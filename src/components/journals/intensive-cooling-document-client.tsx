@@ -13,9 +13,11 @@ import {
   CalendarDays,
   History,
   Plus,
-  Trash2,
   X,
 } from "lucide-react";
+import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
+import { SelectionEditButton } from "@/components/journals/selection-edit-button";
+import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
 import { SuggestInput } from "@/components/journals/suggest-input";
 import { useNameSuggestions } from "@/components/journals/use-name-suggestions";
 import { useRouter } from "next/navigation";
@@ -116,6 +118,8 @@ function RowDialog(props: {
   users: UserItem[];
   /** Блюда организации (последние сверху) — поверх подсказок документа. */
   dishOptions?: readonly string[];
+  /** «(k из N)» при правке выделенных строк по очереди. */
+  titleSuffix?: string;
   onSave: (row: IntensiveCoolingRow) => Promise<void>;
 }) {
   const [row, setRow] = useState<IntensiveCoolingRow>(() => createIntensiveCoolingRow());
@@ -173,8 +177,8 @@ function RowDialog(props: {
   async function handleSave() {
     setSubmitting(true);
     try {
+      // Окно закрывает родитель: при правке по очереди он откроет следующую строку.
       await props.onSave(row);
-      props.onOpenChange(false);
     } catch (error) {
       // ПОЧЕМУ: окно закрывалось в finally — сотрудник видел «сохранено»,
       // хотя сервер отказал, и правка терялась. Показываем текст сервера
@@ -193,7 +197,7 @@ function RowDialog(props: {
         <DialogHeader className="border-b px-8 py-6">
           <div className="flex items-center justify-between gap-4">
             <DialogTitle className="text-[30px] font-medium text-black">
-              {props.initialRow ? "Редактирование строки" : "Добавление новой строки"}
+              {props.initialRow ? `Редактирование строки${props.titleSuffix ? ` ${props.titleSuffix}` : ""}` : "Добавление новой строки"}
             </DialogTitle>
             <button
               type="button"
@@ -707,6 +711,21 @@ export function IntensiveCoolingDocumentClient(props: Props) {
     startTransition(() => router.refresh());
   }
 
+  /** Правка выделенных строк по очереди — тем же окном. */
+  const seq = useSequentialEdit({
+    open: (id) => {
+      const row = rows.find((item) => item.id === id);
+      if (!row || !isActive) return false;
+      setEditingRow(row);
+      setRowDialogOpen(true);
+      return true;
+    },
+    close: () => {
+      setRowDialogOpen(false);
+      setEditingRow(null);
+    },
+  });
+
   async function handleSaveRow(row: IntensiveCoolingRow) {
     const editingId = editingRow?.id ?? null;
     await persistRows((current) => ({
@@ -716,7 +735,13 @@ export function IntensiveCoolingDocumentClient(props: Props) {
         : [...current.rows, row],
     }));
     void dishSuggestions.remember([row.dishName]);
+    if (editingId) {
+      // Очередь правок откроет следующую строку или закроет окно.
+      seq.saved();
+      return;
+    }
     setEditingRow(null);
+    setRowDialogOpen(false);
   }
 
   async function handleDeleteSelected() {
@@ -779,30 +804,18 @@ export function IntensiveCoolingDocumentClient(props: Props) {
   return (
     <div className="bg-white text-black">
       {selectedRowIds.length > 0 ? (
-        <div className="border-b border-[#eef1f7] bg-white">
-          <div className="mx-auto flex max-w-[1860px] flex-wrap items-center gap-4 px-6 py-5">
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-2xl bg-[#fafbff] px-4 py-3 text-[15px] text-[#5563ff]"
-              onClick={() => setSelectedRowIds([])}
-            >
-              <X className="size-5" />
-              Выбрано: {selectedRowIds.length}
-            </button>
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-2xl bg-[#fff4f2] px-4 py-3 text-[15px] text-[#ff3b30]"
-              onClick={() => {
-                handleDeleteSelected().catch((error) =>
-                  toast.error(error instanceof Error ? error.message : "Ошибка")
-                );
-              }}
-            >
-              <Trash2 className="size-5" />
-              Удалить
-            </button>
-          </div>
-        </div>
+        <JournalSelectionBar
+          count={selectedRowIds.length}
+          onClear={() => setSelectedRowIds([])}
+          onDelete={() => {
+            handleDeleteSelected().catch((error) =>
+              toast.error(error instanceof Error ? error.message : "Ошибка")
+            );
+          }}
+          hint="Строки будут удалены вместе с историей правок"
+        >
+          <SelectionEditButton count={selectedRowIds.length} disabled={!isActive} onClick={() => seq.start(selectedRowIds)} />
+        </JournalSelectionBar>
       ) : null}
 
       <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
@@ -1046,10 +1059,15 @@ export function IntensiveCoolingDocumentClient(props: Props) {
       <RowDialog
         open={rowDialogOpen}
         onOpenChange={(value) => {
-          setRowDialogOpen(value);
-          if (!value) setEditingRow(null);
+          if (value) {
+            setRowDialogOpen(true);
+            return;
+          }
+          // Закрытие без сохранения прерывает очередь («Изменено k из N»).
+          seq.cancelled();
         }}
         initialRow={editingRow}
+        titleSuffix={seq.progress ?? undefined}
         config={config}
         users={props.users}
         dishOptions={dishSuggestions.options(config.dishSuggestions)}

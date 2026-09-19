@@ -9,8 +9,10 @@ import {
   Pencil,
   Plus,
   Trash2,
-  X,
 } from "lucide-react";
+import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
+import { SelectionEditButton } from "@/components/journals/selection-edit-button";
+import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -75,6 +77,8 @@ type RowDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   row: MetalImpurityRow | null;
+  /** «(k из N)» при правке выделенных строк по очереди. */
+  titleSuffix?: string;
   materials: MetalImpurityOption[];
   suppliers: MetalImpurityOption[];
   users: MetalImpurityUser[];
@@ -158,6 +162,7 @@ function RowDialog({
   open,
   onOpenChange,
   row,
+  titleSuffix,
   materials,
   suppliers,
   users,
@@ -254,7 +259,7 @@ function RowDialog({
       <DialogContent className="max-w-[calc(100vw-1rem)] rounded-[32px] border-0 p-0 sm:max-w-[760px]">
         <DialogHeader className="border-b px-5 py-6 sm:px-10 sm:py-8">
           <DialogTitle className="text-[22px] font-medium text-black">
-            {row ? "Редактирование строки" : "Добавление новой строки"}
+            {row ? `Редактирование строки${titleSuffix ? ` ${titleSuffix}` : ""}` : "Добавление новой строки"}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-5 px-5 py-6 sm:px-10 sm:py-8">
@@ -399,7 +404,7 @@ function RowDialog({
                       supplierName: newSupplier.trim() || undefined,
                     }
                   );
-                  onOpenChange(false);
+                  // Окно закрывает родитель: при правке по очереди он откроет следующую строку.
                 } catch (error) {
                   // Без catch ошибка глохла: окно висело, тоста не было.
                   toast.error(
@@ -1151,6 +1156,21 @@ export function MetalImpurityDocumentClient({
     startTransition(() => router.refresh());
   }
 
+  /** Правка выделенных строк по очереди — тем же окном. */
+  const seq = useSequentialEdit({
+    open: (id) => {
+      const row = config.rows.find((item) => item.id === id);
+      if (!row || status !== "active") return false;
+      setEditingRow(row);
+      setRowDialogOpen(true);
+      return true;
+    },
+    close: () => {
+      setRowDialogOpen(false);
+      setEditingRow(null);
+    },
+  });
+
   async function saveRow(
     row: MetalImpurityRow,
     additions?: { materialName?: string; supplierName?: string }
@@ -1184,7 +1204,13 @@ export function MetalImpurityDocumentClient({
       ? nextConfig.rows.map((item) => (item.id === editingRow.id ? normalizedRow : item))
       : [...nextConfig.rows, normalizedRow];
     await persist(documentTitle, { ...nextConfig, rows: nextRows });
+    if (editingRow) {
+      // Очередь правок откроет следующую строку или закроет окно.
+      seq.saved();
+      return;
+    }
     setEditingRow(null);
+    setRowDialogOpen(false);
   }
 
   async function deleteSelectedRows() {
@@ -1237,32 +1263,19 @@ export function MetalImpurityDocumentClient({
     <>
       <div className="space-y-8 bg-white text-black">
         {selectedRowIds.length > 0 && status === "active" && (
-          <div className="flex flex-wrap items-center gap-4 rounded-[12px] bg-white px-2 py-2 print:hidden">
-            <div className="inline-flex h-14 items-center gap-3 rounded-[12px] bg-[#fafbff] px-6 text-[18px] text-[#5566f6]">
-              <button
-                type="button"
-                onClick={() => setSelectedRowIds([])}
-                className="flex size-6 items-center justify-center"
-              >
-                <X className="size-5" />
-              </button>
-              Выбрано: {selectedRowIds.length}
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isPending}
-              onClick={() =>
-                deleteSelectedRows().catch((error) =>
-                  toast.error(error instanceof Error ? error.message : "Ошибка удаления")
-                )
-              }
-              className="h-14 rounded-[12px] border-[#ffd7d3] px-6 text-[18px] text-[#ff3b30] hover:bg-[#fff3f2]"
-            >
-              <Trash2 className="size-5" />
-              Удалить
-            </Button>
-          </div>
+          <JournalSelectionBar
+            count={selectedRowIds.length}
+            onClear={() => setSelectedRowIds([])}
+            onDelete={() =>
+              deleteSelectedRows().catch((error) =>
+                toast.error(error instanceof Error ? error.message : "Ошибка удаления")
+              )
+            }
+            deleting={isPending}
+            hint="Записи контроля металлопримесей будут удалены без возможности отмены"
+          >
+            <SelectionEditButton count={selectedRowIds.length} onClick={() => seq.start(selectedRowIds)} />
+          </JournalSelectionBar>
         )}
 
         <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
@@ -1459,10 +1472,15 @@ export function MetalImpurityDocumentClient({
       <RowDialog
         open={rowDialogOpen}
         onOpenChange={(open) => {
-          setRowDialogOpen(open);
-          if (!open) setEditingRow(null);
+          if (open) {
+            setRowDialogOpen(true);
+            return;
+          }
+          // Закрытие без сохранения прерывает очередь («Изменено k из N»).
+          seq.cancelled();
         }}
         row={editingRow}
+        titleSuffix={seq.progress ?? undefined}
         materials={config.materials}
         suppliers={config.suppliers}
         users={users}

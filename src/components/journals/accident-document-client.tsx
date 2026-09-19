@@ -7,9 +7,11 @@ import {
   Archive,
   CalendarDays,
   Plus,
-  Trash2,
   X,
 } from "lucide-react";
+import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
+import { SelectionEditButton } from "@/components/journals/selection-edit-button";
+import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -91,6 +93,8 @@ function RowDialog(props: {
   open: boolean;
   onOpenChange: (value: boolean) => void;
   initialRow: AccidentRow | null;
+  /** «(k из N)» при правке выделенных строк по очереди. */
+  titleSuffix?: string;
   onSave: (row: AccidentRow) => Promise<void>;
 }) {
   const [row, setRow] = useState<AccidentRow>(() => createAccidentRow());
@@ -108,8 +112,8 @@ function RowDialog(props: {
   async function handleSave() {
     setSubmitting(true);
     try {
+      // Окно закрывает родитель: при правке по очереди он откроет следующую строку.
       await props.onSave(row);
-      props.onOpenChange(false);
     } catch (error) {
       // Без catch ошибка сохранения глохла: окно висело, тоста не было.
       toast.error(error instanceof Error ? error.message : "Ошибка сохранения строки");
@@ -124,7 +128,7 @@ function RowDialog(props: {
         <DialogHeader className="border-b px-8 py-6">
           <div className="flex items-center justify-between gap-4">
             <DialogTitle className="text-[30px] font-medium text-black">
-              {props.initialRow ? "Редактирование строки" : "Добавление новой строки"}
+              {props.initialRow ? `Редактирование строки${props.titleSuffix ? ` ${props.titleSuffix}` : ""}` : "Добавление новой строки"}
             </DialogTitle>
             <button
               type="button"
@@ -553,12 +557,33 @@ export function AccidentDocumentClient(props: Props) {
     startTransition(() => router.refresh());
   }
 
+  /** Правка выделенных строк по очереди — тем же окном. */
+  const seq = useSequentialEdit({
+    open: (id) => {
+      const row = config.rows.find((item) => item.id === id);
+      if (!row || !isActive) return false;
+      setEditingRow(row);
+      setRowDialogOpen(true);
+      return true;
+    },
+    close: () => {
+      setRowDialogOpen(false);
+      setEditingRow(null);
+    },
+  });
+
   async function handleSaveRow(row: AccidentRow) {
     const nextRows = editingRow
       ? config.rows.map((item) => (item.id === editingRow.id ? row : item))
       : [...config.rows, row];
     await persist(title, dateFrom, { ...config, rows: nextRows });
+    if (editingRow) {
+      // Очередь правок откроет следующую строку или закроет окно.
+      seq.saved();
+      return;
+    }
     setEditingRow(null);
+    setRowDialogOpen(false);
   }
 
   async function handleDeleteSelected() {
@@ -584,30 +609,18 @@ export function AccidentDocumentClient(props: Props) {
   return (
     <div className="bg-white text-black">
       {selectedRowIds.length > 0 ? (
-        <div className="sticky top-0 z-30 border-b border-[#eef1f7] bg-white/95 backdrop-blur">
-          <div className="mx-auto flex max-w-[1860px] flex-wrap items-center gap-4 px-6 py-5">
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-2xl bg-[#fafbff] px-4 py-3 text-[15px] text-[#5563ff]"
-              onClick={() => setSelectedRowIds([])}
-            >
-              <X className="size-5" />
-              Выбрано: {selectedRowIds.length}
-            </button>
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-2xl bg-[#fff4f2] px-4 py-3 text-[15px] text-[#ff3b30]"
-              onClick={() => {
-                handleDeleteSelected().catch((error) =>
-                  toast.error(error instanceof Error ? error.message : "Ошибка")
-                );
-              }}
-            >
-              <Trash2 className="size-5" />
-              Удалить
-            </button>
-          </div>
-        </div>
+        <JournalSelectionBar
+          count={selectedRowIds.length}
+          onClear={() => setSelectedRowIds([])}
+          onDelete={() => {
+            handleDeleteSelected().catch((error) =>
+              toast.error(error instanceof Error ? error.message : "Ошибка")
+            );
+          }}
+          hint="Записи об авариях будут удалены без возможности отмены"
+        >
+          <SelectionEditButton count={selectedRowIds.length} disabled={!isActive} onClick={() => seq.start(selectedRowIds)} />
+        </JournalSelectionBar>
       ) : null}
 
       <div className="space-y-8 py-4 sm:py-6">
@@ -804,10 +817,15 @@ export function AccidentDocumentClient(props: Props) {
       <RowDialog
         open={rowDialogOpen}
         onOpenChange={(value) => {
-          setRowDialogOpen(value);
-          if (!value) setEditingRow(null);
+          if (value) {
+            setRowDialogOpen(true);
+            return;
+          }
+          // Закрытие без сохранения прерывает очередь («Изменено k из N»).
+          seq.cancelled();
         }}
         initialRow={editingRow}
+        titleSuffix={seq.progress ?? undefined}
         onSave={handleSaveRow}
       />
 

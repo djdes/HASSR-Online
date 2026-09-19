@@ -27,6 +27,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FeedbackDialog } from "@/components/layout/feedback-dialog";
 import { useMiniTheme } from "../_components/mini-theme";
 import { PushSettings } from "../_components/push-settings";
+import { MiniQrPinSection } from "./qr-pin-section";
 
 /**
  * Profile screen for the Mini App.
@@ -235,6 +236,10 @@ export function MiniMeClient({
       {/* Уведомления. Раздел сам себя прячет, если сервер их не
           настроил или браузер не умеет. */}
       <PushSettings />
+
+      {/* PIN для QR-плакатов — нужен только в режиме «Имя + PIN»;
+          раздел показывается, когда организация включила этот режим. */}
+      <MiniQrPinSection />
 
       {/* Баланс и бонусы — паритет с сайтом (П-3). Карточка ведёт на
           тот же экран, что и /settings/balance в кабинете. */}

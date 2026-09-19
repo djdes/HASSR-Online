@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { Archive, Plus, X } from "lucide-react";
+import { Archive, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
+import { SelectionEditButton } from "@/components/journals/selection-edit-button";
+import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
 import { JournalSettingsModal } from "@/components/journals/v2/journal-settings-modal";
 import { FocusTodayScroller } from "@/components/journals/focus-today-scroller";
 import { Button } from "@/components/ui/button";
@@ -90,6 +93,8 @@ function RowDialog(props: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialRow: BreakdownRow | null;
+  /** «(k из N)» при правке выделенных строк по очереди. */
+  titleSuffix?: string;
   onSave: (row: BreakdownRow) => Promise<void>;
   documentId: string;
   directory: readonly EquipmentDirectoryOption[];
@@ -110,8 +115,8 @@ function RowDialog(props: {
     }
     setIsSubmitting(true);
     try {
+      // Окно закрывает родитель: при правке по очереди он откроет следующую строку.
       await props.onSave(row);
-      props.onOpenChange(false);
     } catch (error) {
       // ПОЧЕМУ: окно закрывалось в finally — сотрудник видел «сохранено»,
       // хотя сервер отказал, и запись о поломке терялась.
@@ -128,7 +133,7 @@ function RowDialog(props: {
       <DialogContent className="w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] overflow-hidden rounded-[24px] border-0 p-0 sm:max-w-[640px]">
         <DialogHeader className="border-b px-6 py-5">
           <DialogTitle className="text-[18px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-            {props.initialRow ? "Редактирование строки" : "Добавление новой строки"}
+            {props.initialRow ? `Редактирование строки${props.titleSuffix ? ` ${props.titleSuffix}` : ""}` : "Добавление новой строки"}
           </DialogTitle>
         </DialogHeader>
 
@@ -577,6 +582,21 @@ export function BreakdownHistoryDocumentClient(props: Props) {
     startTransition(() => router.refresh());
   }
 
+  /** Правка выделенных строк по очереди — тем же окном. */
+  const seq = useSequentialEdit({
+    open: (id) => {
+      const row = config.rows.find((item) => item.id === id);
+      if (!row || !isActive) return false;
+      setEditingRow(row);
+      setRowDialogOpen(true);
+      return true;
+    },
+    close: () => {
+      setRowDialogOpen(false);
+      setEditingRow(null);
+    },
+  });
+
   async function handleSaveRow(row: BreakdownRow) {
     const editingId = editingRow?.id ?? null;
     await persistConfig({
@@ -585,7 +605,13 @@ export function BreakdownHistoryDocumentClient(props: Props) {
         ? config.rows.map((item) => (item.id === editingId ? row : item))
         : [...config.rows, row],
     });
+    if (editingId) {
+      // Очередь правок откроет следующую строку или закроет окно.
+      seq.saved();
+      return;
+    }
     setEditingRow(null);
+    setRowDialogOpen(false);
   }
 
   async function handleDeleteSelected() {
@@ -610,6 +636,23 @@ export function BreakdownHistoryDocumentClient(props: Props) {
 
   return (
     <div className="bg-white text-black">
+      {selectedRowIds.length > 0 && isActive ? (
+        <JournalSelectionBar
+          count={selectedRowIds.length}
+          onClear={() => setSelectedRowIds([])}
+          onDelete={() => {
+            handleDeleteSelected().catch((error) =>
+              toast.error(
+                error instanceof Error ? error.message : "Ошибка удаления"
+              )
+            );
+          }}
+          hint="Карточки поломок будут удалены без возможности отмены"
+        >
+          <SelectionEditButton count={selectedRowIds.length} onClick={() => seq.start(selectedRowIds)} />
+        </JournalSelectionBar>
+      ) : null}
+
       <div className="space-y-6 py-4 sm:py-6">
         {/* Скроллер из ?focus=today: для event-driven журнала
            «история поломок» нет «сегодня» — поэтому селектор —
@@ -670,30 +713,6 @@ export function BreakdownHistoryDocumentClient(props: Props) {
                   <Plus className="size-5" />
                   Добавить
                 </Button>
-
-                {selectedRowIds.length > 0 && (
-                  <div className="flex items-center gap-3 rounded-2xl border border-[#dadde9] bg-white px-4 py-2">
-                    <span className="text-sm">
-                      Выбранно: {selectedRowIds.length}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="border-[#ffd7d3] text-[#ff3b30] hover:bg-[#fff0ef]"
-                      onClick={() => {
-                        handleDeleteSelected().catch((error) =>
-                          toast.error(
-                            error instanceof Error ? error.message : "Ошибка удаления"
-                          )
-                        );
-                      }}
-                    >
-                      <X className="mr-1 size-4" />
-                      Удалить
-                    </Button>
-                  </div>
-                )}
               </StickyActionBar>
             ) : undefined
           }
@@ -850,10 +869,15 @@ export function BreakdownHistoryDocumentClient(props: Props) {
           key={editingRow?.id || "new-breakdown-row"}
           open={rowDialogOpen}
           onOpenChange={(open) => {
-            setRowDialogOpen(open);
-            if (!open) setEditingRow(null);
+            if (open) {
+              setRowDialogOpen(true);
+              return;
+            }
+            // Закрытие без сохранения прерывает очередь («Изменено k из N»).
+            seq.cancelled();
           }}
           initialRow={editingRow}
+          titleSuffix={seq.progress ?? undefined}
           onSave={handleSaveRow}
           documentId={props.documentId}
           directory={directory}

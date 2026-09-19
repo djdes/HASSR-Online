@@ -14,6 +14,8 @@ import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { verifyQrFillTokenFor } from "@/lib/qr-fill-token";
 import { orgTodayKey } from "@/lib/timezone";
 import { getUserDisplayTitle } from "@/lib/user-roles";
+import { redirect } from "next/navigation";
+import { normalizeQrFillMode, sessionEmployeeForQr } from "@/lib/qr-fill-actor";
 import { RoomFillClient } from "./room-fill-client";
 
 export const runtime = "nodejs";
@@ -71,7 +73,7 @@ export default async function RoomFillPage({
         select: {
           name: true,
           organizationId: true,
-          organization: { select: { name: true, timezone: true } },
+          organization: { select: { name: true, timezone: true, qrFillMode: true } },
         },
       },
     },
@@ -80,6 +82,16 @@ export default async function RoomFillPage({
 
   const organizationId = room.building.organizationId;
   const timezone = room.building.organization.timezone || "Europe/Moscow";
+  // Режим QR-форм организации: в «auth» без сессии — на вход и обратно.
+  const qrMode = normalizeQrFillMode(room.building.organization.qrFillMode);
+  let sessionEmployee: { id: string; name: string; positionTitle: string | null; canPickOthers: boolean } | null = null;
+  if (qrMode === "auth") {
+    const resolved = await sessionEmployeeForQr(organizationId);
+    if (!resolved.ok && resolved.reason === "no-session") {
+      redirect(`/login?next=${encodeURIComponent(`/room-fill/${roomId}?token=${encodeURIComponent(token)}`)}`);
+    }
+    if (resolved.ok) sessionEmployee = resolved.employee;
+  }
   const now = new Date();
   const dateKey = orgTodayKey(timezone, now);
   const day = new Date(`${dateKey}T00:00:00.000Z`);
@@ -129,7 +141,12 @@ export default async function RoomFillPage({
       norms={norms}
       hasActiveDocument={Boolean(document)}
       nextSlot={config ? pickNearestControlTime(config.controlTimes, now, timezone) : null}
-      employees={employees.map((employee) => ({
+      mode={qrMode}
+      sessionEmployee={sessionEmployee}
+      employees={(sessionEmployee && !sessionEmployee.canPickOthers
+        ? employees.filter((employee) => employee.id === sessionEmployee!.id)
+        : employees
+      ).map((employee) => ({
         id: employee.id,
         name: employee.name,
         position: getUserDisplayTitle(employee),

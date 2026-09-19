@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Archive, Check, ChevronDown, List, ListPlus, Plus, Trash2 } from "lucide-react";
+import { ApplyToSelectedDialog, type ApplyToSelectedField } from "@/components/journals/apply-to-selected-dialog";
+import { SelectionApplyButton, SelectionEditButton, SelectionRepeatButton } from "@/components/journals/selection-edit-button";
+import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
 import { SuggestInput } from "@/components/journals/suggest-input";
 import { useNameSuggestions } from "@/components/journals/use-name-suggestions";
 import { toast } from "sonner";
@@ -369,6 +372,8 @@ export function PerishableRejectionDocumentClient({
     ].filter((field): field is { label: string; value: string; hideIfEmpty: boolean } => field !== null),
   }));
   const [addModalOpen, setAddModalOpen] = useState(false);
+  /** «Применить ко всем выделенным» — одно окно на несколько строк. */
+  const [applyOpen, setApplyOpen] = useState(false);
   // Правка существующей строки идёт через ту же модалку, что и добавление:
   // журнал rolling (до 30 записей за смену), и на телефоне карточка была
   // единственным доступным входом — но не открывала ничего.
@@ -525,6 +530,52 @@ export function PerishableRejectionDocumentClient({
     );
   }
 
+  /** Поля, которые имеет смысл менять у нескольких строк сразу. */
+  const applyFields: ApplyToSelectedField[] = [
+    { key: "arrivalDate", label: "Дата поступления", type: "date" },
+    { key: "arrivalTime", label: "Время поступления", type: "time" },
+    { key: "manufacturer", label: "Производитель", type: "text", suggestions: manufacturerOptions },
+    { key: "supplier", label: "Поставщик", type: "text", suggestions: supplierOptions },
+    { key: "organolepticResult", label: "Органолептическая оценка", type: "select", options: [{ value: "compliant", label: "Соответствует" }, { value: "non_compliant", label: "Не соответствует" }] },
+    { key: "storageCondition", label: "Условия хранения", type: "select", options: (Object.entries(STORAGE_CONDITION_LABELS) as [string, string][]).map(([value, label]) => ({ value, label })) },
+    { key: "actualSaleDate", label: "Дата фактической реализации", type: "date" },
+    { key: "actualSaleTime", label: "Время фактической реализации", type: "time" },
+    { key: "responsiblePerson", label: "Ответственный", type: "text" },
+  ];
+
+  async function applyToSelectedRows(patch: Record<string, string>) {
+    if (readOnly || selectedRows.length === 0) return;
+    applyConfig(
+      (prev) => ({
+        ...prev,
+        rows: prev.rows.map((row) => (selectedRows.includes(row.id) ? createPerishableRejectionRow({ ...row, ...patch }) : row)),
+      }),
+      true
+    );
+    toast.success(`Изменено строк: ${selectedRows.length}`);
+  }
+
+  /** Копия выделенных строк с датой и временем поступления «сейчас». */
+  function repeatSelectedRows() {
+    if (readOnly || selectedRows.length === 0) return;
+    const copies = config.rows
+      .filter((row) => selectedRows.includes(row.id))
+      .map((row) =>
+        createPerishableRejectionRow({
+          ...row,
+          id: undefined,
+          arrivalDate: nowDate(),
+          arrivalTime: mergeHM(nowHour(), nowMinute()),
+          actualSaleDate: "",
+          actualSaleTime: "",
+          sourceRowKey: undefined,
+        })
+      );
+    applyConfig((prev) => ({ ...prev, rows: [...prev.rows, ...copies] }), true);
+    setSelectedRows(copies.map((row) => row.id));
+    toast.success(copies.length > 1 ? `Добавлено копий: ${copies.length}` : `Повторено: ${copies[0]?.productName || "строка"}`);
+  }
+
   async function removeSelectedRows() {
     if (readOnly) return;
     if (selectedRows.length === 0) return;
@@ -664,9 +715,23 @@ export function PerishableRejectionDocumentClient({
     setAddModalOpen(true);
   }
 
+  /** Правка выделенных строк по очереди — тем же окном. */
+  const seq = useSequentialEdit({
+    open: (id) => {
+      const row = config.rows.find((item) => item.id === id);
+      if (!row || readOnly) return false;
+      openEditRow(row);
+      return true;
+    },
+    close: () => {
+      setAddModalOpen(false);
+      setEditingRowId(null);
+    },
+  });
+
   function closeRowModal() {
-    setAddModalOpen(false);
-    setEditingRowId(null);
+    // Закрытие без сохранения прерывает очередь («Изменено k из N»).
+    seq.cancelled();
   }
 
   async function saveDraftRow() {
@@ -691,6 +756,11 @@ export function PerishableRejectionDocumentClient({
     );
     void productSuggestions.remember([nextRow.productName]);
     resetDraftRow();
+    if (rowId) {
+      // Очередь правок откроет следующую строку или закроет окно.
+      seq.saved();
+      return;
+    }
     setEditingRowId(null);
     setAddModalOpen(false);
   }
@@ -1015,8 +1085,13 @@ export function PerishableRejectionDocumentClient({
             onClear={() => setSelectedRows([])}
             onDelete={() => void removeSelectedRows()}
             hint="Строки бракеража будут удалены без возможности отмены"
-          />
+          >
+            <SelectionEditButton count={selectedRows.length} disabled={readOnly} onClick={() => seq.start(selectedRows)} />
+            <SelectionApplyButton count={selectedRows.length} disabled={readOnly} onClick={() => setApplyOpen(true)} />
+            <SelectionRepeatButton count={selectedRows.length} disabled={readOnly} onClick={() => repeatSelectedRows()} />
+          </JournalSelectionBar>
         ) : null}
+        <ApplyToSelectedDialog open={applyOpen} onOpenChange={setApplyOpen} count={selectedRows.length} fields={applyFields} onApply={applyToSelectedRows} />
 
         {/* View toggle */}
 
@@ -1273,7 +1348,7 @@ export function PerishableRejectionDocumentClient({
         <DialogContent className={JOURNAL_DIALOG_CONTENT_WIDE_CLASS}>
           <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
             <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-              {editingRowId ? "Изменение записи" : "Добавление новой строки"}
+              {editingRowId ? `Изменение записи${seq.progress ? ` ${seq.progress}` : ""}` : "Добавление новой строки"}
             </DialogTitle>
           </DialogHeader>
 

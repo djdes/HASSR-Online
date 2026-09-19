@@ -2,7 +2,7 @@
 
 import { TOUR } from "@/lib/tour-anchors";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
   MoreHorizontal,
   Printer,
@@ -10,7 +10,15 @@ import {
   Settings2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { QrFillPreview } from "@/components/qr/qr-fill-preview";
+import {
+  JOURNAL_DIALOG_CONTENT_CLASS,
+  JOURNAL_DIALOG_HEADER_CLASS,
+  JOURNAL_DIALOG_TITLE_CLASS,
+} from "@/components/journals/journal-responsive";
 import { ResponsiveMenu } from "@/components/ui/responsive-menu";
 import { DOC_TITLE_ROW_CLASS } from "@/components/journals/journal-responsive";
 import type { DocumentBarUndo } from "@/components/journals/undo-redo-buttons";
@@ -86,6 +94,7 @@ const ACTION_BUTTON_CLASS =
  * (ссылка «К списку документов» + нижний MiniNav), так что потери нет.
  */
 export function DocumentActionsBar({
+  backHref,
   documentId,
   showPrint = true,
   heading,
@@ -98,6 +107,11 @@ export function DocumentActionsBar({
 }: Props) {
   const items = menuItems.filter(Boolean);
   const hasPrint = Boolean(showPrint && documentId);
+  // Код журнала — из `backHref` (`/journals/<code>`): его передают все
+  // клиенты, и отдельный проп не нужен. Есть код и документ — есть QR.
+  const journalCode = backHref?.match(/^\/journals\/([^/?#]+)/)?.[1] ?? null;
+  const hasQr = Boolean(documentId && journalCode);
+  const [qrOpen, setQrOpen] = useState(false);
 
   // Панель рендерят почти все журналы — публикуем состояние отмены в
   // шапку отсюда, чтобы не звать хук в каждом клиенте по отдельности.
@@ -135,7 +149,7 @@ export function DocumentActionsBar({
       toast.error("Не удалось отправить", { id: toastId });
     }
   }
-  const hasMenu = hasPrint || items.length > 0;
+  const hasMenu = hasPrint || hasQr || items.length > 0;
 
   return (
     <>
@@ -207,6 +221,17 @@ export function DocumentActionsBar({
                       },
                     ]
                   : []),
+                ...(hasQr
+                  ? [
+                      {
+                        key: "qr-fill",
+                        label: "QR: заполнить с телефона",
+                        icon: <QrCode className="size-4 text-[#5566f6]" />,
+                        title: "Плакат с QR-кодом: сотрудник сканирует и вносит запись в этот документ без входа",
+                        onSelect: () => setQrOpen(true),
+                      },
+                    ]
+                  : []),
                 ...items.map((item) => ({
                   key: item.key,
                   label: item.label,
@@ -233,6 +258,27 @@ export function DocumentActionsBar({
         </div>
       </div>
       {children}
+      {hasQr ? (
+        <Dialog open={qrOpen} onOpenChange={setQrOpen}>
+          <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
+            <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
+              <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>QR: заполнить с телефона</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 px-6 py-5">
+              <p className="text-[13px] leading-[1.55] text-[#3c4053]">
+                Повесьте плакат в цехе: сотрудник сканирует, выбирает себя и
+                отвечает на вопросы формы — запись ложится в этот документ за
+                сегодня. Кто может записывать — «Настройки → Соответствие».
+              </p>
+              <QrFillPreview
+                kind="journal"
+                id={`${journalCode}:${documentId}`}
+                emptyHint="QR появится после сохранения документа."
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      ) : null}
     </>
   );
 }

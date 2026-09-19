@@ -60,6 +60,7 @@ export default async function StaffPage() {
           isRoot: true,
           archivedAt: true,
           weeklyDaysOff: true,
+          qrPinHash: true,
           buildingIds: true,
         },
       }),
@@ -155,6 +156,7 @@ export default async function StaffPage() {
         telegramLinked: Boolean(u.telegramChatId),
         weeklyDaysOff: u.weeklyDaysOff,
         buildingIds: u.buildingIds,
+        hasQrPin: Boolean(u.qrPinHash),
       }))}
       workOffDays={workOffDays.map((w) => ({
         userId: w.userId,

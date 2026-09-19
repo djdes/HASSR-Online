@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Archive, ListPlus, Plus, Trash2, X } from "lucide-react";
+import { Archive, ListPlus, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -45,6 +45,9 @@ import { JournalAddRow } from "@/components/journals/journal-add-row";
 import { GRID_CELL_CLASS, GRID_HEAD_CELL_CLASS } from "@/components/journals/journal-grid";
 import { JournalSettingsModal } from "@/components/journals/v2/journal-settings-modal";
 import { FocusTodayScroller } from "@/components/journals/focus-today-scroller";
+import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
+import { SelectionEditButton } from "@/components/journals/selection-edit-button";
+import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
 import { useDocumentCloseAction } from "@/components/journals/document-close-button";
 import { useMobileView } from "@/lib/use-mobile-view";
 import {
@@ -352,6 +355,25 @@ export function EquipmentCalibrationDocumentClient({
     setEditModalOpen(true);
   }
 
+  /** Правка выделенных строк по очереди — тем же окном. */
+  const seq = useSequentialEdit({
+    open: (id) => {
+      const row = configRef.current.rows.find((item) => item.id === id);
+      if (!row || isClosed) return false;
+      openEditRow(id);
+      return true;
+    },
+    close: () => {
+      setEditModalOpen(false);
+      setEditingRowId(null);
+    },
+  });
+
+  function closeEditModal() {
+    // Закрытие без сохранения прерывает очередь («Изменено k из N»).
+    seq.cancelled();
+  }
+
   function saveEditRow() {
     if (!editingRowId) return;
     const rowId = editingRowId;
@@ -372,8 +394,8 @@ export function EquipmentCalibrationDocumentClient({
         row.id === rowId ? { ...row, ...patch } : row
       ),
     }));
-    setEditModalOpen(false);
-    setEditingRowId(null);
+    // Очередь правок откроет следующую строку или закроет окно.
+    seq.saved();
   }
 
   /* ---------- settings save ---------- */
@@ -432,25 +454,14 @@ export function EquipmentCalibrationDocumentClient({
 
       {/* Selection bar */}
       {selectedRows.length > 0 && !isClosed && (
-        <div className="flex flex-wrap items-center gap-3 print:hidden">
-          <button
-            type="button"
-            onClick={() => setSelectedRows([])}
-            className="text-[#6f7282] hover:text-black"
-          >
-            <X className="size-4" />
-          </button>
-          <span className="text-[14px]">Выбранно: {selectedRows.length}</span>
-          <Button
-            type="button"
-            variant="ghost"
-            className="h-9 px-3 text-[13px] text-[#ff3b30] hover:bg-[#fff2f1] hover:text-[#ff3b30]"
-            onClick={removeSelectedRows}
-          >
-            <Trash2 className="mr-1 size-4" />
-            Удалить
-          </Button>
-        </div>
+        <JournalSelectionBar
+          count={selectedRows.length}
+          onClear={() => setSelectedRows([])}
+          onDelete={removeSelectedRows}
+          hint="Строки графика поверки будут удалены без возможности отмены"
+        >
+          <SelectionEditButton count={selectedRows.length} disabled={isClosed} onClick={() => seq.start(selectedRows)} />
+        </JournalSelectionBar>
       )}
 
       <JournalDocumentShell
@@ -772,16 +783,16 @@ export function EquipmentCalibrationDocumentClient({
       </Dialog>
 
       {/* ---------- Edit Row Dialog ---------- */}
-      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+      <Dialog open={editModalOpen} onOpenChange={(open) => (open ? setEditModalOpen(true) : closeEditModal())}>
         <DialogContent showCloseButton={false} className="max-h-[90vh] supports-[height:100dvh]:max-h-[90dvh] overflow-y-auto w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] rounded-[24px] border-0 p-0 sm:max-w-[560px]">
           <DialogHeader className="flex flex-row items-center justify-between border-b px-7 py-5">
             <DialogTitle className="text-[24px] font-semibold text-black">
-              Редактирование строки
+              Редактирование строки{seq.progress ? ` ${seq.progress}` : ""}
             </DialogTitle>
             <button
               type="button"
               className="rounded-md p-1 text-black/80 hover:bg-black/5"
-              onClick={() => setEditModalOpen(false)}
+              onClick={closeEditModal}
             >
               <X className="size-6" />
             </button>

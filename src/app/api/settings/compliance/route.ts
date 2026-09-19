@@ -36,6 +36,7 @@ export async function PATCH(request: Request) {
         requirePhotoOnTaskFillStep?: unknown;
         escalateDeviationsToManagement?: unknown;
         deviationEscalationMinutes?: unknown;
+        qrFillMode?: unknown;
       }
     | null;
   if (!body || typeof body !== "object") {
@@ -49,7 +50,14 @@ export async function PATCH(request: Request) {
     requirePhotoOnTaskFillStep?: boolean;
     escalateDeviationsToManagement?: boolean;
     deviationEscalationMinutes?: number;
+    qrFillMode?: string;
   } = {};
+  if (body.qrFillMode !== undefined) {
+    if (body.qrFillMode !== "public" && body.qrFillMode !== "pin" && body.qrFillMode !== "auth") {
+      return NextResponse.json({ error: "qrFillMode: public | pin | auth" }, { status: 400 });
+    }
+    data.qrFillMode = body.qrFillMode;
+  }
   if (typeof body.requireAdminForJournalEdit === "boolean") {
     data.requireAdminForJournalEdit = body.requireAdminForJournalEdit;
   }

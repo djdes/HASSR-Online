@@ -28,6 +28,7 @@ import {
 } from "@/lib/equipment-fill-targets";
 import { clientIp } from "@/lib/client-ip";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
+import { normalizeQrFillMode, resolveQrFillActor } from "@/lib/qr-fill-actor";
 import {
   QR_FILL_RATE_LIMIT_ERROR,
   qrFillRateKey,
@@ -56,6 +57,8 @@ export const dynamic = "force-dynamic";
 const bodySchema = z.object({
   token: z.string().min(10),
   employeeId: z.string().min(1),
+  /** PIN сотрудника — в режиме `qrFillMode = "pin"`. */
+  pin: z.string().max(12).optional(),
   temperature: z.number(),
   /** Опциональная влажность для оборудования с climate-mapping. */
   humidity: z.number().min(0).max(100).optional(),
@@ -111,7 +114,7 @@ export async function POST(
           id: true,
           organizationId: true,
           name: true,
-          organization: { select: { timezone: true } },
+          organization: { select: { timezone: true, qrFillMode: true } },
         },
       },
     },
@@ -120,6 +123,17 @@ export async function POST(
     return NextResponse.json({ error: "Оборудование не найдено" }, { status: 404 });
   }
   const organizationId = equipment.area.organizationId;
+
+  // Режим QR-форм организации: список / PIN / только после входа.
+  const actor = await resolveQrFillActor({
+    mode: normalizeQrFillMode(equipment.area.organization.qrFillMode),
+    organizationId,
+    employeeId: parsed.employeeId,
+    pin: parsed.pin,
+  });
+  if (!actor.ok) {
+    return NextResponse.json({ error: actor.error }, { status: actor.status });
+  }
 
   // Employee must belong to the same organization — protects against a
   // leaked token being paired with a cross-tenant user id.

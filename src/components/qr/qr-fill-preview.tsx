@@ -69,7 +69,7 @@ export function QrFillPreview({ kind, id, emptyHint, className }: Props) {
       ? result
       : { status: "loading" };
 
-  const posterKind = kind === "room" ? "rooms" : "equipment";
+  const posterKind = kind === "room" ? "rooms" : kind === "journal" ? "journals" : "equipment";
   const printHref = (layout: "poster" | "sheet") =>
     `/settings/qr-posters?kind=${posterKind}&layout=${layout}&ids=${encodeURIComponent(id ?? "")}&autoprint=1`;
 
@@ -128,8 +128,9 @@ export function QrFillPreview({ kind, id, emptyHint, className }: Props) {
                     : ""}
                 </div>
                 <p className="text-[12.5px] leading-[1.5] text-[#3c4053]">
-                  Сотрудник наводит камеру, выбирает своё имя и вводит показание —
-                  запись ложится в журнал за сегодня.
+                  {kind === "journal"
+                    ? "Сотрудник наводит камеру, выбирает себя и отвечает на вопросы формы — запись ложится в этот журнал за сегодня."
+                    : "Сотрудник наводит камеру, выбирает своё имя и вводит показание — запись ложится в журнал за сегодня."}
                 </p>
                 <div className="text-[11.5px] text-[#9b9fb3]">
                   Код бессрочный — печатается один раз.

@@ -3,10 +3,28 @@
  * функции (без `@/lib/db`, см. memory `client-safe-lib-split`).
  */
 
-export const NAME_SUGGESTION_SCOPES = ["dish", "product"] as const;
+export const NAME_SUGGESTION_SCOPES = ["dish", "product", "partner"] as const;
 export type NameSuggestionScope = (typeof NAME_SUGGESTION_SCOPES)[number];
 
 export const NAME_SUGGESTION_MAX_LENGTH = 200;
+
+/** Сопутствующие значения последнего ввода по наименованию. */
+export type NameSuggestionMeta = { productTemp?: string };
+
+export function normalizeSuggestionMeta(raw: unknown): NameSuggestionMeta | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const record = raw as Record<string, unknown>;
+  const meta: NameSuggestionMeta = {};
+  if (typeof record.productTemp === "string" && record.productTemp.trim() !== "") {
+    meta.productTemp = record.productTemp.trim().slice(0, 20);
+  }
+  return Object.keys(meta).length > 0 ? meta : null;
+}
+
+/** Ключ для поиска meta по имени — без учёта регистра и лишних пробелов. */
+export function suggestionKey(value: string): string {
+  return value.replace(/\s+/g, " ").trim().toLowerCase();
+}
 export const NAME_SUGGESTION_LIMIT = 200;
 
 export function isNameSuggestionScope(value: unknown): value is NameSuggestionScope {

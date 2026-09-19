@@ -2,8 +2,11 @@
 
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Archive, Loader2, Pencil, Plus, Trash2, TrendingDown, X } from "lucide-react";
+import { Archive, Loader2, Pencil, Plus, Trash2, TrendingDown } from "lucide-react";
 import { toast } from "sonner";
+import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
+import { SelectionEditButton } from "@/components/journals/selection-edit-button";
+import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
 import { DOC_PRIMARY_BUTTON_CLASS } from "@/components/journals/journal-responsive";
 import { JournalDocumentShell } from "@/components/journals/journal-document-shell";
 import { JournalDocumentHeader } from "@/components/journals/journal-document-header";
@@ -165,6 +168,22 @@ export function ProductWriteoffDocumentClient({
     if (ok) setSettingsOpen(false);
   }
 
+  /** Правка выделенных строк по очереди — тем же окном. */
+  const seq = useSequentialEdit({
+    open: (id) => {
+      // Окно работает по индексу — ищем его по id в актуальном списке.
+      const index = config.rows.findIndex((item) => item.id === id);
+      if (index === -1 || isClosed) return false;
+      setRowDialog({ open: true, index, row: config.rows[index], newProductName: "" });
+      setRowDialogProductOptions(productOptions);
+      return true;
+    },
+    close: () => {
+      setRowDialog({ open: false, index: null, row: emptyRow(), newProductName: "" });
+      setRowDialogProductOptions([]);
+    },
+  });
+
   async function saveRow() {
     const nextRow = {
       ...rowDialog.row,
@@ -188,6 +207,11 @@ export function ProductWriteoffDocumentClient({
 
     const ok = await persistConfig(nextConfig);
     if (ok) {
+      if (rowDialog.index !== null) {
+        // Очередь правок откроет следующую строку или закроет окно.
+        seq.saved();
+        return;
+      }
       setRowDialog({ open: false, index: null, row: emptyRow(), newProductName: "" });
       setRowDialogProductOptions([]);
     }
@@ -355,16 +379,14 @@ export function ProductWriteoffDocumentClient({
     <div className="space-y-6 text-black">
       <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
       {selectedRows.length > 0 && !isClosed && (
-        <div className="flex flex-wrap items-center gap-4 rounded-[20px] bg-white px-6 py-4 shadow-sm">
-          <button type="button" className="rounded-xl px-4 py-2 text-[18px] text-[#5566f6]" onClick={() => setSelectedRows([])}>
-            <X className="mr-2 inline size-5" />
-            Выбрано: {selectedRows.length}
-          </button>
-          <Button type="button" variant="outline" className="h-12 rounded-2xl border-[#ffd7d3] px-5 text-[18px] text-[#ff3b30] hover:bg-[#fff3f2]" onClick={() => deleteSelectedRows().catch(() => undefined)}>
-            <Trash2 className="size-5" />
-            Удалить
-          </Button>
-        </div>
+        <JournalSelectionBar
+          count={selectedRows.length}
+          onClear={() => setSelectedRows([])}
+          onDelete={() => deleteSelectedRows().catch(() => undefined)}
+          hint="Строки акта будут удалены без возможности отмены"
+        >
+          <SelectionEditButton count={selectedRows.length} disabled={isClosed} onClick={() => seq.start(selectedRows)} />
+        </JournalSelectionBar>
       )}
 
       <JournalDocumentShell
@@ -616,13 +638,13 @@ export function ProductWriteoffDocumentClient({
 
       <Dialog open={rowDialog.open} onOpenChange={(open) => {
         if (open) return;
-        setRowDialog({ open: false, index: null, row: emptyRow(), newProductName: "" });
-        setRowDialogProductOptions([]);
+        // Закрытие без сохранения прерывает очередь («Изменено k из N»).
+        seq.cancelled();
       }}>
         <DialogContent className="w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] overflow-hidden rounded-[24px] border-0 p-0 sm:max-w-[640px]">
           <DialogHeader className="border-b px-6 py-5">
             <DialogTitle className="text-[18px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-              {rowDialog.index === null ? "Добавление новой строки" : "Редактирование строки"}
+              {rowDialog.index === null ? "Добавление новой строки" : `Редактирование строки${seq.progress ? ` ${seq.progress}` : ""}`}
             </DialogTitle>
           </DialogHeader>
 

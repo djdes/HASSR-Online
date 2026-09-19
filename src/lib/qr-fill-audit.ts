@@ -10,7 +10,7 @@ import { recordAuditLog } from "@/lib/audit-log";
 export async function recordQrFillAudit(input: {
   request: Request;
   organizationId: string;
-  kind: "room" | "equipment";
+  kind: "room" | "equipment" | "journal";
   objectId: string;
   objectName: string;
   employee: { id: string; name: string };
@@ -20,13 +20,22 @@ export async function recordQrFillAudit(input: {
   temperature?: number | null;
   humidity?: number | null;
   outOfRange?: boolean;
+  /** Как подтверждён автор: список имён, PIN или вход в кабинет. */
+  authMode?: "public" | "pin" | "auth";
+  /** Что записано (форма адаптера) — для журнальных QR. */
+  values?: Record<string, unknown>;
 }): Promise<void> {
   await recordAuditLog({
     request: input.request,
-    session: { user: { id: input.employee.id, name: `${input.employee.name} (QR)` } },
+    session: {
+      user: {
+        id: input.employee.id,
+        name: input.authMode === "auth" ? input.employee.name : `${input.employee.name} (QR)`,
+      },
+    },
     organizationId: input.organizationId,
     action: "journal.qr_fill",
-    entity: input.kind === "room" ? "Room" : "Equipment",
+    entity: input.kind === "room" ? "Room" : input.kind === "journal" ? "JournalDocument" : "Equipment",
     entityId: input.objectId,
     details: {
       kind: input.kind,
@@ -37,6 +46,8 @@ export async function recordQrFillAudit(input: {
       ...(typeof input.temperature === "number" ? { temperature: input.temperature } : {}),
       ...(typeof input.humidity === "number" ? { humidity: input.humidity } : {}),
       outOfRange: input.outOfRange === true,
+      ...(input.authMode ? { authMode: input.authMode } : {}),
+      ...(input.values ? { values: input.values } : {}),
     },
   });
 }
@@ -45,6 +56,6 @@ export const QR_FILL_RATE_LIMIT_ERROR =
   "Слишком много записей подряд с этого телефона. Подождите минуту и попробуйте снова.";
 
 /** Ключ лимитера: адрес клиента + объект. */
-export function qrFillRateKey(ip: string | null, kind: "room" | "equipment", objectId: string) {
+export function qrFillRateKey(ip: string | null, kind: "room" | "equipment" | "journal", objectId: string) {
   return `${ip ?? "unknown"}:${kind}:${objectId}`;
 }

@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Archive, Plus, Trash2, X } from "lucide-react";
+import { Archive, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
+import { SelectionEditButton } from "@/components/journals/selection-edit-button";
+import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
 import { JournalDocumentShell } from "@/components/journals/journal-document-shell";
 import { JournalDocumentHeader } from "@/components/journals/journal-document-header";
 import { GRID_CELL_CLASS, GRID_HEAD_CELL_CLASS } from "@/components/journals/journal-grid";
@@ -445,6 +448,8 @@ function RowDialog(props: {
   itemSuggestions: string[];
   responsibleTitle: string;
   onSave: (row: RowItem, originalRow: RowItem | null) => Promise<void>;
+  /** «(k из N)» при правке выделенных строк по очереди. */
+  titleSuffix?: string;
 }) {
   const [submitting, setSubmitting] = useState(false);
   const [draft, setDraft] = useState<RowItem>(props.row);
@@ -484,7 +489,7 @@ function RowDialog(props: {
       <DialogContent showCloseButton={false} className="max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] overflow-y-auto rounded-[24px] border-0 p-0 sm:max-w-[560px]">
         <DialogHeader className="flex flex-row items-center justify-between border-b px-7 py-5">
           <DialogTitle className="text-[24px] font-semibold tracking-[-0.03em] text-black">
-            {props.originalRow ? "Редактирование строки" : "Добавление новой строки"}
+            {props.originalRow ? `Редактирование строки${props.titleSuffix ? ` ${props.titleSuffix}` : ""}` : "Добавление новой строки"}
           </DialogTitle>
           <button
             type="button"
@@ -760,6 +765,21 @@ export function GlassControlDocumentClient(props: Props) {
     };
   });
 
+  /** Правка выделенных строк по очереди — тем же окном. */
+  const seq = useSequentialEdit({
+    open: (id) => {
+      const row = rows.find((item) => item.id === id);
+      // Виртуальная строка (день без записи) — не правится, пропускаем.
+      if (!row || isVirtualRow(row) || isClosed) return false;
+      setRowDialog({ open: true, row, originalRow: row });
+      return true;
+    },
+    close: () => setRowDialog((prev) => ({ ...prev, open: false })),
+  });
+  // RowDialog сам зовёт onOpenChange(false) после сохранения — этот вызов
+  // не должен прерывать очередь, поэтому помечаем «уже сохранено».
+  const seqSavedRef = useRef(false);
+
   async function upsertRow(nextRow: RowItem, originalRow: RowItem | null) {
     const response = await fetch(`/api/journal-documents/${props.documentId}/entries`, {
       method: "PUT",
@@ -804,6 +824,11 @@ export function GlassControlDocumentClient(props: Props) {
 
       return sortRows([...filtered, savedRow]);
     });
+    if (originalRow) {
+      // Очередь правок откроет следующую строку или закроет окно.
+      seqSavedRef.current = true;
+      seq.saved();
+    }
   }
 
   async function deleteSelectedRows() {
@@ -935,25 +960,14 @@ export function GlassControlDocumentClient(props: Props) {
     <div className="space-y-6 text-black">
       <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
       {selectedCount > 0 && !isClosed && (
-        <div className="sticky top-0 z-30 -mx-4 flex flex-wrap items-center gap-4 rounded-[20px] border-b border-[#dcdfed] bg-white/95 px-4 py-3 shadow-sm backdrop-blur md:-mx-8 md:px-8">
-          <button
-            type="button"
-            className="rounded-xl px-4 py-2 text-[18px] text-[#5566f6]"
-            onClick={() => setSelectedRowIds([])}
-          >
-            <X className="mr-2 inline size-5" />
-            Выбрано: {selectedCount}
-          </button>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-12 rounded-2xl border-[#ffd7d3] px-5 text-[18px] text-[#ff3b30] hover:bg-[#fff3f2]"
-            onClick={() => deleteSelectedRows().catch(() => undefined)}
-          >
-            <Trash2 className="size-5" />
-            Удалить
-          </Button>
-        </div>
+        <JournalSelectionBar
+          count={selectedCount}
+          onClear={() => setSelectedRowIds([])}
+          onDelete={() => deleteSelectedRows().catch(() => undefined)}
+          hint="Записи контроля будут удалены без возможности отмены"
+        >
+          <SelectionEditButton count={selectedCount} disabled={isClosed} onClick={() => seq.start(selectedRowIds)} />
+        </JournalSelectionBar>
       )}
 
       <JournalDocumentShell
@@ -1146,13 +1160,25 @@ export function GlassControlDocumentClient(props: Props) {
 
       <RowDialog
         open={rowDialog.open}
-        onOpenChange={(open) => setRowDialog((prev) => ({ ...prev, open }))}
+        onOpenChange={(open) => {
+          if (open) {
+            setRowDialog((prev) => ({ ...prev, open: true }));
+            return;
+          }
+          if (seqSavedRef.current) {
+            seqSavedRef.current = false;
+            return;
+          }
+          // Закрытие без сохранения прерывает очередь («Изменено k из N»).
+          seq.cancelled();
+        }}
         row={rowDialog.row}
         originalRow={rowDialog.originalRow}
         users={props.users}
         itemSuggestions={itemSuggestions}
         responsibleTitle={props.responsibleTitle || "Управляющий"}
         onSave={upsertRow}
+        titleSuffix={seq.progress ?? undefined}
       />
 
       <Dialog open={closeOpen} onOpenChange={setCloseOpen}>

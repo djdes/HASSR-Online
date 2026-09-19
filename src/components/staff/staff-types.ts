@@ -25,6 +25,8 @@ export type StaffEmployee = {
   weeklyDaysOff: number[];
   /// Точки, на которых работает сотрудник; пусто — на всех.
   buildingIds?: string[];
+  /// Задан ли PIN для QR-форм (сам PIN на клиент не уходит).
+  hasQrPin?: boolean;
 };
 
 export type StaffTelegramInvitePayload = {

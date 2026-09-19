@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Archive, Plus, Printer, Trash2, X } from "lucide-react";
+import { Archive, Plus, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -35,6 +35,9 @@ import { JournalAddRow } from "@/components/journals/journal-add-row";
 import { GRID_CELL_CLASS, GRID_HEAD_CELL_CLASS } from "@/components/journals/journal-grid";
 import { JournalSettingsModal } from "@/components/journals/v2/journal-settings-modal";
 import { FocusTodayScroller } from "@/components/journals/focus-today-scroller";
+import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
+import { SelectionEditButton } from "@/components/journals/selection-edit-button";
+import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
 import { useMobileView } from "@/lib/use-mobile-view";
 import {
   MobileViewToggle,
@@ -258,6 +261,22 @@ export function EquipmentCleaningDocumentClient({
     setRowModalOpen(true);
   }
 
+  /** Правка выделенных строк по очереди — тем же окном. */
+  const seq = useSequentialEdit({
+    open: (id) => {
+      const row = rows.find((item) => item.id === id);
+      if (!row || status !== "active") return false;
+      openEditRow(row);
+      return true;
+    },
+    close: () => setRowModalOpen(false),
+  });
+
+  function closeRowModal() {
+    // Закрытие без сохранения прерывает очередь («Изменено k из N»).
+    seq.cancelled();
+  }
+
   function updateDraft(patch: Partial<EquipmentCleaningRowData>) {
     setDraft((current) => ({
       ...current,
@@ -333,11 +352,16 @@ export function EquipmentCleaningDocumentClient({
         });
       }
       if (!override) {
-        setRowModalOpen(false);
         setDraft({
           id: null,
           data: emptyEquipmentCleaningRow(),
         });
+        if (target.id) {
+          // Очередь правок откроет следующую строку или закроет окно.
+          seq.saved();
+          return;
+        }
+        setRowModalOpen(false);
       }
     } catch (error) {
       if (options?.silent) throw error;
@@ -421,30 +445,22 @@ export function EquipmentCleaningDocumentClient({
   return (
     <div className="space-y-6 text-black">
       {selectedIds.length > 0 && status === "active" ? (
-        <div className="flex flex-wrap items-center gap-3 rounded-[18px] bg-white px-5 py-4 shadow-sm">
-          <button
-            type="button"
-            className="flex items-center gap-2 text-[18px] text-[#5566f6]"
-            onClick={() => setSelectedIds([])}
-          >
-            <X className="size-6" />
-            Выбрано: {selectedIds.length}
-          </button>
-          {canDelete ? (
-            <button
-              type="button"
-              className="flex items-center gap-2 rounded-[16px] bg-[#fff4f4] px-4 py-2 text-[18px] text-[#ff3b30]"
-              onClick={() => {
-                deleteSelectedRows().catch(() => {
-                  toast.error("Не удалось удалить строки");
-                });
-              }}
-            >
-              <Trash2 className="size-5" />
-              Удалить
-            </button>
-          ) : null}
-        </div>
+        <JournalSelectionBar
+          count={selectedIds.length}
+          onClear={() => setSelectedIds([])}
+          onDelete={
+            canDelete
+              ? () => {
+                  deleteSelectedRows().catch(() => {
+                    toast.error("Не удалось удалить строки");
+                  });
+                }
+              : undefined
+          }
+          hint="Строки мойки будут удалены без возможности отмены"
+        >
+          <SelectionEditButton count={selectedIds.length} disabled={status !== "active"} onClick={() => seq.start(selectedIds)} />
+        </JournalSelectionBar>
       ) : null}
 
       <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
@@ -613,11 +629,11 @@ export function EquipmentCleaningDocumentClient({
       </JournalDocumentShell>
 
 
-      <Dialog open={rowModalOpen} onOpenChange={setRowModalOpen}>
+      <Dialog open={rowModalOpen} onOpenChange={(open) => (open ? setRowModalOpen(true) : closeRowModal())}>
         <DialogContent className="w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] overflow-hidden rounded-[24px] border-0 p-0 sm:max-w-[640px]">
           <DialogHeader className="border-b px-6 py-5">
             <DialogTitle className="text-[18px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-              {draft.id ? "Редактирование строки" : "Добавление новой строки"}
+              {draft.id ? `Редактирование строки${seq.progress ? ` ${seq.progress}` : ""}` : "Добавление новой строки"}
             </DialogTitle>
           </DialogHeader>
 
@@ -881,7 +897,7 @@ export function EquipmentCleaningDocumentClient({
               type="button"
               variant="outline"
               className="h-9 w-full rounded-xl border-[#dcdfed] px-5 text-[14px] font-medium text-[#0b1024] shadow-none hover:bg-[#fafbff] sm:w-auto"
-              onClick={() => setRowModalOpen(false)}
+              onClick={closeRowModal}
             >
               Отмена
             </Button>

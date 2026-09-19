@@ -5,7 +5,6 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   CalendarDays,
-  Pencil,
   Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -63,6 +62,8 @@ import {
   JOURNAL_DIALOG_TITLE_CLASS,
 } from "@/components/journals/journal-responsive";
 import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
+import { SelectionEditButton } from "@/components/journals/selection-edit-button";
+import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
 import { JournalSettingsModal } from "@/components/journals/v2/journal-settings-modal";
 import { FocusTodayScroller } from "@/components/journals/focus-today-scroller";
 import { JournalClosedBanner } from "@/components/journals/journal-closed-banner";
@@ -334,7 +335,8 @@ function RoomDialog(props: {
                 setSubmitting(true);
                 try {
                   await props.onSubmit({ ...state, name: state.name.trim() }, linkRoomId || null);
-                  props.onOpenChange(false);
+                  // Окно закрывает родитель: очередь правок может открыть
+                  // следующее помещение.
                 } finally {
                   setSubmitting(false);
                 }
@@ -798,9 +800,6 @@ export function SanitationDayDocumentClient({
   const allSelected =
     normalized.rows.length > 0 &&
     selectedRowIds.length === normalized.rows.length;
-  const selectedRows = normalized.rows.filter((row) =>
-    selectedRowIds.includes(row.id),
-  );
   const journalHref = pathname
     ? pathname.split("/documents/")[0]
     : "/journals/general_cleaning";
@@ -944,6 +943,23 @@ export function SanitationDayDocumentClient({
       verifiers: dbRoom.verifierUserIds.map(nameOf),
     };
   }
+
+  /** Правка выделенных помещений по очереди — карточкой или legacy-диалогом. */
+  const seq = useSequentialEdit({
+    open: (id) => {
+      const row = configRef.current.rows.find((item) => item.id === id);
+      if (!row || readOnly) return false;
+      openRowEditor(row);
+      return true;
+    },
+    close: () => {
+      setRoomDialogOpen(false);
+      setRoomEditor(null);
+    },
+  });
+  // Карточка помещения зовёт onOpenChange(false) и сразу onSaved —
+  // «отмену» решаем после тика, когда известно, было ли сохранение.
+  const roomEditorSavedRef = useRef(false);
 
   /** Клик по помещению: со связью — карточка помещения, без — legacy-диалог. */
   function openRowEditor(row: SanitationRoomRow) {
@@ -1121,21 +1137,7 @@ export function SanitationDayDocumentClient({
             }}
             hint="Помещения будут удалены вместе с планом генеральных уборок"
           >
-            <Button
-              type="button"
-              variant="outline"
-              disabled={selectedRowIds.length !== 1}
-              title="Выберите ровно одно помещение, чтобы изменить его план"
-              onClick={() => {
-                const target = selectedRows[0];
-                if (!target) return;
-                openRowEditor(target);
-              }}
-              className="h-10 gap-1.5 rounded-xl border-[#dcdfed] px-3.5 text-[14px] font-semibold text-[#5566f6] shadow-none transition-colors duration-150 hover:bg-[#f3f4fe] hover:text-[#5566f6]"
-            >
-              <Pencil className="size-4" />
-              Редактировать
-            </Button>
+            <SelectionEditButton count={selectedRowIds.length} disabled={readOnly} onClick={() => seq.start(selectedRowIds)} />
           </JournalSelectionBar>
           </>
         ) : null}
@@ -1437,17 +1439,24 @@ export function SanitationDayDocumentClient({
       <RoomDialog
         key={`room-dialog-${roomDialogState.id || "new"}`}
         open={roomDialogOpen}
-        onOpenChange={setRoomDialogOpen}
+        onOpenChange={(open) => {
+          if (open) setRoomDialogOpen(true);
+          else seq.cancelled();
+        }}
         initial={roomDialogState}
         title={
           roomDialogState.id
-            ? "Редактирование строки"
+            ? `Редактирование строки${seq.progress ? ` ${seq.progress}` : ""}`
             : "Добавление новой строки"
         }
         submitText={roomDialogState.id ? "Сохранить" : "Создать"}
         includePlanFields={!roomDialogState.id}
         linkOptions={listSanitationRoomsNotInDocument(normalized, directoryRooms)}
-        onSubmit={saveRoomDialog}
+        onSubmit={async (value, linkRoomId) => {
+          await saveRoomDialog(value, linkRoomId);
+          // Очередь правок откроет следующее помещение или закроет окно.
+          seq.saved();
+        }}
       />
 
       {/* Единый справочник помещений: добавить из /settings/buildings или
@@ -1468,12 +1477,23 @@ export function SanitationDayDocumentClient({
       <RoomEditorDialog
         open={roomEditor !== null}
         onOpenChange={(open) => {
-          if (!open) setRoomEditor(null);
+          if (open) return;
+          setTimeout(() => {
+            if (roomEditorSavedRef.current) {
+              roomEditorSavedRef.current = false;
+              return;
+            }
+            seq.cancelled();
+          }, 0);
         }}
         initial={roomEditor}
         focus="cleaning"
         users={users}
-        onSaved={() => router.refresh()}
+        onSaved={() => {
+          router.refresh();
+          roomEditorSavedRef.current = true;
+          seq.saved();
+        }}
       />
 
       <DocumentSettingsDialog

@@ -4,6 +4,8 @@ import { verifyEquipmentQrToken } from "@/lib/equipment-qr-token";
 import { resolveEquipmentFillTargets } from "@/lib/equipment-fill-targets";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { orgTodayKey } from "@/lib/timezone";
+import { redirect } from "next/navigation";
+import { normalizeQrFillMode, sessionEmployeeForQr } from "@/lib/qr-fill-actor";
 import { EquipmentFillClient } from "./equipment-fill-client";
 
 export const runtime = "nodejs";
@@ -65,7 +67,7 @@ export default async function EquipmentFillPage({
           id: true,
           name: true,
           organizationId: true,
-          organization: { select: { timezone: true } },
+          organization: { select: { timezone: true, qrFillMode: true } },
         },
       },
       sensorMappings: {
@@ -89,6 +91,16 @@ export default async function EquipmentFillPage({
   );
 
   const organizationId = equipment.area.organizationId;
+  // Режим QR-форм организации: в «auth» без сессии — на вход и обратно.
+  const qrMode = normalizeQrFillMode(equipment.area.organization.qrFillMode);
+  let sessionEmployee: { id: string; name: string; positionTitle: string | null; canPickOthers: boolean } | null = null;
+  if (qrMode === "auth") {
+    const resolved = await sessionEmployeeForQr(organizationId);
+    if (!resolved.ok && resolved.reason === "no-session") {
+      redirect(`/login?next=${encodeURIComponent(`/equipment-fill/${equipmentId}?token=${encodeURIComponent(token)}`)}`);
+    }
+    if (resolved.ok) sessionEmployee = resolved.employee;
+  }
 
   // Employees who can be named as the reader. Набор тот же, что проверяет
   // POST (`ORG_ROSTER_WHERE`): иначе ROOT попадал в список, а сохранение
@@ -134,7 +146,9 @@ export default async function EquipmentFillPage({
         areaName: equipment.area.name,
         hasHumidityField,
       }}
-      employees={employees.map((e) => ({
+      mode={qrMode}
+      sessionEmployee={sessionEmployee}
+      employees={(sessionEmployee && !sessionEmployee.canPickOthers ? employees.filter((e) => e.id === sessionEmployee!.id) : employees).map((e) => ({
         id: e.id,
         name: e.name,
         positionTitle: e.positionTitle ?? null,

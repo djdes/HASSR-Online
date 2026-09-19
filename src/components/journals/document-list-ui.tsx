@@ -4,7 +4,7 @@ import Link from "next/link";
 import { createContext, useCallback, useContext } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArchiveRestore, Ellipsis, Pencil, Plus, Printer, Trash2 } from "lucide-react";
+import { ArchiveRestore, Ellipsis, Pencil, Plus, Printer, QrCode, Trash2 } from "lucide-react";
 import { CreateDocumentDialog } from "@/components/journals/create-document-dialog";
 import { confirmAsync } from "@/components/ui/confirm-async";
 import { findOverlappingDocument } from "@/lib/journal-document-overlap";
@@ -325,6 +325,16 @@ export function JournalTopBar(props: {
             firstDocumentId={props.firstDocumentId}
           />
         </div>
+        {canManage && props.activeTab === "active" && props.documentCount !== 0 ? (
+          <Link
+            href={`/settings/qr-posters?kind=journals&ids=${encodeURIComponent(props.routeCode ?? props.templateCode)}`}
+            title="Плакат с QR-кодом: сотрудник сканирует и вносит запись в этот журнал с телефона"
+            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border-0 bg-[#5566f6]/[0.04] px-4 text-[15px] font-semibold text-[#5566f6] transition-colors duration-150 hover:bg-[#5566f6]/[0.09] sm:w-auto"
+          >
+            <QrCode className="size-4" />
+            QR
+          </Link>
+        ) : null}
         {canManage && props.activeTab === "active" && props.documentCount !== 0 && props.createSlot}
         {canManage && props.activeTab === "active" && props.documentCount !== 0 && !props.createSlot && (
           <CreateDocumentDialog

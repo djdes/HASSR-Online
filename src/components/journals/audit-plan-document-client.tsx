@@ -1,8 +1,8 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,9 @@ import {
 } from "@/lib/audit-plan-document";
 import { JournalSettingsModal } from "@/components/journals/v2/journal-settings-modal";
 import { FocusTodayScroller } from "@/components/journals/focus-today-scroller";
+import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
+import { SelectionEditButton } from "@/components/journals/selection-edit-button";
+import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
 import { useMobileView } from "@/lib/use-mobile-view";
 import {
   RecordCardsView,
@@ -489,6 +492,8 @@ function AddRowDialog(props: {
   sections: AuditPlanSection[];
   /** Правка существующей строки; null — добавление новой. */
   editRow?: AuditPlanRow | null;
+  /** «(k из N)» при правке по очереди. */
+  titleSuffix?: string;
   onCreate: (sectionId: string, text: string) => Promise<void>;
   onOpenAddSection: () => void;
   onOpenManageSections: () => void;
@@ -512,7 +517,7 @@ function AddRowDialog(props: {
         <DialogHeader className="border-b px-8 py-6">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">
-              {editRow ? "Редактирование строки" : "Добавление новой строки"}
+              {editRow ? `Редактирование строки${props.titleSuffix ? ` ${props.titleSuffix}` : ""}` : "Добавление новой строки"}
             </DialogTitle>
             <button type="button" className="rounded-xl p-2" onClick={() => props.onOpenChange(false)}>
               <X className="size-7" />
@@ -671,6 +676,8 @@ export function AuditPlanDocumentClient({
   // как правка — проставленные по колонкам даты не трогаются.
   const [editingRow, setEditingRow] = useState<AuditPlanRow | null>(null);
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
+  // Окно само зовёт onOpenChange(false) после сохранения — это не отмена.
+  const rowSavedRef = useRef(false);
   const [cellEditor, setCellEditor] = useState<{
     rowId: string;
     columnId: string;
@@ -742,6 +749,21 @@ export function AuditPlanDocumentClient({
     });
   }
 
+  /** Правка выделенных строк по очереди — тем же окном. */
+  const seq = useSequentialEdit({
+    open: (id) => {
+      const row = normalized.rows.find((item) => item.id === id);
+      if (!row || readOnly) return false;
+      setEditingRow(row);
+      setAddRowOpen(true);
+      return true;
+    },
+    close: () => {
+      setAddRowOpen(false);
+      setEditingRow(null);
+    },
+  });
+
   async function addRow(sectionId: string, textValue: string) {
     if (editingRow) {
       await patchConfig({
@@ -752,7 +774,9 @@ export function AuditPlanDocumentClient({
             : row
         ),
       });
-      setEditingRow(null);
+      // Очередь правок откроет следующую строку или закроет окно.
+      rowSavedRef.current = true;
+      seq.saved();
       return;
     }
     await patchConfig({
@@ -847,14 +871,14 @@ export function AuditPlanDocumentClient({
   return (
     <div className="space-y-5">
       {selectedRowIds.length > 0 && !readOnly && (
-        <div className="flex flex-wrap items-center gap-4 rounded-2xl bg-[#f3f4fe] px-6 py-3 print:hidden">
-          <button type="button" className="flex items-center gap-1 text-[16px] text-[#5566f6]" onClick={() => setSelectedRowIds([])}>
-            <X className="size-4" /> Выбрано: {selectedRowIds.length}
-          </button>
-          <button type="button" className="flex items-center gap-1 text-[16px] text-[#ff3b30]" onClick={deleteSelectedRows}>
-            <Trash2 className="size-4" /> Удалить
-          </button>
-        </div>
+        <JournalSelectionBar
+          count={selectedRowIds.length}
+          onClear={() => setSelectedRowIds([])}
+          onDelete={() => void deleteSelectedRows()}
+          hint="Строки плана будут удалены без возможности отмены"
+        >
+          <SelectionEditButton count={selectedRowIds.length} disabled={readOnly} onClick={() => seq.start(selectedRowIds)} />
+        </JournalSelectionBar>
       )}
 
       <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
@@ -1014,7 +1038,7 @@ export function AuditPlanDocumentClient({
       <ManageSectionsDialog open={manageSectionsOpen} onOpenChange={setManageSectionsOpen} sections={normalized.sections} onRename={renameSection} />
       <AddSectionDialog open={addSectionOpen} onOpenChange={setAddSectionOpen} onCreate={addSection} title="Добавить новый раздел" placeholder="Введите название раздела" />
       <AddSectionDialog open={addColumnOpen} onOpenChange={setAddColumnOpen} onCreate={addColumn} title="Добавление нового подразделения" placeholder="Введите название подразделения" />
-      <AddRowDialog open={addRowOpen} onOpenChange={(open) => { setAddRowOpen(open); if (!open) setEditingRow(null); }} sections={normalized.sections} editRow={editingRow} onCreate={addRow} onOpenAddSection={() => setAddSectionOpen(true)} onOpenManageSections={() => setManageSectionsOpen(true)} />
+      <AddRowDialog open={addRowOpen} onOpenChange={(open) => { if (open) { setAddRowOpen(true); return; } if (rowSavedRef.current) { rowSavedRef.current = false; return; } seq.cancelled(); }} sections={normalized.sections} editRow={editingRow} titleSuffix={seq.progress ?? undefined} onCreate={addRow} onOpenAddSection={() => setAddSectionOpen(true)} onOpenManageSections={() => setManageSectionsOpen(true)} />
       <CellValueDialog open={!!cellEditor} onOpenChange={(open) => { if (!open) setCellEditor(null); }} initialValue={cellEditor?.value || ""} title={cellEditor?.title || "Редактирование ячейки"} onSave={async (value) => {
         if (!cellEditor) return;
         await updateCellValue(cellEditor.rowId, cellEditor.columnId, value);

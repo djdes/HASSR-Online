@@ -1,8 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
-import { Archive, ChevronDown, Plus, Trash2, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { Archive, ChevronDown, Plus, X } from "lucide-react";
 import Link from "next/link";
+import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
+import { SelectionEditButton } from "@/components/journals/selection-edit-button";
+import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
 import { getUsersForRoleLabel } from "@/lib/user-roles";
 import { DOC_PRIMARY_BUTTON_CLASS } from "@/components/journals/journal-responsive";
 import { JournalDocumentShell } from "@/components/journals/journal-document-shell";
@@ -431,6 +434,8 @@ function RowDialog(props: {
   config: PpeIssuanceConfig;
   initialRow: PpeIssuanceRow | null;
   onSave: (row: PpeIssuanceRow) => Promise<void>;
+  /** «(k из N)» при правке выделенных строк по очереди. */
+  titleSuffix?: string;
 }) {
   const [state, setState] = useState<RowDialogState | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -473,7 +478,7 @@ function RowDialog(props: {
         <DialogHeader className="border-b px-5 py-6 sm:px-10 sm:py-8">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">
-              {props.initialRow ? "Редактирование строки" : "Добавление новой строки"}
+              {props.initialRow ? `Редактирование строки${props.titleSuffix ? ` ${props.titleSuffix}` : ""}` : "Добавление новой строки"}
             </DialogTitle>
             <button type="button" className="rounded-xl p-2 text-[#0b1024]" onClick={() => props.onOpenChange(false)}>
               <X className="size-8" />
@@ -694,6 +699,24 @@ export function PpeIssuanceDocumentClient(props: Props) {
     startTransition(() => router.refresh());
   }
 
+  /** Правка выделенных строк по очереди — тем же окном. */
+  const seq = useSequentialEdit({
+    open: (id) => {
+      const row = config.rows.find((item) => item.id === id);
+      if (!row || isClosed) return false;
+      setEditingRow(row);
+      setRowDialogOpen(true);
+      return true;
+    },
+    close: () => {
+      setRowDialogOpen(false);
+      setEditingRow(null);
+    },
+  });
+  // RowDialog сам зовёт onOpenChange(false) после сохранения — этот вызов
+  // не должен прерывать очередь, поэтому помечаем «уже сохранено».
+  const seqSavedRef = useRef(false);
+
   async function handleSaveRow(row: PpeIssuanceRow) {
     const nextConfig = {
       ...config,
@@ -702,6 +725,12 @@ export function PpeIssuanceDocumentClient(props: Props) {
         : [...config.rows, row],
     };
     await persist(title, dateFrom, nextConfig);
+    if (editingRow) {
+      // Очередь правок откроет следующую строку или закроет окно.
+      seqSavedRef.current = true;
+      seq.saved();
+      return;
+    }
     setEditingRow(null);
   }
 
@@ -737,28 +766,18 @@ export function PpeIssuanceDocumentClient(props: Props) {
   return (
     <div className="space-y-6 text-black">
       {selectedRowIds.length > 0 && !isClosed && (
-        <div className="flex flex-wrap items-center gap-3 rounded-[18px] bg-white px-5 py-4 shadow-sm">
-          <button
-            type="button"
-            onClick={() => setSelectedRowIds([])}
-            className="rounded-md p-1 text-[#6f7282] hover:text-black"
-          >
-            <X className="size-4" />
-          </button>
-          <span className="text-[14px]">Выбрано: {selectedRowIds.length}</span>
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() =>
-              handleDeleteSelected().catch((error) =>
-                toast.error(error instanceof Error ? error.message : "Ошибка")
-              )
-            }
-            className="h-9 px-3 text-[13px] text-[#ff3b30] hover:bg-[#fff2f1] hover:text-[#ff3b30]"
-          >
-            <Trash2 className="mr-1 size-4" /> Удалить
-          </Button>
-        </div>
+        <JournalSelectionBar
+          count={selectedRowIds.length}
+          onClear={() => setSelectedRowIds([])}
+          onDelete={() =>
+            handleDeleteSelected().catch((error) =>
+              toast.error(error instanceof Error ? error.message : "Ошибка")
+            )
+          }
+          hint="Строки выдачи СИЗ будут удалены без возможности отмены"
+        >
+          <SelectionEditButton count={selectedRowIds.length} disabled={isClosed} onClick={() => seq.start(selectedRowIds)} />
+        </JournalSelectionBar>
       )}
 
       <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
@@ -1003,13 +1022,22 @@ export function PpeIssuanceDocumentClient(props: Props) {
       <RowDialog
         open={rowDialogOpen}
         onOpenChange={(value) => {
-          setRowDialogOpen(value);
-          if (!value) setEditingRow(null);
+          if (value) {
+            setRowDialogOpen(true);
+            return;
+          }
+          if (seqSavedRef.current) {
+            seqSavedRef.current = false;
+            return;
+          }
+          // Закрытие без сохранения прерывает очередь («Изменено k из N»).
+          seq.cancelled();
         }}
         users={props.users}
         config={config}
         initialRow={editingRow}
         onSave={handleSaveRow}
+        titleSuffix={seq.progress ?? undefined}
       />
 
       <CloseDialog

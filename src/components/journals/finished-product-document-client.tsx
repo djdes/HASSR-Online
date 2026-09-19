@@ -28,8 +28,12 @@ import {
   JOURNAL_DIALOG_TITLE_CLASS,
 } from "@/components/journals/journal-responsive";
 import { JournalCellInput } from "@/components/journals/journal-cell-input";
+import { ApplyToSelectedDialog, type ApplyToSelectedField } from "@/components/journals/apply-to-selected-dialog";
+import { SelectionApplyButton, SelectionEditButton, SelectionRepeatButton } from "@/components/journals/selection-edit-button";
+import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
 import { SuggestInput } from "@/components/journals/suggest-input";
 import { useNameSuggestions } from "@/components/journals/use-name-suggestions";
+import { suggestionKey } from "@/lib/name-suggestions";
 import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
 import { JournalSettingsModal } from "@/components/journals/v2/journal-settings-modal";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -335,6 +339,8 @@ export function FinishedProductDocumentClient({
   const [config, setConfig] = useState(() => normalizeFinishedProductDocumentConfig(initialConfig));
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [addModalOpen, setAddModalOpen] = useState(false);
+  /** «Применить ко всем выделенным» — одно окно на несколько строк. */
+  const [applyOpen, setApplyOpen] = useState(false);
   // id строки, которую правим. null — режим добавления. Одна модалка на
   // оба сценария: на телефоне карточка открывает её же, иначе бракераж
   // (до 50 записей за смену) правился только в таблице на 1100px.
@@ -346,6 +352,11 @@ export function FinishedProductDocumentClient({
   const [bulkText, setBulkText] = useState("");
   const [newItemName, setNewItemName] = useState("");
   const [draftRow, setDraftRow] = useState<FinishedProductDocumentRow>(() => createDraft(users, "", draftPeople));
+  /**
+   * «Т°C внутри продукта» подставлена по прошлой записи этого блюда.
+   * Ручной ввод снимает флаг — смена блюда больше не перезапишет число.
+   */
+  const [productTempAuto, setProductTempAuto] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const readOnly = status === "closed";
   const { mobileView, switchMobileView } = useMobileView("finished_product");
@@ -463,6 +474,38 @@ export function FinishedProductDocumentClient({
     () => dishSuggestions.options(config.itemsCatalog),
     [dishSuggestions, config.itemsCatalog]
   );
+
+  /** Температура блюда по прошлой записи: память организации, иначе строки этого документа. */
+  function rememberedTemp(name: string): string | null {
+    const key = suggestionKey(name);
+    if (!key) return null;
+    const fromMemory = dishSuggestions.metaFor(name)?.productTemp;
+    if (fromMemory) return fromMemory;
+    for (let i = config.rows.length - 1; i >= 0; i -= 1) {
+      const row = config.rows[i];
+      if (row.id !== editingRowId && suggestionKey(row.productName) === key && row.productTemp.trim() !== "") return row.productTemp;
+    }
+    return null;
+  }
+
+  /** Выбор блюда (список, чип, ввод): при видимой колонке подставляет температуру, если поле пустое или было подставлено. */
+  function pickProductName(name: string) {
+    setDraftRow((prev) => {
+      const next = { ...prev, productName: name };
+      if (!isColumnVisible("temp")) return next;
+      if (prev.productTemp.trim() !== "" && !productTempAuto) return next;
+      const temp = rememberedTemp(name);
+      if (temp) {
+        setProductTempAuto(true);
+        return { ...next, productTemp: temp };
+      }
+      if (productTempAuto) {
+        setProductTempAuto(false);
+        return { ...next, productTemp: "" };
+      }
+      return next;
+    });
+  }
   // Dedupe by name — multiple staff records can carry identical full
   // names ("Титов Максим Андреевич"), and React would warn about
   // duplicate keys in the <datalist> below. The select still falls
@@ -559,7 +602,7 @@ export function FinishedProductDocumentClient({
             {withProductName ? (
               <div className="space-y-2">
                 <Label className="text-[13px] font-medium text-[#3c4053]">Наименование изделия</Label>
-                <SuggestInput ariaLabel="Наименование изделия" value={draftRow.productName} options={productOptions} onChange={(next) => setDraftRow((prev) => ({ ...prev, productName: next }))} />
+                <SuggestInput ariaLabel="Наименование изделия" value={draftRow.productName} options={productOptions} onChange={pickProductName} />
                 {/* Последние блюда — одним касанием, без открытия списка. */}
                 {productOptions.length > 0 ? (
                   <div className="flex flex-wrap gap-1.5" aria-label="Недавние наименования">
@@ -570,7 +613,7 @@ export function FinishedProductDocumentClient({
                           key={name}
                           type="button"
                           aria-pressed={current}
-                          onClick={() => setDraftRow((prev) => ({ ...prev, productName: name }))}
+                          onClick={() => pickProductName(name)}
                           className={`inline-flex h-8 max-w-full items-center truncate rounded-full border px-3 text-[12.5px] font-medium transition-colors duration-150 ${
                             current
                               ? "border-[#5566f6] bg-[#eef1ff] text-[#3848c7]"
@@ -623,7 +666,19 @@ export function FinishedProductDocumentClient({
             {isColumnVisible("temp") ? (
               <div className="space-y-2">
                 <Label className="text-[13px] font-medium text-[#3c4053]">{columnLabel("temp", "T°C внутри продукта")}</Label>
-                <Input className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]" value={draftRow.productTemp} onChange={(e) => setDraftRow((prev) => ({ ...prev, productTemp: e.target.value }))} />
+                <Input
+                  className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
+                  value={draftRow.productTemp}
+                  onChange={(e) => {
+                    setProductTempAuto(false);
+                    setDraftRow((prev) => ({ ...prev, productTemp: e.target.value }));
+                  }}
+                />
+                {productTempAuto && draftRow.productTemp.trim() !== "" ? (
+                  <p className="text-[11.5px] leading-snug text-[#6f7282]" data-testid="product-temp-auto-hint">
+                    По прошлой записи «{draftRow.productName}». Исправьте, если сегодня иначе.
+                  </p>
+                ) : null}
               </div>
             ) : null}
             {isColumnVisible("oxygen") ? (
@@ -747,6 +802,67 @@ export function FinishedProductDocumentClient({
     });
   }
 
+  /** Поля, которые имеет смысл менять у нескольких строк сразу. */
+  const applyFields: ApplyToSelectedField[] = [
+    { key: "rejectionTime", label: columnLabel("rejection", "Время снятия бракеража"), type: "time" },
+    { key: "organoleptic", label: columnLabel("organoleptic", "Органолептическая оценка"), type: "select", options: ORGANOLEPTIC_OPTIONS.map((value) => ({ value, label: value })) },
+    { key: "releaseAllowed", label: columnLabel("release", "Разрешение к реализации"), type: "select", options: [{ value: "yes", label: "Да" }, { value: "no", label: "Нет" }] },
+    { key: "releasePermissionTime", label: columnLabel("release", "Разрешение к реализации (время)"), type: "time" },
+    { key: "courierTransferTime", label: columnLabel("courier", "Время передачи блюд курьеру"), type: "time" },
+    { key: "responsiblePerson", label: columnLabel("responsible", "Ответственный исполнитель"), type: "text", suggestions: personOptions },
+    { key: "inspectorName", label: columnLabel("inspector", "Лицо, проводившее бракераж"), type: "text", suggestions: personOptions },
+  ];
+
+  /** Поля «дата время»: из окна приходит только ЧЧ:ММ — дата берётся из строки (иначе сегодня). */
+  const DATE_TIME_KEYS = new Set(["rejectionTime", "releasePermissionTime", "courierTransferTime"]);
+  function patchRow(row: FinishedProductDocumentRow, patch: Record<string, string>): FinishedProductDocumentRow {
+    const next: Record<string, string> = {};
+    for (const [key, value] of Object.entries(patch)) {
+      if (DATE_TIME_KEYS.has(key) && /^\d{2}:\d{2}$/.test(value)) {
+        const current = String((row as unknown as Record<string, string>)[key] ?? "");
+        const date = /^\d{4}-\d{2}-\d{2}/.test(current) ? current.slice(0, 10) : nowDate();
+        next[key] = mergeDateTime(date, value);
+      } else {
+        next[key] = value;
+      }
+    }
+    return createFinishedProductRow({ ...row, ...next });
+  }
+
+  async function applyToSelectedRows(patch: Record<string, string>) {
+    if (readOnly || selectedRows.length === 0) return;
+    const nextConfig = {
+      ...config,
+      rows: config.rows.map((row) => (selectedRows.includes(row.id) ? patchRow(row, patch) : row)),
+    };
+    setConfig(nextConfig);
+    await saveConfig(nextConfig);
+    toast.success(`Изменено строк: ${selectedRows.length}`);
+  }
+
+  /** Копия выделенных строк с временем «сейчас» — повторная партия того же блюда. */
+  async function repeatSelectedRows() {
+    if (readOnly || selectedRows.length === 0) return;
+    const copies = config.rows
+      .filter((row) => selectedRows.includes(row.id))
+      .map((row) =>
+        createFinishedProductRow({
+          ...row,
+          id: undefined,
+          productionDateTime: dateTimeMinutesAgo(0),
+          rejectionTime: nowTime(),
+          releasePermissionTime: row.releasePermissionTime ? nowTime() : "",
+          courierTransferTime: "",
+          sourceRowKey: undefined,
+        })
+      );
+    const nextConfig = { ...config, rows: [...config.rows, ...copies] };
+    setConfig(nextConfig);
+    await saveConfig(nextConfig);
+    setSelectedRows(copies.map((row) => row.id));
+    toast.success(copies.length > 1 ? `Добавлено копий: ${copies.length}` : `Повторено: ${copies[0]?.productName || "строка"}`);
+  }
+
   async function removeSelectedRows() {
     if (readOnly || selectedRows.length === 0) return;
     const names = config.rows
@@ -834,6 +950,7 @@ export function FinishedProductDocumentClient({
   function openAddRow() {
     setEditingRowId(null);
     setOrganolepticCustom(false);
+    setProductTempAuto(false);
     setDraftRow(createDraft(users, "", draftPeople));
     setAddModalOpen(true);
   }
@@ -843,13 +960,28 @@ export function FinishedProductDocumentClient({
     if (readOnly) return;
     setEditingRowId(row.id);
     setOrganolepticCustom(false);
+    setProductTempAuto(false);
     setDraftRow({ ...row });
     setAddModalOpen(true);
   }
 
+  /** Правка выделенных строк по очереди — тем же окном. */
+  const seq = useSequentialEdit({
+    open: (id) => {
+      const row = config.rows.find((item) => item.id === id);
+      if (!row || readOnly) return false;
+      openEditRow(row);
+      return true;
+    },
+    close: () => {
+      setAddModalOpen(false);
+      setEditingRowId(null);
+    },
+  });
+
   function closeRowModal() {
-    setAddModalOpen(false);
-    setEditingRowId(null);
+    // Закрытие без сохранения прерывает очередь («Изменено k из N»).
+    seq.cancelled();
   }
 
   /**
@@ -866,7 +998,11 @@ export function FinishedProductDocumentClient({
     };
     setConfig(nextConfig);
     await saveConfig(nextConfig);
-    void dishSuggestions.remember([draftRow.productName]);
+    void dishSuggestions.remember(
+      [draftRow.productName],
+      draftRow.productTemp.trim() !== "" ? { [draftRow.productName]: { productTemp: draftRow.productTemp.trim() } } : undefined
+    );
+    setProductTempAuto(false);
     if (options.keepOpen && !editingRowId) {
       toast.success(`Записано: ${draftRow.productName || "без названия"}. Следующее изделие.`);
       setDraftRow({
@@ -883,6 +1019,11 @@ export function FinishedProductDocumentClient({
       return;
     }
     setDraftRow(createDraft(users, "", draftPeople));
+    if (editingRowId) {
+      // Очередь правок откроет следующую строку или закроет окно.
+      seq.saved();
+      return;
+    }
     setEditingRowId(null);
     setAddModalOpen(false);
   }
@@ -1023,7 +1164,12 @@ export function FinishedProductDocumentClient({
           onClear={() => setSelectedRows([])}
           onDelete={() => void removeSelectedRows()}
           hint="Строки журнала будут удалены без возможности отмены"
-        />
+        >
+          <SelectionEditButton count={selectedRows.length} disabled={readOnly} onClick={() => seq.start(selectedRows)} />
+          <SelectionApplyButton count={selectedRows.length} disabled={readOnly} onClick={() => setApplyOpen(true)} />
+          <SelectionRepeatButton count={selectedRows.length} disabled={readOnly} onClick={() => void repeatSelectedRows()} />
+        </JournalSelectionBar>
+        <ApplyToSelectedDialog open={applyOpen} onOpenChange={setApplyOpen} count={selectedRows.length} fields={applyFields} onApply={applyToSelectedRows} />
 
 
         {mobileView === "cards" ? (
@@ -1223,7 +1369,7 @@ export function FinishedProductDocumentClient({
         <DialogContent className={JOURNAL_DIALOG_CONTENT_WIDE_CLASS}>
           <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
             <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-              {editingRowId ? "Изменение записи" : "Добавление новой строки"}
+              {editingRowId ? `Изменение записи${seq.progress ? ` ${seq.progress}` : ""}` : "Добавление новой строки"}
             </DialogTitle>
           </DialogHeader>
           {rowFields({ withProductName: true })}

@@ -2,8 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Archive, Plus, Trash2, X } from "lucide-react";
+import { Archive, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
+import { SelectionEditButton } from "@/components/journals/selection-edit-button";
+import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
 import { DOC_PRIMARY_BUTTON_CLASS } from "@/components/journals/journal-responsive";
 import { JournalDocumentShell } from "@/components/journals/journal-document-shell";
 import { JournalDocumentHeader } from "@/components/journals/journal-document-header";
@@ -139,6 +142,23 @@ export function GlassListDocumentClient({
     if (ok) setSettingsOpen(false);
   }
 
+  /** Правка выделенных строк по очереди — тем же окном. */
+  const seq = useSequentialEdit({
+    open: (id) => {
+      // Окно работает по индексу — ищем его по id в актуальном списке.
+      const index = config.rows.findIndex((item) => item.id === id);
+      if (index === -1 || isClosed) return false;
+      setRowDialog({ open: true, rowIndex: index, row: config.rows[index] });
+      return true;
+    },
+    close: () =>
+      setRowDialog({
+        open: false,
+        rowIndex: null,
+        row: emptyRow(config.location),
+      }),
+  });
+
   async function saveRow() {
     const nextConfig = structuredClone(config) as GlassListConfig;
     if (rowDialog.rowIndex === null) nextConfig.rows.push(rowDialog.row);
@@ -146,6 +166,11 @@ export function GlassListDocumentClient({
 
     const ok = await persist(nextConfig);
     if (ok) {
+      if (rowDialog.rowIndex !== null) {
+        // Очередь правок откроет следующую строку или закроет окно.
+        seq.saved();
+        return;
+      }
       setRowDialog({
         open: false,
         rowIndex: null,
@@ -199,25 +224,14 @@ export function GlassListDocumentClient({
     <div className="space-y-6 text-black">
       <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
       {selectedRows.length > 0 && !isClosed && (
-        <div className="flex flex-wrap items-center gap-4 rounded-[20px] bg-white px-6 py-4 shadow-sm">
-          <button
-            type="button"
-            className="rounded-xl px-4 py-2 text-[18px] text-[#5566f6]"
-            onClick={() => setSelectedRows([])}
-          >
-            <X className="mr-2 inline size-5" />
-            Выбрано: {selectedRows.length}
-          </button>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-12 rounded-2xl border-[#ffd7d3] px-5 text-[18px] text-[#ff3b30] hover:bg-[#fff3f2]"
-            onClick={() => deleteSelectedRows().catch(() => undefined)}
-          >
-            <Trash2 className="size-5" />
-            Удалить
-          </Button>
-        </div>
+        <JournalSelectionBar
+          count={selectedRows.length}
+          onClear={() => setSelectedRows([])}
+          onDelete={() => deleteSelectedRows().catch(() => undefined)}
+          hint="Позиции перечня будут удалены без возможности отмены"
+        >
+          <SelectionEditButton count={selectedRows.length} disabled={isClosed} onClick={() => seq.start(selectedRows)} />
+        </JournalSelectionBar>
       )}
 
       <JournalDocumentShell
@@ -602,18 +616,14 @@ export function GlassListDocumentClient({
       <Dialog
         open={rowDialog.open}
         onOpenChange={(open) =>
-          !open &&
-          setRowDialog({
-            open: false,
-            rowIndex: null,
-            row: emptyRow(config.location),
-          })
+          // Закрытие без сохранения прерывает очередь («Изменено k из N»).
+          !open && seq.cancelled()
         }
       >
         <DialogContent className="max-w-[calc(100vw-1rem)] rounded-[32px] border-0 p-0 sm:max-w-[760px]">
           <DialogHeader className="border-b px-14 py-10">
             <DialogTitle className="text-[22px] font-medium text-black">
-              {rowDialog.rowIndex === null ? "Добавление новой строки" : "Редактирование строки"}
+              {rowDialog.rowIndex === null ? "Добавление новой строки" : `Редактирование строки${seq.progress ? ` ${seq.progress}` : ""}`}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-8 px-14 py-12">

@@ -1,0 +1,27 @@
+DRY-RUN · документов: 271, строк: 2876, наименований: 651
+создать: 651, обновить: 0, без изменений: 0
+  Демо — Ресторан (cmtjzuxsq0000yk9m4ksyewli): product: +11/~0, partner: +14/~0, dish: +6/~0
+  АО УК АР (cmocjjhec00014wtszmdjqznj): dish: +1/~0
+  ООО «ЦДОиМИ» (cms8q6hpj086b9rtsrqitik35): dish: +12/~0
+  Демо — Продуктовый магазин (cmtr8zu4l0025tvts5och28np): product: +11/~0, partner: +14/~0, dish: +3/~0
+  ИП Барладян Роман Борисович (cmtvnlxkf0000qnts26ya7cpj): product: +3/~0, partner: +3/~0, dish: +1/~0
+  Демо — Бар / Паб (cmtk2aeje000ao9tsesj20d9z): product: +11/~0, partner: +14/~0, dish: +6/~0
+  ИП Ковалева Мария Юрьевна (cmt1fcevr0cuj82tsbbc0zh4l): product: +56/~0, partner: +6/~0
+  Демо — Кафе / Кофейня (cmtjw6x0r02n0t49m6647hs7h): dish: +6/~0
+  Демо — Кафе / Кофейня (cmtkflxns004o6ntsdzeb0j5x): dish: +6/~0, product: +11/~0, partner: +14/~0
+  ИП Мринская Ксения Сергеевна (cmrvt0tmd2ikz1mtsrr14h5wh): product: +2/~0, partner: +2/~0
+  Демо — Другое (cmty73ago000a38tsuf7b3dzz): product: +11/~0, partner: +14/~0, dish: +3/~0
+  Демо — Ресторан (cmtkxqw4n004606tsbq68pbiu): product: +11/~0, partner: +14/~0, dish: +6/~0
+  ИП Комарова М.К. (cmts6xv70000amets09rftil0): product: +3/~0, partner: +3/~0
+  ИП Мухина Лариса Васильевна (cmsrnvdf0001uu0tstb8fxvzc): product: +279/~0, partner: +7/~0
+  OOOVRG (cmtliuaiu01xg06ts0096w8gb): product: +2/~0, partner: +3/~0
+  WeSetup (platform): product: +2/~0, partner: +2/~0
+  ООО "ПОБЕДА" (cmq9bbros11581mtsqg8x9ioc): dish: +3/~0, product: +1/~0
+  ИП Пархоменко Вероника Александровна (cmtre54qu00rdtvts0icm8ngl): partner: +2/~0, dish: +1/~0
+  ИП Хитров (cmq4ysc7z0xli1mts8kc2f9z6): dish: +4/~0
+  ООО "ОКУНЬЕВШАЯ КОРПОРАЦИЯ" (cmu0gcos000c573tsd86cnpux): dish: +3/~0, product: +2/~0, partner: +3/~0
+  ИП Калашников Виталий Александрович (cmt9tv5td0ogj82tsl4jq9t54): product: +4/~0, partner: +4/~0
+  Демо — Другое (cmu2x1a8v000sj4tsqyj1157r): product: +11/~0, partner: +14/~0, dish: +3/~0
+  Одинцовская Лингвистическая Гимназия (cmtwzhw9700w73vts4z0z254u): dish: +18/~0
+  ИП Ряснянская (cmu0qn4uz02qn73tsgejx5672): product: +2/~0, partner: +3/~0
+Ничего не записано (dry-run). Для применения: --apply

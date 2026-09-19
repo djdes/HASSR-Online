@@ -2,7 +2,7 @@
  * Плакат / наклейка с QR-кодом для заполнения без входа (client-safe:
  * только типы, без node-импортов — см. memory `client-safe-lib-split`).
  */
-export type QrFillKind = "equipment" | "room";
+export type QrFillKind = "equipment" | "room" | "journal";
 
 export type QrPoster = {
   id: string;

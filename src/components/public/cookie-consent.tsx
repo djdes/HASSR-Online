@@ -30,6 +30,7 @@ const APP_PREFIXES = [
   "/task-fill",
   "/equipment-fill",
   "/room-fill",
+  "/journal-fill",
 ] as const;
 
 /**

@@ -1,14 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { isManagementRole } from "@/lib/user-roles";
 import { toast } from "sonner";
 import { useJournalUndo } from "@/lib/journal-undo";
-import { Archive, Plus, Trash2, X } from "lucide-react";
+import { Archive, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
+import { SelectionEditButton } from "@/components/journals/selection-edit-button";
+import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -586,6 +589,20 @@ export function PestControlDocumentClient(props: Props) {
    * `silent` — вызов из истории: нового шага не кладём и бросаем ошибку
    * наружу, чтобы протухший шаг вылетел из стека.
    */
+  /** Правка выделенных строк по очереди — окном «Редактирование». */
+  const seq = useSequentialEdit({
+    open: (id) => {
+      const entry = entries.find((item) => item.id === id);
+      if (!entry || readOnly) return false;
+      setEditing({ id: entry.id, data: entry.data });
+      return true;
+    },
+    close: () => setEditing(null),
+  });
+  // EntryDialog сам зовёт onOpenChange(false) после сохранения — этот вызов
+  // не должен прерывать очередь, поэтому помечаем «уже сохранено».
+  const seqSavedRef = useRef(false);
+
   async function updateEntry(
     data: PestControlEntryData,
     entryId?: string,
@@ -619,6 +636,11 @@ export function PestControlDocumentClient(props: Props) {
     }
 
     router.refresh();
+    if (!options?.silent) {
+      // Очередь правок откроет следующую строку или закроет окно.
+      seqSavedRef.current = true;
+      seq.saved();
+    }
   }
 
   async function deleteEntries(ids: string[]) {
@@ -684,30 +706,18 @@ export function PestControlDocumentClient(props: Props) {
       <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
 
       {!readOnly && selectedIds.length > 0 && (
-        <div className="flex flex-wrap items-center gap-4 rounded-[16px] border border-[#eceef5] bg-white px-6 py-4">
-          <button
-            type="button"
-            className="flex items-center gap-2 text-[#3848c7]"
-            onClick={() => setSelectedIds([])}
-          >
-            <X className="size-5" />
-            Выбрано: {selectedIds.length}
-          </button>
-          {canDelete ? (
-            <button
-              type="button"
-              className="flex items-center gap-2 text-[#ff3b30]"
-              onClick={() => deleteEntries(selectedIds)}
-            >
-              <Trash2 className="size-5" />
-              Удалить
-            </button>
-          ) : (
-            <span className="text-[13px] text-[#6f7282]">
-              Удалять записи может только управляющий
-            </span>
-          )}
-        </div>
+        <JournalSelectionBar
+          count={selectedIds.length}
+          onClear={() => setSelectedIds([])}
+          onDelete={canDelete ? () => void deleteEntries(selectedIds) : undefined}
+          hint={
+            canDelete
+              ? "Записи будут удалены без возможности отмены"
+              : "Удалять записи может только управляющий"
+          }
+        >
+          <SelectionEditButton count={selectedIds.length} disabled={readOnly} onClick={() => seq.start(selectedIds)} />
+        </JournalSelectionBar>
       )}
 
       <JournalDocumentShell
@@ -892,10 +902,16 @@ export function PestControlDocumentClient(props: Props) {
       <EntryDialog
         open={!!editing}
         onOpenChange={(open) => {
-          if (!open) setEditing(null);
+          if (open) return;
+          if (seqSavedRef.current) {
+            seqSavedRef.current = false;
+            return;
+          }
+          // Закрытие без сохранения прерывает очередь («Изменено k из N»).
+          seq.cancelled();
         }}
         users={props.users}
-        title="Редактирование строки"
+        title={`Редактирование строки${seq.progress ? ` ${seq.progress}` : ""}`}
         submitLabel="Сохранить"
         initial={editing}
         onSubmit={(payload, entryId) => updateEntry(payload, entryId)}

@@ -32,9 +32,15 @@ type Props = {
   /** Норма влажности цеха из климат-журнала; null — норма не задана. */
   humidityNorm: { min: number | null; max: number | null } | null;
   employees: Employee[];
+  /** Режим QR-форм организации (Настройки → Соответствие). */
+  mode?: "public" | "pin" | "auth";
+  /** В режиме «auth» — вошедший сотрудник; линейный не выбирает имя. */
+  sessionEmployee?: { id: string; name: string; canPickOthers: boolean } | null;
 };
 
 const LS_EMPLOYEE_KEY = "wesetup.equipment-fill.employeeId";
+/** Общий ключ всех QR-страниц: имя, выбранное у журнала, помнится и здесь. */
+const LS_SHARED_EMPLOYEE_KEY = "wesetup.qr-fill.employeeId";
 
 /**
  * Worker scans the sticker → lands here. First scan: pick your name
@@ -47,8 +53,12 @@ export function EquipmentFillClient({
   hasActiveDocument,
   humidityNorm,
   employees,
+  mode = "public",
+  sessionEmployee = null,
 }: Props) {
   const [employeeId, setEmployeeId] = useState<string>("");
+  const [pin, setPin] = useState("");
+  const fixedEmployee = mode === "auth" && sessionEmployee && !sessionEmployee.canPickOthers;
   // Морозилка (норма ниже нуля) — минус стоит сразу: на цифровой клавиатуре
   // телефона его не набрать.
   const [temperature, setTemperature] = useState<string>(
@@ -63,11 +73,15 @@ export function EquipmentFillClient({
 
   // Hydrate the remembered employee pick on mount.
   useEffect(() => {
-    const remembered = localStorage.getItem(LS_EMPLOYEE_KEY);
+    if (mode === "auth" && sessionEmployee) {
+      setEmployeeId(sessionEmployee.id);
+      return;
+    }
+    const remembered = localStorage.getItem(LS_SHARED_EMPLOYEE_KEY) ?? localStorage.getItem(LS_EMPLOYEE_KEY);
     if (remembered && employees.some((e) => e.id === remembered)) {
       setEmployeeId(remembered);
     }
-  }, [employees]);
+  }, [employees, mode, sessionEmployee]);
 
   const rangeLabel = useMemo(() => {
     const { tempMin, tempMax } = equipment;
@@ -144,6 +158,7 @@ export function EquipmentFillClient({
               ? { humidity: parsedHumidity }
               : {}),
             ...(correction.trim() ? { correction: correction.trim() } : {}),
+            ...(mode === "pin" ? { pin } : {}),
           }),
         }
       );
@@ -152,6 +167,7 @@ export function EquipmentFillClient({
         throw new Error(data?.error ?? "Ошибка сохранения");
       }
       localStorage.setItem(LS_EMPLOYEE_KEY, employeeId);
+      localStorage.setItem(LS_SHARED_EMPLOYEE_KEY, employeeId);
       setDone(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка сохранения");
@@ -242,7 +258,10 @@ export function EquipmentFillClient({
                 <label className="text-[13px] font-medium text-[#0b1024]">
                   Кто снимает показания
                 </label>
-                <Select value={employeeId} onValueChange={setEmployeeId}>
+                {fixedEmployee ? (
+                  <div className="mt-1 flex h-12 items-center rounded-2xl border border-[#dcdfed] bg-[#fafbff] px-4 text-[15px] font-medium text-[#0b1024]">{sessionEmployee?.name}</div>
+                ) : (
+                  <Select value={employeeId} onValueChange={setEmployeeId}>
                   <SelectTrigger className="mt-1 h-12 rounded-2xl border-[#dcdfed]">
                     <SelectValue placeholder="Выберите ваше имя" />
                   </SelectTrigger>
@@ -255,6 +274,19 @@ export function EquipmentFillClient({
                     ))}
                   </SelectContent>
                 </Select>
+                )}
+                {mode === "pin" ? (
+                  <input
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={6}
+                    value={pin}
+                    onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+                    placeholder="Ваш PIN"
+                    aria-label="PIN для QR"
+                    className="mt-2 h-12 w-full rounded-2xl border border-[#dcdfed] bg-white px-4 text-center text-[20px] tracking-[0.4em] text-[#0b1024] placeholder:tracking-normal placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
+                  />
+                ) : null}
                 {rememberedName ? (
                   <p className="mt-1.5 text-[11px] text-[#9b9fb3]">
                     Запомнили с прошлого раза — можно сразу вводить температуру.

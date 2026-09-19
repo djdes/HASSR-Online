@@ -7,6 +7,7 @@ import {
   type ClimateMetricConfig,
 } from "@/lib/climate-document";
 import { db } from "@/lib/db";
+import { JOURNAL_FILL_HUB_CODE, journalFillSubject, listHubJournals, todayKeyFor } from "@/lib/journal-fill";
 import { mintQrFillToken } from "@/lib/qr-fill-token";
 import type { QrFillKind, QrPoster } from "@/lib/qr-fill-types";
 import { loadDirectoryBuildings } from "@/lib/room-directory";
@@ -15,6 +16,9 @@ import { loadDirectoryBuildings } from "@/lib/room-directory";
  * Единый билдер QR-плакатов: страница `/settings/qr-posters` и
  * `GET /api/qr-fill/[kind]/[id]` собирают объект одинаково — иначе превью
  * в диалоге строки и печатный плакат разошлись бы в норме/ссылке.
+ *
+ * Виды: `equipment` (холодильник), `room` (помещение), `journal`
+ * (запись в журнал: `id` = `<code>` или `<code>:<documentId>`; хаб — `all`).
  *
  * Server-only (db + qrcode + HMAC-секрет): в клиент не импортировать,
  * типы брать из `@/lib/qr-fill-types`.
@@ -39,6 +43,10 @@ async function qrSvg(url: string): Promise<string> {
 export function qrFillUrl(origin: string, kind: QrFillKind, id: string): string {
   const token = mintQrFillToken(kind, id);
   const base = origin.replace(/\/+$/, "");
+  if (kind === "journal") {
+    const [orgId, code] = id.split(":");
+    return `${base}/journal-fill/${orgId}/${code}?token=${encodeURIComponent(token)}`;
+  }
   const path = kind === "room" ? "room-fill" : "equipment-fill";
   return `${base}/${path}/${id}?token=${encodeURIComponent(token)}`;
 }
@@ -88,6 +96,28 @@ export async function buildRoomPoster(
   };
 }
 
+/** Плакат журнала: `documentId` сужает до конкретного документа (из его меню). */
+export async function buildJournalPoster(params: {
+  organizationId: string;
+  code: string;
+  name: string;
+  subtitle: string;
+  documentId?: string | null;
+  origin: string;
+}): Promise<QrPoster> {
+  const subject = journalFillSubject(params.organizationId, params.code, params.documentId);
+  const url = qrFillUrl(params.origin, "journal", subject);
+  return {
+    id: params.documentId ? `${params.code}:${params.documentId}` : params.code,
+    kind: "journal",
+    title: params.name,
+    subtitle: params.subtitle,
+    norms: [],
+    url,
+    svg: await qrSvg(url),
+  };
+}
+
 /** Все объекты организации данного вида (фильтр `allowed` — по id). */
 export async function loadQrPosters(params: {
   organizationId: string;
@@ -97,6 +127,38 @@ export async function loadQrPosters(params: {
 }): Promise<QrPoster[]> {
   const allowed = params.allowed ?? (() => true);
   const posters: QrPoster[] = [];
+  if (params.kind === "journal") {
+    const org = await db.organization.findUnique({
+      where: { id: params.organizationId },
+      select: { timezone: true, disabledJournalCodes: true },
+    });
+    if (!org) return [];
+    const journals = await listHubJournals(params.organizationId, org.disabledJournalCodes as string[], todayKeyFor(org.timezone));
+    if (allowed(JOURNAL_FILL_HUB_CODE)) {
+      posters.push(
+        await buildJournalPoster({
+          organizationId: params.organizationId,
+          code: JOURNAL_FILL_HUB_CODE,
+          name: "Все журналы",
+          subtitle: "Один плакат на стену: сотрудник выбирает журнал после сканирования",
+          origin: params.origin,
+        })
+      );
+    }
+    for (const journal of journals) {
+      if (!allowed(journal.code)) continue;
+      posters.push(
+        await buildJournalPoster({
+          organizationId: params.organizationId,
+          code: journal.code,
+          name: journal.name,
+          subtitle: "Запись в журнал с телефона",
+          origin: params.origin,
+        })
+      );
+    }
+    return posters;
+  }
   if (params.kind === "room") {
     const buildings = await loadDirectoryBuildings(params.organizationId);
     for (const building of buildings) {
@@ -126,6 +188,38 @@ export async function loadQrPoster(params: {
   id: string;
   origin: string;
 }): Promise<QrPoster | null> {
+  if (params.kind === "journal") {
+    const [code, documentId] = params.id.split(":");
+    if (!code) return null;
+    if (code === JOURNAL_FILL_HUB_CODE) {
+      return buildJournalPoster({
+        organizationId: params.organizationId,
+        code,
+        name: "Все журналы",
+        subtitle: "Сотрудник выбирает журнал после сканирования",
+        origin: params.origin,
+      });
+    }
+    const template = await db.journalTemplate.findFirst({ where: { code }, select: { name: true } });
+    if (!template) return null;
+    let subtitle = "Запись в журнал с телефона";
+    if (documentId) {
+      const document = await db.journalDocument.findFirst({
+        where: { id: documentId, organizationId: params.organizationId },
+        select: { title: true, building: { select: { name: true } } },
+      });
+      if (!document) return null;
+      subtitle = document.building?.name ? `${document.title} · ${document.building.name}` : document.title;
+    }
+    return buildJournalPoster({
+      organizationId: params.organizationId,
+      code,
+      name: template.name,
+      subtitle,
+      documentId: documentId ?? null,
+      origin: params.origin,
+    });
+  }
   if (params.kind === "room") {
     const room = await db.room.findFirst({
       where: { id: params.id, building: { organizationId: params.organizationId } },

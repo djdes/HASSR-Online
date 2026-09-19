@@ -2,7 +2,7 @@
 
 import { Fragment, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Archive, Plus, Trash2, ListPlus } from "lucide-react";
+import { Archive, Plus, ListPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -47,6 +47,9 @@ import { JournalAddRow } from "@/components/journals/journal-add-row";
 import { GRID_CELL_CLASS, GRID_HEAD_CELL_CLASS } from "@/components/journals/journal-grid";
 import { JournalSettingsModal } from "@/components/journals/v2/journal-settings-modal";
 import { FocusTodayScroller } from "@/components/journals/focus-today-scroller";
+import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
+import { SelectionEditButton } from "@/components/journals/selection-edit-button";
+import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
 import { useDocumentCloseAction } from "@/components/journals/document-close-button";
 import { useMobileView } from "@/lib/use-mobile-view";
 import {
@@ -362,6 +365,25 @@ export function EquipmentMaintenanceDocumentClient({
     setEditModalOpen(true);
   }
 
+  /** Правка выделенных строк по очереди — тем же окном. */
+  const seq = useSequentialEdit({
+    open: (id) => {
+      const row = configRef.current.rows.find((item) => item.id === id);
+      if (!row || isClosed) return false;
+      openEditRow(id);
+      return true;
+    },
+    close: () => {
+      setEditModalOpen(false);
+      setEditingRowId(null);
+    },
+  });
+
+  function closeEditModal() {
+    // Закрытие без сохранения прерывает очередь («Изменено k из N»).
+    seq.cancelled();
+  }
+
   function saveEditRow() {
     if (!editingRowId) return;
     const rowId = editingRowId;
@@ -379,8 +401,8 @@ export function EquipmentMaintenanceDocumentClient({
         row.id === rowId ? { ...row, ...patch } : row
       ),
     }));
-    setEditModalOpen(false);
-    setEditingRowId(null);
+    // Очередь правок откроет следующую строку или закроет окно.
+    seq.saved();
   }
 
   /* ---------- fact cell change ---------- */
@@ -457,6 +479,17 @@ export function EquipmentMaintenanceDocumentClient({
   return (
     <div className="space-y-6 text-black">
       <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
+
+      {selectedRows.length > 0 && !isClosed && (
+        <JournalSelectionBar
+          count={selectedRows.length}
+          onClear={() => setSelectedRows([])}
+          onDelete={removeSelectedRows}
+          hint="Строки графика будут удалены без возможности отмены"
+        >
+          <SelectionEditButton count={selectedRows.length} disabled={isClosed} onClick={() => seq.start(selectedRows)} />
+        </JournalSelectionBar>
+      )}
 
       <JournalDocumentShell
         title={title}
@@ -542,22 +575,6 @@ export function EquipmentMaintenanceDocumentClient({
                   Добавить из справочника ({missingEquipment.length})
                 </Button>
               ) : null}
-
-              {selectedRows.length > 0 && (
-                <>
-                  <span className="text-sm text-[#7a7f93]">
-                    Выбрано: {selectedRows.length}
-                  </span>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={removeSelectedRows}
-                  >
-                    <Trash2 className="size-4" />
-                    Удалить
-                  </Button>
-                </>
-              )}
             </>
           ) : undefined
         }
@@ -869,11 +886,11 @@ export function EquipmentMaintenanceDocumentClient({
       </Dialog>
 
       {/* ---------- Edit Row Dialog ---------- */}
-      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+      <Dialog open={editModalOpen} onOpenChange={(open) => (open ? setEditModalOpen(true) : closeEditModal())}>
         <DialogContent className="w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] overflow-hidden rounded-[24px] border-0 p-0 sm:max-w-[640px]">
           <DialogHeader className="border-b px-6 py-5">
             <DialogTitle className="text-[18px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-              Редактирование строки
+              Редактирование строки{seq.progress ? ` ${seq.progress}` : ""}
             </DialogTitle>
           </DialogHeader>
 
@@ -983,7 +1000,7 @@ export function EquipmentMaintenanceDocumentClient({
               type="button"
               variant="outline"
               className="h-9 w-full rounded-xl border-[#dcdfed] px-5 text-[14px] font-medium text-[#0b1024] shadow-none hover:bg-[#fafbff] sm:w-auto"
-              onClick={() => setEditModalOpen(false)}
+              onClick={closeEditModal}
             >
               Отмена
             </Button>

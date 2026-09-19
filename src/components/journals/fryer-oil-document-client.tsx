@@ -42,6 +42,8 @@ import {
   JOURNAL_DIALOG_TITLE_CLASS,
 } from "@/components/journals/journal-responsive";
 import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
+import { SelectionEditButton } from "@/components/journals/selection-edit-button";
+import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
 import { JournalPaperHeaderRows } from "@/components/journals/journal-document-header";
 import { JournalSettingsModal } from "@/components/journals/v2/journal-settings-modal";
 import { useDocumentCloseAction } from "@/components/journals/document-close-button";
@@ -195,6 +197,8 @@ function EntryDialog(props: {
   dayEntries: EntryItem[];
   /** По какой строке кликнули: её вкладка открывается активной. */
   focusEntryId: string | null;
+  /** «(k из N)» при правке выделенных строк по очереди. */
+  titleSuffix?: string;
   onSave: (payload: {
     updates: Array<{ id: string; data: FryerOilEntryData }>;
     creates: FryerOilEntryData[];
@@ -411,7 +415,8 @@ function EntryDialog(props: {
         creates: tabs.filter((tab) => !tab.id).map((tab) => tab.data),
         removedIds,
       });
-      props.onOpenChange(false);
+      // Окно закрывает родитель (saveDay): очередь правок может открыть
+      // следующий день.
     } catch (error) {
       // Диалог не закрываем: заполненные вкладки должны остаться перед
       // глазами, чтобы человек мог дожать сохранение, а не набирать заново.
@@ -430,6 +435,7 @@ function EntryDialog(props: {
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
             Записи за {formatDateRu(data.startDate) || "новый день"}
             {tabs.length > 1 ? ` · фритюрниц: ${tabs.length}` : ""}
+            {props.titleSuffix ? ` ${props.titleSuffix}` : ""}
           </DialogTitle>
         </DialogHeader>
 
@@ -1117,6 +1123,21 @@ export function FryerOilDocumentClient(props: Props) {
     ) : null,
   }));
 
+  /** Правка выделенных записей по очереди — окном дня каждой из них. */
+  const seq = useSequentialEdit({
+    open: (id) => {
+      const entry = entries.find((item) => item.id === id);
+      if (!entry || !isActive) return false;
+      openDay(entry);
+      return true;
+    },
+    close: () => {
+      setEntryOpen(false);
+      setDayEntries([]);
+      setFocusEntryId(null);
+    },
+  });
+
   /**
    * Открыть день. Кликнули по строке — показываем все строки её дня;
    * нажали «Добавить» — заводим день с нуля.
@@ -1153,6 +1174,8 @@ export function FryerOilDocumentClient(props: Props) {
     if (payload.removedIds.length > 0) {
       await deleteEntries(payload.removedIds);
     }
+    // Очередь правок откроет следующую запись или закроет окно.
+    seq.saved();
   }
 
   /**
@@ -1325,7 +1348,9 @@ export function FryerOilDocumentClient(props: Props) {
                 onClear={() => setSelectedIds([])}
                 onDelete={() => void confirmDeleteEntries()}
                 hint="Записи о фритюрном жире будут удалены без возможности отмены"
-              />
+              >
+                <SelectionEditButton count={selectedIds.length} disabled={!isActive} onClick={() => seq.start(selectedIds)} />
+              </JournalSelectionBar>
             ) : null}
             {mobileView === "cards" ? <RecordCardsView items={cardItems} emptyLabel="Записей нет. Нажмите «Добавить»." /> : null}
             {/* Горизонтальный скролл — ТОЛЬКО у журнальной таблицы.
@@ -1412,7 +1437,7 @@ export function FryerOilDocumentClient(props: Props) {
         </div>
       </div>
 
-      <EntryDialog key={dialogSeq} open={entryOpen} onOpenChange={(open) => { setEntryOpen(open); if (!open) { setDayEntries([]); setFocusEntryId(null); } }} lists={config.lists} users={props.users} currentUserId={props.currentUserId} shift={config.shift} dayEntries={dayEntries} focusEntryId={focusEntryId} onSave={saveDay} />
+      <EntryDialog key={dialogSeq} open={entryOpen} onOpenChange={(open) => { if (open) setEntryOpen(true); else seq.cancelled(); }} lists={config.lists} users={props.users} currentUserId={props.currentUserId} shift={config.shift} dayEntries={dayEntries} focusEntryId={focusEntryId} titleSuffix={seq.progress ?? undefined} onSave={saveDay} />
       <ListsDialog key={JSON.stringify(config.lists)} open={listsOpen} onOpenChange={setListsOpen} lists={config.lists} onSave={async (lists) => { const nextConfig = { ...config, lists }; const response = await fetch(`/api/journal-documents/${props.documentId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ config: nextConfig }) }); const result = await response.json().catch(() => null); if (!response.ok) throw new Error(result?.error || "Не удалось сохранить списки"); setConfig(nextConfig); router.refresh(); }} />
       <SettingsDialog key={`${title}-${dateFrom}-${status}`} open={settingsOpen} onOpenChange={setSettingsOpen} title={title} dateFrom={dateFrom} status={status} shift={config.shift} useV2={props.useV2} onSave={async (v) => { const nextConfig = { ...config, shift: v.shift, finishedAt: v.status === "closed" ? config.finishedAt || new Date().toISOString() : null }; const response = await fetch(`/api/journal-documents/${props.documentId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title: v.title, dateFrom: v.dateFrom, status: v.status, config: nextConfig }) }); const result = await response.json().catch(() => null); if (!response.ok) throw new Error(result?.error || "Не удалось сохранить настройки"); setTitle(v.title); setDateFrom(v.dateFrom); setStatus(v.status); setConfig(nextConfig); router.refresh(); }} />
     </div>

@@ -1,0 +1,38 @@
+{
+  "finished_product": {
+    "header": {
+      "x": 32,
+      "w": 982
+    },
+    "grid": {
+      "x": 32,
+      "w": 982
+    },
+    "tables": 2,
+    "ok": true
+  },
+  "perishable": {
+    "header": {
+      "x": 32,
+      "w": 982
+    },
+    "grid": {
+      "x": 32,
+      "w": 982
+    },
+    "tables": 2,
+    "ok": true
+  },
+  "incoming": {
+    "header": {
+      "x": 32,
+      "w": 982
+    },
+    "grid": {
+      "x": 32,
+      "w": 982
+    },
+    "tables": 2,
+    "ok": true
+  }
+}

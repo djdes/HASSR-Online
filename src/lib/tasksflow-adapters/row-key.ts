@@ -21,10 +21,21 @@
  * — the trimmed-userId-with-time-suffix didn't match any User row).
  */
 const ADAPTER_SUFFIX_RE = /-time-\d{1,2}:\d{2}$/;
+/**
+ * QR-ввод в строчные журналы (бракераж, скоропорт, охлаждение): адаптеры
+ * делают upsert по `sourceRowKey`, а по QR каждая запись — новая строка.
+ * Сервер добавляет уникальный хвост `#qr-<время>`; сотрудник из ключа
+ * извлекается как обычно. TasksFlow такие ключи не выдаёт.
+ */
+const QR_APPEND_SUFFIX_RE = /#qr-\d+$/;
+
+export function rowKeyWithQrAppend(rowKey: string, now: number = Date.now()): string {
+  return `${rowKey.replace(QR_APPEND_SUFFIX_RE, "")}#qr-${now}`;
+}
 
 export function extractEmployeeId(rowKey: string): string | null {
   if (rowKey.startsWith("employee-")) {
-    const raw = rowKey.slice("employee-".length);
+    const raw = rowKey.slice("employee-".length).replace(QR_APPEND_SUFFIX_RE, "");
     return raw.replace(ADAPTER_SUFFIX_RE, "");
   }
   if (rowKey.startsWith("freetask:")) {

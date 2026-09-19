@@ -2,8 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, Plus, Trash2, X } from "lucide-react";
+import { CalendarDays, Plus, X } from "lucide-react";
 import { DOC_PRIMARY_BUTTON_CLASS } from "@/components/journals/journal-responsive";
+import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
+import { SelectionEditButton } from "@/components/journals/selection-edit-button";
+import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
 import { JournalDocumentShell } from "@/components/journals/journal-document-shell";
 import { JournalDocumentHeader } from "@/components/journals/journal-document-header";
 import { JournalSettingsModal } from "@/components/journals/v2/journal-settings-modal";
@@ -355,6 +358,8 @@ function EditSubdivisionDialog(props: {
   onOpenChange: (v: boolean) => void;
   initial: SubdivisionRow | null;
   onSubmit: (row: SubdivisionRow) => Promise<void>;
+  /** «(k из N)» при правке выделенных строк по очереди. */
+  titleSuffix?: string;
 }) {
   const [row, setRow] = useState<SubdivisionRow | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -372,7 +377,7 @@ function EditSubdivisionDialog(props: {
         <DialogHeader className="border-b px-8 py-6">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">
-              Редактирование строки
+              {`Редактирование строки${props.titleSuffix ? ` ${props.titleSuffix}` : ""}`}
             </DialogTitle>
             <button
               type="button"
@@ -1441,6 +1446,9 @@ export function DisinfectantDocumentClient({
       s.id === row.id ? row : s
     );
     await patchConfig({ ...configRef.current, subdivisions: next });
+    // Очередь правок откроет следующую строку или закроет окно.
+    seqSavedRef.current = true;
+    seqSub.saved();
   }
 
   async function deleteSelectedSubs() {
@@ -1477,6 +1485,9 @@ export function DisinfectantDocumentClient({
   async function updateReceipt(row: ReceiptRow) {
     const next = configRef.current.receipts.map((r) => (r.id === row.id ? row : r));
     await patchConfig({ ...configRef.current, receipts: next });
+    // Очередь правок откроет следующую строку или закроет окно.
+    seqSavedRef.current = true;
+    seqRec.saved();
   }
 
   async function deleteSelectedReceipts() {
@@ -1515,6 +1526,9 @@ export function DisinfectantDocumentClient({
       c.id === row.id ? row : c
     );
     await patchConfig({ ...configRef.current, consumptions: next });
+    // Очередь правок откроет следующую строку или закроет окно.
+    seqSavedRef.current = true;
+    seqCon.saved();
   }
 
   async function deleteSelectedConsumptions() {
@@ -1538,6 +1552,61 @@ export function DisinfectantDocumentClient({
     );
     setSelectedConIds([]);
     await patchConfig({ ...configRef.current, consumptions: next });
+  }
+
+  // --- Правка выделенных строк по очереди — у каждой таблицы своё окно ---
+  // Диалоги сами зовут onOpenChange(false) после сохранения — этот вызов
+  // не должен прерывать очередь, поэтому помечаем «уже сохранено».
+  const seqSavedRef = useRef(false);
+  const seqSub = useSequentialEdit({
+    open: (id) => {
+      const row = configRef.current.subdivisions.find((s) => s.id === id);
+      if (!row || readOnly) return false;
+      setEditSubTarget(row);
+      return true;
+    },
+    close: () => setEditSubTarget(null),
+  });
+  const seqRec = useSequentialEdit({
+    open: (id) => {
+      const row = configRef.current.receipts.find((r) => r.id === id);
+      if (!row || readOnly) return false;
+      setEditRecTarget(row);
+      return true;
+    },
+    close: () => setEditRecTarget(null),
+  });
+  const seqCon = useSequentialEdit({
+    open: (id) => {
+      const row = configRef.current.consumptions.find((c) => c.id === id);
+      if (!row || readOnly) return false;
+      setEditConTarget(row);
+      return true;
+    },
+    close: () => setEditConTarget(null),
+  });
+
+  /** Закрытие окна правки без сохранения — прерывает очередь. */
+  function closeEdit(seq: typeof seqSub) {
+    if (seqSavedRef.current) {
+      seqSavedRef.current = false;
+      return;
+    }
+    seq.cancelled();
+  }
+
+  /** Одна полоса на три таблицы: по очереди правим строки одной из них. */
+  function startSelectedEdit() {
+    const groups = [
+      { ids: selectedSubIds, seq: seqSub },
+      { ids: selectedRecIds, seq: seqRec },
+      { ids: selectedConIds, seq: seqCon },
+    ].filter((group) => group.ids.length > 0);
+    if (groups.length > 1) {
+      toast.error("Править по очереди можно строки одной таблицы — снимите выделение в остальных");
+      return;
+    }
+    groups[0]?.seq.start(groups[0].ids);
   }
 
   // --- Totals ---
@@ -1581,37 +1650,30 @@ export function DisinfectantDocumentClient({
 
       {/* Selection bar */}
       {anySelected && !readOnly && (
-        <div className="flex flex-wrap items-center gap-4 rounded-2xl bg-[#f3f4fe] px-6 py-3">
-          <button
-            type="button"
-            className="flex items-center gap-1 text-[16px] text-[#5566f6]"
-            onClick={() => {
-              setSelectedSubIds([]);
-              setSelectedRecIds([]);
-              setSelectedConIds([]);
-            }}
-          >
-            <X className="size-4" /> Выбранно:{" "}
-            {selectedSubIds.length +
-              selectedRecIds.length +
-              selectedConIds.length}
-          </button>
-          <button
-            type="button"
-            className="flex items-center gap-1 text-[16px] text-[#ff3b30]"
-            onClick={() => {
-              // Последовательно: без await три confirmAsync открывались
-              // одновременно и накладывались друг на друга.
-              void (async () => {
-                if (selectedSubIds.length > 0) await deleteSelectedSubs();
-                if (selectedRecIds.length > 0) await deleteSelectedReceipts();
-                if (selectedConIds.length > 0) await deleteSelectedConsumptions();
-              })();
-            }}
-          >
-            <Trash2 className="size-4" /> Удалить
-          </button>
-        </div>
+        <JournalSelectionBar
+          count={selectedSubIds.length + selectedRecIds.length + selectedConIds.length}
+          onClear={() => {
+            setSelectedSubIds([]);
+            setSelectedRecIds([]);
+            setSelectedConIds([]);
+          }}
+          onDelete={() => {
+            // Последовательно: без await три confirmAsync открывались
+            // одновременно и накладывались друг на друга.
+            void (async () => {
+              if (selectedSubIds.length > 0) await deleteSelectedSubs();
+              if (selectedRecIds.length > 0) await deleteSelectedReceipts();
+              if (selectedConIds.length > 0) await deleteSelectedConsumptions();
+            })();
+          }}
+          hint="Строки будут удалены без возможности отмены"
+        >
+          <SelectionEditButton
+            count={selectedSubIds.length + selectedRecIds.length + selectedConIds.length}
+            disabled={readOnly}
+            onClick={startSelectedEdit}
+          />
+        </JournalSelectionBar>
       )}
 
       <JournalDocumentShell
@@ -2279,10 +2341,11 @@ export function DisinfectantDocumentClient({
         open={!!editSubTarget}
         key={`edit-sub-${editSubTarget?.id ?? "none"}`}
         onOpenChange={(v) => {
-          if (!v) setEditSubTarget(null);
+          if (!v) closeEdit(seqSub);
         }}
         initial={editSubTarget}
         onSubmit={updateSubdivision}
+        titleSuffix={seqSub.progress ?? undefined}
       />
       {/* key по цели: без него диалог держал прошлую строку в useState —
           открываешь строку №2, а видишь и перезаписываешь №1. У «Добавить»
@@ -2300,12 +2363,12 @@ export function DisinfectantDocumentClient({
         key={`edit-rec-${editRecTarget?.id ?? "none"}`}
         open={!!editRecTarget}
         onOpenChange={(v) => {
-          if (!v) setEditRecTarget(null);
+          if (!v) closeEdit(seqRec);
         }}
         users={users}
         initial={editRecTarget}
         onSubmit={updateReceipt}
-        dialogTitle="Редактирование строки"
+        dialogTitle={`Редактирование строки${seqRec.progress ? ` ${seqRec.progress}` : ""}`}
       />
       <ConsumptionDialog
         key={`add-con-${addConOpen}`}
@@ -2320,12 +2383,12 @@ export function DisinfectantDocumentClient({
         key={`edit-con-${editConTarget?.id ?? "none"}`}
         open={!!editConTarget}
         onOpenChange={(v) => {
-          if (!v) setEditConTarget(null);
+          if (!v) closeEdit(seqCon);
         }}
         users={users}
         initial={editConTarget}
         onSubmit={updateConsumption}
-        dialogTitle="Редактирование строки"
+        dialogTitle={`Редактирование строки${seqCon.progress ? ` ${seqCon.progress}` : ""}`}
       />
       <DocumentSettingsDialog
         open={settingsOpen}

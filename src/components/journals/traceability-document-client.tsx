@@ -7,6 +7,9 @@ import { GRID_CELL_CLASS, GRID_HEAD_CELL_CLASS } from "@/components/journals/jou
 import { DOC_SECONDARY_BUTTON_CLASS } from "@/components/journals/journal-responsive";
 import { JournalSettingsModal } from "@/components/journals/v2/journal-settings-modal";
 import { FocusTodayScroller } from "@/components/journals/focus-today-scroller";
+import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
+import { SelectionEditButton } from "@/components/journals/selection-edit-button";
+import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -570,6 +573,8 @@ function RowDialog(props: {
   config: TraceabilityDocumentConfig;
   employees: PersonItem[];
   initialRow: TraceabilityRow | null;
+  /** «(k из N)» при правке выделенных строк по очереди. */
+  titleSuffix?: string;
   dateFrom: string;
   onSave: (row: TraceabilityRow, additions: { rawMaterials: string[]; products: string[] }) => Promise<void>;
 }) {
@@ -630,8 +635,8 @@ function RowDialog(props: {
     }
     setLoading(true);
     try {
+      // Окно закрывает родитель: при правке по очереди он откроет следующую строку.
       await props.onSave(row, { rawMaterials: createdRaw, products: createdProducts });
-      props.onOpenChange(false);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Не удалось сохранить строку");
     } finally {
@@ -647,7 +652,7 @@ function RowDialog(props: {
       <DialogContent showCloseButton={false} className="max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] overflow-y-auto rounded-[28px] border-0 p-0 sm:max-w-[760px]">
         <DialogHeader className="border-b px-8 py-6">
           <div className="flex items-center justify-between gap-4">
-            <DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">{props.initialRow ? "Редактирование строки" : "Добавление новой строки"}</DialogTitle>
+            <DialogTitle className="text-[22px] font-semibold tracking-[-0.03em] text-black">{props.initialRow ? `Редактирование строки${props.titleSuffix ? ` ${props.titleSuffix}` : ""}` : "Добавление новой строки"}</DialogTitle>
             <button type="button" className="rounded-xl p-2" onClick={() => props.onOpenChange(false)}><X className="size-7" /></button>
           </div>
         </DialogHeader>
@@ -954,16 +959,38 @@ export function TraceabilityDocumentClient(props: Props) {
    * набора строк тем же роутом, а не правка состояния на клиенте:
    * серверные проверки обязаны сработать и на откате.
    */
+  /** Правка выделенных строк по очереди — тем же окном. */
+  const seq = useSequentialEdit({
+    open: (id) => {
+      const row = rowById.get(id);
+      if (!row || isClosed) return false;
+      setEditingRow(row);
+      setRowOpen(true);
+      return true;
+    },
+    close: () => {
+      setRowOpen(false);
+      setEditingRow(null);
+    },
+  });
+
   async function saveRow(row: TraceabilityRow, additions: { rawMaterials: string[]; products: string[] }) {
     const previousConfig = config;
-    const nextRows = rowById.has(row.id) ? config.rows.map((item) => (item.id === row.id ? row : item)) : [...config.rows, row];
+    const isEdit = rowById.has(row.id);
+    const nextRows = isEdit ? config.rows.map((item) => (item.id === row.id ? row : item)) : [...config.rows, row];
     const nextConfig = { ...config, rows: nextRows, rawMaterialList: mergeUnique(config.rawMaterialList, additions.rawMaterials), productList: mergeUnique(config.productList, additions.products) };
     await persistConfig(nextConfig);
     undoStack.push({
       undo: () => persistConfig(previousConfig),
       redo: () => persistConfig(nextConfig),
     });
+    if (isEdit) {
+      // Очередь правок откроет следующую строку или закроет окно.
+      seq.saved();
+      return;
+    }
     setEditingRow(null);
+    setRowOpen(false);
   }
 
   async function deleteSelected() {
@@ -1005,23 +1032,16 @@ export function TraceabilityDocumentClient(props: Props) {
   return (
     <div className="space-y-6 text-black">
       {selectedRowIds.length > 0 && !isClosed ? (
-        <div className="flex flex-wrap items-center gap-3 rounded-[18px] bg-white px-5 py-4 shadow-sm">
-          <button type="button" className="flex items-center gap-2 text-[15px] text-[#5563ff]" onClick={() => setSelectedRowIds([])}>
-            <X className="size-5" />
-            Выбрано: {selectedRowIds.length}
-          </button>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-10 rounded-2xl border-[#ffd7d3] px-4 text-[15px] text-[#ff3b30] hover:bg-[#fff2f1] hover:text-[#ff3b30]"
-            onClick={() => {
-              deleteSelected().catch((error) => toast.error(error instanceof Error ? error.message : "Не удалось удалить строки"));
-            }}
-          >
-            <Trash2 className="size-4" />
-            Удалить
-          </Button>
-        </div>
+        <JournalSelectionBar
+          count={selectedRowIds.length}
+          onClear={() => setSelectedRowIds([])}
+          onDelete={() => {
+            deleteSelected().catch((error) => toast.error(error instanceof Error ? error.message : "Не удалось удалить строки"));
+          }}
+          hint="Строки прослеживаемости будут удалены без возможности отмены"
+        >
+          <SelectionEditButton count={selectedRowIds.length} onClick={() => seq.start(selectedRowIds)} />
+        </JournalSelectionBar>
       ) : null}
 
       <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
@@ -1179,7 +1199,8 @@ export function TraceabilityDocumentClient(props: Props) {
 
       <SettingsDialog open={settingsOpen} title="Настройки документа" initial={headerSettings} onOpenChange={setSettingsOpen} onSave={saveSettings} useV2={props.useV2} />
       <ListsDialog open={listsOpen} onOpenChange={setListsOpen} config={config} onSave={saveLists} />
-      <RowDialog open={rowOpen} onOpenChange={(open) => { setRowOpen(open); if (!open) setEditingRow(null); }} config={config} employees={employees} initialRow={editingRow} dateFrom={dateFrom} onSave={saveRow} />
+      {/* Закрытие без сохранения прерывает очередь («Изменено k из N»). */}
+      <RowDialog open={rowOpen} onOpenChange={(open) => { if (open) { setRowOpen(true); return; } seq.cancelled(); }} config={config} employees={employees} initialRow={editingRow} titleSuffix={seq.progress ?? undefined} dateFrom={dateFrom} onSave={saveRow} />
       <ImportDialog open={importOpen} onOpenChange={setImportOpen} onImport={importFile} />
       <FinishDialog open={finishOpen} onOpenChange={setFinishOpen} title={title || DEFAULT_TITLE} onFinish={finishJournal} />
     </div>

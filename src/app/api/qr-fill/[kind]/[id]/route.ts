@@ -28,7 +28,7 @@ export async function GET(
   }
 
   const { kind, id } = await params;
-  if (kind !== "equipment" && kind !== "room") {
+  if (kind !== "equipment" && kind !== "room" && kind !== "journal") {
     return NextResponse.json({ error: "Неизвестный вид объекта" }, { status: 400 });
   }
 

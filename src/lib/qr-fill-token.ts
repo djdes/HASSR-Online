@@ -19,9 +19,14 @@ import crypto from "node:crypto";
  * Отозвать код можно только сменой секрета.
  */
 
-export type QrFillKind = "equipment" | "room";
+export type QrFillKind = "equipment" | "room" | "journal";
 
 const ROOM_PREFIX = "room:";
+/**
+ * Журнал: subject `journal:<orgId>:<code>` (плакат журнала или хаба `all`)
+ * либо `journal:<orgId>:<code>:<documentId>` (плакат из документа).
+ */
+const JOURNAL_PREFIX = "journal:";
 
 function getSecret(): string {
   const raw =
@@ -39,11 +44,17 @@ function sign(payload: string): string {
 }
 
 function subjectFor(kind: QrFillKind, id: string): string {
-  return kind === "room" ? `${ROOM_PREFIX}${id}` : id;
+  if (kind === "room") return `${ROOM_PREFIX}${id}`;
+  if (kind === "journal") return `${JOURNAL_PREFIX}${id}`;
+  return id;
 }
 
 export function mintQrFillToken(kind: QrFillKind, id: string, now: number = Date.now()): string {
-  if (!id || id.includes(".") || (kind === "equipment" && id.startsWith(ROOM_PREFIX))) {
+  if (
+    !id ||
+    id.includes(".") ||
+    (kind === "equipment" && (id.startsWith(ROOM_PREFIX) || id.startsWith(JOURNAL_PREFIX)))
+  ) {
     throw new Error("Некорректный id объекта для QR-токена");
   }
   const payload = `${subjectFor(kind, id)}.${now}`;
@@ -62,8 +73,17 @@ export function verifyQrFillToken(token: string): QrFillTokenVerification {
   const issued = Number(issuedRaw);
   if (!Number.isFinite(issued)) return { ok: false, reason: "bad-format" };
 
-  const kind: QrFillKind = subject.startsWith(ROOM_PREFIX) ? "room" : "equipment";
-  const id = kind === "room" ? subject.slice(ROOM_PREFIX.length) : subject;
+  const kind: QrFillKind = subject.startsWith(ROOM_PREFIX)
+    ? "room"
+    : subject.startsWith(JOURNAL_PREFIX)
+      ? "journal"
+      : "equipment";
+  const id =
+    kind === "room"
+      ? subject.slice(ROOM_PREFIX.length)
+      : kind === "journal"
+        ? subject.slice(JOURNAL_PREFIX.length)
+        : subject;
   if (!id) return { ok: false, reason: "bad-format" };
 
   const expectedBuf = Buffer.from(sign(`${subject}.${issuedRaw}`), "base64url");

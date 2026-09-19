@@ -23,6 +23,7 @@ export default async function CompliancePage() {
       requirePhotoOnTaskFillStep: true,
       escalateDeviationsToManagement: true,
       deviationEscalationMinutes: true,
+      qrFillMode: true,
     },
   });
 
@@ -62,6 +63,7 @@ export default async function CompliancePage() {
           org?.escalateDeviationsToManagement ?? true
         }
         initialEscalationMinutes={org?.deviationEscalationMinutes ?? 60}
+        initialQrFillMode={org?.qrFillMode === "pin" || org?.qrFillMode === "auth" ? org.qrFillMode : "public"}
       />
     </div>
   );

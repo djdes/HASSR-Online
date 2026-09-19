@@ -19,6 +19,7 @@ import {
   pickNearestControlTime,
 } from "@/lib/climate-fill";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
+import { normalizeQrFillMode, resolveQrFillActor } from "@/lib/qr-fill-actor";
 import { verifyQrFillTokenFor } from "@/lib/qr-fill-token";
 import {
   QR_FILL_RATE_LIMIT_ERROR,
@@ -48,6 +49,8 @@ const bodySchema = z
   .object({
     token: z.string().min(10),
     employeeId: z.string().min(1),
+    /** PIN сотрудника — в режиме `qrFillMode = "pin"`. */
+    pin: z.string().max(12).optional(),
     temperature: z.number().min(-60).max(80).optional(),
     humidity: z.number().min(0).max(100).optional(),
     /**
@@ -100,7 +103,7 @@ export async function POST(
       building: {
         select: {
           organizationId: true,
-          organization: { select: { timezone: true } },
+          organization: { select: { timezone: true, qrFillMode: true } },
         },
       },
     },
@@ -110,6 +113,16 @@ export async function POST(
   }
   const organizationId = room.building.organizationId;
   const timezone = room.building.organization.timezone || "Europe/Moscow";
+
+  const actor = await resolveQrFillActor({
+    mode: normalizeQrFillMode(room.building.organization.qrFillMode),
+    organizationId,
+    employeeId: body.employeeId,
+    pin: body.pin,
+  });
+  if (!actor.ok) {
+    return NextResponse.json({ error: actor.error }, { status: actor.status });
+  }
 
   const employee = await db.user.findFirst({
     where: { id: body.employeeId, organizationId, ...ORG_ROSTER_WHERE },

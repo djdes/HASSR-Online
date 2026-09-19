@@ -42,6 +42,8 @@ import {
   JOURNAL_DIALOG_HEADER_CLASS,
 } from "@/components/journals/journal-responsive";
 import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
+import { SelectionEditButton } from "@/components/journals/selection-edit-button";
+import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
 import { PestControlDocumentClient } from "@/components/journals/pest-control-document-client";
 import {
   isPestControlDocumentFields,
@@ -177,6 +179,15 @@ function TrackedDocumentClientImpl({
   // реализации; его карточки не имели ни одного обработчика, то есть на
   // телефоне такие журналы не заполнялись вовсе.
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
+  /** Правка выделенных строк по очереди — тем же листом. */
+  const seq = useSequentialEdit({
+    open: (id) => {
+      if (status !== "active" || !entries.some((item) => item.id === id)) return false;
+      setEditingEntryId(id);
+      return true;
+    },
+    close: () => setEditingEntryId(null),
+  });
 
   const employeeMap = useMemo(
     () => Object.fromEntries(employees.map((item) => [item.id, item])),
@@ -298,10 +309,13 @@ function TrackedDocumentClientImpl({
         date: String(values.__date ?? entry.date),
         data: nextData,
       });
+      // Очередь правок откроет следующую строку.
+      seq.saved();
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Ошибка сохранения"
       );
+      seq.cancelled();
     }
   }
 
@@ -496,7 +510,9 @@ function TrackedDocumentClientImpl({
               toast.error(error instanceof Error ? error.message : "Ошибка удаления строк")
             )
           }
-        />
+        >
+          <SelectionEditButton count={selectedRowIds.length} onClick={() => seq.start(selectedRowIds)} />
+        </JournalSelectionBar>
       ) : null}
 
       <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
@@ -1021,7 +1037,7 @@ function TrackedDocumentClientImpl({
           template.fields, тех же, по которым построена таблица. */}
       <CardEditSheet
         open={editingEntryId !== null}
-        title="Запись журнала"
+        title={`Запись журнала${seq.progress ? ` ${seq.progress}` : ""}`}
         subtitle={
           editingEntryId
             ? formatDateLabel(
@@ -1031,7 +1047,7 @@ function TrackedDocumentClientImpl({
         }
         fields={editingEntryId ? buildEntryEditFields() : []}
         values={editingEntryId ? buildEntryEditValues(editingEntryId) : {}}
-        onClose={() => setEditingEntryId(null)}
+        onClose={() => seq.cancelled()}
         onSubmit={(values) => {
           if (!editingEntryId) return;
           void saveEntryFromSheet(editingEntryId, values);

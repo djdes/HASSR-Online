@@ -19,6 +19,8 @@ import {
   JOURNAL_DIALOG_TITLE_CLASS,
 } from "@/components/journals/journal-responsive";
 import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
+import { SelectionEditButton } from "@/components/journals/selection-edit-button";
+import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
 import { Checkbox } from "@/components/ui/checkbox";
 import { JournalClosedBanner } from "@/components/journals/journal-closed-banner";
 import { useJournalDocumentActions } from "@/components/journals/use-journal-document-actions";
@@ -357,6 +359,16 @@ export function MedBookDocumentClient({
   );
 
   const editRow = rows.find((row) => row.id === editId) ?? null;
+  /** Правка выделенных строк по очереди — тем же окном. Поля пишутся
+   * сразу (onBlur), поэтому «Закрыть» = сохранено, крестик = отмена. */
+  const seq = useSequentialEdit({
+    open: (id) => {
+      if (isClosed || !rows.some((row) => row.id === id)) return false;
+      setEditId(id);
+      return true;
+    },
+    close: () => setEditId(null),
+  });
   const availableEmployees = useMemo(
     () =>
       employees.filter(
@@ -794,7 +806,8 @@ export function MedBookDocumentClient({
     });
     if (!confirmed) return;
     await saveRows(rows.filter((row) => row.id !== rowId));
-    setEditId(null);
+    // Удалили из окна правки — очередь прерывается.
+    seq.cancelled();
     setSelectedRowIds((current) => current.filter((id) => id !== rowId));
   }
 
@@ -1054,7 +1067,9 @@ export function MedBookDocumentClient({
             onClear={() => setSelectedRowIds([])}
             onDelete={() => void deleteSelectedRows()}
             hint="Строки сотрудников исчезнут вместе с отметками об осмотрах и прививках"
-          />
+          >
+            <SelectionEditButton count={selectedRowIds.length} disabled={isClosed} onClick={() => seq.start(selectedRowIds)} />
+          </JournalSelectionBar>
         ) : null}
 
         {/* M3: обе таблицы медкнижек шире бумажного полотна — скроллятся
@@ -1903,15 +1918,18 @@ export function MedBookDocumentClient({
 
       {editRow ? (
         <Dialog
+          // Поля с defaultValue: ключ пересеивает окно при переходе к
+          // следующей строке очереди.
+          key={editRow.id}
           open={Boolean(editRow)}
           onOpenChange={(value) => {
-            if (!value) setEditId(null);
+            if (!value) seq.cancelled();
           }}
         >
           <DialogContent className={JOURNAL_DIALOG_CONTENT_WIDE_CLASS}>
             <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
               <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-                Редактирование строки
+                Редактирование строки{seq.progress ? ` ${seq.progress}` : ""}
               </DialogTitle>
             </DialogHeader>
 
@@ -2058,7 +2076,7 @@ export function MedBookDocumentClient({
               <Button
                 type="button"
                 className="h-10 w-full rounded-xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0] sm:w-auto"
-                onClick={() => setEditId(null)}
+                onClick={() => seq.saved()}
               >
                 Закрыть
               </Button>

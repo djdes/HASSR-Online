@@ -66,6 +66,8 @@ export default function robots(): MetadataRoute.Robots {
           "/equipment-fill",
           // Замер по QR-плакату помещения (подписанная ссылка)
           "/room-fill",
+          // Запись в журнал по QR-плакату (подписанная ссылка)
+          "/journal-fill",
         ],
       },
     ],

@@ -27,7 +27,7 @@ export const metadata = { title: "QR-плакаты" };
  * холодильного оборудования. Сотрудник сканирует камерой телефона и вносит
  * показание без входа в кабинет.
  *
- *   ?kind=rooms|equipment   — что печатать (по умолчанию склады)
+ *   ?kind=rooms|equipment|journals — что печатать (по умолчанию склады)
  *   &layout=poster|sheet    — плакат на лист A4 или наклейки сеткой
  *   &ids=a,b                — только эти объекты
  *   &doc=<id>               — только объекты из строк документа
@@ -50,7 +50,7 @@ export default async function QrPostersPage({
   if (!hasFullWorkspaceAccess(session.user)) redirect("/settings");
   const organizationId = getActiveOrgId(session);
   const query = await searchParams;
-  const kind: QrFillKind = query.kind === "equipment" ? "equipment" : "room";
+  const kind: QrFillKind = query.kind === "equipment" ? "equipment" : query.kind === "journals" ? "journal" : "room";
   const layout: QrPosterLayout = query.layout === "sheet" ? "sheet" : "poster";
   const onlyIds = new Set(
     (query.ids ?? "")

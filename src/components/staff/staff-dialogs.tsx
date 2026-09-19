@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { StaffQrPinField } from "@/components/staff/staff-qr-pin-field";
 import { Input } from "@/components/ui/input";
 import type {
   PositionCategory,
@@ -758,6 +759,20 @@ export function StaffEditEmployeeDialog(props: {
                 ariaLabel={`Точки: ${employee.name}`}
               />
             ) : null}
+            {/* PIN для QR-плакатов — отдельный PATCH, вне общего «Сохранить». */}
+            <StaffQrPinField
+              key={employee.id}
+              hasPin={employee.hasQrPin === true}
+              onSave={async (pin) => {
+                const response = await fetch(`/api/staff/${employee.id}`, {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ qrPin: pin }),
+                });
+                const data = await response.json().catch(() => null);
+                if (!response.ok) throw new Error(data?.error ?? "Не удалось сохранить PIN");
+              }}
+            />
           </div>,
           <>
             {onOpenAccess ? (

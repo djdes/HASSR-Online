@@ -25,9 +25,14 @@ type Props = {
   /** Срок контроля, в который попадёт замер, если сохранить сейчас. */
   nextSlot: string | null;
   employees: Array<{ id: string; name: string; position: string }>;
+  /** Режим QR-форм организации (Настройки → Соответствие). */
+  mode?: "public" | "pin" | "auth";
+  /** В режиме «auth» — вошедший сотрудник; линейный не выбирает имя. */
+  sessionEmployee?: { id: string; name: string; canPickOthers: boolean } | null;
 };
 
 const LS_EMPLOYEE_KEY = "wesetup.room-fill.employeeId";
+const LS_SHARED_EMPLOYEE_KEY = "wesetup.qr-fill.employeeId";
 
 function normLabel(metric: Metric, unit: string): string {
   if (metric.min !== null && metric.max !== null) return `норма ${metric.min}…${metric.max} ${unit}`;
@@ -51,8 +56,10 @@ function isOutside(value: number | null, metric: Metric): boolean {
  * Три шага, как на плакате: выбрать себя → ввести показания → «Сохранить».
  * Имя запоминается на телефоне, со второго раза остаётся ввести числа.
  */
-export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot, employees }: Props) {
+export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot, employees, mode = "public", sessionEmployee = null }: Props) {
   const [employeeId, setEmployeeId] = useState("");
+  const [pin, setPin] = useState("");
+  const fixedEmployee = mode === "auth" && sessionEmployee && !sessionEmployee.canPickOthers;
   // Холодный склад с нормой ниже нуля — минус стоит сразу.
   const [temperature, setTemperature] = useState(
     norms.temperature.max !== null && norms.temperature.max < 0 ? "-" : ""
@@ -66,7 +73,11 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
 
   useEffect(() => {
     try {
-      const remembered = localStorage.getItem(LS_EMPLOYEE_KEY);
+      if (mode === "auth" && sessionEmployee) {
+        setEmployeeId(sessionEmployee.id);
+        return;
+      }
+      const remembered = localStorage.getItem(LS_SHARED_EMPLOYEE_KEY) ?? localStorage.getItem(LS_EMPLOYEE_KEY);
       if (remembered && employees.some((employee) => employee.id === remembered)) {
         setEmployeeId(remembered);
       }
@@ -115,12 +126,14 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
           ...(norms.temperature.enabled && temperatureValue !== null ? { temperature: temperatureValue } : {}),
           ...(norms.humidity.enabled && humidityValue !== null && !humidityInvalid ? { humidity: humidityValue } : {}),
           ...(correction.trim() ? { correction: correction.trim() } : {}),
+          ...(mode === "pin" ? { pin } : {}),
         }),
       });
       const data = await response.json().catch(() => null);
       if (!response.ok) throw new Error(data?.error ?? "Не удалось сохранить");
       try {
         localStorage.setItem(LS_EMPLOYEE_KEY, employeeId);
+        localStorage.setItem(LS_SHARED_EMPLOYEE_KEY, employeeId);
       } catch {
         /* не запомнили — не страшно */
       }
@@ -213,7 +226,10 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
             <div className="space-y-6">
               <div>
                 <label className="text-[13px] font-medium text-[#0b1024]">1. Кто снимает показания</label>
-                <Select value={employeeId} onValueChange={setEmployeeId}>
+                {fixedEmployee ? (
+                  <div className="mt-1 flex h-12 items-center rounded-2xl border border-[#dcdfed] bg-[#fafbff] px-4 text-[15px] font-medium text-[#0b1024]">{sessionEmployee?.name}</div>
+                ) : (
+                  <Select value={employeeId} onValueChange={setEmployeeId}>
                   <SelectTrigger className="mt-1 h-12 rounded-2xl border-[#dcdfed]">
                     <SelectValue placeholder="Выберите своё имя" />
                   </SelectTrigger>
@@ -226,6 +242,19 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                     ))}
                   </SelectContent>
                 </Select>
+                )}
+                {mode === "pin" ? (
+                  <input
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={6}
+                    value={pin}
+                    onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+                    placeholder="Ваш PIN"
+                    aria-label="PIN для QR"
+                    className="mt-2 h-12 w-full rounded-2xl border border-[#dcdfed] bg-white px-4 text-center text-[20px] tracking-[0.4em] text-[#0b1024] placeholder:tracking-normal placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
+                  />
+                ) : null}
                 {rememberedName ? (
                   <p className="mt-1.5 text-[12px] text-[#9b9fb3]">Запомнили с прошлого раза — можно сразу вводить показания.</p>
                 ) : null}

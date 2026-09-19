@@ -3,7 +3,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Archive, ClipboardList, ExternalLink, Plus, Trash2, X } from "lucide-react";
+import { Archive, ClipboardList, ExternalLink, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -34,6 +34,9 @@ import { AUDIT_PLAN_TEMPLATE_CODE } from "@/lib/audit-plan-document";
 import { ResponsiveMenu } from "@/components/ui/responsive-menu";
 import { confirmAsync } from "@/components/ui/confirm-async";
 import { FocusTodayScroller } from "@/components/journals/focus-today-scroller";
+import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
+import { SelectionEditButton } from "@/components/journals/selection-edit-button";
+import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
 import { useDocumentCloseAction } from "@/components/journals/document-close-button";
 import { useMobileView } from "@/lib/use-mobile-view";
 import {
@@ -134,12 +137,15 @@ function RowDialog({
   onOpenChange,
   sections,
   row,
+  titleSuffix,
   onSave,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   sections: AuditProtocolSection[];
   row: AuditProtocolRow | null;
+  /** «(k из N)» при правке по очереди. */
+  titleSuffix?: string;
   onSave: (row: AuditProtocolRow) => Promise<void>;
 }) {
   const [draft, setDraft] = useState<AuditProtocolRow>(
@@ -154,7 +160,7 @@ function RowDialog({
       <DialogContent className="max-w-[calc(100vw-1rem)] rounded-[28px] border-0 p-0 sm:max-w-[700px]">
         <DialogHeader className="border-b px-8 py-6">
           <DialogTitle className="text-[22px] font-semibold text-black">
-            {row ? "Редактирование строки" : "Добавление новой строки"}
+            {row ? `Редактирование строки${titleSuffix ? ` ${titleSuffix}` : ""}` : "Добавление новой строки"}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 px-8 py-6">
@@ -238,6 +244,8 @@ export function AuditProtocolDocumentClient({
   const [sectionOpen, setSectionOpen] = useState(false);
   const [rowOpen, setRowOpen] = useState(false);
   const [editingRow, setEditingRow] = useState<AuditProtocolRow | null>(null);
+  // Окно само зовёт onOpenChange(false) после сохранения — это не отмена.
+  const rowSavedRef = useRef(false);
 
   useEffect(() => {
     setConfig(normalizeAuditProtocolConfig(initialConfig));
@@ -296,11 +304,32 @@ export function AuditProtocolDocumentClient({
     startTransition(() => router.refresh());
   }
 
+  /** Правка выделенных строк по очереди — тем же окном. */
+  const seq = useSequentialEdit({
+    open: (id) => {
+      const row = configRef.current.rows.find((item) => item.id === id);
+      if (!row || status !== "active") return false;
+      setEditingRow(row);
+      setRowOpen(true);
+      return true;
+    },
+    close: () => {
+      setRowOpen(false);
+      setEditingRow(null);
+    },
+  });
+
   async function saveRow(row: AuditProtocolRow) {
     const nextRows = editingRow
       ? config.rows.map((item) => (item.id === editingRow.id ? row : item))
       : [...config.rows, row];
     await persist(documentTitle, { ...config, rows: nextRows });
+    if (editingRow) {
+      // Очередь правок откроет следующую строку или закроет окно.
+      rowSavedRef.current = true;
+      seq.saved();
+      return;
+    }
     setEditingRow(null);
   }
 
@@ -431,14 +460,14 @@ export function AuditProtocolDocumentClient({
     <>
       <div className="space-y-5">
         {selectedRowIds.length > 0 && status === "active" && (
-          <div className="flex flex-wrap items-center gap-4 rounded-2xl bg-[#f3f4fe] px-6 py-3 print:hidden">
-            <button type="button" className="flex items-center gap-1 text-[16px] text-[#5566f6]" onClick={() => setSelectedRowIds([])}>
-              <X className="size-4" /> Выбрано: {selectedRowIds.length}
-            </button>
-            <button type="button" className="flex items-center gap-1 text-[16px] text-[#ff3b30]" onClick={() => deleteSelected().catch((error) => toast.error(error instanceof Error ? error.message : "Ошибка удаления"))}>
-              <Trash2 className="size-4" /> Удалить
-            </button>
-          </div>
+          <JournalSelectionBar
+            count={selectedRowIds.length}
+            onClear={() => setSelectedRowIds([])}
+            onDelete={() => deleteSelected().catch((error) => toast.error(error instanceof Error ? error.message : "Ошибка удаления"))}
+            hint="Строки протокола будут удалены без возможности отмены"
+          >
+            <SelectionEditButton count={selectedRowIds.length} disabled={status !== "active"} onClick={() => seq.start(selectedRowIds)} />
+          </JournalSelectionBar>
         )}
 
         <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
@@ -698,11 +727,19 @@ export function AuditProtocolDocumentClient({
           key={editingRow?.id || `new-${config.sections[0]?.id || "empty"}`}
           open={rowOpen}
           onOpenChange={(open) => {
-            setRowOpen(open);
-            if (!open) setEditingRow(null);
+            if (open) {
+              setRowOpen(true);
+              return;
+            }
+            if (rowSavedRef.current) {
+              rowSavedRef.current = false;
+              return;
+            }
+            seq.cancelled();
           }}
           sections={config.sections}
           row={editingRow}
+          titleSuffix={seq.progress ?? undefined}
           onSave={saveRow}
         />
       )}

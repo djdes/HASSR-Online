@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef } from "react";
-import { FileText, Printer, QrCode, Refrigerator, Sticker, Warehouse } from "lucide-react";
+import { ClipboardList, FileText, Printer, QrCode, Refrigerator, Sticker, Warehouse } from "lucide-react";
 
 import { PageHeader, PageHeaderStat } from "@/components/ui/page-header";
 import type { QrFillKind, QrPoster, QrPosterLayout } from "@/lib/qr-fill-types";
@@ -15,6 +15,11 @@ const STEPS = [
   "Выберите своё имя и введите показания.",
   "Нажмите «Сохранить» — запись попадёт в журнал за сегодня.",
 ];
+const JOURNAL_STEPS = [
+  "Наведите камеру телефона на код.",
+  "Выберите себя (и журнал, если плакат общий).",
+  "Ответьте на вопросы формы и нажмите «Сохранить».",
+];
 
 function buildHref(params: {
   kind: QrFillKind;
@@ -23,7 +28,7 @@ function buildHref(params: {
   selectedIds: string[] | null;
 }): string {
   const search = new URLSearchParams();
-  search.set("kind", params.kind === "room" ? "rooms" : "equipment");
+  search.set("kind", params.kind === "room" ? "rooms" : params.kind === "journal" ? "journals" : "equipment");
   if (params.layout === "sheet") search.set("layout", "sheet");
   if (params.documentId) search.set("doc", params.documentId);
   if (params.selectedIds && params.selectedIds.length > 0) search.set("ids", params.selectedIds.join(","));
@@ -70,6 +75,7 @@ export function QrPostersClient({
   const kindTabs = [
     { kind: "room" as const, label: "Склады и помещения", icon: Warehouse },
     { kind: "equipment" as const, label: "Холодильники и оборудование", icon: Refrigerator },
+    { kind: "journal" as const, label: "Журналы: запись с телефона", icon: ClipboardList },
   ];
   const layoutTabs = [
     { layout: "poster" as const, label: "Плакат на лист", icon: FileText, hint: "Один объект на лист A4 — на дверь или стену" },
@@ -82,7 +88,9 @@ export function QrPostersClient({
       ? "выбранных объектов"
       : kind === "room"
         ? "каждого склада"
-        : "каждого холодильника";
+        : kind === "journal"
+          ? "каждого журнала"
+          : "каждого холодильника";
 
   return (
     <div className="space-y-5 print:space-y-0">
@@ -166,11 +174,14 @@ export function QrPostersClient({
 
         <div className="rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4 text-[13px] leading-[1.55] text-[#3c4053]">
           <b className="font-semibold text-[#0b1024]">Как это работает.</b>{" "}
-          {layout === "sheet"
-            ? "Распечатайте лист, вырежьте наклейки и приклейте на дверцу холодильника или у входа в помещение."
-            : "Распечатайте плакаты и повесьте у входа в помещение или на дверцу холодильника."}{" "}
-          Показание ложится в активный журнал за сегодня — в ближайший срок контроля. Если на сегодня журнала нет,
-          телефон попросит сначала создать документ. Коды бессрочные: распечатали один раз — и они работают, пока
+          {kind === "journal"
+            ? "Плакат «Все журналы» — на стену у входа в цех: сотрудник сканирует, выбирает журнал и себя, отвечает на два-три вопроса. Плакат отдельного журнала ведёт сразу в него."
+            : layout === "sheet"
+              ? "Распечатайте лист, вырежьте наклейки и приклейте на дверцу холодильника или у входа в помещение."
+              : "Распечатайте плакаты и повесьте у входа в помещение или на дверцу холодильника."}{" "}
+          {kind === "journal"
+            ? "Кто может записывать — в «Настройки → Соответствие»: любой из списка, по PIN или только после входа."
+            : "Показание ложится в активный журнал за сегодня — в ближайший срок контроля. Если на сегодня журнала нет, телефон попросит сначала создать документ."} Коды бессрочные: распечатали один раз — и они работают, пока
           объект есть в справочнике.
           <span className="mt-1 block text-[12px] text-[#9b9fb3]">Домен ссылок: {origin.replace(/^https?:\/\//, "")}</span>
         </div>
@@ -187,7 +198,9 @@ export function QrPostersClient({
                 ? "Выбранные объекты не найдены"
                 : kind === "room"
                   ? "Помещений пока нет"
-                  : "Оборудования пока нет"}
+                  : kind === "journal"
+                    ? "Нет журналов с активным документом на сегодня"
+                    : "Оборудования пока нет"}
           </div>
           <p className="mx-auto mt-1.5 max-w-[420px] text-[13px] text-[#6f7282]">
             {documentTitle ? (
@@ -281,7 +294,7 @@ export function QrPostersClient({
               >
                 <div className="qr-poster-eyebrow inline-flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
                   <QrCode className="size-3.5 text-[#5566f6]" />
-                  {poster.kind === "room" ? "Температура и влажность" : "Температура"}
+                  {poster.kind === "room" ? "Температура и влажность" : poster.kind === "journal" ? "Заполнить с телефона" : "Температура"}
                 </div>
                 <h2 className="qr-poster-title mt-2 text-[22px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">
                   {poster.title}
@@ -296,7 +309,7 @@ export function QrPostersClient({
                   dangerouslySetInnerHTML={{ __html: poster.svg }}
                 />
                 <ol className="qr-poster-steps mt-4 w-full space-y-1 text-left text-[13px] leading-[1.5] text-[#3c4053]">
-                  {STEPS.map((step, index) => (
+                  {(poster.kind === "journal" ? JOURNAL_STEPS : STEPS).map((step, index) => (
                     <li key={step} className="flex gap-2">
                       <span className="font-semibold tabular-nums text-[#3848c7]">{index + 1}.</span>
                       <span>{step}</span>

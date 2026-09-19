@@ -31,6 +31,8 @@ import {
   JOURNAL_DIALOG_TITLE_CLASS,
 } from "@/components/journals/journal-responsive";
 import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
+import { SelectionEditButton } from "@/components/journals/selection-edit-button";
+import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
 import { JournalSettingsModal } from "@/components/journals/v2/journal-settings-modal";
 import { FocusTodayScroller } from "@/components/journals/focus-today-scroller";
 import { useRouter } from "next/navigation";
@@ -319,6 +321,8 @@ function RowDialog(props: {
   users: User[];
   config: AcceptanceDocumentConfig;
   initialRow: AcceptanceRow | null;
+  /** «(k из N)» при правке выделенных строк по очереди. */
+  titleSuffix?: string;
   /** Продукция всей организации (последние сверху) — поверх списка документа. */
   recentProducts?: readonly string[];
   onSave: (row: AcceptanceRow, addToLists: { products: string[]; manufacturers: string[]; suppliers: string[] }) => Promise<void>;
@@ -434,7 +438,9 @@ function RowDialog(props: {
       const responsible = props.users.find((u) => u.id === finalRow.responsibleUserId);
       if (responsible?.name) finalRow.responsibleName = responsible.name;
       await props.onSave(finalRow, { products: newProducts, manufacturers: newManufacturers, suppliers: newSuppliers });
-      props.onOpenChange(false);
+      // В режиме правки окно закрывает родитель: очередь правок может
+      // открыть следующую строку.
+      if (!isEdit) props.onOpenChange(false);
     } catch (error) {
       // Без catch ошибка сохранения глохла: окно висело, тоста не было.
       toast.error(getErrorMessage(error, "Не удалось сохранить строку"));
@@ -467,7 +473,7 @@ function RowDialog(props: {
       <DialogContent className={JOURNAL_DIALOG_CONTENT_WIDE_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-            {isEdit ? "Редактирование строки" : "Добавление новой строки"}
+            {isEdit ? `Редактирование строки${props.titleSuffix ? ` ${props.titleSuffix}` : ""}` : "Добавление новой строки"}
           </DialogTitle>
         </DialogHeader>
 
@@ -776,6 +782,8 @@ function IncomingControlRowDialog(props: {
   users: User[];
   config: AcceptanceDocumentConfig;
   initialRow: AcceptanceRow | null;
+  /** «(k из N)» при правке выделенных строк по очереди. */
+  titleSuffix?: string;
   /** Продукция всей организации (последние сверху) — поверх списка документа. */
   recentProducts?: readonly string[];
   onSave: (
@@ -878,7 +886,8 @@ function IncomingControlRowDialog(props: {
         manufacturers: partners,
         suppliers: [],
       });
-      props.onOpenChange(false);
+      // См. RowDialog: при правке закрывает родитель (очередь правок).
+      if (!isEdit) props.onOpenChange(false);
     } catch (error) {
       toast.error(getErrorMessage(error, "Не удалось сохранить строку"));
     } finally {
@@ -909,7 +918,7 @@ function IncomingControlRowDialog(props: {
       <DialogContent className={JOURNAL_DIALOG_CONTENT_WIDE_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-            {isEdit ? "Редактирование строки" : "Добавление новой строки"}
+            {isEdit ? `Редактирование строки${props.titleSuffix ? ` ${props.titleSuffix}` : ""}` : "Добавление новой строки"}
           </DialogTitle>
         </DialogHeader>
 
@@ -2183,6 +2192,21 @@ export function AcceptanceDocumentClient(props: Props) {
       : undefined,
   }));
 
+  /** Правка выделенных строк по очереди — тем же окном. */
+  const seq = useSequentialEdit({
+    open: (id) => {
+      const row = config.rows.find((item) => item.id === id);
+      if (!row || isClosed) return false;
+      setEditingRow(row);
+      setRowDialogOpen(true);
+      return true;
+    },
+    close: () => {
+      setRowDialogOpen(false);
+      setEditingRow(null);
+    },
+  });
+
   async function persist(nextTitle: string, nextDateFrom: string, nextConfig: AcceptanceDocumentConfig) {
     const response = await fetch(`/api/journal-documents/${props.documentId}`, {
       method: "PATCH",
@@ -2208,6 +2232,11 @@ export function AcceptanceDocumentClient(props: Props) {
     const nextManufacturers = [...new Set([...config.manufacturers, ...addToLists.manufacturers])];
     const nextSuppliers = [...new Set([...config.suppliers, ...addToLists.suppliers])];
     await persist(title, dateFrom, { ...config, rows: nextRows, products: nextProducts, manufacturers: nextManufacturers, suppliers: nextSuppliers });
+    if (editingRow) {
+      // Очередь правок откроет следующую строку или закроет окно.
+      seq.saved();
+      return;
+    }
     setEditingRow(null);
   }
 
@@ -2456,7 +2485,9 @@ export function AcceptanceDocumentClient(props: Props) {
               )
             }
             hint="Записи приёмки будут удалены без возможности отмены"
-          />
+          >
+            <SelectionEditButton count={selectedRowIds.length} disabled={isClosed} onClick={() => seq.start(selectedRowIds)} />
+          </JournalSelectionBar>
         ) : null}
 
         {errorMessage ? (
@@ -2893,16 +2924,17 @@ export function AcceptanceDocumentClient(props: Props) {
       {isProductAcceptance ? (
         <IncomingControlRowDialog
           open={rowDialogOpen}
-          onOpenChange={(open) => { setRowDialogOpen(open); if (!open) setEditingRow(null); }}
+          onOpenChange={(open) => { if (open) setRowDialogOpen(true); else seq.cancelled(); }}
           users={props.users}
           config={config}
           initialRow={editingRow}
+          titleSuffix={seq.progress ?? undefined}
           recentProducts={productSuggestions.recent}
           onSave={handleSaveRow}
           onCreateBatch={isClosed ? undefined : handleCreateBatchFromRow}
         />
       ) : (
-        <RowDialog open={rowDialogOpen} onOpenChange={(open) => { setRowDialogOpen(open); if (!open) setEditingRow(null); }} users={props.users} config={config} initialRow={editingRow} recentProducts={productSuggestions.recent} onSave={handleSaveRow} onCreateBatch={isClosed ? undefined : handleCreateBatchFromRow} />
+        <RowDialog open={rowDialogOpen} onOpenChange={(open) => { if (open) setRowDialogOpen(true); else seq.cancelled(); }} users={props.users} config={config} initialRow={editingRow} titleSuffix={seq.progress ?? undefined} recentProducts={productSuggestions.recent} onSave={handleSaveRow} onCreateBatch={isClosed ? undefined : handleCreateBatchFromRow} />
       )}
       <ImportRowsDialog open={rowsImportOpen} onOpenChange={setRowsImportOpen} users={props.users} responsibleTitle={responsibleTitle} responsibleUserId={responsibleUserId} isProductAcceptance={isProductAcceptance} onFileSelect={handleImportFile} />
       <AddMultipleRowsDialog open={bulkAddOpen} onOpenChange={setBulkAddOpen} onSubmit={addMultipleRows} />

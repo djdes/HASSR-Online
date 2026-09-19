@@ -180,6 +180,11 @@ model Organization {
   /// any user who originally filled a task is allowed to re-open and
   /// correct it. Toggled from /settings/compliance.
   requireAdminForJournalEdit     Boolean                        @default(false)
+  /// Режим QR-форм заполнения без входа (2026-09-19): "public" — любой,
+  /// кто отсканировал плакат, выбирает имя из списка; "pin" — имя +
+  /// личный 4-значный PIN сотрудника; "auth" — вход под своим аккаунтом,
+  /// имя не выбирается. Действует на /journal-fill, /equipment-fill, /room-fill.
+  qrFillMode                     String                         @default("public")
   /// Compliance toggle: «фото-доказательство на каждом шаге pipeline'а».
   /// Когда true, в task-fill wizard'е каждый шаг подтверждается ТОЛЬКО
   /// после загрузки фотографии (камера телефона / выбор файла). Без
@@ -552,6 +557,10 @@ model User {
   // Lets the same "cook" role user be displayed as "Повар холодного цеха" or
   // "Официант" per employee, instead of flipping between journals.
   positionTitle               String?
+  /// PIN для QR-форм в режиме "pin" (bcrypt). null — PIN не задан.
+  qrPinHash                   String?
+  qrPinFailedCount            Int                      @default(0)
+  qrPinLockedUntil            DateTime?
   /// «Домашняя» организация: где человека завели, где его должность,
   /// ACL и журналы. Для линейного сотрудника — единственная. Владелец и
   /// приглашённые руководители могут работать и в других — через
@@ -1499,6 +1508,8 @@ model NameSuggestion {
   useCount       Int          @default(1)
   lastUsedAt     DateTime     @default(now())
   createdAt      DateTime     @default(now())
+  /// Сопутствующие значения последнего ввода: для блюд — `{ productTemp }`.
+  meta           Json?
 
   @@unique([organizationId, scope, value])
   @@index([organizationId, scope, lastUsedAt])

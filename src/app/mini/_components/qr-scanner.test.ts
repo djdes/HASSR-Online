@@ -86,4 +86,8 @@ test("opens QR poster and sticker links for readings without login", () => {
     resolveQrDestination("http://localhost:3020/equipment-fill/eq-42?token=eq-42.1789.sig"),
     "/equipment-fill/eq-42?token=eq-42.1789.sig"
   );
+  assert.equal(
+    resolveQrDestination("https://wesetup.ru/journal-fill/org1/hygiene?token=journal%3Aorg1%3Ahygiene.1789.sig"),
+    "/journal-fill/org1/hygiene?token=journal%3Aorg1%3Ahygiene.1789.sig"
+  );
 });

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { setEmployeeQrPin } from "@/lib/qr-fill-actor";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { isManagementRole } from "@/lib/user-roles";
@@ -7,7 +8,9 @@ import { normalizeWeeklyDaysOff } from "@/lib/staff-days-off";
 
 const patchSchema = z.object({
   /// Недельное правило выходных: 0=Пн … 6=Вс.
-  weeklyDaysOff: z.array(z.number().int().min(0).max(6)),
+  weeklyDaysOff: z.array(z.number().int().min(0).max(6)).optional(),
+  /// PIN для QR-форм: 4–6 цифр, `null` — снять.
+  qrPin: z.string().max(12).nullable().optional(),
 });
 
 /**
@@ -53,6 +56,13 @@ export async function PATCH(
     return NextResponse.json({ error: "Сотрудник не найден" }, { status: 404 });
   }
 
+  if (parsed.qrPin !== undefined) {
+    const pinError = await setEmployeeQrPin(user.id, parsed.qrPin);
+    if (pinError) return NextResponse.json({ error: pinError }, { status: 400 });
+  }
+  if (parsed.weeklyDaysOff === undefined) {
+    return NextResponse.json({ ok: true, qrPinSet: parsed.qrPin !== null && parsed.qrPin !== undefined });
+  }
   const weeklyDaysOff = normalizeWeeklyDaysOff(parsed.weeklyDaysOff);
   await db.user.update({ where: { id: user.id }, data: { weeklyDaysOff } });
 

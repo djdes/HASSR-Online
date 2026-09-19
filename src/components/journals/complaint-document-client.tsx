@@ -2,9 +2,12 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Archive, Plus, X } from "lucide-react";
+import { Archive, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DOC_PRIMARY_BUTTON_CLASS } from "@/components/journals/journal-responsive";
+import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
+import { SelectionEditButton } from "@/components/journals/selection-edit-button";
+import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
 import { JournalDocumentShell } from "@/components/journals/journal-document-shell";
 import { JournalDocumentHeader } from "@/components/journals/journal-document-header";
 import { JournalAddRow } from "@/components/journals/journal-add-row";
@@ -68,11 +71,14 @@ function ComplaintRowDialog({
   open,
   onOpenChange,
   row,
+  titleSuffix,
   onSave,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   row: RegisterDocumentRow | null;
+  /** «(k из N)» при правке выделенных строк по очереди. */
+  titleSuffix?: string;
   onSave: (row: RegisterDocumentRow) => Promise<void>;
 }) {
   const today = localDayKey();
@@ -105,8 +111,8 @@ function ComplaintRowDialog({
   async function handleSave() {
     setSubmitting(true);
     try {
+      // Окно закрывает родитель: при правке по очереди он откроет следующую строку.
       await onSave(draft);
-      onOpenChange(false);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Ошибка сохранения строки");
     } finally {
@@ -119,7 +125,7 @@ function ComplaintRowDialog({
       <DialogContent className="max-w-[calc(100vw-1rem)] rounded-[32px] border-0 p-0 sm:max-w-[760px]">
         <DialogHeader className="border-b px-12 py-10">
           <DialogTitle className="text-[22px] font-medium text-black">
-            {row ? "Редактирование строки" : "Добавление новой строки"}
+            {row ? `Редактирование строки${titleSuffix ? ` ${titleSuffix}` : ""}` : "Добавление новой строки"}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-6 px-12 py-10">
@@ -468,6 +474,21 @@ export function ComplaintDocumentClient({
     startTransition(() => router.refresh());
   }
 
+  /** Правка выделенных строк по очереди — тем же окном. */
+  const seq = useSequentialEdit({
+    open: (id) => {
+      const row = config.rows.find((item) => item.id === id);
+      if (!row || status !== "active") return false;
+      setEditingRow(row);
+      setRowDialogOpen(true);
+      return true;
+    },
+    close: () => {
+      setRowDialogOpen(false);
+      setEditingRow(null);
+    },
+  });
+
   async function handleSaveRow(row: RegisterDocumentRow) {
     const nextRows = editingRow
       ? config.rows.map((item) => (item.id === editingRow.id ? row : item))
@@ -477,7 +498,13 @@ export function ComplaintDocumentClient({
       ...config,
       rows: nextRows,
     });
+    if (editingRow) {
+      // Очередь правок откроет следующую строку или закроет окно.
+      seq.saved();
+      return;
+    }
     setEditingRow(null);
+    setRowDialogOpen(false);
   }
 
   async function handleDeleteSelected() {
@@ -528,31 +555,19 @@ export function ComplaintDocumentClient({
       <div className="space-y-6 text-black">
         <FocusTodayScroller selector="[data-focus-today]" emptyTitle="Записей пока нет" emptyBody="Нажмите «Добавить» в таблице ниже, чтобы создать запись." />
         {selectedRowIds.length > 0 && status === "active" && (
-          <div className="flex flex-wrap items-center gap-4 rounded-[12px] bg-white px-2 py-2">
-            <div className="inline-flex h-14 items-center gap-3 rounded-[12px] bg-[#fafbff] px-6 text-[18px] text-[#5566f6]">
-              <button
-                type="button"
-                onClick={() => setSelectedRowIds([])}
-                className="flex size-6 items-center justify-center"
-              >
-                <X className="size-5" />
-              </button>
-              Выбрано: {selectedRowIds.length}
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() =>
-                handleDeleteSelected().catch((error) =>
-                  toast.error(error instanceof Error ? error.message : "Ошибка удаления строк")
-                )
-              }
-              disabled={isPending}
-              className="h-14 rounded-[12px] border-[#ffd7d3] px-6 text-[18px] text-[#ff3b30] hover:bg-[#fff3f2]"
-            >
-              Удалить
-            </Button>
-          </div>
+          <JournalSelectionBar
+            count={selectedRowIds.length}
+            onClear={() => setSelectedRowIds([])}
+            onDelete={() =>
+              handleDeleteSelected().catch((error) =>
+                toast.error(error instanceof Error ? error.message : "Ошибка удаления строк")
+              )
+            }
+            deleting={isPending}
+            hint="Записи реестра обращений будут удалены без возможности отмены"
+          >
+            <SelectionEditButton count={selectedRowIds.length} onClick={() => seq.start(selectedRowIds)} />
+          </JournalSelectionBar>
         )}
 
         <JournalDocumentShell
@@ -715,10 +730,15 @@ export function ComplaintDocumentClient({
       <ComplaintRowDialog
         open={rowDialogOpen}
         onOpenChange={(open) => {
-          setRowDialogOpen(open);
-          if (!open) setEditingRow(null);
+          if (open) {
+            setRowDialogOpen(true);
+            return;
+          }
+          // Закрытие без сохранения прерывает очередь («Изменено k из N»).
+          seq.cancelled();
         }}
         row={editingRow}
+        titleSuffix={seq.progress ?? undefined}
         onSave={handleSaveRow}
       />
 
