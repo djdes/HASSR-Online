@@ -4,6 +4,7 @@ import { getServerSession } from "@/lib/server-session";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
+import { orgDayStartInstant } from "@/lib/timezone";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,8 +32,13 @@ export async function GET() {
     return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
   }
   const organizationId = getActiveOrgId(session);
-  const todayStart = new Date();
-  todayStart.setUTCHours(0, 0, 0, 0);
+  // «Сегодня» — по часовому поясу организации: от UTC-полуночи в Москве
+  // с 00:00 до 03:00 в ленту попадал вчерашний вечер, а свежие отметки нет.
+  const organization = await db.organization.findUnique({
+    where: { id: organizationId },
+    select: { timezone: true },
+  });
+  const todayStart = orgDayStartInstant(organization?.timezone ?? undefined);
 
   const [active, completedToday] = await Promise.all([
     db.journalTaskClaim.findMany({

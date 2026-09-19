@@ -1,10 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Save, Users } from "lucide-react";
+import { Loader2, RotateCcw, Save, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { confirmAsync } from "@/components/ui/confirm-async";
+import { pluralRu } from "@/lib/plural-ru";
 import { cn } from "@/lib/utils";
 
 type ShiftStatus = "scheduled" | "off" | "vacation" | "sick" | "none";
@@ -93,6 +95,34 @@ export function ScheduleEditor({
   });
   const [dirty, setDirty] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
+
+  // Уход со страницы терял несохранённый график молча — ни отмены, ни
+  // предупреждения. Теперь браузер спрашивает, а рядом с «Сохранить»
+  // появляется «Отменить изменения».
+  useEffect(() => {
+    if (dirty.size === 0) return;
+    function onBeforeUnload(event: BeforeUnloadEvent) {
+      event.preventDefault();
+      event.returnValue = "";
+    }
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [dirty]);
+
+  async function resetChanges() {
+    const ok = await confirmAsync({
+      title: "Отменить изменения графика?",
+      description: `Несохранённых правок: ${dirty.size}. График вернётся к тому, что сейчас записано в системе.`,
+      variant: "warn",
+      confirmLabel: "Отменить правки",
+    });
+    if (!ok) return;
+    const map = new Map<string, ShiftCell>();
+    for (const s of shifts) map.set(cellKey(s.userId, s.date), s);
+    setCells(map);
+    setDirty(new Set());
+    toast.success("Правки отменены");
+  }
 
   const dates = useMemo(() => {
     const out: string[] = [];
@@ -191,10 +221,20 @@ export function ScheduleEditor({
           throw new Error(data?.error ?? "Не удалось сохранить");
         }
       }
+      // Раньше ответ DELETE не проверялся: неудавшееся снятие смены
+      // молча терялось, а «Есть изменений» обнулялось — после обновления
+      // страницы смена возвращалась, и выглядело это как потеря правок.
+      let failedDeletes = 0;
       for (const d of toDelete) {
-        await fetch(
+        const res = await fetch(
           `/api/organizations/schedule?userId=${encodeURIComponent(d.userId)}&date=${d.date}`,
           { method: "DELETE" }
+        );
+        if (!res.ok) failedDeletes++;
+      }
+      if (failedDeletes > 0) {
+        throw new Error(
+          `Не удалось снять ${failedDeletes} ${pluralRu(failedDeletes, "смену", "смены", "смен")} — изменения оставлены, попробуйте сохранить ещё раз`
         );
       }
       toast.success("График сохранён");
@@ -344,9 +384,19 @@ export function ScheduleEditor({
         </div>
         <Button
           type="button"
+          variant="outline"
+          onClick={resetChanges}
+          disabled={saving || dirty.size === 0}
+          className="ml-auto h-11 rounded-2xl border-[#dcdfed] px-4 text-[14px] font-medium text-[#3c4053] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+        >
+          <RotateCcw className="size-4" />
+          Отменить изменения
+        </Button>
+        <Button
+          type="button"
           onClick={save}
           disabled={saving || dirty.size === 0}
-          className="ml-auto h-11 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0] disabled:bg-[#c8cbe0]"
+          className="h-11 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0] disabled:bg-[#c8cbe0]"
         >
           {saving ? (
             <Loader2 className="size-4 animate-spin" />

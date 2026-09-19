@@ -183,7 +183,10 @@ export default async function ProductsSettingsPage() {
                           }}
                         />
                         {session.user.role === "owner" && (
-                          <DeleteProductButton productId={product.id} />
+                          <DeleteProductButton
+                            productId={product.id}
+                            productName={product.name}
+                          />
                         )}
                       </div>
                     </td>

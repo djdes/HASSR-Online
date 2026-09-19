@@ -110,6 +110,13 @@ export type AcceptanceRow = {
    */
   mercuryVsdUuid?: string;
   mercuryVsdNumber?: string;
+  /**
+   * Партия (`Batch`), заведённая из этой строки приёмки. Опциональные —
+   * миграция не нужна, как у меркурийных ключей. Есть `batchId` → партия
+   * по строке уже создана, повторно создавать нельзя.
+   */
+  batchId?: string;
+  batchCode?: string;
 };
 
 export type AcceptanceDocumentConfig = {
@@ -290,6 +297,14 @@ export function createAcceptanceRow(
       : {}),
     ...(has("mercuryVsdNumber")
       ? { mercuryVsdNumber: normalizeText(raw.mercuryVsdNumber) }
+      : {}),
+    // Ссылка на партию — по той же причине только при наличии: пустая
+    // строка означала бы «партию пробовали создать».
+    ...(has("batchId") && normalizeText(raw.batchId)
+      ? { batchId: normalizeText(raw.batchId) }
+      : {}),
+    ...(has("batchCode") && normalizeText(raw.batchCode)
+      ? { batchCode: normalizeText(raw.batchCode) }
       : {}),
   };
 }
@@ -594,6 +609,93 @@ export function getIncomingControlColumns(
   );
   columns.splice(anchor + 1, 0, INCOMING_CONTROL_PACKAGING_COLUMN);
   return columns;
+}
+
+/* ─── Приёмка → партия (`Batch`) ─────────────────────────────────── */
+
+export type AcceptanceBatchDraft = {
+  productName: string;
+  supplier: string | null;
+  quantity: number;
+  unit: string;
+  receivedAt: string | null;
+  expiryDate: string | null;
+  notes: string | null;
+};
+
+/** Единицы, которые реально пишут в «Объём, номер партии, дата пр-ва». */
+const BATCH_UNIT_PATTERNS: Array<[RegExp, string]> = [
+  [/(^|[^а-яё])(кг|kg)([^а-яё]|$)/i, "kg"],
+  [/(^|[^а-яё])(г|гр|g)([^а-яё]|$)/i, "g"],
+  [/(^|[^а-яё])(т|тонн\w*)([^а-яё]|$)/i, "t"],
+  [/(^|[^а-яё])(л|l)([^а-яё]|$)/i, "l"],
+  [/(^|[^а-яё])(мл|ml)([^а-яё]|$)/i, "ml"],
+  [/(^|[^а-яё])(шт\.?|уп\.?)([^а-яё]|$)/i, "pcs"],
+];
+
+/**
+ * Количество из свободного текста «Объём, номер партии, дата пр-ва».
+ * Берём первое число и ближайшую единицу; не нашли — 0 и «kg», партию
+ * всё равно заводим, количество поправят на карточке партии.
+ */
+export function parseAcceptanceQuantity(text: unknown): { quantity: number; unit: string } {
+  const raw = normalizeText(text);
+  const match = /(\d+(?:[.,]\d+)?)/.exec(raw);
+  const quantity = match ? Number(match[1].replace(",", ".")) : 0;
+  let unit = "kg";
+  for (const [pattern, code] of BATCH_UNIT_PATTERNS) {
+    if (pattern.test(raw)) {
+      unit = code;
+      break;
+    }
+  }
+  return {
+    quantity: Number.isFinite(quantity) && quantity >= 0 ? quantity : 0,
+    unit,
+  };
+}
+
+/**
+ * Партию заводим только по строке, которую действительно приняли, и
+ * только один раз: `batchId` в строке — признак, что партия уже есть.
+ */
+export function canCreateBatchFromAcceptanceRow(row: AcceptanceRow): boolean {
+  if (normalizeText(row.batchId)) return false;
+  if (!normalizeText(row.productName)) return false;
+  return row.acceptanceDecision !== "reject";
+}
+
+/**
+ * Чистое отображение «строка приёмки → черновик партии». Ничего не
+ * сохраняет: результат уходит в POST /api/batches.
+ */
+export function acceptanceRowToBatchDraft(row: AcceptanceRow): AcceptanceBatchDraft {
+  const { quantity, unit } = parseAcceptanceQuantity(row.batchInfo);
+  const supplier =
+    normalizeText(row.supplier) ||
+    normalizeText(row.manufacturerSupplier) ||
+    normalizeText(row.manufacturer);
+  const expiryDate = normalizeText(row.shelfLifeDate) || normalizeText(row.expiryDate);
+  const notes = [
+    normalizeText(row.batchInfo) ? `Партия/объём: ${normalizeText(row.batchInfo)}` : "",
+    normalizeText(row.accompanyingDocs) ? `Документы: ${normalizeText(row.accompanyingDocs)}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  return {
+    productName: normalizeText(row.productName),
+    supplier: supplier || null,
+    quantity,
+    unit,
+    receivedAt: isIsoDate(row.deliveryDate) ? normalizeText(row.deliveryDate) : null,
+    expiryDate: isIsoDate(expiryDate) ? expiryDate : null,
+    notes: notes || null,
+  };
+}
+
+function isIsoDate(value: unknown): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(normalizeText(value));
 }
 
 /** Значения 10 колонок строки (без «Ответственный» — он резолвится по users). */

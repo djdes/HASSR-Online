@@ -6,6 +6,7 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasCapability } from "@/lib/permission-presets";
 import { notifyEmployee } from "@/lib/telegram";
+import { orgDayStartInstant } from "@/lib/timezone";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -90,10 +91,14 @@ export async function POST(request: Request) {
     targetUserIds = body.userIds.filter((id) => allowedIds.has(id));
   } else {
     // Default: все subordinates с TG, у которых нет active claim сегодня.
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+    // «Сегодня» — по часовому поясу организации: от UTC-полуночи в Москве
+    // ночью напоминание летело тем, кто уже отметился после 00:00.
+    const organization = await db.organization.findUnique({
+      where: { id: organizationId },
+      select: { timezone: true },
+    });
+    const today = orgDayStartInstant(organization?.timezone ?? undefined);
+    const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
 
     const activeClaimUserIds = await db.journalTaskClaim.findMany({
       where: {

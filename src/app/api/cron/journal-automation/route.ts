@@ -14,6 +14,7 @@ import {
   getAutofillCapability,
 } from "@/lib/journal-autofill-capability";
 import { listAutomationCodes } from "@/lib/journal-automation";
+import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { resolveAutomationStaff } from "@/lib/journal-automation-staff";
 import { resolveDayStart } from "@/lib/today-compliance";
 import { notifyOrganization, escapeTelegramHtml as esc } from "@/lib/telegram";
@@ -56,6 +57,8 @@ type OrgRow = {
   timezone: string | null;
   journalAutomationJson: unknown;
   autoJournalCodes: unknown;
+  /// Журналы, выключенные в /settings/journals — автоматика их не ведёт.
+  disabledJournalCodes: unknown;
 };
 
 type OrgResult = {
@@ -88,7 +91,13 @@ async function runForOrganization(
   // в UTC, и с 00:00 до 03:00 МСК его «сегодня» — это ещё вчера.
   const todayKey = toDateKey(resolveDayStart(org.timezone, now));
 
-  const rows = listAutomationCodes(org).filter((row) => row.automation.autoCreate);
+  // Отключённый в /settings/journals журнал не должен возвращаться сам:
+  // его страница отвечает «журнал отключён», а автоматика всё равно
+  // заводила документ и заполняла его.
+  const disabledCodes = parseDisabledCodes(org.disabledJournalCodes);
+  const rows = listAutomationCodes(org).filter(
+    (row) => row.automation.autoCreate && !disabledCodes.has(row.code)
+  );
   if (rows.length === 0) return result;
   // Точки: каждый журнал автоматики ведётся на каждой точке отдельно.
   const targets = await buildingTargets(org.id);
@@ -270,6 +279,7 @@ async function handle(request: Request) {
       timezone: true,
       journalAutomationJson: true,
       autoJournalCodes: true,
+      disabledJournalCodes: true,
     },
   });
 

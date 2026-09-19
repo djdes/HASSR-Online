@@ -3,90 +3,81 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { confirmAsync } from "@/components/ui/confirm-async";
 
 interface DeleteButtonProps {
   id: string;
   endpoint: string;
   entityName: string;
+  /// GET-эндпоинт, отвечающий `{ bullets: string[] }` — что именно
+  /// затронет удаление. Без него диалог спрашивает «точно?» вслепую, а
+  /// человек не знает, потеряет ли он заполненные журналы.
+  usageEndpoint?: string;
 }
 
-export function DeleteButton({ id, endpoint, entityName }: DeleteButtonProps) {
+export function DeleteButton({
+  id,
+  endpoint,
+  entityName,
+  usageEndpoint,
+}: DeleteButtonProps) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isBusy, setIsBusy] = useState(false);
 
-  async function handleDelete() {
-    setIsDeleting(true);
-    setError(null);
-
+  async function handleClick() {
+    setIsBusy(true);
     try {
-      const response = await fetch(`${endpoint}/${id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        const result = await response.json();
-        throw new Error(result.error || "Ошибка при удалении");
+      let bullets: Array<{ label: string; tone?: "default" | "warn" | "info" }> = [];
+      if (usageEndpoint) {
+        try {
+          const usageResponse = await fetch(usageEndpoint);
+          if (usageResponse.ok) {
+            const usage = await usageResponse.json();
+            if (Array.isArray(usage?.bullets)) {
+              bullets = usage.bullets
+                .filter((line: unknown) => typeof line === "string")
+                .map((label: string) => ({ label, tone: "warn" as const }));
+            }
+          }
+        } catch {
+          /* последствия не показали — диалог всё равно спросит подтверждение */
+        }
       }
 
-      setOpen(false);
+      const ok = await confirmAsync({
+        title: "Удалить запись справочника?",
+        description: `Будет удалено ${entityName}. Действие нельзя отменить.`,
+        bullets,
+        variant: "danger",
+        confirmLabel: "Да, удалить",
+      });
+      if (!ok) return;
+
+      const response = await fetch(`${endpoint}/${id}`, { method: "DELETE" });
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({}));
+        throw new Error(result.error || "Ошибка при удалении");
+      }
+      toast.success("Удалено");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка при удалении");
+      toast.error(err instanceof Error ? err.message : "Ошибка при удалении");
     } finally {
-      setIsDeleting(false);
+      setIsBusy(false);
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => setOpen(true)}
-        className="text-destructive hover:text-destructive"
-      >
-        <Trash2 className="size-4" />
-      </Button>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Подтвердите удаление</DialogTitle>
-          <DialogDescription>
-            Вы уверены, что хотите удалить {entityName}? Это действие нельзя
-            отменить.
-          </DialogDescription>
-        </DialogHeader>
-        {error && (
-          <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-            {error}
-          </div>
-        )}
-        <div className="flex justify-end gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setOpen(false)}
-            disabled={isDeleting}
-          >
-            Отмена
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            disabled={isDeleting}
-          >
-            {isDeleting ? "Удаление..." : "Удалить"}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={handleClick}
+      disabled={isBusy}
+      className="text-destructive hover:text-destructive"
+    >
+      <Trash2 className="size-4" />
+    </Button>
   );
 }

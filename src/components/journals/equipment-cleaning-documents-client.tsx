@@ -161,6 +161,8 @@ export function EquipmentCleaningDocumentsClient({
             </Link>
             <DocumentActionsMenu
               size="sm"
+              document={document}
+              siblings={documents}
               onEdit={() => setEditingDocument(document)}
               onPrint={() => window.open(`/api/journal-documents/${document.id}/pdf`, "_blank")}
               onDelete={() => setDeletingDocument(document)}

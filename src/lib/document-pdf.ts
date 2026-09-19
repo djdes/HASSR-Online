@@ -39,6 +39,7 @@ import {
   listCleaningCodeEntries,
   listControlCodeEntries,
   listCleaningRoomCompletions,
+  listDeletedCleaningRoomsWithMarks,
   normalizeCleaningDocumentConfig,
   resolveRoomCleaners,
   resolveRoomControllers,
@@ -55,6 +56,7 @@ import {
 } from "@/lib/finished-product-document";
 import {
   PERISHABLE_REJECTION_TEMPLATE_CODE,
+  formatPerishableDateTime,
   formatPerishableExpiry,
   getPerishableRejectionDocumentTitle,
   getPerishableRejectionFilePrefix,
@@ -84,7 +86,6 @@ import {
   normalizeGlassControlEntryData,
 } from "@/lib/glass-control-document";
 import {
-  formatPestControlDate,
   formatPestControlRowDate,
   normalizePestControlEntryData,
   PEST_CONTROL_DOCUMENT_TITLE,
@@ -274,6 +275,7 @@ import {
   getEquipmentCleaningResultLabel,
   normalizeEquipmentCleaningConfig,
   normalizeEquipmentCleaningRowData,
+  resolveEquipmentCleaningRowName,
 } from "@/lib/equipment-cleaning-document";
 import {
   DISINFECTANT_DOCUMENT_TITLE,
@@ -696,9 +698,21 @@ let activeDocumentStatus = "";
  */
 let activeHeaderTitle = "";
 
+/**
+ * Название журнала из шаблона (`JournalTemplate.name`). Экранная шапка
+ * печатает именно его, а PDF подставлял НАЗВАНИЕ ДОКУМЕНТА — инспектор
+ * получал бланк с «ПРОВЕРКА FRYER_OIL» вместо названия журнала.
+ */
+let activeJournalName = "";
+
 /** Название бланка в шапке: своё из шапки документа или стандартное. */
 function headerTitleOr(standard: string): string {
   return activeHeaderTitle.trim() || standard;
+}
+
+/** Название журнала для шапки: из шаблона, иначе переданный запасной вариант. */
+function journalNameOr(fallback: string): string {
+  return activeJournalName.trim() || fallback;
 }
 
 /**
@@ -800,6 +814,11 @@ function drawJournalHeader(doc: jsPDF, params: {
   /** Верхняя координата штампа (мм). */
   top?: number;
   /**
+   * Своя «Периодичность контроля» — у бланков, где экран берёт её из
+   * другого поля документа (стекло: `config.controlFrequency`).
+   */
+  periodicityText?: string;
+  /**
    * Повторять штамп на страницах 2..N. Включать только там, где у
    * autoTable зарезервирован `margin.top` под шапку.
    */
@@ -809,6 +828,7 @@ function drawJournalHeader(doc: jsPDF, params: {
   // Back-compat: у документов без сохранённого текста гигиена/здоровье
   // печатают прежнюю жёстко зашитую формулировку.
   const periodicityText =
+    params.periodicityText?.trim() ||
     activeControlPeriodicity.trim() ||
     (params.withPeriodicity ? HYGIENE_REGISTER_PERIODICITY.join(" ") : "");
   const withPeriodicity = Boolean(periodicityText);
@@ -1526,12 +1546,16 @@ function drawClimateMetaTable(doc: jsPDF, params: {
   dateTo: Date | string | null;
   marginX?: number;
   repeatOnPages?: boolean;
+  /** Своя формулировка в шапке — у бланков, где она не равна названию журнала. */
+  journalLabel?: string;
 }) {
   // drawTitle() sets a large font size; reset it for header table.
   doc.setFontSize(10);
   return drawJournalHeader(doc, {
     organizationName: params.organizationName,
-    journalLabel: params.title,
+    // По умолчанию — название журнала (как на экране), а не название
+    // документа: иначе в шапке печаталось «ПРОВЕРКА AUDIT_PLAN».
+    journalLabel: params.journalLabel ?? journalNameOr(params.title),
     withPeriodicity: false,
     startedDate: params.dateFrom ?? null,
     finishedDate: params.dateTo ?? null,
@@ -2221,7 +2245,23 @@ function drawCleaningPdf(doc: jsPDF, params: {
       ];
 
   function buildRoomsModeMatrixRows(): RowInput[] {
-    const selectedRoomIds = (config.selectedRoomIds ?? []) as string[];
+    // Удалённое из справочника помещение печатаем так же, как показывает
+    // экран: с отметками — строкой «… (помещение удалено)», без отметок —
+    // не печатаем вовсе (раньше выходила безымянная строка «Помещение»).
+    const knownRoomIds = new Set(Object.keys(params.roomNamesById ?? {}));
+    const deletedNameById = new Map(
+      listDeletedCleaningRoomsWithMarks(config, knownRoomIds).map((item) => [
+        item.id,
+        item.name,
+      ])
+    );
+    const selectedRoomIds = ((config.selectedRoomIds ?? []) as string[]).filter(
+      // Справочник не передали (образцы бланков) — печатаем как раньше.
+      (roomId) =>
+        knownRoomIds.size === 0 ||
+        knownRoomIds.has(roomId) ||
+        deletedNameById.has(roomId)
+    );
     if (selectedRoomIds.length === 0) return [];
     const detergentByRoom = new Map<string, string>();
     config.rooms.forEach((r) => detergentByRoom.set(r.id, r.detergent || ""));
@@ -2248,7 +2288,7 @@ function drawCleaningPdf(doc: jsPDF, params: {
     };
     const roomRows: RowInput[] = selectedRoomIds.map((roomId) => [
       {
-        content: `${namesMap[roomId] ?? "Помещение"}${
+        content: `${namesMap[roomId] ?? deletedNameById.get(roomId) ?? "Помещение"}${
           roomCodes(roomId).length > 0 ? ` (${roomCodes(roomId).join(", ")})` : ""
         }${roomVerifierLine(roomId)}`,
         styles: { halign: "center" as const, valign: "middle" as const },
@@ -2298,13 +2338,33 @@ function drawCleaningPdf(doc: jsPDF, params: {
       : [centerCell("")],
   ];
 
-  const columnStyles: Record<number, { cellWidth: number }> = {
-    0: { cellWidth: 56 },
-    1: { cellWidth: 44 },
+  // Ширины ОБЯЗАНЫ уместиться в лист: при 30 днях сумма 56+44+30×8 = 340 мм
+  // не влезала в печатную область (265 мм), и autoTable обрезал последние
+  // колонки — в бланке пропадали числа 24-30 вместе с отметками уборки.
+  const cleaningUsableWidth = doc.internal.pageSize.getWidth() - 32;
+  const cleaningNameWidth = dateKeys.length > 20 ? 40 : 56;
+  const cleaningDetergentWidth = dateKeys.length > 20 ? 32 : 44;
+  const columnStyles: Record<number, { cellWidth: number; cellPadding?: number }> = {
+    0: { cellWidth: cleaningNameWidth },
+    1: { cellWidth: cleaningDetergentWidth },
   };
-  const dayWidth = dateKeys.length > 0 ? Math.max(8, Math.min(12, 160 / dateKeys.length)) : 12;
+  const dayWidth =
+    dateKeys.length > 0
+      ? Math.max(
+          4.5,
+          Math.min(
+            12,
+            (cleaningUsableWidth - cleaningNameWidth - cleaningDetergentWidth) /
+              dateKeys.length
+          )
+        )
+      : 12;
   dateKeys.forEach((_, index) => {
-    columnStyles[index + 2] = { cellWidth: dayWidth };
+    columnStyles[index + 2] = {
+      cellWidth: dayWidth,
+      // Узкая дневная колонка: широкие поля съедали место под «Т»/«Г».
+      cellPadding: dayWidth < 9 ? 0.5 : 1.8,
+    };
   });
 
   autoTable(doc, {
@@ -2317,7 +2377,9 @@ function drawCleaningPdf(doc: jsPDF, params: {
     theme: "grid",
     styles: {
       font: "JournalUnicode",
-      fontSize: 8,
+      // Узкие дневные колонки (месяц целиком) — мельче кегль, иначе
+      // двузначное число дня переносилось по цифрам: «1» / «0».
+      fontSize: dayWidth < 9 ? 7 : 8,
       cellPadding: 1.8,
       lineColor: [0, 0, 0],
       lineWidth: 0.2,
@@ -2328,6 +2390,7 @@ function drawCleaningPdf(doc: jsPDF, params: {
       fillColor: [255, 255, 255],
       textColor: [0, 0, 0],
       fontStyle: "bold",
+      fontSize: dayWidth < 9 ? 7 : 8,
       lineColor: [0, 0, 0],
       lineWidth: 0.2,
     },
@@ -2598,20 +2661,29 @@ function drawEquipmentMaintenancePdf(doc: jsPDF, params: {
   config: ReturnType<typeof normalizeEquipmentMaintenanceConfig>;
 }) {
   drawTitle(doc, params.title || EQUIPMENT_MAINTENANCE_DOCUMENT_TITLE);
+  // Штамп ХАССП, как на экране: раньше здесь была своя строка
+  // «Организация — Начат — Окончен» без названия журнала и без «СТР.».
+  const maintenanceHeaderBottom = drawClimateMetaTable(doc, {
+    organizationName: params.organizationName,
+    title: params.title || EQUIPMENT_MAINTENANCE_DOCUMENT_TITLE,
+    dateFrom: params.dateFrom,
+    dateTo: resolveFinishedDate(params.dateTo),
+    marginX: PDF_SHEET_MARGIN,
+  });
+
+  // Расшифровка «Тип» — на экране она отдельной строкой над таблицей,
+  // без неё в печати буквы A/B в колонке «Тип» ничего не значат.
+  const maintenanceLegendY = afterHeader(maintenanceHeaderBottom, 30);
   doc.setFont("JournalUnicode", "normal");
-  doc.setFontSize(10);
-  doc.text(params.organizationName, 14, 24);
-  doc.text(`Начат: ${formatPdfDate(params.dateFrom)}`, 210, 24, { align: "right" });
+  doc.setFontSize(9);
   doc.text(
-    // Дата окончания — только у закрытого документа (иначе линия под руку).
-    `Окончен: ${formatPdfDate(resolveFinishedDate(params.dateTo)) || "__________"}`,
-    283,
-    24,
-    { align: "right" }
+    "Тип профилактического обслуживания:  A = Ежемесячно   B = Ежегодно",
+    10,
+    maintenanceLegendY
   );
 
   autoTable(doc, {
-    startY: 30,
+    startY: maintenanceLegendY + 4,
     margin: { left: 10, right: 10 },
     head: [[
       "№",
@@ -2675,30 +2747,30 @@ function drawStaffTrainingPdf(doc: jsPDF, params: {
   config: ReturnType<typeof normalizeStaffTrainingConfig>;
 }) {
   drawTitle(doc, params.title || STAFF_TRAINING_FULL_TITLE);
-  doc.setFont("JournalUnicode", "normal");
-  doc.setFontSize(10);
-  doc.text(params.organizationName, 14, 24);
-  doc.text(`Начат: ${formatPdfDate(params.dateFrom)}`, 210, 24, { align: "right" });
-  doc.text(
-    // Дата окончания — только у закрытого документа (иначе линия под руку).
-    `Окончен: ${formatPdfDate(resolveFinishedDate(params.dateTo)) || "__________"}`,
-    283,
-    24,
-    { align: "right" }
-  );
+  // Штамп ХАССП, как на экране: раньше здесь была своя строка
+  // «Организация — Начат — Окончен» без названия журнала и без «СТР.».
+  const trainingHeaderBottom = drawClimateMetaTable(doc, {
+    organizationName: params.organizationName,
+    title: params.title || STAFF_TRAINING_FULL_TITLE,
+    dateFrom: params.dateFrom,
+    dateTo: resolveFinishedDate(params.dateTo),
+    marginX: PDF_SHEET_MARGIN,
+  });
 
   autoTable(doc, {
-    startY: 30,
+    startY: afterHeader(trainingHeaderBottom, 30),
     margin: { left: 10, right: 10 },
+    // Полные экранные формулировки граф: «Сотрудник» / «Вид» / «Причина»
+    // не говорили инспектору, что именно в колонке.
     head: [[
       "Дата",
-      "Сотрудник",
-      "Должность",
-      "Тема",
-      "Вид",
-      "Причина",
-      "Инструктирующий",
-      "Результат",
+      "Ф.И.О. инструктируемого",
+      "Профессия / должность инструктируемого",
+      "Тема инструктажа (обучения)",
+      "Вид инструктажа (первичный / повторный / внеплановый)",
+      "Причина проведения внепланового инструктажа",
+      "Ф.И.О. / должность инструктирующего",
+      "Результат аттестации после обучения (удовл. / не удовл.)",
     ]],
     body: (params.config.rows.length > 0
       ? params.config.rows
@@ -2745,6 +2817,8 @@ function drawStaffTrainingPdf(doc: jsPDF, params: {
       fillColor: [245, 245, 245],
       textColor: [0, 0, 0],
       fontStyle: "bold",
+      // Мелкий кегль шапки — полные формулировки граф ломаются по словам.
+      fontSize: 6.4,
       halign: "center",
       valign: "middle",
     },
@@ -2848,6 +2922,12 @@ function getRegisterFieldValue(
     return field.options.find((option) => option.value === value)?.label || value;
   }
 
+  // Дата хранится как `ГГГГ-ММ-ДД`; экран (formatComplaintDate) печатает
+  // ДД-ММ-ГГГГ, а PDF отдавал сырой ISO — инспектор видел разные даты.
+  if (field.type === "date") {
+    return formatPdfDate(value) || value;
+  }
+
   return value;
 }
 
@@ -2891,7 +2971,11 @@ function drawIncomingControlPdf(doc: jsPDF, params: {
   const cfg = params.config;
   const pageWidth = doc.internal.pageSize.getWidth();
   const centerX = pageWidth / 2;
-  const journalLabel = (params.title || PRODUCT_ACCEPTANCE_DOCUMENT_TITLE).toUpperCase();
+  // В шапке — название журнала, как на экране: раньше сюда попадало
+  // название документа («ПРОВЕРКА INCOMING_CONTROL»).
+  const journalLabel = journalNameOr(
+    params.title || PRODUCT_ACCEPTANCE_DOCUMENT_TITLE
+  ).toUpperCase();
 
   drawTitle(doc, params.title || PRODUCT_ACCEPTANCE_DOCUMENT_TITLE);
   const headerBottom = drawJournalHeader(doc, {
@@ -2989,7 +3073,9 @@ function drawAcceptancePdf(doc: jsPDF, params: {
   drawTitle(doc, params.title || getAcceptanceDocumentTitle(ACCEPTANCE_DOCUMENT_TEMPLATE_CODE));
   const headerBottom = drawJournalHeader(doc, {
     organizationName: params.organizationName,
-    journalLabel: (params.title || "Журнал приемки и входного контроля продукции").toUpperCase(),
+    journalLabel: journalNameOr(
+      params.title || "Журнал приемки и входного контроля продукции"
+    ).toUpperCase(),
     withPeriodicity: false,
     startedDate: params.dateFrom,
     finishedDate: null,
@@ -3300,7 +3386,9 @@ function drawPerishableRejectionPdf(doc: jsPDF, params: {
   drawTitle(doc, params.title);
   const headerBottom = drawJournalHeader(doc, {
     organizationName: params.organizationName,
-    journalLabel: params.title,
+    // В шапке — название журнала, как на экране (раньше уезжало
+    // название документа, напр. «E2E КОЛОНКИ СКОРОПОРТ»).
+    journalLabel: journalNameOr(params.title),
     withPeriodicity: false,
     startedDate: params.dateFrom,
     finishedDate: null,
@@ -3360,7 +3448,9 @@ function drawPerishableRejectionPdf(doc: jsPDF, params: {
     {
       key: "arrival",
       head: perishableColumns.label("arrival", "Дата, время поступления пищ. продукции"),
-      cell: (row) => [row.arrivalDate, row.arrivalTime].filter(Boolean).join("\n"),
+      // Тем же хелпером, что и экран: раньше в PDF уезжал сырой ISO
+      // «2026-09-15» вместо «15.09.2026».
+      cell: (row) => formatPerishableDateTime(row.arrivalDate, row.arrivalTime),
       style: { cellWidth: 24 },
     },
     { key: "product", head: perishableColumns.label("product", "Наименование"), cell: (row) => row.productName, style: { cellWidth: 26 } },
@@ -3410,7 +3500,7 @@ function drawPerishableRejectionPdf(doc: jsPDF, params: {
     {
       key: "sale",
       head: perishableColumns.label("sale", "Дата, время фактической реализации"),
-      cell: (row) => [row.actualSaleDate, row.actualSaleTime].filter(Boolean).join("\n"),
+      cell: (row) => formatPerishableDateTime(row.actualSaleDate, row.actualSaleTime),
       style: { cellWidth: 22, halign: "center" },
     },
     {
@@ -4337,13 +4427,15 @@ function drawPestControlPdf(doc: jsPDF, params: {
 
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(9);
-  doc.text(`Начат   ${formatPestControlDate(startDate)}`, x + leftWidth + middleWidth + 2, y + 5);
-  doc.text("Окончен __________", x + leftWidth + middleWidth + 2, y + 10);
-  if (endDate && endDate !== startDate) {
-    doc.setFont("JournalUnicode", "normal");
-    doc.text(formatPestControlDate(endDate), x + width - 2, y + 10, { align: "right" });
-    doc.setFont("JournalUnicode", "bold");
-  }
+  // Даты шапки — ДД-ММ-ГГГГ, как на экране и в остальных бланках
+  // (раньше здесь были точки). Дата окончания печатается ВМЕСТО
+  // прочерка: раньше рядом стояли и «__________», и сама дата.
+  doc.text(`Начат   ${formatPdfDate(startDate)}`, x + leftWidth + middleWidth + 2, y + 5);
+  doc.text(
+    endDate ? `Окончен ${formatPdfDate(endDate)}` : "Окончен __________",
+    x + leftWidth + middleWidth + 2,
+    y + 10
+  );
   doc.setFont("JournalUnicode", "normal");
   registerPageLabelSlot(doc, {
     x: x + width - 42,
@@ -4476,6 +4568,8 @@ function drawEquipmentCleaningPdf(doc: jsPDF, params: {
     data: Record<string, unknown>;
   }>;
   fieldVariant: "rinse_temperature" | "rinse_completeness";
+  /** Справочник «Оборудование»: имя связанной единицы берём оттуда. */
+  equipmentDirectory?: { id: string; name: string }[];
 }) {
   const marginX = 14;
   const currentFont = doc.getFont().fontName || "helvetica";
@@ -4553,7 +4647,7 @@ function drawEquipmentCleaningPdf(doc: jsPDF, params: {
     const data = normalizeEquipmentCleaningRowData(entry.data);
     return [
       `${formatRuDateDash(data.washDate)}\n${data.washTime}`,
-      data.equipmentName,
+      resolveEquipmentCleaningRowName(data, params.equipmentDirectory ?? []),
       data.detergentName,
       typeof data.detergentConcentration === "number"
         ? `${formatNumberShort(data.detergentConcentration)}%`
@@ -4932,6 +5026,7 @@ function drawUvRuntimePdf(doc: jsPDF, params: {
     // туда шёл document.title («Бактерицидная установка №1 | Журнал
     // учета работы») — номер установки живёт отдельной строкой ниже.
     title: "Журнал учета работы ультрафиолетовой бактерицидной установки",
+    journalLabel: "Журнал учета работы ультрафиолетовой бактерицидной установки",
     dateFrom: params.dateFrom,
     dateTo: params.dateTo,
     marginX: PDF_SHEET_MARGIN,
@@ -5144,7 +5239,10 @@ function drawUvRuntimePdf(doc: jsPDF, params: {
   autoTable(doc, {
     startY: monthlyEndY,
     head,
-    body: body.length > 1 ? body : [...body, ...ensurePdfBodyRows([], 6, 2)],
+    // Пустые строки-заглушки — только у совсем пустого журнала. Раньше их
+    // дописывали и к одной реальной записи, и лишняя пустая строка
+    // выталкивалась на вторую страницу — там печаталась голая шапка таблицы.
+    body: body.length > 0 ? body : ensurePdfBodyRows([], 6, 2),
     theme: "grid",
     styles: {
       font: "JournalUnicode",
@@ -5327,9 +5425,13 @@ function drawAuditPlanPdf(doc: jsPDF, params: {
 
     params.config.rows
       .filter((row) => row.sectionId === section.id)
-      .forEach((row, index) => {
+      .forEach((row) => {
+        // Нумерация сквозная по всему плану, как на экране: раньше печать
+        // начинала счёт заново в каждом разделе и номера расходились.
+        const rowNumber =
+          params.config.rows.findIndex((item) => item.id === row.id) + 1;
         body.push([
-          centerCell(String(index + 1)),
+          centerCell(String(rowNumber)),
           centerCell(row.text),
           centerCell(row.checked ? "Да" : ""),
           ...params.config.columns.map((column) => centerCell(row.values[column.id] || "")),
@@ -5795,7 +5897,7 @@ function drawFryerOilPdf(doc: jsPDF, params: {
   // фритюрный журнал печатает ту же шапку, что и остальные.
   const headerBottom = drawJournalHeader(doc, {
     organizationName: params.organizationName,
-    journalLabel: params.title,
+    journalLabel: journalNameOr(params.title),
     withPeriodicity: false,
     startedDate: params.dateFrom,
     finishedDate: params.dateTo,
@@ -6042,24 +6144,18 @@ function drawGlassControlPdf(doc: jsPDF, params: {
     organizationName: params.organizationName,
     journalLabel: GLASS_CONTROL_PAGE_TITLE,
     withPeriodicity: false,
+    // Экран печатает в шапке «Частоту контроля» документа, а не общий
+    // текст периодичности шаблона — печать обязана совпадать.
+    periodicityText: params.config.controlFrequency,
     // Раньше «Начат/Окончен» печатались абсолютными координатами прямо
     // поверх правой ячейки шапки — теперь это её штатная часть.
     startedDate: params.dateFrom,
     finishedDate: params.status === "closed" ? params.dateTo : null,
+    repeatOnPages: true,
   });
 
-  autoTable(doc, {
-    startY: afterHeader(headerBottom, 50),
-    body: [[
-      { content: "Частота контроля", styles: { fontStyle: "bold" } },
-      { content: params.config.controlFrequency, colSpan: 3, styles: { halign: "center", fontStyle: "bold" } },
-    ]],
-    theme: "grid",
-    styles: { font: "JournalUnicode", fontSize: 10, lineColor: [0, 0, 0], textColor: [0, 0, 0] },
-    margin: { left: 14, right: 14 },
-    columnStyles: { 0: { cellWidth: 55 }, 1: { cellWidth: 40 }, 2: { cellWidth: 40 }, 3: { cellWidth: 40 } },
-  });
-
+  // Отдельная строка «Частота контроля» убрана: то же значение теперь
+  // стоит в шапке ХАССП, как на экране, и дублировалось на бланке.
   const bodyRows = params.entries.map((entry) => {
     const data = normalizeGlassControlEntryData(entry.data);
     const userName = params.users.find((user) => user.id === entry.employeeId)?.name || params.responsibleName;
@@ -6081,7 +6177,7 @@ function drawGlassControlPdf(doc: jsPDF, params: {
   }
 
   autoTable(doc, {
-    startY: ((doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY || 60) + 8,
+    startY: afterHeader(headerBottom, 50),
     head: [[
       "Дата",
       "Да",
@@ -6108,7 +6204,9 @@ function drawGlassControlPdf(doc: jsPDF, params: {
       fontStyle: "bold",
       lineColor: [0, 0, 0],
     },
-    margin: { left: 14, right: 14 },
+    // Резерв под повтор штампа ХАССП на страницах 2..N — иначе вторая
+    // страница бланка уходила инспектору без шапки.
+    margin: { left: 14, right: 14, top: activePageHeaderHeight + HEADER_TITLE_GAP },
     columnStyles: {
       0: { cellWidth: 24, halign: "center" },
       1: { cellWidth: 12, halign: "center" },
@@ -6422,6 +6520,7 @@ export function renderJournalDocumentPdf(
   activeControlPeriodicity = readControlPeriodicity(document.config, templateCode);
   activeDocumentStatus = document.status ?? "";
   activeHeaderTitle = readHeaderTitleOverride(document.config) ?? "";
+  activeJournalName = document.template.name ?? "";
   activePageHeaderPainter = null;
   activePageHeaderHeight = 0;
   pagesWithJournalHeader.clear();
@@ -6734,6 +6833,7 @@ export function renderJournalDocumentPdf(
       title: document.title || "Журнал мойки и дезинфекции оборудования",
       dateFrom: document.dateFrom,
       fieldVariant: equipmentCleaningConfig.fieldVariant,
+      equipmentDirectory: equipment,
       entries: entries.map((entry) => ({
         id: entry.id,
         date: entry.date,
@@ -6882,6 +6982,7 @@ export function renderJournalDocumentPdf(
   activeControlPeriodicity = "";
   activeDocumentStatus = "";
   activeHeaderTitle = "";
+  activeJournalName = "";
   activePageHeaderPainter = null;
   activePageHeaderHeight = 0;
   pagesWithJournalHeader.clear();

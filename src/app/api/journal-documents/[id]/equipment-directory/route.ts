@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { ensureDefaultArea } from "@/lib/equipment-directory";
+import { canWriteJournal } from "@/lib/journal-acl";
+import { isManagementRole } from "@/lib/user-roles";
 
 /**
  * «Добавить в справочник» из окна строки журнала (ППР, поверка, поломки).
@@ -26,10 +28,36 @@ export async function POST(
   const organizationId = getActiveOrgId(session);
   const document = await db.journalDocument.findUnique({
     where: { id },
-    select: { organizationId: true },
+    select: {
+      organizationId: true,
+      status: true,
+      template: { select: { code: true } },
+    },
   });
   if (!document || document.organizationId !== organizationId) {
     return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
+  }
+  // Закрытый документ не редактируют — значит и справочник из него не
+  // пополняют: строка всё равно никуда не встанет.
+  if (document.status !== "active") {
+    return NextResponse.json(
+      { error: "Документ закрыт. Верните его в активные." },
+      { status: 400 }
+    );
+  }
+  const canWrite =
+    isManagementRole(session.user.role) ||
+    (Boolean(document.template?.code) &&
+      (await canWriteJournal(
+        {
+          id: session.user.id,
+          role: session.user.role,
+          isRoot: session.user.isRoot === true,
+        },
+        document.template!.code
+      )));
+  if (!canWrite) {
+    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
   }
 
   const body = (await request.json().catch(() => ({}))) as {

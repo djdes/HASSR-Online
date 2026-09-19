@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { hasCapability, effectivePreset } from "@/lib/permission-presets";
 import { generatePoolForDay, type TaskScope } from "@/lib/journal-task-pool";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
+import { resolveDayStart } from "@/lib/today-compliance";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -99,8 +100,13 @@ export async function GET() {
   const myUserId = session.user.id;
   const isAdmin = hasCapability(session.user, "admin.full");
 
-  const today = new Date();
-  today.setUTCHours(0, 0, 0, 0);
+  // «Сегодня» — в поясе организации: claim'ы сохраняются под днём
+  // телефона сотрудника, и ночью по Москве UTC-день — это ещё вчера.
+  const orgDay = await db.organization.findUnique({
+    where: { id: organizationId },
+    select: { timezone: true },
+  });
+  const today = resolveDayStart(orgDay?.timezone ?? null, new Date());
   const tomorrow = new Date(today);
   tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
 

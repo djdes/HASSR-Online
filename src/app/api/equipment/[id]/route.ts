@@ -68,6 +68,18 @@ export async function PUT(
         { status: 400 }
       );
     }
+    // Норму «от 6 до 2» сохранить было можно, и тогда журнал помечал
+    // отклонением ЛЮБОЙ замер — журнал выглядел сломанным.
+    if (
+      parsedTempMin !== null &&
+      parsedTempMax !== null &&
+      parsedTempMin > parsedTempMax
+    ) {
+      return NextResponse.json(
+        { error: "Минимальная температура не может быть больше максимальной" },
+        { status: 400 }
+      );
+    }
 
     const nextTuyaDeviceId =
       typeof tuyaDeviceId === "string" && tuyaDeviceId.trim()

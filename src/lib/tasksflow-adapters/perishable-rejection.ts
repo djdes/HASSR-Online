@@ -78,11 +78,10 @@ function buildPerishableForm(employeeName: string | null): TaskFormSchema {
         maxLength: 80,
       },
       {
-        type: "text",
+        type: "time",
         key: "arrivalTime",
-        label: "Время приёмки (ЧЧ:ММ)",
+        label: "Время приёмки",
         placeholder: "09:30",
-        maxLength: 5,
       },
       {
         type: "select",

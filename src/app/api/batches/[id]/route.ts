@@ -35,10 +35,27 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const body = await req.json().catch(() => ({}));
   const data: Record<string, unknown> = {};
 
-  // Allowlist для status — иначе UI-фильтры (active/consumed/expired)
-  // ломаются на «yolo»-значениях из прямого fetch'а.
-  const VALID_STATUSES = ["active", "consumed", "expired", "rejected", "quarantine"];
-  if (typeof body.status === "string" && VALID_STATUSES.includes(body.status)) {
+  // Allowlist для status. ПОЧЕМУ переписан: здесь стояли значения
+  // active/consumed/expired/rejected/quarantine, которых нет ни в модели
+  // (default «received»), ни в UI (received / in_production / finished /
+  // shipped / expired / written_off). Кнопки «В производство», «Готово»,
+  // «Отгрузить», «Списать» присылали свои значения, allowlist их не
+  // пропускал, update уходил с пустым data — ответ 200, статус не менялся.
+  const VALID_STATUSES = [
+    "received",
+    "in_production",
+    "finished",
+    "shipped",
+    "expired",
+    "written_off",
+  ];
+  if (typeof body.status === "string") {
+    if (!VALID_STATUSES.includes(body.status)) {
+      return NextResponse.json(
+        { error: "Неизвестный статус партии" },
+        { status: 400 }
+      );
+    }
     data.status = body.status;
   }
   if (typeof body.productName === "string" && body.productName.trim()) {

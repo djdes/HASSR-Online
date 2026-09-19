@@ -20,6 +20,8 @@ export function ProductImportDialog() {
   const [result, setResult] = useState<{
     imported: number;
     skipped: number;
+    /// Строки, продукт с таким названием уже был в справочнике.
+    duplicates?: number;
     total: number;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -127,6 +129,9 @@ export function ProductImportDialog() {
                 {result.skipped > 0 && (
                   <p>Пропущено (без названия): {result.skipped}</p>
                 )}
+                {result.duplicates ? (
+                  <p>Уже были в справочнике: {result.duplicates}</p>
+                ) : null}
                 <p className="text-xs text-green-600">
                   Всего строк в файле: {result.total}
                 </p>

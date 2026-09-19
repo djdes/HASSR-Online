@@ -115,6 +115,30 @@ export async function POST(
     });
   }
 
+  // 3a. Убрать из Room.cleanerUserIds / verifierUserIds. Раньше чистил
+  //     только hard-delete, и архивный уборщик оставался закреплён за
+  //     помещением: карточка помещения потом вообще отказывалась
+  //     сохраняться («сотрудник в архиве»), пока его не снимали руками.
+  const rooms = await db.room.findMany({
+    where: {
+      building: { organizationId: orgId },
+      OR: [
+        { cleanerUserIds: { has: user.id } },
+        { verifierUserIds: { has: user.id } },
+      ],
+    },
+    select: { id: true, cleanerUserIds: true, verifierUserIds: true },
+  });
+  for (const room of rooms) {
+    await db.room.update({
+      where: { id: room.id },
+      data: {
+        cleanerUserIds: room.cleanerUserIds.filter((rid) => rid !== user.id),
+        verifierUserIds: room.verifierUserIds.filter((rid) => rid !== user.id),
+      },
+    });
+  }
+
   // 4. Сам archive — атомарно: archive + сохранение очищенного slotsJson.
   await db.$transaction([
     db.user.update({

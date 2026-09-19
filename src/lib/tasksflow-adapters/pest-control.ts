@@ -66,12 +66,11 @@ function buildPestForm(employeeName: string | null): TaskFormSchema {
         maxLength: 200,
       },
       {
-        type: "text",
+        type: "time",
         key: "performedTime",
-        label: "Время проведения (ЧЧ:ММ)",
+        label: "Время проведения",
         required: true,
         placeholder: "14:30",
-        maxLength: 5,
       },
       {
         type: "text",

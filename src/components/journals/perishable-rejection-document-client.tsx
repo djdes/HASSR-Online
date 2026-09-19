@@ -39,6 +39,7 @@ import { ResponsiveMenu } from "@/components/ui/responsive-menu";
 import {
   addHoursToLocalDateTime,
   createPerishableRejectionRow,
+  formatPerishableDateTime,
   formatPerishableExpiry,
   normalizePerishableRejectionConfig,
   PERISHABLE_EXPIRY_PRESET_HOURS,
@@ -1117,17 +1118,11 @@ export function PerishableRejectionDocumentClient({
                     />
                   </td>
                   <td className={`${GRID_CELL_CLASS} p-1 align-top leading-tight`}>
-                    <JournalCellInput
-                      value={`${row.arrivalDate} ${row.arrivalTime}`}
-                      onChange={(e) => {
-                        const [date = "", time = ""] =
-                          e.target.value.split(" ");
-                        updateRow(row.id, {
-                          arrivalDate: date,
-                          arrivalTime: time,
-                        });
-                      }}
-                      onBlur={flushConfigSave}
+                    {/* Дата и время — только через окно строки: свободный
+                        ввод делился по пробелу и молча портил оба поля. */}
+                    <JournalCellOpensRow
+                      value={formatPerishableDateTime(row.arrivalDate, row.arrivalTime)}
+                      onOpen={() => openEditRow(row)}
                       disabled={readOnly}
                     />
                   </td>
@@ -1208,17 +1203,9 @@ export function PerishableRejectionDocumentClient({
                     />
                   </td>
                   <td className={`${GRID_CELL_CLASS} p-1 align-top leading-tight${isColumnVisible("sale") ? "" : " hidden"}`}>
-                    <JournalCellInput
-                      value={`${row.actualSaleDate} ${row.actualSaleTime}`}
-                      onChange={(e) => {
-                        const [date = "", time = ""] =
-                          e.target.value.split(" ");
-                        updateRow(row.id, {
-                          actualSaleDate: date,
-                          actualSaleTime: time,
-                        });
-                      }}
-                      onBlur={flushConfigSave}
+                    <JournalCellOpensRow
+                      value={formatPerishableDateTime(row.actualSaleDate, row.actualSaleTime)}
+                      onOpen={() => openEditRow(row)}
                       disabled={readOnly}
                     />
                   </td>

@@ -2,10 +2,13 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  acceptanceRowToBatchDraft,
+  canCreateBatchFromAcceptanceRow,
   createAcceptanceRow,
   getAcceptanceDocumentDefaultConfig,
   getIncomingControlRowValues,
   normalizeAcceptanceDocumentConfig,
+  parseAcceptanceQuantity,
 } from "@/lib/acceptance-document";
 
 test("ответственный за приёмку по умолчанию — по правилам ростера, не аккаунт-почта", () => {
@@ -113,4 +116,63 @@ test("normalizeAcceptanceDocumentConfig migrates rows stored in the old schema",
   assert.equal(values.manufacturerSupplier, "Молзавод");
   assert.equal(values.acceptanceDecision, "О");
   assert.equal(values.correctiveActions, "Отклонено, возврат");
+});
+
+test("строка приёмки → черновик партии: продукт, поставщик, количество, даты", () => {
+  const row = createAcceptanceRow({
+    deliveryDate: "2026-09-10",
+    productName: "Молоко 3,2 %",
+    manufacturerSupplier: "Молзавод / ООО «Поставка»",
+    shelfLifeDate: "2026-09-17",
+    batchInfo: "120 кг, партия 77, 08.09.2026",
+    accompanyingDocs: "ТТН 451",
+  });
+  const draft = acceptanceRowToBatchDraft(row);
+  assert.equal(draft.productName, "Молоко 3,2 %");
+  assert.equal(draft.supplier, "Молзавод / ООО «Поставка»");
+  assert.equal(draft.quantity, 120);
+  assert.equal(draft.unit, "kg");
+  assert.equal(draft.receivedAt, "2026-09-10");
+  assert.equal(draft.expiryDate, "2026-09-17");
+  assert.match(draft.notes ?? "", /ТТН 451/);
+});
+
+test("черновик партии не падает на пустой и нестандартной строке", () => {
+  const empty = acceptanceRowToBatchDraft(
+    createAcceptanceRow({ deliveryDate: "не указана", productName: "Соль" })
+  );
+  assert.equal(empty.quantity, 0);
+  assert.equal(empty.unit, "kg");
+  assert.equal(empty.receivedAt, null);
+  assert.equal(empty.expiryDate, null);
+  assert.equal(empty.supplier, null);
+  assert.equal(empty.notes, null);
+
+  assert.deepEqual(parseAcceptanceQuantity("20 шт"), { quantity: 20, unit: "pcs" });
+  assert.deepEqual(parseAcceptanceQuantity("1,5 л"), { quantity: 1.5, unit: "l" });
+  assert.deepEqual(parseAcceptanceQuantity(""), { quantity: 0, unit: "kg" });
+});
+
+test("партию по строке создаём один раз и только по принятой строке", () => {
+  const accepted = createAcceptanceRow({ productName: "Мука", acceptanceDecision: "accept" });
+  assert.equal(canCreateBatchFromAcceptanceRow(accepted), true);
+  // Уже созданная партия — второй раз нельзя.
+  assert.equal(
+    canCreateBatchFromAcceptanceRow({ ...accepted, batchId: "batch-1" }),
+    false
+  );
+  // Отклонённая поставка партией на складе не становится.
+  assert.equal(
+    canCreateBatchFromAcceptanceRow({ ...accepted, acceptanceDecision: "reject" }),
+    false
+  );
+  // Без наименования партию заводить нечем.
+  assert.equal(canCreateBatchFromAcceptanceRow({ ...accepted, productName: "" }), false);
+  // Ссылка на партию переживает нормализацию конфига.
+  const config = normalizeAcceptanceDocumentConfig(
+    { rows: [{ ...accepted, batchId: "batch-1", batchCode: "B-20260910-001" }] },
+    []
+  );
+  assert.equal(config.rows[0].batchId, "batch-1");
+  assert.equal(config.rows[0].batchCode, "B-20260910-001");
 });

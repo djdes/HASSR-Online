@@ -7,12 +7,14 @@ import { clientIp } from "@/lib/client-ip";
 import { buildingWhere } from "@/lib/building-scope";
 import {
   CLIMATE_DOCUMENT_TEMPLATE_CODE,
+  climateCorrectionKey,
   climateRoomFromDirectory,
   isClimateValueOutOfRange,
   normalizeClimateDocumentConfig,
 } from "@/lib/climate-document";
 import {
   findClimateRowForRoom,
+  mergeClimateCorrections,
   mergeClimateMeasurement,
   pickNearestControlTime,
 } from "@/lib/climate-fill";
@@ -48,6 +50,11 @@ const bodySchema = z
     employeeId: z.string().min(1),
     temperature: z.number().min(-60).max(80).optional(),
     humidity: z.number().min(0).max(100).optional(),
+    /**
+     * «Что сделали» при выходе за норму. Для проверки СанПиН голого числа
+     * мало: в журнале должно быть видно и причину, и действие.
+     */
+    correction: z.string().trim().max(300).optional(),
   })
   .refine((body) => typeof body.temperature === "number" || typeof body.humidity === "number", {
     message: "Введите температуру или влажность",
@@ -160,22 +167,49 @@ export async function POST(
   }
 
   const slot = pickNearestControlTime(config.controlTimes, now, timezone);
+
+  const temperatureOutOfRange = isClimateValueOutOfRange(body.temperature, row.temperature);
+  const humidityOutOfRange = isClimateValueOutOfRange(body.humidity, row.humidity);
+  // Отклонение → комментарий обязателен: иначе в журнале остаётся голое
+  // число, и проверяющий не видит ни причины, ни действия.
+  const correction = body.correction?.trim() ?? "";
+  if ((temperatureOutOfRange || humidityOutOfRange) && !correction) {
+    return NextResponse.json(
+      {
+        code: "correction-required",
+        error:
+          "Замер вне нормы. Напишите, что вы сделали — без этого запись в журнал не принимается.",
+      },
+      { status: 400 }
+    );
+  }
+
   const existing = await db.journalDocumentEntry.findUnique({
     where: { documentId_employeeId_date: { documentId: document.id, employeeId: employee.id, date: day } },
     select: { data: true },
   });
-  const data = mergeClimateMeasurement(existing?.data ?? null, row.id, slot, {
+  let data = mergeClimateMeasurement(existing?.data ?? null, row.id, slot, {
     temperature: body.temperature,
     humidity: body.humidity,
   });
+  if (correction) {
+    // Комментарий держится за свой замер: ключ `помещение:срок:метрика` —
+    // тот же, из которого его читают бланк и печать.
+    data = mergeClimateCorrections(data, {
+      ...(temperatureOutOfRange
+        ? { [climateCorrectionKey(row.id, slot, "temperature")]: correction }
+        : {}),
+      ...(humidityOutOfRange
+        ? { [climateCorrectionKey(row.id, slot, "humidity")]: correction }
+        : {}),
+    });
+  }
   await db.journalDocumentEntry.upsert({
     where: { documentId_employeeId_date: { documentId: document.id, employeeId: employee.id, date: day } },
     create: { documentId: document.id, employeeId: employee.id, date: day, data: data as Prisma.InputJsonValue },
     update: { data: data as Prisma.InputJsonValue },
   });
 
-  const temperatureOutOfRange = isClimateValueOutOfRange(body.temperature, row.temperature);
-  const humidityOutOfRange = isClimateValueOutOfRange(body.humidity, row.humidity);
   if (typeof body.temperature === "number" && row.temperature.enabled) {
     await processTemperatureReading({
       organizationId,

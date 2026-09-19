@@ -94,6 +94,8 @@ export function fieldIcon(field: TaskFormField): LucideIcon {
 
   // По типу поля (fallback)
   switch (field.type) {
+    case "time":
+      return Clock;
     case "number":
       return Hash;
     case "boolean":
@@ -153,6 +155,7 @@ export function fieldIconTone(field: TaskFormField): {
       return { bg: "bg-emerald-100", fg: "text-emerald-700" };
     case "number":
       return { bg: "bg-amber-100", fg: "text-amber-700" };
+    case "time":
     case "date":
       return { bg: "bg-[#eef1ff]", fg: "text-[#3848c7]" };
     case "select":

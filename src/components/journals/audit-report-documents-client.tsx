@@ -24,8 +24,11 @@ import { toast } from "sonner";
 import {
   EmptyDocumentsState,
   filterManageMenuItems,
+  restoreMenuItems,
+  useRestoreDocument,
   useCanManageDocuments,
 } from "@/components/journals/document-list-ui";
+import { resolveJournalPeriodForDate } from "@/lib/journal-period";
 import {
   JOURNAL_CARD_LABEL_CLASS,
   JOURNAL_CARD_SECTION_CLASS,
@@ -158,6 +161,7 @@ export function AuditReportDocumentsClient({ activeTab, routeCode, documents }: 
   // Создание / настройки / удаление документов API отдаёт только
   // руководителю — у остальных эти кнопки не показываем.
   const canManageDocuments = useCanManageDocuments();
+  const restore = useRestoreDocument();
   const [createOpen, setCreateOpen] = useState(false);
   const [settingsDocument, setSettingsDocument] = useState<DocumentItem | null>(null);
   const [deleteDocument, setDeleteDocument] = useState<DocumentItem | null>(null);
@@ -198,8 +202,12 @@ export function AuditReportDocumentsClient({ activeTab, routeCode, documents }: 
       body: JSON.stringify({
         templateCode: AUDIT_REPORT_TEMPLATE_CODE,
         title: payload.title.trim() || AUDIT_REPORT_DOCUMENT_TITLE,
-        dateFrom: payload.documentDate,
-        dateTo: payload.documentDate,
+        // Период — по правилу журнала (`journal-period.ts`): отчёт по
+        // аудиту годовой. «Дата документа» остаётся в шапке.
+        ...resolveJournalPeriodForDate(
+          AUDIT_REPORT_TEMPLATE_CODE,
+          payload.documentDate
+        ),
         config,
       }),
     });
@@ -304,6 +312,9 @@ export function AuditReportDocumentsClient({ activeTab, routeCode, documents }: 
                             toast.error(error instanceof Error ? error.message : "Не удалось открыть PDF")
                           ),
                       },
+                      // Закрытый документ раньше уходил навсегда: вернуть
+                      // его в активные было нечем.
+                      ...restoreMenuItems({ document, siblings: documents, restore }),
                       ...(document.status === "active"
                         ? [
                             {

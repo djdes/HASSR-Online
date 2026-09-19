@@ -50,6 +50,7 @@ import { QuickStartCard } from "@/components/dashboard/quick-start-card";
 import { PrintAgentCard } from "@/components/dashboard/print-agent-card";
 import { runOrgHealthCheck } from "@/lib/org-health-check";
 import { getTemplatesFilledToday } from "@/lib/today-compliance";
+import { CLOSE_DAY_JOURNAL_CODES } from "@/lib/daily-journal-codes";
 import { getActiveBuildingId, loadBuildingContext } from "@/lib/active-building";
 import { LocationsSummaryStrip } from "@/components/dashboard/locations-summary-strip";
 import { getStrugglingWorkers, getWorkerLeaderboard } from "@/lib/worker-leaderboard";
@@ -260,6 +261,12 @@ export default async function DashboardPage() {
     .filter((t) => disabledCodes.has(t.code))
     .map((t) => ({ id: t.id, name: t.name, code: t.code, description: t.description }));
   const unfilledCount = complianceItems.filter((c) => !c.filled).length;
+  // «Закрыть день» умеет только ежедневные журналы: без этой цифры
+  // подтверждение обещало закрыть все незаполненные (включая журналы
+  // «по событию»), а закрывало горстку.
+  const closableUnfilledCount = complianceItems.filter(
+    (c) => !c.filled && CLOSE_DAY_JOURNAL_CODES.has(c.code)
+  ).length;
   const filledCount = complianceItems.length - unfilledCount;
   // Точки: сводка по точкам — заполнено сегодня на каждой, клик переключает.
   const buildingContext = await loadBuildingContext(session);
@@ -334,7 +341,13 @@ export default async function DashboardPage() {
               title="Обязательные журналы"
               icon={ListChecks}
               defaultOpen={true}
-              actions={<CloseDayCard unfilledCount={unfilledCount} compact />}
+              actions={
+                <CloseDayCard
+                  unfilledCount={unfilledCount}
+                  closableCount={closableUnfilledCount}
+                  compact
+                />
+              }
               titleAside={
                 <Link
                   href="/settings/journals"

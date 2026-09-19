@@ -5,6 +5,7 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { getUserRoleLabel } from "@/lib/user-roles";
 import { hasCapability, effectivePreset } from "@/lib/permission-presets";
+import { orgDayStartInstant } from "@/lib/timezone";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -106,8 +107,17 @@ export async function GET() {
 
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+
+  // Для сравнения с реальными метками времени (`completedAt`) нужна
+  // местная полночь организации: от UTC-полуночи в Москве ночью в
+  // «сегодня» попадал вчерашний вечер. Ключ смены (`WorkShift.date`)
+  // остаётся UTC-полуночью — так он и хранится.
+  const organization = await db.organization.findUnique({
+    where: { id: organizationId },
+    select: { timezone: true },
+  });
+  const dayStart = orgDayStartInstant(organization?.timezone ?? undefined);
+  const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
 
   const userIds = users.map((u) => u.id);
 
@@ -127,7 +137,7 @@ export async function GET() {
           organizationId,
           userId: { in: userIds },
           status: "completed",
-          completedAt: { gte: today, lt: tomorrow },
+          completedAt: { gte: dayStart, lt: dayEnd },
         },
         select: {
           userId: true,

@@ -38,6 +38,7 @@ import {
   shiftMonth,
 } from "@/lib/staff-schedule-month";
 import { Button } from "@/components/ui/button";
+import { confirmAsync } from "@/components/ui/confirm-async";
 import { StaffPairDialog } from "@/components/staff/staff-pair-dialog";
 import { StaffQrInviteDialog } from "@/components/staff/staff-qr-invite-dialog";
 import { StaffImportExport } from "@/components/staff/staff-import-export";
@@ -105,6 +106,32 @@ function formatDayCell(iso: string) {
     bottom: dayNames[dayNum] + ".",
     isWeekend: dayNum === 0 || dayNum === 6,
   };
+}
+
+/** «5 сотрудников» / «1 сотрудника» — для заголовков подтверждений. */
+function pluralEmployees(count: number) {
+  const tail = count % 100;
+  if (tail >= 11 && tail <= 14) return "сотрудников";
+  switch (count % 10) {
+    case 1:
+      return "сотрудника";
+    case 2:
+    case 3:
+    case 4:
+      return "сотрудников";
+    default:
+      return "сотрудников";
+  }
+}
+
+/** Сколько записей журналов ссылается на сотрудника (ответ 409 API). */
+async function readBlockedReferences(res: Response) {
+  try {
+    const data = (await res.clone().json()) as { references?: unknown };
+    return typeof data.references === "number" ? data.references : 0;
+  } catch {
+    return 0;
+  }
 }
 
 function formatRange(fromIso: string, toIso: string) {
@@ -238,7 +265,7 @@ export function StaffPageClient(props: StaffPageProps) {
       }
     | { kind: "tg-unlink"; employee: StaffEmployee; pending: boolean }
     | { kind: "archive"; employee: StaffEmployee }
-    | { kind: "delete-blocked"; employee: StaffEmployee }
+    | { kind: "delete-blocked"; employee: StaffEmployee; references: number }
     | { kind: "iiko" }
     | { kind: "instruction" }
     | { kind: "qr-invite" }
@@ -409,6 +436,20 @@ export function StaffPageClient(props: StaffPageProps) {
   async function handleBulkArchive() {
     if (!anySelected) return;
     const ids = Array.from(selected);
+    // Массовое действие без подтверждения: одиночный архив диалог
+    // показывал, а «в архив» по галочкам срабатывал сразу.
+    const confirmed = await confirmAsync({
+      title: `В архив: ${ids.length} ${pluralEmployees(ids.length)}?`,
+      description:
+        "Архивные сотрудники исчезают из списков выбора и не получают задачи.",
+      bullets: [
+        { label: "Записи в журналах сохраняются", tone: "info" },
+        { label: "Сотрудника можно вернуть из архива", tone: "info" },
+      ],
+      variant: "danger",
+      confirmLabel: "В архив",
+    });
+    if (!confirmed) return;
     let ok = 0;
     for (const id of ids) {
       try {
@@ -426,8 +467,25 @@ export function StaffPageClient(props: StaffPageProps) {
   async function tryBulkDelete() {
     if (!anySelected) return;
     const ids = Array.from(selected);
+    // Удаление необратимо, а подтверждения у массового действия не было.
+    const confirmed = await confirmAsync({
+      title: `Удалить ${ids.length} ${pluralEmployees(ids.length)}?`,
+      description: "Восстановить удалённых сотрудников нельзя.",
+      bullets: [
+        { label: "Учётные записи и доступы удаляются навсегда", tone: "warn" },
+        {
+          label: "Сотрудники, участвующие в журналах, удалены не будут",
+          tone: "info",
+        },
+      ],
+      variant: "danger",
+      confirmLabel: "Удалить",
+      typeToConfirm: "УДАЛИТЬ",
+    });
+    if (!confirmed) return;
     let deleted = 0;
     let blockedEmployee: StaffEmployee | null = null;
+    let blockedReferences = 0;
     for (const id of ids) {
       try {
         const res = await fetch(`/api/staff/${id}`, { method: "DELETE" });
@@ -440,6 +498,9 @@ export function StaffPageClient(props: StaffPageProps) {
           if (!blockedEmployee) {
             blockedEmployee =
               props.employees.find((e) => e.id === id) ?? null;
+            // Сервер присылает, сколько записей ссылается на сотрудника,
+            // — показываем это число в диалоге, а не только сам запрет.
+            blockedReferences = await readBlockedReferences(res);
           }
         }
       } catch {
@@ -448,7 +509,11 @@ export function StaffPageClient(props: StaffPageProps) {
     }
     if (deleted > 0) toast.success(`Удалено: ${deleted}`);
     if (blockedEmployee) {
-      setDlg({ kind: "delete-blocked", employee: blockedEmployee });
+      setDlg({
+        kind: "delete-blocked",
+        employee: blockedEmployee,
+        references: blockedReferences,
+      });
     }
     clearSelection();
     startTransition(() => router.refresh());
@@ -1178,6 +1243,7 @@ export function StaffPageClient(props: StaffPageProps) {
       {dlg?.kind === "delete-blocked" ? (
         <StaffDeleteBlockedDialog
           employee={dlg.employee}
+          references={dlg.references}
           open
           onClose={() => setDlg(null)}
         />
@@ -1684,7 +1750,7 @@ function WorkOffGrid(props: {
         onPointerCancel={() => void flushPaint()}
         onLostPointerCapture={() => void flushPaint()}
         className={cn(
-          "overflow-x-auto -mx-4 px-4 xl:mx-0 xl:px-0 xl:overflow-visible rounded-2xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]",
+          "overflow-x-auto -mx-4 px-4 xl:mx-0 xl:px-0 min-[1720px]:overflow-visible rounded-2xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]",
           painting && "cursor-crosshair select-none [touch-action:none]"
         )}
       >

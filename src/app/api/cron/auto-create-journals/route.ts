@@ -9,6 +9,7 @@ import {
   ensureNextPeriodDocument,
 } from "@/lib/journal-auto-create";
 import { listAutomationOwnedCodes } from "@/lib/journal-automation";
+import { parseDisabledCodes } from "@/lib/disabled-journals";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,7 +44,13 @@ async function handle(request: Request) {
   const orgs = await db.organization.findMany({
     // Приостановленные за неактивность организации автоматика не ведёт.
     where: { subscriptionPlan: { notIn: ["paused", "cancelled"] } },
-    select: { id: true, autoJournalCodes: true, journalAutomationJson: true },
+    select: {
+      id: true,
+      autoJournalCodes: true,
+      journalAutomationJson: true,
+      // Журналы, выключенные в /settings/journals: автоматика их не ведёт.
+      disabledJournalCodes: true,
+    },
   });
 
   let totalCurrentCreated = 0;
@@ -58,6 +65,9 @@ async function handle(request: Request) {
     // Точки: документы создаются на каждую точку организации (или один
     // общий, если точки не включены).
     const targets = await buildingTargets(org.id);
+    // Отключённый журнал не должен возвращаться сам: его страница отвечает
+    // «Этот журнал отключён», а ночной крон всё равно заводил документ.
+    const disabledCodes = parseDisabledCodes(org.disabledJournalCodes);
     // Догоняющий шаг: документы прошлых периодов, у которых уже есть
     // преемник, переводим в «закрытые» — иначе они висят active до
     // авто-архива (365 дней). Делаем для ВСЕХ орг, даже без
@@ -83,6 +93,7 @@ async function handle(request: Request) {
       const restored = await ensureCurrentDocumentsForBrokenChains(db, {
         organizationId: org.id,
         buildingIds: targets,
+        skipCodes: disabledCodes,
       });
       for (const report of restored) {
         if (!report.created) continue;
@@ -105,7 +116,7 @@ async function handle(request: Request) {
             (c): c is string => typeof c === "string"
           )
         : []
-    ).filter((code) => !ownedByAutomation.has(code));
+    ).filter((code) => !ownedByAutomation.has(code) && !disabledCodes.has(code));
     if (codes.length === 0) continue;
     orgsTouched += 1;
 

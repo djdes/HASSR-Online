@@ -30,8 +30,11 @@ import {
   JournalTabs,
   JournalTopBar,
   filterManageMenuItems,
+  restoreMenuItems,
+  useRestoreDocument,
   useCanManageDocuments,
 } from "@/components/journals/document-list-ui";
+import { resolveJournalPeriodForDate } from "@/lib/journal-period";
 import { useJournalDocumentActions } from "@/components/journals/use-journal-document-actions";
 import {
   JOURNAL_CARD_LABEL_CLASS,
@@ -343,6 +346,7 @@ export function IncomingControlDocumentsClient({
   const router = useRouter();
   // Настройки / удаление документов API отдаёт только руководителю.
   const canManageDocuments = useCanManageDocuments();
+  const restore = useRestoreDocument();
   const [createOpen, setCreateOpen] = useState(false);
   const [settingsDocument, setSettingsDocument] = useState<DocumentItem | null>(null);
   // Единый источник delete / pdf для журнальных документов.
@@ -405,8 +409,8 @@ export function IncomingControlDocumentsClient({
       body: JSON.stringify({
         templateCode,
         title: payload.title.trim(),
-        dateFrom: payload.startDate,
-        dateTo: payload.startDate,
+        // Период — по правилу журнала (`journal-period.ts`), а не «один день».
+        ...resolveJournalPeriodForDate(templateCode, payload.startDate),
         responsibleTitle: payload.responsibleTitle,
         responsibleUserId,
         config,
@@ -565,6 +569,9 @@ export function IncomingControlDocumentsClient({
                         icon: <Printer className="size-4 text-[#6f7282]" />,
                         onSelect: () => openPdf({ documentId: document.id }),
                       },
+                      // Закрытый документ раньше уходил навсегда: вернуть
+                      // его в активные было нечем.
+                      ...restoreMenuItems({ document, siblings: documents, restore }),
                       ...(document.status === "active"
                         ? [
                             {

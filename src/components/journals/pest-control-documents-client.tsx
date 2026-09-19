@@ -28,8 +28,11 @@ import { toast } from "sonner";
 import {
   EmptyDocumentsState,
   filterManageMenuItems,
+  restoreMenuItems,
+  useRestoreDocument,
   useCanManageDocuments,
 } from "@/components/journals/document-list-ui";
+import { resolveJournalPeriodForDate } from "@/lib/journal-period";
 import {
   JOURNAL_CARD_LABEL_CLASS,
   JOURNAL_CARD_SECTION_CLASS,
@@ -229,6 +232,7 @@ export function PestControlDocumentsClient(props: Props) {
   // Создание / настройки / удаление документов API отдаёт только
   // руководителю — у остальных эти кнопки не показываем.
   const canManageDocuments = useCanManageDocuments();
+  const restore = useRestoreDocument();
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<EditingState | null>(null);
   const [deleting, setDeleting] = useState<DocumentItem | null>(null);
@@ -258,13 +262,17 @@ export function PestControlDocumentsClient(props: Props) {
       body: JSON.stringify({
         templateCode: props.templateCode,
         title: payload.title,
-        dateFrom: payload.dateFrom,
-        dateTo: payload.dateFrom,
+        // Период — по правилу журнала (`journal-period.ts`): дезинсекция
+        // годовая, а окно создавало однодневный документ поверх годового.
+        ...resolveJournalPeriodForDate(props.templateCode, payload.dateFrom),
       }),
     });
 
     if (!response.ok) {
-      toast.error("Не удалось создать документ");
+      // Текст сервера («За этот период уже есть документ «…»») объясняет
+      // отказ. Общая фраза оставляла человека без причины и без выхода.
+      const failure = await response.json().catch(() => null);
+      toast.error(failure?.error || "Не удалось создать документ");
       return;
     }
 
@@ -405,6 +413,9 @@ export function PestControlDocumentsClient(props: Props) {
                       icon: <Printer className="size-4 text-[#6f7282]" />,
                       onSelect: () => openDocumentPdf(document.id),
                     },
+                    // Закрытый документ раньше уходил навсегда: вернуть
+                    // его в активные было нечем.
+                    ...restoreMenuItems({ document, siblings: props.documents, restore }),
                     ...(document.status === "active"
                       ? [
                           {

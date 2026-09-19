@@ -53,6 +53,7 @@ import {
   filterManageMenuItems,
   useCanManageDocuments,
 } from "@/components/journals/document-list-ui";
+import { resolveJournalPeriodForDate } from "@/lib/journal-period";
 import {
   JOURNAL_CARD_LABEL_CLASS,
   JOURNAL_CARD_SECTION_CLASS,
@@ -366,14 +367,18 @@ export function TrainingPlanDocumentsClient({
       body: JSON.stringify({
         templateCode,
         title: payload.title.trim() || TRAINING_PLAN_DOCUMENT_TITLE,
-        dateFrom: payload.documentDate,
-        dateTo: payload.documentDate,
+        // Период — по правилу журнала (`journal-period.ts`): план обучения
+        // годовой. «Дата документа» остаётся в шапке.
+        ...resolveJournalPeriodForDate(templateCode, payload.documentDate),
         config,
       }),
     });
 
     if (!response.ok) {
-      toast.error("Не удалось создать документ");
+      // Текст сервера («За этот период уже есть документ «…»») объясняет
+      // отказ. Общая фраза оставляла человека без причины и без выхода.
+      const failure = await response.json().catch(() => null);
+      toast.error(failure?.error || "Не удалось создать документ");
       return;
     }
 

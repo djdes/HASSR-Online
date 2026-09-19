@@ -236,6 +236,8 @@ export function FryerOilDocumentsClient(props: Props) {
               <div className="flex justify-center">
                 <DocumentActionsMenu
                   size="sm"
+                  document={document}
+                  siblings={props.documents}
                   onEdit={
                     document.status === "active"
                       ? () =>

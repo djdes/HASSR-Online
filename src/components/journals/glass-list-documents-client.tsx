@@ -36,8 +36,11 @@ import { toast } from "sonner";
 import {
   EmptyDocumentsState,
   filterManageMenuItems,
+  restoreMenuItems,
+  useRestoreDocument,
   useCanManageDocuments,
 } from "@/components/journals/document-list-ui";
+import { resolveJournalPeriodForDate } from "@/lib/journal-period";
 import {
   JOURNAL_CARD_LABEL_CLASS,
   JOURNAL_CARD_SECTION_CLASS,
@@ -49,6 +52,8 @@ import {
 } from "@/components/journals/journal-responsive";
 import { PositionNativeOptions } from "@/components/shared/position-select";
 import { useAutoDocumentTitle } from "@/components/journals/use-auto-document-title";
+import { buildDocumentCopy } from "@/lib/journal-document-copy";
+import { localDayKey } from "@/lib/entry-defaults";
 type UserItem = {
   id: string;
   name: string;
@@ -299,6 +304,7 @@ export function GlassListDocumentsClient(props: Props) {
   // Создание / настройки / удаление документов API отдаёт только
   // руководителю — у остальных эти кнопки не показываем.
   const canManageDocuments = useCanManageDocuments();
+  const restore = useRestoreDocument();
   const [createOpen, setCreateOpen] = useState(false);
   const [settingsDocument, setSettingsDocument] = useState<DocumentItem | null>(null);
   const [archiveDocument, setArchiveDocument] = useState<DocumentItem | null>(null);
@@ -328,8 +334,12 @@ export function GlassListDocumentsClient(props: Props) {
       body: JSON.stringify({
         templateCode: GLASS_LIST_TEMPLATE_CODE,
         title: state.documentName.trim() || GLASS_LIST_DOCUMENT_TITLE,
-        dateFrom: state.documentDate,
-        dateTo: state.documentDate,
+        // Период — по правилу журнала (`journal-period.ts`): перечень
+        // стекла годовой. «Дата документа» остаётся в шапке.
+        ...resolveJournalPeriodForDate(
+          GLASS_LIST_TEMPLATE_CODE,
+          state.documentDate
+        ),
         responsibleTitle: state.responsibleTitle || null,
         responsibleUserId: state.responsibleUserId || null,
         config: {
@@ -386,25 +396,38 @@ export function GlassListDocumentsClient(props: Props) {
   }
 
   async function copyDocument(document: DocumentItem) {
-    const config = normalizeGlassListConfig(document.config);
+    // Копия — перечень на следующий год. Сама опись (список изделий) —
+    // это структура и переносится целиком; меняются только период,
+    // дата документа и название (`buildDocumentCopy`). Раньше копия
+    // повторяла период источника и не создавалась вовсе.
+    const copy = buildDocumentCopy({
+      templateCode: GLASS_LIST_TEMPLATE_CODE,
+      journalName: GLASS_LIST_DOCUMENT_TITLE,
+      sourceConfig: normalizeGlassListConfig(document.config),
+      sourcePeriod: { dateFrom: document.dateFrom, dateTo: document.dateFrom },
+      today: localDayKey(),
+      existingTitles: props.documents.map((item) => item.title),
+    });
+    const config = copy.config as { responsibleTitle?: string; responsibleUserId?: string };
     const response = await fetch("/api/journal-documents", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         templateCode: GLASS_LIST_TEMPLATE_CODE,
-        title: config.documentName || document.title || GLASS_LIST_DOCUMENT_TITLE,
-        dateFrom: config.documentDate || document.dateFrom,
-        dateTo: config.documentDate || document.dateFrom,
+        title: copy.title,
+        dateFrom: copy.dateFrom,
+        dateTo: copy.dateTo,
         responsibleTitle:
           config.responsibleTitle || document.responsibleTitle || "Управляющий",
         responsibleUserId:
           config.responsibleUserId || document.responsibleUserId || null,
-        config,
+        config: copy.config,
       }),
     });
 
     if (!response.ok) {
-      toast.error("Не удалось сделать копию документа");
+      const failure = await response.json().catch(() => null);
+      toast.error(failure?.error || "Не удалось сделать копию документа");
       return;
     }
 
@@ -551,6 +574,9 @@ export function GlassListDocumentsClient(props: Props) {
                         onSelect: () =>
                           window.open(`/api/journal-documents/${document.id}/pdf`, "_blank"),
                       },
+                      // Закрытый документ раньше уходил навсегда: вернуть
+                      // его в активные было нечем.
+                      ...restoreMenuItems({ document, siblings: props.documents, restore }),
                       ...(document.status === "active"
                         ? [
                             {

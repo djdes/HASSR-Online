@@ -490,6 +490,27 @@ function normalizeCorrections(value: unknown): Record<string, string> | undefine
 }
 
 /**
+ * Комментарий «что сделали» к замеру вне нормы. Пишется в то же
+ * `corrections[slotKey]`, откуда его читает `collectColdEquipmentDeviations`
+ * — значит, он виден в журнале и в печати без правок клиента.
+ *
+ * Пустой текст ничего не стирает: замер, исправленный в журнале руками,
+ * не должен терять уже написанное объяснение.
+ */
+export function setColdEquipmentCorrection(
+  data: ColdEquipmentEntryData,
+  slotKey: string,
+  comment: string
+): ColdEquipmentEntryData {
+  const text = comment.trim();
+  if (!text) return data;
+  return {
+    ...data,
+    corrections: { ...(data.corrections ?? {}), [slotKey]: text },
+  };
+}
+
+/**
  * Сколько внесённых замеров потеряется, если убрать эти слоты.
  * Нужно для подтверждений: удаление строки оборудования и уменьшение
  * режима «3 раза в день» → «1 раз» молча стирали значения за весь период.

@@ -1,3 +1,9 @@
+import {
+  normalizeSourceEquipmentId,
+  resolveEquipmentRowName,
+  type EquipmentDirectoryOption,
+} from "@/lib/equipment-directory-link";
+
 export const EQUIPMENT_CLEANING_TEMPLATE_CODE = "equipment_cleaning";
 export const EQUIPMENT_CLEANING_SOURCE_SLUG = "equipcleanjournal";
 export const EQUIPMENT_CLEANING_DOCUMENT_TITLE =
@@ -15,6 +21,11 @@ export type EquipmentCleaningRowData = {
   washDate: string;
   washTime: string;
   equipmentName: string;
+  /**
+   * Связь со справочником «Оборудование». Необязательное поле: строки
+   * старых журналов ссылки не имеют и работают как раньше — по тексту.
+   */
+  sourceEquipmentId?: string | null;
   detergentName: string;
   detergentConcentration: string;
   disinfectantName: string;
@@ -131,6 +142,7 @@ export function emptyEquipmentCleaningRow(
       now.getMinutes()
     ).padStart(2, "0")}`,
     equipmentName: "",
+    sourceEquipmentId: null,
     detergentName: "",
     detergentConcentration: "",
     disinfectantName: "",
@@ -167,6 +179,7 @@ export function normalizeEquipmentCleaningRowData(
         : "00:00",
     equipmentName:
       typeof value.equipmentName === "string" ? value.equipmentName : "",
+    sourceEquipmentId: normalizeSourceEquipmentId(value.sourceEquipmentId),
     detergentName:
       typeof value.detergentName === "string" ? value.detergentName : "",
     detergentConcentration:
@@ -201,6 +214,18 @@ export function normalizeEquipmentCleaningRowData(
     controllerUserId:
       typeof value.controllerUserId === "string" ? value.controllerUserId : null,
   });
+}
+
+/**
+ * Имя оборудования строки для экрана и печати: из справочника, если
+ * строка с ним связана, иначе — сохранённый в журнале текст (единицу
+ * могли удалить, а строку журнала предъявляют инспектору).
+ */
+export function resolveEquipmentCleaningRowName(
+  row: Pick<EquipmentCleaningRowData, "equipmentName" | "sourceEquipmentId">,
+  directory: readonly EquipmentDirectoryOption[]
+): string {
+  return resolveEquipmentRowName(row, directory);
 }
 
 export function getEquipmentCleaningPeriodLabel(dateFrom: Date | string) {

@@ -66,6 +66,19 @@ export async function POST(req: NextRequest) {
     }
     expiryDate = d;
   }
+  // Дата поступления приходит из строки приёмки — без неё партия из
+  // журнала за прошлую неделю датировалась бы сегодняшним днём.
+  let receivedAt: Date | null = null;
+  if (body.receivedAt) {
+    const d = new Date(body.receivedAt);
+    if (Number.isNaN(d.getTime())) {
+      return NextResponse.json(
+        { error: "Некорректная дата поступления" },
+        { status: 400 }
+      );
+    }
+    receivedAt = d;
+  }
 
   const orgId = getActiveOrgId(session);
 
@@ -89,6 +102,7 @@ export async function POST(req: NextRequest) {
     quantity,
     unit: typeof body.unit === "string" ? body.unit.slice(0, 20) : "kg",
     expiryDate,
+    ...(receivedAt ? { receivedAt } : {}),
     sourceEntryId:
       typeof body.sourceEntryId === "string" ? body.sourceEntryId : null,
     notes: typeof body.notes === "string" ? body.notes.slice(0, 2000) : null,

@@ -89,6 +89,21 @@ export type TaskFormField =
     }
   | {
       /**
+       * Время суток «ЧЧ:ММ» (24 часа). Раньше время отдавали как `text`
+       * с `maxLength: 5`, и клиент угадывал «это время» по длине — а
+       * набрать «25:99» ничто не мешало. Значение в `values` остаётся
+       * строкой «ЧЧ:ММ», как было: уже сохранённые задачи читаются
+       * прежним `normalizeTime`/`splitTime` без миграций.
+       */
+      type: "time";
+      key: string;
+      label: string;
+      required?: boolean;
+      placeholder?: string;
+      defaultValue?: string;
+    }
+  | {
+      /**
        * Фото-доказательство. Значение — URL'ы через перевод строки
        * (см. `components/journals/photo-field.tsx`). До этого типа
        * `photoRequired` из `journal-specs.ts` был декларацией без
@@ -287,6 +302,27 @@ export function buildCompletionValidator(
           .regex(rx, "Дата должна быть в формате YYYY-MM-DD");
         if (!field.required) s = s.optional().nullable();
         shape[field.key] = s;
+        break;
+      }
+      case "time": {
+        // Часы 00-23, минуты 00-59 — «25:99» дальше не проходит.
+        const rx = /^([01]\d|2[0-3]):[0-5]\d$/;
+        const message = `${field.label}: время в формате ЧЧ:ММ, например 14:30`;
+        const inner: z.ZodTypeAny = field.required
+          ? z.string().regex(rx, message)
+          : z.string().regex(rx, message).optional().nullable();
+        // Пустое необязательное поле приходит как "" — превращаем в
+        // undefined до regex'а, иначе optional не срабатывал.
+        shape[field.key] = z.preprocess((value) => {
+          if (typeof value === "string") {
+            const trimmed = value.trim();
+            return trimmed === "" && !field.required ? undefined : trimmed;
+          }
+          if (value === null || value === undefined) {
+            return field.required ? value : undefined;
+          }
+          return value;
+        }, inner);
         break;
       }
     }

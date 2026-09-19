@@ -42,8 +42,11 @@ import { confirmAsync } from "@/components/ui/confirm-async";
 import {
   EmptyDocumentsState,
   filterManageMenuItems,
+  restoreMenuItems,
+  useRestoreDocument,
   useCanManageDocuments,
 } from "@/components/journals/document-list-ui";
+import { resolveJournalPeriodForDate } from "@/lib/journal-period";
 import {
   JOURNAL_CARD_LABEL_CLASS,
   JOURNAL_CARD_SECTION_CLASS,
@@ -261,6 +264,7 @@ export function GlassControlDocumentsClient(props: Props) {
   // Создание / настройки / удаление документов API отдаёт только
   // руководителю — у остальных эти кнопки не показываем.
   const canManageDocuments = useCanManageDocuments();
+  const restore = useRestoreDocument();
   const [creating, setCreating] = useState(false);
   const [editingDocument, setEditingDocument] = useState<DocumentItem | null>(null);
   const createDefaults = useJournalCreateDefaults();
@@ -283,8 +287,9 @@ export function GlassControlDocumentsClient(props: Props) {
       body: JSON.stringify({
         templateCode: props.templateCode,
         title: config.documentName,
-        dateFrom: state.dateFrom,
-        dateTo: state.dateFrom,
+        // Период — по правилу журнала (`journal-period.ts`): стеклоконтроль
+        // бессрочный, а окно создавало документ на один день.
+        ...resolveJournalPeriodForDate(props.templateCode, state.dateFrom),
         responsibleTitle: state.responsibleTitle || null,
         responsibleUserId: state.responsibleUserId || null,
         config,
@@ -292,7 +297,10 @@ export function GlassControlDocumentsClient(props: Props) {
     });
 
     if (!response.ok) {
-      toast.error("Не удалось создать документ");
+      // Текст сервера («За этот период уже есть документ «…»») объясняет
+      // отказ. Общая фраза оставляла человека без причины и без выхода.
+      const failure = await response.json().catch(() => null);
+      toast.error(failure?.error || "Не удалось создать документ");
       throw new Error("create_failed");
     }
 
@@ -451,6 +459,9 @@ export function GlassControlDocumentsClient(props: Props) {
                       onSelect: () =>
                         window.open(`/api/journal-documents/${document.id}/pdf`, "_blank"),
                     },
+                    // Закрытый документ раньше уходил навсегда: вернуть
+                    // его в активные было нечем.
+                    ...restoreMenuItems({ document, siblings: props.documents, restore }),
                     ...(document.status === "active"
                       ? [
                           {

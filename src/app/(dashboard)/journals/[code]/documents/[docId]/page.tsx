@@ -367,18 +367,30 @@ async function JournalDocumentBody({
     tasksFlowIntegration?.enabled && isIntegrationCryptoConfigured()
   );
 
+  // Должность на экране — из справочника должностей (jobPosition.name), как
+  // это делает загрузчик PDF: иначе гигиена и журнал здоровья откатывались
+  // на лейбл роли («Повар» вместо «Уборщица»).
+  function withDirectoryTitle<
+    T extends {
+      positionTitle?: string | null;
+      jobPosition?: { name?: string | null } | null;
+    },
+  >(employee: T): T {
+    const directoryTitle = employee.jobPosition?.name?.trim();
+    return directoryTitle
+      ? { ...employee, positionTitle: directoryTitle }
+      : employee;
+  }
+
   // Должности демо-команды подставляются только в демо-организации: раньше
   // сотруднику реальной организации, чьи ФИО совпали с демо-ростером,
   // молча меняли должность.
   const demoEmployees =
     organization?.isDemo === true ? getHygieneDemoTeamUsers(employees) : [];
-  const enrichedEmployees =
-    demoEmployees.length > 0
-      ? employees.map((employee) => {
-          const demo = demoEmployees.find((item) => item.id === employee.id);
-          return demo || employee;
-        })
-      : employees;
+  const enrichedEmployees = employees.map((employee) => {
+    const demo = demoEmployees.find((item) => item.id === employee.id);
+    return demo || withDirectoryTitle(employee);
+  });
 
   if (
     !document ||
@@ -415,7 +427,10 @@ async function JournalDocumentBody({
         })
       : [];
   /** Ростер + уволенные: только для рендера ФИО и должностей. */
-  const displayEmployees = [...enrichedEmployees, ...inactiveEmployees];
+  const displayEmployees = [
+    ...enrichedEmployees,
+    ...inactiveEmployees.map(withDirectoryTitle),
+  ];
 
   // Точки: в шапке бланка под организацией — точка с адресом.
   // Название — сокращённое для журналов (своё у документа → общее →
@@ -581,6 +596,7 @@ async function JournalDocumentBody({
         config={normalizeEquipmentCleaningConfig(document.config)}
         users={enrichedEmployees}
         equipmentOptions={equipment.map((item) => item.name)}
+        equipmentDirectory={equipment}
         initialRows={document.entries.map((entry) => ({
           id: entry.id,
           data: normalizeEquipmentCleaningRowData(entry.data),

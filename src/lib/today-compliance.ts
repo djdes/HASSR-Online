@@ -7,6 +7,10 @@ import {
 } from "@/lib/daily-journal-codes";
 import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
 import { orgTodayKey } from "@/lib/timezone";
+import {
+  loadStaffScheduleMap,
+  staffScheduleKey,
+} from "@/lib/staff-journal-autofill";
 
 export { DAILY_JOURNAL_CODES, CONFIG_DAILY_CODES };
 
@@ -161,6 +165,31 @@ export function resolveDayStart(timezone: string | null, now: Date): Date {
   return new Date(`${orgTodayKey(timezone || undefined, now)}T00:00:00.000Z`);
 }
 
+/**
+ * Кто сегодня не работает: выходной по `User.weeklyDaysOff`, отпуск
+ * (`StaffVacation`) или больничный (`StaffSickLeave`). Источник тот же,
+ * что у автозаполнения кадровых журналов.
+ */
+async function loadOffDutyToday(
+  organizationId: string,
+  employeeIds: string[],
+  todayKey: string
+): Promise<Set<string>> {
+  if (employeeIds.length === 0) return new Set();
+  const schedule = await loadStaffScheduleMap(db, {
+    employeeIds,
+    dateKeys: [todayKey],
+    organizationId,
+  });
+  const off = new Set<string>();
+  for (const employeeId of employeeIds) {
+    if (schedule.get(staffScheduleKey(employeeId, todayKey))) {
+      off.add(employeeId);
+    }
+  }
+  return off;
+}
+
 async function orgDayStart(organizationId: string, now: Date): Promise<Date> {
   const org = await db.organization.findUnique({
     where: { id: organizationId },
@@ -172,7 +201,13 @@ async function orgDayStart(organizationId: string, now: Date): Promise<Date> {
 async function rollupDocumentForDay(
   documentId: string,
   todayStart: Date,
-  todayEnd: Date
+  todayEnd: Date,
+  /**
+   * Организация документа и его код — нужны кадровым журналам
+   * (гигиена, здоровье), чтобы не требовать отметку от тех, у кого
+   * сегодня выходной, отпуск или больничный.
+   */
+  staffSchedule?: { organizationId: string; templateCode: string }
 ): Promise<DocumentRollup> {
   const lookbackStart = new Date(todayStart);
   lookbackStart.setUTCDate(lookbackStart.getUTCDate() - 30);
@@ -183,8 +218,29 @@ async function rollupDocumentForDay(
       date: { gte: lookbackStart, lt: todayEnd },
       ...NOT_AUTO_SEEDED,
     },
-    select: { date: true },
+    select: { date: true, employeeId: true },
   });
+
+  if (
+    staffSchedule &&
+    STAFF_SCHEDULE_CODES.has(staffSchedule.templateCode)
+  ) {
+    const todayKey = todayStart.toISOString().slice(0, 10);
+    const employeeIds = [...new Set(entries.map((entry) => entry.employeeId))];
+    const offToday = await loadOffDutyToday(
+      staffSchedule.organizationId,
+      employeeIds,
+      todayKey
+    );
+    return rollupStaffJournalDay({
+      entries: entries.map((entry) => ({
+        dayKey: entry.date.toISOString().slice(0, 10),
+        employeeId: entry.employeeId,
+      })),
+      todayKey,
+      offTodayEmployeeIds: offToday,
+    });
+  }
 
   const byDay = new Map<string, number>();
   for (const entry of entries) {
@@ -236,6 +292,64 @@ async function rollupDocumentForDay(
  * сегодня = «не начали», любая запись = «пошло».
  */
 const STRICT_COMPLETENESS_CODES = new Set(["hygiene", "health_check"]);
+
+/**
+ * Журналы, где строка заводится на каждого сотрудника, а сотрудник в
+ * выходной / отпуске / на больничном её не заполняет. Строгая проверка
+ * «все отметились сегодня» обязана таких людей пропускать — иначе при
+ * выходных Сб-Вс счётчик красный всю субботу и воскресенье.
+ */
+const STAFF_SCHEDULE_CODES = new Set(["hygiene", "health_check"]);
+
+/**
+ * Строгая проверка дня по записям документа: «отметились все, кто
+ * сегодня работает». Чистая функция — её проверяют тесты без БД.
+ *
+ * Ожидаемое число берём как раньше: ростер последнего дня, в котором
+ * вообще были записи, — но вычитаем тех, у кого сегодня нерабочий день.
+ */
+export function rollupStaffJournalDay(params: {
+  entries: { dayKey: string; employeeId: string }[];
+  todayKey: string;
+  offTodayEmployeeIds: ReadonlySet<string>;
+}): DocumentRollup {
+  const { todayKey, offTodayEmployeeIds } = params;
+  const onDuty = (employeeId: string) => !offTodayEmployeeIds.has(employeeId);
+
+  const byDay = new Map<string, Set<string>>();
+  for (const entry of params.entries) {
+    const day = byDay.get(entry.dayKey) ?? new Set<string>();
+    day.add(entry.employeeId);
+    byDay.set(entry.dayKey, day);
+  }
+
+  const todayIds = [...(byDay.get(todayKey) ?? new Set<string>())].filter(onDuty);
+  const todayCount = todayIds.length;
+
+  const priorDayKeys = [...byDay.keys()].filter((key) => key !== todayKey).sort();
+  let rosterIds: string[] = [];
+  for (let i = priorDayKeys.length - 1; i >= 0; i -= 1) {
+    const ids = byDay.get(priorDayKeys[i]);
+    if (ids && ids.size > 0) {
+      rosterIds = [...ids];
+      break;
+    }
+  }
+
+  // Истории нет — первый день документа: достаточно одной записи.
+  if (rosterIds.length === 0) {
+    return { todayCount, expectedCount: 0, filled: todayCount > 0 };
+  }
+
+  const expectedCount = rosterIds.filter(onDuty).length;
+  // Сегодня не работает вообще никто (все в выходном/отпуске) — день
+  // закрыт, красным его показывать не за что.
+  if (expectedCount === 0) {
+    return { todayCount, expectedCount: 0, filled: true };
+  }
+
+  return { todayCount, expectedCount, filled: todayCount >= expectedCount };
+}
 
 
 /**
@@ -484,11 +598,54 @@ export async function getTemplatesFilledToday(
     docMap.set(dayKey, row._count._all);
   }
 
+  // Кадровые журналы: строки по сотрудникам, и тот, у кого сегодня
+  // выходной/отпуск/больничный, отметку не ставит. Поэтому по ним
+  // берём записи с employeeId и считаем только работающих сегодня.
+  const staffDocIds = dailyDocs
+    .filter((doc) => STAFF_SCHEDULE_CODES.has(doc.template.code))
+    .map((doc) => doc.id);
+  const staffEntries =
+    staffDocIds.length > 0
+      ? await db.journalDocumentEntry.findMany({
+          where: {
+            documentId: { in: staffDocIds },
+            date: { gte: lookbackStart, lt: todayEnd },
+            ...NOT_AUTO_SEEDED,
+          },
+          select: { documentId: true, date: true, employeeId: true },
+        })
+      : [];
+  const staffEntriesByDocument = new Map<
+    string,
+    { dayKey: string; employeeId: string }[]
+  >();
+  for (const entry of staffEntries) {
+    const list = staffEntriesByDocument.get(entry.documentId) ?? [];
+    list.push({
+      dayKey: entry.date.toISOString().slice(0, 10),
+      employeeId: entry.employeeId,
+    });
+    staffEntriesByDocument.set(entry.documentId, list);
+  }
+  const offDutyToday = await loadOffDutyToday(
+    organizationId,
+    [...new Set(staffEntries.map((entry) => entry.employeeId))],
+    todayKey
+  );
+
   function documentStartedToday(documentId: string): boolean {
     const byDay = byDocument.get(documentId) ?? new Map();
     return (byDay.get(todayKey) ?? 0) > 0;
   }
   function documentFilledStrict(documentId: string): boolean {
+    const staffRows = staffEntriesByDocument.get(documentId);
+    if (staffRows) {
+      return rollupStaffJournalDay({
+        entries: staffRows,
+        todayKey,
+        offTodayEmployeeIds: offDutyToday,
+      }).filled;
+    }
     const byDay = byDocument.get(documentId) ?? new Map();
     const todayCount = byDay.get(todayKey) ?? 0;
     if (todayCount === 0) return false;
@@ -850,7 +1007,14 @@ export async function getTemplateTodaySummary(
         // ростер-логикой — по каждому сотруднику за сегодня должна
         // быть запись. Для deep-inspect-ов эта ветка не нужна — они
         // все в relaxed-наборе.
-        return rollupDocumentForDay(doc.id, todayStart, todayEnd);
+        return rollupDocumentForDay(
+          doc.id,
+          todayStart,
+          todayEnd,
+          typeof templateCode === "string"
+            ? { organizationId, templateCode }
+            : undefined
+        );
       }
       // Relaxed: «начали сегодня». Считаем только todayCount — без
       // сравнения с предыдущим днём, без inspect'ов equipment/room.

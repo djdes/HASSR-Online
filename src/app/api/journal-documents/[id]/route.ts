@@ -51,6 +51,22 @@ import {
   resolveResponsibleChoice,
 } from "@/lib/journal-roster";
 import { findOrgUser } from "@/lib/journal-roster-db";
+import { orgTodayKey } from "@/lib/timezone";
+import { Prisma, TasksFlowOutboxStatus } from "@prisma/client";
+import { buildDocumentTaskDeleteCommands } from "@/lib/journal-document-tasks-cleanup";
+
+/**
+ * Журналы, которые ведут собственную дату окончания в шапке бланка
+ * (`config.finishedAt`). Закрытие документа проставляет её, только если
+ * человек не заполнил дату сам.
+ */
+const FINISHED_AT_JOURNAL_CODES = new Set([
+  "accident_journal",
+  "complaint_register",
+  "fryer_oil",
+  "intensive_cooling",
+  "perishable_rejection",
+]);
 
 function isValidDate(value: Date) {
   return Number.isFinite(value.getTime());
@@ -127,7 +143,10 @@ export async function PATCH(
     (body.config !== undefined ||
       body.responsibleTitle !== undefined ||
       body.responsibleUserId !== undefined);
-  const template = needsTemplateLookup
+  // Смена статуса тоже должна знать код журнала — по нему решается,
+  // заполнять ли `config.finishedAt` при закрытии.
+  const needsTemplateForStatus = Boolean(doc.templateId) && body.status !== undefined;
+  const template = needsTemplateLookup || needsTemplateForStatus
     ? await db.journalTemplate.findUnique({
         where: { id: doc.templateId },
         select: { code: true },
@@ -460,6 +479,45 @@ export async function PATCH(
     }
   }
 
+  // Дата закрытия документа. ПОЧЕМУ: её нигде не хранили, и шапка
+  // «Окончен» печатала то `dateTo`, то `new Date()` — при каждой
+  // перепечатке новая дата. Схему БД не трогаем: пишем в `config.closedAt`
+  // день по поясу организации.
+  if (body.status !== undefined && body.status !== doc.status) {
+    const org = await db.organization.findUnique({
+      where: { id: doc.organizationId },
+      select: { timezone: true },
+    });
+    const closedDayKey = orgTodayKey(org?.timezone ?? undefined);
+    const baseConfig =
+      data.config !== undefined &&
+      data.config &&
+      typeof data.config === "object" &&
+      !Array.isArray(data.config)
+        ? ({ ...(data.config as Record<string, unknown>) } as Record<string, unknown>)
+        : doc.config && typeof doc.config === "object" && !Array.isArray(doc.config)
+          ? ({ ...(doc.config as Record<string, unknown>) } as Record<string, unknown>)
+          : {};
+    if (body.status === "closed") {
+      baseConfig.closedAt = closedDayKey;
+      // У аварий, претензий, фритюра и интенсивного охлаждения своя дата
+      // окончания в шапке. Уже проставленную не трогаем — её ставил человек.
+      if (
+        template?.code &&
+        FINISHED_AT_JOURNAL_CODES.has(template.code) &&
+        !(
+          typeof baseConfig.finishedAt === "string" &&
+          baseConfig.finishedAt.trim() !== ""
+        )
+      ) {
+        baseConfig.finishedAt = closedDayKey;
+      }
+    } else {
+      delete baseConfig.closedAt;
+    }
+    data.config = baseConfig;
+  }
+
   if (body.dateFrom !== undefined) data.dateFrom = nextDateFrom;
   if (body.dateTo !== undefined) data.dateTo = nextDateTo;
 
@@ -533,6 +591,46 @@ export async function DELETE(
     return NextResponse.json({ error: "Не найдено" }, { status: 404 });
   }
 
-  await db.journalDocument.delete({ where: { id } });
-  return NextResponse.json({ success: true });
+  // Задачи TasksFlow этого документа: локальные ссылки удаляем сами, а
+  // удаление самих задач кладём в outbox (П-12/П-15/П-19 — см.
+  // `journal-document-tasks-cleanup.ts`). Прямых вызовов TF API здесь нет.
+  const links = await db.tasksFlowTaskLink.findMany({
+    where: { journalDocumentId: id },
+    select: { integrationId: true, tasksflowTaskId: true },
+  });
+  const commands = buildDocumentTaskDeleteCommands({
+    organizationId: doc.organizationId,
+    journalDocumentId: id,
+    links,
+  });
+
+  await db.$transaction(async (tx) => {
+    for (const command of commands) {
+      // Дубль по idempotencyKey — команда уже в очереди с прошлой попытки.
+      await tx.tasksFlowOutbox
+        .create({
+          data: {
+            integrationId: command.integrationId,
+            organizationId: command.organizationId,
+            idempotencyKey: command.idempotencyKey,
+            action: command.action,
+            payload: command.payload as Prisma.InputJsonValue,
+            status: TasksFlowOutboxStatus.pending,
+          },
+        })
+        .catch((err: unknown) => {
+          if (
+            err instanceof Prisma.PrismaClientKnownRequestError &&
+            err.code === "P2002"
+          ) {
+            return null;
+          }
+          throw err;
+        });
+    }
+    await tx.tasksFlowTaskLink.deleteMany({ where: { journalDocumentId: id } });
+    await tx.journalDocument.delete({ where: { id } });
+  });
+
+  return NextResponse.json({ success: true, tasksQueuedForDeletion: commands.length });
 }

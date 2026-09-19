@@ -257,6 +257,8 @@ export function ColdEquipmentDocumentsClient({
 
                 <div className="flex items-center justify-center text-[#5566f6]">
                   <DocumentActionsMenu
+                    document={document}
+                    siblings={documents}
                     onEdit={document.status === "active" ? () => setEditingDocument(document) : undefined}
                     onPrint={() => openPdf({ documentId: document.id })}
                     onDelete={document.status === "active" ? () => handleDelete(document) : undefined}

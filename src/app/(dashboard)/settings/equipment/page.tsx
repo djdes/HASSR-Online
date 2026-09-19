@@ -73,6 +73,7 @@ export default async function EquipmentSettingsPage() {
     }
   }
 
+  const equipmentNames = equipment.map((item) => item.name);
   const canManage = isManagementRole(session.user.role);
   // Согласовано с DELETE /api/equipment/[id] на hasFullWorkspaceAccess.
   // Раньше head_chef видел список, но кнопка «Удалить» была скрыта.
@@ -135,7 +136,9 @@ export default async function EquipmentSettingsPage() {
               Плакаты A4
             </Link>
           ) : null}
-          {canManage && <EquipmentDialog areas={areas} />}
+          {canManage && (
+            <EquipmentDialog areas={areas} existingNames={equipmentNames} />
+          )}
         </div>
       </div>
 
@@ -265,6 +268,7 @@ export default async function EquipmentSettingsPage() {
                           />
                           <EquipmentDialog
                             areas={areas}
+                            existingNames={equipmentNames}
                             equipment={{
                               id: item.id,
                               name: item.name,
@@ -280,7 +284,8 @@ export default async function EquipmentSettingsPage() {
                             <DeleteButton
                               id={item.id}
                               endpoint="/api/equipment"
-                              entityName={`оборудование "${item.name}"`}
+                              entityName={`оборудование «${item.name}»`}
+                              usageEndpoint={`/api/equipment/${item.id}/usage`}
                             />
                           )}
                         </div>

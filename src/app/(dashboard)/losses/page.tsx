@@ -56,6 +56,23 @@ export default async function LossesPage() {
       causeRollup.set(k, v);
     }
   }
+  // Откуда запись: `sourceEntryId` указывает на акт списания, из строки
+  // которого она заведена. Один запрос на всю страницу.
+  const sourceIds = [
+    ...new Set(records.map((r) => r.sourceEntryId).filter((id): id is string => !!id)),
+  ];
+  const sourceDocuments = sourceIds.length
+    ? await db.journalDocument.findMany({
+        where: { id: { in: sourceIds }, organizationId: orgId },
+        select: {
+          id: true,
+          dateFrom: true,
+          template: { select: { code: true } },
+        },
+      })
+    : [];
+  const sourceById = new Map(sourceDocuments.map((doc) => [doc.id, doc]));
+
   const topProducts = [...productRollup.entries()]
     .map(([name, v]) => ({ name, ...v }))
     .sort((a, b) => b.cost - a.cost || b.count - a.count)
@@ -226,7 +243,7 @@ export default async function LossesPage() {
 
       {/* Records table */}
       <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 md:overflow-visible">
-        <div className="min-w-[720px] overflow-hidden rounded-3xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
+        <div className="min-w-[880px] overflow-hidden rounded-3xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
           <table className="w-full border-collapse text-[14px]">
             <thead>
               <tr className="border-b border-[#ececf4] bg-[#fafbff] text-left text-[12px] uppercase tracking-wider text-[#6f7282]">
@@ -236,10 +253,13 @@ export default async function LossesPage() {
                 <th className="px-5 py-3 font-medium">Кол-во</th>
                 <th className="px-5 py-3 font-medium">Стоимость</th>
                 <th className="px-5 py-3 font-medium">Причина</th>
+                <th className="px-5 py-3 font-medium">Откуда</th>
               </tr>
             </thead>
             <tbody>
-              {records.map((r) => (
+              {records.map((r) => {
+                const source = r.sourceEntryId ? sourceById.get(r.sourceEntryId) : undefined;
+                return (
                 <tr
                   key={r.id}
                   className="border-b border-[#ececf4] last:border-b-0 hover:bg-[#fafbff]"
@@ -266,12 +286,27 @@ export default async function LossesPage() {
                   <td className="px-5 py-3 text-[13px] text-[#6f7282]">
                     {r.cause || "—"}
                   </td>
+                  {/* Откуда запись: из акта списания или заведена руками. */}
+                  <td className="px-5 py-3 text-[13px]">
+                    {source ? (
+                      <Link
+                        href={`/journals/${source.template.code}/documents/${source.id}`}
+                        className="text-[#3848c7] hover:underline"
+                      >
+                        из акта списания от{" "}
+                        {source.dateFrom.toLocaleDateString("ru-RU")}
+                      </Link>
+                    ) : (
+                      <span className="text-[#9b9fb3]">вручную</span>
+                    )}
+                  </td>
                 </tr>
-              ))}
+                );
+              })}
               {records.length === 0 && (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="px-5 py-10 text-center text-[14px] text-[#9b9fb3]"
                   >
                     Записей пока нет

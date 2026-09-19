@@ -48,6 +48,30 @@ import {
   toRoomScheduleMap,
 } from "@/lib/cleaning-document";
 import { buildDateKeys, toDateKey } from "@/lib/hygiene-document";
+import { buildDocumentAutoTitle } from "@/lib/journal-document-title";
+
+/**
+ * Название автосозданного документа.
+ *
+ * ПОЧЕМУ: раньше здесь был свой формат «Имя журнала · Сентябрь с 1 по 15»,
+ * а диалог «Создать документ» звал `buildDocumentAutoTitle` и давал
+ * «Имя журнала — 1–15 сентября 2026». На один период выходило два бланка
+ * с разными именами, и список читался как два разных журнала.
+ */
+function autoDocumentTitle(
+  templateCode: string,
+  journalName: string,
+  period: { dateFrom: Date; dateTo: Date; label: string }
+): string {
+  const title = buildDocumentAutoTitle({
+    templateCode,
+    journalName,
+    dateFrom: period.dateFrom.toISOString().slice(0, 10),
+    dateTo: period.dateTo.toISOString().slice(0, 10),
+  });
+  // Пустое название невозможно (имя шаблона всегда есть), но страхуемся.
+  return title || `${journalName} · ${period.label}`;
+}
 
 /**
  * Возвращает config самого свежего предыдущего JournalDocument
@@ -565,6 +589,37 @@ export async function ensureActiveDocument(
   });
   const overrides = parseJournalPeriodsJson(orgRow?.journalPeriods ?? null);
   const period = resolveJournalPeriod(args.templateCode, now, overrides);
+
+  // Период уже СДАН. ПОЧЕМУ: раньше искали только активный документ, и
+  // после «Отправить в закрытые» и кнопка «Закрыть день», и ночной крон,
+  // и массовое создание заводили на тот же период ВТОРОЙ документ и
+  // начинали его заполнять — в журнале оказывалось два бланка за один
+  // месяц. Закрытый документ — решение человека: молча обходить его
+  // новым бланком нельзя, поэтому пропускаем и называем причину.
+  const closedSamePeriod = await db.journalDocument.findFirst({
+    where: {
+      organizationId: args.organizationId,
+      templateId: template.id,
+      status: "closed",
+      // Пересечение отрезков: закрытый начался не позже конца нового и
+      // закончился не раньше его начала.
+      dateFrom: { lte: period.dateTo },
+      dateTo: { gte: period.dateFrom },
+      ...buildingWhere(args.buildingId),
+    },
+    select: { id: true },
+    orderBy: { dateFrom: "desc" },
+  });
+  if (closedSamePeriod) {
+    return {
+      code: args.templateCode,
+      name: template.name,
+      created: false,
+      documentId: closedSamePeriod.id,
+      reason: "period-closed",
+    };
+  }
+
   const desired = await resolveDesiredResponsibles(db, {
     organizationId: args.organizationId,
     templateId: template.id,
@@ -627,7 +682,7 @@ export async function ensureActiveDocument(
     data: {
       organizationId: args.organizationId,
       templateId: template.id,
-      title: `${template.name} · ${period.label}`,
+      title: autoDocumentTitle(args.templateCode, template.name, period),
       dateFrom: period.dateFrom,
       dateTo: period.dateTo,
       status: "active",
@@ -857,7 +912,7 @@ export async function ensureNextPeriodDocument(
     data: {
       organizationId: args.organizationId,
       templateId: template.id,
-      title: `${template.name} · ${nextPeriod.label}`,
+      title: autoDocumentTitle(args.templateCode, template.name, nextPeriod),
       dateFrom: nextPeriod.dateFrom,
       dateTo: nextPeriod.dateTo,
       status: "active",
@@ -954,6 +1009,12 @@ export async function ensureCurrentDocumentsForBrokenChains(
      * `[null]` (по умолчанию) — один общий документ, как раньше.
      */
     buildingIds?: Array<string | null>;
+    /**
+     * Журналы, отключённые организацией в /settings/journals. Их не
+     * восстанавливаем: менеджер выключил журнал осознанно, а цепочка
+     * «был документ → истёк → создаём новый» возвращала его каждый месяц.
+     */
+    skipCodes?: Set<string>;
   }
 ): Promise<CreateReport[]> {
   const now = args.now ?? new Date();
@@ -987,6 +1048,16 @@ export async function ensureCurrentDocumentsForBrokenChains(
   for (const templateId of templateIds) {
     const template = templateById.get(templateId);
     if (!template || !template.isActive) continue;
+    if (args.skipCodes?.has(template.code)) {
+      reports.push({
+        code: template.code,
+        name: template.name,
+        created: false,
+        documentId: "",
+        reason: "journal-disabled",
+      });
+      continue;
+    }
     const tplGroups = groups.filter((group) => group.templateId === templateId);
     // Общий документ (без точки) покрывает все точки, свой — только свою.
     const sharedCurrent = tplGroups.some(

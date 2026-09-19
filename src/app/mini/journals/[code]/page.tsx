@@ -68,6 +68,10 @@ type DocItem = {
   status: string;
   dateFrom: string;
   dateTo: string;
+  /** Кто отвечает за таблицу — старый ответ API его не присылает. */
+  responsibleName?: string | null;
+  /** Ответственный — текущий сотрудник. */
+  mine?: boolean;
 };
 
 type Payload = {
@@ -387,7 +391,9 @@ function DocumentJournalBody({
           className="px-1 text-[12px] font-semibold uppercase tracking-wider"
           style={{ color: "var(--mini-text-muted)" }}
         >
-          Мои таблицы
+          {/* Раньше заголовок обещал «Мои», а список показывал таблицы всей
+              организации, включая закрытые и чужие. */}
+          Таблицы журнала
         </h2>
         {documents.length === 0 ? (
           <div
@@ -414,18 +420,46 @@ function DocumentJournalBody({
                 }}
               >
                 <div className="min-w-0 flex-1">
-                  <div
-                    className="text-[14px] font-medium leading-5"
-                    style={{ color: "var(--mini-text)" }}
-                  >
-                    {d.title || dateRange}
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <div
+                      className="text-[14px] font-medium leading-5"
+                      style={{ color: "var(--mini-text)" }}
+                    >
+                      {d.title || dateRange}
+                    </div>
+                    {/* Закрытую таблицу заполнить уже нельзя — это видно до
+                        нажатия, а не после открытия документа. */}
+                    {d.status === "closed" ? (
+                      <span
+                        className="rounded-full px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wider"
+                        style={{
+                          background: "var(--mini-surface-2)",
+                          color: "var(--mini-text-muted)",
+                        }}
+                      >
+                        Закрыт
+                      </span>
+                    ) : null}
+                    {d.mine ? (
+                      <span
+                        className="rounded-full px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wider"
+                        style={{
+                          background: "var(--mini-ice-soft)",
+                          color: "var(--mini-ice)",
+                        }}
+                      >
+                        Ваша
+                      </span>
+                    ) : null}
                   </div>
                   <div
                     className="mt-1 text-[12px] leading-4"
                     style={{ color: "var(--mini-text-muted)" }}
                   >
                     {dateRange}
-                    {d.status === "closed" ? " · закрыт" : ""}
+                    {!d.mine && d.responsibleName
+                      ? ` · отвечает ${d.responsibleName}`
+                      : ""}
                   </div>
                 </div>
                 <ExternalLink

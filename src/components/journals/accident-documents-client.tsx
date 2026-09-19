@@ -34,8 +34,11 @@ import { toast } from "sonner";
 import {
   EmptyDocumentsState,
   filterManageMenuItems,
+  restoreMenuItems,
+  useRestoreDocument,
   useCanManageDocuments,
 } from "@/components/journals/document-list-ui";
+import { resolveJournalPeriodForDate } from "@/lib/journal-period";
 import {
   JOURNAL_CARD_LABEL_CLASS,
   JOURNAL_CARD_SECTION_CLASS,
@@ -250,6 +253,7 @@ export function AccidentDocumentsClient({
   // Создание / настройки / удаление документов API отдаёт только
   // руководителю — у остальных эти кнопки не показываем.
   const canManageDocuments = useCanManageDocuments();
+  const restore = useRestoreDocument();
   const [createOpen, setCreateOpen] = useState(false);
   const [settingsTarget, setSettingsTarget] = useState<DocumentItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DocumentItem | null>(null);
@@ -279,13 +283,18 @@ export function AccidentDocumentsClient({
       body: JSON.stringify({
         templateCode,
         title: payload.title.trim() || ACCIDENT_DOCUMENT_TITLE,
-        dateFrom: payload.dateFrom,
-        dateTo: payload.dateFrom,
+        // Период — по правилу журнала (`journal-period.ts`), а не «один
+        // день». Журнал аварий годовой: ночной крон заводит 01.01–31.12,
+        // а окно создавало однодневный документ поверх него.
+        ...resolveJournalPeriodForDate(templateCode, payload.dateFrom),
       }),
     });
 
     if (!response.ok) {
-      toast.error("Не удалось создать документ");
+      // Текст сервера («За этот период уже есть документ «…»») объясняет
+      // отказ. Общая фраза оставляла человека без причины и без выхода.
+      const failure = await response.json().catch(() => null);
+      toast.error(failure?.error || "Не удалось создать документ");
       return;
     }
 
@@ -419,6 +428,9 @@ export function AccidentDocumentsClient({
                       onSelect: () =>
                         window.open(`/api/journal-documents/${document.id}/pdf`, "_blank"),
                     },
+                    // Закрытый документ раньше уходил навсегда: вернуть
+                    // его в активные было нечем.
+                    ...restoreMenuItems({ document, siblings: documents, restore }),
                     ...(document.status === "active"
                       ? [
                           {

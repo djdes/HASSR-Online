@@ -1,9 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { createContext, useContext } from "react";
-import { Ellipsis, Pencil, Plus, Printer, Trash2 } from "lucide-react";
+import { createContext, useCallback, useContext } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { ArchiveRestore, Ellipsis, Pencil, Plus, Printer, Trash2 } from "lucide-react";
 import { CreateDocumentDialog } from "@/components/journals/create-document-dialog";
+import { confirmAsync } from "@/components/ui/confirm-async";
+import { findOverlappingDocument } from "@/lib/journal-document-overlap";
 import {
   JOURNAL_LIST_ACTIONS_CLASS,
   JOURNAL_LIST_HEADING_CLASS,
@@ -64,6 +68,13 @@ const MANAGE_ONLY_MENU_KEYS = new Set([
   "restore",
   "close",
   "rename",
+  // Те же действия под другими именами в отдельных журналах: копия
+  // (`clone`), возврат из закрытых (`activate`) и переключатель
+  // «Закрыть / Вернуть в активные» (`toggle-status`). Без них у повара
+  // оставались пункты, на которые API отвечает 403.
+  "clone",
+  "activate",
+  "toggle-status",
 ]);
 
 /**
@@ -76,6 +87,164 @@ export function filterManageMenuItems<T extends { key: string }>(
 ): T[] {
   if (canManage) return items;
   return items.filter((item) => !MANAGE_ONLY_MENU_KEYS.has(item.key));
+}
+
+/**
+ * Сколько записей пропадёт вместе с документом — строка для подтверждения
+ * удаления.
+ *
+ * ПОЧЕМУ: окно спрашивало «Удалить документ?» и ничего не говорило про
+ * объём потери. У части журналов (аварии, поломки, претензии, СИЗ,
+ * перечень стекла…) ВСЕ записи лежат в `config.rows`, и посчитать их
+ * можно прямо в списке, не ходя на сервер.
+ *
+ * `null` — считать нечего (журнал ведёт записи отдельной таблицей);
+ * тогда в подтверждении остаётся прежний текст.
+ */
+export function countConfigRecords(config: unknown): number | null {
+  if (!config || typeof config !== "object" || Array.isArray(config)) return null;
+  const rows = (config as { rows?: unknown }).rows;
+  return Array.isArray(rows) ? rows.length : null;
+}
+
+/** «Записей будет удалено: 12» — или `null`, если считать нечего. */
+export function deletedRecordsBullet(
+  config: unknown
+): { label: string; tone: "warn" } | null {
+  const count = countConfigRecords(config);
+  if (count === null) return null;
+  return {
+    label:
+      count === 0
+        ? "Записей в документе нет"
+        : `Записей будет удалено: ${count}`,
+    tone: "warn",
+  };
+}
+
+/**
+ * Документ списка в том минимуме, который нужен возврату из «Закрытых».
+ * `dateTo` есть не у всех клиентов — тогда период считается одним днём.
+ */
+export type RestorableDocument = {
+  id: string;
+  title?: string | null;
+  status?: string | null;
+  /** Часть списков период в карточку не передаёт — тогда проверки нет. */
+  dateFrom?: string | null;
+  dateTo?: string | null;
+};
+
+function toPeriod(doc: RestorableDocument): { dateFrom: Date; dateTo: Date } | null {
+  if (!doc.dateFrom) return null;
+  const from = new Date(doc.dateFrom);
+  if (!Number.isFinite(from.getTime())) return null;
+  const to = doc.dateTo ? new Date(doc.dateTo) : from;
+  return { dateFrom: from, dateTo: Number.isFinite(to.getTime()) ? to : from };
+}
+
+/**
+ * «Вернуть в активные» для закрытого документа.
+ *
+ * ПОЧЕМУ: в двух десятках журналов закрытый документ уходил навсегда —
+ * в меню карточки на вкладке «Закрытые» не было ни одного пункта,
+ * который вернул бы его. Ошиблись кнопкой «Отправить в закрытые» — и
+ * дописать период уже нельзя (PATCH закрытый документ не принимает).
+ *
+ * Перед возвратом проверяем пересечение с АКТИВНЫМ документом того же
+ * журнала: два активных бланка на один период — это записи, разъехавшиеся
+ * по двум документам, и на проверке ни один не выглядит заполненным.
+ */
+export function useRestoreDocument() {
+  const router = useRouter();
+  return useCallback(
+    async (document: RestorableDocument, siblings: RestorableDocument[] = []) => {
+      const ownPeriod = toPeriod(document);
+      const clash = ownPeriod
+        ? findOverlappingDocument(
+            siblings
+              .filter((item) => item.id !== document.id)
+              .flatMap((item) => {
+                const period = toPeriod(item);
+                return period
+                  ? [
+                      {
+                        id: item.id,
+                        title: item.title ?? "",
+                        status: item.status ?? null,
+                        ...period,
+                      },
+                    ]
+                  : [];
+              }),
+            ownPeriod
+          )
+        : null;
+      if (clash) {
+        toast.error(
+          `Вернуть нельзя: на этот период уже есть активный документ «${
+            clash.title || "без названия"
+          }». Закройте или удалите его, иначе записи за одни и те же дни разойдутся по двум бланкам.`
+        );
+        return false;
+      }
+
+      const confirmed = await confirmAsync({
+        title: "Вернуть документ в активные?",
+        description: `Документ «${document.title || "без названия"}» снова станет активным.`,
+        bullets: [
+          { label: "Его можно будет дозаполнить и исправить", tone: "info" },
+          { label: "Он вернётся на вкладку «Активные»", tone: "default" },
+        ],
+        variant: "info",
+        confirmLabel: "Вернуть",
+      });
+      if (!confirmed) return false;
+
+      const response = await fetch(`/api/journal-documents/${document.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "active" }),
+      });
+      if (!response.ok) {
+        const failure = (await response.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+        toast.error(failure?.error || "Не удалось вернуть документ в активные");
+        return false;
+      }
+      toast.success("Документ снова активен");
+      router.refresh();
+      return true;
+    },
+    [router]
+  );
+}
+
+/**
+ * Готовый пункт меню «Вернуть в активные» — для карточки закрытого
+ * документа. Возвращает массив (пустой у активного документа), чтобы
+ * вставлять спредом в `items={filterManageMenuItems([...])}`.
+ *
+ * Ключ `activate` уже перечислен в `MANAGE_ONLY_MENU_KEYS`, поэтому у
+ * рядового сотрудника пункт не появится.
+ */
+export function restoreMenuItems(args: {
+  document: RestorableDocument;
+  siblings?: RestorableDocument[];
+  restore: ReturnType<typeof useRestoreDocument>;
+}) {
+  if ((args.document.status ?? "active") !== "closed") return [];
+  return [
+    {
+      key: "activate",
+      label: "Вернуть в активные",
+      icon: <ArchiveRestore className="size-4 text-[#6f7282]" />,
+      onSelect: () => {
+        void args.restore(args.document, args.siblings ?? []);
+      },
+    },
+  ];
 }
 
 export function JournalTopBar(props: {
@@ -305,6 +474,13 @@ export function DocumentActionsMenu(props: {
   onPrint: () => void;
   onDelete?: () => void;
   size?: "sm" | "md";
+  /**
+   * Документ этой карточки и соседи по списку. Передан — у закрытого
+   * документа появляется «Вернуть в активные» (с проверкой пересечения
+   * периодов). Не передан — меню ведёт себя как раньше.
+   */
+  document?: RestorableDocument;
+  siblings?: RestorableDocument[];
 }) {
   // На телефоне это лист снизу, на компьютере — выпадающий список:
   // общий `ResponsiveMenu`. Меню карточки документа одно на полтора
@@ -312,8 +488,19 @@ export function DocumentActionsMenu(props: {
   // «Настройки» и «Удалить» API отдаёт только руководителю — у остальных
   // в меню остаётся одна «Печать».
   const canManage = useCanManageDocuments();
+  const restore = useRestoreDocument();
   const onEdit = canManage ? props.onEdit : undefined;
   const onDelete = canManage ? props.onDelete : undefined;
+  const restoreItems = props.document
+    ? filterManageMenuItems(
+        restoreMenuItems({
+          document: props.document,
+          siblings: props.siblings,
+          restore,
+        }),
+        canManage
+      )
+    : [];
   return (
     <ResponsiveMenu
       title="Действия с документом"
@@ -339,6 +526,7 @@ export function DocumentActionsMenu(props: {
           icon: <Printer className="size-4 text-[#6f7282]" />,
           onSelect: props.onPrint,
         },
+        ...restoreItems,
         ...(onDelete
           ? [
               {

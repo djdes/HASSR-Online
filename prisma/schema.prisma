@@ -1728,6 +1728,9 @@ model LossRecord {
   costRub        Float?
   cause          String?
   areaId         String?
+  /// Документ-источник записи (акт списания), если потеря заведена из журнала.
+  /// Необязательное — записи, заведённые руками, его не имеют.
+  sourceEntryId  String?
   createdById    String?
   createdAt      DateTime     @default(now())
 

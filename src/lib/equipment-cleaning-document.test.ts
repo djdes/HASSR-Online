@@ -6,6 +6,8 @@ import {
   getEquipmentCleaningEntryDateBounds,
   getEquipmentCleaningResultLabel,
   isEquipmentCleaningDateAllowed,
+  normalizeEquipmentCleaningRowData,
+  resolveEquipmentCleaningRowName,
 } from "./equipment-cleaning-document";
 
 test("период нового документа — годовой, а не один день", () => {
@@ -51,5 +53,39 @@ test("незаполненная смываемость — пусто, а не 
   assert.equal(
     getEquipmentCleaningResultLabel("non_compliant"),
     "Не соответствует"
+  );
+});
+
+/**
+ * Связь строки мойки со справочником «Оборудование» (как в ТО, поверке
+ * и поломках): имя показываем из справочника, старые строки без ссылки
+ * работают по сохранённому тексту.
+ */
+test("строка со ссылкой берёт имя из справочника", () => {
+  const row = normalizeEquipmentCleaningRowData({
+    equipmentName: "Пароконвектомат (старое имя)",
+    sourceEquipmentId: "eq-1",
+  });
+  assert.equal(row.sourceEquipmentId, "eq-1");
+  assert.equal(
+    resolveEquipmentCleaningRowName(row, [{ id: "eq-1", name: "Пароконвектомат №2" }]),
+    "Пароконвектомат №2"
+  );
+});
+
+test("удалённая из справочника единица оставляет имя из журнала", () => {
+  const row = normalizeEquipmentCleaningRowData({
+    equipmentName: "Слайсер",
+    sourceEquipmentId: "eq-gone",
+  });
+  assert.equal(resolveEquipmentCleaningRowName(row, []), "Слайсер");
+});
+
+test("старая строка без ссылки работает как раньше", () => {
+  const row = normalizeEquipmentCleaningRowData({ equipmentName: "Мясорубка" });
+  assert.equal(row.sourceEquipmentId, null);
+  assert.equal(
+    resolveEquipmentCleaningRowName(row, [{ id: "eq-1", name: "Пароконвектомат" }]),
+    "Мясорубка"
   );
 });

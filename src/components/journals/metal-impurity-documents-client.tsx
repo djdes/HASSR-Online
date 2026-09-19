@@ -43,8 +43,11 @@ import { toast } from "sonner";
 import {
   EmptyDocumentsState,
   filterManageMenuItems,
+  restoreMenuItems,
+  useRestoreDocument,
   useCanManageDocuments,
 } from "@/components/journals/document-list-ui";
+import { resolveJournalPeriodForDate } from "@/lib/journal-period";
 import {
   JOURNAL_CARD_LABEL_CLASS,
   JOURNAL_CARD_SECTION_CLASS,
@@ -388,6 +391,7 @@ export function MetalImpurityDocumentsClient({
   // Создание / настройки / удаление документов API отдаёт только
   // руководителю — у остальных эти кнопки не показываем.
   const canManageDocuments = useCanManageDocuments();
+  const restore = useRestoreDocument();
   const [createOpen, setCreateOpen] = useState(false);
   const [settingsDocument, setSettingsDocument] = useState<DocumentItem | null>(null);
   const [deleteDocument, setDeleteDocument] = useState<DocumentItem | null>(null);
@@ -426,8 +430,11 @@ export function MetalImpurityDocumentsClient({
       body: JSON.stringify({
         templateCode: METAL_IMPURITY_TEMPLATE_CODE,
         title: payload.title.trim() || METAL_IMPURITY_DOCUMENT_TITLE,
-        dateFrom: payload.startDate,
-        dateTo: payload.startDate,
+        // Период — по правилу журнала (`journal-period.ts`), а не «один день».
+        ...resolveJournalPeriodForDate(
+          METAL_IMPURITY_TEMPLATE_CODE,
+          payload.startDate
+        ),
         responsibleTitle: payload.responsiblePosition,
         responsibleUserId: payload.responsibleEmployeeId || config.responsibleEmployeeId || null,
         config,
@@ -604,6 +611,9 @@ export function MetalImpurityDocumentsClient({
                             )
                           ),
                       },
+                      // Закрытый документ раньше уходил навсегда: вернуть
+                      // его в активные было нечем.
+                      ...restoreMenuItems({ document, siblings: documents, restore }),
                       ...(document.status === "active"
                         ? [
                             {

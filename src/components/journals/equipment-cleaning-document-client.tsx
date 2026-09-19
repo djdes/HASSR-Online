@@ -23,6 +23,7 @@ import {
   getEquipmentCleaningEntryDateBounds,
   getEquipmentCleaningPeriodEnd,
   getEquipmentCleaningResultLabel,
+  resolveEquipmentCleaningRowName,
   type EquipmentCleaningDocumentConfig,
   type EquipmentCleaningFieldVariant,
   type EquipmentCleaningRowData,
@@ -51,6 +52,8 @@ import { PositionNativeOptions } from "@/components/shared/position-select";
 import { useRosterViewerId } from "@/components/journals/use-roster-viewer";
 import { rankRosterForSlot } from "@/lib/journal-roster";
 import { useTodayKey } from "@/lib/use-today-key";
+import { EquipmentDirectoryField } from "@/components/journals/equipment-directory-field";
+import type { EquipmentDirectoryOption } from "@/lib/equipment-directory-link";
 type UserItem = {
   id: string;
   name: string;
@@ -73,6 +76,8 @@ type Props = {
   config: EquipmentCleaningDocumentConfig;
   users: UserItem[];
   equipmentOptions: string[];
+  /** Справочник «Оборудование» организации — связь строки с единицей. */
+  equipmentDirectory?: EquipmentDirectoryOption[];
   initialRows: EquipmentCleaningRow[];
   /** Design v2 toggle. */
   useV2?: boolean;
@@ -123,6 +128,7 @@ export function EquipmentCleaningDocumentClient({
   config,
   users,
   equipmentOptions,
+  equipmentDirectory = [],
   initialRows,
   useV2 = false,
 }: Props) {
@@ -185,7 +191,7 @@ export function EquipmentCleaningDocumentClient({
     // Якорь «Перейти к сегодня» для режима карточек (телефон).
     title: (
       <span data-focus-today={row.data.washDate === todayKey ? "" : undefined}>
-        {`№${index + 1} · ${row.data.equipmentName || "—"}`}
+        {`№${index + 1} · ${resolveEquipmentCleaningRowName(row.data, equipmentDirectory) || "—"}`}
       </span>
     ),
     subtitle: `${formatEquipmentCleaningDate(row.data.washDate)} ${row.data.washTime || ""}`.trim() || undefined,
@@ -561,7 +567,7 @@ export function EquipmentCleaningDocumentClient({
                     <br />
                     {row.data.washTime}
                   </td>
-                  <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{row.data.equipmentName}</td>
+                  <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{resolveEquipmentCleaningRowName(row.data, equipmentDirectory)}</td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{row.data.detergentName}</td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{row.data.detergentConcentration}</td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{row.data.disinfectantName}</td>
@@ -649,21 +655,35 @@ export function EquipmentCleaningDocumentClient({
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">Наименование оборудования</Label>
-              <Input
-                list="equipment-cleaning-options"
-                className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
+            {equipmentDirectory.length > 0 ? (
+              // Со справочником: имя берём из него, своё название тоже
+              // можно вписать и одной кнопкой завести в справочник.
+              <EquipmentDirectoryField
                 value={draft.data.equipmentName}
-                onChange={(e) => updateDraft({ equipmentName: e.target.value })}
-                placeholder="Введите наименование оборудования"
+                sourceEquipmentId={draft.data.sourceEquipmentId ?? null}
+                directory={equipmentDirectory}
+                documentId={documentId}
+                onChange={(name, sourceId) =>
+                  updateDraft({ equipmentName: name, sourceEquipmentId: sourceId })
+                }
               />
-              <datalist id="equipment-cleaning-options">
-                {Array.from(new Set(equipmentOptions)).map((item) => (
-                  <option key={item} value={item} />
-                ))}
-              </datalist>
-            </div>
+            ) : (
+              <div className="space-y-2">
+                <Label className="text-[13px] font-medium text-[#3c4053]">Наименование оборудования</Label>
+                <Input
+                  list="equipment-cleaning-options"
+                  className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
+                  value={draft.data.equipmentName}
+                  onChange={(e) => updateDraft({ equipmentName: e.target.value })}
+                  placeholder="Введите наименование оборудования"
+                />
+                <datalist id="equipment-cleaning-options">
+                  {Array.from(new Set(equipmentOptions)).map((item) => (
+                    <option key={item} value={item} />
+                  ))}
+                </datalist>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label className="text-[13px] font-medium text-[#3c4053]">Наименование моющего раствора</Label>

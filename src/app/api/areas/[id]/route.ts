@@ -87,6 +87,22 @@ export async function DELETE(
       return NextResponse.json({ error: "Цех не найден" }, { status: 404 });
     }
 
+    // JournalEntry.area — Restrict: удаление цеха с записями бросало, и
+    // человек видел «Внутренняя ошибка сервера» вместо причины.
+    const blockers = await db.area.findUnique({
+      where: { id },
+      select: { _count: { select: { equipment: true, journalEntries: true } } },
+    });
+    const entryCount = blockers?._count.journalEntries ?? 0;
+    if (entryCount > 0) {
+      return NextResponse.json(
+        {
+          error: `Записей журналов в этом цехе: ${entryCount}. Цех нельзя удалить, иначе записи осиротеют — переименуйте цех или перенесите записи.`,
+        },
+        { status: 409 }
+      );
+    }
+
     await db.area.delete({ where: { id } });
 
     return NextResponse.json({ success: true });

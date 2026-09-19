@@ -127,6 +127,8 @@ export function StaffTrainingDocumentsClient({
             </Link>
             <DocumentActionsMenu
               size="sm"
+              document={document}
+              siblings={documents}
               onEdit={() => setEditingDocument(document)}
               onPrint={() => openDocumentPdf(document.id)}
               onDelete={() => handleDelete(document.id, document.title)}

@@ -94,6 +94,17 @@ export async function POST(req: NextRequest) {
     costRub = cost;
   }
 
+  // Дата потери приходит из акта списания — иначе запись по акту от
+  // прошлой недели попадала бы в сегодняшний день.
+  let date: Date | null = null;
+  if (body.date) {
+    const d = new Date(body.date);
+    if (Number.isNaN(d.getTime())) {
+      return NextResponse.json({ error: "Некорректная дата" }, { status: 400 });
+    }
+    date = d;
+  }
+
   const orgId = getActiveOrgId(session);
 
   // areaId — должна принадлежать той же org. Иначе менеджер компании
@@ -125,6 +136,12 @@ export async function POST(req: NextRequest) {
       costRub,
       cause: typeof body.cause === "string" ? body.cause.slice(0, 2000) : null,
       areaId,
+      ...(date ? { date } : {}),
+      // Откуда запись: id документа-источника (акта списания).
+      sourceEntryId:
+        typeof body.sourceEntryId === "string" && body.sourceEntryId
+          ? body.sourceEntryId
+          : null,
       createdById: session.user.id,
     },
   });

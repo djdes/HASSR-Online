@@ -19,6 +19,13 @@ export type TraceabilityIncomingBlock = {
   packagingDate: string;
   quantityPieces: number | null;
   quantityKg: number | null;
+  /**
+   * Партия (`Batch`), из которой взято сырьё. Опциональное поле — старые
+   * строки его не имеют и работают как раньше. Название и номер партии
+   * при этом остаются в `rawMaterialName` / `batchNumber` снимком текста:
+   * партию могут переименовать или удалить, а журнал должен читаться.
+   */
+  batchId?: string;
 };
 
 export type TraceabilityOutgoingBlock = {
@@ -197,6 +204,7 @@ function normalizeIncoming(value: unknown): TraceabilityIncomingBlock {
       record.quantityPieces ?? record.quantityPcs ?? record.pieces
     ),
     quantityKg: normalizeQuantityField(record.quantityKg ?? record.quantity),
+    ...(normalizeText(record.batchId) ? { batchId: normalizeText(record.batchId) } : {}),
   };
 }
 
@@ -275,6 +283,9 @@ export function createTraceabilityRow(
         ? normalizeQuantityField(overrides.incoming?.quantityPieces)
         : null,
       quantityKg: hasIncomingQuantityKg ? normalizeQuantityField(overrides.incoming?.quantityKg) : null,
+      ...(normalizeText(overrides.incoming?.batchId)
+        ? { batchId: normalizeText(overrides.incoming?.batchId) }
+        : {}),
     },
     outgoing: {
       productName:

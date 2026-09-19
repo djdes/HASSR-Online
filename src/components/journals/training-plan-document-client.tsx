@@ -109,9 +109,12 @@ function toIsoDate(value: string) {
 function toViewDateLabel(dateKey: string) {
   const [year, month, day] = dateKey.split("-");
   if (!year || !month || !day) return dateKey;
-  return `« ${day} » ${new Date(`${year}-${month}-01`).toLocaleDateString("ru-RU", {
-    month: "long",
-  })} ${year} г.`;
+  // Без дня локаль ru-RU даёт именительный падеж («январь»), а бланк
+  // требует родительный («января»): форматируем дату целиком и отрезаем день.
+  const monthName = new Date(`${year}-${month}-${day}T00:00:00`)
+    .toLocaleDateString("ru-RU", { day: "numeric", month: "long" })
+    .replace(/^\d+\s+/, "");
+  return `« ${day} » ${monthName} ${year} г.`;
 }
 
 function AddPositionDialog(props: {

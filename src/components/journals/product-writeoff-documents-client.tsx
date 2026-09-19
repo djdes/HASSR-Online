@@ -30,6 +30,9 @@ import { confirmAsync } from "@/components/ui/confirm-async";
 import {
   EmptyDocumentsState,
   filterManageMenuItems,
+  restoreMenuItems,
+  useRestoreDocument,
+  type RestorableDocument,
   useCanManageDocuments,
 } from "@/components/journals/document-list-ui";
 import {
@@ -64,9 +67,13 @@ function ProductWriteoffActionsMenu(props: {
   onPrint: () => void;
   onArchive: () => void;
   onDelete: () => void;
+  /** Документ карточки и соседи — для возврата из «Закрытых». */
+  document: RestorableDocument;
+  siblings: RestorableDocument[];
 }) {
   // Настройки / архив / удаление API отдаёт только руководителю.
   const canManageDocuments = useCanManageDocuments();
+  const restore = useRestoreDocument();
   return (
     <ResponsiveMenu
       title="Действия"
@@ -83,6 +90,13 @@ function ProductWriteoffActionsMenu(props: {
           icon: <Printer className="size-4 text-[#6f7282]" />,
           onSelect: props.onPrint,
         },
+        // Закрытый документ раньше уходил навсегда: вернуть его в
+        // активные было нечем.
+        ...restoreMenuItems({
+          document: props.document,
+          siblings: props.siblings,
+          restore,
+        }),
         ...(props.isActive
           ? [
               {
@@ -278,6 +292,8 @@ export function ProductWriteoffDocumentsClient({
               </Link>
               <div className="flex justify-start sm:justify-end">
                 <ProductWriteoffActionsMenu
+                  document={document}
+                  siblings={documents}
                   isActive={document.status === "active"}
                   onEdit={() => setEditingDocument(document)}
                   onPrint={() => window.open(`/api/journal-documents/${document.id}/pdf`, "_blank")}

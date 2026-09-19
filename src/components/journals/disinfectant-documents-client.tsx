@@ -278,7 +278,10 @@ export function DisinfectantDocumentsClient({
       }),
     });
     if (!response.ok) {
-      toast.error("Не удалось создать документ");
+      // Текст сервера («За этот период уже есть документ «…»») объясняет
+      // отказ. Общая фраза оставляла человека без причины и без выхода.
+      const failure = await response.json().catch(() => null);
+      toast.error(failure?.error || "Не удалось создать документ");
       return;
     }
     const data = (await response.json()) as { document: { id: string } };

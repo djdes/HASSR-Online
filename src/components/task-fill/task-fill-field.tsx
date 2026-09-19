@@ -282,6 +282,20 @@ function renderInput(
         />
       );
 
+    // Нативный time-picker: телефон показывает колёсики часов и минут,
+    // «25:99» ввести нельзя. Значение — строка «ЧЧ:ММ».
+    case "time":
+      return (
+        <Input
+          id={id}
+          type="time"
+          step={60}
+          value={(value as string) ?? ""}
+          onChange={(e) => onChange(e.target.value)}
+          className={`${baseInputClass} font-semibold tabular-nums`}
+        />
+      );
+
     case "photo":
       return (
         <PhotoField

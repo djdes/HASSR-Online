@@ -46,6 +46,7 @@ import {
   type AuditPlanConfig,
 } from "@/lib/audit-plan-document";
 import { openDocumentPdf } from "@/lib/open-document-pdf";
+import { buildDocumentCopy } from "@/lib/journal-document-copy";
 
 import { toast } from "sonner";
 import {
@@ -53,6 +54,7 @@ import {
   filterManageMenuItems,
   useCanManageDocuments,
 } from "@/components/journals/document-list-ui";
+import { resolveJournalPeriodForDate } from "@/lib/journal-period";
 import {
   JOURNAL_CARD_LABEL_CLASS,
   JOURNAL_CARD_SECTION_CLASS,
@@ -369,13 +371,17 @@ export function AuditPlanDocumentsClient({
       body: JSON.stringify({
         templateCode,
         title: payload.title.trim() || AUDIT_PLAN_DOCUMENT_TITLE,
-        dateFrom: payload.documentDate,
-        dateTo: payload.documentDate,
+        // Период — по правилу журнала (`journal-period.ts`): план аудитов
+        // годовой. «Дата документа» остаётся в шапке (config.documentDate).
+        ...resolveJournalPeriodForDate(templateCode, payload.documentDate),
         config,
       }),
     });
     if (!response.ok) {
-      toast.error("Не удалось создать документ");
+      // Текст сервера («За этот период уже есть документ «…»») объясняет
+      // отказ. Общая фраза оставляла человека без причины и без выхода.
+      const failure = await response.json().catch(() => null);
+      toast.error(failure?.error || "Не удалось создать документ");
       return;
     }
 
@@ -440,20 +446,32 @@ export function AuditPlanDocumentsClient({
   }
 
   async function copyDocument(document: AuditPlanDocumentItem) {
-    const cfg = normalizeAuditPlanConfig(document.config, { users });
+    // Копия — это ЧИСТЫЙ бланк на следующий период: состав разделов и
+    // требований переносится, галочки и значения по колонкам — нет
+    // (`buildDocumentCopy`). Раньше копия повторяла период и факт
+    // источника, и сервер отвечал «за этот период уже есть документ».
+    const copy = buildDocumentCopy({
+      templateCode,
+      journalName: AUDIT_PLAN_DOCUMENT_TITLE,
+      sourceConfig: normalizeAuditPlanConfig(document.config, { users }),
+      sourcePeriod: { dateFrom: document.dateFrom, dateTo: document.dateTo },
+      today: localDayKey(),
+      existingTitles: documents.map((item) => item.title),
+    });
     const response = await fetch("/api/journal-documents", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         templateCode,
-        title: document.title || AUDIT_PLAN_DOCUMENT_TITLE,
-        dateFrom: cfg.documentDate,
-        dateTo: cfg.documentDate,
-        config: cfg,
+        title: copy.title,
+        dateFrom: copy.dateFrom,
+        dateTo: copy.dateTo,
+        config: copy.config,
       }),
     });
     if (!response.ok) {
-      toast.error("Не удалось сделать копию документа");
+      const failure = await response.json().catch(() => null);
+      toast.error(failure?.error || "Не удалось сделать копию документа");
       return;
     }
     const data = (await response.json()) as { document: { id: string } };

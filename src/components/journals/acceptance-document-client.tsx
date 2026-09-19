@@ -5,6 +5,7 @@ import {
   Archive,
   CalendarDays,
   ChevronDown,
+  Package,
   Paperclip,
   Pencil,
   Plus,
@@ -56,6 +57,8 @@ import {
 import {
   ACCEPTANCE_DECISION_FULL_LABELS,
   ACCEPTANCE_DOCUMENT_TEMPLATE_CODE,
+  acceptanceRowToBatchDraft,
+  canCreateBatchFromAcceptanceRow,
   createAcceptanceRow,
   getIncomingControlRowValues,
   normalizeAcceptanceDocumentConfig,
@@ -269,6 +272,45 @@ function downloadAcceptanceImportTemplate(isProductAcceptance: boolean) {
   URL.revokeObjectURL(url);
 }
 
+/**
+ * Левая часть футера окна строки: «Создать партию» → после создания
+ * ссылка «Партия B-…». Одна и та же в обоих окнах приёмки.
+ */
+function RowBatchFooterAction(props: {
+  row: AcceptanceRow;
+  canCreate: boolean;
+  busy: boolean;
+  onCreate: () => void;
+}) {
+  if (props.row.batchId) {
+    return (
+      <a
+        href={`/batches/${props.row.batchId}`}
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-xl border border-[#dcdfed] px-4 text-[13.5px] font-medium text-[#3848c7] transition-colors duration-150 hover:bg-[#f5f6ff] sm:mr-auto sm:w-auto"
+      >
+        <Package className="size-4" />
+        Партия {props.row.batchCode || "№ —"}
+      </a>
+    );
+  }
+  if (!props.canCreate) return null;
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      disabled={props.busy}
+      onClick={props.onCreate}
+      title="Заведёт партию на складе по данным этой строки: продукт, поставщик, количество, дата поступления и срок годности"
+      className="h-9 w-full gap-1.5 rounded-xl border-[#5566f6]/30 bg-[#f5f6ff] px-4 text-[13.5px] font-medium text-[#5566f6] shadow-none transition-colors duration-150 hover:bg-[#eef1ff] sm:mr-auto sm:w-auto"
+    >
+      <Package className="size-4" />
+      Создать партию
+    </Button>
+  );
+}
+
 /* ─── Row Dialog ─── */
 
 function RowDialog(props: {
@@ -280,6 +322,8 @@ function RowDialog(props: {
   /** Продукция всей организации (последние сверху) — поверх списка документа. */
   recentProducts?: readonly string[];
   onSave: (row: AcceptanceRow, addToLists: { products: string[]; manufacturers: string[]; suppliers: string[] }) => Promise<void>;
+  /** Приёмка → партия. Отсутствует, если журнал закрыт. */
+  onCreateBatch?: (row: AcceptanceRow) => Promise<AcceptanceRow | null>;
 }) {
   const [row, setRow] = useState<AcceptanceRow>(() => createAcceptanceRow());
   const [newProduct, setNewProduct] = useState("");
@@ -400,6 +444,23 @@ function RowDialog(props: {
   }
 
   const isEdit = !!props.initialRow;
+  // Партию заводим только по уже сохранённой строке: до сохранения её
+  // нечем пометить ссылкой.
+  const canCreateBatch =
+    !!props.onCreateBatch && isEdit && canCreateBatchFromAcceptanceRow(row);
+
+  async function handleCreateBatch() {
+    if (!props.onCreateBatch) return;
+    setIsSubmitting(true);
+    try {
+      const nextRow = await props.onCreateBatch(row);
+      if (nextRow) setRow(nextRow);
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Не удалось создать партию"));
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
@@ -670,7 +731,13 @@ function RowDialog(props: {
           </div>
         </div>
 
-        <div className="flex flex-col-reverse gap-2 border-t bg-white px-6 py-4 sm:flex-row sm:justify-end">
+        <div className="flex flex-col-reverse gap-2 border-t bg-white px-6 py-4 sm:flex-row sm:items-center sm:justify-end">
+          <RowBatchFooterAction
+            row={row}
+            canCreate={canCreateBatch}
+            busy={isSubmitting}
+            onCreate={handleCreateBatch}
+          />
           <Button
             type="button"
             variant="outline"
@@ -715,6 +782,8 @@ function IncomingControlRowDialog(props: {
     row: AcceptanceRow,
     addToLists: { products: string[]; manufacturers: string[]; suppliers: string[] }
   ) => Promise<void>;
+  /** Приёмка → партия. Отсутствует, если журнал закрыт. */
+  onCreateBatch?: (row: AcceptanceRow) => Promise<AcceptanceRow | null>;
 }) {
   const [row, setRow] = useState<AcceptanceRow>(() => createAcceptanceRow());
   const [newProduct, setNewProduct] = useState("");
@@ -818,6 +887,22 @@ function IncomingControlRowDialog(props: {
   }
 
   const isEdit = !!props.initialRow;
+  // См. RowDialog: партия заводится только по сохранённой строке и один раз.
+  const canCreateBatch =
+    !!props.onCreateBatch && isEdit && canCreateBatchFromAcceptanceRow(row);
+
+  async function handleCreateBatch() {
+    if (!props.onCreateBatch) return;
+    setIsSubmitting(true);
+    try {
+      const nextRow = await props.onCreateBatch(row);
+      if (nextRow) setRow(nextRow);
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Не удалось создать партию"));
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
@@ -1157,7 +1242,13 @@ function IncomingControlRowDialog(props: {
           </div>
         </div>
 
-        <div className="flex flex-col-reverse gap-2 border-t bg-white px-6 py-4 sm:flex-row sm:justify-end">
+        <div className="flex flex-col-reverse gap-2 border-t bg-white px-6 py-4 sm:flex-row sm:items-center sm:justify-end">
+          <RowBatchFooterAction
+            row={row}
+            canCreate={canCreateBatch}
+            busy={isSubmitting}
+            onCreate={handleCreateBatch}
+          />
           <Button
             type="button"
             variant="outline"
@@ -2120,6 +2211,37 @@ export function AcceptanceDocumentClient(props: Props) {
     setEditingRow(null);
   }
 
+  /**
+   * Приёмка → партия. Строка приёмки уже содержит всё, что нужно складу,
+   * поэтому партию заводим по ней, а в строке оставляем ссылку: второй
+   * раз по той же строке партия не создаётся (см.
+   * `canCreateBatchFromAcceptanceRow`).
+   */
+  async function handleCreateBatchFromRow(row: AcceptanceRow): Promise<AcceptanceRow | null> {
+    if (!canCreateBatchFromAcceptanceRow(row)) return null;
+    const draft = acceptanceRowToBatchDraft(row);
+    const response = await fetch("/api/batches", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...draft, sourceEntryId: props.documentId }),
+    });
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+      toast.error(payload?.error || "Не удалось создать партию");
+      return null;
+    }
+    const batch = (await response.json()) as { id: string; code: string };
+    const nextRow: AcceptanceRow = { ...row, batchId: batch.id, batchCode: batch.code };
+    await persist(title, dateFrom, {
+      ...config,
+      rows: config.rows.map((item) => (item.id === row.id ? nextRow : item)),
+    });
+    toast.success(`Партия ${batch.code} создана`, {
+      action: { label: "Открыть", onClick: () => router.push(`/batches/${batch.id}`) },
+    });
+    return nextRow;
+  }
+
   async function handleDeleteSelected() {
     if (selectedRowIds.length === 0) return;
     const names = config.rows
@@ -2777,9 +2899,10 @@ export function AcceptanceDocumentClient(props: Props) {
           initialRow={editingRow}
           recentProducts={productSuggestions.recent}
           onSave={handleSaveRow}
+          onCreateBatch={isClosed ? undefined : handleCreateBatchFromRow}
         />
       ) : (
-        <RowDialog open={rowDialogOpen} onOpenChange={(open) => { setRowDialogOpen(open); if (!open) setEditingRow(null); }} users={props.users} config={config} initialRow={editingRow} recentProducts={productSuggestions.recent} onSave={handleSaveRow} />
+        <RowDialog open={rowDialogOpen} onOpenChange={(open) => { setRowDialogOpen(open); if (!open) setEditingRow(null); }} users={props.users} config={config} initialRow={editingRow} recentProducts={productSuggestions.recent} onSave={handleSaveRow} onCreateBatch={isClosed ? undefined : handleCreateBatchFromRow} />
       )}
       <ImportRowsDialog open={rowsImportOpen} onOpenChange={setRowsImportOpen} users={props.users} responsibleTitle={responsibleTitle} responsibleUserId={responsibleUserId} isProductAcceptance={isProductAcceptance} onFileSelect={handleImportFile} />
       <AddMultipleRowsDialog open={bulkAddOpen} onOpenChange={setBulkAddOpen} onSubmit={addMultipleRows} />

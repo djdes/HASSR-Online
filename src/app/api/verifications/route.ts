@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { hasCapability } from "@/lib/permission-presets";
 import { generatePoolForDay } from "@/lib/journal-task-pool";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
+import { resolveDayStart } from "@/lib/today-compliance";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -96,16 +97,16 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const histFilter = url.searchParams.get("hist"); // approved | rejected | null
 
-  const today = new Date();
-  today.setUTCHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
-
   const org = await db.organization.findUnique({
     where: { id: organizationId },
-    select: { disabledJournalCodes: true },
+    select: { disabledJournalCodes: true, timezone: true },
   });
   const disabled = parseDisabledCodes(org?.disabledJournalCodes);
+  // «Сегодня» — в поясе организации: claim'ы сохраняются под днём
+  // телефона сотрудника, и ночью по Москве UTC-день — это ещё вчера.
+  const today = resolveDayStart(org?.timezone ?? null, new Date());
+  const tomorrow = new Date(today);
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
 
   // 1) Pending review claims. Skipped (completionData.skipped=true)
   // выпадают из верификации — они auto-approved.

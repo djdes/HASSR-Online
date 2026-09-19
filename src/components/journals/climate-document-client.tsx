@@ -34,6 +34,7 @@ import {
   climateCorrectionKey,
   collectClimateDeviations,
   countClimateRoomValues,
+  countClimateTimeValues,
   isClimateValueOutOfRange,
   CLIMATE_FREQUENCY_HINT,
   CLIMATE_SCOPE_HINT,
@@ -794,6 +795,7 @@ function JournalSettingsDialog({
   employees,
   config,
   onSave,
+  countValuesAtTime,
   useV2 = false,
 }: {
   open: boolean;
@@ -803,6 +805,8 @@ function JournalSettingsDialog({
   responsibleUserId: string | null;
   employees: EmployeeItem[];
   config: ClimateDocumentConfig;
+  /** Считает родитель — строки документа живут там. */
+  countValuesAtTime: (time: string) => number;
   onSave: (params: {
     title: string;
     responsibleTitle: string | null;
@@ -843,6 +847,27 @@ function JournalSettingsDialog({
     },
     autoPick: "first",
   });
+
+  // Убрать второе время = выкинуть весь его столбец замеров за период,
+  // поэтому сначала спрашиваем и показываем, сколько значений пропадёт.
+  async function handleRemoveSecondTime() {
+    const lostValues = countValuesAtTime(timeTwo);
+    const confirmed = await confirmAsync({
+      title: `Убрать время контроля ${timeTwo}?`,
+      description:
+        "Из документа исчезнет столбец замеров на это время за весь период. Изменение применится после сохранения настроек.",
+      variant: "danger",
+      confirmLabel: "Убрать время",
+      bullets: [
+        lostValues > 0
+          ? { label: `Будет удалено значений: ${lostValues}`, tone: "warn" as const }
+          : { label: "Замеров на это время ещё нет", tone: "info" as const },
+        { label: `Останется время контроля: ${timeOne || "—"}`, tone: "default" as const },
+      ],
+    });
+    if (!confirmed) return;
+    setTimeTwo("");
+  }
 
   async function handleSave() {
     if (!timeOne && !timeTwo) {
@@ -975,7 +1000,7 @@ function JournalSettingsDialog({
                 />
                 <button
                   type="button"
-                  onClick={() => setTimeTwo("")}
+                  onClick={handleRemoveSecondTime}
                   className="h-9 shrink-0 rounded-xl border border-[#ffd7d3] px-3 text-[13px] font-medium text-[#ff3b30] transition-colors hover:bg-[#fff3f2]"
                 >
                   Убрать
@@ -1092,7 +1117,7 @@ function JournalSettingsDialog({
                   />
                   <button
                     type="button"
-                    onClick={() => setTimeTwo("")}
+                    onClick={handleRemoveSecondTime}
                     className="h-9 shrink-0 rounded-xl border border-[#ffd7d3] px-3 text-[13px] font-medium text-[#ff3b30] transition-colors hover:bg-[#fff3f2]"
                   >
                     Убрать
@@ -2831,6 +2856,7 @@ export function ClimateDocumentClient({
         employees={employees}
         config={config}
         onSave={handleSaveSettings}
+        countValuesAtTime={(time) => countClimateTimeValues(rows, time)}
         useV2={useV2}
       />
 

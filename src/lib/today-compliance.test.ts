@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { resolveDayStart, rollupConfigDocumentForDay } from "./today-compliance";
+import {
+  resolveDayStart,
+  rollupConfigDocumentForDay,
+  rollupStaffJournalDay,
+} from "./today-compliance";
 
 /**
  * Граница суток в статусе «заполнено сегодня».
@@ -61,4 +65,71 @@ test("cleaning rooms-mode: помещения берутся из selectedRoomId
     filled: true,
   });
   assert.equal(rollupConfigDocumentForDay("cleaning", config, "2026-09-03")?.filled, false);
+});
+
+/**
+ * Журнал здоровья в выходной: сотрудник, у которого сегодня выходной,
+ * отпуск или больничный, подпись не ставит. Раньше строгая проверка
+ * требовала отметку от всех из ростера — при выходных Сб-Вс счётчик был
+ * красным всю субботу и воскресенье.
+ */
+test("выходной сотрудника не держит журнал здоровья красным", () => {
+  const entries = [
+    { dayKey: "2026-09-18", employeeId: "u1" },
+    { dayKey: "2026-09-18", employeeId: "u2" },
+    { dayKey: "2026-09-18", employeeId: "u3" },
+    { dayKey: "2026-09-19", employeeId: "u1" },
+    { dayKey: "2026-09-19", employeeId: "u2" },
+  ];
+  const withoutSchedule = rollupStaffJournalDay({
+    entries,
+    todayKey: "2026-09-19",
+    offTodayEmployeeIds: new Set(),
+  });
+  assert.equal(withoutSchedule.filled, false, "без графика — как раньше");
+
+  const withDayOff = rollupStaffJournalDay({
+    entries,
+    todayKey: "2026-09-19",
+    offTodayEmployeeIds: new Set(["u3"]),
+  });
+  assert.deepEqual(withDayOff, { todayCount: 2, expectedCount: 2, filled: true });
+});
+
+test("если сегодня не работает никто — день считается закрытым", () => {
+  const rollup = rollupStaffJournalDay({
+    entries: [
+      { dayKey: "2026-09-18", employeeId: "u1" },
+      { dayKey: "2026-09-18", employeeId: "u2" },
+    ],
+    todayKey: "2026-09-19",
+    offTodayEmployeeIds: new Set(["u1", "u2"]),
+  });
+  assert.deepEqual(rollup, { todayCount: 0, expectedCount: 0, filled: true });
+});
+
+test("отметка работающего сотрудника не теряется среди выходных", () => {
+  const rollup = rollupStaffJournalDay({
+    entries: [
+      { dayKey: "2026-09-18", employeeId: "u1" },
+      { dayKey: "2026-09-18", employeeId: "u2" },
+      { dayKey: "2026-09-19", employeeId: "u1" },
+      // Пустая строка выходного сотрудника всё равно лежит в документе.
+      { dayKey: "2026-09-19", employeeId: "u2" },
+    ],
+    todayKey: "2026-09-19",
+    offTodayEmployeeIds: new Set(["u2"]),
+  });
+  assert.deepEqual(rollup, { todayCount: 1, expectedCount: 1, filled: true });
+});
+
+test("нет истории — достаточно одной записи за сегодня", () => {
+  assert.equal(
+    rollupStaffJournalDay({
+      entries: [{ dayKey: "2026-09-19", employeeId: "u1" }],
+      todayKey: "2026-09-19",
+      offTodayEmployeeIds: new Set(),
+    }).filled,
+    true
+  );
 });

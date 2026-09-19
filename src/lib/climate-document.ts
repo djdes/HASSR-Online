@@ -164,6 +164,29 @@ export function countClimateRoomValues(
   return total;
 }
 
+/**
+ * Сколько заполненных значений исчезнет, если убрать время контроля:
+ * замеры хранятся по ключу времени, и удаление времени из настроек
+ * выкидывает весь его столбец по всем помещениям и дням.
+ */
+export function countClimateTimeValues(
+  entries: Array<{ data: { measurements?: Record<string, Record<string, ClimateMeasurement>> } }>,
+  time: string
+): number {
+  let total = 0;
+  for (const entry of entries) {
+    const byRoom = entry.data?.measurements;
+    if (!byRoom) continue;
+    for (const byTime of Object.values(byRoom)) {
+      const measurement = byTime?.[time];
+      if (!measurement) continue;
+      if (typeof measurement.temperature === "number") total += 1;
+      if (typeof measurement.humidity === "number") total += 1;
+    }
+  }
+  return total;
+}
+
 export function collectClimateDeviations(
   config: ClimateDocumentConfig,
   rows: Array<{ id: string; date: string; data: ClimateEntryData }>,

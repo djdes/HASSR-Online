@@ -173,6 +173,33 @@ export function BuildingsClient({
   // режима точек: после включения в шапке появляется выбор точки, а ночное
   // автосоздание делает документ на каждую.
   async function togglePerLocation(next: boolean) {
+    if (next) {
+      // Включение меняло режим молча, и управляющая не понимала, куда
+      // делись прежние документы (никуда — они общие и видны везде).
+      const ok = await confirmAsync({
+        title: "Вести журналы отдельно по точкам?",
+        description: "Что произойдёт с тем, что уже заполнено:",
+        bullets: [
+          {
+            label:
+              "Уже созданные документы не привязаны к точке — они останутся общими и будут видны на каждой точке",
+            tone: "info",
+          },
+          {
+            label:
+              "Отдельные документы появятся только у новых: ближайшей ночью автосоздание сделает по документу на каждую точку",
+            tone: "info",
+          },
+          {
+            label: "В шапке появится выбор точки — списки журналов станут точечными",
+            tone: "default",
+          },
+        ],
+        variant: "warn",
+        confirmLabel: "Включить",
+      });
+      if (!ok) return;
+    }
     if (!next) {
       const ok = await confirmAsync({
         title: "Выключить раздельные журналы?",
@@ -493,9 +520,26 @@ function BuildingCard({
   }
 
   async function deleteRoom(id: string, name: string) {
+    // Спрашиваем сервер, сколько отметок держит помещение: без числа
+    // человек не знает, что в журнале уборки пропадёт целая строка.
+    let bullets: Array<{ label: string; tone?: "default" | "warn" | "info" }> = [];
+    try {
+      const usageResponse = await fetch(`/api/settings/rooms/${id}/usage`);
+      if (usageResponse.ok) {
+        const usage = await usageResponse.json();
+        if (Array.isArray(usage?.bullets)) {
+          bullets = usage.bullets
+            .filter((line: unknown) => typeof line === "string")
+            .map((label: string) => ({ label, tone: "warn" as const }));
+        }
+      }
+    } catch {
+      /* последствия не показали — подтверждение всё равно спросим */
+    }
     const ok = await confirmAsync({
       title: "Удалить помещение?",
-      description: `Помещение «${name}» будет удалено. Связанные записи журналов потеряют ссылку на зону.`,
+      description: `Помещение «${name}» будет удалено безвозвратно.`,
+      bullets,
       variant: "danger",
       confirmLabel: "Удалить помещение",
     });

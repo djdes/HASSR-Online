@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
-import { getActiveBuildingId } from "@/lib/active-building";
-import { buildingWhere } from "@/lib/building-scope";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import {
   parseJournalPeriodsJson,
@@ -124,7 +122,6 @@ export async function PUT(request: Request) {
   const todayUtcStart = new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
   );
-  const activeBuildingId = await getActiveBuildingId(auth.session);
   const allCodes = new Set([...Object.keys(beforeMap), ...Object.keys(map)]);
   const result: Array<{
     code: string;
@@ -142,14 +139,17 @@ export async function PUT(request: Request) {
     });
     if (!tpl) continue;
 
-    const active = await db.journalDocument.findFirst({
+    // Периодичность — настройка всей организации, а смотрели мы только
+    // документ текущей точки: на других точках период молча расходился
+    // (заполненный документ там не мешал смене, пустой не подхватывал
+    // новые даты). Берём документы всех точек.
+    const activeDocuments = await db.journalDocument.findMany({
       where: {
         organizationId: orgId,
         templateId: tpl.id,
         status: "active",
         dateFrom: { lte: todayUtcStart },
         dateTo: { gte: todayUtcStart },
-        ...buildingWhere(activeBuildingId),
       },
       select: {
         id: true,
@@ -165,35 +165,41 @@ export async function PUT(request: Request) {
         },
       },
     });
-    if (!active) {
+    if (activeDocuments.length === 0) {
       result.push({ code, action: "no_active" });
       continue;
     }
 
     const period = resolveJournalPeriod(code, now, map);
-    const sameRange =
-      period.dateFrom.getTime() === active.dateFrom.getTime() &&
-      period.dateTo.getTime() === active.dateTo.getTime();
-    if (sameRange) {
-      result.push({ code, action: "no_change" });
-      continue;
+    let updated = 0;
+    let skipped = 0;
+    let unchanged = 0;
+    for (const active of activeDocuments) {
+      const sameRange =
+        period.dateFrom.getTime() === active.dateFrom.getTime() &&
+        period.dateTo.getTime() === active.dateTo.getTime();
+      if (sameRange) {
+        unchanged += 1;
+        continue;
+      }
+      if (active._count.entries > 0) {
+        skipped += 1;
+        continue;
+      }
+      // Пустой документ — обновляем под новые даты сразу.
+      await db.journalDocument.update({
+        where: { id: active.id },
+        data: {
+          dateFrom: period.dateFrom,
+          dateTo: period.dateTo,
+          title: `${tpl.name} · ${period.label}`,
+        },
+      });
+      updated += 1;
     }
-
-    if (active._count.entries > 0) {
-      result.push({ code, action: "skipped_has_entries" });
-      continue;
-    }
-
-    // Пустой документ — обновляем под новые даты сразу.
-    await db.journalDocument.update({
-      where: { id: active.id },
-      data: {
-        dateFrom: period.dateFrom,
-        dateTo: period.dateTo,
-        title: `${tpl.name} · ${period.label}`,
-      },
-    });
-    result.push({ code, action: "updated_empty" });
+    if (updated > 0) result.push({ code, action: "updated_empty" });
+    else if (skipped > 0) result.push({ code, action: "skipped_has_entries" });
+    else if (unchanged > 0) result.push({ code, action: "no_change" });
   }
 
   return NextResponse.json({ ok: true, periods: map, applied: result });

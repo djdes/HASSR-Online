@@ -229,6 +229,8 @@ export function FinishedProductDocumentsClient({
               </Link>
               <DocumentActionsMenu
                 size="sm"
+                document={document}
+                siblings={documents}
                 onEdit={activeTab === "active" ? () => setEditingDocument(document) : undefined}
                 onPrint={() => openPdf({ documentId: document.id })}
                 onDelete={

@@ -4,11 +4,15 @@ import test from "node:test";
 import {
   findClimateRowForEquipment,
   findClimateRowForRoom,
+  mergeClimateCorrections,
   mergeClimateMeasurement,
   orgClockMinutes,
   pickNearestControlTime,
 } from "@/lib/climate-fill";
-import { createClimateRoomConfig } from "@/lib/climate-document";
+import {
+  climateCorrectionKey,
+  createClimateRoomConfig,
+} from "@/lib/climate-document";
 
 // 2026-09-15 07:40 UTC = 10:40 МСК.
 const NOW = new Date("2026-09-15T07:40:00.000Z");
@@ -64,4 +68,28 @@ test("слияние: соседние помещения и сроки сохр
 
   const fresh = mergeClimateMeasurement(null, "room-r1", "17:00", { temperature: 19 }) as typeof existing;
   assert.deepEqual(fresh.measurements["room-r1"]["17:00"], { temperature: 19, humidity: null });
+});
+
+test("комментарий к отклонению: пишется в corrections, соседние не трогает", () => {
+  type Entry = {
+    measurements: Record<string, Record<string, { temperature: number; humidity: number }>>;
+    corrections: Record<string, string>;
+  };
+  const existing: Entry = {
+    measurements: { "room-r1": { "10:00": { temperature: 30, humidity: 50 } } },
+    corrections: { "room-r1:17:00:temperature": "Проветрили вечером" },
+  };
+  const key = climateCorrectionKey("room-r1", "10:00", "temperature");
+  const merged = mergeClimateCorrections(existing, { [key]: "  Сообщил руководителю  " }) as Entry;
+  assert.equal(merged.corrections[key], "Сообщил руководителю");
+  assert.equal(merged.corrections["room-r1:17:00:temperature"], "Проветрили вечером");
+  assert.deepEqual(merged.measurements, existing.measurements);
+
+  // Пустой текст ничего не стирает и не добавляет.
+  const untouched = mergeClimateCorrections(existing, { [key]: "   " }) as typeof existing;
+  assert.deepEqual(untouched.corrections, existing.corrections);
+
+  // Записи ещё нет — corrections создаются с нуля.
+  const fresh = mergeClimateCorrections(null, { [key]: "Вызвал мастера" }) as typeof existing;
+  assert.deepEqual(fresh.corrections, { [key]: "Вызвал мастера" });
 });

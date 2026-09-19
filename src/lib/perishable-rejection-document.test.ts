@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   addHoursToLocalDateTime,
   createPerishableRejectionRow,
+  formatPerishableDateTime,
   formatPerishableExpiry,
   normalizePerishableRejectionConfig,
   normalizePerishableTime,
@@ -94,6 +95,15 @@ test("время срока нормализуется, мусор отбрас�
   assert.equal(normalizePerishableTime("12:60"), "");
   assert.equal(normalizePerishableTime(undefined), "");
   assert.equal(normalizePerishableTime(42), "");
+});
+
+test("дата+время в ячейке показываются по-русски и не теряются", () => {
+  assert.equal(formatPerishableDateTime("2026-09-19", "08:40"), "19.09.2026 08:40");
+  assert.equal(formatPerishableDateTime("2026-09-19", ""), "19.09.2026");
+  // Старые строки со свободным текстом вместо даты показываем как есть.
+  assert.equal(formatPerishableDateTime("вчера утром", ""), "вчера утром");
+  assert.equal(formatPerishableDateTime("", "08:40"), "08:40");
+  assert.equal(formatPerishableDateTime("", ""), "");
 });
 
 test("пустой срок не печатается, нестандартная дата не теряется", () => {

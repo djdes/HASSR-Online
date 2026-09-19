@@ -35,6 +35,7 @@ import {
   filterManageMenuItems,
   useCanManageDocuments,
 } from "@/components/journals/document-list-ui";
+import { resolveJournalPeriodForDate } from "@/lib/journal-period";
 import {
   JOURNAL_CARD_LABEL_CLASS,
   JOURNAL_CARD_SECTION_CLASS,
@@ -46,6 +47,7 @@ import {
   JOURNAL_LIST_CARDS_CLASS,
 } from "@/components/journals/journal-responsive";
 import { localDayKey } from "@/lib/entry-defaults";
+import { buildDocumentCopy } from "@/lib/journal-document-copy";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
 type DocumentItem = {
   id: string;
@@ -228,14 +230,18 @@ export function SanitaryDayChecklistDocumentsClient({
       body: JSON.stringify({
         templateCode,
         title: payload.title.trim() || checklistTitle,
-        dateFrom: payload.documentDate,
-        dateTo: payload.documentDate,
+        // Период — по правилу журнала (`journal-period.ts`): чек-лист
+        // санитарного дня бессрочный, документ один на всё время.
+        ...resolveJournalPeriodForDate(templateCode, payload.documentDate),
         config,
       }),
     });
 
     if (!response.ok) {
-      toast.error("Не удалось создать документ");
+      // Текст сервера («За этот период уже есть документ «…»») объясняет
+      // отказ. Общая фраза оставляла человека без причины и без выхода.
+      const failure = await response.json().catch(() => null);
+      toast.error(failure?.error || "Не удалось создать документ");
       return;
     }
 
@@ -311,25 +317,37 @@ export function SanitaryDayChecklistDocumentsClient({
   async function cloneDocument(documentId: string) {
     const current = documents.find((item) => item.id === documentId);
     if (!current) return;
-    const cfg = current.config ?? {};
-    const documentDate =
-      typeof cfg.documentDate === "string" && cfg.documentDate
-        ? cfg.documentDate
-        : toIsoDate(current.dateFrom);
-
+    // Копия — чистый чек-лист: зоны, пункты и общие принципы переносятся,
+    // отметки живут в записях документа и не копируются. Период и
+    // название пересобираются (`buildDocumentCopy`), иначе копия
+    // повторяла период источника и не создавалась.
+    const copy = buildDocumentCopy({
+      templateCode,
+      // Не берём `checklistTitle` из области видимости: React Compiler
+      // тогда считает его изменяемым и отказывается мемоизировать форму.
+      journalName: getSanitaryDayChecklistTitle(templateCode),
+      sourceConfig: current.config ?? {},
+      sourcePeriod: {
+        dateFrom: toIsoDate(current.dateFrom),
+        dateTo: toIsoDate(current.dateFrom),
+      },
+      today: localDayKey(),
+      existingTitles: documents.map((item) => item.title),
+    });
     const response = await fetch("/api/journal-documents", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         templateCode,
-        title: current.title,
-        dateFrom: documentDate,
-        dateTo: documentDate,
-        config: { ...cfg, documentDate },
+        title: copy.title,
+        dateFrom: copy.dateFrom,
+        dateTo: copy.dateTo,
+        config: copy.config,
       }),
     });
     if (!response.ok) {
-      toast.error("Не удалось сделать копию");
+      const failure = await response.json().catch(() => null);
+      toast.error(failure?.error || "Не удалось сделать копию");
       return;
     }
     router.refresh();

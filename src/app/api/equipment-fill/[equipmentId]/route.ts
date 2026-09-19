@@ -8,18 +8,24 @@ import {
 } from "@/lib/temperature-deviations";
 import { verifyEquipmentQrToken } from "@/lib/equipment-qr-token";
 import {
-  COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE,
-  normalizeColdEquipmentDocumentConfig,
   normalizeColdEquipmentEntryData,
   pickColdReadingSlotForWrite,
+  setColdEquipmentCorrection,
   type ColdEquipmentEntryData,
 } from "@/lib/cold-equipment-document";
-import { normalizeClimateDocumentConfig } from "@/lib/climate-document";
 import {
-  findClimateRowForEquipment,
+  climateCorrectionKey,
+  isClimateValueOutOfRange,
+} from "@/lib/climate-document";
+import {
+  mergeClimateCorrections,
   mergeClimateMeasurement,
   pickNearestControlTime,
 } from "@/lib/climate-fill";
+import {
+  EQUIPMENT_FILL_NO_DOCUMENT_ERROR,
+  resolveEquipmentFillTargets,
+} from "@/lib/equipment-fill-targets";
 import { clientIp } from "@/lib/client-ip";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import {
@@ -53,6 +59,11 @@ const bodySchema = z.object({
   temperature: z.number(),
   /** Опциональная влажность для оборудования с climate-mapping. */
   humidity: z.number().min(0).max(100).optional(),
+  /**
+   * «Что сделали» при выходе за норму. Для проверки СанПиН голого числа
+   * мало: в журнале должно быть видно и причину, и действие.
+   */
+  correction: z.string().trim().max(300).optional(),
 });
 
 function toPrismaJsonValue(
@@ -134,25 +145,48 @@ export async function POST(
   const dateKey = orgTodayKey(timezone, now);
   const todayStart = new Date(`${dateKey}T00:00:00.000Z`);
 
-  const docs = await db.journalDocument.findMany({
-    where: {
-      organizationId,
-      status: "active",
-      template: { code: COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE },
-      dateFrom: { lte: todayStart },
-      dateTo: { gte: todayStart },
+  // Та же функция, что решает на странице: человек видит «журнала нет»
+  // до ввода, а не после «Сохранить».
+  const targets = await resolveEquipmentFillTargets({
+    equipment: {
+      id: equipment.id,
+      areaId: equipment.area.id,
+      areaName: equipment.area.name,
     },
-    select: { id: true, config: true },
+    organizationId,
+    day: todayStart,
   });
+  if (!targets.hasActiveDocument) {
+    return NextResponse.json(
+      { code: "no-active-document", error: EQUIPMENT_FILL_NO_DOCUMENT_ERROR },
+      { status: 409 }
+    );
+  }
+
+  // Отклонение → комментарий обязателен: иначе в журнале остаётся голое
+  // число, и проверяющий не видит ни причины, ни действия.
+  const isOutOfRange =
+    (equipment.tempMin != null && parsed.temperature < equipment.tempMin) ||
+    (equipment.tempMax != null && parsed.temperature > equipment.tempMax);
+  const humidityOutOfRange = targets.climate
+    ? isClimateValueOutOfRange(parsed.humidity, targets.climate.row.humidity)
+    : false;
+  const correction = parsed.correction?.trim() ?? "";
+  if ((isOutOfRange || humidityOutOfRange) && !correction) {
+    return NextResponse.json(
+      {
+        code: "correction-required",
+        error:
+          "Замер вне нормы. Напишите, что вы сделали — без этого запись в журнал не принимается.",
+      },
+      { status: 400 }
+    );
+  }
 
   let touched = 0;
   const touchedDocumentIds: string[] = [];
-  for (const doc of docs) {
-    const config = normalizeColdEquipmentDocumentConfig(doc.config);
-    const matching = config.equipment.filter(
-      (item) => item.sourceEquipmentId === equipmentId
-    );
-    if (matching.length === 0) continue;
+  for (const doc of targets.coldDocuments) {
+    const matching = doc.items;
 
     const existing = await db.journalDocumentEntry.findUnique({
       where: {
@@ -181,15 +215,23 @@ export async function POST(
         if (value != null) dayTemperatures[key] = value;
       }
     }
+    const writtenSlotKeys: string[] = [];
     for (const item of matching) {
       const slotKey = pickColdReadingSlotForWrite(item, dayTemperatures);
       temperatures[slotKey] = parsed.temperature;
       dayTemperatures[slotKey] = parsed.temperature;
+      writtenSlotKeys.push(slotKey);
     }
-    const nextData: ColdEquipmentEntryData = {
+    let nextData: ColdEquipmentEntryData = {
       responsibleTitle: current.responsibleTitle,
       temperatures,
+      ...(current.corrections ? { corrections: current.corrections } : {}),
     };
+    // Комментарий ложится к тому замеру, который только что записали —
+    // журнал и печать читают его из `corrections` сами.
+    for (const slotKey of writtenSlotKeys) {
+      nextData = setColdEquipmentCorrection(nextData, slotKey, correction);
+    }
 
     await db.journalDocumentEntry.upsert({
       where: {
@@ -215,93 +257,68 @@ export async function POST(
   // в active climate_control document. Используется в кондитерках,
   // где один датчик отвечает за temperature + humidity комнаты.
   let humidityTouched = 0;
-  if (typeof parsed.humidity === "number") {
-    const climateMapping = await db.equipmentSensorMapping.findFirst({
+  if (typeof parsed.humidity === "number" && targets.climate) {
+    // Строка климата — цех оборудования (`room-area-<areaId>` или
+    // совпадение названия): у самого оборудования строки в бланке нет.
+    const { documentId: climateDocId, config: climateConfig, row: climateRow } =
+      targets.climate;
+    const slot = pickNearestControlTime(climateConfig.controlTimes, now, timezone);
+    const existing = await db.journalDocumentEntry.findUnique({
       where: {
-        equipmentId: equipment.id,
-        readingType: "humidity",
-        template: { code: "climate_control" },
-      },
-      select: { templateId: true },
-    });
-    if (climateMapping) {
-      const climateDoc = await db.journalDocument.findFirst({
-        where: {
-          organizationId,
-          templateId: climateMapping.templateId,
-          status: "active",
-          dateFrom: { lte: todayStart },
-          dateTo: { gte: todayStart },
+        documentId_employeeId_date: {
+          documentId: climateDocId,
+          employeeId: employee.id,
+          date: todayStart,
         },
-        select: { id: true, config: true },
+      },
+      select: { data: true },
+    });
+    let nextData = mergeClimateMeasurement(existing?.data ?? null, climateRow.id, slot, {
+      temperature: parsed.temperature,
+      humidity: parsed.humidity,
+    });
+    // Влажность вне нормы цеха — тот же комментарий, ключ замера climate.
+    if (
+      correction &&
+      isClimateValueOutOfRange(parsed.humidity, climateRow.humidity)
+    ) {
+      nextData = mergeClimateCorrections(nextData, {
+        [climateCorrectionKey(climateRow.id, slot, "humidity")]: correction,
       });
-      if (climateDoc) {
-        const climateConfig = normalizeClimateDocumentConfig(climateDoc.config);
-        // Строка климата — цех оборудования (`room-area-<areaId>` или
-        // совпадение названия). Раньше ключом был id самого оборудования:
-        // такой строки в бланке нет, и влажность пропадала.
-        const climateRow = findClimateRowForEquipment(climateConfig, {
-          areaId: equipment.area.id,
-          areaName: equipment.area.name,
-        });
-        if (climateRow) {
-          const slot = pickNearestControlTime(climateConfig.controlTimes, now, timezone);
-          const existing = await db.journalDocumentEntry.findUnique({
-            where: {
-              documentId_employeeId_date: {
-                documentId: climateDoc.id,
-                employeeId: employee.id,
-                date: todayStart,
-              },
-            },
-            select: { data: true },
-          });
-          const nextData = mergeClimateMeasurement(existing?.data ?? null, climateRow.id, slot, {
-            temperature: parsed.temperature,
-            humidity: parsed.humidity,
-          });
-
-          await db.journalDocumentEntry.upsert({
-            where: {
-              documentId_employeeId_date: {
-                documentId: climateDoc.id,
-                employeeId: employee.id,
-                date: todayStart,
-              },
-            },
-            create: {
-              documentId: climateDoc.id,
-              employeeId: employee.id,
-              date: todayStart,
-              data: toPrismaJsonValue(nextData),
-            },
-            update: { data: toPrismaJsonValue(nextData) },
-          });
-          humidityTouched = 1;
-          touchedDocumentIds.push(climateDoc.id);
-        }
-      }
     }
+
+    await db.journalDocumentEntry.upsert({
+      where: {
+        documentId_employeeId_date: {
+          documentId: climateDocId,
+          employeeId: employee.id,
+          date: todayStart,
+        },
+      },
+      create: {
+        documentId: climateDocId,
+        employeeId: employee.id,
+        date: todayStart,
+        data: toPrismaJsonValue(nextData),
+      },
+      update: { data: toPrismaJsonValue(nextData) },
+    });
+    humidityTouched = 1;
+    touchedDocumentIds.push(climateDocId);
   }
 
-  // Показание не легло ни в один активный журнал на сегодня — раньше
-  // отвечали «ok» с touched: 0, и сотрудник думал, что замер записан.
+  // Страховка: цель была, но записать не удалось (например, влажность не
+  // прислали, а холодильных документов нет). Молчаливое «ok» с touched: 0
+  // заставляло сотрудника думать, что замер записан.
   if (touched === 0 && humidityTouched === 0) {
     return NextResponse.json(
-      {
-        code: "no-active-document",
-        error:
-          "Сегодня это оборудование не входит ни в один активный журнал температуры. Попросите управляющего создать документ или добавить в него оборудование.",
-      },
+      { code: "no-active-document", error: EQUIPMENT_FILL_NO_DOCUMENT_ERROR },
       { status: 409 }
     );
   }
 
   // Отклонение → тот же обработчик, что у датчиков: ответственному за
   // журнал сразу, руководству — если не исправит (temperature-deviations).
-  const isOutOfRange =
-    (equipment.tempMin != null && parsed.temperature < equipment.tempMin) ||
-    (equipment.tempMax != null && parsed.temperature > equipment.tempMax);
   await processTemperatureReading({
     organizationId,
     subjectKey: subjectKeyForEquipment(equipment.id),
@@ -324,13 +341,13 @@ export async function POST(
     dateKey,
     temperature: parsed.temperature,
     humidity: parsed.humidity,
-    outOfRange: isOutOfRange,
+    outOfRange: isOutOfRange || humidityOutOfRange,
   });
 
   return NextResponse.json({
     ok: true,
     touched,
     humidityTouched,
-    outOfRange: isOutOfRange,
+    outOfRange: isOutOfRange || humidityOutOfRange,
   });
 }

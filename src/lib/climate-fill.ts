@@ -125,3 +125,28 @@ export function mergeClimateMeasurement(
     },
   };
 }
+
+/**
+ * Комментарий «что сделали» к замеру вне нормы. Кладётся в то же
+ * `corrections[roomId:время:метрика]`, откуда его читает
+ * `collectClimateDeviations` — значит, он виден в журнале и в печати
+ * без правок клиента журнала.
+ *
+ * Пустой текст ничего не стирает, соседние комментарии не трогаем.
+ */
+export function mergeClimateCorrections(
+  existingData: unknown,
+  comments: Record<string, string>
+): Record<string, unknown> {
+  const base = asRecord(existingData);
+  const corrections = { ...asRecord(base.corrections) };
+  let changed = false;
+  for (const [key, text] of Object.entries(comments)) {
+    const trimmed = text.trim();
+    if (!trimmed) continue;
+    corrections[key] = trimmed;
+    changed = true;
+  }
+  if (!changed) return base;
+  return { ...base, corrections };
+}

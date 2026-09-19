@@ -64,6 +64,19 @@ export async function POST(request: Request) {
     const body = await request.json();
     const validatedData = equipmentSchema.parse(body);
 
+    // Норму «от 6 до 2» сохранить было можно, и тогда журнал помечал
+    // отклонением ЛЮБОЙ замер — журнал выглядел сломанным.
+    if (
+      validatedData.tempMin != null &&
+      validatedData.tempMax != null &&
+      validatedData.tempMin > validatedData.tempMax
+    ) {
+      return NextResponse.json(
+        { error: "Минимальная температура не может быть больше максимальной" },
+        { status: 400 }
+      );
+    }
+
     // Verify areaId belongs to org
     const area = await db.area.findUnique({
       where: { id: validatedData.areaId },

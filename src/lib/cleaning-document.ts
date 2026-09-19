@@ -2675,6 +2675,58 @@ export function collectMatrixRoomIds(config: CleaningDocumentConfig): string[] {
   return ids;
 }
 
+/** Подпись строки помещения, которого больше нет в справочнике. */
+export const CLEANING_DELETED_ROOM_SUFFIX = "помещение удалено";
+
+/** Имя строки удалённого помещения: снимок из конфига + пометка. */
+export function formatDeletedCleaningRoomName(name?: string | null): string {
+  const base = (name ?? "").trim() || "Помещение";
+  return `${base} (${CLEANING_DELETED_ROOM_SUFFIX})`;
+}
+
+/** Есть ли у строки помещения хоть одна непустая отметка в matrix. */
+export function hasCleaningRoomMarks(
+  config: Pick<CleaningDocumentConfig, "matrix">,
+  roomId: string
+): boolean {
+  const row = config.matrix?.[roomId];
+  if (!row) return false;
+  return Object.values(row).some(
+    (value) =>
+      typeof value === "string" &&
+      value !== "" &&
+      value !== CLEANING_EMPTY_SENTINEL
+  );
+}
+
+/**
+ * Помещения, удалённые из справочника, но с отметками в журнале.
+ *
+ * ПОЧЕМУ строку оставляем: отметки уборки — данные ХАССП, молча стирать
+ * их нельзя. Пустая строка удалённого помещения, наоборот, не нужна —
+ * она только мешает. Нормализация конфига отметки не трогает вовсе; этот
+ * список нужен экрану и печати, чтобы показывать строку одинаково.
+ */
+export function listDeletedCleaningRoomsWithMarks(
+  config: CleaningDocumentConfig,
+  knownRoomIds: Iterable<string>
+): { id: string; name: string }[] {
+  const known = new Set(knownRoomIds);
+  const snapshotById = new Map(config.rooms.map((room) => [room.id, room.name]));
+  const seen = new Set<string>();
+  const result: { id: string; name: string }[] = [];
+  for (const roomId of collectMatrixRoomIds(config)) {
+    if (known.has(roomId) || seen.has(roomId)) continue;
+    seen.add(roomId);
+    if (!hasCleaningRoomMarks(config, roomId)) continue;
+    result.push({
+      id: roomId,
+      name: formatDeletedCleaningRoomName(snapshotById.get(roomId)),
+    });
+  }
+  return result;
+}
+
 /**
  * Проставляет «/» («уборка не проводилась») во все ПРОШЕДШИЕ дни
  * периода, у которых нет плановой отметки.

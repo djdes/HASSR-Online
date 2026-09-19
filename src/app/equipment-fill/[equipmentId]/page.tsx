@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { verifyEquipmentQrToken } from "@/lib/equipment-qr-token";
+import { resolveEquipmentFillTargets } from "@/lib/equipment-fill-targets";
+import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
+import { orgTodayKey } from "@/lib/timezone";
 import { EquipmentFillClient } from "./equipment-fill-client";
 
 export const runtime = "nodejs";
@@ -62,6 +65,7 @@ export default async function EquipmentFillPage({
           id: true,
           name: true,
           organizationId: true,
+          organization: { select: { timezone: true } },
         },
       },
       sensorMappings: {
@@ -86,16 +90,42 @@ export default async function EquipmentFillPage({
 
   const organizationId = equipment.area.organizationId;
 
-  // Employees who can be named as the reader.
-  const employees = await db.user.findMany({
-    where: { organizationId, isActive: true, archivedAt: null },
-    select: { id: true, name: true, positionTitle: true },
-    orderBy: { name: "asc" },
-  });
+  // Employees who can be named as the reader. Набор тот же, что проверяет
+  // POST (`ORG_ROSTER_WHERE`): иначе ROOT попадал в список, а сохранение
+  // отвечало «Сотрудник не найден».
+  // Цели записи считаем тем же кодом, что и POST: человек должен увидеть
+  // «журнала на сегодня нет» до ввода, а не после «Сохранить» (409).
+  const timezone = equipment.area.organization.timezone || "Europe/Moscow";
+  const day = new Date(`${orgTodayKey(timezone, new Date())}T00:00:00.000Z`);
+  const [employees, targets] = await Promise.all([
+    db.user.findMany({
+      where: { organizationId, ...ORG_ROSTER_WHERE },
+      select: { id: true, name: true, positionTitle: true },
+      orderBy: { name: "asc" },
+    }),
+    resolveEquipmentFillTargets({
+      equipment: {
+        id: equipment.id,
+        areaId: equipment.area.id,
+        areaName: equipment.area.name,
+      },
+      organizationId,
+      day,
+    }),
+  ]);
 
   return (
     <EquipmentFillClient
       token={token}
+      hasActiveDocument={targets.hasActiveDocument}
+      humidityNorm={
+        targets.climate?.row.humidity.enabled
+          ? {
+              min: targets.climate.row.humidity.min,
+              max: targets.climate.row.humidity.max,
+            }
+          : null
+      }
       equipment={{
         id: equipment.id,
         name: equipment.name,

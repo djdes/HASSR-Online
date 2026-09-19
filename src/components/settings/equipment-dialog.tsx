@@ -48,9 +48,28 @@ interface EquipmentData {
 interface EquipmentDialogProps {
   areas: AreaOption[];
   equipment?: EquipmentData;
+  /// Названия уже заведённых единиц — чтобы предупредить о дубле. Два
+  /// холодильника с одним именем невозможно различить ни в журнале, ни
+  /// на QR-плакате.
+  existingNames?: string[];
 }
 
-export function EquipmentDialog({ areas, equipment }: EquipmentDialogProps) {
+/**
+ * «2,5» в поле `type="number"` браузер считает недопустимым и отдаёт
+ * пустую строку — норма молча стиралась. Принимаем запятую как разделитель.
+ */
+function parseTempInput(value: string): number | null | "invalid" {
+  const trimmed = value.trim();
+  if (trimmed === "") return null;
+  const n = Number(trimmed.replace(",", "."));
+  return Number.isFinite(n) ? n : "invalid";
+}
+
+export function EquipmentDialog({
+  areas,
+  equipment,
+  existingNames = [],
+}: EquipmentDialogProps) {
   const router = useRouter();
   const isEdit = !!equipment;
   const [open, setOpen] = useState(false);
@@ -75,8 +94,29 @@ export function EquipmentDialog({ areas, equipment }: EquipmentDialogProps) {
     setError(null);
   }
 
+  const duplicateName =
+    name.trim() !== "" &&
+    name.trim().toLowerCase() !== (equipment?.name ?? "").trim().toLowerCase() &&
+    existingNames.some(
+      (other) => other.trim().toLowerCase() === name.trim().toLowerCase()
+    );
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    const parsedMin = parseTempInput(tempMin);
+    const parsedMax = parseTempInput(tempMax);
+    if (parsedMin === "invalid" || parsedMax === "invalid") {
+      setError("Температура должна быть числом, например 2 или -18,5");
+      return;
+    }
+    if (parsedMin !== null && parsedMax !== null && parsedMin > parsedMax) {
+      setError(
+        "Минимальная температура больше максимальной — поменяйте значения местами"
+      );
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
 
@@ -90,8 +130,8 @@ export function EquipmentDialog({ areas, equipment }: EquipmentDialogProps) {
           type,
           areaId,
           serialNumber: serialNumber || undefined,
-          tempMin: tempMin !== "" ? Number(tempMin) : undefined,
-          tempMax: tempMax !== "" ? Number(tempMax) : undefined,
+          tempMin: parsedMin ?? undefined,
+          tempMax: parsedMax ?? undefined,
           tuyaDeviceId: tuyaDeviceId || undefined,
         }),
       });
@@ -179,6 +219,13 @@ export function EquipmentDialog({ areas, equipment }: EquipmentDialogProps) {
               placeholder="Например: Холодильник Samsung"
               required
             />
+            {duplicateName ? (
+              <p className="text-[13px] text-[#b45309]">
+                Единица с таким названием уже есть. В журналах и на QR-плакатах их
+                будет не различить — добавьте цех или номер, например «Холодильник
+                Samsung (бар)».
+              </p>
+            ) : null}
           </div>
           <div className="space-y-2">
             <Label htmlFor="eq-type">
@@ -228,22 +275,22 @@ export function EquipmentDialog({ areas, equipment }: EquipmentDialogProps) {
               <Label htmlFor="eq-temp-min">Мин. температура</Label>
               <Input
                 id="eq-temp-min"
-                type="number"
-                step="0.1"
+                type="text"
+                inputMode="decimal"
                 value={tempMin}
                 onChange={(e) => setTempMin(e.target.value)}
-                placeholder="°C"
+                placeholder="например 2 или -18"
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="eq-temp-max">Макс. температура</Label>
               <Input
                 id="eq-temp-max"
-                type="number"
-                step="0.1"
+                type="text"
+                inputMode="decimal"
                 value={tempMax}
                 onChange={(e) => setTempMax(e.target.value)}
-                placeholder="°C"
+                placeholder="например 6 или -15"
               />
             </div>
           </div>

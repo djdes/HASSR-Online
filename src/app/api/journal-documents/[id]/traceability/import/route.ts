@@ -9,6 +9,9 @@ import {
   validateTraceabilityRow,
 } from "@/lib/traceability-document";
 import { isManagementRole } from "@/lib/user-roles";
+import { getActiveOrgId } from "@/lib/auth-helpers";
+import { db } from "@/lib/db";
+import { canWriteJournal } from "@/lib/journal-acl";
 
 const MAX_IMPORT_BYTES = 10 * 1024 * 1024;
 
@@ -160,15 +163,6 @@ export async function POST(
     });
   }
 
-  if (!isManagementRole(session.user.role)) {
-    return asImportResponse({
-      rows: [],
-      errors: [{ rowNumber: 0, errors: ["Недостаточно прав"] }],
-      importedCount: 0,
-      status: 403,
-    });
-  }
-
   const { id } = await params;
   if (!id) {
     return asImportResponse({
@@ -176,6 +170,60 @@ export async function POST(
       errors: [{ rowNumber: 0, errors: ["Документ не найден"] }],
       importedCount: 0,
       status: 400,
+    });
+  }
+
+  // Документ проверяем ДО разбора файла: раньше ручка вообще его не
+  // открывала, и строки можно было загрузить в чужой и в закрытый
+  // документ — закрытый период после этого переставал сходиться.
+  const document = await db.journalDocument.findUnique({
+    where: { id },
+    select: {
+      organizationId: true,
+      status: true,
+      template: { select: { code: true } },
+    },
+  });
+  if (!document || document.organizationId !== getActiveOrgId(session)) {
+    return asImportResponse({
+      rows: [],
+      errors: [{ rowNumber: 0, errors: ["Документ не найден"] }],
+      importedCount: 0,
+      status: 404,
+    });
+  }
+  if (document.status !== "active") {
+    return asImportResponse({
+      rows: [],
+      errors: [
+        {
+          rowNumber: 0,
+          errors: [
+            "Документ закрыт. Верните его в активные, чтобы загрузить строки.",
+          ],
+        },
+      ],
+      importedCount: 0,
+      status: 400,
+    });
+  }
+  const canWrite =
+    isManagementRole(session.user.role) ||
+    (Boolean(document.template?.code) &&
+      (await canWriteJournal(
+        {
+          id: session.user.id,
+          role: session.user.role,
+          isRoot: session.user.isRoot === true,
+        },
+        document.template!.code
+      )));
+  if (!canWrite) {
+    return asImportResponse({
+      rows: [],
+      errors: [{ rowNumber: 0, errors: ["Недостаточно прав"] }],
+      importedCount: 0,
+      status: 403,
     });
   }
 

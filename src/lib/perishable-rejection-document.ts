@@ -119,6 +119,21 @@ export function addHoursToLocalDateTime(
   };
 }
 
+/**
+ * Пара «дата + время» для ячейки таблицы: «дд.мм.гггг чч:мм».
+ * Почему отдельно от `formatPerishableExpiry`: поступление и реализация
+ * хранят время в сыром виде (без нормализации), а показать их надо
+ * так же, как срок.
+ */
+export function formatPerishableDateTime(date: unknown, time: unknown): string {
+  const raw = normalizeText(date);
+  const rawTime = normalizeText(time);
+  if (!raw) return rawTime;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+  const shown = match ? `${match[3]}.${match[2]}.${match[1]}` : raw;
+  return rawTime ? `${shown} ${rawTime}` : shown;
+}
+
 /** Срок реализации для бланка: «дд.мм.гггг чч:мм» либо просто дата. */
 export function formatPerishableExpiry(row: {
   expiryDate?: string;

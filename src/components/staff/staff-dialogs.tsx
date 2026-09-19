@@ -976,9 +976,29 @@ export function StaffArchiveDialog(props: {
   );
 }
 
+/** «1 запись / 2 записи / 5 записей» журналов. */
+function pluralJournalRecords(count: number) {
+  const tail = count % 100;
+  if (tail >= 11 && tail <= 14) return "записей";
+  switch (count % 10) {
+    case 1:
+      return "запись";
+    case 2:
+    case 3:
+    case 4:
+      return "записи";
+    default:
+      return "записей";
+  }
+}
+
 export function StaffDeleteBlockedDialog(props: {
   employee: StaffEmployee;
+  /// Сколько записей журналов ссылается на сотрудника — API отдаёт это
+  /// число в ответе 409, а диалог раньше его не показывал.
+  references?: number;
 } & Close) {
+  const references = props.references ?? 0;
   return (
     <Dialog open={props.open} onOpenChange={(v) => !v && props.onClose()}>
       <DialogContent className="max-w-[calc(100vw-1rem)] gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-[480px]">
@@ -986,6 +1006,12 @@ export function StaffDeleteBlockedDialog(props: {
           `Удаление сотрудника "${props.employee.name}"`,
           <div className="space-y-2 text-[13px] text-[#6f7282]">
             <p>Данный сотрудник участвует в журналах. Удаление не возможно.</p>
+            {references > 0 ? (
+              <p className="font-medium text-[#3c4053]">
+                На сотрудника ссылаются {references}{" "}
+                {pluralJournalRecords(references)} журналов.
+              </p>
+            ) : null}
             <p>Если сотрудник уволился, то перенесите его в архив.</p>
           </div>
         )}

@@ -25,6 +25,7 @@ import {
   ZoomIn,
 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { confirmAsync } from "@/components/ui/confirm-async";
 import { cn } from "@/lib/utils";
 import { journalMatchesQuery, normalizeJournalSearch } from "@/lib/journal-search";
 import {
@@ -63,6 +64,8 @@ type Item = {
   defaultAssigneeId: string | null;
   allowedPositionIds: string[];
   bonusAmountKopecks: number;
+  /** Активные документы журнала — их прячет выключение тумблера. */
+  activeDocumentCount?: number;
 };
 
 /** Бумажный бланк с тем же тумблером вкл/выкл, что у электронных. */
@@ -163,6 +166,10 @@ export function JournalsSettingsClient({
   const [disableRestConfirmOpen, setDisableRestConfirmOpen] = useState(false);
   /** Код обязательного журнала, который пытаются выключить. */
   const [requiredOffCode, setRequiredOffCode] = useState<string | null>(null);
+  const requiredOffDocCount = requiredOffCode
+    ? (items.find((item) => item.code === requiredOffCode)
+        ?.activeDocumentCount ?? 0)
+    : 0;
 
   // Anchor-deep-link from disabled-card "Включить" buttons:
   //   /settings/journals#journal-<code>
@@ -204,7 +211,7 @@ export function JournalsSettingsClient({
     setState((prev) => ({ ...prev, [code]: !prev[code] }));
   }
 
-  function toggle(code: string) {
+  async function toggle(code: string) {
     // Выключение обязательного журнала — через подтверждение: человек
     // должен увидеть, чем это грозит на проверке. Условные («нужен при
     // наличии фритюра») выключаются молча: оборудования может не быть.
@@ -212,6 +219,29 @@ export function JournalsSettingsClient({
     if (rule && !rule.condition && state[code]) {
       setRequiredOffCode(code);
       return;
+    }
+    // Раньше журнал с заполненными документами выключался молча, и они
+    // просто пропадали из всех списков — выглядело как потеря данных.
+    const activeDocs =
+      items.find((item) => item.code === code)?.activeDocumentCount ?? 0;
+    if (state[code] && activeDocs > 0) {
+      const ok = await confirmAsync({
+        title: "Выключить журнал?",
+        description: "Данные останутся в базе, но журнал пропадёт из интерфейса.",
+        bullets: [
+          {
+            label: `Активных документов: ${activeDocs} — они скроются из списка журналов, дашборда и задач`,
+            tone: "warn",
+          },
+          {
+            label: "Ничего не удаляется: включите журнал обратно — документы вернутся",
+            tone: "info",
+          },
+        ],
+        variant: "warn",
+        confirmLabel: "Выключить журнал",
+      });
+      if (!ok) return;
     }
     forceToggle(code);
   }
@@ -942,6 +972,16 @@ export function JournalsSettingsClient({
         title={`Выключить обязательный журнал?`}
         description={`Журнал обязателен для сферы «${sphereLabel(sphere)}».`}
         bullets={[
+          ...(requiredOffDocCount > 0
+            ? [
+                {
+                  // Число прячущихся документов — то, о чём спрашивают чаще
+                  // всего: «а заполненное куда делось?».
+                  label: `Скроется активных документов: ${requiredOffDocCount} (данные останутся, вернутся при включении)`,
+                  tone: "warn" as const,
+                },
+              ]
+            : []),
           { label: "Исчезнет из дашборда и из задач сотрудникам", tone: "warn" },
           { label: "Перестанет учитываться в готовности", tone: "default" },
           { label: `Проверка Роспотребнадзора — ${rules.introLaw.label}, до 50 000 ₽`, tone: "warn" },

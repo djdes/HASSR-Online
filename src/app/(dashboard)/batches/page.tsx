@@ -19,6 +19,9 @@ const FILTER_LABELS: Record<string, string> = {
   finished: "Готово",
   shipped: "Отгружено",
   expired: "Просрочено",
+  // Статус «Списана» показывался в таблице, но отфильтровать по нему
+  // было нечем — кнопки в списке фильтров не было.
+  written_off: "Списано",
 };
 
 function daysUntilExpiry(date: Date | null, now: Date): number | null {
@@ -34,11 +37,21 @@ export default async function BatchesPage({
   const filters = await searchParams;
   const session = await requireAuth();
   const now = new Date();
+  // Граница «просрочено» — начало сегодняшнего дня: партия со сроком
+  // «сегодня» ещё годна, в таблице она подписана «сегодня», а не
+  // «просрочена».
+  const todayStart = new Date(now);
+  todayStart.setHours(0, 0, 0, 0);
 
   const where: Record<string, unknown> = {
     organizationId: getActiveOrgId(session),
   };
-  if (filters.status && filters.status !== "all") {
+  if (filters.status === "expired") {
+    // «Просрочено» — это факт по сроку годности, а не статус в базе:
+    // статус `expired` никто не проставляет, и фильтр всегда был пустым.
+    where.expiryDate = { lt: todayStart };
+    where.status = { notIn: ["written_off", "shipped"] };
+  } else if (filters.status && filters.status !== "all") {
     where.status = filters.status;
   }
 
@@ -57,10 +70,14 @@ export default async function BatchesPage({
           status: "in_production",
         },
       }),
+      // «Истекает ≤3 дня» — именно ещё НЕ просроченные: раньше сюда
+      // попадали и партии с давно прошедшим сроком, и цифра на плитке
+      // не сходилась с тем, что показано в таблице.
       db.batch.count({
         where: {
           organizationId: getActiveOrgId(session),
           expiryDate: {
+            gte: todayStart,
             lte: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000),
           },
           status: { notIn: ["expired", "written_off", "shipped"] },
@@ -71,6 +88,23 @@ export default async function BatchesPage({
 
   const [receivedCount, inProductionCount, expiringCount] = stats;
   const activeFilter = filters.status ?? "all";
+
+  // Откуда партия: `sourceEntryId` партий, заведённых из журнала приёмки,
+  // указывает на документ. Одним запросом на всю страницу.
+  const sourceIds = [
+    ...new Set(batches.map((batch) => batch.sourceEntryId).filter((id): id is string => !!id)),
+  ];
+  const sourceDocuments = sourceIds.length
+    ? await db.journalDocument.findMany({
+        where: { id: { in: sourceIds }, organizationId: getActiveOrgId(session) },
+        select: {
+          id: true,
+          dateFrom: true,
+          template: { select: { code: true, name: true } },
+        },
+      })
+    : [];
+  const sourceById = new Map(sourceDocuments.map((doc) => [doc.id, doc]));
 
   return (
     <div className="space-y-5">
@@ -125,7 +159,7 @@ export default async function BatchesPage({
 
       {/* Table */}
       <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0 lg:overflow-visible">
-        <div className="min-w-[840px] overflow-hidden rounded-3xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
+        <div className="min-w-[980px] overflow-hidden rounded-3xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
           <table className="w-full border-collapse text-[14px]">
             <thead>
               <tr className="border-b border-[#ececf4] bg-[#fafbff] text-left text-[12px] uppercase tracking-wider text-[#6f7282]">
@@ -135,6 +169,7 @@ export default async function BatchesPage({
                 <th className="px-5 py-3 font-medium">Кол-во</th>
                 <th className="px-5 py-3 font-medium">Срок годности</th>
                 <th className="px-5 py-3 font-medium">Статус</th>
+                <th className="px-5 py-3 font-medium">Откуда</th>
               </tr>
             </thead>
             <tbody>
@@ -146,6 +181,9 @@ export default async function BatchesPage({
                   label: batch.status,
                   className: "bg-[#f5f6ff] text-[#6f7282]",
                 };
+                const source = batch.sourceEntryId
+                  ? sourceById.get(batch.sourceEntryId)
+                  : undefined;
                 const rowTint = isExpired
                   ? "bg-[#fff4f2]"
                   : isExpiring
@@ -214,13 +252,28 @@ export default async function BatchesPage({
                         {status.label}
                       </span>
                     </td>
+                    {/* Откуда партия: заведена из строки журнала приёмки
+                        или руками. Ссылка ведёт в тот самый документ. */}
+                    <td className="px-5 py-3 text-[13px]">
+                      {source ? (
+                        <Link
+                          href={`/journals/${source.template.code}/documents/${source.id}`}
+                          className="text-[#3848c7] hover:underline"
+                        >
+                          из приёмки от{" "}
+                          {source.dateFrom.toLocaleDateString("ru-RU")}
+                        </Link>
+                      ) : (
+                        <span className="text-[#9b9fb3]">вручную</span>
+                      )}
+                    </td>
                   </tr>
                 );
               })}
               {batches.length === 0 && (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="px-5 py-10 text-center text-[14px] text-[#9b9fb3]"
                   >
                     Партий пока нет

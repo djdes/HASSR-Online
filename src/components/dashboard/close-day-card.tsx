@@ -21,6 +21,7 @@ type Summary = {
   skippedReason?:
     | "out_of_period"
     | "no_document"
+    | "period_closed"
     | "no_employees"
     | "no_responsible"
     | "unsupported"
@@ -39,6 +40,7 @@ type Result = {
 const SKIP_LABELS: Record<NonNullable<Summary["skippedReason"]>, string> = {
   out_of_period: "дата вне периода",
   no_document: "нет документа",
+  period_closed: "журнал за этот период закрыт — верните его в активные",
   no_employees: "нет сотрудников",
   no_responsible: "нет ответственного",
   unsupported: "не заполняется автоматически",
@@ -83,9 +85,16 @@ const documentWord = pluralRu("документ", "документа", "док�
  */
 export function CloseDayCard({
   unfilledCount,
+  closableCount,
   compact,
 }: {
   unfilledCount: number;
+  /**
+   * Сколько из незаполненных журналов эта кнопка действительно
+   * закроет (ежедневные). Остальные — «по событию» и раз-в-месяц,
+   * их она не трогает. Не передан — считаем, что закроет все.
+   */
+  closableCount?: number;
   /** Только кнопки — для строки над списком журналов. */
   compact?: boolean;
 }) {
@@ -146,6 +155,16 @@ export function CloseDayCard({
 
   const busy = submitting || pending;
 
+  // Сколько незаполненных журналов кнопка реально закроет. Остальные
+  // ведутся по событию — там нечего дозаполнять.
+  const closable = closableCount ?? unfilledCount;
+  const unfilledHint =
+    unfilledCount === 0
+      ? ""
+      : closable === unfilledCount
+        ? ` Сейчас ${unfilledCount} ${journalWord(unfilledCount)} без записей за сегодня.`
+        : ` Сейчас ${unfilledCount} ${journalWord(unfilledCount)} без записей за сегодня, из них ежедневных — ${closable}. Остальные ведутся по событию, их кнопка не трогает.`;
+
   const dialog = (
     <ConfirmDialog
       open={confirming}
@@ -157,11 +176,7 @@ export function CloseDayCard({
       variant="info"
       icon={CheckCheck}
       title="Закрыть день?"
-      description={`Пустые дни ежедневных журналов заполнятся по выбранную дату на основании прошлого успешного заполнения.${
-        unfilledCount > 0
-          ? ` Сейчас ${unfilledCount} ${journalWord(unfilledCount)} без записей за сегодня.`
-          : ""
-      }`}
+      description={`Пустые дни ежедневных журналов заполнятся по выбранную дату на основании прошлого успешного заполнения.${unfilledHint}`}
       bullets={[
         { label: "Если заполнений ещё не было — данные сгенерируются по настройкам журнала и реальным сотрудникам, даже если сотрудник один" },
         { label: "Ответственные и проверяющие подберутся по правилам должностей журнала; документ на период создастся, если его нет" },
@@ -247,10 +262,8 @@ export function CloseDayCard({
             Заполняет пустые дни ежедневных журналов по сегодня на
             основании прошлого заполнения, а без него — по настройкам
             журнала и реальным сотрудникам. Уже заполненные строки
-            сохраняются. {unfilledCount > 0 ? (
-              <span className="font-medium text-[#3848c7]">
-                Сейчас {unfilledCount} {journalWord(unfilledCount)} без записей за сегодня.
-              </span>
+            сохраняются. {unfilledHint ? (
+              <span className="font-medium text-[#3848c7]">{unfilledHint.trim()}</span>
             ) : null}
           </p>
         </div>

@@ -51,12 +51,11 @@ function buildForm(
       placeholder: "Например: куриный суп",
     },
     {
-      type: "text",
+      type: "time",
       key: "productionTime",
-      label: "Время производства (ЧЧ:ММ)",
+      label: "Время производства",
       required: true,
       placeholder: "14:00",
-      maxLength: 5,
     },
     {
       type: "text",

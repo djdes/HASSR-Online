@@ -56,29 +56,61 @@ type Payload = {
   } | null;
 };
 
+/** Текст ошибки от API, иначе — понятная замена вместо кода статуса. */
+async function readError(res: Response): Promise<string> {
+  const body = (await res.json().catch(() => ({}))) as { error?: string };
+  if (body.error) return body.error;
+  if (res.status === 401) return "Сессия истекла — войдите заново";
+  if (res.status === 403) return "Нет доступа к задачам на сегодня";
+  return `Не удалось загрузить задачи (HTTP ${res.status})`;
+}
+
 export default function MiniTodayPage() {
   const router = useRouter();
   const [data, setData] = useState<Payload | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [gate, setGate] = useState<ShiftGate | null>(null);
   const [startingShift, setStartingShift] = useState(false);
+  // Без этого любой сбой запроса оставлял экран с вечным «крутилкой»:
+  // data/gate так и не появлялись, а причина нигде не показывалась.
+  const [loadError, setLoadError] = useState<string | null>(null);
   // mounted-флаг защищает от setState'ов после unmount'а — раньше
   // быстрое переключение страниц давало "Cannot update unmounted
   // component" warning + утечка. См. pass-3 review HIGH #6.
   const mountedRef = useRef(true);
 
   async function loadGate() {
-    const res = await fetch("/api/mini/start-shift", { cache: "no-store" });
-    if (!res.ok) return;
-    const payload = (await res.json()) as ShiftGate;
-    if (mountedRef.current) setGate(payload);
+    try {
+      const res = await fetch("/api/mini/start-shift", { cache: "no-store" });
+      if (!res.ok) {
+        if (mountedRef.current) setLoadError(await readError(res));
+        return;
+      }
+      const payload = (await res.json()) as ShiftGate;
+      if (mountedRef.current) {
+        setGate(payload);
+        setLoadError(null);
+      }
+    } catch {
+      if (mountedRef.current) setLoadError("Нет связи — потяните вниз, чтобы обновить");
+    }
   }
 
   async function load() {
-    const res = await fetch("/api/mini/today", { cache: "no-store" });
-    if (!res.ok) return;
-    const payload = (await res.json()) as Payload;
-    if (mountedRef.current) setData(payload);
+    try {
+      const res = await fetch("/api/mini/today", { cache: "no-store" });
+      if (!res.ok) {
+        if (mountedRef.current) setLoadError(await readError(res));
+        return;
+      }
+      const payload = (await res.json()) as Payload;
+      if (mountedRef.current) {
+        setData(payload);
+        setLoadError(null);
+      }
+    } catch {
+      if (mountedRef.current) setLoadError("Нет связи — потяните вниз, чтобы обновить");
+    }
   }
 
   async function startShift() {
@@ -88,7 +120,14 @@ export default function MiniTodayPage() {
       if (res.ok) {
         await loadGate();
         await load();
+      } else {
+        // Молчаливый отказ выглядел как «кнопка не работает».
+        toast.error(await readError(res));
       }
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Не удалось начать смену"
+      );
     } finally {
       if (mountedRef.current) setStartingShift(false);
     }
@@ -239,8 +278,41 @@ export default function MiniTodayPage() {
   }
 
   if (!data) {
+    if (loadError) {
+      return (
+        <div className="space-y-3 pb-24">
+          <div
+            className="rounded-2xl px-4 py-5 text-center text-[14px] leading-relaxed"
+            style={{
+              background: "var(--mini-surface-1)",
+              border: "1px solid var(--mini-divider-strong)",
+              color: "var(--mini-text)",
+            }}
+          >
+            {loadError}
+            <button
+              type="button"
+              onClick={() => {
+                setLoadError(null);
+                void loadGate().then(() => load());
+              }}
+              className="mini-press mt-4 inline-flex h-11 items-center justify-center rounded-2xl px-5 text-[14px] font-semibold"
+              style={{
+                background: "var(--mini-lime)",
+                color: "var(--mini-primary-contrast)",
+              }}
+            >
+              Попробовать ещё раз
+            </button>
+          </div>
+        </div>
+      );
+    }
     return (
-      <div className="flex h-40 items-center justify-center text-[#6f7282]">
+      <div
+        className="flex h-40 items-center justify-center"
+        style={{ color: "var(--mini-text-muted)" }}
+      >
         <Loader2 className="size-5 animate-spin" />
       </div>
     );

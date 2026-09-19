@@ -16,6 +16,12 @@ export type ProductWriteoffRow = {
   quantity: string;
   discrepancyDescription: string;
   action: string;
+  /**
+   * Запись в «Учёте потерь» (`LossRecord`), созданная из этой строки.
+   * Опциональное поле JSON — миграция не нужна. Есть id → повторно
+   * потерю по строке не заводим.
+   */
+  lossRecordId?: string;
 };
 
 export type ProductWriteoffProductList = {
@@ -89,6 +95,82 @@ export function createProductWriteoffRow(
     quantity: normalizeText(overrides.quantity),
     discrepancyDescription: normalizeText(overrides.discrepancyDescription),
     action: normalizeText(overrides.action),
+    ...(normalizeText(overrides.lossRecordId)
+      ? { lossRecordId: normalizeText(overrides.lossRecordId) }
+      : {}),
+  };
+}
+
+/* ─── Акт забраковки → учёт потерь (`LossRecord`) ──────────────────── */
+
+export type WriteoffLossDraft = {
+  category: "writeoff";
+  productName: string;
+  quantity: number;
+  unit: string;
+  cause: string | null;
+  date: string | null;
+};
+
+/** Единицы из свободного «Количество» строки акта. */
+const LOSS_UNIT_PATTERNS: Array<[RegExp, string]> = [
+  [/(^|[^а-яё])(кг|kg)([^а-яё]|$)/i, "kg"],
+  [/(^|[^а-яё])(г|гр|g)([^а-яё]|$)/i, "g"],
+  [/(^|[^а-яё])(т|тонн\w*)([^а-яё]|$)/i, "t"],
+  [/(^|[^а-яё])(л|l)([^а-яё]|$)/i, "l"],
+  [/(^|[^а-яё])(мл|ml)([^а-яё]|$)/i, "ml"],
+  [/(^|[^а-яё])(шт\.?|уп\.?)([^а-яё]|$)/i, "pcs"],
+];
+
+/** Количество из свободного текста: первое число + ближайшая единица. */
+export function parseWriteoffQuantity(text: unknown): { quantity: number; unit: string } {
+  const raw = normalizeText(text);
+  const match = /(\d+(?:[.,]\d+)?)/.exec(raw);
+  const quantity = match ? Number(match[1].replace(",", ".")) : 0;
+  let unit = "kg";
+  for (const [pattern, code] of LOSS_UNIT_PATTERNS) {
+    if (pattern.test(raw)) {
+      unit = code;
+      break;
+    }
+  }
+  return {
+    quantity: Number.isFinite(quantity) && quantity >= 0 ? quantity : 0,
+    unit,
+  };
+}
+
+/** Потерю заводим один раз и только по строке с наименованием. */
+export function canCreateLossFromWriteoffRow(row: ProductWriteoffRow): boolean {
+  if (normalizeText(row.lossRecordId)) return false;
+  return normalizeText(row.productName).length > 0;
+}
+
+/**
+ * Чистое отображение «строка акта забраковки → черновик потери».
+ * Категория всегда «списание»: акт забраковки — это именно списание.
+ */
+export function writeoffRowToLossDraft(
+  row: ProductWriteoffRow,
+  config: Pick<ProductWriteoffConfig, "documentDate" | "actNumber">
+): WriteoffLossDraft {
+  const { quantity, unit } = parseWriteoffQuantity(row.quantity);
+  const cause = [
+    normalizeText(row.discrepancyDescription),
+    normalizeText(row.action) ? `действие: ${normalizeText(row.action)}` : "",
+    normalizeText(row.batchNumber) ? `партия ${normalizeText(row.batchNumber)}` : "",
+  ]
+    .filter(Boolean)
+    .join("; ");
+  const date = normalizeText(config.documentDate);
+
+  return {
+    category: "writeoff",
+    productName: normalizeText(row.productName),
+    quantity,
+    unit,
+    cause: cause || null,
+    date: /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : null,
   };
 }
 

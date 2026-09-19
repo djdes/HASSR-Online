@@ -65,6 +65,17 @@ export default async function JournalsSettingsPage() {
       }),
     ]);
 
+  // Сколько активных документов у каждого журнала: выключение прячет их
+  // из всех списков, и человек должен увидеть число заранее.
+  const activeDocuments = await db.journalDocument.groupBy({
+    by: ["templateId"],
+    where: { organizationId, status: "active" },
+    _count: { _all: true },
+  });
+  const activeDocsByTemplate = new Map(
+    activeDocuments.map((row) => [row.templateId, row._count._all])
+  );
+
   const disabled = parseDisabledCodes(organization?.disabledJournalCodes);
   const disabledPaper = parseDisabledCodes(organization?.disabledPaperJournalIds);
   const sphere = normalizeSphere(organization?.type);
@@ -91,6 +102,7 @@ export default async function JournalsSettingsPage() {
     defaultAssigneeId: t.defaultAssigneeId,
     allowedPositionIds: accessByTemplate.get(t.id) ?? [],
     bonusAmountKopecks: t.bonusAmountKopecks,
+    activeDocumentCount: activeDocsByTemplate.get(t.id) ?? 0,
   }));
 
   // Бумажные бланки сферы с тем же признаком enabled, что у

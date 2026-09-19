@@ -19,11 +19,15 @@ import {
 } from "@/lib/audit-protocol-document";
 import { openDocumentPdf } from "@/lib/open-document-pdf";
 import { useAutoDocumentTitle } from "@/components/journals/use-auto-document-title";
+import { buildDocumentCopy } from "@/lib/journal-document-copy";
+import { localDayKey } from "@/lib/entry-defaults";
 
 import { toast } from "sonner";
 import {
   EmptyDocumentsState,
   filterManageMenuItems,
+  restoreMenuItems,
+  useRestoreDocument,
   useCanManageDocuments,
 } from "@/components/journals/document-list-ui";
 import {
@@ -183,6 +187,7 @@ export function AuditProtocolDocumentsClient({
   // Создание / настройки / удаление документов API отдаёт только
   // руководителю — у остальных эти кнопки не показываем.
   const canManageDocuments = useCanManageDocuments();
+  const restore = useRestoreDocument();
   const [createOpen, setCreateOpen] = useState(false);
   const [settingsDocument, setSettingsDocument] = useState<DocumentItem | null>(null);
   const [deleteDocument, setDeleteDocument] = useState<DocumentItem | null>(null);
@@ -259,21 +264,36 @@ export function AuditProtocolDocumentsClient({
   }
 
   async function copyDocument(document: DocumentItem) {
-    const current = normalizeAuditProtocolConfig(document.config);
+    // Копия — чистый бланк на следующий период: перечень требований
+    // остаётся, результаты «да/нет», замечания и ПОДПИСИ обнуляются
+    // (`buildDocumentCopy`). Раньше копия уносила подписи и дату
+    // подписания чужой проверки — на бумаге это подлог.
+    const copy = buildDocumentCopy({
+      templateCode: AUDIT_PROTOCOL_TEMPLATE_CODE,
+      journalName: AUDIT_PROTOCOL_DOCUMENT_TITLE,
+      sourceConfig: normalizeAuditProtocolConfig(document.config),
+      sourcePeriod: { dateFrom: document.dateFrom, dateTo: document.dateFrom },
+      today: localDayKey(),
+      existingTitles: documents.map((item) => item.title),
+    });
     const response = await fetch("/api/journal-documents", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         templateCode: AUDIT_PROTOCOL_TEMPLATE_CODE,
-        title: document.title || AUDIT_PROTOCOL_DOCUMENT_TITLE,
-        dateFrom: current.documentDate,
-        dateTo: current.documentDate,
-        config: current,
+        title: copy.title,
+        dateFrom: copy.dateFrom,
+        dateTo: copy.dateTo,
+        config: copy.config,
       }),
     });
     const result = await response.json().catch(() => null);
     if (!response.ok || !result?.document?.id) {
-      throw new Error(result?.error || "Не удалось сделать копию");
+      // Текст сервера (например «За этот период уже есть документ «…»»)
+      // показываем как есть: пункт меню промис не ловил, и копия просто
+      // молча не появлялась.
+      toast.error(result?.error || "Не удалось сделать копию");
+      return;
     }
     router.push(`/journals/${routeCode}/documents/${result.document.id}`);
     router.refresh();
@@ -377,6 +397,9 @@ export function AuditProtocolDocumentsClient({
                             toast.error(error instanceof Error ? error.message : "Не удалось открыть PDF")
                           ),
                       },
+                      // Закрытый документ раньше уходил навсегда: вернуть
+                      // его в активные было нечем.
+                      ...restoreMenuItems({ document, siblings: documents, restore }),
                       ...(document.status === "active"
                         ? [
                             {

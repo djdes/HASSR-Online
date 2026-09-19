@@ -35,6 +35,7 @@ import {
   filterManageMenuItems,
   useCanManageDocuments,
 } from "@/components/journals/document-list-ui";
+import { resolveJournalPeriodForDate } from "@/lib/journal-period";
 import { useJournalDocumentActions } from "@/components/journals/use-journal-document-actions";
 import {
   DateField,
@@ -315,15 +316,18 @@ export function CleaningVentilationChecklistDocumentsClient({
       body: JSON.stringify({
         templateCode,
         title: payload.title.trim(),
-        dateFrom: payload.dateFrom,
-        dateTo: payload.dateFrom,
+        // Период — по правилу журнала (`journal-period.ts`), а не «один день».
+        ...resolveJournalPeriodForDate(templateCode, payload.dateFrom),
         config,
         controlPeriodicity: payload.controlPeriodicity,
       }),
     });
 
     if (!response.ok) {
-      toast.error("Не удалось создать документ");
+      // Текст сервера («За этот период уже есть документ «…»») объясняет
+      // отказ. Общая фраза оставляла человека без причины и без выхода.
+      const failure = await response.json().catch(() => null);
+      toast.error(failure?.error || "Не удалось создать документ");
       return;
     }
 

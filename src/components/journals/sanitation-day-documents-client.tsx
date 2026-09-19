@@ -46,14 +46,17 @@ import {
 } from "@/lib/sanitation-day-document";
 
 import { toast } from "sonner";
+import { buildDocumentCopy } from "@/lib/journal-document-copy";
 import {
   EMPTY_STATE_CREATE_BUTTON_CLASS,
   EmptyDocumentsState,
   JournalTabs,
   JournalTopBar,
+  deletedRecordsBullet,
   filterManageMenuItems,
   useCanManageDocuments,
 } from "@/components/journals/document-list-ui";
+import { resolveJournalPeriodForDate } from "@/lib/journal-period";
 import { useJournalDocumentActions } from "@/components/journals/use-journal-document-actions";
 import {
   JOURNAL_CARD_LABEL_CLASS,
@@ -380,8 +383,9 @@ export function SanitationDayDocumentsClient({
       body: JSON.stringify({
         templateCode,
         title: payload.title.trim() || SANITATION_DAY_DOCUMENT_TITLE,
-        dateFrom: payload.documentDate,
-        dateTo: payload.documentDate,
+        // Период — по правилу журнала (`journal-period.ts`): график
+        // генуборок годовой. «Дата документа» остаётся в шапке.
+        ...resolveJournalPeriodForDate(templateCode, payload.documentDate),
         responsibleTitle: payload.responsibleRole,
         config,
         controlPeriodicity: payload.controlPeriodicity,
@@ -389,7 +393,10 @@ export function SanitationDayDocumentsClient({
     });
 
     if (!response.ok) {
-      toast.error("Не удалось создать документ");
+      // Текст сервера («За этот период уже есть документ «…»») объясняет
+      // отказ. Общая фраза оставляла человека без причины и без выхода.
+      const failure = await response.json().catch(() => null);
+      toast.error(failure?.error || "Не удалось создать документ");
       return;
     }
 
@@ -443,6 +450,8 @@ export function SanitationDayDocumentsClient({
       description: `Документ «${document.title || SANITATION_DAY_DOCUMENT_TITLE}» будет удалён безвозвратно.`,
       bullets: [
         { label: `Дата документа: ${getSanitationDocumentDateLabel(cfg.documentDate)}`, tone: "info" },
+        // Сколько записей пропадёт — раньше окно про объём потери молчало.
+        ...(deletedRecordsBullet(document.config) ? [deletedRecordsBullet(document.config)!] : []),
         { label: "Удалятся все строки и отметки санитарного дня", tone: "warn" },
       ],
       successMessage: `Документ «${document.title || SANITATION_DAY_DOCUMENT_TITLE}» удалён`,
@@ -454,22 +463,35 @@ export function SanitationDayDocumentsClient({
     const current = documents.find((item) => item.id === documentId);
     if (!current) return;
 
+    // Копия — график на следующий год: состав помещений и ПЛАН по
+    // месяцам переносятся, ФАКТ («убрано такого-то числа») обнуляется
+    // (`buildDocumentCopy`). Раньше новый график рождался выполненным,
+    // да ещё и на период источника — сервер отказывал его создавать.
     const cfg = normalizeSanitationDayConfig(current.config);
+    const copy = buildDocumentCopy({
+      templateCode,
+      journalName: SANITATION_DAY_DOCUMENT_TITLE,
+      sourceConfig: cfg,
+      sourcePeriod: { dateFrom: current.dateFrom, dateTo: current.dateFrom },
+      today: localDayKey(),
+      existingTitles: documents.map((item) => item.title),
+    });
     const response = await fetch("/api/journal-documents", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         templateCode,
-        title: current.title,
-        dateFrom: cfg.documentDate,
-        dateTo: cfg.documentDate,
+        title: copy.title,
+        dateFrom: copy.dateFrom,
+        dateTo: copy.dateTo,
         responsibleTitle: cfg.responsibleRole,
-        config: cfg,
+        config: copy.config,
       }),
     });
 
     if (!response.ok) {
-      toast.error("Не удалось сделать копию");
+      const failure = await response.json().catch(() => null);
+      toast.error(failure?.error || "Не удалось сделать копию");
       return;
     }
 

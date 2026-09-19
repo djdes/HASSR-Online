@@ -22,8 +22,11 @@ import { toast } from "sonner";
 import {
   EmptyDocumentsState,
   filterManageMenuItems,
+  restoreMenuItems,
+  useRestoreDocument,
   useCanManageDocuments,
 } from "@/components/journals/document-list-ui";
+import { resolveJournalPeriodForDate } from "@/lib/journal-period";
 import {
   JOURNAL_CARD_LABEL_CLASS,
   JOURNAL_CARD_SECTION_CLASS,
@@ -93,8 +96,12 @@ function CreateDialog({
         body: JSON.stringify({
           templateCode: COMPLAINT_REGISTER_TEMPLATE_CODE,
           title: title.trim() || COMPLAINT_REGISTER_TITLE,
-          dateFrom,
-          dateTo: dateFrom,
+          // Период — по правилу журнала (`journal-period.ts`): реестр
+          // претензий годовой, а окно создавало однодневный документ.
+          ...resolveJournalPeriodForDate(
+            COMPLAINT_REGISTER_TEMPLATE_CODE,
+            dateFrom
+          ),
         }),
       });
 
@@ -333,6 +340,7 @@ export function ComplaintDocumentsClient({
   // Создание / настройки / удаление документов API отдаёт только
   // руководителю — у остальных эти кнопки не показываем.
   const canManageDocuments = useCanManageDocuments();
+  const restore = useRestoreDocument();
   const [createOpen, setCreateOpen] = useState(false);
   const [settingsDocument, setSettingsDocument] = useState<ComplaintListDocument | null>(null);
   const [deleteDocument, setDeleteDocument] = useState<ComplaintListDocument | null>(null);
@@ -434,6 +442,9 @@ export function ComplaintDocumentsClient({
                       onSelect: () =>
                         window.open(`/api/journal-documents/${document.id}/pdf`, "_blank"),
                     },
+                    // Закрытый документ раньше уходил навсегда: вернуть
+                    // его в активные было нечем.
+                    ...restoreMenuItems({ document, siblings: documents, restore }),
                     ...(document.status === "active"
                       ? [
                           {

@@ -152,6 +152,8 @@ export function PerishableRejectionDocumentsClient({
             </Link>
             <DocumentActionsMenu
               size="sm"
+              document={document}
+              siblings={documents}
               onEdit={() => setEditingDocument(document)}
               onPrint={() => openPdf({ documentId: document.id })}
               onDelete={() => void handleDelete(document)}

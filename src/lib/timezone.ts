@@ -71,6 +71,55 @@ export function orgTodayKey(
 }
 
 /**
+ * Момент начала СЕГОДНЯШНЕГО дня в зоне организации (UTC-инстант).
+ *
+ * ПОЧЕМУ: сравнение `completedAt >= UTC-полночь` в Москве с 00:00 до 03:00
+ * тянет в выборку вчерашний вечер и теряет свежие отметки — «сегодня» в
+ * БД и «сегодня» у пользователя разъезжаются на несколько часов.
+ */
+export function orgDayStartInstant(
+  timezone: string = "Europe/Moscow",
+  now: Date = new Date()
+): Date {
+  const dayKey = orgTodayKey(timezone, now);
+  // Смещение зоны берём на сам момент `now` — так переход на летнее время
+  // и смена зоны не сдвигают границу дня.
+  const offsetMs = getTimezoneOffsetMs(timezone, now);
+  const utcMidnight = new Date(`${dayKey}T00:00:00.000Z`).getTime();
+  return new Date(utcMidnight - offsetMs);
+}
+
+/** Смещение зоны относительно UTC в миллисекундах на указанный момент. */
+function getTimezoneOffsetMs(timezone: string, at: Date): number {
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      hour12: false,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    }).formatToParts(at);
+    const get = (type: string) =>
+      Number(parts.find((part) => part.type === type)?.value ?? "0");
+    const asUtc = Date.UTC(
+      get("year"),
+      get("month") - 1,
+      get("day"),
+      // В en-US полночь приходит как «24» — приводим к 0.
+      get("hour") % 24,
+      get("minute"),
+      get("second")
+    );
+    return asUtc - Math.floor(at.getTime() / 1000) * 1000;
+  } catch {
+    return 0;
+  }
+}
+
+/**
  * Список зон РФ для UI-селектора. Можно расширить.
  */
 export const RUSSIAN_TIMEZONES = [

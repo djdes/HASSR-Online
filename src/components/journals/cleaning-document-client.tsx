@@ -43,6 +43,7 @@ import {
   createCleaningRoomRow,
   deleteCleaningResponsibleRow,
   deleteCleaningRoomRow,
+  listDeletedCleaningRoomsWithMarks,
   CLEANING_NOT_PERFORMED_DISPLAY,
   displayLegendLine,
   displayMatrixValue,
@@ -943,9 +944,20 @@ export function CleaningDocumentClient(props: Props) {
         ? selectedIds.filter((id) => dbRoomById.has(id))
         : allBuildingRoomIds;
     const configRoomById = new Map(config.rooms.map((room) => [room.id, room]));
+    // Помещение удалили из справочника, а отметки уборки в журнале
+    // остались: строку показываем с пометкой «помещение удалено»
+    // (стирать данные ХАССП нельзя), пустую — нет.
+    const deletedWithMarks = listDeletedCleaningRoomsWithMarks(
+      config,
+      dbRoomById.keys()
+    ).filter((item) => !configRoomById.has(item.id));
+    const deletedNameById = new Map(
+      deletedWithMarks.map((item) => [item.id, item.name])
+    );
     const roomIds = [
       ...config.rooms.map((room) => room.id),
       ...dbRoomIds.filter((id) => !configRoomById.has(id)),
+      ...deletedWithMarks.map((item) => item.id),
     ];
     return roomIds.map((roomId) => {
       const dbRoom = dbRoomById.get(roomId);
@@ -953,7 +965,11 @@ export function CleaningDocumentClient(props: Props) {
       const room: CleaningRoomItem = {
         id: roomId,
         areaId: cfgRoom?.areaId ?? null,
-        name: dbRoom?.name ?? cfgRoom?.name ?? "Помещение",
+        name:
+          dbRoom?.name ??
+          deletedNameById.get(roomId) ??
+          cfgRoom?.name ??
+          "Помещение",
         detergent: dbRoom?.detergent ?? cfgRoom?.detergent ?? "",
         currentScope: Array.isArray(dbRoom?.currentScope)
           ? (dbRoom.currentScope as string[])
@@ -972,7 +988,9 @@ export function CleaningDocumentClient(props: Props) {
       };
       return { id: roomId, kind: "room" as const, room };
     });
-  }, [config.rooms, config.selectedRoomIds, dbRoomById]);
+    // `config` целиком: список строк зависит ещё и от matrix (строки
+    // удалённых помещений с отметками).
+  }, [config, dbRoomById]);
 
   /**
    * C4 аудита: справочник «Наименование помещения / Текущая уборка /
@@ -1072,6 +1090,13 @@ export function CleaningDocumentClient(props: Props) {
    */
   async function writeSignature(rowId: string, dateKey: string, next: string) {
     if (props.status !== "active" || saving) return;
+    const previousConfig = config;
+    // Что было видно в клетке до снятия — по нему решаем, есть ли что
+    // возвращать, и это же показываем в тосте.
+    const previousVisible =
+      rowId === CLEANING_SIGNATURE_ROW_ID
+        ? cleaningCodeForDay(dateKey)
+        : controlCodeForDay(dateKey);
     const nextRowMap = { ...(config.matrix[rowId] ?? {}) };
     if (next === "—") {
       nextRowMap[dateKey] = "—";
@@ -1091,6 +1116,18 @@ export function CleaningDocumentClient(props: Props) {
       ...config,
       matrix: { ...config.matrix, [rowId]: nextRowMap },
     });
+    // Снятие подписи обратимо, поэтому не спрашиваем заранее, а даём
+    // кнопку «Вернуть» — это и подтверждение, что действие прошло.
+    if (next === "—" && previousVisible) {
+      toast.success(`Подпись снята: ${previousVisible}`, {
+        action: {
+          label: "Вернуть",
+          onClick: () => {
+            void patchCellsWithUndo(previousConfig);
+          },
+        },
+      });
+    }
   }
 
   async function cycleSignature(

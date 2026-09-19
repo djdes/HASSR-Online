@@ -289,6 +289,7 @@ function EditDocumentDialog({
 function DocumentRow({
   templateCode,
   document,
+  siblings,
   canManage,
   onEdit,
   onPrint,
@@ -296,6 +297,8 @@ function DocumentRow({
 }: {
   templateCode: string;
   document: JournalListDocument;
+  /** Соседи по списку — нужны проверке пересечения при возврате из закрытых. */
+  siblings: JournalListDocument[];
   canManage: boolean;
   onEdit: (document: JournalListDocument) => void;
   onPrint: (document: JournalListDocument) => void;
@@ -319,6 +322,8 @@ function DocumentRow({
       </Link>
       <div className="flex items-center justify-center text-[#5566f6]">
         <DocumentActionsMenu
+          document={document}
+          siblings={siblings}
           onEdit={canManage ? () => onEdit(document) : undefined}
           onPrint={() => onPrint(document)}
           onDelete={canManage ? () => onDelete(document) : undefined}
@@ -415,6 +420,7 @@ export function HygieneDocumentsClient(props: Props) {
               key={document.id}
               templateCode={templateCode}
               document={document}
+              siblings={documents}
               // Настройки и удаление — только у руководства: у повара
               // эти пункты были видны, а API отвечал 403.
               canManage={document.status === "active" && canManageDocuments}

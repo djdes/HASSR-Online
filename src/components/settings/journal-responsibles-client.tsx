@@ -37,6 +37,7 @@ import {
   type SlotUserMap as WorkloadSlotMap,
 } from "@/lib/journal-workload";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { confirmAsync } from "@/components/ui/confirm-async";
 
 type Position = {
   id: string;
@@ -642,6 +643,11 @@ export function JournalResponsiblesClient({
   const [deletePreflight, setDeletePreflight] = useState<{
     docCount: number;
     entryCount: number;
+  } | null>(null);
+  /// Сколько активных документов закроет «Пересоздать документы».
+  const [recreatePreflight, setRecreatePreflight] = useState<{
+    activeDocCount: number;
+    filledEntryCount: number;
   } | null>(null);
 
   const usersById = useMemo(
@@ -1538,6 +1544,29 @@ export function JournalResponsiblesClient({
 
   async function resyncAll() {
     if (resyncing) return;
+    // Раньше кнопка срабатывала сразу по клику, хотя переписывает шапку
+    // и печатные ФИО внутри УЖЕ заполненных документов — отменить это
+    // нечем. Спрашиваем подтверждение и называем последствия.
+    const ok = await confirmAsync({
+      title: "Перезаписать ответственных в документах?",
+      description:
+        "Во все документы, действующие сегодня, будут записаны ответственные из этой таблицы.",
+      bullets: [
+        {
+          label:
+            "Заполненные документы тоже будут переписаны: в шапке и в печати поменяются ФИО",
+          tone: "warn",
+        },
+        {
+          label: "Сами отметки и записи сотрудников не пострадают",
+          tone: "info",
+        },
+        { label: "Откатить одной кнопкой нельзя", tone: "warn" },
+      ],
+      variant: "danger",
+      confirmLabel: "Да, перезаписать",
+    });
+    if (!ok) return;
     setResyncing(true);
     try {
       const res = await fetch(
@@ -1611,8 +1640,19 @@ export function JournalResponsiblesClient({
     }
   }
 
-  function requestRecreateDocuments() {
+  async function requestRecreateDocuments() {
     if (recreating) return;
+    // Preflight: диалог должен назвать, сколько документов закроется и
+    // сколько в них заполненных строк — без цифр это кнопка вслепую.
+    setRecreatePreflight(null);
+    try {
+      const res = await fetch(
+        "/api/settings/journal-responsibles/recreate-documents"
+      );
+      if (res.ok) setRecreatePreflight(await res.json());
+    } catch {
+      /* preflight не критичен */
+    }
     setRecreateOpen(true);
   }
 
@@ -2320,6 +2360,12 @@ export function JournalResponsiblesClient({
               "Если для журнала нет matching должностей — он не трогается.",
             tone: "info",
           },
+          {
+            // Число журналов диалог раньше не называл — а каскад заодно
+            // переписывает ответственных внутри активных документов.
+            label: `Будет перебрано журналов: ${journals.length}; в активных документах ответственные тоже обновятся`,
+            tone: "warn",
+          },
         ]}
         confirmLabel="Да, применить ко всем"
         variant="default"
@@ -2365,6 +2411,9 @@ export function JournalResponsiblesClient({
         ]}
         confirmLabel="Да, переписать все документы"
         variant="danger"
+        /* Переписывает историю и живые задачи TasksFlow без отката —
+           по правилам проекта такое подтверждают фразой, а не кликом. */
+        typeToConfirm="ПЕРЕПИСАТЬ"
       />
 
       <ConfirmDialog
@@ -2384,6 +2433,14 @@ export function JournalResponsiblesClient({
           </>
         }
         bullets={[
+          ...(recreatePreflight
+            ? [
+                {
+                  label: `Будет закрыто документов: ${recreatePreflight.activeDocCount}, в них уже заполнено строк: ${recreatePreflight.filledEntryCount}`,
+                  tone: "warn" as const,
+                },
+              ]
+            : []),
           {
             label:
               "Старые записи не теряются — они уйдут в закрытые документы.",

@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Archive, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
+import { Archive, Loader2, Pencil, Plus, Trash2, TrendingDown, X } from "lucide-react";
 import { toast } from "sonner";
 import { DOC_PRIMARY_BUTTON_CLASS } from "@/components/journals/journal-responsive";
 import { JournalDocumentShell } from "@/components/journals/journal-document-shell";
@@ -19,10 +19,12 @@ import { Label } from "@/components/ui/label";
 import { USER_ROLE_LABEL_VALUES, getUserRoleLabel, getUsersForRoleLabel } from "@/lib/user-roles";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  canCreateLossFromWriteoffRow,
   createProductWriteoffCommissionMember,
   createProductWriteoffRow,
   getProductWriteoffDocumentListTitle,
   normalizeProductWriteoffConfig,
+  writeoffRowToLossDraft,
   type ProductWriteoffCommissionMember,
   type ProductWriteoffConfig,
   type ProductWriteoffRow,
@@ -188,6 +190,44 @@ export function ProductWriteoffDocumentClient({
     if (ok) {
       setRowDialog({ open: false, index: null, row: emptyRow(), newProductName: "" });
       setRowDialogProductOptions([]);
+    }
+  }
+
+  /**
+   * Акт списания → учёт потерь. Запись заводим по строке акта и
+   * оставляем в ней ссылку: повторно по той же строке потерю не
+   * создаём (см. `canCreateLossFromWriteoffRow`).
+   */
+  async function createLossFromRow(index: number) {
+    const row = config.rows[index];
+    if (!row || !canCreateLossFromWriteoffRow(row)) return;
+    setSaving(true);
+    try {
+      const draft = writeoffRowToLossDraft(row, config);
+      const response = await fetch("/api/losses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...draft, sourceEntryId: documentId }),
+      });
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+        toast.error(payload?.error || "Не удалось записать потерю");
+        return;
+      }
+      const record = (await response.json()) as { id: string };
+      const nextRow = { ...row, lossRecordId: record.id };
+      const nextConfig: ProductWriteoffConfig = {
+        ...config,
+        rows: config.rows.map((item, i) => (i === index ? nextRow : item)),
+      };
+      const ok = await persistConfig(nextConfig);
+      if (!ok) return;
+      setRowDialog((prev) => (prev.open ? { ...prev, row: nextRow } : prev));
+      toast.success("Записано в потери", {
+        action: { label: "Открыть", onClick: () => router.push("/losses") },
+      });
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -639,7 +679,34 @@ export function ProductWriteoffDocumentClient({
             </div>
           </div>
 
-          <div className="flex flex-col-reverse gap-2 border-t bg-white px-6 py-4 sm:flex-row sm:justify-end">
+          <div className="flex flex-col-reverse gap-2 border-t bg-white px-6 py-4 sm:flex-row sm:items-center sm:justify-end">
+            {/* Акт забраковки → учёт потерь: запись заводится отсюда,
+                повторно по той же строке — уже ссылкой. */}
+            {rowDialog.row.lossRecordId ? (
+              <a
+                href="/losses"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-xl border border-[#dcdfed] px-4 text-[13.5px] font-medium text-[#3848c7] transition-colors duration-150 hover:bg-[#f5f6ff] sm:mr-auto sm:w-auto"
+              >
+                <TrendingDown className="size-4" />
+                Записано в потери
+              </a>
+            ) : rowDialog.index !== null &&
+              !isClosed &&
+              canCreateLossFromWriteoffRow(rowDialog.row) ? (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={saving}
+                onClick={() => void createLossFromRow(rowDialog.index as number)}
+                title="Заведёт запись в «Учёте потерь»: категория «Списание», продукт, количество, причина и дата акта"
+                className="h-9 w-full gap-1.5 rounded-xl border-[#5566f6]/30 bg-[#f5f6ff] px-4 text-[13.5px] font-medium text-[#5566f6] shadow-none transition-colors duration-150 hover:bg-[#eef1ff] sm:mr-auto sm:w-auto"
+              >
+                <TrendingDown className="size-4" />
+                Записать в потери
+              </Button>
+            ) : null}
             <Button
               type="button"
               variant="outline"

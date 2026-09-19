@@ -42,6 +42,8 @@ import { confirmAsync } from "@/components/ui/confirm-async";
 import {
   EmptyDocumentsState,
   filterManageMenuItems,
+  restoreMenuItems,
+  useRestoreDocument,
   useCanManageDocuments,
 } from "@/components/journals/document-list-ui";
 import {
@@ -358,6 +360,7 @@ function TrackedDocumentsClientImpl({
   // Создание / настройки / удаление документов API отдаёт только
   // руководителю — у остальных эти кнопки не показываем.
   const canManageDocuments = useCanManageDocuments();
+  const restore = useRestoreDocument();
   const [editingDocument, setEditingDocument] = useState<JournalListDocument | null>(null);
 
   function getResponsibleCardValue(document: JournalListDocument) {
@@ -492,6 +495,9 @@ function TrackedDocumentsClientImpl({
                         onSelect: () =>
                           window.open(`/api/journal-documents/${document.id}/pdf`, "_blank"),
                       },
+                      // Закрытый документ раньше уходил навсегда: вернуть
+                      // его в активные было нечем.
+                      ...restoreMenuItems({ document, siblings: documents, restore }),
                       ...(document.status === "active"
                         ? [
                             {

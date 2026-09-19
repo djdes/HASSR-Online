@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DeviationCorrection } from "@/components/qr-fill/deviation-correction";
 
 type Metric = { enabled: boolean; min: number | null; max: number | null };
 
@@ -57,6 +58,8 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
     norms.temperature.max !== null && norms.temperature.max < 0 ? "-" : ""
   );
   const [humidity, setHumidity] = useState("");
+  // «Что сделали» — обязательно, когда замер вышел за норму.
+  const [correction, setCorrection] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<{ slot: string; outOfRange: boolean } | null>(null);
@@ -81,6 +84,10 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
   const hasValue =
     (norms.temperature.enabled && temperatureValue !== null) ||
     (norms.humidity.enabled && humidityValue !== null && !humidityInvalid);
+  // Сервер проверяет то же самое и вернёт 400 — здесь только чтобы
+  // человек не жал «Сохранить» вслепую.
+  const needsCorrection = temperatureOutside || humidityOutside;
+  const correctionMissing = needsCorrection && correction.trim() === "";
 
   async function save() {
     if (submitting) return;
@@ -93,6 +100,10 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
       setError("Введите показания");
       return;
     }
+    if (correctionMissing) {
+      setError("Замер вне нормы — напишите, что вы сделали");
+      return;
+    }
     setSubmitting(true);
     try {
       const response = await fetch(`/api/room-fill/${room.id}`, {
@@ -103,6 +114,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
           employeeId,
           ...(norms.temperature.enabled && temperatureValue !== null ? { temperature: temperatureValue } : {}),
           ...(norms.humidity.enabled && humidityValue !== null && !humidityInvalid ? { humidity: humidityValue } : {}),
+          ...(correction.trim() ? { correction: correction.trim() } : {}),
         }),
       });
       const data = await response.json().catch(() => null);
@@ -188,6 +200,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                 setSaved(null);
                 setTemperature(norms.temperature.max !== null && norms.temperature.max < 0 ? "-" : "");
                 setHumidity("");
+                setCorrection("");
                 setError(null);
               }}
               className="mt-6 h-12 rounded-2xl bg-[#5566f6] px-5 text-[15px] font-medium text-white transition-colors duration-150 hover:bg-[#4a5bf0]"
@@ -262,11 +275,6 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                         className="h-12 flex-1 rounded-2xl border-[#dcdfed] text-[18px]"
                       />
                     </div>
-                    {temperatureOutside ? (
-                      <p className="mt-2 rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-3 text-[13px] text-[#a13a32]">
-                        Температура вне нормы. Сохраните как есть — руководитель получит уведомление.
-                      </p>
-                    ) : null}
                   </div>
                 ) : null}
 
@@ -295,12 +303,25 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                     </div>
                     {humidityInvalid ? (
                       <p className="mt-1.5 text-[12px] text-[#a13a32]">Влажность — число от 0 до 100.</p>
-                    ) : humidityOutside ? (
-                      <p className="mt-2 rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-3 text-[13px] text-[#a13a32]">
-                        Влажность вне нормы. Сохраните как есть и сообщите управляющему.
-                      </p>
                     ) : null}
                   </div>
+                ) : null}
+
+                {/* Вне нормы — «Что сделали» обязательно: комментарий ложится
+                    в журнал рядом с замером и виден в печати. */}
+                {needsCorrection ? (
+                  <DeviationCorrection
+                    title={
+                      temperatureOutside && humidityOutside
+                        ? "Температура и влажность вне нормы"
+                        : temperatureOutside
+                          ? "Температура вне нормы"
+                          : "Влажность вне нормы"
+                    }
+                    hint="Руководитель получит уведомление."
+                    value={correction}
+                    onChange={setCorrection}
+                  />
                 ) : null}
               </div>
 
@@ -312,7 +333,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                 <Button
                   type="button"
                   onClick={save}
-                  disabled={submitting || !employeeId || !hasValue || !hasActiveDocument}
+                  disabled={submitting || !employeeId || !hasValue || !hasActiveDocument || correctionMissing}
                   className="h-12 w-full rounded-2xl bg-[#5566f6] px-5 text-[15px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] disabled:bg-[#c8cbe0]"
                 >
                   {submitting ? "Сохраняем…" : "3. Сохранить"}

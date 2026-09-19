@@ -85,12 +85,11 @@ function buildForm(
         maxLength: 120,
       },
       {
-        type: "text",
+        type: "time",
         key: "washTime",
-        label: "Время (ЧЧ:ММ)",
+        label: "Время",
         required: true,
         placeholder: "14:30",
-        maxLength: 5,
       },
       {
         type: "text",

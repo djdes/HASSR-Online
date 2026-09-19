@@ -118,25 +118,23 @@ export function TaskFillClient({
           // Date-поле без defaultValue → сегодняшняя дата (ISO).
           // Подавляющее большинство записей — за сегодняшний день.
           init[field.key] = typeof dv === "string" && dv.trim() !== "" ? dv : todayISO;
+        } else if (field.type === "time") {
+          // Time-поле без defaultValue → текущее время. Раньше «это
+          // время» угадывали по maxLength=5 — теперь это тип поля.
+          init[field.key] = typeof dv === "string" && dv.trim() !== "" ? dv : nowHHMM;
         } else {
           // text-поле. Несколько эвристик автозаполнения:
           //   1. defaultValue из адаптера — приоритет (для редактирования).
-          //   2. time-поле (maxLength=5 или метка «ЧЧ:ММ») → текущее HH:MM.
-          //   3. ФИО / подпись / исполнитель → employeeName из props.
-          //   4. иначе — пусто.
+          //   2. ФИО / подпись / исполнитель → employeeName из props.
+          //   3. иначе — пусто.
           const key = (field.key ?? "").toLowerCase();
           const lbl = (field.label ?? "").toLowerCase();
-          const looksLikeTime =
-            field.type === "text" &&
-            ((field as { maxLength?: number }).maxLength === 5 ||
-              field.label?.includes("ЧЧ:ММ"));
           const looksLikeName =
             /(^|[^а-я])(фио|подпис|исполнител|ответствен|повар|работник|имя\b)/i.test(
               `${key} ${lbl}`,
             );
           let autofill = "";
-          if (looksLikeTime) autofill = nowHHMM;
-          else if (looksLikeName && employeeName) autofill = employeeName;
+          if (looksLikeName && employeeName) autofill = employeeName;
           init[field.key] =
             typeof dv === "string" || typeof dv === "number"
               ? String(dv)

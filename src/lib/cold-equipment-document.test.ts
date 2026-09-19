@@ -9,6 +9,7 @@ import {
   createEmptyColdEquipmentEntryData,
   expandColdEquipmentReadingSlots,
   pickColdReadingSlotForWrite,
+  setColdEquipmentCorrection,
   syncColdEquipmentEntryDataWithConfig,
   type ColdEquipmentDocumentConfig,
 } from "@/lib/cold-equipment-document";
@@ -68,4 +69,28 @@ test("замеры: считаем, сколько значений потеря
   assert.equal(countColdEquipmentValues(entries, ["fridge#2"]), 1);
   assert.equal(countColdEquipmentValues(entries, ["freezer"]), 2);
   assert.equal(countColdEquipmentValues(entries, []), 0);
+});
+
+test("комментарий к отклонению: ложится в corrections своего замера", () => {
+  const base = createEmptyColdEquipmentEntryData(config, "Повар");
+  const withComment = setColdEquipmentCorrection(base, "fridge#2", "  Вызвал мастера  ");
+  assert.deepEqual(withComment.corrections, { "fridge#2": "Вызвал мастера" });
+  // Пустой текст ничего не стирает.
+  assert.deepEqual(
+    setColdEquipmentCorrection(withComment, "fridge#2", "   ").corrections,
+    { "fridge#2": "Вызвал мастера" },
+  );
+  // Соседний замер получает свой комментарий, не затирая первый.
+  const both = setColdEquipmentCorrection(withComment, "freezer", "Переложил продукты");
+  assert.deepEqual(both.corrections, {
+    "fridge#2": "Вызвал мастера",
+    freezer: "Переложил продукты",
+  });
+  // Журнал читает комментарий из того же места, куда мы его положили.
+  const deviations = collectColdEquipmentDeviations(config, [
+    { id: "row", date: "2026-09-18", data: { ...both, temperatures: { "fridge#2": 9 } } },
+  ]);
+  assert.equal(deviations[0]?.comment, "Вызвал мастера");
+  // Комментарий переживает синхронизацию строки с конфигом.
+  assert.deepEqual(syncColdEquipmentEntryDataWithConfig(both, config).corrections, both.corrections);
 });

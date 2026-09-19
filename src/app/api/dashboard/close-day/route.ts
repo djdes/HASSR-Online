@@ -6,7 +6,7 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { getActiveBuildingId } from "@/lib/active-building";
 import { buildingWhere } from "@/lib/building-scope";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
-import { DAILY_JOURNAL_CODES } from "@/lib/daily-journal-codes";
+import { CLOSE_DAY_JOURNAL_CODES } from "@/lib/daily-journal-codes";
 import { logAudit } from "@/lib/audit";
 import { buildDateKeys, toDateKey } from "@/lib/hygiene-document";
 import { resolveDayStart } from "@/lib/today-compliance";
@@ -17,7 +17,6 @@ import { getJournalAutomation } from "@/lib/journal-automation";
 import { resolveAutomationStaff } from "@/lib/journal-automation-staff";
 import { prefillResponsiblesForNewDocument } from "@/lib/journal-responsibles-cascade";
 import { getUserPositionLabel } from "@/lib/user-roles";
-import { CLEANING_DOCUMENT_TEMPLATE_CODE } from "@/lib/cleaning-document";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -51,10 +50,7 @@ export const dynamic = "force-dynamic";
 
 type Body = { templateCodes?: string[]; upTo?: string };
 
-const CLOSE_DAY_CODES = new Set<string>([
-  ...DAILY_JOURNAL_CODES,
-  CLEANING_DOCUMENT_TEMPLATE_CODE,
-]);
+const CLOSE_DAY_CODES = CLOSE_DAY_JOURNAL_CODES;
 
 export type CloseDaySummary = {
   templateCode: string;
@@ -70,6 +66,7 @@ export type CloseDaySummary = {
   skippedReason?:
     | "out_of_period"
     | "no_document"
+    | "period_closed"
     | "no_employees"
     | "no_responsible"
     | "unsupported"
@@ -205,6 +202,12 @@ export async function POST(request: Request) {
           inheritResponsiblesFromLastDocument: true,
           buildingId: activeBuildingId,
         });
+        // Журнал за этот период отправлен в закрытые: второй документ на тот же
+        // период не заводим и закрытый не дозаполняем — пусть вернут его в активные.
+        if (created.reason === "period-closed") {
+          summary.skippedReason = "period_closed";
+          continue;
+        }
         if (!created.documentId) {
           summary.skippedReason = "no_document";
           continue;

@@ -286,6 +286,40 @@ function startOfUtcDay(now: Date): Date {
   );
 }
 
+/**
+ * Период документа по дате, выбранной в окне создания, строками
+ * `YYYY-MM-DD`.
+ *
+ * ПОЧЕМУ: два десятка журналов со своим окном создания слали
+ * `dateTo = dateFrom` — однодневный документ независимо от вида периода.
+ * У годовых журналов (дезинсекция, аварии, СИЗ, история поломок…) ночной
+ * крон заводил документ 01.01–31.12, а ручное создание — однодневный,
+ * который с ним пересекался: два бланка на один период, записи
+ * разъезжаются, ни один не выглядит заполненным.
+ *
+ * Дату НАЧАЛА человек по-прежнему выбирает сам — сюда приходит она, а
+ * возвращается период журнала, который эту дату содержит.
+ */
+export function resolveJournalPeriodForDate(
+  templateCode: string,
+  dateFrom: string | null | undefined,
+  overrides?: JournalPeriodOverrideMap
+): { dateFrom: string; dateTo: string } {
+  const day = typeof dateFrom === "string" ? dateFrom.trim().slice(0, 10) : "";
+  const at = /^\d{4}-\d{2}-\d{2}$/.test(day)
+    ? new Date(`${day}T00:00:00.000Z`)
+    : new Date();
+  const period = resolveJournalPeriod(
+    templateCode,
+    Number.isFinite(at.getTime()) ? at : new Date(),
+    overrides
+  );
+  return {
+    dateFrom: period.dateFrom.toISOString().slice(0, 10),
+    dateTo: period.dateTo.toISOString().slice(0, 10),
+  };
+}
+
 export function resolveJournalPeriod(
   templateCode: string,
   now: Date = new Date(),

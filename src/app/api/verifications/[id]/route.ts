@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "@/lib/server-session";
+import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasCapability } from "@/lib/permission-presets";
 import { notifyEmployee } from "@/lib/telegram";
@@ -54,6 +55,16 @@ export async function POST(
     include: { user: { select: { id: true, name: true, telegramChatId: true } } },
   });
   if (!claim) return NextResponse.json({ error: "Не найдено" }, { status: 404 });
+  // Мультиарендность: задача чужой организации не должна подтверждаться
+  // отсюда — id приходит от клиента и ничем больше не ограничен.
+  if (claim.organizationId !== getActiveOrgId(session)) {
+    return NextResponse.json({ error: "Не найдено" }, { status: 404 });
+  }
+  // Повторное «Одобрить» — не ошибка и не переписывает, кто и когда
+  // проверил первым (дедуп по verifiedAt, П-14).
+  if (body.action === "approve" && claim.verificationStatus === "approved") {
+    return NextResponse.json({ ok: true, alreadyVerified: true });
+  }
   if (claim.status !== "completed") {
     return NextResponse.json(
       { error: "Задача не в статусе completed" },

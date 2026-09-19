@@ -57,7 +57,7 @@ import {
   getRegisterDocumentCreatePeriodBounds,
   isRegisterDocumentTemplate,
 } from "@/lib/register-document";
-import { getHygieneCreatePeriodBounds } from "@/lib/hygiene-document";
+import { resolveJournalPeriod, resolveJournalPeriodKind } from "@/lib/journal-period";
 import { getUserPositionLabel } from "@/lib/user-roles";
 import { useJournalCreateDefaults } from "@/components/journals/journal-create-defaults";
 import { isStaffDocumentTemplate } from "@/lib/journal-document-helpers";
@@ -150,6 +150,23 @@ interface Props {
 }
 
 /**
+ * Период по умолчанию для журналов без собственной ветки ниже.
+ *
+ * ПОЧЕМУ: раньше сюда падал полумесячный период гигиены, и годовые
+ * журналы (аварии, жалобы, СИЗ, дезинсекция, перечень стекла…) открывались
+ * на «1–15 сентября», хотя и автоназвание (`buildDocumentAutoTitle`), и
+ * ночное автосоздание считают их годовыми. Документ назывался «2026 год»,
+ * а жил две недели. Теперь источник периода один — `journal-period.ts`.
+ */
+function resolveCreatePeriodBounds(templateCode: string) {
+  const period = resolveJournalPeriod(templateCode);
+  return {
+    dateFrom: period.dateFrom.toISOString().slice(0, 10),
+    dateTo: period.dateTo.toISOString().slice(0, 10),
+  };
+}
+
+/**
  * Показывает ли диалог каскад «Должность → Сотрудник». Журналы, у которых
  * ответственный задаётся не при создании (медкнижки, списания, обучение,
  * ТО/поверка, уборка, уборка оборудования), каскад не показывают.
@@ -182,6 +199,8 @@ export function CreateDocumentDialog({
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  /** Найденный сервером документ на тот же период (ответ 409). */
+  const [duplicate, setDuplicate] = useState<{ id: string; title: string } | null>(null);
 
   const defaultPeriod = useMemo(
     () =>
@@ -207,7 +226,7 @@ export function CreateDocumentDialog({
                   ? getProductWriteoffCreatePeriodBounds()
                 : isRegisterDocumentTemplate(templateCode)
                 ? getRegisterDocumentCreatePeriodBounds()
-                : getHygieneCreatePeriodBounds(),
+                : resolveCreatePeriodBounds(templateCode),
     [templateCode]
   );
 
@@ -274,6 +293,8 @@ export function CreateDocumentDialog({
     const nextTo = next.dateTo ?? dateTo;
     if (next.dateFrom !== undefined) setDateFrom(next.dateFrom);
     if (next.dateTo !== undefined) setDateTo(next.dateTo);
+    // Период поменяли — прежняя находка «уже есть документ» устарела.
+    setDuplicate(null);
     if (titleTouched) return;
     setTitle(
       buildDocumentAutoTitle({
@@ -380,8 +401,19 @@ export function CreateDocumentDialog({
       return;
     }
     setTitleError("");
+    await createDocument(false);
+  }
+
+  /**
+   * `force` — «всё равно создать» после того, как сервер ответил 409
+   * «за этот период уже есть документ». Без этого второй бланк на период
+   * нельзя было завести вообще: сервер отказывал, а кнопки подтверждения
+   * в окне не было, и человек упирался в красную строку.
+   */
+  async function createDocument(force: boolean) {
     setIsSubmitting(true);
     setError("");
+    setDuplicate(null);
 
     try {
       // Уходит ровно выбранный человек. Если выбрали только должность —
@@ -394,6 +426,7 @@ export function CreateDocumentDialog({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           templateCode,
+          force,
           title: isUvRuntimeJournal
             ? buildUvRuntimeDocumentTitle({
                 lampNumber: trackedLampNumber.trim() || "1",
@@ -491,8 +524,15 @@ export function CreateDocumentDialog({
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Ошибка создания");
+        const data = await res.json().catch(() => null);
+        // 409 — «на этот период уже есть документ». Это не ошибка ввода,
+        // а развилка: открыть существующий или завести второй осознанно.
+        if (res.status === 409 && data?.existing?.id) {
+          setDuplicate({ id: String(data.existing.id), title: String(data.existing.title || "") });
+          setError("");
+          return;
+        }
+        throw new Error(data?.error || "Ошибка создания");
       }
 
       const { document: doc } = await res.json();
@@ -531,8 +571,18 @@ export function CreateDocumentDialog({
    * документа есть «Ответственный», а задать его было негде.
    */
   const showResponsiblePicker = showResponsiblePickerFor(templateCode);
+  /**
+   * Бессрочные журналы (дез. средства, стеклоконтроль, интенсивное
+   * охлаждение, чек-лист сан-дня) живут одним документом без конца —
+   * `journal-period.ts` даёт им `dateTo = 31.12.2099`. Показывать такую
+   * «Дату окончания» нельзя: она читается как опечатка.
+   */
+  const isPerpetualJournal = resolveJournalPeriodKind(templateCode) === "perpetual";
   const showDateTo =
-    !isClimateJournal && !isColdEquipmentJournal && !isGeneralCleaningJournal;
+    !isClimateJournal &&
+    !isColdEquipmentJournal &&
+    !isGeneralCleaningJournal &&
+    !isPerpetualJournal;
   /**
    * Период у «штатных» журналов (гигиена, здоровье, контроль гигиены рук)
    * считается автоматически на 15 дней — поля даты у них нет. Раньше на
@@ -552,6 +602,10 @@ export function CreateDocumentDialog({
    * кадровых журналов: владелец просит именно «Гигиенический журнал — …».
    */
   function handleOpenChange(next: boolean) {
+    if (!next) {
+      setDuplicate(null);
+      setError("");
+    }
     if (next && !title.trim()) {
       setTitleTouched(false);
       setTitle(
@@ -669,6 +723,45 @@ export function CreateDocumentDialog({
           className={cn(JOURNAL_DIALOG_BODY_CLASS, JOURNAL_DIALOG_FIELDS_CLASS)}
         >
           {error && <p className={JOURNAL_DIALOG_ERROR_CLASS}>{error}</p>}
+
+          {/* Документ на этот период уже есть. Раньше на этом месте была
+              только красная строка «Откройте его или выберите другой
+              период» — без ссылки и без возможности всё же завести
+              второй бланк. Теперь оба выхода здесь. */}
+          {duplicate && (
+            <div className="rounded-2xl border border-[#ffd8a8] bg-[#fff8ed] p-4">
+              <div className="text-[14px] font-medium text-[#0b1024]">
+                За этот период уже есть документ
+              </div>
+              <div className="mt-1 text-[13px] leading-[1.45] text-[#6f7282]">
+                «{duplicate.title}». Записи за одни и те же дни попадут в разные
+                бланки, и ни один не будет выглядеть заполненным.
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  className="h-10 rounded-xl bg-[#5566f6] px-4 text-[14px] font-semibold text-white transition-colors duration-150 hover:bg-[#4a5bf0]"
+                  onClick={() => {
+                    setOpen(false);
+                    router.push(
+                      `/journals/${templateCode}/documents/${duplicate.id}`
+                    );
+                  }}
+                >
+                  Открыть существующий
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isSubmitting}
+                  className="h-10 rounded-xl border-[#dcdfed] px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+                  onClick={() => void createDocument(true)}
+                >
+                  Всё равно создать
+                </Button>
+              </div>
+            </div>
+          )}
 
           {isCompactSourceModal ? (
             <>

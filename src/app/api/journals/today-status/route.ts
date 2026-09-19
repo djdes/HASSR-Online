@@ -8,7 +8,13 @@ import {
   DAILY_JOURNAL_CODES,
   CONFIG_DAILY_CODES,
 } from "@/lib/today-compliance";
-import { getTasksFlowReadinessByTemplate } from "@/lib/today-compliance";
+import { COUNTS_UNBOUNDED_CODES } from "@/lib/daily-journal-codes";
+import {
+  getTasksFlowReadinessByTemplate,
+  resolveDayStart,
+  rollupConfigDocumentForDay,
+} from "@/lib/today-compliance";
+import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
 
 export const runtime = "nodejs";
@@ -40,12 +46,18 @@ export async function GET() {
   }
   const organizationId = getActiveOrgId(session);
 
+  // «Сегодня» — в поясе организации, как на дашборде: на проде процесс
+  // живёт в UTC, и ночью по Москве UTC-день — это ещё вчера.
+  const org = await db.organization.findUnique({
+    where: { id: organizationId },
+    select: { timezone: true, disabledJournalCodes: true },
+  });
+  const disabledCodes = parseDisabledCodes(org?.disabledJournalCodes);
   const now = new Date();
-  const todayStart = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
-  );
+  const todayStart = resolveDayStart(org?.timezone ?? null, now);
   const todayEnd = new Date(todayStart);
   todayEnd.setUTCDate(todayEnd.getUTCDate() + 1);
+  const todayKey = todayStart.toISOString().slice(0, 10);
 
   // 1. Активные документы daily-журналов сегодня.
   const activeDocs = await db.journalDocument.findMany({
@@ -59,6 +71,7 @@ export async function GET() {
     select: {
       id: true,
       templateId: true,
+      config: true,
       template: { select: { code: true, name: true } },
     },
   });
@@ -108,6 +121,7 @@ export async function GET() {
   };
   const byTemplate = new Map<string, TemplateAcc>();
   for (const doc of activeDocs) {
+    if (disabledCodes.has(doc.template.code)) continue;
     const acc = byTemplate.get(doc.templateId) ?? {
       code: doc.template.code,
       name: doc.template.name,
@@ -115,8 +129,27 @@ export async function GET() {
       totalCount: 0,
       docIds: [],
     };
-    acc.realCount += realByDoc.get(doc.id) ?? 0;
-    acc.totalCount += totalByDoc.get(doc.id) ?? 0;
+    if (CONFIG_DAILY_CODES.has(doc.template.code)) {
+      // Уборка и бракеражи держат строки внутри `config`, а не в
+      // JournalDocumentEntry: без этого они всегда «пока пусто», хотя
+      // на дашборде тот же журнал уже зелёный.
+      const rollup = rollupConfigDocumentForDay(
+        doc.template.code,
+        doc.config,
+        todayKey
+      );
+      const todayCount = rollup?.todayCount ?? 0;
+      acc.realCount += todayCount;
+      // У бракеражей ростера нет — каждая строка это событие. Их
+      // «сколько ожидается» = сколько уже внесли, иначе в сетке
+      // появлялось бы «0 из 9», где 9 — это число документов.
+      acc.totalCount += COUNTS_UNBOUNDED_CODES.has(doc.template.code)
+        ? todayCount
+        : (rollup?.expectedCount ?? 0);
+    } else {
+      acc.realCount += realByDoc.get(doc.id) ?? 0;
+      acc.totalCount += totalByDoc.get(doc.id) ?? 0;
+    }
     acc.docIds.push(doc.id);
     byTemplate.set(doc.templateId, acc);
   }

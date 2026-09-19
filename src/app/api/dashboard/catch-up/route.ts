@@ -9,6 +9,7 @@ import { buildingWhere } from "@/lib/building-scope";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { DAILY_JOURNAL_CODES } from "@/lib/daily-journal-codes";
 import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
+import { resolveDayStart } from "@/lib/today-compliance";
 import { logAudit } from "@/lib/audit";
 
 export const runtime = "nodejs";
@@ -90,7 +91,13 @@ export async function GET() {
   }
   const organizationId = getActiveOrgId(session);
 
-  const today = utcDayStart(new Date());
+  // «Сегодня» — в поясе организации, как на дашборде: иначе ночью по
+  // Москве последний столбец сетки — вчерашний день.
+  const orgDay = await db.organization.findUnique({
+    where: { id: organizationId },
+    select: { timezone: true },
+  });
+  const today = resolveDayStart(orgDay?.timezone ?? null, new Date());
   const start = new Date(today);
   start.setUTCDate(start.getUTCDate() - (WINDOW_DAYS - 1));
 

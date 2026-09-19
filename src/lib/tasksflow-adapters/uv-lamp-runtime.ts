@@ -40,19 +40,17 @@ function buildUvTaskForm(employeeName: string | null): TaskFormSchema {
     submitLabel: "Сохранить смену",
     fields: [
       {
-        type: "text",
+        type: "time",
         key: "startTime",
         label: "Время включения",
         placeholder: "08:00",
-        maxLength: 5,
         required: true,
       },
       {
-        type: "text",
+        type: "time",
         key: "endTime",
         label: "Время выключения",
         placeholder: "09:00",
-        maxLength: 5,
         required: true,
       },
     ],

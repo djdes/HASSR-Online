@@ -80,12 +80,11 @@ function buildForm(
         defaultValue: prefill?.dishName ?? undefined,
       },
       {
-        type: "text",
+        type: "time",
         key: "productionTime",
-        label: "Время выпуска (ЧЧ:ММ)",
+        label: "Время выпуска",
         required: true,
         placeholder: "14:00",
-        maxLength: 5,
         defaultValue: productionTime || undefined,
       },
       {

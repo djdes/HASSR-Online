@@ -72,6 +72,17 @@ export const ALL_DAILY_JOURNAL_CODES = new Set<string>([
 ]);
 
 /**
+ * Журналы, которые умеет дозаполнять «Закрыть день»
+ * (`/api/dashboard/close-day`). Всё остальное кнопка не трогает —
+ * дашборд считает по этому набору, сколько журналов она реально
+ * закроет, чтобы в подтверждении не обещать больше, чем будет.
+ */
+export const CLOSE_DAY_JOURNAL_CODES = new Set<string>([
+  ...DAILY_JOURNAL_CODES,
+  "cleaning",
+]);
+
+/**
  * Journals that genuinely require one task/obligation per employee for
  * the same day. Other selected journals are organization-level daily
  * work: one responsible employee fills the journal for the day.

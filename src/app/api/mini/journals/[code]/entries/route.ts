@@ -74,8 +74,25 @@ export async function GET(
         status: true,
         dateFrom: true,
         dateTo: true,
+        responsibleUserId: true,
       },
     });
+    // Имя ответственного: в списке лежат таблицы всей организации, и без
+    // подписи сотрудник не отличал свою от чужой.
+    const responsibleIds = [
+      ...new Set(
+        documents
+          .map((doc) => doc.responsibleUserId)
+          .filter((id): id is string => Boolean(id))
+      ),
+    ];
+    const responsibles = responsibleIds.length
+      ? await db.user.findMany({
+          where: { id: { in: responsibleIds }, organizationId: orgId },
+          select: { id: true, name: true },
+        })
+      : [];
+    const nameById = new Map(responsibles.map((user) => [user.id, user.name]));
     return NextResponse.json({
       template: {
         code,
@@ -83,7 +100,13 @@ export async function GET(
         description: template.description,
       },
       isDocument: true,
-      documents,
+      documents: documents.map(({ responsibleUserId, ...doc }) => ({
+        ...doc,
+        responsibleName: responsibleUserId
+          ? nameById.get(responsibleUserId) ?? null
+          : null,
+        mine: responsibleUserId === session.user.id,
+      })),
       entries: [],
     });
   }

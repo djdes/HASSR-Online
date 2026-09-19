@@ -132,7 +132,8 @@ export default async function AreasSettingsPage() {
                           <DeleteButton
                             id={area.id}
                             endpoint="/api/areas"
-                            entityName={`цех "${area.name}"`}
+                            entityName={`цех «${area.name}»`}
+                            usageEndpoint={`/api/areas/${area.id}/usage`}
                           />
                         )}
                       </div>

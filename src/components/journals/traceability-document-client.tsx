@@ -13,6 +13,7 @@ import {
   Archive,
   CalendarDays,
   ChevronDown,
+  Package,
   Plus,
   Trash2,
   Upload,
@@ -25,6 +26,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { USER_ROLE_LABEL_VALUES, getUserRoleLabel } from "@/lib/user-roles";
 import { buildStaffOptionLabel } from "@/lib/journal-staff-binding";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -61,6 +63,8 @@ type TraceabilityRowDraft = {
   date: string;
   incomingRawMaterialName: string;
   incomingBatchNumber: string;
+  /** Партия склада, из которой взято сырьё (необязательно). */
+  incomingBatchId: string;
   incomingPackagingDate: string;
   incomingQuantityPieces: string;
   incomingQuantityKg: string;
@@ -103,6 +107,19 @@ function formatDashDate(value: string) {
   const date = new Date(`${normalizeIsoDate(value)}T00:00:00Z`);
   if (Number.isNaN(date.getTime())) return value;
   return `${String(date.getUTCDate()).padStart(2, "0")}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${date.getUTCFullYear()}`;
+}
+/**
+ * «Кол-во, шт./кг.» — одна колонка бланка на обе меры. Печать давно
+ * выводит обе через «/», а экран показывал только килограммы: если
+ * заполнены и штуки, и кг, половина данных пропадала.
+ */
+function formatQuantityPair(
+  pieces: number | null | undefined,
+  kg: number | null | undefined
+) {
+  return [formatTraceabilityQuantity(pieces), formatTraceabilityQuantity(kg)]
+    .filter(Boolean)
+    .join(" / ");
 }
 function parseLooseNumber(value: string) {
   const normalized = value.trim().replace(/\s+/g, "").replace(",", ".");
@@ -165,6 +182,7 @@ function rowToDraft(row: TraceabilityRow, config: TraceabilityDocumentConfig): T
     date: normalizeIsoDate(row.date || todayIso()),
     incomingRawMaterialName: row.incoming.rawMaterialName || config.rawMaterialList[0] || "",
     incomingBatchNumber: row.incoming.batchNumber || "",
+    incomingBatchId: row.incoming.batchId || "",
     // Пустая дата фасовки остаётся пустой: подставленная дата журнала
     // выглядела как заполненная и уезжала в бланк.
     incomingPackagingDate: row.incoming.packagingDate ? normalizeIsoDate(row.incoming.packagingDate) : "",
@@ -186,6 +204,7 @@ function draftToRow(draft: TraceabilityRowDraft) {
     incoming: {
       rawMaterialName: draft.incomingRawMaterialName,
       batchNumber: draft.incomingBatchNumber,
+      batchId: draft.incomingBatchId,
       packagingDate: normalizeIsoDate(draft.incomingPackagingDate),
       quantityPieces: parseLooseNumber(draft.incomingQuantityPieces),
       quantityKg: parseLooseNumber(draft.incomingQuantityKg),
@@ -429,6 +448,122 @@ function ListsDialog(props: {
   );
 }
 
+type ActiveBatch = {
+  id: string;
+  code: string;
+  productName: string;
+  supplier: string | null;
+  quantity: number;
+  unit: string;
+  expiryDate: string | null;
+};
+
+/**
+ * Выбор сырья «из партий»: активные партии организации со складa.
+ * Список бывает длинным, поэтому popover с поиском, а не нативный select.
+ * Выбранная партия сохраняется id'шником И снимком текста (название,
+ * номер) — чтобы журнал читался, даже если партию потом переименуют.
+ */
+function BatchPicker(props: {
+  onPick: (batch: ActiveBatch) => void;
+  disabled?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [batches, setBatches] = useState<ActiveBatch[] | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (!open || batches) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await fetch("/api/batches?status=received");
+        if (!response.ok) throw new Error("load failed");
+        const data = (await response.json()) as ActiveBatch[];
+        if (!cancelled) setBatches(Array.isArray(data) ? data : []);
+      } catch {
+        if (!cancelled) setFailed(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [batches, open]);
+
+  const filtered = (batches ?? []).filter((batch) => {
+    const needle = query.trim().toLowerCase();
+    if (!needle) return true;
+    return `${batch.code} ${batch.productName} ${batch.supplier ?? ""}`
+      .toLowerCase()
+      .includes(needle);
+  });
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={props.disabled}
+          className="h-10 w-full justify-between rounded-xl border-[#d8dae6] px-3.5 text-[13.5px] font-medium text-[#3848c7] shadow-none transition-colors duration-150 hover:bg-[#f5f6ff]"
+        >
+          <span className="flex items-center gap-1.5">
+            <Package className="size-4" />
+            Выбрать из партий
+          </span>
+          <ChevronDown className="size-4 text-[#9b9fb3]" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-[min(420px,calc(100vw-3rem))] rounded-2xl border-[#ececf4] p-2">
+        <Input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Поиск по продукту, номеру, поставщику"
+          className="h-9 rounded-xl border-[#dcdfed] px-3 text-[13px]"
+        />
+        <div className="mt-2 max-h-[280px] space-y-1 overflow-y-auto">
+          {failed ? (
+            <p className="px-2 py-4 text-center text-[13px] text-[#a13a32]">
+              Не удалось загрузить партии
+            </p>
+          ) : batches === null ? (
+            <p className="px-2 py-4 text-center text-[13px] text-[#9b9fb3]">Загрузка…</p>
+          ) : filtered.length === 0 ? (
+            <p className="px-2 py-4 text-center text-[13px] text-[#9b9fb3]">
+              {batches.length === 0
+                ? "Активных партий нет — заведите их в «Партиях» или из приёмки"
+                : "Ничего не найдено"}
+            </p>
+          ) : (
+            filtered.map((batch) => (
+              <button
+                key={batch.id}
+                type="button"
+                onClick={() => {
+                  props.onPick(batch);
+                  setOpen(false);
+                }}
+                className="block w-full rounded-xl px-3 py-2 text-left transition-colors duration-150 hover:bg-[#f5f6ff] focus-visible:bg-[#f5f6ff] focus-visible:outline-none"
+              >
+                <span className="block text-[13.5px] font-medium text-[#0b1024]">
+                  {batch.productName}
+                </span>
+                <span className="mt-0.5 block text-[12px] text-[#6f7282]">
+                  № {batch.code} · остаток {batch.quantity} {batch.unit}
+                  {batch.expiryDate
+                    ? ` · до ${new Date(batch.expiryDate).toLocaleDateString("ru-RU")}`
+                    : ""}
+                </span>
+              </button>
+            ))
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function RowDialog(props: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -533,6 +668,37 @@ function RowDialog(props: {
                   <SelectContent><SelectItem value="__empty__">- Выберите значение -</SelectItem>{Array.from(new Set([draft.incomingRawMaterialName, ...rawOptions].filter(Boolean))).map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent>
                 </Select>
                 <div className="flex items-center gap-2"><Input value={newRaw} onChange={(e) => setNewRaw(e.target.value)} placeholder="Добавить название нового сырья" className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[16px]" /><Button type="button" onClick={() => addCustom("raw")} className="h-10 rounded-xl bg-[#5563ff] px-3.5 text-white hover:bg-[#4654ff]"><Plus className="size-5" /></Button></div>
+                {/* Сырьё со склада: партия подставляет название и номер
+                    и остаётся связанной со строкой. */}
+                <BatchPicker
+                  onPick={(batch) => {
+                    setRawOptions((current) => mergeUnique(current, [batch.productName]));
+                    setDraft((current) =>
+                      current
+                        ? {
+                            ...current,
+                            incomingRawMaterialName: batch.productName,
+                            incomingBatchNumber: batch.code,
+                            incomingBatchId: batch.id,
+                          }
+                        : current
+                    );
+                  }}
+                />
+                {draft.incomingBatchId ? (
+                  <div className="flex items-center justify-between gap-2 rounded-xl border border-[#ececf4] bg-[#fafbff] px-3 py-2">
+                    <span className="min-w-0 truncate text-[12.5px] text-[#6f7282]">
+                      Из партии № {draft.incomingBatchNumber || "—"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setField("incomingBatchId", "")}
+                      className="shrink-0 rounded-lg px-2 py-1 text-[12.5px] font-medium text-[#a13a32] transition-colors duration-150 hover:bg-[#fff4f2]"
+                    >
+                      Отвязать
+                    </button>
+                  </div>
+                ) : null}
               </div>
               <div className="space-y-2"><Label className="text-[13.5px] text-[#7a7c8e]">Номер партии ПФ</Label><Input value={draft.incomingBatchNumber} onChange={(e) => setField("incomingBatchNumber", e.target.value)} placeholder="Введите номер партии ПФ" className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" /></div>
               <div className="space-y-2"><Label className="text-[13.5px] text-[#7a7c8e]">Дата фасовки</Label><div className="relative"><Input type="date" value={draft.incomingPackagingDate} onChange={(e) => setField("incomingPackagingDate", normalizeIsoDate(e.target.value))} className="h-10 rounded-xl border-[#d8dae6] px-3.5 pr-14 text-[13.5px]" /><CalendarDays className="pointer-events-none absolute right-5 top-1/2 size-6 -translate-y-1/2 text-[#6e7080]" /></div></div>
@@ -668,9 +834,22 @@ export function TraceabilityDocumentClient(props: Props) {
   const allSelected = config.rows.length > 0 && selectedRowIds.length === config.rows.length;
   const { mobileView, switchMobileView } = useMobileView("traceability_test");
 
+  /**
+   * ФИО ответственного: в строке хранится снимок имени, но у строк,
+   * заполненных выбором сотрудника, остаётся только id — печать берёт
+   * имя из ростера, а экран показывал «—».
+   */
+  const responsibleName = (row: TraceabilityRow) =>
+    row.responsibleEmployee ||
+    employees.find((employee) => employee.id === row.responsibleEmployeeId)?.name ||
+    "";
+
   const cardItems: RecordCardItem[] = config.rows.map((row, index) => {
-    const incomingQty = row.incoming.quantityKg ?? row.incoming.quantityPieces;
-    const outgoingQty = row.outgoing.quantityPacksKg ?? row.outgoing.quantityPacksPieces;
+    const incomingQty = formatQuantityPair(row.incoming.quantityPieces, row.incoming.quantityKg);
+    const outgoingQty = formatQuantityPair(
+      row.outgoing.quantityPacksPieces,
+      row.outgoing.quantityPacksKg
+    );
     return {
       id: row.id,
       title: `№${index + 1} · ${formatDashDate(row.date) || "—"}`,
@@ -690,13 +869,13 @@ export function TraceabilityDocumentClient(props: Props) {
       ) : null,
       fields: [
         { label: "№ партии / дата фасовки", value: [row.incoming.batchNumber, row.incoming.packagingDate].filter(Boolean).join(" · "), hideIfEmpty: true },
-        { label: "Кол-во сырья", value: incomingQty != null ? formatTraceabilityQuantity(incomingQty) : "", hideIfEmpty: true },
+        { label: "Кол-во сырья", value: incomingQty, hideIfEmpty: true },
         { label: "Наименование ПФ", value: row.outgoing.productName, hideIfEmpty: true },
-        { label: "Кол-во фасовок", value: outgoingQty != null ? formatTraceabilityQuantity(outgoingQty) : "", hideIfEmpty: true },
+        { label: "Кол-во фасовок", value: outgoingQty, hideIfEmpty: true },
         config.showShockTempField
           ? { label: "T°C после шока", value: row.outgoing.shockTemp != null ? String(row.outgoing.shockTemp) : "", hideIfEmpty: true }
           : null,
-        { label: "Ответственный", value: [row.responsibleRole, row.responsibleEmployee].filter(Boolean).join(", "), hideIfEmpty: true },
+        { label: "Ответственный", value: [row.responsibleRole, responsibleName(row)].filter(Boolean).join(", "), hideIfEmpty: true },
       ].filter((f): f is { label: string; value: string; hideIfEmpty: boolean } => f !== null),
       onClick: !isClosed
         ? () => {
@@ -958,8 +1137,11 @@ export function TraceabilityDocumentClient(props: Props) {
           </thead>
           <tbody>
             {config.rows.length > 0 ? config.rows.map((row) => {
-              const incomingQty = row.incoming.quantityKg ?? row.incoming.quantityPieces;
-              const outgoingQty = row.outgoing.quantityPacksKg ?? row.outgoing.quantityPacksPieces;
+              const incomingQty = formatQuantityPair(row.incoming.quantityPieces, row.incoming.quantityKg);
+              const outgoingQty = formatQuantityPair(
+                row.outgoing.quantityPacksPieces,
+                row.outgoing.quantityPacksKg
+              );
               const selected = selectedRowIds.includes(row.id);
               return (
                 <tr key={row.id} className={cn("transition-colors", !isClosed && "cursor-pointer hover:bg-[#fafbff]", selected && "bg-[#eef1ff]")} onClick={() => { if (!isClosed) setEditingRow(row); if (!isClosed) setRowOpen(true); }}>
@@ -967,11 +1149,11 @@ export function TraceabilityDocumentClient(props: Props) {
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{formatDashDate(row.date)}</td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{row.incoming.rawMaterialName || "—"}</td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight whitespace-pre-line`}>{[row.incoming.batchNumber, formatDashDate(row.incoming.packagingDate)].filter(Boolean).join("\n") || "—"}</td>
-                  <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{incomingQty != null ? formatTraceabilityQuantity(incomingQty) : "—"}</td>
+                  <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{incomingQty || "—"}</td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{row.outgoing.productName || "—"}</td>
-                  <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{outgoingQty != null ? formatTraceabilityQuantity(outgoingQty) : "—"}</td>
+                  <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{outgoingQty || "—"}</td>
                   {config.showShockTempField && <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{row.outgoing.shockTemp != null ? formatTraceabilityQuantity(row.outgoing.shockTemp) : "—"}</td>}
-                  <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{row.responsibleEmployee || "—"}</td>
+                  <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{responsibleName(row) || "—"}</td>
                 </tr>
               );
             }) : <tr><td colSpan={isClosed ? 8 : config.showShockTempField ? 9 : 8} className={`${GRID_CELL_CLASS} px-2 py-6 text-center text-[#6f7282]`}>Строк пока нет</td></tr>}

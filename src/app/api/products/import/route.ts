@@ -221,15 +221,36 @@ export async function POST(request: Request) {
       );
     }
 
-    // Bulk create
-    const result = await db.product.createMany({
-      data: products,
-      skipDuplicates: true,
+    // `skipDuplicates` здесь не работал: у Product нет unique-индекса по
+    // (organizationId, name), только обычный @@index. Повторный импорт того
+    // же файла задваивал весь справочник. Отсеиваем дубли сами — и по уже
+    // заведённым продуктам, и внутри самого файла.
+    const existing = await db.product.findMany({
+      where: { organizationId: getActiveOrgId(session) },
+      select: { name: true },
     });
+    const seen = new Set(existing.map((item) => item.name.trim().toLowerCase()));
+    const fresh: typeof products = [];
+    let duplicates = 0;
+    for (const product of products) {
+      const key = product.name.trim().toLowerCase();
+      if (seen.has(key)) {
+        duplicates++;
+        continue;
+      }
+      seen.add(key);
+      fresh.push(product);
+    }
+
+    const result =
+      fresh.length > 0
+        ? await db.product.createMany({ data: fresh })
+        : { count: 0 };
 
     return NextResponse.json({
       imported: result.count,
       skipped,
+      duplicates,
       total: rawRows.length,
     });
   } catch (error) {

@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, QrCode, Thermometer } from "lucide-react";
+import { AlertTriangle, CheckCircle2, QrCode, Thermometer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DeviationCorrection } from "@/components/qr-fill/deviation-correction";
 import {
   Select,
   SelectContent,
@@ -26,6 +27,10 @@ type Props = {
      *  с humidity — тогда форма показывает дополнительное поле. */
     hasHumidityField: boolean;
   };
+  /** На сегодня есть активный журнал с этим оборудованием — иначе писать некуда. */
+  hasActiveDocument: boolean;
+  /** Норма влажности цеха из климат-журнала; null — норма не задана. */
+  humidityNorm: { min: number | null; max: number | null } | null;
   employees: Employee[];
 };
 
@@ -36,7 +41,13 @@ const LS_EMPLOYEE_KEY = "wesetup.equipment-fill.employeeId";
  * (stored in localStorage so every subsequent scan skips the picker).
  * Enter temperature → hit «Сохранить». Done in 8 seconds.
  */
-export function EquipmentFillClient({ token, equipment, employees }: Props) {
+export function EquipmentFillClient({
+  token,
+  equipment,
+  hasActiveDocument,
+  humidityNorm,
+  employees,
+}: Props) {
   const [employeeId, setEmployeeId] = useState<string>("");
   // Морозилка (норма ниже нуля) — минус стоит сразу: на цифровой клавиатуре
   // телефона его не набрать.
@@ -44,6 +55,8 @@ export function EquipmentFillClient({ token, equipment, employees }: Props) {
     equipment.tempMax != null && equipment.tempMax < 0 ? "-" : ""
   );
   const [humidity, setHumidity] = useState<string>("");
+  // «Что сделали» — обязательно, когда замер вышел за норму.
+  const [correction, setCorrection] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +79,11 @@ export function EquipmentFillClient({ token, equipment, employees }: Props) {
   }, [equipment]);
 
   const parsedTemp = useMemo(() => {
-    const n = Number(temperature.replace(",", "."));
+    // Пустое поле нельзя считать нулём: `Number("")` = 0, и «Сохранить»
+    // записывал в журнал 0 °C, хотя человек ничего не ввёл.
+    const raw = temperature.trim().replace(",", ".");
+    if (raw === "") return null;
+    const n = Number(raw);
     return Number.isFinite(n) ? n : null;
   }, [temperature]);
 
@@ -83,6 +100,18 @@ export function EquipmentFillClient({ token, equipment, employees }: Props) {
     return false;
   }, [parsedTemp, equipment]);
 
+  const humidityOutOfRange = useMemo(() => {
+    if (parsedHumidity === null || !humidityNorm) return false;
+    if (humidityNorm.min != null && parsedHumidity < humidityNorm.min) return true;
+    if (humidityNorm.max != null && parsedHumidity > humidityNorm.max) return true;
+    return false;
+  }, [parsedHumidity, humidityNorm]);
+
+  // Сервер проверяет то же самое и вернёт 400 — здесь только чтобы
+  // человек не жал «Сохранить» вслепую.
+  const needsCorrection = outOfRange || humidityOutOfRange;
+  const correctionMissing = needsCorrection && correction.trim() === "";
+
   const rememberedName = employees.find((e) => e.id === employeeId)?.name ?? null;
 
   async function save() {
@@ -94,6 +123,10 @@ export function EquipmentFillClient({ token, equipment, employees }: Props) {
     }
     if (parsedTemp === null) {
       setError("Введите температуру");
+      return;
+    }
+    if (correctionMissing) {
+      setError("Замер вне нормы — напишите, что вы сделали");
       return;
     }
     setSubmitting(true);
@@ -110,6 +143,7 @@ export function EquipmentFillClient({ token, equipment, employees }: Props) {
             ...(parsedHumidity !== null
               ? { humidity: parsedHumidity }
               : {}),
+            ...(correction.trim() ? { correction: correction.trim() } : {}),
           }),
         }
       );
@@ -154,6 +188,19 @@ export function EquipmentFillClient({ token, equipment, employees }: Props) {
       </section>
 
       <section className="mx-auto max-w-xl px-5 py-8">
+        {/* Раньше об отсутствии журнала сообщал только 409 после
+            «Сохранить» — человек вводил замер впустую. */}
+        {!hasActiveDocument ? (
+          <div className="mb-5 flex gap-3 rounded-2xl border border-[#ffe9b0] bg-[#fff8eb] p-4 text-[14px] leading-relaxed text-[#7a4a00]">
+            <AlertTriangle className="mt-0.5 size-5 shrink-0" />
+            <span>
+              Сегодня это оборудование не входит ни в один активный журнал
+              температуры. Попросите управляющего создать документ или добавить
+              в него оборудование — после этого замер можно будет сохранить.
+            </span>
+          </div>
+        ) : null}
+
         {done ? (
           <div className="rounded-3xl border border-[#ececf4] bg-white p-8 text-center shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
             <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-[#ecfdf5] text-[#116b2a]">
@@ -166,11 +213,21 @@ export function EquipmentFillClient({ token, equipment, employees }: Props) {
               Температура {parsedTemp}°C сохранена в журнал{" "}
               {rememberedName ? `на имя ${rememberedName}` : ""}.
             </p>
+            {/* Раньше предупреждение о выходе за норму исчезало вместе с
+                формой, и человек уходил, не зная, что делать дальше. */}
+            {outOfRange ? (
+              <p className="mt-3 rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-3 text-[13px] text-[#a13a32]">
+                Показание вне нормы — руководителю отправлено уведомление.
+                Проверьте оборудование и сообщите начальнику.
+              </p>
+            ) : null}
             <Button
               type="button"
               onClick={() => {
                 setDone(false);
                 setTemperature(equipment.tempMax != null && equipment.tempMax < 0 ? "-" : "");
+                setHumidity("");
+                setCorrection("");
                 setError(null);
               }}
               className="mt-6 h-12 rounded-2xl bg-[#5566f6] px-5 text-[15px] font-medium text-white hover:bg-[#4a5bf0]"
@@ -245,12 +302,6 @@ export function EquipmentFillClient({ token, equipment, employees }: Props) {
                     className="h-12 flex-1 rounded-2xl border-[#dcdfed] text-[18px]"
                   />
                 </div>
-                {parsedTemp !== null && outOfRange ? (
-                  <p className="mt-2 rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-3 text-[13px] text-[#a13a32]">
-                    Значение вне нормы. Запишите в журнал, но сообщите
-                    начальнику — возможно, требуется проверка оборудования.
-                  </p>
-                ) : null}
               </div>
 
               {/* Дополнительное поле для оборудования с climate-mapping
@@ -282,6 +333,23 @@ export function EquipmentFillClient({ token, equipment, employees }: Props) {
                 </div>
               ) : null}
 
+              {/* Вне нормы — «Что сделали» обязательно: комментарий ложится
+                  в журнал рядом с замером и виден в печати. */}
+              {needsCorrection ? (
+                <DeviationCorrection
+                  title={
+                    outOfRange && humidityOutOfRange
+                      ? "Температура и влажность вне нормы"
+                      : outOfRange
+                        ? "Температура вне нормы"
+                        : "Влажность вне нормы"
+                  }
+                  hint="Руководитель получит уведомление."
+                  value={correction}
+                  onChange={setCorrection}
+                />
+              ) : null}
+
               {error ? (
                 <div className="rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-3 text-[13px] text-[#a13a32]">
                   {error}
@@ -291,7 +359,13 @@ export function EquipmentFillClient({ token, equipment, employees }: Props) {
               <Button
                 type="button"
                 onClick={save}
-                disabled={submitting || !employeeId || parsedTemp === null}
+                disabled={
+                  submitting ||
+                  !employeeId ||
+                  parsedTemp === null ||
+                  !hasActiveDocument ||
+                  correctionMissing
+                }
                 className="h-12 w-full rounded-2xl bg-[#5566f6] px-5 text-[15px] font-medium text-white hover:bg-[#4a5bf0] shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] disabled:bg-[#c8cbe0]"
               >
                 {submitting ? "Сохраняем…" : "Сохранить замер"}

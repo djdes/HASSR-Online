@@ -32,6 +32,28 @@ export const dynamic = "force-dynamic";
  * план обучения на год) — пересоздание происходит только если период
  * у нового документа отличается от старого. Иначе оставляем как есть.
  */
+/**
+ * GET — preflight: сколько активных документов будет закрыто и сколько в
+ * них уже заполненных строк. Раньше диалог «Пересоздать документы» не
+ * называл ни одного числа, и управляющая не понимала, что закрывает
+ * журналы в середине месяца.
+ */
+export async function GET() {
+  const auth = await requireApiAuth();
+  if (!auth.ok) return auth.response;
+  if (!hasCapability(auth.session.user, "admin.full")) {
+    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+  }
+  const organizationId = getActiveOrgId(auth.session);
+  const [activeDocCount, filledEntryCount] = await Promise.all([
+    db.journalDocument.count({ where: { organizationId, status: "active" } }),
+    db.journalDocumentEntry.count({
+      where: { document: { organizationId, status: "active" } },
+    }),
+  ]);
+  return NextResponse.json({ activeDocCount, filledEntryCount });
+}
+
 export async function POST() {
   const auth = await requireApiAuth();
   if (!auth.ok) return auth.response;

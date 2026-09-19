@@ -286,13 +286,22 @@ export function InviteUserDialog() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="user-phone">Телефон</Label>
+              <Label htmlFor="user-phone">
+                Телефон <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="user-phone"
                 type="tel"
                 {...phoneInputProps(phone, setPhone)}
                 placeholder={RU_PHONE_PLACEHOLDER}
+                required
               />
+              {/* Номер — ключ связки с TasksFlow (П-8): без него сотрудник
+                  не получит задачи и его приходится «дружить» вручную. */}
+              <p className="text-xs text-muted-foreground">
+                По номеру сотрудник входит в приложение и связывается с
+                TasksFlow. Без телефона задачи ему не дойдут.
+              </p>
             </div>
             <div className="flex justify-end gap-2">
               <Button

@@ -263,6 +263,8 @@ function EditDocumentDialog(props: {
 
 function HealthDocumentRow(props: {
   document: HealthListDocument;
+  /** Соседи по списку — нужны проверке пересечения при возврате из закрытых. */
+  siblings: HealthListDocument[];
   templateCode: string;
   canManage?: boolean;
   onEdit: (document: HealthListDocument) => void;
@@ -288,6 +290,8 @@ function HealthDocumentRow(props: {
       <div />
       <div className="flex items-center justify-center text-[#5566f6]">
         <DocumentActionsMenu
+          document={props.document}
+          siblings={props.siblings}
           onEdit={canManage ? () => props.onEdit(props.document) : undefined}
           onPrint={() => props.onPrint(props.document)}
           onDelete={canManage ? () => props.onDelete(props.document) : undefined}
@@ -369,6 +373,7 @@ export function HealthDocumentsClient(props: Props) {
             <HealthDocumentRow
               key={document.id}
               document={document}
+              siblings={props.documents}
               templateCode={props.templateCode}
               canManage={props.canManageDocuments !== false}
               onEdit={setEditingDocument}

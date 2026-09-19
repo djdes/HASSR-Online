@@ -30,6 +30,8 @@ import {
   formatCalibrationDate,
 } from "@/lib/equipment-calibration-document";
 import { buildStaffOptionLabel } from "@/lib/journal-staff-binding";
+import { buildDocumentCopy } from "@/lib/journal-document-copy";
+import { localDayKey } from "@/lib/entry-defaults";
 
 import { toast } from "sonner";
 import {
@@ -128,20 +130,35 @@ export function EquipmentCalibrationDocumentsClient({
   }
 
   async function handleCopy(doc: JournalListDocument) {
-    const cfg = normalizeEquipmentCalibrationConfig(doc.config);
-    const newYear = cfg.year + 1;
+    // Копия — перечень приборов на следующий год. Дата последней поверки
+    // в копию не переезжает (`buildDocumentCopy`): иначе новый бланк
+    // утверждал бы, что прибор уже поверен.
+    const copy = buildDocumentCopy({
+      templateCode,
+      journalName: templateName,
+      sourceConfig: normalizeEquipmentCalibrationConfig(doc.config),
+      sourcePeriod: { dateFrom: doc.dateFrom, dateTo: doc.dateFrom },
+      today: localDayKey(),
+      existingTitles: documents.map((item) => item.title),
+    });
     const response = await fetch("/api/journal-documents", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         templateCode,
-        title: doc.title,
-        dateFrom: `${newYear}-01-01`,
-        dateTo: `${newYear}-12-31`,
-        config: { ...cfg, year: newYear, documentDate: `${newYear}-01-01` },
+        title: copy.title,
+        dateFrom: copy.dateFrom,
+        dateTo: copy.dateTo,
+        config: copy.config,
       }),
     });
-    if (!response.ok) throw new Error("Не удалось скопировать документ");
+    if (!response.ok) {
+      // Ошибку показываем человеку: пункт меню промис не ловил, и копия
+      // молча не появлялась.
+      const data = await response.json().catch(() => null);
+      toast.error(data?.error || "Не удалось скопировать документ");
+      return;
+    }
     router.refresh();
   }
 

@@ -55,6 +55,26 @@ export async function POST(request: Request) {
       );
     }
 
+    // Дубль по названию: в бракераже и приёмке продукт выбирают именно по
+    // имени, две одинаковые строки в списке неразличимы.
+    // Сравниваем в JS, а не через `mode: "insensitive"`: на кириллице
+    // регистронезависимое сравнение зависит от collation базы и «СЫР» не
+    // совпадал с «Сыр».
+    const existingNames = await db.product.findMany({
+      where: { organizationId: getActiveOrgId(session), isActive: true },
+      select: { name: true },
+    });
+    const wanted = name.trim().toLowerCase();
+    const duplicate = existingNames.some(
+      (item) => item.name.trim().toLowerCase() === wanted
+    );
+    if (duplicate) {
+      return NextResponse.json(
+        { error: "Продукт с таким названием уже есть в справочнике" },
+        { status: 400 }
+      );
+    }
+
     const product = await db.product.create({
       data: {
         name: name.trim(),
