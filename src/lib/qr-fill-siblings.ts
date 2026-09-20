@@ -87,6 +87,7 @@ export async function listRoomSiblings(params: {
       href: `/room-fill/${row.roomId}?token=${encodeURIComponent(mintQrFillToken("room", row.roomId))}`,
       filled: cell !== null,
       summary: summary || null,
+      values: cell ? { temperature: cell.temperature ?? null, humidity: cell.humidity ?? null } : null,
       current: row.roomId === params.currentRoomId,
     };
   });
@@ -145,6 +146,7 @@ export async function listEquipmentSiblings(params: {
         href: `/equipment-fill/${equipmentId}?token=${encodeURIComponent(mintQrFillToken("equipment", equipmentId))}`,
         filled: temperature !== null,
         summary: formatValue(temperature, "°C"),
+        values: temperature !== null ? { temperature } : null,
         current: equipmentId === params.currentEquipmentId,
       });
     }

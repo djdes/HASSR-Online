@@ -19,6 +19,7 @@ import { db } from "@/lib/db";
 import {
   COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE,
   normalizeColdEquipmentDocumentConfig,
+  normalizeColdEquipmentEntryData,
   type ColdEquipmentDocumentConfig,
   type ColdEquipmentEntryData,
 } from "@/lib/cold-equipment-document";
@@ -69,6 +70,47 @@ function buildFormFromConfig(
     submitLabel: "Сохранить замеры",
     fields,
   };
+}
+
+/**
+ * Уже записанные сегодня температуры — в поля формы: повторное открытие
+ * по QR показывает, что снято, и даёт поправить. Своя запись сотрудника
+ * важнее чужой; чужая берётся, если своей нет (показания одни на всех).
+ */
+async function prefillFromToday(
+  form: TaskFormSchema,
+  config: ColdEquipmentDocumentConfig,
+  documentId: string,
+  employeeId: string | null,
+  todayKey: string
+): Promise<void> {
+  const date = new Date(`${todayKey}T00:00:00.000Z`);
+  if (Number.isNaN(date.getTime())) return;
+  const entries = await db.journalDocumentEntry.findMany({
+    where: { documentId, date },
+    select: { employeeId: true, data: true },
+  });
+  if (entries.length === 0) return;
+  const own = entries.find((entry) => entry.employeeId === employeeId) ?? null;
+  const ordered = own ? [own, ...entries.filter((entry) => entry !== own)] : entries;
+  const datas = ordered.map((entry) => normalizeColdEquipmentEntryData(entry.data ?? null));
+  let filled = 0;
+  for (const field of form.fields) {
+    if (field.type !== "number") continue;
+    const item = config.equipment.find((candidate) => fieldKeyForEquipment(candidate.id) === field.key);
+    if (!item) continue;
+    for (const data of datas) {
+      const value = data.temperatures[item.id];
+      if (typeof value === "number" && Number.isFinite(value)) {
+        field.defaultValue = value;
+        filled += 1;
+        break;
+      }
+    }
+  }
+  if (filled > 0) {
+    form.notice = `Сегодня уже записано: ${filled} из ${config.equipment.length}. Значения подставлены — проверьте и измените, что нужно.`;
+  }
 }
 
 export const coldEquipmentAdapter: JournalAdapter = {
@@ -139,7 +181,7 @@ export const coldEquipmentAdapter: JournalAdapter = {
     return EMPTY_SYNC_REPORT;
   },
 
-  async getTaskForm({ documentId, rowKey }) {
+  async getTaskForm({ documentId, rowKey, todayKey }) {
     const doc = await db.journalDocument.findUnique({
       where: { id: documentId },
       select: { config: true, organizationId: true },
@@ -150,7 +192,9 @@ export const coldEquipmentAdapter: JournalAdapter = {
       organizationId: doc.organizationId,
     });
     const config = normalizeColdEquipmentDocumentConfig(doc.config);
-    return buildFormFromConfig(config, employee?.name ?? null);
+    const form = buildFormFromConfig(config, employee?.name ?? null);
+    if (todayKey) await prefillFromToday(form, config, documentId, employeeIdFromRowKey(rowKey), todayKey);
+    return form;
   },
 
   async applyRemoteCompletion({ documentId, rowKey, completed, todayKey, values }) {

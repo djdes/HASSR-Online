@@ -144,6 +144,45 @@ function pickNumber(raw: unknown): number | null {
   return null;
 }
 
+/** Уже записанные сегодня показания этого срока — в поля (см. холодильники). */
+async function prefillFromToday(
+  form: TaskFormSchema,
+  config: ClimateDocumentConfig,
+  documentId: string,
+  employeeId: string | null,
+  slot: string,
+  todayKey: string
+): Promise<void> {
+  const date = new Date(`${todayKey}T00:00:00.000Z`);
+  if (Number.isNaN(date.getTime())) return;
+  const entries = await db.journalDocumentEntry.findMany({
+    where: { documentId, date },
+    select: { employeeId: true, data: true },
+  });
+  if (entries.length === 0) return;
+  const own = entries.find((entry) => entry.employeeId === employeeId) ?? null;
+  const ordered = own ? [own, ...entries.filter((entry) => entry !== own)] : entries;
+  const datas = ordered.map((entry) => normalizeClimateEntryData(entry.data ?? null));
+  let filled = 0;
+  for (const field of form.fields) {
+    if (field.type !== "number") continue;
+    const room = config.rooms.find((candidate) => tempKey(candidate.id) === field.key || humidityKey(candidate.id) === field.key);
+    if (!room) continue;
+    const metric = field.key === tempKey(room.id) ? "temperature" : "humidity";
+    for (const data of datas) {
+      const value = data.measurements[room.id]?.[slot]?.[metric];
+      if (typeof value === "number" && Number.isFinite(value)) {
+        field.defaultValue = value;
+        filled += 1;
+        break;
+      }
+    }
+  }
+  if (filled > 0) {
+    form.notice = `Сегодня в ${slot} уже записано. Значения подставлены — проверьте и измените, что нужно.`;
+  }
+}
+
 export const climateAdapter: JournalAdapter = {
   meta: {
     templateCode: TEMPLATE_CODE,
@@ -234,7 +273,7 @@ export const climateAdapter: JournalAdapter = {
     return EMPTY_SYNC_REPORT;
   },
 
-  async getTaskForm({ documentId, rowKey }) {
+  async getTaskForm({ documentId, rowKey, todayKey }) {
     const doc = await db.journalDocument.findUnique({
       where: { id: documentId },
       select: { config: true, organizationId: true },
@@ -252,7 +291,13 @@ export const climateAdapter: JournalAdapter = {
       normalizeClimateDocumentConfig(doc.config),
       directoryRooms,
     );
-    return buildForm(config, employee?.name ?? null, timeFromRowKey(rowKey));
+    const form = buildForm(config, employee?.name ?? null, timeFromRowKey(rowKey));
+    if (todayKey) {
+      const slotField = form.fields.find((field) => field.key === "controlTime");
+      const slot = slotField && slotField.type === "select" && typeof slotField.defaultValue === "string" ? slotField.defaultValue : null;
+      if (slot) await prefillFromToday(form, config, documentId, employeeIdFromRowKey(rowKey), slot, todayKey);
+    }
+    return form;
   },
 
   async applyRemoteCompletion({ documentId, rowKey, completed, todayKey, values }) {

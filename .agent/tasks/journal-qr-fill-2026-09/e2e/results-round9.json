@@ -1,0 +1,55 @@
+{
+  "coldNoticeBefore": 1,
+  "coldCards": 3,
+  "coldChipRows": 3,
+  "coldChips0": [
+    "2",
+    "4",
+    "6"
+  ],
+  "coldChips1": [
+    "-20",
+    "-18",
+    "-16"
+  ],
+  "coldDevVisible": true,
+  "coldValuesAfterChips": [
+    "4",
+    "-18",
+    "5"
+  ],
+  "coldGoodCount": 3,
+  "coldChipOn": 3,
+  "coldDevHiddenAfter": true,
+  "coldDone": "updated",
+  "coldNotice": "Сегодня уже записано: 3 из 3. Значения подставлены — проверьте и измените, что нужно.",
+  "coldPrefilled": [
+    "4",
+    "-18",
+    "5"
+  ],
+  "coldPrefilledOn": 3,
+  "roomTempChips": [
+    "18",
+    "20",
+    "22"
+  ],
+  "roomHumChips": [
+    "40",
+    "50",
+    "60"
+  ],
+  "roomTemp": "20",
+  "roomHum": "50",
+  "roomReopenTemp": "20",
+  "roomReopenHum": "50",
+  "roomReopenNote": 1,
+  "eqChips": [
+    "-20",
+    "-18",
+    "-16"
+  ],
+  "eqTemp": "-18",
+  "eqReopenTemp": "-18",
+  "eqReopenNote": 1
+}

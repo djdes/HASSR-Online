@@ -188,6 +188,9 @@ export type TaskFormSchema = {
   /** Rendered above the form — free-text task description from admin
    *  is concatenated on top of this. Optional. */
   intro?: string;
+  /** Короткая плашка над полями («Сегодня уже записано — проверьте»).
+   *  Только подсказка интерфейсу; клиенты, которым она не нужна, игнорируют. */
+  notice?: string;
   fields: TaskFormField[];
   /**
    * Опциональный пошаговый pipeline. Если задан, task-fill UI

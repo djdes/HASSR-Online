@@ -139,6 +139,7 @@ export default async function EquipmentFillPage({
     <EquipmentFillClient
       token={token}
       siblings={siblings}
+      todayValues={siblings.find((item) => item.current)?.values ?? null}
       hasActiveDocument={targets.hasActiveDocument}
       humidityNorm={
         targets.climate?.row.humidity.enabled

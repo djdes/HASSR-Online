@@ -166,10 +166,10 @@ export async function isRowKeyAllowed(params: {
   return !resolved.perEmployee && resolved.rows.some((row) => row.rowKey === params.rowKey);
 }
 
-export async function loadJournalFillForm(code: string, documentId: string, rowKey: string): Promise<TaskFormSchema | null> {
+export async function loadJournalFillForm(code: string, documentId: string, rowKey: string, todayKey?: string): Promise<TaskFormSchema | null> {
   const adapter = getAdapter(code);
   if (!adapter?.getTaskForm) return null;
-  return adapter.getTaskForm({ documentId, rowKey });
+  return adapter.getTaskForm({ documentId, rowKey, todayKey });
 }
 
 export function todayKeyFor(timezone: string | null | undefined): string {

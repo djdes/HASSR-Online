@@ -152,6 +152,9 @@ export type JournalAdapter = {
   getTaskForm?(input: {
     documentId: string;
     rowKey: string;
+    /** День (YYYY-MM-DD по часовому поясу организации): адаптер может
+     *  подставить уже записанные сегодня значения как `defaultValue`. */
+    todayKey?: string;
   }): Promise<TaskFormSchema | null>;
 };
 

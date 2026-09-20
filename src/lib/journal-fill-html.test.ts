@@ -13,6 +13,7 @@ describe("journal-fill-html", () => {
   it("takes the deviation norm from the label, else the validator bounds", () => {
     assert.deepEqual(normRange({ type: "number", key: "t", label: "Холодильник №1 · норма 2…6", min: -40, max: 30 }), { min: 2, max: 6 });
     assert.deepEqual(normRange({ type: "number", key: "t", label: "Морозильник · норма -20…-16", min: -40, max: 30 }), { min: -20, max: -16 });
+    assert.deepEqual(normRange({ type: "number", key: "t", label: "Морозильный ларь №4 · норма -18…-20", min: -40, max: 30 }), { min: -20, max: -18 });
     assert.deepEqual(normRange({ type: "number", key: "t", label: "Температура", min: -20, max: 120 }), { min: -20, max: 120 });
     assert.deepEqual(normRange({ type: "text", key: "t", label: "x" }), { min: null, max: null });
   });
@@ -85,6 +86,9 @@ describe("journal-fill-html", () => {
     assert.match(climate, /<div class="obj-t">Склад Овощи<\/div><div class="cols one">/);
     assert.match(climate, /Впишите температуру и влажность в карточки ниже \(2\)/);
     assert.match(climate, /data-label="Склад Бакалея · влажность"/);
+    // Быстрый ввод: границы нормы и середина, текущее значение подсвечено.
+    assert.match(climate, /<div class="chips qv"><button type="button" class="chip" data-fill="r1t" data-value="18">18<\/button><button type="button" class="chip" data-fill="r1t" data-value="20">20<\/button><button type="button" class="chip" data-fill="r1t" data-value="22">22<\/button><\/div>/);
+    assert.match(climate, /<button type="button" class="chip" data-fill="r1h" data-value="50">50<\/button>/);
     assert.equal(accusative("органолептическая оценка"), "органолептическую оценку");
     assert.equal(accusative("температура внутри продукта"), "температуру внутри продукта");
     assert.equal(accusative("время производства"), "время производства");

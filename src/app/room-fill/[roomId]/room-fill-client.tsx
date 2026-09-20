@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { DeviationCorrection } from "@/components/qr-fill/deviation-correction";
 import { QuickSwitchNext, QuickSwitchStrip, type QuickSwitchItem } from "@/components/qr-fill/quick-switch";
+import { QuickValues } from "@/components/qr-fill/quick-values";
 
 type Metric = { enabled: boolean; min: number | null; max: number | null };
 
@@ -32,6 +33,8 @@ type Props = {
   sessionEmployee?: { id: string; name: string; canPickOthers: boolean } | null;
   /** Соседние объекты для быстрой смены (см. lib/qr-fill-siblings). */
   siblings?: QuickSwitchItem[];
+  /** Уже записанные сегодня показания этого помещения — подставляются для правки. */
+  todayValues?: { temperature?: number | null; humidity?: number | null } | null;
 };
 
 const LS_EMPLOYEE_KEY = "wesetup.room-fill.employeeId";
@@ -59,15 +62,16 @@ function isOutside(value: number | null, metric: Metric): boolean {
  * Три шага, как на плакате: выбрать себя → ввести показания → «Сохранить».
  * Имя запоминается на телефоне, со второго раза остаётся ввести числа.
  */
-export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot, employees, mode = "public", sessionEmployee = null, siblings = [] }: Props) {
+export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot, employees, mode = "public", sessionEmployee = null, siblings = [], todayValues = null }: Props) {
   const [employeeId, setEmployeeId] = useState("");
   const [pin, setPin] = useState("");
   const fixedEmployee = mode === "auth" && sessionEmployee && !sessionEmployee.canPickOthers;
   // Холодный склад с нормой ниже нуля — минус стоит сразу.
+  const hasToday = typeof todayValues?.temperature === "number" || typeof todayValues?.humidity === "number";
   const [temperature, setTemperature] = useState(
-    norms.temperature.max !== null && norms.temperature.max < 0 ? "-" : ""
+    typeof todayValues?.temperature === "number" ? String(todayValues.temperature) : norms.temperature.max !== null && norms.temperature.max < 0 ? "-" : ""
   );
-  const [humidity, setHumidity] = useState("");
+  const [humidity, setHumidity] = useState(typeof todayValues?.humidity === "number" ? String(todayValues.humidity) : "");
   // «Что сделали» — обязательно, когда замер вышел за норму.
   const [correction, setCorrection] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -282,6 +286,11 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
 
               <div className="space-y-4">
                 <div className="text-[13px] font-medium text-[#0b1024]">2. Показания</div>
+                {hasToday ? (
+                  <p className="-mt-2 rounded-2xl border border-[#d6dcff] bg-[#eef1ff] px-4 py-2.5 text-[13px] leading-snug text-[#3848c7]">
+                    Сегодня уже записано — значения подставлены, проверьте и измените, что нужно.
+                  </p>
+                ) : null}
                 {norms.temperature.enabled ? (
                   <div>
                     <label htmlFor="room-fill-temperature" className="text-[13px] text-[#3c4053]">
@@ -324,6 +333,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                         className="h-12 flex-1 rounded-2xl border-[#dcdfed] text-[18px]"
                       />
                     </div>
+                    <QuickValues min={norms.temperature.min} max={norms.temperature.max} value={temperature} onPick={setTemperature} label="Быстрый ввод температуры" />
                   </div>
                 ) : null}
 
@@ -350,6 +360,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                         className="h-12 flex-1 rounded-2xl border-[#dcdfed] text-[18px]"
                       />
                     </div>
+                    <QuickValues min={norms.humidity.min} max={norms.humidity.max} value={humidity} onPick={setHumidity} label="Быстрый ввод влажности" />
                     {humidityInvalid ? (
                       <p className="mt-1.5 text-[12px] text-[#a13a32]">Влажность — число от 0 до 100.</p>
                     ) : null}

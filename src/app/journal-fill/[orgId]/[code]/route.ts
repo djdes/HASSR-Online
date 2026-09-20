@@ -354,7 +354,8 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
   }
 
   // ---- форма
-  const form = await loadJournalFillForm(code, document.id, rowKey);
+  // Сегодняшний день организации: адаптер подставит уже записанные значения.
+  const form = await loadJournalFillForm(code, document.id, rowKey, nowParts(timezone).date);
   if (!form) return page(title, `${who}${renderMessage("muted", "В этом документе пока нет строк, которые можно заполнить от вашего имени. Попросите руководителя назначить вас в журнале.")}`, null, null, 200, setCookies);
   if (form.fields.length === 0) return page(title, `${who}${renderMessage("muted", "В документе пока нечего заполнять: список оборудования или строк пуст. Попросите руководителя настроить журнал.")}`, null, null, 200, setCookies);
 

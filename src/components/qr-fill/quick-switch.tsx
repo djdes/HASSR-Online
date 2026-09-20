@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { ArrowRight, Check, MapPin } from "lucide-react";
 
 /**
@@ -17,6 +18,8 @@ export type QuickSwitchItem = {
   filled: boolean;
   /** «22 °C · 45 %» — что уже записано сегодня. */
   summary?: string | null;
+  /** Те же показания числами — чтобы подставить в форму текущего объекта. */
+  values?: { temperature?: number | null; humidity?: number | null } | null;
   current: boolean;
 };
 
@@ -28,6 +31,14 @@ export function nextQuickSwitchItem(items: QuickSwitchItem[]): QuickSwitchItem |
 
 /** Компактная строка сверху формы: где вы, что уже снято, куда дальше. */
 export function QuickSwitchStrip({ items, title }: { items: QuickSwitchItem[]; title: string }) {
+  const scroller = useRef<HTMLDivElement>(null);
+  // Текущий объект — в центр полосы, чтобы соседи были видны с обеих сторон (без вертикального скролла страницы).
+  useEffect(() => {
+    const box = scroller.current;
+    const current = box?.querySelector<HTMLElement>("[aria-current]");
+    if (!box || !current) return;
+    box.scrollLeft = Math.max(0, current.offsetLeft - (box.clientWidth - current.offsetWidth) / 2);
+  }, [items]);
   if (items.length < 2) return null;
   const filled = items.filter((item) => item.filled).length;
   return (
@@ -41,7 +52,7 @@ export function QuickSwitchStrip({ items, title }: { items: QuickSwitchItem[]; t
           снято {filled} из {items.length}
         </span>
       </div>
-      <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div ref={scroller} className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {items.map((item) =>
           item.current ? (
             <span

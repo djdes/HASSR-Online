@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DeviationCorrection } from "@/components/qr-fill/deviation-correction";
 import { QuickSwitchNext, QuickSwitchStrip, type QuickSwitchItem } from "@/components/qr-fill/quick-switch";
+import { QuickValues } from "@/components/qr-fill/quick-values";
 import {
   Select,
   SelectContent,
@@ -39,6 +40,8 @@ type Props = {
   sessionEmployee?: { id: string; name: string; canPickOthers: boolean } | null;
   /** Соседние объекты для быстрой смены (см. lib/qr-fill-siblings). */
   siblings?: QuickSwitchItem[];
+  /** Уже записанная сегодня температура этого оборудования — подставляется для правки. */
+  todayValues?: { temperature?: number | null; humidity?: number | null } | null;
 };
 
 const LS_EMPLOYEE_KEY = "wesetup.equipment-fill.employeeId";
@@ -59,14 +62,16 @@ export function EquipmentFillClient({
   mode = "public",
   sessionEmployee = null,
   siblings = [],
+  todayValues = null,
 }: Props) {
   const [employeeId, setEmployeeId] = useState<string>("");
   const [pin, setPin] = useState("");
   const fixedEmployee = mode === "auth" && sessionEmployee && !sessionEmployee.canPickOthers;
   // Морозилка (норма ниже нуля) — минус стоит сразу: на цифровой клавиатуре
   // телефона его не набрать.
+  const hasToday = typeof todayValues?.temperature === "number";
   const [temperature, setTemperature] = useState<string>(
-    equipment.tempMax != null && equipment.tempMax < 0 ? "-" : ""
+    typeof todayValues?.temperature === "number" ? String(todayValues.temperature) : equipment.tempMax != null && equipment.tempMax < 0 ? "-" : ""
   );
   const [humidity, setHumidity] = useState<string>("");
   // «Что сделали» — обязательно, когда замер вышел за норму.
@@ -315,6 +320,11 @@ export function EquipmentFillClient({
                 ) : null}
               </div>
 
+              {hasToday ? (
+                <p className="rounded-2xl border border-[#d6dcff] bg-[#eef1ff] px-4 py-2.5 text-[13px] leading-snug text-[#3848c7]">
+                  Сегодня уже записано — значение подставлено, проверьте и измените, что нужно.
+                </p>
+              ) : null}
               <div>
                 <label className="text-[13px] font-medium text-[#0b1024]">
                   Температура, °C
@@ -355,6 +365,7 @@ export function EquipmentFillClient({
                     className="h-12 flex-1 rounded-2xl border-[#dcdfed] text-[18px]"
                   />
                 </div>
+                <QuickValues min={equipment.tempMin} max={equipment.tempMax} value={temperature} onPick={setTemperature} label="Быстрый ввод температуры" />
               </div>
 
               {/* Дополнительное поле для оборудования с climate-mapping

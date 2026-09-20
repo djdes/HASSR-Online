@@ -144,6 +144,7 @@ export default async function RoomFillPage({
     <RoomFillClient
       token={token}
       siblings={siblings}
+      todayValues={siblings.find((item) => item.current)?.values ?? null}
       room={{
         id: room.id,
         name: row?.name ?? room.name,
