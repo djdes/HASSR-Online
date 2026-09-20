@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { generateInviteToken, hashInviteToken } from "@/lib/invite-tokens";
+import { resolveQrPosterOrigin } from "@/lib/qr-poster-origin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -66,7 +67,13 @@ export async function POST(request: Request) {
   // Включаем режим киоска у организации — иначе device-cookie не действует.
   await db.organization.update({ where: { id: orgId }, data: { kioskEnabled: true } });
 
-  const origin = new URL(request.url).origin;
+  // Публичный домен, а не внутренний localhost:3002 (за nginx): иначе QR
+  // на планшете вёл бы в никуда.
+  const origin = resolveQrPosterOrigin({
+    requested: new URL(request.url).searchParams.get("origin"),
+    configured: process.env.NEXTAUTH_URL ?? null,
+    production: process.env.NODE_ENV === "production",
+  });
   const claimUrl = `${origin}/api/kiosk/claim/${enrollToken}`;
   const qrPngDataUrl = await QRCode.toDataURL(claimUrl, { errorCorrectionLevel: "M", margin: 1, width: 600 });
 
