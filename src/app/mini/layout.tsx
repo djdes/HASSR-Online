@@ -1,34 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import { getServerSession } from "@/lib/server-session";
-import { loadBuildingContext } from "@/lib/active-building";
 import { authOptions } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { getActiveOrgId } from "@/lib/auth-helpers";
-import { getPartnerHintRates } from "@/lib/partners/partner-hint";
-import { ResumeHome } from "./_components/resume-home";
-import { MiniServiceWorkerRegister } from "./_components/mini-sw-register";
 import { MiniSessionProvider } from "./_components/mini-session-provider";
-import { MiniNav } from "./_components/mini-nav";
-import { EdgeBack } from "./_components/edge-back";
-import { RefreshProvider } from "./_components/refresh-provider";
-import { OfflineIndicator } from "./_components/offline-indicator";
-import { LiveConnectionIndicator } from "@/components/live/live-connection-indicator";
-import { AnnouncementBanner } from "@/components/layout/announcement-banner";
-import { DeletionBanner } from "@/components/layout/deletion-banner";
-import { NpsBanner } from "@/components/layout/nps-banner";
-import { askNpsFor } from "@/lib/nps-data";
-import { deletionDueAt } from "@/lib/org-deletion";
-import { hasFullWorkspaceAccess } from "@/lib/role-access";
-import { currentAnnouncement } from "@/lib/platform-status";
-import { Toaster } from "@/components/ui/sonner";
-import { MiniTelegramRuntime, MiniTopBar } from "./_components/mini-shell";
-import { MiniTour } from "./_components/mini-tour";
-import { SanpinChatWidget } from "@/components/ai/sanpin-chat-widget";
-import {
-  MiniThemeBootstrap,
-  MiniThemeProvider,
-} from "./_components/mini-theme";
+import { MiniAppShell } from "./_components/mini-app-shell";
+import { loadMiniShellData } from "./_components/mini-shell-data";
 import "./mini-theme.css";
 // app-theme.css scopes site dashboard styles to `.app-shell` — needed
 // here because the Mini App embeds site components (e.g. document
@@ -79,158 +54,17 @@ export default async function MiniLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Read the user's saved theme so the layout SSRs in the right colour
-  // immediately. Anonymous visitors (Mini App auth happens client-side
-  // via Telegram initData) get the default `dark`; once they sign in,
-  // a subsequent navigation pulls their preference.
+  // Тему читаем на сервере, чтобы первый кадр был в правильном цвете.
+  // До входа (он происходит на клиенте по initData) её ещё нет —
+  // тогда идёт значение по умолчанию, а клиент подставит тему Telegram.
   const session = await getServerSession(authOptions).catch(() => null);
-  const announcement = await currentAnnouncement();
-  const [askNps, deletionState] = await Promise.all([
-    session?.user ? askNpsFor(session).catch(() => false) : Promise.resolve(false),
-    session?.user ? db.organization.findUnique({ where: { id: session.user.organizationId }, select: { deletionRequestedAt: true } }).catch(() => null) : Promise.resolve(null),
-  ]);
-  const deletionDue = deletionState?.deletionRequestedAt ? deletionDueAt(deletionState.deletionRequestedAt).toISOString() : null;
-  const initialTheme: "light" | "dark" = await (async () => {
-    if (!session?.user?.id) return "dark";
-    const user = await db.user
-      .findUnique({
-        where: { id: session.user.id },
-        select: { themePreference: true },
-      })
-      .catch(() => null);
-    return user?.themePreference === "light" ? "light" : "dark";
-  })();
-
-  // Точки: название активной точки в верхней панели на всех экранах
-  // Mini App — зеркало пилюли в шапке сайта (П-3).
-  const buildingContext = session?.user?.id
-    ? await loadBuildingContext(session).catch(() => null)
-    : null;
-  const locationName = buildingContext?.enabled
-    ? buildingContext.activeBuilding?.name ?? null
-    : null;
-
-  // Та же иконка партнёрской программы, что на сайте (П-3). Mini App
-  // без white-label шапки, поэтому логотип-условие всегда false.
-  const partnerHint = session?.user?.id
-    ? await getPartnerHintRates({
-        organizationId: getActiveOrgId(session),
-        userId: session.user.id,
-        hasWhiteLabelLogo: false,
-      })
-    : null;
+  const shell = await loadMiniShellData(session);
 
   return (
-    <>
-      <Script
-        src="https://telegram.org/js/telegram-web-app.js"
-        strategy="beforeInteractive"
-      />
-      {/* Distinctive font stack, loaded once. Display serif для editorial
-          заголовков, mono для температур/кодов, grotesque для body.
-
-          `media="print"` + переключение на `all` после гидратации — этот
-          стиль КРОСС-ДОМЕННЫЙ и рендер-блокирующий: пока браузер ждал
-          ответа fonts.googleapis.com и три вариативных шрифта, /mini не
-          рисовался вовсе. Замер на проде: TTFB 32 мс, а load — 1038 мс,
-          самая медленная страница сайта.
-
-          Отрисовка теперь идёт сразу на фолбэках, которые уже прописаны
-          в `mini-theme.css` (Georgia / system-ui / ui-monospace), а
-          фирменные шрифты доезжают следом. `display=swap` в самой ссылке
-          гарантирует, что подмена не даст «невидимого текста».
-
-          2026-09-09: остался ОДИН Geist Mono. Fraunces и Bricolage
-          Grotesque убраны — у них нет кириллического набора вовсе
-          (только latin, latin-ext, vietnamese), то есть в русском
-          интерфейсе они не рисовали почти ничего, а весили 263 и 75 КБ.
-          338 КБ на дешёвом андроиде ради одной буквы «W» в значке:
-          логотип «WeSetup» — картинка-маска, а не текст, и он не
-          изменился. Русские заголовки и текст как рисовались
-          системными, так и рисуются. У Geist Mono кириллица есть, и он
-          реально работает — цифры, часы, показания. */}
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link
-        rel="preconnect"
-        href="https://fonts.gstatic.com"
-        crossOrigin="anonymous"
-      />
-      <link
-        rel="stylesheet"
-        media="print"
-        data-mini-fonts=""
-        href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&display=swap"
-      />
-      <Script id="mini-fonts-activate" strategy="afterInteractive">
-        {`document.querySelector('link[data-mini-fonts]')?.setAttribute('media','all')`}
-      </Script>
-      <MiniSessionProvider>
-        <MiniThemeProvider initialTheme={initialTheme}>
-          <MiniTelegramRuntime />
-          <MiniServiceWorkerRegister />
-          <ResumeHome />
-          {/* `id="mini-root"` нужен для pre-hydration скрипта
-              `<MiniThemeBootstrap />` и для `applyThemeToDOM`: они
-              ищут этот контейнер по id, чтобы выставить `data-theme`
-              без FOUC. `suppressHydrationWarning` — скрипт может
-              перезаписать атрибут до того, как React гидратирует
-              элемент; без этого флага React выругался бы.
-              `class="app-shell"` + `data-app-theme` мирорят тему на
-              site-уровень — встроенные клиенты документов из
-              `(dashboard)` (например HygieneDocumentClient) подхватят
-              правильную dark/light палитру через `.app-shell[data-app-theme]`. */}
-          <div
-            id="mini-root"
-            className="mini-root app-shell min-h-dvh"
-            data-theme={initialTheme}
-            data-app-theme={initialTheme}
-            suppressHydrationWarning
-          >
-            <MiniThemeBootstrap />
-            <MiniTopBar partnerHint={partnerHint} locationName={locationName} />
-            {/* Safe-area-inset для iPhone notch и home-indicator. На
-                iPhone X+ Telegram WebApp в expand-режиме растягивается
-                на всю высоту, и без учёта env(safe-area-inset-*) контент
-                клипается под notch'ем сверху и под home-indicator-полосой
-                снизу. pb-28 (нижний nav) дополняем `safe-area-inset-bottom`,
-                pt-4 — `safe-area-inset-top` где notch заходит в шапку. */}
-            <main
-              className="mx-auto flex min-h-[calc(100dvh-64px)] w-full max-w-lg flex-col px-4"
-              style={{
-                paddingTop: "max(1rem, var(--mini-safe-t))",
-                paddingBottom:
-                  "max(7rem, calc(var(--mini-safe-b) + 6rem))",
-              }}
-            >
-              <AnnouncementBanner announcement={announcement} variant="mini" />
-              {deletionDue ? <DeletionBanner dueAt={deletionDue} canCancel={session?.user ? hasFullWorkspaceAccess(session.user) : false} variant="mini" /> : null}
-              {askNps ? <NpsBanner variant="mini" /> : null}
-              {/* Жест «потянуть, чтобы обновить» — на всех экранах сразу.
-                  Экран может сказать, чем именно обновляться
-                  (`useRegisterRefresh`); кто не сказал — перезапрашивает
-                  серверные данные маршрута. */}
-              <RefreshProvider>{children}</RefreshProvider>
-            </main>
-            {/* Тосты: в Mini App контейнера не было вовсе, и любой
-                toast.success/error (смена, отзыв, приглашение) уходил в
-                никуда. Позиция «сверху по центру» — из общего компонента. */}
-            <Toaster />
-            <OfflineIndicator />
-            {/* «Нет связи с сервером» — только после входа: без сессии
-                поток и не должен открываться. */}
-            {session?.user ? <LiveConnectionIndicator variant="mini" /> : null}
-            <MiniNav />
-            {/* Жест «назад» от левого края — только внутри Telegram,
-                где своего системного нет. Решает сам компонент. */}
-            <EdgeBack />
-            <MiniTour />
-            {/* AI помощник и в Mini App (П-3: зеркало сайта). FAB поднят
-                над нижней навигацией. Показываем только авторизованным —
-                до Telegram-входа API всё равно ответит 401. */}
-            {session?.user ? <SanpinChatWidget bottomOffset={96} /> : null}
-          </div>
-        </MiniThemeProvider>
-      </MiniSessionProvider>
-    </>
+    <MiniSessionProvider>
+      <MiniAppShell {...shell} ownRoutes>
+        {children}
+      </MiniAppShell>
+    </MiniSessionProvider>
   );
 }

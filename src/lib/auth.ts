@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { getPermissionRole } from "@/lib/user-roles";
 import { verifyTelegramInitData } from "@/lib/telegram-init-data";
+import { telegramSignInMessageFor } from "@/lib/telegram-auth-messages";
 
 /** User-Agent из мешка заголовков NextAuth (настоящего Request здесь нет). */
 function userAgentFromHeaderBag(headers: unknown): string | null {
@@ -149,7 +150,11 @@ export const authOptions: NextAuthOptions = {
         }
         const verified = verifyTelegramInitData(initData);
         if (!verified.ok) {
-          throw new Error("Неверная подпись Telegram");
+          // Разные причины — разные действия человека. Просроченная
+          // подпись (приложение висело открытым больше суток) лечится
+          // повторным открытием из бота, а не кнопкой «ещё раз»;
+          // несошедшаяся подпись — тем же самым, но текст другой.
+          throw new Error(telegramSignInMessageFor(verified.error));
         }
         const chatIdStr = String(verified.data.user.id);
         const user = await db.user.findFirst({

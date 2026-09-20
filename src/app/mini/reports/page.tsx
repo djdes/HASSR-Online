@@ -1,137 +1,99 @@
-"use client";
+import { authOptions } from "@/lib/auth";
+import { getServerSession } from "@/lib/server-session";
+import { APP_SECTIONS, canSeeAppSection } from "@/lib/app-sections";
 
-import Link from "next/link";
-import { ChevronRight, FileSpreadsheet, FileText } from "lucide-react";
-import { buildMiniOpenBridgePath } from "@/lib/journal-obligation-links";
+import { MiniReportsClient, type MiniReportLink } from "./reports-client";
 
-import { ShareButton } from "../_components/share-button";
+export const dynamic = "force-dynamic";
 
-// Подпись под названием объясняет, что внутри: «CAPA» и «Партии» сами по
-// себе человеку у плиты ничего не говорят.
-const REPORT_LINKS = [
+/**
+ * Отчёты в мини-приложении.
+ *
+ * Раньше каждая строка вела на `/mini/open` — экран-заглушку «раздел
+ * только в полной версии», и человек уходил из приложения. Теперь
+ * разделы открываются прямо здесь, в оболочке приложения, потому что
+ * страницы сайта умеют в ней работать.
+ *
+ * Показываем только то, что человеку и правда открыто: права берём тем
+ * же `canSeeAppSection`, что и экран «Все разделы» — иначе строка вела
+ * бы в отказ, и приложение выглядело бы сломанным.
+ */
+const REPORT_ROWS: {
+  href: string;
+  /** Адрес раздела, по правам которого решаем показывать строку. */
+  section: string;
+  label: string;
+  hint: string;
+  icon: string;
+}[] = [
   {
+    href: "/reports?format=pdf",
+    section: "/reports",
     label: "Журналы в PDF",
     hint: "для проверяющего, на печать",
-    href: "/reports?format=pdf",
-    icon: FileText,
+    icon: "FileText",
   },
   {
+    href: "/reports?format=excel",
+    section: "/reports",
     label: "Журналы в Excel",
     hint: "таблица для своих расчётов",
-    href: "/reports?format=excel",
-    icon: FileSpreadsheet,
+    icon: "FileSpreadsheet",
   },
   {
+    href: "/plans",
+    section: "/plans",
     label: "Производственный план",
     hint: "что и сколько готовим",
-    href: "/plans",
-    icon: FileText,
+    icon: "CalendarRange",
   },
   {
+    href: "/capa",
+    section: "/capa",
     label: "Нарушения и их устранение",
     hint: "что нашли и как исправили (CAPA)",
-    href: "/capa",
-    icon: FileText,
+    icon: "AlertTriangle",
   },
   {
+    href: "/losses",
+    section: "/losses",
     label: "Потери и списания",
     hint: "испорченные и просроченные продукты",
-    href: "/losses",
-    icon: FileText,
+    icon: "TrendingDown",
   },
   {
+    href: "/changes",
+    section: "/changes",
     label: "Изменения в работе",
     hint: "новое оборудование, рецептура, поставщик",
-    href: "/changes",
-    icon: FileText,
+    icon: "GitBranch",
   },
   {
+    href: "/competencies",
+    section: "/competencies",
     label: "Обучение сотрудников",
     hint: "кто что прошёл и когда повторять",
-    href: "/competencies",
-    icon: FileText,
+    icon: "GraduationCap",
   },
   {
+    href: "/batches",
+    section: "/batches",
     label: "Партии продукции",
     hint: "прослеживаемость сырья и блюд",
-    href: "/batches",
-    icon: FileText,
+    icon: "Package",
   },
 ];
 
-export default function MiniReportsPage() {
-  return (
-    /* Цвета — токенами Mini App, а не сайтовыми хардкодами. Раньше здесь
-       стояли `bg-white` и `text-[#0b1024]`: в тёмной теме страница
-       выглядела как белая заплата посреди приложения. */
-    <div className="flex flex-1 flex-col gap-4 pb-24">
-      <header className="mini-card px-5 py-5">
-        <p className="mini-eyebrow">Отчёты</p>
-        <h1
-          className="mt-1 text-[22px] font-semibold tracking-[-0.02em]"
-          style={{ color: "var(--mini-text)" }}
-        >
-          Экспорт и разделы
-        </h1>
-        <p
-          className="mt-2 text-[13px] leading-5"
-          style={{ color: "var(--mini-text-muted)" }}
-        >
-          Здесь собраны выгрузки и разделы с отчётами. Они открываются в полной
-          версии сайта — нажмите на нужный пункт. Чтобы вернуться в приложение,
-          нажмите «назад» в браузере или откройте бота заново.
-        </p>
-        {/* Инспектор просит журнал прямо на кухне — системное меню отдаёт
-            его быстрее, чем скачивание и поиск, чем открыть файл. */}
-        <div className="mt-3">
-          <ShareButton
-            title="Журналы СанПиН и ХАССП"
-            text="Отчёты по журналам"
-            url="/reports"
-          />
-        </div>
-      </header>
+export default async function MiniReportsPage() {
+  const session = await getServerSession(authOptions).catch(() => null);
+  const user = session?.user ?? null;
 
-      <section className="space-y-2">
-        {REPORT_LINKS.map((link) => {
-          const Icon = link.icon;
-          return (
-            <Link
-              key={link.href}
-              href={buildMiniOpenBridgePath(link.href, link.label)}
-              className="mini-card mini-press flex w-full items-center gap-3 px-4 py-3 text-left"
-            >
-              <span
-                className="flex size-10 shrink-0 items-center justify-center rounded-2xl"
-                style={{
-                  background: "var(--mini-lime-soft)",
-                  color: "var(--mini-lime)",
-                }}
-              >
-                <Icon className="size-5" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span
-                  className="block truncate text-[15px] font-medium"
-                  style={{ color: "var(--mini-text)" }}
-                >
-                  {link.label}
-                </span>
-                <span
-                  className="mt-0.5 block text-[12px]"
-                  style={{ color: "var(--mini-text-muted)" }}
-                >
-                  {link.hint}
-                </span>
-              </span>
-              <ChevronRight
-                className="size-4 shrink-0"
-                style={{ color: "var(--mini-text-faint)" }}
-              />
-            </Link>
-          );
-        })}
-      </section>
-    </div>
-  );
+  const links: MiniReportLink[] = user
+    ? REPORT_ROWS.filter((row) => {
+        const section = APP_SECTIONS.find((item) => item.href === row.section);
+        return section ? canSeeAppSection(user, section) : false;
+      }).map(({ href, label, hint, icon }) => ({ href, label, hint, icon }))
+    : [];
+
+  return <MiniReportsClient links={links} authed={Boolean(user)} />;
 }

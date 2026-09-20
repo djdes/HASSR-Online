@@ -8,6 +8,7 @@ import {
   Cpu,
   FileText,
   Home,
+  LayoutGrid,
   Package,
   ShieldCheck,
   Users,
@@ -27,6 +28,10 @@ type NavItem = {
 
 const ALL_NAV_ITEMS: NavItem[] = [
   { href: "/mini", label: "Главная", icon: Home },
+  // «Разделы» — вход во ВСЕ страницы кабинета прямо из приложения
+  // (П-3). Показываем всем: список внутри собирается по правам, и у
+  // линейного сотрудника там журналы и баланс — то же, что на сайте.
+  { href: "/mini/sections", label: "Разделы", icon: LayoutGrid },
   // Подписи подобраны так, чтобы влезать целиком на экране 360 px: длинные
   // «Сотрудники» и «Оборуд.» обрезались многоточием прямо посреди слова.
   { href: "/mini/staff", label: "Персонал", icon: Users, requires: ["staff.view"] },

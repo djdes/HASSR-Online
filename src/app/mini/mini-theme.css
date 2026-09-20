@@ -591,6 +591,23 @@
   -webkit-overflow-scrolling: touch;
 }
 
+/*
+ * То же самое — для ЛЮБОЙ страницы кабинета, открытой в оболочке
+ * мини-приложения (кука `ws-shell=mini`). Страницы сайта рассчитаны на
+ * широкий экран и глушат прокрутку своих таблиц на телефоне
+ * (`max-sm:overflow-visible`), потому что там вбок ездит вся страница
+ * целиком. В оболочке ездить нечему: колонка контента шириной с экран,
+ * и правые колонки таблицы просто обрезались бы краем.
+ *
+ * Вес селектора (0-2-0 плюс `!important`) намеренно выше утилиты
+ * Tailwind — иначе `max-sm:overflow-visible` выигрывает по порядку.
+ */
+.mini-root main .overflow-x-auto {
+  overflow-x: auto !important;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* Нижняя панель бланка стоит над меню с небольшим зазором, а не впритык. */
 .mini-root main .mini-document-host .sticky.bottom-0 {
   bottom: calc(var(--mini-safe-b) + var(--mini-nav-h) + 8px);

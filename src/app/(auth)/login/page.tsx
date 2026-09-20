@@ -1,4 +1,5 @@
 import LoginClient from "./login-client";
+import { MiniShellReset } from "@/components/layout/mini-shell-reset";
 import {
   DEFAULT_OG_IMAGES,
   DEFAULT_TWITTER_CARD,
@@ -32,5 +33,12 @@ export const metadata = {
 };
 
 export default function LoginPage() {
-  return <LoginClient />;
+  return (
+    <>
+      {/* Дошли до формы с паролем — значит это обычный браузер, а не
+          Telegram: режим мобильной оболочки снимаем. */}
+      <MiniShellReset />
+      <LoginClient />
+    </>
+  );
 }

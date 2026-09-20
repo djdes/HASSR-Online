@@ -32,6 +32,7 @@ import {
   Lightbulb,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { headerNavSections } from "@/lib/app-sections";
 import { isManagementRole } from "@/lib/user-roles";
 import { getWebHomeHref, hasFullWorkspaceAccess } from "@/lib/role-access";
 import { Button } from "@/components/ui/button";
@@ -66,21 +67,31 @@ import { CreateOrganizationDialog } from "@/components/layout/create-organizatio
 import { CreateDemoDialog } from "@/components/layout/create-demo-dialog";
 import type { AccessibleOrganization } from "@/lib/organization-access";
 
+// Иконки разделов: сам перечень живёт в `lib/app-sections.ts` (один
+// список на сайт и мини-приложение), а компоненты lucide подставляются
+// здесь — в клиенте. Через границу RSC функции не передаются, поэтому
+// в общем модуле лежат имена иконок, а не они сами.
+const NAV_ICONS: Record<string, typeof ClipboardList> = {
+  ClipboardList,
+  Package,
+  CalendarRange,
+  GitBranch,
+  TrendingDown,
+  GraduationCap,
+  AlertTriangle,
+  FileText,
+  Coins,
+  Lightbulb,
+};
+
 // Items inside the dropdown under the org-pill. «Сотрудники» вынесен
 // отдельной pill-кнопкой в шапке (см. разметку ниже), т.к. это самый
 // частый destination для управляющего.
-const secondaryNavItems = [
-  { label: "Журналы", href: "/journals", icon: ClipboardList },
-  { label: "Партии", href: "/batches", icon: Package },
-  { label: "Производственный план", href: "/plans", icon: CalendarRange },
-  { label: "Изменения", href: "/changes", icon: GitBranch },
-  { label: "Потери", href: "/losses", icon: TrendingDown },
-  { label: "Компетенции", href: "/competencies", icon: GraduationCap },
-  { label: "CAPA", href: "/capa", icon: AlertTriangle },
-  { label: "Отчёты", href: "/reports", icon: FileText },
-  { label: "Премии", href: "/bonuses", icon: Coins },
-  { label: "Идеи", href: "/ideas", icon: Lightbulb },
-];
+const secondaryNavItems = headerNavSections().map((item) => ({
+  label: item.label,
+  href: item.href,
+  icon: NAV_ICONS[item.icon] ?? ClipboardList,
+}));
 
 const STAFF_NAV_ITEM = {
   label: "Сотрудники",

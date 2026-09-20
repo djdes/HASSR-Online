@@ -22,7 +22,13 @@ import {
   CalendarDays,
   Lightbulb,
   BadgeCheck,
+  LayoutGrid,
+  MonitorSmartphone,
 } from "lucide-react";
+import {
+  buildMiniShellClearCookie,
+  hasMiniShellCookie,
+} from "@/lib/mini-shell-cookie";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FeedbackDialog } from "@/components/layout/feedback-dialog";
 import { useMiniTheme } from "../_components/mini-theme";
@@ -297,15 +303,15 @@ export function MiniMeClient({
         </Link>
       </section>
 
-      {/* Оплаты и закрывающие документы живут на сайте: в Mini App
-          экрана подписки нет, поэтому ссылка ведёт в кабинет. Только
+      {/* Оплаты, календарь, идеи и бейдж — страницы кабинета. Раньше
+          они открывались новой вкладкой браузера, и человек выпадал из
+          приложения. Теперь открываются здесь же, в оболочке
+          мини-приложения (П-3), с рабочей кнопкой «назад». Только
           руководителям — сотрудника сайт всё равно перенаправит. */}
       {hasFullWorkspaceAccess(u) ? (
         <section>
-          <a
+          <Link
             href="/settings/subscription"
-            target="_blank"
-            rel="noreferrer"
             className="mini-press flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left text-[14px] font-medium"
             style={{
               background: "var(--mini-card-solid-bg)",
@@ -318,13 +324,11 @@ export function MiniMeClient({
               Оплаты и закрывающие документы
             </span>
             <span className="text-[11px]" style={{ color: "var(--mini-text-faint)" }}>
-              на сайте
+              тариф и счета
             </span>
-          </a>
-          <a
+          </Link>
+          <Link
             href="/settings/calendar"
-            target="_blank"
-            rel="noreferrer"
             className="mini-press mt-2 flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left text-[14px] font-medium"
             style={{
               background: "var(--mini-card-solid-bg)",
@@ -339,11 +343,9 @@ export function MiniMeClient({
             <span className="text-[11px]" style={{ color: "var(--mini-text-faint)" }}>
               медкнижки, поверки
             </span>
-          </a>
-          <a
+          </Link>
+          <Link
             href="/ideas"
-            target="_blank"
-            rel="noreferrer"
             className="mini-press mt-2 flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left text-[14px] font-medium"
             style={{
               background: "var(--mini-card-solid-bg)",
@@ -358,11 +360,9 @@ export function MiniMeClient({
             <span className="text-[11px]" style={{ color: "var(--mini-text-faint)" }}>
               предложить
             </span>
-          </a>
-          <a
+          </Link>
+          <Link
             href="/settings/organization#badge"
-            target="_blank"
-            rel="noreferrer"
             className="mini-press mt-2 flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left text-[14px] font-medium"
             style={{
               background: "var(--mini-card-solid-bg)",
@@ -377,15 +377,13 @@ export function MiniMeClient({
             <span className="text-[11px]" style={{ color: "var(--mini-text-faint)" }}>
               для сайта
             </span>
-          </a>
+          </Link>
         </section>
       ) : null}
 
       <section>
-        <a
+        <Link
           href="/settings/security"
-          target="_blank"
-          rel="noreferrer"
           className="mini-press flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left text-[14px] font-medium"
           style={{
             background: "var(--mini-card-solid-bg)",
@@ -400,7 +398,30 @@ export function MiniMeClient({
           <span className="text-[11px]" style={{ color: "var(--mini-text-faint)" }}>
             входы и сессии
           </span>
-        </a>
+        </Link>
+      </section>
+
+      {/* Все разделы кабинета — теми же правами, что на сайте. Вкладка
+          есть и в нижнем меню; здесь — на случай, если человек ищет
+          «где остальное» именно в профиле. */}
+      <section>
+        <Link
+          href="/mini/sections"
+          className="mini-press flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left text-[14px] font-medium"
+          style={{
+            background: "var(--mini-card-solid-bg)",
+            color: "var(--mini-text)",
+            border: "1px solid var(--mini-divider)",
+          }}
+        >
+          <span className="inline-flex items-center gap-2">
+            <LayoutGrid className="size-4" style={{ color: "var(--mini-text-muted)" }} />
+            Все разделы
+          </span>
+          <span className="text-[11px]" style={{ color: "var(--mini-text-faint)" }}>
+            журналы, отчёты, настройки
+          </span>
+        </Link>
       </section>
 
       {/* Обратная связь — паритет с сайтом (П-3): на сайте форма живёт
@@ -449,6 +470,43 @@ export function MiniMeClient({
           {error}
         </div>
       ) : null}
+
+      {/* Полная версия сайта. Снимает режим оболочки и уводит в
+          обычный кабинет — нужно тем, кто открыл приложение на
+          планшете или ноутбуке и хочет широкие таблицы и шапку. */}
+      <section>
+        <button
+          type="button"
+          onClick={() => {
+            if (hasMiniShellCookie(document.cookie)) {
+              document.cookie = buildMiniShellClearCookie(
+                window.location.protocol === "https:"
+              );
+            }
+            // Полная перезагрузка, а не router.push: хром страницы
+            // выбирает сервер по куке, и клиентский переход отдал бы
+            // ту же оболочку.
+            window.location.href = "/dashboard";
+          }}
+          className="mini-press flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left text-[14px] font-medium"
+          style={{
+            background: "var(--mini-card-solid-bg)",
+            color: "var(--mini-text)",
+            border: "1px solid var(--mini-divider)",
+          }}
+        >
+          <span className="inline-flex items-center gap-2">
+            <MonitorSmartphone
+              className="size-4"
+              style={{ color: "var(--mini-text-muted)" }}
+            />
+            Открыть полную версию сайта
+          </span>
+          <span className="text-[11px]" style={{ color: "var(--mini-text-faint)" }}>
+            шапка и широкие таблицы
+          </span>
+        </button>
+      </section>
 
       <section className="space-y-2">
         <button

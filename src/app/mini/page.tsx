@@ -28,6 +28,10 @@ import { JournalActionsSheet } from "./_components/journal-actions-sheet";
 import { MiniCard } from "./_components/mini-card";
 import { MiniBonusCard } from "./_components/mini-bonus-card";
 import { getTelegramWebApp } from "./_components/telegram-web-app";
+import {
+  telegramSignInProblemFromMessage,
+  type TelegramSignInProblem,
+} from "@/lib/telegram-auth-messages";
 import { QrScannerButton } from "./_components/qr-scanner";
 import { GeoReminder } from "./_components/geo-reminder";
 import { MiniHomeSkeleton } from "./_components/mini-home-skeleton";
@@ -36,7 +40,12 @@ import { MyShiftButton } from "./_components/my-shift-button";
 
 type LocalState =
   | { kind: "init" }
-  | { kind: "error"; message: string };
+  | {
+      kind: "error";
+      message: string;
+      /** Отказ Telegram: повтор не поможет, нужно переоткрыть из бота. */
+      problem?: TelegramSignInProblem | null;
+    };
 
 type HomeUser = {
   name: string;
@@ -200,9 +209,11 @@ export default function MiniHomePage() {
       }
       const r = "r" in result ? result.r : null;
       if (!r || r.error) {
+        const message = r?.error || "Сессия Telegram не получена";
         setLocalState({
           kind: "error",
-          message: r?.error || "Сессия Telegram не получена",
+          message,
+          problem: telegramSignInProblemFromMessage(message),
         });
       }
     })();
@@ -354,34 +365,60 @@ export default function MiniHomePage() {
           >
             {localState.message}
           </p>
-          {/* Retry-кнопка: signInStarted был установлен в true и без
-              сброса повторный signIn никогда не запустится. Сбрасываем
-              guard-флаги и переводим state в init — useEffect status-edge
-              переподнимет signIn при `unauthenticated`.
-              Для уже вошедшего сброс флагов ничего не запускал (зависимости
-              эффекта не менялись) — экран навсегда оставался скелетоном,
-              поэтому здесь перезапрашиваем главную сами. */}
-          <button
-            type="button"
-            onClick={() => {
-              signInStarted.current = false;
-              fetchStarted.current = false;
-              setLocalState({ kind: "init" });
-              setHome(null);
-              if (statusRef.current === "authenticated") {
-                fetchStarted.current = true;
-                void fetchHome();
-              }
-            }}
-            className="mini-press mt-5 inline-flex h-10 items-center gap-2 rounded-2xl px-5 text-[14px] font-medium"
-            style={{
-              background: "var(--mini-surface-2)",
-              border: "1px solid var(--mini-divider-strong)",
-              color: "var(--mini-text)",
-            }}
-          >
-            Попробовать ещё раз
-          </button>
+          {/* Когда Telegram отказал в подписи (устарела или не сошлась),
+              повтор не поможет никогда: те же данные отправятся снова.
+              Единственный выход — закрыть приложение и открыть его из
+              бота, чтобы Telegram выдал свежую подпись. Поэтому здесь
+              вместо «Попробовать ещё раз» — «Закрыть приложение». */}
+          {localState.problem ? (
+            <button
+              type="button"
+              onClick={() => {
+                try {
+                  getTelegramWebApp()?.close?.();
+                } catch {
+                  /* старый клиент — кнопка просто ничего не сделает */
+                }
+              }}
+              className="mini-press mt-5 inline-flex h-10 items-center gap-2 rounded-2xl px-5 text-[14px] font-medium"
+              style={{
+                background: "var(--mini-surface-2)",
+                border: "1px solid var(--mini-divider-strong)",
+                color: "var(--mini-text)",
+              }}
+            >
+              Закрыть приложение
+            </button>
+          ) : (
+            /* Retry-кнопка: signInStarted был установлен в true и без
+               сброса повторный signIn никогда не запустится. Сбрасываем
+               guard-флаги и переводим state в init — useEffect status-edge
+               переподнимет signIn при `unauthenticated`.
+               Для уже вошедшего сброс флагов ничего не запускал (зависимости
+               эффекта не менялись) — экран навсегда оставался скелетоном,
+               поэтому здесь перезапрашиваем главную сами. */
+            <button
+              type="button"
+              onClick={() => {
+                signInStarted.current = false;
+                fetchStarted.current = false;
+                setLocalState({ kind: "init" });
+                setHome(null);
+                if (statusRef.current === "authenticated") {
+                  fetchStarted.current = true;
+                  void fetchHome();
+                }
+              }}
+              className="mini-press mt-5 inline-flex h-10 items-center gap-2 rounded-2xl px-5 text-[14px] font-medium"
+              style={{
+                background: "var(--mini-surface-2)",
+                border: "1px solid var(--mini-divider-strong)",
+                color: "var(--mini-text)",
+              }}
+            >
+              Попробовать ещё раз
+            </button>
+          )}
           {/* Второй выход из этого экрана. Ошибка «аккаунт не связан с
               Telegram» тоже была тупиком: повторять вход бессмысленно,
               пока руководитель не привяжет аккаунт. Телефон и пароль

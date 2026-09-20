@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { QrCode } from "lucide-react";
 import { toast } from "sonner";
-import { getTelegramWebApp } from "./telegram-web-app";
+import { getTelegramWebApp, isInsideTelegram } from "./telegram-web-app";
 import { QrCameraSheet } from "./qr-camera-sheet";
 
 /**
@@ -101,7 +101,7 @@ export function QrScannerButton() {
   );
 
   const handleScan = useCallback(() => {
-    const tg = getTelegramWebApp();
+    const tg = isInsideTelegram() ? getTelegramWebApp() : null;
     if (!tg) {
       // Вне Telegram раньше была только надпись «сканер доступен только
       // внутри Telegram». В установленном на телефон приложении это

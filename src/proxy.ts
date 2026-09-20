@@ -6,6 +6,11 @@ import {
 } from "@/lib/auth-cookies";
 import { canAccessWebPath, hasFullWorkspaceAccess } from "@/lib/role-access";
 import {
+  MINI_SHELL_COOKIE,
+  isMiniShellValue,
+  miniShellSignInHref,
+} from "@/lib/mini-shell-cookie";
+import {
   evaluatePartnerRequest,
   parsePartnerAccessClaim,
   type PartnerAccessClaim,
@@ -143,7 +148,17 @@ export async function proxy(req: NextRequest) {
       Boolean
     );
 
+  // Оболочка мини-приложения: страницы кабинета открыты в телефоне.
+  // Права она НЕ меняет — меняет только, куда вести отказ: на сайте это
+  // `/login` и `/journals`, в приложении — его собственный главный экран.
+  const miniShell = isMiniShellValue(req.cookies.get(MINI_SHELL_COOKIE)?.value);
+
   if (!rawToken) {
+    if (miniShell && isStaffRestrictedWebPath(pathname)) {
+      return NextResponse.redirect(
+        new URL(miniShellSignInHref(pathname), req.url)
+      );
+    }
     if (pathname.startsWith("/root") || pathname.startsWith("/api/root")) {
       return NextResponse.rewrite(new URL("/404", req.url), { status: 404 });
     }
@@ -200,7 +215,11 @@ export async function proxy(req: NextRequest) {
     return withRequestContext(req, claim);
   }
 
-  return NextResponse.redirect(new URL("/journals", req.url));
+  // В приложении «нет прав на раздел» — это возврат на его главный
+  // экран: списка журналов сайта там нет, и человек упёрся бы в чужой хром.
+  return NextResponse.redirect(
+    new URL(miniShell ? "/mini" : "/journals", req.url)
+  );
 }
 
 export const config = {

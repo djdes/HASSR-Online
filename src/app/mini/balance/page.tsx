@@ -1,7 +1,11 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
-import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
+import { authOptions } from "@/lib/auth";
+import { getActiveOrgId } from "@/lib/auth-helpers";
+import { buildMiniAppAuthBootstrapPath } from "@/lib/journal-obligation-links";
+import { getServerSession } from "@/lib/server-session";
 import { loadBalanceOverview } from "@/lib/balance/overview";
 import { BalanceClient } from "@/components/balance/balance-client";
 
@@ -13,7 +17,12 @@ export const dynamic = "force-dynamic";
  * удобнее, чем с десктопа: и камера под рукой, и человек уже в Telegram.
  */
 export default async function MiniBalancePage() {
-  const session = await requireAuth();
+  // Не `requireAuth()`: он уводит на `/login` сайта, а в Telegram это
+  // тупик — почты с паролем у сотрудника нет. Ведём на мини-вход.
+  const session = await getServerSession(authOptions).catch(() => null);
+  if (!session) {
+    redirect(buildMiniAppAuthBootstrapPath("/mini/balance"));
+  }
   const overview = await loadBalanceOverview(
     getActiveOrgId(session),
     session.user,

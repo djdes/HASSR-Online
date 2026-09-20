@@ -1,6 +1,9 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { authOptions } from "@/lib/auth";
+import { getServerSession } from "@/lib/server-session";
+import { buildMiniAppAuthBootstrapPath } from "@/lib/journal-obligation-links";
 import { db } from "@/lib/db";
 import SiteJournalDocumentPage from "@/app/(dashboard)/journals/[code]/documents/[docId]/page";
 import { JournalDocGuideOverlay } from "@/components/journals/journal-doc-guide";
@@ -22,10 +25,15 @@ import { MiniDocumentLinks } from "../mini-document-links";
  * данные грузятся через её внутренний Prisma fetch — дублировать
  * нечего, dispatcher из 700 строк остаётся в одном месте.
  *
- * Auth и ACL обрабатывает SiteJournalDocumentPage (она зовёт
- * `requireAuth()` и проверяет, что `document.organizationId` совпадает
- * с активной организацией пользователя). Mini App-сессия живёт в той
- * же JWT-куке, поэтому никакого специального wiring не требуется.
+ * ACL обрабатывает SiteJournalDocumentPage (она проверяет, что
+ * `document.organizationId` совпадает с активной организацией
+ * пользователя). Mini App-сессия живёт в той же JWT-куке.
+ *
+ * А вот вход проверяем ДО неё сами: `requireAuth()` внутри site-страницы
+ * уводит на `/login` сайта — форму с почтой и паролем, из которой в
+ * Telegram нет ни входа по Telegram, ни дороги назад. Первое открытие
+ * ссылки из бота приходит без куки, поэтому отправляем человека на
+ * мини-вход, запомнив, куда он шёл.
  *
  * NB: внутренние back-links клиентов ведут на `/journals/<code>` (т.е.
  * site dashboard, а не Mini App) — пока приемлемо, т.к. в Mini App есть
@@ -40,6 +48,13 @@ export default async function MiniDocumentPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+
+  const session = await getServerSession(authOptions).catch(() => null);
+  if (!session) {
+    redirect(
+      buildMiniAppAuthBootstrapPath(`/mini/documents/${encodeURIComponent(id)}`),
+    );
+  }
 
   const doc = await db.journalDocument.findUnique({
     where: { id },

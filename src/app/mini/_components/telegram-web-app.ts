@@ -13,6 +13,14 @@ export type TelegramWebApp = {
   };
   ready(): void;
   expand(): void;
+  /**
+   * Клиент, в котором открыто приложение: "android", "ios", "tdesktop",
+   * "web"… Вне Telegram скрипт telegram-web-app.js всё равно создаёт
+   * объект, но кладёт сюда "unknown" — по этому признаку и отличаем
+   * настоящий Telegram от обычной вкладки (см. `isInsideTelegram`).
+   */
+  platform?: string;
+  version?: string;
   colorScheme?: "light" | "dark";
   themeParams?: Record<string, string>;
   close?: () => void;
@@ -93,4 +101,29 @@ declare global {
 export function getTelegramWebApp(): TelegramWebApp | null {
   if (typeof window === "undefined") return null;
   return window.Telegram?.WebApp ?? null;
+}
+
+/**
+ * Открыто ли приложение именно внутри Telegram.
+ *
+ * Наличие `window.Telegram.WebApp` этого НЕ означает: скрипт
+ * telegram-web-app.js подключён на всех экранах `/mini`, и объект он
+ * создаёт всегда — и в обычной вкладке браузера, и в приложении,
+ * установленном на домашний экран. Отличие в том, что вне Telegram
+ * подписанных данных нет (`initData` пустая), а клиент не определён
+ * (`platform === "unknown"`).
+ *
+ * Использовать везде, где ответ нужен на вопрос «мы в Telegram?»:
+ * рисовать ли свою кнопку «назад», перехватывать ли краевой жест,
+ * предлагать ли установку на домашний экран. Если объект нужен просто
+ * чтобы вызвать метод — хватает `getTelegramWebApp()`.
+ */
+export function isInsideTelegram(): boolean {
+  const app = getTelegramWebApp();
+  if (!app) return false;
+  if (typeof app.initData === "string" && app.initData.length > 0) {
+    return true;
+  }
+  const platform = typeof app.platform === "string" ? app.platform.trim() : "";
+  return platform.length > 0 && platform !== "unknown";
 }

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Share, Smartphone, X } from "lucide-react";
 
-import { getTelegramWebApp } from "./telegram-web-app";
+import { isInsideTelegram } from "./telegram-web-app";
 import { haptic } from "./use-haptic";
 import {
   noteInstallDismissed,
@@ -32,7 +32,7 @@ export function InstallPrompt() {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    if (getTelegramWebApp()) return;
+    if (isInsideTelegram()) return;
     const env = readPushEnvironment(false);
     setShow(
       shouldShowInstallPrompt({

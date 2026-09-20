@@ -1,4 +1,6 @@
 import { Suspense } from "react";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { isImpersonating, requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { loadBuildingContext } from "@/lib/active-building";
 import { AuthSessionProvider } from "@/components/layout/session-provider";
@@ -43,7 +45,21 @@ import {
 import { toConsultantContact } from "@/lib/partners/consultant-contact";
 import { getPartnerMembership } from "@/lib/partners/service";
 import { getPartnerHintRates } from "@/lib/partners/partner-hint";
+import { getServerSession } from "@/lib/server-session";
+import { authOptions } from "@/lib/auth";
+import {
+  MINI_SHELL_COOKIE,
+  isMiniShellValue,
+  miniShellSignInHref,
+} from "@/lib/mini-shell-cookie";
+import { MiniAppShell } from "@/app/mini/_components/mini-app-shell";
+import { loadMiniShellData } from "@/app/mini/_components/mini-shell-data";
 import "@/app/app-theme.css";
+// Оболочка мини-приложения показывает эти же страницы в телефоне, и её
+// стили должны быть загружены вместе с ними. Все правила файла
+// заскоуплены на `.mini-root` / `.mini-scope`, поэтому обычный вид
+// кабинета они не трогают.
+import "@/app/mini/mini-theme.css";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -60,6 +76,16 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Режим оболочки мини-приложения: человек пришёл из Telegram или из
+  // установленного на телефон приложения. Страница остаётся ТОЙ ЖЕ —
+  // со всеми своими проверками прав, — меняется только хром вокруг неё
+  // (П-3: мини-приложение это сайт в Telegram). Куку ставит и снимает
+  // клиент мини-приложения, см. `lib/mini-shell-cookie.ts`.
+  const cookieStore = await cookies();
+  if (isMiniShellValue(cookieStore.get(MINI_SHELL_COOKIE)?.value)) {
+    return <MiniShellDashboard>{children}</MiniShellDashboard>;
+  }
+
   const session = await requireAuth();
 
   const activeOrgId =
@@ -438,6 +464,120 @@ export default async function DashboardLayout({
           </FabDockProvider>
         </div>
         <Toaster />
+      </SiteThemeProvider>
+    </AuthSessionProvider>
+  );
+}
+
+/**
+ * Та же страница кабинета, но в оболочке мини-приложения.
+ *
+ * Здесь НЕТ ни одной проверки прав — и это главное свойство решения:
+ * страница и её серверные guard'ы остаются прежними, поэтому у каждого
+ * человека в телефоне ровно те же возможности, что на сайте (П-3, П-4).
+ * Меняется только хром: шапка приложения, нижнее меню, кнопка «назад»
+ * Telegram, тема.
+ *
+ * Сайтовый хром не рисуем вовсе: ни Header (он не помещается в телефон
+ * и дублировал бы нижнее меню), ни хлебные крошки, ни футер, ни ⌘K, ни
+ * «Что нового». Провайдеры, без которых страницы кабинета не работают,
+ * остаются: сессия, тема сайта, док плавающих кнопок, крошки (их
+ * публикуют страницы) и отмена правок журнала (её слот живёт в шапке
+ * приложения).
+ */
+async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
+  // requireAuth() увёл бы на `/login` — в приложении вход происходит сам
+  // (по Telegram initData), и форма с паролем там выглядит поломкой.
+  const session = await getServerSession(authOptions).catch(() => null);
+  if (!session?.user) {
+    redirect(miniShellSignInHref(null));
+  }
+
+  const activeOrgId =
+    isImpersonating(session) && session.user.actingAsOrganizationId
+      ? session.user.actingAsOrganizationId
+      : getActiveOrgId(session);
+  const partnerAccess = session.user.partnerAccess ?? null;
+
+  const [shell, impersonatedOrg, orgRow, ownedAccount, partnerAccessBrand] =
+    await Promise.all([
+      loadMiniShellData(session),
+      isImpersonating(session) && session.user.actingAsOrganizationId
+        ? db.organization
+            .findUnique({
+              where: { id: session.user.actingAsOrganizationId },
+              select: { name: true },
+            })
+            .catch(() => null)
+        : Promise.resolve(null),
+      db.organization
+        .findUnique({
+          where: { id: activeOrgId },
+          select: {
+            name: true,
+            isDemo: true,
+            demoExpiresAt: true,
+            _count: {
+              select: {
+                users: { where: { isActive: true } },
+                journalDocuments: true,
+              },
+            },
+          },
+        })
+        .catch(() => null),
+      db.account
+        .findUnique({
+          where: { ownerUserId: session.user.id },
+          select: { id: true },
+        })
+        .catch(() => null),
+      partnerAccess
+        ? getPartnerBrandById(partnerAccess.partnerId).catch(() => null)
+        : Promise.resolve(null),
+    ]);
+
+  const impersonatedName = impersonatedOrg?.name ?? null;
+
+  return (
+    <AuthSessionProvider session={session}>
+      {/* Тему в оболочке ведёт MiniThemeProvider (профиль → устройство →
+          Telegram → по умолчанию). SiteThemeProvider оставлен ради
+          страниц, которые читают `useSiteTheme` — например «Внешний
+          вид». Его pre-hydration скрипт не рисуем: `#mini-root` уже
+          красит MiniThemeBootstrap, два скрипта дрались бы за атрибут. */}
+      <SiteThemeProvider initialTheme={shell.initialTheme}>
+        <MiniAppShell {...shell}>
+          <FabDockProvider>
+            <PageNavProvider>
+              {/* Человек должен видеть, что он в чужом кабинете или в
+                  песочнице, — в телефоне это важнее, чем на сайте:
+                  адресной строки тут нет. */}
+              {impersonatedName ? (
+                <ImpersonationBanner organizationName={impersonatedName} />
+              ) : null}
+              {partnerAccess ? (
+                <PartnerAccessBanner
+                  organizationName={orgRow?.name ?? "Организация"}
+                  brandName={partnerAccessBrand?.brandName ?? "партнёр"}
+                  level={partnerAccess.level}
+                />
+              ) : null}
+              {orgRow?.isDemo && ownedAccount && !isImpersonating(session) ? (
+                <Suspense fallback={null}>
+                  <DemoOrgBanner
+                    organizationName={orgRow.name}
+                    demoExpiresAt={orgRow.demoExpiresAt?.toISOString() ?? null}
+                    homeOrganizationId={session.user.organizationId}
+                    staffCount={orgRow._count.users}
+                    documentsCount={orgRow._count.journalDocuments}
+                  />
+                </Suspense>
+              ) : null}
+              {children}
+            </PageNavProvider>
+          </FabDockProvider>
+        </MiniAppShell>
       </SiteThemeProvider>
     </AuthSessionProvider>
   );

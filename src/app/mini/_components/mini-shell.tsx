@@ -7,7 +7,19 @@ import type { PartnerHintRates } from "@/lib/partners/partner-hint";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ArrowLeft, UserRound, MapPin } from "lucide-react";
-import { getTelegramWebApp } from "./telegram-web-app";
+import { NotificationsBell } from "@/components/layout/notifications-bell";
+import { UndoRedoButtons } from "@/components/journals/undo-redo-buttons";
+import { useHeaderUndo } from "@/components/journals/journal-undo-slot";
+import { getRouteTitle } from "@/lib/route-titles";
+import {
+  buildMiniShellClearCookie,
+  buildMiniShellCookie,
+  hasMiniShellCookie,
+  isMiniPath,
+  shouldDropMiniShell,
+  shouldSetMiniShell,
+} from "@/lib/mini-shell-cookie";
+import { getTelegramWebApp, isInsideTelegram } from "./telegram-web-app";
 import { haptic } from "./use-haptic";
 import { useMiniTheme } from "./mini-theme";
 
@@ -27,22 +39,83 @@ const SECTION_TITLES: Array<[string, string]> = [
   ["/mini/today", "Сегодня"],
   ["/mini/outbox", "Не отправлено"],
   ["/mini/claim", "Задача"],
+  ["/mini/sections", "Все разделы"],
   ["/mini/open", "Полная версия"],
 ];
 
-function titleForPath(pathname: string): string {
+/**
+ * Подпись страницы сайта, открытой в оболочке мини-приложения.
+ *
+ * Источник тот же, что у хлебных крошек сайта (`route-titles.ts`).
+ * Динамических сегментов там нет, поэтому для `/journals/xxx/documents/1`
+ * поднимаемся по пути вверх до ближайшего известного раздела.
+ */
+export function titleForSitePath(pathname: string): string {
+  let path = pathname.replace(/\/+$/, "") || "/";
+  while (path.length > 1) {
+    const title = getRouteTitle(path);
+    if (title) return title;
+    path = path.slice(0, path.lastIndexOf("/")) || "/";
+  }
+  return "Кабинет";
+}
+
+export function titleForPath(pathname: string): string {
   if (pathname === "/mini") return "Кабинет";
   if (pathname === "/mini/login") return "Вход";
   if (pathname.startsWith("/mini/journals")) return "Журналы";
   if (pathname.startsWith("/mini/documents")) return "Документ";
   if (pathname.startsWith("/mini/o/")) return "Задача";
+  if (!isMiniPath(pathname)) return titleForSitePath(pathname);
   return SECTION_TITLES.find(([prefix]) => pathname.startsWith(prefix))?.[1] ?? "WeSetup";
+}
+
+/** Приложение установлено на домашний экран (без адресной строки). */
+export function isStandaloneDisplay(): boolean {
+  if (typeof window === "undefined") return false;
+  const iosStandalone =
+    (navigator as unknown as { standalone?: boolean }).standalone === true;
+  if (iosStandalone) return true;
+  try {
+    return window.matchMedia("(display-mode: standalone)").matches;
+  } catch {
+    return false;
+  }
 }
 
 export function MiniTelegramRuntime() {
   const { theme } = useMiniTheme();
   const pathname = usePathname();
   const router = useRouter();
+
+  // Режим оболочки (кука `ws-shell=mini`). Ставим, когда человек явно
+  // в приложении: внутри Telegram, в установленном на домашний экран
+  // приложении или просто на экране `/mini/*`. Снимаем, когда он на
+  // широком экране открыл страницу сайта — там оболочка с нижним меню
+  // не нужна. Правила и формат куки — в `lib/mini-shell-cookie.ts`.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const env = {
+      pathname,
+      insideTelegram: isInsideTelegram(),
+      standalone: isStandaloneDisplay(),
+      viewportWidth: window.innerWidth,
+    };
+    const secure = window.location.protocol === "https:";
+    const present = hasMiniShellCookie(document.cookie);
+
+    if (shouldDropMiniShell(env)) {
+      if (!present) return;
+      document.cookie = buildMiniShellClearCookie(secure);
+      // Хром страницы рисует сервер — без перезагрузки человек остался
+      // бы в мобильной оболочке до следующего полного захода.
+      window.location.reload();
+      return;
+    }
+    if (shouldSetMiniShell(env) && !present) {
+      document.cookie = buildMiniShellCookie(secure);
+    }
+  }, [pathname]);
 
   useEffect(() => {
     const tg = getTelegramWebApp();
@@ -186,7 +259,10 @@ function useNeedsOwnBackButton(pathname: string): boolean {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (getTelegramWebApp()) return;
+    // Именно «внутри Telegram», а не «скрипт Telegram загрузился»: в
+    // установленном на домашний экран приложении объект тоже есть, и
+    // раньше из-за этого своя кнопка «назад» не появлялась никогда.
+    if (isInsideTelegram()) return;
 
     const query = window.matchMedia("(display-mode: standalone)");
     // `navigator.standalone` — способ iOS: там media-query до сих пор
@@ -206,16 +282,22 @@ function useNeedsOwnBackButton(pathname: string): boolean {
 export function MiniTopBar({
   partnerHint = null,
   locationName = null,
+  showNotifications = false,
 }: {
   /** Ставки для иконки «партнёрская программа» у логотипа; null — скрыть. */
   partnerHint?: PartnerHintRates | null;
   /** Активная точка (режим точек включён); null — не показывать. */
   locationName?: string | null;
+  /** Колокольчик уведомлений — зеркало шапки сайта; только вошедшим. */
+  showNotifications?: boolean;
 } = {}) {
   const pathname = usePathname();
   const title = titleForPath(pathname);
   const router = useRouter();
   const showBack = useNeedsOwnBackButton(pathname);
+  // Кнопки «отменить / повторить» открытого журнала — тот же слот, что
+  // в шапке сайта. Пока документ не открыт, слот пуст и места не занимает.
+  const headerUndo = useHeaderUndo();
 
   return (
     <header
@@ -304,8 +386,16 @@ export function MiniTopBar({
           </div>
         </Link>
 
-        <div className="flex items-center gap-2.5">
-          <LiveClock />
+        <div className="flex items-center gap-2">
+          {/* Отмена/повтор правок журнала — там же, где на сайте.
+              Часы прячем, когда кнопки заняли место: на 360 px иначе
+              всё три элемента налезают друг на друга. */}
+          {headerUndo ? (
+            <UndoRedoButtons undo={headerUndo} />
+          ) : (
+            <LiveClock />
+          )}
+          {showNotifications ? <NotificationsBell /> : null}
           <Link
             href="/mini/me"
             aria-label="Профиль"

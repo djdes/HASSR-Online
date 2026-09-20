@@ -10,7 +10,7 @@ import {
   trackEdgeBack,
 } from "@/components/journals/edge-back-gesture";
 
-import { getTelegramWebApp } from "./telegram-web-app";
+import { isInsideTelegram } from "./telegram-web-app";
 import { haptic } from "./use-haptic";
 
 /**
@@ -48,7 +48,7 @@ export function EdgeBack() {
     if (isRoot) return;
     if (typeof window === "undefined") return;
     // Вне Telegram жест принадлежит системе — не трогаем.
-    if (!getTelegramWebApp()) return;
+    if (!isInsideTelegram()) return;
 
     const reset = () => {
       gesture.current = null;

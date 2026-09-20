@@ -17,6 +17,28 @@ export const dynamic = "force-dynamic";
  * theme on their phone in Telegram sees the same theme when they open
  * `wesetup.ru` on a desktop.
  */
+/**
+ * Текущая сохранённая тема.
+ *
+ * Нужна Mini App: вход из Telegram происходит на клиенте, серверная
+ * разметка к этому моменту уже отдана с темой по умолчанию. Без этого
+ * запроса выбранная светлая тема появлялась бы только после
+ * перезагрузки страницы.
+ */
+export async function GET() {
+  const auth = await requireApiAuth();
+  if (!auth.ok) return auth.response;
+
+  const user = await db.user.findUnique({
+    where: { id: auth.session.user.id },
+    select: { themePreference: true },
+  });
+
+  return NextResponse.json({
+    theme: user?.themePreference === "light" ? "light" : "dark",
+  });
+}
+
 export async function POST(req: NextRequest) {
   const auth = await requireApiAuth();
   if (!auth.ok) return auth.response;

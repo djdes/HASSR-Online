@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { getTelegramWebApp } from "./telegram-web-app";
+import { getTelegramWebApp, isInsideTelegram } from "./telegram-web-app";
 
 /**
  * Главная кнопка Telegram вместо своей внизу экрана.
@@ -47,7 +47,9 @@ export function useMainButton({
   // показывать ли свою кнопку.
   const [available, setAvailable] = useState(false);
   useEffect(() => {
-    setAvailable(Boolean(getTelegramWebApp()?.MainButton));
+    // Вне Telegram объект тоже есть, а кнопки на экране нет: полагаться
+    // на него значит спрятать свою кнопку и оставить форму без отправки.
+    setAvailable(isInsideTelegram() && Boolean(getTelegramWebApp()?.MainButton));
   }, []);
 
   useEffect(() => {

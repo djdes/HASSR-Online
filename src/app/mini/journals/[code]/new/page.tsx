@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getServerSession } from "@/lib/server-session";
 import { getActiveOrgId } from "@/lib/auth-helpers";
+import { buildMiniAppAuthBootstrapPath } from "@/lib/journal-obligation-links";
 import { DynamicForm } from "@/components/journals/dynamic-form";
 import { FinishedProductPipeline } from "@/components/journals/finished-product-pipeline";
 import {
@@ -33,7 +34,13 @@ export default async function MiniNewJournalEntryPage({
   const { code } = await params;
   const session = await getServerSession(authOptions);
   if (!session) {
-    redirect("/mini");
+    // Возвращаем ровно на эту форму: человек пришёл по ссылке из бота,
+    // и после входа он должен оказаться там, куда шёл, а не на главной.
+    redirect(
+      buildMiniAppAuthBootstrapPath(
+        `/mini/journals/${encodeURIComponent(code)}/new`,
+      ),
+    );
   }
 
   const actor = aclActorFromSession({

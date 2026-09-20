@@ -1,13 +1,17 @@
 "use client";
 
+import { useSession } from "next-auth/react";
 import {
   createContext,
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
+
+import { isInsideTelegram } from "./telegram-web-app";
 
 export type MiniTheme = "dark" | "light";
 
@@ -35,63 +39,110 @@ type Ctx = {
 
 const MiniThemeContext = createContext<Ctx | null>(null);
 
-function readInitialThemeFromStorage(fallback: MiniTheme): MiniTheme {
-  if (typeof window === "undefined") return fallback;
+/** Выбор, сохранённый на этом устройстве. Пишется только явным
+    переключением темы — ни сервером, ни значением по умолчанию. */
+function readStoredTheme(): MiniTheme | null {
+  if (typeof window === "undefined") return null;
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (stored === "light" || stored === "dark") return stored;
     const legacy = window.localStorage.getItem(LEGACY_MINI_KEY);
     if (legacy === "light" || legacy === "dark") return legacy;
-    const attr = document
-      .getElementById(MINI_ROOT_ID)
-      ?.getAttribute(ATTRIBUTE);
-    if (attr === "light" || attr === "dark") return attr;
-    // D6 — следуем Telegram colorScheme если нет ни сохранённого
-    // выбора, ни server-injected initialTheme. У Telegram WebApp
-    // есть `colorScheme: "dark" | "light"` — тогда Mini App
-    // выглядит как «родная» в Telegram'е.
-    const tgScheme = (
-      window as unknown as {
-        Telegram?: { WebApp?: { colorScheme?: string } };
-      }
-    ).Telegram?.WebApp?.colorScheme;
-    if (tgScheme === "light" || tgScheme === "dark") return tgScheme;
   } catch {
-    /* sessionStorage/localStorage blocked */
+    /* localStorage blocked */
   }
-  return fallback;
+  return null;
+}
+
+/** Светлый или тёмный сам клиент Telegram. Вне Telegram — null. */
+function readTelegramColorScheme(): MiniTheme | null {
+  if (typeof window === "undefined") return null;
+  if (!isInsideTelegram()) return null;
+  const scheme = (
+    window as unknown as {
+      Telegram?: { WebApp?: { colorScheme?: string } };
+    }
+  ).Telegram?.WebApp?.colorScheme;
+  return scheme === "light" || scheme === "dark" ? scheme : null;
+}
+
+/**
+ * Какая тема должна быть прямо сейчас.
+ *
+ * Порядок строгий:
+ *   1. выбор человека в профиле (`User.themePreference`) — он и на
+ *      другом устройстве тот же;
+ *   2. выбор, сделанный на этом устройстве, пока человек не вошёл;
+ *   3. тема самого Telegram, если открыто внутри него;
+ *   4. значение по умолчанию.
+ */
+function resolveTheme(
+  profileTheme: MiniTheme | null,
+  fallback: MiniTheme
+): MiniTheme {
+  return (
+    profileTheme ??
+    readStoredTheme() ??
+    readTelegramColorScheme() ??
+    fallback
+  );
 }
 
 export function MiniThemeProvider({
   children,
   initialTheme = "dark",
+  profileTheme = null,
 }: {
   children: ReactNode;
-  /** Server-loaded `User.themePreference`; used as the seed when
-      localStorage is empty (first visit on this device). */
+  /** Тема, в которой отрисован сервер: profileTheme либо значение
+      по умолчанию для ещё не вошедшего. */
   initialTheme?: MiniTheme;
+  /** `User.themePreference` вошедшего; null — сессии на сервере не было. */
+  profileTheme?: MiniTheme | null;
 }) {
   const [theme, setThemeState] = useState<MiniTheme>(initialTheme);
+  // Тема из профиля, доехавшая уже после входа (вход в Telegram
+  // происходит на клиенте, и серверная разметка про него не знает).
+  const [lateProfileTheme, setLateProfileTheme] = useState<MiniTheme | null>(
+    null
+  );
+  const effectiveProfileTheme = profileTheme ?? lateProfileTheme;
 
   useEffect(() => {
-    // localStorage > server. Once the user picks a theme on this
-    // device, that choice survives reload until they explicitly change
-    // it. Server NEVER overrides local — иначе сетевой сбой при persist
-    // приводил бы к откату темы при reload.
-    const fromStorage = readInitialThemeFromStorage(initialTheme);
-    setThemeState(fromStorage);
-    applyThemeToDOM(fromStorage);
+    const next = resolveTheme(effectiveProfileTheme, initialTheme);
+    setThemeState(next);
+    applyThemeToDOM(next);
+    // Ничего не пишем в localStorage: значение по умолчанию, записанное
+    // до входа, потом побеждало настоящий выбор человека в профиле.
+  }, [effectiveProfileTheme, initialTheme]);
 
-    if (typeof window !== "undefined") {
+  // Вход из Telegram проходит на клиенте, серверная разметка отдана
+  // раньше и с темой по умолчанию. Как только сессия появилась —
+  // спрашиваем сохранённый выбор и применяем его сразу, без
+  // перезагрузки страницы.
+  const { status } = useSession();
+  const profileAsked = useRef(false);
+  // Человек переключил тему сам — ответ сервера, выехавший следом, не
+  // должен вернуть экран к прежнему виду.
+  const userPicked = useRef(false);
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    if (profileTheme !== null || profileAsked.current) return;
+    profileAsked.current = true;
+    void (async () => {
       try {
-        if (window.localStorage.getItem(STORAGE_KEY) === null) {
-          window.localStorage.setItem(STORAGE_KEY, fromStorage);
+        const res = await fetch("/api/me/theme", { cache: "no-store" });
+        if (!res.ok) return;
+        const body = (await res.json()) as { theme?: unknown };
+        if (userPicked.current) return;
+        if (body.theme === "light" || body.theme === "dark") {
+          setLateProfileTheme(body.theme);
         }
       } catch {
-        /* storage blocked */
+        /* нет связи — остаёмся на том, что уже показано */
       }
-    }
-  }, [initialTheme]);
+    })();
+  }, [profileTheme, status]);
 
   useEffect(() => {
     function onCustom(e: Event) {
@@ -117,7 +168,10 @@ export function MiniThemeProvider({
   }, []);
 
   const setTheme = useCallback((next: MiniTheme) => {
+    userPicked.current = true;
     setThemeState(next);
+    // Чтобы эффект-расчёт, если он ещё раз запустится, дал тот же ответ.
+    setLateProfileTheme(next);
     applyThemeToDOM(next);
     try {
       window.localStorage.setItem(STORAGE_KEY, next);
@@ -207,19 +261,38 @@ type TelegramWebAppChrome = {
 };
 
 /**
- * Renders a `<script>` that runs before React hydrates and applies the
- * user's saved theme to `#mini-root`. Prevents a dark↔light flash on
- * first paint.
+ * Скрипт до гидрации: применяет нужную тему к `#mini-root`, чтобы не
+ * было вспышки светлого по тёмному и наоборот.
+ *
+ * Тот же порядок, что и у провайдера. Когда человек вошёл, сервер уже
+ * отрисовал разметку с его темой из профиля — трогать нечего. Когда не
+ * вошёл, разметка пришла с темой по умолчанию, и тут выбираем: выбор,
+ * сделанный на этом устройстве, иначе тема самого Telegram.
  */
-export function MiniThemeBootstrap() {
-  const code = `(function(){try{var k=${JSON.stringify(
-    STORAGE_KEY
-  )};var t=localStorage.getItem(k);if(t!=='light'&&t!=='dark'){t=localStorage.getItem(${JSON.stringify(
+export function MiniThemeBootstrap({
+  hasProfileTheme = false,
+}: {
+  /** У сервера была сессия и тема из профиля уже в разметке. */
+  hasProfileTheme?: boolean;
+} = {}) {
+  const code = `(function(){try{
+  if(${hasProfileTheme ? "true" : "false"})return;
+  var t=localStorage.getItem(${JSON.stringify(STORAGE_KEY)});
+  if(t!=='light'&&t!=='dark'){t=localStorage.getItem(${JSON.stringify(
     LEGACY_MINI_KEY
-  )});}if(t==='light'||t==='dark'){var el=document.getElementById(${JSON.stringify(
-    MINI_ROOT_ID
-  )});if(el){el.setAttribute(${JSON.stringify(
-    ATTRIBUTE
-  )},t);el.setAttribute(${JSON.stringify(APP_SHELL_ATTRIBUTE)},t);}}}catch(e){}})();`;
+  )});}
+  if(t!=='light'&&t!=='dark'){
+    var w=window.Telegram&&window.Telegram.WebApp;
+    var p=w&&typeof w.platform==='string'?w.platform.trim():'';
+    var inside=!!w&&((typeof w.initData==='string'&&w.initData.length>0)||(p!==''&&p!=='unknown'));
+    if(inside&&(w.colorScheme==='light'||w.colorScheme==='dark')){t=w.colorScheme;}
+  }
+  if(t==='light'||t==='dark'){
+    var el=document.getElementById(${JSON.stringify(MINI_ROOT_ID)});
+    if(el){el.setAttribute(${JSON.stringify(
+      ATTRIBUTE
+    )},t);el.setAttribute(${JSON.stringify(APP_SHELL_ATTRIBUTE)},t);}
+  }
+}catch(e){}})();`;
   return <script dangerouslySetInnerHTML={{ __html: code }} />;
 }
