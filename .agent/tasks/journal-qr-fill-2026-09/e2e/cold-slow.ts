@@ -12,7 +12,7 @@ const URL = "https://wesetup.ru/journal-fill/cmtk2aeje000ao9tsesj20d9z/finished_
     await page.goto(URL, { waitUntil: "commit", timeout: 180_000 });
     await page.waitForSelector("text=Продолжить", { timeout: 180_000 }).catch(() => null);
     const tList = Date.now() - t0;
-    const btn = page.locator("button[aria-pressed]").first();
+    const btn = page.locator("[aria-pressed]").first();
     let tHydrated = -1;
     for (let i = 0; i < 900; i += 1) { await btn.click({ timeout: 3000 }).catch(() => null); if ((await btn.getAttribute("aria-pressed")) === "true") { tHydrated = Date.now() - t0; break; } await page.waitForTimeout(100); }
     await page.waitForLoadState("load").catch(() => null);

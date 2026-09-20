@@ -13,7 +13,7 @@ const URL = "https://wesetup.ru/journal-fill/cmtk2aeje000ao9tsesj20d9z/finished_
     await page.waitForFunction(() => (window as unknown as { __hydrated?: boolean }).__hydrated === true || document.querySelector('button[aria-pressed]') !== null, { timeout: 120_000 }).catch(() => null);
     const tPaint = await page.evaluate(() => Math.round(performance.getEntriesByType("paint").find((p) => p.name === "first-contentful-paint")?.startTime ?? -1));
     // hydration: ждём, пока клик по сотруднику станет реактивным (aria-pressed меняется)
-    const btn = page.locator("button[aria-pressed]").first();
+    const btn = page.locator("[aria-pressed]").first();
     let tHydrated = -1;
     for (let i = 0; i < 600; i += 1) {
       await btn.click({ timeout: 5000 }).catch(() => null);
