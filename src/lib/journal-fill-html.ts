@@ -95,7 +95,7 @@ main{padding:14px 0 20px}
 .box.flat .stp{width:32px;height:32px;font-size:20px;border-radius:10px}.box.flat .stp.minus{left:6px}.box.flat .stp.plus{right:6px}
 .box.flat .pill{right:auto;left:50%;top:auto;bottom:3px;transform:translateX(-50%);min-width:16px;height:14px;font-size:9px;padding:0 4px}
 .fl.has-step.good .box.flat .in,.fl.has-step.bad .box.flat .in{padding-right:42px}
-.offrow{margin:14px 0 4px}
+.chips.offrow{margin:14px 0 4px}
 .chip.offc{color:#6f7282;border-style:dashed;gap:7px;height:30px;padding:0 12px 0 9px;cursor:pointer}
 .chip.offc input{width:16px;height:16px;margin:0;accent-color:#5566f6}
 .chip.offc.on{background:#f5f6ff;border-style:solid;border-color:#5566f6;color:#3848c7}
@@ -145,7 +145,7 @@ input.in[type=time]{font-weight:600;font-variant-numeric:tabular-nums}
 .qv .chip.on{background:#eef1ff;border-color:#5566f6}
 .cols .qv .chip{flex:1;min-width:0;padding:0 4px}
 .cols>.fl{min-width:0}
-.cols .offrow{width:100%}
+.cols .chips.offrow{width:100%}
 .cols .st{display:block;min-height:1.3em}
 .cols .chip.offc{width:100%;max-width:100%;height:auto;min-height:30px;padding:4px 8px;white-space:normal;line-height:1.2;text-align:left;justify-content:flex-start;box-sizing:border-box}
 .chip.offc input{flex:none}
