@@ -31,6 +31,16 @@ export async function getServerSession(
   if (!token) {
     return null;
   }
+  // Общий планшет: киоск-сессия живёт до `lockAt`. После бездействия (или
+  // явного выхода) сервер её не видит — киоск требует ПИН заново, и «повар
+  // второй смены» не допишет журнал под именем первого. Срабатывает только
+  // при клейме `kiosk`; обычные сессии сюда не попадают.
+  if (token.kiosk === true) {
+    const lockAt = typeof token.lockAt === "number" ? token.lockAt : 0;
+    if (!lockAt || lockAt < Date.now()) {
+      return null;
+    }
+  }
   // Сессия отозвана («Завершить все сессии») — для сервера её нет.
   const tokenUserId = typeof token.id === "string" ? token.id : String(token.sub ?? "");
   if (!(await isSessionVersionCurrent(tokenUserId, token.sv))) {

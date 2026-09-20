@@ -395,8 +395,67 @@ model Organization {
   journalPipelineTemplates       JournalPipelineTemplate[]
   partnerClients                 PartnerClient[]                @relation("PartnerClients")
   journalPreviews                JournalPreview[]
+  kioskDevices                   KioskDevice[]
+  signatureEvents                SignatureEvent[]
+
+  /// Общий планшет (2026-09-20): режим «киоск» — планшет привязан к орге,
+  /// сотрудники подписывают записи личным ПИН. `kioskEnabled` — включён ли
+  /// режим; `kioskIdleLockSeconds` — через сколько бездействия киоск
+  /// перелочивается обратно на список сотрудников.
+  kioskEnabled                   Boolean                        @default(false)
+  kioskIdleLockSeconds           Int                            @default(90)
 
   @@index([isDemo, demoExpiresAt])
+}
+
+/// Общий планшет, привязанный к организации. Планшет живёт под device-cookie
+/// `wesetup.kiosk` (id + HMAC), а не под чьей-то сессией: сам по себе даёт
+/// только список сотрудников и ввод ПИН. `secretHash` — хеш device-секрета,
+/// raw показывается один раз при enroll (как EmployeeJoinToken/InspectorToken).
+model KioskDevice {
+  id             String        @id @default(cuid())
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// Точка (здание), если у организации несколько — киоск показывает её штат.
+  buildingId     String?
+  /// Свободный лейбл для руководителя («Кухня», «Склад №2»).
+  label          String
+  /// SHA-256 от device-секрета; raw в БД не хранится.
+  secretHash     String        @unique
+  createdById    String
+  lastSeenAt     DateTime?
+  revokedAt      DateTime?
+  createdAt      DateTime      @default(now())
+
+  @@index([organizationId, revokedAt])
+}
+
+/// Журнал подписей — первоклассное доказательство «кто и как подтвердил запись».
+/// Пишется при разблокировке киоска (method "kiosk_pin"), а в фазах 3–4 —
+/// с фото (photoUrl) и по passkey. Отдельно от AuditLog: показывается инспектору
+/// и в PDF, привязан к записи журнала через entryRef.
+model SignatureEvent {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// Кто подписал (id из User; связь мягкая, чтобы событие пережило архивацию).
+  userId         String
+  /// Метод подтверждения личности.
+  method         String
+  /// Устройство-киоск, если подпись сделана на общем планшете.
+  deviceId       String?
+  ip             String?
+  userAgent      String?
+  /// Фото факта подписи (фаза 3), путь как у вложений журналов.
+  photoUrl       String?
+  /// Тип записи, к которой относится подпись: "journal_entry" | "document_entry".
+  entryKind      String?
+  /// Ссылка на запись: {templateId,entryId} или {documentId,employeeId,date}.
+  entryRef       Json?
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId, createdAt])
+  @@index([userId, createdAt])
 }
 
 /// Корпус/точка бизнеса организации. У сети может быть несколько

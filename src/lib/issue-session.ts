@@ -122,3 +122,63 @@ export async function issueSession(
 
   return response;
 }
+
+/** Потолок киоск-сессии: 12 часов, дальше — обязательный повторный вход по ПИН. */
+export const KIOSK_SESSION_MAX_AGE = 12 * 60 * 60;
+
+/**
+ * Короткая сессия сотрудника на общем планшете (киоске).
+ *
+ * Отличие от `issueSession`: клеймы `kiosk/deviceId/lockAt` и короткий срок.
+ * `lockAt` (абсолютные мс) читает `server-session`: после него сессия
+ * считается заблокированной, и киоск требует ПИН заново. Продлевается
+ * heartbeat'ом при активности. Так «повар второй смены» не допишет журнал
+ * под именем первого, забывшего выйти.
+ */
+export async function issueKioskSession(
+  response: NextResponse,
+  user: SessionUser,
+  organizationName: string,
+  opts: { deviceId: string; lockAt: number; ttlSeconds?: number },
+): Promise<NextResponse> {
+  const secret = process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET;
+  if (!secret) {
+    throw new Error("NEXTAUTH_SECRET is not configured");
+  }
+
+  const maxAge = Math.min(opts.ttlSeconds ?? KIOSK_SESSION_MAX_AGE, KIOSK_SESSION_MAX_AGE);
+  const token = await encode({
+    secret,
+    maxAge,
+    token: {
+      sub: user.id,
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      organizationId: user.organizationId,
+      organizationName,
+      isRoot: user.isRoot === true,
+      actingAsOrganizationId: null,
+      permissionPreset: user.permissionPreset ?? null,
+      sv: await getSessionVersion(user.id),
+      kiosk: true,
+      deviceId: opts.deviceId,
+      lockAt: opts.lockAt,
+    },
+  });
+
+  clearLegacyCookies(response);
+  response.cookies.set(CUSTOM_SESSION_COOKIE, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge,
+    secure: process.env.NODE_ENV === "production",
+  });
+  for (const cookieName of LEGACY_SESSION_COOKIES) {
+    appendSessionCookie(response, cookieName, token);
+  }
+
+  return response;
+}

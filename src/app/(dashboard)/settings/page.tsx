@@ -19,6 +19,7 @@ import {
   Package,
   Palette,
   Phone,
+  TabletSmartphone,
   Sparkles,
   Plug,
   Scale,
@@ -161,6 +162,13 @@ const settingsCards = [
     href: "/settings/phone",
     icon: Phone,
     iconClass: "text-[#3848c7]",
+    bgClass: "bg-[#eef1ff]",
+  },
+  {
+    description: "Один планшет на смену: сотрудник подписывает записи своим ПИН",
+    href: "/settings/kiosk",
+    icon: TabletSmartphone,
+    iconClass: "text-[#5566f6]",
     bgClass: "bg-[#eef1ff]",
   },
   {
@@ -626,6 +634,7 @@ const GROUP_TEAM = new Set([
   "/settings/position-staff-visibility",
   "/settings/schedule",
   "/settings/phone",
+  "/settings/kiosk",
 ]);
 const GROUP_JOURNALS = new Set([
   "/settings/journals",

@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
 
 import { getServerSession } from "@/lib/server-session";
@@ -108,6 +109,20 @@ export async function sessionEmployeeForQr(organizationId: string): Promise<
       canPickOthers: isManagementRole(user.role) || session.user.isRoot === true,
     },
   };
+}
+
+/**
+ * Автогенерация 4-значного ПИН: система выдаёт код, руководитель его не
+ * придумывает. Отсеиваем тривиальные (одинаковые цифры, `1234`, `0000`),
+ * чтобы результат гарантированно проходил `setEmployeeQrPin`.
+ */
+export function generateEmployeeQrPin(): string {
+  for (;;) {
+    const pin = String(crypto.randomInt(0, 10_000)).padStart(4, "0");
+    if (/^(\d)\1+$/.test(pin)) continue;
+    if (pin === "1234" || pin === "0123") continue;
+    return pin;
+  }
 }
 
 /** Установить/снять PIN. Возвращает ошибку валидации или null. */
