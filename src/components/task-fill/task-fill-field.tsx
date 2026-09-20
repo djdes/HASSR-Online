@@ -13,7 +13,14 @@ import {
 } from "@/components/ui/select";
 import type { TaskFormField } from "@/lib/tasksflow-adapters/task-form";
 import { fieldIcon, fieldIconTone } from "./field-icons";
-import { PhotoField } from "@/components/journals/photo-field";
+import dynamic from "next/dynamic";
+
+// Загрузка фото с обработкой снимка — тяжёлый модуль; в большинстве форм
+// поля «фото» нет, поэтому он не должен входить в стартовый бандл QR-формы.
+const PhotoField = dynamic(() => import("@/components/journals/photo-field").then((m) => m.PhotoField), {
+  ssr: false,
+  loading: () => <div className="h-14 animate-pulse rounded-2xl bg-[#eef1ff]" />,
+});
 
 /**
  * Live-валидация числовых полей: возвращает статус и текст подсказки.

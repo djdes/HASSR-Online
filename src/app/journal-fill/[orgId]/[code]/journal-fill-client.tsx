@@ -447,14 +447,18 @@ export function JournalFillClient(props: Props) {
             <p className="text-[12px] text-[#9b9fb3]">PIN выдаёт руководитель. Он подтверждает, что запись сделали именно вы.</p>
           </div>
         ) : null}
-        <Button
-          type="button"
-          disabled={!employeeId || (mode === "pin" && pin.length < 4)}
-          onClick={() => setEmployeeConfirmed(true)}
-          className="mt-4 h-12 w-full rounded-2xl bg-[#5566f6] text-[15px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] hover:bg-[#4a5bf0]"
-        >
-          Продолжить
-        </Button>
+        {/* Кнопка всегда видна внизу экрана — при длинном списке не нужно
+            листать за ней (sticky относительно окна, карточка ниже). */}
+        <div className="sticky bottom-0 z-10 -mx-5 mt-4 bg-gradient-to-t from-[#fafbff] via-[#fafbff]/95 to-transparent px-5 pb-[max(env(safe-area-inset-bottom),12px)] pt-4">
+          <Button
+            type="button"
+            disabled={!employeeId || (mode === "pin" && pin.length < 4)}
+            onClick={() => setEmployeeConfirmed(true)}
+            className="h-12 w-full rounded-2xl bg-[#5566f6] text-[15px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] hover:bg-[#4a5bf0]"
+          >
+            Продолжить
+          </Button>
+        </div>
       </div>,
       mode === "auth" ? "Вы вошли в кабинет — запись будет подписана вашим аккаунтом." : "Имя запомнится на этом телефоне."
     );
@@ -605,9 +609,12 @@ export function JournalFillClient(props: Props) {
             />
           ) : null}
           {submitError ? <p className="rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-3 text-[13px] text-[#a13a32]">{submitError}</p> : null}
-          <Button type="button" disabled={submitting} onClick={() => void submit()} className="h-14 w-full rounded-2xl bg-[#5566f6] text-[16px] font-semibold text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] hover:bg-[#4a5bf0]">
-            {submitting ? "Сохраняем…" : form.submitLabel ?? "Сохранить"}
-          </Button>
+          {/* «Сохранить» липнет к низу экрана на телефонах и планшетах. */}
+          <div className="sticky bottom-0 z-10 -mx-5 mt-4 bg-gradient-to-t from-[#fafbff] via-[#fafbff]/95 to-transparent px-5 pb-[max(env(safe-area-inset-bottom),12px)] pt-4">
+            <Button type="button" disabled={submitting} onClick={() => void submit()} className="h-14 w-full rounded-2xl bg-[#5566f6] text-[16px] font-semibold text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] hover:bg-[#4a5bf0]">
+              {submitting ? "Сохраняем…" : form.submitLabel ?? "Сохранить"}
+            </Button>
+          </div>
         </>
       )}
     </div>,

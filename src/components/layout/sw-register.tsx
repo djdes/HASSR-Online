@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 import {
   isMiniCacheName,
@@ -38,8 +39,14 @@ async function disableLegacyServiceWorkers() {
   }
 }
 
+/** Публичные QR-формы: без проверки сборки и воркеров — меньше работы на слабом телефоне. */
+const FILL_ROUTE_RE = /^\/(journal-fill|equipment-fill|room-fill|task-fill)(\/|$)/;
+
 export function ServiceWorkerRegister() {
+  const pathname = usePathname();
+  const isFillRoute = FILL_ROUTE_RE.test(pathname ?? "");
   useEffect(() => {
+    if (isFillRoute) return;
     let cancelled = false;
 
     async function syncBuild() {
@@ -84,7 +91,7 @@ export function ServiceWorkerRegister() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [isFillRoute]);
 
   return null;
 }

@@ -35,9 +35,11 @@ export function BuildVersionWatcher() {
   const initialBuildId = useRef<string | null>(null);
   const notified = useRef(false);
   const inMiniApp = pathname === "/mini" || pathname.startsWith("/mini/");
+  // На публичных QR-формах опрос сборки не нужен: форму открывают на минуту.
+  const inFillRoute = /^\/(journal-fill|equipment-fill|room-fill|task-fill)(\/|$)/.test(pathname);
 
   useEffect(() => {
-    if (inMiniApp) return;
+    if (inMiniApp || inFillRoute) return;
     let cancelled = false;
     let timer: ReturnType<typeof setInterval> | null = null;
 

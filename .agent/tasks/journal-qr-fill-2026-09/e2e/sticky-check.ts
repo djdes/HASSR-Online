@@ -1,0 +1,27 @@
+import fs from "node:fs";
+import path from "node:path";
+import { chromium } from "playwright";
+const BASE = process.env.BASE ?? "http://localhost:3020";
+const ROOT = path.resolve(process.cwd(), ".agent/tasks/journal-qr-fill-2026-09/e2e");
+const probe = JSON.parse(fs.readFileSync(path.join(ROOT, "probe.json"), "utf8")) as { tokens: Record<string, string> };
+const ORG = "cmoe6rpt4000097ts71yb922y";
+(async () => {
+  const browser = await chromium.launch({ channel: "chrome" });
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 520 }, isMobile: true, hasTouch: true });
+  await ctx.addInitScript("window.__name = (fn) => fn;");
+  const page = await ctx.newPage();
+  await page.goto(`${BASE}/journal-fill/${ORG}/finished_product?token=${encodeURIComponent(probe.tokens.finished_product)}`, { waitUntil: "load", timeout: 240_000 });
+  await page.waitForSelector("text=Продолжить", { timeout: 120_000 });
+  await page.waitForTimeout(1500);
+  const cont = await page.getByRole("button", { name: "Продолжить" }).evaluate((el) => { const r = el.getBoundingClientRect(); return { top: Math.round(r.top), bottom: Math.round(r.bottom), vh: window.innerHeight, docH: document.documentElement.scrollHeight }; });
+  console.log("continue:", JSON.stringify(cont), cont.bottom <= cont.vh && cont.docH > cont.vh ? "STICKY-OK" : "CHECK");
+  await page.screenshot({ path: path.join(ROOT, "shots", "sticky-continue.png") });
+  await page.getByRole("button", { name: /Кафе/ }).first().click();
+  await page.getByRole("button", { name: "Продолжить" }).click();
+  await page.waitForSelector("text=Сохранить", { timeout: 120_000 });
+  await page.waitForTimeout(1500);
+  const save = await page.getByRole("button", { name: /Сохранить/ }).first().evaluate((el) => { const r = el.getBoundingClientRect(); return { top: Math.round(r.top), bottom: Math.round(r.bottom), vh: window.innerHeight, docH: document.documentElement.scrollHeight }; });
+  console.log("save:", JSON.stringify(save), save.bottom <= save.vh && save.docH > save.vh ? "STICKY-OK" : "CHECK");
+  await page.screenshot({ path: path.join(ROOT, "shots", "sticky-save.png") });
+  await browser.close();
+})();
