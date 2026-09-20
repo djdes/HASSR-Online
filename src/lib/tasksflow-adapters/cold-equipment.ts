@@ -31,7 +31,7 @@ import {
   type JournalAdapter,
   type TaskSchedule,
 } from "./types";
-import type { TaskFormField, TaskFormSchema } from "./task-form";
+import { OFF_NOTE_EQUIPMENT, correctionFromValues, parseOffKeys, type TaskFormField, type TaskFormSchema } from "./task-form";
 import { extractEmployeeId as employeeIdFromRowKey, rowKeyForEmployee } from "./row-key";
 
 const TEMPLATE_CODE = COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE;
@@ -66,7 +66,7 @@ function buildFormFromConfig(
     intro:
       (employeeName ? `${employeeName}, ` : "") +
       "снимите показания каждого холодильника и введите температуру в °C. " +
-      "Если оборудование выключено — оставьте поле пустым и сообщите начальнику.",
+      "Если оборудование выключено — отметьте «Выключено» в его карточке: в журнал попадёт пометка, руководитель получит уведомление.",
     submitLabel: "Сохранить замеры",
     fields,
   };
@@ -95,6 +95,7 @@ async function prefillFromToday(
   const ordered = own ? [own, ...entries.filter((entry) => entry !== own)] : entries;
   const datas = ordered.map((entry) => normalizeColdEquipmentEntryData(entry.data ?? null));
   let filled = 0;
+  const prefilledOff: string[] = [];
   for (const field of form.fields) {
     if (field.type !== "number") continue;
     const item = config.equipment.find((candidate) => fieldKeyForEquipment(candidate.id) === field.key);
@@ -106,8 +107,14 @@ async function prefillFromToday(
         filled += 1;
         break;
       }
+      if (data.corrections?.[item.id] === OFF_NOTE_EQUIPMENT) {
+        prefilledOff.push(field.key);
+        filled += 1;
+        break;
+      }
     }
   }
+  if (prefilledOff.length > 0) form.prefilledOff = prefilledOff;
   if (filled > 0) {
     form.notice = `Сегодня уже записано: ${filled} из ${config.equipment.length}. Значения подставлены — проверьте и измените, что нужно.`;
   }
@@ -228,9 +235,35 @@ export const coldEquipmentAdapter: JournalAdapter = {
       }
     }
 
+    // «Выключено» — прочерк с пометкой вместо показания; комментарий «что
+    // сделали» — к тем холодильникам, где температура вне нормы. Прежние
+    // пометки той же записи сохраняем, снятую пометку «Выключено» убираем.
+    const off = parseOffKeys(values ?? null);
+    const correction = correctionFromValues(values ?? null);
+    const prior = await db.journalDocumentEntry.findUnique({
+      where: { documentId_employeeId_date: { documentId, employeeId, date: dateObj } },
+      select: { data: true },
+    });
+    const priorData = normalizeColdEquipmentEntryData(prior?.data ?? null);
+    const corrections: Record<string, string> = { ...(priorData.corrections ?? {}) };
+    for (const item of config.equipment) {
+      if (off.has(fieldKeyForEquipment(item.id))) {
+        temperatures[item.id] = null;
+        corrections[item.id] = OFF_NOTE_EQUIPMENT;
+        continue;
+      }
+      if (corrections[item.id] === OFF_NOTE_EQUIPMENT) delete corrections[item.id];
+      const t = temperatures[item.id];
+      const lo = typeof item.min === "number" && typeof item.max === "number" ? Math.min(item.min, item.max) : item.min;
+      const hi = typeof item.min === "number" && typeof item.max === "number" ? Math.max(item.min, item.max) : item.max;
+      const outside = typeof t === "number" && ((typeof lo === "number" && t < lo) || (typeof hi === "number" && t > hi));
+      if (outside && correction) corrections[item.id] = correction;
+    }
+
     const data: ColdEquipmentEntryData = {
-      responsibleTitle: null,
+      responsibleTitle: priorData.responsibleTitle ?? null,
       temperatures,
+      ...(Object.keys(corrections).length > 0 ? { corrections } : {}),
     };
 
     await db.journalDocumentEntry.upsert({

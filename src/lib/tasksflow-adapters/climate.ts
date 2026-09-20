@@ -26,6 +26,7 @@ import {
   applyRoomDirectoryToClimateConfig,
   normalizeClimateDocumentConfig,
   normalizeClimateEntryData,
+  climateCorrectionKey,
   type ClimateDocumentConfig,
   type ClimateEntryData,
   type ClimateMeasurement,
@@ -38,7 +39,7 @@ import {
   type JournalAdapter,
   type TaskSchedule,
 } from "./types";
-import type { TaskFormField, TaskFormSchema } from "./task-form";
+import { OFF_NOTE_READING, correctionFromValues, parseOffKeys, type TaskFormField, type TaskFormSchema } from "./task-form";
 import { extractEmployeeId as employeeIdFromRowKey, rowKeyForEmployee } from "./row-key";
 
 /**
@@ -164,6 +165,7 @@ async function prefillFromToday(
   const ordered = own ? [own, ...entries.filter((entry) => entry !== own)] : entries;
   const datas = ordered.map((entry) => normalizeClimateEntryData(entry.data ?? null));
   let filled = 0;
+  const prefilledOff: string[] = [];
   for (const field of form.fields) {
     if (field.type !== "number") continue;
     const room = config.rooms.find((candidate) => tempKey(candidate.id) === field.key || humidityKey(candidate.id) === field.key);
@@ -176,8 +178,14 @@ async function prefillFromToday(
         filled += 1;
         break;
       }
+      if (data.corrections?.[climateCorrectionKey(room.id, slot, metric)] === OFF_NOTE_READING) {
+        prefilledOff.push(field.key);
+        filled += 1;
+        break;
+      }
     }
   }
+  if (prefilledOff.length > 0) form.prefilledOff = prefilledOff;
   if (filled > 0) {
     form.notice = `Сегодня в ${slot} уже записано. Значения подставлены — проверьте и измените, что нужно.`;
   }
@@ -344,17 +352,34 @@ export const climateAdapter: JournalAdapter = {
     const measurements: Record<string, Record<string, ClimateMeasurement>> = {
       ...currentData.measurements,
     };
+    // «Нет показания» — прочерк с пометкой; комментарий к отклонению — к тем
+    // метрикам, что вне нормы. Прежние пометки записи сохраняем.
+    const off = parseOffKeys(values ?? null);
+    const correction = correctionFromValues(values ?? null);
+    const corrections: Record<string, string> = { ...(currentData.corrections ?? {}) };
+    const between = (value: number | null, min: number | null, max: number | null) =>
+      typeof value === "number" && ((typeof min === "number" && value < Math.min(min, max ?? min)) || (typeof max === "number" && value > Math.max(max, min ?? max)));
 
     for (const room of config.rooms) {
       const priorRoom = measurements[room.id] ?? {};
       const priorSlot: ClimateMeasurement =
         priorRoom[requestedTime] ?? { temperature: null, humidity: null };
+      const tempOff = off.has(tempKey(room.id));
+      const humOff = off.has(humidityKey(room.id));
       const nextTemp = room.temperature.enabled
-        ? pickNumber(values?.[tempKey(room.id)])
+        ? tempOff ? null : pickNumber(values?.[tempKey(room.id)])
         : priorSlot.temperature;
       const nextHum = room.humidity.enabled
-        ? pickNumber(values?.[humidityKey(room.id)])
+        ? humOff ? null : pickNumber(values?.[humidityKey(room.id)])
         : priorSlot.humidity;
+      const tKey = climateCorrectionKey(room.id, requestedTime, "temperature");
+      const hKey = climateCorrectionKey(room.id, requestedTime, "humidity");
+      if (tempOff) corrections[tKey] = OFF_NOTE_READING;
+      else if (corrections[tKey] === OFF_NOTE_READING) delete corrections[tKey];
+      if (humOff) corrections[hKey] = OFF_NOTE_READING;
+      else if (corrections[hKey] === OFF_NOTE_READING) delete corrections[hKey];
+      if (correction && room.temperature.enabled && between(nextTemp, room.temperature.min, room.temperature.max)) corrections[tKey] = correction;
+      if (correction && room.humidity.enabled && between(nextHum, room.humidity.min, room.humidity.max)) corrections[hKey] = correction;
       measurements[room.id] = {
         ...priorRoom,
         [requestedTime]: {
@@ -367,6 +392,7 @@ export const climateAdapter: JournalAdapter = {
     const data: ClimateEntryData = {
       responsibleTitle: currentData.responsibleTitle,
       measurements,
+      ...(Object.keys(corrections).length > 0 ? { corrections } : {}),
     };
 
     await db.journalDocumentEntry.upsert({

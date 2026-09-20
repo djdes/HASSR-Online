@@ -342,6 +342,7 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
         documentTitle: document.title,
         employeeName: employee.name,
         timeLabel: nowParts(timezone).time,
+        offCount: Number(q.get("off") ?? 0) || 0,
         addMoreHref: hints.append || done === "appended" ? link({ ...keep, row: resolved.perEmployee ? null : rowKey }) : null,
         daily: daily
           .filter((item) => item.code !== code)
@@ -370,7 +371,7 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
   const script = tempMetaScript(hints, suggestions);
   const correctionField = form.fields.find((field) => field.type === "text" && CORRECTION_KEY_RE.test(`${field.key} ${field.label}`)) ?? null;
 
-  const renderFormPage = (values: Record<string, unknown>, extra: { error?: string | null; badKeys?: string[]; correction?: string; showDeviation?: boolean; deviationTitle?: string | null }, status = 200) =>
+  const renderFormPage = (values: Record<string, unknown>, extra: { error?: string | null; badKeys?: string[]; correction?: string; showDeviation?: boolean; deviationTitle?: string | null; offKeys?: string[] }, status = 200) =>
     page(
       title,
       renderForm({
@@ -390,6 +391,7 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
         correctionPresets: CORRECTION_PRESETS,
         openedAt: Date.now(),
         stamp: stampFor(timezone),
+        offKeys: extra.offKeys,
       }),
       rowLabel,
       script,
@@ -400,10 +402,12 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
   if (posted && posted.get("action") === "submit") {
     const { values, raw } = parseFormValues(posted, form);
     const correction = String(posted.get("__correction") ?? "").trim();
+    // Чекбоксы «Выключено / Нет показания» — `off:<ключ поля>`; работают и без скриптов.
+    const off = Array.from(posted.keys()).filter((key) => key.startsWith("off:")).map((key) => key.slice(4));
     const outOfRange = form.fields.filter((field) => numberOutOfRange(field, values[field.key]));
     const deviationTitle = outOfRange.length > 0 ? `${outOfRange.map((field) => field.label).join(", ")} — вне нормы` : null;
     if (outOfRange.length > 0 && correctionField && !correction) {
-      return renderFormPage(raw, { error: "Значение вне нормы — напишите, что вы сделали", badKeys: outOfRange.map((field) => field.key), correction, showDeviation: true, deviationTitle });
+      return renderFormPage(raw, { error: "Значение вне нормы — напишите, что вы сделали", badKeys: outOfRange.map((field) => field.key), correction, showDeviation: true, deviationTitle, offKeys: off });
     }
     if (correctionField && correction) {
       const existing = String(values[correctionField.key] ?? "").trim();
@@ -419,18 +423,20 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
       employeeId: employee.id,
       rowKey,
       values,
+      off,
+      correction: correction || null,
       pinVerified,
       openedAt: Number.isFinite(openedAtRaw) ? openedAtRaw : null,
     });
     if (!result.ok) {
-      return renderFormPage(raw, { error: result.error, correction, showDeviation: outOfRange.length > 0, deviationTitle }, result.status >= 500 ? 500 : 200);
+      return renderFormPage(raw, { error: result.error, badKeys: result.badKeys, correction, showDeviation: outOfRange.length > 0, deviationTitle, offKeys: off }, result.status >= 500 ? 500 : 200);
     }
-    const target = link({ ...keep, row: resolved.perEmployee ? null : rowKey, done: result.mode });
+    const target = link({ ...keep, row: resolved.perEmployee ? null : rowKey, done: result.mode, off: off.length > 0 ? String(off.length) : null });
     const headers = new Headers({ Location: safeInternalPath(target), "Cache-Control": "no-store" });
     headers.append("Set-Cookie", cookie(EMPLOYEE_COOKIE, employee.id, cookiePath, 365 * 24 * 3600, false, secure));
     for (const item of setCookies) headers.append("Set-Cookie", item);
     return new NextResponse(null, { status: 303, headers });
   }
 
-  return renderFormPage(initialValues(form, hints, employee.name, timezone), {});
+  return renderFormPage(initialValues(form, hints, employee.name, timezone), { offKeys: form.prefilledOff });
 }

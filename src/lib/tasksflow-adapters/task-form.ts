@@ -184,6 +184,29 @@ export type PipelineStep = {
   depth?: number;
 };
 
+/**
+ * Служебные ключи в `values`, которые QR-форма передаёт адаптерам поверх
+ * полей DSL: список полей, отмеченных «Выключено / Нет показания» (ключи
+ * через запятую), и комментарий «что сделали» к отклонению. Адаптеры,
+ * которым это не нужно, просто не читают их.
+ */
+export const TASK_FORM_OFF_KEY = "__off";
+export const TASK_FORM_CORRECTION_KEY = "__correction";
+/** Пометка в журнале вместо показания: оборудование выключено. */
+export const OFF_NOTE_EQUIPMENT = "Выключено";
+/** Пометка в журнале вместо показания: снять нельзя (склад закрыт, прибор не работает). */
+export const OFF_NOTE_READING = "Нет показания";
+
+export function parseOffKeys(values: Record<string, unknown> | null | undefined): Set<string> {
+  const raw = values?.[TASK_FORM_OFF_KEY];
+  return new Set(typeof raw === "string" && raw ? raw.split(",").filter(Boolean) : []);
+}
+
+export function correctionFromValues(values: Record<string, unknown> | null | undefined): string {
+  const raw = values?.[TASK_FORM_CORRECTION_KEY];
+  return typeof raw === "string" ? raw.trim() : "";
+}
+
 export type TaskFormSchema = {
   /** Rendered above the form — free-text task description from admin
    *  is concatenated on top of this. Optional. */
@@ -191,6 +214,8 @@ export type TaskFormSchema = {
   /** Короткая плашка над полями («Сегодня уже записано — проверьте»).
    *  Только подсказка интерфейсу; клиенты, которым она не нужна, игнорируют. */
   notice?: string;
+  /** Поля, у которых сегодня уже стоит пометка «Выключено / Нет показания» — форма показывает их отмеченными. */
+  prefilledOff?: string[];
   fields: TaskFormField[];
   /**
    * Опциональный пошаговый pipeline. Если задан, task-fill UI

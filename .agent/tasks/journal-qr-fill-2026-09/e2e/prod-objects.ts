@@ -77,6 +77,13 @@ const out: Record<string, unknown> = {};
     await firstInput.fill("");
     await page.locator(".obj").nth(0).locator(".stp.minus").click();
     out.coldStepFromEmpty = await firstInput.inputValue();
+    // Пустые поля → понятная ошибка с подсветкой; чип «Выключено» есть у каждой карточки.
+    for (const input of await page.locator(".obj input.in").all()) await input.fill("");
+    await page.locator("#qr-form button[type=submit]").click();
+    await page.waitForSelector(".err", { timeout: 60_000 });
+    out.coldEmptyError = (await page.locator(".err").innerText()).trim().slice(0, 120);
+    out.coldEmptyBad = await page.locator(".fl.bad").count();
+    out.coldOffChips = await page.locator(".chip.offc").count();
     const cards = await page.locator(".obj").count();
     for (let i = 0; i < cards; i += 1) await page.locator(".obj").nth(i).locator(".qv .chip").nth(1).click();
     out.coldValues = await page.locator(".obj input.in").evaluateAll((els) => els.map((el) => (el as HTMLInputElement).value));

@@ -1,4 +1,5 @@
 import { normFromLabel, quickValues } from "@/lib/quick-values";
+import { OFF_NOTE_EQUIPMENT, OFF_NOTE_READING } from "@/lib/tasksflow-adapters/task-form";
 import type { JournalFillHints } from "@/lib/journal-fill-hints";
 import { TIME_OFFSET_CHIPS } from "@/lib/journal-fill-hints";
 import { suggestionKey, type NameSuggestionMeta } from "@/lib/name-suggestions";
@@ -91,6 +92,13 @@ main{padding:14px 0 20px}
 .box.flat .stp{width:32px;height:32px;font-size:20px;border-radius:10px}.box.flat .stp.minus{left:6px}.box.flat .stp.plus{right:6px}
 .box.flat .pill{right:auto;left:50%;top:auto;bottom:3px;transform:translateX(-50%);min-width:16px;height:14px;font-size:9px;padding:0 4px}
 .fl.has-step.good .box.flat .in,.fl.has-step.bad .box.flat .in{padding-right:42px}
+.offrow{margin:6px 0 0}
+.chip.offc{color:#6f7282;border-style:dashed;gap:7px;height:30px;padding:0 12px 0 9px;cursor:pointer}
+.chip.offc input{width:16px;height:16px;margin:0;accent-color:#5566f6}
+.chip.offc.on{background:#f5f6ff;border-style:solid;border-color:#5566f6;color:#3848c7}
+.fl.is-off .box .in{background:#f3f4f8;color:#9b9fb3}
+.fl.is-off .stp,.fl.is-off .qv{opacity:.35;pointer-events:none}
+.fl.is-off .st{color:#3848c7}
 .today{margin:-4px 0 12px;font-size:13.5px;color:#3c4053;line-height:1.35}
 .today b{font-weight:600;color:#0b1024}
 .prog{display:block;width:max-content;max-width:100%;margin:0 auto 8px;padding:3px 12px;border-radius:999px;background:#fff;border:1px solid #ececf4;font-size:12px;color:#6f7282;text-align:center;font-variant-numeric:tabular-nums}
@@ -182,9 +190,10 @@ export const QR_FILL_JS = `
     var st=w.querySelector(".st"); var unit=t.getAttribute("data-unit")||"";
     var mn=t.getAttribute("data-min"), mx=t.getAttribute("data-max");
     var norm=(mn!==null&&mx!==null)?mn+"…"+mx:(mn!==null?"не ниже "+mn:(mx!==null?"не выше "+mx:""));
+    if(w.classList.contains("is-off")){ w.classList.remove("bad","good"); return null; }
     var v=t.value.replace(",",".").trim();
     var qc=w.querySelectorAll(".qv [data-fill]"); for(var j=0;j<qc.length;j++) qc[j].classList.toggle("on",qc[j].getAttribute("data-value")===v);
-    if(v===""||!isFinite(Number(v))){ w.classList.remove("bad","good"); if(st) st.textContent=t.hasAttribute("data-plain")&&norm?"Норма "+norm+(unit?" "+unit:""):""; return null; }
+    if(v===""||!isFinite(Number(v))){ w.classList.remove("good"); if(!t.hasAttribute("aria-required")) w.classList.remove("bad"); if(st) st.textContent=w.classList.contains("bad")?"Не заполнено":(t.hasAttribute("data-plain")&&norm?"Норма "+norm+(unit?" "+unit:""):""); return null; }
     var n=Number(v); var low=mn!==null&&n<Number(mn); var high=mx!==null&&n>Number(mx);
     w.classList.toggle("bad",low||high); w.classList.toggle("good",!(low||high)&&norm!=="");
     var pill=w.querySelector(".pill"); if(pill) pill.textContent=(low||high)?"!":"✓";
@@ -198,8 +207,20 @@ export const QR_FILL_JS = `
     for(var i=0;i<req.length;i++){ if(String(req[i].value||"").trim()!=="") done++; }
     if(!req.length){prog.hidden=true;return;}
     prog.hidden=false; prog.classList.toggle("done",done===req.length);
+    /* Плашка «Не заполнено» гаснет, как только всё заполнено или отмечено. */
+    var er=document.querySelector(".err[data-missing]"); if(er) er.hidden=done===req.length;
     prog.textContent=done===req.length?"Всё заполнено ✓":"Заполнено "+done+" из "+req.length;
   }
+  /* «Выключено / Нет показания»: поле гаснет и перестаёт быть обязательным, в журнал уйдёт прочерк с пометкой. */
+  document.addEventListener("change",function(e){
+    var t=e.target; if(!t||!t.name||t.name.indexOf("off:")!==0) return;
+    var el=document.getElementById("f-"+t.name.slice(4)); var w=el&&el.closest?el.closest(".fl"):null; if(!el||!w) return;
+    var lab=t.closest?t.closest(".offc"):null; if(lab) lab.classList.toggle("on",t.checked);
+    w.classList.toggle("is-off",t.checked); var st=w.querySelector(".st"); var pill=w.querySelector(".pill");
+    if(t.checked){ if(!el.hasAttribute("data-req")) el.setAttribute("data-req",el.hasAttribute("aria-required")?"1":"0"); el.removeAttribute("aria-required"); el.value=""; w.classList.remove("bad","good"); if(pill) pill.textContent=""; if(st) st.textContent=lab&&lab.textContent.trim()==="${OFF_NOTE_EQUIPMENT}"?"Выключено — руководитель получит уведомление":"Нет показания — руководитель получит уведомление"; }
+    else { if(el.getAttribute("data-req")==="1") el.setAttribute("aria-required","true"); if(st) st.textContent=""; fire(el); }
+    progress(); if(typeof checkAll==="function") checkAll();
+  });
   document.addEventListener("input",progress); document.addEventListener("change",progress); progress();
   /* Время в подписях «показания за сегодня» идёт по часам телефона, страница может быть открыта долго. */
   function tick(){ var t=hhmm(new Date()); var st=document.querySelectorAll(".stamp[data-stamp-date]"); for(var i=0;i<st.length;i++) st[i].textContent=st[i].getAttribute("data-stamp-date")+" "+t; var tt=document.querySelectorAll(".stamp-t"); for(var k=0;k<tt.length;k++) tt[k].textContent=t; }
@@ -367,7 +388,7 @@ function metricName(field: Extract<TaskFormField, { type: "number" }>): string {
 }
 
 /** Числовое поле «объекта» (склад, холодильник): норма в подписи или метрика климата. */
-function isObjectField(field: TaskFormField): boolean {
+export function isObjectField(field: TaskFormField): boolean {
   return field.type === "number" && (/норма/i.test(field.label) || metricOf(field.label).metric !== null);
 }
 
@@ -502,6 +523,8 @@ export function renderForm(params: {
   openedAt: number;
   /** «20.09.2026» + «18:31» по часовому поясу организации: строка «показания за сегодня» и подписи полей. */
   stamp?: { date: string; time: string } | null;
+  /** Поля, отмеченные «Выключено / Нет показания» (при повторном показе формы). */
+  offKeys?: string[];
 }): string {
   const bad = new Set(params.badKeys ?? []);
   // Поля объектов (склад/холодильник) — карточкой: «Склад Бакалея» и в ней температура + влажность рядом.
@@ -519,7 +542,7 @@ export function renderForm(params: {
           i += 1;
         } else break;
       }
-      parts.push(renderObjectCard(base, group, params.values, bad, params.stamp ?? null));
+      parts.push(renderObjectCard(base, group, params.values, bad, params.stamp ?? null, new Set(params.offKeys ?? [])));
       continue;
     }
     parts.push(renderField(field, params.values[field.key], params.hints, params.suggestions, bad.has(field.key), params.stamp ?? null));
@@ -546,7 +569,7 @@ export function renderForm(params: {
 <form method="post" action="${esc(params.action)}" id="qr-form" novalidate>
 <input type="hidden" name="action" value="submit">
 <input type="hidden" name="__openedAt" value="${params.openedAt}">
-${params.error ? `<div class="err">${esc(params.error)}</div>` : ""}
+${params.error ? `<div class="err"${params.error.startsWith("Не заполнено") ? ` data-missing="1"` : ""}>${esc(params.error)}</div>` : ""}
 ${params.form.notice ? `<div class="note">${esc(params.form.notice)}</div>` : ""}
 ${fields}
 ${deviation}
@@ -555,7 +578,7 @@ ${deviation}
 }
 
 /** Карточка объекта: название и его числовые поля в две колонки, норма в подписи поля, статус пилюлей. */
-function renderObjectCard(base: string, group: Extract<TaskFormField, { type: "number" }>[], values: Record<string, unknown>, bad: Set<string>, stamp: { date: string; time: string } | null): string {
+function renderObjectCard(base: string, group: Extract<TaskFormField, { type: "number" }>[], values: Record<string, unknown>, bad: Set<string>, stamp: { date: string; time: string } | null, off: Set<string> = new Set()): string {
   // В две колонки плавающей подписи между кнопками не хватает места — подпись над полем.
   const flat = group.length > 1;
   const inputs = group
@@ -569,10 +592,16 @@ function renderObjectCard(base: string, group: Extract<TaskFormField, { type: "n
       const normText = norm.min != null && norm.max != null ? `${norm.min}…${norm.max}${unit}` : "";
       // Подпись короткая (в две колонки длинная режется), норма — строкой под полем внутри карточки.
       const labelBody = `${esc(metricName(field))}${stampHtml(stamp)}${required ? `<span class="req" aria-hidden="true">*</span>` : ""}`;
-      const status = bad.has(field.key) ? `Вне нормы ${normText}` : normText ? `Норма ${normText}` : "";
-      const input = `<input class="in" id="${esc(id)}" name="${esc(field.key)}" type="text" inputmode="decimal" value="${esc(value)}" placeholder=" "${norm.min != null ? ` data-min="${esc(norm.min)}"` : ""}${norm.max != null ? ` data-max="${esc(norm.max)}"` : ""}${field.unit ? ` data-unit="${esc(field.unit)}"` : ""} data-plain="1" data-label="${esc(`${base} · ${lower(metricName(field))}`)}"${required ? ` aria-required="true"` : ""}>`;
+      // «Выключено» у холодильника, «Нет показания» у склада: честный прочерк с пометкой вместо выдуманного нуля.
+      const isOff = off.has(field.key);
+      const offNote = !flat && metricName(field) === "Температура" ? OFF_NOTE_EQUIPMENT : OFF_NOTE_READING;
+      const status = isOff ? `${offNote} — руководитель получит уведомление` : bad.has(field.key) ? `Вне нормы ${normText}` : normText ? `Норма ${normText}` : "";
+      const input = `<input class="in" id="${esc(id)}" name="${esc(field.key)}" type="text" inputmode="decimal" value="${isOff ? "" : esc(value)}" placeholder=" "${norm.min != null ? ` data-min="${esc(norm.min)}"` : ""}${norm.max != null ? ` data-max="${esc(norm.max)}"` : ""}${field.unit ? ` data-unit="${esc(field.unit)}"` : ""} data-plain="1" data-label="${esc(`${base} · ${lower(metricName(field))}`)}"${required && !isOff ? ` aria-required="true"` : ""}${required && isOff ? ` data-req="1"` : ""}>`;
       const box = `<div class="box${flat ? " flat" : ""}">${stepButton(field.key, -1)}${input}${flat ? "" : `<label for="${esc(id)}">${labelBody}</label>`}<span class="pill" aria-hidden="true"></span>${stepButton(field.key, 1)}</div>`;
-      return `<div class="fl up has-step${bad.has(field.key) ? " bad" : ""}">${flat ? `<label class="lab" for="${esc(id)}">${labelBody}</label>` : ""}${box}<p class="st">${esc(status)}</p>${quickChips(field.key, norm, value)}</div>`;
+      const offChip = required
+        ? `<div class="chips offrow"><label class="chip offc${isOff ? " on" : ""}"><input type="checkbox" name="off:${esc(field.key)}" value="1"${isOff ? " checked" : ""}>${esc(offNote)}</label></div>`
+        : "";
+      return `<div class="fl up has-step${bad.has(field.key) ? " bad" : ""}${isOff ? " is-off" : ""}">${flat ? `<label class="lab" for="${esc(id)}">${labelBody}</label>` : ""}${box}<p class="st">${esc(status)}</p>${quickChips(field.key, norm, value)}${offChip}</div>`;
     })
     .join("");
   return `<div class="obj"><div class="obj-t">${esc(base)}</div><div class="cols${group.length === 1 ? " one" : ""}">${inputs}</div></div>`;
@@ -687,8 +716,13 @@ export function renderResult(params: {
   timeLabel: string;
   addMoreHref: string | null;
   daily: Array<{ code: string; name: string; filled: boolean; href: string }>;
+  /** Сколько карточек отмечено «Выключено / Нет показания» — руководитель уведомлён. */
+  offCount?: number;
 }): string {
   const pending = params.daily.filter((item) => !item.filled);
+  const offLine = params.offCount && params.offCount > 0
+    ? `<p class="muted" style="margin-top:6px">Отмечено «Выключено / Нет показания»: ${params.offCount}. В журнале прочерк с пометкой, руководитель получил уведомление.</p>`
+    : "";
   const dailyBlock =
     params.daily.length > 0
       ? `<div class="card"><p class="label">Сегодня у вас</p><div class="list">${params.daily
@@ -703,7 +737,7 @@ export function renderResult(params: {
             : `<p class="hint center" style="color:#116b2a">Все ежедневные отметки на сегодня сделаны.</p>`
         }</div>`
       : "";
-  return `<div class="card center"><div class="ok">${CHECK_ICON}</div><h2>${params.mode === "appended" ? "Строка добавлена" : "Отметка записана"}</h2><p class="muted" style="margin-top:8px">${esc(params.documentTitle)} · ${esc(params.employeeName)} · ${esc(params.timeLabel)}</p>${
+  return `<div class="card center"><div class="ok">${CHECK_ICON}</div><h2>${params.mode === "appended" ? "Строка добавлена" : "Отметка записана"}</h2><p class="muted" style="margin-top:8px">${esc(params.documentTitle)} · ${esc(params.employeeName)} · ${esc(params.timeLabel)}</p>${offLine}${
     params.addMoreHref ? `<div class="sticky"><a class="btn" href="${esc(params.addMoreHref)}">Добавить ещё</a></div>` : ""
   }</div>${dailyBlock}`;
 }

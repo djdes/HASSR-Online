@@ -11,7 +11,11 @@ import { QR_FILL_RATE_LIMIT_ERROR, qrFillRateKey, recordQrFillAudit } from "@/li
 import { qrFillRateLimiter } from "@/lib/rate-limit";
 import { getAdapter } from "@/lib/tasksflow-adapters";
 import { rowKeyWithQrAppend } from "@/lib/tasksflow-adapters/row-key";
-import { buildCompletionValidator } from "@/lib/tasksflow-adapters/task-form";
+import { TASK_FORM_CORRECTION_KEY, TASK_FORM_OFF_KEY, buildCompletionValidator } from "@/lib/tasksflow-adapters/task-form";
+import { cleanLabel, isObjectField } from "@/lib/journal-fill-html";
+import { notifyManagement } from "@/lib/notifications";
+import { stampFor } from "@/lib/quick-values";
+import { notifyOrganization } from "@/lib/telegram";
 import { isManagementRole } from "@/lib/user-roles";
 
 /**
@@ -32,6 +36,10 @@ export type JournalFillSubmitInput = {
   employeeId: string;
   rowKey: string;
   values: Record<string, unknown>;
+  /** Поля, отмеченные «Выключено / Нет показания»: в журнал идёт прочерк с пометкой, руководитель получает уведомление. */
+  off?: string[];
+  /** «Что сделали» при отклонении — адаптеры кладут его к строке/карточке с отклонением. */
+  correction?: string | null;
   pin?: string | null;
   /** PIN уже проверен на отдельном шаге (HTML-форма, cookie-пропуск). */
   pinVerified?: boolean;
@@ -39,7 +47,7 @@ export type JournalFillSubmitInput = {
 };
 
 export type JournalFillSubmitResult =
-  | { ok: false; status: number; error: string }
+  | { ok: false; status: number; error: string; badKeys?: string[] }
   | { ok: true; mode: "appended" | "updated"; documentTitle: string; employeeName: string; employeeId: string };
 
 export async function submitJournalFill(input: JournalFillSubmitInput): Promise<JournalFillSubmitResult> {
@@ -91,29 +99,71 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
   }
 
   const schema = await loadJournalFillForm(code, input.documentId, input.rowKey);
+  // «Выключено / Нет показания» снимает обязательность с числового поля — вместо
+  // цифры в журнал идёт прочерк с пометкой, а не выдуманный ноль.
+  const offKeys = new Set((input.off ?? []).filter((key) => schema?.fields.some((field) => field.key === key && field.type === "number")));
   let values: Record<string, string | number | boolean | null> = {};
   if (schema) {
+    const effective = { ...schema, fields: schema.fields.map((field) => (field.type === "number" && offKeys.has(field.key) ? { ...field, required: false } : field)) };
     try {
-      values = buildCompletionValidator(schema).parse(input.values) as typeof values;
+      values = buildCompletionValidator(effective).parse(input.values) as typeof values;
     } catch (error) {
       if (error instanceof z.ZodError) {
-        const issue = error.issues[0];
-        const key = Array.isArray(issue?.path) ? issue?.path[0] : null;
-        const label = schema.fields.find((field) => field.key === key)?.label ?? "поле";
-        return { ok: false, status: 400, error: `Проверьте «${label}»: ${issue?.message ?? "некорректное значение"}` };
+        const labelOf = (issue: z.ZodIssue) => {
+          const key = Array.isArray(issue.path) ? issue.path[0] : null;
+          const field = schema.fields.find((candidate) => candidate.key === key);
+          return { key: typeof key === "string" ? key : null, label: field ? cleanLabel(field.label) : "поле" };
+        };
+        // Пустое обязательное поле — не «expected number, received undefined», а список того, что не заполнено.
+        const missing = error.issues.filter((issue) => (issue.code === "invalid_type" && (issue as { input?: unknown }).input === undefined) || issue.code === "too_small");
+        if (missing.length > 0) {
+          const items = missing.map(labelOf);
+          const hasObjects = schema.fields.some((field) => isObjectField(field));
+          const hint = hasObjects
+            ? " Если оборудование выключено или показание снять нельзя — отметьте это в карточке: в журнал попадёт прочерк с пометкой, руководитель получит уведомление."
+            : "";
+          return { ok: false, status: 400, error: `Не заполнено: ${items.map((item) => `«${item.label}»`).join(", ")}.${hint}`, badKeys: items.map((item) => item.key).filter((key): key is string => key !== null) };
+        }
+        const first = labelOf(error.issues[0]);
+        return { ok: false, status: 400, error: `Проверьте «${first.label}»: ${error.issues[0]?.message ?? "некорректное значение"}`, badKeys: first.key ? [first.key] : [] };
       }
       throw error;
     }
   }
+  const correction = input.correction?.trim() ?? "";
+  const adapterValues: Record<string, string | number | boolean | null> = {
+    ...values,
+    ...(offKeys.size > 0 ? { [TASK_FORM_OFF_KEY]: Array.from(offKeys).join(",") } : {}),
+    ...(correction ? { [TASK_FORM_CORRECTION_KEY]: correction } : {}),
+  };
 
   const applied = await adapter.applyRemoteCompletion({
     documentId: input.documentId,
     rowKey: hints.append ? rowKeyWithQrAppend(input.rowKey) : input.rowKey,
     completed: true,
     todayKey,
-    values,
+    values: adapterValues,
   });
   if (!applied) return { ok: false, status: 500, error: "Не удалось записать в журнал" };
+
+  // «Выключено / Нет показания» — руководителю сразу: в Telegram и в колокольчик.
+  if (offKeys.size > 0 && schema) {
+    const labels = schema.fields.filter((field) => offKeys.has(field.key)).map((field) => cleanLabel(field.label));
+    const stamp = stampFor(org.timezone || "Europe/Moscow");
+    const text = `⚠️ ${document.title}: ${actor.employee.name} отметил(а) «Выключено / нет показания» — ${labels.join(", ")} (${stamp.date} ${stamp.time}, по QR). Показание не снято, в журнале прочерк с пометкой.`;
+    await Promise.all([
+      notifyOrganization(orgId, text, ["owner", "technologist"], "temperature").catch(() => null),
+      notifyManagement({
+        organizationId: orgId,
+        kind: "qr-fill-off",
+        dedupeKey: `qr-fill-off:${input.documentId}:${todayKey}:${actor.employee.id}`,
+        title: `${document.title}: выключено или нет показания — ${actor.employee.name}`,
+        linkHref: `/journals/${code}/documents/${input.documentId}`,
+        linkLabel: "Открыть журнал",
+        items: labels.map((label, index) => ({ id: `${index}`, label })),
+      }).catch(() => null),
+    ]);
+  }
 
   // Память наименований — по карте подсказок журнала.
   if (hints.nameFields) {
