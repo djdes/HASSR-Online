@@ -139,14 +139,14 @@ export function TaskFillField({ field, value, onChange }: Props) {
       className={`rounded-2xl border bg-white p-4 transition-colors focus-within:border-[#5566f6]/45 focus-within:bg-white sm:p-5 ${cardBorder}`}
     >
       {/* Header */}
-      <div className="flex items-start gap-3">
+      <div className="flex items-center gap-3">
         <span
-          className={`mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl ${tone.bg} ${tone.fg}`}
+          className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${tone.bg} ${tone.fg}`}
         >
           <Icon className="size-[18px]" />
         </span>
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <label
               htmlFor={`field-${field.key}`}
               className="text-[14.5px] font-semibold leading-snug text-[#0b1024] sm:text-[15.5px]"

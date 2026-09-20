@@ -147,6 +147,19 @@ async function main() {
     const tempInput = page.getByLabel(/T°C|Температура/i).first();
     if (await tempInput.count()) await tempInput.fill("73");
     results.fpTimeChips = await page.getByRole("button", { name: /−30 мин/ }).count();
+    results.fpChoiceChips = await page.getByRole("button", { name: /^(Отлично|Хорошо|Удовлетворительно|Неудовлетворительно)$/ }).count();
+    if (await page.getByRole("button", { name: /^Хорошо$/ }).count()) {
+      await page.getByRole("button", { name: /^Хорошо$/ }).click();
+      results.fpChoiceApplied = await page.locator("#field-organoleptic").inputValue().catch(() => null);
+    }
+    results.fpHeaderAlign = await page.evaluate(() => {
+      const label = document.querySelector('label[for="field-productionTime"]');
+      const icon = label?.closest(".rounded-2xl")?.querySelector("span.size-10");
+      if (!label || !icon) return null;
+      const l = label.getBoundingClientRect(); const i = icon.getBoundingClientRect();
+      return { labelCenter: Math.round(l.top + l.height / 2), iconCenter: Math.round(i.top + i.height / 2) };
+    });
+    results.fpTimeInputHeight = await page.locator("#field-productionTime").evaluate((el) => Math.round(el.getBoundingClientRect().height)).catch(() => null);
     await shot(page, "fp-form");
     await page.getByRole("button", { name: /Сохранить|Записать/ }).first().click();
     await settle(page, 3000);

@@ -566,9 +566,20 @@ export function JournalFillClient(props: Props) {
                 );
               }
               const isTempField = hints.tempField?.tempKey === field.key;
+              const choices = field.type === "text" ? hints.choices?.[field.key] : undefined;
               return (
                 <div key={field.key} className="space-y-2">
                   <TaskFillField field={field} value={values[field.key]} onChange={(next) => setFieldValue(field.key, next)} />
+                  {choices && choices.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5 px-1" aria-label={`Варианты: ${field.label}`}>
+                      {choices.map((choice) => {
+                        const active = String(values[field.key] ?? "") === choice;
+                        return (
+                          <button key={choice} type="button" aria-pressed={active} onClick={() => setFieldValue(field.key, choice)} className={`inline-flex h-8 items-center rounded-full border px-3 text-[12.5px] font-medium ${active ? "border-[#5566f6] bg-[#eef1ff] text-[#3848c7]" : "border-[#dcdfed] bg-white text-[#3c4053]"}`}>{choice}</button>
+                        );
+                      })}
+                    </div>
+                  ) : null}
                   {field.type === "time" && hints.timeOffsetFields?.includes(field.key) ? (
                     <div className="flex flex-wrap gap-1.5 px-1">
                       {[...TIME_OFFSET_CHIPS, { minutes: 0, label: "Сейчас" }].map((chip) => {

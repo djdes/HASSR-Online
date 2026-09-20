@@ -18,7 +18,7 @@ const DOC = "cmt6j45tj0i0c82tstt9fjbvg";
       }) as unknown as Record<string, unknown>);
     }
   } else {
-    rows = rows.filter((r) => !String(r.productName ?? "").startsWith("E2E Печать"));
+    rows = rows.filter((r) => !String(r.productName ?? "").startsWith(mode === "purge-e2e" ? "E2E" : "E2E Печать"));
   }
   await db.journalDocument.update({ where: { id: DOC }, data: { config: { ...config, rows } as never } });
   console.log(mode, "rows:", rows.length);

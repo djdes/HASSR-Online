@@ -21,7 +21,11 @@ export type JournalFillHints = {
   tempField?: { nameKey: string; tempKey: string };
   /** Строчный журнал: каждая запись по QR — новая строка («Добавить ещё»). */
   append?: boolean;
+  /** Текстовое поле → готовые варианты одним касанием (своё значение тоже можно). */
+  choices?: Record<string, readonly string[]>;
 };
+
+export const ORGANOLEPTIC_CHOICES = ["Отлично", "Хорошо", "Удовлетворительно", "Неудовлетворительно"] as const;
 
 export const TIME_OFFSET_CHIPS = [
   { minutes: 15, label: "−15 мин" },
@@ -37,6 +41,7 @@ const HINTS: Record<string, JournalFillHints> = {
     timeDefaults: { productionTime: 30 },
     timeOffsetFields: ["productionTime"],
     defaults: { organoleptic: "Отлично" },
+    choices: { organoleptic: ORGANOLEPTIC_CHOICES },
     tempField: { nameKey: "productName", tempKey: "productTemp" },
   },
   intensive_cooling: {

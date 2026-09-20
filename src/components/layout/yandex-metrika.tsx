@@ -24,6 +24,9 @@ export function YandexMetrika() {
         strategy="afterInteractive"
         dangerouslySetInnerHTML={{
           __html: `
+            /* Публичные QR-формы (заполнение с телефона в цехе): без счётчика —
+               лишние 300 КБ на медленной сети, а аналитика там не нужна. */
+            if (/^\\/(journal-fill|equipment-fill|room-fill|task-fill)(\\/|$)/.test(location.pathname)) return;
             (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
             m[i].l=1*new Date();
             for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}

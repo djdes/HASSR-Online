@@ -879,14 +879,14 @@ body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hygie
    ~90px, а текст прижимался к верхнему левому углу. Выравниваем значение
    по центру и держим высоту поля, как у остальных инпутов (44px). */
 @supports (-webkit-touch-callout: none) {
-  .app-shell input[type="date"],
-  .app-shell input[type="time"],
-  .app-shell input[type="datetime-local"] {
+  /* Глобально, не только .app-shell: публичные QR-формы (/journal-fill,
+     /task-fill) живут вне оболочки кабинета. Высоту задаёт класс поля
+     (h-11 в окнах журналов, h-14 в QR-форме). */
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"] {
     display: flex;
     align-items: center;
-    height: 2.75rem;
-    min-height: 2.75rem;
-    max-height: 2.75rem;
     padding-top: 0;
     padding-bottom: 0;
     line-height: 1.2;
@@ -894,9 +894,9 @@ body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hygie
     -webkit-appearance: none;
     appearance: none;
   }
-  .app-shell input[type="date"]::-webkit-date-and-time-value,
-  .app-shell input[type="time"]::-webkit-date-and-time-value,
-  .app-shell input[type="datetime-local"]::-webkit-date-and-time-value {
+  input[type="date"]::-webkit-date-and-time-value,
+  input[type="time"]::-webkit-date-and-time-value,
+  input[type="datetime-local"]::-webkit-date-and-time-value {
     display: block;
     height: auto;
     min-height: 0;

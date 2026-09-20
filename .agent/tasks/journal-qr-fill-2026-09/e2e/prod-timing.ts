@@ -1,0 +1,22 @@
+import fs from "node:fs";
+import { chromium } from "playwright";
+const T = fs.readFileSync(".agent/tasks/journal-qr-fill-2026-09/e2e/prod-token.txt", "utf8").trim();
+const URL = `https://wesetup.ru/journal-fill/cmoe6rpt4000097ts71yb922y/finished_product?token=${encodeURIComponent(T)}`;
+(async () => {
+  const browser = await chromium.launch({ channel: "chrome" });
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  const page = await ctx.newPage();
+  const reqs: Array<{ url: string; ms: number; size: number; type: string }> = [];
+  page.on("requestfinished", async (r) => { const t = r.timing(); const resp = await r.response(); let size = 0; try { size = (await resp?.body())?.length ?? 0; } catch {} reqs.push({ url: r.url().replace("https://wesetup.ru", ""), ms: Math.round(t.responseEnd), size, type: r.resourceType() }); });
+  const t0 = Date.now();
+  await page.goto(URL, { waitUntil: "load", timeout: 120_000 });
+  const tLoad = Date.now() - t0;
+  await page.waitForSelector("button", { timeout: 60_000 }).catch(() => null);
+  const tInteractive = Date.now() - t0;
+  const nav = await page.evaluate(() => { const n = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming; const fp = performance.getEntriesByType("paint").map((p) => `${p.name}=${Math.round(p.startTime)}`); return { ttfb: Math.round(n.responseStart), domInteractive: Math.round(n.domInteractive), dcl: Math.round(n.domContentLoadedEventEnd), load: Math.round(n.loadEventEnd), paint: fp }; });
+  console.log(JSON.stringify({ tLoad, tInteractive, nav }, null, 1));
+  const big = reqs.sort((a, b) => b.size - a.size).slice(0, 12);
+  console.log("total requests:", reqs.length, "total bytes:", reqs.reduce((s, r) => s + r.size, 0));
+  for (const r of big) console.log(`${String(r.size).padStart(8)} ${String(r.ms).padStart(6)}ms ${r.type} ${r.url.slice(0, 110)}`);
+  await browser.close();
+})();

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef } from "react";
-import { ClipboardList, FileText, Printer, QrCode, Refrigerator, Sticker, Warehouse } from "lucide-react";
+import { ClipboardList, ExternalLink, FileText, Printer, QrCode, Refrigerator, Sticker, Warehouse } from "lucide-react";
 
 import { PageHeader, PageHeaderStat } from "@/components/ui/page-header";
 import type { QrFillKind, QrPoster, QrPosterLayout } from "@/lib/qr-fill-types";
@@ -316,6 +316,16 @@ export function QrPostersClient({
                     </li>
                   ))}
                 </ol>
+                <a
+                  href={poster.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Открыть ссылку из QR-кода — проверить, что форма открывается"
+                  className="mt-3 inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-3.5 text-[13px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] print:hidden"
+                >
+                  <ExternalLink className="size-4 text-[#5566f6]" />
+                  Проверить ссылку
+                </a>
               </article>
             );
           })}

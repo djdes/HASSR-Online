@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FileText, Printer, QrCode, RefreshCw, Sticker } from "lucide-react";
+import { ExternalLink, FileText, Printer, QrCode, RefreshCw, Sticker } from "lucide-react";
 
 import type { QrFillKind, QrPoster } from "@/lib/qr-fill-types";
 import { cn } from "@/lib/utils";
@@ -170,6 +170,21 @@ export function QrFillPreview({ kind, id, emptyHint, className }: Props) {
               >
                 <Sticker className="size-4 text-[#5566f6]" />
                 Наклейка
+              </a>
+              <a
+                href={state.status === "ready" ? state.poster.url : "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-disabled={state.status !== "ready"}
+                title="Открыть ссылку из QR-кода в новой вкладке — проверить, что форма открывается"
+                data-testid="qr-check-link"
+                className={cn(
+                  "inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-3.5 text-[13px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]",
+                  state.status !== "ready" && "pointer-events-none opacity-50"
+                )}
+              >
+                <ExternalLink className="size-4 text-[#5566f6]" />
+                Проверить ссылку
               </a>
               <a
                 href={`/settings/qr-posters?kind=${posterKind}`}
