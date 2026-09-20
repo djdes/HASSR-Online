@@ -1,0 +1,45 @@
+{
+  "posterA4ContentPx": 1032,
+  "posters": [
+    {
+      "h": 644,
+      "w": 730,
+      "qr": 378,
+      "scrollH": 644,
+      "title": "Все журналы"
+    },
+    {
+      "h": 687,
+      "w": 730,
+      "qr": 378,
+      "scrollH": 687,
+      "title": "Журнал контроля интенсивного охлаждения "
+    },
+    {
+      "h": 687,
+      "w": 730,
+      "qr": 378,
+      "scrollH": 687,
+      "title": "Журнал приемки и входного контроля проду"
+    },
+    {
+      "h": 687,
+      "w": 730,
+      "qr": 378,
+      "scrollH": 687,
+      "title": "Бланк контроля температуры и влажности н"
+    }
+  ],
+  "postersFit": true,
+  "handleVisible": true,
+  "dateInputHeights": [
+    44,
+    44,
+    44,
+    44
+  ],
+  "shortSwipeStillOpen": true,
+  "contentSwipeStillOpen": true,
+  "longSwipeClosed": true,
+  "errors": []
+}

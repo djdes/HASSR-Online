@@ -49,19 +49,74 @@ function DialogOverlay({
   )
 }
 
+/** Верхняя зона шторки (ручка + шапка), за которую тянут вниз. */
+const SHEET_DRAG_ZONE_PX = 72
+/** Сколько протянуть, чтобы шторка закрылась. */
+const SHEET_DISMISS_PX = 90
+
 function DialogContent({
   className,
   children,
   showCloseButton = true,
+  onTouchStart,
+  onTouchMove,
+  onTouchEnd,
+  onTouchCancel,
+  style,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
 }) {
+  // Свайп вниз за верхнюю зону закрывает шторку — как системные шторки
+  // телефона. Только на узких экранах и только от верхних 72px (ручка и
+  // шапка), чтобы не спорить со скроллом содержимого. Закрываем через
+  // скрытый Radix Close — сработают те же onOpenChange, что и у крестика.
+  const closeRef = React.useRef<HTMLButtonElement>(null)
+  const dragStartY = React.useRef<number | null>(null)
+  // Смещение и в ref: touchend может прийти раньше, чем React перерисует state.
+  const dragOffsetRef = React.useRef(0)
+  const [dragOffset, setDragOffset] = React.useState(0)
+
+  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    onTouchStart?.(event)
+    if (typeof window === "undefined" || window.innerWidth >= 640) return
+    const touch = event.touches[0]
+    const rect = event.currentTarget.getBoundingClientRect()
+    if (!touch || touch.clientY - rect.top > SHEET_DRAG_ZONE_PX) return
+    dragStartY.current = touch.clientY
+  }
+  const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    onTouchMove?.(event)
+    if (dragStartY.current === null) return
+    const dy = event.touches[0].clientY - dragStartY.current
+    dragOffsetRef.current = dy > 0 ? dy : 0
+    setDragOffset(dragOffsetRef.current)
+  }
+  const finishDrag = (event: React.TouchEvent<HTMLDivElement>, cancelled: boolean) => {
+    if (cancelled) onTouchCancel?.(event)
+    else onTouchEnd?.(event)
+    if (dragStartY.current === null) return
+    const shouldClose = !cancelled && dragOffsetRef.current > SHEET_DISMISS_PX
+    dragStartY.current = null
+    dragOffsetRef.current = 0
+    setDragOffset(0)
+    if (shouldClose) closeRef.current?.click()
+  }
+
   return (
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay />
       <DialogPrimitive.Content
         data-slot="dialog-content"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={(event) => finishDrag(event, false)}
+        onTouchCancel={(event) => finishDrag(event, true)}
+        style={
+          dragOffset > 0
+            ? { ...style, transform: `translateY(${dragOffset}px)`, transition: "none" }
+            : style
+        }
         // На телефоне окно выезжает снизу листом во всю ширину — так же,
         // как меню профиля и подтверждения. Один жест на весь сайт:
         // окно приходит снизу, закрывается крестиком в правом верхнем
@@ -76,6 +131,10 @@ function DialogContent({
             карточка скроллится целиком, и абсолютный крестик уезжал
             вверх вместе с текстом. Sticky держит его на виду и не
             занимает места в потоке. */}
+        {/* Ручка шторки на телефоне — подсказка «потяни вниз». Абсолютная,
+            чтобы не сдвигать шапки окон с `p-0`. */}
+        <div aria-hidden className="pointer-events-none absolute left-1/2 top-1.5 z-40 h-1 w-10 -translate-x-1/2 rounded-full bg-[#dcdfed] sm:hidden" />
+        <DialogPrimitive.Close ref={closeRef} tabIndex={-1} aria-hidden className="hidden" />
         {showCloseButton && (
           <div className="sticky top-0 z-30 h-0">
             <DialogPrimitive.Close

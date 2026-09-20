@@ -1095,29 +1095,6 @@ export function FinishedProductDocumentClient({
 
       <div className={`${DOC_BODY_STACK_CLASS} ${DOC_PAPER_CANVAS_CLASS}`}>
 
-        <div
-          className={`${DOC_PAPER_HEADER_CLASS} ${GRID_VIEWPORT_CLASS} ${
-            mobileView === "cards" ? DOC_PAPER_HEADER_CARDS_HIDDEN_CLASS : ""
-          }`}
-        >
-          <table className="w-full min-w-[640px] border-collapse text-[13px] sm:min-w-0">
-            <tbody>
-              <JournalPaperHeaderRows
-                orgName={organizationName}
-                title="ЖУРНАЛ БРАКЕРАЖА ГОТОВОЙ ПИЩЕВОЙ ПРОДУКЦИИ"
-                startedAt={dateFrom}
-                finishedAt={readOnly ? dateTo : null}
-                controlPeriodicity={controlPeriodicity}
-                orgCellClass="w-[18%]"
-                sideCellClass="w-[20%]"
-              />
-            </tbody>
-          </table>
-        </div>
-
-        {/* Кегль КАПС-заголовка — по эталону (finished_product-grid.png):
-            ~14px bold, а не «плакат» на 30px. */}
-        <h2 className={`${DOC_CAPS_TITLE_CLASS} text-center text-[13px] font-bold uppercase leading-tight sm:text-[14px]`}>Журнал бракеража готовой пищевой продукции</h2>
 
         {!readOnly && <div className={DOC_ADD_ROW_CLASS}>
           <ResponsiveMenu
@@ -1187,10 +1164,35 @@ export function FinishedProductDocumentClient({
             `minWidth` включает скролл ВНУТРИ viewport-контейнера — страница
             по горизонтали не едет.
           */}
-          <table
-            className="w-full table-fixed border-collapse text-[12.5px]"
-            style={{ minWidth: `${tableMinWidth}px` }}
+          <div
+            data-journal-blank-column
+            className="min-w-full"
+            style={{ minWidth: `max(100%, ${tableMinWidth}px)` }}
           >
+        {/* Шапка бланка и таблица — ОДИН лист в одном скроллере и одной
+            ширины (как холодильники/фритюр): на печати правая вертикаль
+            шапки совпадает с колонками таблицы, даже когда таблица шире
+            листа и раскладывается по содержимому. */}
+        <div className={DOC_PAPER_HEADER_CLASS}>
+          <table className="w-full border-collapse text-[13px]">
+            <tbody>
+              <JournalPaperHeaderRows
+                orgName={organizationName}
+                title="ЖУРНАЛ БРАКЕРАЖА ГОТОВОЙ ПИЩЕВОЙ ПРОДУКЦИИ"
+                startedAt={dateFrom}
+                finishedAt={readOnly ? dateTo : null}
+                controlPeriodicity={controlPeriodicity}
+                orgCellClass="w-[18%]"
+                sideCellClass="w-[20%]"
+              />
+            </tbody>
+          </table>
+        </div>
+
+        {/* Кегль КАПС-заголовка — по эталону (finished_product-grid.png):
+            ~14px bold, а не «плакат» на 30px. */}
+        <h2 className={`${DOC_CAPS_TITLE_CLASS} text-center text-[13px] font-bold uppercase leading-tight sm:text-[14px]`}>Журнал бракеража готовой пищевой продукции</h2>
+          <table className="w-full table-fixed border-collapse text-[12.5px]">
             <colgroup>
               {/* P8: 26px, как в приёмке — служебная колонка чекбокса не
                   должна отъедать ширину у содержательных колонок бланка. */}
@@ -1320,6 +1322,7 @@ export function FinishedProductDocumentClient({
               />
             ) : null}</tbody>
           </table>
+          </div>
           <datalist id="finished-product-items">{productOptions.map((item) => <option key={item} value={item} />)}</datalist>
           <datalist id="finished-product-users">{personOptions.map((item) => <option key={item} value={item} />)}</datalist>
           <datalist id="finished-product-organoleptic">{ORGANOLEPTIC_OPTIONS.map((item) => <option key={item} value={item} />)}</datalist>

@@ -874,6 +874,38 @@ body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hygie
   color: var(--app-text-muted, #6f7282);
 }
 
+/* Поля date/time на iOS Safari: нативный контрол рисует значение
+   inline-блоком с собственной высотой — в шторке поле растягивалось до
+   ~90px, а текст прижимался к верхнему левому углу. Выравниваем значение
+   по центру и держим высоту поля, как у остальных инпутов (44px). */
+@supports (-webkit-touch-callout: none) {
+  .app-shell input[type="date"],
+  .app-shell input[type="time"],
+  .app-shell input[type="datetime-local"] {
+    display: flex;
+    align-items: center;
+    height: 2.75rem;
+    min-height: 2.75rem;
+    max-height: 2.75rem;
+    padding-top: 0;
+    padding-bottom: 0;
+    line-height: 1.2;
+    font-size: 16px;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .app-shell input[type="date"]::-webkit-date-and-time-value,
+  .app-shell input[type="time"]::-webkit-date-and-time-value,
+  .app-shell input[type="datetime-local"]::-webkit-date-and-time-value {
+    display: block;
+    height: auto;
+    min-height: 0;
+    margin: 0;
+    text-align: left;
+    line-height: 1.2;
+  }
+}
+
 @media print {
   /* ── Q2-1. ТОТАЛЬНЫЙ СВЕТЛЫЙ СБРОС ────────────────────────────────
    * Тёмная тема кабинета живёт на `.app-shell[data-app-theme="dark"]`

@@ -331,10 +331,15 @@ export function QrPostersClient({
 
           /* Плакат: один объект на лист A4. */
           .qr-posters-grid { display: block !important; }
+          /* Без min-height во всю высоту листа: iOS Safari печатает со своими
+             полями, и «лист» с шагами уезжал на вторую страницу. Контент
+             ~200mm — помещается на A4 при любых полях. */
           .qr-poster {
             box-sizing: border-box;
-            min-height: calc(297mm - 28mm - 4mm);
-            justify-content: center;
+            max-height: 255mm;
+            overflow: hidden;
+            justify-content: flex-start;
+            padding-top: 8mm !important;
             border: 0 !important;
             border-radius: 0 !important;
             box-shadow: none !important;
@@ -346,10 +351,10 @@ export function QrPostersClient({
           }
           .qr-poster:last-child { break-after: auto; page-break-after: auto; }
           .qr-poster-eyebrow { font-size: 12pt; }
-          .qr-poster-title { font-size: 30pt; margin-top: 6mm; }
-          .qr-poster-subtitle { font-size: 14pt; margin-top: 3mm; }
-          .qr-poster .qr-box { width: 110mm !important; max-width: none !important; border: 0 !important; margin-top: 10mm; }
-          .qr-poster-steps { font-size: 15pt; width: 150mm; margin-top: 10mm; }
+          .qr-poster-title { font-size: 26pt; margin-top: 5mm; }
+          .qr-poster-subtitle { font-size: 13pt; margin-top: 2mm; }
+          .qr-poster .qr-box { width: 100mm !important; max-width: none !important; border: 0 !important; margin-top: 8mm; }
+          .qr-poster-steps { font-size: 13pt; width: 150mm; max-width: 100%; margin-top: 8mm; }
 
           /* Наклейки: сетка 3 × 4 на листе A4 (12 штук), рамка под ножницы. */
           .qr-sheet-grid {
