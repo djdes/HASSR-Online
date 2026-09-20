@@ -71,7 +71,7 @@ describe("journal-fill-html", () => {
     assert.deepEqual(metricOf("Кухня — влажность · норма 40…60"), { metric: "влажность", base: "Кухня" });
     // Климат: два поля одного склада → одна карточка с двумя колонками, норма в подписи, статус пилюлей.
     const climate = renderForm({
-      action: "/x", token: "t", who: "", correctionPresets: [], openedAt: 1, suggestions: {}, values: {}, hints: {},
+      action: "/x", token: "t", who: "", correctionPresets: [], openedAt: 1, suggestions: {}, values: {}, hints: {}, stamp: { date: "20.09.2026", time: "18:31" },
       form: { fields: [
         { type: "select", key: "time", label: "Время замера", required: true, options: [{ value: "10:00", label: "10:00" }] },
         { type: "number", key: "r1t", label: "Склад Бакалея — t° · норма 18…22", unit: "°C", required: true },
@@ -81,8 +81,12 @@ describe("journal-fill-html", () => {
     });
     assert.equal((climate.match(/class="obj"/g) ?? []).length, 2);
     assert.match(climate, /<div class="obj-t">Склад Бакалея<\/div><div class="cols">/);
-    assert.match(climate, /<label for="f-r1t">Температура<span class="req"/);
-    assert.match(climate, /<label for="f-r1h">Влажность<\/label><span class="pill"[^>]*><\/span><p class="st">Норма 40…60 %<\/p>/);
+    // Две метрики — подпись над полем, «−»/«+» по бокам, дата и время после названия.
+    assert.match(climate, /<label class="lab" for="f-r1t">Температура · <span class="stamp" data-stamp-date="20.09.2026">20.09.2026 18:31<\/span><span class="req"/);
+    assert.match(climate, /<label class="lab" for="f-r1h">Влажность · <span class="stamp"[^>]*>20.09.2026 18:31<\/span><\/label><div class="box flat"><button type="button" class="stp minus" data-step="r1h" data-delta="-1" aria-label="Минус">−<\/button><input[^>]*id="f-r1h"[^>]*><span class="pill"[^>]*><\/span><button type="button" class="stp plus" data-step="r1h" data-delta="1" aria-label="Плюс">\+<\/button><\/div><p class="st">Норма 40…60 %<\/p>/);
+    assert.match(climate, /<p class="today">Показания вносятся за сегодня, <b>20.09.2026<\/b>, время <b class="stamp-t">18:31<\/b>.<\/p>/);
+    // Одна метрика — плавающая подпись внутри поля между кнопками.
+    assert.match(climate, /<div class="box"><button type="button" class="stp minus" data-step="r2t"[^>]*>−<\/button><input[^>]*id="f-r2t"[^>]*><label for="f-r2t">Температура · <span class="stamp"/);
     assert.match(climate, /<div class="obj-t">Склад Овощи<\/div><div class="cols one">/);
     assert.match(climate, /Впишите температуру и влажность в карточки ниже \(2\)/);
     assert.match(climate, /data-label="Склад Бакалея · влажность"/);

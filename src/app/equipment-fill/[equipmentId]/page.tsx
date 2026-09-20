@@ -7,6 +7,7 @@ import { orgTodayKey } from "@/lib/timezone";
 import { redirect } from "next/navigation";
 import { normalizeQrFillMode, sessionEmployeeForQr } from "@/lib/qr-fill-actor";
 import { listEquipmentSiblings } from "@/lib/qr-fill-siblings";
+import { stampFor } from "@/lib/quick-values";
 import { getUserDisplayTitle } from "@/lib/user-roles";
 import { EquipmentFillClient } from "./equipment-fill-client";
 
@@ -140,6 +141,7 @@ export default async function EquipmentFillPage({
       token={token}
       siblings={siblings}
       todayValues={siblings.find((item) => item.current)?.values ?? null}
+      stamp={stampFor(timezone)}
       hasActiveDocument={targets.hasActiveDocument}
       humidityNorm={
         targets.climate?.row.humidity.enabled

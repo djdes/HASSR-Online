@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, QrCode, Thermometer } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Droplets, QrCode, Thermometer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DeviationCorrection } from "@/components/qr-fill/deviation-correction";
 import { QuickSwitchNext, QuickSwitchStrip, type QuickSwitchItem } from "@/components/qr-fill/quick-switch";
 import { QuickValues } from "@/components/qr-fill/quick-values";
+import { StepButton } from "@/components/qr-fill/stepper";
+import { stepNumber } from "@/lib/quick-values";
 import {
   Select,
   SelectContent,
@@ -42,6 +44,8 @@ type Props = {
   siblings?: QuickSwitchItem[];
   /** Уже записанная сегодня температура этого оборудования — подставляется для правки. */
   todayValues?: { temperature?: number | null; humidity?: number | null } | null;
+  /** «20.09.2026» и «18:31» по часовому поясу организации — подпись «за какой момент вносится». */
+  stamp?: { date: string; time: string } | null;
 };
 
 const LS_EMPLOYEE_KEY = "wesetup.equipment-fill.employeeId";
@@ -63,6 +67,7 @@ export function EquipmentFillClient({
   sessionEmployee = null,
   siblings = [],
   todayValues = null,
+  stamp = null,
 }: Props) {
   const [employeeId, setEmployeeId] = useState<string>("");
   const [pin, setPin] = useState("");
@@ -75,7 +80,18 @@ export function EquipmentFillClient({
   );
   const [humidity, setHumidity] = useState<string>("");
   // «Что сделали» — обязательно, когда замер вышел за норму.
-  const [correction, setCorrection] = useState<string>("");
+  const [correction, setCorrection] = useState("");
+  // Время в подписи идёт по часам телефона: страницу могут держать открытой долго.
+  const [stampTime, setStampTime] = useState(stamp?.time ?? "");
+  useEffect(() => {
+    if (!stamp) return;
+    const id = window.setInterval(() => {
+      const now = new Date();
+      setStampTime(`${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`);
+    }, 30_000);
+    return () => window.clearInterval(id);
+  }, [stamp]);
+  const stampLabel = stamp ? `${stamp.date} ${stampTime}` : "";
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -327,32 +343,14 @@ export function EquipmentFillClient({
               ) : null}
               <div>
                 <label className="text-[13px] font-medium text-[#0b1024]">
-                  Температура, °C
+                  Температура, °C{stampLabel ? <span className="font-normal text-[#9b9fb3]"> · {stampLabel}</span> : null}
                 </label>
                 <div className="mt-1 flex items-center gap-2">
                   <span className="flex size-12 items-center justify-center rounded-2xl bg-[#f5f6ff] text-[#5566f6]">
                     <Thermometer className="size-5" />
                   </span>
-                  {/* На цифровой клавиатуре телефона минуса нет — знак ставится кнопкой ±, в том числе после ввода. */}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setTemperature((current) => {
-                        const value = current.trim();
-                        return value.startsWith("-") ? value.slice(1) : value === "" ? "-" : `-${value}`;
-                      })
-                    }
-                    aria-label="Сменить знак: плюс или минус"
-                    aria-pressed={temperature.trim().startsWith("-")}
-                    className={`flex size-12 shrink-0 items-center justify-center rounded-2xl border text-[24px] font-semibold leading-none transition-colors duration-150 ${
-                      temperature.trim().startsWith("-")
-                        ? "border-[#5566f6] bg-[#5566f6] text-white"
-                        : "border-[#dcdfed] bg-white text-[#0b1024] hover:bg-[#f5f6ff]"
-                    }`}
-                  >
-                    ±
-                  </button>
-                  <Input
+                  <StepButton delta={-1} label="Минус: температура на градус ниже" onClick={() => setTemperature((current) => stepNumber(current, -1, equipment.tempMin, equipment.tempMax))} />
+                      <Input
                     type="text"
                     inputMode="decimal"
                     value={temperature}
@@ -364,6 +362,7 @@ export function EquipmentFillClient({
                     }
                     className="h-12 flex-1 rounded-2xl border-[#dcdfed] text-[18px]"
                   />
+                      <StepButton delta={1} label="Плюс: температура на градус выше" onClick={() => setTemperature((current) => stepNumber(current, 1, equipment.tempMin, equipment.tempMax))} />
                 </div>
                 <QuickValues min={equipment.tempMin} max={equipment.tempMax} value={temperature} onPick={setTemperature} label="Быстрый ввод температуры" />
               </div>
@@ -373,13 +372,14 @@ export function EquipmentFillClient({
               {equipment.hasHumidityField ? (
                 <div>
                   <label className="text-[13px] font-medium text-[#0b1024]">
-                    Влажность, % (опционально)
+                    Влажность, % (опционально){stampLabel ? <span className="font-normal text-[#9b9fb3]"> · {stampLabel}</span> : null}
                   </label>
                   <div className="mt-1 flex items-center gap-2">
                     <span className="flex size-12 items-center justify-center rounded-2xl bg-[#f5f6ff] text-[#5566f6]">
-                      💧
+                      <Droplets className="size-5" />
                     </span>
-                    <Input
+                    <StepButton delta={-1} label="Минус: влажность на процент ниже" onClick={() => setHumidity((current) => stepNumber(current, -1, humidityNorm?.min, humidityNorm?.max))} />
+                      <Input
                       type="text"
                       inputMode="decimal"
                       value={humidity}
@@ -387,6 +387,7 @@ export function EquipmentFillClient({
                       placeholder="0–100"
                       className="h-12 flex-1 rounded-2xl border-[#dcdfed] text-[18px]"
                     />
+                      <StepButton delta={1} label="Плюс: влажность на процент выше" onClick={() => setHumidity((current) => stepNumber(current, 1, humidityNorm?.min, humidityNorm?.max))} />
                   </div>
                   {humidity.trim() && parsedHumidity === null ? (
                     <p className="mt-1.5 text-[11px] text-[#a13a32]">

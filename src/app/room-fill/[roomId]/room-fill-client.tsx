@@ -15,6 +15,8 @@ import {
 import { DeviationCorrection } from "@/components/qr-fill/deviation-correction";
 import { QuickSwitchNext, QuickSwitchStrip, type QuickSwitchItem } from "@/components/qr-fill/quick-switch";
 import { QuickValues } from "@/components/qr-fill/quick-values";
+import { StepButton } from "@/components/qr-fill/stepper";
+import { stepNumber } from "@/lib/quick-values";
 
 type Metric = { enabled: boolean; min: number | null; max: number | null };
 
@@ -35,6 +37,8 @@ type Props = {
   siblings?: QuickSwitchItem[];
   /** Уже записанные сегодня показания этого помещения — подставляются для правки. */
   todayValues?: { temperature?: number | null; humidity?: number | null } | null;
+  /** «20.09.2026» и «18:31» по часовому поясу организации — подпись «за какой момент вносится». */
+  stamp?: { date: string; time: string } | null;
 };
 
 const LS_EMPLOYEE_KEY = "wesetup.room-fill.employeeId";
@@ -62,7 +66,7 @@ function isOutside(value: number | null, metric: Metric): boolean {
  * Три шага, как на плакате: выбрать себя → ввести показания → «Сохранить».
  * Имя запоминается на телефоне, со второго раза остаётся ввести числа.
  */
-export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot, employees, mode = "public", sessionEmployee = null, siblings = [], todayValues = null }: Props) {
+export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot, employees, mode = "public", sessionEmployee = null, siblings = [], todayValues = null, stamp = null }: Props) {
   const [employeeId, setEmployeeId] = useState("");
   const [pin, setPin] = useState("");
   const fixedEmployee = mode === "auth" && sessionEmployee && !sessionEmployee.canPickOthers;
@@ -74,6 +78,17 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
   const [humidity, setHumidity] = useState(typeof todayValues?.humidity === "number" ? String(todayValues.humidity) : "");
   // «Что сделали» — обязательно, когда замер вышел за норму.
   const [correction, setCorrection] = useState("");
+  // Время в подписи идёт по часам телефона: страницу могут держать открытой долго.
+  const [stampTime, setStampTime] = useState(stamp?.time ?? "");
+  useEffect(() => {
+    if (!stamp) return;
+    const id = window.setInterval(() => {
+      const now = new Date();
+      setStampTime(`${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`);
+    }, 30_000);
+    return () => window.clearInterval(id);
+  }, [stamp]);
+  const stampLabel = stamp ? `${stamp.date} ${stampTime}` : "";
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<{ slot: string; outOfRange: boolean } | null>(null);
@@ -294,31 +309,13 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                 {norms.temperature.enabled ? (
                   <div>
                     <label htmlFor="room-fill-temperature" className="text-[13px] text-[#3c4053]">
-                      Температура, °C
+                      Температура, °C{stampLabel ? <span className="font-normal text-[#9b9fb3]"> · {stampLabel}</span> : null}
                     </label>
                     <div className="mt-1 flex items-center gap-2">
                       <span className="flex size-12 items-center justify-center rounded-2xl bg-[#f5f6ff] text-[#5566f6]">
                         <Thermometer className="size-5" />
                       </span>
-                      {/* На цифровой клавиатуре телефона минуса нет — знак ставится кнопкой ±, в том числе после ввода. */}
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setTemperature((current) => {
-                            const value = current.trim();
-                            return value.startsWith("-") ? value.slice(1) : value === "" ? "-" : `-${value}`;
-                          })
-                        }
-                        aria-label="Сменить знак: плюс или минус"
-                        aria-pressed={temperature.trim().startsWith("-")}
-                        className={`flex size-12 shrink-0 items-center justify-center rounded-2xl border text-[24px] font-semibold leading-none transition-colors duration-150 ${
-                          temperature.trim().startsWith("-")
-                            ? "border-[#5566f6] bg-[#5566f6] text-white"
-                            : "border-[#dcdfed] bg-white text-[#0b1024] hover:bg-[#f5f6ff]"
-                        }`}
-                      >
-                        ±
-                      </button>
+                      <StepButton delta={-1} label="Минус: температура на градус ниже" onClick={() => setTemperature((current) => stepNumber(current, -1, norms.temperature.min, norms.temperature.max))} />
                       <Input
                         id="room-fill-temperature"
                         type="text"
@@ -332,6 +329,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                         }
                         className="h-12 flex-1 rounded-2xl border-[#dcdfed] text-[18px]"
                       />
+                      <StepButton delta={1} label="Плюс: температура на градус выше" onClick={() => setTemperature((current) => stepNumber(current, 1, norms.temperature.min, norms.temperature.max))} />
                     </div>
                     <QuickValues min={norms.temperature.min} max={norms.temperature.max} value={temperature} onPick={setTemperature} label="Быстрый ввод температуры" />
                   </div>
@@ -340,12 +338,13 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                 {norms.humidity.enabled ? (
                   <div>
                     <label htmlFor="room-fill-humidity" className="text-[13px] text-[#3c4053]">
-                      Влажность, %
+                      Влажность, %{stampLabel ? <span className="font-normal text-[#9b9fb3]"> · {stampLabel}</span> : null}
                     </label>
                     <div className="mt-1 flex items-center gap-2">
                       <span className="flex size-12 items-center justify-center rounded-2xl bg-[#f5f6ff] text-[#5566f6]">
                         <Droplets className="size-5" />
                       </span>
+                      <StepButton delta={-1} label="Минус: влажность на процент ниже" onClick={() => setHumidity((current) => stepNumber(current, -1, norms.humidity.min, norms.humidity.max))} />
                       <Input
                         id="room-fill-humidity"
                         type="text"
@@ -359,6 +358,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                         }
                         className="h-12 flex-1 rounded-2xl border-[#dcdfed] text-[18px]"
                       />
+                      <StepButton delta={1} label="Плюс: влажность на процент выше" onClick={() => setHumidity((current) => stepNumber(current, 1, norms.humidity.min, norms.humidity.max))} />
                     </div>
                     <QuickValues min={norms.humidity.min} max={norms.humidity.max} value={humidity} onPick={setHumidity} label="Быстрый ввод влажности" />
                     {humidityInvalid ? (

@@ -17,6 +17,7 @@ import { getUserDisplayTitle } from "@/lib/user-roles";
 import { redirect } from "next/navigation";
 import { normalizeQrFillMode, sessionEmployeeForQr } from "@/lib/qr-fill-actor";
 import { listRoomSiblings } from "@/lib/qr-fill-siblings";
+import { stampFor } from "@/lib/quick-values";
 import { RoomFillClient } from "./room-fill-client";
 
 export const runtime = "nodejs";
@@ -145,6 +146,7 @@ export default async function RoomFillPage({
       token={token}
       siblings={siblings}
       todayValues={siblings.find((item) => item.current)?.values ?? null}
+      stamp={stampFor(timezone, now)}
       room={{
         id: room.id,
         name: row?.name ?? room.name,

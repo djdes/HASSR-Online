@@ -12,6 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { TaskFormField } from "@/lib/tasksflow-adapters/task-form";
+import { StepButton } from "@/components/qr-fill/stepper";
+import { normFromLabel, stepNumber, stepTime } from "@/lib/quick-values";
 import { fieldIcon, fieldIconTone } from "./field-icons";
 import dynamic from "next/dynamic";
 
@@ -230,26 +232,35 @@ function renderInput(
         />
       );
 
-    case "number":
+    case "number": {
+      // «−»/«+» по бокам: шаг ±1, пустое поле первым нажатием попадает в середину нормы из подписи.
+      const norm = normFromLabel(field.label);
+      const current = value === null || value === undefined ? "" : String(value);
+      const step = (delta: -1 | 1) => onChange(Number(stepNumber(current, delta, norm?.min, norm?.max)));
       return (
-        <Input
-          id={id}
-          type="number"
-          inputMode="decimal"
-          value={value === null || value === undefined ? "" : String(value)}
-          onChange={(e) => {
-            const raw = e.target.value;
-            if (raw === "") return onChange(null);
-            const normalized = raw.replace(",", ".");
-            const parsed = Number(normalized);
-            onChange(Number.isFinite(parsed) ? parsed : raw);
-          }}
-          min={field.min}
-          max={field.max}
-          step={field.step}
-          className={`${baseInputClass} font-semibold tabular-nums`}
-        />
+        <div className="flex items-center gap-2">
+          <StepButton delta={-1} size="md" label="Минус" onClick={() => step(-1)} />
+          <Input
+            id={id}
+            type="number"
+            inputMode="decimal"
+            value={current}
+            onChange={(e) => {
+              const raw = e.target.value;
+              if (raw === "") return onChange(null);
+              const normalized = raw.replace(",", ".");
+              const parsed = Number(normalized);
+              onChange(Number.isFinite(parsed) ? parsed : raw);
+            }}
+            min={field.min}
+            max={field.max}
+            step={field.step}
+            className={`${baseInputClass} min-w-0 flex-1 text-center font-semibold tabular-nums`}
+          />
+          <StepButton delta={1} size="md" label="Плюс" onClick={() => step(1)} />
+        </div>
       );
+    }
 
     case "select":
       return (
@@ -291,17 +302,23 @@ function renderInput(
 
     // Нативный time-picker: телефон показывает колёсики часов и минут,
     // «25:99» ввести нельзя. Значение — строка «ЧЧ:ММ».
-    case "time":
+    case "time": {
+      const current = (value as string) ?? "";
       return (
-        <Input
-          id={id}
-          type="time"
-          step={60}
-          value={(value as string) ?? ""}
-          onChange={(e) => onChange(e.target.value)}
-          className={`${baseInputClass} font-semibold tabular-nums`}
-        />
+        <div className="flex items-center gap-2">
+          <StepButton delta={-1} size="md" label="Минус 5 минут" onClick={() => onChange(stepTime(current, -5))} />
+          <Input
+            id={id}
+            type="time"
+            step={60}
+            value={current}
+            onChange={(e) => onChange(e.target.value)}
+            className={`${baseInputClass} min-w-0 flex-1 font-semibold tabular-nums`}
+          />
+          <StepButton delta={1} size="md" label="Плюс 5 минут" onClick={() => onChange(stepTime(current, 5))} />
+        </div>
       );
+    }
 
     case "photo":
       return (

@@ -1,4 +1,4 @@
-import { quickValues } from "@/lib/quick-values";
+import { normFromLabel, quickValues } from "@/lib/quick-values";
 import type { JournalFillHints } from "@/lib/journal-fill-hints";
 import { TIME_OFFSET_CHIPS } from "@/lib/journal-fill-hints";
 import { suggestionKey, type NameSuggestionMeta } from "@/lib/name-suggestions";
@@ -77,16 +77,28 @@ main{padding:14px 0 20px}
 .fl.good .pill{display:inline-flex;background:#dcfce7;color:#116b2a}
 .fl.bad .pill{display:inline-flex;background:#ffe0dc;color:#a13a32}
 .fl.good .in,.fl.bad .in{padding-right:40px}
-.sign{position:absolute;right:8px;top:29px;transform:translateY(-50%);width:34px;height:34px;border-radius:10px;border:1px solid #dcdfed;background:#fff;color:#3848c7;font:inherit;font-size:17px;font-weight:600;cursor:pointer;padding:0;line-height:1}
-.fl.has-sign .in{padding-right:50px}
-.fl.has-sign .pill{right:50px}
-.fl.has-sign.good .in,.fl.has-sign.bad .in{padding-right:84px}
+.box{position:relative}
+.stp{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:12px;border:1px solid #dcdfed;background:#fff;color:#3848c7;font:inherit;font-size:22px;font-weight:600;line-height:1;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent}
+.stp:active{background:#eef1ff;border-color:#5566f6}
+.stp.minus{left:8px}.stp.plus{right:8px}
+.fl.has-step .in{padding-left:56px;padding-right:56px}
+.fl.has-step .box>label{left:56px;max-width:calc(100% - 112px)}
+.fl.has-step .pill{right:56px}
+.fl.has-step.good .in,.fl.has-step.bad .in{padding-right:86px}
+.fl>label.lab,.fl.up>label.lab{position:static;top:auto;left:auto;display:block;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6f7282;margin:0 0 5px 2px;line-height:1.3;max-width:none;white-space:normal;overflow:visible;pointer-events:auto}
+.stamp{font-weight:500;letter-spacing:0;text-transform:none;white-space:nowrap}
+.box.flat .in{padding:12px 42px;min-height:52px;text-align:center;font-weight:600}
+.box.flat .stp{width:32px;height:32px;font-size:20px;border-radius:10px}.box.flat .stp.minus{left:6px}.box.flat .stp.plus{right:6px}
+.box.flat .pill{right:auto;left:50%;top:auto;bottom:3px;transform:translateX(-50%);min-width:16px;height:14px;font-size:9px;padding:0 4px}
+.fl.has-step.good .box.flat .in,.fl.has-step.bad .box.flat .in{padding-right:42px}
+.today{margin:-4px 0 12px;font-size:13.5px;color:#3c4053;line-height:1.35}
+.today b{font-weight:600;color:#0b1024}
 .prog{display:block;width:max-content;max-width:100%;margin:0 auto 8px;padding:3px 12px;border-radius:999px;background:#fff;border:1px solid #ececf4;font-size:12px;color:#6f7282;text-align:center;font-variant-numeric:tabular-nums}
 .prog.done{color:#116b2a;border-color:#d4f5e3;background:#f3fdf7}
 .fl{position:relative;margin-bottom:10px}
 .fl .in{padding:23px 15px 7px;min-height:58px}
-.fl>label{position:absolute;left:16px;top:19px;font-size:15px;color:#9b9fb3;pointer-events:none;transition:top .15s,font-size .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(100% - 32px);line-height:1.2}
-.fl .in:focus~label,.fl .in:not(:placeholder-shown)~label,.fl.up>label{top:8px;font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6f7282}
+.fl>label,.fl .box>label{position:absolute;left:16px;top:19px;font-size:15px;color:#9b9fb3;pointer-events:none;transition:top .15s,font-size .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(100% - 32px);line-height:1.2}
+.fl .in:focus~label,.fl .in:not(:placeholder-shown)~label,.fl.up>label,.fl.up .box>label{top:8px;font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6f7282}
 .fl.bad .in{border-color:#ef8a83;background:#fff7f6}
 .fl.good .in{border-color:#8fd3a8}
 .st{font-size:12px;margin:4px 0 0 3px;color:#9b9fb3;line-height:1.3}
@@ -136,8 +148,14 @@ export const QR_FILL_JS = `
   function key(s){return String(s||"").replace(/\\s+/g," ").trim().toLowerCase();}
   function fire(el){var ev=document.createEvent("Event"); ev.initEvent("input",true,true); el.dispatchEvent(ev);}
   document.addEventListener("click",function(e){
-    var sg=e.target.closest?e.target.closest("[data-sign]"):null;
-    if(sg){ e.preventDefault(); var si=document.getElementById("f-"+sg.getAttribute("data-sign")); if(si){ var sv=si.value.trim(); si.value=sv.charAt(0)==="-"?sv.slice(1):(sv===""?"-":"-"+sv); fire(si); si.focus(); } return; }
+    var sp=e.target.closest?e.target.closest("[data-step]"):null;
+    if(sp){ e.preventDefault(); var si=document.getElementById("f-"+sp.getAttribute("data-step")); if(!si) return; var d=Number(sp.getAttribute("data-delta")||"1");
+      if(si.type==="time"){ var tm=/^(\\d{1,2}):(\\d{2})$/.exec(si.value); var nd=new Date(); var base=tm?Number(tm[1])*60+Number(tm[2]):nd.getHours()*60+nd.getMinutes(); var tot=(((base+d)%1440)+1440)%1440; si.value=(Math.floor(tot/60)<10?"0":"")+Math.floor(tot/60)+":"+(tot%60<10?"0":"")+(tot%60); }
+      else { var sv=si.value.replace(",",".").trim(); var smn=si.getAttribute("data-min"), smx=si.getAttribute("data-max"); var sn;
+        /* Пустое поле первым касанием попадает в середину нормы, дальше ±1. */
+        if(sv===""||!isFinite(Number(sv))){ sn=(smn!==null&&smx!==null)?Math.round((Number(smn)+Number(smx))/2):0; } else { sn=Math.round((Number(sv)+d)*10)/10; }
+        si.value=String(sn); }
+      fire(si); return; }
     var b=e.target.closest?e.target.closest("[data-fill]"):null; if(!b) return;
     e.preventDefault();
     var el=document.getElementById("f-"+b.getAttribute("data-fill")); if(!el) return;
@@ -183,6 +201,9 @@ export const QR_FILL_JS = `
     prog.textContent=done===req.length?"Всё заполнено ✓":"Заполнено "+done+" из "+req.length;
   }
   document.addEventListener("input",progress); document.addEventListener("change",progress); progress();
+  /* Время в подписях «показания за сегодня» идёт по часам телефона, страница может быть открыта долго. */
+  function tick(){ var t=hhmm(new Date()); var st=document.querySelectorAll(".stamp[data-stamp-date]"); for(var i=0;i<st.length;i++) st[i].textContent=st[i].getAttribute("data-stamp-date")+" "+t; var tt=document.querySelectorAll(".stamp-t"); for(var k=0;k<tt.length;k++) tt[k].textContent=t; }
+  setInterval(tick,30000);
   var dev=document.getElementById("deviation");
   function checkAll(){
     var out=[]; var ins=document.querySelectorAll("input[data-min],input[data-max]");
@@ -318,13 +339,9 @@ type Suggestions = Record<string, { values: string[]; meta: Record<string, NameS
  */
 export function normRange(field: TaskFormField): { min: number | null; max: number | null } {
   if (field.type !== "number") return { min: null, max: null };
-  const m = /норма\s*(-?\d+(?:[.,]\d+)?)\s*[…–—-]\s*(-?\d+(?:[.,]\d+)?)/i.exec(field.label);
-  if (m) {
-    const min = Number(m[1].replace(",", "."));
-    const max = Number(m[2].replace(",", "."));
-    // «норма -18…-20» пишут и в обратном порядке — иначе -19 считалось бы «ниже нормы».
-    if (Number.isFinite(min) && Number.isFinite(max)) return min <= max ? { min, max } : { min: max, max: min };
-  }
+  // «норма -18…-20» пишут и в обратном порядке — парсер приводит границы к порядку.
+  const fromLabel = normFromLabel(field.label);
+  if (fromLabel) return fromLabel;
   return { min: field.min ?? null, max: field.max ?? null };
 }
 
@@ -483,6 +500,8 @@ export function renderForm(params: {
   deviationTitle?: string | null;
   correctionPresets: readonly string[];
   openedAt: number;
+  /** «20.09.2026» + «18:31» по часовому поясу организации: строка «показания за сегодня» и подписи полей. */
+  stamp?: { date: string; time: string } | null;
 }): string {
   const bad = new Set(params.badKeys ?? []);
   // Поля объектов (склад/холодильник) — карточкой: «Склад Бакалея» и в ней температура + влажность рядом.
@@ -500,10 +519,10 @@ export function renderForm(params: {
           i += 1;
         } else break;
       }
-      parts.push(renderObjectCard(base, group, params.values, bad));
+      parts.push(renderObjectCard(base, group, params.values, bad, params.stamp ?? null));
       continue;
     }
-    parts.push(renderField(field, params.values[field.key], params.hints, params.suggestions, bad.has(field.key)));
+    parts.push(renderField(field, params.values[field.key], params.hints, params.suggestions, bad.has(field.key), params.stamp ?? null));
   }
   const fields = parts.join("");
   const pipeline = params.form.pipeline && params.form.pipeline.length > 0
@@ -520,7 +539,10 @@ export function renderForm(params: {
         .map((preset) => `<button type="button" class="chip" data-fill="__correction" data-value="${esc(preset)}">${esc(preset)}</button>`)
         .join("")}</div></div>`
     : "";
-  return `${params.who}${pipeline}${hint ? `<p class="hint" style="margin:-6px 0 12px">${esc(hint).replace(/\n/g, "<br>")}</p>` : ""}
+  const today = params.stamp
+    ? `<p class="today">Показания вносятся за сегодня, <b>${esc(params.stamp.date)}</b>, время <b class="stamp-t">${esc(params.stamp.time)}</b>.</p>`
+    : "";
+  return `${params.who}${today}${pipeline}${hint ? `<p class="hint" style="margin:-6px 0 12px">${esc(hint).replace(/\n/g, "<br>")}</p>` : ""}
 <form method="post" action="${esc(params.action)}" id="qr-form" novalidate>
 <input type="hidden" name="action" value="submit">
 <input type="hidden" name="__openedAt" value="${params.openedAt}">
@@ -533,7 +555,9 @@ ${deviation}
 }
 
 /** Карточка объекта: название и его числовые поля в две колонки, норма в подписи поля, статус пилюлей. */
-function renderObjectCard(base: string, group: Extract<TaskFormField, { type: "number" }>[], values: Record<string, unknown>, bad: Set<string>): string {
+function renderObjectCard(base: string, group: Extract<TaskFormField, { type: "number" }>[], values: Record<string, unknown>, bad: Set<string>, stamp: { date: string; time: string } | null): string {
+  // В две колонки плавающей подписи между кнопками не хватает места — подпись над полем.
+  const flat = group.length > 1;
   const inputs = group
     .map((field) => {
       const id = `f-${field.key}`;
@@ -544,13 +568,25 @@ function renderObjectCard(base: string, group: Extract<TaskFormField, { type: "n
       const unit = field.unit ? ` ${field.unit}` : "";
       const normText = norm.min != null && norm.max != null ? `${norm.min}…${norm.max}${unit}` : "";
       // Подпись короткая (в две колонки длинная режется), норма — строкой под полем внутри карточки.
-      const label = `<label for="${esc(id)}">${esc(metricName(field))}${required ? `<span class="req" aria-hidden="true">*</span>` : ""}</label>`;
+      const labelBody = `${esc(metricName(field))}${stampHtml(stamp)}${required ? `<span class="req" aria-hidden="true">*</span>` : ""}`;
       const status = bad.has(field.key) ? `Вне нормы ${normText}` : normText ? `Норма ${normText}` : "";
-      const withSign = metricName(field) === "Температура";
-      return `<div class="fl up${bad.has(field.key) ? " bad" : ""}${withSign ? " has-sign" : ""}"><input class="in" id="${esc(id)}" name="${esc(field.key)}" type="text" inputmode="decimal" value="${esc(value)}" placeholder=" "${norm.min != null ? ` data-min="${esc(norm.min)}"` : ""}${norm.max != null ? ` data-max="${esc(norm.max)}"` : ""}${field.unit ? ` data-unit="${esc(field.unit)}"` : ""} data-plain="1" data-label="${esc(`${base} · ${lower(metricName(field))}`)}"${required ? ` aria-required="true"` : ""}>${label}${withSign ? `<button type="button" class="sign" data-sign="${esc(field.key)}" aria-label="Сменить знак: плюс или минус">±</button>` : ""}<span class="pill" aria-hidden="true"></span><p class="st">${esc(status)}</p>${quickChips(field.key, norm, value)}</div>`;
+      const input = `<input class="in" id="${esc(id)}" name="${esc(field.key)}" type="text" inputmode="decimal" value="${esc(value)}" placeholder=" "${norm.min != null ? ` data-min="${esc(norm.min)}"` : ""}${norm.max != null ? ` data-max="${esc(norm.max)}"` : ""}${field.unit ? ` data-unit="${esc(field.unit)}"` : ""} data-plain="1" data-label="${esc(`${base} · ${lower(metricName(field))}`)}"${required ? ` aria-required="true"` : ""}>`;
+      const box = `<div class="box${flat ? " flat" : ""}">${stepButton(field.key, -1)}${input}${flat ? "" : `<label for="${esc(id)}">${labelBody}</label>`}<span class="pill" aria-hidden="true"></span>${stepButton(field.key, 1)}</div>`;
+      return `<div class="fl up has-step${bad.has(field.key) ? " bad" : ""}">${flat ? `<label class="lab" for="${esc(id)}">${labelBody}</label>` : ""}${box}<p class="st">${esc(status)}</p>${quickChips(field.key, norm, value)}</div>`;
     })
     .join("");
   return `<div class="obj"><div class="obj-t">${esc(base)}</div><div class="cols${group.length === 1 ? " one" : ""}">${inputs}</div></div>`;
+}
+
+/** Кнопка шага по бокам поля: числа ±1, время ±5 минут. */
+function stepButton(fieldKey: string, delta: number): string {
+  const minus = delta < 0;
+  return `<button type="button" class="stp ${minus ? "minus" : "plus"}" data-step="${esc(fieldKey)}" data-delta="${delta}" aria-label="${minus ? "Минус" : "Плюс"}">${minus ? "−" : "+"}</button>`;
+}
+
+/** «· 20.09.2026 18:31» после названия показания — видно, за какой момент вносится. */
+function stampHtml(stamp: { date: string; time: string } | null): string {
+  return stamp ? ` · <span class="stamp" data-stamp-date="${esc(stamp.date)}">${esc(stamp.date)} ${esc(stamp.time)}</span>` : "";
 }
 
 /** Быстрый ввод под полем с нормой: нижняя, середина, верхняя граница. */
@@ -570,7 +606,7 @@ function chips(fieldKey: string, values: readonly string[], current: string): st
     .join("")}</div>`;
 }
 
-function renderField(field: TaskFormField, raw: unknown, hints: JournalFillHints, suggestions: Suggestions, bad: boolean): string {
+function renderField(field: TaskFormField, raw: unknown, hints: JournalFillHints, suggestions: Suggestions, bad: boolean, stamp: { date: string; time: string } | null = null): string {
   const id = `f-${field.key}`;
   const value = raw === null || raw === undefined ? "" : String(raw);
   const required = "required" in field && field.required === true;
@@ -597,7 +633,7 @@ function renderField(field: TaskFormField, raw: unknown, hints: JournalFillHints
       return (
         fl(
           `<input class="in" id="${esc(id)}" name="${esc(field.key)}" type="text" value="${esc(value)}" placeholder="${esc(placeholder)}"${field.maxLength ? ` maxlength="${field.maxLength}"` : ""}${list.length > 0 ? ` list="dl-${esc(field.key)}" autocomplete="off"` : ""}${req}>${datalist}`,
-          { after: isTemp ? `<p class="st" id="temp-hint" hidden>Подставлено по прошлой записи этого блюда — поправьте, если сегодня иначе.</p>` : "" }
+          { up: placeholder !== " ", after: isTemp ? `<p class="st" id="temp-hint" hidden>Подставлено по прошлой записи этого блюда — поправьте, если сегодня иначе.</p>` : "" }
         ) + chips(field.key, list.slice(0, 6), value) + chips(field.key, choices, value)
       );
     }
@@ -608,11 +644,10 @@ function renderField(field: TaskFormField, raw: unknown, hints: JournalFillHints
       // Норму показываем, только если она задана в подписи; физические пределы валидатора — не норма.
       const status = fromLabel && norm.min != null && norm.max != null ? `Норма ${esc(norm.min)}…${esc(norm.max)}${esc(unit)}` : "";
       const isTemp = hints.tempField?.tempKey === field.key;
-      const withSign = isTemp || field.unit === "°C" || /температур/i.test(field.label);
-      return fl(
-        `<input class="in" id="${esc(id)}" name="${esc(field.key)}" type="text" inputmode="decimal" value="${esc(value)}" placeholder=" "${norm.min != null ? ` data-min="${esc(norm.min)}"` : ""}${norm.max != null ? ` data-max="${esc(norm.max)}"` : ""}${field.unit ? ` data-unit="${esc(field.unit)}"` : ""}${fromLabel ? ` data-plain="1"` : ""} data-label="${esc(cleanLabel(field.label))}"${req}>`,
-        { after: `${withSign ? `<button type="button" class="sign" data-sign="${esc(field.key)}" aria-label="Сменить знак: плюс или минус">±</button>` : ""}<span class="pill" aria-hidden="true"></span>${status ? `<p class="st">${status}</p>` : `<p class="st"></p>`}${isTemp ? `<p class="st" id="temp-hint" hidden>Подставлено по прошлой записи этого блюда — поправьте, если сегодня иначе.</p>` : ""}${fromLabel ? quickChips(field.key, norm, value) : ""}`, extraClass: withSign ? " has-sign" : "" }
-      );
+      const numLabel = `<label for="${esc(id)}">${esc(cleanLabel(field.label))}${stampHtml(stamp)}${required ? `<span class="req" aria-hidden="true">*</span>` : ""}</label>`;
+      const input = `<input class="in" id="${esc(id)}" name="${esc(field.key)}" type="text" inputmode="decimal" value="${esc(value)}" placeholder=" "${norm.min != null ? ` data-min="${esc(norm.min)}"` : ""}${norm.max != null ? ` data-max="${esc(norm.max)}"` : ""}${field.unit ? ` data-unit="${esc(field.unit)}"` : ""}${fromLabel ? ` data-plain="1"` : ""} data-label="${esc(cleanLabel(field.label))}"${req}>`;
+      // «−»/«+» по бокам: на телефоне крутить цифру быстрее, чем набирать; минуса на цифровой клавиатуре нет.
+      return `<div class="fl up has-step${bad ? " bad" : ""}"><div class="box">${stepButton(field.key, -1)}${input}${numLabel}<span class="pill" aria-hidden="true"></span>${stepButton(field.key, 1)}</div>${status ? `<p class="st">${status}</p>` : `<p class="st"></p>`}${isTemp ? `<p class="st" id="temp-hint" hidden>Подставлено по прошлой записи этого блюда — поправьте, если сегодня иначе.</p>` : ""}${fromLabel ? quickChips(field.key, norm, value) : ""}</div>`;
     }
     case "boolean": {
       const checked = raw === true || raw === "on" || raw === "true";
@@ -633,7 +668,8 @@ function renderField(field: TaskFormField, raw: unknown, hints: JournalFillHints
             .map((chip) => `<button type="button" class="chip" data-fill="${esc(field.key)}" data-ago="${chip.minutes}">${esc(chip.label)}</button>`)
             .join("")}</div>`
         : "";
-      return fl(`<input class="in" id="${esc(id)}" name="${esc(field.key)}" type="time" step="60" value="${esc(value)}"${req}>`, { up: true }) + offsets;
+      // ±5 минут кнопками по бокам, чипы «−15 … Сейчас» под полем.
+      return `<div class="fl up has-step${bad ? " bad" : ""}"><div class="box">${stepButton(field.key, -5)}<input class="in" id="${esc(id)}" name="${esc(field.key)}" type="time" step="60" value="${esc(value)}"${req}>${label}${stepButton(field.key, 5)}</div></div>${offsets}`;
     }
     case "photo":
       return `<div class="photo">${esc(field.label)}: фото к этой записи можно приложить в кабинете или в приложении.</div>`;

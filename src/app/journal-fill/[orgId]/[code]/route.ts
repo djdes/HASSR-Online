@@ -1,3 +1,4 @@
+import { stampFor } from "@/lib/quick-values";
 import { NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
@@ -388,6 +389,7 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
         deviationTitle: extra.deviationTitle,
         correctionPresets: CORRECTION_PRESETS,
         openedAt: Date.now(),
+        stamp: stampFor(timezone),
       }),
       rowLabel,
       script,
