@@ -91,7 +91,19 @@ export function useHasFabDock(): boolean {
   return useContext(FabDockContext) !== null;
 }
 
-export function FabDockProvider({ children }: { children: ReactNode }) {
+export function FabDockProvider({
+  children,
+  slotId,
+}: {
+  children: ReactNode;
+  /**
+   * id элемента в шапке, куда встроить кнопку дока вместо плавающей.
+   * Нужен оболочке мини-приложения: на телефоне плавающая кнопка лежала
+   * поверх правого края карточек и полей, и нажать «изменить» под ней
+   * удавалось только после прокрутки.
+   */
+  slotId?: string;
+}) {
   const [actions, setActions] = useState<FabAction[]>([]);
 
   const register = useCallback((action: FabAction) => {
@@ -112,14 +124,24 @@ export function FabDockProvider({ children }: { children: ReactNode }) {
   return (
     <FabDockContext.Provider value={registry}>
       {children}
-      <FabDock actions={actions} />
+      <FabDock actions={actions} slotId={slotId} />
     </FabDockContext.Provider>
   );
 }
 
-function FabDock({ actions }: { actions: FabAction[] }) {
+function FabDock({ actions, slotId }: { actions: FabAction[]; slotId?: string }) {
   const narrow = useIsNarrowViewport();
   const [sheetRequested, setSheetRequested] = useState(false);
+  // Слот живёт в шапке, которая монтируется рядом с доком, — ищем его
+  // после отрисовки, а не во время неё.
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    if (!slotId) return;
+    const find = () => setSlot(document.getElementById(slotId));
+    find();
+    const timer = window.setTimeout(find, 0);
+    return () => window.clearTimeout(timer);
+  }, [slotId, actions.length]);
   // Список мог схлопнуться до одной кнопки, пока лист открыт (виджет
   // размонтировался) — тогда листу нечего показывать, считаем закрытым.
   const sheetOpen = sheetRequested && actions.length > 1;
@@ -127,6 +149,48 @@ function FabDock({ actions }: { actions: FabAction[] }) {
   if (typeof document === "undefined" || actions.length === 0) return null;
 
   const unread = actions.reduce((sum, item) => sum + (item.badge ?? 0), 0);
+
+  // Кнопка в шапке: одна на все подсказки. Одно действие — сразу оно,
+  // несколько — тот же лист снизу, что и у плавающей кнопки.
+  if (slotId) {
+    if (!slot) return null;
+    const single = actions.length === 1 ? actions[0] : null;
+    return (
+      <>
+        {createPortal(
+          <button
+            type="button"
+            onClick={() => (single ? single.onSelect() : setSheetRequested(true))}
+            aria-label={
+              unread > 0
+                ? `Помощь · новых сообщений: ${unread}`
+                : single
+                  ? single.label
+                  : "Помощь и подсказки"
+            }
+            style={{
+              background: "var(--mini-surface-1, var(--app-fab-bg))",
+              border: "1px solid var(--mini-divider, var(--app-fab-border))",
+            }}
+            className="mini-press relative inline-flex size-10 shrink-0 items-center justify-center rounded-2xl text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 print:hidden"
+          >
+            <Sparkles className="size-4" />
+            {unread > 0 ? (
+              <span className="absolute -right-1 -top-1 flex min-w-[16px] items-center justify-center rounded-full bg-[#ff6b5a] px-1 text-[10px] font-semibold leading-4 text-white">
+                {unread > 9 ? "9+" : unread}
+              </span>
+            ) : null}
+          </button>,
+          slot,
+        )}
+        <FabSheet
+          open={sheetOpen}
+          onClose={() => setSheetRequested(false)}
+          actions={actions}
+        />
+      </>
+    );
+  }
 
   // Компьютер и одиночная кнопка на телефоне — привычный ряд в углу.
   if (!narrow || actions.length === 1) {
@@ -169,45 +233,63 @@ function FabDock({ actions }: { actions: FabAction[] }) {
         document.body,
       )}
 
-      <BottomSheet
+      <FabSheet
         open={sheetOpen}
         onClose={() => setSheetRequested(false)}
-        title="Помощь"
-        subtitle="Спросить, написать в поддержку или посмотреть инструкцию"
-      >
-        {actions.map((action) => {
-          const Icon = action.icon;
-          return (
-            <button
-              key={action.id}
-              type="button"
-              onClick={() => {
-                setSheetRequested(false);
-                action.onSelect();
-              }}
-              className={SHEET_ROW_CLASS}
-            >
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#eef1ff] text-[#5566f6]">
-                <Icon className="size-4" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate font-medium">{action.label}</span>
-                {action.hint ? (
-                  <span className="block truncate text-[12.5px] text-[#6f7282]">
-                    {action.hint}
-                  </span>
-                ) : null}
-              </span>
-              {action.badge ? (
-                <span className="shrink-0 rounded-full bg-[#ff6b5a] px-2 text-[11px] font-semibold leading-5 text-white">
-                  {action.badge > 9 ? "9+" : action.badge}
+        actions={actions}
+      />
+    </>
+  );
+}
+
+function FabSheet({
+  open,
+  onClose,
+  actions,
+}: {
+  open: boolean;
+  onClose: () => void;
+  actions: FabAction[];
+}) {
+  return (
+    <BottomSheet
+      open={open}
+      onClose={onClose}
+      title="Помощь"
+      subtitle="Спросить, написать в поддержку или посмотреть инструкцию"
+    >
+      {actions.map((action) => {
+        const Icon = action.icon;
+        return (
+          <button
+            key={action.id}
+            type="button"
+            onClick={() => {
+              onClose();
+              action.onSelect();
+            }}
+            className={SHEET_ROW_CLASS}
+          >
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#eef1ff] text-[#5566f6]">
+              <Icon className="size-4" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate font-medium">{action.label}</span>
+              {action.hint ? (
+                <span className="block truncate text-[12.5px] text-[#6f7282]">
+                  {action.hint}
                 </span>
               ) : null}
-            </button>
-          );
-        })}
-      </BottomSheet>
-    </>
+            </span>
+            {action.badge ? (
+              <span className="shrink-0 rounded-full bg-[#ff6b5a] px-2 text-[11px] font-semibold leading-5 text-white">
+                {action.badge > 9 ? "9+" : action.badge}
+              </span>
+            ) : null}
+          </button>
+        );
+      })}
+    </BottomSheet>
   );
 }
 

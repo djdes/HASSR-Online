@@ -1309,12 +1309,12 @@ function CategoryColumn(props: {
           className="inline-flex min-w-0 items-center gap-2 text-[15px] font-semibold text-[#0b1024]"
         >
           <span
-            className={`flex size-7 items-center justify-center rounded-lg ${headerAccentClass}`}
+            className={`flex size-7 shrink-0 items-center justify-center rounded-lg ${headerAccentClass}`}
             aria-hidden
           >
             <UsersIcon className="size-3.5" />
           </span>
-          {props.title}
+          <span className="min-w-0 truncate">{props.title}</span>
           <span
             className={`inline-flex h-5 items-center rounded-full px-2 text-[11px] font-medium ${headerAccentClass}`}
           >

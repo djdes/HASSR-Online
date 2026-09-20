@@ -1003,7 +1003,10 @@ function firstName(full: string): string {
   const parts = full.trim().split(/\s+/).filter(Boolean);
   if (parts.length >= 3) return parts[1];
   if (parts.length >= 2) return parts[1];
-  return parts[0] ?? "Смена";
+  // Мгновенная регистрация кладёт в имя почту. Приветствие «ivan@mail.ru,»
+  // в заголовке не помещается и выглядит ошибкой — берём часть до «@».
+  const single = parts[0] ?? "Смена";
+  return single.includes("@") ? single.split("@")[0] || "Смена" : single;
 }
 
 function pluralRu(

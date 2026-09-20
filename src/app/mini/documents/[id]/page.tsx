@@ -72,7 +72,7 @@ export default async function MiniDocumentPage({
       <Link
         href={`/mini/journals/${code}`}
         data-mini-noprint
-        className="mini-press inline-flex items-center gap-1 px-1 text-[13px] font-medium print:hidden"
+        className="-my-2 min-h-9 mini-press inline-flex items-center gap-1 px-1 text-[13px] font-medium print:hidden"
         style={{ color: "var(--mini-text-muted)" }}
       >
         <ArrowLeft className="size-4" />К списку документов

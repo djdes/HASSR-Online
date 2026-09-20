@@ -254,6 +254,13 @@
   position: fixed;
 }
 
+/* Полноэкранные слои (окно AI-помощника) — прямые дети корня, и правило
+   выше сбрасывало им `z-50` до единицы: нижнее меню ложилось поверх окна
+   и закрывало поле ввода вопроса. */
+.mini-root > .fixed.inset-0 {
+  z-index: 60;
+}
+
 .mini-root > .sticky {
   position: sticky;
 }
@@ -659,4 +666,16 @@ body:has(.mini-document-host .sticky.bottom-0) .fixed.right-5 {
     overflow: visible !important;
     max-height: none !important;
   }
+}
+
+/* Палец, а не курсор: галочка 20x20 и переключатель 24px в высоту —
+   мимо них промахиваются. Саму галочку не увеличиваем (собьётся вёрстка
+   бланков), растягиваем только зону нажатия невидимой подложкой. */
+.mini-root main :is([role="checkbox"], [role="radio"], [role="switch"]) {
+  position: relative;
+}
+.mini-root main :is([role="checkbox"], [role="radio"], [role="switch"])::after {
+  content: "";
+  position: absolute;
+  inset: -10px;
 }

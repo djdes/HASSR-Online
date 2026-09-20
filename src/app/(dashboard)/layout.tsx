@@ -548,7 +548,6 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
           красит MiniThemeBootstrap, два скрипта дрались бы за атрибут. */}
       <SiteThemeProvider initialTheme={shell.initialTheme}>
         <MiniAppShell {...shell}>
-          <FabDockProvider>
             <PageNavProvider>
               {/* Человек должен видеть, что он в чужом кабинете или в
                   песочнице, — в телефоне это важнее, чем на сайте:
@@ -576,7 +575,6 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
               ) : null}
               {children}
             </PageNavProvider>
-          </FabDockProvider>
         </MiniAppShell>
       </SiteThemeProvider>
     </AuthSessionProvider>

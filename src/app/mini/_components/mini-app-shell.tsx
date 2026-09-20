@@ -6,6 +6,7 @@ import { DeletionBanner } from "@/components/layout/deletion-banner";
 import { NpsBanner } from "@/components/layout/nps-banner";
 import { LiveConnectionIndicator } from "@/components/live/live-connection-indicator";
 import { SanpinChatWidget } from "@/components/ai/sanpin-chat-widget";
+import { FabDockProvider } from "@/components/layout/fab-dock";
 import { JournalUndoProvider } from "@/components/journals/journal-undo-slot";
 import { Toaster } from "@/components/ui/sonner";
 import type { PartnerHintRates } from "@/lib/partners/partner-hint";
@@ -113,6 +114,9 @@ export function MiniAppShell({
               рисуются наверху, а их состояние живёт в клиенте открытого
               документа — иначе они друг друга не видят. Тот же приём,
               что в шапке сайта. */}
+          {/* Док подсказок: AI-помощник и «Как заполнять» — одной кнопкой в
+              шапке, а не круглыми кнопками поверх правого края содержимого. */}
+          <FabDockProvider slotId="mini-fab-slot">
           <JournalUndoProvider>
             <MiniTopBar
               partnerHint={partnerHint}
@@ -149,6 +153,7 @@ export function MiniAppShell({
           <EdgeBack />
           {ownRoutes ? <MiniTour /> : null}
           {authed ? <SanpinChatWidget bottomOffset={96} /> : null}
+          </FabDockProvider>
         </div>
       </MiniThemeProvider>
     </>

@@ -109,7 +109,7 @@ export function PhaseCard({
 
   return (
     <li className="relative">
-      <div className="flex gap-4">
+      <div className="flex gap-2.5 sm:gap-4">
         {/* Number column with connector line */}
         <div className="relative flex flex-col items-center self-stretch">
           <div
@@ -131,7 +131,7 @@ export function PhaseCard({
         {/* Body */}
         <details
           open={defaultOpen}
-          className={`group flex-1 rounded-3xl border p-5 ${tone.card}`}
+          className={`group min-w-0 flex-1 rounded-3xl border p-4 sm:p-5 ${tone.card}`}
         >
           <summary
             // items-center: у этапа обычно одна строка заголовка, и при
@@ -189,7 +189,7 @@ export function PhaseCard({
           </summary>
 
           {phase.items.length > 0 ? (
-            <div className="mt-5 grid gap-2 sm:grid-cols-2">
+            <div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2">
               {phase.items.map((item) => (
                 <SetupCard key={item.title} item={item} />
               ))}

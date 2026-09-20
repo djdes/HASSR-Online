@@ -393,8 +393,14 @@ export function MiniTopBar({
           {headerUndo ? (
             <UndoRedoButtons undo={headerUndo} />
           ) : (
-            <LiveClock />
+            // На узком телефоне часы съедали место у названия экрана:
+            // «Оборудован…», «Баланс и бо…». Время и так есть в шапке Telegram.
+            <span className="max-[430px]:hidden">
+              <LiveClock />
+            </span>
           )}
+          {/* Сюда док встраивает кнопку подсказок (см. `FabDockProvider`). */}
+          <span id="mini-fab-slot" className="contents" />
           {showNotifications ? <NotificationsBell /> : null}
           <Link
             href="/mini/me"

@@ -321,7 +321,7 @@ function BackLink() {
   return (
     <Link
       href="/mini"
-      className="inline-flex items-center gap-1 text-[13px] font-medium"
+      className="-my-2 min-h-9 inline-flex items-center gap-1 text-[13px] font-medium"
       style={{ color: "var(--mini-text-muted)" }}
     >
       <ArrowLeft className="size-4" />

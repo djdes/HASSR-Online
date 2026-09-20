@@ -125,7 +125,7 @@ export function MiniMeClient({
     <div className="flex flex-1 flex-col gap-4 pb-24">
       <Link
         href="/mini"
-        className="mini-press inline-flex items-center gap-1 text-[13px] font-medium"
+        className="-my-2 min-h-9 mini-press inline-flex items-center gap-1 text-[13px] font-medium"
         style={{ color: "var(--mini-text-muted)" }}
       >
         <ArrowLeft className="size-4" />
