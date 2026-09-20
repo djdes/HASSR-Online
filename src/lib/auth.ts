@@ -157,10 +157,20 @@ export const authOptions: NextAuthOptions = {
           throw new Error(telegramSignInMessageFor(verified.error));
         }
         const chatIdStr = String(verified.data.user.id);
-        const user = await db.user.findFirst({
-          where: { telegramChatId: chatIdStr, isActive: true },
-          include: { organization: true },
-        });
+        // Сбой базы не должен долетать до экрана входа как есть: next-auth
+        // отдаёт текст исключения клиенту, и человек видел сырое
+        // «Invalid `db.user.findFirst()` invocation…» вместо объяснения.
+        const user = await db.user
+          .findFirst({
+            where: { telegramChatId: chatIdStr, isActive: true },
+            include: { organization: true },
+          })
+          .catch((error: unknown) => {
+            console.error("[auth:telegram] user lookup failed", error);
+            throw new Error(
+              "Не удалось проверить вход — сервис временно недоступен. Попробуйте ещё раз через минуту."
+            );
+          });
         if (!user) {
           throw new Error(
             "Аккаунт не связан с Telegram. Получите приглашение у руководителя."
