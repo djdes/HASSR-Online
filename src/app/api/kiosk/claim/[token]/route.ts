@@ -6,6 +6,7 @@ import {
   KIOSK_DEVICE_COOKIE_MAX_AGE,
   mintKioskDeviceToken,
 } from "@/lib/kiosk-device";
+import { resolveQrPosterOrigin } from "@/lib/qr-poster-origin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,7 +23,12 @@ export async function GET(
   { params }: { params: Promise<{ token: string }> },
 ) {
   const { token } = await params;
-  const origin = new URL(request.url).origin;
+  // Публичный домен, а не внутренний localhost:3002 за nginx.
+  const origin = resolveQrPosterOrigin({
+    requested: null,
+    configured: process.env.NEXTAUTH_URL ?? null,
+    production: process.env.NODE_ENV === "production",
+  });
 
   const device = await db.kioskDevice.findFirst({
     where: { secretHash: hashInviteToken(token), revokedAt: null },
