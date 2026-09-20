@@ -238,7 +238,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
       }
       if (!hasFullWorkspaceAccess({ role: session.user.role, isRoot: session.user.isRoot })) {
-        return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+        return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
       }
       organizationId = getActiveOrgId(session);
       actingUser = {

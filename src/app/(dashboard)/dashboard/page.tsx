@@ -339,6 +339,9 @@ export default async function DashboardPage() {
             <DashboardSection
               storageKey="compliance-grid"
               title="Обязательные журналы"
+              // Без подписи цифру «1/35» читали как «сегодня сделано 1 из
+              // 35 дел», хотя часть журналов сегодня вести и не надо.
+              subtitle={`Есть запись за сегодня: ${filledCount} из ${complianceItems.length} включённых журналов.`}
               icon={ListChecks}
               defaultOpen={true}
               actions={
@@ -413,7 +416,7 @@ export default async function DashboardPage() {
                 Готовность к проверке Роспотребнадзора
               </div>
               <div className="mt-0.5 text-[12px] text-[#6f7282]">
-                12 проверок · score 0-100 · конкретные «починить» по каждому пункту
+                12 проверок · оценка от 0 до 100 · конкретные «починить» по каждому пункту
               </div>
             </div>
             <ArrowRight className="size-4 shrink-0 text-[#5566f6] transition-transform group-hover:translate-x-1" />

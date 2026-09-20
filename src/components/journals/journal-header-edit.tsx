@@ -30,6 +30,16 @@ export type JournalHeaderEditValue = {
   documentId: string;
   /** Карандаши в шапке: право управлять журналами и документ не закрыт. */
   canEditDocument: boolean;
+  /**
+   * Право управлять журналами (`journals.manage` + управляющая роль),
+   * БЕЗ учёта того, закрыт документ или нет.
+   *
+   * Нужно шапке и тулбарам документа: рядовому сотруднику нельзя
+   * показывать «Автоматически заполнять журнал», «Настройки журнала» и
+   * меню «…» — сервер на такой PATCH отвечает 403, и человек получал
+   * тост «Недостаточно прав» вместо результата.
+   */
+  canManageJournals?: boolean;
   /** «Во всех журналах организации» — только администратор организации. */
   canEditOrganization: boolean;
   /** Название организации для всех журналов (без названия этого документа). */
@@ -58,6 +68,20 @@ export function JournalHeaderEditProvider({
 
 export function useJournalHeaderEdit(): JournalHeaderEditValue | null {
   return useContext(JournalHeaderEditContext);
+}
+
+/**
+ * Можно ли этому человеку показывать управление документом.
+ *
+ * Провайдера нет (образцы бланков, публичные страницы, превью) —
+ * возвращаем `true`: там управление и так ничего не сохраняет, а
+ * прятать его незачем. На настоящей странице документа провайдер есть
+ * всегда, и флаг приходит из тех же прав, что проверяет PATCH.
+ */
+export function useCanManageJournalDocument(): boolean {
+  const ctx = useContext(JournalHeaderEditContext);
+  if (!ctx) return true;
+  return ctx.canManageJournals !== false;
 }
 
 async function readError(response: Response, fallback: string): Promise<string> {

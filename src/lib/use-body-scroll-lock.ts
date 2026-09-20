@@ -57,8 +57,19 @@ export function unlockBodyScroll(): void {
   if (--locks > 0) return;
   const restore = saved;
   saved = null;
-  if (!restore) return;
   const body = document.body;
+  if (!restore) {
+    // Замок сняли, а запомненных стилей нет (окно пережило переход
+    // между страницами, счётчик и снимок разъехались). Страницу нельзя
+    // оставлять прибитой — снимаем фиксацию руками.
+    body.style.position = "";
+    body.style.top = "";
+    body.style.left = "";
+    body.style.right = "";
+    body.style.overflow = "";
+    body.style.paddingRight = "";
+    return;
+  }
   body.style.position = restore.position;
   body.style.top = restore.top;
   body.style.left = restore.left;

@@ -60,7 +60,7 @@ export async function PUT(
         isRoot: session.user.isRoot === true,
       })
     ) {
-      return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+      return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
     }
 
     const user = await db.user.findFirst({
@@ -239,7 +239,7 @@ export async function DELETE(
         isRoot: session.user.isRoot === true,
       })
     ) {
-      return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+      return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
     }
 
     if (id === session.user.id) {

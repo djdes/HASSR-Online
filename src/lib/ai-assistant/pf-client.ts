@@ -52,7 +52,7 @@ export async function enqueueAndWait(
     return {
       ok: false,
       code: "not_configured",
-      error: "AI-помощник недоступен — интеграция не настроена",
+      error: "ИИ-помощник недоступен — интеграция не настроена",
     };
   }
 
@@ -85,7 +85,7 @@ export async function enqueueAndWait(
         error:
           response.status === 429
             ? "Слишком много AI-запросов, подождите минуту"
-            : "Не удалось связаться с AI-помощником. Попробуйте ещё раз",
+            : "Не удалось связаться с ИИ-помощником. Попробуйте ещё раз",
       };
     }
     const data = (await response.json().catch(() => null)) as {
@@ -106,7 +106,7 @@ export async function enqueueAndWait(
     return {
       ok: false,
       code: "enqueue_failed",
-      error: "Не удалось связаться с AI-помощником. Попробуйте ещё раз",
+      error: "Не удалось связаться с ИИ-помощником. Попробуйте ещё раз",
     };
   }
 
@@ -139,7 +139,7 @@ export async function enqueueAndWait(
       return {
         ok: false,
         code: "job_failed",
-        error: "AI-помощник не смог обработать запрос. Попробуйте ещё раз",
+        error: "ИИ-помощник не смог обработать запрос. Попробуйте ещё раз",
       };
     }
 
@@ -158,8 +158,8 @@ export async function enqueueAndWait(
         code: "job_failed",
         error:
           job.error === "dispatcher_timeout"
-            ? "AI-помощник не ответил вовремя. Попробуйте ещё раз"
-            : "AI-помощник не смог обработать запрос. Попробуйте ещё раз",
+            ? "ИИ-помощник не ответил вовремя. Попробуйте ещё раз"
+            : "ИИ-помощник не смог обработать запрос. Попробуйте ещё раз",
       };
     }
     // queued / running — ждём дальше.
@@ -168,6 +168,6 @@ export async function enqueueAndWait(
   return {
     ok: false,
     code: "timeout",
-    error: "AI-помощник не ответил вовремя. Попробуйте ещё раз",
+    error: "ИИ-помощник не ответил вовремя. Попробуйте ещё раз",
   };
 }

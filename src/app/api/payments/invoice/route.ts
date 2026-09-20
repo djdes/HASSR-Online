@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user) || isImpersonating(session)) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
   const body = (await request.json().catch(() => ({}))) as { tariffKey?: unknown };
   const tariffKey = typeof body.tariffKey === "string" && body.tariffKey ? body.tariffKey : TARIFF_MONTHLY;

@@ -134,7 +134,11 @@ export default async function JournalsPage() {
                   filledTodayCount === enabledItems.length ? "ok" : "neutral"
                 }
               >
-                Заполнено сегодня {filledTodayCount}/{enabledItems.length}
+                {/* Раньше было «Заполнено сегодня 26/35» — и в эти 26
+                    попадали журналы, которые сегодня вести не нужно.
+                    Число то же, подпись честная. */}
+                Сегодня не требуют внимания: {filledTodayCount} из{" "}
+                {enabledItems.length}
               </PageHeaderStat>
             ) : null}
           </>

@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     !hasCapability(session.user, "tasks.verify") &&
     !hasCapability(session.user, "admin.full")
   ) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
   let body: z.infer<typeof bodySchema>;

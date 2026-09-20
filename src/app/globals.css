@@ -296,6 +296,54 @@
   background-color: var(--app-surface-muted) !important;
 }
 
+/* ── Добор почти-белых литералов ───────────────────────────────────
+ * Найдены сплошным проходом по `src/components/journals/**` и
+ * `src/app/(dashboard)/**`: каждый из них — светлая подложка под
+ * тёмным текстом, который тут же перекрашивается правилами ниже.
+ * Самый заметный — `#fbfcff` в карточках дня (`day-first-cards.tsx`):
+ * собственная строка сотрудника «надо заполнить» была белым по
+ * белому. */
+.app-shell[data-app-theme="dark"] .bg-\[\#fbfcff\],
+.app-shell[data-app-theme="dark"] .bg-\[\#fbfbfe\],
+.app-shell[data-app-theme="dark"] .bg-\[\#f9f9fc\],
+.app-shell[data-app-theme="dark"] .bg-\[\#f4f4f7\],
+.app-shell[data-app-theme="dark"] .bg-\[\#f3f5ff\],
+.app-shell[data-app-theme="dark"] .bg-\[\#f2f3f8\],
+.app-shell[data-app-theme="dark"] .bg-\[\#e8e8e8\],
+.app-shell[data-app-theme="dark"] .bg-\[\#e4e8ff\],
+.app-shell[data-app-theme="dark"] .bg-\[\#e4e7f0\],
+.app-shell[data-app-theme="dark"] .bg-\[\#e2e6ff\] {
+  background-color: var(--app-surface-muted) !important;
+}
+.app-shell[data-app-theme="dark"] .bg-\[\#dcdfed\] {
+  background-color: var(--app-border) !important;
+}
+.app-shell[data-app-theme="dark"] .bg-\[\#e9f7ee\],
+.app-shell[data-app-theme="dark"] .bg-\[\#f0fff0\],
+.app-shell[data-app-theme="dark"] .bg-\[\#f0fdfa\] {
+  background-color: rgba(19, 107, 42, 0.18) !important;
+}
+.app-shell[data-app-theme="dark"] .bg-\[\#fbe3e3\],
+.app-shell[data-app-theme="dark"] .bg-\[\#ffe8e6\],
+.app-shell[data-app-theme="dark"] .bg-\[\#ffeae7\],
+.app-shell[data-app-theme="dark"] .bg-\[\#fff0ef\],
+.app-shell[data-app-theme="dark"] .bg-\[\#fff0f0\],
+.app-shell[data-app-theme="dark"] .bg-\[\#fff8f6\],
+.app-shell[data-app-theme="dark"] .bg-\[\#fdf2f8\] {
+  background-color: rgba(161, 58, 50, 0.18) !important;
+}
+.app-shell[data-app-theme="dark"] .bg-\[\#fff2e5\],
+.app-shell[data-app-theme="dark"] .bg-\[\#fff4e6\],
+.app-shell[data-app-theme="dark"] .bg-\[\#fff8e8\],
+.app-shell[data-app-theme="dark"] .bg-\[\#fff8ed\],
+.app-shell[data-app-theme="dark"] .bg-\[\#fff9eb\],
+.app-shell[data-app-theme="dark"] .bg-\[\#fffbf0\] {
+  background-color: rgba(245, 158, 11, 0.16) !important;
+}
+.app-shell[data-app-theme="dark"] .bg-\[\#fdf4ff\] {
+  background-color: rgba(93, 58, 179, 0.22) !important;
+}
+
 /* ── Borders ───────────────────────────────────────────────────────── */
 .app-shell[data-app-theme="dark"] .border-\[\#ececf4\],
 .app-shell[data-app-theme="dark"] .border-\[\#eceef5\],
@@ -303,6 +351,7 @@
   border-color: var(--app-border) !important;
 }
 .app-shell[data-app-theme="dark"] .border-\[\#dcdfed\],
+.app-shell[data-app-theme="dark"] .border-\[\#dfe3f5\],
 .app-shell[data-app-theme="dark"] .border-\[\#dfe1ec\],
 .app-shell[data-app-theme="dark"] .border-\[\#d8dae6\],
 .app-shell[data-app-theme="dark"] .border-\[\#d9dceb\],
@@ -353,7 +402,13 @@
 .app-shell[data-app-theme="dark"] .text-\[\#116b2a\] {
   color: #5edc8a !important;
 }
-.app-shell[data-app-theme="dark"] .text-\[\#a13a32\] {
+/* Тёмно-красный текст статусов. На дашборде названия незаполненных
+   журналов стояли `#a1362f` по тёмно-фиолетовому фону — контраст 1.65,
+   читать было нечем. Осветляем ОБА оттенка одним правилом. */
+.app-shell[data-app-theme="dark"] .text-\[\#a13a32\],
+.app-shell[data-app-theme="dark"] .text-\[\#a1362f\],
+.app-shell[data-app-theme="dark"] .text-\[\#a1362e\],
+.app-shell[data-app-theme="dark"] .text-\[\#9f2f27\] {
   color: #ff8a82 !important;
 }
 .app-shell[data-app-theme="dark"] .text-\[\#b25f00\],

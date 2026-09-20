@@ -91,6 +91,7 @@ import { useJournalDocumentActions } from "@/components/journals/use-journal-doc
 import { confirmAsync } from "@/components/ui/confirm-async";
 import { toast } from "sonner";
 import { useMobileView } from "@/lib/use-mobile-view";
+import { formatCardDateTime } from "@/lib/journal-card-date";
 import {
   MobileViewToggle,
   MobileViewTableWrapper,
@@ -2119,13 +2120,13 @@ export function AcceptanceDocumentClient(props: Props) {
   const cardItems: RecordCardItem[] = displayedRows.map((row, index) => ({
     id: row.id,
     title: `№${index + 1} · ${row.productName || "—"}`,
+    // В карточке — общий формат «дд.мм.гггг чч:мм» (в самом бланке
+    // формат прежний, его диктует форма документа).
     subtitle:
-      [
-        formatAcceptanceDateDash(row.deliveryDate),
-        row.deliveryHour ? `${row.deliveryHour}:${row.deliveryMinute || "00"}` : "",
-      ]
-        .filter(Boolean)
-        .join(" ") || undefined,
+      formatCardDateTime(
+        row.deliveryDate,
+        row.deliveryHour ? `${row.deliveryHour}:${row.deliveryMinute || "00"}` : null
+      ) || undefined,
     leading: !isClosed ? (
       <Checkbox
         checked={selectedRowIds.includes(row.id)}

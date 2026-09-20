@@ -43,11 +43,11 @@ export function CapaAutoDetectButton() {
         toast.success("Отклонений 3 дня подряд не найдено.");
       } else if (summary.created === 0) {
         toast.info(
-          `Найдено кандидатов: ${summary.candidates}, но по всем уже есть открытые CAPA.`
+          `Найдено кандидатов: ${summary.candidates}, но по всем уже есть открытые нарушения.`
         );
       } else {
         toast.success(
-          `Создано CAPA: ${summary.created}${
+          `Создано нарушений: ${summary.created}${
             summary.skippedExisting
               ? ` · пропущено уже открытых: ${summary.skippedExisting}`
               : ""
@@ -67,7 +67,7 @@ export function CapaAutoDetectButton() {
       type="button"
       onClick={run}
       disabled={busy}
-      title="Найти оборудование с температурой вне нормы три дня подряд и открыть CAPA."
+      title="Найти оборудование с температурой вне нормы три дня подряд и открыть нарушение."
       className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border-0 bg-[#5566f6]/[0.04] px-4 text-[14px] font-semibold text-[#5566f6] transition-colors hover:bg-[#5566f6]/[0.09] disabled:opacity-60"
     >
       {busy ? (

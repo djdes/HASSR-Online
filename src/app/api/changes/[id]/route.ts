@@ -11,7 +11,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!session?.user) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
 
   if (!isManagementRole(session.user.role) && !session.user.isRoot) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
   const change = await db.changeRequest.findUnique({ where: { id } });

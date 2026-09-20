@@ -5,15 +5,16 @@ import { CalendarRange, Download, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { localDayKey } from "@/lib/entry-defaults";
 
+// Даты — по местным часам, а не по UTC: ночью в Москве поле «по»
+// подставляло вчерашнее число.
 function firstOfCurrentMonth(): string {
   const d = new Date();
-  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1))
-    .toISOString()
-    .slice(0, 10);
+  return localDayKey(new Date(d.getFullYear(), d.getMonth(), 1));
 }
 function todayYmd(): string {
-  return new Date().toISOString().slice(0, 10);
+  return localDayKey();
 }
 
 type Preset = { label: string; from: string; to: string };

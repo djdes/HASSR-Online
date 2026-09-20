@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { Coins } from "lucide-react";
 import { db } from "@/lib/db";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
+import { orgTodayKey } from "@/lib/timezone";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { BonusFeedTable } from "@/components/bonuses/bonus-feed-table";
 import { BonusFilters } from "@/components/bonuses/bonus-filters";
@@ -41,7 +42,13 @@ export default async function BonusesPage({
 
   const orgId = getActiveOrgId(session);
   const params = await searchParams;
-  const filters = resolveFilters(params);
+  // «Сегодня» — по поясу организации, а не по UTC: ночью в Москве
+  // период по умолчанию заканчивался вчерашним днём.
+  const org = await db.organization.findUnique({
+    where: { id: orgId },
+    select: { timezone: true },
+  });
+  const filters = resolveFilters(params, org?.timezone ?? undefined);
 
   const [bonuses, employees] = await Promise.all([
     db.bonusEntry.findMany({
@@ -190,14 +197,18 @@ type ResolvedFilters = {
   userId: string | null;
 };
 
-function resolveFilters(params: {
-  from?: string;
-  to?: string;
-  user?: string;
-}): ResolvedFilters {
-  const today = new Date();
-  const todayIso = isoDate(today);
-  const defaultFrom = isoDate(new Date(today.getTime() - 30 * 86400000));
+function resolveFilters(
+  params: {
+    from?: string;
+    to?: string;
+    user?: string;
+  },
+  timezone?: string
+): ResolvedFilters {
+  const todayIso = orgTodayKey(timezone);
+  const defaultFrom = isoDate(
+    new Date(new Date(`${todayIso}T00:00:00.000Z`).getTime() - 30 * 86400000)
+  );
 
   const fromIso = isValidIsoDate(params.from) ? params.from! : defaultFrom;
   const toIso = isValidIsoDate(params.to) ? params.to! : todayIso;

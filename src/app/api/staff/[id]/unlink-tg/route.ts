@@ -25,7 +25,7 @@ export async function POST(
   // тоже управляет TG-привязками своих сотрудников. Раньше: только
   // manager → head_chef мог пригласить через TG, но не отвязать.
   if (!isManagementRole(session.user.role) && !session.user.isRoot) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
   try {

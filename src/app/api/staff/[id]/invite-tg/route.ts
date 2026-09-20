@@ -30,7 +30,7 @@ export async function POST(
   // head_chef нанимает / приглашает поваров напрямую — должен мочь
   // выпустить TG-invite наравне с manager'ом. Раньше: только manager.
   if (!isManagementRole(session.user.role) && !session.user.isRoot) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
   const botUsername = process.env.TELEGRAM_BOT_USERNAME;

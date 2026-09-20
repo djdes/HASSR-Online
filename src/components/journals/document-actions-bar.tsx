@@ -23,6 +23,7 @@ import { ResponsiveMenu } from "@/components/ui/responsive-menu";
 import { DOC_TITLE_ROW_CLASS } from "@/components/journals/journal-responsive";
 import type { DocumentBarUndo } from "@/components/journals/undo-redo-buttons";
 import { usePublishUndoToHeader } from "@/components/journals/journal-undo-slot";
+import { useCanManageJournalDocument } from "@/components/journals/journal-header-edit";
 import { cn } from "@/lib/utils";
 
 /**
@@ -105,7 +106,11 @@ export function DocumentActionsBar({
   className,
   children,
 }: Props) {
-  const items = menuItems.filter(Boolean);
+  // Рядовому сотруднику управление документом не показываем: сервер на
+  // такой PATCH отвечает 403, и человек видел только тост «Недостаточно
+  // прав». Печать и QR остаются — они никому не запрещены.
+  const canManage = useCanManageJournalDocument();
+  const items = (canManage ? menuItems : []).filter(Boolean);
   const hasPrint = Boolean(showPrint && documentId);
   // Код журнала — из `backHref` (`/journals/<code>`): его передают все
   // клиенты, и отдельный проп не нужен. Есть код и документ — есть QR.
@@ -200,7 +205,7 @@ export function DocumentActionsBar({
               <Printer className="size-4" />
             </button>
           )}
-          {onSettings ? (
+          {onSettings && canManage ? (
             <Button
               type="button"
               variant="outline"

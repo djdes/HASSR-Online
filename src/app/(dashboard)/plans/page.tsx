@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
+import { pluralRu } from "@/lib/plural-ru";
 
 type PlanItem = {
   sku: string;
@@ -144,7 +145,8 @@ export default async function PlansPage() {
                           </span>
                         </div>
                         <p className="text-[11px] text-[#6f7282]">
-                          {items.length} SKU
+                          {items.length}{" "}
+                          {pluralRu(items.length, "позиция", "позиции", "позиций")}
                         </p>
                         {plan.status !== "draft" && totalTarget > 0 && (
                           <div className="space-y-0.5">

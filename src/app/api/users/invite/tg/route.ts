@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     // поваров напрямую и должен мочь рассылать TG-QR. Раньше: только
     // manager.
     if (!isManagementRole(session.user.role) && !session.user.isRoot) {
-      return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+      return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
     }
 
     if (!process.env.TELEGRAM_BOT_USERNAME) {

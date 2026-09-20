@@ -27,7 +27,7 @@ export async function GET() {
       isRoot: session.user.isRoot === true,
     })
   ) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
   const orgId = getActiveOrgId(session);
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
       isRoot: session.user.isRoot === true,
     })
   ) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
   const orgId = getActiveOrgId(session);
@@ -161,7 +161,7 @@ export async function DELETE(req: NextRequest) {
       isRoot: session.user.isRoot === true,
     })
   ) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
   const orgId = getActiveOrgId(session);

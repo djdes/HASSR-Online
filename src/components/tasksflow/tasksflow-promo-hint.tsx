@@ -7,6 +7,7 @@ import {
   TASKSFLOW_PROMO_CODE,
   tasksflowPromoUrl,
 } from "@/lib/tasksflow-promo";
+import { useInAppShell } from "@/lib/use-in-app-shell";
 
 /**
  * Промо-подсказка «подключите TasksFlow» под полем телефона.
@@ -37,6 +38,18 @@ export function TasksFlowPromoHint({
   compact?: boolean;
   className?: string;
 }) {
+  // В оболочке приложения (Telegram) рекламу с внешней ссылкой не
+  // показываем вовсе: тап по ней выбрасывает человека из Telegram
+  // посреди незаполненной анкеты, и введённое теряется.
+  const inAppShell = useInAppShell();
+  if (inAppShell) {
+    return (
+      <p className={`text-[11px] leading-snug text-[#6f7282] ${className}`}>
+        {autolinkNote}
+      </p>
+    );
+  }
+
   if (hasIntegration) {
     return (
       <p className={`text-[11px] leading-snug text-[#6f7282] ${className}`}>

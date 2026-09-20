@@ -250,7 +250,7 @@ export async function PATCH(
   if (!session) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
 
   if (!isManagementRole(session.user.role)) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
   const doc = await db.journalDocument.findUnique({
@@ -438,7 +438,7 @@ export async function DELETE(
   if (!session) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
 
   if (!isManagementRole(session.user.role)) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
   const doc = await db.journalDocument.findUnique({

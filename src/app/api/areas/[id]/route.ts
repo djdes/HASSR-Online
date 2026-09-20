@@ -23,7 +23,7 @@ export async function PUT(
         isRoot: session.user.isRoot === true,
       })
     ) {
-      return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+      return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
     }
 
     const area = await db.area.findUnique({ where: { id } });
@@ -79,7 +79,7 @@ export async function DELETE(
         isRoot: session.user.isRoot === true,
       })
     ) {
-      return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+      return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
     }
 
     const area = await db.area.findUnique({ where: { id } });

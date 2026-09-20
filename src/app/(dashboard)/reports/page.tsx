@@ -132,12 +132,12 @@ export default async function ReportsPage() {
 
   // Подготавливаем mailto-link для шеринга отчёта.
   const subj = encodeURIComponent(
-    `Отчёт по compliance — ${session.user.organizationName}`
+    `Отчёт по заполнению журналов — ${session.user.organizationName}`
   );
   const body = encodeURIComponent(
     `Здравствуйте,\n\n` +
       `делюсь данными compliance из системы WeSetup.\n\n` +
-      `Photo evidence rate: ${
+      `Доля записей с фото: ${
         photoEvidencePct === null ? "n/a" : photoEvidencePct + "%"
       } (${entriesWithAttachment30Count} из ${entries30Count} за 30 дней)\n\n` +
       `Подробный обзор и графики — в системе WeSetup на странице /reports.\n\n` +

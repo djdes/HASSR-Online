@@ -221,7 +221,7 @@ export async function POST(
   if (!canWrite) {
     return asImportResponse({
       rows: [],
-      errors: [{ rowNumber: 0, errors: ["Недостаточно прав"] }],
+      errors: [{ rowNumber: 0, errors: ["Это действие доступно руководителю"] }],
       importedCount: 0,
       status: 403,
     });

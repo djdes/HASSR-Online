@@ -27,6 +27,7 @@ import {
 import {
   buildMiniShellClearCookie,
   hasMiniShellCookie,
+  miniShellSignInHref,
 } from "@/lib/mini-shell-cookie";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FeedbackDialog } from "@/components/layout/feedback-dialog";
@@ -72,10 +73,32 @@ export function MiniMeClient({
   // Профиль нужен и линейному сотруднику: выйти, отвязать Telegram,
   // переключить тему, посмотреть баллы. Поэтому гейта по правам здесь
   // нет — внутри показываем ровно те ссылки, что доступны человеку.
-  if (status !== "authenticated") {
+  // Пока сессия проверяется — «Загружаем…». Если её нет, крутить
+  // спиннер вечно нельзя: человеку надо дать дорогу на вход.
+  if (status === "loading") {
     return (
       <div className="flex flex-1 items-center justify-center text-sm text-slate-500">
         Загружаем…
+      </div>
+    );
+  }
+
+  if (status !== "authenticated") {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 text-center">
+        <div className="text-[15px] font-semibold" style={{ color: "var(--mini-text)" }}>
+          Вы не вошли
+        </div>
+        <p className="text-[13px]" style={{ color: "var(--mini-text-muted)" }}>
+          Профиль виден только после входа. В Telegram вход произойдёт сам.
+        </p>
+        <Link
+          href={miniShellSignInHref("/mini/me")}
+          className="mini-press inline-flex min-h-11 items-center justify-center rounded-2xl px-5 text-[14px] font-semibold"
+          style={{ background: "var(--mini-text)", color: "var(--mini-bg)" }}
+        >
+          Войти
+        </Link>
       </div>
     );
   }
@@ -238,7 +261,7 @@ export function MiniMeClient({
               className="mt-0.5 text-[12px]"
               style={{ color: "var(--mini-text-muted)" }}
             >
-              Настройка сохранится на этом устройстве
+              Выбор запоминается в вашем аккаунте
             </div>
           </div>
         </div>
@@ -461,7 +484,12 @@ export function MiniMeClient({
 
       {/* Полная версия сайта. Снимает режим оболочки и уводит в
           обычный кабинет — нужно тем, кто открыл приложение на
-          планшете или ноутбуке и хочет широкие таблицы и шапку. */}
+          планшете или ноутбуке и хочет широкие таблицы и шапку.
+
+          У линейного сотрудника дом на сайте — тот же `/mini/today`,
+          и кнопка просто возвращала его на этот же экран. Не
+          показываем: обещание, которое нельзя выполнить. */}
+      {homeHref.startsWith("/mini") ? null : (
       <section>
         <button
           type="button"
@@ -495,6 +523,7 @@ export function MiniMeClient({
           </span>
         </button>
       </section>
+      )}
 
       <section className="space-y-2">
         <button

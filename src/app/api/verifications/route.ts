@@ -91,7 +91,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
   }
   if (!hasCapability(session.user, "tasks.verify")) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
   const organizationId = getActiveOrgId(session);
   const url = new URL(request.url);

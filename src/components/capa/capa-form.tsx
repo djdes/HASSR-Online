@@ -112,6 +112,19 @@ const CAPA_TEMPLATES: CapaTemplate[] = [
   },
 ];
 
+/**
+ * Срок устранения, который подразумевает сам приоритет — ровно те
+ * часы, что написаны в его подписи («Критический (2ч)»). Раньше выбор
+ * «Критический» оставлял в поле срока прежние 24 часа, и подпись
+ * приоритета противоречила сроку прямо в одной форме.
+ */
+export const PRIORITY_SLA_HOURS: Record<string, string> = {
+  critical: "2",
+  high: "24",
+  medium: "48",
+  low: "72",
+};
+
 interface Props {
   users: { id: string; name: string }[];
 }
@@ -127,6 +140,8 @@ export function CapaForm({ users }: Props) {
   const [slaHours, setSlaHours] = useState("24");
   const [assignedToId, setAssignedToId] = useState("");
   const [templateId, setTemplateId] = useState("");
+  // Человек сам выставил срок — больше его не трогаем.
+  const [slaTouched, setSlaTouched] = useState(false);
 
   function applyTemplate(id: string) {
     setTemplateId(id);
@@ -137,6 +152,14 @@ export function CapaForm({ users }: Props) {
     setPriority(tpl.priority);
     setCategory(tpl.category);
     setSlaHours(tpl.slaHours);
+    setSlaTouched(false);
+  }
+
+  function handlePriorityChange(next: string) {
+    setPriority(next);
+    if (slaTouched) return;
+    const hours = PRIORITY_SLA_HOURS[next];
+    if (hours) setSlaHours(hours);
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -222,7 +245,7 @@ export function CapaForm({ users }: Props) {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
         <div className="space-y-2">
           <Label>Приоритет</Label>
-          <Select value={priority} onValueChange={setPriority}>
+          <Select value={priority} onValueChange={handlePriorityChange}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="critical">Критический (2ч)</SelectItem>
@@ -251,8 +274,14 @@ export function CapaForm({ users }: Props) {
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
         <div className="space-y-2">
-          <Label>SLA (часов)</Label>
-          <Select value={slaHours} onValueChange={setSlaHours}>
+          <Label>Срок устранения, часов</Label>
+          <Select
+            value={slaHours}
+            onValueChange={(next) => {
+              setSlaTouched(true);
+              setSlaHours(next);
+            }}
+          >
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="2">2 часа</SelectItem>
@@ -277,7 +306,7 @@ export function CapaForm({ users }: Props) {
 
       <div className="flex flex-wrap gap-3">
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Создание..." : "Создать CAPA"}
+          {isSubmitting ? "Создание..." : "Создать нарушение"}
         </Button>
         <Button type="button" variant="outline" onClick={() => router.push("/capa")}>
           Отмена

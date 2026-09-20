@@ -48,7 +48,7 @@ async function getIntegrationStatus() {
   if (!auth.ok) return auth.response;
   const session = auth.session;
   if (!hasFullWorkspaceAccess(session.user)) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
   const orgId = getActiveOrgId(session);
   const integration = await db.tasksFlowIntegration.findUnique({
@@ -128,7 +128,7 @@ async function connectIntegration(request: Request) {
   if (!auth.ok) return auth.response;
   const session = auth.session;
   if (!isManagerRole(session.user.role) && !session.user.isRoot) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
   const orgId = getActiveOrgId(session);
 
@@ -379,7 +379,7 @@ async function deleteIntegration() {
   if (!auth.ok) return auth.response;
   const session = auth.session;
   if (!isManagerRole(session.user.role) && !session.user.isRoot) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
   const orgId = getActiveOrgId(session);
   await db.tasksFlowIntegration

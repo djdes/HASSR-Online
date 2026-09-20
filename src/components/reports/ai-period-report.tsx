@@ -7,18 +7,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GlowLoader } from "@/components/ui/glow-loader";
+import { localDayKey } from "@/lib/entry-defaults";
 
+// Дата — по часам компьютера, а не по UTC: в Москве с полуночи до
+// трёх ночи поле «по» подставляло вчерашнее число.
 function todayKey() {
-  return new Date().toISOString().slice(0, 10);
+  return localDayKey();
 }
 function daysAgo(n: number) {
   const d = new Date();
-  d.setUTCDate(d.getUTCDate() - n);
-  return d.toISOString().slice(0, 10);
+  d.setDate(d.getDate() - n);
+  return localDayKey(d);
 }
 
 /**
- * AI-отчёт за период: 2 date-picker'а, кнопка «Сгенерировать».
+ * ИИ-отчёт за период: 2 date-picker'а, кнопка «Сгенерировать».
  * После — текст в textarea + «Скопировать».
  *
  * Использование: менеджер в конце месяца открывает /reports →
@@ -68,7 +71,7 @@ export function AiPeriodReportCard() {
         </span>
         <div className="min-w-0 flex-1">
           <div className="text-[15px] font-semibold text-[#0b1024]">
-            AI-отчёт за период
+            ИИ-отчёт за период
           </div>
           <p className="mt-1 max-w-[640px] text-[13px] leading-relaxed text-[#6f7282]">
             Система собирает все журналы, инциденты, CAPA, премии за

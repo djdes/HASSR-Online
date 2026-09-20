@@ -110,20 +110,40 @@ function readInitialThemeFromStorage(fallback: SiteTheme): SiteTheme {
 export function SiteThemeProvider({
   children,
   initialTheme = "light",
+  controlled = false,
 }: {
   children: ReactNode;
   /** Server-loaded `User.themePreference`; используется как seed на первом
       визите этого устройства (когда localStorage пуст). После этого
       localStorage побеждает и переживает reload/SSR mismatch. */
   initialTheme?: SiteTheme;
+  /**
+   * Тему ведёт кто-то другой — оболочка мини-приложения
+   * (`MiniThemeProvider`). Тогда этот провайдер только ОТРАЖАЕТ
+   * текущее значение и переключает его по просьбе страниц
+   * («Внешний вид»), но сам ничего не пересчитывает и не пишет
+   * в localStorage: иначе «system» из браузера затирал выбор
+   * человека, сделанный в профиле приложения.
+   */
+  controlled?: boolean;
 }) {
-  const [mode, setModeState] = useState<ThemeMode>("system");
+  const [mode, setModeState] = useState<ThemeMode>(
+    controlled ? initialTheme : "system"
+  );
   const [autoBySchedule, setAutoState] = useState<boolean>(false);
   const [theme, setThemeState] = useState<SiteTheme>(initialTheme);
 
   // Hydrate из localStorage (см. file-level eslint-disable выше — это
   // legit hydration pattern, SSR-mismatch снимается SiteThemeBootstrap).
   useEffect(() => {
+    if (controlled) {
+      // Читаем ТО ЖЕ значение, что и оболочка, и ничего не пишем.
+      const current = readInitialThemeFromStorage(initialTheme);
+      setThemeState(current);
+      setModeState(current);
+      setAutoState(false);
+      return;
+    }
     const storedMode = readStoredMode();
     const storedAuto = readStoredAuto();
     const storedEffective = readInitialThemeFromStorage(initialTheme);
@@ -152,7 +172,7 @@ export function SiteThemeProvider({
         /* storage blocked */
       }
     }
-  }, [initialTheme]);
+  }, [controlled, initialTheme]);
 
   // Cross-tab/cross-instance sync.
   useEffect(() => {
@@ -188,6 +208,10 @@ export function SiteThemeProvider({
 
   // Live-recompute effective theme when mode / auto-schedule / system pref / time changes.
   useEffect(() => {
+    // В оболочке приложения пересчитывать нечего: тему ведёт
+    // `MiniThemeProvider`, а его выбор доезжает сюда событием
+    // `wesetup-theme-change` (слушатель выше).
+    if (controlled) return;
     function recompute() {
       // Functional setState — читаем актуальное значение `theme` без него
       // в deps (иначе цикл: setTheme → useEffect re-run → setTheme).
@@ -236,9 +260,45 @@ export function SiteThemeProvider({
       if (mqlCleanup) mqlCleanup();
       if (intervalId) clearInterval(intervalId);
     };
-  }, [mode, autoBySchedule]);
+  }, [controlled, mode, autoBySchedule]);
+
+  /**
+   * Переключение темы внутри оболочки приложения. Пишем ОБА ключа
+   * (`…-app-theme` и `…-theme-mode`) согласованно и сообщаем событием —
+   * шапка и нижнее меню перекрашиваются сразу, без перезагрузки.
+   */
+  const applyControlled = useCallback((next: SiteTheme) => {
+    setModeState(next);
+    setThemeState(next);
+    applyThemeToDOM(next);
+    try {
+      window.localStorage.setItem(STORAGE_KEY, next);
+      window.localStorage.setItem(STORAGE_MODE_KEY, next);
+      window.localStorage.setItem(STORAGE_AUTO_KEY, "0");
+    } catch {
+      /* ignore */
+    }
+    try {
+      window.dispatchEvent(
+        new CustomEvent<SiteTheme>(CUSTOM_EVENT, { detail: next })
+      );
+    } catch {
+      /* ignore */
+    }
+    void persistThemeToServer(next);
+  }, []);
 
   const setMode = useCallback((next: ThemeMode) => {
+    if (controlled) {
+      // «Как в системе» в оболочке приложения смысла не имеет: экран
+      // один и тема у него ровно одна — оставляем текущую.
+      applyControlled(
+        next === "dark" || next === "light"
+          ? next
+          : computeEffective("system", false, "light")
+      );
+      return;
+    }
     setModeState(next);
     try {
       window.localStorage.setItem(STORAGE_MODE_KEY, next);
@@ -249,16 +309,21 @@ export function SiteThemeProvider({
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [applyControlled, controlled]);
 
-  const setAutoBySchedule = useCallback((next: boolean) => {
-    setAutoState(next);
-    try {
-      window.localStorage.setItem(STORAGE_AUTO_KEY, next ? "1" : "0");
-    } catch {
-      /* ignore */
-    }
-  }, []);
+  const setAutoBySchedule = useCallback(
+    (next: boolean) => {
+      // В оболочке авто-смены по времени нет — переключатель там скрыт.
+      if (controlled) return;
+      setAutoState(next);
+      try {
+        window.localStorage.setItem(STORAGE_AUTO_KEY, next ? "1" : "0");
+      } catch {
+        /* ignore */
+      }
+    },
+    [controlled]
+  );
 
   const toggle = useCallback(() => {
     // Quick toggle — отключает auto (юзер явно выбрал), флипает mode.

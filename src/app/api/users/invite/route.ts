@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     // email-приглашения. Раньше: только manager (плюс isRoot).
     // Согласовано с /api/staff/[id]/invite-tg (commit ab1d96dd).
     if (!isManagementRole(session.user.role) && !session.user.isRoot) {
-      return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+      return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
     }
 
     const body = await request.json();

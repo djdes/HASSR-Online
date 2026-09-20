@@ -39,7 +39,7 @@ export async function POST(
   const auth = await requireApiAuth();
   if (!auth.ok) return auth.response;
   if (!hasFullWorkspaceAccess(auth.session.user)) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
   const { id: documentId } = await params;
   const organizationId = getActiveOrgId(auth.session);

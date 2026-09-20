@@ -54,7 +54,7 @@ export async function POST(request: Request) {
       })
     ) {
       return NextResponse.json(
-        { error: "Недостаточно прав" },
+        { error: "Это действие доступно руководителю" },
         { status: 403 }
       );
     }

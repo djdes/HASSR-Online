@@ -51,7 +51,7 @@ export async function GET() {
     return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
   }
   if (!(await sessionHasPermission(session, "settings.permissions"))) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
   const organizationId = getActiveOrgId(session);
 
@@ -115,7 +115,7 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
   }
   if (!(await sessionHasPermission(session, "settings.permissions"))) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
   const organizationId = getActiveOrgId(session);
   let parsed: z.infer<typeof bodySchema>;

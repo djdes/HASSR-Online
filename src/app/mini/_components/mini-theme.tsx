@@ -23,6 +23,11 @@ export type MiniTheme = "dark" | "light";
  * truth, hydrated server-side into `initialTheme` on every layout render.
  */
 const STORAGE_KEY = "wesetup-app-theme";
+/** Ключи сайтового провайдера (`site-theme.tsx`) — держим согласованными:
+ *  иначе обычный кабинет на компьютере считает, что человек выбрал
+ *  «как в системе», и перекрашивает страницы обратно. */
+const SITE_MODE_KEY = "wesetup-theme-mode";
+const SITE_AUTO_KEY = "wesetup-theme-auto-schedule";
 const ATTRIBUTE = "data-theme";
 const APP_SHELL_ATTRIBUTE = "data-app-theme";
 const MINI_ROOT_ID = "mini-root";
@@ -175,6 +180,10 @@ export function MiniThemeProvider({
     applyThemeToDOM(next);
     try {
       window.localStorage.setItem(STORAGE_KEY, next);
+      // Явный выбор человека: сайтовый провайдер не должен трактовать
+      // его как «как в системе» и не должен включать авто по времени.
+      window.localStorage.setItem(SITE_MODE_KEY, next);
+      window.localStorage.setItem(SITE_AUTO_KEY, "0");
     } catch {
       /* ignore */
     }

@@ -26,7 +26,7 @@ export async function PATCH(request: Request) {
   if (!auth.ok) return auth.response;
   const session = auth.session;
   if (!hasFullWorkspaceAccess(session.user)) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
   const body = await request.json().catch(() => null);

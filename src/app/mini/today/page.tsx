@@ -1,8 +1,11 @@
 "use client";
 
 
+import Link from "next/link";
+
 import { useRegisterRefresh } from "../_components/refresh-provider";
 import { claimReasonRu } from "../_lib/claim-errors";
+import { miniShellSignInHref } from "@/lib/mini-shell-cookie";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -63,6 +66,9 @@ export default function MiniTodayPage() {
   // Без этого любой сбой запроса оставлял экран с вечным «крутилкой»:
   // data/gate так и не появлялись, а причина нигде не показывалась.
   const [loadError, setLoadError] = useState<string | null>(null);
+  // 401 — это не «ошибка загрузки», а «вы не вошли»: вместо кнопки
+  // «Попробовать ещё раз» человеку нужна дорога на вход.
+  const [needsSignIn, setNeedsSignIn] = useState(false);
   // mounted-флаг защищает от setState'ов после unmount'а — раньше
   // быстрое переключение страниц давало "Cannot update unmounted
   // component" warning + утечка. См. pass-3 review HIGH #6.
@@ -72,13 +78,21 @@ export default function MiniTodayPage() {
     try {
       const res = await fetch("/api/mini/today", { cache: "no-store" });
       if (!res.ok) {
-        if (mountedRef.current) setLoadError(await readError(res));
+        if (mountedRef.current) {
+          setNeedsSignIn(res.status === 401);
+          setLoadError(
+            res.status === 401
+              ? "Чтобы увидеть задачи на сегодня, нужно войти. Внутри Telegram вход произойдёт сам."
+              : await readError(res)
+          );
+        }
         return;
       }
       const payload = (await res.json()) as Payload;
       if (mountedRef.current) {
         setData(payload);
         setLoadError(null);
+        setNeedsSignIn(false);
       }
     } catch {
       if (mountedRef.current) setLoadError("Нет связи — потяните вниз, чтобы обновить");
@@ -188,29 +202,44 @@ export default function MiniTodayPage() {
     if (loadError) {
       return (
         <div className="space-y-3 pb-24">
+          {/* Столбиком: раньше кнопка подпирала текст сбоку и наезжала
+              на него на узком экране. */}
           <div
-            className="rounded-2xl px-4 py-5 text-center text-[14px] leading-relaxed"
+            className="flex flex-col items-center gap-4 rounded-2xl px-4 py-5 text-center text-[14px] leading-relaxed"
             style={{
               background: "var(--mini-surface-1)",
               border: "1px solid var(--mini-divider-strong)",
               color: "var(--mini-text)",
             }}
           >
-            {loadError}
-            <button
-              type="button"
-              onClick={() => {
-                setLoadError(null);
-                void load();
-              }}
-              className="mini-press mt-4 inline-flex h-11 items-center justify-center rounded-2xl px-5 text-[14px] font-semibold"
-              style={{
-                background: "var(--mini-lime)",
-                color: "var(--mini-primary-contrast)",
-              }}
-            >
-              Попробовать ещё раз
-            </button>
+            <span>{loadError}</span>
+            {needsSignIn ? (
+              <Link
+                href={miniShellSignInHref("/mini/today")}
+                className="mini-press inline-flex h-11 items-center justify-center rounded-2xl px-5 text-[14px] font-semibold"
+                style={{
+                  background: "var(--mini-lime)",
+                  color: "var(--mini-primary-contrast)",
+                }}
+              >
+                Войти
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setLoadError(null);
+                  void load();
+                }}
+                className="mini-press inline-flex h-11 items-center justify-center rounded-2xl px-5 text-[14px] font-semibold"
+                style={{
+                  background: "var(--mini-lime)",
+                  color: "var(--mini-primary-contrast)",
+                }}
+              >
+                Попробовать ещё раз
+              </button>
+            )}
           </div>
         </div>
       );
@@ -456,8 +485,18 @@ function ScopeRow({
         {av === "available" ? (
           <button
             type="button"
-            onClick={onClaim}
-            disabled={busy || locked || disabled}
+            // Кнопка под замком остаётся нажимаемой намеренно: на
+            // телефоне подсказку из `title` не увидеть, а disabled-кнопка
+            // молчит. Тап объясняет причину тостом, брать задачу при
+            // этом по-прежнему нельзя.
+            onClick={() => {
+              if (locked) {
+                toast.info("Сначала завершите текущую задачу");
+                return;
+              }
+              onClaim();
+            }}
+            disabled={busy || disabled}
             title={locked ? "Сначала завершите текущую задачу" : undefined}
             className={[
               "mini-press inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 text-[13px] font-medium",

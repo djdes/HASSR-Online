@@ -817,12 +817,22 @@ export function HealthDocumentClient(props: Props) {
                               ) : null}
                               <button
                                 type="button"
-                                onClick={(event) =>
-                                  openCellMenu(event, employee.id, dateKey, true)
-                                }
-                                disabled={!isActive || locked}
+                                // Закрытая клетка остаётся нажимаемой:
+                                // на телефоне подсказку из `title` не
+                                // увидеть, а замок молчит. Тап объясняет
+                                // причину тостом, записать всё равно нельзя.
+                                onClick={(event) => {
+                                  if (locked) {
+                                    toast.info(lockReason ?? PAST_DAY_LOCKED_MESSAGE);
+                                    return;
+                                  }
+                                  openCellMenu(event, employee.id, dateKey, true);
+                                }}
+                                disabled={!isActive}
                                 title={lockReason ?? undefined}
                                 className={`min-w-0 flex-1 rounded-lg px-3 py-2 text-left text-[12px] font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-60 ${
+                                  locked ? "opacity-60" : ""
+                                } ${
                                   signed
                                     ? "bg-[#f5f6ff] text-[#5566f6] hover:bg-[#eef1ff]"
                                     : refused

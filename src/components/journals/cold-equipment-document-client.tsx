@@ -74,6 +74,8 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { getCleaningGridMonthLabel } from "@/lib/cleaning-document";
+import { pluralRu } from "@/lib/plural-ru";
+import { useCanManageJournalDocument } from "@/components/journals/journal-header-edit";
 import {
   createColdEquipmentConfigItem,
   coldEquipmentSlotKeys,
@@ -1086,6 +1088,8 @@ export function ColdEquipmentDocumentClient({
     () => buildResponsibleCodes(employees, rows, responsibleUserId),
     [employees, responsibleUserId, rows]
   );
+  /** Право управлять журналами — то же, что проверяет PATCH документа. */
+  const canManageDocument = useCanManageJournalDocument();
   const allSelected =
     config.equipment.length > 0 &&
     selectedEquipmentIds.length === config.equipment.length;
@@ -1106,6 +1110,27 @@ export function ColdEquipmentDocumentClient({
     }, 0);
     return { filled, total: readingSlots.length };
   }, [config.equipment, readingSlots, rowByDate, todayInPeriod, todayKey]);
+
+  // Сколько сегодняшних замеров вышли за норму. Нужно, чтобы зелёная
+  // плашка «Сегодня всё заполнено» не закрывала собой отклонения:
+  // заполнить — ещё не значит, что всё в порядке.
+  const todayOutOfNorm = useMemo(() => {
+    if (!todayInPeriod) return 0;
+    const todayRow = rowByDate[todayKey];
+    if (!todayRow) return 0;
+    return readingSlots.reduce((count, slot) => {
+      const value = todayRow.data.temperatures?.[slot.slotKey];
+      return count + (isColdEquipmentValueOutOfRange(value, slot) ? 1 : 0);
+    }, 0);
+  }, [readingSlots, rowByDate, todayInPeriod, todayKey]);
+
+  /** «Что сделали?» в янтарной плашке — прокрутка к корректирующим действиям. */
+  function scrollToCorrections() {
+    document.getElementById("cold-corrections")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }
 
   /** «Перейти» в полосе прогресса — скролл к сегодняшней колонке дня. */
   function scrollToTodayColumn() {
@@ -1664,6 +1689,9 @@ export function ColdEquipmentDocumentClient({
             #f5f6ff и НЕВАЛИДНЫЙ `h-10 w-18` на тумблере). Раскрывающаяся
             панель норм вынесена отдельным блоком ПОД полосой, чтобы сама
             полоса всегда держала эталонную высоту. */}
+        {/* Автозаполнение — настройка документа, право руководителя.
+            У сотрудника PATCH отвечал 403, а тумблер стоял на виду. */}
+        {canManageDocument ? (
         <div
           className={cn(
             DOC_AUTOFILL_STRIP_CLASS,
@@ -1695,11 +1723,12 @@ export function ColdEquipmentDocumentClient({
             </button>
           ) : null}
         </div>
+        ) : null}
 
         {/* Панель норм — СТРОКИ (~52px), а не карточки по 120px.
             Карандаши убраны: по строке кликают целиком. Последняя
             строка — селект «ФИО отв. лица», как на эталоне. */}
-        {checkedAutoFill && summaryOpen ? (
+        {checkedAutoFill && summaryOpen && canManageDocument ? (
           <div className="-mx-4 mb-10 bg-[#f3f4fe] px-4 pb-4 print:hidden md:-mx-8 md:px-8">
             <div className="space-y-1.5">
               {config.equipment.map((item) => (
@@ -1782,6 +1811,15 @@ export function ColdEquipmentDocumentClient({
             total={todayProgress.total}
             label="единиц оборудования"
             onJumpToToday={scrollToTodayColumn}
+            warning={
+              todayOutOfNorm > 0
+                ? `${todayOutOfNorm} ${pluralRu(todayOutOfNorm, "замер", "замера", "замеров")} вне нормы — опишите, что сделали`
+                : null
+            }
+            warningActionLabel="Что сделали?"
+            onWarningAction={
+              deviations.length > 0 ? scrollToCorrections : undefined
+            }
           />
         </div>
 
@@ -2348,7 +2386,7 @@ export function ColdEquipmentDocumentClient({
           </table>
 
           {deviations.length > 0 ? (
-            <section className="mt-6">
+            <section className="mt-6" id="cold-corrections">
               <div className={DOC_CAPS_TITLE_CLASS}>
                 <JournalDocumentTitle>Корректирующие действия</JournalDocumentTitle>
               </div>

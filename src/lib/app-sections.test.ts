@@ -105,8 +105,19 @@ test("у заведующей в разделах ровно то, что отк
   assert.ok(!list.includes("/settings"));
 });
 
-test("заведующая видит все разделы, кроме журналов и хаба настроек", () => {
-  assert.equal(hrefs(headChef).length, APP_SECTIONS.length - 2);
+test("заведующей закрыты ровно четыре раздела", () => {
+  // Журналы (нет `journals.view`) и три страницы с `admin.full`:
+  // хаб настроек, «Внешний вид», «Готовность к проверке».
+  const list = hrefs(headChef);
+  assert.equal(list.length, APP_SECTIONS.length - 4);
+  for (const href of [
+    "/journals",
+    "/settings",
+    "/settings/appearance",
+    "/dashboard/compliance-audit",
+  ]) {
+    assert.ok(!list.includes(href), `не должно быть видно: ${href}`);
+  }
 });
 
 test("повар не видит ни проверок, ни настроек, ни журналов", () => {

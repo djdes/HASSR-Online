@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     // получал 403 при попытке создать платёж от имени клиента
     // (типичный сценарий support — провести платёж за клиента).
     if (!isManagerRole(session.user.role) && !session.user.isRoot) {
-      return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+      return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
     }
 
     const body = await request.json().catch(() => ({}));

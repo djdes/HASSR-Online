@@ -24,7 +24,7 @@ export async function GET(
     return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
   }
   if (!hasFullWorkspaceAccess({ role: session.user.role, isRoot: session.user.isRoot === true })) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
   const { kind, id } = await params;

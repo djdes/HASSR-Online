@@ -12,7 +12,13 @@ export default async function NewCapaPage() {
 
   return (
     <div className="space-y-5">
-      <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold">Новый CAPA</h1>
+      <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold">
+        Новое нарушение
+      </h1>
+      <p className="text-[14px] text-[#6f7282]">
+        Отклонение и что с ним сделали — корректирующие и предупреждающие
+        действия (CAPA).
+      </p>
       <CapaForm users={users} />
     </div>
   );

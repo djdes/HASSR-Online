@@ -28,7 +28,7 @@ export async function POST(
     return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
   }
   if (!hasCapability(session.user, "admin.full")) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
   const { id } = await ctx.params;

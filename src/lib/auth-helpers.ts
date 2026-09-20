@@ -52,7 +52,7 @@ export async function requireApiRole(
     return {
       ok: false,
       response: NextResponse.json(
-        { error: "Недостаточно прав" },
+        { error: "Это действие доступно руководителю" },
         { status: 403 }
       ),
     };

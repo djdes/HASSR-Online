@@ -3,6 +3,7 @@ import { BodyScrollLock } from "@/lib/use-body-scroll-lock";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Bell, X } from "lucide-react";
 import { toast } from "sonner";
 import { openSupportChat } from "@/lib/support-chat-bus";
@@ -160,6 +161,15 @@ export function NotificationsBell() {
     setOpen(false);
     setSelected(new Set());
   }, []);
+
+  // Шапка живёт между переходами, а панель — нет: без этого сброса
+  // уведомления оставались поверх следующего экрана, а вместе с ними
+  // и блокировка прокрутки страницы (`BodyScrollLock` внутри).
+  const pathname = usePathname();
+  useEffect(() => {
+    setOpen(false);
+    setSelected(new Set());
+  }, [pathname]);
 
   const rows = tab === "unread" ? data.unread : data.read;
   const headerCount = data.unreadCount;

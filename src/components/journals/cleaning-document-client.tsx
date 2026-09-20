@@ -118,6 +118,7 @@ import {
 } from "@/components/shared/position-select";
 import { JournalSettingsModal } from "@/components/journals/v2/journal-settings-modal";
 import { JournalClosedBanner } from "@/components/journals/journal-closed-banner";
+import { useCanManageJournalDocument } from "@/components/journals/journal-header-edit";
 import {
   GRID_CELL_CLASS,
   GRID_DAY_OFF_BG_CLASS,
@@ -336,6 +337,8 @@ export function CleaningDocumentClient(props: Props) {
   // Очередь сохранений: PATCH'и идут строго по одному.
   const saveChainRef = useRef<Promise<unknown>>(Promise.resolve());
   const [saving, setSaving] = useState(false);
+  /** Право управлять журналами — то же, что проверяет PATCH документа. */
+  const canManageDocument = useCanManageJournalDocument();
   const [selection, setSelection] = useState<string[]>([]);
   // Multi-select cells (rowId::dateKey) для bulk-edit. Когда `cellSelectMode`
   // ON: клик по ячейке добавляет/убирает её из selection, mousedown+drag
@@ -2452,17 +2455,20 @@ export function CleaningDocumentClient(props: Props) {
             выходные» переехали в «Настройки документа» (cleaning-11) —
             их меняют раз в месяц, а место в полосе они занимали всегда. */}
         {/* Q3: рамка и свой фон #f5f6ff сняты — только общий токен-лента. */}
-        <section className={DOC_AUTOFILL_STRIP_CLASS}>
-          <Switch
-            checked={config.autoFill.enabled}
-            onCheckedChange={toggleAutoFill}
-            disabled={props.status !== "active" || saving}
-            className="data-[state=unchecked]:bg-[#d4d8ec]"
-          />
-          <span className={DOC_AUTOFILL_LABEL_CLASS}>
-            Автоматически заполнять журнал
-          </span>
-        </section>
+        {/* Настройка документа — право руководителя (сервер отвечал 403). */}
+        {canManageDocument ? (
+          <section className={DOC_AUTOFILL_STRIP_CLASS}>
+            <Switch
+              checked={config.autoFill.enabled}
+              onCheckedChange={toggleAutoFill}
+              disabled={props.status !== "active" || saving}
+              className="data-[state=unchecked]:bg-[#d4d8ec]"
+            />
+            <span className={DOC_AUTOFILL_LABEL_CLASS}>
+              Автоматически заполнять журнал
+            </span>
+          </section>
+        ) : null}
 
         {/* Тулбар «Добавить»/«Заполнение»/«Выделение» и race-strip уборки
             переехали ПОД бумажную шапку и КАПС-заголовок, вплотную над

@@ -48,7 +48,7 @@ const WORKFLOW: Record<
   },
   verification: {
     nextStatus: "closed",
-    nextLabel: "Закрыть CAPA",
+    nextLabel: "Закрыть нарушение",
     field: "verificationResult",
     fieldLabel: "Результат верификации",
     fieldPlaceholder: "Подтвердите, что проблема устранена",

@@ -86,6 +86,7 @@ import { JournalAddRow } from "@/components/journals/journal-add-row";
 import { JournalSettingsModal } from "@/components/journals/v2/journal-settings-modal";
 import { FocusTodayScroller } from "@/components/journals/focus-today-scroller";
 import { TodayProgressStrip } from "@/components/journals/today-progress-strip";
+import { useCanManageJournalDocument } from "@/components/journals/journal-header-edit";
 import { useDocumentCloseAction } from "@/components/journals/document-close-button";
 import { JournalClosedBanner } from "@/components/journals/journal-closed-banner";
 import { useMobileView } from "@/lib/use-mobile-view";
@@ -1378,6 +1379,8 @@ export function ClimateDocumentClient({
   const todayInPeriod =
     isDateWithinDocumentPeriod(todayKey, dateFrom, dateTo) &&
     !(config.skipWeekends && isWeekend(todayKey));
+  /** Право управлять журналами — то же, что проверяет PATCH документа. */
+  const canManageDocument = useCanManageJournalDocument();
   const todayProgress = useMemo(() => {
     if (!todayInPeriod || visibleRooms.length === 0 || config.controlTimes.length === 0) {
       return { filled: 0, total: 0 };
@@ -2232,6 +2235,8 @@ export function ClimateDocumentClient({
             контроля» уехали строками в бумажную шапку (C1), чекбокс
             «Не заполнять в выходные дни» — в «Настройки журнала» (C3). */}
         {/* Q3: единый токен-лента вместо локального r24 + py-5. */}
+        {/* Настройка документа — право руководителя (сервер отвечал 403). */}
+        {canManageDocument ? (
         <div className={DOC_AUTOFILL_STRIP_CLASS} data-tour={TOUR.autofill}>
           <Switch
             checked={checkedAutoFill}
@@ -2243,6 +2248,7 @@ export function ClimateDocumentClient({
             Автоматически заполнять журнал
           </span>
         </div>
+        ) : null}
 
         {/* Обёртка с mb-4 — ТОЛЬКО когда полоса реально рисуется: сам
             компонент при total===0 возвращает null, а className на

@@ -143,7 +143,7 @@ export default async function JournalHelpPage({
             >
               справочник СанПиН
             </Link>{" "}
-            или AI-помощника для конкретных вопросов.
+            или ИИ-помощника для конкретных вопросов.
           </p>
         </section>
       )}

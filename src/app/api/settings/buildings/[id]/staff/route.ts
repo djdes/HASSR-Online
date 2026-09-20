@@ -25,7 +25,7 @@ export async function PUT(request: Request, ctx: { params: Promise<{ id: string 
   const auth = await requireApiAuth();
   if (!auth.ok) return auth.response;
   if (!hasFullWorkspaceAccess(auth.session.user)) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
   const orgId = getActiveOrgId(auth.session);
   const { id: buildingId } = await ctx.params;

@@ -28,7 +28,7 @@ const REVOKE_STATEMENT =
 export async function DELETE(request: Request) {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
   const orgId = getActiveOrgId(session);

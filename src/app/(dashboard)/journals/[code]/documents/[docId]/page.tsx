@@ -281,6 +281,7 @@ async function JournalHeaderEditBoundary({
       value={{
         documentId: document.id,
         canEditDocument: canManageJournals && document.status !== "closed",
+        canManageJournals,
         canEditOrganization: hasCapability(session.user, "admin.full"),
         organizationJournalName: resolveOrgJournalName(organization),
         organizationDefaultName: resolveOrgJournalName({

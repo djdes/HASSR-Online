@@ -1421,23 +1421,33 @@ export function HygieneDocumentClient({
                               // листом снизу). Слепой перебор по тапу
                               // оставался единственным способом попасть в
                               // нужный статус и промах уводил по кругу.
-                              onClick={(event) =>
+                              // Закрытая клетка остаётся нажимаемой:
+                              // на телефоне подсказку из `title` не
+                              // увидеть, а замок молчит. Тап объясняет
+                              // причину тостом, записать всё равно нельзя.
+                              onClick={(event) => {
+                                if (locked) {
+                                  toast.info(lockReason ?? PAST_DAY_LOCKED_MESSAGE);
+                                  return;
+                                }
                                 openCellMenu(
                                   event,
                                   employee.id,
                                   dateKey,
                                   "status",
                                   true
-                                )
-                              }
-                              disabled={!isActive || locked}
+                                );
+                              }}
+                              disabled={!isActive}
                               title={lockReason ?? undefined}
                               data-tour={
                                 employee.id === tourEmployeeId && dateKey === tourDateKey
                                   ? TOUR.statusCell
                                   : undefined
                               }
-                              className="min-w-0 flex-1 rounded-lg border border-[#ececf4] bg-[#fafbff] px-3 py-2 text-left text-[12px] font-medium text-[#0b1024] hover:bg-[#f5f6ff] disabled:cursor-not-allowed disabled:opacity-60"
+                              className={`min-w-0 flex-1 rounded-lg border border-[#ececf4] bg-[#fafbff] px-3 py-2 text-left text-[12px] font-medium text-[#0b1024] hover:bg-[#f5f6ff] disabled:cursor-not-allowed disabled:opacity-60 ${
+                                locked ? "opacity-60" : ""
+                              }`}
                             >
                               {statusMeta?.code ? (
                                 <>
@@ -1454,23 +1464,29 @@ export function HygieneDocumentClient({
                             </button>
                             <button
                               type="button"
-                              onClick={(event) =>
+                              onClick={(event) => {
+                                if (locked) {
+                                  toast.info(lockReason ?? PAST_DAY_LOCKED_MESSAGE);
+                                  return;
+                                }
                                 openCellMenu(
                                   event,
                                   employee.id,
                                   dateKey,
                                   "temperature",
                                   true
-                                )
-                              }
-                              disabled={!isActive || locked}
+                                );
+                              }}
+                              disabled={!isActive}
                               title={lockReason ?? "Температура >37°C"}
                               data-tour={
                                 employee.id === tourEmployeeId && dateKey === tourDateKey
                                   ? TOUR.temperatureCell
                                   : undefined
                               }
-                              className="shrink-0 rounded-lg border border-[#ececf4] bg-[#fafbff] px-2 py-2 text-[12px] text-[#6f7282] hover:bg-[#f5f6ff] disabled:cursor-not-allowed disabled:opacity-60"
+                              className={`shrink-0 rounded-lg border border-[#ececf4] bg-[#fafbff] px-2 py-2 text-[12px] text-[#6f7282] hover:bg-[#f5f6ff] disabled:cursor-not-allowed disabled:opacity-60 ${
+                                locked ? "opacity-60" : ""
+                              }`}
                             >
                               T°: {tempLabel || "—"}
                             </button>

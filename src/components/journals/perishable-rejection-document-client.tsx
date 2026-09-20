@@ -68,6 +68,7 @@ import { JournalClosedBanner } from "@/components/journals/journal-closed-banner
 import { confirmAsync } from "@/components/ui/confirm-async";
 import { promptAsync } from "@/components/ui/prompt-async";
 import { useMobileView } from "@/lib/use-mobile-view";
+import { formatCardDateTime } from "@/lib/journal-card-date";
 import {
   MobileViewToggle,
   MobileViewTableWrapper,
@@ -306,8 +307,8 @@ export function PerishableRejectionDocumentClient({
   const cardItems: RecordCardItem[] = config.rows.map((row, index) => ({
     id: row.id,
     title: `№${index + 1} · ${row.productName || "—"}`,
-    subtitle:
-      [row.arrivalDate, row.arrivalTime].filter(Boolean).join(" ") || undefined,
+    // Общий формат карточек «дд.мм.гггг чч:мм» (в бланке формат свой).
+    subtitle: formatCardDateTime(row.arrivalDate, row.arrivalTime) || undefined,
     onClick: readOnly ? undefined : () => openEditRow(row),
     leading: !readOnly ? (
       <Checkbox

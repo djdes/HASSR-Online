@@ -48,6 +48,34 @@ export function BottomActionBar({
     setMiniRoot(document.getElementById("mini-root"));
   }, []);
 
+  /**
+   * Показывать ли закреплённую панель прямо сейчас (только в оболочке).
+   *
+   * На 360px она ложилась на первый экран и закрывала переключатель
+   * «Карточки/Таблица» и первые карточки — человек не понимал, что там
+   * вообще есть. Правило простое: пока страница стоит в самом верху и
+   * её есть куда крутить — панель не мешаем показывать содержимое.
+   * Прокрутил чуть вниз (80px) — панель приезжает. Страница короче
+   * экрана (крутить некуда) — панель видна сразу, там она никому не
+   * мешает: распорка ниже резервирует под неё место.
+   */
+  const [barVisible, setBarVisible] = useState(true);
+  useEffect(() => {
+    if (!miniRoot) return;
+    function update() {
+      const doc = document.documentElement;
+      const scrollable = doc.scrollHeight - window.innerHeight > 120;
+      setBarVisible(!scrollable || window.scrollY > 80);
+    }
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [miniRoot]);
+
   if (!primary) return null;
 
   const body = (
@@ -90,7 +118,10 @@ export function BottomActionBar({
         <div aria-hidden className="h-[88px] sm:hidden print:hidden" />
         {createPortal(
           <div
-            className="fixed inset-x-0 z-30 border-t border-[#ececf4] bg-white/95 px-4 pb-3 pt-3 backdrop-blur sm:hidden print:hidden"
+            aria-hidden={!barVisible}
+            className={`fixed inset-x-0 z-30 border-t border-[#ececf4] bg-white/95 px-4 pb-3 pt-3 backdrop-blur transition-opacity duration-200 sm:hidden print:hidden ${
+              barVisible ? "opacity-100" : "pointer-events-none opacity-0"
+            }`}
             style={{
               bottom: "calc(var(--mini-safe-b, 12px) + var(--mini-nav-h, 64px) + 8px)",
             }}

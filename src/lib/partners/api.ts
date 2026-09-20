@@ -57,7 +57,7 @@ export async function requireOrgAdminApi(): Promise<
     };
   }
   if (!hasFullWorkspaceAccess(session.user)) {
-    return { ok: false, response: NextResponse.json({ error: "Недостаточно прав" }, { status: 403 }) };
+    return { ok: false, response: NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 }) };
   }
   return { ok: true, session, organizationId: getActiveOrgId(session) };
 }

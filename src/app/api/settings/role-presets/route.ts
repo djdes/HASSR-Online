@@ -53,7 +53,7 @@ const overridesSchema = z.object({
 export async function GET() {
   const session = await requireAuth();
   if (!hasCapability(session.user, "admin.full")) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
   const orgId = getActiveOrgId(session);
   const org = await db.organization.findUnique({
@@ -68,7 +68,7 @@ export async function GET() {
 export async function PUT(request: Request) {
   const session = await requireAuth();
   if (!hasCapability(session.user, "admin.full")) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
   const orgId = getActiveOrgId(session);
 
@@ -114,7 +114,7 @@ export async function DELETE() {
   // Сброс к дефолтам — удаляем JSON.
   const session = await requireAuth();
   if (!hasCapability(session.user, "admin.full")) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
   const orgId = getActiveOrgId(session);
   await db.organization.update({

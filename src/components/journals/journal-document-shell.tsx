@@ -8,6 +8,7 @@ import {
   type DocumentBarUndo,
 } from "@/components/journals/document-actions-bar";
 import { JournalClosedBanner } from "@/components/journals/journal-closed-banner";
+import { useCanManageJournalDocument } from "@/components/journals/journal-header-edit";
 import { JournalDocumentTitle } from "@/components/journals/journal-document-header";
 import { MobileViewToggle } from "@/components/journals/mobile-view-toggle";
 import { TodayProgressStrip } from "@/components/journals/today-progress-strip";
@@ -156,6 +157,9 @@ export function JournalDocumentShell({
 }: JournalDocumentShellProps) {
   const hasCards = Boolean(cards && mobileView && onMobileView);
   const cardsMode = hasCards && mobileView === "cards";
+  // Полоса «Автоматически заполнять журнал» меняет настройку документа —
+  // это право руководителя. Сотруднику её не показываем.
+  const canManage = useCanManageJournalDocument();
 
   return (
     <div className={className}>
@@ -184,7 +188,7 @@ export function JournalDocumentShell({
         <JournalClosedBanner hint={closedHint} className="mb-5 print:hidden" />
       ) : null}
 
-      {autoFill ? (
+      {autoFill && canManage ? (
         <section className={DOC_AUTOFILL_STRIP_CLASS}>
           <Switch
             checked={autoFill.checked}

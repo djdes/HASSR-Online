@@ -68,7 +68,7 @@ export default async function CapaDetailPage({
     <div className="space-y-5">
       <PageCrumbs
         items={[
-          { label: "CAPA", href: "/capa" },
+          { label: "Нарушения", href: "/capa" },
           { label: ticket.title },
         ]}
       />

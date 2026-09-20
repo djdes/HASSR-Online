@@ -549,9 +549,14 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
       {/* Тему в оболочке ведёт MiniThemeProvider (профиль → устройство →
           Telegram → по умолчанию). SiteThemeProvider оставлен ради
           страниц, которые читают `useSiteTheme` — например «Внешний
-          вид». Его pre-hydration скрипт не рисуем: `#mini-root` уже
+          вид», — и работает в режиме `controlled`: он только отражает
+          текущую тему и переключает её, но сам НИЧЕГО не пересчитывает
+          и не пишет в localStorage. Раньше он считал источником правды
+          свой ключ `wesetup-theme-mode` (которого приложение не ставит),
+          получал «как в системе» и возвращал страницы к светлой.
+          Его pre-hydration скрипт не рисуем: `#mini-root` уже
           красит MiniThemeBootstrap, два скрипта дрались бы за атрибут. */}
-      <SiteThemeProvider initialTheme={shell.initialTheme}>
+      <SiteThemeProvider initialTheme={shell.initialTheme} controlled>
         <MiniAppShell {...shell}>
             <PageNavProvider>
               {/* Человек должен видеть, что он в чужом кабинете или в

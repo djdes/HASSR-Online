@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     // хотя UI /settings/products видят только management. Согласовываем
     // с DELETE-эндпоинтом: только management.
     if (!isManagementRole(session.user.role) && !session.user.isRoot) {
-      return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+      return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
     }
 
     const body = await request.json();
@@ -110,7 +110,7 @@ export async function PUT(request: Request) {
     // хотя UI /settings/products видят только management. Согласовываем
     // с DELETE-эндпоинтом: только management.
     if (!isManagementRole(session.user.role) && !session.user.isRoot) {
-      return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+      return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
     }
 
     const body = await request.json();
@@ -164,7 +164,7 @@ export async function DELETE(request: Request) {
     // только manager → head_chef получал 403. Также добавляем isRoot
     // bypass для согласованности с POST/PUT в этом файле.
     if (!isManagementRole(session.user.role) && !session.user.isRoot) {
-      return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+      return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);

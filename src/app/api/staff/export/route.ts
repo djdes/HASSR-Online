@@ -27,7 +27,7 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   const session = await requireAuth();
   if (!isManagementRole(session.user.role) && !session.user.isRoot) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
   const orgId = getActiveOrgId(session);

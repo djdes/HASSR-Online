@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+// Дата — по часам компьютера, а не по UTC: ночью в Москве поле «Дата»
+// подставляло вчерашнее число.
+import { localDayKey } from "@/lib/entry-defaults";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -70,7 +73,7 @@ export function PlanForm() {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
         <div className="space-y-2">
           <Label htmlFor="date">Дата *</Label>
-          <Input id="date" name="date" type="date" required defaultValue={new Date().toISOString().slice(0, 10)} />
+          <Input id="date" name="date" type="date" required defaultValue={localDayKey()} />
         </div>
         <div className="space-y-2">
           <Label>Смена</Label>
@@ -92,7 +95,7 @@ export function PlanForm() {
             <div key={i} className="flex gap-2 items-end">
               <div className="flex-1">
                 <Input
-                  placeholder="SKU / Продукт"
+                  placeholder="Продукт"
                   value={item.sku}
                   onChange={(e) => updateItem(i, "sku", e.target.value)}
                 />
@@ -105,13 +108,15 @@ export function PlanForm() {
                   onChange={(e) => updateItem(i, "targetQuantity", Number(e.target.value))}
                 />
               </div>
-              <div className="w-20">
+              {/* «P1 / P2 / P3» человеку ничего не говорили — пишем
+                  словами. Значения в базе прежние. */}
+              <div className="w-[150px]">
                 <Select value={item.priority} onValueChange={(v) => updateItem(i, "priority", v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="P1">P1</SelectItem>
-                    <SelectItem value="P2">P2</SelectItem>
-                    <SelectItem value="P3">P3</SelectItem>
+                    <SelectItem value="P1">Высокий приоритет</SelectItem>
+                    <SelectItem value="P2">Средний приоритет</SelectItem>
+                    <SelectItem value="P3">Низкий приоритет</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

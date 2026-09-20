@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       isRoot: session.user.isRoot,
     })
   ) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
   let parsed: z.infer<typeof bodySchema>;

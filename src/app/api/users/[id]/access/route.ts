@@ -28,7 +28,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
     return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
   }
   if (!isManagementRole(session.user.role) && !session.user.isRoot) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
   const { id } = await params;
@@ -136,7 +136,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
     return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
   }
   if (!isManagementRole(session.user.role) && !session.user.isRoot) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
   const { id } = await params;

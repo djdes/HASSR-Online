@@ -33,13 +33,9 @@ export default async function ChangesPage() {
     <div className="space-y-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <div className="flex items-center gap-2 text-[#5566f6]">
-            <GitBranch className="size-5" />
-            <span className="text-[12px] font-medium uppercase tracking-[0.16em]">
-              Change control
-            </span>
-          </div>
-          <h1 className="mt-2 text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
+          {/* Надзаголовок убран: он слово в слово повторял H1. */}
+          <h1 className="flex items-center gap-2 text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
+            <GitBranch className="size-6 shrink-0 text-[#5566f6]" />
             Управление изменениями
           </h1>
           <p className="mt-1.5 text-[14px] text-[#6f7282]">

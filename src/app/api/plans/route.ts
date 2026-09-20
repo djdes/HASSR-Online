@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
   // составляет только management». Раньше POST принимал от любого
   // staff-юзера — повар мог создать чужой план.
   if (!isManagementRole(session.user.role) && !session.user.isRoot) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
   const body = await req.json().catch(() => null);

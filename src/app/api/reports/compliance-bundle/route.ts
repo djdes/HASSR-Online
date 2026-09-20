@@ -78,7 +78,7 @@ export async function GET(request: Request) {
       isRoot: session.user.isRoot,
     })
   ) {
-    return new Response(JSON.stringify({ error: "Недостаточно прав" }), {
+    return new Response(JSON.stringify({ error: "Это действие доступно руководителю" }), {
       status: 403,
       headers: { "Content-Type": "application/json" },
     });

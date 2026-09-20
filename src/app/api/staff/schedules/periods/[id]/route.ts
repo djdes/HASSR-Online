@@ -14,7 +14,7 @@ export async function DELETE(
 ) {
   const session = await requireAuth();
   if (!isManagementRole(session.user.role) && !session.user.isRoot) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
   const { id } = await params;
   const orgId = getActiveOrgId(session);

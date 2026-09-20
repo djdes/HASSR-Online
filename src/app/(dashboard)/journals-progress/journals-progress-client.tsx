@@ -101,10 +101,10 @@ export function JournalsProgressClient() {
       <PageHeader
         title={
           counts.untouched + counts.in_progress > 0
-            ? `${counts.untouched + counts.in_progress} ${counts.untouched + counts.in_progress === 1 ? "журнал ждёт" : "журналов ждут"}`
-            : "Все журналы готовы"
+            ? `Сегодня нужно заполнить: ${counts.untouched + counts.in_progress} ${counts.untouched + counts.in_progress === 1 ? "журнал" : "журналов"}`
+            : "Все журналы на сегодня готовы"
         }
-        description="Прогресс заполнения за сегодня. Кликни на журнал чтобы открыть его и проверить. Обновляется автоматически."
+        description="Только те журналы, которые нужно вести сегодня. Откройте журнал, чтобы заполнить или проверить. Обновляется автоматически."
         actions={
           <button
             type="button"

@@ -41,6 +41,7 @@ import {
   type RegisterDocumentRow,
 } from "@/lib/register-document";
 import { useMobileView } from "@/lib/use-mobile-view";
+import { formatCardDateTime } from "@/lib/journal-card-date";
 import {
   RecordCardsView,
   type RecordCardItem,
@@ -139,7 +140,9 @@ function ComplaintRowDialog({
             />
           </div>
           <div className="space-y-3">
-            <Label className="sr-only">ФИО заявителя</Label>
+            {/* Подпись была только для скринридера, и поле стояло без
+                заголовка — в отличие от соседних. */}
+            <Label className="text-[14px] text-[#73738a]">ФИО заявителя</Label>
             <Input
               value={draft.values.applicantName || ""}
               onChange={(event) => setValue("applicantName", event.target.value)}
@@ -412,7 +415,8 @@ export function ComplaintDocumentClient({
   const cardItems: RecordCardItem[] = config.rows.map((row, index) => ({
     id: row.id,
     title: `№${index + 1} · ${row.values.applicantName || "—"}`,
-    subtitle: formatComplaintDate(row.values.receiptDate || "") || undefined,
+    // Общий формат карточек «дд.мм.гггг» (в бланке — через дефис).
+    subtitle: formatCardDateTime(row.values.receiptDate || "") || undefined,
     leading: (
       <Checkbox
         checked={selectedRowIds.includes(row.id)}

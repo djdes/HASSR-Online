@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
   // подразделений) — management-only. Раньше любой staff мог увидеть
   // полный список тикетов своей org-и.
   if (!isManagementRole(session.user.role) && !session.user.isRoot) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
   const { searchParams } = new URL(req.url);
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
   // через прямой fetch создать тикет (например, sourceType / sourceEntryId
   // привязал к чужой entry, чтобы засветить отклонение).
   if (!isManagementRole(session.user.role) && !session.user.isRoot) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
   const body = await req.json().catch(() => null);

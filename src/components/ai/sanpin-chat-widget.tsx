@@ -209,7 +209,7 @@ export function SanpinChatWidget({ bottomOffset }: { bottomOffset?: number }) {
       toast.error(
         err instanceof Error && err.name !== "TimeoutError"
           ? err.message
-          : "AI-помощник не ответил вовремя. Попробуйте ещё раз"
+          : "ИИ-помощник не ответил вовремя. Попробуйте ещё раз"
       );
       // Roll back the optimistic user message — keeps history clean.
       setMessages(messages);
@@ -301,7 +301,7 @@ export function SanpinChatWidget({ bottomOffset }: { bottomOffset?: number }) {
     {
       id: "sanpin-chat",
       order: 10,
-      label: "AI помощник",
+      label: "ИИ-помощник",
       hint: "Спросить про СанПиН, ХАССП и ваши журналы",
       icon: Sparkles,
       tone: "brand",
@@ -329,8 +329,8 @@ export function SanpinChatWidget({ bottomOffset }: { bottomOffset?: number }) {
           onClick={() => setOpen(true)}
           style={fabBottom}
           className="fixed bottom-5 right-5 z-40 flex size-11 items-center justify-center rounded-full bg-gradient-to-br from-[#5566f6] to-[#7a5cff] text-white shadow-[0_12px_28px_-10px_rgba(85,102,246,0.6)] transition-all hover:scale-105"
-          aria-label="AI помощник по СанПиН"
-          title="AI помощник"
+          aria-label="ИИ-помощник по СанПиН"
+          title="ИИ-помощник"
         >
           <Sparkles className="size-4" />
         </button>
@@ -348,7 +348,7 @@ export function SanpinChatWidget({ bottomOffset }: { bottomOffset?: number }) {
                   <Bot className="size-5" />
                 </div>
                 <div>
-                  <div className="text-[15px] font-semibold">AI помощник</div>
+                  <div className="text-[15px] font-semibold">ИИ-помощник</div>
                   <div className="text-[12px] text-white/80">
                     СанПиН, ХАССП и ваши журналы
                   </div>
@@ -399,7 +399,7 @@ export function SanpinChatWidget({ bottomOffset }: { bottomOffset?: number }) {
                     ))}
                   </div>
                   <p className="rounded-xl bg-[#fff8eb] px-3 py-2 text-[12px] text-[#7a4a00]">
-                    Ответы AI — рекомендация. Окончательное решение принимает
+                    Ответы ИИ — рекомендация. Окончательное решение принимает
                     ваш технолог.
                   </p>
                 </div>

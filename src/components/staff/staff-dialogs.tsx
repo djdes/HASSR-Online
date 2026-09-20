@@ -479,7 +479,12 @@ export function StaffAddFlowDialog(props: {
       <Dialog open={props.open} onOpenChange={(v) => !v && closeAll()}>
         <DialogContent className="flex max-h-[88vh] supports-[height:100dvh]:max-h-[88dvh] max-w-[calc(100vw-1rem)] flex-col gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-[460px]">
           {shell(
-            "Добавление должности",
+            // Название группы в заголовке: без него было непонятно,
+            // куда именно ляжет новая должность — в «Руководство»
+            // или в «Сотрудники».
+            `Добавление должности · ${
+              props.categoryKey === "management" ? "Руководство" : "Сотрудники"
+            }`,
             <div className="space-y-3">
               {floatingLabel({
                 id: "pos-name",

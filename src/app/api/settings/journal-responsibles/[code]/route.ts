@@ -32,7 +32,7 @@ export async function PUT(
   if (!auth.ok) return auth.response;
   const session = auth.session;
   if (!hasCapability(session.user, "admin.full")) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
   const { code } = await params;

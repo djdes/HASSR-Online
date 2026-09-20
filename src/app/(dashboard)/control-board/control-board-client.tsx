@@ -285,13 +285,17 @@ export function ControlBoardClient() {
           чего заведующая открывает доску. Остальная разбивка по статусам
           живёт в светлой карточке ниже. */}
       <PageHeader
-        title="Контрольная доска"
+        title="Панель контроля"
         description="Все задачи смены в одном экране. Видно, кто уже работает, кто ещё не начал, что не сделано и что ждёт проверки."
         actions={
           <>
             <PageHeaderStat tone={compliance === 100 ? "ok" : "neutral"}>
-              Прогресс дня: {compliance}% ({s.approved + s.pendingReview} из{" "}
-              {s.total})
+              {/* Раньше здесь стояло просто «Прогресс дня: 0% (0 из 38)»,
+                  и это число путали с «сколько журналов заполнено».
+                  Считаем именно задачи смены, а не журналы. */}
+              Задач смены выполнено: {s.approved + s.pendingReview} из {s.total}
+              {" · "}
+              {compliance}%
             </PageHeaderStat>
             {s.overdue > 0 ? (
               <PageHeaderStat tone="warn">

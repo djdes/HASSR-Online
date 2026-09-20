@@ -6,18 +6,22 @@ import {
   AlertTriangle,
   BadgeCheck,
   Bell,
+  BookOpen,
   Building2,
   CalendarRange,
   ChevronRight,
   ClipboardList,
   Coins,
+  CreditCard,
   FileText,
   Gauge,
   GitBranch,
   GraduationCap,
+  History,
   LayoutGrid,
   Lightbulb,
   Package,
+  Palette,
   Plug,
   ScrollText,
   Search,
@@ -53,16 +57,20 @@ const SECTION_ICONS: Record<string, LucideIcon> = {
   AlertTriangle,
   BadgeCheck,
   Bell,
+  BookOpen,
   Building2,
   CalendarRange,
   ClipboardList,
   Coins,
+  CreditCard,
   FileText,
   Gauge,
   GitBranch,
   GraduationCap,
+  History,
   Lightbulb,
   Package,
+  Palette,
   Plug,
   ScrollText,
   Settings2,
@@ -205,12 +213,18 @@ export function MiniSectionsClient({
             >
               {group.title}
             </h2>
-            <p
-              className="mt-0.5 text-[12px]"
-              style={{ color: "var(--mini-text-faint)" }}
-            >
-              {group.subtitle}
-            </p>
+            {/* Подзаголовок собираем из ТОГО, ЧТО РЕАЛЬНО показано:
+                готовая строка «Журналы, проверка, команда» висела и над
+                одной-единственной карточкой у повара. Один пункт —
+                подзаголовка нет вовсе, он уже написан на карточке. */}
+            {group.items.length > 1 ? (
+              <p
+                className="mt-0.5 text-[12px]"
+                style={{ color: "var(--mini-text-faint)" }}
+              >
+                {group.items.map((item) => item.label).join(" · ")}
+              </p>
+            ) : null}
           </div>
           {group.items.map((item) => {
             const Icon = SECTION_ICONS[item.icon] ?? LayoutGrid;

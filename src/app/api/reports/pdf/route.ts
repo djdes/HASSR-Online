@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     // — ROOT не мог скачать отчёт за импесонируемого клиента.
     if (!isManagementRole(session.user.role) && !session.user.isRoot) {
       return NextResponse.json(
-        { error: "Недостаточно прав" },
+        { error: "Это действие доступно руководителю" },
         { status: 403 }
       );
     }

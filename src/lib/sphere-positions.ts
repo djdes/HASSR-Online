@@ -270,21 +270,44 @@ export const SPHERE_POSITION_SUGGESTIONS: Record<OrgSphere, SpherePositions> = {
 };
 
 /**
+ * Ключ сравнения названий должностей, нечувствительный к роду.
+ *
+ * «Заведующая производством» и «Заведующий производством» — одна и та
+ * же должность, и предлагать вторую, когда первая уже заведена, —
+ * значит плодить дубли. Обрезаем родовые окончания каждого слова:
+ * этого достаточно для «заведующая/заведующий», «старшая/старший»,
+ * «уборщица/уборщик». Полноценной морфологии здесь не нужно.
+ */
+export function positionMatchKey(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/ё/g, "е")
+    .split(/\s+/)
+    .map((word) =>
+      // Порядок важен: длинные окончания проверяем раньше коротких,
+      // иначе «уборщица» обрежется до «уборщиц», а «уборщик» — до
+      // «уборщ», и пара снова разъедется.
+      word.length > 5 ? word.replace(/(ица|ий|ый|ая|ой|ик)$/u, "") : word
+    )
+    .join(" ");
+}
+
+/**
  * Подсказки для конкретной рубрики минус то, что уже заведено.
  *
- * Сравниваем по нормализованному имени: «повар» и «Повар » — одна и та
- * же должность, и предлагать её второй раз бессмысленно.
+ * Сравниваем по ключу, нечувствительному к регистру и роду: «повар»,
+ * «Повар » и «Заведующий» при заведённой «Заведующей» — не новые
+ * должности, предлагать их второй раз бессмысленно.
  */
 export function positionSuggestionsFor(
   sphere: OrgSphere,
   category: PositionCategoryKey,
   existingNames: Iterable<string>,
 ): string[] {
-  const taken = new Set(
-    Array.from(existingNames, (name) => name.trim().toLowerCase()),
-  );
+  const taken = new Set(Array.from(existingNames, positionMatchKey));
   const list =
     SPHERE_POSITION_SUGGESTIONS[sphere]?.[category] ??
     SPHERE_POSITION_SUGGESTIONS.other[category];
-  return list.filter((name) => !taken.has(name.toLowerCase()));
+  return list.filter((name) => !taken.has(positionMatchKey(name)));
 }

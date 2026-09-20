@@ -9,16 +9,50 @@ import {
   ArrowLeft,
   CheckCircle2,
   Loader2,
+  ClipboardList,
+  Droplets,
+  HeartPulse,
   RotateCcw,
+  ShieldCheck,
   SkipForward,
+  Sparkles,
   Thermometer,
   Undo2,
+  Utensils,
 } from "lucide-react";
 import { claimReasonRu } from "@/app/mini/_lib/claim-errors";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PhotoField, parsePhotoValue } from "@/components/journals/photo-field";
 import { TaskFillField } from "@/components/task-fill/task-fill-field";
 import type { TaskFormSchema } from "@/lib/tasksflow-adapters/task-form";
+
+/**
+ * Иконка задачи по виду журнала. Раньше у любой задачи стоял
+ * термометр — уборщица открывала «Уборка зала» и видела градусник.
+ * Незнакомый человек читает картинку раньше текста, и она не должна
+ * врать. Ничего не подошло — нейтральный планшет.
+ */
+function claimIcon(journalCode: string) {
+  const code = journalCode.toLowerCase();
+  if (code.includes("clean") || code.includes("sanitary") || code.includes("disinfect")) {
+    return Sparkles;
+  }
+  if (code.includes("health") || code.includes("med")) return HeartPulse;
+  if (
+    code.includes("temp") ||
+    code.includes("cold") ||
+    code.includes("climate") ||
+    code.includes("fridge")
+  ) {
+    return Thermometer;
+  }
+  if (code.includes("hygien")) return Droplets;
+  if (code.includes("food") || code.includes("dish") || code.includes("product")) {
+    return Utensils;
+  }
+  if (code.includes("control") || code.includes("audit")) return ShieldCheck;
+  return ClipboardList;
+}
 
 type Claim = {
   id: string;
@@ -387,6 +421,7 @@ export default function ClaimPage({
   }, [loadClaim]);
 
   const form = claim ? JOURNAL_FORMS[claim.journalCode] : null;
+  const ClaimIcon = claimIcon(claim?.journalCode ?? "");
 
   async function submit() {
     if (!claim) return;
@@ -588,7 +623,9 @@ export default function ClaimPage({
   );
 
   return (
-    <div className="space-y-4 pb-24">
+    // Нижний отступ больше обычного: последняя кнопка («Вернуть
+    // задачу») пряталась под нижним меню приложения сразу при открытии.
+    <div className="space-y-4 pb-40">
       <BackToday />
 
       <header
@@ -606,7 +643,7 @@ export default function ClaimPage({
               color: "var(--mini-primary-contrast)",
             }}
           >
-            <Thermometer className="size-5" />
+            <ClaimIcon className="size-5" />
           </span>
           <div>
             <div
@@ -751,7 +788,7 @@ export default function ClaimPage({
               color: "var(--mini-text-muted)",
             }}
           >
-            Когда все шаги выполнены — нажмите «Завершить» внизу.
+            Когда все шаги выполнены — нажми «Завершить» внизу.
           </div>
         </div>
       ) : form ? (
@@ -773,8 +810,8 @@ export default function ClaimPage({
             color: "var(--mini-text-muted)",
           }}
         >
-          Для этой задачи короткой формы нет — нажмите «Завершить», чтобы
-          её закрыть. Подробная запись заполняется в полной версии кабинета.
+          Для этой задачи короткой формы нет — нажми «Завершить», чтобы
+          её закрыть. Подробную запись заполняют в полной версии кабинета.
         </div>
       )}
 

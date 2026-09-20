@@ -38,7 +38,7 @@ export function ComplianceHeatmap({ rows, days }: Props) {
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
         <div>
           <h2 className="text-[16px] font-semibold tracking-[-0.01em] text-[#0b1024]">
-            Heatmap compliance
+            Карта заполнения журналов
           </h2>
           <p className="mt-0.5 text-[13px] text-[#6f7282]">
             Строки — журналы (сверху самые проблемные), колонки — дни

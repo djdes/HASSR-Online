@@ -101,7 +101,7 @@ export async function POST(request: Request) {
     // (overwrite product DB всей организации). Теперь проверяем
     // management role (manager + head_chef + legacy owner/technologist).
     if (!isManagementRole(session.user.role) && !session.user.isRoot) {
-      return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+      return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
     }
 
     const formData = await request.formData();

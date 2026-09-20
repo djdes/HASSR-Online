@@ -32,7 +32,7 @@ export async function GET() {
   const auth = await requireApiAuth();
   if (!auth.ok) return auth.response;
   if (!hasFullWorkspaceAccess(auth.session.user)) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
   const orgId = getActiveOrgId(auth.session);
   const org = await db.organization.findUnique({
@@ -61,7 +61,7 @@ export async function PUT(request: Request) {
   const auth = await requireApiAuth();
   if (!auth.ok) return auth.response;
   if (!hasFullWorkspaceAccess(auth.session.user)) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
   let body: z.infer<typeof PutSchema>;

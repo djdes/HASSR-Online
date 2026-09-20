@@ -211,6 +211,14 @@ export const APP_SECTIONS: AppSection[] = [
     group: "production",
     access: WEB_PATH,
   },
+  {
+    href: "/sanpin",
+    hint: "Требования СанПиН простыми словами",
+    icon: "BookOpen",
+    group: "production",
+    // `page.tsx`: только `await requireAuth()` — открыта всем вошедшим.
+    access: WEB_PATH,
+  },
   // ---- Отчёты и деньги -----------------------------------------------
   {
     href: "/reports",
@@ -279,7 +287,9 @@ export const APP_SECTIONS: AppSection[] = [
   },
   {
     href: "/settings/products",
-    hint: "Справочник продуктов",
+    // Подсказка повторяла название пункта слово в слово и ничего
+    // человеку не сообщала.
+    hint: "Названия, сроки годности и условия хранения",
     icon: "Package",
     group: "settings",
     access: WEB_PATH,
@@ -313,6 +323,38 @@ export const APP_SECTIONS: AppSection[] = [
     icon: "ShieldCheck",
     group: "settings",
     access: WEB_PATH,
+  },
+  {
+    href: "/settings/subscription",
+    hint: "Тариф, счета и автопродление",
+    icon: "CreditCard",
+    group: "money",
+    // `page.tsx`: `hasFullWorkspaceAccess(session.user)`, иначе /dashboard.
+    access: FULL_ACCESS,
+  },
+  {
+    href: "/settings/appearance",
+    hint: "Тема, логотип и цвета кабинета",
+    icon: "Palette",
+    group: "settings",
+    // `page.tsx`: `hasCapability(session.user, "admin.full")`, иначе /journals.
+    access: anyOf("admin.full"),
+  },
+  {
+    href: "/dashboard/catch-up",
+    hint: "Заполнить пропущенные дни задним числом",
+    icon: "History",
+    group: "work",
+    // `page.tsx`: `hasFullWorkspaceAccess(session.user)`, иначе /dashboard.
+    access: FULL_ACCESS,
+  },
+  {
+    href: "/dashboard/compliance-audit",
+    hint: "12 проверок и что починить до прихода инспектора",
+    icon: "ShieldCheck",
+    group: "work",
+    // `page.tsx`: `hasCapability(session.user, "admin.full")`, иначе /dashboard.
+    access: anyOf("admin.full"),
   },
 ];
 

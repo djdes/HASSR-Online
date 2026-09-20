@@ -16,7 +16,7 @@ export async function GET() {
   if (!auth.ok) return auth.response;
   const session = auth.session;
   if (!hasCapability(session.user, "admin.full")) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
   const organizationId = getActiveOrgId(session);
   const [docCount, entryCount] = await Promise.all([
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
   if (!auth.ok) return auth.response;
   const session = auth.session;
   if (!hasCapability(session.user, "admin.full")) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
   const body = await request.json().catch(() => null);

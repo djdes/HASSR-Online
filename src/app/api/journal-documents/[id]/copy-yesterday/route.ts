@@ -61,7 +61,7 @@ export async function POST(
       isRoot: session.user.isRoot,
     })
   ) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
   const body = (await request.json().catch(() => ({}))) as Body;

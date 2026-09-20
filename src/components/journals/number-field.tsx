@@ -1,7 +1,7 @@
 "use client";
 
 import { Minus, Plus } from "lucide-react";
-import { useId } from "react";
+import { useId, useState } from "react";
 
 /**
  * Числовое поле журнала «под перчатки».
@@ -68,6 +68,55 @@ export function isOutOfNorm(
   return false;
 }
 
+/**
+ * От какого числа отсчитывает первый тап «−»/«+» в ПУСТОМ поле.
+ *
+ * Раньше отсчёт всегда шёл от нуля, и одно случайное касание плюса в
+ * журнале холодильников с нормой 2…6 °C сохраняло «0,1 °C» как
+ * настоящий замер — сразу отклонение и запись в корректирующие
+ * действия. Если норма известна, стартуем от её середины: человек
+ * дотягивает до факта парой нажатий, а случайный тап не выглядит
+ * аварией. Нормы нет — поведение прежнее, от нуля.
+ */
+export function stepStartValue(
+  norm?: { min?: number | null; max?: number | null } | null
+): number {
+  const min = typeof norm?.min === "number" ? norm.min : null;
+  const max = typeof norm?.max === "number" ? norm.max : null;
+  if (min !== null && max !== null) return (min + max) / 2;
+  if (min !== null) return min;
+  if (max !== null) return max;
+  return 0;
+}
+
+/**
+ * Сообщение, если введённое руками значение физически невозможно для
+ * поля (`min`/`max` — не норма, а границы самого прибора). Раньше
+ * границы работали только у степпера, и «44» в поле с max 30
+ * сохранялось молча. Молча НЕ сохраняем и молча НЕ правим: замер
+ * может быть настоящим, и человек должен увидеть, что не так.
+ */
+export function outOfRangeMessage(
+  raw: string,
+  min?: number,
+  max?: number,
+  unit?: string
+): string | null {
+  const value = parseNumeric(raw);
+  if (value === null) return null;
+  const hasMin = typeof min === "number";
+  const hasMax = typeof max === "number";
+  const tooLow = hasMin && value < (min as number);
+  const tooHigh = hasMax && value > (max as number);
+  if (!tooLow && !tooHigh) return null;
+  const suffix = unit ? ` ${unit}` : "";
+  if (hasMin && hasMax) {
+    return `Проверьте значение: допустимо от ${min} до ${max}${suffix}`;
+  }
+  if (hasMax) return `Проверьте значение: допустимо не выше ${max}${suffix}`;
+  return `Проверьте значение: допустимо не ниже ${min}${suffix}`;
+}
+
 export function formatNorm(
   norm?: { min?: number | null; max?: number | null } | null,
   unit?: string
@@ -103,10 +152,20 @@ export function NumberField({
   const inputId = id ?? generatedId;
   const outOfNorm = isOutOfNorm(value, norm);
   const normHint = hint ?? formatNorm(norm, unit);
+  // Ошибка «так не бывает» живёт до следующей правки поля.
+  const [rangeError, setRangeError] = useState<string | null>(null);
+
+  /** Единая точка сохранения: и blur, и Enter, и степпер. */
+  function commit(next: string) {
+    const problem = outOfRangeMessage(next, min, max, unit);
+    setRangeError(problem);
+    if (problem) return;
+    onCommit?.(next);
+  }
 
   function nudge(direction: 1 | -1) {
     if (disabled) return;
-    const current = parseNumeric(value) ?? 0;
+    const current = parseNumeric(value) ?? stepStartValue(norm);
     // Плавающая арифметика: 4.1 + 0.1 = 4.199999. Округляем по числу
     // знаков в шаге, иначе в журнал уедет «4.199999999999999».
     const decimals = String(step).split(".")[1]?.length ?? 0;
@@ -115,7 +174,7 @@ export function NumberField({
     if (typeof max === "number") next = Math.min(max, next);
     const text = next.toFixed(decimals);
     onChange(text);
-    onCommit?.(text);
+    commit(text);
   }
 
   return (
@@ -152,10 +211,23 @@ export function NumberField({
             value={value}
             placeholder={placeholder ?? "—"}
             disabled={disabled}
-            onChange={(event) => onChange(event.target.value)}
-            onBlur={(event) => onCommit?.(event.target.value)}
+            onChange={(event) => {
+              if (rangeError) setRangeError(null);
+              onChange(event.target.value);
+            }}
+            onBlur={(event) => commit(event.target.value)}
+            // Enter / «Готово» на экранной клавиатуре — то же, что уход
+            // из поля. Раньше человек жал «Готово», видел значение на
+            // экране и уходил со страницы, а оно не сохранялось.
+            onKeyDown={(event) => {
+              if (event.key !== "Enter") return;
+              event.preventDefault();
+              commit(event.currentTarget.value);
+              event.currentTarget.blur();
+            }}
+            aria-invalid={rangeError ? true : undefined}
             className={`h-12 w-full rounded-2xl border bg-white px-3.5 text-[16px] tabular-nums text-[#0b1024] transition-colors duration-150 placeholder:text-[#9b9fb3] focus:outline-none focus:ring-4 disabled:bg-[#fafbff] disabled:text-[#6f7282] ${
-              outOfNorm
+              rangeError || outOfNorm
                 ? "border-[#e0857d] bg-[#fff4f2] text-[#a13a32] focus:border-[#d2453d] focus:ring-[#d2453d]/15"
                 : "border-[#dcdfed] focus:border-[#5566f6] focus:ring-[#5566f6]/15"
             } ${unit ? "pr-10" : ""}`}
@@ -180,7 +252,11 @@ export function NumberField({
         {trailing ? <div className="shrink-0">{trailing}</div> : null}
       </div>
 
-      {normHint ? (
+      {rangeError ? (
+        <div role="alert" className="mt-1 text-[12px] font-medium text-[#d2453d]">
+          {rangeError}
+        </div>
+      ) : normHint ? (
         <div
           className={`mt-1 text-[12px] ${
             outOfNorm ? "font-medium text-[#a13a32]" : "text-[#9b9fb3]"

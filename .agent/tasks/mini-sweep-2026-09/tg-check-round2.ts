@@ -1,0 +1,21 @@
+// Проверка второй пачки: колокольчик, тёмная тема на страницах сайта, права повара на бланке, поле температуры, срок нарушения.
+import { openTelegramSession, db } from "./tg-session";
+(async () => {
+  { const s = await openTelegramSession({ role: "cookA" }); const p = s.page; await p.waitForTimeout(2000);
+    await p.locator('.mini-root header button[aria-label*="ведомлен"]').first().click().catch(() => null); await p.waitForTimeout(1200);
+    await p.locator('.mini-nav-rail a, .mini-root nav a').filter({ hasText: "Разделы" }).first().click({ force: true }).catch(() => null); await p.waitForTimeout(3000);
+    console.log("колокольчик→разделы:", JSON.stringify(await p.evaluate(`({path:location.pathname,bodyPos:getComputedStyle(document.body).position,bodyOverflow:getComputedStyle(document.body).overflow,panel:/Нет новых уведомлений|Прочитанные/.test(document.body.innerText)})`)));
+    const doc = await db.journalDocument.findFirst({ where: { organizationId: s.user.organizationId, status: "active", template: { code: "hygiene" } }, orderBy: { createdAt: "desc" }, select: { id: true } });
+    await p.goto(`${s.base}/journals/hygiene/documents/${doc!.id}`, { waitUntil: "load", timeout: 300000 }); await p.waitForTimeout(3500);
+    console.log("повар на бланке:", JSON.stringify(await p.evaluate(`({autofill:/Автоматически заполнять/.test(document.body.innerText),settings:/Настройки журнала/.test(document.body.innerText),barVisibleAtTop:!!Array.from(document.querySelectorAll('#mini-root > .fixed.inset-x-0')).find(function(e){var r=e.getBoundingClientRect();return r.height>20&&getComputedStyle(e).visibility!=='hidden'&&getComputedStyle(e).opacity!=='0'})})`)));
+    await s.close(); }
+  { const s = await openTelegramSession({ role: "ownerA" }); const p = s.page; await p.goto(s.base + "/mini/me", { waitUntil: "load", timeout: 300000 }); await p.waitForTimeout(2500);
+    await p.waitForFunction(`/Тёмная/.test(document.body.innerText)`, null, { timeout: 60000 }).catch(() => null); await p.getByText("Тёмная", { exact: true }).first().click(); await p.waitForTimeout(1500);
+    for (const r of ["/dashboard", "/journals", "/settings/users"]) { await p.goto(s.base + r, { waitUntil: "load", timeout: 300000 }); await p.waitForTimeout(2500); console.log("тёмная", r, JSON.stringify(await p.evaluate(`({rootTheme:document.getElementById('mini-root').dataset.theme,app:document.getElementById('mini-root').dataset.appTheme,mainBg:getComputedStyle(document.querySelector('main')).backgroundColor,bodyBg:getComputedStyle(document.body).backgroundColor,ls:[localStorage.getItem('wesetup-app-theme'),localStorage.getItem('wesetup-theme-mode')]})`))); }
+    await p.goto(s.base + "/mini/me", { waitUntil: "load", timeout: 300000 }); await p.waitForTimeout(2000); console.log("после обхода в профиле:", await p.evaluate(`document.getElementById('mini-root').dataset.theme`)); await p.getByText("Светлая", { exact: true }).first().click().catch(() => null); await p.waitForTimeout(1200);
+    await p.goto(s.base + "/capa/new", { waitUntil: "load", timeout: 300000 }); await p.waitForTimeout(3000); console.log("нарушение: заголовок", await p.evaluate(`(document.querySelector('main h1')||{}).innerText`), "| ошибки:", s.errors.slice(0, 3).join(" ; ") || "нет");
+    const cold = await db.journalDocument.findFirst({ where: { organizationId: s.user.organizationId, status: "active", template: { code: "cold_equipment_control" } }, orderBy: { createdAt: "desc" }, select: { id: true } });
+    s.errors.length = 0; await p.goto(`${s.base}/journals/cold_equipment_control/documents/${cold!.id}`, { waitUntil: "load", timeout: 300000 }); await p.waitForTimeout(4000);
+    const inp = p.locator('main input[inputmode="decimal"], main input[type="number"]').first(); if (await inp.isVisible().catch(() => false)) { await inp.fill("44"); await inp.press("Enter"); await p.waitForTimeout(1500); console.log("44 °C:", JSON.stringify(await p.evaluate(`({msg:(document.body.innerText.match(/Проверьте значение[^\n]*/)||[''])[0]})`)), "| PUT/POST:", s.errors.length ? s.errors[0] : "нет ошибок сервера"); } else console.log("поле температуры не найдено");
+    await s.close(); }
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 300)); process.exit(1); });

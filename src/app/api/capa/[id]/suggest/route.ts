@@ -61,7 +61,7 @@ export async function POST(
   // CAPA workflow — management-only по дизайну (см. /api/capa
   // POST/GET); согласовываем suggest с ним.
   if (!hasFullWorkspaceAccess(auth.session.user)) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
   const { id } = await params;

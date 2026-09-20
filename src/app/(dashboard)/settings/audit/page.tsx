@@ -22,9 +22,7 @@ export default async function AuditPage() {
         <div>
           <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold">Журнал действий</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            События Wesetup и TasksFlow в одном месте. Раздельно по
-            системам — П-17 единой архитектуры (TF аудит хранится в TF,
-            подтягивается в момент рендера).
+            События WeSetup и TasksFlow в одной ленте.
           </p>
         </div>
         <Link

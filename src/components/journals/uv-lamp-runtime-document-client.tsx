@@ -78,6 +78,7 @@ import { JournalSelectionBar } from "@/components/journals/journal-selection-bar
 import { JournalAddRow } from "@/components/journals/journal-add-row";
 import { FocusTodayScroller } from "@/components/journals/focus-today-scroller";
 import { JournalClosedBanner } from "@/components/journals/journal-closed-banner";
+import { useCanManageJournalDocument } from "@/components/journals/journal-header-edit";
 import { toDateKey } from "@/lib/hygiene-document";
 import { useMobileView } from "@/lib/use-mobile-view";
 import {
@@ -1116,6 +1117,8 @@ export function UvLampRuntimeDocumentClient(props: Props) {
     { rowId: string; sessionIndex: number } | null
   >(null);
   const [autoFill, setAutoFill] = useState(props.autoFill === true);
+  /** Право управлять журналами — то же, что проверяет PATCH документа. */
+  const canManageDocument = useCanManageJournalDocument();
 
   const [config, setConfig] = useState(() => normalizeUvRuntimeDocumentConfig(props.config));
   // На кого записывать строку без выбранного сотрудника: ответственный
@@ -1568,7 +1571,8 @@ export function UvLampRuntimeDocumentClient(props: Props) {
       )}
 
       {/* Полоса автозаполнения — сразу под строкой заголовка (эталон). */}
-      {props.status === "active" && (
+      {/* Настройка документа — право руководителя (сервер отвечал 403). */}
+      {props.status === "active" && canManageDocument && (
         <div className={DOC_AUTOFILL_STRIP_CLASS}>
           <Switch checked={autoFill} onCheckedChange={(checked) => void handleAutoFillChange(checked)} />
           <span className={DOC_AUTOFILL_LABEL_CLASS}>Автоматически заполнять журнал</span>

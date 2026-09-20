@@ -16,7 +16,7 @@ export async function PATCH(
   }
 
   if (!isManagementRole(session.user.role)) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
   const body = await request.json();

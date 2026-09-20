@@ -2,7 +2,7 @@ import { Skeleton, SkeletonPageHeader } from "@/components/ui/skeleton";
 
 /**
  * Skeleton страницы `/reports`. Повторяет структуру: шапка, карточка
- * AI-отчёта, сравнение недель, графики (тренд + heatmap'ы), сводный
+ * ИИ-отчёта, сравнение недель, графики (тренд + heatmap'ы), сводный
  * ZIP-отчёт, форма генерации.
  */
 export default function ReportsLoading() {

@@ -21,7 +21,7 @@ export async function POST(request: Request) {
   const auth = await requireApiAuth();
   if (!auth.ok) return auth.response;
   if (!hasCapability(auth.session.user, "admin.full")) {
-    return NextResponse.json({ ok: false, error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ ok: false, error: "Это действие доступно руководителю" }, { status: 403 });
   }
   const organizationId = getActiveOrgId(auth.session);
   if (!innLookupRateLimiter.consume(`legal:${organizationId}`)) {

@@ -53,6 +53,7 @@ import {
 } from "@/components/shared/position-select";
 import { JournalSettingsModal } from "@/components/journals/v2/journal-settings-modal";
 import { ControlPeriodicityField } from "@/components/journals/control-periodicity-field";
+import { useCanManageJournalDocument } from "@/components/journals/journal-header-edit";
 type UserItem = {
   id: string;
   name: string;
@@ -797,6 +798,8 @@ export function StaffJournalToolbar({
   useV2 = false,
 }: Props) {
   const router = useRouter();
+  /** Право управлять журналами — то же, что проверяет PATCH документа. */
+  const canManageDocument = useCanManageJournalDocument();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [checked, setChecked] = useState(autoFill);
   const [isSwitching, setIsSwitching] = useState(false);
@@ -859,6 +862,9 @@ export function StaffJournalToolbar({
       router.refresh();
     } catch (error) {
       setChecked(previous);
+      // Окно подтверждения закрываем в ЛЮБОМ случае: при отказе сервера
+      // оно оставалось открытым поверх тоста, и человек жал «Да» ещё раз.
+      setAutoFillDialog(null);
       toast.error(error instanceof Error ? error.message : "Ошибка автозаполнения");
     } finally {
       setIsSwitching(false);
@@ -957,7 +963,8 @@ export function StaffJournalToolbar({
             эталоне (крошки → H1 → полоса → бумажная шапка). Кнопка
             «Добавить» здесь больше НЕ рендерится: её место — над таблицей
             (<StaffJournalAddButton>, см. hygiene/health-document-client). */}
-        {status === "active" && !hideAutoFill ? (
+        {/* Настройка документа — право руководителя (сервер отвечал 403). */}
+        {status === "active" && !hideAutoFill && canManageDocument ? (
           // H5/Q3 аудита: у эталона полоса — лента 48px, подпись 15px/600,
           // тумблер штатного размера (44×24), зазор до подписи 12px.
           // Вся геометрия живёт в DOC_AUTOFILL_STRIP_CLASS.

@@ -447,7 +447,7 @@ export function Header({
             <>
               <Link
                 href="/control-board"
-                title="Контрольная доска"
+                title="Панель контроля"
                 className={cn(
                   "ml-1 hidden items-center gap-2 h-10 rounded-lg px-3 text-[14px] font-semibold transition-colors duration-200 lg:flex",
                   pathname === "/control-board"

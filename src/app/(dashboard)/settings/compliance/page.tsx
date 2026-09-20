@@ -37,7 +37,7 @@ export default async function CompliancePage() {
           </span>
           <div>
             <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
-              Compliance
+              Строгость журналов
             </h1>
             <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
               Настройки строгости журналов: кто и когда может править уже

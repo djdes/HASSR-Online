@@ -30,7 +30,7 @@ export async function PATCH(
   const auth = await requireApiAuth();
   if (!auth.ok) return auth.response;
   if (!hasFullWorkspaceAccess(auth.session.user)) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
   const { code, id } = await ctx.params;
   const organizationId = getActiveOrgId(auth.session);
@@ -98,7 +98,7 @@ export async function DELETE(
   const auth = await requireApiAuth();
   if (!auth.ok) return auth.response;
   if (!hasFullWorkspaceAccess(auth.session.user)) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
   const { code, id } = await ctx.params;
   const organizationId = getActiveOrgId(auth.session);

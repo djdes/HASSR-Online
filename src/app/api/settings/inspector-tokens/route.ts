@@ -40,7 +40,7 @@ export async function GET() {
   if (!auth.ok) return auth.response;
   const session = auth.session;
   if (!hasFullWorkspaceAccess(session.user)) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
   const orgId = getActiveOrgId(session);
 
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
   if (!auth.ok) return auth.response;
   const session = auth.session;
   if (!hasFullWorkspaceAccess(session.user)) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
   let parsed;
@@ -133,7 +133,7 @@ export async function DELETE(request: Request) {
   if (!auth.ok) return auth.response;
   const session = auth.session;
   if (!hasFullWorkspaceAccess(session.user)) {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
