@@ -84,6 +84,8 @@ const out: Record<string, unknown> = {};
     out.coldEmptyError = (await page.locator(".err").innerText()).trim().slice(0, 120);
     out.coldEmptyBad = await page.locator(".fl.bad").count();
     out.coldOffChips = await page.locator(".chip.offc").count();
+    out.amberDeviationCss = (await page.content()).includes("#e9b949");
+    out.flatLabelCss = (await page.content()).includes(".lab .lab-s");
     const cards = await page.locator(".obj").count();
     for (let i = 0; i < cards; i += 1) await page.locator(".obj").nth(i).locator(".qv .chip").nth(1).click();
     out.coldValues = await page.locator(".obj input.in").evaluateAll((els) => els.map((el) => (el as HTMLInputElement).value));
