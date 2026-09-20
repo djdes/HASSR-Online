@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, Droplets, QrCode, Thermometer } from "lucide-react";
+import { AlertTriangle, CheckCircle2, QrCode } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -14,10 +13,8 @@ import {
 } from "@/components/ui/select";
 import { DeviationCorrection } from "@/components/qr-fill/deviation-correction";
 import { QuickSwitchNext, QuickSwitchStrip, type QuickSwitchItem } from "@/components/qr-fill/quick-switch";
-import { QuickValues } from "@/components/qr-fill/quick-values";
-import { StepButton } from "@/components/qr-fill/stepper";
+import { ReadingField } from "@/components/qr-fill/reading-field";
 import { draftKeyFor, useFormDraft } from "@/components/qr-fill/use-form-draft";
-import { stepNumber } from "@/lib/quick-values";
 
 type Metric = { enabled: boolean; min: number | null; max: number | null };
 
@@ -337,64 +334,11 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                   </p>
                 ) : null}
                 {norms.temperature.enabled ? (
-                  <div>
-                    <label htmlFor="room-fill-temperature" className="text-[13px] text-[#3c4053]">
-                      Температура, °C{stampLabel ? <span className="font-normal text-[#9b9fb3]"> · {stampLabel}</span> : null}
-                    </label>
-                    <div className="mt-1 flex items-center gap-2">
-                      <span className="flex size-12 items-center justify-center rounded-2xl bg-[#f5f6ff] text-[#5566f6]">
-                        <Thermometer className="size-5" />
-                      </span>
-                      <StepButton delta={-1} label="Минус: температура на градус ниже" onClick={() => setTemperature((current) => stepNumber(current, -1, norms.temperature.min, norms.temperature.max))} />
-                      <Input
-                        id="room-fill-temperature"
-                        type="text"
-                        inputMode="decimal"
-                        value={temperature}
-                        onChange={(event) => setTemperature(event.target.value)}
-                        placeholder={
-                          norms.temperature.min !== null && norms.temperature.max !== null
-                            ? `${norms.temperature.min}…${norms.temperature.max}`
-                            : "0"
-                        }
-                        className="h-12 flex-1 rounded-2xl border-[#dcdfed] text-[18px]"
-                      />
-                      <StepButton delta={1} label="Плюс: температура на градус выше" onClick={() => setTemperature((current) => stepNumber(current, 1, norms.temperature.min, norms.temperature.max))} />
-                    </div>
-                    <QuickValues min={norms.temperature.min} max={norms.temperature.max} value={temperature} onPick={setTemperature} label="Быстрый ввод температуры" />
-                  </div>
+                  <ReadingField id="room-fill-temperature" label="Температура" unit="°C" stamp={stampLabel} value={temperature} onChange={setTemperature} min={norms.temperature.min} max={norms.temperature.max} required />
                 ) : null}
 
                 {norms.humidity.enabled ? (
-                  <div>
-                    <label htmlFor="room-fill-humidity" className="text-[13px] text-[#3c4053]">
-                      Влажность, %{stampLabel ? <span className="font-normal text-[#9b9fb3]"> · {stampLabel}</span> : null}
-                    </label>
-                    <div className="mt-1 flex items-center gap-2">
-                      <span className="flex size-12 items-center justify-center rounded-2xl bg-[#f5f6ff] text-[#5566f6]">
-                        <Droplets className="size-5" />
-                      </span>
-                      <StepButton delta={-1} label="Минус: влажность на процент ниже" onClick={() => setHumidity((current) => stepNumber(current, -1, norms.humidity.min, norms.humidity.max))} />
-                      <Input
-                        id="room-fill-humidity"
-                        type="text"
-                        inputMode="decimal"
-                        value={humidity}
-                        onChange={(event) => setHumidity(event.target.value)}
-                        placeholder={
-                          norms.humidity.min !== null && norms.humidity.max !== null
-                            ? `${norms.humidity.min}…${norms.humidity.max}`
-                            : "0–100"
-                        }
-                        className="h-12 flex-1 rounded-2xl border-[#dcdfed] text-[18px]"
-                      />
-                      <StepButton delta={1} label="Плюс: влажность на процент выше" onClick={() => setHumidity((current) => stepNumber(current, 1, norms.humidity.min, norms.humidity.max))} />
-                    </div>
-                    <QuickValues min={norms.humidity.min} max={norms.humidity.max} value={humidity} onPick={setHumidity} label="Быстрый ввод влажности" />
-                    {humidityInvalid ? (
-                      <p className="mt-1.5 text-[12px] text-[#a13a32]">Влажность — число от 0 до 100.</p>
-                    ) : null}
-                  </div>
+                  <ReadingField id="room-fill-humidity" label="Влажность" unit="%" stamp={stampLabel} value={humidity} onChange={setHumidity} min={norms.humidity.min} max={norms.humidity.max} invalidText={humidityInvalid ? "Влажность — число от 0 до 100." : null} />
                 ) : null}
 
                 {/* Вне нормы — «Что сделали» обязательно: комментарий ложится
