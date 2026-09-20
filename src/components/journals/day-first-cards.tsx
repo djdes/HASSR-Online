@@ -15,6 +15,21 @@ import {
 } from "@/components/journals/day-first-logic";
 
 /**
+ * Нажатие без настоящего события (нижняя кнопка «Заполнить: …», свайп
+ * «Выбрать»). Обработчики строк зовут `preventDefault()` и читают
+ * `currentTarget` — голый `{}` ронял их с TypeError, и главная кнопка экрана
+ * молча не делала ничего.
+ */
+const SYNTHETIC_PRESS = {
+  preventDefault() {},
+  stopPropagation() {},
+  currentTarget: null,
+  target: null,
+  clientX: 0,
+  clientY: 0,
+} as unknown as React.MouseEvent;
+
+/**
  * Карточки «Сегодня → кто/что».
  *
  * Зачем: карточный режим матричных журналов был построен по оси
@@ -289,7 +304,7 @@ export function DayFirstCards({
                     tone: "neutral",
                     icon: <SlidersHorizontal className="size-4" />,
                     onRun: () =>
-                      item.onPress?.({} as React.MouseEvent),
+                      item.onPress?.(SYNTHETIC_PRESS),
                   }
                 : undefined
             }
@@ -319,7 +334,7 @@ export function DayFirstCards({
                   document
                     .querySelector(`[data-day-row="${target.id}"]`)
                     ?.scrollIntoView({ behavior: "smooth", block: "center" });
-                  target.onPress?.({} as React.MouseEvent);
+                  target.onPress?.(SYNTHETIC_PRESS);
                 },
               }
             : null

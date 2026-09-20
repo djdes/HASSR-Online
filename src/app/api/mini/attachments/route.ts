@@ -5,7 +5,7 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { logAudit } from "@/lib/audit";
 import { miniAttachmentRateLimiter } from "@/lib/rate-limit";
-import { writeFile } from "fs/promises";
+import { mkdir, writeFile } from "fs/promises";
 import { join } from "path";
 import crypto from "crypto";
 
@@ -85,6 +85,10 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(bytes);
 
     const uploadDir = join(process.cwd(), "public", "uploads");
+    // На свежей выкладке каталога `public/uploads` может не быть — без него
+    // `writeFile` падал, фото не прикладывалось, и задачу с обязательным
+    // фото нельзя было завершить.
+    await mkdir(uploadDir, { recursive: true });
     const filepath = join(uploadDir, filename);
     await writeFile(filepath, buffer);
 
@@ -120,7 +124,7 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.error("[mini/attachments] upload error:", err);
     return NextResponse.json(
-      { error: "Upload failed" },
+      { error: "Не удалось загрузить фото. Попробуйте ещё раз." },
       { status: 500 }
     );
   }
