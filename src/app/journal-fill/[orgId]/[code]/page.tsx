@@ -29,10 +29,10 @@ export default async function JournalFillPage({
   searchParams,
 }: {
   params: Promise<{ orgId: string; code: string }>;
-  searchParams: Promise<{ token?: string }>;
+  searchParams: Promise<{ token?: string; employee?: string }>;
 }) {
   const { orgId, code } = await params;
-  const { token } = await searchParams;
+  const { token, employee: employeeParam } = await searchParams;
   if (!token) notFound();
 
   const check = verifyJournalFillToken(token, orgId, code);
@@ -98,6 +98,7 @@ export default async function JournalFillPage({
       employees={employees}
       todayKey={todayKey}
       journalDisabled={!isHub && disabledCodes.includes(code)}
+      initialEmployeeId={employeeParam && employees.some((item) => item.id === employeeParam) ? employeeParam : null}
     />
   );
 }

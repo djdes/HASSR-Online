@@ -28,6 +28,10 @@ const manrope = localFont({
   weight: "200 800",
   variable: "--font-manrope",
   display: "swap",
+  // Без preload: файл 68 КБ качается только там, где шрифт реально
+  // используется (кабинет), а публичные QR-формы на системном шрифте
+  // не ждут его на медленной сети.
+  preload: false,
 });
 
 export const metadata: Metadata = {

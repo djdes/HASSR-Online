@@ -1,0 +1,23 @@
+import fs from "node:fs";
+import path from "node:path";
+import { chromium } from "playwright";
+const BASE = process.env.BASE ?? "http://localhost:3020";
+const ROOT = path.resolve(process.cwd(), ".agent/tasks/journal-qr-fill-2026-09/e2e");
+const probe = JSON.parse(fs.readFileSync(path.join(ROOT, "probe.json"), "utf8")) as { tokens: Record<string, string>; users: Array<{ id: string; name: string; email: string }> };
+const ORG = "cmoe6rpt4000097ts71yb922y";
+const E2E = probe.users.find((u) => u.email === "e2e-fill-guide@wesetup.local")!;
+(async () => {
+  const browser = await chromium.launch({ channel: "chrome" });
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, javaScriptEnabled: false });
+  const page = await ctx.newPage();
+  const url = `${BASE}/journal-fill/${ORG}/finished_product?token=${encodeURIComponent(probe.tokens.finished_product)}`;
+  await page.goto(url, { waitUntil: "load", timeout: 240_000 });
+  const href = await page.locator(`a[href*="employee=${E2E.id}"]`).first().getAttribute("href");
+  console.log("nojs link:", href ? "present" : "MISSING");
+  await page.locator(`a[href*="employee=${E2E.id}"]`).first().click();
+  await page.waitForLoadState("load");
+  const body = (await page.evaluate(() => document.body.innerText.slice(0, 300))).replace(/\s+/g, " ");
+  console.log("nojs after click url has employee:", page.url().includes("employee="), "| body:", body.slice(0, 160));
+  console.log("nojs shows employee + Сменить:", body.includes(E2E.name.split(" ")[0]) && body.includes("Сменить"));
+  await browser.close();
+})();

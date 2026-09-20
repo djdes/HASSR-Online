@@ -39,6 +39,8 @@ type Mode = "public" | "pin" | "auth";
 
 type Props = {
   token: string;
+  /** Сотрудник из `?employee=`: тап по списку до загрузки скриптов ведёт сюда обычной ссылкой. */
+  initialEmployeeId?: string | null;
   orgId: string;
   orgName: string;
   code: string;
@@ -117,9 +119,12 @@ export function JournalFillClient(props: Props) {
   const docKey = `wesetup.journal-fill.doc:${orgId}:${code}`;
   const [documentId, setDocumentId] = useState<string | null>(props.documents.length === 1 ? props.documents[0].id : null);
   const [employeeId, setEmployeeId] = useState<string | null>(
-    mode === "auth" && props.sessionEmployee && !props.sessionEmployee.canPickOthers ? props.sessionEmployee.id : null
+    mode === "auth" && props.sessionEmployee && !props.sessionEmployee.canPickOthers ? props.sessionEmployee.id : props.initialEmployeeId ?? null
   );
-  const [employeeConfirmed, setEmployeeConfirmed] = useState(mode === "auth" && !!props.sessionEmployee && !props.sessionEmployee.canPickOthers);
+  // Публичный режим: сотрудник из ссылки сразу подтверждён (PIN и вход требуют своего шага).
+  const [employeeConfirmed, setEmployeeConfirmed] = useState(
+    (mode === "auth" && !!props.sessionEmployee && !props.sessionEmployee.canPickOthers) || (mode === "public" && !!props.initialEmployeeId)
+  );
   const [pin, setPin] = useState("");
   const [query, setQuery] = useState("");
   /** Кто выбирался на этом телефоне — ставим первым; читается после mount (SSR-разметка одинакова). */
@@ -421,11 +426,18 @@ export function JournalFillClient(props: Props) {
           {filteredEmployees.map((item) => {
             const active = item.id === employeeId;
             return (
-              <button
+              // Обычная ссылка с `?employee=`: работает и до загрузки скриптов
+              // (медленная сеть в цехе) — страница откроется с выбранным
+              // сотрудником; после гидрации клик перехватывается без перезагрузки.
+              <a
                 key={item.id}
-                type="button"
+                href={`/journal-fill/${orgId}/${code}?token=${encodeURIComponent(token)}&employee=${encodeURIComponent(item.id)}`}
+                role="button"
                 aria-pressed={active}
-                onClick={() => setEmployeeId(item.id)}
+                onClick={(event) => {
+                  event.preventDefault();
+                  setEmployeeId(item.id);
+                }}
                 className={`${bigButton} ${active ? "border-[#5566f6] bg-[#eef1ff]" : ""}`}
               >
                 <span className="flex min-w-0 items-center gap-3">
@@ -436,7 +448,7 @@ export function JournalFillClient(props: Props) {
                   </span>
                 </span>
                 {active ? <CheckCircle2 className="size-5 shrink-0 text-[#3848c7]" /> : null}
-              </button>
+              </a>
             );
           })}
         </div>
