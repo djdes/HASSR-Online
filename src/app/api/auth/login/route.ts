@@ -68,6 +68,9 @@ export async function POST(request: Request) {
 
     // Минт JWT и раскладка кук вынесены в lib/issue-session.ts —
     // мгновенная регистрация выдаёт сессию тем же кодом.
+    // Успешный вход не тратит лимит: он защищает от перебора паролей, а за
+    // одним роутером кафе входит вся смена.
+    loginRateLimiter.refund(rlKey);
     return issueSession(
       NextResponse.json({ success: true }),
       user,

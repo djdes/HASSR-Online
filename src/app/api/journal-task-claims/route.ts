@@ -129,7 +129,8 @@ export async function POST(request: Request) {
         ok: false,
         reason: "user_has_active",
         activeClaim: result.activeClaim,
-        message: `Сначала заверши «${result.activeClaim.parentHint || result.activeClaim.scopeLabel}»`,
+        // На «вы»: остальные экраны приложения обращаются так же.
+        message: `Сначала завершите «${result.activeClaim.parentHint || result.activeClaim.scopeLabel}» — или верните её в общий список.`,
       },
       { status: 409 }
     );

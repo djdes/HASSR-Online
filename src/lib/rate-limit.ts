@@ -19,6 +19,8 @@ type Bucket = {
 export type RateLimiter = {
   /** Возвращает true если запрос разрешён, иначе false. */
   consume(key: string): boolean;
+  /** Вернуть попытку: успешное действие не должно съедать лимит. */
+  refund(key: string): void;
   /** Сколько секунд до сброса счётчика. */
   remainingMs(key: string): number;
 };
@@ -49,6 +51,11 @@ export function createRateLimiter(opts: {
       if (b.tokens <= 0) return false;
       b.tokens -= 1;
       return true;
+    },
+    refund(key: string): void {
+      const b = buckets.get(key);
+      if (!b || b.resetAt < Date.now()) return;
+      b.tokens = Math.min(opts.tokensPerInterval, b.tokens + 1);
     },
     remainingMs(key: string): number {
       const b = buckets.get(key);

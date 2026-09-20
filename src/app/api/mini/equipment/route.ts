@@ -21,6 +21,10 @@ export async function GET() {
       name: true,
       type: true,
       areaId: true,
+      // Норма температуры — то, ради чего в журнал и смотрят: без неё
+      // человек не знает, нормальные ли показания он записывает.
+      tempMin: true,
+      tempMax: true,
       area: { select: { name: true } },
     },
   });
@@ -30,6 +34,8 @@ export async function GET() {
       id: e.id,
       name: e.name,
       type: e.type,
+      tempMin: e.tempMin,
+      tempMax: e.tempMax,
       areaName: e.area?.name ?? "—",
     })),
   });

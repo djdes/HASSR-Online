@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import type { BuildingOption } from "@/lib/building-scope";
 
 /** Блок `location` из /api/mini/home. */
@@ -51,9 +52,12 @@ export function MiniLocationSwitcher() {
       });
       if (!response.ok) throw new Error();
       setLocation({ ...location, activeBuildingId: building.id });
+      toast.success(`Точка: ${building.name}`);
       router.refresh();
     } catch {
-      // Как и у организации: без тостов, список останется на прежней точке.
+      // Как и у организации: сбой должен быть виден, иначе человек решит,
+      // что точка переключилась, а данные показываются от прежней.
+      toast.error("Не удалось переключить точку. Попробуйте ещё раз.");
     } finally {
       setBusyId(null);
     }

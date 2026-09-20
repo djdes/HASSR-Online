@@ -6,13 +6,16 @@ import { use, useCallback, useEffect, useState } from "react";
 import { useRegisterRefresh } from "../../_components/refresh-provider";
 import { useLiveRefetch } from "@/lib/use-live-refetch";
 import Link from "next/link";
-import { ArrowLeft, ExternalLink, Plus } from "lucide-react";
+import { ArrowLeft, ChevronRight, Plus } from "lucide-react";
+import { toast } from "sonner";
+import { hasDocumentFillUi } from "@/lib/journal-document-helpers";
 import { PhotoUploader, PhotoFile } from "../../_components/photo-uploader";
 import { PhotoLightbox } from "../../_components/photo-lightbox";
 import { JournalTaskPool } from "../../_components/task-pool";
 import { FillGuideLauncher } from "@/components/journals/fill-guide-launcher";
 import { fieldLabel, formatFieldValue } from "@/lib/field-labels";
 import { useScrollHide } from "../../_hooks/use-scroll-hide";
+import { journalSubtitle } from "../_journal-subtitle";
 
 /**
  * Журналы где работает task-pool с race-claim'ами. Если шаблон в этом
@@ -90,9 +93,10 @@ export default function MiniJournalPage({
 }) {
   const { code } = use(params);
   const [payload, setPayload] = useState<Payload | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ title: string; hint: string } | null>(
+    null
+  );
   const [copying, setCopying] = useState(false);
-  const [copyMsg, setCopyMsg] = useState<string | null>(null);
 
   const load = useCallback(
     async (signal?: AbortSignal, silent = false) => {
@@ -102,18 +106,26 @@ export default function MiniJournalPage({
           signal,
         });
         if (!resp.ok) {
-          const body = (await resp.json().catch(() => ({ error: "" }))) as {
-            error?: string;
-          };
-          throw new Error(body.error || `HTTP ${resp.status}`);
+          if (signal?.aborted || silent) return;
+          // Раньше сюда падал текст ответа целиком: «Нет доступа»,
+          // «HTTP 500». Человек видел приговор без объяснения — и шёл
+          // жаловаться, что приложение сломалось.
+          setError(explainLoadFailure(resp.status));
+          return;
         }
         const data = (await resp.json()) as Payload;
-        if (!signal?.aborted) setPayload(data);
-      } catch (err) {
+        if (!signal?.aborted) {
+          setPayload(data);
+          setError(null);
+        }
+      } catch {
         // Тихое перечитывание по живому событию не должно подменять
         // список экраном ошибки из-за одного неудачного запроса.
         if (signal?.aborted || silent) return;
-        setError(err instanceof Error ? err.message : "Ошибка загрузки");
+        setError({
+          title: "Нет связи",
+          hint: "Журнал не загрузился. Проверьте интернет и потяните экран вниз, чтобы обновить.",
+        });
       }
     },
     [code]
@@ -136,14 +148,38 @@ export default function MiniJournalPage({
       <div className="space-y-4">
         <BackLink />
         <div
-          className="rounded-2xl p-4 text-sm"
+          className="rounded-3xl p-4"
           style={{
-            background: "var(--mini-crimson-soft)",
-            border: "1px solid rgba(255, 82, 104, 0.24)",
-            color: "var(--mini-crimson)",
+            background: "var(--mini-surface-1)",
+            border: "1px solid var(--mini-divider-strong)",
           }}
         >
-          {error}
+          <h1
+            className="text-[16px] font-semibold"
+            style={{ color: "var(--mini-text)" }}
+          >
+            {error.title}
+          </h1>
+          <p
+            className="mt-1 text-[13px] leading-5"
+            style={{ color: "var(--mini-text-muted)" }}
+          >
+            {error.hint}
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setError(null);
+              void load();
+            }}
+            className="mini-press mt-3 inline-flex h-10 items-center rounded-2xl px-4 text-[14px] font-semibold"
+            style={{
+              background: "var(--mini-surface-2)",
+              color: "var(--mini-text)",
+            }}
+          >
+            Попробовать снова
+          </button>
         </div>
       </div>
     );
@@ -155,6 +191,17 @@ export default function MiniJournalPage({
     return <MiniListSkeleton label="Загружаем журнал" />;
   }
 
+  const subtitle = journalSubtitle(
+    payload.template.name,
+    payload.template.description
+  );
+  // `hasDocumentFillUi` шире ответа API: у протокола аудита, отчёта и
+  // журнала жалоб заполнение тоже идёт таблицей, хотя старый ответ
+  // помечал их как «полевые». Из-за этого им рисовались «Последние
+  // записи» и кнопка «Новая запись» — она вела на форму из одного поля
+  // «Участок», а у жалоб и вовсе на «Страница не найдена».
+  const isDocumentJournal = payload.isDocument || hasDocumentFillUi(code);
+
   return (
     <div className="flex flex-1 flex-col gap-4 pb-28">
       <BackLink />
@@ -165,32 +212,22 @@ export default function MiniJournalPage({
         >
           {payload.template.name}
         </h1>
-        {payload.template.description ? (
+        {subtitle ? (
           <p
             className="mt-1 text-[13px] leading-5"
             style={{ color: "var(--mini-text-muted)" }}
           >
-            {payload.template.description}
+            {subtitle}
           </p>
         ) : null}
       </header>
 
-      {copyMsg ? (
-        <div
-          className="rounded-xl px-3 py-2 text-[13px]"
-          style={{
-            background: "var(--mini-sage-soft)",
-            border: "1px solid var(--mini-divider-strong)",
-            color: "var(--mini-sage)",
-          }}
-        >
-          {copyMsg}
-        </div>
-      ) : null}
-
       {POOL_JOURNAL_CODES.has(code) ? (
         <section className="space-y-2">
-          <div className="px-1 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
+          <div
+            className="px-1 text-[12px] font-semibold uppercase tracking-[0.14em]"
+            style={{ color: "var(--mini-text-muted)" }}
+          >
             Сегодняшние задачи
           </div>
           <JournalTaskPool
@@ -204,7 +241,7 @@ export default function MiniJournalPage({
         </section>
       ) : null}
 
-      {payload.isDocument ? (
+      {isDocumentJournal ? (
         <DocumentJournalBody
           code={code}
           documents={payload.documents ?? []}
@@ -217,25 +254,30 @@ export default function MiniJournalPage({
           copying={copying}
           onCopyYesterday={async () => {
             setCopying(true);
-            setCopyMsg(null);
             try {
               const res = await fetch(
                 `/api/mini/journals/${code}/bulk-copy-yesterday`,
                 { method: "POST" }
               );
-              const data = await res.json().catch(() => ({ error: "" }));
-              if (res.ok) {
-                setCopyMsg(`Скопировано ${data.copied} запис(и/ей) из вчерашнего дня`);
-                // Refresh entries
-                const resp = await fetch(`/api/mini/journals/${code}/entries`, {
-                  cache: "no-store",
-                });
-                if (resp.ok) setPayload(await resp.json());
-              } else {
-                setCopyMsg(data.error || "Не удалось скопировать");
+              const data = (await res.json().catch(() => ({}))) as {
+                error?: string;
+                copied?: number;
+              };
+              if (!res.ok) {
+                // Результат копирования — это тост, а не зелёная
+                // плашка: раньше отказ («нет записей за вчера»)
+                // показывался тем же зелёным блоком, что и успех.
+                toast.error(data.error || "Не удалось скопировать");
+                return;
               }
+              toast.success(
+                data.copied
+                  ? `Записей создано: ${data.copied}`
+                  : "Копировать нечего — вчера записей не было"
+              );
+              await load();
             } catch {
-              setCopyMsg("Ошибка сети");
+              toast.error("Нет связи — записи не скопировались");
             } finally {
               setCopying(false);
             }
@@ -244,6 +286,35 @@ export default function MiniJournalPage({
       )}
     </div>
   );
+}
+
+/** Почему журнал не открылся — словами, и что делать дальше. */
+function explainLoadFailure(status: number): { title: string; hint: string } {
+  if (status === 401) {
+    return {
+      title: "Приложение вышло из учётной записи",
+      hint: "Закройте приложение и откройте его снова — понадобится войти заново.",
+    };
+  }
+  if (status === 403) {
+    return {
+      title: "Этот журнал вам не открыли",
+      hint: "Доступ к журналам выдаёт руководитель. Попросите открыть этот журнал — после этого он появится на главной.",
+    };
+  }
+  if (status === 404) {
+    // Не утверждаем «такого журнала нет»: 404 прилетает и когда сервер
+    // просто не успел отдать ответ. Обещание, что журнал исчез, пугает
+    // сильнее, чем есть на самом деле.
+    return {
+      title: "Журнал не открылся",
+      hint: "Попробуйте ещё раз. Если не поможет — возможно, ссылка устарела или журнал отключили: выберите журнал из списка на главной.",
+    };
+  }
+  return {
+    title: "Журнал не загрузился",
+    hint: "Похоже, сбой на нашей стороне. Попробуйте ещё раз через минуту.",
+  };
 }
 
 function BackLink() {
@@ -404,7 +475,8 @@ function DocumentJournalBody({
               color: "var(--mini-text-muted)",
             }}
           >
-            Руководитель ещё не создал ни одного документа этого типа.
+            Руководитель ещё не завёл ни одной таблицы этого журнала —
+            заполнять пока нечего. Попросите её создать.
           </div>
         ) : (
           documents.map((d) => {
@@ -462,7 +534,9 @@ function DocumentJournalBody({
                       : ""}
                   </div>
                 </div>
-                <ExternalLink
+                {/* Стрелка «наружу» обещала уход на сайт — таблица
+                    открывается здесь же. */}
+                <ChevronRight
                   className="mt-0.5 size-4 shrink-0 sm:mt-0"
                   style={{ color: "var(--mini-text-faint)" }}
                 />
@@ -595,11 +669,31 @@ function entryPreview(
 }
 
 function formatDateRange(from: string, to: string): string {
-  const fmt = (s: string) =>
-    new Date(s).toLocaleDateString("ru-RU", {
+  const start = new Date(from);
+  const end = new Date(to);
+  // Почти все таблицы — ровно месяц. «Сентябрь 2026» читается с одного
+  // взгляда, «01.09.2026 – 30.09.2026» приходится разбирать; и так же
+  // период подписан внутри самой таблицы.
+  const lastDay = new Date(
+    end.getFullYear(),
+    end.getMonth() + 1,
+    0
+  ).getDate();
+  const wholeMonth =
+    start.getFullYear() === end.getFullYear() &&
+    start.getMonth() === end.getMonth() &&
+    start.getDate() === 1 &&
+    end.getDate() === lastDay;
+  if (wholeMonth) {
+    const month = start.toLocaleDateString("ru-RU", { month: "long" });
+    return `${month[0].toUpperCase()}${month.slice(1)} ${start.getFullYear()}`;
+  }
+  const fmt = (d: Date) =>
+    d.toLocaleDateString("ru-RU", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
     });
-  return `${fmt(from)} – ${fmt(to)}`;
+  // Таблица на один день печаталась как «18.09.2026 – 18.09.2026».
+  return fmt(start) === fmt(end) ? fmt(start) : `${fmt(start)} – ${fmt(end)}`;
 }

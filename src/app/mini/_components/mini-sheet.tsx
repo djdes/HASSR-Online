@@ -7,6 +7,7 @@ import { Drawer } from "vaul";
 import { MODAL_BODY_CLASS, MODAL_CARD_HEIGHT_CLASS } from "@/components/ui/modal-tokens";
 
 import { haptic } from "./use-haptic";
+import { useMiniTheme } from "./mini-theme";
 
 /**
  * Лист снизу для Mini App.
@@ -43,6 +44,11 @@ export function MiniSheet({
   children: ReactNode;
   footer?: ReactNode;
 }) {
+  // Лист портален в `<body>`, то есть вне `.mini-root`: цветовые токены и
+  // слои туда не наследуются, и лист выходил прозрачным и ПОД содержимым
+  // страницы. `.mini-scope` + текущая тема возвращают ему палитру.
+  const { theme } = useMiniTheme();
+
   return (
     <Drawer.Root
       open={open}
@@ -60,7 +66,8 @@ export function MiniSheet({
     >
       <Drawer.Portal>
         <Drawer.Overlay
-          className="fixed inset-0"
+          className="mini-scope fixed inset-0"
+          data-theme={theme}
           style={{
             zIndex: "var(--mini-z-overlay)",
             background: "rgba(5, 6, 9, 0.62)",
@@ -69,7 +76,8 @@ export function MiniSheet({
         />
         <Drawer.Content
           aria-describedby={undefined}
-          className={`fixed inset-x-0 bottom-0 flex flex-col overflow-hidden rounded-t-3xl outline-none ${MODAL_CARD_HEIGHT_CLASS}`}
+          className={`mini-scope fixed inset-x-0 bottom-0 flex flex-col overflow-hidden rounded-t-3xl outline-none ${MODAL_CARD_HEIGHT_CLASS}`}
+          data-theme={theme}
           style={{
             zIndex: "var(--mini-z-overlay)",
             background: "var(--mini-surface-1)",

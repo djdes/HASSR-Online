@@ -44,17 +44,28 @@ export default async function MiniShiftPage() {
     <div className="flex flex-1 flex-col gap-4 pb-24">
       <Link
         href="/mini"
-        className="inline-flex items-center gap-1 text-[13px] font-medium text-slate-500"
+        className="mini-press inline-flex w-fit items-center gap-1 text-[13px] font-medium"
+        style={{ color: "var(--mini-text-muted)" }}
       >
         <ArrowLeft className="size-4" />
         На главную
       </Link>
+      {/* Экран рисовался только для светлой темы: тёмный заголовок на
+          тёмном фоне приложения просто не читался. */}
       <header className="px-1">
-        <h1 className="text-[20px] font-semibold text-slate-900">Смена</h1>
+        <h1
+          className="text-[20px] font-semibold"
+          style={{ color: "var(--mini-text)" }}
+        >
+          Смена
+        </h1>
         {my ? (
-          <p className="mt-0.5 text-[13px] text-slate-500">
+          <p
+            className="mt-0.5 text-[13px]"
+            style={{ color: "var(--mini-text-muted)" }}
+          >
             Вы:{" "}
-            <span className="font-medium text-slate-700">
+            <span className="font-medium" style={{ color: "var(--mini-text)" }}>
               {my.jobPosition?.name || my.positionTitle || getUserRoleLabel(my.role)}
             </span>
           </p>
@@ -62,11 +73,21 @@ export default async function MiniShiftPage() {
       </header>
 
       <section className="space-y-2">
-        <h2 className="px-1 text-[12px] font-semibold uppercase tracking-wider text-slate-500">
+        <h2
+          className="px-1 text-[12px] font-semibold uppercase tracking-wider"
+          style={{ color: "var(--mini-text-muted)" }}
+        >
           Сегодня работают · {coworkers.length}
         </h2>
         {coworkers.length === 0 ? (
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-6 text-center text-[14px] text-slate-500">
+          <div
+            className="rounded-2xl border px-4 py-6 text-center text-[14px]"
+            style={{
+              background: "var(--mini-surface-1)",
+              borderColor: "var(--mini-divider)",
+              color: "var(--mini-text-muted)",
+            }}
+          >
             В организации пока нет активных сотрудников.
           </div>
         ) : (
@@ -80,21 +101,43 @@ export default async function MiniShiftPage() {
               return (
                 <li
                   key={c.id}
-                  className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3"
+                  className="flex items-center gap-3 rounded-2xl border px-4 py-3"
+                  style={{
+                    background: "var(--mini-surface-1)",
+                    borderColor: "var(--mini-divider)",
+                  }}
                 >
-                  <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[12px] font-semibold text-slate-600">
+                  <div
+                    className="flex size-9 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold"
+                    style={{
+                      background: "var(--mini-surface-2)",
+                      color: "var(--mini-text-muted)",
+                    }}
+                  >
                     {(c.name || "?").slice(0, 1).toUpperCase()}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-[14px] font-medium text-slate-900">
+                    <div
+                      className="truncate text-[14px] font-medium"
+                      style={{ color: "var(--mini-text)" }}
+                    >
                       {c.name}
                       {isMe ? (
-                        <span className="ml-1.5 rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-700">
+                        <span
+                          className="ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold"
+                          style={{
+                            background: "var(--mini-lime-soft)",
+                            color: "var(--mini-lime)",
+                          }}
+                        >
                           вы
                         </span>
                       ) : null}
                     </div>
-                    <div className="truncate text-[12px] text-slate-500">
+                    <div
+                      className="truncate text-[12px]"
+                      style={{ color: "var(--mini-text-muted)" }}
+                    >
                       {title}
                     </div>
                   </div>

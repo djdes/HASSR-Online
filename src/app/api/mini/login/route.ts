@@ -75,6 +75,8 @@ export async function POST(request: Request) {
       method: "phone",
     });
 
+    // Успешный вход не тратит лимит (см. /api/auth/login).
+    loginRateLimiter.refund(`mini-login:${ip}`);
     return issueSession(
       NextResponse.json({ success: true }),
       user,

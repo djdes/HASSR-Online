@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { CopyPlus, ListChecks, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 
-import { isDocumentTemplate } from "@/lib/journal-document-helpers";
+import { hasDocumentFillUi } from "@/lib/journal-document-helpers";
 
 import {
   MINI_SHEET_ROW_CLASS,
@@ -84,6 +84,12 @@ export function JournalActionsSheet({
       subtitle="Быстрые действия"
     >
       <div className="space-y-1 pb-2">
+        {/* «Новая запись» есть только там, где запись действительно
+            заводится формой. У табличных журналов этот пункт вёл на
+            форму из одного поля «Участок» (а у журнала жалоб — на
+            «Страница не найдена») и создавал записи, которых потом
+            никто не видел в таблице. */}
+        {journal && !hasDocumentFillUi(journal.code) ? (
         <button
           type="button"
           className={MINI_SHEET_ROW_CLASS}
@@ -93,11 +99,12 @@ export function JournalActionsSheet({
           <Plus className="size-5" style={{ color: "var(--mini-lime)" }} />
           Новая запись
         </button>
+        ) : null}
 
         {/* У табличных журналов этого действия нет вовсе: там день
             копируется внутри самой таблицы. Показать и ответить отказом
             хуже, чем не показывать. */}
-        {journal && !isDocumentTemplate(journal.code) ? (
+        {journal && !hasDocumentFillUi(journal.code) ? (
         <button
           type="button"
           className={MINI_SHEET_ROW_CLASS}
@@ -121,7 +128,9 @@ export function JournalActionsSheet({
           onClick={() => journal && go(`/mini/journals/${journal.code}`)}
         >
           <ListChecks className="size-5" style={{ color: "var(--mini-text-muted)" }} />
-          Открыть записи
+          {journal && hasDocumentFillUi(journal.code)
+            ? "Открыть таблицы журнала"
+            : "Открыть записи"}
         </button>
       </div>
     </MiniSheet>

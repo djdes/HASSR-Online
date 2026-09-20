@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import type { AccessibleOrganization } from "@/lib/organization-access";
 
 /**
@@ -65,10 +66,12 @@ export function MiniOrgSwitcher() {
       });
       if (!response.ok) throw new Error();
       setActiveId(organization.id);
+      toast.success(`Вы работаете в «${organization.name}»`);
       router.refresh();
     } catch {
-      // Молча: в Mini App нет тостов, а список всё равно останется на
-      // прежней организации — человек увидит, что ничего не изменилось.
+      // Раньше сбой проходил молча, и человек не понимал, почему данные
+      // остались от прежней организации. Тосты в Mini App уже есть.
+      toast.error("Не удалось переключить организацию. Попробуйте ещё раз.");
     } finally {
       setBusyId(null);
     }

@@ -27,15 +27,19 @@ type NavItem = {
 
 const ALL_NAV_ITEMS: NavItem[] = [
   { href: "/mini", label: "Главная", icon: Home },
-  { href: "/mini/staff", label: "Сотрудники", icon: Users, requires: ["staff.view"] },
-  { href: "/mini/equipment", label: "Оборуд.", icon: Package, requires: ["equipment.view"] },
+  // Подписи подобраны так, чтобы влезать целиком на экране 360 px: длинные
+  // «Сотрудники» и «Оборуд.» обрезались многоточием прямо посреди слова.
+  { href: "/mini/staff", label: "Персонал", icon: Users, requires: ["staff.view"] },
+  { href: "/mini/equipment", label: "Техника", icon: Package, requires: ["equipment.view"] },
   { href: "/mini/reports", label: "Отчёты", icon: FileText, requires: ["reports.view"] },
   // «Аудит» — журнал действий заведения. Требование совпадает с тем,
   // что проверяет `/api/mini/audit`: раньше вкладка висела на
   // `dashboard.view`, который есть у любого сотрудника, и повар видел
   // вкладку, за которой его ждал отказ.
-  { href: "/mini/audit", label: "Аудит", icon: ShieldCheck, requires: ["audit.view"] },
-  { href: "/mini/iot", label: "IoT", icon: Cpu, requires: ["equipment.view"] },
+  { href: "/mini/audit", label: "Действия", icon: ShieldCheck, requires: ["audit.view"] },
+  // «IoT» — английский код вместо названия: человеку у плиты он ничего
+  // не говорит, а речь про датчики температуры.
+  { href: "/mini/iot", label: "Датчики", icon: Cpu, requires: ["equipment.view"] },
   { href: "/mini/shift-handover", label: "Смены", icon: ClipboardList },
   { href: "/mini/me", label: "Профиль", icon: UserRound },
 ];
@@ -157,10 +161,21 @@ export function MiniNav() {
               onClick={() => {
                 if (!isActive) haptic("selection");
               }}
-              className="mini-press relative flex min-w-[58px] flex-1 flex-col items-center justify-center gap-1 rounded-2xl px-1.5 py-2"
+              // min-w/px подобраны так, чтобы самая длинная подпись
+              // («Персонал», «Действия») влезала целиком на экране 360 px.
+              // «Главная» закреплена слева: у руководителя вкладок больше, чем
+              // помещается, и на правых экранах она уезжала за край — вернуться
+              // на главную было нечем, кроме логотипа в шапке.
+              className={`mini-press relative flex min-w-[64px] flex-1 flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2 ${
+                item.href === "/mini" ? "sticky left-0 z-10" : ""
+              }`}
               style={{
                 color: isActive ? "var(--mini-bg)" : "var(--mini-text-muted)",
-                background: isActive ? "var(--mini-lime)" : "transparent",
+                background: isActive
+                  ? "var(--mini-lime)"
+                  : item.href === "/mini"
+                    ? "var(--mini-nav-rail-solid, var(--mini-surface-1))"
+                    : "transparent",
                 fontSize: 10,
                 fontWeight: isActive ? 600 : 500,
                 letterSpacing: "0.02em",

@@ -11,6 +11,7 @@ import { MiniListSkeleton } from "../_components/mini-list-skeleton";
 import { MiniSearchField } from "../_components/mini-search-field";
 import { filterAndRank } from "../_lib/list-search";
 import { useRegisterRefresh } from "../_components/refresh-provider";
+import { journalSubtitle } from "./_journal-subtitle";
 
 /**
  * Указатель журналов.
@@ -50,13 +51,30 @@ export default function MiniJournalsIndexPage() {
   const load = useCallback(async () => {
     try {
       const resp = await fetch("/api/mini/home", { cache: "no-store" });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      // «HTTP 500» ничего не говорит повару и не подсказывает,
+      // что делать дальше. Говорим причину и следующий шаг.
+      if (resp.status === 401) {
+        setState({
+          kind: "error",
+          message:
+            "Приложение вышло из вашей учётной записи. Закройте и откройте его снова.",
+        });
+        return;
+      }
+      if (!resp.ok) {
+        setState({
+          kind: "error",
+          message:
+            "Сервер не ответил. Проверьте связь и нажмите «Попробовать снова».",
+        });
+        return;
+      }
       const data = await resp.json();
       setState({ kind: "ready", journals: data.all ?? [] });
-    } catch (err) {
+    } catch {
       setState({
         kind: "error",
-        message: err instanceof Error ? err.message : "Ошибка",
+        message: "Нет связи. Проверьте интернет и нажмите «Попробовать снова».",
       });
     }
   }, []);
@@ -84,13 +102,29 @@ export default function MiniJournalsIndexPage() {
         <h1 className="text-lg font-semibold" style={{ color: "var(--mini-text)" }}>
           Не удалось загрузить
         </h1>
-        <p className="mt-1 text-sm" style={{ color: "var(--mini-crimson)" }}>
+        <p className="mt-1 text-sm" style={{ color: "var(--mini-text-muted)" }}>
           {state.message}
         </p>
+        <button
+          type="button"
+          onClick={() => {
+            setState({ kind: "loading" });
+            void load();
+          }}
+          className="mini-press mt-3 inline-flex h-10 items-center rounded-2xl px-4 text-[14px] font-semibold"
+          style={{
+            background: "var(--mini-surface-2)",
+            color: "var(--mini-text)",
+          }}
+        >
+          Попробовать снова
+        </button>
       </div>
     );
   }
 
+  // Ищем и по исходному описанию тоже: человек мог запомнить слово из
+  // него, даже если под названием оно больше не печатается.
   const shown = filterAndRank(state.journals, query, (journal) => [
     journal.name,
     journal.description,
@@ -171,7 +205,20 @@ export default function MiniJournalsIndexPage() {
               color: "var(--mini-text-muted)",
             }}
           >
-            Ничего не нашлось по «{query.trim()}».
+            <p style={{ color: "var(--mini-text)" }}>
+              Ничего не нашлось по «{query.trim()}».
+            </p>
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              className="mini-press mt-3 inline-flex h-10 items-center rounded-2xl px-4 text-[14px] font-semibold"
+              style={{
+                background: "var(--mini-surface-2)",
+                color: "var(--mini-text)",
+              }}
+            >
+              Показать все журналы
+            </button>
           </div>
         ) : (
           shown.map((journal, idx) => (
@@ -179,7 +226,7 @@ export default function MiniJournalsIndexPage() {
               key={journal.code}
               href={`/mini/journals/${journal.code}`}
               title={journal.name}
-              subtitle={journal.description}
+              subtitle={journalSubtitle(journal.name, journal.description)}
               index={idx + 1}
               prefetch={idx < 5}
               onLongPress={() => setActionsFor(journal)}

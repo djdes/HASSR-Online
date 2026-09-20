@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { useRegisterRefresh } from "../_components/refresh-provider";
+import { claimReasonRu } from "../_lib/claim-errors";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -190,14 +191,25 @@ export default function MiniTodayPage() {
       }
       // Surface error: ранее silent fall-through скрывал 409 «уже
       // взяли», 400 «нужна активная смена», 403 ACL.
-      const body = (await res.json().catch(() => ({}))) as { error?: string };
+      // Сервер кладёт пояснение в `message`, а не в `error` — раньше оно
+      // терялось и человек видел общую фразу вместо «сначала завершите X».
+      const raw = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        message?: string;
+      };
+      const body = { error: raw.error ?? raw.message };
       const msg =
         res.status === 409
-          ? body.error || "Эту задачу уже забрали — обновите страницу"
+          ? body.error || "Эту задачу уже забрал кто-то другой"
           : res.status === 403
-            ? "Нет прав на эту задачу"
-            : body.error || `Не удалось взять (HTTP ${res.status})`;
+            ? "Нет доступа к этой задаче"
+            : res.status === 401
+              ? "Вход закончился — войдите заново"
+              : body.error || "Не удалось взять задачу. Попробуйте ещё раз.";
       toast.error(msg);
+      // Список перерисовываем сами: «обновите страницу» на телефоне —
+      // это просьба, которую никто не выполняет.
+      if (res.status === 409 || res.status === 403) await load();
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Не удалось взять задачу"
@@ -217,8 +229,13 @@ export default function MiniTodayPage() {
         body: JSON.stringify({ action: "complete" }),
       });
       if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as { error?: string };
-        toast.error(body.error || `Не удалось завершить (HTTP ${res.status})`);
+        const body = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          reason?: string;
+        };
+        toast.error(
+          body.error || claimReasonRu(body.reason, res.status)
+        );
       }
       await load();
     } catch (err) {
@@ -237,33 +254,46 @@ export default function MiniTodayPage() {
   if (gate && gate.gateRequired && !gate.shiftStarted) {
     return (
       <div className="space-y-4 pb-24">
-        <Link
-          href="/mini"
-          className="inline-flex items-center gap-1.5 text-[13px] text-[#6f7282]"
+        <BackHome />
+        <div
+          className="rounded-3xl border p-8 text-center"
+          style={{
+            background: "var(--mini-surface-1)",
+            borderColor: "var(--mini-divider-strong)",
+          }}
         >
-          <ArrowLeft className="size-4" />
-          Главная
-        </Link>
-        <div className="rounded-3xl border border-[#ececf4] bg-[#0b1024] p-8 text-center text-white">
-          <div className="text-[12px] uppercase tracking-[0.16em] text-white/60">
+          <div
+            className="text-[12px] uppercase tracking-[0.16em]"
+            style={{ color: "var(--mini-text-muted)" }}
+          >
             {new Date(gate.today).toLocaleDateString("ru-RU", {
               weekday: "long",
               day: "numeric",
               month: "long",
             })}
           </div>
-          <div className="mt-2 text-[24px] font-semibold leading-tight">
+          <div
+            className="mt-2 text-[24px] font-semibold leading-tight"
+            style={{ color: "var(--mini-text)" }}
+          >
             Готов к работе?
           </div>
-          <p className="mt-3 text-[14px] leading-relaxed text-white/70">
-            Нажми «Начать смену» чтобы получить задачи на сегодня.
-            Руководитель увидит, что ты вышел на работу.
+          <p
+            className="mt-3 text-[14px] leading-relaxed"
+            style={{ color: "var(--mini-text-muted)" }}
+          >
+            Нажмите «Начать смену», чтобы получить задачи на сегодня.
+            Руководитель увидит, что вы вышли на работу.
           </p>
           <button
             type="button"
             onClick={startShift}
             disabled={startingShift}
-            className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-6 text-[16px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.7)] transition-colors hover:bg-[#4a5bf0] disabled:opacity-60"
+            className="mini-press mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl px-6 text-[16px] font-medium disabled:opacity-60"
+            style={{
+              background: "var(--mini-lime)",
+              color: "var(--mini-primary-contrast)",
+            }}
           >
             {startingShift ? (
               <Loader2 className="size-5 animate-spin" />
@@ -281,6 +311,7 @@ export default function MiniTodayPage() {
     if (loadError) {
       return (
         <div className="space-y-3 pb-24">
+          <BackHome />
           <div
             className="rounded-2xl px-4 py-5 text-center text-[14px] leading-relaxed"
             style={{
@@ -309,11 +340,15 @@ export default function MiniTodayPage() {
       );
     }
     return (
-      <div
-        className="flex h-40 items-center justify-center"
-        style={{ color: "var(--mini-text-muted)" }}
-      >
-        <Loader2 className="size-5 animate-spin" />
+      <div className="space-y-3 pb-24">
+        <BackHome />
+        <div
+          className="flex h-40 items-center justify-center gap-2 text-[14px]"
+          style={{ color: "var(--mini-text-muted)" }}
+        >
+          <Loader2 className="size-5 animate-spin" />
+          Загружаем задачи…
+        </div>
       </div>
     );
   }
@@ -330,60 +365,101 @@ export default function MiniTodayPage() {
 
   return (
     <div className="space-y-4 pb-24">
-      <Link
-        href="/mini"
-        className="inline-flex items-center gap-1.5 text-[13px] text-[#6f7282]"
-      >
-        <ArrowLeft className="size-4" />
-        Главная
-      </Link>
+      <BackHome />
 
-      <header className="rounded-3xl border border-[#ececf4] bg-[#0b1024] p-6 text-white">
-        <div className="text-[12px] uppercase tracking-[0.16em] text-white/60">
+      <header
+        className="rounded-3xl border p-6"
+        style={{
+          background: "var(--mini-surface-1)",
+          borderColor: "var(--mini-divider-strong)",
+        }}
+      >
+        <div
+          className="text-[12px] uppercase tracking-[0.16em]"
+          style={{ color: "var(--mini-text-muted)" }}
+        >
           {new Date(data.dateKey).toLocaleDateString("ru-RU", {
             weekday: "long",
             day: "numeric",
             month: "long",
           })}
         </div>
-        <div className="mt-2 text-[24px] font-semibold leading-tight">
+        <div
+          className="mt-2 text-[24px] font-semibold leading-tight"
+          style={{ color: "var(--mini-text)" }}
+        >
           Сегодня
         </div>
         <div className="mt-3 flex flex-wrap gap-2 text-[12px]">
-          <span className="rounded-full bg-white/10 px-2.5 py-1">
-            Доступно: {totalAvailable}
+          <span
+            className="rounded-full px-2.5 py-1"
+            style={{
+              background: "var(--mini-surface-2)",
+              color: "var(--mini-text-muted)",
+            }}
+          >
+            Свободно: {totalAvailable}
           </span>
           {totalMine > 0 ? (
-            <span className="rounded-full bg-[#5566f6] px-2.5 py-1">
+            <span
+              className="rounded-full px-2.5 py-1 font-medium"
+              style={{
+                background: "var(--mini-lime)",
+                color: "var(--mini-primary-contrast)",
+              }}
+            >
               У меня: {totalMine}
             </span>
           ) : null}
-          <span className="rounded-full bg-emerald-500/20 px-2.5 py-1 text-emerald-100">
+          <span
+            className="rounded-full px-2.5 py-1"
+            style={{
+              background: "var(--mini-sage-soft)",
+              color: "var(--mini-sage)",
+            }}
+          >
             Готово: {totalDone}
           </span>
         </div>
       </header>
 
       {data.myActive ? (
-        <div className="rounded-2xl border border-[#5566f6] bg-[#eef1ff] p-3 text-[13px] text-[#3848c7]">
+        <div
+          className="rounded-2xl border p-3 text-[13px]"
+          style={{
+            background: "var(--mini-lime-soft)",
+            borderColor: "var(--mini-lime-strong)",
+            color: "var(--mini-text)",
+          }}
+        >
           <Lock className="mr-1.5 inline size-4 align-text-bottom" />
-          Сейчас делаешь:&nbsp;
+          Сейчас вы делаете:&nbsp;
           <span className="font-semibold">{data.myActive.scopeLabel}</span>
-          &nbsp;— закончи эту, тогда сможешь взять следующую.
+          &nbsp;— закончите её, тогда сможете взять следующую.
         </div>
       ) : null}
 
       {data.groups.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-10 text-center text-[14px] text-[#6f7282]">
+        <div
+          className="rounded-2xl border border-dashed px-6 py-10 text-center text-[14px]"
+          style={{
+            background: "var(--mini-surface-1)",
+            borderColor: "var(--mini-divider-strong)",
+            color: "var(--mini-text-muted)",
+          }}
+        >
           На сегодня задач пока нет.
           <br />
-          Подойди к руководителю — спроси, что нужно сделать.
+          Подойдите к руководителю — спросите, что нужно сделать.
         </div>
       ) : null}
 
       {data.groups.map((g) => (
         <section key={g.code} className="space-y-2">
-          <div className="px-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
+          <div
+            className="px-1 text-[11px] font-semibold uppercase tracking-[0.14em]"
+            style={{ color: "var(--mini-text-faint)" }}
+          >
             {g.label} ({g.scopes.length})
           </div>
           {/* Сортируем scopes так, чтобы «можно взять» и «у меня» были
@@ -435,30 +511,36 @@ function ScopeRow({
   onComplete: () => void;
 }) {
   const av = scope.availability;
+  // Цвета берём из темы: экран открывается и в тёмном оформлении,
+  // а раньше здесь была жёстко светлая палитра.
+  const rowStyle =
+    av === "completed"
+      ? { background: "var(--mini-sage-soft)", borderColor: "var(--mini-sage)" }
+      : av === "mine"
+        ? { background: "var(--mini-lime-soft)", borderColor: "var(--mini-lime-strong)" }
+        : {
+            background: "var(--mini-surface-1)",
+            borderColor: "var(--mini-divider)",
+          };
+  const iconStyle =
+    av === "completed"
+      ? { background: "var(--mini-sage-soft)", color: "var(--mini-sage)" }
+      : av === "mine"
+        ? { background: "var(--mini-lime)", color: "var(--mini-primary-contrast)" }
+        : av === "taken"
+          ? { background: "var(--mini-surface-2)", color: "var(--mini-text-faint)" }
+          : { background: "var(--mini-lime-soft)", color: "var(--mini-lime)" };
   return (
     <div
       className={[
         "flex items-start gap-3 rounded-2xl border p-3.5 transition-colors",
-        av === "completed"
-          ? "border-[#c8f0d5] bg-[#ecfdf5]"
-          : av === "mine"
-            ? "border-[#5566f6] bg-[#eef1ff]"
-            : av === "taken"
-              ? "border-[#ececf4] bg-[#fafbff] opacity-70"
-              : "border-[#ececf4] bg-white",
+        av === "taken" ? "opacity-70" : "",
       ].join(" ")}
+      style={rowStyle}
     >
       <span
-        className={[
-          "flex size-9 shrink-0 items-center justify-center rounded-xl",
-          av === "completed"
-            ? "bg-[#d9f4e1] text-[#136b2a]"
-            : av === "mine"
-              ? "bg-[#5566f6] text-white"
-              : av === "taken"
-                ? "bg-[#ececf4] text-[#9b9fb3]"
-                : "bg-[#eef1ff] text-[#3848c7]",
-        ].join(" ")}
+        className="flex size-9 shrink-0 items-center justify-center rounded-xl"
+        style={iconStyle}
       >
         {av === "completed" ? (
           <CheckCircle2 className="size-5" />
@@ -471,14 +553,25 @@ function ScopeRow({
         )}
       </span>
       <div className="min-w-0 flex-1">
-        <div className="text-[15px] font-medium text-[#0b1024]">
+        <div
+          className="text-[15px] font-medium"
+          style={{ color: "var(--mini-text)" }}
+        >
           {scope.scopeLabel}
         </div>
         {scope.sublabel ? (
-          <div className="mt-0.5 text-[12px] text-[#6f7282]">{scope.sublabel}</div>
+          <div
+            className="mt-0.5 text-[12px]"
+            style={{ color: "var(--mini-text-muted)" }}
+          >
+            {scope.sublabel}
+          </div>
         ) : null}
         {scope.claimUserName ? (
-          <div className="mt-1 flex items-center gap-1 text-[11px] text-[#6f7282]">
+          <div
+            className="mt-1 flex items-center gap-1 text-[11px]"
+            style={{ color: "var(--mini-text-muted)" }}
+          >
             <Clock className="size-3" />
             {av === "completed" ? "Готово · " : av === "mine" ? "Я · " : "Занято · "}
             <span>{scope.claimUserName}</span>
@@ -491,14 +584,24 @@ function ScopeRow({
             type="button"
             onClick={onClaim}
             disabled={busy || locked || disabled}
-            title={locked ? "Сначала заверши текущую" : undefined}
+            title={locked ? "Сначала завершите текущую задачу" : undefined}
             className={[
-              "inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-[13px] font-medium",
-              locked
-                ? "border border-[#ececf4] bg-[#fafbff] text-[#9b9fb3]"
-                : "bg-[#5566f6] text-white shadow-[0_8px_20px_-10px_rgba(85,102,246,0.6)]",
+              "mini-press inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 text-[13px] font-medium",
               disabled && !busy ? "opacity-50" : "",
             ].join(" ")}
+            style={
+              locked
+                ? {
+                    background: "var(--mini-surface-2)",
+                    borderColor: "var(--mini-divider)",
+                    color: "var(--mini-text-faint)",
+                  }
+                : {
+                    background: "var(--mini-lime)",
+                    borderColor: "transparent",
+                    color: "var(--mini-primary-contrast)",
+                  }
+            }
           >
             {busy ? <Loader2 className="size-3.5 animate-spin" /> : null}
             {locked ? <Lock className="size-3.5" /> : null}
@@ -511,9 +614,13 @@ function ScopeRow({
             onClick={onComplete}
             disabled={busy || disabled}
             className={[
-              "inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#136b2a] px-3 text-[13px] font-medium text-white",
+              "mini-press inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-[13px] font-medium",
               disabled && !busy ? "opacity-50" : "",
             ].join(" ")}
+            style={{
+              background: "var(--mini-sage)",
+              color: "var(--mini-primary-contrast)",
+            }}
           >
             {busy ? <Loader2 className="size-3.5 animate-spin" /> : null}
             Завершить
@@ -521,5 +628,19 @@ function ScopeRow({
         ) : null}
       </div>
     </div>
+  );
+}
+
+/** Возврат на главную — единственный выход с экрана, нужен в каждом состоянии. */
+function BackHome() {
+  return (
+    <Link
+      href="/mini"
+      className="mini-press inline-flex w-fit items-center gap-1.5 text-[13px]"
+      style={{ color: "var(--mini-text-muted)" }}
+    >
+      <ArrowLeft className="size-4" />
+      Главная
+    </Link>
   );
 }

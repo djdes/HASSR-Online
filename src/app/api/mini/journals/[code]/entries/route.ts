@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getDisabledJournalCodes } from "@/lib/disabled-journals";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getServerSession } from "@/lib/server-session";
@@ -6,7 +7,7 @@ import { aclActorFromSession, hasJournalAccess } from "@/lib/journal-acl";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { getActiveBuildingId } from "@/lib/active-building";
 import { buildingWhere } from "@/lib/building-scope";
-import { isDocumentTemplate } from "@/lib/journal-document-helpers";
+import { hasDocumentFillUi } from "@/lib/journal-document-helpers";
 import { buildFieldLabels } from "@/lib/field-labels";
 import { DEFAULT_PIPELINE_FIELDS } from "@/lib/journal-default-pipelines";
 
@@ -52,7 +53,19 @@ export async function GET(
   }
 
   const orgId = getActiveOrgId(session);
-  const isDocument = isDocumentTemplate(code);
+  // Журнал, выключенный в «Наборе журналов», пропадает из списка, но по прямой
+  // ссылке (закладка, старое сообщение) открывался как ни в чём не бывало.
+  if ((await getDisabledJournalCodes(orgId)).has(code)) {
+    return NextResponse.json(
+      { error: "Этот журнал отключён. Включить его может руководитель в настройках." },
+      { status: 403 },
+    );
+  }
+  // Шире, чем `isDocumentTemplate`: у протокола аудита, отчёта и журнала
+  // жалоб заполнение тоже идёт таблицей. Пока они считались «полевыми»,
+  // экран журнала рисовал им «Последние записи» и кнопку «Новая запись»,
+  // которая у жалоб вела на «Страница не найдена».
+  const isDocument = hasDocumentFillUi(code);
 
   if (isDocument) {
     // Document-based journals live in JournalDocument / JournalDocumentEntry.

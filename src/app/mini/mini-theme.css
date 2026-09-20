@@ -10,6 +10,48 @@
  * `[data-theme="light"]`.
  */
 
+/*
+ * Слои и безопасные поля объявлены и на `:root`.
+ *
+ * Оверлеи (лист снизу, лайтбокс, сканер) порталятся в `<body>` — то есть
+ * НАРУЖУ `.mini-root`, и переменные оттуда до них не доходили:
+ * `z-index: var(--mini-z-overlay)` разворачивался в пустоту, слой получал
+ * `z-index: auto` и оказывался ПОД содержимым страницы (`main` стоит на
+ * первом слое). Выглядело это так: лист открылся, фон потемнел, а карточки
+ * списка нарисованы поверх листа.
+ */
+:root,
+/* `.mini-scope` — метка для слоёв, которые живут в `<body>`: лист снизу,
+   лайтбокс. Она включает их в ту же палитру (см. блоки DARK/LIGHT ниже),
+   иначе цвета у них не разворачиваются и лист выходит прозрачным. */
+.mini-scope {
+  --mini-safe-t: max(12px, env(safe-area-inset-top));
+  --mini-safe-b: max(12px, env(safe-area-inset-bottom));
+  --mini-safe-l: env(safe-area-inset-left);
+  --mini-safe-r: env(safe-area-inset-right);
+  --mini-z-topbar: 40;
+  --mini-z-fab: 45;
+  --mini-z-nav: 50;
+  --mini-z-overlay: 60;
+  --mini-z-photo: 80;
+  --mini-z-scanner: 100;
+
+  --mini-font-display: Georgia, "Times New Roman", serif;
+  --mini-font-body: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --mini-font-mono: "Geist Mono", "SF Mono", ui-monospace, Menlo, Monaco, monospace;
+
+  --mini-ease: cubic-bezier(0.2, 0, 0, 1);
+  --mini-dur-press: 0.12s;
+  --mini-dur-fast: 0.18s;
+  --mini-dur-screen: 0.22s;
+  --mini-nav-h: 64px;
+}
+
+.mini-scope {
+  font-family: var(--mini-font-body);
+  color: var(--mini-text);
+}
+
 .mini-root {
   /* Type scales — те же в обеих темах */
   /* Fraunces и Bricolage Grotesque убраны 2026-09-09: у них нет
@@ -64,7 +106,8 @@
  * DARK — "Command Deck" (default)
  * ------------------------------------------------------------------ */
 .mini-root[data-theme="dark"],
-.mini-root:not([data-theme]) {
+.mini-root:not([data-theme]),
+.mini-scope[data-theme="dark"] {
   --mini-bg: #0a0b0f;
   --mini-surface-1: #15161b;
   --mini-surface-2: #1f2128;
@@ -112,7 +155,8 @@
  * primary `#5566f6` и soft-surfaces `#fafbff` / `#f5f6ff` — оператор,
  * переходя с сайта в Mini App, не ощущает шва.
  * ------------------------------------------------------------------ */
-.mini-root[data-theme="light"] {
+.mini-root[data-theme="light"],
+.mini-scope[data-theme="light"] {
   --mini-bg: #fafbff;             /* soft-surface — тот же, что /dashboard */
   --mini-surface-1: #ffffff;      /* card */
   --mini-surface-2: #f5f6ff;      /* tint-indigo, inputs */
@@ -528,4 +572,74 @@
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.9),
     0 6px 20px -12px rgba(85, 102, 246, 0.25);
+}
+
+/* --------------------------------------------------------------------
+ * Документ журнала внутри мини-приложения (`.mini-document-host`).
+ * Бланк рисует тот же код, что и сайт. На сайте широкий бланк ездит вбок
+ * целиком — за счёт обёртки страницы документа, и поэтому у самих таблиц
+ * прокрутка на телефоне выключена (`max-sm:overflow-visible`). В
+ * мини-приложении такой обёртки нет, и таблицу просто обрезал край экрана:
+ * ни сдвинуть, ни добраться до правых колонок. Возвращаем прокрутку самим
+ * таблицам. Обёртку сюда не переносим намеренно: она стала бы контейнером
+ * прокрутки, и «липкая» нижняя кнопка бланка («Заполнить оставшиеся»)
+ * перестала бы держаться у экрана.
+ * ------------------------------------------------------------------ */
+.mini-document-host .overflow-x-auto {
+  overflow-x: auto !important;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Нижняя панель бланка стоит над меню с небольшим зазором, а не впритык. */
+.mini-root main .mini-document-host .sticky.bottom-0 {
+  bottom: calc(var(--mini-safe-b) + var(--mini-nav-h) + 8px);
+}
+
+/* Когда у бланка есть нижняя панель действий, две плавающие круглые кнопки
+   (инструкция и помощник) лежали прямо на ней и закрывали «Заполнить
+   оставшиеся». Поднимаем их на высоту панели. `translate` — отдельное
+   свойство, наведение (`scale`) и их собственный `bottom` оно не трогает. */
+body:has(.mini-document-host .sticky.bottom-0) .fixed.right-5 {
+  translate: 0 -112px;
+}
+
+/* --------------------------------------------------------------------
+ * Печать из мини-приложения.
+ * Правил печати тут не было вовсе: на лист уходили шапка, нижнее меню,
+ * плавающие кнопки и фоновые градиенты — в предпросмотре iPhone это
+ * выглядело как чёрное пятно и синий круг поверх бланка. На бумагу должен
+ * попадать только сам журнал, на белом.
+ * ------------------------------------------------------------------ */
+@media print {
+  .mini-root {
+    background: #fff !important;
+    color: #000 !important;
+    min-height: 0 !important;
+  }
+  .mini-root::before,
+  .mini-root::after {
+    display: none !important;
+  }
+  /* Всё, что лежит рядом с <main>: шапка, меню, тосты, индикаторы, помощник. */
+  .mini-root > *:not(main) {
+    display: none !important;
+  }
+  .mini-root > main {
+    max-width: none !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  /* Баннеры и индикатор «потяните, чтобы обновить» над содержимым. */
+  .mini-root > main > *:not(:last-child),
+  .mini-root [data-mini-noprint] {
+    display: none !important;
+  }
+  /* Бланк шире телефона: на бумаге прокрутки нет, поэтому раскрываем его целиком. */
+  .mini-document-host,
+  .mini-document-host * {
+    overflow: visible !important;
+    max-height: none !important;
+  }
 }

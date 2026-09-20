@@ -41,10 +41,15 @@ import { MiniQrPinSection } from "./qr-pin-section";
  */
 export function MiniMeClient({
   telegramBotUsername,
+  positionTitle = null,
+  phone = null,
 }: {
   // Читается на сервере в page.tsx: TELEGRAM_BOT_USERNAME — не
   // NEXT_PUBLIC-переменная, из клиентского компонента её не видно.
   telegramBotUsername: string;
+  /** Должность и телефон в сессии не лежат — приходят из page.tsx. */
+  positionTitle?: string | null;
+  phone?: string | null;
 }) {
   const { data: session, status } = useSession();
   const { theme, setTheme } = useMiniTheme();
@@ -80,13 +85,22 @@ export function MiniMeClient({
         const body = (await resp.json().catch(() => ({ error: "" }))) as {
           error?: string;
         };
-        throw new Error(body.error || `HTTP ${resp.status}`);
+        // Раньше при сбое на экране появлялось «HTTP 500» — человеку
+        // непонятно ни что случилось, ни что теперь делать.
+        throw new Error(
+          body.error ||
+            "Не удалось отвязать Telegram. Проверьте связь и попробуйте ещё раз."
+        );
       }
       clearSnapshot();
       await signOut({ redirect: false });
       window.location.href = "/mini";
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Не удалось отвязать");
+      setError(
+        err instanceof Error && err.message
+          ? err.message
+          : "Не удалось отвязать Telegram."
+      );
       setBusy("none");
     }
   }
@@ -151,6 +165,26 @@ export function MiniMeClient({
               style={{ color: "var(--mini-text)" }}
             >
               {u.role ? getUserRoleLabel(u.role) : "—"}
+            </dd>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <dt style={{ color: "var(--mini-text-muted)" }}>Должность</dt>
+            <dd
+              className="min-w-0 truncate font-medium"
+              style={{ color: "var(--mini-text)" }}
+            >
+              {positionTitle || "не указана"}
+            </dd>
+          </div>
+          {/* Телефон — ключ, по которому аккаунт связывается с задачами
+              (П-8): если его нет, человек должен это видеть. */}
+          <div className="flex items-center justify-between gap-3">
+            <dt style={{ color: "var(--mini-text-muted)" }}>Телефон</dt>
+            <dd
+              className="min-w-0 truncate font-medium"
+              style={{ color: "var(--mini-text)" }}
+            >
+              {phone || "не указан"}
             </dd>
           </div>
           {u.email && !u.email.endsWith("@invite.local") ? (
@@ -471,7 +505,7 @@ export function MiniMeClient({
           await handleSignOut();
         }}
         title="Выйти из аккаунта?"
-        description="Текущая сессия будет сброшена. Чтобы вернуться, откройте Mini App снова через Telegram — авторизация по initData пройдёт автоматически."
+        description="Приложение забудет вас на этом телефоне. Чтобы вернуться, откройте приложение заново через бота в Telegram — вход произойдёт сам, пароль вводить не нужно."
         confirmLabel="Выйти"
         cancelLabel="Отмена"
         variant="info"
@@ -485,11 +519,14 @@ export function MiniMeClient({
           await handleUnlink();
         }}
         title="Точно отвязать Telegram?"
-        description="После отвязки доступ к Mini App пропадёт — даже из этого же чата. Чтобы вернуться, понадобится новая ссылка-приглашение от руководителя."
+        description="После отвязки приложение перестанет открываться — даже из этого же чата с ботом. Чтобы вернуться, понадобится новая ссылка-приглашение от руководителя."
         bullets={[
-          { label: "Сессия будет сброшена", tone: "default" },
-          { label: "Привязка User → Telegram-чат удалится", tone: "warn" },
-          { label: "Понадобится новый инвайт от руководителя", tone: "warn" },
+          { label: "Приложение забудет вас на этом телефоне", tone: "default" },
+          { label: "Связь аккаунта с вашим Telegram удалится", tone: "warn" },
+          {
+            label: "Понадобится новая ссылка-приглашение от руководителя",
+            tone: "warn",
+          },
         ]}
         confirmLabel="Отвязать"
         cancelLabel="Отмена"

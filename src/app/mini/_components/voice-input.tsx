@@ -47,6 +47,23 @@ function getSpeechRecognitionCtor(): SpeechRecognitionCtor | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
+/** Почему запись не пошла — словами, и что делать дальше. */
+function micErrorText(code?: string): string {
+  if (code === "not-allowed" || code === "service-not-allowed") {
+    return "Доступ к микрофону запрещён. Разрешите его в настройках телефона — или просто наберите текст вручную.";
+  }
+  if (code === "no-speech") {
+    return "Ничего не расслышали. Попробуйте ещё раз поближе к телефону.";
+  }
+  if (code === "audio-capture") {
+    return "Микрофон недоступен. Наберите текст вручную.";
+  }
+  if (code === "network") {
+    return "Нет связи — распознавание речи не работает. Наберите текст вручную.";
+  }
+  return "Запись прервалась. Попробуйте ещё раз или наберите текст вручную.";
+}
+
 export function VoiceInput({
   value,
   onChange,
@@ -60,6 +77,9 @@ export function VoiceInput({
 }) {
   const [recording, setRecording] = useState(false);
   const [unsupported, setUnsupported] = useState(false);
+  // Отказ в доступе к микрофону раньше просто гасил запись: человек
+  // жал кнопку, ничего не происходило, и он жал снова.
+  const [micError, setMicError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   // Базовое значение textarea на момент старта записи — все final/interim
   // транскрипты дописываются именно к нему, чтобы не было «снежного кома»
@@ -94,6 +114,7 @@ export function VoiceInput({
     // Зафиксировать базу один раз — больше «эффекта снежного кома».
     baseValueRef.current = value;
     finalAccRef.current = "";
+    setMicError(null);
 
     rec.onresult = (event) => {
       // Iterate forward from event.resultIndex — Web Speech API кладёт
@@ -113,8 +134,9 @@ export function VoiceInput({
       onChange(baseValueRef.current + finalAccRef.current + interim);
     };
 
-    rec.onerror = () => {
+    rec.onerror = (event) => {
       setRecording(false);
+      setMicError(micErrorText(event?.error));
     };
 
     rec.onend = () => {
@@ -122,8 +144,12 @@ export function VoiceInput({
     };
 
     recognitionRef.current = rec;
-    rec.start();
-    setRecording(true);
+    try {
+      rec.start();
+      setRecording(true);
+    } catch {
+      setMicError("Не получилось включить запись. Наберите текст вручную.");
+    }
   }, [recording, value, onChange]);
 
   if (unsupported) {
@@ -133,7 +159,12 @@ export function VoiceInput({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows}
-        className="w-full rounded-xl border border-slate-200 px-3 py-2 text-[14px] focus:border-slate-400 focus:outline-none"
+        className="w-full rounded-xl px-3 py-2 text-[16px] outline-none"
+        style={{
+          background: "var(--mini-surface-2)",
+          border: "1px solid var(--mini-divider-strong)",
+          color: "var(--mini-text)",
+        }}
       />
     );
   }
@@ -145,16 +176,26 @@ export function VoiceInput({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows}
-        className="w-full rounded-xl border border-slate-200 px-3 py-2 pr-10 text-[14px] focus:border-slate-400 focus:outline-none"
+        // 16 px — иначе iOS увеличивает страницу при фокусе.
+        className="w-full rounded-xl px-3 py-2 pr-10 text-[16px] outline-none"
+        style={{
+          background: "var(--mini-surface-2)",
+          border: "1px solid var(--mini-divider-strong)",
+          color: "var(--mini-text)",
+        }}
       />
       <button
         type="button"
         onClick={toggleRecording}
         className={`absolute right-2 top-2 rounded-full p-1.5 transition-colors ${
-          recording
-            ? "animate-pulse bg-red-500 text-white"
-            : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+          recording ? "animate-pulse" : ""
         }`}
+        style={
+          recording
+            ? { background: "var(--mini-crimson)", color: "#fff" }
+            : { background: "var(--mini-surface-1)", color: "var(--mini-text-muted)" }
+        }
+        aria-label={recording ? "Остановить запись" : "Голосовой ввод"}
         title={recording ? "Остановить запись" : "Голосовой ввод"}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -163,9 +204,20 @@ export function VoiceInput({
         </svg>
       </button>
       {recording ? (
-        <div className="absolute right-2 top-10 rounded bg-slate-800 px-2 py-0.5 text-[10px] text-white">
+        <div
+          className="absolute right-2 top-10 rounded px-2 py-0.5 text-[10px]"
+          style={{ background: "var(--mini-surface-1)", color: "var(--mini-text)" }}
+        >
           Слушаем…
         </div>
+      ) : null}
+      {micError ? (
+        <p
+          className="mt-1.5 text-[12px] leading-4"
+          style={{ color: "var(--mini-crimson)" }}
+        >
+          {micError}
+        </p>
       ) : null}
     </div>
   );

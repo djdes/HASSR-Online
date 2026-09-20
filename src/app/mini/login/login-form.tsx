@@ -106,7 +106,11 @@ export function MiniLoginForm({ next }: { next?: string }) {
           className="mini-input h-14 w-full rounded-2xl px-4 text-center font-mono text-[24px] tracking-[0.4em]"
         />
         {error ? (
-          <p role="alert" className="text-[14px] leading-[1.5] text-[#ff6b6b]">
+          <p
+            role="alert"
+            className="text-[14px] leading-[1.5]"
+            style={{ color: "var(--mini-crimson)" }}
+          >
             {error}
           </p>
         ) : null}
@@ -177,8 +181,13 @@ export function MiniLoginForm({ next }: { next?: string }) {
         </div>
       </div>
 
+      {/* Светлая тема: #ff6b6b на белом почти не читался. */}
       {error ? (
-        <p role="alert" className="text-[14px] leading-[1.5] text-[#ff6b6b]">
+        <p
+          role="alert"
+          className="text-[14px] leading-[1.5]"
+          style={{ color: "var(--mini-crimson)" }}
+        >
           {error}
         </p>
       ) : null}

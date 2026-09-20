@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { signIn, useSession } from "next-auth/react";
+import { toast } from "sonner";
 import { adoptCookieSession } from "./_lib/cookie-session";
 import { useLiveRefetch } from "@/lib/use-live-refetch";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -293,7 +294,19 @@ export default function MiniHomePage() {
       const res = await fetch("/api/mini/start-shift", { method: "POST" });
       if (res.ok) {
         await fetchHome();
+        return;
       }
+      // Молчаливый отказ выглядел как «кнопка не работает»: человек жал
+      // ещё и ещё, экран не менялся и ничего не объяснял.
+      const body = (await res.json().catch(() => ({}))) as { error?: string };
+      toast.error(
+        body.error ||
+          (res.status === 401
+            ? "Вход закончился — войдите заново"
+            : "Не удалось начать смену. Попробуйте ещё раз.")
+      );
+    } catch {
+      toast.error("Нет связи. Проверьте интернет и попробуйте ещё раз.");
     } finally {
       setStartingShift(false);
     }
@@ -324,8 +337,8 @@ export default function MiniHomePage() {
         <section
           className="w-full rounded-3xl px-6 py-8 text-center"
           style={{
-            background: "rgba(255, 82, 104, 0.08)",
-            border: "1px solid rgba(255, 82, 104, 0.24)",
+            background: "var(--mini-crimson-soft)",
+            border: "1px solid var(--mini-divider-strong)",
           }}
         >
           <ShieldAlert
@@ -344,7 +357,10 @@ export default function MiniHomePage() {
           {/* Retry-кнопка: signInStarted был установлен в true и без
               сброса повторный signIn никогда не запустится. Сбрасываем
               guard-флаги и переводим state в init — useEffect status-edge
-              переподнимет signIn при `unauthenticated`. */}
+              переподнимет signIn при `unauthenticated`.
+              Для уже вошедшего сброс флагов ничего не запускал (зависимости
+              эффекта не менялись) — экран навсегда оставался скелетоном,
+              поэтому здесь перезапрашиваем главную сами. */}
           <button
             type="button"
             onClick={() => {
@@ -352,10 +368,19 @@ export default function MiniHomePage() {
               fetchStarted.current = false;
               setLocalState({ kind: "init" });
               setHome(null);
+              if (statusRef.current === "authenticated") {
+                fetchStarted.current = true;
+                void fetchHome();
+              }
             }}
-            className="mt-5 inline-flex h-10 items-center gap-2 rounded-2xl bg-white/8 px-5 text-[14px] font-medium text-white transition-colors hover:bg-white/12"
+            className="mini-press mt-5 inline-flex h-10 items-center gap-2 rounded-2xl px-5 text-[14px] font-medium"
+            style={{
+              background: "var(--mini-surface-2)",
+              border: "1px solid var(--mini-divider-strong)",
+              color: "var(--mini-text)",
+            }}
           >
-            Повторить вход
+            Попробовать ещё раз
           </button>
           {/* Второй выход из этого экрана. Ошибка «аккаунт не связан с
               Telegram» тоже была тупиком: повторять вход бессмысленно,
@@ -403,11 +428,13 @@ export default function MiniHomePage() {
   if (shiftGate?.gateRequired && !shiftGate.shiftStarted) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-6 px-6 py-12">
+        {/* Переменных --mini-card / --mini-border в теме нет: карточка
+            оставалась без фона, а рамка бралась из цвета текста. */}
         <div
           className="rounded-3xl border p-8 text-center"
           style={{
-            background: "var(--mini-card)",
-            borderColor: "var(--mini-border)",
+            background: "var(--mini-surface-1)",
+            borderColor: "var(--mini-divider-strong)",
           }}
         >
           <div
@@ -433,17 +460,19 @@ export default function MiniHomePage() {
             className="mt-3 text-[14px] leading-relaxed"
             style={{ color: "var(--mini-text-muted)" }}
           >
-            Нажми «Начать смену» чтобы получить задачи на сегодня.
-            Руководитель увидит, что ты вышел на работу.
+            Нажмите «Начать смену», чтобы получить задачи на сегодня.
+            Руководитель увидит, что вы вышли на работу.
           </p>
           <button
             type="button"
             onClick={startShift}
             disabled={startingShift}
-            className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl px-6 text-[16px] font-semibold disabled:opacity-60"
+            className="mini-press mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl px-6 text-[16px] font-semibold disabled:opacity-60"
+            // --mini-text-on-lime не существует: подпись наследовала цвет
+            // текста и читалась белым по салатовому.
             style={{
               background: "var(--mini-lime)",
-              color: "var(--mini-text-on-lime)",
+              color: "var(--mini-primary-contrast)",
             }}
           >
             {startingShift ? (
@@ -632,7 +661,8 @@ export default function MiniHomePage() {
                 letterSpacing: "0.08em",
               }}
             >
-              {home.now.length} {home.now.length === 1 ? "задача" : "задач"} ждёт
+              {home.now.length}{" "}
+              {pluralRu(home.now.length, "задача ждёт", "задачи ждут", "задач ждёт")}
             </span>
           </div>
           {home.now.map((item, idx) => {
@@ -769,15 +799,15 @@ export default function MiniHomePage() {
           href="/mini/today"
           className="mini-reveal flex items-center gap-3 rounded-3xl border px-4 py-3.5"
           style={{
-            background: "var(--mini-card)",
-            borderColor: "var(--mini-border)",
+            background: "var(--mini-surface-1)",
+            borderColor: "var(--mini-divider)",
           }}
         >
           <span
             className="flex size-10 shrink-0 items-center justify-center rounded-2xl"
             style={{
               background: "var(--mini-lime)",
-              color: "var(--mini-text-on-lime)",
+              color: "var(--mini-primary-contrast)",
             }}
           >
             <Zap className="size-5 fill-current" />

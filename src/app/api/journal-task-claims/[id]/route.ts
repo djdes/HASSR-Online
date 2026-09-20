@@ -136,7 +136,7 @@ export async function POST(
 
   const fn =
     body.action === "release"
-      ? () => releaseJournalTask({ claimId: id, userId })
+      ? () => releaseClaim(id, userId)
       : () =>
           completeJournalTask({
             claimId: id,
@@ -170,6 +170,39 @@ export async function POST(
     }).catch(() => null);
   }
   return NextResponse.json({ ok: true, warnings: validationWarnings });
+}
+
+/**
+ * Вернуть задачу в общий список.
+ *
+ * В схеме стоит `@@unique(organizationId, journalCode, scopeKey, status)`:
+ * «отпущенная» строка на одну задачу может быть только одна. Когда
+ * сотрудник второй раз за день берёт и возвращает ту же задачу, запись
+ * упиралась в это ограничение, и запрос падал пустым 500 — в приложении
+ * это выглядело как кнопка, которая молча не работает. В отпущенной
+ * строке ничего заполненного нет, поэтому прошлую убираем и повторяем.
+ */
+async function releaseClaim(
+  claimId: string,
+  userId: string
+): Promise<{ ok: boolean; reason?: string }> {
+  try {
+    return await releaseJournalTask({ claimId, userId });
+  } catch (error) {
+    if ((error as { code?: string })?.code !== "P2002") throw error;
+    const claim = await db.journalTaskClaim.findUnique({ where: { id: claimId } });
+    if (!claim) return { ok: false, reason: "not_found" };
+    await db.journalTaskClaim.deleteMany({
+      where: {
+        organizationId: claim.organizationId,
+        journalCode: claim.journalCode,
+        scopeKey: claim.scopeKey,
+        status: "released",
+        id: { not: claimId },
+      },
+    });
+    return await releaseJournalTask({ claimId, userId });
+  }
 }
 
 async function runSideEffects(organizationId: string, effects: SideEffect[]) {
@@ -212,10 +245,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
   }
   const { id } = await ctx.params;
-  const result = await releaseJournalTask({
-    claimId: id,
-    userId: session.user.id,
-  });
+  const result = await releaseClaim(id, session.user.id);
   if (!result.ok) {
     const map: Record<string, number> = {
       not_found: 404,

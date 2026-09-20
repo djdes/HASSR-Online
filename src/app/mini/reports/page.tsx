@@ -6,15 +6,57 @@ import { buildMiniOpenBridgePath } from "@/lib/journal-obligation-links";
 
 import { ShareButton } from "../_components/share-button";
 
+// Подпись под названием объясняет, что внутри: «CAPA» и «Партии» сами по
+// себе человеку у плиты ничего не говорят.
 const REPORT_LINKS = [
-  { label: "Журналы в PDF", href: "/reports?format=pdf", icon: FileText },
-  { label: "Журналы в Excel", href: "/reports?format=excel", icon: FileSpreadsheet },
-  { label: "Производственный план", href: "/plans", icon: FileText },
-  { label: "CAPA", href: "/capa", icon: FileText },
-  { label: "Потери", href: "/losses", icon: FileText },
-  { label: "Изменения", href: "/changes", icon: FileText },
-  { label: "Компетенции", href: "/competencies", icon: FileText },
-  { label: "Партии", href: "/batches", icon: FileText },
+  {
+    label: "Журналы в PDF",
+    hint: "для проверяющего, на печать",
+    href: "/reports?format=pdf",
+    icon: FileText,
+  },
+  {
+    label: "Журналы в Excel",
+    hint: "таблица для своих расчётов",
+    href: "/reports?format=excel",
+    icon: FileSpreadsheet,
+  },
+  {
+    label: "Производственный план",
+    hint: "что и сколько готовим",
+    href: "/plans",
+    icon: FileText,
+  },
+  {
+    label: "Нарушения и их устранение",
+    hint: "что нашли и как исправили (CAPA)",
+    href: "/capa",
+    icon: FileText,
+  },
+  {
+    label: "Потери и списания",
+    hint: "испорченные и просроченные продукты",
+    href: "/losses",
+    icon: FileText,
+  },
+  {
+    label: "Изменения в работе",
+    hint: "новое оборудование, рецептура, поставщик",
+    href: "/changes",
+    icon: FileText,
+  },
+  {
+    label: "Обучение сотрудников",
+    hint: "кто что прошёл и когда повторять",
+    href: "/competencies",
+    icon: FileText,
+  },
+  {
+    label: "Партии продукции",
+    hint: "прослеживаемость сырья и блюд",
+    href: "/batches",
+    icon: FileText,
+  },
 ];
 
 export default function MiniReportsPage() {
@@ -36,7 +78,8 @@ export default function MiniReportsPage() {
           style={{ color: "var(--mini-text-muted)" }}
         >
           Здесь собраны выгрузки и разделы с отчётами. Они открываются в полной
-          версии сайта — нажмите на нужный пункт.
+          версии сайта — нажмите на нужный пункт. Чтобы вернуться в приложение,
+          нажмите «назад» в браузере или откройте бота заново.
         </p>
         {/* Инспектор просит журнал прямо на кухне — системное меню отдаёт
             его быстрее, чем скачивание и поиск, чем открыть файл. */}
@@ -78,7 +121,7 @@ export default function MiniReportsPage() {
                   className="mt-0.5 block text-[12px]"
                   style={{ color: "var(--mini-text-muted)" }}
                 >
-                  Полная версия
+                  {link.hint}
                 </span>
               </span>
               <ChevronRight

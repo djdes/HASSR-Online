@@ -14,6 +14,31 @@ export type PhotoFile = {
 
 type Source = "camera" | "gallery";
 
+/** То же ограничение, что у `/api/mini/attachments`. */
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+
+/**
+ * Ответ сервера бывает на английском («File too large. Max 5MB.»).
+ * Русский текст оттуда пропускаем как есть — он осмысленный
+ * (например, про дневной лимит загрузок).
+ */
+function russianUploadError(status: number, serverText?: string): string {
+  if (serverText && /[а-яё]/i.test(serverText)) return serverText;
+  if (status === 401) {
+    return "Приложение вышло из учётной записи — откройте его заново.";
+  }
+  if (status === 413 || /too large/i.test(serverText ?? "")) {
+    return "Фото слишком большое. Максимум 5 МБ.";
+  }
+  if (/file type/i.test(serverText ?? "")) {
+    return "Можно приложить только фото — JPG, PNG или WebP.";
+  }
+  if (status === 404) {
+    return "Запись не найдена — обновите экран и попробуйте снова.";
+  }
+  return "Фото не загрузилось. Попробуйте ещё раз.";
+}
+
 /**
  * Native bottom-sheet pattern: тап «прикрепить» → sheet с двумя пунктами:
  * камера / галерея. Каждый пункт триггерит свой `<input>` с
@@ -47,6 +72,14 @@ export function PhotoUploader({
 
   const upload = useCallback(
     async (file: File) => {
+      // Проверяем до отправки: сервер отвечает на это по-английски
+      // («Invalid file type. Use JPG, PNG, or WebP.»), и повар видел
+      // непонятную строку вместо подсказки.
+      if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
+        setError("Можно приложить только фото — JPG, PNG или WebP.");
+        haptic("error");
+        return;
+      }
       setUploading(true);
       setError(null);
       try {
@@ -58,6 +91,16 @@ export function PhotoUploader({
         const compressed = await compressImageIfWorthwhile(file);
         const payload = compressed ?? file;
 
+        // Сжатие спасает не всегда (PNG, старый браузер). Лучше сказать
+        // про размер сразу, чем ждать отправку ради отказа сервера.
+        if (payload.size > MAX_UPLOAD_BYTES) {
+          setError(
+            `Фото слишком большое — ${(payload.size / 1024 / 1024).toFixed(1)} МБ. Максимум 5 МБ: снимите в меньшем качестве.`
+          );
+          haptic("error");
+          return;
+        }
+
         const form = new FormData();
         form.append("file", payload);
         if (entryId) form.append("entryId", entryId);
@@ -67,16 +110,16 @@ export function PhotoUploader({
           body: form,
         });
 
-        const data = await res.json().catch(() => ({ error: "Upload failed" }));
+        const data = await res.json().catch(() => ({ error: "" }));
         if (!res.ok) {
-          setError(data.error || "Upload failed");
+          setError(russianUploadError(res.status, data.error));
           haptic("error");
           return;
         }
         onUploaded?.(data as PhotoFile);
         haptic("success");
       } catch {
-        setError("Network error");
+        setError("Нет связи — фото не загрузилось. Попробуйте ещё раз.");
         haptic("error");
       } finally {
         setUploading(false);
@@ -129,7 +172,12 @@ export function PhotoUploader({
           setSheetOpen(true);
         }}
         disabled={uploading}
-        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[13px] font-medium text-slate-700 shadow-sm active:bg-slate-50 disabled:opacity-50"
+        className="mini-press inline-flex items-center gap-2 rounded-xl px-3 py-2 text-[13px] font-medium disabled:opacity-50"
+        style={{
+          background: "var(--mini-surface-2)",
+          border: "1px solid var(--mini-divider-strong)",
+          color: "var(--mini-text)",
+        }}
       >
         {uploading ? (
           <>
@@ -143,7 +191,11 @@ export function PhotoUploader({
           </>
         )}
       </button>
-      {error ? <p className="text-[12px] text-red-500">{error}</p> : null}
+      {error ? (
+        <p className="text-[12px] leading-4" style={{ color: "var(--mini-crimson)" }}>
+          {error}
+        </p>
+      ) : null}
 
       {sheetOpen ? (
         <div
@@ -153,18 +205,28 @@ export function PhotoUploader({
           onClick={() => setSheetOpen(false)}
         >
           <BodyScrollLock />
+          {/* Лист был всегда тёмным: в светлой теме он выглядел
+              чужим окном поверх приложения. */}
           <div
-            className="w-full max-w-md rounded-3xl border border-white/10 bg-[#0a0b0f] p-3 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.7)]"
+            className="w-full max-w-md rounded-3xl p-3 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.45)]"
+            style={{
+              background: "var(--mini-surface-1)",
+              border: "1px solid var(--mini-divider-strong)",
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-2 flex items-center justify-between px-2">
-              <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-white/40">
+              <div
+                className="text-[12px] font-semibold uppercase tracking-[0.16em]"
+                style={{ color: "var(--mini-text-muted)" }}
+              >
                 Источник
               </div>
               <button
                 type="button"
                 onClick={() => setSheetOpen(false)}
-                className="rounded-full p-1.5 text-white/40 hover:bg-white/5 hover:text-white"
+                className="rounded-full p-1.5"
+                style={{ color: "var(--mini-text-muted)" }}
                 aria-label="Закрыть"
               >
                 <X className="size-4" />
@@ -204,14 +266,20 @@ function SheetItem({
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-white transition-colors hover:bg-white/5"
+      className="mini-press flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left"
+      style={{ color: "var(--mini-text)" }}
     >
-      <span className="flex size-10 items-center justify-center rounded-2xl bg-white/8 text-white">
+      <span
+        className="flex size-10 items-center justify-center rounded-2xl"
+        style={{ background: "var(--mini-surface-2)", color: "var(--mini-text)" }}
+      >
         <Icon className="size-5" />
       </span>
       <span className="flex flex-col">
         <span className="text-[15px] font-medium">{label}</span>
-        <span className="text-[12px] text-white/45">{hint}</span>
+        <span className="text-[12px]" style={{ color: "var(--mini-text-muted)" }}>
+          {hint}
+        </span>
       </span>
     </button>
   );

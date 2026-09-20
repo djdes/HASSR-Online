@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 declare global {
   interface Window {
@@ -94,8 +95,23 @@ export function VoiceInput({
       onChange(value + finalTranscript + interim);
     };
 
-    rec.onerror = () => {
+    // Раньше кнопка при любом сбое просто гасла — человек жал её снова и снова,
+    // не понимая, что микрофон запрещён в настройках телефона.
+    rec.onerror = (event) => {
       setRecording(false);
+      const code = event?.error;
+      if (code === "aborted") return;
+      toast.error(
+        code === "not-allowed" || code === "service-not-allowed"
+          ? "Доступ к микрофону запрещён. Разрешите его в настройках телефона или наберите текст вручную."
+          : code === "no-speech"
+            ? "Ничего не расслышали. Попробуйте ещё раз поближе к телефону."
+            : code === "audio-capture"
+              ? "Микрофон недоступен. Наберите текст вручную."
+              : code === "network"
+                ? "Нет связи: распознавание речи не работает. Наберите текст вручную."
+                : "Запись прервалась. Попробуйте ещё раз или наберите текст вручную.",
+      );
     };
 
     rec.onend = () => {

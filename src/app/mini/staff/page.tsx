@@ -4,7 +4,9 @@ import { RU_PHONE_PLACEHOLDER, phoneInputProps } from "@/lib/phone-input";
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Bell, Loader2, UserPlus } from "lucide-react";
+import { toast } from "sonner";
 
+import { MiniSheet } from "../_components/mini-sheet";
 import {
   MiniSearchField,
   SEARCH_WORTH_IT_FROM,
@@ -34,6 +36,9 @@ type StaffData = {
 
 type LocalState =
   | { kind: "loading" }
+  // `denied` — не поломка, а «вам сюда не надо»: показываем спокойно,
+  // без красного слова «Ошибка», которое пугает рядового сотрудника.
+  | { kind: "denied"; message: string }
   | { kind: "error"; message: string }
   | { kind: "ready"; data: StaffData }
   | { kind: "adding" };
@@ -47,6 +52,15 @@ export default function MiniStaffPage() {
   const [formLoading, setFormLoading] = useState(false);
   const [phone, setPhone] = useState("");
   const [notifyStatus, setNotifyStatus] = useState<Record<string, string>>({});
+  // Приглашение в Telegram: тот же эндпоинт, что на сайте в
+  // `/settings/users` — в Mini App его просто не было, и «Нет TG» было
+  // тупиком (П-3).
+  const [invite, setInvite] = useState<
+    | { kind: "loading"; employee: Employee }
+    | { kind: "ready"; employee: Employee; url: string; qr: string | null }
+    | { kind: "error"; employee: Employee; message: string }
+    | null
+  >(null);
   // Per-employee timer-id'ы для clearTimeout. Раньше setTimeout не очищался
   // при unmount → setState на dead component + утечка. Pass-3 review #8.
   const notifyTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(
@@ -77,21 +91,72 @@ export default function MiniStaffPage() {
   async function loadData() {
     try {
       const resp = await fetch("/api/mini/staff", { cache: "no-store" });
+      if (resp.status === 403) {
+        setState({
+          kind: "denied",
+          message:
+            "Список сотрудников ведёт руководитель. Если нужно что-то поправить в вашей карточке — телефон, должность, доступ к журналам — попросите его.",
+        });
+        return;
+      }
       if (!resp.ok) {
+        if (resp.status === 401) {
+          throw new Error("Сессия закончилась. Откройте приложение заново.");
+        }
         const body = (await resp.json().catch(() => ({ error: "" }))) as {
           error?: string;
         };
-        if (resp.status === 403) {
-          throw new Error("Раздел «Сотрудники» доступен руководителю. Попросите его добавить или изменить сотрудника.");
-        }
-        throw new Error(body.error || `HTTP ${resp.status}`);
+        throw new Error(
+          body.error ||
+            "Не удалось загрузить список сотрудников. Проверьте связь и нажмите «Повторить»."
+        );
       }
       const data = (await resp.json()) as StaffData;
       setState({ kind: "ready", data });
     } catch (err) {
       setState({
         kind: "error",
-        message: err instanceof Error ? err.message : "Ошибка загрузки",
+        message:
+          err instanceof Error && err.message
+            ? err.message
+            : "Не удалось загрузить список сотрудников.",
+      });
+    }
+  }
+
+  async function handleInvite(emp: Employee) {
+    setInvite({ kind: "loading", employee: emp });
+    try {
+      const resp = await fetch(`/api/staff/${emp.id}/invite-tg`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "invite" }),
+      });
+      const body = (await resp.json().catch(() => ({}))) as {
+        error?: string;
+        inviteUrl?: string;
+        qrPngDataUrl?: string;
+      };
+      if (!resp.ok || !body.inviteUrl) {
+        throw new Error(
+          body.error ||
+            "Не удалось создать приглашение. Попробуйте ещё раз чуть позже."
+        );
+      }
+      setInvite({
+        kind: "ready",
+        employee: emp,
+        url: body.inviteUrl,
+        qr: body.qrPngDataUrl ?? null,
+      });
+    } catch (err) {
+      setInvite({
+        kind: "error",
+        employee: emp,
+        message:
+          err instanceof Error && err.message
+            ? err.message
+            : "Не удалось создать приглашение.",
       });
     }
   }
@@ -164,16 +229,40 @@ export default function MiniStaffPage() {
     );
   }
 
+  if (state.kind === "denied") {
+    return (
+      <div className="flex flex-1 flex-col gap-3 pt-6">
+        <div
+          className="rounded-2xl px-4 py-4"
+          style={{
+            background: "var(--mini-surface-1)",
+            border: "1px solid var(--mini-divider)",
+          }}
+        >
+          <p
+            className="text-[15px] font-medium"
+            style={{ color: "var(--mini-text)" }}
+          >
+            Раздел для руководителя
+          </p>
+          <p
+            className="mt-1.5 text-[14px] leading-5"
+            style={{ color: "var(--mini-text-muted)" }}
+          >
+            {state.message}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (state.kind === "error") {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-        <h1
-          className="text-lg font-semibold"
-          style={{ color: "var(--mini-text)" }}
+        <p
+          className="text-[14px] leading-5"
+          style={{ color: "var(--mini-crimson)" }}
         >
-          Ошибка
-        </h1>
-        <p className="text-sm" style={{ color: "var(--mini-crimson)" }}>
           {state.message}
         </p>
         <button
@@ -382,12 +471,26 @@ export default function MiniStaffPage() {
                 >
                   {emp.name}
                 </p>
+                {/* Раньше здесь стоял голый прочерк и телефон в одну
+                    строку: на узком экране строка обрезалась посередине,
+                    и не понять, то ли должности нет, то ли не догрузилось. */}
                 <p
                   className="truncate text-[13px]"
                   style={{ color: "var(--mini-text-muted)" }}
                 >
-                  {emp.positionTitle || "—"}
-                  {emp.phone ? ` · ${emp.phone}` : ""}
+                  {emp.positionTitle || "Без должности"}
+                </p>
+                <p
+                  className="truncate text-[12px]"
+                  style={{
+                    color: emp.phone
+                      ? "var(--mini-text-faint)"
+                      : "var(--mini-crimson)",
+                  }}
+                >
+                  {/* Телефон — ключ связки с задачами (П-8): без него
+                      сотрудник не свяжется с аккаунтом в TasksFlow. */}
+                  {emp.phone || "Нет телефона — добавьте его"}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -418,11 +521,20 @@ export default function MiniStaffPage() {
                           });
                           if (res.ok) {
                             setNotifyStatus((s) => ({ ...s, [emp.id]: "sent" }));
+                            toast.success(`Напоминание отправлено: ${emp.name}`);
                           } else {
                             setNotifyStatus((s) => ({ ...s, [emp.id]: "error" }));
+                            // Раньше ошибка была видна только как значок
+                            // колокольчика, который просто не поменялся.
+                            toast.error(
+                              "Не удалось отправить напоминание. Попробуйте ещё раз."
+                            );
                           }
                         } catch {
                           setNotifyStatus((s) => ({ ...s, [emp.id]: "error" }));
+                          toast.error(
+                            "Нет связи с сервером — напоминание не ушло."
+                          );
                         }
                         // Очищаем предыдущий timer этого сотрудника
                         // (повторный клик до 3с на ту же кнопку) и
@@ -454,21 +566,110 @@ export default function MiniStaffPage() {
                     </button>
                   </>
                 ) : (
-                  <span
-                    className="rounded-full px-2 py-0.5 text-[11px] font-medium"
+                  /* «Нет TG» был тупиком: непонятно и ничего не сделать.
+                     Теперь это кнопка, которая выдаёт ссылку-приглашение. */
+                  <button
+                    type="button"
+                    onClick={() => void handleInvite(emp)}
+                    className="mini-press rounded-full px-2.5 py-1 text-[11px] font-medium"
                     style={{
-                      background: "var(--mini-surface-2)",
-                      color: "var(--mini-text-muted)",
+                      background: "var(--mini-lime-soft)",
+                      color: "var(--mini-lime)",
                     }}
                   >
-                    Нет TG
-                  </span>
+                    Пригласить
+                  </button>
                 )}
               </div>
             </div>
           ))
         )}
       </section>
+
+      <MiniSheet
+        open={invite !== null}
+        onClose={() => setInvite(null)}
+        title="Приглашение в Telegram"
+        subtitle={invite?.employee.name}
+      >
+        {invite?.kind === "loading" ? (
+          <div
+            className="flex items-center justify-center gap-2 px-3 py-8 text-[14px]"
+            style={{ color: "var(--mini-text-muted)" }}
+          >
+            <Loader2
+              className="size-4 animate-spin"
+              style={{ color: "var(--mini-lime)" }}
+            />
+            Готовим ссылку…
+          </div>
+        ) : invite?.kind === "error" ? (
+          <div className="px-3 py-4">
+            <p
+              className="text-[14px] leading-5"
+              style={{ color: "var(--mini-crimson)" }}
+            >
+              {invite.message}
+            </p>
+            <button
+              type="button"
+              onClick={() => void handleInvite(invite.employee)}
+              className="mini-press mt-3 rounded-xl px-4 py-2 text-[13px] font-medium"
+              style={{
+                background: "var(--mini-lime)",
+                color: "var(--mini-primary-contrast)",
+              }}
+            >
+              Повторить
+            </button>
+          </div>
+        ) : invite?.kind === "ready" ? (
+          <div className="space-y-3 px-3 py-3">
+            <p
+              className="text-[13px] leading-5"
+              style={{ color: "var(--mini-text-muted)" }}
+            >
+              Отправьте сотруднику эту ссылку или покажите ему код с экрана.
+              Он откроет бота, и приложение само его узнает — пароль не нужен.
+              Ссылка работает 7 дней.
+            </p>
+            {invite.qr ? (
+              // eslint-disable-next-line @next/next/no-img-element -- data:URL с сервера, оптимизация не нужна
+              <img
+                src={invite.qr}
+                alt="Код для входа"
+                className="mx-auto block size-44 rounded-2xl"
+                style={{ background: "#ffffff", padding: 8 }}
+              />
+            ) : null}
+            <p
+              className="mini-mono break-all rounded-xl px-3 py-2 text-[12px]"
+              style={{
+                background: "var(--mini-surface-2)",
+                color: "var(--mini-text-muted)",
+              }}
+            >
+              {invite.url}
+            </p>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(invite.url);
+                  toast.success("Ссылка скопирована");
+                } catch {
+                  toast.error(
+                    "Браузер не дал скопировать — выделите ссылку вручную."
+                  );
+                }
+              }}
+              className="mini-btn-primary mini-press flex h-12 w-full items-center justify-center text-[15px]"
+            >
+              Скопировать ссылку
+            </button>
+          </div>
+        ) : null}
+      </MiniSheet>
     </div>
   );
 }

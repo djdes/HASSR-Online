@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { db } from "@/lib/db";
 import SiteJournalDocumentPage from "@/app/(dashboard)/journals/[code]/documents/[docId]/page";
 import { JournalDocGuideOverlay } from "@/components/journals/journal-doc-guide";
+import { MiniDocumentLinks } from "../mini-document-links";
 
 /**
  * Mini App document editor.
@@ -52,10 +53,11 @@ export default async function MiniDocumentPage({
   const code = doc.template.code;
 
   return (
-    <div className="flex flex-1 flex-col gap-3 pb-24">
+    <div className="flex flex-1 flex-col gap-3 pb-24 print:pb-0">
       <Link
         href={`/mini/journals/${code}`}
-        className="mini-press inline-flex items-center gap-1 px-1 text-[13px] font-medium"
+        data-mini-noprint
+        className="mini-press inline-flex items-center gap-1 px-1 text-[13px] font-medium print:hidden"
         style={{ color: "var(--mini-text-muted)" }}
       >
         <ArrowLeft className="size-4" />К списку документов
@@ -69,7 +71,9 @@ export default async function MiniDocumentPage({
         читаться как «бумажная карточка» поверх charcoal-бэка — что в
         целом OK, но если станет мешать, добавим contrast-обвёртку.
       */}
-      <div className="mini-document-host">
+      {/* Ссылки бланка написаны для сайта (`/journals/...`) — обёртка переводит
+          их на экраны мини-приложения, чтобы человек не вылетал на сайт. */}
+      <MiniDocumentLinks>
         {/* `chrome="mini"` — без хлебных крошек дашборда: в Mini App
             навигация своя (ссылка «К списку документов» выше + MiniNav). */}
         <SiteJournalDocumentPage
@@ -77,7 +81,7 @@ export default async function MiniDocumentPage({
           searchParams={Promise.resolve({})}
           chrome="mini"
         />
-      </div>
+      </MiniDocumentLinks>
 
       {/* Круглая кнопка «Как заполнить?» / «Как заполнять» — как на сайте
           (П-3). Mini-layout её не монтирует, а по URL код журнала не

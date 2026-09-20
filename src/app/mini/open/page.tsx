@@ -31,37 +31,64 @@ export default async function MiniOpenPage({
     <div className="flex flex-1 flex-col gap-4 pb-24">
       <Link
         href="/mini"
-        className="inline-flex items-center gap-1 text-[13px] font-medium text-[#6f7282]"
+        className="mini-press inline-flex w-fit items-center gap-1 text-[13px] font-medium"
+        style={{ color: "var(--mini-text-muted)" }}
       >
         <ArrowLeft className="size-4" />
         На главную
       </Link>
 
-      <section className="rounded-3xl border border-[#ececf4] bg-white px-5 py-6 text-center shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
-        <div className="mx-auto flex size-12 items-center justify-center rounded-3xl bg-[#eef1ff] text-[#5566f6]">
+      <section
+        className="rounded-3xl border px-5 py-6 text-center"
+        style={{
+          background: "var(--mini-surface-1)",
+          borderColor: "var(--mini-divider)",
+        }}
+      >
+        <div
+          className="mx-auto flex size-12 items-center justify-center rounded-3xl"
+          style={{
+            background: "var(--mini-lime-soft)",
+            color: "var(--mini-lime)",
+          }}
+        >
           <MonitorSmartphone className="size-6" />
         </div>
-        <h1 className="mt-4 text-[22px] font-semibold tracking-[-0.02em] text-[#0b1024]">
+        <h1
+          className="mt-4 text-[22px] font-semibold tracking-[-0.02em]"
+          style={{ color: "var(--mini-text)" }}
+        >
           Раздел в полной версии
         </h1>
-        <p className="mt-2 text-[14px] leading-6 text-[#6f7282]">
-          {label} пока не перенесён в Mini App. Можно открыть полную версию
-          кабинета прямо отсюда.
+        <p
+          className="mt-2 text-[14px] leading-6"
+          style={{ color: "var(--mini-text-muted)" }}
+        >
+          «{label}» пока нет в телефоне. Полная версия кабинета откроется
+          прямо отсюда — в том же окне.
         </p>
 
         <div className="mt-5 grid gap-2">
           <Link
             href={href}
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_12px_36px_-16px_rgba(85,102,246,0.75)] active:scale-[0.98]"
+            className="mini-press inline-flex h-12 items-center justify-center gap-2 rounded-2xl px-4 text-[14px] font-medium"
+            style={{
+              background: "var(--mini-lime)",
+              color: "var(--mini-primary-contrast)",
+            }}
           >
-            {isMiniHref ? "Открыть в Mini App" : "Открыть полную версию"}
+            {isMiniHref ? "Открыть в приложении" : "Открыть полную версию"}
             <ExternalLink className="size-4" />
           </Link>
           <Link
             href="/mini"
-            className="inline-flex h-11 items-center justify-center rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] active:scale-[0.98]"
+            className="mini-press inline-flex h-11 items-center justify-center rounded-2xl border px-4 text-[14px] font-medium"
+            style={{
+              borderColor: "var(--mini-divider-strong)",
+              color: "var(--mini-text)",
+            }}
           >
-            Вернуться к журналам
+            Вернуться на главную
           </Link>
         </div>
       </section>

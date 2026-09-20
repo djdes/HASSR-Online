@@ -32,9 +32,19 @@ type Snapshot = {
  * Загружается lazy через GET /api/mini/shift/me; при неавторизованном
  * (anon на /mini) ничего не показываем.
  */
+/** Подписи статусов смены: в тексте для человека кодов быть не должно. */
+const OFF_LABEL: Record<string, string> = {
+  off: "сегодня у вас выходной",
+  vacation: "вы в отпуске",
+  sick: "вы на больничном",
+};
+
 export function MyShiftButton() {
   const [state, setState] = useState<Snapshot | null>(null);
   const [pending, setPending] = useState(false);
+  // Без этого неуспешный ответ оставлял на главной серую полосу-заглушку
+  // навсегда: `state` так и не появлялся, а скелетон рисуется по `!state`.
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -42,10 +52,11 @@ export function MyShiftButton() {
       .then((r) => (r.ok ? r.json() : null))
       .then((data: Snapshot | null) => {
         if (cancelled) return;
-        setState(data);
+        if (!data) setFailed(true);
+        else setState(data);
       })
       .catch(() => {
-        /* anon / network — silently hide */
+        if (!cancelled) setFailed(true);
       });
     return () => {
       cancelled = true;
@@ -81,6 +92,7 @@ export function MyShiftButton() {
     }
   }
 
+  if (failed) return null;
   if (!state) {
     // Skeleton-плейсхолдер той же высоты что финальная card —
     // предотвращаем CLS (cumulative layout shift) на главной.
@@ -112,7 +124,7 @@ export function MyShiftButton() {
       >
         <Coffee className="size-5" style={{ color: "var(--mini-text-muted)" }} />
         <div className="text-[14px] leading-snug">
-          Сегодня вы не на смене ({state.status})
+          Сегодня вы не на смене — {OFF_LABEL[state.status] ?? "смена не назначена"}.
         </div>
       </div>
     );
@@ -165,8 +177,8 @@ export function MyShiftButton() {
           style={{ color: "currentcolor" }}
         >
           {isWorking
-            ? "Бот перестанет пинговать о journal-активности."
-            : "Включит мониторинг активности на сегодня."}
+            ? "Напоминания о незаполненных задачах перестанут приходить."
+            : "Руководитель увидит, что вы на работе, и придут напоминания о задачах."}
         </div>
       </div>
     </button>

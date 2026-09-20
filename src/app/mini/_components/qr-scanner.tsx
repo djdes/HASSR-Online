@@ -136,10 +136,15 @@ export function QrScannerButton() {
     <>
       <button
         onClick={handleScan}
-        className="inline-flex items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-3 py-2 text-[13px] font-medium text-[#0b1024] shadow-sm active:scale-[0.98] active:bg-[#f5f6ff]"
+        className="mini-press inline-flex items-center gap-2 rounded-2xl border px-3 py-2 text-[13px] font-medium"
+        style={{
+          background: "var(--mini-surface-1)",
+          borderColor: "var(--mini-divider-strong)",
+          color: "var(--mini-text)",
+        }}
         aria-label="Сканировать QR"
       >
-        <QrCode className="size-4 text-[#5566f6]" />
+        <QrCode className="size-4" style={{ color: "var(--mini-lime)" }} />
         Сканировать QR
       </button>
       <QrCameraSheet

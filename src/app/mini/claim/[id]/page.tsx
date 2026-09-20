@@ -1,16 +1,21 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   AlertTriangle,
   ArrowLeft,
   CheckCircle2,
   Loader2,
+  RotateCcw,
   SkipForward,
   Thermometer,
+  Undo2,
 } from "lucide-react";
+import { claimReasonRu } from "@/app/mini/_lib/claim-errors";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PhotoField, parsePhotoValue } from "@/components/journals/photo-field";
 import { TaskFillField } from "@/components/task-fill/task-fill-field";
 import type { TaskFormSchema } from "@/lib/tasksflow-adapters/task-form";
@@ -98,7 +103,7 @@ const JOURNAL_FORMS: Record<string, TaskFormSchema> = {
     submitLabel: "Записать ЧП",
     fields: [
       { key: "description", label: "Что произошло", type: "text", required: true },
-      { key: "severity", label: "Серьёзность (low/medium/high)", type: "text" },
+      { key: "severity", label: "Насколько серьёзно", type: "text", placeholder: "лёгкое / среднее / тяжёлое" },
       { key: "actionTaken", label: "Принятые меры", type: "text" },
     ],
   },
@@ -326,6 +331,7 @@ export default function ClaimPage({
   const [warnings, setWarnings] = useState<{ message: string }[]>([]);
   const [skipMode, setSkipMode] = useState(false);
   const [skipReason, setSkipReason] = useState("");
+  const [confirmRelease, setConfirmRelease] = useState(false);
   const [pipeline, setPipeline] = useState<{
     intro?: string;
     steps: Array<{
@@ -343,28 +349,42 @@ export default function ClaimPage({
     {}
   );
 
-  useEffect(() => {
-    (async () => {
+  // Загрузка вынесена наружу: её же вызывает кнопка «Попробовать ещё раз».
+  const loadClaim = useCallback(async () => {
+    setError(null);
+    try {
       const res = await fetch("/api/journal-task-claims/my", { cache: "no-store" });
-      if (res.ok) {
-        const j = (await res.json()) as { claim: Claim | null };
-        if (j.claim && j.claim.id === id) {
-          setClaim(j.claim);
-          // Параллельно — pipeline для этого journalCode (если есть).
-          fetch(`/api/journal-pipelines/${j.claim.journalCode}`, {
-            cache: "force-cache",
-          })
-            .then((r) => (r.ok ? r.json() : null))
-            .then((p) => {
-              if (p?.pipeline) setPipeline(p.pipeline);
-            })
-            .catch(() => null);
-        } else {
-          setError("Не нашёл активную задачу с этим ID. Возможно, она уже завершена.");
-        }
+      if (!res.ok) {
+        // Раньше неуспешный ответ не обрабатывался вовсе: экран
+        // оставался с крутилкой навсегда и ничего не объяснял.
+        setError(claimReasonRu(null, res.status));
+        return;
       }
-    })();
+      const j = (await res.json()) as { claim: Claim | null };
+      if (!j.claim || j.claim.id !== id) {
+        setError(
+          "Эта задача уже закрыта или её взял другой сотрудник. Вернитесь к списку задач на сегодня."
+        );
+        return;
+      }
+      setClaim(j.claim);
+      // Параллельно — pipeline для этого journalCode (если есть).
+      fetch(`/api/journal-pipelines/${j.claim.journalCode}`, {
+        cache: "force-cache",
+      })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((p) => {
+          if (p?.pipeline) setPipeline(p.pipeline);
+        })
+        .catch(() => null);
+    } catch {
+      setError("Нет связи. Проверьте интернет и попробуйте ещё раз.");
+    }
   }, [id]);
+
+  useEffect(() => {
+    void loadClaim();
+  }, [loadClaim]);
 
   const form = claim ? JOURNAL_FORMS[claim.journalCode] : null;
 
@@ -386,7 +406,7 @@ export default function ClaimPage({
           return v === undefined || v === null || v === "";
         });
       if (missing.length > 0) {
-        setError(`Заполни поле: «${missing[0].label}»`);
+        setError(`Заполните поле «${missing[0].label}»`);
         return;
       }
       // Также ловим NaN — пользователь ввёл буквы вместо чисел.
@@ -394,7 +414,7 @@ export default function ClaimPage({
         (f) => f.type === "number" && typeof data[f.key] === "number" && Number.isNaN(data[f.key] as number)
       );
       if (badNumber) {
-        setError(`В поле «${badNumber.label}» нужно число, не буквы.`);
+        setError(`В поле «${badNumber.label}» нужно число, а не буквы.`);
         return;
       }
     }
@@ -428,7 +448,10 @@ export default function ClaimPage({
       const j = await res.json().catch(() => null);
       if (!res.ok) {
         const errs = j?.errors as { field?: string; message: string }[] | undefined;
-        const msg = errs?.map((e) => e.message).join("; ") || j?.reason || "Ошибка";
+        // `reason` — это код вроде `not_owner`; показывать его человеку нельзя.
+        const msg =
+          errs?.map((e) => e.message).join("; ") ||
+          claimReasonRu(j?.reason, res.status);
         throw new Error(msg);
       }
       setWarnings(j?.warnings ?? []);
@@ -456,11 +479,45 @@ export default function ClaimPage({
       });
       const j = await res.json().catch(() => null);
       if (!res.ok) {
-        throw new Error(j?.reason || "Ошибка");
+        throw new Error(claimReasonRu(j?.reason, res.status));
       }
       setTimeout(() => router.push("/mini/today"), 800);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Ошибка");
+      setError(
+        e instanceof Error ? e.message : "Не получилось. Попробуйте ещё раз."
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  /**
+   * Вернуть задачу в общий список.
+   *
+   * Сервер это умел с самого начала (`action: "release"`), но в
+   * приложении кнопки не было: взяв задачу по ошибке, человек не мог ни
+   * отдать её, ни взять другую — «Сегодня» держит по одной задаче на
+   * сотрудника. Единственным выходом было выдумать заполнение.
+   */
+  async function releaseTask() {
+    if (!claim) return;
+    setConfirmRelease(false);
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/journal-task-claims/${id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "release" }),
+      });
+      const j = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(claimReasonRu(j?.reason, res.status));
+      toast.success("Задача снова в общем списке");
+      router.push("/mini/today");
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Не получилось вернуть задачу."
+      );
     } finally {
       setSubmitting(false);
     }
@@ -468,21 +525,56 @@ export default function ClaimPage({
 
   if (error && !claim) {
     return (
-      <div className="space-y-3">
-        <Link href="/mini/today" className="inline-flex items-center gap-1.5 text-[13px] text-[#6f7282]">
-          <ArrowLeft className="size-4" />
-          Сегодня
-        </Link>
-        <div className="rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-4 text-[14px] text-[#a13a32]">
+      <div className="space-y-3 pb-24">
+        <BackToday />
+        <div
+          className="rounded-2xl border p-4 text-[14px] leading-relaxed"
+          style={{
+            background: "var(--mini-crimson-soft)",
+            borderColor: "var(--mini-divider-strong)",
+            color: "var(--mini-text)",
+          }}
+        >
           {error}
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => void loadClaim()}
+              className="mini-press inline-flex h-11 items-center gap-2 rounded-2xl px-5 text-[14px] font-semibold"
+              style={{
+                background: "var(--mini-lime)",
+                color: "var(--mini-primary-contrast)",
+              }}
+            >
+              <RotateCcw className="size-4" />
+              Попробовать ещё раз
+            </button>
+            <Link
+              href="/mini/today"
+              className="mini-press inline-flex h-11 items-center rounded-2xl border px-5 text-[14px] font-medium"
+              style={{
+                borderColor: "var(--mini-divider-strong)",
+                color: "var(--mini-text)",
+              }}
+            >
+              К задачам на сегодня
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
   if (!claim) {
     return (
-      <div className="flex h-40 items-center justify-center text-[#6f7282]">
-        <Loader2 className="size-5 animate-spin" />
+      <div className="space-y-3 pb-24">
+        <BackToday />
+        <div
+          className="flex h-40 items-center justify-center gap-2 text-[14px]"
+          style={{ color: "var(--mini-text-muted)" }}
+        >
+          <Loader2 className="size-5 animate-spin" />
+          Открываем задачу…
+        </div>
       </div>
     );
   }
@@ -497,21 +589,36 @@ export default function ClaimPage({
 
   return (
     <div className="space-y-4 pb-24">
-      <Link href="/mini/today" className="inline-flex items-center gap-1.5 text-[13px] text-[#6f7282]">
-        <ArrowLeft className="size-4" />
-        Сегодня
-      </Link>
+      <BackToday />
 
-      <header className="rounded-3xl border border-[#5566f6]/30 bg-[#eef1ff] p-5">
+      <header
+        className="rounded-3xl border p-5"
+        style={{
+          background: "var(--mini-lime-soft)",
+          borderColor: "var(--mini-lime-strong)",
+        }}
+      >
         <div className="flex items-start gap-3">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-[#5566f6] text-white">
+          <span
+            className="flex size-10 shrink-0 items-center justify-center rounded-2xl"
+            style={{
+              background: "var(--mini-lime)",
+              color: "var(--mini-primary-contrast)",
+            }}
+          >
             <Thermometer className="size-5" />
           </span>
           <div>
-            <div className="text-[12px] uppercase tracking-[0.14em] text-[#3848c7]">
+            <div
+              className="text-[12px] uppercase tracking-[0.14em]"
+              style={{ color: "var(--mini-text-muted)" }}
+            >
               В работе
             </div>
-            <div className="text-[18px] font-semibold leading-tight text-[#0b1024]">
+            <div
+              className="text-[18px] font-semibold leading-tight"
+              style={{ color: "var(--mini-text)" }}
+            >
               {claim.scopeLabel}
             </div>
           </div>
@@ -522,32 +629,46 @@ export default function ClaimPage({
       {pipeline && pipeline.steps.length > 0 ? (
         <div className="space-y-3">
           {pipeline.intro ? (
-            <div className="rounded-2xl border border-[#dcdfed] bg-[#fafbff] p-3 text-[13px] text-[#3c4053]">
+            <div
+              className="rounded-2xl border p-3 text-[13px]"
+              style={{
+                background: "var(--mini-surface-1)",
+                borderColor: "var(--mini-divider)",
+                color: "var(--mini-text-muted)",
+              }}
+            >
               {pipeline.intro}
             </div>
           ) : null}
           <div className="relative space-y-3 pl-4">
             <div
               className="absolute left-[19px] top-2 bottom-2 w-px"
-              style={{ background: "#dcdfed" }}
+              style={{ background: "var(--mini-divider-strong)" }}
             />
             {pipeline.steps.map((step, idx) => {
               const done = Boolean(pipelineProgress[step.id]);
               return (
                 <div
                   key={step.id}
-                  className={`relative ml-4 rounded-2xl border p-4 transition-colors ${
+                  className="relative ml-4 rounded-2xl border p-4 transition-colors"
+                  style={
                     done
-                      ? "border-[#c8f0d5] bg-[#ecfdf5]"
-                      : "border-[#dcdfed] bg-white"
-                  }`}
+                      ? {
+                          background: "var(--mini-sage-soft)",
+                          borderColor: "var(--mini-sage)",
+                        }
+                      : {
+                          background: "var(--mini-surface-1)",
+                          borderColor: "var(--mini-divider)",
+                        }
+                  }
                 >
                   <div
-                    className={`absolute -left-[24px] top-4 flex size-8 items-center justify-center rounded-full text-[12px] font-bold ${
-                      done
-                        ? "bg-[#136b2a] text-white"
-                        : "bg-[#5566f6] text-white"
-                    }`}
+                    className="absolute -left-[24px] top-4 flex size-8 items-center justify-center rounded-full text-[12px] font-bold"
+                    style={{
+                      background: done ? "var(--mini-sage)" : "var(--mini-lime)",
+                      color: "var(--mini-primary-contrast)",
+                    }}
                   >
                     {done ? "✓" : idx + 1}
                   </div>
@@ -558,11 +679,17 @@ export default function ClaimPage({
                     }
                     className="block w-full text-left"
                   >
-                    <div className="text-[15px] font-semibold leading-tight text-[#0b1024]">
+                    <div
+                      className="text-[15px] font-semibold leading-tight"
+                      style={{ color: "var(--mini-text)" }}
+                    >
                       {step.title}
                     </div>
                     {step.instruction ? (
-                      <div className="mt-1 text-[13px] leading-relaxed text-[#3c4053]">
+                      <div
+                        className="mt-1 text-[13px] leading-relaxed"
+                        style={{ color: "var(--mini-text-muted)" }}
+                      >
                         {step.instruction}
                       </div>
                     ) : null}
@@ -583,14 +710,16 @@ export default function ClaimPage({
                                   [itemKey]: !p[itemKey],
                                 }))
                               }
-                              className="mt-0.5 size-4 shrink-0 accent-[#5566f6]"
+                              className="mt-0.5 size-4 shrink-0"
+                              style={{ accentColor: "var(--mini-lime)" }}
                             />
                             <span
-                              className={
-                                itemDone
-                                  ? "text-[#136b2a] line-through"
-                                  : "text-[#0b1024]"
-                              }
+                              className={itemDone ? "line-through" : ""}
+                              style={{
+                                color: itemDone
+                                  ? "var(--mini-sage)"
+                                  : "var(--mini-text)",
+                              }}
                             >
                               {item}
                             </span>
@@ -615,8 +744,14 @@ export default function ClaimPage({
               );
             })}
           </div>
-          <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-3 text-[12px] text-[#6f7282]">
-            Когда все шаги выполнены — нажми «Завершить» внизу.
+          <div
+            className="rounded-2xl border border-dashed p-3 text-[12px]"
+            style={{
+              borderColor: "var(--mini-divider-strong)",
+              color: "var(--mini-text-muted)",
+            }}
+          >
+            Когда все шаги выполнены — нажмите «Завершить» внизу.
           </div>
         </div>
       ) : form ? (
@@ -631,28 +766,57 @@ export default function ClaimPage({
           ))}
         </div>
       ) : (
-        <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-4 text-[13px] text-[#6f7282]">
-          Для этого журнала нет быстрой формы — нажмите «Завершить» чтобы
-          закрыть задачу. Подробное заполнение — в дашборде.
+        <div
+          className="rounded-2xl border border-dashed p-4 text-[13px] leading-relaxed"
+          style={{
+            borderColor: "var(--mini-divider-strong)",
+            color: "var(--mini-text-muted)",
+          }}
+        >
+          Для этой задачи короткой формы нет — нажмите «Завершить», чтобы
+          её закрыть. Подробная запись заполняется в полной версии кабинета.
         </div>
       )}
 
       {error ? (
-        <div className="rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-3 text-[13px] text-[#a13a32]">
+        <div
+          className="rounded-2xl border p-3 text-[13px] leading-relaxed"
+          style={{
+            background: "var(--mini-crimson-soft)",
+            borderColor: "var(--mini-divider-strong)",
+            color: "var(--mini-crimson)",
+          }}
+        >
           <AlertTriangle className="mr-1.5 inline size-4 align-text-bottom" />
           {error}
         </div>
       ) : null}
       {warnings.length > 0 ? (
-        <div className="rounded-2xl border border-[#ffe9b0] bg-[#fff8eb] p-3 text-[13px] text-[#a13a32]">
+        <div
+          className="rounded-2xl border p-3 text-[13px] leading-relaxed"
+          style={{
+            background: "var(--mini-amber-soft)",
+            borderColor: "var(--mini-divider-strong)",
+            color: "var(--mini-amber)",
+          }}
+        >
           <AlertTriangle className="mr-1.5 inline size-4 align-text-bottom" />
           {warnings.map((w) => w.message).join(" · ")}
         </div>
       ) : null}
 
       {skipMode ? (
-        <div className="space-y-3 rounded-2xl border border-[#ffe9b0] bg-[#fff8eb] p-4">
-          <div className="text-[14px] font-medium text-[#0b1024]">
+        <div
+          className="space-y-3 rounded-2xl border p-4"
+          style={{
+            background: "var(--mini-amber-soft)",
+            borderColor: "var(--mini-divider-strong)",
+          }}
+        >
+          <div
+            className="text-[14px] font-medium"
+            style={{ color: "var(--mini-text)" }}
+          >
             Сегодня не требуется заполнять?
           </div>
           <input
@@ -660,14 +824,18 @@ export default function ClaimPage({
             value={skipReason}
             onChange={(e) => setSkipReason(e.target.value)}
             placeholder="Причина (например: поставщик не приехал)"
-            className="h-11 w-full rounded-xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none"
+            className="mini-input h-11 w-full rounded-xl px-3 text-[14px]"
           />
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => setSkipMode(false)}
               disabled={submitting}
-              className="inline-flex h-10 flex-1 items-center justify-center rounded-xl border border-[#dcdfed] bg-white text-[13px] text-[#3c4053]"
+              className="mini-press inline-flex h-10 flex-1 items-center justify-center rounded-xl border text-[13px]"
+              style={{
+                borderColor: "var(--mini-divider-strong)",
+                color: "var(--mini-text)",
+              }}
             >
               Отмена
             </button>
@@ -675,7 +843,11 @@ export default function ClaimPage({
               type="button"
               onClick={skipTask}
               disabled={submitting}
-              className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#a13a32] text-[13px] font-medium text-white disabled:opacity-50"
+              className="mini-press inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl text-[13px] font-medium disabled:opacity-50"
+              style={{
+                background: "var(--mini-crimson)",
+                color: "var(--mini-primary-contrast)",
+              }}
             >
               {submitting ? <Loader2 className="size-3.5 animate-spin" /> : <SkipForward className="size-3.5" />}
               Пропустить
@@ -688,7 +860,11 @@ export default function ClaimPage({
             type="button"
             onClick={submit}
             disabled={submitting || missingStepPhoto}
-            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] text-[15px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] disabled:opacity-60"
+            className="mini-press inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-[15px] font-medium disabled:opacity-60"
+            style={{
+              background: "var(--mini-lime)",
+              color: "var(--mini-primary-contrast)",
+            }}
           >
             {submitting ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
             {missingStepPhoto
@@ -699,14 +875,60 @@ export default function ClaimPage({
             type="button"
             onClick={() => setSkipMode(true)}
             disabled={submitting}
-            className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white text-[13px] text-[#6f7282]"
+            className="mini-press inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border text-[13px]"
+            style={{
+              borderColor: "var(--mini-divider-strong)",
+              color: "var(--mini-text-muted)",
+            }}
           >
             <SkipForward className="size-3.5" />
             Сегодня не требуется
           </button>
+          {/* Выход из задачи, взятой по ошибке: без него «Сегодня» держит
+              человека на одной задаче и другие взять нельзя. */}
+          <button
+            type="button"
+            onClick={() => setConfirmRelease(true)}
+            disabled={submitting}
+            className="mini-press inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-xl text-[13px]"
+            style={{ color: "var(--mini-text-muted)" }}
+          >
+            <Undo2 className="size-3.5" />
+            Вернуть задачу — её возьмёт кто-то другой
+          </button>
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmRelease}
+        onClose={() => setConfirmRelease(false)}
+        onConfirm={releaseTask}
+        variant="warn"
+        title="Вернуть задачу в общий список?"
+        description={claim.scopeLabel}
+        bullets={[
+          { label: "Задача снова станет свободной — её сможет взять любой" },
+          { label: "Введённое на этом экране не сохранится", tone: "warn" },
+          { label: "После этого вы сможете взять другую задачу" },
+        ]}
+        confirmLabel="Вернуть задачу"
+        cancelLabel="Остаюсь делать"
+      />
     </div>
+  );
+}
+
+/** Возврат к списку задач — выход с экрана в любом состоянии. */
+function BackToday() {
+  return (
+    <Link
+      href="/mini/today"
+      className="mini-press inline-flex w-fit items-center gap-1.5 text-[13px]"
+      style={{ color: "var(--mini-text-muted)" }}
+    >
+      <ArrowLeft className="size-4" />
+      Сегодня
+    </Link>
   );
 }
 

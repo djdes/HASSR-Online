@@ -107,6 +107,13 @@ function isStaffRestrictedWebPath(pathname: string): boolean {
  */
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  // www.wesetup.ru → wesetup.ru: один канонический адрес (SEO и cookies).
+  // Host берём из заголовка запроса — за nginx `req.nextUrl` может быть localhost.
+  const host = (req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "").split(",")[0].trim().toLowerCase();
+  if (host.startsWith("www.")) {
+    const url = new URL(`https://${host.slice(4)}${pathname}${req.nextUrl.search}`);
+    return NextResponse.redirect(url, 308);
+  }
 
   // Трейлинг-слеш обрабатываем вручную: автоматический редирект
   // выключен в next.config.ts (`skipTrailingSlashRedirect`), потому что

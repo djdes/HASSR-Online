@@ -11,14 +11,22 @@ import { getTelegramWebApp } from "./telegram-web-app";
 import { haptic } from "./use-haptic";
 import { useMiniTheme } from "./mini-theme";
 
+// Порядок важен: совпадение ищется первым подходящим префиксом, поэтому
+// «/mini/shift-handover» стоит выше «/mini/shift».
 const SECTION_TITLES: Array<[string, string]> = [
   ["/mini/staff", "Сотрудники"],
   ["/mini/equipment", "Оборудование"],
   ["/mini/reports", "Отчёты"],
-  ["/mini/audit", "Аудит"],
-  ["/mini/iot", "IoT"],
+  ["/mini/audit", "Журнал действий"],
+  ["/mini/iot", "Датчики"],
   ["/mini/shift-handover", "Смены"],
+  ["/mini/shift", "Смена"],
   ["/mini/me", "Профиль"],
+  ["/mini/balance", "Баланс и бонусы"],
+  ["/mini/bonus", "Премия"],
+  ["/mini/today", "Сегодня"],
+  ["/mini/outbox", "Не отправлено"],
+  ["/mini/claim", "Задача"],
   ["/mini/open", "Полная версия"],
 ];
 

@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Loader2 } from "lucide-react";
+
+import { useRegisterRefresh } from "../_components/refresh-provider";
 
 type Equipment = {
   id: string;
@@ -19,20 +21,44 @@ export default function MiniIotPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    void (async () => {
-      try {
-        const res = await fetch("/api/mini/iot", { cache: "no-store" });
-        if (!res.ok) throw new Error("Failed");
-        const data = await res.json();
-        setEquipment(data.equipment ?? []);
-      } catch {
-        setError("Не удалось загрузить оборудование");
-      } finally {
-        setLoading(false);
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/mini/iot", { cache: "no-store" });
+      // Отказ по правам и обрыв связи — разные беды, и делать с ними надо
+      // разное. Раньше и то и другое звучало одинаково.
+      if (res.status === 401) {
+        throw new Error("Сессия закончилась. Откройте приложение заново.");
       }
-    })();
+      if (res.status === 403) {
+        throw new Error(
+          "Раздел с датчиками доступен руководителю. Попросите его посмотреть показания."
+        );
+      }
+      if (!res.ok) {
+        throw new Error(
+          "Не удалось загрузить датчики. Проверьте связь и нажмите «Повторить»."
+        );
+      }
+      const data = await res.json();
+      setEquipment(data.equipment ?? []);
+      setError(null);
+    } catch (err) {
+      setError(
+        err instanceof Error && err.message
+          ? err.message
+          : "Не удалось загрузить датчики."
+      );
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  useRegisterRefresh(load);
 
   if (loading) {
     return (
@@ -51,14 +77,25 @@ export default function MiniIotPage() {
   if (error)
     return (
       <div
-        className="rounded-2xl px-4 py-3 text-[13px]"
+        className="rounded-2xl px-4 py-3.5 text-[13px] leading-5"
         style={{
           background: "var(--mini-crimson-soft)",
-          border: "1px solid rgba(255, 82, 104, 0.24)",
+          border: "1px solid var(--mini-divider)",
           color: "var(--mini-crimson)",
         }}
       >
         {error}
+        <button
+          type="button"
+          onClick={() => void load()}
+          className="mini-press mt-3 block rounded-xl px-4 py-2 text-[13px] font-medium"
+          style={{
+            background: "var(--mini-lime)",
+            color: "var(--mini-primary-contrast)",
+          }}
+        >
+          Повторить
+        </button>
       </div>
     );
 
@@ -78,26 +115,47 @@ export default function MiniIotPage() {
           className="text-[20px] font-semibold"
           style={{ color: "var(--mini-text)" }}
         >
-          IoT Мониторинг
+          Датчики температуры
         </h1>
         <p
-          className="mt-0.5 text-[13px]"
+          className="mt-0.5 text-[13px] leading-5"
           style={{ color: "var(--mini-text-muted)" }}
         >
-          Оборудование с датчиками
+          Холодильники и морозилки, где стоит датчик: он сам передаёт
+          температуру, и её не нужно записывать вручную.
         </p>
       </header>
 
       {equipment.length === 0 ? (
+        /* Пустой экран без объяснения читался как поломка: непонятно, ждать
+           данных или что-то настраивать. */
         <div
-          className="rounded-2xl px-4 py-6 text-center text-[14px]"
+          className="rounded-2xl px-4 py-6 text-[14px] leading-5"
           style={{
             background: "var(--mini-surface-1)",
             border: "1px dashed var(--mini-divider-strong)",
             color: "var(--mini-text-muted)",
           }}
         >
-          Нет подключённого оборудования с датчиками.
+          <p style={{ color: "var(--mini-text)" }} className="font-medium">
+            Датчиков пока нет
+          </p>
+          <p className="mt-1.5">
+            Пока ни к одному холодильнику не подключён датчик — температуру
+            записывают вручную в журнале. Подключить датчик можно в полной
+            версии кабинета, раздел «Оборудование».
+          </p>
+          <Link
+            href="/mini/equipment"
+            className="mini-press mt-3 inline-flex rounded-xl px-4 py-2 text-[13px] font-medium"
+            style={{
+              background: "var(--mini-surface-2)",
+              border: "1px solid var(--mini-divider)",
+              color: "var(--mini-text)",
+            }}
+          >
+            Открыть список оборудования
+          </Link>
         </div>
       ) : (
         <section className="space-y-3">

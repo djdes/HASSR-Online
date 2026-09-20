@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -48,20 +48,29 @@ export default function MiniShiftHandoverPage() {
   const [baseNotes, setBaseNotes] = useState("");
   const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
 
-  useEffect(() => {
-    void (async () => {
-      try {
-        const res = await fetch("/api/mini/shift-handover", { cache: "no-store" });
-        if (!res.ok) throw new Error("Failed");
-        const data = await res.json();
-        setShifts(data.shifts ?? []);
-      } catch {
-        setError("Не удалось загрузить смены");
-      } finally {
-        setLoading(false);
+  const loadShifts = useCallback(async () => {
+    try {
+      const res = await fetch("/api/mini/shift-handover", { cache: "no-store" });
+      if (!res.ok) {
+        setError(
+          res.status === 401
+            ? "Вход закончился — войдите заново."
+            : "Не удалось загрузить смены."
+        );
+        return;
       }
-    })();
+      const data = await res.json();
+      setShifts(data.shifts ?? []);
+    } catch {
+      setError("Нет связи. Проверьте интернет и попробуйте ещё раз.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void loadShifts();
+  }, [loadShifts]);
 
   async function saveHandover(shiftId: string) {
     setSaving(true);
@@ -131,16 +140,43 @@ export default function MiniShiftHandoverPage() {
     );
   }
   if (error) {
+    // Раньше это был тупик: только строка ошибки, без выхода и без
+    // возможности повторить — оставалось закрывать приложение.
     return (
-      <div
-        className="rounded-2xl px-4 py-3 text-[13px]"
-        style={{
-          background: "var(--mini-crimson-soft)",
-          border: "1px solid rgba(255, 82, 104, 0.24)",
-          color: "var(--mini-crimson)",
-        }}
-      >
-        {error}
+      <div className="flex flex-1 flex-col gap-4 pb-24">
+        <Link
+          href="/mini"
+          className="mini-press inline-flex w-fit items-center gap-1 text-[13px] font-medium"
+          style={{ color: "var(--mini-text-muted)" }}
+        >
+          <ArrowLeft className="size-4" />
+          На главную
+        </Link>
+        <div
+          className="rounded-2xl px-4 py-4 text-[14px] leading-relaxed"
+          style={{
+            background: "var(--mini-crimson-soft)",
+            border: "1px solid var(--mini-divider-strong)",
+            color: "var(--mini-text)",
+          }}
+        >
+          {error}
+          <button
+            type="button"
+            onClick={() => {
+              setError(null);
+              setLoading(true);
+              void loadShifts();
+            }}
+            className="mini-press mt-4 inline-flex h-11 items-center justify-center rounded-2xl px-5 text-[14px] font-semibold"
+            style={{
+              background: "var(--mini-lime)",
+              color: "var(--mini-primary-contrast)",
+            }}
+          >
+            Попробовать ещё раз
+          </button>
+        </div>
       </div>
     );
   }

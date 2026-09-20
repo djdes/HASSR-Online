@@ -12,6 +12,7 @@ import {
   canWriteJournal,
 } from "@/lib/journal-acl";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { hasDocumentFillUi } from "@/lib/journal-document-helpers";
 import { getEffectiveTaskMode } from "@/lib/journal-task-modes";
 import { getJournalSpec } from "@/lib/journal-specs";
 import { countRollingToday } from "@/lib/journal-rolling";
@@ -42,20 +43,30 @@ export default async function MiniNewJournalEntryPage({
       isRoot: session.user.isRoot === true,
     },
   });
+  // Табличные журналы заполняются в таблице за период. Форма здесь
+  // всё равно открывалась — с одним полем «Участок» — и создавала
+  // записи, которые таблица никогда не показывала: журнал выглядел
+  // заполненным, а в таблице было пусто.
+  if (hasDocumentFillUi(code)) {
+    return (
+      <MiniNotice
+        code={code}
+        title="Здесь запись не заводят"
+        text="Этот журнал ведётся таблицей за период. Откройте журнал и выберите нужную таблицу — заполнять надо в ней."
+        action="Открыть таблицы журнала"
+      />
+    );
+  }
+
   const writable = await canWriteJournal(actor, code);
   if (!writable) {
     return (
-      <div className="space-y-4">
-        <Link
-          href={`/mini/journals/${code}`}
-          className="inline-flex items-center gap-1 text-[13px] font-medium text-slate-500"
-        >
-          <ArrowLeft className="size-4" />К журналу
-        </Link>
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-          У вас нет прав на создание записей в этом журнале.
-        </div>
-      </div>
+      <MiniNotice
+        code={code}
+        title="Записывать в этот журнал вам не открыли"
+        text="Право заполнять журнал выдаёт руководитель. Попросите открыть доступ — после этого кнопка заработает."
+        action="К журналу"
+      />
     );
   }
 
@@ -145,18 +156,20 @@ export default async function MiniNewJournalEntryPage({
 
   return (
     <div className="flex flex-1 flex-col gap-4 pb-8">
-      <Link
-        href={`/mini/journals/${code}`}
-        className="inline-flex items-center gap-1 text-[13px] font-medium text-slate-500"
-      >
-        <ArrowLeft className="size-4" />
-        К журналу
-      </Link>
+      <BackToJournal code={code} />
       <header className="px-1">
-        <h1 className="text-[20px] font-semibold leading-6 text-slate-900">
+        <h1
+          className="text-[20px] font-semibold leading-6"
+          style={{ color: "var(--mini-text)" }}
+        >
           Новая запись
         </h1>
-        <p className="mt-0.5 text-[13px] leading-5 text-slate-500">{template.name}</p>
+        <p
+          className="mt-0.5 text-[13px] leading-5"
+          style={{ color: "var(--mini-text-muted)" }}
+        >
+          {template.name}
+        </p>
       </header>
 
       {/* Phase 2.6 spec'а 2026-05-09 (П-3, П-5): worker-flow в Mini App
@@ -169,19 +182,32 @@ export default async function MiniNewJournalEntryPage({
         role: session.user.role,
         isRoot: session.user.isRoot === true,
       }) ? (
-        <div className="rounded-2xl border border-[#dcdfed] bg-[#fafbff] p-4 text-[13px] leading-5 text-[#3c4053]">
-          <div className="font-medium text-[#0b1024]">
-            Заполнить журнал лучше через TasksFlow
+        <div
+          className="rounded-2xl p-4 text-[13px] leading-5"
+          style={{
+            background: "var(--mini-surface-1)",
+            border: "1px solid var(--mini-divider-strong)",
+          }}
+        >
+          <div className="font-medium" style={{ color: "var(--mini-text)" }}>
+            Обычно это заполняют в приложении задач
           </div>
-          <p className="mt-1 text-[#6f7282]">
-            TasksFlow — основная среда для исполнителей. Там у вас будут
-            задачи на день с фото-доказательствами и проверкой
-            заведующей. Эта форма в Mini App осталась как fallback
-            (для редких случаев когда TasksFlow недоступен).
+          {/* Было название системы и слово «fallback» — сотруднику они
+              ничего не объясняли. */}
+          <p className="mt-1" style={{ color: "var(--mini-text-muted)" }}>
+            Там на смену уже стоят задачи: что сделать, какое фото
+            приложить и кто проверит. Эта форма — запасной путь, если
+            задачи не пришли.
           </p>
         </div>
       ) : null}
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_8px_24px_-18px_rgba(15,23,42,0.28)] sm:p-5">
+      <div
+        className="rounded-2xl p-4 sm:p-5"
+        style={{
+          background: "var(--mini-card-solid-bg)",
+          border: "1px solid var(--mini-divider)",
+        }}
+      >
         {code === "finished_product" ? (
           <FinishedProductPipeline
             journalsBasePath="/mini/journals"
@@ -212,6 +238,68 @@ export default async function MiniNewJournalEntryPage({
             rollingDoneLabel={spec.rolling?.doneLabel ?? "Готово на сегодня"}
           />
         )}
+      </div>
+    </div>
+  );
+}
+
+function BackToJournal({ code }: { code: string }) {
+  return (
+    <Link
+      href={`/mini/journals/${code}`}
+      className="inline-flex items-center gap-1 text-[13px] font-medium"
+      style={{ color: "var(--mini-text-muted)" }}
+    >
+      <ArrowLeft className="size-4" />
+      К журналу
+    </Link>
+  );
+}
+
+/** Объяснение вместо формы: почему здесь писать нельзя и куда идти. */
+function MiniNotice({
+  code,
+  title,
+  text,
+  action,
+}: {
+  code: string;
+  title: string;
+  text: string;
+  action: string;
+}) {
+  return (
+    <div className="flex flex-1 flex-col gap-4">
+      <BackToJournal code={code} />
+      <div
+        className="rounded-3xl p-4"
+        style={{
+          background: "var(--mini-surface-1)",
+          border: "1px solid var(--mini-divider-strong)",
+        }}
+      >
+        <h1
+          className="text-[17px] font-semibold leading-6"
+          style={{ color: "var(--mini-text)" }}
+        >
+          {title}
+        </h1>
+        <p
+          className="mt-1.5 text-[13px] leading-5"
+          style={{ color: "var(--mini-text-muted)" }}
+        >
+          {text}
+        </p>
+        <Link
+          href={`/mini/journals/${code}`}
+          className="mini-press mt-4 inline-flex h-11 items-center rounded-2xl px-4 text-[14px] font-semibold"
+          style={{
+            background: "var(--mini-lime)",
+            color: "var(--mini-primary-contrast)",
+          }}
+        >
+          {action}
+        </Link>
       </div>
     </div>
   );
