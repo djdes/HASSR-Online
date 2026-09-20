@@ -1,7 +1,7 @@
 {
   "badTokenH1": "Ссылка недействительна",
   "badTokenApi": 401,
-  "pageBytes": 12796,
+  "pageBytes": 14710,
   "hubLinks": 8,
   "employeeLinks": 7,
   "pick1": "list",
@@ -9,9 +9,16 @@
   "pinWrong": "Неверный PIN.",
   "pinPassed": true,
   "hygieneLabels": [
-    "Состояние"
+    "Состояние*"
   ],
-  "hygieneWho": "Вы: Кафе «Тестовое 1» Сменить",
+  "hygieneWho": "ВЫ Кафе «Тестовое 1» Сменить",
+  "hygieneSteps": [
+    "Выберите состояние",
+    "Отметьте, если температура выше 37°C",
+    "Нажмите «Сохранить»"
+  ],
+  "hygieneIntroHint": "Если есть симптомы — выберите «Болен» и сообщите начальнику.",
+  "hygieneIntroHasName": false,
   "stickySave": 1,
   "hygieneResult": "Отметка записана",
   "hygieneUrlDone": true,
@@ -20,26 +27,38 @@
   "pick2": "remembered",
   "hygieneRepeat": "Отметка записана",
   "fpLabels": [
-    "Наименование блюда",
-    "Время производства",
-    "Органолептическая оценка",
-    "Температура",
-    "Разрешить к выпуску?",
+    "Наименование блюда*",
+    "Время производства*",
+    "Органолептическая оценка*",
+    "Температура*",
+    "Разрешить к выпуску?*",
     "Корректирующее действие (если брак)"
   ],
-  "fpTimeDefault": "13:00",
+  "fpTimeDefault": "15:27",
   "fpTimeChips": 5,
   "fpChoiceChips": 4,
   "fpOrganolepticDefault": "Отлично",
+  "fpLiveOk": {
+    "cls": "fl good",
+    "st": "В норме ✓"
+  },
+  "fpLiveBad": {
+    "cls": "fl bad",
+    "st": "Выше нормы -20…120 °C — напишите, что сделали"
+  },
   "fpChoiceApplied": "Хорошо",
-  "fpTimeChipApplied": "12:30",
+  "fpTimeChipApplied": "14:57",
   "fpResult": "Строка добавлена",
   "fpAddMore": 1,
   "fpRecentChip": 1,
   "fpTempAuto": "73",
   "fpTempHint": 1,
   "fpHasDeviationBlock": 1,
-  "fpDeviationShown": 0,
-  "fpDeviationBlocked": false,
+  "fpDeviationShown": 1,
+  "fpDeviationBlocked": true,
+  "fpDeviationThenValidator": "Проверьте «Температура»: Too big: expected number to be <=120 НАИМЕНОВАНИЕ БЛЮДА* E2E QR 22908 E2E QR 25870 E2E QR 57783 E2E QR 50276 E2E QR 64162 E2E QR 32727 ВРЕМЯ ПРОИЗВОДСТВА* −15 мин −30 мин −45 мин −1 ч Сейчас ОРГАНОЛЕПТИЧЕСКАЯ ОЦЕНКА* Отлично Хорошо Удовлетворительно Неудовлетворительно ТЕМПЕРАТУРА* Выше нормы -20…120 °C",
+  "coldBody": "КАФЕ «ТЕСТОВОЕ 1» Журнал контроля температурного режима холодильного и морозильного оборудования ВЫ Кафе «Тестовое 1» Сменить В документе пока нечего заполнять: список оборудования или строк пуст. Попросите руководителя настроить журнал.",
+  "cleaningBody": "КАФЕ «ТЕСТОВОЕ 1» Журнал уборки Этот журнал отключён в организации.",
+  "docTokenEmployees": 8,
   "errors": []
 }

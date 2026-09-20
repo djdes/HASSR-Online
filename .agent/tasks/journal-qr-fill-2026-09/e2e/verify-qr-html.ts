@@ -76,7 +76,7 @@ async function main() {
       results.authRememberedSelf = (await ap.locator("a.item.on").first().innerText().catch(() => "")).includes(E2E.name.split(" ")[0]);
       await shot(ap, "auth-employees");
       await pickEmployee(ap);
-      results.authFormLabels = await ap.evaluate(() => Array.from(document.querySelectorAll(".ft label")).map((l) => l.textContent?.trim()));
+      results.authFormLabels = await ap.evaluate(() => Array.from(document.querySelectorAll(".fl > label")).map((l) => l.textContent?.trim()));
       await submit(ap);
       results.authResult = (await ap.locator("h2").first().textContent())?.trim();
       await shot(ap, "auth-result");
@@ -102,8 +102,11 @@ async function main() {
       await enterPin(page, "2580");
       results.pinPassed = (await page.locator('input[name="pin"]').count()) === 0;
     }
-    results.hygieneLabels = await page.evaluate(() => Array.from(document.querySelectorAll(".ft label")).map((l) => l.textContent?.trim()));
+    results.hygieneLabels = await page.evaluate(() => Array.from(document.querySelectorAll(".fl > label")).map((l) => l.textContent?.trim()));
     results.hygieneWho = (await page.locator(".who").first().innerText()).replace(/\s+/g, " ");
+    results.hygieneSteps = await page.evaluate(() => Array.from(document.querySelectorAll(".steps li")).map((l) => l.textContent?.replace(/^\d+/, "").trim()));
+    results.hygieneIntroHint = await page.evaluate(() => document.querySelector(".steps + .hint")?.textContent ?? null);
+    results.hygieneIntroHasName = String(results.hygieneIntroHint ?? "").includes(E2E.name.split(" ")[0]);
     results.stickySave = await page.locator('#qr-form .sticky button[type="submit"]').count();
     await shot(page, "hygiene-form");
     await submit(page);
@@ -123,13 +126,19 @@ async function main() {
     await goto(page, url("finished_product", probe.tokens.finished_product));
     await pickEmployee(page);
     if (MODE === "pin" && (await page.locator('input[name="pin"]').count())) await enterPin(page, "2580");
-    results.fpLabels = await page.evaluate(() => Array.from(document.querySelectorAll(".ft label")).map((l) => l.textContent?.trim()));
+    results.fpLabels = await page.evaluate(() => Array.from(document.querySelectorAll(".fl > label")).map((l) => l.textContent?.trim()));
     results.fpTimeDefault = await page.locator("#f-productionTime").inputValue();
     results.fpTimeChips = await page.locator('[data-fill="productionTime"][data-ago]').count();
     results.fpChoiceChips = await page.locator('[data-fill="organoleptic"]').count();
     results.fpOrganolepticDefault = await page.locator("#f-organoleptic").inputValue();
     await page.locator("#f-productName").fill(dish);
     await page.locator("#f-productTemp").fill("73");
+    if (!NOJS) {
+      results.fpLiveOk = await page.locator("#f-productTemp").evaluate((el) => ({ cls: el.closest(".fl")?.className, st: el.closest(".fl")?.querySelector(".st")?.textContent }));
+      await page.locator("#f-productTemp").fill("150");
+      results.fpLiveBad = await page.locator("#f-productTemp").evaluate((el) => ({ cls: el.closest(".fl")?.className, st: el.closest(".fl")?.querySelector(".st")?.textContent }));
+      await page.locator("#f-productTemp").fill("73");
+    }
     if (!NOJS) {
       await page.locator('[data-fill="organoleptic"][data-value="Хорошо"]').click();
       results.fpChoiceApplied = await page.locator("#f-organoleptic").inputValue();

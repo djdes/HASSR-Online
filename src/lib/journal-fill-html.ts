@@ -8,8 +8,13 @@ import type { TaskFormField, TaskFormSchema } from "@/lib/tasksflow-adapters/tas
  * без общих стилей кабинета, без шрифтов. Страница весит ~15 КБ и
  * работает без JavaScript (ссылки и `<form method="post">`); маленький
  * инлайн-скрипт лишь добавляет удобства (чипы, температура по блюду,
- * подсветка отклонения). Причина: на медленной сети в цехе React-версия
+ * живая проверка нормы). Причина: на медленной сети в цехе React-версия
  * оживала через 10 с.
+ *
+ * Форма компактная: подпись поля живёт внутри поля (плавающая), пункты
+ * «что сделать» — короткий нумерованный список без имени сотрудника,
+ * обязательность — звёздочка, отклонение от нормы подсвечивается при
+ * вводе.
  */
 
 export function esc(value: unknown): string {
@@ -31,61 +36,70 @@ export const QR_FILL_CSS = `
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:#fafbff;color:#0b1024;font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
 a{color:#3848c7}
-.hero{color:#fff;padding:28px 0;background:radial-gradient(circle at 8% 0%,rgba(85,102,246,.55),transparent 55%),radial-gradient(circle at 100% 100%,rgba(122,92,255,.4),transparent 55%),#0b1024}
-.wrap{max-width:36rem;margin:0 auto;padding:0 20px}
-.hero .top{display:flex;gap:12px;align-items:flex-start}
-.hero .ico{flex:none;width:44px;height:44px;border-radius:16px;background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center}
-.eyebrow{font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.7)}
-h1{font-size:22px;line-height:1.2;margin:4px 0 0;font-weight:600;letter-spacing:-.02em}
-.sub{margin:8px 0 0;font-size:14px;color:rgba(255,255,255,.78)}
-main{padding:24px 0 24px}
-.card{background:#fff;border:1px solid #ececf4;border-radius:24px;padding:20px;box-shadow:0 0 0 1px rgba(240,240,250,.45);margin-bottom:16px}
-.label{font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#6f7282;margin:0 0 12px}
+.hero{color:#fff;padding:14px 0;background:radial-gradient(circle at 8% 0%,rgba(85,102,246,.55),transparent 55%),radial-gradient(circle at 100% 100%,rgba(122,92,255,.4),transparent 55%),#0b1024}
+.wrap{max-width:36rem;margin:0 auto;padding:0 16px}
+.hero .top{display:flex;gap:10px;align-items:center}
+.hero .ht{min-width:0;flex:1}
+.hero .ico{flex:none;width:36px;height:36px;border-radius:12px;background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center}
+.eyebrow{font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.65);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+h1{font-size:17px;line-height:1.25;margin:1px 0 0;font-weight:600;letter-spacing:-.01em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.sub{margin:3px 0 0;font-size:12.5px;color:rgba(255,255,255,.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+main{padding:14px 0 20px}
+.card{background:#fff;border:1px solid #ececf4;border-radius:20px;padding:16px;box-shadow:0 0 0 1px rgba(240,240,250,.45);margin-bottom:12px}
+.label{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#6f7282;margin:0 0 10px}
 .list{display:flex;flex-direction:column;gap:8px}
-.item{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px;padding:10px 16px;border:1px solid #dcdfed;border-radius:16px;background:#fff;color:#0b1024;text-decoration:none;font-weight:500;font-size:15px;line-height:1.3}
+.item{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:54px;padding:9px 14px;border:1px solid #dcdfed;border-radius:14px;background:#fff;color:#0b1024;text-decoration:none;font-weight:500;font-size:15px;line-height:1.3}
 .item.on{border-color:#5566f6;background:#eef1ff}
 .item.done{border-color:#d4f5e3;background:#f3fdf7;color:#116b2a}
 .item small{display:block;font-weight:400;color:#6f7282;font-size:12.5px;margin-top:2px}
 .item .arr{flex:none;color:#9b9fb3}
-.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:52px;border:0;border-radius:16px;background:#5566f6;color:#fff;font:inherit;font-size:16px;font-weight:600;text-decoration:none;box-shadow:0 10px 30px -12px rgba(85,102,246,.55);cursor:pointer}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:50px;border:0;border-radius:14px;background:#5566f6;color:#fff;font:inherit;font-size:16px;font-weight:600;text-decoration:none;box-shadow:0 10px 30px -12px rgba(85,102,246,.55);cursor:pointer}
 .btn:disabled{opacity:.6}
 .btn.second{background:#f5f6ff;color:#3848c7;box-shadow:none;border:1px solid rgba(85,102,246,.3);font-weight:500}
-.sticky{position:sticky;bottom:0;z-index:5;padding:14px 0 max(env(safe-area-inset-bottom),12px);background:linear-gradient(to top,#fafbff 72%,rgba(250,251,255,0))}
-.field{background:#fff;border:1px solid #ececf4;border-radius:16px;padding:14px 16px;margin-bottom:12px}
-.field.bad{border-color:#f5a3a3}
-.ft{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;font-size:14.5px;font-weight:600;margin-bottom:8px}
-.ft .u{font-weight:500;color:#9b9fb3;font-size:12.5px}
-.req{display:inline-block;padding:2px 8px;border-radius:999px;background:#ffe4e6;color:#be123c;font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
-.opt{display:inline-block;padding:2px 8px;border-radius:999px;background:#f5f6ff;color:#9b9fb3;font-size:10.5px;font-weight:500;letter-spacing:.08em;text-transform:uppercase}
-.in{display:block;width:100%;min-height:52px;border:1px solid #dcdfed;border-radius:16px;padding:12px 16px;font:inherit;font-size:16px;color:#0b1024;background:#fff;-webkit-appearance:none;appearance:none;margin:0}
-textarea.in{min-height:96px;resize:vertical}
-select.in{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236f7282' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:40px}
+.sticky{position:sticky;bottom:0;z-index:5;padding:12px 0 max(env(safe-area-inset-bottom),10px);background:linear-gradient(to top,#fafbff 72%,rgba(250,251,255,0))}
+.who{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px;padding:8px 12px;border:1px solid #ececf4;border-radius:14px;background:#fff}
+.who .wl{min-width:0;flex:1;display:flex;flex-direction:column;gap:1px}
+.who .k{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#9b9fb3}
+.who .v{font-size:14px;font-weight:600;color:#0b1024;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.who a{flex:none;font-size:12.5px;font-weight:500;text-decoration:none;color:#3848c7;padding:6px 10px;border-radius:999px;background:#f5f6ff}
+.steps{margin:0 0 12px;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}
+.steps li{display:flex;gap:8px;font-size:13.5px;color:#3c4053;line-height:1.35}
+.steps .n{flex:none;width:20px;height:20px;border-radius:999px;background:#eef1ff;color:#3848c7;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.steps small{display:block;color:#6f7282;margin-top:2px}
+.fl{position:relative;margin-bottom:10px}
+.fl .in{padding:23px 15px 7px;min-height:58px}
+.fl>label{position:absolute;left:16px;top:19px;font-size:15px;color:#9b9fb3;pointer-events:none;transition:top .15s,font-size .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(100% - 32px);line-height:1.2}
+.fl .in:focus~label,.fl .in:not(:placeholder-shown)~label,.fl.up>label{top:8px;font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6f7282}
+.fl.bad .in{border-color:#ef8a83;background:#fff7f6}
+.fl.good .in{border-color:#8fd3a8}
+.st{font-size:12px;margin:4px 0 0 3px;color:#9b9fb3}
+.fl.bad .st{color:#a13a32;font-weight:500}
+.fl.good .st{color:#116b2a}
+.req{color:#e11d48;font-weight:700;margin-left:2px}
+.in{display:block;width:100%;min-height:52px;border:1px solid #dcdfed;border-radius:14px;padding:12px 15px;font:inherit;font-size:16px;color:#0b1024;background:#fff;-webkit-appearance:none;appearance:none;margin:0}
+textarea.in{min-height:84px;resize:vertical}
+.fl textarea.in{min-height:64px}
+select.in{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236f7282' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:38px}
 input.in[type=time],input.in[type=date]{display:flex;align-items:center;line-height:1.2}
 input.in[type=time]{font-weight:600;font-variant-numeric:tabular-nums}
 .in:focus{outline:none;border-color:#5566f6;box-shadow:0 0 0 4px rgba(85,102,246,.15)}
-.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.chip{display:inline-flex;align-items:center;height:32px;padding:0 12px;border:1px solid #dcdfed;border-radius:999px;background:#fff;color:#3c4053;font:inherit;font-size:12.5px;font-weight:500;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-variant-numeric:tabular-nums}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin:-4px 0 10px}
+.chip{display:inline-flex;align-items:center;height:30px;padding:0 10px;border:1px solid #dcdfed;border-radius:999px;background:#fff;color:#3c4053;font:inherit;font-size:12px;font-weight:500;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-variant-numeric:tabular-nums}
 .chip.on{border-color:#5566f6;background:#eef1ff;color:#3848c7}
 .hint{font-size:12px;color:#9b9fb3;margin:6px 0 0}
-.err{border:1px solid #ffd2cd;background:#fff4f2;color:#a13a32;border-radius:16px;padding:12px 16px;font-size:13.5px;margin-bottom:12px}
-.warn{border:1px solid #ffe9b0;background:#fff8eb;color:#7a4a00;border-radius:16px;padding:16px;font-size:14px;line-height:1.5}
+.err{border:1px solid #ffd2cd;background:#fff4f2;color:#a13a32;border-radius:14px;padding:11px 14px;font-size:13.5px;margin-bottom:10px}
+.warn{border:1px solid #ffe9b0;background:#fff8eb;color:#7a4a00;border-radius:14px;padding:14px;font-size:14px;line-height:1.5}
 .muted{color:#6f7282;font-size:14px;line-height:1.5;margin:0}
-.who{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;color:#6f7282;margin:0 0 12px}
-.who a{font-weight:500;text-decoration:none}
-.who b{color:#0b1024;font-weight:500}
-.check{display:flex;align-items:center;gap:12px;min-height:44px;font-size:15px;font-weight:500}
-.check input{width:24px;height:24px;margin:0;accent-color:#5566f6}
-.dev{border:1px solid #ffd2cd;background:#fff4f2;border-radius:16px;padding:14px 16px;margin-bottom:12px}
+.check{display:flex;align-items:center;gap:12px;min-height:54px;padding:8px 15px;border:1px solid #dcdfed;border-radius:14px;background:#fff;margin-bottom:10px;font-size:15px;font-weight:500;cursor:pointer}
+.check input{width:24px;height:24px;margin:0;accent-color:#5566f6;flex:none}
+.dev{border:1px solid #ffd2cd;background:#fff4f2;border-radius:14px;padding:12px 14px;margin-bottom:10px}
 .dev b{display:block;color:#a13a32;font-size:14px;margin-bottom:4px}
 .dev p{margin:0 0 8px;font-size:13px;color:#7a2e28}
-.ok{width:56px;height:56px;border-radius:16px;background:#ecfdf5;color:#116b2a;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+.dev .chips{margin-bottom:0}
+.ok{width:56px;height:56px;border-radius:16px;background:#ecfdf5;color:#116b2a;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
 .center{text-align:center}
-h2{font-size:22px;letter-spacing:-.02em;margin:0;font-weight:600}
-.steps{margin:0 0 12px;padding:0;list-style:none}
-.steps li{display:flex;gap:10px;padding:10px 0;border-top:1px solid #ececf4;font-size:14px}
-.steps li:first-child{border-top:0}
-.steps .n{flex:none;width:24px;height:24px;border-radius:999px;background:#eef1ff;color:#3848c7;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center}
-.steps small{display:block;color:#6f7282;margin-top:2px}
+h2{font-size:21px;letter-spacing:-.02em;margin:0;font-weight:600}
+.photo{border:1px dashed #dcdfed;border-radius:14px;padding:10px 14px;margin-bottom:10px;font-size:13px;color:#6f7282}
 [hidden]{display:none!important}
 .search{margin-bottom:10px}
 `;
@@ -95,6 +109,7 @@ export const QR_FILL_JS = `
 (function(){
   function hhmm(d){return (d.getHours()<10?"0":"")+d.getHours()+":"+(d.getMinutes()<10?"0":"")+d.getMinutes();}
   function key(s){return String(s||"").replace(/\\s+/g," ").trim().toLowerCase();}
+  function fire(el){var ev=document.createEvent("Event"); ev.initEvent("input",true,true); el.dispatchEvent(ev);}
   document.addEventListener("click",function(e){
     var b=e.target.closest?e.target.closest("[data-fill]"):null; if(!b) return;
     e.preventDefault();
@@ -103,7 +118,7 @@ export const QR_FILL_JS = `
     el.value=ago!==null?hhmm(new Date(Date.now()-Number(ago)*60000)):(b.getAttribute("data-value")||"");
     var g=b.parentNode.querySelectorAll("[data-fill]");
     for(var i=0;i<g.length;i++) g[i].classList.toggle("on",g[i]===b);
-    var ev=document.createEvent("Event"); ev.initEvent("input",true,true); el.dispatchEvent(ev);
+    fire(el);
   });
   var meta=window.__qrTemps||{}; var tempKey=window.__qrTempKey; var nameKey=window.__qrNameKey; var auto=false;
   var nameEl=nameKey?document.getElementById("f-"+nameKey):null; var tempEl=tempKey?document.getElementById("f-"+tempKey):null;
@@ -111,21 +126,32 @@ export const QR_FILL_JS = `
   if(nameEl&&tempEl){
     nameEl.addEventListener("input",function(){
       var t=meta[key(nameEl.value)];
-      if(t&&(tempEl.value===""||auto)){tempEl.value=t;auto=true;if(hintEl)hintEl.hidden=false;}
-      else if(auto&&!t){tempEl.value="";auto=false;if(hintEl)hintEl.hidden=true;}
+      if(t&&(tempEl.value===""||auto)){tempEl.value=t;auto=true;if(hintEl)hintEl.hidden=false;checkAll();}
+      else if(auto&&!t){tempEl.value="";auto=false;if(hintEl)hintEl.hidden=true;checkAll();}
     });
     tempEl.addEventListener("input",function(){auto=false;if(hintEl)hintEl.hidden=true;});
   }
-  var dev=document.getElementById("deviation");
-  function checkRange(){
-    if(!dev) return; var out=[]; var ins=document.querySelectorAll("input[data-min],input[data-max]");
-    for(var i=0;i<ins.length;i++){var v=ins[i].value.replace(",","."); if(v==="") continue; var n=Number(v); if(!isFinite(n)) continue;
-      var mn=ins[i].getAttribute("data-min"), mx=ins[i].getAttribute("data-max");
-      if((mn!==null&&n<Number(mn))||(mx!==null&&n>Number(mx))) out.push(ins[i].getAttribute("data-label")||"");}
-    dev.hidden=out.length===0; var t=document.getElementById("deviation-title"); if(t&&out.length) t.textContent=out.join(", ")+" — вне нормы";
+  /* Живая проверка нормы: подсветка поля и подпись под ним прямо при вводе. */
+  function live(t){
+    var w=t.closest?t.closest(".fl"):null; if(!w) return null;
+    var st=w.querySelector(".st"); var unit=t.getAttribute("data-unit")||"";
+    var mn=t.getAttribute("data-min"), mx=t.getAttribute("data-max");
+    var norm=(mn!==null&&mx!==null)?mn+"…"+mx:(mn!==null?"не ниже "+mn:(mx!==null?"не выше "+mx:""));
+    var v=t.value.replace(",",".").trim();
+    if(v===""||!isFinite(Number(v))){ w.classList.remove("bad","good"); if(st) st.textContent=norm?"Норма "+norm+(unit?" "+unit:""):""; return null; }
+    var n=Number(v); var low=mn!==null&&n<Number(mn); var high=mx!==null&&n>Number(mx);
+    w.classList.toggle("bad",low||high); w.classList.toggle("good",!(low||high)&&norm!=="");
+    if(st) st.textContent=(low||high)?((low?"Ниже":"Выше")+" нормы "+norm+(unit?" "+unit:"")+" — напишите, что сделали"):(norm?"В норме ✓":"");
+    return (low||high)?(t.getAttribute("data-label")||""):null;
   }
-  document.addEventListener("input",function(e){ if(e.target&&e.target.hasAttribute&&(e.target.hasAttribute("data-min")||e.target.hasAttribute("data-max"))) checkRange(); });
-  checkRange();
+  var dev=document.getElementById("deviation");
+  function checkAll(){
+    var out=[]; var ins=document.querySelectorAll("input[data-min],input[data-max]");
+    for(var i=0;i<ins.length;i++){ var r=live(ins[i]); if(r) out.push(r); }
+    if(dev){ dev.hidden=out.length===0; var t=document.getElementById("deviation-title"); if(t&&out.length) t.textContent=out.join(", ")+" — вне нормы"; }
+  }
+  document.addEventListener("input",function(e){ var t=e.target; if(t&&t.hasAttribute&&(t.hasAttribute("data-min")||t.hasAttribute("data-max"))) checkAll(); });
+  checkAll();
   var form=document.getElementById("qr-form");
   if(form) form.addEventListener("submit",function(){ var b=form.querySelector("button[type=submit]"); if(b){b.disabled=true;b.textContent="Сохраняем…";} });
   var q=document.getElementById("emp-search");
@@ -133,7 +159,7 @@ export const QR_FILL_JS = `
 })();
 `;
 
-const QR_ICON = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg>`;
+const QR_ICON = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg>`;
 const ARROW = `<span class="arr" aria-hidden="true">›</span>`;
 const CHECK_ICON = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>`;
 
@@ -156,8 +182,8 @@ export function renderPage(params: {
 <style>${QR_FILL_CSS}</style>
 </head>
 <body>
-<header class="hero"><div class="wrap"><div class="top"><div class="ico">${QR_ICON}</div><div>
-<div class="eyebrow">${esc(params.orgName)}</div>
+<header class="hero"><div class="wrap"><div class="top"><div class="ico">${QR_ICON}</div><div class="ht">
+<div class="eyebrow" title="${esc(params.orgName)}">${esc(params.orgName)}</div>
 <h1>${esc(params.title)}</h1>
 ${params.subtitle ? `<p class="sub">${esc(params.subtitle)}</p>` : ""}
 </div></div></div></header>
@@ -218,7 +244,7 @@ export function renderEmployeeStep(params: {
 }
 
 export function renderPinStep(params: { action: string; employeeName: string; changeHref: string; error?: string | null }): string {
-  return `<div class="who"><span>Вы: <b>${esc(params.employeeName)}</b></span><a href="${esc(params.changeHref)}">Сменить</a></div>
+  return `${renderWho({ employeeName: params.employeeName, changeHref: params.changeHref })}
 <form method="post" action="${esc(params.action)}" class="card" id="qr-form">
 <input type="hidden" name="action" value="pin">
 <p class="label">Ваш PIN</p>
@@ -236,54 +262,14 @@ export function renderRowStep(params: { rows: Array<{ rowKey: string; label: str
     .join("")}</div></div>`;
 }
 
+/** «Вы / документ» — компактный блок: подпись мелким капсом, значение до двух строк, справа «Сменить». */
 export function renderWho(params: { employeeName: string; changeHref: string | null; documentTitle?: string | null; documentChangeHref?: string | null }): string {
-  const doc = params.documentTitle
-    ? `<p class="who"><span>Документ: <b>${esc(params.documentTitle)}</b></span>${params.documentChangeHref ? `<a href="${esc(params.documentChangeHref)}">Сменить</a>` : ""}</p>`
-    : "";
-  return `<p class="who"><span>Вы: <b>${esc(params.employeeName)}</b></span>${params.changeHref ? `<a href="${esc(params.changeHref)}">Сменить</a>` : ""}</p>${doc}`;
+  const row = (k: string, v: string, href: string | null) =>
+    `<div class="who"><div class="wl"><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></div>${href ? `<a href="${esc(href)}">Сменить</a>` : ""}</div>`;
+  return row("Вы", params.employeeName, params.changeHref) + (params.documentTitle ? row("Документ", params.documentTitle, params.documentChangeHref ?? null) : "");
 }
 
 type Suggestions = Record<string, { values: string[]; meta: Record<string, NameSuggestionMeta> }>;
-
-export function renderForm(params: {
-  action: string;
-  token: string;
-  form: TaskFormSchema;
-  hints: JournalFillHints;
-  values: Record<string, unknown>;
-  suggestions: Suggestions;
-  who: string;
-  error?: string | null;
-  badKeys?: string[];
-  correction?: string;
-  showDeviation?: boolean;
-  deviationTitle?: string | null;
-  correctionPresets: readonly string[];
-  openedAt: number;
-}): string {
-  const bad = new Set(params.badKeys ?? []);
-  const fields = params.form.fields.map((field) => renderField(field, params.values[field.key], params.hints, params.suggestions, bad.has(field.key))).join("");
-  const steps = params.form.pipeline && params.form.pipeline.length > 0
-    ? `<div class="card"><p class="label">Порядок действий</p><ol class="steps">${params.form.pipeline
-        .map((step, index) => `<li><span class="n">${index + 1}</span><span>${esc(step.title)}${step.detail ? `<small>${esc(step.detail)}</small>` : ""}</span></li>`)
-        .join("")}</ol></div>`
-    : "";
-  const hasNumbers = params.form.fields.some((field) => field.type === "number" && (field.min != null || field.max != null));
-  const deviation = hasNumbers
-    ? `<div class="dev" id="deviation"${params.showDeviation ? "" : " hidden"}><b id="deviation-title">${esc(params.deviationTitle ?? "Значение вне нормы")}</b><p>Напишите, что вы сделали — это попадёт в журнал рядом с записью.</p><textarea class="in" name="__correction" id="f-__correction" rows="2" placeholder="Что сделали">${esc(params.correction ?? "")}</textarea><div class="chips">${params.correctionPresets
-        .map((preset) => `<button type="button" class="chip" data-fill="__correction" data-value="${esc(preset)}">${esc(preset)}</button>`)
-        .join("")}</div></div>`
-    : "";
-  return `${params.who}${params.form.intro ? `<p class="muted" style="margin-bottom:14px">${esc(params.form.intro)}</p>` : ""}${steps}
-<form method="post" action="${esc(params.action)}" id="qr-form" novalidate>
-<input type="hidden" name="action" value="submit">
-<input type="hidden" name="__openedAt" value="${params.openedAt}">
-${params.error ? `<div class="err">${esc(params.error)}</div>` : ""}
-${fields}
-${deviation}
-<div class="sticky"><button class="btn" type="submit">${esc(params.form.submitLabel ?? "Сохранить")}</button></div>
-</form>`;
-}
 
 /**
  * Норма для подсветки отклонения: сначала из подписи адаптера
@@ -302,6 +288,162 @@ export function normRange(field: TaskFormField): { min: number | null; max: numb
   return { min: field.min ?? null, max: field.max ?? null };
 }
 
+/** Подпись поля без хвоста «· норма …» и без «— t°/влажность» климата. */
+export function cleanLabel(label: string): string {
+  return label
+    .replace(/\s*[·(]\s*норма[^)]*\)?\s*$/i, "")
+    .replace(/\s*[—–-]\s*(t°|влажность)\s*$/i, "")
+    .trim();
+}
+
+function lower(text: string): string {
+  if (!text) return text;
+  const second = text.charAt(1);
+  return second && second === second.toUpperCase() && second !== second.toLowerCase() ? text : text.charAt(0).toLowerCase() + text.slice(1);
+}
+
+/**
+ * Винительный падеж для «Укажите/Выберите/Впишите …»: склоняем только
+ * ведущие прилагательные (-ая/-яя → -ую/-юю) и первое существительное
+ * (-а/-я → -у/-ю), дальше фразу не трогаем («температура внутри продукта»
+ * → «температуру внутри продукта», «время производства» без изменений).
+ */
+export function accusative(phrase: string): string {
+  const words = phrase.split(" ");
+  const out: string[] = [];
+  let nounDone = false;
+  for (const word of words) {
+    if (nounDone) {
+      out.push(word);
+      continue;
+    }
+    if (/ая$/i.test(word)) out.push(word.replace(/ая$/i, "ую"));
+    else if (/яя$/i.test(word)) out.push(word.replace(/яя$/i, "юю"));
+    else {
+      nounDone = true;
+      // «время», «имя» — средний род на -мя, не склоняем как женский.
+      if (word.length > 2 && /а$/i.test(word)) out.push(word.replace(/а$/i, "у"));
+      else if (word.length > 2 && /я$/i.test(word) && !/мя$/i.test(word)) out.push(word.replace(/я$/i, "ю"));
+      else out.push(word);
+    }
+  }
+  return out.join(" ");
+}
+
+function joinNames(names: string[], limit = 72): string {
+  let out = "";
+  for (let i = 0; i < names.length; i += 1) {
+    const next = out ? `${out}, ${names[i]}` : names[i];
+    if (next.length > limit && i > 0) return `${out} и ещё ${names.length - i}`;
+    out = next;
+  }
+  return out;
+}
+
+/**
+ * Пункты «что сделать» по полям формы — коротко, без имени сотрудника.
+ * Числовые поля с одной единицей объединяются: «Укажите температуру:
+ * Холодильник №1, Морозильник». Необязательные текстовые поля пропускаем.
+ */
+export function formSteps(form: TaskFormSchema, hints: JournalFillHints): string[] {
+  const steps: string[] = [];
+  const numbers = form.fields.filter((field): field is Extract<TaskFormField, { type: "number" }> => field.type === "number");
+  const numberGroups = new Map<string, Extract<TaskFormField, { type: "number" }>[]>();
+  for (const field of numbers) {
+    const unit = field.unit ?? "";
+    numberGroups.set(unit, [...(numberGroups.get(unit) ?? []), field]);
+  }
+  const seen = new Set<string>();
+  for (const field of form.fields) {
+    if (field.type === "number") {
+      const unit = field.unit ?? "";
+      if (seen.has(`unit:${unit}`)) continue;
+      seen.add(`unit:${unit}`);
+      const group = numberGroups.get(unit) ?? [];
+      const noun = unit === "°C" ? "температуру" : unit === "%" ? "влажность" : null;
+      if (group.length === 1) {
+        const label = cleanLabel(group[0].label);
+        steps.push(/температур|влажност|показани/i.test(label) ? `Укажите ${accusative(lower(label))}` : noun ? `Укажите ${noun}: ${lower(label)}` : `Укажите ${accusative(lower(label))}`);
+      } else {
+        steps.push(`Укажите ${noun ?? "показания"}: ${joinNames(group.map((item) => cleanLabel(item.label)))}`);
+      }
+      continue;
+    }
+    if (field.type === "time") steps.push(/врем/i.test(field.label) ? `Укажите ${accusative(lower(field.label))}` : `Укажите время: ${lower(field.label)}`);
+    else if (field.type === "date") steps.push(`Укажите ${accusative(lower(field.label))}`);
+    else if (field.type === "select") steps.push(/\?\s*$/.test(field.label) ? `Ответьте «${field.label}»` : `Выберите ${accusative(lower(field.label))}`);
+    else if (field.type === "boolean") steps.push(`Отметьте, если ${lower(field.label)}`);
+    else if (field.type === "text") {
+      const isName = Boolean(hints.nameFields?.[field.key]);
+      const hasChoices = (hints.choices?.[field.key]?.length ?? 0) > 0;
+      if (hasChoices) steps.push(`Выберите ${accusative(lower(cleanLabel(field.label)))}`);
+      else if (isName || field.required) steps.push(`Впишите ${accusative(lower(cleanLabel(field.label)))}`);
+    }
+  }
+  steps.push(`Нажмите «${form.submitLabel ?? "Сохранить"}»`);
+  return steps;
+}
+
+/**
+ * Вступление адаптера без имени сотрудника: первое предложение повторяет
+ * пункты, остальные (например «Если оборудование выключено — оставьте
+ * поле пустым») показываем подсказкой.
+ */
+export function introHint(intro: string | undefined, employeeName: string): string | null {
+  let text = (intro ?? "").trim();
+  if (!text) return null;
+  const name = employeeName.trim();
+  if (name && text.toLowerCase().startsWith(name.toLowerCase())) text = text.slice(name.length).replace(/^[\s,]+/, "");
+  if (text.includes("\n")) return text;
+  const sentences = text.split(/(?<=[.!?])\s+/).filter(Boolean);
+  const rest = sentences.slice(1).join(" ").trim();
+  return rest || null;
+}
+
+export function renderForm(params: {
+  action: string;
+  token: string;
+  form: TaskFormSchema;
+  hints: JournalFillHints;
+  values: Record<string, unknown>;
+  suggestions: Suggestions;
+  who: string;
+  employeeName?: string;
+  error?: string | null;
+  badKeys?: string[];
+  correction?: string;
+  showDeviation?: boolean;
+  deviationTitle?: string | null;
+  correctionPresets: readonly string[];
+  openedAt: number;
+}): string {
+  const bad = new Set(params.badKeys ?? []);
+  const fields = params.form.fields.map((field) => renderField(field, params.values[field.key], params.hints, params.suggestions, bad.has(field.key))).join("");
+  const pipeline = params.form.pipeline && params.form.pipeline.length > 0
+    ? `<ol class="steps">${params.form.pipeline
+        .map((step, index) => `<li><span class="n">${index + 1}</span><span>${esc(step.title)}${step.detail ? `<small>${esc(step.detail)}</small>` : ""}</span></li>`)
+        .join("")}</ol>`
+    : `<ol class="steps">${formSteps(params.form, params.hints)
+        .map((step, index) => `<li><span class="n">${index + 1}</span><span>${esc(step)}</span></li>`)
+        .join("")}</ol>`;
+  const hint = introHint(params.form.intro, params.employeeName ?? "");
+  const hasNumbers = params.form.fields.some((field) => field.type === "number" && (normRange(field).min != null || normRange(field).max != null));
+  const deviation = hasNumbers
+    ? `<div class="dev" id="deviation"${params.showDeviation ? "" : " hidden"}><b id="deviation-title">${esc(params.deviationTitle ?? "Значение вне нормы")}</b><p>Напишите, что вы сделали — это попадёт в журнал рядом с записью.</p><textarea class="in" name="__correction" id="f-__correction" rows="2" placeholder="Что сделали">${esc(params.correction ?? "")}</textarea><div class="chips">${params.correctionPresets
+        .map((preset) => `<button type="button" class="chip" data-fill="__correction" data-value="${esc(preset)}">${esc(preset)}</button>`)
+        .join("")}</div></div>`
+    : "";
+  return `${params.who}${pipeline}${hint ? `<p class="hint" style="margin:-6px 0 12px">${esc(hint).replace(/\n/g, "<br>")}</p>` : ""}
+<form method="post" action="${esc(params.action)}" id="qr-form" novalidate>
+<input type="hidden" name="action" value="submit">
+<input type="hidden" name="__openedAt" value="${params.openedAt}">
+${params.error ? `<div class="err">${esc(params.error)}</div>` : ""}
+${fields}
+${deviation}
+<div class="sticky"><button class="btn" type="submit">${esc(params.form.submitLabel ?? "Сохранить")}</button></div>
+</form>`;
+}
+
 function chips(fieldKey: string, values: readonly string[], current: string): string {
   if (values.length === 0) return "";
   return `<div class="chips">${values
@@ -313,11 +455,12 @@ function renderField(field: TaskFormField, raw: unknown, hints: JournalFillHints
   const id = `f-${field.key}`;
   const value = raw === null || raw === undefined ? "" : String(raw);
   const required = "required" in field && field.required === true;
-  const unit = "unit" in field && field.unit ? `<span class="u">${esc(field.unit)}</span>` : "";
-  const pill = field.type === "boolean" || field.type === "photo" ? "" : required ? `<span class="req">обязательно</span>` : `<span class="opt">по желанию</span>`;
-  const head = `<div class="ft"><label for="${esc(id)}">${esc(field.label)}</label>${unit}${pill}</div>`;
-  const wrap = (inner: string) => `<div class="field${bad ? " bad" : ""}">${head}${inner}</div>`;
-  const placeholder = "placeholder" in field && field.placeholder ? ` placeholder="${esc(field.placeholder)}"` : "";
+  const label = `<label for="${esc(id)}">${esc(field.type === "number" ? cleanLabel(field.label) : field.label)}${required ? `<span class="req" aria-hidden="true">*</span>` : ""}</label>`;
+  // Подпись внутри поля (плавающая): порядок «input, label» нужен CSS.
+  const fl = (input: string, opts: { up?: boolean; after?: string } = {}) =>
+    `<div class="fl${bad ? " bad" : ""}${opts.up ? " up" : ""}">${input}${label}${opts.after ?? ""}</div>`;
+  const placeholder = "placeholder" in field && field.placeholder ? field.placeholder : " ";
+  const req = required ? ` aria-required="true"` : "";
 
   switch (field.type) {
     case "text": {
@@ -325,48 +468,55 @@ function renderField(field: TaskFormField, raw: unknown, hints: JournalFillHints
       const list = scope ? (suggestions[scope]?.values ?? []) : [];
       const choices = hints.choices?.[field.key] ?? [];
       if (field.multiline) {
-        // Варианты одним касанием и для многострочного поля (органолептика — textarea).
-        return wrap(`<textarea class="in" id="${esc(id)}" name="${esc(field.key)}" rows="${choices.length > 0 ? 2 : 3}"${placeholder}${field.maxLength ? ` maxlength="${field.maxLength}"` : ""}>${esc(value)}</textarea>${chips(field.key, choices, value)}`);
+        return (
+          fl(`<textarea class="in" id="${esc(id)}" name="${esc(field.key)}" rows="${choices.length > 0 ? 2 : 3}" placeholder=" "${field.maxLength ? ` maxlength="${field.maxLength}"` : ""}${req}>${esc(value)}</textarea>`) +
+          chips(field.key, choices, value)
+        );
       }
       const datalist = list.length > 0 ? `<datalist id="dl-${esc(field.key)}">${list.slice(0, 50).map((item) => `<option value="${esc(item)}"></option>`).join("")}</datalist>` : "";
       const isTemp = hints.tempField?.tempKey === field.key;
-      return wrap(
-        `<input class="in" id="${esc(id)}" name="${esc(field.key)}" type="text" value="${esc(value)}"${placeholder}${field.maxLength ? ` maxlength="${field.maxLength}"` : ""}${list.length > 0 ? ` list="dl-${esc(field.key)}" autocomplete="off"` : ""}>${datalist}${chips(field.key, list.slice(0, 6), value)}${chips(field.key, choices, value)}${isTemp ? `<p class="hint" id="temp-hint" hidden>Подставлено по прошлой записи этого блюда — поправьте, если сегодня иначе.</p>` : ""}`
+      return (
+        fl(
+          `<input class="in" id="${esc(id)}" name="${esc(field.key)}" type="text" value="${esc(value)}" placeholder="${esc(placeholder)}"${field.maxLength ? ` maxlength="${field.maxLength}"` : ""}${list.length > 0 ? ` list="dl-${esc(field.key)}" autocomplete="off"` : ""}${req}>${datalist}`,
+          { after: isTemp ? `<p class="st" id="temp-hint" hidden>Подставлено по прошлой записи этого блюда — поправьте, если сегодня иначе.</p>` : "" }
+        ) + chips(field.key, list.slice(0, 6), value) + chips(field.key, choices, value)
       );
     }
     case "number": {
       const norm = normRange(field);
-      const labelHasNorm = /норма/i.test(field.label);
-      const range = labelHasNorm ? "" : norm.min != null && norm.max != null ? `<p class="hint">Норма: ${esc(norm.min)}…${esc(norm.max)}${field.unit ? ` ${esc(field.unit)}` : ""}</p>` : norm.min != null ? `<p class="hint">Не ниже ${esc(norm.min)}</p>` : norm.max != null ? `<p class="hint">Не выше ${esc(norm.max)}</p>` : "";
+      const unit = field.unit ? ` ${field.unit}` : "";
+      const status = norm.min != null && norm.max != null ? `Норма ${esc(norm.min)}…${esc(norm.max)}${esc(unit)}` : norm.min != null ? `Не ниже ${esc(norm.min)}${esc(unit)}` : norm.max != null ? `Не выше ${esc(norm.max)}${esc(unit)}` : "";
       const isTemp = hints.tempField?.tempKey === field.key;
-      return wrap(
-        `<input class="in" id="${esc(id)}" name="${esc(field.key)}" type="text" inputmode="decimal" value="${esc(value)}"${placeholder}${norm.min != null ? ` data-min="${esc(norm.min)}"` : ""}${norm.max != null ? ` data-max="${esc(norm.max)}"` : ""} data-label="${esc(field.label.replace(/\s*·\s*норма.*$/i, ""))}">${range}${isTemp ? `<p class="hint" id="temp-hint" hidden>Подставлено по прошлой записи этого блюда — поправьте, если сегодня иначе.</p>` : ""}`
+      return fl(
+        `<input class="in" id="${esc(id)}" name="${esc(field.key)}" type="text" inputmode="decimal" value="${esc(value)}" placeholder=" "${norm.min != null ? ` data-min="${esc(norm.min)}"` : ""}${norm.max != null ? ` data-max="${esc(norm.max)}"` : ""}${field.unit ? ` data-unit="${esc(field.unit)}"` : ""} data-label="${esc(cleanLabel(field.label))}"${req}>`,
+        { after: `${status ? `<p class="st">${status}</p>` : ""}${isTemp ? `<p class="st" id="temp-hint" hidden>Подставлено по прошлой записи этого блюда — поправьте, если сегодня иначе.</p>` : ""}` }
       );
     }
     case "boolean": {
       const checked = raw === true || raw === "on" || raw === "true";
-      return `<div class="field${bad ? " bad" : ""}"><label class="check"><input type="checkbox" id="${esc(id)}" name="${esc(field.key)}" value="on"${checked ? " checked" : ""}><span>${esc(field.label)}</span></label></div>`;
+      return `<label class="check${bad ? " bad" : ""}"><input type="checkbox" id="${esc(id)}" name="${esc(field.key)}" value="on"${checked ? " checked" : ""}><span>${esc(field.label)}</span></label>`;
     }
     case "select":
-      return wrap(
-        `<select class="in" id="${esc(id)}" name="${esc(field.key)}">${value === "" ? `<option value="">Выберите</option>` : ""}${field.options
+      return fl(
+        `<select class="in" id="${esc(id)}" name="${esc(field.key)}"${req}>${value === "" ? `<option value="">Выберите</option>` : ""}${field.options
           .map((option) => `<option value="${esc(option.value)}"${option.value === value ? " selected" : ""}>${esc(option.label)}</option>`)
-          .join("")}</select>`
+          .join("")}</select>`,
+        { up: true }
       );
     case "date":
-      return wrap(`<input class="in" id="${esc(id)}" name="${esc(field.key)}" type="date" value="${esc(value)}">`);
+      return fl(`<input class="in" id="${esc(id)}" name="${esc(field.key)}" type="date" value="${esc(value)}"${req}>`, { up: true });
     case "time": {
       const offsets = hints.timeOffsetFields?.includes(field.key)
         ? `<div class="chips">${[...TIME_OFFSET_CHIPS, { minutes: 0, label: "Сейчас" }]
             .map((chip) => `<button type="button" class="chip" data-fill="${esc(field.key)}" data-ago="${chip.minutes}">${esc(chip.label)}</button>`)
             .join("")}</div>`
         : "";
-      return wrap(`<input class="in" id="${esc(id)}" name="${esc(field.key)}" type="time" step="60" value="${esc(value)}"${placeholder}>${offsets}`);
+      return fl(`<input class="in" id="${esc(id)}" name="${esc(field.key)}" type="time" step="60" value="${esc(value)}"${req}>`, { up: true }) + offsets;
     }
     case "photo":
-      return `<div class="field"><div class="ft"><span>${esc(field.label)}</span><span class="opt">в кабинете</span></div><p class="hint">Фото к этой записи можно приложить в кабинете или в приложении.</p></div>`;
+      return `<div class="photo">${esc(field.label)}: фото к этой записи можно приложить в кабинете или в приложении.</div>`;
     case "signature":
-      return wrap(`<input class="in" id="${esc(id)}" name="${esc(field.key)}" type="text" value="${esc(value)}" placeholder="Фамилия и инициалы" autocomplete="name">`);
+      return fl(`<input class="in" id="${esc(id)}" name="${esc(field.key)}" type="text" value="${esc(value)}" placeholder=" " autocomplete="name"${req}>`);
     default:
       return "";
   }
