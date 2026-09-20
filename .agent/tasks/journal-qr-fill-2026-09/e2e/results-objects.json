@@ -1,0 +1,14 @@
+{
+  "roomSignAfterMinus": "-20",
+  "roomSignAfterPlus": "20",
+  "roomStrip": "E2E QS Склад Бакалея E2E QS Склад Овощи E2E QS Склад Заморозка",
+  "roomEmployeeTrigger": "Иванова | Ольга | Петровна | Управляющий",
+  "roomNext": "Дальше: E2E QS Склад Овощи",
+  "roomCounter": "снято 1 из 3",
+  "room2Url": "http://localhost:3020/room-fill/cmu9w1qo20002qs9mi8ogo3pb?token=…",
+  "room2Trigger": "Иванова | Ольга | Петровна | Управляющий",
+  "room2Strip": "E2E QS Склад Бакалея 20 °C · 50 % E2E QS Склад Овощи E2E QS Склад Заморозка",
+  "eqSignAfterMinus": "-18",
+  "eqStrip": "E2E QS Холодильник №1 E2E QS Морозильник E2E QS Витрина",
+  "eqNext": "Дальше: E2E QS Витрина"
+}

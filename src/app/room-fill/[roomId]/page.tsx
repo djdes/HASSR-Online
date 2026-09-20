@@ -16,6 +16,7 @@ import { orgTodayKey } from "@/lib/timezone";
 import { getUserDisplayTitle } from "@/lib/user-roles";
 import { redirect } from "next/navigation";
 import { normalizeQrFillMode, sessionEmployeeForQr } from "@/lib/qr-fill-actor";
+import { listRoomSiblings } from "@/lib/qr-fill-siblings";
 import { RoomFillClient } from "./room-fill-client";
 
 export const runtime = "nodejs";
@@ -129,9 +130,20 @@ export default async function RoomFillPage({
     humidity: row?.humidity ?? directoryNorms?.humidity ?? DEFAULT_CLIMATE_HUMIDITY,
   };
 
+  const siblings = await listRoomSiblings({
+    organizationId,
+    buildingId: room.buildingId,
+    currentRoomId: room.id,
+    currentRoomName: row?.name ?? room.name,
+    day,
+    now,
+    timezone,
+  });
+
   return (
     <RoomFillClient
       token={token}
+      siblings={siblings}
       room={{
         id: room.id,
         name: row?.name ?? room.name,

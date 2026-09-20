@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DeviationCorrection } from "@/components/qr-fill/deviation-correction";
+import { QuickSwitchNext, QuickSwitchStrip, type QuickSwitchItem } from "@/components/qr-fill/quick-switch";
 
 type Metric = { enabled: boolean; min: number | null; max: number | null };
 
@@ -29,6 +30,8 @@ type Props = {
   mode?: "public" | "pin" | "auth";
   /** В режиме «auth» — вошедший сотрудник; линейный не выбирает имя. */
   sessionEmployee?: { id: string; name: string; canPickOthers: boolean } | null;
+  /** Соседние объекты для быстрой смены (см. lib/qr-fill-siblings). */
+  siblings?: QuickSwitchItem[];
 };
 
 const LS_EMPLOYEE_KEY = "wesetup.room-fill.employeeId";
@@ -56,7 +59,7 @@ function isOutside(value: number | null, metric: Metric): boolean {
  * Три шага, как на плакате: выбрать себя → ввести показания → «Сохранить».
  * Имя запоминается на телефоне, со второго раза остаётся ввести числа.
  */
-export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot, employees, mode = "public", sessionEmployee = null }: Props) {
+export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot, employees, mode = "public", sessionEmployee = null, siblings = [] }: Props) {
   const [employeeId, setEmployeeId] = useState("");
   const [pin, setPin] = useState("");
   const fixedEmployee = mode === "auth" && sessionEmployee && !sessionEmployee.canPickOthers;
@@ -148,6 +151,12 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
     }
   }
 
+  const selectedEmployee = employees.find((item) => item.id === employeeId) ?? null;
+  // После сохранения текущий объект в списке сразу «снят» — с введёнными значениями.
+  const siblingsView = siblings.map((item) =>
+    item.current && saved ? { ...item, filled: true, summary: [temperatureValue !== null ? `${temperatureValue} °C` : null, humidityValue !== null && !humidityInvalid ? `${humidityValue} %` : null].filter(Boolean).join(" · ") || item.summary } : item
+  );
+
   return (
     <main className="min-h-screen bg-[#fafbff]">
       <section className="relative overflow-hidden bg-[#0b1024] text-white">
@@ -192,6 +201,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
           </div>
         ) : null}
 
+        {!saved ? <QuickSwitchStrip items={siblingsView} title="Помещения" /> : null}
         {saved ? (
           <div className="rounded-3xl border border-[#ececf4] bg-white p-8 text-center">
             <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-[#ecfdf5] text-[#116b2a]">
@@ -220,6 +230,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
             >
               Записать ещё замер
             </Button>
+            <QuickSwitchNext items={siblingsView} title="Помещения" />
           </div>
         ) : (
           <div className="rounded-3xl border border-[#ececf4] bg-white p-6">
@@ -230,14 +241,23 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                   <div className="mt-1 flex h-12 items-center rounded-2xl border border-[#dcdfed] bg-[#fafbff] px-4 text-[15px] font-medium text-[#0b1024]">{sessionEmployee?.name}</div>
                 ) : (
                   <Select value={employeeId} onValueChange={setEmployeeId}>
-                  <SelectTrigger className="mt-1 h-12 rounded-2xl border-[#dcdfed]">
-                    <SelectValue placeholder="Выберите своё имя" />
+                  <SelectTrigger className="mt-1 h-auto min-h-12 w-full rounded-2xl border-[#dcdfed] py-2 text-left *:data-[slot=select-value]:line-clamp-none *:data-[slot=select-value]:whitespace-normal *:data-[slot=select-value]:items-start">
+                    <SelectValue placeholder="Выберите своё имя">
+                      {selectedEmployee ? (
+                        <span className="block min-w-0">
+                          <span className="block text-[14px] font-medium leading-snug text-[#0b1024]">{selectedEmployee.name}</span>
+                          {selectedEmployee.position ? <span className="block text-[12px] leading-snug text-[#6f7282]">{selectedEmployee.position}</span> : null}
+                        </span>
+                      ) : null}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {employees.map((employee) => (
                       <SelectItem key={employee.id} value={employee.id}>
-                        {employee.name}
-                        {employee.position ? ` · ${employee.position}` : ""}
+                        <span className="block">
+                          <span className="block">{employee.name}</span>
+                          {employee.position ? <span className="block text-[12px] text-[#6f7282]">{employee.position}</span> : null}
+                        </span>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -271,16 +291,16 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                       <span className="flex size-12 items-center justify-center rounded-2xl bg-[#f5f6ff] text-[#5566f6]">
                         <Thermometer className="size-5" />
                       </span>
-                      {/* На цифровой клавиатуре телефона минуса нет — знак ставится кнопкой. */}
+                      {/* На цифровой клавиатуре телефона минуса нет — знак ставится кнопкой ±, в том числе после ввода. */}
                       <button
                         type="button"
                         onClick={() =>
                           setTemperature((current) => {
                             const value = current.trim();
-                            return value.startsWith("-") ? value.slice(1) : `-${value}`;
+                            return value.startsWith("-") ? value.slice(1) : value === "" ? "-" : `-${value}`;
                           })
                         }
-                        aria-label="Минус: отрицательная температура"
+                        aria-label="Сменить знак: плюс или минус"
                         aria-pressed={temperature.trim().startsWith("-")}
                         className={`flex size-12 shrink-0 items-center justify-center rounded-2xl border text-[24px] font-semibold leading-none transition-colors duration-150 ${
                           temperature.trim().startsWith("-")
@@ -288,7 +308,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                             : "border-[#dcdfed] bg-white text-[#0b1024] hover:bg-[#f5f6ff]"
                         }`}
                       >
-                        −
+                        ±
                       </button>
                       <Input
                         id="room-fill-temperature"

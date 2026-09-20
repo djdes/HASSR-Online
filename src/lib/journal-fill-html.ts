@@ -76,6 +76,10 @@ main{padding:14px 0 20px}
 .fl.good .pill{display:inline-flex;background:#dcfce7;color:#116b2a}
 .fl.bad .pill{display:inline-flex;background:#ffe0dc;color:#a13a32}
 .fl.good .in,.fl.bad .in{padding-right:40px}
+.sign{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:10px;border:1px solid #dcdfed;background:#fff;color:#3848c7;font:inherit;font-size:17px;font-weight:600;cursor:pointer;padding:0;line-height:1}
+.fl.has-sign .in{padding-right:50px}
+.fl.has-sign .pill{right:50px}
+.fl.has-sign.good .in,.fl.has-sign.bad .in{padding-right:84px}
 .prog{display:block;width:max-content;max-width:100%;margin:0 auto 8px;padding:3px 12px;border-radius:999px;background:#fff;border:1px solid #ececf4;font-size:12px;color:#6f7282;text-align:center;font-variant-numeric:tabular-nums}
 .prog.done{color:#116b2a;border-color:#d4f5e3;background:#f3fdf7}
 .fl{position:relative;margin-bottom:10px}
@@ -124,6 +128,8 @@ export const QR_FILL_JS = `
   function key(s){return String(s||"").replace(/\\s+/g," ").trim().toLowerCase();}
   function fire(el){var ev=document.createEvent("Event"); ev.initEvent("input",true,true); el.dispatchEvent(ev);}
   document.addEventListener("click",function(e){
+    var sg=e.target.closest?e.target.closest("[data-sign]"):null;
+    if(sg){ e.preventDefault(); var si=document.getElementById("f-"+sg.getAttribute("data-sign")); if(si){ var sv=si.value.trim(); si.value=sv.charAt(0)==="-"?sv.slice(1):(sv===""?"-":"-"+sv); fire(si); si.focus(); } return; }
     var b=e.target.closest?e.target.closest("[data-fill]"):null; if(!b) return;
     e.preventDefault();
     var el=document.getElementById("f-"+b.getAttribute("data-fill")); if(!el) return;
@@ -529,7 +535,8 @@ function renderObjectCard(base: string, group: Extract<TaskFormField, { type: "n
       // Подпись короткая (в две колонки длинная режется), норма — строкой под полем внутри карточки.
       const label = `<label for="${esc(id)}">${esc(metricName(field))}${required ? `<span class="req" aria-hidden="true">*</span>` : ""}</label>`;
       const status = bad.has(field.key) ? `Вне нормы ${normText}` : normText ? `Норма ${normText}` : "";
-      return `<div class="fl up${bad.has(field.key) ? " bad" : ""}"><input class="in" id="${esc(id)}" name="${esc(field.key)}" type="text" inputmode="decimal" value="${esc(value)}" placeholder=" "${norm.min != null ? ` data-min="${esc(norm.min)}"` : ""}${norm.max != null ? ` data-max="${esc(norm.max)}"` : ""}${field.unit ? ` data-unit="${esc(field.unit)}"` : ""} data-plain="1" data-label="${esc(`${base} · ${lower(metricName(field))}`)}"${required ? ` aria-required="true"` : ""}>${label}<span class="pill" aria-hidden="true"></span><p class="st">${esc(status)}</p></div>`;
+      const withSign = metricName(field) === "Температура";
+      return `<div class="fl up${bad.has(field.key) ? " bad" : ""}${withSign ? " has-sign" : ""}"><input class="in" id="${esc(id)}" name="${esc(field.key)}" type="text" inputmode="decimal" value="${esc(value)}" placeholder=" "${norm.min != null ? ` data-min="${esc(norm.min)}"` : ""}${norm.max != null ? ` data-max="${esc(norm.max)}"` : ""}${field.unit ? ` data-unit="${esc(field.unit)}"` : ""} data-plain="1" data-label="${esc(`${base} · ${lower(metricName(field))}`)}"${required ? ` aria-required="true"` : ""}>${label}${withSign ? `<button type="button" class="sign" data-sign="${esc(field.key)}" aria-label="Сменить знак: плюс или минус">±</button>` : ""}<span class="pill" aria-hidden="true"></span><p class="st">${esc(status)}</p></div>`;
     })
     .join("");
   return `<div class="obj"><div class="obj-t">${esc(base)}</div><div class="cols${group.length === 1 ? " one" : ""}">${inputs}</div></div>`;
@@ -548,8 +555,8 @@ function renderField(field: TaskFormField, raw: unknown, hints: JournalFillHints
   const required = "required" in field && field.required === true;
   const label = `<label for="${esc(id)}">${esc(field.type === "number" ? cleanLabel(field.label) : field.label)}${required ? `<span class="req" aria-hidden="true">*</span>` : ""}</label>`;
   // Подпись внутри поля (плавающая): порядок «input, label» нужен CSS.
-  const fl = (input: string, opts: { up?: boolean; after?: string } = {}) =>
-    `<div class="fl${bad ? " bad" : ""}${opts.up ? " up" : ""}">${input}${label}${opts.after ?? ""}</div>`;
+  const fl = (input: string, opts: { up?: boolean; after?: string; extraClass?: string } = {}) =>
+    `<div class="fl${bad ? " bad" : ""}${opts.up ? " up" : ""}${opts.extraClass ?? ""}">${input}${label}${opts.after ?? ""}</div>`;
   const placeholder = "placeholder" in field && field.placeholder ? field.placeholder : " ";
   const req = required ? ` aria-required="true"` : "";
 
@@ -580,9 +587,10 @@ function renderField(field: TaskFormField, raw: unknown, hints: JournalFillHints
       // Норму показываем, только если она задана в подписи; физические пределы валидатора — не норма.
       const status = fromLabel && norm.min != null && norm.max != null ? `Норма ${esc(norm.min)}…${esc(norm.max)}${esc(unit)}` : "";
       const isTemp = hints.tempField?.tempKey === field.key;
+      const withSign = isTemp || field.unit === "°C" || /температур/i.test(field.label);
       return fl(
         `<input class="in" id="${esc(id)}" name="${esc(field.key)}" type="text" inputmode="decimal" value="${esc(value)}" placeholder=" "${norm.min != null ? ` data-min="${esc(norm.min)}"` : ""}${norm.max != null ? ` data-max="${esc(norm.max)}"` : ""}${field.unit ? ` data-unit="${esc(field.unit)}"` : ""}${fromLabel ? ` data-plain="1"` : ""} data-label="${esc(cleanLabel(field.label))}"${req}>`,
-        { after: `<span class="pill" aria-hidden="true"></span>${status ? `<p class="st">${status}</p>` : `<p class="st"></p>`}${isTemp ? `<p class="st" id="temp-hint" hidden>Подставлено по прошлой записи этого блюда — поправьте, если сегодня иначе.</p>` : ""}` }
+        { after: `${withSign ? `<button type="button" class="sign" data-sign="${esc(field.key)}" aria-label="Сменить знак: плюс или минус">±</button>` : ""}<span class="pill" aria-hidden="true"></span>${status ? `<p class="st">${status}</p>` : `<p class="st"></p>`}${isTemp ? `<p class="st" id="temp-hint" hidden>Подставлено по прошлой записи этого блюда — поправьте, если сегодня иначе.</p>` : ""}`, extraClass: withSign ? " has-sign" : "" }
       );
     }
     case "boolean": {

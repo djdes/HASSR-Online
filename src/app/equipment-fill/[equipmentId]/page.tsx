@@ -6,6 +6,8 @@ import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { orgTodayKey } from "@/lib/timezone";
 import { redirect } from "next/navigation";
 import { normalizeQrFillMode, sessionEmployeeForQr } from "@/lib/qr-fill-actor";
+import { listEquipmentSiblings } from "@/lib/qr-fill-siblings";
+import { getUserDisplayTitle } from "@/lib/user-roles";
 import { EquipmentFillClient } from "./equipment-fill-client";
 
 export const runtime = "nodejs";
@@ -112,7 +114,7 @@ export default async function EquipmentFillPage({
   const [employees, targets] = await Promise.all([
     db.user.findMany({
       where: { organizationId, ...ORG_ROSTER_WHERE },
-      select: { id: true, name: true, positionTitle: true },
+      select: { id: true, name: true, role: true, positionTitle: true, jobPosition: { select: { name: true } } },
       orderBy: { name: "asc" },
     }),
     resolveEquipmentFillTargets({
@@ -126,9 +128,17 @@ export default async function EquipmentFillPage({
     }),
   ]);
 
+  const siblings = await listEquipmentSiblings({
+    organizationId,
+    currentEquipmentId: equipment.id,
+    currentEquipmentName: equipment.name,
+    day,
+  });
+
   return (
     <EquipmentFillClient
       token={token}
+      siblings={siblings}
       hasActiveDocument={targets.hasActiveDocument}
       humidityNorm={
         targets.climate?.row.humidity.enabled
@@ -151,7 +161,7 @@ export default async function EquipmentFillPage({
       employees={(sessionEmployee && !sessionEmployee.canPickOthers ? employees.filter((e) => e.id === sessionEmployee!.id) : employees).map((e) => ({
         id: e.id,
         name: e.name,
-        positionTitle: e.positionTitle ?? null,
+        positionTitle: getUserDisplayTitle(e) || null,
       }))}
     />
   );

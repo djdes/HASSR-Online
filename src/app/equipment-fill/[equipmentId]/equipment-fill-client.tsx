@@ -5,6 +5,7 @@ import { AlertTriangle, CheckCircle2, QrCode, Thermometer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DeviationCorrection } from "@/components/qr-fill/deviation-correction";
+import { QuickSwitchNext, QuickSwitchStrip, type QuickSwitchItem } from "@/components/qr-fill/quick-switch";
 import {
   Select,
   SelectContent,
@@ -36,6 +37,8 @@ type Props = {
   mode?: "public" | "pin" | "auth";
   /** В режиме «auth» — вошедший сотрудник; линейный не выбирает имя. */
   sessionEmployee?: { id: string; name: string; canPickOthers: boolean } | null;
+  /** Соседние объекты для быстрой смены (см. lib/qr-fill-siblings). */
+  siblings?: QuickSwitchItem[];
 };
 
 const LS_EMPLOYEE_KEY = "wesetup.equipment-fill.employeeId";
@@ -55,6 +58,7 @@ export function EquipmentFillClient({
   employees,
   mode = "public",
   sessionEmployee = null,
+  siblings = [],
 }: Props) {
   const [employeeId, setEmployeeId] = useState<string>("");
   const [pin, setPin] = useState("");
@@ -176,6 +180,12 @@ export function EquipmentFillClient({
     }
   }
 
+  const selectedEmployee = employees.find((item) => item.id === employeeId) ?? null;
+  // После сохранения текущий объект в списке сразу «снят» — с введёнными значениями.
+  const siblingsView = siblings.map((item) =>
+    item.current && done ? { ...item, filled: true, summary: (parsedTemp !== null ? `${parsedTemp} °C` : "") || item.summary } : item
+  );
+
   return (
     <main className="min-h-screen bg-[#fafbff]">
       <section className="relative overflow-hidden bg-[#0b1024] text-white">
@@ -217,6 +227,7 @@ export function EquipmentFillClient({
           </div>
         ) : null}
 
+        {!done ? <QuickSwitchStrip items={siblingsView} title="Оборудование" /> : null}
         {done ? (
           <div className="rounded-3xl border border-[#ececf4] bg-white p-8 text-center shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
             <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-[#ecfdf5] text-[#116b2a]">
@@ -250,6 +261,7 @@ export function EquipmentFillClient({
             >
               Записать ещё замер
             </Button>
+            <QuickSwitchNext items={siblingsView} title="Оборудование" />
           </div>
         ) : (
           <div className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
@@ -262,14 +274,23 @@ export function EquipmentFillClient({
                   <div className="mt-1 flex h-12 items-center rounded-2xl border border-[#dcdfed] bg-[#fafbff] px-4 text-[15px] font-medium text-[#0b1024]">{sessionEmployee?.name}</div>
                 ) : (
                   <Select value={employeeId} onValueChange={setEmployeeId}>
-                  <SelectTrigger className="mt-1 h-12 rounded-2xl border-[#dcdfed]">
-                    <SelectValue placeholder="Выберите ваше имя" />
+                  <SelectTrigger className="mt-1 h-auto min-h-12 w-full rounded-2xl border-[#dcdfed] py-2 text-left *:data-[slot=select-value]:line-clamp-none *:data-[slot=select-value]:whitespace-normal *:data-[slot=select-value]:items-start">
+                    <SelectValue placeholder="Выберите ваше имя">
+                      {selectedEmployee ? (
+                        <span className="block min-w-0">
+                          <span className="block text-[14px] font-medium leading-snug text-[#0b1024]">{selectedEmployee.name}</span>
+                          {selectedEmployee.positionTitle ? <span className="block text-[12px] leading-snug text-[#6f7282]">{selectedEmployee.positionTitle}</span> : null}
+                        </span>
+                      ) : null}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {employees.map((e) => (
                       <SelectItem key={e.id} value={e.id}>
-                        {e.name}
-                        {e.positionTitle ? ` · ${e.positionTitle}` : ""}
+                        <span className="block">
+                          <span className="block">{e.name}</span>
+                          {e.positionTitle ? <span className="block text-[12px] text-[#6f7282]">{e.positionTitle}</span> : null}
+                        </span>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -302,16 +323,16 @@ export function EquipmentFillClient({
                   <span className="flex size-12 items-center justify-center rounded-2xl bg-[#f5f6ff] text-[#5566f6]">
                     <Thermometer className="size-5" />
                   </span>
-                  {/* На цифровой клавиатуре телефона минуса нет — знак ставится кнопкой. */}
+                  {/* На цифровой клавиатуре телефона минуса нет — знак ставится кнопкой ±, в том числе после ввода. */}
                   <button
                     type="button"
                     onClick={() =>
                       setTemperature((current) => {
                         const value = current.trim();
-                        return value.startsWith("-") ? value.slice(1) : `-${value}`;
+                        return value.startsWith("-") ? value.slice(1) : value === "" ? "-" : `-${value}`;
                       })
                     }
-                    aria-label="Минус: отрицательная температура"
+                    aria-label="Сменить знак: плюс или минус"
                     aria-pressed={temperature.trim().startsWith("-")}
                     className={`flex size-12 shrink-0 items-center justify-center rounded-2xl border text-[24px] font-semibold leading-none transition-colors duration-150 ${
                       temperature.trim().startsWith("-")
@@ -319,7 +340,7 @@ export function EquipmentFillClient({
                         : "border-[#dcdfed] bg-white text-[#0b1024] hover:bg-[#f5f6ff]"
                     }`}
                   >
-                    −
+                    ±
                   </button>
                   <Input
                     type="text"
