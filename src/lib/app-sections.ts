@@ -112,6 +112,13 @@ export const APP_SECTIONS: AppSection[] = [
     icon: "Users",
     group: "work",
   },
+  {
+    href: "/settings/schedule",
+    hint: "Кто в какой день выходит",
+    icon: "CalendarRange",
+    group: "work",
+    capability: "admin.full",
+  },
   // ---- Производство --------------------------------------------------
   {
     href: "/batches",
@@ -236,6 +243,16 @@ export const APP_SECTIONS: AppSection[] = [
     hint: "Telegram-бот, типы оповещений",
     icon: "Bell",
     group: "settings",
+    capability: "admin.full",
+  },
+  {
+    href: "/settings/audit",
+    hint: "Кто что менял в журналах и настройках",
+    icon: "ScrollText",
+    group: "settings",
+    // Сама страница строже — только владелец (`requireRole(["owner"])`).
+    // Здесь проверка из общего набора: лишний пункт у заведующей
+    // закончился бы возвратом на дашборд, поэтому берём `admin.full`.
     capability: "admin.full",
   },
   {

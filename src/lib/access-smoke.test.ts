@@ -124,7 +124,6 @@ test("без назначенного ответственного сотруд�
 const GUARDED_ROUTES = [
   "src/app/api/journal-documents/[id]/entries/route.ts",
   "src/app/api/journal-documents/[id]/entries/bulk/route.ts",
-  "src/app/api/mini/documents/[id]/entries/route.ts",
 ];
 
 for (const relative of GUARDED_ROUTES) {

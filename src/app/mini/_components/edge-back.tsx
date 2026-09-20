@@ -11,6 +11,7 @@ import {
 } from "@/components/journals/edge-back-gesture";
 
 import { isInsideTelegram } from "./telegram-web-app";
+import { isMiniRootPath } from "./mini-shell";
 import { haptic } from "./use-haptic";
 
 /**
@@ -28,7 +29,7 @@ import { haptic } from "./use-haptic";
  * Подсказка слева — не украшение: без неё непонятно, сколько ещё
  * тянуть, и жест приходится «нащупывать».
  */
-export function EdgeBack() {
+export function EdgeBack({ homeHref }: { homeHref: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const [progress, setProgress] = useState(0);
@@ -42,7 +43,9 @@ export function EdgeBack() {
     progress: number;
   } | null>(null);
 
-  const isRoot = pathname === "/mini";
+  // Корень — домашний адрес кабинета и экран входа: тянуть назад
+  // оттуда некуда.
+  const isRoot = isMiniRootPath(pathname);
 
   useEffect(() => {
     if (isRoot) return;
@@ -97,7 +100,7 @@ export function EdgeBack() {
       if (!commit) return;
       haptic("light");
       if (window.history.length > 1) router.back();
-      else router.push("/mini");
+      else router.push(homeHref);
     };
 
     // Пассивно: жест ничего не отменяет — прокрутку мы и так отдаём
@@ -112,7 +115,7 @@ export function EdgeBack() {
       window.removeEventListener("touchend", onEnd);
       window.removeEventListener("touchcancel", reset);
     };
-  }, [isRoot, router]);
+  }, [homeHref, isRoot, router]);
 
   if (isRoot || progress <= 0) return null;
 

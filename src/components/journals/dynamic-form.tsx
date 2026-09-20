@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useKeyboardInset } from "@/lib/use-keyboard-inset";
-import { noteEntrySaved } from "@/app/mini/_lib/install-prompt";
 import { isScannableField } from "@/lib/scannable-field";
 import { ScanToField } from "@/components/journals/scan-to-field";
 import { AlertTriangle, History, Wifi, Loader2 } from "lucide-react";
@@ -490,10 +489,6 @@ export function DynamicForm({
 
       // Запись принята — черновик больше не нужен.
       draft.clear();
-      // Считаем успешные записи с телефона: предложение поставить
-      // приложение на экран «Домой» появляется после второй, когда
-      // польза уже очевидна самому человеку.
-      if (offlineCapable) noteEntrySaved();
       const result = await response.json().catch(() => ({}));
       const rollingMeta = result?.rolling as
         | {

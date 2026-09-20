@@ -24,10 +24,34 @@ export function resolveJournalObligationTargetPath(
     throw new Error("Entry journal targets cannot include activeDocumentId");
   }
 
-  const basePath = `/mini/journals/${journalCode}`;
+  // Мини-приложение — это оболочка вокруг страниц сайта (П-3), поэтому
+  // цель обязательства ведёт прямо на страницу кабинета. Раньше здесь
+  // был `/mini/journals/...`, и человек делал лишний прыжок через
+  // экран-переходник.
+  const basePath = `/journals/${journalCode}`;
   return isDocument ? basePath : `${basePath}/new`;
 }
 
+/** Путь принадлежит самому мини-приложению, а не странице сайта. */
+function isMiniOnlyPathname(pathname: string): boolean {
+  return (
+    pathname === MINI_APP_PATH_PREFIX ||
+    pathname.startsWith(`${MINI_APP_PATH_PREFIX}/`)
+  );
+}
+
+/**
+ * Безопасный внутренний адрес для возврата после входа.
+ *
+ * Пропускаем любой путь этого же сайта: мини-приложение показывает
+ * страницы кабинета в своей оболочке, и возвращать человека нужно
+ * туда, куда он шёл, — хоть на `/mini/today`, хоть на `/journals`.
+ *
+ * Не пропускаем: чужой origin (в том числе `//evil.example`, который
+ * `URL` разбирает как протокол-относительный адрес) и `/api/*` —
+ * обработчики отвечают не страницами, и редирект туда после входа
+ * выглядел бы поломкой.
+ */
 export function sanitizeMiniAppRedirectPath(
   targetPath: string
 ): string | null {
@@ -36,11 +60,10 @@ export function sanitizeMiniAppRedirectPath(
     if (url.origin !== MINI_APP_ORIGIN) {
       return null;
     }
-
-    if (
-      url.pathname !== "/mini" &&
-      !url.pathname.startsWith("/mini/")
-    ) {
+    if (!url.pathname.startsWith("/") || url.pathname.startsWith("//")) {
+      return null;
+    }
+    if (url.pathname === "/api" || url.pathname.startsWith("/api/")) {
       return null;
     }
 
@@ -83,23 +106,21 @@ export function buildMiniAppUrl(
 
   const safeTargetPath =
     sanitizeMiniAppRedirectPath(targetPath) ?? MINI_APP_PATH_PREFIX;
+  const pathname = safeTargetPath.split(/[?#]/)[0];
+
+  // Страница сайта (`/journals/hygiene`): база оканчивается на `/mini`,
+  // и приклеивать к ней адрес кабинета нельзя — режем хвост.
+  if (!isMiniOnlyPathname(pathname)) {
+    const origin = baseUrl.slice(0, -MINI_APP_PATH_PREFIX.length);
+    return `${origin}${safeTargetPath}`;
+  }
+
   const suffix =
     safeTargetPath === MINI_APP_PATH_PREFIX
       ? ""
       : safeTargetPath.slice(MINI_APP_PATH_PREFIX.length);
 
   return `${baseUrl}${suffix}`;
-}
-
-export function buildMiniOpenBridgePath(
-  targetHref: string,
-  label?: string
-): string {
-  const params = new URLSearchParams({ href: targetHref });
-  if (label?.trim()) {
-    params.set("label", label.trim());
-  }
-  return `/mini/open?${params.toString()}`;
 }
 
 export function buildMiniAppAuthBootstrapPath(targetPath: string): string {

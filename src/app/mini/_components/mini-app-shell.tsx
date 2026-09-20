@@ -11,15 +11,15 @@ import { JournalUndoProvider } from "@/components/journals/journal-undo-slot";
 import { Toaster } from "@/components/ui/sonner";
 import type { PartnerHintRates } from "@/lib/partners/partner-hint";
 
+import type { MiniNavItem } from "@/app/mini/_lib/nav-items";
+
 import { EdgeBack } from "./edge-back";
 import { MiniNav } from "./mini-nav";
 import { MiniServiceWorkerRegister } from "./mini-sw-register";
 import { MiniTelegramRuntime, MiniTopBar } from "./mini-shell";
 import { MiniThemeBootstrap, MiniThemeProvider } from "./mini-theme";
-import { MiniTour } from "./mini-tour";
 import { OfflineIndicator } from "./offline-indicator";
 import { RefreshProvider } from "./refresh-provider";
-import { ResumeHome } from "./resume-home";
 
 type AnnouncementProp = React.ComponentProps<
   typeof AnnouncementBanner
@@ -41,6 +41,8 @@ export function MiniAppShell({
   children,
   initialTheme,
   profileTheme,
+  homeHref,
+  navItems,
   partnerHint = null,
   locationName = null,
   announcement = null,
@@ -48,13 +50,16 @@ export function MiniAppShell({
   canCancelDeletion = false,
   askNps = false,
   authed = false,
-  ownRoutes = false,
 }: {
   children: ReactNode;
   /** Тема, в которой отрисован сервер. */
   initialTheme: "light" | "dark";
   /** `User.themePreference`; null — сессии на сервере не было. */
   profileTheme: "light" | "dark" | null;
+  /** «Корень» приложения: домашний адрес кабинета (`role-access.ts`). */
+  homeHref: string;
+  /** Вкладки нижнего меню, посчитанные на сервере (`nav-items.ts`). */
+  navItems: MiniNavItem[];
   partnerHint?: PartnerHintRates | null;
   locationName?: string | null;
   announcement?: AnnouncementProp;
@@ -63,12 +68,6 @@ export function MiniAppShell({
   askNps?: boolean;
   /** Есть серверная сессия: живые индикаторы и помощник имеют смысл. */
   authed?: boolean;
-  /**
-   * Собственные экраны `/mini/*`. Для страниц сайта в оболочке
-   * «вернуться на главную по утру» и обучающий тур не показываем —
-   * они про задачи смены, а не про настройки кабинета.
-   */
-  ownRoutes?: boolean;
 }) {
   return (
     <>
@@ -95,9 +94,8 @@ export function MiniAppShell({
         {`document.querySelector('link[data-mini-fonts]')?.setAttribute('media','all')`}
       </Script>
       <MiniThemeProvider initialTheme={initialTheme} profileTheme={profileTheme}>
-        <MiniTelegramRuntime />
+        <MiniTelegramRuntime homeHref={homeHref} />
         <MiniServiceWorkerRegister />
-        {ownRoutes ? <ResumeHome /> : null}
         {/* `id="mini-root"` ищут pre-hydration скрипт темы и
             `applyThemeToDOM`. `class="app-shell"` + `data-app-theme`
             мирорят тему на уровень сайта — встроенные компоненты
@@ -119,6 +117,7 @@ export function MiniAppShell({
           <FabDockProvider slotId="mini-fab-slot">
           <JournalUndoProvider>
             <MiniTopBar
+              homeHref={homeHref}
               partnerHint={partnerHint}
               locationName={locationName}
               showNotifications={authed}
@@ -148,10 +147,9 @@ export function MiniAppShell({
           <Toaster />
           <OfflineIndicator />
           {authed ? <LiveConnectionIndicator variant="mini" /> : null}
-          <MiniNav />
+          <MiniNav items={navItems} />
           {/* Жест «назад» от левого края — только внутри Telegram. */}
-          <EdgeBack />
-          {ownRoutes ? <MiniTour /> : null}
+          <EdgeBack homeHref={homeHref} />
           {authed ? <SanpinChatWidget bottomOffset={96} /> : null}
           </FabDockProvider>
         </div>

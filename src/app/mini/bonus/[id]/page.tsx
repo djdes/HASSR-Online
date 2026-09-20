@@ -59,7 +59,7 @@ export default async function MiniBonusFillPage({
     return (
       <div className="space-y-4 px-1">
         <Link
-          href="/mini"
+          href="/journals"
           className="-my-2 min-h-9 inline-flex items-center gap-1 text-[13px] font-medium"
           style={{ color: "var(--mini-text-muted)" }}
         >
@@ -82,7 +82,7 @@ export default async function MiniBonusFillPage({
   return (
     <div className="flex flex-1 flex-col gap-4 pb-24 px-1">
       <Link
-        href="/mini"
+        href="/journals"
         className="-my-2 min-h-9 inline-flex items-center gap-1 text-[13px] font-medium"
         style={{ color: "var(--mini-text-muted)" }}
       >

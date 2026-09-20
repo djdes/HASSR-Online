@@ -127,7 +127,7 @@ export function MiniSectionsClient({
             style={{ color: "var(--mini-text-muted)" }}
           >
             Разделы зависят от ваших прав, поэтому список появится после
-            входа. Откройте главный экран — вход произойдёт сам.
+            входа. Откройте экран входа — в Telegram он сработает сам.
           </p>
           <Link
             href="/mini"
@@ -137,7 +137,7 @@ export function MiniSectionsClient({
               color: "var(--mini-primary-contrast)",
             }}
           >
-            На главную
+            Войти
           </Link>
         </section>
       </div>

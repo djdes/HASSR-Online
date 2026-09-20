@@ -3,35 +3,21 @@ import { db } from "@/lib/db";
 import { botCallbackRateLimiter } from "@/lib/rate-limit";
 
 /**
- * Shift gate — перед началом смены сотрудник видит ОДНУ кнопку
- * «Начать смену». Других опций нет. После клика создаётся
- * WorkShift сегодняшней даты с status='scheduled' и сотрудник
- * получает обычное приветствие + задачи.
+ * Старая кнопка «Начать смену» в чате бота.
  *
- * Цель — заставить отметку начала смены, чтобы заведующая на
- * Контрольной доске видела кто реально вышел на работу.
+ * «Шлагбаума смены» больше нет: приложение — это кабинет в телефоне
+ * (П-3), и отметки начала рабочего дня в нём не было никогда на сайте.
+ * Новых сообщений с этой кнопкой бот не шлёт, но в чатах остались
+ * старые — их можно нажать в любой момент, и нажатие не должно
+ * заканчиваться «ничего не произошло».
  *
- * Implementation: callback_query handler `shift:start`.
- * Кнопка добавляется в start.ts когда юзер ещё не отметил смену.
+ * Поэтому обработчик оставлен: он по-прежнему отмечает выход на смену
+ * (это безвредно и полезно руководителю на «Команде») и подсказывает,
+ * как открыть кабинет.
  */
 
 function utcMidnight(d: Date): Date {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-}
-
-/**
- * Возвращает true если у юзера WorkShift на сегодня есть.
- */
-export async function userStartedShiftToday(userId: string): Promise<boolean> {
-  const today = utcMidnight(new Date());
-  const tomorrow = new Date(today);
-  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
-  const shift = await db.workShift.findFirst({
-    where: { userId, date: { gte: today, lt: tomorrow } },
-    select: { id: true, status: true },
-  });
-  if (!shift) return false;
-  return shift.status === "scheduled";
 }
 
 /**
@@ -90,12 +76,12 @@ export function registerShiftGateHandler(composer: Composer<Context>): void {
       });
       return;
     }
-    await ctx.answerCallbackQuery({ text: "Смена начата ✓" });
-    // Удаляем сообщение с кнопкой «Начать смену» — заменяем на полноценное
-    // приветствие через replyWithLoadedStartHome (вызовется после редактирования).
+    await ctx.answerCallbackQuery({ text: "Смена отмечена ✓" });
+    // Кнопку из старого сообщения убираем: гейта больше нет, и задачи
+    // доступны сразу — человеку нужен только вход в кабинет.
     try {
       await ctx.editMessageText(
-        `👋 Смена начата, ${escapeName(user.name)}!\n\nОткрой /start чтобы увидеть задачи на сегодня.`,
+        `👋 Отметили, ${escapeName(user.name)}!\n\nЗадачи на сегодня уже доступны — нажмите /start, чтобы открыть кабинет.`,
         { parse_mode: "HTML" }
       );
     } catch {

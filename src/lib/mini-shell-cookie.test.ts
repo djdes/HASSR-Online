@@ -94,11 +94,20 @@ test("на экранах /mini широкое окно оболочку не с
   );
 });
 
-test("неавторизованного возвращаем только на свои экраны", () => {
-  assert.equal(miniShellSignInHref("/mini/reports"), "/mini?next=%2Fmini%2Freports");
+test("неавторизованного возвращаем на любой свой внутренний адрес", () => {
+  assert.equal(miniShellSignInHref("/mini/today"), "/mini?next=%2Fmini%2Ftoday");
+  // Страницы кабинета открываются в оболочке приложения (П-3), поэтому
+  // возврат на них после входа обязателен.
+  assert.equal(
+    miniShellSignInHref("/settings/users"),
+    "/mini?next=%2Fsettings%2Fusers"
+  );
   assert.equal(miniShellSignInHref("/mini"), "/mini");
-  assert.equal(miniShellSignInHref("/settings/users"), "/mini");
+});
+
+test("чужой адрес и обработчики API в возврат не попадают", () => {
   assert.equal(miniShellSignInHref("//evil.example"), "/mini");
   assert.equal(miniShellSignInHref("https://evil.example"), "/mini");
+  assert.equal(miniShellSignInHref("/api/auth/signout"), "/mini");
   assert.equal(miniShellSignInHref(null), "/mini");
 });

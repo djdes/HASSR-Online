@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { isImpersonating, requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { loadBuildingContext } from "@/lib/active-building";
@@ -52,6 +52,7 @@ import {
   isMiniShellValue,
   miniShellSignInHref,
 } from "@/lib/mini-shell-cookie";
+import { PARTNER_HEADER_PATH } from "@/lib/partners/request-context";
 import { MiniAppShell } from "@/app/mini/_components/mini-app-shell";
 import { loadMiniShellData } from "@/app/mini/_components/mini-shell-data";
 import "@/app/app-theme.css";
@@ -490,7 +491,11 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
   // (по Telegram initData), и форма с паролем там выглядит поломкой.
   const session = await getServerSession(authOptions).catch(() => null);
   if (!session?.user) {
-    redirect(miniShellSignInHref(null));
+    // Куда человек шёл, знает только прокси — он кладёт путь в заголовок.
+    // Без этого ссылка из бота на журнал после входа теряла цель и
+    // высаживала человека на домашнем экране.
+    const requestPath = (await headers()).get(PARTNER_HEADER_PATH);
+    redirect(miniShellSignInHref(requestPath));
   }
 
   const activeOrgId =

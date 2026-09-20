@@ -7,6 +7,8 @@ import {
 import { canAccessWebPath, hasFullWorkspaceAccess } from "@/lib/role-access";
 import {
   MINI_SHELL_COOKIE,
+  MINI_SHELL_VALUE,
+  isMiniPath,
   isMiniShellValue,
   miniShellSignInHref,
 } from "@/lib/mini-shell-cookie";
@@ -36,6 +38,7 @@ function withRequestContext(
   headers.set(PARTNER_HEADER_PATH, req.nextUrl.pathname);
   if (claim) headers.set(PARTNER_HEADER_PARTNER_ID, claim.partnerId);
   const res = NextResponse.next({ request: { headers } });
+  markMiniShell(req, res);
   // Страницы кабинета не кэшируем (раньше это делал отдельный корневой
   // middleware.ts, который в dev перекрывал этот файл целиком — и guard
   // партнёра там не работал).
@@ -56,6 +59,37 @@ function withRequestContext(
     res.headers.set("Expires", "0");
   }
   return res;
+}
+
+/**
+ * Включить режим оболочки для адресов самого мини-приложения.
+ *
+ * Правило то же, что у клиента (`shouldSetMiniShell`: путь `/mini/*` —
+ * значит человек в приложении), но поставить куку обязан сервер.
+ * Экраны `/mini/*`, которые теперь просто перекидывают на страницу
+ * кабинета (`/mini/journals/hygiene` → `/journals/hygiene`), делают это
+ * серверным редиректом — клиентский код там не успевает выполниться, и
+ * без этой куки человек, пришедший по ссылке из бота первый раз,
+ * получил бы внутри Telegram широкий хром сайта.
+ */
+function markMiniShell(req: NextRequest, res: NextResponse): void {
+  const { pathname } = req.nextUrl;
+  if (!isMiniPath(pathname)) return;
+  if (isMiniShellValue(req.cookies.get(MINI_SHELL_COOKIE)?.value)) return;
+
+  // Telegram открывает мини-приложение во фрейме: на https кука доедет
+  // только с `SameSite=None; Secure` (см. lib/mini-shell-cookie.ts).
+  const secure =
+    (req.headers.get("x-forwarded-proto") ?? req.nextUrl.protocol).startsWith(
+      "https"
+    );
+  res.cookies.set({
+    name: MINI_SHELL_COOKIE,
+    value: MINI_SHELL_VALUE,
+    path: "/",
+    sameSite: secure ? "none" : "lax",
+    secure,
+  });
 }
 
 function partnerDenied(req: NextRequest, reason: string): NextResponse {

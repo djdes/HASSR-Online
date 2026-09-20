@@ -21,8 +21,7 @@ import { buildStaffObligationDigest } from "@/lib/telegram-obligation-digests";
  *   /shift  → мой статус смены сегодня + inline-кнопки start/end.
  *   /me     → мой профиль (имя, должность, организация).
  *
- * Callback-кнопки start/end используют тот же storage что и
- * /api/mini/shift/me — обновляют WorkShift.status (working/ended).
+ * Callback-кнопки start/end обновляют WorkShift.status (working/ended).
  */
 
 type LinkedUser = {

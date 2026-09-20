@@ -12,8 +12,9 @@ import { Input } from "@/components/ui/input";
  * Соответствие»). Сохраняется отдельно от остальной карточки — PIN не
  * показываем и не храним в форме, только ставим или снимаем.
  *
- * `endpoint`: карточка сотрудника — `PATCH /api/staff/<id>` с `{ qrPin }`;
- * свой профиль в Mini App — `POST /api/mini/me/qr-pin` с `{ pin }`.
+ * `endpoint`: карточка сотрудника — `PATCH /api/staff/<id>` с `{ qrPin }`.
+ * PIN ставит руководитель: самому себе его больше не выдают — такого
+ * экрана нет и на сайте.
  */
 export function StaffQrPinField(props: {
   hasPin: boolean;

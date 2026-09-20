@@ -105,7 +105,7 @@ export function BonusSubmitForm({
         setError(data.error ?? `HTTP ${resp.status}`);
         return;
       }
-      router.push("/mini");
+      router.push("/journals");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Сетевая ошибка");

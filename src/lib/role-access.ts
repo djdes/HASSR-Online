@@ -9,7 +9,6 @@ export type RoleAccessActor = {
 // баллы пишет и повар, и ему важно видеть, сколько за это начислят.
 // Сам баланс организации внутри страницы виден только `admin.full`.
 const STAFF_WEB_ALLOWED_PREFIXES = ["/journals", "/settings/balance"] as const;
-const STAFF_MINI_ALLOWED_PREFIXES = ["/mini", "/mini/journals"] as const;
 
 function normalizePathname(pathname: string): string {
   if (!pathname) return "/";
@@ -36,18 +35,11 @@ export function canAccessWebPath(
   );
 }
 
-export function canAccessMiniPath(
-  actor: RoleAccessActor,
-  pathname: string
-): boolean {
-  if (hasFullWorkspaceAccess(actor)) return true;
-  const normalized = normalizePathname(pathname);
-  return (
-    normalized === STAFF_MINI_ALLOWED_PREFIXES[0] ||
-    matchesPrefix(normalized, STAFF_MINI_ALLOWED_PREFIXES[1])
-  );
-}
-
+/**
+ * Домашний адрес кабинета. Он же «корень» мини-приложения: собственных
+ * экранов-дублей у приложения больше нет — оно показывает страницы
+ * сайта в своей оболочке (П-3).
+ */
 export function getWebHomeHref(actor: RoleAccessActor): string {
   return hasFullWorkspaceAccess(actor) ? "/dashboard" : "/journals";
 }

@@ -108,21 +108,6 @@ export const telegramWebhookRateLimiter = createRateLimiter({
 });
 
 /**
- * Защита от спама /api/mini/notify — менеджер не должен мочь забить
- * Telegram-квоту бота своими «pings». Bot API rate-limit'ы:
- *   - 30 messages/sec в total на одного бота;
- *   - 1 message/sec на конкретный user_chat;
- * 5 запросов в минуту на пару (manager → target) — разумный потолок:
- * пусть менеджер не пишет одному и тому же сотруднику чаще раза
- * в 12 секунд. Глобально один менеджер с 50 подчинёнными всё ещё
- * может слать 250 уведомлений/мин в total — но это уже legitimate.
- */
-export const miniNotifyRateLimiter = createRateLimiter({
-  tokensPerInterval: 5,
-  intervalMs: 60_000,
-});
-
-/**
  * Защита от disk-fill DoS в /api/mini/attachments. Любой авторизованный
  * сотрудник мог бы pump'ить 5MB-файлы пока сервер не упрётся в место.
  * 60 загрузок в день на пользователя — щедро для нормальной работы

@@ -6,22 +6,20 @@ import { MiniLocationSwitcher } from "@/app/mini/_components/mini-location-switc
 import { useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 
-import { clearSnapshot } from "../_lib/snapshot-cache";
-import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { getWebHomeHref, hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getUserRoleLabel } from "@/lib/user-roles";
 import {
   ArrowLeft,
   Coins,
-  FileText,
-  ShieldCheck,
+  CreditCard,
   LogOut,
   MessageCircleMore,
   Moon,
+  Palette,
+  Settings,
+  ShieldCheck,
   Sun,
   Unlink,
-  CalendarDays,
-  Lightbulb,
-  BadgeCheck,
   LayoutGrid,
   MonitorSmartphone,
 } from "lucide-react";
@@ -32,18 +30,21 @@ import {
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FeedbackDialog } from "@/components/layout/feedback-dialog";
 import { useMiniTheme } from "../_components/mini-theme";
-import { PushSettings } from "../_components/push-settings";
-import { MiniQrPinSection } from "./qr-pin-section";
 
 /**
- * Profile screen for the Mini App.
+ * Профиль в мини-приложении.
  *
- * Read-only except for two destructive actions:
- *   - "Выйти" — drop the NextAuth session cookie; next /mini visit must
- *     re-verify initData. Useful when the bound employee changes devices.
- *   - "Отвязать Telegram" — also clears `User.telegramChatId` so even with
- *     valid initData on this device we no longer have a User mapping and
- *     the user must re-accept a fresh invite.
+ * Зеркало выпадающего меню профиля на сайте (`profile-sheet.tsx`):
+ * карточка человека, смена организации и точки, баланс, тариф, внешний
+ * вид, настройки, панель платформы, выход. Ничего «только для
+ * приложения» здесь быть не должно (П-3) — поэтому web-push, PIN для
+ * QR-плакатов и всё про установку на домашний экран отсюда убраны.
+ *
+ * Два действия необратимы:
+ *   • «Выйти» — сбрасывает сессию на этом телефоне;
+ *   • «Отвязать Telegram» — ещё и стирает `User.telegramChatId`, после
+ *     чего понадобится новое приглашение. Это аналог выхода именно для
+ *     Telegram, поэтому он остаётся.
  */
 export function MiniMeClient({
   telegramBotUsername,
@@ -67,11 +68,9 @@ export function MiniMeClient({
   const [confirmSignOutOpen, setConfirmSignOutOpen] = useState(false);
   const [confirmUnlinkOpen, setConfirmUnlinkOpen] = useState(false);
 
-  // Раньше: hasFullWorkspaceAccess gate перенаправлял staff'а обратно
-  // на /mini. Но «Профиль» нужен и линейному сотруднику — выйти,
-  // отвязать Telegram, переключить тему. Плюс ссылка на /mini/me
-  // показывалась всем в нижнем nav (без requires), так что staff
-  // тыкал и фрустрировался.
+  // Профиль нужен и линейному сотруднику: выйти, отвязать Telegram,
+  // переключить тему, посмотреть баллы. Поэтому гейта по правам здесь
+  // нет — внутри показываем ровно те ссылки, что доступны человеку.
   if (status !== "authenticated") {
     return (
       <div className="flex flex-1 items-center justify-center text-sm text-slate-500">
@@ -98,7 +97,6 @@ export function MiniMeClient({
             "Не удалось отвязать Telegram. Проверьте связь и попробуйте ещё раз."
         );
       }
-      clearSnapshot();
       await signOut({ redirect: false });
       window.location.href = "/mini";
     } catch (err) {
@@ -113,18 +111,17 @@ export function MiniMeClient({
 
   async function handleSignOut() {
     setBusy("signout");
-    // Снимок главной — чужие задачи для следующего вошедшего.
-    // Сверка владельца при чтении его бы отсекла, но держать
-    // чужой список на чужом телефоне незачем вовсе.
-    clearSnapshot();
     await signOut({ redirect: false });
     window.location.href = "/mini";
   }
 
+  const fullAccess = hasFullWorkspaceAccess(u);
+  const homeHref = getWebHomeHref(u);
+
   return (
     <div className="flex flex-1 flex-col gap-4 pb-24">
       <Link
-        href="/mini"
+        href={homeHref}
         className="-my-2 min-h-9 mini-press inline-flex items-center gap-1 text-[13px] font-medium"
         style={{ color: "var(--mini-text-muted)" }}
       >
@@ -273,19 +270,10 @@ export function MiniMeClient({
         </div>
       </section>
 
-      {/* Уведомления. Раздел сам себя прячет, если сервер их не
-          настроил или браузер не умеет. */}
-      <PushSettings />
-
-      {/* PIN для QR-плакатов — нужен только в режиме «Имя + PIN»;
-          раздел показывается, когда организация включила этот режим. */}
-      <MiniQrPinSection />
-
-      {/* Баланс и бонусы — паритет с сайтом (П-3). Карточка ведёт на
-          тот же экран, что и /settings/balance в кабинете. */}
+      {/* Баланс и бонусы — тот же пункт, что в меню профиля на сайте. */}
       <section>
         <Link
-          href="/mini/balance"
+          href="/settings/balance"
           className="mini-press flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left text-[14px] font-medium"
           style={{
             background: "var(--mini-card-solid-bg)",
@@ -303,12 +291,10 @@ export function MiniMeClient({
         </Link>
       </section>
 
-      {/* Оплаты, календарь, идеи и бейдж — страницы кабинета. Раньше
-          они открывались новой вкладкой браузера, и человек выпадал из
-          приложения. Теперь открываются здесь же, в оболочке
-          мини-приложения (П-3), с рабочей кнопкой «назад». Только
-          руководителям — сотрудника сайт всё равно перенаправит. */}
-      {hasFullWorkspaceAccess(u) ? (
+      {/* Дальше — ровно те же пункты, что в меню профиля на сайте
+          (`components/layout/profile-sheet.tsx`). Открываются здесь же,
+          в оболочке приложения, с рабочей кнопкой «назад» (П-3). */}
+      {fullAccess ? (
         <section>
           <Link
             href="/settings/subscription"
@@ -320,15 +306,15 @@ export function MiniMeClient({
             }}
           >
             <span className="inline-flex items-center gap-2">
-              <FileText className="size-4" style={{ color: "var(--mini-text-muted)" }} />
-              Оплаты и закрывающие документы
+              <CreditCard className="size-4" style={{ color: "var(--mini-text-muted)" }} />
+              Тарифы и оплата
             </span>
             <span className="text-[11px]" style={{ color: "var(--mini-text-faint)" }}>
-              тариф и счета
+              счета и автопродление
             </span>
           </Link>
           <Link
-            href="/settings/calendar"
+            href="/settings/appearance"
             className="mini-press mt-2 flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left text-[14px] font-medium"
             style={{
               background: "var(--mini-card-solid-bg)",
@@ -337,15 +323,15 @@ export function MiniMeClient({
             }}
           >
             <span className="inline-flex items-center gap-2">
-              <CalendarDays className="size-4" style={{ color: "var(--mini-text-muted)" }} />
-              Календарь сроков
+              <Palette className="size-4" style={{ color: "var(--mini-text-muted)" }} />
+              Внешний вид
             </span>
             <span className="text-[11px]" style={{ color: "var(--mini-text-faint)" }}>
-              медкнижки, поверки
+              логотип и цвета
             </span>
           </Link>
           <Link
-            href="/ideas"
+            href="/settings"
             className="mini-press mt-2 flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left text-[14px] font-medium"
             style={{
               background: "var(--mini-card-solid-bg)",
@@ -354,52 +340,34 @@ export function MiniMeClient({
             }}
           >
             <span className="inline-flex items-center gap-2">
-              <Lightbulb className="size-4" style={{ color: "var(--mini-text-muted)" }} />
-              Идеи и голосование
+              <Settings className="size-4" style={{ color: "var(--mini-text-muted)" }} />
+              Настройки
             </span>
             <span className="text-[11px]" style={{ color: "var(--mini-text-faint)" }}>
-              предложить
-            </span>
-          </Link>
-          <Link
-            href="/settings/organization#badge"
-            className="mini-press mt-2 flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left text-[14px] font-medium"
-            style={{
-              background: "var(--mini-card-solid-bg)",
-              color: "var(--mini-text)",
-              border: "1px solid var(--mini-divider)",
-            }}
-          >
-            <span className="inline-flex items-center gap-2">
-              <BadgeCheck className="size-4" style={{ color: "var(--mini-text-muted)" }} />
-              Публичный бейдж
-            </span>
-            <span className="text-[11px]" style={{ color: "var(--mini-text-faint)" }}>
-              для сайта
+              организация и журналы
             </span>
           </Link>
         </section>
       ) : null}
 
-      <section>
-        <Link
-          href="/settings/security"
-          className="mini-press flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left text-[14px] font-medium"
-          style={{
-            background: "var(--mini-card-solid-bg)",
-            color: "var(--mini-text)",
-            border: "1px solid var(--mini-divider)",
-          }}
-        >
-          <span className="inline-flex items-center gap-2">
-            <ShieldCheck className="size-4" style={{ color: "var(--mini-text-muted)" }} />
-            Безопасность
-          </span>
-          <span className="text-[11px]" style={{ color: "var(--mini-text-faint)" }}>
-            входы и сессии
-          </span>
-        </Link>
-      </section>
+      {u.isRoot ? (
+        <section>
+          <Link
+            href="/root"
+            className="mini-press flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left text-[14px] font-medium"
+            style={{
+              background: "var(--mini-card-solid-bg)",
+              color: "var(--mini-text)",
+              border: "1px solid var(--mini-divider)",
+            }}
+          >
+            <span className="inline-flex items-center gap-2">
+              <ShieldCheck className="size-4" style={{ color: "var(--mini-text-muted)" }} />
+              Панель платформы
+            </span>
+          </Link>
+        </section>
+      ) : null}
 
       {/* Все разделы кабинета — теми же правами, что на сайте. Вкладка
           есть и в нижнем меню; здесь — на случай, если человек ищет
@@ -486,7 +454,7 @@ export function MiniMeClient({
             // Полная перезагрузка, а не router.push: хром страницы
             // выбирает сервер по куке, и клиентский переход отдал бы
             // ту же оболочку.
-            window.location.href = "/dashboard";
+            window.location.href = homeHref;
           }}
           className="mini-press flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left text-[14px] font-medium"
           style={{

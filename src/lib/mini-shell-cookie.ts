@@ -101,15 +101,19 @@ export function shouldDropMiniShell(env: MiniShellEnvironment): boolean {
  * Куда вести неавторизованного в режиме оболочки.
  *
  * На `/login` не отправляем: в Telegram вход происходит сам, по
- * initData. Возврат на исходный адрес имеет смысл только для экранов
- * мини-приложения — на страницу сайта человек после входа попадёт из
- * «Разделов», а открытый чужой адрес в `next` — лишний вектор.
+ * initData. Возврат запоминаем на любой внутренний адрес — экраны
+ * приложения и страницы кабинета в его оболочке равноправны (П-3):
+ * человек, нажавший ссылку из бота на `/journals/hygiene`, должен
+ * после входа попасть именно туда.
+ *
+ * Чужой адрес (`//evil.example`, `https://…`) и обработчики `/api/*`
+ * отбрасываем — вернуть человека можно только на свою страницу.
  */
 export function miniShellSignInHref(nextPath: string | null | undefined): string {
   if (!nextPath || !nextPath.startsWith("/") || nextPath.startsWith("//")) {
     return "/mini";
   }
-  if (!isMiniPath(nextPath)) return "/mini";
+  if (nextPath === "/api" || nextPath.startsWith("/api/")) return "/mini";
   if (nextPath === "/mini") return "/mini";
   return `/mini?next=${encodeURIComponent(nextPath)}`;
 }

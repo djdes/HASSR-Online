@@ -1,0 +1,30 @@
+// «Telegram» на стенде: мини-приложение как зеркало сайта. Вход → домашний адрес сайта, старые адреса → страницы сайта, меню, «назад», прямая ссылка без куки.
+import crypto from "node:crypto"; import fs from "node:fs"; import path from "node:path"; import { chromium } from "playwright";
+import { db } from "../journal-responsibles-org-2026-09/e2e/db";
+const BASE = "http://localhost:3021"; const TOKEN = process.env.TG_FAKE_TOKEN!; const OUT = process.env.SWEEP_OUT!; fs.mkdirSync(OUT, { recursive: true });
+const HERE = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1")); const HOST = fs.readFileSync(path.join(HERE, "tg-host.js"), "utf8");
+const state = JSON.parse(fs.readFileSync(path.join(HERE, "..", "journal-responsibles-org-2026-09", "e2e", "state.json"), "utf8"));
+const TG_IDS: Record<string, number> = { cookA: 990001, managerA: 990002, headA: 990004, ownerA: 990005 };
+function forge(id: number) { const p = new URLSearchParams(); p.set("auth_date", String(Math.floor(Date.now() / 1000) - 5)); p.set("user", JSON.stringify({ id, first_name: "Т" })); const dcs = [...p.entries()].map(([k, v]) => `${k}=${v}`).sort().join("\n"); const s = crypto.createHmac("sha256", "WebAppData").update(TOKEN).digest(); p.set("hash", crypto.createHmac("sha256", s).update(dcs).digest("hex")); return p.toString(); }
+const STATE = `(function(){var h=window.__tgHost||{};var nav=Array.from(document.querySelectorAll('.mini-root nav a')).map(function(a){return a.innerText.trim()+(a.getAttribute('aria-current')||/active|bg-\\[/.test(a.className)&&a.getAttribute('data-active')?'*':'')});return {path:location.pathname+location.search,shell:!!document.getElementById('mini-root'),footer:!!document.querySelector('footer'),back:h.backVisible,nav:nav,active:(document.querySelector('.mini-root nav a[aria-current="page"]')||{innerText:''}).innerText.trim(),sw:document.documentElement.scrollWidth,vw:innerWidth,text:(document.querySelector('main')||document.body).innerText.replace(/\\s+/g,' ').slice(0,90)}})()`;
+async function ctxFor(b: any) { const ctx = await b.newContext({ viewport: { width: 360, height: 640 }, isMobile: true, hasTouch: true }); await ctx.addInitScript(HOST); await ctx.addInitScript(`try{localStorage.setItem("wesetup.last-seen-build-sha","zzz")}catch(e){};document.addEventListener('DOMContentLoaded',function(){var s=document.createElement('style');s.textContent='nextjs-portal{display:none!important}';document.head.appendChild(s)})`); return ctx; }
+(async () => { const b = await chromium.launch({ headless: true });
+  for (const role of (process.env.SWEEP_ROLES ?? "ownerA,headA,cookA").split(",")) { const tgId = TG_IDS[role];
+    await db.user.updateMany({ where: { telegramChatId: String(tgId) }, data: { telegramChatId: null } }); const me = await db.user.update({ where: { email: state.users[role].email }, data: { telegramChatId: String(tgId), themePreference: "light" }, select: { organizationId: true } });
+    const doc = await db.journalDocument.findFirst({ where: { organizationId: me.organizationId, status: "active", template: { code: "hygiene" } }, select: { id: true } });
+    const hash = "#tgWebAppData=" + encodeURIComponent(forge(tgId)) + "&tgWebAppVersion=8.0&tgWebAppPlatform=ios";
+    const ctx = await ctxFor(b); const page = await ctx.newPage(); const errs: string[] = []; page.on("pageerror", (e: any) => errs.push(String(e).slice(0, 140))); page.on("response", (r: any) => { if (r.status() >= 500) errs.push(`http ${r.status()} ${r.url().replace(BASE, "").slice(0, 70)}`); });
+    console.log(`\n===== ${role}`);
+    await page.goto(`${BASE}/mini${hash}`, { waitUntil: "load", timeout: 300000 }); await page.waitForURL((u: URL) => u.pathname !== "/mini", { timeout: 120000 }).catch(() => null); await page.waitForTimeout(3000);
+    const home: any = await page.evaluate(STATE); console.log("вход →", JSON.stringify(home)); await page.screenshot({ path: path.join(OUT, `${role}.home.png`) });
+    for (const r of ["/mini/journals", "/mini/journals/hygiene", `/mini/documents/${doc!.id}`, "/mini/staff", "/mini/equipment", "/mini/iot", "/mini/reports", "/mini/audit", "/mini/balance", "/mini/shift", "/mini/shift-handover", "/mini/open", "/mini/today", "/mini/sections", "/mini/me", "/mini/outbox"]) {
+      await page.goto(BASE + r, { waitUntil: "load", timeout: 300000 }).catch((e: any) => errs.push("goto " + String(e).slice(0, 80))); await page.waitForTimeout(3500); const s: any = await page.evaluate(STATE).catch(() => ({ path: "?" }));
+      const flags = [!s.shell && "NO-SHELL", s.footer && "FOOTER", s.sw > s.vw + 2 && "OVERFLOW", !s.back && "no-back", errs.length && "ERR " + errs.splice(0, 9)[0]].filter(Boolean);
+      console.log(r.replace(doc!.id, "<doc>"), "→", s.path?.replace(doc!.id, "<doc>"), "| меню:", s.active || "-", flags.length ? "| " + flags.join(" | ") : "", "|", (s.text || "").slice(0, 50)); if (/today|me$|sections/.test(r)) await page.screenshot({ path: path.join(OUT, `${role}.${r.replace(/\W+/g, "_")}.png`) }); }
+    // «Назад» Telegram с вложенной страницы
+    await page.goto(BASE + "/settings/balance", { waitUntil: "load", timeout: 300000 }); await page.waitForTimeout(1500); await page.evaluate(`window.__tgHost.pressBack()`); await page.waitForTimeout(2500); console.log("назад с /settings/balance →", await page.evaluate(`location.pathname`));
+    await ctx.close();
+    // Прямая ссылка из бота без куки: журнал и документ
+    for (const r of ["/mini/journals/hygiene", `/mini/documents/${doc!.id}`, "/mini/today"]) { const c2 = await ctxFor(b); const p2 = await c2.newPage(); await p2.goto(BASE + r + hash, { waitUntil: "load", timeout: 300000 }); await p2.waitForTimeout(9000); const s: any = await p2.evaluate(STATE).catch(() => ({ path: "?" })); console.log("без куки", r.replace(doc!.id, "<doc>"), "→", s.path?.replace(doc!.id, "<doc>"), s.shell ? "в оболочке" : "БЕЗ ОБОЛОЧКИ", "|", (s.text || "").slice(0, 50)); await c2.close(); }
+  }
+  await b.close(); await db.$disconnect(); })().catch((e) => { console.log("FATAL", String(e).slice(0, 300)); process.exit(1); });

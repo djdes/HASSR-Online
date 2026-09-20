@@ -75,8 +75,8 @@ test("syncDailyJournalObligationsForUser creates obligations only for allowed da
   assert.deepEqual(
     writes.map((row) => [row.journalCode, row.status, row.targetPath]),
     [
-      ["incoming_control", "done", "/mini/journals/incoming_control/new"],
-      ["hygiene", "pending", "/mini/journals/hygiene"],
+      ["incoming_control", "done", "/journals/incoming_control/new"],
+      ["hygiene", "pending", "/journals/hygiene"],
     ]
   );
 });
@@ -118,7 +118,7 @@ test("syncDailyJournalObligationsForUser sends incoming_control to the entry for
     }
   );
 
-  assert.equal(obligations[0]?.targetPath, "/mini/journals/incoming_control/new");
+  assert.equal(obligations[0]?.targetPath, "/journals/incoming_control/new");
 });
 
 test("syncDailyJournalObligationsForUser clears stale sync rows that are no longer eligible", async () => {
@@ -239,7 +239,7 @@ test("listOpenJournalObligationsForUser scopes to UTC day start", async () => {
           {
             id: "obl_1",
             journalCode: "hygiene",
-            targetPath: "/mini/journals/hygiene",
+            targetPath: "/journals/hygiene",
             template: { name: "Hygiene", description: null },
           },
         ];
@@ -261,13 +261,13 @@ test("listOpenJournalObligationsForUser returns pending obligations ordered by j
         {
           id: "2",
           journalCode: "hygiene",
-          targetPath: "/mini/journals/hygiene",
+          targetPath: "/journals/hygiene",
           template: { name: "Beta", description: "Shift" },
         },
         {
           id: "1",
           journalCode: "incoming_control",
-          targetPath: "/mini/journals/incoming_control/new",
+          targetPath: "/journals/incoming_control/new",
           template: { name: "Alpha", description: null },
         },
       ],
@@ -287,13 +287,13 @@ test("getJournalObligationById returns only the caller-owned obligation", async 
         ? {
             id,
             userId,
-            targetPath: "/mini/journals/hygiene",
+            targetPath: "/journals/hygiene",
             openedAt: null,
           }
         : null,
   });
 
-  assert.equal(obligation?.targetPath, "/mini/journals/hygiene");
+  assert.equal(obligation?.targetPath, "/journals/hygiene");
 });
 
 test("markJournalObligationOpened delegates to the injected marker", async () => {

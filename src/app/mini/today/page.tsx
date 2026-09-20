@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 
 import { useRegisterRefresh } from "../_components/refresh-provider";
 import { claimReasonRu } from "../_lib/claim-errors";
@@ -10,20 +9,11 @@ import { toast } from "sonner";
 // NOTE: терминология «задачи / Сегодня» — нейтральная, мини-апп
 // никогда не показывает слово «журнал». Сотрудник просто видит
 // чек-лист задач смены. Под капотом это journal-task-claim.
-
-type ShiftGate = {
-  gateRequired: boolean;
-  shiftStarted: boolean;
-  today: string;
-  preset: string;
-};
 import {
-  ArrowLeft,
   CheckCircle2,
   Clock,
   Loader2,
   Lock,
-  Play,
   Sparkles,
   UserCheck,
 } from "lucide-react";
@@ -70,8 +60,6 @@ export default function MiniTodayPage() {
   const router = useRouter();
   const [data, setData] = useState<Payload | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const [gate, setGate] = useState<ShiftGate | null>(null);
-  const [startingShift, setStartingShift] = useState(false);
   // Без этого любой сбой запроса оставлял экран с вечным «крутилкой»:
   // data/gate так и не появлялись, а причина нигде не показывалась.
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -79,23 +67,6 @@ export default function MiniTodayPage() {
   // быстрое переключение страниц давало "Cannot update unmounted
   // component" warning + утечка. См. pass-3 review HIGH #6.
   const mountedRef = useRef(true);
-
-  async function loadGate() {
-    try {
-      const res = await fetch("/api/mini/start-shift", { cache: "no-store" });
-      if (!res.ok) {
-        if (mountedRef.current) setLoadError(await readError(res));
-        return;
-      }
-      const payload = (await res.json()) as ShiftGate;
-      if (mountedRef.current) {
-        setGate(payload);
-        setLoadError(null);
-      }
-    } catch {
-      if (mountedRef.current) setLoadError("Нет связи — потяните вниз, чтобы обновить");
-    }
-  }
 
   async function load() {
     try {
@@ -114,51 +85,17 @@ export default function MiniTodayPage() {
     }
   }
 
-  async function startShift() {
-    setStartingShift(true);
-    try {
-      const res = await fetch("/api/mini/start-shift", { method: "POST" });
-      if (res.ok) {
-        await loadGate();
-        await load();
-      } else {
-        // Молчаливый отказ выглядел как «кнопка не работает».
-        toast.error(await readError(res));
-      }
-    } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Не удалось начать смену"
-      );
-    } finally {
-      if (mountedRef.current) setStartingShift(false);
-    }
-  }
-
+  // Задачи показываем сразу: «начала смены» в приложении больше нет —
+  // смены ставит руководитель в графике кабинета.
   useEffect(() => {
     mountedRef.current = true;
-    (async () => {
-      await loadGate();
-      // Не загружаем задачи пока gate не пройден — иначе сотрудник
-      // мельком увидит список до того как нажал «Начать смену».
-    })();
+    void load();
     return () => {
       mountedRef.current = false;
     };
   }, []);
 
-  useEffect(() => {
-    if (gate && (!gate.gateRequired || gate.shiftStarted)) {
-      void load();
-    }
-  }, [gate]);
-
-  // Потянули вниз — и состояние смены, и список задач: смену
-  // могли открыть с другого телефона, и один список без гейта остался
-  // бы запертым.
-  useRegisterRefresh(async () => {
-    await loadGate();
-    await load();
-  });
+  useRegisterRefresh(load);
 
   async function claim(scope: Scope) {
     if (!data) return;
@@ -247,71 +184,10 @@ export default function MiniTodayPage() {
     }
   }
 
-  // Shift gate: для линейного персонала без активной смены —
-  // показываем ОДНУ кнопку «Начать смену» и ничего больше. Это
-  // делает обязательной отметку начала рабочего дня — заведующая
-  // на Контрольной доске видит кто реально вышел на работу.
-  if (gate && gate.gateRequired && !gate.shiftStarted) {
-    return (
-      <div className="space-y-4 pb-24">
-        <BackHome />
-        <div
-          className="rounded-3xl border p-8 text-center"
-          style={{
-            background: "var(--mini-surface-1)",
-            borderColor: "var(--mini-divider-strong)",
-          }}
-        >
-          <div
-            className="text-[12px] uppercase tracking-[0.16em]"
-            style={{ color: "var(--mini-text-muted)" }}
-          >
-            {new Date(gate.today).toLocaleDateString("ru-RU", {
-              weekday: "long",
-              day: "numeric",
-              month: "long",
-            })}
-          </div>
-          <div
-            className="mt-2 text-[24px] font-semibold leading-tight"
-            style={{ color: "var(--mini-text)" }}
-          >
-            Готов к работе?
-          </div>
-          <p
-            className="mt-3 text-[14px] leading-relaxed"
-            style={{ color: "var(--mini-text-muted)" }}
-          >
-            Нажмите «Начать смену», чтобы получить задачи на сегодня.
-            Руководитель увидит, что вы вышли на работу.
-          </p>
-          <button
-            type="button"
-            onClick={startShift}
-            disabled={startingShift}
-            className="mini-press mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl px-6 text-[16px] font-medium disabled:opacity-60"
-            style={{
-              background: "var(--mini-lime)",
-              color: "var(--mini-primary-contrast)",
-            }}
-          >
-            {startingShift ? (
-              <Loader2 className="size-5 animate-spin" />
-            ) : (
-              <Play className="size-5 fill-current" />
-            )}
-            Начать смену
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   if (!data) {
     if (loadError) {
       return (
         <div className="space-y-3 pb-24">
-          <BackHome />
           <div
             className="rounded-2xl px-4 py-5 text-center text-[14px] leading-relaxed"
             style={{
@@ -325,7 +201,7 @@ export default function MiniTodayPage() {
               type="button"
               onClick={() => {
                 setLoadError(null);
-                void loadGate().then(() => load());
+                void load();
               }}
               className="mini-press mt-4 inline-flex h-11 items-center justify-center rounded-2xl px-5 text-[14px] font-semibold"
               style={{
@@ -341,7 +217,6 @@ export default function MiniTodayPage() {
     }
     return (
       <div className="space-y-3 pb-24">
-        <BackHome />
         <div
           className="flex h-40 items-center justify-center gap-2 text-[14px]"
           style={{ color: "var(--mini-text-muted)" }}
@@ -365,7 +240,6 @@ export default function MiniTodayPage() {
 
   return (
     <div className="space-y-4 pb-24">
-      <BackHome />
 
       <header
         className="rounded-3xl border p-6"
@@ -631,16 +505,3 @@ function ScopeRow({
   );
 }
 
-/** Возврат на главную — единственный выход с экрана, нужен в каждом состоянии. */
-function BackHome() {
-  return (
-    <Link
-      href="/mini"
-      className="mini-press inline-flex w-fit items-center gap-1.5 text-[13px]"
-      style={{ color: "var(--mini-text-muted)" }}
-    >
-      <ArrowLeft className="size-4" />
-      Главная
-    </Link>
-  );
-}

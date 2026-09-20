@@ -23,25 +23,38 @@ import { getTelegramWebApp, isInsideTelegram } from "./telegram-web-app";
 import { haptic } from "./use-haptic";
 import { useMiniTheme } from "./mini-theme";
 
-// Порядок важен: совпадение ищется первым подходящим префиксом, поэтому
-// «/mini/shift-handover» стоит выше «/mini/shift».
+// Собственных экранов у приложения осталось немного: остальные адреса
+// `/mini/*` только перекидывают на страницы кабинета, и их подписи
+// берутся из хлебных крошек сайта (`titleForSitePath`).
 const SECTION_TITLES: Array<[string, string]> = [
-  ["/mini/staff", "Сотрудники"],
-  ["/mini/equipment", "Оборудование"],
-  ["/mini/reports", "Отчёты"],
-  ["/mini/audit", "Журнал действий"],
-  ["/mini/iot", "Датчики"],
-  ["/mini/shift-handover", "Смены"],
-  ["/mini/shift", "Смена"],
   ["/mini/me", "Профиль"],
-  ["/mini/balance", "Баланс и бонусы"],
   ["/mini/bonus", "Премия"],
   ["/mini/today", "Сегодня"],
   ["/mini/outbox", "Не отправлено"],
   ["/mini/claim", "Задача"],
   ["/mini/sections", "Все разделы"],
-  ["/mini/open", "Полная версия"],
 ];
+
+/**
+ * Экраны, с которых «назад» вести некуда.
+ *
+ * Корень приложения — домашний адрес кабинета (`/dashboard` или
+ * `/journals`), а `/mini` — экран входа, который сам уводит домой.
+ */
+// `/control-board` и `/mini/today` — тоже «дом»: сайт сам приводит туда
+// заведующую и сотрудника без списка журналов, и возвращаться им некуда.
+const ROOT_PATHS = [
+  "/mini",
+  "/dashboard",
+  "/journals",
+  "/control-board",
+  "/mini/today",
+] as const;
+
+export function isMiniRootPath(pathname: string): boolean {
+  const normalized = pathname.replace(/\/+$/, "") || "/";
+  return ROOT_PATHS.some((path) => path === normalized);
+}
 
 /**
  * Подпись страницы сайта, открытой в оболочке мини-приложения.
@@ -61,10 +74,8 @@ export function titleForSitePath(pathname: string): string {
 }
 
 export function titleForPath(pathname: string): string {
-  if (pathname === "/mini") return "Кабинет";
+  if (pathname === "/mini") return "Вход";
   if (pathname === "/mini/login") return "Вход";
-  if (pathname.startsWith("/mini/journals")) return "Журналы";
-  if (pathname.startsWith("/mini/documents")) return "Документ";
   if (pathname.startsWith("/mini/o/")) return "Задача";
   if (!isMiniPath(pathname)) return titleForSitePath(pathname);
   return SECTION_TITLES.find(([prefix]) => pathname.startsWith(prefix))?.[1] ?? "WeSetup";
@@ -83,7 +94,7 @@ export function isStandaloneDisplay(): boolean {
   }
 }
 
-export function MiniTelegramRuntime() {
+export function MiniTelegramRuntime({ homeHref }: { homeHref: string }) {
   const { theme } = useMiniTheme();
   const pathname = usePathname();
   const router = useRouter();
@@ -161,13 +172,15 @@ export function MiniTelegramRuntime() {
   }, [theme]);
 
   // Telegram-native «<» кнопка в шапке. Показываем на всех вложенных
-  // экранах кроме root /mini. На iOS Telegram WebApp нет системной
-  // back-кнопки внутри iframe — без BackButton пользователь застревает
-  // на форме когда клавиатура закрывает наш custom <ArrowLeft>-link.
+  // экранах, кроме корневых: корень — это домашний адрес кабинета
+  // (`/dashboard` или `/journals`) и экран входа `/mini`. На iOS
+  // Telegram WebApp нет системной back-кнопки внутри iframe — без
+  // BackButton человек застревает на форме, когда клавиатура закрывает
+  // наш собственный <ArrowLeft>.
   useEffect(() => {
     const tg = getTelegramWebApp();
     if (!tg?.BackButton) return;
-    const isRoot = pathname === "/mini";
+    const isRoot = isMiniRootPath(pathname);
     const handler = () => {
       try {
         tg.HapticFeedback?.impactOccurred("light");
@@ -175,12 +188,12 @@ export function MiniTelegramRuntime() {
         /* old client */
       }
       // Если history-stack пустой (пришли по deep-link), router.back()
-      // ничего не сделает — пушим явно на /mini. window.history.length
+      // ничего не сделает — уводим домой. window.history.length
       // включает initial entry, так что 1 == «нет куда возвращаться».
       if (typeof window !== "undefined" && window.history.length > 1) {
         router.back();
       } else {
-        router.push("/mini");
+        router.push(homeHref);
       }
     };
     if (isRoot) {
@@ -205,7 +218,7 @@ export function MiniTelegramRuntime() {
         /* */
       }
     };
-  }, [pathname, router]);
+  }, [homeHref, pathname, router]);
 
   return null;
 }
@@ -276,21 +289,24 @@ function useNeedsOwnBackButton(pathname: string): boolean {
     return () => query.removeEventListener("change", sync);
   }, []);
 
-  return standalone && pathname !== "/mini";
+  return standalone && !isMiniRootPath(pathname);
 }
 
 export function MiniTopBar({
+  homeHref,
   partnerHint = null,
   locationName = null,
   showNotifications = false,
 }: {
+  /** «Корень» приложения: домашний адрес кабинета. */
+  homeHref: string;
   /** Ставки для иконки «партнёрская программа» у логотипа; null — скрыть. */
   partnerHint?: PartnerHintRates | null;
   /** Активная точка (режим точек включён); null — не показывать. */
   locationName?: string | null;
   /** Колокольчик уведомлений — зеркало шапки сайта; только вошедшим. */
   showNotifications?: boolean;
-} = {}) {
+}) {
   const pathname = usePathname();
   const title = titleForPath(pathname);
   const router = useRouter();
@@ -316,9 +332,9 @@ export function MiniTopBar({
             onClick={() => {
               haptic("light");
               // history.length === 1 означает «пришли сразу сюда»
-              // (ярлык, ссылка) — возвращать некуда, ведём на главную.
+              // (ярлык, ссылка) — возвращать некуда, ведём домой.
               if (window.history.length > 1) router.back();
-              else router.push("/mini");
+              else router.push(homeHref);
             }}
             aria-label="Назад"
             className="mini-press -ml-1 flex size-10 shrink-0 items-center justify-center rounded-2xl"
@@ -328,7 +344,7 @@ export function MiniTopBar({
           </button>
         ) : null}
         <Link
-          href="/mini"
+          href={homeHref}
           className="flex min-w-0 items-center gap-3"
           aria-label="На главный экран"
         >

@@ -97,6 +97,23 @@ test("org-override пресета режет разделы так же, как 
   assert.ok(list.includes("/settings/users"));
 });
 
+test("всё, что было отдельными вкладками в приложении, есть в разделах", () => {
+  // Мини-приложение больше не заводит своих экранов: «Сотрудники»,
+  // «Оборудование», «Отчёты», «Журнал действий», «Команда» и «График
+  // смен» должны находиться через «Все разделы» (П-3).
+  const list = hrefs(owner);
+  for (const href of [
+    "/settings/users",
+    "/settings/equipment",
+    "/reports",
+    "/settings/audit",
+    "/team",
+    "/settings/schedule",
+  ]) {
+    assert.ok(list.includes(href), href);
+  }
+});
+
 test("меню шапки собирается из того же списка", () => {
   const items = headerNavSections();
   assert.equal(items.length, 10);

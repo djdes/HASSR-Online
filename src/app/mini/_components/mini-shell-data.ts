@@ -7,7 +7,8 @@ import { askNpsFor } from "@/lib/nps-data";
 import { deletionDueAt } from "@/lib/org-deletion";
 import { getPartnerHintRates } from "@/lib/partners/partner-hint";
 import { currentAnnouncement } from "@/lib/platform-status";
-import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { getWebHomeHref, hasFullWorkspaceAccess } from "@/lib/role-access";
+import { miniNavItems } from "@/app/mini/_lib/nav-items";
 
 /**
  * Данные, которые нужны оболочке мини-приложения.
@@ -70,8 +71,16 @@ export async function loadMiniShellData(session: Session | null) {
         }).catch(() => null)
       : null;
 
+  // «Корень» приложения — домашний адрес кабинета: собственной главной
+  // у приложения нет (П-3). Меню считаем здесь же, на сервере: права
+  // уже в сессии, и первый кадр не должен показывать чужой набор
+  // вкладок, а потом перерисовываться.
+  const actor = session?.user ?? null;
+
   return {
     authed: Boolean(session?.user),
+    homeHref: getWebHomeHref(actor ?? {}),
+    navItems: miniNavItems(actor),
     initialTheme: (profileTheme ?? "dark") as "light" | "dark",
     profileTheme,
     announcement,

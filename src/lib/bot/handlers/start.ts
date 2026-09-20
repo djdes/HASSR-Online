@@ -14,8 +14,6 @@ import { telegramConsultantFooter } from "@/lib/partners/branding";
 import { parseLinkToken } from "@/lib/telegram";
 import { getMiniAppBaseUrlFromEnv } from "@/lib/journal-obligation-links";
 import { buildTelegramWebAppKeyboard } from "@/lib/telegram-web-app";
-import { userStartedShiftToday } from "./shift-gate";
-import { effectivePreset } from "@/lib/permission-presets";
 
 function getMiniAppBaseUrl(): string | null {
   return getMiniAppBaseUrlFromEnv();
@@ -59,51 +57,16 @@ async function replyWithLoadedStartHome(
     return;
   }
 
-  // Shift gate — для линейного персонала (не admin/head_chef): пока
-  // не нажата «Начать смену», показываем ОДНУ кнопку и не загружаем
-  // обычный home. Это заставляет фиксировать выход на смену, чтобы
-  // заведующая на Контрольной доске видела кто реально работает.
+  // Раньше здесь стоял «шлагбаум смены»: линейному сотруднику вместо
+  // задач выдавалась одна кнопка «Начать смену». Отметки начала смены
+  // в приложении больше нет — смены ставит руководитель в графике
+  // кабинета, — поэтому бот сразу отдаёт задачи всем одинаково.
   const dbUser = await db.user.findFirst({
     where: { telegramChatId: fromId, isActive: true },
-    select: {
-      id: true,
-      name: true,
-      role: true,
-      permissionPreset: true,
-      isRoot: true,
-      organizationId: true,
-    },
+    select: { organizationId: true },
   });
   // White-label: клиенты партнёра видят в приветствии «Ваш консультант».
   const consultantFooter = await telegramConsultantFooter(dbUser?.organizationId);
-  if (dbUser) {
-    const preset = effectivePreset({
-      permissionPreset: dbUser.permissionPreset,
-      role: dbUser.role,
-      isRoot: dbUser.isRoot,
-    });
-    const isLineStaff =
-      preset !== "admin" && preset !== "head_chef";
-    if (isLineStaff) {
-      const started = await userStartedShiftToday(dbUser.id);
-      if (!started) {
-        const greetName = dbUser.name.split(" ")[1] || dbUser.name.split(" ")[0] || dbUser.name;
-        await ctx.reply(
-          `👋 Привет, ${escapeName(greetName)}!\n\n` +
-            `Чтобы получить задачи на сегодня — нажми «Начать смену».`,
-          {
-            parse_mode: "HTML",
-            reply_markup: {
-              inline_keyboard: [
-                [{ text: "▶️ Начать смену", callback_data: "shift:start" }],
-              ],
-            },
-          }
-        );
-        return;
-      }
-    }
-  }
 
   if (home.kind === "manager") {
     await replyWithLinkedStart(
@@ -163,12 +126,6 @@ async function replyWithLoadedStartHome(
  * Markdown) to avoid accidental entity escaping issues. The bot never
  * echoes the raw token back.
  */
-function escapeName(name: string): string {
-  return name
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
 
 /**
  * Привязка собственного аккаунта по ссылке из настроек.

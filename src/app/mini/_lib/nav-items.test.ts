@@ -1,48 +1,70 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import test from "node:test";
 
-import { isNavItemVisible, visibleNavItems } from "@/app/mini/_lib/nav-items";
+import { activeMiniNavHref, miniNavItems } from "@/app/mini/_lib/nav-items";
 
-const ITEMS = [
-  { href: "/mini" },
-  { href: "/mini/staff", requires: ["staff.view"] },
-  { href: "/mini/equipment", requires: ["equipment.view"] },
-  { href: "/mini/me" },
-];
-
-describe("visibleNavItems", () => {
-  it("до ответа сервера показывает безусловные вкладки, а не пустоту", () => {
-    // Именно из-за пустоты навигация прыгала на каждой загрузке.
-    const shown = visibleNavItems(ITEMS, null, null).map((i) => i.href);
-    assert.deepEqual(shown, ["/mini", "/mini/me"]);
-  });
-
-  it("сотруднику показывает только то, на что есть право", () => {
-    const shown = visibleNavItems(ITEMS, new Set(["staff.view"]), "staff").map(
-      (i) => i.href
-    );
-    assert.deepEqual(shown, ["/mini", "/mini/staff", "/mini/me"]);
-  });
-
-  it("управляющему показывает всё", () => {
-    const shown = visibleNavItems(ITEMS, new Set(), "manager").map((i) => i.href);
-    assert.equal(shown.length, ITEMS.length);
-  });
-
-  it("без прав и без роли менеджера условные вкладки скрыты", () => {
-    const shown = visibleNavItems(ITEMS, new Set(), "readonly").map((i) => i.href);
-    assert.deepEqual(shown, ["/mini", "/mini/me"]);
-  });
+test("у руководителя четыре вкладки, главная — дашборд", () => {
+  const items = miniNavItems({ role: "manager", isRoot: false });
+  assert.deepEqual(
+    items.map((item) => [item.href, item.label]),
+    [
+      ["/dashboard", "Главная"],
+      ["/journals", "Журналы"],
+      ["/mini/sections", "Разделы"],
+      ["/mini/me", "Профиль"],
+    ]
+  );
 });
 
-describe("isNavItemVisible", () => {
-  it("пустой список требований равнозначен отсутствию", () => {
-    assert.equal(isNavItemVisible({ href: "/x", requires: [] }, null, null), true);
-  });
+test("у линейного сотрудника главная — журналы, второй такой кнопки нет", () => {
+  const items = miniNavItems({ role: "cook", isRoot: false });
+  assert.deepEqual(
+    items.map((item) => [item.href, item.label]),
+    [
+      ["/journals", "Журналы"],
+      ["/mini/sections", "Разделы"],
+      ["/mini/me", "Профиль"],
+    ]
+  );
+});
 
-  it("достаточно одного права из списка", () => {
-    const item = { href: "/x", requires: ["a.view", "b.view"] };
-    assert.equal(isNavItemVisible(item, new Set(["b.view"]), "staff"), true);
-    assert.equal(isNavItemVisible(item, new Set(["c.view"]), "staff"), false);
-  });
+test("до входа показываем набор линейного сотрудника", () => {
+  assert.deepEqual(
+    miniNavItems(null).map((item) => item.href),
+    ["/journals", "/mini/sections", "/mini/me"]
+  );
+});
+
+test("вкладка подсвечивается и на страницах сайта", () => {
+  const items = miniNavItems({ role: "manager", isRoot: false });
+
+  assert.equal(activeMiniNavHref(items, "/dashboard"), "/dashboard");
+  assert.equal(activeMiniNavHref(items, "/journals"), "/journals");
+  assert.equal(activeMiniNavHref(items, "/journals/hygiene"), "/journals");
+  assert.equal(
+    activeMiniNavHref(items, "/journals/hygiene/documents/42"),
+    "/journals"
+  );
+  assert.equal(activeMiniNavHref(items, "/mini/me"), "/mini/me");
+  assert.equal(activeMiniNavHref(items, "/mini/sections"), "/mini/sections");
+});
+
+test("экран входа и «Сегодня» подсвечивают домашнюю вкладку", () => {
+  const manager = miniNavItems({ role: "manager", isRoot: false });
+  const staff = miniNavItems({ role: "cook", isRoot: false });
+
+  assert.equal(activeMiniNavHref(manager, "/mini"), "/dashboard");
+  assert.equal(activeMiniNavHref(staff, "/mini"), "/journals");
+  // Сайт сам отправляет повара с `/journals` на «Сегодня» — значит это
+  // и есть его домашний экран, и вкладка должна быть подсвечена.
+  assert.equal(activeMiniNavHref(staff, "/mini/today"), "/journals");
+});
+
+test("соседние разделы чужую вкладку не подсвечивают", () => {
+  const items = miniNavItems({ role: "manager", isRoot: false });
+
+  // `/journals-progress` — отдельный раздел, а не вложенность журналов.
+  assert.equal(activeMiniNavHref(items, "/journals-progress"), null);
+  assert.equal(activeMiniNavHref(items, "/mini/outbox"), null);
+  assert.equal(activeMiniNavHref(items, "/settings/users"), null);
 });

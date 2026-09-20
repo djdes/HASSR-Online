@@ -1,11 +1,20 @@
 import Link from "next/link";
 import { Download } from "lucide-react";
-import { requireRole } from "@/lib/auth-helpers";
+import { redirect } from "next/navigation";
+import { requireAuth } from "@/lib/auth-helpers";
+import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { AuditLogViewer } from "@/components/settings/audit-log-viewer";
 import { TasksflowAuditFeed } from "@/components/settings/tasksflow-audit-feed";
 
 export default async function AuditPage() {
-  await requireRole(["owner"]);
+  // Раньше здесь стоял `requireRole(["owner"])`, и страница была недостижима
+  // ни для кого: normalizeUserRole переводит legacy-«owner» в «manager»,
+  // и список ["owner"] не совпадал даже с владельцем. Проверка та же, что
+  // у API журнала действий (`/api/audit`).
+  const session = await requireAuth();
+  if (!hasFullWorkspaceAccess(session.user)) {
+    redirect("/settings");
+  }
 
   return (
     <div className="space-y-5">

@@ -62,9 +62,7 @@ export default async function MiniLayout({
 
   return (
     <MiniSessionProvider initialSession={session}>
-      <MiniAppShell {...shell} ownRoutes>
-        {children}
-      </MiniAppShell>
+      <MiniAppShell {...shell}>{children}</MiniAppShell>
     </MiniSessionProvider>
   );
 }

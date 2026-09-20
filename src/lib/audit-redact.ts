@@ -1,6 +1,6 @@
 /**
  * Recursive redaction of sensitive ключей из произвольного JSON-blob'а
- * перед отдачей в клиент через `/api/mini/audit` (и любой другой
+ * перед отдачей в клиент через `/settings/audit` (и любой другой
  * audit-feed). Защита defense-in-depth: даже admin не должен видеть
  * сырой password-hash или Telegram initData в JSON.stringify(details)
  * UI-render'е.

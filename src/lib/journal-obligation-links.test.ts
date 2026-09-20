@@ -4,21 +4,20 @@ import test from "node:test";
 import {
   buildMiniAppAuthBootstrapPath,
   buildMiniAppUrl,
-  buildMiniOpenBridgePath,
   buildMiniObligationEntryUrl,
   normalizeMiniAppBaseUrl,
   resolveJournalObligationTargetPath,
   sanitizeMiniAppRedirectPath,
 } from "@/lib/journal-obligation-links";
 
-test("resolveJournalObligationTargetPath sends entry journals to the mini new page", () => {
+test("resolveJournalObligationTargetPath sends entry journals to the site new page", () => {
   assert.equal(
     resolveJournalObligationTargetPath({
       journalCode: "cleaning",
       isDocument: false,
       activeDocumentId: null,
     }),
-    "/mini/journals/cleaning/new"
+    "/journals/cleaning/new"
   );
 });
 
@@ -39,15 +38,25 @@ test("resolveJournalObligationTargetPath keeps document journals on the journal 
       isDocument: true,
       activeDocumentId: "doc-1",
     }),
-    "/mini/journals/hygiene"
+    "/journals/hygiene"
   );
 });
 
 test("sanitizeMiniAppRedirectPath keeps internal mini app paths", () => {
   assert.equal(
-    sanitizeMiniAppRedirectPath("/mini/journals/hygiene/new"),
-    "/mini/journals/hygiene/new"
+    sanitizeMiniAppRedirectPath("/mini/today"),
+    "/mini/today"
   );
+});
+
+test("sanitizeMiniAppRedirectPath keeps internal site paths with query", () => {
+  // Мини-приложение открывает страницы кабинета в своей оболочке,
+  // поэтому возврат после входа обязан работать и на адрес сайта.
+  assert.equal(
+    sanitizeMiniAppRedirectPath("/journals/hygiene/new?from=bot"),
+    "/journals/hygiene/new?from=bot"
+  );
+  assert.equal(sanitizeMiniAppRedirectPath("/dashboard"), "/dashboard");
 });
 
 test("sanitizeMiniAppRedirectPath rejects external redirects", () => {
@@ -55,10 +64,17 @@ test("sanitizeMiniAppRedirectPath rejects external redirects", () => {
     sanitizeMiniAppRedirectPath("https://evil.example/phish"),
     null
   );
+  assert.equal(sanitizeMiniAppRedirectPath("//evil.example/phish"), null);
 });
 
-test("sanitizeMiniAppRedirectPath rejects traversal outside the mini app", () => {
-  assert.equal(sanitizeMiniAppRedirectPath("/mini/../dashboard"), null);
+test("sanitizeMiniAppRedirectPath rejects api handlers", () => {
+  assert.equal(sanitizeMiniAppRedirectPath("/api/auth/signout"), null);
+  assert.equal(sanitizeMiniAppRedirectPath("/api"), null);
+});
+
+test("sanitizeMiniAppRedirectPath normalises traversal to an internal path", () => {
+  assert.equal(sanitizeMiniAppRedirectPath("/mini/../dashboard"), "/dashboard");
+  assert.equal(sanitizeMiniAppRedirectPath("/mini/../../etc/passwd"), "/etc/passwd");
 });
 
 test("buildMiniAppAuthBootstrapPath preserves a validated exact target for mini auth bootstrap", () => {
@@ -111,9 +127,22 @@ test("buildMiniAppUrl avoids duplicate /mini segments", () => {
   );
 });
 
-test("buildMiniOpenBridgePath encodes a full-cabinet target", () => {
+test("buildMiniAppUrl opens site pages off the same origin", () => {
+  // Цель обязательства теперь путь сайта — кнопка бота обязана открыть
+  // `https://wesetup.ru/journals/hygiene`, а не приклеить его к `/mini`.
   assert.equal(
-    buildMiniOpenBridgePath("/reports?format=pdf", "Журналы в PDF"),
-    "/mini/open?href=%2Freports%3Fformat%3Dpdf&label=%D0%96%D1%83%D1%80%D0%BD%D0%B0%D0%BB%D1%8B+%D0%B2+PDF"
+    buildMiniAppUrl("https://wesetup.ru/mini", "/journals/hygiene"),
+    "https://wesetup.ru/journals/hygiene"
+  );
+  assert.equal(
+    buildMiniAppUrl("https://wesetup.ru", "/journals/hygiene/new"),
+    "https://wesetup.ru/journals/hygiene/new"
+  );
+});
+
+test("buildMiniAppUrl falls back to the mini home for external targets", () => {
+  assert.equal(
+    buildMiniAppUrl("https://wesetup.ru/mini", "https://evil.example/phish"),
+    "https://wesetup.ru/mini"
   );
 });
