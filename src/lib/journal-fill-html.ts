@@ -144,6 +144,11 @@ input.in[type=time]{font-weight:600;font-variant-numeric:tabular-nums}
 .qv .chip{height:28px;padding:0 10px;min-width:44px;justify-content:center;font-size:12.5px;color:#3848c7;border-color:#d6dcff;background:#fff}
 .qv .chip.on{background:#eef1ff;border-color:#5566f6}
 .cols .qv .chip{flex:1;min-width:0;padding:0 4px}
+.cols>.fl{min-width:0}
+.cols .offrow{width:100%}
+.cols .st{display:block;min-height:1.3em}
+.cols .chip.offc{width:100%;max-width:100%;height:auto;min-height:30px;padding:4px 8px;white-space:normal;line-height:1.2;text-align:left;justify-content:flex-start;box-sizing:border-box}
+.chip.offc input{flex:none}
 .ok{width:56px;height:56px;border-radius:16px;background:#ecfdf5;color:#116b2a;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
 .center{text-align:center}
 h2{font-size:21px;letter-spacing:-.02em;margin:0;font-weight:600}
@@ -200,7 +205,8 @@ export const QR_FILL_JS = `
     var n=Number(v); var low=mn!==null&&n<Number(mn); var high=mx!==null&&n>Number(mx);
     w.classList.toggle("bad",low||high); w.classList.toggle("good",!(low||high)&&norm!=="");
     var pill=w.querySelector(".pill"); if(pill) pill.textContent=(low||high)?"!":"✓";
-    if(st) st.textContent=(low||high)?((low?"Ниже":"Выше")+" нормы "+norm+(unit?" "+unit:"")):(norm?"В норме":"");
+    var flat=!!w.querySelector(".box.flat");
+    if(st) st.textContent=(low||high)?((low?"Ниже":"Выше")+" нормы"+(flat?"":" "+norm+(unit?" "+unit:""))):(norm?"В норме":"");
     return (low||high)?(t.getAttribute("data-label")||""):null;
   }
   /* Счётчик обязательных полей у кнопки — видно, сколько осталось. */
@@ -220,7 +226,7 @@ export const QR_FILL_JS = `
     var el=document.getElementById("f-"+t.name.slice(4)); var w=el&&el.closest?el.closest(".fl"):null; if(!el||!w) return;
     var lab=t.closest?t.closest(".offc"):null; if(lab) lab.classList.toggle("on",t.checked);
     w.classList.toggle("is-off",t.checked); var st=w.querySelector(".st"); var pill=w.querySelector(".pill");
-    if(t.checked){ if(!el.hasAttribute("data-req")) el.setAttribute("data-req",el.hasAttribute("aria-required")?"1":"0"); el.removeAttribute("aria-required"); el.value=""; w.classList.remove("bad","good"); if(pill) pill.textContent=""; if(st) st.textContent=lab&&lab.textContent.trim()==="${OFF_NOTE_EQUIPMENT}"?"Выключено — руководитель получит уведомление":"Нет показания — руководитель получит уведомление"; }
+    if(t.checked){ if(!el.hasAttribute("data-req")) el.setAttribute("data-req",el.hasAttribute("aria-required")?"1":"0"); el.removeAttribute("aria-required"); el.value=""; w.classList.remove("bad","good"); if(pill) pill.textContent=""; if(st) st.textContent=w.querySelector(".box.flat")?"Уведомим руководителя":(lab&&lab.textContent.trim()==="${OFF_NOTE_EQUIPMENT}"?"Выключено — руководитель получит уведомление":"Нет показания — руководитель получит уведомление"); }
     else { if(el.getAttribute("data-req")==="1") el.setAttribute("aria-required","true"); if(st) st.textContent=""; fire(el); }
     progress(); if(typeof checkAll==="function") checkAll();
   });
@@ -600,7 +606,9 @@ function renderObjectCard(base: string, group: Extract<TaskFormField, { type: "n
       // «Выключено» у холодильника, «Нет показания» у склада: честный прочерк с пометкой вместо выдуманного нуля.
       const isOff = off.has(field.key);
       const offNote = !flat && metricName(field) === "Температура" ? OFF_NOTE_EQUIPMENT : OFF_NOTE_READING;
-      const status = isOff ? `${offNote} — руководитель получит уведомление` : bad.has(field.key) ? `Вне нормы ${normText}` : normText ? `Норма ${normText}` : "";
+      const status = isOff
+        ? flat ? "Уведомим руководителя" : `${offNote} — руководитель получит уведомление`
+        : bad.has(field.key) ? (flat ? "Вне нормы" : `Вне нормы ${normText}`) : normText ? `Норма ${normText}` : "";
       const input = `<input class="in" id="${esc(id)}" name="${esc(field.key)}" type="text" inputmode="decimal" value="${isOff ? "" : esc(value)}" placeholder=" "${norm.min != null ? ` data-min="${esc(norm.min)}"` : ""}${norm.max != null ? ` data-max="${esc(norm.max)}"` : ""}${field.unit ? ` data-unit="${esc(field.unit)}"` : ""} data-plain="1" data-label="${esc(`${base} · ${lower(metricName(field))}`)}"${required && !isOff ? ` aria-required="true"` : ""}${required && isOff ? ` data-req="1"` : ""}>`;
       const box = `<div class="box${flat ? " flat" : ""}">${stepButton(field.key, -1)}${input}${flat ? "" : `<label for="${esc(id)}">${labelBody}</label>`}<span class="pill" aria-hidden="true"></span>${stepButton(field.key, 1)}</div>`;
       // В две колонки чип есть у обеих метрик — иначе колонки разной высоты; у необязательной он тоже честная пометка.
