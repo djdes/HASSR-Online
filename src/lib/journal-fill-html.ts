@@ -66,13 +66,26 @@ main{padding:14px 0 20px}
 .steps li{display:flex;gap:8px;font-size:13.5px;color:#3c4053;line-height:1.35}
 .steps .n{flex:none;width:20px;height:20px;border-radius:999px;background:#eef1ff;color:#3848c7;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;margin-top:1px}
 .steps small{display:block;color:#6f7282;margin-top:2px}
+.obj{background:#fff;border:1px solid #ececf4;border-radius:16px;padding:12px 12px 4px;margin-bottom:10px;box-shadow:0 0 0 1px rgba(240,240,250,.45)}
+.obj-t{font-size:14px;font-weight:600;margin:0 0 8px 2px;line-height:1.3}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cols.one{grid-template-columns:1fr}
+.cols .fl{margin-bottom:8px}
+.obj .in{background:#fafbff}
+.pill{position:absolute;right:10px;top:50%;transform:translateY(-50%);min-width:22px;height:22px;padding:0 6px;border-radius:999px;font-size:12px;font-weight:700;display:none;align-items:center;justify-content:center;pointer-events:none}
+.fl.good .pill{display:inline-flex;background:#dcfce7;color:#116b2a}
+.fl.bad .pill{display:inline-flex;background:#ffe0dc;color:#a13a32}
+.fl.good .in,.fl.bad .in{padding-right:40px}
+.prog{display:block;width:max-content;max-width:100%;margin:0 auto 8px;padding:3px 12px;border-radius:999px;background:#fff;border:1px solid #ececf4;font-size:12px;color:#6f7282;text-align:center;font-variant-numeric:tabular-nums}
+.prog.done{color:#116b2a;border-color:#d4f5e3;background:#f3fdf7}
 .fl{position:relative;margin-bottom:10px}
 .fl .in{padding:23px 15px 7px;min-height:58px}
 .fl>label{position:absolute;left:16px;top:19px;font-size:15px;color:#9b9fb3;pointer-events:none;transition:top .15s,font-size .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(100% - 32px);line-height:1.2}
 .fl .in:focus~label,.fl .in:not(:placeholder-shown)~label,.fl.up>label{top:8px;font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6f7282}
 .fl.bad .in{border-color:#ef8a83;background:#fff7f6}
 .fl.good .in{border-color:#8fd3a8}
-.st{font-size:12px;margin:4px 0 0 3px;color:#9b9fb3}
+.st{font-size:12px;margin:4px 0 0 3px;color:#9b9fb3;line-height:1.3}
+.st:empty{display:none}
 .fl.bad .st{color:#a13a32;font-weight:500}
 .fl.good .st{color:#116b2a}
 .req{color:#e11d48;font-weight:700;margin-left:2px}
@@ -138,12 +151,23 @@ export const QR_FILL_JS = `
     var mn=t.getAttribute("data-min"), mx=t.getAttribute("data-max");
     var norm=(mn!==null&&mx!==null)?mn+"…"+mx:(mn!==null?"не ниже "+mn:(mx!==null?"не выше "+mx:""));
     var v=t.value.replace(",",".").trim();
-    if(v===""||!isFinite(Number(v))){ w.classList.remove("bad","good"); if(st) st.textContent=norm?"Норма "+norm+(unit?" "+unit:""):""; return null; }
+    if(v===""||!isFinite(Number(v))){ w.classList.remove("bad","good"); if(st) st.textContent=t.hasAttribute("data-plain")&&norm?"Норма "+norm+(unit?" "+unit:""):""; return null; }
     var n=Number(v); var low=mn!==null&&n<Number(mn); var high=mx!==null&&n>Number(mx);
     w.classList.toggle("bad",low||high); w.classList.toggle("good",!(low||high)&&norm!=="");
-    if(st) st.textContent=(low||high)?((low?"Ниже":"Выше")+" нормы "+norm+(unit?" "+unit:"")+" — напишите, что сделали"):(norm?"В норме ✓":"");
+    var pill=w.querySelector(".pill"); if(pill) pill.textContent=(low||high)?"!":"✓";
+    if(st) st.textContent=(low||high)?((low?"Ниже":"Выше")+" нормы "+norm+(unit?" "+unit:"")):(norm?"В норме":"");
     return (low||high)?(t.getAttribute("data-label")||""):null;
   }
+  /* Счётчик обязательных полей у кнопки — видно, сколько осталось. */
+  var prog=document.getElementById("prog");
+  function progress(){
+    if(!prog) return; var req=document.querySelectorAll("#qr-form .in[aria-required]"); var done=0;
+    for(var i=0;i<req.length;i++){ if(String(req[i].value||"").trim()!=="") done++; }
+    if(!req.length){prog.hidden=true;return;}
+    prog.hidden=false; prog.classList.toggle("done",done===req.length);
+    prog.textContent=done===req.length?"Всё заполнено ✓":"Заполнено "+done+" из "+req.length;
+  }
+  document.addEventListener("input",progress); document.addEventListener("change",progress); progress();
   var dev=document.getElementById("deviation");
   function checkAll(){
     var out=[]; var ins=document.querySelectorAll("input[data-min],input[data-max]");
@@ -296,6 +320,26 @@ export function cleanLabel(label: string): string {
     .trim();
 }
 
+/** «Кухня — t° · норма 18…22» → метрика t°/влажность (климат) и база «Кухня». */
+export function metricOf(label: string): { metric: "t°" | "влажность" | null; base: string } {
+  const metric = /[—–-]\s*t°/i.test(label) ? "t°" : /[—–-]\s*влажность/i.test(label) ? "влажность" : null;
+  return { metric, base: cleanLabel(label) };
+}
+
+function metricName(field: Extract<TaskFormField, { type: "number" }>): string {
+  const { metric } = metricOf(field.label);
+  if (metric === "t°" || field.unit === "°C") return "Температура";
+  if (metric === "влажность" || field.unit === "%") return "Влажность";
+  return "Показание";
+}
+
+/** Числовое поле «объекта» (склад, холодильник): норма в подписи или метрика климата. */
+function isObjectField(field: TaskFormField): boolean {
+  return field.type === "number" && (/норма/i.test(field.label) || metricOf(field.label).metric !== null);
+}
+
+type NumberField = Extract<TaskFormField, { type: "number" }>;
+
 function lower(text: string): string {
   if (!text) return text;
   const second = text.charAt(1);
@@ -347,7 +391,13 @@ function joinNames(names: string[], limit = 72): string {
  */
 export function formSteps(form: TaskFormSchema, hints: JournalFillHints): string[] {
   const steps: string[] = [];
-  const numbers = form.fields.filter((field): field is Extract<TaskFormField, { type: "number" }> => field.type === "number");
+  const objectFields = form.fields.filter((field): field is NumberField => field.type === "number" && isObjectField(field));
+  const objectCount = new Set(objectFields.map((field) => metricOf(field.label).base)).size;
+  if (objectFields.length > 0) {
+    const metrics = Array.from(new Set(objectFields.map((field) => (metricName(field) === "Температура" ? "температуру" : metricName(field) === "Влажность" ? "влажность" : "показания"))));
+    steps.push(`Впишите ${metrics.join(" и ")} в карточки ниже (${objectCount})`);
+  }
+  const numbers = form.fields.filter((field): field is Extract<TaskFormField, { type: "number" }> => field.type === "number" && !isObjectField(field));
   const numberGroups = new Map<string, Extract<TaskFormField, { type: "number" }>[]>();
   for (const field of numbers) {
     const unit = field.unit ?? "";
@@ -356,6 +406,7 @@ export function formSteps(form: TaskFormSchema, hints: JournalFillHints): string
   const seen = new Set<string>();
   for (const field of form.fields) {
     if (field.type === "number") {
+      if (isObjectField(field)) continue; // уже в пункте про карточки
       const unit = field.unit ?? "";
       if (seen.has(`unit:${unit}`)) continue;
       seen.add(`unit:${unit}`);
@@ -418,7 +469,27 @@ export function renderForm(params: {
   openedAt: number;
 }): string {
   const bad = new Set(params.badKeys ?? []);
-  const fields = params.form.fields.map((field) => renderField(field, params.values[field.key], params.hints, params.suggestions, bad.has(field.key))).join("");
+  // Поля объектов (склад/холодильник) — карточкой: «Склад Бакалея» и в ней температура + влажность рядом.
+  const parts: string[] = [];
+  const fieldsList = params.form.fields;
+  for (let i = 0; i < fieldsList.length; i += 1) {
+    const field = fieldsList[i];
+    if (field.type === "number" && isObjectField(field)) {
+      const base = metricOf(field.label).base;
+      const group: NumberField[] = [field];
+      while (i + 1 < fieldsList.length) {
+        const next = fieldsList[i + 1];
+        if (next.type === "number" && isObjectField(next) && metricOf(next.label).base === base) {
+          group.push(next);
+          i += 1;
+        } else break;
+      }
+      parts.push(renderObjectCard(base, group, params.values, bad));
+      continue;
+    }
+    parts.push(renderField(field, params.values[field.key], params.hints, params.suggestions, bad.has(field.key)));
+  }
+  const fields = parts.join("");
   const pipeline = params.form.pipeline && params.form.pipeline.length > 0
     ? `<ol class="steps">${params.form.pipeline
         .map((step, index) => `<li><span class="n">${index + 1}</span><span>${esc(step.title)}${step.detail ? `<small>${esc(step.detail)}</small>` : ""}</span></li>`)
@@ -440,8 +511,28 @@ export function renderForm(params: {
 ${params.error ? `<div class="err">${esc(params.error)}</div>` : ""}
 ${fields}
 ${deviation}
-<div class="sticky"><button class="btn" type="submit">${esc(params.form.submitLabel ?? "Сохранить")}</button></div>
+<div class="sticky"><p class="prog" id="prog" hidden></p><button class="btn" type="submit">${esc(params.form.submitLabel ?? "Сохранить")}</button></div>
 </form>`;
+}
+
+/** Карточка объекта: название и его числовые поля в две колонки, норма в подписи поля, статус пилюлей. */
+function renderObjectCard(base: string, group: Extract<TaskFormField, { type: "number" }>[], values: Record<string, unknown>, bad: Set<string>): string {
+  const inputs = group
+    .map((field) => {
+      const id = `f-${field.key}`;
+      const raw = values[field.key];
+      const value = raw === null || raw === undefined ? "" : String(raw);
+      const norm = normRange(field);
+      const required = field.required === true;
+      const unit = field.unit ? ` ${field.unit}` : "";
+      const normText = norm.min != null && norm.max != null ? `${norm.min}…${norm.max}${unit}` : "";
+      // Подпись короткая (в две колонки длинная режется), норма — строкой под полем внутри карточки.
+      const label = `<label for="${esc(id)}">${esc(metricName(field))}${required ? `<span class="req" aria-hidden="true">*</span>` : ""}</label>`;
+      const status = bad.has(field.key) ? `Вне нормы ${normText}` : normText ? `Норма ${normText}` : "";
+      return `<div class="fl up${bad.has(field.key) ? " bad" : ""}"><input class="in" id="${esc(id)}" name="${esc(field.key)}" type="text" inputmode="decimal" value="${esc(value)}" placeholder=" "${norm.min != null ? ` data-min="${esc(norm.min)}"` : ""}${norm.max != null ? ` data-max="${esc(norm.max)}"` : ""}${field.unit ? ` data-unit="${esc(field.unit)}"` : ""} data-plain="1" data-label="${esc(`${base} · ${lower(metricName(field))}`)}"${required ? ` aria-required="true"` : ""}>${label}<span class="pill" aria-hidden="true"></span><p class="st">${esc(status)}</p></div>`;
+    })
+    .join("");
+  return `<div class="obj"><div class="obj-t">${esc(base)}</div><div class="cols${group.length === 1 ? " one" : ""}">${inputs}</div></div>`;
 }
 
 function chips(fieldKey: string, values: readonly string[], current: string): string {
@@ -484,12 +575,14 @@ function renderField(field: TaskFormField, raw: unknown, hints: JournalFillHints
     }
     case "number": {
       const norm = normRange(field);
+      const fromLabel = /норма/i.test(field.label);
       const unit = field.unit ? ` ${field.unit}` : "";
-      const status = norm.min != null && norm.max != null ? `Норма ${esc(norm.min)}…${esc(norm.max)}${esc(unit)}` : norm.min != null ? `Не ниже ${esc(norm.min)}${esc(unit)}` : norm.max != null ? `Не выше ${esc(norm.max)}${esc(unit)}` : "";
+      // Норму показываем, только если она задана в подписи; физические пределы валидатора — не норма.
+      const status = fromLabel && norm.min != null && norm.max != null ? `Норма ${esc(norm.min)}…${esc(norm.max)}${esc(unit)}` : "";
       const isTemp = hints.tempField?.tempKey === field.key;
       return fl(
-        `<input class="in" id="${esc(id)}" name="${esc(field.key)}" type="text" inputmode="decimal" value="${esc(value)}" placeholder=" "${norm.min != null ? ` data-min="${esc(norm.min)}"` : ""}${norm.max != null ? ` data-max="${esc(norm.max)}"` : ""}${field.unit ? ` data-unit="${esc(field.unit)}"` : ""} data-label="${esc(cleanLabel(field.label))}"${req}>`,
-        { after: `${status ? `<p class="st">${status}</p>` : ""}${isTemp ? `<p class="st" id="temp-hint" hidden>Подставлено по прошлой записи этого блюда — поправьте, если сегодня иначе.</p>` : ""}` }
+        `<input class="in" id="${esc(id)}" name="${esc(field.key)}" type="text" inputmode="decimal" value="${esc(value)}" placeholder=" "${norm.min != null ? ` data-min="${esc(norm.min)}"` : ""}${norm.max != null ? ` data-max="${esc(norm.max)}"` : ""}${field.unit ? ` data-unit="${esc(field.unit)}"` : ""}${fromLabel ? ` data-plain="1"` : ""} data-label="${esc(cleanLabel(field.label))}"${req}>`,
+        { after: `<span class="pill" aria-hidden="true"></span>${status ? `<p class="st">${status}</p>` : `<p class="st"></p>`}${isTemp ? `<p class="st" id="temp-hint" hidden>Подставлено по прошлой записи этого блюда — поправьте, если сегодня иначе.</p>` : ""}` }
       );
     }
     case "boolean": {

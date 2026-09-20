@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { accusative, cleanLabel, esc, formSteps, introHint, jsonForScript, normRange, renderForm } from "./journal-fill-html";
+import { accusative, cleanLabel, esc, formSteps, introHint, jsonForScript, metricOf, normRange, renderForm } from "./journal-fill-html";
 
 describe("journal-fill-html", () => {
   it("escapes html and keeps inline json safe", () => {
@@ -60,13 +60,31 @@ describe("journal-fill-html", () => {
       {}
     );
     assert.deepEqual(steps, [
-      "Укажите температуру: Холодильник №1, Морозильник",
+      "Впишите температуру в карточки ниже (2)",
       "Выберите состояние",
       "Отметьте, если температура выше 37°C",
       "Укажите время производства",
       "Нажмите «Сохранить замеры»",
     ]);
     assert.equal(cleanLabel("Кухня — t° · норма 18…22"), "Кухня");
+    assert.deepEqual(metricOf("Кухня — влажность · норма 40…60"), { metric: "влажность", base: "Кухня" });
+    // Климат: два поля одного склада → одна карточка с двумя колонками, норма в подписи, статус пилюлей.
+    const climate = renderForm({
+      action: "/x", token: "t", who: "", correctionPresets: [], openedAt: 1, suggestions: {}, values: {}, hints: {},
+      form: { fields: [
+        { type: "select", key: "time", label: "Время замера", required: true, options: [{ value: "10:00", label: "10:00" }] },
+        { type: "number", key: "r1t", label: "Склад Бакалея — t° · норма 18…22", unit: "°C", required: true },
+        { type: "number", key: "r1h", label: "Склад Бакалея — влажность · норма 40…60", unit: "%" },
+        { type: "number", key: "r2t", label: "Склад Овощи — t° · норма 16…20", unit: "°C", required: true },
+      ], submitLabel: "Сохранить замер" },
+    });
+    assert.equal((climate.match(/class="obj"/g) ?? []).length, 2);
+    assert.match(climate, /<div class="obj-t">Склад Бакалея<\/div><div class="cols">/);
+    assert.match(climate, /<label for="f-r1t">Температура<span class="req"/);
+    assert.match(climate, /<label for="f-r1h">Влажность<\/label><span class="pill"[^>]*><\/span><p class="st">Норма 40…60 %<\/p>/);
+    assert.match(climate, /<div class="obj-t">Склад Овощи<\/div><div class="cols one">/);
+    assert.match(climate, /Впишите температуру и влажность в карточки ниже \(2\)/);
+    assert.match(climate, /data-label="Склад Бакалея · влажность"/);
     assert.equal(accusative("органолептическая оценка"), "органолептическую оценку");
     assert.equal(accusative("температура внутри продукта"), "температуру внутри продукта");
     assert.equal(accusative("время производства"), "время производства");
