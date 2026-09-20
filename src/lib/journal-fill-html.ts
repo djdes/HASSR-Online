@@ -68,11 +68,11 @@ main{padding:14px 0 20px}
 .steps li{display:flex;gap:8px;font-size:13.5px;color:#3c4053;line-height:1.35}
 .steps .n{flex:none;width:20px;height:20px;border-radius:999px;background:#eef1ff;color:#3848c7;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;margin-top:1px}
 .steps small{display:block;color:#6f7282;margin-top:2px}
-.obj{background:#fff;border:1px solid #ececf4;border-radius:16px;padding:12px 12px 4px;margin-bottom:10px;box-shadow:0 0 0 1px rgba(240,240,250,.45)}
+.obj{background:#fff;border:1px solid #ececf4;border-radius:16px;padding:12px 12px 6px;margin-bottom:10px;box-shadow:0 0 0 1px rgba(240,240,250,.45)}
 .obj-t{font-size:14px;font-weight:600;margin:0 0 8px 2px;line-height:1.3}
-.cols{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .cols.one{grid-template-columns:1fr}
-.cols .fl{margin-bottom:8px}
+.cols .fl{margin-bottom:10px}
 .obj .in{background:#fafbff}
 .pill{position:absolute;right:10px;top:29px;transform:translateY(-50%);min-width:22px;height:22px;padding:0 6px;border-radius:999px;font-size:12px;font-weight:700;display:none;align-items:center;justify-content:center;pointer-events:none}
 .fl.good .pill{display:inline-flex;background:#dcfce7;color:#116b2a}
@@ -95,7 +95,7 @@ main{padding:14px 0 20px}
 .box.flat .stp{width:32px;height:32px;font-size:20px;border-radius:10px}.box.flat .stp.minus{left:6px}.box.flat .stp.plus{right:6px}
 .box.flat .pill{right:auto;left:50%;top:auto;bottom:3px;transform:translateX(-50%);min-width:16px;height:14px;font-size:9px;padding:0 4px}
 .fl.has-step.good .box.flat .in,.fl.has-step.bad .box.flat .in{padding-right:42px}
-.offrow{margin:6px 0 0}
+.offrow{margin:10px 0 2px}
 .chip.offc{color:#6f7282;border-style:dashed;gap:7px;height:30px;padding:0 12px 0 9px;cursor:pointer}
 .chip.offc input{width:16px;height:16px;margin:0;accent-color:#5566f6}
 .chip.offc.on{background:#f5f6ff;border-style:solid;border-color:#5566f6;color:#3848c7}
@@ -140,7 +140,7 @@ input.in[type=time]{font-weight:600;font-variant-numeric:tabular-nums}
 .dev .chips{margin:8px 0 0;gap:6px}
 .dev .chip{height:32px;padding:0 12px;font-size:13px}
 .note{border:1px solid #d6dcff;background:#eef1ff;color:#3848c7;border-radius:14px;padding:11px 14px;font-size:13.5px;line-height:1.4;margin-bottom:10px}
-.chips.qv{margin:6px 0 0;gap:6px}
+.chips.qv{margin:8px 0 0;gap:6px}
 .qv .chip{height:28px;padding:0 10px;min-width:44px;justify-content:center;font-size:12.5px;color:#3848c7;border-color:#d6dcff;background:#fff}
 .qv .chip.on{background:#eef1ff;border-color:#5566f6}
 .cols .qv .chip{flex:1;min-width:0;padding:0 4px}
