@@ -1,6 +1,8 @@
 "use client";
 
+import type { Session } from "next-auth";
 import { SessionProvider, useSession } from "next-auth/react";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 
 import { adoptCookieSession } from "../_lib/cookie-session";
@@ -22,25 +24,40 @@ import { getTelegramWebApp } from "./telegram-web-app";
  */
 function CookieSessionBootstrap() {
   const { status } = useSession();
+  const pathname = usePathname();
   const started = useRef(false);
   useEffect(() => {
     if (status !== "unauthenticated" || started.current) return;
+    const insideTelegram = Boolean(getTelegramWebApp()?.initData);
     // В Telegram вход делает главная через signIn("telegram") — не мешаем.
-    if (getTelegramWebApp()?.initData) return;
+    if (insideTelegram && pathname === "/mini") return;
     started.current = true;
-    void adoptCookieSession();
-  }, [status]);
+    void adoptCookieSession().then((adopted) => {
+      // Любой другой экран в Telegram (обновление страницы, прямая
+      // ссылка, переход из раздела сайта) раньше не спрашивал куку вовсе
+      // и навсегда оставался на «Загружаем…». Куки нет — входить умеет
+      // только главная, ведём туда с возвратом на этот экран.
+      if (adopted || !insideTelegram) return;
+      window.location.replace(`/mini?next=${encodeURIComponent(pathname)}`);
+    });
+  }, [status, pathname]);
   return null;
 }
 
 export function MiniSessionProvider({
   children,
+  initialSession = null,
 }: {
   children: React.ReactNode;
+  /**
+   * Сессия, которую сервер уже прочитал из куки. С ней экран сразу
+   * «authenticated» — без лишнего запроса и без кадра «Загружаем…».
+   */
+  initialSession?: Session | null;
 }) {
   return (
     <SessionProvider
-      session={null}
+      session={initialSession}
       refetchOnWindowFocus={false}
       refetchWhenOffline={false}
       refetchInterval={0}

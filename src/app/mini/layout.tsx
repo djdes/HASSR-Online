@@ -61,7 +61,7 @@ export default async function MiniLayout({
   const shell = await loadMiniShellData(session);
 
   return (
-    <MiniSessionProvider>
+    <MiniSessionProvider initialSession={session}>
       <MiniAppShell {...shell} ownRoutes>
         {children}
       </MiniAppShell>

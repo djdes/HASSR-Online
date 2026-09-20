@@ -566,8 +566,15 @@ export default function MiniHomePage() {
               </div>
             ) : null}
             <h1
-              className="mini-display mt-2"
-              style={{ fontSize: "42px", color: "var(--mini-text)" }}
+              className="mini-display mt-2 line-clamp-2"
+              // Длинное имя одним словом («Константинопольский») в 42px
+              // не переносилось: вылезало за экран и уезжало под кнопку
+              // «Сканировать QR». Длинным — кегль меньше и перенос где угодно.
+              style={{
+                fontSize: firstName(displayName).length > 9 ? "30px" : "42px",
+                overflowWrap: "anywhere",
+                color: "var(--mini-text)",
+              }}
             >
               {firstName(displayName)}
               <span
