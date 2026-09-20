@@ -173,15 +173,33 @@ export function DocumentActionsBar({
               журнала», как на эталоне. Печатные стили документа уже есть,
               поэтому кнопка просто зовёт window.print(). Серверный PDF
               остаётся отдельным пунктом в меню «⋯». */}
-          <button
-            type="button"
-            onClick={() => window.print()}
-            aria-label="Распечатать"
-            title="Распечатать"
-            className="flex size-9 items-center justify-center rounded-lg border-0 bg-[#5566f6]/[0.04] text-[#5566f6] transition-colors duration-150 hover:bg-[#5566f6]/[0.09] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
-          >
-            <Printer className="size-4" />
-          </button>
+          {/* Тот же серверный PDF, что и «Печать» в меню «⋯»: бланк собран
+              одинаково на любом устройстве (браузерная печать на телефоне
+              сужала шапку). Обычная ссылка — открывается и там, где
+              обработчик клика не срабатывал (тёмная тема на телефоне). */}
+          {hasPrint ? (
+            <a
+              href={`/api/journal-documents/${documentId}/pdf`}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Распечатать"
+              title="Распечатать (PDF)"
+              data-testid="print-pdf-link"
+              className="relative z-[1] flex size-9 items-center justify-center rounded-lg border-0 bg-[#5566f6]/[0.04] text-[#5566f6] transition-colors duration-150 hover:bg-[#5566f6]/[0.09] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+            >
+              <Printer className="size-4" />
+            </a>
+          ) : (
+            <button
+              type="button"
+              onClick={() => window.print()}
+              aria-label="Распечатать"
+              title="Распечатать"
+              className="relative z-[1] flex size-9 items-center justify-center rounded-lg border-0 bg-[#5566f6]/[0.04] text-[#5566f6] transition-colors duration-150 hover:bg-[#5566f6]/[0.09] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+            >
+              <Printer className="size-4" />
+            </button>
+          )}
           {onSettings ? (
             <Button
               type="button"
