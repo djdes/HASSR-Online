@@ -1,6 +1,7 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 import { haptic } from "@/app/mini/_components/use-haptic";
 
@@ -36,14 +37,24 @@ export function BottomActionBar({
   /** Короткая строка над кнопкой: «осталось 8 из 9». */
   hint?: ReactNode;
 }) {
+  // Оболочка мини-приложения (Telegram). `sticky` держит панель только в
+  // пределах блока со списком: на невысоком телефоне список начинается
+  // низко, панель ложилась на его первые строки, а сама кнопка уходила под
+  // нижнее меню — видна наполовину. В оболочке закрепляем панель по-настоящему:
+  // `fixed` над меню, портал в `#mini-root` (у полотна страницы есть
+  // `transform`, внутри него `fixed` считался бы от полотна, а не от экрана).
+  const [miniRoot, setMiniRoot] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    setMiniRoot(document.getElementById("mini-root"));
+  }, []);
+
   if (!primary) return null;
 
-  return (
-    <div
-      className="sticky inset-x-0 bottom-0 z-30 -mx-4 mt-3 border-t border-[#ececf4] bg-white/95 px-4 pt-3 backdrop-blur sm:hidden print:hidden"
-      style={{ paddingBottom: "var(--safe-b)" }}
-    >
-      {hint ? (
+  const body = (
+    <>
+      {/* В оболочке приложения строку-подсказку не рисуем: счётчик уже стоит в
+          самой кнопке, а экран там ниже на высоту нижнего меню. */}
+      {hint && !miniRoot ? (
         <div className="mb-2 text-center text-[12px] text-[#6f7282]">{hint}</div>
       ) : null}
       <div className="flex gap-2">
@@ -69,6 +80,35 @@ export function BottomActionBar({
           {primary.label}
         </button>
       </div>
+    </>
+  );
+
+  if (miniRoot) {
+    return (
+      <>
+        {/* Место под закреплённую панель, чтобы она не закрывала конец списка. */}
+        <div aria-hidden className="h-[88px] sm:hidden print:hidden" />
+        {createPortal(
+          <div
+            className="fixed inset-x-0 z-30 border-t border-[#ececf4] bg-white/95 px-4 pb-3 pt-3 backdrop-blur sm:hidden print:hidden"
+            style={{
+              bottom: "calc(var(--mini-safe-b, 12px) + var(--mini-nav-h, 64px) + 8px)",
+            }}
+          >
+            {body}
+          </div>,
+          miniRoot,
+        )}
+      </>
+    );
+  }
+
+  return (
+    <div
+      className="sticky inset-x-0 bottom-0 z-30 -mx-4 mt-3 border-t border-[#ececf4] bg-white/95 px-4 pt-3 backdrop-blur sm:hidden print:hidden"
+      style={{ paddingBottom: "var(--safe-b)" }}
+    >
+      {body}
     </div>
   );
 }

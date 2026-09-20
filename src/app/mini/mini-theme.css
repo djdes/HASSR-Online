@@ -615,17 +615,22 @@
   -webkit-overflow-scrolling: touch;
 }
 
-/* Нижняя панель бланка стоит над меню с небольшим зазором, а не впритык. */
-.mini-root main .mini-document-host .sticky.bottom-0 {
-  bottom: calc(var(--mini-safe-b) + var(--mini-nav-h) + 8px);
+/*
+ * Страница документа журнала на сайте обёрнута в `[data-journal-doc-pan]`
+ * с `overflow-x: auto`: там вбок ездит весь бланк целиком. В оболочке
+ * приложения таблицы прокручиваются сами (правило выше), а обёртка только
+ * вредит: блок с `overflow` становится «окном прокрутки» для всего
+ * липкого внутри, и нижняя кнопка бланка («Заполнить оставшиеся») липла
+ * не к экрану, а к концу страницы — на телефоне она оказывалась под
+ * нижним меню, видна наполовину. Снимаем прокрутку с обёртки.
+ */
+.mini-root main [data-journal-doc-pan] {
+  overflow: visible !important;
 }
 
-/* Когда у бланка есть нижняя панель действий, две плавающие круглые кнопки
-   (инструкция и помощник) лежали прямо на ней и закрывали «Заполнить
-   оставшиеся». Поднимаем их на высоту панели. `translate` — отдельное
-   свойство, наведение (`scale`) и их собственный `bottom` оно не трогает. */
-body:has(.mini-document-host .sticky.bottom-0) .fixed.right-5 {
-  translate: 0 -112px;
+/* Нижняя панель бланка стоит над меню с небольшим зазором, а не впритык. */
+.mini-root main [data-journal-doc-pan] .sticky.bottom-0 {
+  bottom: calc(var(--mini-safe-b) + var(--mini-nav-h) + 8px);
 }
 
 /* --------------------------------------------------------------------
@@ -678,4 +683,28 @@ body:has(.mini-document-host .sticky.bottom-0) .fixed.right-5 {
   content: "";
   position: absolute;
   inset: -10px;
+}
+
+/*
+ * Крошки на бланке журнала в оболочке приложения. На телефоне три звена
+ * («Журналы › журнал › документ») сжимались до «Жу… › Журнал у… ›
+ * Проверка…» — не читалось ни одно. «Журналы» есть в нижнем меню, поэтому
+ * первое звено прячем, а двум оставшимся отдаём всю ширину строки.
+ */
+@media (max-width: 639px) {
+  .mini-root main nav[aria-label="Хлебные крошки"] > span:nth-last-child(3),
+  .mini-root main nav[aria-label="Хлебные крошки"] > span:nth-last-child(2) > svg:first-child {
+    display: none;
+  }
+  .mini-root main nav[aria-label="Хлебные крошки"] > span:nth-last-child(-n + 2) {
+    flex: 0 1 auto;
+    max-width: 50%;
+  }
+  .mini-root main nav[aria-label="Хлебные крошки"] > span:last-child {
+    flex: 1 1 0;
+    max-width: none;
+  }
+  .mini-root main nav[aria-label="Хлебные крошки"] .truncate {
+    max-width: 100%;
+  }
 }

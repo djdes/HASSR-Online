@@ -6,7 +6,7 @@ import { PartnerHint } from "@/components/partner/partner-hint";
 import type { PartnerHintRates } from "@/lib/partners/partner-hint";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowLeft, UserRound, MapPin } from "lucide-react";
+import { ArrowLeft, MapPin } from "lucide-react";
 import { NotificationsBell } from "@/components/layout/notifications-bell";
 import { UndoRedoButtons } from "@/components/journals/undo-redo-buttons";
 import { useHeaderUndo } from "@/components/journals/journal-undo-slot";
@@ -418,18 +418,9 @@ export function MiniTopBar({
           {/* Сюда док встраивает кнопку подсказок (см. `FabDockProvider`). */}
           <span id="mini-fab-slot" className="contents" />
           {showNotifications ? <NotificationsBell /> : null}
-          <Link
-            href="/mini/me"
-            aria-label="Профиль"
-            className="mini-press inline-flex size-10 items-center justify-center rounded-2xl"
-            style={{
-              background: "var(--mini-surface-1)",
-              border: "1px solid var(--mini-divider)",
-              color: "var(--mini-text)",
-            }}
-          >
-            <UserRound className="size-4" />
-          </Link>
+          {/* Кнопки профиля здесь нет: «Профиль» всегда есть в нижнем меню, а в
+              шапке она отнимала место у названия экрана — на бланке журнала
+              с кнопками отмены от него оставалось «Жу…». */}
         </div>
       </div>
     </header>

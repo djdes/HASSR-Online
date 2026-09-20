@@ -206,16 +206,16 @@ export function DayFirstCards({
             />
 
             <div className="min-w-0 flex-1">
-              <div className="truncate text-[14px] font-medium text-[#0b1024]">
+              <div className="line-clamp-3 break-words text-[14px] font-medium leading-snug text-[#0b1024]">
                 {item.title}
               </div>
               {item.subtitle ? (
-                <div className="truncate text-[12px] text-[#6f7282]">
+                <div className="line-clamp-2 break-words text-[12px] text-[#6f7282]">
                   {item.subtitle}
                 </div>
               ) : null}
               {locked ? (
-                <div className="mt-0.5 truncate text-[11px] text-[#9b9fb3]">
+                <div className="mt-0.5 break-words text-[11px] text-[#9b9fb3]">
                   {item.disabledReason}
                 </div>
               ) : null}
@@ -246,14 +246,16 @@ export function DayFirstCards({
                   item.onPress?.(event);
                 }}
                 disabled={locked || !item.onPress}
-                className={`flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-xl border px-3 text-[13px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:cursor-not-allowed disabled:opacity-60 ${
+                className={`flex min-h-[44px] max-w-[48%] shrink-0 items-center gap-1.5 rounded-xl border px-3 text-[13px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:cursor-not-allowed disabled:opacity-60 ${
                   filled
                     ? "border-[#ececf4] bg-[#f5f6ff] text-[#3848c7] hover:bg-[#eef1ff]"
                     : "border-[#dcdfed] bg-white text-[#6f7282] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
                 }`}
               >
-                {filled ? item.value : "Заполнить"}
-                {!locked ? <ChevronRight className="size-3.5" /> : null}
+                <span className="min-w-0 truncate">
+                  {filled ? item.value : "Заполнить"}
+                </span>
+                {!locked ? <ChevronRight className="size-3.5 shrink-0" /> : null}
               </button>
             )}
           </div>

@@ -771,10 +771,10 @@ export function HealthDocumentClient(props: Props) {
                         className="flex min-w-0 flex-1 items-center gap-2 text-left"
                       >
                         <div className="min-w-0 flex-1">
-                          <div className="truncate text-[14px] font-medium text-[#0b1024]">
+                          <div className="line-clamp-3 break-words text-[14px] font-medium leading-snug text-[#0b1024]">
                             {employee.name}
                           </div>
-                          <div className="truncate text-[12px] text-[#6f7282]">
+                          <div className="line-clamp-2 break-words text-[12px] text-[#6f7282]">
                             {employee.position ||
                               getHygienePositionLabel("operator")}
                           </div>

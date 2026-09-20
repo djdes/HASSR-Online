@@ -1923,11 +1923,11 @@ export function ColdEquipmentDocumentClient({
                       className="flex min-w-0 flex-1 items-center gap-2 text-left"
                     >
                       <div className="min-w-0 flex-1">
-                        <div className="truncate text-[14px] font-medium text-[#0b1024]">
+                        <div className="line-clamp-3 break-words text-[14px] font-medium leading-snug text-[#0b1024]">
                           {item.name}
                           {item.slotLabel ? <span className="ml-1.5 text-[12px] font-semibold text-[#3848c7]">{item.slotLabel}</span> : null}
                         </div>
-                        <div className="truncate text-[12px] text-[#6f7282]">
+                        <div className="line-clamp-2 break-words text-[12px] text-[#6f7282]">
                           {formatRange(item.min, item.max)}
                         </div>
                       </div>

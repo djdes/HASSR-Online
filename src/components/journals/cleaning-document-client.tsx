@@ -2586,8 +2586,8 @@ export function CleaningDocumentClient(props: Props) {
                     </span>
                     <button type="button" onClick={() => setExpandedRowId(expanded ? null : row.id)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
                       <div className="min-w-0 flex-1">
-                        <div className="truncate text-[14px] font-medium text-[#0b1024]">{title}</div>
-                        {subtitle ? <div className="truncate text-[12px] text-[#6f7282]">{subtitle}</div> : null}
+                        <div className="line-clamp-3 break-words text-[14px] font-medium leading-snug text-[#0b1024]">{title}</div>
+                        {subtitle ? <div className="line-clamp-2 break-words text-[12px] text-[#6f7282]">{subtitle}</div> : null}
                         {row.kind === "room" && roomAssignmentLabel(row.id) ? (
                           <div
                             className={`truncate text-[11px] ${
