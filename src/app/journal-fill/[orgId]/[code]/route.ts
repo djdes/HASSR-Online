@@ -31,6 +31,7 @@ import {
   renderRowStep,
   renderWho,
   tempMetaScript,
+  jsonForScript,
 } from "@/lib/journal-fill-html";
 import { submitJournalFill } from "@/lib/journal-fill-submit";
 import { listNameSuggestions } from "@/lib/name-suggestions-db";
@@ -349,7 +350,7 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
           .map((item) => ({ ...item, href: link({ employee: employee.id }, item.code) })),
       }),
       null,
-      null,
+      `window.__qrDraftKey=${jsonForScript(`qr-draft:${orgId}:${code}:${document.id}:${rowKey}:${employee.id}:${todayKey}`)};window.__qrDraftDone=1;`,
       200,
       setCookies
     );
@@ -368,7 +369,9 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
   }
   const action = link({ ...keep, row: resolved.perEmployee ? null : rowKey });
   const rowLabel = resolved.rows.find((row) => row.rowKey === rowKey)?.label ?? null;
-  const script = tempMetaScript(hints, suggestions);
+  // Черновик формы в браузере: ключ — документ, строка, сотрудник, день.
+  const draftKey = `qr-draft:${orgId}:${code}:${document.id}:${rowKey}:${employee.id}:${todayKey}`;
+  const script = [tempMetaScript(hints, suggestions), `window.__qrDraftKey=${jsonForScript(draftKey)};`].filter(Boolean).join("");
   const correctionField = form.fields.find((field) => field.type === "text" && CORRECTION_KEY_RE.test(`${field.key} ${field.label}`)) ?? null;
 
   const renderFormPage = (values: Record<string, unknown>, extra: { error?: string | null; badKeys?: string[]; correction?: string; showDeviation?: boolean; deviationTitle?: string | null; offKeys?: string[] }, status = 200) =>

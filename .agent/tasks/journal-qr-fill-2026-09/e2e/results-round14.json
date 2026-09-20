@@ -1,0 +1,15 @@
+{
+  "draftStored": 1,
+  "afterReloadValue": "3",
+  "afterReloadOff": true,
+  "afterReloadNote": "",
+  "draftAfterDone": 0,
+  "afterResetNote": 0,
+  "afterResetValue": "3",
+  "roomAfterReload": {
+    "t": "21",
+    "h": "55",
+    "note": 1
+  },
+  "roomDraftAfterSave": 0
+}

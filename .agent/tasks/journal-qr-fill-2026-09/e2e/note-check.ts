@@ -1,0 +1,24 @@
+import fs from "node:fs";
+import path from "node:path";
+import { chromium } from "playwright";
+const ROOT = path.resolve(process.cwd(), ".agent/tasks/journal-qr-fill-2026-09/e2e");
+const probe = JSON.parse(fs.readFileSync(path.join(ROOT, "probe.json"), "utf8")) as { tokens: Record<string, string>; users: Array<{ id: string; email: string }> };
+const E2E = probe.users.find((u) => u.email === "e2e-fill-guide@wesetup.local")!;
+(async () => {
+  const b = await chromium.launch({ channel: "chrome" });
+  const p = await (await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, deviceScaleFactor: 2 })).newPage();
+  p.on("pageerror", (e) => console.log("PAGEERROR", e.message));
+  const url = `http://localhost:3020/journal-fill/cmoe6rpt4000097ts71yb922y/cold_equipment_control?token=${encodeURIComponent(probe.tokens.cold)}&employee=${E2E.id}`;
+  await p.goto(url, { waitUntil: "load" });
+  await p.waitForSelector("#qr-form");
+  console.log("prefilled:", await p.locator(".obj input.in").evaluateAll((els) => els.map((el) => (el as HTMLInputElement).value)));
+  await p.locator(".obj").nth(0).locator("input.in").fill("7");
+  await p.waitForTimeout(400);
+  console.log("draft:", await p.evaluate(() => JSON.stringify(Object.entries(localStorage).filter(([k]) => k.startsWith("qr-draft:")))));
+  await p.reload({ waitUntil: "load" });
+  await p.waitForSelector("#qr-form");
+  await p.waitForTimeout(300);
+  console.log("after reload:", await p.locator(".obj").nth(0).locator("input.in").inputValue(), "note:", await p.locator("#draft-note").count(), (await p.locator("#draft-note").innerText().catch((e) => "ERR " + String(e).slice(0, 80))));
+  await p.screenshot({ path: path.join(ROOT, "shots", "r14-restored.png"), fullPage: true });
+  await b.close();
+})();

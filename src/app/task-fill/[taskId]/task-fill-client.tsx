@@ -1,4 +1,5 @@
 "use client";
+import { draftKeyFor, useFormDraft } from "@/components/qr-fill/use-form-draft";
 import { BodyScrollLock } from "@/lib/use-body-scroll-lock";
 
 import { useEffect, useMemo, useState } from "react";
@@ -151,6 +152,13 @@ export function TaskFillClient({
   // ли он отредактировать данные. После реального submit в editMode →
   // тоже done=true и тот же success-card.
   const [done, setDone] = useState(false);
+  // Черновик значений формы: обновление страницы или обрыв связи не стирают введённое; после записи — стирается.
+  useFormDraft(
+    draftKeyFor(`task-fill:${taskId}`, new Date().toISOString().slice(0, 10)),
+    values,
+    (saved) => setValues((current) => ({ ...current, ...saved })),
+    done
+  );
   const [error, setError] = useState<string | null>(null);
   // Из «Выполненных» задача сама не возвращается. Кружок выполненной
   // → confirm «Точно изменить данные?» → editIntent=true → форма с

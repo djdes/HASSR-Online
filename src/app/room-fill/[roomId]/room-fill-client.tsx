@@ -16,6 +16,7 @@ import { DeviationCorrection } from "@/components/qr-fill/deviation-correction";
 import { QuickSwitchNext, QuickSwitchStrip, type QuickSwitchItem } from "@/components/qr-fill/quick-switch";
 import { QuickValues } from "@/components/qr-fill/quick-values";
 import { StepButton } from "@/components/qr-fill/stepper";
+import { draftKeyFor, useFormDraft } from "@/components/qr-fill/use-form-draft";
 import { stepNumber } from "@/lib/quick-values";
 
 type Metric = { enabled: boolean; min: number | null; max: number | null };
@@ -68,6 +69,16 @@ function isOutside(value: number | null, metric: Metric): boolean {
  */
 export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot, employees, mode = "public", sessionEmployee = null, siblings = [], todayValues = null, stamp = null }: Props) {
   const [employeeId, setEmployeeId] = useState("");
+  // Имя запоминаем сразу при выборе, а не только после записи: обновление страницы или обрыв связи не заставят выбирать заново.
+  const rememberEmployee = (id: string) => {
+    setEmployeeId(id);
+    try {
+      localStorage.setItem(LS_EMPLOYEE_KEY, id);
+      localStorage.setItem(LS_SHARED_EMPLOYEE_KEY, id);
+    } catch {
+      /* приватный режим */
+    }
+  };
   const [pin, setPin] = useState("");
   const fixedEmployee = mode === "auth" && sessionEmployee && !sessionEmployee.canPickOthers;
   // Холодный склад с нормой ниже нуля — минус стоит сразу.
@@ -92,6 +103,17 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<{ slot: string; outOfRange: boolean } | null>(null);
+  // Черновик: обновил страницу или пропал интернет — введённое на месте; после записи стирается.
+  const draft = useFormDraft(
+    draftKeyFor(`room-fill:${room.id}`, stamp?.date),
+    { temperature, humidity, correction },
+    (saved) => {
+      if (typeof saved.temperature === "string") setTemperature(saved.temperature);
+      if (typeof saved.humidity === "string") setHumidity(saved.humidity);
+      if (typeof saved.correction === "string") setCorrection(saved.correction);
+    },
+    Boolean(saved)
+  );
 
   useEffect(() => {
     try {
@@ -259,7 +281,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                 {fixedEmployee ? (
                   <div className="mt-1 flex h-12 items-center rounded-2xl border border-[#dcdfed] bg-[#fafbff] px-4 text-[15px] font-medium text-[#0b1024]">{sessionEmployee?.name}</div>
                 ) : (
-                  <Select value={employeeId} onValueChange={setEmployeeId}>
+                  <Select value={employeeId} onValueChange={rememberEmployee}>
                   <SelectTrigger className="mt-1 h-auto min-h-12 w-full rounded-2xl border-[#dcdfed] py-2 text-left *:data-[slot=select-value]:line-clamp-none *:data-[slot=select-value]:whitespace-normal *:data-[slot=select-value]:items-start">
                     <SelectValue placeholder="Выберите своё имя">
                       {selectedEmployee ? (
@@ -301,6 +323,14 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
 
               <div className="space-y-4">
                 <div className="text-[13px] font-medium text-[#0b1024]">2. Показания</div>
+                {draft.restored ? (
+                  <p className="-mt-2 flex items-center justify-between gap-3 rounded-2xl border border-[#d6dcff] bg-[#eef1ff] px-4 py-2.5 text-[13px] leading-snug text-[#3848c7]">
+                    <span>Восстановили введённое после обновления страницы.</span>
+                    <button type="button" className="shrink-0 font-semibold underline" onClick={() => { draft.reset(); window.location.reload(); }}>
+                      Начать заново
+                    </button>
+                  </p>
+                ) : null}
                 {hasToday ? (
                   <p className="-mt-2 rounded-2xl border border-[#d6dcff] bg-[#eef1ff] px-4 py-2.5 text-[13px] leading-snug text-[#3848c7]">
                     Сегодня уже записано — значения подставлены, проверьте и измените, что нужно.

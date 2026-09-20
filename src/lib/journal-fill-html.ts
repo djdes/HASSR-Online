@@ -102,6 +102,8 @@ main{padding:14px 0 20px}
 .fl.is-off .box .in{background:#f3f4f8;color:#9b9fb3}
 .fl.is-off .stp,.fl.is-off .qv{opacity:.35;pointer-events:none}
 .fl.is-off .st{color:#3848c7}
+.note.draft{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.lnk{background:none;border:0;padding:0;color:#3848c7;font:inherit;font-weight:600;text-decoration:underline;cursor:pointer;white-space:nowrap}
 .today{margin:-4px 0 12px;font-size:13.5px;color:#3c4053;line-height:1.35}
 .today b{font-weight:600;color:#0b1024}
 .prog{display:block;width:max-content;max-width:100%;margin:0 auto 8px;padding:3px 12px;border-radius:999px;background:#fff;border:1px solid #ececf4;font-size:12px;color:#6f7282;text-align:center;font-variant-numeric:tabular-nums}
@@ -246,6 +248,21 @@ export const QR_FILL_JS = `
   if(form) form.addEventListener("submit",function(){ var b=form.querySelector("button[type=submit]"); if(b){b.disabled=true;b.textContent="Сохраняем…";} });
   var q=document.getElementById("emp-search");
   if(q){ q.addEventListener("input",function(){ var s=key(q.value); var it=document.querySelectorAll("[data-emp]"); for(var i=0;i<it.length;i++){ it[i].hidden=s!==""&&key(it[i].getAttribute("data-emp")).indexOf(s)===-1; } }); }
+  /* Черновик: введённое переживает обновление страницы и обрыв связи; после записи стирается, старше 12 часов — не подхватывается. */
+  var dk=window.__qrDraftKey||null;
+  function draftFields(){ var f=document.getElementById("qr-form"); if(!f) return []; var out=[]; var els=f.querySelectorAll("input,select,textarea"); for(var i=0;i<els.length;i++){ var el=els[i]; if(!el.name||el.type==="hidden"||el.type==="submit"||el.type==="button") continue; out.push(el); } return out; }
+  function draftRead(){ if(!dk) return null; try{ var raw=localStorage.getItem(dk); if(!raw) return null; var d=JSON.parse(raw); if(!d||!d.t||Date.now()-d.t>43200000){ localStorage.removeItem(dk); return null; } return d; }catch(e){ return null; } }
+  function draftSave(){ if(!dk) return; try{ var v={}; var any=false; var els=draftFields(); for(var i=0;i<els.length;i++){ var el=els[i]; var val=el.type==="checkbox"?(el.checked?"1":""):el.value; v[el.name]=val; if(val!==""&&val!=="-") any=true; } if(any) localStorage.setItem(dk,JSON.stringify({t:Date.now(),v:v})); else localStorage.removeItem(dk); }catch(e){} }
+  function draftRestore(){ var d=draftRead(); if(!d||!d.v) return; var els=draftFields(); var n=0;
+    for(var i=0;i<els.length;i++){ var el=els[i]; if(!Object.prototype.hasOwnProperty.call(d.v,el.name)) continue; var val=d.v[el.name];
+      if(el.type==="checkbox"){ var c=val==="1"; if(el.checked!==c){ el.checked=c; n++; var ce=document.createEvent("Event"); ce.initEvent("change",true,true); el.dispatchEvent(ce); } }
+      else if(el.value!==val&&val!==""){ el.value=val; n++; fire(el); } }
+    if(n>0){ var f=document.getElementById("qr-form"); var note=document.createElement("div"); note.className="note draft"; note.setAttribute("id","draft-note");
+      note.innerHTML='<span>Восстановили введённое после обновления страницы.</span><button type="button" class="lnk" id="draft-reset">Начать заново</button>';
+      var first=f.querySelector(".err, .note, .fl, .obj"); f.insertBefore(note, first||f.firstChild);
+      document.getElementById("draft-reset").addEventListener("click",function(){ try{ localStorage.removeItem(dk); }catch(e){} location.reload(); }); } }
+  if(dk&&window.__qrDraftDone){ try{ localStorage.removeItem(dk); }catch(e){} }
+  else if(dk&&document.getElementById("qr-form")){ draftRestore(); var dtm=null; function draftLater(){ clearTimeout(dtm); dtm=setTimeout(draftSave,150); } document.addEventListener("input",draftLater); document.addEventListener("change",draftLater); }
 })();
 `;
 

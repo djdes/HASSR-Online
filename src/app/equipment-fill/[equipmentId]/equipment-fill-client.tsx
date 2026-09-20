@@ -8,6 +8,7 @@ import { DeviationCorrection } from "@/components/qr-fill/deviation-correction";
 import { QuickSwitchNext, QuickSwitchStrip, type QuickSwitchItem } from "@/components/qr-fill/quick-switch";
 import { QuickValues } from "@/components/qr-fill/quick-values";
 import { StepButton } from "@/components/qr-fill/stepper";
+import { draftKeyFor, useFormDraft } from "@/components/qr-fill/use-form-draft";
 import { stepNumber } from "@/lib/quick-values";
 import {
   Select,
@@ -70,6 +71,16 @@ export function EquipmentFillClient({
   stamp = null,
 }: Props) {
   const [employeeId, setEmployeeId] = useState<string>("");
+  // Имя запоминаем сразу при выборе, а не только после записи: обновление страницы или обрыв связи не заставят выбирать заново.
+  const rememberEmployee = (id: string) => {
+    setEmployeeId(id);
+    try {
+      localStorage.setItem(LS_EMPLOYEE_KEY, id);
+      localStorage.setItem(LS_SHARED_EMPLOYEE_KEY, id);
+    } catch {
+      /* приватный режим */
+    }
+  };
   const [pin, setPin] = useState("");
   const fixedEmployee = mode === "auth" && sessionEmployee && !sessionEmployee.canPickOthers;
   // Морозилка (норма ниже нуля) — минус стоит сразу: на цифровой клавиатуре
@@ -94,6 +105,17 @@ export function EquipmentFillClient({
   const stampLabel = stamp ? `${stamp.date} ${stampTime}` : "";
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  // Черновик: обновил страницу или пропал интернет — введённое на месте; после записи стирается.
+  const draft = useFormDraft(
+    draftKeyFor(`equipment-fill:${equipment.id}`, stamp?.date),
+    { temperature, humidity, correction },
+    (saved) => {
+      if (typeof saved.temperature === "string") setTemperature(saved.temperature);
+      if (typeof saved.humidity === "string") setHumidity(saved.humidity);
+      if (typeof saved.correction === "string") setCorrection(saved.correction);
+    },
+    Boolean(done)
+  );
   const [error, setError] = useState<string | null>(null);
 
   // Hydrate the remembered employee pick on mount.
@@ -294,7 +316,7 @@ export function EquipmentFillClient({
                 {fixedEmployee ? (
                   <div className="mt-1 flex h-12 items-center rounded-2xl border border-[#dcdfed] bg-[#fafbff] px-4 text-[15px] font-medium text-[#0b1024]">{sessionEmployee?.name}</div>
                 ) : (
-                  <Select value={employeeId} onValueChange={setEmployeeId}>
+                  <Select value={employeeId} onValueChange={rememberEmployee}>
                   <SelectTrigger className="mt-1 h-auto min-h-12 w-full rounded-2xl border-[#dcdfed] py-2 text-left *:data-[slot=select-value]:line-clamp-none *:data-[slot=select-value]:whitespace-normal *:data-[slot=select-value]:items-start">
                     <SelectValue placeholder="Выберите ваше имя">
                       {selectedEmployee ? (
@@ -339,6 +361,14 @@ export function EquipmentFillClient({
               {hasToday ? (
                 <p className="rounded-2xl border border-[#d6dcff] bg-[#eef1ff] px-4 py-2.5 text-[13px] leading-snug text-[#3848c7]">
                   Сегодня уже записано — значение подставлено, проверьте и измените, что нужно.
+                </p>
+              ) : null}
+              {draft.restored ? (
+                <p className="flex items-center justify-between gap-3 rounded-2xl border border-[#d6dcff] bg-[#eef1ff] px-4 py-2.5 text-[13px] leading-snug text-[#3848c7]">
+                  <span>Восстановили введённое после обновления страницы.</span>
+                  <button type="button" className="shrink-0 font-semibold underline" onClick={() => { draft.reset(); window.location.reload(); }}>
+                    Начать заново
+                  </button>
                 </p>
               ) : null}
               <div>
