@@ -285,6 +285,23 @@ ${deviation}
 </form>`;
 }
 
+/**
+ * Норма для подсветки отклонения: сначала из подписи адаптера
+ * («… · норма 2…6»), иначе физические пределы поля (min/max валидатора).
+ * У холодильников пределы -40…30, а норма своя у каждого — иначе 12 °C
+ * в холодильнике не считалось бы отклонением.
+ */
+export function normRange(field: TaskFormField): { min: number | null; max: number | null } {
+  if (field.type !== "number") return { min: null, max: null };
+  const m = /норма\s*(-?\d+(?:[.,]\d+)?)\s*[…–—-]\s*(-?\d+(?:[.,]\d+)?)/i.exec(field.label);
+  if (m) {
+    const min = Number(m[1].replace(",", "."));
+    const max = Number(m[2].replace(",", "."));
+    if (Number.isFinite(min) && Number.isFinite(max)) return { min, max };
+  }
+  return { min: field.min ?? null, max: field.max ?? null };
+}
+
 function chips(fieldKey: string, values: readonly string[], current: string): string {
   if (values.length === 0) return "";
   return `<div class="chips">${values
@@ -318,10 +335,12 @@ function renderField(field: TaskFormField, raw: unknown, hints: JournalFillHints
       );
     }
     case "number": {
-      const range = field.min != null && field.max != null ? `<p class="hint">Норма: ${esc(field.min)}…${esc(field.max)}${field.unit ? ` ${esc(field.unit)}` : ""}</p>` : field.min != null ? `<p class="hint">Не ниже ${esc(field.min)}</p>` : field.max != null ? `<p class="hint">Не выше ${esc(field.max)}</p>` : "";
+      const norm = normRange(field);
+      const labelHasNorm = /норма/i.test(field.label);
+      const range = labelHasNorm ? "" : norm.min != null && norm.max != null ? `<p class="hint">Норма: ${esc(norm.min)}…${esc(norm.max)}${field.unit ? ` ${esc(field.unit)}` : ""}</p>` : norm.min != null ? `<p class="hint">Не ниже ${esc(norm.min)}</p>` : norm.max != null ? `<p class="hint">Не выше ${esc(norm.max)}</p>` : "";
       const isTemp = hints.tempField?.tempKey === field.key;
       return wrap(
-        `<input class="in" id="${esc(id)}" name="${esc(field.key)}" type="text" inputmode="decimal" value="${esc(value)}"${placeholder}${field.min != null ? ` data-min="${esc(field.min)}"` : ""}${field.max != null ? ` data-max="${esc(field.max)}"` : ""} data-label="${esc(field.label)}">${range}${isTemp ? `<p class="hint" id="temp-hint" hidden>Подставлено по прошлой записи этого блюда — поправьте, если сегодня иначе.</p>` : ""}`
+        `<input class="in" id="${esc(id)}" name="${esc(field.key)}" type="text" inputmode="decimal" value="${esc(value)}"${placeholder}${norm.min != null ? ` data-min="${esc(norm.min)}"` : ""}${norm.max != null ? ` data-max="${esc(norm.max)}"` : ""} data-label="${esc(field.label.replace(/\s*·\s*норма.*$/i, ""))}">${range}${isTemp ? `<p class="hint" id="temp-hint" hidden>Подставлено по прошлой записи этого блюда — поправьте, если сегодня иначе.</p>` : ""}`
       );
     }
     case "boolean": {

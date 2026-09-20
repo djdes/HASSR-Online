@@ -1,0 +1,37 @@
+{
+  "badTokenH1": "Ссылка недействительна",
+  "badTokenApi": 401,
+  "pageBytes": 12796,
+  "hubLinks": 8,
+  "employeeLinks": 7,
+  "pick1": "list",
+  "hygieneLabels": [
+    "Состояние"
+  ],
+  "hygieneWho": "Вы: Кафе «Тестовое 1» Сменить",
+  "stickySave": 1,
+  "hygieneResult": "Отметка записана",
+  "hygieneUrlDone": true,
+  "hygieneDaily": true,
+  "hygieneNext": 1,
+  "pick2": "remembered",
+  "hygieneRepeat": "Отметка записана",
+  "fpLabels": [
+    "Наименование блюда",
+    "Время производства",
+    "Органолептическая оценка",
+    "Температура",
+    "Разрешить к выпуску?",
+    "Корректирующее действие (если брак)"
+  ],
+  "fpTimeDefault": "13:07",
+  "fpTimeChips": 5,
+  "fpChoiceChips": 4,
+  "fpOrganolepticDefault": "Отлично",
+  "fpResult": "Строка добавлена",
+  "fpAddMore": 1,
+  "fpRecentChip": 1,
+  "fpHasDeviationBlock": 1,
+  "fpDeviationBlocked": true,
+  "errors": []
+}

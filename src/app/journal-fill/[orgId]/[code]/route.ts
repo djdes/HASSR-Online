@@ -17,6 +17,7 @@ import {
 } from "@/lib/journal-fill";
 import { journalFillHints, type JournalFillHints } from "@/lib/journal-fill-hints";
 import {
+  normRange,
   renderDocumentStep,
   renderEmployeeStep,
   renderForm,
@@ -144,8 +145,9 @@ function numberOutOfRange(field: TaskFormField, value: unknown): boolean {
   if (text === "") return false;
   const n = typeof value === "number" ? value : Number(text.replace(",", "."));
   if (!Number.isFinite(n)) return false;
-  if (field.min != null && n < field.min) return true;
-  if (field.max != null && n > field.max) return true;
+  const norm = normRange(field);
+  if (norm.min != null && n < norm.min) return true;
+  if (norm.max != null && n > norm.max) return true;
   return false;
 }
 
