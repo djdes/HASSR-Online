@@ -8,19 +8,30 @@
  * и попадают в них через «Разделы».
  *
  * Права здесь ничего не разрешают — доступ проверяет сама страница
- * сайта. Единственное, что решает эта функция, — какие четыре кнопки
- * видно и какая из них подсвечена.
+ * сайта. Но кнопка обязана вести туда, где человек и окажется: пункт,
+ * после которого его перекидывает на другой адрес, — это обман. Поэтому
+ * и домашний адрес, и наличие вкладки «Журналы» считаются по тем же
+ * проверкам, что стоят на самих страницах.
  */
 
-import { getWebHomeHref, hasFullWorkspaceAccess } from "@/lib/role-access";
+import { hasCapability } from "@/lib/permission-presets";
+import { hasFullWorkspaceAccess } from "@/lib/role-access";
 
 export type MiniNavActor = {
   role?: string | null;
   isRoot?: boolean | null;
+  /** Пресет прав — тот же, что в сессии (`session.user`). */
+  permissionPreset?: string | null;
+  orgPresetOverrides?: Record<string, string[]> | null;
 };
 
 /** Имя иконки lucide. Компоненты через границу RSC не передаются. */
-export type MiniNavIcon = "Home" | "ClipboardList" | "LayoutGrid" | "UserRound";
+export type MiniNavIcon =
+  | "Home"
+  | "ClipboardList"
+  | "LayoutGrid"
+  | "UserRound"
+  | "CalendarCheck";
 
 export type MiniNavItem = {
   href: string;
@@ -40,28 +51,55 @@ const PROFILE_ITEM: MiniNavItem = {
   icon: "UserRound",
 };
 
+/** Видит ли человек список журналов как список журналов. */
+function canOpenJournals(actor: MiniNavActor | null): boolean {
+  return actor ? hasCapability(actor, "journals.view") : false;
+}
+
+/**
+ * Домашняя вкладка — ровно тот адрес, который откроется.
+ *
+ * Повторяет цепочку редиректов самих страниц (`/dashboard/page.tsx` и
+ * `/journals/page.tsx`):
+ *   • руководство с журналами → «Главная», дашборд;
+ *   • заведующая (проверяет задачи, журналов не видит) → «Главная»,
+ *     контрольная доска — сразу, без прыжка через `/journals`;
+ *   • линейный сотрудник → «Сегодня», список задач смены.
+ */
+export function miniHomeItem(actor: MiniNavActor | null): MiniNavItem {
+  if (actor && canOpenJournals(actor)) {
+    return hasFullWorkspaceAccess(actor)
+      ? { href: "/dashboard", label: "Главная", icon: "Home" }
+      : { href: "/journals", label: "Журналы", icon: "ClipboardList" };
+  }
+  if (actor && hasCapability(actor, "tasks.verify")) {
+    return { href: "/control-board", label: "Главная", icon: "Home" };
+  }
+  return { href: "/mini/today", label: "Сегодня", icon: "CalendarCheck" };
+}
+
+/** Домашний адрес приложения — он же «корень» для кнопки «назад». */
+export function miniHomeHref(actor: MiniNavActor | null): string {
+  return miniHomeItem(actor).href;
+}
+
 /**
  * Что видно в нижнем меню.
  *
- * Руководство: «Главная» (`/dashboard`) + «Журналы» + «Разделы» +
- * «Профиль». Линейный сотрудник: у него домашний адрес — это и есть
- * список журналов, поэтому первая кнопка называется «Журналы» и второй
- * такой же кнопки не будет.
+ * Вкладка «Журналы» — только у тех, у кого список журналов и правда
+ * открывается (`journals.view`). У заведующей и линейного сотрудника её
+ * нет: страница их всё равно уводила бы прочь.
  */
 export function miniNavItems(actor: MiniNavActor | null): MiniNavItem[] {
-  const full = actor ? hasFullWorkspaceAccess(actor) : false;
-  const home = getWebHomeHref(actor ?? {});
+  const home = miniHomeItem(actor);
+  const items: MiniNavItem[] = [home];
 
-  if (!full) {
-    return [{ href: home, label: "Журналы", icon: "Home" }, SECTIONS_ITEM, PROFILE_ITEM];
+  if (canOpenJournals(actor) && home.href !== "/journals") {
+    items.push({ href: "/journals", label: "Журналы", icon: "ClipboardList" });
   }
 
-  return [
-    { href: home, label: "Главная", icon: "Home" },
-    { href: "/journals", label: "Журналы", icon: "ClipboardList" },
-    SECTIONS_ITEM,
-    PROFILE_ITEM,
-  ];
+  items.push(SECTIONS_ITEM, PROFILE_ITEM);
+  return items;
 }
 
 function matchesPrefix(pathname: string, prefix: string): boolean {
@@ -76,13 +114,15 @@ function matchesPrefix(pathname: string, prefix: string): boolean {
  * Берём самое длинное совпадение, иначе «Главная» на `/dashboard`
  * перебивала бы «Журналы» на `/journals`.
  *
- * Отдельно учитываем два адреса, которые и есть «дом» по факту:
- *   • `/mini` — экран входа, после него человека уносит домой;
- *   • `/mini/today` — сюда сайт сам отправляет с `/journals` и
- *     `/dashboard` тех, кому журналы как журналы не показывают.
- * Без этого у повара на его же домашнем экране не подсвечено ничего.
+ * `/mini` — экран входа, после него человека уносит домой, поэтому он
+ * тоже подсвечивает домашнюю вкладку.
+ *
+ * Всё остальное — `/settings/*`, `/team`, `/verifications`, `/reports`,
+ * `/batches`, `/capa` и прочее — это страницы, куда ведут «Разделы».
+ * Раньше на них не было подсвечено ничего, и человек не понимал, где
+ * он и как вернуться. Теперь подсвечены «Разделы».
  */
-const HOME_ALIASES = ["/mini", "/mini/today", "/control-board"] as const;
+const HOME_ALIASES = ["/mini"] as const;
 
 export function activeMiniNavHref(
   items: readonly MiniNavItem[],
@@ -97,5 +137,8 @@ export function activeMiniNavHref(
     if (!matchesPrefix(normalized, item.href)) continue;
     if (best === null || item.href.length > best.length) best = item.href;
   }
-  return best;
+  if (best !== null) return best;
+
+  // Ничего своего не совпало — значит это страница из «Разделов».
+  return items.find((item) => item.href === SECTIONS_ITEM.href)?.href ?? null;
 }

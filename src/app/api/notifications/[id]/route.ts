@@ -36,7 +36,7 @@ export async function PATCH(
     },
   });
   if (!existing) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: "Не найдено" }, { status: 404 });
   }
 
   const body = await request.json().catch(() => null);
@@ -92,7 +92,7 @@ export async function DELETE(
     select: { id: true },
   });
   if (!existing) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: "Не найдено" }, { status: 404 });
   }
   const now = new Date();
   await db.notification.update({

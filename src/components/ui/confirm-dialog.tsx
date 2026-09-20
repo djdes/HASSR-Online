@@ -175,7 +175,15 @@ export function ConfirmDialog({
       role="dialog"
       aria-modal="true"
       aria-labelledby="confirm-dialog-title"
-      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:px-4"
+      // z-60: нижнее меню мини-приложения висит на 50-м слое
+      // (`--mini-z-nav`), и окно обязано лечь поверх него — иначе
+      // кнопки «Подтвердить» на телефоне не видно.
+      //
+      // pointer-events-auto: подтверждение бывает открыто поверх
+      // обычного окна (Radix Dialog), а оно на время своей жизни
+      // выключает `pointer-events` у всего `body`. Без этой строки
+      // кнопки нашего окна не нажимались бы.
+      className="pointer-events-auto fixed inset-0 z-[60] flex items-end justify-center sm:items-center sm:px-4"
     >
       {/* Backdrop */}
       <button

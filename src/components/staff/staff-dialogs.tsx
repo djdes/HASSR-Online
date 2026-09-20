@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { StaffQrPinField } from "@/components/staff/staff-qr-pin-field";
 import { Input } from "@/components/ui/input";
 import type {
@@ -125,6 +126,7 @@ export function StaffEditPositionDialog(props: {
     props.position.categoryKey
   );
   const [pending, setPending] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   async function submit() {
     if (name.trim().length < 2) {
@@ -151,7 +153,6 @@ export function StaffEditPositionDialog(props: {
   }
 
   async function deletePos() {
-    if (!confirm("Удалить должность? Она должна быть пустой.")) return;
     setPending(true);
     try {
       const res = await fetch(`/api/positions/${props.position.id}`, {
@@ -206,7 +207,7 @@ export function StaffEditPositionDialog(props: {
           <div className="flex w-full items-center justify-between">
             <button
               type="button"
-              onClick={deletePos}
+              onClick={() => setConfirmDeleteOpen(true)}
               disabled={pending}
               className="text-[13px] font-medium text-[#d2453d] hover:underline disabled:opacity-50"
             >
@@ -216,6 +217,29 @@ export function StaffEditPositionDialog(props: {
           </div>
         )}
       </DialogContent>
+
+      {/* Нативный confirm() в приложении Telegram может не показаться —
+          кнопка тогда молча не срабатывает (CLAUDE.md §6). */}
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        onClose={() => setConfirmDeleteOpen(false)}
+        onConfirm={async () => {
+          setConfirmDeleteOpen(false);
+          await deletePos();
+        }}
+        title={`Удалить должность «${props.position.name}»?`}
+        description="Должность исчезнет из справочника и из выпадающих списков при добавлении сотрудников."
+        bullets={[
+          {
+            label: "Удалить получится, только если на должности никого нет",
+            tone: "warn",
+          },
+          { label: "Вернуть удалённую должность нельзя", tone: "warn" },
+        ]}
+        confirmLabel="Удалить"
+        cancelLabel="Отмена"
+        variant="danger"
+      />
     </Dialog>
   );
 }

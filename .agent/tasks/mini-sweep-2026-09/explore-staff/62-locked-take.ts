@@ -1,0 +1,25 @@
+import { openTelegramSession, db, state } from "../tg-session";
+import { shot } from "./lib";
+const T = async (p: any) => ((await p.evaluate(`document.body.innerText`)) as string).replace(/\s+/g, " ");
+(async () => {
+  await db.journalTaskClaim.deleteMany({ where: { userId: state.users.cookA.id } });
+  const s = await openTelegramSession({ role: "cookA", width: 360, height: 640, theme: "light" });
+  const p = s.page;
+  await p.goto(s.base + "/mini/today", { waitUntil: "load", timeout: 300000 });
+  await p.waitForTimeout(9000);
+  await p.getByRole("button", { name: "Взять" }).first().click();
+  await p.waitForTimeout(9000);
+  await p.goto(s.base + "/mini/today", { waitUntil: "load", timeout: 300000 });
+  await p.waitForTimeout(8000);
+  console.log("HEAD", (await T(p)).slice(0, 420));
+  await shot(p, "locked-list");
+  const b = p.getByRole("button", { name: "Взять" }).nth(2);
+  await b.scrollIntoViewIfNeeded(); await p.waitForTimeout(500);
+  console.log("locked disabled?", await b.isDisabled(), "title", await b.getAttribute("title"));
+  await b.click({ force: true });
+  await p.waitForTimeout(3000);
+  console.log("after tap locked:", p.url().replace(s.base, ""), "|", (await T(p)).slice(-220));
+  await shot(p, "locked-tap");
+  console.log("ERRORS", JSON.stringify(s.errors));
+  await s.close();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 600)); process.exit(1); });

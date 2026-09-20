@@ -10,6 +10,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 type BackupState = {
   connected: boolean;
@@ -35,6 +36,7 @@ export function YandexBackupClient({ initialState, recentLogs }: Props) {
   const [token, setToken] = useState("");
   const [folder, setFolder] = useState(initialState.folder);
   const [busy, setBusy] = useState(false);
+  const [confirmDisconnectOpen, setConfirmDisconnectOpen] = useState(false);
 
   async function connect() {
     if (token.trim().length < 10) {
@@ -68,7 +70,6 @@ export function YandexBackupClient({ initialState, recentLogs }: Props) {
   }
 
   async function disconnect() {
-    if (!confirm("Отключить Я.Диск? Бэкапы перестанут создаваться.")) return;
     setBusy(true);
     try {
       const res = await fetch("/api/settings/yandex-backup", {
@@ -158,7 +159,7 @@ export function YandexBackupClient({ initialState, recentLogs }: Props) {
             </button>
             <button
               type="button"
-              onClick={disconnect}
+              onClick={() => setConfirmDisconnectOpen(true)}
               disabled={busy}
               className="inline-flex h-11 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-5 text-[14px] font-medium text-[#a13a32] hover:bg-[#fff4f2] disabled:opacity-50"
             >
@@ -296,6 +297,30 @@ export function YandexBackupClient({ initialState, recentLogs }: Props) {
           </ul>
         </section>
       ) : null}
+
+      {/* Нативный confirm() в приложении Telegram может не показаться —
+          кнопка тогда молча не срабатывает (CLAUDE.md §6). */}
+      <ConfirmDialog
+        open={confirmDisconnectOpen}
+        onClose={() => setConfirmDisconnectOpen(false)}
+        onConfirm={async () => {
+          setConfirmDisconnectOpen(false);
+          await disconnect();
+        }}
+        title="Отключить Яндекс.Диск?"
+        description="Связь с диском разорвётся, и новые копии базы перестанут создаваться."
+        bullets={[
+          { label: "Автоматические копии больше не создаются", tone: "warn" },
+          {
+            label: "Уже загруженные копии на диске останутся — их не удаляем",
+            tone: "default",
+          },
+          { label: "Подключить обратно можно в любой момент", tone: "info" },
+        ]}
+        confirmLabel="Отключить"
+        cancelLabel="Отмена"
+        variant="danger"
+      />
     </div>
   );
 }

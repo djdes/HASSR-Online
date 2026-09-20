@@ -1,0 +1,32 @@
+import { openTelegramSession, BASE } from "../tg-session";
+const SHOTS = "C:/Users/Yaroslav/AppData/Local/Temp/18/claude/d--www-Wesetup-ru/aa63a183-7b19-487e-8461-b751f0f1c337/scratchpad/explore-mgmt";
+const DOC = "/journals/hygiene/documents/cmu45uyxc004k5k9m0bq4vwux";
+async function main() {
+  const s = await openTelegramSession({ role: "headA", width: 390, height: 844 });
+  const p = s.page;
+  const net: string[] = [];
+  p.on("request", (r) => { if (r.method() !== "GET" && !/_next|\/api\/auth\/session/.test(r.url())) net.push(`${r.method()} ${r.url().replace(BASE, "")} ${String(r.postData() || "").slice(0, 200)}`); });
+  await p.goto(BASE + DOC, { waitUntil: "domcontentloaded", timeout: 300000 });
+  await p.waitForTimeout(6000);
+  const before = await p.evaluate(`(function(){var b=[...document.querySelectorAll("button")].map(function(x){return x.innerText.replace(/\s+/g," ").trim()}).filter(function(x){return /осталось|Заполнить|Отметить/.test(x)});return b.join(" || ")})()`);
+  console.log("BEFORE BUTTONS:", before);
+  console.log("BEFORE TXT:", await p.evaluate("(function(){var a=document.body.innerText.split(String.fromCharCode(10)).filter(function(x){return x.indexOf('Сегодня осталось')>=0});return a.join(' | ')||'-'})()"));
+  await p.evaluate(`(function(){var b=[...document.querySelectorAll('button')].find(function(x){return x.innerText.indexOf("Отметить всех")>=0}); b.scrollIntoView({block:'center'}); b.click();})()`);
+  await p.waitForTimeout(2500);
+  await p.screenshot({ path: SHOTS + "/hyg-confirm.png", fullPage: false });
+  console.log("DIALOG:", await p.evaluate(`(function(){var d=document.querySelector('[role=dialog]');return d?d.innerText.replace(/\s+/g," "):"нет"})()`));
+  await p.evaluate(`(function(){var d=document.querySelector('[role=dialog]'); if(!d) return; var b=[...d.querySelectorAll("button")].find(function(x){return x.innerText.trim()==="Отметить"}); if(b) b.click();})()`);
+  await p.waitForTimeout(12000);
+  console.log("NET after click:", JSON.stringify(net, null, 1));
+  console.log("AFTER TOAST:", await p.evaluate(`(function(){var l=document.querySelector("[data-sonner-toaster]");return l?l.innerText.replace(/\s+/g," "):"нет"})()`));
+  await p.screenshot({ path: SHOTS + "/hyg-after-click.png", fullPage: false });
+  await p.reload({ waitUntil: "domcontentloaded", timeout: 300000 });
+  await p.waitForTimeout(7000);
+  console.log("AFTER RELOAD TXT:", await p.evaluate("(function(){var a=document.body.innerText.split(String.fromCharCode(10)).filter(function(x){return x.indexOf('Сегодня осталось')>=0});return a.join(' | ')||'-'})()"));
+  console.log("AFTER RELOAD BUTTONS:", await p.evaluate(`(function(){return [...document.querySelectorAll("button")].map(function(x){return x.innerText.replace(/\s+/g," ").trim()}).filter(function(x){return /осталось|Заполнить|Отметить/.test(x)}).join(" || ")})()`));
+  await p.screenshot({ path: SHOTS + "/hyg-after-reload.png", fullPage: false });
+  console.log("NET total:", JSON.stringify(net, null, 1));
+  console.log("ERRORS", JSON.stringify([...new Set(s.errors)], null, 1));
+  await s.close();
+}
+main().catch(e => { console.error(e); process.exit(1); });

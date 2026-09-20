@@ -1,10 +1,22 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { activeMiniNavHref, miniNavItems } from "@/app/mini/_lib/nav-items";
+import {
+  activeMiniNavHref,
+  miniHomeHref,
+  miniNavItems,
+} from "@/app/mini/_lib/nav-items";
+
+const manager = { role: "manager", permissionPreset: "admin", isRoot: false };
+const headChef = {
+  role: "head_chef",
+  permissionPreset: "head_chef",
+  isRoot: false,
+};
+const cook = { role: "cook", permissionPreset: "cook", isRoot: false };
 
 test("у руководителя четыре вкладки, главная — дашборд", () => {
-  const items = miniNavItems({ role: "manager", isRoot: false });
+  const items = miniNavItems(manager);
   assert.deepEqual(
     items.map((item) => [item.href, item.label]),
     [
@@ -16,27 +28,43 @@ test("у руководителя четыре вкладки, главная �
   );
 });
 
-test("у линейного сотрудника главная — журналы, второй такой кнопки нет", () => {
-  const items = miniNavItems({ role: "cook", isRoot: false });
+test("у заведующей главная — контрольная доска, вкладки «Журналы» нет", () => {
+  // `/journals` её всё равно уводит на `/control-board` — кнопка,
+  // ведущая на редирект, человеку только мешает.
+  const items = miniNavItems(headChef);
   assert.deepEqual(
     items.map((item) => [item.href, item.label]),
     [
-      ["/journals", "Журналы"],
+      ["/control-board", "Главная"],
       ["/mini/sections", "Разделы"],
       ["/mini/me", "Профиль"],
     ]
   );
+  assert.equal(miniHomeHref(headChef), "/control-board");
+});
+
+test("у линейного сотрудника главная — «Сегодня», сразу без прыжка", () => {
+  const items = miniNavItems(cook);
+  assert.deepEqual(
+    items.map((item) => [item.href, item.label, item.icon]),
+    [
+      ["/mini/today", "Сегодня", "CalendarCheck"],
+      ["/mini/sections", "Разделы", "LayoutGrid"],
+      ["/mini/me", "Профиль", "UserRound"],
+    ]
+  );
+  assert.equal(miniHomeHref(cook), "/mini/today");
 });
 
 test("до входа показываем набор линейного сотрудника", () => {
   assert.deepEqual(
     miniNavItems(null).map((item) => item.href),
-    ["/journals", "/mini/sections", "/mini/me"]
+    ["/mini/today", "/mini/sections", "/mini/me"]
   );
 });
 
 test("вкладка подсвечивается и на страницах сайта", () => {
-  const items = miniNavItems({ role: "manager", isRoot: false });
+  const items = miniNavItems(manager);
 
   assert.equal(activeMiniNavHref(items, "/dashboard"), "/dashboard");
   assert.equal(activeMiniNavHref(items, "/journals"), "/journals");
@@ -49,22 +77,41 @@ test("вкладка подсвечивается и на страницах с�
   assert.equal(activeMiniNavHref(items, "/mini/sections"), "/mini/sections");
 });
 
-test("экран входа и «Сегодня» подсвечивают домашнюю вкладку", () => {
-  const manager = miniNavItems({ role: "manager", isRoot: false });
-  const staff = miniNavItems({ role: "cook", isRoot: false });
-
-  assert.equal(activeMiniNavHref(manager, "/mini"), "/dashboard");
-  assert.equal(activeMiniNavHref(staff, "/mini"), "/journals");
-  // Сайт сам отправляет повара с `/journals` на «Сегодня» — значит это
-  // и есть его домашний экран, и вкладка должна быть подсвечена.
-  assert.equal(activeMiniNavHref(staff, "/mini/today"), "/journals");
+test("экран входа подсвечивает домашнюю вкладку", () => {
+  assert.equal(activeMiniNavHref(miniNavItems(manager), "/mini"), "/dashboard");
+  assert.equal(activeMiniNavHref(miniNavItems(cook), "/mini"), "/mini/today");
+  assert.equal(
+    activeMiniNavHref(miniNavItems(headChef), "/mini"),
+    "/control-board"
+  );
 });
 
-test("соседние разделы чужую вкладку не подсвечивают", () => {
-  const items = miniNavItems({ role: "manager", isRoot: false });
+test("«Сегодня» — домашний экран сотрудника", () => {
+  const items = miniNavItems(cook);
+  assert.equal(activeMiniNavHref(items, "/mini/today"), "/mini/today");
+});
 
-  // `/journals-progress` — отдельный раздел, а не вложенность журналов.
-  assert.equal(activeMiniNavHref(items, "/journals-progress"), null);
-  assert.equal(activeMiniNavHref(items, "/mini/outbox"), null);
-  assert.equal(activeMiniNavHref(items, "/settings/users"), null);
+test("страницы из «Разделов» подсвечивают «Разделы»", () => {
+  const items = miniNavItems(manager);
+
+  for (const path of [
+    "/settings",
+    "/settings/users",
+    "/settings/equipment/123",
+    "/team",
+    "/verifications",
+    "/reports",
+    "/batches",
+    "/capa",
+    "/journals-progress",
+    "/control-board",
+  ]) {
+    assert.equal(activeMiniNavHref(items, path), "/mini/sections", path);
+  }
+});
+
+test("у заведующей контрольная доска — это дом, а не раздел", () => {
+  const items = miniNavItems(headChef);
+  assert.equal(activeMiniNavHref(items, "/control-board"), "/control-board");
+  assert.equal(activeMiniNavHref(items, "/verifications"), "/mini/sections");
 });

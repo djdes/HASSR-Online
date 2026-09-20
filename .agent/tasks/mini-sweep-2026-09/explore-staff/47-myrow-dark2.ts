@@ -1,0 +1,25 @@
+import { openTelegramSession, db } from "../tg-session";
+import { shot } from "./lib";
+const DOC = "cmu3xjc390004ks9mroi7qi9i", U = "cmu2stncj0009wk9mgu2p7eq1", D = new Date("2026-09-20T00:00:00.000Z");
+(async () => {
+  await db.journalDocumentEntry.updateMany({ where: { documentId: DOC, employeeId: U, date: D }, data: { data: { _autoSeeded: true } } });
+  const s = await openTelegramSession({ role: "cleanerA", width: 360, height: 640, theme: "dark" });
+  const p = s.page;
+  await p.goto(s.base + "/journals/hygiene/documents/" + DOC, { waitUntil: "load", timeout: 300000 });
+  await p.waitForTimeout(11000);
+  const row = p.locator(`[data-day-row]`).filter({ hasText: "Ольга Уборщица" }).first();
+  await p.evaluate(`(()=>{const r=[...document.querySelectorAll('[data-day-row]')].find(r=>/Ольга/.test(r.innerText)); r&&r.scrollIntoView({block:'center'})})()`);
+  await p.waitForTimeout(800);
+  await shot(p, "myrow-dark-repeat");
+  await row.getByRole("button", { name: /Заполнить/ }).first().click();
+  await p.waitForTimeout(2000);
+  await shot(p, "sheet-dark");
+  await p.getByText("Здоров", { exact: true }).click();
+  await p.waitForTimeout(6000);
+  await p.evaluate(`(()=>{const r=[...document.querySelectorAll('[data-day-row]')].find(r=>/Ольга/.test(r.innerText)); r&&r.scrollIntoView({block:'center'})})()`);
+  await p.waitForTimeout(800);
+  await shot(p, "myrow-dark-filled");
+  console.log("row colors", JSON.stringify(await p.evaluate(`(()=>{const r=[...document.querySelectorAll('[data-day-row]')].find(r=>/Ольга/.test(r.innerText));return {rowBg:getComputedStyle(r).backgroundColor, nameColor:getComputedStyle(r.querySelector('div,span')).color}})()`)));
+  console.log("ERRORS", JSON.stringify(s.errors));
+  await s.close();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 600)); process.exit(1); });

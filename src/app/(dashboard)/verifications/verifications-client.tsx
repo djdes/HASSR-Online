@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
+import { showRemindResult, type RemindResult } from "@/lib/remind-toast";
+import { completionEntryLabel, isInternalCompletionKey } from "@/lib/completion-labels";
 
 type GuideField = { name: string; description: string; norm?: string };
 type Guide = {
@@ -82,6 +84,19 @@ function timeAgo(iso: string | null): string {
   if (m < 60) return `${m} мин`;
   const h = Math.floor(m / 60);
   return `${h} ч ${m % 60} мин`;
+}
+
+/**
+ * «10 мин назад».
+ *
+ * Отдельно от `timeAgo`: к нему приклеивали « назад» без разбора, и на
+ * экране появлялись «только что назад» и «— назад».
+ */
+function sinceText(iso: string | null): string {
+  const ago = timeAgo(iso);
+  if (ago === "—") return "недавно";
+  if (ago === "только что") return ago;
+  return `${ago} назад`;
 }
 
 export function VerificationsClient() {
@@ -157,10 +172,14 @@ export function VerificationsClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userIds: [userId], scopeLabel }),
       });
-      if (res.ok) toast.success("Напоминание отправлено");
-      else toast.error("Ошибка");
+      const j = (await res.json().catch(() => ({}))) as RemindResult;
+      if (!res.ok) {
+        toast.error(j.error || "Не получилось отправить напоминание");
+        return;
+      }
+      showRemindResult(j, () => "Напоминание отправлено");
     } catch {
-      toast.error("Ошибка");
+      toast.error("Не получилось отправить напоминание");
     } finally {
       setBusy(null);
     }
@@ -292,6 +311,12 @@ function PendingCard({
   onReject: () => void;
   busy: boolean;
 }) {
+  // Служебные ключи (`_autoSeeded` и прочие с подчёркиванием) ставит
+  // система, а не человек — заведующей они ни о чём не говорят.
+  const filledFields = Object.entries(item.completionData ?? {}).filter(
+    ([key]) => !isInternalCompletionKey(key)
+  );
+
   return (
     <div className="rounded-3xl border border-[#5d3ab3]/20 bg-[#f5f0ff] shadow-[0_0_0_1px_rgba(180,150,230,0.15)] transition-shadow hover:shadow-[0_8px_24px_-12px_rgba(93,58,179,0.25)]">
       <button
@@ -314,7 +339,7 @@ function PendingCard({
             <span className="font-medium text-[#0b1024]">{item.executedBy}</span>
             <span>·</span>
             <Clock className="size-3" />
-            {timeAgo(item.completedAt)} назад
+            {sinceText(item.completedAt)}
           </div>
         </div>
         {expanded ? (
@@ -326,15 +351,17 @@ function PendingCard({
 
       {expanded ? (
         <div className="space-y-3 border-t border-[#5d3ab3]/15 px-4 pb-4 pt-3">
-          {item.completionData ? (
+          {filledFields.length > 0 ? (
             <div className="rounded-2xl border border-[#ececf4] bg-white p-3">
               <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
                 Введённые данные
               </div>
               <div className="mt-1 grid grid-cols-1 gap-x-4 gap-y-1 text-[13px] text-[#0b1024] sm:grid-cols-2">
-                {Object.entries(item.completionData).map(([k, v]) => (
+                {filledFields.map(([k, v]) => (
                   <div key={k} className="flex justify-between gap-2">
-                    <span className="text-[#6f7282]">{k}</span>
+                    <span className="text-[#6f7282]">
+                      {completionEntryLabel(k)}
+                    </span>
                     <span className="text-right font-medium">
                       {typeof v === "boolean"
                         ? v ? "✓" : "✗"
@@ -346,7 +373,7 @@ function PendingCard({
             </div>
           ) : (
             <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-white p-3 text-[12px] text-[#9b9fb3]">
-              Сотрудник не передал form-data — задача завершена без полей.
+              Сотрудник завершил задачу, не заполнив поля.
             </div>
           )}
 

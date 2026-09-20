@@ -17,7 +17,7 @@ const VALID_VIEW_MODES = new Set([
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
   }
   // GET доступен management — listing manager-scopes других юзеров
   // приватно для admin'ов.
@@ -47,7 +47,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
   }
   // Управление иерархией — только management. Раньше: ЛЮБОЙ
   // authenticated юзер мог через прямой fetch создать managerScope
@@ -152,7 +152,7 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
   }
   // Только management может удалять scope-rows.
   if (

@@ -227,11 +227,73 @@
 .app-shell[data-app-theme="dark"] .bg-\[\#fff2f1\] {
   background-color: rgba(161, 58, 50, 0.18) !important;
 }
-.app-shell[data-app-theme="dark"] .bg-\[\#fff8eb\] {
+/* Янтарные/предупреждающие плашки. Все они стоят под тёмным текстом
+   (`text-[#0b1024]`, `text-[#8a5a12]`), который в тёмной теме
+   перекрашивается в светлый — без своего правила фон оставался
+   кремовым, и текст пропадал (контраст 1.06). Так было с плашкой
+   «ещё не взяли задачи» на контрольной доске (`#fffaf0`). */
+.app-shell[data-app-theme="dark"] .bg-\[\#fff8eb\],
+.app-shell[data-app-theme="dark"] .bg-\[\#fffaf0\],
+.app-shell[data-app-theme="dark"] .bg-\[\#fff8e6\],
+.app-shell[data-app-theme="dark"] .bg-\[\#fff8ec\],
+.app-shell[data-app-theme="dark"] .bg-\[\#fff8ee\],
+.app-shell[data-app-theme="dark"] .bg-\[\#fff7ed\],
+.app-shell[data-app-theme="dark"] .bg-\[\#fff5d9\],
+.app-shell[data-app-theme="dark"] .bg-\[\#fff4d9\],
+.app-shell[data-app-theme="dark"] .bg-\[\#fff1d6\],
+.app-shell[data-app-theme="dark"] .bg-\[\#fdeeda\] {
   background-color: rgba(245, 158, 11, 0.16) !important;
 }
-.app-shell[data-app-theme="dark"] .bg-\[\#ecfdf5\] {
+/* Зелёные «всё хорошо». */
+.app-shell[data-app-theme="dark"] .bg-\[\#ecfdf5\],
+.app-shell[data-app-theme="dark"] .bg-\[\#f3fdf7\],
+.app-shell[data-app-theme="dark"] .bg-\[\#effaf1\],
+.app-shell[data-app-theme="dark"] .bg-\[\#e6f8ec\] {
   background-color: rgba(19, 107, 42, 0.18) !important;
+}
+/* Красные «внимание / ошибка». */
+.app-shell[data-app-theme="dark"] .bg-\[\#ffe1dc\],
+.app-shell[data-app-theme="dark"] .bg-\[\#ffe9e5\],
+.app-shell[data-app-theme="dark"] .bg-\[\#ffe6e1\],
+.app-shell[data-app-theme="dark"] .bg-\[\#ffe5e1\],
+.app-shell[data-app-theme="dark"] .bg-\[\#ffecea\],
+.app-shell[data-app-theme="dark"] .bg-\[\#fdf0f0\],
+.app-shell[data-app-theme="dark"] .bg-\[\#fbe3e1\],
+.app-shell[data-app-theme="dark"] .bg-\[\#f8d7d4\] {
+  background-color: rgba(161, 58, 50, 0.18) !important;
+}
+/* Сиреневые «на проверку». */
+.app-shell[data-app-theme="dark"] .bg-\[\#f5f0ff\],
+.app-shell[data-app-theme="dark"] .bg-\[\#f0edff\],
+.app-shell[data-app-theme="dark"] .bg-\[\#f5f3ff\] {
+  background-color: rgba(93, 58, 179, 0.22) !important;
+}
+/* Голубая информационная. */
+.app-shell[data-app-theme="dark"] .bg-\[\#e8f7ff\] {
+  background-color: var(--app-tint-indigo-2) !important;
+}
+/* Нейтральные «бумажные» подложки: карточки, полосы, пустые состояния.
+   Все — светлые поверхности под тёмным текстом. */
+.app-shell[data-app-theme="dark"] .bg-\[\#f8f9fc\],
+.app-shell[data-app-theme="dark"] .bg-\[\#f8f9ff\],
+.app-shell[data-app-theme="dark"] .bg-\[\#f7f8ff\],
+.app-shell[data-app-theme="dark"] .bg-\[\#f7f8fd\],
+.app-shell[data-app-theme="dark"] .bg-\[\#f6f7fb\],
+.app-shell[data-app-theme="dark"] .bg-\[\#f6f7fa\],
+.app-shell[data-app-theme="dark"] .bg-\[\#f6f7ff\],
+.app-shell[data-app-theme="dark"] .bg-\[\#f6f6f6\],
+.app-shell[data-app-theme="dark"] .bg-\[\#f5f6fb\],
+.app-shell[data-app-theme="dark"] .bg-\[\#f4f5fb\],
+.app-shell[data-app-theme="dark"] .bg-\[\#f3f4fe\],
+.app-shell[data-app-theme="dark"] .bg-\[\#f3f4f6\],
+.app-shell[data-app-theme="dark"] .bg-\[\#f1f2f6\],
+.app-shell[data-app-theme="dark"] .bg-\[\#f0f2f7\],
+.app-shell[data-app-theme="dark"] .bg-\[\#f0f0f0\],
+.app-shell[data-app-theme="dark"] .bg-\[\#eef0f6\],
+.app-shell[data-app-theme="dark"] .bg-\[\#eef0ff\],
+.app-shell[data-app-theme="dark"] .bg-\[\#fbfbff\],
+.app-shell[data-app-theme="dark"] .bg-\[\#f9f9f9\] {
+  background-color: var(--app-surface-muted) !important;
 }
 
 /* ── Borders ───────────────────────────────────────────────────────── */
@@ -255,7 +317,9 @@
 .app-shell[data-app-theme="dark"] .border-\[\#ffd7d3\] {
   border-color: rgba(161, 58, 50, 0.35) !important;
 }
-.app-shell[data-app-theme="dark"] .border-\[\#ffe9b0\] {
+.app-shell[data-app-theme="dark"] .border-\[\#ffe9b0\],
+.app-shell[data-app-theme="dark"] .border-\[\#f3d9a8\],
+.app-shell[data-app-theme="dark"] .border-\[\#ffe1c1\] {
   border-color: rgba(245, 158, 11, 0.35) !important;
 }
 .app-shell[data-app-theme="dark"] .border-\[\#c8f0d5\] {
@@ -293,7 +357,10 @@
   color: #ff8a82 !important;
 }
 .app-shell[data-app-theme="dark"] .text-\[\#b25f00\],
-.app-shell[data-app-theme="dark"] .text-\[\#a16d32\] {
+.app-shell[data-app-theme="dark"] .text-\[\#a16d32\],
+.app-shell[data-app-theme="dark"] .text-\[\#8a5a12\],
+.app-shell[data-app-theme="dark"] .text-\[\#b8791f\],
+.app-shell[data-app-theme="dark"] .text-\[\#7a4900\] {
   color: #fbbf24 !important;
 }
 .app-shell[data-app-theme="dark"] .text-\[\#d2453d\],

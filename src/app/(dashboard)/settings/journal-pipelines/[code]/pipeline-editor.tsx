@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
+import { confirmAsync } from "@/components/ui/confirm-async";
 
 type Step = {
   id: string;
@@ -79,14 +80,26 @@ export function PipelineEditor({
   }
 
   async function reset() {
-    if (!confirm("Сбросить на default? Кастомные шаги будут удалены.")) return;
+    const ok = await confirmAsync({
+      title: "Вернуть стандартные шаги?",
+      description:
+        "Порядок шагов и их описания станут такими, какими были изначально.",
+      bullets: [
+        { label: "Шаги, которые вы добавили или изменили, удалятся", tone: "warn" },
+        { label: "Вернуть их обратно нельзя — придётся вписать заново", tone: "warn" },
+        { label: "Записи журнала это не затрагивает", tone: "default" },
+      ],
+      confirmLabel: "Вернуть стандартные",
+      variant: "danger",
+    });
+    if (!ok) return;
     setSaving(true);
     try {
       const res = await fetch(`/api/settings/journal-pipelines/${code}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      toast.success("Сброшено на default");
+      toast.success("Вернули стандартные шаги");
       router.push("/settings/journal-pipelines");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Ошибка");
@@ -230,7 +243,7 @@ export function PipelineEditor({
           disabled={saving}
           className="inline-flex h-11 items-center gap-1.5 rounded-2xl border border-[#ffd2cd] bg-white px-4 text-[13px] font-medium text-[#a13a32] hover:bg-[#fff4f2]"
         >
-          Сбросить на default
+          Вернуть стандартные шаги
         </button>
         <div className="flex-1" />
         <button

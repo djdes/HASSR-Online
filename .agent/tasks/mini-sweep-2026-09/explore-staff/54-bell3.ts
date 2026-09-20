@@ -1,0 +1,20 @@
+import { openTelegramSession } from "../tg-session";
+import { shot } from "./lib";
+(async () => {
+  const s = await openTelegramSession({ role: "cookA", width: 360, height: 640, theme: "light" });
+  const p = s.page;
+  await p.goto(s.base + "/mini/today", { waitUntil: "load", timeout: 300000 });
+  await p.waitForTimeout(9000);
+  await p.locator(`header button[aria-label="Уведомления"]`).click();
+  await p.waitForTimeout(4000);
+  await p.locator('a[data-nav-href="/mini/me"]').click();
+  await p.waitForTimeout(6000);
+  console.log("still open", await p.evaluate(`(()=>{const e=[...document.querySelectorAll('*')].find(e=>/^Уведомления$/.test((e.innerText||'').trim()));if(!e)return 'gone';const c=e.closest('div');const cs=getComputedStyle(c);const r=c.getBoundingClientRect();return JSON.stringify({op:cs.opacity,pe:cs.pointerEvents,z:cs.zIndex,rect:[Math.round(r.x),Math.round(r.y),Math.round(r.width),Math.round(r.height)]})})()`));
+  console.log("hit test at (180,200):", await p.evaluate(`(()=>{const e=document.elementFromPoint(180,200);return e.tagName+'|'+(e.innerText||'').replace(/\s+/g,' ').slice(0,40)})()`));
+  console.log("wait 15s more...");
+  await p.waitForTimeout(15000);
+  console.log("after 15s still open?", ((await p.evaluate(`document.body.innerText`)) as string).includes("Прочитанные"));
+  await shot(p, "bell-15s-later");
+  console.log("ERRORS", JSON.stringify(s.errors));
+  await s.close();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 600)); process.exit(1); });

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+
 type Position = { id: string; name: string; categoryKey: string };
 type Employee = { id: string; name: string; jobPositionId: string | null; positionTitle: string | null };
 type Scope = {
@@ -38,10 +40,19 @@ export function StaffHierarchyClient({
     managersSkipped: number;
     errors: number;
   } | null>(null);
+  /** id правила, которое просят удалить — окно подтверждения. */
+  const [scopeToDelete, setScopeToDelete] = useState<string | null>(null);
 
   // Find managers without scope (can add new)
   const managersWithScope = new Set(scopes.map((s) => s.managerId));
   const availableManagers = employees.filter((e) => !managersWithScope.has(e.id));
+
+  /** Имя руководителя из правила — чтобы в окне было видно, что удаляем. */
+  function managerName(scopeId: string): string {
+    const scope = scopes.find((s) => s.id === scopeId);
+    if (!scope) return "—";
+    return employees.find((e) => e.id === scope.managerId)?.name ?? "—";
+  }
 
   async function saveScope(scope: Partial<Scope> & { managerId: string }) {
     setSaving(true);
@@ -125,7 +136,6 @@ export function StaffHierarchyClient({
   }
 
   async function deleteScope(id: string) {
-    if (!confirm("Удалить правило?")) return;
     try {
       const res = await fetch(`/api/manager-scope?id=${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed");
@@ -195,7 +205,7 @@ export function StaffHierarchyClient({
             })
           }
           onSave={(patch) => saveScope({ ...patch, managerId: scope.managerId })}
-          onDelete={() => deleteScope(scope.id)}
+          onDelete={() => setScopeToDelete(scope.id)}
           saving={saving}
         />
       ))}
@@ -217,6 +227,35 @@ export function StaffHierarchyClient({
           Нет активных сотрудников для настройки.
         </div>
       ) : null}
+
+      {/* Нативный confirm() в приложении Telegram может не показаться —
+          кнопка тогда молча не срабатывает (CLAUDE.md §6). */}
+      <ConfirmDialog
+        open={scopeToDelete !== null}
+        onClose={() => setScopeToDelete(null)}
+        onConfirm={async () => {
+          const id = scopeToDelete;
+          setScopeToDelete(null);
+          if (id) await deleteScope(id);
+        }}
+        title="Удалить правило?"
+        description={
+          scopeToDelete
+            ? `Правило для сотрудника «${managerName(scopeToDelete)}» будет снято.`
+            : undefined
+        }
+        bullets={[
+          {
+            label:
+              "Руководитель снова начнёт видеть всю организацию — ограничение снимется",
+            tone: "warn",
+          },
+          { label: "Сами сотрудники и их задачи не пострадают", tone: "default" },
+        ]}
+        confirmLabel="Удалить правило"
+        cancelLabel="Отмена"
+        variant="danger"
+      />
     </div>
   );
 }

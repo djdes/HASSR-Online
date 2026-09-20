@@ -1,0 +1,21 @@
+import { openTelegramSession } from "../tg-session";
+import { shot } from "./lib";
+const T = async (p: any) => ((await p.evaluate(`document.body.innerText`)) as string).replace(/\s+/g, " ");
+(async () => {
+  const s = await openTelegramSession({ role: process.env.ROLE || "cookA", width: 360, height: 640, theme: "light" });
+  const p = s.page;
+  p.on("response", async (r) => { const u = r.url().replace(s.base, ""); if (u.startsWith("/api/") && r.request().method() !== "GET") console.log("<<", r.status(), r.request().method(), u.slice(0, 70), (await r.text().catch(() => "")).slice(0, 200)); });
+  await p.goto(s.base + "/journals/hygiene/documents/cmu3xjc390004ks9mroi7qi9i", { waitUntil: "load", timeout: 300000 });
+  await p.waitForTimeout(9000);
+  const NAME = process.env.NAME || "Иван Повар";
+  const row = p.locator(`[data-day-row]`).filter({ hasText: NAME }).first();
+  console.log("row count", await p.locator("[data-day-row]").count());
+  const btn = row.getByRole("button", { name: /Заполнить|Зд\.|С1|С2/ }).first();
+  await btn.scrollIntoViewIfNeeded(); await p.waitForTimeout(400);
+  await btn.click();
+  await p.waitForTimeout(2500);
+  console.log("TXT after row click", (await T(p)).slice(0, 700));
+  await shot(p, (process.env.TAG || "cookA") + "-row-menu");
+  console.log("ERRORS", JSON.stringify(s.errors));
+  await s.close();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 700)); process.exit(1); });

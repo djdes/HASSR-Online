@@ -40,7 +40,7 @@ type TasksFlowHealthResponse = {
 export async function GET() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
   }
   const orgId = getActiveOrgId(session);
   const integration = await db.tasksFlowIntegration.findUnique({

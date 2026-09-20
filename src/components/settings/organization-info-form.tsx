@@ -22,6 +22,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   ORG_OWNERSHIP,
   ORG_SPHERES,
@@ -104,6 +105,11 @@ export function OrganizationInfoForm({
   const [innLookup, setInnLookup] = useState(false);
   const [legal, setLegal] = useState<Legal>(legalInitial);
   const [legalLoading, setLegalLoading] = useState(false);
+  /** Предложение заменить введённое название на найденное в ЕГРЮЛ. */
+  const [nameReplace, setNameReplace] = useState<{
+    current: string;
+    suggested: string;
+  } | null>(null);
 
   /** Снимок ЕГРЮЛ в организацию: кнопка «Обновить из ЕГРЮЛ» и после «Найти». */
   async function refreshLegal(inn: string, quiet = false) {
@@ -225,26 +231,24 @@ export function OrganizationInfoForm({
         toast.error(data?.error ?? "Не нашли организацию");
         return;
       }
-      // Защита: если пользователь уже ввёл своё название и оно
-      // отличается от DaData — подтверждаем замену, иначе тихо
-      // затрём ввод.
-      let nextName = data.name || form.name;
-      if (
-        form.name &&
-        data.name &&
+      // Защита: если человек уже ввёл своё название и оно отличается от
+      // найденного в ЕГРЮЛ — спрашиваем, прежде чем затирать ввод.
+      // Спрашиваем своим окном: нативный confirm() в приложении
+      // Telegram может не показаться вовсе (CLAUDE.md §6).
+      const needsNameConfirm =
+        Boolean(form.name) &&
+        Boolean(data.name) &&
         form.name.trim().toLowerCase() !==
-          (data.name as string).trim().toLowerCase()
-      ) {
-        const ok = window.confirm(
-          `Заменить «${form.name}» на «${data.name}» из ЕГРЮЛ?`
-        );
-        if (!ok) nextName = form.name;
-      }
+          (data.name as string).trim().toLowerCase();
+
       setForm((prev) => ({
         ...prev,
-        name: nextName,
+        name: needsNameConfirm ? prev.name : data.name || prev.name,
         address: data.address || prev.address,
       }));
+      if (needsNameConfirm) {
+        setNameReplace({ current: form.name, suggested: data.name as string });
+      }
       toast.success(`Найдено: ${data.name}`);
       void refreshLegal(inn, true);
     } catch (err) {
@@ -693,6 +697,33 @@ export function OrganizationInfoForm({
           color: #9b9fb3;
         }
       `}</style>
+
+      <ConfirmDialog
+        open={nameReplace !== null}
+        onClose={() => setNameReplace(null)}
+        onConfirm={() => {
+          const suggested = nameReplace?.suggested;
+          setNameReplace(null);
+          if (suggested) setForm((prev) => ({ ...prev, name: suggested }));
+        }}
+        title="Заменить название на данные из ЕГРЮЛ?"
+        description={
+          nameReplace
+            ? `Сейчас введено «${nameReplace.current}». В ЕГРЮЛ по этому ИНН записано «${nameReplace.suggested}».`
+            : undefined
+        }
+        bullets={[
+          {
+            label:
+              "Официальное название попадёт в договоры и печатные формы журналов",
+            tone: "info",
+          },
+          { label: "Если откажетесь — останется то, что вы ввели", tone: "default" },
+        ]}
+        confirmLabel="Заменить"
+        cancelLabel="Оставить своё"
+        variant="info"
+      />
     </div>
   );
 }

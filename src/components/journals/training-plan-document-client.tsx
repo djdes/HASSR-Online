@@ -670,7 +670,18 @@ export function TrainingPlanDocumentClient({
   }
 
   async function closeDocument() {
-    if (!window.confirm(`Закончить журнал "${title}"?`)) return;
+    const ok = await confirmAsync({
+      title: `Закончить журнал «${title}»?`,
+      description:
+        "Журнал уйдёт из рабочего списка в раздел закрытых. Все записи сохранятся — отчёты и PDF по ним останутся.",
+      bullets: [
+        { label: "Добавлять и править записи после этого нельзя", tone: "warn" },
+        { label: "Вернуть журнал в активные можно в любой момент", tone: "info" },
+      ],
+      confirmLabel: "Закончить журнал",
+      variant: "warn",
+    });
+    if (!ok) return;
 
     const response = await fetch(`/api/journal-documents/${documentId}`, {
       method: "PATCH",

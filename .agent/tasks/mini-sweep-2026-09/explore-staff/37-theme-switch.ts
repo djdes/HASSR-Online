@@ -1,0 +1,31 @@
+import { openTelegramSession, db, state } from "../tg-session";
+import { shot } from "./lib";
+const PROBE = `(()=>{const m=document.getElementById('mini-root');return {body:getComputedStyle(document.body).backgroundColor, miniRoot:m?getComputedStyle(m).backgroundColor:'none', mt:m?m.getAttribute('data-theme'):'-', ls:localStorage.getItem('wesetup-app-theme')}})()`;
+(async () => {
+  await db.user.update({ where: { id: state.users.cookA.id }, data: { themePreference: "light" } });
+  const s = await openTelegramSession({ role: "cookA", width: 360, height: 640, theme: "light" });
+  const p = s.page;
+  p.on("response", async (r) => { if (r.request().method() !== "GET" && r.url().includes("/api/")) console.log("<<", r.status(), r.request().method(), r.url().replace(s.base, "").slice(0, 60)); });
+  await p.goto(s.base + "/mini/me", { waitUntil: "load", timeout: 300000 });
+  await p.waitForTimeout(6000);
+  console.log("me light", JSON.stringify(await p.evaluate(PROBE)));
+  await p.getByText("Тёмная", { exact: true }).click();
+  await p.waitForTimeout(3000);
+  console.log("me after switch", JSON.stringify(await p.evaluate(PROBE)));
+  console.log("DB pref", (await db.user.findUnique({ where: { id: state.users.cookA.id }, select: { themePreference: true } }))?.themePreference);
+  // client-side nav via bottom menu
+  await p.locator('a[data-nav-href="/mini/sections"]').click();
+  await p.waitForTimeout(5000);
+  console.log("sections (client nav)", p.url().replace(s.base, ""), JSON.stringify(await p.evaluate(PROBE)));
+  await shot(p, "sw-sections");
+  await p.goto(s.base + "/journals/hygiene/documents/cmu3xjc390004ks9mroi7qi9i", { waitUntil: "load", timeout: 300000 });
+  await p.waitForTimeout(9000);
+  console.log("doc (full load)", JSON.stringify(await p.evaluate(PROBE)));
+  await shot(p, "sw-doc");
+  await p.reload({ waitUntil: "load", timeout: 300000 });
+  await p.waitForTimeout(9000);
+  console.log("doc (reload)", JSON.stringify(await p.evaluate(PROBE)));
+  await shot(p, "sw-doc-reload");
+  console.log("ERRORS", JSON.stringify(s.errors));
+  await s.close();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 600)); process.exit(1); });

@@ -235,10 +235,10 @@ export async function POST(request: Request) {
     } else {
       const session = await getServerSession(authOptions);
       if (!session) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
       }
       if (!hasFullWorkspaceAccess({ role: session.user.role, isRoot: session.user.isRoot })) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
       }
       organizationId = getActiveOrgId(session);
       actingUser = {

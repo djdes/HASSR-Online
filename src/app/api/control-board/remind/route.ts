@@ -49,27 +49,31 @@ export async function POST(request: Request) {
   const organizationId = getActiveOrgId(session);
   const myUserId = session.user.id;
 
-  // Разрешаем напомнить только subordinates через ManagerScope.
-  let allowedIds: Set<string>;
-  if (hasCapability(session.user, "admin.full")) {
+  async function allActiveUserIds(): Promise<Set<string>> {
     const all = await db.user.findMany({
       where: { organizationId, isActive: true, archivedAt: null },
       select: { id: true },
     });
-    allowedIds = new Set(all.map((u) => u.id));
+    return new Set(all.map((u) => u.id));
+  }
+
+  // Кому можно напомнить — по «Иерархии управления» (ManagerScope).
+  let allowedIds: Set<string>;
+  if (hasCapability(session.user, "admin.full")) {
+    allowedIds = await allActiveUserIds();
   } else {
     const scope = await db.managerScope.findFirst({
       where: { organizationId, managerId: myUserId },
     });
     if (!scope) {
-      return NextResponse.json({ error: "Нет scope" }, { status: 403 });
-    }
-    if (scope.viewMode === "all") {
-      const all = await db.user.findMany({
-        where: { organizationId, isActive: true, archivedAt: null },
-        select: { id: true },
-      });
-      allowedIds = new Set(all.map((u) => u.id));
+      // Правила иерархии вообще не заводили. Везде в коде это значит
+      // «видит всю организацию» (см. `filterSubordinates` и
+      // `canAssignJournal` в `lib/manager-scope.ts`), и только здесь
+      // раньше стояло 403 «Нет scope»: у заведующей не работали
+      // «Тыкнуть» и «Напомнить всем» — главные кнопки её экрана.
+      allowedIds = await allActiveUserIds();
+    } else if (scope.viewMode === "all") {
+      allowedIds = await allActiveUserIds();
     } else if (scope.viewMode === "specific_users") {
       allowedIds = new Set(scope.viewUserIds);
     } else if (scope.viewMode === "job_positions") {
@@ -87,8 +91,30 @@ export async function POST(request: Request) {
   }
 
   let targetUserIds: string[];
+  // Почему никому не отправили. Интерфейс раньше показывал «Напоминание
+  // отправлено» даже когда отправлять было некому — человек думал, что
+  // сотрудника уже тыкнули.
+  let reason: RemindReason | null = null;
+
   if (body.userIds && body.userIds.length > 0) {
-    targetUserIds = body.userIds.filter((id) => allowedIds.has(id));
+    const inScope = body.userIds.filter((id) => allowedIds.has(id));
+    if (inScope.length === 0) {
+      targetUserIds = [];
+      reason = "out_of_scope";
+    } else {
+      // Без Telegram отправлять некуда — это не ошибка, но и не успех.
+      const reachable = await db.user.findMany({
+        where: {
+          id: { in: inScope },
+          telegramChatId: { not: null },
+          isActive: true,
+          archivedAt: null,
+        },
+        select: { id: true },
+      });
+      targetUserIds = reachable.map((u) => u.id);
+      if (targetUserIds.length === 0) reason = "no_telegram";
+    }
   } else {
     // Default: все subordinates с TG, у которых нет active claim сегодня.
     // «Сегодня» — по часовому поясу организации: от UTC-полуночи в Москве
@@ -131,6 +157,14 @@ export async function POST(request: Request) {
       select: { id: true },
     });
     targetUserIds = idle.map((u) => u.id).filter((id) => !busy.has(id));
+    if (targetUserIds.length === 0) {
+      reason =
+        allowedIds.size === 0
+          ? "no_subordinates"
+          : idle.length === 0
+            ? "no_telegram_all"
+            : "all_busy";
+    }
   }
 
   const text =
@@ -150,8 +184,41 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json({ sent, failed, total: targetUserIds.length });
+  if (sent === 0 && failed > 0) reason = "send_failed";
+
+  return NextResponse.json({
+    sent,
+    failed,
+    total: targetUserIds.length,
+    reason,
+    // Текст сразу готовый: интерфейсу не нужно знать наши коды, а
+    // человеку нельзя показывать ни «scope», ни «0 из 0».
+    reasonText: reason ? REMIND_REASON_TEXT[reason] : null,
+  });
 }
+
+/** Почему напоминание никому не ушло. */
+type RemindReason =
+  | "out_of_scope"
+  | "no_telegram"
+  | "no_telegram_all"
+  | "no_subordinates"
+  | "all_busy"
+  | "send_failed";
+
+const REMIND_REASON_TEXT: Record<RemindReason, string> = {
+  out_of_scope:
+    "Этот сотрудник не в вашей зоне ответственности. Попросите управляющего добавить его в разделе «Иерархия управления».",
+  no_telegram:
+    "У сотрудника не подключён Telegram — напоминание отправить некуда.",
+  no_telegram_all:
+    "Ни у кого из сотрудников не подключён Telegram — напоминания отправлять некуда.",
+  no_subordinates:
+    "Вам не назначены сотрудники для контроля. Попросите управляющего настроить это в разделе «Иерархия управления».",
+  all_busy: "Напоминать некому: все уже взяли задачи или отметились сегодня.",
+  send_failed:
+    "Telegram не принял сообщение. Попробуйте ещё раз через пару минут.",
+};
 
 function escape(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");

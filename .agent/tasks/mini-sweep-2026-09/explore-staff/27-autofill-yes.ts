@@ -1,0 +1,28 @@
+import { openTelegramSession, db } from "../tg-session";
+import { shot } from "./lib";
+const DOC = "cmu3xjc390004ks9mroi7qi9i";
+const T = async (p: any) => ((await p.evaluate(`document.body.innerText`)) as string).replace(/\s+/g, " ");
+(async () => {
+  const before = await db.journalDocumentEntry.count({ where: { documentId: DOC, NOT: { data: { equals: { _autoSeeded: true } } } } });
+  console.log("filled cells before:", before, "autoFill:", (await db.journalDocument.findUnique({ where: { id: DOC }, select: { autoFill: true } }))?.autoFill);
+  const s = await openTelegramSession({ role: "cookA", width: 360, height: 640, theme: "light" });
+  const p = s.page;
+  p.on("response", async (r) => { if (r.request().method() !== "GET" && r.url().includes("/api/")) console.log("<<", r.status(), r.request().method(), r.url().replace(s.base, "").slice(0, 70), (await r.text().catch(() => "")).slice(0, 200)); });
+  await p.goto(s.base + "/journals/hygiene/documents/" + DOC, { waitUntil: "load", timeout: 300000 });
+  await p.waitForTimeout(11000);
+  await p.locator("button[role=switch]").first().click({ force: true });
+  await p.waitForTimeout(2500);
+  await shot(p, "cook-autofill-dialog");
+  await p.getByRole("button", { name: /Да, заполнить/ }).click();
+  await p.waitForTimeout(1500);
+  await shot(p, "cook-autofill-t1500");
+  console.log("T1500", ((await p.evaluate(`document.body.innerText`)) as string).replace(/\s+/g," ").slice(-300));
+  await p.waitForTimeout(3000);
+  console.log("TXT", (await T(p)).slice(-300));
+  await shot(p, "cook-autofill-result");
+  console.log("autoFill after:", (await db.journalDocument.findUnique({ where: { id: DOC }, select: { autoFill: true } }))?.autoFill);
+  const after = await db.journalDocumentEntry.count({ where: { documentId: DOC, NOT: { data: { equals: { _autoSeeded: true } } } } });
+  console.log("filled cells after:", after);
+  console.log("ERRORS", JSON.stringify(s.errors));
+  await s.close();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 600)); process.exit(1); });

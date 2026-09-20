@@ -136,8 +136,24 @@ export function EquipmentMaintenanceDocumentsClient({
   }
 
   async function handleStatusChange(docId: string, newStatus: "active" | "closed", docTitle: string) {
-    const label = newStatus === "closed" ? "Отправить в закрытые" : "Отправить в активные";
-    if (!window.confirm(`${label} документ "${docTitle}"?`)) return;
+    const toClosed = newStatus === "closed";
+    const ok = await confirmAsync({
+      title: toClosed
+        ? `Отправить документ «${docTitle}» в закрытые?`
+        : `Вернуть документ «${docTitle}» в активные?`,
+      description: toClosed
+        ? "Документ уйдёт из рабочего списка в раздел закрытых. Записи сохранятся, отчёты и PDF по ним останутся."
+        : "Документ снова появится в рабочем списке, и его можно будет заполнять.",
+      bullets: toClosed
+        ? [
+            { label: "Заполнять закрытый документ нельзя", tone: "warn" as const },
+            { label: "Вернуть в активные можно в любой момент", tone: "info" as const },
+          ]
+        : undefined,
+      confirmLabel: toClosed ? "В закрытые" : "В активные",
+      variant: toClosed ? "warn" : "info",
+    });
+    if (!ok) return;
     const response = await fetch(`/api/journal-documents/${docId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },

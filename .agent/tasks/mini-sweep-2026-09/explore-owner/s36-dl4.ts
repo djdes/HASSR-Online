@@ -1,0 +1,32 @@
+import { openTelegramSession } from "../tg-session";
+import { shot, probe } from "./lib";
+async function main() {
+const s = await openTelegramSession({ role: "ownerA", width: 360, height: 640, theme: "light" });
+const p = s.page;
+p.on("download", async d => console.log("DOWNLOAD " + d.suggestedFilename()));
+p.on("response", async r => { if (/\/api\/reports\//.test(r.url())) console.log("RES " + r.status() + " " + r.url().replace(s.base,"") + " ct=" + r.headers()["content-type"]); });
+await p.goto(s.base + "/reports", { waitUntil: "load", timeout: 300000 });
+await p.waitForTimeout(14000);
+await p.locator('button:has-text("Выберите журнал")').first().click(); await p.waitForTimeout(1500);
+await p.locator('[role="option"]:has-text("Гигиенический журнал")').first().click(); await p.waitForTimeout(1200);
+const all = p.locator('input[type="date"]');
+await all.nth(4).fill("2026-09-01");
+await all.nth(5).fill("2026-09-21");
+await p.waitForTimeout(600);
+await shot(p, "dl4-filled");
+console.log("--- PDF");
+await p.locator('button:has-text("Скачать PDF")').first().click();
+await p.waitForTimeout(15000);
+await shot(p, "dl4-pdf");
+const pr: any = await probe(p);
+console.log("url=" + pr.url);
+console.log("--- Excel");
+await p.locator('button:has-text("Скачать Excel")').first().click();
+await p.waitForTimeout(15000);
+await shot(p, "dl4-excel");
+const pr2: any = await probe(p);
+console.log("url=" + pr2.url + " tail=" + pr2.bodyText.split("\n").filter((x:string)=>x.trim()).slice(-6).join(" / "));
+console.log("ERRORS", s.errors);
+await s.close();
+}
+main().then(()=>process.exit(0), e=>{console.error(e); process.exit(1);});

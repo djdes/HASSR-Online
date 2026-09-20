@@ -15,6 +15,7 @@ import {
   Zap,
 } from "lucide-react";
 import { toast } from "sonner";
+import { confirmAsync } from "@/components/ui/confirm-async";
 import { LiteMarkdown } from "@/components/ui/lite-markdown";
 import { SANPIN_CHAT_OPEN_EVENT } from "@/lib/sanpin-chat-bus";
 import { IncomingMessagePopup } from "@/components/support/incoming-message-popup";
@@ -272,8 +273,19 @@ export function SanpinChatWidget({ bottomOffset }: { bottomOffset?: number }) {
     );
   }
 
-  function reset() {
-    if (!confirm("Очистить переписку?")) return;
+  async function reset() {
+    const ok = await confirmAsync({
+      title: "Очистить переписку?",
+      description:
+        "Все вопросы и ответы помощника с этого устройства будут стёрты.",
+      bullets: [
+        { label: "Вернуть переписку нельзя", tone: "warn" },
+        { label: "Журналы и записи это не затрагивает", tone: "default" },
+      ],
+      confirmLabel: "Очистить",
+      variant: "danger",
+    });
+    if (!ok) return;
     setMessages([]);
     try {
       localStorage.removeItem(STORAGE_KEY);
@@ -345,7 +357,7 @@ export function SanpinChatWidget({ bottomOffset }: { bottomOffset?: number }) {
               <div className="flex items-center gap-1">
                 <button
                   type="button"
-                  onClick={reset}
+                  onClick={() => void reset()}
                   className="rounded-lg px-2 py-1 text-[11px] text-white/70 hover:bg-white/10 hover:text-white"
                 >
                   Очистить

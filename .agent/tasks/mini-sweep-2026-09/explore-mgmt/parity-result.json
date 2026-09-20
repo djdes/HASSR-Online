@@ -1,0 +1,2765 @@
+[
+ {
+  "route": "/batches",
+  "tag": "shell:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 92,
+  "txt": "W\nВход\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/batches/new",
+  "tag": "shell:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 92,
+  "txt": "W\nВход\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/bonuses",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3130,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 38\nГотово: 2\nСейчас вы делаете: ПРОБА ЧУЖОГО — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nГот",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/capa",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3130,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 38\nГотово: 2\nСейчас вы делаете: ПРОБА ЧУЖОГО — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nГот",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/capa/new",
+  "tag": "shell:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 92,
+  "txt": "W\nВход\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/changes",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3130,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 38\nГотово: 2\nСейчас вы делаете: ПРОБА ЧУЖОГО — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nГот",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/changes/new",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3130,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 38\nГотово: 2\nСейчас вы делаете: ПРОБА ЧУЖОГО — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nГот",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/competencies",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3130,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 38\nГотово: 2\nСейчас вы делаете: ПРОБА ЧУЖОГО — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nГот",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/control-board",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3130,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 38\nГотово: 2\nСейчас вы делаете: ПРОБА ЧУЖОГО — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nГот",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/dashboard",
+  "tag": "shell:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 92,
+  "txt": "W\nВход\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/dashboard/catch-up",
+  "tag": "shell:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 92,
+  "txt": "W\nВход\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/dashboard/compliance-audit",
+  "tag": "shell:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 33,
+  "txt": "W\nЖурналы\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/ideas",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3130,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 38\nГотово: 2\nСейчас вы делаете: ПРОБА ЧУЖОГО — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nГот",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/journals",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3130,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 38\nГотово: 2\nСейчас вы делаете: ПРОБА ЧУЖОГО — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nГот",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/journals-progress",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3130,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 38\nГотово: 2\nСейчас вы делаете: ПРОБА ЧУЖОГО — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nГот",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/losses",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3130,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 38\nГотово: 2\nСейчас вы делаете: ПРОБА ЧУЖОГО — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nГот",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/losses/new",
+  "tag": "shell:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 92,
+  "txt": "W\nВход\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/mercury",
+  "tag": "shell:cookA",
+  "final": "/mercury",
+  "h1": "Входящие ВСД",
+  "len": 436,
+  "txt": "W\nВходящие ВСД\nФГИС «МЕРКУРИЙ»\nВходящие ВСД\n\nПриняли товар — здесь же вносите контроль и гасите документ.\n\nЖдут гашения 0\nНастройки\nКак это работает\nДемо-режим — данные не из Меркурия\nЭто учебные документы. Настоящие появятся после подключения к Ветис.API.\nСинхронизация выключена. Включить в настрой",
+  "verdict": "ok"
+ },
+ {
+  "route": "/orders",
+  "tag": "shell:cookA",
+  "final": "/orders",
+  "h1": "Приказы",
+  "len": 2269,
+  "txt": "W\nПриказы\nПриказы\n\nГотовые приказы по предприятию: реквизиты подставляются сами, остаётся распечатать и подписать.\n\nИзданные приказы\nПока ни одного приказа\n\nВыберите шаблон ниже, заполните Ф. И. О. и номер — реквизиты организации подставятся сами. Изданные приказы останутся здесь, и их можно будет р",
+  "verdict": "ok"
+ },
+ {
+  "route": "/plans",
+  "tag": "shell:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 92,
+  "txt": "W\nВход\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/plans/new",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3130,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 38\nГотово: 2\nСейчас вы делаете: ПРОБА ЧУЖОГО — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nГот",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/reports",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3130,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 38\nГотово: 2\nСейчас вы делаете: ПРОБА ЧУЖОГО — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nГот",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/sanpin",
+  "tag": "shell:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 33,
+  "txt": "W\nЖурналы\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3130,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 38\nГотово: 2\nСейчас вы делаете: ПРОБА ЧУЖОГО — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nГот",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/accounting",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3130,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 38\nГотово: 2\nСейчас вы делаете: ПРОБА ЧУЖОГО — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nГот",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/api",
+  "tag": "shell:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 92,
+  "txt": "W\nВход\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/appearance",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3130,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 38\nГотово: 2\nСейчас вы делаете: ПРОБА ЧУЖОГО — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nГот",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/areas",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3130,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 38\nГотово: 2\nСейчас вы делаете: ПРОБА ЧУЖОГО — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nГот",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/audit",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3130,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 38\nГотово: 2\nСейчас вы делаете: ПРОБА ЧУЖОГО — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nГот",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/auto-journals",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3130,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 38\nГотово: 2\nСейчас вы делаете: ПРОБА ЧУЖОГО — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nГот",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/backup",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3130,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 38\nГотово: 2\nСейчас вы делаете: ПРОБА ЧУЖОГО — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nГот",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/balance",
+  "tag": "shell:cookA",
+  "final": "/settings/balance",
+  "h1": "Баланс и бонусы",
+  "len": 1074,
+  "txt": "W\nБаланс и бонусы\nБаланс и бонусы\n\nБаллы — это скидка на подписку: 1 балл = 1 ₽. Зарабатываются двумя способами: рекомендацией коллегам и отзывом о сервисе. Тратятся автоматически при оплате.\n\nВаши бонусы идут на баланс организации\n\nБаллы тратит руководитель — при оплате подписки. Вы принесли 0 ₽: з",
+  "verdict": "ok"
+ },
+ {
+  "route": "/settings/buildings",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3130,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 38\nГотово: 2\nСейчас вы делаете: ПРОБА ЧУЖОГО — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nГот",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/calendar",
+  "tag": "shell:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 92,
+  "txt": "W\nВход\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/compliance",
+  "tag": "shell:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 92,
+  "txt": "W\nВход\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/consultant",
+  "tag": "shell:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 33,
+  "txt": "W\nЖурналы\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/equipment",
+  "tag": "shell:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 92,
+  "txt": "W\nВход\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/equipment/qr-sheet",
+  "tag": "shell:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 92,
+  "txt": "W\nВход\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/experimental",
+  "tag": "shell:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 33,
+  "txt": "W\nЖурналы\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/inspector-portal",
+  "tag": "shell:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 33,
+  "txt": "W\nЖурналы\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/integrations/mercury",
+  "tag": "shell:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 92,
+  "txt": "W\nВход\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/integrations/tasksflow",
+  "tag": "shell:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 92,
+  "txt": "W\nВход\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journal-access",
+  "tag": "shell:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 92,
+  "txt": "W\nВход\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journal-bonuses",
+  "tag": "shell:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 92,
+  "txt": "W\nВход\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journal-checklists",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3130,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 38\nГотово: 2\nСейчас вы делаете: ПРОБА ЧУЖОГО — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nГот",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journal-difficulty",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3130,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 38\nГотово: 2\nСейчас вы делаете: ПРОБА ЧУЖОГО — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nГот",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journal-flow",
+  "tag": "shell:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 92,
+  "txt": "W\nВход\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journal-periods",
+  "tag": "shell:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 33,
+  "txt": "W\nЖурналы\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journal-pipelines",
+  "tag": "shell:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 92,
+  "txt": "W\nВход\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journal-responsibles",
+  "tag": "shell:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 33,
+  "txt": "W\nЖурналы\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journal-task-mode",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3130,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 38\nГотово: 2\nСейчас вы делаете: ПРОБА ЧУЖОГО — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nГот",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journals",
+  "tag": "shell:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 92,
+  "txt": "W\nВход\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journals-by-position",
+  "tag": "shell:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 92,
+  "txt": "W\nВход\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/notifications",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3130,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 38\nГотово: 2\nСейчас вы делаете: ПРОБА ЧУЖОГО — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nГот",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/onboarding",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3130,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 38\nГотово: 2\nСейчас вы делаете: ПРОБА ЧУЖОГО — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nГот",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/onboarding-template",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3130,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 38\nГотово: 2\nСейчас вы делаете: ПРОБА ЧУЖОГО — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nГот",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/onboarding/advanced",
+  "tag": "shell:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 33,
+  "txt": "W\nЖурналы\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/organization",
+  "tag": "shell:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 33,
+  "txt": "W\nЖурналы\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/partner",
+  "tag": "shell:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 92,
+  "txt": "W\nВход\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/permissions",
+  "tag": "shell:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 33,
+  "txt": "W\nЖурналы\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/phone",
+  "tag": "shell:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 33,
+  "txt": "W\nЖурналы\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/position-staff-visibility",
+  "tag": "shell:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 92,
+  "txt": "W\nВход\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/print-agent",
+  "tag": "shell:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 33,
+  "txt": "W\nЖурналы\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/products",
+  "tag": "shell:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 92,
+  "txt": "W\nВход\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/qr-posters",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3023,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nГотово: 0\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nВзять\nХОЛОДИЛЬНИКИ (8)\nМорозилка QR E2E — Утро\nГорячий цех\nВзять\nМорозилка QR E2E ",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/role-presets",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3023,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nГотово: 0\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nВзять\nХОЛОДИЛЬНИКИ (8)\nМорозилка QR E2E — Утро\nГорячий цех\nВзять\nМорозилка QR E2E ",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/schedule",
+  "tag": "shell:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 33,
+  "txt": "W\nЖурналы\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/security",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3142,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 39\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Проверка здоровья смены — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПров",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/services",
+  "tag": "shell:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 92,
+  "txt": "W\nВход\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/staff-hierarchy",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3142,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 39\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Проверка здоровья смены — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПров",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/subscription",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3142,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 39\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Проверка здоровья смены — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПров",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/task-visibility",
+  "tag": "shell:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 92,
+  "txt": "W\nВход\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/users",
+  "tag": "shell:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 33,
+  "txt": "W\nЖурналы\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/webhooks",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3142,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 39\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Проверка здоровья смены — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПров",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/workload-balance",
+  "tag": "shell:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 33,
+  "txt": "W\nЖурналы\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/staff",
+  "tag": "shell:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 33,
+  "txt": "W\nЖурналы\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/team",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3142,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 39\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Проверка здоровья смены — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПров",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/verifications",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3142,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 39\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Проверка здоровья смены — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПров",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/mini/today",
+  "tag": "shell:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3142,
+  "txt": "W\nСегодня\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 39\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Проверка здоровья смены — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПров",
+  "verdict": "ok"
+ },
+ {
+  "route": "/mini/sections",
+  "tag": "shell:cookA",
+  "final": "/mini/sections",
+  "h1": "Все разделы",
+  "len": 346,
+  "txt": "W\nВсе разделы\n\nКАБИНЕТ\n\nВсе разделы\n\nТе же страницы, что и на сайте, — здесь они открываются прямо в приложении. Показаны только разделы, доступные вам.\n\nРабота\n\nЖурналы, проверка, команда\n\nЖурналы\nЗаполнить и посмотреть записи\nОтчёты и деньги\n\nВыгрузки, премии, баланс, идеи\n\nБаланс и бонусы\nБаллы з",
+  "verdict": "ok"
+ },
+ {
+  "route": "/mini/me",
+  "tag": "shell:cookA",
+  "final": "/mini/me",
+  "h1": "Профиль",
+  "len": 457,
+  "txt": "W\nПрофиль\nНа главную\nПрофиль\nИмя\nИван Повар\nОрганизация\nКафе «Альфа»\nРоль\nПовар\nДолжность\nне указана\nТелефон\n+79990000001\nEmail\ncook-a@e2e.local\nТема оформления\nНастройка сохранится на этом устройстве\nТёмная\nСветлая\nБаланс и бонусы\nотзыв и приглашения\nВсе разделы\nжурналы, отчёты, настройки\nОбратная ",
+  "verdict": "ok"
+ },
+ {
+  "route": "/batches",
+  "tag": "site:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3032,
+  "txt": "W\nСегодня\n00:24:11\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nГотово: 0\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nВзять\nХОЛОДИЛЬНИКИ (8)\nМорозилка QR E2E — Утро\nГорячий цех\nВзять\nМорозилк",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/batches/new",
+  "tag": "site:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 101,
+  "txt": "W\nВход\n00:24:16\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/bonuses",
+  "tag": "site:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 0,
+  "txt": "",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/capa",
+  "tag": "site:cookA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/capa\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/capa\", waiting until \"domconte"
+ },
+ {
+  "route": "/capa/new",
+  "tag": "site:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 0,
+  "txt": "",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/changes",
+  "tag": "site:cookA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/changes\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/changes\", waiting until \"do"
+ },
+ {
+  "route": "/changes/new",
+  "tag": "site:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3032,
+  "txt": "W\nСегодня\n00:24:41\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nГотово: 0\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nВзять\nХОЛОДИЛЬНИКИ (8)\nМорозилка QR E2E — Утро\nГорячий цех\nВзять\nМорозилк",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/competencies",
+  "tag": "site:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 140,
+  "txt": "Иван П.\nИП\nКафе «Альфа»\nЖурналы\nЗагружаем журналы…\n© 2026\nДоговор-оферта\nПолитика конфиденциальности\nБаза знаний\n upport@we etup.ru\nTelegram",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/control-board",
+  "tag": "site:cookA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/control-board\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/control-board\", waiti"
+ },
+ {
+  "route": "/dashboard",
+  "tag": "site:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 0,
+  "txt": "",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/dashboard/catch-up",
+  "tag": "site:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3032,
+  "txt": "W\nСегодня\n00:24:55\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nГотово: 0\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nВзять\nХОЛОДИЛЬНИКИ (8)\nМорозилка QR E2E — Утро\nГорячий цех\nВзять\nМорозилк",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/dashboard/compliance-audit",
+  "tag": "site:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 140,
+  "txt": "Иван П.\nИП\nКафе «Альфа»\nЖурналы\nЗагружаем журналы…\n© 2026\nДоговор-оферта\nПолитика конфиденциальности\nБаза знаний\n upport@we etup.ru\nTelegram",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/ideas",
+  "tag": "site:cookA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/ideas\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/ideas\", waiting until \"domcon"
+ },
+ {
+  "route": "/journals",
+  "tag": "site:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 60,
+  "txt": "W\nСегодня\n00:25:05\nЗагружаем задачи…\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/journals-progress",
+  "tag": "site:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 60,
+  "txt": "W\nСегодня\n00:25:11\nЗагружаем задачи…\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/losses",
+  "tag": "site:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 140,
+  "txt": "Иван П.\nИП\nКафе «Альфа»\nЖурналы\nЗагружаем журналы…\n© 2026\nДоговор-оферта\nПолитика конфиденциальности\nБаза знаний\n upport@we etup.ru\nTelegram",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/losses/new",
+  "tag": "site:cookA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/losses/new\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/losses/new\", waiting unt"
+ },
+ {
+  "route": "/mercury",
+  "tag": "site:cookA",
+  "final": "/mercury",
+  "h1": "Входящие ВСД",
+  "len": 524,
+  "txt": "Иван П.\nИП\nКафе «Альфа»\nВходящие ВСД\nФГИС «МЕРКУРИЙ»\nВходящие ВСД\n\nПриняли товар — здесь же вносите контроль и гасите документ.\n\nЖдут гашения 0\nНастройки\nКак это работает\nДемо-режим — данные не из Меркурия\nЭто учебные документы. Настоящие появятся после подключения к Ветис.API.\nСинхронизация выключе",
+  "verdict": "ok"
+ },
+ {
+  "route": "/orders",
+  "tag": "site:cookA",
+  "final": "/orders",
+  "h1": "Приказы",
+  "len": 2369,
+  "txt": "Иван П.\nИП\nКафе «Альфа»\nПриказы\nПриказы\n\nГотовые приказы по предприятию: реквизиты подставляются сами, остаётся распечатать и подписать.\n\nИзданные приказы\nПока ни одного приказа\n\nВыберите шаблон ниже, заполните Ф. И. О. и номер — реквизиты организации подставятся сами. Изданные приказы останутся зде",
+  "verdict": "ok"
+ },
+ {
+  "route": "/plans",
+  "tag": "site:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3032,
+  "txt": "W\nСегодня\n00:25:37\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nГотово: 0\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nВзять\nХОЛОДИЛЬНИКИ (8)\nМорозилка QR E2E — Утро\nГорячий цех\nВзять\nМорозилк",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/plans/new",
+  "tag": "site:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3032,
+  "txt": "W\nСегодня\n00:25:46\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nГотово: 0\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nВзять\nХОЛОДИЛЬНИКИ (8)\nМорозилка QR E2E — Утро\nГорячий цех\nВзять\nМорозилк",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/reports",
+  "tag": "site:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 0,
+  "txt": "",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/sanpin",
+  "tag": "site:cookA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/sanpin\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/sanpin\", waiting until \"domc"
+ },
+ {
+  "route": "/settings",
+  "tag": "site:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 101,
+  "txt": "W\nВход\n00:26:10\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/accounting",
+  "tag": "site:cookA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/accounting\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/settings/accoun"
+ },
+ {
+  "route": "/settings/api",
+  "tag": "site:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3032,
+  "txt": "W\nСегодня\n00:26:20\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nГотово: 0\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nВзять\nХОЛОДИЛЬНИКИ (8)\nМорозилка QR E2E — Утро\nГорячий цех\nВзять\nМорозилк",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/appearance",
+  "tag": "site:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 0,
+  "txt": "",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/areas",
+  "tag": "site:cookA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/areas\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/settings/areas\", wai"
+ },
+ {
+  "route": "/settings/audit",
+  "tag": "site:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 140,
+  "txt": "Иван П.\nИП\nКафе «Альфа»\nЖурналы\nЗагружаем журналы…\n© 2026\nДоговор-оферта\nПолитика конфиденциальности\nБаза знаний\n upport@we etup.ru\nTelegram",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/auto-journals",
+  "tag": "site:cookA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/auto-journals\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/settings/aut"
+ },
+ {
+  "route": "/settings/backup",
+  "tag": "site:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 140,
+  "txt": "Иван П.\nИП\nКафе «Альфа»\nЖурналы\nЗагружаем журналы…\n© 2026\nДоговор-оферта\nПолитика конфиденциальности\nБаза знаний\n upport@we etup.ru\nTelegram",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/balance",
+  "tag": "site:cookA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/balance\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/settings/balance\","
+ },
+ {
+  "route": "/settings/buildings",
+  "tag": "site:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 140,
+  "txt": "Иван П.\nИП\nКафе «Альфа»\nЖурналы\nЗагружаем журналы…\n© 2026\nДоговор-оферта\nПолитика конфиденциальности\nБаза знаний\n upport@we etup.ru\nTelegram",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/calendar",
+  "tag": "site:cookA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/calendar\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/settings/calendar"
+ },
+ {
+  "route": "/settings/compliance",
+  "tag": "site:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 0,
+  "txt": "",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/consultant",
+  "tag": "site:cookA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/consultant\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/settings/consul"
+ },
+ {
+  "route": "/settings/equipment",
+  "tag": "site:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 140,
+  "txt": "Иван П.\nИП\nКафе «Альфа»\nЖурналы\nЗагружаем журналы…\n© 2026\nДоговор-оферта\nПолитика конфиденциальности\nБаза знаний\n upport@we etup.ru\nTelegram",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/equipment/qr-sheet",
+  "tag": "site:cookA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/equipment/qr-sheet\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/setting"
+ },
+ {
+  "route": "/settings/experimental",
+  "tag": "site:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 140,
+  "txt": "Иван П.\nИП\nКафе «Альфа»\nЖурналы\nЗагружаем журналы…\n© 2026\nДоговор-оферта\nПолитика конфиденциальности\nБаза знаний\n upport@we etup.ru\nTelegram",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/inspector-portal",
+  "tag": "site:cookA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/inspector-portal\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/settings/"
+ },
+ {
+  "route": "/settings/integrations/mercury",
+  "tag": "site:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 0,
+  "txt": "",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/integrations/tasksflow",
+  "tag": "site:cookA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/integrations/tasksflow\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/set"
+ },
+ {
+  "route": "/settings/journal-access",
+  "tag": "site:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3032,
+  "txt": "W\nСегодня\n00:27:14\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nГотово: 0\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nВзять\nХОЛОДИЛЬНИКИ (8)\nМорозилка QR E2E — Утро\nГорячий цех\nВзять\nМорозилк",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journal-bonuses",
+  "tag": "site:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3032,
+  "txt": "W\nСегодня\n00:27:22\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nГотово: 0\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nВзять\nХОЛОДИЛЬНИКИ (8)\nМорозилка QR E2E — Утро\nГорячий цех\nВзять\nМорозилк",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journal-checklists",
+  "tag": "site:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 140,
+  "txt": "Иван П.\nИП\nКафе «Альфа»\nЖурналы\nЗагружаем журналы…\n© 2026\nДоговор-оферта\nПолитика конфиденциальности\nБаза знаний\n upport@we etup.ru\nTelegram",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journal-difficulty",
+  "tag": "site:cookA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/journal-difficulty\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/setting"
+ },
+ {
+  "route": "/settings/journal-flow",
+  "tag": "site:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 0,
+  "txt": "",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journal-periods",
+  "tag": "site:cookA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/journal-periods\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/settings/j"
+ },
+ {
+  "route": "/settings/journal-pipelines",
+  "tag": "site:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 140,
+  "txt": "Иван П.\nИП\nКафе «Альфа»\nЖурналы\nЗагружаем журналы…\n© 2026\nДоговор-оферта\nПолитика конфиденциальности\nБаза знаний\n upport@we etup.ru\nTelegram",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journal-responsibles",
+  "tag": "site:cookA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/journal-responsibles\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/setti"
+ },
+ {
+  "route": "/settings/journal-task-mode",
+  "tag": "site:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 0,
+  "txt": "",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journals",
+  "tag": "site:cookA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/journals\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/settings/journals"
+ },
+ {
+  "route": "/settings/journals-by-position",
+  "tag": "site:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 101,
+  "txt": "W\nВход\n00:27:47\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/notifications",
+  "tag": "site:cookA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/notifications\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/settings/not"
+ },
+ {
+  "route": "/settings/onboarding",
+  "tag": "site:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 60,
+  "txt": "W\nСегодня\n00:28:01\nЗагружаем задачи…\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/onboarding-template",
+  "tag": "site:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 101,
+  "txt": "W\nВход\n00:28:11\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/onboarding/advanced",
+  "tag": "site:cookA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/onboarding/advanced\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/settin"
+ },
+ {
+  "route": "/settings/organization",
+  "tag": "site:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3032,
+  "txt": "W\nСегодня\n00:28:24\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nГотово: 0\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nВзять\nХОЛОДИЛЬНИКИ (8)\nМорозилка QR E2E — Утро\nГорячий цех\nВзять\nМорозилк",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/partner",
+  "tag": "site:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 0,
+  "txt": "",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/permissions",
+  "tag": "site:cookA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/permissions\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/settings/permi"
+ },
+ {
+  "route": "/settings/phone",
+  "tag": "site:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3032,
+  "txt": "W\nСегодня\n00:28:34\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nГотово: 0\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nВзять\nХОЛОДИЛЬНИКИ (8)\nМорозилка QR E2E — Утро\nГорячий цех\nВзять\nМорозилк",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/position-staff-visibility",
+  "tag": "site:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 140,
+  "txt": "Иван П.\nИП\nКафе «Альфа»\nЖурналы\nЗагружаем журналы…\n© 2026\nДоговор-оферта\nПолитика конфиденциальности\nБаза знаний\n upport@we etup.ru\nTelegram",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/print-agent",
+  "tag": "site:cookA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/print-agent\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/settings/print"
+ },
+ {
+  "route": "/settings/products",
+  "tag": "site:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 140,
+  "txt": "Иван П.\nИП\nКафе «Альфа»\nЖурналы\nЗагружаем журналы…\n© 2026\nДоговор-оферта\nПолитика конфиденциальности\nБаза знаний\n upport@we etup.ru\nTelegram",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/qr-posters",
+  "tag": "site:cookA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/qr-posters\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/settings/qr-pos"
+ },
+ {
+  "route": "/settings/role-presets",
+  "tag": "site:cookA",
+  "final": "/journals",
+  "h1": "",
+  "len": 140,
+  "txt": "Иван П.\nИП\nКафе «Альфа»\nЖурналы\nЗагружаем журналы…\n© 2026\nДоговор-оферта\nПолитика конфиденциальности\nБаза знаний\n upport@we etup.ru\nTelegram",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/schedule",
+  "tag": "site:cookA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/schedule\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/settings/schedule"
+ },
+ {
+  "route": "/settings/security",
+  "tag": "site:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3032,
+  "txt": "W\nСегодня\n00:28:50\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nГотово: 0\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nВзять\nХОЛОДИЛЬНИКИ (8)\nМорозилка QR E2E — Утро\nГорячий цех\nВзять\nМорозилк",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/services",
+  "tag": "site:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3032,
+  "txt": "W\nСегодня\n00:28:57\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nГотово: 0\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nВзять\nХОЛОДИЛЬНИКИ (8)\nМорозилка QR E2E — Утро\nГорячий цех\nВзять\nМорозилк",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/staff-hierarchy",
+  "tag": "site:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3032,
+  "txt": "W\nСегодня\n00:29:05\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nГотово: 0\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nВзять\nХОЛОДИЛЬНИКИ (8)\nМорозилка QR E2E — Утро\nГорячий цех\nВзять\nМорозилк",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/subscription",
+  "tag": "site:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 101,
+  "txt": "W\nВход\n00:29:12\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/task-visibility",
+  "tag": "site:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 101,
+  "txt": "W\nВход\n00:29:19\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/users",
+  "tag": "site:cookA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/users\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/settings/users\", wai"
+ },
+ {
+  "route": "/settings/webhooks",
+  "tag": "site:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3032,
+  "txt": "W\nСегодня\n00:29:27\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nГотово: 0\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nВзять\nХОЛОДИЛЬНИКИ (8)\nМорозилка QR E2E — Утро\nГорячий цех\nВзять\nМорозилк",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/workload-balance",
+  "tag": "site:cookA",
+  "final": "/mini",
+  "h1": "",
+  "len": 101,
+  "txt": "W\nВход\n00:29:37\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/staff",
+  "tag": "site:cookA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/staff\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/staff\", waiting until \"domcon"
+ },
+ {
+  "route": "/team",
+  "tag": "site:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3032,
+  "txt": "W\nСегодня\n00:29:43\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nГотово: 0\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nВзять\nХОЛОДИЛЬНИКИ (8)\nМорозилка QR E2E — Утро\nГорячий цех\nВзять\nМорозилк",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/verifications",
+  "tag": "site:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3032,
+  "txt": "W\nСегодня\n00:29:49\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nГотово: 0\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nВзять\nХОЛОДИЛЬНИКИ (8)\nМорозилка QR E2E — Утро\nГорячий цех\nВзять\nМорозилк",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/mini/today",
+  "tag": "site:cookA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3032,
+  "txt": "W\nСегодня\n00:29:51\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nГотово: 0\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья смены\nПроверка health_check\nВзять\nХОЛОДИЛЬНИКИ (8)\nМорозилка QR E2E — Утро\nГорячий цех\nВзять\nМорозилк",
+  "verdict": "ok"
+ },
+ {
+  "route": "/mini/sections",
+  "tag": "site:cookA",
+  "final": "/mini/sections",
+  "h1": "Все разделы",
+  "len": 355,
+  "txt": "W\nВсе разделы\n00:29:54\n\nКАБИНЕТ\n\nВсе разделы\n\nТе же страницы, что и на сайте, — здесь они открываются прямо в приложении. Показаны только разделы, доступные вам.\n\nРабота\n\nЖурналы, проверка, команда\n\nЖурналы\nЗаполнить и посмотреть записи\nОтчёты и деньги\n\nВыгрузки, премии, баланс, идеи\n\nБаланс и бонус",
+  "verdict": "ok"
+ },
+ {
+  "route": "/mini/me",
+  "tag": "site:cookA",
+  "final": "/mini/me",
+  "h1": "Профиль",
+  "len": 466,
+  "txt": "W\nПрофиль\n00:29:56\nНа главную\nПрофиль\nИмя\nИван Повар\nОрганизация\nКафе «Альфа»\nРоль\nПовар\nДолжность\nне указана\nТелефон\n+79990000001\nEmail\ncook-a@e2e.local\nТема оформления\nНастройка сохранится на этом устройстве\nТёмная\nСветлая\nБаланс и бонусы\nотзыв и приглашения\nВсе разделы\nжурналы, отчёты, настройки\n",
+  "verdict": "ok"
+ },
+ {
+  "route": "/batches",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/batches/new",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/bonuses",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/capa",
+  "tag": "shell:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 35,
+  "txt": "W\nЖурналы\n1\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/capa/new",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/changes",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/changes/new",
+  "tag": "shell:cleanerA",
+  "final": "/mini",
+  "h1": "",
+  "len": 92,
+  "txt": "W\nВход\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/competencies",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/control-board",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 51,
+  "txt": "W\nСегодня\nЗагружаем задачи…\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/dashboard",
+  "tag": "shell:cleanerA",
+  "final": "/mini",
+  "h1": "",
+  "len": 92,
+  "txt": "W\nВход\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/dashboard/catch-up",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/dashboard/compliance-audit",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/ideas",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/journals",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/journals-progress",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/losses",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/losses/new",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/mercury",
+  "tag": "shell:cleanerA",
+  "final": "/mercury",
+  "h1": "Входящие ВСД",
+  "len": 438,
+  "txt": "W\nВходящие ВСД\n1\nФГИС «МЕРКУРИЙ»\nВходящие ВСД\n\nПриняли товар — здесь же вносите контроль и гасите документ.\n\nЖдут гашения 0\nНастройки\nКак это работает\nДемо-режим — данные не из Меркурия\nЭто учебные документы. Настоящие появятся после подключения к Ветис.API.\nСинхронизация выключена. Включить в настр",
+  "verdict": "ok"
+ },
+ {
+  "route": "/orders",
+  "tag": "shell:cleanerA",
+  "final": "/orders",
+  "h1": "Приказы",
+  "len": 2271,
+  "txt": "W\nПриказы\n1\nПриказы\n\nГотовые приказы по предприятию: реквизиты подставляются сами, остаётся распечатать и подписать.\n\nИзданные приказы\nПока ни одного приказа\n\nВыберите шаблон ниже, заполните Ф. И. О. и номер — реквизиты организации подставятся сами. Изданные приказы останутся здесь, и их можно будет",
+  "verdict": "ok"
+ },
+ {
+  "route": "/plans",
+  "tag": "shell:cleanerA",
+  "final": "/mini",
+  "h1": "",
+  "len": 92,
+  "txt": "W\nВход\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/plans/new",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/reports",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/sanpin",
+  "tag": "shell:cleanerA",
+  "final": "/mini",
+  "h1": "",
+  "len": 94,
+  "txt": "W\nВход\n1\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings",
+  "tag": "shell:cleanerA",
+  "final": "/mini",
+  "h1": "",
+  "len": 94,
+  "txt": "W\nВход\n1\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/accounting",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/api",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/appearance",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/areas",
+  "tag": "shell:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 35,
+  "txt": "W\nЖурналы\n1\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/audit",
+  "tag": "shell:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 35,
+  "txt": "W\nЖурналы\n1\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/auto-journals",
+  "tag": "shell:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 35,
+  "txt": "W\nЖурналы\n1\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/backup",
+  "tag": "shell:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 35,
+  "txt": "W\nЖурналы\n1\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/balance",
+  "tag": "shell:cleanerA",
+  "final": "/settings/balance",
+  "h1": "Баланс и бонусы",
+  "len": 1076,
+  "txt": "W\nБаланс и бонусы\n1\nБаланс и бонусы\n\nБаллы — это скидка на подписку: 1 балл = 1 ₽. Зарабатываются двумя способами: рекомендацией коллегам и отзывом о сервисе. Тратятся автоматически при оплате.\n\nВаши бонусы идут на баланс организации\n\nБаллы тратит руководитель — при оплате подписки. Вы принесли 0 ₽:",
+  "verdict": "ok"
+ },
+ {
+  "route": "/settings/buildings",
+  "tag": "shell:cleanerA",
+  "final": "/mini",
+  "h1": "",
+  "len": 94,
+  "txt": "W\nВход\n1\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/calendar",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/compliance",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/consultant",
+  "tag": "shell:cleanerA",
+  "final": "/mini",
+  "h1": "",
+  "len": 94,
+  "txt": "W\nВход\n1\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/equipment",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/equipment/qr-sheet",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 51,
+  "txt": "W\nСегодня\nЗагружаем задачи…\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/experimental",
+  "tag": "shell:cleanerA",
+  "final": "/mini",
+  "h1": "",
+  "len": 94,
+  "txt": "W\nВход\n1\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/inspector-portal",
+  "tag": "shell:cleanerA",
+  "final": "/mini",
+  "h1": "",
+  "len": 94,
+  "txt": "W\nВход\n1\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/integrations/mercury",
+  "tag": "shell:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 35,
+  "txt": "W\nЖурналы\n1\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/integrations/tasksflow",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journal-access",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journal-bonuses",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journal-checklists",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journal-difficulty",
+  "tag": "shell:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 35,
+  "txt": "W\nЖурналы\n1\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journal-flow",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journal-periods",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journal-pipelines",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journal-responsibles",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journal-task-mode",
+  "tag": "shell:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 35,
+  "txt": "W\nЖурналы\n1\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journals",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journals-by-position",
+  "tag": "shell:cleanerA",
+  "final": "/mini",
+  "h1": "",
+  "len": 94,
+  "txt": "W\nВход\n1\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/notifications",
+  "tag": "shell:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 35,
+  "txt": "W\nЖурналы\n1\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/onboarding",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/onboarding-template",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/onboarding/advanced",
+  "tag": "shell:cleanerA",
+  "final": "/mini",
+  "h1": "",
+  "len": 94,
+  "txt": "W\nВход\n1\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/organization",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/partner",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/permissions",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/phone",
+  "tag": "shell:cleanerA",
+  "final": "/mini",
+  "h1": "",
+  "len": 94,
+  "txt": "W\nВход\n1\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/position-staff-visibility",
+  "tag": "shell:cleanerA",
+  "final": "/mini",
+  "h1": "",
+  "len": 94,
+  "txt": "W\nВход\n1\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/print-agent",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/products",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/qr-posters",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/role-presets",
+  "tag": "shell:cleanerA",
+  "final": "/mini",
+  "h1": "",
+  "len": 94,
+  "txt": "W\nВход\n1\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/schedule",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/security",
+  "tag": "shell:cleanerA",
+  "final": "/mini",
+  "h1": "",
+  "len": 92,
+  "txt": "W\nВход\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/services",
+  "tag": "shell:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 35,
+  "txt": "W\nЖурналы\n1\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/staff-hierarchy",
+  "tag": "shell:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 35,
+  "txt": "W\nЖурналы\n1\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/subscription",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/task-visibility",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/users",
+  "tag": "shell:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 33,
+  "txt": "W\nЖурналы\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/webhooks",
+  "tag": "shell:cleanerA",
+  "final": "/mini",
+  "h1": "",
+  "len": 94,
+  "txt": "W\nВход\n1\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/workload-balance",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/staff",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/team",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/verifications",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/mini/today",
+  "tag": "shell:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3137,
+  "txt": "W\nСегодня\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 40\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка здоровья с",
+  "verdict": "ok"
+ },
+ {
+  "route": "/mini/sections",
+  "tag": "shell:cleanerA",
+  "final": "/mini/sections",
+  "h1": "Все разделы",
+  "len": 348,
+  "txt": "W\nВсе разделы\n1\n\nКАБИНЕТ\n\nВсе разделы\n\nТе же страницы, что и на сайте, — здесь они открываются прямо в приложении. Показаны только разделы, доступные вам.\n\nРабота\n\nЖурналы, проверка, команда\n\nЖурналы\nЗаполнить и посмотреть записи\nОтчёты и деньги\n\nВыгрузки, премии, баланс, идеи\n\nБаланс и бонусы\nБаллы",
+  "verdict": "ok"
+ },
+ {
+  "route": "/mini/me",
+  "tag": "shell:cleanerA",
+  "final": "/mini/me",
+  "h1": "Профиль",
+  "len": 466,
+  "txt": "W\nПрофиль\n1\nНа главную\nПрофиль\nИмя\nОльга Уборщица\nОрганизация\nКафе «Альфа»\nРоль\nПовар\nДолжность\nне указана\nТелефон\n+79990000001\nEmail\ncleaner-a@e2e.local\nТема оформления\nНастройка сохранится на этом устройстве\nТёмная\nСветлая\nБаланс и бонусы\nотзыв и приглашения\nВсе разделы\nжурналы, отчёты, настройки\n",
+  "verdict": "ok"
+ },
+ {
+  "route": "/batches",
+  "tag": "site:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 62,
+  "txt": "W\nСегодня\n00:38:03\n1\nЗагружаем задачи…\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/batches/new",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 0,
+  "txt": "",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/bonuses",
+  "tag": "site:cleanerA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/bonuses\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/bonuses\", waiting until \"do"
+ },
+ {
+  "route": "/capa",
+  "tag": "site:cleanerA",
+  "final": "/mini",
+  "h1": "",
+  "len": 103,
+  "txt": "W\nВход\n00:38:18\n1\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/capa/new",
+  "tag": "site:cleanerA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/capa/new\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/capa/new\", waiting until \""
+ },
+ {
+  "route": "/changes",
+  "tag": "site:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 62,
+  "txt": "W\nСегодня\n00:38:30\n1\nЗагружаем задачи…\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/changes/new",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 134,
+  "txt": "Ольга У.\nОУ\nКафе «Альфа»\nЖурналы\n© 2026\nДоговор-оферта\nПолитика конфиденциальности\nБаза знаний\n upport@we etup.ru\nTelegram\nAI помощник",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/competencies",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 141,
+  "txt": "Ольга У.\nОУ\nКафе «Альфа»\nЖурналы\nЗагружаем журналы…\n© 2026\nДоговор-оферта\nПолитика конфиденциальности\nБаза знаний\n upport@we etup.ru\nTelegram",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/control-board",
+  "tag": "site:cleanerA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/control-board\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/control-board\", waiti"
+ },
+ {
+  "route": "/dashboard",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 0,
+  "txt": "",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/dashboard/catch-up",
+  "tag": "site:cleanerA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/dashboard/catch-up\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/dashboard/catch-"
+ },
+ {
+  "route": "/dashboard/compliance-audit",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 141,
+  "txt": "Ольга У.\nОУ\nКафе «Альфа»\nЖурналы\nЗагружаем журналы…\n© 2026\nДоговор-оферта\nПолитика конфиденциальности\nБаза знаний\n upport@we etup.ru\nTelegram",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/ideas",
+  "tag": "site:cleanerA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/ideas\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/ideas\", waiting until \"domcon"
+ },
+ {
+  "route": "/journals",
+  "tag": "site:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3160,
+  "txt": "W\nСегодня\n00:39:01\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 39\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка з",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/journals-progress",
+  "tag": "site:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3160,
+  "txt": "W\nСегодня\n00:39:06\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 39\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка з",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/losses",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 141,
+  "txt": "Ольга У.\nОУ\nКафе «Альфа»\nЖурналы\nЗагружаем журналы…\n© 2026\nДоговор-оферта\nПолитика конфиденциальности\nБаза знаний\n upport@we etup.ru\nTelegram",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/losses/new",
+  "tag": "site:cleanerA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/losses/new\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/losses/new\", waiting unt"
+ },
+ {
+  "route": "/mercury",
+  "tag": "site:cleanerA",
+  "final": "/mercury",
+  "h1": "Входящие ВСД",
+  "len": 525,
+  "txt": "Ольга У.\nОУ\nКафе «Альфа»\nВходящие ВСД\nФГИС «МЕРКУРИЙ»\nВходящие ВСД\n\nПриняли товар — здесь же вносите контроль и гасите документ.\n\nЖдут гашения 0\nНастройки\nКак это работает\nДемо-режим — данные не из Меркурия\nЭто учебные документы. Настоящие появятся после подключения к Ветис.API.\nСинхронизация выключ",
+  "verdict": "ok"
+ },
+ {
+  "route": "/orders",
+  "tag": "site:cleanerA",
+  "final": "/orders",
+  "h1": "Приказы",
+  "len": 2372,
+  "txt": "Ольга У.\n1\nОУ\nКафе «Альфа»\nПриказы\nПриказы\n\nГотовые приказы по предприятию: реквизиты подставляются сами, остаётся распечатать и подписать.\n\nИзданные приказы\nПока ни одного приказа\n\nВыберите шаблон ниже, заполните Ф. И. О. и номер — реквизиты организации подставятся сами. Изданные приказы останутся ",
+  "verdict": "ok"
+ },
+ {
+  "route": "/plans",
+  "tag": "site:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3160,
+  "txt": "W\nСегодня\n00:39:24\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 39\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка з",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/plans/new",
+  "tag": "site:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3160,
+  "txt": "W\nСегодня\n00:39:33\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 39\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка з",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/reports",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 0,
+  "txt": "",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/sanpin",
+  "tag": "site:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3160,
+  "txt": "W\nСегодня\n00:39:45\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 39\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка з",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings",
+  "tag": "site:cleanerA",
+  "final": "/mini",
+  "h1": "",
+  "len": 101,
+  "txt": "W\nВход\n00:39:49\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/accounting",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 0,
+  "txt": "",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/api",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 0,
+  "txt": "",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/appearance",
+  "tag": "site:cleanerA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/appearance\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/settings/appear"
+ },
+ {
+  "route": "/settings/areas",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 141,
+  "txt": "Ольга У.\nОУ\nКафе «Альфа»\nЖурналы\nЗагружаем журналы…\n© 2026\nДоговор-оферта\nПолитика конфиденциальности\nБаза знаний\n upport@we etup.ru\nTelegram",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/audit",
+  "tag": "site:cleanerA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/audit\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/settings/audit\", wai"
+ },
+ {
+  "route": "/settings/auto-journals",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 0,
+  "txt": "",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/backup",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 141,
+  "txt": "Ольга У.\nОУ\nКафе «Альфа»\nЖурналы\nЗагружаем журналы…\n© 2026\nДоговор-оферта\nПолитика конфиденциальности\nБаза знаний\n upport@we etup.ru\nTelegram",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/balance",
+  "tag": "site:cleanerA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/balance\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/settings/balance\","
+ },
+ {
+  "route": "/settings/buildings",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 0,
+  "txt": "",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/calendar",
+  "tag": "site:cleanerA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/calendar\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/settings/calendar"
+ },
+ {
+  "route": "/settings/compliance",
+  "tag": "site:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3160,
+  "txt": "W\nСегодня\n00:40:43\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 39\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка з",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/consultant",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 0,
+  "txt": "",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/equipment",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 0,
+  "txt": "",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/equipment/qr-sheet",
+  "tag": "site:cleanerA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/equipment/qr-sheet\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/setting"
+ },
+ {
+  "route": "/settings/experimental",
+  "tag": "site:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3160,
+  "txt": "W\nСегодня\n00:41:03\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 39\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка з",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/inspector-portal",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 141,
+  "txt": "Ольга У.\nОУ\nКафе «Альфа»\nЖурналы\nЗагружаем журналы…\n© 2026\nДоговор-оферта\nПолитика конфиденциальности\nБаза знаний\n upport@we etup.ru\nTelegram",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/integrations/mercury",
+  "tag": "site:cleanerA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/integrations/mercury\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/setti"
+ },
+ {
+  "route": "/settings/integrations/tasksflow",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 0,
+  "txt": "",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journal-access",
+  "tag": "site:cleanerA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/journal-access\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/settings/jo"
+ },
+ {
+  "route": "/settings/journal-bonuses",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 0,
+  "txt": "",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journal-checklists",
+  "tag": "site:cleanerA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/journal-checklists\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/setting"
+ },
+ {
+  "route": "/settings/journal-difficulty",
+  "tag": "site:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3160,
+  "txt": "W\nСегодня\n00:41:29\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 39\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка з",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journal-flow",
+  "tag": "site:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 60,
+  "txt": "W\nСегодня\n00:41:40\nЗагружаем задачи…\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journal-periods",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 141,
+  "txt": "Ольга У.\nОУ\nКафе «Альфа»\nЖурналы\nЗагружаем журналы…\n© 2026\nДоговор-оферта\nПолитика конфиденциальности\nБаза знаний\n upport@we etup.ru\nTelegram",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journal-pipelines",
+  "tag": "site:cleanerA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/journal-pipelines\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/settings"
+ },
+ {
+  "route": "/settings/journal-responsibles",
+  "tag": "site:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 60,
+  "txt": "W\nСегодня\n00:42:02\nЗагружаем задачи…\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journal-task-mode",
+  "tag": "site:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3160,
+  "txt": "W\nСегодня\n00:42:10\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 39\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка з",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journals",
+  "tag": "site:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3160,
+  "txt": "W\nСегодня\n00:42:18\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 39\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка з",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/journals-by-position",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 134,
+  "txt": "Ольга У.\nОУ\nКафе «Альфа»\nЖурналы\n© 2026\nДоговор-оферта\nПолитика конфиденциальности\nБаза знаний\n upport@we etup.ru\nTelegram\nAI помощник",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/notifications",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 0,
+  "txt": "",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/onboarding",
+  "tag": "site:cleanerA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/onboarding\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/settings/onboar"
+ },
+ {
+  "route": "/settings/onboarding-template",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 141,
+  "txt": "Ольга У.\nОУ\nКафе «Альфа»\nЖурналы\nЗагружаем журналы…\n© 2026\nДоговор-оферта\nПолитика конфиденциальности\nБаза знаний\n upport@we etup.ru\nTelegram",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/onboarding/advanced",
+  "tag": "site:cleanerA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/onboarding/advanced\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/settin"
+ },
+ {
+  "route": "/settings/organization",
+  "tag": "site:cleanerA",
+  "verdict": "error",
+  "err": "Error: page.evaluate: Execution context was destroyed, most likely because of a navigation"
+ },
+ {
+  "route": "/settings/partner",
+  "tag": "site:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3160,
+  "txt": "W\nСегодня\n00:42:52\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 39\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка з",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/permissions",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 0,
+  "txt": "",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/phone",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 141,
+  "txt": "Ольга У.\nОУ\nКафе «Альфа»\nЖурналы\nЗагружаем журналы…\n© 2026\nДоговор-оферта\nПолитика конфиденциальности\nБаза знаний\n upport@we etup.ru\nTelegram",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/position-staff-visibility",
+  "tag": "site:cleanerA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/position-staff-visibility\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/"
+ },
+ {
+  "route": "/settings/print-agent",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 134,
+  "txt": "Ольга У.\nОУ\nКафе «Альфа»\nЖурналы\n© 2026\nДоговор-оферта\nПолитика конфиденциальности\nБаза знаний\n upport@we etup.ru\nTelegram\nAI помощник",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/products",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 0,
+  "txt": "",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/qr-posters",
+  "tag": "site:cleanerA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/qr-posters\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/settings/qr-pos"
+ },
+ {
+  "route": "/settings/role-presets",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 141,
+  "txt": "Ольга У.\nОУ\nКафе «Альфа»\nЖурналы\nЗагружаем журналы…\n© 2026\nДоговор-оферта\nПолитика конфиденциальности\nБаза знаний\n upport@we etup.ru\nTelegram",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/schedule",
+  "tag": "site:cleanerA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/schedule\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/settings/schedule"
+ },
+ {
+  "route": "/settings/security",
+  "tag": "site:cleanerA",
+  "final": "/mini",
+  "h1": "",
+  "len": 103,
+  "txt": "W\nВход\n00:43:27\n1\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/services",
+  "tag": "site:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3160,
+  "txt": "W\nСегодня\n00:43:38\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 39\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка з",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/staff-hierarchy",
+  "tag": "site:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3160,
+  "txt": "W\nСегодня\n00:43:46\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 39\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка з",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/subscription",
+  "tag": "site:cleanerA",
+  "final": "/mini",
+  "h1": "",
+  "len": 103,
+  "txt": "W\nВход\n00:43:51\n1\nОткрываем кабинет…\n\nПроверяем вход — это займёт пару секунд.\n\nЖурналы\nРазделы\nПрофиль",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/task-visibility",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 0,
+  "txt": "",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/users",
+  "tag": "site:cleanerA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/users\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/settings/users\", wai"
+ },
+ {
+  "route": "/settings/webhooks",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 0,
+  "txt": "",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/settings/workload-balance",
+  "tag": "site:cleanerA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/workload-balance\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/settings/"
+ },
+ {
+  "route": "/staff",
+  "tag": "site:cleanerA",
+  "final": "/journals",
+  "h1": "",
+  "len": 141,
+  "txt": "Ольга У.\nОУ\nКафе «Альфа»\nЖурналы\nЗагружаем журналы…\n© 2026\nДоговор-оферта\nПолитика конфиденциальности\nБаза знаний\n upport@we etup.ru\nTelegram",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/team",
+  "tag": "site:cleanerA",
+  "verdict": "error",
+  "err": "Error: page.goto: net::ERR_ABORTED at http://localhost:3021/team\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3021/team\", waiting until \"domconte"
+ },
+ {
+  "route": "/verifications",
+  "tag": "site:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3160,
+  "txt": "W\nСегодня\n00:44:26\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 39\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка з",
+  "verdict": "redirect"
+ },
+ {
+  "route": "/mini/today",
+  "tag": "site:cleanerA",
+  "final": "/mini/today",
+  "h1": "",
+  "len": 3160,
+  "txt": "W\nСегодня\n00:44:28\n1\nВОСКРЕСЕНЬЕ, 20 СЕНТЯБРЯ\nСегодня\nСвободно: 39\nУ меня: 1\nГотово: 0\nСейчас вы делаете: Уборка · Склад сухих продуктов — закончите её, тогда сможете взять следующую.\nГИГИЕНА (1)\nГигиенический осмотр смены\nE2E шапка гигиена\nЗанято ·\nowner-a@e2e.local\nПРОВЕРКА ЗДОРОВЬЯ (1)\nПроверка з",
+  "verdict": "ok"
+ },
+ {
+  "route": "/mini/sections",
+  "tag": "site:cleanerA",
+  "final": "/mini/sections",
+  "h1": "Все разделы",
+  "len": 357,
+  "txt": "W\nВсе разделы\n00:44:32\n1\n\nКАБИНЕТ\n\nВсе разделы\n\nТе же страницы, что и на сайте, — здесь они открываются прямо в приложении. Показаны только разделы, доступные вам.\n\nРабота\n\nЖурналы, проверка, команда\n\nЖурналы\nЗаполнить и посмотреть записи\nОтчёты и деньги\n\nВыгрузки, премии, баланс, идеи\n\nБаланс и бон",
+  "verdict": "ok"
+ },
+ {
+  "route": "/mini/me",
+  "tag": "site:cleanerA",
+  "final": "/mini/me",
+  "h1": "Профиль",
+  "len": 475,
+  "txt": "W\nПрофиль\n00:44:35\n1\nНа главную\nПрофиль\nИмя\nОльга Уборщица\nОрганизация\nКафе «Альфа»\nРоль\nПовар\nДолжность\nне указана\nТелефон\n+79990000001\nEmail\ncleaner-a@e2e.local\nТема оформления\nНастройка сохранится на этом устройстве\nТёмная\nСветлая\nБаланс и бонусы\nотзыв и приглашения\nВсе разделы\nжурналы, отчёты, н",
+  "verdict": "ok"
+ }
+]

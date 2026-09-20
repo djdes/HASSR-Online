@@ -37,7 +37,7 @@ export async function GET(
     },
   });
   if (!record) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: "Не найдено" }, { status: 404 });
   }
   if (record.revokedAt || record.expiresAt < new Date()) {
     return NextResponse.json({ error: "Token expired/revoked" }, { status: 403 });

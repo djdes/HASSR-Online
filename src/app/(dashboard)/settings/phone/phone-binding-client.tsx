@@ -14,6 +14,7 @@ import {
   Unlink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { confirmAsync } from "@/components/ui/confirm-async";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
@@ -109,13 +110,21 @@ export function PhoneBindingClient(props: Props) {
 
   async function clear() {
     if (busy) return;
-    if (
-      !confirm(
-        "Убрать телефон? TasksFlow-связь тоже удалится, задачи перестанут приходить до следующей привязки."
-      )
-    ) {
-      return;
-    }
+    // Нативный confirm() в приложении Telegram может не показаться —
+    // кнопка тогда молча не срабатывает (CLAUDE.md §6).
+    const ok = await confirmAsync({
+      title: "Убрать номер телефона?",
+      description:
+        "По номеру ваш аккаунт связан с задачами. Без него связь пропадёт.",
+      bullets: [
+        { label: "Задачи перестанут приходить до новой привязки", tone: "warn" },
+        { label: "Связь с TasksFlow будет удалена", tone: "warn" },
+        { label: "Вписать номер заново можно в любой момент", tone: "info" },
+      ],
+      confirmLabel: "Убрать номер",
+      variant: "danger",
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       const response = await fetch("/api/users/me/phone", { method: "DELETE" });

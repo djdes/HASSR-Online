@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  CalendarCheck,
   ClipboardList,
   Home,
   LayoutGrid,
@@ -33,6 +34,7 @@ const NAV_ICONS: Record<MiniNavIcon, LucideIcon> = {
   ClipboardList,
   LayoutGrid,
   UserRound,
+  CalendarCheck,
 };
 
 export function MiniNav({ items }: { items: MiniNavItem[] }) {

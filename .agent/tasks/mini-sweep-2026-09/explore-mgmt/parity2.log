@@ -1,0 +1,428 @@
+== shell cookA http://localhost:3021/journals
+shell:cookA /batches -> /mini redirect 
+shell:cookA /batches/new -> /mini redirect 
+shell:cookA /bonuses -> /mini/today redirect 
+shell:cookA /capa -> /mini/today redirect 
+shell:cookA /capa/new -> /mini redirect 
+shell:cookA /changes -> /mini/today redirect 
+shell:cookA /changes/new -> /mini/today redirect 
+shell:cookA /competencies -> /mini/today redirect 
+shell:cookA /control-board -> /mini/today redirect 
+shell:cookA /dashboard -> /mini redirect 
+shell:cookA /dashboard/catch-up -> /mini redirect 
+shell:cookA /dashboard/compliance-audit -> /journals redirect 
+shell:cookA /ideas -> /mini/today redirect 
+shell:cookA /journals -> /mini/today redirect 
+shell:cookA /journals-progress -> /mini/today redirect 
+shell:cookA /losses -> /mini/today redirect 
+shell:cookA /losses/new -> /mini redirect 
+shell:cookA /mercury -> /mercury ok Входящие ВСД
+shell:cookA /orders -> /orders ok Приказы
+shell:cookA /plans -> /mini redirect 
+shell:cookA /plans/new -> /mini/today redirect 
+shell:cookA /reports -> /mini/today redirect 
+shell:cookA /sanpin -> /journals redirect 
+shell:cookA /settings -> /mini/today redirect 
+shell:cookA /settings/accounting -> /mini/today redirect 
+shell:cookA /settings/api -> /mini redirect 
+shell:cookA /settings/appearance -> /mini/today redirect 
+shell:cookA /settings/areas -> /mini/today redirect 
+shell:cookA /settings/audit -> /mini/today redirect 
+shell:cookA /settings/auto-journals -> /mini/today redirect 
+shell:cookA /settings/backup -> /mini/today redirect 
+shell:cookA /settings/balance -> /settings/balance ok Баланс и бонусы
+shell:cookA /settings/buildings -> /mini/today redirect 
+shell:cookA /settings/calendar -> /mini redirect 
+shell:cookA /settings/compliance -> /mini redirect 
+shell:cookA /settings/consultant -> /journals redirect 
+shell:cookA /settings/equipment -> /mini redirect 
+shell:cookA /settings/equipment/qr-sheet -> /mini redirect 
+shell:cookA /settings/experimental -> /journals redirect 
+shell:cookA /settings/inspector-portal -> /journals redirect 
+shell:cookA /settings/integrations/mercury -> /mini redirect 
+shell:cookA /settings/integrations/tasksflow -> /mini redirect 
+shell:cookA /settings/journal-access -> /mini redirect 
+shell:cookA /settings/journal-bonuses -> /mini redirect 
+shell:cookA /settings/journal-checklists -> /mini/today redirect 
+shell:cookA /settings/journal-difficulty -> /mini/today redirect 
+shell:cookA /settings/journal-flow -> /mini redirect 
+shell:cookA /settings/journal-periods -> /journals redirect 
+shell:cookA /settings/journal-pipelines -> /mini redirect 
+shell:cookA /settings/journal-responsibles -> /journals redirect 
+shell:cookA /settings/journal-task-mode -> /mini/today redirect 
+shell:cookA /settings/journals -> /mini redirect 
+shell:cookA /settings/journals-by-position -> /mini redirect 
+shell:cookA /settings/notifications -> /mini/today redirect 
+shell:cookA /settings/onboarding -> /mini/today redirect 
+shell:cookA /settings/onboarding-template -> /mini/today redirect 
+shell:cookA /settings/onboarding/advanced -> /journals redirect 
+shell:cookA /settings/organization -> /journals redirect 
+shell:cookA /settings/partner -> /mini redirect 
+shell:cookA /settings/permissions -> /journals redirect 
+shell:cookA /settings/phone -> /journals redirect 
+shell:cookA /settings/position-staff-visibility -> /mini redirect 
+shell:cookA /settings/print-agent -> /journals redirect 
+shell:cookA /settings/products -> /mini redirect 
+shell:cookA /settings/qr-posters -> /mini/today redirect 
+shell:cookA /settings/role-presets -> /mini/today redirect 
+shell:cookA /settings/schedule -> /journals redirect 
+shell:cookA /settings/security -> /mini/today redirect 
+shell:cookA /settings/services -> /mini redirect 
+shell:cookA /settings/staff-hierarchy -> /mini/today redirect 
+shell:cookA /settings/subscription -> /mini/today redirect 
+shell:cookA /settings/task-visibility -> /mini redirect 
+shell:cookA /settings/users -> /journals redirect 
+shell:cookA /settings/webhooks -> /mini/today redirect 
+shell:cookA /settings/workload-balance -> /journals redirect 
+shell:cookA /staff -> /journals redirect 
+shell:cookA /team -> /mini/today redirect 
+shell:cookA /verifications -> /mini/today redirect 
+shell:cookA /mini/today -> /mini/today ok 
+shell:cookA /mini/sections -> /mini/sections ok Все разделы
+shell:cookA /mini/me -> /mini/me ok Профиль
+== site login cookA 200 {"success":true}
+site:cookA /batches -> /mini/today redirect 
+site:cookA /batches/new -> /mini redirect 
+site:cookA /bonuses -> /journals redirect 
+site:cookA /capa -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/capa
+Call log:
+[2m  - navigating to "http://localhost:3021/capa", waiting until "domconte error 
+site:cookA /capa/new -> /journals redirect 
+site:cookA /changes -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/changes
+Call log:
+[2m  - navigating to "http://localhost:3021/changes", waiting until "do error 
+site:cookA /changes/new -> /mini/today redirect 
+site:cookA /competencies -> /journals redirect 
+site:cookA /control-board -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/control-board
+Call log:
+[2m  - navigating to "http://localhost:3021/control-board", waiti error 
+site:cookA /dashboard -> /journals redirect 
+site:cookA /dashboard/catch-up -> /mini/today redirect 
+site:cookA /dashboard/compliance-audit -> /journals redirect 
+site:cookA /ideas -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/ideas
+Call log:
+[2m  - navigating to "http://localhost:3021/ideas", waiting until "domcon error 
+site:cookA /journals -> /mini/today redirect 
+site:cookA /journals-progress -> /mini/today redirect 
+site:cookA /losses -> /journals redirect 
+site:cookA /losses/new -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/losses/new
+Call log:
+[2m  - navigating to "http://localhost:3021/losses/new", waiting unt error 
+site:cookA /mercury -> /mercury ok Входящие ВСД
+site:cookA /orders -> /orders ok Приказы
+site:cookA /plans -> /mini/today redirect 
+site:cookA /plans/new -> /mini/today redirect 
+site:cookA /reports -> /journals redirect 
+site:cookA /sanpin -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/sanpin
+Call log:
+[2m  - navigating to "http://localhost:3021/sanpin", waiting until "domc error 
+site:cookA /settings -> /mini redirect 
+site:cookA /settings/accounting -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/accounting
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/accoun error 
+site:cookA /settings/api -> /mini/today redirect 
+site:cookA /settings/appearance -> /journals redirect 
+site:cookA /settings/areas -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/areas
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/areas", wai error 
+site:cookA /settings/audit -> /journals redirect 
+site:cookA /settings/auto-journals -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/auto-journals
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/aut error 
+site:cookA /settings/backup -> /journals redirect 
+site:cookA /settings/balance -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/balance
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/balance", error 
+site:cookA /settings/buildings -> /journals redirect 
+site:cookA /settings/calendar -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/calendar
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/calendar error 
+site:cookA /settings/compliance -> /journals redirect 
+site:cookA /settings/consultant -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/consultant
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/consul error 
+site:cookA /settings/equipment -> /journals redirect 
+site:cookA /settings/equipment/qr-sheet -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/equipment/qr-sheet
+Call log:
+[2m  - navigating to "http://localhost:3021/setting error 
+site:cookA /settings/experimental -> /journals redirect 
+site:cookA /settings/inspector-portal -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/inspector-portal
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/ error 
+site:cookA /settings/integrations/mercury -> /journals redirect 
+site:cookA /settings/integrations/tasksflow -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/integrations/tasksflow
+Call log:
+[2m  - navigating to "http://localhost:3021/set error 
+site:cookA /settings/journal-access -> /mini/today redirect 
+site:cookA /settings/journal-bonuses -> /mini/today redirect 
+site:cookA /settings/journal-checklists -> /journals redirect 
+site:cookA /settings/journal-difficulty -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/journal-difficulty
+Call log:
+[2m  - navigating to "http://localhost:3021/setting error 
+site:cookA /settings/journal-flow -> /journals redirect 
+site:cookA /settings/journal-periods -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/journal-periods
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/j error 
+site:cookA /settings/journal-pipelines -> /journals redirect 
+site:cookA /settings/journal-responsibles -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/journal-responsibles
+Call log:
+[2m  - navigating to "http://localhost:3021/setti error 
+site:cookA /settings/journal-task-mode -> /journals redirect 
+site:cookA /settings/journals -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/journals
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/journals error 
+site:cookA /settings/journals-by-position -> /mini redirect 
+site:cookA /settings/notifications -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/notifications
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/not error 
+site:cookA /settings/onboarding -> /mini/today redirect 
+site:cookA /settings/onboarding-template -> /mini redirect 
+site:cookA /settings/onboarding/advanced -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/onboarding/advanced
+Call log:
+[2m  - navigating to "http://localhost:3021/settin error 
+site:cookA /settings/organization -> /mini/today redirect 
+site:cookA /settings/partner -> /journals redirect 
+site:cookA /settings/permissions -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/permissions
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/permi error 
+site:cookA /settings/phone -> /mini/today redirect 
+site:cookA /settings/position-staff-visibility -> /journals redirect 
+site:cookA /settings/print-agent -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/print-agent
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/print error 
+site:cookA /settings/products -> /journals redirect 
+site:cookA /settings/qr-posters -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/qr-posters
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/qr-pos error 
+site:cookA /settings/role-presets -> /journals redirect 
+site:cookA /settings/schedule -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/schedule
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/schedule error 
+site:cookA /settings/security -> /mini/today redirect 
+site:cookA /settings/services -> /mini/today redirect 
+site:cookA /settings/staff-hierarchy -> /mini/today redirect 
+site:cookA /settings/subscription -> /mini redirect 
+site:cookA /settings/task-visibility -> /mini redirect 
+site:cookA /settings/users -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/users
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/users", wai error 
+site:cookA /settings/webhooks -> /mini/today redirect 
+site:cookA /settings/workload-balance -> /mini redirect 
+site:cookA /staff -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/staff
+Call log:
+[2m  - navigating to "http://localhost:3021/staff", waiting until "domcon error 
+site:cookA /team -> /mini/today redirect 
+site:cookA /verifications -> /mini/today redirect 
+site:cookA /mini/today -> /mini/today ok 
+site:cookA /mini/sections -> /mini/sections ok Все разделы
+site:cookA /mini/me -> /mini/me ok Профиль
+== shell cleanerA http://localhost:3021/mini/today
+shell:cleanerA /batches -> /mini/today redirect 
+shell:cleanerA /batches/new -> /mini/today redirect 
+shell:cleanerA /bonuses -> /mini/today redirect 
+shell:cleanerA /capa -> /journals redirect 
+shell:cleanerA /capa/new -> /mini/today redirect 
+shell:cleanerA /changes -> /mini/today redirect 
+shell:cleanerA /changes/new -> /mini redirect 
+shell:cleanerA /competencies -> /mini/today redirect 
+shell:cleanerA /control-board -> /mini/today redirect 
+shell:cleanerA /dashboard -> /mini redirect 
+shell:cleanerA /dashboard/catch-up -> /mini/today redirect 
+shell:cleanerA /dashboard/compliance-audit -> /mini/today redirect 
+shell:cleanerA /ideas -> /mini/today redirect 
+shell:cleanerA /journals -> /mini/today redirect 
+shell:cleanerA /journals-progress -> /mini/today redirect 
+shell:cleanerA /losses -> /mini/today redirect 
+shell:cleanerA /losses/new -> /mini/today redirect 
+shell:cleanerA /mercury -> /mercury ok Входящие ВСД
+shell:cleanerA /orders -> /orders ok Приказы
+shell:cleanerA /plans -> /mini redirect 
+shell:cleanerA /plans/new -> /mini/today redirect 
+shell:cleanerA /reports -> /mini/today redirect 
+shell:cleanerA /sanpin -> /mini redirect 
+shell:cleanerA /settings -> /mini redirect 
+shell:cleanerA /settings/accounting -> /mini/today redirect 
+shell:cleanerA /settings/api -> /mini/today redirect 
+shell:cleanerA /settings/appearance -> /mini/today redirect 
+shell:cleanerA /settings/areas -> /journals redirect 
+shell:cleanerA /settings/audit -> /journals redirect 
+shell:cleanerA /settings/auto-journals -> /journals redirect 
+shell:cleanerA /settings/backup -> /journals redirect 
+shell:cleanerA /settings/balance -> /settings/balance ok Баланс и бонусы
+shell:cleanerA /settings/buildings -> /mini redirect 
+shell:cleanerA /settings/calendar -> /mini/today redirect 
+shell:cleanerA /settings/compliance -> /mini/today redirect 
+shell:cleanerA /settings/consultant -> /mini redirect 
+shell:cleanerA /settings/equipment -> /mini/today redirect 
+shell:cleanerA /settings/equipment/qr-sheet -> /mini/today redirect 
+shell:cleanerA /settings/experimental -> /mini redirect 
+shell:cleanerA /settings/inspector-portal -> /mini redirect 
+shell:cleanerA /settings/integrations/mercury -> /journals redirect 
+shell:cleanerA /settings/integrations/tasksflow -> /mini/today redirect 
+shell:cleanerA /settings/journal-access -> /mini/today redirect 
+shell:cleanerA /settings/journal-bonuses -> /mini/today redirect 
+shell:cleanerA /settings/journal-checklists -> /mini/today redirect 
+shell:cleanerA /settings/journal-difficulty -> /journals redirect 
+shell:cleanerA /settings/journal-flow -> /mini/today redirect 
+shell:cleanerA /settings/journal-periods -> /mini/today redirect 
+shell:cleanerA /settings/journal-pipelines -> /mini/today redirect 
+shell:cleanerA /settings/journal-responsibles -> /mini/today redirect 
+shell:cleanerA /settings/journal-task-mode -> /journals redirect 
+shell:cleanerA /settings/journals -> /mini/today redirect 
+shell:cleanerA /settings/journals-by-position -> /mini redirect 
+shell:cleanerA /settings/notifications -> /journals redirect 
+shell:cleanerA /settings/onboarding -> /mini/today redirect 
+shell:cleanerA /settings/onboarding-template -> /mini/today redirect 
+shell:cleanerA /settings/onboarding/advanced -> /mini redirect 
+shell:cleanerA /settings/organization -> /mini/today redirect 
+shell:cleanerA /settings/partner -> /mini/today redirect 
+shell:cleanerA /settings/permissions -> /mini/today redirect 
+shell:cleanerA /settings/phone -> /mini redirect 
+shell:cleanerA /settings/position-staff-visibility -> /mini redirect 
+shell:cleanerA /settings/print-agent -> /mini/today redirect 
+shell:cleanerA /settings/products -> /mini/today redirect 
+shell:cleanerA /settings/qr-posters -> /mini/today redirect 
+shell:cleanerA /settings/role-presets -> /mini redirect 
+shell:cleanerA /settings/schedule -> /mini/today redirect 
+shell:cleanerA /settings/security -> /mini redirect 
+shell:cleanerA /settings/services -> /journals redirect 
+shell:cleanerA /settings/staff-hierarchy -> /journals redirect 
+shell:cleanerA /settings/subscription -> /mini/today redirect 
+shell:cleanerA /settings/task-visibility -> /mini/today redirect 
+shell:cleanerA /settings/users -> /journals redirect 
+shell:cleanerA /settings/webhooks -> /mini redirect 
+shell:cleanerA /settings/workload-balance -> /mini/today redirect 
+shell:cleanerA /staff -> /mini/today redirect 
+shell:cleanerA /team -> /mini/today redirect 
+shell:cleanerA /verifications -> /mini/today redirect 
+shell:cleanerA /mini/today -> /mini/today ok 
+shell:cleanerA /mini/sections -> /mini/sections ok Все разделы
+shell:cleanerA /mini/me -> /mini/me ok Профиль
+== site login cleanerA 200 {"success":true}
+site:cleanerA /batches -> /mini/today redirect 
+site:cleanerA /batches/new -> /journals redirect 
+site:cleanerA /bonuses -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/bonuses
+Call log:
+[2m  - navigating to "http://localhost:3021/bonuses", waiting until "do error 
+site:cleanerA /capa -> /mini redirect 
+site:cleanerA /capa/new -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/capa/new
+Call log:
+[2m  - navigating to "http://localhost:3021/capa/new", waiting until " error 
+site:cleanerA /changes -> /mini/today redirect 
+site:cleanerA /changes/new -> /journals redirect 
+site:cleanerA /competencies -> /journals redirect 
+site:cleanerA /control-board -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/control-board
+Call log:
+[2m  - navigating to "http://localhost:3021/control-board", waiti error 
+site:cleanerA /dashboard -> /journals redirect 
+site:cleanerA /dashboard/catch-up -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/dashboard/catch-up
+Call log:
+[2m  - navigating to "http://localhost:3021/dashboard/catch- error 
+site:cleanerA /dashboard/compliance-audit -> /journals redirect 
+site:cleanerA /ideas -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/ideas
+Call log:
+[2m  - navigating to "http://localhost:3021/ideas", waiting until "domcon error 
+site:cleanerA /journals -> /mini/today redirect 
+site:cleanerA /journals-progress -> /mini/today redirect 
+site:cleanerA /losses -> /journals redirect 
+site:cleanerA /losses/new -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/losses/new
+Call log:
+[2m  - navigating to "http://localhost:3021/losses/new", waiting unt error 
+site:cleanerA /mercury -> /mercury ok Входящие ВСД
+site:cleanerA /orders -> /orders ok Приказы
+site:cleanerA /plans -> /mini/today redirect 
+site:cleanerA /plans/new -> /mini/today redirect 
+site:cleanerA /reports -> /journals redirect 
+site:cleanerA /sanpin -> /mini/today redirect 
+site:cleanerA /settings -> /mini redirect 
+site:cleanerA /settings/accounting -> /journals redirect 
+site:cleanerA /settings/api -> /journals redirect 
+site:cleanerA /settings/appearance -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/appearance
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/appear error 
+site:cleanerA /settings/areas -> /journals redirect 
+site:cleanerA /settings/audit -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/audit
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/audit", wai error 
+site:cleanerA /settings/auto-journals -> /journals redirect 
+site:cleanerA /settings/backup -> /journals redirect 
+site:cleanerA /settings/balance -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/balance
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/balance", error 
+site:cleanerA /settings/buildings -> /journals redirect 
+site:cleanerA /settings/calendar -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/calendar
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/calendar error 
+site:cleanerA /settings/compliance -> /mini/today redirect 
+site:cleanerA /settings/consultant -> /journals redirect 
+site:cleanerA /settings/equipment -> /journals redirect 
+site:cleanerA /settings/equipment/qr-sheet -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/equipment/qr-sheet
+Call log:
+[2m  - navigating to "http://localhost:3021/setting error 
+site:cleanerA /settings/experimental -> /mini/today redirect 
+site:cleanerA /settings/inspector-portal -> /journals redirect 
+site:cleanerA /settings/integrations/mercury -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/integrations/mercury
+Call log:
+[2m  - navigating to "http://localhost:3021/setti error 
+site:cleanerA /settings/integrations/tasksflow -> /journals redirect 
+site:cleanerA /settings/journal-access -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/journal-access
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/jo error 
+site:cleanerA /settings/journal-bonuses -> /journals redirect 
+site:cleanerA /settings/journal-checklists -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/journal-checklists
+Call log:
+[2m  - navigating to "http://localhost:3021/setting error 
+site:cleanerA /settings/journal-difficulty -> /mini/today redirect 
+site:cleanerA /settings/journal-flow -> /mini/today redirect 
+site:cleanerA /settings/journal-periods -> /journals redirect 
+site:cleanerA /settings/journal-pipelines -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/journal-pipelines
+Call log:
+[2m  - navigating to "http://localhost:3021/settings error 
+site:cleanerA /settings/journal-responsibles -> /mini/today redirect 
+site:cleanerA /settings/journal-task-mode -> /mini/today redirect 
+site:cleanerA /settings/journals -> /mini/today redirect 
+site:cleanerA /settings/journals-by-position -> /journals redirect 
+site:cleanerA /settings/notifications -> /journals redirect 
+site:cleanerA /settings/onboarding -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/onboarding
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/onboar error 
+site:cleanerA /settings/onboarding-template -> /journals redirect 
+site:cleanerA /settings/onboarding/advanced -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/onboarding/advanced
+Call log:
+[2m  - navigating to "http://localhost:3021/settin error 
+site:cleanerA /settings/organization -> Error: page.evaluate: Execution context was destroyed, most likely because of a navigation error 
+site:cleanerA /settings/partner -> /mini/today redirect 
+site:cleanerA /settings/permissions -> /journals redirect 
+site:cleanerA /settings/phone -> /journals redirect 
+site:cleanerA /settings/position-staff-visibility -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/position-staff-visibility
+Call log:
+[2m  - navigating to "http://localhost:3021/ error 
+site:cleanerA /settings/print-agent -> /journals redirect 
+site:cleanerA /settings/products -> /journals redirect 
+site:cleanerA /settings/qr-posters -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/qr-posters
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/qr-pos error 
+site:cleanerA /settings/role-presets -> /journals redirect 
+site:cleanerA /settings/schedule -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/schedule
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/schedule error 
+site:cleanerA /settings/security -> /mini redirect 
+site:cleanerA /settings/services -> /mini/today redirect 
+site:cleanerA /settings/staff-hierarchy -> /mini/today redirect 
+site:cleanerA /settings/subscription -> /mini redirect 
+site:cleanerA /settings/task-visibility -> /journals redirect 
+site:cleanerA /settings/users -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/users
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/users", wai error 
+site:cleanerA /settings/webhooks -> /journals redirect 
+site:cleanerA /settings/workload-balance -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/workload-balance
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/ error 
+site:cleanerA /staff -> /journals redirect 
+site:cleanerA /team -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/team
+Call log:
+[2m  - navigating to "http://localhost:3021/team", waiting until "domconte error 
+site:cleanerA /verifications -> /mini/today redirect 
+site:cleanerA /mini/today -> /mini/today ok 
+site:cleanerA /mini/sections -> /mini/sections ok Все разделы
+site:cleanerA /mini/me -> /mini/me ok Профиль

@@ -182,7 +182,18 @@ export function ProductWriteoffDocumentsClient({
   }
 
   async function handleArchive(documentId: string) {
-    if (!window.confirm("Перенести документ в закрытые?")) return;
+    const ok = await confirmAsync({
+      title: "Перенести документ в закрытые?",
+      description:
+        "Документ уйдёт из рабочего списка в раздел закрытых. Все записи сохранятся — отчёты и PDF по ним останутся.",
+      bullets: [
+        { label: "Заполнять закрытый документ нельзя", tone: "warn" },
+        { label: "Вернуть в активные можно в любой момент", tone: "info" },
+      ],
+      confirmLabel: "Перенести",
+      variant: "warn",
+    });
+    if (!ok) return;
     try {
       await patchDocument(documentId, { status: "closed" });
       router.refresh();

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Bell, X } from "lucide-react";
 import { toast } from "sonner";
 import { openSupportChat } from "@/lib/support-chat-bus";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useLiveEvents } from "@/lib/use-live-events";
 
 type NotificationItem = {
@@ -104,6 +105,7 @@ export function NotificationsBell() {
   // Чекбокс шапки нотификации checked если ВСЕ её items selected, и
   // indeterminate если только некоторые.
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [confirmRemoveAllOpen, setConfirmRemoveAllOpen] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -311,7 +313,6 @@ export function NotificationsBell() {
   }
 
   async function removeAll() {
-    if (!confirm("Удалить все уведомления? Это не отменить.")) return;
     try {
       const r = await fetch("/api/notifications", { method: "DELETE" });
       if (!r.ok) {
@@ -421,7 +422,7 @@ export function NotificationsBell() {
                 </button>
                 <button
                   type="button"
-                  onClick={removeAll}
+                  onClick={() => setConfirmRemoveAllOpen(true)}
                   className="rounded-xl bg-[#fff4f2] px-4 py-2 text-[13px] font-medium text-[#d2453d] transition-colors hover:bg-[#ffe6e1]"
                 >
                   Удалить все
@@ -546,6 +547,29 @@ export function NotificationsBell() {
           </div>
         </div>
       )}
+
+      {/* Нативный confirm() в WebView Telegram может не показаться
+          вовсе — кнопка тогда молча ничего не делает (CLAUDE.md §6). */}
+      <ConfirmDialog
+        open={confirmRemoveAllOpen}
+        onClose={() => setConfirmRemoveAllOpen(false)}
+        onConfirm={async () => {
+          setConfirmRemoveAllOpen(false);
+          await removeAll();
+        }}
+        title="Удалить все уведомления?"
+        description="Список очистится полностью — и прочитанные, и непрочитанные."
+        bullets={[
+          { label: "Вернуть удалённые уведомления нельзя", tone: "warn" },
+          {
+            label: "Сами задачи и записи журналов не пострадают",
+            tone: "default",
+          },
+        ]}
+        confirmLabel="Удалить всё"
+        cancelLabel="Отмена"
+        variant="danger"
+      />
     </>
   );
 }

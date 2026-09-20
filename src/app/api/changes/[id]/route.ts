@@ -16,7 +16,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const change = await db.changeRequest.findUnique({ where: { id } });
   if (!change || change.organizationId !== getActiveOrgId(session)) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: "Не найдено" }, { status: 404 });
   }
 
   const body = await req.json().catch(() => ({}));

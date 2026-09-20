@@ -7,8 +7,8 @@ import { askNpsFor } from "@/lib/nps-data";
 import { deletionDueAt } from "@/lib/org-deletion";
 import { getPartnerHintRates } from "@/lib/partners/partner-hint";
 import { currentAnnouncement } from "@/lib/platform-status";
-import { getWebHomeHref, hasFullWorkspaceAccess } from "@/lib/role-access";
-import { miniNavItems } from "@/app/mini/_lib/nav-items";
+import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { miniHomeHref, miniNavItems } from "@/app/mini/_lib/nav-items";
 
 /**
  * Данные, которые нужны оболочке мини-приложения.
@@ -75,11 +75,16 @@ export async function loadMiniShellData(session: Session | null) {
   // у приложения нет (П-3). Меню считаем здесь же, на сервере: права
   // уже в сессии, и первый кадр не должен показывать чужой набор
   // вкладок, а потом перерисовываться.
+  //
+  // Адрес берём из того же `nav-items.ts`, что и первая вкладка меню:
+  // иначе логотип в шапке и жест «назад» уводили бы на `/journals`, а
+  // оттуда человека сразу перекидывало дальше — лишний прыжок и
+  // мигающий экран.
   const actor = session?.user ?? null;
 
   return {
     authed: Boolean(session?.user),
-    homeHref: getWebHomeHref(actor ?? {}),
+    homeHref: miniHomeHref(actor),
     navItems: miniNavItems(actor),
     initialTheme: (profileTheme ?? "dark") as "light" | "dark",
     profileTheme,

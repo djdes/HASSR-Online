@@ -152,11 +152,28 @@ function DialogContent({
   )
 }
 
+/**
+ * Шапка окна.
+ *
+ * У окон с обычными отступами (`p-6` на `DialogContent`) шапка липкая и
+ * с непрозрачным фоном: раньше на виду оставался только крестик, а
+ * заголовок и поля уезжали под него — на листе «Добавить оборудование»
+ * крестик ложился прямо на поле «Название». Теперь содержимое уходит
+ * под всю шапку целиком, а не под один крестик.
+ *
+ * Вариант `[.p-6_&]` намеренный: окна с `p-0` (все журнальные) рисуют
+ * свою шапку сами — с собственным фоном, рамкой и отступами
+ * (`JOURNAL_DIALOG_HEADER_CLASS`), и их трогать нельзя.
+ */
 function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn("flex flex-col gap-2 text-center sm:text-left", className)}
+      className={cn(
+        "flex flex-col gap-2 text-center sm:text-left",
+        "[.p-6_&]:sticky [.p-6_&]:top-0 [.p-6_&]:z-20 [.p-6_&]:-mx-6 [.p-6_&]:-mt-6 [.p-6_&]:bg-background [.p-6_&]:px-6 [.p-6_&]:pt-6 [.p-6_&]:pr-14 [.p-6_&]:pb-3",
+        className
+      )}
       {...props}
     />
   )

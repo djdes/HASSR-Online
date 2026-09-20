@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session?.user) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
 
   const changes = await db.changeRequest.findMany({
     where: { organizationId: getActiveOrgId(session) },
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session?.user) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
 
   // Базовая валидация — раньше принимали что угодно. Пустой title
   // или title-как-объект ломал UI и Prisma бросала truncate-error.

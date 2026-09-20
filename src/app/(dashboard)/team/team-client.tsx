@@ -205,7 +205,7 @@ export function TeamClient() {
           сотрудников и так подписана «Название (N)». */}
       <PageHeader
         title="Моя команда"
-        description="Кто работает, кто закончил, кто прохлаждается. Обновляется каждые 30 секунд."
+        description="Кто работает, кто закончил, кто ещё не начал. Обновляется каждые 30 секунд."
       />
 
       {groups.length === 0 ? (
@@ -276,7 +276,7 @@ function MemberCard({ member }: { member: TeamMember }) {
       {member.workStatus === "not_started" && member.hasTelegram ? (
         <div className="mt-3 inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] text-[#a13a32]">
           <AlertTriangle className="size-3" />
-          Не взял ни одной задачи сегодня
+          Задач сегодня ещё нет
         </div>
       ) : null}
 

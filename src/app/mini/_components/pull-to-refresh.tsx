@@ -129,6 +129,43 @@ export function PullToRefresh({
   const indicatorOpacity = Math.min(1, pull / ACTIVATION_THRESHOLD);
   const isActive = phase === "armed" || phase === "refreshing";
 
+  // На сколько сдвинуто содержимое. В покое — ноль, и тогда у обёртки
+  // НЕ должно остаться ни `transform`, ни `will-change`.
+  const offset = phase === "refreshing" ? 36 : pull;
+
+  /**
+   * ⚠️ Почему в покое обёртка обязана быть без `transform`.
+   *
+   * Элемент с ненулевым (и даже нулевым!) `transform` становится
+   * containing block для всех потомков с `position: fixed`. Обёртка
+   * стоит между `<main>` и содержимым страницы, то есть выше любого
+   * окна кабинета, которое рисуется не порталом в `body`, а прямо в
+   * разметке страницы (`fixed inset-0 …`). Пока здесь всегда висел
+   * `translateY(0px)`, такие окна мерились не от экрана, а от высоты
+   * всей страницы: на 360×640 «Пригласить по QR» открывалось высотой
+   * в три тысячи пикселей, карточка уезжала на два экрана вниз, а
+   * прокрутки не было — окно блокирует скролл страницы.
+   *
+   * Поэтому transform живёт ровно столько, сколько идёт жест плюс
+   * время обратной анимации, после чего снимается совсем.
+   */
+  const [settling, setSettling] = useState(false);
+  const wasShifted = useRef(false);
+  useEffect(() => {
+    if (offset > 0) {
+      wasShifted.current = true;
+      setSettling(false);
+      return;
+    }
+    if (!wasShifted.current) return;
+    wasShifted.current = false;
+    setSettling(true);
+    const timer = window.setTimeout(() => setSettling(false), 300);
+    return () => window.clearTimeout(timer);
+  }, [offset]);
+
+  const shifted = offset > 0 || settling;
+
   return (
     // Обёртки обязаны быть колонкой с flex-1: теперь они стоят между
     // `<main>` и любым экраном, а экраны тянутся через `flex-1`.
@@ -161,18 +198,21 @@ export function PullToRefresh({
       </div>
 
       {/* Контент сдвигается вниз ровно на pull, чтобы индикатор был
-          визуально «отделён» от хедера и не накрывал текст. */}
+          визуально «отделён» от хедера и не накрывал текст.
+          В покое — вообще без `style`: см. комментарий к `shifted`. */}
       <div
         className="flex min-h-0 flex-1 flex-col"
-        style={{
-          transform: `translateY(${
-            phase === "refreshing" ? 36 : pull
-          }px)`,
-          transition:
-            phase === "idle" || phase === "refreshing"
-              ? "transform 0.25s ease"
-              : undefined,
-        }}
+        style={
+          shifted
+            ? {
+                transform: `translateY(${offset}px)`,
+                transition:
+                  phase === "idle" || phase === "refreshing"
+                    ? "transform 0.25s ease"
+                    : undefined,
+              }
+            : undefined
+        }
       >
         {children}
       </div>

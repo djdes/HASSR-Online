@@ -5,23 +5,11 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Check, Loader2, X, ShieldCheck } from "lucide-react";
 
-const FIELD_LABELS: Record<string, string> = {
-  status: "Статус",
-  healthStatus: "Здоровье",
-  temperature: "Температура",
-  temperatureAbove37: "Температура >37°C",
-  cleaned: "Убрано",
-  signature: "Подпись",
-  notes: "Комментарий",
-  comment: "Комментарий",
-  agent: "Средство",
-  area: "Помещение",
-  product: "Продукт",
-  supplier: "Поставщик",
-  lotNumber: "Партия",
-  date: "Дата",
-  time: "Время",
-};
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  completionEntryLabel,
+  isInternalCompletionKey,
+} from "@/lib/completion-labels";
 
 const VALUE_LABELS: Record<string, string> = {
   healthy: "здоров",
@@ -32,9 +20,9 @@ const VALUE_LABELS: Record<string, string> = {
   failed: "не допущен",
 };
 
-function formatFieldLabel(key: string): string {
-  return FIELD_LABELS[key] ?? key;
-}
+// Словарь подписей общий с «Проверками» (`lib/completion-labels.ts`):
+// одно и то же поле не должно называться по-разному на двух экранах.
+const formatFieldLabel = completionEntryLabel;
 
 function formatFieldValue(value: unknown): ReactNode {
   if (value === null || value === undefined) return "—";
@@ -67,7 +55,9 @@ function CellDataView({ data }: { data: unknown }) {
     );
   }
   const entries = Object.entries(data as Record<string, unknown>).filter(
-    ([, v]) => v !== null && v !== undefined && v !== "",
+    ([k, v]) =>
+      // Служебные ключи (`_autoSeeded`) ставит система, а не человек.
+      !isInternalCompletionKey(k) && v !== null && v !== undefined && v !== "",
   );
   if (entries.length === 0) {
     return (
@@ -118,6 +108,9 @@ export function VerifierClient({
   const [busy, setBusy] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
+  // Нативный `confirm()` в WebView Telegram может не показаться вовсе —
+  // кнопка тогда просто ничего не делает (CLAUDE.md §6).
+  const [approveAllOpen, setApproveAllOpen] = useState(false);
 
   const grouped = useMemo(() => {
     const map = new Map<string, Entry[]>();
@@ -171,7 +164,6 @@ export function VerifierClient({
 
   async function approveAll() {
     if (busy) return;
-    if (!confirm("Принять весь журнал? Все ячейки будут одобрены.")) return;
     setBusy(true);
     try {
       await call({ decision: "approve-all" });
@@ -303,7 +295,7 @@ export function VerifierClient({
           </button>
           <button
             type="button"
-            onClick={approveAll}
+            onClick={() => setApproveAllOpen(true)}
             disabled={busy || docVerificationStatus === "approved"}
             className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#5566f6] px-3 text-[13px] font-medium text-white hover:bg-[#4a5bf0] disabled:opacity-50"
           >
@@ -312,6 +304,27 @@ export function VerifierClient({
           </button>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={approveAllOpen}
+        onClose={() => setApproveAllOpen(false)}
+        onConfirm={async () => {
+          setApproveAllOpen(false);
+          await approveAll();
+        }}
+        title="Принять весь журнал?"
+        description={`Одобрены будут все записи документа — ${entries.length}. Отмечать ячейки по одной не придётся.`}
+        bullets={[
+          { label: "Все записи получат статус «Принято»", tone: "info" },
+          {
+            label: "Отклонить отдельную запись после этого можно, но придётся делать это вручную",
+            tone: "warn",
+          },
+        ]}
+        confirmLabel="Принять всё"
+        cancelLabel="Отмена"
+        variant="info"
+      />
 
       {rejectOpen ? (
         <div className="mt-3 rounded-2xl border border-[#fecaca] bg-[#fff4f2] p-3">

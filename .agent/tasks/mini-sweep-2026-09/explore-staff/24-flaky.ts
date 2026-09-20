@@ -1,0 +1,25 @@
+import { openTelegramSession, db } from "../tg-session";
+import { shot } from "./lib";
+const DOC = "cmu3xjc390004ks9mroi7qi9i", U = "cmu2stncc0008wk9m2yu67ip7", D = new Date("2026-09-20T00:00:00.000Z");
+(async () => {
+  await db.journalDocumentEntry.updateMany({ where: { documentId: DOC, employeeId: U, date: D }, data: { data: { _autoSeeded: true } } });
+  const s = await openTelegramSession({ role: "cookA", width: 360, height: 640, theme: "light" });
+  const p = s.page;
+  await p.goto(s.base + "/journals/hygiene/documents/" + DOC, { waitUntil: "load", timeout: 300000 });
+  await p.waitForTimeout(11000);
+  const row = p.locator(`[data-day-row]`).filter({ hasText: "Иван Повар" }).first();
+  const btn = row.getByRole("button", { name: /Заполнить/ }).first();
+  await btn.scrollIntoViewIfNeeded();
+  await p.waitForTimeout(800);
+  const box = await btn.boundingBox();
+  console.log("btn box", JSON.stringify(box));
+  const cx = box!.x + box!.width / 2, cy = box!.y + box!.height / 2;
+  console.log("elementFromPoint:", await p.evaluate(`(()=>{const e=document.elementFromPoint(${cx},${cy});return e? e.tagName+'|'+(e.innerText||'').slice(0,30)+'|'+(e.className+'').slice(0,60):'null'})()`));
+  await shot(p, "flaky-before-click");
+  await btn.click();
+  await p.waitForTimeout(3000);
+  await shot(p, "flaky-after-click");
+  console.log("sheet?", await p.getByText("Отметка о здоровье").count(), "Здоров?", await p.getByText("Здоров", { exact: true }).count());
+  console.log("ERRORS", JSON.stringify(s.errors));
+  await s.close();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 500)); process.exit(1); });

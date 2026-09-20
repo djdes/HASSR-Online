@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Copy, ExternalLink, Loader2, Plus, ShieldX, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -58,6 +59,8 @@ function fmtDate(value: string): string {
 export function InspectorPortalClient({ initialTokens }: Props) {
   const [tokens, setTokens] = useState<TokenRow[]>(initialTokens);
   const [createOpen, setCreateOpen] = useState(false);
+  /** id ссылки, которую просят отозвать — окно подтверждения. */
+  const [tokenToRevoke, setTokenToRevoke] = useState<string | null>(null);
   const [created, setCreated] = useState<{
     rawToken: string;
     inspectorUrl: string;
@@ -71,9 +74,6 @@ export function InspectorPortalClient({ initialTokens }: Props) {
   }
 
   async function handleRevoke(id: string) {
-    if (!confirm("Отозвать ссылку? Инспектор перестанет видеть журналы.")) {
-      return;
-    }
     const response = await fetch(
       `/api/settings/inspector-tokens?id=${encodeURIComponent(id)}`,
       { method: "DELETE" }
@@ -178,7 +178,7 @@ export function InspectorPortalClient({ initialTokens }: Props) {
                       {isActive ? (
                         <button
                           type="button"
-                          onClick={() => handleRevoke(t.id)}
+                          onClick={() => setTokenToRevoke(t.id)}
                           className="inline-flex items-center gap-1 rounded-xl px-2 py-1 text-[12px] text-[#a13a32] hover:bg-[#fff4f2]"
                         >
                           <ShieldX className="size-4" />
@@ -209,6 +209,27 @@ export function InspectorPortalClient({ initialTokens }: Props) {
       {created ? (
         <SuccessDialog data={created} onClose={() => setCreated(null)} />
       ) : null}
+
+      {/* Нативный confirm() в приложении Telegram может не показаться —
+          кнопка тогда молча не срабатывает (CLAUDE.md §6). */}
+      <ConfirmDialog
+        open={tokenToRevoke !== null}
+        onClose={() => setTokenToRevoke(null)}
+        onConfirm={async () => {
+          const id = tokenToRevoke;
+          setTokenToRevoke(null);
+          if (id) await handleRevoke(id);
+        }}
+        title="Отозвать ссылку для проверяющего?"
+        description="Ссылка перестанет открываться сразу же."
+        bullets={[
+          { label: "Проверяющий больше не увидит журналы по этой ссылке", tone: "warn" },
+          { label: "Вернуть ссылку нельзя — понадобится выпустить новую", tone: "warn" },
+        ]}
+        confirmLabel="Отозвать"
+        cancelLabel="Отмена"
+        variant="danger"
+      />
     </div>
   );
 }

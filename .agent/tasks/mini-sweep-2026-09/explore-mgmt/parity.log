@@ -1,0 +1,912 @@
+== shell ownerA http://localhost:3021/dashboard
+shell:ownerA /batches -> /batches ok Партии
+shell:ownerA /batches/new -> /batches/new ok Новая партия
+shell:ownerA /bonuses -> /bonuses ok Премии за работу
+shell:ownerA /capa -> /capa ok CAPA
+shell:ownerA /capa/new -> /capa/new ok Новый CAPA
+shell:ownerA /changes -> /changes ok Управление изменениями
+shell:ownerA /changes/new -> /changes/new ok Новое изменение
+shell:ownerA /competencies -> /competencies ok Обучение персонала
+shell:ownerA /control-board -> /control-board ok 
+shell:ownerA /dashboard -> /dashboard ok 
+shell:ownerA /dashboard/catch-up -> /dashboard/catch-up ok Догнать пропуски
+shell:ownerA /dashboard/compliance-audit -> /dashboard/compliance-audit ok Критично — высокий риск штрафа
+shell:ownerA /ideas -> /ideas ok Идеи и голосование
+shell:ownerA /journals -> /journals ok Журналы
+shell:ownerA /journals-progress -> /journals-progress ok 9 журналов ждут
+shell:ownerA /losses -> /losses ok Учёт потерь
+shell:ownerA /losses/new -> /losses/new ok Записать потерю
+shell:ownerA /mercury -> /mercury ok Входящие ВСД
+shell:ownerA /orders -> /orders ok Приказы
+shell:ownerA /plans -> /plans ok Производственный план
+shell:ownerA /plans/new -> /plans/new ok Новый план
+shell:ownerA /reports -> /reports ok Отчёты
+shell:ownerA /sanpin -> /sanpin ok Справочник СанПиН
+shell:ownerA /settings -> /settings ok Настройки
+shell:ownerA /settings/accounting -> /settings/accounting ok Бухгалтерия
+shell:ownerA /settings/api -> /settings/api ok API интеграций
+shell:ownerA /settings/appearance -> /settings/appearance ok Внешний вид
+shell:ownerA /settings/areas -> /settings/areas ok Цеха и участки
+shell:ownerA /settings/audit -> /settings/audit ok Журнал действий
+shell:ownerA /settings/auto-journals -> /settings/auto-journals ok Автосоздание и автозаполнение журналов
+shell:ownerA /settings/backup -> /settings/backup ok Авто-бэкап на Я.Диск
+shell:ownerA /settings/balance -> /settings/balance ok Баланс и бонусы
+shell:ownerA /settings/buildings -> /settings/buildings ok Точки и помещения
+shell:ownerA /settings/calendar -> /settings/calendar ok Календарь
+shell:ownerA /settings/compliance -> /settings/compliance ok Compliance
+shell:ownerA /settings/consultant -> /settings/consultant ok Консультант
+shell:ownerA /settings/equipment -> /settings/equipment ok Оборудование
+shell:ownerA /settings/equipment/qr-sheet -> /settings/qr-posters?kind=equipment&layout=sheet redirect QR-наклейки
+shell:ownerA /settings/experimental -> /settings/experimental ok Бета-функции
+shell:ownerA /settings/inspector-portal -> /settings/inspector-portal ok Портал инспектора
+shell:ownerA /settings/integrations/mercury -> /settings/integrations/mercury ok ФГИС «Меркурий»
+shell:ownerA /settings/integrations/tasksflow -> /settings/integrations/tasksflow ok TasksFlow
+shell:ownerA /settings/journal-access -> /settings/journal-access ok Журналы для сотрудников
+shell:ownerA /settings/journal-bonuses -> /settings/journal-bonuses ok Премии за журналы
+shell:ownerA /settings/journal-checklists -> /settings/journal-checklists ok Чек-листы для журналов
+shell:ownerA /settings/journal-difficulty -> /settings/journal-difficulty ok Сложность журналов
+shell:ownerA /settings/journal-flow -> /settings/journal-flow ok Режим распределения задач
+shell:ownerA /settings/journal-periods -> /settings/journal-periods ok Периоды журналов
+shell:ownerA /settings/journal-pipelines -> /settings/journal-pipelines ok Настройки журналов
+shell:ownerA /settings/journal-responsibles -> /settings/journal-responsibles ok Ответственные за журналы
+shell:ownerA /settings/journal-task-mode -> /settings/journal-task-mode ok Режимы раздачи задач
+shell:ownerA /settings/journals -> /settings/journals ok Набор журналов
+shell:ownerA /settings/journals-by-position -> /settings/journals-by-position ok Иерархия журналов по должностям
+shell:ownerA /settings/notifications -> /settings/notifications ok Уведомления
+shell:ownerA /settings/onboarding -> /settings/onboarding ok Быстрый старт
+shell:ownerA /settings/onboarding-template -> /settings/onboarding-template ok Шаблоны заведений
+shell:ownerA /settings/onboarding/advanced -> /settings/onboarding/advanced ok Продвинутая настройка — 6 этапов
+shell:ownerA /settings/organization -> /settings/organization ok Информация об организации
+shell:ownerA /settings/partner -> /settings/partner ok Стать партнёром
+shell:ownerA /settings/permissions -> /settings/permissions ok Права доступа
+shell:ownerA /settings/phone -> /settings/phone ok Привязка телефона
+shell:ownerA /settings/position-staff-visibility -> /settings/position-staff-visibility ok Видимость сотрудников по должностям
+shell:ownerA /settings/print-agent -> /settings/print-agent ok Онлайн принтер
+shell:ownerA /settings/products -> /settings/products ok Справочник продуктов
+shell:ownerA /settings/qr-posters -> /settings/qr-posters ok QR-плакаты
+shell:ownerA /settings/role-presets -> /settings/role-presets ok Пресеты ролей
+shell:ownerA /settings/schedule -> /settings/schedule ok График смен
+shell:ownerA /settings/security -> /settings/security ok Безопасность
+shell:ownerA /settings/services -> /settings/services ok Услуги
+shell:ownerA /settings/staff-hierarchy -> /settings/staff-hierarchy ok Иерархия управления
+shell:ownerA /settings/subscription -> /settings/subscription ok Улучшение тарифа
+shell:ownerA /settings/task-visibility -> /settings/task-visibility ok Видимость чужих задач
+shell:ownerA /settings/users -> /settings/users ok Сотрудники
+shell:ownerA /settings/webhooks -> /settings/webhooks ok Вебхуки
+shell:ownerA /settings/workload-balance -> /settings/workload-balance ok Распределение задач
+shell:ownerA /staff -> /settings/users redirect Сотрудники
+shell:ownerA /team -> /team ok Моя команда
+shell:ownerA /verifications -> /verifications ok 
+shell:ownerA /mini/today -> /mini/today ok 
+shell:ownerA /mini/sections -> /mini/sections ok Все разделы
+shell:ownerA /mini/me -> /mini/me ok Профиль
+== site login ownerA 200 {"success":true}
+site:ownerA /batches -> /batches ok Партии
+site:ownerA /batches/new -> /batches/new ok Новая партия
+site:ownerA /bonuses -> /bonuses ok Премии за работу
+site:ownerA /capa -> /capa ok CAPA
+site:ownerA /capa/new -> /capa/new ok Новый CAPA
+site:ownerA /changes -> /changes ok Управление изменениями
+site:ownerA /changes/new -> /changes/new ok Новое изменение
+site:ownerA /competencies -> /competencies ok Обучение персонала
+site:ownerA /control-board -> /control-board ok 
+site:ownerA /dashboard -> /dashboard ok 
+site:ownerA /dashboard/catch-up -> /dashboard/catch-up ok Догнать пропуски
+site:ownerA /dashboard/compliance-audit -> /dashboard/compliance-audit ok Критично — высокий риск штрафа
+site:ownerA /ideas -> /ideas ok Идеи и голосование
+site:ownerA /journals -> /journals ok Журналы
+site:ownerA /journals-progress -> /journals-progress ok 9 журналов ждут
+site:ownerA /losses -> /losses ok Учёт потерь
+site:ownerA /losses/new -> /losses/new ok Записать потерю
+site:ownerA /mercury -> /mercury ok Входящие ВСД
+site:ownerA /orders -> /orders ok Приказы
+site:ownerA /plans -> /plans ok Производственный план
+site:ownerA /plans/new -> /plans/new ok Новый план
+site:ownerA /reports -> /reports ok Отчёты
+site:ownerA /sanpin -> /sanpin ok Справочник СанПиН
+site:ownerA /settings -> /settings ok Настройки
+site:ownerA /settings/accounting -> /settings/accounting ok Бухгалтерия
+site:ownerA /settings/api -> /settings/api ok API интеграций
+site:ownerA /settings/appearance -> /settings/appearance ok Внешний вид
+site:ownerA /settings/areas -> /settings/areas ok Цеха и участки
+site:ownerA /settings/audit -> /settings/audit ok Журнал действий
+site:ownerA /settings/auto-journals -> /settings/auto-journals ok Автосоздание и автозаполнение журналов
+site:ownerA /settings/backup -> /settings/backup ok Авто-бэкап на Я.Диск
+site:ownerA /settings/balance -> /settings/balance ok Баланс и бонусы
+site:ownerA /settings/buildings -> /settings/buildings ok Точки и помещения
+site:ownerA /settings/calendar -> /settings/calendar ok Календарь
+site:ownerA /settings/compliance -> /settings/compliance ok Compliance
+site:ownerA /settings/consultant -> /settings/consultant ok Консультант
+site:ownerA /settings/equipment -> /settings/equipment ok Оборудование
+site:ownerA /settings/equipment/qr-sheet -> /settings/qr-posters?kind=equipment&layout=sheet redirect QR-наклейки
+site:ownerA /settings/experimental -> /settings/experimental ok Бета-функции
+site:ownerA /settings/inspector-portal -> /settings/inspector-portal ok Портал инспектора
+site:ownerA /settings/integrations/mercury -> /settings/integrations/mercury ok ФГИС «Меркурий»
+site:ownerA /settings/integrations/tasksflow -> /settings/integrations/tasksflow ok TasksFlow
+site:ownerA /settings/journal-access -> /settings/journal-access ok Журналы для сотрудников
+site:ownerA /settings/journal-bonuses -> /settings/journal-bonuses ok Премии за журналы
+site:ownerA /settings/journal-checklists -> /settings/journal-checklists ok Чек-листы для журналов
+site:ownerA /settings/journal-difficulty -> /settings/journal-difficulty ok Сложность журналов
+site:ownerA /settings/journal-flow -> /settings/journal-flow ok Режим распределения задач
+site:ownerA /settings/journal-periods -> /settings/journal-periods ok Периоды журналов
+site:ownerA /settings/journal-pipelines -> /settings/journal-pipelines ok Настройки журналов
+site:ownerA /settings/journal-responsibles -> /settings/journal-responsibles ok Ответственные за журналы
+site:ownerA /settings/journal-task-mode -> /settings/journal-task-mode ok Режимы раздачи задач
+site:ownerA /settings/journals -> /settings/journals ok Набор журналов
+site:ownerA /settings/journals-by-position -> /settings/journals-by-position ok Иерархия журналов по должностям
+site:ownerA /settings/notifications -> /settings/notifications ok Уведомления
+site:ownerA /settings/onboarding -> /settings/onboarding ok Быстрый старт
+site:ownerA /settings/onboarding-template -> /settings/onboarding-template ok Шаблоны заведений
+site:ownerA /settings/onboarding/advanced -> /settings/onboarding/advanced ok Продвинутая настройка — 6 этапов
+site:ownerA /settings/organization -> /settings/organization ok Информация об организации
+site:ownerA /settings/partner -> /settings/partner ok Стать партнёром
+site:ownerA /settings/permissions -> /settings/permissions ok Права доступа
+site:ownerA /settings/phone -> /settings/phone ok Привязка телефона
+site:ownerA /settings/position-staff-visibility -> /settings/position-staff-visibility ok Видимость сотрудников по должностям
+site:ownerA /settings/print-agent -> /settings/print-agent ok Онлайн принтер
+site:ownerA /settings/products -> /settings/products ok Справочник продуктов
+site:ownerA /settings/qr-posters -> /settings/qr-posters ok QR-плакаты
+site:ownerA /settings/role-presets -> /settings/role-presets ok Пресеты ролей
+site:ownerA /settings/schedule -> /settings/schedule ok График смен
+site:ownerA /settings/security -> /settings/security ok Безопасность
+site:ownerA /settings/services -> /settings/services ok Услуги
+site:ownerA /settings/staff-hierarchy -> /settings/staff-hierarchy ok Иерархия управления
+site:ownerA /settings/subscription -> /settings/subscription ok Улучшение тарифа
+site:ownerA /settings/task-visibility -> /settings/task-visibility ok Видимость чужих задач
+site:ownerA /settings/users -> /settings/users ok Сотрудники
+site:ownerA /settings/webhooks -> /settings/webhooks ok Вебхуки
+site:ownerA /settings/workload-balance -> /settings/workload-balance ok Распределение задач
+site:ownerA /staff -> /settings/users redirect Сотрудники
+site:ownerA /team -> /team ok Моя команда
+site:ownerA /verifications -> /verifications ok 
+site:ownerA /mini/today -> /mini/today ok 
+site:ownerA /mini/sections -> /mini/sections ok Все разделы
+site:ownerA /mini/me -> /mini/me ok Профиль
+== shell managerA http://localhost:3021/dashboard
+shell:managerA /batches -> /batches ok Партии
+shell:managerA /batches/new -> /batches/new ok Новая партия
+shell:managerA /bonuses -> /bonuses ok Премии за работу
+shell:managerA /capa -> /capa ok CAPA
+shell:managerA /capa/new -> /capa/new ok Новый CAPA
+shell:managerA /changes -> /changes ok Управление изменениями
+shell:managerA /changes/new -> /changes/new ok Новое изменение
+shell:managerA /competencies -> /competencies ok Обучение персонала
+shell:managerA /control-board -> /control-board ok 
+shell:managerA /dashboard -> /dashboard ok 
+shell:managerA /dashboard/catch-up -> /dashboard/catch-up ok Догнать пропуски
+shell:managerA /dashboard/compliance-audit -> /dashboard/compliance-audit ok Критично — высокий риск штрафа
+shell:managerA /ideas -> /ideas ok Идеи и голосование
+shell:managerA /journals -> /journals ok Журналы
+shell:managerA /journals-progress -> /journals-progress ok Все журналы готовы
+shell:managerA /losses -> /losses ok Учёт потерь
+shell:managerA /losses/new -> /losses/new ok Записать потерю
+shell:managerA /mercury -> /mercury ok Входящие ВСД
+shell:managerA /orders -> /orders ok Приказы
+shell:managerA /plans -> /plans ok Производственный план
+shell:managerA /plans/new -> /plans/new ok Новый план
+shell:managerA /reports -> /reports ok Отчёты
+shell:managerA /sanpin -> /sanpin ok Справочник СанПиН
+shell:managerA /settings -> /settings ok Настройки
+shell:managerA /settings/accounting -> /settings/accounting ok Бухгалтерия
+shell:managerA /settings/api -> /settings/api ok API интеграций
+shell:managerA /settings/appearance -> /settings/appearance ok Внешний вид
+shell:managerA /settings/areas -> /settings/areas ok Цеха и участки
+shell:managerA /settings/audit -> /settings/audit ok Журнал действий
+shell:managerA /settings/auto-journals -> /settings/auto-journals ok Автосоздание и автозаполнение журналов
+shell:managerA /settings/backup -> /settings/backup ok Авто-бэкап на Я.Диск
+shell:managerA /settings/balance -> /settings/balance ok Баланс и бонусы
+shell:managerA /settings/buildings -> /settings/buildings ok Точки и помещения
+shell:managerA /settings/calendar -> /settings/calendar ok Календарь
+shell:managerA /settings/compliance -> /settings/compliance ok Compliance
+shell:managerA /settings/consultant -> /settings/consultant ok Консультант
+shell:managerA /settings/equipment -> /settings/equipment ok Оборудование
+shell:managerA /settings/equipment/qr-sheet -> /settings/qr-posters?kind=equipment&layout=sheet redirect QR-наклейки
+shell:managerA /settings/experimental -> /settings/experimental ok Бета-функции
+shell:managerA /settings/inspector-portal -> /settings/inspector-portal ok Портал инспектора
+shell:managerA /settings/integrations/mercury -> /settings/integrations/mercury ok ФГИС «Меркурий»
+shell:managerA /settings/integrations/tasksflow -> /settings/integrations/tasksflow ok TasksFlow
+shell:managerA /settings/journal-access -> /settings/journal-access ok Журналы для сотрудников
+shell:managerA /settings/journal-bonuses -> /settings/journal-bonuses ok Премии за журналы
+shell:managerA /settings/journal-checklists -> /settings/journal-checklists ok Чек-листы для журналов
+shell:managerA /settings/journal-difficulty -> /settings/journal-difficulty ok Сложность журналов
+shell:managerA /settings/journal-flow -> /settings/journal-flow ok Режим распределения задач
+shell:managerA /settings/journal-periods -> /settings/journal-periods ok Периоды журналов
+shell:managerA /settings/journal-pipelines -> /settings/journal-pipelines ok Настройки журналов
+shell:managerA /settings/journal-responsibles -> /settings/journal-responsibles ok Ответственные за журналы
+shell:managerA /settings/journal-task-mode -> /settings/journal-task-mode ok Режимы раздачи задач
+shell:managerA /settings/journals -> /settings/journals ok Набор журналов
+shell:managerA /settings/journals-by-position -> /settings/journals-by-position ok Иерархия журналов по должностям
+shell:managerA /settings/notifications -> /settings/notifications ok Уведомления
+shell:managerA /settings/onboarding -> /settings/onboarding ok Быстрый старт
+shell:managerA /settings/onboarding-template -> /settings/onboarding-template ok Шаблоны заведений
+shell:managerA /settings/onboarding/advanced -> /settings/onboarding/advanced ok Продвинутая настройка — 6 этапов
+shell:managerA /settings/organization -> /settings/organization ok Информация об организации
+shell:managerA /settings/partner -> /settings/partner ok Стать партнёром
+shell:managerA /settings/permissions -> /settings/permissions ok Права доступа
+shell:managerA /settings/phone -> /settings/phone ok Привязка телефона
+shell:managerA /settings/position-staff-visibility -> /settings/position-staff-visibility ok Видимость сотрудников по должностям
+shell:managerA /settings/print-agent -> /settings/print-agent ok Онлайн принтер
+shell:managerA /settings/products -> /settings/products ok Справочник продуктов
+shell:managerA /settings/qr-posters -> /settings/qr-posters ok QR-плакаты
+shell:managerA /settings/role-presets -> /settings/role-presets ok Пресеты ролей
+shell:managerA /settings/schedule -> /settings/schedule ok График смен
+shell:managerA /settings/security -> /settings/security ok Безопасность
+shell:managerA /settings/services -> /settings/services ok Услуги
+shell:managerA /settings/staff-hierarchy -> /settings/staff-hierarchy ok Иерархия управления
+shell:managerA /settings/subscription -> /settings/subscription ok Улучшение тарифа
+shell:managerA /settings/task-visibility -> /settings/task-visibility ok Видимость чужих задач
+shell:managerA /settings/users -> /settings/users ok Сотрудники
+shell:managerA /settings/webhooks -> /settings/webhooks ok Вебхуки
+shell:managerA /settings/workload-balance -> /settings/workload-balance ok Распределение задач
+shell:managerA /staff -> /settings/users redirect Сотрудники
+shell:managerA /team -> /team ok 
+shell:managerA /verifications -> /verifications ok 
+shell:managerA /mini/today -> /mini/today ok 
+shell:managerA /mini/sections -> /mini/sections ok Все разделы
+shell:managerA /mini/me -> /mini/me ok Профиль
+== site login managerA 200 {"success":true}
+site:managerA /batches -> /batches ok Партии
+site:managerA /batches/new -> /batches/new ok Новая партия
+site:managerA /bonuses -> /bonuses ok Премии за работу
+site:managerA /capa -> /capa ok CAPA
+site:managerA /capa/new -> /capa/new ok Новый CAPA
+site:managerA /changes -> /changes ok Управление изменениями
+site:managerA /changes/new -> /changes/new ok Новое изменение
+site:managerA /competencies -> /competencies ok Обучение персонала
+site:managerA /control-board -> /control-board ok 
+site:managerA /dashboard -> /dashboard ok 
+site:managerA /dashboard/catch-up -> /dashboard/catch-up ok Догнать пропуски
+site:managerA /dashboard/compliance-audit -> /dashboard/compliance-audit ok Критично — высокий риск штрафа
+site:managerA /ideas -> /ideas ok Идеи и голосование
+site:managerA /journals -> /journals ok Журналы
+site:managerA /journals-progress -> /journals-progress ok 8 журналов ждут
+site:managerA /losses -> /losses ok Учёт потерь
+site:managerA /losses/new -> /losses/new ok Записать потерю
+site:managerA /mercury -> /mercury ok Входящие ВСД
+site:managerA /orders -> /orders ok Приказы
+site:managerA /plans -> /plans ok Производственный план
+site:managerA /plans/new -> /plans/new ok Новый план
+site:managerA /reports -> /reports ok Отчёты
+site:managerA /sanpin -> /sanpin ok Справочник СанПиН
+site:managerA /settings -> /settings ok Настройки
+site:managerA /settings/accounting -> /settings/accounting ok Бухгалтерия
+site:managerA /settings/api -> /settings/api ok API интеграций
+site:managerA /settings/appearance -> /settings/appearance ok Внешний вид
+site:managerA /settings/areas -> /settings/areas ok Цеха и участки
+site:managerA /settings/audit -> /settings/audit ok Журнал действий
+site:managerA /settings/auto-journals -> /settings/auto-journals ok Автосоздание и автозаполнение журналов
+site:managerA /settings/backup -> /settings/backup ok Авто-бэкап на Я.Диск
+site:managerA /settings/balance -> /settings/balance ok Баланс и бонусы
+site:managerA /settings/buildings -> /settings/buildings ok Точки и помещения
+site:managerA /settings/calendar -> /settings/calendar ok Календарь
+site:managerA /settings/compliance -> /settings/compliance ok Compliance
+site:managerA /settings/consultant -> /settings/consultant ok Консультант
+site:managerA /settings/equipment -> /settings/equipment ok Оборудование
+site:managerA /settings/equipment/qr-sheet -> /settings/qr-posters?kind=equipment&layout=sheet redirect QR-наклейки
+site:managerA /settings/experimental -> /settings/experimental ok Бета-функции
+site:managerA /settings/inspector-portal -> /settings/inspector-portal ok Портал инспектора
+site:managerA /settings/integrations/mercury -> /settings/integrations/mercury ok ФГИС «Меркурий»
+site:managerA /settings/integrations/tasksflow -> /settings/integrations/tasksflow ok TasksFlow
+site:managerA /settings/journal-access -> /settings/journal-access ok Журналы для сотрудников
+site:managerA /settings/journal-bonuses -> /settings/journal-bonuses ok Премии за журналы
+site:managerA /settings/journal-checklists -> /settings/journal-checklists ok Чек-листы для журналов
+site:managerA /settings/journal-difficulty -> /settings/journal-difficulty ok Сложность журналов
+site:managerA /settings/journal-flow -> /settings/journal-flow ok Режим распределения задач
+site:managerA /settings/journal-periods -> /settings/journal-periods ok Периоды журналов
+site:managerA /settings/journal-pipelines -> /settings/journal-pipelines ok Настройки журналов
+site:managerA /settings/journal-responsibles -> /settings/journal-responsibles ok Ответственные за журналы
+site:managerA /settings/journal-task-mode -> /settings/journal-task-mode ok Режимы раздачи задач
+site:managerA /settings/journals -> /settings/journals ok Набор журналов
+site:managerA /settings/journals-by-position -> /settings/journals-by-position ok Иерархия журналов по должностям
+site:managerA /settings/notifications -> /settings/notifications ok Уведомления
+site:managerA /settings/onboarding -> /settings/onboarding ok Быстрый старт
+site:managerA /settings/onboarding-template -> /settings/onboarding-template ok Шаблоны заведений
+site:managerA /settings/onboarding/advanced -> /settings/onboarding/advanced ok Продвинутая настройка — 6 этапов
+site:managerA /settings/organization -> /settings/organization ok Информация об организации
+site:managerA /settings/partner -> /settings/partner ok Стать партнёром
+site:managerA /settings/permissions -> /settings/permissions ok Права доступа
+site:managerA /settings/phone -> /settings/phone ok Привязка телефона
+site:managerA /settings/position-staff-visibility -> /settings/position-staff-visibility ok Видимость сотрудников по должностям
+site:managerA /settings/print-agent -> /settings/print-agent ok Онлайн принтер
+site:managerA /settings/products -> /settings/products ok Справочник продуктов
+site:managerA /settings/qr-posters -> /settings/qr-posters ok QR-плакаты
+site:managerA /settings/role-presets -> /settings/role-presets ok Пресеты ролей
+site:managerA /settings/schedule -> /settings/schedule ok График смен
+site:managerA /settings/security -> /settings/security ok Безопасность
+site:managerA /settings/services -> /settings/services ok Услуги
+site:managerA /settings/staff-hierarchy -> /settings/staff-hierarchy ok Иерархия управления
+site:managerA /settings/subscription -> /settings/subscription ok Улучшение тарифа
+site:managerA /settings/task-visibility -> /settings/task-visibility ok Видимость чужих задач
+site:managerA /settings/users -> /settings/users ok Сотрудники
+site:managerA /settings/webhooks -> /settings/webhooks ok Вебхуки
+site:managerA /settings/workload-balance -> /settings/workload-balance ok Распределение задач
+site:managerA /staff -> /settings/users redirect Сотрудники
+site:managerA /team -> /team ok Моя команда
+site:managerA /verifications -> /verifications ok 
+site:managerA /mini/today -> /mini/today ok 
+site:managerA /mini/sections -> /mini/sections ok Все разделы
+site:managerA /mini/me -> /mini/me ok Профиль
+== shell headA http://localhost:3021/dashboard
+shell:headA /batches -> /batches ok Партии
+shell:headA /batches/new -> /batches/new ok Новая партия
+shell:headA /bonuses -> /bonuses ok Премии за работу
+shell:headA /capa -> /capa ok CAPA
+shell:headA /capa/new -> /capa/new ok Новый CAPA
+shell:headA /changes -> /changes ok Управление изменениями
+shell:headA /changes/new -> /changes/new ok Новое изменение
+shell:headA /competencies -> /competencies ok Обучение персонала
+shell:headA /control-board -> /control-board ok Контрольная доска
+shell:headA /dashboard -> /control-board redirect Контрольная доска
+shell:headA /dashboard/catch-up -> /dashboard/catch-up ok Догнать пропуски
+shell:headA /dashboard/compliance-audit -> /control-board redirect 
+shell:headA /ideas -> /ideas ok Идеи и голосование
+shell:headA /journals -> /control-board redirect Контрольная доска
+shell:headA /journals-progress -> /journals-progress ok 8 журналов ждут
+shell:headA /losses -> /losses ok Учёт потерь
+shell:headA /losses/new -> /losses/new ok Записать потерю
+shell:headA /mercury -> /mercury ok Входящие ВСД
+shell:headA /orders -> /orders ok Приказы
+shell:headA /plans -> /plans ok Производственный план
+shell:headA /plans/new -> /plans/new ok Новый план
+shell:headA /reports -> /reports ok Отчёты
+shell:headA /sanpin -> /sanpin ok Справочник СанПиН
+shell:headA /settings -> /control-board redirect Контрольная доска
+shell:headA /settings/accounting -> /settings/accounting ok Бухгалтерия
+shell:headA /settings/api -> /settings/api ok API интеграций
+shell:headA /settings/appearance -> /control-board redirect 
+shell:headA /settings/areas -> /settings/areas ok Цеха и участки
+shell:headA /settings/audit -> /settings/audit ok Журнал действий
+shell:headA /settings/auto-journals -> /settings/auto-journals ok Автосоздание и автозаполнение журналов
+shell:headA /settings/backup -> /settings/backup ok Авто-бэкап на Я.Диск
+shell:headA /settings/balance -> /settings/balance ok Баланс и бонусы
+shell:headA /settings/buildings -> /settings/buildings ok Точки и помещения
+shell:headA /settings/calendar -> /settings/calendar ok Календарь
+shell:headA /settings/compliance -> /settings/compliance ok Compliance
+shell:headA /settings/consultant -> /settings/consultant ok Консультант
+shell:headA /settings/equipment -> /settings/equipment ok Оборудование
+shell:headA /settings/equipment/qr-sheet -> /settings/qr-posters?kind=equipment&layout=sheet redirect QR-наклейки
+shell:headA /settings/experimental -> /settings/experimental ok Бета-функции
+shell:headA /settings/inspector-portal -> /settings/inspector-portal ok Портал инспектора
+shell:headA /settings/integrations/mercury -> /settings/integrations/mercury ok ФГИС «Меркурий»
+shell:headA /settings/integrations/tasksflow -> /settings/integrations/tasksflow ok TasksFlow
+shell:headA /settings/journal-access -> /settings/journal-access ok Журналы для сотрудников
+shell:headA /settings/journal-bonuses -> /settings/journal-bonuses ok Премии за журналы
+shell:headA /settings/journal-checklists -> /control-board redirect Контрольная доска
+shell:headA /settings/journal-difficulty -> /settings redirect 
+shell:headA /settings/journal-flow -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/journal-flow
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/jour error 
+shell:headA /settings/journal-periods -> /settings/journal-periods ok Периоды журналов
+shell:headA /settings/journal-pipelines -> /journals redirect 
+shell:headA /settings/journal-responsibles -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/journal-responsibles
+Call log:
+[2m  - navigating to "http://localhost:3021/setti error 
+shell:headA /settings/journal-task-mode -> /settings/journal-task-mode ok Режимы раздачи задач
+shell:headA /settings/journals -> /settings/journals ok Набор журналов
+shell:headA /settings/journals-by-position -> /settings/journals-by-position ok Иерархия журналов по должностям
+shell:headA /settings/notifications -> /settings/notifications ok Уведомления
+shell:headA /settings/onboarding -> /settings redirect 
+shell:headA /settings/onboarding-template -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/onboarding-template
+Call log:
+[2m  - navigating to "http://localhost:3021/settin error 
+shell:headA /settings/onboarding/advanced -> /control-board redirect Контрольная доска
+shell:headA /settings/organization -> /control-board redirect 
+shell:headA /settings/partner -> /settings/partner ok Стать партнёром
+shell:headA /settings/permissions -> /settings/permissions ok Права доступа
+shell:headA /settings/phone -> /settings/phone ok Привязка телефона
+shell:headA /settings/position-staff-visibility -> /settings/position-staff-visibility ok Видимость сотрудников по должностям
+shell:headA /settings/print-agent -> /settings/print-agent ok Онлайн принтер
+shell:headA /settings/products -> /settings/products ok Справочник продуктов
+shell:headA /settings/qr-posters -> /settings/qr-posters ok QR-плакаты
+shell:headA /settings/role-presets -> /journals redirect 
+shell:headA /settings/schedule -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/schedule
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/schedule error 
+shell:headA /settings/security -> /settings/security ok Безопасность
+shell:headA /settings/services -> /settings/services ok Услуги
+shell:headA /settings/staff-hierarchy -> /settings/staff-hierarchy ok Иерархия управления
+shell:headA /settings/subscription -> /settings/subscription ok Улучшение тарифа
+shell:headA /settings/task-visibility -> /settings redirect 
+shell:headA /settings/users -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/users
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/users", wai error 
+shell:headA /settings/webhooks -> /settings/webhooks ok Вебхуки
+shell:headA /settings/workload-balance -> /control-board redirect 
+shell:headA /staff -> /settings/users redirect Сотрудники
+shell:headA /team -> /team ok 
+shell:headA /verifications -> /verifications ok 
+shell:headA /mini/today -> /mini/today ok 
+shell:headA /mini/sections -> /mini/sections ok Все разделы
+shell:headA /mini/me -> /mini/me ok Профиль
+== site login headA 200 {"success":true}
+site:headA /batches -> /batches ok Партии
+site:headA /batches/new -> /batches/new ok Новая партия
+site:headA /bonuses -> /bonuses ok Премии за работу
+site:headA /capa -> /capa ok CAPA
+site:headA /capa/new -> /capa/new ok Новый CAPA
+site:headA /changes -> /changes ok Управление изменениями
+site:headA /changes/new -> /changes/new ok Новое изменение
+site:headA /competencies -> /competencies ok Обучение персонала
+site:headA /control-board -> /control-board ok 
+site:headA /dashboard -> /control-board redirect Контрольная доска
+site:headA /dashboard/catch-up -> /dashboard/catch-up ok Догнать пропуски
+site:headA /dashboard/compliance-audit -> /control-board redirect Контрольная доска
+site:headA /ideas -> /ideas ok Идеи и голосование
+site:headA /journals -> /control-board redirect Контрольная доска
+site:headA /journals-progress -> /journals-progress ok 8 журналов ждут
+site:headA /losses -> /losses ok Учёт потерь
+site:headA /losses/new -> /losses/new ok Записать потерю
+site:headA /mercury -> /mercury ok Входящие ВСД
+site:headA /orders -> /orders ok Приказы
+site:headA /plans -> /plans ok Производственный план
+site:headA /plans/new -> /plans/new ok Новый план
+site:headA /reports -> /reports ok Отчёты
+site:headA /sanpin -> /sanpin ok Справочник СанПиН
+site:headA /settings -> /control-board redirect Контрольная доска
+site:headA /settings/accounting -> /settings/accounting ok Бухгалтерия
+site:headA /settings/api -> /settings/api ok API интеграций
+site:headA /settings/appearance -> Error: page.evaluate: Execution context was destroyed, most likely because of a navigation error 
+site:headA /settings/areas -> /settings/areas ok Цеха и участки
+site:headA /settings/audit -> /settings/audit ok Журнал действий
+site:headA /settings/auto-journals -> /settings/auto-journals ok Автосоздание и автозаполнение журналов
+site:headA /settings/backup -> /settings/backup ok Авто-бэкап на Я.Диск
+site:headA /settings/balance -> /settings/balance ok Баланс и бонусы
+site:headA /settings/buildings -> /settings/buildings ok Точки и помещения
+site:headA /settings/calendar -> /settings/calendar ok Календарь
+site:headA /settings/compliance -> /settings/compliance ok Compliance
+site:headA /settings/consultant -> /settings/consultant ok Консультант
+site:headA /settings/equipment -> /settings/equipment ok Оборудование
+site:headA /settings/equipment/qr-sheet -> /settings/qr-posters?kind=equipment&layout=sheet redirect QR-наклейки
+site:headA /settings/experimental -> /settings/experimental ok Бета-функции
+site:headA /settings/inspector-portal -> /settings/inspector-portal ok Портал инспектора
+site:headA /settings/integrations/mercury -> /settings/integrations/mercury ok ФГИС «Меркурий»
+site:headA /settings/integrations/tasksflow -> /settings/integrations/tasksflow ok TasksFlow
+site:headA /settings/journal-access -> /settings/journal-access ok Журналы для сотрудников
+site:headA /settings/journal-bonuses -> /settings/journal-bonuses ok Премии за журналы
+site:headA /settings/journal-checklists -> /control-board redirect 
+site:headA /settings/journal-difficulty -> /control-board redirect 
+site:headA /settings/journal-flow -> /control-board redirect 
+site:headA /settings/journal-periods -> /settings/journal-periods ok Периоды журналов
+site:headA /settings/journal-pipelines -> /journals redirect 
+site:headA /settings/journal-responsibles -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/journal-responsibles
+Call log:
+[2m  - navigating to "http://localhost:3021/setti error 
+site:headA /settings/journal-task-mode -> /settings/journal-task-mode ok Режимы раздачи задач
+site:headA /settings/journals -> /settings/journals ok Набор журналов
+site:headA /settings/journals-by-position -> /settings/journals-by-position ok Иерархия журналов по должностям
+site:headA /settings/notifications -> /settings/notifications ok Уведомления
+site:headA /settings/onboarding -> /control-board redirect 
+site:headA /settings/onboarding-template -> /control-board redirect 
+site:headA /settings/onboarding/advanced -> /control-board redirect 
+site:headA /settings/organization -> /control-board redirect 
+site:headA /settings/partner -> /settings/partner ok Стать партнёром
+site:headA /settings/permissions -> /settings/permissions ok Права доступа
+site:headA /settings/phone -> /settings/phone ok Привязка телефона
+site:headA /settings/position-staff-visibility -> /settings/position-staff-visibility ok Видимость сотрудников по должностям
+site:headA /settings/print-agent -> /settings/print-agent ok Онлайн принтер
+site:headA /settings/products -> /settings/products ok Справочник продуктов
+site:headA /settings/qr-posters -> /settings/qr-posters ok QR-плакаты
+site:headA /settings/role-presets -> /control-board redirect Контрольная доска
+site:headA /settings/schedule -> /settings/schedule ok График смен
+site:headA /settings/security -> /settings/security ok Безопасность
+site:headA /settings/services -> /settings/services ok Услуги
+site:headA /settings/staff-hierarchy -> /settings/staff-hierarchy ok Иерархия управления
+site:headA /settings/subscription -> /settings/subscription ok Улучшение тарифа
+site:headA /settings/task-visibility -> Error: page.evaluate: Execution context was destroyed, most likely because of a navigation error 
+site:headA /settings/users -> /settings/users ok Сотрудники
+site:headA /settings/webhooks -> /settings/webhooks ok Вебхуки
+site:headA /settings/workload-balance -> /settings redirect 
+site:headA /staff -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/staff
+Call log:
+[2m  - navigating to "http://localhost:3021/staff", waiting until "domcon error 
+site:headA /team -> /team ok Моя команда
+site:headA /verifications -> /verifications ok 
+site:headA /mini/today -> /mini/today ok 
+site:headA /mini/sections -> /mini/sections ok Все разделы
+site:headA /mini/me -> /mini/me ok Профиль
+== shell cookA http://localhost:3021/mini/today
+shell:cookA /batches -> /mini redirect 
+shell:cookA /batches/new -> /mini redirect 
+shell:cookA /bonuses -> /journals redirect 
+shell:cookA /capa -> /journals redirect 
+shell:cookA /capa/new -> /mini redirect 
+shell:cookA /changes -> /mini redirect 
+shell:cookA /changes/new -> /mini redirect 
+shell:cookA /competencies -> /mini redirect 
+shell:cookA /control-board -> /mini/today redirect 
+shell:cookA /dashboard -> /journals redirect 
+shell:cookA /dashboard/catch-up -> /journals redirect 
+shell:cookA /dashboard/compliance-audit -> /journals redirect 
+shell:cookA /ideas -> /mini/today redirect 
+shell:cookA /journals -> /mini/today redirect 
+shell:cookA /journals-progress -> /mini/today redirect 
+shell:cookA /losses -> /mini redirect 
+shell:cookA /losses/new -> /journals redirect 
+shell:cookA /mercury -> /mercury ok Входящие ВСД
+shell:cookA /orders -> /orders ok Приказы
+shell:cookA /plans -> /journals redirect 
+shell:cookA /plans/new -> /mini redirect 
+shell:cookA /reports -> /mini redirect 
+shell:cookA /sanpin -> /journals redirect 
+shell:cookA /settings -> /mini redirect 
+shell:cookA /settings/accounting -> /mini redirect 
+shell:cookA /settings/api -> /mini redirect 
+shell:cookA /settings/appearance -> /mini redirect 
+shell:cookA /settings/areas -> /journals redirect 
+shell:cookA /settings/audit -> /mini redirect 
+shell:cookA /settings/auto-journals -> /journals redirect 
+shell:cookA /settings/backup -> /journals redirect 
+shell:cookA /settings/balance -> /settings/balance ok Баланс и бонусы
+shell:cookA /settings/buildings -> /mini redirect 
+shell:cookA /settings/calendar -> /mini redirect 
+shell:cookA /settings/compliance -> /journals redirect 
+shell:cookA /settings/consultant -> /mini redirect 
+shell:cookA /settings/equipment -> /journals redirect 
+shell:cookA /settings/equipment/qr-sheet -> /journals redirect 
+shell:cookA /settings/experimental -> /journals redirect 
+shell:cookA /settings/inspector-portal -> /mini redirect 
+shell:cookA /settings/integrations/mercury -> /mini redirect 
+shell:cookA /settings/integrations/tasksflow -> /mini redirect 
+shell:cookA /settings/journal-access -> /mini redirect 
+shell:cookA /settings/journal-bonuses -> /mini redirect 
+shell:cookA /settings/journal-checklists -> /mini redirect 
+shell:cookA /settings/journal-difficulty -> /mini redirect 
+shell:cookA /settings/journal-flow -> /mini redirect 
+shell:cookA /settings/journal-periods -> /journals redirect 
+shell:cookA /settings/journal-pipelines -> /mini redirect 
+shell:cookA /settings/journal-responsibles -> /mini redirect 
+shell:cookA /settings/journal-task-mode -> /journals redirect 
+shell:cookA /settings/journals -> /mini redirect 
+shell:cookA /settings/journals-by-position -> /mini redirect 
+shell:cookA /settings/notifications -> /journals redirect 
+shell:cookA /settings/onboarding -> /mini redirect 
+shell:cookA /settings/onboarding-template -> /mini redirect 
+shell:cookA /settings/onboarding/advanced -> /journals redirect 
+shell:cookA /settings/organization -> /journals redirect 
+shell:cookA /settings/partner -> /journals redirect 
+shell:cookA /settings/permissions -> /journals redirect 
+shell:cookA /settings/phone -> /journals redirect 
+shell:cookA /settings/position-staff-visibility -> /mini redirect 
+shell:cookA /settings/print-agent -> /mini redirect 
+shell:cookA /settings/products -> /mini redirect 
+shell:cookA /settings/qr-posters -> /journals redirect 
+shell:cookA /settings/role-presets -> /mini redirect 
+shell:cookA /settings/schedule -> /mini redirect 
+shell:cookA /settings/security -> /mini redirect 
+shell:cookA /settings/services -> /mini redirect 
+shell:cookA /settings/staff-hierarchy -> /mini redirect 
+shell:cookA /settings/subscription -> /mini redirect 
+shell:cookA /settings/task-visibility -> /journals redirect 
+shell:cookA /settings/users -> /mini redirect 
+shell:cookA /settings/webhooks -> /journals redirect 
+shell:cookA /settings/workload-balance -> /mini redirect 
+shell:cookA /staff -> /mini redirect 
+shell:cookA /team -> /mini/today redirect 
+shell:cookA /verifications -> /mini/today redirect 
+shell:cookA /mini/today -> /mini/today ok 
+shell:cookA /mini/sections -> /mini/sections ok Все разделы
+shell:cookA /mini/me -> /mini/me ok Профиль
+== site login cookA 200 {"success":true}
+site:cookA /batches -> /mini/today redirect 
+site:cookA /batches/new -> /mini redirect 
+site:cookA /bonuses -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/bonuses
+Call log:
+[2m  - navigating to "http://localhost:3021/bonuses", waiting until "do error 
+site:cookA /capa -> /mini/today redirect 
+site:cookA /capa/new -> /mini redirect 
+site:cookA /changes -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/changes
+Call log:
+[2m  - navigating to "http://localhost:3021/changes", waiting until "do error 
+site:cookA /changes/new -> /mini/today redirect 
+site:cookA /competencies -> /mini redirect 
+site:cookA /control-board -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/control-board
+Call log:
+[2m  - navigating to "http://localhost:3021/control-board", waiti error 
+site:cookA /dashboard -> /mini/today redirect 
+site:cookA /dashboard/catch-up -> /mini redirect 
+site:cookA /dashboard/compliance-audit -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/dashboard/compliance-audit
+Call log:
+[2m  - navigating to "http://localhost:3021/dashboar error 
+site:cookA /ideas -> /mini/today redirect 
+site:cookA /journals -> /mini/today redirect 
+site:cookA /journals-progress -> /mini/today redirect 
+site:cookA /losses -> /mini redirect 
+site:cookA /losses/new -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/losses/new
+Call log:
+[2m  - navigating to "http://localhost:3021/losses/new", waiting unt error 
+site:cookA /mercury -> /mercury ok Входящие ВСД
+site:cookA /orders -> /orders ok Приказы
+site:cookA /plans -> /mini/today redirect 
+site:cookA /plans/new -> /mini redirect 
+site:cookA /reports -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/reports
+Call log:
+[2m  - navigating to "http://localhost:3021/reports", waiting until "do error 
+site:cookA /sanpin -> /mini/today redirect 
+site:cookA /settings -> /journals redirect 
+site:cookA /settings/accounting -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/accounting
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/accoun error 
+site:cookA /settings/api -> /mini redirect 
+site:cookA /settings/appearance -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/appearance
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/appear error 
+site:cookA /settings/areas -> /mini/today redirect 
+site:cookA /settings/audit -> /mini redirect 
+site:cookA /settings/auto-journals -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/auto-journals
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/aut error 
+site:cookA /settings/backup -> /mini/today redirect 
+site:cookA /settings/balance -> /settings/balance ok Баланс и бонусы
+site:cookA /settings/buildings -> /mini/today redirect 
+site:cookA /settings/calendar -> /mini redirect 
+site:cookA /settings/compliance -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/compliance
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/compli error 
+site:cookA /settings/consultant -> /mini/today redirect 
+site:cookA /settings/equipment -> /mini redirect 
+site:cookA /settings/equipment/qr-sheet -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/equipment/qr-sheet
+Call log:
+[2m  - navigating to "http://localhost:3021/setting error 
+site:cookA /settings/experimental -> /mini/today redirect 
+site:cookA /settings/inspector-portal -> /mini redirect 
+site:cookA /settings/integrations/mercury -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/integrations/mercury
+Call log:
+[2m  - navigating to "http://localhost:3021/setti error 
+site:cookA /settings/integrations/tasksflow -> /mini/today redirect 
+site:cookA /settings/journal-access -> /mini redirect 
+site:cookA /settings/journal-bonuses -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/journal-bonuses
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/j error 
+site:cookA /settings/journal-checklists -> /mini/today redirect 
+site:cookA /settings/journal-difficulty -> /mini/today redirect 
+site:cookA /settings/journal-flow -> /mini redirect 
+site:cookA /settings/journal-periods -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/journal-periods
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/j error 
+site:cookA /settings/journal-pipelines -> /journals redirect 
+site:cookA /settings/journal-responsibles -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/journal-responsibles
+Call log:
+[2m  - navigating to "http://localhost:3021/setti error 
+site:cookA /settings/journal-task-mode -> /mini redirect 
+site:cookA /settings/journals -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/journals
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/journals error 
+site:cookA /settings/journals-by-position -> /mini/today redirect 
+site:cookA /settings/notifications -> /mini redirect 
+site:cookA /settings/onboarding -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/onboarding
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/onboar error 
+site:cookA /settings/onboarding-template -> /mini/today redirect 
+site:cookA /settings/onboarding/advanced -> /journals redirect 
+site:cookA /settings/organization -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/organization
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/orga error 
+site:cookA /settings/partner -> /mini redirect 
+site:cookA /settings/permissions -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/permissions
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/permi error 
+site:cookA /settings/phone -> /mini/today redirect 
+site:cookA /settings/position-staff-visibility -> /mini redirect 
+site:cookA /settings/print-agent -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/print-agent
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/print error 
+site:cookA /settings/products -> /mini/today redirect 
+site:cookA /settings/qr-posters -> /journals redirect Страница не найдена
+site:cookA /settings/role-presets -> /mini/today redirect 
+site:cookA /settings/schedule -> /mini redirect 
+site:cookA /settings/security -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/security
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/security error 
+site:cookA /settings/services -> /mini/today redirect 
+site:cookA /settings/staff-hierarchy -> /mini redirect 
+site:cookA /settings/subscription -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/subscription
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/subs error 
+site:cookA /settings/task-visibility -> /mini/today redirect 
+site:cookA /settings/users -> /mini/today redirect 
+site:cookA /settings/webhooks -> /mini/today redirect 
+site:cookA /settings/workload-balance -> /mini/today redirect 
+site:cookA /staff -> /mini redirect 
+site:cookA /team -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/team
+Call log:
+[2m  - navigating to "http://localhost:3021/team", waiting until "domconte error 
+site:cookA /verifications -> /mini/today redirect 
+site:cookA /mini/today -> /mini/today ok 
+site:cookA /mini/sections -> /mini/sections ok Все разделы
+site:cookA /mini/me -> /mini/me ok Профиль
+== shell cleanerA http://localhost:3021/journals
+shell:cleanerA /batches -> /mini redirect 
+shell:cleanerA /batches/new -> /mini redirect 
+shell:cleanerA /bonuses -> /mini redirect 
+shell:cleanerA /capa -> /mini redirect 
+shell:cleanerA /capa/new -> /journals redirect 
+shell:cleanerA /changes -> /mini redirect 
+shell:cleanerA /changes/new -> /mini redirect 
+shell:cleanerA /competencies -> /mini redirect 
+shell:cleanerA /control-board -> /mini/today redirect 
+shell:cleanerA /dashboard -> /journals redirect 
+shell:cleanerA /dashboard/catch-up -> /mini redirect 
+shell:cleanerA /dashboard/compliance-audit -> /mini redirect 
+shell:cleanerA /ideas -> /mini/today redirect 
+shell:cleanerA /journals -> /mini/today redirect 
+shell:cleanerA /journals-progress -> /mini/today redirect 
+shell:cleanerA /losses -> /journals redirect 
+shell:cleanerA /losses/new -> /mini redirect 
+shell:cleanerA /mercury -> /mercury ok Входящие ВСД
+shell:cleanerA /orders -> /orders ok Приказы
+shell:cleanerA /plans -> /mini redirect 
+shell:cleanerA /plans/new -> /journals redirect 
+shell:cleanerA /reports -> /mini redirect 
+shell:cleanerA /sanpin -> /journals redirect 
+shell:cleanerA /settings -> /mini redirect 
+shell:cleanerA /settings/accounting -> /mini redirect 
+shell:cleanerA /settings/api -> /mini redirect 
+shell:cleanerA /settings/appearance -> /mini redirect 
+shell:cleanerA /settings/areas -> /mini redirect 
+shell:cleanerA /settings/audit -> /mini redirect 
+shell:cleanerA /settings/auto-journals -> /mini redirect 
+shell:cleanerA /settings/backup -> /mini redirect 
+shell:cleanerA /settings/balance -> /settings/balance ok Баланс и бонусы
+shell:cleanerA /settings/buildings -> /mini redirect 
+shell:cleanerA /settings/calendar -> /mini redirect 
+shell:cleanerA /settings/compliance -> /journals redirect 
+shell:cleanerA /settings/consultant -> /mini redirect 
+shell:cleanerA /settings/equipment -> /journals redirect 
+shell:cleanerA /settings/equipment/qr-sheet -> /mini redirect 
+shell:cleanerA /settings/experimental -> /mini redirect 
+shell:cleanerA /settings/inspector-portal -> /mini redirect 
+shell:cleanerA /settings/integrations/mercury -> /mini redirect 
+shell:cleanerA /settings/integrations/tasksflow -> /mini redirect 
+shell:cleanerA /settings/journal-access -> /mini redirect 
+shell:cleanerA /settings/journal-bonuses -> /mini redirect 
+shell:cleanerA /settings/journal-checklists -> /journals redirect 
+shell:cleanerA /settings/journal-difficulty -> /mini redirect 
+shell:cleanerA /settings/journal-flow -> /mini redirect 
+shell:cleanerA /settings/journal-periods -> /journals redirect 
+shell:cleanerA /settings/journal-pipelines -> /mini redirect 
+shell:cleanerA /settings/journal-responsibles -> /journals redirect 
+shell:cleanerA /settings/journal-task-mode -> /mini redirect 
+shell:cleanerA /settings/journals -> /journals redirect 
+shell:cleanerA /settings/journals-by-position -> /journals redirect 
+shell:cleanerA /settings/notifications -> /journals redirect 
+shell:cleanerA /settings/onboarding -> /mini redirect 
+shell:cleanerA /settings/onboarding-template -> /journals redirect 
+shell:cleanerA /settings/onboarding/advanced -> /journals redirect 
+shell:cleanerA /settings/organization -> /journals redirect 
+shell:cleanerA /settings/partner -> /journals redirect 
+shell:cleanerA /settings/permissions -> /journals redirect 
+shell:cleanerA /settings/phone -> /journals redirect 
+shell:cleanerA /settings/position-staff-visibility -> /journals redirect 
+shell:cleanerA /settings/print-agent -> /journals redirect 
+shell:cleanerA /settings/products -> /journals redirect 
+shell:cleanerA /settings/qr-posters -> /journals redirect 
+shell:cleanerA /settings/role-presets -> /journals redirect 
+shell:cleanerA /settings/schedule -> /mini redirect 
+shell:cleanerA /settings/security -> /journals redirect 
+shell:cleanerA /settings/services -> /journals redirect 
+shell:cleanerA /settings/staff-hierarchy -> /mini redirect 
+shell:cleanerA /settings/subscription -> /mini redirect 
+shell:cleanerA /settings/task-visibility -> /mini redirect 
+shell:cleanerA /settings/users -> /journals redirect 
+shell:cleanerA /settings/webhooks -> /mini redirect 
+shell:cleanerA /settings/workload-balance -> /mini redirect 
+shell:cleanerA /staff -> /journals redirect 
+shell:cleanerA /team -> /mini/today redirect 
+shell:cleanerA /verifications -> /mini/today redirect 
+shell:cleanerA /mini/today -> /mini/today ok 
+shell:cleanerA /mini/sections -> /mini/sections ok Все разделы
+shell:cleanerA /mini/me -> /mini/me ok Профиль
+== site login cleanerA 200 {"success":true}
+site:cleanerA /batches -> /mini/today redirect 
+site:cleanerA /batches/new -> /mini redirect 
+site:cleanerA /bonuses -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/bonuses
+Call log:
+[2m  - navigating to "http://localhost:3021/bonuses", waiting until "do error 
+site:cleanerA /capa -> /mini/today redirect 
+site:cleanerA /capa/new -> /mini redirect 
+site:cleanerA /changes -> /mini redirect 
+site:cleanerA /changes/new -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/changes/new
+Call log:
+[2m  - navigating to "http://localhost:3021/changes/new", waiting u error 
+site:cleanerA /competencies -> /mini/today redirect 
+site:cleanerA /control-board -> /mini/today redirect 
+site:cleanerA /dashboard -> /mini redirect 
+site:cleanerA /dashboard/catch-up -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/dashboard/catch-up
+Call log:
+[2m  - navigating to "http://localhost:3021/dashboard/catch- error 
+site:cleanerA /dashboard/compliance-audit -> /mini/today redirect 
+site:cleanerA /ideas -> /mini/today redirect 
+site:cleanerA /journals -> /mini/today redirect 
+site:cleanerA /journals-progress -> /mini/today redirect 
+site:cleanerA /losses -> /mini/today redirect 
+site:cleanerA /losses/new -> /mini/today redirect 
+site:cleanerA /mercury -> /mercury ok Входящие ВСД
+site:cleanerA /orders -> /orders ok Приказы
+site:cleanerA /plans -> /mini/today redirect 
+site:cleanerA /plans/new -> /mini redirect 
+site:cleanerA /reports -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/reports
+Call log:
+[2m  - navigating to "http://localhost:3021/reports", waiting until "do error 
+site:cleanerA /sanpin -> /mini/today redirect 
+site:cleanerA /settings -> /mini/today redirect 
+site:cleanerA /settings/accounting -> /mini redirect 
+site:cleanerA /settings/api -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/api
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/api", waiting error 
+site:cleanerA /settings/appearance -> /mini/today redirect 
+site:cleanerA /settings/areas -> /journals redirect 
+site:cleanerA /settings/audit -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/audit
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/audit", wai error 
+site:cleanerA /settings/auto-journals -> /mini/today redirect 
+site:cleanerA /settings/backup -> /mini redirect 
+site:cleanerA /settings/balance -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/balance
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/balance", error 
+site:cleanerA /settings/buildings -> /mini/today redirect 
+site:cleanerA /settings/calendar -> Error: page.evaluate: Execution context was destroyed, most likely because of a navigation error 
+site:cleanerA /settings/compliance -> /mini redirect 
+site:cleanerA /settings/consultant -> /mini/today redirect 
+site:cleanerA /settings/equipment -> /mini redirect 
+site:cleanerA /settings/equipment/qr-sheet -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/equipment/qr-sheet
+Call log:
+[2m  - navigating to "http://localhost:3021/setting error 
+site:cleanerA /settings/experimental -> /mini/today redirect 
+site:cleanerA /settings/inspector-portal -> /mini redirect 
+site:cleanerA /settings/integrations/mercury -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/integrations/mercury
+Call log:
+[2m  - navigating to "http://localhost:3021/setti error 
+site:cleanerA /settings/integrations/tasksflow -> /mini/today redirect 
+site:cleanerA /settings/journal-access -> /mini redirect 
+site:cleanerA /settings/journal-bonuses -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/journal-bonuses
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/j error 
+site:cleanerA /settings/journal-checklists -> /mini/today redirect 
+site:cleanerA /settings/journal-difficulty -> /mini/today redirect 
+site:cleanerA /settings/journal-flow -> /mini/today redirect 
+site:cleanerA /settings/journal-periods -> /journals redirect 
+site:cleanerA /settings/journal-pipelines -> /mini/today redirect 
+site:cleanerA /settings/journal-responsibles -> /mini redirect 
+site:cleanerA /settings/journal-task-mode -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/journal-task-mode
+Call log:
+[2m  - navigating to "http://localhost:3021/settings error 
+site:cleanerA /settings/journals -> /mini/today redirect 
+site:cleanerA /settings/journals-by-position -> /mini redirect 
+site:cleanerA /settings/notifications -> /mini redirect 
+site:cleanerA /settings/onboarding -> /journals redirect 
+site:cleanerA /settings/onboarding-template -> /mini/today redirect 
+site:cleanerA /settings/onboarding/advanced -> /mini/today redirect 
+site:cleanerA /settings/organization -> /mini/today redirect 
+site:cleanerA /settings/partner -> /mini redirect 
+site:cleanerA /settings/permissions -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/permissions
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/permi error 
+site:cleanerA /settings/phone -> /mini/today redirect 
+site:cleanerA /settings/position-staff-visibility -> /mini redirect 
+site:cleanerA /settings/print-agent -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/print-agent
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/print error 
+site:cleanerA /settings/products -> /mini/today redirect 
+site:cleanerA /settings/qr-posters -> /mini/today redirect 
+site:cleanerA /settings/role-presets -> /mini/today redirect 
+site:cleanerA /settings/schedule -> /mini/today redirect 
+site:cleanerA /settings/security -> /mini/today redirect 
+site:cleanerA /settings/services -> /mini redirect 
+site:cleanerA /settings/staff-hierarchy -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/staff-hierarchy
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/s error 
+site:cleanerA /settings/subscription -> /mini/today redirect 
+site:cleanerA /settings/task-visibility -> /mini redirect 
+site:cleanerA /settings/users -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/settings/users
+Call log:
+[2m  - navigating to "http://localhost:3021/settings/users", wai error 
+site:cleanerA /settings/webhooks -> /mini/today redirect 
+site:cleanerA /settings/workload-balance -> /mini redirect 
+site:cleanerA /staff -> Error: page.goto: net::ERR_ABORTED at http://localhost:3021/staff
+Call log:
+[2m  - navigating to "http://localhost:3021/staff", waiting until "domcon error 
+site:cleanerA /team -> /mini/today redirect 
+site:cleanerA /verifications -> /mini/today redirect 
+site:cleanerA /mini/today -> /mini/today ok 
+site:cleanerA /mini/sections -> /mini/sections ok Все разделы
+site:cleanerA /mini/me -> /mini/me ok Профиль

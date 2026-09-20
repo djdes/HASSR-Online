@@ -388,9 +388,19 @@
   animation: miniPulse 2s ease-in-out infinite;
 }
 
+/* Появление экрана.
+ *
+ * Только прозрачность, без `transform`. Раньше здесь был
+ * `translateY(8px) → 0` с `animation-fill-mode: both`: после окончания
+ * анимации на элементе НАВСЕГДА оставался `transform: translateY(0)`,
+ * а любой transform делает элемент containing block для потомков с
+ * `position: fixed`. Окна страниц кабинета, которые рисуются не
+ * порталом в body, мерились тогда не от экрана, а от высоты страницы —
+ * и открывались далеко за нижним краем. Та же причина, что в
+ * `pull-to-refresh.tsx`. */
 @keyframes miniReveal {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 .mini-reveal {
   animation: miniReveal 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;

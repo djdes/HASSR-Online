@@ -1,0 +1,24 @@
+import { openTelegramSession } from "../tg-session";
+import { shot } from "./lib";
+(async () => {
+  const s = await openTelegramSession({ role: "cookA", width: 360, height: 640, theme: "light" });
+  const p = s.page;
+  await p.goto(s.base + "/mini/today", { waitUntil: "load", timeout: 300000 });
+  await p.waitForTimeout(9000);
+  console.log("scroll before bell:", await p.evaluate(`(()=>{window.scrollTo(0,400);return scrollY})()`));
+  await p.evaluate(`window.scrollTo(0,0)`);
+  await p.locator(`header button[aria-label="Уведомления"]`).click();
+  await p.waitForTimeout(4000);
+  await p.locator('a[data-nav-href="/mini/today"]').click().catch(() => {});
+  await p.waitForTimeout(2000);
+  await p.locator('a[data-nav-href="/mini/sections"]').click();
+  await p.waitForTimeout(5000);
+  console.log("body style", await p.evaluate(`document.body.getAttribute('style')`));
+  console.log("can scroll on sections?", await p.evaluate(`(()=>{window.scrollTo(0,300);return scrollY})()`));
+  await p.goto(s.base + "/mini/today", { waitUntil: "load", timeout: 300000 });
+  await p.waitForTimeout(7000);
+  console.log("after full reload scroll:", await p.evaluate(`(()=>{window.scrollTo(0,400);return scrollY})()`));
+  await shot(p, "bell-scrolllock");
+  console.log("ERRORS", JSON.stringify(s.errors));
+  await s.close();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 600)); process.exit(1); });

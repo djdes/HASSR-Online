@@ -6,8 +6,9 @@ import { MiniLocationSwitcher } from "@/app/mini/_components/mini-location-switc
 import { useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 
-import { getWebHomeHref, hasFullWorkspaceAccess } from "@/lib/role-access";
-import { getUserRoleLabel } from "@/lib/user-roles";
+import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { miniHomeHref } from "@/app/mini/_lib/nav-items";
+import { getUserPositionLabel, getUserRoleLabel } from "@/lib/user-roles";
 import {
   ArrowLeft,
   Coins,
@@ -116,7 +117,17 @@ export function MiniMeClient({
   }
 
   const fullAccess = hasFullWorkspaceAccess(u);
-  const homeHref = getWebHomeHref(u);
+  // Домашний адрес — тот же, что у первой вкладки меню, иначе кнопка
+  // «На главную» вела бы туда, откуда сразу перекидывает.
+  const homeHref = miniHomeHref(u);
+  // Та же приоритетность, что в «Сотрудниках»/«Команде»:
+  // справочная должность → свободная строка → подпись роли.
+  const positionLabel = getUserPositionLabel({
+    name: u.name ?? "",
+    role: u.role,
+    positionTitle,
+  });
+  const roleLabel = u.role ? getUserRoleLabel(u.role) : null;
 
   return (
     <div className="flex flex-1 flex-col gap-4 pb-24">
@@ -161,22 +172,31 @@ export function MiniMeClient({
               {u.organizationName || "—"}
             </dd>
           </div>
-          <div className="flex items-center justify-between gap-3">
-            <dt style={{ color: "var(--mini-text-muted)" }}>Роль</dt>
-            <dd
-              className="font-medium"
-              style={{ color: "var(--mini-text)" }}
-            >
-              {u.role ? getUserRoleLabel(u.role) : "—"}
-            </dd>
-          </div>
+          {/* Подпись должности — та же, что в «Сотрудниках» и
+              «Команде» (`getUserPositionLabel`): справочная должность
+              важнее роли. Иначе в профиле у заведующей стояло
+              «Шеф-повар», а в списке команды — «Заведующая
+              производством», и человек не понимал, кто он в системе.
+              Строку «Роль» показываем, только если она добавляет
+              что-то новое: дважды одно и то же — лишний шум. */}
+          {roleLabel && roleLabel !== positionLabel ? (
+            <div className="flex items-center justify-between gap-3">
+              <dt style={{ color: "var(--mini-text-muted)" }}>Роль</dt>
+              <dd
+                className="font-medium"
+                style={{ color: "var(--mini-text)" }}
+              >
+                {roleLabel}
+              </dd>
+            </div>
+          ) : null}
           <div className="flex items-center justify-between gap-3">
             <dt style={{ color: "var(--mini-text-muted)" }}>Должность</dt>
             <dd
               className="min-w-0 truncate font-medium"
               style={{ color: "var(--mini-text)" }}
             >
-              {positionTitle || "не указана"}
+              {positionLabel}
             </dd>
           </div>
           {/* Телефон — ключ, по которому аккаунт связывается с задачами
@@ -192,7 +212,7 @@ export function MiniMeClient({
           </div>
           {u.email && !u.email.endsWith("@invite.local") ? (
             <div className="flex items-center justify-between gap-3">
-              <dt style={{ color: "var(--mini-text-muted)" }}>Email</dt>
+              <dt style={{ color: "var(--mini-text-muted)" }}>Почта</dt>
               <dd
                 className="font-medium"
                 style={{ color: "var(--mini-text)" }}

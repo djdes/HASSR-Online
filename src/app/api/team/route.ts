@@ -31,7 +31,7 @@ export const dynamic = "force-dynamic";
  *   - lastSeenAt (последний claim/complete)
  *
  * Используется UI «Моя команда» для заведующей: видно кто работает
- * прямо сейчас, кто закончил, кто прохлаждается.
+ * прямо сейчас, кто закончил, кто ещё не начал.
  */
 export async function GET() {
   const session = await getServerSession(authOptions);

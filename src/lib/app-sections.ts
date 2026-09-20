@@ -20,7 +20,7 @@
  */
 
 import { hasCapability, type Capability } from "@/lib/permission-presets";
-import { canAccessWebPath } from "@/lib/role-access";
+import { canAccessWebPath, hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getRouteTitle } from "@/lib/route-titles";
 
 export type AppSectionGroupId = "work" | "production" | "money" | "settings";
@@ -32,6 +32,26 @@ export type AppSectionActor = {
   orgPresetOverrides?: Record<string, string[]> | null;
 };
 
+/**
+ * Какая проверка стоит на самой странице раздела.
+ *
+ * Значение переписывает фактический guard из `page.tsx`, а не «как
+ * задумано»: список разделов обязан показывать ровно то, что человек и
+ * правда откроет. Раньше здесь была одна `capability`, и у заведующей
+ * половина доступных ей страниц в списке просто не появлялась.
+ *
+ *   • `webPath`   — своей проверки на странице нет, доступ режет только
+ *                   `canAccessWebPath` (тот же guard, что в `proxy.ts`);
+ *   • `fullAccess`— страница делает `hasFullWorkspaceAccess(session.user)`
+ *                   (руководство: управляющая, заведующая, ROOT);
+ *   • `anyOf`     — страница пускает при любой из перечисленных
+ *                   возможностей (`hasCapability`).
+ */
+export type AppSectionAccess =
+  | { kind: "webPath" }
+  | { kind: "fullAccess" }
+  | { kind: "anyOf"; capabilities: Capability[] };
+
 export type AppSection = {
   href: string;
   /** Название. По умолчанию берётся из `route-titles.ts`. */
@@ -42,11 +62,21 @@ export type AppSection = {
   icon: string;
   group: AppSectionGroupId;
   /**
-   * Возможность, без которой раздела не видно. Совпадает с проверкой,
-   * которую делает сама страница на сервере.
+   * Проверка, которую делает сама страница. Обязательна: раздел без
+   * явного правила легко расходится со своей страницей.
    */
-  capability?: Capability;
+  access: AppSectionAccess;
 };
+
+/** Короткая запись для `access: { kind: "anyOf", … }`. */
+function anyOf(...capabilities: Capability[]): AppSectionAccess {
+  return { kind: "anyOf", capabilities };
+}
+
+/** Своей проверки на странице нет — пускает `canAccessWebPath`. */
+const WEB_PATH: AppSectionAccess = { kind: "webPath" };
+/** `hasFullWorkspaceAccess(session.user)` в самой странице. */
+const FULL_ACCESS: AppSectionAccess = { kind: "fullAccess" };
 
 export const APP_SECTION_GROUPS: {
   id: AppSectionGroupId;
@@ -85,39 +115,44 @@ export const APP_SECTIONS: AppSection[] = [
     hint: "Заполнить и посмотреть записи",
     icon: "ClipboardList",
     group: "work",
+    // Страница без `journals.view` уводит на «Контрольную доску» или
+    // «Сегодня» — значит и пункта у такого человека быть не должно.
+    access: anyOf("journals.view"),
   },
   {
     href: "/control-board",
     hint: "Что сделано сегодня и кем",
     icon: "Gauge",
     group: "work",
-    capability: "tasks.verify",
+    access: anyOf("tasks.verify", "admin.full"),
   },
   {
     href: "/verifications",
     hint: "Проверить и подтвердить выполненное",
     icon: "BadgeCheck",
     group: "work",
-    capability: "tasks.verify",
+    access: anyOf("tasks.verify"),
   },
   {
     href: "/journals-progress",
     hint: "Где отстаём по заполнению",
     icon: "TrendingUp",
     group: "work",
+    access: anyOf("tasks.verify", "admin.full"),
   },
   {
     href: "/team",
     hint: "Кто на смене и чем занят",
     icon: "Users",
     group: "work",
+    access: anyOf("staff.view", "tasks.verify", "admin.full"),
   },
   {
     href: "/settings/schedule",
     hint: "Кто в какой день выходит",
     icon: "CalendarRange",
     group: "work",
-    capability: "admin.full",
+    access: FULL_ACCESS,
   },
   // ---- Производство --------------------------------------------------
   {
@@ -125,48 +160,56 @@ export const APP_SECTIONS: AppSection[] = [
     hint: "Прослеживаемость сырья и готовых блюд",
     icon: "Package",
     group: "production",
+    access: WEB_PATH,
   },
   {
     href: "/plans",
     hint: "Что и сколько готовим",
     icon: "CalendarRange",
     group: "production",
+    access: WEB_PATH,
   },
   {
     href: "/changes",
     hint: "Новое оборудование, рецептура, поставщик",
     icon: "GitBranch",
     group: "production",
+    access: WEB_PATH,
   },
   {
     href: "/losses",
     hint: "Испорченные и просроченные продукты",
     icon: "TrendingDown",
     group: "production",
+    access: WEB_PATH,
   },
   {
     href: "/capa",
     hint: "Что нашли и как исправили",
     icon: "AlertTriangle",
     group: "production",
+    access: WEB_PATH,
   },
   {
     href: "/competencies",
     hint: "Кто что прошёл и когда повторять",
     icon: "GraduationCap",
     group: "production",
+    access: WEB_PATH,
   },
   {
     href: "/orders",
     hint: "Заполнить реквизитами и распечатать",
     icon: "ScrollText",
     group: "production",
+    access: WEB_PATH,
   },
   {
     href: "/mercury",
     hint: "Входящие ветеринарные документы",
     icon: "Plug",
     group: "production",
+    access: WEB_PATH,
   },
   // ---- Отчёты и деньги -----------------------------------------------
   {
@@ -174,25 +217,32 @@ export const APP_SECTIONS: AppSection[] = [
     hint: "Выгрузки в PDF и Excel для проверяющего",
     icon: "FileText",
     group: "money",
-    capability: "reports.view",
+    // Страница проверяет `hasFullWorkspaceAccess`, а НЕ `reports.view`:
+    // заведующая её открывает, и раньше пункта у неё не было.
+    access: FULL_ACCESS,
   },
   {
     href: "/bonuses",
     hint: "Сколько начислено команде за журналы",
     icon: "Coins",
     group: "money",
+    access: FULL_ACCESS,
   },
   {
     href: "/settings/balance",
     hint: "Баллы за отзывы и приглашения",
     icon: "Coins",
     group: "money",
+    // Единственный раздел настроек, открытый линейному сотруднику:
+    // отзыв за баллы пишет и повар (см. `role-access.ts`).
+    access: WEB_PATH,
   },
   {
     href: "/ideas",
     hint: "Предложить и проголосовать",
     icon: "Lightbulb",
     group: "money",
+    access: FULL_ACCESS,
   },
   // ---- Настройки ------------------------------------------------------
   {
@@ -201,65 +251,68 @@ export const APP_SECTIONS: AppSection[] = [
     hint: "Полный список — организация, журналы, интеграции",
     icon: "Settings2",
     group: "settings",
-    capability: "admin.full",
+    // Хаб настроек — единственная страница, которая и правда просит
+    // `admin.full`: заведующую он уводит на «Контрольную доску».
+    access: anyOf("admin.full"),
   },
   {
     href: "/settings/users",
     hint: "Роли, доступы, приглашения",
     icon: "Users",
     group: "settings",
-    capability: "staff.view",
+    // Страница пускает по роли руководства, а не по `staff.view`.
+    access: FULL_ACCESS,
   },
   {
     href: "/settings/equipment",
     hint: "Холодильники, печи, датчики",
     icon: "Wrench",
     group: "settings",
-    capability: "admin.full",
+    access: WEB_PATH,
   },
   {
     href: "/settings/areas",
     hint: "Производственные зоны и помещения",
     icon: "Building2",
     group: "settings",
-    capability: "admin.full",
+    access: WEB_PATH,
   },
   {
     href: "/settings/products",
     hint: "Справочник продуктов",
     icon: "Package",
     group: "settings",
-    capability: "admin.full",
+    access: WEB_PATH,
   },
   {
     href: "/settings/buildings",
     hint: "Точки с адресами и помещения внутри",
     icon: "Building2",
     group: "settings",
-    capability: "admin.full",
+    access: FULL_ACCESS,
   },
   {
     href: "/settings/notifications",
     hint: "Telegram-бот, типы оповещений",
     icon: "Bell",
     group: "settings",
-    capability: "admin.full",
+    access: WEB_PATH,
   },
   {
     href: "/settings/audit",
     hint: "Кто что менял в журналах и настройках",
     icon: "ScrollText",
     group: "settings",
-    // Сама страница строже — только владелец (`requireRole(["owner"])`).
-    // Здесь проверка из общего набора: лишний пункт у заведующей
-    // закончился бы возвратом на дашборд, поэтому берём `admin.full`.
-    capability: "admin.full",
+    // `requireRole(["owner"])` здесь давно снят — страница проверяет
+    // `hasFullWorkspaceAccess`, и заведующая её открывает.
+    access: FULL_ACCESS,
   },
   {
     href: "/settings/security",
     hint: "История входов, выход со всех устройств",
     icon: "ShieldCheck",
     group: "settings",
+    access: WEB_PATH,
   },
 ];
 
@@ -271,21 +324,30 @@ export function appSectionLabel(section: AppSection): string {
 /**
  * Видит ли человек раздел.
  *
- * Две проверки, обе уже существующие:
- *   1. `canAccessWebPath` — тот самый guard, которым `proxy.ts`
- *      разворачивает линейного сотрудника с закрытых разделов;
- *   2. `hasCapability` — та самая возможность, которую проверяет сама
- *      страница (например `/settings` требует `admin.full`).
+ * Новых правил доступа здесь нет — повторяются ровно те, что стоят на
+ * самих страницах:
+ *   1. `canAccessWebPath` — guard, которым `proxy.ts` разворачивает
+ *      линейного сотрудника с закрытых разделов;
+ *   2. `section.access` — то, что страница проверяет у себя внутри.
+ *
+ * Правило одно на оба места: список разделов должен показывать ровно
+ * то, что откроется. Пункт, ведущий на редирект, — это обман.
  */
 export function canSeeAppSection(
   actor: AppSectionActor,
   section: AppSection
 ): boolean {
   if (!canAccessWebPath(actor, section.href)) return false;
-  if (section.capability && !hasCapability(actor, section.capability)) {
-    return false;
+  switch (section.access.kind) {
+    case "webPath":
+      return true;
+    case "fullAccess":
+      return hasFullWorkspaceAccess(actor);
+    case "anyOf":
+      return section.access.capabilities.some((capability) =>
+        hasCapability(actor, capability)
+      );
   }
-  return true;
 }
 
 export function visibleAppSections(actor: AppSectionActor): AppSection[] {

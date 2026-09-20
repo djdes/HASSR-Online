@@ -1,0 +1,21 @@
+import { openTelegramSession } from "../tg-session";
+import { shot } from "./lib";
+const T = async (p: any) => ((await p.evaluate(`document.body.innerText`)) as string).replace(/\s+/g, " ");
+(async () => {
+  const s = await openTelegramSession({ role: process.env.ROLE || "cookA", width: Number(process.env.W || 360), height: Number(process.env.H || 640), theme: "light" });
+  const p = s.page;
+  await p.goto(s.base + "/mini/today", { waitUntil: "load", timeout: 300000 });
+  await p.waitForTimeout(8000);
+  const b = p.locator(`button[aria-label^="Партнёрская программа"]`);
+  console.log("count", await b.count(), "visible", await b.first().isVisible());
+  await b.first().click();
+  await p.waitForTimeout(3000);
+  console.log("after click", (await T(p)).slice(-260));
+  await shot(p, "partner-click-" + (process.env.W || 360));
+  await b.first().click().catch(() => {});
+  await p.waitForTimeout(3000);
+  console.log("after 2nd click", (await T(p)).slice(-260));
+  await shot(p, "partner-click2-" + (process.env.W || 360));
+  console.log("ERRORS", JSON.stringify(s.errors));
+  await s.close();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 600)); process.exit(1); });

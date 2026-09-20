@@ -20,7 +20,14 @@ export default async function MiniMePage() {
     ? await db.user
         .findUnique({
           where: { id: session.user.id },
-          select: { phone: true, positionTitle: true },
+          select: {
+            phone: true,
+            positionTitle: true,
+            // Должность почти всегда задана справочником, а не строкой:
+            // раньше читали только `positionTitle`, и у всех, кого
+            // завели правильно, в профиле стояло «не указана».
+            jobPosition: { select: { name: true } },
+          },
         })
         .catch(() => null)
     : null;
@@ -28,7 +35,11 @@ export default async function MiniMePage() {
   return (
     <MiniMeClient
       telegramBotUsername={process.env.TELEGRAM_BOT_USERNAME ?? ""}
-      positionTitle={profile?.positionTitle ?? null}
+      positionTitle={
+        profile?.jobPosition?.name?.trim() ||
+        profile?.positionTitle?.trim() ||
+        null
+      }
       phone={profile?.phone ?? null}
     />
   );

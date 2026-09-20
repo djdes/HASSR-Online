@@ -1,0 +1,30 @@
+import { chromium } from "playwright";
+import { state, BASE } from "../tg-session";
+const SHOTS = "C:/Users/Yaroslav/AppData/Local/Temp/18/claude/d--www-Wesetup-ru/aa63a183-7b19-487e-8461-b751f0f1c337/scratchpad/explore-mgmt";
+const DOC = "/journals/hygiene/documents/cmu45uyxc004k5k9m0bq4vwux";
+const LEFT = "(function(){var a=document.body.innerText.split(String.fromCharCode(10)).filter(function(x){return x.indexOf('\u0421\u0435\u0433\u043e\u0434\u043d\u044f \u043e\u0441\u0442\u0430\u043b\u043e\u0441\u044c')>=0});return a.join(' | ')||'-'})()";
+async function main() {
+  const w = Number(process.argv[2] || 1280);
+  const br = await chromium.launch({ headless: true });
+  const ctx = await br.newContext({ viewport: { width: w, height: 900 }, isMobile: w < 500, hasTouch: w < 500 });
+  await ctx.request.post(BASE + "/api/auth/login", { data: { email: (state as any).users.headA.email, password: (state as any).password } });
+  const p = await ctx.newPage();
+  const net: string[] = [];
+  p.on("request", (r) => { if (r.method() !== "GET" && !/_next|auth\/session/.test(r.url())) net.push(`${r.method()} ${r.url().replace(BASE, "")} ${String(r.postData() || "").slice(0, 160)}`); });
+  await p.goto(BASE + DOC, { waitUntil: "domcontentloaded", timeout: 300000 });
+  await p.waitForTimeout(7000);
+  console.log("BEFORE:", await p.evaluate(LEFT));
+  console.log("BTNS:", JSON.stringify(await p.evaluate(`[...document.querySelectorAll("button")].map(function(x){return x.innerText.replace(/\s+/g," ").trim()}).filter(Boolean).slice(0,60)`)));
+  const b = p.getByRole("button", { name: /Отметить всех/ }).first();
+  console.log("btn:", await b.count());
+  await b.click();
+  await p.waitForTimeout(12000);
+  console.log("NET:", JSON.stringify(net, null, 1));
+  console.log("TOAST:", await p.evaluate(`(function(){var l=document.querySelector("[data-sonner-toaster]");return l?l.innerText.replace(/\s+/g," "):"нет"})()`));
+  await p.reload({ waitUntil: "domcontentloaded", timeout: 300000 });
+  await p.waitForTimeout(7000);
+  console.log("AFTER RELOAD:", await p.evaluate(LEFT));
+  await p.screenshot({ path: `${SHOTS}/hyg-site-${w}.png`, fullPage: false });
+  await br.close();
+}
+main().catch(e => { console.error(e); process.exit(1); });

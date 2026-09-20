@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Copy, KeyRound, RefreshCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 function mask(token: string): string {
   if (token.length <= 8) return "••••";
@@ -13,6 +14,7 @@ function mask(token: string): string {
 export function ApiTokenManager({ initialToken }: { initialToken: string | null }) {
   const [token, setToken] = useState<string | null>(initialToken);
   const [justGenerated, setJustGenerated] = useState<string | null>(null);
+  const [confirmRevokeOpen, setConfirmRevokeOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const rotate = () =>
@@ -31,7 +33,6 @@ export function ApiTokenManager({ initialToken }: { initialToken: string | null 
 
   const revoke = () =>
     startTransition(async () => {
-      if (!confirm("Точно удалить текущий ключ? Все интеграции, которые его используют, перестанут работать.")) return;
       try {
         const res = await fetch("/api/settings/external-token", { method: "DELETE" });
         if (!res.ok) throw new Error("Не удалось удалить ключ");
@@ -92,12 +93,41 @@ export function ApiTokenManager({ initialToken }: { initialToken: string | null 
           {token ? "Сгенерировать новый" : "Создать ключ"}
         </Button>
         {token ? (
-          <Button type="button" variant="outline" onClick={revoke} disabled={pending}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setConfirmRevokeOpen(true)}
+            disabled={pending}
+          >
             <Trash2 className="size-4" />
             Отозвать
           </Button>
         ) : null}
       </div>
+
+      {/* Нативный confirm() в приложении Telegram может не показаться —
+          кнопка тогда молча не срабатывает (CLAUDE.md §6). */}
+      <ConfirmDialog
+        open={confirmRevokeOpen}
+        onClose={() => setConfirmRevokeOpen(false)}
+        onConfirm={() => {
+          setConfirmRevokeOpen(false);
+          revoke();
+        }}
+        title="Отозвать ключ доступа?"
+        description="Ключ перестанет работать сразу же."
+        bullets={[
+          {
+            label: "Все интеграции, где прописан этот ключ, перестанут работать",
+            tone: "warn",
+          },
+          { label: "Вернуть отозванный ключ нельзя — только создать новый", tone: "warn" },
+        ]}
+        confirmLabel="Отозвать ключ"
+        cancelLabel="Отмена"
+        variant="danger"
+        typeToConfirm="ОТОЗВАТЬ"
+      />
     </div>
   );
 }

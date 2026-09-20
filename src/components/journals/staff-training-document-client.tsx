@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Archive, ChevronDown, Plus, Trash2 } from "lucide-react";
 import { ResponsiveMenu } from "@/components/ui/responsive-menu";
 import { Button } from "@/components/ui/button";
+import { confirmAsync } from "@/components/ui/confirm-async";
 import { JournalDocumentShell } from "@/components/journals/journal-document-shell";
 import { JournalDocumentHeader } from "@/components/journals/journal-document-header";
 import {
@@ -369,7 +370,18 @@ export function StaffTrainingDocumentClient({
   /* ---------- close journal ---------- */
 
   async function handleCloseJournal() {
-    if (!window.confirm(`Закончить журнал "${title}"?`)) return;
+    const ok = await confirmAsync({
+      title: `Закончить журнал «${title}»?`,
+      description:
+        "Журнал уйдёт из рабочего списка в раздел закрытых. Все записи сохранятся — отчёты и PDF по ним останутся.",
+      bullets: [
+        { label: "Добавлять и править записи после этого нельзя", tone: "warn" },
+        { label: "Вернуть журнал в активные можно в любой момент", tone: "info" },
+      ],
+      confirmLabel: "Закончить журнал",
+      variant: "warn",
+    });
+    if (!ok) return;
     const response = await fetch(`/api/journal-documents/${documentId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },

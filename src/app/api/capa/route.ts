@@ -8,7 +8,7 @@ import { isManagementRole } from "@/lib/user-roles";
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session?.user) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
 
   // GET CAPA-list возвращает все тикеты org-и (включая чужих
   // подразделений) — management-only. Раньше любой staff мог увидеть
@@ -48,7 +48,7 @@ const VALID_CATEGORIES = [
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session?.user) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
 
   // Создавать CAPA могут только management — раньше любой staff мог
   // через прямой fetch создать тикет (например, sourceType / sourceEntryId

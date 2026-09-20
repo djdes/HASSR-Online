@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Loader2, Mail, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 type Props = {
   initialEmail: string | null;
@@ -12,6 +13,7 @@ export function AccountingClient({ initialEmail }: Props) {
   const [email, setEmail] = useState(initialEmail ?? "");
   const [saved, setSaved] = useState(initialEmail);
   const [busy, setBusy] = useState(false);
+  const [confirmDisconnectOpen, setConfirmDisconnectOpen] = useState(false);
 
   async function save() {
     const trimmed = email.trim();
@@ -38,7 +40,6 @@ export function AccountingClient({ initialEmail }: Props) {
   }
 
   async function disconnect() {
-    if (!confirm("Отключить рассылку?")) return;
     setBusy(true);
     try {
       const res = await fetch("/api/settings/accountant-email", {
@@ -102,7 +103,7 @@ export function AccountingClient({ initialEmail }: Props) {
         {saved ? (
           <button
             type="button"
-            onClick={disconnect}
+            onClick={() => setConfirmDisconnectOpen(true)}
             disabled={busy}
             className="inline-flex h-12 shrink-0 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#a13a32] hover:bg-[#fff4f2] disabled:opacity-50"
           >
@@ -119,6 +120,27 @@ export function AccountingClient({ initialEmail }: Props) {
         «;», даты в формате ДД.ММ.ГГГГ. Если за неделю не было
         списаний — письмо не отправляется.
       </div>
+
+      {/* Нативный confirm() в приложении Telegram может не показаться —
+          кнопка тогда молча не срабатывает (CLAUDE.md §6). */}
+      <ConfirmDialog
+        open={confirmDisconnectOpen}
+        onClose={() => setConfirmDisconnectOpen(false)}
+        onConfirm={async () => {
+          setConfirmDisconnectOpen(false);
+          await disconnect();
+        }}
+        title="Отключить рассылку бухгалтеру?"
+        description={`Адрес ${saved ?? ""} перестанет получать еженедельный отчёт по списаниям.`}
+        bullets={[
+          { label: "Письма по понедельникам приходить перестанут", tone: "warn" },
+          { label: "Сами списания и журналы остаются на месте", tone: "default" },
+          { label: "Подключить обратно можно в любой момент", tone: "info" },
+        ]}
+        confirmLabel="Отключить"
+        cancelLabel="Отмена"
+        variant="warn"
+      />
     </section>
   );
 }

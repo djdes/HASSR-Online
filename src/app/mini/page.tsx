@@ -8,7 +8,7 @@ import { Loader2, ShieldAlert } from "lucide-react";
 
 import { adoptCookieSession } from "./_lib/cookie-session";
 import { sanitizeMiniAppRedirectPath } from "@/lib/journal-obligation-links";
-import { getWebHomeHref } from "@/lib/role-access";
+import { miniHomeHref } from "@/app/mini/_lib/nav-items";
 import { getTelegramWebApp } from "./_components/telegram-web-app";
 import {
   telegramSignInProblemFromMessage,
@@ -130,14 +130,12 @@ export default function MiniEntryPage() {
   useEffect(() => {
     if (status !== "authenticated" || redirectStarted.current) return;
     redirectStarted.current = true;
-    router.replace(
-      nextPath ??
-        getWebHomeHref({
-          role: session?.user?.role ?? null,
-          isRoot: session?.user?.isRoot === true,
-        })
-    );
-  }, [nextPath, router, session?.user?.isRoot, session?.user?.role, status]);
+    // Тот же адрес, что у первой вкладки меню: у линейного сотрудника
+    // это «Сегодня», у заведующей — контрольная доска. Раньше всех
+    // вели на `/journals`, откуда сразу перекидывало дальше — лишний
+    // прыжок и мигающий экран.
+    router.replace(nextPath ?? miniHomeHref(session?.user ?? null));
+  }, [nextPath, router, session?.user, status]);
 
   if (localState.kind === "error") {
     return (

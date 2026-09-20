@@ -7,7 +7,7 @@ import { ArrowLeft, Clock, RotateCcw, TriangleAlert, UserCheck } from "lucide-re
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { getWebHomeHref } from "@/lib/role-access";
+import { miniHomeHref } from "@/app/mini/_lib/nav-items";
 import { haptic } from "../_components/use-haptic";
 import {
   claimQueuedEntry,
@@ -81,10 +81,7 @@ export default function OutboxPage() {
   return (
     <div className="flex flex-1 flex-col gap-4 pb-28">
       <Link
-        href={getWebHomeHref({
-          role: session?.user?.role ?? null,
-          isRoot: session?.user?.isRoot === true,
-        })}
+        href={miniHomeHref(session?.user ?? null)}
         className="mini-press inline-flex w-fit items-center gap-1.5 text-[13px]"
         style={{ color: "var(--mini-text-muted)" }}
       >

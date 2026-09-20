@@ -19,7 +19,7 @@ const PutSchema = z.object({
 export async function GET() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
   }
   const orgId = getActiveOrgId(session);
   const org = await db.organization.findUnique({
@@ -46,7 +46,7 @@ export async function GET() {
 export async function PUT(request: Request) {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
   }
   const orgId = getActiveOrgId(session);
   let body: unknown;
@@ -92,7 +92,7 @@ export async function PUT(request: Request) {
 export async function DELETE() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
   }
   const orgId = getActiveOrgId(session);
   await db.organization.update({

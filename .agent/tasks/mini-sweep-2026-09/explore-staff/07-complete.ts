@@ -1,0 +1,32 @@
+import { openTelegramSession, db, state } from "../tg-session";
+import { shot } from "./lib";
+const txt = async (p: any) => ((await p.evaluate(`document.body.innerText`)) as string).replace(/[ \t\n\r]+/g, " ");
+(async () => {
+  const uid = state.users.cookA.id;
+  const c = await db.journalTaskClaim.findFirst({ where: { userId: uid, status: "active" } });
+  console.log("claim", c?.id, c?.journalCode);
+  const s = await openTelegramSession({ role: "cookA", width: 360, height: 640, theme: "light" });
+  const p = s.page;
+  p.on("response", async (r) => { if (r.url().includes("/api/")) console.log("<<", r.status(), r.request().method(), r.url().replace(s.base, "").slice(0, 80)); });
+  await p.goto(s.base + "/mini/claim/" + c!.id, { waitUntil: "load", timeout: 300000 });
+  await p.waitForTimeout(6000);
+  // checkbox
+  const cb = p.locator("input[type=checkbox], [role=checkbox]");
+  console.log("checkbox count", await cb.count());
+  await p.getByText("Все сотрудники в норме").click();
+  await p.waitForTimeout(800);
+  await shot(p, "cookA-claim-checked");
+  const ta = p.locator("textarea, input:not([type=checkbox]):not([type=radio])").first();
+  await ta.click(); await ta.fill("Проверено, замечаний нет");
+  await p.waitForTimeout(500);
+  await shot(p, "cookA-claim-filled");
+  await p.getByRole("button", { name: /Завершить/ }).click();
+  await p.waitForTimeout(6000);
+  console.log("URL after complete", p.url());
+  console.log("TXT", (await txt(p)).slice(0, 700));
+  await shot(p, "cookA-after-complete");
+  const after = await db.journalTaskClaim.findUnique({ where: { id: c!.id } });
+  console.log("DB claim status", after?.status, "entryId", after?.entryId, "completedAt", after?.completedAt);
+  console.log("ERRORS", JSON.stringify(s.errors));
+  await s.close();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 800)); process.exit(1); });

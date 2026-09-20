@@ -17,6 +17,11 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, PageHeaderStat } from "@/components/ui/page-header";
+import {
+  pluralRu,
+  showRemindResult,
+  type RemindResult,
+} from "@/lib/remind-toast";
 
 type Task = {
   journalCode: string;
@@ -124,6 +129,19 @@ function timeAgo(iso: string | null): string {
   return `${h} ч ${m % 60} мин`;
 }
 
+/**
+ * «10 мин назад».
+ *
+ * Отдельно от `timeAgo`, потому что к нему приклеивали « назад» без
+ * разбора — и получалось «только что назад» и «— назад».
+ */
+function sinceText(iso: string | null): string {
+  const ago = timeAgo(iso);
+  if (ago === "—") return "недавно";
+  if (ago === "только что") return ago;
+  return `${ago} назад`;
+}
+
 export function ControlBoardClient() {
   const [data, setData] = useState<Resp | null>(null);
   const [loading, setLoading] = useState(true);
@@ -158,11 +176,18 @@ export function ControlBoardClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
       });
-      const j = await res.json();
-      if (res.ok) toast.success(`Отправлено ${j.sent} напоминаний (из ${j.total})`);
-      else toast.error(j.error || "Ошибка");
+      const j = (await res.json()) as RemindResult;
+      if (!res.ok) {
+        toast.error(j.error || "Не получилось отправить напоминание");
+        return;
+      }
+      showRemindResult(
+        j,
+        (sent) =>
+          `Напоминание отправлено: ${sent} ${pluralRu(sent, "сотруднику", "сотрудникам", "сотрудникам")}`
+      );
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Ошибка");
+      toast.error(e instanceof Error ? e.message : "Не получилось отправить напоминание");
     } finally {
       setBusyButton(null);
     }
@@ -176,13 +201,14 @@ export function ControlBoardClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userIds: [userId], scopeLabel }),
       });
-      if (res.ok) toast.success("Напоминание отправлено");
-      else {
-        const j = await res.json();
-        toast.error(j.error || "Ошибка");
+      const j = (await res.json()) as RemindResult;
+      if (!res.ok) {
+        toast.error(j.error || "Не получилось отправить напоминание");
+        return;
       }
+      showRemindResult(j, () => "Напоминание отправлено");
     } catch {
-      toast.error("Ошибка");
+      toast.error("Не получилось отправить напоминание");
     } finally {
       setBusyButton(null);
     }
@@ -260,7 +286,7 @@ export function ControlBoardClient() {
           живёт в светлой карточке ниже. */}
       <PageHeader
         title="Контрольная доска"
-        description="Все задачи смены в одном экране. Видно кто работает, кто прохлаждается, что не сделано и что ждёт проверки."
+        description="Все задачи смены в одном экране. Видно, кто уже работает, кто ещё не начал, что не сделано и что ждёт проверки."
         actions={
           <>
             <PageHeaderStat tone={compliance === 100 ? "ok" : "neutral"}>
@@ -288,7 +314,7 @@ export function ControlBoardClient() {
           <AlertTriangle className="size-4 shrink-0 text-[#b8791f]" />
           <div className="text-[13px] text-[#0b1024]">
             {s.notStartedCount > 0
-              ? `${s.notStartedCount} сотрудник${plural(s.notStartedCount)} прохлаждается (не взяли задачи)`
+              ? `${s.notStartedCount} ${pluralRu(s.notStartedCount, "сотрудник", "сотрудника", "сотрудников")} ещё не ${pluralRu(s.notStartedCount, "взял", "взяли", "взяли")} задачи`
               : ""}
             {s.notStartedCount > 0 && s.noTelegramCount > 0 ? " · " : ""}
             {s.noTelegramCount > 0
@@ -481,7 +507,7 @@ function TaskCard({
             {task.completedAt && task.status === "pending_review" ? (
               <>
                 <span>·</span>
-                <span>сделал {timeAgo(task.completedAt)} назад</span>
+                <span>сделано {sinceText(task.completedAt)}</span>
               </>
             ) : null}
           </div>
@@ -582,7 +608,7 @@ function SubCard({
         ) : null}
         {total === 0 && sub.hasTelegram ? (
           <span className="rounded-full bg-[#fff8eb] px-2 py-0.5 text-[#a13a32]">
-            Не взял ни одной задачи
+            Задач сегодня ещё нет
           </span>
         ) : null}
         {!sub.hasTelegram ? (
@@ -595,11 +621,3 @@ function SubCard({
   );
 }
 
-function plural(n: number): string {
-  const abs = Math.abs(n) % 100;
-  const last = abs % 10;
-  if (abs > 10 && abs < 20) return "ов";
-  if (last === 1) return "";
-  if (last >= 2 && last <= 4) return "а";
-  return "ов";
-}

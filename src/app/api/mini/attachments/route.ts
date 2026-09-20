@@ -24,7 +24,7 @@ const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
   }
 
   // Per-user disk-fill protection: 60 загрузок в день. Без этого один

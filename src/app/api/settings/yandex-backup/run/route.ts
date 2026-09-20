@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 export async function POST() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
   }
   const orgId = getActiveOrgId(session);
 

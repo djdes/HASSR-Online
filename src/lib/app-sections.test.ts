@@ -4,32 +4,38 @@ import assert from "node:assert/strict";
 import {
   APP_SECTIONS,
   appSectionLabel,
+  canSeeAppSection,
   headerNavSections,
   visibleAppSectionGroups,
   visibleAppSections,
   type AppSectionActor,
 } from "./app-sections";
 
-const owner: AppSectionActor = { role: "manager", permissionPreset: "admin" };
-const manager: AppSectionActor = { role: "owner", permissionPreset: "admin" };
+const owner: AppSectionActor = { role: "owner", permissionPreset: "admin" };
+const manager: AppSectionActor = { role: "manager", permissionPreset: "admin" };
 const headChef: AppSectionActor = {
-  // Заведующая: роль управленческая (сайт её пускает), но возможностей
-  // администратора у неё нет — настройки и отчёты закрыты.
-  role: "manager",
+  // Заведующая: роль управленческая (`hasFullWorkspaceAccess` = true),
+  // но возможностей администратора нет — `admin.full` ей не выдан.
+  role: "head_chef",
   permissionPreset: "head_chef",
 };
 const cook: AppSectionActor = { role: "cook", permissionPreset: "cook" };
+const cleaner: AppSectionActor = { role: "cook", permissionPreset: "cleaner" };
 
 function hrefs(actor: AppSectionActor): string[] {
   return visibleAppSections(actor).map((section) => section.href);
 }
 
-test("у каждого раздела есть название и подпись", () => {
+test("у каждого раздела есть название, подпись и правило доступа", () => {
   for (const section of APP_SECTIONS) {
     assert.ok(appSectionLabel(section).length > 0, section.href);
     assert.ok(section.hint.length > 0, section.href);
     assert.ok(section.icon.length > 0, section.href);
     assert.match(section.href, /^\//);
+    assert.ok(section.access, section.href);
+    if (section.access.kind === "anyOf") {
+      assert.ok(section.access.capabilities.length > 0, section.href);
+    }
   }
 });
 
@@ -38,7 +44,7 @@ test("адреса разделов не повторяются", () => {
   assert.equal(seen.size, APP_SECTIONS.length);
 });
 
-test("владелец видит всё", () => {
+test("владелец и управляющая видят всё", () => {
   assert.equal(visibleAppSections(owner).length, APP_SECTIONS.length);
   assert.equal(visibleAppSections(manager).length, APP_SECTIONS.length);
 });
@@ -50,25 +56,65 @@ test("ROOT видит всё, даже без роли", () => {
   );
 });
 
-test("линейному сотруднику открыты только журналы и баланс", () => {
-  assert.deepEqual(hrefs(cook), ["/journals", "/settings/balance"]);
+test("линейному сотруднику открыт только баланс", () => {
+  // `/journals` без `journals.view` уводит на «Сегодня» — значит пункта
+  // быть не должно: список разделов показывает только то, что реально
+  // откроется.
+  assert.deepEqual(hrefs(cook), ["/settings/balance"]);
+  assert.deepEqual(hrefs(cleaner), ["/settings/balance"]);
 });
 
-test("заведующая проверяет задачи, но не правит настройки", () => {
+test("у заведующей в разделах ровно то, что открывается", () => {
   const list = hrefs(headChef);
-  assert.ok(list.includes("/verifications"));
-  assert.ok(list.includes("/control-board"));
-  // Сотрудники ей видны (staff.view), а хаб настроек и отчёты — нет.
-  assert.ok(list.includes("/settings/users"));
+
+  // Открывается: страницы с `tasks.verify` и все, где стоит
+  // `hasFullWorkspaceAccess` (её роль — управленческая).
+  for (const href of [
+    "/control-board",
+    "/verifications",
+    "/journals-progress",
+    "/team",
+    "/settings/schedule",
+    "/batches",
+    "/plans",
+    "/changes",
+    "/losses",
+    "/capa",
+    "/competencies",
+    "/orders",
+    "/mercury",
+    "/reports",
+    "/bonuses",
+    "/settings/balance",
+    "/ideas",
+    "/settings/users",
+    "/settings/equipment",
+    "/settings/areas",
+    "/settings/products",
+    "/settings/buildings",
+    "/settings/notifications",
+    "/settings/audit",
+    "/settings/security",
+  ]) {
+    assert.ok(list.includes(href), `должно быть видно: ${href}`);
+  }
+
+  // Не открывается: журналы (нет `journals.view`) и хаб настроек
+  // (нет `admin.full` — страница уводит на «Контрольную доску»).
+  assert.ok(!list.includes("/journals"));
   assert.ok(!list.includes("/settings"));
-  assert.ok(!list.includes("/reports"));
 });
 
-test("повар не видит ни проверок, ни настроек", () => {
+test("заведующая видит все разделы, кроме журналов и хаба настроек", () => {
+  assert.equal(hrefs(headChef).length, APP_SECTIONS.length - 2);
+});
+
+test("повар не видит ни проверок, ни настроек, ни журналов", () => {
   const list = hrefs(cook);
   assert.ok(!list.includes("/verifications"));
   assert.ok(!list.includes("/settings"));
   assert.ok(!list.includes("/reports"));
+  assert.ok(!list.includes("/journals"));
 });
 
 test("группы отдаются без пустых", () => {
@@ -78,7 +124,7 @@ test("группы отдаются без пустых", () => {
   }
   assert.deepEqual(
     groups.map((g) => g.id),
-    ["work", "money"]
+    ["money"]
   );
   assert.deepEqual(
     visibleAppSectionGroups(owner).map((g) => g.id),
@@ -88,13 +134,52 @@ test("группы отдаются без пустых", () => {
 
 test("org-override пресета режет разделы так же, как на сайте", () => {
   const limited: AppSectionActor = {
-    role: "manager",
+    role: "head_chef",
     permissionPreset: "head_chef",
     orgPresetOverrides: { head_chef: ["staff.view"] },
   };
   const list = hrefs(limited);
+  // Проверки задач больше нет — пункт исчез.
   assert.ok(!list.includes("/verifications"));
+  assert.ok(!list.includes("/control-board"));
+  // А «Сотрудники» проверяют роль, а не возможность — остаются.
   assert.ok(list.includes("/settings/users"));
+});
+
+test("правило раздела повторяет проверку самой страницы", () => {
+  const section = (href: string) => {
+    const found = APP_SECTIONS.find((s) => s.href === href);
+    assert.ok(found, href);
+    return found;
+  };
+
+  // Журналы: страница смотрит `journals.view`.
+  assert.deepEqual(section("/journals").access, {
+    kind: "anyOf",
+    capabilities: ["journals.view"],
+  });
+  // Хаб настроек: страница смотрит `admin.full`.
+  assert.deepEqual(section("/settings").access, {
+    kind: "anyOf",
+    capabilities: ["admin.full"],
+  });
+  // Отчёты: страница смотрит `hasFullWorkspaceAccess`, не `reports.view`.
+  assert.deepEqual(section("/reports").access, { kind: "fullAccess" });
+  // Оборудование: своей проверки у страницы нет.
+  assert.deepEqual(section("/settings/equipment").access, { kind: "webPath" });
+});
+
+test("canSeeAppSection и visibleAppSections согласованы", () => {
+  for (const actor of [owner, manager, headChef, cook, cleaner]) {
+    const list = hrefs(actor);
+    for (const section of APP_SECTIONS) {
+      assert.equal(
+        canSeeAppSection(actor, section),
+        list.includes(section.href),
+        section.href
+      );
+    }
+  }
 });
 
 test("всё, что было отдельными вкладками в приложении, есть в разделах", () => {
