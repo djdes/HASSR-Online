@@ -76,7 +76,7 @@ main{padding:14px 0 20px}
 .obj .in{background:#fafbff}
 .pill{position:absolute;right:10px;top:29px;transform:translateY(-50%);min-width:22px;height:22px;padding:0 6px;border-radius:999px;font-size:12px;font-weight:700;display:none;align-items:center;justify-content:center;pointer-events:none}
 .fl.good .pill{display:inline-flex;background:#dcfce7;color:#116b2a}
-.fl.bad .pill{display:inline-flex;background:#ffe0dc;color:#a13a32}
+.fl.bad .pill{display:inline-flex;background:#fff0c2;color:#7a4a00}
 .fl.good .in,.fl.bad .in{padding-right:40px}
 .box{position:relative}
 .stp{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:12px;border:1px solid #dcdfed;background:#fff;color:#3848c7;font:inherit;font-size:22px;font-weight:600;line-height:1;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent}
@@ -88,6 +88,9 @@ main{padding:14px 0 20px}
 .fl.has-step.good .in,.fl.has-step.bad .in{padding-right:86px}
 .fl>label.lab,.fl.up>label.lab{position:static;top:auto;left:auto;display:block;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6f7282;margin:0 0 5px 2px;line-height:1.3;max-width:none;white-space:normal;overflow:visible;pointer-events:auto}
 .stamp{font-weight:500;letter-spacing:0;text-transform:none;white-space:nowrap}
+.lab .lab-t,.lab .lab-s{display:block}
+.lab .lab-s{min-height:1.3em;font-weight:500;letter-spacing:0;text-transform:none;color:#9b9fb3}
+.lab .lab-s .stamp{color:inherit}
 .box.flat .in{padding:12px 42px;min-height:52px;text-align:center;font-weight:600}
 .box.flat .stp{width:32px;height:32px;font-size:20px;border-radius:10px}.box.flat .stp.minus{left:6px}.box.flat .stp.plus{right:6px}
 .box.flat .pill{right:auto;left:50%;top:auto;bottom:3px;transform:translateX(-50%);min-width:16px;height:14px;font-size:9px;padding:0 4px}
@@ -107,11 +110,11 @@ main{padding:14px 0 20px}
 .fl .in{padding:23px 15px 7px;min-height:58px}
 .fl>label,.fl .box>label{position:absolute;left:16px;top:19px;font-size:15px;color:#9b9fb3;pointer-events:none;transition:top .15s,font-size .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(100% - 32px);line-height:1.2}
 .fl .in:focus~label,.fl .in:not(:placeholder-shown)~label,.fl.up>label,.fl.up .box>label{top:8px;font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6f7282}
-.fl.bad .in{border-color:#ef8a83;background:#fff7f6}
+.fl.bad .in{border-color:#e9b949;background:#fffaeb}
 .fl.good .in{border-color:#8fd3a8}
 .st{font-size:12px;margin:4px 0 0 3px;color:#9b9fb3;line-height:1.3}
 .st:empty{display:none}
-.fl.bad .st{color:#a13a32;font-weight:500}
+.fl.bad .st{color:#7a4a00;font-weight:500}
 .fl.good .st{color:#116b2a}
 .req{color:#e11d48;font-weight:700;margin-left:2px}
 .in{display:block;width:100%;min-height:52px;border:1px solid #dcdfed;border-radius:14px;padding:12px 15px;font:inherit;font-size:16px;color:#0b1024;background:#fff;-webkit-appearance:none;appearance:none;margin:0}
@@ -130,9 +133,9 @@ input.in[type=time]{font-weight:600;font-variant-numeric:tabular-nums}
 .muted{color:#6f7282;font-size:14px;line-height:1.5;margin:0}
 .check{display:flex;align-items:center;gap:12px;min-height:54px;padding:8px 15px;border:1px solid #dcdfed;border-radius:14px;background:#fff;margin-bottom:10px;font-size:15px;font-weight:500;cursor:pointer}
 .check input{width:24px;height:24px;margin:0;accent-color:#5566f6;flex:none}
-.dev{border:1px solid #ffd2cd;background:#fff4f2;border-radius:14px;padding:12px 14px;margin-bottom:10px}
-.dev b{display:block;color:#a13a32;font-size:14px;margin-bottom:4px}
-.dev p{margin:0 0 8px;font-size:13px;color:#7a2e28}
+.dev{border:1px solid #ffe9b0;background:#fff8eb;border-radius:14px;padding:12px 14px;margin-bottom:10px}
+.dev b{display:block;color:#7a4a00;font-size:14px;margin-bottom:4px}
+.dev p{margin:0 0 8px;font-size:13px;color:#7a4a00}
 .dev textarea.in{margin:0}
 .dev .chips{margin:8px 0 0;gap:6px}
 .dev .chip{height:32px;padding:0 12px;font-size:13px}
@@ -592,16 +595,19 @@ function renderObjectCard(base: string, group: Extract<TaskFormField, { type: "n
       const normText = norm.min != null && norm.max != null ? `${norm.min}…${norm.max}${unit}` : "";
       // Подпись короткая (в две колонки длинная режется), норма — строкой под полем внутри карточки.
       const labelBody = `${esc(metricName(field))}${stampHtml(stamp)}${required ? `<span class="req" aria-hidden="true">*</span>` : ""}`;
+      // В две колонки подписи одинаковой высоты: название строкой, дата и время — второй строкой у обеих метрик.
+      const flatLabel = `<span class="lab-t">${esc(metricName(field))}${required ? `<span class="req" aria-hidden="true">*</span>` : ""}</span><span class="lab-s">${stamp ? `<span class="stamp" data-stamp-date="${esc(stamp.date)}">${esc(stamp.date)} ${esc(stamp.time)}</span>` : ""}</span>`;
       // «Выключено» у холодильника, «Нет показания» у склада: честный прочерк с пометкой вместо выдуманного нуля.
       const isOff = off.has(field.key);
       const offNote = !flat && metricName(field) === "Температура" ? OFF_NOTE_EQUIPMENT : OFF_NOTE_READING;
       const status = isOff ? `${offNote} — руководитель получит уведомление` : bad.has(field.key) ? `Вне нормы ${normText}` : normText ? `Норма ${normText}` : "";
       const input = `<input class="in" id="${esc(id)}" name="${esc(field.key)}" type="text" inputmode="decimal" value="${isOff ? "" : esc(value)}" placeholder=" "${norm.min != null ? ` data-min="${esc(norm.min)}"` : ""}${norm.max != null ? ` data-max="${esc(norm.max)}"` : ""}${field.unit ? ` data-unit="${esc(field.unit)}"` : ""} data-plain="1" data-label="${esc(`${base} · ${lower(metricName(field))}`)}"${required && !isOff ? ` aria-required="true"` : ""}${required && isOff ? ` data-req="1"` : ""}>`;
       const box = `<div class="box${flat ? " flat" : ""}">${stepButton(field.key, -1)}${input}${flat ? "" : `<label for="${esc(id)}">${labelBody}</label>`}<span class="pill" aria-hidden="true"></span>${stepButton(field.key, 1)}</div>`;
-      const offChip = required
+      // В две колонки чип есть у обеих метрик — иначе колонки разной высоты; у необязательной он тоже честная пометка.
+      const offChip = required || flat
         ? `<div class="chips offrow"><label class="chip offc${isOff ? " on" : ""}"><input type="checkbox" name="off:${esc(field.key)}" value="1"${isOff ? " checked" : ""}>${esc(offNote)}</label></div>`
         : "";
-      return `<div class="fl up has-step${bad.has(field.key) ? " bad" : ""}${isOff ? " is-off" : ""}">${flat ? `<label class="lab" for="${esc(id)}">${labelBody}</label>` : ""}${box}<p class="st">${esc(status)}</p>${quickChips(field.key, norm, value)}${offChip}</div>`;
+      return `<div class="fl up has-step${bad.has(field.key) ? " bad" : ""}${isOff ? " is-off" : ""}">${flat ? `<label class="lab" for="${esc(id)}">${flatLabel}</label>` : ""}${box}<p class="st">${esc(status)}</p>${quickChips(field.key, norm, value)}${offChip}</div>`;
     })
     .join("");
   return `<div class="obj"><div class="obj-t">${esc(base)}</div><div class="cols${group.length === 1 ? " one" : ""}">${inputs}</div></div>`;

@@ -10,7 +10,7 @@ const climate = renderPage({
   title: "Бланк контроля температуры и влажности на складах",
   body: renderForm({
     action: "#", token: "t", who, employeeName: "Абдухалилова Шайирахон Фахритдиновна", correctionPresets: ["Сообщил руководителю", "Вызвал мастера"], openedAt: 1, suggestions: {}, hints: {},
-    values: { time: "10:00", r1t: "24", r1h: "45" },
+    values: { time: "10:00", r1t: "18", r1h: "38" }, stamp: { date: "20.09.2026", time: "20:17" },
     form: {
       intro: "Абдухалилова Шайирахон Фахритдиновна, снимите показания температуры (и влажности — где включено) по каждому помещению и выберите время замера.",
       fields: [

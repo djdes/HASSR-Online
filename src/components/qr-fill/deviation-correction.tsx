@@ -33,12 +33,12 @@ type Props = {
 
 export function DeviationCorrection({ title, hint, value, onChange }: Props) {
   return (
-    <div className="rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-4">
+    <div className="rounded-2xl border border-[#ffe9b0] bg-[#fff8eb] p-4">
       <div className="flex items-start gap-2.5">
-        <AlertTriangle className="mt-0.5 size-5 shrink-0 text-[#a13a32]" />
+        <AlertTriangle className="mt-0.5 size-5 shrink-0 text-[#7a4a00]" />
         <div className="min-w-0">
-          <div className="text-[14px] font-semibold text-[#a13a32]">{title}</div>
-          <p className="mt-1 text-[13px] leading-relaxed text-[#8a4038]">
+          <div className="text-[14px] font-semibold text-[#7a4a00]">{title}</div>
+          <p className="mt-1 text-[13px] leading-relaxed text-[#7a4a00]">
             {hint ?? "Руководитель получит уведомление."} Напишите, что вы
             сделали — без этого замер не сохранится.
           </p>
@@ -57,7 +57,7 @@ export function DeviationCorrection({ title, hint, value, onChange }: Props) {
               className={`rounded-full border px-3 py-2 text-[13px] font-medium transition-colors duration-150 ${
                 active
                   ? "border-[#5566f6] bg-[#5566f6] text-white"
-                  : "border-[#f0c4bd] bg-white text-[#0b1024] hover:border-[#5566f6]/50 hover:bg-[#f5f6ff]"
+                  : "border-[#f2d78a] bg-white text-[#0b1024] hover:border-[#5566f6]/50 hover:bg-[#f5f6ff]"
               }`}
             >
               {preset}
@@ -72,7 +72,7 @@ export function DeviationCorrection({ title, hint, value, onChange }: Props) {
         rows={2}
         maxLength={300}
         placeholder="Или напишите своими словами"
-        className="mt-3 min-h-[72px] rounded-2xl border-[#f0c4bd] bg-white px-4 py-3 text-[15px] focus-visible:border-[#5566f6] focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+        className="mt-3 min-h-[72px] rounded-2xl border-[#f2d78a] bg-white px-4 py-3 text-[15px] focus-visible:border-[#5566f6] focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
       />
     </div>
   );
