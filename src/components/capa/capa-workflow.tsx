@@ -110,7 +110,10 @@ export function CapaWorkflow({ ticketId, currentStatus }: Props) {
           [step.field]: fieldValue || undefined,
         }),
       });
-      if (!res.ok) throw new Error("Ошибка");
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(data?.error || "Не удалось сохранить. Попробуйте ещё раз.");
+      }
       router.refresh();
     } catch {
       setError("Не удалось обновить статус");

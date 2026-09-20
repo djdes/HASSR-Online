@@ -55,3 +55,5 @@
 | typecheck / eslint / unit | чисто; `journal-fill-html.test.ts` 4/4 |
 
 Тестовые помещения, оборудование, цех, точка и сегодняшние замеры удалены (`seed-objects.ts remove`).
+
+Прод (сборка `c4ad355c`, `prod-objects.ts`, вход тестовым аккаунтом → токены через `/api/qr-fill`, страницы без сессии, 390px): `/room-fill` и `/equipment-fill` — 200, ± даёт «-7», полоса «Помещения»/«Оборудование» из трёх объектов (`results-prod-objects.json`, `prod-room-fill.png`, `prod-equipment-fill.png`). Тестовые объекты удалены повторно.

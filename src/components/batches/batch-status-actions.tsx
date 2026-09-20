@@ -41,7 +41,10 @@ export function BatchStatusActions({ batchId, currentStatus }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
-      if (!res.ok) throw new Error("Ошибка");
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(data?.error || "Не удалось сохранить. Попробуйте ещё раз.");
+      }
       router.refresh();
     } catch {
       // ignore

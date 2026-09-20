@@ -51,7 +51,10 @@ export function PlanForm() {
           notes: form.get("notes") || null,
         }),
       });
-      if (!res.ok) throw new Error("Ошибка");
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(data?.error || "Не удалось сохранить план. Попробуйте ещё раз.");
+      }
       router.push("/plans");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка");

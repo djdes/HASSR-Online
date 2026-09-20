@@ -1,0 +1,14 @@
+{
+  "login": 200,
+  "roomHref": "/room-fill/cmu9xig1y0001qk9m47cuoiwl?token=…",
+  "roomStatus": 200,
+  "roomLoadMs": 397,
+  "roomAfterSign": "-7",
+  "roomStrip": "E2E QS Склад Бакалея E2E QS Склад Овощи E2E QS Склад Заморозка",
+  "roomTrigger": "Выберите | своё | имя",
+  "equipmentStatus": 200,
+  "equipmentLoadMs": 153,
+  "equipmentAfterSign": "-7",
+  "equipmentStrip": "E2E QS Холодильник №1 E2E QS Морозильник E2E QS Витрина",
+  "equipmentTrigger": "Выберите | ваше | имя"
+}

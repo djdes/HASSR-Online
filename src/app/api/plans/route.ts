@@ -64,17 +64,32 @@ export async function POST(req: NextRequest) {
   // items должен быть array — иначе UI не сможет рендерить JSON-колонку.
   const items = Array.isArray(body.items) ? body.items : [];
 
-  const plan = await db.productionPlan.create({
-    data: {
-      organizationId: getActiveOrgId(session),
-      date,
-      shift,
-      items,
-      status: "draft",
-      notes: typeof body.notes === "string" ? body.notes.slice(0, 2000) : null,
-      createdById: session.user.id,
-    },
-  });
-
-  return NextResponse.json(plan, { status: 201 });
+  try {
+    const plan = await db.productionPlan.create({
+      data: {
+        organizationId: getActiveOrgId(session),
+        date,
+        shift,
+        items,
+        status: "draft",
+        notes: typeof body.notes === "string" ? body.notes.slice(0, 2000) : null,
+        createdById: session.user.id,
+      },
+    });
+    return NextResponse.json(plan, { status: 201 });
+  } catch (err) {
+    // На дату и смену план один (@@unique). Второй раньше падал с 500,
+    // а форма показывала голое «Ошибка» — человек не понимал, что план
+    // уже заведён.
+    if ((err as { code?: string } | null)?.code === "P2002") {
+      return NextResponse.json(
+        {
+          error:
+            "План на эту дату и смену уже есть. Откройте его в списке планов или выберите другую смену.",
+        },
+        { status: 409 }
+      );
+    }
+    throw err;
+  }
 }
