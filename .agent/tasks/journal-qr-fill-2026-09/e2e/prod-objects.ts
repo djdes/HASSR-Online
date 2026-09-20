@@ -29,7 +29,7 @@ const out: Record<string, unknown> = {};
   };
   const roomHref = await posterUrl("room", seed.rooms[0].id);
   const eqHref = await posterUrl("equipment", seed.equipment[1].id);
-  const coldHref = await posterUrl("journal", `cmoe6rpt4000097ts71yb922y:cold_equipment_control`);
+  const coldHref = await posterUrl("journal", "cold_equipment_control");
   out.coldHref = coldHref.replace(/token=.*/, "token=…");
   out.roomHref = roomHref.replace(/token=.*/, "token=…");
   await admin.close();
@@ -54,9 +54,19 @@ const out: Record<string, unknown> = {};
   // HTML-форма холодильников: чипы быстрого ввода, запись касанием, повторное открытие с подстановкой.
   if (coldHref) {
     await page.goto(`${BASE}${coldHref}`, { waitUntil: "load", timeout: 120_000 });
+    out.coldStep1 = (await page.locator("body").innerText()).replace(/\s+/g, " ").slice(0, 200);
     const emp = page.locator('a[href*="employee="]').first();
     if (await emp.count()) await emp.click();
-    await page.waitForSelector("#qr-form", { timeout: 60_000 });
+    else {
+      const doc = page.locator('a[href*="doc="], a[href*="document="]').first();
+      if (await doc.count()) { await doc.click(); await page.waitForTimeout(500); const e2 = page.locator('a[href*="employee="]').first(); if (await e2.count()) await e2.click(); }
+    }
+    await page.waitForTimeout(500);
+    out.coldStep2 = (await page.locator("body").innerText()).replace(/\s+/g, " ").slice(0, 200);
+    out.coldUrl2 = page.url().replace(/token=[^&]+/, "token=…");
+    await page.screenshot({ path: path.join(ROOT, "shots", "prod-cold-step.png"), fullPage: true });
+    fs.writeFileSync(path.join(ROOT, "results-prod-objects.json"), JSON.stringify(out, null, 2));
+    await page.waitForSelector("#qr-form", { state: "attached", timeout: 90_000 });
     out.coldChipRows = await page.locator(".chips.qv").count();
     const cards = await page.locator(".obj").count();
     for (let i = 0; i < cards; i += 1) await page.locator(".obj").nth(i).locator(".qv .chip").nth(1).click();
@@ -65,7 +75,9 @@ const out: Record<string, unknown> = {};
     await page.locator("#qr-form button[type=submit]").click();
     await page.waitForURL((u) => u.search.includes("done="), { timeout: 60_000 });
     await page.goto(`${BASE}${coldHref}`, { waitUntil: "load", timeout: 120_000 });
-    await page.waitForSelector("#qr-form", { timeout: 60_000 });
+    const again = page.locator('a[href*="employee="]').first();
+    if (await again.count()) await again.click();
+    await page.waitForSelector("#qr-form", { state: "attached", timeout: 90_000 });
     out.coldNotice = (await page.locator(".note").first().innerText().catch(() => "")).trim();
     out.coldPrefilled = await page.locator(".obj input.in").evaluateAll((els) => els.map((el) => (el as HTMLInputElement).value));
     await page.screenshot({ path: path.join(ROOT, "shots", "prod-cold-prefilled.png"), fullPage: true });

@@ -1,14 +1,30 @@
 {
   "login": 200,
-  "roomHref": "/room-fill/cmu9xig1y0001qk9m47cuoiwl?token=…",
+  "coldHref": "/journal-fill/cmoe6rpt4000097ts71yb922y/cold_equipment_control?token=…",
+  "roomHref": "/room-fill/cmu9yxjhz0001uo9m9cpdbmhq?token=…",
   "roomStatus": 200,
-  "roomLoadMs": 397,
+  "roomLoadMs": 383,
   "roomAfterSign": "-7",
   "roomStrip": "E2E QS Склад Бакалея E2E QS Склад Овощи E2E QS Склад Заморозка",
   "roomTrigger": "Выберите | своё | имя",
   "equipmentStatus": 200,
-  "equipmentLoadMs": 153,
+  "equipmentLoadMs": 129,
   "equipmentAfterSign": "-7",
-  "equipmentStrip": "E2E QS Холодильник №1 E2E QS Морозильник E2E QS Витрина",
-  "equipmentTrigger": "Выберите | ваше | имя"
+  "equipmentStrip": "E2E QS Холодильник №1 4 °C E2E QS Морозильник E2E QS Витрина 5 °C",
+  "equipmentTrigger": "Выберите | ваше | имя",
+  "coldStep1": "КАФЕ «ТЕСТОВОЕ 1» Журнал контроля температурного режима холодильного и морозильного оборудования Кто заполняет КТО ЗАПОЛНЯЕТ Иванова Ольга Петровна › Кафе «Тестовое 1» Директор › Кузнецов Дмитрий Андр",
+  "coldStep2": "КАФЕ «ТЕСТОВОЕ 1» Журнал контроля температурного режима холодильного и морозильного оборудования ВЫ Иванова Ольга Петровна Сменить 1 Впишите температуру в карточки ниже (3) 2 Нажмите «Сохранить замеры",
+  "coldUrl2": "https://wesetup.ru/journal-fill/cmoe6rpt4000097ts71yb922y/cold_equipment_control?token=…&employee=cmoe6rpwn000197tsm9918bc7&doc=cmu3e8tav00gqd7tspsb35swv",
+  "coldChipRows": 3,
+  "coldValues": [
+    "4",
+    "-18",
+    "5"
+  ],
+  "coldNotice": "Сегодня уже записано: 3 из 3. Значения подставлены — проверьте и измените, что нужно.",
+  "coldPrefilled": [
+    "4",
+    "-18",
+    "5"
+  ]
 }
