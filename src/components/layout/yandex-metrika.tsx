@@ -26,7 +26,10 @@ export function YandexMetrika() {
           __html: `
             /* Публичные QR-формы (заполнение с телефона в цехе): без счётчика —
                лишние 300 КБ на медленной сети, а аналитика там не нужна. */
-            if (/^\\/(journal-fill|equipment-fill|room-fill|task-fill)(\\/|$)/.test(location.pathname)) return;
+            /* Условие блоком, а не return: у встроенного скрипта нет функции-обёртки,
+               и return на верхнем уровне — синтаксическая ошибка, с которой счётчик
+               не запускался ни на одной странице. */
+            if (!/^\\/(journal-fill|equipment-fill|room-fill|task-fill)(\\/|$)/.test(location.pathname)) {
             (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
             m[i].l=1*new Date();
             for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
@@ -43,6 +46,7 @@ export function YandexMetrika() {
                 accurateTrackBounce: true,
                 trackLinks: true
             });
+            }
           `,
         }}
       />
