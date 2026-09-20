@@ -95,7 +95,7 @@ main{padding:14px 0 20px}
 .box.flat .stp{width:32px;height:32px;font-size:20px;border-radius:10px}.box.flat .stp.minus{left:6px}.box.flat .stp.plus{right:6px}
 .box.flat .pill{right:auto;left:50%;top:auto;bottom:3px;transform:translateX(-50%);min-width:16px;height:14px;font-size:9px;padding:0 4px}
 .fl.has-step.good .box.flat .in,.fl.has-step.bad .box.flat .in{padding-right:42px}
-.offrow{margin:10px 0 2px}
+.offrow{margin:14px 0 4px}
 .chip.offc{color:#6f7282;border-style:dashed;gap:7px;height:30px;padding:0 12px 0 9px;cursor:pointer}
 .chip.offc input{width:16px;height:16px;margin:0;accent-color:#5566f6}
 .chip.offc.on{background:#f5f6ff;border-style:solid;border-color:#5566f6;color:#3848c7}
