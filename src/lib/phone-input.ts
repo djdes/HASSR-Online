@@ -24,7 +24,12 @@ const digitsOf = (value: string) => value.replace(/\D/g, "");
 
 export function formatRuPhoneInput(raw: string, previous = ""): string {
   if (raw === "") return "";
-  const trimmed = raw.trim();
+  // Поле при фокусе уже содержит «+7 ». Человек по привычке набирает свой
+  // «+7…» поверх — выходит «+7 +7 999…». Берём то, что после последнего
+  // плюса: иначе вторая семёрка считалась первой цифрой номера, последняя
+  // цифра терялась, и сохранялся чужой номер.
+  const lastPlus = raw.lastIndexOf("+");
+  const trimmed = (lastPlus > 0 ? raw.slice(lastPlus) : raw).trim();
   const allDigits = digitsOf(trimmed);
 
   // Явно другой код страны — оставляем как есть.
@@ -43,6 +48,12 @@ export function formatRuPhoneInput(raw: string, previous = ""): string {
     national = allDigits.slice(1);
   } else {
     national = allDigits;
+  }
+  // То же с привычной «8»: после подставленного «+7 » набирают «8 999 …».
+  // Одиннадцать цифр, начинающихся с 8 или 7, — это номер с кодом страны,
+  // а не десятизначный номер с лишней цифрой в конце.
+  if (national.length > NATIONAL_DIGITS && /^[78]/.test(national)) {
+    national = national.slice(1);
   }
   national = national.slice(0, NATIONAL_DIGITS);
 
