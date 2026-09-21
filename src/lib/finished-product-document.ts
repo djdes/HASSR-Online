@@ -63,6 +63,61 @@ export type FinishedProductDocumentRow = {
   sourceRowKey?: string;
 };
 
+/** Член бракеражной комиссии: кто подписывает журнал. */
+export type FinishedProductCommissionMember = {
+  id: string;
+  /** Роль в комиссии: «Председатель», «Член комиссии»… */
+  role: string;
+  /** Сотрудник организации; пусто — вписан вручную. */
+  employeeId: string;
+  employeeName: string;
+};
+
+/**
+ * Константы времени бракеража: на сколько минут назад ставить время в
+ * новой строке. Изготовление снимают раньше самой проверки, поэтому у
+ * него сдвиг больше. Раньше обе величины были зашиты в клиент.
+ */
+export type FinishedProductTimeDefaults = {
+  /** «Дата, время изготовления» — минут назад от текущего момента. */
+  productionMinutesAgo: number;
+  /** «Время снятия бракеража» — минут назад (обычно 0, то есть сейчас). */
+  rejectionMinutesAgo: number;
+};
+
+export const FINISHED_PRODUCT_TIME_DEFAULTS: FinishedProductTimeDefaults = {
+  productionMinutesAgo: 30,
+  rejectionMinutesAgo: 0,
+};
+export const FINISHED_PRODUCT_TIME_MINUTES_MAX = 24 * 60;
+
+/** Стандартные оценки: у блюд — четыре балла, у полуфабрикатов — соответствие. */
+export const FINISHED_PRODUCT_ORGANOLEPTIC_DISH = [
+  "Отлично",
+  "Хорошо",
+  "Удовлетворительно",
+  "Неудовлетворительно",
+];
+export const FINISHED_PRODUCT_ORGANOLEPTIC_SEMI = [
+  "Соответствует",
+  "Требует доработки",
+  "Не соответствует",
+];
+export const FINISHED_PRODUCT_ORGANOLEPTIC_MAX = 20;
+
+/**
+ * Оценки документа: свои, если заданы, иначе стандартные по режиму
+ * наименования (блюдо или полуфабрикат).
+ */
+export function getFinishedProductOrganolepticOptions(
+  config: Pick<FinishedProductDocumentConfig, "organolepticOptions" | "fieldNameMode">
+): string[] {
+  if (config.organolepticOptions.length > 0) return config.organolepticOptions;
+  return config.fieldNameMode === "semi"
+    ? FINISHED_PRODUCT_ORGANOLEPTIC_SEMI
+    : FINISHED_PRODUCT_ORGANOLEPTIC_DISH;
+}
+
 export type FinishedProductDocumentConfig = {
   rows: FinishedProductDocumentRow[];
   /**
@@ -81,6 +136,12 @@ export type FinishedProductDocumentConfig = {
   footerNote: string;
   productLists: Array<{ id: string; name: string; items: string[] }>;
   itemsCatalog: string[];
+  /** Состав бракеражной комиссии — подписи под журналом и выбор в QR-форме. */
+  commissionMembers: FinishedProductCommissionMember[];
+  /** Константы времени для новой строки. */
+  timeDefaults: FinishedProductTimeDefaults;
+  /** Свои варианты оценки; пусто — стандартные по режиму наименования. */
+  organolepticOptions: string[];
 };
 
 function createId(prefix: string) {
@@ -109,6 +170,52 @@ export function normalizeCustomCells(value: unknown): Record<string, string> {
     if (text) result[key] = text;
   }
   return result;
+}
+
+/** Состав комиссии: роль и имя обязательны, иначе строку отбрасываем. */
+export function normalizeCommissionMembers(value: unknown): FinishedProductCommissionMember[] {
+  if (!Array.isArray(value)) return [];
+  const result: FinishedProductCommissionMember[] = [];
+  for (const item of value) {
+    if (!item || typeof item !== "object") continue;
+    const record = item as Record<string, unknown>;
+    const employeeName = normalizeText(record.employeeName).slice(0, 120);
+    if (!employeeName) continue;
+    result.push({
+      id: normalizeText(record.id) || createId("finished-product-commission"),
+      role: normalizeText(record.role).slice(0, 80) || "Член комиссии",
+      employeeId: normalizeText(record.employeeId),
+      employeeName,
+    });
+    if (result.length >= 10) break;
+  }
+  return result;
+}
+
+/** Константы времени: целые минуты в пределах суток. */
+export function normalizeTimeDefaults(value: unknown): FinishedProductTimeDefaults {
+  const record = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+  const clamp = (raw: unknown, fallback: number) => {
+    const minutes = typeof raw === "number" ? Math.round(raw) : Number.NaN;
+    if (!Number.isFinite(minutes)) return fallback;
+    return Math.min(FINISHED_PRODUCT_TIME_MINUTES_MAX, Math.max(0, minutes));
+  };
+  return {
+    productionMinutesAgo: clamp(record.productionMinutesAgo, FINISHED_PRODUCT_TIME_DEFAULTS.productionMinutesAgo),
+    rejectionMinutesAgo: clamp(record.rejectionMinutesAgo, FINISHED_PRODUCT_TIME_DEFAULTS.rejectionMinutesAgo),
+  };
+}
+
+/** Свои оценки: непустые, без повторов, не длиннее списка выбора. */
+export function normalizeOrganolepticOptions(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return [
+    ...new Set(
+      value
+        .map((item) => (typeof item === "string" ? item.replace(/\s+/g, " ").trim().slice(0, 80) : ""))
+        .filter(Boolean)
+    ),
+  ].slice(0, FINISHED_PRODUCT_ORGANOLEPTIC_MAX);
 }
 
 /**
@@ -160,6 +267,9 @@ export function getDefaultFinishedProductDocumentConfig(): FinishedProductDocume
     showCourierTime: true,
     showReleaseAllowed: true,
     footerNote: "",
+    commissionMembers: [],
+    timeDefaults: { ...FINISHED_PRODUCT_TIME_DEFAULTS },
+    organolepticOptions: [],
     productLists: [
       { id: createId("finished-product-list"), name: "Основной список", items: [] },
       { id: createId("finished-product-list"), name: "Сезонные позиции", items: [] },
@@ -237,6 +347,9 @@ export function normalizeFinishedProductDocumentConfig(
 
   return {
     rows: rows.length > 0 ? rows : defaults.rows,
+    commissionMembers: normalizeCommissionMembers(record.commissionMembers),
+    timeDefaults: normalizeTimeDefaults(record.timeDefaults),
+    organolepticOptions: normalizeOrganolepticOptions(record.organolepticOptions),
     ...(columns ? { columns } : {}),
     fieldNameMode: record.fieldNameMode === "semi" ? "semi" : defaults.fieldNameMode,
     inspectorMode:

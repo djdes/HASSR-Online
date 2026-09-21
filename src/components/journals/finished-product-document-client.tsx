@@ -44,11 +44,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ResponsiveMenu } from "@/components/ui/responsive-menu";
 import {
+  FINISHED_PRODUCT_ORGANOLEPTIC_DISH,
   FINISHED_PRODUCT_QUALITY_GUIDE_TITLE,
+  FINISHED_PRODUCT_TIME_DEFAULTS,
+  FINISHED_PRODUCT_TIME_MINUTES_MAX,
   createFinishedProductRow,
+  getFinishedProductOrganolepticOptions,
   normalizeFinishedProductDocumentConfig,
   type FinishedProductDocumentConfig,
   type FinishedProductDocumentRow,
+  type FinishedProductTimeDefaults,
 } from "@/lib/finished-product-document";
 import { useDocumentCloseAction } from "@/components/journals/document-close-button";
 import { FocusTodayScroller } from "@/components/journals/focus-today-scroller";
@@ -279,22 +284,25 @@ function QuickTimeChips({
 function createDraft(
   users: Props["users"],
   productName = "",
-  people: { responsibleUserId?: string | null; verifierUserId?: string | null } = {}
+  people: { responsibleUserId?: string | null; verifierUserId?: string | null } = {},
+  times: FinishedProductTimeDefaults = FINISHED_PRODUCT_TIME_DEFAULTS,
+  organolepticOptions: string[] = FINISHED_PRODUCT_ORGANOLEPTIC_DISH
 ): FinishedProductDocumentRow {
   const nameOf = (id: string | null | undefined) =>
     (id && users.find((user) => user.id === id)?.name) || "";
   return createFinishedProductRow({
     productName,
-    // Бракераж снимают после готовки: по умолчанию изготовление на 30 минут раньше.
-    productionDateTime: dateTimeMinutesAgo(30),
-    rejectionTime: mergeDateTime(nowDate(), nowTime()),
+    // Бракераж снимают после готовки: сдвиг изготовления задаётся в
+    // настройках журнала («Константы времени»), по умолчанию 30 минут.
+    productionDateTime: dateTimeMinutesAgo(times.productionMinutesAgo),
+    rejectionTime: dateTimeMinutesAgo(times.rejectionMinutesAgo),
     releasePermissionTime: mergeDateTime(nowDate(), nowTime()),
     courierTransferTime: mergeDateTime(nowDate(), nowTime()),
     responsiblePerson: nameOf(people.responsibleUserId),
     inspectorName: nameOf(people.verifierUserId),
     releaseAllowed: "yes",
     // По умолчанию «Отлично»: в норме бракераж проходит, хуже — выберут.
-    organoleptic: ORGANOLEPTIC_OPTIONS[0],
+    organoleptic: organolepticOptions[0] ?? "",
   });
 }
 
@@ -361,7 +369,13 @@ export function FinishedProductDocumentClient({
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkText, setBulkText] = useState("");
   const [newItemName, setNewItemName] = useState("");
-  const [draftRow, setDraftRow] = useState<FinishedProductDocumentRow>(() => createDraft(users, "", draftPeople));
+  // Оценки документа: свои из настроек или стандартные по режиму
+  // наименования (у полуфабрикатов — про соответствие, а не баллы).
+  const organolepticOptions = useMemo(
+    () => getFinishedProductOrganolepticOptions(config),
+    [config]
+  );
+  const [draftRow, setDraftRow] = useState<FinishedProductDocumentRow>(() => createDraft(users, "", draftPeople, config.timeDefaults, organolepticOptions));
   /**
    * «Т°C внутри продукта» подставлена по прошлой записи этого блюда.
    * Ручной ввод снимает флаг — смена блюда больше не перезапишет число.
@@ -585,7 +599,7 @@ export function FinishedProductDocumentClient({
   // Поля записи — одно окно для «Добавить изделие», правки строки и «Добавить
   // списком» (там наименования приходят списком, остальное общее).
   const [organolepticCustom, setOrganolepticCustom] = useState(false);
-  const organolepticSelectValue = (ORGANOLEPTIC_OPTIONS as readonly string[]).includes(draftRow.organoleptic) && !organolepticCustom
+  const organolepticSelectValue = organolepticOptions.includes(draftRow.organoleptic) && !organolepticCustom
     ? draftRow.organoleptic
     : draftRow.organoleptic || organolepticCustom
       ? ORGANOLEPTIC_CUSTOM
@@ -658,7 +672,7 @@ export function FinishedProductDocumentClient({
                   <SelectValue placeholder="— Выберите оценку —" />
                 </SelectTrigger>
                 <SelectContent>
-                  {ORGANOLEPTIC_OPTIONS.map((option) => (
+                  {organolepticOptions.map((option) => (
                     <SelectItem key={option} value={option}>{option}</SelectItem>
                   ))}
                   <SelectItem value={ORGANOLEPTIC_CUSTOM}>Своя формулировка…</SelectItem>
@@ -817,7 +831,7 @@ export function FinishedProductDocumentClient({
   /** Поля, которые имеет смысл менять у нескольких строк сразу. */
   const applyFields: ApplyToSelectedField[] = [
     { key: "rejectionTime", label: columnLabel("rejection", "Время снятия бракеража"), type: "time" },
-    { key: "organoleptic", label: columnLabel("organoleptic", "Органолептическая оценка"), type: "select", options: ORGANOLEPTIC_OPTIONS.map((value) => ({ value, label: value })) },
+    { key: "organoleptic", label: columnLabel("organoleptic", "Органолептическая оценка"), type: "select", options: organolepticOptions.map((value) => ({ value, label: value })) },
     { key: "releaseAllowed", label: columnLabel("release", "Разрешение к реализации"), type: "select", options: [{ value: "yes", label: "Да" }, { value: "no", label: "Нет" }] },
     { key: "releasePermissionTime", label: columnLabel("release", "Разрешение к реализации (время)"), type: "time" },
     { key: "courierTransferTime", label: columnLabel("courier", "Время передачи блюд курьеру"), type: "time" },
@@ -930,7 +944,7 @@ export function FinishedProductDocumentClient({
     commitConfig(
       {
         ...config,
-        rows: [...config.rows, ...Array.from({ length: count }, () => createDraft(users, "", draftPeople))],
+        rows: [...config.rows, ...Array.from({ length: count }, () => createDraft(users, "", draftPeople, config.timeDefaults, organolepticOptions))],
       },
       true
     );
@@ -963,7 +977,7 @@ export function FinishedProductDocumentClient({
     setEditingRowId(null);
     setOrganolepticCustom(false);
     setProductTempAuto(false);
-    setDraftRow(createDraft(users, "", draftPeople));
+    setDraftRow(createDraft(users, "", draftPeople, config.timeDefaults, organolepticOptions));
     setAddModalOpen(true);
   }
 
@@ -1018,7 +1032,7 @@ export function FinishedProductDocumentClient({
     if (options.keepOpen && !editingRowId) {
       toast.success(`Записано: ${draftRow.productName || "без названия"}. Следующее изделие.`);
       setDraftRow({
-        ...createDraft(users, "", draftPeople),
+        ...createDraft(users, "", draftPeople, config.timeDefaults, organolepticOptions),
         productionDateTime: draftRow.productionDateTime,
         rejectionTime: draftRow.rejectionTime,
         releasePermissionTime: draftRow.releasePermissionTime,
@@ -1030,7 +1044,7 @@ export function FinishedProductDocumentClient({
       });
       return;
     }
-    setDraftRow(createDraft(users, "", draftPeople));
+    setDraftRow(createDraft(users, "", draftPeople, config.timeDefaults, organolepticOptions));
     if (editingRowId) {
       // Очередь правок откроет следующую строку или закроет окно.
       seq.saved();
@@ -1131,7 +1145,7 @@ export function FinishedProductDocumentClient({
                 icon: <ListPlus className="size-4 text-[#6f7282]" />,
                 onSelect: () => {
                   setBulkText("");
-                  { setDraftRow(createDraft(users, "", draftPeople)); setBulkOpen(true); };
+                  { setDraftRow(createDraft(users, "", draftPeople, config.timeDefaults, organolepticOptions)); setBulkOpen(true); };
                 },
               },
             ]}
@@ -1354,7 +1368,7 @@ export function FinishedProductDocumentClient({
           </div>
           <datalist id="finished-product-items">{productOptions.map((item) => <option key={item} value={item} />)}</datalist>
           <datalist id="finished-product-users">{personOptions.map((item) => <option key={item} value={item} />)}</datalist>
-          <datalist id="finished-product-organoleptic">{ORGANOLEPTIC_OPTIONS.map((item) => <option key={item} value={item} />)}</datalist>
+          <datalist id="finished-product-organoleptic">{organolepticOptions.map((item) => <option key={item} value={item} />)}</datalist>
         </MobileViewTableWrapper>
 
         {/* «Примечание:» под таблицей — как на эталоне, и на экране, и в печати.
@@ -1453,6 +1467,183 @@ export function FinishedProductDocumentClient({
               headerMenu.openApplyToAll(next);
             }}
           />
+
+          <div className="space-y-2">
+            <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
+              Константы времени
+            </Label>
+            <p className="text-[12.5px] leading-[1.45] text-[#6f7282]">
+              На сколько минут назад ставить время в новой строке. Бракераж снимают после готовки, поэтому изготовление
+              обычно раньше самой проверки.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              {([
+                ["productionMinutesAgo", "Изготовление, мин назад"],
+                ["rejectionMinutesAgo", "Снятие бракеража, мин назад"],
+              ] as const).map(([key, label]) => (
+                <label key={key} className="flex items-center gap-2 text-[13px] text-[#6f7282]">
+                  {label}
+                  <input
+                    type="number"
+                    min={0}
+                    max={FINISHED_PRODUCT_TIME_MINUTES_MAX}
+                    value={config.timeDefaults[key]}
+                    onChange={(event) =>
+                      setConfig((prev) => ({
+                        ...prev,
+                        timeDefaults: { ...prev.timeDefaults, [key]: Number(event.target.value) || 0 },
+                      }))
+                    }
+                    className="h-9 w-24 rounded-xl border border-[#dcdfed] bg-white px-2 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none"
+                  />
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
+              Оценки
+            </Label>
+            <p className="text-[12.5px] leading-[1.45] text-[#6f7282]">
+              Варианты органолептической оценки. Пусто — стандартные:{" "}
+              {config.fieldNameMode === "semi"
+                ? "для полуфабрикатов (соответствует / требует доработки / не соответствует)"
+                : "для блюд (отлично / хорошо / удовлетворительно / неудовлетворительно)"}
+              .
+            </p>
+            <div className="space-y-1.5">
+              {config.organolepticOptions.map((option, index) => (
+                <div key={`${option}-${index}`} className="flex items-center gap-1.5">
+                  <input
+                    value={option}
+                    onChange={(event) =>
+                      setConfig((prev) => {
+                        const next = [...prev.organolepticOptions];
+                        next[index] = event.target.value;
+                        return { ...prev, organolepticOptions: next };
+                      })
+                    }
+                    maxLength={80}
+                    className="h-9 flex-1 rounded-xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setConfig((prev) => ({
+                        ...prev,
+                        organolepticOptions: prev.organolepticOptions.filter((_, i) => i !== index),
+                      }))
+                    }
+                    className="rounded-xl p-2 text-[#a13a32] hover:bg-[#fff4f2]"
+                    aria-label={`Удалить оценку «${option}»`}
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    organolepticOptions: [
+                      ...(prev.organolepticOptions.length > 0
+                        ? prev.organolepticOptions
+                        : getFinishedProductOrganolepticOptions(prev)),
+                      "",
+                    ],
+                  }))
+                }
+                className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-dashed border-[#dcdfed] px-3 text-[13px] font-medium text-[#3848c7] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+              >
+                <Plus className="size-4" /> Добавить оценку
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
+              Состав бракеражной комиссии
+            </Label>
+            <p className="text-[12.5px] leading-[1.45] text-[#6f7282]">
+              Кто подписывает журнал. Состав печатается под таблицей и предлагается при заполнении по QR-коду.
+            </p>
+            <div className="space-y-1.5">
+              {config.commissionMembers.map((member, index) => (
+                <div key={member.id} className="flex flex-wrap items-center gap-1.5">
+                  <input
+                    value={member.role}
+                    onChange={(event) =>
+                      setConfig((prev) => {
+                        const next = [...prev.commissionMembers];
+                        next[index] = { ...next[index], role: event.target.value };
+                        return { ...prev, commissionMembers: next };
+                      })
+                    }
+                    placeholder="Роль"
+                    maxLength={80}
+                    className="h-9 w-[40%] min-w-[120px] rounded-xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none"
+                  />
+                  <input
+                    value={member.employeeName}
+                    onChange={(event) =>
+                      setConfig((prev) => {
+                        const next = [...prev.commissionMembers];
+                        const name = event.target.value;
+                        next[index] = {
+                          ...next[index],
+                          employeeName: name,
+                          employeeId: users.find((user) => user.name === name)?.id ?? "",
+                        };
+                        return { ...prev, commissionMembers: next };
+                      })
+                    }
+                    placeholder="ФИО"
+                    list="finished-product-users"
+                    maxLength={120}
+                    className="h-9 flex-1 rounded-xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setConfig((prev) => ({
+                        ...prev,
+                        commissionMembers: prev.commissionMembers.filter((item) => item.id !== member.id),
+                      }))
+                    }
+                    className="rounded-xl p-2 text-[#a13a32] hover:bg-[#fff4f2]"
+                    aria-label={`Убрать ${member.employeeName || "члена комиссии"} из комиссии`}
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                </div>
+              ))}
+              {config.commissionMembers.length < 10 ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setConfig((prev) => ({
+                      ...prev,
+                      commissionMembers: [
+                        ...prev.commissionMembers,
+                        {
+                          id: `commission-${Date.now()}-${prev.commissionMembers.length}`,
+                          role: prev.commissionMembers.length === 0 ? "Председатель" : "Член комиссии",
+                          employeeId: "",
+                          employeeName: "",
+                        },
+                      ],
+                    }))
+                  }
+                  className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-dashed border-[#dcdfed] px-3 text-[13px] font-medium text-[#3848c7] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+                >
+                  <Plus className="size-4" /> Добавить члена комиссии
+                </button>
+              ) : null}
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
               Примечание под таблицей

@@ -15,6 +15,7 @@
 import { db } from "@/lib/db";
 import {
   FINISHED_PRODUCT_DOCUMENT_TEMPLATE_CODE,
+  getFinishedProductOrganolepticOptions,
   type FinishedProductDocumentConfig,
   type FinishedProductDocumentRow,
   normalizeFinishedProductDocumentConfig,
@@ -57,7 +58,20 @@ function buildForm(
       required: true,
       placeholder: "14:00",
     },
-    {
+  ];
+  // Оценка: варианты документа (у полуфабрикатов свои).
+  const organolepticOptions = getFinishedProductOrganolepticOptions(config);
+  if (organolepticOptions.length > 0) {
+    fields.push({
+      type: "select",
+      key: "organoleptic",
+      label: "Органолептическая оценка",
+      required: true,
+      options: organolepticOptions.map((value) => ({ value, label: value })),
+      defaultValue: organolepticOptions[0],
+    });
+  } else {
+    fields.push({
       type: "text",
       key: "organoleptic",
       label: "Органолептическая оценка",
@@ -65,8 +79,8 @@ function buildForm(
       placeholder: "Например: цвет, запах, вкус — без отклонений",
       multiline: true,
       maxLength: 400,
-    },
-  ];
+    });
+  }
   if (config.showProductTemp) {
     fields.push({
       type: "number",
@@ -97,6 +111,20 @@ function buildForm(
       label: "Корректирующее действие (если брак)",
       multiline: true,
       maxLength: 400,
+    });
+  }
+  // Состав бракеражной комиссии задан — подписывающий выбирается из него.
+  if (config.commissionMembers.length > 0) {
+    fields.push({
+      type: "select",
+      key: "inspectorName",
+      label: "Бракераж провёл",
+      required: true,
+      options: config.commissionMembers.map((member) => ({
+        value: member.employeeName,
+        label: member.role ? `${member.employeeName} — ${member.role}` : member.employeeName,
+      })),
+      defaultValue: config.commissionMembers[0].employeeName,
     });
   }
   return {

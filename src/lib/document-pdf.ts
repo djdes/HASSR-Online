@@ -2686,6 +2686,23 @@ function drawFinishedProductPdf(doc: jsPDF, params: {
     doc.text(params.config.footerNote, 10, finishedFooterY + 13);
   }
 
+  // Состав бракеражной комиссии — подписи под таблицей. Печатаем, только
+  // если состав задан: пустых линеек в бланке быть не должно.
+  if (params.config.commissionMembers.length > 0) {
+    const noteOffset = params.config.footerNote ? 13 : 0;
+    let signY = finishedFooterY + 8 + noteOffset + (noteOffset ? 8 : 0);
+    doc.setFont("JournalUnicode", "bold");
+    doc.setFontSize(9);
+    doc.text("Состав бракеражной комиссии:", 10, signY);
+    doc.setFont("JournalUnicode", "normal");
+    signY += 6;
+    for (const member of params.config.commissionMembers) {
+      doc.text(`${member.role}: ${member.employeeName}`, 14, signY);
+      doc.line(95, signY + 1, 140, signY + 1);
+      signY += 7;
+    }
+  }
+
   // Заголовок-ссылку «Рекомендации по организации контроля…» в печати
   // не показываем: на экране это кликабельная ссылка на гайд, а на
   // бумаге оставалась висячая подчёркнутая строка без содержимого.
