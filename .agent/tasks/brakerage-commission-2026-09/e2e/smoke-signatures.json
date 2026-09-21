@@ -1,0 +1,132 @@
+[
+  {
+    "name": "комиссия: заведующая — председатель",
+    "ok": true,
+    "detail": "{\"members\":[{\"id\":\"commission-cmu2stnc80007wk9mhv7i9h0s\",\"role\":\"Председатель\",\"employeeId\":\"cmu2stnc80007wk9mhv7i9h0s\",\"employeeName\":\"Анна Заведующая\"}],\"updatedDocuments\":11}"
+  },
+  {
+    "name": "закрыть с неподписанной строкой нельзя (409 unsigned-rows)",
+    "ok": true,
+    "detail": {
+      "error": "Нельзя закончить журнал: 1 строка ждёт подписи комиссии",
+      "code": "unsigned-rows",
+      "unsigned": [
+        "Суп смоук подписи"
+      ]
+    }
+  },
+  {
+    "name": "не член комиссии подписать не может (403)",
+    "ok": true,
+    "detail": 403
+  },
+  {
+    "name": "плашка «Сегодня: 1 строка, 1 ждёт подписи комиссии»",
+    "ok": true,
+    "detail": "Сегодня: 1 строка, 1 ждёт подписи комиссии"
+  },
+  {
+    "name": "у не-члена комиссии нет кнопки «Подписать»",
+    "ok": true
+  },
+  {
+    "name": "подпись в строке: заведующая, метод «вход в кабинет»",
+    "ok": true,
+    "detail": {
+      "id": "smoke-sign-row-1",
+      "note": "",
+      "signatures": [
+        {
+          "name": "Анна Заведующая",
+          "role": "Председатель",
+          "grade": "Отлично",
+          "method": "session",
+          "userId": "cmu2stnc80007wk9mhv7i9h0s",
+          "signedAt": "2026-09-21T18:07:33.095Z",
+          "snapshot": {
+            "productName": "Суп смоук подписи",
+            "organoleptic": "Отлично",
+            "portionWeight": "",
+            "releaseAllowed": "yes",
+            "organolepticResult": ""
+          }
+        }
+      ],
+      "oxygenLevel": "",
+      "productName": "Суп смоук подписи",
+      "productTemp": "",
+      "organoleptic": "Отлично",
+      "inspectorName": "",
+      "portionWeight": "",
+      "rejectionTime": "2026-09-21 21:07",
+      "releaseAllowed": "yes",
+      "correctiveAction": "",
+      "organolepticValue": "",
+      "responsiblePerson": "",
+      "organolepticResult": "",
+      "productionDateTime": "2026-09-21 12:00",
+      "courierTransferTime": "",
+      "releasePermissionTime": "2026-09-21 21:07"
+    }
+  },
+  {
+    "name": "время снятия бракеража дописано подписью",
+    "ok": true,
+    "detail": "2026-09-21 21:07"
+  },
+  {
+    "name": "событие в журнале подписей",
+    "ok": true,
+    "detail": 1
+  },
+  {
+    "name": "плашка стала «все подписаны комиссией»",
+    "ok": true,
+    "detail": "Сегодня: 1 строка, все подписаны комиссией"
+  },
+  {
+    "name": "колонка «Подпись бракеражной комиссии» показывает подписавшего",
+    "ok": true,
+    "detail": "\t\n\t\n\t\n\t\n\t\nРазрешено\nНе разрешено\n\t\nАнна З. · 21:07\n\t\n\t\n\t\n\t\n\t\n\t\n\t"
+  },
+  {
+    "name": "сохранение устаревшей вкладки не стирает подпись",
+    "ok": true,
+    "detail": [
+      {
+        "id": "smoke-sign-row-1",
+        "signatures": [
+          {
+            "name": "Анна Заведующая",
+            "role": "Председатель",
+            "grade": "Отлично",
+            "method": "session",
+            "userId": "cmu2stnc80007wk9mhv7i9h0s",
+            "signedAt": "2026-09-21T18:07:33.095Z",
+            "snapshot": {
+              "productName": "Суп смоук подписи",
+              "organoleptic": "Отлично",
+              "portionWeight": "",
+              "releaseAllowed": "yes",
+              "organolepticResult": ""
+            }
+          }
+        ],
+        "productName": "Суп смоук подписи",
+        "organoleptic": "Отлично",
+        "releaseAllowed": "yes",
+        "productionDateTime": "2026-09-21 12:00"
+      }
+    ]
+  },
+  {
+    "name": "после подписи журнал закрывается",
+    "ok": true,
+    "detail": "{\"document\":{\"id\":\"cmu3xu9lc005lks9mmmr8ltma\",\"templateId\":\"cmu2pwdro0003t49mw2klzjfs\",\"organizationId\":\"e2e-org-a\",\"title\":\"E2E колонки\",\"config\":{\"rows\":[{\"id\":\"smoke-sign-row-1\",\"signatures\":[{\"name\":\"Анна Заведующая\",\"role\":\"Председатель\",\"grade\":\"Отлично\",\"method\":\"session\",\"userId\":\"cmu2stnc80007wk9mhv7i9h0s\",\"signedAt\":\"2026-09-21T18:07:33.095Z\",\"snapshot\":{\"productName\":\"Суп смоук подписи\",\"organoleptic\":\"Отлично\",\"portionWeight\":\"\",\"releaseAllowed\":\"yes\",\"organolepticResult\":\"\"}}],\"productName\":\"Суп смоук подписи\",\"organoleptic\":\"Отлично\",\"releaseAllowed\":\"yes\",\"productionDateTime\":\"2026-09-21 12:00\"}],\"columns\":{\"hidden\":[\"responsible\"],\"labels\":{\"name\":\"Блюдо\"}},\"closedAt\":\"2026-09-21\",\"footerNote\":\"\",\"itemsCatalog\":[\"Сметана 20 %\",\"Творог 9 %\"],\"productLists\":[{\"id\":\"finished-product-list-00133cb9-0b72-4929-b93a-cdd2ce10fffa\",\"name\":\"Основной список\",\"items\":[\"Сметана 20 %\",\"Творог 9 %\"]},{\"id\":\"finished-product-list-1e62afaa-357e-48bb-b20f-4ec2bae0ee85\",\"name\":\"Сезонные позиции\",\"items\":[]}],\"fieldNameMode\":\"dish\",\"inspectorMode\":\"inspector_name\",\"showCourierTime\":true,\"showOxygenLevel\":true,\"showProductTemp\":true,\"commissionMembers\":[{\"id\":\"commission-cmu2stnc80007wk9mhv7i9h0s\",\"role\":\"Председатель\",\"employeeId\":\"cmu2stnc80007wk9mhv7i9h0s\",\"employeeName\":\"Анна Заведующая\"}],\"showCorrectiveAction\":true},\"dateFrom\":\"2026-09-01T00:00:00.000Z\",\"dateTo\":\"2026-09-30T00:00:00.000Z\",\"responsibleUserId\":\"cmu2stncc0008wk9m2yu67ip7\",\"responsibleTitle\":\"Повар\",\"verifierUserId\":\"cmu2stnc80007wk9mhv7i9h0s\",\"verificationStatus\":null,\"verificationDecidedById\":null,\"verificationDecidedAt\":null,\"verificationRejectReason\":null,\"status\":\"closed\",\"autoFill\":false,\"createdById\":\"cmu2stnbo0005wk9me2bn3w8b\",\"buildingId\":null,\"createdAt\":\"2026-09-16T10:08:38.160Z\",\"updatedAt\":\"2026-09-21T18:07:34.437Z\"}}"
+  },
+  {
+    "name": "без ошибок в консоли страницы",
+    "ok": true,
+    "detail": []
+  }
+]

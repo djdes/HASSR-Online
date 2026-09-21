@@ -1,0 +1,113 @@
+[
+  {
+    "name": "«Новый человек»: создан, ПИН выдан сразу",
+    "ok": true,
+    "detail": {
+      "user": {
+        "id": "cmubjhp4o000c2k9m57tdgner",
+        "name": "Сторонняя Проверяющая Е2Е"
+      },
+      "pin": "8372"
+    }
+  },
+  {
+    "name": "новый человек — в должности категории «Комиссия», не руководитель",
+    "ok": true,
+    "detail": {
+      "role": "cook",
+      "jobPosition": {
+        "categoryKey": "commission",
+        "name": "Член бракеражной комиссии"
+      },
+      "qrPinHash": "$2b$10$6vkMdW7E6ZOni64bBy6Jo.2rqeJkZf205yquh0WhVOAyb9ID7GzL2"
+    }
+  },
+  {
+    "name": "состав сохранён и скопирован в активные документы",
+    "ok": true,
+    "detail": {
+      "members": [
+        {
+          "id": "commission-cmubjhp4o000c2k9m57tdgner",
+          "role": "Председатель",
+          "employeeId": "cmubjhp4o000c2k9m57tdgner",
+          "employeeName": "Сторонняя Проверяющая Е2Е"
+        },
+        {
+          "id": "commission-cmu2stnc80007wk9mhv7i9h0s",
+          "role": "Член комиссии",
+          "employeeId": "cmu2stnc80007wk9mhv7i9h0s",
+          "employeeName": "Анна Заведующая"
+        }
+      ],
+      "updatedDocuments": 11
+    }
+  },
+  {
+    "name": "в документе — состав с привязкой к сотрудникам",
+    "ok": true,
+    "detail": [
+      {
+        "id": "commission-cmubjhp4o000c2k9m57tdgner",
+        "role": "Председатель",
+        "employeeId": "cmubjhp4o000c2k9m57tdgner",
+        "employeeName": "Сторонняя Проверяющая Е2Е"
+      },
+      {
+        "id": "commission-cmu2stnc80007wk9mhv7i9h0s",
+        "role": "Член комиссии",
+        "employeeId": "cmu2stnc80007wk9mhv7i9h0s",
+        "employeeName": "Анна Заведующая"
+      }
+    ]
+  },
+  {
+    "name": "после сохранения документа привязка стороннего члена комиссии не слетела",
+    "ok": true,
+    "detail": [
+      {
+        "id": "commission-cmubjhp4o000c2k9m57tdgner",
+        "role": "Председатель",
+        "employeeId": "cmubjhp4o000c2k9m57tdgner",
+        "employeeName": "Сторонняя Проверяющая Е2Е"
+      },
+      {
+        "id": "commission-cmu2stnc80007wk9mhv7i9h0s",
+        "role": "Член комиссии",
+        "employeeId": "cmu2stnc80007wk9mhv7i9h0s",
+        "employeeName": "Анна Заведующая"
+      }
+    ]
+  },
+  {
+    "name": "ростер журналов (гигиена и др.) без стороннего члена комиссии",
+    "ok": true
+  },
+  {
+    "name": "сотрудники без должности остались в ростере",
+    "ok": true,
+    "detail": {
+      "withoutPosition": 1,
+      "rosterWithoutPosition": 1
+    }
+  },
+  {
+    "name": "на странице сотрудников есть колонка «Комиссия»",
+    "ok": true
+  },
+  {
+    "name": "галка «Уполномочен редактировать… список блюд» сохраняется",
+    "ok": true,
+    "detail": 200
+  },
+  {
+    "name": "окно комиссии показывает состав и ПИН задан",
+    "ok": true,
+    "detail": "Закрыть\nСторонняя бракеражная комиссия\n\nЧлены комиссии подписывают каждое блюдо. Без подписи хотя бы одного из них строка бракеража не закрыта.\n\nСторонняя Проверяющая Е2Е\nЧлен бракеражной комиссии · ПИН задан\nАнна Заведующая\nЗаведующая производством · ПИН не задан — выдайте в карточке сотрудника\nДоб"
+  },
+  {
+    "name": "без ошибок в консоли страницы",
+    "ok": true,
+    "detail": []
+  }
+]

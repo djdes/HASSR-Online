@@ -1,0 +1,186 @@
+[
+  {
+    "name": "сторонний член комиссии создан с PIN",
+    "ok": true,
+    "detail": {
+      "user": {
+        "id": "cmubkqhsm001m2k9m3t4siyiw",
+        "name": "Проверяющая QR Смоук"
+      },
+      "pin": "9930"
+    }
+  },
+  {
+    "name": "повар видит форму добавления, без списка «За сегодня»",
+    "ok": true
+  },
+  {
+    "name": "форма «Несколько блюд» без горизонтальной прокрутки (390px)",
+    "ok": true
+  },
+  {
+    "name": "после сохранения: галка и «Добавлено: 3», без перехода в другие журналы",
+    "ok": true,
+    "detail": "Добавлено: 3\n\nСохранено: E2E колонки · Иван Повар · 21:24\n\nДобавить ещё"
+  },
+  {
+    "name": "в журнале 3 строки",
+    "ok": true,
+    "detail": [
+      "Борщ",
+      "Котлета куриная",
+      "Компот"
+    ]
+  },
+  {
+    "name": "член комиссии: сначала PIN",
+    "ok": true
+  },
+  {
+    "name": "список за сегодня: 3 блюда ждут подписи",
+    "ok": true,
+    "detail": "КТО ЗАПОЛНЯЕТ\nПроверяющая QR Смоук\nСменить\nЗа сегодня\nДобавить блюдо\n\nЖдут подписи: 3. Оцените и отметьте строки — подпись ставится от вашего имени. Наименование и время меняет повар или заведующая.\n\nБорщ\n20:54\nЖдёт подписи\n\nОЦЕНКА\n\nОтлично\nХорошо\nУдовлетворительно\nНеудовлетворительно\nДоброкачественная\nНедоброкачественная\nРазрешено\nНе разрешено\nПодписать\nКотлета куриная\n20:54\nЖдёт подписи\n\nОЦЕНКА\n\nОтлично\nХорошо\nУдовлетворительно\nНеудовлетворительно\nДоброкачественная\nНедоброкачественная\nРазрешен"
+  },
+  {
+    "name": "комиссия не может менять наименование и время",
+    "ok": true
+  },
+  {
+    "name": "список без горизонтальной прокрутки (390px)",
+    "ok": true
+  },
+  {
+    "name": "«Подписано: 3»",
+    "ok": true
+  },
+  {
+    "name": "подписи в строках: член комиссии, метод QR",
+    "ok": true,
+    "detail": [
+      [
+        {
+          "name": "Проверяющая QR Смоук",
+          "role": "Председатель",
+          "grade": "Отлично",
+          "method": "qr",
+          "userId": "cmubkqhsm001m2k9m3t4siyiw",
+          "signedAt": "2026-09-21T18:24:06.170Z",
+          "snapshot": {
+            "productName": "Борщ",
+            "organoleptic": "Отлично",
+            "portionWeight": "",
+            "releaseAllowed": "yes",
+            "organolepticResult": ""
+          }
+        }
+      ],
+      [
+        {
+          "name": "Проверяющая QR Смоук",
+          "role": "Председатель",
+          "grade": "Хорошо",
+          "method": "qr",
+          "userId": "cmubkqhsm001m2k9m3t4siyiw",
+          "signedAt": "2026-09-21T18:24:06.170Z",
+          "snapshot": {
+            "productName": "Котлета куриная",
+            "organoleptic": "Хорошо",
+            "portionWeight": "",
+            "releaseAllowed": "yes",
+            "organolepticResult": ""
+          }
+        }
+      ],
+      [
+        {
+          "name": "Проверяющая QR Смоук",
+          "role": "Председатель",
+          "grade": "Отлично",
+          "method": "qr",
+          "userId": "cmubkqhsm001m2k9m3t4siyiw",
+          "signedAt": "2026-09-21T18:24:06.170Z",
+          "snapshot": {
+            "productName": "Компот",
+            "organoleptic": "Отлично",
+            "portionWeight": "",
+            "releaseAllowed": "yes",
+            "organolepticResult": ""
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "оценка «Хорошо» записана",
+    "ok": true,
+    "detail": {
+      "id": "bracerage-1790015042321-ziddly",
+      "note": "",
+      "signatures": [
+        {
+          "name": "Проверяющая QR Смоук",
+          "role": "Председатель",
+          "grade": "Хорошо",
+          "method": "qr",
+          "userId": "cmubkqhsm001m2k9m3t4siyiw",
+          "signedAt": "2026-09-21T18:24:06.170Z",
+          "snapshot": {
+            "productName": "Котлета куриная",
+            "organoleptic": "Хорошо",
+            "portionWeight": "",
+            "releaseAllowed": "yes",
+            "organolepticResult": ""
+          }
+        }
+      ],
+      "oxygenLevel": "",
+      "productName": "Котлета куриная",
+      "productTemp": "",
+      "organoleptic": "Хорошо",
+      "sourceRowKey": "employee-cmu2stncc0008wk9m2yu67ip7#qr-1790015042310",
+      "inspectorName": "",
+      "portionWeight": "",
+      "rejectionTime": "2026-09-21 21:24",
+      "releaseAllowed": "yes",
+      "correctiveAction": "",
+      "organolepticValue": "",
+      "responsiblePerson": "Иван Повар",
+      "organolepticResult": "",
+      "productionDateTime": "2026-09-21 20:54",
+      "courierTransferTime": "",
+      "releasePermissionTime": "2026-09-21 21:24"
+    }
+  },
+  {
+    "name": "подмена наименования комиссией не прошла",
+    "ok": true,
+    "detail": "Борщ"
+  },
+  {
+    "name": "3 события в журнале подписей",
+    "ok": true,
+    "detail": 3
+  },
+  {
+    "name": "редактору видны вкладки «За сегодня / Добавить блюдо»",
+    "ok": true
+  },
+  {
+    "name": "редактор исправил наименование",
+    "ok": true,
+    "detail": "Борщ красный"
+  },
+  {
+    "name": "удаление подписанной строки — с предупреждением",
+    "ok": true,
+    "detail": "КТО ЗАПОЛНЯЕТ\nМария Руководитель\nСменить\nУдалить «Компот»?\n\nСтрока пропадёт из журнала. Она уже подписана комиссией — подпись останется в журнале подписей.\n\nДа, удалить\nОтмена"
+  },
+  {
+    "name": "строка удалена",
+    "ok": true,
+    "detail": [
+      "Борщ красный",
+      "Котлета куриная"
+    ]
+  }
+]

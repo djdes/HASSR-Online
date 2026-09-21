@@ -131,6 +131,10 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   "Колонки журналов": Table2,
   "Бракераж готовой продукции": ClipboardCheck,
   "Температура холодильников": Snowflake,
+  "Бракераж: комиссия и подписи": UserCheck,
+  "Бракераж: быстрый ввод по QR": QrCode,
+  "Колонки и шаблоны журналов": Table2,
+  "Общий справочник блюд": ClipboardCheck,
 };
 
 function iconForCategory(name: string): LucideIcon {

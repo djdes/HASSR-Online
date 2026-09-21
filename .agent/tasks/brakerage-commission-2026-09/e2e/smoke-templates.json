@@ -1,0 +1,241 @@
+[
+  {
+    "name": "встроенный шаблон «Рекомендуемая форма в соответствии с Приложением №4…» в списке",
+    "ok": true,
+    "detail": {
+      "templates": [
+        {
+          "id": "builtin:appendix4",
+          "name": "Рекомендуемая форма в соответствии с Приложением №4 СанПиН 2.3/2.4.4282-26",
+          "journalCode": "finished_product",
+          "builtIn": true,
+          "columns": {
+            "hidden": [
+              "temp",
+              "corrective",
+              "oxygen",
+              "release_allowed",
+              "courier",
+              "responsible",
+              "inspector"
+            ],
+            "labels": {},
+            "order": [
+              "production",
+              "rejection",
+              "name",
+              "organoleptic",
+              "release",
+              "signatures",
+              "portion",
+              "note",
+              "temp",
+              "corrective",
+              "oxygen",
+              "release_allowed",
+              "courier",
+              "responsible",
+              "inspector"
+            ]
+          }
+        },
+        {
+          "id": "builtin:extended",
+          "name": "Расширенная форма (все колонки)",
+          "journalCode": "finished_product",
+          "builtIn": true,
+          "columns": {
+            "hidden": [
+              "oxygen",
+              "courier"
+            ],
+            "labels": {},
+            "order": [
+              "production",
+              "rejection",
+              "name",
+              "organoleptic",
+              "release",
+              "signatures",
+              "portion",
+              "note",
+              "temp",
+              "corrective",
+              "oxygen",
+              "release_allowed",
+              "courier",
+              "responsible",
+              "inspector"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "импорт типовой формы из Excel узнал 8 колонок, своих не добавил",
+    "ok": true,
+    "detail": {
+      "labels": [
+        "Дата и час изготовления блюда",
+        "Время снятия бракеража",
+        "Наименование готового блюда",
+        "Результаты органолептической оценки качества готовых блюд",
+        "Разрешение к реализации блюда, кулинарного изделия",
+        "Подпись бракеражной комиссии",
+        "Результат взвешивания порционных блюд",
+        "Примечание"
+      ],
+      "matched": [
+        {
+          "label": "Дата и час изготовления блюда",
+          "key": "production",
+          "standardLabel": "Дата и час изготовления блюда"
+        },
+        {
+          "label": "Время снятия бракеража",
+          "key": "rejection",
+          "standardLabel": "Время снятия бракеража"
+        },
+        {
+          "label": "Наименование готового блюда",
+          "key": "name",
+          "standardLabel": "Наименование готового блюда"
+        },
+        {
+          "label": "Результаты органолептической оценки качества готовых блюд",
+          "key": "organoleptic",
+          "standardLabel": "Результаты органолептической оценки качества готовых блюд"
+        },
+        {
+          "label": "Разрешение к реализации блюда, кулинарного изделия",
+          "key": "release",
+          "standardLabel": "Разрешение к реализации блюда, кулинарного изделия"
+        },
+        {
+          "label": "Подпись бракеражной комиссии",
+          "key": "signatures",
+          "standardLabel": "Подпись бракеражной комиссии"
+        },
+        {
+          "label": "Результат взвешивания порционных блюд",
+          "key": "portion",
+          "standardLabel": "Результат взвешивания порционных блюд"
+        },
+        {
+          "label": "Примечание",
+          "key": "note",
+          "standardLabel": "Примечание"
+        }
+      ],
+      "custom": [],
+      "skipped": [],
+      "columns": {
+        "hidden": [
+          "temp",
+          "corrective",
+          "oxygen",
+          "release_allowed",
+          "courier",
+          "responsible",
+          "inspector"
+        ],
+        "labels": {},
+        "order": [
+          "production",
+          "rejection",
+          "name",
+          "organoleptic",
+          "release",
+          "signatures",
+          "portion",
+          "note",
+          "temp",
+          "corrective",
+          "oxygen",
+          "release_allowed",
+          "courier",
+          "responsible",
+          "inspector"
+        ]
+      }
+    }
+  },
+  {
+    "name": "образец .xlsx скачивается",
+    "ok": true,
+    "detail": 200
+  },
+  {
+    "name": "свой шаблон сохраняется",
+    "ok": true,
+    "detail": {
+      "template": {
+        "id": "cmubic29c00032k9mj81tyk16",
+        "name": "E2E мой шаблон",
+        "journalCode": "finished_product",
+        "builtIn": false,
+        "columns": {
+          "hidden": [
+            "temp"
+          ],
+          "labels": {
+            "name": "Блюдо"
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "в настройках есть выбор шаблона и свой шаблон в списке",
+    "ok": true,
+    "detail": [
+      "Выберите шаблон…",
+      "Рекомендуемая форма в соответствии с Приложением №4 СанПиН 2.3/2.4.4282-26",
+      "Расширенная форма (все колонки)",
+      "Свой: E2E мой шаблон"
+    ]
+  },
+  {
+    "name": "выбор шаблона показывает предупреждение со списком изменений",
+    "ok": true
+  },
+  {
+    "name": "после «Заменить колонки» и «Сохранить» документ — форма Приложения 4",
+    "ok": true,
+    "detail": {
+      "order": [
+        "production",
+        "rejection",
+        "name",
+        "organoleptic",
+        "release",
+        "signatures",
+        "portion",
+        "note",
+        "temp",
+        "corrective",
+        "oxygen",
+        "release_allowed",
+        "courier",
+        "responsible",
+        "inspector"
+      ],
+      "hidden": [
+        "temp",
+        "corrective",
+        "oxygen",
+        "release_allowed",
+        "courier",
+        "responsible",
+        "inspector"
+      ],
+      "labels": {}
+    }
+  },
+  {
+    "name": "без ошибок в консоли страницы",
+    "ok": true,
+    "detail": []
+  }
+]
