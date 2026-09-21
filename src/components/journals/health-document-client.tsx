@@ -75,6 +75,7 @@ import {
   hasFullDocumentAccess,
 } from "@/lib/journal-entry-scope";
 import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 type Props = {
   documentId: string;
@@ -422,7 +423,7 @@ export function HealthDocumentClient(props: Props) {
         else delete copy[key];
         return copy;
       });
-      toast.error(error instanceof Error ? error.message : "Ошибка сохранения");
+      toast.error(humanizeFetchError(error, "Ошибка сохранения"));
     } finally {
       setSavingCellKey((current) => (current === key ? null : current));
     }
@@ -561,7 +562,7 @@ export function HealthDocumentClient(props: Props) {
       setSelectedEmployeeIds([]);
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка удаления строк");
+      toast.error(humanizeFetchError(error, "Ошибка удаления строк"));
     } finally {
       setIsDeleting(false);
     }

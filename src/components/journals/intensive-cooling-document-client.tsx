@@ -72,6 +72,7 @@ import {
 } from "@/components/journals/record-cards-view";
 import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
 import { useRosterViewerId } from "@/components/journals/use-roster-viewer";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 type UserItem = {
   id: string;
@@ -184,7 +185,7 @@ function RowDialog(props: {
       // хотя сервер отказал, и правка терялась. Показываем текст сервера
       // и оставляем окно открытым.
       toast.error(
-        error instanceof Error ? error.message : "Не удалось сохранить строку"
+        humanizeFetchError(error, "Не удалось сохранить строку")
       );
     } finally {
       setSubmitting(false);
@@ -476,7 +477,7 @@ function SettingsDialog(props: {
     } catch (error) {
       // Не закрываем окно при отказе сервера — иначе правка теряется молча.
       toast.error(
-        error instanceof Error ? error.message : "Не удалось сохранить настройки"
+        humanizeFetchError(error, "Не удалось сохранить настройки")
       );
     } finally {
       setSubmitting(false);
@@ -589,7 +590,7 @@ function FinishDialog(props: {
       props.onOpenChange(false);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Не удалось закончить журнал"
+        humanizeFetchError(error, "Не удалось закончить журнал")
       );
     } finally {
       setSubmitting(false);
@@ -809,7 +810,7 @@ export function IntensiveCoolingDocumentClient(props: Props) {
           onClear={() => setSelectedRowIds([])}
           onDelete={() => {
             handleDeleteSelected().catch((error) =>
-              toast.error(error instanceof Error ? error.message : "Ошибка")
+              toast.error(humanizeFetchError(error, "Ошибка"))
             );
           }}
           hint="Строки будут удалены вместе с историей правок"

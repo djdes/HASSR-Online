@@ -31,6 +31,28 @@ import {
  */
 export const PHOTO_VALUE_SEPARATOR = "\n";
 
+/** Те же ограничения, что на сервере (`/api/mini/attachments`). */
+export const PHOTO_MAX_BYTES = 5 * 1024 * 1024;
+export const PHOTO_ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+export const PHOTO_RULES_HINT = "JPG, PNG или WebP, не больше 5 МБ";
+
+/**
+ * Проверка снимка ДО отправки. Раньше её не было вовсе: человек ждал
+ * загрузку восьмимегабайтного кадра по сотовой связи, чтобы в конце
+ * получить отказ. Тексты — те же, что отдаёт сервер, чтобы правило
+ * звучало одинаково, откуда бы ни пришло.
+ */
+export function checkPhotoBeforeUpload(file: File): string | null {
+  // Снимок с камеры иногда приходит без mime-типа — не придираемся.
+  if (file.type && !PHOTO_ALLOWED_TYPES.includes(file.type)) {
+    return "Подойдут JPG, PNG или WebP";
+  }
+  if (file.size > PHOTO_MAX_BYTES) {
+    return "Фото больше 5 МБ — сожмите или снимите заново";
+  }
+  return null;
+}
+
 export function parsePhotoValue(raw: unknown): string[] {
   if (typeof raw !== "string" || raw.trim() === "") return [];
   return raw.split(PHOTO_VALUE_SEPARATOR).map((item) => item.trim()).filter(Boolean);
@@ -65,6 +87,12 @@ export function PhotoField({
   const urls = parsePhotoValue(value);
 
   async function upload(file: File) {
+    // Сначала — правила, потом сеть. Ждать загрузку ради отказа незачем.
+    const problem = checkPhotoBeforeUpload(file);
+    if (problem) {
+      setError(problem);
+      return;
+    }
     setUploading(true);
     setError(null);
     // Объявлено снаружи try: если отправка упадёт, в офлайн-очередь
@@ -210,9 +238,12 @@ export function PhotoField({
 
       {error ? (
         <div className="mt-1 text-[12px] font-medium text-[#a13a32]">{error}</div>
-      ) : hint ? (
-        <div className="mt-1 text-[12px] text-[#9b9fb3]">{hint}</div>
-      ) : null}
+      ) : (
+        // Правило показываем ЗАРАНЕЕ, а не после неудачной отправки.
+        <div className="mt-1 text-[12px] text-[#9b9fb3]">
+          {hint ? `${hint} · ${PHOTO_RULES_HINT}` : PHOTO_RULES_HINT}
+        </div>
+      )}
     </div>
   );
 }

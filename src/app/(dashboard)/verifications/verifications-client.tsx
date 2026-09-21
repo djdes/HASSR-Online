@@ -18,7 +18,10 @@ import {
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
 import { showRemindResult, type RemindResult } from "@/lib/remind-toast";
-import { completionEntryLabel, isInternalCompletionKey } from "@/lib/completion-labels";
+import {
+  buildCompletionView,
+  completionEntryLabel,
+} from "@/lib/completion-labels";
 
 type GuideField = { name: string; description: string; norm?: string };
 type Guide = {
@@ -56,6 +59,9 @@ type InProgressItem = {
   executedById: string;
   claimedAt: string;
   overdue: boolean;
+  /** День задачи «ГГГГ-ММ-ДД» — чтобы зависшую со вчера было видно. */
+  dateKey?: string;
+  fromPreviousDay?: boolean;
 };
 
 type NotTakenItem = {
@@ -75,6 +81,12 @@ type Resp = {
   hist: PendingItem[];
   summary: { pending: number; inProgress: number; notTaken: number };
 };
+
+/** «2026-09-20» → «20.09». Без часовых поясов: это уже день организации. */
+function dayMonth(dateKey: string): string {
+  const [, month, day] = dateKey.split("-");
+  return month && day ? `${day}.${month}` : dateKey;
+}
 
 function timeAgo(iso: string | null): string {
   if (!iso) return "—";
@@ -311,11 +323,14 @@ function PendingCard({
   onReject: () => void;
   busy: boolean;
 }) {
-  // Служебные ключи (`_autoSeeded` и прочие с подчёркиванием) ставит
-  // система, а не человек — заведующей они ни о чём не говорят.
-  const filledFields = Object.entries(item.completionData ?? {}).filter(
-    ([key]) => !isInternalCompletionKey(key)
-  );
+  // Снимок раскладываем на понятные части: шаги, причина пропуска и
+  // обычные поля. Раньше печатали `String(v)` подряд, и заведующая
+  // видела «steps [object Object],[object Object]».
+  const completion = buildCompletionView(item.completionData);
+  const hasCompletion =
+    completion.fields.length > 0 ||
+    completion.steps.length > 0 ||
+    completion.skippedReason !== null;
 
   return (
     <div className="rounded-3xl border border-[#5d3ab3]/20 bg-[#f5f0ff] shadow-[0_0_0_1px_rgba(180,150,230,0.15)] transition-shadow hover:shadow-[0_8px_24px_-12px_rgba(93,58,179,0.25)]">
@@ -351,25 +366,55 @@ function PendingCard({
 
       {expanded ? (
         <div className="space-y-3 border-t border-[#5d3ab3]/15 px-4 pb-4 pt-3">
-          {filledFields.length > 0 ? (
-            <div className="rounded-2xl border border-[#ececf4] bg-white p-3">
+          {hasCompletion ? (
+            <div className="space-y-2 rounded-2xl border border-[#ececf4] bg-white p-3">
               <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
                 Введённые данные
               </div>
-              <div className="mt-1 grid grid-cols-1 gap-x-4 gap-y-1 text-[13px] text-[#0b1024] sm:grid-cols-2">
-                {filledFields.map(([k, v]) => (
-                  <div key={k} className="flex justify-between gap-2">
-                    <span className="text-[#6f7282]">
-                      {completionEntryLabel(k)}
-                    </span>
-                    <span className="text-right font-medium">
-                      {typeof v === "boolean"
-                        ? v ? "✓" : "✗"
-                        : String(v ?? "—")}
-                    </span>
-                  </div>
-                ))}
-              </div>
+
+              {completion.skippedReason ? (
+                <div className="rounded-xl bg-[#fff8eb] px-3 py-2 text-[13px] text-[#8a5a00]">
+                  Пропущено: {completion.skippedReason}
+                </div>
+              ) : null}
+
+              {completion.steps.length > 0 ? (
+                <ul className="space-y-1 text-[13px] text-[#0b1024]">
+                  {completion.steps.map((step, i) => (
+                    <li key={i}>
+                      <span
+                        className={
+                          step.done
+                            ? "text-[#136b2a]"
+                            : "font-medium text-[#a13a32]"
+                        }
+                      >
+                        {step.done ? "✓" : "✗"} {step.title}
+                      </span>
+                      {step.checklist.length > 0 ? (
+                        <ul className="ml-5 text-[12px] text-[#6f7282]">
+                          {step.checklist.map((c, j) => (
+                            <li key={j}>
+                              {c.done ? "✓" : "✗"} {c.item}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+
+              {completion.fields.length > 0 ? (
+                <div className="grid grid-cols-1 gap-x-4 gap-y-1 text-[13px] text-[#0b1024] sm:grid-cols-2">
+                  {completion.fields.map((f) => (
+                    <div key={f.key} className="flex justify-between gap-2">
+                      <span className="text-[#6f7282]">{f.label}</span>
+                      <span className="text-right font-medium">{f.value}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
             </div>
           ) : (
             <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-white p-3 text-[12px] text-[#9b9fb3]">
@@ -397,8 +442,11 @@ function PendingCard({
                       <div className="space-y-1">
                         {guide.fields.map((f) => (
                           <div key={f.name}>
-                            <span className="font-mono text-[11px] font-semibold text-[#3848c7]">
-                              {f.name}
+                            {/* Подпись поля, а не ключ из базы:
+                                «temperature — …» заведующей ничего
+                                не сообщает. */}
+                            <span className="text-[11px] font-semibold text-[#3848c7]">
+                              {completionEntryLabel(f.name)}
                             </span>
                             <span className="text-[#3c4053]"> — {f.description}</span>
                             {f.norm ? (
@@ -525,7 +573,11 @@ function InProgressCard({
             {item.overdue ? (
               <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-[#a13a32]">
                 <AlertTriangle className="size-3" />
-                Зависло
+                {/* «Зависло» без даты ничего не объясняло: задача со
+                    вчера выглядела как взятая только что. */}
+                {item.fromPreviousDay && item.dateKey
+                  ? `Зависло с ${dayMonth(item.dateKey)}`
+                  : "Зависло"}
               </span>
             ) : null}
           </div>

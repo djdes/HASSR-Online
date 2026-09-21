@@ -4,6 +4,7 @@ import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
 import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
+import { getUserPositionLabel } from "@/lib/user-roles";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,9 @@ export default async function ByUserReportPage({
       name: true,
       role: true,
       positionTitle: true,
+      // Должность берём тем же помощником, что и карточка сотрудника:
+      // раньше в шапке отчёта стоял код роли — «cook».
+      jobPosition: { select: { name: true, categoryKey: true } },
       email: true,
       phone: true,
     },
@@ -67,7 +71,9 @@ export default async function ByUserReportPage({
           createdAt: { gte: fromDate, lte: toDate },
           ...NOT_AUTO_SEEDED,
         },
-        orderBy: { createdAt: "desc" },
+        // По дате самой записи, а не по времени сохранения: в списке
+        // показана именно дата в журнале, и порядок должен ей отвечать.
+        orderBy: [{ date: "desc" }, { createdAt: "desc" }],
         take: 200,
         include: {
           document: {
@@ -102,7 +108,7 @@ export default async function ByUserReportPage({
           {user.name}
         </h1>
         <p className="mt-1 text-[14px] text-[#6f7282]">
-          {user.positionTitle ?? user.role} · {user.email}
+          {getUserPositionLabel(user)} · {user.email}
           {user.phone ? ` · ${user.phone}` : ""}
         </p>
         <p className="mt-2 text-[13px] text-[#9b9fb3]">
@@ -117,10 +123,10 @@ export default async function ByUserReportPage({
         <StatCard
           label="В журналах"
           value={docEntries.length}
-          hint="document-entry"
+          hint="отметки в бланках"
         />
-        <StatCard label="Открыл CAPA" value={capaCreated} />
-        <StatCard label="Закрыл CAPA" value={capaResolved} />
+        <StatCard label="Открыл нарушений" value={capaCreated} />
+        <StatCard label="Закрыл нарушений" value={capaResolved} />
       </div>
 
       {/* Document entries */}
@@ -138,9 +144,6 @@ export default async function ByUserReportPage({
                 <FileText className="size-4 shrink-0 text-[#9b9fb3]" />
                 <span className="min-w-0 flex-1 truncate text-[#0b1024]">
                   {e.document.title}
-                  <span className="ml-2 text-[12px] text-[#6f7282]">
-                    ({e.document.template.code})
-                  </span>
                 </span>
                 <span className="shrink-0 text-[12px] text-[#9b9fb3]">
                   {e.date.toISOString().slice(0, 10)}
@@ -162,7 +165,7 @@ export default async function ByUserReportPage({
       {fieldEntries.length > 0 && (
         <section className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
           <h2 className="text-[15px] font-semibold text-[#0b1024]">
-            Field-based записи ({fieldEntries.length})
+            Отдельные записи ({fieldEntries.length})
           </h2>
           <ul className="mt-3 divide-y divide-[#ececf4]">
             {fieldEntries.slice(0, 50).map((e) => (
@@ -173,9 +176,6 @@ export default async function ByUserReportPage({
                 <FileText className="size-4 shrink-0 text-[#9b9fb3]" />
                 <span className="min-w-0 flex-1 truncate text-[#0b1024]">
                   {e.template.name}
-                  <span className="ml-2 text-[12px] text-[#6f7282]">
-                    ({e.template.code})
-                  </span>
                 </span>
                 <span className="shrink-0 text-[12px] text-[#9b9fb3]">
                   {e.createdAt.toLocaleString("ru-RU", {

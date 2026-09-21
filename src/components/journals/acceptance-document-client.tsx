@@ -109,6 +109,7 @@ import { JournalAddRow } from "@/components/journals/journal-add-row";
 import { JournalPaperHeaderRows } from "@/components/journals/journal-document-header";
 import { localDayKey } from "@/lib/entry-defaults";
 import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 type User = { id: string; name: string; role: string };
 
@@ -161,7 +162,9 @@ function getResponsibleLabel(row: AcceptanceRow, users: User[]) {
 }
 
 function getErrorMessage(error: unknown, fallback = "Ошибка") {
-  return error instanceof Error ? error.message : fallback;
+  // Сообщения браузера о пропаже связи («Failed to fetch») подменяем
+  // русской фразой — см. lib/humanize-fetch-error.ts.
+  return humanizeFetchError(error, fallback);
 }
 
 function normalizeImportText(value: unknown) {

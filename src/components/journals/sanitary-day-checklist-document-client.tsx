@@ -54,6 +54,7 @@ import {
   NO_ROW_EMPLOYEE_MESSAGE,
   useRosterViewerId,
 } from "@/components/journals/use-roster-viewer";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 /* ─── Types ─── */
 
@@ -203,7 +204,7 @@ function SettingsDialog(props: {
       props.onSaved(nextConfig);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Ошибка сохранения"
+        humanizeFetchError(error, "Ошибка сохранения")
       );
     } finally {
       setSubmitting(false);
@@ -882,7 +883,7 @@ export function SanitaryDayChecklistDocumentClient({
         setConfig(newConfig);
       } catch (error) {
         toast.error(
-          error instanceof Error ? error.message : "Ошибка сохранения"
+          humanizeFetchError(error, "Ошибка сохранения")
         );
       } finally {
         setSaving(false);
@@ -952,7 +953,7 @@ export function SanitaryDayChecklistDocumentClient({
         setChecked(new Set(Object.keys(previous.done)));
         if (options?.silent) throw error;
         toast.error(
-          error instanceof Error ? error.message : "Ошибка сохранения"
+          humanizeFetchError(error, "Ошибка сохранения")
         );
       }
     },

@@ -40,6 +40,7 @@ import {
 import { localDayKey } from "@/lib/entry-defaults";
 import { useAutoDocumentTitle } from "@/components/journals/use-auto-document-title";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 type ComplaintListDocument = {
   id: string;
   title: string;
@@ -114,7 +115,7 @@ function CreateDialog({
       onCreated();
       router.push(`/journals/${COMPLAINT_REGISTER_TEMPLATE_CODE}/documents/${result.document.id}`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка создания документа");
+      toast.error(humanizeFetchError(error, "Ошибка создания документа"));
     } finally {
       setSubmitting(false);
     }
@@ -220,7 +221,7 @@ function SettingsDialog({
       onOpenChange(false);
       onSaved();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка сохранения документа");
+      toast.error(humanizeFetchError(error, "Ошибка сохранения документа"));
     } finally {
       setSubmitting(false);
     }
@@ -302,7 +303,7 @@ function DeleteDialog({
       onOpenChange(false);
       onDeleted();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка удаления документа");
+      toast.error(humanizeFetchError(error, "Ошибка удаления документа"));
     } finally {
       setSubmitting(false);
     }

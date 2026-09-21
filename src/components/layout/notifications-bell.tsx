@@ -2,6 +2,7 @@
 import { BodyScrollLock } from "@/lib/use-body-scroll-lock";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Bell, X } from "lucide-react";
@@ -107,6 +108,9 @@ export function NotificationsBell() {
   // indeterminate если только некоторые.
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmRemoveAllOpen, setConfirmRemoveAllOpen] = useState(false);
+  // Портал в body есть только на клиенте; до монтирования панель не рисуем.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const load = useCallback(async () => {
     try {
@@ -353,9 +357,20 @@ export function NotificationsBell() {
         )}
       </button>
 
-      {open && (
+      {/* Портал в body — обязательно.
+          Панель жила внутри шапки, а у шапки есть `backdrop-filter` и
+          собственный контекст наложения: `fixed inset-0` считался от
+          коробки шапки, а не от экрана. Подложка получалась 360×96
+          вместо всего окна, сама панель вела себя как `static` и
+          уходила ПОД содержимое страницы — и в приложении, и на сайте.
+          z-[60] — поверх нижнего меню приложения (`--mini-z-nav` = 50),
+          как у ConfirmDialog и BottomSheet. Тёмную тему портал берёт от
+          `body:has(.app-shell[data-app-theme="dark"])` в app-theme.css. */}
+      {open &&
+        mounted &&
+        createPortal(
         <div
-          className="fixed inset-0 z-40 flex items-start justify-end bg-[#0b1024]/15 p-4 pt-20 sm:p-8 sm:pt-24"
+          className="fixed inset-0 z-[60] flex items-start justify-end bg-[#0b1024]/15 p-4 pt-20 sm:p-8 sm:pt-24"
           onClick={closePanel}
         >
           <BodyScrollLock />
@@ -555,7 +570,8 @@ export function NotificationsBell() {
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Нативный confirm() в WebView Telegram может не показаться

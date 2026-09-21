@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 
 import { useNetwork } from "../_hooks/use-network";
@@ -12,6 +13,9 @@ import {
   type FlushResult,
 } from "../_lib/journal-queue";
 import { notifyQueueSent, updateAppBadge } from "../_lib/app-badge";
+
+/** Отступ сверху: высота шапки приложения плюс безопасная зона iPhone. */
+const BELOW_TOP_BAR = "calc(var(--mini-safe-t, 12px) + 56px)";
 
 /**
  * Полоса состояния отправки вверху экрана.
@@ -29,6 +33,12 @@ export function OfflineIndicator() {
   // Записи отправляются только своим автором — см. `journal-queue.ts`.
   const { data: session } = useSession();
   const userId = session?.user?.id ?? null;
+  // Экран задачи и экран премии в очередь отправки НЕ пишут: очередь
+  // умеет только форму журнала. Обещать там «отправится, когда связь
+  // вернётся» — врать: человек закроет приложение и потеряет введённое.
+  const pathname = usePathname() ?? "";
+  const onQueuelessScreen =
+    pathname.startsWith("/mini/claim/") || pathname.startsWith("/mini/bonus/");
   const [pending, setPending] = useState(0);
   const [justSent, setJustSent] = useState(0);
   const flushing = useRef(false);
@@ -118,7 +128,9 @@ export function OfflineIndicator() {
   const text = !isOnline
     ? pending > 0
       ? `Нет связи. Записей ждёт отправки: ${pending}`
-      : "Нет связи. Заполнять можно — отправится, когда связь вернётся"
+      : onQueuelessScreen
+        ? "Нет связи. Завершить задачу получится, когда связь вернётся"
+        : "Нет связи. Заполнять можно — отправится, когда связь вернётся"
     : pending > 0
       ? `Отправляем записи: ${pending}`
       : `Отправлено: ${justSent}`;
@@ -134,16 +146,20 @@ export function OfflineIndicator() {
       <Link
         href="/mini/outbox"
         role="status"
-        className={`fixed left-1/2 top-2 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-full px-4 py-1.5 text-center text-[12px] font-medium text-white shadow-lg transition-all ${tone}`}
-        style={{ zIndex: "var(--mini-z-overlay)" }}
+        className={`fixed left-1/2 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-full px-4 py-1.5 text-center text-[12px] font-medium text-white shadow-lg transition-all ${tone}`}
+        // Ниже шапки приложения: раньше полоса ложилась поверх логотипа,
+        // названия экрана и колокольчика.
+        style={{ zIndex: "var(--mini-z-overlay)", top: BELOW_TOP_BAR }}
       >
         {text}
       </Link>
     ) : (
       <div
         role="status"
-        className={`fixed left-1/2 top-2 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-full px-4 py-1.5 text-center text-[12px] font-medium text-white shadow-lg transition-all ${tone}`}
-        style={{ zIndex: "var(--mini-z-overlay)" }}
+        className={`fixed left-1/2 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-full px-4 py-1.5 text-center text-[12px] font-medium text-white shadow-lg transition-all ${tone}`}
+        // Ниже шапки приложения: раньше полоса ложилась поверх логотипа,
+        // названия экрана и колокольчика.
+        style={{ zIndex: "var(--mini-z-overlay)", top: BELOW_TOP_BAR }}
       >
         {text}
       </div>

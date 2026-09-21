@@ -57,6 +57,7 @@ import { rankRosterForSlot } from "@/lib/journal-roster";
 import { useTodayKey } from "@/lib/use-today-key";
 import { EquipmentDirectoryField } from "@/components/journals/equipment-directory-field";
 import type { EquipmentDirectoryOption } from "@/lib/equipment-directory-link";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 type UserItem = {
   id: string;
   name: string;
@@ -365,7 +366,7 @@ export function EquipmentCleaningDocumentClient({
       }
     } catch (error) {
       if (options?.silent) throw error;
-      toast.error(error instanceof Error ? error.message : "Ошибка сохранения строки");
+      toast.error(humanizeFetchError(error, "Ошибка сохранения строки"));
     } finally {
       setIsSaving(false);
     }

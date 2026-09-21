@@ -37,6 +37,7 @@ import {
 import { toast } from "sonner";
 import { confirmAsync } from "@/components/ui/confirm-async";
 import { PositionNativeOptions } from "@/components/shared/position-select";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 type UserItem = {
   id: string;
   name: string;
@@ -129,7 +130,7 @@ export function GlassListDocumentClient({
       return true;
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Не удалось сохранить документ"
+        humanizeFetchError(error, "Не удалось сохранить документ")
       );
       return false;
     } finally {

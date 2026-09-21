@@ -144,7 +144,10 @@ export function MiniAppShell({
               <RefreshProvider>{children}</RefreshProvider>
             </main>
           </JournalUndoProvider>
-          <Toaster />
+          {/* Сообщения — ниже шапки приложения. По умолчанию sonner
+              кладёт их в самый верх экрана, и они закрывали логотип,
+              название экрана и колокольчик. */}
+          <Toaster offset={{ top: "calc(var(--mini-safe-t, 12px) + 56px)" }} />
           <OfflineIndicator />
           {authed ? <LiveConnectionIndicator variant="mini" /> : null}
           <MiniNav items={navItems} />

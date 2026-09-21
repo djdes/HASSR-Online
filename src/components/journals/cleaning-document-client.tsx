@@ -132,6 +132,7 @@ import {
 import { useTodayKey } from "@/lib/use-today-key";
 import { TodayStripForJournal } from "@/components/journals/today-strip-for-journal";
 import { localDayKey } from "@/lib/entry-defaults";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 type UserItem = {
   id: string;
   name: string;
@@ -1526,7 +1527,7 @@ export function CleaningDocumentClient(props: Props) {
       toast.success(data.message ?? "Готово");
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Сеть упала");
+      toast.error(humanizeFetchError(err, "Сеть упала"));
     } finally {
       setCleanupCompletedRunning(false);
     }
@@ -1571,7 +1572,7 @@ export function CleaningDocumentClient(props: Props) {
     } catch (error) {
       if (!opts?.silent) {
         toast.error(
-          error instanceof Error ? error.message : "Ошибка обновления"
+          humanizeFetchError(error, "Ошибка обновления")
         );
       }
     } finally {
@@ -1635,9 +1636,7 @@ export function CleaningDocumentClient(props: Props) {
         setConfig(previousConfig);
         setSettingsState(buildSettingsState(previousConfig));
         toast.error(
-          error instanceof Error
-            ? error.message
-            : "Не удалось сохранить изменения",
+          humanizeFetchError(error, "Не удалось сохранить изменения"),
         );
         throw error;
       }
@@ -1847,7 +1846,7 @@ export function CleaningDocumentClient(props: Props) {
       );
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Не удалось обновить ячейки",
+        humanizeFetchError(err, "Не удалось обновить ячейки"),
       );
     }
   }
@@ -1915,7 +1914,7 @@ export function CleaningDocumentClient(props: Props) {
       clearCellSelection();
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Не удалось обновить ячейки",
+        humanizeFetchError(err, "Не удалось обновить ячейки"),
       );
     }
   }
@@ -1964,7 +1963,7 @@ export function CleaningDocumentClient(props: Props) {
       await patchDocument(nextConfig);
       toast.success(`Удалено строк: ${count}`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось удалить выбранные строки");
+      toast.error(humanizeFetchError(error, "Не удалось удалить выбранные строки"));
     }
   }
 

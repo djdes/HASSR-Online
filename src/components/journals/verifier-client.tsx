@@ -10,6 +10,7 @@ import {
   completionEntryLabel,
   isInternalCompletionKey,
 } from "@/lib/completion-labels";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 const VALUE_LABELS: Record<string, string> = {
   healthy: "здоров",
@@ -179,7 +180,7 @@ export function VerifierClient({
       toast.success("Журнал принят целиком");
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка");
+      toast.error(humanizeFetchError(err, "Ошибка"));
     } finally {
       setBusy(false);
     }
@@ -207,7 +208,7 @@ export function VerifierClient({
       toast.success(`Принято ячеек: ${ids.length}`);
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка");
+      toast.error(humanizeFetchError(err, "Ошибка"));
     } finally {
       setBusy(false);
     }
@@ -242,7 +243,7 @@ export function VerifierClient({
       toast.success(`Отклонено ячеек: ${ids.length}`);
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка");
+      toast.error(humanizeFetchError(err, "Ошибка"));
     } finally {
       setBusy(false);
     }

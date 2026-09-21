@@ -41,6 +41,7 @@ import {
   JOURNAL_LIST_CARDS_CLASS,
 } from "@/components/journals/journal-responsive";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 type DocumentItem = {
   id: string;
   title: string;
@@ -394,7 +395,7 @@ export function AuditProtocolDocumentsClient({
                         icon: <Printer className="size-4 text-[#6f7282]" />,
                         onSelect: () =>
                           void openDocumentPdf(document.id).catch((error) =>
-                            toast.error(error instanceof Error ? error.message : "Не удалось открыть PDF")
+                            toast.error(humanizeFetchError(error, "Не удалось открыть PDF"))
                           ),
                       },
                       // Закрытый документ раньше уходил навсегда: вернуть

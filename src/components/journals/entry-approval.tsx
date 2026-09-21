@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 interface EntryApprovalActionsProps {
   entryId: string;
@@ -54,7 +55,7 @@ export function EntryApprovalActions({
       router.push(`/journals/${journalCode}`);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "\u041e\u0448\u0438\u0431\u043a\u0430");
+      setError(humanizeFetchError(err, "\u041e\u0448\u0438\u0431\u043a\u0430"));
     } finally {
       setIsApproving(false);
       setIsRejecting(false);

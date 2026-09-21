@@ -1,0 +1,21 @@
+import { openTelegramSession, db } from "../tg-session";
+import { shot, sleep } from "./lib";
+const T = `document.body.innerText`;
+(async () => {
+  const doc = await db.journalDocument.findFirst({ where: { organizationId: "e2e-org-a", verifierUserId: { not: null } }, include: { template: { select: { code: true, name: true } } }, orderBy: { createdAt: "desc" } });
+  console.log("документ:", doc?.id, doc?.template.code, doc?.title, "| статус проверки:", doc?.verificationStatus);
+  const head = await openTelegramSession({ role: "headA", width: 390, height: 844, theme: "light" });
+  const hp = head.page;
+  const url = `/journals/${doc!.template.code}/documents/${doc!.id}/verify`;
+  await hp.goto(head.base + url, { timeout: 300000 }); await sleep(hp, 12000);
+  console.log("=== " + url + " → " + hp.url().replace(head.base,"") + " ===\n" + ((await hp.evaluate(T)) as string).slice(0, 1500));
+  await shot(hp, "29-verify-doc", true);
+  const r = await hp.evaluate(String.raw`(()=>{const b=[...document.querySelectorAll('button')].find(b=>/Принять весь журнал/.test(b.innerText));return b?(b.scrollIntoView({block:'center'}),b.click(),'клик'):'нет кнопки';})()`);
+  console.log("Принять весь журнал:", r); await sleep(hp, 2500);
+  await shot(hp, "29-confirm-dialog", false);
+  console.log("окно:", ((await hp.evaluate(T)) as string).replace(/\n+/g," | ").slice(0, 800));
+  const r2 = await hp.evaluate(String.raw`(()=>{const b=[...document.querySelectorAll('button')].filter(b=>/Принять|Подтверд|Да,/.test(b.innerText));return b.map(x=>x.innerText.replace(/\s+/g,' ').trim());})()`);
+  console.log("кнопки окна:", JSON.stringify(r2));
+  console.log("ERRORS", JSON.stringify(head.errors.slice(0,8)));
+  await head.close();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 1500)); process.exit(1); });

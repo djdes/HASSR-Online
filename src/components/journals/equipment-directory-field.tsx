@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { SuggestInput } from "@/components/journals/suggest-input";
 import type { EquipmentDirectoryOption } from "@/lib/equipment-directory-link";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 /**
  * Поле «наименование оборудования» для окон журналов ППР, поверки и
@@ -72,7 +73,7 @@ export function EquipmentDirectoryField({
       );
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Не удалось добавить в справочник"
+        humanizeFetchError(error, "Не удалось добавить в справочник")
       );
     } finally {
       setIsLinking(false);

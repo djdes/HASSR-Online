@@ -55,6 +55,7 @@ import {
   Wrench,
   X,
 } from "lucide-react";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 type JournalTemplateListItem = {
   id: string;
@@ -230,7 +231,7 @@ export function JournalsBrowser({
       clearSelection();
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка сети");
+      toast.error(humanizeFetchError(err, "Ошибка сети"));
     } finally {
       setBulkBusy(false);
     }
@@ -422,7 +423,7 @@ function TemplateCard({
       toast.success(successText);
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось сохранить настройку");
+      toast.error(humanizeFetchError(error, "Не удалось сохранить настройку"));
     } finally {
       setToggling(false);
     }

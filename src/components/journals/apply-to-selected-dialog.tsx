@@ -16,6 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 /**
  * «Применить ко всем выделенным»: одно окно с полями и галочками «менять
@@ -69,7 +70,7 @@ export function ApplyToSelectedDialog({
       await onApply(patch);
       onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось применить изменения");
+      toast.error(humanizeFetchError(error, "Не удалось применить изменения"));
     } finally {
       setBusy(false);
     }

@@ -10,6 +10,7 @@ import {
   JournalAutomationEnableDialog,
   type AutomationChoice,
 } from "@/components/journals/journal-automation-enable-dialog";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 /**
  * Автоматика журнала: два переключателя над списком документов.
@@ -87,7 +88,7 @@ export function JournalAutoCreateToggle({
       toast.success("Документ на новый период будет создаваться сам");
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Не удалось сохранить",
+        humanizeFetchError(error, "Не удалось сохранить"),
       );
       throw error;
     } finally {
@@ -131,7 +132,7 @@ export function JournalAutoCreateToggle({
       }
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Не удалось сохранить",
+        humanizeFetchError(error, "Не удалось сохранить"),
       );
       throw error;
     } finally {
@@ -160,7 +161,7 @@ export function JournalAutoCreateToggle({
       setAutoCreate(previousCreate);
       setAutoFill(previousFill);
       toast.error(
-        error instanceof Error ? error.message : "Не удалось сохранить",
+        humanizeFetchError(error, "Не удалось сохранить"),
       );
       throw error;
     } finally {
@@ -204,7 +205,7 @@ export function JournalAutoCreateToggle({
     } catch (error) {
       setAutoFill(previous);
       toast.error(
-        error instanceof Error ? error.message : "Не удалось сохранить",
+        humanizeFetchError(error, "Не удалось сохранить"),
       );
     } finally {
       setBusy(null);

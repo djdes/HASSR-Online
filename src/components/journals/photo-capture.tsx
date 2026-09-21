@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { Camera, Loader2, X, Check, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 export interface OcrResult {
   productName: string | null;
@@ -54,7 +55,7 @@ export function PhotoCapture({ onResult }: PhotoCaptureProps) {
 
       setResult(data.result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка распознавания");
+      setError(humanizeFetchError(err, "Ошибка распознавания"));
     } finally {
       setIsProcessing(false);
     }

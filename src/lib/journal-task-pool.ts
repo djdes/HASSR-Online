@@ -37,6 +37,15 @@ export type PoolForDayResult = {
   pool: boolean;
 };
 
+/**
+ * Ключ дня из уже нормализованной даты.
+ *
+ * ВАЖНО: на вход обязан приходить результат `resolveDayStart(timezone)` —
+ * полночь дня организации, выраженная в UTC. Если сюда передать «сейчас»,
+ * то с 00:00 до 03:00 по Москве получится вчерашний день: процесс на
+ * сервере живёт в UTC. Именно так «Сегодня» показывало вчерашнюю дату, а
+ * взятые задачи сохранялись под вчерашним `dateKey`.
+ */
 function dayKey(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
@@ -57,6 +66,10 @@ function utcMidnight(d: Date): Date {
 export async function generatePoolForDay(args: {
   organizationId: string;
   journalCode: string;
+  /**
+   * День организации — результат `resolveDayStart(org.timezone, now)`,
+   * а не `new Date()`. См. комментарий к `dayKey` выше.
+   */
   date: Date;
   /** Точка: документ и ключи задач ограничиваются ею; null — без точек. */
   buildingId?: string | null;
@@ -182,6 +195,24 @@ const GENERIC_EVENT_LABELS: Record<string, string> = {
   audit_report: "Отчёт аудита",
 };
 
+/**
+ * Слова, по которым узнаём холодильное оборудование в карточке.
+ * Совпадение ищем и в типе, и в названии — тип заполняют не всегда.
+ */
+const COLD_EQUIPMENT_MARKERS = [
+  "fridge",
+  "refriger",
+  "freezer",
+  "chill",
+  "cold",
+  "холодильн",
+  "морозиль",
+  "морозил",
+  "камера хранения",
+  "шкаф шоковой",
+  "ларь",
+] as const;
+
 /* ---------- per-journal generators ---------- */
 
 async function poolHygieneShift(args: {
@@ -219,8 +250,25 @@ async function poolColdEquipment(args: {
   today: Date;
   todayKey: string;
 }): Promise<PoolForDayResult> {
+  // Берём только холодильное оборудование. Раньше сюда попадало ВСЁ
+  // оборудование организации, и в группе «Холодильники» появлялась
+  // задача «Термогигрометр цеха — Утро»: у датчика нечего замерять
+  // термометром, а заведующая видела вечно невыполненную строку.
+  //
+  // Признак тот же, что и у самого журнала: тип холодильного
+  // оборудования ИЛИ заданная в карточке норма температуры (её ставят
+  // именно тем единицам, которые в этот журнал и попадают).
   const fridges = await db.equipment.findMany({
-    where: { area: { organizationId: args.organizationId } },
+    where: {
+      area: { organizationId: args.organizationId },
+      OR: [
+        ...COLD_EQUIPMENT_MARKERS.flatMap((marker) => [
+          { type: { contains: marker, mode: "insensitive" as const } },
+          { name: { contains: marker, mode: "insensitive" as const } },
+        ]),
+        { AND: [{ tempMin: { not: null } }, { tempMax: { not: null } }] },
+      ],
+    },
     select: { id: true, name: true, type: true, area: { select: { name: true } } },
     orderBy: { name: "asc" },
   });

@@ -1,0 +1,22 @@
+import { openTelegramSession, db } from "../tg-session";
+import { shot, sleep } from "./lib";
+const T = `document.body.innerText`;
+(async () => {
+  const pend = await db.journalTaskClaim.findFirst({ where: { organizationId: "e2e-org-a", verificationStatus: "pending" }, orderBy: { completedAt: "desc" } });
+  console.log("одобряем:", pend?.scopeLabel, pend?.id);
+  const s = await openTelegramSession({ role: "headA", width: 390, height: 844, theme: "light" });
+  const p = s.page;
+  await p.goto(s.base + "/verifications", { timeout: 300000 }); await sleep(p, 11000);
+  const before = ((await p.evaluate(T)) as string);
+  console.log("до:", before.slice(0, 400).replace(/\n+/g, " | "));
+  const r = await p.evaluate(`fetch('/api/verifications/${pend!.id}',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'approve'})}).then(async r=>r.status+' '+(await r.text()).slice(0,120))`);
+  console.log("approve:", r);
+  await p.reload({ timeout: 300000 }); await sleep(p, 10000);
+  const after = ((await p.evaluate(T)) as string);
+  console.log("после:", after.slice(0, 700).replace(/\n+/g, " | "));
+  console.log("есть ли раздел «проверено»:", /Проверен|Одобрен|Принят/i.test(after));
+  console.log("задача видна на экране:", after.includes(pend!.scopeLabel));
+  await shot(p, "46-after-approve", true);
+  console.log("ERRORS", JSON.stringify(s.errors.slice(0,6)));
+  await s.close();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 1500)); process.exit(1); });

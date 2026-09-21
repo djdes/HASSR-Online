@@ -13,13 +13,19 @@ import { toast } from "sonner";
 // никогда не показывает слово «журнал». Сотрудник просто видит
 // чек-лист задач смены. Под капотом это journal-task-claim.
 import {
+  AlertTriangle,
+  Bed,
+  CalendarOff,
   CheckCircle2,
   Clock,
   Loader2,
   Lock,
-  Sparkles,
+  Palmtree,
+  Undo2,
   UserCheck,
 } from "lucide-react";
+import { JournalIcon } from "../_components/journal-icon";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 type Scope = {
   scopeKey: string;
@@ -27,6 +33,8 @@ type Scope = {
   sublabel?: string;
   journalCode: string;
   journalLabel: string;
+  /** Имя иконки lucide, подобранное по виду журнала (см. journal-label.ts). */
+  iconName?: string;
   journalDocumentId?: string;
   availability: "available" | "mine" | "taken" | "completed";
   claimUserName?: string | null;
@@ -39,16 +47,62 @@ type Group = {
   scopes: Scope[];
 };
 
+type StuckClaim = {
+  id: string;
+  scopeLabel: string;
+  journalCode: string;
+  dateKey: string;
+};
+
 type Payload = {
   dateKey: string;
   groups: Group[];
+  /** «off» | «vacation» | «sick» из графика смен, если сегодня не рабочий день. */
+  scheduleStatus?: string | null;
   myActive: {
     id: string;
     journalCode: string;
     scopeKey: string;
     scopeLabel: string;
+    verificationStatus?: string | null;
+    verifierComment?: string | null;
   } | null;
+  /** Взятые и не закрытые задачи прошлых дней. */
+  stuckClaims?: StuckClaim[];
 };
+
+/** Плашка «сегодня у вас по графику». Спокойная, задачи не прячет. */
+const SCHEDULE_NOTES: Record<
+  string,
+  { label: string; icon: typeof Bed }
+> = {
+  sick: { label: "больничный", icon: Bed },
+  vacation: { label: "отпуск", icon: Palmtree },
+  off: { label: "выходной", icon: CalendarOff },
+};
+
+/** «2026-09-20» → «20 сентября». Без часовых поясов: день уже посчитан. */
+function humanDay(dateKey: string): string {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  if (!year || !month || !day) return dateKey;
+  return new Date(Date.UTC(year, month - 1, day)).toLocaleDateString("ru-RU", {
+    timeZone: "UTC",
+    day: "numeric",
+    month: "long",
+  });
+}
+
+/** Полная подпись даты для шапки: «понедельник, 20 сентября». */
+function humanWeekday(dateKey: string): string {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  if (!year || !month || !day) return dateKey;
+  return new Date(Date.UTC(year, month - 1, day)).toLocaleDateString("ru-RU", {
+    timeZone: "UTC",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+}
 
 /** Текст ошибки от API, иначе — понятная замена вместо кода статуса. */
 async function readError(res: Response): Promise<string> {
@@ -95,7 +149,11 @@ export default function MiniTodayPage() {
         setNeedsSignIn(false);
       }
     } catch {
-      if (mountedRef.current) setLoadError("Нет связи — потяните вниз, чтобы обновить");
+      if (mountedRef.current) {
+        setLoadError(
+          "Нет связи с сервером. Проверьте интернет и потяните вниз, чтобы обновить"
+        );
+      }
     }
   }
 
@@ -163,8 +221,41 @@ export default function MiniTodayPage() {
       if (res.status === 409 || res.status === 403) await load();
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Не удалось взять задачу"
+        // Раньше сюда улетало «Failed to fetch» от браузера.
+        humanizeFetchError(err, "Не удалось взять задачу")
       );
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  /**
+   * Вернуть зависшую задачу прошлого дня в общий список.
+   *
+   * Пока она висит, взять новую нельзя — правило «одна активная задача»
+   * считает задачи любого дня. Раньше выхода из этого тупика не было.
+   */
+  async function releaseClaim(claimId: string) {
+    if (busy) return;
+    setBusy(claimId);
+    try {
+      const res = await fetch(`/api/journal-task-claims/${claimId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "release" }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          reason?: string;
+        };
+        toast.error(body.error || claimReasonRu(body.reason, res.status));
+      } else {
+        toast.success("Задача снова в общем списке");
+      }
+      await load();
+    } catch (err) {
+      toast.error(humanizeFetchError(err));
     } finally {
       setBusy(null);
     }
@@ -191,7 +282,7 @@ export default function MiniTodayPage() {
       await load();
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Не удалось завершить задачу"
+        humanizeFetchError(err, "Не удалось завершить задачу")
       );
     } finally {
       setBusy(null);
@@ -257,6 +348,10 @@ export default function MiniTodayPage() {
     );
   }
 
+  const scheduleNote = data.scheduleStatus
+    ? SCHEDULE_NOTES[data.scheduleStatus] ?? null
+    : null;
+
   const totalAvailable = data.groups.flatMap((g) =>
     g.scopes.filter((s) => s.availability === "available")
   ).length;
@@ -281,11 +376,10 @@ export default function MiniTodayPage() {
           className="text-[12px] uppercase tracking-[0.16em]"
           style={{ color: "var(--mini-text-muted)" }}
         >
-          {new Date(data.dateKey).toLocaleDateString("ru-RU", {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-          })}
+          {/* Дата приходит уже посчитанной по поясу организации.
+              `new Date(dateKey)` разбирал её как UTC и в часть суток
+              показывал соседний день — форматируем в UTC. */}
+          {humanWeekday(data.dateKey)}
         </div>
         <div
           className="mt-2 text-[24px] font-semibold leading-tight"
@@ -326,6 +420,86 @@ export default function MiniTodayPage() {
         </div>
       </header>
 
+      {/* Отметка из «Графика смен». Сотрудник её вообще не видел:
+          управляющая ставила больничный, а в приложении ничего не
+          менялось. Задачи не прячем — человек может выйти на подмену. */}
+      {scheduleNote ? (
+        <div
+          className="flex items-start gap-2 rounded-2xl border p-3 text-[13px]"
+          style={{
+            background: "var(--mini-surface-2)",
+            borderColor: "var(--mini-divider-strong)",
+            color: "var(--mini-text)",
+          }}
+        >
+          <scheduleNote.icon
+            className="mt-0.5 size-4 shrink-0"
+            style={{ color: "var(--mini-text-muted)" }}
+          />
+          <span>
+            Сегодня у вас по графику: {scheduleNote.label}. Если вышли на
+            подмену — задачи ниже доступны как обычно.
+          </span>
+        </div>
+      ) : null}
+
+      {/* Незакрытая задача прошлого дня. Раньше она просто блокировала
+          всё остальное, а открыть её было нельзя: экран отвечал «уже
+          закрыта или её взял другой сотрудник». */}
+      {(data.stuckClaims ?? []).map((stuck) => (
+        <div
+          key={stuck.id}
+          className="rounded-2xl border p-3 text-[13px]"
+          style={{
+            background: "var(--mini-amber-soft)",
+            borderColor: "var(--mini-divider-strong)",
+            color: "var(--mini-text)",
+          }}
+        >
+          <div className="flex items-start gap-2">
+            <AlertTriangle
+              className="mt-0.5 size-4 shrink-0"
+              style={{ color: "var(--mini-amber)" }}
+            />
+            <div className="min-w-0 flex-1">
+              <div>
+                Незавершённая задача за {humanDay(stuck.dateKey)}:{" "}
+                <span className="font-semibold">{stuck.scopeLabel}</span>
+              </div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Link
+                  href={`/mini/claim/${stuck.id}`}
+                  className="mini-press inline-flex h-9 items-center rounded-xl px-3 text-[13px] font-medium"
+                  style={{
+                    background: "var(--mini-lime)",
+                    color: "var(--mini-primary-contrast)",
+                  }}
+                >
+                  Открыть
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => void releaseClaim(stuck.id)}
+                  disabled={busy !== null}
+                  className="mini-press inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 text-[13px] font-medium disabled:opacity-50"
+                  style={{
+                    borderColor: "var(--mini-divider-strong)",
+                    color: "var(--mini-text)",
+                  }}
+                >
+                  {busy === stuck.id ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <Undo2 className="size-3.5" />
+                  )}
+                  Вернуть
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+
       {data.myActive ? (
         <div
           className="rounded-2xl border p-3 text-[13px]"
@@ -339,6 +513,26 @@ export default function MiniTodayPage() {
           Сейчас вы делаете:&nbsp;
           <span className="font-semibold">{data.myActive.scopeLabel}</span>
           &nbsp;— закончите её, тогда сможете взять следующую.
+          {/* Отказ заведующей доходил только до Telegram: на экране была
+              обычная активная задача без единого слова о переделке. */}
+          {data.myActive.verificationStatus === "rejected" ? (
+            <div
+              className="mt-2 rounded-xl p-2.5"
+              style={{
+                background: "var(--mini-amber-soft)",
+                color: "var(--mini-text)",
+              }}
+            >
+              <span
+                className="font-semibold"
+                style={{ color: "var(--mini-amber)" }}
+              >
+                Вернули на переделку:
+              </span>{" "}
+              {data.myActive.verifierComment?.trim() ||
+                "комментария нет — уточните у заведующей."}
+            </div>
+          ) : null}
         </div>
       ) : null}
 
@@ -380,12 +574,21 @@ export default function MiniTodayPage() {
               // Раньше можно было пока «Взять» в одном scope'е жмёт —
               // тапнуть «Взять» в другом и получить race с backend'ом.
               disabled={busy !== null && busy !== s.scopeKey && busy !== s.claimId}
-              locked={Boolean(
-                data.myActive &&
-                  data.myActive.journalCode +
-                    data.myActive.scopeKey !==
-                    s.journalCode + s.scopeKey
-              )}
+              // Зависшая задача прошлого дня тоже держит человека:
+              // правило «одна активная задача» не смотрит на дату.
+              locked={
+                (data.stuckClaims ?? []).length > 0 ||
+                Boolean(
+                  data.myActive &&
+                    data.myActive.journalCode + data.myActive.scopeKey !==
+                      s.journalCode + s.scopeKey
+                )
+              }
+              lockedHint={
+                (data.stuckClaims ?? []).length > 0
+                  ? "Сначала завершите или верните незакрытую задачу прошлого дня"
+                  : "Сначала завершите текущую задачу"
+              }
               onClaim={() => claim(s)}
               onComplete={() => s.claimId && complete(s.claimId)}
             />
@@ -401,6 +604,7 @@ function ScopeRow({
   busy,
   disabled,
   locked,
+  lockedHint,
   onClaim,
   onComplete,
 }: {
@@ -410,6 +614,8 @@ function ScopeRow({
   /** True когда другая scope'а в процессе POST — блокируем во избежание race. */
   disabled?: boolean;
   locked: boolean;
+  /** Почему нельзя взять — текст тоста и подсказки. */
+  lockedHint: string;
   onClaim: () => void;
   onComplete: () => void;
 }) {
@@ -452,7 +658,13 @@ function ScopeRow({
         ) : av === "taken" ? (
           <Lock className="size-5" />
         ) : (
-          <Sparkles className="size-5" />
+          // Иконка по виду журнала — тем же помощником, что и на
+          // экране задачи. Раньше у всех задач были одинаковые «искры».
+          <JournalIcon
+            name={scope.iconName}
+            journalCode={scope.journalCode}
+            className="size-5"
+          />
         )}
       </span>
       <div className="min-w-0 flex-1">
@@ -491,13 +703,13 @@ function ScopeRow({
             // этом по-прежнему нельзя.
             onClick={() => {
               if (locked) {
-                toast.info("Сначала завершите текущую задачу");
+                toast.info(lockedHint);
                 return;
               }
               onClaim();
             }}
             disabled={busy || disabled}
-            title={locked ? "Сначала завершите текущую задачу" : undefined}
+            title={locked ? lockedHint : undefined}
             className={[
               "mini-press inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 text-[13px] font-medium",
               disabled && !busy ? "opacity-50" : "",

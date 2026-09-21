@@ -73,6 +73,7 @@ import {
   getDayColumnPrintKeepBg,
 } from "@/components/journals/journal-grid";
 import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 type Props = {
   documentId: string;
@@ -689,7 +690,7 @@ export function HygieneDocumentClient({
     } catch (error) {
       restoreCellsLocal(new Map([[key, previous]]));
       if (options?.silent) throw error;
-      toast.error(error instanceof Error ? error.message : "Ошибка сохранения");
+      toast.error(humanizeFetchError(error, "Ошибка сохранения"));
     } finally {
       setSavingCellKey((current) => (current === key ? null : current));
     }
@@ -761,7 +762,7 @@ export function HygieneDocumentClient({
     } catch (error) {
       restoreCellsLocal(previous);
       if (options?.silent) throw error;
-      toast.error(error instanceof Error ? error.message : "Ошибка сохранения");
+      toast.error(humanizeFetchError(error, "Ошибка сохранения"));
     }
   }
 
@@ -806,7 +807,7 @@ export function HygieneDocumentClient({
       setSelectedEmployeeIds([]);
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка удаления строк");
+      toast.error(humanizeFetchError(error, "Ошибка удаления строк"));
     } finally {
       setIsDeleting(false);
     }

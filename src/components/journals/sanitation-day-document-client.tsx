@@ -97,6 +97,7 @@ import {
 import { JournalAddRow } from "@/components/journals/journal-add-row";
 import { JournalPaperHeaderRows } from "@/components/journals/journal-document-header";
 import { localDayKey } from "@/lib/entry-defaults";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 /**
  * Screen ↔ print duality tokens (тот же приём, что в
@@ -1132,7 +1133,7 @@ export function SanitationDayDocumentClient({
             onClear={() => setSelectedRowIds([])}
             onDelete={() => {
               deleteSelectedRows().catch((error) =>
-                toast.error(error instanceof Error ? error.message : "Не удалось удалить строки")
+                toast.error(humanizeFetchError(error, "Не удалось удалить строки"))
               );
             }}
             hint="Помещения будут удалены вместе с планом генеральных уборок"

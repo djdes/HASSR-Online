@@ -106,6 +106,7 @@ import {
 import { useTodayKey } from "@/lib/use-today-key";
 import { NO_ROW_EMPLOYEE_MESSAGE, useRosterViewerId } from "@/components/journals/use-roster-viewer";
 import { TodayStripForJournal } from "@/components/journals/today-strip-for-journal";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 type UserItem = {
   id: string;
   name: string;
@@ -1179,7 +1180,7 @@ export function CleaningVentilationChecklistDocumentClient({
         onClear={() => setSelection([])}
         onDelete={() => {
           clearSelectedRows().catch((error) =>
-            toast.error(error instanceof Error ? error.message : "Не удалось удалить строки")
+            toast.error(humanizeFetchError(error, "Не удалось удалить строки"))
           );
         }}
         hint="Выбранные даты будут скрыты из чек-листа, их отметки удалены"
@@ -1263,7 +1264,7 @@ export function CleaningVentilationChecklistDocumentClient({
                 disabled={!isActive}
                 onCheckedChange={(checked) => {
                   persistConfig({ ...config, autoFillEnabled: checked === true }).catch((error) =>
-                    toast.error(error instanceof Error ? error.message : "Не удалось сохранить настройки")
+                    toast.error(humanizeFetchError(error, "Не удалось сохранить настройки"))
                   );
                 }}
                 className="data-[state=checked]:bg-[#5566f6] data-[state=unchecked]:bg-[#d4d8ec]"
@@ -1318,7 +1319,7 @@ export function CleaningVentilationChecklistDocumentClient({
                               : item
                           );
                           persistConfig({ ...config, procedures: nextProcedures }).catch((error) =>
-                            toast.error(error instanceof Error ? error.message : "Не удалось сохранить настройки")
+                            toast.error(humanizeFetchError(error, "Не удалось сохранить настройки"))
                           );
                         }}
                       />
@@ -1335,7 +1336,7 @@ export function CleaningVentilationChecklistDocumentClient({
                           item.id === procedure.id ? { ...item, responsibleUserId: value } : item
                         );
                         persistConfig({ ...config, procedures: nextProcedures }).catch((error) =>
-                          toast.error(error instanceof Error ? error.message : "Не удалось сохранить настройки")
+                          toast.error(humanizeFetchError(error, "Не удалось сохранить настройки"))
                         );
                       }}
                     >
@@ -1360,7 +1361,7 @@ export function CleaningVentilationChecklistDocumentClient({
                   disabled={!isActive}
                   onCheckedChange={(checked) => {
                     persistConfig({ ...config, skipWeekends: checked === true }).catch((error) =>
-                      toast.error(error instanceof Error ? error.message : "Не удалось сохранить настройки")
+                      toast.error(humanizeFetchError(error, "Не удалось сохранить настройки"))
                     );
                   }}
                   className="size-6 rounded-[10px]"
@@ -1463,9 +1464,7 @@ export function CleaningVentilationChecklistDocumentClient({
                                 ).filter((_, itemIndex) => itemIndex !== index),
                               }).catch((error) =>
                                 toast.error(
-                                  error instanceof Error
-                                    ? error.message
-                                    : "Не удалось обновить периодичность"
+                                  humanizeFetchError(error, "Не удалось обновить периодичность")
                                 )
                               );
                             }}
@@ -1530,9 +1529,7 @@ export function CleaningVentilationChecklistDocumentClient({
                                   ),
                                 }).catch((error) =>
                                   toast.error(
-                                    error instanceof Error
-                                      ? error.message
-                                      : "Не удалось обновить список ответственных"
+                                    humanizeFetchError(error, "Не удалось обновить список ответственных")
                                   )
                                 );
                               }}
@@ -1763,9 +1760,7 @@ export function CleaningVentilationChecklistDocumentClient({
                                 updateProcedureTime(row.dateKey, procedure, timeIndex, value).catch(
                                   (error) =>
                                     toast.error(
-                                      error instanceof Error
-                                        ? error.message
-                                        : "Не удалось сохранить время"
+                                      humanizeFetchError(error, "Не удалось сохранить время")
                                     )
                                 );
                               }}
@@ -1827,7 +1822,7 @@ export function CleaningVentilationChecklistDocumentClient({
             await addManualDate(date);
           } catch (error) {
             toast.error(
-              error instanceof Error ? error.message : "Не удалось добавить дату"
+              humanizeFetchError(error, "Не удалось добавить дату")
             );
             throw error;
           }
@@ -1899,9 +1894,7 @@ export function CleaningVentilationChecklistDocumentClient({
               editProcedure(editingProcedure.dateKey, procedure, next).catch(
                 (error) =>
                   toast.error(
-                    error instanceof Error
-                      ? error.message
-                      : "Не удалось сохранить время"
+                    humanizeFetchError(error, "Не удалось сохранить время")
                   )
               );
             }}

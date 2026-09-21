@@ -4,12 +4,11 @@ import { getServerSession } from "@/lib/server-session";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { generatePoolForDay, type TaskScope } from "@/lib/journal-task-pool";
-import {
-  getActiveClaimForUser,
-  type ClaimRow,
-} from "@/lib/journal-task-claims";
+import { type ClaimRow } from "@/lib/journal-task-claims";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { hasJournalAccess } from "@/lib/journal-acl";
+import { resolveDayStart } from "@/lib/today-compliance";
+import { journalIconName, looksLikeJournalCode } from "@/lib/journal-label";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -79,7 +78,7 @@ const JOURNAL_LABELS: Record<string, string> = {
   traceability_test: "Прослеживаемость",
   general_cleaning: "Генуборка",
   sanitation_day_control: "Сан. день",
-  sanitary_day_control: "Сан. день",
+  sanitary_day_control: "Чек-лист сан. дня",
   pest_control: "Дератизация",
   intensive_cooling: "Интенс. охл.",
   uv_lamp_runtime: "УФ-лампа",
@@ -102,18 +101,38 @@ export async function GET() {
 
   const org = await db.organization.findUnique({
     where: { id: organizationId },
-    select: { disabledJournalCodes: true },
+    select: { disabledJournalCodes: true, timezone: true },
   });
   const disabled = parseDisabledCodes(org?.disabledJournalCodes);
 
-  const today = new Date();
+  // «Сегодня» — по поясу организации, а не по UTC. С 00:00 до 03:00 по
+  // Москве процесс на сервере живёт ещё во вчера: экран показывал
+  // вчерашнюю дату, claim'ы сохранялись под вчерашним `dateKey`, и у
+  // заведующей одна задача висела сразу в «Ждут проверки» и «Ещё не
+  // взято». Тот же помощник, что у /api/verifications и /api/control-board.
+  const today = resolveDayStart(org?.timezone ?? null, new Date());
   const dateKey = today.toISOString().slice(0, 10);
+  const tomorrow = new Date(today);
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
 
-  const myActive = await getActiveClaimForUser(userId, organizationId);
+  // Активные задачи сотрудника — все, любого дня. Взятая вчера и не
+  // закрытая задача остаётся его: её можно открыть и доделать, и
+  // отдельной плашкой она видна в списке.
+  const myActiveClaims = await db.journalTaskClaim.findMany({
+    where: { organizationId, userId, status: "active" },
+    orderBy: { claimedAt: "desc" },
+  });
+  const myActiveToday =
+    myActiveClaims.find(
+      (c) => c.dateKey >= today && c.dateKey < tomorrow
+    ) ?? null;
+  const stuckClaims = myActiveClaims.filter((c) => c.dateKey < today);
 
   type EnrichedScope = TaskScope & {
     journalCode: string;
     journalLabel: string;
+    /** Имя иконки lucide — подбирается по виду журнала, см. journal-label.ts. */
+    iconName: string;
     availability: "available" | "mine" | "taken" | "completed";
     claimUserName?: string | null;
     claimId?: string;
@@ -145,17 +164,28 @@ export async function GET() {
   );
   const allowedCodes = candidateCodes.filter((_, i) => aclResults[i]);
 
+  // Название журнала — из шаблонов организации. Раньше подписи групп
+  // были захардкожены, и два разных журнала («sanitation_day_control» и
+  // «sanitary_day_control») получали одну и ту же подпись «САН. ДЕНЬ» —
+  // в списке шли две неразличимые группы.
+  const templates =
+    candidateCodes.length > 0
+      ? await db.journalTemplate.findMany({
+          where: { code: { in: candidateCodes } },
+          select: { code: true, name: true },
+        })
+      : [];
+  const templateName = new Map(templates.map((t) => [t.code, t.name.trim()]));
+  const journalName = (code: string): string =>
+    // Короткая подпись из словаря — первой: полное название журнала
+    // («Журнал контроля температурного режима холодильного и морозильного
+    // оборудования») в заголовке группы на телефоне не помещается.
+    JOURNAL_LABELS[code] || templateName.get(code) || code;
+
   if (allowedCodes.length > 0) {
-    // Day-window для batch claims-query.
-    const dayStart = new Date(
-      Date.UTC(
-        today.getUTCFullYear(),
-        today.getUTCMonth(),
-        today.getUTCDate()
-      )
-    );
-    const dayEnd = new Date(dayStart);
-    dayEnd.setUTCDate(dayEnd.getUTCDate() + 1);
+    // Day-window для batch claims-query — по дню организации.
+    const dayStart = today;
+    const dayEnd = tomorrow;
 
     const [pools, allClaimsRaw] = await Promise.all([
       Promise.all(
@@ -213,6 +243,7 @@ export async function GET() {
         if (c.status === "completed") b.completed = c;
         claimByScope.set(c.scopeKey, b);
       }
+      const label = journalName(code);
       const enriched: EnrichedScope[] = pool.scopes.map((s) => {
         const b = claimByScope.get(s.scopeKey) ?? {};
         let availability: EnrichedScope["availability"] = "available";
@@ -229,31 +260,56 @@ export async function GET() {
         }
         return {
           ...s,
+          // Название документа бывает служебным («Проверка health_check»),
+          // и оно уезжало в подпись задачи как есть.
+          sublabel: s.sublabel
+            ? looksLikeJournalCode(s.sublabel)
+              ? label
+              : s.sublabel
+            : undefined,
           journalCode: code,
-          journalLabel: JOURNAL_LABELS[code] ?? code,
+          journalLabel: label,
+          iconName: journalIconName(code),
           availability,
           claimUserName,
           claimId,
         };
       });
-      groups.push({
-        code,
-        label: JOURNAL_LABELS[code] ?? code,
-        scopes: enriched,
-      });
+      groups.push({ code, label, scopes: enriched });
     }
   }
+
+  // Больничный / отпуск / выходной из «Графика смен». Сотрудник его не
+  // видел вовсе: отметку ставила управляющая, а в приложении ничего не
+  // менялось. Задачи при этом НЕ прячем — человек может выйти на подмену.
+  const shift = await db.workShift.findFirst({
+    where: { organizationId, userId, date: { gte: today, lt: tomorrow } },
+    select: { status: true },
+  });
+  const scheduleStatus =
+    shift && shift.status !== "scheduled" ? shift.status : null;
 
   return NextResponse.json({
     dateKey,
     groups,
-    myActive: myActive
+    scheduleStatus,
+    myActive: myActiveToday
       ? {
-          id: myActive.id,
-          journalCode: myActive.journalCode,
-          scopeKey: myActive.scopeKey,
-          scopeLabel: myActive.scopeLabel,
+          id: myActiveToday.id,
+          journalCode: myActiveToday.journalCode,
+          scopeKey: myActiveToday.scopeKey,
+          scopeLabel: myActiveToday.scopeLabel,
+          verificationStatus: myActiveToday.verificationStatus,
+          verifierComment: myActiveToday.verifierComment,
         }
       : null,
+    // Зависшие задачи прошлых дней. Автозакрытия нет намеренно — решение
+    // владельца; человек сам доделывает или возвращает их в общий список.
+    stuckClaims: stuckClaims.map((c) => ({
+      id: c.id,
+      scopeLabel: c.scopeLabel,
+      journalCode: c.journalCode,
+      dateKey: c.dateKey.toISOString().slice(0, 10),
+    })),
   });
 }

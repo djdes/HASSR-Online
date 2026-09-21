@@ -4,6 +4,11 @@ import { useRef, useState } from "react";
 import { useMainButton } from "@/app/mini/_components/use-main-button";
 import { useRouter } from "next/navigation";
 import { Camera, Check, Loader2 } from "lucide-react";
+import {
+  checkPhotoBeforeUpload,
+  PHOTO_RULES_HINT,
+} from "@/components/journals/photo-field";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 /**
  * Photo-mandatory submit-форма для премиального obligation
@@ -52,6 +57,15 @@ export function BonusSubmitForm({
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Тип и размер проверяем ДО отправки — теми же правилами, что и на
+    // сервере. Иначе человек ждёт загрузку ради отказа.
+    const problem = checkPhotoBeforeUpload(file);
+    if (problem) {
+      setError(problem);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
     setUploading(true);
     setError(null);
     try {
@@ -71,7 +85,7 @@ export function BonusSubmitForm({
       }
       setPhotoUrl(data.url);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Сетевая ошибка");
+      setError(humanizeFetchError(err));
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -81,7 +95,7 @@ export function BonusSubmitForm({
   async function handleSubmit(event?: React.FormEvent) {
     event?.preventDefault();
     if (!photoUrl) {
-      setError("Прикрепи фото-доказательство — это обязательно");
+      setError("Снимите фото результата — без него премия не начислится");
       return;
     }
     setSubmitting(true);
@@ -102,13 +116,13 @@ export function BonusSubmitForm({
         error?: string;
       };
       if (!resp.ok) {
-        setError(data.error ?? `HTTP ${resp.status}`);
+        setError(data.error ?? "Не получилось отправить. Попробуйте ещё раз");
         return;
       }
       router.push("/journals");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Сетевая ошибка");
+      setError(humanizeFetchError(err));
     } finally {
       setSubmitting(false);
     }
@@ -131,12 +145,36 @@ export function BonusSubmitForm({
       </div>
 
       <section className="space-y-2">
-        <label
-          className="block text-[13px] font-medium"
-          style={{ color: "var(--mini-text)" }}
+        {/* Бейдж «обязательно» вместо звёздочки — как в остальных формах:
+            звёздочку на телефоне не замечают. */}
+        <div className="flex flex-wrap items-center gap-2">
+          <label
+            className="text-[13px] font-medium"
+            style={{ color: "var(--mini-text)" }}
+          >
+            Фото результата
+          </label>
+          <span
+            className="inline-flex items-center rounded-full px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.08em]"
+            style={{
+              background: "var(--mini-crimson-soft)",
+              color: "var(--mini-crimson)",
+            }}
+          >
+            обязательно
+          </span>
+        </div>
+        {/* Правило — ЗАРАНЕЕ, а не после отказа сервера: из галереи
+            фото не подойдёт, проверяется время съёмки. */}
+        <div
+          className="text-[12px] leading-5"
+          style={{ color: "var(--mini-text-muted)" }}
         >
-          Фото-доказательство <span style={{ color: "var(--mini-crimson)" }}>*</span>
-        </label>
+          Снимите прямо сейчас, на месте: система смотрит время съёмки и
+          принимает фото не старше 5 минут. Снимок из галереи не подойдёт.
+          {" "}
+          {PHOTO_RULES_HINT}.
+        </div>
 
         {photoUrl ? (
           <div className="space-y-2">

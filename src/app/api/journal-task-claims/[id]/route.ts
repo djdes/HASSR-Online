@@ -57,8 +57,12 @@ export async function POST(
   }
 
   // На action=skip — задача отмечается как «сегодня не требуется».
-  // Без валидаторов, без side-effects. Заведующая видит causal reason
-  // в /verifications.
+  // Без валидаторов, без side-effects, но с двумя обязательными
+  // условиями: руководитель разрешил пропуск для этого журнала
+  // (`JournalTemplate.allowNoEvents`) и сотрудник написал причину.
+  // Пропуск уходит заведующей на проверку наравне с обычной задачей —
+  // иначе «Сегодня не требуется» превращалось в кнопку «закрыть день
+  // не глядя», и в /verifications эта запись не появлялась вовсе.
   if (body.action === "skip") {
     const claim = await db.journalTaskClaim.findUnique({ where: { id } });
     if (!claim) {
@@ -70,15 +74,39 @@ export async function POST(
     if (claim.status !== "active") {
       return NextResponse.json({ ok: false, reason: "not_active" }, { status: 409 });
     }
+    if (!(await journalAllowsSkip(claim.journalCode))) {
+      return NextResponse.json(
+        {
+          ok: false,
+          reason: "skip_not_allowed",
+          message:
+            "Для этого журнала пропуск не разрешён. Обратитесь к руководителю",
+        },
+        { status: 403 }
+      );
+    }
+    const skipReason = body.skipReason?.trim() ?? "";
+    if (skipReason.length < 3) {
+      return NextResponse.json(
+        {
+          ok: false,
+          reason: "skip_reason_required",
+          message: "Напишите, почему сегодня заполнять не нужно",
+        },
+        { status: 400 }
+      );
+    }
     await db.journalTaskClaim.update({
       where: { id },
       data: {
         status: "completed",
         completedAt: new Date(),
-        verificationStatus: "approved", // skip не требует проверки заведующей
+        // Как обычная выполненная задача: заведующая увидит её в
+        // «Ждут проверки» и решит, был ли пропуск оправдан.
+        verificationStatus: "pending",
         completionData: {
           skipped: true,
-          reason: body.skipReason?.trim() || "Сегодня не требуется",
+          reason: skipReason,
         } as never,
       },
     });
@@ -170,6 +198,92 @@ export async function POST(
     }).catch(() => null);
   }
   return NextResponse.json({ ok: true, warnings: validationWarnings });
+}
+
+/**
+ * Разрешил ли руководитель пропуск «сегодня не требуется» для журнала.
+ *
+ * Тумблер живёт в `/settings/journals/<code>/scope`. Кнопка в приложении
+ * его не читала вовсе — запрет ничего не запрещал.
+ */
+async function journalAllowsSkip(journalCode: string): Promise<boolean> {
+  const template = await db.journalTemplate.findUnique({
+    where: { code: journalCode },
+    select: { allowNoEvents: true },
+  });
+  // Шаблона нет — считаем, что запрета не ставили.
+  return template?.allowNoEvents !== false;
+}
+
+/**
+ * GET /api/journal-task-claims/[id] — одна задача по её id.
+ *
+ * Экран задачи раньше искал себя в «моей текущей задаче» и при
+ * расхождении писал «уже закрыта или её взял другой сотрудник». У
+ * человека с зависшей вчерашней задачей это была неправда: задача его,
+ * просто не самая свежая. Отдаём ровно запрошенную.
+ */
+export async function GET(
+  _request: Request,
+  ctx: { params: Promise<{ id: string }> }
+) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
+  }
+  const { id } = await ctx.params;
+  const claim = await db.journalTaskClaim.findUnique({
+    where: { id },
+    include: { verifiedBy: { select: { name: true } } },
+  });
+  if (!claim) {
+    return NextResponse.json({ ok: false, reason: "not_found" }, { status: 404 });
+  }
+  if (claim.userId !== session.user.id) {
+    return NextResponse.json({ ok: false, reason: "not_owner" }, { status: 403 });
+  }
+  if (claim.status !== "active") {
+    return NextResponse.json({ ok: false, reason: "not_active" }, { status: 409 });
+  }
+
+  // Норма температуры — из карточки оборудования этой задачи
+  // (`scopeKey` вида `fridge:<equipmentId>:<смена>:<дата>`). Поле ввода
+  // в приложении рисует ту же подсказку и тот же старт степпера, что и
+  // журнал на сайте.
+  let temperatureNorm: { min: number | null; max: number | null } | null = null;
+  const fridge = /^fridge:([^:]+):/.exec(claim.scopeKey);
+  if (fridge) {
+    const equipment = await db.equipment.findUnique({
+      where: { id: fridge[1] },
+      select: { tempMin: true, tempMax: true },
+    });
+    if (equipment && (equipment.tempMin !== null || equipment.tempMax !== null)) {
+      temperatureNorm = { min: equipment.tempMin, max: equipment.tempMax };
+    }
+  }
+
+  return NextResponse.json({
+    claim: {
+      id: claim.id,
+      journalCode: claim.journalCode,
+      scopeKey: claim.scopeKey,
+      scopeLabel: claim.scopeLabel,
+      parentHint: claim.parentHint,
+      status: claim.status,
+      dateKey: claim.dateKey.toISOString().slice(0, 10),
+      // Отказ заведующей: без этих полей повар видел обычную активную
+      // задачу и пустую форму — «Переделать» до него не доходило.
+      verificationStatus: claim.verificationStatus,
+      verifierComment: claim.verifierComment,
+      verifiedByName: claim.verifiedBy?.name ?? null,
+      completionData:
+        (claim.completionData as Record<string, unknown> | null) ?? null,
+      temperatureNorm,
+      // Кнопку «Сегодня не требуется» показываем только там, где
+      // руководитель разрешил пропуск.
+      allowSkip: await journalAllowsSkip(claim.journalCode),
+    },
+  });
 }
 
 /**

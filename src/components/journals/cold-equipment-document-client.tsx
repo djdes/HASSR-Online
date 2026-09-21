@@ -125,6 +125,7 @@ import {
   NOT_TODAY_MESSAGE,
   hasFullDocumentAccess,
 } from "@/lib/journal-entry-scope";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 /**
  * Screen ↔ print duality tokens (тот же приём, что в
  * `cleaning-document-client.tsx` / `hygiene-document-client.tsx`).
@@ -351,7 +352,7 @@ function EquipmentDialog({
       }
       onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось сохранить оборудование");
+      toast.error(humanizeFetchError(error, "Не удалось сохранить оборудование"));
     } finally {
       setIsSubmitting(false);
     }
@@ -1194,7 +1195,7 @@ export function ColdEquipmentDocumentClient({
       router.refresh();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Не удалось сменить ответственного"
+        humanizeFetchError(error, "Не удалось сменить ответственного")
       );
     } finally {
       setIsSwitching(false);
@@ -1245,7 +1246,7 @@ export function ColdEquipmentDocumentClient({
         `/settings/qr-posters?kind=equipment&layout=sheet&ids=${encodeURIComponent(equipmentIds.join(","))}`
       );
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось подготовить QR-коды");
+      toast.error(humanizeFetchError(error, "Не удалось подготовить QR-коды"));
     } finally {
       setIsPreparingQr(false);
     }
@@ -1313,7 +1314,7 @@ export function ColdEquipmentDocumentClient({
       return true;
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Не удалось удалить строку"
+        humanizeFetchError(error, "Не удалось удалить строку")
       );
       return false;
     } finally {
@@ -1370,7 +1371,7 @@ export function ColdEquipmentDocumentClient({
       );
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Не удалось удалить выбранные строки"
+        humanizeFetchError(error, "Не удалось удалить выбранные строки")
       );
     } finally {
       setIsDeleting(false);
@@ -1403,7 +1404,7 @@ export function ColdEquipmentDocumentClient({
     } catch (error) {
       setCheckedAutoFill(!value);
       toast.error(
-        error instanceof Error ? error.message : "Ошибка обновления автозаполнения"
+        humanizeFetchError(error, "Ошибка обновления автозаполнения")
       );
     } finally {
       setIsSwitching(false);

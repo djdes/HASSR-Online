@@ -14,6 +14,7 @@ import {
 import { HEADER_TITLE_MAX, sanitizeHeaderTitle } from "@/lib/journal-header-title";
 import { ORG_JOURNAL_NAME_MAX, sanitizeOrgJournalName } from "@/lib/org-journal-name";
 import { cn } from "@/lib/utils";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 /**
  * Правка бумажной шапки прямо в документе: название организации, название
@@ -264,7 +265,7 @@ export function HeaderOrgName({ orgName }: { orgName: string }) {
       finish();
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось сохранить название");
+      toast.error(humanizeFetchError(error, "Не удалось сохранить название"));
     }
   }
 
@@ -379,7 +380,7 @@ export function HeaderTitle({ title }: { title: string }) {
           router.refresh();
           return true;
         } catch (error) {
-          toast.error(error instanceof Error ? error.message : "Не удалось сохранить название");
+          toast.error(humanizeFetchError(error, "Не удалось сохранить название"));
           return false;
         }
       }}
@@ -420,7 +421,7 @@ export function HeaderPeriodicity({ text }: { text: string }) {
           router.refresh();
           return true;
         } catch (error) {
-          toast.error(error instanceof Error ? error.message : "Не удалось сохранить периодичность");
+          toast.error(humanizeFetchError(error, "Не удалось сохранить периодичность"));
           return false;
         }
       }}

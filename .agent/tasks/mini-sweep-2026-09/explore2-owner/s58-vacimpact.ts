@@ -1,0 +1,20 @@
+import { chromium } from "playwright";
+import { db } from "../tg-session";
+import { shot, go } from "./lib";
+const PASS = "Zz2Test2026!";
+(async () => {
+  const browser = await chromium.launch({ headless: true });
+  const ctx = await browser.newContext({ viewport: { width: 360, height: 640 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1 });
+  const page = await ctx.newPage();
+  await go(page, "http://localhost:3021/mini/login", 6000);
+  await page.locator("input[name=phone]").click();
+  await page.keyboard.type("+79210007788", { delay: 20 });
+  await page.locator("input[name=password]").fill(PASS);
+  await page.getByRole("button", { name: "Войти" }).click();
+  await page.waitForTimeout(9000);
+  await go(page, "http://localhost:3021/mini/today", 20000);
+  await shot(page, "58-zz2-vacation-today", true);
+  console.log("URL", page.url());
+  console.log("TODAY (в отпуске 21-25.09):", (await page.evaluate(`document.body.innerText`) as string).slice(0, 900));
+  await browser.close(); await db.$disconnect();
+})();

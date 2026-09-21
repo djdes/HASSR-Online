@@ -53,6 +53,7 @@ import { PositionEmployeePicker } from "@/components/shared/position-select";
 import { PageGuide } from "@/components/ui/page-guide";
 import { AUTOMATION_ENABLE_BULLETS } from "@/lib/journal-automation";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 type JournalListDocument = {
   id: string;
   title: string;
@@ -203,7 +204,7 @@ function EditDocumentDialog({
       onOpenChange(false);
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось сохранить настройки документа");
+      toast.error(humanizeFetchError(error, "Не удалось сохранить настройки документа"));
     } finally {
       setIsSubmitting(false);
     }

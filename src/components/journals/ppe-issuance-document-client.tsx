@@ -54,6 +54,7 @@ import { toast } from "sonner";
 import { confirmAsync } from "@/components/ui/confirm-async";
 import { localDayKey } from "@/lib/entry-defaults";
 import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 type UserItem = {
   id: string;
@@ -207,7 +208,7 @@ function SettingsDialog(props: {
     } catch (error) {
       // Без catch ошибка сохранения уходила в никуда (см. RowDialog).
       toast.error(
-        error instanceof Error ? error.message : "Не удалось сохранить настройки"
+        humanizeFetchError(error, "Не удалось сохранить настройки")
       );
     } finally {
       setSubmitting(false);
@@ -465,7 +466,7 @@ function RowDialog(props: {
       // Ошибку сохранения раньше глотал `finally` без `catch`: окно
       // закрывалось молча, введённая строка терялась.
       toast.error(
-        error instanceof Error ? error.message : "Не удалось сохранить строку"
+        humanizeFetchError(error, "Не удалось сохранить строку")
       );
     } finally {
       setSubmitting(false);
@@ -747,7 +748,7 @@ export function PpeIssuanceDocumentClient(props: Props) {
       setSelectedRowIds([]);
       toast.success(`Удалено строк: ${count}`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось удалить выбранные строки");
+      toast.error(humanizeFetchError(error, "Не удалось удалить выбранные строки"));
     }
   }
 
@@ -771,7 +772,7 @@ export function PpeIssuanceDocumentClient(props: Props) {
           onClear={() => setSelectedRowIds([])}
           onDelete={() =>
             handleDeleteSelected().catch((error) =>
-              toast.error(error instanceof Error ? error.message : "Ошибка")
+              toast.error(humanizeFetchError(error, "Ошибка"))
             )
           }
           hint="Строки выдачи СИЗ будут удалены без возможности отмены"

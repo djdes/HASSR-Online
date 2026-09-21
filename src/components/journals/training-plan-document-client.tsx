@@ -54,6 +54,7 @@ import {
 } from "@/components/shared/position-select";
 import { JournalSettingsModal } from "@/components/journals/v2/journal-settings-modal";
 import { localDayKey } from "@/lib/entry-defaults";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 type UserItem = { id: string; name: string; role: string };
 
 type Props = {
@@ -665,7 +666,7 @@ export function TrainingPlanDocumentClient({
       await patchConfig({ ...normalized, rows: nextRows });
       toast.success(`Удалено строк: ${count}`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось удалить выбранные строки");
+      toast.error(humanizeFetchError(error, "Не удалось удалить выбранные строки"));
     }
   }
 

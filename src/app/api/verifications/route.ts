@@ -204,6 +204,10 @@ export async function GET(request: Request) {
       executedBy: c.user.name,
       executedById: c.user.id,
       claimedAt: c.claimedAt.toISOString(),
+      // День задачи. Зависшую со вчера видно по дате: раньше она
+      // выглядела как взятая сегодня и «Зависло» ничего не объясняло.
+      dateKey: c.dateKey.toISOString().slice(0, 10),
+      fromPreviousDay: c.dateKey < today,
       // Зависает в работе > 2h?
       overdue: Date.now() - c.claimedAt.getTime() > 2 * 60 * 60 * 1000,
     })),

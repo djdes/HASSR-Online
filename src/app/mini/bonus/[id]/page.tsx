@@ -56,6 +56,10 @@ export default async function MiniBonusFillPage({
   }
 
   if (obligation.claimedById !== session.user.id) {
+    // Две разные ситуации, а текст был один. «Уже забрал другой
+    // сотрудник» про задачу, которую вообще никто не брал, — неправда,
+    // и человек уходил ни с чем, хотя мог её взять.
+    const nobodyTookIt = obligation.claimedById === null;
     return (
       <div className="space-y-4 px-1">
         <Link
@@ -73,8 +77,22 @@ export default async function MiniBonusFillPage({
             color: "var(--mini-amber)",
           }}
         >
-          Эту премию уже забрал другой сотрудник.
+          {nobodyTookIt
+            ? "Эту задачу ещё никто не взял. Сначала возьмите её в списке «Сегодня» — и премия закрепится за вами."
+            : "Эту премию уже забрал другой сотрудник."}
         </div>
+        {nobodyTookIt ? (
+          <Link
+            href="/mini/today"
+            className="mini-press inline-flex h-11 items-center justify-center rounded-2xl px-5 text-[14px] font-semibold"
+            style={{
+              background: "var(--mini-lime)",
+              color: "var(--mini-primary-contrast)",
+            }}
+          >
+            К задачам на сегодня
+          </Link>
+        ) : null}
       </div>
     );
   }
@@ -99,7 +117,7 @@ export default async function MiniBonusFillPage({
           className="mt-1 text-[13px] leading-5"
           style={{ color: "var(--mini-text-muted)" }}
         >
-          Премия зафиксирована. Прикрепи фото-доказательство — без него
+          Премия зафиксирована. Осталось снять фото результата — без него
           выплата не пройдёт.
         </p>
       </header>

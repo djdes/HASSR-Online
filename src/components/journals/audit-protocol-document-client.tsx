@@ -51,6 +51,7 @@ import { GRID_CELL_CLASS, GRID_HEAD_CELL_CLASS } from "@/components/journals/jou
 import { DOC_EXTRA_BLOCK_CLASS } from "@/components/journals/journal-responsive";
 
 import { toast } from "sonner";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 type Props = {
   documentId: string;
   title: string;
@@ -277,7 +278,7 @@ export function AuditProtocolDocumentClient({
       })
       .catch((error) => {
         configRef.current = config;
-        toast.error(error instanceof Error ? error.message : "Ошибка сохранения");
+        toast.error(humanizeFetchError(error, "Ошибка сохранения"));
       });
   }
 
@@ -377,7 +378,7 @@ export function AuditProtocolDocumentClient({
       await persist(documentTitle, preview.config);
       toast.success(`Перенесено требований: ${preview.addedRows}`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка сохранения");
+      toast.error(humanizeFetchError(error, "Ошибка сохранения"));
     }
   }
 
@@ -463,7 +464,7 @@ export function AuditProtocolDocumentClient({
           <JournalSelectionBar
             count={selectedRowIds.length}
             onClear={() => setSelectedRowIds([])}
-            onDelete={() => deleteSelected().catch((error) => toast.error(error instanceof Error ? error.message : "Ошибка удаления"))}
+            onDelete={() => deleteSelected().catch((error) => toast.error(humanizeFetchError(error, "Ошибка удаления")))}
             hint="Строки протокола будут удалены без возможности отмены"
           >
             <SelectionEditButton count={selectedRowIds.length} disabled={status !== "active"} onClick={() => seq.start(selectedRowIds)} />
@@ -546,13 +547,13 @@ export function AuditProtocolDocumentClient({
               <div className="text-[20px] font-semibold">Подписи</div>
               {config.signatures.map((signature, index) => (
                 <div key={signature.id} className="grid grid-cols-1 gap-3 sm:grid-cols-[220px_1fr_240px]">
-                  <Input value={signature.role} disabled={status !== "active"} onChange={(e) => setConfig((current) => ({ ...current, signatures: current.signatures.map((item, idx) => idx === index ? { ...item, role: e.target.value } : item) }))} onBlur={() => saveSignature(index, config.signatures[index]).catch((error) => toast.error(error instanceof Error ? error.message : "Ошибка сохранения"))} className="h-12 rounded-xl border-[#d8dae6] px-4 text-[16px]" />
-                  <Input value={signature.name} disabled={status !== "active"} onChange={(e) => setConfig((current) => ({ ...current, signatures: current.signatures.map((item, idx) => idx === index ? { ...item, name: e.target.value } : item) }))} onBlur={() => saveSignature(index, config.signatures[index]).catch((error) => toast.error(error instanceof Error ? error.message : "Ошибка сохранения"))} className="h-12 rounded-xl border-[#d8dae6] px-4 text-[16px]" />
-                  <Input type="date" value={signature.signedAt} disabled={status !== "active"} onChange={(e) => setConfig((current) => ({ ...current, signatures: current.signatures.map((item, idx) => idx === index ? { ...item, signedAt: e.target.value } : item) }))} onBlur={() => saveSignature(index, config.signatures[index]).catch((error) => toast.error(error instanceof Error ? error.message : "Ошибка сохранения"))} className="h-12 rounded-xl border-[#d8dae6] px-4 text-[16px]" />
+                  <Input value={signature.role} disabled={status !== "active"} onChange={(e) => setConfig((current) => ({ ...current, signatures: current.signatures.map((item, idx) => idx === index ? { ...item, role: e.target.value } : item) }))} onBlur={() => saveSignature(index, config.signatures[index]).catch((error) => toast.error(humanizeFetchError(error, "Ошибка сохранения")))} className="h-12 rounded-xl border-[#d8dae6] px-4 text-[16px]" />
+                  <Input value={signature.name} disabled={status !== "active"} onChange={(e) => setConfig((current) => ({ ...current, signatures: current.signatures.map((item, idx) => idx === index ? { ...item, name: e.target.value } : item) }))} onBlur={() => saveSignature(index, config.signatures[index]).catch((error) => toast.error(humanizeFetchError(error, "Ошибка сохранения")))} className="h-12 rounded-xl border-[#d8dae6] px-4 text-[16px]" />
+                  <Input type="date" value={signature.signedAt} disabled={status !== "active"} onChange={(e) => setConfig((current) => ({ ...current, signatures: current.signatures.map((item, idx) => idx === index ? { ...item, signedAt: e.target.value } : item) }))} onBlur={() => saveSignature(index, config.signatures[index]).catch((error) => toast.error(humanizeFetchError(error, "Ошибка сохранения")))} className="h-12 rounded-xl border-[#d8dae6] px-4 text-[16px]" />
                 </div>
               ))}
               {status === "active" && (
-                <Button type="button" variant="outline" onClick={() => persist(documentTitle, { ...config, signatures: [...config.signatures, createAuditProtocolSignature()] }).catch((error) => toast.error(error instanceof Error ? error.message : "Ошибка сохранения"))}>
+                <Button type="button" variant="outline" onClick={() => persist(documentTitle, { ...config, signatures: [...config.signatures, createAuditProtocolSignature()] }).catch((error) => toast.error(humanizeFetchError(error, "Ошибка сохранения")))}>
                   Добавить подпись
                 </Button>
               )}
@@ -609,7 +610,7 @@ export function AuditProtocolDocumentClient({
                         </td>
                         <td className={`${GRID_CELL_CLASS} px-2 py-1 leading-tight`}>
                           {status === "active" ? (
-                            <Textarea value={row.note} onChange={(event) => setConfig((current) => ({ ...current, rows: current.rows.map((item) => item.id === row.id ? { ...item, note: event.target.value } : item) }))} onBlur={() => persist(documentTitle, config).catch((error) => toast.error(error instanceof Error ? error.message : "Ошибка сохранения"))} className="min-h-[70px] border-0 px-0 py-0 text-[14px] shadow-none focus-visible:ring-0" />
+                            <Textarea value={row.note} onChange={(event) => setConfig((current) => ({ ...current, rows: current.rows.map((item) => item.id === row.id ? { ...item, note: event.target.value } : item) }))} onBlur={() => persist(documentTitle, config).catch((error) => toast.error(humanizeFetchError(error, "Ошибка сохранения")))} className="min-h-[70px] border-0 px-0 py-0 text-[14px] shadow-none focus-visible:ring-0" />
                           ) : (
                             row.note
                           )}

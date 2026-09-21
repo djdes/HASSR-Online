@@ -55,6 +55,7 @@ import { useJournalUndo } from "@/lib/journal-undo";
 import { confirmAsync } from "@/components/ui/confirm-async";
 import { localDayKey } from "@/lib/entry-defaults";
 import { useRosterViewerId } from "@/components/journals/use-roster-viewer";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 type EmployeeItem = {
   id: string;
   name: string;
@@ -313,7 +314,7 @@ function TrackedDocumentClientImpl({
       seq.saved();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Ошибка сохранения"
+        humanizeFetchError(error, "Ошибка сохранения")
       );
       seq.cancelled();
     }
@@ -495,7 +496,7 @@ function TrackedDocumentClientImpl({
       setSelectedRowIds([]);
       toast.success(`Удалено строк: ${count}`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось удалить выбранные строки");
+      toast.error(humanizeFetchError(error, "Не удалось удалить выбранные строки"));
     }
   }
 
@@ -507,7 +508,7 @@ function TrackedDocumentClientImpl({
           onClear={() => setSelectedRowIds([])}
           onDelete={() =>
             removeSelectedEntries().catch((error) =>
-              toast.error(error instanceof Error ? error.message : "Ошибка удаления строк")
+              toast.error(humanizeFetchError(error, "Ошибка удаления строк"))
             )
           }
         >
@@ -570,7 +571,7 @@ function TrackedDocumentClientImpl({
                     onSelect: () => {
                       fillForToday().catch((error) =>
                         toast.error(
-                          error instanceof Error ? error.message : "Ошибка автозаполнения"
+                          humanizeFetchError(error, "Ошибка автозаполнения")
                         )
                       );
                     },
@@ -594,7 +595,7 @@ function TrackedDocumentClientImpl({
                   variant="outline"
                   onClick={() =>
                     removeSelectedEntries().catch((error) =>
-                      toast.error(error instanceof Error ? error.message : "Ошибка удаления строк")
+                      toast.error(humanizeFetchError(error, "Ошибка удаления строк"))
                     )
                   }
                   className="h-9 rounded-xl border-[#ffd7d3] px-3.5 text-[13.5px] text-[#ff3b30] hover:bg-[#fff3f2]"
@@ -678,7 +679,7 @@ function TrackedDocumentClientImpl({
                         }).catch((error) => {
                           input.value = entry.date;
                           toast.error(
-                            error instanceof Error ? error.message : "Ошибка сохранения"
+                            humanizeFetchError(error, "Ошибка сохранения")
                           );
                         });
                       }}
@@ -697,7 +698,7 @@ function TrackedDocumentClientImpl({
                       onValueChange={(value) => {
                         saveEntry({ ...entry, employeeId: value }).catch((error) =>
                           toast.error(
-                            error instanceof Error ? error.message : "Ошибка сохранения"
+                            humanizeFetchError(error, "Ошибка сохранения")
                           )
                         );
                       }}
@@ -746,7 +747,7 @@ function TrackedDocumentClientImpl({
                                 },
                               }).catch((error) =>
                                 toast.error(
-                                  error instanceof Error ? error.message : "Ошибка сохранения"
+                                  humanizeFetchError(error, "Ошибка сохранения")
                                 )
                               );
                             }}
@@ -764,7 +765,7 @@ function TrackedDocumentClientImpl({
                               },
                             }).catch((error) =>
                               toast.error(
-                                error instanceof Error ? error.message : "Ошибка сохранения"
+                                humanizeFetchError(error, "Ошибка сохранения")
                               )
                             );
                           }}
@@ -800,7 +801,7 @@ function TrackedDocumentClientImpl({
                               },
                             }).catch((error) =>
                               toast.error(
-                                error instanceof Error ? error.message : "Ошибка сохранения"
+                                humanizeFetchError(error, "Ошибка сохранения")
                               )
                             )
                           }
@@ -881,7 +882,7 @@ function TrackedDocumentClientImpl({
                 onClick={() =>
                   createEntry(newEmployeeId, newDate).catch((error) =>
                     toast.error(
-                      error instanceof Error ? error.message : "Ошибка создания строки"
+                      humanizeFetchError(error, "Ошибка создания строки")
                     )
                   )
                 }
@@ -906,7 +907,7 @@ function TrackedDocumentClientImpl({
             try {
               await saveSettings();
             } catch (error) {
-              toast.error(error instanceof Error ? error.message : "Ошибка сохранения настроек");
+              toast.error(humanizeFetchError(error, "Ошибка сохранения настроек"));
             }
           }}
           onCancel={() => setSettingsOpen(false)}
@@ -1019,7 +1020,7 @@ function TrackedDocumentClientImpl({
                   onClick={() =>
                     saveSettings().catch((error) =>
                       toast.error(
-                        error instanceof Error ? error.message : "Ошибка сохранения настроек"
+                        humanizeFetchError(error, "Ошибка сохранения настроек")
                       )
                     )
                   }

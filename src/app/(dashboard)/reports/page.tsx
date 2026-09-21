@@ -136,9 +136,9 @@ export default async function ReportsPage() {
   );
   const body = encodeURIComponent(
     `Здравствуйте,\n\n` +
-      `делюсь данными compliance из системы WeSetup.\n\n` +
+      `делюсь данными о заполнении журналов из системы WeSetup.\n\n` +
       `Доля записей с фото: ${
-        photoEvidencePct === null ? "n/a" : photoEvidencePct + "%"
+        photoEvidencePct === null ? "нет данных" : photoEvidencePct + "%"
       } (${entriesWithAttachment30Count} из ${entries30Count} за 30 дней)\n\n` +
       `Подробный обзор и графики — в системе WeSetup на странице /reports.\n\n` +
       `Это автоматическое письмо из WeSetup.`

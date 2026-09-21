@@ -1,0 +1,24 @@
+import { openTelegramSession, db } from "../tg-session";
+import { shot, sleep } from "./lib";
+import { releaseActive, claimScope } from "./claimlib";
+const T = `document.body.innerText`;
+(async () => {
+  const s = await openTelegramSession({ role: "cookA", width: 360, height: 640, theme: "dark" });
+  const p = s.page;
+  await p.goto(s.base + "/mini/today", { timeout: 300000 }); await sleep(p, 5000);
+  await releaseActive(p);
+  const c = await claimScope(p, "accident_journal", "");
+  const cid = c.res.j?.claim?.id;
+  await p.goto(s.base + "/mini/claim/" + cid, { timeout: 300000 }); await sleep(p, 8000);
+  await p.locator("input:not([type=file])").first().fill("ZZ3 порез руки");
+  await s.ctx.setOffline(true); await sleep(p, 2000);
+  await p.evaluate(String.raw`(()=>{const b=[...document.querySelectorAll('button')].find(b=>/^Записать ЧП$/.test(b.innerText.trim()));b&&b.click();})()`);
+  await sleep(p, 5000);
+  const t = ((await p.evaluate(T)) as string);
+  console.log("повтор №2, текст ошибки:", /Failed to fetch/.test(t) ? "«Failed to fetch» ЕСТЬ" : "нет");
+  console.log(t.replace(/\n+/g, " | ").slice(0, 600));
+  await shot(p, "47-offline-dark");
+  await s.ctx.setOffline(false);
+  await releaseActive(p).catch(()=>null);
+  await s.close();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 1500)); process.exit(1); });

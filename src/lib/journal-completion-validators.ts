@@ -40,24 +40,53 @@ export type ScopeContext = {
 /**
  * Главный validator dispatcher.
  *
- * Если payload содержит `pipelineCompleted:true` — это pipeline-flow,
- * валидируем только что хотя бы один step done. Остальная валидация
- * не применяется — в pipeline сотрудник идёт по шагам, а не по полям.
+ * Пошаговая инструкция (pipeline) НЕ отменяет проверку полей журнала.
+ * Раньше отменяла: при `pipelineCompleted:true` хватало одного тапа по
+ * любому шагу, и замер температуры холодильника — критическая точка
+ * ХАССП — закрывался вообще без значения. Теперь обе проверки идут
+ * подряд: все шаги должны быть отмечены И поля журнала заполнены.
  */
 export async function validateCompletion(ctx: ScopeContext): Promise<ValidationResult> {
-  if (ctx.data.pipelineCompleted === true) {
-    const steps = Array.isArray(ctx.data.steps) ? (ctx.data.steps as Array<{ done?: boolean }>) : [];
-    const doneCount = steps.filter((s) => s.done === true).length;
-    if (doneCount === 0) {
-      return {
-        ok: false,
-        errors: [{ message: "Отметьте хотя бы один шаг как выполненный" }],
-        warnings: [],
-        sideEffects: [],
-      };
-    }
-    return { ok: true, errors: [], warnings: [], sideEffects: [] };
+  const pipelineErrors = validatePipelineSteps(ctx);
+  const journal = await validateJournalFields(ctx);
+  const errors = [...pipelineErrors, ...journal.errors];
+  return {
+    ok: errors.length === 0,
+    errors,
+    warnings: journal.warnings,
+    sideEffects: journal.sideEffects,
+  };
+}
+
+/**
+ * Все шаги пошаговой инструкции должны быть отмечены.
+ *
+ * «Хотя бы один» не годится: шаг «Запиши значение» — это и есть работа,
+ * а закрывали задачу тапом по «Возьми термометр».
+ */
+function validatePipelineSteps(ctx: ScopeContext): ValidationResult["errors"] {
+  if (ctx.data.pipelineCompleted !== true) return [];
+  const steps = Array.isArray(ctx.data.steps)
+    ? (ctx.data.steps as Array<{ done?: boolean }>)
+    : [];
+  if (steps.length === 0) {
+    return [{ message: "Отметьте шаги инструкции как выполненные" }];
   }
+  const doneCount = steps.filter((s) => s.done === true).length;
+  if (doneCount < steps.length) {
+    return [
+      {
+        message: `Отметьте все шаги инструкции: ${doneCount} из ${steps.length}`,
+      },
+    ];
+  }
+  return [];
+}
+
+/** Проверка полей конкретного журнала — работает и с pipeline, и без него. */
+async function validateJournalFields(
+  ctx: ScopeContext
+): Promise<ValidationResult> {
   switch (ctx.journalCode) {
     case "cold_equipment_control":
       return validateColdEquipment(ctx);
@@ -231,7 +260,13 @@ async function validateHygiene(ctx: ScopeContext): Promise<ValidationResult> {
   }
   if (allHealthy === null && (!notes || notes.trim().length < 3)) {
     errors.push({
-      message: "Подтвердите чек-боксом «Все допущены» или опишите ситуацию",
+      // Формулировка повторяет подпись чек-бокса на экране задачи слово
+      // в слово: раньше на экране было «Все сотрудники в норме», а
+      // сервер просил отметить «Все допущены» — человек искал кнопку,
+      // которой нет.
+      field: "allHealthy",
+      message:
+        "Отметьте «Все сотрудники допущены» или опишите ситуацию в примечании",
     });
   }
   return { ok: errors.length === 0, errors, warnings: [], sideEffects };

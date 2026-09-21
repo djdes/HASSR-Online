@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 /**
  * Индикатор «журнал включён / отключён» справа от заголовка журнала.
@@ -61,7 +62,7 @@ export function JournalEnabledIndicator({
       toast.success(successText);
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось сохранить настройку");
+      toast.error(humanizeFetchError(error, "Не удалось сохранить настройку"));
     } finally {
       setBusy(false);
       setConfirmOpen(false);

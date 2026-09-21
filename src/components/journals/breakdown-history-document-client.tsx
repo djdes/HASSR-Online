@@ -52,6 +52,7 @@ import { toast } from "sonner";
 import { confirmAsync } from "@/components/ui/confirm-async";
 import { StickyActionBar } from "@/components/journals/sticky-action-bar";
 import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 type Props = {
   documentId: string;
@@ -121,7 +122,7 @@ function RowDialog(props: {
       // ПОЧЕМУ: окно закрывалось в finally — сотрудник видел «сохранено»,
       // хотя сервер отказал, и запись о поломке терялась.
       toast.error(
-        error instanceof Error ? error.message : "Не удалось сохранить строку"
+        humanizeFetchError(error, "Не удалось сохранить строку")
       );
     } finally {
       setIsSubmitting(false);
@@ -310,7 +311,7 @@ function SettingsDialog(props: {
     } catch (error) {
       // Не закрываем окно при отказе сервера — иначе правка теряется молча.
       toast.error(
-        error instanceof Error ? error.message : "Не удалось сохранить настройки"
+        humanizeFetchError(error, "Не удалось сохранить настройки")
       );
     } finally {
       setIsSubmitting(false);
@@ -419,7 +420,7 @@ function FinishDialog(props: {
       props.onFinished();
       props.onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(humanizeFetchError(error, "Ошибка"));
     } finally {
       setIsSubmitting(false);
     }
@@ -626,7 +627,7 @@ export function BreakdownHistoryDocumentClient(props: Props) {
       setSelectedRowIds([]);
       toast.success(`Удалено строк: ${count}`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось удалить выбранные строки");
+      toast.error(humanizeFetchError(error, "Не удалось удалить выбранные строки"));
     }
   }
 
@@ -643,7 +644,7 @@ export function BreakdownHistoryDocumentClient(props: Props) {
           onDelete={() => {
             handleDeleteSelected().catch((error) =>
               toast.error(
-                error instanceof Error ? error.message : "Ошибка удаления"
+                humanizeFetchError(error, "Ошибка удаления")
               )
             );
           }}

@@ -1,0 +1,47 @@
+import fs from "node:fs";
+import path from "node:path";
+export const SHOT = "C:/Users/Yaroslav/AppData/Local/Temp/18/claude/d--www-Wesetup-ru/aa63a183-7b19-487e-8461-b751f0f1c337/scratchpad/explore2-owner";
+fs.mkdirSync(SHOT, { recursive: true });
+export const shotPath = (n: string) => path.join(SHOT, n.endsWith(".png") ? n : n + ".png");
+export async function shot(page: any, name: string, full = false) {
+  const p = shotPath(name);
+  await page.screenshot({ path: p, fullPage: full });
+  console.log("SHOT " + p);
+  return p;
+}
+export async function go(page: any, url: string, wait = 2500) {
+  await page.goto(url, { waitUntil: "load", timeout: 300000 }).catch((e: any) => console.log("GOTO ERR " + String(e).slice(0, 120)));
+  await page.waitForTimeout(wait);
+}
+export const PROBE = `(() => {
+  const nl = String.fromCharCode(10);
+  const heads = [...document.querySelectorAll('header')].map(e=>e.innerText.split(nl).join(' | ').slice(0,200));
+  const de = document.documentElement;
+  const overflow = de.scrollWidth - de.clientWidth;
+  const wide = [...document.querySelectorAll('body *')].filter(e=>{const r=e.getBoundingClientRect(); return r.width>0 && r.height>0 && (r.right > window.innerWidth+2 || r.left < -2);}).slice(0,12).map(e=>e.tagName+'.'+((e.className&&e.className.toString)?e.className.toString().slice(0,70):'')+' L='+Math.round(e.getBoundingClientRect().left)+' R='+Math.round(e.getBoundingClientRect().right));
+  return { url: location.pathname + location.search, title: document.title, heads, overflow, wide, bodyText: document.body.innerText.slice(0,3000) };
+})()`;
+export async function probe(page: any) { return await page.evaluate(PROBE); }
+export const CLICKABLES = `(() => {
+  const nl = String.fromCharCode(10);
+  const out = [];
+  for (const el of document.querySelectorAll('button, a[href], [role=button], summary, [role=tab]')) {
+    const r = el.getBoundingClientRect();
+    if (r.width < 3 || r.height < 3) continue;
+    const t = (el.innerText||el.getAttribute('aria-label')||'').split(nl).join(' ').trim().slice(0,60);
+    out.push((el.tagName==='A'?'A ':'B ') + JSON.stringify(t) + (el.getAttribute('href')?(' ->'+el.getAttribute('href')):'') + ' @' + Math.round(r.left)+','+Math.round(r.top)+' '+Math.round(r.width)+'x'+Math.round(r.height));
+  }
+  return out;
+})()`;
+export const FIELDS = `(() => {
+  const out = [];
+  for (const el of document.querySelectorAll('input, textarea, select')) {
+    const r = el.getBoundingClientRect(); if (r.width<3&&r.height<3) continue;
+    const cs = getComputedStyle(el);
+    out.push(el.tagName + '[' + (el.type||'') + '] name=' + (el.name||'') + ' ph=' + (el.getAttribute('placeholder')||'') + ' fs=' + cs.fontSize + ' val=' + JSON.stringify(String(el.value).slice(0,40)) + ' @' + Math.round(r.left)+','+Math.round(r.top)+' '+Math.round(r.width)+'x'+Math.round(r.height));
+  }
+  return out;
+})()`;
+export function dump(name: string, data: any) {
+  fs.writeFileSync(path.join(SHOT, name.endsWith(".json") ? name : name + ".json"), JSON.stringify(data, null, 2), "utf8");
+}

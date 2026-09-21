@@ -1,0 +1,28 @@
+import { openTelegramSession, db } from "../tg-session";
+import { shot, sleep } from "./lib";
+import { releaseActive, claimScope } from "./claimlib";
+const CODE = "glass_items_list";
+const CLICK = (re: string) => `(()=>{const b=[...document.querySelectorAll('button')].find(b=>${re}.test(b.innerText.trim()));return b?(b.click(),'клик: '+b.innerText.trim()):'нет кнопки';})()`;
+(async () => {
+  const before = await db.journalTemplate.findUnique({ where: { code: CODE }, select: { allowNoEvents: true } });
+  await db.journalTemplate.update({ where: { code: CODE }, data: { allowNoEvents: false } });
+  console.log("allowNoEvents было", before?.allowNoEvents, "→ поставили false");
+  const s = await openTelegramSession({ role: "cookA", width: 390, height: 844, theme: "light" });
+  const p = s.page;
+  await p.goto(s.base + "/mini/today", { timeout: 300000 }); await sleep(p, 4000);
+  await releaseActive(p);
+  const c = await claimScope(p, CODE, "");
+  const cid = c.res.j?.claim?.id;
+  await p.goto(s.base + "/mini/claim/" + cid, { timeout: 300000 }); await sleep(p, 7000);
+  console.log("есть ли кнопка пропуска:", await p.evaluate(CLICK("/Сегодня не требуется/")));
+  await sleep(p, 1500);
+  console.log("пропустить:", await p.evaluate(CLICK("/^Пропустить$/")));
+  await sleep(p, 4000);
+  const row = await db.journalTaskClaim.findUnique({ where: { id: cid }, select: { status: true, verificationStatus: true, completionData: true } });
+  console.log("результат при запрещённом пропуске:", JSON.stringify(row));
+  await shot(p, "18-skip-forbidden");
+  await db.journalTemplate.update({ where: { code: CODE }, data: { allowNoEvents: before?.allowNoEvents ?? true } });
+  console.log("флаг возвращён");
+  console.log("ERRORS", JSON.stringify(s.errors.slice(0,5)));
+  await s.close();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 1500)); process.exit(1); });

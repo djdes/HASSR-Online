@@ -124,6 +124,7 @@ import {
 
 import { useTodayKey } from "@/lib/use-today-key";
 import { submitWithOfflineFallback } from "@/lib/use-offline-submit";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 /**
  * Screen ↔ print duality tokens (тот же приём, что в
  * `cleaning-document-client.tsx` / `hygiene-document-client.tsx`).
@@ -252,7 +253,7 @@ function ControlTimeDialog({
       await onSave(nextTimes);
       onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось изменить время контроля");
+      toast.error(humanizeFetchError(error, "Не удалось изменить время контроля"));
     } finally {
       setIsSubmitting(false);
     }
@@ -367,7 +368,7 @@ function RoomDialog({
       await onSave(room, linkRoomId || null);
       onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка сохранения помещения");
+      toast.error(humanizeFetchError(error, "Ошибка сохранения помещения"));
     } finally {
       setIsSubmitting(false);
     }
@@ -381,7 +382,7 @@ function RoomDialog({
       if (removed === false) return;
       onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка удаления помещения");
+      toast.error(humanizeFetchError(error, "Ошибка удаления помещения"));
     } finally {
       setIsSubmitting(false);
     }
@@ -580,7 +581,7 @@ function ResponsibleDialog({
       });
       onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось сохранить ответственного");
+      toast.error(humanizeFetchError(error, "Не удалось сохранить ответственного"));
     } finally {
       setIsSubmitting(false);
     }
@@ -706,7 +707,7 @@ function AddRowDialog({
       });
       onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка создания строки");
+      toast.error(humanizeFetchError(error, "Ошибка создания строки"));
     } finally {
       setIsSubmitting(false);
     }
@@ -892,7 +893,7 @@ function JournalSettingsDialog({
       });
       onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка сохранения настроек");
+      toast.error(humanizeFetchError(error, "Ошибка сохранения настроек"));
     } finally {
       setIsSubmitting(false);
     }
@@ -1274,7 +1275,7 @@ export function ClimateDocumentClient({
         current.map((item) => (item.id === rowId ? previousRow : item)),
       );
       toast.error(
-        error instanceof Error ? error.message : "Ошибка сохранения",
+        humanizeFetchError(error, "Ошибка сохранения"),
       );
     }
   }
@@ -1807,7 +1808,7 @@ export function ClimateDocumentClient({
       setRows((currentRows) =>
         currentRows.map((item) => (item.id === rowId ? previousRow : item))
       );
-      toast.error(error instanceof Error ? error.message : "Ошибка сохранения");
+      toast.error(humanizeFetchError(error, "Ошибка сохранения"));
     }
   }
 
@@ -1908,7 +1909,7 @@ export function ClimateDocumentClient({
       setRows((currentRows) =>
         currentRows.map((item) => (item.id === rowId ? previousRow : item))
       );
-      toast.error(error instanceof Error ? error.message : "Ошибка сохранения");
+      toast.error(humanizeFetchError(error, "Ошибка сохранения"));
     }
   }
 
@@ -1975,7 +1976,7 @@ export function ClimateDocumentClient({
       setSelectedRowIds([]);
       toast.success(`Удалено строк: ${count}`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось удалить выбранные строки");
+      toast.error(humanizeFetchError(error, "Не удалось удалить выбранные строки"));
     }
   }
 
@@ -2003,7 +2004,7 @@ export function ClimateDocumentClient({
     } catch (error) {
       setCheckedAutoFill(!value);
       toast.error(
-        error instanceof Error ? error.message : "Ошибка обновления автозаполнения"
+        humanizeFetchError(error, "Ошибка обновления автозаполнения")
       );
     } finally {
       setIsSwitching(false);
@@ -2132,7 +2133,7 @@ export function ClimateDocumentClient({
                         const match = suggestDirectoryRoomForClimateRow(room, directoryRooms);
                         if (match) {
                           handleSaveRoom(room, match.id).catch((error) =>
-                            toast.error(error instanceof Error ? error.message : "Не удалось связать помещение"),
+                            toast.error(humanizeFetchError(error, "Не удалось связать помещение")),
                           );
                         }
                       }}
@@ -2930,7 +2931,7 @@ export function ClimateDocumentClient({
             try {
               await handleSaveRoom(next);
             } catch (error) {
-              toast.error(error instanceof Error ? error.message : "Не удалось обновить строку");
+              toast.error(humanizeFetchError(error, "Не удалось обновить строку"));
             }
           }
           router.refresh();

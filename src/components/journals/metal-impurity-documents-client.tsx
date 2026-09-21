@@ -64,6 +64,7 @@ import {
   usePositionEmployeeCascade,
 } from "@/components/shared/position-select";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 type DocumentItem = {
   id: string;
   title: string;
@@ -607,7 +608,7 @@ export function MetalImpurityDocumentsClient({
                         onSelect: () =>
                           void openDocumentPdf(document.id).catch((error) =>
                             toast.error(
-                              error instanceof Error ? error.message : "Не удалось открыть PDF"
+                              humanizeFetchError(error, "Не удалось открыть PDF")
                             )
                           ),
                       },

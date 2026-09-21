@@ -72,6 +72,7 @@ import {
 import { useAutoDocumentTitle } from "@/components/journals/use-auto-document-title";
 import { localDayKey } from "@/lib/entry-defaults";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 type UserItem = { id: string; name: string; role: string };
 
 type AuditPlanDocumentItem = {
@@ -609,7 +610,7 @@ export function AuditPlanDocumentsClient({
                       onSelect: () =>
                         void openDocumentPdf(document.id).catch((error) =>
                           toast.error(
-                            error instanceof Error ? error.message : "Не удалось открыть PDF"
+                            humanizeFetchError(error, "Не удалось открыть PDF")
                           )
                         ),
                     },

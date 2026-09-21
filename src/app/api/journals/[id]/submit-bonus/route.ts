@@ -98,7 +98,12 @@ export async function POST(
 
   if (obligation.claimedById !== userId) {
     return NextResponse.json(
-      { error: "Премию забрал другой сотрудник" },
+      {
+        error:
+          obligation.claimedById === null
+            ? "Сначала возьмите эту задачу в списке «Сегодня»"
+            : "Премию забрал другой сотрудник",
+      },
       { status: 403 }
     );
   }
@@ -142,10 +147,11 @@ export async function POST(
     });
     return NextResponse.json(
       {
+        // На «вы», как и остальные сообщения сервера.
         error:
           photoTakenAt === null
-            ? "В фото нет метаданных времени съёмки — сделай новое фото в момент работы"
-            : "Фото снято слишком давно — оно должно быть свежим (не старше 5 минут)",
+            ? "В этом фото нет времени съёмки — снимите новое прямо на месте. Снимок из галереи не подойдёт"
+            : "Фото снято слишком давно — нужен свежий снимок, не старше 5 минут",
         photoTakenAt: photoTakenAt?.toISOString() ?? null,
       },
       { status: 400 }

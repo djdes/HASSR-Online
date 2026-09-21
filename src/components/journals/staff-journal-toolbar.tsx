@@ -54,6 +54,7 @@ import {
 import { JournalSettingsModal } from "@/components/journals/v2/journal-settings-modal";
 import { ControlPeriodicityField } from "@/components/journals/control-periodicity-field";
 import { useCanManageJournalDocument } from "@/components/journals/journal-header-edit";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 type UserItem = {
   id: string;
   name: string;
@@ -207,7 +208,7 @@ export function AddEmployeeDialog({
       onOpenChange(false);
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка добавления сотрудника");
+      toast.error(humanizeFetchError(error, "Ошибка добавления сотрудника"));
     } finally {
       setIsSubmitting(false);
     }
@@ -367,7 +368,7 @@ function FillFromStaffDialog({
       onOpenChange(false);
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка заполнения из списка");
+      toast.error(humanizeFetchError(error, "Ошибка заполнения из списка"));
     } finally {
       setIsSubmitting(false);
     }
@@ -580,7 +581,7 @@ function JournalSettingsDialog({
       onOpenChange(false);
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка сохранения настроек журнала");
+      toast.error(humanizeFetchError(error, "Ошибка сохранения настроек журнала"));
     } finally {
       setIsSubmitting(false);
     }
@@ -865,7 +866,7 @@ export function StaffJournalToolbar({
       // Окно подтверждения закрываем в ЛЮБОМ случае: при отказе сервера
       // оно оставалось открытым поверх тоста, и человек жал «Да» ещё раз.
       setAutoFillDialog(null);
-      toast.error(error instanceof Error ? error.message : "Ошибка автозаполнения");
+      toast.error(humanizeFetchError(error, "Ошибка автозаполнения"));
     } finally {
       setIsSwitching(false);
     }

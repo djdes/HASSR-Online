@@ -114,6 +114,7 @@ import {
   getEquipmentCleaningCreatePeriodBounds,
   type EquipmentCleaningFieldVariant,
 } from "@/lib/equipment-cleaning-document";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 /**
  * «Добавлять пустых строк при печати» — тот же набор значений, что в
@@ -540,7 +541,7 @@ export function CreateDocumentDialog({
       router.push(`/journals/${templateCode}/documents/${doc.id}`);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка");
+      setError(humanizeFetchError(err, "Ошибка"));
     } finally {
       setIsSubmitting(false);
     }

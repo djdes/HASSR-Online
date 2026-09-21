@@ -62,6 +62,7 @@ import {
   usePositionEmployeeCascade,
 } from "@/components/shared/position-select";
 import { localDayKey } from "@/lib/entry-defaults";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 type Props = {
   documentId: string;
   title: string;
@@ -408,7 +409,7 @@ function RowDialog({
                 } catch (error) {
                   // Без catch ошибка глохла: окно висело, тоста не было.
                   toast.error(
-                    error instanceof Error ? error.message : "Не удалось сохранить строку"
+                    humanizeFetchError(error, "Не удалось сохранить строку")
                   );
                 } finally {
                   setSubmitting(false);
@@ -1268,7 +1269,7 @@ export function MetalImpurityDocumentClient({
             onClear={() => setSelectedRowIds([])}
             onDelete={() =>
               deleteSelectedRows().catch((error) =>
-                toast.error(error instanceof Error ? error.message : "Ошибка удаления")
+                toast.error(humanizeFetchError(error, "Ошибка удаления"))
               )
             }
             deleting={isPending}
@@ -1524,7 +1525,7 @@ export function MetalImpurityDocumentClient({
               type="button"
               onClick={() =>
                 finishJournal().catch((error) =>
-                  toast.error(error instanceof Error ? error.message : "Ошибка закрытия")
+                  toast.error(humanizeFetchError(error, "Ошибка закрытия"))
                 )
               }
               className="h-10 rounded-xl bg-[#5566f6] px-8 text-[16px] text-white hover:bg-[#4b57ff]"

@@ -52,6 +52,7 @@ import {
   JOURNAL_LIST_STACK_CLASS,
 } from "@/components/journals/journal-responsive";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 /**
  * Список документов журнала медкнижек.
@@ -140,9 +141,7 @@ function SettingsDialog({
       router.refresh();
     } catch (error) {
       toast.error(
-        error instanceof Error
-          ? error.message
-          : "Не удалось сохранить название документа",
+        humanizeFetchError(error, "Не удалось сохранить название документа"),
       );
     } finally {
       setSaving(false);

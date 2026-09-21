@@ -21,6 +21,13 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
+import {
+  AUDIT_ACTION_LABELS,
+  AUDIT_ENTITY_FILTER_OPTIONS,
+  auditActionLabel,
+  auditDetailPairs,
+  auditEntityLabel,
+} from "@/lib/audit-labels";
 
 interface AuditEntry {
   id: string;
@@ -31,152 +38,6 @@ interface AuditEntry {
   details: Record<string, unknown> | null;
   createdAt: string;
 }
-
-const ACTION_LABELS: Record<
-  string,
-  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
-> = {
-  create: { label: "Создание", variant: "default" },
-  update: { label: "Изменение", variant: "secondary" },
-  delete: { label: "Удаление", variant: "destructive" },
-  login: { label: "Вход", variant: "outline" },
-  export: { label: "Экспорт", variant: "outline" },
-  // Pipeline / task-fill actions
-  "journal.fill.step": { label: "Шаг pipeline", variant: "outline" },
-  "journal.fill.photo": { label: "Фото загружено", variant: "outline" },
-  "journal.fill.completed": { label: "Журнал заполнен", variant: "default" },
-  "journal.fill.reopened": { label: "Повторное открытие", variant: "secondary" },
-  "journal.entry.create": { label: "Запись создана", variant: "default" },
-  "journal.entry.update": { label: "Запись изменена", variant: "secondary" },
-  "journal.entry.delete": { label: "Запись удалена", variant: "destructive" },
-  "journal.document.close": { label: "Журнал закрыт", variant: "secondary" },
-  "journal.document.reopen": { label: "Журнал переоткрыт", variant: "outline" },
-  // Консультант (партнёр). Действия внутри кабинета уже подписаны его
-  // именем в колонке «Кто», здесь — сами события сопровождения.
-  "partner.attached": { label: "Консультант подключён", variant: "default" },
-  "partner.detached": { label: "Консультант отключён", variant: "destructive" },
-  "partner.access_level": {
-    label: "Уровень доступа консультанта",
-    variant: "secondary",
-  },
-  "partner.cabinet_opened": {
-    label: "Консультант открыл кабинет",
-    variant: "outline",
-  },
-  "partner.client_org_created": {
-    label: "Организация создана консультантом",
-    variant: "default",
-  },
-  "partner.org_updated": {
-    label: "Консультант изменил реквизиты",
-    variant: "secondary",
-  },
-  "partner.owner_invited": {
-    label: "Приглашение владельцу",
-    variant: "outline",
-  },
-  // Settings / admin actions
-  "settings.tasksflow.connect": {
-    label: "TasksFlow подключён",
-    variant: "default",
-  },
-  "settings.tasksflow.disconnect": {
-    label: "TasksFlow отключён",
-    variant: "destructive",
-  },
-  "settings.responsibles.update": {
-    label: "Ответственные обновлены",
-    variant: "secondary",
-  },
-  "settings.user.archive": {
-    label: "Сотрудник архивирован",
-    variant: "destructive",
-  },
-  "settings.user.unarchive": {
-    label: "Сотрудник восстановлен",
-    variant: "default",
-  },
-  "settings.experimental.v2.enable": {
-    label: "Design v2 включён",
-    variant: "default",
-  },
-  "settings.experimental.v2.disable": {
-    label: "Design v2 выключен",
-    variant: "secondary",
-  },
-  // P1 Pipeline editor — каждая мутация в дереве шагов журнала
-  "settings.journal-pipelines.seed": {
-    label: "Pipeline создан из колонок",
-    variant: "default",
-  },
-  "settings.journal-pipelines.seed-all": {
-    label: "Pipeline создан bulk-операцией",
-    variant: "default",
-  },
-  "settings.journal-pipelines.node.create": {
-    label: "Шаг pipeline добавлен",
-    variant: "default",
-  },
-  "settings.journal-pipelines.node.update": {
-    label: "Шаг pipeline обновлён",
-    variant: "secondary",
-  },
-  "settings.journal-pipelines.node.delete": {
-    label: "Шаг pipeline удалён",
-    variant: "destructive",
-  },
-  "settings.journal-pipelines.node.move": {
-    label: "Шаг pipeline перемещён",
-    variant: "secondary",
-  },
-  "settings.journal-pipelines.node.split": {
-    label: "Pinned-шаг разделён",
-    variant: "outline",
-  },
-  "settings.journal-pipelines.clear-custom": {
-    label: "Custom-шаги очищены",
-    variant: "destructive",
-  },
-  "settings.journal-pipelines.clear-all": {
-    label: "Pipeline полностью очищен",
-    variant: "destructive",
-  },
-  // P1 Guide editor — пользовательский гайд «как заполнять» в БД
-  "settings.journal-guides.node.create": {
-    label: "Шаг гайда добавлен",
-    variant: "default",
-  },
-  "settings.journal-guides.node.update": {
-    label: "Шаг гайда обновлён",
-    variant: "secondary",
-  },
-  "settings.journal-guides.node.delete": {
-    label: "Шаг гайда удалён",
-    variant: "destructive",
-  },
-  "settings.journal-guides.node.move": {
-    label: "Шаг гайда перемещён",
-    variant: "secondary",
-  },
-};
-
-const ENTITY_LABELS: Record<string, string> = {
-  area: "Цех",
-  equipment: "Оборудование",
-  user: "Пользователь",
-  journal_entry: "Запись журнала",
-  journal_task: "Задача (TasksFlow)",
-  journal_document: "Документ журнала",
-  product: "Продукт",
-  organization: "Организация",
-  TasksFlowIntegration: "Интеграция TasksFlow",
-  manager_scope: "Видимость менеджера",
-  position: "Должность",
-  JournalPipelineTemplate: "Шаблон pipeline",
-  JournalPipelineNode: "Шаг pipeline",
-  JournalGuideTemplate: "Шаблон гайда",
-  JournalGuideNode: "Шаг гайда",
-};
 
 const JOURNAL_LABEL_BY_CODE: Record<string, string> =
   ACTIVE_JOURNAL_CATALOG.reduce<Record<string, string>>((acc, item) => {
@@ -381,11 +242,21 @@ function renderDetails(entry: AuditEntry): ReactElement {
     );
   }
 
-  // Generic — JSON в одну строку, без stack-trace'ов
-  const json = JSON.stringify(d);
+  // Остальное — парами «Подпись: значение». Раньше здесь стоял
+  // JSON.stringify: руководитель видел строку со скобками и кавычками
+  // и всё равно не понимал, что произошло.
+  const pairs = auditDetailPairs(d);
+  if (pairs.length === 0) {
+    return <div className="text-[12px] text-[#9b9fb3]">—</div>;
+  }
   return (
-    <div className="text-[12px] text-[#6f7282]">
-      {json.length > 120 ? json.slice(0, 120) + "…" : json}
+    <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-[12px] text-[#6f7282]">
+      {pairs.map((pair) => (
+        <span key={pair.key}>
+          {pair.label}:{" "}
+          <span className="font-medium text-[#0b1024]">{pair.value}</span>
+        </span>
+      ))}
     </div>
   );
 }
@@ -474,9 +345,9 @@ export function AuditLogViewer() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Все сущности</SelectItem>
-            {Object.entries(ENTITY_LABELS).map(([k, v]) => (
-              <SelectItem key={k} value={k}>
-                {v}
+            {AUDIT_ENTITY_FILTER_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -493,7 +364,7 @@ export function AuditLogViewer() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Все действия</SelectItem>
-            {Object.entries(ACTION_LABELS).map(([k, v]) => (
+            {Object.entries(AUDIT_ACTION_LABELS).map(([k, v]) => (
               <SelectItem key={k} value={k}>
                 {v.label}
               </SelectItem>
@@ -583,11 +454,7 @@ export function AuditLogViewer() {
                   </div>
                   <div className="divide-y divide-[#ececf4]">
                     {[...group.entries].reverse().map((log) => {
-                      const actionInfo =
-                        ACTION_LABELS[log.action] ?? {
-                          label: log.action,
-                          variant: "outline" as const,
-                        };
+                      const actionInfo = auditActionLabel(log.action);
                       return (
                         <div
                           key={log.id}
@@ -608,7 +475,7 @@ export function AuditLogViewer() {
                             {renderDetails(log)}
                           </div>
                           <div className="shrink-0 text-[11px] text-[#9b9fb3]">
-                            {ENTITY_LABELS[log.entity] ?? log.entity}
+                            {auditEntityLabel(log.entity)}
                           </div>
                         </div>
                       );

@@ -50,6 +50,7 @@ import { PhotoCapture, type OcrResult } from "./photo-capture";
 import { VoiceInput } from "./voice-input";
 import { PhotoField, parsePhotoValue } from "@/components/journals/photo-field";
 import { localDayKey } from "@/lib/entry-defaults";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 type FieldOption = { value: string; label: string };
 type ShowIfCondition = { field: string; equals: unknown };
@@ -338,7 +339,7 @@ export function DynamicForm({
       });
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Ошибка получения данных"
+        humanizeFetchError(err, "Ошибка получения данных")
       );
     } finally {
       setIsFetchingSensor(false);
@@ -551,7 +552,7 @@ export function DynamicForm({
       ) {
         return;
       }
-      setError(err instanceof Error ? err.message : "Ошибка при сохранении");
+      setError(humanizeFetchError(err, "Ошибка при сохранении"));
     } finally {
       setIsSubmitting(false);
       setSubmittingMode("default");

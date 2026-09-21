@@ -50,6 +50,7 @@ import {
 import { toast } from "sonner";
 import { confirmAsync } from "@/components/ui/confirm-async";
 import { localDayKey } from "@/lib/entry-defaults";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 type EmployeeItem = {
   id: string;
   name: string;
@@ -115,7 +116,7 @@ function ComplaintRowDialog({
       // Окно закрывает родитель: при правке по очереди он откроет следующую строку.
       await onSave(draft);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка сохранения строки");
+      toast.error(humanizeFetchError(error, "Ошибка сохранения строки"));
     } finally {
       setSubmitting(false);
     }
@@ -248,7 +249,7 @@ function SettingsDialog({
       await onSave({ title: draftTitle, dateFrom: draftDate });
       onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка сохранения настроек");
+      toast.error(humanizeFetchError(error, "Ошибка сохранения настроек"));
     } finally {
       setSubmitting(false);
     }
@@ -352,7 +353,7 @@ function FinishDialog({
       await onFinish();
       onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка завершения журнала");
+      toast.error(humanizeFetchError(error, "Ошибка завершения журнала"));
     } finally {
       setSubmitting(false);
     }
@@ -564,7 +565,7 @@ export function ComplaintDocumentClient({
             onClear={() => setSelectedRowIds([])}
             onDelete={() =>
               handleDeleteSelected().catch((error) =>
-                toast.error(error instanceof Error ? error.message : "Ошибка удаления строк")
+                toast.error(humanizeFetchError(error, "Ошибка удаления строк"))
               )
             }
             deleting={isPending}

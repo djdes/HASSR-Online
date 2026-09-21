@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { retryFetch } from "@/lib/retry-fetch";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 /**
  * Pipeline-форма для finished_product (бракераж готовой продукции).
@@ -394,7 +395,7 @@ export function FinishedProductPipeline({
       router.push(`${journalsBasePath}/finished_product`);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка при сохранении");
+      setError(humanizeFetchError(err, "Ошибка при сохранении"));
     } finally {
       setSubmitting(false);
       setSubmittingMode("default");

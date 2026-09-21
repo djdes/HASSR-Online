@@ -41,6 +41,7 @@ import {
 } from "@/components/journals/journal-responsive";
 import { PositionEmployeePicker } from "@/components/shared/position-select";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 type UserItem = {
   id: string;
   name: string;
@@ -124,7 +125,7 @@ function EditDocumentDialog({
       onSaved();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Не удалось сохранить настройки документа"
+        humanizeFetchError(error, "Не удалось сохранить настройки документа")
       );
     } finally {
       setIsSubmitting(false);

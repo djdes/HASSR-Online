@@ -100,6 +100,7 @@ import { confirmAsync } from "@/components/ui/confirm-async";
 import { JournalSettingsModal } from "@/components/journals/v2/journal-settings-modal";
 import { useTodayKey } from "@/lib/use-today-key";
 import { TodayStripForJournal } from "@/components/journals/today-strip-for-journal";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 type UserItem = {
   id: string;
   name: string;
@@ -1273,7 +1274,7 @@ export function UvLampRuntimeDocumentClient(props: Props) {
       setSelectedRowIds([]);
       toast.success(`Удалено строк: ${count}`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось удалить выбранные строки");
+      toast.error(humanizeFetchError(error, "Не удалось удалить выбранные строки"));
     }
   }
 

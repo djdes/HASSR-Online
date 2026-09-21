@@ -63,6 +63,7 @@ import {
   usePositionEmployeeCascade,
 } from "@/components/shared/position-select";
 import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 type Props = {
   documentId: string;
@@ -272,7 +273,7 @@ export function EquipmentMaintenanceDocumentClient({
     } catch (error) {
       applyConfig(previous);
       toast.error(
-        error instanceof Error ? error.message : "Не удалось сохранить журнал"
+        humanizeFetchError(error, "Не удалось сохранить журнал")
       );
     } finally {
       setIsSaving(false);
@@ -465,7 +466,7 @@ export function EquipmentMaintenanceDocumentClient({
       // Откат: иначе на экране остаются настройки, которых нет в базе.
       applyConfig(previous);
       toast.error(
-        error instanceof Error ? error.message : "Не удалось сохранить настройки"
+        humanizeFetchError(error, "Не удалось сохранить настройки")
       );
     } finally {
       setIsSaving(false);

@@ -75,7 +75,7 @@ const STATUS_META: Record<
     border: "border-[#c8f0d5]",
   },
   not_started: {
-    label: "Прохлаждается",
+    label: "Без задачи",
     icon: Coffee,
     color: "text-[#a13a32]",
     bg: "bg-[#fff8eb]",
@@ -170,7 +170,7 @@ export function TeamClient() {
     },
     {
       key: "not_started",
-      label: "Прохлаждаются (не взяли задачу)",
+      label: "Ещё не взяли задачу",
       items: data.team.filter((m) => m.workStatus === "not_started"),
     },
     {

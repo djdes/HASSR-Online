@@ -58,6 +58,7 @@ import { toast } from "sonner";
 import { confirmAsync } from "@/components/ui/confirm-async";
 import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
 import { localDayKey } from "@/lib/entry-defaults";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 type Props = {
   documentId: string;
@@ -116,7 +117,7 @@ function RowDialog(props: {
       await props.onSave(row);
     } catch (error) {
       // Без catch ошибка сохранения глохла: окно висело, тоста не было.
-      toast.error(error instanceof Error ? error.message : "Ошибка сохранения строки");
+      toast.error(humanizeFetchError(error, "Ошибка сохранения строки"));
     } finally {
       setSubmitting(false);
     }
@@ -414,7 +415,7 @@ function FinishDialog(props: {
       props.onFinished();
       props.onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(humanizeFetchError(error, "Ошибка"));
     } finally {
       setSubmitting(false);
     }
@@ -598,7 +599,7 @@ export function AccidentDocumentClient(props: Props) {
       setSelectedRowIds([]);
       toast.success(`Удалено строк: ${count}`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось удалить выбранные строки");
+      toast.error(humanizeFetchError(error, "Не удалось удалить выбранные строки"));
     }
   }
 
@@ -614,7 +615,7 @@ export function AccidentDocumentClient(props: Props) {
           onClear={() => setSelectedRowIds([])}
           onDelete={() => {
             handleDeleteSelected().catch((error) =>
-              toast.error(error instanceof Error ? error.message : "Ошибка")
+              toast.error(humanizeFetchError(error, "Ошибка"))
             );
           }}
           hint="Записи об авариях будут удалены без возможности отмены"

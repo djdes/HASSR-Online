@@ -272,6 +272,37 @@ export const APP_SECTIONS: AppSection[] = [
     access: FULL_ACCESS,
   },
   {
+    href: "/settings/journals",
+    hint: "Какие журналы ведёт заведение",
+    icon: "ClipboardList",
+    group: "settings",
+    // `page.tsx`: `hasFullWorkspaceAccess(session.user)`, иначе /dashboard.
+    // Страница заведующей открывается и работает (PATCH проходит), а
+    // пункта в разделах у неё не было — список расходился с правдой.
+    access: FULL_ACCESS,
+  },
+  {
+    href: "/settings/permissions",
+    hint: "Кто что может делать в кабинете",
+    icon: "ShieldCheck",
+    group: "settings",
+    // `page.tsx`: `sessionHasPermission(session, "settings.permissions")`.
+    // Это право лежит в БД и проверяется асинхронно, а список разделов
+    // считается на месте. Ближайшее синхронное соответствие —
+    // управленческая роль: линейному персоналу право не выдаётся по
+    // умолчанию, и `canAccessWebPath` его сюда всё равно не пускает.
+    access: FULL_ACCESS,
+  },
+  {
+    href: "/settings/integrations/tasksflow",
+    label: "Интеграция с TasksFlow",
+    hint: "Связка сотрудников и задач с TasksFlow",
+    icon: "Plug",
+    group: "settings",
+    // `page.tsx`: `hasFullWorkspaceAccess(session.user)`, иначе /journals.
+    access: FULL_ACCESS,
+  },
+  {
     href: "/settings/equipment",
     hint: "Холодильники, печи, датчики",
     icon: "Wrench",

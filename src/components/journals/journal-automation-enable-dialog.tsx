@@ -10,6 +10,7 @@ import type {
   JournalAutomationResponsibles,
   JournalAutomationStaff,
 } from "@/lib/journal-automation";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 /**
  * Диалог включения автоматики журнала.
@@ -161,7 +162,7 @@ export function JournalAutomationEnableDialog({
       setSearch("");
     } catch (error) {
       setLoadError(
-        error instanceof Error ? error.message : "Не удалось загрузить данные",
+        humanizeFetchError(error, "Не удалось загрузить данные"),
       );
     } finally {
       setLoading(false);

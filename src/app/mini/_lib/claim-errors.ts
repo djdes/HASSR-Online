@@ -11,6 +11,9 @@ const REASONS: Record<string, string> = {
   not_active: "Задача уже закрыта — заново её завершать не нужно.",
   validation_failed: "Проверьте заполненные поля — что-то введено неверно.",
   internal_error: "Сервер не смог сохранить. Попробуйте ещё раз.",
+  skip_not_allowed:
+    "Для этого журнала пропуск не разрешён. Обратитесь к руководителю",
+  skip_reason_required: "Напишите, почему сегодня заполнять не нужно",
 };
 
 const STATUSES: Record<number, string> = {

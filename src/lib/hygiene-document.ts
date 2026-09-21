@@ -10,7 +10,7 @@ export const HYGIENE_STATUS_OPTIONS = [
   { value: "healthy", code: "Зд.", label: "Здоров" },
   { value: "day_off", code: "В", label: "Выходной / отгул" },
   { value: "sick_leave", code: "Б/л", label: "Больничный лист" },
-  { value: "suspended", code: "От", label: "Отстранен от работы" },
+  { value: "suspended", code: "От", label: "Отстранён от работы" },
   { value: "vacation", code: "Отп", label: "Отпуск" },
 ] as const;
 

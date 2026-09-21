@@ -118,12 +118,110 @@ const COMPLETION_FIELD_LABELS: Record<string, string> = {
  *
  * Такие ключи ставит не человек, а система: `_autoSeeded` — метка
  * пустой строки, созданной ночным сидером. Для заведующей это шум.
+ *
+ * `pipelineCompleted` сюда же: «✓» напротив внутреннего флага ничего
+ * не сообщает — шаги показываются отдельным списком.
  */
 export function isInternalCompletionKey(key: string): boolean {
-  return key.startsWith("_");
+  return key.startsWith("_") || key === "pipelineCompleted";
 }
 
 /** Подпись поля. Неизвестный ключ показываем как есть — лучше, чем ничего. */
 export function completionEntryLabel(key: string): string {
   return COMPLETION_FIELD_LABELS[key] ?? key;
+}
+
+/* ---------- разбор снимка «что заполнил сотрудник» ---------- */
+
+export type CompletionStep = {
+  title: string;
+  done: boolean;
+  checklist: { item: string; done: boolean }[];
+  photos: string[];
+};
+
+export type CompletionView = {
+  /** Пропущено «сегодня не требуется» + причина. */
+  skippedReason: string | null;
+  /** Шаги пошаговой инструкции — списком с галочками. */
+  steps: CompletionStep[];
+  /** Обычные поля «подпись → значение». */
+  fields: { key: string; label: string; value: string }[];
+};
+
+/**
+ * Раскладывает `completionData` на понятные человеку части.
+ *
+ * Раньше блок «Введённые данные» печатал `String(v)` для любого
+ * значения, и заведующая видела «steps [object Object],[object Object]»,
+ * «pipelineCompleted ✓» и «skipped ✓». Теперь:
+ *   • шаги — списком «✓ Возьми термометр / ✗ Запиши значение»;
+ *   • пропуск — строкой «Пропущено: <причина>»;
+ *   • объект или массив без понятной раскладки просто не печатаем —
+ *     мусор хуже пустоты.
+ */
+export function buildCompletionView(
+  data: Record<string, unknown> | null | undefined
+): CompletionView {
+  const view: CompletionView = { skippedReason: null, steps: [], fields: [] };
+  if (!data) return view;
+
+  if (data.skipped === true) {
+    const reason =
+      typeof data.reason === "string" && data.reason.trim()
+        ? data.reason.trim()
+        : "причина не указана";
+    view.skippedReason = reason;
+  }
+
+  if (Array.isArray(data.steps)) {
+    for (const raw of data.steps) {
+      if (!raw || typeof raw !== "object") continue;
+      const step = raw as Record<string, unknown>;
+      const title =
+        typeof step.title === "string" && step.title.trim()
+          ? step.title.trim()
+          : typeof step.id === "string"
+            ? step.id
+            : "Шаг";
+      view.steps.push({
+        title,
+        done: step.done === true,
+        checklist: Array.isArray(step.checklist)
+          ? (step.checklist as unknown[])
+              .filter(
+                (c): c is Record<string, unknown> => !!c && typeof c === "object"
+              )
+              .map((c) => ({
+                item: typeof c.item === "string" ? c.item : "",
+                done: c.done === true,
+              }))
+              .filter((c) => c.item)
+          : [],
+        photos: Array.isArray(step.photos)
+          ? (step.photos as unknown[]).filter(
+              (p): p is string => typeof p === "string" && p.length > 0
+            )
+          : [],
+      });
+    }
+  }
+
+  for (const [key, value] of Object.entries(data)) {
+    if (isInternalCompletionKey(key)) continue;
+    if (key === "steps") continue;
+    // Пропуск уже показан отдельной строкой.
+    if (key === "skipped" || (key === "reason" && view.skippedReason)) continue;
+    if (value === null || value === undefined || value === "") continue;
+    // Объект или массив без своей раскладки не печатаем: «[object
+    // Object]» ничего не сообщает.
+    if (typeof value === "object") continue;
+    view.fields.push({
+      key,
+      label: completionEntryLabel(key),
+      value: typeof value === "boolean" ? (value ? "✓" : "✗") : String(value),
+    });
+  }
+
+  return view;
 }

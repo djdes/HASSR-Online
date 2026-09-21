@@ -53,6 +53,7 @@ import {
   JOURNAL_LIST_CARDS_CLASS,
 } from "@/components/journals/journal-responsive";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 type HealthListDocument = {
   id: string;
@@ -176,7 +177,7 @@ function EditDocumentDialog(props: {
       router.refresh();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Не удалось сохранить настройки документа"
+        humanizeFetchError(error, "Не удалось сохранить настройки документа")
       );
     } finally {
       setIsSubmitting(false);

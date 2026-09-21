@@ -62,6 +62,7 @@ import {
 } from "@/components/shared/position-select";
 import { localDayKey } from "@/lib/entry-defaults";
 import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 type Props = {
   documentId: string;
@@ -259,7 +260,7 @@ export function EquipmentCalibrationDocumentClient({
     } catch (error) {
       applyConfig(previous);
       toast.error(
-        error instanceof Error ? error.message : "Не удалось сохранить журнал"
+        humanizeFetchError(error, "Не удалось сохранить журнал")
       );
     } finally {
       setIsSaving(false);
@@ -439,7 +440,7 @@ export function EquipmentCalibrationDocumentClient({
       // Откат: иначе на экране остаются настройки, которых нет в базе.
       applyConfig(previous);
       toast.error(
-        error instanceof Error ? error.message : "Не удалось сохранить настройки"
+        humanizeFetchError(error, "Не удалось сохранить настройки")
       );
     } finally {
       setIsSaving(false);

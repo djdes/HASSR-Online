@@ -58,6 +58,7 @@ import {
 } from "@/components/journals/record-cards-view";
 import { localDayKey } from "@/lib/entry-defaults";
 import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 type PersonItem = { id: string; name: string; role?: string | null };
 type TraceabilitySettingsDraft = { title: string; dateFrom: string; showShockTempField: boolean; showShipmentBlock: boolean };
@@ -246,7 +247,7 @@ function SettingsDialog(props: {
       props.onOpenChange(false);
     } catch (error) {
       // Без catch ошибка сохранения глохла: окно висело, тоста не было.
-      toast.error(error instanceof Error ? error.message : "Не удалось сохранить настройки");
+      toast.error(humanizeFetchError(error, "Не удалось сохранить настройки"));
     } finally {
       setLoading(false);
     }
@@ -400,7 +401,7 @@ function ListsDialog(props: {
       });
       props.onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось сохранить списки");
+      toast.error(humanizeFetchError(error, "Не удалось сохранить списки"));
     } finally {
       setLoading(false);
     }
@@ -638,7 +639,7 @@ function RowDialog(props: {
       // Окно закрывает родитель: при правке по очереди он откроет следующую строку.
       await props.onSave(row, { rawMaterials: createdRaw, products: createdProducts });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Не удалось сохранить строку");
+      toast.error(humanizeFetchError(err, "Не удалось сохранить строку"));
     } finally {
       setLoading(false);
     }
@@ -769,7 +770,7 @@ function ImportDialog(props: {
       await props.onImport(file);
       props.onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось импортировать файл");
+      toast.error(humanizeFetchError(error, "Не удалось импортировать файл"));
     } finally {
       setLoading(false);
     }
@@ -797,7 +798,7 @@ function FinishDialog(props: { open: boolean; onOpenChange: (open: boolean) => v
       await props.onFinish();
       props.onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось закончить журнал");
+      toast.error(humanizeFetchError(error, "Не удалось закончить журнал"));
     } finally {
       setLoading(false);
     }
@@ -1003,7 +1004,7 @@ export function TraceabilityDocumentClient(props: Props) {
       await persistConfig({ ...config, rows: config.rows.filter((row) => !idsToRemove.includes(row.id)) });
       toast.success(`Удалено строк: ${count}`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось удалить выбранные строки");
+      toast.error(humanizeFetchError(error, "Не удалось удалить выбранные строки"));
     }
   }
 
@@ -1036,7 +1037,7 @@ export function TraceabilityDocumentClient(props: Props) {
           count={selectedRowIds.length}
           onClear={() => setSelectedRowIds([])}
           onDelete={() => {
-            deleteSelected().catch((error) => toast.error(error instanceof Error ? error.message : "Не удалось удалить строки"));
+            deleteSelected().catch((error) => toast.error(humanizeFetchError(error, "Не удалось удалить строки")));
           }}
           hint="Строки прослеживаемости будут удалены без возможности отмены"
         >

@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 /**
  * Быстрое создание сотрудника прямо в журнале.
@@ -116,7 +117,7 @@ export function QuickAddEmployee({
       setNewPositionName("");
       await onCreated(data.user);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toast.error(humanizeFetchError(error, "Ошибка"));
     } finally {
       setPending(false);
     }

@@ -46,20 +46,22 @@ export async function POST(req: NextRequest) {
     const file = form.get("file") as File | null;
     const entryId = form.get("entryId") as string | null;
 
+    // Тексты — по-русски и на «вы»: их видит повар на телефоне, а не
+    // разработчик в консоли.
     if (!file) {
-      return NextResponse.json({ error: "No file" }, { status: 400 });
+      return NextResponse.json({ error: "Файл не выбран" }, { status: 400 });
     }
 
     if (!ALLOWED_TYPES.includes(file.type as AllowedType)) {
       return NextResponse.json(
-        { error: "Invalid file type. Use JPG, PNG, or WebP." },
+        { error: "Подойдут JPG, PNG или WebP" },
         { status: 400 }
       );
     }
 
     if (file.size > MAX_SIZE) {
       return NextResponse.json(
-        { error: "File too large. Max 5MB." },
+        { error: "Фото больше 5 МБ — сожмите или снимите заново" },
         { status: 400 }
       );
     }
@@ -74,7 +76,7 @@ export async function POST(req: NextRequest) {
         select: { id: true },
       });
       if (!entry) {
-        return NextResponse.json({ error: "Entry not found" }, { status: 404 });
+        return NextResponse.json({ error: "Запись не найдена" }, { status: 404 });
       }
     }
 

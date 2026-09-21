@@ -92,6 +92,7 @@ import {
 } from "@/components/journals/journal-grid";
 import { JournalAddRow } from "@/components/journals/journal-add-row";
 import { localDayKey } from "@/lib/entry-defaults";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 type Employee = { id: string; name: string; role: string };
 type Row = {
@@ -499,7 +500,7 @@ export function MedBookDocumentClient({
       setRows(previousRows);
       if (options?.silent) throw error;
       toast.error(
-        error instanceof Error ? error.message : "Не удалось сохранить журнал",
+        humanizeFetchError(error, "Не удалось сохранить журнал"),
       );
     }
   }
@@ -534,7 +535,7 @@ export function MedBookDocumentClient({
       router.refresh();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Не удалось сохранить журнал",
+        humanizeFetchError(error, "Не удалось сохранить журнал"),
       );
     }
   }
@@ -1599,9 +1600,7 @@ export function MedBookDocumentClient({
               router.refresh();
             } catch (error) {
               toast.error(
-                error instanceof Error
-                  ? error.message
-                  : "Не удалось сохранить настройки",
+                humanizeFetchError(error, "Не удалось сохранить настройки"),
               );
             }
           }}
@@ -1708,9 +1707,7 @@ export function MedBookDocumentClient({
                       router.refresh();
                     } catch (error) {
                       toast.error(
-                        error instanceof Error
-                          ? error.message
-                          : "Не удалось сохранить настройки",
+                        humanizeFetchError(error, "Не удалось сохранить настройки"),
                       );
                     }
                   }}

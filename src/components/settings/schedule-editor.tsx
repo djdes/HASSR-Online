@@ -252,7 +252,7 @@ export function ScheduleEditor({
       <div className="rounded-3xl border border-[#ececf4] bg-[#fafbff] px-5 py-4">
         <div className="flex flex-wrap items-center gap-3 text-[12px] text-[#3c4053]">
           <span className="font-semibold uppercase tracking-[0.14em] text-[#6f7282]">
-            Статус (кликните на ячейку, чтобы переключить)
+            Статус (нажмите на ячейку, чтобы переключить)
           </span>
           {(["scheduled", "off", "vacation", "sick"] as ShiftStatus[]).map(
             (s) => (

@@ -9,50 +9,19 @@ import {
   ArrowLeft,
   CheckCircle2,
   Loader2,
-  ClipboardList,
-  Droplets,
-  HeartPulse,
   RotateCcw,
-  ShieldCheck,
   SkipForward,
-  Sparkles,
-  Thermometer,
   Undo2,
-  Utensils,
 } from "lucide-react";
 import { claimReasonRu } from "@/app/mini/_lib/claim-errors";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PhotoField, parsePhotoValue } from "@/components/journals/photo-field";
+import { NumberField } from "@/components/journals/number-field";
 import { TaskFillField } from "@/components/task-fill/task-fill-field";
+import { journalIconName } from "@/lib/journal-label";
+import { JournalIcon } from "@/app/mini/_components/journal-icon";
+import { humanizeFetchError, isFetchNetworkError } from "@/lib/humanize-fetch-error";
 import type { TaskFormSchema } from "@/lib/tasksflow-adapters/task-form";
-
-/**
- * Иконка задачи по виду журнала. Раньше у любой задачи стоял
- * термометр — уборщица открывала «Уборка зала» и видела градусник.
- * Незнакомый человек читает картинку раньше текста, и она не должна
- * врать. Ничего не подошло — нейтральный планшет.
- */
-function claimIcon(journalCode: string) {
-  const code = journalCode.toLowerCase();
-  if (code.includes("clean") || code.includes("sanitary") || code.includes("disinfect")) {
-    return Sparkles;
-  }
-  if (code.includes("health") || code.includes("med")) return HeartPulse;
-  if (
-    code.includes("temp") ||
-    code.includes("cold") ||
-    code.includes("climate") ||
-    code.includes("fridge")
-  ) {
-    return Thermometer;
-  }
-  if (code.includes("hygien")) return Droplets;
-  if (code.includes("food") || code.includes("dish") || code.includes("product")) {
-    return Utensils;
-  }
-  if (code.includes("control") || code.includes("audit")) return ShieldCheck;
-  return ClipboardList;
-}
 
 type Claim = {
   id: string;
@@ -61,7 +30,124 @@ type Claim = {
   scopeLabel: string;
   parentHint: string | null;
   status: string;
+  dateKey: string;
+  /** «rejected» — заведующая вернула задачу на переделку. */
+  verificationStatus: string | null;
+  verifierComment: string | null;
+  verifiedByName: string | null;
+  /** Что было заполнено в прошлый раз — подставляем обратно в поля. */
+  completionData: Record<string, unknown> | null;
+  /** Норма температуры из карточки оборудования этой задачи. */
+  temperatureNorm: { min: number | null; max: number | null } | null;
+  /** Разрешил ли руководитель «Сегодня не требуется» для этого журнала. */
+  allowSkip: boolean;
 };
+
+/** Ключ черновика в sessionStorage — переживает уход с экрана и возврат. */
+function draftKey(claimId: string): string {
+  return `wesetup.claim-draft.${claimId}`;
+}
+
+/** Единица измерения из подписи поля: «Температура (°C)» → «°C». */
+function unitFromLabel(label: string): string | undefined {
+  const match = /\(([^)]+)\)\s*$/.exec(label);
+  if (!match) return undefined;
+  const unit = match[1].trim();
+  return unit.length <= 4 ? unit : undefined;
+}
+
+/** Пустое ли значение поля — одинаково для строк, чисел и null. */
+function isBlank(value: unknown): boolean {
+  return (
+    value === undefined ||
+    value === null ||
+    (typeof value === "string" && value.trim() === "")
+  );
+}
+
+/** Строка или число → число. Русская запятая принимается наравне с точкой. */
+function toNumber(value: unknown): number {
+  if (typeof value === "number") return value;
+  return Number(String(value ?? "").replace(",", ".").trim());
+}
+
+type ClaimDraft = {
+  data: Record<string, unknown>;
+  pipelineProgress: Record<string, boolean>;
+  stepPhotos: Record<string, string>;
+};
+
+function readDraft(claimId: string): ClaimDraft | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(draftKey(claimId));
+    return raw ? (JSON.parse(raw) as ClaimDraft) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeDraft(claimId: string, draft: ClaimDraft): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(draftKey(claimId), JSON.stringify(draft));
+  } catch {
+    // Приватный режим Safari запрещает запись — не повод ломать экран.
+  }
+}
+
+function clearDraft(claimId: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.removeItem(draftKey(claimId));
+  } catch {
+    /* см. writeDraft */
+  }
+}
+
+/** Служебные ключи снимка — в поля формы они не возвращаются. */
+const SERVICE_COMPLETION_KEYS = new Set([
+  "steps",
+  "pipelineCompleted",
+  "skipped",
+  "reason",
+]);
+
+/** Прежние значения полей — чтобы после «Переделать» форма не была пустой. */
+function pickFormValues(
+  completionData: Record<string, unknown> | null
+): Record<string, unknown> {
+  if (!completionData) return {};
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(completionData)) {
+    if (SERVICE_COMPLETION_KEYS.has(key) || key.startsWith("_")) continue;
+    if (value === null || typeof value === "object") continue;
+    // Числа возвращаем строкой: поле ввода работает со строкой.
+    out[key] = typeof value === "number" ? String(value) : value;
+  }
+  return out;
+}
+
+/** Прежние отметки шагов — включая пункты чек-листов внутри шага. */
+function pickStepProgress(
+  completionData: Record<string, unknown> | null
+): Record<string, boolean> {
+  const steps = completionData?.steps;
+  if (!Array.isArray(steps)) return {};
+  const out: Record<string, boolean> = {};
+  for (const step of steps as Array<{
+    id?: string;
+    done?: boolean;
+    checklist?: Array<{ done?: boolean }>;
+  }>) {
+    if (!step?.id) continue;
+    if (step.done === true) out[step.id] = true;
+    (step.checklist ?? []).forEach((item, i) => {
+      if (item?.done === true) out[`${step.id}::cl::${i}`] = true;
+    });
+  }
+  return out;
+}
 
 /**
  * Универсальная страница «выполнить claim» в Mini App.
@@ -159,7 +245,7 @@ const JOURNAL_FORMS: Record<string, TaskFormSchema> = {
   health_check: {
     submitLabel: "Завершить",
     fields: [
-      { key: "allHealthy", label: "Все сотрудники в норме", type: "boolean" },
+      { key: "allHealthy", label: "Все сотрудники допущены", type: "boolean" },
       { key: "notes", label: "Примечания", type: "text" },
     ],
   },
@@ -387,21 +473,33 @@ export default function ClaimPage({
   const loadClaim = useCallback(async () => {
     setError(null);
     try {
-      const res = await fetch("/api/journal-task-claims/my", { cache: "no-store" });
+      // Запрашиваем ИМЕННО эту задачу. Раньше экран брал «мою текущую» и
+      // при расхождении писал «уже закрыта или её взял другой сотрудник» —
+      // у человека с зависшей вчерашней задачей это была неправда.
+      const res = await fetch(`/api/journal-task-claims/${id}`, {
+        cache: "no-store",
+      });
       if (!res.ok) {
-        // Раньше неуспешный ответ не обрабатывался вовсе: экран
-        // оставался с крутилкой навсегда и ничего не объяснял.
-        setError(claimReasonRu(null, res.status));
+        const body = (await res.json().catch(() => null)) as {
+          reason?: string;
+        } | null;
+        setError(claimReasonRu(body?.reason, res.status));
         return;
       }
-      const j = (await res.json()) as { claim: Claim | null };
-      if (!j.claim || j.claim.id !== id) {
-        setError(
-          "Эта задача уже закрыта или её взял другой сотрудник. Вернитесь к списку задач на сегодня."
-        );
-        return;
-      }
+      const j = (await res.json()) as { claim: Claim };
       setClaim(j.claim);
+
+      // Черновик с этого же экрана важнее прошлой отправки: человек мог
+      // что-то дописать и уйти, не дождавшись связи.
+      const draft = readDraft(id);
+      const previous = j.claim.completionData ?? null;
+      setData({ ...pickFormValues(previous), ...(draft?.data ?? {}) });
+      setPipelineProgress({
+        ...pickStepProgress(previous),
+        ...(draft?.pipelineProgress ?? {}),
+      });
+      if (draft?.stepPhotos) setStepPhotos(draft.stepPhotos);
+
       // Параллельно — pipeline для этого journalCode (если есть).
       fetch(`/api/journal-pipelines/${j.claim.journalCode}`, {
         cache: "force-cache",
@@ -411,8 +509,8 @@ export default function ClaimPage({
           if (p?.pipeline) setPipeline(p.pipeline);
         })
         .catch(() => null);
-    } catch {
-      setError("Нет связи. Проверьте интернет и попробуйте ещё раз.");
+    } catch (e) {
+      setError(humanizeFetchError(e));
     }
   }, [id]);
 
@@ -420,49 +518,70 @@ export default function ClaimPage({
     void loadClaim();
   }, [loadClaim]);
 
+  // Черновик на устройстве. Экран задачи в очередь отправки не пишет
+  // (её умеет только форма журнала), поэтому честная страховка одна:
+  // введённое переживает уход с экрана и возврат, а отправку человек
+  // повторяет сам, когда связь появится.
+  useEffect(() => {
+    if (!claim) return;
+    writeDraft(id, { data, pipelineProgress, stepPhotos });
+  }, [claim, id, data, pipelineProgress, stepPhotos]);
+
   const form = claim ? JOURNAL_FORMS[claim.journalCode] : null;
-  const ClaimIcon = claimIcon(claim?.journalCode ?? "");
+  const steps = pipeline?.steps ?? [];
+  const requiredFields = (form?.fields ?? []).filter(
+    // `required` есть не у всех вариантов TaskFormField (у булева его нет
+    // по определению) — сужаем через `in`.
+    (f) => "required" in f && f.required === true
+  );
+  const missingFields = requiredFields.filter((f) => isBlank(data[f.key]));
+  const doneSteps = steps.filter((s) => pipelineProgress[s.id]).length;
+  const missingSteps = steps.length - doneSteps;
 
   async function submit() {
     if (!claim) return;
 
-    // Клиент-side проверка required-полей. Сотрудник без опыта работы
-    // с PC не должен видеть «Ошибка валидации: temperature: required»
-    // от сервера — он не поймёт что это значит. Подсветим конкретное
-    // поле названием на русском и сразу.
-    if (form && (!pipeline || pipeline.steps.length === 0)) {
-      const missing = form.fields
-        // `required` есть не у всех вариантов TaskFormField (у булева его
-        // нет по определению) — сужаем через `in`.
-        .filter((f) => "required" in f && f.required === true)
-        .filter((f) => {
-          const v = data[f.key];
-          if (f.type === "boolean") return false; // булево required не используем
-          return v === undefined || v === null || v === "";
-        });
-      if (missing.length > 0) {
-        setError(`Заполните поле «${missing[0].label}»`);
-        return;
-      }
-      // Также ловим NaN — пользователь ввёл буквы вместо чисел.
-      const badNumber = form.fields.find(
-        (f) => f.type === "number" && typeof data[f.key] === "number" && Number.isNaN(data[f.key] as number)
+    // Клиент-side проверка обязательных полей. Работает ВСЕГДА, в том
+    // числе при пошаговой инструкции: раньше pipeline её выключал, и
+    // замер температуры уходил на сервер пустым.
+    if (missingSteps > 0) {
+      setError(`Отметьте все шаги: ${doneSteps} из ${steps.length}`);
+      return;
+    }
+    if (missingFields.length > 0) {
+      setError(
+        `Заполните: ${missingFields.map((f) => f.label).join(", ")}`
       );
-      if (badNumber) {
-        setError(`В поле «${badNumber.label}» нужно число, а не буквы.`);
-        return;
-      }
+      return;
+    }
+    // Ловим буквы вместо цифр.
+    const badNumber = (form?.fields ?? []).find(
+      (f) =>
+        f.type === "number" &&
+        !isBlank(data[f.key]) &&
+        !Number.isFinite(toNumber(data[f.key]))
+    );
+    if (badNumber) {
+      setError(`В поле «${badNumber.label}» нужно число, а не буквы.`);
+      return;
     }
 
     setSubmitting(true);
     setError(null);
     try {
-      // Если pipeline — используем прогресс шагов как data; иначе — form data.
+      // Числовые поля храним строкой (в них живёт запятая и промежуточный
+      // ввод) — на сервер уходит число.
+      const values: Record<string, unknown> = { ...data };
+      for (const f of form?.fields ?? []) {
+        if (f.type !== "number") continue;
+        values[f.key] = isBlank(data[f.key]) ? undefined : toNumber(data[f.key]);
+      }
+      // Шаги идут вместе с полями: заведующая видит и инструкцию, и цифры.
       const payload =
-        pipeline && pipeline.steps.length > 0
+        steps.length > 0
           ? {
               pipelineCompleted: true,
-              steps: pipeline.steps.map((s) => ({
+              steps: steps.map((s) => ({
                 id: s.id,
                 title: s.title,
                 done: Boolean(pipelineProgress[s.id]),
@@ -472,9 +591,9 @@ export default function ClaimPage({
                   done: Boolean(pipelineProgress[`${s.id}::cl::${i}`]),
                 })),
               })),
-              ...data,
+              ...values,
             }
-          : data;
+          : values;
       const res = await fetch(`/api/journal-task-claims/${id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -486,14 +605,20 @@ export default function ClaimPage({
         // `reason` — это код вроде `not_owner`; показывать его человеку нельзя.
         const msg =
           errs?.map((e) => e.message).join("; ") ||
+          j?.message ||
           claimReasonRu(j?.reason, res.status);
         throw new Error(msg);
       }
+      clearDraft(id);
       setWarnings(j?.warnings ?? []);
       // Через 1 сек возвращаемся на /mini/today
       setTimeout(() => router.push("/mini/today"), 1200);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Ошибка");
+      setError(
+        isFetchNetworkError(e)
+          ? "Нет связи. Введённое на экране сохранилось — нажми «Завершить» ещё раз, когда связь появится"
+          : humanizeFetchError(e, "Не получилось. Попробуй ещё раз.")
+      );
     } finally {
       setSubmitting(false);
     }
@@ -501,6 +626,12 @@ export default function ClaimPage({
 
   async function skipTask() {
     if (!claim) return;
+    // Причина обязательна: без неё заведующая видит «пропущено» и не
+    // знает, поставщик не приехал или человек решил не возиться.
+    if (skipReason.trim().length < 3) {
+      setError("Напиши, почему сегодня заполнять не нужно");
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -509,17 +640,20 @@ export default function ClaimPage({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "skip",
-          skipReason: skipReason.trim() || "Сегодня не требуется",
+          skipReason: skipReason.trim(),
         }),
       });
       const j = await res.json().catch(() => null);
       if (!res.ok) {
-        throw new Error(claimReasonRu(j?.reason, res.status));
+        throw new Error(j?.message || claimReasonRu(j?.reason, res.status));
       }
+      clearDraft(id);
       setTimeout(() => router.push("/mini/today"), 800);
     } catch (e) {
       setError(
-        e instanceof Error ? e.message : "Не получилось. Попробуйте ещё раз."
+        isFetchNetworkError(e)
+          ? "Нет связи. Попробуй ещё раз, когда связь появится"
+          : humanizeFetchError(e, "Не получилось. Попробуй ещё раз.")
       );
     } finally {
       setSubmitting(false);
@@ -551,7 +685,7 @@ export default function ClaimPage({
       router.push("/mini/today");
     } catch (e) {
       setError(
-        e instanceof Error ? e.message : "Не получилось вернуть задачу."
+        humanizeFetchError(e, "Не получилось вернуть задачу.")
       );
     } finally {
       setSubmitting(false);
@@ -617,10 +751,22 @@ export default function ClaimPage({
   // Шаг с requirePhoto не даёт закрыть задачу, пока снимка нет — до этой
   // правки требование было надписью без последствий.
   const missingStepPhoto = Boolean(
-    pipeline?.steps.some(
+    steps.some(
       (step) => step.requirePhoto && parsePhotoValue(stepPhotos[step.id]).length === 0
     )
   );
+
+  // Что мешает завершить. Показываем прямо под кнопкой: «Отметьте шаги:
+  // 3 из 4», «Заполните: Температура».
+  const blockers: string[] = [];
+  if (missingSteps > 0) {
+    blockers.push(`Отметьте шаги: ${doneSteps} из ${steps.length}`);
+  }
+  if (missingFields.length > 0) {
+    blockers.push(`Заполните: ${missingFields.map((f) => f.label).join(", ")}`);
+  }
+  if (missingStepPhoto) blockers.push("Нужно фото шага");
+  const canSubmit = blockers.length === 0;
 
   return (
     // Нижний отступ больше обычного: последняя кнопка («Вернуть
@@ -643,7 +789,10 @@ export default function ClaimPage({
               color: "var(--mini-primary-contrast)",
             }}
           >
-            <ClaimIcon className="size-5" />
+            <JournalIcon
+              name={journalIconName(claim.journalCode)}
+              className="size-5"
+            />
           </span>
           <div>
             <div
@@ -662,7 +811,39 @@ export default function ClaimPage({
         </div>
       </header>
 
-      {/* Pipeline — пошаговая инструкция. Имеет приоритет над form. */}
+      {/* Задача вернулась от заведующей. Раньше повар видел обычную
+          активную задачу и пустую форму — комментарий «Переделать» до
+          него не доходил вовсе. */}
+      {claim.verificationStatus === "rejected" ? (
+        <div
+          className="rounded-2xl border p-4 text-[13px] leading-relaxed"
+          style={{
+            background: "var(--mini-amber-soft)",
+            borderColor: "var(--mini-divider-strong)",
+            color: "var(--mini-text)",
+          }}
+        >
+          <div className="font-semibold" style={{ color: "var(--mini-amber)" }}>
+            Вернули на переделку
+          </div>
+          <div className="mt-1">
+            {claim.verifierComment?.trim() ||
+              "Комментария нет — уточни у заведующей, что поправить."}
+          </div>
+          {claim.verifiedByName ? (
+            <div className="mt-1" style={{ color: "var(--mini-text-muted)" }}>
+              — {claim.verifiedByName}
+            </div>
+          ) : null}
+          <div className="mt-2" style={{ color: "var(--mini-text-muted)" }}>
+            Прошлые ответы уже стоят в полях — поправь, что нужно, и
+            нажми «Завершить» ещё раз.
+          </div>
+        </div>
+      ) : null}
+
+      {/* Пошаговая инструкция. Поля журнала идут ПОД ней — раньше шаги
+          их полностью вытесняли, и замер закрывался без значения. */}
       {pipeline && pipeline.steps.length > 0 ? (
         <div className="space-y-3">
           {pipeline.intro ? (
@@ -709,27 +890,42 @@ export default function ClaimPage({
                   >
                     {done ? "✓" : idx + 1}
                   </div>
+                  {/* Чек-бокс у КАЖДОГО шага: отметить нужно все, и
+                      человек должен видеть, где ещё не отмечено. Раньше
+                      отметка была невидимым тапом по заголовку. */}
                   <button
                     type="button"
+                    aria-pressed={done}
                     onClick={() =>
                       setPipelineProgress((p) => ({ ...p, [step.id]: !p[step.id] }))
                     }
-                    className="block w-full text-left"
+                    className="flex w-full items-start gap-2.5 text-left"
                   >
-                    <div
-                      className="text-[15px] font-semibold leading-tight"
-                      style={{ color: "var(--mini-text)" }}
-                    >
-                      {step.title}
-                    </div>
-                    {step.instruction ? (
-                      <div
-                        className="mt-1 text-[13px] leading-relaxed"
-                        style={{ color: "var(--mini-text-muted)" }}
+                    <input
+                      type="checkbox"
+                      checked={done}
+                      readOnly
+                      tabIndex={-1}
+                      aria-hidden
+                      className="mt-1 size-5 shrink-0 pointer-events-none"
+                      style={{ accentColor: "var(--mini-lime)" }}
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span
+                        className="block text-[15px] font-semibold leading-tight"
+                        style={{ color: "var(--mini-text)" }}
                       >
-                        {step.instruction}
-                      </div>
-                    ) : null}
+                        {step.title}
+                      </span>
+                      {step.instruction ? (
+                        <span
+                          className="mt-1 block text-[13px] leading-relaxed"
+                          style={{ color: "var(--mini-text-muted)" }}
+                        >
+                          {step.instruction}
+                        </span>
+                      ) : null}
+                    </span>
                   </button>
                   {step.checklist && step.checklist.length > 0 ? (
                     <ul className="mt-2 space-y-1">
@@ -788,21 +984,61 @@ export default function ClaimPage({
               color: "var(--mini-text-muted)",
             }}
           >
-            Когда все шаги выполнены — нажми «Завершить» внизу.
+            Отметь все шаги, заполни поля ниже — и нажми «Завершить».
           </div>
         </div>
-      ) : form ? (
+      ) : null}
+
+      {form ? (
         <div className="space-y-3">
-          {form.fields.map((f) => (
-            <TaskFillField
-              key={f.key}
-              field={f}
-              value={data[f.key]}
-              onChange={(v) => setData((d) => ({ ...d, [f.key]: v }))}
-            />
-          ))}
+          {steps.length > 0 ? (
+            <div
+              className="px-1 text-[11px] font-semibold uppercase tracking-[0.14em]"
+              style={{ color: "var(--mini-text-faint)" }}
+            >
+              Запиши результат
+            </div>
+          ) : null}
+          {form.fields.map((f) =>
+            // Числовое поле — тот же компонент, что в журналах: степпер
+            // «−/+», «Готово» сохраняет, норма подписана под полем и
+            // старт степпера от её середины.
+            f.type === "number" ? (
+              <div
+                key={f.key}
+                className="rounded-2xl border p-4"
+                style={{
+                  background: "var(--mini-surface-1)",
+                  borderColor: "var(--mini-divider)",
+                }}
+              >
+                <NumberField
+                  label={f.label}
+                  unit={unitFromLabel(f.label) ?? f.unit}
+                  value={data[f.key] == null ? "" : String(data[f.key])}
+                  onChange={(next) =>
+                    setData((d) => ({ ...d, [f.key]: next }))
+                  }
+                  norm={
+                    f.key === "temperature" || f.key === "temperatureC"
+                      ? claim.temperatureNorm
+                      : null
+                  }
+                  step={f.step ?? 1}
+                  placeholder={f.placeholder}
+                />
+              </div>
+            ) : (
+              <TaskFillField
+                key={f.key}
+                field={f}
+                value={data[f.key]}
+                onChange={(v) => setData((d) => ({ ...d, [f.key]: v }))}
+              />
+            )
+          )}
         </div>
-      ) : (
+      ) : steps.length === 0 ? (
         <div
           className="rounded-2xl border border-dashed p-4 text-[13px] leading-relaxed"
           style={{
@@ -813,7 +1049,7 @@ export default function ClaimPage({
           Для этой задачи короткой формы нет — нажми «Завершить», чтобы
           её закрыть. Подробную запись заполняют в полной версии кабинета.
         </div>
-      )}
+      ) : null}
 
       {error ? (
         <div
@@ -856,6 +1092,13 @@ export default function ClaimPage({
           >
             Сегодня не требуется заполнять?
           </div>
+          <div
+            className="text-[12px] leading-relaxed"
+            style={{ color: "var(--mini-text-muted)" }}
+          >
+            Напиши причину — заведующая её увидит и подтвердит пропуск.
+            Без причины пропустить нельзя.
+          </div>
           <input
             type="text"
             value={skipReason}
@@ -879,7 +1122,7 @@ export default function ClaimPage({
             <button
               type="button"
               onClick={skipTask}
-              disabled={submitting}
+              disabled={submitting || skipReason.trim().length < 3}
               className="mini-press inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl text-[13px] font-medium disabled:opacity-50"
               style={{
                 background: "var(--mini-crimson)",
@@ -896,7 +1139,7 @@ export default function ClaimPage({
           <button
             type="button"
             onClick={submit}
-            disabled={submitting || missingStepPhoto}
+            disabled={submitting || !canSubmit}
             className="mini-press inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-[15px] font-medium disabled:opacity-60"
             style={{
               background: "var(--mini-lime)",
@@ -904,23 +1147,35 @@ export default function ClaimPage({
             }}
           >
             {submitting ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
-            {missingStepPhoto
-              ? "Нужно фото шага"
-              : form?.submitLabel || "Завершить"}
+            {form?.submitLabel || "Завершить"}
           </button>
-          <button
-            type="button"
-            onClick={() => setSkipMode(true)}
-            disabled={submitting}
-            className="mini-press inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border text-[13px]"
-            style={{
-              borderColor: "var(--mini-divider-strong)",
-              color: "var(--mini-text-muted)",
-            }}
-          >
-            <SkipForward className="size-3.5" />
-            Сегодня не требуется
-          </button>
+          {/* Кнопка серая — человек должен видеть, чего именно не хватает,
+              а не гадать. */}
+          {blockers.length > 0 ? (
+            <div
+              className="px-1 text-center text-[12px] leading-relaxed"
+              style={{ color: "var(--mini-text-muted)" }}
+            >
+              {blockers.join(" · ")}
+            </div>
+          ) : null}
+          {/* Пропуск показываем только там, где руководитель его разрешил
+              (`allowNoEvents` в настройках журнала). */}
+          {claim.allowSkip ? (
+            <button
+              type="button"
+              onClick={() => setSkipMode(true)}
+              disabled={submitting}
+              className="mini-press inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border text-[13px]"
+              style={{
+                borderColor: "var(--mini-divider-strong)",
+                color: "var(--mini-text-muted)",
+              }}
+            >
+              <SkipForward className="size-3.5" />
+              Сегодня не требуется
+            </button>
+          ) : null}
           {/* Выход из задачи, взятой по ошибке: без него «Сегодня» держит
               человека на одной задаче и другие взять нельзя. */}
           <button
@@ -946,7 +1201,8 @@ export default function ClaimPage({
         bullets={[
           { label: "Задача снова станет свободной — её сможет взять любой" },
           { label: "Введённое на этом экране не сохранится", tone: "warn" },
-          { label: "После этого вы сможете взять другую задачу" },
+          // Экран задачи и инструкции на нём — на «ты», как и сами шаги.
+          { label: "После этого ты сможешь взять другую задачу" },
         ]}
         confirmLabel="Вернуть задачу"
         cancelLabel="Остаюсь делать"

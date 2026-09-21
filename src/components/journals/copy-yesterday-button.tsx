@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 type Result = {
   copied: number;
@@ -85,7 +86,7 @@ export function useCopyYesterdayAction(documentId: string) {
         router.refresh();
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка сети");
+      toast.error(humanizeFetchError(err, "Ошибка сети"));
     } finally {
       setBusy(false);
     }

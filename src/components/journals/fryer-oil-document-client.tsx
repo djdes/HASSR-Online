@@ -86,6 +86,7 @@ import { JournalAddRow } from "@/components/journals/journal-add-row";
 
 import { useTodayKey } from "@/lib/use-today-key";
 import { TodayStripForJournal } from "@/components/journals/today-strip-for-journal";
+import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 /**
  * ЭКРАН = WeSetup (мягкие серые рамки `#ececf4`, шапка `#f8f9fc`),
  * ПЕЧАТЬ (Ctrl+P) = «бумага» для инспектора РПН/СЭС (чёрные рамки,
@@ -421,7 +422,7 @@ function EntryDialog(props: {
       // Диалог не закрываем: заполненные вкладки должны остаться перед
       // глазами, чтобы человек мог дожать сохранение, а не набирать заново.
       toast.error(
-        error instanceof Error ? error.message : "Не удалось сохранить записи"
+        humanizeFetchError(error, "Не удалось сохранить записи")
       );
     } finally {
       setBusy(false);
@@ -777,7 +778,7 @@ function ListsDialog(props: { open: boolean; onOpenChange: (open: boolean) => vo
       toast.success(`Добавлено позиций: ${values.length}`);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Не удалось прочитать файл",
+        humanizeFetchError(error, "Не удалось прочитать файл"),
       );
     }
   }
@@ -861,7 +862,7 @@ function ListsDialog(props: { open: boolean; onOpenChange: (open: boolean) => vo
               await props.onSave(lists);
               props.onOpenChange(false);
             } catch (error) {
-              toast.error(error instanceof Error ? error.message : "Не удалось сохранить списки");
+              toast.error(humanizeFetchError(error, "Не удалось сохранить списки"));
             } finally {
               setIsSaving(false);
             }
@@ -888,7 +889,7 @@ function SettingsDialog(props: { open: boolean; onOpenChange: (open: boolean) =>
       props.onOpenChange(false);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Не удалось сохранить настройки"
+        humanizeFetchError(error, "Не удалось сохранить настройки")
       );
     } finally {
       setIsSaving(false);
@@ -1267,7 +1268,7 @@ export function FryerOilDocumentClient(props: Props) {
     });
     if (!confirmed) return;
     await deleteEntries(selectedIds).catch((error) =>
-      toast.error(error instanceof Error ? error.message : "Не удалось удалить записи"),
+      toast.error(humanizeFetchError(error, "Не удалось удалить записи")),
     );
   }
 
