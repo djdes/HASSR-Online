@@ -29,6 +29,7 @@ import {
 } from "./types";
 import type { TaskFormField, TaskFormSchema } from "./task-form";
 import { extractEmployeeId as employeeIdFromRowKey, rowKeyForEmployee } from "./row-key";
+import { NOT_COMMISSION_WHERE } from "@/lib/journal-roster";
 
 const HYGIENE_CODE = "hygiene";
 const CATEGORY = "WeSetup · Гигиена";
@@ -103,7 +104,7 @@ export const hygieneAdapter: JournalAdapter = {
         orderBy: { dateFrom: "desc" },
       }),
       db.user.findMany({
-        where: { organizationId, isActive: true },
+        where: { organizationId, isActive: true, ...NOT_COMMISSION_WHERE },
         select: {
           id: true,
           name: true,

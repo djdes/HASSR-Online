@@ -153,7 +153,9 @@ export async function createStaffMember(
     "/journals/health_check": "журнал здоровья",
     "/journals/staff_training": "журнал регистрации инструктажей",
   };
-  try {
+  // Сторонняя бракеражная комиссия — не штат: в гигиену, здоровье и
+  // инструктажи её не вносят, напоминать об этом руководителю не нужно.
+  if (position.categoryKey !== "commission") try {
     await Promise.all(
       journalsToPopulate.map((j) =>
         notifyManagement({

@@ -62,6 +62,7 @@ export default async function StaffPage() {
           weeklyDaysOff: true,
           qrPinHash: true,
           buildingIds: true,
+          canEditBrakerageDishes: true,
         },
       }),
       db.staffWorkOffDay.findMany({
@@ -113,6 +114,9 @@ export default async function StaffPage() {
       existingPositionNames
     ),
     staff: positionSuggestionsFor(sphere, "staff", existingPositionNames),
+    commission: ["Член бракеражной комиссии", "Председатель бракеражной комиссии", "Медицинский работник"].filter(
+      (name) => !existingPositionNames.includes(name)
+    ),
   };
 
   // Заводить новые точки может только владелец аккаунта: организации
@@ -138,7 +142,10 @@ export default async function StaffPage() {
       telegramBotUrl={telegramBotUrl}
       positions={positions.map((p) => ({
         id: p.id,
-        categoryKey: p.categoryKey as "management" | "staff",
+        categoryKey: (p.categoryKey === "management" || p.categoryKey === "commission" ? p.categoryKey : "staff") as
+          | "management"
+          | "staff"
+          | "commission",
         name: p.name,
         sortOrder: p.sortOrder,
       }))}
@@ -157,6 +164,7 @@ export default async function StaffPage() {
         weeklyDaysOff: u.weeklyDaysOff,
         buildingIds: u.buildingIds,
         hasQrPin: Boolean(u.qrPinHash),
+        canEditBrakerageDishes: u.canEditBrakerageDishes,
       }))}
       workOffDays={workOffDays.map((w) => ({
         userId: w.userId,

@@ -4,6 +4,7 @@ import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { ScheduleEditor } from "@/components/settings/schedule-editor";
+import { NOT_COMMISSION_WHERE } from "@/lib/journal-roster";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,7 @@ export default async function ScheduleSettingsPage() {
         organizationId,
         isActive: true,
         archivedAt: null,
+        ...NOT_COMMISSION_WHERE,
       },
       orderBy: [{ name: "asc" }],
       select: {

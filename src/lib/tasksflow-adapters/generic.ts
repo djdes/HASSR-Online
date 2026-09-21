@@ -31,6 +31,7 @@ import {
 } from "./types";
 import type { PipelineStep, TaskFormField, TaskFormSchema } from "./task-form";
 import { extractEmployeeId, rowKeyForEmployee } from "./row-key";
+import { NOT_COMMISSION_WHERE } from "@/lib/journal-roster";
 
 const COMMENT_FIELD = {
   type: "text" as const,
@@ -341,7 +342,7 @@ export function buildGenericAdapter(
           orderBy: { dateFrom: "desc" },
         }),
         db.user.findMany({
-          where: { organizationId, isActive: true },
+          where: { organizationId, isActive: true, ...NOT_COMMISSION_WHERE },
           select: {
             id: true,
             name: true,

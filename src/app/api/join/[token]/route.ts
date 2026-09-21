@@ -59,7 +59,8 @@ export async function GET(_request: Request, ctx: Ctx) {
       select: { name: true },
     }),
     db.jobPosition.findMany({
-      where: { organizationId: r.row.organizationId },
+      // Сторонняя бракеражная комиссия в штат по QR не записывается.
+      where: { organizationId: r.row.organizationId, categoryKey: { not: "commission" } },
       orderBy: [{ categoryKey: "asc" }, { sortOrder: "asc" }],
       select: { id: true, name: true, categoryKey: true },
     }),
@@ -137,7 +138,7 @@ export async function POST(request: Request, ctx: Ctx) {
 
   // Должность должна принадлежать той же org что и токен.
   const position = await db.jobPosition.findFirst({
-    where: { id: body.jobPositionId, organizationId: r.row.organizationId },
+    where: { id: body.jobPositionId, organizationId: r.row.organizationId, categoryKey: { not: "commission" } },
     select: { id: true, name: true, categoryKey: true },
   });
   if (!position) {

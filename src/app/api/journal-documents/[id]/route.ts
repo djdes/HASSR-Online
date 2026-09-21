@@ -49,6 +49,7 @@ import { isManagementRole } from "@/lib/user-roles";
 import { canWriteJournal, hasJournalAccess } from "@/lib/journal-acl";
 import {
   ORG_ROSTER_WHERE,
+  ORG_SIGNER_WHERE,
   RESPONSIBLE_NOT_IN_ORG_ERROR,
   resolveResponsibleChoice,
 } from "@/lib/journal-roster";
@@ -191,7 +192,10 @@ export async function PATCH(
       ? await db.user.findMany({
           where: {
             organizationId: getActiveOrgId(session),
-            ...ORG_ROSTER_WHERE,
+            // Бракераж: в сверку сотрудников конфига входит и сторонняя
+            // комиссия, иначе привязка её членов обнулялась бы при каждом
+            // сохранении (normalizeJournalEntryStaffData).
+            ...(isBrakerageJournalCode(template?.code) ? ORG_SIGNER_WHERE : ORG_ROSTER_WHERE),
           },
           select: {
             id: true,

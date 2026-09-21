@@ -9,6 +9,7 @@ import {
   tasksflowClientFor,
 } from "@/lib/tasksflow-client";
 import { syncTasksflowUsers } from "@/lib/tasksflow-user-sync";
+import { NOT_COMMISSION_WHERE } from "@/lib/journal-roster";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,7 +43,7 @@ export async function POST(request: Request) {
   }
 
   const rawUsers = await db.user.findMany({
-    where: { organizationId: orgId, isActive: true, archivedAt: null },
+    where: { organizationId: orgId, isActive: true, archivedAt: null, ...NOT_COMMISSION_WHERE },
     select: {
       id: true,
       name: true,

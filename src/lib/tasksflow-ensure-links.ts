@@ -5,6 +5,7 @@ import {
   tasksflowClientFor,
 } from "@/lib/tasksflow-client";
 import { syncTasksflowUsers } from "@/lib/tasksflow-user-sync";
+import { NOT_COMMISSION_WHERE } from "@/lib/journal-roster";
 
 /**
  * Lite-версия syncTasksflowUsers: только WeSetup → TasksFlow
@@ -44,7 +45,7 @@ export async function ensureTasksflowUserLinks(input: {
   }
 
   const rawUsers = await db.user.findMany({
-    where: { organizationId, isActive: true, archivedAt: null },
+    where: { organizationId, isActive: true, archivedAt: null, ...NOT_COMMISSION_WHERE },
     select: {
       id: true,
       name: true,

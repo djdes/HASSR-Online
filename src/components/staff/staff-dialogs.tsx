@@ -491,7 +491,11 @@ export function StaffAddFlowDialog(props: {
             // куда именно ляжет новая должность — в «Руководство»
             // или в «Сотрудники».
             `Добавление должности · ${
-              props.categoryKey === "management" ? "Руководство" : "Сотрудники"
+              props.categoryKey === "management"
+                ? "Руководство"
+                : props.categoryKey === "commission"
+                  ? "Комиссия"
+                  : "Сотрудники"
             }`,
             <div className="space-y-3">
               {floatingLabel({
@@ -591,7 +595,9 @@ export function StaffAddFlowDialog(props: {
                     <option key={p.id} value={p.id}>
                       {p.categoryKey === "management"
                         ? "Руководство · "
-                        : "Сотрудники · "}
+                        : p.categoryKey === "commission"
+                          ? "Комиссия · "
+                          : "Сотрудники · "}
                       {p.name}
                     </option>
                   ))}
@@ -683,6 +689,7 @@ export function StaffEditEmployeeDialog(props: {
     phone?: string | null;
     weeklyDaysOff?: number[];
     buildingIds?: string[];
+    canEditBrakerageDishes?: boolean;
   }) => void;
   /** Открыть окно выдачи доступа вместо этого диалога. */
   onOpenAccess?: () => void;
@@ -697,6 +704,7 @@ export function StaffEditEmployeeDialog(props: {
   const [buildingIds, setBuildingIds] = useState<string[]>(
     () => employee.buildingIds ?? []
   );
+  const [canEditDishes, setCanEditDishes] = useState(employee.canEditBrakerageDishes === true);
 
   // Reset local state when dialog opens on a different employee.
   useEffect(() => {
@@ -705,8 +713,10 @@ export function StaffEditEmployeeDialog(props: {
       setPhone(employee.phone ?? "");
       setWeeklyDaysOff(normalizeWeeklyDaysOff(employee.weeklyDaysOff));
       setBuildingIds(employee.buildingIds ?? []);
+      setCanEditDishes(employee.canEditBrakerageDishes === true);
     }
   }, [
+    employee.canEditBrakerageDishes,
     open,
     employee.id,
     employee.name,
@@ -726,7 +736,11 @@ export function StaffEditEmployeeDialog(props: {
       phone?: string | null;
       weeklyDaysOff?: number[];
       buildingIds?: string[];
+      canEditBrakerageDishes?: boolean;
     } = {};
+    if (canEditDishes !== (employee.canEditBrakerageDishes === true)) {
+      patch.canEditBrakerageDishes = canEditDishes;
+    }
     const nextWeekly = normalizeWeeklyDaysOff(weeklyDaysOff);
     if (nextWeekly.join(",") !== savedWeeklyDaysOff.join(",")) {
       patch.weeklyDaysOff = nextWeekly;
@@ -796,6 +810,23 @@ export function StaffEditEmployeeDialog(props: {
                 ariaLabel={`Точки: ${employee.name}`}
               />
             ) : null}
+            <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3 transition-colors duration-150 hover:bg-[#f5f6ff]">
+              <input
+                type="checkbox"
+                checked={canEditDishes}
+                onChange={(event) => setCanEditDishes(event.target.checked)}
+                className="mt-0.5 size-4 accent-[#5566f6]"
+              />
+              <span>
+                <span className="block text-[14px] font-medium text-[#0b1024]">
+                  Уполномочен редактировать в бракеражных журналах список блюд
+                </span>
+                <span className="block text-[12px] leading-snug text-[#6f7282]">
+                  По QR журнала видит все блюда за сегодня и может исправить наименование и время. Обычно —
+                  заведующая производством.
+                </span>
+              </span>
+            </label>
             {/* PIN для быстрой QR-авторизации — отдельный PATCH, вне общего «Сохранить». */}
             <StaffQrPinField
               key={employee.id}

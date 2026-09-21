@@ -41,6 +41,7 @@ import {
 } from "./types";
 import { OFF_NOTE_READING, correctionFromValues, parseOffKeys, type TaskFormField, type TaskFormSchema } from "./task-form";
 import { extractEmployeeId as employeeIdFromRowKey, rowKeyForEmployee } from "./row-key";
+import { NOT_COMMISSION_WHERE } from "@/lib/journal-roster";
 
 /**
  * climate row-keys теперь привязаны к конкретному controlTime — это даёт
@@ -234,7 +235,7 @@ export const climateAdapter: JournalAdapter = {
         orderBy: { dateFrom: "desc" },
       }),
       db.user.findMany({
-        where: { organizationId, isActive: true },
+        where: { organizationId, isActive: true, ...NOT_COMMISSION_WHERE },
         select: { id: true, name: true, role: true, positionTitle: true },
         orderBy: [{ role: "asc" }, { name: "asc" }],
       }),

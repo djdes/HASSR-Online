@@ -4,6 +4,7 @@ import {
   isFreePlan,
 } from "@/lib/plan-limits";
 import { db } from "@/lib/db";
+import { NOT_COMMISSION_WHERE } from "@/lib/journal-roster";
 
 /**
  * Серверная часть тарифных лимитов.
@@ -76,7 +77,8 @@ export async function ensurePlanForHeadcount(
       : [org.id];
 
   const activeUsers = await db.user.count({
-    where: { organizationId: { in: scopeOrgIds }, isActive: true },
+    // Сторонние члены бракеражной комиссии в тариф не входят (владелец, 2026-09-21).
+    where: { organizationId: { in: scopeOrgIds }, isActive: true, ...NOT_COMMISSION_WHERE },
   });
 
   const currentPlan = org.account?.subscriptionPlan ?? org.subscriptionPlan;

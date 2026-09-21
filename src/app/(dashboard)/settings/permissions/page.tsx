@@ -54,7 +54,8 @@ export default async function PermissionsSettingsPage() {
   const positionItems = positions.map((p) => ({
     id: p.id,
     name: p.name,
-    categoryKey: (p.categoryKey === "staff" ? "staff" : "management") as
+    // «Комиссия» (сторонние члены бракеражной комиссии) — не руководство.
+    categoryKey: (p.categoryKey === "management" ? "management" : "staff") as
       | "management"
       | "staff",
     permissions: readPermissions(p.permissionsJson),

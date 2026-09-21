@@ -21,6 +21,7 @@ import {
   pickSingleAssignee as loadSingleAssignee,
   type FillMode,
 } from "@/lib/journal-routing";
+import { NOT_COMMISSION_WHERE } from "@/lib/journal-roster";
 
 const DAILY_OBLIGATION_SOURCE = "daily-journal-sync" as const;
 const PHASE_ONE_JOURNAL_RULES: Partial<
@@ -424,6 +425,7 @@ function createDefaultDeps(): ObligationDeps {
           organizationId,
           isActive: true,
           archivedAt: null,
+          ...NOT_COMMISSION_WHERE,
         },
         select: {
           id: true,

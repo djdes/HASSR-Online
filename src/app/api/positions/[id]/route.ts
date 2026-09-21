@@ -6,7 +6,7 @@ import { isManagementRole } from "@/lib/user-roles";
 
 const patchSchema = z.object({
   name: z.string().trim().min(2).max(120).optional(),
-  categoryKey: z.enum(["management", "staff"]).optional(),
+  categoryKey: z.enum(["management", "staff", "commission"]).optional(),
 });
 
 function forbidden() {

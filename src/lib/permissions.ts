@@ -206,11 +206,19 @@ export const DEFAULT_STAFF_PERMISSIONS: ReadonlyArray<Permission> = [
   "competencies.view",
 ];
 
+/**
+ * Сторонняя бракеражная комиссия: видит и подписывает журналы, к которым
+ * ей дан доступ (бракеражи), — и только.
+ */
+export const DEFAULT_COMMISSION_PERMISSIONS: ReadonlyArray<Permission> = ["journals.view", "journals.fill"];
+
 export function getDefaultPermissionsForCategory(
-  categoryKey: "management" | "staff" | string
+  categoryKey: "management" | "staff" | "commission" | string
 ): ReadonlyArray<Permission> {
-  if (categoryKey === "staff") return DEFAULT_STAFF_PERMISSIONS;
-  return DEFAULT_MANAGEMENT_PERMISSIONS;
+  if (categoryKey === "management") return DEFAULT_MANAGEMENT_PERMISSIONS;
+  if (categoryKey === "commission") return DEFAULT_COMMISSION_PERMISSIONS;
+  // Незнакомая категория — права линейного персонала, а не руководителя.
+  return DEFAULT_STAFF_PERMISSIONS;
 }
 
 /**

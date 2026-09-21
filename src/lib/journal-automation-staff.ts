@@ -22,6 +22,7 @@
 import type { PrismaClient } from "@prisma/client";
 import type { JournalAutomationStaff } from "@/lib/journal-automation";
 import { filterRoster } from "@/lib/journal-roster";
+import { NOT_COMMISSION_WHERE } from "@/lib/journal-roster";
 
 export type AutomationStaffSource = "custom" | "inherit" | "legacy";
 
@@ -104,6 +105,7 @@ export async function loadLegacyEligibleEmployees(
       isActive: true,
       archivedAt: null,
       isRoot: false,
+      ...NOT_COMMISSION_WHERE,
       ...(allowedPositionIds.length > 0
         ? { jobPositionId: { in: allowedPositionIds } }
         : {}),
@@ -121,6 +123,7 @@ export async function loadLegacyEligibleEmployees(
       isActive: true,
       archivedAt: null,
       isRoot: false,
+      ...NOT_COMMISSION_WHERE,
     },
     select: { id: true, name: true, email: true },
     orderBy: { name: "asc" },
@@ -141,6 +144,7 @@ async function loadAliveIds(
       organizationId: args.organizationId,
       isActive: true,
       archivedAt: null,
+      ...NOT_COMMISSION_WHERE,
     },
     select: { id: true },
   });
@@ -190,6 +194,7 @@ async function resolveInherited(
       organizationId: args.organizationId,
       isActive: true,
       archivedAt: null,
+      ...NOT_COMMISSION_WHERE,
       createdAt: { gt: lastDocument.createdAt },
     },
     select: { id: true },

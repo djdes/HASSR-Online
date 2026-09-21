@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
+import { isBrakerageJournalCode } from "@/lib/brakerage-row-merge";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
@@ -125,6 +126,7 @@ import { prefillResponsiblesForNewDocument } from "@/lib/journal-responsibles-ca
 import { getPrimarySlotId, getVerifierSlotId } from "@/lib/journal-responsible-schemas";
 import {
   ORG_ROSTER_WHERE,
+  ORG_SIGNER_WHERE,
   RESPONSIBLE_NOT_IN_ORG_ERROR,
   rankRosterForSlot,
   resolveResponsibleChoice,
@@ -270,7 +272,8 @@ export async function POST(request: Request) {
   const allUsers = await db.user.findMany({
     where: {
       organizationId: getActiveOrgId(session),
-      ...ORG_ROSTER_WHERE,
+      // Бракераж: сторонняя комиссия нужна в сверке состава комиссии.
+      ...(isBrakerageJournalCode(resolvedTemplateCode) ? ORG_SIGNER_WHERE : ORG_ROSTER_WHERE),
     },
     select: {
       id: true,

@@ -301,16 +301,13 @@ const PATCHERS: Record<string, Patcher> = {
     // У бракеража готовой продукции в config пока нет фиксированного
     // committee-поля — ставим defaultResponsibleUserId как primary
     // (председатель), а остальных кладём как extras для будущего UI.
+    // Состав комиссии живёт в config.commissionMembers (окно «Сторонняя
+    // бракеражная комиссия»), слоты «Член комиссии» убраны.
     const chef = slots.chef ?? slots.main ?? null;
     const next: ConfigObj = { ...cfg };
     if (chef) {
       next.defaultResponsibleUserId = chef;
     }
-    next.commission = {
-      chefUserId: slots.chef ?? null,
-      member1UserId: slots.member1 ?? null,
-      member2UserId: slots.member2 ?? null,
-    };
     return next;
   },
 

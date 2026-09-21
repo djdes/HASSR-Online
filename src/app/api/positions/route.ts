@@ -10,7 +10,7 @@ const createSchema = z.object({
     .trim()
     .min(2, "Название должности слишком короткое")
     .max(120, "Слишком длинное название"),
-  categoryKey: z.enum(["management", "staff"], {
+  categoryKey: z.enum(["management", "staff", "commission"], {
     message: "Недопустимая категория",
   }),
 });

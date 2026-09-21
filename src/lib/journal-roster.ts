@@ -20,11 +20,43 @@
  *     невалидный выбор — ошибка, а не тихая подмена.
  */
 
+/** Категория должности сторонней бракеражной комиссии (колонка «Комиссия»). */
+export const COMMISSION_CATEGORY_KEY = "commission";
+
+/**
+ * Не член сторонней бракеражной комиссии: их не ставят в гигиену, графики,
+ * задачи и прочие штатные списки — они только подписывают бракераж.
+ * Через `AND`, а не `NOT`: у сотрудника без должности `NOT (… IN …)` дал бы
+ * NULL, и он пропал бы из всех списков.
+ */
+export const NOT_COMMISSION_WHERE = {
+  AND: [
+    {
+      OR: [
+        { jobPositionId: null },
+        { jobPosition: { is: { categoryKey: { not: COMMISSION_CATEGORY_KEY } } } },
+      ],
+    },
+  ],
+};
+
 export const ORG_ROSTER_WHERE = {
-  isActive: true,
+  isActive: true as const,
   archivedAt: null,
-  isRoot: false,
-} as const;
+  isRoot: false as const,
+  ...NOT_COMMISSION_WHERE,
+};
+
+/**
+ * Те же живые сотрудники, но вместе со сторонней комиссией — там, где она
+ * нужна: выбор себя в QR бракеража, проверка ПИН при подписи, окно комиссии,
+ * сверка состава комиссии в конфиге бракеража.
+ */
+export const ORG_SIGNER_WHERE = {
+  isActive: true as const,
+  archivedAt: null,
+  isRoot: false as const,
+};
 
 export type RosterUser = {
   id: string;

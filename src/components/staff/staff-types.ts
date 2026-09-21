@@ -1,6 +1,7 @@
 import type { BuildingOption } from "@/lib/building-scope";
 
-export type PositionCategory = "management" | "staff";
+/** «commission» — сторонняя бракеражная комиссия (третья колонка «Комиссия»). */
+export type PositionCategory = "management" | "staff" | "commission";
 
 export type StaffPosition = {
   id: string;
@@ -27,6 +28,8 @@ export type StaffEmployee = {
   buildingIds?: string[];
   /// Задан ли PIN для QR-форм (сам PIN на клиент не уходит).
   hasQrPin?: boolean;
+  /** «Уполномочен редактировать в бракеражных журналах список блюд». */
+  canEditBrakerageDishes?: boolean;
 };
 
 export type StaffTelegramInvitePayload = {

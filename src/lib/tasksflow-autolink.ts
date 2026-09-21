@@ -9,6 +9,7 @@
  * helper just saves clicks when stars align.
  */
 import { db } from "@/lib/db";
+import { COMMISSION_CATEGORY_KEY } from "@/lib/journal-roster";
 import { TasksFlowError, tasksflowClientFor } from "@/lib/tasksflow-client";
 import { getIntegrationCryptoErrorMessage } from "@/lib/integration-crypto";
 import { normalizePhone } from "@/lib/phone";
@@ -27,6 +28,16 @@ type Result =
 export async function tryAutolinkTasksflowByPhone(args: Args): Promise<Result> {
   const normalized = normalizePhone(args.phone);
   if (!normalized) return { ok: false, reason: "invalid-phone" };
+
+  // Сторонняя бракеражная комиссия задач не получает — аккаунт в TasksFlow
+  // ей не нужен (П-5, П-12), даже если у человека указан телефон.
+  const person = await db.user.findUnique({
+    where: { id: args.weSetupUserId },
+    select: { jobPosition: { select: { categoryKey: true } } },
+  });
+  if (person?.jobPosition?.categoryKey === COMMISSION_CATEGORY_KEY) {
+    return { ok: true, linked: false, reason: "commission-member" };
+  }
 
   const integration = await db.tasksFlowIntegration.findFirst({
     where: { organizationId: args.organizationId, enabled: true },

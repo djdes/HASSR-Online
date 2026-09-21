@@ -32,6 +32,7 @@ import {
 } from "@/lib/tasksflow-client";
 import { isManagementRole } from "@/lib/user-roles";
 import type { ManagerScope } from "@prisma/client";
+import { NOT_COMMISSION_WHERE } from "@/lib/journal-roster";
 
 type ScopeLike = Pick<
   ManagerScope,
@@ -248,6 +249,7 @@ export async function syncHierarchyToTasksflow(
       isActive: true,
       archivedAt: null,
       isRoot: false,
+      ...NOT_COMMISSION_WHERE,
       jobPositionId: { not: null },
     },
     select: {

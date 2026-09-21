@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Archive, Check, ChevronDown, List, ListPlus, Plus, Trash2 } from "lucide-react";
+import { Archive, Check, ChevronDown, List, ListPlus, Plus, Trash2, Users } from "lucide-react";
+import { CommissionDialog } from "@/components/journals/commission-dialog";
 import { ApplyToSelectedDialog, type ApplyToSelectedField } from "@/components/journals/apply-to-selected-dialog";
 import { SelectionApplyButton, SelectionEditButton, SelectionRepeatButton } from "@/components/journals/selection-edit-button";
 import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
@@ -306,6 +307,8 @@ export function PerishableRejectionDocumentClient({
     showNote: legacyFlagsFromColumns("perishable_rejection", next).showNote !== false,
   });
   const readOnly = status === "closed";
+  /** Окно «Сторонняя бракеражная комиссия». */
+  const [commissionOpen, setCommissionOpen] = useState(false);
   // «Настройки журнала» — название документа и дата начала. Раньше их
   // можно было изменить только со страницы списка; теперь доступны из «⋯».
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -1255,11 +1258,21 @@ export function PerishableRejectionDocumentClient({
           >
             Редактировать списки
           </Button>
+          <Button type="button" variant="outline" className={DOC_SECONDARY_BUTTON_CLASS} onClick={() => setCommissionOpen(true)}>
+            <Users className="size-4" />
+            Комиссия{config.commissionMembers.length > 0 ? ` · ${config.commissionMembers.length}` : ""}
+          </Button>
           {/* Кнопки «Сохранить» нет: правки уезжают сами (см. applyConfig). */}
           {isSaving ? (
             <span className="text-[13px] text-[#6f7282]">Сохранение…</span>
           ) : null}
         </div>
+        {config.commissionMembers.length > 0 ? (
+          <p className="text-[13px] leading-snug text-[#3c4053] print:hidden" data-testid="brakerage-responsibles">
+            {defaultResponsibleUser ? `Ответственные: ${defaultResponsibleUser.name} (исполнитель) · ` : ""}
+            Комиссия: {config.commissionMembers.map((member) => member.employeeName).join(", ")}
+          </p>
+        ) : null}
 
         {!readOnly ? (
           <JournalSelectionBar
@@ -1979,6 +1992,15 @@ export function PerishableRejectionDocumentClient({
       </Dialog>
 
       {/* «Добавить списком» — многострочная вставка вместо window.prompt. */}
+      <CommissionDialog
+        code="perishable_rejection"
+        open={commissionOpen}
+        onClose={() => setCommissionOpen(false)}
+        onSaved={(members) => {
+          setConfig((prev) => ({ ...prev, commissionMembers: members }));
+          router.refresh();
+        }}
+      />
       <Dialog open={readOnly ? false : bulkOpen} onOpenChange={setBulkOpen}>
         <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
           <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>

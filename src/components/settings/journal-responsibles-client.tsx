@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { CommissionDialog } from "@/components/journals/commission-dialog";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertCircle,
@@ -178,6 +179,45 @@ const MODE_TONE: Record<string, string> = {
 /** Phase C: вспомогательный компонент для рендера одного slot-picker'а
  *  — раньше код был inline, после разделения «Заполняют»/«Проверяет»
  *  оба раздела вызывают этот же UI. */
+
+/**
+ * Бракеражи: ответственные = исполнитель + комиссия. Комиссия — отдельным
+ * составом из окна «Сторонняя бракеражная комиссия», а не слотами.
+ */
+function CommissionSlotRow({ code }: { code: string }) {
+  const [open, setOpen] = useState(false);
+  const [names, setNames] = useState<string[] | null>(null);
+  const load = useCallback(() => {
+    void fetch(`/api/settings/brakerage-commission/${code}`, { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((body: { members?: Array<{ employeeName: string }> } | null) => setNames((body?.members ?? []).map((m) => m.employeeName)))
+      .catch(() => setNames([]));
+  }, [code]);
+  useEffect(() => {
+    load();
+  }, [load]);
+  return (
+    <div className="mt-3">
+      <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#116b2a]">
+        <span className="inline-block size-1.5 rounded-full bg-[#16a34a]" />
+        Комиссия — подписывает бракераж
+      </div>
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#ececf4] bg-white px-3 py-2 text-[13px]">
+        <span className="min-w-0 flex-1 text-[#3c4053]">
+          {names === null ? "…" : names.length > 0 ? names.join(", ") : "Не задана — строки закрываются без подписи комиссии"}
+        </span>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="inline-flex h-8 items-center rounded-lg border border-[#dcdfed] px-3 text-[12.5px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+        >
+          Изменить
+        </button>
+      </div>
+      <CommissionDialog code={code} open={open} onClose={() => setOpen(false)} onSaved={() => load()} />
+    </div>
+  );
+}
 
 export type CandidateGroup = "recommended" | "ok" | "not-recommended";
 
@@ -2312,6 +2352,9 @@ export function JournalResponsiblesClient({
                                     ))}
                                   </div>
                                 </div>
+                              ) : null}
+                              {j.code === "finished_product" || j.code === "perishable_rejection" ? (
+                                <CommissionSlotRow code={j.code} />
                               ) : null}
                             </>
                           );

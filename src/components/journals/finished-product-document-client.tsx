@@ -9,6 +9,7 @@ import {
   Plus,
   Trash2,
   Check,
+  Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -101,6 +102,7 @@ import {
 } from "@/components/journals/journal-custom-cell";
 import { OrgDirectoryDialog } from "@/components/journals/org-directory-dialog";
 import { DishPoolSection } from "@/components/journals/dish-pool-section";
+import { CommissionDialog } from "@/components/journals/commission-dialog";
 import { mergeIntoList } from "@/lib/org-directory";
 import { useLiveEvents } from "@/lib/use-live-events";
 import { formatRowSignatures, hasCommission, normalizeRowSignatures } from "@/lib/brakerage-commission";
@@ -374,6 +376,8 @@ export function FinishedProductDocumentClient({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const closeAction = useDocumentCloseAction({ documentId, title });
   const [catalogOpen, setCatalogOpen] = useState(false);
+  /** Окно «Сторонняя бракеражная комиссия». */
+  const [commissionOpen, setCommissionOpen] = useState(false);
   /** «Из справочника организации» для списка изделий этого журнала. */
   const [directoryOpen, setDirectoryOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
@@ -393,6 +397,16 @@ export function FinishedProductDocumentClient({
   const [productTempAuto, setProductTempAuto] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const readOnly = status === "closed";
+  // «Ответственные = исполнитель + комиссия» (владелец, 2026-09-21).
+  const responsibleName = responsibleUserId ? users.find((user) => user.id === responsibleUserId)?.name ?? "" : "";
+  const responsibleLine = [
+    responsibleName ? `Ответственные: ${responsibleName} (исполнитель)` : "",
+    config.commissionMembers.length > 0
+      ? `Комиссия: ${config.commissionMembers.map((member) => member.employeeName).join(", ")}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
   const { mobileView, switchMobileView } = useMobileView("finished_product");
 
   /* ── Автосохранение ячеек ───────────────────────────────────────────
@@ -1272,11 +1286,20 @@ export function FinishedProductDocumentClient({
               на эталоне это отдельная кнопка рядом. */}
           <Button type="button" className="h-11 gap-2 rounded-lg bg-[#5566f6] px-5 text-[15px] font-semibold text-white transition-colors duration-150 hover:bg-[#4a5bf0]" onClick={() => openAddRow()}><Plus className="size-5" strokeWidth={2.5} />Добавить изделие</Button>
           <Button type="button" variant="outline" className={DOC_SECONDARY_BUTTON_CLASS} onClick={() => setCatalogOpen(true)}>Редактировать список изделий</Button>
+          <Button type="button" variant="outline" className={DOC_SECONDARY_BUTTON_CLASS} onClick={() => setCommissionOpen(true)}>
+            <Users className="size-4" />
+            Комиссия{config.commissionMembers.length > 0 ? ` · ${config.commissionMembers.length}` : ""}
+          </Button>
           {/* Кнопки «Сохранить» нет: правки уезжают сами (см. commitConfig). */}
           {isAutoSaving || isSaving || isPending ? (
             <span className="text-[13px] text-[#6f7282]">Сохранение…</span>
           ) : null}
         </div>}
+        {responsibleLine ? (
+          <p className="text-[13px] leading-snug text-[#3c4053] print:hidden" data-testid="brakerage-responsibles">
+            {responsibleLine}
+          </p>
+        ) : null}
         <JournalSelectionBar
           count={selectedRows.length}
           onClear={() => setSelectedRows([])}
@@ -1596,6 +1619,15 @@ export function FinishedProductDocumentClient({
         </DialogContent>
       </Dialog>
 
+      <CommissionDialog
+        code="finished_product"
+        open={commissionOpen}
+        onClose={() => setCommissionOpen(false)}
+        onSaved={(members) => {
+          setConfig((prev) => ({ ...prev, commissionMembers: members }));
+          startTransition(() => router.refresh());
+        }}
+      />
       <JournalSettingsModal
         open={readOnly ? false : settingsOpen}
           onOpenChange={setSettingsOpen}
@@ -1716,83 +1748,26 @@ export function FinishedProductDocumentClient({
 
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Состав бракеражной комиссии
+              Сторонняя бракеражная комиссия
             </Label>
-            <p className="text-[12.5px] leading-[1.45] text-[#6f7282]">
-              Кто подписывает журнал. Состав печатается под таблицей и предлагается при заполнении по QR-коду.
-            </p>
-            <div className="space-y-1.5">
-              {config.commissionMembers.map((member, index) => (
-                <div key={member.id} className="flex flex-wrap items-center gap-1.5">
-                  <input
-                    value={member.role}
-                    onChange={(event) =>
-                      setConfig((prev) => {
-                        const next = [...prev.commissionMembers];
-                        next[index] = { ...next[index], role: event.target.value };
-                        return { ...prev, commissionMembers: next };
-                      })
-                    }
-                    placeholder="Роль"
-                    maxLength={80}
-                    className="h-9 w-[40%] min-w-[120px] rounded-xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none"
-                  />
-                  <input
-                    value={member.employeeName}
-                    onChange={(event) =>
-                      setConfig((prev) => {
-                        const next = [...prev.commissionMembers];
-                        const name = event.target.value;
-                        next[index] = {
-                          ...next[index],
-                          employeeName: name,
-                          employeeId: users.find((user) => user.name === name)?.id ?? "",
-                        };
-                        return { ...prev, commissionMembers: next };
-                      })
-                    }
-                    placeholder="ФИО"
-                    list="finished-product-users"
-                    maxLength={120}
-                    className="h-9 flex-1 rounded-xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setConfig((prev) => ({
-                        ...prev,
-                        commissionMembers: prev.commissionMembers.filter((item) => item.id !== member.id),
-                      }))
-                    }
-                    className="rounded-xl p-2 text-[#a13a32] hover:bg-[#fff4f2]"
-                    aria-label={`Убрать ${member.employeeName || "члена комиссии"} из комиссии`}
-                  >
-                    <Trash2 className="size-4" />
-                  </button>
-                </div>
-              ))}
-              {config.commissionMembers.length < 10 ? (
-                <button
-                  type="button"
-                  onClick={() =>
-                    setConfig((prev) => ({
-                      ...prev,
-                      commissionMembers: [
-                        ...prev.commissionMembers,
-                        {
-                          id: `commission-${Date.now()}-${prev.commissionMembers.length}`,
-                          role: prev.commissionMembers.length === 0 ? "Председатель" : "Член комиссии",
-                          employeeId: "",
-                          employeeName: "",
-                        },
-                      ],
-                    }))
-                  }
-                  className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-dashed border-[#dcdfed] px-3 text-[13px] font-medium text-[#3848c7] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
-                >
-                  <Plus className="size-4" /> Добавить члена комиссии
-                </button>
-              ) : null}
+            <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-3 py-2.5 text-[13.5px]">
+              <span className="min-w-0 flex-1 text-[#3c4053]">
+                {config.commissionMembers.length > 0
+                  ? config.commissionMembers.map((member) => `${member.employeeName} (${member.role})`).join(", ")
+                  : "Состав не задан — строки закрываются без подписи комиссии"}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  // Второе окно поверх Radix-модалки не получает кликов:
+                  // закрываем настройки и открываем окно комиссии.
+                  setSettingsOpen(false);
+                  setCommissionOpen(true);
+                }}
+                className="inline-flex h-9 items-center rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+              >
+                Изменить состав
+              </button>
             </div>
           </div>
 

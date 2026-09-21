@@ -171,7 +171,7 @@ export function StaffPageClient(props: StaffPageProps) {
   // Accordion: all open by default.
   const [categoryOpen, setCategoryOpen] = useState<
     Record<PositionCategory, boolean>
-  >({ management: true, staff: true });
+  >({ management: true, staff: true, commission: true });
   // В каждой рубрике раскрыта РОВНО ОДНА должность: со всеми открытыми
   // список сотрудников уезжал на два экрана вниз и «Добавить» терялся.
   // По умолчанию — первая должность рубрики.
@@ -181,6 +181,7 @@ export function StaffPageClient(props: StaffPageProps) {
     management:
       props.positions.find((p) => p.categoryKey === "management")?.id ?? null,
     staff: props.positions.find((p) => p.categoryKey === "staff")?.id ?? null,
+    commission: props.positions.find((p) => p.categoryKey === "commission")?.id ?? null,
   }));
   // Ручной выбор переживает router.refresh() — иначе после добавления
   // сотрудника аккордеон схлопывался обратно на первую должность.
@@ -192,6 +193,7 @@ export function StaffPageClient(props: StaffPageProps) {
       setOpenPosition((prev) => ({
         management: parsed.management ?? prev.management,
         staff: parsed.staff ?? prev.staff,
+        commission: parsed.commission ?? prev.commission,
       }));
     } catch {
       /* приватный режим / повреждённое значение — просто игнорируем */
@@ -313,8 +315,9 @@ export function StaffPageClient(props: StaffPageProps) {
     const groups: Record<PositionCategory, StaffPosition[]> = {
       management: [],
       staff: [],
+      commission: [],
     };
-    for (const p of props.positions) groups[p.categoryKey].push(p);
+    for (const p of props.positions) (groups[p.categoryKey] ?? groups.staff).push(p);
     return groups;
   }, [props.positions]);
 
@@ -935,11 +938,20 @@ export function StaffPageClient(props: StaffPageProps) {
           убрали: название и так есть в hero и в крошках, а лишний
           аккордеон только отодвигал список вниз. */}
       <div className="overflow-hidden rounded-2xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
-        <div className="grid gap-6 bg-[#f4f5fb] p-5 md:grid-cols-2 md:gap-8 md:p-6">
-          {(["management", "staff"] as PositionCategory[]).map((cat) => (
+        <div
+          className={`grid gap-6 bg-[#f4f5fb] p-5 md:grid-cols-2 md:gap-8 md:p-6 ${
+            positionsByCategory.commission.length > 0 ? "xl:grid-cols-3" : ""
+          }`}
+        >
+          {/* «Комиссия» — сторонние члены бракеражной комиссии: колонка
+              появляется, когда в ней есть должность (заводится из окна
+              «Сторонняя бракеражная комиссия» журнала бракеража). */}
+          {((positionsByCategory.commission.length > 0
+            ? ["management", "staff", "commission"]
+            : ["management", "staff"]) as PositionCategory[]).map((cat) => (
             <CategoryColumn
                 key={cat}
-                title={cat === "management" ? "Руководство" : "Сотрудники"}
+                title={cat === "management" ? "Руководство" : cat === "commission" ? "Комиссия" : "Сотрудники"}
                 categoryKey={cat}
                 open={categoryOpen[cat]}
                 onToggle={() => toggleCategory(cat)}
@@ -1361,7 +1373,9 @@ function CategoryColumn(props: {
   const headerAccentClass =
     props.categoryKey === "management"
       ? "bg-[#fff8eb] text-[#b25f00]"
-      : "bg-[#eef1ff] text-[#5566f6]";
+      : props.categoryKey === "commission"
+        ? "bg-[#ecfdf5] text-[#116b2a]"
+        : "bg-[#eef1ff] text-[#5566f6]";
   const totalEmployees = props.positions.reduce(
     (sum, p) => sum + (props.employeesByPosition.get(p.id)?.length ?? 0),
     0

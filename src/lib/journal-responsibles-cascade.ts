@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { parseOrgColumnDefaults, withOrgColumnDefault } from "@/lib/journal-columns";
+import { withOrgCommission } from "@/lib/brakerage-commission-org";
 import {
   getPrimarySlotId,
   getSchemaForJournal,
@@ -568,6 +569,10 @@ export async function prefillResponsiblesForNewDocument(input: {
     withOrgColumnDefault(journalCode, config, parseOrgColumnDefaults(org?.journalColumnsJson), {
       respectFlags: input.respectColumnFlags === true,
     }) ?? config;
+
+  // 6. Бракеражи: состав комиссии организации — новому документу
+  // (окно «Сторонняя бракеражная комиссия», модель «копия»).
+  config = await withOrgCommission(input.organizationId, journalCode, config ?? {});
 
   return {
     config,

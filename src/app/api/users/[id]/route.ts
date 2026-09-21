@@ -35,6 +35,8 @@ const updateUserSchema = z.object({
   weeklyDaysOff: z.array(z.number().int().min(0).max(6)).optional(),
   /// Точки, на которых работает сотрудник; пусто — на всех.
   buildingIds: z.array(z.string().min(1)).max(50).optional(),
+  /// «Уполномочен редактировать в бракеражных журналах список блюд».
+  canEditBrakerageDishes: z.boolean().optional(),
 });
 
 export async function PUT(
@@ -72,7 +74,7 @@ export async function PUT(
     }
 
     const body = updateUserSchema.parse(await request.json());
-    const { name, role, phone, positionTitle, isActive, weeklyDaysOff, buildingIds } = body;
+    const { name, role, phone, positionTitle, isActive, weeklyDaysOff, buildingIds, canEditBrakerageDishes } = body;
     const cleanBuildingIds =
       buildingIds !== undefined
         ? await sanitizeBuildingIds(getActiveOrgId(session), buildingIds)
@@ -132,6 +134,7 @@ export async function PUT(
           weeklyDaysOff: normalizeWeeklyDaysOff(weeklyDaysOff),
         }),
         ...(cleanBuildingIds !== undefined && { buildingIds: cleanBuildingIds }),
+        ...(canEditBrakerageDishes !== undefined && { canEditBrakerageDishes }),
       },
       select: {
         id: true,

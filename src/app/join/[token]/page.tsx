@@ -42,7 +42,8 @@ export default async function JoinPage({ params }: Props) {
       select: { name: true },
     }),
     db.jobPosition.findMany({
-      where: { organizationId: row.organizationId },
+      // Сторонняя бракеражная комиссия в штат по QR не записывается.
+      where: { organizationId: row.organizationId, categoryKey: { not: "commission" } },
       orderBy: [{ categoryKey: "asc" }, { sortOrder: "asc" }],
       select: { id: true, name: true, categoryKey: true },
     }),
