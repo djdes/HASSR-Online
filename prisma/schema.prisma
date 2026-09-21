@@ -87,6 +87,18 @@ model Organization {
   /// Копируются в config.columns документов при создании и по «Применить ко
   /// всем документам» (см. src/lib/journal-columns.ts).
   journalColumnsJson             Json                           @default("{}")
+  /// Состав бракеражной комиссии по коду журнала:
+  /// { finished_product: [{ id, role, employeeId, employeeName }], … }.
+  /// Копируется в config.commissionMembers активных и новых документов
+  /// (см. src/lib/brakerage-commission-org.ts).
+  journalCommissionJson          Json                           @default("{}")
+  /// Служебный код базы организации — по нему другие организации
+  /// подключаются к общему справочнику блюд (см. src/lib/dish-pool.ts).
+  serviceCode                    String?                        @unique
+  /// Код чужой базы, к которой организация подключилась («Привязать журнал,
+  /// служебный код»). Пусто — своя база.
+  linkedServiceCode              String?
+  journalColumnTemplates         JournalColumnTemplate[]
   /// Сфера заведения: restaurant | cafe | education | bakery | fastfood |
   /// production | other. Колонка переиспользована — раньше здесь лежал
   /// «тип производства» (meat/dairy/…), старые значения переводит
@@ -497,7 +509,13 @@ model SignatureEvent {
   createdAt      DateTime     @default(now())
 
   @@index([organizationId, createdAt])
+  /// Подпись члена бракеражной комиссии под строкой документа
+  /// (entryKind = "brakerage_row"): документ и id строки в config.rows.
+  documentId     String?
+  rowId          String?
+
   @@index([userId, createdAt])
+  @@index([documentId, rowId])
 }
 
 /// Корпус/точка бизнеса организации. У сети может быть несколько
@@ -662,6 +680,9 @@ model User {
   qrPinHash                   String?
   qrPinFailedCount            Int                      @default(0)
   qrPinLockedUntil            DateTime?
+  /// «Уполномочен редактировать в бракеражных журналах список блюд»:
+  /// по QR видит блюда за сегодня и правит наименование и время.
+  canEditBrakerageDishes      Boolean                      @default(false)
   /// Тот же PIN в обратимом шифре (AES-GCM, ключ INTEGRATION_KEY_SECRET/NEXTAUTH_SECRET),
   /// чтобы руководитель мог показать код сотруднику. null — задан до этой возможности.
   qrPinEncrypted              String?
@@ -3590,4 +3611,22 @@ model ServiceRequest {
 
   @@index([status, createdAt])
   @@index([organizationId, createdAt])
+}
+
+/// Свой шаблон колонок журнала (бракеражи): набор скрытых/переименованных/своих
+/// колонок и их порядок. Встроенные шаблоны («Рекомендуемая форма…») живут в
+/// коде, см. src/lib/journal-column-templates.ts.
+model JournalColumnTemplate {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  journalCode    String
+  name           String
+  /// JournalColumnsConfig: { hidden, labels, custom?, mustFill?, order? }.
+  columns        Json
+  createdById    String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId, journalCode])
 }

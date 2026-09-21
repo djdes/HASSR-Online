@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { TableContextMenu, type TableContextMenuItem } from "@/components/journals/table-context-menu";
+import { JournalColumnTemplatesBar } from "@/components/journals/journal-column-templates-bar";
 import {
   JOURNAL_COLUMN_LABEL_MAX,
   JOURNAL_CUSTOM_COLUMNS_MAX,
@@ -400,6 +401,13 @@ export function JournalColumnsSettings({
           </button>
         ) : null}
       </div>
+      <JournalColumnTemplatesBar
+        code={code}
+        config={config}
+        current={current}
+        onApply={onChange}
+        canManage={canApplyToAll === true}
+      />
       <p className="flex gap-1.5 text-[12.5px] leading-[1.45] text-[#6f7282]">
         <Info className="mt-0.5 size-3.5 shrink-0 text-[#5566f6]" />
         Любую колонку можно скрыть — она не печатается и не видна в таблице, но записанные в ней данные сохраняются:

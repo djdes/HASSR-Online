@@ -1,9 +1,15 @@
 "use client";
 
+import { applyColumnsToConfig } from "@/lib/journal-columns";
+import {
+  APPENDIX4_TEMPLATE_ID,
+  builtInTemplates,
+  type JournalColumnTemplate,
+} from "@/lib/journal-column-templates";
 import type { TourAnchor } from "@/lib/tour-anchors";
 import { useSubmitLock } from "@/lib/use-submit-lock";
 
-import { type ReactNode, useId, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useId, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -357,7 +363,7 @@ export function CreateDocumentDialog({
    */
   const PRINT_EMPTY_ROWS_DEFAULT = 0;
   const [fpFieldNameMode, setFpFieldNameMode] = useState<"dish" | "semi">("dish");
-  const [fpInspectorMode, setFpInspectorMode] = useState<"inspector_name" | "commission_signatures">(
+  const [fpInspectorMode] = useState<"inspector_name" | "commission_signatures">(
     "inspector_name"
   );
   // Переключатели колонок стартуют с общего набора организации (если он
@@ -367,12 +373,25 @@ export function CreateDocumentDialog({
     const common = columnDefaultsForCreate[code];
     return common ? !common.hidden.includes(key) : fallback;
   };
-  const [fpShowProductTemp, setFpShowProductTemp] = useState(() => startsVisible("finished_product", "temp", false));
-  const [fpShowCorrectiveAction, setFpShowCorrectiveAction] = useState(() =>
-    startsVisible("finished_product", "corrective", false)
-  );
-  const [fpShowOxygenLevel, setFpShowOxygenLevel] = useState(() => startsVisible("finished_product", "oxygen", false));
-  const [fpShowCourierTime, setFpShowCourierTime] = useState(() => startsVisible("finished_product", "courier", false));
+  // Форма журнала — шаблон колонок. По умолчанию общий набор организации
+  // (если его задали «Применить ко всем документам»), иначе «Рекомендуемая
+  // форма» Приложения 4.
+  const hasOrgColumns = Boolean(columnDefaultsForCreate.finished_product);
+  const [fpFormId, setFpFormId] = useState<string>(() => (hasOrgColumns ? "org" : APPENDIX4_TEMPLATE_ID));
+  const [fpForms, setFpForms] = useState<JournalColumnTemplate[]>(() => builtInTemplates("finished_product"));
+  useEffect(() => {
+    if (templateCode !== FINISHED_PRODUCT_DOCUMENT_TEMPLATE_CODE) return;
+    let cancelled = false;
+    void fetch("/api/settings/journal-column-templates?code=finished_product", { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((body: { templates?: JournalColumnTemplate[] } | null) => {
+        if (!cancelled && body?.templates?.length) setFpForms(body.templates);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [templateCode]);
   const [fpShowFooterNote, setFpShowFooterNote] = useState(false);
   const [fpFooterNote, setFpFooterNote] = useState("");
   const [medBookIncludeVaccinations, setMedBookIncludeVaccinations] = useState(true);
@@ -489,15 +508,17 @@ export function CreateDocumentDialog({
                 }
               : templateCode === FINISHED_PRODUCT_DOCUMENT_TEMPLATE_CODE
               ? {
-                  fieldNameMode: fpFieldNameMode,
-                  inspectorMode: fpInspectorMode,
-                  showProductTemp: fpShowProductTemp,
-                  showCorrectiveAction: fpShowCorrectiveAction,
-                  showOxygenLevel: fpShowOxygenLevel,
-                  showCourierTime: fpShowCourierTime,
-                  // Решение «выпускать / не выпускать» должно быть видно в таблице и в печати.
-                  showReleaseAllowed: true,
-                  footerNote: fpShowFooterNote ? fpFooterNote.trim() : "",
+                  ...(() => {
+                    // Набор колонок выбранной формы (флаги showX — из него же);
+                    // «общий набор организации» ляжет на сервере при создании.
+                    const form = fpForms.find((item) => item.id === fpFormId);
+                    const base: Record<string, unknown> = {
+                      fieldNameMode: fpFieldNameMode,
+                      inspectorMode: fpInspectorMode,
+                      footerNote: fpShowFooterNote ? fpFooterNote.trim() : "",
+                    };
+                    return form ? applyColumnsToConfig("finished_product", base, form.columns) : base;
+                  })(),
                 }
             : templateCode === FRYER_OIL_TEMPLATE_CODE
               ? defaultFryerOilDocumentConfig()
@@ -1040,70 +1061,39 @@ export function CreateDocumentDialog({
                       showCorrectiveAction — колонка примечаний при этом
                       не появлялась вовсе. Теперь каждый тумблер = ровно
                       одна колонка таблицы. */}
-                  <FloatingLabelField label="Добавить поля">
-                    <div className="flex flex-col gap-3 pt-2">
-                      {fieldToggle(
-                        "fp-temp",
-                        "«Т ºС внутри продукта»",
-                        fpShowProductTemp,
-                        setFpShowProductTemp
-                      )}
-                      {fieldToggle(
-                        "fp-corrective",
-                        "«Корректирующие действия»",
-                        fpShowCorrectiveAction,
-                        setFpShowCorrectiveAction
-                      )}
+                  <FloatingLabelField label="Форма журнала">
+                    <div className="space-y-2 pt-1">
+                      <select
+                        value={fpFormId}
+                        onChange={(event) => setFpFormId(event.target.value)}
+                        className="h-10 w-full rounded-xl border border-[#dcdfed] bg-white px-2 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
+                        aria-label="Форма журнала"
+                      >
+                        {hasOrgColumns ? <option value="org">Общий набор колонок организации</option> : null}
+                        {fpForms.map((form) => (
+                          <option key={form.id} value={form.id}>
+                            {form.builtIn ? "" : "Свой: "}
+                            {form.name}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-[12.5px] leading-snug text-[#6f7282]">
+                        Колонки таблицы и печати. Любую колонку потом можно включить, скрыть или переименовать в
+                        «Настройках документа».
+                      </p>
                       {fieldToggle(
                         "fp-note",
-                        "«Примечание»",
+                        "«Примечание под таблицей»",
                         fpShowFooterNote,
                         setFpShowFooterNote,
-                        "Печатается текстом под таблицей"
+                        "Текст печатается под таблицей; колонка «Примечание» у каждой строки — отдельно"
                       )}
-                      {fieldToggle(
-                        "fp-oxygen",
-                        "«Остаточный уровень кислорода, % об.»",
-                        fpShowOxygenLevel,
-                        setFpShowOxygenLevel
-                      )}
-                      {fieldToggle(
-                        "fp-courier",
-                        "«Время передачи блюд курьеру»",
-                        fpShowCourierTime,
-                        setFpShowCourierTime
-                      )}
-                    </div>
-                  </FloatingLabelField>
-
-                  <FloatingLabelField label="Кто подписывает">
-                    <div className="flex flex-col gap-2 pt-1 text-[14px] text-[#0b1024]">
-                      <label className="flex items-center gap-2.5">
-                        <input
-                          type="radio"
-                          checked={fpInspectorMode === "inspector_name"}
-                          onChange={() => setFpInspectorMode("inspector_name")}
-                          className="size-4 accent-[#5566f6]"
-                        />
-                        ФИО лица, проводившего бракераж
-                      </label>
-                      <label className="flex items-center gap-2.5">
-                        <input
-                          type="radio"
-                          checked={fpInspectorMode === "commission_signatures"}
-                          onChange={() =>
-                            setFpInspectorMode("commission_signatures")
-                          }
-                          className="size-4 accent-[#5566f6]"
-                        />
-                        Подписи членов бракеражной комиссии
-                      </label>
                     </div>
                   </FloatingLabelField>
 
                   {fpShowFooterNote && (
                     <FloatingInputField
-                      label="Примечание"
+                      label="Примечание под таблицей"
                       value={fpFooterNote}
                       onChange={setFpFooterNote}
                       placeholder="Печатается под таблицей"
