@@ -271,6 +271,8 @@ export const authOptions: NextAuthOptions = {
             : null;
         session.user.partnerAccess = null;
         session.user.orgPresetOverrides = null;
+        session.user.kioskDeviceId =
+          token.kiosk === true && typeof token.deviceId === "string" ? token.deviceId : null;
 
         // Live-refresh organizationName + permissionPreset из БД. JWT
         // кэширует на момент login и больше не обновляется, поэтому

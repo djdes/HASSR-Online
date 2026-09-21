@@ -42,6 +42,9 @@ export type RegulatorCoverInput = {
   capaOpen: number;
   capaClosed: number;
   temperatureAnomalies: number;
+  /// Подписей через общий планшет (ПИН) за период — доказательство, что
+  /// записи вносили сами сотрудники, а не один человек за всех.
+  kioskSignatures?: number;
   preparedBy: string;
 };
 
@@ -106,6 +109,9 @@ export function buildRegulatorCoverPdf(input: RegulatorCoverInput): Buffer {
       "Температурные инциденты (≥3 дня подряд вне нормы)",
       String(input.temperatureAnomalies),
     ],
+    ...(typeof input.kioskSignatures === "number"
+      ? [["Подписей сотрудников по ПИН на общем планшете", String(input.kioskSignatures)] as RowInput]
+      : []),
   ];
 
   autoTable(doc, {

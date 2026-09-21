@@ -742,6 +742,38 @@ let activePageHeaderHeight = 0;
 /** Страницы, на которых шапка уже нарисована (без повторного оверлея). */
 const pagesWithJournalHeader = new Set<number>();
 
+/**
+ * Страница-приложение «Подписи сотрудников (общий планшет)».
+ *
+ * Инспектору важно, что записи вносили сами сотрудники, а не один человек
+ * за всех. Таблица: сотрудник · как подтверждал личность · планшет ·
+ * сколько входов · первый и последний за период. Добавляется только когда
+ * такие подписи есть — обычный бланк не меняется.
+ */
+function appendSignaturesPage(doc: jsPDF, fontName: string, lines: PdfSignatureLine[]) {
+  doc.addPage("a4", "landscape");
+  doc.setFont(fontName, "bold");
+  doc.setFontSize(13);
+  doc.text("Приложение. Подписи сотрудников через общий планшет", 14, 16);
+  doc.setFont(fontName, "normal");
+  doc.setFontSize(9);
+  doc.text(
+    "Каждый вход подтверждён личным ПИН сотрудника на планшете организации; запись журнала внесена под этим входом.",
+    14,
+    22,
+  );
+  const fmt = (d: Date) => d.toLocaleString("ru-RU", { dateStyle: "short", timeStyle: "short" });
+  autoTable(doc, {
+    startY: 27,
+    head: [["Сотрудник", "Подтверждение", "Планшет", "Входов", "Первый", "Последний"]],
+    body: lines.map((l) => [l.employeeName, l.method, l.device ?? "—", String(l.count), fmt(l.firstAt), fmt(l.lastAt)]),
+    theme: "grid",
+    styles: { font: fontName, fontSize: 9, cellPadding: 2 },
+    headStyles: { fillColor: [238, 241, 255], textColor: [11, 16, 36], font: fontName, fontStyle: "bold" },
+    margin: { left: 14, right: 14 },
+  });
+}
+
 function repeatJournalHeaderOnPages(doc: jsPDF) {
   const painter = activePageHeaderPainter;
   if (!painter) return;
@@ -6285,6 +6317,18 @@ export type JournalDocumentPdfInput = {
   /// «Работает на платформе WeSetup». `null`/undefined — организация без
   /// партнёра или скрыла брендинг, подвал не печатается.
   branding?: PdfFooterBrand | null;
+  /// Подписи сотрудников через общий планшет (ПИН) за период документа —
+  /// печатаются отдельной страницей-приложением. Пусто → страницы нет.
+  signatures?: PdfSignatureLine[];
+};
+
+export type PdfSignatureLine = {
+  employeeName: string;
+  method: string;
+  device: string | null;
+  count: number;
+  firstAt: Date;
+  lastAt: Date;
 };
 
 /**
@@ -6413,7 +6457,55 @@ export async function loadJournalDocumentPdfInput(params: {
     ? { brandName: orgBranding.brandName, pdfSignature: orgBranding.pdfSignature }
     : null;
 
-  return { document, users, equipment, rooms, branding };
+  // Подписи через общий планшет за период документа — по сотрудникам.
+  const signatures = await loadPdfSignatureLines({
+    organizationId,
+    employeeIds: document.entries.map((e) => e.employeeId),
+    from: document.dateFrom,
+    to: new Date(document.dateTo.getTime() + 24 * 60 * 60 * 1000),
+    users,
+  }).catch(() => []);
+
+  return { document, users, equipment, rooms, branding, signatures };
+}
+
+async function loadPdfSignatureLines(params: {
+  organizationId: string;
+  employeeIds: string[];
+  from: Date;
+  to: Date;
+  users: JournalDocumentPdfUser[];
+}): Promise<PdfSignatureLine[]> {
+  const { loadSignatureEvidence, SIGNATURE_METHOD_LABEL } = await import("@/lib/signature-evidence");
+  const { events, deviceLabels } = await loadSignatureEvidence({
+    organizationId: params.organizationId,
+    userIds: params.employeeIds,
+    from: params.from,
+    to: params.to,
+  });
+  const nameById = new Map(params.users.map((u) => [u.id, u.name]));
+  const groups = new Map<string, PdfSignatureLine>();
+  for (const ev of events) {
+    if (ev.createdAt < params.from) continue;
+    const device = ev.deviceId ? (deviceLabels.get(ev.deviceId) ?? null) : null;
+    const key = `${ev.userId}|${ev.method}|${device ?? ""}`;
+    const line = groups.get(key);
+    if (line) {
+      line.count += 1;
+      if (ev.createdAt < line.firstAt) line.firstAt = ev.createdAt;
+      if (ev.createdAt > line.lastAt) line.lastAt = ev.createdAt;
+    } else {
+      groups.set(key, {
+        employeeName: nameById.get(ev.userId) ?? "—",
+        method: SIGNATURE_METHOD_LABEL[ev.method] ?? ev.method,
+        device,
+        count: 1,
+        firstAt: ev.createdAt,
+        lastAt: ev.createdAt,
+      });
+    }
+  }
+  return Array.from(groups.values()).sort((a, b) => a.employeeName.localeCompare(b.employeeName, "ru"));
 }
 
 /** Совместимость: загрузка + рендер одним вызовом, как было раньше. */
@@ -6971,6 +7063,12 @@ export function renderJournalDocumentPdf(
   // Штамп ХАССП обязан быть на КАЖДОЙ странице бланка — повторяем шапку
   // на страницах 2..N (там, где отрисовщик зарезервировал margin.top).
   repeatJournalHeaderOnPages(doc);
+
+  // Приложение «Подписи сотрудников»: после повтора шапок (чтобы шапка на
+  // него не легла) и до нумерации (чтобы N страниц было честным).
+  if (input.signatures && input.signatures.length > 0) {
+    appendSignaturesPage(doc, fontName, input.signatures);
+  }
 
   // Единый проход по готовому документу: «СТР. i ИЗ N» с честным N в
   // шапке каждой страницы (или в подвале, если шапки на странице нет).

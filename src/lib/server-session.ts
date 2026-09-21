@@ -67,6 +67,8 @@ export async function getServerSession(
           ? token.permissionPreset
           : null,
       orgPresetOverrides: null,
+      kioskDeviceId:
+        token.kiosk === true && typeof token.deviceId === "string" ? token.deviceId : null,
       name: typeof token.name === "string" ? token.name : null,
       email: typeof token.email === "string" ? token.email : null,
       image: null,

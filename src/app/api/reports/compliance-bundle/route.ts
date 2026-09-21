@@ -252,6 +252,12 @@ export async function GET(request: Request) {
   const temperatureAnomalies = capaRowsRaw.filter(
     (r) => r.sourceType === "auto_temp_3days"
   ).length;
+  // Подписи сотрудников по ПИН на общем планшете за период — в сводку.
+  const kioskSignatures = await db.signatureEvent
+    .count({
+      where: { organizationId, method: "kiosk_pin", createdAt: { gte: from, lte: to } },
+    })
+    .catch(() => 0);
 
   try {
     const capaPdf = buildCapaSummaryPdf({
@@ -276,6 +282,7 @@ export async function GET(request: Request) {
       capaOpen,
       capaClosed,
       temperatureAnomalies,
+      kioskSignatures,
       preparedBy: session.user.name ?? "",
     });
     zip.file("00_СВОДКА.pdf", cover);

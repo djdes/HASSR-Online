@@ -1,7 +1,8 @@
 import { Suspense } from "react";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { isImpersonating, requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
+import { isImpersonating, requireAuth, getActiveOrgId, signInHrefFor } from "@/lib/auth-helpers";
+import { KioskSessionGuard } from "@/components/layout/kiosk-session-guard";
 import { loadBuildingContext } from "@/lib/active-building";
 import { AuthSessionProvider } from "@/components/layout/session-provider";
 import { Header } from "@/components/layout/header";
@@ -279,6 +280,7 @@ export default async function DashboardLayout({
 
   return (
     <AuthSessionProvider session={session}>
+      <KioskSessionGuard />
       <SiteThemeProvider initialTheme={initialTheme}>
         <SiteThemeBootstrap />
         {/* H1 — white-label brand color через CSS-vars. Подменяет
@@ -495,7 +497,9 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
     // Без этого ссылка из бота на журнал после входа теряла цель и
     // высаживала человека на домашнем экране.
     const requestPath = (await headers()).get(PARTNER_HEADER_PATH);
-    redirect(miniShellSignInHref(requestPath));
+    // Общий планшет: без сессии — к списку сотрудников и ПИН, а не ко входу.
+    const kioskHref = await signInHrefFor();
+    redirect(kioskHref === "/mini/kiosk" ? kioskHref : miniShellSignInHref(requestPath));
   }
 
   const activeOrgId =
@@ -546,6 +550,7 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthSessionProvider session={session}>
+      <KioskSessionGuard />
       {/* Тему в оболочке ведёт MiniThemeProvider (профиль → устройство →
           Telegram → по умолчанию). SiteThemeProvider оставлен ради
           страниц, которые читают `useSiteTheme` — например «Внешний

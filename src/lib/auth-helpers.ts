@@ -1,9 +1,22 @@
 import type { Session } from "next-auth";
 import { getServerSession } from "@/lib/server-session";
 import { notFound, redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
+import { KIOSK_DEVICE_COOKIE } from "@/lib/kiosk-device";
 import { hasAnyUserRole } from "@/lib/user-roles";
+
+/**
+ * Куда уводить без сессии. На общем планшете (есть device-cookie киоска)
+ * — к списку сотрудников, а не к форме с почтой и паролем: там сотрудник
+ * снова введёт ПИН. Так после автолока или выхода планшет не «выпадает»
+ * из режима киоска.
+ */
+export async function signInHrefFor(): Promise<string> {
+  const cookieStore = await cookies();
+  return cookieStore.get(KIOSK_DEVICE_COOKIE)?.value ? "/mini/kiosk" : "/login";
+}
 
 type ApiAuthResult =
   | { ok: true; session: Session }
@@ -13,7 +26,7 @@ export async function requireAuth() {
   const session = await getServerSession(authOptions);
 
   if (!session) {
-    redirect("/login");
+    redirect(await signInHrefFor());
   }
 
   return session;

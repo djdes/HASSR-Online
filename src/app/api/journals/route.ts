@@ -4,6 +4,7 @@ import type { Prisma } from "@prisma/client";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
+import { logAudit } from "@/lib/audit";
 import { db } from "@/lib/db";
 import {
   processTemperatureReading,
@@ -319,6 +320,37 @@ export async function POST(request: Request) {
     entryCreated = true;
 
     const filledByName = session.user.name || session.user.email || "";
+
+    // След в журнале действий: раньше обычное заполнение не оставляло ни
+    // строки — инспектору нечем было подтвердить «кто и когда». Ошибка
+    // аудита запись не ломает (logAudit глотает исключения).
+    await logAudit({
+      organizationId,
+      userId: session.user.id,
+      userName: filledByName,
+      action: "journal_entry.create",
+      entity: "JournalEntry",
+      entityId: entry.id,
+      details: {
+        templateCode,
+        ...(session.user.kioskDeviceId ? { kioskDeviceId: session.user.kioskDeviceId } : {}),
+      },
+    });
+    // Общий планшет: точная привязка подписи к записи (а не только по окну).
+    if (session.user.kioskDeviceId) {
+      await db.signatureEvent
+        .create({
+          data: {
+            organizationId,
+            userId: session.user.id,
+            method: "kiosk_pin",
+            deviceId: session.user.kioskDeviceId,
+            entryKind: "journal_entry",
+            entryRef: { templateId: template.id, entryId: entry.id },
+          },
+        })
+        .catch(() => null);
+    }
 
     // --- Temperature-specific alert (with equipment range check) ---
     if (templateCode === "temp_control" && equipmentId && data.temperature != null) {

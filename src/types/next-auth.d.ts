@@ -49,6 +49,12 @@ declare module "next-auth" {
        * Перезагружается из БД на каждый getServerSession().
        */
       orgPresetOverrides: Record<string, string[]> | null;
+      /**
+       * Общий планшет: id киоска, если это короткая сессия сотрудника,
+       * выданная по ПИН на общем планшете. Клиент по нему включает
+       * heartbeat и кнопку «Выйти» обратно к списку сотрудников.
+       */
+      kioskDeviceId?: string | null;
     } & DefaultSession["user"];
   }
 }
@@ -66,5 +72,10 @@ declare module "next-auth/jwt" {
     sv?: number;
     /** Кабинет клиента, открытый партнёром: { partnerId, organizationId, level }. */
     partnerAccess?: { partnerId: string; organizationId: string; level: "view" | "edit" } | null;
+    /** Общий планшет: короткая киоск-сессия сотрудника (см. lib/issue-session.ts). */
+    kiosk?: boolean;
+    deviceId?: string;
+    /** Абсолютные мс: после этого момента киоск-сессия заблокирована. */
+    lockAt?: number;
   }
 }

@@ -4,6 +4,7 @@ import { ArrowLeft, Calendar, ClipboardCheck } from "lucide-react";
 import { db } from "@/lib/db";
 import { hashInspectorToken } from "@/lib/inspector-tokens";
 import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
+import { describeSignature, loadSignatureEvidence, matchSignature } from "@/lib/signature-evidence";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -75,9 +76,26 @@ export default async function InspectorTemplatePage({
       id: true,
       createdAt: true,
       data: true,
+      filledById: true,
       filledBy: { select: { name: true } },
     },
     orderBy: { createdAt: "desc" },
+  });
+
+  // Подписи: под каким входом внесена запись (ПИН на общем планшете и т.п.).
+  // Для бланков-документов строк здесь нет — показываем сводку по журналу.
+  const evidence = await loadSignatureEvidence({
+    organizationId: record.organizationId,
+    userIds: legacyEntries.map((e) => e.filledById),
+    from: periodFrom,
+    to: periodToInclusive,
+  });
+  const kioskSignaturesInPeriod = await db.signatureEvent.count({
+    where: {
+      organizationId: record.organizationId,
+      method: "kiosk_pin",
+      createdAt: { gte: periodFrom, lte: periodToInclusive },
+    },
   });
 
   return (
@@ -98,6 +116,11 @@ export default async function InspectorTemplatePage({
             <h1 className="text-[clamp(1.5rem,2vw+1rem,2rem)] font-semibold tracking-[-0.02em] text-[#0b1024]">
               {template.name}
             </h1>
+            {kioskSignaturesInPeriod > 0 ? (
+              <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#ecfdf5] px-3 py-1 text-[12px] text-[#116b2a]">
+                Подписей сотрудников по ПИН на общем планшете за период: {kioskSignaturesInPeriod}
+              </div>
+            ) : null}
             <div className="mt-1.5 flex items-center gap-2 text-[14px] text-[#6f7282]">
               <Calendar className="size-4" />
               {formatRange(periodFrom, record.periodTo)}
@@ -158,6 +181,14 @@ export default async function InspectorTemplatePage({
                         {entry.filledBy?.name ?? "—"}
                       </span>
                     </div>
+                    {(() => {
+                      const sig = matchSignature(evidence.events, entry.filledById, entry.createdAt, { entryId: entry.id });
+                      return sig ? (
+                        <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-[#ecfdf5] px-2.5 py-0.5 text-[12px] text-[#116b2a]">
+                          Подпись: {describeSignature(sig, evidence.deviceLabels)}
+                        </div>
+                      ) : null;
+                    })()}
                     <pre className="mt-2 overflow-x-auto rounded-xl bg-[#fafbff] p-3 text-[12px] leading-relaxed text-[#3c4053]">
                       {JSON.stringify(entry.data, null, 2)}
                     </pre>
