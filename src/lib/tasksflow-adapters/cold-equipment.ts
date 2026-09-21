@@ -18,8 +18,10 @@
 import { db } from "@/lib/db";
 import {
   COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE,
+  expandColdEquipmentReadingSlots,
   normalizeColdEquipmentDocumentConfig,
   normalizeColdEquipmentEntryData,
+  type ColdEquipmentConfigItem,
   type ColdEquipmentDocumentConfig,
   type ColdEquipmentEntryData,
 } from "@/lib/cold-equipment-document";
@@ -38,23 +40,33 @@ const TEMPLATE_CODE = COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE;
 const toDateKey = (d: Date) =>
   `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
 
-function fieldKeyForEquipment(equipmentId: string) {
-  return `t_${equipmentId}`;
+/** Ключ поля = ключ замера (`id` для первого, `id#2` для второго): первый замер совместим со старым `t_<id>`. */
+function fieldKeyForEquipment(slotKey: string) {
+  return `t_${slotKey}`;
+}
+
+type NormMap = Map<string, { min: number | null; max: number | null }>;
+
+/** Норма строки журнала, а если в ней пусто — из справочника оборудования (там «от … до …»). */
+function normFor(item: ColdEquipmentConfigItem, directory: NormMap): { min: number | null; max: number | null } {
+  if (typeof item.min === "number" && typeof item.max === "number") return { min: item.min, max: item.max };
+  const fromDirectory = item.sourceEquipmentId ? directory.get(item.sourceEquipmentId) : null;
+  return { min: item.min ?? fromDirectory?.min ?? null, max: item.max ?? fromDirectory?.max ?? null };
 }
 
 function buildFormFromConfig(
   config: ColdEquipmentDocumentConfig,
-  employeeName: string | null
+  employeeName: string | null,
+  directory: NormMap = new Map()
 ): TaskFormSchema {
-  const fields: TaskFormField[] = config.equipment.map((item) => {
-    const range =
-      typeof item.min === "number" && typeof item.max === "number"
-        ? ` · норма ${item.min}…${item.max}`
-        : "";
+  // Поле на каждый замер дня («1-й замер», «2-й замер»), как строки в таблице журнала.
+  const fields: TaskFormField[] = expandColdEquipmentReadingSlots(config).map((slot) => {
+    const norm = normFor(slot, directory);
+    const range = typeof norm.min === "number" && typeof norm.max === "number" ? ` · норма ${norm.min}…${norm.max}` : "";
     return {
       type: "number",
-      key: fieldKeyForEquipment(item.id),
-      label: `${item.name}${range}`,
+      key: fieldKeyForEquipment(slot.slotKey),
+      label: `${slot.name} — ${slot.slotLabel || "t°"}${range}`,
       unit: "°C",
       required: true,
       min: -40,
@@ -96,18 +108,19 @@ async function prefillFromToday(
   const datas = ordered.map((entry) => normalizeColdEquipmentEntryData(entry.data ?? null));
   let filled = 0;
   const prefilledOff: string[] = [];
+  const slots = expandColdEquipmentReadingSlots(config);
   for (const field of form.fields) {
     if (field.type !== "number") continue;
-    const item = config.equipment.find((candidate) => fieldKeyForEquipment(candidate.id) === field.key);
-    if (!item) continue;
+    const slot = slots.find((candidate) => fieldKeyForEquipment(candidate.slotKey) === field.key);
+    if (!slot) continue;
     for (const data of datas) {
-      const value = data.temperatures[item.id];
+      const value = data.temperatures[slot.slotKey];
       if (typeof value === "number" && Number.isFinite(value)) {
         field.defaultValue = value;
         filled += 1;
         break;
       }
-      if (data.corrections?.[item.id] === OFF_NOTE_EQUIPMENT) {
+      if (data.corrections?.[slot.slotKey] === OFF_NOTE_EQUIPMENT) {
         prefilledOff.push(field.key);
         filled += 1;
         break;
@@ -116,8 +129,16 @@ async function prefillFromToday(
   }
   if (prefilledOff.length > 0) form.prefilledOff = prefilledOff;
   if (filled > 0) {
-    form.notice = `Сегодня уже записано: ${filled} из ${config.equipment.length}. Значения подставлены — проверьте и измените, что нужно.`;
+    form.notice = `Сегодня уже записано: ${filled} из ${slots.length}. Значения подставлены — проверьте и измените, что нужно.`;
   }
+}
+
+/** Нормы из справочника оборудования для строк, где в журнале норма не задана. */
+async function loadDirectoryNorms(config: ColdEquipmentDocumentConfig): Promise<NormMap> {
+  const ids = config.equipment.map((item) => item.sourceEquipmentId).filter((id): id is string => typeof id === "string" && id.length > 0);
+  if (ids.length === 0) return new Map();
+  const rows = await db.equipment.findMany({ where: { id: { in: ids } }, select: { id: true, tempMin: true, tempMax: true } });
+  return new Map(rows.map((row) => [row.id, { min: row.tempMin ?? null, max: row.tempMax ?? null }]));
 }
 
 export const coldEquipmentAdapter: JournalAdapter = {
@@ -199,7 +220,8 @@ export const coldEquipmentAdapter: JournalAdapter = {
       organizationId: doc.organizationId,
     });
     const config = normalizeColdEquipmentDocumentConfig(doc.config);
-    const form = buildFormFromConfig(config, employee?.name ?? null);
+    const directory = await loadDirectoryNorms(config);
+    const form = buildFormFromConfig(config, employee?.name ?? null, directory);
     if (todayKey) await prefillFromToday(form, config, documentId, employeeIdFromRowKey(rowKey), todayKey);
     return form;
   },
@@ -222,22 +244,9 @@ export const coldEquipmentAdapter: JournalAdapter = {
 
     // Walk config.equipment, pick matching `t_<equipmentId>` value
     // from submitted form. Missing = null (equipment skipped).
-    const temperatures: Record<string, number | null> = {};
-    for (const item of config.equipment) {
-      const raw = values?.[fieldKeyForEquipment(item.id)];
-      if (typeof raw === "number" && Number.isFinite(raw)) {
-        temperatures[item.id] = raw;
-      } else if (typeof raw === "string" && raw.trim() !== "") {
-        const parsed = Number(raw);
-        temperatures[item.id] = Number.isFinite(parsed) ? parsed : null;
-      } else {
-        temperatures[item.id] = null;
-      }
-    }
-
     // «Выключено» — прочерк с пометкой вместо показания; комментарий «что
-    // сделали» — к тем холодильникам, где температура вне нормы. Прежние
-    // пометки той же записи сохраняем, снятую пометку «Выключено» убираем.
+    // сделали» — к тем замерам, где температура вне нормы. Прежние пометки
+    // той же записи сохраняем, снятую пометку «Выключено» убираем.
     const off = parseOffKeys(values ?? null);
     const correction = correctionFromValues(values ?? null);
     const prior = await db.journalDocumentEntry.findUnique({
@@ -245,19 +254,34 @@ export const coldEquipmentAdapter: JournalAdapter = {
       select: { data: true },
     });
     const priorData = normalizeColdEquipmentEntryData(prior?.data ?? null);
+    const directory = await loadDirectoryNorms(config);
+    // Значения по замерам: что прислали — записываем, чего в форме не было — оставляем как было.
+    const temperatures: Record<string, number | null> = { ...priorData.temperatures };
     const corrections: Record<string, string> = { ...(priorData.corrections ?? {}) };
-    for (const item of config.equipment) {
-      if (off.has(fieldKeyForEquipment(item.id))) {
-        temperatures[item.id] = null;
-        corrections[item.id] = OFF_NOTE_EQUIPMENT;
+    for (const slot of expandColdEquipmentReadingSlots(config)) {
+      const key = fieldKeyForEquipment(slot.slotKey);
+      if (off.has(key)) {
+        temperatures[slot.slotKey] = null;
+        corrections[slot.slotKey] = OFF_NOTE_EQUIPMENT;
         continue;
       }
-      if (corrections[item.id] === OFF_NOTE_EQUIPMENT) delete corrections[item.id];
-      const t = temperatures[item.id];
-      const lo = typeof item.min === "number" && typeof item.max === "number" ? Math.min(item.min, item.max) : item.min;
-      const hi = typeof item.min === "number" && typeof item.max === "number" ? Math.max(item.min, item.max) : item.max;
+      if (!values || !(key in values)) {
+        if (temperatures[slot.slotKey] === undefined) temperatures[slot.slotKey] = null;
+        continue;
+      }
+      const raw = values[key];
+      if (typeof raw === "number" && Number.isFinite(raw)) temperatures[slot.slotKey] = raw;
+      else if (typeof raw === "string" && raw.trim() !== "") {
+        const parsed = Number(raw);
+        temperatures[slot.slotKey] = Number.isFinite(parsed) ? parsed : null;
+      } else temperatures[slot.slotKey] = null;
+      if (corrections[slot.slotKey] === OFF_NOTE_EQUIPMENT) delete corrections[slot.slotKey];
+      const t = temperatures[slot.slotKey];
+      const norm = normFor(slot, directory);
+      const lo = typeof norm.min === "number" && typeof norm.max === "number" ? Math.min(norm.min, norm.max) : norm.min;
+      const hi = typeof norm.min === "number" && typeof norm.max === "number" ? Math.max(norm.min, norm.max) : norm.max;
       const outside = typeof t === "number" && ((typeof lo === "number" && t < lo) || (typeof hi === "number" && t > hi));
-      if (outside && correction) corrections[item.id] = correction;
+      if (outside && correction) corrections[slot.slotKey] = correction;
     }
 
     const data: ColdEquipmentEntryData = {

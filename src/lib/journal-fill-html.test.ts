@@ -29,6 +29,21 @@ describe("journal-fill-html", () => {
     assert.doesNotMatch(html, /<select/);
   });
 
+  it("splits a fridge with two readings a day into two big fields in one card", () => {
+    const html = renderForm({
+      action: "/x", token: "t", who: "", correctionPresets: [], openedAt: 1, suggestions: {}, hints: {}, values: { "t_e1": "-18.3" },
+      form: { fields: [
+        { type: "number", key: "t_e1", label: "Морозильный ларь №4 (П/Ф) — 1-й замер · норма -20…-18", unit: "°C", required: true },
+        { type: "number", key: "t_e1#2", label: "Морозильный ларь №4 (П/Ф) — 2-й замер · норма -20…-18", unit: "°C", required: true },
+      ] },
+    });
+    assert.equal((html.match(/class="obj"/g) ?? []).length, 1);
+    assert.match(html, /<div class="obj-t">Морозильный ларь №4 \(П\/Ф\)<\/div>/);
+    assert.match(html, /<label for="f-t_e1">1-й замер<span class="req"/);
+    assert.match(html, /<label for="f-t_e1#2">2-й замер<span class="req"/);
+    assert.match(html, /Впишите температуру в карточки ниже \(1\)/);
+  });
+
   it("asks the PIN above the save button when required and keeps its error next to it", () => {
     const html = renderForm({
       action: "/x", token: "t", who: "", correctionPresets: [], openedAt: 1, suggestions: {}, values: {}, hints: {}, pinRequired: true, error: "Неверный PIN. Осталось попыток: 4.",
@@ -101,18 +116,19 @@ describe("journal-fill-html", () => {
       ], submitLabel: "Сохранить замер" },
     });
     assert.equal((climate.match(/class="obj"/g) ?? []).length, 2);
-    assert.match(climate, /<div class="obj-t">Склад Бакалея<\/div><div class="cols">/);
+    assert.match(climate, /<div class="obj-t">Склад Бакалея<\/div><div class="cols one">/);
     // Две метрики — подпись над полем, «−»/«+» по бокам, дата и время после названия.
-    assert.match(climate, /<label class="lab" for="f-r1t"><span class="lab-t">Температура<span class="req"[^>]*>\*<\/span><\/span><span class="lab-s"><span class="stamp" data-stamp-date="20.09.2026">20.09.2026 18:31<\/span><\/span><\/label>/);
-    assert.match(climate, /<label class="lab" for="f-r1h"><span class="lab-t">Влажность<\/span><span class="lab-s"><span class="stamp"[^>]*>20.09.2026 18:31<\/span><\/span><\/label><div class="box flat"><button type="button" class="stp minus" data-step="r1h" data-delta="-1" aria-label="Минус">−<\/button><input[^>]*id="f-r1h"[^>]*><span class="pill"[^>]*><\/span><button type="button" class="stp plus" data-step="r1h" data-delta="1" aria-label="Плюс">\+<\/button><\/div><p class="st">Норма 40…60 %<\/p>/);
+    // Один стиль: поле во всю ширину, подпись внутри с датой, «−»/«+» по краям.
+    assert.match(climate, /<div class="box"><button type="button" class="stp minus" data-step="r1t"[^>]*>−<\/button><input[^>]*id="f-r1t"[^>]*><label for="f-r1t">Температура · <span class="stamp" data-stamp-date="20.09.2026">20.09.2026 18:31<\/span><span class="req"/);
+    assert.match(climate, /<input[^>]*id="f-r1h"[^>]*><label for="f-r1h">Влажность · <span class="stamp"[^>]*>20.09.2026 18:31<\/span><\/label><span class="pill"[^>]*><\/span><button type="button" class="stp plus" data-step="r1h" data-delta="1" aria-label="Плюс">\+<\/button><\/div><p class="st">Норма 40…60 %<\/p>/);
     assert.doesNotMatch(climate, /class="pinbox"/);
     assert.match(climate, /<p class="today">Показания вносятся за сегодня, <b>20.09.2026<\/b>, время <b class="stamp-t">18:31<\/b>.<\/p>/);
-    // «Нет показания» только у обязательного поля; при повторном показе — отмечено и поле погашено.
-    assert.match(climate, /<div class="chips offrow"><label class="chip offc"><input type="checkbox" name="off:r1t" value="1">Нет показания<\/label><\/div>/);
+    // Пометка вместо показания: у температуры «Выключено», у влажности «Нет показания».
+    assert.match(climate, /<div class="chips offrow"><label class="chip offc"><input type="checkbox" name="off:r1t" value="1">Выключено<\/label><\/div>/);
     // В две колонки чип у обеих метрик (симметрично), в одну колонку — только у обязательного поля.
     assert.match(climate, /name="off:r1h"/);
-    // Одна метрика — плавающая подпись внутри поля между кнопками.
     assert.match(climate, /<div class="box"><button type="button" class="stp minus" data-step="r2t"[^>]*>−<\/button><input[^>]*id="f-r2t"[^>]*><label for="f-r2t">Температура · <span class="stamp"/);
+    assert.doesNotMatch(climate, /class="note"/);
     assert.match(climate, /<div class="obj-t">Склад Овощи<\/div><div class="cols one">/);
     assert.match(climate, /Впишите температуру и влажность в карточки ниже \(2\)/);
     assert.match(climate, /data-label="Склад Бакалея · влажность"/);

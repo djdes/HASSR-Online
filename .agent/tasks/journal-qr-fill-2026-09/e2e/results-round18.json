@@ -1,0 +1,27 @@
+{
+  "cards": 3,
+  "cardTitles": [
+    "E2E QS Холодильник №1",
+    "E2E QS Морозильник",
+    "E2E QS Витрина"
+  ],
+  "card2Labels": [
+    "1-Й ЗАМЕР · 21.09.2026 10:18*",
+    "2-Й ЗАМЕР · 21.09.2026 10:18*"
+  ],
+  "noteCount": 0,
+  "hintCount": 0,
+  "valueFont": "44px center",
+  "offChips": 4,
+  "done": "updated",
+  "dbSlots": {
+    "first": -19,
+    "second": -17,
+    "other": 4
+  },
+  "reopenCard2": [
+    "-19",
+    "-17"
+  ],
+  "roomValueFont": "44px center"
+}

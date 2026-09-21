@@ -69,8 +69,8 @@ main{padding:14px 0 20px}
 .steps .n{flex:none;width:24px;height:24px;border-radius:999px;background:#eef1ff;color:#3848c7;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;margin-top:1px}
 .steps small{display:block;color:#6f7282;margin-top:2px}
 .obj{background:#fff;border:1px solid #ececf4;border-radius:16px;padding:12px 12px 6px;margin-bottom:10px;box-shadow:0 0 0 1px rgba(240,240,250,.45)}
-.obj-t{font-size:17px;font-weight:600;margin:0 0 8px 2px;line-height:1.3}
-.cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.obj-t{font-size:21px;line-height:1.25;margin:0 0 10px 2px;font-weight:700;font-weight:600;margin:0 0 8px 2px;line-height:1.3}
+.cols{display:grid;grid-template-columns:1fr;gap:10px}
 .cols.one{grid-template-columns:1fr}
 .cols .fl{margin-bottom:10px}
 .obj .in{background:#fafbff}
@@ -123,6 +123,9 @@ main{padding:14px 0 20px}
 .sheet .sh-s{padding:0 16px 8px}
 .sheet .sh-l{flex:1;overflow-y:auto;padding:0 16px max(env(safe-area-inset-bottom),16px)}
 .who.emp{cursor:pointer}
+.fl.big .in{min-height:96px;padding-top:34px;padding-bottom:8px;font-size:44px;line-height:1;font-weight:700;text-align:center}
+.fl.big .box>label{top:10px}
+.fl.big .stp,.fl.big .pill{top:50%}
 .today{margin:-4px 0 12px;font-size:16px;color:#3c4053;line-height:1.35}
 .today b{font-weight:600;color:#0b1024}
 .prog{display:block;width:max-content;max-width:100%;margin:0 auto 8px;padding:4px 14px;border-radius:999px;background:#fff;border:1px solid #ececf4;font-size:14px;color:#6f7282;text-align:center;font-variant-numeric:tabular-nums}
@@ -441,18 +444,20 @@ export function normRange(field: TaskFormField): { min: number | null; max: numb
 export function cleanLabel(label: string): string {
   return label
     .replace(/\s*[·(]\s*норма[^)]*\)?\s*$/i, "")
-    .replace(/\s*[—–-]\s*(t°|влажность)\s*$/i, "")
+    .replace(/\s*[—–-]\s*(t°|влажность|\d+-й замер)\s*$/i, "")
     .trim();
 }
 
 /** «Кухня — t° · норма 18…22» → метрика t°/влажность (климат) и база «Кухня». */
-export function metricOf(label: string): { metric: "t°" | "влажность" | null; base: string } {
-  const metric = /[—–-]\s*t°/i.test(label) ? "t°" : /[—–-]\s*влажность/i.test(label) ? "влажность" : null;
-  return { metric, base: cleanLabel(label) };
+export function metricOf(label: string): { metric: "t°" | "влажность" | "замер" | null; base: string; slot?: string } {
+  const slot = /[—–-]\s*(\d+-й замер)/i.exec(label)?.[1];
+  const metric = slot ? "замер" : /[—–-]\s*t°/i.test(label) ? "t°" : /[—–-]\s*влажность/i.test(label) ? "влажность" : null;
+  return { metric, base: cleanLabel(label), ...(slot ? { slot } : {}) };
 }
 
 function metricName(field: Extract<TaskFormField, { type: "number" }>): string {
-  const { metric } = metricOf(field.label);
+  const { metric, slot } = metricOf(field.label);
+  if (metric === "замер" && slot) return slot;
   if (metric === "t°" || field.unit === "°C") return "Температура";
   if (metric === "влажность" || field.unit === "%") return "Влажность";
   return "Показание";
@@ -519,7 +524,7 @@ export function formSteps(form: TaskFormSchema, hints: JournalFillHints): string
   const objectFields = form.fields.filter((field): field is NumberField => field.type === "number" && isObjectField(field));
   const objectCount = new Set(objectFields.map((field) => metricOf(field.label).base)).size;
   if (objectFields.length > 0) {
-    const metrics = Array.from(new Set(objectFields.map((field) => (metricName(field) === "Температура" ? "температуру" : metricName(field) === "Влажность" ? "влажность" : "показания"))));
+    const metrics = Array.from(new Set(objectFields.map((field) => (metricName(field) === "Влажность" ? "влажность" : "температуру"))));
     steps.push(`Впишите ${metrics.join(" и ")} в карточки ниже (${objectCount})`);
   }
   const numbers = form.fields.filter((field): field is Extract<TaskFormField, { type: "number" }> => field.type === "number" && !isObjectField(field));
@@ -643,12 +648,12 @@ export function renderForm(params: {
   const pinBlock = params.pinRequired
     ? `<div class="pinbox"><p class="pin-t">Введите ваш PIN</p>${pinError ? `<div class="err">${esc(pinError)}</div>` : ""}<input class="in pin" name="pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" placeholder="••••" required aria-label="PIN для быстрой QR-авторизации"><p class="hint center">PIN подтверждает, что запись сделали именно вы.</p></div>`
     : "";
-  return `${params.who}${today}${pipeline}${hint ? `<p class="hint" style="margin:-6px 0 12px">${esc(hint).replace(/\n/g, "<br>")}</p>` : ""}
+  void hint; // Пояснения из intro и плашку «уже записано» не показываем: значения и так подставлены, лишний текст мешает.
+  return `${params.who}${today}${pipeline}
 <form method="post" action="${esc(params.action)}" id="qr-form" novalidate>
 <input type="hidden" name="action" value="submit">
 <input type="hidden" name="__openedAt" value="${params.openedAt}">
 ${params.error && !pinError ? `<div class="err"${params.error.startsWith("Не заполнено") ? ` data-missing="1"` : ""}>${esc(params.error)}</div>` : ""}
-${params.form.notice ? `<div class="note">${esc(params.form.notice)}</div>` : ""}
 ${fields}
 ${deviation}
 ${pinBlock}
@@ -658,8 +663,8 @@ ${pinBlock}
 
 /** Карточка объекта: название и его числовые поля в две колонки, норма в подписи поля, статус пилюлей. */
 function renderObjectCard(base: string, group: Extract<TaskFormField, { type: "number" }>[], values: Record<string, unknown>, bad: Set<string>, stamp: { date: string; time: string } | null, off: Set<string> = new Set()): string {
-  // В две колонки плавающей подписи между кнопками не хватает места — подпись над полем.
-  const flat = group.length > 1;
+  // Один стиль для холодильников и складов: название объекта целиком, под ним поля во всю ширину
+  // («Температура», «Влажность», «1-й замер», «2-й замер»), показание крупно по центру.
   const inputs = group
     .map((field) => {
       const id = `f-${field.key}`;
@@ -669,26 +674,17 @@ function renderObjectCard(base: string, group: Extract<TaskFormField, { type: "n
       const required = field.required === true;
       const unit = field.unit ? ` ${field.unit}` : "";
       const normText = norm.min != null && norm.max != null ? `${norm.min}…${norm.max}${unit}` : "";
-      // Подпись короткая (в две колонки длинная режется), норма — строкой под полем внутри карточки.
-      const labelBody = `${esc(metricName(field))}${stampHtml(stamp)}${required ? `<span class="req" aria-hidden="true">*</span>` : ""}`;
-      // В две колонки подписи одинаковой высоты: название строкой, дата и время — второй строкой у обеих метрик.
-      const flatLabel = `<span class="lab-t">${esc(metricName(field))}${required ? `<span class="req" aria-hidden="true">*</span>` : ""}</span><span class="lab-s">${stamp ? `<span class="stamp" data-stamp-date="${esc(stamp.date)}">${esc(stamp.date)} ${esc(stamp.time)}</span>` : ""}</span>`;
-      // «Выключено» у холодильника, «Нет показания» у склада: честный прочерк с пометкой вместо выдуманного нуля.
       const isOff = off.has(field.key);
-      const offNote = !flat && metricName(field) === "Температура" ? OFF_NOTE_EQUIPMENT : OFF_NOTE_READING;
-      const status = isOff
-        ? flat ? "Уведомим руководителя" : `${offNote} — руководитель получит уведомление`
-        : bad.has(field.key) ? (flat ? "Вне нормы" : `Вне нормы ${normText}`) : normText ? `Норма ${normText}` : "";
+      const offNote = metricName(field) === "Влажность" ? OFF_NOTE_READING : OFF_NOTE_EQUIPMENT;
+      const labelBody = `${esc(metricName(field))}${stampHtml(stamp)}${required ? `<span class="req" aria-hidden="true">*</span>` : ""}`;
+      const status = isOff ? `${offNote} — руководитель получит уведомление` : bad.has(field.key) ? `Вне нормы ${normText}` : normText ? `Норма ${normText}` : "";
       const input = `<input class="in" id="${esc(id)}" name="${esc(field.key)}" type="text" inputmode="decimal" value="${isOff ? "" : esc(value)}" placeholder=" "${norm.min != null ? ` data-min="${esc(norm.min)}"` : ""}${norm.max != null ? ` data-max="${esc(norm.max)}"` : ""}${field.unit ? ` data-unit="${esc(field.unit)}"` : ""} data-plain="1" data-label="${esc(`${base} · ${lower(metricName(field))}`)}"${required && !isOff ? ` aria-required="true"` : ""}${required && isOff ? ` data-req="1"` : ""}>`;
-      const box = `<div class="box${flat ? " flat" : ""}">${stepButton(field.key, -1)}${input}${flat ? "" : `<label for="${esc(id)}">${labelBody}</label>`}<span class="pill" aria-hidden="true"></span>${stepButton(field.key, 1)}</div>`;
-      // В две колонки чип есть у обеих метрик — иначе колонки разной высоты; у необязательной он тоже честная пометка.
-      const offChip = required || flat
-        ? `<div class="chips offrow"><label class="chip offc${isOff ? " on" : ""}"><input type="checkbox" name="off:${esc(field.key)}" value="1"${isOff ? " checked" : ""}>${esc(offNote)}</label></div>`
-        : "";
-      return `<div class="fl up has-step${bad.has(field.key) ? " bad" : ""}${isOff ? " is-off" : ""}">${flat ? `<label class="lab" for="${esc(id)}">${flatLabel}</label>` : ""}${box}<p class="st">${esc(status)}</p>${quickChips(field.key, norm, value)}${offChip}</div>`;
+      const box = `<div class="box">${stepButton(field.key, -1)}${input}<label for="${esc(id)}">${labelBody}</label><span class="pill" aria-hidden="true"></span>${stepButton(field.key, 1)}</div>`;
+      const offChip = `<div class="chips offrow"><label class="chip offc${isOff ? " on" : ""}"><input type="checkbox" name="off:${esc(field.key)}" value="1"${isOff ? " checked" : ""}>${esc(offNote)}</label></div>`;
+      return `<div class="fl up has-step big${bad.has(field.key) ? " bad" : ""}${isOff ? " is-off" : ""}">${box}<p class="st">${esc(status)}</p>${quickChips(field.key, norm, value)}${offChip}</div>`;
     })
     .join("");
-  return `<div class="obj"><div class="obj-t">${esc(base)}</div><div class="cols${group.length === 1 ? " one" : ""}">${inputs}</div></div>`;
+  return `<div class="obj"><div class="obj-t">${esc(base)}</div><div class="cols one">${inputs}</div></div>`;
 }
 
 /** Кнопка шага по бокам поля: числа ±1, время ±5 минут. */

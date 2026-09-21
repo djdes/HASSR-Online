@@ -74,7 +74,7 @@ export function ReadingField({
           onChange={(event) => onChange(event.target.value)}
           placeholder=" "
           aria-required={required || undefined}
-          className={`h-[70px] w-full rounded-[14px] bg-transparent pb-[6px] pl-14 pt-[24px] text-center text-[26px] font-semibold text-[#0b1024] outline-none focus:ring-4 focus:ring-[#5566f6]/15 ${tone === "idle" ? "pr-14" : "pr-[88px]"}`}
+          className={`h-[96px] w-full rounded-[14px] bg-transparent pb-[6px] pl-14 pt-[30px] text-center text-[44px] font-bold leading-none text-[#0b1024] outline-none focus:ring-4 focus:ring-[#5566f6]/15 ${tone === "idle" ? "pr-14" : "pr-[88px]"}`}
         />
         <label htmlFor={id} className="pointer-events-none absolute left-14 right-14 top-2 truncate text-[11.5px] font-semibold uppercase tracking-[0.06em] text-[#6f7282]">
           {label}

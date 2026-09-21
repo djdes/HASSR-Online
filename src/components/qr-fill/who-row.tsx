@@ -35,7 +35,7 @@ export function WhoRow({
       >
         <span className="flex min-w-0 flex-1 flex-col gap-px">
           <span className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#9b9fb3]">{label}</span>
-          <span className={`line-clamp-2 text-[19px] font-semibold leading-[1.3] [word-break:break-word] ${empty ? "text-[#3848c7]" : "text-[#0b1024]"}`}>
+          <span className={`line-clamp-2 text-[21px] font-semibold leading-[1.3] [word-break:break-word] ${empty ? "text-[#3848c7]" : "text-[#0b1024]"}`}>
             {value ?? placeholder ?? "Выбрать"}
           </span>
         </span>
