@@ -4,10 +4,47 @@ import {
   type JournalColumnsConfig,
 } from "@/lib/journal-columns";
 import { normalizeCustomCells } from "@/lib/finished-product-document";
+import {
+  normalizeCommissionMembers,
+  normalizeRowSignatures,
+  type BrakerageCommissionMember,
+  type BrakerageRowSignature,
+} from "@/lib/brakerage-commission";
+import { getUserDisplayTitle } from "@/lib/user-roles";
 
 export const PERISHABLE_REJECTION_TEMPLATE_CODE = "perishable_rejection";
 export const PERISHABLE_REJECTION_DOCUMENT_TITLE =
   "Журнал бракеража скоропортящейся пищевой продукции";
+
+/**
+ * «ФИО, должность» для колонки «Ответственное лицо». Строка хранится
+ * склеенной (без id человека), поэтому должность берём из его карточки в
+ * момент записи — а не метку из фильтра или «Управляющий» по умолчанию.
+ */
+export function formatPerishableResponsible(
+  user: { name: string } & NonNullable<Parameters<typeof getUserDisplayTitle>[0]>
+): string {
+  const title = getUserDisplayTitle(user).trim();
+  return title && title !== user.name ? `${user.name}, ${title}` : user.name;
+}
+
+/**
+ * Результат органолептической оценки. «Доброкачественная» /
+ * «Недоброкачественная» добавлены владельцем 2026-09-21 к прежним двум.
+ */
+export const PERISHABLE_ORGANOLEPTIC_VALUES = ["compliant", "non_compliant", "good_quality", "poor_quality"] as const;
+export type PerishableOrganolepticResult = (typeof PERISHABLE_ORGANOLEPTIC_VALUES)[number];
+
+export function normalizePerishableOrganoleptic(value: unknown): PerishableOrganolepticResult {
+  return PERISHABLE_ORGANOLEPTIC_VALUES.includes(value as PerishableOrganolepticResult)
+    ? (value as PerishableOrganolepticResult)
+    : "compliant";
+}
+
+/** Продукция забракована: «Не соответствует» или «Недоброкачественная». */
+export function isPerishableRejected(value: unknown): boolean {
+  return value === "non_compliant" || value === "poor_quality";
+}
 
 export type PerishableRejectionRow = {
   id: string;
@@ -20,7 +57,7 @@ export type PerishableRejectionRow = {
   packaging: string;
   quantity: string;
   documentNumber: string;
-  organolepticResult: "compliant" | "non_compliant";
+  organolepticResult: PerishableOrganolepticResult;
   storageCondition: "2_6" | "minus18" | "minus2_2";
   expiryDate: string;
   /**
@@ -33,6 +70,8 @@ export type PerishableRejectionRow = {
   actualSaleTime: string;
   responsiblePerson: string;
   note: string;
+  /** Подписи членов комиссии — копия `SignatureEvent`, ею владеет сервер. */
+  signatures?: BrakerageRowSignature[];
   /** TaskLink.rowKey of the TasksFlow task that produced this row, if
    *  any. The adapter uses it to update-in-place on re-completion. */
   /** Значения своих колонок организации, ключ — `custom:<id>`. */
@@ -51,6 +90,8 @@ export type PerishableRejectionConfig = {
    * документы, у которых поля в config нет, ничего не теряют.
    */
   showNote: boolean;
+  /** Состав бракеражной комиссии — подписывает строки (как у готовой продукции). */
+  commissionMembers: BrakerageCommissionMember[];
   /** Набор колонок документа, см. `src/lib/journal-columns.ts`. */
   columns?: JournalColumnsConfig;
   /**
@@ -164,7 +205,7 @@ export function createPerishableRejectionRow(
     packaging: normalizeText(overrides.packaging),
     quantity: normalizeText(overrides.quantity),
     documentNumber: normalizeText(overrides.documentNumber),
-    organolepticResult: overrides.organolepticResult === "non_compliant" ? "non_compliant" : "compliant",
+    organolepticResult: normalizePerishableOrganoleptic(overrides.organolepticResult),
     storageCondition:
       overrides.storageCondition === "minus18"
         ? "minus18"
@@ -177,6 +218,9 @@ export function createPerishableRejectionRow(
     actualSaleTime: normalizeText(overrides.actualSaleTime),
     responsiblePerson: normalizeText(overrides.responsiblePerson),
     note: normalizeText(overrides.note),
+    ...(Array.isArray(overrides.signatures) && overrides.signatures.length > 0
+      ? { signatures: normalizeRowSignatures(overrides.signatures) }
+      : {}),
     ...(overrides.custom && Object.keys(overrides.custom).length > 0
       ? { custom: normalizeCustomCells(overrides.custom) }
       : {}),
@@ -202,6 +246,7 @@ export function getDefaultPerishableRejectionConfig(): PerishableRejectionConfig
     manufacturers: [],
     suppliers: [],
     showNote: true,
+    commissionMembers: [],
   };
 }
 
@@ -215,6 +260,7 @@ export function getPerishableRejectionSampleConfig(): PerishableRejectionConfig 
     manufacturers: ['ООО "Ромашка"'],
     suppliers: ["ИП Бубнов Б.Б."],
     showNote: true,
+    commissionMembers: [],
   };
 }
 
@@ -308,6 +354,7 @@ export function normalizePerishableRejectionConfig(
       : typeof record.showNote === "boolean"
         ? record.showNote
         : defaults.showNote,
+    commissionMembers: normalizeCommissionMembers(record.commissionMembers),
     ...(columns ? { columns } : {}),
     ...(typeof record.finishedAt === "string" && record.finishedAt.trim() !== ""
       ? { finishedAt: record.finishedAt }
@@ -343,4 +390,6 @@ export const STORAGE_CONDITION_LABELS: Record<string, string> = {
 export const ORGANOLEPTIC_LABELS: Record<string, string> = {
   compliant: "Соответствует",
   non_compliant: "Не соответствует",
+  good_quality: "Доброкачественная",
+  poor_quality: "Недоброкачественная",
 };

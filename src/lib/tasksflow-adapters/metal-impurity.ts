@@ -161,7 +161,8 @@ export const metalImpurityAdapter: JournalAdapter = {
       consumedQuantityKg: typeof values?.consumedQuantityKg === "string" ? values.consumedQuantityKg : "",
       impurityQuantityG: typeof values?.impurityQuantityG === "string" ? values.impurityQuantityG : "",
       impurityCharacteristic: typeof values?.impurityCharacteristic === "string" ? values.impurityCharacteristic : "",
-      responsibleRole: currentConfig.responsiblePosition,
+      // Должность исполнителя из справочника, не ответственного документа.
+      responsibleRole: employee?.positionTitle ?? "",
       responsibleEmployeeId: employeeId,
       responsibleName: employee?.name ?? "",
     });

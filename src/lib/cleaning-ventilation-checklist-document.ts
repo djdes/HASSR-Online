@@ -1,5 +1,5 @@
 import { formatTimesRu } from "@/lib/plural-ru";
-import { pickPrimaryManager } from "@/lib/user-roles";
+import { getUserDisplayTitle, pickPrimaryManager } from "@/lib/user-roles";
 
 export const CLEANING_VENTILATION_CHECKLIST_TEMPLATE_CODE =
   "cleaning_ventilation_checklist";
@@ -52,6 +52,9 @@ type BasicUser = {
   id: string;
   name: string;
   role: string;
+  // Должность из карточки (как в UserLike) — подпись ответственных.
+  positionTitle?: string | null;
+  jobPosition?: { name: string; categoryKey: string } | null;
 };
 
 function createId() {
@@ -123,9 +126,12 @@ export function getDefaultCleaningVentilationConfig(
   users: BasicUser[] = []
 ): CleaningVentilationChecklistConfig {
   const mainResponsibleUserId = getPreferredResponsibleUserId(users);
-  const fallbackTitle = getRoleLabel(
-    users.find((user) => user.id === mainResponsibleUserId)?.role || "owner"
-  );
+  // Должность самого ответственного из справочника; «Управляющий» — только
+  // если в организации ещё никого нет.
+  const mainResponsibleUser = users.find((user) => user.id === mainResponsibleUserId);
+  const fallbackTitle = mainResponsibleUser
+    ? getUserDisplayTitle(mainResponsibleUser)
+    : getRoleLabel("owner");
 
   // Берём management-юзеров (новых и legacy) для default responsibles.
   // Раньше: только legacy ["owner", "technologist", "operator"] —
@@ -137,7 +143,7 @@ export function getDefaultCleaningVentilationConfig(
     .slice(0, 3)
     .map((user) => ({
       id: createId(),
-      title: getRoleLabel(user.role),
+      title: getUserDisplayTitle(user),
       userId: user.id,
     }));
 

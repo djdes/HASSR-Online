@@ -31,7 +31,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { USER_ROLE_LABEL_VALUES } from "@/lib/user-roles";
+import { getUserDisplayTitle } from "@/lib/user-roles";
 import {
   Dialog,
   DialogContent,
@@ -44,13 +44,17 @@ import {
   createPerishableRejectionRow,
   formatPerishableDateTime,
   formatPerishableExpiry,
+  formatPerishableResponsible,
   normalizePerishableRejectionConfig,
   PERISHABLE_EXPIRY_PRESET_HOURS,
   STORAGE_CONDITION_LABELS,
   ORGANOLEPTIC_LABELS,
+  PERISHABLE_ORGANOLEPTIC_VALUES,
   type PerishableRejectionConfig,
   type PerishableRejectionRow,
 } from "@/lib/perishable-rejection-document";
+import { useLiveEvents } from "@/lib/use-live-events";
+import { formatRowSignatures, normalizeRowSignatures } from "@/lib/brakerage-commission";
 import { useDocumentCloseAction } from "@/components/journals/document-close-button";
 import {
   PositionSelectItems,
@@ -93,6 +97,7 @@ import {
   legacyFlagsFromColumns,
   resolveColumns,
   type JournalColumnsConfig,
+  type ResolvedJournalColumn,
 } from "@/lib/journal-columns";
 import {
   JournalCustomCell,
@@ -118,7 +123,14 @@ type Props = {
   dateFrom: string;
   status: string;
   initialConfig: PerishableRejectionConfig;
-  users: { id: string; name: string; role: string }[];
+  // Должность из карточки (как в UserLike) — в «ФИО, должность».
+  users: {
+    id: string;
+    name: string;
+    role: string;
+    positionTitle?: string | null;
+    jobPosition?: { name: string; categoryKey: string } | null;
+  }[];
   /**
    * Ответственный документа (бракеровщик). Его имя подставляется в новую
    * строку; не назначен — поле пустое, человек выбирает сам.
@@ -126,7 +138,6 @@ type Props = {
   responsibleUserId?: string | null;
 };
 
-const RESPONSIBLE_POSITIONS = USER_ROLE_LABEL_VALUES;
 
 /**
  * ЭКРАН = WeSetup (мягкие серые рамки `#ececf4`, шапка `#f8f9fc`),
@@ -252,8 +263,16 @@ export function PerishableRejectionDocumentClient({
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   // Раньше новая строка получала «первого сотрудника по алфавиту».
-  const defaultResponsibleName =
-    (responsibleUserId && users.find((user) => user.id === responsibleUserId)?.name) || "";
+  // «ФИО, должность» ответственного — должность из его карточки.
+  const defaultResponsibleUser = responsibleUserId
+    ? users.find((user) => user.id === responsibleUserId)
+    : undefined;
+  const defaultResponsibleName = defaultResponsibleUser
+    ? formatPerishableResponsible(defaultResponsibleUser)
+    : "";
+  const defaultResponsiblePosition = defaultResponsibleUser
+    ? getUserDisplayTitle(defaultResponsibleUser)
+    : "";
   const [config, setConfig] = useState(() =>
     normalizePerishableRejectionConfig(initialConfig)
   );
@@ -357,11 +376,13 @@ export function PerishableRejectionDocumentClient({
       isColumnVisible("document")
         ? { label: columnLabel("document", "Документ безопасности"), value: row.documentNumber, hideIfEmpty: true }
         : null,
-      {
-        label: columnLabel("organoleptic", "Органолептика"),
-        value: ORGANOLEPTIC_LABELS[row.organolepticResult] || row.organolepticResult,
-        hideIfEmpty: true,
-      },
+      isColumnVisible("organoleptic")
+        ? {
+            label: columnLabel("organoleptic", "Органолептика"),
+            value: ORGANOLEPTIC_LABELS[row.organolepticResult] || row.organolepticResult,
+            hideIfEmpty: true,
+          }
+        : null,
       isColumnVisible("storage")
         ? {
             label: columnLabel("storage", "Условия хранения"),
@@ -385,7 +406,16 @@ export function PerishableRejectionDocumentClient({
             hideIfEmpty: true,
           }
         : null,
-      { label: columnLabel("responsible", "Ответственный"), value: row.responsiblePerson, hideIfEmpty: true },
+      isColumnVisible("responsible")
+        ? { label: columnLabel("responsible", "Ответственный"), value: row.responsiblePerson, hideIfEmpty: true }
+        : null,
+      isColumnVisible("signatures")
+        ? {
+            label: columnLabel("signatures", "Подпись бракеражной комиссии"),
+            value: formatRowSignatures(normalizeRowSignatures(row.signatures)) || "Ждёт подписи комиссии",
+            hideIfEmpty: false,
+          }
+        : null,
       isColumnVisible("note") ? { label: columnLabel("note", "Примечание"), value: row.note, hideIfEmpty: true } : null,
       // Свои колонки организации — и в карточке на телефоне, иначе с
       // телефона их вообще не видно.
@@ -426,8 +456,9 @@ export function PerishableRejectionDocumentClient({
       responsiblePerson: defaultResponsibleName,
     })
   );
-  const [draftPosition, setDraftPosition] = useState(RESPONSIBLE_POSITIONS[0]);
-  const [draftUserId, setDraftUserId] = useState("");
+  // Без «Управляющий» по умолчанию: ответственный документа и его должность.
+  const [draftPosition, setDraftPosition] = useState(defaultResponsiblePosition);
+  const [draftUserId, setDraftUserId] = useState(defaultResponsibleUser?.id ?? "");
   const draftCascade = usePositionEmployeeCascade({
     users,
     positionTitle: draftPosition,
@@ -472,6 +503,24 @@ export function PerishableRejectionDocumentClient({
   configRef.current = config;
   const dirtyRef = useRef(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /**
+   * Строки, которые видела эта страница: сервер по ним не даёт сохранению с
+   * сайта стереть позиции, добавленные по QR, и подписи комиссии
+   * (см. brakerage-row-merge.ts).
+   */
+  const knownRowIdsRef = useRef<Set<string>>(new Set(config.rows.map((row) => row.id)));
+  const inFlightRef = useRef(0);
+  const adoptServerRows = useCallback((rawConfig: unknown) => {
+    if (dirtyRef.current || saveTimerRef.current || inFlightRef.current > 0) return;
+    const fresh = normalizePerishableRejectionConfig(rawConfig);
+    for (const row of fresh.rows) knownRowIdsRef.current.add(row.id);
+    setConfig((prev) => {
+      const same =
+        prev.rows.length === fresh.rows.length &&
+        prev.rows.every((row, index) => JSON.stringify(row) === JSON.stringify(fresh.rows[index]));
+      return same ? prev : { ...prev, rows: fresh.rows };
+    });
+  }, []);
 
   const flushConfigSave = useCallback(() => {
     if (saveTimerRef.current) {
@@ -481,21 +530,25 @@ export function PerishableRejectionDocumentClient({
     if (!dirtyRef.current) return;
     dirtyRef.current = false;
     setIsSaving(true);
+    for (const row of configRef.current.rows) knownRowIdsRef.current.add(row.id);
+    inFlightRef.current += 1;
     void fetch(`/api/journal-documents/${documentId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ config: configRef.current }),
+      body: JSON.stringify({ config: configRef.current, knownRowIds: [...knownRowIdsRef.current] }),
     })
-      .then((response) => {
+      .then(async (response) => {
         if (!response.ok) throw new Error();
+        const body = (await response.json().catch(() => null)) as { document?: { config?: unknown } } | null;
+        inFlightRef.current -= 1;
+        if (body?.document) adoptServerRows(body.document.config);
       })
-      .catch(() =>
-        toast.error(
-          "Не удалось сохранить журнал — изменения остались только на экране"
-        )
-      )
+      .catch(() => {
+        inFlightRef.current = Math.max(0, inFlightRef.current - 1);
+        toast.error("Не удалось сохранить журнал — изменения остались только на экране");
+      })
       .finally(() => setIsSaving(false));
-  }, [documentId]);
+  }, [documentId, adoptServerRows]);
 
   /**
    * Применить изменение конфига и поставить запись в очередь.
@@ -520,6 +573,92 @@ export function PerishableRejectionDocumentClient({
 
   // Уход со страницы не должен съедать последний недописанный ввод.
   useEffect(() => () => flushConfigSave(), [flushConfigSave]);
+
+  // Позиции с телефонов (QR) и подписи комиссии появляются здесь сами.
+  useLiveEvents((event) => {
+    if ((event as { type?: string }).type !== "journal" || readOnly) return;
+    const data = (event as { data?: { documentIds?: unknown } }).data;
+    const ids = Array.isArray(data?.documentIds) ? (data?.documentIds as unknown[]) : [];
+    if (!ids.includes(documentId)) return;
+    void fetch(`/api/journal-documents/${documentId}`, { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((body: { document?: { config?: unknown } } | null) => {
+        if (body?.document) adoptServerRows(body.document.config);
+      })
+      .catch(() => undefined);
+  });
+
+  /** Ячейка колонки: одно место для всех колонок бланка и своих. */
+  function renderCell(row: PerishableRejectionRow, column: ResolvedJournalColumn) {
+    if (column.custom) {
+      return (
+        <JournalCustomCell
+          column={column.custom}
+          value={customCellValue(row, column.key)}
+          onChange={(value) => updateRow(row.id, { custom: withCustomCell(row, column.key, value) })}
+          onBlur={flushConfigSave}
+          disabled={readOnly}
+          mustFill={column.mustFill}
+          employees={employeeNames}
+        />
+      );
+    }
+    const opens = (value: string) => (
+      <JournalCellOpensRow value={value} onOpen={() => openEditRow(row)} disabled={readOnly} />
+    );
+    const text = (field: "productName" | "productionDate" | "documentNumber" | "responsiblePerson" | "note") => (
+      <JournalCellInput
+        value={row[field]}
+        onChange={(e) => updateRow(row.id, { [field]: e.target.value } as Partial<PerishableRejectionRow>)}
+        onBlur={flushConfigSave}
+        disabled={readOnly}
+      />
+    );
+    switch (column.key) {
+      case "arrival":
+        // Дата и время — только через окно строки: свободный ввод делился
+        // по пробелу и молча портил оба поля.
+        return opens(formatPerishableDateTime(row.arrivalDate, row.arrivalTime));
+      case "product":
+        return text("productName");
+      case "productionDate":
+        return text("productionDate");
+      case "manufacturer":
+        return opens([row.manufacturer, row.supplier].filter(Boolean).join(" / "));
+      case "packaging":
+        return opens([row.packaging, row.quantity].filter(Boolean).join(" / "));
+      case "document":
+        return text("documentNumber");
+      case "organoleptic":
+        return opens(ORGANOLEPTIC_LABELS[row.organolepticResult] || row.organolepticResult);
+      case "storage":
+        return opens(
+          [STORAGE_CONDITION_LABELS[row.storageCondition] || row.storageCondition, formatPerishableExpiry(row)]
+            .filter(Boolean)
+            .join(", ")
+        );
+      case "sale":
+        return opens(formatPerishableDateTime(row.actualSaleDate, row.actualSaleTime));
+      case "responsible":
+        return text("responsiblePerson");
+      case "note":
+        return text("note");
+      case "signatures": {
+        const signatures = normalizeRowSignatures(row.signatures);
+        return signatures.length > 0 ? (
+          <div className="px-1 py-1 text-center text-[12px] leading-snug">{formatRowSignatures(signatures)}</div>
+        ) : (
+          <div className="px-1 py-1 text-center print:hidden">
+            <span className="inline-flex rounded-full bg-[#fff8eb] px-2 py-0.5 text-[11px] font-medium text-[#7a4a00]">
+              Ждёт подписи комиссии
+            </span>
+          </div>
+        );
+      }
+      default:
+        return null;
+    }
+  }
 
   const headerEdit = useJournalHeaderEdit();
   const canManageColumns = headerEdit?.canEditDocument === true;
@@ -565,7 +704,7 @@ export function PerishableRejectionDocumentClient({
     { key: "arrivalTime", label: "Время поступления", type: "time" },
     { key: "manufacturer", label: "Производитель", type: "text", suggestions: manufacturerOptions },
     { key: "supplier", label: "Поставщик", type: "text", suggestions: supplierOptions },
-    { key: "organolepticResult", label: "Органолептическая оценка", type: "select", options: [{ value: "compliant", label: "Соответствует" }, { value: "non_compliant", label: "Не соответствует" }] },
+    { key: "organolepticResult", label: "Органолептическая оценка", type: "select", options: PERISHABLE_ORGANOLEPTIC_VALUES.map((value) => ({ value, label: ORGANOLEPTIC_LABELS[value] })) },
     { key: "storageCondition", label: "Условия хранения", type: "select", options: (Object.entries(STORAGE_CONDITION_LABELS) as [string, string][]).map(([value, label]) => ({ value, label })) },
     { key: "actualSaleDate", label: "Дата фактической реализации", type: "date" },
     { key: "actualSaleTime", label: "Время фактической реализации", type: "time" },
@@ -715,8 +854,8 @@ export function PerishableRejectionDocumentClient({
         responsiblePerson: defaultResponsibleName,
       })
     );
-    setDraftPosition(RESPONSIBLE_POSITIONS[0]);
-    setDraftUserId("");
+    setDraftPosition(defaultResponsiblePosition);
+    setDraftUserId(defaultResponsibleUser?.id ?? "");
   }
 
   function openAddRow() {
@@ -737,10 +876,8 @@ export function PerishableRejectionDocumentClient({
       .map((part) => part.trim());
     const matchedUser = users.find((user) => user.name === namePart);
     setDraftUserId(matchedUser?.id ?? "");
-    setDraftPosition(
-      RESPONSIBLE_POSITIONS.find((position) => position === positionPart) ??
-        RESPONSIBLE_POSITIONS[0]
-    );
+    // Должность найденного человека — из карточки; иначе то, что записано.
+    setDraftPosition(matchedUser ? getUserDisplayTitle(matchedUser) : positionPart || "");
     setAddModalOpen(true);
   }
 
@@ -769,9 +906,11 @@ export function PerishableRejectionDocumentClient({
     // Сотрудника в списке может не быть (уволен, ФИО вписано руками) —
     // тогда сохраняем то, что уже стояло в строке, иначе ФИО стиралось
     // и оставалась одна должность.
+    // Должность — выбранного человека, не метка фильтра; одна должность
+    // без ФИО в колонку «ФИО, должность» не пишется.
     const responsible = user
-      ? `${user.name}, ${draftPosition}`
-      : draftRow.responsiblePerson.trim() || draftPosition;
+      ? formatPerishableResponsible(user)
+      : draftRow.responsiblePerson.trim();
     const nextRow = { ...draftRow, responsiblePerson: responsible };
     const rowId = editingRowId;
     applyConfig(
@@ -1240,140 +1379,11 @@ export function PerishableRejectionDocumentClient({
                       disabled={readOnly}
                     />
                   </td>
-                  <td className={`${GRID_CELL_CLASS} p-1 align-top leading-tight`}>
-                    {/* Дата и время — только через окно строки: свободный
-                        ввод делился по пробелу и молча портил оба поля. */}
-                    <JournalCellOpensRow
-                      value={formatPerishableDateTime(row.arrivalDate, row.arrivalTime)}
-                      onOpen={() => openEditRow(row)}
-                      disabled={readOnly}
-                    />
-                  </td>
-                  <td className={`${GRID_CELL_CLASS} p-1 align-top leading-tight`}>
-                    <JournalCellInput
-                      value={row.productName}
-                      onChange={(e) =>
-                        updateRow(row.id, { productName: e.target.value })
-                      }
-                      onBlur={flushConfigSave}
-                      disabled={readOnly}
-                    />
-                  </td>
-                  <td className={`${GRID_CELL_CLASS} p-1 align-top leading-tight${isColumnVisible("productionDate") ? "" : " hidden"}`}>
-                    <JournalCellInput
-                      value={row.productionDate}
-                      onChange={(e) =>
-                        updateRow(row.id, { productionDate: e.target.value })
-                      }
-                      onBlur={flushConfigSave}
-                      disabled={readOnly}
-                    />
-                  </td>
-                  <td className={`${GRID_CELL_CLASS} p-1 align-top leading-tight${isColumnVisible("manufacturer") ? "" : " hidden"}`}>
-                    <JournalCellOpensRow
-                      value={
-                        [row.manufacturer, row.supplier]
-                          .filter(Boolean)
-                          .join(" / ") || ""
-                      }
-                      onOpen={() => openEditRow(row)}
-                      disabled={readOnly}
-                    />
-                  </td>
-                  <td className={`${GRID_CELL_CLASS} p-1 align-top leading-tight${isColumnVisible("packaging") ? "" : " hidden"}`}>
-                    <JournalCellOpensRow
-                      value={
-                        [row.packaging, row.quantity]
-                          .filter(Boolean)
-                          .join(" / ") || ""
-                      }
-                      onOpen={() => openEditRow(row)}
-                      disabled={readOnly}
-                    />
-                  </td>
-                  <td className={`${GRID_CELL_CLASS} p-1 align-top leading-tight${isColumnVisible("document") ? "" : " hidden"}`}>
-                    <JournalCellInput
-                      value={row.documentNumber}
-                      onChange={(e) =>
-                        updateRow(row.id, {
-                          documentNumber: e.target.value,
-                        })
-                      }
-                      onBlur={flushConfigSave}
-                      disabled={readOnly}
-                    />
-                  </td>
-                  <td className={`${GRID_CELL_CLASS} p-1 align-top leading-tight`}>
-                    <JournalCellOpensRow
-                      value={
-                        ORGANOLEPTIC_LABELS[row.organolepticResult] ||
-                        row.organolepticResult
-                      }
-                      onOpen={() => openEditRow(row)}
-                      disabled={readOnly}
-                    />
-                  </td>
-                  <td className={`${GRID_CELL_CLASS} p-1 align-top leading-tight${isColumnVisible("storage") ? "" : " hidden"}`}>
-                    <JournalCellOpensRow
-                      value={[
-                        STORAGE_CONDITION_LABELS[row.storageCondition] || row.storageCondition,
-                        formatPerishableExpiry(row),
-                      ]
-                        .filter(Boolean)
-                        .join(", ")}
-                      onOpen={() => openEditRow(row)}
-                      disabled={readOnly}
-                    />
-                  </td>
-                  <td className={`${GRID_CELL_CLASS} p-1 align-top leading-tight${isColumnVisible("sale") ? "" : " hidden"}`}>
-                    <JournalCellOpensRow
-                      value={formatPerishableDateTime(row.actualSaleDate, row.actualSaleTime)}
-                      onOpen={() => openEditRow(row)}
-                      disabled={readOnly}
-                    />
-                  </td>
-                  <td className={`${GRID_CELL_CLASS} p-1 align-top leading-tight`}>
-                    <JournalCellInput
-                      value={row.responsiblePerson}
-                      onChange={(e) =>
-                        updateRow(row.id, {
-                          responsiblePerson: e.target.value,
-                        })
-                      }
-                      onBlur={flushConfigSave}
-                      disabled={readOnly}
-                    />
-                  </td>
-                  {config.showNote ? (
-                    <td className={`${GRID_CELL_CLASS} p-1 align-top leading-tight`}>
-                      <JournalCellInput
-                        value={row.note}
-                        onChange={(e) =>
-                          updateRow(row.id, { note: e.target.value })
-                        }
-                        onBlur={flushConfigSave}
-                        disabled={readOnly}
-                      />
-                    </td>
-                  ) : null}
-                  {/* Свои колонки организации идут последними — ровно в том
-                      порядке, в каком их отдаёт resolveColumns для шапки. */}
-                  {customColumns.map(({ column, custom }) => (
-                    <td
-                      key={column.key}
-                      className={`${GRID_CELL_CLASS} p-1 align-top leading-tight`}
-                    >
-                      <JournalCustomCell
-                        column={custom}
-                        value={customCellValue(row, column.key)}
-                        onChange={(value) =>
-                          updateRow(row.id, { custom: withCustomCell(row, column.key, value) })
-                        }
-                        onBlur={flushConfigSave}
-                        disabled={readOnly}
-                        mustFill={column.mustFill}
-                        employees={employeeNames}
-                      />
+                  {/* Ячейки идут тем же циклом, что и шапка: скрытая колонка
+                      исчезает, порядок колонок — как в настройках. */}
+                  {visibleColumnsView.map((column) => (
+                    <td key={column.key} className={`${GRID_CELL_CLASS} p-1 align-top leading-tight`}>
+                      {renderCell(row, column)}
                     </td>
                   ))}
                 </tr>
@@ -1395,8 +1405,8 @@ export function PerishableRejectionDocumentClient({
               {!readOnly ? (
                 <JournalAddRow
                   leading={1}
-                  labelSpan={2}
-                  trailing={visibleColumnsView.length - 2}
+                  labelSpan={Math.min(2, Math.max(1, visibleColumnsView.length))}
+                  trailing={Math.max(0, visibleColumnsView.length - 2)}
                   label="Добавить запись"
                   onClick={() => openAddRow()}
                 />
@@ -1672,6 +1682,8 @@ export function PerishableRejectionDocumentClient({
                   [
                     ["compliant", "Соответствует", "#136b2a", "rgba(19,107,42,0.18)"],
                     ["non_compliant", "Не соответствует", "#d2453d", "rgba(210,69,61,0.18)"],
+                    ["good_quality", "Доброкачественная", "#136b2a", "rgba(19,107,42,0.18)"],
+                    ["poor_quality", "Недоброкачественная", "#d2453d", "rgba(210,69,61,0.18)"],
                   ] as const
                 ).map(([value, label, fg, bg]) => {
                   const active = draftRow.organolepticResult === value;

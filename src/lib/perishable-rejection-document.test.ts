@@ -6,6 +6,7 @@ import {
   createPerishableRejectionRow,
   formatPerishableDateTime,
   formatPerishableExpiry,
+  formatPerishableResponsible,
   normalizePerishableRejectionConfig,
   normalizePerishableTime,
 } from "@/lib/perishable-rejection-document";
@@ -109,4 +110,24 @@ test("дата+время в ячейке показываются по-русс
 test("пустой срок не печатается, нестандартная дата не теряется", () => {
   assert.equal(formatPerishableExpiry({ expiryDate: "", expiryTime: "10:00" }), "");
   assert.equal(formatPerishableExpiry({ expiryDate: "до 21.09" }), "до 21.09");
+});
+
+/**
+ * «Ответственное лицо (ФИО, должность)» хранится одной строкой. Должность
+ * — самого человека из карточки: раньше подставлялась первая роль
+ * «Управляющий», и повар подписывался управляющим.
+ */
+test("бракераж: «ФИО, должность» — должность из карточки человека", () => {
+  assert.equal(
+    formatPerishableResponsible({
+      name: "Акулинина Е.В.",
+      role: "cook",
+      jobPosition: { name: "Кладовщик" },
+    }),
+    "Акулинина Е.В., Кладовщик"
+  );
+  assert.equal(
+    formatPerishableResponsible({ name: "Репешко И.В.", role: "manager" }),
+    "Репешко И.В., Управляющий"
+  );
 });

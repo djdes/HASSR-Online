@@ -131,8 +131,10 @@ export const disinfectantUsageAdapter: JournalAdapter = {
       responsibleRole: rawConfig.responsibleRole ?? "Сотрудник",
     } as DisinfectantDocumentConfig;
 
+    // Должность исполнителя из справочника (findTaskEmployee), а не
+    // ответственного документа: строка принадлежит исполнителю.
     const newRow: ReceiptRow = createEmptyReceipt(
-      employee?.positionTitle ?? currentConfig.responsibleRole,
+      employee?.positionTitle ?? "",
       employee?.name ?? "",
       employeeId
     );

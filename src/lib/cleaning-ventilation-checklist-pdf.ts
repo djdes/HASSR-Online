@@ -31,7 +31,7 @@ function ensureUnicodeFont(doc: jsPDF): string {
 import { readControlPeriodicity } from "@/lib/control-periodicity";
 import { readHeaderTitleOverride } from "@/lib/journal-header-title";
 import { registerPageLabelSlot } from "@/lib/pdf-page-labels";
-import { getUserDisplayTitle } from "@/lib/user-roles";
+import { getRowEmployeeTitle } from "@/lib/user-roles";
 import {
   CLEANING_VENTILATION_CHECKLIST_TEMPLATE_CODE,
   buildChecklistDateKeys,
@@ -182,16 +182,15 @@ export function drawCleaningVentilationChecklistPdf(
     .map((item) => `${item.label}: ${item.text}`)
     .join("\n\n");
 
-  // На экране ответственные подписаны «Должность - ФИО», где ДОЛЖНОСТЬ
-  // берётся из конфига документа (`responsible.title`), а НЕ из
-  // jobPosition пользователя. Раньше PDF звал getUserDisplayTitle и
-  // печатал «Менеджер - Ярослав» там, где экран показывает
-  // «Управляющий - Ярослав».
+  // «Должность - ФИО»: должность самого человека из справочника — как на
+  // экране (он тоже выводит её от человека). Сохранённая в документе копия —
+  // только если человека уже нет: туда попадала «корзина» «Управляющий»
+  // вместо настоящей должности («Менеджер»).
   const responsiblesText =
     config.responsibles
       .map((item) => {
         const user = params.users.find((candidate) => candidate.id === item.userId);
-        const title = item.title?.trim() || getUserDisplayTitle(user);
+        const title = getRowEmployeeTitle(user, item.title);
         return `${title} - ${user?.name || "Не выбран"}`;
       })
       .filter(Boolean)

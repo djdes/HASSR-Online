@@ -66,7 +66,12 @@ import { JournalSettingsModal } from "@/components/journals/v2/journal-settings-
 import { useCopyYesterdayAction } from "@/components/journals/copy-yesterday-button";
 import { FocusTodayScroller } from "@/components/journals/focus-today-scroller";
 import { JournalClosedBanner } from "@/components/journals/journal-closed-banner";
-import { isManagementRole } from "@/lib/user-roles";
+import {
+  getRowEmployeeTitle,
+  getUsersForRoleLabel,
+  isManagementRole,
+  type UserLike,
+} from "@/lib/user-roles";
 import { useMobileView } from "@/lib/use-mobile-view";
 import {
   MobileViewToggle,
@@ -84,17 +89,20 @@ import {
 import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
 
 /**
- * The Должность select for this journal is a hardcoded "Управляющий / Сотрудник"
- * bucket, so the Сотрудник list is filtered by that bucket rather than by a
- * concrete role label.
+ * Старые документы хранят должность-«корзину» «Управляющий / Сотрудник» —
+ * для них список фильтруется по корзине. Для настоящей должности из
+ * справочника — только люди в этой должности: раньше показывались ВСЕ, и
+ * сохранялась пара «чужая должность + человек».
  */
-function filterUsersByBucket<T extends { role?: string | null }>(
+function filterUsersByBucket<T extends UserLike & { id: string; role?: string | null }>(
   users: T[],
   bucket: string
 ): T[] {
+  const exact = getUsersForRoleLabel(users, bucket);
+  if (exact.length > 0) return exact;
   if (bucket === "Управляющий") return users.filter((u) => isManagementRole(u.role));
   if (bucket === "Сотрудник") return users.filter((u) => !isManagementRole(u.role));
-  return users;
+  return exact;
 }
 
 import { cn } from "@/lib/utils";
@@ -111,6 +119,9 @@ type UserItem = {
   id: string;
   name: string;
   role: string;
+  // Должность из карточки (как в UserLike) — подпись «Должность - ФИО».
+  positionTitle?: string | null;
+  jobPosition?: { name: string; categoryKey: string } | null;
 };
 
 type Props = {
@@ -621,7 +632,13 @@ function AddResponsibleDialog(props: {
               className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4a5bf0]"
               disabled={!title || !userId}
               onClick={async () => {
-                await props.onAdd({ id: createId(), title, userId });
+                // Должность выбранного человека, а не метка фильтра.
+                const picked = props.users.find((user) => user.id === userId);
+                await props.onAdd({
+                  id: createId(),
+                  title: getRowEmployeeTitle(picked, title),
+                  userId,
+                });
                 props.onOpenChange(false);
               }}
             >
@@ -1516,15 +1533,18 @@ export function CleaningVentilationChecklistDocumentClient({
                   {config.responsibles.length > 0 ? (
                     config.responsibles.map((responsible) => {
                       const user = userMap[responsible.userId];
+                      // Должность этого человека из карточки; сохранённая —
+                      // только если его уже нет в организации.
+                      const responsibleTitle = getRowEmployeeTitle(user, responsible.title);
                       return (
                         <div key={responsible.id} className="flex items-center justify-between gap-3">
                           <span>
-                            {responsible.title} - {user?.name || "Не выбран"}
+                            {responsibleTitle} - {user?.name || "Не выбран"}
                           </span>
                           {isActive ? (
                             <button
                               type="button"
-                              aria-label={`Удалить ответственного «${responsible.title}»`}
+                              aria-label={`Удалить ответственного «${responsibleTitle}»`}
                               /* R5-3а: без print:hidden иконки-корзины
                                  уходили на бумагу — в официальном бланке
                                  у каждого ответственного печаталась
@@ -1804,7 +1824,10 @@ export function CleaningVentilationChecklistDocumentClient({
             {
               ...config,
               ventilationEnabled: value.ventilationEnabled,
-              mainResponsibleTitle: value.mainResponsibleTitle,
+              mainResponsibleTitle: getRowEmployeeTitle(
+                users.find((user) => user.id === value.mainResponsibleUserId),
+                value.mainResponsibleTitle
+              ),
               mainResponsibleUserId: value.mainResponsibleUserId,
               procedures: config.procedures.map((item) => ({
                 ...item,

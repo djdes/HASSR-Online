@@ -218,7 +218,13 @@ const PROVIDERS: Record<string, Provider> = {
   cleaning_ventilation_checklist: (orgData) => {
     if (orgData?.users && orgData.users.length > 0) {
       return getDefaultCleaningVentilationConfig(
-        orgData.users
+        // Должность из справочника → подпись ответственных чек-листа.
+        orgData.users.map((user) => ({
+          ...user,
+          jobPosition: user.jobPositionName?.trim()
+            ? { name: user.jobPositionName.trim(), categoryKey: "" }
+            : null,
+        }))
       ) as unknown as Record<string, unknown>;
     }
     return getDefaultCleaningVentilationConfig() as unknown as Record<

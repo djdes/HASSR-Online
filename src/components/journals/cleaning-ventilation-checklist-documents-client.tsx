@@ -64,6 +64,7 @@ import {
 } from "@/components/journals/journal-responsive";
 import { localDayKey } from "@/lib/entry-defaults";
 import { formatJournalDate } from "@/lib/journal-card-date";
+import { getRowEmployeeTitle } from "@/lib/user-roles";
 import { useAutoDocumentTitle } from "@/components/journals/use-auto-document-title";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
 import {
@@ -85,6 +86,9 @@ type UserItem = {
   id: string;
   name: string;
   role: string;
+  // Должность из карточки (как в UserLike) — в подписи ответственного.
+  positionTitle?: string | null;
+  jobPosition?: { name: string; categoryKey: string } | null;
 };
 
 type Props = {
@@ -127,11 +131,15 @@ function formatDateLabel(isoDate: string) {
  */
 function getMainResponsibleLabel(document: DocumentItem, users: UserItem[]) {
   const config = document.config ?? null;
-  const title =
-    typeof config?.mainResponsibleTitle === "string" ? config.mainResponsibleTitle.trim() : "";
   const userId =
     typeof config?.mainResponsibleUserId === "string" ? config.mainResponsibleUserId : "";
-  const name = users.find((user) => user.id === userId)?.name?.trim() || "";
+  const user = users.find((item) => item.id === userId);
+  const name = user?.name?.trim() || "";
+  // Должность самого ответственного из карточки, копия — если его нет.
+  const title = getRowEmployeeTitle(
+    user,
+    typeof config?.mainResponsibleTitle === "string" ? config.mainResponsibleTitle : ""
+  );
 
   if (title && name) return `${title}: ${name}`;
   return title || name || "—";

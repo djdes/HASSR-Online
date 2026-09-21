@@ -30,7 +30,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getDistinctRoleLabels, getUsersForRoleLabel } from "@/lib/user-roles";
+import {
+  getDistinctRoleLabels,
+  getRowEmployeeTitle,
+  getUsersForRoleLabel,
+} from "@/lib/user-roles";
 import { buildStaffOptionLabel } from "@/lib/journal-staff-binding";
 import { usePositionEmployeeCascade } from "@/components/shared/position-select";
 import {
@@ -75,7 +79,14 @@ import { localDayKey } from "@/lib/entry-defaults";
  * становится прозрачным, а рамки таблиц — чёрными («бумага» для РПН).
  */
 
-type UserItem = { id: string; name: string; role: string };
+// Должность из карточки (как в UserLike) — её пишем в строки.
+type UserItem = {
+  id: string;
+  name: string;
+  role: string;
+  positionTitle?: string | null;
+  jobPosition?: { name: string; categoryKey: string } | null;
+};
 
 type Props = {
   documentId: string;
@@ -799,7 +810,15 @@ function ReceiptDialog(props: {
                   if (!active) return;
                   setSubmitting(true);
                   try {
-                    await props.onSubmit(active);
+                    // Должность выбранного человека из карточки, а не копия
+                    // из документа (строка засеивается его парой).
+                    await props.onSubmit({
+                      ...active,
+                      responsibleRole: getRowEmployeeTitle(
+                        props.users.find((user) => user.id === active.responsibleEmployeeId),
+                        active.responsibleRole
+                      ),
+                    });
                     props.onOpenChange(false);
                   } finally {
                     setSubmitting(false);
@@ -1090,7 +1109,15 @@ function ConsumptionDialog(props: {
                   if (!active) return;
                   setSubmitting(true);
                   try {
-                    await props.onSubmit(active);
+                    // Должность выбранного человека из карточки, а не копия
+                    // из документа (строка засеивается его парой).
+                    await props.onSubmit({
+                      ...active,
+                      responsibleRole: getRowEmployeeTitle(
+                        props.users.find((user) => user.id === active.responsibleEmployeeId),
+                        active.responsibleRole
+                      ),
+                    });
                     props.onOpenChange(false);
                   } finally {
                     setSubmitting(false);
@@ -1341,6 +1368,12 @@ export function DisinfectantDocumentClient({
 }: Props) {
   const router = useRouter();
   const normalized = normalizeDisinfectantConfig(config);
+  // Новая строка засеивается ответственным документа — с его должностью из
+  // карточки, а не сохранённой копией (могла устареть).
+  const defaultResponsibleRole = getRowEmployeeTitle(
+    users.find((user) => user.id === normalized.responsibleEmployeeId),
+    normalized.responsibleRole
+  );
   const readOnly = status === "closed";
   const { mobileView, switchMobileView } = useMobileView("disinfectant_usage");
   // «Сегодня» в поясе организации — якорь для «Перейти к сегодня».
@@ -1368,14 +1401,14 @@ export function DisinfectantDocumentClient({
   const emptyReceipt = useMemo(
     () =>
       createEmptyReceipt(
-        normalized.responsibleRole,
+        defaultResponsibleRole,
         normalized.responsibleEmployee,
         normalized.responsibleEmployeeId
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       addRecOpen,
-      normalized.responsibleRole,
+      defaultResponsibleRole,
       normalized.responsibleEmployee,
       normalized.responsibleEmployeeId,
     ]
@@ -1383,14 +1416,14 @@ export function DisinfectantDocumentClient({
   const emptyConsumption = useMemo(
     () =>
       createEmptyConsumption(
-        normalized.responsibleRole,
+        defaultResponsibleRole,
         normalized.responsibleEmployee,
         normalized.responsibleEmployeeId
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       addConOpen,
-      normalized.responsibleRole,
+      defaultResponsibleRole,
       normalized.responsibleEmployee,
       normalized.responsibleEmployeeId,
     ]

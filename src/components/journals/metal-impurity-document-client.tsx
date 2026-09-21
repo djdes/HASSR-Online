@@ -41,6 +41,7 @@ import {
   type MetalImpurityUser,
 } from "@/lib/metal-impurity-document";
 import { buildStaffOptionLabel } from "@/lib/journal-staff-binding";
+import { getRowEmployeeTitle } from "@/lib/user-roles";
 import { DOC_PRIMARY_BUTTON_CLASS } from "@/components/journals/journal-responsive";
 import { JournalDocumentShell } from "@/components/journals/journal-document-shell";
 import { JournalDocumentHeader } from "@/components/journals/journal-document-header";
@@ -232,7 +233,14 @@ function RowDialog({
         responsibleName: responsibleEmployee,
       });
     setDraft(initialRow);
-    setDraftPosition(initialRow.responsibleRole || responsiblePosition);
+    // Должность человека строки — из карточки (как видит PDF), иначе
+    // селект открывался с чужой должностью документа.
+    setDraftPosition(
+      getRowEmployeeTitle(
+        users.find((user) => user.id === initialRow.responsibleEmployeeId),
+        initialRow.responsibleRole || responsiblePosition
+      )
+    );
     setDraftEmployeeId(initialRow.responsibleEmployeeId || responsibleEmployeeId || "");
     setNewSupplier("");
     setNewMaterial("");
@@ -401,7 +409,12 @@ function RowDialog({
                   await onSave(
                     {
                       ...draft,
-                      responsibleRole: draftPosition,
+                      // Должность выбранного человека, а не метка фильтра:
+                      // список сотрудников шире выбранной должности.
+                      responsibleRole: getRowEmployeeTitle(
+                        users.find((user) => user.id === draftEmployeeId),
+                        draftPosition
+                      ),
                       responsibleEmployeeId: draftEmployeeId || null,
                       responsibleName:
                         users.find((user) => user.id === draftEmployeeId)?.name || draft.responsibleName,
@@ -505,7 +518,17 @@ function SettingsDialog({
   async function handleSave() {
     setSubmitting(true);
     try {
-      await onSave({ title: draftTitle, config: draftConfig });
+      // Должность ответственного — его собственная (список шире должности).
+      await onSave({
+        title: draftTitle,
+        config: {
+          ...draftConfig,
+          responsiblePosition: getRowEmployeeTitle(
+            users.find((user) => user.id === draftConfig.responsibleEmployeeId),
+            draftConfig.responsiblePosition
+          ),
+        },
+      });
       onOpenChange(false);
     } finally {
       setSubmitting(false);

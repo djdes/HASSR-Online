@@ -1,6 +1,6 @@
 import {
   USER_ROLE_LABEL_VALUES,
-  getUserRoleLabel,
+  getUserDisplayTitle,
   getUsersForRoleLabel,
   pickPrimaryManager,
 } from "@/lib/user-roles";
@@ -15,6 +15,9 @@ export type MetalImpurityUser = {
   id: string;
   name: string;
   role: string;
+  // Должность из карточки (как в UserLike) — её пишем в строку.
+  positionTitle?: string | null;
+  jobPosition?: { name: string; categoryKey: string } | null;
 };
 
 export type MetalImpurityOption = {
@@ -139,7 +142,8 @@ export function getDefaultMetalImpurityConfig(params?: {
     name,
   }));
   const manager = params?.users?.length ? pickPrimaryManager(params.users) : null;
-  const defaultRole = manager ? getUserRoleLabel(manager.role) : METAL_IMPURITY_RESPONSIBLE_POSITIONS[0];
+  // Должность ответственного из справочника, а не лейбл роли.
+  const defaultRole = manager ? getUserDisplayTitle(manager) : METAL_IMPURITY_RESPONSIBLE_POSITIONS[0];
   const responsiblePosition = params?.responsiblePosition || defaultRole;
   const responsibleUser =
     (params?.responsibleEmployeeId
