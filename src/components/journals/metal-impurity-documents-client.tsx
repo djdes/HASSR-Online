@@ -65,6 +65,11 @@ import {
 } from "@/components/shared/position-select";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import {
+  DocumentDialogFeedback,
+  readCreatedDocument,
+  useDocumentDialogSubmit,
+} from "@/components/journals/use-document-dialog-submit";
 type DocumentItem = {
   id: string;
   title: string;
@@ -168,7 +173,10 @@ function DocumentDialog({
   onSubmit: (value: SettingsState) => Promise<void>;
 }) {
   const [state, setState] = useState(initial);
-  const [submitting, setSubmitting] = useState(false);
+  // Окно закрывается только при успехе, ошибка сервера видна здесь же.
+  const submit = useDocumentDialogSubmit({ onOpenChange });
+  const submitting = submit.submitting;
+  const { reset: resetSubmit } = submit;
   const defaultEmployeeId = pickPrimaryManager(users)?.id || "";
   // Rendered list: keeps the currently selected employee even if the
   // position no longer matches (hydrated documents).
@@ -224,9 +232,10 @@ function DocumentDialog({
       const seeded =
         mode === "create" ? titleForPeriod({ dateFrom: initial.startDate }) : null;
       setState({ ...initial, title: seeded || initial.title });
-      setSubmitting(false);
+      // Открыли заново — старая ошибка сервера не должна висеть.
+      resetSubmit();
     }
-  }, [initial, mode, open, resetAutoTitle, titleForPeriod]);
+  }, [initial, mode, open, resetAutoTitle, resetSubmit, titleForPeriod]);
 
   useEffect(() => {
     if (!open || employeeOptions.length === 0) return;
@@ -246,6 +255,7 @@ function DocumentDialog({
           <DialogTitle className="text-[22px] font-medium text-black">{title}</DialogTitle>
         </DialogHeader>
         <div className="space-y-6 px-12 py-10">
+          <DocumentDialogFeedback state={submit} onOpenChange={onOpenChange} />
           <div className="space-y-3">
             <Label className="text-[14px] text-[#73738a]">Название документа</Label>
             <Input
@@ -282,7 +292,7 @@ function DocumentDialog({
               onValueChange={cascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите должность" />
               </SelectTrigger>
               <SelectContent>
                 <PositionSelectItems users={users} />
@@ -299,10 +309,10 @@ function DocumentDialog({
                 onOpenChange={cascade.setEmployeeOpen}
               >
                 <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                  <SelectValue placeholder="- Выберите значение -" />
+                  <SelectValue placeholder="Выберите сотрудника" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={EMPTY_SELECT_VALUE}>- Выберите значение -</SelectItem>
+                  <SelectItem value={EMPTY_SELECT_VALUE}>Выберите сотрудника</SelectItem>
                   {employeeOptions.map((employee) => (
                     <SelectItem key={employee.id} value={employee.id}>
                       {buildStaffOptionLabel(employee)}
@@ -317,13 +327,7 @@ function DocumentDialog({
               type="button"
               disabled={submitting}
               onClick={async () => {
-                setSubmitting(true);
-                try {
-                  await onSubmit(state);
-                  onOpenChange(false);
-                } finally {
-                  setSubmitting(false);
-                }
+                await submit.run(() => onSubmit(state));
               }}
               className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4b57ff]"
             >
@@ -347,7 +351,10 @@ function DeleteDialog({
   title: string;
   onDelete: () => Promise<void>;
 }) {
-  const [submitting, setSubmitting] = useState(false);
+  // Окно закрывается только при успехе, ошибка сервера видна здесь же.
+  const submit = useDocumentDialogSubmit({ onOpenChange });
+  const submitting = submit.submitting;
+  const { reset: resetSubmit } = submit;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -362,13 +369,7 @@ function DeleteDialog({
             type="button"
             disabled={submitting}
             onClick={async () => {
-              setSubmitting(true);
-              try {
-                await onDelete();
-                onOpenChange(false);
-              } finally {
-                setSubmitting(false);
-              }
+              await submit.run(() => onDelete());
             }}
             className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4b57ff]"
           >

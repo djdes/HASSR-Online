@@ -166,10 +166,10 @@ function AddPositionDialog(props: {
             <Label className="text-[14px] text-[#73738a]">Должность</Label>
             <Select value={position || "__empty__"} onValueChange={(value) => setPosition(value === "__empty__" ? "" : value)}>
               <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите должность" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__empty__">- Выберите значение -</SelectItem>
+                <SelectItem value="__empty__">Выберите должность</SelectItem>
                 <PositionSelectItems users={props.users} />
               </SelectContent>
             </Select>
@@ -453,7 +453,7 @@ function DocumentSettingsDialog(props: {
               onValueChange={approveCascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите должность" />
               </SelectTrigger>
               <SelectContent>
                 <PositionSelectItems users={props.users} />
@@ -469,10 +469,10 @@ function DocumentSettingsDialog(props: {
               onOpenChange={approveCascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите сотрудника" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__empty__">- Выберите значение -</SelectItem>
+                <SelectItem value="__empty__">Выберите сотрудника</SelectItem>
                 {approveCascade.candidates.map((user) => (
                   <SelectItem key={user.id} value={user.id}>
                     {buildStaffOptionLabel(user)}

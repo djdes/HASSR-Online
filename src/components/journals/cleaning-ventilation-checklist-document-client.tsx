@@ -332,8 +332,8 @@ function DocumentSettingsDialog(props: {
           if (nextOpen) setState(props.initial);
           props.onOpenChange(nextOpen);
         }}
-        title="Настройки журнала"
-        description="Название журнала, дата начала, режим проветривания и ответственный сотрудник."
+        title="Настройки документа"
+        description="Название документа, дата начала, режим проветривания и ответственный сотрудник."
         size="md"
         isSaving={submitting}
         onSave={handleSave}
@@ -439,7 +439,7 @@ function DocumentSettingsDialog(props: {
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <div className="flex items-center justify-between">
             <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-              Настройки журнала
+              Настройки документа
             </DialogTitle>
           </div>
         </DialogHeader>
@@ -489,7 +489,7 @@ function DocumentSettingsDialog(props: {
               onValueChange={mainCascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите должность" />
               </SelectTrigger>
               <SelectContent>
                 <PositionSelectItems users={props.users} />
@@ -505,7 +505,7 @@ function DocumentSettingsDialog(props: {
               onOpenChange={mainCascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите сотрудника" />
               </SelectTrigger>
               <SelectContent>
                 {mainCandidates.map((user) => (
@@ -588,7 +588,7 @@ function AddResponsibleDialog(props: {
               onValueChange={cascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите должность" />
               </SelectTrigger>
               <SelectContent>
                 <PositionSelectItems users={props.users} />
@@ -604,7 +604,7 @@ function AddResponsibleDialog(props: {
               onOpenChange={cascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите сотрудника" />
               </SelectTrigger>
               <SelectContent>
                 {candidates.map((user) => (
@@ -1223,7 +1223,7 @@ export function CleaningVentilationChecklistDocumentClient({
         </DocumentActionsBar>
 
         {!isActive ? (
-          <JournalClosedBanner hint="Откройте журнал заново, чтобы редактировать отметки." />
+          <JournalClosedBanner hint="Откройте журнал заново, чтобы редактировать отметки." documentId={documentId} />
         ) : (
           (() => {
             // Сегодня закрыто, когда у каждой процедуры дня проставлено
@@ -1257,7 +1257,7 @@ export function CleaningVentilationChecklistDocumentClient({
             «Настроить ⌄» остаётся в полосе справа, панель настроек —
             отдельным блоком под полосой. */}
         <div className={cn(DOC_AUTOFILL_STRIP_CLASS, panelOpen && "mb-0")}>
-            <div className="flex min-w-0 items-center gap-3">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
               <Switch
                 id="cleaning-ventilation-autofill"
                 checked={config.autoFillEnabled}
@@ -1271,7 +1271,9 @@ export function CleaningVentilationChecklistDocumentClient({
               />
               <label
                 htmlFor="cleaning-ventilation-autofill"
-                className={`block min-w-0 cursor-pointer truncate ${DOC_AUTOFILL_LABEL_CLASS}`}
+                // Перенос вместо `truncate`: на 360/390 подпись обрезалась до
+                // «Автоматически запол…» при свободном месте во второй строке.
+                className={`block min-w-0 cursor-pointer break-words ${DOC_AUTOFILL_LABEL_CLASS}`}
               >
                 Автоматически заполнять чек-лист
               </label>
@@ -1386,6 +1388,13 @@ export function CleaningVentilationChecklistDocumentClient({
         {/* В карточках на телефоне бумажная часть (шапка ХАССП +
             «Процедура/Периодичность/Ответственные») скрыта: она шире
             экрана и обрезалась справа. Печать и десктоп — как были. */}
+        {/* Свой `overflow-x-auto` у шапки: в оболочке мини-приложения
+            обёртка страницы `[data-journal-doc-pan]` сознательно без
+            прокрутки (mini-theme.css), и бланк шириной 1140px просто
+            обрезался краем экрана — `body` был шире экрана на 800px.
+            На сайте `max-sm:overflow-visible` оставляет прежнюю панораму
+            всего листа. */}
+        <div className="overflow-x-auto max-sm:overflow-visible print:overflow-visible">
         <div className={`overflow-hidden ${mobileView === "table" ? "max-sm:w-fit max-sm:min-w-full" : "max-sm:hidden print:block"}`}>
           <table className={`w-full border-collapse text-[13px] text-left ${mobileView === "table" ? "max-sm:min-w-[1140px]" : ""}`}>
             <tbody>
@@ -1559,6 +1568,7 @@ export function CleaningVentilationChecklistDocumentClient({
             </tbody>
           </table>
         </div>
+        </div>
 
 
         {mobileView === "cards" ? (
@@ -1637,7 +1647,10 @@ export function CleaningVentilationChecklistDocumentClient({
             лица» раньше сжималось до «Администрат…». */}
         <MobileViewTableWrapper
           mobileView={mobileView}
-          className="-mx-4 max-h-[70vh] overflow-auto px-4 max-sm:max-h-none max-sm:overflow-visible sm:mx-0 sm:px-0 rounded-[28px] border border-[#333] print:mx-0 print:max-h-none print:overflow-visible print:px-0 print:border-black"
+          // `overflow-x-auto` — свой горизонтальный скролл сетки в оболочке
+          // мини-приложения (правило `.mini-root main .overflow-x-auto`).
+          // Без него сетка 1140px не прокручивалась вообще.
+          className="-mx-4 max-h-[70vh] overflow-auto overflow-x-auto px-4 max-sm:max-h-none max-sm:overflow-visible sm:mx-0 sm:px-0 rounded-[28px] border border-[#333] print:mx-0 print:max-h-none print:overflow-visible print:px-0 print:border-black"
         >
           <table className="min-w-[1140px] w-full table-fixed border-collapse text-[13px]">
             <colgroup>

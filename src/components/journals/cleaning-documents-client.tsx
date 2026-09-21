@@ -69,6 +69,11 @@ import {
   readControlPeriodicity,
 } from "@/lib/control-periodicity";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
+import {
+  DocumentDialogFeedback,
+  readCreatedDocument,
+  useDocumentDialogSubmit,
+} from "@/components/journals/use-document-dialog-submit";
 
 type UserItem = {
   id: string;
@@ -176,7 +181,9 @@ function ConfirmDialog(props: {
   submitLabel: string;
   onSubmit: () => Promise<void>;
 }) {
-  const [submitting, setSubmitting] = useState(false);
+  // Окно закрывается только при успехе, ошибка сервера видна здесь же.
+  const submit = useDocumentDialogSubmit({ onOpenChange: props.onOpenChange });
+  const submitting = submit.submitting;
 
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
@@ -188,23 +195,20 @@ function ConfirmDialog(props: {
             </DialogTitle>
           </div>
         </DialogHeader>
-        <div className="flex justify-end px-6 py-5">
+        <div className="space-y-4 px-6 py-5">
+          <DocumentDialogFeedback state={submit} onOpenChange={props.onOpenChange} />
+          <div className="flex justify-end">
           <Button
             type="button"
             disabled={submitting}
             onClick={async () => {
-              setSubmitting(true);
-              try {
-                await props.onSubmit();
-                props.onOpenChange(false);
-              } finally {
-                setSubmitting(false);
-              }
+              await submit.run(() => props.onSubmit());
             }}
             className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]"
           >
             {submitting ? "Сохранение..." : props.submitLabel}
           </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
@@ -224,7 +228,9 @@ function CreateDialog(props: {
     [props.documents]
   );
   const [state, setState] = useState<CreateState>(() => buildCreateState(existingTitles));
-  const [submitting, setSubmitting] = useState(false);
+  // Окно закрывается только при успехе, ошибка сервера видна здесь же.
+  const submit = useDocumentDialogSubmit({ onOpenChange: props.onOpenChange });
+  const submitting = submit.submitting;
   const [titleError, setTitleError] = useState("");
 
   useEffect(() => {
@@ -250,6 +256,7 @@ function CreateDialog(props: {
         ) : (
         <>
         <div className={cn(JOURNAL_DIALOG_BODY_CLASS, JOURNAL_DIALOG_FIELDS_CLASS)}>
+          <DocumentDialogFeedback state={submit} onOpenChange={props.onOpenChange} />
           <FloatingInputField
             label="Название документа"
             placeholder="Введите название документа"
@@ -306,13 +313,7 @@ function CreateDialog(props: {
                   return;
                 }
                 setTitleError("");
-                setSubmitting(true);
-                try {
-                  await props.onSubmit(state);
-                  props.onOpenChange(false);
-                } finally {
-                  setSubmitting(false);
-                }
+                await submit.run(() => props.onSubmit(state));
               }}
               className={JOURNAL_DIALOG_SUBMIT_CLASS}
             >
@@ -335,7 +336,9 @@ function SettingsDialog(props: {
   onSubmit: (state: SettingsState) => Promise<void>;
 }) {
   const [state, setState] = useState<SettingsState | null>(props.initialState);
-  const [submitting, setSubmitting] = useState(false);
+  // Окно закрывается только при успехе, ошибка сервера видна здесь же.
+  const submit = useDocumentDialogSubmit({ onOpenChange: props.onOpenChange });
+  const submitting = submit.submitting;
 
   useEffect(() => {
     if (!props.open) return;
@@ -350,11 +353,12 @@ function SettingsDialog(props: {
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <div className="flex items-center justify-between">
             <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-              Настройки журнала
+              Настройки документа
             </DialogTitle>
           </div>
         </DialogHeader>
         <div className={cn(JOURNAL_DIALOG_BODY_CLASS, JOURNAL_DIALOG_FIELDS_CLASS)}>
+          <DocumentDialogFeedback state={submit} onOpenChange={props.onOpenChange} />
           <FloatingInputField
             label="Название документа"
             value={state.title}
@@ -413,13 +417,7 @@ function SettingsDialog(props: {
               type="button"
               disabled={submitting}
               onClick={async () => {
-                setSubmitting(true);
-                try {
-                  await props.onSubmit(state);
-                  props.onOpenChange(false);
-                } finally {
-                  setSubmitting(false);
-                }
+                await submit.run(() => props.onSubmit(state));
               }}
               className={JOURNAL_DIALOG_SUBMIT_CLASS}
             >

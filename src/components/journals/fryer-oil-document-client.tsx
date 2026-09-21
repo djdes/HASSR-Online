@@ -10,8 +10,7 @@ import {
   Pencil,
   Plus,
   Trash2,
-  Upload,
-} from "lucide-react";
+  Upload, Database, } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -87,6 +86,8 @@ import { JournalAddRow } from "@/components/journals/journal-add-row";
 import { useTodayKey } from "@/lib/use-today-key";
 import { TodayStripForJournal } from "@/components/journals/today-strip-for-journal";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { OrgDirectoryDialog } from "@/components/journals/org-directory-dialog";
+import { mergeIntoList, type OrgDirectoryKind } from "@/lib/org-directory";
 /**
  * ЭКРАН = WeSetup (мягкие серые рамки `#ececf4`, шапка `#f8f9fc`),
  * ПЕЧАТЬ (Ctrl+P) = «бумага» для инспектора РПН/СЭС (чёрные рамки,
@@ -742,6 +743,14 @@ function EntryDialog(props: {
 function ListsDialog(props: { open: boolean; onOpenChange: (open: boolean) => void; lists: FryerOilSelectLists; onSave: (lists: FryerOilSelectLists) => Promise<void> }) {
   const [lists, setLists] = useState(props.lists);
   const [isSaving, setIsSaving] = useState(false);
+  // «Из справочника организации»: жиры — это продукты со склада, виды
+  // продукции — наименования из журналов. Оборудование своего справочника
+  // не имеет, поэтому кнопки там нет.
+  const [directoryKey, setDirectoryKey] = useState<keyof FryerOilSelectLists | null>(null);
+  const DIRECTORY_KIND: Partial<Record<keyof FryerOilSelectLists, OrgDirectoryKind>> = {
+    fatTypes: "product",
+    productTypes: "dish",
+  };
   const tabs: Array<[keyof FryerOilSelectLists, string]> = [["fatTypes", "Вид жира"], ["equipmentTypes", "Оборудование"], ["productTypes", "Вид продукции"]];
 
   /**
@@ -802,6 +811,18 @@ function ListsDialog(props: { open: boolean; onOpenChange: (open: boolean) => vo
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>Редактировать списки</DialogTitle>
         </DialogHeader>
+        <OrgDirectoryDialog
+          open={directoryKey !== null}
+          onClose={() => setDirectoryKey(null)}
+          kind={directoryKey ? DIRECTORY_KIND[directoryKey] ?? "product" : "product"}
+          existing={directoryKey ? lists[directoryKey] : []}
+          onAdd={(items) => {
+            const key = directoryKey;
+            if (!key) return;
+            setLists((value) => ({ ...value, [key]: mergeIntoList(value[key], items) }));
+          }}
+        />
+
         <div className="px-7 py-6">
           <Tabs defaultValue="fatTypes">
             <TabsList className="mb-5 w-full">{tabs.map(([key, label]) => <TabsTrigger key={key} value={key} className="flex-1">{label}</TabsTrigger>)}</TabsList>
@@ -813,7 +834,21 @@ function ListsDialog(props: { open: boolean; onOpenChange: (open: boolean) => vo
                     <Button type="button" variant="outline" className="h-10 rounded-xl border-[#ffd7d3] text-[#ff3b30]" onClick={() => setLists((v) => ({ ...v, [key]: v[key].filter((_, i) => i !== index) }))}><Trash2 className="size-4" /></Button>
                   </div>
                 ))}
-                <Button type="button" variant="outline" className="h-10 rounded-xl" onClick={() => setLists((v) => ({ ...v, [key]: [...v[key], ""] }))}><Plus className="size-4" />Добавить</Button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button type="button" variant="outline" className="h-10 rounded-xl" onClick={() => setLists((v) => ({ ...v, [key]: [...v[key], ""] }))}><Plus className="size-4" />Добавить</Button>
+                  {DIRECTORY_KIND[key] ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-10 rounded-xl"
+                      onClick={() => setDirectoryKey(key)}
+                      title="Добавить позиции из общего справочника организации"
+                    >
+                      <Database className="size-4" />
+                      Из справочника организации
+                    </Button>
+                  ) : null}
+                </div>
 
                 {/* Импорт списком. Пример файла даём ВСЕГДА: без него
                     человек не угадает, что нужен один столбец без
@@ -901,8 +936,8 @@ function SettingsDialog(props: { open: boolean; onOpenChange: (open: boolean) =>
       <JournalSettingsModal
         open={props.open}
         onOpenChange={props.onOpenChange}
-        title="Настройки журнала"
-        description="Название журнала, дата начала и статус."
+        title="Настройки документа"
+        description="Название документа, дата начала и статус."
         size="md"
         isSaving={isSaving}
         onSave={submit}
@@ -976,7 +1011,7 @@ function SettingsDialog(props: { open: boolean; onOpenChange: (open: boolean) =>
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
       <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
-          <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>Настройки журнала</DialogTitle>
+          <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>Настройки документа</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 px-7 py-6">
           <div className="space-y-1"><Label>Название документа</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} className="h-10 rounded-xl" /></div>
@@ -1319,7 +1354,7 @@ export function FryerOilDocumentClient(props: Props) {
         />
         {!isActive ? (
           <div className="mb-5">
-            <JournalClosedBanner hint="Верните журнал в активные, чтобы снова вносить записи об использовании фритюрных жиров." />
+            <JournalClosedBanner hint="Верните журнал в активные, чтобы снова вносить записи об использовании фритюрных жиров." documentId={props.documentId} />
           </div>
         ) : (
           <div className="mb-4 print:hidden">

@@ -242,7 +242,7 @@ function EditTrackedDocumentDialog({
               onValueChange={cascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите должность" />
               </SelectTrigger>
               <SelectContent>
                 <PositionSelectItems users={users} />
@@ -260,7 +260,7 @@ function EditTrackedDocumentDialog({
                 onOpenChange={cascade.setEmployeeOpen}
               >
                 <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                  <SelectValue placeholder="- Выберите значение -" />
+                  <SelectValue placeholder="Выберите сотрудника" />
                 </SelectTrigger>
                 <SelectContent>
                   {(responsibleTitle ? cascade.candidates : users).map((user) => (
@@ -308,7 +308,7 @@ function EditTrackedDocumentDialog({
                 <Label className="text-[14px] text-[#73738a]">Сотрудник</Label>
                 <Select value={responsibleUserId} onValueChange={setResponsibleUserId}>
                   <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                    <SelectValue placeholder="- Выберите значение -" />
+                    <SelectValue placeholder="Выберите сотрудника" />
                   </SelectTrigger>
                   <SelectContent>
                     {(responsibleTitle ? getUsersForRoleLabel(users, responsibleTitle, { keepUserId: responsibleUserId }) : users).map((user) => (

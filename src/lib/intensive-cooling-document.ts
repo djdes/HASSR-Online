@@ -5,7 +5,15 @@ export const INTENSIVE_COOLING_TEMPLATE_CODE = "intensive_cooling";
 export const INTENSIVE_COOLING_SOURCE_SLUG = "intensivecoolingjournal";
 export const INTENSIVE_COOLING_DOCUMENT_TITLE =
   "Журнал контроля интенсивного охлаждения горячих блюд";
-export const INTENSIVE_COOLING_DEFAULT_DOCUMENT_NAME = "Журнал контроля";
+/**
+ * Название документа по умолчанию.
+ *
+ * Было «Журнал контроля» — обрезок, по которому в списке нельзя понять,
+ * что это за журнал. Подставляем полное название журнала; периода в
+ * имени нет, потому что документ бессрочный (см. PERPETUAL_JOURNAL_CODES).
+ */
+export const INTENSIVE_COOLING_DEFAULT_DOCUMENT_NAME =
+  INTENSIVE_COOLING_DOCUMENT_TITLE;
 
 export type IntensiveCoolingRowSnapshot = {
   productionDate: string;

@@ -1,0 +1,40 @@
+import { openSite } from "./site";
+import { shot, go, probe, CLICKABLES } from "./lib";
+import { db } from "../tg-session";
+const OPEN = `[...document.querySelectorAll("div.fixed.inset-0")].filter(d=>/Уведомления/.test(d.innerText)).length`;
+(async () => {
+const s = await openSite({ role: "ownerA", width: 1280, height: 900 });
+const p = s.page;
+await go(p, s.base + "/dashboard", 5000);
+await p.waitForTimeout(6000);
+const before = await db.notification.count({ where: { userId: "cmu2stnc30006wk9mo57z0txk" } }).catch(()=>-1);
+console.log("notifications in db:", before);
+await p.click('button[aria-label="Уведомления"]');
+await p.waitForTimeout(2000);
+console.log("open:", await p.evaluate(OPEN));
+await shot(p, "33-site-bell-open");
+console.log("PANEL:\n" + (await probe(p)).bodyText.slice((await probe(p)).bodyText.indexOf("Уведомления"), 2600));
+console.log("CLICK", JSON.stringify(await p.evaluate(CLICKABLES), null, 1).slice(0,2500));
+await p.keyboard.press("Escape");
+await p.waitForTimeout(1000);
+console.log("after Escape (site):", await p.evaluate(OPEN));
+// отметить прочитанным: выбрать первый чекбокс и нажать «Прочитать»
+const cb = await p.evaluate(`(()=>{const o=[...document.querySelectorAll("div.fixed.inset-0")].filter(d=>/Уведомления/.test(d.innerText))[0];const c=[...o.querySelectorAll('input[type=checkbox],button[role=checkbox]')];if(c.length)c[0].click();return c.length})()`);
+console.log("checkboxes", cb);
+await p.waitForTimeout(800);
+await shot(p, "33-site-bell-selected");
+await p.evaluate(`[...document.querySelectorAll('button')].find(x=>x.innerText.trim()==='Прочитать').click()`);
+await p.waitForTimeout(2500);
+console.log("after Прочитать:", (await probe(p)).bodyText.slice(0,300).replace(/\n/g," | "));
+await shot(p, "33-site-after-read");
+const unread = await db.notification.count({ where: { userId: "cmu2stnc30006wk9mo57z0txk", readAt: null } }).catch(()=>-1);
+console.log("unread now:", unread);
+// удалить все
+await p.evaluate(`[...document.querySelectorAll('button')].find(x=>x.innerText.trim()==='Удалить все')?.click()`);
+await p.waitForTimeout(1500);
+console.log("CONFIRM:\n" + (await probe(p)).bodyText.slice(-900));
+await shot(p, "33-site-clear-confirm");
+console.log("ERRORS", JSON.stringify(s.errors).slice(0,600));
+await s.close();
+await db.$disconnect();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 2000)); process.exit(1); });

@@ -156,6 +156,42 @@ export const PERPETUAL_JOURNAL_CODES = new Set<string>([
 
 const PERPETUAL_DATE_TO = new Date(Date.UTC(2099, 11, 31));
 
+/** Год-маркер «бессрочного» документа. Всё, что >= него — perpetual. */
+const PERPETUAL_YEAR_THRESHOLD = 2099;
+
+/**
+ * Документ бессрочный? Определяем по дате окончания, а не по коду
+ * журнала: перечень PERPETUAL_JOURNAL_CODES мог меняться, а уже
+ * созданные документы остались с `dateTo = 31.12.2099`.
+ */
+export function isPerpetualDateTo(dateTo: Date | string | null | undefined): boolean {
+  if (!dateTo) return false;
+  const year =
+    typeof dateTo === "string"
+      ? Number(dateTo.slice(0, 4))
+      : dateTo.getUTCFullYear();
+  return Number.isFinite(year) && year >= PERPETUAL_YEAR_THRESHOLD;
+}
+
+/**
+ * Дата окончания «для показа и печати».
+ *
+ * У бессрочного документа `dateTo` — 31.12.2099, это технический
+ * маркер «журнал не ротируется», а не реальный конец периода. Печатать
+ * по нему сетку нельзя: бланк разрастался до 35 страниц дней, которых
+ * ещё не было. Поэтому и экран, и PDF ограничиваются сегодняшним днём
+ * (в зоне организации). У обычных документов ничего не меняется.
+ */
+export function resolveDisplayDateTo(
+  dateTo: Date,
+  todayKey: string
+): Date {
+  if (!isPerpetualDateTo(dateTo)) return dateTo;
+  const today = new Date(`${todayKey}T00:00:00.000Z`);
+  if (!Number.isFinite(today.getTime())) return dateTo;
+  return today < dateTo ? today : dateTo;
+}
+
 export function resolveJournalPeriodKind(
   templateCode: string
 ): JournalPeriodKind {
@@ -236,7 +272,7 @@ function customDaysLabel(now: Date, days: number): string {
   const fromDay = b.from.getUTCDate();
   const toDay = b.to.getUTCDate();
   const monthName = RU_MONTHS_NOMINATIVE[now.getUTCMonth()];
-  return `${monthName} с ${fromDay} по ${toDay}`;
+  return `${monthName} ${now.getUTCFullYear()}, с ${fromDay} по ${toDay}`;
 }
 
 const RU_MONTHS_NOMINATIVE = [
@@ -261,15 +297,17 @@ function yearLabel(now: Date): string {
   return `${now.getUTCFullYear()} г.`;
 }
 function halfMonthLabel(now: Date): string {
-  // «Апрель с 1 по 15» / «Апрель с 16 по 30» — формат как на
-  // haccp-online.ru, для согласованности UI.
+  // «Апрель 2026, с 1 по 15» / «Апрель 2026, с 16 по 30».
+  // Год добавлен: без него «Май с 1 по 31» не отличить от прошлогоднего
+  // документа, а в списке документов они стоят рядом.
   const day = now.getUTCDate();
   const monthName = RU_MONTHS_NOMINATIVE[now.getUTCMonth()];
-  if (day <= 15) return `${monthName} с 1 по 15`;
+  const year = now.getUTCFullYear();
+  if (day <= 15) return `${monthName} ${year}, с 1 по 15`;
   const lastDay = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0)
+    Date.UTC(year, now.getUTCMonth() + 1, 0)
   ).getUTCDate();
-  return `${monthName} с 16 по ${lastDay}`;
+  return `${monthName} ${year}, с 16 по ${lastDay}`;
 }
 
 function singleDayLabel(now: Date): string {

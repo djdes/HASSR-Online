@@ -21,6 +21,7 @@ import { openDocumentPdf } from "@/lib/open-document-pdf";
 import { useAutoDocumentTitle } from "@/components/journals/use-auto-document-title";
 import { buildDocumentCopy } from "@/lib/journal-document-copy";
 import { localDayKey } from "@/lib/entry-defaults";
+import { formatJournalDate } from "@/lib/journal-card-date";
 
 import { toast } from "sonner";
 import {
@@ -42,6 +43,11 @@ import {
 } from "@/components/journals/journal-responsive";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import {
+  DocumentDialogFeedback,
+  readCreatedDocument,
+  useDocumentDialogSubmit,
+} from "@/components/journals/use-document-dialog-submit";
 type DocumentItem = {
   id: string;
   title: string;
@@ -84,7 +90,10 @@ function DocumentDialog({
   onSubmit: (value: SettingsState) => Promise<void>;
 }) {
   const [state, setState] = useState(initial);
-  const [submitting, setSubmitting] = useState(false);
+  // Окно закрывается только при успехе, ошибка сервера видна здесь же.
+  const submit = useDocumentDialogSubmit({ onOpenChange });
+  const submitting = submit.submitting;
+  const { reset: resetSubmit } = submit;
   const auto = useAutoDocumentTitle({
     templateCode: AUDIT_PROTOCOL_TEMPLATE_CODE,
     journalName: AUDIT_PROTOCOL_DOCUMENT_TITLE,
@@ -100,9 +109,10 @@ function DocumentDialog({
       // В create-режиме `initial.title` — константа, поэтому автоназвание
       // важнее; в edit-режиме хук отключён и вернёт "".
       setState({ ...initial, title: seedTitle() || initial.title });
-      setSubmitting(false);
+      // Открыли заново — старая ошибка сервера не должна висеть.
+      resetSubmit();
     }
-  }, [initial, open, resetAutoTitle, seedTitle]);
+  }, [initial, open, resetAutoTitle, resetSubmit, seedTitle]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -111,6 +121,7 @@ function DocumentDialog({
           <DialogTitle className="text-[22px] font-medium text-black">{title}</DialogTitle>
         </DialogHeader>
         <div className="space-y-6 px-12 py-10">
+          <DocumentDialogFeedback state={submit} onOpenChange={onOpenChange} />
           <div className="space-y-3">
             <Label className="text-[14px] text-[#73738a]">Название документа</Label>
             <Input
@@ -160,13 +171,7 @@ function DocumentDialog({
               type="button"
               disabled={submitting}
               onClick={async () => {
-                setSubmitting(true);
-                try {
-                  await onSubmit(state);
-                  onOpenChange(false);
-                } finally {
-                  setSubmitting(false);
-                }
+                await submit.run(() => onSubmit(state));
               }}
               className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4b57ff]"
             >
@@ -362,7 +367,8 @@ export function AuditProtocolDocumentsClient({
                 </Link>
                 <Link href={`/journals/${routeCode}/documents/${document.id}`} className={JOURNAL_CARD_SECTION_CLASS}>
                   <div className={JOURNAL_CARD_LABEL_CLASS}>Дата документа</div>
-                  <div className={JOURNAL_CARD_VALUE_CLASS}>{config.documentDate}</div>
+                  {/* Было сырое «2026-09-18» из config — на экране дата везде «дд.мм.гггг». */}
+                  <div className={JOURNAL_CARD_VALUE_CLASS}>{formatJournalDate(config.documentDate)}</div>
                 </Link>
                 <div className="justify-self-start sm:justify-self-end">
                   <ResponsiveMenu

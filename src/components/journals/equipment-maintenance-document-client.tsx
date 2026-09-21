@@ -64,6 +64,7 @@ import {
 } from "@/components/shared/position-select";
 import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { formatPositionWithName } from "@/lib/position-name-label";
 
 type Props = {
   documentId: string;
@@ -761,8 +762,14 @@ export function EquipmentMaintenanceDocumentClient({
                 colSpan={4 + MONTH_KEYS.length}
                 className={`${GRID_CELL_CLASS} px-2 py-2 text-[13px] leading-tight`}
               >
-                Ответственный: {config.responsibleRole},{" "}
-                {config.responsibleEmployee}
+                {/* Без сотрудника было «Ответственный: Управляющий,» —
+                    запятая с пустотой. Разделитель — только между частями. */}
+                Ответственный:{" "}
+                {formatPositionWithName(
+                  config.responsibleRole,
+                  config.responsibleEmployee,
+                  { separator: ", ", emptyValue: "—" }
+                )}
               </td>
             </tr>
 
@@ -1021,7 +1028,7 @@ export function EquipmentMaintenanceDocumentClient({
         <JournalSettingsModal
           open={settingsOpen}
           onOpenChange={setSettingsOpen}
-          title="Настройки журнала"
+          title="Настройки документа"
           description="Название, дата, год и две роли: утверждающий и ответственный."
           size="md"
           isSaving={isSaving}
@@ -1162,7 +1169,7 @@ export function EquipmentMaintenanceDocumentClient({
         <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
           <DialogContent className="max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] overflow-y-auto sm:max-w-[520px]">
             <DialogHeader>
-              <DialogTitle>Настройки журнала</DialogTitle>
+              <DialogTitle>Настройки документа</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <Label>Название документа</Label>
@@ -1201,7 +1208,7 @@ export function EquipmentMaintenanceDocumentClient({
                 onValueChange={approveCascade.handlePositionChange}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="- Выберите значение -" />
+                  <SelectValue placeholder="Выберите должность" />
                 </SelectTrigger>
                 <SelectContent>
                   <PositionSelectItems users={users} />
@@ -1221,7 +1228,7 @@ export function EquipmentMaintenanceDocumentClient({
                 onOpenChange={approveCascade.setEmployeeOpen}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="- Выберите значение -" />
+                  <SelectValue placeholder="Выберите сотрудника" />
                 </SelectTrigger>
                 <SelectContent>
                   {(settingsApproveRole ? approveCascade.candidates : users).map((u) => (
@@ -1238,7 +1245,7 @@ export function EquipmentMaintenanceDocumentClient({
                 onValueChange={responsibleCascade.handlePositionChange}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="- Выберите значение -" />
+                  <SelectValue placeholder="Выберите должность" />
                 </SelectTrigger>
                 <SelectContent>
                   <PositionSelectItems users={users} />
@@ -1258,7 +1265,7 @@ export function EquipmentMaintenanceDocumentClient({
                 onOpenChange={responsibleCascade.setEmployeeOpen}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="- Выберите значение -" />
+                  <SelectValue placeholder="Выберите сотрудника" />
                 </SelectTrigger>
                 <SelectContent>
                   {(settingsResponsibleRole ? responsibleCascade.candidates : users).map((u) => (

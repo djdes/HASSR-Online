@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Archive, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -51,6 +51,8 @@ import { toast } from "sonner";
 import { confirmAsync } from "@/components/ui/confirm-async";
 import { localDayKey } from "@/lib/entry-defaults";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { resolveJournalPeriodForDate } from "@/lib/journal-period";
+import { confirmDateInPeriod } from "@/components/journals/confirm-date-in-period";
 type EmployeeItem = {
   id: string;
   name: string;
@@ -62,6 +64,8 @@ type Props = {
   title: string;
   organizationName: string;
   dateFrom: string;
+  /** Конец периода документа — для предупреждения «дата вне периода». */
+  dateTo?: string;
   status: string;
   initialConfig: RegisterDocumentConfig;
   users: EmployeeItem[];
@@ -74,11 +78,14 @@ function ComplaintRowDialog({
   onOpenChange,
   row,
   titleSuffix,
+  period,
   onSave,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   row: RegisterDocumentRow | null;
+  /** Период документа: дата поступления вне его — предупреждаем. */
+  period: { dateFrom: string; dateTo: string };
   /** «(k из N)» при правке выделенных строк по очереди. */
   titleSuffix?: string;
   onSave: (row: RegisterDocumentRow) => Promise<void>;
@@ -111,6 +118,9 @@ function ComplaintRowDialog({
   }
 
   async function handleSave() {
+    // Дата вне периода не запрещена, но молча уезжала в чужой бланк
+    // (жалоба за 21.09.2026 — в документ на 2027 год). Спрашиваем.
+    if (!(await confirmDateInPeriod(draft.values.receiptDate, period))) return;
     setSubmitting(true);
     try {
       // Окно закрывает родитель: при правке по очереди он откроет следующую строку.
@@ -158,7 +168,7 @@ function ComplaintRowDialog({
               onValueChange={(value) => setValue("complaintReceiptForm", value)}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите из списка" />
               </SelectTrigger>
               <SelectContent>
                 {COMPLAINT_RECEIPT_OPTIONS.map((option) => (
@@ -261,7 +271,7 @@ function SettingsDialog({
         open={open}
         onOpenChange={onOpenChange}
         title="Настройки документа"
-        description="Название журнала и дата начала."
+        description="Название документа и дата начала."
         size="md"
         isSaving={submitting}
         onSave={handleSave}
@@ -387,10 +397,20 @@ export function ComplaintDocumentClient({
   title,
   organizationName,
   dateFrom,
+  dateTo,
   status,
   initialConfig,
   useV2 = false,
 }: Props) {
+  // Период документа для предупреждения «дата вне периода». Конец —
+  // из документа, а если его не передали — по правилу журнала (годовой).
+  const documentPeriod = useMemo(
+    () =>
+      dateTo
+        ? { dateFrom, dateTo }
+        : resolveJournalPeriodForDate(COMPLAINT_REGISTER_TEMPLATE_CODE, dateFrom),
+    [dateFrom, dateTo]
+  );
   const router = useRouter();
   const [config, setConfig] = useState(() => normalizeComplaintConfig(initialConfig));
   const [documentTitle, setDocumentTitle] = useState(title || COMPLAINT_REGISTER_TITLE);
@@ -536,10 +556,13 @@ export function ComplaintDocumentClient({
   }
 
   async function handleSaveSettings(params: { title: string; dateFrom: string }) {
+    // Период — по правилу журнала (годовой), как при создании. Раньше
+    // сохранение настроек сжимало документ до одного дня (dateTo = dateFrom),
+    // и любая жалоба за другой день оказывалась «вне периода».
     await persist(
       params.title.trim() || COMPLAINT_REGISTER_TITLE,
       config,
-      { dateFrom: params.dateFrom, dateTo: params.dateFrom }
+      resolveJournalPeriodForDate(COMPLAINT_REGISTER_TEMPLATE_CODE, params.dateFrom)
     );
   }
 
@@ -744,6 +767,7 @@ export function ComplaintDocumentClient({
         }}
         row={editingRow}
         titleSuffix={seq.progress ?? undefined}
+        period={documentPeriod}
         onSave={handleSaveRow}
       />
 

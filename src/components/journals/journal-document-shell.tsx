@@ -160,6 +160,11 @@ export function JournalDocumentShell({
   // Полоса «Автоматически заполнять журнал» меняет настройку документа —
   // это право руководителя. Сотруднику её не показываем.
   const canManage = useCanManageJournalDocument();
+  // Закрытый документ править нельзя: сервер отвечает 400 «Закрытый
+  // документ нельзя редактировать», а кнопка «Настройки» создавала вид,
+  // что можно — и окно зависало в «Сохранение…». Прячем её до тех пор,
+  // пока журнал не откроют заново (кнопка есть в баннере ниже).
+  const settingsAction = closed ? undefined : onSettings;
 
   return (
     <div className={className}>
@@ -175,7 +180,7 @@ export function JournalDocumentShell({
             ) : null}
           </div>
         }
-        onSettings={onSettings}
+        onSettings={settingsAction}
         settingsLabel={settingsLabel}
         menuItems={menuItems}
         undo={undo}
@@ -185,7 +190,11 @@ export function JournalDocumentShell({
       </DocumentActionsBar>
 
       {closed ? (
-        <JournalClosedBanner hint={closedHint} className="mb-5 print:hidden" />
+        <JournalClosedBanner
+          hint={closedHint}
+          documentId={documentId}
+          className="mb-5 print:hidden"
+        />
       ) : null}
 
       {autoFill && canManage ? (

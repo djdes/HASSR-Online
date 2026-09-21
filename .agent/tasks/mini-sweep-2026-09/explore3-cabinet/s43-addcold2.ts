@@ -1,0 +1,23 @@
+import { openSite } from "./site";
+import { shot, go, probe, CLICKABLES } from "./lib";
+import { db } from "../tg-session";
+const DOC = "cmu8hkgnh001tic9md21uf2nx";
+(async () => {
+const s = await openSite({ role: "ownerA", width: 1280, height: 900 });
+const p = s.page;
+await go(p, s.base + "/journals/cold_equipment_control/documents/" + DOC, 6000);
+await p.waitForFunction(`/Добавить оборудование/.test(document.body.innerText)`, { timeout: 180000 });
+await p.waitForTimeout(4000);
+await p.evaluate(`[...document.querySelectorAll('button')].find(x=>x.innerText.trim()==='Добавить').click()`);
+await p.waitForTimeout(1500);
+console.log("МЕНЮ «Добавить»:\n" + (await probe(p)).bodyText.slice(-1200));
+await shot(p, "43-add-menu");
+console.log("visible buttons after:", JSON.stringify(await p.evaluate(`[...document.querySelectorAll('button,[role=menuitem]')].filter(b=>b.getBoundingClientRect().width>0).map(b=>b.innerText.trim()).filter(Boolean).slice(0,40)`)));
+await p.keyboard.press("Escape"); await p.waitForTimeout(800);
+await p.evaluate(`[...document.querySelectorAll('button')].find(x=>x.innerText.trim()==='Добавить оборудование').click()`);
+await p.waitForTimeout(2000);
+console.log("ДИАЛОГ «Добавить оборудование»:\n" + (await probe(p)).bodyText.slice(-1600));
+await shot(p, "43-add-equip-dialog");
+console.log("ERRORS", JSON.stringify(s.errors).slice(0,400));
+await s.close(); await db.$disconnect();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 2000)); process.exit(1); });

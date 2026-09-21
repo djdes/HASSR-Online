@@ -1,0 +1,20 @@
+import { openSite } from "./site";
+import { shot, go, probe } from "./lib";
+import { clickText, listButtons } from "./dbl";
+import { db } from "../tg-session";
+(async () => {
+const s = await openSite({ role: "ownerA", width: 1280, height: 900 });
+const p = s.page;
+p.on("response", async r => { if (/\/api\//.test(r.url()) && r.request().method()!=="GET") console.log("  RES", r.status(), r.url().replace(s.base,""), (await r.text().catch(()=>"")).slice(0,300)); });
+await go(p, s.base + "/dashboard", 6000);
+await p.waitForFunction(`/Закрыть день/.test(document.body.innerText)`, undefined, { timeout: 180000 });
+await p.waitForTimeout(4000);
+const before = await db.journalDocumentEntry.count({ where: { document: { organization: { id: "e2e-org-a" } } } });
+console.log("entries before:", before);
+await clickText(p, "Закрыть день");
+await p.waitForTimeout(2500);
+console.log("CONFIRM:\n" + (await probe(p)).bodyText.slice(-1400));
+await shot(p, "72-closeday-confirm");
+console.log("BTNS", JSON.stringify((await listButtons(p)).slice(-8)));
+await s.close(); await db.$disconnect();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 2000)); process.exit(1); });

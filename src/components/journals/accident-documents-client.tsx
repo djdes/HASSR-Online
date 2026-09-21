@@ -50,6 +50,12 @@ import {
   JOURNAL_LIST_CARDS_CLASS,
 } from "@/components/journals/journal-responsive";
 import { localDayKey } from "@/lib/entry-defaults";
+import { formatJournalDate } from "@/lib/journal-card-date";
+import {
+  DocumentDialogFeedback,
+  readCreatedDocument,
+  useDocumentDialogSubmit,
+} from "@/components/journals/use-document-dialog-submit";
 import { useAutoDocumentTitle } from "@/components/journals/use-auto-document-title";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
 type DocumentItem = {
@@ -74,9 +80,10 @@ type DialogState = {
 };
 
 function formatDateDMY(value: string) {
-  const [year, month, day] = value.split("-");
-  if (!year || !month || !day) return value;
-  return `${day}-${month}-${year}`;
+  // Единый вид даты на экране — «дд.мм.гггг» (src/lib/journal-card-date.ts).
+  // Раньше тут было «ДД-ММ-ГГГГ», а у дезинсекции и акта забраковки —
+  // «ДД.ММ.ГГГГ»: три разных написания одной и той же вещи в одном заходе.
+  return formatJournalDate(value) || value;
 }
 
 function SettingsDialog(props: {
@@ -84,13 +91,22 @@ function SettingsDialog(props: {
   onOpenChange: (value: boolean) => void;
   mode: "create" | "edit";
   templateCode: string;
+  routeCode: string;
   initial: DialogState | null;
-  onSubmit: (value: DialogState) => Promise<void>;
+  onSubmit: (value: DialogState, force: boolean) => Promise<void>;
   submitText: string;
   dialogTitle: string;
 }) {
   const [state, setState] = useState<DialogState | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  // Окно закрывается только при успехе, ошибка сервера видна здесь же.
+  const submit = useDocumentDialogSubmit({
+    onOpenChange: props.onOpenChange,
+    fallbackError:
+      props.mode === "create"
+        ? "Не удалось создать документ"
+        : "Не удалось сохранить настройки",
+  });
+  const submitting = submit.submitting;
 
   const activeState = state || props.initial;
   const auto = useAutoDocumentTitle({
@@ -112,15 +128,9 @@ function SettingsDialog(props: {
     setState(initial ? { ...initial, title: seeded || initial.title } : null);
   }, [initial, mode, open, resetAutoTitle, titleForPeriod]);
 
-  async function handleSubmit() {
+  function handleSubmit(force = false) {
     if (!activeState) return;
-    setSubmitting(true);
-    try {
-      await props.onSubmit(activeState);
-      props.onOpenChange(false);
-    } finally {
-      setSubmitting(false);
-    }
+    void submit.run((forced) => props.onSubmit(activeState, forced), force);
   }
 
   return (
@@ -145,6 +155,12 @@ function SettingsDialog(props: {
         </DialogHeader>
         {activeState ? (
           <div className="space-y-6 px-8 py-7">
+            <DocumentDialogFeedback
+              state={submit}
+              routeCode={props.routeCode}
+              onOpenChange={props.onOpenChange}
+              onForce={() => handleSubmit(true)}
+            />
             <div className="space-y-2">
               <Label className="text-base text-[#6e7387]">Название документа</Label>
               <Input
@@ -179,7 +195,7 @@ function SettingsDialog(props: {
             <div className="flex justify-end">
               <Button
                 type="button"
-                onClick={handleSubmit}
+                onClick={() => handleSubmit(false)}
                 disabled={submitting}
                 className="h-9 rounded-xl bg-[#5563ff] px-10 text-[13.5px] text-white hover:bg-[#4452ee]"
               >
@@ -276,12 +292,13 @@ export function AccidentDocumentsClient({
     [settingsTarget]
   );
 
-  async function createDocument(payload: DialogState) {
+  async function createDocument(payload: DialogState, force: boolean) {
     const response = await fetch("/api/journal-documents", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         templateCode,
+        force,
         title: payload.title.trim() || ACCIDENT_DOCUMENT_TITLE,
         // Период — по правилу журнала (`journal-period.ts`), а не «один
         // день». Журнал аварий годовой: ночной крон заводит 01.01–31.12,
@@ -290,16 +307,10 @@ export function AccidentDocumentsClient({
       }),
     });
 
-    if (!response.ok) {
-      // Текст сервера («За этот период уже есть документ «…»») объясняет
-      // отказ. Общая фраза оставляла человека без причины и без выхода.
-      const failure = await response.json().catch(() => null);
-      toast.error(failure?.error || "Не удалось создать документ");
-      return;
-    }
-
-    const data = (await response.json()) as { document: { id: string } };
-    router.push(`/journals/${routeCode}/documents/${data.document.id}`);
+    // Ошибка больше не гасится тостом: её показывает само окно, и
+    // введённое не пропадает (см. use-document-dialog-submit).
+    const created = await readCreatedDocument(response);
+    router.push(`/journals/${routeCode}/documents/${created.id}`);
     router.refresh();
   }
 
@@ -315,8 +326,8 @@ export function AccidentDocumentsClient({
     });
 
     if (!response.ok) {
-      toast.error("Не удалось сохранить настройки");
-      return;
+      const failure = await response.json().catch(() => null);
+      throw new Error(failure?.error || "Не удалось сохранить настройки");
     }
 
     router.refresh();
@@ -463,6 +474,7 @@ export function AccidentDocumentsClient({
         onOpenChange={setCreateOpen}
         mode="create"
         templateCode={templateCode}
+        routeCode={routeCode}
         initial={createInitialState}
         onSubmit={createDocument}
         submitText="Создать"
@@ -476,6 +488,7 @@ export function AccidentDocumentsClient({
         }}
         mode="edit"
         templateCode={templateCode}
+        routeCode={routeCode}
         initial={settingsInitialState}
         onSubmit={async (payload) => {
           if (!settingsTarget) return;

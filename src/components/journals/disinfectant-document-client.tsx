@@ -780,7 +780,7 @@ function ReceiptDialog(props: {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__empty__">- Выберите значение -</SelectItem>
+                  <SelectItem value="__empty__">Выберите сотрудника</SelectItem>
                   {cascade.candidates.map(
                     (u) => (
                       <SelectItem key={u.id} value={u.id}>
@@ -1071,7 +1071,7 @@ function ConsumptionDialog(props: {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__empty__">- Выберите значение -</SelectItem>
+                  <SelectItem value="__empty__">Выберите сотрудника</SelectItem>
                   {cascade.candidates.map(
                     (u) => (
                       <SelectItem key={u.id} value={u.id}>
@@ -1171,7 +1171,7 @@ function DocumentSettingsDialog(props: {
           props.onOpenChange(v);
         }}
         title="Настройки документа"
-        description="Название журнала и ответственный сотрудник."
+        description="Название документа и ответственный сотрудник."
         size="md"
         isSaving={submitting}
         onSave={handleSave}
@@ -1302,7 +1302,7 @@ function DocumentSettingsDialog(props: {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__empty__">- Выберите значение -</SelectItem>
+                <SelectItem value="__empty__">Выберите сотрудника</SelectItem>
                 {cascade.candidates.map(
                   (u) => (
                     <SelectItem key={u.id} value={u.id}>

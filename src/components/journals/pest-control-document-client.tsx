@@ -119,7 +119,7 @@ function DocumentSettingsDialog(props: {
         open={props.open}
         onOpenChange={props.onOpenChange}
         title="Настройки документа"
-        description="Название журнала и дата начала."
+        description="Название документа и дата начала."
         size="md"
         isSaving={submitting}
         saveDisabled={!dateFrom}
@@ -168,18 +168,24 @@ function DocumentSettingsDialog(props: {
           </button>
         </DialogHeader>
         <div className="space-y-5 px-7 py-6">
+          <PestFieldLabel htmlFor="pest-settings-title" label="Название документа">
           <Input
+            id="pest-settings-title"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             placeholder="Введите название документа"
             className="h-9 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]"
           />
+          </PestFieldLabel>
+          <PestFieldLabel htmlFor="pest-settings-date" label="Дата начала">
           <Input
+            id="pest-settings-date"
             type="date"
             value={dateFrom}
             onChange={(event) => setDateFrom(event.target.value)}
             className="h-9 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]"
           />
+          </PestFieldLabel>
           <div className="flex justify-end">
             <Button
               type="button"
@@ -240,6 +246,25 @@ function ConfirmDialog(props: {
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/**
+ * Постоянная подпись над полем окна «Добавление новой строки».
+ * Плейсхолдер исчезает при вводе — подпись остаётся.
+ */
+function PestFieldLabel(props: {
+  label: string;
+  htmlFor?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={props.htmlFor} className="text-[14px] text-[#6f7282]">
+        {props.label}
+      </Label>
+      {props.children}
+    </div>
   );
 }
 
@@ -369,49 +394,67 @@ function EntryDialog(props: {
             </div>
           </div>
 
+          {/* Постоянные подписи над полями: раньше поля жили на одних
+              плейсхолдерах, и после ввода было не понять, что где. */}
+          <PestFieldLabel htmlFor="pest-row-event" label="Мероприятие (вид, место)">
           <Input
+            id="pest-row-event"
             value={entry.event}
             onChange={(event) =>
               setEntry((current) => ({ ...current, event: event.target.value }))
             }
-            placeholder="Введите мероприятие (вид, место)"
+            placeholder="Например: дератизация, склад сырья"
             className="h-9 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]"
           />
+          </PestFieldLabel>
+          <PestFieldLabel htmlFor="pest-row-area" label="Площадь и (или) объём">
           <Input
+            id="pest-row-area"
             value={entry.areaOrVolume}
             onChange={(event) =>
               setEntry((current) => ({ ...current, areaOrVolume: event.target.value }))
             }
-            placeholder="Введите площадь и (или) объем"
+            placeholder="Например: 120 м²"
             className="h-9 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]"
           />
+          </PestFieldLabel>
+          <PestFieldLabel htmlFor="pest-row-product" label="Средство обработки">
           <Input
+            id="pest-row-product"
             value={entry.treatmentProduct}
             onChange={(event) =>
               setEntry((current) => ({ ...current, treatmentProduct: event.target.value }))
             }
-            placeholder="Введите средство обработки"
+            placeholder="Название средства"
             className="h-9 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]"
           />
+          </PestFieldLabel>
+          <PestFieldLabel htmlFor="pest-row-note" label="Примечание">
           <Textarea
+            id="pest-row-note"
             value={entry.note}
             onChange={(event) =>
               setEntry((current) => ({ ...current, note: event.target.value }))
             }
-            placeholder="Примечание"
+            placeholder="Необязательно"
             className="min-h-[140px] rounded-2xl border-[#dfe1ec] px-4 py-3 text-[18px]"
           />
+          </PestFieldLabel>
+          <PestFieldLabel htmlFor="pest-row-by" label="Кем проведено">
           <Input
+            id="pest-row-by"
             value={entry.performedBy}
             onChange={(event) =>
               setEntry((current) => ({ ...current, performedBy: event.target.value }))
             }
-            placeholder="Введите кем проведено"
+            placeholder="Организация или специалист"
             className="h-9 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]"
           />
+          </PestFieldLabel>
+          <PestFieldLabel label="Должность принявшего работы">
           <Select value={entry.acceptedRole} onValueChange={updateAcceptedRole}>
-            <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-              <SelectValue placeholder="Должность принявшего работы" />
+            <SelectTrigger aria-label="Должность принявшего работы" className="h-10 w-full rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
+              <SelectValue placeholder="Выберите должность" />
             </SelectTrigger>
             <SelectContent>
               {roleOptions.map((role) => (
@@ -421,14 +464,16 @@ function EntryDialog(props: {
               ))}
             </SelectContent>
           </Select>
+          </PestFieldLabel>
+          <PestFieldLabel label="Сотрудник, принявший работы">
           <Select
             value={entry.acceptedEmployeeId}
             onValueChange={(value) =>
               setEntry((current) => ({ ...current, acceptedEmployeeId: value }))
             }
           >
-            <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-              <SelectValue placeholder="Сотрудник" />
+            <SelectTrigger aria-label="Сотрудник, принявший работы" className="h-10 w-full rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
+              <SelectValue placeholder="Выберите сотрудника" />
             </SelectTrigger>
             <SelectContent>
               {employeeOptions.map((user) => (
@@ -438,6 +483,7 @@ function EntryDialog(props: {
               ))}
             </SelectContent>
           </Select>
+          </PestFieldLabel>
 
           <div className="flex justify-end">
             <Button

@@ -45,6 +45,7 @@ import {
 } from "@/components/journals/journal-responsive";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { formatJournalDate } from "@/lib/journal-card-date";
 type DocumentItem = {
   id: string;
   title: string;
@@ -71,10 +72,11 @@ type EditingState = {
 };
 
 function formatDateDash(value: string): string {
+  // Единый вид даты на экране — «дд.мм.гггг» (src/lib/journal-card-date.ts).
+  // Раньше тут было «ДД-ММ-ГГГГ», а у дезинсекции и акта забраковки —
+  // «ДД.ММ.ГГГГ»: три разных написания одной и той же вещи в одном заходе.
   if (!value) return "";
-  const date = new Date(value);
-  if (isNaN(date.getTime())) return value;
-  return date.toLocaleDateString("ru-RU").replaceAll(".", "-");
+  return formatJournalDate(value) || value;
 }
 
 function FryerOilSettingsDialog(props: {
@@ -134,7 +136,7 @@ function FryerOilSettingsDialog(props: {
       <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-            Настройки журнала
+            Настройки документа
           </DialogTitle>
         </DialogHeader>
 

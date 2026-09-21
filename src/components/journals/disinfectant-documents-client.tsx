@@ -45,7 +45,6 @@ import {
   type DisinfectantDocumentConfig,
 } from "@/lib/disinfectant-document";
 
-import { toast } from "sonner";
 import {
   EmptyDocumentsState,
   JournalTabs,
@@ -60,6 +59,11 @@ import {
   JOURNAL_CARD_VALUE_CLASS,
 } from "@/components/journals/journal-responsive";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
+import {
+  DocumentDialogFeedback,
+  readCreatedDocument,
+  useDocumentDialogSubmit,
+} from "@/components/journals/use-document-dialog-submit";
 type UserItem = { id: string; name: string; role: string };
 
 type DisinfectantDocumentItem = {
@@ -92,15 +96,24 @@ function SettingsDialog(props: {
   users: UserItem[];
   /** Бессрочный журнал: периода в названии нет, автоназвание — имя журнала. */
   templateCode: string;
+  routeCode: string;
   initial: SettingsState | null;
-  onSubmit: (value: SettingsState) => Promise<void>;
+  onSubmit: (value: SettingsState, force: boolean) => Promise<void>;
   submitText: string;
   dialogTitle: string;
   /** Создание — название подставляется автоматически (просьба владельца 2026-09-04). */
   mode: "create" | "edit";
 }) {
   const [state, setState] = useState<SettingsState | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  // Окно закрывается только при успехе, ошибка сервера видна здесь же.
+  const submit = useDocumentDialogSubmit({
+    onOpenChange: props.onOpenChange,
+    fallbackError:
+      props.mode === "create"
+        ? "Не удалось создать документ"
+        : "Не удалось сохранить",
+  });
+  const submitting = submit.submitting;
   const auto = useAutoDocumentTitle({
     templateCode: props.templateCode,
     journalName: DISINFECTANT_DOCUMENT_TITLE,
@@ -132,15 +145,9 @@ function SettingsDialog(props: {
     autoPick: "first",
   });
 
-  async function handleSubmit() {
+  function handleSubmit(force = false) {
     if (!activeState) return;
-    setSubmitting(true);
-    try {
-      await props.onSubmit(activeState);
-      props.onOpenChange(false);
-    } finally {
-      setSubmitting(false);
-    }
+    void submit.run((forced) => props.onSubmit(activeState, forced), force);
   }
 
   return (
@@ -170,6 +177,12 @@ function SettingsDialog(props: {
         </DialogHeader>
         {activeState && (
           <div className="space-y-5 px-5 py-6 sm:px-10 sm:py-8">
+            <DocumentDialogFeedback
+              state={submit}
+              routeCode={props.routeCode}
+              onOpenChange={props.onOpenChange}
+              onForce={() => handleSubmit(true)}
+            />
             <div className="space-y-2">
               <Label className="text-[14px] text-[#6f7282]">
                 Название документа
@@ -193,7 +206,7 @@ function SettingsDialog(props: {
                 onValueChange={cascade.handlePositionChange}
               >
                 <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-                  <SelectValue placeholder="- Выберите значение -" />
+                  <SelectValue placeholder="Выберите должность" />
                 </SelectTrigger>
                 <SelectContent>
                   <PositionSelectItems users={props.users} />
@@ -209,7 +222,7 @@ function SettingsDialog(props: {
                 onOpenChange={cascade.setEmployeeOpen}
               >
                 <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-                  <SelectValue placeholder="- Выберите значение -" />
+                  <SelectValue placeholder="Выберите сотрудника" />
                 </SelectTrigger>
                 <SelectContent>
                   {cascade.candidates.map((u) => (
@@ -223,7 +236,7 @@ function SettingsDialog(props: {
             <div className="flex justify-end pt-3">
               <Button
                 type="button"
-                onClick={handleSubmit}
+                onClick={() => handleSubmit(false)}
                 disabled={submitting}
                 className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4a5bf0]"
               >
@@ -255,7 +268,7 @@ export function DisinfectantDocumentsClient({
 
   const defaultConfig = getDisinfectantDefaultConfig();
 
-  async function createDocument(payload: SettingsState) {
+  async function createDocument(payload: SettingsState, force: boolean) {
     const config: DisinfectantDocumentConfig = {
       ...defaultConfig,
       responsibleRole: payload.responsibleRole,
@@ -271,21 +284,17 @@ export function DisinfectantDocumentsClient({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         templateCode,
+        force,
         title: payload.title.trim() || DISINFECTANT_DOCUMENT_TITLE,
         dateFrom: now.toISOString().slice(0, 10),
         dateTo: now.toISOString().slice(0, 10),
         config,
       }),
     });
-    if (!response.ok) {
-      // Текст сервера («За этот период уже есть документ «…»») объясняет
-      // отказ. Общая фраза оставляла человека без причины и без выхода.
-      const failure = await response.json().catch(() => null);
-      toast.error(failure?.error || "Не удалось создать документ");
-      return;
-    }
-    const data = (await response.json()) as { document: { id: string } };
-    router.push(`/journals/${routeCode}/documents/${data.document.id}`);
+    // Ошибку показывает само окно создания: тост её гасил, а окно
+    // закрывалось вместе с введённым.
+    const created = await readCreatedDocument(response);
+    router.push(`/journals/${routeCode}/documents/${created.id}`);
     router.refresh();
   }
 
@@ -308,8 +317,8 @@ export function DisinfectantDocumentsClient({
       }),
     });
     if (!response.ok) {
-      toast.error("Не удалось сохранить");
-      return;
+      const failure = await response.json().catch(() => null);
+      throw new Error(failure?.error || "Не удалось сохранить");
     }
     router.refresh();
   }
@@ -480,6 +489,7 @@ export function DisinfectantDocumentsClient({
         onOpenChange={setCreateOpen}
         users={users}
         templateCode={templateCode}
+        routeCode={routeCode}
         initial={defaultCreateState}
         onSubmit={createDocument}
         submitText="Создать"
@@ -493,6 +503,7 @@ export function DisinfectantDocumentsClient({
         }}
         users={users}
         templateCode={templateCode}
+        routeCode={routeCode}
         initial={
           settingsTarget
             ? {

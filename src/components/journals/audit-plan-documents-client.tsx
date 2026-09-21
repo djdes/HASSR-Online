@@ -71,6 +71,11 @@ import {
 } from "@/components/shared/position-select";
 import { useAutoDocumentTitle } from "@/components/journals/use-auto-document-title";
 import { localDayKey } from "@/lib/entry-defaults";
+import {
+  DocumentDialogFeedback,
+  readCreatedDocument,
+  useDocumentDialogSubmit,
+} from "@/components/journals/use-document-dialog-submit";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 type UserItem = { id: string; name: string; role: string };
@@ -130,14 +135,23 @@ function SettingsDialog(props: {
   open: boolean;
   onOpenChange: (value: boolean) => void;
   users: UserItem[];
+  routeCode: string;
   initial: SettingsState | null;
-  onSubmit: (value: SettingsState) => Promise<void>;
+  onSubmit: (value: SettingsState, force: boolean) => Promise<void>;
   submitText: string;
   title: string;
   mode: "create" | "edit";
 }) {
   const [state, setState] = useState<SettingsState | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  // Окно закрывается только при успехе, ошибка сервера видна здесь же.
+  const submit = useDocumentDialogSubmit({
+    onOpenChange: props.onOpenChange,
+    fallbackError:
+      props.mode === "create"
+        ? "Не удалось создать документ"
+        : "Не удалось сохранить документ",
+  });
+  const submitting = submit.submitting;
   const roles = useMemo(() => roleOptionsFromUsers(props.users), [props.users]);
   const activeState = state || props.initial;
 
@@ -186,15 +200,9 @@ function SettingsDialog(props: {
     autoPick: "first",
   });
 
-  async function handleSubmit() {
+  function handleSubmit(force = false) {
     if (!activeState) return;
-    setSubmitting(true);
-    try {
-      await props.onSubmit(activeState);
-      props.onOpenChange(false);
-    } finally {
-      setSubmitting(false);
-    }
+    void submit.run((forced) => props.onSubmit(activeState, forced), force);
   }
 
   return (
@@ -219,6 +227,12 @@ function SettingsDialog(props: {
         </DialogHeader>
         {activeState && (
           <div className="space-y-4 px-8 py-6">
+            <DocumentDialogFeedback
+              state={submit}
+              routeCode={props.routeCode}
+              onOpenChange={props.onOpenChange}
+              onForce={() => handleSubmit(true)}
+            />
             <div className="space-y-2">
               <Label className="text-[14px] text-[#73738a]">Название документа</Label>
               <Input
@@ -291,7 +305,7 @@ function SettingsDialog(props: {
                 onValueChange={cascade.handlePositionChange}
               >
                 <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
-                  <SelectValue placeholder="- Выберите значение -" />
+                  <SelectValue placeholder="Выберите должность" />
                 </SelectTrigger>
                 <SelectContent>
                   <PositionSelectItems users={props.users} />
@@ -307,7 +321,7 @@ function SettingsDialog(props: {
                 onOpenChange={cascade.setEmployeeOpen}
               >
                 <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
-                  <SelectValue placeholder="- Выберите значение -" />
+                  <SelectValue placeholder="Выберите сотрудника" />
                 </SelectTrigger>
                 <SelectContent>
                   {cascade.candidates.map((u) => (
@@ -322,7 +336,7 @@ function SettingsDialog(props: {
               <Button
                 type="button"
                 disabled={submitting}
-                onClick={handleSubmit}
+                onClick={() => handleSubmit(false)}
                 className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]"
               >
                 {submitting ? "Сохранение..." : props.submitText}
@@ -356,7 +370,7 @@ export function AuditPlanDocumentsClient({
     [users]
   );
 
-  async function createDocument(payload: SettingsState) {
+  async function createDocument(payload: SettingsState, force: boolean) {
     const config: AuditPlanConfig = {
       ...defaultConfig,
       year: Number(payload.year),
@@ -371,6 +385,7 @@ export function AuditPlanDocumentsClient({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         templateCode,
+        force,
         title: payload.title.trim() || AUDIT_PLAN_DOCUMENT_TITLE,
         // Период — по правилу журнала (`journal-period.ts`): план аудитов
         // годовой. «Дата документа» остаётся в шапке (config.documentDate).
@@ -378,16 +393,10 @@ export function AuditPlanDocumentsClient({
         config,
       }),
     });
-    if (!response.ok) {
-      // Текст сервера («За этот период уже есть документ «…»») объясняет
-      // отказ. Общая фраза оставляла человека без причины и без выхода.
-      const failure = await response.json().catch(() => null);
-      toast.error(failure?.error || "Не удалось создать документ");
-      return;
-    }
-
-    const data = (await response.json()) as { document: { id: string } };
-    router.push(`/journals/${routeCode}/documents/${data.document.id}`);
+    // Ошибку показывает само окно создания: тост её гасил, а окно
+    // закрывалось вместе с введённым.
+    const created = await readCreatedDocument(response);
+    router.push(`/journals/${routeCode}/documents/${created.id}`);
     router.refresh();
   }
 
@@ -414,8 +423,8 @@ export function AuditPlanDocumentsClient({
       }),
     });
     if (!response.ok) {
-      toast.error("Не удалось сохранить документ");
-      return;
+      const failure = await response.json().catch(() => null);
+      throw new Error(failure?.error || "Не удалось сохранить документ");
     }
     router.refresh();
   }
@@ -657,6 +666,7 @@ export function AuditPlanDocumentsClient({
         open={createOpen}
         onOpenChange={setCreateOpen}
         users={users}
+        routeCode={routeCode}
         initial={defaultCreateState}
         onSubmit={createDocument}
         submitText="Создать"
@@ -670,6 +680,7 @@ export function AuditPlanDocumentsClient({
           if (!v) setSettingsTarget(null);
         }}
         users={users}
+        routeCode={routeCode}
         initial={settingsTarget ? toUiState(settingsTarget, users) : null}
         onSubmit={async (value) => {
           if (settingsTarget) await saveSettings(settingsTarget.id, value);

@@ -774,8 +774,8 @@ function JournalSettingsDialog({
       <JournalSettingsModal
         open={open}
         onOpenChange={onOpenChange}
-        title="Настройки журнала"
-        description="Название журнала, ответственный сотрудник и режим заполнения."
+        title="Настройки документа"
+        description="Название документа, ответственный сотрудник и режим заполнения."
         size="md"
         isSaving={isSubmitting}
         onSave={handleSave}
@@ -786,7 +786,7 @@ function JournalSettingsDialog({
             htmlFor="cold-journal-title-v2"
             className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]"
           >
-            Название журнала
+            Название документа
           </Label>
           <Input
             id="cold-journal-title-v2"
@@ -869,14 +869,14 @@ function JournalSettingsDialog({
       <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-            Настройки журнала
+            Настройки документа
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-8 px-6 py-5">
           <div className="space-y-3">
             <Label htmlFor="journal-title" className="text-[13px] font-medium text-[#3c4053]">
-              Название журнала
+              Название документа
             </Label>
             <Input
               id="journal-title"
@@ -1856,7 +1856,7 @@ export function ColdEquipmentDocumentClient({
         </DocumentActionsBar>
         {status !== "active" ? (
           <div className="mb-8">
-            <JournalClosedBanner hint="Откройте журнал заново, чтобы редактировать показания." />
+            <JournalClosedBanner hint="Откройте журнал заново, чтобы редактировать показания." documentId={documentId} />
           </div>
         ) : null}
 

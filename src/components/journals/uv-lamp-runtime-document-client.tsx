@@ -57,7 +57,7 @@ import {
 } from "@/components/shared/position-select";
 
 /** Старые документы хранят плейсхолдер как значение должности — считаем его «не выбрано». */
-const UV_LEGACY_EMPTY_TITLE = "- Выберите значение -";
+const UV_LEGACY_EMPTY_TITLE = "Выберите должность";
 import { DocumentActionsBar } from "@/components/journals/document-actions-bar";
 import { useJournalUndo } from "@/lib/journal-undo";
 import {
@@ -503,7 +503,7 @@ function UvRuntimeSettingsDialog(props: {
       <JournalSettingsModal
         open={props.open}
         onOpenChange={props.onOpenChange}
-        title="Настройки журнала"
+        title="Настройки документа"
         description="Учёт работы бактерицидной установки"
         size="md"
         isSaving={submitting}
@@ -586,7 +586,7 @@ function UvRuntimeSettingsDialog(props: {
       <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-            Настройки журнала
+            Настройки документа
           </DialogTitle>
         </DialogHeader>
 
@@ -627,10 +627,10 @@ function UvRuntimeSettingsDialog(props: {
               onValueChange={settingsCascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите должность" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={EMPTY_SELECT_VALUE} className={MENU_ITEM_MUTED_CLASS}>- Выберите значение -</SelectItem>
+                <SelectItem value={EMPTY_SELECT_VALUE} className={MENU_ITEM_MUTED_CLASS}>Выберите должность</SelectItem>
                 <PositionSelectItems users={props.users} groups={options} />
               </SelectContent>
             </Select>
@@ -644,7 +644,7 @@ function UvRuntimeSettingsDialog(props: {
               onOpenChange={settingsCascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите сотрудника" />
               </SelectTrigger>
               <SelectContent>
                 {(responsibleTitle && responsibleTitle !== UV_LEGACY_EMPTY_TITLE
@@ -805,7 +805,7 @@ function AddRowDialog(props: {
               onValueChange={addRowCascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите должность" />
               </SelectTrigger>
               <SelectContent>
                 <PositionSelectItems users={props.users} groups={options} />
@@ -822,7 +822,7 @@ function AddRowDialog(props: {
               onOpenChange={addRowCascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите сотрудника" />
               </SelectTrigger>
               <SelectContent>
                 {(responsibleTitle ? addRowCascade.candidates : props.users).map((user) => (
@@ -1553,7 +1553,7 @@ export function UvLampRuntimeDocumentClient(props: Props) {
 
       {props.status !== "active" ? (
         <div className="mb-5">
-          <JournalClosedBanner hint="Откройте журнал заново, чтобы редактировать отметки времени." />
+          <JournalClosedBanner hint="Откройте журнал заново, чтобы редактировать отметки времени." documentId={props.documentId} />
         </div>
       ) : (
         <div className="mb-4 print:hidden">

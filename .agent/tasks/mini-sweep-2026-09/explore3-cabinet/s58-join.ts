@@ -1,0 +1,25 @@
+import { chromium } from "playwright";
+import { shot, go, probe, FIELDS } from "./lib";
+import { db } from "../tg-session";
+const LINK = process.argv[2];
+(async () => {
+const browser = await chromium.launch({ headless: true });
+const ctx = await browser.newContext({ viewport: { width: 360, height: 640 }, isMobile: true, hasTouch: true });
+await ctx.addInitScript(`document.addEventListener('DOMContentLoaded',function(){var s=document.createElement('style');s.textContent='nextjs-portal{display:none!important}';document.head.appendChild(s)})`);
+const p = await ctx.newPage();
+const errors: string[] = [];
+p.on("response", r => { if (r.status()>=400 && !/_next\/static|favicon/.test(r.url())) errors.push(r.status()+" "+r.request().method()+" "+r.url().replace("http://localhost:3021","")); });
+p.on("pageerror", e => errors.push("pageerror "+String(e).slice(0,150)));
+await go(p, LINK, 6000);
+await p.waitForTimeout(8000);
+const pr = await probe(p);
+console.log("URL", pr.url, "overflow", pr.overflow);
+console.log(pr.bodyText.slice(0, 2000));
+await shot(p, "58-join-vp");
+await shot(p, "58-join", true);
+console.log("FIELDS", JSON.stringify(await p.evaluate(FIELDS), null, 1));
+console.log("BTNS", JSON.stringify(await p.evaluate(`[...document.querySelectorAll('button,a[href]')].filter(b=>b.getBoundingClientRect().width>0).map(b=>b.innerText.trim()).filter(Boolean)`)));
+console.log("cookie banner?", /cookie|Cookies|куки/i.test(pr.bodyText));
+console.log("ERRORS", JSON.stringify(errors));
+await browser.close(); await db.$disconnect();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 2000)); process.exit(1); });

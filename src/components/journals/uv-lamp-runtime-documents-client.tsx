@@ -40,7 +40,7 @@ import {
 } from "@/components/shared/position-select";
 
 /** Старые документы хранят плейсхолдер как значение должности — считаем его «не выбрано». */
-const UV_LEGACY_EMPTY_TITLE = "- Выберите значение -";
+const UV_LEGACY_EMPTY_TITLE = "Выберите должность";
 
 import { toast } from "sonner";
 import { confirmAsync } from "@/components/ui/confirm-async";
@@ -186,16 +186,27 @@ function UvRuntimeSettingsDialog(props: {
       <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-            Настройки журнала
+            Настройки документа
           </DialogTitle>
         </DialogHeader>
 
         <div className={cn(JOURNAL_DIALOG_BODY_CLASS, JOURNAL_DIALOG_FIELDS_CLASS)}>
+          {/* Подпись «Бактерицидная установка №» путали с названием:
+              вводили туда имя, и документ назывался «Бактерицидная
+              установка №<имя>». Теперь поле подписано как номер, а итоговое
+              название показано ниже — его собирает система. */}
           <FloatingInputField
-            label="Бактерицидная установка №"
+            label="Номер установки"
+            placeholder="Например: 1"
             value={lampNumber}
             onChange={setLampNumber}
           />
+          <p className="-mt-1 text-[12.5px] leading-[1.45] text-[#6f7282]">
+            Название документа соберётся само:{" "}
+            <span className="font-medium text-[#3c4053]">
+              «Бактерицидная установка №{lampNumber.trim() || "1"}»
+            </span>
+          </p>
 
           <FloatingInputField
             label="Наименование цеха/участка применения"
@@ -219,7 +230,7 @@ function UvRuntimeSettingsDialog(props: {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={EMPTY_SELECT_VALUE} className={MENU_ITEM_MUTED_CLASS}>
-                  - Выберите значение -
+                  Выберите должность
                 </SelectItem>
                 <PositionSelectItems users={props.users} groups={options} />
               </SelectContent>

@@ -325,7 +325,7 @@ export function EquipmentCalibrationDocumentsClient({
             <div className="space-y-1">
               <Label className="text-[14px] text-[#6f7282]">Должность &quot;Утверждаю&quot;</Label>
               <Select value={approveRole} onValueChange={approveCascade.handlePositionChange}>
-                <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-5 text-[16px]"><SelectValue placeholder="- Выберите значение -" /></SelectTrigger>
+                <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-5 text-[16px]"><SelectValue placeholder="Выберите должность" /></SelectTrigger>
                 <SelectContent>
                   <PositionSelectItems users={users} />
                 </SelectContent>
@@ -339,7 +339,7 @@ export function EquipmentCalibrationDocumentsClient({
                 setApproveEmployee(user?.name || approveEmployee);
                 if (user) setApproveRole(getUserRoleLabel(user.role));
               }} open={approveCascade.employeeOpen} onOpenChange={approveCascade.setEmployeeOpen}>
-                <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-5 text-[16px]"><SelectValue placeholder="- Выберите значение -" /></SelectTrigger>
+                <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-5 text-[16px]"><SelectValue placeholder="Выберите сотрудника" /></SelectTrigger>
                 <SelectContent>
                   {users.map((u) => <SelectItem key={u.id} value={u.id}>{buildStaffOptionLabel(u)}</SelectItem>)}
                 </SelectContent>

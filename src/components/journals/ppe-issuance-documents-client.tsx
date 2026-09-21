@@ -7,7 +7,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   BookOpenText,
-  CalendarDays,
   Ellipsis,
   Pencil,
   Plus,
@@ -62,6 +61,12 @@ import {
 } from "@/components/journals/journal-responsive";
 import { useAutoDocumentTitle } from "@/components/journals/use-auto-document-title";
 import { localDayKey } from "@/lib/entry-defaults";
+import { formatJournalDate } from "@/lib/journal-card-date";
+import {
+  DocumentDialogFeedback,
+  readCreatedDocument,
+  useDocumentDialogSubmit,
+} from "@/components/journals/use-document-dialog-submit";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
 type UserItem = { id: string; name: string; role: string };
 
@@ -95,8 +100,10 @@ type SettingsState = {
 };
 
 function formatDateLabel(value: string) {
-  const [year, month, day] = value.split("-");
-  return year && month && day ? `${day}-${month}-${year}` : value;
+  // Единый вид даты на экране — «дд.мм.гггг» (src/lib/journal-card-date.ts).
+  // Раньше тут было «ДД-ММ-ГГГГ», а у дезинсекции и акта забраковки —
+  // «ДД.ММ.ГГГГ»: три разных написания одной и той же вещи в одном заходе.
+  return formatJournalDate(value) || value;
 }
 
 function roleOptions(users: UserItem[]) {
@@ -170,12 +177,21 @@ function SettingsDialog(props: {
   title: string;
   submitText: string;
   users: UserItem[];
+  routeCode: string;
   initial: SettingsState | null;
-  onSubmit: (value: SettingsState) => Promise<void>;
+  onSubmit: (value: SettingsState, force: boolean) => Promise<void>;
   mode: "create" | "edit";
 }) {
   const [state, setState] = useState<SettingsState | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  // Окно закрывается только при успехе, ошибка сервера видна здесь же.
+  const submit = useDocumentDialogSubmit({
+    onOpenChange: props.onOpenChange,
+    fallbackError:
+      props.mode === "create"
+        ? "Не удалось создать документ"
+        : "Не удалось сохранить настройки",
+  });
+  const submitting = submit.submitting;
   const titles = useMemo(() => roleOptions(props.users), [props.users]);
   const active = state || props.initial;
 
@@ -207,15 +223,9 @@ function SettingsDialog(props: {
     setState(initial ? { ...initial, title: initial.title || seedTitle() } : initial);
   }, [props.open, resetAuto, seedTitle]);
 
-  async function handleSubmit() {
+  function handleSubmit(force = false) {
     if (!active) return;
-    setSubmitting(true);
-    try {
-      await props.onSubmit(active);
-      props.onOpenChange(false);
-    } finally {
-      setSubmitting(false);
-    }
+    void submit.run((forced) => props.onSubmit(active, forced), force);
   }
 
   return (
@@ -240,6 +250,12 @@ function SettingsDialog(props: {
         </DialogHeader>
         {active && (
           <div className="space-y-6 px-5 py-6 sm:px-10 sm:py-8">
+            <DocumentDialogFeedback
+              state={submit}
+              routeCode={props.routeCode}
+              onOpenChange={props.onOpenChange}
+              onForce={() => handleSubmit(true)}
+            />
             <div className="space-y-2">
               <Label className="text-[14px] text-[#7a7c8e]">Название документа</Label>
               <Input
@@ -267,9 +283,10 @@ function SettingsDialog(props: {
                       ...(next !== null ? { title: next } : {}),
                     });
                   }}
-                  className="h-9 rounded-xl border-[#d8dae6] px-7 pr-14 text-[13.5px]"
+                  className="h-9 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]"
                 />
-                <CalendarDays className="pointer-events-none absolute right-6 top-1/2 size-7 -translate-y-1/2 text-[#6e7080]" />
+                {/* Свой значок календаря убран: у `type="date"` уже есть
+                    системный, и на телефоне стояли два значка подряд. */}
               </div>
             </div>
             <fieldset className="space-y-4 rounded-[28px] border border-[#d8dae6] px-6 py-5">
@@ -295,7 +312,7 @@ function SettingsDialog(props: {
                 }}
               >
                 <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
-                  <SelectValue placeholder="- Выберите значение -" />
+                  <SelectValue placeholder="Выберите сотрудника" />
                 </SelectTrigger>
                 <SelectContent>
                   {props.users.map((user) => (
@@ -313,7 +330,7 @@ function SettingsDialog(props: {
                 onValueChange={(value) => setState({ ...active, defaultIssuerTitle: value })}
               >
                 <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
-                  <SelectValue placeholder="- Выберите значение -" />
+                  <SelectValue placeholder="Выберите должность" />
                 </SelectTrigger>
                 <SelectContent>
                   {titles.map((title) => (
@@ -327,7 +344,7 @@ function SettingsDialog(props: {
             <div className="flex justify-end pt-2">
               <Button
                 type="button"
-                onClick={handleSubmit}
+                onClick={() => handleSubmit(false)}
                 disabled={submitting}
                 className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]"
               >
@@ -408,7 +425,7 @@ export function PpeIssuanceDocumentsClient({
   const [deleteTarget, setDeleteTarget] = useState<DocumentItem | null>(null);
   const createInitial = useMemo(() => defaultCreateState(users), [users]);
 
-  async function createDocument(value: SettingsState) {
+  async function createDocument(value: SettingsState, force: boolean) {
     const config: PpeIssuanceConfig = {
       rows: [],
       showGloves: value.showGloves,
@@ -424,6 +441,7 @@ export function PpeIssuanceDocumentsClient({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         templateCode,
+        force,
         title: value.title.trim() || PPE_ISSUANCE_DOCUMENT_TITLE,
         // Период — по правилу журнала (`journal-period.ts`): учёт СИЗ
         // годовой, а окно создавало однодневный документ поверх годового.
@@ -432,16 +450,10 @@ export function PpeIssuanceDocumentsClient({
       }),
     });
 
-    if (!response.ok) {
-      // Текст сервера («За этот период уже есть документ «…»») объясняет
-      // отказ. Общая фраза оставляла человека без причины и без выхода.
-      const failure = await response.json().catch(() => null);
-      toast.error(failure?.error || "Не удалось создать документ");
-      return;
-    }
-
-    const data = (await response.json()) as { document: { id: string } };
-    router.push(`/journals/${routeCode}/documents/${data.document.id}`);
+    // Ошибку показывает само окно создания: тост её гасил, а окно
+    // закрывалось вместе с введённым.
+    const created = await readCreatedDocument(response);
+    router.push(`/journals/${routeCode}/documents/${created.id}`);
     router.refresh();
   }
 
@@ -470,8 +482,8 @@ export function PpeIssuanceDocumentsClient({
     });
 
     if (!response.ok) {
-      toast.error("Не удалось сохранить настройки");
-      return;
+      const failure = await response.json().catch(() => null);
+      throw new Error(failure?.error || "Не удалось сохранить настройки");
     }
 
     router.refresh();
@@ -617,6 +629,7 @@ export function PpeIssuanceDocumentsClient({
         title="Создание документа"
         submitText="Создать"
         users={users}
+        routeCode={routeCode}
         initial={createInitial}
         onSubmit={createDocument}
         mode="create"
@@ -630,6 +643,7 @@ export function PpeIssuanceDocumentsClient({
         title="Настройки документа"
         submitText="Сохранить"
         users={users}
+        routeCode={routeCode}
         initial={settingsTarget ? toSettingsState(settingsTarget, users) : null}
         onSubmit={async (value) => {
           if (settingsTarget) await saveSettings(settingsTarget.id, value);

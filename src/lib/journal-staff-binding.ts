@@ -40,6 +40,7 @@ import {
   METAL_IMPURITY_TEMPLATE_CODE,
   normalizeMetalImpurityConfig,
 } from "@/lib/metal-impurity-document";
+import { getUserDisplayName, NO_NAME_LABEL } from "@/lib/user-display-name";
 
 export type StaffBindingUser = {
   id: string;
@@ -236,8 +237,10 @@ export function reconcileNamedStaffSelection(
   };
 }
 
-export function buildStaffOptionLabel(user: StaffBindingUser) {
-  return `${getDbStaffTitle(user)} - ${user.name}`;
+export function buildStaffOptionLabel(user: StaffBindingUser & { email?: string | null }) {
+  // Почту вместо фамилии не показываем: у аккаунта мгновенной регистрации
+  // в списке выбора было «Управляющий - owner-a@e2e.local».
+  return `${getDbStaffTitle(user)} - ${getUserDisplayName(user, NO_NAME_LABEL.toLowerCase())}`;
 }
 
 /**

@@ -94,6 +94,13 @@ import {
   resolveColumns,
   type JournalColumnsConfig,
 } from "@/lib/journal-columns";
+import {
+  JournalCustomCell,
+  customCellValue,
+  withCustomCell,
+} from "@/components/journals/journal-custom-cell";
+import { OrgDirectoryDialog } from "@/components/journals/org-directory-dialog";
+import { mergeIntoList, type OrgDirectoryKind } from "@/lib/org-directory";
 
 import { useTodayKey } from "@/lib/use-today-key";
 import { TodayStripForJournal } from "@/components/journals/today-strip-for-journal";
@@ -259,6 +266,16 @@ export function PerishableRejectionDocumentClient({
   );
   const isColumnVisible = (key: string) =>
     columnsView.find((column) => column.key === key)?.hidden !== true;
+  /** Имена сотрудников — для своей колонки типа «Сотрудник». */
+  const employeeNames = useMemo(() => users.map((user) => user.name), [users]);
+  /** Свои колонки организации — их ячейки печатаются в конце строки. */
+  const customColumns = useMemo(
+    () =>
+      visibleColumnsView.flatMap((column) =>
+        column.custom ? [{ column, custom: column.custom }] : []
+      ),
+    [visibleColumnsView]
+  );
   /** Подпись колонки: своя из набора документа или стандартная `fallback`. */
   const columnLabel = (key: string, fallback: string) => {
     const column = columnsView.find((item) => item.key === key);
@@ -370,6 +387,13 @@ export function PerishableRejectionDocumentClient({
         : null,
       { label: columnLabel("responsible", "Ответственный"), value: row.responsiblePerson, hideIfEmpty: true },
       isColumnVisible("note") ? { label: columnLabel("note", "Примечание"), value: row.note, hideIfEmpty: true } : null,
+      // Свои колонки организации — и в карточке на телефоне, иначе с
+      // телефона их вообще не видно.
+      ...customColumns.map(({ column }) => ({
+        label: column.label,
+        value: customCellValue(row, column.key),
+        hideIfEmpty: true,
+      })),
     ].filter((field): field is { label: string; value: string; hideIfEmpty: boolean } => field !== null),
   }));
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -388,6 +412,10 @@ export function PerishableRejectionDocumentClient({
   const [bulkText, setBulkText] = useState("");
   const [newItemName, setNewItemName] = useState("");
   const [activeListId, setActiveListId] = useState<string>("");
+  // «Из справочника организации» — общий список продуктов/поставщиков
+  // организации. Раньше каждый журнал вёл свой список и свою загрузку из
+  // файла, и загруженное в настройках сюда не доезжало.
+  const [directoryKind, setDirectoryKind] = useState<OrgDirectoryKind | null>(null);
 
   const [draftRow, setDraftRow] = useState<PerishableRejectionRow>(() =>
     createPerishableRejectionRow({
@@ -855,27 +883,35 @@ export function PerishableRejectionDocumentClient({
       .split(/[\n;]/)
       .map((x) => x.trim())
       .filter(Boolean);
+    addItemsToSection(section, items);
+  }
+
+  /**
+   * Добавление готовых наименований в раздел списков. Общая точка для
+   * вставки текстом и для выбора из справочника организации — чтобы оба
+   * пути клали значения в одно и то же место.
+   */
+  function addItemsToSection(
+    section: "products" | "manufacturers" | "suppliers",
+    items: string[]
+  ) {
+    if (readOnly || items.length === 0) return;
     if (section === "products") {
       const list = config.productLists[0];
       if (!list) return;
       applyConfig((prev) => ({
         ...prev,
         productLists: prev.productLists.map((l) =>
-          l.id === list.id
-            ? { ...l, items: Array.from(new Set([...l.items, ...items])) }
-            : l
+          l.id === list.id ? { ...l, items: mergeIntoList(l.items, items) } : l
         ),
       }));
     } else if (section === "manufacturers") {
       applyConfig((prev) => ({
         ...prev,
-        manufacturers: Array.from(new Set([...prev.manufacturers, ...items])),
+        manufacturers: mergeIntoList(prev.manufacturers, items),
       }));
     } else {
-      applyConfig((prev) => ({
-        ...prev,
-        suppliers: Array.from(new Set([...prev.suppliers, ...items])),
-      }));
+      applyConfig((prev) => ({ ...prev, suppliers: mergeIntoList(prev.suppliers, items) }));
     }
   }
 
@@ -955,7 +991,7 @@ export function PerishableRejectionDocumentClient({
       />
       {readOnly ? (
         <div className="mb-6">
-          <JournalClosedBanner hint="Верните журнал в активные, чтобы снова вносить записи бракеража скоропортящейся продукции." />
+          <JournalClosedBanner hint="Верните журнал в активные, чтобы снова вносить записи бракеража скоропортящейся продукции." documentId={documentId} />
         </div>
       ) : (
         <div className="mb-4 print:hidden">
@@ -982,10 +1018,15 @@ export function PerishableRejectionDocumentClient({
         {/* HACCP header table */}
         {/* В карточках на телефоне бумажная шапка скрыта (уезжала за
             правый край); на печати и на десктопе — как было. */}
-        <table
-          className={`${DOC_PAPER_HEADER_CLASS} w-full border-collapse text-[13px] ${
-            mobileView === "cards" ? "max-sm:hidden print:table" : ""
+        {/* Свой `overflow-x-auto`: на 360px шапка была шире экрана на
+            96px, и «Начат…/СТР. 1 ИЗ 1» обрезались без прокрутки. */}
+        <div
+          className={`overflow-x-auto print:overflow-visible ${
+            mobileView === "cards" ? "max-sm:hidden print:block" : ""
           }`}
+        >
+        <table
+          className={`${DOC_PAPER_HEADER_CLASS} w-full border-collapse text-[13px]`}
         >
           <tbody>
             <JournalPaperHeaderRows
@@ -999,6 +1040,7 @@ export function PerishableRejectionDocumentClient({
             />
           </tbody>
         </table>
+        </div>
 
         <h2 className={`${DOC_CAPS_TITLE_CLASS} text-center text-[13px] font-bold uppercase leading-tight sm:text-[14px]`}>
           ЖУРНАЛ БРАКЕРАЖА СКОРОПОРТЯЩЕЙСЯ ПИЩЕВОЙ ПРОДУКЦИИ
@@ -1158,6 +1200,11 @@ export function PerishableRejectionDocumentClient({
                     {...headerMenu.headerProps(column.key)}
                   >
                     {column.label}
+                    {column.mustFill ? (
+                      <span className="text-[#d43a2f]" title="Обязательно заполнять">
+                        {" *"}
+                      </span>
+                    ) : null}
                   </th>
                 ))}
               </tr>
@@ -1309,6 +1356,26 @@ export function PerishableRejectionDocumentClient({
                       />
                     </td>
                   ) : null}
+                  {/* Свои колонки организации идут последними — ровно в том
+                      порядке, в каком их отдаёт resolveColumns для шапки. */}
+                  {customColumns.map(({ column, custom }) => (
+                    <td
+                      key={column.key}
+                      className={`${GRID_CELL_CLASS} p-1 align-top leading-tight`}
+                    >
+                      <JournalCustomCell
+                        column={custom}
+                        value={customCellValue(row, column.key)}
+                        onChange={(value) =>
+                          updateRow(row.id, { custom: withCustomCell(row, column.key, value) })
+                        }
+                        onBlur={flushConfigSave}
+                        disabled={readOnly}
+                        mustFill={column.mustFill}
+                        employees={employeeNames}
+                      />
+                    </td>
+                  ))}
                 </tr>
               ))}
               {/* Последняя строка — кликабельная «пустая»: то же окно,
@@ -1849,6 +1916,27 @@ export function PerishableRejectionDocumentClient({
                 }
               />
             </div>
+
+            {/* Свои колонки организации — и в окне строки: на телефоне
+                карточка открывает именно это окно. */}
+            {customColumns.map(({ column, custom }) => (
+              <div key={column.key} className="space-y-2">
+                <Label className="text-[13px] font-medium text-[#3c4053]">
+                  {column.label}
+                  {column.mustFill ? <span className="ml-1 text-[#a13a32]">*</span> : null}
+                </Label>
+                <JournalCustomCell
+                  column={custom}
+                  value={customCellValue(draftRow, column.key)}
+                  onChange={(value) =>
+                    setDraftRow((prev) => ({ ...prev, custom: withCustomCell(prev, column.key, value) }))
+                  }
+                  mustFill={column.mustFill}
+                  employees={employeeNames}
+                  className="h-9 rounded-xl border border-[#dcdfed] px-3.5 text-[13.5px]"
+                />
+              </div>
+            ))}
           </div>
 
           <div className="flex flex-col-reverse gap-2 border-t bg-white px-6 py-4 sm:flex-row sm:justify-end">
@@ -2085,13 +2173,22 @@ export function PerishableRejectionDocumentClient({
                       <Plus className="size-4" />
                     </Button>
                   </div>
-                  <button
-                    type="button"
-                    className="text-[#5566f6] underline"
-                    onClick={() => void importItemsFromText("products")}
-                  >
-                    Добавить из файла
-                  </button>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                    <button
+                      type="button"
+                      className="text-[#5566f6] underline"
+                      onClick={() => void importItemsFromText("products")}
+                    >
+                      Добавить из файла
+                    </button>
+                    <button
+                      type="button"
+                      className="text-[#3848c7] underline"
+                      onClick={() => setDirectoryKind("product")}
+                    >
+                      Из справочника организации
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -2132,13 +2229,22 @@ export function PerishableRejectionDocumentClient({
                     <Plus className="size-4" />
                   </Button>
                 </div>
-                <button
-                  type="button"
-                  className="text-[#5566f6] underline"
-                  onClick={() => void importItemsFromText("manufacturers")}
-                >
-                  Добавить из файла
-                </button>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                  <button
+                    type="button"
+                    className="text-[#5566f6] underline"
+                    onClick={() => void importItemsFromText("manufacturers")}
+                  >
+                    Добавить из файла
+                  </button>
+                  <button
+                    type="button"
+                    className="text-[#3848c7] underline"
+                    onClick={() => setDirectoryKind("manufacturer")}
+                  >
+                    Из справочника организации
+                  </button>
+                </div>
               </div>
             )}
 
@@ -2176,13 +2282,22 @@ export function PerishableRejectionDocumentClient({
                     <Plus className="size-4" />
                   </Button>
                 </div>
-                <button
-                  type="button"
-                  className="text-[#5566f6] underline"
-                  onClick={() => void importItemsFromText("suppliers")}
-                >
-                  Добавить из файла
-                </button>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                  <button
+                    type="button"
+                    className="text-[#5566f6] underline"
+                    onClick={() => void importItemsFromText("suppliers")}
+                  >
+                    Добавить из файла
+                  </button>
+                  <button
+                    type="button"
+                    className="text-[#3848c7] underline"
+                    onClick={() => setDirectoryKind("supplier")}
+                  >
+                    Из справочника организации
+                  </button>
+                </div>
               </div>
             )}
 
@@ -2200,12 +2315,36 @@ export function PerishableRejectionDocumentClient({
         </DialogContent>
       </Dialog>
 
+      {/* Общий справочник организации — один диалог на все три раздела. */}
+      <OrgDirectoryDialog
+        open={directoryKind !== null}
+        onClose={() => setDirectoryKind(null)}
+        kind={directoryKind ?? "product"}
+        existing={
+          directoryKind === "manufacturer"
+            ? config.manufacturers
+            : directoryKind === "supplier"
+              ? config.suppliers
+              : config.productLists[0]?.items ?? []
+        }
+        onAdd={(items) =>
+          addItemsToSection(
+            directoryKind === "manufacturer"
+              ? "manufacturers"
+              : directoryKind === "supplier"
+                ? "suppliers"
+                : "products",
+            items
+          )
+        }
+      />
+
       {/* Настройки журнала — название документа и дата начала. */}
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
         <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
           <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
             <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-              Настройки журнала
+              Настройки документа
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 px-6 py-5">

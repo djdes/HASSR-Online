@@ -47,8 +47,14 @@ import {
   JOURNAL_LIST_CARDS_CLASS,
 } from "@/components/journals/journal-responsive";
 import { localDayKey } from "@/lib/entry-defaults";
+import { formatJournalDate } from "@/lib/journal-card-date";
 import { buildDocumentCopy } from "@/lib/journal-document-copy";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
+import {
+  DocumentDialogFeedback,
+  readCreatedDocument,
+  useDocumentDialogSubmit,
+} from "@/components/journals/use-document-dialog-submit";
 type DocumentItem = {
   id: string;
   title: string;
@@ -98,18 +104,11 @@ function toUiState(document: DocumentItem, fallbackTitle: string): SettingsState
 }
 
 function formatDateLabel(isoDate: string): string {
+  // Единый вид даты на экране — «дд.мм.гггг» (src/lib/journal-card-date.ts).
+  // Раньше тут было «ДД-ММ-ГГГГ», а у дезинсекции и акта забраковки —
+  // «ДД.ММ.ГГГГ»: три разных написания одной и той же вещи в одном заходе.
   if (!isoDate) return "—";
-  const date = new Date(isoDate + "T00:00:00Z");
-  if (Number.isNaN(date.getTime())) return isoDate;
-  // «ДД-ММ-ГГГГ» — единый формат дат карточек списка (как в бумажной шапке).
-  return date
-    .toLocaleDateString("ru-RU", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      timeZone: "UTC",
-    })
-    .replaceAll(".", "-");
+  return formatJournalDate(isoDate) || isoDate;
 }
 
 function SettingsDialog(props: {
@@ -121,19 +120,15 @@ function SettingsDialog(props: {
   title: string;
 }) {
   const [state, setState] = useState<SettingsState | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  // Окно закрывается только при успехе, ошибка сервера видна здесь же.
+  const submit = useDocumentDialogSubmit({ onOpenChange: props.onOpenChange });
+  const submitting = submit.submitting;
 
   const activeState = state || props.initial;
 
   async function handleSubmit() {
     if (!activeState) return;
-    setSubmitting(true);
-    try {
-      await props.onSubmit(activeState);
-      props.onOpenChange(false);
-    } finally {
-      setSubmitting(false);
-    }
+    await submit.run(() => props.onSubmit(activeState));
   }
 
   return (
@@ -163,6 +158,7 @@ function SettingsDialog(props: {
         </DialogHeader>
         {activeState && (
           <div className="space-y-5 px-5 py-6 sm:px-10 sm:py-8">
+            <DocumentDialogFeedback state={submit} onOpenChange={props.onOpenChange} />
             <div className="space-y-2">
               <Label className="text-[15px] text-[#7a7c8e]">Название документа</Label>
               <Input
@@ -237,16 +233,10 @@ export function SanitaryDayChecklistDocumentsClient({
       }),
     });
 
-    if (!response.ok) {
-      // Текст сервера («За этот период уже есть документ «…»») объясняет
-      // отказ. Общая фраза оставляла человека без причины и без выхода.
-      const failure = await response.json().catch(() => null);
-      toast.error(failure?.error || "Не удалось создать документ");
-      return;
-    }
-
-    const data = (await response.json()) as { document: { id: string } };
-    router.push(`/journals/${routeCode}/documents/${data.document.id}`);
+    // Ошибку показывает само окно создания: тост её гасил, а окно
+    // закрывалось вместе с введённым.
+    const created = await readCreatedDocument(response);
+    router.push(`/journals/${routeCode}/documents/${created.id}`);
     router.refresh();
   }
 
@@ -270,8 +260,8 @@ export function SanitaryDayChecklistDocumentsClient({
     });
 
     if (!response.ok) {
-      toast.error("Не удалось сохранить настройки");
-      return;
+      const failure = await response.json().catch(() => null);
+      throw new Error(failure?.error || "Не удалось сохранить настройки");
     }
 
     router.refresh();

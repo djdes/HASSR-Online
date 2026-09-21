@@ -135,11 +135,14 @@ export function JournalPaperHeaderRows({
         <td
           className={`${sideCellClass} ${GRID_CELL_CLASS} px-3 py-2 text-[13px] leading-tight`}
         >
-          <div className="flex items-baseline gap-2">
+          {/* `flex-wrap`: на узком телефоне дата уходит на вторую строку,
+              а не выталкивает шапку за правый край (там «Начат…/Окончен…»
+              обрезались и не читались). */}
+          <div className="flex flex-wrap items-baseline gap-x-2">
             <span className="font-semibold">Начат</span>
             <span className="tabular-nums">{formatPaperHeaderDate(startedAt)}</span>
           </div>
-          <div className="mt-1 flex items-baseline gap-2">
+          <div className="mt-1 flex flex-wrap items-baseline gap-x-2">
             <span>Окончен</span>
             <span className="tabular-nums">{formatPaperHeaderDate(finishedAt)}</span>
           </div>
@@ -177,7 +180,7 @@ export function JournalPaperHeaderRows({
           общего `<tbody>` бланка (единая рамка, см. R1).
         */}
         <td
-          className={`${GRID_CELL_CLASS} px-3 py-2 text-center text-[13px] whitespace-nowrap uppercase leading-tight [word-spacing:0.18em]`}
+          className={`${GRID_CELL_CLASS} px-3 py-2 text-center text-[13px] uppercase leading-tight [word-spacing:0.18em] sm:whitespace-nowrap`}
         >
           <span className="print:hidden">{pageInfo}</span>
           <span className="hidden print:inline">СТР. ___ ИЗ ___</span>
@@ -208,21 +211,27 @@ export function JournalDocumentHeader({
   controlPeriodicity,
   className = "",
 }: Props) {
+  // Свой `overflow-x-auto`: если на узком телефоне шапка всё-таки шире
+  // экрана (длинное название организации), её можно прокрутить, а не
+  // потерять правый край с «Начат/Окончен» и «СТР. 1 ИЗ 1». Раньше
+  // шапка med_books / uv_lamp_runtime обрезалась на 66–98px.
   return (
-    <table
-      className={`w-full border-collapse text-[13px] text-[#0b1024] ${className}`}
-    >
-      <tbody>
-        <JournalPaperHeaderRows
-          orgName={orgName}
-          title={title}
-          pageInfo={pageInfo}
-          startedAt={startedAt ?? dateMode?.startedAt}
-          finishedAt={finishedAt ?? dateMode?.finishedAt}
-          controlPeriodicity={controlPeriodicity}
-        />
-      </tbody>
-    </table>
+    <div className="overflow-x-auto print:overflow-visible">
+      <table
+        className={`w-full border-collapse text-[13px] text-[#0b1024] ${className}`}
+      >
+        <tbody>
+          <JournalPaperHeaderRows
+            orgName={orgName}
+            title={title}
+            pageInfo={pageInfo}
+            startedAt={startedAt ?? dateMode?.startedAt}
+            finishedAt={finishedAt ?? dateMode?.finishedAt}
+            controlPeriodicity={controlPeriodicity}
+          />
+        </tbody>
+      </table>
+    </div>
   );
 }
 

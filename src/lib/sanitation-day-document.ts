@@ -1,3 +1,5 @@
+import { formatPositionWithName } from "@/lib/position-name-label";
+
 export const SANITATION_DAY_TEMPLATE_CODE = "general_cleaning";
 export const SANITATION_DAY_SOURCE_SLUG = "sanitationdayjournal";
 
@@ -337,8 +339,9 @@ export function getSanitationApproveLabel(
   employee: string,
   separator = ": ",
 ) {
-  const rolePart = role ? `${role}${separator}` : "";
-  return `${rolePart}${employee || ""}`.trim();
+  // Разделитель — только между двумя непустыми частями: без сотрудника
+  // здесь печаталось «Управляющий:» с пустотой после двоеточия.
+  return formatPositionWithName(role, employee, { separator });
 }
 
 export function createEmptySanitationRow(

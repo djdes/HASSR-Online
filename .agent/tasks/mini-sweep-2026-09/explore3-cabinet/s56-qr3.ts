@@ -1,0 +1,28 @@
+import { openTelegramSession, db } from "../tg-session";
+import { shot, go, probe } from "./lib";
+import { clickText, listButtons } from "./dbl";
+(async () => {
+const s = await openTelegramSession({ role: "ownerA", width: 360, height: 640 });
+const p = s.page;
+await go(p, s.base + "/settings/users", 5000);
+await p.waitForFunction(`/Пригласить по QR/.test(document.body.innerText)`, undefined, { timeout: 180000 });
+await p.waitForTimeout(4000);
+await clickText(p, "Пригласить по QR");
+await p.waitForTimeout(2500);
+await p.evaluate(`(()=>{const i=[...document.querySelectorAll('input[type=text]')].filter(e=>e.getBoundingClientRect().width>0);const set=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;if(i.length){set.call(i[i.length-1],'ZZ6 приглашение');i[i.length-1].dispatchEvent(new Event('input',{bubbles:true}));}})()`);
+await clickText(p, "Сгенерировать QR-код");
+await p.waitForTimeout(5000);
+const pr = await probe(p);
+console.log(pr.bodyText.slice(-1800));
+await shot(p, "56-qr-generated-vp");
+await shot(p, "56-qr-generated", true);
+const geom = await p.evaluate(`(()=>{const o=[...document.querySelectorAll('div')].find(x=>/fixed inset-0/.test(String(x.className)));const card=o?o.querySelector(':scope > *'):null;return {overlay:o?o.getBoundingClientRect().toJSON():null, card:card?{r:card.getBoundingClientRect().toJSON(),sh:card.scrollHeight,ch:card.clientHeight,ov:getComputedStyle(card).overflowY}:null}})()`);
+console.log("GEOM", JSON.stringify(geom));
+console.log("BTNS", JSON.stringify((await listButtons(p)).slice(-10)));
+const link = await p.evaluate(`(()=>{const t=document.body.innerText.match(/https?:\/\/[^\s]+/g);return t?t.slice(0,4):null})()`);
+console.log("LINKS", JSON.stringify(link));
+const tokens = await db.joinToken.findMany({ where: { organizationId: "e2e-org-a" }, orderBy: { createdAt: "desc" }, take: 3 }).catch(()=>null);
+console.log("TOKENS", JSON.stringify(tokens)?.slice(0,600));
+console.log("ERRORS", JSON.stringify(s.errors).slice(0,400));
+await s.close();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 2000)); process.exit(1); });

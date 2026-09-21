@@ -919,7 +919,7 @@ export function EquipmentCleaningDocumentClient({
           open={settingsOpen}
           onOpenChange={setSettingsOpen}
           title="Настройки документа"
-          description="Название журнала, дата начала и формат поля."
+          description="Название документа, дата начала и формат поля."
           size="md"
           isSaving={isSaving}
           onSave={async () => {

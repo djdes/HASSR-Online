@@ -1,0 +1,20 @@
+import { openTelegramSession, db } from "../tg-session";
+import { shot, go, probe } from "./lib";
+import { clickText } from "./dbl";
+(async () => {
+const s = await openTelegramSession({ role: "ownerA", width: 360, height: 640 });
+const p = s.page;
+await go(p, s.base + "/settings/users", 5000);
+await p.waitForFunction(`/Пригласить по QR/.test(document.body.innerText)`, undefined, { timeout: 180000 });
+await p.waitForTimeout(4000);
+await clickText(p, "Пригласить по QR");
+await p.waitForTimeout(2500);
+await clickText(p, "Сгенерировать QR-код");
+await p.waitForTimeout(5000);
+const link = await p.evaluate(`(()=>{const i=[...document.querySelectorAll('input')].map(e=>e.value).filter(v=>v&&v.indexOf('/join/')>=0);return i[0]||null})()`);
+console.log("LINK", link);
+const t = await db.employeeJoinToken.findFirst({ where: { organizationId: "e2e-org-a" }, orderBy: { createdAt: "desc" } });
+console.log("TOKEN row", JSON.stringify({ id: t?.id, label: t?.label, suggested: t?.suggestedJobPositionId, exp: t?.expiresAt }));
+console.log("ERRORS", JSON.stringify(s.errors).slice(0,300));
+await s.close();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 2000)); process.exit(1); });

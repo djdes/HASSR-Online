@@ -1,0 +1,22 @@
+import { openSite } from "./site";
+import { shot, go, probe, dump } from "./lib";
+import { clickText } from "./dbl";
+import { db } from "../tg-session";
+(async () => {
+const s = await openSite({ role: "ownerA", width: 1280, height: 900 });
+const p = s.page;
+await go(p, s.base + "/dashboard", 6000);
+await p.waitForFunction(`/Закрыть день/.test(document.body.innerText)`, undefined, { timeout: 180000 });
+await p.waitForTimeout(4000);
+const res: any = await p.evaluate(`fetch('/api/dashboard/close-day',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({})}).then(async r=>({s:r.status,j:await r.json()}))`);
+dump("74-closeday.json", res);
+console.log("status", res.s, "totalFilled", res.j?.totalFilled, "processed", res.j?.processed, "docsCreated", res.j?.documentsCreated);
+for (const x of res.j?.summaries ?? []) console.log("  ", x.templateCode, "| filled", x.filled, "| days", x.days, "| docCreated", x.documentCreated, "| resp", x.responsiblesAssigned);
+await go(p, s.base + "/dashboard", 6000);
+await p.waitForTimeout(8000);
+const t = (await probe(p)).bodyText;
+const m = t.match(/Есть запись за сегодня: \d+ из \d+/);
+console.log("dashboard says:", m?.[0]);
+console.log("ERRORS", JSON.stringify(s.errors).slice(0,400));
+await s.close(); await db.$disconnect();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 2000)); process.exit(1); });

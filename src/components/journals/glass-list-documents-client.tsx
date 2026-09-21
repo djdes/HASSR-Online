@@ -54,6 +54,11 @@ import { PositionNativeOptions } from "@/components/shared/position-select";
 import { useAutoDocumentTitle } from "@/components/journals/use-auto-document-title";
 import { buildDocumentCopy } from "@/lib/journal-document-copy";
 import { localDayKey } from "@/lib/entry-defaults";
+import {
+  DocumentDialogFeedback,
+  readCreatedDocument,
+  useDocumentDialogSubmit,
+} from "@/components/journals/use-document-dialog-submit";
 type UserItem = {
   id: string;
   name: string;
@@ -114,7 +119,9 @@ function GlassListFormDialog(props: {
   onSubmit: (state: FormState) => Promise<void>;
 }) {
   const [state, setState] = useState<FormState>(props.initialState);
-  const [submitting, setSubmitting] = useState(false);
+  // Окно закрывается только при успехе, ошибка сервера видна здесь же.
+  const submit = useDocumentDialogSubmit({ onOpenChange: props.onOpenChange });
+  const submitting = submit.submitting;
 
   const auto = useAutoDocumentTitle({
     templateCode: GLASS_LIST_TEMPLATE_CODE,
@@ -149,6 +156,7 @@ function GlassListFormDialog(props: {
           </button>
         </DialogHeader>
         <div className="space-y-8 px-14 py-12">
+          <DocumentDialogFeedback state={submit} onOpenChange={props.onOpenChange} />
           <div className="space-y-3">
             <Label className="text-[14px] text-[#73738a]">Название документа</Label>
             <Input
@@ -202,7 +210,7 @@ function GlassListFormDialog(props: {
               }
               className="h-9 w-full rounded-xl border border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]"
             >
-              <option value="">- Выберите значение -</option>
+              <option value="">Выберите должность</option>
               <PositionNativeOptions users={props.users} />
             </select>
           </div>
@@ -215,7 +223,7 @@ function GlassListFormDialog(props: {
               }
               className="h-9 w-full rounded-xl border border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]"
             >
-              <option value="">- Выберите значение -</option>
+              <option value="">Выберите сотрудника</option>
               {(state.responsibleTitle
                 ? getUsersForRoleLabel(props.users, state.responsibleTitle, { keepUserId: state.responsibleUserId })
                 : props.users
@@ -231,13 +239,7 @@ function GlassListFormDialog(props: {
               type="button"
               disabled={submitting}
               onClick={async () => {
-                setSubmitting(true);
-                try {
-                  await props.onSubmit(state);
-                  props.onOpenChange(false);
-                } finally {
-                  setSubmitting(false);
-                }
+                await submit.run(() => props.onSubmit(state));
               }}
               className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4b57ff]"
             >
@@ -257,7 +259,9 @@ function ConfirmDialog(props: {
   submitLabel: string;
   onSubmit: () => Promise<void>;
 }) {
-  const [submitting, setSubmitting] = useState(false);
+  // Окно закрывается только при успехе, ошибка сервера видна здесь же.
+  const submit = useDocumentDialogSubmit({ onOpenChange: props.onOpenChange });
+  const submitting = submit.submitting;
 
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
@@ -279,13 +283,7 @@ function ConfirmDialog(props: {
             type="button"
             disabled={submitting}
             onClick={async () => {
-              setSubmitting(true);
-              try {
-                await props.onSubmit();
-                props.onOpenChange(false);
-              } finally {
-                setSubmitting(false);
-              }
+              await submit.run(() => props.onSubmit());
             }}
             className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4b57ff]"
           >

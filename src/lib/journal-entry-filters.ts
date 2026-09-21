@@ -42,3 +42,9 @@ export function isAutoSeededEntry(data: unknown): boolean {
   const keys = Object.keys(obj);
   return keys.length === 1 && obj._autoSeeded === true;
 }
+
+/**
+ * «Запись пустая?» — реализация живёт в `journal-entry-blank.ts`
+ * (без импорта Prisma, чтобы хелпер можно было звать и из браузера).
+ */
+export { isBlankEntryData } from "@/lib/journal-entry-blank";

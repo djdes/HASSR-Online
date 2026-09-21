@@ -57,6 +57,11 @@ import {
   JOURNAL_LIST_CARD_CLASS,
   JOURNAL_LIST_CARDS_CLASS,
 } from "@/components/journals/journal-responsive";
+import {
+  DocumentDialogFeedback,
+  readCreatedDocument,
+  useDocumentDialogSubmit,
+} from "@/components/journals/use-document-dialog-submit";
 type UserItem = {
   id: string;
   name: string;
@@ -116,7 +121,9 @@ function GlassControlFormDialog(props: {
   onSubmit: (state: FormState) => Promise<void>;
 }) {
   const [state, setState] = useState<FormState>(props.initialState);
-  const [submitting, setSubmitting] = useState(false);
+  // Окно закрывается только при успехе, ошибка сервера видна здесь же.
+  const submit = useDocumentDialogSubmit({ onOpenChange: props.onOpenChange });
+  const submitting = submit.submitting;
   const options = useMemo(
     () => getGlassControlResponsibleOptions(props.users),
     [props.users]
@@ -157,6 +164,7 @@ function GlassControlFormDialog(props: {
         </DialogHeader>
 
         <div className="space-y-4 px-7 py-6">
+          <DocumentDialogFeedback state={submit} onOpenChange={props.onOpenChange} />
           <div className="space-y-1">
             <Label className="text-[16px] text-[#6f7282]">Название документа</Label>
             <Input
@@ -201,7 +209,7 @@ function GlassControlFormDialog(props: {
               onValueChange={cascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите должность" />
               </SelectTrigger>
               <SelectContent>
                 {options.titles.map((title) => (
@@ -222,7 +230,7 @@ function GlassControlFormDialog(props: {
               onOpenChange={cascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите сотрудника" />
               </SelectTrigger>
               <SelectContent>
                 {employeeCandidates.map((user) => (
@@ -239,13 +247,7 @@ function GlassControlFormDialog(props: {
               type="button"
               disabled={submitting}
               onClick={async () => {
-                setSubmitting(true);
-                try {
-                  await props.onSubmit(state);
-                  props.onOpenChange(false);
-                } finally {
-                  setSubmitting(false);
-                }
+                await submit.run(() => props.onSubmit(state));
               }}
               className="h-9 rounded-xl bg-[#5863f8] px-3.5 text-[13.5px] font-medium text-white hover:bg-[#4b57f3]"
             >
@@ -296,13 +298,9 @@ export function GlassControlDocumentsClient(props: Props) {
       }),
     });
 
-    if (!response.ok) {
-      // Текст сервера («За этот период уже есть документ «…»») объясняет
-      // отказ. Общая фраза оставляла человека без причины и без выхода.
-      const failure = await response.json().catch(() => null);
-      toast.error(failure?.error || "Не удалось создать документ");
-      throw new Error("create_failed");
-    }
+    // Ошибку показывает само окно создания: тост её гасил, а в окно
+    // уезжало служебное «create_failed».
+    await readCreatedDocument(response);
 
     router.refresh();
   }
@@ -328,8 +326,10 @@ export function GlassControlDocumentsClient(props: Props) {
     });
 
     if (!response.ok) {
-      toast.error("Не удалось сохранить настройки документа");
-      throw new Error("save_failed");
+      const failure = await response.json().catch(() => null);
+      throw new Error(
+        failure?.error || "Не удалось сохранить настройки документа"
+      );
     }
 
     setEditingDocument(null);

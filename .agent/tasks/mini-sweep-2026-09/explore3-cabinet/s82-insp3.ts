@@ -1,0 +1,24 @@
+import { openSite } from "./site";
+import { chromium } from "playwright";
+import { go, probe, shot } from "./lib";
+import { clickText, listButtons } from "./dbl";
+import { db } from "../tg-session";
+(async () => {
+const s = await openSite({ role: "ownerA", width: 1280, height: 900 });
+const p = s.page;
+p.on("response", async r => { if (/\/api\//.test(r.url()) && r.request().method()!=="GET") console.log("  RES", r.status(), r.url().replace(s.base,""), (await r.text().catch(()=>"")).slice(0,200)); });
+await go(p, s.base + "/settings/inspector-portal", 5000);
+await p.waitForFunction(`/Создать ссылку/.test(document.body.innerText)`, undefined, { timeout: 180000 });
+await p.waitForTimeout(3000);
+await clickText(p, "Создать ссылку"); await p.waitForTimeout(3000);
+await p.evaluate(`(()=>{const b=[...document.querySelectorAll('button')].filter(x=>/Создать/.test(x.innerText)&&x.getBoundingClientRect().width>0);b[b.length-1].click();})()`);
+await p.waitForTimeout(20000);
+const t = (await probe(p)).bodyText;
+console.log("dialog open?", /Создать ссылку для инспектора/.test(t));
+console.log("AFTER 20s:\n" + t.slice(0,1500));
+await shot(p, "82-insp-20s");
+const link = await p.evaluate(`(()=>{const v=[...document.querySelectorAll('input')].map(e=>e.value).filter(x=>x&&x.indexOf('inspector')>=0);return v[0]||null})()`);
+console.log("LINK", link);
+console.log("ERRORS", JSON.stringify(s.errors).slice(0,400));
+await s.close(); await db.$disconnect();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 2000)); process.exit(1); });

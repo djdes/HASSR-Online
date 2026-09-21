@@ -10,6 +10,10 @@ import { resolveColumns, type ResolvedJournalColumn } from "@/lib/journal-column
 import { readHeaderTitleOverride } from "@/lib/journal-header-title";
 import { resolveOrgJournalName } from "@/lib/org-journal-name";
 import { isAutoSeededEntry } from "@/lib/journal-entry-filters";
+import { isPerpetualDateTo, resolveDisplayDateTo } from "@/lib/journal-period";
+import { orgTodayKey } from "@/lib/timezone";
+import { formatPositionWithName } from "@/lib/position-name-label";
+import { getUserDisplayName } from "@/lib/user-display-name";
 import {
   CLIMATE_DOCUMENT_TEMPLATE_CODE,
   getClimateDocumentTitle,
@@ -65,6 +69,7 @@ import {
   STORAGE_CONDITION_LABELS,
 } from "@/lib/perishable-rejection-document";
 import {
+  PRODUCT_WRITEOFF_DOCUMENT_TITLE,
   PRODUCT_WRITEOFF_TEMPLATE_CODE,
   formatProductWriteoffDateLong,
   getProductWriteoffFilePrefix,
@@ -79,11 +84,11 @@ import {
 } from "@/lib/glass-list-document";
 import {
   GLASS_CONTROL_TEMPLATE_CODE,
+  buildGlassControlPdfRows,
   formatRuDateDash as formatGlassRuDateDash,
   getGlassControlFilePrefix,
   GLASS_CONTROL_PAGE_TITLE,
   normalizeGlassControlConfig,
-  normalizeGlassControlEntryData,
 } from "@/lib/glass-control-document";
 import {
   formatPestControlRowDate,
@@ -1017,7 +1022,13 @@ function formatApprovalDateLong(dateKey: string, year: number | string) {
   const day = String(dateKey || "").slice(8, 10);
   const monthIndex = Number(String(dateKey || "").slice(5, 7)) - 1;
   const month = RU_MONTHS_GENITIVE[monthIndex] ?? "";
-  return `« ${day} » ${month} ${year} г.`;
+  // Год — из САМОЙ даты утверждения. Раньше брался «год плана», и при
+  // дате документа 01.03.2027 бланк печатал «« 01 » марта 2026 г.».
+  // `year` остаётся запасным вариантом для дат без года.
+  const dateYear = /^\d{4}-\d{2}-\d{2}$/.test(String(dateKey || ""))
+    ? String(dateKey).slice(0, 4)
+    : String(year);
+  return `« ${day} » ${month} ${dateYear} г.`;
 }
 
 function drawTitle(doc: jsPDF, title: string) {
@@ -2106,7 +2117,9 @@ function drawCleaningPdf(doc: jsPDF, params: {
 
   const headerBottom = drawJournalHeader(doc, {
     organizationName: params.organizationName,
-    journalLabel: journalTitle,
+    // В шапке — название ЖУРНАЛА, а не документа: у уборки сюда уезжало
+    // имя документа заглавными («ZZ3 CLEANING»).
+    journalLabel: journalNameOr(journalTitle),
     withPeriodicity: false,
     startedDate: params.dateFrom,
     finishedDate: params.dateTo,
@@ -3315,7 +3328,11 @@ function drawProductWriteoffPdf(doc: jsPDF, params: {
   drawTitle(doc, params.title);
   const headerBottom = drawJournalHeader(doc, {
     organizationName: params.organizationName,
-    journalLabel: params.config.documentName || params.title,
+    // В шапке — название ЖУРНАЛА, а не документа: раньше сюда уезжало
+    // «АКТ ЗАБРАКОВКИ №5» / имя документа заглавными.
+    journalLabel: journalNameOr(
+      params.config.documentName || params.title || PRODUCT_WRITEOFF_DOCUMENT_TITLE
+    ),
     withPeriodicity: false,
     startedDate: params.dateFrom,
     finishedDate: null,
@@ -3565,7 +3582,18 @@ function drawPerishableRejectionPdf(doc: jsPDF, params: {
       style: { cellWidth: 27 },
     },
     { key: "note", head: perishableColumns.label("note", "Примечание"), cell: (row) => row.note, style: { cellWidth: 24 } },
-  ] satisfies PerishablePrintColumn[]).filter((column) => perishableColumns.visible(column.key));
+  ] satisfies PerishablePrintColumn[])
+    .filter((column) => perishableColumns.visible(column.key))
+    // Свои колонки организации печатаются последними — в том же порядке,
+    // что на экране.
+    .concat(
+      perishableColumns.custom().map((column) => ({
+        key: column.key,
+        head: column.label,
+        cell: (row: PerishableRow) => row.custom?.[column.key] || "",
+        style: { cellWidth: 22, halign: "center" as const },
+      }))
+    );
 
   autoTable(doc, {
     startY: perishableTitleY + 8,
@@ -4322,7 +4350,13 @@ function drawSanitationDayPdf(doc: jsPDF, params: {
 
   body.push([
     {
-      content: `Ответственный: ${cfg.responsibleRole}, ${cfg.responsibleEmployee}`,
+      // Без сотрудника печаталось «Ответственный: Управляющий, » — запятая
+      // с пустотой. Разделитель — только между непустыми частями.
+      content: `Ответственный: ${formatPositionWithName(
+        cfg.responsibleRole,
+        cfg.responsibleEmployee,
+        { separator: ", ", emptyValue: "—" }
+      )}`,
       colSpan: 2,
       styles: { halign: "left", valign: "middle" },
     },
@@ -4478,7 +4512,11 @@ function drawPestControlPdf(doc: jsPDF, params: {
   drawCenteredText(doc, "СИСТЕМА ХАССП", x + leftWidth, y, middleWidth, topHeight, middleWidth - 10);
 
   doc.setFont("JournalUnicode", "italic");
-  drawCenteredText(doc, headerTitleOr(params.title || PEST_CONTROL_DOCUMENT_TITLE).toUpperCase(), x + leftWidth, y + topHeight, middleWidth, secondHeight, middleWidth - 12);
+  // В шапке — официальное название ЖУРНАЛА, как у остальных бланков.
+  // Раньше сюда уезжало название документа, и инспектор видел
+  // «ZZ5 PEST_CONTROL» вместо «Журнал учёта дезинсекции и дератизации».
+  const pestJournalLabel = journalNameOr(PEST_CONTROL_DOCUMENT_TITLE);
+  drawCenteredText(doc, headerTitleOr(pestJournalLabel).toUpperCase(), x + leftWidth, y + topHeight, middleWidth, secondHeight, middleWidth - 12);
 
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(9);
@@ -4504,12 +4542,16 @@ function drawPestControlPdf(doc: jsPDF, params: {
 
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(14);
-  doc.text(
-    (params.title || PEST_CONTROL_DOCUMENT_TITLE).toUpperCase(),
-    pageWidth / 2,
-    58,
-    { align: "center" }
-  );
+  doc.text(pestJournalLabel.toUpperCase(), pageWidth / 2, 58, { align: "center" });
+  // Название документа — отдельной строкой и только если оно отличается
+  // от названия журнала (у бланка «ZZ5 pest_control» это заголовок
+  // документа, а не журнала).
+  const pestDocumentName = (params.title || "").trim();
+  if (pestDocumentName && pestDocumentName !== pestJournalLabel) {
+    doc.setFont("JournalUnicode", "normal");
+    doc.setFontSize(10);
+    doc.text(pestDocumentName, pageWidth / 2, 64, { align: "center" });
+  }
 
   // Порядок — как на экране (дата, затем время): запросом строки
   // приходят в порядке (employeeId, date), и печать шла вразнобой.
@@ -6211,18 +6253,15 @@ function drawGlassControlPdf(doc: jsPDF, params: {
 
   // Отдельная строка «Частота контроля» убрана: то же значение теперь
   // стоит в шапке ХАССП, как на экране, и дублировалось на бланке.
-  const bodyRows = params.entries.map((entry) => {
-    const data = normalizeGlassControlEntryData(entry.data);
-    const userName = params.users.find((user) => user.id === entry.employeeId)?.name || params.responsibleName;
-    return [
-      formatGlassRuDateDash(entry.date),
-      data.damagesDetected ? "V" : "",
-      data.damagesDetected ? "" : "V",
-      data.itemName,
-      data.quantity,
-      data.damageInfo,
-      userName,
-    ];
+  // Пустые заготовки строк печатаются ПУСТЫМИ — см.
+  // buildGlassControlPdfRows. Раньше здесь нормализация достраивала
+  // `damagesDetected:false`, и бланк утверждал, что осмотр проведён.
+  const bodyRows: RowInput[] = buildGlassControlPdfRows({
+    entries: params.entries,
+    formatDate: formatGlassRuDateDash,
+    resolveUserName: (employeeId) =>
+      params.users.find((user) => user.id === employeeId)?.name ||
+      params.responsibleName,
   });
 
   if (bodyRows.length === 0) {
@@ -6425,13 +6464,19 @@ export async function loadJournalDocumentPdfInput(params: {
     },
     orderBy: [{ role: "asc" }, { name: "asc" }],
   });
-  const users = dbUsers.map((user) => ({
-    id: user.id,
-    name: user.name,
-    role: user.role,
-    email: user.email,
-    positionTitle: getUserDisplayTitle(user),
-  }));
+  const users = dbUsers.map((user) => {
+    const positionTitle = getUserDisplayTitle(user);
+    return {
+      id: user.id,
+      // Почта вместо фамилии на бланк не идёт: у аккаунта мгновенной
+      // регистрации в шапке и строках печаталось «owner-a@e2e.local».
+      // Вместо неё — должность, а если нет и её — «Без имени».
+      name: getUserDisplayName(user, positionTitle),
+      role: user.role,
+      email: user.email,
+      positionTitle,
+    };
+  });
   const equipment = await db.equipment.findMany({
     where: {
       area: {
@@ -6544,13 +6589,39 @@ export async function generateJournalDocumentPdf(params: {
 }
 
 /**
+ * Бессрочный документ к печати: `dateTo` прижимается к сегодняшнему дню,
+ * записи с будущими датами отбрасываются.
+ *
+ * ПОЧЕМУ: у perpetual-журналов (контроль стекла, интенсивное охлаждение,
+ * дезсредства, чек-лист сан. дня) `dateTo = 31.12.2099` — это маркер
+ * «документ не ротируется», а не конец периода. Печать строила сетку по
+ * нему и выдавала десятки страниц дней, которых ещё не было.
+ */
+function clampPerpetualDocumentForPrint(
+  document: JournalDocumentForPdf
+): JournalDocumentForPdf {
+  if (!isPerpetualDateTo(document.dateTo)) return document;
+  const dateTo = resolveDisplayDateTo(document.dateTo, orgTodayKey());
+  if (dateTo.getTime() === document.dateTo.getTime()) return document;
+  const limit = dateTo.getTime();
+  return {
+    ...document,
+    dateTo,
+    entries: document.entries.filter((entry) => entry.date.getTime() <= limit),
+  };
+}
+
+/**
  * Чистый рендер: ни одного обращения к БД, только jsPDF поверх
  * переданных данных.
  */
 export function renderJournalDocumentPdf(
   input: JournalDocumentPdfInput
 ): { buffer: Buffer; fileName: string } {
-  const { document, users, equipment, rooms, branding } = input;
+  const { users, equipment, rooms, branding } = input;
+  // Бессрочный документ (`dateTo = 31.12.2099`) печатается по сегодняшний
+  // день: иначе сетка бланка растягивалась на десятки страниц будущих дат.
+  const document = clampPerpetualDocumentForPrint(input.document);
 
   const doc = new jsPDF({
     orientation: "landscape",

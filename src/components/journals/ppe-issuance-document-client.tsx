@@ -378,7 +378,7 @@ function SettingsDialog(props: {
               });
             }}>
               <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите сотрудника" />
               </SelectTrigger>
               <SelectContent>
                 {(state.defaultIssuerTitle
@@ -408,7 +408,7 @@ function SettingsDialog(props: {
               }}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите сотрудника" />
               </SelectTrigger>
               <SelectContent>
                 {titles.map((title) => (
@@ -512,7 +512,7 @@ function RowDialog(props: {
                   });
                 }}
               >
-                <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]"><SelectValue placeholder="- Выберите значение -" /></SelectTrigger>
+                <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]"><SelectValue placeholder="Выберите сотрудника" /></SelectTrigger>
                 <SelectContent>
                   {titles.map((title) => <SelectItem key={title} value={title}>{title}</SelectItem>)}
                 </SelectContent>
@@ -524,7 +524,7 @@ function RowDialog(props: {
                 const user = props.users.find((item) => item.id === value);
                 setState({ ...state, recipientUserId: value, recipientTitle: state.recipientTitle || (user ? getHygienePositionLabel(user.role) : "") });
               }}>
-                <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]"><SelectValue placeholder="- Выберите значение -" /></SelectTrigger>
+                <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]"><SelectValue placeholder="Выберите сотрудника" /></SelectTrigger>
                 <SelectContent>
                   {(state.recipientTitle
                     ? getUsersForRoleLabel(props.users, state.recipientTitle)
@@ -551,7 +551,7 @@ function RowDialog(props: {
                   });
                 }}
               >
-                <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]"><SelectValue placeholder="- Выберите значение -" /></SelectTrigger>
+                <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]"><SelectValue placeholder="Выберите сотрудника" /></SelectTrigger>
                 <SelectContent>
                   {titles.map((title) => <SelectItem key={title} value={title}>{title}</SelectItem>)}
                 </SelectContent>
@@ -563,7 +563,7 @@ function RowDialog(props: {
                 const user = props.users.find((item) => item.id === value);
                 setState({ ...state, issuerUserId: value, issuerTitle: state.issuerTitle || (user ? getHygienePositionLabel(user.role) : "") });
               }}>
-                <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]"><SelectValue placeholder="- Выберите значение -" /></SelectTrigger>
+                <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]"><SelectValue placeholder="Выберите сотрудника" /></SelectTrigger>
                 <SelectContent>
                   {(state.issuerTitle
                     ? getUsersForRoleLabel(props.users, state.issuerTitle)

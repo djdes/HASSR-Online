@@ -54,6 +54,7 @@ import { confirmAsync } from "@/components/ui/confirm-async";
 import { localDayKey } from "@/lib/entry-defaults";
 import { NO_ROW_EMPLOYEE_MESSAGE, useRosterViewerId } from "@/components/journals/use-roster-viewer";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { isBlankEntryData } from "@/lib/journal-entry-blank";
 type UserItem = {
   id: string;
   name: string;
@@ -72,6 +73,12 @@ type RowItem = {
   employeeId: string;
   date: string;
   data: GlassControlEntryData;
+  /**
+   * Запись за этот день есть в БД, но человек в неё ничего не вносил
+   * (заготовка `{_autoSeeded:true}` от сидера или пустой объект).
+   * Такую строку нельзя показывать как «осмотрено, повреждений нет».
+   */
+  blank?: boolean;
 };
 
 type RowDialogState = {
@@ -127,6 +134,7 @@ function normalizeEntry(entry: EntryItem): RowItem {
     employeeId: entry.employeeId,
     date: entry.date,
     data: normalizeGlassControlEntryData(entry.data),
+    blank: isBlankEntryData(entry.data),
   };
 }
 
@@ -148,6 +156,16 @@ function rowKey(row: { employeeId: string; date: string }) {
  */
 function isVirtualRow(row: { id: string }) {
   return row.id.startsWith("virtual:");
+}
+
+/**
+ * Строка «контроль не проводился»: либо дня вообще нет в БД
+ * (виртуальная), либо запись есть, но пустая (заготовка сидера).
+ * На экране и в печати такая строка обязана быть пустой — без «V» в
+ * колонке «Нет» и без фамилии.
+ */
+function isUnfilledRow(row: RowItem) {
+  return isVirtualRow(row) || row.blank === true;
 }
 
 function buildRows(params: {
@@ -251,7 +269,7 @@ function GlassControlSettingsDialog(props: {
         open={props.open}
         onOpenChange={props.onOpenChange}
         title="Настройки документа"
-        description="Название журнала, частота контроля и ответственный сотрудник."
+        description="Название документа, частота контроля и ответственный сотрудник."
         size="md"
         isSaving={submitting}
         onSave={handleSave}
@@ -391,7 +409,7 @@ function GlassControlSettingsDialog(props: {
               onValueChange={cascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите должность" />
               </SelectTrigger>
               <SelectContent>
                 {Array.from(new Set(options.titles)).map((titleItem) => (
@@ -412,7 +430,7 @@ function GlassControlSettingsDialog(props: {
               onOpenChange={cascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите сотрудника" />
               </SelectTrigger>
               <SelectContent>
                 {employeeCandidates.map((user) => (
@@ -563,7 +581,7 @@ function RowDialog(props: {
               onValueChange={rowCascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите должность" />
               </SelectTrigger>
               <SelectContent>
                 {Array.from(new Set(options.titles)).map((titleItem) => (
@@ -584,7 +602,7 @@ function RowDialog(props: {
               onOpenChange={rowCascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите сотрудника" />
               </SelectTrigger>
               <SelectContent>
                 {employeeCandidates.map((user) => (
@@ -717,7 +735,7 @@ export function GlassControlDocumentClient(props: Props) {
 
   const cardItems: RecordCardItem[] = rows.map((row, index) => {
     const userName = props.users.find((user) => user.id === row.employeeId)?.name || "";
-    const virtual = isVirtualRow(row);
+    const virtual = isUnfilledRow(row);
     return {
       id: row.id,
       title: `№${index + 1} · ${formatRuDateDash(row.date)}`,
@@ -883,8 +901,10 @@ export function GlassControlDocumentClient(props: Props) {
       // ПОЧЕМУ только реальные: `rows` содержит виртуальную строку на
       // каждый день периода, поэтому «уже есть» было верно всегда и
       // автозаполнение не записывало НИЧЕГО.
+      // Пустая заготовка сидера — это НЕ заполненный день: её тоже надо
+      // дозаполнить, иначе автозаполнение молча пропускало весь период.
       const existingDates = new Set(
-        rows.filter((row) => !isVirtualRow(row)).map((row) => row.date)
+        rows.filter((row) => !isUnfilledRow(row)).map((row) => row.date)
       );
 
       for (const date of dates) {
@@ -1069,7 +1089,7 @@ export function GlassControlDocumentClient(props: Props) {
           <tbody>
             {rows.map((row) => {
               const userName = props.users.find((user) => user.id === row.employeeId)?.name || "";
-              const virtual = isVirtualRow(row);
+              const virtual = isUnfilledRow(row);
               return (
                 <tr
                   key={row.id}

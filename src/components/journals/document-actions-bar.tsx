@@ -100,7 +100,7 @@ export function DocumentActionsBar({
   showPrint = true,
   heading,
   onSettings,
-  settingsLabel = "Настройки журнала",
+  settingsLabel = "Настройки документа",
   menuItems = [],
   undo,
   className,

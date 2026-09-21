@@ -706,7 +706,7 @@ export function HealthDocumentClient(props: Props) {
           />
 
           {!isActive ? (
-            <JournalClosedBanner hint="Откройте журнал заново, чтобы редактировать отметки сотрудников." />
+            <JournalClosedBanner hint="Откройте журнал заново, чтобы редактировать отметки сотрудников." documentId={props.documentId} />
           ) : null}
 
           {isActive && (

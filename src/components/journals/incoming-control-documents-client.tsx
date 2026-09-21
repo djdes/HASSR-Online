@@ -62,6 +62,11 @@ import {
 import { localDayKey } from "@/lib/entry-defaults";
 import { useAutoDocumentTitle } from "@/components/journals/use-auto-document-title";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
+import {
+  DocumentDialogFeedback,
+  readCreatedDocument,
+  useDocumentDialogSubmit,
+} from "@/components/journals/use-document-dialog-submit";
 
 type User = { id: string; name: string; role: string };
 
@@ -182,7 +187,10 @@ function SettingsDialog({
   onSubmit: (value: DialogState) => Promise<void>;
 }) {
   const [state, setState] = useState(initial);
-  const [submitting, setSubmitting] = useState(false);
+  // Окно закрывается только при успехе, ошибка сервера видна здесь же.
+  const submit = useDocumentDialogSubmit({ onOpenChange });
+  const submitting = submit.submitting;
+  const { reset: resetSubmit } = submit;
   const [titleError, setTitleError] = useState("");
   const auto = useAutoDocumentTitle({
     templateCode,
@@ -199,9 +207,10 @@ function SettingsDialog({
     if (!open) return;
     resetAutoTitle();
     setState({ ...initial, title: initial.title || seedTitle() });
-    setSubmitting(false);
+    // Открыли заново — старая ошибка сервера не должна висеть.
+    resetSubmit();
     setTitleError("");
-  }, [initial, open, resetAutoTitle, seedTitle]);
+  }, [initial, open, resetAutoTitle, resetSubmit, seedTitle]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -210,6 +219,7 @@ function SettingsDialog({
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>{title}</DialogTitle>
         </DialogHeader>
         <div className={cn(JOURNAL_DIALOG_BODY_CLASS, JOURNAL_DIALOG_FIELDS_CLASS)}>
+          <DocumentDialogFeedback state={submit} onOpenChange={onOpenChange} />
           <FloatingInputField
             label="Название документа"
             placeholder="Введите название документа"
@@ -314,13 +324,7 @@ function SettingsDialog({
                   return;
                 }
                 setTitleError("");
-                setSubmitting(true);
-                try {
-                  await onSubmit(state);
-                  onOpenChange(false);
-                } finally {
-                  setSubmitting(false);
-                }
+                await submit.run(() => onSubmit(state));
               }}
               className={JOURNAL_DIALOG_SUBMIT_CLASS}
             >
@@ -619,7 +623,7 @@ export function IncomingControlDocumentsClient({
         onOpenChange={(open) => {
           if (!open) setSettingsDocument(null);
         }}
-        title="Настройки журнала"
+        title="Настройки документа"
         submitLabel="Сохранить"
         initial={
           settingsDocument

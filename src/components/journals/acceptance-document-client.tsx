@@ -110,6 +110,8 @@ import { JournalPaperHeaderRows } from "@/components/journals/journal-document-h
 import { localDayKey } from "@/lib/entry-defaults";
 import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { OrgDirectoryDialog } from "@/components/journals/org-directory-dialog";
+import { mergeIntoList, type OrgDirectoryKind } from "@/lib/org-directory";
 
 type User = { id: string; name: string; role: string };
 
@@ -1293,8 +1295,11 @@ function EditableListSection(props: {
   onChange: (items: string[]) => void;
   /** Встречается ли позиция в строках журнала — для предупреждения. */
   isUsed?: (item: string) => boolean;
+  /** Вид общего справочника организации, откуда можно добрать позиции. */
+  directoryKind?: OrgDirectoryKind;
 }) {
   const [draft, setDraft] = useState("");
+  const [directoryOpen, setDirectoryOpen] = useState(false);
   const [editingValue, setEditingValue] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -1420,6 +1425,25 @@ function EditableListSection(props: {
       >
         Добавить из файла
       </button>
+      {props.directoryKind ? (
+        <>
+          <button
+            type="button"
+            className="ml-4 text-left text-[15px] text-[#3848c7] underline underline-offset-4"
+            onClick={() => setDirectoryOpen(true)}
+            title="Добавить позиции из общего справочника организации"
+          >
+            Из справочника организации
+          </button>
+          <OrgDirectoryDialog
+            open={directoryOpen}
+            onClose={() => setDirectoryOpen(false)}
+            kind={props.directoryKind}
+            existing={props.items}
+            onAdd={(items) => props.onChange(mergeIntoList(props.items, items))}
+          />
+        </>
+      ) : null}
       {importOpen && (
         <div className="space-y-3 rounded-2xl border border-[#e3e5ef] bg-white p-4">
           <div className="text-[14px] leading-6 text-[#3d4152]">
@@ -1504,6 +1528,7 @@ function IncomingControlEditListsDialog(props: {
             items={products}
             placeholder="Введите название новой продукции"
             onChange={setProducts}
+            directoryKind="product"
             isUsed={(item) => props.config.rows.some((row) => row.productName === item)}
           />
           <EditableListSection
@@ -1511,6 +1536,7 @@ function IncomingControlEditListsDialog(props: {
             items={manufacturers}
             placeholder="Введите название нового производителя"
             onChange={setManufacturers}
+            directoryKind="manufacturer"
             isUsed={(item) =>
               props.config.rows.some(
                 (row) =>
@@ -1523,6 +1549,7 @@ function IncomingControlEditListsDialog(props: {
             items={suppliers}
             placeholder="Введите название нового поставщика"
             onChange={setSuppliers}
+            directoryKind="supplier"
             isUsed={(item) =>
               props.config.rows.some(
                 (row) => row.supplier === item || row.manufacturerSupplier.includes(item)
@@ -1717,8 +1744,8 @@ function SettingsDialog(props: {
       <JournalSettingsModal
         open={props.open}
         onOpenChange={props.onOpenChange}
-        title="Настройки журнала"
-        description="Название журнала, дата начала, формат поля срока и ответственный по умолчанию."
+        title="Настройки документа"
+        description="Название документа, дата начала, формат поля срока и ответственный по умолчанию."
         size="md"
         isSaving={isSubmitting}
         onSave={handleSave}
@@ -1733,7 +1760,7 @@ function SettingsDialog(props: {
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
       <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
-          <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>Настройки журнала</DialogTitle>
+          <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>Настройки документа</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 px-6 py-5">
           <div className="space-y-1">
@@ -1769,7 +1796,7 @@ function SettingsDialog(props: {
               }
               onValueChange={settingsCascade.handlePositionChange}
             >
-              <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#f3f4fb] px-3.5 text-[16px]"><SelectValue placeholder="- Выберите значение -" /></SelectTrigger>
+              <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#f3f4fb] px-3.5 text-[16px]"><SelectValue placeholder="Выберите сотрудника" /></SelectTrigger>
               <SelectContent>
                 <PositionSelectItems users={props.users} />
               </SelectContent>
@@ -1782,7 +1809,7 @@ function SettingsDialog(props: {
               const user = props.users.find((u) => u.id === v);
               if (user) setResponsibleTitle(getUserRoleLabel(user.role));
             }} open={settingsCascade.employeeOpen} onOpenChange={settingsCascade.setEmployeeOpen}>
-              <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#f3f4fb] px-3.5 text-[16px]"><SelectValue placeholder="- Выберите значение -" /></SelectTrigger>
+              <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#f3f4fb] px-3.5 text-[16px]"><SelectValue placeholder="Выберите сотрудника" /></SelectTrigger>
               <SelectContent>
                 {(responsibleTitle ? settingsCascade.candidates : props.users).map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
               </SelectContent>
@@ -2583,7 +2610,7 @@ export function AcceptanceDocumentClient(props: Props) {
 
         {isClosed ? (
           <div className="mb-5">
-            <JournalClosedBanner hint="Верните журнал в активные, чтобы снова регистрировать поставки и входной контроль." />
+            <JournalClosedBanner hint="Верните журнал в активные, чтобы снова регистрировать поставки и входной контроль." documentId={props.documentId} />
           </div>
         ) : null}
 

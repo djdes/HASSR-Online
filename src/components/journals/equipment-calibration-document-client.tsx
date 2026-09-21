@@ -886,7 +886,7 @@ export function EquipmentCalibrationDocumentClient({
           open={settingsOpen}
           onOpenChange={setSettingsOpen}
           title="Настройки документа"
-          description="Название журнала, дата, год и должность утверждающего."
+          description="Название документа, дата, год и должность утверждающего."
           size="md"
           isSaving={isSaving}
           onSave={handleSaveSettings}
@@ -1031,7 +1031,7 @@ export function EquipmentCalibrationDocumentClient({
                   onValueChange={approveCascade.handlePositionChange}
                 >
                   <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-5 text-[16px]">
-                    <SelectValue placeholder="- Выберите значение -" />
+                    <SelectValue placeholder="Выберите должность" />
                   </SelectTrigger>
                   <SelectContent>
                     <PositionSelectItems users={users} />
@@ -1052,7 +1052,7 @@ export function EquipmentCalibrationDocumentClient({
                   onOpenChange={approveCascade.setEmployeeOpen}
                 >
                   <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-5 text-[16px]">
-                    <SelectValue placeholder="- Выберите значение -" />
+                    <SelectValue placeholder="Выберите сотрудника" />
                   </SelectTrigger>
                   <SelectContent>
                     {(settingsApproveRole ? approveCascade.candidates : users).map((u) => (

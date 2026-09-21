@@ -50,6 +50,11 @@ import {
   JOURNAL_LIST_CARDS_CLASS,
 } from "@/components/journals/journal-responsive";
 import { localDayKey } from "@/lib/entry-defaults";
+import {
+  DocumentDialogFeedback,
+  readCreatedDocument,
+  useDocumentDialogSubmit,
+} from "@/components/journals/use-document-dialog-submit";
 import { useAutoDocumentTitle } from "@/components/journals/use-auto-document-title";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
 type DocumentItem = {
@@ -94,13 +99,22 @@ function SettingsDialog(props: {
   onOpenChange: (value: boolean) => void;
   mode: "create" | "edit";
   templateCode: string;
+  routeCode: string;
   initial: DialogState | null;
-  onSubmit: (value: DialogState) => Promise<void>;
+  onSubmit: (value: DialogState, force: boolean) => Promise<void>;
   submitText: string;
   dialogTitle: string;
 }) {
   const [state, setState] = useState<DialogState | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  // Окно закрывается только при успехе, ошибка сервера видна здесь же.
+  const submit = useDocumentDialogSubmit({
+    onOpenChange: props.onOpenChange,
+    fallbackError:
+      props.mode === "create"
+        ? "Не удалось создать документ"
+        : "Не удалось сохранить настройки",
+  });
+  const submitting = submit.submitting;
 
   const activeState = state || props.initial;
   const auto = useAutoDocumentTitle({
@@ -122,15 +136,9 @@ function SettingsDialog(props: {
     setState(initial ? { ...initial, title: seeded || initial.title } : null);
   }, [initial, mode, open, resetAutoTitle, titleForPeriod]);
 
-  async function handleSubmit() {
+  function handleSubmit(force = false) {
     if (!activeState) return;
-    setSubmitting(true);
-    try {
-      await props.onSubmit(activeState);
-      props.onOpenChange(false);
-    } finally {
-      setSubmitting(false);
-    }
+    void submit.run((forced) => props.onSubmit(activeState, forced), force);
   }
 
   return (
@@ -155,6 +163,12 @@ function SettingsDialog(props: {
         </DialogHeader>
         {activeState && (
           <div className="space-y-5 px-5 py-6 sm:px-10 sm:py-8">
+            <DocumentDialogFeedback
+              state={submit}
+              routeCode={props.routeCode}
+              onOpenChange={props.onOpenChange}
+              onForce={() => handleSubmit(true)}
+            />
             <div className="space-y-2">
               <Label className="text-[15px] text-[#7a7c8e]">Название документа</Label>
               <Input
@@ -191,7 +205,7 @@ function SettingsDialog(props: {
             <div className="flex justify-end pt-3">
               <Button
                 type="button"
-                onClick={handleSubmit}
+                onClick={() => handleSubmit(false)}
                 disabled={submitting}
                 className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4554ff]"
               >
@@ -297,12 +311,13 @@ export function BreakdownHistoryDocumentsClient({
     [settingsTarget]
   );
 
-  async function createDocument(payload: DialogState) {
+  async function createDocument(payload: DialogState, force: boolean) {
     const response = await fetch("/api/journal-documents", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         templateCode,
+        force,
         title: payload.title.trim() || BREAKDOWN_HISTORY_DOCUMENT_TITLE,
         // Период — по правилу журнала (`journal-period.ts`): история
         // поломок годовая, а окно создавало однодневный документ.
@@ -311,16 +326,10 @@ export function BreakdownHistoryDocumentsClient({
       }),
     });
 
-    if (!response.ok) {
-      // Текст сервера («За этот период уже есть документ «…»») объясняет
-      // отказ. Общая фраза оставляла человека без причины и без выхода.
-      const failure = await response.json().catch(() => null);
-      toast.error(failure?.error || "Не удалось создать документ");
-      return;
-    }
-
-    const data = (await response.json()) as { document: { id: string } };
-    router.push(`/journals/${routeCode}/documents/${data.document.id}`);
+    // Ошибку показывает само окно создания: тост её гасил, а окно
+    // закрывалось вместе с введённым.
+    const created = await readCreatedDocument(response);
+    router.push(`/journals/${routeCode}/documents/${created.id}`);
     router.refresh();
   }
 
@@ -335,8 +344,8 @@ export function BreakdownHistoryDocumentsClient({
     });
 
     if (!response.ok) {
-      toast.error("Не удалось сохранить настройки");
-      return;
+      const failure = await response.json().catch(() => null);
+      throw new Error(failure?.error || "Не удалось сохранить настройки");
     }
 
     router.refresh();
@@ -486,6 +495,7 @@ export function BreakdownHistoryDocumentsClient({
         onOpenChange={setCreateOpen}
         mode="create"
         templateCode={templateCode}
+        routeCode={routeCode}
         initial={defaultCreateState}
         onSubmit={createDocument}
         submitText="Создать"
@@ -500,6 +510,7 @@ export function BreakdownHistoryDocumentsClient({
         }}
         mode="edit"
         templateCode={templateCode}
+        routeCode={routeCode}
         initial={settingsInitialState}
         onSubmit={async (value) => {
           if (!settingsTarget) return;

@@ -52,6 +52,12 @@ import {
   JOURNAL_LIST_CARDS_CLASS,
 } from "@/components/journals/journal-responsive";
 import { localDayKey } from "@/lib/entry-defaults";
+import { formatJournalDate } from "@/lib/journal-card-date";
+import {
+  DocumentDialogFeedback,
+  readCreatedDocument,
+  useDocumentDialogSubmit,
+} from "@/components/journals/use-document-dialog-submit";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
 type UserItem = {
   id: string;
@@ -83,9 +89,10 @@ type DialogState = {
 };
 
 function formatDateDMY(value: string) {
-  const [year, month, day] = value.split("-");
-  if (!year || !month || !day) return value;
-  return `${day}-${month}-${year}`;
+  // Единый вид даты на экране — «дд.мм.гггг» (src/lib/journal-card-date.ts).
+  // Раньше тут было «ДД-ММ-ГГГГ», а у дезинсекции и акта забраковки —
+  // «ДД.ММ.ГГГГ»: три разных написания одной и той же вещи в одном заходе.
+  return formatJournalDate(value) || value;
 }
 
 function DocumentDialog(props: {
@@ -94,21 +101,18 @@ function DocumentDialog(props: {
   initial: DialogState | null;
   dialogTitle: string;
   submitText: string;
-  onSubmit: (value: DialogState) => Promise<void>;
+  routeCode: string;
+  onSubmit: (value: DialogState, force: boolean) => Promise<void>;
 }) {
   const [state, setState] = useState<DialogState | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  // Окно закрывается только при успехе, ошибка сервера видна здесь же.
+  const submit = useDocumentDialogSubmit({ onOpenChange: props.onOpenChange });
+  const submitting = submit.submitting;
   const activeState = state || props.initial;
 
-  async function handleSubmit() {
+  function handleSubmit(force = false) {
     if (!activeState) return;
-    setSubmitting(true);
-    try {
-      await props.onSubmit(activeState);
-      props.onOpenChange(false);
-    } finally {
-      setSubmitting(false);
-    }
+    void submit.run((forced) => props.onSubmit(activeState, forced), force);
   }
 
   return (
@@ -136,6 +140,12 @@ function DocumentDialog(props: {
         </DialogHeader>
         {activeState ? (
           <div className="space-y-6 px-8 py-7">
+            <DocumentDialogFeedback
+              state={submit}
+              routeCode={props.routeCode}
+              onOpenChange={props.onOpenChange}
+              onForce={() => handleSubmit(true)}
+            />
             <div className="space-y-2">
               <Label className="text-base text-[#6e7387]">
                 Название документа
@@ -166,7 +176,7 @@ function DocumentDialog(props: {
             <div className="flex justify-end">
               <Button
                 type="button"
-                onClick={handleSubmit}
+                onClick={() => handleSubmit(false)}
                 disabled={submitting}
                 className="h-9 rounded-xl bg-[#5563ff] px-10 text-[13.5px] text-white hover:bg-[#4452ee]"
               >
@@ -254,12 +264,13 @@ export function IntensiveCoolingDocumentsClient({
     []
   );
 
-  async function createDocument(payload: DialogState) {
+  async function createDocument(payload: DialogState, force: boolean) {
     const response = await fetch("/api/journal-documents", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         templateCode: INTENSIVE_COOLING_TEMPLATE_CODE,
+        force,
         title: payload.title.trim() || INTENSIVE_COOLING_DEFAULT_DOCUMENT_NAME,
         // Период — по правилу журнала (`journal-period.ts`): интенсивное
         // охлаждение бессрочное, а окно создавало документ на один день.
@@ -271,16 +282,10 @@ export function IntensiveCoolingDocumentsClient({
       }),
     });
 
-    if (!response.ok) {
-      // Текст сервера («За этот период уже есть документ «…»») объясняет
-      // отказ. Общая фраза оставляла человека без причины и без выхода.
-      const failure = await response.json().catch(() => null);
-      toast.error(failure?.error || "Не удалось создать документ");
-      return;
-    }
-
-    const data = (await response.json()) as { document: { id: string } };
-    router.push(`/journals/${routeCode}/documents/${data.document.id}`);
+    // Ошибку показывает само окно создания: тост её гасил, а окно
+    // закрывалось вместе с введённым.
+    const created = await readCreatedDocument(response);
+    router.push(`/journals/${routeCode}/documents/${created.id}`);
     router.refresh();
   }
 
@@ -296,8 +301,8 @@ export function IntensiveCoolingDocumentsClient({
     });
 
     if (!response.ok) {
-      toast.error("Не удалось сохранить настройки");
-      return;
+      const failure = await response.json().catch(() => null);
+      throw new Error(failure?.error || "Не удалось сохранить настройки");
     }
 
     router.refresh();
@@ -443,6 +448,7 @@ export function IntensiveCoolingDocumentsClient({
       <DocumentDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
+        routeCode={routeCode}
         initial={createInitialState}
         onSubmit={createDocument}
         submitText="Создать"
@@ -454,6 +460,7 @@ export function IntensiveCoolingDocumentsClient({
         onOpenChange={(value) => {
           if (!value) setSettingsTarget(null);
         }}
+        routeCode={routeCode}
         initial={
           settingsTarget
             ? {

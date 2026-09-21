@@ -284,7 +284,7 @@ function RowDialog(props: {
                 <SelectValue placeholder="Лицо, проводившее контроль" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__empty__">- Выберите значение -</SelectItem>
+                <SelectItem value="__empty__">Выберите должность</SelectItem>
                 <PositionSelectItems users={props.users} />
               </SelectContent>
             </Select>
@@ -314,7 +314,7 @@ function RowDialog(props: {
                 <SelectValue placeholder="Сотрудник" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__empty__">- Выберите значение -</SelectItem>
+                <SelectItem value="__empty__">Выберите сотрудника</SelectItem>
                 {(row.responsibleTitle ? responsibleCascade.candidates : props.users).map((user) => (
                   <SelectItem key={user.id} value={user.id}>
                     {user.name}
@@ -490,7 +490,7 @@ function SettingsDialog(props: {
         open={props.open}
         onOpenChange={props.onOpenChange}
         title="Настройки документа"
-        description="Название журнала и дата начала."
+        description="Название документа и дата начала."
         size="md"
         isSaving={submitting}
         onSave={handleSave}

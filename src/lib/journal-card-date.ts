@@ -9,6 +9,11 @@
  * Печатные бланки и значения в самих полях ввода трогать нельзя: там
  * формат диктует форма документа. Этот помощник — ТОЛЬКО для подписей
  * и заголовков карточек.
+ *
+ * `formatJournalDate` — то же самое для списков документов, где времени
+ * нет: там за один заход встречались «2026-09-18» (протокол и отчёт об
+ * аудите), «01-09-2026» (большинство журналов) и «01.09.2026»
+ * (дезинсекция, акт забраковки).
  */
 
 /** Принимает `YYYY-MM-DD`, `DD-MM-YYYY` или `DD.MM.YYYY`. */
@@ -38,6 +43,16 @@ function normalizeTime(value: string | null | undefined): string {
  * Дата не разобралась — возвращаем исходную строку: молча терять
  * содержимое карточки нельзя.
  */
+export function formatJournalDate(
+  date: string | Date | null | undefined
+): string {
+  if (date instanceof Date) {
+    if (Number.isNaN(date.getTime())) return "";
+    return formatCardDateTime(date.toISOString().slice(0, 10));
+  }
+  return formatCardDateTime(date);
+}
+
 export function formatCardDateTime(
   date: string | null | undefined,
   time?: string | null

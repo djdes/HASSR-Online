@@ -793,6 +793,7 @@ async function JournalDocumentBody({
         title={document.title}
         organizationName={organizationName}
         dateFrom={toDateKey(document.dateFrom)}
+        dateTo={toDateKey(document.dateTo)}
         status={document.status}
         initialConfig={normalizeComplaintConfig(document.config)}
         users={enrichedEmployees}

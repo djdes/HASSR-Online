@@ -1,0 +1,28 @@
+import { openSite } from "./site";
+import { chromium } from "playwright";
+import { go, probe, shot, FIELDS } from "./lib";
+import { clickText, listButtons } from "./dbl";
+import { db } from "../tg-session";
+(async () => {
+const s = await openSite({ role: "ownerA", width: 1280, height: 900 });
+const p = s.page;
+await go(p, s.base + "/settings/inspector-portal", 5000);
+await p.waitForFunction(`/Создать ссылку/.test(document.body.innerText)`, undefined, { timeout: 180000 });
+await p.waitForTimeout(3000);
+await clickText(p, "Создать ссылку"); await p.waitForTimeout(3000);
+console.log("DIALOG:\n" + (await probe(p)).bodyText.slice(-1000));
+console.log("FIELDS", JSON.stringify(await p.evaluate(FIELDS)).slice(0,700));
+console.log("BTNS", JSON.stringify((await listButtons(p)).slice(-6)));
+await shot(p, "81-insp-dialog");
+await p.evaluate(`(()=>{const b=[...document.querySelectorAll('button')].filter(x=>/Создать/.test(x.innerText)&&x.getBoundingClientRect().width>0);b[b.length-1].click();})()`);
+await p.waitForTimeout(6000);
+const t = (await probe(p)).bodyText;
+console.log("AFTER:\n" + t.slice(-1200));
+await shot(p, "81-insp-created");
+const link = await p.evaluate(`(()=>{const v=[...document.querySelectorAll('input')].map(e=>e.value).filter(x=>x&&x.indexOf('/inspector')>=0);return v[0]|| (document.body.innerText.match(/http[^\s]*inspector[^\s]*/)||[])[0] || null})()`);
+console.log("LINK", link);
+const tok = await db.inspectorToken.findMany({ orderBy: { createdAt: "desc" }, take: 2 }).catch(()=>null);
+console.log("TOKENS", JSON.stringify(tok)?.slice(0,400));
+console.log("ERRORS", JSON.stringify(s.errors).slice(0,400));
+await s.close(); await db.$disconnect();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 2000)); process.exit(1); });

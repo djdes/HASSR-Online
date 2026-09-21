@@ -1,0 +1,20 @@
+import { openSite } from "./site";
+import { shot, go, probe, FIELDS } from "./lib";
+import { clickText, listButtons } from "./dbl";
+import { db } from "../tg-session";
+(async () => {
+const s = await openSite({ role: "ownerA", width: 1400, height: 950 });
+const p = s.page;
+await go(p, s.base + "/settings/users", 6000);
+await p.waitForFunction(`/График отпусков/.test(document.body.innerText)`, undefined, { timeout: 180000 });
+await p.waitForTimeout(4000);
+await clickText(p, "График отпусков"); await p.waitForTimeout(2500);
+await p.evaluate(`(()=>{const b=[...document.querySelectorAll('button')].filter(x=>x.innerText.trim()==='Добавить'&&x.getBoundingClientRect().width>0);b[b.length-1].click();})()`);
+await p.waitForTimeout(2000);
+await p.selectOption('select', { label: "Повар" });
+await p.waitForTimeout(600);
+console.log("after position pick:\n" + (await probe(p)).bodyText.slice(-900));
+console.log("FIELDS", JSON.stringify(await p.evaluate(FIELDS)).slice(-900));
+await shot(p, "66-vac-after-pos");
+await s.close(); await db.$disconnect();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 2000)); process.exit(1); });

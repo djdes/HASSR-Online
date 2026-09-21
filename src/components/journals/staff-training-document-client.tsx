@@ -637,7 +637,7 @@ export function StaffTrainingDocumentClient({
               onValueChange={draftCascade.handlePositionChange}
             >
               <SelectTrigger>
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите должность" />
               </SelectTrigger>
               <SelectContent>
                 <PositionSelectItems users={users} />
@@ -662,10 +662,10 @@ export function StaffTrainingDocumentClient({
               onOpenChange={draftCascade.setEmployeeOpen}
             >
               <SelectTrigger>
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите сотрудника" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__empty__">- Выберите значение -</SelectItem>
+                <SelectItem value="__empty__">Выберите сотрудника</SelectItem>
                 {(draftRow.employeePosition ? draftCascade.candidates : users).map((user) => (
                   <SelectItem key={user.id} value={user.id}>
                     {buildStaffOptionLabel(user)}
@@ -682,7 +682,7 @@ export function StaffTrainingDocumentClient({
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите из списка" />
               </SelectTrigger>
               <SelectContent>
                 {TRAINING_TYPES.map((t) => (
@@ -701,7 +701,7 @@ export function StaffTrainingDocumentClient({
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите из списка" />
               </SelectTrigger>
               <SelectContent>
                 {TRAINING_TOPICS.map((t) => (
@@ -732,7 +732,7 @@ export function StaffTrainingDocumentClient({
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите должность" />
               </SelectTrigger>
               <SelectContent>
                 <PositionSelectItems users={users} />
@@ -852,7 +852,7 @@ export function StaffTrainingDocumentClient({
             {editingCell?.field === "trainingType" && (
               <Select value={cellEditValue} onValueChange={setCellEditValue}>
                 <SelectTrigger>
-                  <SelectValue placeholder="- Выберите значение -" />
+                  <SelectValue placeholder="Выберите из списка" />
                 </SelectTrigger>
                 <SelectContent>
                   {TRAINING_TYPES.map((t) => (
@@ -876,7 +876,7 @@ export function StaffTrainingDocumentClient({
             {editingCell?.field === "instructorName" && (
               <Select value={cellEditValue} onValueChange={setCellEditValue}>
                 <SelectTrigger>
-                  <SelectValue placeholder="- Выберите значение -" />
+                  <SelectValue placeholder="Выберите из списка" />
                 </SelectTrigger>
                 <SelectContent>
                   <PositionSelectItems users={users} />
@@ -905,7 +905,7 @@ export function StaffTrainingDocumentClient({
         <JournalSettingsModal
           open={settingsOpen}
           onOpenChange={setSettingsOpen}
-          title="Настройки журнала"
+          title="Настройки документа"
           description="Параметры журнала обучения и аттестации персонала"
           size="md"
           onSave={async () => {
@@ -927,7 +927,7 @@ export function StaffTrainingDocumentClient({
           onCancel={() => setSettingsOpen(false)}
         >
           <div className="space-y-2">
-            <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Название журнала</Label>
+            <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Название документа</Label>
             <Input
               value={settingsTitle}
               onChange={(e) => setSettingsTitle(e.target.value)}
@@ -939,10 +939,10 @@ export function StaffTrainingDocumentClient({
         <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
           <DialogContent className="sm:max-w-[480px]">
             <DialogHeader>
-              <DialogTitle>Настройки журнала</DialogTitle>
+              <DialogTitle>Настройки документа</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <Label>Название журнала</Label>
+              <Label>Название документа</Label>
               <Input
                 value={settingsTitle}
                 onChange={(e) => setSettingsTitle(e.target.value)}

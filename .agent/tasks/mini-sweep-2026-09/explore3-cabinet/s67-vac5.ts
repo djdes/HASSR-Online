@@ -1,0 +1,28 @@
+import { openSite } from "./site";
+import { shot, go, probe } from "./lib";
+import { clickText } from "./dbl";
+import { db } from "../tg-session";
+(async () => {
+const s = await openSite({ role: "ownerA", width: 1400, height: 950 });
+const p = s.page;
+await go(p, s.base + "/settings/users", 6000);
+await p.waitForFunction(`/График отпусков/.test(document.body.innerText)`, undefined, { timeout: 180000 });
+await p.waitForTimeout(4000);
+await clickText(p, "График отпусков"); await p.waitForTimeout(2500);
+await p.evaluate(`(()=>{const b=[...document.querySelectorAll('button')].filter(x=>x.innerText.trim()==='Добавить'&&x.getBoundingClientRect().width>0);b[b.length-1].click();})()`);
+await p.waitForTimeout(2000);
+await p.selectOption('select >> nth=0', { label: "Повар" }); await p.waitForTimeout(800);
+await p.selectOption('select >> nth=1', { label: "ZZ6 Новичок 9208" }); await p.waitForTimeout(600);
+await p.evaluate(`(()=>{const set=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;const d=[...document.querySelectorAll('input[type=date]')];set.call(d[0],'2026-09-21');d[0].dispatchEvent(new Event('input',{bubbles:true}));d[0].dispatchEvent(new Event('change',{bubbles:true}));set.call(d[1],'2026-09-23');d[1].dispatchEvent(new Event('input',{bubbles:true}));d[1].dispatchEvent(new Event('change',{bubbles:true}));})()`);
+await p.waitForTimeout(600);
+await p.evaluate(`(()=>{const b=[...document.querySelectorAll('button')].filter(x=>x.innerText.trim()==='Добавить'&&x.getBoundingClientRect().width>0);b[b.length-1].click();})()`);
+await p.waitForTimeout(4000);
+const t = (await probe(p)).bodyText;
+const i = t.indexOf("Даты отпуска");
+console.log("TABLE:\n" + t.slice(i, i+500).replace(/\n/g," | "));
+await shot(p, "67-vac-added");
+const vac = await db.vacation.findMany({ where: { user: { organizationId: "e2e-org-a" } } }).catch(()=>null);
+console.log("VACATIONS", JSON.stringify(vac)?.slice(0,600));
+console.log("ERRORS", JSON.stringify(s.errors).slice(0,400));
+await s.close(); await db.$disconnect();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 2000)); process.exit(1); });

@@ -622,8 +622,8 @@ function JournalSettingsDialog({
       <JournalSettingsModal
         open={open}
         onOpenChange={onOpenChange}
-        title="Настройки журнала"
-        description="Название журнала и ответственный сотрудник. Применяется ко всему периоду документа."
+        title="Настройки документа"
+        description="Название документа и ответственный сотрудник. Применяется ко всему периоду документа."
         size="md"
         isSaving={isSubmitting}
         onSave={handleSave}
@@ -699,7 +699,7 @@ function JournalSettingsDialog({
       <DialogContent className="max-w-[calc(100vw-1rem)] rounded-[32px] border-0 p-0 sm:max-w-[765px]">
         <DialogHeader className="border-b px-14 py-12">
           <DialogTitle className="text-[22px] font-medium text-black">
-            Настройки журнала
+            Настройки документа
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-8 px-14 py-12">
@@ -722,7 +722,7 @@ function JournalSettingsDialog({
               onValueChange={cascade.handlePositionChange}
             >
               <SelectTrigger className="h-22 rounded-3xl border-[#dfe1ec] bg-[#f3f4fb] px-8 text-[24px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите должность" />
               </SelectTrigger>
               <SelectContent>
                 <PositionSelectItems users={users} />
@@ -738,7 +738,7 @@ function JournalSettingsDialog({
               onOpenChange={cascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-22 rounded-3xl border-[#dfe1ec] bg-[#f3f4fb] px-8 text-[24px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите сотрудника" />
               </SelectTrigger>
               <SelectContent>
                 {(responsible ? cascade.candidates : users).map((user) => (
@@ -945,7 +945,7 @@ export function StaffJournalToolbar({
               onClick={() => setSettingsOpen(true)}
               className="h-9 rounded-lg border-0 bg-[#5566f6]/[0.04] px-3.5 text-[14px] font-semibold text-[#5566f6] shadow-none hover:bg-[#5566f6]/[0.09]"
             >
-              Настройки журнала
+              Настройки документа
             </Button>
             <DocumentCloseButton
               documentId={documentId}

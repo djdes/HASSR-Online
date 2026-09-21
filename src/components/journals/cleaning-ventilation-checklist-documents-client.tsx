@@ -26,7 +26,6 @@ import {
   getDefaultCleaningVentilationConfig,
 } from "@/lib/cleaning-ventilation-checklist-document";
 
-import { toast } from "sonner";
 import {
   EMPTY_STATE_CREATE_BUTTON_CLASS,
   EmptyDocumentsState,
@@ -64,8 +63,14 @@ import {
   JOURNAL_LIST_CARDS_CLASS,
 } from "@/components/journals/journal-responsive";
 import { localDayKey } from "@/lib/entry-defaults";
+import { formatJournalDate } from "@/lib/journal-card-date";
 import { useAutoDocumentTitle } from "@/components/journals/use-auto-document-title";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
+import {
+  DocumentDialogFeedback,
+  readCreatedDocument,
+  useDocumentDialogSubmit,
+} from "@/components/journals/use-document-dialog-submit";
 type DocumentItem = {
   id: string;
   title: string;
@@ -108,10 +113,11 @@ function getDefaultDate() {
 }
 
 function formatDateLabel(isoDate: string) {
+  // Единый вид даты на экране — «дд.мм.гггг» (src/lib/journal-card-date.ts).
+  // Раньше тут было «ДД-ММ-ГГГГ», а у дезинсекции и акта забраковки —
+  // «ДД.ММ.ГГГГ»: три разных написания одной и той же вещи в одном заходе.
   if (!isoDate) return "—";
-  // Единый формат дат в карточках списков — «ДД-ММ-ГГГГ», как в бумажной
-  // шапке документа и на эталоне (S9 аудита), а не «ДД.ММ.ГГГГ».
-  return new Date(`${isoDate}T00:00:00`).toLocaleDateString("ru-RU").replaceAll(".", "-");
+  return formatJournalDate(isoDate) || isoDate;
 }
 
 /**
@@ -147,7 +153,9 @@ function SettingsDialog(props: {
   templateCode: string;
 }) {
   const [state, setState] = useState<SettingsState | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  // Окно закрывается только при успехе, ошибка сервера видна здесь же.
+  const submit = useDocumentDialogSubmit({ onOpenChange: props.onOpenChange });
+  const submitting = submit.submitting;
   const [titleError, setTitleError] = useState("");
   const auto = useAutoDocumentTitle({
     templateCode: props.templateCode,
@@ -188,6 +196,7 @@ function SettingsDialog(props: {
         </DialogHeader>
         {activeState ? (
           <div className={cn(JOURNAL_DIALOG_BODY_CLASS, JOURNAL_DIALOG_FIELDS_CLASS)}>
+            <DocumentDialogFeedback state={submit} onOpenChange={props.onOpenChange} />
             <FloatingInputField
               label="Название документа"
               placeholder="Введите название документа"
@@ -252,13 +261,7 @@ function SettingsDialog(props: {
                     return;
                   }
                   setTitleError("");
-                  setSubmitting(true);
-                  try {
-                    await props.onSubmit(activeState);
-                    props.onOpenChange(false);
-                  } finally {
-                    setSubmitting(false);
-                  }
+                  await submit.run(() => props.onSubmit(activeState));
                 }}
                 disabled={submitting}
                 className={JOURNAL_DIALOG_SUBMIT_CLASS}
@@ -323,16 +326,10 @@ export function CleaningVentilationChecklistDocumentsClient({
       }),
     });
 
-    if (!response.ok) {
-      // Текст сервера («За этот период уже есть документ «…»») объясняет
-      // отказ. Общая фраза оставляла человека без причины и без выхода.
-      const failure = await response.json().catch(() => null);
-      toast.error(failure?.error || "Не удалось создать документ");
-      return;
-    }
-
-    const data = (await response.json()) as { document: { id: string } };
-    router.push(`/journals/${routeCode}/documents/${data.document.id}`);
+    // Ошибку показывает само окно создания: тост её гасил, а окно
+    // закрывалось вместе с введённым.
+    const created = await readCreatedDocument(response);
+    router.push(`/journals/${routeCode}/documents/${created.id}`);
     router.refresh();
   }
 
@@ -357,8 +354,8 @@ export function CleaningVentilationChecklistDocumentsClient({
     });
 
     if (!response.ok) {
-      toast.error("Не удалось сохранить настройки");
-      return;
+      const failure = await response.json().catch(() => null);
+      throw new Error(failure?.error || "Не удалось сохранить настройки");
     }
 
     router.refresh();
@@ -527,7 +524,7 @@ export function CleaningVentilationChecklistDocumentsClient({
           await saveSettings(settingsTarget.id, value);
         }}
         submitText="Сохранить"
-        title="Настройки журнала"
+        title="Настройки документа"
         templateCode={templateCode}
       />
     </div>

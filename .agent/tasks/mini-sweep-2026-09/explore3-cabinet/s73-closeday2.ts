@@ -1,0 +1,27 @@
+import { openSite } from "./site";
+import { shot, go, probe } from "./lib";
+import { clickText, listButtons } from "./dbl";
+import { db } from "../tg-session";
+(async () => {
+const s = await openSite({ role: "ownerA", width: 1280, height: 900 });
+const p = s.page;
+p.on("response", async r => { if (/\/api\//.test(r.url()) && r.request().method()!=="GET") console.log("  RES", r.status(), r.url().replace(s.base,""), (await r.text().catch(()=>"")).slice(0,400)); });
+await go(p, s.base + "/dashboard", 6000);
+await p.waitForFunction(`/Закрыть день/.test(document.body.innerText)`, undefined, { timeout: 180000 });
+await p.waitForTimeout(4000);
+const before = await db.journalDocumentEntry.count({ where: { document: { organization: { id: "e2e-org-a" } } } });
+const beforeDocs = await db.journalDocument.count({ where: { organization: { id: "e2e-org-a" } } });
+console.log("entries before:", before, "docs before:", beforeDocs);
+await clickText(p, "Закрыть день");
+await p.waitForTimeout(2500);
+await p.evaluate(`(()=>{const b=[...document.querySelectorAll('button')].filter(x=>x.innerText.trim()==='Закрыть день');b[b.length-1].click();})()`);
+await p.waitForTimeout(25000);
+console.log("AFTER:\n" + (await probe(p)).bodyText.slice(0,900).replace(/\n/g," | "));
+await shot(p, "73-closeday-after");
+const after = await db.journalDocumentEntry.count({ where: { document: { organization: { id: "e2e-org-a" } } } });
+const afterDocs = await db.journalDocument.count({ where: { organization: { id: "e2e-org-a" } } });
+console.log("entries after:", after, "docs after:", afterDocs, "| delta entries:", after-before, "docs:", afterDocs-beforeDocs);
+console.log("BTNS: есть ли отмена?", JSON.stringify((await listButtons(p)).filter(t=>/Отмен|Откат|Вернуть/.test(t))));
+console.log("ERRORS", JSON.stringify(s.errors).slice(0,500));
+await s.close(); await db.$disconnect();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 2000)); process.exit(1); });

@@ -434,8 +434,8 @@ function DocumentSettingsDialog(props: {
           if (value) setState(props.initial);
           props.onOpenChange(value);
         }}
-        title="Настройки журнала"
-        description="Название журнала, дата, год и две роли: утверждающий и ответственный."
+        title="Настройки документа"
+        description="Название документа, дата, год и две роли: утверждающий и ответственный."
         size="md"
         isSaving={submitting}
         onSave={handleSave}
@@ -592,7 +592,7 @@ function DocumentSettingsDialog(props: {
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <div className="flex items-center justify-between">
             <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-              Настройки журнала
+              Настройки документа
             </DialogTitle>
           </div>
         </DialogHeader>
@@ -665,7 +665,7 @@ function DocumentSettingsDialog(props: {
               <SelectValue placeholder="Сотрудник" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__empty__">- Выберите значение -</SelectItem>
+              <SelectItem value="__empty__">Выберите сотрудника</SelectItem>
               {approveCascade.candidates.map((user) => (
                 <SelectItem key={user.id} value={user.id}>
                   {buildStaffOptionLabel(user)}
@@ -696,7 +696,7 @@ function DocumentSettingsDialog(props: {
               <SelectValue placeholder="Сотрудник" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__empty__">- Выберите значение -</SelectItem>
+              <SelectItem value="__empty__">Выберите сотрудника</SelectItem>
               {responsibleCascade.candidates.map((user) => (
                 <SelectItem key={user.id} value={user.id}>
                   {buildStaffOptionLabel(user)}
@@ -1054,7 +1054,7 @@ export function SanitationDayDocumentClient({
       />
 
       {readOnly ? (
-        <JournalClosedBanner hint="Откройте журнал заново, чтобы редактировать план и факт уборок." />
+        <JournalClosedBanner hint="Откройте журнал заново, чтобы редактировать план и факт уборок." documentId={documentId} />
       ) : null}
 
       {/* R1: бумажное полотно — во всю ширину контентной колонки. */}

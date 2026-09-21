@@ -2426,7 +2426,7 @@ export function CleaningDocumentClient(props: Props) {
         </div>
 
         {props.status !== "active" ? (
-          <JournalClosedBanner hint="Откройте журнал заново, чтобы редактировать отметки, помещения и ответственных." />
+          <JournalClosedBanner hint="Откройте журнал заново, чтобы редактировать отметки, помещения и ответственных." documentId={props.documentId} />
         ) : (
           (() => {
             // Считаем только строки-помещения: строки ответственных
@@ -3339,8 +3339,8 @@ export function CleaningDocumentClient(props: Props) {
         <JournalSettingsModal
           open={settingsOpen}
           onOpenChange={setSettingsOpen}
-          title="Настройки журнала"
-          description="Название журнала и ответственные. Изменения применяются ко всему периоду документа."
+          title="Настройки документа"
+          description="Название документа и ответственные. Изменения применяются ко всему периоду документа."
           size="md"
           isSaving={saving}
           onSave={async () => {

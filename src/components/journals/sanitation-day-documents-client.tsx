@@ -86,6 +86,11 @@ import {
 import { localDayKey } from "@/lib/entry-defaults";
 import { useAutoDocumentTitle } from "@/components/journals/use-auto-document-title";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
+import {
+  DocumentDialogFeedback,
+  readCreatedDocument,
+  useDocumentDialogSubmit,
+} from "@/components/journals/use-document-dialog-submit";
 type UserItem = {
   id: string;
   name: string;
@@ -164,7 +169,9 @@ function SettingsDialog(props: {
   showEmptyState?: boolean;
 }) {
   const [state, setState] = useState<SettingsState | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  // Окно закрывается только при успехе, ошибка сервера видна здесь же.
+  const submit = useDocumentDialogSubmit({ onOpenChange: props.onOpenChange });
+  const submitting = submit.submitting;
 
   const activeState = state || props.initial;
   const auto = useAutoDocumentTitle({
@@ -190,13 +197,7 @@ function SettingsDialog(props: {
 
   async function handleSubmit() {
     if (!activeState) return;
-    setSubmitting(true);
-    try {
-      await props.onSubmit(activeState);
-      props.onOpenChange(false);
-    } finally {
-      setSubmitting(false);
-    }
+    await submit.run(() => props.onSubmit(activeState));
   }
 
   return (
@@ -220,6 +221,7 @@ function SettingsDialog(props: {
         ) : activeState ? (
           <>
           <div className={cn(JOURNAL_DIALOG_BODY_CLASS, JOURNAL_DIALOG_FIELDS_CLASS)}>
+            <DocumentDialogFeedback state={submit} onOpenChange={props.onOpenChange} />
             <FloatingInputField
               label="Название документа"
               value={activeState.title}
@@ -392,16 +394,10 @@ export function SanitationDayDocumentsClient({
       }),
     });
 
-    if (!response.ok) {
-      // Текст сервера («За этот период уже есть документ «…»») объясняет
-      // отказ. Общая фраза оставляла человека без причины и без выхода.
-      const failure = await response.json().catch(() => null);
-      toast.error(failure?.error || "Не удалось создать документ");
-      return;
-    }
-
-    const data = (await response.json()) as { document: { id: string } };
-    router.push(`/journals/${routeCode}/documents/${data.document.id}`);
+    // Ошибку показывает само окно создания: тост её гасил, а окно
+    // закрывалось вместе с введённым.
+    const created = await readCreatedDocument(response);
+    router.push(`/journals/${routeCode}/documents/${created.id}`);
     router.refresh();
   }
 
@@ -436,8 +432,8 @@ export function SanitationDayDocumentsClient({
     });
 
     if (!response.ok) {
-      toast.error("Не удалось сохранить настройки");
-      return;
+      const failure = await response.json().catch(() => null);
+      throw new Error(failure?.error || "Не удалось сохранить настройки");
     }
 
     router.refresh();
@@ -711,7 +707,7 @@ export function SanitationDayDocumentsClient({
           await saveSettings(settingsTarget.id, value);
         }}
         submitText="Сохранить"
-        title="Настройки журнала"
+        title="Настройки документа"
       />
     </div>
   );

@@ -1,0 +1,48 @@
+import { openTelegramSession, db } from "../tg-session";
+import { shot, go, probe } from "./lib";
+(async () => {
+const s = await openTelegramSession({ role: "cookA", width: 360, height: 640 });
+const p = s.page;
+async function release() { const my:any = await p.evaluate(`fetch('/api/journal-task-claims/my',{cache:'no-store'}).then(r=>r.json())`); if(my?.claim?.id) await p.evaluate(`fetch('/api/journal-task-claims/${my.claim.id}',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'release'})}).then(r=>r.status)`); }
+await go(p, s.base + "/mini/today", 3000);
+await release();
+const api:any = await p.evaluate(`fetch('/api/mini/today',{cache:'no-store'}).then(r=>r.json())`);
+const g=api.groups.find((x:any)=>x.code==="climate_control"); const sc=g.scopes.find((y:any)=>y.availability==="available");
+const body=JSON.stringify({journalCode:"climate_control",scopeKey:sc.scopeKey,scopeLabel:sc.scopeLabel,dateKey:api.dateKey});
+const r:any=await p.evaluate(`fetch('/api/journal-task-claims',{method:'POST',headers:{'Content-Type':'application/json'},body:${JSON.stringify(body)}}).then(async r=>({s:r.status,j:await r.text()}))`);
+const cid = JSON.parse(r.j).claim?.id; console.log("climate claim", cid);
+await go(p, s.base + "/mini/claim/" + cid, 3000);
+await p.waitForFunction(`/Влажность/.test(document.body.innerText)`, { timeout: 120000 });
+await p.waitForTimeout(1500);
+const ins = await p.evaluate(`[...document.querySelectorAll('input[type=text]')].map((e,i)=>i+':'+(e.placeholder||''))`);
+console.log("inputs", JSON.stringify(ins));
+await p.evaluate(`(()=>{const e=[...document.querySelectorAll('input[type=text]')];e[0].focus();})()`);
+await p.evaluate(`(()=>{const set=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;const e=[...document.querySelectorAll('input[type=text]')];set.call(e[0],'18');e[0].dispatchEvent(new Event('input',{bubbles:true}));set.call(e[1],'55');e[1].dispatchEvent(new Event('input',{bubbles:true}));})()`);
+await p.waitForTimeout(600);
+console.log("values", JSON.stringify(await p.evaluate(`[...document.querySelectorAll('input[type=text]')].map(e=>e.value)`)));
+await s.ctx.setOffline(true);
+console.log("OFFLINE ON");
+await p.waitForTimeout(1200);
+await shot(p, "28-offline-before", true);
+await p.evaluate(`(()=>{const b=[...document.querySelectorAll('button')].filter(x=>x.innerText.trim()==='Завершить');b[b.length-1].click();})()`);
+await p.waitForTimeout(4000);
+const pr = await probe(p);
+console.log("OFFLINE BODY:\n" + pr.bodyText.slice(0,1400));
+await shot(p, "28-offline-err", true);
+await shot(p, "28-offline-err-vp");
+// уходим и возвращаемся
+await p.goBack().catch(()=>null);
+await p.waitForTimeout(1500);
+await p.goForward().catch(()=>null);
+await p.waitForTimeout(2500);
+console.log("after back/forward values", JSON.stringify(await p.evaluate(`[...document.querySelectorAll('input[type=text]')].map(e=>e.value)`)));
+await s.ctx.setOffline(false);
+await p.waitForTimeout(1000);
+await go(p, s.base + "/mini/claim/" + cid, 3000);
+await p.waitForFunction(`/Влажность/.test(document.body.innerText)`, { timeout: 120000 });
+await p.waitForTimeout(2000);
+console.log("after reload online values", JSON.stringify(await p.evaluate(`[...document.querySelectorAll('input[type=text]')].map(e=>e.value)`)));
+await shot(p, "28-after-return", true);
+console.log("ERRORS", JSON.stringify(s.errors).slice(0,600));
+await s.close();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 2000)); process.exit(1); });

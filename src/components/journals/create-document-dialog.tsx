@@ -771,13 +771,24 @@ export function CreateDocumentDialog({
             <>
               {trackedCreateMode === "uv" ? (
                 <>
+                  {/* Подпись «Бактерицидная установка №» путали с
+                      названием документа: вводили туда имя, и документ
+                      назывался «Бактерицидная установка №<имя>». Теперь
+                      поле подписано как номер, а итоговое название видно. */}
                   <FloatingInputField
                     id="uv-lamp-number"
-                    label="Бактерицидная установка №"
+                    label="Номер установки"
+                    placeholder="Например: 1"
                     value={trackedLampNumber}
                     onChange={setTrackedLampNumber}
                     required
                   />
+                  <p className="-mt-1 text-[12.5px] leading-[1.45] text-[#6f7282]">
+                    Название документа соберётся само:{" "}
+                    <span className="font-medium text-[#3c4053]">
+                      «Бактерицидная установка №{trackedLampNumber.trim() || "1"}»
+                    </span>
+                  </p>
                   <FloatingInputField
                     id="tracked-area-name"
                     label="Наименование цеха/участка применения"

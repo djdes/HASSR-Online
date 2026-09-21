@@ -32,11 +32,19 @@ export type ComplaintDocumentConfig = RegisterDocumentConfig & {
   finishedAt?: string | null;
 };
 
+/**
+ * Дата жалобы НА ЭКРАНЕ — «дд.мм.гггг».
+ *
+ * Внутри одного документа карточки показывали «05.03.2027», а таблица
+ * — «05-03-2027»: для человека это два разных поля. Помощник
+ * используется только в клиентских компонентах журнала жалоб; печатный
+ * бланк форматирует даты сам (см. document-pdf.ts).
+ */
 export function formatComplaintDate(value: string) {
   if (!value) return "";
   const [year, month, day] = value.split("-");
   if (!year || !month || !day) return value;
-  return `${day}-${month}-${year}`;
+  return `${day}.${month}.${year}`;
 }
 
 export function normalizeComplaintConfig(value: unknown): ComplaintDocumentConfig {

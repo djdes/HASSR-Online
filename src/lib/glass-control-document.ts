@@ -1,8 +1,17 @@
+import { isBlankEntryData } from "@/lib/journal-entry-blank";
+
 export const GLASS_CONTROL_TEMPLATE_CODE = "glass_control";
 export const GLASS_CONTROL_SOURCE_SLUG = "glassjournal";
 export const GLASS_CONTROL_PAGE_TITLE =
   "Журнал контроля изделий из стекла и хрупкого пластика";
-export const GLASS_CONTROL_DOCUMENT_TITLE = "Журнал контроля изделий";
+/**
+ * Название документа по умолчанию.
+ *
+ * Было «Журнал контроля изделий» — обрезок: каких изделий, непонятно.
+ * Подставляем полное название журнала; периода в имени нет, потому что
+ * документ бессрочный (см. PERPETUAL_JOURNAL_CODES).
+ */
+export const GLASS_CONTROL_DOCUMENT_TITLE = GLASS_CONTROL_PAGE_TITLE;
 export const GLASS_CONTROL_DEFAULT_FREQUENCY = "1 раз в сутки";
 
 export type GlassControlDocumentConfig = {
@@ -100,6 +109,38 @@ export function buildGlassControlAutoFillEntryData(): GlassControlEntryData {
     quantity: "",
     damageInfo: "",
   };
+}
+
+/**
+ * Строки таблицы бланка «контроль стекла».
+ *
+ * КРИТИЧНО: заготовка строки (запись есть, но человек в неё ничего не
+ * вносил — `{}` / `{_autoSeeded:true}`) печатается ПУСТОЙ: без «V» в
+ * колонке «Нет» и без фамилии. Раньше нормализация достраивала
+ * `damagesDetected:false`, и бланк на каждый день периода утверждал,
+ * что осмотр проведён и повреждений не выявлено, хотя журнал никто не
+ * вёл. Это подлог данных перед инспектором.
+ */
+export function buildGlassControlPdfRows(params: {
+  entries: Array<{ date: Date; employeeId: string; data: unknown }>;
+  formatDate: (date: Date) => string;
+  resolveUserName: (employeeId: string) => string;
+}): string[][] {
+  return params.entries.map((entry) => {
+    if (isBlankEntryData(entry.data)) {
+      return [params.formatDate(entry.date), "", "", "", "", "", ""];
+    }
+    const data = normalizeGlassControlEntryData(entry.data);
+    return [
+      params.formatDate(entry.date),
+      data.damagesDetected ? "V" : "",
+      data.damagesDetected ? "" : "V",
+      data.itemName,
+      data.quantity,
+      data.damageInfo,
+      params.resolveUserName(entry.employeeId),
+    ];
+  });
 }
 
 export function getGlassControlResponsibleOptions(

@@ -158,7 +158,10 @@ const today = () => localDayKey();
 const emptyDraft = (): Draft => ({
   employeeId: "",
   positionTitle: "",
-  birthDate: today(),
+  // Дата рождения НЕ подставляется: сегодняшняя дата выглядела как
+  // введённое значение, и её сохраняли по невнимательности. Пусто →
+  // человек видит, что поле надо заполнить (на сервер уходит null).
+  birthDate: "",
   hireDate: today(),
   gender: null,
   medBookNumber: "",
@@ -905,7 +908,7 @@ export function MedBookDocumentClient({
       />
       {isClosed ? (
         <div className="mb-5">
-          <JournalClosedBanner hint="Верните журнал в активные, чтобы менять даты осмотров, исследований и прививок." />
+          <JournalClosedBanner hint="Верните журнал в активные, чтобы менять даты осмотров, исследований и прививок." documentId={documentId} />
         </div>
       ) : null}
 
@@ -1307,8 +1310,13 @@ export function MedBookDocumentClient({
             {/* Не GRID_VIEWPORT_CLASS: у него на телефоне скролл снимается
                 глобальным правилом, и «Прививки» уезжали в край экрана.
                 Здесь таблица ездит внутри своего блока. */}
+            {/* `overflow-x-auto` в классе обязателен: в оболочке
+                мини-приложения прокрутку таблицам возвращает правило
+                `.mini-root main .overflow-x-auto`, и без этого класса
+                «Прививки» (1320px) на вкладке «Карточки» уходили за
+                правый край экрана. */}
             <div
-              className={`overflow-auto rounded-[14px] bg-white ${GRID_VIEWPORT_SCROLLBAR_CLASS} print:overflow-visible print:rounded-none print:bg-transparent`}
+              className={`overflow-auto overflow-x-auto rounded-[14px] bg-white ${GRID_VIEWPORT_SCROLLBAR_CLASS} print:overflow-visible print:rounded-none print:bg-transparent`}
             >
               <table className="w-full min-w-[1320px] border-collapse text-[13px] text-black">
                 <thead>
@@ -1582,8 +1590,8 @@ export function MedBookDocumentClient({
         <JournalSettingsModal
           open={settingsOpen}
           onOpenChange={setSettingsOpen}
-          title="Настройки журнала"
-          description="Название журнала, перечень обследований и прививок."
+          title="Настройки документа"
+          description="Название документа, перечень обследований и прививок."
           size="md"
           isSaving={saving}
           saveDisabled={!settingsTitle.trim()}
@@ -1672,7 +1680,7 @@ export function MedBookDocumentClient({
           <DialogContent className={JOURNAL_DIALOG_CONTENT_WIDE_CLASS}>
             <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
               <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-                Настройки журнала
+                Настройки документа
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-5 px-6 py-5">

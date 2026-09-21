@@ -1,0 +1,31 @@
+import { openTelegramSession, db } from "../tg-session";
+import { shot, go, probe } from "./lib";
+(async () => {
+const CID = "cmuax9enx0006209m12tf4w4b";
+await db.journalTaskClaim.update({ where: { id: CID }, data: { status: "completed", completedAt: new Date(), verificationStatus: "pending", verifierComment: null, verifiedById: null, verifiedAt: null } });
+const s = await openTelegramSession({ role: "headA", width: 360, height: 640 });
+const p = s.page;
+p.on("console", m => { if (m.type()!=="error") console.log("  [console]", m.text().slice(0,150)); });
+await go(p, s.base + "/verifications", 4000);
+await p.waitForFunction(`/ЖДУТ ПРОВЕРКИ|Ждут проверки/i.test(document.body.innerText)`, { timeout: 120000 });
+await p.waitForTimeout(2500);
+const api: any = await p.evaluate(`fetch('/api/verifications',{cache:'no-store'}).then(r=>r.json())`);
+console.log("pendingReview ids", JSON.stringify((api.pendingReview||[]).map((x:any)=>({id:x.id,l:x.scopeLabel,by:x.executedByName}))));
+console.log("inProgress", JSON.stringify((api.inProgress||[]).map((x:any)=>({id:x.id,l:x.scopeLabel,by:x.executedByName,stuck:x.stuckSince||x.claimedAt}))));
+// раскрыть нужную карточку по id из api
+const ok = await p.evaluate(`(()=>{const btns=[...document.querySelectorAll('button')].filter(b=>/Холодильник QR E2E — Утро/.test(b.innerText));if(!btns.length)return 'none';btns[0].click();return 'clicked '+btns.length})()`);
+console.log("expand:", ok);
+await p.waitForTimeout(2000);
+const hasInput = await p.evaluate(`document.querySelectorAll('input[placeholder^="Комментарий"]').length`);
+console.log("comment inputs:", hasInput);
+await p.fill('input[placeholder^="Комментарий"]', "Перемерь: 9 градусов слишком много");
+await p.waitForTimeout(300);
+const clicked = await p.evaluate(`(()=>{const b=[...document.querySelectorAll('button')].filter(x=>x.innerText.trim()==='Переделать');if(!b.length)return 'no button';b[0].click();return 'ok';})()`);
+console.log("reject click:", clicked);
+await p.waitForTimeout(4000);
+console.log("toast/body:", (await probe(p)).bodyText.slice(0,400).replace(/\n/g," | "));
+const r = await db.journalTaskClaim.findUnique({ where: { id: CID } });
+console.log("DB after:", r?.status, (r as any)?.verificationStatus, JSON.stringify((r as any)?.verifierComment));
+console.log("HEAD ERRORS", JSON.stringify(s.errors));
+await s.close();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 2000)); process.exit(1); });

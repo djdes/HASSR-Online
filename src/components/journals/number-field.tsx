@@ -1,7 +1,7 @@
 "use client";
 
 import { Minus, Plus } from "lucide-react";
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 /**
  * Числовое поле журнала «под перчатки».
@@ -53,6 +53,27 @@ export function parseNumeric(raw: string): number | null {
   if (normalized === "") return null;
   const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+/**
+ * Ввод вообще числом не является?
+ *
+ * ПОЧЕМУ отдельно от `parseNumeric`: он возвращает `null` и для пустой
+ * строки, и для мусора. Из-за этого «3abc» приезжало в базу как `null`
+ * и СТИРАЛО уже сохранённый замер — молча, без единого сообщения.
+ * Теперь эти два случая разведены: пусто = «очистили», мусор = ошибка.
+ *
+ * Незаконченный ввод («-», «,», «3,») ошибкой не считается: человек ещё
+ * печатает, ругаться рано.
+ */
+export function numericInputError(raw: string): string | null {
+  const text = String(raw ?? "").trim();
+  if (text === "") return null;
+  if (/^[-+]?[.,]?$/.test(text)) return null;
+  const normalized = text.replace(",", ".");
+  if (/^[-+]?\d*\.?$/.test(normalized)) return null;
+  if (Number.isFinite(Number(normalized))) return null;
+  return "Введите число, например 3,5";
 }
 
 /** Значение вне нормы? null-норма и пустое значение — всегда «в норме». */
@@ -181,12 +202,30 @@ export function NumberField({
   const normHint = hint ?? formatNorm(norm, unit);
   // Ошибка «так не бывает» живёт до следующей правки поля.
   const [rangeError, setRangeError] = useState<string | null>(null);
+  /**
+   * Последнее значение, которое было числом. Нужно, чтобы вернуть его в
+   * поле после мусорного ввода: раньше «3abc» + уход из поля стирали
+   * сохранённый замер.
+   */
+  const lastNumericRef = useRef(value);
+  useEffect(() => {
+    if (!numericInputError(value)) lastNumericRef.current = value;
+  }, [value]);
 
   /** Единая точка сохранения: и blur, и Enter, и степпер. */
   function commit(next: string) {
+    const notANumber = numericInputError(next);
+    if (notANumber) {
+      setRangeError(notANumber);
+      // Ничего не сохраняем и ничего не стираем: в поле возвращается
+      // прежнее число, сохранённое значение остаётся на месте.
+      onChange(lastNumericRef.current);
+      return;
+    }
     const problem = outOfRangeMessage(next, min, max, unit);
     setRangeError(problem);
     if (problem) return;
+    lastNumericRef.current = next;
     onCommit?.(next);
   }
 

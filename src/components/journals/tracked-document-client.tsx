@@ -900,8 +900,8 @@ function TrackedDocumentClientImpl({
         <JournalSettingsModal
           open={settingsOpen}
           onOpenChange={setSettingsOpen}
-          title="Настройки журнала"
-          description="Название журнала и ответственный сотрудник."
+          title="Настройки документа"
+          description="Название документа и ответственный сотрудник."
           size="md"
           onSave={async () => {
             try {
@@ -917,7 +917,7 @@ function TrackedDocumentClientImpl({
               htmlFor="tracked-title-v2"
               className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]"
             >
-              Название журнала
+              Название документа
             </Label>
             <Input
               id="tracked-title-v2"
@@ -963,14 +963,14 @@ function TrackedDocumentClientImpl({
           <DialogContent className="max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] overflow-y-auto rounded-[32px] border-0 p-0 sm:max-w-[860px]">
             <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
               <DialogTitle className="text-[22px] font-medium text-black">
-                Настройки журнала
+                Настройки документа
               </DialogTitle>
             </DialogHeader>
 
             <div className={JOURNAL_DIALOG_BODY_CLASS}>
               <div className="space-y-3">
                 <Label htmlFor="journal-title" className="text-[14px] text-[#73738a]">
-                  Название журнала
+                  Название документа
                 </Label>
                 <Input
                   id="journal-title"

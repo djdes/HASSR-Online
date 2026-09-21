@@ -39,6 +39,8 @@ import {
   RecordCardsView,
   type RecordCardItem,
 } from "@/components/journals/record-cards-view";
+import { OrgDirectoryDialog } from "@/components/journals/org-directory-dialog";
+import { mergeIntoList } from "@/lib/org-directory";
 
 type UserItem = { id: string; name: string; role: string };
 
@@ -109,6 +111,8 @@ export function ProductWriteoffDocumentClient({
   const [config, setConfig] = useState(() => normalizeProductWriteoffConfig(initialConfig));
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
+  // «Из справочника организации» — общий список продуктов организации.
+  const [directoryOpen, setDirectoryOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [listsOpen, setListsOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
@@ -550,7 +554,7 @@ export function ProductWriteoffDocumentClient({
           open={settingsOpen}
           onOpenChange={setSettingsOpen}
           title="Настройки документа"
-          description="Название журнала, № акта, дата и комментарий."
+          description="Название документа, № акта, дата и комментарий."
           size="md"
           isSaving={saving}
           onSave={async () => {
@@ -752,8 +756,11 @@ export function ProductWriteoffDocumentClient({
       <Dialog open={commissionDialog.open} onOpenChange={(open) => !open && setCommissionDialog({ open: false, index: null, member: emptyCommissionMember() })}>
         <DialogContent className="w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] overflow-hidden rounded-[24px] border-0 p-0 sm:max-w-[640px]">
           <DialogHeader className="border-b px-6 py-5">
+            {/* «Добавить» открывал окно с заголовком «Редактирование
+                строки» и кнопкой «Сохранить» — человек не понимал, создаёт
+                он новую строку или правит чужую. */}
             <DialogTitle className="text-[18px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-              Редактирование строки
+              {commissionDialog.index === null ? "Добавление строки" : "Редактирование строки"}
             </DialogTitle>
           </DialogHeader>
 
@@ -836,7 +843,11 @@ export function ProductWriteoffDocumentClient({
                 disabled={saving}
                 className="h-10 w-full rounded-xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0] sm:w-auto"
               >
-                {saving ? "Сохранение..." : "Сохранить"}
+                {saving
+                  ? "Сохранение..."
+                  : commissionDialog.index === null
+                    ? "Добавить"
+                    : "Сохранить"}
               </Button>
             </div>
           </div>
@@ -895,6 +906,29 @@ export function ProductWriteoffDocumentClient({
                     <Plus className="size-6" />
                   </Button>
                 </div>
+
+                <button
+                  type="button"
+                  className="block text-[18px] text-[#3848c7] underline"
+                  onClick={() => setDirectoryOpen(true)}
+                  title="Добавить позиции из общего справочника организации"
+                >
+                  Из справочника организации
+                </button>
+                <OrgDirectoryDialog
+                  open={directoryOpen}
+                  onClose={() => setDirectoryOpen(false)}
+                  kind="product"
+                  existing={config.productLists[0]?.items ?? []}
+                  onAdd={(items) =>
+                    setConfig((prev) => ({
+                      ...prev,
+                      productLists: prev.productLists.map((list, index) =>
+                        index === 0 ? { ...list, items: mergeIntoList(list.items, items) } : list
+                      ),
+                    }))
+                  }
+                />
 
                 <button type="button" className="text-[18px] text-[#6c77ff] underline" onClick={() => fileInputRef.current?.click()} disabled={importing}>
                   Добавить из файла

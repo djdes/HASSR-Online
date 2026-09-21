@@ -71,6 +71,11 @@ import {
 import { useAutoDocumentTitle } from "@/components/journals/use-auto-document-title";
 import { localDayKey } from "@/lib/entry-defaults";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
+import {
+  DocumentDialogFeedback,
+  readCreatedDocument,
+  useDocumentDialogSubmit,
+} from "@/components/journals/use-document-dialog-submit";
 type UserItem = { id: string; name: string; role: string };
 
 type TrainingPlanDocumentItem = {
@@ -135,7 +140,9 @@ function SettingsDialog(props: {
   mode: "create" | "edit";
 }) {
   const [state, setState] = useState<SettingsState | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  // Окно закрывается только при успехе, ошибка сервера видна здесь же.
+  const submit = useDocumentDialogSubmit({ onOpenChange: props.onOpenChange });
+  const submitting = submit.submitting;
   const roles = useMemo(() => roleOptionsFromUsers(props.users), [props.users]);
   const activeState = state || props.initial;
 
@@ -186,13 +193,7 @@ function SettingsDialog(props: {
 
   async function handleSubmit() {
     if (!activeState) return;
-    setSubmitting(true);
-    try {
-      await props.onSubmit(activeState);
-      props.onOpenChange(false);
-    } finally {
-      setSubmitting(false);
-    }
+    await submit.run(() => props.onSubmit(activeState));
   }
 
   return (
@@ -217,6 +218,7 @@ function SettingsDialog(props: {
         </DialogHeader>
         {activeState && (
           <div className="space-y-5 px-5 py-6 sm:px-10 sm:py-8">
+            <DocumentDialogFeedback state={submit} onOpenChange={props.onOpenChange} />
             <div className="space-y-2">
               <Label className="text-[14px] text-[#7a7c8e]">Название документа</Label>
               <Input
@@ -236,13 +238,19 @@ function SettingsDialog(props: {
                   value={activeState.documentDate}
                   onChange={(event) => {
                     const documentDate = toIsoDate(event.target.value);
+                    // Год плана идёт за датой документа: раньше он оставался
+                    // текущим, и документ от 01.03.2027 получал «Год 2026»
+                    // и строки графика «01.26». Год можно поправить ниже.
+                    const dateYear = documentDate.slice(0, 4);
+                    const year = /^\d{4}$/.test(dateYear) ? dateYear : activeState.year;
                     const next = auto.titleForPeriod({
                       dateFrom: documentDate,
-                      year: activeState.year,
+                      year,
                     });
                     setState({
                       ...activeState,
                       documentDate,
+                      year,
                       ...(next !== null ? { title: next } : {}),
                     });
                   }}
@@ -289,7 +297,7 @@ function SettingsDialog(props: {
                 onValueChange={cascade.handlePositionChange}
               >
                 <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
-                  <SelectValue placeholder="- Выберите значение -" />
+                  <SelectValue placeholder="Выберите должность" />
                 </SelectTrigger>
                 <SelectContent>
                   <PositionSelectItems users={props.users} />
@@ -305,7 +313,7 @@ function SettingsDialog(props: {
                 onOpenChange={cascade.setEmployeeOpen}
               >
                 <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
-                  <SelectValue placeholder="- Выберите значение -" />
+                  <SelectValue placeholder="Выберите сотрудника" />
                 </SelectTrigger>
                 <SelectContent>
                   {cascade.candidates.map((user) => (
@@ -374,16 +382,10 @@ export function TrainingPlanDocumentsClient({
       }),
     });
 
-    if (!response.ok) {
-      // Текст сервера («За этот период уже есть документ «…»») объясняет
-      // отказ. Общая фраза оставляла человека без причины и без выхода.
-      const failure = await response.json().catch(() => null);
-      toast.error(failure?.error || "Не удалось создать документ");
-      return;
-    }
-
-    const data = (await response.json()) as { document: { id: string } };
-    router.push(`/journals/${routeCode}/documents/${data.document.id}`);
+    // Ошибку показывает само окно создания: тост её гасил, а окно
+    // закрывалось вместе с введённым.
+    const created = await readCreatedDocument(response);
+    router.push(`/journals/${routeCode}/documents/${created.id}`);
     router.refresh();
   }
 
@@ -413,8 +415,8 @@ export function TrainingPlanDocumentsClient({
     });
 
     if (!response.ok) {
-      toast.error("Не удалось сохранить");
-      return;
+      const failure = await response.json().catch(() => null);
+      throw new Error(failure?.error || "Не удалось сохранить");
     }
 
     router.refresh();

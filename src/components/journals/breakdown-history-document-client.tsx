@@ -324,7 +324,7 @@ function SettingsDialog(props: {
         open={props.open}
         onOpenChange={props.onOpenChange}
         title="Настройки документа"
-        description="Название журнала и дата начала."
+        description="Название документа и дата начала."
         size="md"
         isSaving={isSubmitting}
         onSave={handleSave}

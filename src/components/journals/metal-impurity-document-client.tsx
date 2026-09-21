@@ -63,6 +63,8 @@ import {
 } from "@/components/shared/position-select";
 import { localDayKey } from "@/lib/entry-defaults";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { OrgDirectoryDialog } from "@/components/journals/org-directory-dialog";
+import { type OrgDirectoryKind } from "@/lib/org-directory";
 type Props = {
   documentId: string;
   title: string;
@@ -105,6 +107,10 @@ type ListEditorSectionProps = {
   onImportFile: (file: File) => void;
   /** Удаление ошибочно добавленной позиции. */
   onDelete: (item: MetalImpurityOption) => void;
+  /** Вид общего справочника организации, откуда можно добрать позиции. */
+  directoryKind?: OrgDirectoryKind;
+  /** Добавление выбранных имён — id присваивает вызывающий. */
+  onDirectoryAdd?: (names: string[]) => void;
 };
 
 function formatRuDate(value: string) {
@@ -355,7 +361,7 @@ function RowDialog({
               onValueChange={rowCascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-5 text-[16px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите должность" />
               </SelectTrigger>
               <SelectContent>
                 <PositionSelectItems users={users} />
@@ -372,10 +378,10 @@ function RowDialog({
               onOpenChange={rowCascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-5 text-[16px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите сотрудника" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={EMPTY_SELECT_VALUE}>- Выберите значение -</SelectItem>
+                <SelectItem value={EMPTY_SELECT_VALUE}>Выберите сотрудника</SelectItem>
                 {employeeOptions.map((employee) => (
                   <SelectItem key={employee.id} value={employee.id}>
                     {buildStaffOptionLabel(employee)}
@@ -512,7 +518,7 @@ function SettingsDialog({
         open={open}
         onOpenChange={onOpenChange}
         title="Настройки документа"
-        description="Название журнала, дата и ответственный сотрудник."
+        description="Название документа, дата и ответственный сотрудник."
         size="md"
         isSaving={submitting}
         onSave={handleSave}
@@ -622,7 +628,7 @@ function SettingsDialog({
               onValueChange={settingsCascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-5 text-[16px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите должность" />
               </SelectTrigger>
               <SelectContent>
                 <PositionSelectItems users={users} />
@@ -638,10 +644,10 @@ function SettingsDialog({
               onOpenChange={settingsCascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#dfe1ec] bg-[#f3f4fb] px-5 text-[16px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите сотрудника" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={EMPTY_SELECT_VALUE}>- Выберите значение -</SelectItem>
+                <SelectItem value={EMPTY_SELECT_VALUE}>Выберите сотрудника</SelectItem>
                 {filteredEmployees.map((employee) => (
                   <SelectItem key={employee.id} value={employee.id}>
                     {buildStaffOptionLabel(employee)}
@@ -681,7 +687,10 @@ function ListEditorSection({
   onImportClick,
   onImportFile,
   onDelete,
+  directoryKind,
+  onDirectoryAdd,
 }: ListEditorSectionProps) {
+  const [directoryOpen, setDirectoryOpen] = useState(false);
   return (
     <div className="space-y-4">
       <div className="text-[24px] font-semibold text-black">{title}</div>
@@ -749,6 +758,25 @@ function ListEditorSection({
           >
             Добавить из файла
           </button>
+          {directoryKind && onDirectoryAdd ? (
+            <>
+              <button
+                type="button"
+                onClick={() => setDirectoryOpen(true)}
+                className="ml-4 text-left text-[#3848c7] underline underline-offset-2"
+                title="Добавить позиции из общего справочника организации"
+              >
+                Из справочника организации
+              </button>
+              <OrgDirectoryDialog
+                open={directoryOpen}
+                onClose={() => setDirectoryOpen(false)}
+                kind={directoryKind}
+                existing={items.map((item) => item.name)}
+                onAdd={onDirectoryAdd}
+              />
+            </>
+          ) : null}
           <div>
             Список должен быть в файле Excel, на первом листе в первом столбце и начинаться с
             первой строки.
@@ -936,6 +964,19 @@ function ListsDialog({
             onEditChange={setEditingValue}
             onEditCommit={commitMaterialEdit}
             addPlaceholder="Введите название нового сырья"
+            directoryKind="product"
+            onDirectoryAdd={(names) =>
+              setDraft((current) => ({
+                ...current,
+                materials: [
+                  ...current.materials,
+                  ...names.map((name, index) => ({
+                    id: `material-dir-${Date.now()}-${index}`,
+                    name,
+                  })),
+                ],
+              }))
+            }
             onImportClick={() => materialFileInputRef.current?.click()}
             onImportFile={(file) => {
               importItems(file, "materials").catch(() => undefined);
@@ -970,6 +1011,19 @@ function ListsDialog({
             onEditChange={setEditingValue}
             onEditCommit={commitSupplierEdit}
             addPlaceholder="Введите название нового поставщика"
+            directoryKind="supplier"
+            onDirectoryAdd={(names) =>
+              setDraft((current) => ({
+                ...current,
+                suppliers: [
+                  ...current.suppliers,
+                  ...names.map((name, index) => ({
+                    id: `supplier-dir-${Date.now()}-${index}`,
+                    name,
+                  })),
+                ],
+              }))
+            }
             onImportClick={() => supplierFileInputRef.current?.click()}
             onImportFile={(file) => {
               importItems(file, "suppliers").catch(() => undefined);

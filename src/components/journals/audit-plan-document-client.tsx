@@ -144,7 +144,7 @@ function DocumentSettingsDialog(props: {
           props.onOpenChange(v);
         }}
         title="Настройки документа"
-        description="Название журнала, дата, год и должность утверждающего."
+        description="Название документа, дата, год и должность утверждающего."
         size="md"
         isSaving={submitting}
         onSave={handleSave}
@@ -298,7 +298,7 @@ function DocumentSettingsDialog(props: {
               onValueChange={approveCascade.handlePositionChange}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите должность" />
               </SelectTrigger>
               <SelectContent>
                 <PositionSelectItems users={props.users} />
@@ -314,10 +314,10 @@ function DocumentSettingsDialog(props: {
               onOpenChange={approveCascade.setEmployeeOpen}
             >
               <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите сотрудника" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__empty__">- Выберите значение -</SelectItem>
+                <SelectItem value="__empty__">Выберите сотрудника</SelectItem>
                 {approveCascade.candidates.map((user) => (
                   <SelectItem key={user.id} value={user.id}>
                     {buildStaffOptionLabel(user)}
@@ -529,7 +529,7 @@ function AddRowDialog(props: {
             <Label className="text-[14px] text-[#73738a]">Раздел</Label>
             <Select value={sectionId} onValueChange={setSectionId}>
               <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
-                <SelectValue placeholder="- Выберите значение -" />
+                <SelectValue placeholder="Выберите из списка" />
               </SelectTrigger>
               <SelectContent>
                 {props.sections.map((section) => (

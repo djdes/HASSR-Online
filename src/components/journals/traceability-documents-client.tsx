@@ -40,8 +40,14 @@ import {
   JOURNAL_LIST_CARDS_CLASS,
 } from "@/components/journals/journal-responsive";
 import { localDayKey } from "@/lib/entry-defaults";
+import { formatJournalDate } from "@/lib/journal-card-date";
 import { useAutoDocumentTitle } from "@/components/journals/use-auto-document-title";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
+import {
+  DocumentDialogFeedback,
+  readCreatedDocument,
+  useDocumentDialogSubmit,
+} from "@/components/journals/use-document-dialog-submit";
 type TraceabilityDocumentItem = {
   id: string;
   title: string;
@@ -77,18 +83,11 @@ function toIsoDate(value: string) {
 }
 
 function formatDateLabel(value: string) {
+  // Единый вид даты на экране — «дд.мм.гггг» (src/lib/journal-card-date.ts).
+  // Раньше тут было «ДД-ММ-ГГГГ», а у дезинсекции и акта забраковки —
+  // «ДД.ММ.ГГГГ»: три разных написания одной и той же вещи в одном заходе.
   if (!value) return "—";
-  const date = new Date(`${toIsoDate(value)}T00:00:00Z`);
-  if (Number.isNaN(date.getTime())) return value;
-  // «ДД-ММ-ГГГГ» — единый формат дат карточек списка (как в бумажной шапке).
-  return date
-    .toLocaleDateString("ru-RU", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      timeZone: "UTC",
-    })
-    .replaceAll(".", "-");
+  return formatJournalDate(toIsoDate(value)) || value;
 }
 
 function toBoolean(value: unknown, fallback = false) {
@@ -124,7 +123,9 @@ function TraceabilitySettingsDialog(props: {
   onSubmit: (state: TraceabilityFormState) => Promise<void>;
 }) {
   const [state, setState] = useState<TraceabilityFormState | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  // Окно закрывается только при успехе, ошибка сервера видна здесь же.
+  const submit = useDocumentDialogSubmit({ onOpenChange: props.onOpenChange });
+  const submitting = submit.submitting;
 
   const activeState = state || props.initial;
   const auto = useAutoDocumentTitle({
@@ -149,13 +150,7 @@ function TraceabilitySettingsDialog(props: {
 
   async function handleSubmit() {
     if (!activeState) return;
-    setSubmitting(true);
-    try {
-      await props.onSubmit(activeState);
-      props.onOpenChange(false);
-    } finally {
-      setSubmitting(false);
-    }
+    await submit.run(() => props.onSubmit(activeState));
   }
 
   return (
@@ -177,6 +172,7 @@ function TraceabilitySettingsDialog(props: {
         </DialogHeader>
         {activeState && (
           <div className="space-y-5 px-5 py-6 sm:px-10 sm:py-8">
+            <DocumentDialogFeedback state={submit} onOpenChange={props.onOpenChange} />
             <div className="space-y-2">
               <Label className="text-[14px] text-[#7a7c8e]">Название документа</Label>
               <Input
@@ -365,32 +361,27 @@ export function TraceabilityDocumentsClient({
     );
 
     if (!response.ok) {
-      throw new Error("request failed");
+      // Текст сервера объясняет отказ («За этот период уже есть
+      // документ…»); служебное «request failed» человеку ничего не давало.
+      const failure = await response.json().catch(() => null);
+      throw new Error(failure?.error || "Не удалось сохранить документ");
     }
 
     return response.json() as Promise<{ document: { id: string } }>;
   }
 
+  // Ошибку больше не глотаем тостом: её показывает само окно, и окно
+  // при отказе не закрывается — введённое остаётся на месте.
   async function handleCreate(payload: TraceabilityFormState) {
-    try {
-      const data = await persistDocument(payload);
-      setCreateOpen(false);
-      router.push(`/journals/${routeCode}/documents/${data.document.id}`);
-      router.refresh();
-    } catch {
-      toast.error("Не удалось создать документ");
-    }
+    const data = await persistDocument(payload);
+    router.push(`/journals/${routeCode}/documents/${data.document.id}`);
+    router.refresh();
   }
 
   async function handleSaveSettings(payload: TraceabilityFormState) {
     if (!editingDocument) return;
-    try {
-      await persistDocument(payload, editingDocument.id, editingDocument.config);
-      setEditingDocument(null);
-      router.refresh();
-    } catch {
-      toast.error("Не удалось сохранить настройки");
-    }
+    await persistDocument(payload, editingDocument.id, editingDocument.config);
+    router.refresh();
   }
 
   async function handleDelete(doc: TraceabilityDocumentItem) {
@@ -427,6 +418,9 @@ export function TraceabilityDocumentsClient({
 
   return (
     <div className="space-y-5">
+      {/* Порядок как во всех журналах: заголовок и «Создать документ» —
+          сверху, вкладки «Активные/Закрытые» — под ними. Раньше на
+          телефоне кнопка создания оказывалась ПОСЛЕ вкладок. */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
@@ -435,7 +429,19 @@ export function TraceabilityDocumentsClient({
           <div className="mt-4 flex w-full sm:w-auto">
             <FillGuideLauncher code="traceability_test" page="list" variant="button" />
           </div>
-          <div className="mt-5 flex flex-wrap items-center gap-5 border-b border-[#d8dbe6] text-[15px] sm:gap-10 sm:text-[18px]">
+        </div>
+        {canManageDocuments && activeTab === "active" && (
+          <Button
+            type="button"
+            onClick={() => setCreateOpen(true)}
+            className="h-9 w-full rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] font-medium text-white shadow-md shadow-[#5563ff]/20 hover:bg-[#4957fb] sm:w-auto"
+          >
+            <Plus className="size-6" />
+            Создать документ
+          </Button>
+        )}
+      </div>
+          <div className="flex flex-wrap items-center gap-5 border-b border-[#d8dbe6] text-[15px] sm:gap-10 sm:text-[18px]">
             <Link
               href={`/journals/${routeCode}`}
               className={cn(
@@ -457,18 +463,6 @@ export function TraceabilityDocumentsClient({
               Закрытые
             </Link>
           </div>
-        </div>
-        {canManageDocuments && activeTab === "active" && (
-          <Button
-            type="button"
-            onClick={() => setCreateOpen(true)}
-            className="h-9 w-full rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] font-medium text-white shadow-md shadow-[#5563ff]/20 hover:bg-[#4957fb] sm:w-auto"
-          >
-            <Plus className="size-6" />
-            Создать документ
-          </Button>
-        )}
-      </div>
 
       <div className={JOURNAL_LIST_CARDS_CLASS}>
         {documents.length === 0 ? (

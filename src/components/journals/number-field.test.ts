@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  numericInputError,
   outOfRangeMessage,
   parseNumeric,
   stepStartValue,
@@ -91,4 +92,28 @@ test("границ нет — не ругаемся ни на что", () => {
 test("русская запятая читается как разделитель дробной части", () => {
   assert.equal(parseNumeric("4,5"), 4.5);
   assert.equal(outOfRangeMessage("44,5", -40, 30, "°C") !== null, true);
+});
+
+/* ── Мусорный ввод не стирает сохранённый замер ────────────────────── */
+
+test("«3abc» — ошибка под полем, а не тихое стирание замера", () => {
+  assert.equal(numericInputError("3abc"), "Введите число, например 3,5");
+  assert.equal(numericInputError("норма"), "Введите число, например 3,5");
+});
+
+test("пустое поле — это «очистили», а не ошибка", () => {
+  // Пусто и мусор раньше были неразличимы: оба давали null и уезжали в
+  // базу как «значения нет».
+  assert.equal(numericInputError(""), null);
+  assert.equal(numericInputError("   "), null);
+  assert.equal(parseNumeric(""), null);
+  assert.equal(parseNumeric("3abc"), null);
+});
+
+test("незаконченный ввод ошибкой не считается", () => {
+  assert.equal(numericInputError("-"), null);
+  assert.equal(numericInputError(","), null);
+  assert.equal(numericInputError("3,"), null);
+  assert.equal(numericInputError("3,5"), null);
+  assert.equal(numericInputError("-18"), null);
 });

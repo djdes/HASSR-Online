@@ -1,0 +1,44 @@
+import { chromium } from "playwright";
+import { shot, go, probe, FIELDS } from "./lib";
+import { db } from "../tg-session";
+const LINK = process.argv[2];
+const PHONE = "+79217776655";
+const NAME = "ZZ6 Новичок " + Date.now().toString().slice(-4);
+(async () => {
+const browser = await chromium.launch({ headless: true });
+const ctx = await browser.newContext({ viewport: { width: 360, height: 640 }, isMobile: true, hasTouch: true });
+const p = await ctx.newPage();
+const errors: string[] = [];
+p.on("response", r => { if (r.status()>=400 && !/_next\/static|favicon/.test(r.url())) errors.push(r.status()+" "+r.request().method()+" "+r.url().replace("http://localhost:3021","")); });
+await go(p, LINK, 6000);
+await p.waitForFunction(`/Зарегистрироваться/.test(document.body.innerText)`, undefined, { timeout: 180000 });
+await p.waitForTimeout(3000);
+// 1) без должности
+await p.fill('input[placeholder="Иванов Иван Иванович"]', NAME);
+await p.fill('input[type=tel]', "8 921 777 66 55");
+await p.fill('input[type=password]', "ZZ6parol123");
+await p.waitForTimeout(500);
+console.log("phone field value:", await p.evaluate(`document.querySelector('input[type=tel]').value`));
+await p.evaluate(`[...document.querySelectorAll('button')].find(x=>/Зарегистрироваться/.test(x.innerText)).click()`);
+await p.waitForTimeout(3500);
+console.log("BODY without position:\n" + (await probe(p)).bodyText.slice(0,1200));
+await shot(p, "59-join-nopos-vp");
+// 2) выбрать должность «Повар» и отправить
+await p.selectOption('select', { label: "Повар" });
+await p.waitForTimeout(500);
+await p.evaluate(`[...document.querySelectorAll('button')].find(x=>/Зарегистрироваться/.test(x.innerText)).click()`);
+await p.waitForTimeout(6000);
+const pr = await probe(p);
+console.log("AFTER REGISTER url", pr.url);
+console.log(pr.bodyText.slice(0,1500));
+await shot(p, "59-join-done-vp");
+await shot(p, "59-join-done", true);
+console.log("BTNS", JSON.stringify(await p.evaluate(`[...document.querySelectorAll('button,a[href]')].filter(b=>b.getBoundingClientRect().width>0).map(b=>b.innerText.trim()+'->'+(b.getAttribute('href')||''))`)));
+const u = await db.user.findFirst({ where: { organizationId: "e2e-org-a", name: { contains: "ZZ6 Новичок" } }, orderBy: { createdAt: "desc" } });
+console.log("USER", JSON.stringify({ id: u?.id, name: u?.name, phone: u?.phone, role: u?.role, email: u?.email, jobPositionId: (u as any)?.jobPositionId }));
+const acl = await db.userJournalAccess.count({ where: { userId: u!.id } });
+console.log("journal access rows:", acl, "| journalAccessMigrated:", (u as any)?.journalAccessMigrated);
+console.log("ERRORS", JSON.stringify(errors));
+await browser.close(); await db.$disconnect();
+console.log("PHONE", PHONE, "NAME", NAME);
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 2000)); process.exit(1); });

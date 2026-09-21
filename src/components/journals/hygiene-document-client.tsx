@@ -1221,7 +1221,7 @@ export function HygieneDocumentClient({
         />
 
         {!isActive ? (
-          <JournalClosedBanner hint="Откройте журнал заново, чтобы редактировать отметки сотрудников." />
+          <JournalClosedBanner hint="Откройте журнал заново, чтобы редактировать отметки сотрудников." documentId={documentId} />
         ) : null}
 
         {isActive ? (

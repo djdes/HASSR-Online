@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { BookOpenText, Ellipsis, Pencil, Plus, Printer, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -45,6 +46,11 @@ import {
 } from "@/components/journals/journal-responsive";
 import { localDayKey } from "@/lib/entry-defaults";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
+import {
+  DocumentDialogFeedback,
+  readCreatedDocument,
+  useDocumentDialogSubmit,
+} from "@/components/journals/use-document-dialog-submit";
 type UserItem = { id: string; name: string; role: string };
 
 type DocumentItem = {
@@ -80,7 +86,9 @@ function SettingsDialog(props: {
   mode: "create" | "edit";
 }) {
   const [form, setForm] = useState({ title: "", dateFrom: "" });
-  const [submitting, setSubmitting] = useState(false);
+  // Окно закрывается только при успехе, ошибка сервера видна здесь же.
+  const submit = useDocumentDialogSubmit({ onOpenChange: props.onOpenChange });
+  const submitting = submit.submitting;
 
   const auto = useAutoDocumentTitle({
     templateCode: PEST_CONTROL_TEMPLATE_CODE,
@@ -129,7 +137,16 @@ function SettingsDialog(props: {
         </DialogHeader>
 
         <div className="space-y-5 px-7 py-6">
+          <DocumentDialogFeedback state={submit} onOpenChange={props.onOpenChange} />
+          {/* Постоянные подписи над полями: раньше оба поля жили на одном
+              плейсхолдере (у даты — вообще без подписи), и после ввода
+              было непонятно, что где. */}
+          <div className="space-y-1.5">
+            <Label htmlFor="pest-doc-title" className="text-[14px] text-[#6f7282]">
+              Название документа
+            </Label>
           <Input
+            id="pest-doc-title"
             value={form.title}
             onChange={(event) => {
               auto.markTouched();
@@ -138,7 +155,13 @@ function SettingsDialog(props: {
             placeholder="Введите название документа"
             className="h-9 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]"
           />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="pest-doc-date" className="text-[14px] text-[#6f7282]">
+              Дата начала
+            </Label>
           <Input
+            id="pest-doc-date"
             type="date"
             value={form.dateFrom}
             onChange={(event) => {
@@ -152,22 +175,17 @@ function SettingsDialog(props: {
             }}
             className="h-9 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]"
           />
+          </div>
           <div className="flex justify-end">
             <Button
               type="button"
               disabled={submitting || !form.dateFrom}
               className="h-12 rounded-xl bg-[#5863f8] px-7 text-[18px] text-white hover:bg-[#4b57f3]"
               onClick={async () => {
-                setSubmitting(true);
-                try {
-                  await props.onSubmit({
+                await submit.run(() => props.onSubmit({
                     title: form.title.trim() || PEST_CONTROL_DOCUMENT_TITLE,
                     dateFrom: form.dateFrom,
-                  });
-                  props.onOpenChange(false);
-                } finally {
-                  setSubmitting(false);
-                }
+                  }));
               }}
             >
               {submitting ? "Сохранение..." : props.submitLabel}
@@ -186,7 +204,9 @@ function ConfirmDialog(props: {
   submitLabel: string;
   onSubmit: () => Promise<void>;
 }) {
-  const [submitting, setSubmitting] = useState(false);
+  // Окно закрывается только при успехе, ошибка сервера видна здесь же.
+  const submit = useDocumentDialogSubmit({ onOpenChange: props.onOpenChange });
+  const submitting = submit.submitting;
 
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
@@ -210,13 +230,7 @@ function ConfirmDialog(props: {
             disabled={submitting}
             className="h-12 rounded-xl bg-[#5863f8] px-7 text-[18px] text-white hover:bg-[#4b57f3]"
             onClick={async () => {
-              setSubmitting(true);
-              try {
-                await props.onSubmit();
-                props.onOpenChange(false);
-              } finally {
-                setSubmitting(false);
-              }
+              await submit.run(() => props.onSubmit());
             }}
           >
             {submitting ? "Подождите..." : props.submitLabel}
@@ -268,16 +282,10 @@ export function PestControlDocumentsClient(props: Props) {
       }),
     });
 
-    if (!response.ok) {
-      // Текст сервера («За этот период уже есть документ «…»») объясняет
-      // отказ. Общая фраза оставляла человека без причины и без выхода.
-      const failure = await response.json().catch(() => null);
-      toast.error(failure?.error || "Не удалось создать документ");
-      return;
-    }
-
-    const result = (await response.json()) as { document: { id: string } };
-    router.push(`/journals/${props.routeCode}/documents/${result.document.id}`);
+    // Ошибку показывает само окно создания: тост её гасил, а окно
+    // закрывалось вместе с введённым.
+    const created = await readCreatedDocument(response);
+    router.push(`/journals/${props.routeCode}/documents/${created.id}`);
     router.refresh();
   }
 
@@ -295,8 +303,8 @@ export function PestControlDocumentsClient(props: Props) {
     });
 
     if (!response.ok) {
-      toast.error("Не удалось сохранить настройки документа");
-      return;
+      const failure = await response.json().catch(() => null);
+      throw new Error(failure?.error || "Не удалось сохранить настройки документа");
     }
 
     router.refresh();

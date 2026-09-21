@@ -1,0 +1,23 @@
+import { openTelegramSession, SHOT, db } from "./lib";
+import fs from "node:fs";
+const ZZ = JSON.parse(fs.readFileSync(SHOT + "/zz5.json", "utf8"));
+const id = ZZ["accident_journal"][0].id;
+(async () => {
+  const s = await openTelegramSession({ role: "ownerA", width: 360, height: 640 });
+  await s.page.goto(`${s.base}/journals/accident_journal/documents/${id}`, { timeout: 300000, waitUntil: "domcontentloaded" });
+  await s.page.waitForTimeout(6000);
+  await s.page.locator('button:has-text("Настройки журнала")').first().click();
+  await s.page.waitForSelector('[role="dialog"]', { timeout: 30000 });
+  await s.page.waitForTimeout(1500);
+  await s.page.locator('[role="dialog"] input').first().fill("ZZ5 accident_journal ПЕРЕИМЕНОВАН");
+  await s.page.waitForTimeout(400);
+  await s.page.locator('[role="dialog"] button:has-text("Сохранить")').last().click();
+  await s.page.waitForTimeout(4000);
+  const st = await s.page.evaluate(`(function(){var d=document.querySelector('[role="dialog"]'); return {dlg:!!d, toast: Array.from(document.querySelectorAll('[data-sonner-toast]')).map(function(e){return e.innerText.trim()}).join(' || '), body: document.body.innerText.slice(0,400)}})()`);
+  await s.page.screenshot({ path: SHOT + "/closed-save.png" });
+  const d = await db.journalDocument.findUnique({ where: { id }, select: { title: true, status: true } });
+  console.log("UI:", JSON.stringify(st).slice(0, 600));
+  console.log("DB title:", d?.title, "status:", d?.status);
+  console.log("pageerrors:", s.errors.slice(-3));
+  await s.close();
+})();

@@ -300,8 +300,8 @@ function SettingsDialog(props: {
       <JournalSettingsModal
         open={props.open}
         onOpenChange={props.onOpenChange}
-        title="Настройки журнала"
-        description="Название журнала и дата начала."
+        title="Настройки документа"
+        description="Название документа и дата начала."
         size="md"
         isSaving={submitting}
         onSave={handleSave}
@@ -338,7 +338,7 @@ function SettingsDialog(props: {
         <DialogHeader className="border-b px-8 py-6">
           <div className="flex items-center justify-between gap-4">
             <DialogTitle className="text-[30px] font-medium text-black">
-              Настройки журнала
+              Настройки документа
             </DialogTitle>
             <button
               type="button"

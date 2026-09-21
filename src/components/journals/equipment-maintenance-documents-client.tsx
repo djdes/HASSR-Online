@@ -362,7 +362,7 @@ export function EquipmentMaintenanceDocumentsClient({
             <div className="space-y-2">
               <Label>Должность &quot;Утверждаю&quot;</Label>
               <Select value={approveRole} onValueChange={approveCascade.handlePositionChange}>
-                <SelectTrigger><SelectValue placeholder="- Выберите значение -" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Выберите должность" /></SelectTrigger>
                 <SelectContent>
                   <PositionSelectItems users={users} />
                 </SelectContent>
@@ -376,7 +376,7 @@ export function EquipmentMaintenanceDocumentsClient({
                 setApproveEmployee(user?.name || approveEmployee);
                 if (user) setApproveRole(getUserRoleLabel(user.role));
               }} open={approveCascade.employeeOpen} onOpenChange={approveCascade.setEmployeeOpen}>
-                <SelectTrigger><SelectValue placeholder="- Выберите значение -" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Выберите сотрудника" /></SelectTrigger>
                 <SelectContent>
                   {(approveRole ? approveCascade.candidates : users).map((u) => (
                     <SelectItem key={u.id} value={u.id}>{buildStaffOptionLabel(u)}</SelectItem>
@@ -387,7 +387,7 @@ export function EquipmentMaintenanceDocumentsClient({
             <div className="space-y-2">
               <Label>Должность ответственного</Label>
               <Select value={responsibleRole} onValueChange={responsibleCascade.handlePositionChange}>
-                <SelectTrigger><SelectValue placeholder="- Выберите значение -" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Выберите должность" /></SelectTrigger>
                 <SelectContent>
                   <PositionSelectItems users={users} />
                 </SelectContent>
@@ -401,7 +401,7 @@ export function EquipmentMaintenanceDocumentsClient({
                 setResponsibleEmployee(user?.name || responsibleEmployee);
                 if (user) setResponsibleRole(getUserRoleLabel(user.role));
               }} open={responsibleCascade.employeeOpen} onOpenChange={responsibleCascade.setEmployeeOpen}>
-                <SelectTrigger><SelectValue placeholder="- Выберите значение -" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Выберите сотрудника" /></SelectTrigger>
                 <SelectContent>
                   {(responsibleRole ? responsibleCascade.candidates : users).map((u) => (
                     <SelectItem key={u.id} value={u.id}>{buildStaffOptionLabel(u)}</SelectItem>

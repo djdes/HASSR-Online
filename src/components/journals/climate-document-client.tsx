@@ -904,8 +904,8 @@ function JournalSettingsDialog({
       <JournalSettingsModal
         open={open}
         onOpenChange={onOpenChange}
-        title="Настройки журнала"
-        description="Название журнала, ответственный сотрудник по умолчанию и расписание контроля."
+        title="Настройки документа"
+        description="Название документа, ответственный сотрудник по умолчанию и расписание контроля."
         size="lg"
         isSaving={isSubmitting}
         saveDisabled={name.trim() === ""}
@@ -917,7 +917,7 @@ function JournalSettingsDialog({
             htmlFor="climate-title-v2"
             className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]"
           >
-            Название журнала
+            Название документа
           </Label>
           <Input
             id="climate-title-v2"
@@ -1036,14 +1036,14 @@ function JournalSettingsDialog({
       <DialogContent className={JOURNAL_DIALOG_CONTENT_WIDE_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>
-            Настройки журнала
+            Настройки документа
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-8 px-6 py-5">
           <div className="space-y-3">
             <Label htmlFor="journal-title" className="sr-only">
-              Название журнала
+              Название документа
             </Label>
             <Input
               id="journal-title"
@@ -2227,7 +2227,7 @@ export function ClimateDocumentClient({
         />
         {status !== "active" ? (
           <div className="mb-8">
-            <JournalClosedBanner hint="Откройте журнал заново, чтобы редактировать строки." />
+            <JournalClosedBanner hint="Откройте журнал заново, чтобы редактировать строки." documentId={documentId} />
           </div>
         ) : null}
 

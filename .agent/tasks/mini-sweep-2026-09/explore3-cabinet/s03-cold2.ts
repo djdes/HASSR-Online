@@ -1,0 +1,23 @@
+import { openTelegramSession, db } from "../tg-session";
+import { shot, go, probe, dump, CLICKABLES, FIELDS } from "./lib";
+(async () => {
+const s = await openTelegramSession({ role: "cookA", width: 360, height: 640 });
+const p = s.page;
+const my: any = await p.evaluate(`fetch('/api/journal-task-claims/my',{cache:'no-store'}).then(r=>r.json())`);
+const claimId = my?.claim?.id;
+console.log("active claim", claimId, my?.claim?.scopeLabel);
+await go(p, s.base + "/mini/claim/" + claimId, 3000);
+await p.waitForFunction(`!/Открываем задачу/.test(document.body.innerText)`, { timeout: 120000 }).catch(()=>console.log("STILL LOADING"));
+await p.waitForTimeout(3000);
+const pr = await probe(p);
+console.log("URL", pr.url, "overflow", pr.overflow, "wide", JSON.stringify(pr.wide));
+console.log("BODY:\n" + pr.bodyText);
+await shot(p, "03-cold-claim", true);
+await shot(p, "03-cold-claim-vp");
+console.log("CLICKABLES", JSON.stringify(await p.evaluate(CLICKABLES), null, 1));
+console.log("FIELDS", JSON.stringify(await p.evaluate(FIELDS), null, 1));
+const st = await p.evaluate(`(()=>{const b=[...document.querySelectorAll('button')].find(x=>/Заверш/.test(x.innerText));return b?{txt:b.innerText,disabled:b.disabled}:null})()`);
+console.log("SUBMIT BTN", JSON.stringify(st));
+console.log("ERRORS", JSON.stringify(s.errors));
+await s.close();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 2000)); process.exit(1); });

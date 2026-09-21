@@ -59,6 +59,7 @@ import {
 import { localDayKey } from "@/lib/entry-defaults";
 import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { OrgDirectoryDialog } from "@/components/journals/org-directory-dialog";
 
 type PersonItem = { id: string; name: string; role?: string | null };
 type TraceabilitySettingsDraft = { title: string; dateFrom: string; showShockTempField: boolean; showShipmentBlock: boolean };
@@ -259,7 +260,7 @@ function SettingsDialog(props: {
         open={props.open}
         onOpenChange={props.onOpenChange}
         title={props.title}
-        description="Название журнала, дата начала и опциональные блоки."
+        description="Название документа, дата начала и опциональные блоки."
         size="md"
         isSaving={loading}
         saveDisabled={!draft}
@@ -351,6 +352,21 @@ function ListsDialog(props: {
   const [newRaw, setNewRaw] = useState("");
   const [newProduct, setNewProduct] = useState("");
   const [loading, setLoading] = useState(false);
+  // «Из справочника организации» — общий справочник продуктов организации
+  // вместо отдельной загрузки в каждом журнале.
+  const [directoryList, setDirectoryList] = useState<"raw" | "product" | null>(null);
+
+  /** Добавление имён из общего справочника — без повторов и переименований. */
+  function addFromDirectory(list: "raw" | "product", items: string[]) {
+    const setter = list === "raw" ? setRawMaterials : setProducts;
+    setter((current) => {
+      const have = new Set(current.map((item) => item.value.trim().toLowerCase()));
+      const additions = items
+        .filter((item) => !have.has(item.trim().toLowerCase()))
+        .map((value) => ({ original: null, value }));
+      return [...current, ...additions];
+    });
+  }
 
   useEffect(() => {
     if (!props.open) return;
@@ -429,6 +445,14 @@ function ListsDialog(props: {
               ))}
               {rawMaterials.length === 0 && <div className="rounded-2xl border border-dashed border-[#dfe1ec] px-4 py-4 text-[15px] text-[#6f7282]">Список пуст</div>}
             </div>
+            <button
+              type="button"
+              className="text-left text-[14px] text-[#3848c7] underline underline-offset-4"
+              onClick={() => setDirectoryList("raw")}
+              title="Добавить сырьё из общего справочника организации"
+            >
+              Из справочника организации
+            </button>
             <div className="flex items-center gap-2"><Input value={newRaw} onChange={(e) => setNewRaw(e.target.value)} placeholder="Добавить новое сырье" className="h-12 rounded-2xl border-[#dfe1ec] px-4 text-[16px]" /><Button type="button" onClick={() => { const v = newRaw.trim(); if (!v) return; setRawMaterials((current) => [...current, { original: null, value: v }]); setNewRaw(""); }} className="h-12 rounded-2xl bg-[#5563ff] px-4 text-white hover:bg-[#4654ff]"><Plus className="size-5" /></Button></div>
           </section>
           <section className="space-y-4 rounded-[24px] border border-[#e6e9f5] p-5">
@@ -442,9 +466,25 @@ function ListsDialog(props: {
               ))}
               {products.length === 0 && <div className="rounded-2xl border border-dashed border-[#dfe1ec] px-4 py-4 text-[15px] text-[#6f7282]">Список пуст</div>}
             </div>
+            <button
+              type="button"
+              className="text-left text-[14px] text-[#3848c7] underline underline-offset-4"
+              onClick={() => setDirectoryList("product")}
+              title="Добавить продукцию из общего справочника организации"
+            >
+              Из справочника организации
+            </button>
             <div className="flex items-center gap-2"><Input value={newProduct} onChange={(e) => setNewProduct(e.target.value)} placeholder="Добавить новую продукцию" className="h-12 rounded-2xl border-[#dfe1ec] px-4 text-[16px]" /><Button type="button" onClick={() => { const v = newProduct.trim(); if (!v) return; setProducts((current) => [...current, { original: null, value: v }]); setNewProduct(""); }} className="h-12 rounded-2xl bg-[#5563ff] px-4 text-white hover:bg-[#4654ff]"><Plus className="size-5" /></Button></div>
           </section>
         </div>
+
+        <OrgDirectoryDialog
+          open={directoryList !== null}
+          onClose={() => setDirectoryList(null)}
+          kind={directoryList === "product" ? "dish" : "product"}
+          existing={(directoryList === "product" ? products : rawMaterials).map((item) => item.value)}
+          onAdd={(items) => addFromDirectory(directoryList ?? "raw", items)}
+        />
 
         <div className="flex justify-end px-8 pb-6"><Button type="button" onClick={save} disabled={loading} className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] text-white hover:bg-[#4654ff]">{loading ? "Сохранение..." : "Сохранить"}</Button></div>
       </DialogContent>
@@ -671,7 +711,7 @@ function RowDialog(props: {
                   {/* Своё значение строки — первым: после удаления позиции
                       из справочника Select переставал его находить и строка
                       выглядела пустой. */}
-                  <SelectContent><SelectItem value="__empty__">- Выберите значение -</SelectItem>{Array.from(new Set([draft.incomingRawMaterialName, ...rawOptions].filter(Boolean))).map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent>
+                  <SelectContent><SelectItem value="__empty__">Выберите из списка</SelectItem>{Array.from(new Set([draft.incomingRawMaterialName, ...rawOptions].filter(Boolean))).map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent>
                 </Select>
                 <div className="flex items-center gap-2"><Input value={newRaw} onChange={(e) => setNewRaw(e.target.value)} placeholder="Добавить название нового сырья" className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[16px]" /><Button type="button" onClick={() => addCustom("raw")} className="h-10 rounded-xl bg-[#5563ff] px-3.5 text-white hover:bg-[#4654ff]"><Plus className="size-5" /></Button></div>
                 {/* Сырьё со склада: партия подставляет название и номер
@@ -717,7 +757,7 @@ function RowDialog(props: {
                 <Label className="text-[15px] text-[#7a7c8e]">Наименование ПФ</Label>
                 <Select value={draft.outgoingProductName || "__empty__"} onValueChange={(value) => setField("outgoingProductName", value === "__empty__" ? "" : value)}>
                   <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-white px-3.5 text-[18px]"><SelectValue placeholder="Выберите из списка или добавьте новое" /></SelectTrigger>
-                  <SelectContent><SelectItem value="__empty__">- Выберите значение -</SelectItem>{Array.from(new Set([draft.outgoingProductName, ...productOptions].filter(Boolean))).map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent>
+                  <SelectContent><SelectItem value="__empty__">Выберите из списка</SelectItem>{Array.from(new Set([draft.outgoingProductName, ...productOptions].filter(Boolean))).map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent>
                 </Select>
                 <div className="flex items-center gap-2"><Input value={newProduct} onChange={(e) => setNewProduct(e.target.value)} placeholder="Добавить название нового ПФ" className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[16px]" /><Button type="button" onClick={() => addCustom("product")} className="h-10 rounded-xl bg-[#5563ff] px-3.5 text-white hover:bg-[#4654ff]"><Plus className="size-5" /></Button></div>
               </div>
@@ -728,7 +768,7 @@ function RowDialog(props: {
             <div className="space-y-2 rounded-[28px] border border-[#e3e5f0] px-4 py-4">
               <div className="text-[20px] font-semibold tracking-[-0.02em] text-black">Ответственный</div>
               <div className="grid gap-3 md:grid-cols-2">
-                <div className="space-y-2"><Label className="text-[13.5px] text-[#7a7c8e]">Должность ответственного</Label><Select value={draft.responsibleRole || "__empty__"} onValueChange={(value) => setField("responsibleRole", value === "__empty__" ? "" : value)} disabled={employees.length > 0}><SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f3f4fb] px-3.5 text-[13.5px]"><SelectValue placeholder="- Выберите значение -" /></SelectTrigger><SelectContent><SelectItem value="__empty__">- Выберите значение -</SelectItem><PositionSelectItems users={props.employees} /></SelectContent></Select></div>
+                <div className="space-y-2"><Label className="text-[13.5px] text-[#7a7c8e]">Должность ответственного</Label><Select value={draft.responsibleRole || "__empty__"} onValueChange={(value) => setField("responsibleRole", value === "__empty__" ? "" : value)} disabled={employees.length > 0}><SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f3f4fb] px-3.5 text-[13.5px]"><SelectValue placeholder="Выберите сотрудника" /></SelectTrigger><SelectContent><SelectItem value="__empty__">- Выберите значение -</SelectItem><PositionSelectItems users={props.employees} /></SelectContent></Select></div>
                 <div className="space-y-2"><Label className="text-[15px] text-[#7a7c8e]">Сотрудник</Label>{employees.length > 0 ? <Select value={draft.responsibleEmployeeId || "__empty__"} onValueChange={(value) => {
                   if (value === "__empty__") {
                     setField("responsibleEmployeeId", "");
@@ -740,7 +780,7 @@ function RowDialog(props: {
                   setField("responsibleEmployeeId", value);
                   setField("responsibleEmployee", employee?.name || "");
                   setField("responsibleRole", employee ? getUserRoleLabel(employee.role) : draft.responsibleRole);
-                }}><SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f3f4fb] px-3.5 text-[13.5px]"><SelectValue placeholder="- Выберите значение -" /></SelectTrigger><SelectContent><SelectItem value="__empty__">- Выберите значение -</SelectItem>{employees.map((employee) => <SelectItem key={employee.id} value={employee.id}>{buildStaffOptionLabel(employee)}</SelectItem>)}</SelectContent></Select> : <Input value={draft.responsibleEmployee} onChange={(e) => setField("responsibleEmployee", e.target.value)} placeholder="ФИО ответственного" className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />}</div>
+                }}><SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f3f4fb] px-3.5 text-[13.5px]"><SelectValue placeholder="Выберите сотрудника" /></SelectTrigger><SelectContent><SelectItem value="__empty__">- Выберите значение -</SelectItem>{employees.map((employee) => <SelectItem key={employee.id} value={employee.id}>{buildStaffOptionLabel(employee)}</SelectItem>)}</SelectContent></Select> : <Input value={draft.responsibleEmployee} onChange={(e) => setField("responsibleEmployee", e.target.value)} placeholder="ФИО ответственного" className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />}</div>
               </div>
             </div>
 

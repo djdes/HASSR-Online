@@ -1,0 +1,22 @@
+import { openTelegramSession, db } from "../tg-session";
+import { shot, go, probe } from "./lib";
+import { clickText, listButtons } from "./dbl";
+(async () => {
+const s = await openTelegramSession({ role: "ownerA", width: 360, height: 640 });
+const p = s.page;
+await go(p, s.base + "/settings/users", 5000);
+await p.waitForFunction(`/Пригласить по QR/.test(document.body.innerText)`, undefined, { timeout: 180000 });
+await p.waitForTimeout(4000);
+await clickText(p, "Пригласить по QR");
+await p.waitForTimeout(3000);
+const pr = await probe(p);
+console.log("DIALOG overflow", pr.overflow);
+console.log(pr.bodyText.slice(-1600));
+await shot(p, "55-qr-dialog-vp");
+await shot(p, "55-qr-dialog", true);
+console.log("BTNS", JSON.stringify((await listButtons(p)).slice(-10)));
+const geom = await p.evaluate(`(()=>{const d=[...document.querySelectorAll('div')].filter(x=>getComputedStyle(x).position==='fixed'&&x.getBoundingClientRect().height>100);return d.slice(0,4).map(x=>({cls:String(x.className).slice(0,60),r:x.getBoundingClientRect().toJSON(),ov:getComputedStyle(x).overflowY}))})()`);
+console.log("GEOM", JSON.stringify(geom));
+console.log("ERRORS", JSON.stringify(s.errors).slice(0,400));
+await s.close();
+})().catch((e) => { console.log("FATAL", String(e).slice(0, 2000)); process.exit(1); });

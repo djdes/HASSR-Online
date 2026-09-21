@@ -41,6 +41,7 @@ import {
 } from "@/components/journals/journal-responsive";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { formatJournalDate } from "@/lib/journal-card-date";
 type DocumentItem = {
   id: string;
   title: string;
@@ -287,7 +288,8 @@ export function AuditReportDocumentsClient({ activeTab, routeCode, documents }: 
                 </Link>
                 <Link href={`/journals/${routeCode}/documents/${document.id}`} className={JOURNAL_CARD_SECTION_CLASS}>
                   <div className={JOURNAL_CARD_LABEL_CLASS}>Дата аудита</div>
-                  <div className={JOURNAL_CARD_VALUE_CLASS}>{config.documentDate}</div>
+                  {/* Было сырое «2026-09-18» из config — на экране дата везде «дд.мм.гггг». */}
+                  <div className={JOURNAL_CARD_VALUE_CLASS}>{formatJournalDate(config.documentDate)}</div>
                 </Link>
                 <div className="justify-self-end">
                   <ResponsiveMenu

@@ -494,6 +494,15 @@ export function FinishedProductDocumentClient({
         ? { label: cardLabel("responsible", "Исполнитель"), value: row.responsiblePerson, hideIfEmpty: true }
         : null,
       { label: cardLabel("inspector", "Провёл бракераж"), value: row.inspectorName, hideIfEmpty: true },
+      // Свои колонки организации — и в карточке на телефоне, иначе с
+      // телефона их вообще не видно.
+      ...cardColumns
+        .filter((column) => column.custom !== null && !column.hidden)
+        .map((column) => ({
+          label: column.label,
+          value: customCellValue(row, column.key),
+          hideIfEmpty: true,
+        })),
     ].filter((f): f is { label: string; value: string; hideIfEmpty: boolean } => f !== null),
   }));
 
@@ -779,6 +788,31 @@ export function FinishedProductDocumentClient({
               <Label className="text-[13px] font-medium text-[#3c4053]">{config.inspectorMode === "commission_signatures" ? "Подписи членов комиссии" : "Лицо, проводившее бракераж"}</Label>
               <SuggestInput ariaLabel="Лицо, проводившее бракераж" value={draftRow.inspectorName} options={personOptions} placeholder="Выберите сотрудника или впишите ФИО" onChange={(next) => setDraftRow((prev) => ({ ...prev, inspectorName: next }))} />
             </div>
+            {/* Свои колонки организации — и в окне строки: на телефоне
+                карточка открывает именно это окно, и без полей своя
+                колонка была бы доступна только на большом экране. */}
+            {resolvedColumns
+              .flatMap((column) =>
+                column.custom && !column.hidden ? [{ column, custom: column.custom }] : []
+              )
+              .map(({ column, custom }) => (
+                <div key={column.key} className="space-y-2">
+                  <Label className="text-[13px] font-medium text-[#3c4053]">
+                    {column.label}
+                    {column.mustFill ? <span className="ml-1 text-[#a13a32]">*</span> : null}
+                  </Label>
+                  <JournalCustomCell
+                    column={custom}
+                    value={customCellValue(draftRow, column.key)}
+                    onChange={(value) =>
+                      setDraftRow((prev) => ({ ...prev, custom: withCustomCell(prev, column.key, value) }))
+                    }
+                    mustFill={column.mustFill}
+                    employees={personOptions}
+                    className="h-11 rounded-2xl border border-[#dcdfed] px-3 text-[14px]"
+                  />
+                </div>
+              ))}
           
     </div>
   );
@@ -1109,7 +1143,7 @@ export function FinishedProductDocumentClient({
 
       {readOnly ? (
         <div className="mb-6">
-          <JournalClosedBanner hint="Верните журнал в активные, чтобы снова вносить записи бракеража." />
+          <JournalClosedBanner hint="Верните журнал в активные, чтобы снова вносить записи бракеража." documentId={documentId} />
         </div>
       ) : null}
 
@@ -1452,7 +1486,7 @@ export function FinishedProductDocumentClient({
       <JournalSettingsModal
         open={readOnly ? false : settingsOpen}
           onOpenChange={setSettingsOpen}
-          title="Настройки журнала"
+          title="Настройки документа"
           description="Колонки таблицы и подпись внизу журнала."
           size="md"
           isSaving={isSaving}
