@@ -85,7 +85,13 @@ import {
   legacyFlagsFromColumns,
   resolveColumns,
   type JournalColumnsConfig,
+  type JournalCustomColumn,
 } from "@/lib/journal-columns";
+import {
+  JournalCustomCell,
+  customCellValue,
+  withCustomCell,
+} from "@/components/journals/journal-custom-cell";
 type Props = {
   documentId: string;
   title: string;
@@ -165,6 +171,10 @@ type FinishedProductColumn = {
   align?: "center";
   /** id `<datalist>` с подсказками, если у колонки есть справочник. */
   list?: string;
+  /** Своя колонка организации — значение лежит в `row.custom`. */
+  custom?: JournalCustomColumn | null;
+  /** Отмечена «обязательно заполнять»: пустая ячейка подсвечивается. */
+  mustFill?: boolean;
 };
 
 const QUALITY_GUIDELINES = [
@@ -548,6 +558,8 @@ export function FinishedProductDocumentClient({
           label: column.label,
           weight: column.weight,
           align: column.align,
+          custom: column.custom,
+          mustFill: column.mustFill,
           ...FINISHED_PRODUCT_COLUMN_FIELDS[column.key],
         })),
     [resolvedColumns]
@@ -1241,6 +1253,11 @@ export function FinishedProductDocumentClient({
                   {...headerMenu.headerProps(column.key)}
                 >
                   {column.label}
+                  {column.mustFill ? (
+                    <span className="text-[#d43a2f]" title="Обязательно заполнять">
+                      {" *"}
+                    </span>
+                  ) : null}
                 </th>
               ))}
             </tr></thead>
@@ -1255,7 +1272,19 @@ export function FinishedProductDocumentClient({
                       (`column.list`) на время правки подменяются
                       настоящим <input list>, поэтому подсказки из
                       каталога остаются на месте. */}
-                  {column.field ? (
+                  {column.custom ? (
+                    <JournalCustomCell
+                      column={column.custom}
+                      value={customCellValue(row, column.key)}
+                      onChange={(value) =>
+                        updateRow(row.id, { custom: withCustomCell(row, column.key, value) })
+                      }
+                      onBlur={flushConfigSave}
+                      disabled={readOnly}
+                      mustFill={column.mustFill}
+                      employees={personOptions}
+                    />
+                  ) : column.field ? (
                     <JournalCellInput
                       value={row[column.field]}
                       onChange={(event) =>

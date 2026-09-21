@@ -2565,6 +2565,9 @@ function pdfColumns(code: string, config: unknown) {
       const column = byKey.get(key);
       return column && column.label !== column.defaultLabel ? column.label : printDefault;
     },
+    /** Свои колонки организации — печатаются после колонок бланка. */
+    custom: () =>
+      [...byKey.values()].filter((column) => column.custom !== null && !column.hidden),
   };
 }
 
@@ -2619,6 +2622,8 @@ function drawFinishedProductPdf(doc: jsPDF, params: {
       )
     )
   );
+  const customColumns = columns.custom();
+  for (const column of customColumns) headRow.push(centerCell(column.label));
   const head: RowInput[] = [headRow];
 
   const body: RowInput[] = params.config.rows.map((row, index) => {
@@ -2641,6 +2646,7 @@ function drawFinishedProductPdf(doc: jsPDF, params: {
     if (columns.visible("courier")) line.push(centerCell(row.courierTransferTime || ""));
     if (columns.visible("responsible")) line.push(centerCell(row.responsiblePerson || ""));
     line.push(centerCell(row.inspectorName || ""));
+    for (const column of customColumns) line.push(centerCell(row.custom?.[column.key] || ""));
     return line;
   });
 

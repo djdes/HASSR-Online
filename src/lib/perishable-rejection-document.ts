@@ -3,6 +3,7 @@ import {
   sanitizeColumnsConfig,
   type JournalColumnsConfig,
 } from "@/lib/journal-columns";
+import { normalizeCustomCells } from "@/lib/finished-product-document";
 
 export const PERISHABLE_REJECTION_TEMPLATE_CODE = "perishable_rejection";
 export const PERISHABLE_REJECTION_DOCUMENT_TITLE =
@@ -34,6 +35,8 @@ export type PerishableRejectionRow = {
   note: string;
   /** TaskLink.rowKey of the TasksFlow task that produced this row, if
    *  any. The adapter uses it to update-in-place on re-completion. */
+  /** Значения своих колонок организации, ключ — `custom:<id>`. */
+  custom?: Record<string, string>;
   sourceRowKey?: string;
 };
 
@@ -174,6 +177,9 @@ export function createPerishableRejectionRow(
     actualSaleTime: normalizeText(overrides.actualSaleTime),
     responsiblePerson: normalizeText(overrides.responsiblePerson),
     note: normalizeText(overrides.note),
+    ...(overrides.custom && Object.keys(overrides.custom).length > 0
+      ? { custom: normalizeCustomCells(overrides.custom) }
+      : {}),
     ...(overrides.sourceRowKey
       ? { sourceRowKey: normalizeText(overrides.sourceRowKey) }
       : {}),

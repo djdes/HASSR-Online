@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Info, Lock, Pencil, RotateCcw } from "lucide-react";
+import { Check, Info, Lock, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Checkbox } from "@/components/ui/checkbox";
@@ -10,9 +10,22 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { TableContextMenu, type TableContextMenuItem } from "@/components/journals/table-context-menu";
 import {
   JOURNAL_COLUMN_LABEL_MAX,
+  JOURNAL_CUSTOM_COLUMNS_MAX,
+  JOURNAL_FIELD_TYPES,
+  JOURNAL_FIELD_TYPE_LABEL,
+  JOURNAL_RATING_MAX_DEFAULT,
+  JOURNAL_RATING_MAX_MAX,
+  JOURNAL_RATING_MAX_MIN,
+  JOURNAL_SELECT_OPTIONS_MAX,
+  addCustomColumn,
   columnsConfigFromResolved,
+  newCustomColumnKey,
+  removeCustomColumn,
   resolveColumns,
+  setColumnMustFill,
+  updateCustomColumn,
   type JournalColumnsConfig,
+  type JournalFieldType,
   type ResolvedJournalColumn,
 } from "@/lib/journal-columns";
 import { LONG_PRESS_MS, isLongPressCancelled, type PressPoint } from "@/lib/long-press";
@@ -50,11 +63,19 @@ function ColumnRow({
   column,
   onToggle,
   onRename,
+  onMustFill,
+  onTypeChange,
+  onRemove,
   disabled,
 }: {
   column: ResolvedJournalColumn;
   onToggle: (hidden: boolean) => void;
   onRename: (label: string) => void;
+  /** Отметка «обязательно заполнять». */
+  onMustFill?: (mustFill: boolean) => void;
+  /** Настройки типа своей колонки. */
+  onTypeChange?: (patch: { type?: JournalFieldType; options?: string[]; ratingMax?: number; unit?: string }) => void;
+  onRemove?: () => void;
   disabled?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
@@ -118,8 +139,25 @@ function ColumnRow({
             <Lock className="size-3" />
             Обязательная колонка бланка
           </div>
+        ) : column.custom ? (
+          <div className="mt-0.5 text-[12px] text-[#9b9fb3]">
+            Своя колонка · {JOURNAL_FIELD_TYPE_LABEL[column.custom.type]}
+          </div>
         ) : column.label !== column.defaultLabel && !editing ? (
           <div className="mt-0.5 text-[12px] text-[#9b9fb3]">Стандартное: {column.defaultLabel}</div>
+        ) : null}
+        {!disabled && onMustFill && !column.hidden ? (
+          <label className="mt-1.5 flex cursor-pointer items-center gap-2 text-[12.5px] text-[#6f7282]">
+            <Checkbox
+              checked={column.mustFill}
+              onCheckedChange={(value) => onMustFill(value === true)}
+              aria-label={`Обязательно заполнять колонку «${column.label}»`}
+            />
+            Обязательно заполнять
+          </label>
+        ) : null}
+        {!disabled && column.custom && onTypeChange && !column.hidden ? (
+          <CustomColumnEditor column={column} onChange={onTypeChange} />
         ) : null}
       </div>
       {!disabled ? (
@@ -144,6 +182,141 @@ function ColumnRow({
           >
             {editing ? <Check className="size-4" /> : <Pencil className="size-4" />}
           </button>
+          {onRemove ? (
+            <button
+              type="button"
+              onClick={onRemove}
+              className="rounded-xl p-2 text-[#a13a32] transition-colors duration-150 hover:bg-[#fff4f2]"
+              title="Удалить свою колонку"
+              aria-label="Удалить свою колонку"
+            >
+              <Trash2 className="size-4" />
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Настройки типа своей колонки: тип, значения списка, верхний балл,
+ * единица измерения. Значения списка правятся построчно — так же, как
+ * списки изделий в журналах.
+ */
+function CustomColumnEditor({
+  column,
+  onChange,
+}: {
+  column: ResolvedJournalColumn;
+  onChange: (patch: { type?: JournalFieldType; options?: string[]; ratingMax?: number; unit?: string }) => void;
+}) {
+  const custom = column.custom;
+  const [optionDraft, setOptionDraft] = useState("");
+  if (!custom) return null;
+  const options = custom.options ?? [];
+
+  return (
+    <div className="mt-2 space-y-2 rounded-xl bg-white p-2.5">
+      <label className="flex items-center gap-2 text-[12.5px] text-[#6f7282]">
+        Тип поля
+        <select
+          value={custom.type}
+          onChange={(event) => onChange({ type: event.target.value as JournalFieldType })}
+          className="h-8 flex-1 rounded-lg border border-[#dcdfed] bg-white px-2 text-[13px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none"
+        >
+          {JOURNAL_FIELD_TYPES.map((type) => (
+            <option key={type} value={type}>
+              {JOURNAL_FIELD_TYPE_LABEL[type]}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      {custom.type === "number" ? (
+        <label className="flex items-center gap-2 text-[12.5px] text-[#6f7282]">
+          Единица
+          <input
+            value={custom.unit ?? ""}
+            onChange={(event) => onChange({ unit: event.target.value })}
+            placeholder="°C, кг, шт"
+            maxLength={12}
+            className="h-8 w-28 rounded-lg border border-[#dcdfed] bg-white px-2 text-[13px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none"
+          />
+        </label>
+      ) : null}
+
+      {custom.type === "rating" ? (
+        <label className="flex items-center gap-2 text-[12.5px] text-[#6f7282]">
+          Максимальный балл
+          <input
+            type="number"
+            min={JOURNAL_RATING_MAX_MIN}
+            max={JOURNAL_RATING_MAX_MAX}
+            value={custom.ratingMax ?? JOURNAL_RATING_MAX_DEFAULT}
+            onChange={(event) => onChange({ ratingMax: Number(event.target.value) || JOURNAL_RATING_MAX_DEFAULT })}
+            className="h-8 w-20 rounded-lg border border-[#dcdfed] bg-white px-2 text-[13px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none"
+          />
+        </label>
+      ) : null}
+
+      {custom.type === "select" ? (
+        <div className="space-y-1.5">
+          <div className="text-[12.5px] text-[#6f7282]">Значения списка</div>
+          {options.map((option, index) => (
+            <div key={`${option}-${index}`} className="flex items-center gap-1.5">
+              <input
+                value={option}
+                onChange={(event) => {
+                  const next = [...options];
+                  next[index] = event.target.value;
+                  onChange({ options: next });
+                }}
+                maxLength={JOURNAL_COLUMN_LABEL_MAX}
+                className="h-8 flex-1 rounded-lg border border-[#dcdfed] bg-white px-2 text-[13px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => onChange({ options: options.filter((_, i) => i !== index) })}
+                className="rounded-lg p-1.5 text-[#a13a32] hover:bg-[#fff4f2]"
+                aria-label={`Удалить значение «${option}»`}
+              >
+                <Trash2 className="size-3.5" />
+              </button>
+            </div>
+          ))}
+          {options.length < JOURNAL_SELECT_OPTIONS_MAX ? (
+            <div className="flex items-center gap-1.5">
+              <input
+                value={optionDraft}
+                onChange={(event) => setOptionDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key !== "Enter") return;
+                  event.preventDefault();
+                  const value = optionDraft.trim();
+                  if (!value) return;
+                  onChange({ options: [...options, value] });
+                  setOptionDraft("");
+                }}
+                placeholder="Добавить значение и нажать Enter"
+                maxLength={JOURNAL_COLUMN_LABEL_MAX}
+                className="h-8 flex-1 rounded-lg border border-dashed border-[#dcdfed] bg-white px-2 text-[13px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const value = optionDraft.trim();
+                  if (!value) return;
+                  onChange({ options: [...options, value] });
+                  setOptionDraft("");
+                }}
+                className="rounded-lg p-1.5 text-[#3848c7] hover:bg-[#f5f6ff]"
+                aria-label="Добавить значение"
+              >
+                <Plus className="size-3.5" />
+              </button>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>
@@ -203,10 +376,38 @@ export function JournalColumnsSettings({
             key={column.key}
             column={column}
             onToggle={(hidden) => onChange(toggleColumnHidden(current, column.key, hidden))}
-            onRename={(label) => onChange(renameColumn(current, column.key, label))}
+            onRename={(label) =>
+              onChange(
+                column.custom
+                  ? updateCustomColumn(current, column.key, { label: label || column.custom.label })
+                  : renameColumn(current, column.key, label)
+              )
+            }
+            onMustFill={(mustFill) => onChange(setColumnMustFill(current, column.key, mustFill))}
+            onTypeChange={
+              column.custom ? (patch) => onChange(updateCustomColumn(current, column.key, patch)) : undefined
+            }
+            onRemove={column.custom ? () => onChange(removeCustomColumn(current, column.key)) : undefined}
           />
         ))}
       </div>
+      {(current.custom ?? []).length < JOURNAL_CUSTOM_COLUMNS_MAX ? (
+        <button
+          type="button"
+          onClick={() =>
+            onChange(
+              addCustomColumn(current, {
+                key: newCustomColumnKey(),
+                label: `Своя колонка ${(current.custom ?? []).length + 1}`,
+                type: "text",
+              })
+            )
+          }
+          className="mt-1 inline-flex h-10 w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-[#dcdfed] text-[13.5px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+        >
+          <Plus className="size-4" /> Добавить свою колонку
+        </button>
+      ) : null}
       <ApplyColumnsToAllDialog code={code} columns={current} open={applyOpen} onClose={() => setApplyOpen(false)} />
     </div>
   );

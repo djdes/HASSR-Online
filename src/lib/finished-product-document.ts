@@ -1,4 +1,5 @@
 import {
+  isCustomColumnKey,
   legacyFlagsFromColumns,
   sanitizeColumnsConfig,
   type JournalColumnsConfig,
@@ -48,6 +49,13 @@ export type FinishedProductDocumentRow = {
   organolepticResult: string;
   releaseAllowed: "yes" | "no";
   /**
+   * Значения своих колонок организации (`config.columns.custom`), ключ —
+   * `custom:<id>`. Храним строками: одинаково для текста, числа, даты,
+   * времени, «да/нет», списка и балла — таблица, карточка и печать
+   * показывают одно и то же.
+   */
+  custom?: Record<string, string>;
+  /**
    * TaskLink.rowKey of the TasksFlow task that produced this row, if
    * any. The adapter looks it up to update-in-place on re-completion
    * instead of appending a duplicate. Undefined for manual entries.
@@ -88,6 +96,22 @@ function normalizeText(value: unknown) {
 }
 
 /**
+ * Ячейки своих колонок: только ключи `custom:*`, значения — строки до
+ * 500 символов. Пустые не храним, чтобы строка не пухла от выключенных
+ * колонок.
+ */
+export function normalizeCustomCells(value: unknown): Record<string, string> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const result: Record<string, string> = {};
+  for (const [key, raw] of Object.entries(value as Record<string, unknown>)) {
+    if (!isCustomColumnKey(key)) continue;
+    const text = typeof raw === "string" ? raw.trim().slice(0, 500) : "";
+    if (text) result[key] = text;
+  }
+  return result;
+}
+
+/**
  * «Примечание» документа. Пустое — значит примечания нет (блок под
  * таблицей не печатается). Legacy-значение (заголовок справочного блока)
  * приравнивается к пустому — см. FINISHED_PRODUCT_QUALITY_GUIDE_TITLE.
@@ -116,6 +140,9 @@ export function createFinishedProductRow(
     organolepticValue: normalizeText(overrides.organolepticValue),
     organolepticResult: normalizeText(overrides.organolepticResult),
     releaseAllowed: overrides.releaseAllowed === "no" ? "no" : "yes",
+    ...(overrides.custom && Object.keys(overrides.custom).length > 0
+      ? { custom: normalizeCustomCells(overrides.custom) }
+      : {}),
     ...(overrides.sourceRowKey
       ? { sourceRowKey: normalizeText(overrides.sourceRowKey) }
       : {}),

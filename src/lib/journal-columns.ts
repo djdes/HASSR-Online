@@ -25,10 +25,75 @@
 
 export const JOURNAL_COLUMN_LABEL_MAX = 60;
 
+/**
+ * Типы своих колонок. Набор закрытый: каждый тип умеет и таблица, и
+ * карточка на телефоне, и печать. «Оценка» — это выбор балла 1…max,
+ * «список» — редактируемый выпадающий список значений организации.
+ */
+export const JOURNAL_FIELD_TYPES = [
+  "text",
+  "number",
+  "date",
+  "time",
+  "boolean",
+  "select",
+  "rating",
+  "employee",
+] as const;
+export type JournalFieldType = (typeof JOURNAL_FIELD_TYPES)[number];
+
+export const JOURNAL_FIELD_TYPE_LABEL: Record<JournalFieldType, string> = {
+  text: "Текст",
+  number: "Число",
+  date: "Дата",
+  time: "Время",
+  boolean: "Да / Нет",
+  select: "Список (свои значения)",
+  rating: "Оценка (баллы)",
+  employee: "Сотрудник",
+};
+
+export const JOURNAL_CUSTOM_COLUMNS_MAX = 12;
+export const JOURNAL_SELECT_OPTIONS_MAX = 40;
+export const JOURNAL_RATING_MAX_MIN = 2;
+export const JOURNAL_RATING_MAX_MAX = 10;
+export const JOURNAL_RATING_MAX_DEFAULT = 5;
+const CUSTOM_KEY_PREFIX = "custom:";
+
+/** Своя колонка организации: подпись, тип и настройки типа. */
+export type JournalCustomColumn = {
+  /** `custom:<id>` — отличает от колонок бланка и не сталкивается с ними. */
+  key: string;
+  label: string;
+  type: JournalFieldType;
+  /** Значения выпадающего списка (type = "select"). */
+  options?: string[];
+  /** Верхний балл (type = "rating"), 2…10. */
+  ratingMax?: number;
+  /** Подпись единицы измерения (type = "number"): «°C», «кг». */
+  unit?: string;
+};
+
 export type JournalColumnsConfig = {
   hidden: string[];
   labels: Record<string, string>;
+  /** Свои колонки — дописываются в конец таблицы в этом порядке. */
+  custom?: JournalCustomColumn[];
+  /**
+   * Колонки, которые организация считает обязательными к ЗАПОЛНЕНИЮ.
+   * Не путать с `required` у колонки бланка: та про «нельзя скрыть».
+   */
+  mustFill?: string[];
 };
+
+export function isCustomColumnKey(key: string): boolean {
+  return key.startsWith(CUSTOM_KEY_PREFIX);
+}
+
+/** Новый ключ своей колонки. Случайный — чтобы не совпал при слиянии. */
+export function newCustomColumnKey(): string {
+  return `${CUSTOM_KEY_PREFIX}${Math.random().toString(36).slice(2, 10)}`;
+}
 
 type ConfigRecord = Record<string, unknown>;
 
@@ -61,9 +126,14 @@ export type ResolvedJournalColumn = {
   label: string;
   defaultLabel: string;
   weight: number;
+  /** Обязательная колонка бланка — скрыть нельзя. */
   required: boolean;
   hidden: boolean;
   align?: "center";
+  /** Обязательна к заполнению — пустая ячейка подсвечивается. */
+  mustFill: boolean;
+  /** Своя колонка организации (null у колонок бланка). */
+  custom: JournalCustomColumn | null;
 };
 
 const FINISHED_PRODUCT_COLUMNS: JournalColumnDef[] = [
@@ -172,6 +242,52 @@ function defaultLabelOf(column: JournalColumnDef, config: ConfigRecord): string 
   return typeof column.label === "function" ? column.label(config) : column.label;
 }
 
+function cleanLabel(value: unknown): string {
+  return typeof value === "string" ? value.replace(/\s+/g, " ").trim().slice(0, JOURNAL_COLUMN_LABEL_MAX) : "";
+}
+
+/**
+ * Приводит свои колонки к допустимому виду: известный тип, непустая
+ * подпись, уникальный ключ, разумные пределы у списка и оценки. Лишнее
+ * молча отбрасываем — конфиг приходит из браузера.
+ */
+function sanitizeCustomColumns(raw: unknown): JournalCustomColumn[] {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set<string>();
+  const result: JournalCustomColumn[] = [];
+  for (const item of raw) {
+    if (result.length >= JOURNAL_CUSTOM_COLUMNS_MAX) break;
+    if (!item || typeof item !== "object") continue;
+    const record = item as ConfigRecord;
+    const key = typeof record.key === "string" ? record.key : "";
+    if (!isCustomColumnKey(key) || key.length > 64 || seen.has(key)) continue;
+    const label = cleanLabel(record.label);
+    if (!label) continue;
+    const type = JOURNAL_FIELD_TYPES.includes(record.type as JournalFieldType)
+      ? (record.type as JournalFieldType)
+      : "text";
+    const column: JournalCustomColumn = { key, label, type };
+    if (type === "select") {
+      const options = Array.isArray(record.options) ? record.options : [];
+      const cleaned = [
+        ...new Set(options.map((option) => cleanLabel(option)).filter(Boolean)),
+      ].slice(0, JOURNAL_SELECT_OPTIONS_MAX);
+      column.options = cleaned;
+    }
+    if (type === "rating") {
+      const max = typeof record.ratingMax === "number" ? Math.round(record.ratingMax) : JOURNAL_RATING_MAX_DEFAULT;
+      column.ratingMax = Math.min(JOURNAL_RATING_MAX_MAX, Math.max(JOURNAL_RATING_MAX_MIN, max));
+    }
+    if (type === "number") {
+      const unit = cleanLabel(record.unit).slice(0, 12);
+      if (unit) column.unit = unit;
+    }
+    seen.add(key);
+    result.push(column);
+  }
+  return result;
+}
+
 /**
  * Приводит сырое значение `columns` к допустимому виду для журнала. `null`
  * — значения нет (или это не объект): документ пользуется стандартом.
@@ -188,12 +304,16 @@ export function sanitizeColumnsConfig(
   const configRecord = asRecord(config);
   const byKey = new Map(registry.map((column) => [column.key, column]));
 
+  const customColumns = sanitizeCustomColumns(record.custom);
+  const customKeys = new Set(customColumns.map((column) => column.key));
   const hiddenRaw = Array.isArray(record.hidden) ? record.hidden : [];
   const hidden = [
     ...new Set(
       hiddenRaw.filter(
         (key): key is string =>
-          typeof key === "string" && byKey.has(key) && byKey.get(key)?.required !== true
+          typeof key === "string" &&
+          // Свою колонку скрыть можно всегда; колонку бланка — только необязательную.
+          (customKeys.has(key) || (byKey.has(key) && byKey.get(key)?.required !== true))
       )
     ),
   ];
@@ -208,7 +328,19 @@ export function sanitizeColumnsConfig(
     labels[key] = label;
   }
 
-  return { hidden, labels };
+  const custom = customColumns;
+  const knownKeys = new Set([...byKey.keys(), ...customKeys]);
+  const mustFillRaw = Array.isArray(record.mustFill) ? record.mustFill : [];
+  const mustFill = [
+    ...new Set(mustFillRaw.filter((key): key is string => typeof key === "string" && knownKeys.has(key))),
+  ];
+
+  return {
+    hidden,
+    labels,
+    ...(custom.length > 0 ? { custom } : {}),
+    ...(mustFill.length > 0 ? { mustFill } : {}),
+  };
 }
 
 /** Колонки журнала с итоговой видимостью и подписью. */
@@ -223,7 +355,8 @@ export function resolveColumns(
   const fromOrg = own ? null : sanitizeColumnsConfig(code, orgDefaults, configRecord);
   const source = own ?? fromOrg;
 
-  return registry.map((column) => {
+  const mustFillSet = new Set(source?.mustFill ?? []);
+  const base = registry.map((column) => {
     const defaultLabel = defaultLabelOf(column, configRecord);
     let hidden: boolean;
     if (column.required) {
@@ -250,8 +383,27 @@ export function resolveColumns(
       required: column.required === true,
       hidden,
       align: column.align,
-    };
+      mustFill: mustFillSet.has(column.key),
+      custom: null,
+    } satisfies ResolvedJournalColumn;
   });
+
+  // Свои колонки идут после колонок бланка, в порядке добавления.
+  const custom = (source?.custom ?? []).map(
+    (column): ResolvedJournalColumn => ({
+      key: column.key,
+      label: column.label,
+      defaultLabel: column.label,
+      weight: column.type === "text" ? 10 : 7,
+      required: false,
+      hidden: source?.hidden.includes(column.key) === true,
+      align: column.type === "text" ? undefined : "center",
+      mustFill: mustFillSet.has(column.key),
+      custom: column,
+    })
+  );
+
+  return [...base, ...custom];
 }
 
 /** Только видимые колонки — для таблицы, карточек и печати. */
@@ -278,14 +430,66 @@ export function legacyFlagsFromColumns(
 
 /** Набор колонок из текущего вида документа — для «сохранить как общий». */
 export function columnsConfigFromResolved(columns: ResolvedJournalColumn[]): JournalColumnsConfig {
+  const custom = columns
+    .map((column) => column.custom)
+    .filter((column): column is JournalCustomColumn => column !== null);
+  const mustFill = columns.filter((column) => column.mustFill).map((column) => column.key);
   return {
     hidden: columns.filter((column) => column.hidden).map((column) => column.key),
     labels: Object.fromEntries(
       columns
-        .filter((column) => column.label !== column.defaultLabel)
+        .filter((column) => column.custom === null && column.label !== column.defaultLabel)
         .map((column) => [column.key, column.label])
     ),
+    ...(custom.length > 0 ? { custom } : {}),
+    ...(mustFill.length > 0 ? { mustFill } : {}),
   };
+}
+
+/** Добавить свою колонку. */
+export function addCustomColumn(columns: JournalColumnsConfig, column: JournalCustomColumn): JournalColumnsConfig {
+  const custom = [...(columns.custom ?? [])];
+  if (custom.length >= JOURNAL_CUSTOM_COLUMNS_MAX) return columns;
+  return { ...columns, custom: [...custom, column] };
+}
+
+/** Изменить свою колонку (подпись, тип, настройки типа). */
+export function updateCustomColumn(
+  columns: JournalColumnsConfig,
+  key: string,
+  patch: Partial<Omit<JournalCustomColumn, "key">>
+): JournalColumnsConfig {
+  const custom = (columns.custom ?? []).map((column) =>
+    column.key === key ? { ...column, ...patch } : column
+  );
+  return { ...columns, custom };
+}
+
+/** Удалить свою колонку вместе с её отметками. */
+export function removeCustomColumn(columns: JournalColumnsConfig, key: string): JournalColumnsConfig {
+  return {
+    ...columns,
+    custom: (columns.custom ?? []).filter((column) => column.key !== key),
+    hidden: columns.hidden.filter((item) => item !== key),
+    mustFill: (columns.mustFill ?? []).filter((item) => item !== key),
+  };
+}
+
+/** Отметить колонку обязательной к заполнению (или снять отметку). */
+export function setColumnMustFill(
+  columns: JournalColumnsConfig,
+  key: string,
+  mustFill: boolean
+): JournalColumnsConfig {
+  const set = new Set(columns.mustFill ?? []);
+  if (mustFill) set.add(key);
+  else set.delete(key);
+  return { ...columns, mustFill: [...set] };
+}
+
+/** Пустая ли ячейка своей колонки — для подсветки обязательных. */
+export function isCellEmpty(value: unknown): boolean {
+  return value === null || value === undefined || String(value).trim() === "";
 }
 
 /** Конфиг документа с набором колонок и синхронными старыми флагами (`showX`). */

@@ -7,6 +7,7 @@ import {
   columnsConfigFromResolved,
   legacyFlagsFromColumns,
   parseOrgColumnDefaults,
+  removeCustomColumn,
   resolveColumns,
   sanitizeColumnsConfig,
   syncColumnsWithLegacyFlags,
@@ -165,4 +166,77 @@ test("настройки из списка документов: переклю�
   assert.deepEqual(synced.columns, { hidden: ["courier"], labels: { name: "Блюдо" } });
   const noColumns = { showProductTemp: true };
   assert.equal(syncColumnsWithLegacyFlags("finished_product", noColumns), noColumns);
+});
+
+const CUSTOM = {
+  key: "custom:abc12345",
+  label: "Партия",
+  type: "select" as const,
+  options: ["Первая", "Вторая"],
+};
+
+test("своя колонка резолвится после колонок бланка", () => {
+  const resolved = resolveColumns("finished_product", { columns: { hidden: [], labels: {}, custom: [CUSTOM] } });
+  const last = resolved[resolved.length - 1];
+  assert.equal(last.key, CUSTOM.key);
+  assert.equal(last.label, "Партия");
+  assert.equal(last.custom?.type, "select");
+  assert.deepEqual(last.custom?.options, ["Первая", "Вторая"]);
+});
+
+test("свою колонку можно скрыть, обязательную колонку бланка — нет", () => {
+  const resolved = resolveColumns("finished_product", {
+    columns: { hidden: [CUSTOM.key, "name"], labels: {}, custom: [CUSTOM] },
+  });
+  assert.equal(resolved.find((c) => c.key === CUSTOM.key)?.hidden, true);
+  assert.equal(resolved.find((c) => c.key === "name")?.hidden, false);
+});
+
+test("отметка «обязательно заполнять» доходит и до колонки бланка, и до своей", () => {
+  const resolved = resolveColumns("finished_product", {
+    columns: { hidden: [], labels: {}, custom: [CUSTOM], mustFill: ["temp", CUSTOM.key] },
+  });
+  assert.equal(resolved.find((c) => c.key === "temp")?.mustFill, true);
+  assert.equal(resolved.find((c) => c.key === CUSTOM.key)?.mustFill, true);
+  assert.equal(resolved.find((c) => c.key === "name")?.mustFill, false);
+});
+
+test("мусор в своих колонках отбрасывается, оценка зажимается в пределы", () => {
+  const clean = sanitizeColumnsConfig("finished_product", {
+    hidden: [],
+    labels: {},
+    custom: [
+      { key: "bad-key", label: "Без префикса", type: "text" },
+      { key: "custom:ok", label: "  Оценка  ", type: "rating", ratingMax: 99 },
+      { key: "custom:ok", label: "Дубль ключа", type: "text" },
+      { key: "custom:zzz", label: "", type: "text" },
+      { key: "custom:typ", label: "Неизвестный тип", type: "wat" },
+    ],
+    mustFill: ["custom:ok", "нет такой колонки"],
+  });
+  assert.equal(clean?.custom?.length, 2);
+  assert.equal(clean?.custom?.[0].key, "custom:ok");
+  assert.equal(clean?.custom?.[0].label, "Оценка");
+  assert.equal(clean?.custom?.[0].ratingMax, 10);
+  assert.equal(clean?.custom?.[1].type, "text");
+  assert.deepEqual(clean?.mustFill, ["custom:ok"]);
+});
+
+test("удаление своей колонки снимает её отметки", () => {
+  const next = removeCustomColumn(
+    { hidden: [CUSTOM.key], labels: {}, custom: [CUSTOM], mustFill: [CUSTOM.key] },
+    CUSTOM.key,
+  );
+  assert.deepEqual(next.custom, []);
+  assert.deepEqual(next.hidden, []);
+  assert.deepEqual(next.mustFill, []);
+});
+
+test("конфиг из resolved сохраняет свои колонки и обязательность", () => {
+  const resolved = resolveColumns("finished_product", {
+    columns: { hidden: [], labels: {}, custom: [CUSTOM], mustFill: [CUSTOM.key] },
+  });
+  const back = columnsConfigFromResolved(resolved);
+  assert.equal(back.custom?.length, 1);
+  assert.deepEqual(back.mustFill, [CUSTOM.key]);
 });
