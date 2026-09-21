@@ -192,3 +192,5 @@
 | unit / typecheck / eslint | `journal-fill-html.test.ts` 5/5 (в т.ч. блок PIN над `.sticky`, ошибка только у поля), `quick-values.test.ts` 7/7; typecheck, eslint чисто |
 
 Тестовый PIN снят, тестовые объекты удалены. Схема: `npx prisma db push` (колонка `qrPinEncrypted`, nullable) — на проде применится деплоем.
+
+Прод (сборка `17e50bc7`, `prod-objects.ts` с `PIN_FLOW=1`): PIN сгенерирован через `POST /api/staff/<id>/qr-pin`, `GET` показывает тот же код; поиск «тестовое» в разделе сотрудников → 1 строка; HTML холодильников с этим сотрудником — блок PIN над «Сохранить», шрифт 18px, «0000» → «Неверный PIN. Осталось попыток: 4.», верный → `done=updated` (`prod-r16-pin-done.png`); `/room-fill` при выборе сотрудника с PIN — «Введите ваш PIN» (`prod-r16-room-pin.png`). Тестовый PIN снят (`hasHash: false`), тестовые объекты удалены.

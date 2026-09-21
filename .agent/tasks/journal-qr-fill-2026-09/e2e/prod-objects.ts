@@ -87,6 +87,8 @@ const out: Record<string, unknown> = {};
     out.amberDeviationCss = (await page.content()).includes("#e9b949");
     out.flatLabelCss = (await page.content()).includes(".lab .lab-s");
     out.offrowCss = (await page.content()).includes(".chips.offrow{margin:14px 0 4px}");
+    out.pinboxCss = (await page.content()).includes(".pinbox{");
+    out.bodyFont = await page.evaluate(() => getComputedStyle(document.body).fontSize);
     const cards = await page.locator(".obj").count();
     for (let i = 0; i < cards; i += 1) await page.locator(".obj").nth(i).locator(".qv .chip").nth(1).click();
     out.coldValues = await page.locator(".obj input.in").evaluateAll((els) => els.map((el) => (el as HTMLInputElement).value));
@@ -100,6 +102,69 @@ const out: Record<string, unknown> = {};
     out.coldNotice = (await page.locator(".note").first().innerText().catch(() => "")).trim();
     out.coldPrefilled = await page.locator(".obj input.in").evaluateAll((els) => els.map((el) => (el as HTMLInputElement).value));
     await page.screenshot({ path: path.join(ROOT, "shots", "prod-cold-prefilled.png"), fullPage: true });
+  }
+  // ---- PIN: выдать тестовому сотруднику через API, проверить запрос над «Сохранить» на HTML-форме и странице помещения, снять.
+  if (process.env.PIN_FLOW) {
+    const admin2 = await browser.newContext();
+    const ap2 = await admin2.newPage();
+    await ap2.goto(`${BASE}/login`, { waitUntil: "load", timeout: 120_000 });
+    await ap2.waitForTimeout(2500);
+    await ap2.locator("#email").fill(creds.email);
+    await ap2.locator("#password").fill(creds.password);
+    await Promise.all([ap2.waitForResponse((r) => r.url().includes("/api/auth/login")), ap2.locator('button[type="submit"]').first().click()]);
+    await ap2.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 120_000 });
+    const E2E_ID = "cmto7vatn0000cg9mgopek07o";
+    const gen = await ap2.request.post(`${BASE}/api/staff/${E2E_ID}/qr-pin`);
+    const genJson = (await gen.json()) as { pin?: string };
+    const pin = genJson.pin ?? "";
+    out.pinFlow = { generated: Boolean(pin) };
+    const reveal = await ap2.request.get(`${BASE}/api/staff/${E2E_ID}/qr-pin`);
+    out.pinReveal = ((await reveal.json()) as { pin?: string }).pin === pin;
+    // поиск по ФИО в разделе сотрудников
+    await ap2.goto(`${BASE}/settings/users`, { waitUntil: "load", timeout: 120_000 });
+    await ap2.waitForSelector('input[aria-label="Поиск сотрудника"]', { timeout: 120_000 });
+    await ap2.locator('input[aria-label="Поиск сотрудника"]').fill("тестовое");
+    await ap2.waitForTimeout(400);
+    out.staffSearchRows = await ap2.locator('[data-testid="staff-search-results"] li').count();
+    const coldEmp = `${coldHref}&employee=${E2E_ID}`;
+    await admin2.close();
+    const p2 = await (await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 })).newPage();
+    await p2.goto(`${BASE}${coldEmp}`, { waitUntil: "load", timeout: 120_000 });
+    await p2.waitForSelector("#qr-form", { state: "attached", timeout: 90_000 });
+    out.htmlPinBox = await p2.locator(".pinbox").count();
+    out.htmlBodyFont = await p2.evaluate(() => getComputedStyle(document.body).fontSize);
+    const cards2 = await p2.locator(".obj").count();
+    for (let i = 0; i < cards2; i += 1) await p2.locator(".obj").nth(i).locator(".qv .chip").nth(1).click();
+    await p2.locator("input.pin").fill("0000");
+    await p2.locator("#qr-form button[type=submit]").click();
+    await p2.waitForSelector(".pinbox .err", { timeout: 60_000 });
+    out.htmlWrongPin = (await p2.locator(".pinbox .err").innerText()).trim();
+    await p2.locator("input.pin").fill(pin);
+    await p2.locator("#qr-form button[type=submit]").click();
+    await p2.waitForURL((u) => u.search.includes("done="), { timeout: 60_000 });
+    out.htmlDone = new URL(p2.url()).searchParams.get("done");
+    await p2.screenshot({ path: path.join(ROOT, "shots", "prod-r16-pin-done.png"), fullPage: true });
+    // помещение: выбор сотрудника с PIN → блок PIN
+    await p2.goto(`${BASE}${roomHref}`, { waitUntil: "load", timeout: 120_000 });
+    await p2.waitForSelector("#room-fill-temperature", { timeout: 60_000 });
+    await p2.locator("button[role=combobox]").first().click();
+    await p2.locator("[role=option]").filter({ hasText: "Тестовое" }).first().click();
+    await p2.waitForTimeout(200);
+    out.roomPinPrompt = await p2.locator("text=Введите ваш PIN").count();
+    await p2.screenshot({ path: path.join(ROOT, "shots", "prod-r16-room-pin.png"), fullPage: true });
+    await p2.context().close();
+    // снять тестовый PIN
+    const admin3 = await browser.newContext();
+    const ap3 = await admin3.newPage();
+    await ap3.goto(`${BASE}/login`, { waitUntil: "load", timeout: 120_000 });
+    await ap3.waitForTimeout(2500);
+    await ap3.locator("#email").fill(creds.email);
+    await ap3.locator("#password").fill(creds.password);
+    await Promise.all([ap3.waitForResponse((r) => r.url().includes("/api/auth/login")), ap3.locator('button[type="submit"]').first().click()]);
+    await ap3.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 120_000 });
+    const clear = await ap3.request.patch(`${BASE}/api/staff/${E2E_ID}`, { data: { qrPin: null } });
+    out.pinCleared = clear.ok();
+    await admin3.close();
   }
   await browser.close();
   fs.writeFileSync(path.join(ROOT, "results-prod-objects.json"), JSON.stringify(out, null, 2));
