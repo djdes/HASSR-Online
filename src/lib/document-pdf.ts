@@ -1926,7 +1926,7 @@ function drawColdEquipmentPdf(doc: jsPDF, params: {
   dateTo: Date | string;
   config: ReturnType<typeof normalizeColdEquipmentDocumentConfig>;
   entries: { employeeId: string; date: Date; data: Record<string, unknown> }[];
-  users: { id: string; name: string; role: string }[];
+  users: PdfPositionUser[];
   monthLabel: string;
 }) {
   const metaBottom = drawClimateMetaTable(doc, {
@@ -3058,7 +3058,7 @@ function drawIncomingControlPdf(doc: jsPDF, params: {
   title: string;
   dateFrom: Date | string;
   config: ReturnType<typeof normalizeAcceptanceDocumentConfig>;
-  users: { id: string; name: string; role: string }[];
+  users: PdfPositionUser[];
 }) {
   const cfg = params.config;
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -3156,7 +3156,7 @@ function drawAcceptancePdf(doc: jsPDF, params: {
   title: string;
   dateFrom: Date | string;
   config: ReturnType<typeof normalizeAcceptanceDocumentConfig>;
-  users: { id: string; name: string; role: string }[];
+  users: PdfPositionUser[];
 }) {
   const cfg = params.config;
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -3263,7 +3263,7 @@ function drawPpeIssuancePdf(doc: jsPDF, params: {
   title: string;
   dateFrom: Date | string;
   config: ReturnType<typeof normalizePpeIssuanceConfig>;
-  users: { id: string; name: string; role: string }[];
+  users: PdfPositionUser[];
 }) {
   const cfg = params.config;
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -4440,7 +4440,7 @@ function drawTrackedPdf(doc: jsPDF, params: {
   dateTo: Date | string;
   fields: TrackedField[];
   entries: { employeeId: string; date: Date; data: Record<string, unknown> }[];
-  users: { id: string; name: string; role: string }[];
+  users: PdfPositionUser[];
 }) {
   drawTitle(doc, params.title);
   const metaBottom = drawClimateMetaTable(doc, {
@@ -4496,7 +4496,7 @@ function drawPestControlPdf(doc: jsPDF, params: {
   dateFrom: Date | string;
   dateTo: Date | string | null;
   entries: { employeeId: string; date: Date; data: Record<string, unknown> }[];
-  users: { id: string; name: string; role: string }[];
+  users: PdfPositionUser[];
 }) {
   const pageWidth = doc.internal.pageSize.getWidth();
   const startDate =
@@ -4509,7 +4509,7 @@ function drawPestControlPdf(doc: jsPDF, params: {
       : typeof params.dateTo === "string"
         ? params.dateTo.slice(0, 10)
         : "";
-  const userMap = Object.fromEntries(params.users.map((user) => [user.id, user.name]));
+  const pestUserById = new Map(params.users.map((user) => [user.id, user]));
 
   drawTitle(doc, params.title || PEST_CONTROL_DOCUMENT_TITLE);
 
@@ -4600,10 +4600,12 @@ function drawPestControlPdf(doc: jsPDF, params: {
       return diff !== 0 ? diff : left.entry.date.getTime() - right.entry.date.getTime();
     })
     .map(({ entry, normalized }) => {
-      const acceptedEmployeeName =
-        userMap[normalized.acceptedEmployeeId] ||
-        userMap[entry.employeeId] ||
-        "";
+      const acceptedUser =
+        pestUserById.get(normalized.acceptedEmployeeId) ||
+        pestUserById.get(entry.employeeId);
+      const acceptedEmployeeName = acceptedUser?.name || "";
+      // Должность принявшего — из его карточки, не копия из записи.
+      const acceptedTitle = getRowEmployeeTitle(acceptedUser, normalized.acceptedRole);
 
       return [
         "",
@@ -4618,7 +4620,9 @@ function drawPestControlPdf(doc: jsPDF, params: {
         normalized.treatmentProduct,
         normalized.note,
         normalized.performedBy,
-        [normalized.acceptedRole, acceptedEmployeeName].filter(Boolean).join(", "),
+        [acceptedTitle === acceptedEmployeeName ? "" : acceptedTitle, acceptedEmployeeName]
+          .filter(Boolean)
+          .join(", "),
       ];
     });
 
@@ -5138,7 +5142,7 @@ function drawUvRuntimePdf(doc: jsPDF, params: {
   dateTo: Date | string;
   config: ReturnType<typeof normalizeUvRuntimeDocumentConfig>;
   entries: { employeeId: string; date: Date; data: Record<string, unknown> }[];
-  users: { id: string; name: string; role: string }[];
+  users: PdfPositionUser[];
 }) {
   drawTitle(doc, "Журнал учета работы УФ бактерицидной установки");
   const metaBottom = drawClimateMetaTable(doc, {
@@ -5434,7 +5438,7 @@ function drawRegisterPdf(doc: jsPDF, params: {
   dateTo: Date | string;
   fields: RegisterField[];
   config: ReturnType<typeof normalizeRegisterDocumentConfig>;
-  users: { id: string; name: string; role: string }[];
+  users: PdfPositionUser[];
   equipment: { id: string; name: string }[];
 }) {
   drawTitle(doc, params.title);
@@ -5868,7 +5872,7 @@ function drawIntensiveCoolingPdf(doc: jsPDF, params: {
   title: string;
   dateFrom: Date | string;
   config: IntensiveCoolingConfig;
-  users: { id: string; name: string; role: string }[];
+  users: PdfPositionUser[];
 }) {
   const pageWidth = doc.internal.pageSize.getWidth();
   const x = 24;
@@ -5947,7 +5951,9 @@ function drawIntensiveCoolingPdf(doc: jsPDF, params: {
     params.config.rows.length > 0
       ? params.config.rows.map((row) => {
           const user = params.users.find((item) => item.id === row.responsibleUserId);
-          const responsibleLabel = [row.responsibleTitle, user?.name]
+          // «(должность, ФИО)» — должность этого сотрудника, не копия строки.
+          const title = getRowEmployeeTitle(user, row.responsibleTitle);
+          const responsibleLabel = [title === user?.name ? "" : title, user?.name]
             .filter(Boolean)
             .join(", ");
 
@@ -6256,7 +6262,7 @@ function drawGlassControlPdf(doc: jsPDF, params: {
   responsibleName: string;
   config: ReturnType<typeof normalizeGlassControlConfig>;
   entries: Array<{ date: Date; employeeId: string; data: Record<string, unknown> }>;
-  users: Array<{ id: string; name: string; role: string }>;
+  users: PdfPositionUser[];
 }) {
   const pageWidth = doc.internal.pageSize.getWidth();
 

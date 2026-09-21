@@ -6,7 +6,12 @@ import Link from "next/link";
 import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
 import { SelectionEditButton } from "@/components/journals/selection-edit-button";
 import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
-import { getUsersForRoleLabel } from "@/lib/user-roles";
+import {
+  getDistinctRoleLabels,
+  getRowEmployeeTitle,
+  getUserDisplayTitle,
+  getUsersForRoleLabel,
+} from "@/lib/user-roles";
 import { DOC_PRIMARY_BUTTON_CLASS } from "@/components/journals/journal-responsive";
 import { JournalDocumentShell } from "@/components/journals/journal-document-shell";
 import { JournalDocumentHeader } from "@/components/journals/journal-document-header";
@@ -43,7 +48,6 @@ import {
   type PpeIssuanceConfig,
   type PpeIssuanceRow,
 } from "@/lib/ppe-issuance-document";
-import { getHygienePositionLabel } from "@/lib/hygiene-document";
 import { useMobileView } from "@/lib/use-mobile-view";
 import {
   RecordCardsView,
@@ -60,6 +64,9 @@ type UserItem = {
   id: string;
   name: string;
   role: string;
+  // Должность из карточки (как в UserLike) — её пишем и показываем.
+  positionTitle?: string | null;
+  jobPosition?: { name: string; categoryKey: string } | null;
 };
 
 type Props = {
@@ -87,11 +94,14 @@ type RowDialogState = {
   issuerTitle: string;
 };
 
+// Те же метки, по которым `getUsersForRoleLabel` фильтрует сотрудников:
+// с лейблами ролей список людей для своей должности («Кладовщик») был пуст.
 function roleOptions(users: UserItem[]) {
-  return [...new Set(users.map((user) => getHygienePositionLabel(user.role)))];
+  return getDistinctRoleLabels(users);
 }
 
-function rowToState(row: PpeIssuanceRow): RowDialogState {
+function rowToState(row: PpeIssuanceRow, users: UserItem[] = []): RowDialogState {
+  const findUser = (id: string) => users.find((user) => user.id === id);
   return {
     issueDate: row.issueDate,
     maskCount: String(row.maskCount || ""),
@@ -100,9 +110,11 @@ function rowToState(row: PpeIssuanceRow): RowDialogState {
     clothingSetsCount: String(row.clothingSetsCount || ""),
     capCount: String(row.capCount || ""),
     recipientUserId: row.recipientUserId,
-    recipientTitle: row.recipientTitle,
+    // Должность выбранного человека — как в ячейке, иначе в селекте
+    // открывалась старая копия, не совпадающая ни с одним пунктом.
+    recipientTitle: getRowEmployeeTitle(findUser(row.recipientUserId), row.recipientTitle),
     issuerUserId: row.issuerUserId,
-    issuerTitle: row.issuerTitle,
+    issuerTitle: getRowEmployeeTitle(findUser(row.issuerUserId), row.issuerTitle),
   };
 }
 
@@ -132,9 +144,16 @@ function stateToRow(
     clothingSetsCount: Number(state.clothingSetsCount || 0),
     capCount: Number(state.capCount || 0),
     recipientUserId: state.recipientUserId,
-    recipientTitle: state.recipientTitle,
+    // Копия должности — выбранного человека, а не метка фильтра.
+    recipientTitle: getRowEmployeeTitle(
+      users.find((user) => user.id === state.recipientUserId),
+      state.recipientTitle
+    ),
     issuerUserId: state.issuerUserId,
-    issuerTitle: state.issuerTitle,
+    issuerTitle: getRowEmployeeTitle(
+      users.find((user) => user.id === state.issuerUserId),
+      state.issuerTitle
+    ),
   });
 }
 
@@ -313,9 +332,9 @@ function SettingsDialog(props: {
               setState({
                 ...state,
                 defaultIssuerUserId: value,
-                defaultIssuerTitle:
-                  state.defaultIssuerTitle ||
-                  (user ? getHygienePositionLabel(user.role) : null),
+                defaultIssuerTitle: user
+                  ? getUserDisplayTitle(user)
+                  : state.defaultIssuerTitle,
               });
             }}
           >
@@ -374,7 +393,7 @@ function SettingsDialog(props: {
               setState({
                 ...state,
                 defaultIssuerUserId: value,
-                defaultIssuerTitle: state.defaultIssuerTitle || (user ? getHygienePositionLabel(user.role) : null),
+                defaultIssuerTitle: user ? getUserDisplayTitle(user) : state.defaultIssuerTitle,
               });
             }}>
               <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]">
@@ -451,10 +470,17 @@ function RowDialog(props: {
             issueDate: localDayKey(),
             issuerUserId: props.config.defaultIssuerUserId || "",
             issuerTitle: props.config.defaultIssuerTitle || "",
-          })
+          }),
+        props.users
       )
     );
-  }, [props.config.defaultIssuerTitle, props.config.defaultIssuerUserId, props.initialRow, props.open]);
+  }, [
+    props.config.defaultIssuerTitle,
+    props.config.defaultIssuerUserId,
+    props.initialRow,
+    props.open,
+    props.users,
+  ]);
 
   async function handleSave() {
     if (!state) return;
@@ -522,7 +548,7 @@ function RowDialog(props: {
               <Label className="text-[14px] text-[#7a7c8e]">Сотрудник</Label>
               <Select value={state.recipientUserId} onValueChange={(value) => {
                 const user = props.users.find((item) => item.id === value);
-                setState({ ...state, recipientUserId: value, recipientTitle: state.recipientTitle || (user ? getHygienePositionLabel(user.role) : "") });
+                setState({ ...state, recipientUserId: value, recipientTitle: user ? getUserDisplayTitle(user) : state.recipientTitle });
               }}>
                 <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]"><SelectValue placeholder="Выберите сотрудника" /></SelectTrigger>
                 <SelectContent>
@@ -561,7 +587,7 @@ function RowDialog(props: {
               <Label className="text-[14px] text-[#7a7c8e]">Сотрудник</Label>
               <Select value={state.issuerUserId} onValueChange={(value) => {
                 const user = props.users.find((item) => item.id === value);
-                setState({ ...state, issuerUserId: value, issuerTitle: state.issuerTitle || (user ? getHygienePositionLabel(user.role) : "") });
+                setState({ ...state, issuerUserId: value, issuerTitle: user ? getUserDisplayTitle(user) : state.issuerTitle });
               }}>
                 <SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f1f2f8] px-3.5 text-[13.5px]"><SelectValue placeholder="Выберите сотрудника" /></SelectTrigger>
                 <SelectContent>

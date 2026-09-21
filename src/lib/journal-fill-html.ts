@@ -173,7 +173,13 @@ input.in[type=time]{font-weight:600;font-variant-numeric:tabular-nums}
 .cols .st{display:block;min-height:1.3em}
 .cols .chip.offc{width:100%;max-width:100%;height:auto;min-height:30px;padding:4px 8px;white-space:normal;line-height:1.2;text-align:left;justify-content:flex-start;box-sizing:border-box}
 .chip.offc input{flex:none}
-.ok{width:56px;height:56px;border-radius:16px;background:#ecfdf5;color:#116b2a;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.ok{width:84px;height:84px;border-radius:50%;background:#ecfdf5;color:#16a34a;display:flex;align-items:center;justify-content:center;margin:4px auto 16px;animation:okpop .45s cubic-bezier(.2,.9,.3,1.3) both}
+.ok svg{width:56px;height:56px}
+.ok .okc{stroke-dasharray:64;stroke-dashoffset:64;animation:okdraw .45s ease-out .1s forwards}
+.ok .okm{stroke-dasharray:18;stroke-dashoffset:18;animation:okdraw .3s ease-out .5s forwards}
+@keyframes okpop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes okdraw{to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){.ok,.ok .okc,.ok .okm{animation:none;stroke-dashoffset:0}}
 .center{text-align:center}
 h2{font-size:21px;letter-spacing:-.02em;margin:0;font-weight:600}
 .photo{border:1px dashed #dcdfed;border-radius:14px;padding:10px 14px;margin-bottom:10px;font-size:13px;color:#6f7282}
@@ -303,7 +309,7 @@ export const QR_FILL_JS = `
 const QR_ICON = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg>`;
 const ARROW = `<span class="arr" aria-hidden="true">›</span>`;
 const CHECK_SMALL = `<svg class="arr" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3848c7" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>`;
-const CHECK_ICON = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>`;
+const CHECK_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle class="okc" cx="12" cy="12" r="10"/><path class="okm" d="m8 12.5 2.7 2.7L16.5 9.5"/></svg>`;
 
 export function renderPage(params: {
   orgName: string;
@@ -807,31 +813,20 @@ export function renderResult(params: {
   employeeName: string;
   timeLabel: string;
   addMoreHref: string | null;
-  daily: Array<{ code: string; name: string; filled: boolean; href: string }>;
   /** Сколько карточек отмечено «Выключено / Нет показания» — руководитель уведомлён. */
   offCount?: number;
+  /** Своя строка заголовка — «Добавлено блюд: 7», «Подписано: 5». */
+  headline?: string | null;
 }): string {
-  const pending = params.daily.filter((item) => !item.filled);
   const offLine = params.offCount && params.offCount > 0
     ? `<p class="muted" style="margin-top:6px">Отмечено «Выключено / Нет показания»: ${params.offCount}. В журнале прочерк с пометкой, руководитель получил уведомление.</p>`
     : "";
-  const dailyBlock =
-    params.daily.length > 0
-      ? `<div class="card"><p class="label">Сегодня у вас</p><div class="list">${params.daily
-          .map((item) =>
-            item.filled
-              ? `<span class="item done"><span>${esc(item.name)}</span><small>отмечено</small></span>`
-              : `<a class="item" href="${esc(item.href)}"><span>${esc(item.name)}</span>${ARROW}</a>`
-          )
-          .join("")}</div>${
-          pending.length > 0
-            ? `<div class="sticky"><a class="btn second" href="${esc(pending[0].href)}">Дальше: ${esc(pending[0].name)}</a></div>`
-            : `<p class="hint center" style="color:#116b2a">Все ежедневные отметки на сегодня сделаны.</p>`
-        }</div>`
-      : "";
-  return `<div class="card center"><div class="ok">${CHECK_ICON}</div><h2>${params.mode === "appended" ? "Строка добавлена" : "Отметка записана"}</h2><p class="muted" style="margin-top:8px">${esc(params.documentTitle)} · ${esc(params.employeeName)} · ${esc(params.timeLabel)}</p>${offLine}${
+  // Экран успеха остаётся в этом журнале: переходов в другие журналы здесь нет
+  // (владелец, 2026-09-21) — только «Добавить ещё» для строчных журналов.
+  const headline = params.headline ?? (params.mode === "appended" ? "Строка добавлена" : "Отметка записана");
+  return `<div class="card center" role="status" aria-live="polite"><div class="ok">${CHECK_ICON}</div><h2>${esc(headline)}</h2><p class="muted" style="margin-top:8px">Сохранено: ${esc(params.documentTitle)} · ${esc(params.employeeName)} · ${esc(params.timeLabel)}</p>${offLine}${
     params.addMoreHref ? `<div class="sticky"><a class="btn" href="${esc(params.addMoreHref)}">Добавить ещё</a></div>` : ""
-  }</div>${dailyBlock}`;
+  }</div>`;
 }
 
 /** Мета температуры по блюдам для инлайн-скрипта: `{ "борщ": "75" }`. */

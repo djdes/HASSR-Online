@@ -1,6 +1,10 @@
 import { localDayKey } from "@/lib/entry-defaults";
-import { getHygienePositionLabel } from "@/lib/hygiene-document";
-import { normalizeUserRole, pickPrimaryManager } from "@/lib/user-roles";
+import {
+  getRowEmployeeTitle,
+  getUserDisplayTitle,
+  normalizeUserRole,
+  pickPrimaryManager,
+} from "@/lib/user-roles";
 
 export const PPE_ISSUANCE_TEMPLATE_CODE = "ppe_issuance";
 export const PPE_ISSUANCE_SOURCE_SLUG = "issuancesizjournal";
@@ -38,10 +42,16 @@ export type PpeIssuanceConfig = {
   defaultIssuerTitle: string | null;
 };
 
-type UserLike = {
+/** Поля должности (как в UserLike из user-roles): getUserDisplayTitle. */
+type PositionFields = {
+  role?: string | null;
+  positionTitle?: string | null;
+  jobPosition?: { name?: string | null } | null;
+};
+
+type UserLike = PositionFields & {
   id: string;
   name?: string | null;
-  role?: string | null;
 };
 
 function createId(prefix: string) {
@@ -100,9 +110,7 @@ export function getPpeIssuanceDefaultConfig(users: UserLike[]): PpeIssuanceConfi
     showClothing: false,
     showCaps: false,
     defaultIssuerUserId: defaultIssuer?.id || null,
-    defaultIssuerTitle: defaultIssuer?.role
-      ? getHygienePositionLabel(defaultIssuer.role)
-      : null,
+    defaultIssuerTitle: defaultIssuer ? getUserDisplayTitle(defaultIssuer) : null,
   };
 }
 
@@ -185,10 +193,10 @@ export function buildPpeIssuanceDemoConfig(
         clothingSetsCount: 1,
         capCount: 1,
         recipientUserId: user.id,
-        recipientTitle: getHygienePositionLabel(user.role || "cook"),
+        recipientTitle: getUserDisplayTitle(user),
         issuerUserId: defaultIssuer?.id || "",
-        issuerTitle: defaultIssuer?.role
-          ? getHygienePositionLabel(defaultIssuer.role)
+        issuerTitle: defaultIssuer
+          ? getUserDisplayTitle(defaultIssuer)
           : base.defaultIssuerTitle || "",
       })
     ),
@@ -207,15 +215,16 @@ export function getPpeIssuanceStartedAt(date: Date) {
 
 export function getPpeIssuanceRecipientLabel(
   row: PpeIssuanceRow,
-  users: Array<{ id: string; name: string }>
+  users: Array<{ id: string; name: string } & PositionFields>
 ) {
-  // Сохранённое имя — запасной вариант: уволенного сотрудника в
-  // `users` уже нет, а строка журнала должна остаться читаемой.
-  const name =
-    users.find((user) => user.id === row.recipientUserId)?.name ||
-    row.recipientName ||
-    "";
-  return [row.recipientTitle, name].filter(Boolean).join(", ");
+  // Сохранённые имя и должность — запасной вариант: уволенного сотрудника
+  // в `users` уже нет, а строка журнала должна остаться читаемой. Для
+  // найденного — его должность из карточки, а не копия из строки.
+  const user = users.find((item) => item.id === row.recipientUserId);
+  const name = user?.name || row.recipientName || "";
+  const title = getRowEmployeeTitle(user, row.recipientTitle);
+  // В PDF у аккаунта без ФИО имя уже заменено должностью — не дублируем.
+  return [title === name ? "" : title, name].filter(Boolean).join(", ");
 }
 
 export function getPpeIssuanceIssuerLabel(

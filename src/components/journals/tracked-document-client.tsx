@@ -60,6 +60,9 @@ type EmployeeItem = {
   id: string;
   name: string;
   role: string;
+  // Должность из карточки — дезинсекция показывает её под фамилией.
+  positionTitle?: string | null;
+  jobPosition?: { name: string; categoryKey: string } | null;
 };
 
 type FieldOption = {

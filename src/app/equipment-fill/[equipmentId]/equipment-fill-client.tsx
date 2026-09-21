@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2 } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
+import { SuccessCheck } from "@/components/qr-fill/success-check";
 import { Button } from "@/components/ui/button";
 import { DeviationCorrection } from "@/components/qr-fill/deviation-correction";
 import { QuickSwitchList, QuickSwitchNext, type QuickSwitchItem } from "@/components/qr-fill/quick-switch";
@@ -243,9 +244,7 @@ export function EquipmentFillClient({
 
         {done ? (
           <div className="rounded-3xl border border-[#ececf4] bg-white p-8 text-center shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
-            <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-[#ecfdf5] text-[#116b2a]">
-              <CheckCircle2 className="size-7" />
-            </div>
+            <SuccessCheck />
             <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-[#0b1024]">
               Записано
             </h2>

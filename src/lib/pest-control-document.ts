@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { getHygienePositionLabel } from "@/lib/hygiene-document";
+import { getUserDisplayTitle, getUserPositionLabel } from "@/lib/user-roles";
 
 export const PEST_CONTROL_TEMPLATE_CODE = "pest_control" as const;
 export const PEST_CONTROL_DOCUMENT_TITLE =
@@ -21,6 +21,9 @@ export type PestControlUser = {
   id: string;
   name: string;
   role: string;
+  // Должность из карточки (как в UserLike): варианты и подстановка — по ней.
+  positionTitle?: string | null;
+  jobPosition?: { name: string; categoryKey: string } | null;
 };
 
 export type PestControlEntryData = {
@@ -120,7 +123,9 @@ export function formatPestControlRowDate(
 }
 
 export function getPestControlRoleOptions(users: PestControlUser[]) {
-  const values = users.map((user) => getHygienePositionLabel(user.role));
+  // Метки из справочника должностей — те же, по которым фильтруются
+  // сотрудники (раньше лейблы ролей: «Кладовщик» не находился).
+  const values = users.map((user) => getUserPositionLabel(user));
   return [...new Set(values)].map((value) => ({ value, label: value }));
 }
 
@@ -128,7 +133,7 @@ export function getPestControlEmployeesForRole(
   users: PestControlUser[],
   roleLabel: string
 ) {
-  return users.filter((user) => getHygienePositionLabel(user.role) === roleLabel);
+  return users.filter((user) => getUserPositionLabel(user) === roleLabel);
 }
 
 export function getPestControlUsersForRole(
@@ -187,11 +192,20 @@ export function normalizePestControlEntryData(
   const rawMinute = safeString(source.performedMinute);
   const performedHour = rawHour ? rawHour.padStart(2, "0").slice(0, 2) : "";
   const performedMinute = rawMinute ? rawMinute.padStart(2, "0").slice(0, 2) : "";
-  const acceptedRole = safeString(source.acceptedRole) || getPestControlDefaultRole(users);
+  // Принявший известен (в т.ч. исполнитель TasksFlow) — его должность из
+  // карточки. Первую роль организации подставляем только совсем пустой
+  // записи: иначе под фамилией стояла чужая должность («Управляющий»).
+  const knownEmployeeId = safeString(source.acceptedEmployeeId) || fallbackEmployeeId;
+  const knownEmployee = users.find((user) => user.id === knownEmployeeId);
+  const acceptedRole =
+    safeString(source.acceptedRole) ||
+    (knownEmployee
+      ? getUserDisplayTitle(knownEmployee)
+      : knownEmployeeId
+        ? ""
+        : getPestControlDefaultRole(users));
   const acceptedEmployeeId =
-    safeString(source.acceptedEmployeeId) ||
-    fallbackEmployeeId ||
-    getPestControlDefaultEmployeeId(users, acceptedRole);
+    knownEmployeeId || getPestControlDefaultEmployeeId(users, acceptedRole);
   const timeSpecified = safeBoolean(source.timeSpecified) || !!(performedHour && performedMinute);
 
   return {

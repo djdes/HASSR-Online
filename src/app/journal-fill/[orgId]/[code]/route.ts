@@ -4,7 +4,6 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import {
   JOURNAL_FILL_HUB_CODE,
-  listEmployeeDailyStatus,
   listFillEmployees,
   listHubJournals,
   listJournalFillDocuments,
@@ -317,7 +316,6 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
   // ---- результат
   const done = q.get("done");
   if (done === "appended" || done === "updated") {
-    const daily = await listEmployeeDailyStatus({ orgId, employeeId: employee.id, disabledCodes, todayKey });
     const hints = journalFillHints(code);
     return page(
       title,
@@ -328,9 +326,6 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
         timeLabel: nowParts(timezone).time,
         offCount: Number(q.get("off") ?? 0) || 0,
         addMoreHref: hints.append || done === "appended" ? link({ ...keep, row: resolved.perEmployee ? null : rowKey }) : null,
-        daily: daily
-          .filter((item) => item.code !== code)
-          .map((item) => ({ ...item, href: link({ employee: employee.id }, item.code) })),
       }),
       null,
       `window.__qrDraftKey=${jsonForScript(`qr-draft:${orgId}:${code}:${document.id}:${rowKey}:${employee.id}:${todayKey}`)};window.__qrDraftDone=1;`,

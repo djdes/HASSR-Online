@@ -1,4 +1,5 @@
 "use client";
+import { SuccessCheck } from "@/components/qr-fill/success-check";
 import { draftKeyFor, useFormDraft } from "@/components/qr-fill/use-form-draft";
 import { BodyScrollLock } from "@/lib/use-body-scroll-lock";
 
@@ -928,9 +929,7 @@ function SharedAddAnotherCard({
 }) {
   return (
     <div className="rounded-3xl border border-[#ececf4] bg-white p-8 text-center shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
-      <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-[#ecfdf5] text-[#116b2a]">
-        <CheckCircle2 className="size-7" />
-      </div>
+      <SuccessCheck />
       <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-[#0b1024]">
         Запись сохранена
       </h2>
@@ -998,9 +997,7 @@ function SharedClosedCard({
   };
   return (
     <div className="rounded-3xl border border-[#ececf4] bg-white p-8 text-center shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
-      <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-[#ecfdf5] text-[#116b2a]">
-        <CheckCircle2 className="size-7" />
-      </div>
+      <SuccessCheck />
       <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-[#0b1024]">
         {labelByKind[closure.kind] ?? "Журнал закрыт"}
       </h2>
@@ -1185,9 +1182,7 @@ function AlreadyDoneCard({
 }) {
   return (
     <div className="rounded-3xl border border-[#ececf4] bg-white p-8 text-center shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
-      <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-[#ecfdf5] text-[#116b2a]">
-        <CheckCircle2 className="size-7" />
-      </div>
+      <SuccessCheck />
       <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-[#0b1024]">
         Задача выполнена
       </h2>
@@ -1235,9 +1230,7 @@ function SuccessCard({
 }) {
   return (
     <div className="rounded-3xl border border-[#ececf4] bg-white p-8 text-center shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
-      <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-[#ecfdf5] text-[#116b2a]">
-        <CheckCircle2 className="size-7" />
-      </div>
+      <SuccessCheck />
       <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-[#0b1024]">
         Журнал заполнен
       </h2>

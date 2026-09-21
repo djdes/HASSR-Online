@@ -36,7 +36,7 @@ import {
   splitTimeValue,
 } from "@/components/journals/time-field";
 import { Label } from "@/components/ui/label";
-import { USER_ROLE_LABEL_VALUES } from "@/lib/user-roles";
+import { getRowEmployeeTitle } from "@/lib/user-roles";
 import {
   Select,
   SelectContent,
@@ -50,7 +50,6 @@ import {
   formatIntensiveCoolingDate,
   formatIntensiveCoolingDateTime,
   formatTemperatureLabel,
-  getResponsibleTitleByRole,
   INTENSIVE_COOLING_DEFAULT_DOCUMENT_NAME,
   INTENSIVE_COOLING_DOCUMENT_TITLE,
   normalizeIntensiveCoolingConfig,
@@ -78,6 +77,9 @@ type UserItem = {
   id: string;
   name: string;
   role: string;
+  // Должность из карточки (как в UserLike) — её показываем в строке.
+  positionTitle?: string | null;
+  jobPosition?: { name: string; categoryKey: string } | null;
 };
 
 type Props = {
@@ -106,7 +108,9 @@ function minuteOptions() {
 function getResponsibleLabel(row: IntensiveCoolingRow, users: UserItem[]) {
   const employee = users.find((item) => item.id === row.responsibleUserId);
   const name = employee?.name || "";
-  const title = row.responsibleTitle || getResponsibleTitleByRole(employee?.role);
+  // Должность этого сотрудника, а не копия строки (туда попадала должность
+  // по умолчанию документа) и не «Повар» для ненайденного.
+  const title = getRowEmployeeTitle(employee, row.responsibleTitle);
   if (!title && !name) return "—";
   return [title, name].filter(Boolean).join(", ");
 }
@@ -130,7 +134,14 @@ function RowDialog(props: {
   useEffect(() => {
     if (!props.open) return;
     if (props.initialRow) {
-      setRow(props.initialRow);
+      const rowUser = props.users.find(
+        (user) => user.id === props.initialRow?.responsibleUserId
+      );
+      // Должность — как в ячейке, иначе селект открывался со старой копией.
+      setRow({
+        ...props.initialRow,
+        responsibleTitle: getRowEmployeeTitle(rowUser, props.initialRow.responsibleTitle),
+      });
       return;
     }
     // Ответственный журнала, иначе вошедший — не «первый в списке».
@@ -146,9 +157,12 @@ function RowDialog(props: {
     setRow(
       createIntensiveCoolingRow({
         responsibleUserId: fallbackUser?.id || "",
-        responsibleTitle:
-          props.config.defaultResponsibleTitle ||
-          getResponsibleTitleByRole(fallbackUser?.role),
+        // Должность того, кто подставлен: fallbackUser может быть вошедшим,
+        // а должность по умолчанию документа — ответственного.
+        responsibleTitle: getRowEmployeeTitle(
+          fallbackUser,
+          props.config.defaultResponsibleTitle
+        ),
         productionHour: hh,
         productionMinute: mm,
       })
@@ -303,8 +317,7 @@ function RowDialog(props: {
                 setRow((current) => ({
                   ...current,
                   responsibleUserId: value,
-                  responsibleTitle:
-                    current.responsibleTitle || getResponsibleTitleByRole(user?.role),
+                  responsibleTitle: getRowEmployeeTitle(user, current.responsibleTitle),
                 }));
               }}
               open={responsibleCascade.employeeOpen}

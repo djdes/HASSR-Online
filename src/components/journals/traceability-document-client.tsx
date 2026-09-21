@@ -30,7 +30,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { USER_ROLE_LABEL_VALUES, getUserRoleLabel } from "@/lib/user-roles";
+import {
+  USER_ROLE_LABEL_VALUES,
+  getRowEmployeeTitle,
+  getUserDisplayTitle,
+} from "@/lib/user-roles";
 import { buildStaffOptionLabel } from "@/lib/journal-staff-binding";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
@@ -61,7 +65,14 @@ import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 import { OrgDirectoryDialog } from "@/components/journals/org-directory-dialog";
 
-type PersonItem = { id: string; name: string; role?: string | null };
+// Должность из карточки (как в UserLike) — её пишем в строку и показываем.
+type PersonItem = {
+  id: string;
+  name: string;
+  role?: string | null;
+  positionTitle?: string | null;
+  jobPosition?: { name: string; categoryKey: string } | null;
+};
 type TraceabilitySettingsDraft = { title: string; dateFrom: string; showShockTempField: boolean; showShipmentBlock: boolean };
 type TraceabilityRowDraft = {
   id: string;
@@ -197,9 +208,20 @@ function rowToDraft(row: TraceabilityRow, config: TraceabilityDocumentConfig): T
     outgoingQuantityPieces: row.outgoing.quantityPacksPieces != null ? String(row.outgoing.quantityPacksPieces) : "",
     outgoingQuantityKg: row.outgoing.quantityPacksKg != null ? String(row.outgoing.quantityPacksKg) : "",
     outgoingShockTemp: row.outgoing.shockTemp != null ? String(row.outgoing.shockTemp) : "",
-    responsibleRole: row.responsibleRole || config.defaultResponsibleRole || "",
-    responsibleEmployeeId: row.responsibleEmployeeId || config.defaultResponsibleEmployeeId || "",
-    responsibleEmployee: row.responsibleEmployee || config.defaultResponsibleEmployee || "",
+    // Человек в строке уже есть — его должность, а не должность
+    // ответственного документа (другого человека). Пара по умолчанию —
+    // только для строки без ответственного.
+    ...(row.responsibleEmployeeId || row.responsibleEmployee
+      ? {
+          responsibleRole: row.responsibleRole || "",
+          responsibleEmployeeId: row.responsibleEmployeeId || "",
+          responsibleEmployee: row.responsibleEmployee || "",
+        }
+      : {
+          responsibleRole: config.defaultResponsibleRole || "",
+          responsibleEmployeeId: config.defaultResponsibleEmployeeId || "",
+          responsibleEmployee: config.defaultResponsibleEmployee || "",
+        }),
   };
 }
 function draftToRow(draft: TraceabilityRowDraft) {
@@ -770,16 +792,20 @@ function RowDialog(props: {
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="space-y-2"><Label className="text-[13.5px] text-[#7a7c8e]">Должность ответственного</Label><Select value={draft.responsibleRole || "__empty__"} onValueChange={(value) => setField("responsibleRole", value === "__empty__" ? "" : value)} disabled={employees.length > 0}><SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f3f4fb] px-3.5 text-[13.5px]"><SelectValue placeholder="Выберите сотрудника" /></SelectTrigger><SelectContent><SelectItem value="__empty__">- Выберите значение -</SelectItem><PositionSelectItems users={props.employees} /></SelectContent></Select></div>
                 <div className="space-y-2"><Label className="text-[15px] text-[#7a7c8e]">Сотрудник</Label>{employees.length > 0 ? <Select value={draft.responsibleEmployeeId || "__empty__"} onValueChange={(value) => {
+                  // Одним setDraft: три setField подряд брали один и тот же
+                  // устаревший draft, и применялся только последний — выбор
+                  // сотрудника не сохранялся, менялась лишь должность.
                   if (value === "__empty__") {
-                    setField("responsibleEmployeeId", "");
-                    setField("responsibleEmployee", "");
-                    setField("responsibleRole", "");
+                    setDraft({ ...draft, responsibleEmployeeId: "", responsibleEmployee: "", responsibleRole: "" });
                     return;
                   }
                   const employee = employees.find((item) => item.id === value);
-                  setField("responsibleEmployeeId", value);
-                  setField("responsibleEmployee", employee?.name || "");
-                  setField("responsibleRole", employee ? getUserRoleLabel(employee.role) : draft.responsibleRole);
+                  setDraft({
+                    ...draft,
+                    responsibleEmployeeId: value,
+                    responsibleEmployee: employee?.name || "",
+                    responsibleRole: employee ? getUserDisplayTitle(employee) : draft.responsibleRole,
+                  });
                 }}><SelectTrigger className="h-10 rounded-xl border-[#d8dae6] bg-[#f3f4fb] px-3.5 text-[13.5px]"><SelectValue placeholder="Выберите сотрудника" /></SelectTrigger><SelectContent><SelectItem value="__empty__">- Выберите значение -</SelectItem>{employees.map((employee) => <SelectItem key={employee.id} value={employee.id}>{buildStaffOptionLabel(employee)}</SelectItem>)}</SelectContent></Select> : <Input value={draft.responsibleEmployee} onChange={(e) => setField("responsibleEmployee", e.target.value)} placeholder="ФИО ответственного" className="h-10 rounded-xl border-[#d8dae6] px-3.5 text-[13.5px]" />}</div>
               </div>
             </div>
@@ -921,7 +947,20 @@ export function TraceabilityDocumentClient(props: Props) {
         config.showShockTempField
           ? { label: "T°C после шока", value: row.outgoing.shockTemp != null ? String(row.outgoing.shockTemp) : "", hideIfEmpty: true }
           : null,
-        { label: "Ответственный", value: [row.responsibleRole, responsibleName(row)].filter(Boolean).join(", "), hideIfEmpty: true },
+        {
+          label: "Ответственный",
+          // Должность этого человека из карточки, копия строки — если его нет.
+          value: [
+            getRowEmployeeTitle(
+              employees.find((employee) => employee.id === row.responsibleEmployeeId),
+              row.responsibleRole
+            ),
+            responsibleName(row),
+          ]
+            .filter(Boolean)
+            .join(", "),
+          hideIfEmpty: true,
+        },
       ].filter((f): f is { label: string; value: string; hideIfEmpty: boolean } => f !== null),
       onClick: !isClosed
         ? () => {

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { isManagementRole } from "@/lib/user-roles";
+import { getRowEmployeeTitle, isManagementRole } from "@/lib/user-roles";
 import { toast } from "sonner";
 import { useJournalUndo } from "@/lib/journal-undo";
 import { Archive, Plus, X } from "lucide-react";
@@ -56,6 +56,9 @@ type UserItem = {
   id: string;
   name: string;
   role: string;
+  // Должность из карточки (как в UserLike) — под фамилией принявшего.
+  positionTitle?: string | null;
+  jobPosition?: { name: string; categoryKey: string } | null;
 };
 
 type EntryItem = {
@@ -589,7 +592,7 @@ export function PestControlDocumentClient(props: Props) {
         { label: "Кем проведено", value: entry.data.performedBy, hideIfEmpty: true },
         {
           label: "Принявший",
-          value: [entry.data.acceptedRole, acceptedUser?.name].filter(Boolean).join(", "),
+          value: [getRowEmployeeTitle(acceptedUser, entry.data.acceptedRole), acceptedUser?.name].filter(Boolean).join(", "),
           hideIfEmpty: true,
         },
       ],
@@ -905,7 +908,7 @@ export function PestControlDocumentClient(props: Props) {
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>
                     {isPlaceholder
                       ? ""
-                      : [entry.data.acceptedRole, acceptedUser?.name].filter(Boolean).join(", ")}
+                      : [getRowEmployeeTitle(acceptedUser, entry.data.acceptedRole), acceptedUser?.name].filter(Boolean).join(", ")}
                   </td>
                 </tr>
               );

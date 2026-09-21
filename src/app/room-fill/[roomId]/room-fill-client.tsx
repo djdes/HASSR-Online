@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2 } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
+import { SuccessCheck } from "@/components/qr-fill/success-check";
 
 import { Button } from "@/components/ui/button";
 import { DeviationCorrection } from "@/components/qr-fill/deviation-correction";
@@ -208,9 +209,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
 
         {saved ? (
           <div className="rounded-3xl border border-[#ececf4] bg-white p-8 text-center">
-            <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-[#ecfdf5] text-[#116b2a]">
-              <CheckCircle2 className="size-7" />
-            </div>
+            <SuccessCheck />
             <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-[#0b1024]">Записано</h2>
             <p className="mt-2 text-[14px] leading-relaxed text-[#6f7282]">
               Записано в бланк за сегодня{saved.slot ? `, ${saved.slot}` : ""}
