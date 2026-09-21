@@ -6,6 +6,7 @@ import {
   applyColumnsToConfig,
   columnsConfigFromResolved,
   legacyFlagsFromColumns,
+  moveColumn,
   parseOrgColumnDefaults,
   removeCustomColumn,
   resolveColumns,
@@ -17,20 +18,23 @@ import {
 
 const keys = (columns: Array<{ key: string }>) => columns.map((column) => column.key);
 
-test("реестр: 12 колонок бракеража готовой продукции и 11 — скоропорта", () => {
-  // 12-я — «Разрешение к реализации: Да/Нет», заведена позже остальных.
-  assert.equal(resolveColumns("finished_product", {}).length, 12);
-  assert.equal(resolveColumns("perishable_rejection", {}).length, 11);
+test("реестр: 15 колонок бракеража готовой продукции и 12 — скоропорта", () => {
+  // Восемь колонок формы Приложения 4 + семь колонок расширенной формы.
+  assert.equal(resolveColumns("finished_product", {}).length, 15);
+  assert.equal(resolveColumns("perishable_rejection", {}).length, 12);
   assert.deepEqual(resolveColumns("hygiene", {}), []);
 });
 
-test("старый документ без columns выглядит как раньше (флаги showX, showNote по умолчанию true)", () => {
+test("старый документ без columns: форма Приложения 4 + прежние видимые колонки (ничего не прячем)", () => {
   assert.deepEqual(keys(visibleColumns("finished_product", {})), [
     "production",
     "rejection",
     "name",
     "organoleptic",
     "release",
+    "signatures",
+    "portion",
+    "note",
     "responsible",
     "inspector",
   ]);
@@ -53,12 +57,12 @@ test("приоритет: columns документа → общий вариан
   assert.equal(ownWins.find((column) => column.key === "responsible")?.hidden, false);
 });
 
-test("обязательную колонку скрыть нельзя, неизвестные ключи отбрасываются", () => {
+test("любую колонку можно скрыть, неизвестные ключи отбрасываются", () => {
   const sanitized = sanitizeColumnsConfig("perishable_rejection", {
     hidden: ["product", "note", "nope", "note"],
     labels: { nope: "x", product: "  Продукт  ", note: "" },
   });
-  assert.deepEqual(sanitized, { hidden: ["note"], labels: { product: "Продукт" } });
+  assert.deepEqual(sanitized, { hidden: ["product", "note"], labels: { product: "Продукт" } });
   assert.equal(sanitizeColumnsConfig("hygiene", { hidden: ["x"] }), null);
   assert.equal(sanitizeColumnsConfig("finished_product", "broken"), null);
 });
@@ -67,7 +71,7 @@ test("подпись ограничена и не хранится, если с�
   const long = "а".repeat(200);
   const sanitized = sanitizeColumnsConfig("finished_product", {
     hidden: [],
-    labels: { organoleptic: long, release: "Разрешение к реализации (время)" },
+    labels: { organoleptic: long, release: "Разрешение к реализации блюда, кулинарного изделия" },
   });
   assert.equal(sanitized?.labels.organoleptic.length, JOURNAL_COLUMN_LABEL_MAX);
   assert.equal("release" in (sanitized?.labels ?? {}), false);
@@ -86,6 +90,8 @@ test("legacyFlagsFromColumns ↔ columnsConfigFromResolved", () => {
     showOxygenLevel: false,
     showReleaseAllowed: true,
     showCourierTime: true,
+    showResponsible: true,
+    showInspector: true,
   });
   assert.deepEqual(legacyFlagsFromColumns("perishable_rejection", { hidden: ["note"], labels: {} }), { showNote: false });
 
@@ -97,6 +103,7 @@ test("legacyFlagsFromColumns ↔ columnsConfigFromResolved", () => {
       (key) => resolved.find((c) => c.key === key)?.hidden
     ),
     labels: { name: "Блюдо" },
+    order: resolved.map((column) => column.key),
   });
 });
 
@@ -124,7 +131,7 @@ test("общий набор организации: мусор и журналы
     hygiene: { hidden: ["x"] },
     perishable_rejection: "broken",
   });
-  assert.deepEqual(parsed, { finished_product: { hidden: ["temp"], labels: { name: "Блюдо" } } });
+  assert.deepEqual(parsed, { finished_product: { hidden: ["temp", "name"], labels: { name: "Блюдо" } } });
   assert.deepEqual(parseOrgColumnDefaults(null), {});
 });
 
@@ -184,12 +191,12 @@ test("своя колонка резолвится после колонок б�
   assert.deepEqual(last.custom?.options, ["Первая", "Вторая"]);
 });
 
-test("свою колонку можно скрыть, обязательную колонку бланка — нет", () => {
+test("скрыть можно и свою колонку, и любую колонку бланка", () => {
   const resolved = resolveColumns("finished_product", {
     columns: { hidden: [CUSTOM.key, "name"], labels: {}, custom: [CUSTOM] },
   });
   assert.equal(resolved.find((c) => c.key === CUSTOM.key)?.hidden, true);
-  assert.equal(resolved.find((c) => c.key === "name")?.hidden, false);
+  assert.equal(resolved.find((c) => c.key === "name")?.hidden, true);
 });
 
 test("отметка «обязательно заполнять» доходит и до колонки бланка, и до своей", () => {
@@ -239,4 +246,43 @@ test("конфиг из resolved сохраняет свои колонки и �
   const back = columnsConfigFromResolved(resolved);
   assert.equal(back.custom?.length, 1);
   assert.deepEqual(back.mustFill, [CUSTOM.key]);
+});
+
+test("форма Приложения 4: подписи колонок как на бумажном бланке", () => {
+  const labels = visibleColumns("finished_product", {
+    showResponsible: false,
+    showInspector: false,
+  }).map((column) => column.label);
+  assert.deepEqual(labels, [
+    "Дата и час изготовления блюда",
+    "Время снятия бракеража",
+    "Наименование готового блюда",
+    "Результаты органолептической оценки качества готовых блюд",
+    "Разрешение к реализации блюда, кулинарного изделия",
+    "Подпись бракеражной комиссии",
+    "Результат взвешивания порционных блюд",
+    "Примечание",
+  ]);
+});
+
+test("порядок колонок: order из набора, остальные — по реестру", () => {
+  const resolved = resolveColumns("finished_product", {
+    columns: { hidden: [], labels: {}, order: ["note", "name", "nope"] },
+  });
+  assert.deepEqual(keys(resolved).slice(0, 3), ["note", "name", "production"]);
+  const moved = moveColumn({ hidden: [], labels: {} }, resolveColumns("finished_product", {}), "rejection", -1);
+  assert.deepEqual(moved.order?.slice(0, 2), ["rejection", "production"]);
+});
+
+test("скоропорт: колонка подписей появляется только у документа с комиссией", () => {
+  const without = resolveColumns("perishable_rejection", {}).find((column) => column.key === "signatures");
+  assert.equal(without?.hidden, true);
+  assert.ok(without?.unavailable);
+  const withCommission = resolveColumns("perishable_rejection", {
+    commissionMembers: [{ id: "c", role: "Председатель", employeeId: "u1", employeeName: "Иванова" }],
+  }).find((column) => column.key === "signatures");
+  assert.equal(withCommission?.hidden, false);
+  // Недоступная колонка не записывается в набор скрытой.
+  const config = columnsConfigFromResolved(resolveColumns("perishable_rejection", {}));
+  assert.equal(config.hidden.includes("signatures"), false);
 });

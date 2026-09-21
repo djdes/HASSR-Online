@@ -16,10 +16,16 @@
  * Today-compliance recognises this journal as filled when at least one
  * row carries today's date (`arrivalDate.slice(0,10) === todayKey`).
  */
+import type { Prisma } from "@prisma/client";
+
 import { db } from "@/lib/db";
+import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import {
   PERISHABLE_REJECTION_TEMPLATE_CODE,
-  type PerishableRejectionConfig,
+  createPerishableRejectionRow,
+  formatPerishableResponsible,
+  normalizePerishableOrganoleptic,
+  normalizePerishableRejectionConfig,
   type PerishableRejectionRow,
 } from "@/lib/perishable-rejection-document";
 import { findTaskEmployee } from "@/lib/journal-roster-db";
@@ -90,7 +96,9 @@ function buildPerishableForm(employeeName: string | null): TaskFormSchema {
         required: true,
         options: [
           { value: "compliant", label: "Соответствует — принято" },
+          { value: "good_quality", label: "Доброкачественная — принято" },
           { value: "non_compliant", label: "Не соответствует — брак" },
+          { value: "poor_quality", label: "Недоброкачественная — брак" },
         ],
         defaultValue: "compliant",
       },
@@ -183,73 +191,71 @@ export const perishableRejectionAdapter: JournalAdapter = {
     if (!completed) return false;
     const employeeId = employeeIdFromRowKey(rowKey);
     if (!employeeId) return false;
-
-    const doc = await db.journalDocument.findUnique({
-      where: { id: documentId },
-      select: { config: true, organizationId: true, template: { select: { code: true } } },
-    });
-    if (!doc || doc.template.code !== TEMPLATE_CODE) return false;
-    const employee = await findTaskEmployee({ employeeId, organizationId: doc.organizationId });
+    // Сотрудник из rowKey (внешний сервис) — только своей организации.
+    const doc = await db.journalDocument.findUnique({ where: { id: documentId }, select: { organizationId: true } });
+    const employee = await findTaskEmployee({ employeeId, organizationId: doc?.organizationId });
     if (!employee) return false;
-    const currentConfig = (doc.config ?? {}) as PerishableRejectionConfig;
-    const existingRows = Array.isArray(currentConfig.rows)
-      ? currentConfig.rows
-      : [];
-
-    // Upsert-by-sourceRowKey: re-completion of the same TF task updates
-    // the existing row instead of appending a duplicate. Manual admin
-    // rows (no sourceRowKey) are untouched.
-    const existingIndex = existingRows.findIndex(
-      (r) => r.sourceRowKey === rowKey
-    );
-    const existingId =
-      existingIndex >= 0
-        ? existingRows[existingIndex].id
-        : `perishable-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-
-    const organolepticResult =
-      values?.organolepticResult === "non_compliant"
-        ? "non_compliant"
-        : "compliant";
-
-    const row: PerishableRejectionRow = {
-      id: existingId,
-      arrivalDate: todayKey,
-      arrivalTime: normalizeTime(values?.arrivalTime),
-      productName:
-        typeof values?.productName === "string" ? values.productName : "",
-      productionDate: "",
-      manufacturer: "",
-      supplier:
-        typeof values?.supplier === "string" ? values.supplier : "",
-      packaging: "",
-      quantity:
-        typeof values?.quantity === "string" ? values.quantity : "",
-      documentNumber: "",
-      organolepticResult,
-      storageCondition: "2_6",
-      expiryDate: "",
-      expiryTime: "",
-      actualSaleDate: "",
-      actualSaleTime: "",
-      responsiblePerson: employee?.name ?? "",
-      note: typeof values?.note === "string" ? values.note : "",
-      sourceRowKey: rowKey,
-    };
-
-    const nextRows =
-      existingIndex >= 0
-        ? existingRows.map((r, i) => (i === existingIndex ? row : r))
-        : [...existingRows, row];
-    const nextConfig: PerishableRejectionConfig = {
-      ...currentConfig,
-      rows: nextRows,
-    };
-
-    await db.journalDocument.update({
-      where: { id: documentId },
-      data: { config: nextConfig },
+    const written = await appendPerishableRows({
+      documentId,
+      employee,
+      todayKey,
+      entries: [{ rowKey, values: values ?? {} }],
     });
-    return true;
+    return written > 0;
   },
 };
+
+function textValue(value: unknown): string | undefined {
+  if (typeof value === "number") return String(value);
+  return typeof value === "string" ? value : undefined;
+}
+
+/**
+ * Записать строки скоропорта (QR, TasksFlow, «Несколько позиций» по QR) под
+ * блокировкой документа. Повтор той же задачи обновляет свою строку, не
+ * трогая поля, заполненные на сайте. Возвращает число записанных строк.
+ */
+export async function appendPerishableRows(params: {
+  documentId: string;
+  /** Уже сверенный с организацией документа сотрудник (findTaskEmployee). */
+  employee: { id: string; name: string; positionTitle: string | null };
+  todayKey: string;
+  entries: Array<{ rowKey: string; values: Record<string, unknown> }>;
+}): Promise<number> {
+  const result = await withDocumentConfigLock(params.documentId, async (doc) => {
+    if (doc.templateCode !== TEMPLATE_CODE) return null;
+    const employee = params.employee;
+    const config = normalizePerishableRejectionConfig(doc.config);
+    const rows = [...config.rows];
+    let written = 0;
+    for (const entry of params.entries) {
+      const values = entry.values;
+      const patch: Partial<PerishableRejectionRow> = {
+        arrivalDate: params.todayKey,
+        arrivalTime: normalizeTime(values.arrivalTime),
+        productName: textValue(values.productName) ?? "",
+        supplier: textValue(values.supplier) ?? "",
+        quantity: textValue(values.quantity) ?? "",
+        organolepticResult: normalizePerishableOrganoleptic(values.organolepticResult),
+        note: textValue(values.note) ?? "",
+      };
+      const existingIndex = rows.findIndex((row) => row.sourceRowKey === entry.rowKey);
+      if (existingIndex >= 0) {
+        rows[existingIndex] = createPerishableRejectionRow({ ...rows[existingIndex], ...patch });
+      } else {
+        rows.push(
+          createPerishableRejectionRow({
+            ...patch,
+            id: `perishable-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            storageCondition: "2_6",
+            responsiblePerson: formatPerishableResponsible(employee),
+            sourceRowKey: entry.rowKey,
+          })
+        );
+      }
+      written += 1;
+    }
+    return { config: { ...config, rows } as unknown as Prisma.InputJsonValue, result: written };
+  });
+  return result ?? 0;
+}

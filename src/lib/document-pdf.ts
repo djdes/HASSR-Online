@@ -1,3 +1,4 @@
+import { formatRowSignatures, normalizeRowSignatures } from "@/lib/brakerage-commission";
 import fs from "fs";
 import path from "path";
 import type { Prisma } from "@prisma/client";
@@ -54,6 +55,7 @@ import {
 import { applyRoomResponsiblesToConfig } from "@/lib/cleaning-room-responsibles";
 import {
   FINISHED_PRODUCT_DOCUMENT_TEMPLATE_CODE,
+  finishedProductCellText,
   getFinishedProductDocumentTitle,
   getFinishedProductFilePrefix,
   normalizeFinishedProductDocumentConfig,
@@ -2598,13 +2600,19 @@ function pdfColumns(code: string, config: unknown) {
   );
   return {
     visible: (key: string) => byKey.get(key)?.hidden !== true,
-    label: (key: string, printDefault: string) => {
-      const column = byKey.get(key);
-      return column && column.label !== column.defaultLabel ? column.label : printDefault;
-    },
+    // Подпись колонки — как в таблице (стандартная из реестра или своя):
+    // иначе новые названия формы Приложения 4 не доезжали бы до печати.
+    label: (key: string, printDefault: string) => byKey.get(key)?.label ?? printDefault,
     /** Свои колонки организации — печатаются после колонок бланка. */
     custom: () =>
       [...byKey.values()].filter((column) => column.custom !== null && !column.hidden),
+    /** Место колонки в порядке показа (для сортировки печатных колонок). */
+    rank: (key: string) => {
+      const index = [...byKey.keys()].indexOf(key);
+      return index < 0 ? Number.MAX_SAFE_INTEGER : index;
+    },
+    /** Видимые колонки в порядке показа. */
+    ordered: () => [...byKey.values()].filter((column) => !column.hidden),
   };
 }
 
@@ -2623,69 +2631,24 @@ function drawFinishedProductPdf(doc: jsPDF, params: {
     dateTo: params.dateTo,
   });
 
+  // Колонки — ровно как в таблице документа: видимые, в заданном порядке,
+  // с подписями формы Приложения 4 (или своими). Текст ячейки — тот же, что
+  // у карточки на телефоне (`finishedProductCellText`).
   const columns = pdfColumns("finished_product", params.config);
-  const headRow: RowInput = [
-    centerCell("№"),
-    centerCell(columns.label("production", "Дата, время изготовления")),
-    centerCell(columns.label("rejection", "Время снятия бракеража")),
-    centerCell(
-      columns.label(
-        "name",
-        params.config.fieldNameMode === "semi"
-          ? "Наименование полуфабриката"
-          : "Наименование блюд (изделий)"
-      )
-    ),
-    centerCell(columns.label("organoleptic", "Органолептическая оценка (включая оценку степени готовности)")),
-  ];
-  if (columns.visible("temp")) headRow.push(centerCell(columns.label("temp", "T продукта")));
-  if (columns.visible("corrective")) headRow.push(centerCell(columns.label("corrective", "Корректирующие действия")));
-  if (columns.visible("oxygen")) headRow.push(centerCell(columns.label("oxygen", "Остаточный кислород, %")));
-  headRow.push(centerCell(columns.label("release", "Разрешение к реализации (время)")));
-  if (columns.visible("release_allowed")) {
-    headRow.push(centerCell(columns.label("release_allowed", "Разрешение к реализации: Да/Нет")));
-  }
-  if (columns.visible("courier")) headRow.push(centerCell(columns.label("courier", "Передача курьеру")));
-  if (columns.visible("responsible")) {
-    headRow.push(centerCell(columns.label("responsible", "Ответственный исполнитель (ФИО, должность)")));
-  }
-  headRow.push(
-    centerCell(
-      columns.label(
-        "inspector",
-        params.config.inspectorMode === "commission_signatures"
-          ? "Подписи комиссии"
-          : "ФИО лица, проводившего бракераж"
-      )
-    )
-  );
-  const customColumns = columns.custom();
-  for (const column of customColumns) headRow.push(centerCell(column.label));
+  const printColumns = columns.ordered();
+  const inspectorFallback = !columns.visible("inspector");
+  const headRow: RowInput = [centerCell("№"), ...printColumns.map((column) => centerCell(column.label))];
   const head: RowInput[] = [headRow];
 
-  const body: RowInput[] = params.config.rows.map((row, index) => {
-    const line: RowInput = [
-      centerCell(String(index + 1)),
-      centerCell(row.productionDateTime || ""),
-      centerCell(row.rejectionTime || ""),
-      { content: row.productName || "", styles: { halign: "left", valign: "middle" } },
-      centerCell(row.organoleptic || ""),
-    ];
-    if (columns.visible("temp")) line.push(centerCell(row.productTemp || ""));
-    if (columns.visible("corrective")) {
-      line.push({ content: row.correctiveAction || "", styles: { halign: "left", valign: "middle" } });
-    }
-    if (columns.visible("oxygen")) line.push(centerCell(row.oxygenLevel || ""));
-    line.push(centerCell(row.releasePermissionTime || ""));
-    if (columns.visible("release_allowed")) {
-      line.push(centerCell(row.releaseAllowed === "no" ? "Нет" : "Да"));
-    }
-    if (columns.visible("courier")) line.push(centerCell(row.courierTransferTime || ""));
-    if (columns.visible("responsible")) line.push(centerCell(row.responsiblePerson || ""));
-    line.push(centerCell(row.inspectorName || ""));
-    for (const column of customColumns) line.push(centerCell(row.custom?.[column.key] || ""));
-    return line;
-  });
+  const body: RowInput[] = params.config.rows.map((row, index) => [
+    centerCell(String(index + 1)),
+    ...printColumns.map((column) => {
+      const text = finishedProductCellText(row, column.key, { inspectorFallback });
+      return column.key === "name" || column.key === "corrective" || column.key === "note"
+        ? { content: text, styles: { halign: "left" as const, valign: "middle" as const } }
+        : centerCell(text);
+    }),
+  ]);
 
   autoTable(doc, {
     startY: afterHeader(metaBottom, 66),
@@ -3605,9 +3568,16 @@ function drawPerishableRejectionPdf(doc: jsPDF, params: {
       cell: (row) => row.responsiblePerson,
       style: { cellWidth: 27 },
     },
+    {
+      key: "signatures",
+      head: perishableColumns.label("signatures", "Подпись бракеражной комиссии"),
+      cell: (row) => formatRowSignatures(normalizeRowSignatures((row as { signatures?: unknown }).signatures)),
+      style: { cellWidth: 26 },
+    },
     { key: "note", head: perishableColumns.label("note", "Примечание"), cell: (row) => row.note, style: { cellWidth: 24 } },
   ] satisfies PerishablePrintColumn[])
     .filter((column) => perishableColumns.visible(column.key))
+    .sort((a, b) => perishableColumns.rank(a.key) - perishableColumns.rank(b.key))
     // Свои колонки организации печатаются последними — в том же порядке,
     // что на экране.
     .concat(

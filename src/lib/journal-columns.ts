@@ -6,7 +6,9 @@
  *   { hidden: ["temp", "courier"], labels: { name: "Блюдо" } }
  *
  * Правила:
- *   • обязательную колонку бланка (`required`) скрыть нельзя;
+ *   • любую колонку можно скрыть и переименовать (владелец, 2026-09-21:
+ *     «обязательных колонок бланка» больше нет), свою — удалить;
+ *   • порядок — `order` (ключи в порядке показа), иначе порядок реестра;
  *   • неизвестные ключи отбрасываются, подпись — не длиннее 60 символов;
  *   • пустая подпись или совпадающая со стандартной не хранится;
  *   • скрытая колонка данных не теряет: значения строк остаются в конфиге.
@@ -79,11 +81,10 @@ export type JournalColumnsConfig = {
   labels: Record<string, string>;
   /** Свои колонки — дописываются в конец таблицы в этом порядке. */
   custom?: JournalCustomColumn[];
-  /**
-   * Колонки, которые организация считает обязательными к ЗАПОЛНЕНИЮ.
-   * Не путать с `required` у колонки бланка: та про «нельзя скрыть».
-   */
+  /** Колонки, которые организация считает обязательными к ЗАПОЛНЕНИЮ. */
   mustFill?: string[];
+  /** Порядок показа: ключи колонок. Нет — порядок реестра, свои в конце. */
+  order?: string[];
 };
 
 export function isCustomColumnKey(key: string): boolean {
@@ -103,8 +104,13 @@ export type JournalColumnDef = {
   label: string | ((config: ConfigRecord) => string);
   /** Относительная ширина в таблице. */
   weight: number;
-  /** Обязательная колонка бланка — скрыть нельзя. */
-  required?: boolean;
+  /**
+   * Колонка имеет смысл только при условии (подписи — когда у документа есть
+   * комиссия). Условие ложно — колонка скрыта и в настройках неактивна.
+   */
+  visibleIf?: (config: ConfigRecord) => boolean;
+  /** Подсказка, почему колонка сейчас недоступна. */
+  unavailableHint?: string;
   /**
    * Старый булев флаг конфига, которым колонка включалась раньше.
    * `defaultVisible` — как вёл себя документ без флага.
@@ -126,9 +132,11 @@ export type ResolvedJournalColumn = {
   label: string;
   defaultLabel: string;
   weight: number;
-  /** Обязательная колонка бланка — скрыть нельзя. */
-  required: boolean;
   hidden: boolean;
+  /** Скрыта человеком (в наборе); `hidden` ещё учитывает `unavailable`. */
+  hiddenByChoice: boolean;
+  /** `visibleIf` ложно: колонку сейчас не показать (текст — почему). */
+  unavailable?: string;
   align?: "center";
   /** Обязательна к заполнению — пустая ячейка подсвечивается. */
   mustFill: boolean;
@@ -136,22 +144,33 @@ export type ResolvedJournalColumn = {
   custom: JournalCustomColumn | null;
 };
 
+function hasCommissionMembers(config: ConfigRecord): boolean {
+  return Array.isArray(config.commissionMembers) && config.commissionMembers.length > 0;
+}
+
+/**
+ * Реестр бракеража готовой продукции. Первые восемь колонок — бумажная форма
+ * Приложения 4 (фото владельца, 2026-09-21) в её порядке и с её подписями;
+ * дальше — колонки расширенной формы, у новых документов скрытые.
+ */
 const FINISHED_PRODUCT_COLUMNS: JournalColumnDef[] = [
-  { key: "production", label: "Дата, время изготовления", weight: 9, required: true, align: "center" },
-  { key: "rejection", label: "Время снятия бракеража", weight: 7, required: true, align: "center" },
+  { key: "production", label: "Дата и час изготовления блюда", weight: 9, align: "center" },
+  { key: "rejection", label: "Время снятия бракеража", weight: 7, align: "center" },
   {
     key: "name",
     label: (config) =>
-      config.fieldNameMode === "semi" ? "Наименование полуфабриката" : "Наименование блюд (изделий)",
+      config.fieldNameMode === "semi" ? "Наименование полуфабриката" : "Наименование готового блюда",
     weight: 13,
-    required: true,
   },
   {
     key: "organoleptic",
-    label: "Органолептическая оценка (включая оценку степени готовности)",
-    weight: 31,
-    required: true,
+    label: "Результаты органолептической оценки качества готовых блюд",
+    weight: 20,
   },
+  { key: "release", label: "Разрешение к реализации блюда, кулинарного изделия", weight: 11, align: "center" },
+  { key: "signatures", label: "Подпись бракеражной комиссии", weight: 13 },
+  { key: "portion", label: "Результат взвешивания порционных блюд", weight: 8, align: "center" },
+  { key: "note", label: "Примечание", weight: 10 },
   {
     key: "temp",
     label: "T°C внутри продукта",
@@ -172,7 +191,6 @@ const FINISHED_PRODUCT_COLUMNS: JournalColumnDef[] = [
     legacyFlag: { key: "showOxygenLevel", defaultVisible: false },
     align: "center",
   },
-  { key: "release", label: "Разрешение к реализации (время)", weight: 13, required: true, align: "center" },
   {
     key: "release_allowed",
     label: "Разрешение к реализации: Да/Нет",
@@ -188,7 +206,12 @@ const FINISHED_PRODUCT_COLUMNS: JournalColumnDef[] = [
     legacyFlag: { key: "showCourierTime", defaultVisible: false },
     align: "center",
   },
-  { key: "responsible", label: "Ответственный исполнитель (ФИО, должность)", weight: 14 },
+  {
+    key: "responsible",
+    label: "Ответственный исполнитель (ФИО, должность)",
+    weight: 14,
+    legacyFlag: { key: "showResponsible", defaultVisible: true },
+  },
   {
     key: "inspector",
     label: (config) =>
@@ -196,21 +219,28 @@ const FINISHED_PRODUCT_COLUMNS: JournalColumnDef[] = [
         ? "Подписи членов комиссии"
         : "ФИО лица, проводившего бракераж",
     weight: 13,
-    required: true,
+    legacyFlag: { key: "showInspector", defaultVisible: true },
   },
 ];
 
 const PERISHABLE_REJECTION_COLUMNS: JournalColumnDef[] = [
-  { key: "arrival", label: "Дата, время поступления пищ. продукции", weight: 95, required: true },
-  { key: "product", label: "Наименование", weight: 110, required: true },
+  { key: "arrival", label: "Дата, время поступления пищ. продукции", weight: 95 },
+  { key: "product", label: "Наименование", weight: 110 },
   { key: "productionDate", label: "Дата выработки", weight: 78 },
   { key: "manufacturer", label: "Изготовитель/поставщик", weight: 100 },
   { key: "packaging", label: "Фасовка/Кол-во поступившего продукта (в кг, литрах, шт)", weight: 92 },
   { key: "document", label: "Номер документа, подтверждающего безопасность", weight: 92 },
-  { key: "organoleptic", label: "Результаты органолептической оценки", weight: 100, required: true },
+  { key: "organoleptic", label: "Результаты органолептической оценки", weight: 100 },
   { key: "storage", label: "Условия хранения, конечный срок реализации", weight: 100 },
   { key: "sale", label: "Дата, время фактической реализации", weight: 84 },
-  { key: "responsible", label: "Ответственное лицо (ФИО, должность)", weight: 96, required: true },
+  { key: "responsible", label: "Ответственное лицо (ФИО, должность)", weight: 96 },
+  {
+    key: "signatures",
+    label: "Подпись бракеражной комиссии",
+    weight: 96,
+    visibleIf: hasCommissionMembers,
+    unavailableHint: "Появится, когда задан состав бракеражной комиссии",
+  },
   {
     key: "note",
     label: "Примечание",
@@ -311,9 +341,7 @@ export function sanitizeColumnsConfig(
     ...new Set(
       hiddenRaw.filter(
         (key): key is string =>
-          typeof key === "string" &&
-          // Свою колонку скрыть можно всегда; колонку бланка — только необязательную.
-          (customKeys.has(key) || (byKey.has(key) && byKey.get(key)?.required !== true))
+          typeof key === "string" && (customKeys.has(key) || byKey.has(key))
       )
     ),
   ];
@@ -335,11 +363,17 @@ export function sanitizeColumnsConfig(
     ...new Set(mustFillRaw.filter((key): key is string => typeof key === "string" && knownKeys.has(key))),
   ];
 
+  const orderRaw = Array.isArray(record.order) ? record.order : [];
+  const order = [
+    ...new Set(orderRaw.filter((key): key is string => typeof key === "string" && knownKeys.has(key))),
+  ];
+
   return {
     hidden,
     labels,
     ...(custom.length > 0 ? { custom } : {}),
     ...(mustFill.length > 0 ? { mustFill } : {}),
+    ...(order.length > 0 ? { order } : {}),
   };
 }
 
@@ -359,9 +393,7 @@ export function resolveColumns(
   const base = registry.map((column) => {
     const defaultLabel = defaultLabelOf(column, configRecord);
     let hidden: boolean;
-    if (column.required) {
-      hidden = false;
-    } else if (column.introducedWithFlag && column.legacyFlag) {
+    if (column.introducedWithFlag && column.legacyFlag) {
       // Флаг здесь главнее сохранённого набора колонок: у старого
       // документа в наборе ключа нет, и «нет в hidden» там значит «не
       // знали о колонке», а не «показывать».
@@ -375,13 +407,15 @@ export function resolveColumns(
     } else {
       hidden = false;
     }
+    const available = column.visibleIf ? column.visibleIf(configRecord) : true;
     return {
       key: column.key,
       label: source?.labels[column.key] ?? defaultLabel,
       defaultLabel,
       weight: column.weight,
-      required: column.required === true,
-      hidden,
+      hidden: hidden || !available,
+      hiddenByChoice: hidden,
+      ...(available ? {} : { unavailable: column.unavailableHint ?? "Колонка сейчас недоступна" }),
       align: column.align,
       mustFill: mustFillSet.has(column.key),
       custom: null,
@@ -395,15 +429,47 @@ export function resolveColumns(
       label: column.label,
       defaultLabel: column.label,
       weight: column.type === "text" ? 10 : 7,
-      required: false,
       hidden: source?.hidden.includes(column.key) === true,
+      hiddenByChoice: source?.hidden.includes(column.key) === true,
       align: column.type === "text" ? undefined : "center",
       mustFill: mustFillSet.has(column.key),
       custom: column,
     })
   );
 
-  return [...base, ...custom];
+  return orderColumns([...base, ...custom], source?.order);
+}
+
+/** Порядок колонок: сначала по `order`, остальные — в исходном порядке. */
+function orderColumns<T extends { key: string }>(columns: T[], order: readonly string[] | undefined): T[] {
+  if (!order || order.length === 0) return columns;
+  const rank = new Map(order.map((key, index) => [key, index]));
+  return columns
+    .map((column, index) => ({ column, index }))
+    .sort((a, b) => {
+      const ra = rank.get(a.column.key);
+      const rb = rank.get(b.column.key);
+      if (ra !== undefined && rb !== undefined) return ra - rb;
+      if (ra !== undefined) return -1;
+      if (rb !== undefined) return 1;
+      return a.index - b.index;
+    })
+    .map((item) => item.column);
+}
+
+/** Сдвинуть колонку на шаг влево (-1) или вправо (+1) в порядке показа. */
+export function moveColumn(
+  columns: JournalColumnsConfig,
+  resolved: readonly ResolvedJournalColumn[],
+  key: string,
+  direction: -1 | 1
+): JournalColumnsConfig {
+  const keys = resolved.map((column) => column.key);
+  const index = keys.indexOf(key);
+  const target = index + direction;
+  if (index < 0 || target < 0 || target >= keys.length) return columns;
+  [keys[index], keys[target]] = [keys[target], keys[index]];
+  return { ...columns, order: keys };
 }
 
 /** Только видимые колонки — для таблицы, карточек и печати. */
@@ -435,7 +501,9 @@ export function columnsConfigFromResolved(columns: ResolvedJournalColumn[]): Jou
     .filter((column): column is JournalCustomColumn => column !== null);
   const mustFill = columns.filter((column) => column.mustFill).map((column) => column.key);
   return {
-    hidden: columns.filter((column) => column.hidden).map((column) => column.key),
+    // Недоступная колонка (подписи без комиссии) скрыта условием, а не
+    // человеком: в набор её не пишем, иначе она не появилась бы с комиссией.
+    hidden: columns.filter((column) => column.hiddenByChoice).map((column) => column.key),
     labels: Object.fromEntries(
       columns
         .filter((column) => column.custom === null && column.label !== column.defaultLabel)
@@ -443,6 +511,7 @@ export function columnsConfigFromResolved(columns: ResolvedJournalColumn[]): Jou
     ),
     ...(custom.length > 0 ? { custom } : {}),
     ...(mustFill.length > 0 ? { mustFill } : {}),
+    order: columns.map((column) => column.key),
   };
 }
 

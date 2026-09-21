@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { isBrakerageJournalCode, mergeBrakerageConfig, parseKnownRowIds } from "@/lib/brakerage-row-merge";
+import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
@@ -529,7 +531,21 @@ export async function PATCH(
   if (body.dateFrom !== undefined) data.dateFrom = nextDateFrom;
   if (body.dateTo !== undefined) data.dateTo = nextDateTo;
 
-  const updated = await db.journalDocument.update({ where: { id }, data });
+  // Бракеражи: строки, добавленные по QR и подписанные комиссией, пока
+  // страница была открыта, не затираются — слияние под блокировкой
+  // документа (см. brakerage-row-merge.ts).
+  const updated =
+    isBrakerageJournalCode(template?.code) && data.config !== undefined
+      ? await withDocumentConfigLock(id, async (locked) => ({
+          config: mergeBrakerageConfig({
+            incoming: data.config,
+            current: locked.config,
+            knownRowIds: parseKnownRowIds((body as { knownRowIds?: unknown }).knownRowIds),
+          }) as Prisma.InputJsonValue,
+          data: { ...data, config: undefined },
+          result: true,
+        })).then(() => db.journalDocument.findUniqueOrThrow({ where: { id } }))
+      : await db.journalDocument.update({ where: { id }, data });
 
   // Fire-and-forget TasksFlow sync for journals whose adapter is
   // registered (see src/lib/tasksflow-adapters/index.ts). Sync runs

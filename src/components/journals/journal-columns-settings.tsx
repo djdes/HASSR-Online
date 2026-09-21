@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Info, Lock, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, Info, Lock, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Checkbox } from "@/components/ui/checkbox";
@@ -19,6 +19,7 @@ import {
   JOURNAL_SELECT_OPTIONS_MAX,
   addCustomColumn,
   columnsConfigFromResolved,
+  moveColumn,
   newCustomColumnKey,
   removeCustomColumn,
   resolveColumns,
@@ -37,7 +38,8 @@ import { cn } from "@/lib/utils";
  * «Применить ко всем документам журнала».
  *
  * Хранение и правила — `src/lib/journal-columns.ts`. Здесь только UI:
- * скрытие колонки данных не удаляет, обязательную колонку скрыть нельзя.
+ * скрытие колонки данных не удаляет; скрыть можно любую колонку, кроме
+ * последней видимой; порядок — стрелками.
  */
 
 export type ColumnsApplyScope = "new-only" | "active-any" | "all";
@@ -66,9 +68,15 @@ function ColumnRow({
   onMustFill,
   onTypeChange,
   onRemove,
+  onMove,
+  lastVisible,
   disabled,
 }: {
   column: ResolvedJournalColumn;
+  /** Сдвиг в порядке показа; `null` у крайней колонки. */
+  onMove?: { up: (() => void) | null; down: (() => void) | null };
+  /** Это последняя видимая колонка — скрыть нельзя, таблица не может быть пустой. */
+  lastVisible?: boolean;
   onToggle: (hidden: boolean) => void;
   onRename: (label: string) => void;
   /** Отметка «обязательно заполнять». */
@@ -104,7 +112,7 @@ function ColumnRow({
     >
       <Checkbox
         checked={!column.hidden}
-        disabled={disabled || column.required}
+        disabled={disabled || Boolean(column.unavailable) || (lastVisible === true && !column.hidden)}
         onCheckedChange={(value) => onToggle(value !== true)}
         aria-label={column.hidden ? `Показать колонку «${column.label}»` : `Скрыть колонку «${column.label}»`}
       />
@@ -134,11 +142,13 @@ function ColumnRow({
             {column.label}
           </div>
         )}
-        {column.required ? (
+        {column.unavailable ? (
           <div className="mt-0.5 inline-flex items-center gap-1 text-[12px] text-[#9b9fb3]">
             <Lock className="size-3" />
-            Обязательная колонка бланка
+            {column.unavailable}
           </div>
+        ) : lastVisible && !column.hidden ? (
+          <div className="mt-0.5 text-[12px] text-[#9b9fb3]">Последняя видимая колонка — скрыть нельзя</div>
         ) : column.custom ? (
           <div className="mt-0.5 text-[12px] text-[#9b9fb3]">
             Своя колонка · {JOURNAL_FIELD_TYPE_LABEL[column.custom.type]}
@@ -162,6 +172,30 @@ function ColumnRow({
       </div>
       {!disabled ? (
         <div className="flex shrink-0 items-center gap-1">
+          {onMove ? (
+            <div className="flex flex-col">
+              <button
+                type="button"
+                onClick={onMove.up ?? undefined}
+                disabled={!onMove.up}
+                className="rounded-lg p-1 text-[#6f7282] transition-colors duration-150 hover:bg-white hover:text-[#3848c7] disabled:opacity-30 disabled:hover:bg-transparent"
+                title="Выше — левее в таблице"
+                aria-label={`Сдвинуть колонку «${column.label}» левее`}
+              >
+                <ArrowUp className="size-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={onMove.down ?? undefined}
+                disabled={!onMove.down}
+                className="rounded-lg p-1 text-[#6f7282] transition-colors duration-150 hover:bg-white hover:text-[#3848c7] disabled:opacity-30 disabled:hover:bg-transparent"
+                title="Ниже — правее в таблице"
+                aria-label={`Сдвинуть колонку «${column.label}» правее`}
+              >
+                <ArrowDown className="size-3.5" />
+              </button>
+            </div>
+          ) : null}
           {column.label !== column.defaultLabel && !editing ? (
             <button
               type="button"
@@ -350,6 +384,7 @@ export function JournalColumnsSettings({
   const [applyOpen, setApplyOpen] = useState(false);
   const columns = useMemo(() => resolveColumns(code, config), [code, config]);
   const current = useMemo(() => columnsConfigFromResolved(columns), [columns]);
+  const visibleCount = columns.filter((column) => !column.hidden).length;
 
   return (
     <div className="space-y-2">
@@ -367,14 +402,19 @@ export function JournalColumnsSettings({
       </div>
       <p className="flex gap-1.5 text-[12.5px] leading-[1.45] text-[#6f7282]">
         <Info className="mt-0.5 size-3.5 shrink-0 text-[#5566f6]" />
-        Скрытая колонка не печатается и не видна в таблице, но записанные в ней данные сохраняются — включите её снова, и они
-        вернутся. Карандаш меняет название колонки только в этом документе.
+        Любую колонку можно скрыть — она не печатается и не видна в таблице, но записанные в ней данные сохраняются:
+        включите её снова, и они вернутся. Карандаш меняет название, стрелки — порядок колонок в таблице и в печати.
       </p>
       <div className="space-y-2">
-        {columns.map((column) => (
+        {columns.map((column, index) => (
           <ColumnRow
             key={column.key}
             column={column}
+            lastVisible={visibleCount <= 1}
+            onMove={{
+              up: index > 0 ? () => onChange(moveColumn(current, columns, column.key, -1)) : null,
+              down: index < columns.length - 1 ? () => onChange(moveColumn(current, columns, column.key, 1)) : null,
+            }}
             onToggle={(hidden) => onChange(toggleColumnHidden(current, column.key, hidden))}
             onRename={(label) =>
               onChange(
@@ -576,8 +616,8 @@ export function useColumnHeaderMenu({
             setRenameDraft(menu.column.label);
           },
         },
-        ...(menu.column.required
-          ? [{ key: "required", label: "Обязательная колонка бланка — скрыть нельзя", onSelect: () => undefined }]
+        ...(columns.filter((column) => !column.hidden).length <= 1
+          ? [{ key: "last", label: "Последняя видимая колонка — скрыть нельзя", onSelect: () => undefined }]
           : [
               {
                 key: "hide",

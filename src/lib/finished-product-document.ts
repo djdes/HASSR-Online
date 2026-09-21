@@ -4,6 +4,13 @@ import {
   sanitizeColumnsConfig,
   type JournalColumnsConfig,
 } from "@/lib/journal-columns";
+import {
+  formatRowSignatures,
+  normalizeCommissionMembers as normalizeBrakerageCommission,
+  normalizeRowSignatures,
+  type BrakerageCommissionMember,
+  type BrakerageRowSignature,
+} from "@/lib/brakerage-commission";
 
 export const FINISHED_PRODUCT_DOCUMENT_TEMPLATE_CODE = "finished_product";
 export const FINISHED_PRODUCT_DEFAULT_DOCUMENT_TITLE = "Бракеражный журнал";
@@ -48,6 +55,15 @@ export type FinishedProductDocumentRow = {
   organolepticValue: string;
   organolepticResult: string;
   releaseAllowed: "yes" | "no";
+  /** «Результат взвешивания порционных блюд» (вес выход): «150», «200/10». */
+  portionWeight: string;
+  /** «Примечание» строки (колонка формы Приложения 4). */
+  note: string;
+  /**
+   * Подписи членов комиссии. Копия `SignatureEvent`, которой владеет
+   * сервер: клиент её не меняет (см. brakerage-row-merge.ts).
+   */
+  signatures?: BrakerageRowSignature[];
   /**
    * Значения своих колонок организации (`config.columns.custom`), ключ —
    * `custom:<id>`. Храним строками: одинаково для текста, числа, даты,
@@ -64,14 +80,7 @@ export type FinishedProductDocumentRow = {
 };
 
 /** Член бракеражной комиссии: кто подписывает журнал. */
-export type FinishedProductCommissionMember = {
-  id: string;
-  /** Роль в комиссии: «Председатель», «Член комиссии»… */
-  role: string;
-  /** Сотрудник организации; пусто — вписан вручную. */
-  employeeId: string;
-  employeeName: string;
-};
+export type FinishedProductCommissionMember = BrakerageCommissionMember;
 
 /**
  * Константы времени бракеража: на сколько минут назад ставить время в
@@ -97,11 +106,15 @@ export const FINISHED_PRODUCT_ORGANOLEPTIC_DISH = [
   "Хорошо",
   "Удовлетворительно",
   "Неудовлетворительно",
+  "Доброкачественная",
+  "Недоброкачественная",
 ];
 export const FINISHED_PRODUCT_ORGANOLEPTIC_SEMI = [
   "Соответствует",
   "Требует доработки",
   "Не соответствует",
+  "Доброкачественная",
+  "Недоброкачественная",
 ];
 export const FINISHED_PRODUCT_ORGANOLEPTIC_MAX = 20;
 
@@ -133,6 +146,10 @@ export type FinishedProductDocumentConfig = {
   showCourierTime: boolean;
   /** Колонка «Разрешение к реализации: Да/Нет» (поле `releaseAllowed`). */
   showReleaseAllowed: boolean;
+  /** «Ответственный исполнитель» — нет флага у старых документов: видна. */
+  showResponsible: boolean;
+  /** «ФИО лица, проводившего бракераж» — нет флага у старых документов: видна. */
+  showInspector: boolean;
   footerNote: string;
   productLists: Array<{ id: string; name: string; items: string[] }>;
   itemsCatalog: string[];
@@ -172,24 +189,9 @@ export function normalizeCustomCells(value: unknown): Record<string, string> {
   return result;
 }
 
-/** Состав комиссии: роль и имя обязательны, иначе строку отбрасываем. */
+/** Состав комиссии: имя обязательно, иначе строку отбрасываем. */
 export function normalizeCommissionMembers(value: unknown): FinishedProductCommissionMember[] {
-  if (!Array.isArray(value)) return [];
-  const result: FinishedProductCommissionMember[] = [];
-  for (const item of value) {
-    if (!item || typeof item !== "object") continue;
-    const record = item as Record<string, unknown>;
-    const employeeName = normalizeText(record.employeeName).slice(0, 120);
-    if (!employeeName) continue;
-    result.push({
-      id: normalizeText(record.id) || createId("finished-product-commission"),
-      role: normalizeText(record.role).slice(0, 80) || "Член комиссии",
-      employeeId: normalizeText(record.employeeId),
-      employeeName,
-    });
-    if (result.length >= 10) break;
-  }
-  return result;
+  return normalizeBrakerageCommission(value);
 }
 
 /** Константы времени: целые минуты в пределах суток. */
@@ -247,6 +249,11 @@ export function createFinishedProductRow(
     organolepticValue: normalizeText(overrides.organolepticValue),
     organolepticResult: normalizeText(overrides.organolepticResult),
     releaseAllowed: overrides.releaseAllowed === "no" ? "no" : "yes",
+    portionWeight: normalizeText(overrides.portionWeight).slice(0, 20),
+    note: normalizeText(overrides.note).slice(0, 500),
+    ...(Array.isArray(overrides.signatures) && overrides.signatures.length > 0
+      ? { signatures: normalizeRowSignatures(overrides.signatures) }
+      : {}),
     ...(overrides.custom && Object.keys(overrides.custom).length > 0
       ? { custom: normalizeCustomCells(overrides.custom) }
       : {}),
@@ -261,11 +268,15 @@ export function getDefaultFinishedProductDocumentConfig(): FinishedProductDocume
     rows: [createFinishedProductRow()],
     fieldNameMode: "dish",
     inspectorMode: "inspector_name",
-    showProductTemp: true,
-    showCorrectiveAction: true,
+    // Новый документ — «Рекомендуемая форма» Приложения 4: только восемь
+    // колонок бланка. Остальные включаются в настройках, данные не теряются.
+    showProductTemp: false,
+    showCorrectiveAction: false,
     showOxygenLevel: false,
-    showCourierTime: true,
-    showReleaseAllowed: true,
+    showCourierTime: false,
+    showReleaseAllowed: false,
+    showResponsible: false,
+    showInspector: false,
     footerNote: "",
     commissionMembers: [],
     timeDefaults: { ...FINISHED_PRODUCT_TIME_DEFAULTS },
@@ -364,6 +375,13 @@ export function normalizeFinishedProductDocumentConfig(
     // выводить её из сохранённого набора колонок нельзя — там её тоже
     // нет, а это не то же самое, что «показывать».
     showReleaseAllowed: record.showReleaseAllowed === true,
+    // У старых документов флагов нет — колонки были видны всегда.
+    showResponsible: columnFlags && "showResponsible" in columnFlags
+      ? columnFlags.showResponsible === true
+      : record.showResponsible !== false,
+    showInspector: columnFlags && "showInspector" in columnFlags
+      ? columnFlags.showInspector === true
+      : record.showInspector !== false,
     footerNote: normalizeFooterNote(record.footerNote),
     productLists: Array.isArray(record.productLists)
       ? (record.productLists as Array<Record<string, unknown>>)
@@ -392,6 +410,73 @@ export function normalizeFinishedProductDocumentConfig(
           .filter((item) => item.length > 0)
       : defaults.itemsCatalog,
   };
+}
+
+/** «ЧЧ:ММ» из «YYYY-MM-DD ЧЧ:ММ» или «ЧЧ:ММ»; иначе пусто. */
+function timeOf(value: string): string {
+  const match = /(\d{1,2}:\d{2})\s*$/.exec(value.trim());
+  return match ? match[1] : "";
+}
+
+/**
+ * «Разрешение к реализации блюда, кулинарного изделия» как на бумажной
+ * форме: «Разрешено, 11:52» / «Не разрешено».
+ */
+export function finishedProductReleaseText(row: Pick<FinishedProductDocumentRow, "releaseAllowed" | "releasePermissionTime">): string {
+  if (row.releaseAllowed === "no") return "Не разрешено";
+  const time = timeOf(row.releasePermissionTime);
+  return time ? `Разрешено, ${time}` : "Разрешено";
+}
+
+/**
+ * Текст ячейки колонки для карточки на телефоне и печати — одно место на
+ * все представления. Свои колонки — `row.custom[key]`.
+ * `inspectorFallback`: у старой строки без подписей комиссии в колонке
+ * подписей показываем «ФИО лица, проводившего бракераж», если его
+ * колонка скрыта, — иначе подпись пропала бы из печати.
+ */
+export function finishedProductCellText(
+  row: FinishedProductDocumentRow,
+  key: string,
+  options: { timeZone?: string; inspectorFallback?: boolean } = {}
+): string {
+  switch (key) {
+    case "production":
+      return row.productionDateTime;
+    case "rejection":
+      return row.rejectionTime;
+    case "name":
+      return row.productName;
+    case "organoleptic":
+      return row.organoleptic;
+    case "release":
+      return finishedProductReleaseText(row);
+    case "signatures": {
+      const signatures = normalizeRowSignatures(row.signatures);
+      if (signatures.length > 0) return formatRowSignatures(signatures, options.timeZone);
+      return options.inspectorFallback ? row.inspectorName : "";
+    }
+    case "portion":
+      return row.portionWeight;
+    case "note":
+      return row.note;
+    case "temp":
+      return row.productTemp;
+    case "corrective":
+      return row.correctiveAction;
+    case "oxygen":
+      return row.oxygenLevel;
+    case "release_allowed":
+      return row.releaseAllowed === "no" ? "Нет" : "Да";
+    case "courier":
+      return row.courierTransferTime;
+    case "responsible":
+      return row.responsiblePerson;
+    case "inspector":
+      return row.inspectorName;
+    default:
+      return row.custom?.[key] ?? "";
+  }
 }
 
 export function getFinishedProductDocumentTitle() {

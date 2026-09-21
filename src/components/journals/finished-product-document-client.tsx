@@ -50,6 +50,7 @@ import {
   FINISHED_PRODUCT_TIME_DEFAULTS,
   FINISHED_PRODUCT_TIME_MINUTES_MAX,
   createFinishedProductRow,
+  finishedProductCellText,
   getFinishedProductOrganolepticOptions,
   normalizeFinishedProductDocumentConfig,
   type FinishedProductDocumentConfig,
@@ -100,6 +101,8 @@ import {
 } from "@/components/journals/journal-custom-cell";
 import { OrgDirectoryDialog } from "@/components/journals/org-directory-dialog";
 import { mergeIntoList } from "@/lib/org-directory";
+import { useLiveEvents } from "@/lib/use-live-events";
+import { formatRowSignatures, hasCommission, normalizeRowSignatures } from "@/lib/brakerage-commission";
 type Props = {
   documentId: string;
   title: string;
@@ -136,8 +139,6 @@ const BULK_ROWS_MAX = 50;
 /** Пауза до автосохранения после последнего нажатия клавиши в ячейке. */
 const AUTOSAVE_DELAY_MS = 800;
 
-/** Стандартные результаты органолептической оценки (по просьбе заказчика — список). */
-const ORGANOLEPTIC_OPTIONS = ["Отлично", "Хорошо", "Удовлетворительно", "Неудовлетворительно"] as const;
 const ORGANOLEPTIC_CUSTOM = "__custom__";
 
 /** Текстовые поля строки — только они рендерятся колонками таблицы. */
@@ -152,7 +153,9 @@ type FinishedProductTextField =
   | "releasePermissionTime"
   | "courierTransferTime"
   | "responsiblePerson"
-  | "inspectorName";
+  | "inspectorName"
+  | "portionWeight"
+  | "note";
 
 /** Поле строки и справочник подсказок для каждой колонки реестра. */
 const FINISHED_PRODUCT_COLUMN_FIELDS: Record<string, { field: FinishedProductTextField; list?: string }> = {
@@ -163,7 +166,8 @@ const FINISHED_PRODUCT_COLUMN_FIELDS: Record<string, { field: FinishedProductTex
   temp: { field: "productTemp" },
   corrective: { field: "correctiveAction" },
   oxygen: { field: "oxygenLevel" },
-  release: { field: "releasePermissionTime" },
+  portion: { field: "portionWeight" },
+  note: { field: "note" },
   courier: { field: "courierTransferTime" },
   responsible: { field: "responsiblePerson", list: "finished-product-users" },
   inspector: { field: "inspectorName", list: "finished-product-users" },
@@ -401,6 +405,32 @@ export function FinishedProductDocumentClient({
   const pendingConfigRef = useRef<FinishedProductDocumentConfig | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isAutoSaving, setIsAutoSaving] = useState(false);
+  /**
+   * Строки, которые эта страница видела. Сервер по ним отличает строку,
+   * удалённую здесь, от строки, добавленной по QR после загрузки страницы
+   * (см. brakerage-row-merge.ts), — иначе сохранение с сайта стирало бы
+   * блюда, внесённые с телефонов, и подписи комиссии.
+   */
+  const knownRowIdsRef = useRef<Set<string>>(new Set(config.rows.map((row) => row.id)));
+  const rememberRows = useCallback((rows: readonly { id: string }[]) => {
+    for (const row of rows) knownRowIdsRef.current.add(row.id);
+  }, []);
+  const inFlightRef = useRef(0);
+  /** Принять строки с сервера (слияние после сохранения, QR, подписи), если нет своих несохранённых правок. */
+  const adoptServerRows = useCallback(
+    (rawConfig: unknown) => {
+      if (pendingConfigRef.current || saveTimerRef.current || inFlightRef.current > 0) return;
+      const fresh = normalizeFinishedProductDocumentConfig(rawConfig);
+      rememberRows(fresh.rows);
+      setConfig((prev) => {
+        const same =
+          prev.rows.length === fresh.rows.length &&
+          prev.rows.every((row, index) => JSON.stringify(row) === JSON.stringify(fresh.rows[index]));
+        return same ? prev : { ...prev, rows: fresh.rows };
+      });
+    },
+    [rememberRows]
+  );
 
   const flushConfigSave = useCallback(() => {
     if (saveTimerRef.current) {
@@ -411,17 +441,25 @@ export function FinishedProductDocumentClient({
     pendingConfigRef.current = null;
     if (!next) return;
     setIsAutoSaving(true);
+    rememberRows(next.rows);
+    inFlightRef.current += 1;
     void fetch(`/api/journal-documents/${documentId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ config: next }),
+      body: JSON.stringify({ config: next, knownRowIds: [...knownRowIdsRef.current] }),
     })
-      .then((response) => {
+      .then(async (response) => {
         if (!response.ok) throw new Error();
+        const body = (await response.json().catch(() => null)) as { document?: { config?: unknown } } | null;
+        inFlightRef.current -= 1;
+        if (body?.document) adoptServerRows(body.document.config);
       })
-      .catch(() => toast.error("Не удалось сохранить журнал — изменения остались только на экране"))
+      .catch(() => {
+        inFlightRef.current = Math.max(0, inFlightRef.current - 1);
+        toast.error("Не удалось сохранить журнал — изменения остались только на экране");
+      })
       .finally(() => setIsAutoSaving(false));
-  }, [documentId]);
+  }, [documentId, adoptServerRows, rememberRows]);
 
   /** Применить новое состояние конфига и поставить его в очередь записи. */
   const commitConfig = useCallback(
@@ -441,13 +479,27 @@ export function FinishedProductDocumentClient({
   // Уход со страницы не должен съедать последний недописанный ввод.
   useEffect(() => () => flushConfigSave(), [flushConfigSave]);
 
+  // Блюда с телефонов (QR) и подписи комиссии появляются здесь сами:
+  // живое событие «журнал изменился» → перечитать строки документа.
+  const refreshRowsFromServer = useCallback(() => {
+    if (readOnly) return;
+    void fetch(`/api/journal-documents/${documentId}`, { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((body: { document?: { config?: unknown } } | null) => {
+        if (body?.document) adoptServerRows(body.document.config);
+      })
+      .catch(() => undefined);
+  }, [adoptServerRows, documentId, readOnly]);
+  useLiveEvents((event) => {
+    const data = (event as { type?: string; data?: { documentIds?: unknown } }).data;
+    if ((event as { type?: string }).type !== "journal") return;
+    const ids = Array.isArray(data?.documentIds) ? (data?.documentIds as unknown[]) : [];
+    if (ids.includes(documentId)) refreshRowsFromServer();
+  });
+
   // Карточки (телефон, Mini App) — те же колонки и подписи, что у таблицы.
   const cardColumns = resolveColumns("finished_product", config);
   const cardVisible = (key: string) => cardColumns.find((column) => column.key === key)?.hidden !== true;
-  const cardLabel = (key: string, fallback: string) => {
-    const column = cardColumns.find((item) => item.key === key);
-    return column && column.label !== column.defaultLabel ? column.label : fallback;
-  };
   const cardItems: RecordCardItem[] = config.rows.map((row, index) => ({
     id: row.id,
     title: `№${index + 1} · ${row.productName || "—"}`,
@@ -467,43 +519,18 @@ export function FinishedProductDocumentClient({
         className="size-5"
       />
     ) : null,
-    fields: [
-      { label: cardLabel("rejection", "Время снятия бракеража"), value: row.rejectionTime, hideIfEmpty: true },
-      { label: cardLabel("organoleptic", "Органолептика"), value: row.organoleptic, hideIfEmpty: true },
-      cardVisible("temp")
-        ? { label: cardLabel("temp", "T°C внутри продукта"), value: row.productTemp, hideIfEmpty: true }
-        : null,
-      cardVisible("corrective")
-        ? { label: cardLabel("corrective", "Корректирующие действия"), value: row.correctiveAction, hideIfEmpty: true }
-        : null,
-      cardVisible("oxygen")
-        ? { label: cardLabel("oxygen", "Остаточный уровень кислорода, % об."), value: row.oxygenLevel, hideIfEmpty: true }
-        : null,
-      { label: cardLabel("release", "Разрешение к реализации"), value: row.releasePermissionTime, hideIfEmpty: true },
-      cardVisible("release_allowed")
-        ? {
-            label: cardLabel("release_allowed", "Разрешение к реализации: Да/Нет"),
-            value: row.releaseAllowed === "no" ? "Нет" : "Да",
-            hideIfEmpty: false,
-          }
-        : null,
-      cardVisible("courier")
-        ? { label: cardLabel("courier", "Передача курьеру"), value: row.courierTransferTime, hideIfEmpty: true }
-        : null,
-      cardVisible("responsible")
-        ? { label: cardLabel("responsible", "Исполнитель"), value: row.responsiblePerson, hideIfEmpty: true }
-        : null,
-      { label: cardLabel("inspector", "Провёл бракераж"), value: row.inspectorName, hideIfEmpty: true },
-      // Свои колонки организации — и в карточке на телефоне, иначе с
-      // телефона их вообще не видно.
-      ...cardColumns
-        .filter((column) => column.custom !== null && !column.hidden)
-        .map((column) => ({
-          label: column.label,
-          value: customCellValue(row, column.key),
-          hideIfEmpty: true,
-        })),
-    ].filter((f): f is { label: string; value: string; hideIfEmpty: boolean } => f !== null),
+    // Те же колонки, что у таблицы и печати, тем же текстом ячейки.
+    fields: cardColumns
+      .filter((column) => !column.hidden && column.key !== "name" && column.key !== "production")
+      .map((column) => ({
+        label: column.label,
+        value: column.custom
+          ? customCellValue(row, column.key)
+          : column.key === "signatures" && hasCommission(config) && normalizeRowSignatures(row.signatures).length === 0
+            ? "Ждёт подписи комиссии"
+            : finishedProductCellText(row, column.key, { inspectorFallback: !cardVisible("inspector") }),
+        hideIfEmpty: column.key !== "release",
+      })),
   }));
 
   // Наименования всей организации (последние сверху) + справочник документа.
@@ -721,6 +748,33 @@ export function FinishedProductDocumentClient({
                 ) : null}
               </div>
             ) : null}
+            {isColumnVisible("portion") ? (
+              <div className="space-y-2">
+                <Label className="text-[13px] font-medium text-[#3c4053]">Вес выход, г</Label>
+                <Input
+                  className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
+                  value={draftRow.portionWeight}
+                  inputMode="decimal"
+                  maxLength={20}
+                  placeholder="Например: 150 или 200/10"
+                  aria-label="Вес выход, г"
+                  onChange={(e) => setDraftRow((prev) => ({ ...prev, portionWeight: e.target.value }))}
+                />
+                <p className="text-[11.5px] leading-snug text-[#6f7282]">{columnLabel("portion", "Результат взвешивания порционных блюд")}</p>
+              </div>
+            ) : null}
+            {isColumnVisible("note") ? (
+              <div className="space-y-2">
+                <Label className="text-[13px] font-medium text-[#3c4053]">{columnLabel("note", "Примечание")}</Label>
+                <Input
+                  className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
+                  value={draftRow.note}
+                  maxLength={500}
+                  aria-label="Примечание"
+                  onChange={(e) => setDraftRow((prev) => ({ ...prev, note: e.target.value }))}
+                />
+              </div>
+            ) : null}
             {isColumnVisible("oxygen") ? (
               <div className="space-y-2">
                 <Label className="text-[13px] font-medium text-[#3c4053]">{columnLabel("oxygen", "Остаточный уровень кислорода, % об.")}</Label>
@@ -736,7 +790,7 @@ export function FinishedProductDocumentClient({
             {/* Колонка выключена ⇒ и в окне не спрашиваем: иначе выбор
                 «Нет» некуда деть — его не видно ни в таблице, ни в
                 карточке, ни на печати. */}
-            {isColumnVisible("release_allowed") ? (
+            {isColumnVisible("release_allowed") || isColumnVisible("release") ? (
             <div className="space-y-2">
               <Label className="text-[13px] font-medium text-[#3c4053]">Разрешение к реализации</Label>
               {/* Выбранный вариант — заливка + галочка + кольцо; невыбранный —
@@ -745,8 +799,8 @@ export function FinishedProductDocumentClient({
               <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Разрешение к реализации">
                 {(
                   [
-                    ["yes", "Да", "#136b2a", "rgba(19,107,42,0.18)"],
-                    ["no", "Нет", "#d2453d", "rgba(210,69,61,0.18)"],
+                    ["yes", "Разрешено", "#136b2a", "rgba(19,107,42,0.18)"],
+                    ["no", "Не разрешено", "#d2453d", "rgba(210,69,61,0.18)"],
                   ] as const
                 ).map(([value, label, fg, ring]) => {
                   const active = draftRow.releaseAllowed === value;
@@ -784,10 +838,14 @@ export function FinishedProductDocumentClient({
                 <SuggestInput ariaLabel="Ответственный исполнитель" value={draftRow.responsiblePerson} options={personOptions} placeholder="Выберите сотрудника или впишите ФИО" onChange={(next) => setDraftRow((prev) => ({ ...prev, responsiblePerson: next }))} />
               </div>
             ) : null}
-            <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-[#3c4053]">{config.inspectorMode === "commission_signatures" ? "Подписи членов комиссии" : "Лицо, проводившее бракераж"}</Label>
-              <SuggestInput ariaLabel="Лицо, проводившее бракераж" value={draftRow.inspectorName} options={personOptions} placeholder="Выберите сотрудника или впишите ФИО" onChange={(next) => setDraftRow((prev) => ({ ...prev, inspectorName: next }))} />
-            </div>
+            {/* При составе комиссии бракераж подписывают её члены своим входом —
+                вписывать ФИО проверяющего вручную не нужно. */}
+            {isColumnVisible("inspector") && !hasCommission(config) ? (
+              <div className="space-y-2">
+                <Label className="text-[13px] font-medium text-[#3c4053]">{config.inspectorMode === "commission_signatures" ? "Подписи членов комиссии" : "Лицо, проводившее бракераж"}</Label>
+                <SuggestInput ariaLabel="Лицо, проводившее бракераж" value={draftRow.inspectorName} options={personOptions} placeholder="Выберите сотрудника или впишите ФИО" onChange={(next) => setDraftRow((prev) => ({ ...prev, inspectorName: next }))} />
+              </div>
+            ) : null}
             {/* Свои колонки организации — и в окне строки: на телефоне
                 карточка открывает именно это окно, и без полей своя
                 колонка была бы доступна только на большом экране. */}
@@ -826,6 +884,8 @@ export function FinishedProductDocumentClient({
   });
 
   const columnsWeight = columns.reduce((sum, column) => sum + column.weight, 0);
+  // Подпись «Добавить изделие» встаёт под колонкой наименования, где бы она ни была.
+  const nameColumnIndex = columns.findIndex((column) => column.key === "name");
   /**
    * Ниже этой ширины колонки перестают читаться — включаем скролл внутри
    * viewport'а таблицы. 7 базовых колонок помещаются в контент 1248px,
@@ -846,12 +906,15 @@ export function FinishedProductDocumentClient({
     pendingConfigRef.current = null;
     setIsSaving(true);
     try {
+      rememberRows(nextConfig.rows);
       const response = await fetch(`/api/journal-documents/${documentId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ config: nextConfig }),
+        body: JSON.stringify({ config: nextConfig, knownRowIds: [...knownRowIdsRef.current] }),
       });
       if (!response.ok) throw new Error();
+      const body = (await response.json().catch(() => null)) as { document?: { config?: unknown } } | null;
+      if (body?.document) adoptServerRows(body.document.config);
       startTransition(() => router.refresh());
     } catch {
       toast.error("Не удалось сохранить журнал");
@@ -871,8 +934,9 @@ export function FinishedProductDocumentClient({
   const applyFields: ApplyToSelectedField[] = [
     { key: "rejectionTime", label: columnLabel("rejection", "Время снятия бракеража"), type: "time" },
     { key: "organoleptic", label: columnLabel("organoleptic", "Органолептическая оценка"), type: "select", options: organolepticOptions.map((value) => ({ value, label: value })) },
-    { key: "releaseAllowed", label: columnLabel("release", "Разрешение к реализации"), type: "select", options: [{ value: "yes", label: "Да" }, { value: "no", label: "Нет" }] },
-    { key: "releasePermissionTime", label: columnLabel("release", "Разрешение к реализации (время)"), type: "time" },
+    { key: "releaseAllowed", label: columnLabel("release", "Разрешение к реализации"), type: "select", options: [{ value: "yes", label: "Разрешено" }, { value: "no", label: "Не разрешено" }] },
+    { key: "releasePermissionTime", label: "Время разрешения к реализации", type: "time" },
+    { key: "portionWeight", label: "Вес выход, г", type: "text" },
     { key: "courierTransferTime", label: columnLabel("courier", "Время передачи блюд курьеру"), type: "time" },
     { key: "responsiblePerson", label: columnLabel("responsible", "Ответственный исполнитель"), type: "text", suggestions: personOptions },
     { key: "inspectorName", label: columnLabel("inspector", "Лицо, проводившее бракераж"), type: "text", suggestions: personOptions },
@@ -919,6 +983,11 @@ export function FinishedProductDocumentClient({
           releasePermissionTime: row.releasePermissionTime ? nowTime() : "",
           courierTransferTime: "",
           sourceRowKey: undefined,
+          // Повторная партия — новая порция: подпись комиссии, вес и
+          // примечание прежней строки к ней не относятся.
+          signatures: undefined,
+          portionWeight: "",
+          note: "",
         })
       );
     const nextConfig = { ...config, rows: [...config.rows, ...copies] };
@@ -934,6 +1003,9 @@ export function FinishedProductDocumentClient({
       .filter((row) => selectedRows.includes(row.id))
       .map((row) => row.productName)
       .filter(Boolean);
+    const signedCount = config.rows.filter(
+      (row) => selectedRows.includes(row.id) && normalizeRowSignatures(row.signatures).length > 0
+    ).length;
     const confirmed = await confirmAsync({
       title: "Удалить выбранные записи?",
       description: "Записи бракеража исчезнут из журнала после сохранения.",
@@ -941,6 +1013,9 @@ export function FinishedProductDocumentClient({
       confirmLabel: "Удалить",
       bullets: [
         { label: `Записей будет удалено: ${selectedRows.length}`, tone: "warn" },
+        ...(signedCount > 0
+          ? [{ label: `Подписано комиссией: ${signedCount} — подписи останутся в журнале подписей`, tone: "warn" as const }]
+          : []),
         names.length > 0
           ? {
               label: `Изделия: ${names.slice(0, 4).join(", ")}${names.length > 4 ? " и др." : ""}`,
@@ -1337,6 +1412,43 @@ export function FinishedProductDocumentClient({
                       mustFill={column.mustFill}
                       employees={personOptions}
                     />
+                  ) : column.key === "signatures" ? (
+                    <SignaturesCell row={row} commission={hasCommission(config)} inspectorFallback={!isColumnVisible("inspector")} />
+                  ) : column.key === "release" ? (
+                    <div className="flex flex-col items-center gap-0.5 py-0.5">
+                      <div className="flex items-center gap-1">
+                        {(["yes", "no"] as const).map((value) => (
+                          <button
+                            key={value}
+                            type="button"
+                            disabled={readOnly}
+                            onClick={() => {
+                              updateRow(row.id, { releaseAllowed: value });
+                              flushConfigSave();
+                            }}
+                            className={`rounded-lg px-1.5 py-1 text-[11.5px] leading-none transition-colors duration-150 disabled:opacity-60 ${
+                              row.releaseAllowed === value
+                                ? value === "yes"
+                                  ? "bg-[#e9f7ee] font-semibold text-[#1f8a45]"
+                                  : "bg-[#fff2f1] font-semibold text-[#d43a2f]"
+                                : "text-[#9b9fb3] hover:bg-[#f5f6ff]"
+                            }`}
+                          >
+                            {value === "yes" ? "Разрешено" : "Не разрешено"}
+                          </button>
+                        ))}
+                      </div>
+                      {row.releaseAllowed !== "no" ? (
+                        <JournalCellInput
+                          value={row.releasePermissionTime}
+                          onChange={(event) => updateRow(row.id, { releasePermissionTime: event.target.value })}
+                          onBlur={flushConfigSave}
+                          className="rounded-none text-center"
+                          disabled={readOnly}
+                          aria-label="Время разрешения"
+                        />
+                      ) : null}
+                    </div>
                   ) : column.field ? (
                     <JournalCellInput
                       value={row[column.field]}
@@ -1396,9 +1508,9 @@ export function FinishedProductDocumentClient({
                 что был раньше. */}
             {!readOnly ? (
               <JournalAddRow
-                leading={3}
-                labelSpan={1}
-                trailing={columns.length - 3}
+                leading={nameColumnIndex >= 0 ? nameColumnIndex + 1 : 1}
+                labelSpan={nameColumnIndex >= 0 ? 1 : Math.max(1, columns.length)}
+                trailing={nameColumnIndex >= 0 ? columns.length - nameColumnIndex - 1 : 0}
                 label="Добавить изделие"
                 onClick={() => openAddRow()}
               />
@@ -1776,6 +1888,48 @@ export function FinishedProductDocumentClient({
           </div>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+/**
+ * Ячейка «Подпись бракеражной комиссии»: только чтение. Подписи ставят сами
+ * члены комиссии (QR с ПИН или «Подписать» на сайте), руками их не впишешь.
+ */
+function SignaturesCell({
+  row,
+  commission,
+  inspectorFallback,
+}: {
+  row: FinishedProductDocumentRow;
+  commission: boolean;
+  inspectorFallback: boolean;
+}) {
+  const signatures = normalizeRowSignatures(row.signatures);
+  if (signatures.length > 0) {
+    return (
+      <div className="px-1.5 py-1 text-center text-[12px] leading-snug text-[#0b1024]">
+        {formatRowSignatures(signatures)}
+        {signatures.some((signature) => signature.outdated) ? (
+          <div className="mt-0.5 text-[10.5px] text-[#b25c00]" title="Строку меняли после подписи">
+            изменено после подписи
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+  if (commission) {
+    return (
+      <div className="px-1.5 py-1 text-center print:hidden">
+        <span className="inline-flex rounded-full bg-[#fff8eb] px-2 py-0.5 text-[11px] font-medium text-[#7a4a00]">
+          Ждёт подписи комиссии
+        </span>
+      </div>
+    );
+  }
+  return (
+    <div className="px-1.5 py-1 text-center text-[12px] leading-snug text-[#3c4053]">
+      {inspectorFallback ? row.inspectorName : ""}
     </div>
   );
 }

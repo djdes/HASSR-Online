@@ -52,6 +52,8 @@ export const DEFAULT_PIPELINE_FIELDS: Record<string, DefaultField[]> = {
       options: [
         { value: "compliant", label: "Соответствует" },
         { value: "non_compliant", label: "Не соответствует" },
+        { value: "good_quality", label: "Доброкачественная" },
+        { value: "poor_quality", label: "Недоброкачественная" },
       ],
     },
     {
