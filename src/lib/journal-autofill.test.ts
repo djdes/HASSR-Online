@@ -13,6 +13,7 @@ import test from "node:test";
 
 import {
   COPY_FORWARD_SKIP_KEYS,
+  applyPerDayJournalAutoFill,
   copyForwardWithJitter,
   countMatrixDiff,
   hashToUnit,
@@ -25,6 +26,10 @@ import {
   normalizeFryerOilEntryData,
 } from "@/lib/fryer-oil-document";
 import { buildGlassControlAutoFillEntryData } from "@/lib/glass-control-document";
+import {
+  CLIMATE_DOCUMENT_TEMPLATE_CODE,
+  type ClimateEntryData,
+} from "@/lib/climate-document";
 import {
   buildCleaningVentilationAutoFillEntryData,
   isCleaningVentilationEntryDataEmpty,
@@ -327,4 +332,81 @@ test("copyForwardWithJitter с 2% не выносит замер далеко о
   });
   assert.ok(Math.abs((out.t as number) - 20) <= 0.4 + 1e-9);
   assert.ok(Math.abs((out.h as number) - 50) <= 1 + 1e-9);
+});
+
+/**
+ * Микроклимат, баг со скриншота: автозаполнение выбирает одну строку на
+ * дату (чья бы ни была) и раньше дописывало в неё должность ответственного
+ * документа — под фамилией другого сотрудника появлялось «Заведующий
+ * производством». Замеры по-прежнему дописываются, должность — нет.
+ */
+function fakeClimateDb(rowEmployeeId: string) {
+  const updates: Array<{ where: { id: string }; data: { data: unknown } }> = [];
+  const creates: unknown[] = [];
+  const db = {
+    journalDocumentEntry: {
+      findMany: async () => [
+        {
+          id: "e1",
+          employeeId: rowEmployeeId,
+          date: new Date("2026-09-02T00:00:00.000Z"),
+          data: {
+            responsibleTitle: null,
+            measurements: { r1: { "10:00": { temperature: 19.4, humidity: null } } },
+          },
+        },
+      ],
+      createMany: async (args: unknown) => {
+        creates.push(args);
+        return { count: 1 };
+      },
+      update: async (args: (typeof updates)[number]) => {
+        updates.push(args);
+        return {};
+      },
+    },
+  } as unknown as Parameters<typeof applyPerDayJournalAutoFill>[0];
+  return { db, updates, creates };
+}
+
+const climateDocument = {
+  id: "doc",
+  organizationId: "org",
+  templateCode: CLIMATE_DOCUMENT_TEMPLATE_CODE,
+  config: {
+    rooms: [
+      {
+        id: "r1",
+        name: "Склад",
+        temperature: { enabled: true, min: 18, max: 25 },
+        humidity: { enabled: true, min: 40, max: 75 },
+      },
+    ],
+    controlTimes: ["10:00"],
+  },
+  responsibleUserId: "resp",
+  responsibleTitle: "Заведующий производством",
+  dateFrom: new Date("2026-09-01T00:00:00.000Z"),
+  dateTo: new Date("2026-09-30T00:00:00.000Z"),
+};
+
+test("климат: автозаполнение не пишет должность документа в строку другого сотрудника", async () => {
+  const { db, updates, creates } = fakeClimateDb("akulinina");
+  const result = await applyPerDayJournalAutoFill(db, {
+    document: climateDocument,
+    dateKeys: ["2026-09-02"],
+  });
+  assert.equal(creates.length, 0);
+  assert.equal(result.updated, 1);
+  const written = updates[0].data.data as ClimateEntryData;
+  assert.equal(written.responsibleTitle, null);
+  assert.equal(written.measurements.r1["10:00"].temperature, 19.4);
+  assert.notEqual(written.measurements.r1["10:00"].humidity, null);
+});
+
+test("климат: строка самого ответственного по-прежнему получает его должность", async () => {
+  const { db, updates } = fakeClimateDb("resp");
+  await applyPerDayJournalAutoFill(db, { document: climateDocument, dateKeys: ["2026-09-02"] });
+  const written = updates[0].data.data as ClimateEntryData;
+  assert.equal(written.responsibleTitle, "Заведующий производством");
 });

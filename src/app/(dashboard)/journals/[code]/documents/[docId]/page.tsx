@@ -1262,6 +1262,8 @@ async function JournalDocumentBody({
         status={document.status}
         autoFill={document.autoFill}
         employees={enrichedEmployees}
+        // ФИО и должности в строках — включая уволенных, как в PDF.
+        displayEmployees={displayEmployees}
         buildings={directoryBuildings}
         config={normalizeClimateDocumentConfig(document.config)}
         initialEntries={document.entries.map((entry) => ({

@@ -265,7 +265,7 @@ import {
   toDateKey,
 } from "@/lib/hygiene-document";
 import { readControlPeriodicity } from "@/lib/control-periodicity";
-import { getUserDisplayTitle } from "@/lib/user-roles";
+import { getRowEmployeeTitle, getUserDisplayTitle } from "@/lib/user-roles";
 import {
   registerPageLabelSlot,
   resetPageLabelSlots,
@@ -1743,10 +1743,28 @@ function buildClimateHead(config: ClimateDocumentConfig): RowInput[] {
   ];
 }
 
+/** Пользователь бланка: `positionTitle` загрузчик уже вычислил (getUserDisplayTitle). */
+type PdfPositionUser = {
+  id: string;
+  name: string;
+  role: string;
+  positionTitle?: string | null;
+};
+
+/**
+ * «Имя + должность» в ячейке бланка. У аккаунта без ФИО загрузчик ставит
+ * должность вместо имени — второй раз её не печатаем («Повар, Повар»).
+ */
+function joinPdfNameAndTitle(name: string, title: string, separator: string) {
+  const cleanTitle = title.trim();
+  if (!cleanTitle || cleanTitle === name.trim()) return name;
+  return `${name}${separator}${cleanTitle}`;
+}
+
 function buildClimateBody(params: {
   config: ClimateDocumentConfig;
   entries: { employeeId: string; date: Date; data: Record<string, unknown> }[];
-  users: { id: string; name: string; role: string }[];
+  users: PdfPositionUser[];
 }): RowInput[] {
   const rooms = params.config.rooms.filter(
     (room) => room.temperature.enabled || room.humidity.enabled
@@ -1783,8 +1801,14 @@ function buildClimateBody(params: {
         })
       ),
       {
+        // Должность этого сотрудника (загрузчик уже положил её в positionTitle),
+        // а не копия из строки: туда попадала должность документа.
         content: user
-          ? `${user.name}${normalized.responsibleTitle ? `\n${normalized.responsibleTitle}` : ""}`
+          ? joinPdfNameAndTitle(
+              user.name,
+              getRowEmployeeTitle(user, normalized.responsibleTitle),
+              "\n"
+            )
           : normalized.responsibleTitle || "",
         styles: { halign: "center" as const, valign: "middle" as const },
       },
@@ -1799,7 +1823,7 @@ function drawClimatePdf(doc: jsPDF, params: {
   dateTo: Date | string;
   config: ClimateDocumentConfig;
   entries: { employeeId: string; date: Date; data: Record<string, unknown> }[];
-  users: { id: string; name: string; role: string }[];
+  users: PdfPositionUser[];
 }) {
   // Экранный H1 над штампом в бланк не идёт — название журнала уже
   // стоит в штампе ХАССП и отдельным заголовком над таблицей.

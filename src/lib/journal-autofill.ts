@@ -598,7 +598,14 @@ export async function applyPerDayJournalAutoFill(
         normalizeClimateEntryData(existing.data),
         config
       );
-      const merged = mergeClimateEntryData(current, generated);
+      // Строка дня может принадлежать не ответственному (QR, TasksFlow):
+      // должность документа — его должность, в чужую строку её не пишем.
+      const merged = mergeClimateEntryData(
+        current,
+        existing.employeeId === responsibleUserId
+          ? generated
+          : { ...generated, responsibleTitle: null }
+      );
       // Сравниваем с уже приведённой к настройкам записью: дописывать
       // нечего — не пишем. Раньше сравнение шло с сырой записью, и любое
       // расхождение формы (лишний ключ, слот без нормы) давало запись на

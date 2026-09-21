@@ -50,6 +50,7 @@ import {
   type ClimateEntryData,
   type ClimateRoomConfig,
 } from "@/lib/climate-document";
+import { getRowEmployeeTitle } from "@/lib/user-roles";
 import {
   RoomEditorDialog,
   type RoomEditorInitial,
@@ -134,6 +135,10 @@ type EmployeeItem = {
   id: string;
   name: string;
   role: string;
+  // Должность сотрудника (как в UserLike): под фамилией в строке показываем
+  // её, а не должность ответственного документа.
+  positionTitle?: string | null;
+  jobPosition?: { name: string; categoryKey: string } | null;
 };
 
 type RowItem = {
@@ -160,6 +165,11 @@ type Props = {
   status: string;
   autoFill?: boolean;
   employees: EmployeeItem[];
+  /**
+   * Ростер + уволенные, на которых ссылаются строки, — только для ФИО и
+   * должности в строках. Выборы ответственных берут `employees`.
+   */
+  displayEmployees?: EmployeeItem[];
   /**
    * 2026-09-04: единый справочник помещений (/settings/buildings).
    * Строки с `roomId` берут имя и нормы из него; карточка помещения
@@ -554,10 +564,19 @@ function ResponsibleDialog({
   useEffect(() => {
     if (!open || !row) return;
     // Первого сотрудника из списка не подставляем: только тот, кто уже
-    // записан в строке, или ответственный документа.
-    setResponsibleTitle(row.data.responsibleTitle || defaultResponsibleTitle || "");
-    setEmployeeId(row.employeeId || defaultResponsibleUserId || "");
-  }, [defaultResponsibleTitle, defaultResponsibleUserId, open, row]);
+    // записан в строке, или ответственный документа. Должность — его
+    // собственная, как в ячейке (раньше открывалась должность документа
+    // рядом с другим сотрудником, и «Сохранить» записывало эту пару).
+    const nextEmployeeId = row.employeeId || defaultResponsibleUserId || "";
+    const nextEmployee = employees.find((item) => item.id === nextEmployeeId);
+    setResponsibleTitle(
+      getRowEmployeeTitle(
+        nextEmployee,
+        row.employeeId ? row.data.responsibleTitle : defaultResponsibleTitle
+      )
+    );
+    setEmployeeId(nextEmployeeId);
+  }, [defaultResponsibleTitle, defaultResponsibleUserId, employees, open, row]);
 
   const cascade = usePositionEmployeeCascade({
     users: employees,
@@ -577,7 +596,12 @@ function ResponsibleDialog({
       await onSave({
         rowId: row.id,
         employeeId,
-        responsibleTitle: responsibleTitle || null,
+        // Копия в строке — должность выбранного человека, а не метка фильтра.
+        responsibleTitle:
+          getRowEmployeeTitle(
+            employees.find((item) => item.id === employeeId),
+            responsibleTitle
+          ) || null,
       });
       onOpenChange(false);
     } catch (error) {
@@ -682,9 +706,16 @@ function AddRowDialog({
   useEffect(() => {
     if (!open) return;
     setDate(todayKey);
-    setResponsibleTitle(defaultResponsibleTitle || "");
+    // Должность ответственного — из его карточки: сохранённая в документе
+    // могла устареть и не совпасть ни с одним пунктом списка должностей.
+    setResponsibleTitle(
+      getRowEmployeeTitle(
+        employees.find((item) => item.id === defaultResponsibleUserId),
+        defaultResponsibleTitle
+      )
+    );
     setEmployeeId(defaultResponsibleUserId || "");
-  }, [defaultResponsibleTitle, defaultResponsibleUserId, open, todayKey]);
+  }, [defaultResponsibleTitle, defaultResponsibleUserId, employees, open, todayKey]);
 
   const cascade = usePositionEmployeeCascade({
     users: employees,
@@ -703,7 +734,11 @@ function AddRowDialog({
       await onCreate({
         employeeId,
         date,
-        responsibleTitle: responsibleTitle || null,
+        responsibleTitle:
+          getRowEmployeeTitle(
+            employees.find((item) => item.id === employeeId),
+            responsibleTitle
+          ) || null,
       });
       onOpenChange(false);
     } catch (error) {
@@ -1177,6 +1212,7 @@ export function ClimateDocumentClient({
   status,
   autoFill = false,
   employees,
+  displayEmployees,
   buildings = [],
   config: initialConfig,
   initialEntries,
@@ -1350,9 +1386,9 @@ export function ClimateDocumentClient({
   const employeeMap = useMemo(
     () =>
       Object.fromEntries(
-        employees.map((employee) => [employee.id, employee])
+        (displayEmployees ?? employees).map((employee) => [employee.id, employee])
       ) as Record<string, EmployeeItem>,
-    [employees]
+    [displayEmployees, employees]
   );
 
   const visibleRooms = useMemo(
@@ -1730,6 +1766,9 @@ export function ClimateDocumentClient({
       method: "PUT",
       url: `/api/journal-documents/${documentId}/entries`,
       body: {
+        // id строки: без него смена сотрудника в «Редактировании
+        // ответственного» делала upsert по новой паре и оставляла дубль.
+        entryId: nextRow.id,
         employeeId: nextRow.employeeId,
         date: nextRow.date,
         data: nextRow.data,
@@ -2810,7 +2849,9 @@ export function ClimateDocumentClient({
                       >
                         <div className="font-medium">{employee?.name || "—"}</div>
                         <div className="text-[13px] text-[#6f7282]">
-                          {row.data.responsibleTitle || defaultResponsibleTitle || ""}
+                          {/* Должность этого сотрудника, не документа:
+                              строку мог заполнить не ответственный. */}
+                          {getRowEmployeeTitle(employee, row.data.responsibleTitle)}
                         </div>
                       </button>
                     </td>
