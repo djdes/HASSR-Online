@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSubmitLock } from "@/lib/use-submit-lock";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +17,9 @@ interface Props {
 
 export function LossForm({ areas }: Props) {
   const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Двойной тап отправлял два POST подряд: setState применяется только
+  // к следующему рендеру. Синхронный замок отсекает второй вход.
+  const { busy: isSubmitting, acquire, release } = useSubmitLock();
   const [error, setError] = useState("");
   const [category, setCategory] = useState("writeoff");
   const [unit, setUnit] = useState("kg");
@@ -24,7 +27,7 @@ export function LossForm({ areas }: Props) {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setIsSubmitting(true);
+    if (!acquire()) return;
     setError("");
     const form = new FormData(e.currentTarget);
 
@@ -50,7 +53,7 @@ export function LossForm({ areas }: Props) {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка");
     } finally {
-      setIsSubmitting(false);
+      release();
     }
   }
 

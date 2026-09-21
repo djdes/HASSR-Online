@@ -1,5 +1,6 @@
 "use client";
 import { RU_PHONE_PLACEHOLDER, phoneInputProps } from "@/lib/phone-input";
+import { useSubmitLock } from "@/lib/use-submit-lock";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -39,7 +40,9 @@ export function InviteUserDialog() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<InviteMode>("email");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Двойной тап по кнопке успевал отправить два одинаковых запроса:
+  // setState применяется только к следующему рендеру. Замок синхронный.
+  const { busy: isSubmitting, acquire, release } = useSubmitLock();
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -61,7 +64,7 @@ export function InviteUserDialog() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setIsSubmitting(true);
+    if (!acquire()) return;
     setError(null);
 
     try {
@@ -117,7 +120,7 @@ export function InviteUserDialog() {
         err instanceof Error ? err.message : "Ошибка при создании сотрудника"
       );
     } finally {
-      setIsSubmitting(false);
+      release();
     }
   }
 

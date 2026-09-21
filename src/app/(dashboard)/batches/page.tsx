@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatMeasureUnit } from "@/lib/measure-units";
 import { AlertTriangle, Plus } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
@@ -210,7 +211,7 @@ export default async function BatchesPage({
                       {batch.supplier || "—"}
                     </td>
                     <td className="px-5 py-3 tabular-nums text-[#0b1024]">
-                      {batch.quantity} {batch.unit}
+                      {batch.quantity} {formatMeasureUnit(batch.unit)}
                     </td>
                     <td className="px-5 py-3">
                       {batch.expiryDate ? (

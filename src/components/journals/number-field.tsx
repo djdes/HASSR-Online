@@ -90,6 +90,33 @@ export function stepStartValue(
 }
 
 /**
+ * Что покажет поле после тапа «−»/«+».
+ *
+ * Пустое поле — первый тап ставит РОВНО стартовое значение (середину
+ * нормы), без сдвига на шаг: с нормой 2…6 °C человек ждёт «4», а получал
+ * «3,9» либо «4,1» и всё равно лез править руками. Заполненное поле —
+ * обычный сдвиг на шаг с зажимом в границы прибора.
+ */
+export function stepValue(params: {
+  raw: string;
+  direction: 1 | -1;
+  step: number;
+  norm?: { min?: number | null; max?: number | null } | null;
+  min?: number;
+  max?: number;
+}): string {
+  const { raw, direction, step, norm, min, max } = params;
+  const current = parseNumeric(raw);
+  // Плавающая арифметика: 4.1 + 0.1 = 4.199999. Округляем по числу
+  // знаков в шаге, иначе в журнал уедет «4.199999999999999».
+  const decimals = String(step).split(".")[1]?.length ?? 0;
+  let next = current === null ? stepStartValue(norm) : current + direction * step;
+  if (typeof min === "number") next = Math.max(min, next);
+  if (typeof max === "number") next = Math.min(max, next);
+  return next.toFixed(decimals);
+}
+
+/**
  * Сообщение, если введённое руками значение физически невозможно для
  * поля (`min`/`max` — не норма, а границы самого прибора). Раньше
  * границы работали только у степпера, и «44» в поле с max 30
@@ -165,14 +192,7 @@ export function NumberField({
 
   function nudge(direction: 1 | -1) {
     if (disabled) return;
-    const current = parseNumeric(value) ?? stepStartValue(norm);
-    // Плавающая арифметика: 4.1 + 0.1 = 4.199999. Округляем по числу
-    // знаков в шаге, иначе в журнал уедет «4.199999999999999».
-    const decimals = String(step).split(".")[1]?.length ?? 0;
-    let next = current + direction * step;
-    if (typeof min === "number") next = Math.max(min, next);
-    if (typeof max === "number") next = Math.min(max, next);
-    const text = next.toFixed(decimals);
+    const text = stepValue({ raw: value, direction, step, norm, min, max });
     onChange(text);
     commit(text);
   }

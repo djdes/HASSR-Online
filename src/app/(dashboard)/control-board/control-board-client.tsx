@@ -50,6 +50,8 @@ type Sub = {
   approvedCount: number;
   rejectedCount: number;
   notStarted: boolean;
+  /** «отпуск» / «больничный» / «выходной» по графику — иначе null. */
+  absence?: string | null;
 };
 
 type Resp = {
@@ -560,7 +562,9 @@ function SubCard({
 }) {
   const total =
     sub.inProgressCount + sub.pendingReviewCount + sub.approvedCount + sub.rejectedCount;
-  const isProblem = sub.notStarted || !sub.hasTelegram;
+  // Человек в отпуске / на больничном / в выходной — не проблема, а
+  // спокойная серая строка. Раньше он висел красным «не взял задачи».
+  const isProblem = !sub.absence && (sub.notStarted || !sub.hasTelegram);
   return (
     <div
       className={`rounded-2xl border p-3 ${
@@ -574,9 +578,12 @@ function SubCard({
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
           <div className="text-[13px] font-medium text-[#0b1024]">{sub.name}</div>
-          <div className="mt-0.5 text-[11px] text-[#6f7282]">{sub.positionLabel}</div>
+          <div className="mt-0.5 text-[11px] text-[#6f7282]">
+            {sub.positionLabel}
+            {sub.absence ? ` · сегодня ${sub.absence}` : ""}
+          </div>
         </div>
-        {sub.hasTelegram && sub.notStarted ? (
+        {sub.hasTelegram && sub.notStarted && !sub.absence ? (
           <button
             type="button"
             onClick={onRemind}

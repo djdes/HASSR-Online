@@ -1,6 +1,7 @@
 import type React from "react";
 import { LiveRefresh } from "@/components/live/live-refresh";
 import { hasSeenNotice } from "@/lib/seen-notices";
+import { formatCardDateTime } from "@/lib/journal-card-date";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { Plus } from "lucide-react";
@@ -492,7 +493,9 @@ function toDateKey(value: Date) {
 }
 
 function toSourceDateLabel(value: Date) {
-  return value.toLocaleDateString("ru-RU").replaceAll(".", "-");
+  // Было «01-09-2026» — третье написание одной и той же даты на соседних
+  // экранах. Общий помощник подписей карточек даёт «01.09.2026».
+  return formatCardDateTime(toDateKey(value));
 }
 
 function buildTrackedDemoValue(field: TrackedTemplateField, rowIndex: number) {

@@ -6,6 +6,7 @@ import { normalizePhone } from "@/lib/phone";
 import { tryAutolinkTasksflowByPhone } from "@/lib/tasksflow-autolink";
 import { ensurePlanForHeadcount } from "@/lib/plan-limits.server";
 import { normalizeWeeklyDaysOff } from "@/lib/staff-days-off";
+import { resolveJournalAccessBootstrap } from "@/lib/staff-journal-bootstrap";
 
 /**
  * Создание сотрудника организации — общее ядро для POST /api/staff и
@@ -75,7 +76,9 @@ export async function createStaffMember(
     where: { organizationId: orgId, jobPositionId: position.id },
     include: { template: { select: { code: true } } },
   });
-  const useStrictAcl = positionTemplates.length > 0;
+  const accessBootstrap = resolveJournalAccessBootstrap(
+    positionTemplates.map((t) => t.template.code)
+  );
   const buildingIds = await sanitizeBuildingIds(orgId, input.buildingIds ?? []);
 
   const user = await db.$transaction(async (tx) => {
@@ -95,15 +98,15 @@ export async function createStaffMember(
         isActive: true,
         weeklyDaysOff: normalizeWeeklyDaysOff(input.weeklyDaysOff ?? []),
         buildingIds,
-        journalAccessMigrated: useStrictAcl,
+        journalAccessMigrated: accessBootstrap.journalAccessMigrated,
       },
       select: { id: true, name: true, jobPositionId: true, isActive: true },
     });
-    if (useStrictAcl) {
+    if (accessBootstrap.grantedTemplateCodes.length > 0) {
       await tx.userJournalAccess.createMany({
-        data: positionTemplates.map((t) => ({
+        data: accessBootstrap.grantedTemplateCodes.map((templateCode) => ({
           userId: u.id,
-          templateCode: t.template.code,
+          templateCode,
           canRead: true,
           canWrite: true,
           canFinalize: false,

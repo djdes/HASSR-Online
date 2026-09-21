@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSubmitLock } from "@/lib/use-submit-lock";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +19,9 @@ type PlanItem = { sku: string; targetQuantity: number; priority: string };
 
 export function PlanForm() {
   const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Двойной тап отправлял два POST подряд: setState применяется только
+  // к следующему рендеру. Синхронный замок отсекает второй вход.
+  const { busy: isSubmitting, acquire, release } = useSubmitLock();
   const [error, setError] = useState("");
   const [shift, setShift] = useState("morning");
   const [items, setItems] = useState<PlanItem[]>([{ sku: "", targetQuantity: 0, priority: "P2" }]);
@@ -39,7 +42,7 @@ export function PlanForm() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setIsSubmitting(true);
+    if (!acquire()) return;
     setError("");
     const form = new FormData(e.currentTarget);
 
@@ -62,7 +65,7 @@ export function PlanForm() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка");
     } finally {
-      setIsSubmitting(false);
+      release();
     }
   }
 

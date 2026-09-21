@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatMeasureUnit } from "@/lib/measure-units";
 import { Plus, TrendingDown } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
@@ -276,7 +277,7 @@ export default async function LossesPage() {
                     {r.productName}
                   </td>
                   <td className="px-5 py-3 tabular-nums text-[#0b1024]">
-                    {r.quantity} {r.unit}
+                    {r.quantity} {formatMeasureUnit(r.unit)}
                   </td>
                   <td className="px-5 py-3 tabular-nums text-[#0b1024]">
                     {r.costRub

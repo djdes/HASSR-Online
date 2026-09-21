@@ -21,9 +21,9 @@ export const metadata: Metadata = {
 export default async function MiniLoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; phone?: string }>;
 }) {
-  const { next } = await searchParams;
+  const { next, phone } = await searchParams;
 
   return (
     <div className="mx-auto flex min-h-[70vh] w-full max-w-[420px] flex-col justify-center">
@@ -36,7 +36,10 @@ export default async function MiniLoginPage({
           можно войти и через него, по персональной ссылке-приглашению.
         </p>
 
-        <MiniLoginForm next={next} />
+        {/* `?phone=` подставляет номер: после регистрации по QR-коду
+            сотрудник приходит сюда прямо с экрана «Готово», и заново
+            набирать номер ему незачем. */}
+        <MiniLoginForm next={next} initialPhone={phone} />
       </div>
     </div>
   );

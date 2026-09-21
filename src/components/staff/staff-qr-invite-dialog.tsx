@@ -1,5 +1,6 @@
 "use client";
 import { BodyScrollLock } from "@/lib/use-body-scroll-lock";
+import { useSubmitLock } from "@/lib/use-submit-lock";
 
 import { useState } from "react";
 import { Copy, Loader2, Printer, RefreshCcw, X } from "lucide-react";
@@ -25,7 +26,9 @@ type GeneratedToken = {
  * или скопировать.
  */
 export function StaffQrInviteDialog({ open, onClose, positions }: Props) {
-  const [busy, setBusy] = useState(false);
+  // Двойной тап выпускал две одноразовые ссылки подряд — вторая тут же
+  // затирала первую на экране, а первая оставалась висеть в базе.
+  const { busy, acquire, release } = useSubmitLock();
   const [posId, setPosId] = useState<string>("");
   const [label, setLabel] = useState("");
   const [token, setToken] = useState<GeneratedToken | null>(null);
@@ -34,7 +37,7 @@ export function StaffQrInviteDialog({ open, onClose, positions }: Props) {
   if (!open) return null;
 
   async function generate() {
-    setBusy(true);
+    if (!acquire()) return;
     setError(null);
     try {
       const res = await fetch("/api/staff/join-token", {
@@ -62,7 +65,7 @@ export function StaffQrInviteDialog({ open, onClose, positions }: Props) {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка");
     } finally {
-      setBusy(false);
+      release();
     }
   }
 
@@ -112,7 +115,10 @@ export function StaffQrInviteDialog({ open, onClose, positions }: Props) {
       className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4"
     >
       <BodyScrollLock />
-      <div className="w-full max-w-md rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_30px_80px_-20px_rgba(11,16,36,0.55)]">
+      {/* max-h + прокрутка: с готовым QR карточка выше, чем 360×640, и
+          без этого нижние кнопки «Распечатать» / «Ещё один» уезжали за
+          экран, а страница под модалкой не скроллится. */}
+      <div className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_30px_80px_-20px_rgba(11,16,36,0.55)]">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
             <div className="mb-1 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#3848c7]">

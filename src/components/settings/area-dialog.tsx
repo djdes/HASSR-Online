@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSubmitLock } from "@/lib/use-submit-lock";
 import { useRouter } from "next/navigation";
 import { Plus, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,9 @@ export function AreaDialog({ area }: AreaDialogProps) {
   const router = useRouter();
   const isEdit = !!area;
   const [open, setOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Двойной тап по кнопке успевал отправить два одинаковых запроса:
+  // setState применяется только к следующему рендеру. Замок синхронный.
+  const { busy: isSubmitting, acquire, release } = useSubmitLock();
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState(area?.name ?? "");
   const [description, setDescription] = useState(area?.description ?? "");
@@ -36,7 +39,7 @@ export function AreaDialog({ area }: AreaDialogProps) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setIsSubmitting(true);
+    if (!acquire()) return;
     setError(null);
 
     try {
@@ -58,7 +61,7 @@ export function AreaDialog({ area }: AreaDialogProps) {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка");
     } finally {
-      setIsSubmitting(false);
+      release();
     }
   }
 

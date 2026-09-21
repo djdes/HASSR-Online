@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSubmitLock } from "@/lib/use-submit-lock";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus, Pencil, Building2, ArrowRight } from "lucide-react";
@@ -73,7 +74,9 @@ export function EquipmentDialog({
   const router = useRouter();
   const isEdit = !!equipment;
   const [open, setOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Двойной тап по кнопке успевал отправить два одинаковых запроса:
+  // setState применяется только к следующему рендеру. Замок синхронный.
+  const { busy: isSubmitting, acquire, release } = useSubmitLock();
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState(equipment?.name ?? "");
   const [type, setType] = useState(equipment?.type ?? "");
@@ -117,7 +120,7 @@ export function EquipmentDialog({
       return;
     }
 
-    setIsSubmitting(true);
+    if (!acquire()) return;
     setError(null);
 
     try {
@@ -147,7 +150,7 @@ export function EquipmentDialog({
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка");
     } finally {
-      setIsSubmitting(false);
+      release();
     }
   }
 
@@ -161,7 +164,20 @@ export function EquipmentDialog({
     >
       <DialogTrigger asChild>
         {isEdit ? (
-          <Button variant="ghost" size="sm"><Pencil className="size-4" /></Button>
+          // aria-label: кнопка состоит из одной иконки, и без подписи
+          // скринридер читал её как «кнопка».
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-label={
+              equipment?.name
+                ? `Изменить оборудование «${equipment.name}»`
+                : "Изменить оборудование"
+            }
+            title="Изменить"
+          >
+            <Pencil className="size-4" />
+          </Button>
         ) : (
           <Button><Plus className="size-4" />Добавить оборудование</Button>
         )}

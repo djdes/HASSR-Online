@@ -9,6 +9,7 @@ import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { hasJournalAccess } from "@/lib/journal-acl";
 import { resolveDayStart } from "@/lib/today-compliance";
 import { journalIconName, looksLikeJournalCode } from "@/lib/journal-label";
+import { formatStaffAbsenceNote, isStaffAbsentOnDay } from "@/lib/staff-absence";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -279,20 +280,33 @@ export async function GET() {
     }
   }
 
-  // Больничный / отпуск / выходной из «Графика смен». Сотрудник его не
-  // видел вовсе: отметку ставила управляющая, а в приложении ничего не
-  // менялось. Задачи при этом НЕ прячем — человек может выйти на подмену.
-  const shift = await db.workShift.findFirst({
-    where: { organizationId, userId, date: { gte: today, lt: tomorrow } },
-    select: { status: true },
-  });
+  // Больничный / отпуск / выходной. Сотрудник их не видел вовсе: отметку
+  // ставила управляющая, а в приложении ничего не менялось. Задачи при
+  // этом НЕ прячем — человек может выйти на подмену.
+  //
+  // Два источника: «График смен» (`WorkShift`) и вкладки графиков в
+  // «Сотрудниках» (отпуск / больничный / постоянные выходные). Второй
+  // читало только автозаполнение гигиены — берём тот же помощник, чтобы
+  // экран и журнал говорили одно и то же.
+  const [shift, absence] = await Promise.all([
+    db.workShift.findFirst({
+      where: { organizationId, userId, date: { gte: today, lt: tomorrow } },
+      select: { status: true },
+    }),
+    isStaffAbsentOnDay(db, { organizationId, employeeId: userId, dateKey }),
+  ]);
   const scheduleStatus =
     shift && shift.status !== "scheduled" ? shift.status : null;
+  const scheduleNote = absence
+    ? { kind: absence.status, text: formatStaffAbsenceNote(absence) }
+    : null;
 
   return NextResponse.json({
     dateKey,
     groups,
     scheduleStatus,
+    // Готовая подпись для плашки: «Сегодня у вас по графику: отпуск до 25.09».
+    scheduleNote,
     myActive: myActiveToday
       ? {
           id: myActiveToday.id,

@@ -16,7 +16,7 @@ type Item = {
 const KIND_LABEL: Record<JournalPeriodKind, string> = {
   monthly: "По месяцу",
   yearly: "По году",
-  "half-monthly": "Полумесячный (1–15 / 16–end)",
+  "half-monthly": "Полумесячный (1–15 / 16–конец месяца)",
   "single-day": "Один день",
   perpetual: "Бессрочный",
   days: "По N дней",
@@ -107,7 +107,11 @@ export function JournalPeriodsClient({ initial }: { initial: Item[] }) {
         <table className="w-full text-[13.5px]">
           <thead className="bg-[#fafbff] text-[12px] font-semibold uppercase tracking-[0.06em] text-[#6f7282]">
             <tr>
-              <th className="px-5 py-3 text-left">Журнал</th>
+              {/* Закреплена: на телефоне таблицу крутят вбок, и без
+                  названия непонятно, чей это период. */}
+              <th className="sticky left-0 z-10 bg-[#fafbff] px-5 py-3 text-left">
+                Журнал
+              </th>
               <th className="px-3 py-3 text-left">Период</th>
               <th className="px-3 py-3 text-left w-24">Дней</th>
               <th className="px-3 py-3 text-left">По умолчанию</th>
@@ -119,7 +123,7 @@ export function JournalPeriodsClient({ initial }: { initial: Item[] }) {
               const isDays = r.kind === "days";
               return (
                 <tr key={r.code} className="border-t border-[#eef0f6]">
-                  <td className="px-5 py-2.5 font-medium text-[#0b1024]">
+                  <td className="sticky left-0 z-10 bg-white px-5 py-2.5 font-medium text-[#0b1024]">
                     {r.name}
                     <div className="text-[11px] font-normal text-[#9b9fb3]">
                       {r.code}

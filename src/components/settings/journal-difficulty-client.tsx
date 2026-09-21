@@ -159,7 +159,7 @@ export function JournalDifficultyClient({ journals, initialDifficulty }: Props) 
           title="Удалить все переопределения и вернуться к дефолтам"
         >
           <RotateCcw className="size-4 text-[#5566f6]" />
-          Сбросить к дефолту
+          Сбросить к значениям по умолчанию
         </button>
 
         {dirty.size > 0 ? (

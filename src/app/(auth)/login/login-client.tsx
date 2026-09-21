@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand/logo";
 import { ArrowRight, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { looksLikePhoneInput, phoneQueryValue } from "@/lib/login-identifier";
 
 function LoginForm() {
   const router = useRouter();
@@ -91,8 +92,16 @@ function LoginForm() {
     }
   }
 
+  // Вход по телефону живёт в мобильном кабинете: здесь только почта.
+  // Считаем это не ошибкой, а поводом подсказать дорогу.
+  const phoneTyped = looksLikePhoneInput(formData.email);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (phoneTyped) {
+      setError(null);
+      return;
+    }
     setError(null);
     setLoading(true);
     try {
@@ -320,16 +329,36 @@ function LoginForm() {
             </form>
           ) : null}
           <form onSubmit={handleSubmit} className="mt-8 space-y-5" hidden={Boolean(challengeId)}>
+            {/* type="text": со встроенной проверкой браузер показывал
+                английское «Please include an '@'…», когда сотрудник
+                вводил телефон. Проверяем сами и объясняем по-русски. */}
             <Field
               id="email"
               label="Email"
-              type="email"
+              type="text"
+              inputMode="email"
               value={formData.email}
               onChange={(v) => setFormData((p) => ({ ...p, email: v }))}
               placeholder="name@company.com"
               autoComplete="email"
               required
             />
+
+            {phoneTyped ? (
+              <p className="rounded-2xl border border-[#ffe9b0] bg-[#fffaf0] px-4 py-3 text-[13px] leading-[1.55] text-[#8a5a00]">
+                Похоже, вы ввели номер телефона. На этой странице вход по
+                почте. Сотрудникам —{" "}
+                <Link
+                  href={`/mini/login?phone=${encodeURIComponent(
+                    phoneQueryValue(formData.email)
+                  )}`}
+                  className="font-medium text-[#3848c7] underline underline-offset-2"
+                >
+                  Вход по номеру телефона
+                </Link>
+                .
+              </p>
+            ) : null}
 
             <Field
               id="password"
@@ -457,6 +486,7 @@ function Field({
   autoComplete,
   required,
   adornment,
+  inputMode,
 }: {
   id: string;
   label: string;
@@ -467,6 +497,7 @@ function Field({
   autoComplete?: string;
   required?: boolean;
   adornment?: React.ReactNode;
+  inputMode?: "email" | "tel" | "text";
 }) {
   return (
     <label htmlFor={id} className="block">
@@ -482,6 +513,7 @@ function Field({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           autoComplete={autoComplete}
+          inputMode={inputMode}
           required={required}
           // text-[16px]: ниже 16px iOS Safari зумит страницу при фокусе
           // в поле и не возвращает масштаб обратно.

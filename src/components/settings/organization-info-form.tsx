@@ -1,5 +1,9 @@
 "use client";
-import { RU_PHONE_PLACEHOLDER, phoneInputProps } from "@/lib/phone-input";
+import {
+  RU_PHONE_PLACEHOLDER,
+  formatRuPhoneInput,
+  phoneInputProps,
+} from "@/lib/phone-input";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -100,7 +104,17 @@ export function OrganizationInfoForm({
   legal?: Legal;
 }) {
   const router = useRouter();
-  const [form, setForm] = useState<Form>(initial);
+  // Телефон в базе хранится как «+79991234567». В поле он и показывался
+  // сплошной строкой цифр — приводим к читаемому «+7 999 123-45-67».
+  // Сравниваем с этим же видом, иначе форма считалась бы «изменённой»
+  // сразу после открытия.
+  const initialPhoneDisplay = initial.phone
+    ? formatRuPhoneInput(initial.phone)
+    : initial.phone;
+  const [form, setForm] = useState<Form>(() => ({
+    ...initial,
+    phone: initialPhoneDisplay,
+  }));
   const [saving, setSaving] = useState(false);
   const [innLookup, setInnLookup] = useState(false);
   const [legal, setLegal] = useState<Legal>(legalInitial);
@@ -140,7 +154,7 @@ export function OrganizationInfoForm({
     form.type !== initial.type ||
     form.inn !== initial.inn ||
     form.address !== initial.address ||
-    form.phone !== initial.phone ||
+    form.phone !== initialPhoneDisplay ||
     form.accountantEmail !== initial.accountantEmail ||
     form.locale !== initial.locale ||
     form.timezone !== initial.timezone ||
@@ -178,7 +192,7 @@ export function OrganizationInfoForm({
       if (form.inn !== initial.inn) payload.inn = form.inn ?? "";
       if (form.address !== initial.address)
         payload.address = form.address ?? "";
-      if (form.phone !== initial.phone) payload.phone = form.phone ?? "";
+      if (form.phone !== initialPhoneDisplay) payload.phone = form.phone ?? "";
       if (form.accountantEmail !== initial.accountantEmail)
         payload.accountantEmail = form.accountantEmail ?? "";
       if (form.locale !== initial.locale) payload.locale = form.locale;
@@ -295,7 +309,7 @@ export function OrganizationInfoForm({
       {/* === ОСНОВНОЕ === */}
       <FormSection
         title="Основные реквизиты"
-        subtitle="Идут в шапку каждого printable-журнала и в договоры с поставщиками"
+        subtitle="Идут в шапку каждого печатного журнала и в договоры с поставщиками"
         icon={<Building2 className="size-4" />}
       >
         <FormRow label="Название организации" hint="Юридическое или коммерческое">
@@ -340,7 +354,7 @@ export function OrganizationInfoForm({
             </div>
           </div>
         </FormRow>
-        <FormRow label="Сфера" hint="Влияет на пресеты журналов и pipelines">
+        <FormRow label="Сфера" hint="Влияет на наборы журналов и пошаговые инструкции">
           <select
             value={normalizeSphere(form.type)}
             onChange={(e) => set("type", e.target.value)}
@@ -575,13 +589,13 @@ export function OrganizationInfoForm({
 
       {/* === СМЕНЫ И КОМПЛАЕНС === */}
       <FormSection
-        title="Смены и compliance"
+        title="Смены и строгость журналов"
         subtitle="Когда журнал «закрывается» и кто может править прошлые записи"
         icon={<ShieldCheck className="size-4" />}
       >
         <FormRow
           label="Час окончания смены"
-          hint="После этого часа день считается «прошлым» (для compliance-блокировок). 0–23"
+          hint="После этого часа день считается «прошлым» — для блокировок за незаполненные журналы. 0–23"
         >
           <input
             type="number"

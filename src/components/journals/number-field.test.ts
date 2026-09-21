@@ -5,6 +5,7 @@ import {
   outOfRangeMessage,
   parseNumeric,
   stepStartValue,
+  stepValue,
 } from "@/components/journals/number-field";
 
 /* ── Откуда считает степпер в пустом поле ──────────────────────────── */
@@ -24,6 +25,32 @@ test("нормы нет — поведение прежнее, от нуля", (
   assert.equal(stepStartValue(null), 0);
   assert.equal(stepStartValue(undefined), 0);
   assert.equal(stepStartValue({ min: null, max: null }), 0);
+});
+
+/* ── Первый тап степпера ───────────────────────────────────────────── */
+
+test("первый тап в пустом поле ставит ровно середину нормы, без сдвига", () => {
+  // Было: «−» давал 3,9, «+» давал 4,1 — человек всё равно правил руками.
+  const args = { raw: "", step: 0.1, norm: { min: 2, max: 6 }, min: -40, max: 30 };
+  assert.equal(stepValue({ ...args, direction: -1 }), "4.0");
+  assert.equal(stepValue({ ...args, direction: 1 }), "4.0");
+});
+
+test("в заполненном поле степпер по-прежнему сдвигает на шаг", () => {
+  const args = { raw: "4", step: 0.1, norm: { min: 2, max: 6 }, min: -40, max: 30 };
+  assert.equal(stepValue({ ...args, direction: 1 }), "4.1");
+  assert.equal(stepValue({ ...args, direction: -1 }), "3.9");
+});
+
+test("степпер не выходит за границы прибора", () => {
+  assert.equal(
+    stepValue({ raw: "30", direction: 1, step: 1, min: -40, max: 30 }),
+    "30"
+  );
+  assert.equal(
+    stepValue({ raw: "-40", direction: -1, step: 1, min: -40, max: 30 }),
+    "-40"
+  );
 });
 
 /* ── Границы поля при ручном вводе ─────────────────────────────────── */

@@ -130,7 +130,13 @@ export function UserAccessEditor({ userId, catalog, initialAccess }: Props) {
         <table className="w-full min-w-[620px] text-[15px]">
           <thead className="bg-[#f6f7fb] text-[14px] text-[#6f7282]">
             <tr>
-              <th className="px-6 py-3 text-left font-medium">Журнал</th>
+              {/* Первая колонка закреплена: на телефоне таблицу крутят
+                  вбок, и название журнала уезжало — оставались
+                  безымянные галочки. Фон непрозрачный, иначе под ним
+                  просвечивают проезжающие ячейки. */}
+              <th className="sticky left-0 z-10 bg-[#f6f7fb] px-6 py-3 text-left font-medium">
+                Журнал
+              </th>
               <th className="w-[120px] py-3 text-center font-medium">
                 Просмотр
               </th>
@@ -150,7 +156,7 @@ export function UserAccessEditor({ userId, catalog, initialAccess }: Props) {
                   key={item.code}
                   className="border-t border-[#eef0f6] last:border-b-0"
                 >
-                  <td className="px-6 py-3 text-[15px] text-black">
+                  <td className="sticky left-0 z-10 bg-white px-6 py-3 text-[15px] text-black">
                     {item.name}
                   </td>
                   <td className="py-3 text-center">

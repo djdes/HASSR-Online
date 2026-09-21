@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { hasCapability } from "@/lib/permission-presets";
 import { notifyEmployee } from "@/lib/telegram";
 import { orgDayStartInstant } from "@/lib/timezone";
+import { loadStaffAbsenceForDay } from "@/lib/staff-absence";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -112,8 +113,25 @@ export async function POST(request: Request) {
         },
         select: { id: true },
       });
-      targetUserIds = reachable.map((u) => u.id);
-      if (targetUserIds.length === 0) reason = "no_telegram";
+      // Точечное «Тыкнуть» тоже уважает график: кнопку мы для
+      // отсутствующих прячем, но запрос может прийти и со старой вкладки.
+      const organization = await db.organization.findUnique({
+        where: { id: organizationId },
+        select: { timezone: true },
+      });
+      const absent = await loadStaffAbsenceForDay(db, {
+        organizationId,
+        employeeIds: reachable.map((u) => u.id),
+        dateKey: orgDayStartInstant(organization?.timezone ?? undefined)
+          .toISOString()
+          .slice(0, 10),
+      });
+      targetUserIds = reachable
+        .map((u) => u.id)
+        .filter((id) => !absent.has(id));
+      if (targetUserIds.length === 0) {
+        reason = reachable.length > 0 ? "absent" : "no_telegram";
+      }
     }
   } else {
     // Default: все subordinates с TG, у которых нет active claim сегодня.
@@ -156,7 +174,18 @@ export async function POST(request: Request) {
       },
       select: { id: true },
     });
-    targetUserIds = idle.map((u) => u.id).filter((id) => !busy.has(id));
+    // Отпуск / больничный / постоянный выходной. На вкладках графиков в
+    // «Сотрудниках» прямо написано, что напоминания в такие дни не
+    // приходят — а они приходили. Тот же помощник, что у автозаполнения
+    // гигиены, чтобы экран и рассылка не расходились.
+    const absent = await loadStaffAbsenceForDay(db, {
+      organizationId,
+      employeeIds: idle.map((u) => u.id),
+      dateKey: today.toISOString().slice(0, 10),
+    });
+    targetUserIds = idle
+      .map((u) => u.id)
+      .filter((id) => !busy.has(id) && !absent.has(id));
     if (targetUserIds.length === 0) {
       reason =
         allowedIds.size === 0
@@ -204,6 +233,7 @@ type RemindReason =
   | "no_telegram_all"
   | "no_subordinates"
   | "all_busy"
+  | "absent"
   | "send_failed";
 
 const REMIND_REASON_TEXT: Record<RemindReason, string> = {
@@ -216,6 +246,8 @@ const REMIND_REASON_TEXT: Record<RemindReason, string> = {
   no_subordinates:
     "Вам не назначены сотрудники для контроля. Попросите управляющего настроить это в разделе «Иерархия управления».",
   all_busy: "Напоминать некому: все уже взяли задачи или отметились сегодня.",
+  absent:
+    "Сегодня у сотрудника по графику отпуск, больничный или выходной — напоминания в такие дни не отправляем.",
   send_failed:
     "Telegram не принял сообщение. Попробуйте ещё раз через пару минут.",
 };

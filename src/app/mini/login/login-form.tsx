@@ -17,8 +17,17 @@ import { sanitizeMiniAppRedirectPath } from "@/lib/journal-obligation-links";
  *   • показ пароля — набрать вслепую с первого раза почти невозможно;
  *   • одна строка ошибки, без модалок и подробностей.
  */
-export function MiniLoginForm({ next }: { next?: string }) {
-  const [phone, setPhone] = useState("");
+export function MiniLoginForm({
+  next,
+  initialPhone,
+}: {
+  next?: string;
+  /** Номер из строки запроса — приходит с экрана «Готово» после QR-регистрации. */
+  initialPhone?: string;
+}) {
+  const [phone, setPhone] = useState(() =>
+    initialPhone ? formatRuPhoneInput(initialPhone) : ""
+  );
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -148,7 +157,7 @@ export function MiniLoginForm({ next }: { next?: string }) {
           type="tel"
           inputMode="tel"
           autoComplete="tel"
-          autoFocus
+          autoFocus={!initialPhone}
           value={phone}
           onChange={(e) => setPhone(formatRuPhoneInput(e.target.value))}
           placeholder="+7 999 123-45-67"
@@ -166,6 +175,7 @@ export function MiniLoginForm({ next }: { next?: string }) {
             name="password"
             type={showPassword ? "text" : "password"}
             autoComplete="current-password"
+            autoFocus={Boolean(initialPhone)}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="mini-input h-14 w-full rounded-2xl px-4 pr-14 text-[17px]"

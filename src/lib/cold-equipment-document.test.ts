@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  applyEquipmentNormToColdConfig,
   coldEquipmentSlotKeys,
   coldReadingSlotKey,
   countColdEquipmentValues,
@@ -93,4 +94,39 @@ test("комментарий к отклонению: ложится в correcti
   assert.equal(deviations[0]?.comment, "Вызвал мастера");
   // Комментарий переживает синхронизацию строки с конфигом.
   assert.deepEqual(syncColdEquipmentEntryDataWithConfig(both, config).corrections, both.corrections);
+});
+
+/* ── Норма из справочника доходит до уже созданного документа ─────── */
+
+test("правка нормы оборудования обновляет min/max в конфиге документа", () => {
+  const { config: next, changed } = applyEquipmentNormToColdConfig(config, {
+    sourceEquipmentId: "eq-1",
+    min: 0,
+    max: 4,
+  });
+  assert.equal(changed, true);
+  assert.equal(next.equipment[0].min, 0);
+  assert.equal(next.equipment[0].max, 4);
+  // Соседние строки не трогаем.
+  assert.deepEqual(next.equipment[1], config.equipment[1]);
+  // Исходный конфиг не мутируем.
+  assert.equal(config.equipment[0].min, 2);
+});
+
+test("строка без ссылки на справочник остаётся как есть", () => {
+  const { changed } = applyEquipmentNormToColdConfig(config, {
+    sourceEquipmentId: "eq-неизвестный",
+    min: 0,
+    max: 4,
+  });
+  assert.equal(changed, false);
+});
+
+test("та же норма — записи в базу не требуется", () => {
+  const { changed } = applyEquipmentNormToColdConfig(config, {
+    sourceEquipmentId: "eq-1",
+    min: 2,
+    max: 6,
+  });
+  assert.equal(changed, false);
 });

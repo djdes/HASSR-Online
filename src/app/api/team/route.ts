@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { getUserRoleLabel } from "@/lib/user-roles";
 import { hasCapability, effectivePreset } from "@/lib/permission-presets";
 import { orgDayStartInstant } from "@/lib/timezone";
+import { loadStaffAbsenceForDay } from "@/lib/staff-absence";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -178,6 +179,15 @@ export async function GET() {
       }),
     ]);
 
+  // Постоянные выходные (`User.weeklyDaysOff`) жили только в
+  // автозаполнении гигиены: в «Моей команде» человек в свой законный
+  // выходной висел «ещё не начал». Берём тот же помощник.
+  const absenceByUser = await loadStaffAbsenceForDay(db, {
+    organizationId,
+    employeeIds: userIds,
+    dateKey: today.toISOString().slice(0, 10),
+  });
+
   const activeByUser = new Map<string, (typeof activeClaims)[number]>();
   for (const c of activeClaims) activeByUser.set(c.userId, c);
   const doneCountByUser = new Map<string, number>();
@@ -224,9 +234,11 @@ export async function GET() {
       | "shift_off"
       | "no_telegram" = "not_started";
 
-    if (sick) workStatus = "sick";
-    else if (vac) workStatus = "vacation";
-    else if (off) workStatus = "off_day";
+    const absence = absenceByUser.get(u.id) ?? null;
+
+    if (sick || absence?.status === "sick_leave") workStatus = "sick";
+    else if (vac || absence?.status === "vacation") workStatus = "vacation";
+    else if (off || absence?.status === "day_off") workStatus = "off_day";
     else if (shift?.status === "off") workStatus = "shift_off";
     else if (active) workStatus = "working";
     else if (doneCount > 0) workStatus = "completed_only";

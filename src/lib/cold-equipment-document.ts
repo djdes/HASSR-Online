@@ -423,6 +423,45 @@ export function normalizeColdEquipmentDocumentConfig(
   };
 }
 
+/**
+ * Подставляет новую норму из справочника «Оборудование» в конфиг документа.
+ *
+ * ПОЧЕМУ нужно: строка журнала помнит `sourceEquipmentId`, но `min`/`max`
+ * в ней заморожены на момент создания документа. Управляющая правила
+ * норму в карточке холодильника, а журнал продолжал считать отклонением
+ * то, что уже в норме (и наоборот). Имя из справочника подтягивалось,
+ * а цифры — нет.
+ *
+ * Уже внесённые замеры не трогаем: пересчёт отклонений происходит при
+ * показе, по текущему конфигу.
+ *
+ * @returns новый конфиг и флаг «что-то поменялось» (иначе запись в БД
+ *          не нужна).
+ */
+export function applyEquipmentNormToColdConfig(
+  config: ColdEquipmentDocumentConfig,
+  norm: {
+    sourceEquipmentId: string;
+    min: number | null;
+    max: number | null;
+  }
+): { config: ColdEquipmentDocumentConfig; changed: boolean } {
+  const targetId = norm.sourceEquipmentId.trim();
+  if (targetId === "") return { config, changed: false };
+
+  let changed = false;
+  const equipment = config.equipment.map((item) => {
+    if (item.sourceEquipmentId !== targetId) return item;
+    const nextMin = normalizeNumber(norm.min);
+    const nextMax = normalizeNumber(norm.max);
+    if (item.min === nextMin && item.max === nextMax) return item;
+    changed = true;
+    return { ...item, min: nextMin, max: nextMax };
+  });
+
+  return changed ? { config: { ...config, equipment }, changed } : { config, changed };
+}
+
 export function createEmptyColdEquipmentEntryData(
   config: ColdEquipmentDocumentConfig,
   responsibleTitle: string | null = null

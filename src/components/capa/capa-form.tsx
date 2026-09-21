@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useSubmitLock } from "@/lib/use-submit-lock";
 
 /**
  * Pre-set CAPA scenarios — частые случаи, чтобы менеджер не писал
@@ -125,6 +126,9 @@ export const PRIORITY_SLA_HOURS: Record<string, string> = {
   low: "72",
 };
 
+/** Приоритет по умолчанию — от него же берётся и срок устранения. */
+export const DEFAULT_PRIORITY = "medium";
+
 interface Props {
   users: { id: string; name: string }[];
 }
@@ -133,11 +137,15 @@ export function CapaForm({ users }: Props) {
   const router = useRouter();
   const titleRef = useRef<HTMLInputElement>(null);
   const descRef = useRef<HTMLTextAreaElement>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Двойной тап по «Создать нарушение» заводил две карточки: `useState`
+  // применяется к следующему рендеру, и оба клика успевали отправить POST.
+  const { busy: isSubmitting, acquire, release } = useSubmitLock();
   const [error, setError] = useState("");
-  const [priority, setPriority] = useState("medium");
+  const [priority, setPriority] = useState(DEFAULT_PRIORITY);
   const [category, setCategory] = useState("other");
-  const [slaHours, setSlaHours] = useState("24");
+  // Срок по умолчанию — из приоритета по умолчанию, одним словарём.
+  // Раньше стояло «24» при приоритете «Средний (48ч)» — подписи спорили.
+  const [slaHours, setSlaHours] = useState(PRIORITY_SLA_HOURS[DEFAULT_PRIORITY]);
   const [assignedToId, setAssignedToId] = useState("");
   const [templateId, setTemplateId] = useState("");
   // Человек сам выставил срок — больше его не трогаем.
@@ -164,7 +172,7 @@ export function CapaForm({ users }: Props) {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setIsSubmitting(true);
+    if (!acquire()) return;
     setError("");
 
     const form = new FormData(e.currentTarget);
@@ -192,7 +200,7 @@ export function CapaForm({ users }: Props) {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка");
     } finally {
-      setIsSubmitting(false);
+      release();
     }
   }
 

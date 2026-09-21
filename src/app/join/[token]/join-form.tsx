@@ -15,11 +15,15 @@ type Props = {
 export function JoinForm({ token, positions, suggestedJobPositionId }: Props) {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("+7");
-  const [jobPositionId, setJobPositionId] = useState(
-    suggestedJobPositionId && positions.some((p) => p.id === suggestedJobPositionId)
+  // Должность приглашения — если её указал руководитель. Иначе пусто:
+  // раньше подставлялась первая строка списка («Управляющий»), и повар,
+  // не вчитавшись, регистрировался руководителем.
+  const lockedPositionId =
+    suggestedJobPositionId &&
+    positions.some((p) => p.id === suggestedJobPositionId)
       ? suggestedJobPositionId
-      : positions[0]?.id ?? ""
-  );
+      : null;
+  const [jobPositionId, setJobPositionId] = useState(lockedPositionId ?? "");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
@@ -34,6 +38,10 @@ export function JoinForm({ token, positions, suggestedJobPositionId }: Props) {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (busy) return;
+    if (!jobPositionId) {
+      setError("Выберите должность");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -68,12 +76,15 @@ export function JoinForm({ token, positions, suggestedJobPositionId }: Props) {
           Готово
         </h2>
         <p className="mt-1.5 text-[14px] leading-[1.55] text-[#6f7282]">
-          Аккаунт создан. Войти можно по номеру телефона{" "}
+          Аккаунт создан. Входите по номеру телефона{" "}
           <span className="font-mono text-[#0b1024]">{phone}</span> и паролю,
           который вы только что установили.
         </p>
+        {/* Вход по телефону живёт на /mini/login — на /login сайта поле
+            только для почты, а почта у сотрудника служебная и он её не
+            знает. Номер подставляем строкой запроса. */}
         <a
-          href="/login"
+          href={`/mini/login?phone=${encodeURIComponent(phone)}`}
           className="mt-5 inline-flex h-11 items-center justify-center rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0]"
         >
           Войти в WeSetup
@@ -116,9 +127,11 @@ export function JoinForm({ token, positions, suggestedJobPositionId }: Props) {
         <select
           required
           value={jobPositionId}
+          disabled={Boolean(lockedPositionId)}
           onChange={(e) => setJobPositionId(e.target.value)}
-          className="h-12 w-full rounded-2xl border border-[#dcdfed] bg-white px-4 text-[15px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
+          className="h-12 w-full rounded-2xl border border-[#dcdfed] bg-white px-4 text-[15px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15 disabled:bg-[#f6f7fb] disabled:text-[#6f7282]"
         >
+          <option value="">— выберите должность —</option>
           {grouped.mgmt.length > 0 && (
             <optgroup label="Руководство">
               {grouped.mgmt.map((p) => (
@@ -138,6 +151,15 @@ export function JoinForm({ token, positions, suggestedJobPositionId }: Props) {
             </optgroup>
           )}
         </select>
+        {lockedPositionId ? (
+          <p className="mt-1.5 text-[12px] text-[#6f7282]">
+            Должность указана в приглашении — менять её не нужно.
+          </p>
+        ) : (
+          <p className="mt-1.5 text-[12px] text-[#6f7282]">
+            Выберите свою должность — от неё зависят журналы и задачи.
+          </p>
+        )}
       </Field>
 
       <Field label="Пароль">

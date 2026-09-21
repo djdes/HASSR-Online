@@ -1,6 +1,7 @@
 "use client";
 
 import type { TourAnchor } from "@/lib/tour-anchors";
+import { useSubmitLock } from "@/lib/use-submit-lock";
 
 import { type ReactNode, useId, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -198,7 +199,9 @@ export function CreateDocumentDialog({
   const router = useRouter();
   const formId = useId();
   const [open, setOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Двойной тап по кнопке успевал отправить два одинаковых запроса:
+  // setState применяется только к следующему рендеру. Замок синхронный.
+  const { busy: isSubmitting, acquire, release } = useSubmitLock();
   const [error, setError] = useState("");
   /** Найденный сервером документ на тот же период (ответ 409). */
   const [duplicate, setDuplicate] = useState<{ id: string; title: string } | null>(null);
@@ -412,7 +415,7 @@ export function CreateDocumentDialog({
    * в окне не было, и человек упирался в красную строку.
    */
   async function createDocument(force: boolean) {
-    setIsSubmitting(true);
+    if (!acquire()) return;
     setError("");
     setDuplicate(null);
 
@@ -543,7 +546,7 @@ export function CreateDocumentDialog({
     } catch (err) {
       setError(humanizeFetchError(err, "Ошибка"));
     } finally {
-      setIsSubmitting(false);
+      release();
     }
   }
 

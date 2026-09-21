@@ -297,11 +297,22 @@ export function VerifierClient({
           <button
             type="button"
             onClick={() => setApproveAllOpen(true)}
-            disabled={busy || docVerificationStatus === "approved"}
+            // Пустой журнал принимать нечего: кнопка была активной и
+            // «принимала» ноль записей — человек думал, что проверил.
+            disabled={
+              busy ||
+              entries.length === 0 ||
+              docVerificationStatus === "approved"
+            }
+            title={
+              entries.length === 0
+                ? "Нет записей для проверки"
+                : "Одобрить все записи документа"
+            }
             className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#5566f6] px-3 text-[13px] font-medium text-white hover:bg-[#4a5bf0] disabled:opacity-50"
           >
             <ShieldCheck className="size-4" />
-            Принять весь журнал
+            {entries.length === 0 ? "Нет записей для проверки" : "Принять весь журнал"}
           </button>
         </div>
       </div>

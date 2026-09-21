@@ -75,6 +75,9 @@ export function DeleteButton({
       size="sm"
       onClick={handleClick}
       disabled={isBusy}
+      // Кнопка из одной иконки: без подписи скринридер читал «кнопка».
+      aria-label={`Удалить ${entityName}`}
+      title="Удалить"
       className="text-destructive hover:text-destructive"
     >
       <Trash2 className="size-4" />

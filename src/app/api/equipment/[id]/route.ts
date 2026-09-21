@@ -4,6 +4,50 @@ import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import {
+  COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE,
+  applyEquipmentNormToColdConfig,
+  normalizeColdEquipmentDocumentConfig,
+} from "@/lib/cold-equipment-document";
+
+/**
+ * Разносит норму температуры из справочника по активным журналам
+ * холодильников организации. Best-effort: сбой синхронизации не должен
+ * ронять сохранение карточки оборудования.
+ */
+async function syncColdEquipmentNorms(params: {
+  organizationId: string;
+  sourceEquipmentId: string;
+  min: number | null;
+  max: number | null;
+}) {
+  try {
+    const documents = await db.journalDocument.findMany({
+      where: {
+        organizationId: params.organizationId,
+        status: "active",
+        template: { code: COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE },
+      },
+      select: { id: true, config: true },
+    });
+
+    for (const doc of documents) {
+      const current = normalizeColdEquipmentDocumentConfig(doc.config);
+      const { config, changed } = applyEquipmentNormToColdConfig(current, {
+        sourceEquipmentId: params.sourceEquipmentId,
+        min: params.min,
+        max: params.max,
+      });
+      if (!changed) continue;
+      await db.journalDocument.update({
+        where: { id: doc.id },
+        data: { config },
+      });
+    }
+  } catch (error) {
+    console.error("[equipment] cold norm sync failed", error);
+  }
+}
 
 export async function PUT(
   request: Request,
@@ -99,6 +143,19 @@ export async function PUT(
         tempMax: parsedTempMax,
         tuyaDeviceId: nextTuyaDeviceId,
       },
+    });
+
+    // Новая норма должна дойти до уже созданных журналов холодильников.
+    // Строка документа помнит `sourceEquipmentId`, но min/max в ней
+    // заморожены: до этого правка нормы в карточке оборудования ни на что
+    // не влияла, и журнал продолжал считать отклонением то, что уже в
+    // норме. Трогаем только АКТИВНЫЕ документы — закрытые предъявляют
+    // инспектору в том виде, в каком их подписали.
+    await syncColdEquipmentNorms({
+      organizationId: equipment.area.organizationId,
+      sourceEquipmentId: id,
+      min: parsedTempMin,
+      max: parsedTempMax,
     });
 
     return NextResponse.json({ equipment: updated });

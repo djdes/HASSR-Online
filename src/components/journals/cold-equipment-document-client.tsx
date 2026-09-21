@@ -45,6 +45,10 @@ import {
   UserPlus,
 } from "lucide-react";
 import { QrFillPreview } from "@/components/qr/qr-fill-preview";
+import {
+  getMissingDirectoryEquipment,
+  type EquipmentLinkedRow,
+} from "@/lib/equipment-directory-link";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ResponsiveMenu } from "@/components/ui/responsive-menu";
@@ -223,10 +227,68 @@ function buildResponsibleCodes(
   };
 }
 
+/** Единица справочника «Оборудование», пригодная для журнала холодильников. */
+type DirectoryOption = {
+  id: string;
+  name: string;
+  areaName: string | null;
+  min: number | null;
+  max: number | null;
+};
+
+/**
+ * Что показать в блоке «Выбрать из справочника»: холодильное оборудование
+ * организации, которого ещё нет в этом документе.
+ *
+ * Холодильным считаем по тому же правилу, что и при создании бланка:
+ * тип refrigerator/freezer либо заданная температурная норма.
+ */
+function pickColdDirectoryOptions(
+  raw: unknown,
+  existingRows: readonly EquipmentLinkedRow[]
+): DirectoryOption[] {
+  if (!Array.isArray(raw)) return [];
+  const cold = raw
+    .filter((item): item is Record<string, unknown> =>
+      Boolean(item) && typeof item === "object" && !Array.isArray(item)
+    )
+    .filter((item) => {
+      const type = typeof item.type === "string" ? item.type.toLowerCase() : "";
+      return (
+        type === "refrigerator" ||
+        type === "freezer" ||
+        item.tempMin != null ||
+        item.tempMax != null
+      );
+    })
+    .map((item) => ({
+      id: String(item.id ?? ""),
+      name: typeof item.name === "string" ? item.name : "",
+      areaName:
+        item.area && typeof item.area === "object" && !Array.isArray(item.area)
+          ? String((item.area as Record<string, unknown>).name ?? "") || null
+          : null,
+      min: typeof item.tempMin === "number" ? item.tempMin : null,
+      max: typeof item.tempMax === "number" ? item.tempMax : null,
+    }))
+    .filter((item) => item.id !== "" && item.name.trim() !== "");
+
+  // Отсев уже добавленных — и по ссылке, и по имени (строки старых
+  // документов ссылки не имеют).
+  const available = new Set(
+    getMissingDirectoryEquipment(
+      cold.map((item) => ({ id: item.id, name: item.name })),
+      existingRows
+    ).map((item) => item.id)
+  );
+  return cold.filter((item) => available.has(item.id));
+}
+
 function EquipmentDialog({
   open,
   onOpenChange,
   initialItem,
+  existingRows,
   canDelete,
   onSave,
   onDelete,
@@ -235,6 +297,8 @@ function EquipmentDialog({
   open: boolean;
   onOpenChange: (value: boolean) => void;
   initialItem: ColdEquipmentConfigItem | null;
+  /** Строки документа — чтобы не предлагать уже добавленное. */
+  existingRows: EquipmentLinkedRow[];
   canDelete: boolean;
   /** Возвращает сохранённую строку — уже со ссылкой на справочник. */
   onSave: (item: ColdEquipmentConfigItem) => Promise<ColdEquipmentConfigItem>;
@@ -261,6 +325,52 @@ function EquipmentDialog({
   const [linkedEquipmentId, setLinkedEquipmentId] = useState<string | null>(
     initialItem?.sourceEquipmentId ?? null,
   );
+  /** Холодильное оборудование организации, которого ещё нет в журнале. */
+  const [directoryOptions, setDirectoryOptions] = useState<DirectoryOption[]>([]);
+  const [directoryLoading, setDirectoryLoading] = useState(false);
+
+  // Справочник тянем только при добавлении новой строки: при правке
+  // выбирать не из чего.
+  useEffect(() => {
+    if (!open || initialItem) {
+      setDirectoryOptions([]);
+      return;
+    }
+    let cancelled = false;
+    setDirectoryLoading(true);
+    fetch("/api/equipment")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (cancelled) return;
+        setDirectoryOptions(
+          pickColdDirectoryOptions(payload?.equipment, existingRows)
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setDirectoryOptions([]);
+      })
+      .finally(() => {
+        if (!cancelled) setDirectoryLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, initialItem, existingRows]);
+
+  /** Выбор готовой единицы: подставляем её имя и норму, ссылку запоминаем. */
+  function pickFromDirectory(option: DirectoryOption) {
+    setLinkedEquipmentId(option.id);
+    setName(option.name);
+    setMin(option.min == null ? "" : String(option.min));
+    setMax(option.max == null ? "" : String(option.max));
+    const matched = COLD_EQUIPMENT_PRESETS.find(
+      (preset) =>
+        preset.id !== "custom" &&
+        preset.min === (option.min ?? null) &&
+        preset.max === (option.max ?? null),
+    );
+    setPresetId(matched?.id ?? "custom");
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -380,6 +490,60 @@ function EquipmentDialog({
         </DialogHeader>
 
         <div className="space-y-7 px-6 py-5">
+          {/* Первым делом — уже заведённое оборудование организации.
+              Раньше окно умело только СОЗДАТЬ новую единицу, и один и
+              тот же холодильник заводился в справочнике по второму разу
+              на каждый новый бланк. */}
+          {!initialItem ? (
+            <div className="space-y-3">
+              <Label className="text-[13px] font-medium text-[#3c4053]">
+                Выбрать из справочника
+              </Label>
+              {directoryLoading ? (
+                <p className="text-[12.5px] text-[#6f7282]">Загружаем справочник…</p>
+              ) : directoryOptions.length === 0 ? (
+                <p className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-3 text-[12.5px] leading-[1.5] text-[#6f7282]">
+                  В справочнике «Оборудование» нет холодильников, которых ещё
+                  нет в этом журнале. Заведите новую единицу ниже.
+                </p>
+              ) : (
+                <div className="max-h-[220px] space-y-1.5 overflow-y-auto">
+                  {directoryOptions.map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => pickFromDirectory(option)}
+                      className={cn(
+                        "flex w-full items-start gap-2.5 rounded-xl border px-3 py-2 text-left transition-colors",
+                        linkedEquipmentId === option.id
+                          ? "border-[#5566f6] bg-[#f5f6ff]"
+                          : "border-[#ececf4] bg-white hover:bg-[#fafbff]",
+                      )}
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[13.5px] text-[#0b1024]">
+                          {option.name}
+                        </span>
+                        <span className="block text-[12px] text-[#6f7282]">
+                          {option.areaName ? `${option.areaName} · ` : ""}
+                          {formatRange(option.min, option.max) || "норма не задана"}
+                        </span>
+                      </span>
+                      {linkedEquipmentId === option.id ? (
+                        <span className="shrink-0 text-[12px] font-medium text-[#3848c7]">
+                          Выбрано
+                        </span>
+                      ) : null}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <p className="text-[12px] leading-[1.5] text-[#6f7282]">
+                Или заведите новую единицу — заполните поля ниже.
+              </p>
+            </div>
+          ) : null}
+
           <div className="space-y-3">
             <Label htmlFor="equipment-name" className="text-[13px] font-medium text-[#3c4053]">
               Наименование
@@ -1013,6 +1177,16 @@ export function ColdEquipmentDocumentClient({
   });
   const [equipmentDialogOpen, setEquipmentDialogOpen] = useState(false);
   const [editingEquipment, setEditingEquipment] = useState<ColdEquipmentConfigItem | null>(null);
+  // Что уже есть в документе — чтобы окно не предлагало добавить то же
+  // самое второй раз. Мемоизируем: ссылка уходит в зависимости эффекта.
+  const equipmentDialogExistingRows = useMemo(
+    () =>
+      config.equipment.map((item) => ({
+        equipmentName: item.name,
+        sourceEquipmentId: item.sourceEquipmentId,
+      })),
+    [config.equipment]
+  );
   const [isSwitching, setIsSwitching] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isPreparingQr, setIsPreparingQr] = useState(false);
@@ -1579,7 +1753,7 @@ export function ColdEquipmentDocumentClient({
             items={[
               {
                 key: "add-equipment",
-                label: "Добавить ХК",
+                label: "Добавить холодильник или камеру",
                 icon: <Plus className="size-4 text-[#6f7282]" />,
                 onSelect: () => {
                   setEditingEquipment(null);
@@ -2473,6 +2647,7 @@ export function ColdEquipmentDocumentClient({
         open={equipmentDialogOpen}
         onOpenChange={setEquipmentDialogOpen}
         initialItem={editingEquipment}
+        existingRows={equipmentDialogExistingRows}
         canDelete={config.equipment.length > 1}
         onSave={handleSaveEquipment}
         onDelete={handleDeleteEquipment}

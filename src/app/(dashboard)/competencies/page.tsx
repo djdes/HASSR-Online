@@ -2,6 +2,7 @@ import { GraduationCap } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { CompetencyCell } from "@/components/competencies/competency-cell";
+import { getUserPositionLabel } from "@/lib/user-roles";
 
 const SKILLS = [
   { key: "safety", label: "Безопасность" },
@@ -27,7 +28,13 @@ export default async function CompetenciesPage() {
   const [users, competencies] = await Promise.all([
     db.user.findMany({
       where: { organizationId: orgId, isActive: true },
-      select: { id: true, name: true, role: true },
+      select: {
+        id: true,
+        name: true,
+        role: true,
+        positionTitle: true,
+        jobPosition: { select: { name: true, categoryKey: true } },
+      },
       orderBy: { name: "asc" },
     }),
     db.staffCompetency.findMany({
@@ -96,7 +103,11 @@ export default async function CompetenciesPage() {
                   <td className="px-4 py-3">
                     <div>
                       <p className="font-medium text-[#0b1024]">{user.name}</p>
-                      <p className="text-[12px] text-[#9b9fb3]">{user.role}</p>
+                      {/* Под именем стоял код роли («cook»). Человеку
+                          нужна должность, как она заведена в «Сотрудниках». */}
+                      <p className="text-[12px] text-[#9b9fb3]">
+                        {getUserPositionLabel(user)}
+                      </p>
                     </div>
                   </td>
                   {SKILLS.map((skill) => {

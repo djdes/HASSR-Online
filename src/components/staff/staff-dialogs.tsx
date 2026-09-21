@@ -4,6 +4,8 @@ import { RU_PHONE_PLACEHOLDER, phoneInputProps } from "@/lib/phone-input";
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
+import { useSubmitLock } from "@/lib/use-submit-lock";
+import { formatDaysRu } from "@/lib/format-days";
 import { ChevronLeft, Copy, ExternalLink, KeyRound } from "lucide-react";
 import {
   Dialog,
@@ -314,7 +316,9 @@ export function StaffAddFlowDialog(props: {
       props.positions[0]?.id ??
       ""
   );
-  const [pending, setPending] = useState(false);
+  // Замок от двойного тапа по «Добавить»: setState применяется к
+  // следующему рендеру, и два клика подряд заводили двух сотрудников.
+  const { busy: pending, acquire, release } = useSubmitLock();
   const [subStep, setSubStep] = useState<AddStep>({ kind: "form" });
   // Выходные нового сотрудника: по умолчанию Сб+Вс, чтобы график не
   // пришлось прокликивать руками сразу после найма.
@@ -405,7 +409,7 @@ export function StaffAddFlowDialog(props: {
       toast.error("Введите ФИО");
       return;
     }
-    setPending(true);
+    if (!acquire()) return;
     try {
       const res = await fetch("/api/staff", {
         method: "POST",
@@ -436,7 +440,7 @@ export function StaffAddFlowDialog(props: {
         userName: data.user.name,
       });
     } finally {
-      setPending(false);
+      release();
     }
   }
 
@@ -1271,7 +1275,7 @@ export function StaffAddPeriodDialog(props: {
                       onClick={() => setDateTo(addDays(dateFrom, d))}
                       className="hover:underline"
                     >
-                      +{d} дней
+                      +{formatDaysRu(d)}
                     </button>
                   ))}
                 </div>

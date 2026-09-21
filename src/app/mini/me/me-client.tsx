@@ -567,7 +567,7 @@ export function MiniMeClient({
             Отвязать Telegram
           </span>
           <span className="text-[11px] opacity-70">
-            {busy === "unlink" ? "…" : "нужен новый инвайт"}
+            {busy === "unlink" ? "…" : "понадобится новое приглашение"}
           </span>
         </button>
       </section>

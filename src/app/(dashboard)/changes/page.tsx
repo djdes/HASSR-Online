@@ -56,7 +56,7 @@ export default async function ChangesPage() {
           <table className="w-full border-collapse text-[14px]">
             <thead>
               <tr className="border-b border-[#ececf4] bg-[#fafbff] text-left text-[12px] uppercase tracking-wider text-[#6f7282]">
-                <th className="px-5 py-3 font-medium">v.</th>
+                <th className="px-5 py-3 font-medium">Версия</th>
                 <th className="px-5 py-3 font-medium">Название</th>
                 <th className="px-5 py-3 font-medium">Тип</th>
                 <th className="px-5 py-3 font-medium">Статус</th>

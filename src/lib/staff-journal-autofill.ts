@@ -51,6 +51,18 @@ type EntryDb = Pick<PrismaClient, "journalDocumentEntry">;
 
 export type StaffScheduleMap = Map<string, StaffScheduleStatus>;
 
+/**
+ * То же, что `StaffScheduleMap`, но с датой окончания периода — она нужна
+ * приложению, чтобы сказать «отпуск до 25.09», а не просто «отпуск».
+ * `untilKey` пуст у обычного выходного (он всегда на один день).
+ */
+export type StaffScheduleDetail = {
+  status: StaffScheduleStatus;
+  untilKey: string | null;
+};
+
+export type StaffScheduleDetailMap = Map<string, StaffScheduleDetail>;
+
 export function staffScheduleKey(employeeId: string, dateKey: string) {
   return `${employeeId}:${dateKey}`;
 }
@@ -91,7 +103,25 @@ export async function loadStaffScheduleMap(
     organizationId?: string;
   }
 ): Promise<StaffScheduleMap> {
+  const detail = await loadStaffScheduleDetailMap(db, params);
   const map: StaffScheduleMap = new Map();
+  detail.forEach((value, key) => map.set(key, value.status));
+  return map;
+}
+
+/**
+ * Полная версия: статус + дата окончания периода. Её же использует
+ * приложение сотрудника, чтобы показать «отпуск до 25.09».
+ */
+export async function loadStaffScheduleDetailMap(
+  db: ScheduleDb,
+  params: {
+    employeeIds: string[];
+    dateKeys: string[];
+    organizationId?: string;
+  }
+): Promise<StaffScheduleDetailMap> {
+  const map: StaffScheduleDetailMap = new Map();
   const { employeeIds } = params;
   const dateKeys = [...params.dateKeys].sort();
   if (employeeIds.length === 0 || dateKeys.length === 0) return map;
@@ -145,7 +175,10 @@ export async function loadStaffScheduleMap(
     dateKeys.forEach((dateKey) => {
       const override = overrides.get(dayOffOverrideKey(user.id, dateKey));
       if (!isStaffDayOff(user, dateKey, override ?? null)) return;
-      map.set(staffScheduleKey(user.id, dateKey), "day_off");
+      map.set(staffScheduleKey(user.id, dateKey), {
+        status: "day_off",
+        untilKey: null,
+      });
     });
   });
 
@@ -158,7 +191,10 @@ export async function loadStaffScheduleMap(
       const to = toDateKey(period.dateTo);
       dateKeys.forEach((dateKey) => {
         if (dateKey < from || dateKey > to) return;
-        map.set(staffScheduleKey(period.userId, dateKey), status);
+        map.set(staffScheduleKey(period.userId, dateKey), {
+          status,
+          untilKey: to,
+        });
       });
     });
   }

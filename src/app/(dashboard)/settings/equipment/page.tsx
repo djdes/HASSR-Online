@@ -162,7 +162,11 @@ export default async function EquipmentSettingsPage() {
           <table className="w-full min-w-[720px] text-[15px]">
             <thead className="bg-[#f8f9fc] text-[13px] text-[#6f7282]">
               <tr>
-                <th className="px-6 py-3 text-left font-medium">Название</th>
+                {/* Закреплена: на телефоне таблицу крутят вбок, и без
+                    названия остаются безымянные строки. */}
+                <th className="sticky left-0 z-10 bg-[#f8f9fc] px-6 py-3 text-left font-medium">
+                  Название
+                </th>
                 <th className="px-6 py-3 text-left font-medium">Тип</th>
                 <th className="px-6 py-3 text-left font-medium">Цех</th>
                 <th className="px-6 py-3 text-left font-medium">T° диапазон</th>
@@ -194,7 +198,7 @@ export default async function EquipmentSettingsPage() {
                     key={item.id}
                     className="border-t border-[#f0f1f8] transition-colors hover:bg-[#fafbff]"
                   >
-                    <td className="px-6 py-4">
+                    <td className="sticky left-0 z-10 bg-white px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="flex size-8 items-center justify-center rounded-lg bg-[#f5f3ff] text-[#7a5cff]">
                           <Thermometer className="size-4" />

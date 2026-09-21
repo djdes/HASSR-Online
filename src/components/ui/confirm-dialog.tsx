@@ -126,14 +126,30 @@ export function ConfirmDialog({
     }
   }, [open]);
 
+  // Escape ловим в ФАЗЕ ПЕРЕХВАТА на window. Окно нередко открывают из
+  // кнопки, лежащей внутри `<summary>` раскрывающейся секции (кнопка
+  // «Закрыть день» на главной) — там нажатие успевал обработать кто-то
+  // другой, и лист не закрывался. Перехват срабатывает раньше всех и не
+  // зависит от того, где сейчас фокус.
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape" && !submitting) onClose();
+      if (e.key !== "Escape" || submitting) return;
+      e.preventDefault();
+      e.stopPropagation();
+      onClose();
     }
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
   }, [open, submitting, onClose]);
+
+  // Фокус переводим на саму карточку: иначе он остаётся на кнопке под
+  // окном, и клавиатура продолжает управлять страницей, а не листом.
+  useEffect(() => {
+    if (!open) return;
+    const id = window.setTimeout(() => dialogRef.current?.focus(), 0);
+    return () => window.clearTimeout(id);
+  }, [open]);
 
   // Body scroll lock пока открыта.
   useEffect(() => {
@@ -199,7 +215,13 @@ export function ConfirmDialog({
           экрана и кнопка «Подтвердить» уезжает за нижний край. */}
       <div
         ref={dialogRef}
-        className={`relative flex max-h-[90vh] supports-[height:100dvh]:max-h-[90dvh] w-full max-w-[480px] flex-col overflow-hidden rounded-t-3xl border border-[#ececf4] bg-white sm:rounded-3xl shadow-[0_30px_80px_-30px_rgba(11,16,36,0.55)]`}
+        tabIndex={-1}
+        // Клики внутри окна не должны уходить наверх по дереву React:
+        // портал остаётся ребёнком того места, где его отрисовали, и на
+        // главной это `<summary>` раскрывающейся секции — нажатия внутри
+        // листа сворачивали бы её.
+        onClick={(e) => e.stopPropagation()}
+        className={`relative flex max-h-[90vh] outline-none supports-[height:100dvh]:max-h-[90dvh] w-full max-w-[480px] flex-col overflow-hidden rounded-t-3xl border border-[#ececf4] bg-white sm:rounded-3xl shadow-[0_30px_80px_-30px_rgba(11,16,36,0.55)]`}
       >
         {/* Header — gradient accent */}
         <div className={`relative shrink-0 overflow-hidden ${styles.accentBg} p-6`}>

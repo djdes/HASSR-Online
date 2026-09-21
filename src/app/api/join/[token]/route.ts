@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { hashInviteToken } from "@/lib/invite-tokens";
 import { ensurePlanForHeadcount } from "@/lib/plan-limits.server";
+import { resolveJournalAccessBootstrap } from "@/lib/staff-journal-bootstrap";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -164,21 +165,26 @@ export async function POST(request: Request, ctx: Ctx) {
   // Email — synthetic (telephone-based), чтобы соблюсти @unique constraint
   // и не запрашивать его на форме (не у всех сотрудников вообще есть email).
   // Если в будущем admin захочет настоящий email — добавит через UI.
+  //
+  // Домен — ПОЛНЫЙ id организации. Раньше брали первые 8 символов: у cuid
+  // это общий для всех записей префикс (одна и та же временная метка), и
+  // две разные компании с одинаковым номером сотрудника упирались в
+  // `User.email @unique` — наружу летела голая 500.
   const synthEmailLocal = phone.replace(/\D+/g, "");
-  const orgSlug = r.row.organizationId.slice(0, 8);
+  const orgSlug = r.row.organizationId.toLowerCase().replace(/[^a-z0-9]/g, "");
   const email = `${synthEmailLocal}@${orgSlug}.staff.local`;
 
   const passwordHash = await bcrypt.hash(body.password, 10);
 
   const role = deriveRoleFromCategory(position.categoryKey);
 
-  // Заранее достанем templates, разрешённые для этой должности —
-  // populate UserJournalAccess чтобы новый сотрудник реально мог
-  // видеть свои журналы. Раньше: journalAccessMigrated=true ставился
-  // без populate'а UserJournalAccess. hasJournalAccess читает только
-  // UserJournalAccess (не JobPositionJournalAccess), и QR-joined
-  // сотрудник видел "0 доступных журналов" пока админ вручную не
-  // добавлял ACL-rows. Теперь делаем сразу при join.
+  // Журналы должности → UserJournalAccess: `hasJournalAccess` читает
+  // только его, а не JobPositionJournalAccess.
+  //
+  // Если у должности журналы НЕ настроены (а по умолчанию это так),
+  // строгий режим не включаем — иначе сотрудник получал пустой ACL и не
+  // видел вообще ничего. Правило общее с «Сотрудниками», см.
+  // `resolveJournalAccessBootstrap`.
   const positionTemplates = await db.jobPositionJournalAccess.findMany({
     where: {
       organizationId: r.row.organizationId,
@@ -186,61 +192,79 @@ export async function POST(request: Request, ctx: Ctx) {
     },
     include: { template: { select: { code: true } } },
   });
+  const accessBootstrap = resolveJournalAccessBootstrap(
+    positionTemplates.map((t) => t.template.code)
+  );
 
   // Создаём User + UserJournalAccess + помечаем токен использованным
   // в одной транзакции.
-  const newUser = await db.$transaction(async (tx) => {
-    const u = await tx.user.create({
-      data: {
-        email,
-        name: body.fullName.trim(),
-        phone,
-        passwordHash,
-        role,
-        organizationId: r.row.organizationId,
-        jobPositionId: position.id,
-        positionTitle: position.name,
-        isActive: true,
-        // Сразу включаем ACL. Реальный набор журналов выводится из
-        // JobPositionJournalAccess и копируется в UserJournalAccess
-        // ниже (потому что hasJournalAccess читает именно последний).
-        journalAccessMigrated: true,
-      },
-    });
-    if (positionTemplates.length > 0) {
-      await tx.userJournalAccess.createMany({
-        data: positionTemplates.map((t) => ({
-          userId: u.id,
-          templateCode: t.template.code,
-          canRead: true,
-          canWrite: true,
-          canFinalize: false,
-        })),
-        skipDuplicates: true,
-      });
-    }
-    await tx.employeeJoinToken.update({
-      where: { id: r.row.id },
-      data: { claimedAt: new Date(), claimedUserId: u.id },
-    });
-    await tx.auditLog.create({
-      data: {
-        organizationId: r.row.organizationId,
-        userId: u.id,
-        userName: u.name,
-        action: "employee.self_registered",
-        entity: "User",
-        entityId: u.id,
-        details: {
-          via: "qr_join_token",
-          joinTokenId: r.row.id,
-          positionName: position.name,
-          journalsGranted: positionTemplates.length,
+  let newUser: { id: string; name: string };
+  try {
+    newUser = await db.$transaction(async (tx) => {
+      const u = await tx.user.create({
+        data: {
+          email,
+          name: body.fullName.trim(),
+          phone,
+          passwordHash,
+          role,
+          organizationId: r.row.organizationId,
+          jobPositionId: position.id,
+          positionTitle: position.name,
+          isActive: true,
+          journalAccessMigrated: accessBootstrap.journalAccessMigrated,
         },
-      },
+      });
+      if (accessBootstrap.grantedTemplateCodes.length > 0) {
+        await tx.userJournalAccess.createMany({
+          data: accessBootstrap.grantedTemplateCodes.map((templateCode) => ({
+            userId: u.id,
+            templateCode,
+            canRead: true,
+            canWrite: true,
+            canFinalize: false,
+          })),
+          skipDuplicates: true,
+        });
+      }
+      await tx.employeeJoinToken.update({
+        where: { id: r.row.id },
+        data: { claimedAt: new Date(), claimedUserId: u.id },
+      });
+      await tx.auditLog.create({
+        data: {
+          organizationId: r.row.organizationId,
+          userId: u.id,
+          userName: u.name,
+          action: "employee.self_registered",
+          entity: "User",
+          entityId: u.id,
+          details: {
+            via: "qr_join_token",
+            joinTokenId: r.row.id,
+            positionName: position.name,
+            journalsGranted: accessBootstrap.grantedTemplateCodes.length,
+          },
+        },
+      });
+      return u;
     });
-    return u;
-  });
+  } catch (err) {
+    // P2002 — уникальный индекс. Практически всегда это email, собранный
+    // из телефона: тот же номер уже заводили в этой компании (например,
+    // сотрудник архивирован и поэтому не попал в проверку выше).
+    if (
+      typeof err === "object" &&
+      err !== null &&
+      (err as { code?: string }).code === "P2002"
+    ) {
+      return NextResponse.json(
+        { error: "Сотрудник с таким телефоном уже зарегистрирован в этой компании" },
+        { status: 409 }
+      );
+    }
+    throw err;
+  }
 
   // Лимит бесплатного тарифа: самозапись по QR тоже увеличивает
   // численность, поэтому проверяем и здесь (создание не блокируем).

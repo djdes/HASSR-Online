@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSubmitLock } from "@/lib/use-submit-lock";
 import { useRouter } from "next/navigation";
 import { Plus, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -33,7 +34,9 @@ export function ProductDialog({ product }: ProductDialogProps) {
   const router = useRouter();
   const isEdit = !!product;
   const [open, setOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Двойной тап по кнопке успевал отправить два одинаковых запроса:
+  // setState применяется только к следующему рендеру. Замок синхронный.
+  const { busy: isSubmitting, acquire, release } = useSubmitLock();
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState(product?.name ?? "");
   const [supplier, setSupplier] = useState(product?.supplier ?? "");
@@ -56,7 +59,7 @@ export function ProductDialog({ product }: ProductDialogProps) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setIsSubmitting(true);
+    if (!acquire()) return;
     setError(null);
 
     try {
@@ -88,7 +91,7 @@ export function ProductDialog({ product }: ProductDialogProps) {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка");
     } finally {
-      setIsSubmitting(false);
+      release();
     }
   }
 

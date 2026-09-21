@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/dialog";
 import { PhotoLightbox } from "@/components/shared/photo-lightbox";
 import { Switch } from "@/components/ui/switch";
+import { pluralRu } from "@/lib/plural-ru";
 import { toast } from "sonner";
 import type { FillMode } from "@/lib/journal-routing";
 import { ORG_SPHERES, sphereLabel, type OrgSphere } from "@/lib/org-profile";
@@ -199,6 +200,11 @@ export function JournalsSettingsClient({
     [state, paperItems, paperState]
   );
   const totalCount = items.length + paperItems.length;
+  /** Сколько из включённых — бумажные: их нет в счётчике на главной. */
+  const enabledPaperCount = useMemo(
+    () => paperItems.filter((journal) => paperState[journal.id]).length,
+    [paperItems, paperState]
+  );
 
   const dirty = useMemo(
     () =>
@@ -450,9 +456,12 @@ export function JournalsSettingsClient({
 
         <div className="flex min-w-0 flex-1 flex-col gap-2 p-3">
           <div className="flex items-start gap-2">
+            {/* Переключатель — один кружок без подписи: без aria-label
+                скринридер читал его как безымянный. */}
             <Switch
               checked={enabled}
               onCheckedChange={() => toggle(item.code)}
+              aria-label={`Вести журнал «${item.name}»`}
               className="mt-0.5 shrink-0"
             />
             <button
@@ -507,6 +516,7 @@ export function JournalsSettingsClient({
               type="button"
               onClick={() => setDistDialogCode(item.code)}
               title={`Распределение: ${FILL_MODE_LABELS[dist.fillMode].label}`}
+              aria-label={`Кому заполнять журнал «${item.name}»`}
               className="inline-flex h-8 min-w-0 flex-1 items-center justify-center gap-1 rounded-xl border border-[#ececf4] bg-[#fafbff] px-2 text-[11px] font-medium text-[#3848c7] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
             >
               <Settings2 className="size-3.5 shrink-0" />
@@ -516,6 +526,7 @@ export function JournalsSettingsClient({
             <Link
               href={`/settings/journals/${item.code}/scope`}
               title="Тип задачи и кнопки"
+              aria-label={`Задачи журнала «${item.name}»`}
               className="inline-flex h-8 min-w-0 flex-1 items-center justify-center gap-1 rounded-xl border border-[#ececf4] bg-[#fafbff] px-2 text-[11px] font-medium text-[#3848c7] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
             >
               <ClipboardList className="size-3.5 shrink-0" />
@@ -563,6 +574,7 @@ export function JournalsSettingsClient({
             <Switch
               checked={enabled}
               onCheckedChange={() => togglePaper(journal.id)}
+              aria-label={`Вести бумажный журнал «${journal.name}»`}
               className="mt-0.5 shrink-0"
             />
             <button
@@ -771,6 +783,17 @@ export function JournalsSettingsClient({
                 <span className="inline-flex items-center gap-1 rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] font-medium text-[#5566f6]">
                   <CheckCircle2 className="size-3.5" />
                   Включено {enabledCount} из {totalCount}
+                  {/* На главной и в «Режимах задач» стоит другая цифра:
+                      там только электронные журналы. Разницу называем
+                      прямо, иначе она читается как ошибка. */}
+                  {enabledPaperCount > 0
+                    ? `, из них ${enabledPaperCount} ${pluralRu(
+                        enabledPaperCount,
+                        "бумажный",
+                        "бумажных",
+                        "бумажных"
+                      )}`
+                    : ""}
                 </span>
               </div>
               <p className="mt-2 max-w-[640px] text-[14px] leading-relaxed text-[#6f7282]">

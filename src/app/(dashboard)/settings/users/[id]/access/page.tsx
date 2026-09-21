@@ -5,6 +5,8 @@ import { isManagementRole } from "@/lib/user-roles";
 import { db } from "@/lib/db";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { OrganizationAccessCard } from "@/components/settings/organization-access-card";
+import { formatPhone } from "@/lib/phone";
+import { isTechnicalEmail } from "@/lib/technical-email";
 import { UserAccessEditor } from "./user-access-editor";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +26,7 @@ export default async function UserJournalAccessPage({ params }: PageProps) {
       id: true,
       name: true,
       email: true,
+      phone: true,
       role: true,
       organizationId: true,
       journalAccessMigrated: true,
@@ -59,6 +62,13 @@ export default async function UserJournalAccessPage({ params }: PageProps) {
       })
     : [];
 
+  // Телефон — да, служебная почта — нет.
+  const contactLabel = user.phone
+    ? formatPhone(user.phone)
+    : isTechnicalEmail(user.email)
+      ? ""
+      : user.email;
+
   const accessRows = await db.userJournalAccess.findMany({
     where: { userId: id },
     select: {
@@ -75,14 +85,14 @@ export default async function UserJournalAccessPage({ params }: PageProps) {
         items={[
           { label: "Настройки", href: "/settings" },
           { label: "Сотрудники", href: "/settings/users" },
-          { label: user.name || user.email },
+          { label: user.name || contactLabel || "Сотрудник" },
         ]}
       />
 
       {accountOrganizations.length > 1 ? (
         <OrganizationAccessCard
           userId={user.id}
-          userName={user.name || user.email}
+          userName={user.name || contactLabel || "Сотрудник"}
           organizations={accountOrganizations.map((organization) => ({
             id: organization.id,
             name: organization.name,
@@ -96,8 +106,11 @@ export default async function UserJournalAccessPage({ params }: PageProps) {
         <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.03em] text-black">
           Доступ к журналам
         </h1>
+        {/* Служебная почта (…@….staff.local, staff-…@….local.haccp)
+            сотруднику ничего не говорит и в интерфейс не выносится:
+            показываем телефон, а если его нет — только имя. */}
         <p className="mt-2 text-[15px] text-[#6f7282]">
-          {user.name} · {user.email}
+          {[user.name, contactLabel].filter(Boolean).join(" · ")}
         </p>
         {!user.journalAccessMigrated && (
           <p className="mt-3 text-[14px] text-[#b87a00]">

@@ -59,6 +59,12 @@ type Payload = {
   groups: Group[];
   /** «off» | «vacation» | «sick» из графика смен, если сегодня не рабочий день. */
   scheduleStatus?: string | null;
+  /**
+   * Отпуск / больничный / постоянный выходной из вкладок графиков в
+   * «Сотрудниках». Текст приходит готовым: «Сегодня у вас по графику:
+   * отпуск до 25.09».
+   */
+  scheduleNote?: { kind: string; text: string } | null;
   myActive: {
     id: string;
     journalCode: string;
@@ -77,8 +83,10 @@ const SCHEDULE_NOTES: Record<
   { label: string; icon: typeof Bed }
 > = {
   sick: { label: "больничный", icon: Bed },
+  sick_leave: { label: "больничный", icon: Bed },
   vacation: { label: "отпуск", icon: Palmtree },
   off: { label: "выходной", icon: CalendarOff },
+  day_off: { label: "выходной", icon: CalendarOff },
 };
 
 /** «2026-09-20» → «20 сентября». Без часовых поясов: день уже посчитан. */
@@ -348,9 +356,18 @@ export default function MiniTodayPage() {
     );
   }
 
-  const scheduleNote = data.scheduleStatus
-    ? SCHEDULE_NOTES[data.scheduleStatus] ?? null
+  // Отпуск / больничный / выходной приходит из двух мест: вкладок графиков
+  // в «Сотрудниках» (текст с датой окончания — точнее) и «Графика смен».
+  // Первый — приоритетнее.
+  const scheduleKind = data.scheduleNote?.kind ?? data.scheduleStatus ?? null;
+  const ScheduleIcon = scheduleKind
+    ? SCHEDULE_NOTES[scheduleKind]?.icon ?? null
     : null;
+  const scheduleText =
+    data.scheduleNote?.text ??
+    (scheduleKind && SCHEDULE_NOTES[scheduleKind]
+      ? `Сегодня у вас по графику: ${SCHEDULE_NOTES[scheduleKind].label}`
+      : null);
 
   const totalAvailable = data.groups.flatMap((g) =>
     g.scopes.filter((s) => s.availability === "available")
@@ -423,7 +440,7 @@ export default function MiniTodayPage() {
       {/* Отметка из «Графика смен». Сотрудник её вообще не видел:
           управляющая ставила больничный, а в приложении ничего не
           менялось. Задачи не прячем — человек может выйти на подмену. */}
-      {scheduleNote ? (
+      {scheduleText ? (
         <div
           className="flex items-start gap-2 rounded-2xl border p-3 text-[13px]"
           style={{
@@ -432,13 +449,15 @@ export default function MiniTodayPage() {
             color: "var(--mini-text)",
           }}
         >
-          <scheduleNote.icon
-            className="mt-0.5 size-4 shrink-0"
-            style={{ color: "var(--mini-text-muted)" }}
-          />
+          {ScheduleIcon ? (
+            <ScheduleIcon
+              className="mt-0.5 size-4 shrink-0"
+              style={{ color: "var(--mini-text-muted)" }}
+            />
+          ) : null}
           <span>
-            Сегодня у вас по графику: {scheduleNote.label}. Если вышли на
-            подмену — задачи ниже доступны как обычно.
+            {scheduleText}. Если вышли на подмену — задачи ниже доступны как
+            обычно.
           </span>
         </div>
       ) : null}

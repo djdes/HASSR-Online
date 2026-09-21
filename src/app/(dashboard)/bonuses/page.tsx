@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Coins } from "lucide-react";
 import { db } from "@/lib/db";
@@ -175,10 +176,13 @@ export default async function BonusesPage({
             За период премий нет
           </div>
           <p className="mx-auto mt-1.5 max-w-[420px] text-[13px] text-[#6f7282]">
-            Поменяй фильтр или активируй премию у нужного журнала в{" "}
-            <code className="rounded bg-[#f5f6ff] px-1.5 py-0.5 text-[12px] text-[#3848c7]">
-              /settings/journals
-            </code>
+            Поменяйте период в фильтре или включите премию у нужного журнала —{" "}
+            <Link
+              href="/settings/journals"
+              className="font-medium text-[#3848c7] transition-colors hover:text-[#0b1024]"
+            >
+              Настройки журналов
+            </Link>
             .
           </p>
         </div>
@@ -239,11 +243,15 @@ function isValidIsoDate(value: string | undefined): boolean {
 function formatDateRu(iso: string): string {
   try {
     const d = new Date(`${iso}T00:00:00.000Z`);
-    return d.toLocaleDateString("ru-RU", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    });
+    // «21 сентября 2026 г.» — сокращение уже заканчивается точкой, и
+    // следом за ним в тексте шла вторая: «2026 г.. CSV-выгрузка…».
+    return d
+      .toLocaleDateString("ru-RU", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      })
+      .replace(/\s*г\.?$/, "");
   } catch {
     return iso;
   }

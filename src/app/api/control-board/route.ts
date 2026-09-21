@@ -7,6 +7,7 @@ import { hasCapability, effectivePreset } from "@/lib/permission-presets";
 import { generatePoolForDay, type TaskScope } from "@/lib/journal-task-pool";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { resolveDayStart } from "@/lib/today-compliance";
+import { STAFF_ABSENCE_LABEL, loadStaffAbsenceForDay } from "@/lib/staff-absence";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -234,11 +235,24 @@ export async function GET() {
     approvedCount: number;
     rejectedCount: number;
     notStarted: boolean;
+    /** «отпуск» / «больничный» / «выходной» по графику — или null. */
+    absence: string | null;
   };
+
+  // Кто сегодня не работает по графику (отпуск, больничный, постоянный
+  // выходной). Такой человек не «не взял задачи» — он просто отсутствует,
+  // и красным его подсвечивать нельзя.
+  const absenceByUser = await loadStaffAbsenceForDay(db, {
+    organizationId,
+    employeeIds: subordinates.map((u) => u.id),
+    dateKey: today.toISOString().slice(0, 10),
+  });
 
   const perSub: Record<string, SubRow> = {};
   for (const u of subordinates) {
+    const absence = absenceByUser.get(u.id) ?? null;
     perSub[u.id] = {
+      absence: absence ? STAFF_ABSENCE_LABEL[absence.status] : null,
       id: u.id,
       name: u.name,
       preset: effectivePreset({
@@ -252,7 +266,8 @@ export async function GET() {
       pendingReviewCount: 0,
       approvedCount: 0,
       rejectedCount: 0,
-      notStarted: true,
+      // Отсутствующий по графику должником не считается.
+      notStarted: absence === null,
     };
   }
   for (const t of tasks) {
