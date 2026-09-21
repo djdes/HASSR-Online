@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 import { ClipboardList, ExternalLink, FileText, Printer, QrCode, Refrigerator, Sticker, Warehouse } from "lucide-react";
 
 import { PageHeader, PageHeaderStat } from "@/components/ui/page-header";
-import { posterSubtitleLine, type QrFillKind, type QrPoster, type QrPosterLayout } from "@/lib/qr-fill-types";
+import { posterDetailLine, type QrFillKind, type QrPoster, type QrPosterLayout } from "@/lib/qr-fill-types";
 import { cn } from "@/lib/utils";
 
 export type { QrPoster } from "@/lib/qr-fill-types";
@@ -267,10 +267,10 @@ export function QrPostersClient({
                 <div className="qr-sticker-title mt-2.5 text-[15px] font-semibold leading-tight text-[#0b1024]">
                   {poster.title}
                 </div>
-                <div className="qr-sticker-subtitle mt-0.5 text-[12px] text-[#6f7282]">{posterSubtitleLine(poster)}</div>
-                {poster.norms.length > 0 ? (
+                <div className="qr-sticker-subtitle mt-0.5 text-[12px] text-[#6f7282]">{poster.orgName}</div>
+                {posterDetailLine(poster) ? (
                   <div className="qr-sticker-norm mt-1 text-[12px] font-medium text-[#3848c7]">
-                    Норма: {poster.norms.join(", ")}
+                    {posterDetailLine(poster)}
                   </div>
                 ) : null}
                 <div className="qr-sticker-hint mt-2 text-[10.5px] text-[#9b9fb3]">
@@ -299,10 +299,12 @@ export function QrPostersClient({
                 <h2 className="qr-poster-title mt-2 text-[22px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">
                   {poster.title}
                 </h2>
-                <div className="qr-poster-subtitle mt-1 text-[13px] text-[#6f7282]">
-                  {posterSubtitleLine(poster)}
-                  {poster.norms.length > 0 ? ` · норма ${poster.norms.join(", ")}` : ""}
-                </div>
+                <div className="qr-poster-subtitle mt-1 text-[13px] text-[#6f7282]">{poster.orgName}</div>
+                {posterDetailLine(poster) ? (
+                  <div className="qr-poster-norm mt-0.5 text-[13px] font-medium text-[#3848c7]">
+                    {posterDetailLine(poster)}
+                  </div>
+                ) : null}
                 <div
                   className="qr-box mx-auto mt-4 w-full max-w-[220px] rounded-2xl border border-[#ececf4] bg-white p-2"
                   // SVG собран на сервере библиотекой qrcode — безопасно встраивать.
@@ -363,6 +365,7 @@ export function QrPostersClient({
           .qr-poster-eyebrow { font-size: 12pt; }
           .qr-poster-title { font-size: 26pt; margin-top: 5mm; }
           .qr-poster-subtitle { font-size: 13pt; margin-top: 2mm; }
+          .qr-poster-norm { font-size: 13pt; margin-top: 1mm; }
           .qr-poster .qr-box { width: 100mm !important; max-width: none !important; border: 0 !important; margin-top: 8mm; }
           .qr-poster-steps { font-size: 13pt; width: 150mm; max-width: 100%; margin-top: 8mm; }
 

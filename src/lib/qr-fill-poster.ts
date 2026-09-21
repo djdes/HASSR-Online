@@ -84,7 +84,9 @@ export async function buildEquipmentPoster(
     kind: "equipment",
     title: item.name,
     orgName,
-    subtitle: item.area.name,
+    // Цех не печатаем: плакат висит на самом холодильнике, а строка с
+    // организацией и без него получалась длинной.
+    subtitle: "",
     norms: norm ? [norm] : [],
     url,
     svg: await qrSvg(url),
@@ -95,7 +97,7 @@ type RoomSource = { id: string; name: string; climateNorms: unknown };
 
 export async function buildRoomPoster(
   room: RoomSource,
-  buildingName: string,
+  _buildingName: string,
   origin: string,
   orgName: string
 ): Promise<QrPoster> {
@@ -106,7 +108,8 @@ export async function buildRoomPoster(
     kind: "room",
     title: room.name,
     orgName,
-    subtitle: buildingName,
+    // Точку не печатаем: её название почти повторяет организацию.
+    subtitle: "",
     norms: [
       metricLabel(norms?.temperature ?? DEFAULT_CLIMATE_TEMPERATURE, "°C"),
       metricLabel(norms?.humidity ?? DEFAULT_CLIMATE_HUMIDITY, "%"),

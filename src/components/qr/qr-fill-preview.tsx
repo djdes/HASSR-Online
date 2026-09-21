@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { ExternalLink, FileText, Printer, QrCode, RefreshCw, Sticker } from "lucide-react";
 
-import { posterSubtitleLine, type QrFillKind, type QrPoster } from "@/lib/qr-fill-types";
+import { posterDetailLine, type QrFillKind, type QrPoster } from "@/lib/qr-fill-types";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -122,10 +122,10 @@ export function QrFillPreview({ kind, id, emptyHint, className }: Props) {
                   {state.poster.title}
                 </div>
                 <div className="text-[12.5px] leading-[1.5] text-[#6f7282]">
-                  {posterSubtitleLine(state.poster)}
-                  {state.poster.norms.length > 0
-                    ? ` · норма ${state.poster.norms.join(", ")}`
-                    : ""}
+                  {state.poster.orgName}
+                  {posterDetailLine(state.poster) ? (
+                    <span className="block">{posterDetailLine(state.poster)}</span>
+                  ) : null}
                 </div>
                 <p className="text-[12.5px] leading-[1.5] text-[#3c4053]">
                   {kind === "journal"

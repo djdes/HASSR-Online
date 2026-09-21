@@ -1,28 +1,25 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { posterSubtitleLine } from "./qr-fill-types";
+import { posterDetailLine } from "./qr-fill-types";
 
-describe("posterSubtitleLine", () => {
-  it("ставит организацию перед контекстом", () => {
+describe("posterDetailLine", () => {
+  it("у объекта — только норма (организация печатается строкой выше)", () => {
+    assert.equal(posterDetailLine({ subtitle: "", norms: ["18…22 °C", "40…55 %"] }), "норма 18…22 °C, 40…55 %");
+  });
+
+  it("у журнала — краткая инструкция", () => {
+    assert.equal(posterDetailLine({ subtitle: "Запись в журнал с телефона", norms: [] }), "Запись в журнал с телефона");
+  });
+
+  it("инструкция и норма — через разделитель", () => {
     assert.equal(
-      posterSubtitleLine({ orgName: "МБОУ Гимназия", subtitle: "Основное производство" }),
-      "МБОУ Гимназия · Основное производство",
+      posterDetailLine({ subtitle: "Гигиенический журнал", norms: ["0…4 °C"] }),
+      "Гигиенический журнал · норма 0…4 °C",
     );
   });
 
-  it("не дублирует, когда точка названа как организация", () => {
-    assert.equal(
-      posterSubtitleLine({ orgName: "МБОУ Гимназия", subtitle: "мбоу гимназия" }),
-      "МБОУ Гимназия",
-    );
-  });
-
-  it("организация одна, если контекста нет", () => {
-    assert.equal(posterSubtitleLine({ orgName: "МБОУ Гимназия", subtitle: "  " }), "МБОУ Гимназия");
-  });
-
-  it("контекст один, если организация не задана", () => {
-    assert.equal(posterSubtitleLine({ orgName: "", subtitle: "Склад" }), "Склад");
+  it("пусто, когда нечего показать", () => {
+    assert.equal(posterDetailLine({ subtitle: "  ", norms: [] }), "");
   });
 });

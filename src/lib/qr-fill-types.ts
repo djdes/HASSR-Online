@@ -15,7 +15,12 @@ export type QrPoster = {
    * холодильник». Меняется только контекст (`subtitle`), организация — нет.
    */
   orgName: string;
-  /** Контекст под организацией: цех, точка или краткая инструкция. */
+  /**
+   * Вторая строка под организацией: краткая инструкция (плакаты журналов)
+   * или пусто у объектов — у них там печатается норма. Точку и цех сюда НЕ
+   * кладём: их названия почти повторяют организацию, и строка задваивалась
+   * («д/с №68, МБОУ СОШ №8 · Детский сад №68, МБОУ СОШ №8»).
+   */
   subtitle: string;
   norms: string[];
   url: string;
@@ -24,17 +29,17 @@ export type QrPoster = {
 };
 
 /**
- * Строка под заголовком: «Организация · контекст». Одна на все три места
- * рендера (страница плакатов, наклейки, превью в диалоге) — иначе печатный
- * лист и превью разойдутся. Контекст, совпавший с названием организации
- * (например, единственная точка названа как заведение), не дублируем.
+ * Вторая строка плаката: краткая инструкция и/или норма. Первая строка —
+ * всегда `orgName`, один раз. Функция одна на все три места рендера
+ * (плакат, наклейка, превью в диалоге) — иначе печатный лист и превью
+ * разойдутся.
  */
-export function posterSubtitleLine(poster: Pick<QrPoster, "orgName" | "subtitle">): string {
-  const org = poster.orgName.trim();
-  const context = poster.subtitle.trim();
-  if (!org) return context;
-  if (!context || context.toLowerCase() === org.toLowerCase()) return org;
-  return `${org} · ${context}`;
+export function posterDetailLine(poster: Pick<QrPoster, "subtitle" | "norms">): string {
+  const parts = [
+    poster.subtitle.trim(),
+    poster.norms.length > 0 ? `норма ${poster.norms.join(", ")}` : "",
+  ];
+  return parts.filter(Boolean).join(" · ");
 }
 
 /** Раскладка страницы печати: плакат на лист или наклейки сеткой. */
