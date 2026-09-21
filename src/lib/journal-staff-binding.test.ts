@@ -137,3 +137,51 @@ test("чужой id в конфиге не становится ответств
     null
   );
 });
+
+/**
+ * Строка, чей человек не нашёлся в ростере (уволен, чужое имя), не должна
+ * получать должность ответственного документа — это должность другого
+ * человека. Остаётся только то, что сохранено в самой строке.
+ */
+test("прослеживаемость: ненайденный человек строки не получает должность документа", () => {
+  const config = normalizeJournalStaffBoundConfig(
+    "traceability_test",
+    {
+      defaultResponsibleEmployeeId: "mgr",
+      defaultResponsibleEmployee: "Анна Заведующая",
+      defaultResponsibleRole: "Заведующий производством",
+      rows: [
+        {
+          id: "r1",
+          date: "2026-09-21",
+          responsibleEmployeeId: "gone",
+          responsibleEmployee: "Акулинина Е.В.",
+          responsibleRole: null,
+        },
+      ],
+    },
+    roster
+  ) as { rows: Array<{ responsibleRole: string | null }> };
+  // Ни должность документа, ни должность его ответственного («Управляющий»).
+  assert.equal(config.rows[0].responsibleRole ?? null, null);
+});
+
+test("перештамповка берёт должность из справочника, а не устаревший positionTitle", () => {
+  const baker: StaffBindingUser = {
+    id: "baker",
+    name: "Вера Кондитер",
+    role: "cook",
+    positionTitle: "Повар",
+    jobPosition: { name: "Кондитер" },
+  };
+  const config = normalizeJournalStaffBoundConfig(
+    "traceability_test",
+    {
+      rows: [
+        { id: "r1", date: "2026-09-21", responsibleEmployeeId: "baker", responsibleEmployee: "Вера Кондитер", responsibleRole: "Повар" },
+      ],
+    },
+    [...roster, baker]
+  ) as { rows: Array<{ responsibleRole: string | null }> };
+  assert.equal(config.rows[0].responsibleRole, "Кондитер");
+});

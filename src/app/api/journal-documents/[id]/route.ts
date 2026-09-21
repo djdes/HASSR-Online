@@ -191,7 +191,15 @@ export async function PATCH(
             organizationId: getActiveOrgId(session),
             ...ORG_ROSTER_WHERE,
           },
-          select: { id: true, name: true, role: true, positionTitle: true },
+          select: {
+            id: true,
+            name: true,
+            role: true,
+            positionTitle: true,
+            // Должность из справочника: без неё перештамповка писала в строки
+            // устаревший positionTitle или лейбл роли.
+            jobPosition: { select: { name: true } },
+          },
           orderBy: [{ role: "asc" }, { name: "asc" }],
         })
       : [];

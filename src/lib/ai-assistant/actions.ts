@@ -430,6 +430,7 @@ async function executeFillCells(
 
   const employees = await db.user.findMany({
     where: { id: { in: input.employeeIds }, organizationId: ctx.orgId },
+    include: { jobPosition: { select: { name: true } } },
   });
   if (employees.length !== new Set(input.employeeIds).size) {
     return { ok: false, error: "Сотрудник не найден" };

@@ -152,6 +152,23 @@ export function getUserDisplayTitle(
   return getUserRoleLabel(user?.role);
 }
 
+/**
+ * Должность человека в строке журнала — всегда из его карточки
+ * (`getUserDisplayTitle`). Копия, сохранённая в строке, — только если
+ * человека нет в списке (уволен, удалён). Должность документа сюда не
+ * подставляем: строку мог заполнить не ответственный документа.
+ *
+ * Сначала проверяем, что человек найден: `getUserDisplayTitle(undefined)`
+ * вернул бы «Повар» (пустая роль нормализуется в cook).
+ */
+export function getRowEmployeeTitle(
+  user: Parameters<typeof getUserDisplayTitle>[0],
+  storedTitle?: string | null
+): string {
+  if (user) return getUserDisplayTitle(user);
+  return typeof storedTitle === "string" ? storedTitle.trim() : "";
+}
+
 export function getPermissionRole(role: string | null | undefined): string {
   switch (normalizeUserRole(role)) {
     case "manager":

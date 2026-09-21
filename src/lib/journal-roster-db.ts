@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { ORG_ROSTER_WHERE, type RosterUser } from "@/lib/journal-roster";
+import { getUserDisplayTitle } from "@/lib/user-roles";
 
 /**
  * Серверная половина `journal-roster.ts`: чтение ростера из БД. Отдельным
@@ -78,8 +79,20 @@ export async function findTaskEmployee(input: {
 }): Promise<{ id: string; name: string; positionTitle: string | null } | null> {
   const id = text(input.employeeId);
   if (!id || !input.organizationId) return null;
-  return db.user.findFirst({
+  const user = await db.user.findFirst({
     where: { id, organizationId: input.organizationId, isRoot: false },
-    select: { id: true, name: true, positionTitle: true },
+    select: {
+      id: true,
+      name: true,
+      role: true,
+      positionTitle: true,
+      jobPosition: { select: { name: true } },
+    },
   });
+  if (!user) return null;
+  // Адаптеры пишут `positionTitle` в строку журнала как должность
+  // исполнителя — отдаём её из справочника, как на экране и в PDF, а не
+  // устаревший positionTitle (он пуст или не меняется при переименовании
+  // должности).
+  return { id: user.id, name: user.name, positionTitle: getUserDisplayTitle(user) };
 }

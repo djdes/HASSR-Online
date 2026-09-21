@@ -118,6 +118,8 @@ export async function PUT(
   // Verify employee belongs to org
   const employee = await db.user.findFirst({
     where: { id: employeeId, organizationId: getActiveOrgId(session) },
+    // Должность из справочника — её подставляет reconcileEntryStaffFields.
+    include: { jobPosition: { select: { name: true } } },
   });
   if (!employee) {
     return NextResponse.json({ error: "Сотрудник не найден" }, { status: 404 });
@@ -298,7 +300,13 @@ export async function PATCH(
       id: { in: candidateEmployeeIds },
       organizationId: getActiveOrgId(session),
     },
-    select: { id: true, name: true, role: true, positionTitle: true },
+    select: {
+      id: true,
+      name: true,
+      role: true,
+      positionTitle: true,
+      jobPosition: { select: { name: true } },
+    },
   });
 
   const normalizedEntries: Array<{

@@ -154,6 +154,7 @@ type EmployeeRecord = {
   name: string;
   role: string | null;
   positionTitle: string | null;
+  jobPosition?: { name: string } | null;
 };
 
 type Normalized = { employeeId: string; date: Date; data: unknown };
@@ -778,7 +779,13 @@ export async function dispatchExternalEntries(params: {
 
   const allUsers = await db.user.findMany({
     where: { organizationId, isActive: true },
-    select: { id: true, name: true, role: true, positionTitle: true },
+    select: {
+      id: true,
+      name: true,
+      role: true,
+      positionTitle: true,
+      jobPosition: { select: { name: true } },
+    },
     orderBy: [{ createdAt: "asc" }],
   });
   const employeesById = new Map(allUsers.map((u) => [u.id, u]));

@@ -47,6 +47,8 @@ export type StaffBindingUser = {
   name: string;
   role?: string | null;
   positionTitle?: string | null;
+  /** Должность из справочника — главнее `positionTitle` (getUserDisplayTitle). */
+  jobPosition?: { name?: string | null } | null;
 };
 
 type StaffBindingMatch = "id" | "name" | "fallback" | "none";
@@ -75,7 +77,15 @@ function isPlaceholderStaffName(value: unknown) {
 }
 
 export function getDbStaffTitle(
-  userOrRole: string | null | undefined | { role?: string | null; positionTitle?: string | null }
+  userOrRole:
+    | string
+    | null
+    | undefined
+    | {
+        role?: string | null;
+        positionTitle?: string | null;
+        jobPosition?: { name?: string | null } | null;
+      }
 ) {
   const user =
     userOrRole && typeof userOrRole === "object"
@@ -535,8 +545,9 @@ function reconcileTraceabilityConfigUsers(users: StaffBindingUser[], value: unkn
         userId: raw?.rows?.[index]?.responsibleEmployeeId,
         userName: row.responsibleEmployee,
         title: row.responsibleRole,
-        fallbackTitle:
-          row.responsibleRole || defaultResponsible.title || config.defaultResponsibleRole,
+        // Человек строки не найден — только её собственная копия: должность
+        // ответственного документа принадлежит другому человеку.
+        fallbackTitle: row.responsibleRole,
         allowFallbackUser: "placeholder-only",
       });
 
@@ -544,11 +555,7 @@ function reconcileTraceabilityConfigUsers(users: StaffBindingUser[], value: unkn
         ...row,
         responsibleEmployeeId: selection.userId,
         responsibleEmployee: selection.userName ?? row.responsibleEmployee,
-        responsibleRole:
-          selection.title ??
-          row.responsibleRole ??
-          defaultResponsible.title ??
-          config.defaultResponsibleRole,
+        responsibleRole: selection.title ?? row.responsibleRole,
       };
     }),
   };
@@ -750,7 +757,8 @@ function reconcileMetalImpurityConfigUsers(users: StaffBindingUser[], value: unk
         userId: raw?.rows?.[index]?.responsibleEmployeeId,
         userName: row.responsibleName,
         title: row.responsibleRole,
-        fallbackTitle: row.responsibleRole || responsible.title || config.responsiblePosition,
+        // Как в прослеживаемости: без должности ответственного документа.
+        fallbackTitle: row.responsibleRole,
         allowFallbackUser: "placeholder-only",
       });
 
@@ -758,8 +766,7 @@ function reconcileMetalImpurityConfigUsers(users: StaffBindingUser[], value: unk
         ...row,
         responsibleEmployeeId: selection.userId,
         responsibleName: selection.userName ?? row.responsibleName,
-        responsibleRole:
-          selection.title ?? row.responsibleRole ?? responsible.title ?? config.responsiblePosition,
+        responsibleRole: selection.title ?? row.responsibleRole,
       };
     }),
   };

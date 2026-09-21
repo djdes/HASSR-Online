@@ -132,6 +132,7 @@ export async function POST(
   const employeeIds = [...new Set(parsed.items.map((item) => item.employeeId))];
   const employees = await db.user.findMany({
     where: { id: { in: employeeIds }, organizationId: getActiveOrgId(session) },
+    include: { jobPosition: { select: { name: true } } },
   });
   if (employees.length !== employeeIds.length) {
     return NextResponse.json({ error: "Сотрудник не найден" }, { status: 404 });
