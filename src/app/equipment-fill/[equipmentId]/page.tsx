@@ -115,7 +115,7 @@ export default async function EquipmentFillPage({
   const [employees, targets] = await Promise.all([
     db.user.findMany({
       where: { organizationId, ...ORG_ROSTER_WHERE },
-      select: { id: true, name: true, role: true, positionTitle: true, jobPosition: { select: { name: true } } },
+      select: { id: true, name: true, role: true, positionTitle: true, qrPinHash: true, jobPosition: { select: { name: true } } },
       orderBy: { name: "asc" },
     }),
     resolveEquipmentFillTargets({
@@ -165,6 +165,7 @@ export default async function EquipmentFillPage({
         id: e.id,
         name: e.name,
         positionTitle: getUserDisplayTitle(e) || null,
+        hasPin: Boolean(e.qrPinHash),
       }))}
     />
   );

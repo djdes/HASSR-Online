@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { isManagementRole } from "@/lib/user-roles";
+import { decryptSecret, encryptSecret, isIntegrationCryptoConfigured } from "@/lib/integration-crypto";
 
 /**
  * Кто заполняет QR-форму — общая проверка для журналов, холодильников и
@@ -53,7 +54,10 @@ export async function resolveQrFillActor(params: {
     return { ok: true, employee: { id: employee.id, name: employee.name, role: employee.role } };
   }
 
-  if (params.mode === "pin") {
+  // PIN спрашиваем всегда, когда он у сотрудника задан — и в публичном режиме:
+  // один и тот же код на QR-формах, страницах объектов и общем планшете.
+  const pinRequired = params.mode === "pin" || (params.mode === "public" && Boolean(employee.qrPinHash));
+  if (pinRequired) {
     if (!employee.qrPinHash) {
       return { ok: false, status: 403, error: "У сотрудника не задан PIN. Попросите руководителя задать его в карточке сотрудника." };
     }
@@ -128,12 +132,24 @@ export function generateEmployeeQrPin(): string {
 /** Установить/снять PIN. Возвращает ошибку валидации или null. */
 export async function setEmployeeQrPin(userId: string, pin: string | null): Promise<string | null> {
   if (pin === null || pin === "") {
-    await db.user.update({ where: { id: userId }, data: { qrPinHash: null, qrPinFailedCount: 0, qrPinLockedUntil: null } });
+    await db.user.update({ where: { id: userId }, data: { qrPinHash: null, qrPinEncrypted: null, qrPinFailedCount: 0, qrPinLockedUntil: null } });
     return null;
   }
   if (!/^\d{4,6}$/.test(pin)) return "PIN — от 4 до 6 цифр";
   if (/^(\d)\1+$/.test(pin) || pin === "1234" || pin === "123456") return "Слишком простой PIN — выберите другой";
   const hash = await bcrypt.hash(pin, 10);
-  await db.user.update({ where: { id: userId }, data: { qrPinHash: hash, qrPinFailedCount: 0, qrPinLockedUntil: null } });
+  const qrPinEncrypted = isIntegrationCryptoConfigured() ? encryptSecret(pin) : null;
+  await db.user.update({ where: { id: userId }, data: { qrPinHash: hash, qrPinEncrypted, qrPinFailedCount: 0, qrPinLockedUntil: null } });
   return null;
+}
+
+/** Показать PIN руководителю: null — не задан или задан до того, как код стали хранить для показа. */
+export async function revealEmployeeQrPin(userId: string): Promise<string | null> {
+  const user = await db.user.findUnique({ where: { id: userId }, select: { qrPinHash: true, qrPinEncrypted: true } });
+  if (!user?.qrPinHash || !user.qrPinEncrypted || !isIntegrationCryptoConfigured()) return null;
+  try {
+    return decryptSecret(user.qrPinEncrypted);
+  } catch {
+    return null;
+  }
 }

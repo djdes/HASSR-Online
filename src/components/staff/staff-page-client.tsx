@@ -25,6 +25,7 @@ import {
   UserPlus,
   Users as UsersIcon,
   X,
+  Search,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -189,6 +190,18 @@ export function StaffPageClient(props: StaffPageProps) {
       /* приватный режим / повреждённое значение — просто игнорируем */
     }
   }, []);
+
+  // Быстрый поиск по ФИО: находит человека без раскрытия должностей.
+  const [staffQuery, setStaffQuery] = useState("");
+  const staffMatches = useMemo(() => {
+    const q = staffQuery.trim().toLowerCase();
+    if (!q) return [];
+    const posNameById = new Map(props.positions.map((p) => [p.id, p.name]));
+    return [...props.employees]
+      .filter((e) => e.name.toLowerCase().includes(q) || (e.positionTitle ?? "").toLowerCase().includes(q))
+      .sort((a, b) => a.name.localeCompare(b.name, "ru"))
+      .map((e) => ({ employee: e, position: (e.jobPositionId ? posNameById.get(e.jobPositionId) : null) ?? e.positionTitle ?? "" }));
+  }, [staffQuery, props.employees, props.positions]);
 
   // Подсветка строки только что добавленного сотрудника.
   const [highlightPositionId, setHighlightPositionId] = useState<string | null>(
@@ -869,6 +882,47 @@ export function StaffPageClient(props: StaffPageProps) {
           </div>
         </div>
       ) : null}
+
+      {/* Быстрый поиск по ФИО — результаты сразу, без раскрытия должностей. */}
+      <div className="rounded-2xl border border-[#ececf4] bg-white p-3 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#9b9fb3]" />
+          <input
+            type="search"
+            value={staffQuery}
+            onChange={(event) => setStaffQuery(event.target.value)}
+            placeholder="Найти сотрудника по ФИО или должности"
+            aria-label="Поиск сотрудника"
+            className="h-12 w-full rounded-2xl border border-[#dcdfed] bg-white pl-11 pr-4 text-[15px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
+          />
+        </div>
+        {staffQuery.trim() ? (
+          <div className="mt-3" data-testid="staff-search-results">
+            {staffMatches.length === 0 ? (
+              <p className="px-1 py-2 text-[13px] text-[#9b9fb3]">Никого не нашли по «{staffQuery.trim()}».</p>
+            ) : (
+              <ul className="divide-y divide-[#ececf4] rounded-2xl border border-[#ececf4]">
+                {staffMatches.map(({ employee, position }) => (
+                  <li key={employee.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                    <span className="min-w-0">
+                      <span className="block truncate text-[14px] font-medium text-[#0b1024]">{employee.name}</span>
+                      {position ? <span className="block text-[12px] text-[#6f7282]">{position}</span> : null}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => void openEditEmployee(employee)}
+                      className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#3848c7] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+                    >
+                      <Pencil className="size-3.5" />
+                      Изменить
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ) : null}
+      </div>
 
       {/* Positions by category. Синюю шапку с названием организации
           убрали: название и так есть в hero и в крошках, а лишний

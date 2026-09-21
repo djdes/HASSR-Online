@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { DeviationCorrection } from "@/components/qr-fill/deviation-correction";
 import { QuickSwitchNext, QuickSwitchStrip, type QuickSwitchItem } from "@/components/qr-fill/quick-switch";
 import { ReadingField } from "@/components/qr-fill/reading-field";
+import { PinPrompt } from "@/components/qr-fill/pin-prompt";
 import { draftKeyFor, useFormDraft } from "@/components/qr-fill/use-form-draft";
 import {
   Select,
@@ -15,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-type Employee = { id: string; name: string; positionTitle: string | null };
+type Employee = { id: string; name: string; positionTitle: string | null; hasPin?: boolean };
 
 type Props = {
   token: string;
@@ -202,7 +203,7 @@ export function EquipmentFillClient({
               ? { humidity: parsedHumidity }
               : {}),
             ...(correction.trim() ? { correction: correction.trim() } : {}),
-            ...(mode === "pin" ? { pin } : {}),
+            ...(pin ? { pin } : {}),
           }),
         }
       );
@@ -221,6 +222,8 @@ export function EquipmentFillClient({
   }
 
   const selectedEmployee = employees.find((item) => item.id === employeeId) ?? null;
+  // PIN спрашиваем всегда, когда он у выбранного сотрудника задан (или режим «имя + PIN»).
+  const pinRequired = mode === "pin" || Boolean(selectedEmployee?.hasPin);
   // После сохранения текущий объект в списке сразу «снят» — с введёнными значениями.
   const siblingsView = siblings.map((item) =>
     item.current && done ? { ...item, filled: true, summary: (parsedTemp !== null ? `${parsedTemp} °C` : "") || item.summary } : item
@@ -307,7 +310,7 @@ export function EquipmentFillClient({
           <div className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
             <div className="space-y-5">
               <div>
-                <label className="text-[13px] font-medium text-[#0b1024]">
+                <label className="text-[16px] font-semibold text-[#0b1024]">
                   Кто снимает показания
                 </label>
                 {fixedEmployee ? (
@@ -318,8 +321,8 @@ export function EquipmentFillClient({
                     <SelectValue placeholder="Выберите ваше имя">
                       {selectedEmployee ? (
                         <span className="block min-w-0">
-                          <span className="block text-[14px] font-medium leading-snug text-[#0b1024]">{selectedEmployee.name}</span>
-                          {selectedEmployee.positionTitle ? <span className="block text-[12px] leading-snug text-[#6f7282]">{selectedEmployee.positionTitle}</span> : null}
+                          <span className="block text-[17px] font-medium leading-snug text-[#0b1024]">{selectedEmployee.name}</span>
+                          {selectedEmployee.positionTitle ? <span className="block text-[14px] leading-snug text-[#6f7282]">{selectedEmployee.positionTitle}</span> : null}
                         </span>
                       ) : null}
                     </SelectValue>
@@ -328,7 +331,7 @@ export function EquipmentFillClient({
                     {employees.map((e) => (
                       <SelectItem key={e.id} value={e.id}>
                         <span className="block">
-                          <span className="block">{e.name}</span>
+                          <span className="block text-[16px]">{e.name}</span>
                           {e.positionTitle ? <span className="block text-[12px] text-[#6f7282]">{e.positionTitle}</span> : null}
                         </span>
                       </SelectItem>
@@ -336,20 +339,8 @@ export function EquipmentFillClient({
                   </SelectContent>
                 </Select>
                 )}
-                {mode === "pin" ? (
-                  <input
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    maxLength={6}
-                    value={pin}
-                    onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
-                    placeholder="Ваш PIN"
-                    aria-label="PIN для QR"
-                    className="mt-2 h-12 w-full rounded-2xl border border-[#dcdfed] bg-white px-4 text-center text-[20px] tracking-[0.4em] text-[#0b1024] placeholder:tracking-normal placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
-                  />
-                ) : null}
                 {rememberedName ? (
-                  <p className="mt-1.5 text-[11px] text-[#9b9fb3]">
+                  <p className="mt-1.5 text-[14px] text-[#9b9fb3]">
                     Запомнили с прошлого раза — можно сразу вводить температуру.
                   </p>
                 ) : null}
@@ -393,12 +384,13 @@ export function EquipmentFillClient({
                 />
               ) : null}
 
-              {error ? (
-                <div className="rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-3 text-[13px] text-[#a13a32]">
+              {error && !/PIN/.test(error) ? (
+                <div className="rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-3 text-[15px] text-[#a13a32]">
                   {error}
                 </div>
               ) : null}
 
+              {pinRequired ? <PinPrompt value={pin} onChange={setPin} error={error && /PIN/.test(error) ? error : null} /> : null}
               <Button
                 type="button"
                 onClick={save}
@@ -407,9 +399,10 @@ export function EquipmentFillClient({
                   !employeeId ||
                   parsedTemp === null ||
                   !hasActiveDocument ||
-                  correctionMissing
+                  correctionMissing ||
+                  (pinRequired && pin.length < 4)
                 }
-                className="h-12 w-full rounded-2xl bg-[#5566f6] px-5 text-[15px] font-medium text-white hover:bg-[#4a5bf0] shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] disabled:bg-[#c8cbe0]"
+                className="h-14 w-full rounded-2xl bg-[#5566f6] px-5 text-[18px] font-semibold text-white hover:bg-[#4a5bf0] shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] disabled:bg-[#c8cbe0]"
               >
                 {submitting ? "Сохраняем…" : "Сохранить замер"}
               </Button>

@@ -662,6 +662,9 @@ model User {
   qrPinHash                   String?
   qrPinFailedCount            Int                      @default(0)
   qrPinLockedUntil            DateTime?
+  /// Тот же PIN в обратимом шифре (AES-GCM, ключ INTEGRATION_KEY_SECRET/NEXTAUTH_SECRET),
+  /// чтобы руководитель мог показать код сотруднику. null — задан до этой возможности.
+  qrPinEncrypted              String?
   /// Согласие на фотофиксацию входа на общем планшете; null — фото не снимается.
   kioskPhotoConsentAt         DateTime?
   webAuthnCredentials         WebAuthnCredential[]

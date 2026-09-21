@@ -26,7 +26,6 @@ import {
   renderInvalidLink,
   renderMessage,
   renderPage,
-  renderPinStep,
   renderResult,
   renderRowStep,
   renderWho,
@@ -37,7 +36,6 @@ import { submitJournalFill } from "@/lib/journal-fill-submit";
 import { listNameSuggestions } from "@/lib/name-suggestions-db";
 import type { NameSuggestionMeta } from "@/lib/name-suggestions";
 import { resolveQrFillActor, sessionEmployeeForQr } from "@/lib/qr-fill-actor";
-import { mintPinPass, PIN_PASS_COOKIE, PIN_PASS_MAX_AGE_SEC, verifyPinPass } from "@/lib/qr-pin-pass";
 import { relativeRedirect, safeInternalPath } from "@/lib/relative-redirect";
 import { rowKeyForEmployee } from "@/lib/tasksflow-adapters/row-key";
 import type { TaskFormField, TaskFormSchema } from "@/lib/tasksflow-adapters/task-form";
@@ -249,7 +247,7 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
   // ---- сотрудник
   const employees: JournalFillEmployee[] =
     sessionEmployee && !sessionEmployee.canPickOthers
-      ? [{ id: sessionEmployee.id, name: sessionEmployee.name, positionTitle: sessionEmployee.positionTitle }]
+      ? [{ id: sessionEmployee.id, name: sessionEmployee.name, positionTitle: sessionEmployee.positionTitle, hasPin: false }]
       : await listFillEmployees(orgId);
   const employeeParam = q.get("employee");
   let employee: JournalFillEmployee | null = null;
@@ -295,24 +293,8 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
     documentChangeHref: documents.length > 1 ? link({ employee: employee.id, pick: "doc" }) : null,
   });
 
-  // ---- PIN: отдельный шаг, дальше 15 минут по cookie-пропуску
-  const pinVerified = mode === "pin" ? verifyPinPass(cookies[PIN_PASS_COOKIE], employee.id) : false;
-  if (mode === "pin" && !pinVerified) {
-    const action = link({ ...keep });
-    if (posted && posted.get("action") === "pin") {
-      const pin = String(posted.get("pin") ?? "");
-      const actor = await resolveQrFillActor({ mode: "pin", organizationId: orgId, employeeId: employee.id, pin });
-      if (actor.ok) {
-        // PRG: после проверки PIN — GET того же шага, чтобы обновление страницы не слало PIN повторно.
-        const headers = new Headers({ Location: safeInternalPath(action), "Cache-Control": "no-store" });
-        headers.append("Set-Cookie", cookie(PIN_PASS_COOKIE, mintPinPass(employee.id), cookiePath, PIN_PASS_MAX_AGE_SEC, true, secure));
-        for (const item of setCookies) headers.append("Set-Cookie", item);
-        return new NextResponse(null, { status: 303, headers });
-      }
-      return page(title, renderPinStep({ action, employeeName: employee.name, changeHref: changeHref ?? action, error: actor.error }), "Подтвердите PIN", null, 200, setCookies);
-    }
-    return page(title, renderPinStep({ action, employeeName: employee.name, changeHref: changeHref ?? action }), "Подтвердите PIN", null, 200, setCookies);
-  }
+  // PIN спрашиваем в самой форме над «Сохранить» — каждый раз, если он у сотрудника задан (или режим «имя + PIN»).
+  const pinRequired = mode === "pin" || (mode === "public" && employee.hasPin);
 
   // ---- строка
   const resolved = await resolveJournalFillRows({ orgId, code, documentId: document.id, employeeId: employee.id });
@@ -395,6 +377,7 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
         openedAt: Date.now(),
         stamp: stampFor(timezone),
         offKeys: extra.offKeys,
+        pinRequired,
       }),
       rowLabel,
       script,
@@ -428,7 +411,8 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
       values,
       off,
       correction: correction || null,
-      pinVerified,
+      pin: String(posted.get("pin") ?? "").trim() || null,
+      pinVerified: false,
       openedAt: Number.isFinite(openedAtRaw) ? openedAtRaw : null,
     });
     if (!result.ok) {

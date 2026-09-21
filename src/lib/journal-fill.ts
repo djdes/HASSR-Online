@@ -52,7 +52,7 @@ export type JournalFillDocument = {
   dateTo: string;
 };
 
-export type JournalFillEmployee = { id: string; name: string; positionTitle: string | null };
+export type JournalFillEmployee = { id: string; name: string; positionTitle: string | null; hasPin: boolean };
 
 export type JournalFillRow = { rowKey: string; label: string; sublabel?: string; mine: boolean };
 
@@ -102,10 +102,10 @@ export async function listJournalFillDocuments(orgId: string, code: string, toda
 export async function listFillEmployees(orgId: string): Promise<JournalFillEmployee[]> {
   const users = await db.user.findMany({
     where: { organizationId: orgId, ...ORG_ROSTER_WHERE },
-    select: { id: true, name: true, positionTitle: true },
+    select: { id: true, name: true, positionTitle: true, qrPinHash: true },
     orderBy: { name: "asc" },
   });
-  return users.map((user) => ({ id: user.id, name: user.name, positionTitle: user.positionTitle ?? null }));
+  return users.map((user) => ({ id: user.id, name: user.name, positionTitle: user.positionTitle ?? null, hasPin: Boolean(user.qrPinHash) }));
 }
 
 /** Журналы хаба: включённые, с активным документом на сегодня. */

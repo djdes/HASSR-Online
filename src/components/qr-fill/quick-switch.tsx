@@ -58,7 +58,7 @@ export function QuickSwitchStrip({ items, title }: { items: QuickSwitchItem[]; t
             <span
               key={item.id}
               aria-current="true"
-              className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border border-[#5566f6] bg-[#5566f6] px-3.5 text-[13px] font-medium text-white"
+              className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full border border-[#5566f6] bg-[#5566f6] px-4 text-[15px] font-medium text-white"
             >
               {item.name}
             </span>
@@ -66,7 +66,7 @@ export function QuickSwitchStrip({ items, title }: { items: QuickSwitchItem[]; t
             <a
               key={item.id}
               href={item.href}
-              className={`inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[13px] font-medium transition-colors duration-150 ${
+              className={`inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full border px-4 text-[15px] font-medium transition-colors duration-150 ${
                 item.filled
                   ? "border-[#d4f5e3] bg-[#f3fdf7] text-[#116b2a]"
                   : "border-[#dcdfed] bg-white text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"

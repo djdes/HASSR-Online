@@ -101,7 +101,7 @@ export default async function RoomFillPage({
   const [employees, documents] = await Promise.all([
     db.user.findMany({
       where: { organizationId, ...ORG_ROSTER_WHERE },
-      select: { id: true, name: true, role: true, positionTitle: true, jobPosition: { select: { name: true } } },
+      select: { id: true, name: true, role: true, positionTitle: true, qrPinHash: true, jobPosition: { select: { name: true } } },
       orderBy: { name: "asc" },
     }),
     db.journalDocument.findMany({
@@ -165,6 +165,7 @@ export default async function RoomFillPage({
         id: employee.id,
         name: employee.name,
         position: getUserDisplayTitle(employee),
+        hasPin: Boolean(employee.qrPinHash),
       }))}
     />
   );

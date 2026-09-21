@@ -59,7 +59,7 @@ export function ReadingField({
       : tone === "good"
         ? "border-[#8fd3a8] bg-white"
         : "border-[#dcdfed] bg-white";
-  const stepButton = "absolute top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-xl border border-[#dcdfed] bg-white text-[22px] font-semibold leading-none text-[#3848c7] transition-colors duration-150 hover:bg-[#f5f6ff] active:border-[#5566f6] active:bg-[#eef1ff]";
+  const stepButton = "absolute top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-xl border border-[#dcdfed] bg-white text-[24px] font-semibold leading-none text-[#3848c7] transition-colors duration-150 hover:bg-[#f5f6ff] active:border-[#5566f6] active:bg-[#eef1ff]";
   return (
     <div>
       <div className={`relative rounded-[14px] border transition-colors duration-150 ${box}`}>
@@ -74,11 +74,11 @@ export function ReadingField({
           onChange={(event) => onChange(event.target.value)}
           placeholder=" "
           aria-required={required || undefined}
-          className={`h-[58px] w-full rounded-[14px] bg-transparent pb-[6px] pl-14 pt-[22px] text-[17px] font-medium text-[#0b1024] outline-none focus:ring-4 focus:ring-[#5566f6]/15 ${tone === "idle" ? "pr-14" : "pr-[88px]"}`}
+          className={`h-[66px] w-full rounded-[14px] bg-transparent pb-[6px] pl-14 pt-[24px] text-[22px] font-semibold text-[#0b1024] outline-none focus:ring-4 focus:ring-[#5566f6]/15 ${tone === "idle" ? "pr-14" : "pr-[88px]"}`}
         />
-        <label htmlFor={id} className="pointer-events-none absolute left-14 right-14 top-2 truncate text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[#6f7282]">
+        <label htmlFor={id} className="pointer-events-none absolute left-14 right-14 top-2 truncate text-[11.5px] font-semibold uppercase tracking-[0.06em] text-[#6f7282]">
           {label}
-          {stamp ? <span className="font-medium normal-case tracking-normal"> · {stamp}</span> : null}
+          {stamp ? <span className="text-[11px] font-medium normal-case tracking-normal"> · {stamp}</span> : null}
           {required ? <span className="ml-0.5 text-[#a13a32]">*</span> : null}
         </label>
         {tone !== "idle" ? (
@@ -96,7 +96,7 @@ export function ReadingField({
         </button>
       </div>
       {status ? (
-        <p className={`ml-[3px] mt-1 text-[12px] leading-[1.3] ${tone === "bad" ? "font-medium text-[#7a4a00]" : tone === "good" ? "text-[#116b2a]" : "text-[#9b9fb3]"}`}>{status}</p>
+        <p className={`ml-[3px] mt-1 text-[14.5px] leading-[1.3] ${tone === "bad" ? "font-medium text-[#7a4a00]" : tone === "good" ? "text-[#116b2a]" : "text-[#9b9fb3]"}`}>{status}</p>
       ) : null}
       <QuickValues min={lo} max={hi} value={value} onPick={onChange} label={`Быстрый ввод: ${label.toLowerCase()}`} />
     </div>

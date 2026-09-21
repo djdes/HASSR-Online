@@ -1,0 +1,30 @@
+{
+  "htmlPinBox": 1,
+  "htmlPinBeforeSticky": true,
+  "htmlBodyFont": "18px",
+  "htmlItemFont": "17px",
+  "htmlWrongPin": "Неверный PIN. Осталось попыток: 4.",
+  "htmlValuesKept": [
+    "4",
+    "-18",
+    "5"
+  ],
+  "htmlDone": "updated",
+  "htmlPinAgain": 1,
+  "roomPinPrompt": 1,
+  "roomSaveDisabledWithoutPin": true,
+  "roomWrongPin": "Неверный PIN. Осталось попыток: 4.",
+  "roomSaved": true,
+  "roomNoPinPrompt": 0,
+  "staffSearchRows": 1,
+  "staffSearchFirst": "Кафе «Тестовое 1» Директор Изменить",
+  "staffShownPin": "2580",
+  "staffGeneratedPin": "4020",
+  "apiReveal": {
+    "ok": true,
+    "userId": "cmto7vatn0000cg9mgopek07o",
+    "name": "Кафе «Тестовое 1»",
+    "pin": "4020",
+    "hasPin": true
+  }
+}

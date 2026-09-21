@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { KeyRound, Loader2, Plus, RefreshCw, Trash2, TabletSmartphone } from "lucide-react";
+import { Eye, KeyRound, Loader2, Plus, RefreshCw, Trash2, TabletSmartphone } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -125,6 +125,24 @@ export function KioskClient({
     }
   }
 
+  async function revealOne(emp: KioskEmployeeRow) {
+    setBusy(`show:${emp.id}`);
+    try {
+      const res = await fetch(`/api/staff/${emp.id}/qr-pin`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Ошибка");
+      if (!data.pin) {
+        toast.info("Этот ПИН задан раньше и не сохранён для показа — выдайте новый.");
+        return;
+      }
+      setIssued([{ name: data.name, pin: data.pin }]);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Ошибка");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function issueAll() {
     setBusy("bulk");
     try {
@@ -238,6 +256,11 @@ export function KioskClient({
               <span className={`rounded-full px-2.5 py-0.5 text-[12px] ${e.hasPin ? "bg-[#ecfdf5] text-[#116b2a]" : "bg-[#fff8eb] text-[#b25f00]"}`}>
                 {e.hasPin ? "ПИН задан" : "нет ПИН"}
               </span>
+              {e.hasPin ? (
+                <button onClick={() => revealOne(e)} disabled={busy === `show:${e.id}`} className="inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-[13px] font-medium text-[#3848c7] transition-colors hover:bg-[#f5f6ff]">
+                  {busy === `show:${e.id}` ? <Loader2 className="size-4 animate-spin" /> : <Eye className="size-4" />} Показать
+                </button>
+              ) : null}
               <button onClick={() => issueOne(e)} disabled={busy === `pin:${e.id}`} className="inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-[13px] font-medium text-[#3848c7] transition-colors hover:bg-[#f5f6ff]">
                 {busy === `pin:${e.id}` ? <Loader2 className="size-4 animate-spin" /> : <KeyRound className="size-4" />} {e.hasPin ? "Сменить" : "Выдать"}
               </button>

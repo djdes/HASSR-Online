@@ -18,6 +18,16 @@ describe("journal-fill-html", () => {
     assert.deepEqual(normRange({ type: "text", key: "t", label: "x" }), { min: null, max: null });
   });
 
+  it("asks the PIN above the save button when required and keeps its error next to it", () => {
+    const html = renderForm({
+      action: "/x", token: "t", who: "", correctionPresets: [], openedAt: 1, suggestions: {}, values: {}, hints: {}, pinRequired: true, error: "Неверный PIN. Осталось попыток: 4.",
+      form: { fields: [{ type: "number", key: "t", label: "Холодильник · норма 2…6", unit: "°C", min: -40, max: 30 }] },
+    });
+    assert.match(html, /<div class="pinbox"><p class="pin-t">Введите ваш PIN<\/p><div class="err">Неверный PIN. Осталось попыток: 4.<\/div><input class="in pin" name="pin" type="password" inputmode="numeric"[^>]*>/);
+    assert.equal((html.match(/class="err"/g) ?? []).length, 1);
+    assert.ok(html.indexOf('class="pinbox"') < html.indexOf('class="sticky"'));
+  });
+
   it("renders a plain form that works without scripts", () => {
     const html = renderForm({
       action: "/journal-fill/o/c?token=t",
@@ -84,6 +94,7 @@ describe("journal-fill-html", () => {
     // Две метрики — подпись над полем, «−»/«+» по бокам, дата и время после названия.
     assert.match(climate, /<label class="lab" for="f-r1t"><span class="lab-t">Температура<span class="req"[^>]*>\*<\/span><\/span><span class="lab-s"><span class="stamp" data-stamp-date="20.09.2026">20.09.2026 18:31<\/span><\/span><\/label>/);
     assert.match(climate, /<label class="lab" for="f-r1h"><span class="lab-t">Влажность<\/span><span class="lab-s"><span class="stamp"[^>]*>20.09.2026 18:31<\/span><\/span><\/label><div class="box flat"><button type="button" class="stp minus" data-step="r1h" data-delta="-1" aria-label="Минус">−<\/button><input[^>]*id="f-r1h"[^>]*><span class="pill"[^>]*><\/span><button type="button" class="stp plus" data-step="r1h" data-delta="1" aria-label="Плюс">\+<\/button><\/div><p class="st">Норма 40…60 %<\/p>/);
+    assert.doesNotMatch(climate, /class="pinbox"/);
     assert.match(climate, /<p class="today">Показания вносятся за сегодня, <b>20.09.2026<\/b>, время <b class="stamp-t">18:31<\/b>.<\/p>/);
     // «Нет показания» только у обязательного поля; при повторном показе — отмечено и поле погашено.
     assert.match(climate, /<div class="chips offrow"><label class="chip offc"><input type="checkbox" name="off:r1t" value="1">Нет показания<\/label><\/div>/);

@@ -14,6 +14,7 @@ import {
 import { DeviationCorrection } from "@/components/qr-fill/deviation-correction";
 import { QuickSwitchNext, QuickSwitchStrip, type QuickSwitchItem } from "@/components/qr-fill/quick-switch";
 import { ReadingField } from "@/components/qr-fill/reading-field";
+import { PinPrompt } from "@/components/qr-fill/pin-prompt";
 import { draftKeyFor, useFormDraft } from "@/components/qr-fill/use-form-draft";
 
 type Metric = { enabled: boolean; min: number | null; max: number | null };
@@ -26,7 +27,7 @@ type Props = {
   hasActiveDocument: boolean;
   /** Срок контроля, в который попадёт замер, если сохранить сейчас. */
   nextSlot: string | null;
-  employees: Array<{ id: string; name: string; position: string }>;
+  employees: Array<{ id: string; name: string; position: string; hasPin?: boolean }>;
   /** Режим QR-форм организации (Настройки → Соответствие). */
   mode?: "public" | "pin" | "auth";
   /** В режиме «auth» — вошедший сотрудник; линейный не выбирает имя. */
@@ -167,7 +168,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
           ...(norms.temperature.enabled && temperatureValue !== null ? { temperature: temperatureValue } : {}),
           ...(norms.humidity.enabled && humidityValue !== null && !humidityInvalid ? { humidity: humidityValue } : {}),
           ...(correction.trim() ? { correction: correction.trim() } : {}),
-          ...(mode === "pin" ? { pin } : {}),
+          ...(pin ? { pin } : {}),
         }),
       });
       const data = await response.json().catch(() => null);
@@ -190,6 +191,8 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
   }
 
   const selectedEmployee = employees.find((item) => item.id === employeeId) ?? null;
+  // PIN спрашиваем всегда, когда он у выбранного сотрудника задан (или режим «имя + PIN»).
+  const pinRequired = mode === "pin" || Boolean(selectedEmployee?.hasPin);
   // После сохранения текущий объект в списке сразу «снят» — с введёнными значениями.
   const siblingsView = siblings.map((item) =>
     item.current && saved ? { ...item, filled: true, summary: [temperatureValue !== null ? `${temperatureValue} °C` : null, humidityValue !== null && !humidityInvalid ? `${humidityValue} %` : null].filter(Boolean).join(" · ") || item.summary } : item
@@ -274,7 +277,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
           <div className="rounded-3xl border border-[#ececf4] bg-white p-6">
             <div className="space-y-6">
               <div>
-                <label className="text-[13px] font-medium text-[#0b1024]">1. Кто снимает показания</label>
+                <label className="text-[16px] font-semibold text-[#0b1024]">1. Кто снимает показания</label>
                 {fixedEmployee ? (
                   <div className="mt-1 flex h-12 items-center rounded-2xl border border-[#dcdfed] bg-[#fafbff] px-4 text-[15px] font-medium text-[#0b1024]">{sessionEmployee?.name}</div>
                 ) : (
@@ -283,8 +286,8 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                     <SelectValue placeholder="Выберите своё имя">
                       {selectedEmployee ? (
                         <span className="block min-w-0">
-                          <span className="block text-[14px] font-medium leading-snug text-[#0b1024]">{selectedEmployee.name}</span>
-                          {selectedEmployee.position ? <span className="block text-[12px] leading-snug text-[#6f7282]">{selectedEmployee.position}</span> : null}
+                          <span className="block text-[17px] font-medium leading-snug text-[#0b1024]">{selectedEmployee.name}</span>
+                          {selectedEmployee.position ? <span className="block text-[14px] leading-snug text-[#6f7282]">{selectedEmployee.position}</span> : null}
                         </span>
                       ) : null}
                     </SelectValue>
@@ -293,7 +296,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                     {employees.map((employee) => (
                       <SelectItem key={employee.id} value={employee.id}>
                         <span className="block">
-                          <span className="block">{employee.name}</span>
+                          <span className="block text-[16px]">{employee.name}</span>
                           {employee.position ? <span className="block text-[12px] text-[#6f7282]">{employee.position}</span> : null}
                         </span>
                       </SelectItem>
@@ -301,25 +304,13 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                   </SelectContent>
                 </Select>
                 )}
-                {mode === "pin" ? (
-                  <input
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    maxLength={6}
-                    value={pin}
-                    onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
-                    placeholder="Ваш PIN"
-                    aria-label="PIN для QR"
-                    className="mt-2 h-12 w-full rounded-2xl border border-[#dcdfed] bg-white px-4 text-center text-[20px] tracking-[0.4em] text-[#0b1024] placeholder:tracking-normal placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
-                  />
-                ) : null}
                 {rememberedName ? (
-                  <p className="mt-1.5 text-[12px] text-[#9b9fb3]">Запомнили с прошлого раза — можно сразу вводить показания.</p>
+                  <p className="mt-1.5 text-[14px] text-[#9b9fb3]">Запомнили с прошлого раза — можно сразу вводить показания.</p>
                 ) : null}
               </div>
 
               <div className="space-y-4">
-                <div className="text-[13px] font-medium text-[#0b1024]">2. Показания</div>
+                <div className="text-[16px] font-semibold text-[#0b1024]">2. Показания</div>
                 {draft.restored ? (
                   <p className="-mt-2 flex items-center justify-between gap-3 rounded-2xl border border-[#d6dcff] bg-[#eef1ff] px-4 py-2.5 text-[13px] leading-snug text-[#3848c7]">
                     <span>Восстановили введённое после обновления страницы.</span>
@@ -359,21 +350,22 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                 ) : null}
               </div>
 
-              {error ? (
-                <div className="rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-3 text-[13px] text-[#a13a32]">{error}</div>
+              {error && !/PIN/.test(error) ? (
+                <div className="rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-3 text-[15px] text-[#a13a32]">{error}</div>
               ) : null}
 
+              {pinRequired ? <PinPrompt value={pin} onChange={setPin} error={error && /PIN/.test(error) ? error : null} /> : null}
               <div>
                 <Button
                   type="button"
                   onClick={save}
-                  disabled={submitting || !employeeId || !hasValue || !hasActiveDocument || correctionMissing}
-                  className="h-12 w-full rounded-2xl bg-[#5566f6] px-5 text-[15px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] disabled:bg-[#c8cbe0]"
+                  disabled={submitting || !employeeId || !hasValue || !hasActiveDocument || correctionMissing || (pinRequired && pin.length < 4)}
+                  className="h-14 w-full rounded-2xl bg-[#5566f6] px-5 text-[18px] font-semibold text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] disabled:bg-[#c8cbe0]"
                 >
                   {submitting ? "Сохраняем…" : "3. Сохранить"}
                 </Button>
                 {hasActiveDocument && nextSlot ? (
-                  <p className="mt-2 text-center text-[12px] text-[#9b9fb3]">
+                  <p className="mt-2 text-center text-[14px] text-[#9b9fb3]">
                     Запись попадёт в журнал за сегодня, срок контроля {nextSlot}.
                   </p>
                 ) : null}

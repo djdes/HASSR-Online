@@ -27,7 +27,7 @@ export function QuickValues({
           type="button"
           onClick={() => onPick(item)}
           aria-pressed={current === item}
-          className={`inline-flex h-8 min-w-[52px] items-center justify-center rounded-full border px-3 text-[13px] font-medium tabular-nums transition-colors duration-150 ${
+          className={`inline-flex h-10 min-w-[56px] items-center justify-center rounded-full border px-3.5 text-[16px] font-medium tabular-nums transition-colors duration-150 ${
             current === item
               ? "border-[#5566f6] bg-[#eef1ff] text-[#3848c7]"
               : "border-[#dcdfed] bg-white text-[#3c4053] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"

@@ -792,9 +792,10 @@ export function StaffEditEmployeeDialog(props: {
                 ariaLabel={`Точки: ${employee.name}`}
               />
             ) : null}
-            {/* PIN для QR-плакатов — отдельный PATCH, вне общего «Сохранить». */}
+            {/* PIN для быстрой QR-авторизации — отдельный PATCH, вне общего «Сохранить». */}
             <StaffQrPinField
               key={employee.id}
+              employeeId={employee.id}
               hasPin={employee.hasQrPin === true}
               onSave={async (pin) => {
                 const response = await fetch(`/api/staff/${employee.id}`, {
