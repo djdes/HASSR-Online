@@ -8,6 +8,7 @@ import {
 } from "@/lib/climate-document";
 import { db } from "@/lib/db";
 import { JOURNAL_FILL_HUB_CODE, journalFillSubject, listHubJournals, todayKeyFor } from "@/lib/journal-fill";
+import { resolveOrgJournalName } from "@/lib/org-journal-name";
 import { mintQrFillToken } from "@/lib/qr-fill-token";
 import type { QrFillKind, QrPoster } from "@/lib/qr-fill-types";
 import { loadDirectoryBuildings } from "@/lib/room-directory";
@@ -51,6 +52,18 @@ export function qrFillUrl(origin: string, kind: QrFillKind, id: string): string 
   return `${base}/${path}/${id}?token=${encodeURIComponent(token)}`;
 }
 
+/**
+ * Краткое название организации для плакатов — то же, что в шапке журналов.
+ * Берём один раз на сборку: плакатов на листе бывает десятки.
+ */
+export async function loadPosterOrgName(organizationId: string): Promise<string> {
+  const org = await db.organization.findUnique({
+    where: { id: organizationId },
+    select: { name: true, journalShortName: true, legalProfileJson: true },
+  });
+  return resolveOrgJournalName(org);
+}
+
 type EquipmentSource = {
   id: string;
   name: string;
@@ -59,13 +72,18 @@ type EquipmentSource = {
   area: { name: string };
 };
 
-export async function buildEquipmentPoster(item: EquipmentSource, origin: string): Promise<QrPoster> {
+export async function buildEquipmentPoster(
+  item: EquipmentSource,
+  origin: string,
+  orgName: string
+): Promise<QrPoster> {
   const url = qrFillUrl(origin, "equipment", item.id);
   const norm = rangeLabel(item.tempMin, item.tempMax, "°C");
   return {
     id: item.id,
     kind: "equipment",
     title: item.name,
+    orgName,
     subtitle: item.area.name,
     norms: norm ? [norm] : [],
     url,
@@ -78,7 +96,8 @@ type RoomSource = { id: string; name: string; climateNorms: unknown };
 export async function buildRoomPoster(
   room: RoomSource,
   buildingName: string,
-  origin: string
+  origin: string,
+  orgName: string
 ): Promise<QrPoster> {
   const norms = normalizeClimateRoomNorms(room.climateNorms);
   const url = qrFillUrl(origin, "room", room.id);
@@ -86,6 +105,7 @@ export async function buildRoomPoster(
     id: room.id,
     kind: "room",
     title: room.name,
+    orgName,
     subtitle: buildingName,
     norms: [
       metricLabel(norms?.temperature ?? DEFAULT_CLIMATE_TEMPERATURE, "°C"),
@@ -102,6 +122,7 @@ export async function buildJournalPoster(params: {
   code: string;
   name: string;
   subtitle: string;
+  orgName: string;
   documentId?: string | null;
   origin: string;
 }): Promise<QrPoster> {
@@ -111,6 +132,7 @@ export async function buildJournalPoster(params: {
     id: params.documentId ? `${params.code}:${params.documentId}` : params.code,
     kind: "journal",
     title: params.name,
+    orgName: params.orgName,
     subtitle: params.subtitle,
     norms: [],
     url,
@@ -130,9 +152,16 @@ export async function loadQrPosters(params: {
   if (params.kind === "journal") {
     const org = await db.organization.findUnique({
       where: { id: params.organizationId },
-      select: { timezone: true, disabledJournalCodes: true },
+      select: {
+        timezone: true,
+        disabledJournalCodes: true,
+        name: true,
+        journalShortName: true,
+        legalProfileJson: true,
+      },
     });
     if (!org) return [];
+    const orgName = resolveOrgJournalName(org);
     const journals = await listHubJournals(params.organizationId, org.disabledJournalCodes as string[], todayKeyFor(org.timezone));
     if (allowed(JOURNAL_FILL_HUB_CODE)) {
       posters.push(
@@ -141,6 +170,7 @@ export async function loadQrPosters(params: {
           code: JOURNAL_FILL_HUB_CODE,
           name: "Все журналы",
           subtitle: "Один плакат на стену: сотрудник выбирает журнал после сканирования",
+          orgName,
           origin: params.origin,
         })
       );
@@ -153,18 +183,20 @@ export async function loadQrPosters(params: {
           code: journal.code,
           name: journal.name,
           subtitle: "Запись в журнал с телефона",
+          orgName,
           origin: params.origin,
         })
       );
     }
     return posters;
   }
+  const orgName = await loadPosterOrgName(params.organizationId);
   if (params.kind === "room") {
     const buildings = await loadDirectoryBuildings(params.organizationId);
     for (const building of buildings) {
       for (const room of building.rooms) {
         if (!allowed(room.id)) continue;
-        posters.push(await buildRoomPoster(room, building.name, params.origin));
+        posters.push(await buildRoomPoster(room, building.name, params.origin, orgName));
       }
     }
     return posters;
@@ -176,7 +208,7 @@ export async function loadQrPosters(params: {
   });
   for (const item of equipment) {
     if (!allowed(item.id)) continue;
-    posters.push(await buildEquipmentPoster(item, params.origin));
+    posters.push(await buildEquipmentPoster(item, params.origin, orgName));
   }
   return posters;
 }
@@ -188,6 +220,7 @@ export async function loadQrPoster(params: {
   id: string;
   origin: string;
 }): Promise<QrPoster | null> {
+  const orgName = await loadPosterOrgName(params.organizationId);
   if (params.kind === "journal") {
     const [code, documentId] = params.id.split(":");
     if (!code) return null;
@@ -197,6 +230,7 @@ export async function loadQrPoster(params: {
         code,
         name: "Все журналы",
         subtitle: "Сотрудник выбирает журнал после сканирования",
+        orgName,
         origin: params.origin,
       });
     }
@@ -216,6 +250,7 @@ export async function loadQrPoster(params: {
       code,
       name: template.name,
       subtitle,
+      orgName,
       documentId: documentId ?? null,
       origin: params.origin,
     });
@@ -226,12 +261,12 @@ export async function loadQrPoster(params: {
       select: { id: true, name: true, climateNorms: true, building: { select: { name: true } } },
     });
     if (!room) return null;
-    return buildRoomPoster(room, room.building.name, params.origin);
+    return buildRoomPoster(room, room.building.name, params.origin, orgName);
   }
   const item = await db.equipment.findFirst({
     where: { id: params.id, area: { organizationId: params.organizationId } },
     select: { id: true, name: true, tempMin: true, tempMax: true, area: { select: { name: true } } },
   });
   if (!item) return null;
-  return buildEquipmentPoster(item, params.origin);
+  return buildEquipmentPoster(item, params.origin, orgName);
 }

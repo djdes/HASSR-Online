@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 import { ClipboardList, ExternalLink, FileText, Printer, QrCode, Refrigerator, Sticker, Warehouse } from "lucide-react";
 
 import { PageHeader, PageHeaderStat } from "@/components/ui/page-header";
-import type { QrFillKind, QrPoster, QrPosterLayout } from "@/lib/qr-fill-types";
+import { posterSubtitleLine, type QrFillKind, type QrPoster, type QrPosterLayout } from "@/lib/qr-fill-types";
 import { cn } from "@/lib/utils";
 
 export type { QrPoster } from "@/lib/qr-fill-types";
@@ -267,7 +267,7 @@ export function QrPostersClient({
                 <div className="qr-sticker-title mt-2.5 text-[15px] font-semibold leading-tight text-[#0b1024]">
                   {poster.title}
                 </div>
-                <div className="qr-sticker-subtitle mt-0.5 text-[12px] text-[#6f7282]">{poster.subtitle}</div>
+                <div className="qr-sticker-subtitle mt-0.5 text-[12px] text-[#6f7282]">{posterSubtitleLine(poster)}</div>
                 {poster.norms.length > 0 ? (
                   <div className="qr-sticker-norm mt-1 text-[12px] font-medium text-[#3848c7]">
                     Норма: {poster.norms.join(", ")}
@@ -300,7 +300,7 @@ export function QrPostersClient({
                   {poster.title}
                 </h2>
                 <div className="qr-poster-subtitle mt-1 text-[13px] text-[#6f7282]">
-                  {poster.subtitle}
+                  {posterSubtitleLine(poster)}
                   {poster.norms.length > 0 ? ` · норма ${poster.norms.join(", ")}` : ""}
                 </div>
                 <div
