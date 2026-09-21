@@ -37,6 +37,40 @@ function LoginForm() {
   const [challengeId, setChallengeId] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [magicState, setMagicState] = useState<"idle" | "sending" | "sent">("idle");
+  const [passkeyBusy, setPasskeyBusy] = useState(false);
+
+  /**
+   * Вход по passkey (Face ID / отпечаток своего устройства). Ключ
+   * регистрируется в профиле; здесь браузер сам предложит сохранённый.
+   */
+  async function handlePasskey() {
+    setPasskeyBusy(true);
+    setError("");
+    try {
+      const { startAuthentication } = await import("@simplewebauthn/browser");
+      const opt = await fetch("/api/webauthn/authenticate/options", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const optJson = (await opt.json()) as { challengeId: string; options: Parameters<typeof startAuthentication>[0]["optionsJSON"]; error?: string };
+      if (!opt.ok) throw new Error(optJson.error ?? "Не удалось начать вход");
+      const response = await startAuthentication({ optionsJSON: optJson.options });
+      const ver = await fetch("/api/webauthn/authenticate/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ challengeId: optJson.challengeId, response }),
+      });
+      const verJson = (await ver.json()) as { error?: string };
+      if (!ver.ok) throw new Error(verJson.error ?? "Подпись не подтверждена");
+      window.location.href = "/dashboard";
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
+      setError(/NotAllowed|cancel|abort/i.test(msg) ? "Вход по Face ID отменён" : msg || "Не удалось войти по Face ID");
+    } finally {
+      setPasskeyBusy(false);
+    }
+  }
   const magicReason = searchParams.get("magic");
   async function requestMagicLink() {
     const email = formData.email.trim();
@@ -417,6 +451,16 @@ function LoginForm() {
                     : "Ссылка не подошла — запросите новую."}
             </p>
           ) : null}
+          <button
+            type="button"
+            onClick={handlePasskey}
+            disabled={passkeyBusy}
+            data-testid="passkey-login-button"
+            className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-60"
+          >
+            {passkeyBusy ? "Подтверждаем…" : "Войти по Face ID / отпечатку"}
+          </button>
+
           {magicState === "sent" ? (
             <p className="mt-4 rounded-2xl border border-[#c8f0d5] bg-[#effaf1] px-4 py-3 text-[13px] text-[#136b2a]" data-testid="magic-sent">
               Если аккаунт с такой почтой есть, ссылка для входа уже отправлена. Она действует 15 минут.

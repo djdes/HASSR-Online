@@ -31,6 +31,7 @@ import {
 } from "@/lib/mini-shell-cookie";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FeedbackDialog } from "@/components/layout/feedback-dialog";
+import { PasskeySettings } from "@/components/auth/passkey-settings";
 import { useMiniTheme } from "../_components/mini-theme";
 
 /**
@@ -248,6 +249,10 @@ export function MiniMeClient({
       </section>
 
       {/* Theme toggle — сегментный переключатель «тёмная/светлая». */}
+      <section className="mini-card p-4">
+        <PasskeySettings dark />
+      </section>
+
       <section className="mini-card p-4">
         <div className="mb-3 flex items-center justify-between">
           <div>

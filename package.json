@@ -44,6 +44,8 @@
     "@napi-rs/canvas": "^1.0.8",
     "@prisma/adapter-pg": "^7.4.2",
     "@prisma/client": "^7.4.2",
+    "@simplewebauthn/browser": "^14.0.0",
+    "@simplewebauthn/server": "^14.0.2",
     "@tuya/tuya-connector-nodejs": "^2.1.2",
     "@types/qrcode": "^1.5.6",
     "bcryptjs": "^3.0.3",

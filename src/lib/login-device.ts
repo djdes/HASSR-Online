@@ -9,7 +9,7 @@ import { createHash } from "node:crypto";
  * а семейство браузера и ОС — есть. IP в ключ не входит: домашний
  * Wi-Fi и мобильная сеть меняют его по десять раз на дню.
  */
-export type LoginMethod = "password" | "phone" | "telegram" | "pair" | "register" | "magic";
+export type LoginMethod = "password" | "phone" | "telegram" | "pair" | "register" | "magic" | "passkey";
 
 export const LOGIN_METHOD_LABEL: Record<LoginMethod, string> = {
   password: "почта и пароль",
@@ -18,6 +18,7 @@ export const LOGIN_METHOD_LABEL: Record<LoginMethod, string> = {
   pair: "QR-приглашение",
   register: "регистрация",
   magic: "ссылка из письма",
+  passkey: "Face ID / отпечаток (passkey)",
 };
 
 export function describeUserAgent(ua: string | null | undefined): string {

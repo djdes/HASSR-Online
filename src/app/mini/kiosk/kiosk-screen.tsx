@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Camera, Delete, Loader2, Search, UserRound } from "lucide-react";
+import { Camera, Delete, Fingerprint, Loader2, Search, UserRound } from "lucide-react";
 
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { KIOSK_PIN_EXPLAINER } from "@/lib/kiosk-copy";
@@ -159,6 +159,47 @@ export function KioskScreen() {
     setPin((p) => (p.length >= 6 ? p : p + d));
   }
 
+  /**
+   * Вход своим Face ID / отпечатком: ключ сотрудника лежит в его телефоне,
+   * планшет только передаёт вызов (браузер покажет QR или Bluetooth-связку).
+   * Подпись при этом — «passkey», сильнее ПИН.
+   */
+  async function submitPasskey() {
+    if (!picked) return;
+    setSubmitting(true);
+    setPinError(null);
+    try {
+      const { startAuthentication } = await import("@simplewebauthn/browser");
+      const opt = await fetch("/api/webauthn/authenticate/options", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: picked.id }),
+      });
+      const optJson = (await opt.json()) as { challengeId: string; options: Parameters<typeof startAuthentication>[0]["optionsJSON"]; error?: string };
+      if (!opt.ok) {
+        setPinError(optJson.error ?? "Ключ не найден");
+        return;
+      }
+      const response = await startAuthentication({ optionsJSON: optJson.options });
+      const ver = await fetch("/api/webauthn/authenticate/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ challengeId: optJson.challengeId, response }),
+      });
+      const verJson = (await ver.json()) as { error?: string };
+      if (!ver.ok) {
+        setPinError(verJson.error ?? "Подпись не подтверждена");
+        return;
+      }
+      goToJournals();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
+      setPinError(/NotAllowed|cancel|abort/i.test(msg) ? "Отменено" : "Не удалось подтвердить Face ID");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   if (error) {
     return (
       <div className="flex min-h-[70vh] flex-col items-center justify-center px-6 text-center">
@@ -279,6 +320,13 @@ export function KioskScreen() {
             className="mt-1 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] text-[15px] font-medium text-white disabled:opacity-50"
           >
             {submitting ? <Loader2 className="size-5 animate-spin" /> : <UserRound className="size-5" />} Войти и заполнять
+          </button>
+          <button
+            onClick={submitPasskey}
+            disabled={submitting}
+            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-[#2a2c3a] text-[14px] font-medium text-[#e7e9f3] disabled:opacity-50"
+          >
+            <Fingerprint className="size-5 text-[#5566f6]" /> Face ID / отпечаток своего телефона
           </button>
           <p className="text-center text-[12px] leading-relaxed text-[#9b9fb3]">{KIOSK_PIN_EXPLAINER}</p>
         </div>

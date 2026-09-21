@@ -434,6 +434,44 @@ model KioskDevice {
   @@index([organizationId, revokedAt])
 }
 
+/// Passkey (WebAuthn) сотрудника — настоящий Face ID / отпечаток его
+/// собственного телефона. Ключ регистрируется в профиле; разблокировка
+/// киоска и вход на сайт подписываются им (SignatureEvent.method "passkey").
+/// Публичный ключ и счётчик — по спецификации WebAuthn, приватный ключ
+/// никогда не покидает устройство.
+model WebAuthnCredential {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// base64url credential id из аутентификатора.
+  credentialId String    @unique
+  /// COSE public key, base64url.
+  publicKey    String
+  counter      BigInt    @default(0)
+  transports   String[]  @default([])
+  /// Подпись устройства для списка в профиле («iPhone», «Android»).
+  deviceLabel  String?
+  createdAt    DateTime  @default(now())
+  lastUsedAt   DateTime?
+
+  @@index([userId])
+}
+
+/// Одноразовый challenge WebAuthn (регистрация и вход), живёт 5 минут.
+/// Для входа без выбранного пользователя userId = null.
+model WebAuthnChallenge {
+  id         String    @id @default(cuid())
+  userId     String?
+  challenge  String
+  /// "register" | "authenticate"
+  kind       String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([expiresAt])
+}
+
 /// Журнал подписей — первоклассное доказательство «кто и как подтвердил запись».
 /// Пишется при разблокировке киоска (method "kiosk_pin"), а в фазах 3–4 —
 /// с фото (photoUrl) и по passkey. Отдельно от AuditLog: показывается инспектору
@@ -626,6 +664,7 @@ model User {
   qrPinLockedUntil            DateTime?
   /// Согласие на фотофиксацию входа на общем планшете; null — фото не снимается.
   kioskPhotoConsentAt         DateTime?
+  webAuthnCredentials         WebAuthnCredential[]
   /// «Домашняя» организация: где человека завели, где его должность,
   /// ACL и журналы. Для линейного сотрудника — единственная. Владелец и
   /// приглашённые руководители могут работать и в других — через

@@ -76,7 +76,7 @@ export function matchSignature(
 
 export const SIGNATURE_METHOD_LABEL: Record<string, string> = {
   kiosk_pin: "ПИН на общем планшете",
-  passkey: "Face ID / отпечаток своего телефона",
+  passkey: "Face ID / отпечаток своего телефона (passkey)",
   qr: "ПИН на QR-форме",
   session: "вход в кабинет",
 };
