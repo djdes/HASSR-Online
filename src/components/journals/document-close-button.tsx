@@ -31,6 +31,7 @@ export function useDocumentCloseAction({
   confirmDescription,
   successMessage = CLOSED_TOAST,
   onClosed,
+  blocker,
 }: {
   documentId: string;
   title: string;
@@ -43,12 +44,30 @@ export function useDocumentCloseAction({
   confirmDescription?: string;
   successMessage?: string;
   onClosed?: () => void;
+  /**
+   * Причина, по которой журнал закрыть нельзя (например, блюда ждут
+   * подписи комиссии). Если есть — вместо вопроса показываем объяснение
+   * со списком, запрос на сервер не уходит.
+   */
+  blocker?: () => { title: string; description?: string; bullets: string[] } | null;
 }) {
   const router = useRouter();
   const [isClosing, setIsClosing] = useState(false);
 
   async function closeDocument() {
     if (isClosing) return;
+    const blocked = blocker?.();
+    if (blocked) {
+      await confirmAsync({
+        title: blocked.title,
+        description: blocked.description,
+        bullets: blocked.bullets.map((label) => ({ label, tone: "warn" as const })),
+        variant: "warn",
+        confirmLabel: "Понятно",
+        cancelLabel: "Закрыть",
+      });
+      return;
+    }
     const confirmed = await confirmAsync({
       title: confirmMessage || `${CLOSE_LABEL} "${title}"?`,
       description: confirmDescription,

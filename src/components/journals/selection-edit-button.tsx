@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, ListChecks, Pencil } from "lucide-react";
+import { Copy, ListChecks, Pencil, Signature } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { selectionEditLabel } from "@/components/journals/sequential-edit";
@@ -55,6 +55,26 @@ export function SelectionRepeatButton({ count, onClick, disabled }: { count: num
     <Button type="button" variant="outline" disabled={disabled || count === 0} onClick={onClick} data-testid="selection-repeat" title="Добавить копию выделенных строк с текущим временем" className={SECONDARY_CLASS}>
       <Copy className="size-4" />
       {count > 1 ? `Повторить · ${count}` : "Повторить строку"}
+    </Button>
+  );
+}
+
+/**
+ * «Подписать» в полосе выделения бракеража — видна только члену комиссии.
+ * Подпись ставится от имени вошедшего человека, за другого подписать нельзя.
+ */
+export function SelectionSignButton({ count, onClick, disabled, busy }: { count: number; onClick: () => void; disabled?: boolean; busy?: boolean }) {
+  return (
+    <Button
+      type="button"
+      disabled={disabled || busy || count === 0}
+      onClick={onClick}
+      data-testid="selection-sign"
+      title="Поставить вашу подпись члена комиссии под выделенными строками"
+      className="h-10 gap-1.5 rounded-xl bg-[#5566f6] px-3.5 text-[14px] font-semibold text-white shadow-none transition-colors duration-150 hover:bg-[#4a5bf0]"
+    >
+      <Signature className="size-4" />
+      {busy ? "Подписываем…" : count > 1 ? `Подписать · ${count}` : "Подписать"}
     </Button>
   );
 }

@@ -41,6 +41,10 @@ export async function loadSignatureEvidence(params: {
       organizationId: params.organizationId,
       userId: { in: userIds },
       createdAt: { gte: new Date(params.from.getTime() - KIOSK_WINDOW_MS), lte: params.to },
+      // Подписи комиссии под строками бракеража — не «вход», под которым
+      // внесена запись: иначе они стали бы доказательством для чужих записей
+      // того же человека в 12-часовом окне.
+      OR: [{ entryKind: null }, { entryKind: { not: "brakerage_row" } }],
     },
     select: { id: true, userId: true, method: true, deviceId: true, createdAt: true, entryKind: true, entryRef: true, photoUrl: true },
     orderBy: { createdAt: "desc" },

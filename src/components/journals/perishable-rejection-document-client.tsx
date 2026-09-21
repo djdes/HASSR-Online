@@ -5,7 +5,12 @@ import { useRouter } from "next/navigation";
 import { Archive, Check, ChevronDown, List, ListPlus, Plus, Trash2, Users } from "lucide-react";
 import { CommissionDialog } from "@/components/journals/commission-dialog";
 import { ApplyToSelectedDialog, type ApplyToSelectedField } from "@/components/journals/apply-to-selected-dialog";
-import { SelectionApplyButton, SelectionEditButton, SelectionRepeatButton } from "@/components/journals/selection-edit-button";
+import {
+  SelectionApplyButton,
+  SelectionEditButton,
+  SelectionRepeatButton,
+  SelectionSignButton,
+} from "@/components/journals/selection-edit-button";
 import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
 import { SuggestInput } from "@/components/journals/suggest-input";
 import { useNameSuggestions } from "@/components/journals/use-name-suggestions";
@@ -55,7 +60,15 @@ import {
   type PerishableRejectionRow,
 } from "@/lib/perishable-rejection-document";
 import { useLiveEvents } from "@/lib/use-live-events";
-import { formatRowSignatures, normalizeRowSignatures } from "@/lib/brakerage-commission";
+import {
+  closeBlockerForUnsigned,
+  formatRowSignatures,
+  isCommissionMember,
+  normalizeRowSignatures,
+  todaySignatureSummary,
+  todaySignatureText,
+} from "@/lib/brakerage-commission";
+import { orgTodayKey } from "@/lib/timezone";
 import { useDocumentCloseAction } from "@/components/journals/document-close-button";
 import {
   PositionSelectItems,
@@ -137,6 +150,8 @@ type Props = {
    * строку; не назначен — поле пустое, человек выбирает сам.
    */
   responsibleUserId?: string | null;
+  /** Кто открыл документ: член комиссии видит «Подписать» в полосе выделения. */
+  currentUserId?: string | null;
 };
 
 
@@ -260,6 +275,7 @@ export function PerishableRejectionDocumentClient({
   initialConfig,
   users,
   responsibleUserId = null,
+  currentUserId = null,
 }: Props) {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
@@ -315,7 +331,12 @@ export function PerishableRejectionDocumentClient({
   const [settingsTitle, setSettingsTitle] = useState(title);
   const [settingsDateFrom, setSettingsDateFrom] = useState(dateFrom);
   const [settingsSaving, setSettingsSaving] = useState(false);
-  const closeAction = useDocumentCloseAction({ documentId, title: settingsTitle });
+  const closeAction = useDocumentCloseAction({
+    documentId,
+    title: settingsTitle,
+    blocker: () => closeBlockerForUnsigned(config),
+  });
+  const [isSigning, setIsSigning] = useState(false);
 
   async function saveDocumentSettings() {
     setSettingsSaving(true);
@@ -576,6 +597,40 @@ export function PerishableRejectionDocumentClient({
 
   // Уход со страницы не должен съедать последний недописанный ввод.
   useEffect(() => () => flushConfigSave(), [flushConfigSave]);
+
+  const canSign = !readOnly && isCommissionMember(config, currentUserId);
+  const todaySummary = todaySignatureSummary(config, orgTodayKey());
+
+  /** Подпись члена комиссии под выделенными строками (метод «вход в кабинет»). */
+  const signSelectedRows = useCallback(async () => {
+    if (!canSign || selectedRows.length === 0) return;
+    setIsSigning(true);
+    try {
+      // Сначала дописать свои несохранённые правки: подписывается то, что на сервере.
+      flushConfigSave();
+      for (let i = 0; i < 50 && inFlightRef.current > 0; i += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+      const response = await fetch(`/api/journal-documents/${documentId}/sign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entries: selectedRows.map((rowId) => ({ rowId })) }),
+      });
+      const body = (await response.json().catch(() => null)) as { signed?: number; config?: unknown; error?: string } | null;
+      if (!response.ok) throw new Error(body?.error || "Не удалось подписать");
+      if (body?.config) {
+        const fresh = normalizePerishableRejectionConfig(body.config);
+        for (const row of fresh.rows) knownRowIdsRef.current.add(row.id);
+        setConfig((prev) => ({ ...prev, rows: fresh.rows }));
+      }
+      setSelectedRows([]);
+      toast.success(`Подписано строк: ${body?.signed ?? selectedRows.length}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Не удалось подписать");
+    } finally {
+      setIsSigning(false);
+    }
+  }, [canSign, documentId, flushConfigSave, selectedRows]);
 
   // Позиции с телефонов (QR) и подписи комиссии появляются здесь сами.
   useLiveEvents((event) => {
@@ -1273,6 +1328,16 @@ export function PerishableRejectionDocumentClient({
             Комиссия: {config.commissionMembers.map((member) => member.employeeName).join(", ")}
           </p>
         ) : null}
+        {todaySummary ? (
+          <p
+            data-testid="brakerage-today-signatures"
+            className={`rounded-2xl px-4 py-2.5 text-[13px] font-medium print:hidden ${
+              todaySummary.waiting > 0 ? "bg-[#fff8eb] text-[#9a5b00]" : "bg-[#ecfdf5] text-[#116b2a]"
+            }`}
+          >
+            {todaySignatureText(todaySummary, canSign)}
+          </p>
+        ) : null}
 
         {!readOnly ? (
           <JournalSelectionBar
@@ -1284,6 +1349,7 @@ export function PerishableRejectionDocumentClient({
             <SelectionEditButton count={selectedRows.length} disabled={readOnly} onClick={() => seq.start(selectedRows)} />
             <SelectionApplyButton count={selectedRows.length} disabled={readOnly} onClick={() => setApplyOpen(true)} />
             <SelectionRepeatButton count={selectedRows.length} disabled={readOnly} onClick={() => repeatSelectedRows()} />
+            {canSign ? <SelectionSignButton count={selectedRows.length} busy={isSigning} onClick={() => void signSelectedRows()} /> : null}
           </JournalSelectionBar>
         ) : null}
         <ApplyToSelectedDialog open={applyOpen} onOpenChange={setApplyOpen} count={selectedRows.length} fields={applyFields} onApply={applyToSelectedRows} />

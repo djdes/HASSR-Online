@@ -24,6 +24,8 @@ import {
 } from "@/lib/journal-period";
 import { prefillResponsiblesForNewDocument } from "@/lib/journal-responsibles-cascade";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
+import { isBrakerageJournalCode } from "@/lib/brakerage-row-merge";
+import { unsignedRows } from "@/lib/brakerage-commission";
 import { seedEntriesForDocument } from "@/lib/journal-document-entries-seed";
 import {
   getPrimarySlotId,
@@ -298,6 +300,18 @@ export async function closeExpiredDocuments(
       select: { id: true },
     });
     if (!successor) continue;
+
+    // Бракераж с комиссией: пока есть неподписанные строки, документ
+    // закрываем не сразу, а через 3 суток после конца периода — ужин 31-го
+    // комиссия подписывает утром 1-го (подпись в закрытый журнал не встанет).
+    if (isBrakerageJournalCode(code) && Date.now() - doc.dateTo.getTime() < 3 * 24 * 60 * 60 * 1000) {
+      const full = await db.journalDocument.findUnique({ where: { id: doc.id }, select: { config: true } });
+      const cfg = (full?.config && typeof full.config === "object" ? full.config : {}) as {
+        commissionMembers?: unknown[];
+        rows?: Record<string, unknown>[];
+      };
+      if (unsignedRows(cfg).length > 0) continue;
+    }
 
     const res = await db.journalDocument.updateMany({
       where: { id: doc.id, status: "active" },

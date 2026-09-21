@@ -2,7 +2,13 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  closeBlockerForUnsigned,
   formatRowSignatures,
+  isSignatureOutdated,
+  signatureSnapshot,
+  todaySignatureSummary,
+  todaySignatureText,
+  unsignedRows,
   isRowClosed,
   normalizeCommissionMembers,
   normalizeRowSignatures,
@@ -54,4 +60,46 @@ test("подпись в ячейке: фамилия с инициалами и 
     ),
     "Иванова А. А. · 11:52"
   );
+});
+
+const member = { id: "m1", role: "Председатель", employeeId: "u1", employeeName: "Иванова Анна" };
+const signed = [{ userId: "u1", name: "Иванова Анна", role: "Председатель", signedAt: "2026-09-21T09:00:00.000Z", method: "qr" }];
+
+test("неподписанные строки: без комиссии — нет, пустые строки не считаем", () => {
+  const rows = [
+    { id: "a", productName: "Суп", productionDateTime: "2026-09-21 12:00" },
+    { id: "b", productName: "Каша", productionDateTime: "2026-09-21 08:00", signatures: signed },
+    { id: "c", productName: "", productionDateTime: "" },
+  ];
+  assert.deepEqual(unsignedRows({ commissionMembers: [], rows }), []);
+  assert.deepEqual(unsignedRows({ commissionMembers: [member], rows }).map((row) => row.id), ["a"]);
+  assert.equal(closeBlockerForUnsigned({ commissionMembers: [], rows }), null);
+  const blocker = closeBlockerForUnsigned({ commissionMembers: [member], rows });
+  assert.ok(blocker);
+  assert.match(blocker.title, /1 строка ждёт подписи комиссии/);
+  assert.deepEqual(blocker.bullets, ["Суп · 21.09 12:00"]);
+});
+
+test("плашка «сегодня»: считаем строки дня и ждущие подписи", () => {
+  const config = {
+    commissionMembers: [member],
+    rows: [
+      { productName: "Суп", productionDateTime: "2026-09-21 12:00" },
+      { productName: "Каша", productionDateTime: "2026-09-21 08:00", signatures: signed },
+      { productName: "Вчера", productionDateTime: "2026-09-20 18:00" },
+    ],
+  };
+  const summary = todaySignatureSummary(config, "2026-09-21");
+  assert.deepEqual(summary, { total: 2, waiting: 1 });
+  assert.equal(todaySignatureText(summary!, false), "Сегодня: 2 строки, 1 ждёт подписи комиссии");
+  assert.equal(todaySignatureText({ total: 5, waiting: 0 }, true), "Сегодня: 5 строк, все подписаны комиссией");
+  assert.equal(todaySignatureSummary({ commissionMembers: [], rows: config.rows }, "2026-09-21"), null);
+});
+
+test("подпись устарела, если строку поменяли после неё", () => {
+  const row = { productName: "Суп", organoleptic: "Отлично", portionWeight: "250" };
+  const signature = { ...signed[0], snapshot: signatureSnapshot(row) };
+  assert.equal(isSignatureOutdated(row, signature), false);
+  assert.equal(isSignatureOutdated({ ...row, organoleptic: "Хорошо" }, signature), true);
+  assert.equal(isSignatureOutdated(row, signed[0]), false);
 });

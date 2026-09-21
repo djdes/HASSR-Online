@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isBrakerageJournalCode, mergeBrakerageConfig, parseKnownRowIds } from "@/lib/brakerage-row-merge";
 import { withDocumentConfigLock } from "@/lib/document-config-lock";
+import { unsignedRows } from "@/lib/brakerage-commission";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
@@ -437,6 +438,26 @@ export async function PATCH(
   }
 
   if (body.title !== undefined) data.title = body.title;
+  // Бракераж с комиссией: без подписи хотя бы одного члена комиссии
+  // строку не закрыть, а значит и журнал не закончить (владелец, 2026-09-21).
+  if (body.status === "closed" && doc.status !== "closed" && isBrakerageJournalCode(template?.code)) {
+    const pending = unsignedRows(
+      (doc.config && typeof doc.config === "object" ? doc.config : {}) as {
+        commissionMembers?: unknown[];
+        rows?: Record<string, unknown>[];
+      }
+    );
+    if (pending.length > 0) {
+      return NextResponse.json(
+        {
+          error: `Нельзя закончить журнал: ${pending.length} ${pending.length === 1 ? "строка ждёт" : "строк ждут"} подписи комиссии`,
+          code: "unsigned-rows",
+          unsigned: pending.slice(0, 20).map((row) => String(row.productName || row.productionDateTime || "без названия")),
+        },
+        { status: 409 }
+      );
+    }
+  }
   if (body.status !== undefined) data.status = body.status;
   if (body.autoFill !== undefined) data.autoFill = body.autoFill;
   if (body.config !== undefined && data.config === undefined) data.config = body.config;

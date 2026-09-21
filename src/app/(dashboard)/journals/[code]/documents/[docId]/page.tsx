@@ -656,6 +656,7 @@ async function JournalDocumentBody({
     return (
       <PerishableRejectionDocumentClient
         documentId={document.id}
+        currentUserId={session.user.id}
         controlPeriodicity={controlPeriodicity}
         title={document.title}
         organizationName={organizationName}
@@ -1398,6 +1399,7 @@ async function JournalDocumentBody({
     return (
       <FinishedProductDocumentClient
         documentId={document.id}
+        currentUserId={session.user.id}
         controlPeriodicity={controlPeriodicity}
         title={document.title}
         organizationName={organizationName}

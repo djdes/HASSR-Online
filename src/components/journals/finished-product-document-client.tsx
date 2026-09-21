@@ -31,7 +31,12 @@ import {
 } from "@/components/journals/journal-responsive";
 import { JournalCellInput } from "@/components/journals/journal-cell-input";
 import { ApplyToSelectedDialog, type ApplyToSelectedField } from "@/components/journals/apply-to-selected-dialog";
-import { SelectionApplyButton, SelectionEditButton, SelectionRepeatButton } from "@/components/journals/selection-edit-button";
+import {
+  SelectionApplyButton,
+  SelectionEditButton,
+  SelectionRepeatButton,
+  SelectionSignButton,
+} from "@/components/journals/selection-edit-button";
 import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
 import { SuggestInput } from "@/components/journals/suggest-input";
 import { useNameSuggestions } from "@/components/journals/use-name-suggestions";
@@ -105,7 +110,17 @@ import { DishPoolSection } from "@/components/journals/dish-pool-section";
 import { CommissionDialog } from "@/components/journals/commission-dialog";
 import { mergeIntoList } from "@/lib/org-directory";
 import { useLiveEvents } from "@/lib/use-live-events";
-import { formatRowSignatures, hasCommission, normalizeRowSignatures } from "@/lib/brakerage-commission";
+import {
+  formatRowSignatures,
+  hasCommission,
+  isSignatureOutdated,
+  normalizeRowSignatures,
+  closeBlockerForUnsigned,
+  isCommissionMember,
+  todaySignatureSummary,
+  todaySignatureText,
+} from "@/lib/brakerage-commission";
+import { orgTodayKey } from "@/lib/timezone";
 type Props = {
   documentId: string;
   title: string;
@@ -127,6 +142,8 @@ type Props = {
   verifierUserId?: string | null;
   /** Design v2 toggle. */
   useV2?: boolean;
+  /** Кто открыл документ: член комиссии видит «Подписать» в полосе выделения. */
+  currentUserId?: string | null;
 };
 
 /**
@@ -359,6 +376,7 @@ export function FinishedProductDocumentClient({
   users,
   responsibleUserId = null,
   verifierUserId = null,
+  currentUserId = null,
 }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -374,7 +392,12 @@ export function FinishedProductDocumentClient({
   // (до 50 записей за смену) правился только в таблице на 1100px.
   const [editingRowId, setEditingRowId] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const closeAction = useDocumentCloseAction({ documentId, title });
+  const closeAction = useDocumentCloseAction({
+    documentId,
+    title,
+    blocker: () => closeBlockerForUnsigned(config),
+  });
+  const [isSigning, setIsSigning] = useState(false);
   const [catalogOpen, setCatalogOpen] = useState(false);
   /** Окно «Сторонняя бракеражная комиссия». */
   const [commissionOpen, setCommissionOpen] = useState(false);
@@ -493,6 +516,40 @@ export function FinishedProductDocumentClient({
 
   // Уход со страницы не должен съедать последний недописанный ввод.
   useEffect(() => () => flushConfigSave(), [flushConfigSave]);
+
+  const canSign = !readOnly && isCommissionMember(config, currentUserId);
+  const todaySummary = todaySignatureSummary(config, orgTodayKey());
+
+  /** Подпись члена комиссии под выделенными строками (метод «вход в кабинет»). */
+  const signSelectedRows = useCallback(async () => {
+    if (!canSign || selectedRows.length === 0) return;
+    setIsSigning(true);
+    try {
+      // Сначала дописать свои несохранённые правки: подписывается то, что на сервере.
+      flushConfigSave();
+      for (let i = 0; i < 50 && inFlightRef.current > 0; i += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+      const response = await fetch(`/api/journal-documents/${documentId}/sign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entries: selectedRows.map((rowId) => ({ rowId })) }),
+      });
+      const body = (await response.json().catch(() => null)) as { signed?: number; config?: unknown; error?: string } | null;
+      if (!response.ok) throw new Error(body?.error || "Не удалось подписать");
+      if (body?.config) {
+        const fresh = normalizeFinishedProductDocumentConfig(body.config);
+        rememberRows(fresh.rows);
+        setConfig((prev) => ({ ...prev, rows: fresh.rows }));
+      }
+      setSelectedRows([]);
+      toast.success(`Подписано строк: ${body?.signed ?? selectedRows.length}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Не удалось подписать");
+    } finally {
+      setIsSigning(false);
+    }
+  }, [canSign, documentId, flushConfigSave, rememberRows, selectedRows]);
 
   // Блюда с телефонов (QR) и подписи комиссии появляются здесь сами:
   // живое событие «журнал изменился» → перечитать строки документа.
@@ -1300,6 +1357,16 @@ export function FinishedProductDocumentClient({
             {responsibleLine}
           </p>
         ) : null}
+        {todaySummary ? (
+          <p
+            data-testid="brakerage-today-signatures"
+            className={`rounded-2xl px-4 py-2.5 text-[13px] font-medium print:hidden ${
+              todaySummary.waiting > 0 ? "bg-[#fff8eb] text-[#9a5b00]" : "bg-[#ecfdf5] text-[#116b2a]"
+            }`}
+          >
+            {todaySignatureText(todaySummary, canSign)}
+          </p>
+        ) : null}
         <JournalSelectionBar
           count={selectedRows.length}
           onClear={() => setSelectedRows([])}
@@ -1309,6 +1376,7 @@ export function FinishedProductDocumentClient({
           <SelectionEditButton count={selectedRows.length} disabled={readOnly} onClick={() => seq.start(selectedRows)} />
           <SelectionApplyButton count={selectedRows.length} disabled={readOnly} onClick={() => setApplyOpen(true)} />
           <SelectionRepeatButton count={selectedRows.length} disabled={readOnly} onClick={() => void repeatSelectedRows()} />
+          {canSign ? <SelectionSignButton count={selectedRows.length} busy={isSigning} onClick={() => void signSelectedRows()} /> : null}
         </JournalSelectionBar>
         <ApplyToSelectedDialog open={applyOpen} onOpenChange={setApplyOpen} count={selectedRows.length} fields={applyFields} onApply={applyToSelectedRows} />
 
@@ -1440,7 +1508,7 @@ export function FinishedProductDocumentClient({
                     <SignaturesCell row={row} commission={hasCommission(config)} inspectorFallback={!isColumnVisible("inspector")} />
                   ) : column.key === "release" ? (
                     <div className="flex flex-col items-center gap-0.5 py-0.5">
-                      <div className="flex items-center gap-1">
+                      <div className="flex flex-wrap items-center justify-center gap-1">
                         {(["yes", "no"] as const).map((value) => (
                           <button
                             key={value}
@@ -1450,7 +1518,7 @@ export function FinishedProductDocumentClient({
                               updateRow(row.id, { releaseAllowed: value });
                               flushConfigSave();
                             }}
-                            className={`rounded-lg px-1.5 py-1 text-[11.5px] leading-none transition-colors duration-150 disabled:opacity-60 ${
+                            className={`whitespace-nowrap rounded-lg px-1.5 py-1 text-[11.5px] leading-none transition-colors duration-150 disabled:opacity-60 ${
                               row.releaseAllowed === value
                                 ? value === "yes"
                                   ? "bg-[#e9f7ee] font-semibold text-[#1f8a45]"
@@ -1888,7 +1956,7 @@ function SignaturesCell({
     return (
       <div className="px-1.5 py-1 text-center text-[12px] leading-snug text-[#0b1024]">
         {formatRowSignatures(signatures)}
-        {signatures.some((signature) => signature.outdated) ? (
+        {signatures.some((signature) => isSignatureOutdated(row, signature)) ? (
           <div className="mt-0.5 text-[10.5px] text-[#b25c00]" title="Строку меняли после подписи">
             изменено после подписи
           </div>
