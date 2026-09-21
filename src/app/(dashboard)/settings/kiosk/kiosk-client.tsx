@@ -18,15 +18,36 @@ type IssuedPin = { name: string; pin: string };
 
 export function KioskClient({
   idleLockSeconds,
+  photoRequired,
   devices,
   employees,
 }: {
   idleLockSeconds: number;
+  photoRequired: boolean;
   devices: KioskDeviceRow[];
   employees: KioskEmployeeRow[];
 }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [idle, setIdle] = useState(idleLockSeconds);
+  const [photo, setPhoto] = useState(photoRequired);
+
+  async function togglePhoto(next: boolean) {
+    setBusy("photo");
+    try {
+      const res = await fetch("/api/settings/kiosk", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photoRequired: next }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error ?? "Ошибка");
+      setPhoto(next);
+      toast.success(next ? "Фото при входе включено" : "Фото при входе выключено");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Ошибка");
+    } finally {
+      setBusy(null);
+    }
+  }
   const [newLabel, setNewLabel] = useState("");
   const [enrollQr, setEnrollQr] = useState<{ label: string; qr: string; url: string } | null>(null);
   const [revoke, setRevoke] = useState<KioskDeviceRow | null>(null);
@@ -178,6 +199,25 @@ export function KioskClient({
             {busy === "idle" ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />} Сохранить
           </Button>
         </div>
+      </section>
+
+      <section className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
+        <div className="mb-2 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Фото при входе</div>
+        <label className="flex cursor-pointer items-start gap-3">
+          <input
+            type="checkbox"
+            checked={photo}
+            disabled={busy === "photo"}
+            onChange={(e) => togglePhoto(e.target.checked)}
+            className="mt-1 size-4 accent-[#5566f6]"
+          />
+          <span className="text-[14px] leading-relaxed text-[#0b1024]">
+            Снимать кадр с фронтальной камеры при входе по ПИН и прикладывать к подписи.
+            <span className="block text-[13px] text-[#6f7282]">
+              Это доказательство «вошёл именно он» для проверки, не распознавание лиц. Кадр снимается только после согласия сотрудника — планшет спросит его при первом входе. Без согласия сотрудник работает как обычно, фото не делается.
+            </span>
+          </span>
+        </label>
       </section>
 
       <section className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">

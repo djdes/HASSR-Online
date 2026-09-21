@@ -20,7 +20,7 @@ export type KioskContext = {
     buildingId: string | null;
     label: string;
   };
-  organization: { id: string; name: string; kioskIdleLockSeconds: number };
+  organization: { id: string; name: string; kioskIdleLockSeconds: number; kioskPhotoRequired: boolean };
 };
 
 export async function resolveKioskContext(): Promise<KioskContext | null> {
@@ -37,7 +37,7 @@ export async function resolveKioskContext(): Promise<KioskContext | null> {
       buildingId: true,
       label: true,
       organization: {
-        select: { id: true, name: true, kioskIdleLockSeconds: true, kioskEnabled: true },
+        select: { id: true, name: true, kioskIdleLockSeconds: true, kioskEnabled: true, kioskPhotoRequired: true },
       },
     },
   });
@@ -54,6 +54,7 @@ export async function resolveKioskContext(): Promise<KioskContext | null> {
       id: device.organization.id,
       name: device.organization.name,
       kioskIdleLockSeconds: device.organization.kioskIdleLockSeconds,
+      kioskPhotoRequired: device.organization.kioskPhotoRequired,
     },
   };
 }

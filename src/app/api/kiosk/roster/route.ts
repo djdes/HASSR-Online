@@ -26,7 +26,7 @@ export async function GET() {
 
   const users = await db.user.findMany({
     where: { organizationId: ctx.device.organizationId, ...ORG_ROSTER_WHERE, ...buildingFilter },
-    select: { id: true, name: true, positionTitle: true, role: true, qrPinHash: true },
+    select: { id: true, name: true, positionTitle: true, role: true, qrPinHash: true, kioskPhotoConsentAt: true },
     orderBy: { name: "asc" },
   });
 
@@ -34,11 +34,13 @@ export async function GET() {
     device: { id: ctx.device.id, label: ctx.device.label },
     organization: { name: ctx.organization.name },
     idleLockSeconds: ctx.organization.kioskIdleLockSeconds,
+    photoRequired: ctx.organization.kioskPhotoRequired,
     employees: users.map((u) => ({
       id: u.id,
       name: u.name,
       positionTitle: u.positionTitle,
       hasPin: Boolean(u.qrPinHash),
+      photoConsent: Boolean(u.kioskPhotoConsentAt),
     })),
   });
 }

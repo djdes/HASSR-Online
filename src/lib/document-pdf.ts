@@ -765,8 +765,8 @@ function appendSignaturesPage(doc: jsPDF, fontName: string, lines: PdfSignatureL
   const fmt = (d: Date) => d.toLocaleString("ru-RU", { dateStyle: "short", timeStyle: "short" });
   autoTable(doc, {
     startY: 27,
-    head: [["Сотрудник", "Подтверждение", "Планшет", "Входов", "Первый", "Последний"]],
-    body: lines.map((l) => [l.employeeName, l.method, l.device ?? "—", String(l.count), fmt(l.firstAt), fmt(l.lastAt)]),
+    head: [["Сотрудник", "Подтверждение", "Планшет", "Входов", "С фото", "Первый", "Последний"]],
+    body: lines.map((l) => [l.employeeName, l.method, l.device ?? "—", String(l.count), String(l.photos), fmt(l.firstAt), fmt(l.lastAt)]),
     theme: "grid",
     styles: { font: fontName, fontSize: 9, cellPadding: 2 },
     headStyles: { fillColor: [238, 241, 255], textColor: [11, 16, 36], font: fontName, fontStyle: "bold" },
@@ -6327,6 +6327,8 @@ export type PdfSignatureLine = {
   method: string;
   device: string | null;
   count: number;
+  /// Сколько входов с фотофиксацией (кадр приложен к подписи).
+  photos: number;
   firstAt: Date;
   lastAt: Date;
 };
@@ -6492,6 +6494,7 @@ async function loadPdfSignatureLines(params: {
     const line = groups.get(key);
     if (line) {
       line.count += 1;
+      if (ev.photoUrl) line.photos += 1;
       if (ev.createdAt < line.firstAt) line.firstAt = ev.createdAt;
       if (ev.createdAt > line.lastAt) line.lastAt = ev.createdAt;
     } else {
@@ -6500,6 +6503,7 @@ async function loadPdfSignatureLines(params: {
         method: SIGNATURE_METHOD_LABEL[ev.method] ?? ev.method,
         device,
         count: 1,
+        photos: ev.photoUrl ? 1 : 0,
         firstAt: ev.createdAt,
         lastAt: ev.createdAt,
       });

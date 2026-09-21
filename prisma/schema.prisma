@@ -404,6 +404,10 @@ model Organization {
   /// перелочивается обратно на список сотрудников.
   kioskEnabled                   Boolean                        @default(false)
   kioskIdleLockSeconds           Int                            @default(90)
+  /// Фото при входе по ПИН на общем планшете (opt-in руководителя). Кадр с
+  /// фронтальной камеры прикладывается к подписи как доказательство «это
+  /// был он». Снимается только при согласии сотрудника (User.kioskPhotoConsentAt).
+  kioskPhotoRequired             Boolean                        @default(false)
 
   @@index([isDemo, demoExpiresAt])
 }
@@ -620,6 +624,8 @@ model User {
   qrPinHash                   String?
   qrPinFailedCount            Int                      @default(0)
   qrPinLockedUntil            DateTime?
+  /// Согласие на фотофиксацию входа на общем планшете; null — фото не снимается.
+  kioskPhotoConsentAt         DateTime?
   /// «Домашняя» организация: где человека завели, где его должность,
   /// ACL и журналы. Для линейного сотрудника — единственная. Владелец и
   /// приглашённые руководители могут работать и в других — через

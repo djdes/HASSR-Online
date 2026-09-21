@@ -1,17 +1,50 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Delete, Loader2, Search, UserRound } from "lucide-react";
+import { Camera, Delete, Loader2, Search, UserRound } from "lucide-react";
 
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { KIOSK_PIN_EXPLAINER } from "@/lib/kiosk-copy";
 
-type Employee = { id: string; name: string; positionTitle: string | null; hasPin: boolean };
-type Roster = { organization: { name: string }; employees: Employee[]; idleLockSeconds: number };
+type Employee = { id: string; name: string; positionTitle: string | null; hasPin: boolean; photoConsent: boolean };
+type Roster = { organization: { name: string }; employees: Employee[]; idleLockSeconds: number; photoRequired: boolean };
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).slice(0, 2);
   return parts.map((p) => p[0]?.toUpperCase() ?? "").join("") || "?";
+}
+
+/**
+ * Кадр с фронтальной камеры для подписи. Любая ошибка (нет камеры, отказ в
+ * доступе) → null: фото — доказательство, а не преграда для работы.
+ */
+async function captureFrontPhoto(): Promise<Blob | null> {
+  if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) return null;
+  let stream: MediaStream | null = null;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+      audio: false,
+    });
+    const video = document.createElement("video");
+    video.srcObject = stream;
+    video.muted = true;
+    video.playsInline = true;
+    await video.play();
+    // Даём автоэкспозиции секунду, иначе первый кадр тёмный.
+    await new Promise((r) => setTimeout(r, 800));
+    const w = video.videoWidth || 640;
+    const h = video.videoHeight || 480;
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    canvas.getContext("2d")?.drawImage(video, 0, 0, w, h);
+    return await new Promise<Blob | null>((resolve) => canvas.toBlob((b) => resolve(b), "image/jpeg", 0.8));
+  } catch {
+    return null;
+  } finally {
+    stream?.getTracks().forEach((t) => t.stop());
+  }
 }
 
 export function KioskScreen() {
@@ -22,6 +55,9 @@ export function KioskScreen() {
   const [pin, setPin] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [pinError, setPinError] = useState<string | null>(null);
+  /** Сотрудник вошёл, но ещё не дал согласия на фото — показываем вопрос. */
+  const [consentFor, setConsentFor] = useState<Employee | null>(null);
+  const [stage, setStage] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -54,6 +90,22 @@ export function KioskScreen() {
     setPinError(null);
   }, []);
 
+  function goToJournals() {
+    // Сессия сотрудника выдана — полный переход, чтобы cookie подхватил сервер.
+    window.location.href = "/journals";
+  }
+
+  async function takePhotoAndGo() {
+    setStage("Снимаем фото для подписи…");
+    const blob = await captureFrontPhoto();
+    if (blob) {
+      const form = new FormData();
+      form.append("file", blob, "signature.jpg");
+      await fetch("/api/kiosk/signature-photo", { method: "POST", body: form }).catch(() => null);
+    }
+    goToJournals();
+  }
+
   async function submitPin() {
     if (!picked || pin.length < 4) return;
     setSubmitting(true);
@@ -70,14 +122,36 @@ export function KioskScreen() {
         setPin("");
         return;
       }
-      // Сессия сотрудника выдана — уводим в журналы полным переходом,
-      // чтобы cookie подхватилась сервером.
-      window.location.href = "/journals";
+      if (roster?.photoRequired) {
+        if (!picked.photoConsent) {
+          // Сначала спрашиваем согласие — ПИН уже подтвердил, что это он.
+          setConsentFor(picked);
+          setPicked(null);
+          return;
+        }
+        await takePhotoAndGo();
+        return;
+      }
+      goToJournals();
     } catch {
       setPinError("Нет связи");
     } finally {
       setSubmitting(false);
     }
+  }
+
+  async function decideConsent(agree: boolean) {
+    setStage(agree ? "Сохраняем согласие…" : null);
+    if (agree) {
+      await fetch("/api/kiosk/photo-consent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agree: true }),
+      }).catch(() => null);
+      await takePhotoAndGo();
+      return;
+    }
+    goToJournals();
   }
 
   function tapDigit(d: string) {
@@ -138,6 +212,38 @@ export function KioskScreen() {
         ) : null}
       </div>
 
+      {stage ? (
+        <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center gap-3 bg-[#0a0b0f]/90 text-[#e7e9f3]">
+          <Camera className="size-8 text-[#5566f6]" />
+          <p className="text-[15px]">{stage}</p>
+        </div>
+      ) : null}
+
+      <BottomSheet
+        open={Boolean(consentFor)}
+        onClose={() => decideConsent(false)}
+        title="Фото при входе"
+        subtitle={consentFor?.name ?? ""}
+      >
+        <div className="space-y-4 pb-2">
+          <p className="text-[14px] leading-relaxed text-[#e7e9f3]">
+            Организация включила фотофиксацию: при вводе ПИН планшет делает один кадр с фронтальной камеры и прикладывает его к вашей подписи в журнале — как подтверждение, что запись внесли именно вы. Это не распознавание лиц: кадр просто хранится вместе с записью для проверки.
+          </p>
+          <p className="text-[13px] leading-relaxed text-[#9b9fb3]">
+            Согласие можно не давать — вы будете работать как обычно, без фото. Отозвать его можно у руководителя.
+          </p>
+          <button
+            onClick={() => decideConsent(true)}
+            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] text-[15px] font-medium text-white"
+          >
+            <Camera className="size-5" /> Согласен, снимать фото при входе
+          </button>
+          <button onClick={() => decideConsent(false)} className="h-11 w-full rounded-2xl text-[14px] text-[#9b9fb3]">
+            Не сейчас — продолжить без фото
+          </button>
+        </div>
+      </BottomSheet>
+
       <BottomSheet
         open={Boolean(picked)}
         onClose={closeSheet}
@@ -147,10 +253,7 @@ export function KioskScreen() {
         <div className="flex flex-col items-center gap-4 pb-2">
           <div className="flex gap-3">
             {[0, 1, 2, 3, 4, 5].slice(0, Math.max(4, pin.length)).map((i) => (
-              <span
-                key={i}
-                className={`size-4 rounded-full ${i < pin.length ? "bg-[#5566f6]" : "bg-[#2a2c3a]"}`}
-              />
+              <span key={i} className={`size-4 rounded-full ${i < pin.length ? "bg-[#5566f6]" : "bg-[#2a2c3a]"}`} />
             ))}
           </div>
           {pinError ? <p className="text-[13px] text-[#ff8a8a]">{pinError}</p> : null}

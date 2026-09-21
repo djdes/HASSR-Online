@@ -15,6 +15,8 @@ export const dynamic = "force-dynamic";
 const Schema = z.object({
   idleLockSeconds: z.number().int().min(30).max(1800).optional(),
   revokeDeviceId: z.string().min(1).optional(),
+  /// Фото при входе по ПИН (opt-in). Снимается только при согласии сотрудника.
+  photoRequired: z.boolean().optional(),
 });
 
 export async function PATCH(request: Request) {
@@ -41,10 +43,13 @@ export async function PATCH(request: Request) {
       data: { revokedAt: new Date() },
     });
   }
-  if (typeof body.idleLockSeconds === "number") {
+  if (typeof body.idleLockSeconds === "number" || typeof body.photoRequired === "boolean") {
     await db.organization.update({
       where: { id: orgId },
-      data: { kioskIdleLockSeconds: body.idleLockSeconds },
+      data: {
+        ...(typeof body.idleLockSeconds === "number" ? { kioskIdleLockSeconds: body.idleLockSeconds } : {}),
+        ...(typeof body.photoRequired === "boolean" ? { kioskPhotoRequired: body.photoRequired } : {}),
+      },
     });
   }
 

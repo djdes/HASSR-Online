@@ -23,7 +23,7 @@ export default async function KioskSettingsPage() {
   const [org, devices, employees] = await Promise.all([
     db.organization.findUnique({
       where: { id: orgId },
-      select: { kioskEnabled: true, kioskIdleLockSeconds: true },
+      select: { kioskEnabled: true, kioskIdleLockSeconds: true, kioskPhotoRequired: true },
     }),
     db.kioskDevice.findMany({
       where: { organizationId: orgId, revokedAt: null },
@@ -59,6 +59,7 @@ export default async function KioskSettingsPage() {
       />
       <KioskClient
         idleLockSeconds={org?.kioskIdleLockSeconds ?? 90}
+        photoRequired={org?.kioskPhotoRequired ?? false}
         devices={deviceRows}
         employees={employeeRows}
       />

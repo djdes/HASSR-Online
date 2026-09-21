@@ -184,8 +184,13 @@ export default async function InspectorTemplatePage({
                     {(() => {
                       const sig = matchSignature(evidence.events, entry.filledById, entry.createdAt, { entryId: entry.id });
                       return sig ? (
-                        <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-[#ecfdf5] px-2.5 py-0.5 text-[12px] text-[#116b2a]">
+                        <div className="mt-1 inline-flex items-center gap-2 rounded-full bg-[#ecfdf5] px-2.5 py-0.5 text-[12px] text-[#116b2a]">
                           Подпись: {describeSignature(sig, evidence.deviceLabels)}
+                          {sig.photoUrl ? (
+                            <a href={sig.photoUrl} target="_blank" rel="noreferrer" className="underline decoration-dotted">
+                              фото
+                            </a>
+                          ) : null}
                         </div>
                       ) : null;
                     })()}

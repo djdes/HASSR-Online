@@ -20,6 +20,7 @@ export type SignatureEvidence = {
   createdAt: Date;
   entryKind: string | null;
   entryRef: unknown;
+  photoUrl: string | null;
 };
 
 export type SignatureEvidenceBundle = {
@@ -41,7 +42,7 @@ export async function loadSignatureEvidence(params: {
       userId: { in: userIds },
       createdAt: { gte: new Date(params.from.getTime() - KIOSK_WINDOW_MS), lte: params.to },
     },
-    select: { id: true, userId: true, method: true, deviceId: true, createdAt: true, entryKind: true, entryRef: true },
+    select: { id: true, userId: true, method: true, deviceId: true, createdAt: true, entryKind: true, entryRef: true, photoUrl: true },
     orderBy: { createdAt: "desc" },
   });
   const deviceIds = Array.from(new Set(events.map((e) => e.deviceId).filter((d): d is string => Boolean(d))));
