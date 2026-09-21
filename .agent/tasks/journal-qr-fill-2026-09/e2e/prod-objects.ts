@@ -50,8 +50,14 @@ const out: Record<string, unknown> = {};
     await page.getByRole("button", { name: /^Плюс: температура/ }).first().click();
     out[`${kind}AfterPlus`] = await input.inputValue();
     out[`${kind}Label`] = (await page.locator("label", { hasText: "Температура" }).first().innerText()).replace(/\s+/g, " ");
+    out[`${kind}Header`] = (await page.locator("header").innerText()).replace(/\s+/g, " ").trim();
+    out[`${kind}Sheet`] = await page.getByRole("button", { name: /Кто снимает показания/ }).count();
+    // Список объектов теперь под кнопкой «Сменить» у строки объекта.
+    await page.getByRole("button", { name: kind === "room" ? /Помещение/ : /Оборудование/ }).first().click();
+    await page.waitForTimeout(200);
     out[`${kind}Strip`] = (await page.locator("[aria-current=true]").first().locator("xpath=..").innerText()).replace(/\s+/g, " ");
-    out[`${kind}Trigger`] = (await page.locator("button[role=combobox]").first().innerText()).replace(/\s+/g, " | ");
+    await page.getByRole("button", { name: kind === "room" ? /Помещение/ : /Оборудование/ }).first().click();
+    out[`${kind}Trigger`] = (await page.getByRole("button", { name: /Кто снимает показания/ }).first().innerText()).replace(/\s+/g, " | ");
     await page.screenshot({ path: path.join(ROOT, "shots", `prod-${kind}-fill.png`), fullPage: true });
   }
   // HTML-форма холодильников: чипы быстрого ввода, запись касанием, повторное открытие с подстановкой.
