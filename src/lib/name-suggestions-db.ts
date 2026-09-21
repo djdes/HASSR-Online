@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { resolveDishPoolOrgIds } from "@/lib/dish-pool";
 import {
   NAME_SUGGESTION_LIMIT,
   normalizeSuggestionMeta,
@@ -34,7 +35,30 @@ export async function listNameSuggestions(
     const normalized = normalizeSuggestionMeta(row.meta);
     if (normalized) meta[suggestionKey(row.value)] = normalized;
   }
-  return { values: rows.map((row) => row.value), meta };
+  const values = rows.map((row) => row.value);
+  // Блюда — ещё и из общего справочника по служебному коду (dish-pool.ts):
+  // свои сверху, дальше блюда других организаций пула. Память температур
+  // берём только свою — чужая кухня не должна подставлять свои градусы.
+  if (scope === "dish") {
+    const poolIds = (await resolveDishPoolOrgIds(organizationId)).filter((id) => id !== organizationId);
+    if (poolIds.length > 0) {
+      const pooled = await db.nameSuggestion.findMany({
+        where: { organizationId: { in: poolIds }, scope },
+        orderBy: [{ lastUsedAt: "desc" }, { useCount: "desc" }],
+        take: NAME_SUGGESTION_LIMIT,
+        select: { value: true },
+      });
+      const seen = new Set(values.map(suggestionKey));
+      for (const row of pooled) {
+        if (values.length >= NAME_SUGGESTION_LIMIT * 2) break;
+        const key = suggestionKey(row.value);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        values.push(row.value);
+      }
+    }
+  }
+  return { values, meta };
 }
 
 /**

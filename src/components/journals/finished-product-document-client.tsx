@@ -100,6 +100,7 @@ import {
   withCustomCell,
 } from "@/components/journals/journal-custom-cell";
 import { OrgDirectoryDialog } from "@/components/journals/org-directory-dialog";
+import { DishPoolSection } from "@/components/journals/dish-pool-section";
 import { mergeIntoList } from "@/lib/org-directory";
 import { useLiveEvents } from "@/lib/use-live-events";
 import { formatRowSignatures, hasCommission, normalizeRowSignatures } from "@/lib/brakerage-commission";
@@ -1794,6 +1795,8 @@ export function FinishedProductDocumentClient({
               ) : null}
             </div>
           </div>
+
+          {canManageColumns ? <DishPoolSection /> : null}
 
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
