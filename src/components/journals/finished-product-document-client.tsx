@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 import {
   Archive,
   ChevronDown,
+  Database,
   ListPlus,
   Plus,
   Trash2,
@@ -97,6 +98,8 @@ import {
   customCellValue,
   withCustomCell,
 } from "@/components/journals/journal-custom-cell";
+import { OrgDirectoryDialog } from "@/components/journals/org-directory-dialog";
+import { mergeIntoList } from "@/lib/org-directory";
 type Props = {
   documentId: string;
   title: string;
@@ -366,6 +369,8 @@ export function FinishedProductDocumentClient({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const closeAction = useDocumentCloseAction({ documentId, title });
   const [catalogOpen, setCatalogOpen] = useState(false);
+  /** «Из справочника организации» для списка изделий этого журнала. */
+  const [directoryOpen, setDirectoryOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkText, setBulkText] = useState("");
   const [newItemName, setNewItemName] = useState("");
@@ -1724,6 +1729,16 @@ export function FinishedProductDocumentClient({
             ) : null}
             {Array.from(new Set(config.itemsCatalog)).map((item) => <div key={item} className="flex items-center gap-2 rounded-xl border border-[#e6e6f0] px-3 py-2"><div className="flex-1 text-[14px]">{item}</div><Button type="button" variant="ghost" title="Удалить изделие из списка" onClick={() => commitConfig({ ...config, itemsCatalog: config.itemsCatalog.filter((catalogItem) => catalogItem !== item) }, true)}><Trash2 className="size-4" /></Button></div>)}
             <div className="flex gap-2"><Input value={newItemName} onChange={(e) => setNewItemName(e.target.value)} placeholder="Введите название нового изделия" className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]" /><Button className="h-10 rounded-lg bg-[#5566f6] px-4 text-white hover:bg-[#4a5bf0]" title="Добавить изделие в список" onClick={() => { if (!newItemName.trim()) return; commitConfig({ ...config, itemsCatalog: Array.from(new Set([...config.itemsCatalog, newItemName.trim()])) }, true); setNewItemName(""); }}><Plus className="size-4" /></Button></div>
+            <Button type="button" variant="outline" className="h-10 w-full rounded-xl border-[#dcdfed] text-[13.5px] font-medium text-[#3848c7] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]" onClick={() => setDirectoryOpen(true)} title="Добавить изделия из общего справочника организации">
+              <Database className="mr-1.5 size-4" /> Из справочника организации
+            </Button>
+            <OrgDirectoryDialog
+              open={directoryOpen}
+              onClose={() => setDirectoryOpen(false)}
+              kind="product"
+              existing={config.itemsCatalog}
+              onAdd={(items) => commitConfig({ ...config, itemsCatalog: mergeIntoList(config.itemsCatalog, items) }, true)}
+            />
           </div>
         </DialogContent>
       </Dialog>
