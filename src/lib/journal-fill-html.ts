@@ -185,6 +185,24 @@ h2{font-size:21px;letter-spacing:-.02em;margin:0;font-weight:600}
 .photo{border:1px dashed #dcdfed;border-radius:14px;padding:10px 14px;margin-bottom:10px;font-size:13px;color:#6f7282}
 [hidden]{display:none!important}
 .search{margin-bottom:10px}
+.tabs{display:flex;gap:6px;padding:4px;margin:0 0 12px;border-radius:16px;background:#eef1ff}
+.tabs a{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;min-height:46px;padding:4px 8px;border-radius:12px;font-size:16px;font-weight:600;color:#3848c7;text-decoration:none;line-height:1.2}
+.tabs a.on{background:#fff;color:#0b1024;box-shadow:0 1px 3px rgba(11,16,36,.12)}
+.bk-h{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin:2px 2px 10px}
+.bk-n{font-size:19px;font-weight:600;line-height:1.3;word-break:break-word}
+.bk-t{display:block;font-size:14.5px;font-weight:400;color:#6f7282;margin-top:2px}
+.bk-s{flex:none;max-width:48%;font-size:13px;font-weight:600;padding:4px 10px;border-radius:999px;text-align:right;line-height:1.3}
+.bk-s.signed{background:#ecfdf5;color:#116b2a}
+.bk-s.wait{background:#fff8eb;color:#9a5b00}
+.bk .seg{margin-bottom:10px;gap:6px}
+.bk .segb{min-height:48px;padding:6px 6px;font-size:15px;flex:1 1 45%;min-width:0;overflow-wrap:anywhere}
+.bk .in{min-height:52px;font-size:17px;padding:10px 14px;margin-bottom:10px}
+.bk .check{min-height:50px;margin-bottom:8px}
+.bk-e{display:grid;grid-template-columns:minmax(0,1fr) 116px;gap:8px}
+.bk-del{display:inline-block;font-size:15px;color:#a13a32;margin:0 2px 8px}
+.bk-sub{font-size:12.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6f7282;margin:0 0 6px 2px}
+.btn.danger{background:#d2453d;box-shadow:0 10px 30px -12px rgba(210,69,61,.55)}
+.btn+.btn{margin-top:8px}
 `;
 
 /** Инлайн-скрипт: только удобства, страница работает и без него. */
@@ -206,6 +224,7 @@ export const QR_FILL_JS = `
     e.preventDefault();
     var el=document.getElementById("f-"+b.getAttribute("data-fill")); if(!el) return;
     var ago=b.getAttribute("data-ago");
+    if(ago===null&&el.hasAttribute("data-lines")){ var lv=b.getAttribute("data-value")||""; var cur=el.value.replace(/\\s+$/,""); el.value=cur?cur+"\\n"+lv:lv; fire(el); el.focus(); return; }
     el.value=ago!==null?hhmm(new Date(Date.now()-Number(ago)*60000)):(b.getAttribute("data-value")||"");
     var g=b.parentNode.querySelectorAll("[data-fill]");
     for(var i=0;i<g.length;i++) g[i].classList.toggle("on",g[i]===b);
@@ -817,6 +836,8 @@ export function renderResult(params: {
   offCount?: number;
   /** Своя строка заголовка — «Добавлено блюд: 7», «Подписано: 5». */
   headline?: string | null;
+  /** Подпись кнопки под галкой (по умолчанию «Добавить ещё»). */
+  addMoreLabel?: string;
 }): string {
   const offLine = params.offCount && params.offCount > 0
     ? `<p class="muted" style="margin-top:6px">Отмечено «Выключено / Нет показания»: ${params.offCount}. В журнале прочерк с пометкой, руководитель получил уведомление.</p>`
@@ -825,7 +846,7 @@ export function renderResult(params: {
   // (владелец, 2026-09-21) — только «Добавить ещё» для строчных журналов.
   const headline = params.headline ?? (params.mode === "appended" ? "Строка добавлена" : "Отметка записана");
   return `<div class="card center" role="status" aria-live="polite"><div class="ok">${CHECK_ICON}</div><h2>${esc(headline)}</h2><p class="muted" style="margin-top:8px">Сохранено: ${esc(params.documentTitle)} · ${esc(params.employeeName)} · ${esc(params.timeLabel)}</p>${offLine}${
-    params.addMoreHref ? `<div class="sticky"><a class="btn" href="${esc(params.addMoreHref)}">Добавить ещё</a></div>` : ""
+    params.addMoreHref ? `<div class="sticky"><a class="btn" href="${esc(params.addMoreHref)}">${esc(params.addMoreLabel ?? "Добавить ещё")}</a></div>` : ""
   }</div>`;
 }
 

@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
+import { ORG_ROSTER_WHERE, ORG_SIGNER_WHERE } from "@/lib/journal-roster";
 import { getAdapter } from "@/lib/tasksflow-adapters";
 import { rowKeyForEmployee } from "@/lib/tasksflow-adapters/row-key";
 import type { TaskFormSchema } from "@/lib/tasksflow-adapters/task-form";
@@ -99,9 +99,13 @@ export async function listJournalFillDocuments(orgId: string, code: string, toda
   }));
 }
 
-export async function listFillEmployees(orgId: string): Promise<JournalFillEmployee[]> {
+export async function listFillEmployees(
+  orgId: string,
+  options: { includeCommission?: boolean } = {}
+): Promise<JournalFillEmployee[]> {
+  // Бракеражи: сторонняя комиссия тоже выбирает себя на QR, чтобы подписать.
   const users = await db.user.findMany({
-    where: { organizationId: orgId, ...ORG_ROSTER_WHERE },
+    where: { organizationId: orgId, ...(options.includeCommission ? ORG_SIGNER_WHERE : ORG_ROSTER_WHERE) },
     select: { id: true, name: true, positionTitle: true, qrPinHash: true },
     orderBy: { name: "asc" },
   });

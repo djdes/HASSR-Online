@@ -6,6 +6,11 @@ import { isRowKeyAllowed, listJournalFillDocuments, loadJournalFillForm, loadOrg
 import { journalFillHints } from "@/lib/journal-fill-hints";
 import { isNameSuggestionScope } from "@/lib/name-suggestions";
 import { rememberNames } from "@/lib/name-suggestions-db";
+import { isBrakerageJournalCode } from "@/lib/brakerage-row-merge";
+import { FINISHED_PRODUCT_DOCUMENT_TEMPLATE_CODE } from "@/lib/finished-product-document";
+import { findTaskEmployee } from "@/lib/journal-roster-db";
+import { appendFinishedProductRows } from "@/lib/tasksflow-adapters/finished-product";
+import { appendPerishableRows } from "@/lib/tasksflow-adapters/perishable-rejection";
 import { normalizeQrFillMode, resolveQrFillActor } from "@/lib/qr-fill-actor";
 import { QR_FILL_RATE_LIMIT_ERROR, qrFillRateKey, recordQrFillAudit } from "@/lib/qr-fill-audit";
 import { qrFillRateLimiter } from "@/lib/rate-limit";
@@ -44,11 +49,13 @@ export type JournalFillSubmitInput = {
   /** PIN уже проверен на отдельном шаге (HTML-форма, cookie-пропуск). */
   pinVerified?: boolean;
   openedAt?: number | null;
+  /** Бракераж «Несколько сразу»: наименования, по строке журнала на каждое (до 30). */
+  bulkNames?: string[];
 };
 
 export type JournalFillSubmitResult =
   | { ok: false; status: number; error: string; badKeys?: string[] }
-  | { ok: true; mode: "appended" | "updated"; documentTitle: string; employeeName: string; employeeId: string };
+  | { ok: true; mode: "appended" | "updated"; documentTitle: string; employeeName: string; employeeId: string; count: number };
 
 export async function submitJournalFill(input: JournalFillSubmitInput): Promise<JournalFillSubmitResult> {
   const { request, orgId, code } = input;
@@ -72,6 +79,7 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
     organizationId: orgId,
     employeeId: input.employeeId,
     pin: input.pin,
+    includeCommission: isBrakerageJournalCode(code),
   });
   if (!actor.ok) return { ok: false, status: actor.status, error: actor.error };
 
@@ -104,7 +112,14 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
   const offKeys = new Set((input.off ?? []).filter((key) => schema?.fields.some((field) => field.key === key && field.type === "number")));
   let values: Record<string, string | number | boolean | null> = {};
   if (schema) {
-    const effective = { ...schema, fields: schema.fields.map((field) => (field.type === "number" && offKeys.has(field.key) ? { ...field, required: false } : field)) };
+    // «Несколько сразу»: температура у каждого блюда своя — общая необязательна.
+    const bulkOptional = (key: string) => Boolean(input.bulkNames?.length) && key === "productTemp";
+    const effective = {
+      ...schema,
+      fields: schema.fields.map((field) =>
+        field.type === "number" && (offKeys.has(field.key) || bulkOptional(field.key)) ? { ...field, required: false } : field
+      ),
+    };
     try {
       values = buildCompletionValidator(effective).parse(input.values) as typeof values;
     } catch (error) {
@@ -137,14 +152,33 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
     ...(correction ? { [TASK_FORM_CORRECTION_KEY]: correction } : {}),
   };
 
-  const applied = await adapter.applyRemoteCompletion({
-    documentId: input.documentId,
-    rowKey: hints.append ? rowKeyWithQrAppend(input.rowKey) : input.rowKey,
-    completed: true,
-    todayKey,
-    values: adapterValues,
-  });
-  if (!applied) return { ok: false, status: 500, error: "Не удалось записать в журнал" };
+  const bulkNames = isBrakerageJournalCode(code) && input.bulkNames && input.bulkNames.length > 0 ? input.bulkNames : null;
+  let count = 1;
+  if (bulkNames) {
+    // Несколько блюд одним вызовом под блокировкой документа, у каждой строки свой ключ.
+    const employee = await findTaskEmployee({ employeeId: actor.employee.id, organizationId: orgId });
+    if (!employee) return { ok: false, status: 404, error: "Сотрудник не найден" };
+    const base = Date.now();
+    const entries = bulkNames.map((name, index) => ({
+      rowKey: rowKeyWithQrAppend(input.rowKey, base + index),
+      values: { ...adapterValues, productName: name },
+    }));
+    count =
+      code === FINISHED_PRODUCT_DOCUMENT_TEMPLATE_CODE
+        ? await appendFinishedProductRows({ documentId: input.documentId, employee, todayKey, entries })
+        : await appendPerishableRows({ documentId: input.documentId, employee, todayKey, entries });
+    if (count === 0) return { ok: false, status: 500, error: "Не удалось записать в журнал" };
+    values.productName = bulkNames[0];
+  } else {
+    const applied = await adapter.applyRemoteCompletion({
+      documentId: input.documentId,
+      rowKey: hints.append ? rowKeyWithQrAppend(input.rowKey) : input.rowKey,
+      completed: true,
+      todayKey,
+      values: adapterValues,
+    });
+    if (!applied) return { ok: false, status: 500, error: "Не удалось записать в журнал" };
+  }
 
   // «Выключено / Нет показания» — руководителю сразу: в Telegram и в колокольчик.
   if (offKeys.size > 0 && schema) {
@@ -172,7 +206,8 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
       const value = values[key];
       if (typeof value !== "string" || value.trim() === "") continue;
       const bucket = byScope.get(scope) ?? { values: [], meta: {} };
-      bucket.values.push(value);
+      if (bulkNames && key === "productName") bucket.values.push(...bulkNames);
+      else bucket.values.push(value);
       if (hints.tempField && hints.tempField.nameKey === key) {
         const temp = values[hints.tempField.tempKey];
         if (temp !== null && temp !== undefined && String(temp).trim() !== "") bucket.meta[value] = { productTemp: String(temp) };
@@ -210,5 +245,5 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
     }
   }
 
-  return { ok: true, mode: isShared ? "appended" : "updated", documentTitle: document.title, employeeName: actor.employee.name, employeeId: actor.employee.id };
+  return { ok: true, mode: isShared ? "appended" : "updated", documentTitle: document.title, employeeName: actor.employee.name, employeeId: actor.employee.id, count };
 }

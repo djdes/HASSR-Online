@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
+import { ORG_ROSTER_WHERE, ORG_SIGNER_WHERE } from "@/lib/journal-roster";
 import { isManagementRole } from "@/lib/user-roles";
 import { decryptSecret, encryptSecret, isIntegrationCryptoConfigured } from "@/lib/integration-crypto";
 
@@ -34,9 +34,11 @@ export async function resolveQrFillActor(params: {
   organizationId: string;
   employeeId: string;
   pin?: string | null;
+  /** Бракеражи: членов сторонней комиссии тоже ищем. */
+  includeCommission?: boolean;
 }): Promise<QrFillActorResult> {
   const employee = await db.user.findFirst({
-    where: { id: params.employeeId, organizationId: params.organizationId, ...ORG_ROSTER_WHERE },
+    where: { id: params.employeeId, organizationId: params.organizationId, ...(params.includeCommission ? ORG_SIGNER_WHERE : ORG_ROSTER_WHERE) },
     select: { id: true, name: true, role: true, qrPinHash: true, qrPinFailedCount: true, qrPinLockedUntil: true },
   });
   if (!employee) return { ok: false, status: 404, error: "Сотрудник не найден" };

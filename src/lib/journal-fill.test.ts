@@ -25,11 +25,12 @@ describe("qr-fill-token: journal kind", () => {
 });
 
 describe("journal-fill-hints", () => {
-  it("бракераж: наименование — блюдо, время −30, оценка «Отлично», температура по памяти", () => {
+  it("бракераж: наименование — блюдо, время −30, температура по памяти; оценка — из вариантов документа", () => {
     const hints = journalFillHints("finished_product");
     assert.equal(hints.nameFields?.productName, "dish");
     assert.equal(hints.timeDefaults?.productionTime, 30);
-    assert.equal(hints.defaults?.organoleptic, "Отлично");
+    // Оценка — select адаптера с вариантами документа, своих подсказок нет.
+    assert.equal(hints.defaults?.organoleptic, undefined);
     assert.deepEqual(hints.tempField, { nameKey: "productName", tempKey: "productTemp" });
   });
   it("неизвестный журнал — пустые подсказки", () => {

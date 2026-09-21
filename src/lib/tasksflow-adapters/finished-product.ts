@@ -25,6 +25,7 @@ import {
   type FinishedProductDocumentRow,
   normalizeFinishedProductDocumentConfig,
 } from "@/lib/finished-product-document";
+import { visibleColumns } from "@/lib/journal-columns";
 import { findTaskEmployee } from "@/lib/journal-roster-db";
 import {
   EMPTY_SYNC_REPORT,
@@ -119,18 +120,26 @@ function buildForm(
       maxLength: 400,
     });
   }
-  // Состав бракеражной комиссии задан — подписывающий выбирается из него.
-  if (config.commissionMembers.length > 0) {
+  // Вес и примечание — если колонки видны в документе. Оценку и подпись
+  // комиссия ставит сама (QR «За сегодня»), поэтому «Бракераж провёл» в
+  // форме повара нет.
+  const visible = new Set(visibleColumns(TEMPLATE_CODE, config).map((column) => column.key));
+  if (visible.has("portion")) {
     fields.push({
-      type: "select",
-      key: "inspectorName",
-      label: "Бракераж провёл",
-      required: true,
-      options: config.commissionMembers.map((member) => ({
-        value: member.employeeName,
-        label: member.role ? `${member.employeeName} — ${member.role}` : member.employeeName,
-      })),
-      defaultValue: config.commissionMembers[0].employeeName,
+      type: "text",
+      key: "portionWeight",
+      label: "Вес выход, г",
+      maxLength: 20,
+      placeholder: "Например: 150 или 200/10",
+    });
+  }
+  if (visible.has("note")) {
+    fields.push({
+      type: "text",
+      key: "note",
+      label: "Примечание",
+      multiline: true,
+      maxLength: 500,
     });
   }
   return {

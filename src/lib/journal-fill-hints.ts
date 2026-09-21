@@ -27,8 +27,6 @@ export type JournalFillHints = {
   segmented?: Record<string, Record<string, string>>;
 };
 
-export const ORGANOLEPTIC_CHOICES = ["Отлично", "Хорошо", "Удовлетворительно", "Неудовлетворительно"] as const;
-
 export const TIME_OFFSET_CHIPS = [
   { minutes: 15, label: "−15 мин" },
   { minutes: 30, label: "−30 мин" },
@@ -47,8 +45,7 @@ const HINTS: Record<string, JournalFillHints> = {
     nameFields: { productName: "dish" },
     timeDefaults: { productionTime: 30 },
     timeOffsetFields: ["productionTime"],
-    defaults: { organoleptic: "Отлично" },
-    choices: { organoleptic: ORGANOLEPTIC_CHOICES },
+    // Оценки — варианты документа (select адаптера), первая по умолчанию.
     tempField: { nameKey: "productName", tempKey: "productTemp" },
   },
   intensive_cooling: {
