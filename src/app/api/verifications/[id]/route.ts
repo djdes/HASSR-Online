@@ -6,6 +6,7 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasCapability } from "@/lib/permission-presets";
 import { notifyEmployee } from "@/lib/telegram";
+import { recordAuditLog } from "@/lib/audit-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -71,6 +72,21 @@ export async function POST(
       { status: 409 }
     );
   }
+
+  await recordAuditLog({
+    request,
+    session,
+    organizationId: claim.organizationId,
+    action: body.action === "approve" ? "task.verify.approve" : "task.verify.reject",
+    entity: "journal_task",
+    entityId: claim.id,
+    details: {
+      journalCode: claim.journalCode,
+      task: claim.scopeLabel,
+      employee: claim.user.name,
+      comment: body.comment?.trim() || undefined,
+    },
+  });
 
   if (body.action === "approve") {
     await db.journalTaskClaim.update({

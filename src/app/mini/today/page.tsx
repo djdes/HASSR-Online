@@ -75,6 +75,8 @@ type Payload = {
   } | null;
   /** Взятые и не закрытые задачи прошлых дней. */
   stuckClaims?: StuckClaim[];
+  /** false — режим «Только руководитель назначает»: «Взять» не показываем. */
+  canSelfClaim?: boolean;
 };
 
 /** Плашка «сегодня у вас по графику». Спокойная, задачи не прячет. */
@@ -219,7 +221,7 @@ export default function MiniTodayPage() {
         res.status === 409
           ? body.error || "Эту задачу уже забрал кто-то другой"
           : res.status === 403
-            ? "Нет доступа к этой задаче"
+            ? body.error || "Нет доступа к этой задаче"
             : res.status === 401
               ? "Вход закончился — войдите заново"
               : body.error || "Не удалось взять задачу. Попробуйте ещё раз.";
@@ -608,6 +610,7 @@ export default function MiniTodayPage() {
                   ? "Сначала завершите или верните незакрытую задачу прошлого дня"
                   : "Сначала завершите текущую задачу"
               }
+              canSelfClaim={data.canSelfClaim !== false}
               onClaim={() => claim(s)}
               onComplete={() => s.claimId && complete(s.claimId)}
             />
@@ -624,6 +627,7 @@ function ScopeRow({
   disabled,
   locked,
   lockedHint,
+  canSelfClaim = true,
   onClaim,
   onComplete,
 }: {
@@ -635,6 +639,8 @@ function ScopeRow({
   locked: boolean;
   /** Почему нельзя взять — текст тоста и подсказки. */
   lockedHint: string;
+  /** false — задачи назначает руководитель, кнопки «Взять» нет. */
+  canSelfClaim?: boolean;
   onClaim: () => void;
   onComplete: () => void;
 }) {
@@ -713,7 +719,15 @@ function ScopeRow({
         ) : null}
       </div>
       <div className="shrink-0">
-        {av === "available" ? (
+        {av === "available" && !canSelfClaim ? (
+          <span
+            className="inline-flex h-9 items-center rounded-xl px-2 text-[12px]"
+            style={{ color: "var(--mini-text-muted)" }}
+          >
+            Назначает руководитель
+          </span>
+        ) : null}
+        {av === "available" && canSelfClaim ? (
           <button
             type="button"
             // Кнопка под замком остаётся нажимаемой намеренно: на

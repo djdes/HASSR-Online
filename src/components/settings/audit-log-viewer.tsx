@@ -21,10 +21,12 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
+import { pluralRu } from "@/lib/plural-ru";
 import {
   AUDIT_ACTION_LABELS,
   AUDIT_ENTITY_FILTER_OPTIONS,
   auditActionLabel,
+  auditDetailLabel,
   auditDetailPairs,
   auditEntityLabel,
 } from "@/lib/audit-labels";
@@ -161,7 +163,9 @@ function renderDetails(entry: AuditEntry): ReactElement {
           ✓ {journalLabel}
         </div>
         <div className="text-[12px] text-[#6f7282]">
-          {stepsCount ? `${stepsCount} шаг${stepsCount === 1 ? "" : "ов"}` : ""}
+          {stepsCount
+            ? `${stepsCount} ${pluralRu(stepsCount, "шаг", "шага", "шагов")}`
+            : ""}
           {dur ? ` · всего ${dur}` : ""}
         </div>
       </div>
@@ -175,7 +179,7 @@ function renderDetails(entry: AuditEntry): ReactElement {
   ) {
     const code = (d as { templateCode?: string }).templateCode;
     const journalLabel =
-      JOURNAL_LABEL_BY_CODE[code ?? ""] ?? code ?? "—";
+      JOURNAL_LABEL_BY_CODE[code ?? ""] ?? code ?? "";
     const title = (d as { title?: string }).title;
     const isPipeline = entry.action.startsWith(
       "settings.journal-pipelines."
@@ -184,7 +188,7 @@ function renderDetails(entry: AuditEntry): ReactElement {
     let primary = "";
     if (entry.action === "settings.journal-pipelines.seed") {
       const count = (d as { createdCount?: number }).createdCount ?? 0;
-      primary = `Создано pinned-узлов: ${count}`;
+      primary = `Создано шагов из колонок журнала: ${count}`;
     } else if (entry.action === "settings.journal-pipelines.seed-all") {
       const created = (d as { created?: number }).created ?? 0;
       const skippedExisting =
@@ -194,14 +198,14 @@ function renderDetails(entry: AuditEntry): ReactElement {
       primary = `Создано: ${created} · Уже было: ${skippedExisting} · Без колонок: ${skippedNoFields}`;
     } else if (entry.action === "settings.journal-pipelines.clear-custom") {
       const removed = (d as { removed?: number }).removed ?? 0;
-      primary = `Удалено custom-узлов: ${removed}`;
+      primary = `Удалено своих шагов: ${removed}`;
     } else if (entry.action === "settings.journal-pipelines.clear-all") {
       const removed = (d as { removed?: number }).removed ?? 0;
-      primary = `Удалено всех узлов: ${removed} (pinned + custom)`;
+      primary = `Удалено шагов: ${removed} (и из колонок, и своих)`;
     } else if (entry.action.endsWith(".node.create")) {
-      primary = title ? `«${title}»` : "(новый узел)";
+      primary = title ? `«${title}»` : "(новый шаг)";
     } else if (entry.action.endsWith(".node.delete")) {
-      primary = title ? `«${title}»` : "(узел)";
+      primary = title ? `«${title}»` : "(шаг)";
     } else if (entry.action.endsWith(".node.update")) {
       // Подсветим какие поля поменялись
       const changed = Object.keys(d).filter(
@@ -209,13 +213,15 @@ function renderDetails(entry: AuditEntry): ReactElement {
       );
       const titlePart = title ? `«${title}»` : "";
       const fieldsPart =
-        changed.length > 0 ? ` · поля: ${changed.join(", ")}` : "";
+        changed.length > 0
+          ? ` · изменено: ${changed.map((key) => auditDetailLabel(key)).join(", ")}`
+          : "";
       primary = `${titlePart}${fieldsPart}`.trim() || "(изменён)";
     } else if (entry.action.endsWith(".node.move")) {
       const parent = (d as { parentId?: string | null }).parentId;
       primary = parent
-        ? "Перемещён внутрь подузла"
-        : "Перемещён на уровень root";
+        ? "Перемещён внутрь другого шага"
+        : "Перемещён на верхний уровень";
     } else if (entry.action === "settings.journal-pipelines.node.split") {
       const partNum = (d as { newPartNumber?: number }).newPartNumber;
       primary = partNum
@@ -234,7 +240,7 @@ function renderDetails(entry: AuditEntry): ReactElement {
                 : "bg-[#f5f0ff] text-[#7a5cff]"
             }`}
           >
-            {isPipeline ? "🌳 Pipeline" : "📖 Guide"}
+            {isPipeline ? "Инструкция" : "Подсказка"}
           </span>
           {journalLabel}
         </div>
@@ -440,7 +446,7 @@ export function AuditLogViewer() {
                       </div>
                       <div className="text-[12px] text-[#6f7282]">
                         {group.entries.length}{" "}
-                        {group.entries.length === 1 ? "событие" : "событий"}
+                        {pluralRu(group.entries.length, "событие", "события", "событий")}
                       </div>
                     </div>
                     <div className="text-[12px] text-[#6f7282] tabular-nums">

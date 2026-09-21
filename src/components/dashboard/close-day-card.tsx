@@ -67,7 +67,7 @@ function pluralRu(one: string, few: string, many: string) {
     return many;
   };
 }
-const recordWord = pluralRu("запись", "записи", "записей");
+const markWord = pluralRu("отметка", "отметки", "отметок");
 const journalWord = pluralRu("журнал", "журнала", "журналов");
 const documentWord = pluralRu("документ", "документа", "документов");
 
@@ -134,7 +134,7 @@ export function CloseDayCard({
         );
       } else {
         const parts = [
-          `Заполнено ${r.totalFilled} ${recordWord(r.totalFilled)} в ${touched} ${journalWord(touched)}`,
+          `Заполнено: ${touched} ${journalWord(touched)}, ${r.totalFilled} ${markWord(r.totalFilled)}`,
         ];
         if (r.documentsCreated > 0) {
           parts.push(`создано ${r.documentsCreated} ${documentWord(r.documentsCreated)}`);

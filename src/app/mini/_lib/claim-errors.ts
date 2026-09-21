@@ -14,6 +14,9 @@ const REASONS: Record<string, string> = {
   skip_not_allowed:
     "Для этого журнала пропуск не разрешён. Обратитесь к руководителю",
   skip_reason_required: "Напишите, почему сегодня заполнять не нужно",
+  skip_reason_not_in_list: "Выберите причину из списка",
+  manual_mode:
+    "В вашей компании задачи назначает руководитель. Дождитесь назначения",
 };
 
 const STATUSES: Record<number, string> = {

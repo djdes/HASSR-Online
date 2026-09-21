@@ -86,7 +86,7 @@ export default async function PermissionsSettingsPage() {
             <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
               Три уровня настройки: базовый пакет для{" "}
               <strong className="text-[#0b1024]">группы</strong> (Руководство
-              / Сотрудники), override на{" "}
+              / Сотрудники), особые права для{" "}
               <strong className="text-[#0b1024]">должности</strong> и, при
               необходимости, индивидуально на{" "}
               <strong className="text-[#0b1024]">конкретном человеке</strong>.

@@ -10,7 +10,7 @@ import { ArrowLeft, MapPin } from "lucide-react";
 import { NotificationsBell } from "@/components/layout/notifications-bell";
 import { UndoRedoButtons } from "@/components/journals/undo-redo-buttons";
 import { useHeaderUndo } from "@/components/journals/journal-undo-slot";
-import { getRouteTitle } from "@/lib/route-titles";
+import { getDynamicRouteTitle, getRouteTitle } from "@/lib/route-titles";
 import {
   buildMiniShellClearCookie,
   buildMiniShellCookie,
@@ -64,6 +64,8 @@ export function isMiniRootPath(pathname: string): boolean {
  * поднимаемся по пути вверх до ближайшего известного раздела.
  */
 export function titleForSitePath(pathname: string): string {
+  const dynamicTitle = getDynamicRouteTitle(pathname);
+  if (dynamicTitle) return dynamicTitle;
   let path = pathname.replace(/\/+$/, "") || "/";
   while (path.length > 1) {
     const title = getRouteTitle(path);

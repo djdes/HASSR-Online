@@ -98,4 +98,19 @@ describe("calibrationEvents", () => {
     assert.equal(evs[0].title, "Поверка: Термометр (T-1)");
     assert.match(evs[0].description ?? "", /Где: Кухня/);
   });
+  it("технический код вместо номера (хвост id) в название не попадает", () => {
+    const docs = [
+      {
+        id: "d2",
+        config: {
+          rows: [
+            { id: "r3", sourceEquipmentId: "cmabcdefuiylzrud", equipmentName: "Холодильник", equipmentNumber: "UIYLZRUD", lastCalibrationDate: "2026-01-15", calibrationInterval: 12 },
+            { id: "r4", equipmentName: "Весы", equipmentNumber: "GYGXJC", lastCalibrationDate: "2026-01-15", calibrationInterval: 12 },
+          ],
+        },
+      },
+    ];
+    const titles = calibrationEvents(docs, window).map((e) => e.title);
+    assert.deepEqual(titles, ["Поверка: Холодильник", "Поверка: Весы"]);
+  });
 });

@@ -175,6 +175,16 @@ export function NotificationsBell() {
     setSelected(new Set());
   }, [pathname]);
 
+  // Escape закрывает панель — как любое окно поверх страницы.
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closePanel();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, closePanel]);
+
   const rows = tab === "unread" ? data.unread : data.read;
   const headerCount = data.unreadCount;
 

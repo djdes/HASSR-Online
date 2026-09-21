@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Plus, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { formatMeasureUnit, parseMeasureUnitInput } from "@/lib/measure-units";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -129,7 +130,13 @@ export function ProductDialog({ product }: ProductDialogProps) {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
             <div className="space-y-2">
               <Label htmlFor="prod-unit">Единица</Label>
-              <Input id="prod-unit" value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="kg" />
+              {/* В базе единица хранится кодом («kg»), на экране — «кг». */}
+              <Input
+                id="prod-unit"
+                value={formatMeasureUnit(unit)}
+                onChange={(e) => setUnit(parseMeasureUnitInput(e.target.value))}
+                placeholder="кг"
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="prod-category">Категория</Label>

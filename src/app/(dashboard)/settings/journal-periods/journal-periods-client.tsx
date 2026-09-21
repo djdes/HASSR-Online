@@ -125,9 +125,6 @@ export function JournalPeriodsClient({ initial }: { initial: Item[] }) {
                 <tr key={r.code} className="border-t border-[#eef0f6]">
                   <td className="sticky left-0 z-10 bg-white px-5 py-2.5 font-medium text-[#0b1024]">
                     {r.name}
-                    <div className="text-[11px] font-normal text-[#9b9fb3]">
-                      {r.code}
-                    </div>
                   </td>
                   <td className="px-3 py-2.5">
                     <select

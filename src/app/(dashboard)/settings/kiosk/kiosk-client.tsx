@@ -297,8 +297,8 @@ export function KioskClient({
           variant="info"
         >
           <ul className="space-y-1.5">
-            {issued.map((i) => (
-              <li key={i.name} className="flex items-center justify-between rounded-xl bg-[#f5f6ff] px-3 py-2">
+            {issued.map((i, index) => (
+              <li key={`${i.name}-${index}`} className="flex items-center justify-between rounded-xl bg-[#f5f6ff] px-3 py-2">
                 <span className="text-[14px] text-[#0b1024]">{i.name}</span>
                 <span className="font-mono text-[18px] font-semibold tracking-[0.3em] text-[#3848c7]">{i.pin}</span>
               </li>

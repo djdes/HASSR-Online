@@ -240,9 +240,6 @@ export function JournalBonusesEditor({ items }: Props) {
                       </span>
                     ) : null}
                   </div>
-                  <div className="mt-0.5 font-mono text-[11px] text-[#9b9fb3] dark:text-white/40">
-                    {i.code}
-                  </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-1.5">

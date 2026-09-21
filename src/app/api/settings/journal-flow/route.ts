@@ -5,6 +5,7 @@ import { getServerSession } from "@/lib/server-session";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasCapability } from "@/lib/permission-presets";
+import { recordAuditLog } from "@/lib/audit-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -40,9 +41,26 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Невалидный запрос" }, { status: 400 });
   }
   const organizationId = getActiveOrgId(session);
+  const before = await db.organization.findUnique({
+    where: { id: organizationId },
+    select: { taskFlowMode: true },
+  });
   await db.organization.update({
     where: { id: organizationId },
     data: { taskFlowMode: body.taskFlowMode },
   });
+  if ((before?.taskFlowMode ?? "race") !== body.taskFlowMode) {
+    await recordAuditLog({
+      request,
+      session,
+      organizationId,
+      action: "settings.task_flow_mode.update",
+      entity: "organization",
+      entityId: organizationId,
+      details: {
+        taskFlowMode: { from: before?.taskFlowMode ?? "race", to: body.taskFlowMode },
+      },
+    });
+  }
   return NextResponse.json({ ok: true });
 }

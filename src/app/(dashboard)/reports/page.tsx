@@ -109,6 +109,21 @@ export default async function ReportsPage() {
     }),
   ]);
 
+  // Период выгрузки по умолчанию — последние 30 дней по поясу организации,
+  // чтобы поля дат не были пустыми.
+  const orgTimezone =
+    (
+      await db.organization.findUnique({
+        where: { id: orgId },
+        select: { timezone: true },
+      })
+    )?.timezone || "Europe/Moscow";
+  const defaultDateTo = formatYmdInZone(now, orgTimezone);
+  const defaultDateFrom = formatYmdInZone(
+    new Date(now.getTime() - 29 * 24 * 60 * 60 * 1000),
+    orgTimezone
+  );
+
   const thisWeekTotal = thisWeekFieldEntries + thisWeekDocEntries;
   const prevWeekTotal = prevWeekFieldEntries + prevWeekDocEntries;
   const entriesDeltaPct =
@@ -234,10 +249,29 @@ export default async function ReportsPage() {
             счётчики по документам считаются для неё
           </div>
         ) : null}
-        <ReportForm templates={templates} areas={areas} />
+        <ReportForm
+          templates={templates}
+          areas={areas}
+          defaultDateFrom={defaultDateFrom}
+          defaultDateTo={defaultDateTo}
+        />
       </div>
     </div>
   );
+}
+
+function formatYmdInZone(date: Date, timeZone: string): string {
+  try {
+    // en-CA даёт ровно YYYY-MM-DD — формат value у <input type="date">.
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(date);
+  } catch {
+    return date.toISOString().slice(0, 10);
+  }
 }
 
 function CompareTile({

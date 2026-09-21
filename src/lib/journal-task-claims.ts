@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
+import { decideClaim, normalizeTaskFlowMode } from "@/lib/journal-task-flow-rules";
 
 /**
  * Race-claim helpers для journal task pool. Базовая модель — общая
@@ -32,6 +33,8 @@ export type ClaimResult =
   | { ok: false; reason: "taken_by_other"; claim: ClaimRow }
   | { ok: false; reason: "user_has_active"; activeClaim: ClaimRow }
   | { ok: false; reason: "scope_completed" }
+  /** Режим «Только руководитель назначает»: сотрудник сам не берёт. */
+  | { ok: false; reason: "manual_mode" }
   | { ok: false; reason: "internal_error" };
 
 export type ClaimRow = {
@@ -65,9 +68,7 @@ export async function getTaskFlowMode(
     where: { id: organizationId },
     select: { taskFlowMode: true },
   });
-  const m = org?.taskFlowMode;
-  if (m === "shared" || m === "manual") return m;
-  return "race";
+  return normalizeTaskFlowMode(org?.taskFlowMode);
 }
 
 /**
@@ -90,8 +91,12 @@ export async function claimJournalTask(args: {
   parentHint?: string | null;
   tasksFlowTaskId?: string | null;
   /** Если true — обходим one-active-task rule (например, ROOT
-   *  заполняет за сотрудника, или admin-override). */
+   *  заполняет за сотрудника, или admin-override). Это и есть
+   *  «назначение руководителем»: разрешено в любом режиме. */
   bypassActiveCheck?: boolean;
+  /** У того, кто берёт задачу себе, есть право назначать (руководитель,
+   *  ROOT) — в режиме `manual` ему самостоятельное взятие разрешено. */
+  actorCanAssign?: boolean;
 }): Promise<ClaimResult> {
   // 1) Проверяем completed — может быть scope уже завершён.
   const completed = await db.journalTaskClaim.findFirst({
@@ -105,9 +110,16 @@ export async function claimJournalTask(args: {
   });
   if (completed) return { ok: false, reason: "scope_completed" };
 
-  // 2) One-active-task rule. В shared/manual mode пропускаем.
+  // 2) Режим распределения: в `manual` сотрудник сам не берёт;
+  //    правило «одна активная задача» — везде, кроме `shared`.
   const flowMode = await getTaskFlowMode(args.organizationId);
-  if (!args.bypassActiveCheck && flowMode === "race") {
+  const decision = decideClaim({
+    mode: flowMode,
+    assignedByManager: args.bypassActiveCheck === true,
+    actorCanAssign: args.actorCanAssign === true,
+  });
+  if (!decision.allowed) return { ok: false, reason: "manual_mode" };
+  if (decision.enforceOneActive) {
     const active = await db.journalTaskClaim.findFirst({
       where: {
         organizationId: args.organizationId,

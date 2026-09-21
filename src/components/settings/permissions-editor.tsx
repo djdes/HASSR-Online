@@ -309,7 +309,7 @@ export function PermissionsEditor({
           </span>
         </div>
         <p className="mt-2 text-[13px] text-[#6f7282]">
-          Override только для конкретного человека. По умолчанию сотрудник
+          Особые права только для конкретного человека. По умолчанию сотрудник
           наследует права своей должности.
         </p>
         <ul className="mt-3 divide-y divide-[#ececf4]">

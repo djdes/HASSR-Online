@@ -8,6 +8,7 @@ import { hasCapability } from "@/lib/permission-presets";
 import { claimJournalTask } from "@/lib/journal-task-claims";
 import { mirrorClaimToTasksFlow } from "@/lib/tasksflow-claim-mirror";
 import { notifyEmployee } from "@/lib/telegram";
+import { recordAuditLog } from "@/lib/audit-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -86,6 +87,20 @@ export async function POST(request: Request) {
       { status: 409 }
     );
   }
+
+  await recordAuditLog({
+    request,
+    session,
+    organizationId,
+    action: "task.assign",
+    entity: "journal_task",
+    entityId: result.claim.id,
+    details: {
+      journalCode: body.journalCode,
+      task: body.scopeLabel,
+      assignee: target.name,
+    },
+  });
 
   // TG mirror в TasksFlow (если applicable).
   void mirrorClaimToTasksFlow({

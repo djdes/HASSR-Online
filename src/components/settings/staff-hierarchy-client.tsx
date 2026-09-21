@@ -163,9 +163,9 @@ export function StaffHierarchyClient({
             Синхронизация с TasksFlow
           </div>
           <div className="mt-1 text-[12px] text-[#6f7282]">
-            Иерархия живёт здесь, в TasksFlow её зеркалит этот sync —
-            каждый руководитель видит у себя только задачи своих
-            подчинённых.
+            Иерархия настраивается здесь, и эта же иерархия передаётся в
+            TasksFlow — каждый руководитель видит у себя только задачи
+            своих подчинённых.
           </div>
           {syncReport ? (
             <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-[#ecfdf5] px-3 py-1 text-[12px] font-medium text-[#116b2a]">

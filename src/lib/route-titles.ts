@@ -100,6 +100,21 @@ export const ROUTE_TITLES: Record<string, string> = {
   "/verifications": "Подтверждения",
 };
 
+/**
+ * Подписи динамических экранов, у которых шапка иначе взяла бы название
+ * родителя: `/settings/journals/<code>/scope` без этого назывался
+ * «Набор журналов», хотя это настройки задач одного журнала.
+ */
+const DYNAMIC_ROUTE_TITLES: Array<[RegExp, string]> = [
+  [/^\/settings\/journals\/[^/]+\/scope$/, "Задачи журнала"],
+];
+
+/** Подпись динамического экрана по шаблону пути; иначе null. */
+export function getDynamicRouteTitle(pathname: string): string | null {
+  const clean = pathname.replace(/\/+$/, "") || "/";
+  return DYNAMIC_ROUTE_TITLES.find(([pattern]) => pattern.test(clean))?.[1] ?? null;
+}
+
 /** Точное совпадение пути. Для динамических путей вернёт null. */
 export function getRouteTitle(pathname: string): string | null {
   const clean = pathname.replace(/\/+$/, "") || "/";

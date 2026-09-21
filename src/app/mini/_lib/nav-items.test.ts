@@ -91,6 +91,18 @@ test("«Сегодня» — домашний экран сотрудника", 
   assert.equal(activeMiniNavHref(items, "/mini/today"), "/mini/today");
 });
 
+test("экраны задачи, премии и очереди подсвечивают дом, а не «Разделы»", () => {
+  for (const path of [
+    "/mini/claim/abc",
+    "/mini/bonus/42",
+    "/mini/o/token",
+    "/mini/outbox",
+  ]) {
+    assert.equal(activeMiniNavHref(miniNavItems(cook), path), "/mini/today", path);
+    assert.equal(activeMiniNavHref(miniNavItems(manager), path), "/dashboard", path);
+  }
+});
+
 test("страницы из «Разделов» подсвечивают «Разделы»", () => {
   const items = miniNavItems(manager);
 

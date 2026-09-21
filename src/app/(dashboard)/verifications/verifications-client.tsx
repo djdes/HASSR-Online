@@ -48,7 +48,37 @@ type PendingItem = {
   verifierComment: string | null;
   completionData: Record<string, unknown> | null;
   dateKey: string;
+  /** Норма температуры оборудования задачи (холодильники), если задана. */
+  temperatureNorm?: { min: number | null; max: number | null } | null;
 };
+
+const TEMPERATURE_KEYS = new Set(["temperature", "temperatureC", "temp", "tempC"]);
+
+/** Значение вне нормы → подпись «вне нормы 2…6 °C», иначе null. */
+function outOfNormHint(
+  key: string,
+  raw: unknown,
+  norm: { min: number | null; max: number | null } | null | undefined
+): string | null {
+  if (!norm || !TEMPERATURE_KEYS.has(key)) return null;
+  const value =
+    typeof raw === "number"
+      ? raw
+      : typeof raw === "string" && raw.trim() !== ""
+        ? Number(raw.replace(",", "."))
+        : NaN;
+  if (!Number.isFinite(value)) return null;
+  const tooLow = typeof norm.min === "number" && value < norm.min;
+  const tooHigh = typeof norm.max === "number" && value > norm.max;
+  if (!tooLow && !tooHigh) return null;
+  const range =
+    typeof norm.min === "number" && typeof norm.max === "number"
+      ? `${norm.min}…${norm.max} °C`
+      : typeof norm.min === "number"
+        ? `от ${norm.min} °C`
+        : `до ${norm.max} °C`;
+  return `вне нормы ${range}`;
+}
 
 type InProgressItem = {
   id: string;
@@ -212,7 +242,7 @@ export function VerificationsClient() {
           каждая секция ниже уже показывает свой count. */}
       <PageHeader
         title="Проверка задач"
-        description="Кликните на блок чтобы развернуть детали, гайд и кнопки одобрения. Сверху — сделанное, снизу — ещё не взятые задачи."
+        description="Нажмите на карточку, чтобы увидеть подробности, подсказку и кнопки «Одобрить» и «Переделать». Сверху — сделанное, снизу — ещё не взятые задачи."
       />
 
       {/* SECTION: Pending review (top — самое важное) */}
@@ -407,12 +437,34 @@ function PendingCard({
 
               {completion.fields.length > 0 ? (
                 <div className="grid grid-cols-1 gap-x-4 gap-y-1 text-[13px] text-[#0b1024] sm:grid-cols-2">
-                  {completion.fields.map((f) => (
-                    <div key={f.key} className="flex justify-between gap-2">
-                      <span className="text-[#6f7282]">{f.label}</span>
-                      <span className="text-right font-medium">{f.value}</span>
-                    </div>
-                  ))}
+                  {completion.fields.map((f) => {
+                    // Замер вне нормы — красным и с подписью нормы, иначе
+                    // заведующая пролистывала отклонение как обычную цифру.
+                    const outHint = outOfNormHint(
+                      f.key,
+                      item.completionData?.[f.key],
+                      item.temperatureNorm
+                    );
+                    return (
+                      <div key={f.key} className="flex justify-between gap-2">
+                        <span className="text-[#6f7282]">{f.label}</span>
+                        <span
+                          className={
+                            outHint
+                              ? "text-right font-semibold text-[#a13a32]"
+                              : "text-right font-medium"
+                          }
+                        >
+                          {f.value}
+                          {outHint ? (
+                            <span className="ml-1.5 inline-flex rounded-full bg-[#fff4f2] px-2 py-0.5 text-[11px] font-medium text-[#a13a32]">
+                              {outHint}
+                            </span>
+                          ) : null}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : null}
             </div>
@@ -496,7 +548,7 @@ function PendingCard({
             <input
               value={comment}
               onChange={(e) => onCommentChange(e.target.value)}
-              placeholder="Комментарий (опционально, появится у сотрудника в Telegram)"
+              placeholder="Комментарий (необязательно) — сотрудник увидит его в задаче и в Telegram"
               className="h-11 w-full rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none"
             />
             <div className="flex flex-wrap gap-2">

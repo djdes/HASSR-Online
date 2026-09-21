@@ -10,6 +10,8 @@ import { hasJournalAccess } from "@/lib/journal-acl";
 import { resolveDayStart } from "@/lib/today-compliance";
 import { journalIconName, looksLikeJournalCode } from "@/lib/journal-label";
 import { formatStaffAbsenceNote, isStaffAbsentOnDay } from "@/lib/staff-absence";
+import { canSelfClaim, normalizeTaskFlowMode } from "@/lib/journal-task-flow-rules";
+import { hasCapability } from "@/lib/permission-presets";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -102,7 +104,7 @@ export async function GET() {
 
   const org = await db.organization.findUnique({
     where: { id: organizationId },
-    select: { disabledJournalCodes: true, timezone: true },
+    select: { disabledJournalCodes: true, timezone: true, taskFlowMode: true },
   });
   const disabled = parseDisabledCodes(org?.disabledJournalCodes);
 
@@ -301,9 +303,17 @@ export async function GET() {
     ? { kind: absence.status, text: formatStaffAbsenceNote(absence) }
     : null;
 
+  // Режим «Только руководитель назначает»: сотрудник сам не берёт —
+  // вместо «Взять» экран пишет «Назначает руководитель».
+  const selfClaimAllowed = canSelfClaim(
+    normalizeTaskFlowMode(org?.taskFlowMode),
+    session.user.isRoot === true || hasCapability(session.user, "admin.full")
+  );
+
   return NextResponse.json({
     dateKey,
     groups,
+    canSelfClaim: selfClaimAllowed,
     scheduleStatus,
     // Готовая подпись для плашки: «Сегодня у вас по графику: отпуск до 25.09».
     scheduleNote,

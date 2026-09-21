@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
+import { recordAuditLog } from "@/lib/audit-log";
 import {
   ORG_PROFILE_FIELDS,
   parseOrganizationProfilePatch,
@@ -50,9 +51,20 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
   const data = parsed.data;
+  const organizationId = getActiveOrgId(session);
+
+  // Снимок «до» — только по меняемым полям, для журнала действий.
+  const changedKeys = Object.keys(data);
+  const before =
+    changedKeys.length > 0
+      ? ((await db.organization.findUnique({
+          where: { id: organizationId },
+          select: Object.fromEntries(changedKeys.map((key) => [key, true])),
+        })) as Record<string, unknown> | null)
+      : null;
 
   const updated = await db.organization.update({
-    where: { id: getActiveOrgId(session) },
+    where: { id: organizationId },
     data,
     select: {
       name: true,
@@ -74,5 +86,31 @@ export async function PATCH(request: Request) {
     },
   });
 
+  // «Было → стало» по реально изменившимся полям: часовой пояс,
+  // реквизиты, название для журналов и т.п.
+  const changed: Record<string, { from: unknown; to: unknown }> = {};
+  for (const key of changedKeys) {
+    const from = auditScalar(before?.[key]);
+    const to = auditScalar((data as Record<string, unknown>)[key]);
+    if (JSON.stringify(from) !== JSON.stringify(to)) changed[key] = { from, to };
+  }
+  if (Object.keys(changed).length > 0) {
+    await recordAuditLog({
+      request,
+      session,
+      organizationId,
+      action: "organization.settings.update",
+      entity: "organization",
+      entityId: organizationId,
+      details: { changed },
+    });
+  }
+
   return NextResponse.json({ ok: true, organization: updated });
+}
+
+function auditScalar(value: unknown): unknown {
+  if (value instanceof Date) return value.toISOString();
+  if (value === undefined) return null;
+  return value;
 }

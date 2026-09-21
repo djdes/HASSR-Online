@@ -159,7 +159,11 @@ export function calibrationEvents(
         uid: `calibration-${doc.id}-${row.id}`,
         kind: "calibration",
         date,
-        title: `Поверка: ${name}${row.equipmentNumber ? ` (${row.equipmentNumber})` : ""}`,
+        title: `Поверка: ${name}${
+          isHumanEquipmentNumber(row.equipmentNumber, row.sourceEquipmentId)
+            ? ` (${row.equipmentNumber})`
+            : ""
+        }`,
         description: [row.location && `Где: ${row.location}`, row.purpose && `Назначение: ${row.purpose}`, `Интервал: ${row.calibrationInterval} мес.`]
           .filter(Boolean)
           .join("\n"),
@@ -167,6 +171,26 @@ export function calibrationEvents(
     }
   }
   return out;
+}
+
+/**
+ * Показывать ли номер прибора в названии события.
+ *
+ * Когда у оборудования нет серийного номера, журнал поверки подставляет
+ * хвост его id («UIYLZRUD», см. equipment-calibration-document.ts). Для
+ * человека это набор букв — в календаре показываем только имя. Настоящие
+ * номера почти всегда содержат цифры или разделители («СИ-01», «T-1»).
+ */
+export function isHumanEquipmentNumber(
+  value: string | null | undefined,
+  sourceEquipmentId?: string | null
+): boolean {
+  const number = (value ?? "").trim();
+  if (!number) return false;
+  if (sourceEquipmentId && sourceEquipmentId.slice(-8).toUpperCase() === number) {
+    return false;
+  }
+  return !/^[A-Z]{5,10}$/.test(number);
 }
 
 function slug(value: string): string {

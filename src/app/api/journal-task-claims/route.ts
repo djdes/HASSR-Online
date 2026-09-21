@@ -10,6 +10,9 @@ import {
 import { mirrorClaimToTasksFlow } from "@/lib/tasksflow-claim-mirror";
 import { db } from "@/lib/db";
 import { canWriteJournal, hasJournalAccess } from "@/lib/journal-acl";
+import { hasCapability } from "@/lib/permission-presets";
+import { MANUAL_MODE_CLAIM_MESSAGE } from "@/lib/journal-task-flow-rules";
+import { recordAuditLog } from "@/lib/audit-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -88,9 +91,37 @@ export async function POST(request: Request) {
     userId,
     parentHint: body.parentHint ?? null,
     tasksFlowTaskId: body.tasksFlowTaskId ?? null,
+    actorCanAssign:
+      session.user.isRoot === true || hasCapability(session.user, "admin.full"),
   });
 
+  if (!result.ok && result.reason === "manual_mode") {
+    return NextResponse.json(
+      {
+        ok: false,
+        reason: "manual_mode",
+        error: MANUAL_MODE_CLAIM_MESSAGE,
+        message: MANUAL_MODE_CLAIM_MESSAGE,
+      },
+      { status: 403 }
+    );
+  }
+
   if (result.ok) {
+    if (result.createdNew) {
+      await recordAuditLog({
+        request,
+        session,
+        organizationId,
+        action: "task.claim",
+        entity: "journal_task",
+        entityId: result.claim.id,
+        details: {
+          journalCode: body.journalCode,
+          task: body.scopeLabel,
+        },
+      });
+    }
     // Mirror в TasksFlow если есть active integration + task link.
     // Не блокирует ответ при ошибке — graceful degrade.
     void mirrorClaimToTasksFlow({

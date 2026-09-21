@@ -32,8 +32,8 @@ export function AppStoresTeaser({
           (card ? "max-w-[520px]" : "max-w-[280px]")
         }
       >
-        Сотрудники будут вести журналы и получать push-уведомления с
-        телефона. Запуск — {MOBILE_APP_LAUNCH_DATE}.
+        Сотрудники будут вести журналы и получать уведомления прямо на
+        телефон. Запуск — {MOBILE_APP_LAUNCH_DATE}.
       </p>
       <div className="mt-2 flex flex-wrap gap-2">
         {STORES.map((store) => (

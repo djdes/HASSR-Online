@@ -52,9 +52,9 @@ export default async function JournalScopePage({
               {template.name}
             </h1>
             <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
-              Настройте поведение задач в TasksFlow для этого журнала: тип
-              задачи (личная или общая), кнопку «Не требуется сегодня» и
-              список доступных причин.
+              Как ведут себя задачи этого журнала у сотрудников — в
+              приложении и в TasksFlow: тип задачи (личная или общая),
+              кнопка «Не требуется сегодня» и список причин.
             </p>
           </div>
         </div>
@@ -62,6 +62,9 @@ export default async function JournalScopePage({
 
       <JournalScopeClient
         code={template.code}
+        // Настройки лежат в общем для всей платформы шаблоне журнала —
+        // менять их может только администратор платформы (ROOT).
+        canEdit={session.user.isRoot === true}
         initial={{
           taskScope: template.taskScope as "personal" | "shared",
           allowNoEvents: template.allowNoEvents,

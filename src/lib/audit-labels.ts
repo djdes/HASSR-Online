@@ -14,6 +14,8 @@
 
 import { redactSensitiveDetails } from "@/lib/audit-redact";
 import { completionEntryLabel } from "@/lib/completion-labels";
+import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
+import { getEquipmentTypeLabel } from "@/lib/equipment-type-label";
 
 export type AuditBadgeVariant =
   | "default"
@@ -96,6 +98,16 @@ export const AUDIT_ACTION_LABELS: Record<string, AuditActionLabel> = {
   "badge.disable": { label: "Бейдж выключен", variant: "secondary" },
   "badge.rotate": { label: "Бейдж перевыпущен", variant: "secondary" },
 
+  // --- Задачи сотрудников -----------------------------------------------
+  "task.claim": { label: "Задача взята", variant: "outline" },
+  "task.complete": { label: "Задача выполнена", variant: "default" },
+  "task.release": { label: "Задача возвращена в общий список", variant: "secondary" },
+  "task.skip": { label: "Задача пропущена: «Сегодня не требуется»", variant: "outline" },
+  "task.assign": { label: "Задача назначена руководителем", variant: "default" },
+  "task.verify.approve": { label: "Задача одобрена", variant: "default" },
+  "task.verify.reject": { label: "Задача отправлена на переделку", variant: "destructive" },
+  "dashboard.close_day": { label: "День закрыт кнопкой", variant: "secondary" },
+
   // --- Смены и напоминания ---------------------------------------------
   "shift_watcher.notify_30": { label: "Напоминание за 30 минут", variant: "outline" },
   "shift_watcher.mark_absent": { label: "Отмечен как не вышедший", variant: "destructive" },
@@ -106,6 +118,7 @@ export const AUDIT_ACTION_LABELS: Record<string, AuditActionLabel> = {
   "org.switched": { label: "Переключение организации", variant: "outline" },
   "building.switched": { label: "Переключение точки", variant: "outline" },
   "organization.update": { label: "Реквизиты изменены", variant: "secondary" },
+  "organization.settings.update": { label: "Настройки организации изменены", variant: "secondary" },
   "organization.export_downloaded": { label: "Выгрузка организации скачана", variant: "outline" },
   "organization.deletion.request": { label: "Запрошено удаление организации", variant: "destructive" },
   "organization.deletion.cancel": { label: "Удаление организации отменено", variant: "default" },
@@ -124,6 +137,12 @@ export const AUDIT_ACTION_LABELS: Record<string, AuditActionLabel> = {
   "webhook.update": { label: "Вебхук изменён", variant: "secondary" },
   "webhook.delete": { label: "Вебхук удалён", variant: "destructive" },
   "onboarding.apply-preset": { label: "Применён готовый набор настроек", variant: "default" },
+  "settings.journal_scope.update": { label: "Настройки задач журнала изменены", variant: "secondary" },
+  "settings.task_flow_mode.update": { label: "Режим распределения задач изменён", variant: "secondary" },
+  "equipment.add": { label: "Оборудование добавлено", variant: "default" },
+  "equipment.update": { label: "Карточка оборудования изменена", variant: "secondary" },
+  "staff.add": { label: "Сотрудник добавлен", variant: "default" },
+  "staff.update": { label: "Данные сотрудника изменены", variant: "secondary" },
   ensure_equipment: { label: "Оборудование заведено", variant: "default" },
   save_equipment: { label: "Оборудование сохранено", variant: "secondary" },
   "cleaning.room_scopes.sync": { label: "Помещения уборки обновлены", variant: "secondary" },
@@ -289,9 +308,15 @@ const DETAIL_KEY_LABELS: Record<string, string> = {
   role: "Должность",
   from: "Было",
   to: "Стало",
+  before: "Было",
+  after: "Стало",
+  changed: "Изменено",
   dateKey: "Дата",
   date: "Дата",
   scopeLabel: "Задача",
+  task: "Задача",
+  assignee: "Исполнитель",
+  employee: "Сотрудник",
   parentId: "Родительский шаг",
   reason: "Причина",
   comment: "Комментарий",
@@ -302,7 +327,120 @@ const DETAIL_KEY_LABELS: Record<string, string> = {
   newPartNumber: "Номер части",
   msSinceFormOpen: "Время от открытия формы",
   totalDurationMs: "Общая длительность",
+  // Способ и итоги массовых действий
+  via: "Способ",
+  journalsGranted: "Выдано журналов",
+  filledCells: "Заполнено отметок",
+  totalFilled: "Заполнено отметок",
+  journalsFilled: "Журналов заполнено",
+  journals: "Журналы",
+  documentsCreated: "Создано бланков",
+  documentsUpdated: "Обновлено бланков",
+  processed: "Журналов обработано",
+  upTo: "По дату",
+  today: "Сегодня",
+  // Колонки журнала
+  hidden: "Скрытые колонки",
+  labels: "Подписи колонок",
+  applyTo: "Применено",
+  // Настройки задач
+  taskFlowMode: "Режим задач",
+  taskScope: "Тип задачи",
+  allowNoEvents: "Кнопка «Не требуется сегодня»",
+  noEventsReasons: "Причины пропуска",
+  allowFreeTextReason: "Своя причина",
+  // Оборудование
+  equipmentName: "Оборудование",
+  type: "Тип",
+  serialNumber: "Серийный номер",
+  tempMin: "Норма от, °C",
+  tempMax: "Норма до, °C",
+  tuyaDeviceId: "Датчик",
+  // Организация
+  journalShortName: "Название для журналов",
+  inn: "ИНН",
+  address: "Адрес",
+  timezone: "Часовой пояс",
+  locationsCount: "Число точек",
+  ownershipKind: "Форма собственности",
+  locale: "Язык",
+  brandColor: "Цвет бренда",
+  logoUrl: "Логотип",
+  shiftEndHour: "Конец смены, час",
+  lockPastDayEdits: "Запрет правки прошлых дней",
+  requireAdminForJournalEdit: "Правка журналов только руководителем",
+  accountantEmail: "Почта бухгалтера",
+  subscriptionPlan: "Тариф",
+  subscriptionEnd: "Подписка до",
 };
+
+/**
+ * Служебные ссылки на записи в базе: человеку ничего не говорят, а
+ * название, если оно есть, лежит в соседнем поле.
+ */
+const HIDDEN_DETAIL_KEYS = new Set([
+  "joinTokenId",
+  "partnerId",
+  "claimId",
+  "userId",
+  "organizationId",
+  "areaId",
+  "templateId",
+  "documentId",
+  "entryId",
+  "parentId",
+]);
+
+/** Значения-перечисления по ключу → по-русски. */
+const DETAIL_VALUE_LABELS: Record<string, Record<string, string>> = {
+  via: {
+    qr_join_token: "QR-приглашение",
+    "dashboard.close_day": "кнопка «Закрыть день»",
+    "dashboard.catch_up": "«Догнать пропуски»",
+    "tasksflow-supervisor": "из TasksFlow",
+  },
+  applyTo: {
+    all: "ко всем бланкам",
+    "active-any": "к действующим бланкам",
+    "new-only": "только к новым бланкам",
+  },
+  taskFlowMode: {
+    race: "Гонка",
+    shared: "Свободно",
+    manual: "Только руководитель назначает",
+  },
+  taskScope: { personal: "личная", shared: "общая задача смены" },
+  role: {
+    owner: "владелец",
+    manager: "руководитель",
+    head_chef: "шеф-повар",
+    technologist: "технолог",
+    cook: "повар",
+    waiter: "официант",
+    operator: "сотрудник",
+  },
+};
+
+/** Ключи, значения которых — сами имена полей (их тоже переводим). */
+const FIELD_LIST_KEYS = new Set(["hidden", "changed", "fields"]);
+
+/** Ключи, где значение — код журнала; показываем название журнала. */
+const JOURNAL_CODE_KEYS = new Set(["journalCode", "templateCode", "journals"]);
+
+const JOURNAL_NAME_BY_CODE: Record<string, string> = Object.fromEntries(
+  ACTIVE_JOURNAL_CATALOG.map((item) => [item.code, item.name])
+);
+
+/** Похоже на cuid — служебный id записи, не для человека. */
+export function looksLikeRecordId(value: string): boolean {
+  return /^c[a-z0-9]{20,}$/.test(value.trim());
+}
+
+/** Название журнала по коду; незнакомый код — как есть. */
+export function auditJournalName(code: string | null | undefined): string {
+  const value = (code ?? "").trim();
+  return JOURNAL_NAME_BY_CODE[value] ?? value;
+}
 
 /** Подпись ключа в деталях: свои → общие подписи полей → сам ключ. */
 export function auditDetailLabel(key: string): string {
@@ -316,6 +454,8 @@ export type AuditDetailPair = { key: string; label: string; value: string };
  *
  * Никакого `JSON.stringify` со скобками: вложенные объекты и массивы
  * либо разворачиваются в понятные значения, либо не показываются.
+ * Служебные id (cuid) не показываем, коды журналов подменяем названием,
+ * перечисления («qr_join_token», «all») — русскими словами.
  * Чувствительные ключи (пароли, токены) по-прежнему прячет
  * `redactSensitiveDetails`.
  */
@@ -328,35 +468,64 @@ export function auditDetailPairs(
   const out: AuditDetailPair[] = [];
   for (const [key, value] of Object.entries(safe)) {
     if (out.length >= limit) break;
-    const text = formatDetailValue(value);
+    if (HIDDEN_DETAIL_KEYS.has(key)) continue;
+    const text = formatDetailValue(value, key);
     if (text === null) continue;
     out.push({ key, label: auditDetailLabel(key), value: text });
   }
   return out;
 }
 
-function formatDetailValue(value: unknown): string | null {
+function formatScalar(value: string | number, key?: string): string | null {
+  if (typeof value === "number") return String(value);
+  const text = value.trim();
+  if (text === "") return null;
+  if (looksLikeRecordId(text)) return null;
+  if (key) {
+    const enumLabel = DETAIL_VALUE_LABELS[key]?.[text];
+    if (enumLabel) return enumLabel;
+    if (JOURNAL_CODE_KEYS.has(key) && JOURNAL_NAME_BY_CODE[text]) {
+      return JOURNAL_NAME_BY_CODE[text];
+    }
+    if (FIELD_LIST_KEYS.has(key)) return auditDetailLabel(text);
+    if (key === "type") return getEquipmentTypeLabel(text) || text;
+  }
+  return text;
+}
+
+function formatDetailValue(value: unknown, key?: string): string | null {
   if (value === null || value === undefined || value === "") return null;
   if (typeof value === "boolean") return value ? "да" : "нет";
   if (typeof value === "number" || typeof value === "string") {
-    return String(value);
+    return formatScalar(value, key);
   }
   if (Array.isArray(value)) {
     // Массив простых значений — перечисляем; массив объектов не печатаем:
     // «[object Object]» человеку ничего не сообщает.
-    const items = value.filter(
-      (v) => typeof v === "string" || typeof v === "number"
-    );
+    const items = value
+      .filter((v): v is string | number => typeof v === "string" || typeof v === "number")
+      .map((v) => formatScalar(v, key))
+      .filter((v): v is string => v !== null);
     if (items.length === 0) {
-      return value.length > 0 ? `${value.length} шт.` : null;
+      const objects = value.filter((v) => v !== null && typeof v === "object").length;
+      return objects > 0 ? `${objects} шт.` : null;
     }
     const head = items.slice(0, 5).join(", ");
     return items.length > 5 ? `${head} и ещё ${items.length - 5}` : head;
   }
   if (typeof value === "object") {
-    const nested = Object.entries(value as Record<string, unknown>)
+    const record = value as Record<string, unknown>;
+    const keys = Object.keys(record);
+    // «Было → стало» одной строкой: { from, to }.
+    if (keys.length > 0 && keys.every((k) => k === "from" || k === "to")) {
+      const from = formatDetailValue(record.from, key) ?? "—";
+      const to = formatDetailValue(record.to, key) ?? "—";
+      return `${from} → ${to}`;
+    }
+    const nested = Object.entries(record)
+      .filter(([k]) => !HIDDEN_DETAIL_KEYS.has(k))
       .map(([k, v]) => {
-        const text = formatDetailValue(v);
+        const text = formatDetailValue(v, k);
         return text === null ? null : `${auditDetailLabel(k)}: ${text}`;
       })
       .filter((v): v is string => v !== null);

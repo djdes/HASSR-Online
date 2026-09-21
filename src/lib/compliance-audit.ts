@@ -60,7 +60,7 @@ export async function runComplianceAudit(
     status: areasCount === 0 ? "fail" : areasCount < 3 ? "warn" : "ok",
     detail:
       areasCount === 0
-        ? "Не создано ни одного помещения. Создай как минимум кухню, склад, мойку."
+        ? "Не создано ни одного помещения. Создайте как минимум кухню, склад, мойку."
         : areasCount < 3
           ? `Создано ${areasCount}. Рекомендуется минимум 3 (горячий цех, склад, мойка).`
           : `Создано ${areasCount} помещений.`,
@@ -93,9 +93,9 @@ export async function runComplianceAudit(
           : "ok",
     detail:
       equipmentCount === 0
-        ? "Нет ни одной единицы оборудования. Заведи холодильники для journals температурного контроля."
+        ? "Нет ни одной единицы оборудования. Заведите холодильники для журналов температурного контроля."
         : fridgesCount === 0
-          ? "Есть оборудование, но нет холодильников с заданными нормами температуры. journal-температуры будут без авто-проверки."
+          ? "Есть оборудование, но нет холодильников с заданными нормами температуры. Журналы температуры будут без автоматической проверки."
           : `${equipmentCount} единиц, из них ${fridgesCount} холодильников с нормами.`,
     fixUrl: "/settings/equipment",
     weight: 5,
@@ -131,8 +131,8 @@ export async function runComplianceAudit(
     status: scopesCount === 0 ? "warn" : "ok",
     detail:
       scopesCount === 0
-        ? "Не настроено ни одного manager-scope. Заведующая не видит подчинённых в TasksFlow."
-        : `Настроено ${scopesCount} scope'ов.`,
+        ? "Не настроено, кого видит каждый руководитель. Заведующая не видит подчинённых в TasksFlow."
+        : `Настроено правил видимости: ${scopesCount}.`,
     fixUrl: "/settings/staff-hierarchy",
     weight: 5,
     score: scopesCount === 0 ? 0.3 : 1,
@@ -149,7 +149,7 @@ export async function runComplianceAudit(
     status: adminPositionsCount === 0 ? "warn" : "ok",
     detail:
       adminPositionsCount === 0
-        ? "Ни одна должность не отмечена как 'видит чужие задачи'. Действует legacy fallback (первый management = admin TF) — это не явно."
+        ? "Ни одна должность не отмечена как «видит чужие задачи». Сейчас чужие задачи видит первый руководитель по списку — лучше указать это явно."
         : `${adminPositionsCount} должность(и) видят чужие задачи.`,
     fixUrl: "/settings/task-visibility",
     weight: 3,
@@ -227,7 +227,7 @@ export async function runComplianceAudit(
         : responsiblesPct < 0.9
           ? "warn"
           : "ok",
-    detail: `${journalsWithResponsibles} из ${journalsToCheck.length} журналов имеют filler-slot.`,
+    detail: `У ${journalsWithResponsibles} из ${journalsToCheck.length} журналов назначен ответственный за заполнение.`,
     fixUrl: "/settings/journal-responsibles",
     weight: 10,
     score: responsiblesPct,
@@ -242,7 +242,7 @@ export async function runComplianceAudit(
     title: "У каждого журнала есть проверяющий",
     status:
       verifiersPct < 0.5 ? "fail" : verifiersPct < 0.8 ? "warn" : "ok",
-    detail: `${journalsWithVerifier} из ${journalsToCheck.length} журналов имеют verifier.`,
+    detail: `У ${journalsWithVerifier} из ${journalsToCheck.length} журналов назначен проверяющий.`,
     fixUrl: "/settings/journal-responsibles",
     weight: 5,
     score: verifiersPct,
@@ -352,9 +352,9 @@ export async function runComplianceAudit(
         ? "warn"
         : "ok",
     detail: !integration
-      ? "TasksFlow интеграция не подключена. Задачи не дойдут до сотрудников."
+      ? "Интеграция с TasksFlow не подключена. Задачи не дойдут до сотрудников."
       : tfLinkedUsersPct < 1
-        ? `Привязано ${Math.round(tfLinkedUsersPct * 100)}% сотрудников. У остальных нет телефона или нет TF-юзера.`
+        ? `Привязано ${Math.round(tfLinkedUsersPct * 100)}% сотрудников. У остальных нет телефона или аккаунта в TasksFlow.`
         : "Все сотрудники привязаны к TasksFlow.",
     fixUrl: "/settings/integrations/tasksflow",
     weight: 10,
@@ -374,9 +374,9 @@ export async function runComplianceAudit(
   checks.push({
     id: "tasksflow.task_modes",
     category: "tasksflow",
-    title: "Task-modes настроены (или используют defaults)",
+    title: "Режимы задач журналов настроены (или стоят по умолчанию)",
     status: "ok",
-    detail: `Используется effective-mode для всех ${journalsToCheck.length} журналов (явно настроено: ${journalsWithMode}, default: ${journalsToCheck.length - journalsWithMode}).`,
+    detail: `Режим задач действует для всех ${journalsToCheck.length} журналов (настроено вручную: ${journalsWithMode}, по умолчанию: ${journalsToCheck.length - journalsWithMode}).`,
     fixUrl: "/settings/journal-task-mode",
     weight: 2,
     score: 1,

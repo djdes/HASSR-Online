@@ -19,6 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { FileDown, FileSpreadsheet, Loader2 } from "lucide-react";
+import { isInsideTelegram } from "@/app/mini/_components/telegram-web-app";
 
 interface Template {
   id: string;
@@ -34,16 +35,45 @@ interface Area {
 interface ReportFormProps {
   templates: Template[];
   areas: Area[];
+  /** YYYY-MM-DD — начало периода по умолчанию (30 дней по поясу организации). */
+  defaultDateFrom?: string;
+  defaultDateTo?: string;
 }
 
-export function ReportForm({ templates, areas }: ReportFormProps) {
+type ReportKind = "pdf" | "excel";
+
+function buildReportUrl(
+  kind: ReportKind,
+  args: { templateCode: string; dateFrom: string; dateTo: string; areaId: string },
+  inline = false
+): string {
+  const params =
+    kind === "pdf"
+      ? new URLSearchParams({ template: args.templateCode, from: args.dateFrom, to: args.dateTo })
+      : new URLSearchParams({ templateCode: args.templateCode, from: args.dateFrom, to: args.dateTo });
+  if (args.areaId && args.areaId !== "__all__") {
+    params.set(kind === "pdf" ? "area" : "areaId", args.areaId);
+  }
+  if (inline) params.set("inline", "1");
+  return `/api/reports/${kind}?${params.toString()}`;
+}
+
+export function ReportForm({
+  templates,
+  areas,
+  defaultDateFrom = "",
+  defaultDateTo = "",
+}: ReportFormProps) {
   const [templateCode, setTemplateCode] = useState("");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+  const [dateFrom, setDateFrom] = useState(defaultDateFrom);
+  const [dateTo, setDateTo] = useState(defaultDateTo);
   const [areaId, setAreaId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingExcel, setIsLoadingExcel] = useState(false);
   const [error, setError] = useState("");
+  // Прямая ссылка на последний файл — запасной вариант, если браузер
+  // (или WebView Telegram) не сохранил скачанный файл.
+  const [fallbackLink, setFallbackLink] = useState<{ href: string; label: string } | null>(null);
 
   const validateFields = () => {
     if (!templateCode) { setError("Выберите журнал"); return false; }
@@ -56,104 +86,58 @@ export function ReportForm({ templates, areas }: ReportFormProps) {
     return true;
   };
 
-  const handleDownloadExcel = async () => {
+  const download = async (kind: ReportKind) => {
     setError("");
+    setFallbackLink(null);
     if (!validateFields()) return;
-    setIsLoadingExcel(true);
+    const setBusy = kind === "pdf" ? setIsLoading : setIsLoadingExcel;
+    setBusy(true);
+    const args = { templateCode, dateFrom, dateTo, areaId };
+    const extension = kind === "pdf" ? "pdf" : "xlsx";
     try {
-      const params = new URLSearchParams({
-        templateCode,
-        from: dateFrom,
-        to: dateTo,
-      });
-      if (areaId && areaId !== "__all__") params.set("areaId", areaId);
-
-      const response = await fetch(`/api/reports/excel?${params.toString()}`);
+      const response = await fetch(buildReportUrl(kind, args));
       if (!response.ok) {
-        const data = await response.json();
+        const data = await response.json().catch(() => ({}));
         throw new Error(data.error || "Ошибка при формировании отчёта");
+      }
+      const inlineUrl = buildReportUrl(kind, args, true);
+      setFallbackLink({
+        href: inlineUrl,
+        label: kind === "pdf" ? "Открыть PDF" : "Открыть файл Excel",
+      });
+      // В оболочке Telegram скачивание через a[download] + blob не
+      // работает: WebView молча игнорирует такой клик. Открываем файл
+      // переходом по ссылке в том же окне — сессия (cookie) сохраняется.
+      // openLink не подходит: внешний браузер открылся бы без входа.
+      if (isInsideTelegram()) {
+        window.location.assign(inlineUrl);
+        return;
       }
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `report_${templateCode}_${dateFrom}_${dateTo}.xlsx`;
+      link.download = `report_${templateCode}_${dateFrom}_${dateTo}.${extension}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка");
+      setError(err instanceof Error ? err.message : "Ошибка при формировании отчёта");
     } finally {
-      setIsLoadingExcel(false);
+      setBusy(false);
     }
   };
 
-  const handleDownload = async () => {
-    setError("");
-
-    if (!templateCode) {
-      setError("Выберите журнал");
-      return;
-    }
-    if (!dateFrom) {
-      setError("Укажите дату начала");
-      return;
-    }
-    if (!dateTo) {
-      setError("Укажите дату окончания");
-      return;
-    }
-    if (new Date(dateFrom) > new Date(dateTo)) {
-      setError("Дата начала не может быть позже даты окончания");
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const params = new URLSearchParams({
-        template: templateCode,
-        from: dateFrom,
-        to: dateTo,
-      });
-
-      if (areaId && areaId !== "__all__") {
-        params.set("area", areaId);
-      }
-
-      const response = await fetch(`/api/reports/pdf?${params.toString()}`);
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Ошибка при формировании отчёта");
-      }
-
-      // Download the PDF
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `report_${templateCode}_${dateFrom}_${dateTo}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Ошибка при формировании отчёта";
-      setError(message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const handleDownload = () => download("pdf");
+  const handleDownloadExcel = () => download("excel");
 
   return (
     <Card className="max-w-lg">
       <CardHeader>
         <CardTitle>Сформировать отчёт</CardTitle>
         <CardDescription>
-          Выберите журнал и период для формирования PDF-отчёта
+          Выберите журнал и период — выгрузка в PDF или Excel
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -222,6 +206,20 @@ export function ReportForm({ templates, areas }: ReportFormProps) {
           {error && (
             <p className="text-sm text-destructive">{error}</p>
           )}
+
+          {fallbackLink ? (
+            <p className="text-[13px] text-[#6f7282]">
+              Файл не скачался?{" "}
+              <a
+                href={fallbackLink.href}
+                target="_blank"
+                rel="noopener"
+                className="font-medium text-[#3848c7] underline-offset-2 transition-colors hover:text-[#5566f6] hover:underline"
+              >
+                {fallbackLink.label}
+              </a>
+            </p>
+          ) : null}
 
           {/* Submit buttons */}
           <div className="flex flex-wrap gap-2">

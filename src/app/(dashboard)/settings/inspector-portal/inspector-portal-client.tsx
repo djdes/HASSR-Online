@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Copy, ExternalLink, Loader2, Plus, ShieldX, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -121,7 +121,7 @@ export function InspectorPortalClient({ initialTokens }: Props) {
           <p className="mx-auto mt-1.5 max-w-[420px] text-[13px] text-[#6f7282]">
             Создайте первую ссылку перед визитом контролёра — выберите
             период, на который инспектор должен видеть журналы, и получите
-            URL для пересылки.
+            ссылку для пересылки.
           </p>
         </div>
       ) : (
@@ -196,10 +196,10 @@ export function InspectorPortalClient({ initialTokens }: Props) {
 
       <CreateTokenDialog
         open={createOpen}
-        onOpenChange={(value) => {
-          if (!value) setCreated(null);
-          setCreateOpen(value);
-        }}
+        // Закрытие окна создания НЕ трогает `created`: handleSubmit сначала
+        // отдаёт ссылку наверх, потом закрывает окно — раньше второй вызов
+        // тут же обнулял её, и окно «Ссылка создана» не показывалось.
+        onOpenChange={setCreateOpen}
         onCreated={(payload) => {
           setCreated(payload);
           refresh();
@@ -346,13 +346,11 @@ function CreateTokenDialog({
               type="button"
               onClick={handleSubmit}
               disabled={submitting}
-              className="h-10 rounded-2xl bg-[#5566f6] px-5 text-white hover:bg-[#4a5bf0]"
+              aria-busy={submitting}
+              className="h-10 min-w-[112px] rounded-2xl bg-[#5566f6] px-5 text-white hover:bg-[#4a5bf0]"
             >
-              {submitting ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                "Создать"
-              )}
+              {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
+              Создать
             </Button>
           </div>
         </div>
@@ -368,6 +366,26 @@ function SuccessDialog({
   data: { rawToken: string; inspectorUrl: string };
   onClose: () => void;
 }) {
+  const urlInputRef = useRef<HTMLInputElement | null>(null);
+
+  async function handleCopy() {
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error("no clipboard");
+      await navigator.clipboard.writeText(data.inspectorUrl);
+      toast.success("Ссылка скопирована");
+    } catch {
+      // Буфер обмена недоступен (WebView Telegram, http) — выделяем
+      // текст в поле, чтобы человек скопировал его сам.
+      const input = urlInputRef.current;
+      if (input) {
+        input.focus();
+        input.select();
+        input.setSelectionRange(0, input.value.length);
+      }
+      toast.info("Ссылка выделена — скопируйте её долгим нажатием");
+    }
+  }
+
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="rounded-3xl">
@@ -382,21 +400,24 @@ function SuccessDialog({
             показать её повторно нельзя — придётся создавать новую.
           </div>
           <div className="rounded-2xl border border-[#dcdfed] bg-[#fafbff] p-4">
-            <div className="text-[12px] font-medium text-[#6f7282]">URL</div>
-            <div className="mt-1 break-all font-mono text-[13px] text-[#0b1024]">
-              {data.inspectorUrl}
-            </div>
+            <div className="text-[12px] font-medium text-[#6f7282]">Ссылка</div>
+            {/* Поле, а не текст: если буфер обмена недоступен (оболочка
+                Telegram), ссылка остаётся выделенной — её копируют сами. */}
+            <input
+              ref={urlInputRef}
+              readOnly
+              value={data.inspectorUrl}
+              onFocus={(event) => event.currentTarget.select()}
+              className="mt-1 w-full rounded-xl border border-[#dcdfed] bg-white px-3 py-2 font-mono text-[13px] text-[#0b1024] outline-none transition-shadow focus:ring-4 focus:ring-[#5566f6]/15"
+            />
             <div className="mt-3 flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={() => {
-                  navigator.clipboard.writeText(data.inspectorUrl);
-                  toast.success("URL скопирован");
-                }}
-                className="inline-flex items-center gap-1 rounded-xl bg-white px-3 py-1.5 text-[12px] font-medium text-[#3848c7] hover:bg-[#f5f6ff]"
+                onClick={handleCopy}
+                className="inline-flex items-center gap-1 rounded-xl bg-white px-3 py-1.5 text-[12px] font-medium text-[#3848c7] transition-colors hover:bg-[#f5f6ff]"
               >
                 <Copy className="size-3.5" />
-                Скопировать URL
+                Скопировать ссылку
               </button>
               <a
                 href={data.inspectorUrl}

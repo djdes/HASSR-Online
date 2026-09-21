@@ -410,8 +410,8 @@ export function NotificationSettings({
         <div className="font-medium text-[#0b1024]">Полезно знать</div>
         <ul className="mt-3 grid gap-1.5 md:grid-cols-2">
           <li>• Уведомления получают все владельцы организации.</li>
-          <li>• Команда <code className="rounded bg-white px-1.5 py-0.5 font-mono text-[12px] text-[#5566f6]">/stop</code> в боте отвяжет ваш аккаунт.</li>
-          <li>• История отправок: <a href="/root/telegram-logs" className="text-[#5566f6] hover:underline">/root/telegram-logs</a> (только для ROOT).</li>
+          <li>• Чтобы отключить уведомления, отправьте боту команду <code className="rounded bg-white px-1.5 py-0.5 font-mono text-[12px] text-[#5566f6]">/stop</code> или нажмите «Отвязать Telegram» выше.</li>
+          <li>• Историю отправленных сообщений хранит администратор платформы — если сообщение не дошло, напишите в поддержку.</li>
           <li>• Бот не пишет первым — инициатива всегда с вашей стороны.</li>
         </ul>
       </section>

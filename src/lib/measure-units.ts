@@ -22,3 +22,17 @@ export function formatMeasureUnit(unit: string | null | undefined): string {
   if (key === "") return "";
   return UNIT_LABELS[key.toLowerCase()] ?? key;
 }
+
+/**
+ * Обратное к `formatMeasureUnit` — для полей ввода, где человек видит
+ * «кг», а в базе по-прежнему хранится «kg». Незнакомое значение
+ * сохраняется как введено.
+ */
+export function parseMeasureUnitInput(text: string): string {
+  const value = text.trim();
+  const lower = value.toLowerCase();
+  for (const [code, label] of Object.entries(UNIT_LABELS)) {
+    if (label === lower) return code;
+  }
+  return value;
+}

@@ -37,9 +37,21 @@ const NAV_ICONS: Record<MiniNavIcon, LucideIcon> = {
   CalendarCheck,
 };
 
+/**
+ * Экраны входа: `/mini/login` и `/mini` (проверка Telegram, ошибка входа,
+ * переадресация домой). Меню «Сегодня / Разделы / Профиль» там
+ * бессмысленно — человек ещё не вошёл, и каждая вкладка вела бы обратно
+ * на вход.
+ */
+function isSignInPath(pathname: string): boolean {
+  const normalized = pathname.replace(/\/+$/, "") || "/";
+  return normalized === "/mini" || normalized === "/mini/login";
+}
+
 export function MiniNav({ items }: { items: MiniNavItem[] }) {
   const pathname = usePathname();
   const activeHref = activeMiniNavHref(items, pathname);
+  if (isSignInPath(pathname ?? "")) return null;
 
   return (
     <nav

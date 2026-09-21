@@ -13,6 +13,12 @@ import {
 } from "@/lib/journal-completion-validators";
 import { notifyOrganization } from "@/lib/telegram";
 import { mirrorClaimToTasksFlow } from "@/lib/tasksflow-claim-mirror";
+import { recordAuditLog } from "@/lib/audit-log";
+import {
+  checkSkipReason,
+  parseSkipReasonPolicy,
+  type SkipReasonPolicy,
+} from "@/lib/no-events-reason";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -74,7 +80,8 @@ export async function POST(
     if (claim.status !== "active") {
       return NextResponse.json({ ok: false, reason: "not_active" }, { status: 409 });
     }
-    if (!(await journalAllowsSkip(claim.journalCode))) {
+    const skipSettings = await journalSkipSettings(claim.journalCode);
+    if (!skipSettings.allowSkip) {
       return NextResponse.json(
         {
           ok: false,
@@ -85,17 +92,20 @@ export async function POST(
         { status: 403 }
       );
     }
-    const skipReason = body.skipReason?.trim() ?? "";
-    if (skipReason.length < 3) {
+    // Причина — из списка журнала; свой текст — только если разрешён.
+    const reasonCheck = checkSkipReason(body.skipReason, skipSettings.policy);
+    if (!reasonCheck.ok) {
       return NextResponse.json(
         {
           ok: false,
-          reason: "skip_reason_required",
-          message: "Напишите, почему сегодня заполнять не нужно",
+          reason: reasonCheck.code,
+          message: reasonCheck.message,
+          error: reasonCheck.message,
         },
         { status: 400 }
       );
     }
+    const skipReason = reasonCheck.reason;
     await db.journalTaskClaim.update({
       where: { id },
       data: {
@@ -118,6 +128,19 @@ export async function POST(
       userId: claim.userId,
       event: "complete",
     }).catch(() => null);
+    await recordAuditLog({
+      request,
+      session,
+      organizationId: claim.organizationId,
+      action: "task.skip",
+      entity: "journal_task",
+      entityId: claim.id,
+      details: {
+        journalCode: claim.journalCode,
+        task: claim.scopeLabel,
+        reason: skipReason,
+      },
+    });
     return NextResponse.json({ ok: true, skipped: true });
   }
 
@@ -189,6 +212,18 @@ export async function POST(
   // После успеха — зеркалим в TasksFlow (background, не блокирует ответ).
   const mirrorClaim = await db.journalTaskClaim.findUnique({ where: { id } });
   if (mirrorClaim) {
+    await recordAuditLog({
+      request,
+      session,
+      organizationId: mirrorClaim.organizationId,
+      action: body.action === "complete" ? "task.complete" : "task.release",
+      entity: "journal_task",
+      entityId: mirrorClaim.id,
+      details: {
+        journalCode: mirrorClaim.journalCode,
+        task: mirrorClaim.scopeLabel,
+      },
+    });
     void mirrorClaimToTasksFlow({
       organizationId: mirrorClaim.organizationId,
       journalCode: mirrorClaim.journalCode,
@@ -206,13 +241,22 @@ export async function POST(
  * Тумблер живёт в `/settings/journals/<code>/scope`. Кнопка в приложении
  * его не читала вовсе — запрет ничего не запрещал.
  */
-async function journalAllowsSkip(journalCode: string): Promise<boolean> {
+async function journalSkipSettings(
+  journalCode: string
+): Promise<{ allowSkip: boolean; policy: SkipReasonPolicy }> {
   const template = await db.journalTemplate.findUnique({
     where: { code: journalCode },
-    select: { allowNoEvents: true },
+    select: {
+      allowNoEvents: true,
+      noEventsReasons: true,
+      allowFreeTextReason: true,
+    },
   });
-  // Шаблона нет — считаем, что запрета не ставили.
-  return template?.allowNoEvents !== false;
+  return {
+    // Шаблона нет — считаем, что запрета не ставили.
+    allowSkip: template?.allowNoEvents !== false,
+    policy: parseSkipReasonPolicy(template),
+  };
 }
 
 /**
@@ -262,6 +306,8 @@ export async function GET(
     }
   }
 
+  const skipSettings = await journalSkipSettings(claim.journalCode);
+
   return NextResponse.json({
     claim: {
       id: claim.id,
@@ -281,7 +327,11 @@ export async function GET(
       temperatureNorm,
       // Кнопку «Сегодня не требуется» показываем только там, где
       // руководитель разрешил пропуск.
-      allowSkip: await journalAllowsSkip(claim.journalCode),
+      allowSkip: skipSettings.allowSkip,
+      // Готовые причины пропуска и можно ли написать свою — экран
+      // показывает кнопки-варианты и поле только при разрешении.
+      skipReasons: skipSettings.policy.reasons,
+      allowFreeTextReason: skipSettings.policy.allowFreeText,
     },
   });
 }
@@ -351,7 +401,7 @@ async function runSideEffects(organizationId: string, effects: SideEffect[]) {
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   ctx: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
@@ -360,6 +410,20 @@ export async function DELETE(
   }
   const { id } = await ctx.params;
   const result = await releaseClaim(id, session.user.id);
+  if (result.ok) {
+    const released = await db.journalTaskClaim.findUnique({ where: { id } });
+    if (released) {
+      await recordAuditLog({
+        request,
+        session,
+        organizationId: released.organizationId,
+        action: "task.release",
+        entity: "journal_task",
+        entityId: released.id,
+        details: { journalCode: released.journalCode, task: released.scopeLabel },
+      });
+    }
+  }
   if (!result.ok) {
     const map: Record<string, number> = {
       not_found: 404,

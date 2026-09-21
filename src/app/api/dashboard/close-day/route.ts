@@ -7,7 +7,7 @@ import { getActiveBuildingId } from "@/lib/active-building";
 import { buildingWhere } from "@/lib/building-scope";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { CLOSE_DAY_JOURNAL_CODES } from "@/lib/daily-journal-codes";
-import { logAudit } from "@/lib/audit";
+import { recordAuditLog } from "@/lib/audit-log";
 import { buildDateKeys, toDateKey } from "@/lib/hygiene-document";
 import { resolveDayStart } from "@/lib/today-compliance";
 import { applyJournalAutoFill } from "@/lib/journal-autofill";
@@ -358,24 +358,30 @@ export async function POST(request: Request) {
     }
   }
 
-  await logAudit({
+  // Сколько журналов реально что-то получили — для итога и журнала действий.
+  const journalsFilled = summaries.filter((summary) => summary.filled > 0).length;
+
+  await recordAuditLog({
+    request,
+    session,
     organizationId,
-    userId: session.user.id,
-    userName: session.user.name ?? undefined,
-    action: "journal_entry.copy",
+    action: "dashboard.close_day",
     entity: "journal_document",
     details: {
-      via: "dashboard.close_day",
-      totalFilled,
+      filledCells: totalFilled,
+      journalsFilled,
       documentsCreated,
       processed: summaries.length,
       upTo: upToKey,
-      today: todayKey,
+      journals: summaries
+        .filter((summary) => summary.filled > 0)
+        .map((summary) => summary.templateName),
     },
   });
 
   return NextResponse.json({
     totalFilled,
+    journalsFilled,
     documentsCreated,
     processed: summaries.length,
     upToKey,

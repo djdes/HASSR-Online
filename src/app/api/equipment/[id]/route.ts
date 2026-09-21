@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { recordAuditLog } from "@/lib/audit-log";
 import {
   COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE,
   applyEquipmentNormToColdConfig,
@@ -144,6 +145,33 @@ export async function PUT(
         tuyaDeviceId: nextTuyaDeviceId,
       },
     });
+
+    // Журнал действий: какие поля карточки изменились (норма, тип, цех…).
+    const changed: Record<string, { from: unknown; to: unknown }> = {};
+    for (const key of [
+      "name",
+      "type",
+      "areaId",
+      "serialNumber",
+      "tempMin",
+      "tempMax",
+      "tuyaDeviceId",
+    ] as const) {
+      const from = equipment[key] ?? null;
+      const to = updated[key] ?? null;
+      if (from !== to) changed[key] = { from, to };
+    }
+    if (Object.keys(changed).length > 0) {
+      await recordAuditLog({
+        request,
+        session,
+        organizationId: equipment.area.organizationId,
+        action: "equipment.update",
+        entity: "equipment",
+        entityId: id,
+        details: { equipmentName: updated.name, changed },
+      });
+    }
 
     // Новая норма должна дойти до уже созданных журналов холодильников.
     // Строка документа помнит `sourceEquipmentId`, но min/max в ней

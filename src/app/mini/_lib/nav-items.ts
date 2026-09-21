@@ -124,6 +124,19 @@ function matchesPrefix(pathname: string, prefix: string): boolean {
  */
 const HOME_ALIASES = ["/mini"] as const;
 
+/**
+ * Собственные экраны приложения, которые открываются «из дома»: задача,
+ * премия, задача по ссылке из бота, очередь отправки. Раньше на них
+ * подсвечивались «Разделы», хотя человек пришёл сюда со «Сегодня» (или
+ * с «Главной» у руководителя).
+ */
+const HOME_CHILD_PREFIXES = [
+  "/mini/claim",
+  "/mini/bonus",
+  "/mini/o",
+  "/mini/outbox",
+] as const;
+
 export function activeMiniNavHref(
   items: readonly MiniNavItem[],
   pathname: string
@@ -131,6 +144,9 @@ export function activeMiniNavHref(
   const normalized = pathname.replace(/\/+$/, "") || "/";
   const home = items[0]?.href ?? null;
   if (HOME_ALIASES.some((alias) => alias === normalized)) return home;
+  if (HOME_CHILD_PREFIXES.some((prefix) => matchesPrefix(normalized, prefix))) {
+    return home;
+  }
 
   let best: string | null = null;
   for (const item of items) {

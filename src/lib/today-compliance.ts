@@ -302,6 +302,30 @@ const STRICT_COMPLETENESS_CODES = new Set(["hygiene", "health_check"]);
 const STAFF_SCHEDULE_CODES = new Set(["hygiene", "health_check"]);
 
 /**
+ * Строгая ли проверка «сегодня записей не меньше, чем в прошлый рабочий
+ * день» для журнала.
+ *
+ * `fillMode` по умолчанию у всех шаблонов — "per-employee", поэтому раньше
+ * строгими оказывались и журналы, где запись одна на ДЕНЬ на весь
+ * документ (холодильники, климат, фритюр, УФ-лампа, чек-лист
+ * проветривания). Сравнивать у них число строк бессмысленно: стоило
+ * накануне появиться второй строке (повар закрыл задачу со своего
+ * телефона — строка легла на него), и сегодняшняя одна строка от
+ * «Закрыть день» или от руки уже никогда не засчитывалась. Для таких
+ * журналов день заполнен, если за сегодня есть хоть одна запись.
+ */
+export function isStrictCompletenessJournal(
+  code: string,
+  fillMode: string | null | undefined
+): boolean {
+  if (STRICT_COMPLETENESS_CODES.has(code)) return true;
+  if (DAILY_JOURNAL_CODES.has(code) && !STAFF_SCHEDULE_CODES.has(code)) {
+    return false;
+  }
+  return (fillMode ?? "per-employee") === "per-employee";
+}
+
+/**
  * Строгая проверка дня по записям документа: «отметились все, кто
  * сегодня работает». Чистая функция — её проверяют тесты без БД.
  *
@@ -686,8 +710,7 @@ export async function getTemplatesFilledToday(
 
   for (const [templateId, { code, docIds }] of documentsByTemplate.entries()) {
     const fillMode = fillModeById.get(templateId) ?? "per-employee";
-    const strict =
-      STRICT_COMPLETENESS_CODES.has(code) || fillMode === "per-employee";
+    const strict = isStrictCompletenessJournal(code, fillMode);
     const ok = strict
       ? docIds.every(documentFilledStrict) // все документы целиком заполнены
       : docIds.some(documentStartedToday); // хотя бы один начат
@@ -995,10 +1018,12 @@ export async function getTemplateTodaySummary(
   //   2. Динамически: любой шаблон с `fillMode === "per-employee"` —
   //      т.е. менеджер настроил «каждый сотрудник заполняет за себя»
   //      в `/settings/journals`. Один заполнивший ≠ выполнен.
+  // Журналы с одной записью на день (холодильники, климат…) — не строгие,
+  // см. isStrictCompletenessJournal: так же считает дашборд.
   const strict =
-    (typeof templateCode === "string" &&
-      STRICT_COMPLETENESS_CODES.has(templateCode)) ||
-    fillMode === "per-employee";
+    typeof templateCode === "string"
+      ? isStrictCompletenessJournal(templateCode, fillMode)
+      : fillMode === "per-employee";
 
   const rollups = await Promise.all(
     activeDocuments.map(async (doc) => {

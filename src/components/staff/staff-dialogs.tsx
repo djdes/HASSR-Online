@@ -47,7 +47,9 @@ function shell(
   footer?: React.ReactNode,
   // `leading` — слот слева в шапке (кнопка «‹ Назад» в многошаговом
   // диалоге), `eyebrow` — мелкая надпись «Шаг 2 из 2» над заголовком.
-  opts?: { leading?: React.ReactNode; eyebrow?: string }
+  // `description` — пояснение для экранных чтецов; без него дублируется
+  // заголовок (в тексте окна он звучал дважды).
+  opts?: { leading?: React.ReactNode; eyebrow?: string; description?: string }
 ) {
   return (
     <>
@@ -61,7 +63,9 @@ function shell(
         <DialogTitle className="text-[18px] font-semibold text-[#0b1024]">
           {title}
         </DialogTitle>
-        <DialogDescription className="sr-only">{title}</DialogDescription>
+        <DialogDescription className="sr-only">
+          {opts?.description ?? title}
+        </DialogDescription>
       </DialogHeader>
       {/* Скроллится только середина: шапка с крестиком и кнопки видны всегда. */}
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6 sm:py-6">
@@ -1175,10 +1179,14 @@ export function StaffAddPeriodDialog(props: {
     }
   }
 
+  // Заголовок по вкладке: раньше отпуск и больничный назывались
+  // безлико «Добавление новой строки».
   const title =
     props.kind === "dismissal"
       ? "Добавление увольнения"
-      : "Добавление новой строки";
+      : props.kind === "vacation"
+        ? "Добавление отпуска"
+        : "Добавление больничного";
   const fromLabel =
     props.kind === "vacation"
       ? "Дата отпуска С"
@@ -1283,7 +1291,8 @@ export function StaffAddPeriodDialog(props: {
               </>
             ) : null}
           </div>,
-          primaryBtn("Добавить", submit, pending)
+          primaryBtn("Добавить", submit, pending),
+          { description: "Выберите сотрудника и даты" }
         )}
       </DialogContent>
     </Dialog>

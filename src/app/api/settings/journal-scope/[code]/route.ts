@@ -3,6 +3,8 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { getActiveOrgId } from "@/lib/auth-helpers";
+import { recordAuditLog } from "@/lib/audit-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,11 +18,15 @@ export const dynamic = "force-dynamic";
  *   Body: { taskScope?, allowNoEvents?, noEventsReasons?, allowFreeTextReason? }
  *   Обновляет любое подмножество полей. Только management.
  *
- * Note: значения шаблона глобальные (не per-org). Это compromise:
- * каждая Organization могла бы иметь свой override через отдельную
- * таблицу OrgJournalScope, но в MVP — все компании используют общую
- * настройку. Если возникнет потребность — расширим в этапе 7.
+ * Note: значения шаблона глобальные (не per-org): `JournalTemplate`
+ * один на всю платформу. Поэтому менять их может только ROOT —
+ * раньше руководитель одной компании менял поведение задач у всех.
+ * Своё значение на организацию требует поля в схеме
+ * (например `Organization.journalScopeJson`), пока его нет.
  */
+const GLOBAL_SCOPE_FORBIDDEN_MESSAGE =
+  "Эти настройки общие для всех компаний, их меняет администратор платформы";
+
 const patchSchema = z.object({
   taskScope: z.enum(["personal", "shared"]).optional(),
   allowNoEvents: z.boolean().optional(),
@@ -66,6 +72,9 @@ export async function PATCH(
   if (!hasFullWorkspaceAccess(auth.session.user)) {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
+  if (auth.session.user.isRoot !== true) {
+    return NextResponse.json({ error: GLOBAL_SCOPE_FORBIDDEN_MESSAGE }, { status: 403 });
+  }
 
   const { code } = await ctx.params;
   let parsed;
@@ -83,7 +92,13 @@ export async function PATCH(
 
   const template = await db.journalTemplate.findFirst({
     where: { code },
-    select: { id: true },
+    select: {
+      id: true,
+      taskScope: true,
+      allowNoEvents: true,
+      noEventsReasons: true,
+      allowFreeTextReason: true,
+    },
   });
   if (!template) {
     return NextResponse.json({ error: "Не найдено" }, { status: 404 });
@@ -113,6 +128,24 @@ export async function PATCH(
       allowNoEvents: true,
       noEventsReasons: true,
       allowFreeTextReason: true,
+    },
+  });
+  await recordAuditLog({
+    request,
+    session: auth.session,
+    organizationId: getActiveOrgId(auth.session),
+    action: "settings.journal_scope.update",
+    entity: "journal_template",
+    entityId: template.id,
+    details: {
+      journalCode: code,
+      before: {
+        taskScope: template.taskScope,
+        allowNoEvents: template.allowNoEvents,
+        noEventsReasons: template.noEventsReasons,
+        allowFreeTextReason: template.allowFreeTextReason,
+      },
+      after: updated,
     },
   });
   return NextResponse.json({ ok: true, ...updated });

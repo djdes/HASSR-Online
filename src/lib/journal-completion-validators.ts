@@ -1,4 +1,12 @@
 import { db } from "@/lib/db";
+import {
+  climateIssues,
+  coldEquipmentIssues,
+  finishedProductIssues,
+  fryerOilIssues,
+  hygieneIssues,
+  incomingIssues,
+} from "@/lib/journal-completion-rules";
 
 /**
  * Валидаторы и побочные эффекты при completion claim'а для каждого
@@ -109,20 +117,12 @@ async function validateJournalFields(
 /* ---------- per-journal ---------- */
 
 async function validateColdEquipment(ctx: ScopeContext): Promise<ValidationResult> {
-  const t = numField(ctx.data, ["temperature", "temp", "tempC"]);
-  const errors: ValidationResult["errors"] = [];
   const warnings: ValidationResult["warnings"] = [];
   const sideEffects: SideEffect[] = [];
 
-  if (t === null) {
-    errors.push({ field: "temperature", message: "Не указана температура" });
-    return { ok: false, errors, warnings, sideEffects };
-  }
-
   // Извлекаем equipmentId из scopeKey: fridge:<id>:<shift>:<date>
   const m = /^fridge:([^:]+):/.exec(ctx.scopeKey);
-  let tempMin = -30;
-  let tempMax = 12;
+  let norm: { min: number | null; max: number | null } | null = null;
   let equipmentName = "холодильник";
   if (m) {
     const eq = await db.equipment.findUnique({
@@ -131,45 +131,41 @@ async function validateColdEquipment(ctx: ScopeContext): Promise<ValidationResul
     });
     if (eq) {
       equipmentName = eq.name;
-      if (eq.tempMin !== null) tempMin = eq.tempMin;
-      if (eq.tempMax !== null) tempMax = eq.tempMax;
+      norm = { min: eq.tempMin, max: eq.tempMax };
     }
   }
 
-  if (t < tempMin || t > tempMax) {
-    const correctiveAction = stringField(ctx.data, ["correctiveAction"]);
-    if (!correctiveAction || correctiveAction.trim().length < 5) {
-      errors.push({
-        field: "correctiveAction",
-        message: `Температура ${t}°C вне диапазона (${tempMin}…${tempMax}°C). Опишите корректирующие действия (минимум 5 символов).`,
-      });
-    } else {
-      warnings.push({
-        message: `Температура ${t}°C вне диапазона (${tempMin}…${tempMax}°C). Создан CAPA, менеджер уведомлён.`,
-      });
-      sideEffects.push({
-        kind: "create_capa",
-        title: `${equipmentName}: температура ${t}°C вне диапазона (${tempMin}…${tempMax}°C)`,
-        severity: "high",
-        data: {
-          equipmentId: m?.[1],
-          temperature: t,
-          tempMin,
-          tempMax,
-          correctiveAction,
-          actionBy: ctx.userName,
-        },
-      });
-      sideEffects.push({
-        kind: "telegram_alert",
-        recipients: "managers",
-        message:
-          `🚨 <b>Температура ${equipmentName}: ${t}°C</b>\n` +
-          `Диапазон: ${tempMin}…${tempMax}°C\n` +
-          `Сотрудник: ${ctx.userName ?? ""}\n` +
-          `Действие: ${correctiveAction}`,
-      });
-    }
+  // Сама проверка — общая с экраном задачи (journal-completion-rules).
+  const check = coldEquipmentIssues(ctx.data, norm);
+  const errors: ValidationResult["errors"] = [...check.errors];
+  if (errors.length === 0 && check.outOfRange) {
+    const { t, min: tempMin, max: tempMax } = check.outOfRange;
+    const correctiveAction = check.correctiveAction;
+    warnings.push({
+      message: `Температура ${t}°C вне диапазона (${tempMin}…${tempMax}°C). Создан CAPA, менеджер уведомлён.`,
+    });
+    sideEffects.push({
+      kind: "create_capa",
+      title: `${equipmentName}: температура ${t}°C вне диапазона (${tempMin}…${tempMax}°C)`,
+      severity: "high",
+      data: {
+        equipmentId: m?.[1],
+        temperature: t,
+        tempMin,
+        tempMax,
+        correctiveAction,
+        actionBy: ctx.userName,
+      },
+    });
+    sideEffects.push({
+      kind: "telegram_alert",
+      recipients: "managers",
+      message:
+        `🚨 <b>Температура ${equipmentName}: ${t}°C</b>\n` +
+        `Диапазон: ${tempMin}…${tempMax}°C\n` +
+        `Сотрудник: ${ctx.userName ?? ""}\n` +
+        `Действие: ${correctiveAction}`,
+    });
   }
   return { ok: errors.length === 0, errors, warnings, sideEffects };
 }
@@ -177,13 +173,8 @@ async function validateColdEquipment(ctx: ScopeContext): Promise<ValidationResul
 async function validateClimate(ctx: ScopeContext): Promise<ValidationResult> {
   const t = numField(ctx.data, ["temperature", "temp"]);
   const h = numField(ctx.data, ["humidity"]);
-  const errors: ValidationResult["errors"] = [];
   // Минимум — хотя бы одно из двух.
-  if (t === null && h === null) {
-    errors.push({
-      message: "Введите температуру или влажность (хотя бы одно поле)",
-    });
-  }
+  const errors: ValidationResult["errors"] = climateIssues(ctx.data);
   const warnings: ValidationResult["warnings"] = [];
   // Нормы для пищевых производств: t = +5..+32°C, h = 30-75%.
   if (t !== null && (t < 5 || t > 32)) {
@@ -199,7 +190,7 @@ async function validateFryerOil(ctx: ScopeContext): Promise<ValidationResult> {
   const t = numField(ctx.data, ["temperatureC", "temperature"]);
   const polar = numField(ctx.data, ["polarCompoundsPercent"]);
   const replaced = boolField(ctx.data, ["replaced"]);
-  const errors: ValidationResult["errors"] = [];
+  const errors: ValidationResult["errors"] = fryerOilIssues(ctx.data);
   const warnings: ValidationResult["warnings"] = [];
   const sideEffects: SideEffect[] = [];
 
@@ -207,12 +198,7 @@ async function validateFryerOil(ctx: ScopeContext): Promise<ValidationResult> {
     warnings.push({ message: `Температура жира ${t}°C вне нормы 140–200°C` });
   }
   if (polar !== null && polar > 25) {
-    if (!replaced) {
-      errors.push({
-        field: "replaced",
-        message: `Полярные соединения ${polar}% > 25% — требуется замена масла. Подтвердите чекбоксом.`,
-      });
-    } else {
+    if (replaced) {
       sideEffects.push({
         kind: "create_capa",
         title: `Замена фритюрного жира — полярные соединения ${polar}%`,
@@ -228,8 +214,6 @@ async function validateHygiene(ctx: ScopeContext): Promise<ValidationResult> {
   // Mini App шлёт упрощённую форму: { allHealthy: boolean, notes: string }.
   // Полная матричная форма (per-employee entries[]) — отдельный flow в
   // Dashboard, мы её принимаем тоже но не требуем.
-  const allHealthy = boolField(ctx.data, ["allHealthy"]);
-  const notes = stringField(ctx.data, ["notes"]);
   const entries = arrField(ctx.data, ["entries"]);
   const errors: ValidationResult["errors"] = [];
   const sideEffects: SideEffect[] = [];
@@ -251,58 +235,23 @@ async function validateHygiene(ctx: ScopeContext): Promise<ValidationResult> {
     return { ok: true, errors, warnings: [], sideEffects };
   }
 
-  // Simplified форма: достаточно allHealthy=true ИЛИ allHealthy=false с notes.
-  if (allHealthy === false && (!notes || notes.trim().length < 3)) {
-    errors.push({
-      field: "notes",
-      message: "Если не все сотрудники допущены — укажите кто и почему",
-    });
-  }
-  if (allHealthy === null && (!notes || notes.trim().length < 3)) {
-    errors.push({
-      // Формулировка повторяет подпись чек-бокса на экране задачи слово
-      // в слово: раньше на экране было «Все сотрудники в норме», а
-      // сервер просил отметить «Все допущены» — человек искал кнопку,
-      // которой нет.
-      field: "allHealthy",
-      message:
-        "Отметьте «Все сотрудники допущены» или опишите ситуацию в примечании",
-    });
-  }
+  // Simplified форма: достаточно allHealthy=true ИЛИ примечание.
+  // Проверка общая с экраном задачи (journal-completion-rules).
+  errors.push(...hygieneIssues(ctx.data));
   return { ok: errors.length === 0, errors, warnings: [], sideEffects };
 }
 
 async function validateIncoming(ctx: ScopeContext): Promise<ValidationResult> {
-  const supplier = stringField(ctx.data, ["supplier"]);
-  const productName = stringField(ctx.data, ["productName"]);
-  const accepted = boolField(ctx.data, ["accepted"]);
-  const errors: ValidationResult["errors"] = [];
-  // Минимум — поставщик ИЛИ продукт. Не оба.
-  if (!supplier && !productName) {
-    errors.push({
-      message: "Укажите хотя бы поставщика или товар",
-    });
-  }
-  if (accepted === false) {
-    const reason = stringField(ctx.data, ["rejectionReason"]);
-    if (!reason || reason.trim().length < 3) {
-      errors.push({
-        field: "rejectionReason",
-        message: "Если товар отклонён — укажите причину",
-      });
-    }
-  }
+  // Минимум — поставщик ИЛИ продукт; отказ — с причиной.
+  const errors: ValidationResult["errors"] = incomingIssues(ctx.data);
   return { ok: errors.length === 0, errors, warnings: [], sideEffects: [] };
 }
 
 async function validateFinishedProduct(ctx: ScopeContext): Promise<ValidationResult> {
   const dish = stringField(ctx.data, ["dish"]);
   const tasteOk = boolField(ctx.data, ["tasteOk"]);
-  const errors: ValidationResult["errors"] = [];
+  const errors: ValidationResult["errors"] = finishedProductIssues(ctx.data);
   const sideEffects: SideEffect[] = [];
-  if (!dish || dish.trim().length < 1) {
-    errors.push({ field: "dish", message: "Не указано блюдо" });
-  }
   if (tasteOk === false) {
     sideEffects.push({
       kind: "create_capa",

@@ -599,9 +599,14 @@ export async function applyPerDayJournalAutoFill(
         config
       );
       const merged = mergeClimateEntryData(current, generated);
+      // Сравниваем с уже приведённой к настройкам записью: дописывать
+      // нечего — не пишем. Раньше сравнение шло с сырой записью, и любое
+      // расхождение формы (лишний ключ, слот без нормы) давало запись на
+      // каждом прогоне «Закрыть день».
       if (
+        JSON.stringify(merged) === JSON.stringify(current) ||
         JSON.stringify(merged) ===
-        JSON.stringify(normalizeClimateEntryData(existing.data))
+          JSON.stringify(normalizeClimateEntryData(existing.data))
       ) {
         continue;
       }
@@ -652,9 +657,12 @@ export async function applyPerDayJournalAutoFill(
         config
       );
       const merged = mergeColdEquipmentEntryData(current, generated);
+      // См. климат выше: нечего дописывать — повторный прогон ничего не
+      // пишет (раньше холодильники перезаписывались на каждом прогоне).
       if (
+        JSON.stringify(merged) === JSON.stringify(current) ||
         JSON.stringify(merged) ===
-        JSON.stringify(normalizeColdEquipmentEntryData(existing.data))
+          JSON.stringify(normalizeColdEquipmentEntryData(existing.data))
       ) {
         continue;
       }

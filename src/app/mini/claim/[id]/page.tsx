@@ -22,6 +22,8 @@ import { journalIconName } from "@/lib/journal-label";
 import { JournalIcon } from "@/app/mini/_components/journal-icon";
 import { humanizeFetchError, isFetchNetworkError } from "@/lib/humanize-fetch-error";
 import type { TaskFormSchema } from "@/lib/tasksflow-adapters/task-form";
+import { completionFieldIssues } from "@/lib/journal-completion-rules";
+import { SKIP_REASON_MIN_LENGTH } from "@/lib/no-events-reason";
 
 type Claim = {
   id: string;
@@ -41,6 +43,10 @@ type Claim = {
   temperatureNorm: { min: number | null; max: number | null } | null;
   /** Разрешил ли руководитель «Сегодня не требуется» для этого журнала. */
   allowSkip: boolean;
+  /** Готовые причины пропуска из настроек журнала (кнопки). */
+  skipReasons?: string[];
+  /** Можно ли написать свою причину. */
+  allowFreeTextReason?: boolean;
 };
 
 /** Ключ черновика в sessionStorage — переживает уход с экрана и возврат. */
@@ -535,6 +541,29 @@ export default function ClaimPage({
     (f) => "required" in f && f.required === true
   );
   const missingFields = requiredFields.filter((f) => isBlank(data[f.key]));
+  // Те же проверки полей, что делает сервер (journal-completion-rules):
+  // «вне нормы → опишите, что сделали», «Все сотрудники допущены» и т.п.
+  // Раньше кнопка была активной, а сервер отказывал.
+  const fieldCheck = completionFieldIssues(claim?.journalCode ?? "", data, {
+    temperatureNorm: claim?.temperatureNorm ?? null,
+  });
+  const missingKeys = new Set(missingFields.map((f) => f.key));
+  const fieldIssueMessages = fieldCheck.errors
+    // Пустое обязательное поле уже названо в «Заполните: …».
+    .filter((issue) => !issue.field || !missingKeys.has(issue.field))
+    .map((issue) =>
+      claim?.journalCode === "cold_equipment_control" &&
+      issue.field === "correctiveAction"
+        ? "Опишите, что сделали: температура вне нормы"
+        : issue.message
+    );
+  const conditionalRequired = new Set(fieldCheck.conditionalRequired);
+  const skipReasons = claim?.skipReasons ?? [];
+  const allowFreeSkipReason =
+    skipReasons.length === 0 || claim?.allowFreeTextReason !== false;
+  const skipReasonValid =
+    skipReasons.includes(skipReason.trim()) ||
+    (allowFreeSkipReason && skipReason.trim().length >= SKIP_REASON_MIN_LENGTH);
   const doneSteps = steps.filter((s) => pipelineProgress[s.id]).length;
   const missingSteps = steps.length - doneSteps;
 
@@ -563,6 +592,10 @@ export default function ClaimPage({
     );
     if (badNumber) {
       setError(`В поле «${badNumber.label}» нужно число, а не буквы.`);
+      return;
+    }
+    if (fieldIssueMessages.length > 0) {
+      setError(fieldIssueMessages.join(" · "));
       return;
     }
 
@@ -628,8 +661,14 @@ export default function ClaimPage({
     if (!claim) return;
     // Причина обязательна: без неё заведующая видит «пропущено» и не
     // знает, поставщик не приехал или человек решил не возиться.
-    if (skipReason.trim().length < 3) {
-      setError("Напиши, почему сегодня заполнять не нужно");
+    if (!skipReasonValid) {
+      setError(
+        allowFreeSkipReason
+          ? skipReasons.length > 0
+            ? "Выбери причину из списка или напиши свою"
+            : "Напиши, почему сегодня заполнять не нужно"
+          : "Выбери причину из списка"
+      );
       return;
     }
     setSubmitting(true);
@@ -681,6 +720,9 @@ export default function ClaimPage({
       });
       const j = await res.json().catch(() => null);
       if (!res.ok) throw new Error(claimReasonRu(j?.reason, res.status));
+      // Окно обещало «Введённое не сохранится» — черновик убираем, иначе
+      // он всплыл бы у того, кто возьмёт задачу на этом же телефоне.
+      clearDraft(id);
       toast.success("Задача снова в общем списке");
       router.push("/mini/today");
     } catch (e) {
@@ -766,6 +808,7 @@ export default function ClaimPage({
     blockers.push(`Заполните: ${missingFields.map((f) => f.label).join(", ")}`);
   }
   if (missingStepPhoto) blockers.push("Нужно фото шага");
+  blockers.push(...fieldIssueMessages);
   const canSubmit = blockers.length === 0;
 
   return (
@@ -1031,7 +1074,13 @@ export default function ClaimPage({
             ) : (
               <TaskFillField
                 key={f.key}
-                field={f}
+                // Поле, ставшее обязательным из-за значений (температура
+                // вне нормы и т.п.), получает бейдж «обязательно».
+                field={
+                  f.type !== "boolean" && conditionalRequired.has(f.key)
+                    ? { ...f, required: true }
+                    : f
+                }
                 value={data[f.key]}
                 onChange={(v) => setData((d) => ({ ...d, [f.key]: v }))}
               />
@@ -1096,16 +1145,57 @@ export default function ClaimPage({
             className="text-[12px] leading-relaxed"
             style={{ color: "var(--mini-text-muted)" }}
           >
-            Напиши причину — заведующая её увидит и подтвердит пропуск.
+            {skipReasons.length > 0
+              ? allowFreeSkipReason
+                ? "Выбери причину или напиши свою — заведующая её увидит и подтвердит пропуск."
+                : "Выбери причину — заведующая её увидит и подтвердит пропуск."
+              : "Напиши причину — заведующая её увидит и подтвердит пропуск."}{" "}
             Без причины пропустить нельзя.
           </div>
-          <input
-            type="text"
-            value={skipReason}
-            onChange={(e) => setSkipReason(e.target.value)}
-            placeholder="Причина (например: поставщик не приехал)"
-            className="mini-input h-11 w-full rounded-xl px-3 text-[14px]"
-          />
+          {skipReasons.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {skipReasons.map((reason) => {
+                const picked = skipReason.trim() === reason;
+                return (
+                  <button
+                    key={reason}
+                    type="button"
+                    aria-pressed={picked}
+                    onClick={() => setSkipReason(picked ? "" : reason)}
+                    className="mini-press inline-flex min-h-9 items-center rounded-full border px-3 py-1.5 text-left text-[13px] transition-colors duration-150"
+                    style={
+                      picked
+                        ? {
+                            background: "var(--mini-lime)",
+                            borderColor: "transparent",
+                            color: "var(--mini-primary-contrast)",
+                          }
+                        : {
+                            background: "var(--mini-surface-1)",
+                            borderColor: "var(--mini-divider-strong)",
+                            color: "var(--mini-text)",
+                          }
+                    }
+                  >
+                    {reason}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+          {allowFreeSkipReason ? (
+            <input
+              type="text"
+              value={skipReasons.includes(skipReason.trim()) ? "" : skipReason}
+              onChange={(e) => setSkipReason(e.target.value)}
+              placeholder={
+                skipReasons.length > 0
+                  ? "Или своя причина"
+                  : "Причина (например: поставщик не приехал)"
+              }
+              className="mini-input h-11 w-full rounded-xl px-3 text-[14px]"
+            />
+          ) : null}
           <div className="flex gap-2">
             <button
               type="button"
@@ -1122,7 +1212,7 @@ export default function ClaimPage({
             <button
               type="button"
               onClick={skipTask}
-              disabled={submitting || skipReason.trim().length < 3}
+              disabled={submitting || !skipReasonValid}
               className="mini-press inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl text-[13px] font-medium disabled:opacity-50"
               style={{
                 background: "var(--mini-crimson)",
@@ -1136,6 +1226,16 @@ export default function ClaimPage({
         </div>
       ) : (
         <div className="space-y-2">
+          {/* Главная кнопка «липнет» над нижним меню приложения: без
+              пошаговой инструкции она при открытии экрана оказывалась
+              ровно под меню. */}
+          <div
+            className="sticky z-10 -mx-1 space-y-2 rounded-2xl px-1 py-1"
+            style={{
+              bottom: "calc(var(--mini-safe-b, 0px) + var(--mini-nav-h, 64px) + 16px)",
+              background: "var(--mini-bg)",
+            }}
+          >
           <button
             type="button"
             onClick={submit}
@@ -1159,6 +1259,7 @@ export default function ClaimPage({
               {blockers.join(" · ")}
             </div>
           ) : null}
+          </div>
           {/* Пропуск показываем только там, где руководитель его разрешил
               (`allowNoEvents` в настройках журнала). */}
           {claim.allowSkip ? (

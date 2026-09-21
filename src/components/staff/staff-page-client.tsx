@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  useTransition,
+} from "react";
 import { PageHeader, PageHeaderStat } from "@/components/ui/page-header";
 import { useRouter } from "next/navigation";
 import {
@@ -1664,6 +1671,30 @@ function StaffSortHead(props: {
  * 2. «Зажал и красишь» — pointer-события вместо чекбоксов: один POST на
  *    всю покраску вместо запроса и router.refresh() на каждую ячейку.
  */
+/**
+ * Сенсорный экран (`pointer: coarse`): ни «зажать и провести курсором»,
+ * ни Shift там нет — подсказка должна говорить про нажатия.
+ */
+const COARSE_POINTER_QUERY = "(pointer: coarse)";
+
+function subscribeCoarsePointer(onChange: () => void): () => void {
+  if (typeof window === "undefined" || !window.matchMedia) return () => {};
+  const query = window.matchMedia(COARSE_POINTER_QUERY);
+  query.addEventListener?.("change", onChange);
+  return () => query.removeEventListener?.("change", onChange);
+}
+
+function useCoarsePointer(): boolean {
+  return useSyncExternalStore(
+    subscribeCoarsePointer,
+    () =>
+      typeof window !== "undefined" && !!window.matchMedia
+        ? window.matchMedia(COARSE_POINTER_QUERY).matches
+        : false,
+    () => false
+  );
+}
+
 function WorkOffGrid(props: {
   employees: StaffEmployee[];
   positions: StaffPosition[];
@@ -1680,6 +1711,7 @@ function WorkOffGrid(props: {
     props.positions.map((p) => [p.id, p.name])
   );
 
+  const coarsePointer = useCoarsePointer();
   const gridRef = useRef<HTMLDivElement | null>(null);
   // Значение текущей покраски (true = «отмечаем выходным»). Держим в
   // ref, а не в state: pointermove не должен ждать перерисовку.
@@ -1993,9 +2025,19 @@ function WorkOffGrid(props: {
           Выходные — суббота и воскресенье подсвечены светло-жёлтым
         </div>
         <div>
-          Зажмите и проведите курсором, чтобы отметить сразу несколько дней.
-          Shift + клик — прямоугольник. Полупрозрачная галочка — выходной по
-          недельному правилу; клик по ней делает исключение на этот день.
+          {coarsePointer ? (
+            <>
+              Нажимайте на клетки, чтобы отметить выходные. Полупрозрачная
+              галочка — выходной по недельному правилу; нажатие на неё делает
+              исключение на этот день.
+            </>
+          ) : (
+            <>
+              Зажмите и проведите курсором, чтобы отметить сразу несколько дней.
+              Shift + клик — прямоугольник. Полупрозрачная галочка — выходной по
+              недельному правилу; клик по ней делает исключение на этот день.
+            </>
+          )}
         </div>
       </div>
     </div>

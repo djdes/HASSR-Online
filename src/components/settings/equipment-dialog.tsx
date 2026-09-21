@@ -5,6 +5,7 @@ import { useSubmitLock } from "@/lib/use-submit-lock";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus, Pencil, Building2, ArrowRight } from "lucide-react";
+import { getEquipmentTypeLabel } from "@/lib/equipment-type-label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,12 +24,29 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
+// Все типы, которые реально встречаются в данных: заведённые руками,
+// из шаблонов онбординга и справочника журналов. Раньше в списке не было
+// «Датчика» — у датчика поле «Тип» открывалось пустым, а любой выбор
+// перетирал тип.
 const equipmentTypes = [
   { value: "refrigerator", label: "Холодильник" },
   { value: "freezer", label: "Морозильник" },
+  { value: "sensor", label: "Датчик температуры" },
+  { value: "thermometer", label: "Термометр" },
   { value: "oven", label: "Печь" },
+  { value: "fryer", label: "Фритюрница" },
+  { value: "dishwasher", label: "Посудомоечная машина" },
+  { value: "uv_lamp", label: "УФ-лампа" },
   { value: "other", label: "Другое" },
 ];
+
+/** Синонимы старых кодов: «fridge» — тот же холодильник. */
+const TYPE_ALIASES: Record<string, string> = { fridge: "refrigerator" };
+
+function initialType(type: string | undefined): string {
+  const value = (type ?? "").trim();
+  return TYPE_ALIASES[value.toLowerCase()] ?? value;
+}
 
 type AreaOption = {
   id: string;
@@ -79,7 +97,7 @@ export function EquipmentDialog({
   const { busy: isSubmitting, acquire, release } = useSubmitLock();
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState(equipment?.name ?? "");
-  const [type, setType] = useState(equipment?.type ?? "");
+  const [type, setType] = useState(initialType(equipment?.type));
   const [areaId, setAreaId] = useState(equipment?.areaId ?? "");
   const [serialNumber, setSerialNumber] = useState(equipment?.serialNumber ?? "");
   const [tempMin, setTempMin] = useState(equipment?.tempMin?.toString() ?? "");
@@ -88,7 +106,7 @@ export function EquipmentDialog({
 
   function resetForm() {
     setName(equipment?.name ?? "");
-    setType(equipment?.type ?? "");
+    setType(initialType(equipment?.type));
     setAreaId(equipment?.areaId ?? "");
     setSerialNumber(equipment?.serialNumber ?? "");
     setTempMin(equipment?.tempMin?.toString() ?? "");
@@ -252,7 +270,12 @@ export function EquipmentDialog({
                 <SelectValue placeholder="Выберите тип" />
               </SelectTrigger>
               <SelectContent>
-                {equipmentTypes.map((t) => (
+                {(type && !equipmentTypes.some((t) => t.value === type)
+                  ? // Тип не из списка (введён иначе) — показываем как есть,
+                    // чтобы поле не было пустым и тип не терялся.
+                    [...equipmentTypes, { value: type, label: getEquipmentTypeLabel(type) }]
+                  : equipmentTypes
+                ).map((t) => (
                   <SelectItem key={t.value} value={t.value}>
                     {t.label}
                   </SelectItem>

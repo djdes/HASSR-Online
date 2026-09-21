@@ -193,9 +193,36 @@ export async function GET(request: Request) {
     }
   }
 
+  // Норма температуры из карточки оборудования (scopeKey вида
+  // `fridge:<equipmentId>:…`) — чтобы заведующая видела замер вне нормы.
+  const fridgeIds = [
+    ...new Set(
+      [...pendingClaims, ...histClaims]
+        .map((c) => /^fridge:([^:]+):/.exec(c.scopeKey)?.[1])
+        .filter((id): id is string => Boolean(id))
+    ),
+  ];
+  const normByEquipment = new Map<string, { min: number | null; max: number | null }>();
+  if (fridgeIds.length > 0) {
+    const equipment = await db.equipment.findMany({
+      where: { id: { in: fridgeIds }, area: { organizationId } },
+      select: { id: true, tempMin: true, tempMax: true },
+    });
+    for (const item of equipment) {
+      if (item.tempMin !== null || item.tempMax !== null) {
+        normByEquipment.set(item.id, { min: item.tempMin, max: item.tempMax });
+      }
+    }
+  }
+  const withNorm = (c: Parameters<typeof toItem>[0] & { scopeKey: string }) => ({
+    ...toItem(c),
+    temperatureNorm:
+      normByEquipment.get(/^fridge:([^:]+):/.exec(c.scopeKey)?.[1] ?? "") ?? null,
+  });
+
   return NextResponse.json({
     today: today.toISOString().slice(0, 10),
-    pendingReview: pendingClaims.map(toItem),
+    pendingReview: pendingClaims.map(withNorm),
     inProgress: activeClaims.map((c) => ({
       id: c.id,
       scopeLabel: c.scopeLabel,
@@ -212,7 +239,7 @@ export async function GET(request: Request) {
       overdue: Date.now() - c.claimedAt.getTime() > 2 * 60 * 60 * 1000,
     })),
     notTaken,
-    hist: histClaims.map(toItem),
+    hist: histClaims.map(withNorm),
     summary: {
       pending: pendingClaims.length,
       inProgress: activeClaims.length,

@@ -88,7 +88,8 @@ export async function GET(request: Request) {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${fileName}"`,
+        // inline=1 — запасной путь для оболочки Telegram (см. report-form.tsx).
+        "Content-Disposition": `${searchParams.get("inline") === "1" ? "inline" : "attachment"}; filename="${fileName}"`,
         "Content-Length": String(uint8.length),
       },
     });

@@ -186,7 +186,9 @@ const GENERIC_EVENT_LABELS: Record<string, string> = {
   traceability_test: "Прослеживаемость",
   general_cleaning: "Генеральная уборка",
   sanitation_day_control: "Санитарный день",
-  sanitary_day_control: "Санитарный день",
+  // Отдельный журнал — «Чек-лист (памятка) проведения санитарного дня».
+  // С одинаковой подписью две задачи на «Сегодня» было не различить.
+  sanitary_day_control: "Чек-лист сан. дня",
   pest_control: "Дератизация / дезинсекция",
   intensive_cooling: "Интенсивное охлаждение",
   glass_control: "Контроль стекла",

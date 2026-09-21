@@ -199,8 +199,11 @@ export function CalendarClient({
                   </div>
                   {group.upcoming.length > 0 ? (
                     <ul className="mt-2 space-y-1.5">
-                      {group.upcoming.map((event) => (
-                        <li key={`${event.date}-${event.title}`} className="flex items-start gap-3 text-[13px] leading-snug">
+                      {group.upcoming.map((event, index) => (
+                        // Дата + название не уникальны (две поверки одного
+                        // прибора в день, одноимённые сотрудники) — React
+                        // ругался «two children with the same key».
+                        <li key={`${event.date}-${event.title}-${index}`} className="flex items-start gap-3 text-[13px] leading-snug">
                           <span className="shrink-0 tabular-nums text-[#6f7282]">{formatDay(event.date)}</span>
                           <span className="min-w-0 text-[#0b1024]">{event.title}</span>
                         </li>

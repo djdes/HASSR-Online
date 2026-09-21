@@ -133,3 +133,17 @@ test("нет истории — достаточно одной записи з�
     true
   );
 });
+
+test("журналы с одной записью на день не сравнивают число строк со вчера", async () => {
+  const { isStrictCompletenessJournal } = await import("./today-compliance");
+  // Холодильники/климат: fillMode по умолчанию per-employee, но запись
+  // одна на день — достаточно любой записи за сегодня.
+  assert.equal(isStrictCompletenessJournal("cold_equipment_control", "per-employee"), false);
+  assert.equal(isStrictCompletenessJournal("climate_control", undefined), false);
+  // Кадровые журналы — по-прежнему строгие.
+  assert.equal(isStrictCompletenessJournal("hygiene", "single"), true);
+  assert.equal(isStrictCompletenessJournal("health_check", null), true);
+  // Прочие — как настроено в fillMode.
+  assert.equal(isStrictCompletenessJournal("incoming_control", "per-employee"), true);
+  assert.equal(isStrictCompletenessJournal("incoming_control", "single"), false);
+});
