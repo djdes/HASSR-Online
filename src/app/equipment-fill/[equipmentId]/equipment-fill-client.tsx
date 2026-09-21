@@ -1,20 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, QrCode } from "lucide-react";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DeviationCorrection } from "@/components/qr-fill/deviation-correction";
-import { QuickSwitchNext, QuickSwitchStrip, type QuickSwitchItem } from "@/components/qr-fill/quick-switch";
+import { QuickSwitchList, QuickSwitchNext, type QuickSwitchItem } from "@/components/qr-fill/quick-switch";
+import { QrPageShell } from "@/components/qr-fill/qr-page-shell";
+import { WhoRow } from "@/components/qr-fill/who-row";
+import { EmployeePicker } from "@/components/qr-fill/employee-picker";
 import { ReadingField } from "@/components/qr-fill/reading-field";
 import { PinPrompt } from "@/components/qr-fill/pin-prompt";
 import { draftKeyFor, useFormDraft } from "@/components/qr-fill/use-form-draft";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 type Employee = { id: string; name: string; positionTitle: string | null; hasPin?: boolean };
 
@@ -45,6 +41,9 @@ type Props = {
   todayValues?: { temperature?: number | null; humidity?: number | null } | null;
   /** «20.09.2026» и «18:31» по часовому поясу организации — подпись «за какой момент вносится». */
   stamp?: { date: string; time: string } | null;
+  /** Шапка в две строки: организация и название журнала. */
+  organizationName: string;
+  journalTitle: string;
 };
 
 const LS_EMPLOYEE_KEY = "wesetup.equipment-fill.employeeId";
@@ -67,6 +66,8 @@ export function EquipmentFillClient({
   siblings = [],
   todayValues = null,
   stamp = null,
+  organizationName,
+  journalTitle,
 }: Props) {
   const [employeeId, setEmployeeId] = useState<string>("");
   // Имя запоминаем сразу при выборе, а не только после записи: обновление страницы или обрыв связи не заставят выбирать заново.
@@ -90,6 +91,7 @@ export function EquipmentFillClient({
   const [humidity, setHumidity] = useState<string>("");
   // «Что сделали» — обязательно, когда замер вышел за норму.
   const [correction, setCorrection] = useState("");
+  const [switchOpen, setSwitchOpen] = useState(false);
   // Время в подписи идёт по часам телефона: страницу могут держать открытой долго.
   const [stampTime, setStampTime] = useState(stamp?.time ?? "");
   useEffect(() => {
@@ -128,14 +130,6 @@ export function EquipmentFillClient({
     }
   }, [employees, mode, sessionEmployee]);
 
-  const rangeLabel = useMemo(() => {
-    const { tempMin, tempMax } = equipment;
-    if (tempMin != null && tempMax != null)
-      return `норма ${tempMin}…${tempMax} °C`;
-    if (tempMin != null) return `норма от ${tempMin} °C`;
-    if (tempMax != null) return `норма до ${tempMax} °C`;
-    return "норма не задана";
-  }, [equipment]);
 
   const parsedTemp = useMemo(() => {
     // Пустое поле нельзя считать нулём: `Number("")` = 0, и «Сохранить»
@@ -230,33 +224,10 @@ export function EquipmentFillClient({
   );
 
   return (
-    <main className="min-h-screen bg-[#fafbff]">
-      <section className="relative overflow-hidden bg-[#0b1024] text-white">
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -left-24 -top-24 size-[420px] rounded-full bg-[#5566f6] opacity-40 blur-[120px]" />
-          <div className="absolute -bottom-40 -right-32 size-[460px] rounded-full bg-[#7a5cff] opacity-30 blur-[140px]" />
-        </div>
-        <div className="relative z-10 mx-auto max-w-xl px-5 py-10">
-          <div className="flex items-start gap-3">
-            <div className="flex size-11 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20">
-              <QrCode className="size-5" />
-            </div>
-            <div>
-              <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-white/70">
-                Замер температуры
-              </div>
-              <h1 className="mt-1 text-[22px] font-semibold leading-tight tracking-[-0.02em]">
-                {equipment.name}
-              </h1>
-              <p className="mt-2 text-[14px] text-white/75">
-                {equipment.areaName} · {rangeLabel}
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-xl px-5 py-8">
+    <QrPageShell orgName={organizationName} title={journalTitle}>
+        <WhoRow label="Оборудование" value={equipment.name} action={switchOpen ? "Скрыть" : "Сменить"} onAction={siblingsView.length > 1 ? () => setSwitchOpen((v) => !v) : undefined}>
+          {switchOpen && !done ? <QuickSwitchList items={siblingsView} /> : null}
+        </WhoRow>
         {/* Раньше об отсутствии журнала сообщал только 409 после
             «Сохранить» — человек вводил замер впустую. */}
         {!hasActiveDocument ? (
@@ -270,7 +241,6 @@ export function EquipmentFillClient({
           </div>
         ) : null}
 
-        {!done ? <QuickSwitchStrip items={siblingsView} title="Оборудование" /> : null}
         {done ? (
           <div className="rounded-3xl border border-[#ececf4] bg-white p-8 text-center shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
             <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-[#ecfdf5] text-[#116b2a]">
@@ -307,44 +277,15 @@ export function EquipmentFillClient({
             <QuickSwitchNext items={siblingsView} title="Оборудование" />
           </div>
         ) : (
-          <div className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
+          <div>
             <div className="space-y-5">
-              <div>
-                <label className="text-[16px] font-semibold text-[#0b1024]">
-                  Кто снимает показания
-                </label>
-                {fixedEmployee ? (
-                  <div className="mt-1 flex h-12 items-center rounded-2xl border border-[#dcdfed] bg-[#fafbff] px-4 text-[15px] font-medium text-[#0b1024]">{sessionEmployee?.name}</div>
-                ) : (
-                  <Select value={employeeId} onValueChange={rememberEmployee}>
-                  <SelectTrigger className="mt-1 h-auto min-h-12 w-full rounded-2xl border-[#dcdfed] py-2 text-left *:data-[slot=select-value]:line-clamp-none *:data-[slot=select-value]:whitespace-normal *:data-[slot=select-value]:items-start">
-                    <SelectValue placeholder="Выберите ваше имя">
-                      {selectedEmployee ? (
-                        <span className="block min-w-0">
-                          <span className="block text-[17px] font-medium leading-snug text-[#0b1024]">{selectedEmployee.name}</span>
-                          {selectedEmployee.positionTitle ? <span className="block text-[14px] leading-snug text-[#6f7282]">{selectedEmployee.positionTitle}</span> : null}
-                        </span>
-                      ) : null}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {employees.map((e) => (
-                      <SelectItem key={e.id} value={e.id}>
-                        <span className="block">
-                          <span className="block text-[16px]">{e.name}</span>
-                          {e.positionTitle ? <span className="block text-[12px] text-[#6f7282]">{e.positionTitle}</span> : null}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                )}
-                {rememberedName ? (
-                  <p className="mt-1.5 text-[14px] text-[#9b9fb3]">
-                    Запомнили с прошлого раза — можно сразу вводить температуру.
-                  </p>
-                ) : null}
-              </div>
+              <EmployeePicker
+                employees={employees.map((employee) => ({ id: employee.id, name: employee.name, position: employee.positionTitle, hasPin: employee.hasPin }))}
+                value={employeeId}
+                onChange={rememberEmployee}
+                fixedName={fixedEmployee ? sessionEmployee?.name ?? null : null}
+                hint={rememberedName ? "Запомнили с прошлого раза — можно сразу вводить показания." : null}
+              />
 
               {hasToday ? (
                 <p className="rounded-2xl border border-[#d6dcff] bg-[#eef1ff] px-4 py-2.5 text-[13px] leading-snug text-[#3848c7]">
@@ -409,7 +350,6 @@ export function EquipmentFillClient({
             </div>
           </div>
         )}
-      </section>
-    </main>
+    </QrPageShell>
   );
 }

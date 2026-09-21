@@ -18,6 +18,17 @@ describe("journal-fill-html", () => {
     assert.deepEqual(normRange({ type: "text", key: "t", label: "x" }), { min: null, max: null });
   });
 
+  it("renders a segmented status row for hygiene with the default checked", () => {
+    const html = renderForm({
+      action: "/x", token: "t", who: "", correctionPresets: [], openedAt: 1, suggestions: {},
+      hints: { defaults: { status: "healthy" }, segmented: { status: { healthy: "Здоров", day_off: "Выходной", sick_leave: "Болен" } } },
+      values: { status: "healthy" },
+      form: { fields: [{ type: "select", key: "status", label: "Состояние", required: true, options: [{ value: "healthy", label: "Здоров" }, { value: "day_off", label: "Выходной / отгул" }, { value: "sick_leave", label: "Больничный лист" }] }] },
+    });
+    assert.match(html, /<div class="seg"><label class="segb on"><input type="radio" name="status" value="healthy" checked required><span>Здоров<\/span><\/label><label class="segb"><input type="radio" name="status" value="day_off" required><span>Выходной<\/span><\/label>/);
+    assert.doesNotMatch(html, /<select/);
+  });
+
   it("asks the PIN above the save button when required and keeps its error next to it", () => {
     const html = renderForm({
       action: "/x", token: "t", who: "", correctionPresets: [], openedAt: 1, suggestions: {}, values: {}, hints: {}, pinRequired: true, error: "Неверный PIN. Осталось попыток: 4.",

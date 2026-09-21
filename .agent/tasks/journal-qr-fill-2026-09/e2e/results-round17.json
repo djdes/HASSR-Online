@@ -1,0 +1,22 @@
+{
+  "roomHeader": "КАФЕ «ТЕСТОВОЕ 1» Температура и влажность помещений",
+  "roomObjectRow": "ПОМЕЩЕНИЕ E2E QS Склад Бакалея Сменить",
+  "roomSheetItems": 7,
+  "roomSheetFiltered": 1,
+  "roomPicked": "КТО СНИМАЕТ ПОКАЗАНИЯ Иванова Ольга Петровна Сменить",
+  "roomInputAlign": "center 26px",
+  "roomSwitchList": 2,
+  "eqHeader": "КАФЕ «ТЕСТОВОЕ 1» Температура холодильного оборудования",
+  "hygSeg": [
+    "Здоров",
+    "Выходной",
+    "Болен",
+    "Отстранён",
+    "Отпуск"
+  ],
+  "hygChecked": "healthy",
+  "hygSelect": 0,
+  "hygSheetItems": 7,
+  "hygSheetVisible": 2,
+  "hygAfterTap": "day_off"
+}

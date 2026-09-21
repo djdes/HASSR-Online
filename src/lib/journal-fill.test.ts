@@ -33,7 +33,10 @@ describe("journal-fill-hints", () => {
     assert.deepEqual(hints.tempField, { nameKey: "productName", tempKey: "productTemp" });
   });
   it("неизвестный журнал — пустые подсказки", () => {
-    assert.deepEqual(journalFillHints("hygiene"), {});
+    // Гигиена: «здоров» по умолчанию и статус кнопками; у неизвестного журнала подсказок нет.
+    assert.equal(journalFillHints("hygiene").defaults?.status, "healthy");
+    assert.equal(journalFillHints("hygiene").segmented?.status?.healthy, "Здоров");
+    assert.deepEqual(journalFillHints("no_such_journal"), {});
   });
   it("timeMinutesAgo даёт ЧЧ:ММ со сдвигом", () => {
     const base = new Date(2026, 8, 19, 10, 5);

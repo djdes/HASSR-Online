@@ -61,8 +61,8 @@ main{padding:14px 0 20px}
 .sticky{position:sticky;bottom:0;z-index:5;padding:12px 0 max(env(safe-area-inset-bottom),10px);background:linear-gradient(to top,#fafbff 72%,rgba(250,251,255,0))}
 .who{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px;padding:8px 12px;border:1px solid #ececf4;border-radius:14px;background:#fff}
 .who .wl{min-width:0;flex:1;display:flex;flex-direction:column;gap:1px}
-.who .k{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#9b9fb3}
-.who .v{font-size:17px;font-weight:600;color:#0b1024;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.who .k{font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#9b9fb3}
+.who .v{font-size:19px;font-weight:600;color:#0b1024;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
 .who a{flex:none;font-size:15px;font-weight:500;text-decoration:none;color:#3848c7;padding:6px 10px;border-radius:999px;background:#f5f6ff}
 .steps{margin:0 0 12px;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}
 .steps li{display:flex;gap:10px;font-size:16.5px;color:#3c4053;line-height:1.35}
@@ -109,6 +109,20 @@ main{padding:14px 0 20px}
 .pinbox .in.pin{text-align:center;font-size:36px;font-weight:600;letter-spacing:.5em;padding-left:.5em;min-height:72px}
 .pinbox .in.pin::placeholder{letter-spacing:.3em;color:#c8cbe0}
 .pinbox .hint{text-align:center;margin-top:8px}
+.seg{display:flex;flex-wrap:wrap;gap:8px}
+.segb{flex:1 1 30%;min-width:96px;display:flex;align-items:center;justify-content:center;min-height:58px;padding:8px 10px;border:1px solid #dcdfed;border-radius:14px;background:#fff;font-size:18px;font-weight:600;color:#0b1024;text-align:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.segb input{position:absolute;opacity:0;width:0;height:0}
+.segb.on,.segb:has(input:checked){border-color:#5566f6;background:#eef1ff;color:#3848c7;box-shadow:0 0 0 3px rgba(85,102,246,.15)}
+.seg-wrap .lab{margin-bottom:8px}
+.fl.has-step .in{text-align:center;font-size:24px;font-weight:600}
+.sheet{position:fixed;inset:0;z-index:120;background:rgba(11,16,36,.45);display:flex;align-items:flex-end}
+.sheet[hidden]{display:none}
+.sheet .sh{width:100%;max-height:88dvh;display:flex;flex-direction:column;background:#fafbff;border-radius:22px 22px 0 0;box-shadow:0 -20px 60px -30px rgba(11,16,36,.55)}
+.sheet .sh-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 16px 8px;font-size:19px;font-weight:600}
+.sheet .sh-x{width:40px;height:40px;border-radius:999px;border:0;background:#fff;box-shadow:0 0 0 1px #ececf4;font-size:22px;color:#6f7282;cursor:pointer}
+.sheet .sh-s{padding:0 16px 8px}
+.sheet .sh-l{flex:1;overflow-y:auto;padding:0 16px max(env(safe-area-inset-bottom),16px)}
+.who.emp{cursor:pointer}
 .today{margin:-4px 0 12px;font-size:16px;color:#3c4053;line-height:1.35}
 .today b{font-weight:600;color:#0b1024}
 .prog{display:block;width:max-content;max-width:100%;margin:0 auto 8px;padding:4px 14px;border-radius:999px;background:#fff;border:1px solid #ececf4;font-size:14px;color:#6f7282;text-align:center;font-variant-numeric:tabular-nums}
@@ -237,6 +251,18 @@ export const QR_FILL_JS = `
     else { if(el.getAttribute("data-req")==="1") el.setAttribute("aria-required","true"); if(st) st.textContent=""; fire(el); }
     progress(); if(typeof checkAll==="function") checkAll();
   });
+  document.addEventListener("change",function(e){ var t=e.target; if(!t||t.type!=="radio") return; var wrap=t.closest?t.closest(".seg"):null; if(!wrap) return; var ls=wrap.querySelectorAll(".segb"); for(var i=0;i<ls.length;i++){ var inp=ls[i].querySelector("input"); ls[i].classList.toggle("on",!!(inp&&inp.checked)); } });
+  /* Смена сотрудника — шторка с поиском на той же странице (без скриптов — ссылка на шаг выбора). */
+  var sheet=document.getElementById("emp-sheet");
+  if(sheet){
+    function openSheet(){ sheet.hidden=false; document.body.style.overflow="hidden"; var si=document.getElementById("emp-sheet-search"); if(si){ setTimeout(function(){ si.focus({preventScroll:true}); },60); } }
+    function closeSheet(){ sheet.hidden=true; document.body.style.overflow=""; }
+    var opener=document.querySelector("[data-emp-open]"); if(opener) opener.addEventListener("click",function(e){ e.preventDefault(); openSheet(); });
+    sheet.addEventListener("click",function(e){ if(e.target===sheet) closeSheet(); });
+    var xb=sheet.querySelector(".sh-x"); if(xb) xb.addEventListener("click",closeSheet);
+    document.addEventListener("keydown",function(e){ if(e.key==="Escape") closeSheet(); });
+    var ss=document.getElementById("emp-sheet-search"); if(ss){ ss.addEventListener("input",function(){ var s=key(ss.value); var it=sheet.querySelectorAll("[data-emp]"); for(var i=0;i<it.length;i++){ it[i].hidden=s!==""&&key(it[i].getAttribute("data-emp")).indexOf(s)<0; } }); }
+  }
   document.addEventListener("input",progress); document.addEventListener("change",progress); progress();
   /* Время в подписях «показания за сегодня» идёт по часам телефона, страница может быть открыта долго. */
   function tick(){ var t=hhmm(new Date()); var st=document.querySelectorAll(".stamp[data-stamp-date]"); for(var i=0;i<st.length;i++) st[i].textContent=st[i].getAttribute("data-stamp-date")+" "+t; var tt=document.querySelectorAll(".stamp-t"); for(var k=0;k<tt.length;k++) tt[k].textContent=t; }
@@ -273,6 +299,7 @@ export const QR_FILL_JS = `
 
 const QR_ICON = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg>`;
 const ARROW = `<span class="arr" aria-hidden="true">›</span>`;
+const CHECK_SMALL = `<svg class="arr" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3848c7" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>`;
 const CHECK_ICON = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>`;
 
 export function renderPage(params: {
@@ -346,7 +373,7 @@ export function renderEmployeeStep(params: {
   const remembered = params.remembered
     ? `<div class="card"><p class="label">Вы</p><a class="item on" href="${esc(params.remembered.href)}"><span>${esc(params.remembered.name)}${params.remembered.positionTitle ? `<small>${esc(params.remembered.positionTitle)}</small>` : ""}</span>${ARROW}</a><div class="sticky"><a class="btn" href="${esc(params.remembered.href)}">Продолжить</a></div></div>`
     : "";
-  const search = params.employees.length > 12 ? `<div class="search"><input id="emp-search" class="in" type="search" placeholder="Найти по фамилии" autocomplete="off"></div>` : "";
+  const search = params.employees.length > 6 ? `<div class="search"><input id="emp-search" class="in" type="search" placeholder="Найти по фамилии" autocomplete="off"></div>` : "";
   return `${remembered}<div class="card"><p class="label">${params.remembered ? "Или другой сотрудник" : "Кто заполняет"}</p>${search}<div class="list">${params.employees
     .map(
       (item) =>
@@ -375,10 +402,23 @@ export function renderRowStep(params: { rows: Array<{ rowKey: string; label: str
 }
 
 /** «Вы / документ» — компактный блок: подпись мелким капсом, значение до двух строк, справа «Сменить». */
-export function renderWho(params: { employeeName: string; changeHref: string | null; documentTitle?: string | null; documentChangeHref?: string | null }): string {
-  const row = (k: string, v: string, href: string | null) =>
-    `<div class="who"><div class="wl"><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></div>${href ? `<a href="${esc(href)}">Сменить</a>` : ""}</div>`;
-  return row("Вы", params.employeeName, params.changeHref) + (params.documentTitle ? row("Документ", params.documentTitle, params.documentChangeHref ?? null) : "");
+export function renderWho(params: {
+  employeeName: string;
+  changeHref: string | null;
+  documentTitle?: string | null;
+  documentChangeHref?: string | null;
+  /** Список для шторки «Сменить» на той же странице (со скриптами); без них — ссылка на шаг выбора. */
+  employees?: Array<{ id: string; name: string; positionTitle: string | null; href: string; current: boolean }>;
+}): string {
+  const row = (k: string, v: string, href: string | null, extra = "") =>
+    `<div class="who${extra ? " emp" : ""}"><div class="wl"><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></div>${href ? `<a href="${esc(href)}"${extra}>Сменить</a>` : ""}</div>`;
+  const sheet =
+    params.changeHref && params.employees && params.employees.length > 0
+      ? `<div class="sheet" id="emp-sheet" hidden role="dialog" aria-modal="true" aria-label="Кто заполняет"><div class="sh"><div class="sh-h"><span>Кто заполняет</span><button type="button" class="sh-x" aria-label="Закрыть">×</button></div><div class="sh-s"><input id="emp-sheet-search" class="in" type="search" placeholder="Найти по фамилии" autocomplete="off" aria-label="Поиск сотрудника"></div><div class="sh-l"><div class="list">${params.employees
+          .map((item) => `<a class="item${item.current ? " on" : ""}" data-emp="${esc(item.name)}" href="${esc(item.href)}"><span>${esc(item.name)}${item.positionTitle ? `<small>${esc(item.positionTitle)}</small>` : ""}</span>${item.current ? CHECK_SMALL : ARROW}</a>`)
+          .join("")}</div></div></div></div>`
+      : "";
+  return row("Кто заполняет", params.employeeName, params.changeHref, sheet ? " data-emp-open" : "") + (params.documentTitle ? row("Документ", params.documentTitle, params.documentChangeHref ?? null) : "") + sheet;
 }
 
 type Suggestions = Record<string, { values: string[]; meta: Record<string, NameSuggestionMeta> }>;
@@ -726,13 +766,25 @@ function renderField(field: TaskFormField, raw: unknown, hints: JournalFillHints
       const checked = raw === true || raw === "on" || raw === "true";
       return `<label class="check${bad ? " bad" : ""}"><input type="checkbox" id="${esc(id)}" name="${esc(field.key)}" value="on"${checked ? " checked" : ""}><span>${esc(field.label)}</span></label>`;
     }
-    case "select":
+    case "select": {
+      // Ряд крупных кнопок (radio) вместо списка — работает и без скриптов.
+      const seg = hints.segmented?.[field.key];
+      if (seg) {
+        const buttons = field.options
+          .map((option) => {
+            const checked = option.value === value;
+            return `<label class="segb${checked ? " on" : ""}"><input type="radio" name="${esc(field.key)}" value="${esc(option.value)}"${checked ? " checked" : ""}${required ? " required" : ""}><span>${esc(seg[option.value] ?? option.label)}</span></label>`;
+          })
+          .join("");
+        return `<div class="fl up seg-wrap${bad ? " bad" : ""}"><p class="lab">${esc(field.label)}${required ? `<span class="req" aria-hidden="true">*</span>` : ""}</p><div class="seg">${buttons}</div></div>`;
+      }
       return fl(
         `<select class="in" id="${esc(id)}" name="${esc(field.key)}"${req}>${value === "" ? `<option value="">Выберите</option>` : ""}${field.options
           .map((option) => `<option value="${esc(option.value)}"${option.value === value ? " selected" : ""}>${esc(option.label)}</option>`)
           .join("")}</select>`,
         { up: true }
       );
+    }
     case "date":
       return fl(`<input class="in" id="${esc(id)}" name="${esc(field.key)}" type="date" value="${esc(value)}"${req}>`, { up: true });
     case "time": {

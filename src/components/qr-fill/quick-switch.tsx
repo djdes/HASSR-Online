@@ -141,3 +141,40 @@ export function QuickSwitchNext({ items, title }: { items: QuickSwitchItem[]; ti
     </div>
   );
 }
+
+/** Список объектов для «Сменить»: текущий отмечен, снятые — с показанием. */
+export function QuickSwitchList({ items }: { items: QuickSwitchItem[] }) {
+  if (items.length < 2) return null;
+  return (
+    <div className="mt-2 flex flex-col gap-2">
+      {items.map((item) =>
+        item.current ? (
+          <span key={item.id} aria-current="true" className="flex min-h-16 items-center justify-between gap-3 rounded-[14px] border border-[#5566f6] bg-[#eef1ff] px-4 py-3 text-[18px] font-medium text-[#0b1024]">
+            <span className="min-w-0 truncate">{item.name}</span>
+            <Check className="size-6 shrink-0 text-[#3848c7]" />
+          </span>
+        ) : (
+          <a
+            key={item.id}
+            href={item.href}
+            className={`flex min-h-16 items-center justify-between gap-3 rounded-[14px] border px-4 py-3 text-[18px] font-medium transition-colors duration-150 ${
+              item.filled ? "border-[#d4f5e3] bg-[#f3fdf7] text-[#116b2a]" : "border-[#dcdfed] bg-white text-[#0b1024] active:bg-[#f5f6ff]"
+            }`}
+          >
+            <span className="min-w-0 truncate">{item.name}</span>
+            <span className="flex shrink-0 items-center gap-1.5 text-[15px] font-normal">
+              {item.filled ? (
+                <>
+                  {item.summary ?? "снято"}
+                  <Check className="size-5" />
+                </>
+              ) : (
+                <ArrowRight className="size-5 text-[#9b9fb3]" />
+              )}
+            </span>
+          </a>
+        )
+      )}
+    </div>
+  );
+}

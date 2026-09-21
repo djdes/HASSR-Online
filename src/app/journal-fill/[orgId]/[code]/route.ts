@@ -35,7 +35,7 @@ import {
 import { submitJournalFill } from "@/lib/journal-fill-submit";
 import { listNameSuggestions } from "@/lib/name-suggestions-db";
 import type { NameSuggestionMeta } from "@/lib/name-suggestions";
-import { resolveQrFillActor, sessionEmployeeForQr } from "@/lib/qr-fill-actor";
+import { sessionEmployeeForQr } from "@/lib/qr-fill-actor";
 import { relativeRedirect, safeInternalPath } from "@/lib/relative-redirect";
 import { rowKeyForEmployee } from "@/lib/tasksflow-adapters/row-key";
 import type { TaskFormField, TaskFormSchema } from "@/lib/tasksflow-adapters/task-form";
@@ -291,6 +291,7 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
     changeHref,
     documentTitle: documents.length > 1 ? document.title : null,
     documentChangeHref: documents.length > 1 ? link({ employee: employee.id, pick: "doc" }) : null,
+    employees: employees.map((item) => ({ id: item.id, name: item.name, positionTitle: item.positionTitle, href: link({ ...keep, employee: item.id }), current: item.id === employee.id })),
   });
 
   // PIN спрашиваем в самой форме над «Сохранить» — каждый раз, если он у сотрудника задан (или режим «имя + PIN»).

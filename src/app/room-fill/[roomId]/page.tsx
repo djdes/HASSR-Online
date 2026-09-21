@@ -144,6 +144,7 @@ export default async function RoomFillPage({
   return (
     <RoomFillClient
       token={token}
+      journalTitle="Температура и влажность помещений"
       siblings={siblings}
       todayValues={siblings.find((item) => item.current)?.values ?? null}
       stamp={stampFor(timezone, now)}

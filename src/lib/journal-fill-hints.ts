@@ -23,6 +23,8 @@ export type JournalFillHints = {
   append?: boolean;
   /** Текстовое поле → готовые варианты одним касанием (своё значение тоже можно). */
   choices?: Record<string, readonly string[]>;
+  /** Поле-список → ряд крупных кнопок вместо выпадающего списка: значение → короткая подпись. */
+  segmented?: Record<string, Record<string, string>>;
 };
 
 export const ORGANOLEPTIC_CHOICES = ["Отлично", "Хорошо", "Удовлетворительно", "Неудовлетворительно"] as const;
@@ -35,6 +37,11 @@ export const TIME_OFFSET_CHIPS = [
 ] as const;
 
 const HINTS: Record<string, JournalFillHints> = {
+  hygiene: {
+    // Почти всегда «здоров»: стоит по умолчанию, остальное — одним касанием.
+    defaults: { status: "healthy" },
+    segmented: { status: { healthy: "Здоров", day_off: "Выходной", sick_leave: "Болен", vacation: "Отпуск", suspended: "Отстранён" } },
+  },
   finished_product: {
     append: true,
     nameFields: { productName: "dish" },

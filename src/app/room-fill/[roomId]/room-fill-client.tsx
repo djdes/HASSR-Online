@@ -1,18 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, QrCode } from "lucide-react";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { DeviationCorrection } from "@/components/qr-fill/deviation-correction";
-import { QuickSwitchNext, QuickSwitchStrip, type QuickSwitchItem } from "@/components/qr-fill/quick-switch";
+import { QuickSwitchList, QuickSwitchNext, type QuickSwitchItem } from "@/components/qr-fill/quick-switch";
+import { QrPageShell } from "@/components/qr-fill/qr-page-shell";
+import { WhoRow } from "@/components/qr-fill/who-row";
+import { EmployeePicker } from "@/components/qr-fill/employee-picker";
 import { ReadingField } from "@/components/qr-fill/reading-field";
 import { PinPrompt } from "@/components/qr-fill/pin-prompt";
 import { draftKeyFor, useFormDraft } from "@/components/qr-fill/use-form-draft";
@@ -38,17 +34,13 @@ type Props = {
   todayValues?: { temperature?: number | null; humidity?: number | null } | null;
   /** «20.09.2026» и «18:31» по часовому поясу организации — подпись «за какой момент вносится». */
   stamp?: { date: string; time: string } | null;
+  /** Название журнала в шапке (вторая строка после организации). */
+  journalTitle: string;
 };
 
 const LS_EMPLOYEE_KEY = "wesetup.room-fill.employeeId";
 const LS_SHARED_EMPLOYEE_KEY = "wesetup.qr-fill.employeeId";
 
-function normLabel(metric: Metric, unit: string): string {
-  if (metric.min !== null && metric.max !== null) return `норма ${metric.min}…${metric.max} ${unit}`;
-  if (metric.min !== null) return `норма от ${metric.min} ${unit}`;
-  if (metric.max !== null) return `норма до ${metric.max} ${unit}`;
-  return "норма не задана";
-}
 
 function parseNumber(value: string): number | null {
   if (!value.trim()) return null;
@@ -65,7 +57,7 @@ function isOutside(value: number | null, metric: Metric): boolean {
  * Три шага, как на плакате: выбрать себя → ввести показания → «Сохранить».
  * Имя запоминается на телефоне, со второго раза остаётся ввести числа.
  */
-export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot, employees, mode = "public", sessionEmployee = null, siblings = [], todayValues = null, stamp = null }: Props) {
+export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot, employees, mode = "public", sessionEmployee = null, siblings = [], todayValues = null, stamp = null, journalTitle }: Props) {
   const [employeeId, setEmployeeId] = useState("");
   // Имя запоминаем сразу при выборе, а не только после записи: обновление страницы или обрыв связи не заставят выбирать заново.
   const rememberEmployee = (id: string) => {
@@ -87,6 +79,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
   const [humidity, setHumidity] = useState(typeof todayValues?.humidity === "number" ? String(todayValues.humidity) : "");
   // «Что сделали» — обязательно, когда замер вышел за норму.
   const [correction, setCorrection] = useState("");
+  const [switchOpen, setSwitchOpen] = useState(false);
   // Время в подписи идёт по часам телефона: страницу могут держать открытой долго.
   const [stampTime, setStampTime] = useState(stamp?.time ?? "");
   useEffect(() => {
@@ -199,39 +192,10 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
   );
 
   return (
-    <main className="min-h-screen bg-[#fafbff]">
-      <section className="relative overflow-hidden bg-[#0b1024] text-white">
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -left-24 -top-24 size-[420px] rounded-full bg-[#5566f6] opacity-40 blur-[120px]" />
-          <div className="absolute -bottom-40 -right-32 size-[460px] rounded-full bg-[#7a5cff] opacity-30 blur-[140px]" />
-        </div>
-        <div className="relative z-10 mx-auto max-w-xl px-5 py-10">
-          <div className="flex items-start gap-3">
-            <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20">
-              <QrCode className="size-5" />
-            </div>
-            <div className="min-w-0">
-              <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-white/70">
-                Температура и влажность
-              </div>
-              <h1 className="mt-1 text-[22px] font-semibold leading-tight tracking-[-0.02em]">{room.name}</h1>
-              <p className="mt-2 text-[14px] text-white/75">
-                {room.organizationName} · {room.buildingName}
-              </p>
-              <p className="mt-1 text-[13px] text-white/60">
-                {[
-                  norms.temperature.enabled ? normLabel(norms.temperature, "°C") : null,
-                  norms.humidity.enabled ? normLabel(norms.humidity, "%") : null,
-                ]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-xl px-5 py-8">
+    <QrPageShell orgName={room.organizationName} title={journalTitle}>
+        <WhoRow label="Помещение" value={room.name} action={switchOpen ? "Скрыть" : "Сменить"} onAction={siblingsView.length > 1 ? () => setSwitchOpen((v) => !v) : undefined}>
+          {switchOpen && !saved ? <QuickSwitchList items={siblingsView} /> : null}
+        </WhoRow>
         {!hasActiveDocument ? (
           <div className="mb-5 flex gap-3 rounded-2xl border border-[#ffe9b0] bg-[#fff8eb] p-4 text-[14px] leading-relaxed text-[#7a4a00]">
             <AlertTriangle className="mt-0.5 size-5 shrink-0" />
@@ -242,7 +206,6 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
           </div>
         ) : null}
 
-        {!saved ? <QuickSwitchStrip items={siblingsView} title="Помещения" /> : null}
         {saved ? (
           <div className="rounded-3xl border border-[#ececf4] bg-white p-8 text-center">
             <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-[#ecfdf5] text-[#116b2a]">
@@ -274,43 +237,18 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
             <QuickSwitchNext items={siblingsView} title="Помещения" />
           </div>
         ) : (
-          <div className="rounded-3xl border border-[#ececf4] bg-white p-6">
-            <div className="space-y-6">
-              <div>
-                <label className="text-[16px] font-semibold text-[#0b1024]">1. Кто снимает показания</label>
-                {fixedEmployee ? (
-                  <div className="mt-1 flex h-12 items-center rounded-2xl border border-[#dcdfed] bg-[#fafbff] px-4 text-[15px] font-medium text-[#0b1024]">{sessionEmployee?.name}</div>
-                ) : (
-                  <Select value={employeeId} onValueChange={rememberEmployee}>
-                  <SelectTrigger className="mt-1 h-auto min-h-12 w-full rounded-2xl border-[#dcdfed] py-2 text-left *:data-[slot=select-value]:line-clamp-none *:data-[slot=select-value]:whitespace-normal *:data-[slot=select-value]:items-start">
-                    <SelectValue placeholder="Выберите своё имя">
-                      {selectedEmployee ? (
-                        <span className="block min-w-0">
-                          <span className="block text-[17px] font-medium leading-snug text-[#0b1024]">{selectedEmployee.name}</span>
-                          {selectedEmployee.position ? <span className="block text-[14px] leading-snug text-[#6f7282]">{selectedEmployee.position}</span> : null}
-                        </span>
-                      ) : null}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {employees.map((employee) => (
-                      <SelectItem key={employee.id} value={employee.id}>
-                        <span className="block">
-                          <span className="block text-[16px]">{employee.name}</span>
-                          {employee.position ? <span className="block text-[12px] text-[#6f7282]">{employee.position}</span> : null}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                )}
-                {rememberedName ? (
-                  <p className="mt-1.5 text-[14px] text-[#9b9fb3]">Запомнили с прошлого раза — можно сразу вводить показания.</p>
-                ) : null}
-              </div>
+          <div>
+            <div className="space-y-5">
+              <EmployeePicker
+                employees={employees.map((employee) => ({ id: employee.id, name: employee.name, position: employee.position, hasPin: employee.hasPin }))}
+                value={employeeId}
+                onChange={rememberEmployee}
+                fixedName={fixedEmployee ? sessionEmployee?.name ?? null : null}
+                hint={rememberedName ? "Запомнили с прошлого раза — можно сразу вводить показания." : null}
+              />
 
               <div className="space-y-4">
-                <div className="text-[16px] font-semibold text-[#0b1024]">2. Показания</div>
+                <div className="text-[16px] font-semibold text-[#0b1024]">Показания</div>
                 {draft.restored ? (
                   <p className="-mt-2 flex items-center justify-between gap-3 rounded-2xl border border-[#d6dcff] bg-[#eef1ff] px-4 py-2.5 text-[13px] leading-snug text-[#3848c7]">
                     <span>Восстановили введённое после обновления страницы.</span>
@@ -362,7 +300,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                   disabled={submitting || !employeeId || !hasValue || !hasActiveDocument || correctionMissing || (pinRequired && pin.length < 4)}
                   className="h-14 w-full rounded-2xl bg-[#5566f6] px-5 text-[18px] font-semibold text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] disabled:bg-[#c8cbe0]"
                 >
-                  {submitting ? "Сохраняем…" : "3. Сохранить"}
+                  {submitting ? "Сохраняем…" : "Сохранить"}
                 </Button>
                 {hasActiveDocument && nextSlot ? (
                   <p className="mt-2 text-center text-[14px] text-[#9b9fb3]">
@@ -373,7 +311,6 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
             </div>
           </div>
         )}
-      </section>
-    </main>
+    </QrPageShell>
   );
 }

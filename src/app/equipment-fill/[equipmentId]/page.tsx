@@ -70,7 +70,7 @@ export default async function EquipmentFillPage({
           id: true,
           name: true,
           organizationId: true,
-          organization: { select: { timezone: true, qrFillMode: true } },
+          organization: { select: { name: true, timezone: true, qrFillMode: true } },
         },
       },
       sensorMappings: {
@@ -139,6 +139,8 @@ export default async function EquipmentFillPage({
   return (
     <EquipmentFillClient
       token={token}
+      organizationName={equipment.area.organization.name}
+      journalTitle="Температура холодильного оборудования"
       siblings={siblings}
       todayValues={siblings.find((item) => item.current)?.values ?? null}
       stamp={stampFor(timezone)}
