@@ -90,13 +90,16 @@ const out: Record<string, unknown> = {};
     out.coldEmptyError = (await page.locator(".err").innerText()).trim().slice(0, 120);
     out.coldEmptyBad = await page.locator(".fl.bad").count();
     out.coldOffChips = await page.locator(".chip.offc").count();
+    out.coldValueFont = await page.locator(".obj input.in").first().evaluate((el) => `${getComputedStyle(el).fontSize} ${getComputedStyle(el).textAlign}`);
+    out.coldNotes = await page.locator(".note").count();
     out.amberDeviationCss = (await page.content()).includes("#e9b949");
     out.flatLabelCss = (await page.content()).includes(".lab .lab-s");
     out.offrowCss = (await page.content()).includes(".chips.offrow{margin:14px 0 4px}");
     out.pinboxCss = (await page.content()).includes(".pinbox{");
     out.bodyFont = await page.evaluate(() => getComputedStyle(document.body).fontSize);
-    const cards = await page.locator(".obj").count();
-    for (let i = 0; i < cards; i += 1) await page.locator(".obj").nth(i).locator(".qv .chip").nth(1).click();
+    // У холодильника может быть несколько замеров в день — заполняем каждое поле (ряд быстрых значений).
+    const rows = await page.locator(".obj .chips.qv").count();
+    for (let i = 0; i < rows; i += 1) await page.locator(".obj .chips.qv").nth(i).locator(".chip").nth(1).click();
     out.coldValues = await page.locator(".obj input.in").evaluateAll((els) => els.map((el) => (el as HTMLInputElement).value));
     await page.screenshot({ path: path.join(ROOT, "shots", "prod-cold-form.png"), fullPage: true });
     await page.locator("#qr-form button[type=submit]").click();
