@@ -83,7 +83,7 @@ import {
   MedBookListDialog,
   type MedBookListChange,
 } from "@/components/journals/med-book-list-dialog";
-import { getUserRoleLabel } from "@/lib/user-roles";
+import { getUserDisplayTitle } from "@/lib/user-roles";
 import {
   GRID_CELL_CLASS,
   GRID_HEAD_CELL_CLASS,
@@ -94,7 +94,14 @@ import { JournalAddRow } from "@/components/journals/journal-add-row";
 import { localDayKey } from "@/lib/entry-defaults";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
-type Employee = { id: string; name: string; role: string };
+// Должность из карточки (как в UserLike) — подставляется в медкнижку.
+type Employee = {
+  id: string;
+  name: string;
+  role: string;
+  positionTitle?: string | null;
+  jobPosition?: { name: string; categoryKey: string } | null;
+};
 type Row = {
   id: string;
   employeeId: string;
@@ -848,7 +855,7 @@ export function MedBookDocumentClient({
     const employee = employees.find((item) => item.id === draft.employeeId);
     if (!employee) return;
     const positionTitle =
-      draft.positionTitle || getUserRoleLabel(employee.role);
+      draft.positionTitle || getUserDisplayTitle(employee);
     saveRows([
       ...rows,
       {
@@ -1764,8 +1771,9 @@ export function MedBookDocumentClient({
                   setDraft((current) => ({
                     ...current,
                     employeeId: value,
+                    // Должность из справочника, а не лейбл роли; правится руками.
                     positionTitle: employee
-                      ? getUserRoleLabel(employee.role)
+                      ? getUserDisplayTitle(employee)
                       : current.positionTitle,
                   }));
                 }}

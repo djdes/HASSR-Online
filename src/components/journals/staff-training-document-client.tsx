@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { USER_ROLE_LABEL_VALUES } from "@/lib/user-roles";
+import { USER_ROLE_LABEL_VALUES, getUserDisplayTitle } from "@/lib/user-roles";
 import {
   Dialog,
   DialogContent,
@@ -40,7 +40,6 @@ import {
   type StaffTrainingConfig,
   type StaffTrainingRow,
 } from "@/lib/staff-training-document";
-import { getHygienePositionLabel } from "@/lib/hygiene-document";
 import { buildStaffOptionLabel } from "@/lib/journal-staff-binding";
 import { useMobileView } from "@/lib/use-mobile-view";
 import {
@@ -63,7 +62,14 @@ type Props = {
   dateFrom: string;
   status: string;
   initialConfig: StaffTrainingConfig;
-  users: { id: string; name: string; role: string }[];
+  // Должность из карточки (как в UserLike) — «Должность» обучаемого.
+  users: {
+    id: string;
+    name: string;
+    role: string;
+    positionTitle?: string | null;
+    jobPosition?: { name: string; categoryKey: string } | null;
+  }[];
   /** Design v2 toggle. */
   useV2?: boolean;
 };
@@ -329,8 +335,10 @@ export function StaffTrainingDocumentClient({
                 // строку по прежнему сотруднику.
                 employeeId: picked?.id || null,
                 employeeName: picked?.name || cellEditValue,
+                // Должность из справочника, а не лейбл роли — сервер
+                // при сохранении выводит её так же.
                 employeePosition: picked
-                  ? getHygienePositionLabel(picked.role)
+                  ? getUserDisplayTitle(picked)
                   : row.employeePosition,
               }
             : { ...row, [field]: cellEditValue }
@@ -654,7 +662,7 @@ export function StaffTrainingDocumentClient({
                   employeeId: user?.id || null,
                   employeeName: user?.name || "",
                   employeePosition: user
-                    ? getHygienePositionLabel(user.role)
+                    ? getUserDisplayTitle(user)
                     : prev.employeePosition,
                 }));
               }}
@@ -799,7 +807,7 @@ export function StaffTrainingDocumentClient({
                         Radix склеивал в один вариант. */}
                     {users.map((u) => (
                       <SelectItem key={u.id} value={u.id}>
-                        {buildStaffOptionLabel({ id: u.id, name: u.name, role: u.role })}
+                        {buildStaffOptionLabel(u)}
                       </SelectItem>
                     ))}
                   </SelectContent>

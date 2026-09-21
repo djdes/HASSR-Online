@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
+import { normalizeJournalStaffBoundConfig } from "@/lib/journal-staff-binding";
 import { TrackedDocumentClient } from "@/components/journals/tracked-document-client";
 import { ScanJournalDocumentClient } from "@/components/journals/scan-journal-document-client";
 import { ColdEquipmentDocumentClient } from "@/components/journals/cold-equipment-document-client";
@@ -675,7 +676,15 @@ async function JournalDocumentBody({
         organizationName={organizationName}
         dateFrom={toDateKey(document.dateFrom)}
         status={document.status}
-        initialConfig={normalizeProductWriteoffConfig(document.config)}
+        // Должности членов комиссии — из карточек (как в PDF): сохранённые
+        // копии могли быть лейблом роли или «Управляющий» по умолчанию.
+        initialConfig={normalizeProductWriteoffConfig(
+          normalizeJournalStaffBoundConfig(
+            PRODUCT_WRITEOFF_TEMPLATE_CODE,
+            document.config,
+            displayEmployees
+          )
+        )}
         users={enrichedEmployees}
         useV2={organization?.experimentalUiV2 ?? true}
       />
@@ -731,7 +740,14 @@ async function JournalDocumentBody({
         organizationName={organizationName}
         dateFrom={toDateKey(document.dateFrom)}
         status={document.status}
-        initialConfig={normalizeStaffTrainingConfig(document.config)}
+        // Должности обучаемых — из карточек, как печатает PDF.
+        initialConfig={normalizeStaffTrainingConfig(
+          normalizeJournalStaffBoundConfig(
+            STAFF_TRAINING_TEMPLATE_CODE,
+            document.config,
+            displayEmployees
+          )
+        )}
         users={enrichedEmployees}
         useV2={organization?.experimentalUiV2 ?? true}
       />

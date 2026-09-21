@@ -261,6 +261,7 @@ import {
   PEST_CONTROL_TEMPLATE_CODE,
 } from "@/lib/pest-control-document";
 import {
+  getUserDisplayTitle,
   getUserRoleLabel,
   pickPrimaryManager,
   toCanonicalUserRole,
@@ -1678,12 +1679,6 @@ export default async function JournalDocumentsPage({
 
       // Add sample entries for each org user
       if (orgUsers.length > 0) {
-        const positionLabels: Record<string, string> = {
-          owner: "Управляющий",
-          technologist: "Шеф-повар",
-          operator: "Повар",
-        };
-
         const sampleExamDate = "2025-04-19";
         const sampleExamExpiry = "2026-04-19";
         const expiredExamDate = "2025-03-25";
@@ -1695,7 +1690,9 @@ export default async function JournalDocumentsPage({
             employeeId: user.id,
             date: now,
             data: {
-              ...emptyMedBookEntry(positionLabels[user.role] || "Сотрудник"),
+              // Должность из справочника: карта legacy-ролей давала всем
+              // текущим ролям «Сотрудник».
+              ...emptyMedBookEntry(getUserDisplayTitle(user)),
               birthDate: "2010-03-19",
               gender: "female" as const,
               hireDate: "2025-03-19",

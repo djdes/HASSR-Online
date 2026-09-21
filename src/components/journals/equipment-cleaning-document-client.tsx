@@ -15,7 +15,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useSession } from "next-auth/react";
-import { USER_ROLE_LABEL_VALUES, getUserRoleLabel, getUsersForRoleLabel, isManagementRole } from "@/lib/user-roles";
+import {
+  getRowEmployeeTitle,
+  getUserDisplayTitle,
+  getUsersForRoleLabel,
+  isManagementRole,
+} from "@/lib/user-roles";
 import {
   emptyEquipmentCleaningRow,
   EQUIPMENT_CLEANING_VARIANT_LABELS,
@@ -62,6 +67,9 @@ type UserItem = {
   id: string;
   name: string;
   role: string;
+  // Должность из карточки (как в UserLike) — подпись мойщика и контролёра.
+  positionTitle?: string | null;
+  jobPosition?: { name: string; categoryKey: string } | null;
 };
 
 type EquipmentCleaningRow = {
@@ -92,15 +100,10 @@ type RowDraftState = {
   data: EquipmentCleaningRowData;
 };
 
-const ROLE_OPTIONS = USER_ROLE_LABEL_VALUES;
 const HOUR_OPTIONS = Array.from({ length: 24 }, (_, index) => String(index).padStart(2, "0"));
 const MINUTE_OPTIONS = Array.from({ length: 12 }, (_, index) =>
   String(index * 5).padStart(2, "0")
 );
-
-function userRoleLabel(role: string) {
-  return getUserRoleLabel(role);
-}
 
 function splitTime(value: string) {
   const [hour = "00", minute = "00"] = value.split(":");
@@ -165,7 +168,9 @@ export function EquipmentCleaningDocumentClient({
       // «Мойщик» в списке должностей отсутствует — селект оказывался
       // пустым. Должность подставляем из реальной роли сотрудника.
       washerPosition: "",
-      controllerPosition: "Управляющий",
+      // Без «Управляющий» по умолчанию: должность подставится из карточки
+      // выбранного контролёра.
+      controllerPosition: "",
     }),
   });
   const [isSaving, setIsSaving] = useState(false);
@@ -189,6 +194,14 @@ export function EquipmentCleaningDocumentClient({
 
   const allSelected = rows.length > 0 && selectedIds.length === rows.length;
   const { mobileView, switchMobileView } = useMobileView("equipment_cleaning");
+
+  // Должность контролёра — из его карточки, не копия строки (туда
+  // подставлялось «Управляющий» по роли). Копия — если его уже нет.
+  const controllerTitle = (data: EquipmentCleaningRowData) =>
+    getRowEmployeeTitle(
+      users.find((user) => user.id === data.controllerUserId),
+      data.controllerPosition
+    );
 
   const cardItems: RecordCardItem[] = sortedRows.map((row, index) => ({
     id: row.id,
@@ -225,7 +238,11 @@ export function EquipmentCleaningDocumentClient({
         hideIfEmpty: true,
       },
       { label: "Мойщик", value: row.data.washerName, hideIfEmpty: true },
-      { label: "Контроль", value: `${row.data.controllerPosition || ""}, ${row.data.controllerName || ""}`.trim().replace(/^,\s*|\s*,\s*$/g, ""), hideIfEmpty: true },
+      {
+        label: "Контроль",
+        value: [controllerTitle(row.data), row.data.controllerName].filter(Boolean).join(", "),
+        hideIfEmpty: true,
+      },
     ],
     onClick: status === "active" ? () => openEditRow(row) : undefined,
   }));
@@ -241,12 +258,12 @@ export function EquipmentCleaningDocumentClient({
       id: null,
       data: emptyEquipmentCleaningRow({
         equipmentName: equipmentOptions[0] || "",
-        // Должность мойщика — из роли вошедшего: строки «Мойщик» в списке
-        // должностей нет, и селект открывался пустым.
-        washerPosition: washer ? userRoleLabel(washer.role) : "",
+        // Должность мойщика — из карточки вошедшего (справочник должностей),
+        // а не лейбл роли: иначе селект с должностями открывался пустым.
+        washerPosition: washer ? getUserDisplayTitle(washer) : "",
         washerName: washer?.name || "",
         washerUserId: washer?.id || null,
-        controllerPosition: userRoleLabel(controller?.role || "owner"),
+        controllerPosition: controller ? getUserDisplayTitle(controller) : "",
         controllerName: controller?.name || "",
         controllerUserId: controller?.id || null,
       }),
@@ -596,7 +613,7 @@ export function EquipmentCleaningDocumentClient({
                   </td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{row.data.washerName}</td>
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>
-                    {`${row.data.controllerPosition}, ${row.data.controllerName}`}
+                    {[controllerTitle(row.data), row.data.controllerName].filter(Boolean).join(", ")}
                   </td>
                 </tr>
               ))}
@@ -822,9 +839,8 @@ export function EquipmentCleaningDocumentClient({
                     updateDraft({
                       washerUserId: value,
                       washerName: user?.name || "",
-                      ...(!draft.data.washerPosition && user
-                        ? { washerPosition: getUserRoleLabel(user.role) }
-                        : {}),
+                      // Должность выбранного человека из карточки.
+                      ...(user ? { washerPosition: getUserDisplayTitle(user) } : {}),
                     });
                   }}
                 >
@@ -874,9 +890,7 @@ export function EquipmentCleaningDocumentClient({
                     updateDraft({
                       controllerUserId: value,
                       controllerName: user?.name || "",
-                      ...(!draft.data.controllerPosition && user
-                        ? { controllerPosition: getUserRoleLabel(user.role) }
-                        : {}),
+                      ...(user ? { controllerPosition: getUserDisplayTitle(user) } : {}),
                     });
                   }}
                 >

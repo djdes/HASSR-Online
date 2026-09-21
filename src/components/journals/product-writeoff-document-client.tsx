@@ -19,7 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { USER_ROLE_LABEL_VALUES, getUserRoleLabel, getUsersForRoleLabel } from "@/lib/user-roles";
+import { getUserDisplayTitle, getUsersForRoleLabel } from "@/lib/user-roles";
 import { Textarea } from "@/components/ui/textarea";
 import {
   canCreateLossFromWriteoffRow,
@@ -42,7 +42,14 @@ import {
 import { OrgDirectoryDialog } from "@/components/journals/org-directory-dialog";
 import { mergeIntoList } from "@/lib/org-directory";
 
-type UserItem = { id: string; name: string; role: string };
+// Должность из карточки (как в UserLike) — должность члена комиссии.
+type UserItem = {
+  id: string;
+  name: string;
+  role: string;
+  positionTitle?: string | null;
+  jobPosition?: { name: string; categoryKey: string } | null;
+};
 
 type Props = {
   documentId: string;
@@ -69,19 +76,20 @@ type CommissionDialogState = {
   member: ProductWriteoffCommissionMember;
 };
 
-const ROLE_OPTIONS = USER_ROLE_LABEL_VALUES;
-
 function emptyRow() {
   return createProductWriteoffRow();
 }
 
 function emptyCommissionMember() {
-  return createProductWriteoffCommissionMember({ role: ROLE_OPTIONS[0] });
+  // Без «Управляющий» по умолчанию: должность придёт с выбранным человеком
+  // (с ней список сотрудников часто оказывался пустым).
+  return createProductWriteoffCommissionMember({ role: "" });
 }
 
 function getRoleLabelByUserId(users: UserItem[], userId: string) {
   const user = users.find((item) => item.id === userId);
-  return user ? getUserRoleLabel(user.role) : "";
+  // Должность из справочника, а не лейбл роли.
+  return user ? getUserDisplayTitle(user) : "";
 }
 
 function actDateParts(value: string) {
@@ -801,7 +809,7 @@ export function ProductWriteoffDocumentClient({
                 <Label className="text-[13px] font-medium text-[#3c4053]">Сотрудник</Label>
                 <select value={commissionDialog.member.employeeId} onChange={(event) => {
                   const user = users.find((item) => item.id === event.target.value);
-                  setCommissionDialog((prev) => ({ ...prev, member: { ...prev.member, employeeId: event.target.value, employeeName: user?.name || "", role: user ? getUserRoleLabel(user.role) : prev.member.role } }));
+                  setCommissionDialog((prev) => ({ ...prev, member: { ...prev.member, employeeId: event.target.value, employeeName: user?.name || "", role: user ? getUserDisplayTitle(user) : prev.member.role } }));
                 }} className="h-9 w-full rounded-xl border border-[#dcdfed] bg-white px-3.5 text-[13.5px] text-[#0b1024]">
                   <option value="">Выберите сотрудника</option>
                   {(commissionDialog.member.role

@@ -1,4 +1,4 @@
-import { getUserRoleLabel, normalizeUserRole } from "@/lib/user-roles";
+import { getUserDisplayTitle, normalizeUserRole } from "@/lib/user-roles";
 
 export const STAFF_TRAINING_TEMPLATE_CODE = "staff_training";
 export const STAFF_TRAINING_DOCUMENT_TITLE = "Журнал регистрации инструктажей";
@@ -82,7 +82,12 @@ export function getDefaultStaffTrainingConfig(): StaffTrainingConfig {
 }
 
 export function buildStaffTrainingSeedRows(
-  users: Array<{ name: string; role: string }>,
+  users: Array<{
+    name: string;
+    role: string;
+    positionTitle?: string | null;
+    jobPosition?: { name?: string | null } | null;
+  }>,
   dateKey: string
 ): StaffTrainingRow[] {
   const rows: StaffTrainingRow[] = [];
@@ -96,7 +101,8 @@ export function buildStaffTrainingSeedRows(
           date: dateKey,
           employeeId: null,
           employeeName: user.name,
-          employeePosition: getUserRoleLabel(user.role),
+          // Должность из справочника, а не лейбл роли.
+          employeePosition: getUserDisplayTitle(user),
           topic,
           trainingType: "",
           unscheduledReason: "",

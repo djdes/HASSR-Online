@@ -1,3 +1,5 @@
+import { getUserDisplayTitle } from "@/lib/user-roles";
+
 export const PRODUCT_WRITEOFF_TEMPLATE_CODE = "product_writeoff";
 export const PRODUCT_WRITEOFF_DOCUMENT_TITLE = "Акт забраковки";
 
@@ -188,7 +190,13 @@ export function getDefaultProductWriteoffConfig(referenceDate = new Date()): Pro
 }
 
 export function buildProductWriteoffConfigFromData(params: {
-  users: Array<{ id: string; name: string; role?: string | null }>;
+  users: Array<{
+    id: string;
+    name: string;
+    role?: string | null;
+    positionTitle?: string | null;
+    jobPosition?: { name?: string | null } | null;
+  }>;
   products: Array<{ name: string }>;
   batches: Array<{
     code: string;
@@ -204,9 +212,11 @@ export function buildProductWriteoffConfigFromData(params: {
   const config = getDefaultProductWriteoffConfig(referenceDate);
 
   const commissionUsers = users.slice(0, 2);
-  config.commissionMembers = commissionUsers.map((user, index) =>
+  config.commissionMembers = commissionUsers.map((user) =>
     createProductWriteoffCommissionMember({
-      role: index === 0 ? "Управляющий" : "Технолог",
+      // Должность самого человека из справочника, а не выдуманная пара
+      // «Управляющий / Технолог».
+      role: getUserDisplayTitle(user),
       employeeId: user.id,
       employeeName: user.name,
     })

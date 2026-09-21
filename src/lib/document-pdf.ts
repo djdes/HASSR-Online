@@ -4695,6 +4695,8 @@ function drawEquipmentCleaningPdf(doc: jsPDF, params: {
   fieldVariant: "rinse_temperature" | "rinse_completeness";
   /** Справочник «Оборудование»: имя связанной единицы берём оттуда. */
   equipmentDirectory?: { id: string; name: string }[];
+  /** Для должности контролёра из его карточки (не копии из строки). */
+  users?: PdfPositionUser[];
 }) {
   const marginX = 14;
   const currentFont = doc.getFont().fontName || "helvetica";
@@ -4785,7 +4787,15 @@ function drawEquipmentCleaningPdf(doc: jsPDF, params: {
         ? formatNumberShort(data.rinseTemperature) || "—"
         : getEquipmentCleaningResultLabel(data.rinseResult),
       data.washerName,
-      `${data.controllerPosition}, ${data.controllerName}`,
+      [
+        getRowEmployeeTitle(
+          params.users?.find((user) => user.id === data.controllerUserId),
+          data.controllerPosition
+        ),
+        data.controllerName,
+      ]
+        .filter(Boolean)
+        .join(", "),
     ];
   });
 
@@ -7054,6 +7064,7 @@ export function renderJournalDocumentPdf(
       dateFrom: document.dateFrom,
       fieldVariant: equipmentCleaningConfig.fieldVariant,
       equipmentDirectory: equipment,
+      users,
       entries: entries.map((entry) => ({
         id: entry.id,
         date: entry.date,
