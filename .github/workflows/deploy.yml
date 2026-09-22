@@ -69,6 +69,10 @@ jobs:
       # разрешены — это рабочие точки для постепенного устранения.
       # См. docs/superpowers/specs/01-architecture.md.
       - name: Type-check
+        # Проект перерос стандартные ~2 ГБ кучи Node: tsc падал с
+        # «JavaScript heap out of memory» (2026-09-22). У раннера 7 ГБ.
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
         run: npm run typecheck
 
       - name: Tests (baseline gate)
