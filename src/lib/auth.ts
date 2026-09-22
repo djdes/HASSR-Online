@@ -220,6 +220,18 @@ export const authOptions: NextAuthOptions = {
         );
         token.sv = await getSessionVersion(u.id);
       }
+      // «Разрешение менять настройки» (2026-09-22) перечитываем на каждом
+      // обращении: руководитель выдал или снял галку — действует сразу, без
+      // перевхода (в т.ч. для proxy, который читает только токен).
+      if (token.id) {
+        try {
+          const { db } = await import("@/lib/db");
+          const flags = await db.user.findUnique({ where: { id: String(token.id) }, select: { canManageSettings: true } });
+          token.canManageSettings = flags?.canManageSettings === true;
+        } catch {
+          /* оставляем прежнее значение */
+        }
+      }
       // Переключение между своими организациями пишет claim напрямую в
       // cookie (см. lib/session-token.ts) — здесь только подхватываем.
       if (trigger === "update" && session && typeof session === "object") {
@@ -273,6 +285,13 @@ export const authOptions: NextAuthOptions = {
         session.user.orgPresetOverrides = null;
         session.user.kioskDeviceId =
           token.kiosk === true && typeof token.deviceId === "string" ? token.deviceId : null;
+        session.user.canManageSettings = token.canManageSettings === true;
+        // Галка «Разрешение менять настройки» = права руководителя в своей
+        // организации: одна галка вместо уровней доступа.
+        if (token.canManageSettings === true && !session.user.isRoot) {
+          const { isManagementRole: isMgmt } = await import("@/lib/user-roles");
+          if (!isMgmt(session.user.role)) session.user.role = "owner";
+        }
 
         // Live-refresh organizationName + permissionPreset из БД. JWT
         // кэширует на момент login и больше не обновляется, поэтому

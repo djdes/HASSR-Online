@@ -242,7 +242,8 @@ export async function proxy(req: NextRequest) {
   const actor = {
     // В кабинете клиента партнёр работает как руководство независимо
     // от своей роли в домашней организации.
-    role: claim ? "owner" : typeof token.role === "string" ? token.role : null,
+    // «Разрешение менять настройки» — как руководство (2026-09-22).
+    role: claim || token.canManageSettings === true ? "owner" : typeof token.role === "string" ? token.role : null,
     isRoot: token.isRoot === true,
   };
   if (hasFullWorkspaceAccess(actor) || canAccessWebPath(actor, pathname)) {

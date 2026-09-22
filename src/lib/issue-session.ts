@@ -90,10 +90,17 @@ export async function issueSession(
     throw new Error("NEXTAUTH_SECRET is not configured");
   }
 
+  // «Разрешение менять настройки» (2026-09-22) — в токене, чтобы proxy
+  // пускал в настройки. При смене галки сессии сотрудника сбрасываются
+  // (bumpSessionVersion в /api/users/[id]), и новый вход берёт свежее.
+  const { db } = await import("@/lib/db");
+  const flags = await db.user.findUnique({ where: { id: user.id }, select: { canManageSettings: true } }).catch(() => null);
+
   const token = await encode({
     secret,
     maxAge: MAX_AGE,
     token: {
+      canManageSettings: flags?.canManageSettings === true,
       sub: user.id,
       id: user.id,
       email: user.email,

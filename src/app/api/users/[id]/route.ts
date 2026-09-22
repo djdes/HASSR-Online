@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { bumpSessionVersion } from "@/lib/session-version";
 import { sanitizeBuildingIds } from "@/lib/building-targets";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
@@ -154,6 +155,11 @@ export async function PUT(
         phone: true,
       },
     });
+    // Права поменялись — старые сессии сотрудника закрываем: новый вход
+    // возьмёт актуальную галку (proxy читает её из токена).
+    if (canManageSettings !== undefined && canManageSettings !== (user.canManageSettings === true)) {
+      await bumpSessionVersion(id).catch(() => null);
+    }
 
     // Auto-offboarding trigger: пользователь только что был
     // деактивирован (был active → стал inactive). Fire-and-forget,

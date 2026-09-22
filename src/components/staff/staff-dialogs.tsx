@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { StaffQrPinField } from "@/components/staff/staff-qr-pin-field";
+import { PersonalQrCard } from "@/components/staff/personal-qr-card";
 import { Input } from "@/components/ui/input";
 import type {
   PositionCategory,
@@ -868,8 +869,8 @@ export function StaffEditEmployeeDialog(props: {
               <span>
                 <span className="block text-[14px] font-medium text-[#0b1024]">Разрешение менять настройки</span>
                 <span className="block text-[12px] leading-snug text-[#6f7282]">
-                  Открывает все настройки кабинета, как у руководителя: журналы, сотрудники, QR, оборудование.
-                  Оплату и удаление организации по-прежнему видит только владелец. Вход — по личному QR и PIN.
+                  Открывает кабинет как у руководителя: все настройки, журналы, сотрудники, QR-плакаты,
+                  оборудование. Удобно для заведующей. Войти можно по личному QR и своему PIN. После изменения галки сотрудник входит заново.
                 </span>
               </span>
             </label>
@@ -888,6 +889,7 @@ export function StaffEditEmployeeDialog(props: {
                 if (!response.ok) throw new Error(data?.error ?? "Не удалось сохранить PIN");
               }}
             />
+            <PersonalQrCard employeeId={employee.id} employeeName={employee.name} />
           </div>,
           <>
             {onOpenAccess ? (

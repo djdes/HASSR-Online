@@ -13,7 +13,11 @@ import { db } from "@/lib/db";
  * немедленно; воркер один (PM2 fork), так что этого достаточно.
  */
 const TTL_MS = 60_000;
-const cache = new Map<string, { version: number; at: number }>();
+// Кеш — один на процесс (globalThis): Next грузит модуль отдельными копиями
+// для страниц и API-маршрутов, и bump из API иначе доходил до страниц
+// только через минуту (2026-09-22).
+const cacheHost = globalThis as typeof globalThis & { __wesetupSessionVersionCache?: Map<string, { version: number; at: number }> };
+const cache = (cacheHost.__wesetupSessionVersionCache ??= new Map<string, { version: number; at: number }>());
 
 export async function getSessionVersion(userId: string): Promise<number> {
   const hit = cache.get(userId);

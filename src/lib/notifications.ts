@@ -206,7 +206,8 @@ export async function notifyManagement(args: {
       organizationId: args.organizationId,
       isActive: true,
       archivedAt: null,
-      role: { in: getDbRoleValuesWithLegacy(MANAGEMENT_ROLES) },
+      // «Разрешение менять настройки» — тоже руководство (2026-09-22).
+      OR: [{ role: { in: getDbRoleValuesWithLegacy(MANAGEMENT_ROLES) } }, { canManageSettings: true }],
     },
     select: { id: true },
   });

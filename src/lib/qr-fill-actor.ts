@@ -53,11 +53,11 @@ export async function resolveQrFillActor(params: {
   if (params.mode === "auth") {
     const session = await getServerSession(authOptions);
     if (!session) return { ok: false, status: 401, error: "Нужно войти в кабинет" };
-    const actor = await db.user.findUnique({ where: { id: session.user.id }, select: { organizationId: true, role: true } });
+    const actor = await db.user.findUnique({ where: { id: session.user.id }, select: { organizationId: true, role: true, canManageSettings: true } });
     if (!actor || actor.organizationId !== params.organizationId) {
       return { ok: false, status: 403, error: "Вы вошли под аккаунтом другой организации" };
     }
-    if (session.user.id !== employee.id && !isManagementRole(actor.role) && session.user.isRoot !== true) {
+    if (session.user.id !== employee.id && !isManagementRole(actor.role) && !actor.canManageSettings && session.user.isRoot !== true) {
       return { ok: false, status: 403, error: "Записать можно только от своего имени" };
     }
     return { ok: true, employee: { id: employee.id, name: employee.name, role: employee.role } };
@@ -110,7 +110,7 @@ export async function sessionEmployeeForQr(organizationId: string): Promise<
   if (!session) return { ok: false, reason: "no-session" };
   const user = await db.user.findUnique({
     where: { id: session.user.id },
-    select: { id: true, name: true, positionTitle: true, role: true, organizationId: true },
+    select: { id: true, name: true, positionTitle: true, role: true, organizationId: true, canManageSettings: true },
   });
   if (!user || user.organizationId !== organizationId) return { ok: false, reason: "other-org" };
   return {
@@ -119,7 +119,7 @@ export async function sessionEmployeeForQr(organizationId: string): Promise<
       id: user.id,
       name: user.name,
       positionTitle: user.positionTitle ?? null,
-      canPickOthers: isManagementRole(user.role) || session.user.isRoot === true,
+      canPickOthers: isManagementRole(user.role) || user.canManageSettings || session.user.isRoot === true,
     },
   };
 }

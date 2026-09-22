@@ -14,6 +14,8 @@ export type SessionPartnerAccess = {
 declare module "next-auth" {
   interface Session {
     user: {
+      /** «Разрешение менять настройки» (2026-09-22). */
+      canManageSettings?: boolean;
       id: string;
       role: string;
       organizationId: string;
@@ -61,6 +63,7 @@ declare module "next-auth" {
 
 declare module "next-auth/jwt" {
   interface JWT {
+    canManageSettings?: boolean;
     id: string;
     role: string;
     organizationId: string;
