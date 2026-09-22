@@ -158,6 +158,32 @@ export function isRowClosed(
   return normalizeRowSignatures(row.signatures).length > 0;
 }
 
+/**
+ * Сторонняя бракеражная комиссия — только у бракеража готовой продукции
+ * (решение владельца 2026-09-22). Бракераж скоропорта — внутренняя
+ * история: без комиссии, её подписей и входа по QR для комиссии.
+ */
+export const COMMISSION_JOURNAL_CODES: ReadonlySet<string> = new Set(["finished_product"]);
+
+export function isCommissionJournalCode(code: string | null | undefined): boolean {
+  return typeof code === "string" && COMMISSION_JOURNAL_CODES.has(code);
+}
+
+/**
+ * Утверждённый состав и кто из него уже подписал строку — для блока
+ * «Комиссия» в окне блюда. Подписи посторонних (не из состава) не в счёт.
+ */
+export function commissionRowStatus(
+  row: { signatures?: readonly unknown[] },
+  members: readonly BrakerageCommissionMember[]
+): Array<BrakerageCommissionMember & { signed: boolean; signedAt: string | null }> {
+  const signatures = normalizeRowSignatures(row.signatures);
+  return members.map((member) => {
+    const signature = member.employeeId ? signatures.find((item) => item.userId === member.employeeId) : undefined;
+    return { ...member, signed: Boolean(signature), signedAt: signature?.signedAt ?? null };
+  });
+}
+
 /** Состоит ли сотрудник в комиссии документа. */
 export function isCommissionMember(
   config: { commissionMembers?: readonly BrakerageCommissionMember[] },

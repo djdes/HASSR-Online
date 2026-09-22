@@ -7,6 +7,7 @@ import { journalFillHints } from "@/lib/journal-fill-hints";
 import { isNameSuggestionScope } from "@/lib/name-suggestions";
 import { rememberNames } from "@/lib/name-suggestions-db";
 import { isBrakerageJournalCode } from "@/lib/brakerage-row-merge";
+import { isCommissionJournalCode } from "@/lib/brakerage-commission";
 import { FINISHED_PRODUCT_DOCUMENT_TEMPLATE_CODE } from "@/lib/finished-product-document";
 import { findTaskEmployee } from "@/lib/journal-roster-db";
 import { appendFinishedProductRows } from "@/lib/tasksflow-adapters/finished-product";
@@ -81,7 +82,8 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
     // PIN уже подтверждён отдельным шагом ДО формы — второй раз не спрашиваем
     // (раньше в public-режиме сотрудника с PIN спрашивали повторно).
     pinVerified: input.pinVerified === true,
-    includeCommission: isBrakerageJournalCode(code),
+    // Сторонняя комиссия — только у бракеража готовой продукции.
+    includeCommission: isCommissionJournalCode(code),
   });
   if (!actor.ok) return { ok: false, status: actor.status, error: actor.error };
 

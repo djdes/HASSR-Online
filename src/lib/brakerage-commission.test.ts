@@ -13,6 +13,8 @@ import {
   normalizeCommissionMembers,
   normalizeRowSignatures,
   shortPersonName,
+  commissionRowStatus,
+  isCommissionJournalCode,
 } from "./brakerage-commission";
 
 test("состав комиссии: без имени отбрасываем, повтор сотрудника — тоже, не больше 10", () => {
@@ -102,4 +104,29 @@ test("подпись устарела, если строку поменяли п
   assert.equal(isSignatureOutdated(row, signature), false);
   assert.equal(isSignatureOutdated({ ...row, organoleptic: "Хорошо" }, signature), true);
   assert.equal(isSignatureOutdated(row, signed[0]), false);
+});
+
+/**
+ * Сторонняя бракеражная комиссия — только у бракеража готовой продукции.
+ * Бракераж скоропорта — внутренняя история: комиссии и подписей там нет.
+ */
+test("комиссия только у бракеража готовой продукции", () => {
+  assert.equal(isCommissionJournalCode("finished_product"), true);
+  assert.equal(isCommissionJournalCode("perishable_rejection"), false);
+  assert.equal(isCommissionJournalCode(null), false);
+});
+
+test("статус подписей строки по утверждённому составу", () => {
+  const members = [
+    { id: "c1", role: "Председатель", employeeId: "u1", employeeName: "Иванова Анна Андреевна" },
+    { id: "c2", role: "Член комиссии", employeeId: "u2", employeeName: "Петров Пётр Петрович" },
+  ];
+  const status = commissionRowStatus(
+    { signatures: [{ userId: "u1", name: "Иванова Анна Андреевна", role: "Председатель", signedAt: "2026-09-22T09:00:00Z", method: "qr" }, { userId: "stranger", name: "Чужой", role: "", signedAt: "2026-09-22T09:01:00Z", method: "qr" }] },
+    members
+  );
+  assert.deepEqual(
+    status.map((item) => [item.employeeId, item.signed]),
+    [["u1", true], ["u2", false]]
+  );
 });

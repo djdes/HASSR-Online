@@ -4,6 +4,7 @@ import {
   sanitizeColumnsConfig,
   type JournalColumnsConfig,
 } from "@/lib/journal-columns";
+import { BRAKERAGE_TIME_OFFSETS_DEFAULT } from "@/lib/brakerage-times";
 import {
   formatRowSignatures,
   normalizeCommissionMembers as normalizeBrakerageCommission,
@@ -90,13 +91,19 @@ export type FinishedProductCommissionMember = BrakerageCommissionMember;
 export type FinishedProductTimeDefaults = {
   /** «Дата, время изготовления» — минут назад от текущего момента. */
   productionMinutesAgo: number;
-  /** «Время снятия бракеража» — минут назад (обычно 0, то есть сейчас). */
+  /** Устарело: «время бракеража — минут назад». Читается у старых документов, не используется. */
   rejectionMinutesAgo: number;
+  /** «Время снятия бракеража» = изготовление + N минут (по умолчанию 5). */
+  rejectionAfterProductionMinutes: number;
+  /** «Время разрешения к реализации» = бракераж + N минут (по умолчанию 5). */
+  releaseAfterRejectionMinutes: number;
 };
 
 export const FINISHED_PRODUCT_TIME_DEFAULTS: FinishedProductTimeDefaults = {
   productionMinutesAgo: 30,
   rejectionMinutesAgo: 0,
+  rejectionAfterProductionMinutes: BRAKERAGE_TIME_OFFSETS_DEFAULT.rejectionAfterProductionMinutes,
+  releaseAfterRejectionMinutes: BRAKERAGE_TIME_OFFSETS_DEFAULT.releaseAfterRejectionMinutes,
 };
 export const FINISHED_PRODUCT_TIME_MINUTES_MAX = 24 * 60;
 
@@ -205,6 +212,8 @@ export function normalizeTimeDefaults(value: unknown): FinishedProductTimeDefaul
   return {
     productionMinutesAgo: clamp(record.productionMinutesAgo, FINISHED_PRODUCT_TIME_DEFAULTS.productionMinutesAgo),
     rejectionMinutesAgo: clamp(record.rejectionMinutesAgo, FINISHED_PRODUCT_TIME_DEFAULTS.rejectionMinutesAgo),
+    rejectionAfterProductionMinutes: clamp(record.rejectionAfterProductionMinutes, FINISHED_PRODUCT_TIME_DEFAULTS.rejectionAfterProductionMinutes),
+    releaseAfterRejectionMinutes: clamp(record.releaseAfterRejectionMinutes, FINISHED_PRODUCT_TIME_DEFAULTS.releaseAfterRejectionMinutes),
   };
 }
 
@@ -431,13 +440,14 @@ export function finishedProductReleaseText(row: Pick<FinishedProductDocumentRow,
 /**
  * Текст ячейки колонки для карточки на телефоне и печати — одно место на
  * все представления. Свои колонки — `row.custom[key]`.
- * `inspectorFallback`: у старой строки без подписей комиссии в колонке
- * подписей показываем «ФИО лица, проводившего бракераж», если его
- * колонка скрыта, — иначе подпись пропала бы из печати.
+ * В колонке подписей — только настоящие подписи утверждённой комиссии:
+ * раньше у неподписанной строки сюда подставлялось ФИО проверяющего, и в
+ * печати выходила «подпись» того, кто не подписывал.
  */
 export function finishedProductCellText(
   row: FinishedProductDocumentRow,
   key: string,
+  /** `inspectorFallback` больше не действует (оставлен для старых вызовов). */
   options: { timeZone?: string; inspectorFallback?: boolean } = {}
 ): string {
   switch (key) {
@@ -453,8 +463,7 @@ export function finishedProductCellText(
       return finishedProductReleaseText(row);
     case "signatures": {
       const signatures = normalizeRowSignatures(row.signatures);
-      if (signatures.length > 0) return formatRowSignatures(signatures, options.timeZone);
-      return options.inspectorFallback ? row.inspectorName : "";
+      return signatures.length > 0 ? formatRowSignatures(signatures, options.timeZone) : "";
     }
     case "portion":
       return row.portionWeight;
