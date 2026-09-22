@@ -99,6 +99,8 @@ export function toMiniUrl(href?: string | null): string {
   if (!href || !href.startsWith("/")) return "/mini";
   if (href.startsWith("/mini")) return href;
   if (href.startsWith("/journals")) return `/mini${href}`;
+  // «Запросы PIN» и прочее по сотрудникам — раздел сотрудников Mini App.
+  if (href.startsWith("/settings/users")) return "/mini/staff";
   return "/mini";
 }
 

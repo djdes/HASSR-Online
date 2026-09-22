@@ -15,8 +15,11 @@ describe("toMiniUrl", () => {
   });
 
   it("незнакомый раздел ведёт на главную, а не в пустоту", () => {
-    assert.equal(toMiniUrl("/settings/users"), "/mini");
     assert.equal(toMiniUrl("/capa"), "/mini");
+  });
+
+  it("запросы PIN сотрудников открывают раздел сотрудников", () => {
+    assert.equal(toMiniUrl("/settings/users?pinRequests=1#pin-requests"), "/mini/staff");
   });
 
   it("пустое и отсутствующее — на главную", () => {

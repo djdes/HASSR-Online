@@ -5,6 +5,8 @@ import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { isManagementRole } from "@/lib/user-roles";
 import { StaffPageClient } from "@/components/staff/staff-page-client";
+import { PinRequestsPanel } from "@/components/staff/pin-requests-panel";
+import { listPendingQrPinRequests } from "@/lib/qr-pin-requests";
 import { AddOrganizationButton } from "@/components/settings/add-organization-button";
 import { normalizeSphere } from "@/lib/org-profile";
 import type { PositionCategory } from "@/components/staff/staff-types";
@@ -122,6 +124,9 @@ export default async function StaffPage() {
   // Заводить новые точки может только владелец аккаунта: организации
   // делят тариф и лимит мест. Приглашённому руководителю кнопку даже не
   // показываем — отказ по клику выглядел бы как поломка.
+  // Запросы PIN с QR-страниц: сотрудник придумал PIN, руководитель одобряет.
+  const pinRequests = await listPendingQrPinRequests(orgId);
+
   const ownedAccount = await db.account.findUnique({
     where: { ownerUserId: session.user.id },
     select: { id: true, _count: { select: { organizations: true } } },
@@ -129,6 +134,7 @@ export default async function StaffPage() {
 
   return (
     <>
+    <PinRequestsPanel initial={pinRequests} />
     <StaffPageClient
       positionSuggestions={positionSuggestions}
       buildings={staffBuildings}
