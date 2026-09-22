@@ -137,6 +137,10 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   "Вход по QR и ПИН": KeyRound,
   "Колонки и шаблоны журналов": Table2,
   "Общий справочник блюд": ClipboardCheck,
+  "Холодильники, склады и УФ-лампы": QrCode,
+  "Заведующей: права и личный QR": KeyRound,
+  "Проверка в конце смены": BellRing,
+  "Telegram-бот": MessageCircle,
 };
 
 function iconForCategory(name: string): LucideIcon {
