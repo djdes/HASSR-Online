@@ -409,6 +409,7 @@ model Organization {
   journalPreviews                JournalPreview[]
   kioskDevices                   KioskDevice[]
   signatureEvents                SignatureEvent[]
+  qrPinRequests                  QrPinRequest[]
 
   /// Общий планшет (2026-09-20): режим «киоск» — планшет привязан к орге,
   /// сотрудники подписывают записи личным ПИН. `kioskEnabled` — включён ли
@@ -516,6 +517,41 @@ model SignatureEvent {
 
   @@index([userId, createdAt])
   @@index([documentId, rowId])
+}
+
+/// Запрос сотрудника с QR-страницы: выдать PIN («Запросить доступ») или
+/// сменить его. Сотрудник сам придумывает PIN, руководитель одобряет —
+/// тогда PIN начинает работать. Хэш и шифрованная копия PIN стираются после
+/// решения; одна ожидающая заявка на сотрудника и вид (новая заменяет прежнюю).
+model QrPinRequest {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// Сотрудник (связь мягкая, как у SignatureEvent).
+  userId         String
+  /// "issue" — PIN ещё нет; "change" — сменить действующий.
+  kind           String
+  /// pending | approved | rejected | superseded | expired
+  status         String       @default("pending")
+  /// bcrypt желаемого PIN; стирается после решения.
+  pinHash        String?
+  /// Шифрованная копия для «Показать PIN» в карточке; стирается после решения.
+  pinEncrypted   String?
+  /// Откуда пришёл запрос: "journal-fill" | "room-fill" | "equipment-fill".
+  source         String
+  journalCode    String?
+  documentId     String?
+  ip             String?
+  userAgent      String?
+  decidedById    String?
+  decidedAt      DateTime?
+  decisionNote   String?
+  expiresAt      DateTime
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId, status, createdAt])
+  @@index([userId, status])
 }
 
 /// Корпус/точка бизнеса организации. У сети может быть несколько

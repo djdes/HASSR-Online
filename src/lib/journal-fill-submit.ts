@@ -74,11 +74,13 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
   if (!document) return { ok: false, status: 409, error: "На сегодня нет активного документа этого журнала" };
 
   const actor = await resolveQrFillActor({
-    // PIN уже подтверждён отдельным шагом — сотрудника ищем как в публичном режиме.
-    mode: mode === "pin" && input.pinVerified ? "public" : mode,
+    mode,
     organizationId: orgId,
     employeeId: input.employeeId,
     pin: input.pin,
+    // PIN уже подтверждён отдельным шагом ДО формы — второй раз не спрашиваем
+    // (раньше в public-режиме сотрудника с PIN спрашивали повторно).
+    pinVerified: input.pinVerified === true,
     includeCommission: isBrakerageJournalCode(code),
   });
   if (!actor.ok) return { ok: false, status: actor.status, error: actor.error };

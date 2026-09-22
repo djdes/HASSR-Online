@@ -49,25 +49,3 @@ export function verifyQrPass(
   return qrHmacEquals(signature, qrHmac(SCOPE, parts.slice(0, 5).join(".")));
 }
 
-/*
- * Старый пропуск v1 (только сотрудник, cookie `wesetup.qr.pin`) — пока им
- * пользуется список бракеража в `journal-fill/.../route.ts`; уходит вместе с
- * переводом всех журналов на шаг PIN до формы.
- */
-export const PIN_PASS_COOKIE = "wesetup.qr.pin";
-export const PIN_PASS_MAX_AGE_SEC = QR_PASS_MAX_AGE_SEC;
-
-export function mintPinPass(employeeId: string, now: number = Date.now()): string {
-  const payload = `${employeeId}.${now + QR_PASS_TTL_MS}`;
-  return `${payload}.${qrHmac("pin-pass", payload)}`;
-}
-
-export function verifyPinPass(value: string | null | undefined, employeeId: string, now: number = Date.now()): boolean {
-  if (!value) return false;
-  const parts = value.split(".");
-  if (parts.length !== 3) return false;
-  const [id, expRaw, signature] = parts;
-  const exp = Number(expRaw);
-  if (id !== employeeId || !Number.isFinite(exp) || exp < now) return false;
-  return qrHmacEquals(signature, qrHmac("pin-pass", `${id}.${expRaw}`));
-}

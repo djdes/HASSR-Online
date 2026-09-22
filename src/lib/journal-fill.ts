@@ -5,6 +5,7 @@ import { rowKeyForEmployee } from "@/lib/tasksflow-adapters/row-key";
 import type { TaskFormSchema } from "@/lib/tasksflow-adapters/task-form";
 import { verifyQrFillToken } from "@/lib/qr-fill-token";
 import { orgTodayKey } from "@/lib/timezone";
+import { getUserDisplayTitle } from "@/lib/user-roles";
 import { DAILY_JOURNAL_CODES } from "@/lib/today-compliance";
 
 /**
@@ -37,12 +38,27 @@ export function verifyJournalFillToken(token: string, orgId: string, code: strin
   const [tokenOrg, tokenCode, tokenDocument] = verified.id.split(":");
   if (tokenOrg !== orgId) return { ok: false, reason: "mismatch" };
   if (tokenCode === JOURNAL_FILL_HUB_CODE) return { ok: true, documentId: null, hub: true };
-  // Плакат одного журнала открывает и другие журналы организации: так
-  // работает «Дальше →» к следующей ежедневной отметке. Сужение до
-  // документа действует только для «своего» журнала.
-  if (tokenCode !== code) return { ok: true, documentId: null, hub: false };
+  // Плакат журнала открывает только свой журнал. Раньше пускал в любой
+  // журнал организации — ради «Дальше →», которого больше нет (владелец,
+  // 2026-09-21); ссылкой с одного плаката можно было писать в чужие журналы.
+  if (tokenCode !== code) return { ok: false, reason: "mismatch" };
   return { ok: true, documentId: tokenDocument ?? null, hub: false };
 }
+
+/**
+ * Журналы объектов: холодильники и склады заполняются по наклейке на самом
+ * объекте (`/equipment-fill`, `/room-fill`) — там понятно, что именно
+ * замеряешь. Плакат журнала для них показывает «отсканируйте наклейку»,
+ * в хабе «Все журналы» их нет.
+ */
+export const OBJECT_QR_JOURNAL_CODES: ReadonlySet<string> = new Set(["cold_equipment_control", "climate_control"]);
+
+export const OBJECT_QR_JOURNAL_HINTS: Record<string, string> = {
+  cold_equipment_control:
+    "Температуру холодильников вносят по наклейке на самом холодильнике: отсканируйте QR-код на его дверце — откроется именно этот холодильник.",
+  climate_control:
+    "Температуру и влажность склада вносят по наклейке в самом помещении: отсканируйте QR-код на стене склада — откроется именно это помещение.",
+};
 
 export type JournalFillDocument = {
   id: string;
@@ -106,10 +122,11 @@ export async function listFillEmployees(
   // Бракеражи: сторонняя комиссия тоже выбирает себя на QR, чтобы подписать.
   const users = await db.user.findMany({
     where: { organizationId: orgId, ...(options.includeCommission ? ORG_SIGNER_WHERE : ORG_ROSTER_WHERE) },
-    select: { id: true, name: true, positionTitle: true, qrPinHash: true },
+    select: { id: true, name: true, role: true, positionTitle: true, jobPosition: { select: { name: true } }, qrPinHash: true },
     orderBy: { name: "asc" },
   });
-  return users.map((user) => ({ id: user.id, name: user.name, positionTitle: user.positionTitle ?? null, hasPin: Boolean(user.qrPinHash) }));
+  // Должность — из справочника (как на сайте и в PDF), а не устаревшее поле.
+  return users.map((user) => ({ id: user.id, name: user.name, positionTitle: getUserDisplayTitle(user), hasPin: Boolean(user.qrPinHash) }));
 }
 
 /** Журналы хаба: включённые, с активным документом на сегодня. */
@@ -122,6 +139,8 @@ export async function listHubJournals(orgId: string, disabledCodes: string[], to
   const seen = new Map<string, string>();
   for (const doc of docs) {
     if (disabledCodes.includes(doc.template.code)) continue;
+    // Холодильники и склады — по наклейке на объекте, не из хаба.
+    if (OBJECT_QR_JOURNAL_CODES.has(doc.template.code)) continue;
     if (!seen.has(doc.template.code)) seen.set(doc.template.code, doc.template.name);
   }
   return Array.from(seen.entries()).map(([code, name]) => ({ code, name }));

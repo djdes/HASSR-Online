@@ -4,6 +4,8 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import {
   JOURNAL_FILL_HUB_CODE,
+  OBJECT_QR_JOURNAL_CODES,
+  OBJECT_QR_JOURNAL_HINTS,
   listFillEmployees,
   listHubJournals,
   listJournalFillDocuments,
@@ -25,6 +27,10 @@ import {
   renderInvalidLink,
   renderMessage,
   renderPage,
+  renderPinNoAccess,
+  renderPinOk,
+  renderPinRequestForm,
+  renderPinRequestSent,
   renderPinStep,
   renderResult,
   renderRowStep,
@@ -54,7 +60,18 @@ import {
   normalizeFinishedProductDocumentConfig,
 } from "@/lib/finished-product-document";
 import { normalizePerishableRejectionConfig } from "@/lib/perishable-rejection-document";
-import { PIN_PASS_COOKIE, PIN_PASS_MAX_AGE_SEC, mintPinPass, verifyPinPass } from "@/lib/qr-pin-pass";
+import { QR_PASS_COOKIE, QR_PASS_MAX_AGE_SEC, mintQrPass, newQrFlowId, verifyQrPass } from "@/lib/qr-pin-pass";
+import { decidePinGate } from "@/lib/qr-pin-gate";
+import {
+  LEGACY_EMPLOYEE_COOKIE,
+  readRememberValue,
+  rememberClearCookie,
+  rememberCookieName,
+  rememberSetCookie,
+  shouldRefreshRemember,
+} from "@/lib/qr-remember";
+import { createQrPinRequest, latestQrPinRequestFor } from "@/lib/qr-pin-requests";
+import { normalizePinRequestKind, pinRequestStatusText } from "@/lib/qr-pin-requests-core";
 import { QR_FILL_RATE_LIMIT_ERROR, qrFillRateKey } from "@/lib/qr-fill-audit";
 import { qrFillRateLimiter } from "@/lib/rate-limit";
 import { relativeRedirect, safeInternalPath } from "@/lib/relative-redirect";
@@ -66,13 +83,14 @@ export const dynamic = "force-dynamic";
 
 /**
  * Публичная QR-форма журнала — обычный серверный HTML (см.
- * `lib/journal-fill-html.ts`): плакат → документ → сотрудник (PIN / вход
- * по режиму организации) → строка → форма адаптера → результат. Каждый
- * шаг — ссылка или `<form method="post">`, скрипты не обязательны.
- * Запись делает `submitJournalFill` (общее ядро с JSON-API).
+ * `lib/journal-fill-html.ts`): плакат → документ → сотрудник (знакомое
+ * устройство — сразу свой сотрудник) → PIN ДО формы (или «Запросить
+ * доступ») → строка → форма адаптера → результат. Каждый шаг — ссылка или
+ * `<form>`, скрипты не обязательны. Запись делает `submitJournalFill`.
+ *
+ * PIN спрашивается каждый визит: пропуск (`qr-pin-pass`) привязан к `f` в
+ * адресе, новый скан плаката его не несёт. Запоминается только сотрудник.
  */
-
-const EMPLOYEE_COOKIE = "wesetup.qr.employee";
 const CORRECTION_KEY_RE = /(correct|comment|note|remark|measure|action|коммент|действ)/i;
 const CORRECTION_PRESETS = ["Сообщил руководителю", "Вызвал мастера", "Переложил продукты", "Повторю замер через 30 минут"] as const;
 
@@ -264,6 +282,8 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
   const title = template.name;
 
   if (disabledCodes.includes(code)) return page(title, renderMessage("muted", "Этот журнал отключён в организации."));
+  // Холодильники и склады — по наклейке на самом объекте.
+  if (OBJECT_QR_JOURNAL_CODES.has(code)) return page(title, renderMessage("muted", OBJECT_QR_JOURNAL_HINTS[code] ?? "Отсканируйте наклейку на самом объекте."));
 
   const allDocs = await listJournalFillDocuments(orgId, code, todayKey);
   const documents = check.documentId ? allDocs.filter((doc) => doc.id === check.documentId) : allDocs;
@@ -285,13 +305,60 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
     sessionEmployee && !sessionEmployee.canPickOthers
       ? [{ id: sessionEmployee.id, name: sessionEmployee.name, positionTitle: sessionEmployee.positionTitle, hasPin: false }]
       : await listFillEmployees(orgId, { includeCommission: isBrakerage });
+  // «Запомнить выбор на этом оборудовании»: знакомое устройство сразу
+  // попадает к своему сотруднику (см. `qr-remember`). В режиме входа по
+  // кабинету сотрудник — из сессии, устройство не запоминаем.
+  const remembered = mode === "auth" ? null : readRememberValue(orgId, cookies[rememberCookieName(orgId)]);
+  const legacyRememberedId = mode === "auth" ? null : cookies[LEGACY_EMPLOYEE_COOKIE] ?? null;
+  const pickRequested = q.get("pick") === "employee";
   const employeeParam = q.get("employee");
   let employee: JournalFillEmployee | null = null;
   if (sessionEmployee && !sessionEmployee.canPickOthers) employee = employees[0];
   else if (employeeParam) employee = employees.find((item) => item.id === employeeParam) ?? null;
-  if (employee && employeeParam === employee.id) setCookies.push(cookie(EMPLOYEE_COOKIE, employee.id, cookiePath, 365 * 24 * 3600, false, secure));
+  else if (!pickRequested) {
+    const rememberedId = remembered?.employeeId ?? legacyRememberedId;
+    employee = rememberedId ? employees.find((item) => item.id === rememberedId) ?? null : null;
+  }
 
-  const keep = { employee: employee?.id ?? null, doc: document?.id ?? null, commission: commissionOnly ? "1" : null };
+  // Выбор из списка (форма с `rf=1`): ставим или стираем «запомнить» и
+  // уходим на чистый адрес, чтобы обновление страницы ничего не меняло.
+  const passthrough = { view: q.get("view"), bulk: q.get("bulk") };
+  if (q.get("rf") === "1" && employee && employeeParam === employee.id && mode !== "auth") {
+    const rememberCookies = [
+      q.get("remember") === "1" ? rememberSetCookie(orgId, employee.id, { secure }) : rememberClearCookie(orgId, { secure }),
+      cookie(LEGACY_EMPLOYEE_COOKIE, "", cookiePath, 0, false, secure),
+      ...setCookies,
+    ];
+    const target = link({ employee: employee.id, doc: document?.id ?? null, commission: commissionOnly ? "1" : null, ...passthrough });
+    const headers = new Headers({ Location: safeInternalPath(target), "Cache-Control": "no-store" });
+    for (const item of rememberCookies) headers.append("Set-Cookie", item);
+    return new NextResponse(null, { status: 303, headers });
+  }
+  if (employee && remembered?.employeeId === employee.id && shouldRefreshRemember(remembered.issuedAtSec)) {
+    setCookies.push(rememberSetCookie(orgId, employee.id, { secure }));
+  }
+  if (employee && !remembered && legacyRememberedId === employee.id) {
+    // Старая cookie журналов (сырой id на год) → подписанная на организацию.
+    setCookies.push(rememberSetCookie(orgId, employee.id, { secure }), cookie(LEGACY_EMPLOYEE_COOKIE, "", cookiePath, 0, false, secure));
+  }
+
+  // Визит после PIN: `f` в адресе + пропуск в cookie. Новый скан — без `f`.
+  const flow = q.get("f") ?? "";
+  const passValid = Boolean(employee && flow && verifyQrPass(cookies[QR_PASS_COOKIE], { employeeId: employee.id, orgId, flow }));
+  const keep = {
+    employee: employee?.id ?? null,
+    doc: document?.id ?? null,
+    commission: commissionOnly ? "1" : null,
+    f: passValid ? flow : null,
+  };
+  const pickForm = (currentDoc: string | null) => ({
+    action: path,
+    hidden: Object.fromEntries(
+      Object.entries({ token, doc: currentDoc, commission: keep.commission, ...passthrough }).filter((entry): entry is [string, string] => Boolean(entry[1]))
+    ),
+    showRemember: mode !== "auth",
+    rememberOn: true,
+  });
 
   if (!document) {
     return page(
@@ -322,43 +389,42 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
   }
 
   if (!employee) {
-    const rememberedId = q.get("pick") === "employee" ? null : sessionEmployee?.id ?? cookies[EMPLOYEE_COOKIE] ?? null;
-    const remembered = rememberedId ? employees.find((item) => item.id === rememberedId) ?? null : null;
     return page(
       title,
       renderEmployeeStep({
-        employees: employees.map((item) => ({ ...item, href: link({ ...keep, employee: item.id }) })),
-        remembered: remembered ? { ...remembered, href: link({ ...keep, employee: remembered.id }) } : null,
+        pick: pickForm(document.id),
+        employees,
+        currentId: pickRequested ? remembered?.employeeId ?? sessionEmployee?.id ?? null : null,
         hintText: commissionOnly
           ? "Список — члены бракеражной комиссии. Дальше спросим ваш PIN."
           : mode === "auth"
             ? "Вы вошли в кабинет — запись будет подписана вашим аккаунтом."
-            : "Имя запомнится на этом телефоне.",
+            : null,
       }),
-      "Кто заполняет",
+      null,
       null,
       200,
       setCookies
     );
   }
 
-  const changeHref = sessionEmployee && !sessionEmployee.canPickOthers ? null : link({ doc: document.id, pick: "employee", commission: keep.commission });
+  const changeHref = sessionEmployee && !sessionEmployee.canPickOthers ? null : link({ doc: document.id, pick: "employee", commission: keep.commission, ...passthrough });
   const who = renderWho({
     employeeName: employee.name,
     changeHref,
     documentTitle: documents.length > 1 ? document.title : null,
     documentChangeHref: documents.length > 1 ? link({ employee: employee.id, pick: "doc" }) : null,
-    employees: employees.map((item) => ({ id: item.id, name: item.name, positionTitle: item.positionTitle, href: link({ ...keep, employee: item.id }), current: item.id === employee.id })),
+    employees: employees.map((item) => ({ id: item.id, name: item.name, positionTitle: item.positionTitle, current: item.id === employee.id })),
+    pick: pickForm(document.id),
   });
 
-  // PIN спрашиваем в самой форме над «Сохранить» — каждый раз, если он у сотрудника задан (или режим «имя + PIN»).
-  const pinRequired = mode === "pin" || (mode === "public" && employee.hasPin);
-
-  // ---- бракераж: «За сегодня» для комиссии и редактора списка (п. 10 ТЗ)
-  let brakerageTabs = "";
+  // ---- бракераж: роль в списке «За сегодня» (нужна до шага PIN)
+  let role: BrakerageQrRole | null = null;
+  let listCapable = false;
+  let view: "list" | "add" = "add";
   if (isBrakerage && brakerageConfig) {
     const person = await db.user.findUnique({ where: { id: employee.id }, select: { role: true, canEditBrakerageDishes: true } });
-    const role: BrakerageQrRole = brakerageQrRole({
+    role = brakerageQrRole({
       config: brakerageConfig,
       employeeId: employee.id,
       role: person?.role,
@@ -366,9 +432,114 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
     });
     // Вошёл по PIN без кабинета — только оценка и подпись.
     if (commissionOnly) role.editor = false;
-    const listCapable = role.evaluator || role.editor;
+    listCapable = role.evaluator || role.editor;
     const viewParam = q.get("view");
-    const view: "list" | "add" = commissionOnly ? "list" : viewParam === "add" || viewParam === "list" ? viewParam : brakerageQrDefaultView(role);
+    view = commissionOnly ? "list" : viewParam === "add" || viewParam === "list" ? viewParam : brakerageQrDefaultView(role);
+  }
+
+  // ---- PIN ДО содержимого — единое правило для всех журналов
+  const done = q.get("done");
+  const rowParamForLinks = q.get("row");
+  const stepHref = link({ ...keep, ...passthrough, row: rowParamForLinks });
+  const postedAction = posted ? String(posted.get("action") ?? "") : "";
+  const rateLimited = () => !qrFillRateLimiter.consume(qrFillRateKey(clientIp(request), "journal", document.id));
+  const sessionVerified = sessionEmployee !== null && sessionEmployee.id === employee.id;
+
+  // «Запросить доступ» / «Запросить смену PIN»: PIN придумывает сотрудник, одобряет руководитель.
+  if (posted && postedAction === "pin-request") {
+    const kind = normalizePinRequestKind(posted.get("kind"));
+    const retry = (error: string) =>
+      page(
+        title,
+        kind === "change" ? renderPinRequestForm({ who, action: stepHref, backHref: stepHref, error }) : renderPinNoAccess({ who, action: stepHref, error }),
+        null,
+        null,
+        200,
+        setCookies
+      );
+    if (rateLimited()) return retry(QR_FILL_RATE_LIMIT_ERROR);
+    const created = await createQrPinRequest({
+      organizationId: orgId,
+      userId: employee.id,
+      kind,
+      pin: String(posted.get("pin") ?? "").trim(),
+      repeat: String(posted.get("pin2") ?? "").trim(),
+      source: "journal-fill",
+      journalCode: code,
+      documentId: document.id,
+      ip: clientIp(request),
+      userAgent: request.headers.get("user-agent"),
+    });
+    if (!created.ok) return retry(created.error);
+    return page(title, renderPinRequestSent({ who, kind, backHref: stepHref }), null, null, 200, setCookies);
+  }
+  if (!posted && q.get("pinreq") === "change" && employee.hasPin) {
+    return page(title, renderPinRequestForm({ who, action: stepHref, backHref: stepHref }), null, null, 200, setCookies);
+  }
+
+  const gate = decidePinGate({
+    mode,
+    hasPin: employee.hasPin,
+    sessionVerified,
+    passValid,
+    // Список бракеража — это подпись: PIN нужен всегда (или вход в кабинет).
+    requirePin: commissionOnly || (listCapable && view === "list"),
+    isResultPage: done === "appended" || done === "updated" || done === "signed" || done === "saved",
+  });
+  if (gate === "no-pin") {
+    const latest = await latestQrPinRequestFor({ organizationId: orgId, userId: employee.id });
+    const text = latest ? pinRequestStatusText(latest) : null;
+    const status = latest && text ? { text, tone: latest.status === "rejected" ? ("bad" as const) : ("wait" as const) } : null;
+    return page(title, renderPinNoAccess({ who, action: stepHref, status }), null, null, 200, setCookies);
+  }
+  if (gate === "pin") {
+    let error: string | null = null;
+    if (posted && postedAction === "pin") {
+      if (rateLimited()) error = QR_FILL_RATE_LIMIT_ERROR;
+      else {
+        const actor = await resolveQrFillActor({
+          mode: "pin",
+          organizationId: orgId,
+          employeeId: employee.id,
+          pin: String(posted.get("pin") ?? "").trim(),
+          includeCommission: isBrakerage,
+        });
+        if (actor.ok) {
+          const nextFlow = newQrFlowId();
+          const headers = new Headers({
+            Location: safeInternalPath(link({ ...keep, ...passthrough, row: rowParamForLinks, f: nextFlow, ok: "1" })),
+            "Cache-Control": "no-store",
+          });
+          headers.append("Set-Cookie", cookie(QR_PASS_COOKIE, mintQrPass({ employeeId: employee.id, orgId, flow: nextFlow }), cookiePath, QR_PASS_MAX_AGE_SEC, true, secure));
+          for (const item of setCookies) headers.append("Set-Cookie", item);
+          return new NextResponse(null, { status: 303, headers });
+        }
+        error = actor.error;
+      }
+    } else if (posted) {
+      // Пропуск визита истёк, пока заполняли: введённое осталось в черновике телефона.
+      error = "Подтвердите PIN ещё раз — введённое сохранилось на этом телефоне.";
+    }
+    const latest = await latestQrPinRequestFor({ organizationId: orgId, userId: employee.id });
+    const approvedNote =
+      latest?.status === "approved" && latest.decidedAt && Date.now() - latest.decidedAt.getTime() < 3 * 24 * 3600 * 1000
+        ? `<div class="qp-ok-note" role="status">${pinRequestStatusText(latest) ?? ""}</div>`
+        : "";
+    return page(
+      title,
+      renderPinStep({ action: stepHref, who: `${who}${approvedNote}`, error, changePinHref: link({ ...keep, ...passthrough, row: rowParamForLinks, pinreq: "change" }) }),
+      null,
+      null,
+      200,
+      setCookies
+    );
+  }
+  // Сразу после верного PIN — зелёная галочка, поля всплывают под ней.
+  const pinOk = passValid && q.get("ok") === "1";
+  const whoOk = pinOk ? `${who}${renderPinOk()}` : who;
+
+  let brakerageTabs = "";
+  if (isBrakerage && brakerageConfig && role) {
     const isFinished = code === FINISHED_PRODUCT_DOCUMENT_TEMPLATE_CODE;
     const listHref = link({ ...keep, view: "list" });
     const addHref = link({ ...keep, view: "add" });
@@ -395,14 +566,11 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
         employee,
         role,
         isFinished,
-        verified: (sessionEmployee !== null && sessionEmployee.id === employee.id) || verifyPinPass(cookies[PIN_PASS_COOKIE], employee.id),
         tabs: brakerageTabs,
-        who,
+        who: whoOk,
         listLink: (params) => link({ ...keep, view: "list", ...params }),
         addHref,
         changeHref: changeHref ?? listHref,
-        cookiePath,
-        secure,
         page: (body, status = 200, extraCookies = []) => page(title, body, null, null, status, [...setCookies, ...extraCookies]),
       });
     }
@@ -417,7 +585,7 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
   if (!rowKey) {
     return page(
       title,
-      renderRowStep({ rows: resolved.rows.map((row) => ({ ...row, href: link({ ...keep, row: row.rowKey }) })), who }),
+      renderRowStep({ rows: resolved.rows.map((row) => ({ ...row, href: link({ ...keep, row: row.rowKey }) })), who: whoOk }),
       null,
       null,
       200,
@@ -426,7 +594,6 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
   }
 
   // ---- результат
-  const done = q.get("done");
   const doneCount = Number(q.get("n") ?? 0) || 0;
   if (done === "appended" || done === "updated") {
     const hints = journalFillHints(code);
@@ -541,7 +708,7 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
         openedAt: Date.now(),
         stamp: stampFor(timezone),
         offKeys: extra.offKeys,
-        pinRequired,
+        pinOk,
       }).replace(`id="f-productNames"`, `id="f-productNames" data-lines`),
       rowLabel,
       script,
@@ -584,16 +751,22 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
       values,
       off,
       correction: correction || null,
-      pin: String(posted.get("pin") ?? "").trim() || null,
-      pinVerified: false,
+      pin: null,
+      // PIN подтверждён на своём шаге до формы (или вход по кабинету).
+      pinVerified: passValid || sessionVerified,
       openedAt: Number.isFinite(openedAtRaw) ? openedAtRaw : null,
       bulkNames,
     });
     if (!result.ok) {
       return renderFormPage(raw, { error: result.error, badKeys: result.badKeys, correction, showDeviation: outOfRange.length > 0, deviationTitle, offKeys: off }, result.status >= 500 ? 500 : 200);
     }
+    // Журналы «добавить ещё» (бракераж) держат пропуск визита до конца 15
+    // минут; остальные — стирают сразу: следующий человек у того же
+    // телефона снова введёт свой PIN.
+    const appendJournal = Boolean(baseHints.append) || result.mode === "appended";
     const target = link({
       ...keep,
+      f: appendJournal ? keep.f : null,
       row: resolved.perEmployee ? null : rowKey,
       done: result.mode,
       off: off.length > 0 ? String(off.length) : null,
@@ -602,7 +775,7 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
       view: brakerageTabs ? "add" : null,
     });
     const headers = new Headers({ Location: safeInternalPath(target), "Cache-Control": "no-store" });
-    headers.append("Set-Cookie", cookie(EMPLOYEE_COOKIE, employee.id, cookiePath, 365 * 24 * 3600, false, secure));
+    if (!appendJournal) headers.append("Set-Cookie", cookie(QR_PASS_COOKIE, "", cookiePath, 0, true, secure));
     for (const item of setCookies) headers.append("Set-Cookie", item);
     return new NextResponse(null, { status: 303, headers });
   }
@@ -614,8 +787,8 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
 
 /**
  * Список за сегодня для комиссии (оценка + подпись) и уполномоченного
- * редактора (наименование, время, удаление). Личность подтверждается один
- * раз: PIN → подписанная cookie на 15 минут; в режиме «через вход» — сессия.
+ * редактора (наименование, время, удаление). Личность уже подтверждена
+ * общим шагом PIN до содержимого (в режиме «через вход» — сессией).
  */
 async function handleBrakerageList(ctx: {
   request: Request;
@@ -629,14 +802,11 @@ async function handleBrakerageList(ctx: {
   employee: JournalFillEmployee;
   role: BrakerageQrRole;
   isFinished: boolean;
-  verified: boolean;
   tabs: string;
   who: string;
   listLink: (params: Record<string, string | null>) => string;
   addHref: string;
   changeHref: string;
-  cookiePath: string;
-  secure: boolean;
   page: (body: string, status?: number, cookies?: string[]) => NextResponse;
 }): Promise<NextResponse> {
   const { posted, employee, role } = ctx;
@@ -649,35 +819,6 @@ async function handleBrakerageList(ctx: {
     for (const item of cookies) headers.append("Set-Cookie", item);
     return new NextResponse(null, { status: 303, headers });
   };
-
-  // ---- подтверждение личности
-  if (!ctx.verified) {
-    if (!employee.hasPin) {
-      return ctx.page(
-        `${ctx.who}${renderMessage("warn", "Чтобы оценивать и подписывать бракераж, нужен личный PIN. Попросите руководителя выдать его в карточке сотрудника (или в окне «Комиссия» журнала).")}`
-      );
-    }
-    let error: string | null = null;
-    if (action === "pin" && posted) {
-      if (rateLimited()) error = QR_FILL_RATE_LIMIT_ERROR;
-      else {
-        const actor = await resolveQrFillActor({
-          mode: "pin",
-          organizationId: ctx.orgId,
-          employeeId: employee.id,
-          pin: String(posted.get("pin") ?? "").trim(),
-          includeCommission: true,
-        });
-        if (actor.ok) {
-          return redirectTo(listHref, [
-            cookie(PIN_PASS_COOKIE, mintPinPass(employee.id), ctx.cookiePath, PIN_PASS_MAX_AGE_SEC, true, ctx.secure),
-          ]);
-        }
-        error = actor.error;
-      }
-    }
-    return ctx.page(renderPinStep({ action: listHref, employeeName: employee.name, changeHref: ctx.changeHref, error }));
-  }
 
   // ---- итог после подписи / правки
   const done = new URL(ctx.request.url).searchParams.get("done");

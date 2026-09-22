@@ -4,6 +4,7 @@ import type { JournalFillHints } from "@/lib/journal-fill-hints";
 import { TIME_OFFSET_CHIPS } from "@/lib/journal-fill-hints";
 import { suggestionKey, type NameSuggestionMeta } from "@/lib/name-suggestions";
 import type { TaskFormField, TaskFormSchema } from "@/lib/tasksflow-adapters/task-form";
+import { QR_PIN_OK_HTML, QR_PIN_UI_CSS, QR_REMEMBER_LABEL } from "@/lib/qr-pin-ui";
 
 /**
  * QR-форма журнала как обычный серверный HTML: без React-загрузчика,
@@ -50,10 +51,11 @@ main{padding:14px 0 20px}
 .card{background:#fff;border:1px solid #ececf4;border-radius:20px;padding:16px;box-shadow:0 0 0 1px rgba(240,240,250,.45);margin-bottom:12px}
 .label{font-size:13px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#6f7282;margin:0 0 10px}
 .list{display:flex;flex-direction:column;gap:8px}
-.item{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:64px;padding:12px 16px;border:1px solid #dcdfed;border-radius:14px;background:#fff;color:#0b1024;text-decoration:none;font-weight:500;font-size:18px;line-height:1.3}
+.item{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:72px;padding:12px 16px;border:1px solid #dcdfed;border-radius:14px;background:#fff;color:#0b1024;text-decoration:none;font-weight:600;font-size:22px;line-height:1.25}
+button.item{width:100%;font-family:inherit;text-align:left;cursor:pointer;-webkit-appearance:none;appearance:none}
 .item.on{border-color:#5566f6;background:#eef1ff}
 .item.done{border-color:#d4f5e3;background:#f3fdf7;color:#116b2a}
-.item small{display:block;font-weight:400;color:#6f7282;font-size:15px;margin-top:2px}
+.item small{display:block;font-weight:400;color:#6f7282;font-size:18px;margin-top:3px}
 .item .arr{flex:none;color:#9b9fb3}
 .btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:60px;border:0;border-radius:14px;background:#5566f6;color:#fff;font:inherit;font-size:19px;font-weight:600;text-decoration:none;box-shadow:0 10px 30px -12px rgba(85,102,246,.55);cursor:pointer}
 .btn:disabled{opacity:.6}
@@ -62,7 +64,7 @@ main{padding:14px 0 20px}
 .who{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px;padding:8px 12px;border:1px solid #ececf4;border-radius:14px;background:#fff}
 .who .wl{min-width:0;flex:1;display:flex;flex-direction:column;gap:1px}
 .who .k{font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#9b9fb3}
-.who .v{font-size:19px;font-weight:600;color:#0b1024;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.who .v{font-size:22px;font-weight:600;color:#0b1024;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
 .who a{flex:none;font-size:15px;font-weight:500;text-decoration:none;color:#3848c7;padding:6px 10px;border-radius:999px;background:#f5f6ff}
 .steps{margin:0 0 12px;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}
 .steps li{display:flex;gap:10px;font-size:16.5px;color:#3c4053;line-height:1.35}
@@ -104,11 +106,6 @@ main{padding:14px 0 20px}
 .fl.is-off .st{color:#3848c7}
 .note.draft{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .lnk{background:none;border:0;padding:0;color:#3848c7;font:inherit;font-weight:600;text-decoration:underline;cursor:pointer;white-space:nowrap}
-.pinbox{margin:14px 0 6px;padding:16px;border:1px solid #d6dcff;background:#eef1ff;border-radius:16px}
-.pinbox .pin-t{margin:0 0 10px;font-size:19px;font-weight:600;color:#0b1024;text-align:center}
-.pinbox .in.pin{text-align:center;font-size:36px;font-weight:600;letter-spacing:.5em;padding-left:.5em;min-height:72px}
-.pinbox .in.pin::placeholder{letter-spacing:.3em;color:#c8cbe0}
-.pinbox .hint{text-align:center;margin-top:8px}
 .seg{display:flex;flex-wrap:wrap;gap:8px}
 .segb{flex:1 1 30%;min-width:96px;display:flex;align-items:center;justify-content:center;min-height:58px;padding:8px 10px;border:1px solid #dcdfed;border-radius:14px;background:#fff;font-size:18px;font-weight:600;color:#0b1024;text-align:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .segb input{position:absolute;opacity:0;width:0;height:0}
@@ -203,7 +200,7 @@ h2{font-size:21px;letter-spacing:-.02em;margin:0;font-weight:600}
 .bk-sub{font-size:12.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6f7282;margin:0 0 6px 2px}
 .btn.danger{background:#d2453d;box-shadow:0 10px 30px -12px rgba(210,69,61,.55)}
 .btn+.btn{margin-top:8px}
-`;
+${QR_PIN_UI_CSS}`;
 
 /** Инлайн-скрипт: только удобства, страница работает и без него. */
 export const QR_FILL_JS = `
@@ -393,33 +390,145 @@ export function renderDocumentStep(params: {
     .join("")}</div></div>`;
 }
 
-export function renderEmployeeStep(params: {
-  employees: Array<{ id: string; name: string; positionTitle: string | null; href: string }>;
-  remembered: { id: string; name: string; positionTitle: string | null; href: string } | null;
-  hintText: string;
-}): string {
-  const remembered = params.remembered
-    ? `<div class="card"><p class="label">Вы</p><a class="item on" href="${esc(params.remembered.href)}"><span>${esc(params.remembered.name)}${params.remembered.positionTitle ? `<small>${esc(params.remembered.positionTitle)}</small>` : ""}</span>${ARROW}</a><div class="sticky"><a class="btn" href="${esc(params.remembered.href)}">Продолжить</a></div></div>`
-    : "";
-  const search = params.employees.length > 6 ? `<div class="search"><input id="emp-search" class="in" type="search" placeholder="Найти по фамилии" autocomplete="off"></div>` : "";
-  return `${remembered}<div class="card"><p class="label">${params.remembered ? "Или другой сотрудник" : "Кто заполняет"}</p>${search}<div class="list">${params.employees
+/**
+ * Форма выбора сотрудника — обычный GET: каждое имя — кнопка `employee`,
+ * рядом чекбокс «Запомнить выбор на этом оборудовании» (отмечен по
+ * умолчанию). Без скриптов работает так же: браузер сам соберёт адрес.
+ */
+export type EmployeePickForm = {
+  /** Путь без query: `/journal-fill/<org>/<code>`. */
+  action: string;
+  /** Что нести дальше: token, doc, commission, view… */
+  hidden: Record<string, string>;
+  /** Показывать ли «Запомнить» (в режиме входа по кабинету — нет). */
+  showRemember: boolean;
+  /** Отмечен ли чекбокс (по умолчанию — да). */
+  rememberOn?: boolean;
+};
+
+function renderPickItems(
+  employees: Array<{ id: string; name: string; positionTitle: string | null }>,
+  currentId: string | null
+): string {
+  return employees
     .map(
       (item) =>
-        `<a class="item${params.remembered?.id === item.id ? " on" : ""}" data-emp="${esc(item.name)}" href="${esc(item.href)}"><span>${esc(item.name)}${item.positionTitle ? `<small>${esc(item.positionTitle)}</small>` : ""}</span>${ARROW}</a>`
+        `<button class="item${item.id === currentId ? " on" : ""}" type="submit" name="employee" value="${esc(item.id)}" data-emp="${esc(item.name)}"><span>${esc(item.name)}${item.positionTitle ? `<small>${esc(item.positionTitle)}</small>` : ""}</span>${item.id === currentId ? CHECK_SMALL : ARROW}</button>`
     )
-    .join("")}</div><p class="hint">${esc(params.hintText)}</p></div>`;
+    .join("");
 }
 
-export function renderPinStep(params: { action: string; employeeName: string; changeHref: string; error?: string | null }): string {
-  return `${renderWho({ employeeName: params.employeeName, changeHref: params.changeHref })}
-<form method="post" action="${esc(params.action)}" class="card" id="qr-form">
+function renderPickHidden(pick: EmployeePickForm): string {
+  return `${Object.entries(pick.hidden)
+    .map(([name, value]) => `<input type="hidden" name="${esc(name)}" value="${esc(value)}">`)
+    .join("")}<input type="hidden" name="rf" value="1">`;
+}
+
+function renderRememberCheck(pick: EmployeePickForm): string {
+  if (!pick.showRemember) return "";
+  return `<label class="qp-remember"><input type="checkbox" name="remember" value="1"${pick.rememberOn === false ? "" : " checked"}>${esc(QR_REMEMBER_LABEL)}</label>`;
+}
+
+export function renderEmployeeStep(params: {
+  pick: EmployeePickForm;
+  employees: Array<{ id: string; name: string; positionTitle: string | null }>;
+  /** Кто выбран сейчас («Сменить») — отмечен в списке. */
+  currentId?: string | null;
+  hintText?: string | null;
+}): string {
+  const search = params.employees.length > 6 ? `<div class="search"><input id="emp-search" class="in" type="search" placeholder="Найти по фамилии" autocomplete="off" aria-label="Поиск сотрудника"></div>` : "";
+  return `<form method="get" action="${esc(params.pick.action)}" class="card">${renderPickHidden(params.pick)}<p class="label">Кто заполняет</p>${search}<div class="list">${renderPickItems(
+    params.employees,
+    params.currentId ?? null
+  )}</div>${renderRememberCheck(params.pick)}${params.hintText ? `<p class="hint">${esc(params.hintText)}</p>` : ""}</form>`;
+}
+
+/**
+ * Шаг «Ваш PIN» — ДО формы, во всю ширину (без белой карточки): крупное
+ * поле, крупная подсказка, справа от заголовка — «Запросить смену PIN».
+ */
+export function renderPinStep(params: {
+  action: string;
+  who: string;
+  error?: string | null;
+  changePinHref?: string | null;
+}): string {
+  return `${params.who}
+<form method="post" action="${esc(params.action)}" id="qr-pin">
 <input type="hidden" name="action" value="pin">
-<p class="label">Ваш PIN</p>
-${params.error ? `<div class="err">${esc(params.error)}</div>` : ""}
-<input class="in" type="password" name="pin" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" placeholder="••••" required autofocus style="text-align:center;font-size:22px;letter-spacing:.4em">
-<p class="hint">PIN выдаёт руководитель. Он подтверждает, что запись сделали именно вы.</p>
+<div class="qp-head"><label class="qp-k" for="qp-pin">Ваш PIN</label>${params.changePinHref ? `<a class="qp-link" href="${esc(params.changePinHref)}">Запросить смену PIN</a>` : ""}</div>
+${params.error ? `<div class="qp-err" role="alert">${esc(params.error)}</div>` : ""}
+<input id="qp-pin" class="qp-pin" type="password" name="pin" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" placeholder="••••" required autofocus>
+<p class="qp-hint">PIN подтверждает, что запись делаете именно вы.</p>
 <div class="sticky"><button class="btn" type="submit">Продолжить</button></div>
 </form>`;
+}
+
+/** Зелёная галочка сразу после верного PIN: сама схлопывается, поля всплывают снизу. */
+export function renderPinOk(): string {
+  return QR_PIN_OK_HTML;
+}
+
+function pinPairInputs(firstLabel: string): string {
+  return `<div class="qp-head"><label class="qp-k" for="qp-pin">${esc(firstLabel)}</label></div>
+<input id="qp-pin" class="qp-pin" type="password" name="pin" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password" placeholder="••••" required>
+<div class="qp-head" style="margin-top:16px"><label class="qp-k" for="qp-pin2" style="font-size:20px">Повторите PIN</label></div>
+<input id="qp-pin2" class="qp-pin" type="password" name="pin2" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password" placeholder="••••" required style="min-height:96px">`;
+}
+
+/**
+ * PIN нужен, а у сотрудника его нет: коротко и крупно, сразу поле «Придумайте
+ * PIN» и большая «Запросить доступ» — руководитель одобрит, PIN заработает.
+ */
+export function renderPinNoAccess(params: {
+  who: string;
+  action: string;
+  /** Статус последнего запроса («ждёт», «отклонил…»). */
+  status?: { text: string; tone: "wait" | "bad" } | null;
+  error?: string | null;
+}): string {
+  return `${params.who}
+<div class="qp-note">Нужен личный PIN: он подтверждает, что запись делаете именно вы.</div>
+${params.status ? `<div class="${params.status.tone === "bad" ? "qp-err" : "qp-ok-note"}" role="status">${esc(params.status.text)}</div>` : ""}
+<form method="post" action="${esc(params.action)}" id="qr-pin">
+<input type="hidden" name="action" value="pin-request">
+<input type="hidden" name="kind" value="issue">
+${params.error ? `<div class="qp-err" role="alert">${esc(params.error)}</div>` : ""}
+${pinPairInputs("Придумайте PIN")}
+<p class="qp-hint">4–6 цифр. Руководитель получит запрос — после его одобрения PIN заработает.</p>
+<div class="sticky"><button class="btn" type="submit">Запросить доступ</button></div>
+</form>`;
+}
+
+/** «Запросить смену PIN»: новый PIN дважды; до одобрения действует старый. */
+export function renderPinRequestForm(params: {
+  who: string;
+  action: string;
+  backHref: string;
+  error?: string | null;
+}): string {
+  return `${params.who}
+<form method="post" action="${esc(params.action)}" id="qr-pin">
+<input type="hidden" name="action" value="pin-request">
+<input type="hidden" name="kind" value="change">
+<p class="qp-hint" style="margin:4px 2px 14px;color:#3c4053">Введите новый PIN — ответственный за смену PIN получит запрос. После одобрения придёт уведомление, до этого действует старый PIN.</p>
+${params.error ? `<div class="qp-err" role="alert">${esc(params.error)}</div>` : ""}
+${pinPairInputs("Новый PIN")}
+<div class="sticky"><button class="btn" type="submit">Запросить смену PIN</button><a class="btn second" href="${esc(params.backHref)}">Отмена</a></div>
+</form>`;
+}
+
+/** Запрос отправлен: что будет дальше. */
+export function renderPinRequestSent(params: { who: string; kind: "issue" | "change"; backHref: string }): string {
+  return `${params.who}
+<div class="center">${QR_PIN_OK_HTML.replace('class="qp-ok"', 'class="qp-ok" style="animation:none"')}</div>
+<h2 class="center" style="margin:6px 0 10px">Запрос отправлен</h2>
+<p class="qp-hint center" style="color:#3c4053">${
+    params.kind === "change"
+      ? "Руководитель получит уведомление. После одобрения новый PIN заработает, а пока действует старый."
+      : "Руководитель получит уведомление. После одобрения PIN заработает — отсканируйте QR-код снова."
+  }</p>
+<div class="sticky"><a class="btn second" href="${esc(params.backHref)}">${params.kind === "change" ? "Вернуться к вводу PIN" : "Готово"}</a></div>`;
 }
 
 export function renderRowStep(params: { rows: Array<{ rowKey: string; label: string; sublabel?: string; mine: boolean; href: string }>; who: string }): string {
@@ -436,15 +545,19 @@ export function renderWho(params: {
   documentTitle?: string | null;
   documentChangeHref?: string | null;
   /** Список для шторки «Сменить» на той же странице (со скриптами); без них — ссылка на шаг выбора. */
-  employees?: Array<{ id: string; name: string; positionTitle: string | null; href: string; current: boolean }>;
+  employees?: Array<{ id: string; name: string; positionTitle: string | null; current: boolean }>;
+  /** Форма выбора для шторки (как на шаге сотрудника, с «Запомнить»). */
+  pick?: EmployeePickForm | null;
 }): string {
   const row = (k: string, v: string, href: string | null, extra = "") =>
     `<div class="who${extra ? " emp" : ""}"><div class="wl"><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></div>${href ? `<a href="${esc(href)}"${extra}>Сменить</a>` : ""}</div>`;
+  const current = params.employees?.find((item) => item.current)?.id ?? null;
   const sheet =
-    params.changeHref && params.employees && params.employees.length > 0
-      ? `<div class="sheet" id="emp-sheet" hidden role="dialog" aria-modal="true" aria-label="Кто заполняет"><div class="sh"><div class="sh-h"><span>Кто заполняет</span><button type="button" class="sh-x" aria-label="Закрыть">×</button></div><div class="sh-s"><input id="emp-sheet-search" class="in" type="search" placeholder="Найти по фамилии" autocomplete="off" aria-label="Поиск сотрудника"></div><div class="sh-l"><div class="list">${params.employees
-          .map((item) => `<a class="item${item.current ? " on" : ""}" data-emp="${esc(item.name)}" href="${esc(item.href)}"><span>${esc(item.name)}${item.positionTitle ? `<small>${esc(item.positionTitle)}</small>` : ""}</span>${item.current ? CHECK_SMALL : ARROW}</a>`)
-          .join("")}</div></div></div></div>`
+    params.changeHref && params.pick && params.employees && params.employees.length > 0
+      ? `<div class="sheet" id="emp-sheet" hidden role="dialog" aria-modal="true" aria-label="Кто заполняет"><div class="sh"><div class="sh-h"><span>Кто заполняет</span><button type="button" class="sh-x" aria-label="Закрыть">×</button></div><div class="sh-s"><input id="emp-sheet-search" class="in" type="search" placeholder="Найти по фамилии" autocomplete="off" aria-label="Поиск сотрудника"></div><form method="get" action="${esc(params.pick.action)}" class="sh-l">${renderPickHidden(params.pick)}<div class="list">${renderPickItems(
+          params.employees,
+          current
+        )}</div>${renderRememberCheck(params.pick)}</form></div></div>`
       : "";
   return row("Кто заполняет", params.employeeName, params.changeHref, sheet ? " data-emp-open" : "") + (params.documentTitle ? row("Документ", params.documentTitle, params.documentChangeHref ?? null) : "") + sheet;
 }
@@ -626,8 +739,11 @@ export function renderForm(params: {
   stamp?: { date: string; time: string } | null;
   /** Поля, отмеченные «Выключено / Нет показания» (при повторном показе формы). */
   offKeys?: string[];
-  /** У сотрудника задан PIN (или режим «имя + PIN») — спросить его над «Сохранить». */
-  pinRequired?: boolean;
+  /**
+   * PIN только что подтверждён на своём шаге: галочка над формой, поля
+   * всплывают снизу. Сам PIN в форме больше не спрашивается — он ДО формы.
+   */
+  pinOk?: boolean;
 }): string {
   const bad = new Set(params.badKeys ?? []);
   // Поля объектов (склад/холодильник) — карточкой: «Склад Бакалея» и в ней температура + влажность рядом.
@@ -668,22 +784,17 @@ export function renderForm(params: {
   const today = params.stamp
     ? `<p class="today">Показания вносятся за сегодня, <b>${esc(params.stamp.date)}</b>, время <b class="stamp-t">${esc(params.stamp.time)}</b>.</p>`
     : "";
-  // Ошибка PIN показывается у самого поля PIN, а не сверху формы.
-  const pinError = params.pinRequired && params.error && /PIN/.test(params.error) ? params.error : null;
-  const pinBlock = params.pinRequired
-    ? `<div class="pinbox"><p class="pin-t">Введите ваш PIN</p>${pinError ? `<div class="err">${esc(pinError)}</div>` : ""}<input class="in pin" name="pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" placeholder="••••" required aria-label="PIN для быстрой QR-авторизации"><p class="hint center">PIN подтверждает, что запись сделали именно вы.</p></div>`
-    : "";
   void hint; // Пояснения из intro и плашку «уже записано» не показываем: значения и так подставлены, лишний текст мешает.
-  return `${params.who}${today}${pipeline}
+  const body = `${today}${pipeline}
 <form method="post" action="${esc(params.action)}" id="qr-form" novalidate>
 <input type="hidden" name="action" value="submit">
 <input type="hidden" name="__openedAt" value="${params.openedAt}">
-${params.error && !pinError ? `<div class="err"${params.error.startsWith("Не заполнено") ? ` data-missing="1"` : ""}>${esc(params.error)}</div>` : ""}
+${params.error ? `<div class="err"${params.error.startsWith("Не заполнено") ? ` data-missing="1"` : ""}>${esc(params.error)}</div>` : ""}
 ${fields}
 ${deviation}
-${pinBlock}
 <div class="sticky"><p class="prog" id="prog" hidden></p><button class="btn" type="submit">${esc(params.form.submitLabel ?? "Сохранить")}</button></div>
 </form>`;
+  return params.pinOk ? `${params.who}${renderPinOk()}<div class="qp-rise">${body}</div>` : `${params.who}${body}`;
 }
 
 /** Карточка объекта: название и его числовые поля в две колонки, норма в подписи поля, статус пилюлей. */

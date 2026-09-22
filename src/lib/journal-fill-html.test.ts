@@ -1,7 +1,20 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { accusative, cleanLabel, esc, formSteps, introHint, jsonForScript, metricOf, normRange, renderForm } from "./journal-fill-html";
+import {
+  accusative,
+  cleanLabel,
+  esc,
+  formSteps,
+  introHint,
+  jsonForScript,
+  metricOf,
+  normRange,
+  renderEmployeeStep,
+  renderForm,
+  renderPinNoAccess,
+  renderPinStep,
+} from "./journal-fill-html";
 
 describe("journal-fill-html", () => {
   it("escapes html and keeps inline json safe", () => {
@@ -44,14 +57,44 @@ describe("journal-fill-html", () => {
     assert.match(html, /Впишите температуру в карточки ниже \(1\)/);
   });
 
-  it("asks the PIN above the save button when required and keeps its error next to it", () => {
-    const html = renderForm({
-      action: "/x", token: "t", who: "", correctionPresets: [], openedAt: 1, suggestions: {}, values: {}, hints: {}, pinRequired: true, error: "Неверный PIN. Осталось попыток: 4.",
-      form: { fields: [{ type: "number", key: "t", label: "Холодильник · норма 2…6", unit: "°C", min: -40, max: 30 }] },
+  // PIN — ДО формы, на своём шаге: в самой форме его больше нет.
+  it("keeps the PIN out of the form; after the PIN step shows a check and lets fields rise", () => {
+    const base = {
+      action: "/x", token: "t", who: "<div class=\"who\"></div>", correctionPresets: [], openedAt: 1, suggestions: {}, values: {}, hints: {},
+      form: { fields: [{ type: "number" as const, key: "t", label: "Холодильник · норма 2…6", unit: "°C", min: -40, max: 30 }] },
+    };
+    const plain = renderForm(base);
+    assert.doesNotMatch(plain, /name="pin"/);
+    assert.doesNotMatch(plain, /qp-ok/);
+    const afterPin = renderForm({ ...base, pinOk: true });
+    assert.match(afterPin, /<div class="who"><\/div><div class="qp-ok" role="status"/);
+    assert.match(afterPin, /<div class="qp-rise">[\s\S]*<form method="post"/);
+  });
+
+  it("renders the PIN step full-width with a big field and the change-PIN link", () => {
+    const html = renderPinStep({ action: "/x?f=1", who: "<div class=\"who\"></div>", error: "Неверный PIN. Осталось попыток: 4.", changePinHref: "/x?pinreq=change" });
+    assert.doesNotMatch(html, /class="card"/);
+    assert.match(html, /<label class="qp-k" for="qp-pin">Ваш PIN<\/label><a class="qp-link" href="\/x\?pinreq=change">Запросить смену PIN<\/a>/);
+    assert.match(html, /<input id="qp-pin" class="qp-pin" type="password" name="pin" inputmode="numeric"/);
+    assert.match(html, /<div class="qp-err" role="alert">Неверный PIN. Осталось попыток: 4.<\/div>/);
+  });
+
+  it("renders the employee picker as a plain GET form with «remember» checked", () => {
+    const html = renderEmployeeStep({
+      pick: { action: "/journal-fill/o/hygiene", hidden: { token: "t", doc: "d1" }, showRemember: true },
+      employees: [{ id: "u1", name: "Репешко Ирина Васильевна", positionTitle: "Заведующий производством" }],
     });
-    assert.match(html, /<div class="pinbox"><p class="pin-t">Введите ваш PIN<\/p><div class="err">Неверный PIN. Осталось попыток: 4.<\/div><input class="in pin" name="pin" type="password" inputmode="numeric"[^>]*>/);
-    assert.equal((html.match(/class="err"/g) ?? []).length, 1);
-    assert.ok(html.indexOf('class="pinbox"') < html.indexOf('class="sticky"'));
+    assert.match(html, /^<form method="get" action="\/journal-fill\/o\/hygiene" class="card"><input type="hidden" name="token" value="t"><input type="hidden" name="doc" value="d1"><input type="hidden" name="rf" value="1">/);
+    assert.match(html, /<button class="item" type="submit" name="employee" value="u1" data-emp="Репешко Ирина Васильевна"><span>Репешко Ирина Васильевна<small>Заведующий производством<\/small><\/span>/);
+    assert.match(html, /<input type="checkbox" name="remember" value="1" checked>Запомнить выбор на этом оборудовании<\/label>/);
+  });
+
+  it("offers «request access» with a self-chosen PIN when the employee has none", () => {
+    const html = renderPinNoAccess({ who: "", action: "/x", status: { text: "Запрос на PIN отправлен и ждёт подтверждения руководителя.", tone: "wait" } });
+    assert.match(html, /<input type="hidden" name="action" value="pin-request"><input type="hidden" name="kind" value="issue">|name="action" value="pin-request">\n<input type="hidden" name="kind" value="issue">/);
+    assert.match(html, /name="pin2"/);
+    assert.match(html, />Запросить доступ<\/button>/);
+    assert.match(html, /qp-ok-note" role="status">Запрос на PIN отправлен/);
   });
 
   it("renders a plain form that works without scripts", () => {
