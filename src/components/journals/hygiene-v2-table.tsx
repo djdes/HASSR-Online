@@ -3,13 +3,18 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ArrowRight, QrCode } from "lucide-react";
-import { HYGIENE_V2_COLUMNS, buildHygieneV2Rows, type HygieneV2Row } from "@/lib/hygiene-v2";
+import {
+  HYGIENE_V2_COLUMNS,
+  HYGIENE_V2_FORM_CAPTION,
+  buildHygieneV2Rows,
+  type HygieneV2Row,
+} from "@/lib/hygiene-v2";
 
 /**
  * Гигиенический журнал по форме Приложения №1 СанПиН (документы с
  * `config.hygieneFormVersion = 2`). Только чтение: три графы подписывает
  * сам сотрудник по QR журнала, допуск и подпись ставит ответственный по
- * QR «Гигиенический журнал — допуск». Строка — сотрудник в день.
+ * QR «Гигиенический журнал (сотрудники) — допуск». Строка — сотрудник в день.
  */
 
 type Props = {
@@ -93,7 +98,7 @@ export function HygieneV2Table({ dateKeys, todayKey = "", employees, entries }: 
         </div>
         <p className="flex-1 text-[14px] leading-[1.55] text-[#3c4053]">
           Сотрудники подписывают три графы по QR-коду журнала, ответственный ставит допуск по QR
-          «Гигиенический журнал — допуск» (Настройки → QR-плакаты).
+          «Гигиенический журнал (сотрудники) — допуск» (Настройки → QR-плакаты).
         </p>
         <Link
           href="/settings/qr-posters?kind=journal"
@@ -124,61 +129,68 @@ export function HygieneV2Table({ dateKeys, todayKey = "", employees, entries }: 
         </div>
       ) : null}
 
-      {visibleRows.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-14 text-center">
-          <div className="text-[15px] font-medium text-[#0b1024]">
-            {day === ALL ? "Пока нет отметок" : "В этот день отметок нет"}
+      {/* Бланк: строка «Рекомендуемая форма…» справа над таблицей — как на
+          форме заказчика и в PDF. Над пустым состоянием тоже, чтобы при
+          переключении дней ничего не прыгало. */}
+      <div className="space-y-2">
+        <p className="text-right text-[12px] leading-[1.4] text-[#6f7282]">{HYGIENE_V2_FORM_CAPTION}</p>
+
+        {visibleRows.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-14 text-center">
+            <div className="text-[15px] font-medium text-[#0b1024]">
+              {day === ALL ? "Пока нет отметок" : "В этот день отметок нет"}
+            </div>
+            <p className="mx-auto mt-1.5 max-w-[420px] text-[13px] text-[#6f7282]">
+              Строка появится, когда сотрудник отсканирует QR-код журнала перед сменой и подпишет три
+              графы. Выходные, отпуска и больничные в бланк не попадают.
+            </p>
           </div>
-          <p className="mx-auto mt-1.5 max-w-[420px] text-[13px] text-[#6f7282]">
-            Строка появится, когда сотрудник отсканирует QR-код журнала перед сменой и подпишет три
-            графы. Выходные, отпуска и больничные в бланк не попадают.
-          </p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto rounded-3xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
-          <table className="w-full min-w-[980px] border-collapse text-[14px] text-[#0b1024]">
-            <thead>
-              <tr className="bg-[#fafbff]">
-                {HYGIENE_V2_COLUMNS.map((column) => (
-                  <th
-                    key={column.key}
-                    scope="col"
-                    className="border-b border-[#ececf4] px-3 py-3 text-left align-bottom text-[12px] font-medium leading-[1.35] text-[#6f7282]"
-                  >
-                    {column.label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {visibleRows.map((row, index) => (
-                <tr
-                  key={`${row.employeeId}:${row.dateKey}`}
-                  className="border-b border-[#ececf4] transition-colors duration-150 last:border-b-0 hover:bg-[#f5f6ff]"
-                >
-                  <td className="px-3 py-2.5 tabular-nums text-[#6f7282]">{day === ALL ? row.n : index + 1}</td>
-                  <td className="whitespace-nowrap px-3 py-2.5 tabular-nums">{row.date}</td>
-                  <td className="px-3 py-2.5 font-medium">{row.name}</td>
-                  <td className="px-3 py-2.5 text-[#3c4053]">{row.position || "—"}</td>
-                  <td className="px-3 py-2.5 text-center">
-                    <SignatureCell mark={row.temperature} />
-                  </td>
-                  <td className="px-3 py-2.5 text-center">
-                    <SignatureCell mark={row.infection} />
-                  </td>
-                  <td className="px-3 py-2.5 text-center">
-                    <SignatureCell mark={row.respiratorySkin} />
-                  </td>
-                  <td className="px-3 py-2.5">
-                    <ResultCell row={row} />
-                  </td>
-                  <td className="px-3 py-2.5 text-[13px] text-[#3c4053]">{row.verifier || "—"}</td>
+        ) : (
+          <div className="overflow-x-auto rounded-3xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
+            <table className="w-full min-w-[980px] border-collapse text-[14px] text-[#0b1024]">
+              <thead>
+                <tr className="bg-[#fafbff]">
+                  {HYGIENE_V2_COLUMNS.map((column) => (
+                    <th
+                      key={column.key}
+                      scope="col"
+                      className="border-b border-[#ececf4] px-3 py-3 text-left align-bottom text-[12px] font-medium leading-[1.35] text-[#6f7282]"
+                    >
+                      {column.label}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              </thead>
+              <tbody>
+                {visibleRows.map((row, index) => (
+                  <tr
+                    key={`${row.employeeId}:${row.dateKey}`}
+                    className="border-b border-[#ececf4] transition-colors duration-150 last:border-b-0 hover:bg-[#f5f6ff]"
+                  >
+                    <td className="px-3 py-2.5 tabular-nums text-[#6f7282]">{day === ALL ? row.n : index + 1}</td>
+                    <td className="whitespace-nowrap px-3 py-2.5 tabular-nums">{row.date}</td>
+                    <td className="px-3 py-2.5 font-medium">{row.name}</td>
+                    <td className="px-3 py-2.5 text-[#3c4053]">{row.position || "—"}</td>
+                    <td className="px-3 py-2.5 text-center">
+                      <SignatureCell mark={row.temperature} />
+                    </td>
+                    <td className="px-3 py-2.5 text-center">
+                      <SignatureCell mark={row.infection} />
+                    </td>
+                    <td className="px-3 py-2.5 text-center">
+                      <SignatureCell mark={row.respiratorySkin} />
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <ResultCell row={row} />
+                    </td>
+                    <td className="px-3 py-2.5 text-[13px] text-[#3c4053]">{row.verifier || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -150,6 +150,7 @@ export function UvLampClient(props: {
               token={props.token}
               employeeId={selected.id}
               employeeName={selected.name}
+              hasPin={Boolean(selected.hasPin)}
               remember={remember}
               onPass={(value) => {
                 setPass(value);

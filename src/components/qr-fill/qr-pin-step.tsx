@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 
+import { QrPinNoAccess, QrPinRequestForm, QrPinRequestSent, useQrPinRequestInfo } from "@/components/qr-fill/qr-pin-request";
 import { QR_PIN_OK_HTML, QR_PIN_UI_CSS, QR_REMEMBER_LABEL } from "@/lib/qr-pin-ui";
 
 /**
@@ -36,19 +37,37 @@ export function rememberQrEmployee(params: { kind: "equipment" | "room"; objectI
   }).catch(() => null);
 }
 
-export function QrPinStep(props: {
+type QrPinStepProps = {
   kind: "equipment" | "room";
   objectId: string;
   token: string;
   employeeId: string;
   employeeName: string;
+  /** У сотрудника задан PIN. false — PIN нужен, а его нет: экран «Запросить доступ». */
+  hasPin?: boolean;
   remember: boolean;
   onPass: (pass: string) => void;
   onChangeEmployee?: () => void;
-}) {
+};
+
+/**
+ * Шаг PIN до формы: ввод PIN (справа в заголовке — «Запросить смену PIN»),
+ * а если PIN нужен, но его нет, — «Запросить доступ». Как у QR-журналов.
+ */
+export function QrPinStep(props: QrPinStepProps) {
+  // Другой сотрудник — шаг с чистого листа: цифры, ошибка, статус запроса.
+  return <QrPinStepFor key={props.employeeId} {...props} />;
+}
+
+function QrPinStepFor(props: QrPinStepProps) {
+  const target = { kind: props.kind, objectId: props.objectId, token: props.token, employeeId: props.employeeId };
+  const [info, setInfo] = useQrPinRequestInfo(target);
+  const [view, setView] = useState<"pin" | "change" | "change-sent">("pin");
   const [pin, setPin] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // PIN мог появиться, пока страница открыта: руководитель одобрил запрос.
+  const hasPin = props.hasPin !== false || info.hasPin === true;
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -72,15 +91,41 @@ export function QrPinStep(props: {
     }
   }
 
+  if (!hasPin) {
+    return <QrPinNoAccess target={target} status={info.status} onStatus={(status) => setInfo((current) => ({ ...current, status }))} />;
+  }
+  if (view === "change") {
+    return <QrPinRequestForm target={target} requestKind="change" onSent={() => setView("change-sent")} onCancel={() => setView("pin")} />;
+  }
+  if (view === "change-sent") return <QrPinRequestSent requestKind="change" onDone={() => setView("pin")} />;
+
   return (
     <form onSubmit={submit} className="qp-card" data-testid="qr-pin-step">
-      <div className="qp-head">
+      {info.approvedNote ? (
+        <div className="qp-ok-note" role="status">
+          {info.approvedNote}
+        </div>
+      ) : null}
+      <div className="qp-head flex-wrap">
         <span className="qp-k">Ваш PIN</span>
-        {props.onChangeEmployee ? (
-          <button type="button" className="qp-link" onClick={props.onChangeEmployee}>
-            Не {props.employeeName.split(" ")[0]}?
+        <span className="ml-auto flex flex-wrap items-baseline justify-end gap-x-4 gap-y-1">
+          <button
+            type="button"
+            className="qp-link"
+            data-testid="qr-pin-change"
+            onClick={() => {
+              setError(null);
+              setView("change");
+            }}
+          >
+            Запросить смену PIN
           </button>
-        ) : null}
+          {props.onChangeEmployee ? (
+            <button type="button" className="qp-link" onClick={props.onChangeEmployee}>
+              Не {props.employeeName.split(" ")[0]}?
+            </button>
+          ) : null}
+        </span>
       </div>
       {error ? <div className="qp-err">{error}</div> : null}
       <input

@@ -20,6 +20,14 @@ export function readHygieneFormVersion(config: unknown): 1 | 2 {
   return (config as Record<string, unknown>)[HYGIENE_FORM_VERSION_KEY] === 2 ? 2 : 1;
 }
 
+/**
+ * Строка справа над заголовком «Гигиенический журнал (сотрудники)» — как
+ * на форме заказчика. Печатается в PDF (`drawHygieneV2Pdf`) и стоит над
+ * таблицей на сайте (`HygieneV2Table`).
+ */
+export const HYGIENE_V2_FORM_CAPTION =
+  "Рекомендуемая форма в соответствии с Приложением №1 СанПиН 2.3/2.4.4282-26";
+
 /** Колонки бланка — порядок и подписи как на форме заказчика. */
 export const HYGIENE_V2_COLUMNS: ReadonlyArray<{ key: string; label: string }> = [
   { key: "n", label: "N п/п" },

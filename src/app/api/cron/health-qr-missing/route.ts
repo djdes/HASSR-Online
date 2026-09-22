@@ -103,7 +103,7 @@ async function handle(request: Request) {
     }
     const title =
       missing.length > 0
-        ? `Не отметились по QR «Гигиена и здоровье»: ${missing.length}`
+        ? `Не отметились по QR гигиенического журнала: ${missing.length}`
         : `Не допущены к работе сегодня: ${suspended.length}`;
     const lines = [
       ...missing.map((p) => ({ id: p.id, label: p.name, hint: "не отметился" })),
@@ -120,9 +120,9 @@ async function handle(request: Request) {
       items: lines,
       linkHref: `/journals/hygiene/documents/${docs[0].id}`,
       linkLabel: "Открыть гигиенический журнал",
-      telegramText: `🩺 ${title}\n${listText}\n\nПроверьте и отметьте в журнале или по QR «Гигиена и здоровье» → «Все за сегодня».`,
+      telegramText: `🩺 ${title}\n${listText}\n\nПроверьте и отметьте в журнале или по QR гигиенического журнала → «Допуск сотрудников».`,
       emailSubject: `${org.name}: ${title}`,
-      emailBodyHtml: `<p>Итог дня по гигиене и здоровью (${todayKey}):</p><ul>${listHtml}</ul><p>Отметить или поправить можно в гигиеническом журнале или по QR «Гигиена и здоровье» → «Все за сегодня».</p>`,
+      emailBodyHtml: `<p>Итог дня по гигиене и здоровью (${todayKey}):</p><ul>${listHtml}</ul><p>Отметить или поправить можно в гигиеническом журнале или по его QR → «Допуск сотрудников».</p>`,
     });
     report.push({ orgId: org.id, missing: missing.length, suspended: suspended.length, sent: true });
   }

@@ -299,7 +299,17 @@ export function buildCompletionValidator(
         break;
       }
       case "boolean": {
-        shape[field.key] = z.coerce.boolean().optional().nullable();
+        // z.coerce.boolean() делает из строки "false" true — а галка бывает
+        // подписью (гигиена по форме Приложения №1). Строки разбираем явно.
+        shape[field.key] = z.preprocess((value) => {
+          if (typeof value === "string") {
+            const normalized = value.trim().toLowerCase();
+            if (["false", "0", "off", "no", "нет", ""].includes(normalized)) return false;
+            if (["true", "1", "on", "yes", "да"].includes(normalized)) return true;
+          }
+          if (typeof value === "number") return value !== 0;
+          return value;
+        }, z.boolean().optional().nullable());
         break;
       }
       case "select": {

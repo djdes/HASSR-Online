@@ -208,7 +208,7 @@ function HygieneHeader({
       <tbody>
         <JournalPaperHeaderRows
           orgName={organizationLabel}
-          title="ГИГИЕНИЧЕСКИЙ ЖУРНАЛ"
+          title="ГИГИЕНИЧЕСКИЙ ЖУРНАЛ (СОТРУДНИКИ)"
           pageInfo={pageLabel}
           startedAt={startedAt}
           finishedAt={finishedAt}
@@ -444,7 +444,7 @@ export function HygieneDocumentClient({
   const tourDateKey = dateKeys.includes(todayKey) ? todayKey : dateKeys[0];
   const organizationLabel = organizationName || ORG_NAME_FALLBACK;
   const responsibleLabel = responsibleTitle || getHygieneDefaultResponsibleTitle(employees);
-  const documentTitle = title || "Гигиенический журнал";
+  const documentTitle = title || "Гигиенический журнал (сотрудники)";
   const monthLabel = formatMonthLabel(dateFrom, dateTo);
   const selectedCount = selectedEmployeeIds.length;
   const allSelected = rosterUsers.length > 0 && selectedCount === rosterUsers.length;
@@ -1259,7 +1259,7 @@ export function HygieneDocumentClient({
           subtitle={getJournalDocumentPeriodLabel("hygiene", dateFrom, dateTo)}
           documentId={documentId}
           closeWarning={closeWarning}
-          heading="Гигиенический журнал"
+          heading="Гигиенический журнал (сотрудники)"
           title={documentTitle}
           status={status}
           autoFill={autoFill}

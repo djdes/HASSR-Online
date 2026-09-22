@@ -499,7 +499,8 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
   });
   if (gate === "no-pin") {
     const latest = await latestQrPinRequestFor({ organizationId: orgId, userId: employee.id });
-    const text = latest ? pinRequestStatusText(latest) : null;
+    // PIN нет — значит «одобрено» устарело (PIN сняли после одобрения).
+    const text = latest && latest.status !== "approved" ? pinRequestStatusText(latest) : null;
     const status = latest && text ? { text, tone: latest.status === "rejected" ? ("bad" as const) : ("wait" as const) } : null;
     return page(title, renderPinNoAccess({ who, action: stepHref, status }), null, null, 200, setCookies);
   }

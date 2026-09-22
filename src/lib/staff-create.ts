@@ -27,6 +27,12 @@ export type CreateStaffInput = {
   weeklyDaysOff?: number[];
   /// Точки сотрудника; чужие id отбрасываются.
   buildingIds?: string[];
+  /// «Ответственный за ведение основных журналов». Права на выдачу
+  /// проверяет вызывающая сторона; по умолчанию — нет.
+  keepsCoreJournals?: boolean;
+  /// «Разрешение менять настройки». Права на выдачу проверяет вызывающая
+  /// сторона; по умолчанию — нет.
+  canManageSettings?: boolean;
 };
 
 export type CreateStaffResult =
@@ -99,6 +105,8 @@ export async function createStaffMember(
         isActive: true,
         weeklyDaysOff: normalizeWeeklyDaysOff(input.weeklyDaysOff ?? []),
         buildingIds,
+        keepsCoreJournals: input.keepsCoreJournals === true,
+        canManageSettings: input.canManageSettings === true,
         journalAccessMigrated: accessBootstrap.journalAccessMigrated,
       },
       select: { id: true, name: true, jobPositionId: true, isActive: true },

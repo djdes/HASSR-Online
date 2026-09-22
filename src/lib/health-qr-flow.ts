@@ -2,15 +2,14 @@ import type { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 import { clientIp } from "@/lib/client-ip";
-import { listCoreJournalRecipients, notifyCoreJournalRecipients } from "@/lib/core-journal-keepers";
 import { db } from "@/lib/db";
 import { HEALTH_CONFIRMATIONS, dayMarkFromEntry, healthDecision, isRealHygieneEntry } from "@/lib/health-qr";
 import { renderHealthDay, renderHealthForm, renderHealthSuspended, renderHealthTabs } from "@/lib/health-qr-html";
+import { notifyHygieneDeclaration } from "@/lib/hygiene-declaration-notify";
 import { applyHygieneVerification, hygieneV2View } from "@/lib/hygiene-v2";
 import { renderResult } from "@/lib/journal-fill-html";
 import { listFillEmployees, type JournalFillEmployee } from "@/lib/journal-fill";
 import { isExaminationExpired, normalizeMedBookEntryData } from "@/lib/med-book-document";
-import { upsertNotification } from "@/lib/notifications";
 import { QR_FILL_RATE_LIMIT_ERROR, qrFillRateKey, recordQrFillAudit } from "@/lib/qr-fill-audit";
 import { qrFillRateLimiter } from "@/lib/rate-limit";
 import { safeInternalPath } from "@/lib/relative-redirect";
@@ -307,52 +306,16 @@ export async function handleHealthQr(ctx: HealthCtx): Promise<NextResponse> {
       userName: ctx.employee.name,
     });
 
-    // Колокольчик ответственному: одна карточка на документ и день, в ней —
-    // все, кто отметился и ждёт допуска (повторная отметка обновляет пункт).
-    if (pair.hygieneId) {
-      const recipients = await listCoreJournalRecipients(ctx.orgId, pair.hygieneId).catch(() => []);
-      await Promise.all(
-        recipients.map((recipient) =>
-          upsertNotification({
-            organizationId: ctx.orgId,
-            userId: recipient.id,
-            kind: "hygiene-admission",
-            dedupeKey: `hygiene-admission:${pair.hygieneId}:${ctx.todayKey}`,
-            title: "Гигиенический журнал: сотрудники ждут допуска",
-            linkHref: `/journals/hygiene/documents/${pair.hygieneId}`,
-            linkLabel: "Открыть журнал",
-            items: [
-              {
-                id: ctx.employee.id,
-                label: decision.admitted ? `${ctx.employee.name} — подписал, ждёт допуска` : `${ctx.employee.name} — жалобы: ${decision.complaints.join(", ")}`,
-                hint: at,
-              },
-            ],
-          }).catch(() => null)
-        )
-      );
-    }
-
-    if (!decision.admitted || medExpired) {
-      const recipients = await listCoreJournalRecipients(ctx.orgId, pair.hygieneId).catch(() => []);
-      const title = decision.admitted
-        ? `${ctx.employee.name}: просрочена медкнижка`
-        : `${ctx.employee.name} не допущен(а) к работе`;
-      const reason = decision.admitted ? "медкнижка просрочена" : decision.complaints.join(", ");
-      await notifyCoreJournalRecipients({
-        organizationId: ctx.orgId,
-        recipients,
-        kind: "health-qr-suspended",
-        dedupeKey: `health-qr:${ctx.todayKey}:${ctx.employee.id}:${decision.admitted ? "med" : "suspended"}`,
-        title,
-        items: [{ id: ctx.employee.id, label: `${ctx.employee.name} — ${reason}`, hint: at }],
-        linkHref: pair.hygieneId ? `/journals/hygiene/documents/${pair.hygieneId}` : "/journals",
-        linkLabel: "Открыть журнал",
-        telegramText: `⚠️ ${title}\nПричина: ${reason} (отметка по QR в ${at}).`,
-        emailSubject: title,
-        emailBodyHtml: `<p>Сотрудник <strong>${escapeHtml(ctx.employee.name)}</strong> отметился по QR в ${at}.</p><p>Причина: ${escapeHtml(reason)}.</p><p>В гигиеническом журнале стоит «${decision.admitted ? "Здоров" : "Отстранён"}». Примите решение о допуске и при необходимости поправьте запись.</p>`,
-      }).catch(() => null);
-    }
+    await notifyHygieneDeclaration({
+      organizationId: ctx.orgId,
+      hygieneDocumentId: pair.hygieneId,
+      employee: { id: ctx.employee.id, name: ctx.employee.name },
+      todayKey: ctx.todayKey,
+      at,
+      decision,
+      via: "QR",
+      medExpired,
+    });
     return redirect({ view: "me", done: decision.admitted ? "admitted" : "suspended", med: medExpired ? "1" : null });
   }
 
@@ -375,8 +338,4 @@ export async function handleHealthQr(ctx: HealthCtx): Promise<NextResponse> {
       writesHealth: Boolean(pair.healthId),
     })
   );
-}
-
-function escapeHtml(value: string): string {
-  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }

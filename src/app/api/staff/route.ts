@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
+import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { isManagementRole } from "@/lib/user-roles";
 import { createStaffMember } from "@/lib/staff-create";
 
@@ -28,6 +29,9 @@ const createSchema = z.object({
   weeklyDaysOff: z.array(z.number().int().min(0).max(6)).optional(),
   /// Точки, на которых работает сотрудник; пусто — на всех.
   buildingIds: z.array(z.string().min(1)).max(50).optional(),
+  /// Галки прав — как в карточке сотрудника (PUT /api/users/[id]).
+  keepsCoreJournals: z.boolean().optional(),
+  canManageSettings: z.boolean().optional(),
 });
 
 export async function POST(request: Request) {
@@ -53,7 +57,18 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = await createStaffMember(orgId, parsed);
+  // Галки прав выдаёт тот же круг, что и в карточке сотрудника
+  // (PUT /api/users/[id]): руководитель или ROOT. Остальным — не ошибка,
+  // галки просто не ставятся.
+  const { keepsCoreJournals, canManageSettings, ...rest } = parsed;
+  const mayGrantFlags = hasFullWorkspaceAccess({
+    role: session.user.role,
+    isRoot: session.user.isRoot === true,
+  });
+  const result = await createStaffMember(
+    orgId,
+    mayGrantFlags ? { ...rest, keepsCoreJournals, canManageSettings } : rest
+  );
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: result.status });
   }

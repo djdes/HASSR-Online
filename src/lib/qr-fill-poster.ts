@@ -124,7 +124,7 @@ export async function buildRoomPoster(
  * три графы, ответственный по второму ставит «допущен / отстранён».
  */
 export const HYGIENE_VERIFY_SUFFIX = "@verify";
-const HYGIENE_VERIFY_POSTER = { name: "Гигиенический журнал — допуск", subtitle: "Для ответственного: «Допущен» или «Отстранён» каждому на смене" };
+const HYGIENE_VERIFY_POSTER = { name: "Гигиенический журнал (сотрудники) — допуск", subtitle: "Для ответственного: «Допущен» или «Отстранён» каждому на смене" };
 
 /** Плакат журнала: `documentId` сужает до конкретного документа (из его меню). */
 export async function buildJournalPoster(params: {

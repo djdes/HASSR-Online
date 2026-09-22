@@ -103,7 +103,7 @@ const journalTemplates = [
   },
   {
     code: "hygiene",
-    name: "Гигиенический журнал",
+    name: "Гигиенический журнал (сотрудники)",
     description: "Журнал осмотра сотрудников на предмет признаков заболеваний",
     sortOrder: 4,
     isMandatorySanpin: true,

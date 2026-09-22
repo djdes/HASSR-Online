@@ -110,6 +110,11 @@ export async function POST(request: Request) {
   const codeByJournalName = new Map(
     templates.map((item) => [item.name.toLowerCase(), item.code])
   );
+  // Файлы, выгруженные до переименования (2026-09-22), ещё содержат
+  // старое название гигиенического журнала.
+  if (!codeByJournalName.has("гигиенический журнал")) {
+    codeByJournalName.set("гигиенический журнал", "hygiene");
+  }
   const codesByPosition = new Map<string, string[]>();
   for (const item of positionAccess) {
     const list = codesByPosition.get(item.jobPositionId) ?? [];

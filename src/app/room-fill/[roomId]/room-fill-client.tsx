@@ -249,7 +249,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                 value={employeeId}
                 onChange={rememberEmployee}
                 fixedName={fixedEmployee ? sessionEmployee?.name ?? null : null}
-                hint={rememberedName && !pinStepNeeded ? "Запомнили с прошлого раза — можно сразу вводить показания." : rememberedName ? "Запомнили с прошлого раза — введите свой PIN." : null}
+                hint={rememberedName && !pinStepNeeded ? "Запомнили с прошлого раза — можно сразу вводить показания." : rememberedName && selectedEmployee?.hasPin ? "Запомнили с прошлого раза — введите свой PIN." : null}
               />
               {!fixedEmployee && mode !== "auth" ? <QrRememberToggle checked={remember} onChange={setRemember} /> : null}
 
@@ -260,6 +260,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                   token={token}
                   employeeId={selectedEmployee.id}
                   employeeName={selectedEmployee.name}
+                  hasPin={Boolean(selectedEmployee.hasPin)}
                   remember={remember}
                   onPass={(value) => {
                     setPass(value);

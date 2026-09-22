@@ -274,6 +274,7 @@ import {
 } from "@/lib/hygiene-document";
 import {
   HYGIENE_V2_COLUMNS,
+  HYGIENE_V2_FORM_CAPTION,
   buildHygieneV2Rows,
   hygieneV2PdfMark,
   readHygieneFormVersion,
@@ -1431,7 +1432,7 @@ function drawHygienePdf(doc: jsPDF, params: {
   // журнала уже есть в шапке ХАССП и отдельным заголовком ниже.
   const headerBottom = drawJournalHeader(doc, {
     organizationName: params.organizationName,
-    journalLabel: "Гигиенический журнал",
+    journalLabel: "Гигиенический журнал (сотрудники)",
     withPeriodicity: true,
     startedDate: params.dateFrom,
     finishedDate: params.dateTo,
@@ -1480,7 +1481,7 @@ function drawHygienePdf(doc: jsPDF, params: {
   doc.addPage("a4", "landscape");
   const page2HeaderBottom = drawJournalHeader(doc, {
     organizationName: params.organizationName,
-    journalLabel: "Гигиенический журнал",
+    journalLabel: "Гигиенический журнал (сотрудники)",
     withPeriodicity: true,
     startedDate: params.dateFrom,
     finishedDate: params.dateTo,
@@ -1545,7 +1546,15 @@ function drawHygieneV2Pdf(doc: jsPDF, params: {
     repeatOnPages: true,
   });
 
-  const titleY = afterHeader(headerBottom, 74);
+  // Как на форме заказчика: справа над заголовком — «Рекомендуемая форма
+  // в соответствии с Приложением №1 …». Высокая шапка (длинная
+  // периодичность) сдвигает обе строки вниз, а не кладёт их на рамку.
+  const captionY = afterHeader(headerBottom, 66);
+  doc.setFont("JournalUnicode", "normal");
+  doc.setFontSize(9);
+  doc.text(HYGIENE_V2_FORM_CAPTION, pageWidth - 14, captionY, { align: "right" });
+
+  const titleY = Math.max(74, captionY + 8);
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(14);
   doc.text("ГИГИЕНИЧЕСКИЙ ЖУРНАЛ (СОТРУДНИКИ)", pageWidth / 2, titleY, { align: "center" });
@@ -4114,8 +4123,13 @@ function drawEquipmentCalibrationPdf(doc: jsPDF, params: {
   dateFrom: Date | string | null;
   dateTo: Date | string | null;
   config: ReturnType<typeof normalizeEquipmentCalibrationConfig>;
+  /** Ростер организации: должность и ФИО в «УТВЕРЖДАЮ» — из карточки человека. */
+  users?: readonly PersonDisplayUser[];
 }) {
   const cfg = params.config;
+  // «УТВЕРЖДАЮ»: должность и ФИО одного человека, как на экране.
+  // Сохранённые строки — только если человека нет в ростере.
+  const approver = resolveApprover(cfg, params.users);
   const pageWidth = doc.internal.pageSize.getWidth();
   const centerX = pageWidth / 2;
   const headerRight = pageWidth - 24;
@@ -4136,9 +4150,9 @@ function drawEquipmentCalibrationPdf(doc: jsPDF, params: {
   doc.text("УТВЕРЖДАЮ", headerRight, approvalY, { align: "right" });
   doc.setFont("JournalUnicode", "normal");
   doc.setFontSize(9);
-  doc.text(cfg.approveRole || "", headerRight, approvalY + 6, { align: "right" });
+  doc.text(approver.title, headerRight, approvalY + 6, { align: "right" });
   doc.line(headerRight - 52, approvalY + 10, headerRight, approvalY + 10);
-  doc.text(cfg.approveEmployee || "", headerRight, approvalY + 14, { align: "right" });
+  doc.text(approver.name, headerRight, approvalY + 14, { align: "right" });
   doc.text(formatCalibrationDateLong(cfg.documentDate), headerRight - 6, approvalY + 20, {
     align: "center",
   });
@@ -4268,8 +4282,13 @@ function drawTrainingPlanPdf(doc: jsPDF, params: {
   dateFrom: Date | string | null;
   dateTo: Date | string | null;
   config: ReturnType<typeof normalizeTrainingPlanConfig>;
+  /** Ростер организации: должность и ФИО в «УТВЕРЖДАЮ» — из карточки человека. */
+  users?: readonly PersonDisplayUser[];
 }) {
   const cfg = params.config;
+  // «УТВЕРЖДАЮ»: должность и ФИО одного человека, как на экране.
+  // Сохранённые строки — только если человека нет в ростере.
+  const approver = resolveApprover(cfg, params.users);
   const pageWidth = doc.internal.pageSize.getWidth();
   const centerX = pageWidth / 2;
   const headerRight = pageWidth - 24;
@@ -4290,9 +4309,9 @@ function drawTrainingPlanPdf(doc: jsPDF, params: {
   doc.text("УТВЕРЖДАЮ", headerRight, approvalY, { align: "right" });
   doc.setFont("JournalUnicode", "normal");
   doc.setFontSize(9);
-  doc.text(cfg.approveRole || "", headerRight, approvalY + 6, { align: "right" });
+  doc.text(approver.title, headerRight, approvalY + 6, { align: "right" });
   doc.line(headerRight - 52, approvalY + 10, headerRight, approvalY + 10);
-  doc.text(cfg.approveEmployee || "", headerRight, approvalY + 14, { align: "right" });
+  doc.text(approver.name, headerRight, approvalY + 14, { align: "right" });
   doc.text(
     formatApprovalDateLong(cfg.documentDate, cfg.year),
     headerRight - 6,
@@ -5601,7 +5620,12 @@ function drawAuditPlanPdf(doc: jsPDF, params: {
   dateFrom: Date | string;
   dateTo: Date | string;
   config: ReturnType<typeof normalizeAuditPlanConfig>;
+  /** Ростер организации: должность и ФИО в «УТВЕРЖДАЮ» — из карточки человека. */
+  users?: readonly PersonDisplayUser[];
 }) {
+  // «УТВЕРЖДАЮ»: должность и ФИО одного человека, как на экране.
+  // Сохранённые строки — только если человека нет в ростере.
+  const approver = resolveApprover(params.config, params.users);
   drawTitle(doc, params.title);
   const metaBottom = drawClimateMetaTable(doc, {
     organizationName: params.organizationName,
@@ -5616,8 +5640,8 @@ function drawAuditPlanPdf(doc: jsPDF, params: {
   {
     const lines = [
       "УТВЕРЖДАЮ",
-      params.config.approveRole,
-      params.config.approveEmployee,
+      approver.title,
+      approver.name,
       getAuditPlanPrintDateLabel(params.config.documentDate),
     ].filter((line) => Boolean(line && line.trim()));
     const right = doc.internal.pageSize.getWidth() - 10;
@@ -7070,6 +7094,7 @@ export function renderJournalDocumentPdf(
       dateTo: document.dateTo,
       title: document.title || TRAINING_PLAN_HEADING,
       config: normalizeTrainingPlanConfig(reconciledConfig),
+      users,
     });
   } else if (templateCode === AUDIT_PLAN_TEMPLATE_CODE) {
     drawAuditPlanPdf(doc, {
@@ -7078,6 +7103,7 @@ export function renderJournalDocumentPdf(
       dateFrom: document.dateFrom,
       dateTo: document.dateTo,
       config: auditPlanConfig,
+      users,
     });
   } else if (templateCode === AUDIT_PROTOCOL_TEMPLATE_CODE) {
     drawAuditProtocolPdf(doc, {
@@ -7127,6 +7153,7 @@ export function renderJournalDocumentPdf(
       dateTo: document.dateTo,
       title: document.title || EQUIPMENT_CALIBRATION_DOCUMENT_TITLE,
       config: withResolvedEquipmentNames(equipmentCalibrationConfig, equipment),
+      users,
     });
   } else if (templateCode === ACCEPTANCE_DOCUMENT_TEMPLATE_CODE) {
     drawIncomingControlPdf(doc, {

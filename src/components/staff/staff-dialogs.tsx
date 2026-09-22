@@ -124,6 +124,40 @@ function floatingLabel({
   );
 }
 
+// Галки прав сотрудника — одни и те же в окнах добавления и редактирования.
+const KEEPS_CORE_JOURNALS_LABEL = "Ответственный за ведение основных журналов";
+const KEEPS_CORE_JOURNALS_HINT =
+  "По QR гигиенического журнала видит вкладку «Допуск сотрудников»: кто отметился сегодня, и ставит «Допущен» или «Отстранён». " +
+  "В конце дня получает список тех, кто не отметился, и сразу — если кого-то не допустили.";
+const MANAGE_SETTINGS_LABEL = "Разрешение менять настройки";
+const MANAGE_SETTINGS_HINT =
+  "Открывает кабинет как у руководителя: все настройки, журналы, сотрудники, QR-плакаты, " +
+  "оборудование. Удобно для заведующего производством.";
+
+function FlagCheckbox(props: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  label: string;
+  hint: string;
+  testId: string;
+}) {
+  return (
+    <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3 transition-colors duration-150 hover:bg-[#f5f6ff]">
+      <input
+        type="checkbox"
+        checked={props.checked}
+        onChange={(event) => props.onChange(event.target.checked)}
+        className="mt-0.5 size-4 accent-[#5566f6]"
+        data-testid={props.testId}
+      />
+      <span>
+        <span className="block text-[14px] font-medium text-[#0b1024]">{props.label}</span>
+        <span className="block text-[12px] leading-snug text-[#6f7282]">{props.hint}</span>
+      </span>
+    </label>
+  );
+}
+
 export function StaffEditPositionDialog(props: {
   position: StaffPosition;
   onUpdated: () => void;
@@ -333,6 +367,9 @@ export function StaffAddFlowDialog(props: {
   const [weeklyDaysOff, setWeeklyDaysOff] = useState<number[]>([
     ...DEFAULT_WEEKLY_DAYS_OFF,
   ]);
+  // Те же галки прав, что в карточке сотрудника; по умолчанию сняты.
+  const [keepsCore, setKeepsCore] = useState(false);
+  const [manageSettings, setManageSettings] = useState(false);
   // Подсказки должностей: сервер уже вычел заведённые, здесь дополнительно
   // убираем созданные в этой же сессии диалога.
   const [showAllHints, setShowAllHints] = useState(false);
@@ -424,6 +461,8 @@ export function StaffAddFlowDialog(props: {
           fullName: fullName.trim(),
           weeklyDaysOff: normalizeWeeklyDaysOff(weeklyDaysOff),
           buildingIds,
+          keepsCoreJournals: keepsCore,
+          canManageSettings: manageSettings,
           // Телефон необязателен — пустую строку не отправляем вовсе.
           ...(phone.trim() ? { phone: phone.trim() } : {}),
         }),
@@ -652,6 +691,20 @@ export function StaffAddFlowDialog(props: {
                 ariaLabel="Точки нового сотрудника"
               />
             ) : null}
+            <FlagCheckbox
+              checked={keepsCore}
+              onChange={setKeepsCore}
+              label={KEEPS_CORE_JOURNALS_LABEL}
+              hint={KEEPS_CORE_JOURNALS_HINT}
+              testId="staff-add-keeps-core-journals"
+            />
+            <FlagCheckbox
+              checked={manageSettings}
+              onChange={setManageSettings}
+              label={MANAGE_SETTINGS_LABEL}
+              hint={`${MANAGE_SETTINGS_HINT} Войти можно по личному QR и своему PIN — их выдают в карточке сотрудника после добавления.`}
+              testId="staff-add-can-manage-settings"
+            />
           </div>,
           primaryBtn("Добавить", () => void submitEmployee(), pending),
           {
@@ -840,40 +893,20 @@ export function StaffEditEmployeeDialog(props: {
                 </span>
               </span>
             </label>
-            <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3 transition-colors duration-150 hover:bg-[#f5f6ff]">
-              <input
-                type="checkbox"
-                checked={keepsCore}
-                onChange={(event) => setKeepsCore(event.target.checked)}
-                className="mt-0.5 size-4 accent-[#5566f6]"
-                data-testid="staff-keeps-core-journals"
-              />
-              <span>
-                <span className="block text-[14px] font-medium text-[#0b1024]">
-                  Ответственный за ведение основных журналов
-                </span>
-                <span className="block text-[12px] leading-snug text-[#6f7282]">
-                  После скана QR «Гигиена и здоровье» видит, кто отметился сегодня, и может исправить отметку любого.
-                  В конце дня получает список тех, кто не отметился, и сразу — если кого-то не допустили.
-                </span>
-              </span>
-            </label>
-            <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3 transition-colors duration-150 hover:bg-[#f5f6ff]">
-              <input
-                type="checkbox"
-                checked={manageSettings}
-                onChange={(event) => setManageSettings(event.target.checked)}
-                className="mt-0.5 size-4 accent-[#5566f6]"
-                data-testid="staff-can-manage-settings"
-              />
-              <span>
-                <span className="block text-[14px] font-medium text-[#0b1024]">Разрешение менять настройки</span>
-                <span className="block text-[12px] leading-snug text-[#6f7282]">
-                  Открывает кабинет как у руководителя: все настройки, журналы, сотрудники, QR-плакаты,
-                  оборудование. Удобно для заведующего производством. Войти можно по личному QR и своему PIN. После изменения галки сотрудник входит заново.
-                </span>
-              </span>
-            </label>
+            <FlagCheckbox
+              checked={keepsCore}
+              onChange={setKeepsCore}
+              label={KEEPS_CORE_JOURNALS_LABEL}
+              hint={KEEPS_CORE_JOURNALS_HINT}
+              testId="staff-keeps-core-journals"
+            />
+            <FlagCheckbox
+              checked={manageSettings}
+              onChange={setManageSettings}
+              label={MANAGE_SETTINGS_LABEL}
+              hint={`${MANAGE_SETTINGS_HINT} Войти можно по личному QR и своему PIN. После изменения галки сотрудник входит заново.`}
+              testId="staff-can-manage-settings"
+            />
             {/* PIN для быстрой QR-авторизации — отдельный PATCH, вне общего «Сохранить». */}
             <StaffQrPinField
               key={employee.id}
