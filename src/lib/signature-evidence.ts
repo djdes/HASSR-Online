@@ -43,8 +43,9 @@ export async function loadSignatureEvidence(params: {
       createdAt: { gte: new Date(params.from.getTime() - KIOSK_WINDOW_MS), lte: params.to },
       // Подписи комиссии под строками бракеража — не «вход», под которым
       // внесена запись: иначе они стали бы доказательством для чужих записей
-      // того же человека в 12-часовом окне.
-      OR: [{ entryKind: null }, { entryKind: { not: "brakerage_row" } }],
+      // того же человека в 12-часовом окне. То же — подписи гигиенического
+      // журнала по QR (сотрудник и допуск ответственного).
+      OR: [{ entryKind: null }, { entryKind: { notIn: ["brakerage_row", "hygiene_declaration", "hygiene_verification"] } }],
     },
     select: { id: true, userId: true, method: true, deviceId: true, createdAt: true, entryKind: true, entryRef: true, photoUrl: true },
     orderBy: { createdAt: "desc" },

@@ -255,6 +255,7 @@ import {
   getDayNumber,
   getHealthDocumentTitle,
   getHygieneDocumentTitle,
+  getHygieneUserPositionLabel,
   getStatusMeta,
   getWeekdayShort,
   HYGIENE_REGISTER_LEGEND,
@@ -266,6 +267,12 @@ import {
   normalizeHygieneEntryData,
   toDateKey,
 } from "@/lib/hygiene-document";
+import {
+  HYGIENE_V2_COLUMNS,
+  buildHygieneV2Rows,
+  hygieneV2PdfMark,
+  readHygieneFormVersion,
+} from "@/lib/hygiene-v2";
 import { readControlPeriodicity } from "@/lib/control-periodicity";
 import { getRowEmployeeTitle, getUserDisplayTitle } from "@/lib/user-roles";
 import {
@@ -1503,6 +1510,111 @@ function drawHygienePdf(doc: jsPDF, params: {
   doc.text("Условные обозначения:", 14, cursorY);
   cursorY += 5;
   renderWrappedTextBlock(doc, HYGIENE_REGISTER_LEGEND, 14, cursorY, pageWidth - 28, 5);
+}
+
+/** Минимум строк в бланке новой формы: пустые строки — под ручное заполнение. */
+const HYGIENE_V2_MIN_PDF_ROWS = 20;
+
+/**
+ * Гигиенический журнал по форме Приложения №1 СанПиН (документы с
+ * `config.hygieneFormVersion = 2`): строка — сотрудник в день, три
+ * подписи сотрудника, результат осмотра и подпись ответственного.
+ */
+function drawHygieneV2Pdf(doc: jsPDF, params: {
+  organizationName: string;
+  dateFrom: Date | string | null;
+  dateTo: Date | string | null;
+  dateKeys: string[];
+  users: { id: string; name: string; role: string; email?: string | null; positionTitle?: string | null }[];
+  entries: Array<{ employeeId: string; date: Date; data: unknown }>;
+}) {
+  const pageWidth = doc.internal.pageSize.getWidth();
+
+  const headerBottom = drawJournalHeader(doc, {
+    organizationName: params.organizationName,
+    journalLabel: "Гигиенический журнал (сотрудники)",
+    withPeriodicity: true,
+    startedDate: params.dateFrom,
+    finishedDate: params.dateTo,
+    marginX: 14,
+    repeatOnPages: true,
+  });
+
+  const titleY = afterHeader(headerBottom, 74);
+  doc.setFont("JournalUnicode", "bold");
+  doc.setFontSize(14);
+  doc.text("ГИГИЕНИЧЕСКИЙ ЖУРНАЛ (СОТРУДНИКИ)", pageWidth / 2, titleY, { align: "center" });
+
+  const rows = buildHygieneV2Rows({
+    employees: params.users.map((user) => ({
+      id: user.id,
+      name: user.name,
+      position: getHygieneUserPositionLabel(user),
+    })),
+    entries: params.entries.map((entry) => ({
+      employeeId: entry.employeeId,
+      dateKey: toDateKey(entry.date),
+      data: entry.data,
+    })),
+    dateKeys: params.dateKeys,
+  });
+
+  // Графы подписи — «да»/«нет» (см. hygieneV2PdfMark: запасные шрифты не
+  // знают ✓/✗).
+  const body: RowInput[] = rows.map((row) => [
+    centerCell(String(row.n)),
+    centerCell(row.date),
+    { content: row.name, styles: { halign: "left", valign: "middle" } },
+    { content: row.position, styles: { halign: "left", valign: "middle" } },
+    centerCell(hygieneV2PdfMark(row.temperature)),
+    centerCell(hygieneV2PdfMark(row.infection)),
+    centerCell(hygieneV2PdfMark(row.respiratorySkin)),
+    centerCell(row.result),
+    centerCell(row.verifier),
+  ]);
+  // Пустые строки под ручное заполнение — бланк должен быть пригоден и
+  // на бумаге.
+  while (body.length < HYGIENE_V2_MIN_PDF_ROWS) {
+    body.push(HYGIENE_V2_COLUMNS.map(() => centerCell("")));
+  }
+
+  autoTable(doc, {
+    startY: titleY + 6,
+    head: [HYGIENE_V2_COLUMNS.map((column) => centerCell(column.label))],
+    body,
+    theme: "grid",
+    styles: {
+      font: "JournalUnicode",
+      fontSize: 8,
+      cellPadding: 1.6,
+      lineColor: [0, 0, 0],
+      textColor: [0, 0, 0],
+      overflow: "linebreak",
+      minCellHeight: 8,
+    },
+    headStyles: {
+      fillColor: [242, 242, 242],
+      textColor: [0, 0, 0],
+      fontStyle: "bold",
+      fontSize: 7,
+      lineColor: [0, 0, 0],
+    },
+    margin: {
+      left: 14,
+      right: 14,
+      top: activePageHeaderHeight + HEADER_TITLE_GAP,
+    },
+    columnStyles: {
+      0: { cellWidth: 12 },
+      1: { cellWidth: 22 },
+      2: { cellWidth: 42 },
+      3: { cellWidth: 32 },
+      4: { cellWidth: 26 },
+      5: { cellWidth: 32 },
+      6: { cellWidth: 36 },
+      7: { cellWidth: 28 },
+    },
+  });
 }
 
 function drawHealthPdf(doc: jsPDF, params: {
@@ -6725,7 +6837,16 @@ export function renderJournalDocumentPdf(
   pagesWithJournalHeader.clear();
   resetPageLabelSlots();
 
-  if (templateCode === "hygiene") {
+  if (templateCode === "hygiene" && readHygieneFormVersion(document.config) === 2) {
+    drawHygieneV2Pdf(doc, {
+      organizationName,
+      dateFrom: document.dateFrom,
+      dateTo: document.dateTo,
+      dateKeys,
+      users,
+      entries,
+    });
+  } else if (templateCode === "hygiene") {
     drawHygienePdf(doc, {
       organizationName,
       dateFrom: document.dateFrom,

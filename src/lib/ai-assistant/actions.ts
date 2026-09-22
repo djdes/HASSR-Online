@@ -15,8 +15,10 @@ import {
 } from "@/lib/journal-entry-write";
 import {
   HYGIENE_STATUS_OPTIONS,
+  isEntryDataEmpty,
   toDateKey,
 } from "@/lib/hygiene-document";
+import { readHygieneFormVersion } from "@/lib/hygiene-v2";
 import {
   buildStaffAutoFillEntryData,
   loadStaffScheduleMap,
@@ -408,6 +410,21 @@ async function executeFillCells(
     return { ok: false, error: "Нет доступа к этому журналу" };
   }
 
+  // Гигиена по новой форме (Приложение №1): три графы подписывает сам
+  // сотрудник по QR, допуск — ответственный. «Здоров» / «Отстранён» за
+  // человека ассистент не ставит; автозаполнение — только график.
+  const hygieneFormVersion = templateCode === "hygiene" ? readHygieneFormVersion(doc.config) : 1;
+  if (
+    hygieneFormVersion === 2 &&
+    input.values.kind === "status" &&
+    (input.values.status === "healthy" || input.values.status === "suspended")
+  ) {
+    return {
+      ok: false,
+      error: "В новой форме подписи ставит сам сотрудник по QR — «Здоров» и «Отстранён» за него не ставятся.",
+    };
+  }
+
   const org = await db.organization.findUnique({
     where: { id: ctx.orgId },
     select: { timezone: true },
@@ -468,7 +485,8 @@ async function executeFillCells(
     if (input.values.kind === "auto") {
       return buildStaffAutoFillEntryData(
         templateCode,
-        scheduleMap?.get(staffScheduleKey(employeeId, dateKey))
+        scheduleMap?.get(staffScheduleKey(employeeId, dateKey)),
+        { hygieneFormVersion }
       );
     }
     return input.values.data;
@@ -478,6 +496,7 @@ async function executeFillCells(
   const accepted: Array<{ employeeId: string; date: Date; data: unknown }> = [];
   const overrideDates: Date[] = [];
   let skipped = 0;
+  let leftForQr = 0;
 
   for (const dateKey of input.dates) {
     const dateObj = toEntryDayUtc(dateKey);
@@ -494,6 +513,11 @@ async function executeFillCells(
     for (const employeeId of input.employeeIds) {
       const employee = employeeById.get(employeeId);
       const data = cellData(employeeId, dateKey);
+      // v2: без графика ячейку не трогаем — пустой upsert стёр бы подпись с QR.
+      if (hygieneFormVersion === 2 && input.values.kind === "auto" && isEntryDataEmpty(data)) {
+        leftForQr += 1;
+        continue;
+      }
       accepted.push({
         employeeId,
         date: dateObj,
@@ -516,7 +540,10 @@ async function executeFillCells(
   if (accepted.length === 0) {
     return {
       ok: false,
-      error: "Все выбранные дни закрыты для редактирования",
+      error:
+        leftForQr > 0
+          ? "Нечего заполнять: в новой форме «Здоров» отмечает сам сотрудник по QR, а выходных, отпусков и больничных на эти дни в графике нет."
+          : "Все выбранные дни закрыты для редактирования",
     };
   }
 
@@ -547,6 +574,7 @@ async function executeFillCells(
     ok: true,
     summary:
       `Заполнено ячеек: ${accepted.length}` +
-      (skipped > 0 ? `, пропущено (день закрыт): ${skipped}` : ""),
+      (skipped > 0 ? `, пропущено (день закрыт): ${skipped}` : "") +
+      (leftForQr > 0 ? `, оставлено для отметки по QR: ${leftForQr}` : ""),
   };
 }

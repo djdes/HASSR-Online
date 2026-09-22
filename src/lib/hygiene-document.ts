@@ -524,11 +524,23 @@ export function normalizeHygieneEntryData(data: unknown): HygieneEntryData {
       ? record.temperatureAbove37
       : null;
 
+  // Отметка по QR (подписи сотрудника, время, источник) и допуск
+  // ответственного: таблица сайта перестраивает строку через этот
+  // нормализатор, и без них первая же правка стирала бы подписи.
+  const passthrough: Record<string, unknown> = {};
+  for (const key of HYGIENE_QR_KEYS) {
+    if (record[key] !== undefined && record[key] !== null) passthrough[key] = record[key];
+  }
+
   return {
     status,
     temperatureAbove37,
+    ...passthrough,
   };
 }
+
+/** Поля отметки по QR и допуска, которые переживают правку таблицы. */
+const HYGIENE_QR_KEYS = ["confirmations", "confirmedAt", "source", "verification", "editedById", "editedByName"] as const;
 
 type HygieneRowPattern = Array<{
   from: number;

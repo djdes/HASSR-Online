@@ -47,6 +47,7 @@ import {
   getDayNumber,
   getHygieneDefaultResponsibleTitle,
   getHygienePositionLabel,
+  getHygieneUserPositionLabel,
   getStatusMeta,
   normalizeHygieneEntryData,
   type HygieneEntryData,
@@ -74,6 +75,7 @@ import {
 } from "@/components/journals/journal-grid";
 import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { HygieneV2Table } from "@/components/journals/hygiene-v2-table";
 
 type Props = {
   documentId: string;
@@ -122,6 +124,12 @@ type Props = {
    * сохранении. Не передан — ведём себя как раньше (полный доступ).
    */
   viewer?: { id: string; role: string; isRoot: boolean };
+  /**
+   * Форма бланка: 2 — Приложение №1 СанПиН «Гигиенический журнал
+   * (сотрудники)», только чтение (`readHygieneFormVersion(config)` на
+   * сервере). Не передан — прежняя месячная сетка.
+   */
+  hygieneFormVersion?: 1 | 2;
 };
 
 /**
@@ -316,6 +324,7 @@ export function HygieneDocumentClient({
   pastDaysLocked = false,
   todayKey = "",
   viewer,
+  hygieneFormVersion = 1,
 }: Props) {
   const router = useRouter();
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([]);
@@ -440,6 +449,25 @@ export function HygieneDocumentClient({
   const selectedCount = selectedEmployeeIds.length;
   const allSelected = rosterUsers.length > 0 && selectedCount === rosterUsers.length;
   const isActive = status === "active";
+  // Новая форма (Приложение №1): строки бланка — из записей дня с QR.
+  const v2Employees = useMemo(
+    () =>
+      [...employees, ...inactiveEmployees].map((employee) => ({
+        id: employee.id,
+        name: employee.name,
+        position: getHygieneUserPositionLabel(employee),
+      })),
+    [employees, inactiveEmployees]
+  );
+  const v2Entries = useMemo(
+    () =>
+      initialEntries.map((entry) => ({
+        employeeId: entry.employeeId,
+        dateKey: entry.date,
+        data: entry.data,
+      })),
+    [initialEntries]
+  );
   // Последняя строка таблицы открывает то же окно, что и «Добавить».
   const [addRowOpen, setAddRowOpen] = useState(false);
 
@@ -1035,6 +1063,55 @@ export function HygieneDocumentClient({
         },
       },
     ];
+  }
+
+  if (hygieneFormVersion === 2) {
+    // Бланк Приложения №1: отметки ставят сотрудники и ответственный по QR,
+    // на сайте — только просмотр, печать и настройки документа.
+    return (
+      <div className="bg-white text-black">
+        <div className="screen-only space-y-4">
+          <StaffJournalToolbar
+            subtitle={getJournalDocumentPeriodLabel("hygiene", dateFrom, dateTo)}
+            documentId={documentId}
+            closeWarning={closeWarning}
+            heading="Гигиенический журнал (сотрудники)"
+            title={documentTitle}
+            status={status}
+            autoFill={autoFill}
+            responsibleTitle={responsibleTitle}
+            responsibleUserId={responsibleUserId}
+            users={employees}
+            includedEmployeeIds={includedEmployeeIds}
+            routeCode={routeCode}
+            controlPeriodicity={controlPeriodicity}
+            dateFrom={dateFrom}
+            dateTo={dateTo}
+            countOutsidePeriod={(from, to) =>
+              initialEntries.filter(
+                (entry) => entry.date < from || entry.date > to
+              ).length
+            }
+            organizationName={organizationLabel}
+            showHeaderActions
+            useV2={useV2}
+          />
+
+          {!isActive ? (
+            <JournalClosedBanner hint="Журнал закрыт: новые отметки по QR в него не попадут." documentId={documentId} />
+          ) : null}
+        </div>
+
+        <div className="mt-6">
+          <HygieneV2Table
+            dateKeys={dateKeys}
+            todayKey={todayKey}
+            employees={v2Employees}
+            entries={v2Entries}
+          />
+        </div>
+      </div>
+    );
   }
 
   return (

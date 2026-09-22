@@ -133,6 +133,8 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   "Температура холодильников": Snowflake,
   "Бракераж: комиссия и подписи": UserCheck,
   "Бракераж: быстрый ввод по QR": QrCode,
+  "Гигиенический журнал по форме СанПиН": ShieldCheck,
+  "Вход по QR и ПИН": KeyRound,
   "Колонки и шаблоны журналов": Table2,
   "Общий справочник блюд": ClipboardCheck,
 };

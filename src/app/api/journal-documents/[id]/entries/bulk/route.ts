@@ -17,6 +17,7 @@ import {
 } from "@/lib/journal-entry-write";
 import { checkEntryScope } from "@/lib/journal-entry-write";
 import { orgTodayKey } from "@/lib/timezone";
+import { HYGIENE_V2_NO_COPY_MESSAGE, readHygieneFormVersion } from "@/lib/hygiene-v2";
 
 /**
  * POST /api/journal-documents/[id]/entries/bulk
@@ -102,6 +103,23 @@ export async function POST(
       { error: "Не удалось прочитать запрос" },
       { status: 400 }
     );
+  }
+
+  // Гигиена по форме Приложения №1: «Здоров» / «Отстранён» — это подпись
+  // сотрудника по QR и допуск ответственного, штрихом их не проставить.
+  // Выходной / отпуск / больничный красить можно.
+  if (
+    doc.template?.code === "hygiene" &&
+    readHygieneFormVersion(doc.config) === 2 &&
+    parsed.items.some((item) => {
+      const status =
+        item.data && typeof item.data === "object"
+          ? (item.data as Record<string, unknown>).status
+          : undefined;
+      return status === "healthy" || status === "suspended";
+    })
+  ) {
+    return NextResponse.json({ error: HYGIENE_V2_NO_COPY_MESSAGE }, { status: 400 });
   }
 
   // Аккаунтабилити: рядовой сотрудник красит только свою строку и только

@@ -30,6 +30,7 @@ import {
   isStaffDayOff,
 } from "@/lib/staff-days-off";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
+import { readHygieneFormVersion } from "@/lib/hygiene-v2";
 
 export const HYGIENE_TEMPLATE_CODE = "hygiene";
 export const HEALTH_CHECK_TEMPLATE_CODE = "health_check";
@@ -212,7 +213,8 @@ export async function loadStaffScheduleDetailMap(
  */
 export function buildStaffAutoFillEntryData(
   templateCode: string,
-  scheduleStatus?: StaffScheduleStatus
+  scheduleStatus?: StaffScheduleStatus,
+  options: { hygieneFormVersion?: 1 | 2 } = {}
 ) {
   if (scheduleStatus) {
     if (templateCode === HYGIENE_TEMPLATE_CODE) {
@@ -226,7 +228,27 @@ export function buildStaffAutoFillEntryData(
     return {};
   }
 
+  // Новая форма гигиены (Приложение №1): три графы подписывает сам
+  // сотрудник по QR — «Здоров» за него не ставим, ячейка остаётся пустой.
+  if (templateCode === HYGIENE_TEMPLATE_CODE && options.hygieneFormVersion === 2) {
+    return {};
+  }
+
   return getDefaultEntryDataForTemplate(templateCode);
+}
+
+/**
+ * Автозаполнение пишет только статусы из графика (выходной, отпуск,
+ * больничный): при допуске по QR и в гигиене по новой форме — подпись
+ * сотрудника за него не ставится.
+ */
+export function staffAutoFillScheduleOnly(params: {
+  templateCode: string;
+  qrAdmission: boolean;
+  hygieneFormVersion: 1 | 2;
+}): boolean {
+  if (params.qrAdmission) return true;
+  return params.templateCode === HYGIENE_TEMPLATE_CODE && params.hygieneFormVersion === 2;
 }
 
 export type StaffAutoFillEntry = {
@@ -290,8 +312,24 @@ export async function applyStaffJournalAutoFill(
     ? (await orgClient.findUnique({ where: { id: organizationId }, select: { healthQrRequired: true } }).catch(() => null))
         ?.healthQrRequired === true
     : false;
+  // Гигиена по новой форме (config.hygieneFormVersion = 2) — то же правило:
+  // только график, подписи ставит сам сотрудник.
+  const documentClient = (db as { journalDocument?: Pick<PrismaClient, "journalDocument">["journalDocument"] })
+    .journalDocument;
+  const hygieneFormVersion =
+    templateCode === HYGIENE_TEMPLATE_CODE && documentClient
+      ? readHygieneFormVersion(
+          (await documentClient.findUnique({ where: { id: documentId }, select: { config: true } }).catch(() => null))
+            ?.config
+        )
+      : 1;
+  const scheduleOnly = staffAutoFillScheduleOnly({ templateCode, qrAdmission, hygieneFormVersion });
   const autoFillAllowed = (employeeId: string, dateKey: string) =>
-    !qrAdmission || schedule.has(staffScheduleKey(employeeId, dateKey));
+    !scheduleOnly || schedule.has(staffScheduleKey(employeeId, dateKey));
+  const entryData = (employeeId: string, dateKey: string) =>
+    buildStaffAutoFillEntryData(templateCode, schedule.get(staffScheduleKey(employeeId, dateKey)), {
+      hygieneFormVersion,
+    });
 
   const dateKeySet = new Set(dateKeys);
   const existingKeys = new Set(
@@ -306,10 +344,7 @@ export async function applyStaffJournalAutoFill(
         documentId,
         employeeId,
         date: utcDate(dateKey),
-        data: buildStaffAutoFillEntryData(
-          templateCode,
-          schedule.get(staffScheduleKey(employeeId, dateKey))
-        ),
+        data: entryData(employeeId, dateKey),
       }))
   );
 
@@ -329,9 +364,7 @@ export async function applyStaffJournalAutoFill(
     if (!dateKeySet.has(dateKey) || !isEntryDataEmpty(entry.data)) return false;
     if (!autoFillAllowed(entry.employeeId, dateKey)) return false;
     // Пустую ячейку выходного (журнал здоровья) не перезаписываем пустотой.
-    return !isEntryDataEmpty(
-      buildStaffAutoFillEntryData(templateCode, schedule.get(staffScheduleKey(entry.employeeId, dateKey)))
-    );
+    return !isEntryDataEmpty(entryData(entry.employeeId, dateKey));
   });
 
   await Promise.all(
@@ -339,10 +372,7 @@ export async function applyStaffJournalAutoFill(
       db.journalDocumentEntry.update({
         where: { id: entry.id },
         data: {
-          data: buildStaffAutoFillEntryData(
-            templateCode,
-            schedule.get(staffScheduleKey(entry.employeeId, toDateKey(entry.date)))
-          ),
+          data: entryData(entry.employeeId, toDateKey(entry.date)),
         },
       })
     )

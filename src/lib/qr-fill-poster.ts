@@ -119,6 +119,13 @@ export async function buildRoomPoster(
   };
 }
 
+/**
+ * Гигиена по форме Приложения №1 — два плаката: сотрудники подписывают
+ * три графы, ответственный по второму ставит «допущен / отстранён».
+ */
+export const HYGIENE_VERIFY_SUFFIX = "@verify";
+const HYGIENE_VERIFY_POSTER = { name: "Гигиенический журнал — допуск", subtitle: "Для ответственного: «Допущен» или «Отстранён» каждому на смене" };
+
 /** Плакат журнала: `documentId` сужает до конкретного документа (из его меню). */
 export async function buildJournalPoster(params: {
   organizationId: string;
@@ -128,11 +135,14 @@ export async function buildJournalPoster(params: {
   orgName: string;
   documentId?: string | null;
   origin: string;
+  /** Второй плакат гигиены — «Допуск сотрудников» для ответственного. */
+  verify?: boolean;
 }): Promise<QrPoster> {
   const subject = journalFillSubject(params.organizationId, params.code, params.documentId);
-  const url = qrFillUrl(params.origin, "journal", subject);
+  const url = qrFillUrl(params.origin, "journal", subject) + (params.verify ? "&view=all" : "");
+  const code = params.verify ? `${params.code}${HYGIENE_VERIFY_SUFFIX}` : params.code;
   return {
-    id: params.documentId ? `${params.code}:${params.documentId}` : params.code,
+    id: params.documentId ? `${code}:${params.documentId}` : code,
     kind: "journal",
     title: params.name,
     orgName: params.orgName,
@@ -190,6 +200,18 @@ export async function loadQrPosters(params: {
           origin: params.origin,
         })
       );
+      if (journal.code === "hygiene" && allowed(`hygiene${HYGIENE_VERIFY_SUFFIX}`)) {
+        posters.push(
+          await buildJournalPoster({
+            organizationId: params.organizationId,
+            code: journal.code,
+            ...HYGIENE_VERIFY_POSTER,
+            orgName,
+            origin: params.origin,
+            verify: true,
+          })
+        );
+      }
     }
     return posters;
   }
@@ -225,8 +247,10 @@ export async function loadQrPoster(params: {
 }): Promise<QrPoster | null> {
   const orgName = await loadPosterOrgName(params.organizationId);
   if (params.kind === "journal") {
-    const [code, documentId] = params.id.split(":");
-    if (!code) return null;
+    const [rawCode, documentId] = params.id.split(":");
+    const verify = rawCode?.endsWith(HYGIENE_VERIFY_SUFFIX) ?? false;
+    const code = verify ? rawCode.slice(0, -HYGIENE_VERIFY_SUFFIX.length) : rawCode;
+    if (!code || (verify && code !== "hygiene")) return null;
     if (code === JOURNAL_FILL_HUB_CODE) {
       return buildJournalPoster({
         organizationId: params.organizationId,
@@ -247,6 +271,9 @@ export async function loadQrPoster(params: {
       });
       if (!document) return null;
       subtitle = document.building?.name ? `${document.title} · ${document.building.name}` : document.title;
+    }
+    if (verify) {
+      return buildJournalPoster({ organizationId: params.organizationId, code, ...HYGIENE_VERIFY_POSTER, orgName, documentId: documentId ?? null, origin: params.origin, verify: true });
     }
     return buildJournalPoster({
       organizationId: params.organizationId,

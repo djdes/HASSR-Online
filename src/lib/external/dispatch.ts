@@ -1,3 +1,4 @@
+import { withNewHygieneFormVersion } from "@/lib/hygiene-v2";
 import { Prisma, type JournalDocument, type JournalTemplate } from "@prisma/client";
 import { db } from "@/lib/db";
 import { resolveJournalCodeAlias } from "@/lib/source-journal-map";
@@ -266,7 +267,7 @@ async function findOrCreateDocument(params: {
       status: "active",
       autoFill: false,
       createdById: createdById || undefined,
-      config: Prisma.JsonNull,
+      config: templateCode === "hygiene" ? (withNewHygieneFormVersion(templateCode, {}) as Prisma.InputJsonValue) : Prisma.JsonNull,
     },
   });
   return { doc: created, created: true };

@@ -188,6 +188,7 @@ import { isIntegrationCryptoConfigured } from "@/lib/integration-crypto";
 
 import { orgTodayKey } from "@/lib/timezone";
 import { TodayKeyProvider } from "@/lib/today-key-context";
+import { readHygieneFormVersion } from "@/lib/hygiene-v2";
 export const dynamic = "force-dynamic";
 
 type TrackedFieldOption = {
@@ -491,6 +492,7 @@ async function JournalDocumentBody({
   if (document.template.code === "hygiene") {
     return (
       <HygieneDocumentClient
+        hygieneFormVersion={readHygieneFormVersion(document.config)}
         documentId={document.id}
         controlPeriodicity={controlPeriodicity}
         routeCode={code}

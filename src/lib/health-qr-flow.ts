@@ -1,13 +1,16 @@
+import type { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 import { clientIp } from "@/lib/client-ip";
 import { listCoreJournalRecipients, notifyCoreJournalRecipients } from "@/lib/core-journal-keepers";
 import { db } from "@/lib/db";
-import { HEALTH_CONFIRMATIONS, dayMarkFromEntry, healthDecision, isKeeperStatus, isRealHygieneEntry } from "@/lib/health-qr";
+import { HEALTH_CONFIRMATIONS, dayMarkFromEntry, healthDecision, isRealHygieneEntry } from "@/lib/health-qr";
 import { renderHealthDay, renderHealthForm, renderHealthSuspended, renderHealthTabs } from "@/lib/health-qr-html";
+import { applyHygieneVerification, hygieneV2View } from "@/lib/hygiene-v2";
 import { renderResult } from "@/lib/journal-fill-html";
 import { listFillEmployees, type JournalFillEmployee } from "@/lib/journal-fill";
 import { isExaminationExpired, normalizeMedBookEntryData } from "@/lib/med-book-document";
+import { upsertNotification } from "@/lib/notifications";
 import { QR_FILL_RATE_LIMIT_ERROR, qrFillRateKey, recordQrFillAudit } from "@/lib/qr-fill-audit";
 import { qrFillRateLimiter } from "@/lib/rate-limit";
 import { safeInternalPath } from "@/lib/relative-redirect";
@@ -15,11 +18,13 @@ import { STAFF_ABSENCE_LABEL, loadStaffAbsenceForDay } from "@/lib/staff-absence
 
 /**
  * QR «Гигиена и здоровье» (2026-09-22): один плакат на оба журнала.
- * Сотрудник отмечает пять подтверждений — запись сразу в гигиенический
- * журнал и журнал здоровья (если он включён). Не всё подтверждено —
- * «не допущен» и уведомление ответственным. Хранитель журналов (галка
- * «Ответственный за ведение основных журналов») видит всех за сегодня и
- * правит статусы.
+ * Сотрудник (с PIN) подписывает три графы формы Приложения №1 — запись
+ * сразу в гигиенический журнал и журнал здоровья (если он включён), в
+ * колокольчик ответственному — «ждёт допуска». Не всё подтверждено —
+ * «не допущен» и срочное уведомление (Telegram, почта). Ответственный
+ * (хранитель журналов, руководитель, ответственный по документу) на
+ * вкладке «Допуск сотрудников» ставит «Допущен / Отстранён» — это его
+ * подпись в журнале. Обе подписи пишутся в `SignatureEvent`.
  */
 
 type HealthCtx = {
@@ -126,37 +131,94 @@ export async function handleHealthQr(ctx: HealthCtx): Promise<NextResponse> {
     const absences = await loadStaffAbsenceForDay(db, { organizationId: ctx.orgId, employeeIds: people.map((p) => p.id), dateKey: ctx.todayKey });
     return people.map((person) => {
       const absence = absences.get(person.id);
+      const data = byEmployee.get(person.id) ?? null;
       return {
         id: person.id,
         name: person.name,
         position: person.positionTitle,
-        mark: dayMarkFromEntry(byEmployee.get(person.id), absence ? STAFF_ABSENCE_LABEL[absence.status] : null),
+        data,
+        mark: dayMarkFromEntry(data, absence ? STAFF_ABSENCE_LABEL[absence.status] : null),
+        hygiene: hygieneV2View(isRealHygieneEntry(data) ? data : null),
       };
     });
   };
+  const signatureEvent = (userId: string, entryKind: "hygiene_declaration" | "hygiene_verification", employeeId: string, entryRef: Record<string, unknown>) =>
+    pair.hygieneId
+      ? db.signatureEvent
+          .create({
+            data: {
+              organizationId: ctx.orgId,
+              userId,
+              method: ctx.authMode === "auth" ? "session" : "qr",
+              entryKind,
+              documentId: pair.hygieneId,
+              rowId: `${employeeId}:${ctx.todayKey}`,
+              ip: clientIp(ctx.request),
+              userAgent: ctx.request.headers.get("user-agent")?.slice(0, 500) ?? null,
+              entryRef: entryRef as Prisma.InputJsonValue,
+            },
+          })
+          .catch(() => null)
+      : Promise.resolve(null);
   let tabs = "";
   if (ctx.keeper) {
     const day = await loadDay();
-    tabs = renderHealthTabs({ active: ctx.view, meHref, allHref, missing: day.filter((row) => row.mark.state === "missing").length });
+    tabs = renderHealthTabs({ active: ctx.view, meHref, allHref, missing: day.filter((row) => row.hygiene.declared && !row.hygiene.result && !row.hygiene.absence).length });
     if (ctx.view === "all") {
       if (ctx.posted && String(ctx.posted.get("action") ?? "") === "health-keeper") {
         if (rateLimited()) return ctx.page(renderHealthDay({ action: allHref, who: ctx.who, tabs, rows: day, error: QR_FILL_RATE_LIMIT_ERROR }), 429);
         let changed = 0;
         const at = hhmm(ctx.timezone);
+        const title = ctx.employee.positionTitle ?? null;
+        const healthEntries = pair.healthId
+          ? await db.journalDocumentEntry.findMany({ where: { documentId: pair.healthId, date: dayDate(ctx.todayKey) }, select: { employeeId: true, data: true } })
+          : [];
+        const healthByEmployee = new Map(healthEntries.map((entry) => [entry.employeeId, entry.data]));
+        const asRecord = (value: unknown): Record<string, unknown> =>
+          value && typeof value === "object" && !Array.isArray(value) ? { ...(value as Record<string, unknown>) } : {};
         for (const row of day) {
-          const value = ctx.posted.get(`st:${row.id}`);
-          if (!isKeeperStatus(value)) continue;
-          const current = row.mark.state === "admitted" ? "healthy" : row.mark.state === "suspended" ? "suspended" : null;
-          if (current === value) continue;
-          const common = { source: "keeper", editedById: ctx.employee.id, editedByName: ctx.employee.name, confirmedAt: at };
-          if (pair.hygieneId) await upsertEntry(pair.hygieneId, row.id, ctx.todayKey, { status: value, temperatureAbove37: false, ...common });
+          const absence = String(ctx.posted.get(`ab:${row.id}`) ?? "");
+          const result = String(ctx.posted.get(`st:${row.id}`) ?? "");
+          const editor = { editedById: ctx.employee.id, editedByName: ctx.employee.name };
+          if (absence === "day_off" || absence === "sick_leave" || absence === "vacation") {
+            // Нет на смене: строка в бланк не нужна, подписи и допуска нет.
+            if (row.hygiene.absence === absence) continue;
+            if (pair.hygieneId) await upsertEntry(pair.hygieneId, row.id, ctx.todayKey, { status: absence, source: "keeper", confirmedAt: at, ...editor });
+            changed += 1;
+            continue;
+          }
+          if (result !== "admitted" && result !== "suspended") continue;
+          if (row.hygiene.result?.result === result && !row.hygiene.absence) continue;
+          const base = asRecord(isRealHygieneEntry(row.data) ? row.data : null);
+          if (row.hygiene.absence) delete base.status;
+          if (pair.hygieneId) {
+            await upsertEntry(
+              pair.hygieneId,
+              row.id,
+              ctx.todayKey,
+              applyHygieneVerification(
+                { ...base, temperatureAbove37: base.temperatureAbove37 === true, ...editor },
+                { result, byUserId: ctx.employee.id, byName: ctx.employee.name, byTitle: title, at, method: ctx.authMode === "auth" ? "session" : "qr" }
+              )
+            );
+          }
           if (pair.healthId) {
+            const health = asRecord(healthByEmployee.get(row.id));
             await upsertEntry(pair.healthId, row.id, ctx.todayKey, {
-              signed: value === "healthy" ? true : null,
-              measures: value === "suspended" ? `Отстранён: ${ctx.employee.name}` : null,
-              ...common,
+              ...health,
+              signed: result === "admitted" ? true : health.signed ?? null,
+              measures: result === "suspended" ? health.measures ?? `Отстранён: ${ctx.employee.name}` : health.measures ?? null,
+              ...editor,
             });
           }
+          await signatureEvent(ctx.employee.id, "hygiene_verification", row.id, {
+            employeeId: row.id,
+            employeeName: row.name,
+            date: ctx.todayKey,
+            result,
+            at,
+            userName: ctx.employee.name,
+          });
           changed += 1;
         }
         await recordQrFillAudit({
@@ -173,7 +235,8 @@ export async function handleHealthQr(ctx: HealthCtx): Promise<NextResponse> {
         }).catch(() => null);
         return redirect({ view: "all", saved: String(changed) });
       }
-      return ctx.page(renderHealthDay({ action: allHref, who: ctx.who, tabs, rows: day }));
+      const saved = Number(url.searchParams.get("saved") ?? "");
+      return ctx.page(renderHealthDay({ action: allHref, who: ctx.who, tabs, rows: day, saved: Number.isFinite(saved) ? saved : null }));
     }
   }
 
@@ -235,6 +298,40 @@ export async function handleHealthQr(ctx: HealthCtx): Promise<NextResponse> {
       authMode: ctx.authMode,
       values: { admitted: decision.admitted, confirmations: decision.confirmations },
     }).catch(() => null);
+
+    await signatureEvent(ctx.employee.id, "hygiene_declaration", ctx.employee.id, {
+      employeeId: ctx.employee.id,
+      date: ctx.todayKey,
+      confirmations: decision.confirmations,
+      at,
+      userName: ctx.employee.name,
+    });
+
+    // Колокольчик ответственному: одна карточка на документ и день, в ней —
+    // все, кто отметился и ждёт допуска (повторная отметка обновляет пункт).
+    if (pair.hygieneId) {
+      const recipients = await listCoreJournalRecipients(ctx.orgId, pair.hygieneId).catch(() => []);
+      await Promise.all(
+        recipients.map((recipient) =>
+          upsertNotification({
+            organizationId: ctx.orgId,
+            userId: recipient.id,
+            kind: "hygiene-admission",
+            dedupeKey: `hygiene-admission:${pair.hygieneId}:${ctx.todayKey}`,
+            title: "Гигиенический журнал: сотрудники ждут допуска",
+            linkHref: `/journals/hygiene/documents/${pair.hygieneId}`,
+            linkLabel: "Открыть журнал",
+            items: [
+              {
+                id: ctx.employee.id,
+                label: decision.admitted ? `${ctx.employee.name} — подписал, ждёт допуска` : `${ctx.employee.name} — жалобы: ${decision.complaints.join(", ")}`,
+                hint: at,
+              },
+            ],
+          }).catch(() => null)
+        )
+      );
+    }
 
     if (!decision.admitted || medExpired) {
       const recipients = await listCoreJournalRecipients(ctx.orgId, pair.hygieneId).catch(() => []);

@@ -1,3 +1,4 @@
+import { withNewHygieneFormVersion } from "@/lib/hygiene-v2";
 import { db } from "@/lib/db";
 import { parseOrgColumnDefaults, withOrgColumnDefault } from "@/lib/journal-columns";
 import { withOrgCommission } from "@/lib/brakerage-commission-org";
@@ -573,6 +574,12 @@ export async function prefillResponsiblesForNewDocument(input: {
   // 6. Бракеражи: состав комиссии организации — новому документу
   // (окно «Сторонняя бракеражная комиссия», модель «копия»).
   config = await withOrgCommission(input.organizationId, journalCode, config ?? {});
+
+  // 7. Гигиена: новый документ — по форме Приложения №1 СанПиН
+  // (config.hygieneFormVersion = 2), в т.ч. когда конфиг перенесён из
+  // прошлого периода. Вызов для СУЩЕСТВУЮЩЕГО документа (close-day)
+  // возвращает версию обратно через keepHygieneFormVersion.
+  config = withNewHygieneFormVersion(journalCode, config ?? {});
 
   return {
     config,

@@ -26,3 +26,26 @@ test("график: гигиена получает статус дня, жур�
   assert.deepEqual(buildStaffAutoFillEntryData("health_check", "sick_leave"), {});
   assert.deepEqual(buildStaffAutoFillEntryData("health_check", undefined), { signed: true, measures: null });
 });
+
+test("гигиена по новой форме (v2): автозаполнение не ставит «Здоров» за сотрудника, только график", async () => {
+  const { buildStaffAutoFillEntryData, staffAutoFillScheduleOnly } = await import("@/lib/staff-journal-autofill");
+  assert.deepEqual(buildStaffAutoFillEntryData("hygiene", undefined, { hygieneFormVersion: 2 }), {});
+  assert.deepEqual(buildStaffAutoFillEntryData("hygiene", "vacation", { hygieneFormVersion: 2 }), {
+    status: "vacation",
+    temperatureAbove37: null,
+  });
+  // Прежняя форма и журнал здоровья — без изменений.
+  assert.deepEqual(buildStaffAutoFillEntryData("hygiene", undefined, { hygieneFormVersion: 1 }), {
+    status: "healthy",
+    temperatureAbove37: false,
+  });
+  assert.deepEqual(buildStaffAutoFillEntryData("health_check", undefined, { hygieneFormVersion: 2 }), {
+    signed: true,
+    measures: null,
+  });
+
+  assert.equal(staffAutoFillScheduleOnly({ templateCode: "hygiene", qrAdmission: false, hygieneFormVersion: 2 }), true);
+  assert.equal(staffAutoFillScheduleOnly({ templateCode: "hygiene", qrAdmission: false, hygieneFormVersion: 1 }), false);
+  assert.equal(staffAutoFillScheduleOnly({ templateCode: "health_check", qrAdmission: false, hygieneFormVersion: 2 }), false);
+  assert.equal(staffAutoFillScheduleOnly({ templateCode: "health_check", qrAdmission: true, hygieneFormVersion: 1 }), true);
+});

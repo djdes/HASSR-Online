@@ -1,4 +1,5 @@
-import { HEALTH_CONFIRMATIONS, KEEPER_STATUSES, type DayMark } from "@/lib/health-qr";
+import { HEALTH_CONFIRMATIONS, type DayMark } from "@/lib/health-qr";
+import { signatureMark, type HygieneV2View } from "@/lib/hygiene-v2";
 import { esc } from "@/lib/journal-fill-html";
 
 /**
@@ -23,6 +24,13 @@ const HEALTH_CSS = `<style>
 .hq-row select{min-height:48px;font-size:16px}
 .hq-sum{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
 .hq-sum span{padding:6px 12px;border-radius:999px;font-size:15px;font-weight:600}
+.hq-warn{border:2px solid #fde68a;background:#fffbeb;color:#7a4a00;border-radius:18px;padding:14px 16px;font-size:18px;line-height:1.4;font-weight:600;margin:0 0 14px}
+.hq-sig{font-size:16px;color:#3c4053;margin:2px 0 0;line-height:1.4}
+.hq-sig b{font-weight:600}
+.hq-row .seg{margin:6px 0 0}
+.hq-row .segb{min-height:52px;font-size:17px}
+.hq-row .segb.yes:has(input:checked){border-color:#16a34a;background:#ecfdf5;color:#116b2a}
+.hq-row .segb.no:has(input:checked){border-color:#d2453d;background:#fff4f2;color:#a13a32}
 </style>`;
 
 export function renderHealthTabs(params: { active: "me" | "all"; meHref: string; allHref: string; missing: number }): string {
@@ -31,7 +39,7 @@ export function renderHealthTabs(params: { active: "me" | "all"; meHref: string;
   return `<nav class="tabs" aria-label="Режим">${tab("me", params.meHref, "Моя отметка")}${tab(
     "all",
     params.allHref,
-    params.missing > 0 ? `Все за сегодня · нет ${params.missing}` : "Все за сегодня"
+    params.missing > 0 ? `Допуск сотрудников · ждут ${params.missing}` : "Допуск сотрудников"
   )}</nav>`;
 }
 
@@ -59,10 +67,11 @@ export function renderHealthForm(params: {
 <form method="post" action="${esc(params.action)}" id="hq-form">
 <input type="hidden" name="action" value="health-submit">
 ${params.error ? `<div class="err">${esc(params.error)}</div>` : ""}
-<p class="hq-lead">Подтверждаю:</p>
+<div class="hq-warn" role="note">Каждая отметка — ваша подпись в гигиеническом журнале. За заведомо ложные сведения о своём здоровье отвечает сотрудник: это нарушение санитарных правил.</div>
+<p class="hq-lead">Подписываю:</p>
 <div class="hq-list">${items}</div>
-<p class="hq-note">Отметьте то, что верно. Если что-то не так — не отмечайте: заведующая узнает сразу. Запишется ${journals}.</p>
-<div class="sticky"><button class="btn" type="submit">Сохранить</button></div>
+<p class="hq-note">Отметьте то, что верно. Если что-то не так — не отмечайте: заведующая узнает сразу и решит о допуске. Запишется ${journals}.</p>
+<div class="sticky"><button class="btn" type="submit">Подписать</button></div>
 </form>`;
 }
 
@@ -86,41 +95,78 @@ const MARK_TEXT = (mark: DayMark): { cls: string; text: string } => {
   }
 };
 
+export type HealthDayRow = { id: string; name: string; position: string | null; mark: DayMark; hygiene: HygieneV2View };
+
+const SIGNATURE_SHORT: ReadonlyArray<{ key: keyof HygieneV2View["signatures"]; label: string }> = [
+  { key: "temperature", label: "t° до 37" },
+  { key: "infection", label: "нет инфекций" },
+  { key: "respiratorySkin", label: "нет ОРВИ и кожных" },
+];
+
+const ABSENCE_OPTIONS = [
+  { value: "day_off", label: "Выходной" },
+  { value: "sick_leave", label: "Болен" },
+  { value: "vacation", label: "Отпуск" },
+] as const;
+
+/**
+ * Допуск сотрудников (второй QR и вкладка ответственного): подписи
+ * сотрудника по трём графам и решение «Допущен / Отстранён» — подпись
+ * ответственного в журнале. Отсутствующих отмечают в списке ниже.
+ */
 export function renderHealthDay(params: {
   action: string;
   who: string;
   tabs: string;
-  rows: Array<{ id: string; name: string; position: string | null; mark: DayMark }>;
+  rows: HealthDayRow[];
   error?: string | null;
+  saved?: number | null;
 }): string {
-  const count = (state: DayMark["state"]) => params.rows.filter((row) => row.mark.state === state).length;
-  const summary = `<div class="hq-sum"><span style="background:#f0fdf4;color:#116b2a">допущено ${count("admitted")}</span><span style="background:#fff8eb;color:#9a5b00">не отметились ${count(
-    "missing"
-  )}</span><span style="background:#fef2f2;color:#b42318">не допущено ${count("suspended")}</span></div>`;
-  const options = (current: DayMark) =>
-    `<option value="">— не менять —</option>${KEEPER_STATUSES.map(
-      (item) =>
-        `<option value="${esc(item.value)}"${
-          (current.state === "admitted" && item.value === "healthy") || (current.state === "suspended" && item.value === "suspended") ? " selected" : ""
-        }>${esc(item.label)}</option>`
-    ).join("")}`;
-  // Сверху — кому нужно внимание: не допущен, не отметился.
-  const order: Record<DayMark["state"], number> = { suspended: 0, missing: 1, admitted: 2, absent: 3 };
+  const waiting = (row: HealthDayRow) => row.hygiene.declared && !row.hygiene.result && !row.hygiene.absence;
+  const count = (test: (row: HealthDayRow) => boolean) => params.rows.filter(test).length;
+  const summary = `<div class="hq-sum"><span style="background:#eef1ff;color:#3848c7">ждут допуска ${count(waiting)}</span><span style="background:#fff8eb;color:#9a5b00">не отметились ${count(
+    (row) => row.mark.state === "missing"
+  )}</span><span style="background:#f0fdf4;color:#116b2a">допущено ${count((row) => row.hygiene.result?.result === "admitted")}</span><span style="background:#fef2f2;color:#b42318">отстранено ${count(
+    (row) => row.hygiene.result?.result === "suspended"
+  )}</span></div>`;
+  // Сверху — кому нужно решение: ждут допуска, не допущены сами, не отметились.
+  const rank = (row: HealthDayRow) =>
+    waiting(row) ? 0 : row.mark.state === "suspended" && !row.hygiene.result ? 1 : row.mark.state === "missing" ? 2 : row.hygiene.absence ? 4 : 3;
   const rows = [...params.rows]
-    .sort((a, b) => order[a.mark.state] - order[b.mark.state] || a.name.localeCompare(b.name, "ru"))
+    .sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, "ru"))
     .map((row) => {
+      const h = row.hygiene;
+      const signatures = h.declared
+        ? `<p class="hq-sig">Подписи: ${SIGNATURE_SHORT.map(
+            (item) => `<b style="color:${h.signatures[item.key] === true ? "#116b2a" : "#b42318"}">${esc(signatureMark(h.signatures[item.key]) || "—")}</b> ${esc(item.label)}`
+          ).join(" · ")}${h.declaredAt ? ` · ${esc(h.declaredAt)}` : ""}</p>`
+        : "";
       const mark = MARK_TEXT(row.mark);
-      return `<div class="hq-row"><div><div class="hq-n">${esc(row.name)}</div>${row.position ? `<div class="hint" style="margin:0">${esc(row.position)}</div>` : ""}<div class="hq-s ${mark.cls}">${esc(
-        mark.text
-      )}</div></div><select class="in" name="st:${esc(row.id)}" aria-label="Статус: ${esc(row.name)}">${options(row.mark)}</select></div>`;
+      const state = h.result
+        ? `<div class="hq-s ${h.result.result === "admitted" ? "hq-sok" : "hq-sbad"}">${h.result.result === "admitted" ? "✓ допущен" : "⚠ отстранён"} · ${esc(h.result.byName)} · ${esc(h.result.at)}</div>`
+        : h.absence
+          ? `<div class="hq-s hq-soff">${esc(mark.text)}</div>`
+          : h.declared
+            ? `<div class="hq-s ${row.mark.state === "suspended" ? "hq-sbad" : "hq-smiss"}">${row.mark.state === "suspended" ? "⚠ отметил жалобы — ждёт решения" : "ждёт допуска"}</div>`
+            : `<div class="hq-s ${mark.cls}">${esc(mark.text)}</div>`;
+      const checked = (value: "admitted" | "suspended") => h.result?.result === value;
+      const seg = `<div class="seg" role="radiogroup" aria-label="Допуск: ${esc(row.name)}"><label class="segb yes${checked("admitted") ? " on" : ""}"><input type="radio" name="st:${esc(row.id)}" value="admitted"${checked("admitted") ? " checked" : ""}><span>Допущен</span></label><label class="segb no${checked("suspended") ? " on" : ""}"><input type="radio" name="st:${esc(row.id)}" value="suspended"${checked("suspended") ? " checked" : ""}><span>Отстранён</span></label></div>`;
+      const absence = `<select class="in" name="ab:${esc(row.id)}" aria-label="Нет на смене: ${esc(row.name)}"><option value="">На смене</option>${ABSENCE_OPTIONS.map(
+        (item) => `<option value="${item.value}"${h.absence === item.value ? " selected" : ""}>${item.label}</option>`
+      ).join("")}</select>`;
+      return `<div class="hq-row"><div><div class="hq-n">${esc(row.name)}</div>${row.position ? `<div class="hint" style="margin:0">${esc(row.position)}</div>` : ""}${signatures}${state}</div>${seg}${absence}</div>`;
     })
     .join("");
-  return `${HEALTH_CSS}${params.who}${params.tabs}${summary}
+  const saved =
+    params.saved != null && params.saved > 0
+      ? `<div class="hq-done" role="status">Сохранено: ${params.saved}. Ваша подпись стоит в журнале.</div>`
+      : "";
+  return `${HEALTH_CSS}${params.who}${params.tabs}${saved}${summary}
 <form method="post" action="${esc(params.action)}">
 <input type="hidden" name="action" value="health-keeper">
 ${params.error ? `<div class="err">${esc(params.error)}</div>` : ""}
-<p class="hq-note">Поправьте статус, если сотрудник ошибся или отметить его нужно вам (выходной, болен). В журнале останется, кто исправил.</p>
+<p class="hq-note">Осмотрите сотрудника и отметьте «Допущен» или «Отстранён» — это ваша подпись ответственного в гигиеническом журнале. Кого нет на смене — выберите «Выходной», «Болен» или «Отпуск».</p>
 ${rows || `<div class="card"><p class="muted">Сегодня в списке никого нет.</p></div>`}
-<div class="sticky"><button class="btn" type="submit">Сохранить изменения</button></div>
+<div class="sticky"><button class="btn" type="submit">Подписать допуск</button></div>
 </form>`;
 }

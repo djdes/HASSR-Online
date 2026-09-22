@@ -17,6 +17,7 @@ import { getJournalAutomation } from "@/lib/journal-automation";
 import { resolveAutomationStaff } from "@/lib/journal-automation-staff";
 import { prefillResponsiblesForNewDocument } from "@/lib/journal-responsibles-cascade";
 import { getUserPositionLabel } from "@/lib/user-roles";
+import { keepHygieneFormVersion } from "@/lib/hygiene-v2";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -277,7 +278,10 @@ export async function POST(request: Request) {
               responsibleTitle,
               verifierUserId: nextVerifier,
               // Печатные формы: имена/должности в config из того же подбора.
-              ...(responsibleAlive ? {} : { config: picked.config as never }),
+              // Форма гигиены у существующего документа не меняется.
+              ...(responsibleAlive
+                ? {}
+                : { config: keepHygieneFormVersion(doc.config, picked.config) as never }),
             },
             select: {
               id: true,

@@ -442,7 +442,8 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
   let healthView: "me" | "all" = "me";
   if (isHealthQr) {
     const person = await db.user.findUnique({ where: { id: employee.id }, select: { keepsCoreJournals: true, role: true } });
-    healthKeeper = person?.keepsCoreJournals === true || isManagementRole(person?.role ?? "");
+    const doc = await db.journalDocument.findUnique({ where: { id: document.id }, select: { responsibleUserId: true } });
+    healthKeeper = person?.keepsCoreJournals === true || isManagementRole(person?.role ?? "") || doc?.responsibleUserId === employee.id;
     healthView = healthKeeper && q.get("view") === "all" ? "all" : "me";
   }
 
@@ -492,7 +493,8 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
     sessionVerified,
     passValid,
     // Список бракеража — это подпись: PIN нужен всегда (или вход в кабинет).
-    requirePin: commissionOnly || (listCapable && view === "list") || (isHealthQr && healthView === "all"),
+    // Гигиена по форме Приложения №1: отметка сотрудника и допуск — подписи, PIN всегда.
+    requirePin: commissionOnly || (listCapable && view === "list") || isHealthQr,
     isResultPage: done === "appended" || done === "updated" || done === "signed" || done === "saved" || done === "admitted" || done === "suspended",
   });
   if (gate === "no-pin") {

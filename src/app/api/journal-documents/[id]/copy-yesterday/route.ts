@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { HYGIENE_V2_NO_COPY_MESSAGE, readHygieneFormVersion } from "@/lib/hygiene-v2";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -76,6 +77,8 @@ export async function POST(
       organizationId: true,
       dateFrom: true,
       dateTo: true,
+      config: true,
+      template: { select: { code: true } },
     },
   });
   if (!doc || doc.organizationId !== organizationId) {
@@ -83,6 +86,11 @@ export async function POST(
   }
   if (doc.status === "closed") {
     return NextResponse.json({ error: "Документ закрыт" }, { status: 400 });
+  }
+  // Гигиена по форме Приложения №1: подпись — личная отметка сотрудника
+  // по QR, вчерашнюю на сегодня не переносим.
+  if (doc.template?.code === "hygiene" && readHygieneFormVersion(doc.config) === 2) {
+    return NextResponse.json({ error: HYGIENE_V2_NO_COPY_MESSAGE }, { status: 400 });
   }
 
   const now = new Date();
