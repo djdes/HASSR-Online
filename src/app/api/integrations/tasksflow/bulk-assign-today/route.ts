@@ -19,6 +19,12 @@ import {
   tasksflowClientFor,
 } from "@/lib/tasksflow-client";
 import { listAdapters } from "@/lib/tasksflow-adapters";
+import {
+  buildGeneralCleaningPlan,
+  sanitationDayAdapter,
+} from "@/lib/tasksflow-adapters/sanitation-day";
+import { parseGcRowKey } from "@/lib/tasksflow-adapters/sanitation-day-tasks";
+import { SANITATION_DAY_TEMPLATE_CODE } from "@/lib/sanitation-day-document";
 import { getEffectiveTaskMode } from "@/lib/journal-task-modes";
 import {
   hasExplicitPerRowDistribution,
@@ -818,6 +824,47 @@ export async function POST(request: Request) {
         documentTitle: doc.title,
         documentAutoCreated: autoCreatedDocIds.has(doc.id) || undefined,
       };
+
+      // График генуборок (2026-09-22): задача — на каждую ПЛАНОВУЮ дату и
+      // появляется в день уборки через outbox (часовой крон делает то же
+      // самое). Ни повторяющихся задач, ни fan-out «всем на смене» —
+      // только планировщик адаптера: кому и какие уборки сегодня.
+      if (tpl.code === SANITATION_DAY_TEMPLATE_CODE) {
+        const built = await buildGeneralCleaningPlan({ integration, documentId: doc.id });
+        if (!built) {
+          reports.push(report);
+          continue;
+        }
+        const { plan, input } = built;
+        report.alreadyLinked += input.links.filter(
+          (link) => parseGcRowKey(link.rowKey)?.dateKey === input.todayKey,
+        ).length;
+        report.recipients = plan.create.map((command) => {
+          const user = earlyUsersData.find((u) => u.id === command.assigneeUserId);
+          return {
+            userId: command.assigneeUserId,
+            name: user?.name ?? "—",
+            position: user?.jobPosition?.name ?? null,
+            rowKey: command.rowKey,
+            status: "ready" as const,
+          };
+        });
+        if (dryRun) {
+          report.created = plan.create.length;
+        } else {
+          const synced = await sanitationDayAdapter.syncDocument({ integration, documentId: doc.id });
+          report.created = synced.created;
+        }
+        if (plan.skippedNoLink.length > 0) {
+          report.skipped += plan.skippedNoLink.length;
+          report.skipReason = "Исполнитель генеральной уборки не привязан к TasksFlow";
+          pushSkippedItem(report.code, report.label, report.skipReason);
+        } else if (plan.create.length === 0 && report.alreadyLinked === 0) {
+          report.skipReason = "Сегодня генеральных уборок по плану нет";
+        }
+        reports.push(report);
+        continue;
+      }
 
       const adapterDoc = adapterDocs.find((d) => d.documentId === doc.id);
       if (!adapterDoc || adapterDoc.rows.length === 0) {

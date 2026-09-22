@@ -2,19 +2,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * Skeleton списка документов внутри журнала (`/journals/[code]`).
- * Повторяет `JournalTopBar` (заголовок + две кнопки), `JournalTabs`
- * («Активные / Закрытые») и карточки документов.
+ * Повторяет `JournalTopBar` (заголовок + блок кнопок `JournalListActions`:
+ * «QR-точка контроля» во всю ширину над рядом «Создать документ |
+ * Инструкция»), `JournalTabs` («Активные / Закрытые») и карточки документов.
  */
 export default function JournalCodeLoading() {
   return (
     <div className="space-y-5 sm:space-y-14" aria-busy="true" aria-live="polite">
       <span className="sr-only">Загружаем документы журнала…</span>
 
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4 sm:items-center">
         <Skeleton className="h-9 w-[320px] max-w-full rounded-2xl" />
-        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
-          <Skeleton className="h-11 w-full rounded-2xl sm:w-[140px]" />
-          <Skeleton className="h-11 w-full rounded-2xl sm:w-[190px]" />
+        <div className="grid w-full grid-cols-2 gap-2 sm:w-[440px] sm:shrink-0">
+          <Skeleton className="col-span-2 h-12 w-full rounded-2xl" />
+          <Skeleton className="h-11 w-full rounded-2xl" />
+          <Skeleton className="h-11 w-full rounded-2xl" />
         </div>
       </div>
 

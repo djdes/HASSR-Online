@@ -1,0 +1,572 @@
+[
+  {
+    "code": "cold_equipment_control",
+    "width": 390,
+    "overflow": false,
+    "place": "below",
+    "h1": {
+      "x": 16,
+      "y": 270,
+      "w": 358,
+      "h": 161
+    },
+    "block": {
+      "x": 16,
+      "y": 491,
+      "w": 358,
+      "h": 100
+    },
+    "overflowCells": []
+  },
+  {
+    "code": "cold_equipment_control",
+    "width": 640,
+    "overflow": false,
+    "place": "below",
+    "h1": {
+      "x": 16,
+      "y": 270,
+      "w": 608,
+      "h": 99
+    },
+    "block": {
+      "x": 16,
+      "y": 429,
+      "w": 440,
+      "h": 100
+    },
+    "overflowCells": []
+  },
+  {
+    "code": "cold_equipment_control",
+    "width": 768,
+    "overflow": false,
+    "place": "below",
+    "h1": {
+      "x": 32,
+      "y": 278,
+      "w": 704,
+      "h": 72
+    },
+    "block": {
+      "x": 32,
+      "y": 410,
+      "w": 440,
+      "h": 100
+    },
+    "overflowCells": []
+  },
+  {
+    "code": "cold_equipment_control",
+    "width": 1024,
+    "overflow": false,
+    "place": "right",
+    "h1": {
+      "x": 32,
+      "y": 278,
+      "w": 504,
+      "h": 147
+    },
+    "block": {
+      "x": 552,
+      "y": 324,
+      "w": 440,
+      "h": 100
+    },
+    "overflowCells": []
+  },
+  {
+    "code": "cold_equipment_control",
+    "width": 1440,
+    "overflow": false,
+    "place": "right",
+    "h1": {
+      "x": 32,
+      "y": 278,
+      "w": 920,
+      "h": 74
+    },
+    "block": {
+      "x": 968,
+      "y": 287,
+      "w": 440,
+      "h": 100
+    },
+    "overflowCells": []
+  },
+  {
+    "code": "sanitary_day_control",
+    "width": 390,
+    "overflow": false,
+    "place": "below",
+    "h1": {
+      "x": 16,
+      "y": 217,
+      "w": 358,
+      "h": 97
+    },
+    "block": {
+      "x": 16,
+      "y": 330,
+      "w": 358,
+      "h": 100
+    },
+    "overflowCells": []
+  },
+  {
+    "code": "sanitary_day_control",
+    "width": 640,
+    "overflow": false,
+    "place": "below",
+    "h1": {
+      "x": 16,
+      "y": 217,
+      "w": 608,
+      "h": 66
+    },
+    "block": {
+      "x": 16,
+      "y": 299,
+      "w": 440,
+      "h": 100
+    },
+    "overflowCells": []
+  },
+  {
+    "code": "sanitary_day_control",
+    "width": 768,
+    "overflow": false,
+    "place": "below",
+    "h1": {
+      "x": 32,
+      "y": 225,
+      "w": 704,
+      "h": 72
+    },
+    "block": {
+      "x": 32,
+      "y": 313,
+      "w": 440,
+      "h": 100
+    },
+    "overflowCells": []
+  },
+  {
+    "code": "sanitary_day_control",
+    "width": 1024,
+    "overflow": false,
+    "place": "right",
+    "h1": {
+      "x": 32,
+      "y": 238,
+      "w": 504,
+      "h": 74
+    },
+    "block": {
+      "x": 552,
+      "y": 225,
+      "w": 440,
+      "h": 100
+    },
+    "overflowCells": []
+  },
+  {
+    "code": "sanitary_day_control",
+    "width": 1440,
+    "overflow": false,
+    "place": "right",
+    "h1": {
+      "x": 32,
+      "y": 257,
+      "w": 920,
+      "h": 37
+    },
+    "block": {
+      "x": 968,
+      "y": 225,
+      "w": 440,
+      "h": 100
+    },
+    "overflowCells": []
+  },
+  {
+    "code": "accident_journal",
+    "width": 390,
+    "overflow": false,
+    "place": "below",
+    "h1": {
+      "x": 16,
+      "y": 217,
+      "w": 358,
+      "h": 32
+    },
+    "block": {
+      "x": 16,
+      "y": 265,
+      "w": 358,
+      "h": 100
+    },
+    "overflowCells": []
+  },
+  {
+    "code": "accident_journal",
+    "width": 640,
+    "overflow": false,
+    "place": "below",
+    "h1": {
+      "x": 16,
+      "y": 217,
+      "w": 608,
+      "h": 33
+    },
+    "block": {
+      "x": 16,
+      "y": 266,
+      "w": 440,
+      "h": 100
+    },
+    "overflowCells": []
+  },
+  {
+    "code": "accident_journal",
+    "width": 768,
+    "overflow": false,
+    "place": "below",
+    "h1": {
+      "x": 32,
+      "y": 225,
+      "w": 704,
+      "h": 36
+    },
+    "block": {
+      "x": 32,
+      "y": 277,
+      "w": 440,
+      "h": 100
+    },
+    "overflowCells": []
+  },
+  {
+    "code": "accident_journal",
+    "width": 1024,
+    "overflow": false,
+    "place": "right",
+    "h1": {
+      "x": 32,
+      "y": 257,
+      "w": 504,
+      "h": 37
+    },
+    "block": {
+      "x": 552,
+      "y": 225,
+      "w": 440,
+      "h": 100
+    },
+    "overflowCells": []
+  },
+  {
+    "code": "accident_journal",
+    "width": 1440,
+    "overflow": false,
+    "place": "right",
+    "h1": {
+      "x": 32,
+      "y": 257,
+      "w": 920,
+      "h": 37
+    },
+    "block": {
+      "x": 968,
+      "y": 225,
+      "w": 440,
+      "h": 100
+    },
+    "overflowCells": []
+  },
+  {
+    "code": "product_writeoff",
+    "width": 390,
+    "overflow": false,
+    "place": "below",
+    "h1": {
+      "x": 16,
+      "y": 217,
+      "w": 358,
+      "h": 32
+    },
+    "block": {
+      "x": 16,
+      "y": 265,
+      "w": 358,
+      "h": 100
+    },
+    "overflowCells": []
+  },
+  {
+    "code": "product_writeoff",
+    "width": 640,
+    "overflow": false,
+    "place": "below",
+    "h1": {
+      "x": 16,
+      "y": 217,
+      "w": 608,
+      "h": 33
+    },
+    "block": {
+      "x": 16,
+      "y": 266,
+      "w": 440,
+      "h": 100
+    },
+    "overflowCells": []
+  },
+  {
+    "code": "product_writeoff",
+    "width": 768,
+    "overflow": false,
+    "place": "below",
+    "h1": {
+      "x": 32,
+      "y": 225,
+      "w": 704,
+      "h": 36
+    },
+    "block": {
+      "x": 32,
+      "y": 277,
+      "w": 440,
+      "h": 100
+    },
+    "overflowCells": []
+  },
+  {
+    "code": "product_writeoff",
+    "width": 1024,
+    "overflow": false,
+    "place": "right",
+    "h1": {
+      "x": 32,
+      "y": 257,
+      "w": 504,
+      "h": 37
+    },
+    "block": {
+      "x": 552,
+      "y": 225,
+      "w": 440,
+      "h": 100
+    },
+    "overflowCells": []
+  },
+  {
+    "code": "product_writeoff",
+    "width": 1440,
+    "overflow": false,
+    "place": "right",
+    "h1": {
+      "x": 32,
+      "y": 257,
+      "w": 920,
+      "h": 37
+    },
+    "block": {
+      "x": 968,
+      "y": 225,
+      "w": 440,
+      "h": 100
+    },
+    "overflowCells": []
+  },
+  {
+    "code": "cleaning",
+    "width": 390,
+    "overflow": false,
+    "place": "below",
+    "h1": {
+      "x": 16,
+      "y": 270,
+      "w": 358,
+      "h": 32
+    },
+    "block": {
+      "x": 16,
+      "y": 318,
+      "w": 358,
+      "h": 100
+    },
+    "overflowCells": []
+  },
+  {
+    "code": "cleaning",
+    "width": 640,
+    "overflow": false,
+    "place": "below",
+    "h1": {
+      "x": 16,
+      "y": 270,
+      "w": 608,
+      "h": 33
+    },
+    "block": {
+      "x": 16,
+      "y": 319,
+      "w": 440,
+      "h": 100
+    },
+    "overflowCells": []
+  },
+  {
+    "code": "cleaning",
+    "width": 768,
+    "overflow": false,
+    "place": "below",
+    "h1": {
+      "x": 32,
+      "y": 278,
+      "w": 704,
+      "h": 36
+    },
+    "block": {
+      "x": 32,
+      "y": 330,
+      "w": 440,
+      "h": 100
+    },
+    "overflowCells": []
+  },
+  {
+    "code": "cleaning",
+    "width": 1024,
+    "overflow": false,
+    "place": "right",
+    "h1": {
+      "x": 32,
+      "y": 310,
+      "w": 504,
+      "h": 37
+    },
+    "block": {
+      "x": 552,
+      "y": 278,
+      "w": 440,
+      "h": 100
+    },
+    "overflowCells": []
+  },
+  {
+    "code": "cleaning",
+    "width": 1440,
+    "overflow": false,
+    "place": "right",
+    "h1": {
+      "x": 32,
+      "y": 310,
+      "w": 920,
+      "h": 37
+    },
+    "block": {
+      "x": 968,
+      "y": 278,
+      "w": 440,
+      "h": 100
+    },
+    "overflowCells": []
+  },
+  {
+    "code": "glass_items_list",
+    "width": 390,
+    "overflow": false,
+    "place": "below",
+    "h1": {
+      "x": 16,
+      "y": 217,
+      "w": 358,
+      "h": 97
+    },
+    "block": {
+      "x": 16,
+      "y": 330,
+      "w": 358,
+      "h": 100
+    },
+    "overflowCells": []
+  },
+  {
+    "code": "glass_items_list",
+    "width": 640,
+    "overflow": false,
+    "place": "below",
+    "h1": {
+      "x": 16,
+      "y": 217,
+      "w": 608,
+      "h": 66
+    },
+    "block": {
+      "x": 16,
+      "y": 299,
+      "w": 440,
+      "h": 100
+    },
+    "overflowCells": []
+  },
+  {
+    "code": "glass_items_list",
+    "width": 768,
+    "overflow": false,
+    "place": "below",
+    "h1": {
+      "x": 32,
+      "y": 225,
+      "w": 704,
+      "h": 72
+    },
+    "block": {
+      "x": 32,
+      "y": 313,
+      "w": 440,
+      "h": 100
+    },
+    "overflowCells": []
+  },
+  {
+    "code": "glass_items_list",
+    "width": 1024,
+    "overflow": false,
+    "place": "right",
+    "h1": {
+      "x": 32,
+      "y": 238,
+      "w": 504,
+      "h": 74
+    },
+    "block": {
+      "x": 552,
+      "y": 225,
+      "w": 440,
+      "h": 100
+    },
+    "overflowCells": []
+  },
+  {
+    "code": "glass_items_list",
+    "width": 1440,
+    "overflow": false,
+    "place": "right",
+    "h1": {
+      "x": 32,
+      "y": 257,
+      "w": 920,
+      "h": 37
+    },
+    "block": {
+      "x": 968,
+      "y": 225,
+      "w": 440,
+      "h": 100
+    },
+    "overflowCells": []
+  }
+]

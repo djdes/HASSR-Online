@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { ORG_ROSTER_WHERE, ORG_SIGNER_WHERE } from "@/lib/journal-roster";
+import { parseJournalPeriodsJson, resolveJournalPeriodKind } from "@/lib/journal-period";
 import { getAdapter } from "@/lib/tasksflow-adapters";
 import { rowKeyForEmployee } from "@/lib/tasksflow-adapters/row-key";
 import type { TaskFormSchema } from "@/lib/tasksflow-adapters/task-form";
@@ -129,8 +130,41 @@ export async function listFillEmployees(
   return users.map((user) => ({ id: user.id, name: user.name, positionTitle: getUserDisplayTitle(user), hasPin: Boolean(user.qrPinHash) }));
 }
 
-/** Журналы хаба: включённые, с активным документом на сегодня. */
-export async function listHubJournals(orgId: string, disabledCodes: string[], todayKey: string) {
+/**
+ * Журналы, чей прошлый период кончился, а нового документа ещё нет
+ * (правило ночного крона: документы были, ни один не покрывает сегодня
+ * или будущее; `perpetual` закрывают только руками).
+ */
+async function listLapsedJournals(orgId: string, day: Date): Promise<Array<{ code: string; name: string }>> {
+  const groups = await db.journalDocument.groupBy({
+    by: ["templateId"],
+    where: { organizationId: orgId },
+    _max: { dateTo: true },
+  });
+  const lapsedIds = groups
+    .filter((group) => group._max.dateTo !== null && group._max.dateTo.getTime() < day.getTime())
+    .map((group) => group.templateId);
+  if (lapsedIds.length === 0) return [];
+  const [templates, org] = await Promise.all([
+    db.journalTemplate.findMany({ where: { id: { in: lapsedIds }, isActive: true }, select: { code: true, name: true } }),
+    db.organization.findUnique({ where: { id: orgId }, select: { journalPeriods: true } }),
+  ]);
+  const overrides = parseJournalPeriodsJson(org?.journalPeriods ?? null);
+  return templates.filter((template) => (overrides[template.code]?.kind ?? resolveJournalPeriodKind(template.code)) !== "perpetual");
+}
+
+/**
+ * Журналы хаба: включённые, с активным документом на сегодня.
+ * `includeLapsed` — ещё и журналы, чей прошлый период кончился: первый
+ * скан откроет документ нового периода по образцу прошлого
+ * (`journal-qr-rollover.ts`), и хаб 1-го числа не пустеет.
+ */
+export async function listHubJournals(
+  orgId: string,
+  disabledCodes: string[],
+  todayKey: string,
+  options: { includeLapsed?: boolean } = {}
+) {
   const day = new Date(`${todayKey}T00:00:00.000Z`);
   const docs = await db.journalDocument.findMany({
     where: { organizationId: orgId, status: "active", dateFrom: { lte: day }, dateTo: { gte: day } },
@@ -142,6 +176,12 @@ export async function listHubJournals(orgId: string, disabledCodes: string[], to
     // Холодильники и склады — по наклейке на объекте, не из хаба.
     if (OBJECT_QR_JOURNAL_CODES.has(doc.template.code)) continue;
     if (!seen.has(doc.template.code)) seen.set(doc.template.code, doc.template.name);
+  }
+  if (options.includeLapsed) {
+    for (const journal of await listLapsedJournals(orgId, day)) {
+      if (disabledCodes.includes(journal.code) || OBJECT_QR_JOURNAL_CODES.has(journal.code)) continue;
+      if (!seen.has(journal.code)) seen.set(journal.code, journal.name);
+    }
   }
   // Гигиена и здоровье — один QR на оба журнала (health-qr-flow.ts). Без
   // гигиены (выключена или на сегодня нет документа) QR пишет только в

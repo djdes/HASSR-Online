@@ -1,0 +1,313 @@
+{
+  "at": "2026-09-22T16:02:58.625Z",
+  "docId": "cmucv33kq0001qc9m0rhz8ine",
+  "today": "2026-09-22",
+  "summary": {
+    "passed": 23,
+    "failed": 0
+  },
+  "checks": [
+    {
+      "id": "A-1a",
+      "name": "в окне создания поле «Дата документа»",
+      "ok": true
+    },
+    {
+      "id": "A-1b",
+      "name": "барабан «день | месяц | год», стрелка вниз — следующий день",
+      "ok": true,
+      "detail": {
+        "spinCount": 3,
+        "dayBefore": 1,
+        "dayAfter": 2,
+        "valueText": "2, пятница"
+      }
+    },
+    {
+      "id": "A-1c",
+      "name": "дата с барабана попала в поле ДД.ММ.ГГГГ",
+      "ok": true,
+      "detail": "02.01.2026"
+    },
+    {
+      "id": "A-1d",
+      "name": "план сразу по графику помещений: пятницы / 1, 15, последний; без графика — пусто",
+      "ok": true,
+      "detail": {
+        "kitchen": [
+          "2026-09-25",
+          "2026-10-02",
+          "2026-10-09",
+          "2026-10-16",
+          "2026-10-23"
+        ],
+        "storage": [
+          "2026-09-30",
+          "2026-10-01",
+          "2026-10-15",
+          "2026-10-31",
+          "2026-11-01"
+        ],
+        "bar": 0,
+        "year": 2026
+      }
+    },
+    {
+      "id": "A-1e",
+      "name": "строка «План» — проекция дат («DD, DD»)",
+      "ok": true,
+      "detail": "25"
+    },
+    {
+      "id": "A-2a",
+      "name": "редактор месяца: график помещения и подсказка про TasksFlow",
+      "ok": true,
+      "detail": {
+        "scheduleText": 1,
+        "tfHint": 1
+      }
+    },
+    {
+      "id": "A-2b",
+      "name": "«Добавить дату»: по умолчанию ближайший свободный день (сегодня)",
+      "ok": true,
+      "detail": "Добавить 22.09 (вт)"
+    },
+    {
+      "id": "A-2c",
+      "name": "дата в плане (операция под блокировкой), проекция обновлена",
+      "ok": true,
+      "detail": "22, 25"
+    },
+    {
+      "id": "A-2d",
+      "name": "AuditLog general_cleaning.op записан",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "id": "A-5a",
+      "name": "команда createTask в outbox: разовая, ключ gc-create::doc::строка::дата",
+      "ok": true,
+      "detail": {
+        "key": "gc-create::cmucv33kq0001qc9m0rhz8ine::row-room-cmucuk8qq0006gc9mxhzucfbz::2026-09-22",
+        "rowKey": "gc::row-room-cmucuk8qq0006gc9mxhzucfbz::2026-09-22",
+        "task": {
+          "title": "Генеральная уборка · Кухня (e2e) · 22.09 (вт)",
+          "category": "WeSetup · Ген. уборки",
+          "workerId": 501,
+          "description": "Журнал: График ген. уборок — 2026 год\nПомещение: Кухня (e2e)\nДата по графику: 22.09.2026, вторник\nПроведите генеральную уборку по шагам карточки помещения и нажмите «Сделал».",
+          "isRecurring": false,
+          "journalLink": "{\"kind\":\"wesetup-general_cleaning\",\"baseUrl\":\"http://localhost:3031\",\"integrationId\":\"cmucuk8sr0009gc9mp8zsn4dg\",\"documentId\":\"cmucv33kq0001qc9m0rhz8ine\",\"rowKey\":\"gc::row-room-cmucuk8qq0006gc9mxhzucfbz::2026-09-22\",\"label\":\"Генеральная уборка · Кухня (e2e) · 22.09 (вт)\",\"isFreeText\":false,\"bonusAmountKopecks\":0,\"taskScope\":\"personal\",\"siblingVisibility\":false}",
+          "requiresPhoto": false,
+          "verifierWorkerId": 502
+        }
+      }
+    },
+    {
+      "id": "A-5b",
+      "name": "TF получил задачу «Генеральная уборка · Кухня (e2e) · DD.MM (дн)», создана ссылка",
+      "ok": true,
+      "detail": {
+        "title": "Генеральная уборка · Кухня (e2e) · 22.09 (вт)",
+        "key": "gc-create::cmucv33kq0001qc9m0rhz8ine::row-room-cmucuk8qq0006gc9mxhzucfbz::2026-09-22",
+        "linkId": "cmucv414n0000d49mcnf8iq79"
+      }
+    },
+    {
+      "id": "A-7a",
+      "name": "«Перенести»: сегодняшняя дата ушла из плана, новая — в плане",
+      "ok": true,
+      "detail": {
+        "moveLabel": "Перенести на 23.09 (ср)",
+        "dates": [
+          "2026-09-23",
+          "2026-09-25",
+          "2026-10-02",
+          "2026-10-09",
+          "2026-10-16",
+          "2026-10-23"
+        ]
+      }
+    },
+    {
+      "id": "A-7b",
+      "name": "дата убрана → deleteTask в outbox, ссылка удалена",
+      "ok": true,
+      "detail": {
+        "status": "pending",
+        "payload": {
+          "reason": "general-cleaning-date-removed",
+          "rowKey": "gc::row-room-cmucuk8qq0006gc9mxhzucfbz::2026-09-22",
+          "taskId": 7001,
+          "journalDocumentId": "cmucv33kq0001qc9m0rhz8ine"
+        }
+      }
+    },
+    {
+      "id": "A-7c",
+      "name": "TF получил DELETE задачи",
+      "ok": true,
+      "detail": "/api/tasks/7001"
+    },
+    {
+      "id": "A-5c",
+      "name": "дату вернули в план — createTask снова pending, поколение 1",
+      "ok": true,
+      "detail": {
+        "status": "pending",
+        "payload": {
+          "task": {
+            "title": "Генеральная уборка · Кухня (e2e) · 22.09 (вт)",
+            "category": "WeSetup · Ген. уборки",
+            "workerId": 501,
+            "description": "Журнал: График ген. уборок — 2026 год\nПомещение: Кухня (e2e)\nДата по графику: 22.09.2026, вторник\nПроведите генеральную уборку по шагам карточки помещения и нажмите «Сделал».",
+            "isRecurring": false,
+            "journalLink": "{\"kind\":\"wesetup-general_cleaning\",\"baseUrl\":\"http://localhost:3031\",\"integrationId\":\"cmucuk8sr0009gc9mp8zsn4dg\",\"documentId\":\"cmucv33kq0001qc9m0rhz8ine\",\"rowKey\":\"gc::row-room-cmucuk8qq0006gc9mxhzucfbz::2026-09-22\",\"label\":\"Генеральная уборка · Кухня (e2e) · 22.09 (вт)\",\"isFreeText\":false,\"bonusAmountKopecks\":0,\"taskScope\":\"personal\",\"siblingVisibility\":false}",
+            "requiresPhoto": false,
+            "verifierWorkerId": 502
+          },
+          "rowId": "row-room-cmucuk8qq0006gc9mxhzucfbz",
+          "rowKey": "gc::row-room-cmucuk8qq0006gc9mxhzucfbz::2026-09-22",
+          "dateKey": "2026-09-22",
+          "documentId": "cmucv33kq0001qc9m0rhz8ine",
+          "generation": 1,
+          "journalCode": "general_cleaning"
+        }
+      }
+    },
+    {
+      "id": "A-5d",
+      "name": "повторное создание уходит с Idempotency-Key …#g1",
+      "ok": true,
+      "detail": [
+        "gc-create::cmucv33kq0001qc9m0rhz8ine::row-room-cmucuk8qq0006gc9mxhzucfbz::2026-09-22",
+        "gc-create::cmucv33kq0001qc9m0rhz8ine::row-room-cmucuk8qq0006gc9mxhzucfbz::2026-09-22#g1"
+      ]
+    },
+    {
+      "id": "A-6a",
+      "name": "выполнение задачи TF отметило ровно эту дату (doneSource: task)",
+      "ok": true,
+      "detail": {
+        "id": "p:2026-09-22",
+        "done": "2026-09-22",
+        "planned": "2026-09-22",
+        "doneSource": "task"
+      }
+    },
+    {
+      "id": "A-6b",
+      "name": "PATCH устаревшим конфигом не стирает отметку задачи",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "slot": {
+          "id": "p:2026-09-22",
+          "done": "2026-09-22",
+          "planned": "2026-09-22",
+          "doneSource": "task"
+        }
+      }
+    },
+    {
+      "id": "A-3",
+      "name": "«Отметить выполненной»: день с барабана (раньше плана, не позже сегодня), doneBy — руководитель",
+      "ok": true,
+      "detail": {
+        "markLabel": "Отметить 21.09 (пн)",
+        "doneSlot": {
+          "id": "p:2026-09-23",
+          "done": "2026-09-21",
+          "doneBy": "cmucuk8nv0002gc9m096fzoeb",
+          "planned": "2026-09-23",
+          "doneSource": "manual"
+        }
+      }
+    },
+    {
+      "id": "A-4",
+      "name": "внеплановая уборка: только прошедший день, в «Факт», без плановой даты",
+      "ok": true,
+      "detail": {
+        "unplannedLabel": "Отметить 19.09 (сб)",
+        "unplanned": [
+          {
+            "id": "u:2026-09-19",
+            "done": "2026-09-19",
+            "doneBy": "cmucuk8nv0002gc9m096fzoeb",
+            "planned": null,
+            "doneSource": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "A-8",
+      "name": "предпросмотр заполнения: строки, режимы, без графика — пропуск",
+      "ok": true,
+      "detail": {
+        "noSchedule": 1,
+        "confirmText": "Менять нечего"
+      }
+    },
+    {
+      "id": "A-9",
+      "name": "телефон: сводка на карточке, годовой лист → месяц в том же листе",
+      "ok": true,
+      "detail": {
+        "sheetOk": true,
+        "summaryVisible": true
+      }
+    },
+    {
+      "id": "A-10",
+      "name": "без ошибок страницы / консоли",
+      "ok": true,
+      "detail": []
+    }
+  ],
+  "tfRequests": [
+    {
+      "method": "POST",
+      "url": "/api/tasks",
+      "idempotencyKey": "gc-create::cmucv33kq0001qc9m0rhz8ine::row-room-cmucuk8qq0006gc9mxhzucfbz::2026-09-22",
+      "auth": "Bearer tfk_gc_e2e_key_0000000000",
+      "body": {
+        "title": "Генеральная уборка · Кухня (e2e) · 22.09 (вт)",
+        "category": "WeSetup · Ген. уборки",
+        "workerId": 501,
+        "description": "Журнал: График ген. уборок — 2026 год\nПомещение: Кухня (e2e)\nДата по графику: 22.09.2026, вторник\nПроведите генеральную уборку по шагам карточки помещения и нажмите «Сделал».",
+        "isRecurring": false,
+        "journalLink": "{\"kind\":\"wesetup-general_cleaning\",\"baseUrl\":\"http://localhost:3031\",\"integrationId\":\"cmucuk8sr0009gc9mp8zsn4dg\",\"documentId\":\"cmucv33kq0001qc9m0rhz8ine\",\"rowKey\":\"gc::row-room-cmucuk8qq0006gc9mxhzucfbz::2026-09-22\",\"label\":\"Генеральная уборка · Кухня (e2e) · 22.09 (вт)\",\"isFreeText\":false,\"bonusAmountKopecks\":0,\"taskScope\":\"personal\",\"siblingVisibility\":false}",
+        "requiresPhoto": false,
+        "verifierWorkerId": 502
+      }
+    },
+    {
+      "method": "DELETE",
+      "url": "/api/tasks/7001",
+      "idempotencyKey": "gc-delete::cmucv33kq0001qc9m0rhz8ine::7001",
+      "auth": "Bearer tfk_gc_e2e_key_0000000000",
+      "body": null
+    },
+    {
+      "method": "POST",
+      "url": "/api/tasks",
+      "idempotencyKey": "gc-create::cmucv33kq0001qc9m0rhz8ine::row-room-cmucuk8qq0006gc9mxhzucfbz::2026-09-22#g1",
+      "auth": "Bearer tfk_gc_e2e_key_0000000000",
+      "body": {
+        "title": "Генеральная уборка · Кухня (e2e) · 22.09 (вт)",
+        "category": "WeSetup · Ген. уборки",
+        "workerId": 501,
+        "description": "Журнал: График ген. уборок — 2026 год\nПомещение: Кухня (e2e)\nДата по графику: 22.09.2026, вторник\nПроведите генеральную уборку по шагам карточки помещения и нажмите «Сделал».",
+        "isRecurring": false,
+        "journalLink": "{\"kind\":\"wesetup-general_cleaning\",\"baseUrl\":\"http://localhost:3031\",\"integrationId\":\"cmucuk8sr0009gc9mp8zsn4dg\",\"documentId\":\"cmucv33kq0001qc9m0rhz8ine\",\"rowKey\":\"gc::row-room-cmucuk8qq0006gc9mxhzucfbz::2026-09-22\",\"label\":\"Генеральная уборка · Кухня (e2e) · 22.09 (вт)\",\"isFreeText\":false,\"bonusAmountKopecks\":0,\"taskScope\":\"personal\",\"siblingVisibility\":false}",
+        "requiresPhoto": false,
+        "verifierWorkerId": 502
+      }
+    }
+  ],
+  "pageErrors": [],
+  "foreignErrors": []
+}

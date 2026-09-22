@@ -1,0 +1,324 @@
+{
+  "at": "2026-09-22T15:48:01.272Z",
+  "base": "http://localhost:3027",
+  "summary": {
+    "pass": 46,
+    "fail": 0
+  },
+  "checks": [
+    {
+      "id": "B-1",
+      "name": "поле «Найти журнал» над списком",
+      "ok": true
+    },
+    {
+      "id": "B-1",
+      "name": "мышь: фокус сразу в поле поиска",
+      "ok": true,
+      "detail": {
+        "media": {
+          "fine": true
+        }
+      }
+    },
+    {
+      "id": "B-1",
+      "name": "в списке только включённые журналы (32)",
+      "ok": true,
+      "detail": {
+        "count": 32
+      }
+    },
+    {
+      "id": "B-1",
+      "name": "выключенных журналов в списке нет",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "B-1",
+      "name": "заголовок «Перейти к журналу»",
+      "ok": true
+    },
+    {
+      "id": "B-1",
+      "name": "легенда — ровно из статусов, что есть в списке (без «выключен»)",
+      "ok": true,
+      "detail": {
+        "legendLabels": [
+          "ждёт заполнения"
+        ],
+        "rowStatuses": [
+          "ждёт заполнения"
+        ]
+      }
+    },
+    {
+      "id": "B-1",
+      "name": "внизу «Показать все» с подсказкой «включая выключенные»",
+      "ok": true,
+      "detail": "ждёт заполнения\nПоказать все\nвключая выключенные"
+    },
+    {
+      "id": "B-2",
+      "name": "клавиши с кириллицей остаются в поле (нет «прыжка по букве»)",
+      "ok": true
+    },
+    {
+      "id": "B-2",
+      "name": "«журнал гигиен» → «Гигиенический журнал» (слова в любом порядке)",
+      "ok": true,
+      "detail": [
+        "Гигиенический журнал"
+      ]
+    },
+    {
+      "id": "B-2",
+      "name": "«учёт уф» → журнал учета УФ (ё = е)",
+      "ok": true,
+      "detail": [
+        "Журнал учета работы УФ бактерицидной установки"
+      ]
+    },
+    {
+      "id": "B-2",
+      "name": "поиск по коду журнала",
+      "ok": true,
+      "detail": [
+        "Гигиенический журнал"
+      ]
+    },
+    {
+      "id": "B-2",
+      "name": "«бракераж» → только включённый журнал бракеража",
+      "ok": true,
+      "detail": [
+        "Журнал бракеража готовой пищевой продукции"
+      ]
+    },
+    {
+      "id": "B-2",
+      "name": "подсказка: выключенный журнал назван",
+      "ok": true,
+      "detail": "ПЕРЕЙТИ К ЖУРНАЛУ\nЖурнал бракеража готовой пищевой продукции\n, ждёт заполнения\n\nВыключен в наборе: «Журнал бракеража скоропортящейся пищевой продукции»\n\nОткрыть набор журналов\nНайдено: 1\nждёт заполнения\nПоказать все\nвключая выключенные"
+    },
+    {
+      "id": "B-2",
+      "name": "у руководителя в подсказке ссылка «Открыть набор журналов»",
+      "ok": true
+    },
+    {
+      "id": "B-2",
+      "name": "«фритюр» → пусто: «Ничего не нашлось по «фритюр»»",
+      "ok": true
+    },
+    {
+      "id": "B-2",
+      "name": "…и объяснение, что он выключен",
+      "ok": true
+    },
+    {
+      "id": "B-2",
+      "name": "с набранным запросом уход мыши меню не закрывает",
+      "ok": true
+    },
+    {
+      "id": "B-2",
+      "name": "Esc №1 очищает поиск, меню открыто",
+      "ok": true
+    },
+    {
+      "id": "B-2",
+      "name": "Esc №2 закрывает меню",
+      "ok": true
+    },
+    {
+      "id": "B-2",
+      "name": "↓ из поля — на первый пункт",
+      "ok": true,
+      "detail": "Гигиенический журнал, ждёт заполнения"
+    },
+    {
+      "id": "B-2",
+      "name": "↑ с первого пункта — обратно в поле",
+      "ok": true
+    },
+    {
+      "id": "B-2",
+      "name": "буква на пункте списка уходит в поле поиска",
+      "ok": true,
+      "detail": "h"
+    },
+    {
+      "id": "B-2",
+      "name": "Enter → первое совпадение (/journals/uv_lamp_runtime)",
+      "ok": true,
+      "detail": "http://localhost:3027/journals/uv_lamp_runtime"
+    },
+    {
+      "id": "B-3",
+      "name": "звено журнала: тот же поиск «Найти журнал»",
+      "ok": true
+    },
+    {
+      "id": "B-3",
+      "name": "выключенный ТЕКУЩИЙ журнал остаётся в списке",
+      "ok": true,
+      "detail": {
+        "count": 33
+      }
+    },
+    {
+      "id": "B-3",
+      "name": "…серый, с подписью «выключен»",
+      "ok": true,
+      "detail": "Журнал учета использования фритюрных жиров\n, выключен\nвыключен"
+    },
+    {
+      "id": "B-3",
+      "name": "в легенде появился «выключен»",
+      "ok": true,
+      "detail": "ждёт заполнения\nвыключен"
+    },
+    {
+      "id": "B-3",
+      "name": "«Показать все» → /settings/journals",
+      "ok": true,
+      "detail": "http://localhost:3027/settings/journals"
+    },
+    {
+      "id": "B-3",
+      "name": "документы: легенда «открыт / закрыт»",
+      "ok": true,
+      "detail": "открыт\nзакрыт"
+    },
+    {
+      "id": "B-4",
+      "name": "сотрудник: выключенных журналов в списке нет",
+      "ok": true,
+      "detail": {
+        "count": 32
+      }
+    },
+    {
+      "id": "B-4",
+      "name": "сотрудник: «Показать все» нет (страница набора — только руководителю)",
+      "ok": true
+    },
+    {
+      "id": "B-4",
+      "name": "сотрудник: подсказка «Включить может руководитель», без ссылки",
+      "ok": true,
+      "detail": "ПЕРЕЙТИ К ЖУРНАЛУ\nНичего не нашлось по «фритюр»\nПопробуйте часть слова или другое название\n\nВыключен в наборе: «Журнал учета использования фритюрных жиров»\n\nВключить может руководитель\n\nНайдено: 0\nждёт заполнения"
+    },
+    {
+      "id": "B-5",
+      "name": "страница открыта в оболочке Mini App",
+      "ok": true,
+      "detail": {
+        "fine": false,
+        "shell": true
+      }
+    },
+    {
+      "id": "B-5",
+      "name": "страница журнала в Mini App: видны «Журналы» и звено журнала",
+      "ok": true,
+      "detail": {
+        "journalsVisible": true
+      }
+    },
+    {
+      "id": "B-5",
+      "name": "лист: поиск «Найти журнал» и только включённые журналы",
+      "ok": true,
+      "detail": {
+        "count": 32
+      }
+    },
+    {
+      "id": "B-5",
+      "name": "телефон: фокус в поле сам не ставится (клавиатура не выезжает)",
+      "ok": true,
+      "detail": {
+        "fine": false,
+        "shell": true
+      }
+    },
+    {
+      "id": "B-5",
+      "name": "подвал листа: легенда (без «выключен») и «Показать все»",
+      "ok": true,
+      "detail": {
+        "sheetLegend": "ждёт заполнения",
+        "tail": " ждёт заполнения\nПеречень изделий из стекла и хрупкого пластика\n, ждёт заполнения\nЖурнал учета дезинфекции, дезинсекции и дератизации\n, ждёт заполнения\nждёт заполнения\nПоказать все\nвключая выключенные"
+      }
+    },
+    {
+      "id": "B-5",
+      "name": "лист: «бракераж» → включённый журнал + подсказка про выключенный",
+      "ok": true,
+      "detail": [
+        "Журнал бракеража готовой пищевой продукции"
+      ]
+    },
+    {
+      "id": "B-5",
+      "name": "поле не уезжает, пока список сжимается (высота листа держится)",
+      "ok": true,
+      "detail": {
+        "before": 195.28125,
+        "after": 195.5
+      }
+    },
+    {
+      "id": "B-5",
+      "name": "лист: пустой результат объяснён",
+      "ok": true
+    },
+    {
+      "id": "B-5",
+      "name": "крестик очищает поиск",
+      "ok": true
+    },
+    {
+      "id": "B-5",
+      "name": "лист: Enter → первое совпадение",
+      "ok": true,
+      "detail": "http://localhost:3027/journals/uv_lamp_runtime"
+    },
+    {
+      "id": "B-5",
+      "name": "бланк в Mini App: «Журналы» спрятан, переключатель — в звене журнала",
+      "ok": true,
+      "detail": {
+        "docJournalsVisible": false
+      }
+    },
+    {
+      "id": "B-5",
+      "name": "лист документов: легенда «открыт / закрыт»",
+      "ok": true,
+      "detail": "Документы журнала\nГигиена — текущий месяц\n, открыт\nсент. 2026 г.\nГигиена — прошлый месяц\n, закрыт\nавг. 2026 г.\nоткрыт\nзакрыт"
+    },
+    {
+      "id": "B-5",
+      "name": "на бланке звено журнала тоже с поиском",
+      "ok": true
+    },
+    {
+      "id": "run",
+      "name": "без ошибок страницы и консоли, связанных с крошками (в т.ч. гидрации)",
+      "ok": true,
+      "detail": []
+    }
+  ],
+  "errors": [],
+  "foreignErrors": [
+    "mini /journals/hygiene: console: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\n%s%s https://react.dev/link/hydration-mismatch \n\n  ...\n    <HotReload globalError={[...]} webSocket={WebSocket} staticIndicatorState={{pathname:null, ...}}>\n      <AppDevOverlayErrorBoundary globalError={[...]}>\n        <ReplaySsrOnlyErrors>\n        <DevRootHTTPAccessFallbackBoundary>\n          <HTTPAccessFallbackBoundary notFound={<NotAllowedRootHTTPFallbackError>}>\n            <HTTPAccessFallbackErrorBoundary pathname=\"/journals/...\" notFound={<NotAllowedRootHTTPFallbackError>} ...>\n              <RedirectBoundary>\n                <RedirectErrorBoundary router={{...}}>\n                  <Head>\n                  <__next_root_layout_boundary__>\n                    <SegmentViewNode type=\"layout\" pagePath=\"layout.tsx\">\n                      <SegmentTrieNode>\n                      <link>\n                      <script>\n                      <script>\n                      <script>\n                      <RootLayout>\n                        <html\n                          lang=\"ru\"\n-                         style={{--tg-viewport-height:\"100vh\",--tg-viewport-stable-height:\"100vh\"}}\n                        >\n                          <head>\n                          ...\n                            <div className=\"mini-eyebr...\" style={{opacity:0.75}}>\n                              <BrandLogo>\n                              <span onClick={function onClick} className=\"inline-flex\">\n                                <PartnerHint rates={{...}} variant=\"mini\" className=\"size-6\">\n                                  <button\n                                    type=\"button\"\n                                    aria-label=\"Партнёрская программа: ваш логотип вместо WeSetup\"\n                                    title=\"Партнёрская программа\"\n                                    onClick={function}\n                                    className=\"inline-flex shrink-0 items-center justify-center rounded-full transitio...\"\n-                                   aria-haspopup=\"dialog\"\n-                                   aria-expanded=\"false\"\n-                                   aria-controls=\"radix-_R_2d4mul5ralb_\"\n-                                   data-state=\"closed\"\n                                  >\n                                  ...\n                  ...\n",
+    "mini /journals/hygiene: console: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\n%s%s https://react.dev/link/hydration-mismatch \n\n  ...\n    <JournalToggleProvider value={{code:\"hygiene\", ...}}>\n      <JournalCreateDefaultsProvider value={{...}}>\n        <JournalManageProvider canManage={true}>\n          <HygieneDocumentsClient activeTab=\"active\" templateCode=\"hygiene\" templateName=\"Гигиеничес...\" users={[...]} ...>\n            <div className=\"space-y-8\">\n              <JournalTopBar>\n              <JournalTabs>\n              <PageGuide>\n              <div className=\"space-y-4\">\n                <DocumentRow templateCode=\"hygiene\" document={{id:\"cmucu0...\", ...}} siblings={[...]} canManage={true} ...>\n                  <div className={\"flex fle...\"} data-tour=\"document-card\">\n                    <LinkComponent>\n                    <LinkComponent>\n                    <LinkComponent>\n                    <div className=\"flex items...\">\n                      <DocumentActionsMenu document={{id:\"cmucu0...\", ...}} siblings={[...]} onEdit={function} ...>\n                        <ResponsiveMenu title=\"Действия с...\" contentClassName=\"w-[300px] ...\" items={[...]} ...>\n                          <button\n                            type=\"button\"\n                            aria-label=\"Действия с документом\"\n                            className=\"inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-[#...\"\n                            onClick={function onClick}\n-                           id=\"radix-_R_9kf5er9esnea8mul5ralb_\"\n-                           aria-haspopup=\"menu\"\n-                           aria-expanded=\"false\"\n-                           data-state=\"closed\"\n-                           data-slot=\"dropdown-menu-trigger\"\n                          >\n                          ...\n            ...\n",
+    "mini /journals/hygiene/documents/cmucu0qgo0001js9mzn1w5cod: console: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\n%s%s https://react.dev/link/hydration-mismatch \n\n  ...\n    <HotReload globalError={[...]} webSocket={WebSocket} staticIndicatorState={{pathname:null, ...}}>\n      <AppDevOverlayErrorBoundary globalError={[...]}>\n        <ReplaySsrOnlyErrors>\n        <DevRootHTTPAccessFallbackBoundary>\n          <HTTPAccessFallbackBoundary notFound={<NotAllowedRootHTTPFallbackError>}>\n            <HTTPAccessFallbackErrorBoundary pathname=\"/journals/...\" notFound={<NotAllowedRootHTTPFallbackError>} ...>\n              <RedirectBoundary>\n                <RedirectErrorBoundary router={{...}}>\n                  <Head>\n                  <__next_root_layout_boundary__>\n                    <SegmentViewNode type=\"layout\" pagePath=\"layout.tsx\">\n                      <SegmentTrieNode>\n                      <link>\n                      <script>\n                      <script>\n                      <script>\n                      <RootLayout>\n                        <html\n                          lang=\"ru\"\n-                         style={{--tg-viewport-height:\"100vh\",--tg-viewport-stable-height:\"100vh\"}}\n                        >\n                          <head>\n                          ...\n                            <div className=\"mini-eyebr...\" style={{opacity:0.75}}>\n                              <BrandLogo>\n                              <span onClick={function onClick} className=\"inline-flex\">\n                                <PartnerHint rates={{...}} variant=\"mini\" className=\"size-6\">\n                                  <button\n                                    type=\"button\"\n                                    aria-label=\"Партнёрская программа: ваш логотип вместо WeSetup\"\n                                    title=\"Партнёрская программа\"\n                                    onClick={function}\n                                    className=\"inline-flex shrink-0 items-center justify-center rounded-full transitio...\"\n-                                   aria-haspopup=\"dialog\"\n-                                   aria-expanded=\"false\"\n-                                   aria-controls=\"radix-_R_2d4mul5ralb_\"\n-                                   data-state=\"closed\"\n                                  >\n                                  ...\n                  ...\n",
+    "mini /journals/hygiene/documents/cmucu0qgo0001js9mzn1w5cod: console: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\n%s%s https://react.dev/link/hydration-mismatch \n\n  ...\n    <InnerLayoutRouter url=\"/journals/...\" tree={[...]} params={{code:\"hygiene\", ...}} cacheNode={{rsc:{...}, ...}} ...>\n      <SegmentViewNode type=\"page\" pagePath=\"(dashboard...\">\n        <SegmentTrieNode>\n        <JournalDocumentPage>\n          <JournalHeaderEditBoundary>\n            <JournalHeaderEditProvider value={{...}}>\n              <JournalDocumentBody>\n                <HygieneDocumentClient hygieneFormVersion={2} documentId=\"cmucu0qgo0...\" ...>\n                  <div className=\"bg-white t...\">\n                    <div className=\"screen-onl...\">\n                      <StaffJournalToolbar subtitle=\"Сентябрь с...\" documentId=\"cmucu0qgo0...\" ...>\n                        <div className=\"print:spac...\">\n                          <DocumentActionsBar className={undefined} backHref=\"/journals/...\" documentId=\"cmucu0qgo0...\" ...>\n                            <div className=\"mb-5 flex ...\">\n                              <div>\n                              <div className=\"flex shrin...\">\n                                <a>\n                                <Button>\n                                <ResponsiveMenu title=\"Действия с...\" items={[...]} trigger={<button>}>\n                                  <button\n                                    type=\"button\"\n                                    aria-label=\"Ещё действия\"\n                                    title=\"Ещё действия\"\n                                    data-tour=\"more-actions\"\n                                    className=\"flex size-9 items-center justify-center rounded-lg border-0 bg-[#5566f6...\"\n                                    onClick={function onClick}\n-                                   id=\"radix-_R_3iimatuitper9esnea8mul5ralb_\"\n-                                   aria-haspopup=\"menu\"\n-                                   aria-expanded=\"false\"\n-                                   data-state=\"closed\"\n-                                   data-slot=\"dropdown-menu-trigger\"\n                                  >\n                                  ...\n                            ...\n                          ...\n                        ...\n                    ...\n      ...\n",
+    "mini /journals/hygiene/documents/cmucu0qgo0001js9mzn1w5cod: console: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\n%s%s https://react.dev/link/hydration-mismatch \n\n  ...\n    <InnerLayoutRouter url=\"/journals/...\" tree={[...]} params={{code:\"hygiene\", ...}} cacheNode={{rsc:{...}, ...}} ...>\n      <SegmentViewNode type=\"page\" pagePath=\"(dashboard...\">\n        <SegmentTrieNode>\n        <JournalDocumentPage>\n          <JournalHeaderEditBoundary>\n            <JournalHeaderEditProvider value={{...}}>\n              <JournalDocumentBody>\n                <HygieneDocumentClient hygieneFormVersion={2} documentId=\"cmucu0qgo0...\" ...>\n                  <div className=\"bg-white t...\">\n                    <div className=\"screen-onl...\">\n                      <StaffJournalToolbar subtitle=\"Сентябрь с...\" documentId=\"cmucu0qgo0...\" ...>\n                        <div className=\"print:spac...\">\n                          <DocumentActionsBar className={undefined} backHref=\"/journals/...\" documentId=\"cmucu0qgo0...\" ...>\n                            <div className=\"mb-5 flex ...\">\n                              <div>\n                              <div className=\"flex shrin...\">\n                                <a>\n                                <Button>\n                                <ResponsiveMenu title=\"Действия с...\" items={[...]} trigger={<button>}>\n                                  <button\n                                    type=\"button\"\n                                    aria-label=\"Ещё действия\"\n                                    title=\"Ещё действия\"\n                                    data-tour=\"more-actions\"\n                                    className=\"flex size-9 items-center justify-center rounded-lg border-0 bg-[#5566f6...\"\n                                    onClick={function onClick}\n-                                   id=\"radix-_R_3iimatuitper9esnea8mul5ralb_\"\n-                                   aria-haspopup=\"menu\"\n-                                   aria-expanded=\"false\"\n-                                   data-state=\"closed\"\n-                                   data-slot=\"dropdown-menu-trigger\"\n                                  >\n                                  ...\n                            ...\n                          ...\n                        ...\n                    ...\n      ...\n"
+  ]
+}

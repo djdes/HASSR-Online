@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Crown, ExternalLink, Package, RotateCcw, Truck, Unlink } from "lucide-react";
+import { Crown, ExternalLink, Package, Pencil, RotateCcw, Truck, Unlink } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -33,6 +33,7 @@ import {
   EditToggle,
   PartnerPayoutForm,
   PartnerProfileForm,
+  PartnerRenameDialog,
   type PayoutInitial,
   type ProfileInitial,
 } from "./partner-edit-forms";
@@ -118,6 +119,7 @@ export function PartnerCardClient({ data }: { data: CardData }) {
   // Анкета и реквизиты правятся по одной: открытые сразу обе формы
   // превращают карточку в сплошное поле ввода без ориентиров.
   const [editing, setEditing] = useState<"profile" | "payout" | null>(null);
+  const [renameOpen, setRenameOpen] = useState(false);
   const refresh = () => router.refresh();
   const stopEditing = () => setEditing(null);
   const savedAndClose = () => {
@@ -169,6 +171,10 @@ export function PartnerCardClient({ data }: { data: CardData }) {
           ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
+          <button type="button" className={btnOutline} onClick={() => setRenameOpen(true)}>
+            <Pencil className="size-4 text-[#5566f6]" />
+            Переименовать
+          </button>
           {availableReviewActions(p.status).map((action) => (
             <button
               key={action}
@@ -434,6 +440,14 @@ export function PartnerCardClient({ data }: { data: CardData }) {
           setReview(null);
           refresh();
         }}
+      />
+
+      <PartnerRenameDialog
+        partnerId={p.id}
+        open={renameOpen}
+        onOpenChange={setRenameOpen}
+        initial={{ companyName: p.companyName, brandName: p.brandName ?? "" }}
+        onSaved={refresh}
       />
     </div>
   );

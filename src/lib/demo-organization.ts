@@ -922,7 +922,11 @@ function buildIntensiveCoolingConfig(
   return { ...config, rows, dishSuggestions: Array.from(new Set([...dishes, ...config.dishSuggestions])) };
 }
 
-/** Санитарный день: план на год, факт за прошедшие месяцы. */
+/**
+ * Санитарный день: план на год (последняя суббота месяца), выполнено —
+ * за прошедшие месяцы. Уборки — отдельными датами (2026-09-22), строки
+ * plan/fact пересчитывает нормализатор.
+ */
 function buildSanitationConfig(
   rawConfig: unknown,
   today: Date,
@@ -935,14 +939,22 @@ function buildSanitationConfig(
   const currentMonth = today.getUTCMonth();
   const rows = roomNames.map((name) => {
     const row = createEmptySanitationRow(name);
-    SANITATION_MONTHS.forEach((month, index) => {
-      const lastSaturday = lastWeekdayOfMonth(year, index, 6);
-      row.plan[month.key] = `${lastSaturday}`;
-      row.fact[month.key] = index < currentMonth ? `${lastSaturday}` : "-";
+    const cleanings = SANITATION_MONTHS.map((_month, index) => {
+      const date = `${year}-${String(index + 1).padStart(2, "0")}-${String(
+        lastWeekdayOfMonth(year, index, 6),
+      ).padStart(2, "0")}`;
+      const done = index < currentMonth;
+      return {
+        id: `p:${date}`,
+        planned: date,
+        done: done ? date : null,
+        ...(done ? { doneBy: cleaner.id, doneSource: "manual" as const } : {}),
+      };
     });
-    return row;
+    // Строки plan/fact не передаём: их пересчитает нормализатор из уборок.
+    return { id: row.id, roomName: row.roomName, cleanings };
   });
-  return {
+  return normalizeSanitationDayConfig({
     ...config,
     year,
     approveRole: manager.position,
@@ -952,7 +964,7 @@ function buildSanitationConfig(
     responsibleEmployeeId: cleaner.id,
     responsibleEmployee: cleaner.name,
     rows,
-  };
+  });
 }
 
 /** День месяца последнего вхождения дня недели (JS: 0=Вс … 6=Сб). */

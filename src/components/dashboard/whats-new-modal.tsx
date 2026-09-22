@@ -140,6 +140,9 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   "Холодильники, склады и УФ-лампы": QrCode,
   "Заведующему производством: права и личный QR": KeyRound,
   "График генеральных уборок и БЖГП": ClipboardCheck,
+  "QR-точка контроля": QrCode,
+  "График генеральных уборок": CalendarCheck,
+  "Переход между журналами": Search,
   "Проверка в конце смены": BellRing,
   "Telegram-бот": MessageCircle,
 };

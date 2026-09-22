@@ -20,6 +20,7 @@ import {
   pickNearestControlTime,
 } from "@/lib/climate-fill";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
+import { ensureQrPeriodDocuments, qrRolloverMessage } from "@/lib/journal-qr-rollover";
 import { normalizeQrFillMode } from "@/lib/qr-fill-actor";
 import { resolveObjectActor } from "@/lib/qr-object-pass";
 import { verifyQrFillTokenFor } from "@/lib/qr-fill-token";
@@ -146,6 +147,15 @@ export async function POST(
   const dateKey = orgTodayKey(timezone, now);
   const day = new Date(`${dateKey}T00:00:00.000Z`);
 
+  // Период сменился, пока форма была открыта (или это первый скан нового
+  // периода) — документ климата точки по образцу прошлого, а не 409.
+  const rollover = await ensureQrPeriodDocuments({
+    organizationId,
+    templateCode: CLIMATE_DOCUMENT_TEMPLATE_CODE,
+    todayKey: dateKey,
+    anchor: { buildingId: room.buildingId },
+    source: "room-fill",
+  });
   const documents = await db.journalDocument.findMany({
     where: {
       organizationId,
@@ -167,7 +177,10 @@ export async function POST(
     return NextResponse.json(
       {
         code: "no-active-document",
-        error: "На сегодня нет активного журнала температуры. Попросите управляющего создать документ.",
+        error:
+          rollover.reason === "period-closed" || rollover.reason === "org-paused"
+            ? qrRolloverMessage(rollover.reason)
+            : "На сегодня нет активного журнала температуры. Попросите управляющего создать документ.",
       },
       { status: 409 }
     );

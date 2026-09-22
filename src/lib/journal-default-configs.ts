@@ -93,7 +93,16 @@ export type DefaultConfigOrgData = {
   areas?: Array<{ id: string; name: string }>;
   /// 2026-09-04: единый справочник помещений (Room). Климат и график
   /// ген. уборок сидируются из него; areas — legacy fallback.
-  rooms?: Array<{ id: string; name: string; climateNorms?: unknown }>;
+  /// 2026-09-22: график генуборки помещения — план графика сразу
+  /// заполняется датами с сегодняшнего дня до конца года.
+  rooms?: Array<{
+    id: string;
+    name: string;
+    climateNorms?: unknown;
+    generalScheduleType?: string | null;
+    generalDays?: number | null;
+    generalMonthDays?: unknown;
+  }>;
   equipment?: Array<{
     id: string;
     name: string;

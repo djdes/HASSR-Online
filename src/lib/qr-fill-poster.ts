@@ -7,10 +7,13 @@ import {
   type ClimateMetricConfig,
 } from "@/lib/climate-document";
 import { db } from "@/lib/db";
+import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { JOURNAL_FILL_HUB_CODE, journalFillSubject, listHubJournals, todayKeyFor } from "@/lib/journal-fill";
+import { parseJournalPeriodsJson, resolveJournalPeriodKind } from "@/lib/journal-period";
+import { HYGIENE_VERIFY_SUFFIX, splitJournalPosterId } from "@/lib/journal-qr-target";
 import { resolveOrgJournalName } from "@/lib/org-journal-name";
 import { mintQrFillToken } from "@/lib/qr-fill-token";
-import type { QrFillKind, QrPoster } from "@/lib/qr-fill-types";
+import type { QrFillKind, QrPoster, QrPosterMissing } from "@/lib/qr-fill-types";
 import { loadDirectoryBuildings } from "@/lib/room-directory";
 
 /**
@@ -122,8 +125,9 @@ export async function buildRoomPoster(
 /**
  * Гигиена по форме Приложения №1 — два плаката: сотрудники подписывают
  * три графы, ответственный по второму ставит «допущен / отстранён».
+ * Суффикс второго плаката — в `journal-qr-target.ts` (его строит и кнопка).
  */
-export const HYGIENE_VERIFY_SUFFIX = "@verify";
+export { HYGIENE_VERIFY_SUFFIX };
 const HYGIENE_VERIFY_POSTER = { name: "Гигиенический журнал (сотрудники) — допуск", subtitle: "Для ответственного: «Допущен» или «Отстранён» каждому на смене" };
 
 /** Плакат журнала: `documentId` сужает до конкретного документа (из его меню). */
@@ -153,29 +157,217 @@ export async function buildJournalPoster(params: {
   };
 }
 
-/** Все объекты организации данного вида (фильтр `allowed` — по id). */
+// ---------------------------------------------------------------------------
+// Подсказки на плакатах журналов (только на экране, не печатаются): что
+// будет при сканировании, если документа на сегодня нет.
+
+export const QR_POSTER_NOTICE_LAPSED =
+  "Прошлый период закончился — при первом сканировании откроется новый документ по образцу прошлого";
+export const QR_POSTER_NOTICE_EMPTY = "У журнала ещё нет документа — создайте первый";
+export const QR_POSTER_NOTICE_MISSING = "На сегодня документа нет, а сам он не создаётся — создайте документ в журнале";
+export const QR_POSTER_NOTICE_CLOSED =
+  "Документ за этот период закрыт — пока его не вернут в активные, запись по QR не пройдёт";
+export const QR_POSTER_NOTICE_DISABLED = "Журнал выключен в наборе журналов — QR ответит «журнал отключён»";
+
+type JournalQrState = "active" | "lapsed" | "closed" | "empty" | "missing" | "disabled";
+
+const NOTICE_BY_STATE: Record<JournalQrState, string | null> = {
+  active: null,
+  lapsed: QR_POSTER_NOTICE_LAPSED,
+  closed: QR_POSTER_NOTICE_CLOSED,
+  empty: QR_POSTER_NOTICE_EMPTY,
+  missing: QR_POSTER_NOTICE_MISSING,
+  disabled: QR_POSTER_NOTICE_DISABLED,
+};
+
+/** Состояние журналов на сегодня — четыре запроса на весь лист плакатов. */
+async function loadJournalQrStates(params: {
+  organizationId: string;
+  codes: string[];
+  todayKey: string;
+  disabledCodes: Set<string>;
+  journalPeriods: unknown;
+}): Promise<Map<string, JournalQrState>> {
+  const codes = Array.from(new Set(params.codes)).filter((code) => code && code !== JOURNAL_FILL_HUB_CODE);
+  const states = new Map<string, JournalQrState>();
+  if (codes.length === 0) return states;
+  const day = new Date(`${params.todayKey}T00:00:00.000Z`);
+  const templates = await db.journalTemplate.findMany({ where: { code: { in: codes } }, select: { id: true, code: true } });
+  const templateIds = templates.map((template) => template.id);
+  const [active, closed, groups] = await Promise.all([
+    db.journalDocument.findMany({
+      where: { organizationId: params.organizationId, templateId: { in: templateIds }, status: "active", dateFrom: { lte: day }, dateTo: { gte: day } },
+      select: { templateId: true },
+    }),
+    db.journalDocument.findMany({
+      where: { organizationId: params.organizationId, templateId: { in: templateIds }, status: "closed", dateFrom: { lte: day }, dateTo: { gte: day } },
+      select: { templateId: true },
+    }),
+    db.journalDocument.groupBy({
+      by: ["templateId"],
+      where: { organizationId: params.organizationId, templateId: { in: templateIds } },
+      _max: { dateTo: true },
+    }),
+  ]);
+  const activeIds = new Set(active.map((doc) => doc.templateId));
+  const closedIds = new Set(closed.map((doc) => doc.templateId));
+  const maxDateTo = new Map(groups.map((group) => [group.templateId, group._max.dateTo]));
+  const overrides = parseJournalPeriodsJson(params.journalPeriods ?? null);
+  for (const template of templates) {
+    const last = maxDateTo.get(template.id) ?? null;
+    let state: JournalQrState;
+    if (params.disabledCodes.has(template.code)) state = "disabled";
+    else if (activeIds.has(template.id)) state = "active";
+    else if (closedIds.has(template.id)) state = "closed";
+    else if (!last) state = "empty";
+    else if (last.getTime() >= day.getTime()) state = "missing";
+    else state = (overrides[template.code]?.kind ?? resolveJournalPeriodKind(template.code)) === "perpetual" ? "missing" : "lapsed";
+    states.set(template.code, state);
+  }
+  return states;
+}
+
+type ExplicitJournalPoster =
+  | { poster: QrPoster; code: string; document: { status: string; dateFrom: Date; dateTo: Date } | null }
+  | { missing: QrPosterMissing };
+
+/**
+ * Плакат журнала по id из адреса (`<код>`, `<код>:<документ>`,
+ * `hygiene@verify[:документ]`, `all`) — любого журнала организации, даже
+ * без документа на сегодня. Не собрался — причина для экрана.
+ */
+async function buildJournalPosterById(params: {
+  organizationId: string;
+  id: string;
+  orgName: string;
+  origin: string;
+}): Promise<ExplicitJournalPoster> {
+  const { code, documentId, verify } = splitJournalPosterId(params.id);
+  if (!code) return { missing: { id: params.id, label: params.id, reason: "Пустой код журнала" } };
+  if (verify && code !== "hygiene") {
+    return { missing: { id: params.id, label: params.id, reason: "Плакат допуска есть только у гигиенического журнала" } };
+  }
+  if (code === JOURNAL_FILL_HUB_CODE) {
+    return {
+      code,
+      document: null,
+      poster: await buildJournalPoster({
+        organizationId: params.organizationId,
+        code,
+        name: "Все журналы",
+        subtitle: "Сотрудник выбирает журнал после сканирования",
+        orgName: params.orgName,
+        origin: params.origin,
+      }),
+    };
+  }
+  const template = await db.journalTemplate.findFirst({ where: { code }, select: { name: true } });
+  if (!template) return { missing: { id: params.id, label: code, reason: "Такого журнала нет" } };
+  let subtitle = "Запись в журнал с телефона";
+  let document: { status: string; dateFrom: Date; dateTo: Date } | null = null;
+  if (documentId) {
+    const found = await db.journalDocument.findFirst({
+      where: { id: documentId, organizationId: params.organizationId, template: { code } },
+      select: { title: true, status: true, dateFrom: true, dateTo: true, building: { select: { name: true } } },
+    });
+    if (!found) {
+      return { missing: { id: params.id, label: template.name, reason: "Документ не найден — возможно, его удалили" } };
+    }
+    document = { status: found.status, dateFrom: found.dateFrom, dateTo: found.dateTo };
+    subtitle = found.building?.name ? `${found.title} · ${found.building.name}` : found.title;
+  }
+  const poster = verify
+    ? await buildJournalPoster({
+        organizationId: params.organizationId,
+        code,
+        ...HYGIENE_VERIFY_POSTER,
+        orgName: params.orgName,
+        documentId,
+        origin: params.origin,
+        verify: true,
+      })
+    : await buildJournalPoster({
+        organizationId: params.organizationId,
+        code,
+        name: template.name,
+        subtitle,
+        orgName: params.orgName,
+        documentId,
+        origin: params.origin,
+      });
+  return { poster, code, document };
+}
+
+/** Подсказка плаката документа: сам документ важнее состояния журнала. */
+function documentNotice(
+  document: { status: string; dateFrom: Date; dateTo: Date } | null,
+  journalState: JournalQrState | undefined,
+  day: Date
+): string | null {
+  if (document && document.dateFrom.getTime() <= day.getTime() && document.dateTo.getTime() >= day.getTime()) {
+    if (document.status === "active") return null;
+    if (document.status === "closed") return QR_POSTER_NOTICE_CLOSED;
+  }
+  return journalState ? NOTICE_BY_STATE[journalState] : null;
+}
+
+export type QrPostersResult = { posters: QrPoster[]; missing: QrPosterMissing[] };
+
+/**
+ * Все объекты организации данного вида (фильтр `allowed` — по id).
+ * `explicitIds` — явно запрошенные в `ids=`: плакаты журналов по ним
+ * собираются даже без документа на сегодня, а то, что собрать не
+ * вышло, возвращается в `missing` с причиной — вместо пустого экрана
+ * «Выбранные объекты не найдены».
+ */
 export async function loadQrPosters(params: {
   organizationId: string;
   kind: QrFillKind;
   origin: string;
   allowed?: (id: string) => boolean;
-}): Promise<QrPoster[]> {
+  explicitIds?: string[];
+}): Promise<QrPostersResult> {
   const allowed = params.allowed ?? (() => true);
   const posters: QrPoster[] = [];
+  const explicitIds = Array.from(new Set((params.explicitIds ?? []).map((id) => id.trim()).filter(Boolean)));
   if (params.kind === "journal") {
     const org = await db.organization.findUnique({
       where: { id: params.organizationId },
       select: {
         timezone: true,
         disabledJournalCodes: true,
+        journalPeriods: true,
         name: true,
         journalShortName: true,
         legalProfileJson: true,
       },
     });
-    if (!org) return [];
+    if (!org) return { posters: [], missing: [] };
     const orgName = resolveOrgJournalName(org);
-    const journals = await listHubJournals(params.organizationId, org.disabledJournalCodes as string[], todayKeyFor(org.timezone));
+    const todayKey = todayKeyFor(org.timezone);
+    const day = new Date(`${todayKey}T00:00:00.000Z`);
+    const disabledCodes = parseDisabledCodes(org.disabledJournalCodes);
+    const stateParams = { organizationId: params.organizationId, todayKey, disabledCodes, journalPeriods: org.journalPeriods };
+
+    if (explicitIds.length > 0) {
+      const missing: QrPosterMissing[] = [];
+      const built: Array<Extract<ExplicitJournalPoster, { poster: QrPoster }>> = [];
+      for (const id of explicitIds) {
+        const result = await buildJournalPosterById({ organizationId: params.organizationId, id, orgName, origin: params.origin });
+        if ("missing" in result) missing.push(result.missing);
+        else built.push(result);
+      }
+      const states = await loadJournalQrStates({ ...stateParams, codes: built.map((item) => item.code) });
+      return {
+        posters: built.map((item) => ({ ...item.poster, notice: documentNotice(item.document, states.get(item.code), day) })),
+        missing,
+      };
+    }
+
+    // Журналы с кончившимся периодом — тоже на лист: первый скан откроет
+    // документ нового периода.
+    const journals = await listHubJournals(params.organizationId, Array.from(disabledCodes), todayKey, { includeLapsed: true });
+    const states = await loadJournalQrStates({ ...stateParams, codes: journals.map((journal) => journal.code) });
     if (allowed(JOURNAL_FILL_HUB_CODE)) {
       posters.push(
         await buildJournalPoster({
@@ -190,52 +382,61 @@ export async function loadQrPosters(params: {
     }
     for (const journal of journals) {
       if (!allowed(journal.code)) continue;
-      posters.push(
-        await buildJournalPoster({
+      const state = states.get(journal.code);
+      const notice = state ? NOTICE_BY_STATE[state] : null;
+      posters.push({
+        ...(await buildJournalPoster({
           organizationId: params.organizationId,
           code: journal.code,
           name: journal.name,
           subtitle: "Запись в журнал с телефона",
           orgName,
           origin: params.origin,
-        })
-      );
+        })),
+        notice,
+      });
       if (journal.code === "hygiene" && allowed(`hygiene${HYGIENE_VERIFY_SUFFIX}`)) {
-        posters.push(
-          await buildJournalPoster({
+        posters.push({
+          ...(await buildJournalPoster({
             organizationId: params.organizationId,
             code: journal.code,
             ...HYGIENE_VERIFY_POSTER,
             orgName,
             origin: params.origin,
             verify: true,
-          })
-        );
+          })),
+          notice,
+        });
       }
     }
-    return posters;
+    return { posters, missing: [] };
   }
   const orgName = await loadPosterOrgName(params.organizationId);
+  const wanted = (id: string) => allowed(id) && (explicitIds.length === 0 || explicitIds.includes(id));
   if (params.kind === "room") {
     const buildings = await loadDirectoryBuildings(params.organizationId);
     for (const building of buildings) {
       for (const room of building.rooms) {
-        if (!allowed(room.id)) continue;
+        if (!wanted(room.id)) continue;
         posters.push(await buildRoomPoster(room, building.name, params.origin, orgName));
       }
     }
-    return posters;
+  } else {
+    const equipment = await db.equipment.findMany({
+      where: { area: { organizationId: params.organizationId } },
+      orderBy: [{ area: { name: "asc" } }, { name: "asc" }],
+      select: { id: true, name: true, tempMin: true, tempMax: true, area: { select: { name: true } } },
+    });
+    for (const item of equipment) {
+      if (!wanted(item.id)) continue;
+      posters.push(await buildEquipmentPoster(item, params.origin, orgName));
+    }
   }
-  const equipment = await db.equipment.findMany({
-    where: { area: { organizationId: params.organizationId } },
-    orderBy: [{ area: { name: "asc" } }, { name: "asc" }],
-    select: { id: true, name: true, tempMin: true, tempMax: true, area: { select: { name: true } } },
-  });
-  for (const item of equipment) {
-    if (!allowed(item.id)) continue;
-    posters.push(await buildEquipmentPoster(item, params.origin, orgName));
-  }
-  return posters;
+  const found = new Set(posters.map((poster) => poster.id));
+  const missing = explicitIds
+    .filter((id) => !found.has(id))
+    .map((id) => ({ id, label: id, reason: "Не найдено в справочнике — возможно, удалено" }));
+  return { posters, missing };
 }
 
 /** Один объект; `null`, если его нет или он не из этой организации. */
@@ -247,43 +448,8 @@ export async function loadQrPoster(params: {
 }): Promise<QrPoster | null> {
   const orgName = await loadPosterOrgName(params.organizationId);
   if (params.kind === "journal") {
-    const [rawCode, documentId] = params.id.split(":");
-    const verify = rawCode?.endsWith(HYGIENE_VERIFY_SUFFIX) ?? false;
-    const code = verify ? rawCode.slice(0, -HYGIENE_VERIFY_SUFFIX.length) : rawCode;
-    if (!code || (verify && code !== "hygiene")) return null;
-    if (code === JOURNAL_FILL_HUB_CODE) {
-      return buildJournalPoster({
-        organizationId: params.organizationId,
-        code,
-        name: "Все журналы",
-        subtitle: "Сотрудник выбирает журнал после сканирования",
-        orgName,
-        origin: params.origin,
-      });
-    }
-    const template = await db.journalTemplate.findFirst({ where: { code }, select: { name: true } });
-    if (!template) return null;
-    let subtitle = "Запись в журнал с телефона";
-    if (documentId) {
-      const document = await db.journalDocument.findFirst({
-        where: { id: documentId, organizationId: params.organizationId },
-        select: { title: true, building: { select: { name: true } } },
-      });
-      if (!document) return null;
-      subtitle = document.building?.name ? `${document.title} · ${document.building.name}` : document.title;
-    }
-    if (verify) {
-      return buildJournalPoster({ organizationId: params.organizationId, code, ...HYGIENE_VERIFY_POSTER, orgName, documentId: documentId ?? null, origin: params.origin, verify: true });
-    }
-    return buildJournalPoster({
-      organizationId: params.organizationId,
-      code,
-      name: template.name,
-      subtitle,
-      orgName,
-      documentId: documentId ?? null,
-      origin: params.origin,
-    });
+    const result = await buildJournalPosterById({ organizationId: params.organizationId, id: params.id, orgName, origin: params.origin });
+    return "poster" in result ? result.poster : null;
   }
   if (params.kind === "room") {
     const room = await db.room.findFirst({

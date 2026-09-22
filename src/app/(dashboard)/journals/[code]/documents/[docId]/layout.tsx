@@ -6,6 +6,7 @@ import {
   getDocumentCrumbMenu,
   getJournalCrumbMenu,
 } from "@/lib/journal-crumb-menu";
+import { DOCUMENT_STATUS_LEGEND } from "@/lib/crumb-menu";
 import { orgTodayKey } from "@/lib/timezone";
 import { TodayKeyProvider } from "@/lib/today-key-context";
 
@@ -93,6 +94,8 @@ export default async function JournalDocumentLayout({
               label: document?.title ?? "",
               menu: documentMenu,
               menuTitle: "Документы журнала",
+              // Точки документов — «открыт / закрыт», не журнальные.
+              menuLegend: DOCUMENT_STATUS_LEGEND,
             },
           ]}
         />

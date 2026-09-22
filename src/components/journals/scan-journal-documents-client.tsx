@@ -1,6 +1,11 @@
 "use client";
 
-import { FillGuideLauncher } from "@/components/journals/fill-guide-launcher";
+import {
+  JOURNAL_ACTION_CREATE_CLASS,
+  JOURNAL_LIST_HEADER_ROW_CLASS,
+  JOURNAL_LIST_TITLE_CLASS,
+  JournalListActions,
+} from "@/components/journals/journal-list-actions";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -19,8 +24,6 @@ import {
   JOURNAL_CARD_SECTION_CLASS,
   JOURNAL_CARD_TITLE_CLASS,
   JOURNAL_CARD_VALUE_CLASS,
-  JOURNAL_LIST_ACTIONS_CLASS,
-  JOURNAL_LIST_HEADING_CLASS,
   JOURNAL_LIST_CARD_CLASS,
   JOURNAL_LIST_CARDS_CLASS,
 } from "@/components/journals/journal-responsive";
@@ -107,25 +110,21 @@ export function ScanJournalDocumentsClient({
 
   return (
     <div className="space-y-10">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className={JOURNAL_LIST_HEADING_CLASS}>{templateName}</h1>
-        <div className={JOURNAL_LIST_ACTIONS_CLASS}>
-          <FillGuideLauncher
-            code={templateCode}
-            page="list"
-            variant="button"
-          />
-          {canManageDocuments && activeTab === "active" && (
-            <Button
-              onClick={handleCreate}
-              disabled={isCreating}
-              className="h-12 w-full rounded-xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0] sm:w-auto"
-            >
-              <Plus className="size-4" />
-              {isCreating ? "Создание..." : "Создать документ"}
-            </Button>
-          )}
-        </div>
+      <div className={JOURNAL_LIST_HEADER_ROW_CLASS}>
+        <h1 className={JOURNAL_LIST_TITLE_CLASS}>{templateName}</h1>
+        <JournalListActions
+          templateCode={templateCode}
+          journalName={templateName}
+          canManage={canManageDocuments}
+          create={
+            canManageDocuments && activeTab === "active" ? (
+              <Button onClick={handleCreate} disabled={isCreating} className={JOURNAL_ACTION_CREATE_CLASS}>
+                <Plus className="size-4" />
+                {isCreating ? "Создание..." : "Создать документ"}
+              </Button>
+            ) : null
+          }
+        />
       </div>
 
       <div className="border-b border-[#d9dce8]">

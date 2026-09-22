@@ -6,6 +6,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { PageHeader, PageHeaderStat } from "@/components/ui/page-header";
+import { JOURNAL_ACTION_CREATE_CLASS, JournalListActions } from "@/components/journals/journal-list-actions";
 import { JournalPageCrumbs } from "@/components/journals/journal-breadcrumbs";
 import { getJournalCrumbMenu } from "@/lib/journal-crumb-menu";
 import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
@@ -4153,13 +4154,19 @@ export default async function JournalDocumentsPage({
             <PageHeaderStat>
               {entries.length} {entries.length === 1 ? "запись" : "записей"}
             </PageHeaderStat>
-            <Link
-              href={`/journals/${resolvedCode}/new`}
-              className="inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
-            >
-              <Plus className="size-4" />
-              Новая запись
-            </Link>
+            {/* «QR-точка контроля» над рядом «Новая запись | Инструкция» —
+                тот же блок, что у документных журналов. */}
+            <JournalListActions
+              templateCode={resolvedCode}
+              journalName={template.name}
+              canManage={hasFullWorkspaceAccess(session.user)}
+              create={
+                <Link href={`/journals/${resolvedCode}/new`} className={JOURNAL_ACTION_CREATE_CLASS}>
+                  <Plus className="size-4" />
+                  Новая запись
+                </Link>
+              }
+            />
           </>
         }
       />

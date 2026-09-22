@@ -1,6 +1,11 @@
 "use client";
 
-import { FillGuideLauncher } from "@/components/journals/fill-guide-launcher";
+import {
+  JOURNAL_ACTION_CREATE_CLASS,
+  JOURNAL_LIST_HEADER_ROW_CLASS,
+  JOURNAL_LIST_TITLE_CLASS,
+  JournalListActions,
+} from "@/components/journals/journal-list-actions";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -52,8 +57,6 @@ import {
   JOURNAL_CARD_SECTION_CLASS,
   JOURNAL_CARD_TITLE_CLASS,
   JOURNAL_CARD_VALUE_CLASS,
-  JOURNAL_LIST_ACTIONS_CLASS,
-  JOURNAL_LIST_HEADING_CLASS,
   JOURNAL_LIST_CARD_CLASS,
   JOURNAL_LIST_CARDS_CLASS,
 } from "@/components/journals/journal-responsive";
@@ -353,27 +356,22 @@ export function GlassControlDocumentsClient(props: Props) {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className={JOURNAL_LIST_HEADING_CLASS}>
+      <div className={JOURNAL_LIST_HEADER_ROW_CLASS}>
+        <h1 className={JOURNAL_LIST_TITLE_CLASS}>
           {GLASS_CONTROL_PAGE_TITLE}
         </h1>
-        <div className={JOURNAL_LIST_ACTIONS_CLASS}>
-          <FillGuideLauncher
-            code="glass_control"
-            page="list"
-            variant="button"
-          />
-          {canManageDocuments && props.activeTab === "active" && (
-            <Button
-              type="button"
-              onClick={() => setCreating(true)}
-              className="h-12 w-full rounded-xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0] sm:w-auto"
-            >
-              <Plus className="size-4" />
-              Создать документ
-            </Button>
-          )}
-        </div>
+        <JournalListActions
+          templateCode="glass_control"
+          canManage={canManageDocuments}
+          create={
+            canManageDocuments && props.activeTab === "active" ? (
+              <Button type="button" onClick={() => setCreating(true)} className={JOURNAL_ACTION_CREATE_CLASS}>
+                <Plus className="size-4" />
+                Создать документ
+              </Button>
+            ) : null
+          }
+        />
       </div>
 
       <div className="border-b border-[#d9dce8]">

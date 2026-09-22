@@ -1,0 +1,28 @@
+PASS [A-1a] в окне создания поле «Дата документа»
+PASS [A-1b] барабан «день | месяц | год», стрелка вниз — следующий день :: {"spinCount":3,"dayBefore":1,"dayAfter":2,"valueText":"2, пятница"}
+PASS [A-1c] дата с барабана попала в поле ДД.ММ.ГГГГ :: "02.01.2026"
+PASS [A-1d] план сразу по графику помещений: пятницы / 1, 15, последний; без графика — пусто :: {"kitchen":["2026-09-25","2026-10-02","2026-10-09","2026-10-16","2026-10-23"],"storage":["2026-09-30","2026-10-01","2026-10-15","2026-10-31","2026-11-01"],"bar":0,"year":2026}
+PASS [A-1e] строка «План» — проекция дат («DD, DD») :: "25"
+PASS [A-2a] редактор месяца: график помещения и подсказка про TasksFlow :: {"scheduleText":1,"tfHint":1}
+PASS [A-2b] «Добавить дату»: по умолчанию ближайший свободный день (сегодня) :: "Добавить 22.09 (вт)"
+PASS [A-2c] дата в плане (операция под блокировкой), проекция обновлена :: "22, 25"
+PASS [A-2d] AuditLog general_cleaning.op записан :: 1
+PASS [A-5a] команда createTask в outbox: разовая, ключ gc-create::doc::строка::дата :: {"key":"gc-create::cmucv33kq0001qc9m0rhz8ine::row-room-cmucuk8qq0006gc9mxhzucfbz::2026-09-22","rowKey":"gc::row-room-cmucuk8qq0006gc9mxhzucfbz::2026-09-22","task":{"title":"Генеральная уборка · Кухня (e2e) · 22.09 (вт)","category":"WeSetup · Ген. уборки","workerId":501,"description":"Журнал: График ген. уборок — 2026 год\nПомещение: Кухня (e2e)\nДата по графику: 22.09.2026, вторник\nПроведите генеральную уборку по шагам карточки помещения и нажмите «Сделал».","isRecurring":false,"journalLink":"{\"kind\":\"wesetup-general_cleaning\",\"baseUrl\":\"http://localhost:3031\",\"integrationId\":\"cmuc
+   outbox A-5b: {"ok":true,"processed":1,"delivered":1,"failed":0}
+PASS [A-5b] TF получил задачу «Генеральная уборка · Кухня (e2e) · DD.MM (дн)», создана ссылка :: {"title":"Генеральная уборка · Кухня (e2e) · 22.09 (вт)","key":"gc-create::cmucv33kq0001qc9m0rhz8ine::row-room-cmucuk8qq0006gc9mxhzucfbz::2026-09-22","linkId":"cmucv414n0000d49mcnf8iq79"}
+PASS [A-7a] «Перенести»: сегодняшняя дата ушла из плана, новая — в плане :: {"moveLabel":"Перенести на 23.09 (ср)","dates":["2026-09-23","2026-09-25","2026-10-02","2026-10-09","2026-10-16","2026-10-23"]}
+PASS [A-7b] дата убрана → deleteTask в outbox, ссылка удалена :: {"status":"pending","payload":{"reason":"general-cleaning-date-removed","rowKey":"gc::row-room-cmucuk8qq0006gc9mxhzucfbz::2026-09-22","taskId":7001,"journalDocumentId":"cmucv33kq0001qc9m0rhz8ine"}}
+   outbox A-7c: {"ok":true,"processed":1,"delivered":1,"failed":0}
+PASS [A-7c] TF получил DELETE задачи :: "/api/tasks/7001"
+PASS [A-5c] дату вернули в план — createTask снова pending, поколение 1 :: {"status":"pending","payload":{"task":{"title":"Генеральная уборка · Кухня (e2e) · 22.09 (вт)","category":"WeSetup · Ген. уборки","workerId":501,"description":"Журнал: График ген. уборок — 2026 год\nПомещение: Кухня (e2e)\nДата по графику: 22.09.2026, вторник\nПроведите генеральную уборку по шагам карточки помещения и нажмите «Сделал».","isRecurring":false,"journalLink":"{\"kind\":\"wesetup-general_cleaning\",\"baseUrl\":\"http://localhost:3031\",\"integrationId\":\"cmucuk8sr0009gc9mp8zsn4dg\",\"documentId\":\"cmucv33kq0001qc9m0rhz8ine\",\"rowKey\":\"gc::row-room-cmucuk8qq0006gc9mxhzucfbz::202
+   outbox A-5d: {"ok":true,"processed":1,"delivered":1,"failed":0}
+PASS [A-5d] повторное создание уходит с Idempotency-Key …#g1 :: ["gc-create::cmucv33kq0001qc9m0rhz8ine::row-room-cmucuk8qq0006gc9mxhzucfbz::2026-09-22","gc-create::cmucv33kq0001qc9m0rhz8ine::row-room-cmucuk8qq0006gc9mxhzucfbz::2026-09-22#g1"]
+PASS [A-6a] выполнение задачи TF отметило ровно эту дату (doneSource: task) :: {"id":"p:2026-09-22","done":"2026-09-22","planned":"2026-09-22","doneSource":"task"}
+PASS [A-6b] PATCH устаревшим конфигом не стирает отметку задачи :: {"status":200,"slot":{"id":"p:2026-09-22","done":"2026-09-22","planned":"2026-09-22","doneSource":"task"}}
+PASS [A-3] «Отметить выполненной»: день с барабана (раньше плана, не позже сегодня), doneBy — руководитель :: {"markLabel":"Отметить 21.09 (пн)","doneSlot":{"id":"p:2026-09-23","done":"2026-09-21","doneBy":"cmucuk8nv0002gc9m096fzoeb","planned":"2026-09-23","doneSource":"manual"}}
+PASS [A-4] внеплановая уборка: только прошедший день, в «Факт», без плановой даты :: {"unplannedLabel":"Отметить 19.09 (сб)","unplanned":[{"id":"u:2026-09-19","done":"2026-09-19","doneBy":"cmucuk8nv0002gc9m096fzoeb","planned":null,"doneSource":"manual"}]}
+PASS [A-8] предпросмотр заполнения: строки, режимы, без графика — пропуск :: {"noSchedule":1,"confirmText":"Менять нечего"}
+PASS [A-9] телефон: сводка на карточке, годовой лист → месяц в том же листе :: {"sheetOk":true,"summaryVisible":true}
+PASS [A-10] без ошибок страницы / консоли :: []
+{"passed":23,"failed":0}
+exit 0

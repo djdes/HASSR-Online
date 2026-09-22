@@ -2,13 +2,29 @@
 
 import Link from "next/link";
 import { useEffect, useRef } from "react";
-import { ClipboardList, ExternalLink, FileText, Printer, QrCode, Refrigerator, Sticker, Warehouse } from "lucide-react";
+import { AlertTriangle, ClipboardList, ExternalLink, FileText, Info, Printer, QrCode, Refrigerator, Sticker, Warehouse } from "lucide-react";
 
 import { PageHeader, PageHeaderStat } from "@/components/ui/page-header";
-import { posterDetailLine, type QrFillKind, type QrPoster, type QrPosterLayout } from "@/lib/qr-fill-types";
+import {
+  posterDetailLine,
+  type QrFillKind,
+  type QrPoster,
+  type QrPosterLayout,
+  type QrPosterMissing,
+} from "@/lib/qr-fill-types";
 import { cn } from "@/lib/utils";
 
 export type { QrPoster } from "@/lib/qr-fill-types";
+
+/** Наклейки объектов журнала (кнопка «QR-точка контроля» холодильников, складов, УФ-ламп). */
+export type QrPostersJournalScope = {
+  code: string;
+  name: string;
+  /** Откуда взяты объекты: документы сегодня / последний документ / справочник. */
+  source: "document" | "active" | "latest" | "directory";
+};
+
+const LINK_CLASS = "font-medium text-[#3848c7] underline underline-offset-2";
 
 const STEPS = [
   "Наведите камеру телефона на код.",
@@ -26,13 +42,72 @@ function buildHref(params: {
   layout: QrPosterLayout;
   documentId: string | null;
   selectedIds: string[] | null;
+  journalCode?: string | null;
 }): string {
   const search = new URLSearchParams();
   search.set("kind", params.kind === "room" ? "rooms" : params.kind === "journal" ? "journals" : "equipment");
   if (params.layout === "sheet") search.set("layout", "sheet");
+  if (params.journalCode) search.set("journal", params.journalCode);
   if (params.documentId) search.set("doc", params.documentId);
   if (params.selectedIds && params.selectedIds.length > 0) search.set("ids", params.selectedIds.join(","));
   return `/settings/qr-posters?${search.toString()}`;
+}
+
+/**
+ * Подсказка под плакатом журнала: что будет при сканировании, если
+ * документа на сегодня нет. Только на экране — на бумагу не печатается.
+ */
+function PosterNotice({ notice }: { notice?: string | null }) {
+  if (!notice) return null;
+  return (
+    <p
+      data-qr-notice=""
+      className="mt-3 flex w-full items-start gap-1.5 rounded-xl bg-[#f5f6ff] px-3 py-2 text-left text-[12px] leading-[1.45] text-[#3848c7] print:hidden"
+    >
+      <Info className="mt-px size-3.5 shrink-0" aria-hidden />
+      <span>{notice}</span>
+    </p>
+  );
+}
+
+/** Пустой лист наклеек журнала объектов — что сделать, чтобы наклейки появились. */
+function JournalScopeEmpty({ journal, kind }: { journal: QrPostersJournalScope; kind: QrFillKind }) {
+  const journalLink = (
+    <Link href={`/journals/${journal.code}`} className={LINK_CLASS}>
+      журнал «{journal.name}»
+    </Link>
+  );
+  if (kind === "room") {
+    return (
+      <>
+        Наклейка клеится на само помещение — добавьте склады и цеха в{" "}
+        <Link href="/settings/buildings" className={LINK_CLASS}>
+          «Точки и помещения»
+        </Link>{" "}
+        и в {journalLink}.
+      </>
+    );
+  }
+  if (journal.code === "uv_lamp_runtime") {
+    return (
+      <>
+        Наклейка клеится на саму лампу — добавьте её в{" "}
+        <Link href="/settings/equipment" className={LINK_CLASS}>
+          «Оборудование»
+        </Link>{" "}
+        с типом «УФ-лампа».
+      </>
+    );
+  }
+  return (
+    <>
+      Наклейка клеится на дверцу холодильника — добавьте холодильники в{" "}
+      <Link href="/settings/equipment" className={LINK_CLASS}>
+        «Оборудование»
+      </Link>{" "}
+      и в {journalLink}.
+    </>
+  );
 }
 
 /**
@@ -46,23 +121,31 @@ export function QrPostersClient({
   kind,
   layout,
   posters,
+  missing = [],
   origin,
   documentTitle,
   documentId,
+  journal = null,
   selectedIds,
   autoprint,
 }: {
   kind: QrFillKind;
   layout: QrPosterLayout;
   posters: QrPoster[];
+  /** Запрошенные в `ids=`, которые собрать не вышло, — с причиной. */
+  missing?: QrPosterMissing[];
   origin: string;
   documentTitle: string | null;
   documentId: string | null;
+  /** Наклейки объектов журнала (`journal=`). */
+  journal?: QrPostersJournalScope | null;
   /** `ids=` из адреса — печать только выбранных объектов. */
   selectedIds: string[] | null;
   /** Открыть диалог печати сразу после загрузки (`autoprint=1`). */
   autoprint: boolean;
 }) {
+  const journalCode = journal?.code ?? null;
+  const scoped = Boolean(documentId || selectedIds || journal);
   const printedRef = useRef(false);
   useEffect(() => {
     if (!autoprint || printedRef.current || posters.length === 0) return;
@@ -84,13 +167,21 @@ export function QrPostersClient({
 
   const scopeLabel = documentTitle
     ? `объектов документа «${documentTitle}»`
-    : selectedIds
-      ? "выбранных объектов"
-      : kind === "room"
-        ? "каждого склада"
-        : kind === "journal"
-          ? "каждого журнала"
-          : "каждого холодильника";
+    : journal
+      ? `объектов журнала «${journal.name}»`
+      : selectedIds
+        ? kind === "journal"
+          ? selectedIds.length === 1 || (selectedIds.length === 2 && selectedIds.every((id) => id.startsWith("hygiene")))
+            ? "этого журнала"
+            : "выбранных журналов"
+          : "выбранных объектов"
+        : kind === "room"
+          ? "каждого склада"
+          : kind === "journal"
+            ? "каждого журнала"
+            : "каждого холодильника";
+  const missingJournals = kind === "journal" ? missing : [];
+  const missingObjects = kind === "journal" ? 0 : missing.length;
 
   return (
     <div className="space-y-5 print:space-y-0">
@@ -107,6 +198,16 @@ export function QrPostersClient({
               {selectedIds ? (
                 <PageHeaderStat>Выбрано: {posters.length}</PageHeaderStat>
               ) : null}
+              {journal || documentId ? (
+                <Link
+                  href={buildHref({ kind, layout, documentId: null, selectedIds: null })}
+                  title="Наклейки на все объекты этого вида из справочника"
+                  className="inline-flex h-11 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+                >
+                  {kind === "room" ? <Warehouse className="size-4 text-[#5566f6]" /> : <Refrigerator className="size-4 text-[#5566f6]" />}
+                  {kind === "room" ? "Все помещения" : "Всё оборудование"}
+                </Link>
+              ) : null}
               <button
                 type="button"
                 onClick={() => window.print()}
@@ -121,7 +222,7 @@ export function QrPostersClient({
         />
 
         <div className="flex flex-wrap items-center gap-2">
-          {documentId || selectedIds
+          {scoped
             ? null
             : kindTabs.map((tab) => {
                 const Icon = tab.icon;
@@ -156,7 +257,7 @@ export function QrPostersClient({
                   role="tab"
                   aria-selected={active}
                   title={tab.hint}
-                  href={buildHref({ kind, layout: tab.layout, documentId, selectedIds })}
+                  href={buildHref({ kind, layout: tab.layout, documentId, selectedIds, journalCode })}
                   className={cn(
                     "inline-flex h-8 items-center gap-1.5 rounded-xl px-3 text-[13px] font-medium transition-colors duration-150",
                     active
@@ -176,15 +277,51 @@ export function QrPostersClient({
           <b className="font-semibold text-[#0b1024]">Как это работает.</b>{" "}
           {kind === "journal"
             ? "Плакат «Все журналы» — на стену у входа в цех: сотрудник сканирует, выбирает журнал и себя, отвечает на два-три вопроса. Плакат отдельного журнала ведёт сразу в него."
-            : layout === "sheet"
-              ? "Распечатайте лист, вырежьте наклейки и приклейте на дверцу холодильника или у входа в помещение."
-              : "Распечатайте плакаты и повесьте у входа в помещение или на дверцу холодильника."}{" "}
+            : journal
+              ? "У этого журнала нет общего плаката: записывают по наклейке на самом объекте — так понятно, что именно замеряешь. Распечатайте лист, вырежьте наклейки и приклейте на каждый объект."
+              : layout === "sheet"
+                ? "Распечатайте лист, вырежьте наклейки и приклейте на дверцу холодильника или у входа в помещение."
+                : "Распечатайте плакаты и повесьте у входа в помещение или на дверцу холодильника."}{" "}
           {kind === "journal"
             ? "Кто может записывать — в «Настройки → Соответствие»: любой из списка, по PIN или только после входа."
-            : "Показание ложится в активный журнал за сегодня — в ближайший срок контроля. Если на сегодня журнала нет, телефон попросит сначала создать документ."} Коды бессрочные: распечатали один раз — и они работают, пока
-          объект есть в справочнике.
+            : "Показание ложится в активный журнал за сегодня — в ближайший срок контроля."}{" "}
+          Когда период журнала закончился, первый скан сам откроет новый документ по образцу прошлого. Коды
+          бессрочные: распечатали один раз — и они работают, пока объект есть в справочнике.
           <span className="mt-1 block text-[12px] text-[#9b9fb3]">Домен ссылок: {origin.replace(/^https?:\/\//, "")}</span>
         </div>
+
+        {missingJournals.length > 0 || missingObjects > 0 ? (
+          <div
+            role="status"
+            className="flex gap-3 rounded-2xl border border-[#ffd7d3] bg-[#fff4f2] p-4 text-[13px] leading-[1.55] text-[#a13a32]"
+          >
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <div className="min-w-0">
+              {missingObjects > 0 ? (
+                <p>
+                  Не найдено в справочнике: {missingObjects} — возможно, объекты удалили.{" "}
+                  <Link
+                    href={buildHref({ kind, layout, documentId: null, selectedIds: null })}
+                    className="font-medium underline underline-offset-2"
+                  >
+                    Показать все
+                  </Link>
+                </p>
+              ) : (
+                <>
+                  <p className="font-medium">Не удалось показать:</p>
+                  <ul className="mt-1 space-y-0.5">
+                    {missingJournals.map((item) => (
+                      <li key={item.id}>
+                        «{item.label}» — {item.reason}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {posters.length === 0 ? (
@@ -194,37 +331,57 @@ export function QrPostersClient({
               ? kind === "room"
                 ? "В документе нет помещений из «Точек и помещений»"
                 : "В документе нет оборудования из «Оборудования»"
-              : selectedIds
-                ? "Выбранные объекты не найдены"
-                : kind === "room"
-                  ? "Помещений пока нет"
-                  : kind === "journal"
-                    ? "Нет журналов с активным документом на сегодня"
-                    : "Оборудования пока нет"}
+              : journal
+                ? kind === "room"
+                  ? "У журнала пока нет помещений для наклеек"
+                  : journal.code === "uv_lamp_runtime"
+                    ? "УФ-ламп в «Оборудовании» пока нет"
+                    : "У журнала пока нет холодильников для наклеек"
+                : selectedIds
+                  ? kind === "journal"
+                    ? "Выбранные журналы не найдены"
+                    : "Выбранные объекты не найдены"
+                  : kind === "room"
+                    ? "Помещений пока нет"
+                    : kind === "journal"
+                      ? "Нет журналов с документами"
+                      : "Оборудования пока нет"}
           </div>
-          <p className="mx-auto mt-1.5 max-w-[420px] text-[13px] text-[#6f7282]">
+          <p className="mx-auto mt-1.5 max-w-[440px] text-[13px] text-[#6f7282]">
             {documentTitle ? (
               // Плакаты открыты из журнала: список ограничен строками документа,
               // а объекты в справочнике при этом могут быть.
               <>
-                Плакаты открыты из документа «{documentTitle}»: показываются только его строки, связанные со
+                Наклейки открыты из документа «{documentTitle}»: показываются только его строки, связанные со
                 справочником, а таких нет. Добавьте объект в документ из справочника или{" "}
                 <Link
                   href={buildHref({ kind, layout, documentId: null, selectedIds: null })}
-                  className="font-medium text-[#3848c7] underline underline-offset-2"
+                  className={LINK_CLASS}
                 >
-                  {kind === "room" ? "откройте плакаты всех помещений" : "откройте плакаты всего оборудования"}
+                  {kind === "room" ? "откройте наклейки всех помещений" : "откройте наклейки всего оборудования"}
                 </Link>
                 .
               </>
+            ) : journal ? (
+              <JournalScopeEmpty journal={journal} kind={kind} />
             ) : selectedIds ? (
               <>
-                Возможно, объекты удалены из справочника.{" "}
+                {kind === "journal"
+                  ? "Проверьте ссылку — причины перечислены выше."
+                  : "Возможно, объекты удалены из справочника."}{" "}
                 <Link
                   href={buildHref({ kind, layout, documentId: null, selectedIds: null })}
-                  className="font-medium text-[#3848c7] underline underline-offset-2"
+                  className={LINK_CLASS}
                 >
                   Показать все
+                </Link>
+                .
+              </>
+            ) : kind === "journal" ? (
+              <>
+                Плакаты журналов появятся, когда в журнале будет первый документ —{" "}
+                <Link href="/journals" className={LINK_CLASS}>
+                  откройте журналы
                 </Link>
                 .
               </>
@@ -276,6 +433,7 @@ export function QrPostersClient({
                 <div className="qr-sticker-hint mt-2 text-[10.5px] text-[#9b9fb3]">
                   Сканируйте камерой телефона
                 </div>
+                <PosterNotice notice={poster.notice} />
               </article>
             );
           })}
@@ -328,6 +486,7 @@ export function QrPostersClient({
                   <ExternalLink className="size-4 text-[#5566f6]" />
                   Проверить ссылку
                 </a>
+                <PosterNotice notice={poster.notice} />
               </article>
             );
           })}

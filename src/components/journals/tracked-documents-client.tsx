@@ -1,6 +1,11 @@
 "use client";
 
-import { FillGuideLauncher } from "@/components/journals/fill-guide-launcher";
+import {
+  JOURNAL_ACTION_CREATE_CLASS,
+  JOURNAL_LIST_HEADER_ROW_CLASS,
+  JOURNAL_LIST_TITLE_CLASS,
+  JournalListActions,
+} from "@/components/journals/journal-list-actions";
 import { TOUR } from "@/lib/tour-anchors";
 
 import Link from "next/link";
@@ -51,9 +56,7 @@ import {
   JOURNAL_CARD_LABEL_CLASS,
   JOURNAL_CARD_TITLE_CLASS,
   JOURNAL_CARD_VALUE_CLASS,
-  JOURNAL_LIST_ACTIONS_CLASS,
   JOURNAL_LIST_CARD_CLASS,
-  JOURNAL_LIST_HEADING_CLASS,
   JOURNAL_TAB_RAIL_CLASS,
   JOURNAL_TAB_VIEWPORT_CLASS,
   JOURNAL_CARD_SECTION_CLASS,
@@ -389,31 +392,28 @@ function TrackedDocumentsClientImpl({
   return (
     <>
       <div className={JOURNAL_LIST_STACK_CLASS}>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className={JOURNAL_LIST_HEADING_CLASS}>{heading}</h1>
-          <div className={JOURNAL_LIST_ACTIONS_CLASS}>
-            {/* Одна кнопка «Инструкция» — окно с двумя вкладками. */}
-            <div className="flex w-full gap-2 sm:w-auto">
-              <FillGuideLauncher
-                code={templateCode}
-                journalName={templateName}
-                page="list"
-                variant="button"
-                firstDocumentId={activeTab === "active" ? documents[0]?.id : undefined}
-              />
-            </div>
-            {canManageDocuments && activeTab === "active" && (
-              <CreateDocumentDialog
-                templateCode={templateCode}
-                templateName={templateName}
-                users={users}
-                triggerClassName="h-10 w-full rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] font-medium text-white hover:bg-[#4a5bf0] sm:w-auto"
-                triggerLabel="Создать документ"
-                triggerIcon={<Plus className="size-4" />}
-                triggerDataTour={TOUR.createDocument}
-              />
-            )}
-          </div>
+        <div className={JOURNAL_LIST_HEADER_ROW_CLASS}>
+          <h1 className={JOURNAL_LIST_TITLE_CLASS}>{heading}</h1>
+          {/* «QR-точка контроля» над рядом «Создать документ | Инструкция». */}
+          <JournalListActions
+            templateCode={templateCode}
+            journalName={templateName}
+            canManage={canManageDocuments}
+            guideProps={{ firstDocumentId: activeTab === "active" ? documents[0]?.id : undefined }}
+            create={
+              canManageDocuments && activeTab === "active" ? (
+                <CreateDocumentDialog
+                  templateCode={templateCode}
+                  templateName={templateName}
+                  users={users}
+                  triggerClassName={JOURNAL_ACTION_CREATE_CLASS}
+                  triggerLabel="Создать документ"
+                  triggerIcon={<Plus className="size-4" />}
+                  triggerDataTour={TOUR.createDocument}
+                />
+              ) : null
+            }
+          />
         </div>
 
         <div className="border-b border-[#d9dce8]">

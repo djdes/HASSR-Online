@@ -24,6 +24,7 @@
  */
 import { resolveJournalPeriod, resolveJournalPeriodKind } from "@/lib/journal-period";
 import { buildDocumentAutoTitle } from "@/lib/journal-document-title";
+import { copySanitationRowToYear } from "@/lib/sanitation-day-document";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -131,10 +132,15 @@ function stripCommonFactFields(config: Record<string, unknown>) {
   delete config.sourceProtocolTitle;
 }
 
-/** Обнуление факта — по журналам. Структура строк остаётся на месте. */
+/**
+ * Обнуление факта — по журналам. Структура строк остаётся на месте.
+ * `periodFrom` — начало нового периода (для журналов, где даты плана
+ * переезжают вместе с годом).
+ */
 function resetFactByTemplate(
   templateCode: string,
-  config: Record<string, unknown>
+  config: Record<string, unknown>,
+  periodFrom: string
 ) {
   switch (templateCode) {
     // План внутреннего аудита: состав разделов, требований и колонок —
@@ -172,14 +178,31 @@ function resetFactByTemplate(
       }));
       break;
     }
-    // ТО оборудования и график генуборок: план по месяцам — структура,
-    // `fact` — отметки «сделано».
-    case "equipment_maintenance":
-    case "general_cleaning": {
+    // ТО оборудования: план по месяцам — структура, `fact` — отметки
+    // «сделано».
+    case "equipment_maintenance": {
       config.rows = asRows(config.rows).map((row) => ({
         ...row,
         fact: blankValues(row.fact),
       }));
+      break;
+    }
+    // График генуборок. Строки нового формата (`cleanings`, 2026-09-22):
+    // плановые даты переезжают на те же числа нового года, отметки о
+    // выполнении и внеплановые уборки остаются в старом документе,
+    // заметки плана сохраняются, заметки факта — нет. Строки старого
+    // формата — как раньше: план как есть, факт пустой.
+    case "general_cleaning": {
+      const targetYear = Number(periodFrom.slice(0, 4));
+      const sourceYear =
+        typeof config.year === "number" && Number.isFinite(config.year)
+          ? config.year
+          : targetYear;
+      config.rows = asRows(config.rows).map((row) =>
+        Array.isArray(row.cleanings)
+          ? (copySanitationRowToYear(row, sourceYear, targetYear) as unknown as Record<string, unknown>)
+          : { ...row, fact: blankValues(row.fact) }
+      );
       break;
     }
     // Перечень стеклянных изделий: сама опись — это и есть структура,
@@ -195,6 +218,46 @@ function resetFactByTemplate(
     default:
       break;
   }
+}
+
+/**
+ * Журналы, у которых есть «Сделать копию» и для которых
+ * `copyDocumentStructure` знает, где в конфиге структура, а где факт.
+ * Для остальных журналов конфиг может целиком состоять из факта
+ * (бракераж, аварии…) — копировать его нельзя.
+ */
+export const DOCUMENT_COPY_SUPPORTED_CODES: ReadonlySet<string> = new Set([
+  "audit_plan",
+  "audit_protocol",
+  "equipment_calibration",
+  "equipment_maintenance",
+  "general_cleaning",
+  "glass_items_list",
+  "sanitary_day_control",
+]);
+
+/**
+ * Структура документа на новый период: общие поля факта убраны, факт
+ * журнала обнулён, год и дата документа — от начала нового периода.
+ * Исходный конфиг не меняется.
+ *
+ * `periodFrom` — `YYYY-MM-DD` начала нового периода. Имеет смысл для
+ * журналов из `DOCUMENT_COPY_SUPPORTED_CODES`.
+ */
+export function copyDocumentStructure(
+  templateCode: string,
+  sourceConfig: unknown,
+  periodFrom: string
+): Record<string, unknown> {
+  const config = asRecord(sourceConfig);
+  stripCommonFactFields(config);
+  resetFactByTemplate(templateCode, config, periodFrom);
+
+  // Год и дата документа в шапке — от нового периода, иначе бланк
+  // напечатается с прошлогодней датой.
+  if ("year" in config) config.year = Number(periodFrom.slice(0, 4));
+  if ("documentDate" in config) config.documentDate = periodFrom;
+  return config;
 }
 
 /**
@@ -216,14 +279,11 @@ export function buildDocumentCopy(args: {
     args.sourcePeriod,
     args.today
   );
-  const config = asRecord(args.sourceConfig);
-  stripCommonFactFields(config);
-  resetFactByTemplate(args.templateCode, config);
-
-  // Год и дата документа в шапке — от нового периода, иначе бланк
-  // напечатается с прошлогодней датой.
-  if ("year" in config) config.year = Number(period.dateFrom.slice(0, 4));
-  if ("documentDate" in config) config.documentDate = period.dateFrom;
+  const config = copyDocumentStructure(
+    args.templateCode,
+    args.sourceConfig,
+    period.dateFrom
+  );
 
   const title = buildDocumentAutoTitle({
     templateCode: args.templateCode,

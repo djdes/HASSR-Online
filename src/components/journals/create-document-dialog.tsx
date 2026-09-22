@@ -856,6 +856,7 @@ export function CreateDocumentDialog({
                      general_cleaning попадает СЮДА (showCompactDateFrom),
                      и на проде подпись оставалась «Дата начала». */
                   label={isGeneralCleaningJournal ? "Дата документа" : "Дата начала"}
+                  picker={isGeneralCleaningJournal ? "wheel" : "calendar"}
                   value={dateFrom}
                   onChange={(value) =>
                     applyPeriod(

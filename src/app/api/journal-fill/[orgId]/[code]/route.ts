@@ -12,6 +12,7 @@ import {
   verifyJournalFillToken,
 } from "@/lib/journal-fill";
 import { submitJournalFill } from "@/lib/journal-fill-submit";
+import { ensureQrPeriodDocuments, qrRolloverMessage, resolveTokenDocumentIds } from "@/lib/journal-qr-rollover";
 import { rowKeyForEmployee } from "@/lib/tasksflow-adapters/row-key";
 import { journalFillHints } from "@/lib/journal-fill-hints";
 import { isNameSuggestionScope } from "@/lib/name-suggestions";
@@ -43,21 +44,38 @@ export async function GET(request: Request, { params }: { params: Promise<{ orgI
     return NextResponse.json({ daily });
   }
 
-  const documentId = url.searchParams.get("documentId") ?? "";
-  if (!documentId || !employeeId) return NextResponse.json({ error: "Не указан документ или сотрудник" }, { status: 400 });
-  const docs = await listJournalFillDocuments(orgId, code, todayKey);
-  if (!docs.some((doc) => doc.id === documentId)) return NextResponse.json({ error: "Документ не активен" }, { status: 404 });
+  const requestedDocumentId = url.searchParams.get("documentId") ?? "";
+  if (!requestedDocumentId || !employeeId) return NextResponse.json({ error: "Не указан документ или сотрудник" }, { status: 400 });
+  let documentId = requestedDocumentId;
+  let docs = await listJournalFillDocuments(orgId, code, todayKey);
+  if (!docs.some((doc) => doc.id === documentId)) {
+    // Период сменился, пока форма была открыта: документ нового периода той
+    // же линии (создаётся по образцу прошлого, как у ночного крона).
+    const rollover = await ensureQrPeriodDocuments({ organizationId: orgId, templateCode: code, todayKey, anchor: { documentId }, source: "journal-fill-api" });
+    const lineage = await resolveTokenDocumentIds({ organizationId: orgId, templateCode: code, todayKey, tokenDocumentId: documentId });
+    docs = await listJournalFillDocuments(orgId, code, todayKey);
+    const successor = lineage.documentIds.length === 1 ? docs.find((doc) => doc.id === lineage.documentIds[0]) : undefined;
+    if (!successor) {
+      return NextResponse.json(
+        { error: "Документ не активен", reason: lineage.reason ?? rollover.reason ?? null, message: qrRolloverMessage(lineage.reason === "period-closed" ? lineage.reason : rollover.reason) },
+        { status: 404 }
+      );
+    }
+    documentId = successor.id;
+  }
 
   const rowKeyParam = url.searchParams.get("rowKey");
   const resolved = await resolveJournalFillRows({ orgId, code, documentId, employeeId });
   const rowKey = resolved.perEmployee ? rowKeyForEmployee(employeeId) : rowKeyParam || null;
-  if (!rowKey) return NextResponse.json({ rows: resolved.rows, form: null, rowKey: null });
+  if (!rowKey) return NextResponse.json({ documentId, rows: resolved.rows, form: null, rowKey: null });
   if (!resolved.perEmployee && !resolved.rows.some((row) => row.rowKey === rowKey)) {
     return NextResponse.json({ error: "Строка не найдена" }, { status: 404 });
   }
   const form = await loadJournalFillForm(code, documentId, rowKey);
   const template = await db.journalTemplate.findFirst({ where: { code }, select: { taskScope: true } });
   return NextResponse.json({
+    // Может отличаться от запрошенного: период сменился — документ-преемник.
+    documentId,
     rows: resolved.rows,
     rowKey,
     form,

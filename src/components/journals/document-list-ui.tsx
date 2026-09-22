@@ -1,20 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { createContext, useCallback, useContext } from "react";
+import { cloneElement, createContext, isValidElement, useCallback, useContext, type ReactElement } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArchiveRestore, Ellipsis, Pencil, Plus, Printer, QrCode, Trash2 } from "lucide-react";
+import { ArchiveRestore, Ellipsis, Pencil, Plus, Printer, Trash2 } from "lucide-react";
 import { CreateDocumentDialog } from "@/components/journals/create-document-dialog";
 import { confirmAsync } from "@/components/ui/confirm-async";
 import { findOverlappingDocument } from "@/lib/journal-document-overlap";
 import {
-  JOURNAL_LIST_ACTIONS_CLASS,
   JOURNAL_LIST_HEADING_CLASS,
   JOURNAL_TAB_RAIL_CLASS,
   JOURNAL_TAB_VIEWPORT_CLASS,
 } from "@/components/journals/journal-responsive";
-import { FillGuideLauncher } from "@/components/journals/fill-guide-launcher";
+import { JOURNAL_ACTION_CREATE_CLASS, JournalListActions } from "@/components/journals/journal-list-actions";
 import { TOUR } from "@/lib/tour-anchors";
 import { ResponsiveMenu } from "@/components/ui/responsive-menu";
 import { LinkPendingSpinner } from "@/components/ui/link-pending";
@@ -273,7 +272,8 @@ export function JournalTopBar(props: {
    * breakdown-history) и потому не могут пользоваться общим
    * `<CreateDocumentDialog>`. Когда передан — рендерим его вместо
    * дефолтного диалога, всё остальное (заголовок, «Инструкция»,
-   * respons-раскладка) остаётся общим.
+   * respons-раскладка) остаётся общим. Стиль кнопки задаёт шапка
+   * (`JOURNAL_ACTION_CREATE_CLASS`) — у всех журналов она одинаковая.
    */
   createSlot?: React.ReactNode;
   /** uv_lamp_runtime: следующий свободный номер установки (U7 аудита). */
@@ -292,6 +292,9 @@ export function JournalTopBar(props: {
 }) {
   const canManageFromContext = useCanManageDocuments();
   const canManage = props.canManage !== false && canManageFromContext;
+  // Пока документов ноль, «Создать документ» — только в карточке пустого
+  // состояния (эталон), на «Закрытых» создавать нечего.
+  const showCreate = canManage && props.activeTab === "active" && props.documentCount !== 0;
   return (
     // `sm:items-center` — когда длинный H1 («Журнал бракеража скоропортящейся
     // продукции») переносится в две строки, кнопки «Инструкция» / «Создать
@@ -301,8 +304,11 @@ export function JournalTopBar(props: {
       {/* Индикатор «журнал включён» — вплотную к заголовку: решение
           «этот журнал нам не нужен» принимают, когда открыли его и
           посмотрели. Данные приходят контекстом из страницы раздела;
-          в Mini App провайдера нет, и слот ничего не рисует. */}
-      <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 sm:max-w-[70%]">
+          в Mini App провайдера нет, и слот ничего не рисует.
+          Заголовок занимает всё место рядом с блоком кнопок (440 px) и
+          переносится внутри него; блок уходит под заголовок, только
+          когда рядом не остаётся и 18rem. */}
+      <div className="flex min-w-0 flex-1 basis-[18rem] flex-wrap items-center gap-x-3 gap-y-2">
         {/* Ограничение ширины переехало с заголовка на эту строку: с
             `w-full` на h1 индикатор всегда переносился под него, а
             просили рядом. */}
@@ -311,46 +317,51 @@ export function JournalTopBar(props: {
         </h1>
         <JournalEnabledIndicatorSlot />
       </div>
-      <div className={JOURNAL_LIST_ACTIONS_CLASS}>
-        {/* Одна кнопка «Инструкция»: открывает окно с двумя вкладками —
-            «Куда нажимать» (шаги по интерфейсу) и «Правила» (что и как
-            проверять). Страница `/journals/<code>/guide` осталась —
-            ссылка на неё внизу окна. */}
-        <div className="flex w-full gap-2 sm:w-auto">
-          <FillGuideLauncher
-            code={props.templateCode}
-            journalName={props.templateName}
-            page="list"
-            variant="button"
-            firstDocumentId={props.firstDocumentId}
-          />
-        </div>
-        {canManage && props.activeTab === "active" && props.documentCount !== 0 ? (
-          <Link
-            href={`/settings/qr-posters?kind=journals&ids=${encodeURIComponent(props.routeCode ?? props.templateCode)}`}
-            title="Плакат с QR-кодом: сотрудник сканирует и вносит запись в этот журнал с телефона"
-            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border-0 bg-[#5566f6]/[0.04] px-4 text-[15px] font-semibold text-[#5566f6] transition-colors duration-150 hover:bg-[#5566f6]/[0.09] sm:w-auto"
-          >
-            <QrCode className="size-4" />
-            QR
-          </Link>
-        ) : null}
-        {canManage && props.activeTab === "active" && props.documentCount !== 0 && props.createSlot}
-        {canManage && props.activeTab === "active" && props.documentCount !== 0 && !props.createSlot && (
-          <CreateDocumentDialog
-            templateCode={props.templateCode}
-            templateName={props.templateName}
-            users={props.users}
-            triggerClassName="h-11 w-full gap-2 rounded-lg bg-[#5566f6] px-5 text-[15px] font-semibold text-white hover:bg-[#4a5bf0] sm:w-auto"
-            triggerLabel="Создать документ"
-            triggerIcon={<Plus className="size-5" strokeWidth={2.5} />}
-            nextLampNumber={props.nextLampNumber}
-            triggerDataTour={TOUR.createDocument}
-          />
-        )}
-      </div>
+      {/* «QR-точка контроля» (золотая, во всю ширину) над рядом «Создать
+          документ | Инструкция» — один блок у всех журналов. «Инструкция»
+          открывает окно с вкладками «Куда нажимать» и «Правила». */}
+      <JournalListActions
+        templateCode={props.templateCode}
+        journalName={props.templateName}
+        canManage={canManage}
+        guideProps={{ firstDocumentId: props.firstDocumentId }}
+        create={
+          showCreate ? (
+            props.createSlot ? (
+              restyleCreateSlot(props.createSlot)
+            ) : (
+              <CreateDocumentDialog
+                templateCode={props.templateCode}
+                templateName={props.templateName}
+                users={props.users}
+                triggerClassName={JOURNAL_ACTION_CREATE_CLASS}
+                triggerLabel="Создать документ"
+                triggerIcon={<Plus className="size-4" strokeWidth={2.5} />}
+                nextLampNumber={props.nextLampNumber}
+                triggerDataTour={TOUR.createDocument}
+              />
+            )
+          ) : null
+        }
+      />
     </div>
   );
+}
+
+/**
+ * Своя кнопка создания журнала (`createSlot`) — в общем стиле второго
+ * ряда. Журналы передают готовую кнопку со своим классом (раньше —
+ * сплошной индиго h-10); в шапке у всех журналов она одинаковая.
+ */
+function restyleCreateSlot(slot: React.ReactNode): React.ReactNode {
+  if (!isValidElement(slot)) return slot;
+  if (slot.type === CreateDocumentDialog) {
+    return cloneElement(slot as ReactElement<{ triggerClassName?: string }>, { triggerClassName: JOURNAL_ACTION_CREATE_CLASS });
+  }
+  if (typeof (slot.props as { className?: unknown }).className === "string") {
+    return cloneElement(slot as ReactElement<{ className?: string }>, { className: JOURNAL_ACTION_CREATE_CLASS });
+  }
+  return slot;
 }
 
 export function JournalTabs(props: {

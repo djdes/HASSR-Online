@@ -1,6 +1,11 @@
 "use client";
 
-import { FillGuideLauncher } from "@/components/journals/fill-guide-launcher";
+import {
+  JOURNAL_ACTION_CREATE_CLASS,
+  JOURNAL_LIST_HEADER_ROW_CLASS,
+  JOURNAL_LIST_TITLE_CLASS,
+  JournalListActions,
+} from "@/components/journals/journal-list-actions";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -421,25 +426,22 @@ export function TraceabilityDocumentsClient({
       {/* Порядок как во всех журналах: заголовок и «Создать документ» —
           сверху, вкладки «Активные/Закрытые» — под ними. Раньше на
           телефоне кнопка создания оказывалась ПОСЛЕ вкладок. */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
-            {heading}
-          </h1>
-          <div className="mt-4 flex w-full sm:w-auto">
-            <FillGuideLauncher code="traceability_test" page="list" variant="button" />
-          </div>
-        </div>
-        {canManageDocuments && activeTab === "active" && (
-          <Button
-            type="button"
-            onClick={() => setCreateOpen(true)}
-            className="h-9 w-full rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] font-medium text-white shadow-md shadow-[#5563ff]/20 hover:bg-[#4957fb] sm:w-auto"
-          >
-            <Plus className="size-6" />
-            Создать документ
-          </Button>
-        )}
+      <div className={JOURNAL_LIST_HEADER_ROW_CLASS}>
+        <h1 className={JOURNAL_LIST_TITLE_CLASS}>
+          {heading}
+        </h1>
+        <JournalListActions
+          templateCode="traceability_test"
+          canManage={canManageDocuments}
+          create={
+            canManageDocuments && activeTab === "active" ? (
+              <Button type="button" onClick={() => setCreateOpen(true)} className={JOURNAL_ACTION_CREATE_CLASS}>
+                <Plus className="size-4" />
+                Создать документ
+              </Button>
+            ) : null
+          }
+        />
       </div>
           <div className="flex flex-wrap items-center gap-5 border-b border-[#d8dbe6] text-[15px] sm:gap-10 sm:text-[18px]">
             <Link

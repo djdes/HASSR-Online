@@ -1,9 +1,9 @@
-import {
-  Breadcrumbs,
-  type Crumb,
-  type CrumbMenuItem,
-} from "@/components/ui/breadcrumbs";
+import { Breadcrumbs, type Crumb } from "@/components/ui/breadcrumbs";
 import { PageBackLink } from "@/components/layout/page-nav";
+import {
+  journalSwitcherOptions,
+  type JournalSwitcherMenu,
+} from "@/lib/crumb-menu";
 
 /**
  * Хлебные крошки раздела журналов:
@@ -53,13 +53,21 @@ export function JournalPageCrumbs({
   organizationName: string;
   journalName?: string;
   journalCode?: string;
-  /** Набор журналов — звено «журнал» раскрывается в него по наведению. */
-  journalMenu?: CrumbMenuItem[];
+  /**
+   * Переключатель журналов (`getJournalCrumbMenu`): звенья «Журналы» и
+   * «журнал» раскрываются в него — с поиском, легендой и «Показать все».
+   */
+  journalMenu?: JournalSwitcherMenu;
   tail?: JournalCrumb[];
   className?: string;
   /** Куда вернуться при прямом заходе: истории в новой вкладке нет. */
   backHref?: string;
 }) {
+  // Поиск «Найти журнал», легенда точек и «Показать все» — одинаковые у
+  // обоих звеньев: в Mini App на телефоне видно только одно из них
+  // (второе прячет mini-theme.css), и переключатель должен быть в любом.
+  const switcher = journalMenu ? journalSwitcherOptions(journalMenu) : {};
+
   const items: JournalCrumb[] = [
     { label: organizationName, href: "/dashboard" },
     {
@@ -68,8 +76,9 @@ export function JournalPageCrumbs({
       // Двухуровневое, как «Проекты» в ProjectsFlow: журнал → его
       // документы. Отсюда можно попасть сразу в нужный бланк, не
       // открывая сперва журнал.
-      menu: journalMenu,
+      menu: journalMenu?.items,
       menuTitle: journalMenu ? "Перейти к журналу" : undefined,
+      ...switcher,
     },
   ];
 
@@ -84,8 +93,9 @@ export function JournalPageCrumbs({
     items.push({
       label: journalName,
       href: tail.length > 0 && journalCode ? `/journals/${journalCode}` : undefined,
-      menu: journalMenu?.map(({ submenuJournalCode: _drop, ...rest }) => rest),
+      menu: journalMenu?.items.map(({ submenuJournalCode: _drop, ...rest }) => rest),
       menuTitle: journalMenu ? "Журналы набора" : undefined,
+      ...switcher,
     });
   }
 

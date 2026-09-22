@@ -9,6 +9,7 @@ import { JournalPageCrumbs } from "@/components/journals/journal-breadcrumbs";
 import { getJournalCrumbMenu } from "@/lib/journal-crumb-menu";
 import { getCrumbOrganizationName } from "@/lib/crumb-organization";
 import { getDocumentCrumbMenu } from "@/lib/journal-crumb-menu";
+import { DOCUMENT_STATUS_LEGEND } from "@/lib/crumb-menu";
 import { getActiveBuildingId } from "@/lib/active-building";
 
 export const runtime = "nodejs";
@@ -105,6 +106,7 @@ export default async function VerifyDocumentPage({
             href: `/journals/${code}/documents/${docId}`,
             menu: documentMenu,
             menuTitle: "Документы журнала",
+            menuLegend: DOCUMENT_STATUS_LEGEND,
           },
           { label: "Проверка" },
         ]}

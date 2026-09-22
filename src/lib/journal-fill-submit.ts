@@ -4,6 +4,7 @@ import { clientIp } from "@/lib/client-ip";
 import { db } from "@/lib/db";
 import { isRowKeyAllowed, listJournalFillDocuments, loadJournalFillForm, loadOrganizationForFill, todayKeyFor, verifyJournalFillToken } from "@/lib/journal-fill";
 import { journalFillHints } from "@/lib/journal-fill-hints";
+import { ensureQrPeriodDocuments, qrRolloverMessage, resolveTokenDocumentIds } from "@/lib/journal-qr-rollover";
 import { isNameSuggestionScope } from "@/lib/name-suggestions";
 import { rememberNames } from "@/lib/name-suggestions-db";
 import { isBrakerageJournalCode } from "@/lib/brakerage-row-merge";
@@ -70,9 +71,37 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
   const mode = normalizeQrFillMode(org.qrFillMode);
   const todayKey = todayKeyFor(org.timezone);
 
-  const docs = await listJournalFillDocuments(orgId, code, todayKey);
-  const document = docs.find((doc) => doc.id === input.documentId);
-  if (!document) return { ok: false, status: 409, error: "На сегодня нет активного документа этого журнала" };
+  let docs = await listJournalFillDocuments(orgId, code, todayKey);
+  let document = docs.find((doc) => doc.id === input.documentId);
+  if (!document) {
+    // Форму открыли 30-го, «Сохранить» нажали 1-го: пишем в документ нового
+    // периода той же линии (создаётся по образцу прошлого), а не 409.
+    const rollover = await ensureQrPeriodDocuments({
+      organizationId: orgId,
+      templateCode: code,
+      todayKey,
+      anchor: { documentId: input.documentId },
+      source: "journal-fill-submit",
+    });
+    const lineage = await resolveTokenDocumentIds({ organizationId: orgId, templateCode: code, todayKey, tokenDocumentId: input.documentId });
+    docs = await listJournalFillDocuments(orgId, code, todayKey);
+    document = lineage.documentIds.length === 1 ? docs.find((doc) => doc.id === lineage.documentIds[0]) : undefined;
+    if (!document) {
+      const reason = lineage.reason === "period-closed" ? lineage.reason : rollover.reason;
+      return {
+        ok: false,
+        status: 409,
+        error:
+          lineage.documentIds.length > 1
+            ? "Начался новый период — откройте QR-код заново и выберите документ."
+            : reason
+              ? qrRolloverMessage(reason)
+              : "На сегодня нет активного документа этого журнала",
+      };
+    }
+  }
+  // Дальше — только документ, куда запись реально ляжет.
+  const documentId = document.id;
 
   const actor = await resolveQrFillActor({
     mode,
@@ -87,7 +116,7 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
   });
   if (!actor.ok) return { ok: false, status: actor.status, error: actor.error };
 
-  if (!(await isRowKeyAllowed({ orgId, code, documentId: input.documentId, employeeId: actor.employee.id, rowKey: input.rowKey }))) {
+  if (!(await isRowKeyAllowed({ orgId, code, documentId, employeeId: actor.employee.id, rowKey: input.rowKey }))) {
     return { ok: false, status: 404, error: "Строка не найдена" };
   }
 
@@ -102,7 +131,7 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
   // за сегодня линейным сотрудником — как в /api/task-fill.
   if (!isShared && org.requireAdminForJournalEdit && !isManagementRole(actor.employee.role)) {
     const existing = await db.journalDocumentEntry.findFirst({
-      where: { documentId: input.documentId, employeeId: actor.employee.id, date: new Date(`${todayKey}T00:00:00.000Z`) },
+      where: { documentId, employeeId: actor.employee.id, date: new Date(`${todayKey}T00:00:00.000Z`) },
       select: { id: true },
     });
     if (existing) {
@@ -110,7 +139,7 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
     }
   }
 
-  const schema = await loadJournalFillForm(code, input.documentId, input.rowKey);
+  const schema = await loadJournalFillForm(code, documentId, input.rowKey);
   // «Выключено / Нет показания» снимает обязательность с числового поля — вместо
   // цифры в журнал идёт прочерк с пометкой, а не выдуманный ноль.
   const offKeys = new Set((input.off ?? []).filter((key) => schema?.fields.some((field) => field.key === key && field.type === "number")));
@@ -169,13 +198,13 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
     }));
     count =
       code === FINISHED_PRODUCT_DOCUMENT_TEMPLATE_CODE
-        ? await appendFinishedProductRows({ documentId: input.documentId, employee, todayKey, entries })
-        : await appendPerishableRows({ documentId: input.documentId, employee, todayKey, entries });
+        ? await appendFinishedProductRows({ documentId, employee, todayKey, entries })
+        : await appendPerishableRows({ documentId, employee, todayKey, entries });
     if (count === 0) return { ok: false, status: 500, error: "Не удалось записать в журнал" };
     values.productName = bulkNames[0];
   } else {
     const applied = await adapter.applyRemoteCompletion({
-      documentId: input.documentId,
+      documentId,
       rowKey: hints.append ? rowKeyWithQrAppend(input.rowKey) : input.rowKey,
       completed: true,
       todayKey,
@@ -194,9 +223,9 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
       notifyManagement({
         organizationId: orgId,
         kind: "qr-fill-off",
-        dedupeKey: `qr-fill-off:${input.documentId}:${todayKey}:${actor.employee.id}`,
+        dedupeKey: `qr-fill-off:${documentId}:${todayKey}:${actor.employee.id}`,
         title: `${document.title}: выключено или нет показания — ${actor.employee.name}`,
-        linkHref: `/journals/${code}/documents/${input.documentId}`,
+        linkHref: `/journals/${code}/documents/${documentId}`,
         linkLabel: "Открыть журнал",
         items: labels.map((label, index) => ({ id: `${index}`, label })),
       }).catch(() => null),
@@ -231,10 +260,10 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
     request,
     organizationId: orgId,
     kind: "journal",
-    objectId: input.documentId,
+    objectId: documentId,
     objectName: document.title,
     employee: { id: actor.employee.id, name: actor.employee.name },
-    documentIds: [input.documentId],
+    documentIds: [documentId],
     dateKey: todayKey,
     authMode: mode,
     values,

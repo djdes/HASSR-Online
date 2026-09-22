@@ -18,6 +18,7 @@ import {
   type JournalFillEmployee,
 } from "@/lib/journal-fill";
 import { journalFillHints, type JournalFillHints } from "@/lib/journal-fill-hints";
+import { ensureQrPeriodDocuments, qrRolloverMessage, resolveTokenDocumentIds } from "@/lib/journal-qr-rollover";
 import {
   normRange,
   renderDocumentStep,
@@ -272,7 +273,9 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
 
   // ---- хаб «Все журналы»
   if (code === JOURNAL_FILL_HUB_CODE) {
-    const journals = await listHubJournals(orgId, disabledCodes, todayKey);
+    // Журналы с кончившимся периодом тоже в списке: документ нового
+    // периода откроется при входе в журнал (ниже).
+    const journals = await listHubJournals(orgId, disabledCodes, todayKey, { includeLapsed: true });
     return page("Все журналы", renderHub(journals.map((item) => ({ ...item, href: link({}, item.code) }))), "Выберите журнал — дальше два-три касания.");
   }
 
@@ -284,10 +287,28 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
   // Холодильники и склады — по наклейке на самом объекте.
   if (OBJECT_QR_JOURNAL_CODES.has(code)) return page(title, renderMessage("muted", OBJECT_QR_JOURNAL_HINTS[code] ?? "Отсканируйте наклейку на самом объекте."));
 
+  // Период сменился (1-е число, прошлый документ до 30-го) — документ
+  // нового периода по образцу прошлого создаётся здесь же, тем же правилом,
+  // что у ночного крона. Организация — из проверенного токена.
+  const rollover = await ensureQrPeriodDocuments({
+    organizationId: orgId,
+    templateCode: code,
+    todayKey,
+    anchor: check.documentId ? { documentId: check.documentId } : undefined,
+    source: "journal-fill",
+  });
   const allDocs = await listJournalFillDocuments(orgId, code, todayKey);
-  const documents = check.documentId ? allDocs.filter((doc) => doc.id === check.documentId) : allDocs;
+  let documents = allDocs;
+  let lineageReason: Awaited<ReturnType<typeof resolveTokenDocumentIds>>["reason"];
+  if (check.documentId) {
+    // Плакат документа ведёт в его «линию»: сам документ, пока он идёт,
+    // затем документ нового периода той же точки.
+    const lineage = await resolveTokenDocumentIds({ organizationId: orgId, templateCode: code, todayKey, tokenDocumentId: check.documentId });
+    documents = allDocs.filter((doc) => lineage.documentIds.includes(doc.id));
+    lineageReason = lineage.reason;
+  }
   if (documents.length === 0) {
-    return page(title, renderMessage("warn", "На сегодня нет активного документа этого журнала. Попросите руководителя создать документ в кабинете — форма заработает сразу."));
+    return page(title, renderMessage("warn", qrRolloverMessage(lineageReason === "period-closed" ? lineageReason : rollover.reason ?? lineageReason)));
   }
 
   // ---- документ

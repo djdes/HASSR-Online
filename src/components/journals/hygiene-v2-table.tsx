@@ -9,6 +9,7 @@ import {
   buildHygieneV2Rows,
   type HygieneV2Row,
 } from "@/lib/hygiene-v2";
+import { journalQrHref } from "@/lib/journal-qr-target";
 
 /**
  * Гигиенический журнал по форме Приложения №1 СанПиН (документы с
@@ -101,7 +102,7 @@ export function HygieneV2Table({ dateKeys, todayKey = "", employees, entries }: 
           «Гигиенический журнал (сотрудники) — допуск» (Настройки → QR-плакаты).
         </p>
         <Link
-          href="/settings/qr-posters?kind=journal"
+          href={journalQrHref("hygiene")}
           className="inline-flex h-10 shrink-0 items-center gap-2 self-start rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] sm:self-auto"
         >
           QR-плакаты

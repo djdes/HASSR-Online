@@ -1,5 +1,8 @@
+import { advisoryLockKey, withAdvisoryTryLock } from "@/lib/advisory-lock";
 import { deliverableEmail, notifyCoreJournalRecipients, type CoreJournalRecipient } from "@/lib/core-journal-keepers";
 import { db } from "@/lib/db";
+import { announceQrRollover } from "@/lib/journal-qr-rollover";
+import { carryStructureFromPrevious } from "@/lib/journal-structure-carry";
 import { getPrimarySlotId } from "@/lib/journal-responsible-schemas";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { orgTodayKey } from "@/lib/timezone";
@@ -28,19 +31,28 @@ function hhmm(timeZone: string, at: Date): string {
   }
 }
 
-/** Документ журнала этой лампы на сегодня: связанный, найденный по номеру или новый на месяц. */
+/**
+ * Документ журнала этой лампы на сегодня: связанный, найденный по номеру
+ * или новый на месяц. Новый месяц — «по образцу прошлого»: номер, цех,
+ * паспорт и ответственные из прошлого документа ЭТОЙ лампы. Создание — под
+ * замком «лампа × месяц» с повторной проверкой: два одновременных
+ * «Я выключил» 1-го числа не заведут два документа.
+ */
 export async function ensureUvDocumentForLamp(params: {
   organizationId: string;
   lamp: { id: string; name: string; areaName: string; lampLifetimeHours: number | null };
   todayKey: string;
 }): Promise<{ id: string; responsibleUserId: string | null } | null> {
   const day = new Date(`${params.todayKey}T00:00:00.000Z`);
-  const docs = await db.journalDocument.findMany({
-    where: { organizationId: params.organizationId, status: "active", template: { code: UV_LAMP_RUNTIME_TEMPLATE_CODE }, dateFrom: { lte: day }, dateTo: { gte: day } },
-    select: { id: true, config: true, responsibleUserId: true },
-    orderBy: { dateFrom: "desc" },
-  });
-  const linked = docs.find((doc) => normalizeUvRuntimeDocumentConfig(doc.config).equipmentId === params.lamp.id);
+  const findLinked = async () => {
+    const docs = await db.journalDocument.findMany({
+      where: { organizationId: params.organizationId, status: "active", template: { code: UV_LAMP_RUNTIME_TEMPLATE_CODE }, dateFrom: { lte: day }, dateTo: { gte: day } },
+      select: { id: true, config: true, responsibleUserId: true },
+      orderBy: { dateFrom: "desc" },
+    });
+    return { docs, linked: docs.find((doc) => normalizeUvRuntimeDocumentConfig(doc.config).equipmentId === params.lamp.id) ?? null };
+  };
+  const { docs, linked } = await findLinked();
   if (linked) return { id: linked.id, responsibleUserId: linked.responsibleUserId };
   const byName = docs.find((doc) => {
     const config = normalizeUvRuntimeDocumentConfig(doc.config);
@@ -51,34 +63,99 @@ export async function ensureUvDocumentForLamp(params: {
     await db.journalDocument.update({ where: { id: byName.id }, data: { config: config as never } });
     return { id: byName.id, responsibleUserId: byName.responsibleUserId };
   }
-  const template = await db.journalTemplate.findFirst({ where: { code: UV_LAMP_RUNTIME_TEMPLATE_CODE }, select: { id: true } });
+  const template = await db.journalTemplate.findFirst({ where: { code: UV_LAMP_RUNTIME_TEMPLATE_CODE }, select: { id: true, name: true } });
   if (!template) return null;
+
   const [year, month] = params.todayKey.split("-").map(Number);
-  const dateFrom = new Date(Date.UTC(year, month - 1, 1));
-  const dateTo = new Date(Date.UTC(year, month, 0));
-  // Ответственный — как у остальных документов журнала (слот «ответственных за журналы»).
-  const org = await db.organization.findUnique({ where: { id: params.organizationId }, select: { journalResponsibleUsersJson: true } });
-  const slots = ((org?.journalResponsibleUsersJson ?? {}) as Record<string, Record<string, string | null> | undefined>)[UV_LAMP_RUNTIME_TEMPLATE_CODE] ?? {};
-  const responsibleUserId = slots[getPrimarySlotId(UV_LAMP_RUNTIME_TEMPLATE_CODE)] ?? null;
-  const created = await db.journalDocument.create({
-    data: {
+  const locked = await withAdvisoryTryLock(
+    advisoryLockKey("uv", params.organizationId, params.lamp.id, params.todayKey.slice(0, 7)),
+    async () => {
+      // Под замком — заново: документ мог создать соседний запрос.
+      const again = (await findLinked()).linked;
+      if (again) return { doc: { id: again.id, responsibleUserId: again.responsibleUserId }, rollover: false };
+
+      const dateFrom = new Date(Date.UTC(year, month - 1, 1));
+      const dateTo = new Date(Date.UTC(year, month, 0));
+      const previous = await previousLampDocument(params.organizationId, template.id, params.lamp.id);
+      const carried = previous
+        ? carryStructureFromPrevious(UV_LAMP_RUNTIME_TEMPLATE_CODE, previous.config, {
+            liveEquipmentIds: new Set([params.lamp.id]),
+            periodFrom: dateFrom.toISOString().slice(0, 10),
+          })
+        : null;
+      const carriedSpec = carried && typeof carried.spec === "object" && carried.spec ? (carried.spec as Record<string, unknown>) : {};
+      // Ответственный — как у остальных документов журнала (слот «ответственных
+      // за журналы»), иначе — из прошлого документа лампы, если человек ещё работает.
+      const org = await db.organization.findUnique({ where: { id: params.organizationId }, select: { journalResponsibleUsersJson: true } });
+      const slots = ((org?.journalResponsibleUsersJson ?? {}) as Record<string, Record<string, string | null> | undefined>)[UV_LAMP_RUNTIME_TEMPLATE_CODE] ?? {};
+      const alive = await aliveUserIds(params.organizationId, [previous?.responsibleUserId, previous?.verifierUserId]);
+      const previousResponsible = previous?.responsibleUserId && alive.has(previous.responsibleUserId) ? previous.responsibleUserId : null;
+      const responsibleUserId = slots[getPrimarySlotId(UV_LAMP_RUNTIME_TEMPLATE_CODE)] ?? previousResponsible;
+      const created = await db.journalDocument.create({
+        data: {
+          organizationId: params.organizationId,
+          templateId: template.id,
+          title: `${UV_LAMP_RUNTIME_PAGE_TITLE} · ${params.lamp.name}`,
+          dateFrom,
+          dateTo,
+          status: "active",
+          responsibleUserId,
+          responsibleTitle: responsibleUserId && responsibleUserId === previousResponsible ? previous?.responsibleTitle ?? null : null,
+          verifierUserId: previous?.verifierUserId && alive.has(previous.verifierUserId) ? previous.verifierUserId : null,
+          config: {
+            ...(carried ?? {}),
+            lampNumber: typeof carried?.lampNumber === "string" && carried.lampNumber.trim() ? carried.lampNumber : params.lamp.name,
+            areaName: typeof carried?.areaName === "string" && carried.areaName.trim() ? carried.areaName : params.lamp.areaName,
+            spec: {
+              ...defaultUvSpecification(),
+              ...carriedSpec,
+              ...(params.lamp.lampLifetimeHours ? { lampLifetimeHours: params.lamp.lampLifetimeHours } : {}),
+            },
+            equipmentId: params.lamp.id,
+          } as never,
+        },
+        select: { id: true, responsibleUserId: true },
+      });
+      // Новый месяц по образцу прошлого — в аудит и колокольчик; первый документ лампы — молча, как раньше.
+      return { doc: created, rollover: previous !== null };
+    }
+  );
+  if (!locked.acquired) {
+    // Замок дольше попыток держит соседний запрос — он и создаёт документ.
+    const again = (await findLinked()).linked;
+    return again ? { id: again.id, responsibleUserId: again.responsibleUserId } : null;
+  }
+  if (locked.value.rollover) {
+    await announceQrRollover({
       organizationId: params.organizationId,
-      templateId: template.id,
-      title: `${UV_LAMP_RUNTIME_PAGE_TITLE} · ${params.lamp.name}`,
-      dateFrom,
-      dateTo,
-      status: "active",
-      responsibleUserId,
-      config: {
-        lampNumber: params.lamp.name,
-        areaName: params.lamp.areaName,
-        spec: { ...defaultUvSpecification(), ...(params.lamp.lampLifetimeHours ? { lampLifetimeHours: params.lamp.lampLifetimeHours } : {}) },
-        equipmentId: params.lamp.id,
-      } as never,
-    },
-    select: { id: true, responsibleUserId: true },
+      templateCode: UV_LAMP_RUNTIME_TEMPLATE_CODE,
+      journalName: template.name,
+      documentId: locked.value.doc.id,
+      source: "uv-lamp",
+    }).catch(() => null);
+  }
+  return locked.value.doc;
+}
+
+/** Последний документ журнала УФ именно этой лампы (любого статуса). */
+async function previousLampDocument(organizationId: string, templateId: string, lampId: string) {
+  const docs = await db.journalDocument.findMany({
+    where: { organizationId, templateId },
+    select: { config: true, responsibleUserId: true, responsibleTitle: true, verifierUserId: true },
+    orderBy: [{ dateFrom: "desc" }, { createdAt: "desc" }],
+    take: 200,
   });
-  return created;
+  return docs.find((doc) => normalizeUvRuntimeDocumentConfig(doc.config).equipmentId === lampId) ?? null;
+}
+
+async function aliveUserIds(organizationId: string, ids: Array<string | null | undefined>): Promise<Set<string>> {
+  const wanted = ids.filter((id): id is string => Boolean(id));
+  if (wanted.length === 0) return new Set();
+  const users = await db.user.findMany({
+    where: { id: { in: wanted }, organizationId, isActive: true, archivedAt: null },
+    select: { id: true },
+  });
+  return new Set(users.map((user) => user.id));
 }
 
 /** Кто отмечает лампу: закреплённые за ней, иначе ответственные журнала УФ-ламп, иначе все. */

@@ -168,6 +168,8 @@ function SettingsDialog(props: {
   title: string;
   /** Онбординг-гейт: только для диалога создания документа. */
   showEmptyState?: boolean;
+  /** В документе уже есть даты уборок — при смене года предупредить о переносе. */
+  hasDates?: boolean;
 }) {
   const [state, setState] = useState<SettingsState | null>(null);
   // Окно закрывается только при успехе, ошибка сервера видна здесь же.
@@ -233,7 +235,8 @@ function SettingsDialog(props: {
             />
 
             <DateField
-              label="Дата начала"
+              picker="wheel"
+              label="Дата документа"
               value={activeState.documentDate}
               onChange={(value) => {
                 const documentDate = toIsoDate(value);
@@ -279,6 +282,16 @@ function SettingsDialog(props: {
                 </SelectContent>
               </Select>
             </FloatingLabelField>
+
+            {props.mode === "edit" &&
+            props.hasDates &&
+            props.initial &&
+            activeState.year !== props.initial.year ? (
+              <p className="rounded-2xl bg-[#fff8eb] px-3.5 py-2.5 text-[12.5px] leading-[1.5] text-[#8a5a14]">
+                Даты плана и отметки о выполнении перенесутся на {activeState.year} год — те же
+                числа и месяцы. Для графика на следующий год удобнее «Сделать копию».
+              </p>
+            ) : null}
 
             <PositionEmployeePicker
               users={props.users}
@@ -700,6 +713,13 @@ export function SanitationDayDocumentsClient({
         mode="edit"
         users={users}
         initial={settingsInitialState}
+        hasDates={
+          settingsTarget
+            ? normalizeSanitationDayConfig(settingsTarget.config).rows.some(
+                (row) => row.cleanings.length > 0
+              )
+            : false
+        }
         onSubmit={async (value) => {
           if (!settingsTarget) return;
           await saveSettings(settingsTarget.id, value);

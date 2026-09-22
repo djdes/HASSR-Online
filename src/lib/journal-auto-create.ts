@@ -51,6 +51,8 @@ import {
 } from "@/lib/cleaning-document";
 import { buildDateKeys, toDateKey } from "@/lib/hygiene-document";
 import { buildDocumentAutoTitle } from "@/lib/journal-document-title";
+import { advisoryLockKey, withAdvisoryTryLock } from "@/lib/advisory-lock";
+import { carryStructureFromPrevious, structureCarryNeeds } from "@/lib/journal-structure-carry";
 
 /**
  * Название автосозданного документа.
@@ -103,6 +105,52 @@ async function fetchPreviousDocConfigForReuse(
     select: { config: true },
   });
   return stripPeriodSpecificCleaningFields(prev?.config);
+}
+
+/**
+ * Структура нового периода «по образцу прошлого» (белый список журналов —
+ * `journal-structure-carry.ts`): последний документ той же точки, из его
+ * конфига — состав холодильников / помещений / паспорт лампы / структура
+ * журналов с «Сделать копию». Удалённые из справочника объекты отсекаются.
+ * `null` — переносить нечего, документ соберётся из справочника.
+ */
+async function loadCarriedStructure(
+  db: PrismaClient,
+  args: {
+    organizationId: string;
+    templateId: string;
+    templateCode: string;
+    buildingId: string | null;
+    periodFrom: string;
+    documentTitle: string;
+  }
+): Promise<Record<string, unknown> | null> {
+  const needs = structureCarryNeeds(args.templateCode);
+  if (!needs) return null;
+  const previous = await db.journalDocument.findFirst({
+    where: {
+      organizationId: args.organizationId,
+      templateId: args.templateId,
+      ...buildingWhere(args.buildingId),
+    },
+    orderBy: [{ dateFrom: "desc" }, { createdAt: "desc" }],
+    select: { config: true },
+  });
+  if (!previous) return null;
+  const [equipment, rooms] = await Promise.all([
+    needs.equipment
+      ? db.equipment.findMany({ where: { area: { organizationId: args.organizationId } }, select: { id: true } })
+      : Promise.resolve([] as Array<{ id: string }>),
+    needs.rooms
+      ? db.room.findMany({ where: { building: { organizationId: args.organizationId } }, select: { id: true } })
+      : Promise.resolve([] as Array<{ id: string }>),
+  ]);
+  return carryStructureFromPrevious(args.templateCode, previous.config, {
+    liveEquipmentIds: needs.equipment ? new Set(equipment.map((item) => item.id)) : undefined,
+    liveRoomIds: needs.rooms ? new Set(rooms.map((room) => room.id)) : undefined,
+    periodFrom: args.periodFrom,
+    documentTitle: args.documentTitle,
+  });
 }
 
 /**
@@ -541,6 +589,14 @@ export async function ensureActiveDocument(
      * общий документ периода, по точкам дублей не появляется.
      */
     buildingId?: string | null;
+    /**
+     * Новый период «по образцу прошлого»: состав холодильников, помещений
+     * климата, паспорт УФ-лампы и структура журналов с «Сделать копию»
+     * берутся из последнего документа (`journal-structure-carry.ts`).
+     * Включают восстановление прерванной цепочки — ночной крон и первый
+     * QR-скан нового периода.
+     */
+    carryPreviousStructure?: boolean;
   }
 ): Promise<CreateReport> {
   const now = args.now ?? new Date();
@@ -599,6 +655,9 @@ export async function ensureActiveDocument(
       journalPeriods: true,
       journalAutomationJson: true,
       autoJournalCodes: true,
+      // Какие слоты ответственных заданы в /settings/journal-responsibles —
+      // незаданные прерванная цепочка берёт из прошлого документа.
+      journalResponsibleUsersJson: true,
     },
   });
   const overrides = parseJournalPeriodsJson(orgRow?.journalPeriods ?? null);
@@ -650,13 +709,50 @@ export async function ensureActiveDocument(
     args.templateCode,
     args.buildingId ?? null,
   );
+  const title = autoDocumentTitle(args.templateCode, template.name, period);
+  // Прерванная цепочка (крон, QR): остальные журналы белого списка тоже
+  // стартуют со структуры прошлого документа, а не со справочника.
+  const carriedConfig =
+    !prevConfig && args.carryPreviousStructure
+      ? await loadCarriedStructure(db, {
+          organizationId: args.organizationId,
+          templateId: template.id,
+          templateCode: args.templateCode,
+          buildingId: args.buildingId ?? null,
+          periodFrom: period.dateFrom.toISOString().slice(0, 10),
+          documentTitle: title,
+        })
+      : null;
+  const inherited = args.inheritResponsiblesFromLastDocument
+    ? await inheritResponsiblesFromLastDocument(db, {
+        organizationId: args.organizationId,
+        templateId: template.id,
+        buildingId: args.buildingId ?? null,
+      })
+    : { responsibleUserId: null, verifierUserId: null };
+  // Прерванная цепочка: слот, НЕ заданный в /settings/journal-responsibles,
+  // получает человека из прошлого документа. Раньше наследование шло лишь
+  // запасным вариантом после авто-подбора по ростеру — и новый период
+  // рождался с «первым попавшимся» ответственным вместо прежнего.
+  const savedSlots =
+    ((orgRow?.journalResponsibleUsersJson ?? {}) as Record<string, Record<string, string | null> | undefined>)[
+      args.templateCode
+    ] ?? {};
+  const slotDesired = {
+    responsibleUserId:
+      desired.responsibleUserId ??
+      (savedSlots[getPrimarySlotId(args.templateCode)] ? null : inherited.responsibleUserId),
+    verifierUserId:
+      desired.verifierUserId ??
+      (savedSlots[getVerifierSlotId(args.templateCode)] ? null : inherited.verifierUserId),
+  };
   // Подтягиваем сохранённых в /settings/journal-responsibles
   // ответственных в config + responsibleUserId.
   const prefill = await prefillResponsiblesForNewDocument({
     organizationId: args.organizationId,
     journalCode: args.templateCode,
-    baseConfig: prevConfig ?? {},
-    slotOverrides: buildSlotOverrides(args.templateCode, desired),
+    baseConfig: prevConfig ?? carriedConfig ?? {},
+    slotOverrides: buildSlotOverrides(args.templateCode, slotDesired),
   });
   // C1: cleaning собирается от Room организации, а не от blueprint'ов.
   const cleaningRooms =
@@ -675,13 +771,6 @@ export async function ensureActiveDocument(
     now,
     cleaningRooms.length > 0 ? toRoomScheduleMap(cleaningRooms) : undefined,
   );
-  const inherited = args.inheritResponsiblesFromLastDocument
-    ? await inheritResponsiblesFromLastDocument(db, {
-        organizationId: args.organizationId,
-        templateId: template.id,
-        buildingId: args.buildingId ?? null,
-      })
-    : { responsibleUserId: null, verifierUserId: null };
   const responsibleUserId =
     prefill.responsibleUserId ?? inherited.responsibleUserId;
   const [responsibleTitle, seedEmployeeIds] = await Promise.all([
@@ -696,7 +785,7 @@ export async function ensureActiveDocument(
     data: {
       organizationId: args.organizationId,
       templateId: template.id,
-      title: autoDocumentTitle(args.templateCode, template.name, period),
+      title,
       dateFrom: period.dateFrom,
       dateTo: period.dateTo,
       status: "active",
@@ -1000,7 +1089,11 @@ export async function ensureNextPeriodDocument(
  * одного документа, покрывающего сегодня или будущее, — создаём
  * документ на ТЕКУЩИЙ период (периоды берутся из journal-period.ts с
  * учётом per-org override'ов). Ответственные наследуются из последнего
- * документа, если в /settings/journal-responsibles ничего не задано.
+ * документа, если в /settings/journal-responsibles ничего не задано;
+ * структура (холодильники, помещения климата, УФ-лампа, журналы с
+ * «Сделать копию») — «по образцу прошлого» (`journal-structure-carry.ts`).
+ * Решение по одной цепочке — `restoreBrokenChainForTemplate`, его же
+ * зовёт QR-переход периода.
  *
  * Что НЕ трогаем:
  *   • шаблоны без единого документа в орге — журналом не пользовались,
@@ -1032,7 +1125,6 @@ export async function ensureCurrentDocumentsForBrokenChains(
   }
 ): Promise<CreateReport[]> {
   const now = args.now ?? new Date();
-  const todayUtcStart = startOfUtcDay(now);
   const targets =
     args.buildingIds && args.buildingIds.length > 0 ? args.buildingIds : [null];
 
@@ -1052,11 +1144,6 @@ export async function ensureCurrentDocumentsForBrokenChains(
     select: { id: true, code: true, name: true, isActive: true },
   });
   const templateById = new Map(templates.map((tpl) => [tpl.id, tpl]));
-  const isCurrent = (group: { _max: { dateTo: Date | null } }) =>
-    Boolean(
-      group._max.dateTo &&
-        group._max.dateTo.getTime() >= todayUtcStart.getTime(),
-    );
 
   const reports: CreateReport[] = [];
   for (const templateId of templateIds) {
@@ -1073,58 +1160,115 @@ export async function ensureCurrentDocumentsForBrokenChains(
       continue;
     }
     const tplGroups = groups.filter((group) => group.templateId === templateId);
-    // Общий документ (без точки) покрывает все точки, свой — только свою.
-    const sharedCurrent = tplGroups.some(
-      (group) => (group.buildingId ?? null) === null && isCurrent(group),
-    );
-    const anyCurrent = tplGroups.some(isCurrent);
-
     for (const buildingId of targets) {
-      const hasCurrent =
-        buildingId === null
-          ? anyCurrent
-          : sharedCurrent ||
-            tplGroups.some(
-              (group) => group.buildingId === buildingId && isCurrent(group),
-            );
-      // Есть документ, который покрывает сегодня или начинается позже —
-      // цепочка цела (в т.ч. look-ahead документ на следующий период).
-      if (hasCurrent) {
-        reports.push({
-          code: template.code,
-          name: template.name,
-          created: false,
-          documentId: "",
-          reason: "has-current-document",
-        });
-        continue;
-      }
-
-      const kind: JournalPeriodKind =
-        overrides[template.code]?.kind ?? resolveJournalPeriodKind(template.code);
-      if (kind === "perpetual") {
-        reports.push({
-          code: template.code,
-          name: template.name,
-          created: false,
-          documentId: "",
-          reason: "perpetual-manual-only",
-        });
-        continue;
-      }
-
-      const report = await ensureActiveDocument(db, {
-        organizationId: args.organizationId,
-        templateCode: template.code,
-        now,
-        inheritResponsiblesFromLastDocument: true,
-        buildingId,
-      });
       reports.push(
-        report.created ? { ...report, reason: "broken-chain-restored" } : report
+        await restoreBrokenChainForTemplate(db, {
+          organizationId: args.organizationId,
+          template,
+          buildingId,
+          now,
+          overrides,
+          groups: tplGroups,
+        }),
       );
     }
   }
 
   return reports;
+}
+
+/** Группа документов шаблона: точка → самая поздняя дата окончания. */
+export type TemplateDocumentGroup = {
+  buildingId?: string | null;
+  _max: { dateTo: Date | null };
+};
+
+/**
+ * Одна прерванная цепочка: шаблон × точка. Общая часть ночного крона
+ * (`ensureCurrentDocumentsForBrokenChains`) и QR-перехода периода
+ * (`journal-qr-rollover.ts`) — правило одно на оба входа:
+ *   • документов шаблона не было никогда — не создаём (журналом не
+ *     пользовались, навязывать его не надо);
+ *   • есть документ, покрывающий сегодня или начинающийся позже (любого
+ *     статуса, в т.ч. закрытый руководителем) — цепочка цела;
+ *   • `perpetual` — только руками;
+ *   • иначе документ текущего периода: ответственные — из последнего,
+ *     структура — «по образцу прошлого».
+ *
+ * Создание — под advisory-замком «журнал × точка»: крон и пять первых
+ * сканов после полуночи не заведут два бланка на один период. Внутри
+ * замка `ensureActiveDocument` заново проверяет «активный уже есть».
+ */
+export async function restoreBrokenChainForTemplate(
+  db: PrismaClient,
+  args: {
+    organizationId: string;
+    template: { id: string; code: string; name: string };
+    buildingId: string | null;
+    now?: Date;
+    overrides?: JournalPeriodOverrideMap;
+    /** Группы документов шаблона, если уже прочитаны (крон — одним запросом). */
+    groups?: TemplateDocumentGroup[];
+  }
+): Promise<CreateReport> {
+  const now = args.now ?? new Date();
+  const todayUtcStart = startOfUtcDay(now);
+  const skip = (reason: string): CreateReport => ({
+    code: args.template.code,
+    name: args.template.name,
+    created: false,
+    documentId: "",
+    reason,
+  });
+
+  let groups: TemplateDocumentGroup[];
+  if (args.groups) {
+    groups = args.groups;
+  } else {
+    const rows = await db.journalDocument.groupBy({
+      by: ["buildingId"],
+      where: { organizationId: args.organizationId, templateId: args.template.id },
+      _max: { dateTo: true },
+    });
+    groups = rows.map((row) => ({ buildingId: row.buildingId, _max: { dateTo: row._max.dateTo } }));
+  }
+  if (groups.length === 0) return skip("no-previous-document");
+
+  const isCurrent = (group: TemplateDocumentGroup) =>
+    Boolean(group._max.dateTo && group._max.dateTo.getTime() >= todayUtcStart.getTime());
+  // Общий документ (без точки) покрывает все точки, свой — только свою.
+  const hasCurrent =
+    args.buildingId === null
+      ? groups.some(isCurrent)
+      : groups.some(
+          (group) =>
+            ((group.buildingId ?? null) === null || group.buildingId === args.buildingId) &&
+            isCurrent(group),
+        );
+  // Есть документ, который покрывает сегодня или начинается позже —
+  // цепочка цела (в т.ч. look-ahead документ на следующий период).
+  if (hasCurrent) return skip("has-current-document");
+
+  const overrides = args.overrides ?? (await loadPeriodOverrides(db, args.organizationId));
+  const kind: JournalPeriodKind =
+    overrides[args.template.code]?.kind ?? resolveJournalPeriodKind(args.template.code);
+  if (kind === "perpetual") return skip("perpetual-manual-only");
+
+  const locked = await withAdvisoryTryLock(
+    advisoryLockKey("journal-period", args.organizationId, args.template.code, args.buildingId),
+    () =>
+      ensureActiveDocument(db, {
+        organizationId: args.organizationId,
+        templateCode: args.template.code,
+        now,
+        inheritResponsiblesFromLastDocument: true,
+        carryPreviousStructure: true,
+        buildingId: args.buildingId,
+      }),
+    { client: db },
+  );
+  // Замок держит другой создатель дольше попыток — он и создаст документ.
+  if (!locked.acquired) return skip("busy");
+  const report = locked.value;
+  return report.created ? { ...report, reason: "broken-chain-restored" } : report;
 }

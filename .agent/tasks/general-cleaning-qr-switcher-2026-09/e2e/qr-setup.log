@@ -1,0 +1,53 @@
+OK {
+  "password": "E2eTest2026!",
+  "org": "e2e-org-qr",
+  "today": "2026-09-22",
+  "periods": {
+    "prevMonthFrom": "2026-08-01",
+    "prevMonthTo": "2026-08-31",
+    "prevHalf": {
+      "from": "2026-09-01",
+      "to": "2026-09-15"
+    },
+    "curMonthFrom": "2026-09-01",
+    "curMonthTo": "2026-09-30"
+  },
+  "users": {
+    "manager": {
+      "id": "cmuctp55l0002089mc3lsn9w1",
+      "email": "qr-manager@e2e.local",
+      "name": "Кира Руководитель"
+    },
+    "cook": {
+      "id": "cmuctp55t0003089mjggl7v5b",
+      "email": "qr-cook@e2e.local",
+      "name": "Пётр Повар"
+    }
+  },
+  "equipment": {
+    "fridge": "cmucvlsls00039o9m3m1vsnuh",
+    "freezer": "cmucvlsm000049o9mimlp0b39",
+    "dead": "cmucvlsm600059o9mri4d9yjp",
+    "lamp": "cmucvlsmb00069o9mb16blusw"
+  },
+  "rooms": {
+    "room1": "cmucvlsmm00089o9muwmg6jax",
+    "room2": "cmucvlsmr00099o9mkg8th945"
+  },
+  "buildingId": "cmucvlsmf00079o9mstjtdueu",
+  "docs": {
+    "checklistPrev": "cmucvlsn3000a9o9mrqg6m8gq",
+    "coldPrev": "cmucvlsne000b9o9m5trr8b5u",
+    "climatePrev": "cmucvlsnm000c9o9msxegwu1k",
+    "uvPrev": "cmucvlsnq000d9o9mfaag2beg",
+    "metalPrev": "cmucvlsnv000e9o9m6cnu5fzj",
+    "writeoffPrev": "cmucvlsnz000f9o9m9crxx8or",
+    "writeoffClosed": "cmucvlso3000g9o9mstq58e2n",
+    "tracePrev": "cmucvlso7000h9o9m5ftodr3d",
+    "fryerPrev": "cmucvlsoc000i9o9m3io9tanm",
+    "maintPrev": "cmucvlsoi000j9o9mwl38jbxn"
+  },
+  "disabled": [
+    "traceability_test"
+  ]
+}

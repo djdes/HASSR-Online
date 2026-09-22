@@ -20,6 +20,7 @@ import {
   type ClimateRoomConfig,
 } from "@/lib/climate-document";
 import { findClimateRowForEquipment } from "@/lib/climate-fill";
+import { ensureQrPeriodDocuments } from "@/lib/journal-qr-rollover";
 
 /** Текст 409 и жёлтой плашки — один на страницу и на API. */
 export const EQUIPMENT_FILL_NO_DOCUMENT_ERROR =
@@ -46,6 +47,14 @@ export async function resolveEquipmentFillTargets(params: {
 }): Promise<EquipmentFillTargets> {
   const { equipment, organizationId, day } = params;
 
+  // Первый скан нового периода: документ холодильников создаётся по
+  // образцу прошлого (те же холодильники), и замер ложится как обычно.
+  await ensureQrPeriodDocuments({
+    organizationId,
+    templateCode: COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE,
+    todayKey: day.toISOString().slice(0, 10),
+    source: "equipment-fill",
+  });
   const documents = await db.journalDocument.findMany({
     where: {
       organizationId,
@@ -93,6 +102,12 @@ async function resolveClimateTarget(params: {
   });
   if (!mapping) return null;
 
+  await ensureQrPeriodDocuments({
+    organizationId,
+    templateCode: CLIMATE_DOCUMENT_TEMPLATE_CODE,
+    todayKey: day.toISOString().slice(0, 10),
+    source: "equipment-fill",
+  });
   const document = await db.journalDocument.findFirst({
     where: {
       organizationId,

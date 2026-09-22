@@ -3,14 +3,18 @@
 import { TOUR } from "@/lib/tour-anchors";
 
 import { useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import {
   MoreHorizontal,
   Printer,
   PrinterCheck,
   Settings2,
+  Sticker,
 } from "lucide-react";
 import { toast } from "sonner";
 import { QrCode } from "lucide-react";
+import { isJournalObjectQrCode, journalQrHref } from "@/lib/journal-qr-target";
+import { resolveJournalCodeAlias } from "@/lib/source-journal-map";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { QrFillPreview } from "@/components/qr/qr-fill-preview";
@@ -108,14 +112,20 @@ export function DocumentActionsBar({
 }: Props) {
   // Рядовому сотруднику управление документом не показываем: сервер на
   // такой PATCH отвечает 403, и человек видел только тост «Недостаточно
-  // прав». Печать и QR остаются — они никому не запрещены.
+  // прав». Печать остаётся — она никому не запрещена. QR-плакаты и
+  // наклейки собирает только руководитель (их API и страница — для него).
   const canManage = useCanManageJournalDocument();
+  const router = useRouter();
   const items = (canManage ? menuItems : []).filter(Boolean);
   const hasPrint = Boolean(showPrint && documentId);
   // Код журнала — из `backHref` (`/journals/<code>`): его передают все
   // клиенты, и отдельный проп не нужен. Есть код и документ — есть QR.
-  const journalCode = backHref?.match(/^\/journals\/([^/?#]+)/)?.[1] ?? null;
-  const hasQr = Boolean(documentId && journalCode);
+  const routeCode = backHref?.match(/^\/journals\/([^/?#]+)/)?.[1] ?? null;
+  const journalCode = routeCode ? resolveJournalCodeAlias(routeCode) : null;
+  const hasQr = Boolean(canManage && documentId && journalCode);
+  // Холодильники, склады, УФ-лампы: плаката журнала нет — записывают по
+  // наклейке на самом объекте. Пункт ведёт на наклейки объектов документа.
+  const objectQr = hasQr && isJournalObjectQrCode(journalCode);
   const [qrOpen, setQrOpen] = useState(false);
 
   // Панель рендерят почти все журналы — публикуем состояние отмены в
@@ -244,17 +254,27 @@ export function DocumentActionsBar({
                       },
                     ]
                   : []),
-                ...(hasQr
+                ...(objectQr
                   ? [
                       {
-                        key: "qr-fill",
-                        label: "QR: заполнить с телефона",
-                        icon: <QrCode className="size-4 text-[#5566f6]" />,
-                        title: "Плакат с QR-кодом: сотрудник сканирует и вносит запись в этот документ без входа",
-                        onSelect: () => setQrOpen(true),
+                        key: "qr-stickers",
+                        label: "QR-наклейки объектов",
+                        icon: <Sticker className="size-4 text-[#5566f6]" />,
+                        title: "Наклейки с QR-кодом на каждый объект этого документа: сотрудник сканирует объект и вносит показание",
+                        onSelect: () => router.push(journalQrHref(journalCode as string, { documentId })),
                       },
                     ]
-                  : []),
+                  : hasQr
+                    ? [
+                        {
+                          key: "qr-fill",
+                          label: "QR: заполнить с телефона",
+                          icon: <QrCode className="size-4 text-[#5566f6]" />,
+                          title: "Плакат с QR-кодом: сотрудник сканирует и вносит запись в этот документ без входа",
+                          onSelect: () => setQrOpen(true),
+                        },
+                      ]
+                    : []),
                 ...items.map((item) => ({
                   key: item.key,
                   label: item.label,
@@ -281,7 +301,7 @@ export function DocumentActionsBar({
         </div>
       </div>
       {children}
-      {hasQr ? (
+      {hasQr && !objectQr ? (
         <Dialog open={qrOpen} onOpenChange={setQrOpen}>
           <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
             <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>

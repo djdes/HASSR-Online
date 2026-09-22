@@ -12,6 +12,7 @@ import {
   normalizeClimateRoomNorms,
 } from "@/lib/climate-document";
 import { findClimateRowForRoom, pickNearestControlTime } from "@/lib/climate-fill";
+import { ensureQrPeriodDocuments } from "@/lib/journal-qr-rollover";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { verifyQrFillTokenFor } from "@/lib/qr-fill-token";
 import { orgTodayKey } from "@/lib/timezone";
@@ -102,6 +103,15 @@ export default async function RoomFillPage({
   const dateKey = orgTodayKey(timezone, now);
   const day = new Date(`${dateKey}T00:00:00.000Z`);
 
+  // Первый скан нового периода: документ климата точки создаётся по
+  // образцу прошлого (те же помещения и сроки), форма работает как обычно.
+  await ensureQrPeriodDocuments({
+    organizationId,
+    templateCode: CLIMATE_DOCUMENT_TEMPLATE_CODE,
+    todayKey: dateKey,
+    anchor: { buildingId: room.buildingId },
+    source: "room-fill",
+  });
   const [employees, documents] = await Promise.all([
     db.user.findMany({
       where: { organizationId, ...ORG_ROSTER_WHERE },

@@ -2,13 +2,22 @@
  * TasksFlow adapter for «График и учет генеральных уборок»
  * (general_cleaning / sanitation_day).
  *
- * Mapping:
- *   • adapter row  = each room row in the document config
- *   • completion   = mark current month's fact cell with "✓"
- *   • schedule     = recurring monthly (1st of month)
+ * 2026-09-22 — задача на каждую ПЛАНОВУЮ дату, а не ежемесячная
+ * повторяющаяся на строку (см. `sanitation-day-tasks.ts`):
+ *   • adapter row  = строка графика (помещение) — для QR и выбора строки;
+ *     подпись «По плану сегодня» / «Следующая: 25.09»;
+ *   • syncDocument = планировщик + TasksFlowOutbox одной транзакцией:
+ *     сегодняшние открытые уборки → createTask (разовая задача),
+ *     убранные из плана даты → deleteTask, отмеченные руководителем →
+ *     completeTask. Прямых вызовов TF API здесь нет (П-12, П-15, П-19);
+ *   • completion   = отметка ровно той плановой уборки, днём выполнения
+ *     по поясу организации, под блокировкой документа.
  */
-import type { TasksFlowIntegration } from "@prisma/client";
+import type { Prisma, TasksFlowIntegration } from "@prisma/client";
 import { db } from "@/lib/db";
+import { withDocumentConfigLock } from "@/lib/document-config-lock";
+import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
+import { orgTodayKey } from "@/lib/timezone";
 import {
   SANITATION_DAY_TEMPLATE_CODE,
   type SanitationDayConfig,
@@ -17,10 +26,17 @@ import {
 } from "@/lib/sanitation-day-document";
 import { effectiveStepRequirePhoto, parseScopeSteps } from "@/lib/cleaning-document";
 import { toDateKey } from "@/lib/hygiene-document";
+import { enqueueOutbox, type OutboxClientLike } from "@/lib/tasksflow-outbox-actions";
+import { formatDayMonth, formatDayMonthWeekday } from "@/lib/wheel-date";
 import {
-  TasksFlowError,
-  tasksflowClientFor,
-} from "@/lib/tasksflow-client";
+  applyTaskCompletion,
+  nextOpenCleaning,
+  parseGcRowKey,
+  planGeneralCleaningTasks,
+  type GcPlanInput,
+  type GcPlannerRoom,
+  type GcTaskPlan,
+} from "./sanitation-day-tasks";
 import {
   EMPTY_SYNC_REPORT,
   type AdapterDocument,
@@ -31,15 +47,13 @@ import {
 } from "./types";
 
 const TEMPLATE_CODE = SANITATION_DAY_TEMPLATE_CODE;
-const CATEGORY = "WeSetup · Ген. уборки";
-const MARK = "✓";
 
 /**
  * 2026-09-04: единый справочник помещений. Строка графика связана с Room
  * (`roomId`): ответственный — первый уборщик помещения, проверяющий —
  * первый проверяющий, фото и шаги формы — из карточки помещения
- * (generalScope / requirePhoto), день месяца — из generalMonthDays.
- * Без связи — как раньше: ответственный документа, 8 стандартных шагов.
+ * (generalScope / requirePhoto). Без связи — ответственный документа,
+ * 8 стандартных шагов, задач по датам нет.
  */
 type DirectoryRoomForSanitation = {
   id: string;
@@ -49,6 +63,7 @@ type DirectoryRoomForSanitation = {
   requirePhoto: boolean;
   generalScope: unknown;
   generalScheduleType: string;
+  generalDays: number;
   generalMonthDays: unknown;
 };
 
@@ -60,10 +75,15 @@ const DIRECTORY_ROOM_SELECT = {
   requirePhoto: true,
   generalScope: true,
   generalScheduleType: true,
+  generalDays: true,
   generalMonthDays: true,
 } as const;
 
-/** День месяца для TF из Room.generalMonthDays («last» → 28: есть в любом месяце). */
+/**
+ * День месяца для повторяющейся задачи TF (контракт адаптера, общий
+ * «Привязать строку»). Задачи по датам графика его не используют.
+ * «last» → 28: есть в любом месяце.
+ */
 function monthDayForRoom(room: DirectoryRoomForSanitation | undefined): number {
   if (!room || room.generalScheduleType !== "monthly") return 1;
   const days = Array.isArray(room.generalMonthDays) ? room.generalMonthDays : [];
@@ -77,31 +97,183 @@ function monthDayForRoom(room: DirectoryRoomForSanitation | undefined): number {
 
 type DocWithMonthDays = AdapterDocument & { _monthDayByRowKey?: Record<string, number> };
 
-function currentMonthKey(): string {
-  const now = new Date();
-  const month = now.getUTCMonth() + 1;
-  const map: Record<number, string> = {
-    1: "jan",
-    2: "feb",
-    3: "mar",
-    4: "apr",
-    5: "may",
-    6: "jun",
-    7: "jul",
-    8: "aug",
-    9: "sep",
-    10: "oct",
-    11: "nov",
-    12: "dec",
+function publicBaseUrl(): string {
+  return ((process.env.NEXTAUTH_URL ?? "").trim() || "https://wesetup.ru").replace(/\/+$/, "");
+}
+
+async function organizationTodayKey(organizationId: string): Promise<string> {
+  const org = await db.organization.findUnique({
+    where: { id: organizationId },
+    select: { timezone: true },
+  });
+  return orgTodayKey(org?.timezone ?? undefined);
+}
+
+export type GeneralCleaningPlan = {
+  plan: GcTaskPlan;
+  input: GcPlanInput;
+  organizationId: string;
+};
+
+/**
+ * Что нужно сделать в TasksFlow по документу прямо сейчас — без записи.
+ * null — документ не наш, закрыт или чужой организации.
+ */
+export async function buildGeneralCleaningPlan(args: {
+  integration: Pick<TasksFlowIntegration, "id" | "organizationId">;
+  documentId: string;
+  todayKey?: string;
+}): Promise<GeneralCleaningPlan | null> {
+  const doc = await db.journalDocument.findUnique({
+    where: { id: args.documentId },
+    select: {
+      id: true,
+      title: true,
+      organizationId: true,
+      status: true,
+      config: true,
+      responsibleUserId: true,
+      buildingId: true,
+      template: { select: { code: true } },
+    },
+  });
+  if (
+    !doc ||
+    doc.organizationId !== args.integration.organizationId ||
+    doc.template.code !== TEMPLATE_CODE ||
+    doc.status === "closed"
+  ) {
+    return null;
+  }
+
+  const [rooms, activeUsers, userLinks, links, todayKey, building] = await Promise.all([
+    db.room.findMany({
+      where: { building: { organizationId: doc.organizationId } },
+      select: DIRECTORY_ROOM_SELECT,
+    }),
+    db.user.findMany({
+      where: { organizationId: doc.organizationId, ...ORG_ROSTER_WHERE },
+      select: { id: true },
+    }),
+    db.tasksFlowUserLink.findMany({
+      where: { integrationId: args.integration.id },
+      select: { wesetupUserId: true, tasksflowUserId: true },
+    }),
+    db.tasksFlowTaskLink.findMany({
+      where: { integrationId: args.integration.id, journalDocumentId: doc.id },
+      select: { id: true, rowKey: true, tasksflowTaskId: true, remoteStatus: true, kind: true },
+    }),
+    args.todayKey ? Promise.resolve(args.todayKey) : organizationTodayKey(doc.organizationId),
+    doc.buildingId
+      ? db.building.findUnique({ where: { id: doc.buildingId }, select: { name: true } })
+      : Promise.resolve(null),
+  ]);
+
+  const active = new Set(activeUsers.map((user) => user.id));
+  const plannerRooms = new Map<string, GcPlannerRoom>(
+    rooms.map((room) => [
+      room.id,
+      {
+        cleanerUserIds: room.cleanerUserIds.filter((id) => active.has(id)),
+        verifierUserIds: room.verifierUserIds.filter((id) => active.has(id)),
+        requirePhoto: room.requirePhoto === true,
+      },
+    ]),
+  );
+  const config = applyRoomDirectoryToSanitationConfig(
+    normalizeSanitationDayConfig(doc.config),
+    rooms,
+  );
+  const responsibleUserId =
+    [config.responsibleEmployeeId, doc.responsibleUserId].find(
+      (id): id is string => typeof id === "string" && active.has(id),
+    ) ?? null;
+  const tfUserIdByWesetupId = new Map<string, number>();
+  for (const link of userLinks) {
+    if (link.tasksflowUserId !== null) tfUserIdByWesetupId.set(link.wesetupUserId, link.tasksflowUserId);
+  }
+
+  const input: GcPlanInput = {
+    documentId: doc.id,
+    documentTitle: doc.title,
+    integrationId: args.integration.id,
+    baseUrl: publicBaseUrl(),
+    todayKey,
+    config,
+    rooms: plannerRooms,
+    responsibleUserId,
+    tfUserIdByWesetupId,
+    links,
+    buildingName: building?.name ?? null,
   };
-  return map[month] ?? "jan";
+  return { plan: planGeneralCleaningTasks(input), input, organizationId: doc.organizationId };
+}
+
+/** План → команды outbox одной транзакцией. Ссылки убранных дат удаляются сразу. */
+async function commitGeneralCleaningPlan(
+  integration: Pick<TasksFlowIntegration, "id">,
+  built: GeneralCleaningPlan,
+): Promise<void> {
+  const { plan, input, organizationId } = built;
+  if (plan.create.length === 0 && plan.remove.length === 0 && plan.complete.length === 0) return;
+  await db.$transaction(async (tx) => {
+    const client = tx as unknown as OutboxClientLike;
+    const base = { integrationId: integration.id, organizationId };
+    for (const command of plan.create) {
+      await enqueueOutbox(
+        client,
+        {
+          ...base,
+          idempotencyKey: command.idempotencyKey,
+          action: "createTask",
+          payload: {
+            journalCode: TEMPLATE_CODE,
+            documentId: input.documentId,
+            rowKey: command.rowKey,
+            rowId: command.rowId,
+            dateKey: command.dateKey,
+            task: command.task,
+          },
+        },
+        { requeue: true },
+      );
+    }
+    for (const command of plan.remove) {
+      await enqueueOutbox(client, {
+        ...base,
+        idempotencyKey: command.idempotencyKey,
+        action: "deleteTask",
+        payload: {
+          taskId: command.taskId,
+          journalDocumentId: input.documentId,
+          rowKey: command.rowKey,
+          reason: "general-cleaning-date-removed",
+        },
+      });
+      // deleteMany: ссылку могли уже удалить параллельно — это не ошибка.
+      await tx.tasksFlowTaskLink.deleteMany({ where: { id: command.linkId } });
+    }
+    for (const command of plan.complete) {
+      await enqueueOutbox(client, {
+        ...base,
+        idempotencyKey: command.idempotencyKey,
+        action: "completeTask",
+        payload: {
+          taskId: command.taskId,
+          journalDocumentId: input.documentId,
+          rowKey: command.rowKey,
+          reason: "general-cleaning-marked-in-journal",
+        },
+      });
+    }
+  });
 }
 
 export const sanitationDayAdapter: JournalAdapter = {
   meta: {
     templateCode: TEMPLATE_CODE,
     label: "Генеральные уборки",
-    description: "Контроль проведения генеральных уборок по помещениям",
+    description: "Задача в день каждой плановой генеральной уборки помещения",
     iconName: "broom",
   },
 
@@ -118,7 +290,7 @@ export const sanitationDayAdapter: JournalAdapter = {
     return [
       `Журнал: ${doc.documentTitle}`,
       `Период: ${doc.period.from} — ${doc.period.to}`,
-      "Отметьте факт проведения уборки за текущий месяц.",
+      "Отметьте проведённую генеральную уборку.",
     ].join("\n");
   },
 
@@ -138,10 +310,13 @@ export const sanitationDayAdapter: JournalAdapter = {
       },
       orderBy: { dateFrom: "desc" },
     });
-    const directoryRooms = await db.room.findMany({
-      where: { building: { organizationId } },
-      select: DIRECTORY_ROOM_SELECT,
-    });
+    const [directoryRooms, todayKey] = await Promise.all([
+      db.room.findMany({
+        where: { building: { organizationId } },
+        select: DIRECTORY_ROOM_SELECT,
+      }),
+      organizationTodayKey(organizationId),
+    ]);
     const roomById = new Map(directoryRooms.map((r) => [r.id, r]));
     return docs.map((doc) => {
       const config = applyRoomDirectoryToSanitationConfig(
@@ -159,9 +334,16 @@ export const sanitationDayAdapter: JournalAdapter = {
         rows: (config.rows ?? []).map<AdapterRow>((row) => {
           const room = row.roomId ? roomById.get(row.roomId) : undefined;
           monthDayByRowKey[row.id] = monthDayForRoom(room);
+          const next = nextOpenCleaning(row, todayKey);
+          const sublabel = next?.planned
+            ? next.planned === todayKey
+              ? "По плану сегодня"
+              : `Следующая: ${formatDayMonth(next.planned)}`
+            : undefined;
           return {
             rowKey: row.id,
             label: row.roomName || "Помещение",
+            ...(sublabel ? { sublabel } : {}),
             responsibleUserId:
               room?.cleanerUserIds[0] ?? config.responsibleEmployeeId ?? null,
             verifierUserId: room?.verifierUserIds[0] ?? null,
@@ -175,165 +357,51 @@ export const sanitationDayAdapter: JournalAdapter = {
   },
 
   async syncDocument({ integration, documentId }): Promise<JournalSyncReport> {
-    const doc = await db.journalDocument.findUnique({
-      where: { id: documentId },
-      include: { template: true },
-    });
-    if (
-      !doc ||
-      doc.organizationId !== integration.organizationId ||
-      doc.template.code !== TEMPLATE_CODE
-    ) {
-      return EMPTY_SYNC_REPORT;
-    }
-    if (doc.status === "closed") return EMPTY_SYNC_REPORT;
-
-    const directoryRooms = await db.room.findMany({
-      where: { building: { organizationId: doc.organizationId } },
-      select: DIRECTORY_ROOM_SELECT,
-    });
-    const roomById = new Map(directoryRooms.map((r) => [r.id, r]));
-    const config = applyRoomDirectoryToSanitationConfig(
-      normalizeSanitationDayConfig(doc.config) as SanitationDayConfig,
-      directoryRooms,
-    );
-    const rows = config.rows ?? [];
-
-    const userLinks = await db.tasksFlowUserLink.findMany({
-      where: { integrationId: integration.id },
-      select: { wesetupUserId: true, tasksflowUserId: true },
-    });
-    const linkByUser = new Map(userLinks.map((l) => [l.wesetupUserId, l]));
-
-    const existingTaskLinks = await db.tasksFlowTaskLink.findMany({
-      where: { integrationId: integration.id, journalDocumentId: documentId },
-      select: { id: true, rowKey: true, tasksflowTaskId: true },
-    });
-    const taskLinkByRow = new Map(
-      existingTaskLinks.map((tl) => [tl.rowKey, tl])
-    );
-
-    const client = tasksflowClientFor(integration);
-    const report: JournalSyncReport = {
-      created: 0,
-      updated: 0,
-      deleted: 0,
-      skippedNoLink: [],
+    const built = await buildGeneralCleaningPlan({ integration, documentId });
+    if (!built) return EMPTY_SYNC_REPORT;
+    await commitGeneralCleaningPlan(integration, built);
+    return {
+      created: built.plan.create.length,
+      updated: built.plan.complete.length,
+      deleted: built.plan.remove.length,
+      skippedNoLink: built.plan.skippedNoLink,
       errors: [],
     };
-
-    const dateFromIso = toDateKey(doc.dateFrom);
-    const dateToIso = toDateKey(doc.dateTo);
-    const seen = new Set<string>();
-
-    for (const row of rows) {
-      seen.add(row.id);
-      const room = row.roomId ? roomById.get(row.roomId) : undefined;
-      const responsibleUserId =
-        room?.cleanerUserIds[0] ?? config.responsibleEmployeeId;
-      let remoteUserId: number | null = null;
-      if (responsibleUserId) {
-        const link = linkByUser.get(responsibleUserId);
-        remoteUserId = link?.tasksflowUserId ?? null;
-      }
-      if (!remoteUserId) {
-        report.skippedNoLink.push(row.id);
-        continue;
-      }
-
-      const payload = {
-        title: `Ген. уборка · ${row.roomName || "Помещение"}`,
-        workerId: remoteUserId,
-        requiresPhoto: room?.requirePhoto === true,
-        isRecurring: true,
-        monthDay: monthDayForRoom(room),
-        category: CATEGORY,
-        description: [
-          `Журнал: ${doc.title}`,
-          `Период: ${dateFromIso} — ${dateToIso}`,
-          `Помещение: ${row.roomName || "—"}`,
-        ].join("\n"),
-      };
-
-      const existing = taskLinkByRow.get(row.id);
-      try {
-        if (existing) {
-          await client.updateTask(existing.tasksflowTaskId, payload);
-          await db.tasksFlowTaskLink.update({
-            where: { id: existing.id },
-            data: { lastDirection: "push" },
-          });
-          report.updated += 1;
-        } else {
-          const created = await client.createTask(payload);
-          await db.tasksFlowTaskLink.create({
-            data: {
-              integrationId: integration.id,
-              journalCode: TEMPLATE_CODE,
-              journalDocumentId: documentId,
-              rowKey: row.id,
-              tasksflowTaskId: created.id,
-              remoteStatus: created.isCompleted ? "completed" : "active",
-              lastDirection: "push",
-            },
-          });
-          report.created += 1;
-        }
-      } catch (err) {
-        const msg =
-          err instanceof TasksFlowError
-            ? `${err.status} ${err.message}`
-            : err instanceof Error
-            ? err.message
-            : "unknown error";
-        report.errors.push({ rowKey: row.id, message: msg });
-      }
-    }
-
-    for (const tl of existingTaskLinks) {
-      if (seen.has(tl.rowKey)) continue;
-      try {
-        await client.deleteTask(tl.tasksflowTaskId);
-      } catch (err) {
-        const status = err instanceof TasksFlowError ? err.status : 0;
-        if (status !== 404) {
-          report.errors.push({
-            rowKey: tl.rowKey,
-            message: `delete: ${err instanceof Error ? err.message : "unknown"}`,
-          });
-        }
-      }
-      await db.tasksFlowTaskLink
-        .delete({ where: { id: tl.id } })
-        .catch(() => null);
-      report.deleted += 1;
-    }
-
-    return report;
   },
 
-  async applyRemoteCompletion({ documentId, rowKey, completed, todayKey }) {
+  async applyRemoteCompletion({ documentId, rowKey, completed }) {
     const doc = await db.journalDocument.findUnique({
       where: { id: documentId },
-      include: { template: { select: { code: true } } },
+      select: {
+        organizationId: true,
+        status: true,
+        template: { select: { code: true } },
+      },
     });
-    if (!doc || doc.template.code !== TEMPLATE_CODE) return false;
+    if (!doc || doc.template.code !== TEMPLATE_CODE || doc.status === "closed") return false;
 
-    const config = normalizeSanitationDayConfig(doc.config) as SanitationDayConfig;
-    const rowIndex = config.rows.findIndex((r) => r.id === rowKey);
-    if (rowIndex < 0) return false;
-
-    const monthKey = currentMonthKey() as keyof typeof config.rows[typeof rowIndex]["fact"];
-    const before = config.rows[rowIndex].fact[monthKey] ?? "";
-    const next = completed ? MARK : "";
-    if (before === next) return false;
-
-    (config.rows[rowIndex].fact as Record<string, string>)[monthKey] = next;
-    await db.journalDocument.update({
-      where: { id: documentId },
-      data: { config },
+    // День выполнения — по поясу организации, а не UTC вызывающего:
+    // до 03:00 МСК UTC-дата ещё вчерашняя.
+    const doneKey = await organizationTodayKey(doc.organizationId);
+    const changed = await withDocumentConfigLock(documentId, async (locked) => {
+      if (locked.status === "closed" || locked.templateCode !== TEMPLATE_CODE) return null;
+      const result = applyTaskCompletion(normalizeSanitationDayConfig(locked.config), {
+        rowKey,
+        doneKey,
+        completed,
+      });
+      if (!result.changed) return null;
+      // Прочие ключи конфига (шапка, closedAt) — как были.
+      const extras =
+        locked.config && typeof locked.config === "object" && !Array.isArray(locked.config)
+          ? (locked.config as Record<string, unknown>)
+          : {};
+      return {
+        config: { ...extras, ...result.config } as unknown as Prisma.InputJsonValue,
+        result: true,
+      };
     });
-    return true;
+    return changed === true;
   },
 
   /**
@@ -341,9 +409,8 @@ export const sanitationDayAdapter: JournalAdapter = {
    * в TF Mini App видел «Форма не требует заполнения». Sanitation day —
    * большой ХАССП-журнал, нужен полноценный wizard.
    *
-   * Pipeline: чек-лист стандартных шагов санитарного дня для конкретного
-   * помещения (label из row.title). photoMode: required — это monthly
-   * генеральная очистка, fixate evidence обязательно.
+   * Pipeline: шаги генеральной уборки конкретного помещения. rowKey —
+   * строка графика или задача на дату (`gc::<rowId>::<дата>`).
    */
   async getTaskForm({ documentId, rowKey }) {
     const doc = await db.journalDocument.findUnique({
@@ -360,16 +427,19 @@ export const sanitationDayAdapter: JournalAdapter = {
       normalizeSanitationDayConfig(doc.config) as SanitationDayConfig,
       directoryRooms,
     );
-    const row = config.rows.find((r) => r.id === rowKey);
+    const gc = parseGcRowKey(rowKey);
+    const rowId = gc?.rowId ?? rowKey;
+    const row = config.rows.find((r) => r.id === rowId);
     const roomName = row?.roomName ?? "помещение";
     const room = row?.roomId ? directoryRooms.find((r) => r.id === row.roomId) : undefined;
+    const dateSuffix = gc ? ` · ${formatDayMonthWeekday(gc.dateKey)}` : "";
 
     // Шаги — из карточки помещения (состав генеральной уборки), если он
     // задан; иначе стандартный список.
     const roomSteps = parseScopeSteps(room?.generalScope);
     if (room && roomSteps.length > 0) {
       return {
-        intro: `Генеральная уборка · ${roomName}\nСостав из карточки помещения. Выполняйте шаги по порядку.`,
+        intro: `Генеральная уборка · ${roomName}${dateSuffix}\nСостав из карточки помещения. Выполняйте шаги по порядку.`,
         fields: [],
         pipeline: roomSteps.map((step, idx) => ({
           id: `step-${idx + 1}`,
@@ -395,7 +465,7 @@ export const sanitationDayAdapter: JournalAdapter = {
     ];
 
     return {
-      intro: `Санитарный день · ${roomName}\nПолная глубокая уборка с дезинфекцией. Каждый шаг — фотофиксация результата.`,
+      intro: `Генеральная уборка · ${roomName}${dateSuffix}\nПолная глубокая уборка с дезинфекцией. Каждый шаг — фотофиксация результата.`,
       fields: [],
       pipeline: steps.map((title, idx) => ({
         id: `step-${idx + 1}`,
@@ -403,7 +473,7 @@ export const sanitationDayAdapter: JournalAdapter = {
         detail: `Шаг ${idx + 1} из ${steps.length}. После выполнения — фото и «Сделал».`,
         photoMode: "required" as const,
       })),
-      submitLabel: "Завершить санитарный день",
+      submitLabel: "Завершить генеральную уборку",
     };
   },
 };

@@ -75,10 +75,18 @@ async function fetchOrgDataForDefaults(
       orderBy: { name: "asc" },
     }),
     // 2026-09-04: единый справочник помещений — климат и график
-    // ген. уборок сидируются из Room.
+    // ген. уборок сидируются из Room (2026-09-22: вместе с графиком
+    // генуборки — план сразу заполняется датами).
     db.room.findMany({
       where: { building: { organizationId } },
-      select: { id: true, name: true, climateNorms: true },
+      select: {
+        id: true,
+        name: true,
+        climateNorms: true,
+        generalScheduleType: true,
+        generalDays: true,
+        generalMonthDays: true,
+      },
       orderBy: [{ buildingId: "asc" }, { sortOrder: "asc" }, { name: "asc" }],
     }),
     db.equipment.findMany({

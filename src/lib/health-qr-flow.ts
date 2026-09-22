@@ -8,6 +8,7 @@ import { renderHealthDay, renderHealthForm, renderHealthSuspended, renderHealthT
 import { notifyHygieneDeclaration } from "@/lib/hygiene-declaration-notify";
 import { applyHygieneVerification, hygieneV2View } from "@/lib/hygiene-v2";
 import { renderResult } from "@/lib/journal-fill-html";
+import { ensureQrPeriodDocuments } from "@/lib/journal-qr-rollover";
 import { listFillEmployees, type JournalFillEmployee } from "@/lib/journal-fill";
 import { isExaminationExpired, normalizeMedBookEntryData } from "@/lib/med-book-document";
 import { QR_FILL_RATE_LIMIT_ERROR, qrFillRateKey, recordQrFillAudit } from "@/lib/qr-fill-audit";
@@ -60,11 +61,25 @@ async function resolvePair(ctx: HealthCtx): Promise<{ hygieneId: string | null; 
   const other = ctx.code === "hygiene" ? "health_check" : "hygiene";
   let companionId: string | null = null;
   if (!ctx.disabledCodes.includes(other)) {
-    const candidates = await db.journalDocument.findMany({
-      where: { organizationId: ctx.orgId, status: "active", template: { code: other }, dateFrom: { lte: day }, dateTo: { gte: day } },
-      select: { id: true, buildingId: true },
-      orderBy: { dateFrom: "desc" },
-    });
+    const listCandidates = () =>
+      db.journalDocument.findMany({
+        where: { organizationId: ctx.orgId, status: "active", template: { code: other }, dateFrom: { lte: day }, dateTo: { gte: day } },
+        select: { id: true, buildingId: true },
+        orderBy: { dateFrom: "desc" },
+      });
+    let candidates = await listCandidates();
+    if (candidates.length === 0) {
+      // Период парного журнала кончился — его документ нового периода
+      // создаётся по образцу прошлого, иначе отметка ляжет только в один.
+      const ensured = await ensureQrPeriodDocuments({
+        organizationId: ctx.orgId,
+        templateCode: other,
+        todayKey: ctx.todayKey,
+        anchor: { buildingId: primary?.buildingId ?? null },
+        source: "health-qr",
+      });
+      if (ensured.status === "created") candidates = await listCandidates();
+    }
     companionId = (candidates.find((doc) => doc.buildingId === (primary?.buildingId ?? null)) ?? candidates[0])?.id ?? null;
   }
   return ctx.code === "hygiene"

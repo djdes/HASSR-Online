@@ -1,6 +1,11 @@
 "use client";
 
-import { FillGuideLauncher } from "@/components/journals/fill-guide-launcher";
+import {
+  JOURNAL_ACTION_CREATE_CLASS,
+  JOURNAL_LIST_HEADER_ROW_CLASS,
+  JOURNAL_LIST_TITLE_CLASS,
+  JournalListActions,
+} from "@/components/journals/journal-list-actions";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -52,8 +57,6 @@ import {
   JOURNAL_DIALOG_HEADER_CLASS,
   JOURNAL_DIALOG_SUBMIT_CLASS,
   JOURNAL_DIALOG_TITLE_CLASS,
-  JOURNAL_LIST_ACTIONS_CLASS,
-  JOURNAL_LIST_HEADING_CLASS,
   JOURNAL_LIST_STACK_CLASS,
   JOURNAL_TAB_RAIL_CLASS,
   JOURNAL_TAB_VIEWPORT_CLASS,
@@ -591,29 +594,24 @@ export function CleaningDocumentsClient(props: Props) {
   return (
     <>
       <div className={JOURNAL_LIST_STACK_CLASS}>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className={JOURNAL_LIST_HEADING_CLASS}>
+        <div className={JOURNAL_LIST_HEADER_ROW_CLASS}>
+          <h1 className={JOURNAL_LIST_TITLE_CLASS}>
             {CLEANING_PAGE_TITLE}
           </h1>
-          <div className={JOURNAL_LIST_ACTIONS_CLASS}>
-            <FillGuideLauncher
-              code="cleaning"
-              page="list"
-              variant="button"
-            />
-            {/* Пока документов нет, единственная точка входа — кнопка
-                внутри карточки пустого состояния (эталон). */}
-            {canManageDocuments && props.activeTab === "active" && props.documents.length > 0 ? (
-              <Button
-                type="button"
-                onClick={() => setCreateOpen(true)}
-                className="h-10 w-full rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4d58f5] sm:w-auto"
-              >
-                <Plus className="size-6" />
-                Создать документ
-              </Button>
-            ) : null}
-          </div>
+          <JournalListActions
+            templateCode="cleaning"
+            canManage={canManageDocuments}
+            create={
+              // Пока документов нет, единственная точка входа — кнопка
+              // внутри карточки пустого состояния (эталон).
+              canManageDocuments && props.activeTab === "active" && props.documents.length > 0 ? (
+                <Button type="button" onClick={() => setCreateOpen(true)} className={JOURNAL_ACTION_CREATE_CLASS}>
+                  <Plus className="size-4" />
+                  Создать документ
+                </Button>
+              ) : null
+            }
+          />
         </div>
 
         {/* Вкладки — та же вёрстка и типографика, что у <JournalTabs>

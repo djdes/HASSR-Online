@@ -1,17 +1,12 @@
 import { redirect } from "next/navigation";
 
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
-import {
-  CLIMATE_DOCUMENT_TEMPLATE_CODE,
-  normalizeClimateDocumentConfig,
-} from "@/lib/climate-document";
-import {
-  COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE,
-  normalizeColdEquipmentDocumentConfig,
-} from "@/lib/cold-equipment-document";
 import { db } from "@/lib/db";
+import { isJournalObjectQrCode, journalQrHref, parseQrPosterKind, splitJournalPosterId } from "@/lib/journal-qr-target";
+import { todayKeyFor } from "@/lib/journal-fill";
 import { loadQrPosters } from "@/lib/qr-fill-poster";
-import type { QrFillKind, QrPosterLayout } from "@/lib/qr-fill-types";
+import type { QrPosterLayout } from "@/lib/qr-fill-types";
+import { resolveJournalObjectScope } from "@/lib/qr-journal-scope";
 import { resolveQrPosterOrigin } from "@/lib/qr-poster-origin";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { QrPostersClient } from "./qr-posters-client";
@@ -27,12 +22,21 @@ export const metadata = { title: "QR-плакаты" };
  * холодильного оборудования. Сотрудник сканирует камерой телефона и вносит
  * показание без входа в кабинет.
  *
- *   ?kind=rooms|equipment|journals — что печатать (по умолчанию склады)
+ *   ?kind=rooms|equipment|journals — что печатать (по умолчанию склады;
+ *                           единственное число тоже принимается)
  *   &layout=poster|sheet    — плакат на лист A4 или наклейки сеткой
- *   &ids=a,b                — только эти объекты
+ *   &ids=a,b                — только эти объекты; у журналов — любые коды
+ *                           организации (`код`, `код:документ`,
+ *                           `hygiene@verify`), даже без документа на сегодня
+ *   &journal=<код>          — наклейки объектов журнала (холодильники,
+ *                           склады, УФ-лампы) — кнопка «QR-точка контроля»
  *   &doc=<id>               — только объекты из строк документа
+ *                           (важнее `journal=`)
  *   &autoprint=1            — сразу открыть диалог печати
  *   &origin=https://…       — домен ссылок (для проверки на стенде)
+ *
+ * Журнал объектов в `ids=` (старые ссылки) перенаправляется на его
+ * наклейки: плаката журнала у холодильников нет — сканируют сам объект.
  */
 export default async function QrPostersPage({
   searchParams,
@@ -42,6 +46,7 @@ export default async function QrPostersPage({
     layout?: string;
     ids?: string;
     doc?: string;
+    journal?: string;
     autoprint?: string;
     origin?: string;
   }>;
@@ -50,13 +55,15 @@ export default async function QrPostersPage({
   if (!hasFullWorkspaceAccess(session.user)) redirect("/settings");
   const organizationId = getActiveOrgId(session);
   const query = await searchParams;
-  const kind: QrFillKind = query.kind === "equipment" ? "equipment" : query.kind === "journals" ? "journal" : "room";
+  const kind = parseQrPosterKind(query.kind);
   const layout: QrPosterLayout = query.layout === "sheet" ? "sheet" : "poster";
-  const onlyIds = new Set(
-    (query.ids ?? "")
-      .split(",")
-      .map((id) => id.trim())
-      .filter(Boolean)
+  const onlyIds = Array.from(
+    new Set(
+      (query.ids ?? "")
+        .split(",")
+        .map((id) => id.trim())
+        .filter(Boolean)
+    )
   );
   const origin = resolveQrPosterOrigin({
     requested: query.origin,
@@ -64,36 +71,37 @@ export default async function QrPostersPage({
     production: process.env.NODE_ENV === "production",
   });
 
-  // Документ ограничивает список своими строками (кнопка «QR-плакаты» в журнале).
-  let documentScope: { title: string; ids: Set<string> } | null = null;
-  if (query.doc) {
-    const document = await db.journalDocument.findFirst({
-      where: { id: query.doc, organizationId },
-      select: { title: true, config: true, template: { select: { code: true } } },
-    });
-    if (document?.template.code === CLIMATE_DOCUMENT_TEMPLATE_CODE && kind === "room") {
-      const config = normalizeClimateDocumentConfig(document.config);
-      documentScope = {
-        title: document.title,
-        ids: new Set(config.rooms.map((room) => room.roomId).filter((id): id is string => Boolean(id))),
-      };
-    } else if (document?.template.code === COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE && kind === "equipment") {
-      const config = normalizeColdEquipmentDocumentConfig(document.config);
-      documentScope = {
-        title: document.title,
-        ids: new Set(
-          config.equipment.map((item) => item.sourceEquipmentId).filter((id): id is string => Boolean(id))
-        ),
-      };
-    }
+  // Журнал объектов вместо плаката журнала — на наклейки его объектов.
+  if (kind === "journal") {
+    const objectId = onlyIds.map(splitJournalPosterId).find((item) => isJournalObjectQrCode(item.code));
+    if (objectId) redirect(journalQrHref(objectId.code, { documentId: objectId.documentId ?? query.doc ?? null }));
   }
 
-  const posters = await loadQrPosters({
+  // Область наклеек: документ (`doc=`) важнее журнала (`journal=`).
+  let scopeCode = isJournalObjectQrCode(query.journal) ? (query.journal as string) : null;
+  if (query.doc && kind !== "journal") {
+    const document = await db.journalDocument.findFirst({
+      where: { id: query.doc, organizationId },
+      select: { template: { select: { code: true } } },
+    });
+    if (document && isJournalObjectQrCode(document.template.code)) scopeCode = document.template.code;
+  }
+  const org = scopeCode
+    ? await db.organization.findUnique({ where: { id: organizationId }, select: { timezone: true } })
+    : null;
+  const scope = scopeCode
+    ? await resolveJournalObjectScope(organizationId, scopeCode, todayKeyFor(org?.timezone), query.doc ?? null)
+    : null;
+  // Вид из адреса не совпал с журналом (склады ↔ холодильники) — на верный.
+  if (scope && scope.kind !== kind) redirect(journalQrHref(scope.code, { documentId: scope.document?.id ?? null }));
+  const scopeIds = scope ? new Set(scope.ids) : null;
+
+  const { posters, missing } = await loadQrPosters({
     organizationId,
     kind,
     origin,
-    allowed: (id) =>
-      (onlyIds.size === 0 || onlyIds.has(id)) && (!documentScope || documentScope.ids.has(id)),
+    explicitIds: onlyIds,
+    allowed: (id) => !scopeIds || scopeIds.has(id),
   });
 
   return (
@@ -101,10 +109,16 @@ export default async function QrPostersPage({
       kind={kind}
       layout={layout}
       posters={posters}
+      missing={missing}
       origin={origin}
-      documentTitle={documentScope?.title ?? null}
-      documentId={documentScope ? query.doc ?? null : null}
-      selectedIds={onlyIds.size > 0 ? Array.from(onlyIds) : null}
+      documentTitle={scope?.document?.title ?? null}
+      documentId={scope?.document?.id ?? null}
+      journal={
+        scope
+          ? { code: scope.code, name: scope.journalName, source: scope.source }
+          : null
+      }
+      selectedIds={onlyIds.length > 0 ? onlyIds : null}
       autoprint={query.autoprint === "1"}
     />
   );

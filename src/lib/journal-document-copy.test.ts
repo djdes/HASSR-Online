@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
+  DOCUMENT_COPY_SUPPORTED_CODES,
   buildDocumentCopy,
+  copyDocumentStructure,
   resolveDocumentCopyPeriod,
 } from "@/lib/journal-document-copy";
 
@@ -232,6 +234,40 @@ describe("buildDocumentCopy — график генеральных уборок
   });
 });
 
+describe("buildDocumentCopy — график генуборок, уборки по датам", () => {
+  it("план переезжает на новый год, отметки и внеплановые остаются в старом", () => {
+    const got = copy("general_cleaning", {
+      year: 2026,
+      rows: [
+        {
+          id: "r1",
+          roomId: "R1",
+          roomName: "Кухня",
+          cleanings: [
+            { id: "p:2026-09-04", planned: "2026-09-04", done: "2026-09-04", doneSource: "manual" },
+            { id: "p:2026-09-11", planned: "2026-09-11", done: null },
+            { id: "u:2026-09-20", planned: null, done: "2026-09-20", doneSource: "task" },
+          ],
+          legacyNotes: { oct: { plan: "по графику", fact: "✓" } },
+        },
+        // Строка старого формата — как раньше: план как есть, факт пустой.
+        { id: "r2", roomName: "Склад", plan: { jan: "+" }, fact: { jan: "12.01" } },
+      ],
+    });
+    assert.equal(got.config.year, 2027);
+    const [row, legacy] = got.config.rows as Array<Record<string, unknown>>;
+    assert.deepEqual(row.cleanings, [
+      { id: "p:2027-09-04", planned: "2027-09-04", done: null },
+      { id: "p:2027-09-11", planned: "2027-09-11", done: null },
+    ]);
+    assert.deepEqual(row.legacyNotes, { oct: { plan: "по графику" } });
+    assert.equal((row.plan as Record<string, string>).sep, "04, 11");
+    assert.equal((row.fact as Record<string, string>).sep, "-");
+    assert.equal(row.roomId, "R1");
+    assert.deepEqual(legacy, { id: "r2", roomName: "Склад", plan: { jan: "+" }, fact: { jan: "" } });
+  });
+});
+
 describe("buildDocumentCopy — перечень стеклянных изделий", () => {
   it("опись целиком остаётся, название выравнивается по документу", () => {
     const got = copy(
@@ -275,5 +311,71 @@ describe("buildDocumentCopy — чек-лист санитарного дня", 
     ]);
     assert.equal(got.config.responsibleName, "Иванова");
     assert.equal(got.dateFrom, TODAY);
+  });
+});
+
+describe("copyDocumentStructure — структура без факта на новый период", () => {
+  it("совпадает с конфигом копии (кроме названия)", () => {
+    const source = {
+      year: 2026,
+      documentDate: "2026-01-01",
+      closedAt: "2026-12-31",
+      rows: [
+        {
+          id: "r1",
+          equipmentName: "Печь",
+          plan: { jan: "+" },
+          fact: { jan: "05.01" },
+        },
+      ],
+    };
+    const structure = copyDocumentStructure(
+      "equipment_maintenance",
+      source,
+      "2027-01-01"
+    );
+    assert.deepEqual(structure, copy("equipment_maintenance", source).config);
+  });
+
+  it("год и дата документа — от начала нового периода", () => {
+    const got = copyDocumentStructure(
+      "equipment_calibration",
+      { year: 2025, documentDate: "2025-01-01", rows: [] },
+      "2026-01-01"
+    );
+    assert.equal(got.year, 2026);
+    assert.equal(got.documentDate, "2026-01-01");
+  });
+
+  it("исходный конфиг не меняется", () => {
+    const source = {
+      closedAt: "2026-09-01",
+      rows: [{ id: "r1", checked: true, values: { c1: "ок" } }],
+    };
+    const before = JSON.stringify(source);
+    copyDocumentStructure("audit_plan", source, "2027-01-01");
+    assert.equal(JSON.stringify(source), before);
+  });
+
+  it("мусор на входе — пустой конфиг", () => {
+    assert.deepEqual(
+      copyDocumentStructure("glass_items_list", null, "2027-01-01"),
+      {}
+    );
+    assert.deepEqual(copyDocumentStructure("audit_plan", "x", "2027-01-01"), {
+      rows: [],
+    });
+  });
+
+  it("перечень журналов с копией — те семь, что умеют «Сделать копию»", () => {
+    assert.deepEqual([...DOCUMENT_COPY_SUPPORTED_CODES].sort(), [
+      "audit_plan",
+      "audit_protocol",
+      "equipment_calibration",
+      "equipment_maintenance",
+      "general_cleaning",
+      "glass_items_list",
+      "sanitary_day_control",
+    ]);
   });
 });

@@ -4470,16 +4470,27 @@ function drawSanitationDayPdf(doc: jsPDF, params: {
     SANITATION_MONTHS.map((item) => ({ content: item.short, styles: { halign: "center" } })),
   ];
 
+  // Ячейка месяца: с 2026-09-22 уборок в месяце может быть несколько
+  // («04, 11, 18, 25») — от трёх дат кегль на пункт меньше, чтобы даты
+  // помещались в колонку месяца, не раздувая строку.
+  const monthCell = (text: string): CellDef => {
+    const value = text || "";
+    const tokens = value.split(",").filter((token) => token.trim()).length;
+    return tokens >= 3
+      ? { content: value, styles: { halign: "center", valign: "middle", fontSize: 7 } }
+      : centerCell(value);
+  };
+
   const body: RowInput[] = [];
   for (const row of cfg.rows) {
     body.push([
       { content: row.roomName || "", rowSpan: 2, styles: { halign: "center", valign: "middle" } },
       { content: "План", styles: { halign: "center", valign: "middle" } },
-      ...SANITATION_MONTHS.map((month) => centerCell(row.plan[month.key] || "")),
+      ...SANITATION_MONTHS.map((month) => monthCell(row.plan[month.key] || "")),
     ]);
     body.push([
       { content: "Факт", styles: { halign: "center", valign: "middle" } },
-      ...SANITATION_MONTHS.map((month) => centerCell(row.fact[month.key] || "")),
+      ...SANITATION_MONTHS.map((month) => monthCell(row.fact[month.key] || "")),
     ]);
   }
 

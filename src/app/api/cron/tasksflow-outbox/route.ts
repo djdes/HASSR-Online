@@ -1,14 +1,124 @@
 import { NextResponse } from "next/server";
+import { Prisma, type TasksFlowOutbox } from "@prisma/client";
 import { db } from "@/lib/db";
 import { checkCronSecret } from "@/lib/cron-auth";
 import { checkTasksflowOutboxHealth } from "@/lib/platform-alerts";
 import { tasksflowClientFor, TasksFlowError } from "@/lib/tasksflow-client";
+import {
+  enqueueOutbox,
+  outboxHeaderKey,
+  parseCreateTaskPayload,
+  type OutboxClientLike,
+} from "@/lib/tasksflow-outbox-actions";
+import {
+  SANITATION_DAY_TEMPLATE_CODE,
+  normalizeSanitationDayConfig,
+} from "@/lib/sanitation-day-document";
+import {
+  gcDeleteIdempotencyKey,
+  isGeneralCleaningDatePlanned,
+  parseGcRowKey,
+} from "@/lib/tasksflow-adapters/sanitation-day-tasks";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const MAX_ATTEMPTS = 20;
 const ADVISORY_LOCK_KEY = 9523847; // случайный constant int4 для Postgres advisory lock
+
+/** Что не так с нагрузкой команды (битая — failed без повторов), иначе null. */
+function payloadProblem(row: Pick<TasksFlowOutbox, "action" | "payload">): string | null {
+  if (row.action === "createTask") {
+    return parseCreateTaskPayload(row.payload) ? null : "Invalid payload: createTask task/row missing";
+  }
+  const payload = row.payload as Record<string, unknown> | null;
+  return typeof payload?.taskId === "number" ? null : "Invalid payload: taskId missing or not number";
+}
+
+/**
+ * `createTask` — разовая задача (сейчас — генуборка на плановую дату).
+ * Возвращает пометку для `lastError` доставленной команды или null.
+ *
+ * Перед созданием перепроверяем, что задача всё ещё нужна: дату могли
+ * убрать из плана или отметить, пока команда ждала в очереди; ссылка на
+ * строку могла появиться из параллельной доставки.
+ */
+async function deliverCreateTask(
+  row: TasksFlowOutbox,
+  client: ReturnType<typeof tasksflowClientFor>,
+): Promise<string | null> {
+  const payload = parseCreateTaskPayload(row.payload);
+  if (!payload) throw new Error("Invalid payload: createTask");
+
+  if (payload.journalCode === SANITATION_DAY_TEMPLATE_CODE) {
+    const gc = parseGcRowKey(payload.rowKey);
+    const rowId = payload.rowId ?? gc?.rowId;
+    const dateKey = payload.dateKey ?? gc?.dateKey;
+    const doc = await db.journalDocument.findUnique({
+      where: { id: payload.documentId },
+      select: { organizationId: true, status: true, config: true },
+    });
+    if (
+      !doc ||
+      doc.organizationId !== row.organizationId ||
+      doc.status !== "active" ||
+      !rowId ||
+      !dateKey ||
+      !isGeneralCleaningDatePlanned(normalizeSanitationDayConfig(doc.config), rowId, dateKey)
+    ) {
+      return "skipped: unplanned";
+    }
+  }
+
+  const linked = await db.tasksFlowTaskLink.findUnique({
+    where: {
+      integrationId_journalDocumentId_rowKey: {
+        integrationId: row.integrationId,
+        journalDocumentId: payload.documentId,
+        rowKey: payload.rowKey,
+      },
+    },
+    select: { id: true },
+  });
+  if (linked) return "skipped: already linked";
+
+  const created = await client.createTask(payload.task, {
+    idempotencyKey: outboxHeaderKey(row.idempotencyKey, row.payload),
+  });
+  try {
+    await db.tasksFlowTaskLink.create({
+      data: {
+        integrationId: row.integrationId,
+        journalCode: payload.journalCode,
+        journalDocumentId: payload.documentId,
+        rowKey: payload.rowKey,
+        tasksflowTaskId: created.id,
+        remoteStatus: created.isCompleted ? "completed" : "active",
+        lastDirection: "push",
+      },
+    });
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+      // Строку успела связать параллельная доставка — новая задача в TF
+      // лишняя: удаляем её тем же outbox'ом.
+      await enqueueOutbox(db as unknown as OutboxClientLike, {
+        integrationId: row.integrationId,
+        organizationId: row.organizationId,
+        idempotencyKey: gcDeleteIdempotencyKey(payload.documentId, created.id),
+        action: "deleteTask",
+        payload: {
+          taskId: created.id,
+          journalDocumentId: payload.documentId,
+          rowKey: payload.rowKey,
+          reason: "duplicate-create",
+        },
+      });
+      return `duplicate: task ${created.id} queued for deletion`;
+    }
+    throw err;
+  }
+  return null;
+}
 
 /**
  * GET /api/cron/tasksflow-outbox?secret=$CRON_SECRET
@@ -23,6 +133,14 @@ const ADVISORY_LOCK_KEY = 9523847; // случайный constant int4 для Po
  *
  * Phase 2.1 (отдельный коммит после правки в TF repo):
  *   - переключаемся на PATCH /api/tasks/<id> со статусом claimed_by_other.
+ *
+ * 2026-09-22:
+ *   - action="createTask" → client.createTask(payload.task) + TaskLink на
+ *     (документ, rowKey). Сейчас так создаются задачи генуборки на
+ *     плановую дату. Перед созданием проверяем, что дата ещё в плане и
+ *     не выполнена (иначе delivered «skipped: unplanned») и что ссылки
+ *     нет (delivered «skipped: already linked»). Ссылка появилась
+ *     параллельно (P2002) — новую задачу ставим на удаление.
  *
  * Auth: Bearer CRON_SECRET (через checkCronSecret — единый паттерн
  * с остальными /api/cron/*).
@@ -43,18 +161,36 @@ export async function GET(request: Request) {
   // только один cron-tick обрабатывает outbox. Если другой уже работает
   // (50 строк × сетевая латентность TF может занять > 30s), просто
   // выходим без работы — следующий запуск подхватит.
-  const lockResult = await db.$queryRaw<Array<{ locked: boolean }>>`
-    SELECT pg_try_advisory_lock(${ADVISORY_LOCK_KEY}) AS locked
-  `;
-  if (!lockResult[0]?.locked) {
-    return NextResponse.json({
-      ok: true,
-      processed: 0,
-      skipped: "another_tick_running",
-    });
-  }
+  //
+  // 2026-09-22: блокировка — на время ТРАНЗАКЦИИ (`pg_try_advisory_xact_lock`).
+  // Сессионная `pg_try_advisory_lock` + `pg_advisory_unlock` через пул
+  // соединений уходили в разные соединения: снятие молча не срабатывало,
+  // замок оставался у простаивающего соединения, и следующие тики
+  // выходили с «another_tick_running», пока пул его не закроет (e2e
+  // генуборок ловил это стабильно). Транзакция держит одно соединение
+  // до конца обработки и отпускает замок сама; работа идёт через `db`.
+  return db.$transaction(
+    async (tx) => {
+      const lockResult = await tx.$queryRaw<Array<{ locked: boolean }>>`
+        SELECT pg_try_advisory_xact_lock(${ADVISORY_LOCK_KEY}) AS locked
+      `;
+      if (!lockResult[0]?.locked) {
+        return NextResponse.json({
+          ok: true,
+          processed: 0,
+          skipped: "another_tick_running",
+        });
+      }
+      return processOutboxTick();
+    },
+    // 50 команд × таймаут TF 15 с — запас до 15 минут, иначе Prisma
+    // откатит транзакцию посреди обработки и отпустит замок раньше времени.
+    { maxWait: 10_000, timeout: 15 * 60_000 },
+  );
+}
 
-  try {
+async function processOutboxTick(): Promise<NextResponse> {
+  {
     const pending = await db.tasksFlowOutbox.findMany({
       where: { status: "pending" },
       orderBy: [
@@ -75,21 +211,24 @@ export async function GET(request: Request) {
 
     for (const row of pending) {
       const payload = row.payload as Record<string, unknown> | null;
-      const taskId = typeof payload?.taskId === "number" ? payload.taskId : null;
-      if (taskId === null) {
+      // taskId нужен всем действиям, кроме createTask — у той своя
+      // нагрузка (задача и строка журнала).
+      const problem = payloadProblem(row);
+      if (problem) {
         // Невалидный payload — пометить failed, не retry.
         await db.tasksFlowOutbox.update({
           where: { id: row.id },
           data: {
             status: "failed",
             lastAttemptAt: new Date(),
-            lastError: "Invalid payload: taskId missing or not number",
+            lastError: problem,
           },
         });
         failed += 1;
         errors.push({ id: row.id, error: "invalid_payload" });
         continue;
       }
+      const taskId = typeof payload?.taskId === "number" ? payload.taskId : 0;
 
       if (!row.integration.enabled) {
         // Integration отключён — отмечаем lastAttemptAt чтобы row не блокировал
@@ -118,6 +257,7 @@ export async function GET(request: Request) {
         // (Phase 2.5+) поддержит — retries станут безопасными без правок
         // здесь. Header отправляется для всех мутирующих запросов.
         const idempotency = { idempotencyKey: row.idempotencyKey };
+        let deliveryNote: string | null = null;
         switch (row.action) {
           case "markClaimedByOther":
           case "deleteTask":
@@ -125,6 +265,11 @@ export async function GET(request: Request) {
             break;
           case "completeTask":
             await client.completeTask(taskId, idempotency);
+            break;
+          case "createTask":
+            // Разовая задача с ссылкой на строку журнала (генуборка на
+            // плановую дату). Ссылку TaskLink пишем здесь же.
+            deliveryNote = await deliverCreateTask(row, client);
             break;
           default: {
             // N3 fix: Unknown action — permanent producer/consumer mismatch.
@@ -143,6 +288,7 @@ export async function GET(request: Request) {
             deliveredAt: new Date(),
             lastAttemptAt: new Date(),
             attempts: { increment: 1 },
+            ...(deliveryNote ? { lastError: deliveryNote } : {}),
           },
         });
         delivered += 1;
@@ -237,7 +383,5 @@ export async function GET(request: Request) {
       errors: errors.length > 0 ? errors.slice(0, 10) : undefined,
       health: health ?? undefined,
     });
-  } finally {
-    await db.$queryRaw`SELECT pg_advisory_unlock(${ADVISORY_LOCK_KEY})`;
   }
 }

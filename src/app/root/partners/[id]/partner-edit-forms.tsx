@@ -5,6 +5,7 @@ import { Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Field, btnOutline, btnPrimary, inputClass, readError } from "@/components/partner/ui";
 import { phoneInputProps } from "@/lib/phone-input";
 import { cn } from "@/lib/utils";
@@ -45,6 +46,110 @@ async function patchPartner(partnerId: string, body: Record<string, unknown>): P
     return false;
   }
   return true;
+}
+
+/**
+ * «Переименовать» из шапки карточки: вывеска (её видят клиенты) и
+ * название компании (договор, выплаты). Раньше переименовать можно было
+ * только внутри «Контакты и доступы → Изменить» — ниже баланса, не найти.
+ */
+export function PartnerRenameDialog({
+  partnerId,
+  open,
+  onOpenChange,
+  initial,
+  onSaved,
+}: {
+  partnerId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  initial: { companyName: string; brandName: string };
+  onSaved: () => void;
+}) {
+  const [companyName, setCompanyName] = useState(initial.companyName);
+  const [brandName, setBrandName] = useState(initial.brandName);
+  const [busy, setBusy] = useState(false);
+
+  const trimmedCompany = companyName.trim();
+  const trimmedBrand = brandName.trim();
+  const dirty = trimmedCompany !== initial.companyName || trimmedBrand !== initial.brandName;
+
+  async function save() {
+    if (trimmedBrand.length < 2) {
+      toast.error("Укажите вывеску — её видят клиенты");
+      return;
+    }
+    if (trimmedCompany.length < 2) {
+      toast.error("Укажите название компании");
+      return;
+    }
+    const body: Record<string, unknown> = {};
+    if (trimmedCompany !== initial.companyName) body.companyName = trimmedCompany;
+    if (trimmedBrand !== initial.brandName) body.brandName = trimmedBrand;
+    setBusy(true);
+    try {
+      if (await patchPartner(partnerId, body)) {
+        toast.success("Партнёр переименован");
+        onOpenChange(false);
+        onSaved();
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (next) {
+          setCompanyName(initial.companyName);
+          setBrandName(initial.brandName);
+        }
+        onOpenChange(next);
+      }}
+    >
+      <DialogContent className="max-w-[480px] rounded-3xl border-[#ececf4] p-0">
+        <DialogHeader className="border-b border-[#ececf4] px-6 pb-4 pt-6">
+          <DialogTitle className="text-[20px] font-semibold tracking-[-0.02em] text-[#0b1024]">Переименовать партнёра</DialogTitle>
+          <DialogDescription className="text-[13px] leading-[1.5] text-[#6f7282]">
+            Вывеску видят клиенты партнёра и он сам в кабинете. Название компании — для договора и выплат.
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            void save();
+          }}
+          className="space-y-4 px-6 pb-6 pt-4"
+        >
+          <Field label="Вывеска для клиентов" hint="До 40 символов — так партнёра видят клиенты" required>
+            <input
+              value={brandName}
+              onChange={(e) => setBrandName(e.target.value)}
+              className={inputClass}
+              maxLength={40}
+              autoFocus
+            />
+          </Field>
+          <Field label="Название компании" required>
+            <input
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              className={inputClass}
+              maxLength={120}
+            />
+          </Field>
+          <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
+            <button type="button" className={btnOutline} onClick={() => onOpenChange(false)}>
+              Отмена
+            </button>
+            <SaveButton busy={busy} dirty={dirty} />
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 /** Кнопка-переключатель «Изменить» / «Отмена» в шапке карточки. */

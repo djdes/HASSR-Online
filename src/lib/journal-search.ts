@@ -10,19 +10,33 @@
  * Только чистые функции — модуль импортируют клиентские компоненты.
  */
 
+/**
+ * Нижний регистр, «ё» как «е», пробелы схлопнуты. «Учёт» в названии и
+ * «учет», набранный без «ё», — одно и то же слово; лишний пробел из
+ * копипаста тоже не должен ломать поиск.
+ */
 export function normalizeJournalSearch(value: string): string {
-  return value.toLocaleLowerCase("ru-RU").trim();
+  return value
+    .toLocaleLowerCase("ru-RU")
+    .replace(/ё/g, "е")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /**
- * Совпадает ли журнал с уже нормализованным запросом. Пустой запрос
- * совпадает со всем — вызывающему не нужно про это помнить.
+ * Совпадает ли журнал с запросом. Нужны ВСЕ слова запроса, в любом
+ * порядке: «журнал гигиен» находит «Гигиенический журнал». Пустой
+ * запрос совпадает со всем — вызывающему не нужно про это помнить.
+ *
+ * Запрос нормализуется ещё раз (нормализация идемпотентна): так сырой
+ * ввод с «ё» или двойным пробелом не даёт молчаливого «ничего не нашлось».
  */
 export function journalMatchesQuery(
   fields: Array<string | null | undefined>,
   normalizedQuery: string,
 ): boolean {
-  if (!normalizedQuery) return true;
+  const words = normalizeJournalSearch(normalizedQuery).split(" ").filter(Boolean);
+  if (words.length === 0) return true;
   const haystack = normalizeJournalSearch(fields.filter(Boolean).join(" "));
-  return haystack.includes(normalizedQuery);
+  return words.every((word) => haystack.includes(word));
 }

@@ -1,12 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  CalendarDays,
-  Plus,
-} from "lucide-react";
+import { CalendarRange, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -25,10 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { buildStaffOptionLabel } from "@/lib/journal-staff-binding";
-import {
-  getDistinctRoleLabels,
-  getUsersForRoleLabel,
-} from "@/lib/user-roles";
+import { getUsersForRoleLabel } from "@/lib/user-roles";
 import {
   SANITATION_MONTHS,
   applyRoomDirectoryToSanitationConfig,
@@ -36,14 +29,27 @@ import {
   getSanitationApproveLabel,
   listSanitationRoomsNotInDocument,
   normalizeSanitationDayConfig,
+  sanitationScheduleFromKey,
   suggestDirectoryRoomForSanitationRow,
+  summarizeCleanings,
   type SanitationDayConfig,
-  type SanitationMonthKey,
   type SanitationRoomRow,
 } from "@/lib/sanitation-day-document";
 import {
+  describeGeneralSchedule,
+  roomGeneralSchedule,
+  type RoomGeneralSchedule,
+} from "@/lib/general-cleaning-schedule";
+import {
+  applyGeneralCleaningOp,
+  diffCleaningPlans,
+  type GeneralCleaningOp,
+} from "@/lib/general-cleaning-ops";
+import { nextOpenCleaning } from "@/lib/tasksflow-adapters/sanitation-day-tasks";
+import {
   RoomEditorDialog,
   type RoomEditorInitial,
+  type RoomEditorSavedSnapshot,
 } from "@/components/cleaning/room-editor-dialog";
 import { RoomDirectoryPickerDialog } from "@/components/cleaning/room-directory-picker-dialog";
 import { directoryRoomToEditorInitial } from "@/components/cleaning/room-editor-initial";
@@ -73,14 +79,18 @@ import {
   MobileViewTableWrapper,
 } from "@/components/journals/mobile-view-toggle";
 import {
-  CardEditSheet,
-  type CardEditFieldDef,
-  type CardEditValues,
-} from "@/components/journals/card-edit-sheet";
-import {
   RecordCardsView,
-  type RecordCardItem,
 } from "@/components/journals/record-cards-view";
+import { DateField } from "@/components/journals/journal-dialog-field";
+import { GeneralCleaningMonthCell } from "@/components/journals/general-cleaning/month-cell";
+import {
+  GeneralCleaningMonthEditor,
+  GeneralCleaningMonthPanel,
+  describeMonthLoad,
+  type GeneralCleaningAnchor,
+} from "@/components/journals/general-cleaning/month-editor";
+import { GeneralCleaningYearSheet } from "@/components/journals/general-cleaning/year-sheet";
+import { GeneralCleaningFillDialog } from "@/components/journals/general-cleaning/fill-dialog";
 
 import { toast } from "sonner";
 import { confirmAsync } from "@/components/ui/confirm-async";
@@ -99,6 +109,9 @@ import { JournalPaperHeaderRows } from "@/components/journals/journal-document-h
 import { localDayKey } from "@/lib/entry-defaults";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 import { resolveApprover, resolveResponsible } from "@/lib/approver-display";
+import { useLiveRefetch } from "@/lib/use-live-refetch";
+import { useTodayKey } from "@/lib/use-today-key";
+import { MONTH_NAMES_RU, formatDayMonth, formatDayMonthWeekday } from "@/lib/wheel-date";
 
 /**
  * Screen ↔ print duality tokens (тот же приём, что в
@@ -132,6 +145,11 @@ type Props = {
   config: unknown;
   /** Design v2 toggle. */
   useV2?: boolean;
+  /**
+   * Интеграция с TasksFlow включена: подсказываем, что в день уборки
+   * исполнитель получит задачу.
+   */
+  tasksflowEnabled?: boolean;
 };
 
 type SettingsState = {
@@ -149,27 +167,7 @@ type SettingsState = {
 type RoomDialogState = {
   id: string | null;
   name: string;
-  plan: Record<SanitationMonthKey, string>;
 };
-
-const MONTH_FIELD_LABELS: Record<SanitationMonthKey, string> = {
-  jan: "Январь",
-  feb: "Февраль",
-  mar: "Март",
-  apr: "Апрель",
-  may: "Май",
-  jun: "Июнь",
-  jul: "Июль",
-  aug: "Август",
-  sep: "Сентябрь",
-  oct: "Октябрь",
-  nov: "Ноябрь",
-  dec: "Декабрь",
-};
-
-function roleOptionsFromUsers(users: UserItem[]) {
-  return getDistinctRoleLabels(users);
-}
 
 function usersForRole(users: UserItem[], roleLabel: string) {
   return getUsersForRoleLabel(users, roleLabel);
@@ -196,8 +194,9 @@ function toViewDateLabel(dateKey: string) {
   return `« ${day} » ${monthName} ${year} г.`;
 }
 
-function displayMonthValue(value: string) {
-  return value.trim() || "-";
+function datesPreview(dates: string[]): string {
+  const shown = dates.slice(0, 5).map(formatDayMonth).join(", ");
+  return dates.length > 5 ? `${shown} и ещё ${dates.length - 5}` : shown;
 }
 
 function RoomDialog(props: {
@@ -206,7 +205,6 @@ function RoomDialog(props: {
   title: string;
   submitText: string;
   initial: RoomDialogState;
-  includePlanFields: boolean;
   /** Помещения справочника, с которыми можно связать legacy-строку. */
   linkOptions?: Array<{ id: string; name: string }>;
   onSubmit: (value: RoomDialogState, linkRoomId?: string | null) => Promise<void>;
@@ -280,49 +278,9 @@ function RoomDialog(props: {
                 ))}
               </select>
               <p className="text-[11.5px] leading-[1.5] text-[#6f7282]">
-                После связи название и ответственные берутся из карточки помещения («Настройки → Помещения»); план по месяцам сохраняется.
+                После связи название, ответственные и график генуборки берутся из карточки помещения («Настройки → Помещения»); даты плана сохраняются.
               </p>
             </div>
-          ) : null}
-
-          {props.includePlanFields ? (
-            <>
-              {SANITATION_MONTHS.map((month) => (
-                <div key={month.key} className="space-y-2">
-                  <Label className="text-[13px] font-medium text-[#3c4053]">
-                    {MONTH_FIELD_LABELS[month.key]}
-                  </Label>
-                  <Select
-                    value={state.plan[month.key] || "__empty__"}
-                    onValueChange={(value) =>
-                      setState((current) => ({
-                        ...current,
-                        plan: {
-                          ...current.plan,
-                          [month.key]: value === "__empty__" ? "" : value,
-                        },
-                      }))
-                    }
-                  >
-                    <SelectTrigger className="h-10 rounded-xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[13.5px]">
-                      <SelectValue placeholder="--" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__empty__">--</SelectItem>
-                      {Array.from({ length: 31 }).map((_, index) => {
-                        const value = String(index + 1).padStart(2, "0");
-                        return (
-                          <SelectItem key={value} value={value}>
-                            {value}
-                          </SelectItem>
-                        );
-                      })}
-                      <SelectItem value="-">-</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              ))}
-            </>
           ) : null}
 
           <div className="flex justify-end pt-2">
@@ -369,7 +327,6 @@ function DocumentSettingsDialog(props: {
     if (!props.open) return;
     setState(props.initial);
   }, [props.open, props.initial]);
-  const roles = useMemo(() => roleOptionsFromUsers(props.users), [props.users]);
   const resolveRoleCandidates = (roleLabel: string) =>
     usersForRole(props.users, roleLabel);
 
@@ -427,6 +384,22 @@ function DocumentSettingsDialog(props: {
     }
   }
 
+  // «Дата документа» — барабан «день | месяц | год»: дата в шапке бланка
+  // редко бывает сегодняшней, листать календарь по месяцам неудобно.
+  const documentDateField = (
+    <DateField
+      picker="wheel"
+      label="Дата документа"
+      value={state.documentDate}
+      onChange={(value) =>
+        setState((current) => ({
+          ...current,
+          documentDate: toIsoDate(value),
+        }))
+      }
+    />
+  );
+
   if (props.useV2) {
     return (
       <JournalSettingsModal
@@ -456,22 +429,7 @@ function DocumentSettingsDialog(props: {
           />
         </div>
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Дата документа
-            </Label>
-            <Input
-              type="date"
-              value={state.documentDate}
-              onChange={(event) =>
-                setState((current) => ({
-                  ...current,
-                  documentDate: toIsoDate(event.target.value),
-                }))
-              }
-              className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
-            />
-          </div>
+          {documentDateField}
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
               Год
@@ -498,6 +456,12 @@ function DocumentSettingsDialog(props: {
             </Select>
           </div>
         </div>
+        {state.year !== props.initial.year ? (
+          <p className="rounded-2xl bg-[#fff8eb] px-3.5 py-2.5 text-[12.5px] leading-[1.5] text-[#8a5a14]">
+            Даты плана и отметки перенесутся на {state.year} год — те же числа и месяцы. Перед
+            сохранением мы спросим ещё раз.
+          </p>
+        ) : null}
         <div className="space-y-2">
           <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
             {/* G6: у эталона кавычки прямые, не «ёлочки». */}
@@ -608,20 +572,7 @@ function DocumentSettingsDialog(props: {
             className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
           />
 
-          <div className="relative">
-            <Input
-              type="date"
-              value={state.documentDate}
-              onChange={(event) =>
-                setState((current) => ({
-                  ...current,
-                  documentDate: toIsoDate(event.target.value),
-                }))
-              }
-              className="h-9 rounded-xl border-[#dcdfed] px-3.5 pr-14 text-[13.5px]"
-            />
-            <CalendarDays className="pointer-events-none absolute right-4 top-1/2 size-6 -translate-y-1/2 text-[#6f7282]" />
-          </div>
+          {documentDateField}
 
           <Select
             value={state.year}
@@ -740,36 +691,26 @@ export function SanitationDayDocumentClient({
   buildings = [],
   config,
   useV2 = false,
+  tasksflowEnabled = false,
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
+  const todayKey = useTodayKey();
   const [roomDialogOpen, setRoomDialogOpen] = useState(false);
   const [roomDialogState, setRoomDialogState] = useState<RoomDialogState>({
     id: null,
     name: "",
-    plan: {
-      jan: "-",
-      feb: "-",
-      mar: "-",
-      apr: "-",
-      may: "-",
-      jun: "-",
-      jul: "-",
-      aug: "-",
-      sep: "-",
-      oct: "-",
-      nov: "-",
-      dec: "-",
-    },
   });
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
-  // Какую половину строки правим из карточки: план или факт по месяцам.
-  // Двенадцать месяцев в одном листе, а не двадцать четыре: план и факт
-  // заполняют в разное время и разные люди.
-  const [editingMonths, setEditingMonths] = useState<
-    { rowId: string; mode: "plan" | "fact" } | null
-  >(null);
+  // Редактор месяца (поповер у ячейки / лист снизу) и годовой лист строки
+  // для карточек на телефоне.
+  const [editor, setEditor] = useState<{ rowId: string; monthIndex: number } | null>(null);
+  const anchorRef = useRef<GeneralCleaningAnchor>({
+    getBoundingClientRect: () => new DOMRect(),
+  });
+  const [yearSheetRowId, setYearSheetRowId] = useState<string | null>(null);
+  const [fillOpen, setFillOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [roomEditor, setRoomEditor] = useState<RoomEditorInitial | null>(null);
   // Справочник помещений: название строк с roomId — из Room.
@@ -777,21 +718,36 @@ export function SanitationDayDocumentClient({
     () => buildings.flatMap((b) => b.rooms),
     [buildings],
   );
-  const normalized = applyRoomDirectoryToSanitationConfig(
-    normalizeSanitationDayConfig(config),
-    directoryRooms,
+  // График генуборки каждого помещения справочника (null — не задан).
+  const scheduleByRoomId = useMemo(
+    () =>
+      new Map<string, RoomGeneralSchedule | null>(
+        directoryRooms.map((room) => [room.id, roomGeneralSchedule(room)]),
+      ),
+    [directoryRooms],
   );
+  // Ответ операции показываем сразу, не дожидаясь router.refresh():
+  // `source` — проп, от которого он получен; новый проп с сервера его
+  // вытесняет сам.
+  const [override, setOverride] = useState<{ source: unknown; config: SanitationDayConfig } | null>(null);
+  const baseConfig =
+    override && override.source === config ? override.config : normalizeSanitationDayConfig(config);
+  const normalized = applyRoomDirectoryToSanitationConfig(baseConfig, directoryRooms);
   // Последнее локальное состояние конфига + очередь сохранений: быстрый
   // ввод по ячейкам месяцев раньше строил каждый PATCH от серверного пропа.
   const configRef = useRef(normalized);
+  const configPropRef = useRef<unknown>(config);
   useEffect(() => {
     // Пришли свежие серверные данные — начинаем от них.
     configRef.current = normalized;
+    configPropRef.current = config;
     // Намеренно только по пропу `config`: `normalized` пересоздаётся
     // на каждый рендер и затирал бы локальное состояние.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config]);
   const saveChainRef = useRef<Promise<unknown>>(Promise.resolve());
+  // Отметка, пришедшая из TasksFlow или по QR, появляется без перезагрузки.
+  useLiveRefetch(() => router.refresh(), { codes: ["general_cleaning"] });
   // Шапка «УТВЕРЖДАЮ» и строка «Ответственный»: должность и ФИО одного
   // человека — из его карточки, сохранённые строки только для уволенных.
   const approver = resolveApprover(normalized, users);
@@ -843,7 +799,7 @@ export function SanitationDayDocumentClient({
     nextTitle = title,
   ) {
     // Следующая правка строится от этого состояния, а не от серверного
-    // пропа: 24 ячейки на blur успевали перезаписать друг друга.
+    // пропа: быстрые правки успевали перезаписать друг друга.
     const previousConfig = configRef.current;
     configRef.current = nextConfig;
     // Сохранения — строго по очереди, двойной клик не создаёт дубль.
@@ -871,72 +827,46 @@ export function SanitationDayDocumentClient({
       }
 
       setSelectedRowIds([]);
+      setOverride({ source: configPropRef.current, config: nextConfig });
       router.refresh();
     });
     saveChainRef.current = run;
     await run;
   }
 
-  async function saveMonthValue(
-    rowId: string,
-    month: SanitationMonthKey,
-    value: string,
-    mode: "plan" | "fact",
-  ) {
-    const current = configRef.current;
-    const nextRows = current.rows.map((row) => {
-      if (row.id !== rowId) return row;
-      return {
-        ...row,
-        [mode]: {
-          ...row[mode],
-          [month]: value,
-        },
-      };
-    });
-    await patchConfig({ ...current, rows: nextRows });
-  }
-
-  /** Двенадцать полей «день месяца» — по одному на месяц. */
-  function buildMonthsEditFields(): CardEditFieldDef[] {
-    return SANITATION_MONTHS.map((month) => ({
-      type: "text",
-      key: month.key,
-      label: MONTH_FIELD_LABELS[month.key],
-      placeholder: "день",
-    }));
-  }
-
-  function buildMonthsEditValues(
-    rowId: string,
-    mode: "plan" | "fact"
-  ): CardEditValues {
-    const row = normalized.rows.find((item) => item.id === rowId);
-    const values: CardEditValues = {};
-    for (const month of SANITATION_MONTHS) {
-      values[month.key] = row?.[mode][month.key] || "";
-    }
-    return values;
-  }
-
-  async function saveMonthsFromSheet(
-    rowId: string,
-    mode: "plan" | "fact",
-    values: CardEditValues
-  ) {
-    // configRef, а не normalized: серверный проп отстаёт до router.refresh(),
-    // и правка затирала только что введённые ячейки соседних строк.
-    const current = configRef.current;
-    const nextRows = current.rows.map((row) => {
-      if (row.id !== rowId) return row;
-      const nextMonths = { ...row[mode] };
-      for (const month of SANITATION_MONTHS) {
-        nextMonths[month.key] = String(values[month.key] ?? "");
+  /**
+   * Одна правка уборок (`POST …/general-cleaning`): сервер применяет её к
+   * свежему конфигу под блокировкой документа — отметки из задач и
+   * соседние вкладки не затираются. true — сохранилось.
+   */
+  async function postOp(op: GeneralCleaningOp): Promise<boolean> {
+    const run = saveChainRef.current.catch(() => {}).then(async () => {
+      try {
+        const response = await fetch(`/api/journal-documents/${documentId}/general-cleaning`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ op }),
+        });
+        const body = await response.json().catch(() => null);
+        if (!response.ok) {
+          toast.error(
+            (body && typeof body.error === "string" && body.error) ||
+              "Не удалось сохранить график",
+          );
+          return false;
+        }
+        const next = normalizeSanitationDayConfig(body?.config);
+        configRef.current = applyRoomDirectoryToSanitationConfig(next, directoryRooms);
+        setOverride({ source: configPropRef.current, config: next });
+        router.refresh();
+        return true;
+      } catch (error) {
+        toast.error(humanizeFetchError(error, "Не удалось сохранить график"));
+        return false;
       }
-      return { ...row, [mode]: nextMonths };
     });
-    setEditingMonths(null);
-    await patchConfig({ ...current, rows: nextRows });
+    saveChainRef.current = run;
+    return run;
   }
 
   /** Кто убирает / проверяет помещение строки — из справочника. */
@@ -948,6 +878,19 @@ export function SanitationDayDocumentClient({
       cleaners: dbRoom.cleanerUserIds.map(nameOf),
       verifiers: dbRoom.verifierUserIds.map(nameOf),
     };
+  }
+
+  function rowSchedule(row: SanitationRoomRow): RoomGeneralSchedule | null {
+    return row.roomId ? scheduleByRoomId.get(row.roomId) ?? null : null;
+  }
+
+  function rowLinked(row: SanitationRoomRow): boolean {
+    return Boolean(row.roomId && scheduleByRoomId.has(row.roomId));
+  }
+
+  function openMonthEditor(rowId: string, monthIndex: number, event: MouseEvent<HTMLButtonElement>) {
+    anchorRef.current = event.currentTarget;
+    setEditor({ rowId, monthIndex });
   }
 
   /** Правка выделенных помещений по очереди — карточкой или legacy-диалогом. */
@@ -974,20 +917,30 @@ export function SanitationDayDocumentClient({
       setRoomEditor(directoryRoomToEditorInitial(dbRoom));
       return;
     }
-    setRoomDialogState({ id: row.id, name: row.roomName, plan: { ...row.plan } });
+    setRoomDialogState({ id: row.id, name: row.roomName });
     setRoomDialogOpen(true);
   }
 
-  /** Помещение из справочника → строка графика (id стабильный `row-room-<Room.id>`). */
+  /**
+   * Помещение из справочника → строка графика (id стабильный
+   * `row-room-<Room.id>`). План сразу заполнен по графику помещения — с
+   * сегодняшнего дня до конца года документа.
+   */
   async function addRoomFromDirectory(room: DirectoryRoom) {
     const current = configRef.current;
     if (current.rows.some((r) => r.roomId === room.id)) {
       toast.error("Это помещение уже есть в графике");
       return;
     }
+    const nextRow = createEmptySanitationRow(
+      room.name,
+      room.id,
+      roomGeneralSchedule(room),
+      sanitationScheduleFromKey(current.year, todayKey),
+    );
     await patchConfig({
       ...current,
-      rows: [...current.rows, createEmptySanitationRow(room.name, room.id)],
+      rows: [...current.rows, nextRow],
     });
   }
 
@@ -1012,11 +965,9 @@ export function SanitationDayDocumentClient({
     }
     const current = configRef.current;
     if (!value.id) {
-      const nextRow = createEmptySanitationRow(value.name);
-      nextRow.plan = value.plan;
       await patchConfig({
         ...current,
-        rows: [...current.rows, nextRow],
+        rows: [...current.rows, createEmptySanitationRow(value.name)],
       });
       return;
     }
@@ -1033,7 +984,7 @@ export function SanitationDayDocumentClient({
     const count = selectedRowIds.length;
     const confirmed = await confirmAsync({
       title: count > 1 ? `Удалить ${count} строк?` : "Удалить строку?",
-      description: "Строки помещений и их отметки по месяцам будут удалены безвозвратно.",
+      description: "Строки помещений, их план и отметки о выполнении будут удалены безвозвратно.",
       variant: "danger",
       confirmLabel: "Удалить",
     });
@@ -1046,6 +997,114 @@ export function SanitationDayDocumentClient({
       rows: current.rows.filter((row) => !rowIdSet.has(row.id)),
     });
   }
+
+  /**
+   * В карточке помещения поменяли график генуборки — предлагаем привести
+   * к нему будущие даты этой строки (прошлое и отметки не меняются).
+   */
+  async function offerScheduleRefresh(snapshot: RoomEditorSavedSnapshot, inSequence: boolean) {
+    if (!snapshot.scheduleChanged || readOnly) return;
+    const row = configRef.current.rows.find((item) => item.roomId === snapshot.id);
+    if (!row) return;
+    const schedule = roomGeneralSchedule(snapshot);
+    if (!schedule) {
+      toast.info(`У «${row.roomName}» больше нет графика генуборки — даты в плане остались как были`);
+      return;
+    }
+    if (inSequence) {
+      toast.info("График помещения изменился — обновите даты кнопкой «Заполнить план по графику»");
+      return;
+    }
+    const op: GeneralCleaningOp = {
+      type: "fillFromSchedule",
+      rowIds: [row.id],
+      mode: "replace-future",
+      fromDate: todayKey,
+    };
+    const schedules = new Map(scheduleByRoomId);
+    schedules.set(snapshot.id, schedule);
+    let change: { added: string[]; removed: string[] } | undefined;
+    try {
+      const result = applyGeneralCleaningOp(configRef.current, op, {
+        todayKey,
+        userId: null,
+        schedules,
+      });
+      change = diffCleaningPlans(configRef.current, result.config).get(row.id);
+    } catch {
+      return;
+    }
+    if (!change) return;
+    const ok = await confirmAsync({
+      title: `Обновить план «${row.roomName}» по новому графику?`,
+      description: `Новый график: ${describeGeneralSchedule(schedule)}.`,
+      bullets: [
+        ...(change.added.length > 0
+          ? [{ label: `Добавятся: ${datesPreview(change.added)}`, tone: "info" as const }]
+          : []),
+        ...(change.removed.length > 0
+          ? [{ label: `Уйдут из плана: ${datesPreview(change.removed)}`, tone: "warn" as const }]
+          : []),
+        { label: "Прошедшие даты и отметки о выполнении не изменятся", tone: "default" as const },
+      ],
+      confirmLabel: "Обновить план",
+      cancelLabel: "Оставить как есть",
+    });
+    if (ok) await postOp(op);
+  }
+
+  async function saveSettings(value: SettingsState) {
+    const nextYear = Number(value.year);
+    const hasDates = configRef.current.rows.some(
+      (row) => row.cleanings.length > 0 || Object.keys(row.legacyNotes ?? {}).length > 0,
+    );
+    if (Number.isFinite(nextYear) && nextYear !== configRef.current.year && hasDates) {
+      // Окно настроек закрываем до вопроса: подтверждение поверх
+      // модального окна Radix закрыло бы его само.
+      setSettingsOpen(false);
+      const counts = configRef.current.rows.reduce(
+        (acc, row) => {
+          acc.planned += row.cleanings.filter((c) => c.planned).length;
+          acc.done += row.cleanings.filter((c) => c.done).length;
+          return acc;
+        },
+        { planned: 0, done: 0 },
+      );
+      const ok = await confirmAsync({
+        title: `Перенести график на ${nextYear} год?`,
+        description: "Все даты останутся теми же числами и месяцами, но в новом году.",
+        bullets: [
+          { label: `Дат в плане: ${counts.planned}`, tone: "info" },
+          { label: `Отметок о выполнении: ${counts.done} — тоже переедут`, tone: counts.done > 0 ? "warn" : "info" },
+          { label: "Для графика на следующий год удобнее «Сделать копию» в списке документов", tone: "default" },
+        ],
+        confirmLabel: `Перенести на ${nextYear}`,
+        variant: "warn",
+      });
+      if (!ok) {
+        toast.info("Год не изменён — настройки не сохранены");
+        return;
+      }
+      if (!(await postOp({ type: "shiftYear", year: nextYear }))) return;
+    }
+    const next = normalizeSanitationDayConfig({
+      ...configRef.current,
+      year: nextYear,
+      documentDate: value.documentDate,
+      approveRole: value.approveRole,
+      approveEmployeeId: value.approveEmployeeId || null,
+      approveEmployee: value.approveEmployee,
+      responsibleRole: value.responsibleRole,
+      responsibleEmployeeId: value.responsibleEmployeeId || null,
+      responsibleEmployee: value.responsibleEmployee,
+    });
+    await patchConfig(next, value.title.trim() || title);
+  }
+
+  const editorRow = editor ? normalized.rows.find((row) => row.id === editor.rowId) ?? null : null;
+  const yearSheetRow = yearSheetRowId
+    ? normalized.rows.find((row) => row.id === yearSheetRowId) ?? null
+    : null;
 
   return (
     <div className="space-y-5">
@@ -1131,6 +1190,17 @@ export function SanitationDayDocumentClient({
               Добавить помещение
             </Button>
 
+            {normalized.rows.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => setFillOpen(true)}
+                title="Проставить даты плана по дням генеральной уборки из карточек помещений"
+                className="inline-flex h-11 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 print:hidden"
+              >
+                <CalendarRange className="size-4 text-[#5566f6]" />
+                Заполнить план по графику помещений
+              </button>
+            ) : null}
           </div>
 
           <JournalSelectionBar
@@ -1155,21 +1225,22 @@ export function SanitationDayDocumentClient({
         {mobileView === "cards" ? (
             <RecordCardsView
               items={normalized.rows.map((row, index) => {
-                // Пустая ячейка месяца хранится как «-» (normalizeMonthCell),
-                // поэтому без этой проверки карточка выдавала 12 пунктов
-                // «Январь:- · Февраль:- · …».
-                const monthSummary = (months: Record<string, string>) =>
-                  SANITATION_MONTHS.map((m) => {
-                    const v = months[m.key];
-                    return v && v !== "-" ? `${MONTH_FIELD_LABELS[m.key]}:${v}` : null;
-                  })
-                    .filter(Boolean)
-                    .join(" · ");
-                const planSummary = monthSummary(row.plan);
-                const factSummary = monthSummary(row.fact);
+                const summary = summarizeCleanings(row.cleanings, todayKey);
+                const next = nextOpenCleaning(row, todayKey);
+                const planText =
+                  summary.planned + summary.unplanned === 0
+                    ? ""
+                    : [
+                        `${summary.planned} в плане`,
+                        `выполнено ${summary.done}`,
+                        ...(summary.overdue > 0 ? [`просрочено ${summary.overdue}`] : []),
+                      ].join(" · ");
+                const openYear = readOnly ? undefined : () => setYearSheetRowId(row.id);
                 return {
                   id: row.id,
                   title: `№${index + 1} · ${row.roomName || "—"}`,
+                  // «изменить» на карточке — год строки по месяцам в листе снизу.
+                  onClick: openYear,
                   leading: !readOnly ? (
                     <Checkbox
                       checked={selectedRowIds.includes(row.id)}
@@ -1184,27 +1255,20 @@ export function SanitationDayDocumentClient({
                     />
                   ) : null,
                   fields: [
+                    { label: "Уборки", value: planText || "дат пока нет", header: true },
+                    {
+                      label: "Ближайшая",
+                      value: next?.planned ? formatDayMonthWeekday(next.planned) : "",
+                      header: true,
+                    },
                     { label: "Убирает", value: roomPeople(row).cleaners.join(", "), hideIfEmpty: true },
                     { label: "Проверяет", value: roomPeople(row).verifiers.join(", "), hideIfEmpty: true },
                     {
-                      label: "План по месяцам",
-                      value: planSummary,
+                      label: "План и факт на год",
+                      value: planText,
                       hideIfEmpty: false,
-                      onClick: readOnly
-                        ? undefined
-                        : () =>
-                            setEditingMonths({ rowId: row.id, mode: "plan" }),
-                      hint: readOnly ? undefined : "нажмите, чтобы заполнить",
-                    },
-                    {
-                      label: "Факт по месяцам",
-                      value: factSummary,
-                      hideIfEmpty: false,
-                      onClick: readOnly
-                        ? undefined
-                        : () =>
-                            setEditingMonths({ rowId: row.id, mode: "fact" }),
-                      hint: readOnly ? undefined : "нажмите, чтобы заполнить",
+                      onClick: openYear,
+                      hint: readOnly ? undefined : "нажмите, чтобы открыть месяцы",
                     },
                   ],
                 };
@@ -1304,6 +1368,11 @@ export function SanitationDayDocumentClient({
                           Проверяет: {roomPeople(row).verifiers.join(", ")}
                         </div>
                       ) : null}
+                      {rowSchedule(row) ? (
+                        <div className="text-[11px] font-normal text-[#6f7282] print:hidden">
+                          График: {describeGeneralSchedule(rowSchedule(row) as RoomGeneralSchedule)}
+                        </div>
+                      ) : null}
                       {!readOnly && !row.roomId && suggestDirectoryRoomForSanitationRow(row, directoryRooms) ? (
                         <button
                           type="button"
@@ -1312,7 +1381,7 @@ export function SanitationDayDocumentClient({
                             const match = suggestDirectoryRoomForSanitationRow(row, directoryRooms);
                             if (match) void linkRow(row.id, match);
                           }}
-                          title="В справочнике есть помещение с таким же названием — связать, чтобы название и ответственные брались из карточки помещения"
+                          title="В справочнике есть помещение с таким же названием — связать, чтобы название, ответственные и график брались из карточки помещения"
                           className="mt-0.5 rounded-full bg-[#f5f6ff] px-2 py-0.5 text-[11px] font-medium text-[#3848c7] transition-colors duration-150 hover:bg-[#eef1ff] print:hidden"
                         >
                           Связать
@@ -1322,30 +1391,20 @@ export function SanitationDayDocumentClient({
                     <td className={`${GRID_CELL_CLASS} px-3 py-1 text-center leading-tight`}>
                       План
                     </td>
-                    {SANITATION_MONTHS.map((month) => (
+                    {SANITATION_MONTHS.map((month, monthIndex) => (
                       <td
                         key={`${row.id}-plan-${month.key}`}
-                        className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}
+                        className={`${GRID_CELL_CLASS} px-1 py-1 text-center leading-tight`}
                       >
-                        {readOnly ? (
-                          displayMonthValue(row.plan[month.key])
-                        ) : (
-                          <Input
-                            defaultValue={row.plan[month.key] || ""}
-                            aria-label={`${MONTH_FIELD_LABELS[month.key]} план`}
-                            onBlur={(event) => {
-                              const next = event.target.value;
-                              if (next === (row.plan[month.key] || "")) return;
-                              void saveMonthValue(
-                                row.id,
-                                month.key,
-                                next,
-                                "plan",
-                              );
-                            }}
-                            className="h-7 rounded-lg border-0 bg-transparent px-1 text-center text-[13px]"
-                          />
-                        )}
+                        <GeneralCleaningMonthCell
+                          row={row}
+                          year={normalized.year}
+                          monthIndex={monthIndex}
+                          kind="plan"
+                          todayKey={todayKey}
+                          readOnly={readOnly}
+                          onOpen={(event) => openMonthEditor(row.id, monthIndex, event)}
+                        />
                       </td>
                     ))}
                   </tr>
@@ -1353,30 +1412,20 @@ export function SanitationDayDocumentClient({
                     <td className={`${GRID_CELL_CLASS} px-3 py-1 text-center leading-tight`}>
                       Факт
                     </td>
-                    {SANITATION_MONTHS.map((month) => (
+                    {SANITATION_MONTHS.map((month, monthIndex) => (
                       <td
                         key={`${row.id}-fact-${month.key}`}
-                        className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}
+                        className={`${GRID_CELL_CLASS} px-1 py-1 text-center leading-tight`}
                       >
-                        {readOnly ? (
-                          displayMonthValue(row.fact[month.key])
-                        ) : (
-                          <Input
-                            defaultValue={row.fact[month.key] || ""}
-                            aria-label={`${MONTH_FIELD_LABELS[month.key]} факт`}
-                            onBlur={(event) => {
-                              const next = event.target.value;
-                              if (next === (row.fact[month.key] || "")) return;
-                              void saveMonthValue(
-                                row.id,
-                                month.key,
-                                next,
-                                "fact",
-                              );
-                            }}
-                            className="h-7 rounded-lg border-0 bg-transparent px-1 text-center text-[13px]"
-                          />
-                        )}
+                        <GeneralCleaningMonthCell
+                          row={row}
+                          year={normalized.year}
+                          monthIndex={monthIndex}
+                          kind="fact"
+                          todayKey={todayKey}
+                          readOnly={readOnly}
+                          onOpen={(event) => openMonthEditor(row.id, monthIndex, event)}
+                        />
                       </td>
                     ))}
                   </tr>
@@ -1442,6 +1491,57 @@ export function SanitationDayDocumentClient({
           </MobileViewTableWrapper>
       </section>
 
+      {editor && editorRow ? (
+        <GeneralCleaningMonthEditor
+          open
+          onOpenChange={(open) => {
+            if (!open) setEditor(null);
+          }}
+          anchorRef={anchorRef}
+          title={`${MONTH_NAMES_RU[editor.monthIndex]} ${normalized.year} · ${editorRow.roomName || "Помещение"}`}
+          subtitle={describeMonthLoad(editorRow, normalized.year, editor.monthIndex, todayKey).text}
+        >
+          <GeneralCleaningMonthPanel
+            key={`${editorRow.id}-${editor.monthIndex}`}
+            row={editorRow}
+            year={normalized.year}
+            monthIndex={editor.monthIndex}
+            todayKey={todayKey}
+            schedule={rowSchedule(editorRow)}
+            linked={rowLinked(editorRow)}
+            tasksflowEnabled={tasksflowEnabled}
+            canFillFromSchedule
+            onOp={postOp}
+          />
+        </GeneralCleaningMonthEditor>
+      ) : null}
+
+      {yearSheetRow ? (
+        <GeneralCleaningYearSheet
+          key={yearSheetRow.id}
+          open
+          onClose={() => setYearSheetRowId(null)}
+          row={yearSheetRow}
+          year={normalized.year}
+          todayKey={todayKey}
+          schedule={rowSchedule(yearSheetRow)}
+          linked={rowLinked(yearSheetRow)}
+          tasksflowEnabled={tasksflowEnabled}
+          canFillFromSchedule
+          onOp={postOp}
+        />
+      ) : null}
+
+      {fillOpen ? (
+        <GeneralCleaningFillDialog
+          onClose={() => setFillOpen(false)}
+          config={normalized}
+          schedules={scheduleByRoomId}
+          todayKey={todayKey}
+          onConfirm={postOp}
+        />
+      ) : null}
+
       <RoomDialog
         key={`room-dialog-${roomDialogState.id || "new"}`}
         open={roomDialogOpen}
@@ -1456,7 +1556,6 @@ export function SanitationDayDocumentClient({
             : "Добавление новой строки"
         }
         submitText={roomDialogState.id ? "Сохранить" : "Создать"}
-        includePlanFields={!roomDialogState.id}
         linkOptions={listSanitationRoomsNotInDocument(normalized, directoryRooms)}
         onSubmit={async (value, linkRoomId) => {
           await saveRoomDialog(value, linkRoomId);
@@ -1472,7 +1571,7 @@ export function SanitationDayDocumentClient({
         onOpenChange={setPickerOpen}
         buildings={buildings}
         excludeRoomIds={normalized.rows.map((r) => r.roomId).filter((id): id is string => Boolean(id))}
-        hint="Помещения общие для всех журналов. Состав генеральной уборки, уборщики и проверяющие — в карточке помещения."
+        hint="Помещения общие для всех журналов. Состав генеральной уборки, дни по графику, уборщики и проверяющие — в карточке помещения."
         onPick={addRoomFromDirectory}
         onCreated={async (room) => {
           await addRoomFromDirectory(room);
@@ -1495,10 +1594,12 @@ export function SanitationDayDocumentClient({
         initial={roomEditor}
         focus="cleaning"
         users={users}
-        onSaved={() => {
+        onSaved={(snapshot) => {
           router.refresh();
           roomEditorSavedRef.current = true;
+          const inSequence = seq.progress !== null;
           seq.saved();
+          void offerScheduleRefresh(snapshot, inSequence);
         }}
       />
 
@@ -1507,46 +1608,8 @@ export function SanitationDayDocumentClient({
         onOpenChange={setSettingsOpen}
         users={users}
         initial={settingsState}
-        onSubmit={async (value) => {
-          const next = normalizeSanitationDayConfig({
-            ...normalized,
-            year: Number(value.year),
-            documentDate: value.documentDate,
-            approveRole: value.approveRole,
-            approveEmployeeId: value.approveEmployeeId || null,
-            approveEmployee: value.approveEmployee,
-            responsibleRole: value.responsibleRole,
-            responsibleEmployeeId: value.responsibleEmployeeId || null,
-            responsibleEmployee: value.responsibleEmployee,
-          });
-          await patchConfig(next, value.title.trim() || title);
-        }}
+        onSubmit={saveSettings}
         useV2={useV2}
-      />
-
-      {/* План или факт по месяцам для одного помещения — из карточки. */}
-      <CardEditSheet
-        open={editingMonths !== null}
-        title={editingMonths?.mode === "fact" ? "Факт по месяцам" : "План по месяцам"}
-        subtitle={
-          normalized.rows.find((row) => row.id === editingMonths?.rowId)
-            ?.roomName || undefined
-        }
-        fields={editingMonths ? buildMonthsEditFields() : []}
-        values={
-          editingMonths
-            ? buildMonthsEditValues(editingMonths.rowId, editingMonths.mode)
-            : {}
-        }
-        onClose={() => setEditingMonths(null)}
-        onSubmit={(values) => {
-          if (!editingMonths) return;
-          void saveMonthsFromSheet(
-            editingMonths.rowId,
-            editingMonths.mode,
-            values
-          );
-        }}
       />
     </div>
   );

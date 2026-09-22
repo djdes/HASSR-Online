@@ -871,6 +871,7 @@ async function JournalDocumentBody({
         buildings={directoryBuildings}
         config={document.config}
         useV2={organization?.experimentalUiV2 ?? true}
+        tasksflowEnabled={hasTasksFlowIntegration}
       />
     );
   }

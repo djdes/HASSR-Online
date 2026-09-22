@@ -58,6 +58,7 @@ import { findOrgUser } from "@/lib/journal-roster-db";
 import { orgTodayKey } from "@/lib/timezone";
 import { Prisma, TasksFlowOutboxStatus } from "@prisma/client";
 import { buildDocumentTaskDeleteCommands } from "@/lib/journal-document-tasks-cleanup";
+import { mergeSanitationTaskMarks } from "@/lib/general-cleaning-merge";
 
 /**
  * Журналы, которые ведут собственную дату окончания в шапке бланка
@@ -567,6 +568,18 @@ export async function PATCH(
             current: locked.config,
             knownRowIds: parseKnownRowIds((body as { knownRowIds?: unknown }).knownRowIds),
           }) as Prisma.InputJsonValue,
+          data: { ...data, config: undefined },
+          result: true,
+        })).then(() => db.journalDocument.findUniqueOrThrow({ where: { id } }))
+      : template?.code === SANITATION_DAY_TEMPLATE_CODE && data.config !== undefined
+      ? // График генуборок: отметки из задач TasksFlow / QR, пришедшие,
+        // пока страница была открыта, не затираются — слияние под той же
+        // блокировкой документа, что и у адаптера (general-cleaning-merge.ts).
+        await withDocumentConfigLock(id, async (locked) => ({
+          config: mergeSanitationTaskMarks({
+            incoming: data.config,
+            current: locked.config,
+          }) as unknown as Prisma.InputJsonValue,
           data: { ...data, config: undefined },
           result: true,
         })).then(() => db.journalDocument.findUniqueOrThrow({ where: { id } }))

@@ -9,6 +9,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { WheelDatePicker } from "@/components/ui/wheel-date-picker";
 import { cn } from "@/lib/utils";
 import {
   JOURNAL_DIALOG_ERROR_CLASS,
@@ -253,6 +254,10 @@ function buildMonthGrid(year: number, month: number) {
  * Поле даты с floating label и русским календарём.
  * `value`/`onChange` работают в ISO «YYYY-MM-DD» — тот же формат, что
  * отправляется в API, поэтому вызывающий код не меняется.
+ *
+ * `picker="wheel"` — вместо сетки календаря барабан «день | месяц | год»
+ * (`WheelDatePicker`): удобнее пальцем и для дат далеко от сегодняшней.
+ * Ввод ДД.ММ.ГГГГ с клавиатуры работает в обоих вариантах.
  */
 export function DateField({
   label,
@@ -262,6 +267,7 @@ export function DateField({
   disabled,
   className,
   error,
+  picker = "calendar",
 }: {
   label: string;
   value: string;
@@ -270,6 +276,7 @@ export function DateField({
   disabled?: boolean;
   className?: string;
   error?: ReactNode;
+  picker?: "calendar" | "wheel";
 }) {
   const generatedId = useId();
   const fieldId = id || generatedId;
@@ -304,6 +311,13 @@ export function DateField({
     }
   }
 
+  /** Дата с барабана: сразу в поле и наружу. */
+  function commitIso(iso: string) {
+    onChange(iso);
+    setLastValue(iso);
+    setText(formatRuDateValue(iso));
+  }
+
   return (
     <FloatingLabelField
       label={label}
@@ -333,12 +347,29 @@ export function DateField({
             <button
               type="button"
               disabled={disabled}
-              aria-label="Открыть календарь"
+              aria-label={picker === "wheel" ? "Выбрать дату" : "Открыть календарь"}
               className="shrink-0 rounded-lg p-1 text-[#6f7282] transition-colors duration-150 hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:opacity-50"
             >
               <CalendarDays className="size-5" />
             </button>
           </PopoverTrigger>
+          {picker === "wheel" ? (
+            <PopoverContent
+              align="end"
+              className="w-[300px] rounded-[18px] border-[#ececf4] p-3 shadow-[0_16px_48px_rgba(40,45,86,0.14)]"
+            >
+              <WheelDatePicker
+                value={value || todayIso}
+                onChange={commitIso}
+                todayKey={todayIso}
+                onDone={() => {
+                  // Открыли и сразу «Готово» — берём показанную дату.
+                  if (!value) commitIso(todayIso);
+                  setOpen(false);
+                }}
+              />
+            </PopoverContent>
+          ) : (
           <PopoverContent
             align="end"
             className="w-[292px] rounded-[18px] border-[#ececf4] p-3 shadow-[0_16px_48px_rgba(40,45,86,0.14)]"
@@ -410,6 +441,7 @@ export function DateField({
               })}
             </div>
           </PopoverContent>
+          )}
         </Popover>
       </div>
     </FloatingLabelField>

@@ -133,6 +133,7 @@ import {
 } from "@/lib/journal-roster";
 import { findOrgUser } from "@/lib/journal-roster-db";
 import { seedEntriesForDocument } from "@/lib/journal-document-entries-seed";
+import { orgTodayKey } from "@/lib/timezone";
 
 /**
  * Журналы, где утверждающий шапки («УТВЕРЖДАЮ») — отдельный слот
@@ -425,10 +426,32 @@ export async function POST(request: Request) {
               ...(activeBuildingId ? { id: activeBuildingId } : {}),
             },
           },
-          select: { id: true, name: true, climateNorms: true },
+          // 2026-09-22: вместе с графиком генуборки помещения — план
+          // нового документа сразу заполняется датами по графику.
+          select: {
+            id: true,
+            name: true,
+            climateNorms: true,
+            generalScheduleType: true,
+            generalDays: true,
+            generalMonthDays: true,
+          },
           orderBy: [{ buildingId: "asc" }, { sortOrder: "asc" }, { name: "asc" }],
         })
       : [];
+  // «Сегодня» по поясу организации: план по графику сеется с этого дня,
+  // прошедшие дни года остаются пустыми.
+  const sanitationFromKey =
+    resolvedTemplateCode === SANITATION_DAY_TEMPLATE_CODE
+      ? orgTodayKey(
+          (
+            await db.organization.findUnique({
+              where: { id: getActiveOrgId(session) },
+              select: { timezone: true },
+            })
+          )?.timezone ?? undefined
+        )
+      : null;
 
   // C1/C2 аудита: помещения уборки — это таблица Room
   // (/settings/buildings), а не blueprint'ы в config.rooms. Матрицу и
@@ -702,7 +725,9 @@ export async function POST(request: Request) {
         // присылает лишь approve*/responsible*, и наивный merge обнулил
         // бы список помещений.
         (() => {
-          const base = buildSanitationDayConfigFromRooms(directoryRooms, new Date(dateFrom));
+          const base = buildSanitationDayConfigFromRooms(directoryRooms, new Date(dateFrom), {
+            fromKey: sanitationFromKey,
+          });
           const provided = (rawConfig || {}) as Record<string, unknown>;
           const providedRows =
             Array.isArray(provided.rows) && provided.rows.length > 0;

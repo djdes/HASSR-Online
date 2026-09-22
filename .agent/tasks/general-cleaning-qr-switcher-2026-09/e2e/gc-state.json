@@ -1,0 +1,14 @@
+{
+  "password": "E2eTest2026!",
+  "orgId": "e2e-org-gc",
+  "managerEmail": "gc-manager@e2e.local",
+  "managerId": "cmucuk8nv0002gc9m096fzoeb",
+  "cleanerId": "cmucuk8p20003gc9mrfk49k8q",
+  "verifierId": "cmucuk8pl0004gc9mkfm5sgs0",
+  "integrationId": "cmucuk8sr0009gc9mp8zsn4dg",
+  "roomIds": {
+    "Кухня (e2e)": "cmucuk8qq0006gc9mxhzucfbz",
+    "Склад (e2e)": "cmucuk8r90007gc9mditeq586",
+    "Бар (e2e)": "cmucuk8sd0008gc9mrrvjw7px"
+  }
+}

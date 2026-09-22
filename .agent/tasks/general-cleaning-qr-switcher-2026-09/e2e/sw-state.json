@@ -1,0 +1,21 @@
+{
+  "password": "E2eTest2026!",
+  "org": "e2e-org-sw",
+  "disabled": [
+    "perishable_rejection",
+    "fryer_oil",
+    "glass_control"
+  ],
+  "users": {
+    "manager": {
+      "id": "cmuct5q1b0002gc9mlmobhz2t",
+      "email": "sw-manager@e2e.local",
+      "name": "Светлана Руководитель"
+    },
+    "cook": {
+      "id": "cmuct5q1m0003gc9mxv7ehw13",
+      "email": "sw-cook@e2e.local",
+      "name": "Семён Повар"
+    }
+  }
+}

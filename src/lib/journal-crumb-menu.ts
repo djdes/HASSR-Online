@@ -8,7 +8,14 @@ import { getTemplatesFilledToday } from "@/lib/today-compliance";
 import { getActiveBuildingId } from "@/lib/active-building";
 import { buildingWhere } from "@/lib/building-scope";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
-import type { CrumbMenuItem } from "@/components/ui/breadcrumbs";
+import {
+  JOURNAL_SWITCHER_SHOW_ALL_HREF,
+  buildJournalSwitcherMenu,
+  type CrumbMenuItem,
+  type JournalSwitcherMenu,
+} from "@/lib/crumb-menu";
+
+export type { JournalSwitcherMenu } from "@/lib/crumb-menu";
 
 /**
  * Содержимое выпадающих списков в хлебных крошках раздела журналов.
@@ -18,9 +25,11 @@ import type { CrumbMenuItem } from "@/components/ui/breadcrumbs";
  * несколько журналов подряд, и переход «журнал → журнал» не должен стоить
  * возврата в список и обратно.
  *
- * Правила видимости — те же, что на `/journals`: свой ACL у сотрудника,
- * отключённые журналы прячем от всех, кроме управляющих (сотрудник всё
- * равно не может включить их обратно, и пункт стал бы тупиком).
+ * В списке — только ВКЛЮЧЁННЫЕ журналы, с учётом ACL сотрудника: это
+ * рабочий набор организации. Выключенные раньше висели у руководителя
+ * серыми строками посреди списка и мешали искать нужный; теперь весь
+ * набор — по «Показать все» (страница руководителя), а поиск, совпавший
+ * с выключенным журналом, объясняет, почему его нет.
  *
  * `cache` — на один серверный рендер: страница документа спрашивает и
  * список журналов, и список документов, а её ветки могут спросить дважды.
@@ -28,7 +37,7 @@ import type { CrumbMenuItem } from "@/components/ui/breadcrumbs";
 
 /** Набор журналов организации со статусом «заполнен сегодня». */
 export const getJournalCrumbMenu = cache(
-  async (session: Session, currentCode?: string): Promise<CrumbMenuItem[]> => {
+  async (session: Session, currentCode?: string): Promise<JournalSwitcherMenu> => {
     const organizationId = getActiveOrgId(session);
     const isManager = hasFullWorkspaceAccess(session.user);
     const allowedCodes = await getAllowedJournalCodes(
@@ -51,36 +60,22 @@ export const getJournalCrumbMenu = cache(
     ]);
 
     const disabledCodes = parseDisabledCodes(organization?.disabledJournalCodes);
-    const visible = isManager
-      ? templates
-      : templates.filter((t) => !disabledCodes.has(t.code));
+    const enabled = templates.filter((t) => !disabledCodes.has(t.code));
 
-    const filledIds = await getTemplatesFilledToday(
+    const filledTemplateIds = await getTemplatesFilledToday(
       organizationId,
       new Date(),
-      visible.map((t) => ({ id: t.id, code: t.code })),
+      enabled.map((t) => ({ id: t.id, code: t.code })),
       disabledCodes,
       { buildingId: await getActiveBuildingId(session) },
     );
 
-    return visible.map((template) => {
-      const disabled = disabledCodes.has(template.code);
-      return {
-        label: template.name,
-        href: `/journals/${template.code}`,
-        // Отключённый журнал серый, а не красный: он не «просрочен», его
-        // просто не ведут — красным он бы звал заполнять то, чего нет.
-        status: disabled
-          ? ("muted" as const)
-          : filledIds.has(template.id)
-            ? ("ok" as const)
-            : ("danger" as const),
-        hint: disabled ? "выключен" : undefined,
-        current: template.code === currentCode,
-        // Наведение на строку раскрывает документы этого журнала —
-        // второй уровень подгружается лениво, по одному запросу.
-        submenuJournalCode: template.code,
-      };
+    return buildJournalSwitcherMenu({
+      templates,
+      disabledCodes,
+      filledTemplateIds,
+      currentCode,
+      showAllHref: isManager ? JOURNAL_SWITCHER_SHOW_ALL_HREF : null,
     });
   },
 );
