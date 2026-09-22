@@ -111,3 +111,11 @@ dispatcher/logs/
 
 # архивы деплоя — внутри .env/CLAUDE.md
 .agent/**/*.tar
+
+# Локальные инструкции и заметки с доступами — только на машине, не в репозитории
+/CLAUDE.md
+/KIMI_ONBOARDING.md
+/docs/local-testing.md
+/docs/FEATURES_AND_AUTOMATION.md
+/docs/superpowers/plans/2026-05-09-race-siblings-fix.md
+/.agent/tasks/telegram-notifications/DEPLOY_GUIDE.md
