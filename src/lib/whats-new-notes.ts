@@ -881,3 +881,24 @@ export function whatsNewVersion(notes: WhatsNewNote[] = WHATS_NEW_NOTES): string
   }
   return (hash >>> 0).toString(36);
 }
+
+const PARTNER_PROGRAM_CATEGORIES = new Set(["Партнёры", "Партнёрство"]);
+const PARTNER_PROGRAM_WORDS = /партн[её]р|консультант|вознагражд/i;
+
+/**
+ * Заметки для клиента, чей консультант скрыл себя (2026-09-22): без
+ * категорий и пунктов о партнёрской программе и консультантах.
+ */
+export function notesWithoutPartnerProgram(notes: WhatsNewNote[] = WHATS_NEW_NOTES): WhatsNewNote[] {
+  const out: WhatsNewNote[] = [];
+  for (const note of notes) {
+    if (typeof note === "string") {
+      if (!PARTNER_PROGRAM_WORDS.test(note)) out.push(note);
+      continue;
+    }
+    if (PARTNER_PROGRAM_CATEGORIES.has(note.category)) continue;
+    const items = note.items.filter((item) => !PARTNER_PROGRAM_WORDS.test(item));
+    if (items.length > 0) out.push({ ...note, items });
+  }
+  return out;
+}

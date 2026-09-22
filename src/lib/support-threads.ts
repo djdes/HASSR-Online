@@ -126,7 +126,8 @@ export async function getActivePartnerForOrg(
   organizationId: string
 ): Promise<ThreadPartner | null> {
   const link = await db.partnerClient.findFirst({
-    where: { organizationId, detachedAt: null, partner: { status: "active" } },
+    // Скрытый партнёр чатов клиента не ведёт — отвечает поддержка WeSetup.
+    where: { organizationId, detachedAt: null, partner: { status: "active", hideFromClients: false } },
     select: {
       partnerId: true,
       partner: {
@@ -157,7 +158,7 @@ export async function getPartnerThreadOwnership(
     where: {
       organizationId: { in: ids },
       detachedAt: null,
-      partner: { status: "active" },
+      partner: { status: "active", hideFromClients: false },
     },
     select: {
       organizationId: true,
@@ -179,7 +180,7 @@ export async function getPartnerThreadOwnership(
 /** Организации партнёра с активной привязкой. */
 export async function listPartnerOrgIds(partnerId: string): Promise<string[]> {
   const links = await db.partnerClient.findMany({
-    where: { partnerId, detachedAt: null },
+    where: { partnerId, detachedAt: null, partner: { hideFromClients: false } },
     select: { organizationId: true },
   });
   return links.map((l) => l.organizationId);

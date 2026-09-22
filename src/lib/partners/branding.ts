@@ -30,6 +30,12 @@ export type PartnerBrandView = {
   supportEmail: string | null;
   pdfSignature: string | null;
   loginGreeting: string | null;
+  /**
+   * Партнёр скрыл себя от клиентов («Не показывать клиентам информацию о
+   * консультанте»): в интерфейсе, письмах, PDF и Telegram клиента его нет,
+   * а где без упоминания не обойтись — «Служба сопровождения WeSetup».
+   */
+  hiddenFromClients: boolean;
 };
 
 export type OrgBranding = PartnerBrandView & {
@@ -41,8 +47,15 @@ export type OrgBranding = PartnerBrandView & {
 };
 
 type CacheEntry = { value: OrgBranding | null; expires: number };
-const orgCache = new Map<string, CacheEntry>();
-const partnerOrgs = new Map<string, Set<string>>();
+// Кэш — один на процесс (globalThis): страницы и API-маршруты Next грузят
+// модуль отдельными копиями, и сброс из API иначе не доходил до страниц —
+// скрытие консультанта применялось бы только через 5 минут.
+const cacheHost = globalThis as typeof globalThis & {
+  __wesetupOrgBrandingCache?: Map<string, CacheEntry>;
+  __wesetupPartnerOrgs?: Map<string, Set<string>>;
+};
+const orgCache = (cacheHost.__wesetupOrgBrandingCache ??= new Map<string, CacheEntry>());
+const partnerOrgs = (cacheHost.__wesetupPartnerOrgs ??= new Map<string, Set<string>>());
 
 export function invalidateOrgBranding(organizationId: string) {
   orgCache.delete(organizationId);
@@ -55,6 +68,9 @@ export function invalidatePartnerBranding(partnerId: string) {
     for (const orgId of orgs) orgCache.delete(orgId);
     partnerOrgs.delete(partnerId);
   }
+  for (const [orgId, entry] of orgCache) {
+    if (entry.value?.partnerId === partnerId) orgCache.delete(orgId);
+  }
 }
 
 export function logoUrlFor(brand: Pick<PartnerBrandView, "partnerId" | "version">, variant: "light" | "dark") {
@@ -65,6 +81,7 @@ type PartnerRow = {
   id: string;
   slug: string;
   companyName: string;
+  hideFromClients: boolean;
   branding: {
     brandName: string;
     logoLightMime: string | null;
@@ -83,6 +100,7 @@ const PARTNER_SELECT = {
   id: true,
   slug: true,
   companyName: true,
+  hideFromClients: true,
   branding: {
     select: {
       brandName: true,
@@ -117,6 +135,32 @@ export function toBrandView(partner: PartnerRow): PartnerBrandView {
     supportEmail: b?.supportEmail?.trim() || null,
     pdfSignature: b?.pdfSignature?.trim() || null,
     loginGreeting: b?.loginGreeting?.trim() || null,
+    hiddenFromClients: partner.hideFromClients,
+  };
+}
+
+/** Как скрытый партнёр называется там, где клиенту нужно знать, кто имеет доступ. */
+export const NEUTRAL_SUPPORT_NAME = "Служба сопровождения WeSetup";
+
+/**
+ * Брендинг для глаз клиента: у скрытого партнёра — нейтральный, без
+ * названия, логотипа, цвета и контактов. Кабинет самого партнёра берёт
+ * настоящий брендинг напрямую.
+ */
+export function clientFacingBrand<T extends PartnerBrandView>(brand: T): T {
+  if (!brand.hiddenFromClients) return brand;
+  return {
+    ...brand,
+    brandName: NEUTRAL_SUPPORT_NAME,
+    hasLogoLight: false,
+    hasLogoDark: false,
+    accentColor: null,
+    accentHover: null,
+    supportPhone: null,
+    supportTelegram: null,
+    supportEmail: null,
+    pdfSignature: null,
+    loginGreeting: "Добро пожаловать в электронные журналы WeSetup",
   };
 }
 
@@ -160,9 +204,19 @@ export async function getVisibleOrgBranding(organizationId: string | null | unde
   if (!organizationId) return null;
   try {
     const branding = await resolveOrgBranding(organizationId);
-    return branding && !branding.clientHidesBranding ? branding : null;
+    return branding && !branding.clientHidesBranding && !branding.hiddenFromClients ? branding : null;
   } catch {
     return null;
+  }
+}
+
+/** Партнёр организации скрыт от клиента — подписи и уведомления без него. */
+export async function isPartnerHiddenForOrg(organizationId: string | null | undefined): Promise<boolean> {
+  if (!organizationId) return false;
+  try {
+    return (await resolveOrgBranding(organizationId))?.hiddenFromClients === true;
+  } catch {
+    return false;
   }
 }
 

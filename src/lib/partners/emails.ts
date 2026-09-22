@@ -103,8 +103,22 @@ export async function sendPartnerClientInviteEmail(params: {
   declineUrl: string;
   contactLine: string | null;
 }) {
-  const brand: EmailBrand | null = await emailBrandForPartnerSlug(params.partnerSlug);
   const inviteUrl = `${APP_URL}/p/${params.partnerSlug}`;
+  // Партнёр скрыл себя от клиентов — письмо от WeSetup, без бренда и «партнёра».
+  const { getPartnerBrandBySlug } = await import("./branding");
+  const view = await getPartnerBrandBySlug(params.partnerSlug).catch(() => null);
+  if (view?.hiddenFromClients) {
+    const neutralBody = `
+    <p ${P}>Здравствуйте!</p>
+    <p ${P}>Приглашаем вести электронные журналы СанПиН и ХАССП в WeSetup. Служба сопровождения WeSetup поможет с настройкой, подскажет про просрочки и подготовку к проверкам.</p>
+    <div ${BOX}>
+      <p style="margin:0;color:#3f3f46;font-size:14px">Регистрация без карты: бесплатно до ${FREE_MAX_USERS} сотрудников, без ограничений по записям.</p>
+    </div>
+    ${button(inviteUrl, "Зарегистрироваться")}
+    <p ${MUTED}>Не интересно? <a href="${params.declineUrl}" style="color:#71717a">Нажмите здесь</a> — и приглашения больше не придут.</p>`;
+    return sendRawEmail(params.to, "Приглашение вести журналы СанПиН в WeSetup", renderEmailLayout("Приглашение в WeSetup", neutralBody));
+  }
+  const brand: EmailBrand | null = await emailBrandForPartnerSlug(params.partnerSlug);
   const subject = `${params.brandName} приглашает вести журналы СанПиН в WeSetup`;
   const body = `
     <p ${P}>Здравствуйте!</p>
@@ -168,16 +182,18 @@ export async function sendPartnerClientOwnerInviteEmail(params: {
   organizationName: string;
   brandName: string;
   inviteUrl: string;
+  /** Партнёр скрыл себя от клиентов — письмо без его имени. */
+  hidden?: boolean;
 }) {
   const subject = `Ваш кабинет WeSetup готов — ${params.organizationName}`;
   const body = `
     <p ${P}>Здравствуйте, <strong>${escapeHtml(params.name)}</strong>!</p>
-    <p ${P}><strong>${escapeHtml(params.brandName)}</strong> подготовил для вас кабинет WeSetup — электронные журналы СанПиН и ХАССП для организации <strong>${escapeHtml(params.organizationName)}</strong>.</p>
+    <p ${P}>${params.hidden ? "Для вас подготовлен" : `<strong>${escapeHtml(params.brandName)}</strong> подготовил для вас`} кабинет WeSetup — электронные журналы СанПиН и ХАССП для организации <strong>${escapeHtml(params.organizationName)}</strong>.</p>
     <div ${BOX}>
       <p style="margin:0;color:#3f3f46;line-height:1.6">Журналы, должности и сотрудники уже настроены. Останется установить пароль и начать заполнять.</p>
     </div>
     ${button(params.inviteUrl, "Установить пароль и войти")}
-    <p ${MUTED}>Ссылка действительна 7 дней. После входа вы станете владельцем организации: сможете управлять доступом консультанта и подпиской в разделе «Настройки».</p>`;
+    <p ${MUTED}>Ссылка действительна 7 дней. После входа вы станете владельцем организации: сможете управлять доступом ${params.hidden ? "службы сопровождения" : "консультанта"} и подпиской в разделе «Настройки».</p>`;
   return sendRawEmail(params.to, subject, renderEmailLayout("Кабинет готов", body));
 }
 
@@ -217,10 +233,17 @@ export async function sendConsultantAccessLevelChangedEmail(params: {
 }) {
   const human =
     params.level === "edit" ? "просмотр и редактирование" : "только просмотр";
-  const subject = `Консультант изменил уровень доступа: ${params.organizationName}`;
+  const neutral = params.brandName === "Служба сопровождения WeSetup";
+  const subject = neutral
+    ? `Изменён доступ службы сопровождения: ${params.organizationName}`
+    : `Консультант изменил уровень доступа: ${params.organizationName}`;
   const body = `
     <p ${P}>Здравствуйте!</p>
-    <p ${P}>Консультант <strong>${escapeHtml(params.brandName)}</strong> изменил свой уровень доступа к организации <strong>${escapeHtml(params.organizationName)}</strong>. Теперь ему доступно: <strong>${human}</strong>.</p>
+    <p ${P}>${
+      neutral
+        ? `У службы сопровождения WeSetup изменён уровень доступа к организации <strong>${escapeHtml(params.organizationName)}</strong>. Теперь доступно: <strong>${human}</strong>.`
+        : `Консультант <strong>${escapeHtml(params.brandName)}</strong> изменил свой уровень доступа к организации <strong>${escapeHtml(params.organizationName)}</strong>. Теперь ему доступно: <strong>${human}</strong>.`
+    }</p>
     <div ${BOX}>
       <p style="margin:0;color:#3f3f46;line-height:1.6">${
         params.level === "edit"

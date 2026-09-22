@@ -17,7 +17,7 @@ export async function GET() {
   const invites = await listClientInvites(partner.id);
 
   return NextResponse.json({
-    texts: buildInviteTexts(partner.brandName, partner.slug, partner.code),
+    texts: buildInviteTexts(partner.brandName, partner.slug, partner.code, partner.hideFromClients),
     statusLabels: INVITE_STATUS_LABELS,
     invites,
   });

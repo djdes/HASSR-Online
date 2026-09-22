@@ -12,7 +12,7 @@ export default async function PartnerInvitesPage() {
   const { membership } = await requirePartnerPage();
   const { partner } = membership;
   const [texts, invites] = await Promise.all([
-    Promise.resolve(buildInviteTexts(partner.brandName, partner.slug, partner.code)),
+    Promise.resolve(buildInviteTexts(partner.brandName, partner.slug, partner.code, partner.hideFromClients)),
     listClientInvites(partner.id),
   ]);
 

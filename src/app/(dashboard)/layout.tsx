@@ -11,6 +11,8 @@ import { CompleteProfileNudge } from "@/components/dashboard/complete-profile-nu
 import { WelcomeOrgBanner } from "@/components/organizations/welcome-org-banner";
 import { DemoOrgBanner } from "@/components/organizations/demo-org-banner";
 import { DashboardFooter } from "@/components/dashboard/dashboard-footer";
+import { LegalUpdateModal } from "@/components/legal/legal-update-modal";
+import { LEGAL_VERSION } from "@/lib/legal-consent";
 import { FabDockProvider } from "@/components/layout/fab-dock";
 import { Toaster } from "@/components/ui/sonner";
 import {
@@ -28,7 +30,7 @@ import { NpsBanner } from "@/components/layout/nps-banner";
 import { askNpsFor } from "@/lib/nps-data";
 import { deletionDueAt } from "@/lib/org-deletion";
 import { currentAnnouncement } from "@/lib/platform-status";
-import { WHATS_NEW_NOTES, whatsNewVersion } from "@/lib/whats-new-notes";
+import { WHATS_NEW_NOTES, notesWithoutPartnerProgram, whatsNewVersion } from "@/lib/whats-new-notes";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { hasCapability } from "@/lib/permission-presets";
 import { getBalance } from "@/lib/balance/ledger";
@@ -42,6 +44,7 @@ import { PartnerAccessBanner } from "@/components/dashboard/partner-access-banne
 import {
   getPartnerBrandById,
   getVisibleOrgBranding,
+  isPartnerHiddenForOrg,
 } from "@/lib/partners/branding";
 import { toConsultantContact } from "@/lib/partners/consultant-contact";
 import { getPartnerMembership } from "@/lib/partners/service";
@@ -124,6 +127,7 @@ export default async function DashboardLayout({
         email: true,
         name: true,
         phone: true,
+        legalVersion: true,
       },
     }),
     // H1 — white-label: читаем brandColor для override основного
@@ -176,6 +180,11 @@ export default async function DashboardLayout({
       // того, скрыл клиент брендинг или нет.
       partnerAccess ? getPartnerBrandById(partnerAccess.partnerId) : Promise.resolve(null),
     ]);
+
+  // Консультант скрыл себя — в «Что нового» нет заметок о партнёрской программе.
+  const whatsNewNotes = (await isPartnerHiddenForOrg(activeOrgId))
+    ? notesWithoutPartnerProgram(WHATS_NEW_NOTES)
+    : WHATS_NEW_NOTES;
 
   // Точки: список для переключателя в шапке и активная точка запроса.
   // Тот же контекст (кэш на запрос) читают страницы журналов.
@@ -453,10 +462,19 @@ export default async function DashboardLayout({
               показ зависит от самого текста (`whatsNewVersion`) — не
               изменили заметки, окно не появится. Плюс человек может
               выключить его совсем в «Настройки → Внешний вид». */}
+          {/* Новая редакция документов — руководитель принимает один раз.
+              Не при входе ROOT «как организация» и не из кабинета партнёра. */}
+          {hasFullWorkspaceAccess(session.user) &&
+          !isImpersonating(session) &&
+          !partnerAccess &&
+          profile &&
+          profile.legalVersion !== LEGAL_VERSION ? (
+            <LegalUpdateModal />
+          ) : null}
           {hasFullWorkspaceAccess(session.user) && profile?.showWhatsNew !== false ? (
             <WhatsNewModal
-              buildSha={whatsNewVersion()}
-              notes={WHATS_NEW_NOTES}
+              buildSha={whatsNewVersion(whatsNewNotes)}
+              notes={whatsNewNotes}
             />
           ) : null}
           {/* ⌘K — палитра-навигатор. Один глобальный listener на keydown,

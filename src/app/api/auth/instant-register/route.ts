@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
 import { db } from "@/lib/db";
+import { recordLegalConsent } from "@/lib/legal-consent";
 import { issueSession } from "@/lib/issue-session";
 import { sendAccountPasswordEmail } from "@/lib/email";
 import { attachAccountForNewOrganization } from "@/lib/create-organization";
@@ -64,12 +65,22 @@ export async function POST(request: Request) {
   // Откуда пришла регистрация: место формы, посадочная, referrer, utm.
   // Собирает клиент (lib/signup-source.ts), здесь только режем длину.
   const source = readSource((body as { source?: unknown } | null)?.source);
+  // Обязательное согласие с документами (2026-09-22): без галки — отказ.
+  const consentGiven = (body as { consent?: unknown } | null)?.consent === true;
+  const consentPlace = (body as { consentPlace?: unknown } | null)?.consentPlace === "landing" ? "landing" : "register";
 
   // Мусор отсекаем ДО расхода лимита, чтобы бот пустыми запросами не
   // выжигал квоту живому пользователю с того же IP (общий офисный NAT).
   if (!email || email.length > 200 || !EMAIL_RE.test(email)) {
     return NextResponse.json(
       { error: "Укажите корректный адрес электронной почты" },
+      { status: 400 },
+    );
+  }
+
+  if (!consentGiven) {
+    return NextResponse.json(
+      { error: "Отметьте согласие с офертой, соглашением и обработкой персональных данных" },
       { status: 400 },
     );
   }
@@ -170,6 +181,14 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
+
+  await recordLegalConsent({
+    request,
+    userId: created.user.id,
+    email,
+    organizationId: created.organization.id,
+    source: consentPlace,
+  }).catch((err) => console.error("legal consent record failed", err));
 
   // Письмо и уведомление — не блокируют вход: пользователь уже в кабинете,
   // упавшая почта не должна оборачиваться ошибкой регистрации.

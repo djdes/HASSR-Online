@@ -16,7 +16,9 @@ export const DEFAULT_ACCENT = "#5566f6";
 export const PLATFORM_BADGE_TEXT = "Работает на платформе WeSetup";
 
 /** Страница с текстом партнёрского договора (публичная). */
-export const PARTNER_AGREEMENT_URL = "/partners#agreement";
+export const PARTNER_AGREEMENT_URL = "/partner-agreement";
+/** Редакция договора партнёра — пишется в `Partner.agreementVersion` при заявке. */
+export const PARTNER_AGREEMENT_VERSION = "2026-09-22";
 
 export const INVITE_STATUS_LABELS: Record<string, string> = {
   sent: "Отправлено",

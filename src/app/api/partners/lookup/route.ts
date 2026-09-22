@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { getPartnerBrandBySlug, logoUrlFor } from "@/lib/partners/branding";
+import { clientFacingBrand, getPartnerBrandBySlug, logoUrlFor } from "@/lib/partners/branding";
 import { normalizeSlug } from "@/lib/partners/validation";
 
 export const runtime = "nodejs";
@@ -11,8 +11,9 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const slug = normalizeSlug(url.searchParams.get("slug") ?? "");
   if (!slug) return NextResponse.json({ partner: null });
-  const brand = await getPartnerBrandBySlug(slug);
-  if (!brand) return NextResponse.json({ partner: null });
+  const found = await getPartnerBrandBySlug(slug);
+  if (!found) return NextResponse.json({ partner: null });
+  const brand = clientFacingBrand(found);
   return NextResponse.json({
     partner: {
       slug: brand.slug,

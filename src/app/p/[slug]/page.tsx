@@ -7,7 +7,7 @@ import { PartnerAccessChooser } from "@/components/partner/partner-access-choose
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "@/lib/server-session";
 import { PARTNER_ACCESS_LEVEL_LABELS } from "@/lib/partners/access-guard";
-import { PLATFORM_BADGE_TEXT, getPartnerBrandBySlug, logoUrlFor } from "@/lib/partners/branding";
+import { PLATFORM_BADGE_TEXT, clientFacingBrand, getPartnerBrandBySlug, logoUrlFor } from "@/lib/partners/branding";
 import { phoneHref, telegramHref } from "@/lib/partners/consultant-contact";
 import { validateSlug } from "@/lib/partners/validation";
 import { DEFAULT_OG_IMAGES } from "@/lib/meta-defaults";
@@ -18,7 +18,8 @@ type Params = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Params) {
   const { slug } = await params;
-  const brand = validateSlug(slug).ok ? await getPartnerBrandBySlug(slug) : null;
+  const found = validateSlug(slug).ok ? await getPartnerBrandBySlug(slug) : null;
+  const brand = found ? clientFacingBrand(found) : null;
   const title = brand ? `${brand.brandName} — вход и регистрация в WeSetup` : "Страница партнёра";
   return {
     title,
@@ -40,8 +41,10 @@ export async function generateMetadata({ params }: Params) {
 export default async function PartnerLandingPage({ params }: Params) {
   const { slug } = await params;
   if (!validateSlug(slug).ok) notFound();
-  const brand = await getPartnerBrandBySlug(slug);
-  if (!brand) notFound();
+  const found = await getPartnerBrandBySlug(slug);
+  if (!found) notFound();
+  // Партнёр скрыл себя от клиентов — нейтральная страница WeSetup.
+  const brand = clientFacingBrand(found);
 
   const session = await getServerSession(authOptions);
   const loggedInOrg = session?.user?.organizationId
@@ -152,9 +155,11 @@ export default async function PartnerLandingPage({ params }: Params) {
             <span>{PLATFORM_BADGE_TEXT}</span>
             <BrandLogo height={16} title="" />
           </Link>
-          <span>
-            Есть аккаунт, а консультанта нет? Введите код партнёра в «Настройки → Консультант».
-          </span>
+          {brand.hiddenFromClients ? null : (
+            <span>
+              Есть аккаунт, а консультанта нет? Введите код партнёра в «Настройки → Консультант».
+            </span>
+          )}
         </div>
       </div>
     </div>

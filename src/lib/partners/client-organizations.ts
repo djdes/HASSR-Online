@@ -185,6 +185,12 @@ async function assertOwnerEmailUsable(email: string): Promise<void> {
 }
 
 /** Сколько организаций партнёр завёл, но ещё не передал клиенту. */
+/** Партнёр скрыл себя от клиентов — письма им без его имени. */
+async function partnerHidden(partnerId: string): Promise<boolean> {
+  const partner = await db.partner.findUnique({ where: { id: partnerId }, select: { hideFromClients: true } });
+  return partner?.hideFromClients === true;
+}
+
 export async function countPendingClientOrganizations(partnerId: string): Promise<number> {
   return db.partnerClient.count({
     where: {
@@ -355,13 +361,14 @@ export async function createClientOrganization(input: {
   }
 
   if (data.owner && inviteRaw) {
-    void sendPartnerClientOwnerInviteEmail({
-      to: data.owner.email,
-      name: data.owner.name,
+    void partnerHidden(input.partnerId).then((hidden) => sendPartnerClientOwnerInviteEmail({
+      to: data.owner!.email,
+      name: data.owner!.name,
       organizationName: data.name,
       brandName: input.brandName,
       inviteUrl: buildInviteUrl(inviteRaw),
-    }).catch((err) => console.error("partner owner invite email failed", err));
+      hidden,
+    })).catch((err) => console.error("partner owner invite email failed", err));
   }
 
   // Владельцу платформы видно каждое создание: «наплодить организаций»
@@ -555,6 +562,7 @@ export async function assignClientOwner(input: {
     organizationName: input.organizationName,
     brandName: input.brandName,
     inviteUrl: buildInviteUrl(raw),
+    hidden: await partnerHidden(input.partnerId),
   });
 
   return getClientHandoverState(input.organizationId);

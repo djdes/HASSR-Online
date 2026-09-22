@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 
 import { BrandingForm } from "@/components/partner/branding-form";
+import { PartnerVisibilityCard } from "@/components/partner/visibility-card";
 import { btnOutline } from "@/components/partner/ui";
 import { PageGuide } from "@/components/ui/page-guide";
 import { getBrandingSettings } from "@/lib/partners/branding-admin";
@@ -37,6 +38,11 @@ export default async function PartnerBrandingPage() {
           "PDF: подпись внизу каждой страницы. Письма: логотип и «при сопровождении <бренд>». Telegram: строка «Ваш консультант».",
           "Изменения доходят до клиентов в течение 5 минут. Клиент может скрыть ваш брендинг у себя — тогда он увидит стандартный WeSetup.",
         ]}
+      />
+
+      <PartnerVisibilityCard
+        initialHidden={membership.partner.hideFromClients}
+        canEdit={membership.role === "owner"}
       />
 
       <BrandingForm initial={branding} />

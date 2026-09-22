@@ -19,7 +19,7 @@ export const RECURRING_PERIOD_TEXT =
   "О сумме предупредим за 3 дня, отключить автопродление можно в любой момент.";
 
 /** Редакция оферты — пишем в историю согласий вместе с текстом. */
-export const OFFER_REVISION = "2026-09-01";
+export const OFFER_REVISION = "2026-09-22";
 
 /** Ссылка на раздел оферты об автосписаниях. */
 export const RECURRING_OFFER_HREF = "/oferta#recurring";

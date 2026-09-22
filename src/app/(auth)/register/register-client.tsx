@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { LegalConsentCheckbox } from "@/components/legal/legal-consent-checkbox";
 import { BrandLogo } from "@/components/brand/logo";
 import { ArrowRight, CheckCircle2, Gift, Loader2, Sparkles } from "lucide-react";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
@@ -58,6 +59,8 @@ function RegisterScreen() {
   const field = useEmailField(prefilled);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [consent, setConsent] = useState(false);
+  const [consentMissing, setConsentMissing] = useState(false);
 
   useEffect(() => {
     rememberSignupSource();
@@ -68,6 +71,11 @@ function RegisterScreen() {
     field.setTouched(true);
     // Кнопка заблокирована при неверном адресе — это страховка на Enter.
     if (!field.valid) return;
+    if (!consent) {
+      setConsentMissing(true);
+      setError("Отметьте согласие с документами — без него аккаунт не создаётся");
+      return;
+    }
     const value = field.value.trim().toLowerCase();
 
     setError(null);
@@ -80,6 +88,8 @@ function RegisterScreen() {
         body: JSON.stringify({
           email: value,
           source: readSignupSource("register"),
+          consent: true,
+          consentPlace: "register",
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -245,6 +255,19 @@ function RegisterScreen() {
               onApply={field.applySuggestion}
             />
 
+            <LegalConsentCheckbox
+              checked={consent}
+              onChange={(value) => {
+                setConsent(value);
+                if (value) {
+                  setConsentMissing(false);
+                  setError(null);
+                }
+              }}
+              highlight={consentMissing}
+              className="mt-4"
+            />
+
             {error ? (
               <p className="mt-3 rounded-2xl bg-[#fff4f2] px-4 py-3 text-[13px] text-[#a13a32]">
                 {error}
@@ -280,23 +303,7 @@ function RegisterScreen() {
             </Link>
           </p>
 
-          <p className="mt-8 text-center text-[12px] leading-[1.6] text-[#9b9fb3]">
-            Регистрируясь, вы соглашаетесь с условиями{" "}
-            <Link
-              href="/oferta"
-              className="text-[#3848c7] transition-colors hover:text-[#0b1024]"
-            >
-              договора-оферты
-            </Link>{" "}
-            и{" "}
-            <Link
-              href="/privacy"
-              className="text-[#3848c7] transition-colors hover:text-[#0b1024]"
-            >
-              политикой обработки персональных данных
-            </Link>
-            .
-          </p>
+
         </div>
       </main>
     </div>

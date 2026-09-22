@@ -74,11 +74,11 @@ function createPrismaClient(): PrismaClient {
               userName: marker.label,
               details: {
                 ...details,
-                partner: {
-                  partnerId: marker.partnerId,
-                  brandName: marker.brandName,
-                  userName: marker.userName,
-                },
+                // Скрытый партнёр: в деталях (их видно в выгрузке) — только
+                // непрозрачный id для платформы, без бренда и ФИО.
+                partner: marker.userName
+                  ? { partnerId: marker.partnerId, brandName: marker.brandName, userName: marker.userName }
+                  : { partnerId: marker.partnerId, hidden: true },
               },
             };
           }

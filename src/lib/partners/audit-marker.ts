@@ -15,24 +15,34 @@ export type PartnerAuditMarker = {
 };
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
-const brandCache = new Map<string, { value: string; expires: number }>();
+type BrandCacheEntry = { value: string; hidden: boolean; expires: number };
+// Один кэш на процесс (см. branding.ts): сброс из API доходит до всех копий модуля.
+const auditCacheHost = globalThis as typeof globalThis & { __wesetupPartnerAuditBrand?: Map<string, BrandCacheEntry> };
+const brandCache = (auditCacheHost.__wesetupPartnerAuditBrand ??= new Map<string, BrandCacheEntry>());
 
 export function invalidatePartnerBrandCache(partnerId: string) {
   brandCache.delete(partnerId);
 }
 
-async function readBrandName(client: PrismaClient, partnerId: string): Promise<string | null> {
+async function readBrandName(client: PrismaClient, partnerId: string): Promise<{ value: string; hidden: boolean } | null> {
   const cached = brandCache.get(partnerId);
-  if (cached && cached.expires > Date.now()) return cached.value;
+  if (cached && cached.expires > Date.now()) return cached;
   const partner = await client.partner.findUnique({
     where: { id: partnerId },
-    select: { companyName: true, branding: { select: { brandName: true } } },
+    select: { companyName: true, hideFromClients: true, branding: { select: { brandName: true } } },
   });
   if (!partner) return null;
-  const value = partner.branding?.brandName ?? partner.companyName;
-  brandCache.set(partnerId, { value, expires: Date.now() + CACHE_TTL_MS });
-  return value;
+  const entry = {
+    value: partner.branding?.brandName ?? partner.companyName,
+    hidden: partner.hideFromClients,
+    expires: Date.now() + CACHE_TTL_MS,
+  };
+  brandCache.set(partnerId, entry);
+  return entry;
 }
+
+/** Подпись скрытого партнёра в журнале действий клиента — без бренда и ФИО. */
+export const HIDDEN_PARTNER_AUDIT_LABEL = "служба сопровождения WeSetup";
 
 export function partnerAuditLabel(brandName: string, userName: string): string {
   return `партнёр: ${brandName}, ${userName}`;
@@ -55,8 +65,12 @@ export async function resolvePartnerAuditMarker(
     return null;
   }
   if (!partnerId) return null;
-  const brandName = await readBrandName(client, partnerId);
-  if (!brandName) return null;
+  const brand = await readBrandName(client, partnerId);
+  if (!brand) return null;
+  if (brand.hidden) {
+    return { partnerId, brandName: HIDDEN_PARTNER_AUDIT_LABEL, userName: "", label: HIDDEN_PARTNER_AUDIT_LABEL };
+  }
+  const brandName = brand.value;
   let userName = input.userName?.trim() || "";
   if (!userName && input.userId) {
     const user = await client.user.findUnique({

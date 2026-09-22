@@ -13,8 +13,26 @@ export type InviteTexts = {
 };
 
 /** Готовые тексты приглашений — партнёр копирует или отправляет в Telegram. */
-export function buildInviteTexts(brandName: string, slug: string, code: string): InviteTexts {
+export function buildInviteTexts(brandName: string, slug: string, code: string, hidden = false): InviteTexts {
   const url = partnerPublicUrl(slug);
+  // Партнёр скрыл себя от клиентов: тексты без «консультанта» и «нашей ссылки».
+  if (hidden) {
+    const short = `Рекомендую WeSetup — электронные журналы СанПиН и ХАССП. Регистрация: ${url}`;
+    const long = [
+      "Здравствуйте!",
+      "",
+      "Рекомендую WeSetup — электронные журналы СанПиН и ХАССП с автозаполнением и напоминаниями. Помогут с настройкой и подготовкой к проверкам.",
+      "",
+      `Регистрация: ${url}`,
+    ].join("\n");
+    return {
+      url,
+      code,
+      short,
+      long,
+      telegramShareUrl: `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(short)}`,
+    };
+  }
   const short = `${brandName} рекомендует WeSetup — электронные журналы СанПиН и ХАССП. Регистрация по ссылке: ${url} (или код ${code} в настройках).`;
   const long = [
     `Здравствуйте! Это ${brandName}.`,

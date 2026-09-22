@@ -9,7 +9,14 @@ import { escapeTelegramHtml, notifyEmployee, notifyOrganization } from "@/lib/te
 import { getDbRoleValuesWithLegacy, MANAGEMENT_ROLES } from "@/lib/user-roles";
 
 import { isPartnerAccessLevel, type PartnerAccessLevel } from "./access-guard";
-import { consultantLine, invalidateOrgBranding, invalidatePartnerBranding, toBrandView } from "./branding";
+import {
+  NEUTRAL_SUPPORT_NAME,
+  consultantLine,
+  invalidateOrgBranding,
+  invalidatePartnerBranding,
+  isPartnerHiddenForOrg,
+  toBrandView,
+} from "./branding";
 import {
   sendPartnerApplicationReceivedEmail,
   sendPartnerApprovedEmail,
@@ -30,6 +37,7 @@ import {
   partnerCodeFromBytes,
   RESERVED_SLUGS,
   validateSlug,
+  PARTNER_AGREEMENT_VERSION,
 } from "./validation";
 
 /**
@@ -97,6 +105,8 @@ export type PartnerMembership = {
     status: PartnerStatus;
     companyName: string;
     brandName: string;
+    /** «Не показывать клиентам информацию о консультанте». */
+    hideFromClients: boolean;
     onboardingDoneAt: Date | null;
     contactEmail: string;
     applicantUserId: string;
@@ -119,6 +129,7 @@ export async function getPartnerMembership(userId: string): Promise<PartnerMembe
           code: true,
           status: true,
           companyName: true,
+          hideFromClients: true,
           onboardingDoneAt: true,
           contactEmail: true,
           applicantUserId: true,
@@ -140,6 +151,7 @@ export async function getPartnerMembership(userId: string): Promise<PartnerMembe
       status: asStatus(row.partner.status),
       companyName: row.partner.companyName,
       brandName: row.partner.branding?.brandName ?? row.partner.companyName,
+      hideFromClients: row.partner.hideFromClients,
       onboardingDoneAt: row.partner.onboardingDoneAt,
       contactEmail: row.partner.contactEmail,
       applicantUserId: row.partner.applicantUserId,
@@ -268,6 +280,7 @@ export async function applyForPartnership(
           contactEmail: input.contactEmail,
           venuesCount: input.venuesCount,
           termsAcceptedAt: new Date(),
+          agreementVersion: PARTNER_AGREEMENT_VERSION,
           applicantOrganizationId: actor.organizationId,
           reviewComment: null,
           reviewedAt: null,
@@ -292,6 +305,7 @@ export async function applyForPartnership(
         contactEmail: input.contactEmail,
         venuesCount: input.venuesCount,
         termsAcceptedAt: new Date(),
+        agreementVersion: PARTNER_AGREEMENT_VERSION,
         applicantUserId: actor.userId,
         applicantOrganizationId: actor.organizationId,
         members: { create: { userId: actor.userId, role: "owner" } },
@@ -692,10 +706,15 @@ async function notifyClientAccessLevelChanged(input: {
     input.level === "edit"
       ? "просмотр и редактирование"
       : "только просмотр";
+  // Скрытый партнёр: клиент знает, что у службы сопровождения сменился
+  // доступ, — но без бренда и слова «консультант».
+  const hidden = await isPartnerHiddenForOrg(input.organizationId);
+  const who = hidden ? NEUTRAL_SUPPORT_NAME : `Консультант ${input.brandName}`;
+  const brandName = hidden ? NEUTRAL_SUPPORT_NAME : input.brandName;
   const title =
     input.level === "edit"
-      ? `Консультант ${input.brandName} включил себе редактирование`
-      : `Консультант ${input.brandName} оставил себе только просмотр`;
+      ? `${who}: включено редактирование журналов`
+      : `${who}: оставлен только просмотр`;
 
   const { notifyManagement } = await import("@/lib/notifications");
   await Promise.allSettled([
@@ -716,7 +735,9 @@ async function notifyClientAccessLevelChanged(input: {
     }),
     notifyOrganization(
       input.organizationId,
-      `🔐 Консультант <b>${escapeTelegramHtml(input.brandName)}</b> изменил свой уровень доступа.\nТеперь ему доступно: ${human}.\nВернуть «только просмотр» или отключить консультанта — ${APP_URL}/settings/consultant`,
+      hidden
+        ? `🔐 У службы сопровождения WeSetup изменён уровень доступа.\nТеперь доступно: ${human}.\nВернуть «только просмотр» или отключить сопровождение — ${APP_URL}/settings/consultant`
+        : `🔐 Консультант <b>${escapeTelegramHtml(input.brandName)}</b> изменил свой уровень доступа.\nТеперь ему доступно: ${human}.\nВернуть «только просмотр» или отключить консультанта — ${APP_URL}/settings/consultant`,
       ["owner"],
     ),
     (async () => {
@@ -724,7 +745,7 @@ async function notifyClientAccessLevelChanged(input: {
       if (!to) return;
       await sendConsultantAccessLevelChangedEmail({
         to,
-        brandName: input.brandName,
+        brandName,
         organizationName: input.organizationName,
         level: input.level,
       });
@@ -781,6 +802,7 @@ export async function getOrganizationConsultant(organizationId: string) {
           id: true,
           slug: true,
           companyName: true,
+          hideFromClients: true,
           status: true,
           city: true,
           type: true,

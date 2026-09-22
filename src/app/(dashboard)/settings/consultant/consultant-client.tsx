@@ -50,6 +50,8 @@ type Consultant = {
   supportTelegram: string | null;
   supportEmail: string | null;
   consultantLine: string | null;
+  /** Партнёр скрыт от клиента — показываем нейтральную «Службу сопровождения». */
+  hidden?: boolean;
 };
 
 type Preview = { slug: string; brandName: string; active: boolean; ownOrganization: boolean };
@@ -185,6 +187,8 @@ export function ConsultantSettingsClient({
                   </a>
                 ))}
               </div>
+            ) : consultant.hidden ? (
+              <div className="mt-3 text-[13px] text-[#6f7282]">Связь — через чат поддержки в правом нижнем углу.</div>
             ) : (
               <div className="mt-3 text-[13px] text-[#9b9fb3]">Консультант ещё не указал контакты.</div>
             )}
@@ -254,10 +258,11 @@ export function ConsultantSettingsClient({
           <Link href="/settings/audit" className="text-[#3848c7] underline-offset-2 hover:underline">
             журнал действий
           </Link>{" "}
-          с пометкой «партнёр».
+          с пометкой «{consultant.hidden ? "служба сопровождения" : "партнёр"}».
         </p>
       </Card>
 
+      {consultant.hidden ? null : (
       <Card eyebrow="Оформление" title="Логотип и контакты консультанта в вашем кабинете">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-[560px] text-[14px] leading-[1.55] text-[#3c4053]">
@@ -282,6 +287,7 @@ export function ConsultantSettingsClient({
           </button>
         </div>
       </Card>
+      )}
 
       <Card eyebrow="Отключение" title="Прекратить сопровождение">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

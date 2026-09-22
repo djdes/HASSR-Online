@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { readJson, requireOrgAdminApi } from "@/lib/partners/api";
 import { isPartnerAccessLevel } from "@/lib/partners/access-guard";
-import { logoUrlFor } from "@/lib/partners/branding";
+import { NEUTRAL_SUPPORT_NAME, logoUrlFor } from "@/lib/partners/branding";
 import { partnerErrorResponse } from "@/lib/partners/errors";
 import {
   detachOrganizationFromPartner,
@@ -27,6 +27,30 @@ export const dynamic = "force-dynamic";
 async function consultantPayload(organizationId: string) {
   const consultant = await getOrganizationConsultant(organizationId);
   if (!consultant) return { consultant: null };
+  // Партнёр скрыл себя: клиент видит, что доступ есть и у кого (служба
+  // сопровождения WeSetup), может его ограничить или отключить — но без
+  // бренда, контактов и слова «партнёр».
+  if (consultant.brand.hiddenFromClients) {
+    return {
+      consultant: {
+        partnerClientId: consultant.partnerClientId,
+        accessLevel: consultant.accessLevel,
+        clientHidesBranding: true,
+        attachedAt: consultant.attachedAt.toISOString(),
+        partnerStatus: "active",
+        partnerType: "support",
+        city: null,
+        brandName: NEUTRAL_SUPPORT_NAME,
+        slug: "",
+        logoUrl: null,
+        supportPhone: null,
+        supportTelegram: null,
+        supportEmail: null,
+        consultantLine: null,
+        hidden: true,
+      },
+    };
+  }
   return {
     consultant: {
       partnerClientId: consultant.partnerClientId,

@@ -219,6 +219,10 @@ model Organization {
   /// без записей. По умолчанию 0 = полночь (23:59:59). Для ночных смен
   /// можно поставить, например, 6 — тогда «сегодня» длится до 06:00.
   shiftEndHour                   Int                            @default(0)
+  /// «Допуск по QR»: сотрудники сами отмечают гигиену и здоровье по QR
+  /// перед сменой; автозаполнение за них выключено, в конце дня —
+  /// сводка «кто не отметился» ответственным (2026-09-22).
+  healthQrRequired               Boolean                        @default(false)
   /// Compliance toggle: «закрытый день». Когда true — после `shiftEndHour`
   /// рядовые сотрудники не могут редактировать записи прошедших дней
   /// (PUT/PATCH/DELETE на JournalDocumentEntry). Только management
@@ -643,6 +647,8 @@ model Room {
   /// (см. src/lib/cleaning-room-responsibles.ts); при hard-delete
   /// сотрудника id вычищается из массивов (api/staff/[id]).
   cleanerUserIds      String[] @default([])
+  /// «Кто заполняет» по QR помещения/склада; пусто — все (2026-09-22).
+  fillerUserIds       String[] @default([])
   verifierUserIds     String[] @default([])
   /// 2026-09-04: единый справочник помещений для всех журналов. Нормы
   /// климата (журнал температуры/влажности по помещениям):
@@ -719,6 +725,16 @@ model User {
   /// «Уполномочен редактировать в бракеражных журналах список блюд»:
   /// по QR видит блюда за сегодня и правит наименование и время.
   canEditBrakerageDishes      Boolean                      @default(false)
+  /// «Ответственный за ведение основных журналов» (гигиена и здоровье):
+  /// по QR видит отметки всех за сегодня и правит их, получает сводку
+  /// «кто не отметился» в конце дня (2026-09-22).
+  keepsCoreJournals           Boolean                      @default(false)
+  /// «Разрешение менять настройки»: одна галка вместо ролей — права
+  /// руководителя на настройки кабинета (2026-09-22).
+  canManageSettings           Boolean                      @default(false)
+  /// Версия принятых юридических документов (оферта, соглашение, политика,
+  /// согласие) — сравнивается с LEGAL_VERSION; история — в LegalConsent.
+  legalVersion                String?
   /// Тот же PIN в обратимом шифре (AES-GCM, ключ INTEGRATION_KEY_SECRET/NEXTAUTH_SECRET),
   /// чтобы руководитель мог показать код сотруднику. null — задан до этой возможности.
   qrPinEncrypted              String?
@@ -1165,6 +1181,41 @@ model Equipment {
   area           Area                     @relation(fields: [areaId], references: [id], onDelete: Cascade)
   journalEntries JournalEntry[]
   sensorMappings EquipmentSensorMapping[]
+  /// «Кто заполняет»: только эти сотрудники могут отметить оборудование по
+  /// QR (даже с верным PIN). Пусто — все (2026-09-22).
+  fillerUserIds  String[]                 @default([])
+  /// УФ-лампа: модель, ресурс по паспорту, дата установки, наработка.
+  lampModel         String?
+  lampLifetimeHours Int?
+  lampInstalledAt   DateTime?
+  /// Часы, накопленные с установки текущей лампы (включая «уже отработала»).
+  lampUsedHours     Float                  @default(0)
+  /// Лампа сейчас включена: с какого момента и кем.
+  runningSince      DateTime?
+  runningUserId     String?
+  /// Последний отправленный порог ресурса: "warn" (≤10 %) | "over" (0).
+  lampWarnLevel     String?
+  runSessions       EquipmentRunSession[]
+}
+
+/// Сеанс работы оборудования (УФ-лампы): «Я включил» → «Я выключил».
+model EquipmentRunSession {
+  id             String    @id @default(cuid())
+  equipmentId    String
+  equipment      Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  organizationId String
+  startedAt      DateTime
+  startedById    String
+  endedAt        DateTime?
+  endedById      String?
+  /// Часы сеанса (после выключения).
+  hours          Float?
+  /// Документ журнала, куда записан сеанс.
+  documentId     String?
+  createdAt      DateTime  @default(now())
+
+  @@index([equipmentId, startedAt])
+  @@index([organizationId, endedAt])
 }
 
 /// Связь «датчик ↔ поле шаблона журнала». Один Tuya-девайс может
@@ -2657,6 +2708,42 @@ model PaymentOrder {
 /// в споре о списании нужно показать, когда согласие было дано, какой
 /// текст человек видел и когда он его отозвал. Поэтому строки только
 /// добавляются — отзыв это новая запись с granted=false.
+/// Согласие с юридическими документами (оферта, соглашение, политика,
+/// согласие на обработку ПД): кто, когда, какой редакции, откуда.
+model LegalConsent {
+  id             String   @id @default(cuid())
+  userId         String?
+  email          String
+  organizationId String?
+  /// Редакция документов (LEGAL_VERSION).
+  version        String
+  /// Дословный текст рядом с галкой.
+  statementText  String
+  /// register | landing | update-modal
+  source         String
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([email])
+}
+
+/// Личный QR-вход: скан → свой PIN → кабинет. Одна активная запись на
+/// человека; перевыпуск отзывает старую (2026-09-22).
+model PersonalLoginToken {
+  id             String    @id @default(cuid())
+  userId         String
+  organizationId String
+  tokenHash      String    @unique
+  createdById    String?
+  createdAt      DateTime  @default(now())
+  revokedAt      DateTime?
+  lastUsedAt     DateTime?
+
+  @@index([userId, revokedAt])
+}
+
 model PaymentConsent {
   id             String   @id @default(cuid())
   email          String
@@ -2784,6 +2871,12 @@ model Partner {
   payoutDetails           Json?
   agreementSignedAt       DateTime?
   agreementNumber         String?
+  /// Партнёр выбрал «Не показывать клиентам информацию о консультанте»:
+  /// клиенты видят нейтральную «Службу сопровождения WeSetup» — без бренда,
+  /// контактов и упоминаний партнёрства (2026-09-22).
+  hideFromClients         Boolean             @default(false)
+  /// Версия принятого договора партнёра (`/partner-agreement`).
+  agreementVersion        String?
   createdAt               DateTime            @default(now())
   updatedAt               DateTime            @updatedAt
   members                 PartnerUser[]

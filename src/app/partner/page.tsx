@@ -30,7 +30,7 @@ export default async function PartnerOverviewPage({
     return (
       <OnboardingWizard
         branding={branding}
-        inviteTexts={buildInviteTexts(partner.brandName, partner.slug, partner.code)}
+        inviteTexts={buildInviteTexts(partner.brandName, partner.slug, partner.code, partner.hideFromClients)}
         payout={payout}
         canEditPayout={membership.role === "owner"}
       />

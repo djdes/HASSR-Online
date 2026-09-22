@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { LegalConsentCheckbox } from "@/components/legal/legal-consent-checkbox";
 import { ArrowRight, Loader2, Mail } from "lucide-react";
 import { EmailHint, useEmailField } from "@/components/ui/email-field";
 import {
@@ -45,6 +46,8 @@ export function HeroEmailStart({
   const field = useEmailField();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [consent, setConsent] = useState(false);
+  const [consentMissing, setConsentMissing] = useState(false);
   const dark = tone === "dark";
   const inputId = `${place}-email`;
   const goalParams = { place };
@@ -61,6 +64,11 @@ export function HeroEmailStart({
     // Кнопка и так заблокирована при неверном адресе — это страховка на
     // случай отправки формы клавишей Enter.
     if (!field.valid) return;
+    if (!consent) {
+      setConsentMissing(true);
+      setError("Отметьте согласие с документами — без него аккаунт не создаётся");
+      return;
+    }
     const value = field.value.trim().toLowerCase();
 
     setError(null);
@@ -76,6 +84,8 @@ export function HeroEmailStart({
         body: JSON.stringify({
           email: value,
           source: readSignupSource(place),
+          consent: true,
+          consentPlace: "landing",
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -180,6 +190,20 @@ export function HeroEmailStart({
         domainState={field.domainState}
         onApply={field.applySuggestion}
         tone={tone}
+      />
+
+      <LegalConsentCheckbox
+        checked={consent}
+        onChange={(value) => {
+          setConsent(value);
+          if (value) {
+            setConsentMissing(false);
+            setError(null);
+          }
+        }}
+        tone={dark ? "dark" : "light"}
+        highlight={consentMissing}
+        className="mt-2.5"
       />
 
       {/* Подсказки «аккаунт создадим сразу» под полем больше нет: на
