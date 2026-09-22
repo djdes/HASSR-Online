@@ -65,6 +65,8 @@ export default async function StaffPage() {
           qrPinHash: true,
           buildingIds: true,
           canEditBrakerageDishes: true,
+          keepsCoreJournals: true,
+          canManageSettings: true,
         },
       }),
       db.staffWorkOffDay.findMany({
@@ -171,6 +173,8 @@ export default async function StaffPage() {
         buildingIds: u.buildingIds,
         hasQrPin: Boolean(u.qrPinHash),
         canEditBrakerageDishes: u.canEditBrakerageDishes,
+        keepsCoreJournals: u.keepsCoreJournals,
+        canManageSettings: u.canManageSettings,
       }))}
       workOffDays={workOffDays.map((w) => ({
         userId: w.userId,

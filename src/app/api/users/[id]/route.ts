@@ -37,6 +37,8 @@ const updateUserSchema = z.object({
   buildingIds: z.array(z.string().min(1)).max(50).optional(),
   /// «Уполномочен редактировать в бракеражных журналах список блюд».
   canEditBrakerageDishes: z.boolean().optional(),
+  keepsCoreJournals: z.boolean().optional(),
+  canManageSettings: z.boolean().optional(),
 });
 
 export async function PUT(
@@ -74,7 +76,11 @@ export async function PUT(
     }
 
     const body = updateUserSchema.parse(await request.json());
-    const { name, role, phone, positionTitle, isActive, weeklyDaysOff, buildingIds, canEditBrakerageDishes } = body;
+    const { name, role, phone, positionTitle, isActive, weeklyDaysOff, buildingIds, canEditBrakerageDishes, keepsCoreJournals, canManageSettings } = body;
+    // «Разрешение менять настройки» себе не выдают — только другой руководитель.
+    if (canManageSettings !== undefined && id === session.user.id) {
+      return NextResponse.json({ error: "Разрешение на настройки себе изменить нельзя" }, { status: 400 });
+    }
     const cleanBuildingIds =
       buildingIds !== undefined
         ? await sanitizeBuildingIds(getActiveOrgId(session), buildingIds)
@@ -135,6 +141,8 @@ export async function PUT(
         }),
         ...(cleanBuildingIds !== undefined && { buildingIds: cleanBuildingIds }),
         ...(canEditBrakerageDishes !== undefined && { canEditBrakerageDishes }),
+        ...(keepsCoreJournals !== undefined && { keepsCoreJournals }),
+        ...(canManageSettings !== undefined && { canManageSettings }),
       },
       select: {
         id: true,

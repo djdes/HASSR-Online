@@ -690,6 +690,8 @@ export function StaffEditEmployeeDialog(props: {
     weeklyDaysOff?: number[];
     buildingIds?: string[];
     canEditBrakerageDishes?: boolean;
+    keepsCoreJournals?: boolean;
+    canManageSettings?: boolean;
   }) => void;
   /** Открыть окно выдачи доступа вместо этого диалога. */
   onOpenAccess?: () => void;
@@ -705,6 +707,8 @@ export function StaffEditEmployeeDialog(props: {
     () => employee.buildingIds ?? []
   );
   const [canEditDishes, setCanEditDishes] = useState(employee.canEditBrakerageDishes === true);
+  const [keepsCore, setKeepsCore] = useState(employee.keepsCoreJournals === true);
+  const [manageSettings, setManageSettings] = useState(employee.canManageSettings === true);
 
   // Reset local state when dialog opens on a different employee.
   useEffect(() => {
@@ -714,9 +718,13 @@ export function StaffEditEmployeeDialog(props: {
       setWeeklyDaysOff(normalizeWeeklyDaysOff(employee.weeklyDaysOff));
       setBuildingIds(employee.buildingIds ?? []);
       setCanEditDishes(employee.canEditBrakerageDishes === true);
+      setKeepsCore(employee.keepsCoreJournals === true);
+      setManageSettings(employee.canManageSettings === true);
     }
   }, [
     employee.canEditBrakerageDishes,
+    employee.keepsCoreJournals,
+    employee.canManageSettings,
     open,
     employee.id,
     employee.name,
@@ -737,10 +745,14 @@ export function StaffEditEmployeeDialog(props: {
       weeklyDaysOff?: number[];
       buildingIds?: string[];
       canEditBrakerageDishes?: boolean;
+      keepsCoreJournals?: boolean;
+      canManageSettings?: boolean;
     } = {};
     if (canEditDishes !== (employee.canEditBrakerageDishes === true)) {
       patch.canEditBrakerageDishes = canEditDishes;
     }
+    if (keepsCore !== (employee.keepsCoreJournals === true)) patch.keepsCoreJournals = keepsCore;
+    if (manageSettings !== (employee.canManageSettings === true)) patch.canManageSettings = manageSettings;
     const nextWeekly = normalizeWeeklyDaysOff(weeklyDaysOff);
     if (nextWeekly.join(",") !== savedWeeklyDaysOff.join(",")) {
       patch.weeklyDaysOff = nextWeekly;
@@ -824,6 +836,40 @@ export function StaffEditEmployeeDialog(props: {
                 <span className="block text-[12px] leading-snug text-[#6f7282]">
                   По QR журнала видит все блюда за сегодня и может исправить наименование и время. Обычно —
                   заведующая производством.
+                </span>
+              </span>
+            </label>
+            <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3 transition-colors duration-150 hover:bg-[#f5f6ff]">
+              <input
+                type="checkbox"
+                checked={keepsCore}
+                onChange={(event) => setKeepsCore(event.target.checked)}
+                className="mt-0.5 size-4 accent-[#5566f6]"
+                data-testid="staff-keeps-core-journals"
+              />
+              <span>
+                <span className="block text-[14px] font-medium text-[#0b1024]">
+                  Ответственный за ведение основных журналов
+                </span>
+                <span className="block text-[12px] leading-snug text-[#6f7282]">
+                  После скана QR «Гигиена и здоровье» видит, кто отметился сегодня, и может исправить отметку любого.
+                  В конце дня получает список тех, кто не отметился, и сразу — если кого-то не допустили.
+                </span>
+              </span>
+            </label>
+            <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3 transition-colors duration-150 hover:bg-[#f5f6ff]">
+              <input
+                type="checkbox"
+                checked={manageSettings}
+                onChange={(event) => setManageSettings(event.target.checked)}
+                className="mt-0.5 size-4 accent-[#5566f6]"
+                data-testid="staff-can-manage-settings"
+              />
+              <span>
+                <span className="block text-[14px] font-medium text-[#0b1024]">Разрешение менять настройки</span>
+                <span className="block text-[12px] leading-snug text-[#6f7282]">
+                  Открывает все настройки кабинета, как у руководителя: журналы, сотрудники, QR, оборудование.
+                  Оплату и удаление организации по-прежнему видит только владелец. Вход — по личному QR и PIN.
                 </span>
               </span>
             </label>

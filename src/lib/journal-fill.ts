@@ -143,6 +143,14 @@ export async function listHubJournals(orgId: string, disabledCodes: string[], to
     if (OBJECT_QR_JOURNAL_CODES.has(doc.template.code)) continue;
     if (!seen.has(doc.template.code)) seen.set(doc.template.code, doc.template.name);
   }
+  // Гигиена и здоровье — один QR на оба журнала (health-qr-flow.ts).
+  const healthName = "Гигиена и здоровье — отметка перед сменой";
+  if (seen.has("hygiene")) {
+    seen.set("hygiene", healthName);
+    seen.delete("health_check");
+  } else if (seen.has("health_check")) {
+    seen.set("health_check", healthName);
+  }
   return Array.from(seen.entries()).map(([code, name]) => ({ code, name }));
 }
 

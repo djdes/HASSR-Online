@@ -24,6 +24,7 @@ export default async function CompliancePage() {
       escalateDeviationsToManagement: true,
       deviationEscalationMinutes: true,
       qrFillMode: true,
+      healthQrRequired: true,
     },
   });
 
@@ -64,6 +65,7 @@ export default async function CompliancePage() {
         }
         initialEscalationMinutes={org?.deviationEscalationMinutes ?? 60}
         initialQrFillMode={org?.qrFillMode === "pin" || org?.qrFillMode === "auth" ? org.qrFillMode : "public"}
+        initialHealthQrRequired={org?.healthQrRequired === true}
       />
     </div>
   );

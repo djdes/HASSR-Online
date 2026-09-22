@@ -282,6 +282,17 @@ export async function applyStaffJournalAutoFill(
   // гигиена ставит статус дня, здоровье оставляет ячейку пустой.
   const schedule = await loadStaffScheduleMap(db, { employeeIds, dateKeys, organizationId });
 
+  // «Допуск по QR» (2026-09-22): сотрудник отмечается сам — «Здоров» и
+  // подпись за него не ставим, только статусы из графика (выходной,
+  // отпуск, больничный). Иначе сводка «кто не отметился» теряет смысл.
+  const orgClient = (db as { organization?: Pick<PrismaClient, "organization">["organization"] }).organization;
+  const qrAdmission = orgClient
+    ? (await orgClient.findUnique({ where: { id: organizationId }, select: { healthQrRequired: true } }).catch(() => null))
+        ?.healthQrRequired === true
+    : false;
+  const autoFillAllowed = (employeeId: string, dateKey: string) =>
+    !qrAdmission || schedule.has(staffScheduleKey(employeeId, dateKey));
+
   const dateKeySet = new Set(dateKeys);
   const existingKeys = new Set(
     entries.map((entry) => staffScheduleKey(entry.employeeId, toDateKey(entry.date)))
@@ -290,6 +301,7 @@ export async function applyStaffJournalAutoFill(
   const rowsToCreate = employeeIds.flatMap((employeeId) =>
     dateKeys
       .filter((dateKey) => !existingKeys.has(staffScheduleKey(employeeId, dateKey)))
+      .filter((dateKey) => autoFillAllowed(employeeId, dateKey))
       .map((dateKey) => ({
         documentId,
         employeeId,
@@ -315,6 +327,7 @@ export async function applyStaffJournalAutoFill(
   const rowsToUpdate = entries.filter((entry) => {
     const dateKey = toDateKey(entry.date);
     if (!dateKeySet.has(dateKey) || !isEntryDataEmpty(entry.data)) return false;
+    if (!autoFillAllowed(entry.employeeId, dateKey)) return false;
     // Пустую ячейку выходного (журнал здоровья) не перезаписываем пустотой.
     return !isEntryDataEmpty(
       buildStaffAutoFillEntryData(templateCode, schedule.get(staffScheduleKey(entry.employeeId, dateKey)))

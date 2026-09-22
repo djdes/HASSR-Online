@@ -37,6 +37,7 @@ export async function PATCH(request: Request) {
         escalateDeviationsToManagement?: unknown;
         deviationEscalationMinutes?: unknown;
         qrFillMode?: unknown;
+        healthQrRequired?: unknown;
       }
     | null;
   if (!body || typeof body !== "object") {
@@ -51,7 +52,11 @@ export async function PATCH(request: Request) {
     escalateDeviationsToManagement?: boolean;
     deviationEscalationMinutes?: number;
     qrFillMode?: string;
+    healthQrRequired?: boolean;
   } = {};
+  if (typeof body.healthQrRequired === "boolean") {
+    data.healthQrRequired = body.healthQrRequired;
+  }
   if (body.qrFillMode !== undefined) {
     if (body.qrFillMode !== "public" && body.qrFillMode !== "pin" && body.qrFillMode !== "auth") {
       return NextResponse.json({ error: "qrFillMode: public | pin | auth" }, { status: 400 });

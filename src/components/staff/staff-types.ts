@@ -30,6 +30,10 @@ export type StaffEmployee = {
   hasQrPin?: boolean;
   /** «Уполномочен редактировать в бракеражных журналах список блюд». */
   canEditBrakerageDishes?: boolean;
+  /** «Ответственный за ведение основных журналов» (гигиена и здоровье). */
+  keepsCoreJournals?: boolean;
+  /** «Разрешение менять настройки» — права руководителя на настройки. */
+  canManageSettings?: boolean;
 };
 
 export type StaffTelegramInvitePayload = {

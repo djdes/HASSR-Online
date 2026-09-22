@@ -1,0 +1,285 @@
+import { NextResponse } from "next/server";
+
+import { clientIp } from "@/lib/client-ip";
+import { listCoreJournalRecipients, notifyCoreJournalRecipients } from "@/lib/core-journal-keepers";
+import { db } from "@/lib/db";
+import { HEALTH_CONFIRMATIONS, dayMarkFromEntry, healthDecision, isKeeperStatus, isRealHygieneEntry } from "@/lib/health-qr";
+import { renderHealthDay, renderHealthForm, renderHealthSuspended, renderHealthTabs } from "@/lib/health-qr-html";
+import { renderResult } from "@/lib/journal-fill-html";
+import { listFillEmployees, type JournalFillEmployee } from "@/lib/journal-fill";
+import { isExaminationExpired, normalizeMedBookEntryData } from "@/lib/med-book-document";
+import { QR_FILL_RATE_LIMIT_ERROR, qrFillRateKey, recordQrFillAudit } from "@/lib/qr-fill-audit";
+import { qrFillRateLimiter } from "@/lib/rate-limit";
+import { safeInternalPath } from "@/lib/relative-redirect";
+import { STAFF_ABSENCE_LABEL, loadStaffAbsenceForDay } from "@/lib/staff-absence";
+
+/**
+ * QR «Гигиена и здоровье» (2026-09-22): один плакат на оба журнала.
+ * Сотрудник отмечает пять подтверждений — запись сразу в гигиенический
+ * журнал и журнал здоровья (если он включён). Не всё подтверждено —
+ * «не допущен» и уведомление ответственным. Хранитель журналов (галка
+ * «Ответственный за ведение основных журналов») видит всех за сегодня и
+ * правит статусы.
+ */
+
+type HealthCtx = {
+  request: Request;
+  posted: FormData | null;
+  orgId: string;
+  document: { id: string; title: string };
+  code: string;
+  employee: JournalFillEmployee;
+  todayKey: string;
+  timezone: string;
+  disabledCodes: string[];
+  authMode: "public" | "pin" | "auth";
+  keeper: boolean;
+  view: "me" | "all";
+  who: string;
+  /** Ссылка на экран с сохранением сотрудника/пропуска. */
+  link: (params: Record<string, string | null>) => string;
+  page: (body: string, status?: number) => NextResponse;
+};
+
+function hhmm(timezone: string, at = new Date()): string {
+  try {
+    return new Intl.DateTimeFormat("en-GB", { timeZone: timezone, hour: "2-digit", minute: "2-digit", hour12: false }).format(at).replace(/^24/, "00");
+  } catch {
+    return at.toISOString().slice(11, 16);
+  }
+}
+
+/** Документы гигиены и здоровья на сегодня — выбранный на плакате и парный к нему. */
+async function resolvePair(ctx: HealthCtx): Promise<{ hygieneId: string | null; healthId: string | null }> {
+  const day = new Date(`${ctx.todayKey}T00:00:00.000Z`);
+  const primary = await db.journalDocument.findUnique({ where: { id: ctx.document.id }, select: { buildingId: true } });
+  const other = ctx.code === "hygiene" ? "health_check" : "hygiene";
+  let companionId: string | null = null;
+  if (!ctx.disabledCodes.includes(other)) {
+    const candidates = await db.journalDocument.findMany({
+      where: { organizationId: ctx.orgId, status: "active", template: { code: other }, dateFrom: { lte: day }, dateTo: { gte: day } },
+      select: { id: true, buildingId: true },
+      orderBy: { dateFrom: "desc" },
+    });
+    companionId = (candidates.find((doc) => doc.buildingId === (primary?.buildingId ?? null)) ?? candidates[0])?.id ?? null;
+  }
+  return ctx.code === "hygiene"
+    ? { hygieneId: ctx.document.id, healthId: companionId }
+    : { hygieneId: companionId, healthId: ctx.document.id };
+}
+
+function dayDate(todayKey: string): Date {
+  return new Date(`${todayKey}T00:00:00.000Z`);
+}
+
+async function upsertEntry(documentId: string, employeeId: string, todayKey: string, data: Record<string, unknown>) {
+  const date = dayDate(todayKey);
+  await db.journalDocumentEntry.upsert({
+    where: { documentId_employeeId_date: { documentId, employeeId, date } },
+    create: { documentId, employeeId, date, data: data as never },
+    update: { data: data as never },
+  });
+}
+
+/** Медкнижка просрочена? — предупреждение на экране и ответственным. */
+async function expiredMedBook(orgId: string, employeeId: string, todayKey: string): Promise<boolean> {
+  const entry = await db.journalDocumentEntry.findFirst({
+    where: { employeeId, document: { organizationId: orgId, status: "active", template: { code: "med_books" } } },
+    orderBy: { date: "desc" },
+    select: { data: true },
+  });
+  if (!entry) return false;
+  const data = normalizeMedBookEntryData(entry.data);
+  return Object.values(data.examinations).some((exam) => isExaminationExpired(exam, todayKey));
+}
+
+/** «Пришёл на смену» в графике — как кнопка «Я вышел на смену» в боте; выходные/отпуск не трогаем. */
+async function markShiftStarted(orgId: string, employeeId: string, todayKey: string) {
+  const date = dayDate(todayKey);
+  const existing = await db.workShift.findUnique({ where: { userId_date: { userId: employeeId, date } }, select: { status: true } });
+  if (existing && ["off", "vacation", "sick", "working", "ended"].includes(existing.status)) return;
+  await db.workShift.upsert({
+    where: { userId_date: { userId: employeeId, date } },
+    update: { status: "working" },
+    create: { organizationId: orgId, userId: employeeId, date, status: "working" },
+  });
+}
+
+export async function handleHealthQr(ctx: HealthCtx): Promise<NextResponse> {
+  const url = new URL(ctx.request.url);
+  const done = url.searchParams.get("done");
+  const pair = await resolvePair(ctx);
+  const meHref = ctx.link({ view: "me" });
+  const allHref = ctx.link({ view: "all" });
+  const rateLimited = () => !qrFillRateLimiter.consume(qrFillRateKey(clientIp(ctx.request), "journal", ctx.document.id));
+  // 303: после POST браузер переходит GET-запросом, обновление страницы не повторяет запись.
+  const redirect = (params: Record<string, string | null>) =>
+    new NextResponse(null, { status: 303, headers: { Location: safeInternalPath(ctx.link(params)), "Cache-Control": "no-store" } });
+
+  // ---- сводка дня для хранителя журналов
+  const loadDay = async () => {
+    const people = await listFillEmployees(ctx.orgId);
+    const entries = pair.hygieneId
+      ? await db.journalDocumentEntry.findMany({ where: { documentId: pair.hygieneId, date: dayDate(ctx.todayKey) }, select: { employeeId: true, data: true } })
+      : [];
+    const byEmployee = new Map(entries.map((entry) => [entry.employeeId, entry.data]));
+    const absences = await loadStaffAbsenceForDay(db, { organizationId: ctx.orgId, employeeIds: people.map((p) => p.id), dateKey: ctx.todayKey });
+    return people.map((person) => {
+      const absence = absences.get(person.id);
+      return {
+        id: person.id,
+        name: person.name,
+        position: person.positionTitle,
+        mark: dayMarkFromEntry(byEmployee.get(person.id), absence ? STAFF_ABSENCE_LABEL[absence.status] : null),
+      };
+    });
+  };
+  let tabs = "";
+  if (ctx.keeper) {
+    const day = await loadDay();
+    tabs = renderHealthTabs({ active: ctx.view, meHref, allHref, missing: day.filter((row) => row.mark.state === "missing").length });
+    if (ctx.view === "all") {
+      if (ctx.posted && String(ctx.posted.get("action") ?? "") === "health-keeper") {
+        if (rateLimited()) return ctx.page(renderHealthDay({ action: allHref, who: ctx.who, tabs, rows: day, error: QR_FILL_RATE_LIMIT_ERROR }), 429);
+        let changed = 0;
+        const at = hhmm(ctx.timezone);
+        for (const row of day) {
+          const value = ctx.posted.get(`st:${row.id}`);
+          if (!isKeeperStatus(value)) continue;
+          const current = row.mark.state === "admitted" ? "healthy" : row.mark.state === "suspended" ? "suspended" : null;
+          if (current === value) continue;
+          const common = { source: "keeper", editedById: ctx.employee.id, editedByName: ctx.employee.name, confirmedAt: at };
+          if (pair.hygieneId) await upsertEntry(pair.hygieneId, row.id, ctx.todayKey, { status: value, temperatureAbove37: false, ...common });
+          if (pair.healthId) {
+            await upsertEntry(pair.healthId, row.id, ctx.todayKey, {
+              signed: value === "healthy" ? true : null,
+              measures: value === "suspended" ? `Отстранён: ${ctx.employee.name}` : null,
+              ...common,
+            });
+          }
+          changed += 1;
+        }
+        await recordQrFillAudit({
+          request: ctx.request,
+          organizationId: ctx.orgId,
+          kind: "journal",
+          objectId: ctx.document.id,
+          objectName: ctx.document.title,
+          employee: { id: ctx.employee.id, name: ctx.employee.name },
+          documentIds: [pair.hygieneId, pair.healthId].filter((id): id is string => Boolean(id)),
+          dateKey: ctx.todayKey,
+          authMode: ctx.authMode,
+          values: { keeperChanged: changed },
+        }).catch(() => null);
+        return redirect({ view: "all", saved: String(changed) });
+      }
+      return ctx.page(renderHealthDay({ action: allHref, who: ctx.who, tabs, rows: day }));
+    }
+  }
+
+  // ---- итог
+  if (!ctx.posted && done === "admitted") {
+    const med = url.searchParams.get("med") === "1";
+    return ctx.page(
+      renderResult({
+        mode: "updated",
+        documentTitle: pair.healthId && pair.hygieneId ? "гигиенический журнал и журнал здоровья" : ctx.document.title,
+        employeeName: ctx.employee.name,
+        timeLabel: hhmm(ctx.timezone),
+        headline: "Допущен к работе",
+        addMoreHref: null,
+      }) +
+        (med
+          ? `<div class="warn" role="status" style="margin-top:12px;font-size:17px">Медкнижка просрочена — обратитесь к заведующей, ей уже сообщили.</div>`
+          : "")
+    );
+  }
+  if (!ctx.posted && done === "suspended") {
+    const entry = pair.hygieneId
+      ? await db.journalDocumentEntry.findUnique({
+          where: { documentId_employeeId_date: { documentId: pair.hygieneId, employeeId: ctx.employee.id, date: dayDate(ctx.todayKey) } },
+          select: { data: true },
+        })
+      : null;
+    const confirmations = ((entry?.data as { confirmations?: Record<string, boolean> } | null)?.confirmations ?? {}) as Record<string, boolean>;
+    const complaints = HEALTH_CONFIRMATIONS.filter((item) => confirmations[item.key] === false).map((item) => item.complaint);
+    return ctx.page(renderHealthSuspended({ who: ctx.who, complaints, timeLabel: hhmm(ctx.timezone), backHref: meHref }));
+  }
+
+  // ---- отметка
+  if (ctx.posted && String(ctx.posted.get("action") ?? "") === "health-submit") {
+    if (rateLimited()) {
+      return ctx.page(renderHealthForm({ action: meHref, who: ctx.who, tabs, alreadyAt: null, alreadyAdmitted: null, error: QR_FILL_RATE_LIMIT_ERROR, writesHealth: Boolean(pair.healthId) }), 429);
+    }
+    if (!pair.hygieneId && !pair.healthId) {
+      return ctx.page(renderHealthForm({ action: meHref, who: ctx.who, tabs, alreadyAt: null, alreadyAdmitted: null, error: "На сегодня нет документа журнала — попросите руководителя создать его.", writesHealth: false }));
+    }
+    const checked = HEALTH_CONFIRMATIONS.filter((item) => ctx.posted?.get(`c:${item.key}`) === "on").map((item) => item.key);
+    const decision = healthDecision(checked);
+    const at = hhmm(ctx.timezone);
+    const common = { confirmations: decision.confirmations, source: "qr", confirmedAt: at };
+    if (pair.hygieneId) await upsertEntry(pair.hygieneId, ctx.employee.id, ctx.todayKey, { ...decision.hygiene, ...common });
+    if (pair.healthId) await upsertEntry(pair.healthId, ctx.employee.id, ctx.todayKey, { ...decision.health, ...common });
+    if (decision.admitted) await markShiftStarted(ctx.orgId, ctx.employee.id, ctx.todayKey).catch(() => null);
+    const medExpired = decision.admitted ? await expiredMedBook(ctx.orgId, ctx.employee.id, ctx.todayKey).catch(() => false) : false;
+
+    await recordQrFillAudit({
+      request: ctx.request,
+      organizationId: ctx.orgId,
+      kind: "journal",
+      objectId: ctx.document.id,
+      objectName: ctx.document.title,
+      employee: { id: ctx.employee.id, name: ctx.employee.name },
+      documentIds: [pair.hygieneId, pair.healthId].filter((id): id is string => Boolean(id)),
+      dateKey: ctx.todayKey,
+      authMode: ctx.authMode,
+      values: { admitted: decision.admitted, confirmations: decision.confirmations },
+    }).catch(() => null);
+
+    if (!decision.admitted || medExpired) {
+      const recipients = await listCoreJournalRecipients(ctx.orgId, pair.hygieneId).catch(() => []);
+      const title = decision.admitted
+        ? `${ctx.employee.name}: просрочена медкнижка`
+        : `${ctx.employee.name} не допущен(а) к работе`;
+      const reason = decision.admitted ? "медкнижка просрочена" : decision.complaints.join(", ");
+      await notifyCoreJournalRecipients({
+        organizationId: ctx.orgId,
+        recipients,
+        kind: "health-qr-suspended",
+        dedupeKey: `health-qr:${ctx.todayKey}:${ctx.employee.id}:${decision.admitted ? "med" : "suspended"}`,
+        title,
+        items: [{ id: ctx.employee.id, label: `${ctx.employee.name} — ${reason}`, hint: at }],
+        linkHref: pair.hygieneId ? `/journals/hygiene/documents/${pair.hygieneId}` : "/journals",
+        linkLabel: "Открыть журнал",
+        telegramText: `⚠️ ${title}\nПричина: ${reason} (отметка по QR в ${at}).`,
+        emailSubject: title,
+        emailBodyHtml: `<p>Сотрудник <strong>${escapeHtml(ctx.employee.name)}</strong> отметился по QR в ${at}.</p><p>Причина: ${escapeHtml(reason)}.</p><p>В гигиеническом журнале стоит «${decision.admitted ? "Здоров" : "Отстранён"}». Примите решение о допуске и при необходимости поправьте запись.</p>`,
+      }).catch(() => null);
+    }
+    return redirect({ view: "me", done: decision.admitted ? "admitted" : "suspended", med: medExpired ? "1" : null });
+  }
+
+  // ---- форма
+  const entry = pair.hygieneId
+    ? await db.journalDocumentEntry.findUnique({
+        where: { documentId_employeeId_date: { documentId: pair.hygieneId, employeeId: ctx.employee.id, date: dayDate(ctx.todayKey) } },
+        select: { data: true },
+      })
+    : null;
+  const data = entry?.data as { status?: string; confirmedAt?: string } | null;
+  const already = isRealHygieneEntry(data) && (data?.status === "healthy" || data?.status === "suspended");
+  return ctx.page(
+    renderHealthForm({
+      action: meHref,
+      who: ctx.who,
+      tabs,
+      alreadyAt: already ? data?.confirmedAt ?? "сегодня" : null,
+      alreadyAdmitted: already ? data?.status === "healthy" : null,
+      writesHealth: Boolean(pair.healthId),
+    })
+  );
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}

@@ -56,6 +56,9 @@ import {
 import { normalizePerishableRejectionConfig } from "@/lib/perishable-rejection-document";
 import { QR_PASS_COOKIE, QR_PASS_MAX_AGE_SEC, mintQrPass, newQrFlowId, verifyQrPass } from "@/lib/qr-pin-pass";
 import { decidePinGate } from "@/lib/qr-pin-gate";
+import { HEALTH_QR_CODES } from "@/lib/health-qr";
+import { isManagementRole } from "@/lib/user-roles";
+import { handleHealthQr } from "@/lib/health-qr-flow";
 import {
   LEGACY_EMPLOYEE_COOKIE,
   readRememberValue,
@@ -433,6 +436,16 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
     view = commissionOnly ? "list" : viewParam === "add" || viewParam === "list" ? viewParam : brakerageQrDefaultView(role);
   }
 
+  // ---- гигиена и здоровье: один QR на оба журнала (health-qr-flow.ts)
+  const isHealthQr = HEALTH_QR_CODES.has(code);
+  let healthKeeper = false;
+  let healthView: "me" | "all" = "me";
+  if (isHealthQr) {
+    const person = await db.user.findUnique({ where: { id: employee.id }, select: { keepsCoreJournals: true, role: true } });
+    healthKeeper = person?.keepsCoreJournals === true || isManagementRole(person?.role ?? "");
+    healthView = healthKeeper && q.get("view") === "all" ? "all" : "me";
+  }
+
   // ---- PIN ДО содержимого — единое правило для всех журналов
   const done = q.get("done");
   const rowParamForLinks = q.get("row");
@@ -479,8 +492,8 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
     sessionVerified,
     passValid,
     // Список бракеража — это подпись: PIN нужен всегда (или вход в кабинет).
-    requirePin: commissionOnly || (listCapable && view === "list"),
-    isResultPage: done === "appended" || done === "updated" || done === "signed" || done === "saved",
+    requirePin: commissionOnly || (listCapable && view === "list") || (isHealthQr && healthView === "all"),
+    isResultPage: done === "appended" || done === "updated" || done === "signed" || done === "saved" || done === "admitted" || done === "suspended",
   });
   if (gate === "no-pin") {
     const latest = await latestQrPinRequestFor({ organizationId: orgId, userId: employee.id });
@@ -533,6 +546,26 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
   // Сразу после верного PIN — зелёная галочка, поля всплывают под ней.
   const pinOk = passValid && q.get("ok") === "1";
   const whoOk = pinOk ? `${who}${renderPinOk()}` : who;
+
+  if (isHealthQr) {
+    return handleHealthQr({
+      request,
+      posted,
+      orgId,
+      document,
+      code,
+      employee,
+      todayKey,
+      timezone,
+      disabledCodes,
+      authMode: mode,
+      keeper: healthKeeper,
+      view: healthView,
+      who: whoOk,
+      link: (params) => link({ ...keep, ...params }),
+      page: (body, status = 200) => page(title, body, null, null, status, setCookies),
+    });
+  }
 
   let brakerageTabs = "";
   if (isBrakerage && brakerageConfig && role) {

@@ -35,6 +35,7 @@ type Props = {
   initialEscalateDeviations: boolean;
   initialEscalationMinutes: number;
   initialQrFillMode: QrFillModeValue;
+  initialHealthQrRequired: boolean;
 };
 
 type QrFillModeValue = "public" | "pin" | "auth";
@@ -74,8 +75,36 @@ export function ComplianceClient({
   initialEscalateDeviations,
   initialEscalationMinutes,
   initialQrFillMode,
+  initialHealthQrRequired,
 }: Props) {
   const [qrFillMode, setQrFillMode] = useState<QrFillModeValue>(initialQrFillMode);
+  const [healthQr, setHealthQr] = useState(initialHealthQrRequired);
+  const [savingHealthQr, setSavingHealthQr] = useState(false);
+
+  async function handleHealthQr(next: boolean) {
+    if (savingHealthQr) return;
+    setHealthQr(next);
+    setSavingHealthQr(true);
+    try {
+      const response = await fetch("/api/settings/compliance", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ healthQrRequired: next }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.error ?? "Не удалось сохранить");
+      toast.success(
+        next
+          ? "Допуск по QR включён: сотрудники отмечаются сами, в конце смены придёт список не отметившихся"
+          : "Допуск по QR выключен: гигиену снова заполняет автоматика"
+      );
+    } catch (error) {
+      setHealthQr(!next);
+      toast.error(error instanceof Error ? error.message : "Ошибка сохранения");
+    } finally {
+      setSavingHealthQr(false);
+    }
+  }
   const [savingQrMode, setSavingQrMode] = useState(false);
 
   async function handleQrFillMode(next: QrFillModeValue) {
@@ -583,6 +612,23 @@ export function ComplianceClient({
                 );
               })}
             </div>
+            <label className="mt-4 flex cursor-pointer items-start justify-between gap-4 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4 transition-colors duration-150 hover:bg-[#f5f6ff]">
+              <span className="min-w-0">
+                <span className="block text-[14px] font-semibold text-[#0b1024]">Допуск к работе по QR «Гигиена и здоровье»</span>
+                <span className="mt-1 block text-[12.5px] leading-[1.5] text-[#6f7282]">
+                  Сотрудник сам отмечает перед сменой: нет температуры, ОРВИ, кишечных расстройств, гнойничков, дома
+                  все здоровы. Автоматика больше не ставит «Здоров» за него. В час окончания смены ответственные
+                  за основные журналы получают список тех, кто не отметился.
+                </span>
+              </span>
+              <Switch
+                checked={healthQr}
+                disabled={savingHealthQr}
+                onCheckedChange={(value) => void handleHealthQr(value)}
+                aria-label="Допуск к работе по QR"
+                data-testid="health-qr-required"
+              />
+            </label>
             {qrFillMode === "pin" ? (
               <p className="mt-3 text-[12.5px] leading-[1.5] text-[#a13a32]">
                 PIN задаётся в карточке сотрудника («Сотрудники → карточка → PIN для быстрой QR-авторизации») или на странице общего планшета — код один и тот же. Сотрудник без PIN записать по QR не сможет. В публичном режиме PIN тоже спрашивается у тех, кому он задан.
