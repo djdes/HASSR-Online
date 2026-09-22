@@ -1,0 +1,20 @@
+{
+  "task": "qr-access-uv-partner-2026-09",
+  "verifiedAt": "2026-09-22",
+  "commit": "50ca42d2",
+  "verdict": "PASS",
+  "criteria": {
+    "AC1": { "status": "PASS", "evidence": "Bot API getMyName/getMyCommands (19 valid), pre-commit secret scan" },
+    "AC2": { "status": "PASS", "evidence": "e2e/smoke-partner-hidden.ts 10/10" },
+    "AC3": { "status": "PASS", "evidence": "e2e/smoke-legal-consent.ts 7/7" },
+    "AC4": { "status": "PASS", "evidence": "e2e/smoke-health-qr.ts 16/16" },
+    "AC5": { "status": "PASS", "evidence": "e2e/smoke-health-qr.ts 16/16" },
+    "AC6": { "status": "PASS", "evidence": "e2e/smoke-objects-uv.ts 16/16" },
+    "AC7": { "status": "PASS", "evidence": "e2e/smoke-objects-uv.ts 16/16" },
+    "AC8": { "status": "PASS", "evidence": "e2e/smoke-personal-qr.ts 9/9" },
+    "AC9": { "status": "PASS", "evidence": "e2e/smoke-objects-uv.ts 16/16, prod crontab uv-lamp-running" },
+    "AC10": { "status": "PASS", "evidence": "e2e/smoke-pin-step.ts 11/11" },
+    "AC11": { "status": "PASS", "evidence": "prod .build-sha 50ca42d2, PM2 online, crontab health-qr-missing + uv-lamp-running" }
+  },
+  "ownerActions": ["change SSH password of wesetupru", "legal review of offer/terms/privacy/consent/partner-agreement"]
+}

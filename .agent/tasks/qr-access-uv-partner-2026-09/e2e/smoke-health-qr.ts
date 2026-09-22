@@ -1,4 +1,4 @@
-// Смоук QR «Гигиена и здоровье»: 5 галок → оба журнала, «не допущен» → уведомление,
+// Смоук QR «Гигиена и здоровье»: 3 графы (Приложение №1) → оба журнала, «не допущен» → уведомление,
 // хранитель журналов правит отметки, крон конца дня присылает список.
 // Запуск (dev на 3020 с wesetup_e2e): npx tsx .agent/tasks/qr-access-uv-partner-2026-09/e2e/smoke-health-qr.ts
 import fs from "node:fs";
@@ -18,6 +18,15 @@ const state = JSON.parse(
 const ORG = "e2e-org-a";
 const HYGIENE_DOC = "cmu3xjc390004ks9mroi7qi9i";
 const KEEPER_PIN = "5831";
+const STAFF_PIN = "4826";
+
+/** Шаг PIN до формы: ввести PIN, если страница его спрашивает. */
+async function passPin(page: import("playwright").Page, pin: string) {
+  const input = page.locator('input[name="pin"]');
+  if (!(await input.first().isVisible({ timeout: 15_000 }).catch(() => false))) return;
+  await input.first().fill(pin);
+  await page.locator('form:has(input[name="pin"]) button[type=submit]').first().click();
+}
 
 const envText = fs.readFileSync(path.join(ROOT, ".env"), "utf8");
 for (const line of envText.split(/\r?\n/)) {
@@ -58,7 +67,11 @@ async function main() {
   const mobile = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 };
   try {
     await db.organization.update({ where: { id: ORG }, data: { qrFillMode: "public", healthQrRequired: true } });
-    await db.user.updateMany({ where: { id: { in: [cook, cleaner] } }, data: { qrPinHash: null, qrPinEncrypted: null } });
+    // На QR-журналах теперь нужен личный PIN (f4f2da11) — выдаём его сотрудникам смоука.
+    await db.user.updateMany({
+      where: { id: { in: [cook, cleaner] } },
+      data: { qrPinHash: await bcrypt.hash(STAFF_PIN, 10), qrPinEncrypted: null, qrPinFailedCount: 0, qrPinLockedUntil: null },
+    });
     await db.user.update({ where: { id: head }, data: { keepsCoreJournals: true, qrPinHash: await bcrypt.hash(KEEPER_PIN, 10), qrPinFailedCount: 0, qrPinLockedUntil: null } });
     await db.journalDocumentEntry.deleteMany({ where: { id: { in: beforeEntries.map((e) => e.id) } } });
     await db.workShift.deleteMany({ where: { userId: { in: people }, date: day } });
@@ -75,8 +88,14 @@ async function main() {
     const cookCtx = await browser.newContext(mobile);
     const cookPage = await cookCtx.newPage();
     await cookPage.goto(qr({ employee: cook }), { waitUntil: "load", timeout: 240_000 });
-    await cookPage.locator("#hq-form").waitFor({ timeout: 60_000 });
-    check("форма: пять крупных подтверждений", (await cookPage.locator("[data-hq]").count()) === 5);
+    await passPin(cookPage, STAFF_PIN);
+    await cookPage.locator("#hq-form").waitFor({ timeout: 60_000 }).catch(async (err) => {
+      await cookPage.screenshot({ path: path.join(SHOTS, "30-health-before-form.png"), fullPage: true });
+      console.log("URL", cookPage.url(), (await cookPage.locator("body").innerText()).slice(0, 800));
+      throw err;
+    });
+    // Форма по Приложению №1 (addb2a67): три графы подписи сотрудника.
+    check("форма: три крупных подтверждения (Приложение №1)", (await cookPage.locator("[data-hq]").count()) === 3);
     check("форма без горизонтальной прокрутки (390px)", await noOverflow(cookPage));
     await cookPage.screenshot({ path: path.join(SHOTS, "30-health-form.png"), fullPage: true });
     for (const box of await cookPage.locator("[data-hq]").all()) await box.check();
@@ -100,6 +119,7 @@ async function main() {
     const cleanerCtx = await browser.newContext(mobile);
     const cleanerPage = await cleanerCtx.newPage();
     await cleanerPage.goto(qr({ employee: cleaner }), { waitUntil: "load", timeout: 240_000 });
+    await passPin(cleanerPage, STAFF_PIN);
     await cleanerPage.locator("#hq-form").waitFor({ timeout: 60_000 });
     const boxes = await cleanerPage.locator("[data-hq]").all();
     for (const box of boxes.slice(1)) await box.check(); // первая — «Нет повышенной температуры» — не отмечена
@@ -123,14 +143,13 @@ async function main() {
     check("сводка дня требует PIN", true);
     await keeper.fill('input[name="pin"]', KEEPER_PIN);
     await keeper.locator('form:has(input[name="pin"]) button[type=submit]').first().click();
-    await keeper.getByText("Все за сегодня").first().waitFor({ timeout: 60_000 });
-    await keeper.waitForSelector(`select[name="st:${cleaner}"]`, { timeout: 60_000 });
+    await keeper.waitForSelector(`select[name="ab:${cleaner}"]`, { timeout: 60_000 });
     const dayText = await keeper.locator("main").innerText();
     await keeper.screenshot({ path: path.join(SHOTS, "33-health-keeper-day.png"), fullPage: true });
-    check("сводка: повар допущен, уборщица не допущена", /допущен/.test(dayText) && /не допущен/.test(dayText), dayText.slice(0, 500));
+    check("сводка: повар допущен, уборщица отстранена", /допущен/.test(dayText) && /отстран/.test(dayText), dayText.slice(0, 500));
     check("сводка без горизонтальной прокрутки (390px)", await noOverflow(keeper));
-    await keeper.selectOption(`select[name="st:${cleaner}"]`, "sick_leave");
-    await keeper.locator('form button[type=submit]', { hasText: "Сохранить изменения" }).click();
+    await keeper.selectOption(`select[name="ab:${cleaner}"]`, "sick_leave");
+    await keeper.locator('form button[type=submit]', { hasText: "Подписать допуск" }).click();
     await keeper.waitForURL(/saved=/, { timeout: 60_000 });
     const fixed = await db.journalDocumentEntry.findUnique({
       where: { documentId_employeeId_date: { documentId: HYGIENE_DOC, employeeId: cleaner, date: day } },

@@ -32,8 +32,10 @@ async function main() {
   const cook = state.users.cookA as { id: string; name: string };
   const fridge = await db.equipment.findFirstOrThrow({
     where: { area: { organizationId: ORG }, type: { in: ["refrigerator", "freezer"] } },
-    select: { id: true, fillerUserIds: true },
+    select: { id: true, fillerUserIds: true, tempMin: true, tempMax: true },
   });
+  // Замер внутри нормы объекта (холодильник или морозилка), чтобы не требовалось «что сделали».
+  const inNorm = String(Math.round(((fridge.tempMin ?? 2) + (fridge.tempMax ?? 6)) / 2));
   const room = await db.room.findFirst({ where: { building: { organizationId: ORG } }, select: { id: true, fillerUserIds: true } });
   const org = await db.organization.findUniqueOrThrow({ where: { id: ORG }, select: { qrFillMode: true } });
   const saved = await db.user.findUniqueOrThrow({
@@ -90,8 +92,9 @@ async function main() {
     const cookies = await ctx.cookies();
     check("выбор запомнен в cookie организации", cookies.some((c) => c.name === `wesetup.qr.who.${ORG}`), cookies.map((c) => c.name));
 
-    await page.fill("#equipment-fill-temperature", "4");
-    await page.getByRole("button", { name: /Сохранить/ }).click();
+    await page.fill("#equipment-fill-temperature", inNorm);
+    await page.screenshot({ path: path.join(SHOTS, "63-before-save.png"), fullPage: true });
+    await page.getByRole("button", { name: /Сохранить/ }).click({ timeout: 30_000 });
     const recorded = await page.getByText("Записано").first().waitFor({ timeout: 60_000 }).then(() => true).catch(() => false);
     check("замер сохранён с пропуском визита", recorded, recorded ? undefined : (await page.content()).slice(0, 300));
 
