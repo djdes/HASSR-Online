@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { ORG_ROSTER_WHERE, ORG_SIGNER_WHERE } from "@/lib/journal-roster";
 import { isManagementRole } from "@/lib/user-roles";
 import { decryptSecret, encryptSecret, isIntegrationCryptoConfigured } from "@/lib/integration-crypto";
+import { generateQrPin, validateQrPin } from "@/lib/qr-pin-rules";
 
 /**
  * Кто заполняет QR-форму — общая проверка для журналов, холодильников и
@@ -36,6 +37,12 @@ export async function resolveQrFillActor(params: {
   pin?: string | null;
   /** Бракеражи: членов сторонней комиссии тоже ищем. */
   includeCommission?: boolean;
+  /**
+   * PIN уже подтверждён на своём шаге (пропуск `qr-pin-pass`): второй раз
+   * не спрашиваем. Раньше в public-режиме сотрудника с PIN спрашивали
+   * повторно при сохранении.
+   */
+  pinVerified?: boolean;
 }): Promise<QrFillActorResult> {
   const employee = await db.user.findFirst({
     where: { id: params.employeeId, organizationId: params.organizationId, ...(params.includeCommission ? ORG_SIGNER_WHERE : ORG_ROSTER_WHERE) },
@@ -59,7 +66,7 @@ export async function resolveQrFillActor(params: {
   // PIN спрашиваем всегда, когда он у сотрудника задан — и в публичном режиме:
   // один и тот же код на QR-формах, страницах объектов и общем планшете.
   const pinRequired = params.mode === "pin" || (params.mode === "public" && Boolean(employee.qrPinHash));
-  if (pinRequired) {
+  if (pinRequired && !params.pinVerified) {
     if (!employee.qrPinHash) {
       return { ok: false, status: 403, error: "У сотрудника не задан PIN. Попросите руководителя задать его в карточке сотрудника." };
     }
@@ -123,12 +130,7 @@ export async function sessionEmployeeForQr(organizationId: string): Promise<
  * чтобы результат гарантированно проходил `setEmployeeQrPin`.
  */
 export function generateEmployeeQrPin(): string {
-  for (;;) {
-    const pin = String(crypto.randomInt(0, 10_000)).padStart(4, "0");
-    if (/^(\d)\1+$/.test(pin)) continue;
-    if (pin === "1234" || pin === "0123") continue;
-    return pin;
-  }
+  return generateQrPin((max) => crypto.randomInt(0, max));
 }
 
 /** Установить/снять PIN. Возвращает ошибку валидации или null. */
@@ -137,12 +139,26 @@ export async function setEmployeeQrPin(userId: string, pin: string | null): Prom
     await db.user.update({ where: { id: userId }, data: { qrPinHash: null, qrPinEncrypted: null, qrPinFailedCount: 0, qrPinLockedUntil: null } });
     return null;
   }
-  if (!/^\d{4,6}$/.test(pin)) return "PIN — от 4 до 6 цифр";
-  if (/^(\d)\1+$/.test(pin) || pin === "1234" || pin === "123456") return "Слишком простой PIN — выберите другой";
+  const invalid = validateQrPin(pin);
+  if (invalid) return invalid;
   const hash = await bcrypt.hash(pin, 10);
   const qrPinEncrypted = isIntegrationCryptoConfigured() ? encryptSecret(pin) : null;
   await db.user.update({ where: { id: userId }, data: { qrPinHash: hash, qrPinEncrypted, qrPinFailedCount: 0, qrPinLockedUntil: null } });
   return null;
+}
+
+/**
+ * Установить PIN по уже посчитанному хэшу — одобренный запрос сотрудника
+ * (`QrPinRequest`): сам PIN знает только сотрудник, руководитель одобряет.
+ */
+export async function setEmployeeQrPinHash(
+  userId: string,
+  params: { hash: string; encrypted: string | null }
+): Promise<void> {
+  await db.user.update({
+    where: { id: userId },
+    data: { qrPinHash: params.hash, qrPinEncrypted: params.encrypted, qrPinFailedCount: 0, qrPinLockedUntil: null },
+  });
 }
 
 /** Показать PIN руководителю: null — не задан или задан до того, как код стали хранить для показа. */

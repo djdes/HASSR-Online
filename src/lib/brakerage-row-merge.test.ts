@@ -53,3 +53,39 @@ test("конфиг без rows не трогаем; мусор в knownRowIds о
   assert.deepEqual([...(parseKnownRowIds(["a", 1, "", null]) ?? [])], ["a"]);
   assert.equal(parseKnownRowIds("a"), null);
 });
+
+/**
+ * Состав комиссии — серверный ключ: его пишет только окно «Комиссия»
+ * (прямо в базу). Вкладка сайта, открытая до смены состава, при
+ * автосохранении возвращала старый список — и члена комиссии по QR
+ * переставали узнавать.
+ */
+const members = [{ id: "commission-u1", role: "Председатель", employeeId: "u1", employeeName: "Иванова" }];
+
+test("состав комиссии берётся из базы, а не из устаревшей вкладки (со строками)", () => {
+  const merged = mergeBrakerageConfig({
+    incoming: { rows: [{ id: "a" }], commissionMembers: [] },
+    current: { rows: [{ id: "a" }], commissionMembers: members },
+    knownRowIds: new Set(["a"]),
+  });
+  assert.deepEqual(merged.commissionMembers, members);
+});
+
+test("состав комиссии берётся из базы и в конфиге без rows", () => {
+  const merged = mergeBrakerageConfig({
+    incoming: { columns: {}, commissionMembers: [] },
+    current: { commissionMembers: members },
+    knownRowIds: null,
+  });
+  assert.deepEqual(merged.commissionMembers, members);
+  assert.deepEqual(merged.columns, {});
+});
+
+test("клиент не может дописать состав комиссии, которого нет в базе", () => {
+  const merged = mergeBrakerageConfig({
+    incoming: { rows: [], commissionMembers: members },
+    current: { rows: [] },
+    knownRowIds: null,
+  });
+  assert.equal("commissionMembers" in merged, false);
+});

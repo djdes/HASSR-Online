@@ -71,6 +71,25 @@ export function mergeBrakerageRows(params: {
   return merged;
 }
 
+/**
+ * Ключи конфига, которыми владеет сервер. Состав комиссии пишет только окно
+ * «Комиссия» (прямо в базу, `saveOrgCommission`); вкладка сайта, открытая до
+ * смены состава, возвращала бы старый список при автосохранении.
+ */
+export const SERVER_OWNED_CONFIG_KEYS = ["commissionMembers"] as const;
+
+function withServerOwnedKeys(
+  incoming: Record<string, unknown>,
+  current: Record<string, unknown>
+): Record<string, unknown> {
+  const next = { ...incoming };
+  for (const key of SERVER_OWNED_CONFIG_KEYS) {
+    if (current[key] !== undefined) next[key] = current[key];
+    else delete next[key];
+  }
+  return next;
+}
+
 /** Конфиг с объединёнными строками (остальные ключи — как прислал клиент). */
 export function mergeBrakerageConfig(params: {
   incoming: unknown;
@@ -85,9 +104,10 @@ export function mergeBrakerageConfig(params: {
     params.current && typeof params.current === "object" && !Array.isArray(params.current)
       ? (params.current as Record<string, unknown>)
       : {};
-  if (!Array.isArray(incoming.rows)) return incoming;
+  const guarded = withServerOwnedKeys(incoming, current);
+  if (!Array.isArray(incoming.rows)) return guarded;
   return {
-    ...incoming,
+    ...guarded,
     rows: mergeBrakerageRows({ incoming: incoming.rows, current: current.rows, knownRowIds: params.knownRowIds }),
   };
 }
