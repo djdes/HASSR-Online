@@ -336,7 +336,9 @@ export function Header({
           single box so the pointer doesn't fall through the gap.
         */}
         <div className="hidden min-w-0 flex-1 items-center md:flex">
-          <div className="group/nav relative">
+          {/* min-w-0: без него блок не сжимается, и на 768–1200px левая
+              группа наезжала на правую (колокольчик, «Панель платформы»). */}
+          <div className="group/nav relative min-w-0">
             <Link
               href={homeHref}
               title={homeTooltip}
@@ -419,7 +421,7 @@ export function Header({
               href={STAFF_NAV_ITEM.href}
               title={STAFF_NAV_ITEM.label}
               className={cn(
-                "ml-1 hidden items-center gap-2 h-10 rounded-lg px-3 text-[14px] font-semibold transition-colors duration-200 lg:flex",
+                "ml-1 hidden min-w-0 items-center gap-2 h-10 rounded-lg px-3 text-[14px] font-semibold transition-colors duration-200 lg:flex",
                 pathname === STAFF_NAV_ITEM.href ||
                   pathname.startsWith(STAFF_NAV_ITEM.href + "/")
                   ? "bg-[#5566f6]/[0.09] text-[#5566f6]"
@@ -449,7 +451,7 @@ export function Header({
                 href="/control-board"
                 title="Панель контроля"
                 className={cn(
-                  "ml-1 hidden items-center gap-2 h-10 rounded-lg px-3 text-[14px] font-semibold transition-colors duration-200 lg:flex",
+                  "ml-1 hidden min-w-0 items-center gap-2 h-10 rounded-lg px-3 text-[14px] font-semibold transition-colors duration-200 lg:flex",
                   pathname === "/control-board"
                     ? "bg-[#5566f6]/[0.09] text-[#5566f6]"
                     : "bg-[#5566f6]/[0.04] text-[#5566f6] hover:bg-[#5566f6]/[0.09]"
@@ -462,7 +464,7 @@ export function Header({
                 href="/journals-progress"
                 title="Прогресс журналов сегодня"
                 className={cn(
-                  "ml-1 hidden items-center gap-2 h-10 rounded-lg px-3 text-[14px] font-semibold transition-colors duration-200 lg:flex",
+                  "ml-1 hidden min-w-0 items-center gap-2 h-10 rounded-lg px-3 text-[14px] font-semibold transition-colors duration-200 lg:flex",
                   pathname === "/journals-progress"
                     ? "bg-[#5566f6]/[0.09] text-[#5566f6]"
                     : "bg-[#5566f6]/[0.04] text-[#5566f6] hover:bg-[#5566f6]/[0.09]"
@@ -475,7 +477,7 @@ export function Header({
                 href="/team"
                 title="Моя команда"
                 className={cn(
-                  "ml-1 hidden items-center gap-2 h-10 rounded-lg px-3 text-[14px] font-semibold transition-colors duration-200 lg:flex",
+                  "ml-1 hidden min-w-0 items-center gap-2 h-10 rounded-lg px-3 text-[14px] font-semibold transition-colors duration-200 lg:flex",
                   pathname === "/team"
                     ? "bg-[#5566f6]/[0.09] text-[#5566f6]"
                     : "bg-[#5566f6]/[0.04] text-[#5566f6] hover:bg-[#5566f6]/[0.09]"
@@ -488,7 +490,7 @@ export function Header({
                 href="/verifications"
                 title="Проверка задач"
                 className={cn(
-                  "ml-1 hidden items-center gap-2 h-10 rounded-lg px-3 text-[14px] font-semibold transition-colors duration-200 lg:flex",
+                  "ml-1 hidden min-w-0 items-center gap-2 h-10 rounded-lg px-3 text-[14px] font-semibold transition-colors duration-200 lg:flex",
                   pathname === "/verifications"
                     ? "bg-[#5566f6]/[0.09] text-[#5566f6]"
                     : "bg-[#5566f6]/[0.04] text-[#5566f6] hover:bg-[#5566f6]/[0.09]"
@@ -606,7 +608,7 @@ export function Header({
             Обратная связь отсюда убрана: вход в поддержку был в двух
             местах сразу — здесь и пузырём внизу, — и человек не понимал,
             чем они отличаются. Остался пузырь: там же и онлайн-чат. */}
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
           <OfflineIndicator />
           <LiveConnectionIndicator />
           <NotificationsBell />
@@ -616,10 +618,13 @@ export function Header({
               href="/partner"
               aria-label="Партнёрский кабинет"
               title={`Партнёрский кабинет · ${partnerCabinet.brandName}`}
-              className="hidden h-10 shrink-0 items-center gap-2 rounded-lg border-0 bg-[#5566f6]/[0.04] px-3 text-[14px] font-semibold text-[#5566f6] transition-colors duration-200 md:inline-flex hover:bg-[#5566f6]/[0.09]"
+              className="hidden h-10 shrink-0 items-center justify-center gap-2 rounded-lg border-0 bg-[#5566f6]/[0.04] px-2.5 text-[14px] font-semibold text-[#5566f6] transition-colors duration-200 md:inline-flex xl:px-3 hover:bg-[#5566f6]/[0.09]"
             >
-              <Handshake className="size-5" />
-              Партнёрский кабинет
+              <Handshake className="size-5 shrink-0" />
+              {/* До xl — только иконка: рядом ещё «Панель платформы»,
+                  настройки, выход и аватар, и две длинные подписи не
+                  помещались. */}
+              <span className="hidden xl:inline">Партнёрский кабинет</span>
             </Link>
           ) : null}
 
@@ -629,12 +634,12 @@ export function Header({
               aria-label="Панель платформы"
               title="Панель платформы"
               className={cn(
-                "hidden h-10 shrink-0 items-center gap-2 rounded-lg border-0 bg-[#5566f6]/[0.04] px-3 text-[14px] font-semibold text-[#5566f6] transition-colors duration-200 md:inline-flex hover:bg-[#5566f6]/[0.09]",
+                "hidden h-10 shrink-0 items-center justify-center gap-2 rounded-lg border-0 bg-[#5566f6]/[0.04] px-2.5 text-[14px] font-semibold text-[#5566f6] transition-colors duration-200 md:inline-flex xl:px-3 hover:bg-[#5566f6]/[0.09]",
                 pathname.startsWith("/root") && "bg-[#5566f6]/[0.09]"
               )}
             >
-              <ShieldCheck className="size-5" />
-              Панель платформы
+              <ShieldCheck className="size-5 shrink-0" />
+              <span className="hidden xl:inline">Панель платформы</span>
             </Link>
           ) : null}
 

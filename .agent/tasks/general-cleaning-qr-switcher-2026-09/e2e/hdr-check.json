@@ -1,0 +1,34 @@
+[
+  {
+    "width": 390,
+    "ok": true
+  },
+  {
+    "width": 600,
+    "ok": true
+  },
+  {
+    "width": 768,
+    "ok": true
+  },
+  {
+    "width": 900,
+    "ok": true
+  },
+  {
+    "width": 1024,
+    "ok": true
+  },
+  {
+    "width": 1280,
+    "ok": true
+  },
+  {
+    "width": 1440,
+    "ok": true
+  },
+  {
+    "width": 1920,
+    "ok": true
+  }
+]

@@ -1037,25 +1037,26 @@ function SpecificationTable({
  */
 const UV_MONTHLY_MIN_ROWS = 6;
 
+/**
+ * Итог по месяцам — три колонки: месяц, часы, остаток. Раньше бланк
+ * печатался «в две половины» (шесть колонок), и на экране это читалось
+ * как задублированные колонки (замечание владельца, 2026-09-22). В PDF
+ * бланк остался прежним.
+ */
 function MonthlySummaryTable({ monthlyData }: { monthlyData: { month: string; hours: number; remaining: number }[] }) {
-  const half = Math.max(
-    UV_MONTHLY_MIN_ROWS,
-    Math.ceil(monthlyData.length / 2)
-  );
-  const leftCol = monthlyData.slice(0, half);
-  const rightCol = monthlyData.slice(half);
-  const rowIndexes = Array.from({ length: half }, (_, index) => index);
+  const rowCount = Math.max(UV_MONTHLY_MIN_ROWS, monthlyData.length);
+  const rowIndexes = Array.from({ length: rowCount }, (_, index) => index);
 
   return (
     <div className="uv-monthly-section">
       {/* См. комментарий в SpecificationTable — тот же обход глобального
           правила для телефона. */}
       <div className="-mx-4 overflow-auto px-4 sm:mx-0 lg:overflow-visible sm:px-0">
-      <table className="w-full min-w-[720px] border-collapse text-[13px] text-[12px] sm:min-w-0">
+      <table className="w-full min-w-[420px] border-collapse text-[13px] text-[12px] sm:min-w-0">
         <thead>
           <tr>
             <th
-              colSpan={6}
+              colSpan={3}
               className="border border-[#ccc] bg-[#f0f0f0] px-3 py-1.5 text-center text-[13px] font-bold leading-tight print:bg-white"
             >
               Суммарное количество отработанных часов бактерицидной установкой по месяцам
@@ -1065,15 +1066,11 @@ function MonthlySummaryTable({ monthlyData }: { monthlyData: { month: string; ho
             <th className="border border-[#ccc] px-3 py-1 text-left font-semibold leading-tight">Месяц, год</th>
             <th className="border border-[#ccc] px-3 py-1 text-center font-semibold leading-tight">Количество часов</th>
             <th className="border border-[#ccc] px-3 py-1 text-center font-semibold leading-tight">Остаточное количество часов</th>
-            <th className="border border-[#ccc] px-3 py-1 text-left font-semibold leading-tight">Месяц, год</th>
-            <th className="border border-[#ccc] px-3 py-1 text-center font-semibold leading-tight">Количество часов</th>
-            <th className="border border-[#ccc] px-3 py-1 text-center font-semibold leading-tight">Остаточное количество часов</th>
           </tr>
         </thead>
         <tbody>
           {rowIndexes.map((index) => {
-            const left = leftCol[index];
-            const right = rightCol[index];
+            const left = monthlyData[index];
             /* h-[28px] + неразрывный пробел в пустой ячейке: без них
                шесть пустых строк бланка схлопывались в нити 3-5px
                (у `leading-tight` пустой td нулевой высоты). */
@@ -1085,9 +1082,6 @@ function MonthlySummaryTable({ monthlyData }: { monthlyData: { month: string; ho
                 <td className={cell}>{left ? formatMonthLabel(left.month) : blank}</td>
                 <td className={num}>{left ? left.hours.toFixed(2).replace(".", ",") : blank}</td>
                 <td className={num}>{left ? left.remaining.toFixed(2).replace(".", ",") : blank}</td>
-                <td className={cell}>{right ? formatMonthLabel(right.month) : blank}</td>
-                <td className={num}>{right ? right.hours.toFixed(2).replace(".", ",") : blank}</td>
-                <td className={num}>{right ? right.remaining.toFixed(2).replace(".", ",") : blank}</td>
               </tr>
             );
           })}
