@@ -78,6 +78,8 @@ const UpdateSchema = z.object({
   requirePhoto: z.boolean().optional(),
   // 2026-09-04: кто убирает / кто проверяет помещение. Порядок = приоритет.
   cleanerUserIds: z.array(z.string().min(1)).max(30).optional(),
+  /** «Кто заполняет» по QR помещения; пусто — все. */
+  fillerUserIds: z.array(z.string().min(1)).max(200).optional(),
   verifierUserIds: z.array(z.string().min(1)).max(30).optional(),
   // 2026-09-04: нормы климата (единый справочник помещений). null —
   // нормы не заданы.
@@ -163,7 +165,9 @@ export async function PATCH(request: Request, ctx: Ctx) {
     body.cleanerUserIds !== undefined ? uniqueIds(body.cleanerUserIds) : undefined;
   const nextVerifierIds =
     body.verifierUserIds !== undefined ? uniqueIds(body.verifierUserIds) : undefined;
-  const idsToCheck = uniqueIds([...(nextCleanerIds ?? []), ...(nextVerifierIds ?? [])]);
+  const nextFillerIds =
+    body.fillerUserIds !== undefined ? uniqueIds(body.fillerUserIds) : undefined;
+  const idsToCheck = uniqueIds([...(nextCleanerIds ?? []), ...(nextVerifierIds ?? []), ...(nextFillerIds ?? [])]);
   if (!(await ensureOrgUsers(orgId, idsToCheck))) {
     return NextResponse.json(
       { error: "Некоторые сотрудники не принадлежат организации или в архиве" },
@@ -222,6 +226,7 @@ export async function PATCH(request: Request, ctx: Ctx) {
         : {}),
       ...(nextCleanerIds !== undefined ? { cleanerUserIds: nextCleanerIds } : {}),
       ...(nextVerifierIds !== undefined ? { verifierUserIds: nextVerifierIds } : {}),
+      ...(nextFillerIds !== undefined ? { fillerUserIds: nextFillerIds } : {}),
       ...(body.climateNorms !== undefined
         ? { climateNorms: body.climateNorms === null ? Prisma.JsonNull : body.climateNorms }
         : {}),

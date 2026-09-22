@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseEquipmentExtras } from "@/lib/equipment-extras";
 import { ZodError } from "zod";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
@@ -89,8 +90,12 @@ export async function POST(request: Request) {
       );
     }
 
+    const extras = await parseEquipmentExtras(body as Record<string, unknown>, getActiveOrgId(session));
+    if (!extras.ok) return NextResponse.json({ error: extras.error }, { status: 400 });
+
     const equipment = await db.equipment.create({
       data: {
+        ...extras.patch,
         name: validatedData.name,
         type: validatedData.type,
         serialNumber: validatedData.serialNumber || null,

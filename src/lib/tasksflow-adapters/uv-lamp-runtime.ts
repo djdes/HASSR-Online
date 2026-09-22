@@ -14,6 +14,9 @@
 import { db } from "@/lib/db";
 import {
   UV_LAMP_RUNTIME_TEMPLATE_CODE,
+  appendUvRuntimeSession,
+  isUvRuntimeEntryDataEmpty,
+  normalizeUvRuntimeEntryData,
   type UvRuntimeEntryData,
 } from "@/lib/uv-lamp-runtime-document";
 import { findTaskEmployee } from "@/lib/journal-roster-db";
@@ -156,10 +159,20 @@ export const uvLampRuntimeAdapter: JournalAdapter = {
     const employee = await findTaskEmployee({ employeeId, organizationId: doc.organizationId });
     if (!employee) return false;
 
-    const data: UvRuntimeEntryData = {
+    const session = {
       startTime: normalizeTime(values?.startTime),
       endTime: normalizeTime(values?.endTime),
     };
+    // Сеанс дописывается к уже записанным за день (раньше вся запись
+    // перезаписывалась и дополнительные сеансы пропадали).
+    const existing = await db.journalDocumentEntry.findUnique({
+      where: { documentId_employeeId_date: { documentId, employeeId, date: dateObj } },
+      select: { data: true },
+    });
+    const previous = normalizeUvRuntimeEntryData(existing?.data ?? null);
+    const data: UvRuntimeEntryData = isUvRuntimeEntryDataEmpty(previous)
+      ? session
+      : appendUvRuntimeSession(previous, session);
 
     await db.journalDocumentEntry.upsert({
       where: {

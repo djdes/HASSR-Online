@@ -7,9 +7,13 @@ import { orgTodayKey } from "@/lib/timezone";
 import { redirect } from "next/navigation";
 import { normalizeQrFillMode, sessionEmployeeForQr } from "@/lib/qr-fill-actor";
 import { listEquipmentSiblings } from "@/lib/qr-fill-siblings";
+import { filterAllowedFillers } from "@/lib/object-fillers";
 import { stampFor } from "@/lib/quick-values";
 import { getUserDisplayTitle } from "@/lib/user-roles";
 import { EquipmentFillClient } from "./equipment-fill-client";
+import { UvLampClient } from "./uv-lamp-client";
+import { isUvLampType } from "@/lib/uv-lamp";
+import { lampState, listLampOperators } from "@/lib/uv-lamp-runs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -65,6 +69,8 @@ export default async function EquipmentFillPage({
       name: true,
       tempMin: true,
       tempMax: true,
+      type: true,
+      fillerUserIds: true,
       area: {
         select: {
           id: true,
@@ -105,6 +111,27 @@ export default async function EquipmentFillPage({
     if (resolved.ok) sessionEmployee = resolved.employee;
   }
 
+  // УФ-лампа: «Я включил / Я выключил» вместо замера (2026-09-22).
+  if (isUvLampType(equipment.type)) {
+    const lampTz = equipment.area.organization.timezone || "Europe/Moscow";
+    const [operators, state] = await Promise.all([
+      listLampOperators({ organizationId, fillerUserIds: equipment.fillerUserIds, documentResponsibleId: null }),
+      lampState(equipment.id, lampTz),
+    ]);
+    const list = sessionEmployee && !sessionEmployee.canPickOthers ? operators.filter((e) => e.id === sessionEmployee!.id) : operators;
+    return (
+      <UvLampClient
+        token={token}
+        organizationName={equipment.area.organization.name}
+        lamp={{ id: equipment.id, name: equipment.name, areaName: equipment.area.name }}
+        employees={list.map((e) => ({ id: e.id, name: e.name, positionTitle: getUserDisplayTitle(e) || null, hasPin: Boolean(e.qrPinHash) }))}
+        mode={qrMode}
+        sessionEmployee={sessionEmployee}
+        initialState={state ?? { running: null, lifetimeHours: null, usedHours: 0, remainingHours: null }}
+      />
+    );
+  }
+
   // Employees who can be named as the reader. Набор тот же, что проверяет
   // POST (`ORG_ROSTER_WHERE`): иначе ROOT попадал в список, а сохранение
   // отвечало «Сотрудник не найден».
@@ -115,7 +142,7 @@ export default async function EquipmentFillPage({
   const [employees, targets] = await Promise.all([
     db.user.findMany({
       where: { organizationId, ...ORG_ROSTER_WHERE },
-      select: { id: true, name: true, role: true, positionTitle: true, qrPinHash: true, jobPosition: { select: { name: true } } },
+      select: { id: true, name: true, role: true, positionTitle: true, qrPinHash: true, canManageSettings: true, jobPosition: { select: { name: true } } },
       orderBy: { name: "asc" },
     }),
     resolveEquipmentFillTargets({
@@ -129,6 +156,8 @@ export default async function EquipmentFillPage({
     }),
   ]);
 
+  // Смены объекта на наклейке нет (владелец, 2026-09-22): замер — только у
+  // этого холодильника. Список соседей нужен лишь для сегодняшнего значения.
   const siblings = await listEquipmentSiblings({
     organizationId,
     currentEquipmentId: equipment.id,
@@ -141,7 +170,6 @@ export default async function EquipmentFillPage({
       token={token}
       organizationName={equipment.area.organization.name}
       journalTitle="Температура холодильного оборудования"
-      siblings={siblings}
       todayValues={siblings.find((item) => item.current)?.values ?? null}
       stamp={stampFor(timezone)}
       hasActiveDocument={targets.hasActiveDocument}
@@ -163,7 +191,10 @@ export default async function EquipmentFillPage({
       }}
       mode={qrMode}
       sessionEmployee={sessionEmployee}
-      employees={(sessionEmployee && !sessionEmployee.canPickOthers ? employees.filter((e) => e.id === sessionEmployee!.id) : employees).map((e) => ({
+      employees={(sessionEmployee && !sessionEmployee.canPickOthers
+        ? employees.filter((e) => e.id === sessionEmployee!.id)
+        : filterAllowedFillers(employees, equipment.fillerUserIds)
+      ).map((e) => ({
         id: e.id,
         name: e.name,
         positionTitle: getUserDisplayTitle(e) || null,

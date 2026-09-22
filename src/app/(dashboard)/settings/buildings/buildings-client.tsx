@@ -25,6 +25,7 @@ type Room = {
   sortOrder: number;
   // 2026-09-04: кто убирает / кто проверяет.
   cleanerUserIds?: string[];
+  fillerUserIds?: string[];
   verifierUserIds?: string[];
   detergent?: string | null;
   currentScope?: unknown;
@@ -110,6 +111,7 @@ export function BuildingsClient({
       kind: room.kind,
       cleanerUserIds: toUserIdList(room.cleanerUserIds),
       verifierUserIds: toUserIdList(room.verifierUserIds),
+      fillerUserIds: toUserIdList(room.fillerUserIds),
       detergent: room.detergent ?? "",
       // Передаём scope как-есть — RoomEditorDialog.parseScopeSteps
       // нормализует и legacy string[] и новый ScopeStep[] (с per-step

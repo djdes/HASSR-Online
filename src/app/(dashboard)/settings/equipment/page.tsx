@@ -14,8 +14,9 @@ import { CopyIdButton } from "@/components/settings/copy-id-button";
 import { EquipmentDialog } from "@/components/settings/equipment-dialog";
 import { DeleteButton } from "@/components/settings/delete-button";
 import { PageGuide } from "@/components/ui/page-guide";
-import { isManagementRole } from "@/lib/user-roles";
+import { getUserDisplayTitle, isManagementRole } from "@/lib/user-roles";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,8 @@ const TYPE_LABELS: Record<string, string> = {
   scale: "Весы",
   thermometer: "Термометр",
   sensor: "Датчик",
+  uv_lamp: "УФ-лампа",
+  fryer: "Фритюрница",
   other: "Другое",
 };
 
@@ -41,7 +44,7 @@ export default async function EquipmentSettingsPage() {
   const session = await requireAuth();
   const orgId = getActiveOrgId(session);
 
-  const [equipment, areas] = await Promise.all([
+  const [equipment, areas, staff] = await Promise.all([
     db.equipment.findMany({
       where: { area: { organizationId: orgId } },
       orderBy: { name: "asc" },
@@ -52,7 +55,19 @@ export default async function EquipmentSettingsPage() {
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }),
+    db.user.findMany({
+      where: { organizationId: orgId, ...ORG_ROSTER_WHERE },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, role: true, positionTitle: true, canManageSettings: true, jobPosition: { select: { name: true } } },
+    }),
   ]);
+  // «Кто заполняет» по QR: руководство заполняет любой объект — в выборе не нужно.
+  const fillerOptions = staff.map((user) => ({
+    id: user.id,
+    name: user.name,
+    position: getUserDisplayTitle(user) || null,
+    management: isManagementRole(user.role) || user.canManageSettings,
+  }));
 
   // IoT readings
   const iotIds = equipment.filter((e) => e.tuyaDeviceId).map((e) => e.id);
@@ -86,8 +101,11 @@ export default async function EquipmentSettingsPage() {
     <div className="space-y-5">
       <PageGuide
         title="Как настроить оборудование"
-        storageKey="settings-equipment-v1"
+        storageKey="settings-equipment-v2"
         bullets={[
+          { title: "Закрепите сотрудника за холодильником или складом", body: "Карточка оборудования (карандаш) → «Кто заполняет по QR» → отметьте людей → «Сохранить». На наклейке останутся только они; остальным наклейка откажет даже с верным PIN. Руководство заполняет любой объект." },
+          { title: "Одна наклейка — один объект", body: "Распечатайте «QR-наклейки» и приклейте на каждый холодильник. Сменить холодильник на телефоне нельзя — замер делают у самого оборудования." },
+          { title: "УФ-лампа", body: "Тип «УФ-лампа» → модель (ресурс подставится) → «Уже отработала» для не новой лампы. На наклейке лампы — кнопки «Я включил» и «Я выключил»; наработка считается сама, за 10 % до конца ресурса придёт уведомление." },
           { title: "Сначала создайте цех", body: "Оборудование привязывается к помещению. Если цехов нет — откройте «Здания и помещения» (соседний раздел) и заведите хотя бы один." },
           { title: "Заполните min/max температуру", body: "Например, холодильник: 2°C - 6°C. Эти значения попадут в журнал температурного режима как нормативный диапазон. Сотрудник увидит «выход за пределы» сразу." },
           { title: "Tuya Device ID — опционально", body: "Если стоит WiFi-датчик температуры (HACCP/Aubess) — введите Device ID, и WeSetup сам будет писать показания в журнал каждый час." },
@@ -137,7 +155,7 @@ export default async function EquipmentSettingsPage() {
             </Link>
           ) : null}
           {canManage && (
-            <EquipmentDialog areas={areas} existingNames={equipmentNames} />
+            <EquipmentDialog areas={areas} existingNames={equipmentNames} fillerOptions={fillerOptions} />
           )}
         </div>
       </div>
@@ -282,7 +300,13 @@ export default async function EquipmentSettingsPage() {
                               tempMin: item.tempMin,
                               tempMax: item.tempMax,
                               tuyaDeviceId: item.tuyaDeviceId ?? null,
+                              fillerUserIds: item.fillerUserIds,
+                              lampModel: item.lampModel,
+                              lampLifetimeHours: item.lampLifetimeHours,
+                              lampInstalledAt: item.lampInstalledAt ? item.lampInstalledAt.toISOString().slice(0, 10) : null,
+                              lampUsedHours: item.lampUsedHours,
                             }}
+                            fillerOptions={fillerOptions}
                           />
                           {canDelete && (
                             <DeleteButton

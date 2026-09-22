@@ -10,6 +10,8 @@ const EQUIPMENT_TYPE_LABELS: Record<string, string> = {
   oven: "Печь",
   sensor: "Датчик",
   thermometer: "Термометр",
+  uv_lamp: "УФ-лампа",
+  fryer: "Фритюрница",
   other: "Другое",
 };
 

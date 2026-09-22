@@ -5,7 +5,6 @@ import { AlertTriangle } from "lucide-react";
 import { SuccessCheck } from "@/components/qr-fill/success-check";
 import { Button } from "@/components/ui/button";
 import { DeviationCorrection } from "@/components/qr-fill/deviation-correction";
-import { QuickSwitchList, QuickSwitchNext, type QuickSwitchItem } from "@/components/qr-fill/quick-switch";
 import { QrPageShell } from "@/components/qr-fill/qr-page-shell";
 import { WhoRow } from "@/components/qr-fill/who-row";
 import { EmployeePicker } from "@/components/qr-fill/employee-picker";
@@ -36,8 +35,6 @@ type Props = {
   mode?: "public" | "pin" | "auth";
   /** В режиме «auth» — вошедший сотрудник; линейный не выбирает имя. */
   sessionEmployee?: { id: string; name: string; canPickOthers: boolean } | null;
-  /** Соседние объекты для быстрой смены (см. lib/qr-fill-siblings). */
-  siblings?: QuickSwitchItem[];
   /** Уже записанная сегодня температура этого оборудования — подставляется для правки. */
   todayValues?: { temperature?: number | null; humidity?: number | null } | null;
   /** «20.09.2026» и «18:31» по часовому поясу организации — подпись «за какой момент вносится». */
@@ -64,7 +61,6 @@ export function EquipmentFillClient({
   employees,
   mode = "public",
   sessionEmployee = null,
-  siblings = [],
   todayValues = null,
   stamp = null,
   organizationName,
@@ -92,7 +88,6 @@ export function EquipmentFillClient({
   const [humidity, setHumidity] = useState<string>("");
   // «Что сделали» — обязательно, когда замер вышел за норму.
   const [correction, setCorrection] = useState("");
-  const [switchOpen, setSwitchOpen] = useState(false);
   // Время в подписи идёт по часам телефона: страницу могут держать открытой долго.
   const [stampTime, setStampTime] = useState(stamp?.time ?? "");
   useEffect(() => {
@@ -219,16 +214,12 @@ export function EquipmentFillClient({
   const selectedEmployee = employees.find((item) => item.id === employeeId) ?? null;
   // PIN спрашиваем всегда, когда он у выбранного сотрудника задан (или режим «имя + PIN»).
   const pinRequired = mode === "pin" || Boolean(selectedEmployee?.hasPin);
-  // После сохранения текущий объект в списке сразу «снят» — с введёнными значениями.
-  const siblingsView = siblings.map((item) =>
-    item.current && done ? { ...item, filled: true, summary: (parsedTemp !== null ? `${parsedTemp} °C` : "") || item.summary } : item
-  );
 
   return (
     <QrPageShell orgName={organizationName} title={journalTitle}>
-        <WhoRow label="Оборудование" value={equipment.name} action={switchOpen ? "Скрыть" : "Сменить"} onAction={siblingsView.length > 1 ? () => setSwitchOpen((v) => !v) : undefined}>
-          {switchOpen && !done ? <QuickSwitchList items={siblingsView} /> : null}
-        </WhoRow>
+        {/* Смены оборудования на наклейке нет (владелец, 2026-09-22): каждый
+            холодильник — своей наклейкой, чтобы замер делали у него. */}
+        <WhoRow label="Оборудование" value={equipment.name} />
         {/* Раньше об отсутствии журнала сообщал только 409 после
             «Сохранить» — человек вводил замер впустую. */}
         {!hasActiveDocument ? (
@@ -273,7 +264,6 @@ export function EquipmentFillClient({
             >
               Записать ещё замер
             </Button>
-            <QuickSwitchNext items={siblingsView} title="Оборудование" />
           </div>
         ) : (
           <div>

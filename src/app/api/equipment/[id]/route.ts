@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseEquipmentExtras } from "@/lib/equipment-extras";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
@@ -130,9 +131,13 @@ export async function PUT(
       typeof tuyaDeviceId === "string" && tuyaDeviceId.trim()
         ? tuyaDeviceId.trim().slice(0, 100)
         : null;
+    const extras = await parseEquipmentExtras(body as Record<string, unknown>, getActiveOrgId(session));
+    if (!extras.ok) return NextResponse.json({ error: extras.error }, { status: 400 });
+
     const updated = await db.equipment.update({
       where: { id },
       data: {
+        ...extras.patch,
         name: name.trim().slice(0, 200),
         type: typeof type === "string" && type.trim() ? type.trim().slice(0, 50) : equipment.type,
         areaId: typeof areaId === "string" && areaId ? areaId : equipment.areaId,

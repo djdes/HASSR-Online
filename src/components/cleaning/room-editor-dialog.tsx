@@ -1,5 +1,8 @@
 "use client";
 
+import { FillerPicker } from "@/components/settings/filler-picker";
+import { isManagementRole } from "@/lib/user-roles";
+
 /**
  * Shared dialog для редактирования полной cleaning-конфигурации помещения:
  * name, kind, detergent, currentScope, generalScope, currentDays,
@@ -78,6 +81,9 @@ export type RoomEditorInitial = {
   // verifierUserIds). Порядок = приоритет.
   cleanerUserIds?: string[];
   verifierUserIds?: string[];
+  /** «Кто заполняет» по QR помещения (2026-09-22). undefined — вызывающий
+   * не загрузил поле: блок не показываем и на сервер не шлём. */
+  fillerUserIds?: string[];
   // 2026-09-04: нормы климата (Room.climateNorms). null — помещение не
   // контролируется в журнале климата.
   climateNorms?: ClimateRoomNorms | null;
@@ -170,6 +176,7 @@ export function RoomEditorDialog({
   const [cleanerUserIds, setCleanerUserIds] = useState<string[]>(
     initial?.cleanerUserIds ?? [],
   );
+  const [fillerUserIds, setFillerUserIds] = useState<string[]>(initial?.fillerUserIds ?? []);
   const [verifierUserIds, setVerifierUserIds] = useState<string[]>(
     initial?.verifierUserIds ?? [],
   );
@@ -233,6 +240,7 @@ export function RoomEditorDialog({
     setRequirePhoto(initial?.requirePhoto ?? false);
     setCleanerUserIds(initial?.cleanerUserIds ?? []);
     setVerifierUserIds(initial?.verifierUserIds ?? []);
+    setFillerUserIds(initial?.fillerUserIds ?? []);
     setClimateEnabled(Boolean(initial?.climateNorms));
     setClimate(toClimateForm(initial?.climateNorms ?? null));
     setCleaningOpen(focus !== "climate");
@@ -291,6 +299,7 @@ export function RoomEditorDialog({
           requirePhoto,
           cleanerUserIds,
           verifierUserIds,
+          ...(initial.fillerUserIds !== undefined ? { fillerUserIds } : {}),
           climateNorms,
         }),
       });
@@ -426,6 +435,22 @@ export function RoomEditorDialog({
                   disabled={saving}
                 />
               </div>
+
+              {initial?.fillerUserIds !== undefined ? (
+                <div className="rounded-3xl border border-[#ececf4] bg-[#fafbff] p-4">
+                  <FillerPicker
+                    value={fillerUserIds}
+                    onChange={setFillerUserIds}
+                    objectNoun="помещение"
+                    options={users.map((user) => ({
+                      id: user.id,
+                      name: user.name,
+                      position: user.jobPosition?.name ?? user.positionTitle ?? null,
+                      management: isManagementRole(user.role),
+                    }))}
+                  />
+                </div>
+              ) : null}
 
               {/* Секция «Климат» — нормы температуры/влажности для журнала
                   климата. Единый справочник помещений, 2026-09-04. */}

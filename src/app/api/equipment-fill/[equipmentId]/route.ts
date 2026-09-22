@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { OBJECT_FILLER_DENIED, canFillObject } from "@/lib/object-fillers";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
@@ -143,8 +144,12 @@ export async function POST(
       organizationId,
       ...ORG_ROSTER_WHERE,
     },
-    select: { id: true, name: true },
+    select: { id: true, name: true, role: true, canManageSettings: true },
   });
+  // «Кто заполняет»: закреплённое оборудование — только своим (и руководству).
+  if (employee && !canFillObject(equipment.fillerUserIds, employee)) {
+    return NextResponse.json({ error: OBJECT_FILLER_DENIED }, { status: 403 });
+  }
   if (!employee) {
     return NextResponse.json(
       { error: "Сотрудник не найден" },

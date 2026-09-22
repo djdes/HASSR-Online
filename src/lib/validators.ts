@@ -56,7 +56,9 @@ export const areaSchema = z.object({
 
 export const equipmentSchema = z.object({
   name: z.string().min(1, "Название обязательно").max(200),
-  type: z.enum(["refrigerator", "freezer", "oven", "dishwasher", "scale", "thermometer", "other"], {
+  // Все типы из окна оборудования: раньше «УФ-лампа», «Датчик» и
+  // «Фритюрница» отдавали 400 при создании.
+  type: z.enum(["refrigerator", "freezer", "oven", "dishwasher", "scale", "thermometer", "sensor", "fryer", "uv_lamp", "other"], {
     message: "Выберите тип оборудования",
   }),
   serialNumber: z.string().max(100).optional(),
@@ -64,6 +66,13 @@ export const equipmentSchema = z.object({
   tempMax: z.number().finite().optional(),
   tuyaDeviceId: z.string().max(100).optional(),
   areaId: z.string().min(1, "Выберите зону"),
+  /** «Кто заполняет» по QR; пусто — все. */
+  fillerUserIds: z.array(z.string().min(1).max(64)).max(200).optional(),
+  /** УФ-лампа: модель, ресурс, дата установки, уже отработала. */
+  lampModel: z.string().max(120).optional(),
+  lampLifetimeHours: z.number().int().min(1).max(100000).optional(),
+  lampInstalledAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  lampUsedHours: z.number().min(0).max(100000).optional(),
 });
 
 export const competencySchema = z.object({

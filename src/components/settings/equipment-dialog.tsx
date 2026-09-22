@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus, Pencil, Building2, ArrowRight } from "lucide-react";
 import { getEquipmentTypeLabel } from "@/lib/equipment-type-label";
+import { FillerPicker, type FillerOption } from "@/components/settings/filler-picker";
+import { LAMP_PRESETS, UV_LAMP_TYPE, formatHours, lampRemainingHours, lampWarnLevel } from "@/lib/uv-lamp";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -62,6 +64,11 @@ interface EquipmentData {
   tempMin: number | null;
   tempMax: number | null;
   tuyaDeviceId: string | null;
+  fillerUserIds?: string[];
+  lampModel?: string | null;
+  lampLifetimeHours?: number | null;
+  lampInstalledAt?: string | null;
+  lampUsedHours?: number | null;
 }
 
 interface EquipmentDialogProps {
@@ -71,6 +78,8 @@ interface EquipmentDialogProps {
   /// холодильника с одним именем невозможно различить ни в журнале, ни
   /// на QR-плакате.
   existingNames?: string[];
+  /** Сотрудники для «Кто заполняет». */
+  fillerOptions?: FillerOption[];
 }
 
 /**
@@ -88,6 +97,7 @@ export function EquipmentDialog({
   areas,
   equipment,
   existingNames = [],
+  fillerOptions = [],
 }: EquipmentDialogProps) {
   const router = useRouter();
   const isEdit = !!equipment;
@@ -103,6 +113,12 @@ export function EquipmentDialog({
   const [tempMin, setTempMin] = useState(equipment?.tempMin?.toString() ?? "");
   const [tempMax, setTempMax] = useState(equipment?.tempMax?.toString() ?? "");
   const [tuyaDeviceId, setTuyaDeviceId] = useState(equipment?.tuyaDeviceId ?? "");
+  const [fillerUserIds, setFillerUserIds] = useState<string[]>(equipment?.fillerUserIds ?? []);
+  const [lampModel, setLampModel] = useState(equipment?.lampModel ?? "");
+  const [lampLifetime, setLampLifetime] = useState(equipment?.lampLifetimeHours?.toString() ?? "");
+  const [lampInstalledAt, setLampInstalledAt] = useState(equipment?.lampInstalledAt ?? "");
+  const [lampUsed, setLampUsed] = useState(equipment?.lampUsedHours != null ? String(Math.round(equipment.lampUsedHours)) : "0");
+  const isLamp = type === UV_LAMP_TYPE;
 
   function resetForm() {
     setName(equipment?.name ?? "");
@@ -112,6 +128,11 @@ export function EquipmentDialog({
     setTempMin(equipment?.tempMin?.toString() ?? "");
     setTempMax(equipment?.tempMax?.toString() ?? "");
     setTuyaDeviceId(equipment?.tuyaDeviceId ?? "");
+    setFillerUserIds(equipment?.fillerUserIds ?? []);
+    setLampModel(equipment?.lampModel ?? "");
+    setLampLifetime(equipment?.lampLifetimeHours?.toString() ?? "");
+    setLampInstalledAt(equipment?.lampInstalledAt ?? "");
+    setLampUsed(equipment?.lampUsedHours != null ? String(Math.round(equipment.lampUsedHours)) : "0");
     setError(null);
   }
 
@@ -138,6 +159,17 @@ export function EquipmentDialog({
       return;
     }
 
+    const lifetimeNumber = lampLifetime.trim() ? Number(lampLifetime.trim()) : null;
+    const usedNumber = lampUsed.trim() ? Number(lampUsed.trim().replace(",", ".")) : 0;
+    if (isLamp && (lifetimeNumber === null || !Number.isFinite(lifetimeNumber) || lifetimeNumber <= 0)) {
+      setError("Укажите ресурс лампы в часах — он есть в паспорте лампы");
+      return;
+    }
+    if (isLamp && (!Number.isFinite(usedNumber) || usedNumber < 0)) {
+      setError("«Уже отработала» — число часов, 0 для новой лампы");
+      return;
+    }
+
     if (!acquire()) return;
     setError(null);
 
@@ -154,6 +186,15 @@ export function EquipmentDialog({
           tempMin: parsedMin ?? undefined,
           tempMax: parsedMax ?? undefined,
           tuyaDeviceId: tuyaDeviceId || undefined,
+          fillerUserIds,
+          ...(isLamp
+            ? {
+                lampModel: lampModel || undefined,
+                lampLifetimeHours: lifetimeNumber ? Math.round(lifetimeNumber) : undefined,
+                lampInstalledAt: lampInstalledAt || undefined,
+                lampUsedHours: usedNumber,
+              }
+            : {}),
         }),
       });
 
@@ -333,6 +374,92 @@ export function EquipmentDialog({
               />
             </div>
           </div>
+          {isLamp ? (
+            <div className="space-y-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4" data-testid="lamp-section">
+              <div className="text-[14px] font-semibold text-[#0b1024]">Ресурс лампы</div>
+              <div className="space-y-2">
+                <Label htmlFor="eq-lamp-model">Модель лампы или облучателя</Label>
+                <Select
+                  value={lampModel}
+                  onValueChange={(value) => {
+                    setLampModel(value);
+                    const preset = LAMP_PRESETS.find((item) => item.label === value);
+                    if (preset) setLampLifetime(String(preset.hours));
+                  }}
+                >
+                  <SelectTrigger id="eq-lamp-model" className="w-full">
+                    <SelectValue placeholder="Выберите — ресурс подставится сам" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LAMP_PRESETS.map((preset) => (
+                      <SelectItem key={preset.key} value={preset.label}>
+                        {preset.label} — {preset.hours.toLocaleString("ru-RU")} ч
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="eq-lamp-life">Ресурс по паспорту, ч</Label>
+                  <Input id="eq-lamp-life" inputMode="numeric" value={lampLifetime} onChange={(e) => setLampLifetime(e.target.value)} placeholder="например 8000" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="eq-lamp-used">Уже отработала, ч</Label>
+                  <Input id="eq-lamp-used" inputMode="decimal" value={lampUsed} onChange={(e) => setLampUsed(e.target.value)} placeholder="0 — новая лампа" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="eq-lamp-installed">Дата установки лампы</Label>
+                <Input id="eq-lamp-installed" type="date" value={lampInstalledAt} onChange={(e) => setLampInstalledAt(e.target.value)} />
+              </div>
+              {(() => {
+                const life = Number(lampLifetime) || null;
+                const used = Number(lampUsed.replace(",", ".")) || 0;
+                const remaining = lampRemainingHours(life, used);
+                if (remaining === null || !life) return null;
+                const level = lampWarnLevel(life, used);
+                const share = Math.max(0, Math.min(1, remaining / life));
+                return (
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-[13px]">
+                      <span className="text-[#6f7282]">Осталось ресурса</span>
+                      <span className={level ? "font-semibold text-[#b42318]" : "font-semibold text-[#116b2a]"}>
+                        {formatHours(remaining)} ({Math.round(share * 100)} %)
+                      </span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-[#ececf4]">
+                      <div className={level ? "h-full bg-[#e0445a]" : "h-full bg-[#16a34a]"} style={{ width: `${share * 100}%` }} />
+                    </div>
+                    {level ? (
+                      <p className="text-[12.5px] text-[#b42318]">
+                        {level === "over" ? "Ресурс исчерпан — замените лампу." : "Ресурс почти исчерпан — пора заказать лампу."}
+                      </p>
+                    ) : null}
+                  </div>
+                );
+              })()}
+              {isEdit ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLampUsed("0");
+                    setLampInstalledAt(new Date().toISOString().slice(0, 10));
+                  }}
+                  className="text-[13px] font-medium text-[#3848c7] transition-colors duration-150 hover:text-[#0b1024]"
+                >
+                  Заменили лампу — начать отсчёт заново
+                </button>
+              ) : null}
+              <p className="text-[12px] leading-[1.5] text-[#6f7282]">
+                Наработка считается сама по кнопкам «Я включил / Я выключил» на наклейке лампы. Когда ресурса останется 10 %,
+                ответственный за журнал получит уведомление.
+              </p>
+            </div>
+          ) : null}
+          {fillerOptions.length > 0 ? (
+            <FillerPicker value={fillerUserIds} onChange={setFillerUserIds} options={fillerOptions} objectNoun={isLamp ? "лампу" : "оборудование"} />
+          ) : null}
           <div className="space-y-2">
             <Label htmlFor="eq-tuya">Tuya Device ID (IoT-датчик)</Label>
             <Input

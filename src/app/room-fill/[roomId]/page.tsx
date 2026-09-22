@@ -17,6 +17,7 @@ import { getUserDisplayTitle } from "@/lib/user-roles";
 import { redirect } from "next/navigation";
 import { normalizeQrFillMode, sessionEmployeeForQr } from "@/lib/qr-fill-actor";
 import { listRoomSiblings } from "@/lib/qr-fill-siblings";
+import { filterAllowedFillers } from "@/lib/object-fillers";
 import { stampFor } from "@/lib/quick-values";
 import { RoomFillClient } from "./room-fill-client";
 
@@ -71,6 +72,7 @@ export default async function RoomFillPage({
       name: true,
       climateNorms: true,
       buildingId: true,
+      fillerUserIds: true,
       building: {
         select: {
           name: true,
@@ -101,7 +103,7 @@ export default async function RoomFillPage({
   const [employees, documents] = await Promise.all([
     db.user.findMany({
       where: { organizationId, ...ORG_ROSTER_WHERE },
-      select: { id: true, name: true, role: true, positionTitle: true, qrPinHash: true, jobPosition: { select: { name: true } } },
+      select: { id: true, name: true, role: true, positionTitle: true, qrPinHash: true, canManageSettings: true, jobPosition: { select: { name: true } } },
       orderBy: { name: "asc" },
     }),
     db.journalDocument.findMany({
@@ -145,7 +147,6 @@ export default async function RoomFillPage({
     <RoomFillClient
       token={token}
       journalTitle="Температура и влажность помещений"
-      siblings={siblings}
       todayValues={siblings.find((item) => item.current)?.values ?? null}
       stamp={stampFor(timezone, now)}
       room={{
@@ -161,7 +162,7 @@ export default async function RoomFillPage({
       sessionEmployee={sessionEmployee}
       employees={(sessionEmployee && !sessionEmployee.canPickOthers
         ? employees.filter((employee) => employee.id === sessionEmployee!.id)
-        : employees
+        : filterAllowedFillers(employees, room.fillerUserIds)
       ).map((employee) => ({
         id: employee.id,
         name: employee.name,

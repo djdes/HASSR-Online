@@ -24,6 +24,9 @@ export type UvRuntimeDocumentConfig = {
   lampNumber: string;
   areaName: string;
   spec: UvSpecification;
+  /** Лампа из «Оборудования» (тип «УФ-лампа»): её QR пишет в этот документ,
+   * ресурс считается у лампы, а не заново каждый месяц (2026-09-22). */
+  equipmentId?: string;
 };
 
 /** Один сеанс работы установки. */
@@ -233,6 +236,7 @@ export function normalizeUvRuntimeDocumentConfig(value: unknown): UvRuntimeDocum
         : "1",
     areaName: normalizeUvAreaName(item.areaName),
     spec: normalizeUvSpecification(item.spec),
+    ...(typeof item.equipmentId === "string" && item.equipmentId ? { equipmentId: item.equipmentId } : {}),
   };
 }
 

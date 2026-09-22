@@ -29,6 +29,7 @@ export default async function BuildingsPage() {
           // 2026-09-04: кто убирает / кто проверяет помещение.
           cleanerUserIds: true,
           verifierUserIds: true,
+          fillerUserIds: true,
           // Cleaning unification 2026-05-08: Room теперь хранит scope/days/
           // detergent — RoomEditorDialog в buildings-client использует.
           detergent: true,

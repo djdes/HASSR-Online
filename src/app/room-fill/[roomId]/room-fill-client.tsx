@@ -6,7 +6,6 @@ import { SuccessCheck } from "@/components/qr-fill/success-check";
 
 import { Button } from "@/components/ui/button";
 import { DeviationCorrection } from "@/components/qr-fill/deviation-correction";
-import { QuickSwitchList, QuickSwitchNext, type QuickSwitchItem } from "@/components/qr-fill/quick-switch";
 import { QrPageShell } from "@/components/qr-fill/qr-page-shell";
 import { WhoRow } from "@/components/qr-fill/who-row";
 import { EmployeePicker } from "@/components/qr-fill/employee-picker";
@@ -29,8 +28,6 @@ type Props = {
   mode?: "public" | "pin" | "auth";
   /** В режиме «auth» — вошедший сотрудник; линейный не выбирает имя. */
   sessionEmployee?: { id: string; name: string; canPickOthers: boolean } | null;
-  /** Соседние объекты для быстрой смены (см. lib/qr-fill-siblings). */
-  siblings?: QuickSwitchItem[];
   /** Уже записанные сегодня показания этого помещения — подставляются для правки. */
   todayValues?: { temperature?: number | null; humidity?: number | null } | null;
   /** «20.09.2026» и «18:31» по часовому поясу организации — подпись «за какой момент вносится». */
@@ -58,7 +55,7 @@ function isOutside(value: number | null, metric: Metric): boolean {
  * Три шага, как на плакате: выбрать себя → ввести показания → «Сохранить».
  * Имя запоминается на телефоне, со второго раза остаётся ввести числа.
  */
-export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot, employees, mode = "public", sessionEmployee = null, siblings = [], todayValues = null, stamp = null, journalTitle }: Props) {
+export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot, employees, mode = "public", sessionEmployee = null, todayValues = null, stamp = null, journalTitle }: Props) {
   const [employeeId, setEmployeeId] = useState("");
   // Имя запоминаем сразу при выборе, а не только после записи: обновление страницы или обрыв связи не заставят выбирать заново.
   const rememberEmployee = (id: string) => {
@@ -80,7 +77,6 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
   const [humidity, setHumidity] = useState(typeof todayValues?.humidity === "number" ? String(todayValues.humidity) : "");
   // «Что сделали» — обязательно, когда замер вышел за норму.
   const [correction, setCorrection] = useState("");
-  const [switchOpen, setSwitchOpen] = useState(false);
   // Время в подписи идёт по часам телефона: страницу могут держать открытой долго.
   const [stampTime, setStampTime] = useState(stamp?.time ?? "");
   useEffect(() => {
@@ -188,15 +184,12 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
   // PIN спрашиваем всегда, когда он у выбранного сотрудника задан (или режим «имя + PIN»).
   const pinRequired = mode === "pin" || Boolean(selectedEmployee?.hasPin);
   // После сохранения текущий объект в списке сразу «снят» — с введёнными значениями.
-  const siblingsView = siblings.map((item) =>
-    item.current && saved ? { ...item, filled: true, summary: [temperatureValue !== null ? `${temperatureValue} °C` : null, humidityValue !== null && !humidityInvalid ? `${humidityValue} %` : null].filter(Boolean).join(" · ") || item.summary } : item
-  );
 
   return (
     <QrPageShell orgName={room.organizationName} title={journalTitle}>
-        <WhoRow label="Помещение" value={room.name} action={switchOpen ? "Скрыть" : "Сменить"} onAction={siblingsView.length > 1 ? () => setSwitchOpen((v) => !v) : undefined}>
-          {switchOpen && !saved ? <QuickSwitchList items={siblingsView} /> : null}
-        </WhoRow>
+        {/* Смены помещения на плакате нет (владелец, 2026-09-22): каждое
+            помещение — своим QR, чтобы замер делали на месте. */}
+        <WhoRow label="Помещение" value={room.name} />
         {!hasActiveDocument ? (
           <div className="mb-5 flex gap-3 rounded-2xl border border-[#ffe9b0] bg-[#fff8eb] p-4 text-[14px] leading-relaxed text-[#7a4a00]">
             <AlertTriangle className="mt-0.5 size-5 shrink-0" />
@@ -233,7 +226,6 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
             >
               Записать ещё замер
             </Button>
-            <QuickSwitchNext items={siblingsView} title="Помещения" />
           </div>
         ) : (
           <div>

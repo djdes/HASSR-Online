@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { OBJECT_FILLER_DENIED, canFillObject } from "@/lib/object-fillers";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 
@@ -100,6 +101,7 @@ export async function POST(
       name: true,
       climateNorms: true,
       buildingId: true,
+      fillerUserIds: true,
       building: {
         select: {
           organizationId: true,
@@ -126,8 +128,12 @@ export async function POST(
 
   const employee = await db.user.findFirst({
     where: { id: body.employeeId, organizationId, ...ORG_ROSTER_WHERE },
-    select: { id: true, name: true },
+    select: { id: true, name: true, role: true, canManageSettings: true },
   });
+  // «Кто заполняет»: закреплённое помещение — только своим (и руководству).
+  if (employee && !canFillObject(room.fillerUserIds, employee)) {
+    return NextResponse.json({ error: OBJECT_FILLER_DENIED }, { status: 403 });
+  }
   if (!employee) {
     return NextResponse.json({ error: "Сотрудник не найден" }, { status: 404 });
   }
