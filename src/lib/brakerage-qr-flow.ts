@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 
-import { editBrakerageRows, listBrakerageDayRows, type BrakerageRowEdit } from "@/lib/brakerage-qr";
+import { editBrakerageRows, listBrakerageDayRows } from "@/lib/brakerage-qr";
+import { parseBrakerageListPost } from "@/lib/brakerage-qr-post";
 import { renderBrakerageDeleteConfirm, renderBrakerageList } from "@/lib/brakerage-qr-html";
 import type { BrakerageQrRole } from "@/lib/brakerage-qr-role";
-import { signBrakerageRows, type BrakerageSignEntry } from "@/lib/brakerage-signatures";
+import { signBrakerageRows } from "@/lib/brakerage-signatures";
 import { clientIp } from "@/lib/client-ip";
 import type { JournalFillEmployee } from "@/lib/journal-fill";
 import { renderResult } from "@/lib/journal-fill-html";
@@ -130,26 +131,21 @@ export async function handleBrakerageList(ctx: {
     return redirectTo(listHref);
   }
 
-  if (posted && (action === "sign" || action === "edit")) {
+  if (posted && (action === "save" || action === "sign" || action === "edit")) {
     if (rateLimited()) return renderList(QR_FILL_RATE_LIMIT_ERROR, 429);
     const field = (name: string) => {
       const value = posted.get(name);
       return typeof value === "string" ? value : undefined;
     };
+    // Права по ролям: зав правит блюдо/время/выход/оценку, комиссия — оценку
+    // и время бракеража; «Допущено»/«Не допущено» — подпись (brakerage-qr-post).
+    const { editsByDoc, signsByDoc } = parseBrakerageListPost(field, list.rows, role, {
+      isFinished: ctx.isFinished,
+      gradeValues: list.gradeOptions.map((option) => option.value),
+    });
 
-    // Правка наименования и времени — только редактору; остальным поля не приходят.
     let changed = 0;
     if (role.editor) {
-      const editsByDoc = new Map<string, BrakerageRowEdit[]>();
-      for (const row of list.rows) {
-        const name = field(`name:${row.rowId}`);
-        const time = field(`time:${row.rowId}`);
-        if (name === undefined && time === undefined) continue;
-        if ((name ?? row.name).trim() === row.name && (time ?? row.time) === row.time) continue;
-        const edits = editsByDoc.get(row.documentId) ?? [];
-        edits.push({ rowId: row.rowId, name, time });
-        editsByDoc.set(row.documentId, edits);
-      }
       for (const [documentId, edits] of editsByDoc) {
         const result = await editBrakerageRows({ documentId, organizationId: ctx.orgId, edits });
         if (!result.ok) return renderList(result.error);
@@ -157,27 +153,12 @@ export async function handleBrakerageList(ctx: {
       }
     }
 
-    if (action === "edit") return redirectTo(ctx.listLink({ done: "saved", n: String(changed) }));
-
-    if (!role.evaluator) return renderList("Подписывают только члены бракеражной комиссии.", 403);
-    const entriesByDoc = new Map<string, BrakerageSignEntry[]>();
-    for (const row of list.rows) {
-      if (field(`sign:${row.rowId}`) !== "on") continue;
-      const release = field(`rel:${row.rowId}`);
-      const entry: BrakerageSignEntry = {
-        rowId: row.rowId,
-        ...(field(`grade:${row.rowId}`) ? { grade: String(field(`grade:${row.rowId}`)).slice(0, 80) } : {}),
-        ...(release === "yes" || release === "no" ? { releaseAllowed: release } : {}),
-        ...(field(`w:${row.rowId}`) !== undefined ? { portionWeight: String(field(`w:${row.rowId}`)).trim().slice(0, 20) } : {}),
-        ...(field(`note:${row.rowId}`) !== undefined ? { note: String(field(`note:${row.rowId}`)).trim().slice(0, 500) } : {}),
-      };
-      const entries = entriesByDoc.get(row.documentId) ?? [];
-      entries.push(entry);
-      entriesByDoc.set(row.documentId, entries);
+    if (!role.evaluator || signsByDoc.size === 0) {
+      if (role.evaluator && changed === 0) return renderList("Отметьте «Допущено» или «Не допущено» у блюд, которые проверили.");
+      return redirectTo(ctx.listLink({ done: "saved", n: String(changed) }));
     }
-    if (entriesByDoc.size === 0) return renderList("Отметьте строки, которые подписываете.");
     let signed = 0;
-    for (const [documentId, entries] of entriesByDoc) {
+    for (const [documentId, entries] of signsByDoc) {
       const result = await signBrakerageRows({
         documentId,
         organizationId: ctx.orgId,

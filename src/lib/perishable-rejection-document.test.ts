@@ -131,3 +131,13 @@ test("бракераж: «ФИО, должность» — должность и
     "Репешко И.В., Управляющий"
   );
 });
+
+test("скоропорт без комиссии: скопированный ранее состав игнорируется, закрытию ничего не мешает", () => {
+  const config = normalizePerishableRejectionConfig({
+    commissionMembers: [
+      { id: "commission-u1", role: "Председатель", employeeId: "u1", employeeName: "Иванова Анна" },
+    ],
+    rows: [],
+  });
+  assert.deepEqual(config.commissionMembers, []);
+});

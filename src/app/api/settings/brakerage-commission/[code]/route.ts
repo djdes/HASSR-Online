@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { authOptions } from "@/lib/auth";
+import { isCommissionJournalCode } from "@/lib/brakerage-commission";
 import { readOrgCommission, saveOrgCommission } from "@/lib/brakerage-commission-org";
-import { isBrakerageJournalCode } from "@/lib/brakerage-row-merge";
 import { db } from "@/lib/db";
 import { recordAuditLog } from "@/lib/audit-log";
 import { COMMISSION_CATEGORY_KEY, ORG_SIGNER_WHERE } from "@/lib/journal-roster";
@@ -27,8 +27,8 @@ async function guard(ctx: Ctx) {
   const session = await getServerSession(authOptions);
   if (!session) return { error: NextResponse.json({ error: "Не авторизован" }, { status: 401 }) } as const;
   const { code } = await ctx.params;
-  if (!isBrakerageJournalCode(code)) {
-    return { error: NextResponse.json({ error: "Комиссия есть только у бракеражных журналов" }, { status: 404 }) } as const;
+  if (!isCommissionJournalCode(code)) {
+    return { error: NextResponse.json({ error: "Сторонняя комиссия есть только у бракеража готовой продукции" }, { status: 400 }) } as const;
   }
   return { session, code, organizationId: getActiveOrgId(session) } as const;
 }

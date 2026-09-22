@@ -5,7 +5,6 @@ import {
 } from "@/lib/journal-columns";
 import { normalizeCustomCells } from "@/lib/finished-product-document";
 import {
-  normalizeCommissionMembers,
   normalizeRowSignatures,
   type BrakerageCommissionMember,
   type BrakerageRowSignature,
@@ -90,7 +89,10 @@ export type PerishableRejectionConfig = {
    * документы, у которых поля в config нет, ничего не теряют.
    */
   showNote: boolean;
-  /** Состав бракеражной комиссии — подписывает строки (как у готовой продукции). */
+  /**
+   * Оставлено для совместимости типов: у скоропорта сторонней комиссии нет
+   * (решение владельца 2026-09-22), нормализатор всегда отдаёт [].
+   */
   commissionMembers: BrakerageCommissionMember[];
   /** Набор колонок документа, см. `src/lib/journal-columns.ts`. */
   columns?: JournalColumnsConfig;
@@ -354,7 +356,9 @@ export function normalizePerishableRejectionConfig(
       : typeof record.showNote === "boolean"
         ? record.showNote
         : defaults.showNote,
-    commissionMembers: normalizeCommissionMembers(record.commissionMembers),
+    // Скоропорт — внутренний бракераж без комиссии: ранее скопированный
+    // состав игнорируем, чтобы он не требовал подписей и не мешал закрытию.
+    commissionMembers: [],
     ...(columns ? { columns } : {}),
     ...(typeof record.finishedAt === "string" && record.finishedAt.trim() !== ""
       ? { finishedAt: record.finishedAt }

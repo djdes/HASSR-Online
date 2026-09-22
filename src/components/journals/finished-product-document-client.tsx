@@ -111,8 +111,10 @@ import { CommissionDialog } from "@/components/journals/commission-dialog";
 import { mergeIntoList } from "@/lib/org-directory";
 import { useLiveEvents } from "@/lib/use-live-events";
 import {
+  commissionRowStatus,
   formatRowSignatures,
   hasCommission,
+  signatureTime,
   isSignatureOutdated,
   normalizeRowSignatures,
   closeBlockerForUnsigned,
@@ -121,6 +123,7 @@ import {
   todaySignatureText,
 } from "@/lib/brakerage-commission";
 import { orgTodayKey } from "@/lib/timezone";
+import { addMinutesToLocalDateTime, deriveBrakerageTimes } from "@/lib/brakerage-times";
 type Props = {
   documentId: string;
   title: string;
@@ -311,22 +314,38 @@ function QuickTimeChips({
 function createDraft(
   users: Props["users"],
   productName = "",
-  people: { responsibleUserId?: string | null; verifierUserId?: string | null } = {},
+  people: {
+    responsibleUserId?: string | null;
+    verifierUserId?: string | null;
+    /** У документа есть комиссия: подписи ставят её члены, ФИО проверяющего не подставляем. */
+    commission?: boolean;
+  } = {},
   times: FinishedProductTimeDefaults = FINISHED_PRODUCT_TIME_DEFAULTS,
   organolepticOptions: string[] = FINISHED_PRODUCT_ORGANOLEPTIC_DISH
 ): FinishedProductDocumentRow {
   const nameOf = (id: string | null | undefined) =>
     (id && users.find((user) => user.id === id)?.name) || "";
+  // Бракераж снимают после готовки: сдвиг изготовления задаётся в
+  // настройках журнала («Константы времени»), по умолчанию 30 минут.
+  const productionDateTime = dateTimeMinutesAgo(times.productionMinutesAgo);
+  // Бракераж = изготовление + N мин, разрешение = бракераж + M мин
+  // (по умолчанию 5/5) — не «сейчас».
+  const { rejectionTime, releasePermissionTime } = deriveBrakerageTimes({
+    productionDateTime,
+    offsets: {
+      rejectionAfterProductionMinutes: times.rejectionAfterProductionMinutes,
+      releaseAfterRejectionMinutes: times.releaseAfterRejectionMinutes,
+    },
+  });
   return createFinishedProductRow({
     productName,
-    // Бракераж снимают после готовки: сдвиг изготовления задаётся в
-    // настройках журнала («Константы времени»), по умолчанию 30 минут.
-    productionDateTime: dateTimeMinutesAgo(times.productionMinutesAgo),
-    rejectionTime: dateTimeMinutesAgo(times.rejectionMinutesAgo),
-    releasePermissionTime: mergeDateTime(nowDate(), nowTime()),
+    productionDateTime,
+    rejectionTime,
+    releasePermissionTime,
     courierTransferTime: mergeDateTime(nowDate(), nowTime()),
     responsiblePerson: nameOf(people.responsibleUserId),
-    inspectorName: nameOf(people.verifierUserId),
+    // С комиссией подписи пустые по умолчанию — их ставят члены комиссии.
+    inspectorName: people.commission ? "" : nameOf(people.verifierUserId),
     releaseAllowed: "yes",
     // По умолчанию «Отлично»: в норме бракераж проходит, хуже — выберут.
     organoleptic: organolepticOptions[0] ?? "",
@@ -380,9 +399,11 @@ export function FinishedProductDocumentClient({
 }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const draftPeople = { responsibleUserId, verifierUserId };
   const [isSaving, setIsSaving] = useState(false);
   const [config, setConfig] = useState(() => normalizeFinishedProductDocumentConfig(initialConfig));
+  const draftPeople = { responsibleUserId, verifierUserId, commission: hasCommission(config) };
+  /** «Подписываю как член комиссии (допущено)» в окне блюда — по умолчанию выключено. */
+  const [signAsMember, setSignAsMember] = useState(false);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [addModalOpen, setAddModalOpen] = useState(false);
   /** «Применить ко всем выделенным» — одно окно на несколько строк. */
@@ -520,36 +541,52 @@ export function FinishedProductDocumentClient({
   const canSign = !readOnly && isCommissionMember(config, currentUserId);
   const todaySummary = todaySignatureSummary(config, orgTodayKey());
 
-  /** Подпись члена комиссии под выделенными строками (метод «вход в кабинет»). */
+  /**
+   * Подпись члена комиссии под строками (метод «вход в кабинет») — тот же
+   * эндпоинт для «Подписать выбранные» и галочки в окне блюда.
+   * Возвращает число подписанных строк или null при ошибке (тост уже показан).
+   */
+  const signRows = useCallback(
+    async (entries: Array<{ rowId: string; releaseAllowed?: "yes" | "no" }>): Promise<number | null> => {
+      if (!canSign || entries.length === 0) return null;
+      setIsSigning(true);
+      try {
+        // Сначала дописать свои несохранённые правки: подписывается то, что на сервере.
+        flushConfigSave();
+        for (let i = 0; i < 50 && inFlightRef.current > 0; i += 1) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+        const response = await fetch(`/api/journal-documents/${documentId}/sign`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ entries }),
+        });
+        const body = (await response.json().catch(() => null)) as { signed?: number; config?: unknown; error?: string } | null;
+        if (!response.ok) throw new Error(body?.error || "Не удалось подписать");
+        if (body?.config) {
+          const fresh = normalizeFinishedProductDocumentConfig(body.config);
+          rememberRows(fresh.rows);
+          setConfig((prev) => ({ ...prev, rows: fresh.rows }));
+        }
+        return body?.signed ?? entries.length;
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Не удалось подписать");
+        return null;
+      } finally {
+        setIsSigning(false);
+      }
+    },
+    [canSign, documentId, flushConfigSave, rememberRows]
+  );
+
+  /** «Подписать» в полосе выделения. */
   const signSelectedRows = useCallback(async () => {
-    if (!canSign || selectedRows.length === 0) return;
-    setIsSigning(true);
-    try {
-      // Сначала дописать свои несохранённые правки: подписывается то, что на сервере.
-      flushConfigSave();
-      for (let i = 0; i < 50 && inFlightRef.current > 0; i += 1) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      }
-      const response = await fetch(`/api/journal-documents/${documentId}/sign`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ entries: selectedRows.map((rowId) => ({ rowId })) }),
-      });
-      const body = (await response.json().catch(() => null)) as { signed?: number; config?: unknown; error?: string } | null;
-      if (!response.ok) throw new Error(body?.error || "Не удалось подписать");
-      if (body?.config) {
-        const fresh = normalizeFinishedProductDocumentConfig(body.config);
-        rememberRows(fresh.rows);
-        setConfig((prev) => ({ ...prev, rows: fresh.rows }));
-      }
-      setSelectedRows([]);
-      toast.success(`Подписано строк: ${body?.signed ?? selectedRows.length}`);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось подписать");
-    } finally {
-      setIsSigning(false);
-    }
-  }, [canSign, documentId, flushConfigSave, rememberRows, selectedRows]);
+    if (selectedRows.length === 0) return;
+    const signed = await signRows(selectedRows.map((rowId) => ({ rowId })));
+    if (signed === null) return;
+    setSelectedRows([]);
+    toast.success(`Подписано строк: ${signed}`);
+  }, [selectedRows, signRows]);
 
   // Блюда с телефонов (QR) и подписи комиссии появляются здесь сами:
   // живое событие «журнал изменился» → перечитать строки документа.
@@ -571,7 +608,6 @@ export function FinishedProductDocumentClient({
 
   // Карточки (телефон, Mini App) — те же колонки и подписи, что у таблицы.
   const cardColumns = resolveColumns("finished_product", config);
-  const cardVisible = (key: string) => cardColumns.find((column) => column.key === key)?.hidden !== true;
   const cardItems: RecordCardItem[] = config.rows.map((row, index) => ({
     id: row.id,
     title: `№${index + 1} · ${row.productName || "—"}`,
@@ -600,7 +636,7 @@ export function FinishedProductDocumentClient({
           ? customCellValue(row, column.key)
           : column.key === "signatures" && hasCommission(config) && normalizeRowSignatures(row.signatures).length === 0
             ? "Ждёт подписи комиссии"
-            : finishedProductCellText(row, column.key, { inspectorFallback: !cardVisible("inspector") }),
+            : finishedProductCellText(row, column.key),
         hideIfEmpty: column.key !== "release",
       })),
   }));
@@ -653,6 +689,21 @@ export function FinishedProductDocumentClient({
     () => Array.from(new Set(users.map((item) => item.name).filter((name) => Boolean(name) && !name.includes("@")))),
     [users]
   );
+  /**
+   * Подписи/проверяющий: при составе комиссии — только утверждённые члены
+   * комиссии (config.commissionMembers), без комиссии — все сотрудники.
+   */
+  const withCommission = hasCommission(config);
+  const signerOptions = useMemo(
+    () =>
+      withCommission
+        ? Array.from(new Set(config.commissionMembers.map((member) => member.employeeName).filter(Boolean)))
+        : personOptions,
+    [withCommission, config.commissionMembers, personOptions]
+  );
+  /** Утверждённый состав и кто из него подписал строку в окне блюда. */
+  const draftCommissionStatus = withCommission ? commissionRowStatus(draftRow, config.commissionMembers) : [];
+  const alreadySignedByMe = draftCommissionStatus.some((member) => member.signed && member.employeeId === currentUserId);
 
   /**
    * Колонки таблицы одним описанием: заголовок + вес для colgroup.
@@ -688,8 +739,10 @@ export function FinishedProductDocumentClient({
           custom: column.custom,
           mustFill: column.mustFill,
           ...FINISHED_PRODUCT_COLUMN_FIELDS[column.key],
+          // С комиссией подсказки проверяющего — только её члены.
+          ...(column.key === "inspector" && withCommission ? { list: "finished-product-signers" } : {}),
         })),
-    [resolvedColumns]
+    [resolvedColumns, withCommission]
   );
 
   // Набор колонок: из «Настроек журнала» — в черновик (сохранит кнопка
@@ -734,8 +787,16 @@ export function FinishedProductDocumentClient({
               <DateTimePair dateLabel="Дата снятия бракеража" timeLabel="Время снятия бракеража" value={draftRow.rejectionTime} onChange={(next) => setDraftRow((prev) => ({ ...prev, rejectionTime: next }))} />
               <QuickTimeChips
                 value={draftRow.rejectionTime}
-                onChange={(next) => setDraftRow((prev) => ({ ...prev, rejectionTime: next, releasePermissionTime: next }))}
-                nowLabel="Сейчас (и разрешение тем же временем)"
+                onChange={(next) =>
+                  setDraftRow((prev) => ({
+                    ...prev,
+                    rejectionTime: next,
+                    // Разрешение к реализации — через N мин после бракеража (константы времени).
+                    releasePermissionTime:
+                      addMinutesToLocalDateTime(next, config.timeDefaults.releaseAfterRejectionMinutes) || next,
+                  }))
+                }
+                nowLabel={`Сейчас (разрешение — через ${config.timeDefaults.releaseAfterRejectionMinutes} мин)`}
               />
             </div>
             {withProductName ? (
@@ -910,12 +971,64 @@ export function FinishedProductDocumentClient({
                 <SuggestInput ariaLabel="Ответственный исполнитель" value={draftRow.responsiblePerson} options={personOptions} placeholder="Выберите сотрудника или впишите ФИО" onChange={(next) => setDraftRow((prev) => ({ ...prev, responsiblePerson: next }))} />
               </div>
             ) : null}
-            {/* При составе комиссии бракераж подписывают её члены своим входом —
-                вписывать ФИО проверяющего вручную не нужно. */}
-            {isColumnVisible("inspector") && !hasCommission(config) ? (
+            {/* При составе комиссии бракераж подписывают её члены своим входом
+                (QR с PIN или галочка ниже) — вписывать ФИО вручную не нужно,
+                поэтому вместо поля — состав и кто уже подписал. */}
+            {withCommission ? (
+              withProductName ? (
+                <div className="space-y-2" data-testid="commission-row-status">
+                  <Label className="text-[13px] font-medium text-[#3c4053]">Комиссия</Label>
+                  <ul className="divide-y divide-[#ececf4] overflow-hidden rounded-2xl border border-[#ececf4] bg-[#fafbff]">
+                    {draftCommissionStatus.map((member) => (
+                      <li key={member.id} className="flex items-center gap-3 px-3.5 py-2.5">
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-[13.5px] font-medium text-[#0b1024]">{member.employeeName}</div>
+                          <div className="truncate text-[12px] text-[#6f7282]">{member.role}</div>
+                        </div>
+                        {member.signed ? (
+                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#ecfdf5] px-2.5 py-1 text-[12px] font-medium text-[#116b2a]">
+                            <Check className="size-3.5" strokeWidth={3} />
+                            подписал{member.signedAt ? ` · ${signatureTime(member.signedAt)}` : ""}
+                          </span>
+                        ) : (
+                          <span className="inline-flex shrink-0 rounded-full bg-[#fff8eb] px-2.5 py-1 text-[12px] font-medium text-[#7a4a00]">
+                            ждёт подписи
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                  {canSign && !alreadySignedByMe ? (
+                    <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[#dcdfed] bg-white px-3.5 py-3 transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]">
+                      <Checkbox
+                        checked={signAsMember}
+                        onCheckedChange={(value) => {
+                          const next = value === true;
+                          setSignAsMember(next);
+                          // Подпись ставится с «допущено» — выбор в окне тот же.
+                          if (next) setDraftRow((prev) => ({ ...prev, releaseAllowed: "yes" }));
+                        }}
+                        className="mt-0.5 size-5"
+                        aria-label="Подписываю как член комиссии (допущено)"
+                      />
+                      <span className="min-w-0">
+                        <span className="block text-[13.5px] font-medium text-[#0b1024]">Подписываю как член комиссии (допущено)</span>
+                        <span className="block text-[12px] leading-snug text-[#6f7282]">
+                          После сохранения под блюдом появится ваша подпись со временем, строка будет закрыта.
+                        </span>
+                      </span>
+                    </label>
+                  ) : (
+                    <p className="text-[12px] leading-snug text-[#6f7282]">
+                      Члены комиссии подписывают блюдо сами — по QR журнала (PIN) или галочкой в этом окне.
+                    </p>
+                  )}
+                </div>
+              ) : null
+            ) : isColumnVisible("inspector") ? (
               <div className="space-y-2">
                 <Label className="text-[13px] font-medium text-[#3c4053]">{config.inspectorMode === "commission_signatures" ? "Подписи членов комиссии" : "Лицо, проводившее бракераж"}</Label>
-                <SuggestInput ariaLabel="Лицо, проводившее бракераж" value={draftRow.inspectorName} options={personOptions} placeholder="Выберите сотрудника или впишите ФИО" onChange={(next) => setDraftRow((prev) => ({ ...prev, inspectorName: next }))} />
+                <SuggestInput ariaLabel="Лицо, проводившее бракераж" value={draftRow.inspectorName} options={signerOptions} placeholder="Выберите сотрудника или впишите ФИО" onChange={(next) => setDraftRow((prev) => ({ ...prev, inspectorName: next }))} />
               </div>
             ) : null}
             {/* Свои колонки организации — и в окне строки: на телефоне
@@ -970,7 +1083,7 @@ export function FinishedProductDocumentClient({
    * Гасит очередь автосохранения — иначе отложенный PATCH со старым
    * состоянием мог бы «догнать» и перетереть только что записанное.
    */
-  async function saveConfig(nextConfig = config) {
+  async function saveConfig(nextConfig = config): Promise<boolean> {
     if (saveTimerRef.current) {
       clearTimeout(saveTimerRef.current);
       saveTimerRef.current = null;
@@ -988,8 +1101,10 @@ export function FinishedProductDocumentClient({
       const body = (await response.json().catch(() => null)) as { document?: { config?: unknown } } | null;
       if (body?.document) adoptServerRows(body.document.config);
       startTransition(() => router.refresh());
+      return true;
     } catch {
       toast.error("Не удалось сохранить журнал");
+      return false;
     } finally {
       setIsSaving(false);
     }
@@ -1011,7 +1126,10 @@ export function FinishedProductDocumentClient({
     { key: "portionWeight", label: "Вес выход, г", type: "text" },
     { key: "courierTransferTime", label: columnLabel("courier", "Время передачи блюд курьеру"), type: "time" },
     { key: "responsiblePerson", label: columnLabel("responsible", "Ответственный исполнитель"), type: "text", suggestions: personOptions },
-    { key: "inspectorName", label: columnLabel("inspector", "Лицо, проводившее бракераж"), type: "text", suggestions: personOptions },
+    // С комиссией проверяющего не вписывают: подписи ставят её члены сами.
+    ...(withCommission
+      ? []
+      : [{ key: "inspectorName", label: columnLabel("inspector", "Лицо, проводившее бракераж"), type: "text", suggestions: signerOptions } as const]),
   ];
 
   /** Поля «дата время»: из окна приходит только ЧЧ:ММ — дата берётся из строки (иначе сегодня). */
@@ -1030,8 +1148,10 @@ export function FinishedProductDocumentClient({
     return createFinishedProductRow({ ...row, ...next });
   }
 
-  async function applyToSelectedRows(patch: Record<string, string>) {
+  async function applyToSelectedRows(rawPatch: Record<string, string>) {
     if (readOnly || selectedRows.length === 0) return;
+    const patch = { ...rawPatch };
+    if (withCommission) delete patch.inspectorName;
     const nextConfig = {
       ...config,
       rows: config.rows.map((row) => (selectedRows.includes(row.id) ? patchRow(row, patch) : row)),
@@ -1164,6 +1284,7 @@ export function FinishedProductDocumentClient({
     setOrganolepticCustom(false);
     setProductTempAuto(false);
     setDraftRow(createDraft(users, "", draftPeople, config.timeDefaults, organolepticOptions));
+    setSignAsMember(false);
     setAddModalOpen(true);
   }
 
@@ -1174,6 +1295,7 @@ export function FinishedProductDocumentClient({
     setOrganolepticCustom(false);
     setProductTempAuto(false);
     setDraftRow({ ...row });
+    setSignAsMember(false);
     setAddModalOpen(true);
   }
 
@@ -1209,7 +1331,14 @@ export function FinishedProductDocumentClient({
         : [...config.rows, draftRow],
     };
     setConfig(nextConfig);
-    await saveConfig(nextConfig);
+    const saved = await saveConfig(nextConfig);
+    // «Подписываю как член комиссии»: строка уже на сервере — подпись тем же
+    // эндпоинтом, что «Подписать выбранные», с «допущено».
+    if (saved && signAsMember && canSign && withCommission) {
+      const signed = await signRows([{ rowId: draftRow.id, releaseAllowed: "yes" }]);
+      if (signed !== null) toast.success(`Подписано: ${draftRow.productName || "блюдо"}`);
+    }
+    setSignAsMember(false);
     void dishSuggestions.remember(
       [draftRow.productName],
       draftRow.productTemp.trim() !== "" ? { [draftRow.productName]: { productTemp: draftRow.productTemp.trim() } } : undefined
@@ -1505,7 +1634,7 @@ export function FinishedProductDocumentClient({
                       employees={personOptions}
                     />
                   ) : column.key === "signatures" ? (
-                    <SignaturesCell row={row} commission={hasCommission(config)} inspectorFallback={!isColumnVisible("inspector")} />
+                    <SignaturesCell row={row} commission={withCommission} />
                   ) : column.key === "release" ? (
                     <div className="flex flex-col items-center gap-0.5 py-0.5">
                       <div className="flex flex-wrap items-center justify-center gap-1">
@@ -1611,6 +1740,7 @@ export function FinishedProductDocumentClient({
           </div>
           <datalist id="finished-product-items">{productOptions.map((item) => <option key={item} value={item} />)}</datalist>
           <datalist id="finished-product-users">{personOptions.map((item) => <option key={item} value={item} />)}</datalist>
+          <datalist id="finished-product-signers">{signerOptions.map((item) => <option key={item} value={item} />)}</datalist>
           <datalist id="finished-product-organoleptic">{organolepticOptions.map((item) => <option key={item} value={item} />)}</datalist>
         </MobileViewTableWrapper>
 
@@ -1725,13 +1855,16 @@ export function FinishedProductDocumentClient({
               Константы времени
             </Label>
             <p className="text-[12.5px] leading-[1.45] text-[#6f7282]">
-              На сколько минут назад ставить время в новой строке. Бракераж снимают после готовки, поэтому изготовление
-              обычно раньше самой проверки.
+              Какое время ставить в новой строке: изготовление — на {config.timeDefaults.productionMinutesAgo} мин раньше
+              момента, когда открыли окно; бракераж — через {config.timeDefaults.rejectionAfterProductionMinutes} мин после
+              изготовления; разрешение к реализации — через {config.timeDefaults.releaseAfterRejectionMinutes} мин после
+              бракеража. Время в строке всегда можно поправить вручную.
             </p>
             <div className="flex flex-wrap gap-3">
               {([
                 ["productionMinutesAgo", "Изготовление, мин назад"],
-                ["rejectionMinutesAgo", "Снятие бракеража, мин назад"],
+                ["rejectionAfterProductionMinutes", "Бракераж — через N мин после изготовления"],
+                ["releaseAfterRejectionMinutes", "Разрешение к реализации — через N мин после бракеража"],
               ] as const).map(([key, label]) => (
                 <label key={key} className="flex items-center gap-2 text-[13px] text-[#6f7282]">
                   {label}
@@ -1746,7 +1879,8 @@ export function FinishedProductDocumentClient({
                         timeDefaults: { ...prev.timeDefaults, [key]: Number(event.target.value) || 0 },
                       }))
                     }
-                    className="h-9 w-24 rounded-xl border border-[#dcdfed] bg-white px-2 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none"
+                    aria-label={label}
+                    className="h-9 w-24 rounded-xl border border-[#dcdfed] bg-white px-2 text-[14px] text-[#0b1024] transition-colors duration-150 focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
                   />
                 </label>
               ))}
@@ -1945,11 +2079,9 @@ export function FinishedProductDocumentClient({
 function SignaturesCell({
   row,
   commission,
-  inspectorFallback,
 }: {
   row: FinishedProductDocumentRow;
   commission: boolean;
-  inspectorFallback: boolean;
 }) {
   const signatures = normalizeRowSignatures(row.signatures);
   if (signatures.length > 0) {
@@ -1973,9 +2105,6 @@ function SignaturesCell({
       </div>
     );
   }
-  return (
-    <div className="px-1.5 py-1 text-center text-[12px] leading-snug text-[#3c4053]">
-      {inspectorFallback ? row.inspectorName : ""}
-    </div>
-  );
+  // Без подписей и без комиссии ячейка пустая: только настоящие подписи.
+  return <div className="px-1.5 py-1" />;
 }

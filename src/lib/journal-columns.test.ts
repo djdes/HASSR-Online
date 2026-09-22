@@ -18,10 +18,10 @@ import {
 
 const keys = (columns: Array<{ key: string }>) => columns.map((column) => column.key);
 
-test("реестр: 15 колонок бракеража готовой продукции и 12 — скоропорта", () => {
+test("реестр: 15 колонок бракеража готовой продукции и 11 — скоропорта", () => {
   // Восемь колонок формы Приложения 4 + семь колонок расширенной формы.
   assert.equal(resolveColumns("finished_product", {}).length, 15);
-  assert.equal(resolveColumns("perishable_rejection", {}).length, 12);
+  assert.equal(resolveColumns("perishable_rejection", {}).length, 11);
   assert.deepEqual(resolveColumns("hygiene", {}), []);
 });
 
@@ -274,15 +274,12 @@ test("порядок колонок: order из набора, остальные
   assert.deepEqual(moved.order?.slice(0, 2), ["rejection", "production"]);
 });
 
-test("скоропорт: колонка подписей появляется только у документа с комиссией", () => {
-  const without = resolveColumns("perishable_rejection", {}).find((column) => column.key === "signatures");
-  assert.equal(without?.hidden, true);
-  assert.ok(without?.unavailable);
-  const withCommission = resolveColumns("perishable_rejection", {
-    commissionMembers: [{ id: "c", role: "Председатель", employeeId: "u1", employeeName: "Иванова" }],
-  }).find((column) => column.key === "signatures");
-  assert.equal(withCommission?.hidden, false);
-  // Недоступная колонка не записывается в набор скрытой.
-  const config = columnsConfigFromResolved(resolveColumns("perishable_rejection", {}));
-  assert.equal(config.hidden.includes("signatures"), false);
+test("скоропорт: колонки подписей комиссии нет — комиссия только у готовой продукции", () => {
+  const keysOf = (config: Record<string, unknown>) => resolveColumns("perishable_rejection", config).map((column) => column.key);
+  assert.equal(keysOf({}).includes("signatures"), false);
+  // Даже у старого документа со скопированным составом комиссии.
+  assert.equal(
+    keysOf({ commissionMembers: [{ id: "c", role: "Председатель", employeeId: "u1", employeeName: "Иванова" }] }).includes("signatures"),
+    false
+  );
 });

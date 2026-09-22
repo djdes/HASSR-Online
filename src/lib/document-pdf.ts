@@ -2636,14 +2636,13 @@ function drawFinishedProductPdf(doc: jsPDF, params: {
   // у карточки на телефоне (`finishedProductCellText`).
   const columns = pdfColumns("finished_product", params.config);
   const printColumns = columns.ordered();
-  const inspectorFallback = !columns.visible("inspector");
   const headRow: RowInput = [centerCell("№"), ...printColumns.map((column) => centerCell(column.label))];
   const head: RowInput[] = [headRow];
 
   const body: RowInput[] = params.config.rows.map((row, index) => [
     centerCell(String(index + 1)),
     ...printColumns.map((column) => {
-      const text = finishedProductCellText(row, column.key, { inspectorFallback });
+      const text = finishedProductCellText(row, column.key);
       return column.key === "name" || column.key === "corrective" || column.key === "note"
         ? { content: text, styles: { halign: "left" as const, valign: "middle" as const } }
         : centerCell(text);

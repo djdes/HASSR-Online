@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { isBrakerageJournalCode, mergeBrakerageConfig, parseKnownRowIds } from "@/lib/brakerage-row-merge";
 import { withDocumentConfigLock } from "@/lib/document-config-lock";
-import { unsignedRows } from "@/lib/brakerage-commission";
+import { isCommissionJournalCode, unsignedRows } from "@/lib/brakerage-commission";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
@@ -196,7 +196,7 @@ export async function PATCH(
             // Бракераж: в сверку сотрудников конфига входит и сторонняя
             // комиссия, иначе привязка её членов обнулялась бы при каждом
             // сохранении (normalizeJournalEntryStaffData).
-            ...(isBrakerageJournalCode(template?.code) ? ORG_SIGNER_WHERE : ORG_ROSTER_WHERE),
+            ...(isCommissionJournalCode(template?.code) ? ORG_SIGNER_WHERE : ORG_ROSTER_WHERE),
           },
           select: {
             id: true,
@@ -438,9 +438,9 @@ export async function PATCH(
   }
 
   if (body.title !== undefined) data.title = body.title;
-  // Бракераж с комиссией: без подписи хотя бы одного члена комиссии
+  // Бракераж готовой продукции с комиссией (скоропорт — без комиссии): без подписи хотя бы одного члена комиссии
   // строку не закрыть, а значит и журнал не закончить (владелец, 2026-09-21).
-  if (body.status === "closed" && doc.status !== "closed" && isBrakerageJournalCode(template?.code)) {
+  if (body.status === "closed" && doc.status !== "closed" && isCommissionJournalCode(template?.code)) {
     const pending = unsignedRows(
       (doc.config && typeof doc.config === "object" ? doc.config : {}) as {
         commissionMembers?: unknown[];

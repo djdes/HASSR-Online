@@ -1,6 +1,7 @@
 "use client";
 
 import { CommissionDialog } from "@/components/journals/commission-dialog";
+import { isCommissionJournalCode } from "@/lib/brakerage-commission";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -2353,7 +2354,8 @@ export function JournalResponsiblesClient({
                                   </div>
                                 </div>
                               ) : null}
-                              {j.code === "finished_product" || j.code === "perishable_rejection" ? (
+                              {/* Сторонняя комиссия — только у бракеража готовой продукции. */}
+                              {isCommissionJournalCode(j.code) ? (
                                 <CommissionSlotRow code={j.code} />
                               ) : null}
                             </>

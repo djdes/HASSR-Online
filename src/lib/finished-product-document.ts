@@ -447,8 +447,7 @@ export function finishedProductReleaseText(row: Pick<FinishedProductDocumentRow,
 export function finishedProductCellText(
   row: FinishedProductDocumentRow,
   key: string,
-  /** `inspectorFallback` больше не действует (оставлен для старых вызовов). */
-  options: { timeZone?: string; inspectorFallback?: boolean } = {}
+  options: { timeZone?: string } = {}
 ): string {
   switch (key) {
     case "production":

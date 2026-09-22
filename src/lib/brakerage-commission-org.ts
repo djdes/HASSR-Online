@@ -1,7 +1,11 @@
 import type { Prisma } from "@prisma/client";
 
-import { normalizeCommissionMembers, type BrakerageCommissionMember } from "@/lib/brakerage-commission";
-import { isBrakerageJournalCode } from "@/lib/brakerage-row-merge";
+import {
+  COMMISSION_JOURNAL_CODES,
+  isCommissionJournalCode,
+  normalizeCommissionMembers,
+  type BrakerageCommissionMember,
+} from "@/lib/brakerage-commission";
 import { db } from "@/lib/db";
 import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import { COMMISSION_CATEGORY_KEY, ORG_SIGNER_WHERE } from "@/lib/journal-roster";
@@ -16,7 +20,6 @@ import { COMMISSION_CATEGORY_KEY, ORG_SIGNER_WHERE } from "@/lib/journal-roster"
  */
 
 export const COMMISSION_POSITION_NAME = "Член бракеражной комиссии";
-const BRAKERAGE_CODES = ["finished_product", "perishable_rejection"] as const;
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
@@ -40,7 +43,7 @@ export async function saveOrgCommission(
   code: string,
   input: Array<{ employeeId: string; role?: string }>
 ): Promise<{ members: BrakerageCommissionMember[]; updatedDocuments: number }> {
-  if (!isBrakerageJournalCode(code)) throw new Error("Журнал без комиссии");
+  if (!isCommissionJournalCode(code)) throw new Error("Журнал без комиссии");
   const ids = [...new Set(input.map((item) => item.employeeId).filter(Boolean))];
   const users = await db.user.findMany({
     where: { id: { in: ids }, organizationId, ...ORG_SIGNER_WHERE },
@@ -87,7 +90,8 @@ export async function withOrgCommission(
   code: string,
   config: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
-  if (!isBrakerageJournalCode(code)) return config;
+  // Сторонняя комиссия — только у бракеража готовой продукции.
+  if (!isCommissionJournalCode(code)) return config;
   if (Array.isArray(config.commissionMembers) && config.commissionMembers.length > 0) return config;
   const members = await readOrgCommission(organizationId, code);
   return members.length > 0 ? { ...config, commissionMembers: members } : config;
@@ -95,7 +99,7 @@ export async function withOrgCommission(
 
 /**
  * Должность «Член бракеражной комиссии» категории «Комиссия» с доступом к
- * обоим бракеражам — находит или создаёт. Новые люди из окна комиссии
+ * бракеражу готовой продукции (у скоропорта комиссии нет) — находит или создаёт. Новые люди из окна комиссии
  * попадают в неё и видят на странице сотрудников колонку «Комиссия».
  */
 export async function ensureCommissionPosition(organizationId: string): Promise<{ id: string }> {
@@ -110,7 +114,7 @@ export async function ensureCommissionPosition(organizationId: string): Promise<
       select: { id: true },
     }));
   const templates = await db.journalTemplate.findMany({
-    where: { code: { in: [...BRAKERAGE_CODES] } },
+    where: { code: { in: [...COMMISSION_JOURNAL_CODES] } },
     select: { id: true },
   });
   for (const template of templates) {

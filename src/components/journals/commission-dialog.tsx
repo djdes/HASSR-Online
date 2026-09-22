@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, KeyRound, Plus, Search, Trash2, UserPlus, Users } from "lucide-react";
+import { Check, KeyRound, Plus, RefreshCw, Search, Trash2, UserPlus, Users } from "lucide-react";
 import { toast } from "sonner";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { BrakerageCommissionMember } from "@/lib/brakerage-commission";
+import { generateQrPin, validateQrPin } from "@/lib/qr-pin-rules";
 import { cn } from "@/lib/utils";
 
 type Candidate = {
@@ -16,6 +17,11 @@ type Candidate = {
   hasPin: boolean;
 };
 
+/** PIN для формы «Новый человек» — случайность из Web Crypto. */
+function newDraftPin(): string {
+  return generateQrPin((max) => crypto.getRandomValues(new Uint32Array(1))[0] % max);
+}
+
 const GROUP_LABEL: Record<Candidate["group"], string> = {
   commission: "Комиссия",
   management: "Руководство",
@@ -23,10 +29,10 @@ const GROUP_LABEL: Record<Candidate["group"], string> = {
 };
 
 /**
- * «Сторонняя бракеражная комиссия» журнала (готовая продукция, скоропорт).
+ * «Сторонняя бракеражная комиссия» журнала (только готовая продукция).
  * Состав — сотрудники организации (выбор из групп «Комиссия / Руководство /
  * Сотрудники» с поиском) или «Новый человек»: он попадает на страницу
- * сотрудников в колонку «Комиссия», ПИН выдаётся сразу. Сохранение —
+ * сотрудников в колонку «Комиссия»; ПИН виден в форме ещё до создания. Сохранение —
  * на уровне организации, с копией в активные документы журнала.
  */
 export function CommissionDialog({
@@ -47,7 +53,7 @@ export function CommissionDialog({
   const [saving, setSaving] = useState(false);
   const [picking, setPicking] = useState(false);
   const [query, setQuery] = useState("");
-  const [newPerson, setNewPerson] = useState<{ fullName: string; role: string; phone: string } | null>(null);
+  const [newPerson, setNewPerson] = useState<{ fullName: string; role: string; phone: string; pin: string } | null>(null);
   const [issuedPin, setIssuedPin] = useState<{ name: string; pin: string } | null>(null);
 
   const load = useCallback(async () => {
@@ -93,14 +99,16 @@ export function CommissionDialog({
     setQuery("");
   }
 
+  const newPinProblem = newPerson ? validateQrPin(newPerson.pin) : null;
+
   async function createPerson() {
-    if (!newPerson) return;
+    if (!newPerson || newPinProblem) return;
     setSaving(true);
     try {
       const response = await fetch(`/api/settings/brakerage-commission/${code}/members`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullName: newPerson.fullName, phone: newPerson.phone }),
+        body: JSON.stringify({ fullName: newPerson.fullName, phone: newPerson.phone, pin: newPerson.pin }),
       });
       const body = (await response.json().catch(() => null)) as {
         user?: { id: string; name: string };
@@ -173,11 +181,10 @@ export function CommissionDialog({
           {issuedPin ? (
             <div className="rounded-2xl border border-[#d4f5e3] bg-[#f3fdf7] p-4 text-[13.5px] text-[#116b2a]" role="status">
               <div className="flex items-center gap-2 font-semibold">
-                <KeyRound className="size-4" /> ПИН для {issuedPin.name}: <span className="font-mono text-[18px] tracking-[0.3em]">{issuedPin.pin}</span>
+                <KeyRound className="size-4" /> {issuedPin.name}: PIN{" "}
+                <span className="font-mono text-[18px] tracking-[0.3em]">{issuedPin.pin}</span> — передайте сотруднику
               </div>
-              <p className="mt-1 text-[12.5px]">
-                Передайте человеку. Посмотреть позже — «Показать» в его карточке на странице сотрудников.
-              </p>
+              <p className="mt-1 text-[12.5px]">Посмотреть позже — «Показать» в его карточке на странице сотрудников.</p>
             </div>
           ) : null}
 
@@ -237,7 +244,13 @@ export function CommissionDialog({
               <button
                 type="button"
                 onClick={() => {
-                  setNewPerson({ fullName: "", role: members.length === 0 ? "Председатель" : "Член комиссии", phone: "" });
+                  setNewPerson({
+                    fullName: "",
+                    role: members.length === 0 ? "Председатель" : "Член комиссии",
+                    phone: "",
+                    pin: newDraftPin(),
+                  });
+                  setIssuedPin(null);
                   setPicking(false);
                 }}
                 className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-3 text-[13.5px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
@@ -314,14 +327,42 @@ export function CommissionDialog({
                   className={input}
                 />
               </div>
+              <div className="rounded-xl border border-[#ececf4] bg-[#fafbff] p-2.5">
+                <label htmlFor="commission-new-pin" className="flex items-center gap-1.5 text-[12.5px] font-medium text-[#3c4053]">
+                  <KeyRound className="size-3.5 text-[#5566f6]" /> PIN для подписи по QR
+                </label>
+                <div className="mt-1.5 flex gap-2">
+                  <input
+                    id="commission-new-pin"
+                    value={newPerson.pin}
+                    onChange={(event) =>
+                      setNewPerson({ ...newPerson, pin: event.target.value.replace(/\D/g, "").slice(0, 6) })
+                    }
+                    inputMode="numeric"
+                    autoComplete="off"
+                    aria-invalid={Boolean(newPinProblem)}
+                    className={cn(input, "w-[130px] font-mono text-[16px] tracking-[0.3em]")}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setNewPerson({ ...newPerson, pin: newDraftPin() })}
+                    className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+                  >
+                    <RefreshCw className="size-3.5" /> Сгенерировать заново
+                  </button>
+                </div>
+                <p className={cn("mt-1.5 text-[12px] leading-snug", newPinProblem ? "text-[#a13a32]" : "text-[#6f7282]")}>
+                  {newPinProblem ?? "4–6 цифр. Можно оставить этот или вписать свой — его и передадите человеку."}
+                </p>
+              </div>
               <p className="text-[12px] leading-snug text-[#6f7282]">
-                Человек появится на странице сотрудников в колонке «Комиссия» с доступом только к бракеражным журналам.
-                ПИН выдадим сразу.
+                Человек появится на странице сотрудников в колонке «Комиссия» с доступом к бракеражу готовой продукции.
+                С этим PIN он подписывает блюда по QR журнала.
               </p>
               <div className="flex gap-2">
                 <button
                   type="button"
-                  disabled={saving || newPerson.fullName.trim().length < 2}
+                  disabled={saving || newPerson.fullName.trim().length < 2 || Boolean(newPinProblem)}
                   onClick={() => void createPerson()}
                   className="inline-flex h-10 items-center rounded-xl bg-[#5566f6] px-4 text-[13.5px] font-medium text-white transition-colors duration-150 hover:bg-[#4a5bf0] disabled:opacity-50"
                 >

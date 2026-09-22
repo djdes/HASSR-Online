@@ -19,6 +19,7 @@ import {
   type PerishableRejectionRow,
 } from "@/lib/perishable-rejection-document";
 import { orgTodayKey } from "@/lib/timezone";
+import { deriveBrakerageTimes, withLocalTime } from "@/lib/brakerage-times";
 
 /**
  * Подпись членов бракеражной комиссии под строками (п. 2, 12 ТЗ).
@@ -37,6 +38,8 @@ export type BrakerageSignEntry = {
   releaseAllowed?: "yes" | "no";
   portionWeight?: string;
   note?: string;
+  /** Время снятия бракеража «ЧЧ:ММ», исправленное комиссией (дата — строки). */
+  rejectionTime?: string;
 };
 
 export type BrakerageSignResult = { ok: true; signed: number } | { ok: false; error: string; status: number };
@@ -100,16 +103,25 @@ export async function signBrakerageRows(params: {
           continue;
         }
         const releaseAllowed = entry.releaseAllowed ?? row.releaseAllowed;
+        // Время бракеража: исправленное комиссией (ЧЧ:ММ на дату строки), иначе
+        // записанное, иначе изготовление + смещение журнала (5 мин); разрешение —
+        // бракераж + смещение. «Сейчас» — только если нет и времени изготовления.
+        const correctedRejection = entry.rejectionTime ? withLocalTime(row.productionDateTime || nowLocal, entry.rejectionTime) : null;
+        const times = deriveBrakerageTimes({
+          productionDateTime: row.productionDateTime,
+          rejectionTime: correctedRejection ?? row.rejectionTime,
+          releasePermissionTime: correctedRejection ? "" : row.releasePermissionTime,
+          releaseAllowed,
+          offsets: config.timeDefaults,
+        });
         const next = createFinishedProductRow({
           ...row,
           ...(entry.grade ? { organoleptic: entry.grade } : {}),
           releaseAllowed,
           ...(entry.portionWeight !== undefined ? { portionWeight: entry.portionWeight } : {}),
           ...(entry.note !== undefined ? { note: entry.note } : {}),
-          // Время снятия бракеража и разрешения — момент работы комиссии,
-          // если в строке их ещё нет (строки с QR приходят без них).
-          rejectionTime: row.rejectionTime || nowLocal,
-          releasePermissionTime: releaseAllowed === "yes" ? row.releasePermissionTime || nowLocal : row.releasePermissionTime,
+          rejectionTime: times.rejectionTime || nowLocal,
+          releasePermissionTime: releaseAllowed === "yes" ? times.releasePermissionTime || nowLocal : "",
         });
         const signature: BrakerageRowSignature = {
           userId: params.signer.id,

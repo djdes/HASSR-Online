@@ -144,10 +144,6 @@ export type ResolvedJournalColumn = {
   custom: JournalCustomColumn | null;
 };
 
-function hasCommissionMembers(config: ConfigRecord): boolean {
-  return Array.isArray(config.commissionMembers) && config.commissionMembers.length > 0;
-}
-
 /**
  * Реестр бракеража готовой продукции. Первые восемь колонок — бумажная форма
  * Приложения 4 (фото владельца, 2026-09-21) в её порядке и с её подписями;
@@ -234,13 +230,8 @@ const PERISHABLE_REJECTION_COLUMNS: JournalColumnDef[] = [
   { key: "storage", label: "Условия хранения, конечный срок реализации", weight: 100 },
   { key: "sale", label: "Дата, время фактической реализации", weight: 84 },
   { key: "responsible", label: "Ответственное лицо (ФИО, должность)", weight: 96 },
-  {
-    key: "signatures",
-    label: "Подпись бракеражной комиссии",
-    weight: 96,
-    visibleIf: hasCommissionMembers,
-    unavailableHint: "Появится, когда задан состав бракеражной комиссии",
-  },
+  // Колонки подписей комиссии нет: сторонняя комиссия — только у бракеража
+  // готовой продукции, скоропорт — внутренний (решение владельца 2026-09-22).
   {
     key: "note",
     label: "Примечание",

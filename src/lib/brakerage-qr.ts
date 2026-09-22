@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 
 import { normalizeRowSignatures, type BrakerageRowSignature } from "@/lib/brakerage-commission";
+import { deriveBrakerageTimes } from "@/lib/brakerage-times";
 import { db } from "@/lib/db";
 import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import {
@@ -27,6 +28,11 @@ export type BrakerageQrRow = {
   name: string;
   /** «ЧЧ:ММ» изготовления (готовая продукция) или поступления (скоропорт). */
   time: string;
+  /**
+   * «ЧЧ:ММ» снятия бракеража: записанное или по умолчанию — изготовление +
+   * смещение журнала (5 мин). Пусто у скоропорта.
+   */
+  rejectionTime: string;
   dayKey: string;
   fromYesterday: boolean;
   /** Готовая продукция — текст оценки; скоропорт — код. */
@@ -97,6 +103,9 @@ export async function listBrakerageDayRows(params: {
           rowId: row.id,
           name: row.productName,
           time: timeOf(row.productionDateTime),
+          rejectionTime: timeOf(
+            deriveBrakerageTimes({ productionDateTime: row.productionDateTime, rejectionTime: row.rejectionTime, offsets: config.timeDefaults }).rejectionTime
+          ),
           dayKey,
           fromYesterday: dayKey !== params.todayKey,
           grade: row.organoleptic,
@@ -117,6 +126,7 @@ export async function listBrakerageDayRows(params: {
           rowId: row.id,
           name: row.productName,
           time: timeOf(row.arrivalTime),
+          rejectionTime: "",
           dayKey,
           fromYesterday: dayKey !== params.todayKey,
           grade: row.organolepticResult,
@@ -152,11 +162,19 @@ export async function listBrakerageDayRows(params: {
   };
 }
 
-export type BrakerageRowEdit = { rowId: string; name?: string; time?: string };
+export type BrakerageRowEdit = {
+  rowId: string;
+  name?: string;
+  time?: string;
+  /** Оценка: у готовой продукции — текст, у скоропорта — код. */
+  grade?: string;
+  /** «Результат взвешивания» (выход), только готовая продукция. */
+  portionWeight?: string;
+};
 
 /**
- * Правка списка по QR тем, кто уполномочен (п. 10): наименование, время,
- * удаление строки. Подпись под изменённой строкой остаётся и получает
+ * Правка списка по QR тем, кто уполномочен (п. 10): наименование, время
+ * изготовления, выход, оценка, удаление строки. Подпись под изменённой строкой остаётся и получает
  * пометку «изменено после подписи» (снимок в подписи).
  */
 export async function editBrakerageRows(params: {
@@ -189,8 +207,18 @@ export async function editBrakerageRows(params: {
         const time = cleanTime(edit?.time);
         const nextName = name || row.productName;
         const nextDateTime = time ? `${row.productionDateTime.slice(0, 10)} ${time}`.trim() : row.productionDateTime;
-        if (edit && (nextName !== row.productName || nextDateTime !== row.productionDateTime)) {
-          rows.push(createFinishedProductRow({ ...row, productName: nextName, productionDateTime: nextDateTime }));
+        const nextGrade = edit?.grade ?? row.organoleptic;
+        const nextWeight = edit?.portionWeight ?? row.portionWeight;
+        if (
+          edit &&
+          (nextName !== row.productName ||
+            nextDateTime !== row.productionDateTime ||
+            nextGrade !== row.organoleptic ||
+            nextWeight !== row.portionWeight)
+        ) {
+          rows.push(
+            createFinishedProductRow({ ...row, productName: nextName, productionDateTime: nextDateTime, organoleptic: nextGrade, portionWeight: nextWeight })
+          );
           changed += 1;
         } else rows.push(row);
       }
@@ -208,8 +236,10 @@ export async function editBrakerageRows(params: {
       const edit = byId.get(row.id);
       const nextName = cleanName(edit?.name) || row.productName;
       const nextTime = cleanTime(edit?.time) || row.arrivalTime;
-      if (edit && (nextName !== row.productName || nextTime !== row.arrivalTime)) {
-        rows.push(createPerishableRejectionRow({ ...row, productName: nextName, arrivalTime: nextTime }));
+      // Код оценки уже проверен по списку вариантов при разборе формы.
+      const nextGrade = (edit?.grade ?? row.organolepticResult) as typeof row.organolepticResult;
+      if (edit && (nextName !== row.productName || nextTime !== row.arrivalTime || nextGrade !== row.organolepticResult)) {
+        rows.push(createPerishableRejectionRow({ ...row, productName: nextName, arrivalTime: nextTime, organolepticResult: nextGrade }));
         changed += 1;
       } else rows.push(row);
     }

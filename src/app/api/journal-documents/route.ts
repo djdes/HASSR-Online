@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
-import { isBrakerageJournalCode } from "@/lib/brakerage-row-merge";
+import { isCommissionJournalCode } from "@/lib/brakerage-commission";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
@@ -272,8 +272,9 @@ export async function POST(request: Request) {
   const allUsers = await db.user.findMany({
     where: {
       organizationId: getActiveOrgId(session),
-      // Бракераж: сторонняя комиссия нужна в сверке состава комиссии.
-      ...(isBrakerageJournalCode(resolvedTemplateCode) ? ORG_SIGNER_WHERE : ORG_ROSTER_WHERE),
+      // Бракераж готовой продукции: сторонняя комиссия нужна в сверке
+      // состава комиссии (у скоропорта комиссии нет).
+      ...(isCommissionJournalCode(resolvedTemplateCode) ? ORG_SIGNER_WHERE : ORG_ROSTER_WHERE),
     },
     select: {
       id: true,
