@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { db } from "@/lib/db";
+import { getDisabledJournalCodes } from "@/lib/disabled-journals";
 import { sanitizeBuildingIds } from "@/lib/building-targets";
 import { notifyManagement } from "@/lib/notifications";
 import { normalizePhone } from "@/lib/phone";
@@ -137,17 +138,32 @@ export async function createStaffMember(
   const displayLabel = position.name
     ? `${user.name}, ${position.name}`
     : user.name;
-  const journalsToPopulate = [
-    { href: "/journals/hygiene", dedupeKey: "staff.added.journal:hygiene" },
+  const allJournalsToPopulate = [
     {
+      code: "hygiene",
+      href: "/journals/hygiene",
+      dedupeKey: "staff.added.journal:hygiene",
+    },
+    {
+      code: "health_check",
       href: "/journals/health_check",
       dedupeKey: "staff.added.journal:health_check",
     },
     {
+      code: "staff_training",
       href: "/journals/staff_training",
       dedupeKey: "staff.added.journal:staff_training",
     },
   ];
+  // Не зовём вносить новичка в выключенный журнал: журнал здоровья по
+  // умолчанию выключен (health-check-default-off.ts), и напоминание о
+  // нём вело бы на журнал, которого организация не ведёт.
+  const disabledCodes = await getDisabledJournalCodes(orgId).catch(
+    () => new Set<string>()
+  );
+  const journalsToPopulate = allJournalsToPopulate.filter(
+    (j) => !disabledCodes.has(j.code)
+  );
   const staticLinkLabels: Record<string, string> = {
     "/journals/hygiene": "гигиенический журнал",
     "/journals/health_check": "журнал здоровья",

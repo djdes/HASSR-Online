@@ -1,3 +1,4 @@
+import { withDefaultOffCodes } from "@/lib/health-check-default-off";
 import { ALL_JOURNAL_CODES } from "@/lib/onboarding-presets";
 import type { OrgSphere } from "@/lib/org-profile";
 
@@ -327,7 +328,6 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
     ],
     electronicRecommended: [
       "cleaning",
-      "health_check",
       "finished_product",
       "perishable_rejection",
       "incoming_control",
@@ -348,7 +348,6 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
     ],
     electronicRecommended: [
       "cleaning",
-      "health_check",
       "perishable_rejection",
       "incoming_control",
       "med_books",
@@ -373,7 +372,6 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       "finished_product",
       "perishable_rejection",
       "cleaning",
-      "health_check",
       "incoming_control",
       "disinfectant_usage",
       "uv_lamp_runtime",
@@ -396,10 +394,10 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       { code: "finished_product", basis: "practice", law: MR_CHILD },
       { code: "perishable_rejection", basis: "practice", law: MR_CHILD },
     ],
-    // health_check убран: это дубль гигиенического журнала, его форма
-    // осталась от отменённого СанПиН 2409-08.
+    // health_check не рекомендуем ни одной сфере: это дубль гигиенического
+    // журнала (форма осталась от отменённого СанПиН 2409-08), и он
+    // выключен по умолчанию — см. health-check-default-off.ts.
     electronicRecommended: [
-      "health_check",
       "incoming_control",
       "cleaning",
       "general_cleaning",
@@ -422,7 +420,6 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
     ],
     electronicRecommended: [
       "cleaning",
-      "health_check",
       "pest_control",
       "metal_impurity",
       "fryer_oil",
@@ -480,7 +477,6 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
     ],
     electronicRecommended: [
       "cleaning",
-      "health_check",
       "fryer_oil",
       "perishable_rejection",
       "med_books",
@@ -507,7 +503,6 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
     ],
     electronicRecommended: [
       "cleaning",
-      "health_check",
       "incoming_control",
       "intensive_cooling",
       "med_books",
@@ -529,7 +524,6 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
     electronicRecommended: [
       "cleaning",
       "general_cleaning",
-      "health_check",
       "finished_product",
       "perishable_rejection",
       "incoming_control",
@@ -553,7 +547,6 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       { code: "perishable_rejection", basis: "sanpin", law: SANPIN_4282, note: "Обязателен для медицинских и социальных организаций — требует юр-сверки по полному тексту 4282-26" },
     ],
     electronicRecommended: [
-      "health_check",
       "incoming_control",
       "cleaning",
       "general_cleaning",
@@ -581,7 +574,6 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       "incoming_control",
       "product_writeoff",
       "cleaning",
-      "health_check",
       "disinfectant_usage",
       "med_books",
     ],
@@ -607,7 +599,6 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       "perishable_rejection",
       "incoming_control",
       "cleaning",
-      "health_check",
       "med_books",
     ],
     paperRequired: PAPER_FULL,
@@ -632,7 +623,6 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       "incoming_control",
       "product_writeoff",
       "cleaning",
-      "health_check",
       "disinfectant_usage",
       "med_books",
     ],
@@ -649,7 +639,6 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
     ],
     electronicRecommended: [
       "cleaning",
-      "health_check",
       "perishable_rejection",
       "incoming_control",
     ],
@@ -673,7 +662,11 @@ export function requiredCodesFor(sphere: OrgSphere): string[] {
  */
 export function defaultDisabledCodesFor(sphere: OrgSphere): string[] {
   const required = new Set(requiredCodesFor(sphere));
-  return ALL_JOURNAL_CODES.filter((code) => !required.has(code));
+  // Через withDefaultOffCodes: журнал здоровья выключен у новых
+  // организаций всегда, даже если его по ошибке вернут в какой-то набор.
+  return withDefaultOffCodes(
+    ALL_JOURNAL_CODES.filter((code) => !required.has(code))
+  );
 }
 
 /** Бумажные журналы сферы — в том порядке, в каком они перечислены. */

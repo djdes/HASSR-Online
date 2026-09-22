@@ -8,6 +8,7 @@ import {
   getAutofillCapability,
 } from "@/lib/journal-autofill-capability";
 import { listAutomationOwnedCodes } from "@/lib/journal-automation";
+import { parseDisabledCodes } from "@/lib/disabled-journals";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -72,20 +73,32 @@ async function handle(request: Request) {
     },
   });
 
-  // Журналы, которые целиком ведёт cron автоматизации 06:00, здесь
-  // пропускаем — иначе одну и ту же работу делают два разных cron'а и
-  // в логах невозможно понять, кто что заполнил.
-  const automationByOrg = new Map<string, Set<string>>();
-  async function getAutomationOwned(organizationId: string): Promise<Set<string>> {
-    const cached = automationByOrg.get(organizationId);
+  // Пропускаемые коды организации (кэш на прогон):
+  //  • журналы, которые целиком ведёт cron автоматизации 06:00, — иначе
+  //    одну и ту же работу делают два разных cron'а и в логах невозможно
+  //    понять, кто что заполнил;
+  //  • журналы, отключённые в /settings/journals (например, журнал
+  //    здоровья, выключенный по умолчанию), — у старого документа мог
+  //    остаться `autoFill: true`, и cron заполнял бы журнал, который
+  //    организация не ведёт.
+  const skippedByOrg = new Map<string, Set<string>>();
+  async function getSkippedCodes(organizationId: string): Promise<Set<string>> {
+    const cached = skippedByOrg.get(organizationId);
     if (cached) return cached;
     const org = await db.organization.findUnique({
       where: { id: organizationId },
-      select: { journalAutomationJson: true, autoJournalCodes: true },
+      select: {
+        journalAutomationJson: true,
+        autoJournalCodes: true,
+        disabledJournalCodes: true,
+      },
     });
-    const owned = new Set(listAutomationOwnedCodes(org));
-    automationByOrg.set(organizationId, owned);
-    return owned;
+    const skipped = new Set([
+      ...listAutomationOwnedCodes(org),
+      ...parseDisabledCodes(org?.disabledJournalCodes),
+    ]);
+    skippedByOrg.set(organizationId, skipped);
+    return skipped;
   }
 
   const usersByOrg = new Map<string, OrgUser[]>();
@@ -112,8 +125,8 @@ async function handle(request: Request) {
   for (const document of documents) {
     const code = document.template.code;
     try {
-      const owned = await getAutomationOwned(document.organizationId);
-      if (owned.has(code)) continue;
+      const skipped = await getSkippedCodes(document.organizationId);
+      if (skipped.has(code)) continue;
       const users = await getUsers(document.organizationId);
       if (users.length === 0) continue;
 

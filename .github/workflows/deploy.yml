@@ -577,6 +577,8 @@ jobs:
               npx tsx scripts/disable-broken-tf-integrations.ts 2>&1 | tail -10
               echo "=== Cleaning unification: backfill scope/days from JournalDocument.config.rooms[] → Room ==="
               npx tsx prisma/seed-cleaning-unification.ts 2>&1 | tail -10
+              echo "=== Журнал здоровья: выключаем у организаций, которые его не ведут (one-shot, PlatformSetting-guard) ==="
+              npx tsx prisma/seed-disable-health-check.ts 2>&1 | tail -10 || echo "[warn] seed-disable-health-check failed — deploy continues"
             else
               echo ".env not found, skip seed"
             fi

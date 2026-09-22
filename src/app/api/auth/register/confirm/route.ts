@@ -11,6 +11,7 @@ import { escapeTelegramHtml } from "@/lib/telegram";
 import { normalizePhone } from "@/lib/phone";
 import { registrationConfirmRateLimiter } from "@/lib/rate-limit";
 import { defaultJournalAutomationJson } from "@/lib/journal-automation";
+import { DEFAULT_OFF_JOURNAL_CODES } from "@/lib/health-check-default-off";
 import { attachAccountForNewOrganization } from "@/lib/create-organization";
 import {
   attachOrganizationByRef,
@@ -157,6 +158,8 @@ export async function POST(request: Request) {
         subscriptionPlan: plan,
         // Автоматика гигиенического журнала — сразу после регистрации.
         journalAutomationJson: defaultJournalAutomationJson(),
+        // Журнал здоровья выключен по умолчанию (health-check-default-off.ts).
+        disabledJournalCodes: [...DEFAULT_OFF_JOURNAL_CODES],
       },
     });
 

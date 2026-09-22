@@ -95,6 +95,12 @@ test("дефолты новой организации включают журн
   assert.equal(isAutomationDefaultOn("cleaning"), false);
 });
 
+test("журнал здоровья не автоматизируется по умолчанию — он выключен у новых организаций", () => {
+  assert.deepEqual([...AUTOMATION_DEFAULT_ON_CODES], ["hygiene"]);
+  assert.equal(isAutomationDefaultOn("health_check"), false);
+  assert.equal(defaultJournalAutomationJson().health_check, undefined);
+});
+
 test("listAutomationCodes объединяет карту и легаси-список", () => {
   const org = {
     journalAutomationJson: { hygiene: { autoCreate: true, autoFill: true } },

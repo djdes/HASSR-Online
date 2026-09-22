@@ -90,9 +90,10 @@ export const ORG_TEMPLATES: OrgTemplate[] = [
       { name: "Холодильник для готовой продукции", type: "fridge", tempMin: 2, tempMax: 6 },
       { name: "Витрина-холодильник", type: "fridge", tempMin: 2, tempMax: 6 },
     ],
+    // health_check не включаем: журнал здоровья выключен по умолчанию
+    // (см. health-check-default-off.ts).
     enabledJournals: [
       "hygiene",
-      "health_check",
       "med_books",
       "staff_training",
       "ppe_issuance",

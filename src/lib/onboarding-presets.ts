@@ -15,6 +15,8 @@
  *   restaurant | meat | dairy | bakery | confectionery | other
  */
 
+import { withDefaultOffCodes } from "@/lib/health-check-default-off";
+
 type JobPositionCategoryKey = "management" | "staff";
 
 export type OrgType =
@@ -93,7 +95,9 @@ export const ALL_JOURNAL_CODES: readonly string[] = [
 ] as const;
 
 // Каноничные группы журналов — переиспользуем во всех пресетах.
-const HYGIENE_PER_EMPLOYEE = ["hygiene", "health_check"];
+// health_check сюда не входит: журнал здоровья выключен по умолчанию
+// (см. health-check-default-off.ts), его включают руками.
+const HYGIENE_PER_EMPLOYEE = ["hygiene"];
 const CLEANING = [
   "cleaning",
   "general_cleaning",
@@ -484,18 +488,21 @@ export function listOnboardingPresets(): OrgTypePreset[] {
  * не видел в /journals 35 нерелевантных карточек.
  */
 export function computeDisabledJournalCodes(preset: OrgTypePreset): string[] {
+  // Default-off журналы (здоровье) выключаем при любом пресете.
   if (preset.disabledJournalCodes && preset.disabledJournalCodes.length > 0) {
-    return [...preset.disabledJournalCodes];
+    return withDefaultOffCodes([...preset.disabledJournalCodes]);
   }
   const enabled = new Set<string>(
     preset.positions.flatMap((p) => p.journalCodes)
   );
-  return ALL_JOURNAL_CODES.filter((code) => !enabled.has(code));
+  return withDefaultOffCodes(
+    ALL_JOURNAL_CODES.filter((code) => !enabled.has(code))
+  );
 }
 
 /**
  * Журналы, которые WeSetup сам создаёт документами на каждый месяц.
- * По умолчанию — все ежедневные «hygiene/health_check/cleaning/temperatures»
+ * По умолчанию — все ежедневные «hygiene/cleaning/temperatures»
  * из preset'a, чтобы клиенту не пришлось их заводить руками каждый месяц.
  * Если preset.autoJournalCodes явно задан — берём оттуда.
  */
@@ -509,9 +516,9 @@ export function computeAutoJournalCodes(preset: OrgTypePreset): string[] {
   // Ежедневные журналы — те, для которых имеет смысл «один документ на
   // месяц, заполняем каждый день». События (accidents, complaints,
   // breakdowns) НЕ авто-создаём.
+  // health_check не автосоздаём: журнал здоровья выключен по умолчанию.
   const DAILY = [
     "hygiene",
-    "health_check",
     "cleaning",
     "general_cleaning",
     "cleaning_ventilation_checklist",

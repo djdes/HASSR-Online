@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { normalizeSphere } from "@/lib/org-profile";
 import { defaultDisabledCodesFor } from "@/lib/sphere-journal-rules";
+import { isUntouchedDisabledCodes } from "@/lib/health-check-default-off";
 import bcrypt from "bcryptjs";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
@@ -78,16 +79,19 @@ export async function POST(request: Request) {
   const displayName = data.name?.trim() || data.organizationName;
 
   // Набор журналов по сфере. Пишем только если организация ещё не
-  // трогала список руками: пустой `disabledJournalCodes` означает
-  // «включено всё» — состояние сразу после регистрации. Если человек
-  // уже что-то выключал, его выбор важнее нашего дефолта.
+  // трогала список руками: пустой `disabledJournalCodes` (или только
+  // журнал здоровья, который мы выключаем сами при регистрации) —
+  // состояние сразу после регистрации. Если человек уже что-то
+  // выключал, его выбор важнее нашего дефолта.
   const current = await db.organization.findUnique({
     where: { id: organizationId },
     select: { disabledJournalCodes: true },
   });
-  const untouchedJournals =
-    !Array.isArray(current?.disabledJournalCodes) ||
-    current.disabledJournalCodes.length === 0;
+  const untouchedJournals = isUntouchedDisabledCodes(
+    Array.isArray(current?.disabledJournalCodes)
+      ? (current.disabledJournalCodes as string[])
+      : null
+  );
 
   // «Оформить меня сотрудником»: владелец уже есть в команде, но без
   // должности — он висит в /settings/users безымянной строкой. Ставим ему

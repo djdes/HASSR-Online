@@ -16,6 +16,7 @@ import { notifyPlatformAdmin } from "@/lib/platform-admin";
 import { describeHardwareConfig } from "@/lib/hardware-pricing";
 import { formatRub } from "@/lib/tariffs";
 import { defaultJournalAutomationJson } from "@/lib/journal-automation";
+import { DEFAULT_OFF_JOURNAL_CODES } from "@/lib/health-check-default-off";
 import { attachAccountForNewOrganization } from "@/lib/create-organization";
 
 /**
@@ -169,6 +170,8 @@ export async function fulfillPaidOrder(order: {
         subscriptionEnd,
         // Автоматика гигиенического журнала — сразу после оплаты.
         journalAutomationJson: defaultJournalAutomationJson(),
+        // Журнал здоровья выключен по умолчанию (health-check-default-off.ts).
+        disabledJournalCodes: [...DEFAULT_OFF_JOURNAL_CODES],
       },
     });
     const user = await tx.user.create({

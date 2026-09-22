@@ -82,6 +82,23 @@ test("выключаем всё, кроме обязательного", () => {
   }
 });
 
+test("журнал здоровья выключен по умолчанию и не рекомендуется ни одной сфере", () => {
+  for (const sphere of spheres) {
+    assert.ok(
+      defaultDisabledCodesFor(sphere).includes("health_check"),
+      `${sphere}: health_check должен быть выключен по умолчанию`,
+    );
+    assert.ok(
+      !SPHERE_RULES[sphere].electronicRecommended.includes("health_check"),
+      `${sphere}: health_check не должен быть в рекомендованных`,
+    );
+    assert.ok(
+      !requiredCodesFor(sphere).includes("health_check"),
+      `${sphere}: health_check не должен быть обязательным`,
+    );
+  }
+});
+
 test("у бумажного бланка есть закон, штраф и колонки", () => {
   for (const journal of PAPER_JOURNALS) {
     assert.ok(journal.law.url.startsWith("https://"), journal.id);
