@@ -67,9 +67,9 @@ docs/                    — этот файл и архитектурные п�
 - **Site:** https://wesetup.ru
 - **Path:** `/var/www/wesetupru/data/www/wesetup.ru/app`
 - **PM2 process:** `haccp-online` на порту 3002
-- **SSH (для проверки логов):** `wesetupru@wesetup.ru:22` пароль `bCQMn~Jy9C-n&9+(`. Команда:
+- **SSH (для проверки логов):** `wesetupru@wesetup.ru:22` пароль `<WESETUP_SSH_PASSWORD из .env>`. Команда:
   ```bash
-  plink -batch -hostkey "ssh-ed25519 255 SHA256:NwU1dGS29JAjs2K5LfEtu3DLFgg04yo7ZEA4iOGkM6E" -P 22 -l wesetupru -pw 'bCQMn~Jy9C-n&9+(' wesetup.ru "pm2 logs haccp-online --lines 50 --nostream --err"
+  plink -batch -hostkey "ssh-ed25519 255 SHA256:NwU1dGS29JAjs2K5LfEtu3DLFgg04yo7ZEA4iOGkM6E" -P 22 -l wesetupru -pw "$WESETUP_SSH_PASSWORD" wesetup.ru "pm2 logs haccp-online --lines 50 --nostream --err"
   ```
 
 ### TasksFlow context

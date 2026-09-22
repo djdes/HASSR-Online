@@ -168,3 +168,10 @@ test("TELEGRAM_COMMANDS stays within Telegram setMyCommands limits", () => {
     );
   }
 });
+
+test("команды бота — только латиница, цифры и _ (иначе Telegram отвергает всё меню)", () => {
+  for (const item of TELEGRAM_COMMANDS) {
+    assert.match(item.command, /^[a-z0-9_]{1,32}$/, item.command);
+    assert.ok(item.description.length >= 1 && item.description.length <= 256, item.command);
+  }
+});

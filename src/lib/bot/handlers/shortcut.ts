@@ -79,7 +79,7 @@ export function registerShortcutHandlers(composer: Composer<Context>): void {
         "• /start — домашний экран\n" +
         "• /shift — моя смена · открыть/закрыть в один тап\n" +
         "• /tasks — что надо заполнить сегодня\n" +
-        "• /my-digest — те же задачи, но списком в чате\n" +
+        "• /my_digest — те же задачи, но списком в чате\n" +
         "• /journals — журналы СанПиН и ХАССП\n" +
         "• /me — мой профиль\n\n" +
         "<b>Руководителю</b>\n" +
@@ -90,7 +90,7 @@ export function registerShortcutHandlers(composer: Composer<Context>): void {
         "• /batches — активные партии\n" +
         "• /losses — списания за неделю\n" +
         "• /stats — недельный график выполнения\n" +
-        "• /who-late — кто на смене > 2ч без записей в журналах\n" +
+        "• /who_late — кто на смене > 2ч без записей в журналах\n" +
         "• /health — диагностика бота (build sha, DB, Telegram API)\n" +
         "• /reports — PDF и ZIP для инспектора\n\n" +
         "<b>Прочее</b>\n" +

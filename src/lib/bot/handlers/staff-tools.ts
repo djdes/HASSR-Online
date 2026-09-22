@@ -216,15 +216,15 @@ export function registerStaffToolsHandlers(composer: Composer<Context>): void {
     });
   });
 
-  // /my-digest — on-demand копия утреннего mini-digest'а. Сотрудник
+  // /my_digest — on-demand копия утреннего mini-digest'а. Сотрудник
   // может в любой момент спросить «что мне делать сегодня?» и получить
   // тот же список open-obligations, что и в утреннем push'е, не
   // открывая Mini App. Полезно когда повар на смене получил сообщение
   // о смене ответственных и хочет сразу узнать актуальный список.
-  composer.command("my-digest", async (ctx) => {
+  composer.command("my_digest", async (ctx) => {
     const fromId = ctx.from?.id;
     if (!fromId) return;
-    if (!botCallbackRateLimiter.consume(`${fromId}:my-digest`)) {
+    if (!botCallbackRateLimiter.consume(`${fromId}:my_digest`)) {
       await ctx.reply("Слишком много запросов, подождите минуту.", {
         parse_mode: "HTML",
       });

@@ -3,6 +3,9 @@
 # Не запускает full build (медленно) — только быстрые проверки которые
 # отлавливают 80% случайных регрессий.
 
+echo "→ Проверка на секреты..."
+sh scripts/check-secrets.sh || exit 1
+
 # Type check на изменённых .ts/.tsx
 staged_ts=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx)$' || true)
 if [ -n "$staged_ts" ]; then

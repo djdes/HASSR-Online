@@ -35,8 +35,8 @@
 
 ### Env-переменные
 ```
-TELEGRAM_BOT_TOKEN=8432663244:AAFmnsGEKxp1RG-yexouyL6BanasbvjVFt4
-TELEGRAM_WEBHOOK_SECRET=haccp-telegram-webhook-2026
+TELEGRAM_BOT_TOKEN=<токен из @BotFather, только в .env>
+TELEGRAM_WEBHOOK_SECRET=<случайная строка, только в .env>
 MINI_APP_BASE_URL=https://fuzzy-ads-poke.loca.lt/mini   # <-- задаётся в .env.local
 NEXTAUTH_URL=http://localhost:3000
 ```
@@ -93,7 +93,7 @@ Localtunnel покажет страницу с кнопкой — нажми е�
 
 **Проверка:**
 ```powershell
-$token = "8432663244:AAFmnsGEKxp1RG-yexouyL6BanasbvjVFt4"
+$token = $env:TELEGRAM_BOT_TOKEN  # из .env, в репозиторий не класть
 Invoke-RestMethod -Uri "https://api.telegram.org/bot$token/getUpdates?offset=-1&limit=1&timeout=5"
 # Вернёт: 409 Conflict: terminated by other getUpdates request
 ```
@@ -149,7 +149,7 @@ pm2 start haccp-telegram-poller
 Если продакшен бот временно упадёт/остановится:
 
 ```powershell
-$token = "8432663244:AAFmnsGEKxp1RG-yexouyL6BanasbvjVFt4"
+$token = $env:TELEGRAM_BOT_TOKEN  # из .env, в репозиторий не класть
 $webhookUrl = "https://dark-lies-roll.loca.lt/api/telegram/webhook"
 $secret = "haccp-telegram-webhook-2026"
 
@@ -172,7 +172,7 @@ Invoke-RestMethod -Uri "https://api.telegram.org/bot$token/getWebhookInfo"
 
 2. **Удали webhook** (если устанавливал):
    ```powershell
-   $token = "8432663244:AAFmnsGEKxp1RG-yexouyL6BanasbvjVFt4"
+   $token = $env:TELEGRAM_BOT_TOKEN  # из .env, в репозиторий не класть
    Invoke-RestMethod -Uri "https://api.telegram.org/bot$token/deleteWebhook" -Method Post
    ```
 
@@ -196,7 +196,7 @@ Invoke-RestMethod -Uri "https://api.telegram.org/bot$token/getWebhookInfo"
 
 2. **Удали webhook** (если устанавливал):
    ```powershell
-   $token = "8432663244:AAFmnsGEKxp1RG-yexouyL6BanasbvjVFt4"
+   $token = $env:TELEGRAM_BOT_TOKEN  # из .env, в репозиторий не класть
    Invoke-RestMethod -Uri "https://api.telegram.org/bot$token/deleteWebhook" -Method Post
    ```
 
@@ -216,7 +216,7 @@ Invoke-WebRequest -Uri "http://localhost:3000" -UseBasicParsing
 Invoke-WebRequest -Uri "https://fuzzy-ads-poke.loca.lt" -UseBasicParsing
 
 # Установить webhook
-$token = "8432663244:AAFmnsGEKxp1RG-yexouyL6BanasbvjVFt4"
+$token = $env:TELEGRAM_BOT_TOKEN  # из .env, в репозиторий не класть
 $webhookUrl = "https://<твой-туннель>.loca.lt/api/telegram/webhook"
 $secret = "haccp-telegram-webhook-2026"
 Invoke-RestMethod -Uri "https://api.telegram.org/bot$token/setWebhook?url=$webhookUrl&secret_token=$secret"

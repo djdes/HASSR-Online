@@ -61,7 +61,7 @@
 DATABASE_URL="postgresql://magday:r15*gRJPulurILWV@127.0.0.1:5433/haccp_magday?sslmode=disable"
 
 # SSH в прод WeSetup
-Host: wesetup.ru, User: wesetupru, Pass: bCQMn~Jy9C-n&9+(, Port: 22 (external 50222 закрыт)
+Host: wesetup.ru, User: wesetupru, Pass: <WESETUP_SSH_PASSWORD из .env>, Port: 22 (external 50222 закрыт)
 Путь: /var/www/wesetupru/data/www/wesetup.ru/app
 PM2: haccp-online на :3002
 

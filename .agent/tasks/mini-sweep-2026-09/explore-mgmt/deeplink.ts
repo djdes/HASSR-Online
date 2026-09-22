@@ -5,7 +5,7 @@ const SHOTS = "C:/Users/Yaroslav/AppData/Local/Temp/18/claude/d--www-Wesetup-ru/
 const HERE = "D:/www/Wesetup.ru/.agent/tasks/mini-sweep-2026-09";
 const HOST = fs.readFileSync(path.join(HERE, "tg-host.js"), "utf8");
 const state = JSON.parse(fs.readFileSync(path.join(HERE, "..", "journal-responsibles-org-2026-09", "e2e", "state.json"), "utf8"));
-const TOKEN = "7000000001:AAE2eFakeTokenForLocalStandOnly000000";
+const TOKEN = process.env.TELEGRAM_BOT_TOKEN ?? "";
 const TG_IDS: Record<string, number> = { cookA: 990001, managerA: 990002, cleanerA: 990003, headA: 990004, ownerA: 990005 };
 function forge(id: number) { const p = new URLSearchParams(); p.set("auth_date", String(Math.floor(Date.now()/1000)-5)); p.set("user", JSON.stringify({id, first_name:"Т"})); const dcs=[...p.entries()].map(([k,v])=>`${k}=${v}`).sort().join("\n"); const s=crypto.createHmac("sha256","WebAppData").update(TOKEN).digest(); p.set("hash", crypto.createHmac("sha256",s).update(dcs).digest("hex")); return p.toString(); }
 async function main() {

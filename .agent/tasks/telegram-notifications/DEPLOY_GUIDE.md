@@ -59,7 +59,7 @@ curl "https://wesetup-tg.ТВОЁ_ИМЯ.workers.dev/bot<TOKEN>/setWebhook?url=h
 ```
 
 `<TOKEN>` = значение `TELEGRAM_BOT_TOKEN` из .env.
-`<TELEGRAM_WEBHOOK_SECRET>` = `haccp-telegram-webhook-2026` (уже в .env).
+`<TELEGRAM_WEBHOOK_SECRET>` — значение из .env (в репозиторий не класть).
 
 Ответ должен быть `{"ok":true,"result":true,"description":"Webhook was set"}`.
 

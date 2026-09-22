@@ -743,7 +743,7 @@ git push origin master
 HEAD_SHA=$(git rev-parse --short HEAD)
 echo "expected: $HEAD_SHA"
 for i in {1..20}; do
-  out=$(plink -batch -hostkey "ssh-ed25519 255 SHA256:NwU1dGS29JAjs2K5LfEtu3DLFgg04yo7ZEA4iOGkM6E" -P 22 -l wesetupru -pw 'bCQMn~Jy9C-n&9+(' wesetup.ru "cd /var/www/wesetupru/data/www/wesetup.ru/app && cat .build-sha 2>/dev/null")
+  out=$(plink -batch -hostkey "ssh-ed25519 255 SHA256:NwU1dGS29JAjs2K5LfEtu3DLFgg04yo7ZEA4iOGkM6E" -P 22 -l wesetupru -pw "$WESETUP_SSH_PASSWORD" wesetup.ru "cd /var/www/wesetupru/data/www/wesetup.ru/app && cat .build-sha 2>/dev/null")
   short="${out:0:8}"
   echo "[$i] prod=$short"
   if [ "$short" = "$HEAD_SHA" ]; then echo "DEPLOYED"; break; fi
@@ -766,7 +766,7 @@ Expected: `HTTP/1.1 200 OK`
 Если `CRON_SECRET` задан в проде:
 
 ```bash
-plink -batch -hostkey "ssh-ed25519 255 SHA256:NwU1dGS29JAjs2K5LfEtu3DLFgg04yo7ZEA4iOGkM6E" -P 22 -l wesetupru -pw 'bCQMn~Jy9C-n&9+(' wesetup.ru "cd /var/www/wesetupru/data/www/wesetup.ru/app && grep '^CRON_SECRET=' .env | head -1"
+plink -batch -hostkey "ssh-ed25519 255 SHA256:NwU1dGS29JAjs2K5LfEtu3DLFgg04yo7ZEA4iOGkM6E" -P 22 -l wesetupru -pw "$WESETUP_SSH_PASSWORD" wesetup.ru "cd /var/www/wesetupru/data/www/wesetup.ru/app && grep '^CRON_SECRET=' .env | head -1"
 ```
 
 Получить значение, потом:

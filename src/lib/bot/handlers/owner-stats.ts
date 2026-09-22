@@ -437,12 +437,12 @@ export function registerOwnerExtendedHandlers(composer: Composer<Context>): void
     });
   });
 
-  // /who-late — кто на смене (status='working') но без journal-активности
+  // /who_late — кто на смене (status='working') но без journal-активности
   // последние 2 часа. Это «рука помощи» для управляющего: ОДНОЙ командой
   // увидеть кому нужно позвонить или зайти проверить, без открытия Mini App.
   // Перекликается с shift-watcher cron'ом, но on-demand: менеджер хочет
   // сразу узнать состояние, не ждать следующего cron-tick'а.
-  composer.command("who-late", async (ctx) => {
+  composer.command("who_late", async (ctx) => {
     const user = await resolveManagementUser(ctx.from?.id);
     if (!user) return replyNotAuthorized(ctx);
 

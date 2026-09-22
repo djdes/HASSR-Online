@@ -618,20 +618,20 @@ Workflow steps:
 **Production SSH:**
 - Host: `wesetup.ru`
 - User: `wesetupru`
-- Password: `bCQMn~Jy9C-n&9+(`
+- Password: в локальном `.env` → `WESETUP_SSH_PASSWORD` (в репозиторий не класть)
 - External port: `50222`
 - Internal port: `22`
 
 Useful production checks:
 ```bash
 # PM2 status
-plink -batch -hostkey "ssh-ed25519 255 SHA256:NwU1dGS29JAjs2K5LfEtu3DLFgg04yo7ZEA4iOGkM6E" -P 22 -l wesetupru -pw 'bCQMn~Jy9C-n&9+(' wesetup.ru "pm2 status haccp-online --no-color"
+plink -batch -hostkey "ssh-ed25519 255 SHA256:NwU1dGS29JAjs2K5LfEtu3DLFgg04yo7ZEA4iOGkM6E" -P 22 -l wesetupru -pw "$(grep -E '^WESETUP_SSH_PASSWORD=' .env | cut -d= -f2- | tr -d '"')" wesetup.ru "pm2 status haccp-online --no-color"
 
 # Build markers
-plink -batch -hostkey "ssh-ed25519 255 SHA256:NwU1dGS29JAjs2K5LfEtu3DLFgg04yo7ZEA4iOGkM6E" -P 22 -l wesetupru -pw 'bCQMn~Jy9C-n&9+(' wesetup.ru "cd /var/www/wesetupru/data/www/wesetup.ru/app && cat .build-sha && cat .build-time"
+plink -batch -hostkey "ssh-ed25519 255 SHA256:NwU1dGS29JAjs2K5LfEtu3DLFgg04yo7ZEA4iOGkM6E" -P 22 -l wesetupru -pw "$(grep -E '^WESETUP_SSH_PASSWORD=' .env | cut -d= -f2- | tr -d '"')" wesetup.ru "cd /var/www/wesetupru/data/www/wesetup.ru/app && cat .build-sha && cat .build-time"
 
 # Local HTTP probe
-plink -batch -hostkey "ssh-ed25519 255 SHA256:NwU1dGS29JAjs2K5LfEtu3DLFgg04yo7ZEA4iOGkM6E" -P 22 -l wesetupru -pw 'bCQMn~Jy9C-n&9+(' wesetup.ru "curl -I -s http://127.0.0.1:3002 | sed -n '1,10p'"
+plink -batch -hostkey "ssh-ed25519 255 SHA256:NwU1dGS29JAjs2K5LfEtu3DLFgg04yo7ZEA4iOGkM6E" -P 22 -l wesetupru -pw "$(grep -E '^WESETUP_SSH_PASSWORD=' .env | cut -d= -f2- | tr -d '"')" wesetup.ru "curl -I -s http://127.0.0.1:3002 | sed -n '1,10p'"
 ```
 
 ## Known Issues & Workarounds

@@ -6,7 +6,7 @@
 import crypto from "node:crypto"; import fs from "node:fs"; import path from "node:path"; import { chromium, type Page, type BrowserContext } from "playwright";
 import { db } from "../journal-responsibles-org-2026-09/e2e/db";
 export const BASE = "http://localhost:3021";
-const TOKEN = process.env.TG_FAKE_TOKEN ?? "7000000001:AAE2eFakeTokenForLocalStandOnly000000";
+const TOKEN = process.env.TG_FAKE_TOKEN ?? process.env.TELEGRAM_BOT_TOKEN ?? "";
 const HERE = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"));
 const HOST = fs.readFileSync(path.join(HERE, "tg-host.js"), "utf8");
 export const state = JSON.parse(fs.readFileSync(path.join(HERE, "..", "journal-responsibles-org-2026-09", "e2e", "state.json"), "utf8"));
