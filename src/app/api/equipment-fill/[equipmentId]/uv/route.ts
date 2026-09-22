@@ -4,7 +4,8 @@ import { clientIp } from "@/lib/client-ip";
 import { db } from "@/lib/db";
 import { verifyEquipmentQrToken } from "@/lib/equipment-qr-token";
 import { OBJECT_FILLER_DENIED } from "@/lib/object-fillers";
-import { normalizeQrFillMode, resolveQrFillActor } from "@/lib/qr-fill-actor";
+import { normalizeQrFillMode } from "@/lib/qr-fill-actor";
+import { resolveObjectActor } from "@/lib/qr-object-pass";
 import { QR_FILL_RATE_LIMIT_ERROR, qrFillRateKey, recordQrFillAudit } from "@/lib/qr-fill-audit";
 import { qrFillRateLimiter } from "@/lib/rate-limit";
 import { orgTodayKey } from "@/lib/timezone";
@@ -26,7 +27,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ equ
     return NextResponse.json({ error: QR_FILL_RATE_LIMIT_ERROR }, { status: 429 });
   }
   const body = (await request.json().catch(() => null)) as
-    | { token?: unknown; employeeId?: unknown; pin?: unknown; action?: unknown }
+    | { token?: unknown; employeeId?: unknown; pin?: unknown; pass?: unknown; action?: unknown }
     | null;
   const token = typeof body?.token === "string" ? body.token : "";
   const employeeId = typeof body?.employeeId === "string" ? body.employeeId : "";
@@ -53,7 +54,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ equ
   const timeZone = lamp.area.organization.timezone || "Europe/Moscow";
   const mode = normalizeQrFillMode(lamp.area.organization.qrFillMode);
 
-  const actor = await resolveQrFillActor({ mode, organizationId, employeeId, pin: typeof body?.pin === "string" ? body.pin : null });
+  const actor = await resolveObjectActor({
+    mode,
+    organizationId,
+    employeeId,
+    pin: typeof body?.pin === "string" ? body.pin : null,
+    pass: typeof body?.pass === "string" ? body.pass : null,
+  });
   if (!actor.ok) return NextResponse.json({ error: actor.error }, { status: actor.status });
 
   // Только люди из списка журнала (закреплённые за лампой / ответственные журнала).

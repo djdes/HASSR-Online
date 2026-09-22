@@ -20,7 +20,8 @@ import {
   pickNearestControlTime,
 } from "@/lib/climate-fill";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
-import { normalizeQrFillMode, resolveQrFillActor } from "@/lib/qr-fill-actor";
+import { normalizeQrFillMode } from "@/lib/qr-fill-actor";
+import { resolveObjectActor } from "@/lib/qr-object-pass";
 import { verifyQrFillTokenFor } from "@/lib/qr-fill-token";
 import {
   QR_FILL_RATE_LIMIT_ERROR,
@@ -52,6 +53,8 @@ const bodySchema = z
     employeeId: z.string().min(1),
     /** PIN сотрудника — в режиме `qrFillMode = "pin"`. */
     pin: z.string().max(12).optional(),
+    /** Пропуск визита после шага PIN (`/api/qr-fill/pass`). */
+    pass: z.string().max(300).optional(),
     temperature: z.number().min(-60).max(80).optional(),
     humidity: z.number().min(0).max(100).optional(),
     /**
@@ -116,11 +119,12 @@ export async function POST(
   const organizationId = room.building.organizationId;
   const timezone = room.building.organization.timezone || "Europe/Moscow";
 
-  const actor = await resolveQrFillActor({
+  const actor = await resolveObjectActor({
     mode: normalizeQrFillMode(room.building.organization.qrFillMode),
     organizationId,
     employeeId: body.employeeId,
     pin: body.pin,
+    pass: body.pass,
   });
   if (!actor.ok) {
     return NextResponse.json({ error: actor.error }, { status: actor.status });

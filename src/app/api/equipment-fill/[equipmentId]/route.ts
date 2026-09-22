@@ -29,7 +29,8 @@ import {
 } from "@/lib/equipment-fill-targets";
 import { clientIp } from "@/lib/client-ip";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
-import { normalizeQrFillMode, resolveQrFillActor } from "@/lib/qr-fill-actor";
+import { normalizeQrFillMode } from "@/lib/qr-fill-actor";
+import { resolveObjectActor } from "@/lib/qr-object-pass";
 import {
   QR_FILL_RATE_LIMIT_ERROR,
   qrFillRateKey,
@@ -60,6 +61,8 @@ const bodySchema = z.object({
   employeeId: z.string().min(1),
   /** PIN сотрудника — в режиме `qrFillMode = "pin"`. */
   pin: z.string().max(12).optional(),
+  /** Пропуск визита после шага PIN (`/api/qr-fill/pass`). */
+  pass: z.string().max(300).optional(),
   temperature: z.number(),
   /** Опциональная влажность для оборудования с climate-mapping. */
   humidity: z.number().min(0).max(100).optional(),
@@ -126,11 +129,12 @@ export async function POST(
   const organizationId = equipment.area.organizationId;
 
   // Режим QR-форм организации: список / PIN / только после входа.
-  const actor = await resolveQrFillActor({
+  const actor = await resolveObjectActor({
     mode: normalizeQrFillMode(equipment.area.organization.qrFillMode),
     organizationId,
     employeeId: parsed.employeeId,
     pin: parsed.pin,
+    pass: parsed.pass,
   });
   if (!actor.ok) {
     return NextResponse.json({ error: actor.error }, { status: actor.status });

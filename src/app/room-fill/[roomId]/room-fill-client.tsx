@@ -10,7 +10,7 @@ import { QrPageShell } from "@/components/qr-fill/qr-page-shell";
 import { WhoRow } from "@/components/qr-fill/who-row";
 import { EmployeePicker } from "@/components/qr-fill/employee-picker";
 import { ReadingField } from "@/components/qr-fill/reading-field";
-import { PinPrompt } from "@/components/qr-fill/pin-prompt";
+import { QrPinOk, QrPinStep, QrPinUiStyles, QrRememberToggle, rememberQrEmployee } from "@/components/qr-fill/qr-pin-step";
 import { draftKeyFor, useFormDraft } from "@/components/qr-fill/use-form-draft";
 
 type Metric = { enabled: boolean; min: number | null; max: number | null };
@@ -34,6 +34,8 @@ type Props = {
   stamp?: { date: string; time: string } | null;
   /** Название журнала в шапке (вторая строка после организации). */
   journalTitle: string;
+  /** «Запомнить выбор на этом оборудовании» — сотрудник из cookie организации. */
+  rememberedEmployeeId?: string | null;
 };
 
 const LS_EMPLOYEE_KEY = "wesetup.room-fill.employeeId";
@@ -55,11 +57,22 @@ function isOutside(value: number | null, metric: Metric): boolean {
  * Три шага, как на плакате: выбрать себя → ввести показания → «Сохранить».
  * Имя запоминается на телефоне, со второго раза остаётся ввести числа.
  */
-export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot, employees, mode = "public", sessionEmployee = null, todayValues = null, stamp = null, journalTitle }: Props) {
+export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot, employees, mode = "public", sessionEmployee = null, todayValues = null, stamp = null, journalTitle, rememberedEmployeeId = null }: Props) {
   const [employeeId, setEmployeeId] = useState("");
+  // Единые правила QR (2026-09-22): PIN — шагом до формы, дальше пропуск визита.
+  const [pass, setPass] = useState<string | null>(null);
+  const [pinOk, setPinOk] = useState(false);
+  const [remember, setRemember] = useState(true);
   // Имя запоминаем сразу при выборе, а не только после записи: обновление страницы или обрыв связи не заставят выбирать заново.
   const rememberEmployee = (id: string) => {
     setEmployeeId(id);
+    setPass(null);
+    setPinOk(false);
+    const next = employees.find((item) => item.id === id);
+    // Без PIN выбор запоминаем сразу; с PIN — на шаге PIN.
+    if (mode !== "auth" && !(mode === "pin" || next?.hasPin)) {
+      rememberQrEmployee({ kind: "room", objectId: room.id, token, employeeId: id, remember });
+    }
     try {
       localStorage.setItem(LS_EMPLOYEE_KEY, id);
       localStorage.setItem(LS_SHARED_EMPLOYEE_KEY, id);
@@ -67,7 +80,6 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
       /* приватный режим */
     }
   };
-  const [pin, setPin] = useState("");
   const fixedEmployee = mode === "auth" && sessionEmployee && !sessionEmployee.canPickOthers;
   // Холодный склад с нормой ниже нуля — минус стоит сразу.
   const hasToday = typeof todayValues?.temperature === "number" || typeof todayValues?.humidity === "number";
@@ -109,14 +121,14 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
         setEmployeeId(sessionEmployee.id);
         return;
       }
-      const remembered = localStorage.getItem(LS_SHARED_EMPLOYEE_KEY) ?? localStorage.getItem(LS_EMPLOYEE_KEY);
+      const remembered = rememberedEmployeeId ?? localStorage.getItem(LS_SHARED_EMPLOYEE_KEY) ?? localStorage.getItem(LS_EMPLOYEE_KEY);
       if (remembered && employees.some((employee) => employee.id === remembered)) {
         setEmployeeId(remembered);
       }
     } catch {
       /* приватный режим — выберут имя вручную */
     }
-  }, [employees]);
+  }, [employees, mode, sessionEmployee, rememberedEmployeeId]);
 
   const temperatureValue = useMemo(() => parseNumber(temperature), [temperature]);
   const humidityValue = useMemo(() => parseNumber(humidity), [humidity]);
@@ -158,7 +170,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
           ...(norms.temperature.enabled && temperatureValue !== null ? { temperature: temperatureValue } : {}),
           ...(norms.humidity.enabled && humidityValue !== null && !humidityInvalid ? { humidity: humidityValue } : {}),
           ...(correction.trim() ? { correction: correction.trim() } : {}),
-          ...(pin ? { pin } : {}),
+          ...(pass ? { pass } : {}),
         }),
       });
       const data = await response.json().catch(() => null);
@@ -181,12 +193,14 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
   }
 
   const selectedEmployee = employees.find((item) => item.id === employeeId) ?? null;
-  // PIN спрашиваем всегда, когда он у выбранного сотрудника задан (или режим «имя + PIN»).
-  const pinRequired = mode === "pin" || Boolean(selectedEmployee?.hasPin);
+  // PIN спрашиваем шагом до формы, когда он у сотрудника задан (или режим «имя + PIN»); вход в кабинет — без PIN.
+  const pinRequired = mode !== "auth" && (mode === "pin" || Boolean(selectedEmployee?.hasPin));
+  const pinStepNeeded = Boolean(employeeId) && pinRequired && !pass;
   // После сохранения текущий объект в списке сразу «снят» — с введёнными значениями.
 
   return (
     <QrPageShell orgName={room.organizationName} title={journalTitle}>
+        <QrPinUiStyles />
         {/* Смены помещения на плакате нет (владелец, 2026-09-22): каждое
             помещение — своим QR, чтобы замер делали на месте. */}
         <WhoRow label="Помещение" value={room.name} />
@@ -235,8 +249,27 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                 value={employeeId}
                 onChange={rememberEmployee}
                 fixedName={fixedEmployee ? sessionEmployee?.name ?? null : null}
-                hint={rememberedName ? "Запомнили с прошлого раза — можно сразу вводить показания." : null}
+                hint={rememberedName && !pinStepNeeded ? "Запомнили с прошлого раза — можно сразу вводить показания." : rememberedName ? "Запомнили с прошлого раза — введите свой PIN." : null}
               />
+              {!fixedEmployee && mode !== "auth" ? <QrRememberToggle checked={remember} onChange={setRemember} /> : null}
+
+              {pinStepNeeded && selectedEmployee ? (
+                <QrPinStep
+                  kind="room"
+                  objectId={room.id}
+                  token={token}
+                  employeeId={selectedEmployee.id}
+                  employeeName={selectedEmployee.name}
+                  remember={remember}
+                  onPass={(value) => {
+                    setPass(value);
+                    setPinOk(true);
+                  }}
+                />
+              ) : null}
+              {pinOk ? <QrPinOk /> : null}
+              {pinStepNeeded ? null : (
+              <div className={pinOk ? "qp-rise space-y-5" : "space-y-5"}>
 
               <div className="space-y-4">
                 <div className="text-[16px] font-semibold text-[#0b1024]">Показания</div>
@@ -279,16 +312,15 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                 ) : null}
               </div>
 
-              {error && !/PIN/.test(error) ? (
+              {error ? (
                 <div className="rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-3 text-[15px] text-[#a13a32]">{error}</div>
               ) : null}
 
-              {pinRequired ? <PinPrompt value={pin} onChange={setPin} error={error && /PIN/.test(error) ? error : null} /> : null}
               <div>
                 <Button
                   type="button"
                   onClick={save}
-                  disabled={submitting || !employeeId || !hasValue || !hasActiveDocument || correctionMissing || (pinRequired && pin.length < 4)}
+                  disabled={submitting || !employeeId || !hasValue || !hasActiveDocument || correctionMissing || (pinRequired && !pass)}
                   className="h-14 w-full rounded-2xl bg-[#5566f6] px-5 text-[18px] font-semibold text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] disabled:bg-[#c8cbe0]"
                 >
                   {submitting ? "Сохраняем…" : "Сохранить"}
@@ -299,6 +331,8 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                   </p>
                 ) : null}
               </div>
+              </div>
+              )}
             </div>
           </div>
         )}
