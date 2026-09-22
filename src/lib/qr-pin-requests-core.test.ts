@@ -17,7 +17,8 @@ import {
 test("PIN в запросе: правила PIN и совпадение повтора", () => {
   assert.equal(validatePinRequestInput({ pin: "4821", repeat: "4821" }), null);
   assert.match(validatePinRequestInput({ pin: "4821", repeat: "4812" }) ?? "", /не совпадают/);
-  assert.match(validatePinRequestInput({ pin: "1111", repeat: "1111" }) ?? "", /простой/);
+  // Простые комбинации разрешены (решение владельца, 2026-09-22).
+  assert.equal(validatePinRequestInput({ pin: "1111", repeat: "1111" }), null);
   assert.match(validatePinRequestInput({ pin: "48", repeat: "48" }) ?? "", /4 до 6/);
 });
 
