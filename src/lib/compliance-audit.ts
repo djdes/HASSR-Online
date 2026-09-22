@@ -131,7 +131,7 @@ export async function runComplianceAudit(
     status: scopesCount === 0 ? "warn" : "ok",
     detail:
       scopesCount === 0
-        ? "Не настроено, кого видит каждый руководитель. Заведующая не видит подчинённых в TasksFlow."
+        ? "Не настроено, кого видит каждый руководитель. Заведующий производством не видит подчинённых в TasksFlow."
         : `Настроено правил видимости: ${scopesCount}.`,
     fixUrl: "/settings/staff-hierarchy",
     weight: 5,

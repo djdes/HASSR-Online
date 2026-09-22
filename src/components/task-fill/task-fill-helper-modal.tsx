@@ -231,7 +231,7 @@ export function TaskFillHelperModal({
                 </h3>
                 <p className="mt-1.5 text-[13px] leading-relaxed text-[#6f7282]">
                   Заполни поля по описанию выше. Если что-то непонятно —
-                  спроси заведующую или открой полную страницу гайда.
+                  спроси заведующего производством или открой полную страницу гайда.
                 </p>
                 <a
                   href={`/journals/${journalCode}/guide`}

@@ -86,6 +86,7 @@ import {
 import { localDayKey } from "@/lib/entry-defaults";
 import { useAutoDocumentTitle } from "@/components/journals/use-auto-document-title";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
+import { resolveApprover, resolveResponsible } from "@/lib/approver-display";
 import {
   DocumentDialogFeedback,
   readCreatedDocument,
@@ -554,6 +555,9 @@ export function SanitationDayDocumentsClient({
         {documents.map((document) => {
           const cfg = normalizeSanitationDayConfig(document.config);
           const href = `/journals/${routeCode}/documents/${document.id}`;
+          // Должность и ФИО одного человека — из его карточки.
+          const approver = resolveApprover(cfg, users);
+          const responsible = resolveResponsible(cfg, users);
 
           return (
             <div
@@ -586,10 +590,7 @@ export function SanitationDayDocumentsClient({
                   Должность &quot;Утверждаю&quot;
                 </div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
-                  {getSanitationApproveLabel(
-                    cfg.approveRole,
-                    cfg.approveEmployee,
-                  )}
+                  {getSanitationApproveLabel(approver.title, approver.name)}
                 </div>
               </Link>
 
@@ -599,10 +600,7 @@ export function SanitationDayDocumentsClient({
               >
                 <div className={JOURNAL_CARD_LABEL_CLASS}>Ответственный</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
-                  {getSanitationApproveLabel(
-                    cfg.responsibleRole,
-                    cfg.responsibleEmployee,
-                  )}
+                  {getSanitationApproveLabel(responsible.title, responsible.name)}
                 </div>
               </Link>
 

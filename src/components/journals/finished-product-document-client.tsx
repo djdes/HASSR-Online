@@ -10,6 +10,7 @@ import {
   Trash2,
   Check,
   Users,
+  X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -63,6 +64,14 @@ import {
   type FinishedProductDocumentRow,
   type FinishedProductTimeDefaults,
 } from "@/lib/finished-product-document";
+import {
+  applyPaste,
+  dishYieldRowsToAdd,
+  emptyDishYieldRows,
+  isMultiCellPaste,
+  parseDishYieldPaste,
+  type DishYieldRow,
+} from "@/lib/finished-product-bulk";
 import { useDocumentCloseAction } from "@/components/journals/document-close-button";
 import { FocusTodayScroller } from "@/components/journals/focus-today-scroller";
 import { useMobileView } from "@/lib/use-mobile-view";
@@ -158,6 +167,8 @@ type Props = {
 
 /** Сколько строк максимум разрешаем добавить одной пачкой. */
 const BULK_ROWS_MAX = 50;
+/** Сколько пустых строк в таблице «Добавить списком» при открытии. */
+const BULK_TABLE_START_ROWS = 5;
 
 /** Пауза до автосохранения после последнего нажатия клавиши в ячейке. */
 const AUTOSAVE_DELAY_MS = 800;
@@ -425,7 +436,7 @@ export function FinishedProductDocumentClient({
   /** «Из справочника организации» для списка изделий этого журнала. */
   const [directoryOpen, setDirectoryOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
-  const [bulkText, setBulkText] = useState("");
+  const [bulkRows, setBulkRows] = useState<DishYieldRow[]>(() => emptyDishYieldRows(BULK_TABLE_START_ROWS));
   const [newItemName, setNewItemName] = useState("");
   // Оценки документа: свои из настроек или стандартные по режиму
   // наименования (у полуфабрикатов — про соответствие, а не баллы).
@@ -770,7 +781,106 @@ export function FinishedProductDocumentClient({
     : draftRow.organoleptic || organolepticCustom
       ? ORGANOLEPTIC_CUSTOM
       : "";
-  const rowFields = ({ withProductName, leading }: { withProductName: boolean; leading?: React.ReactNode }) => (
+  // «Добавить списком»: строка таблицы = изделие со своим выходом.
+  const bulkShowYield = isColumnVisible("portion");
+  const bulkAddCount = bulkRows.filter((row) => row.name.trim() !== "").length;
+  const bulkInputClass =
+    "h-10 w-full rounded-xl border px-3 text-[14px] text-[#0b1024] placeholder:text-[#9b9fb3] transition-colors duration-150 focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15";
+  const bulkTable = (
+    <div className="space-y-3" data-testid="bulk-dish-table">
+      <div className="hidden items-center gap-2 px-1 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#6f7282] sm:flex">
+        <span className="w-6 shrink-0 text-center">№</span>
+        <span className="min-w-0 flex-1">Наименование</span>
+        {bulkShowYield ? <span className="w-[140px] shrink-0">Выход, г</span> : null}
+        <span className="w-9 shrink-0" aria-hidden />
+      </div>
+      <ol className="space-y-2">
+        {bulkRows.map((row, index) => {
+          const n = index + 1;
+          const orphanYield = bulkShowYield && row.name.trim() === "" && row.yield.trim() !== "";
+          return (
+            <li
+              key={index}
+              className={`rounded-2xl border p-2.5 transition-colors duration-150 sm:border-0 sm:bg-transparent sm:p-0 ${
+                orphanYield ? "border-[#f3c9c2] bg-[#fff4f2]" : "border-[#ececf4] bg-[#fafbff]"
+              }`}
+            >
+              <div className="flex items-start gap-2">
+                <span className="mt-2.5 w-6 shrink-0 text-center text-[13px] font-medium tabular-nums text-[#9b9fb3]">{n}</span>
+                <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row">
+                  <input
+                    className={`${bulkInputClass} min-w-0 sm:flex-1 ${orphanYield ? "border-[#e8a39a] bg-[#fff4f2]" : "border-[#dcdfed] bg-white"}`}
+                    value={row.name}
+                    maxLength={200}
+                    placeholder={index === 0 ? "Например: Борщ" : "Наименование"}
+                    aria-label={`Наименование, строка ${n}`}
+                    onChange={(e) => updateBulkRow(index, { name: e.target.value })}
+                    onPaste={(e) => pasteIntoBulkTable(e, index)}
+                  />
+                  {bulkShowYield ? (
+                    <input
+                      className={`${bulkInputClass} border-[#dcdfed] bg-white sm:w-[140px] sm:shrink-0`}
+                      value={row.yield}
+                      maxLength={20}
+                      inputMode="decimal"
+                      placeholder={index === 0 ? "250 или 200/10" : "Выход, г"}
+                      aria-label={`Выход, строка ${n}`}
+                      onChange={(e) => updateBulkRow(index, { yield: e.target.value })}
+                      onPaste={(e) => pasteIntoBulkTable(e, index)}
+                    />
+                  ) : null}
+                </div>
+                <button
+                  type="button"
+                  aria-label={`Удалить строку ${n}`}
+                  title="Удалить строку"
+                  onClick={() => removeBulkRow(index)}
+                  className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl text-[#9b9fb3] transition-colors duration-150 hover:bg-[#fff4f2] hover:text-[#a13a32] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+              {orphanYield ? (
+                <p className="mt-1.5 pl-8 text-[12px] leading-snug text-[#a13a32]">нет наименования — строка не добавится</p>
+              ) : null}
+            </li>
+          );
+        })}
+      </ol>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={() => setBulkRows((prev) => (prev.length >= BULK_ROWS_MAX ? prev : [...prev, { name: "", yield: "" }]))}
+          disabled={bulkRows.length >= BULK_ROWS_MAX}
+          className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-dashed border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Plus className="size-4" />
+          Ещё строка
+        </button>
+        <span className="rounded-full bg-[#f5f6ff] px-3 py-1 text-[13px] text-[#3848c7]">
+          Будет добавлено: <span className="font-semibold tabular-nums">{bulkAddCount}</span>
+        </span>
+      </div>
+      <p className="text-[12px] leading-[1.45] text-[#6f7282]">
+        {bulkShowYield
+          ? "Можно вставить из Excel сразу два столбца — наименование и выход: встаньте в первую ячейку и нажмите Ctrl+V."
+          : "Можно вставить из Excel или из списка столбец наименований: встаньте в первую ячейку и нажмите Ctrl+V."}
+      </p>
+      <div className="border-t border-[#ececf4] pt-4 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
+        Общие для всех изделий
+      </div>
+    </div>
+  );
+  const rowFields = ({
+    withProductName,
+    withPortion = true,
+    leading,
+  }: {
+    withProductName: boolean;
+    /** false — в окне «списком»: у каждой строки таблицы свой выход. */
+    withPortion?: boolean;
+    leading?: React.ReactNode;
+  }) => (
     <div className="max-h-[calc(92vh-160px)] min-w-0 space-y-5 overflow-x-hidden overflow-y-auto px-6 py-5">
       {leading}
             <div className="space-y-2">
@@ -881,7 +991,7 @@ export function FinishedProductDocumentClient({
                 ) : null}
               </div>
             ) : null}
-            {isColumnVisible("portion") ? (
+            {withPortion && isColumnVisible("portion") ? (
               <div className="space-y-2">
                 <Label className="text-[13px] font-medium text-[#3c4053]">Вес выход, г</Label>
                 <Input
@@ -1256,27 +1366,65 @@ export function FinishedProductDocumentClient({
     );
   }
 
-  /** «Добавить из файла» — многострочная вставка списка наименований. */
-  function addRowsFromText() {
-    const items = bulkText
-      .split("\n")
-      .map((item) => item.trim())
-      .filter(Boolean);
+  /** «Добавить списком» — таблица «Наименование | Выход»: строка таблицы = строка журнала. */
+  function addRowsFromTable() {
+    const items = dishYieldRowsToAdd(bulkRows);
     if (items.length === 0) return;
+    if (items.length > BULK_ROWS_MAX) {
+      toast.error(`За один раз можно добавить не больше ${BULK_ROWS_MAX} строк`);
+      return;
+    }
+    const withYield = isColumnVisible("portion");
     // Общие поля из окна (даты, оценка, ответственные) — каждому изделию списка.
     const { id: _templateId, ...template } = draftRow;
     void _templateId;
     commitConfig(
       {
         ...config,
-        rows: [...config.rows, ...items.map((item) => createFinishedProductRow({ ...template, productName: item }))],
+        rows: [
+          ...config.rows,
+          ...items.map((item) =>
+            createFinishedProductRow({
+              ...template,
+              productName: item.name,
+              portionWeight: withYield ? item.yield : "",
+            })
+          ),
+        ],
       },
       true
     );
-    void dishSuggestions.remember(items);
-    setBulkText("");
+    void dishSuggestions.remember(items.map((item) => item.name));
+    setBulkRows(emptyDishYieldRows(BULK_TABLE_START_ROWS));
     setBulkOpen(false);
     toast.success(`Добавлено строк: ${items.length}`);
+  }
+
+  /** Вставка блока из Excel / списка в ячейку таблицы — заполняет вниз от этой строки. */
+  function pasteIntoBulkTable(event: React.ClipboardEvent<HTMLInputElement>, index: number) {
+    const text = event.clipboardData.getData("text/plain");
+    if (!isMultiCellPaste(text)) return;
+    event.preventDefault();
+    const parsed = parseDishYieldPaste(text);
+    if (parsed.rows.length === 0) return;
+    if (parsed.kind === "yields" && !isColumnVisible("portion")) {
+      toast.info("В этом журнале колонка выхода скрыта — вставьте наименования");
+      return;
+    }
+    const count = Math.min(parsed.rows.length, BULK_ROWS_MAX - index);
+    setBulkRows((prev) => applyPaste(prev, index, parsed));
+    toast.success(`Вставлено строк: ${count}`);
+  }
+
+  function updateBulkRow(index: number, patch: Partial<DishYieldRow>) {
+    setBulkRows((prev) => prev.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+  }
+
+  function removeBulkRow(index: number) {
+    setBulkRows((prev) => {
+      const next = prev.filter((_, i) => i !== index);
+      return next.length > 0 ? next : emptyDishYieldRows(1);
+    });
   }
 
   function openAddRow() {
@@ -1459,7 +1607,7 @@ export function FinishedProductDocumentClient({
                 label: "Добавить списком",
                 icon: <ListPlus className="size-4 text-[#6f7282]" />,
                 onSelect: () => {
-                  setBulkText("");
+                  setBulkRows(emptyDishYieldRows(BULK_TABLE_START_ROWS));
                   { setDraftRow(createDraft(users, "", draftPeople, config.timeDefaults, organolepticOptions)); setBulkOpen(true); };
                 },
               },
@@ -2000,23 +2148,8 @@ export function FinishedProductDocumentClient({
           </DialogHeader>
           {rowFields({
             withProductName: false,
-            leading: (
-              <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">Наименования изделий — каждое с новой строки</Label>
-                <Textarea
-                  value={bulkText}
-                  onChange={(event) => setBulkText(event.target.value)}
-                  placeholder={"Борщ\nКотлета по-киевски\nСалат «Цезарь»"}
-                  aria-label="Наименования изделий списком"
-                  className="min-h-[140px] rounded-2xl border-[#dcdfed] px-4 py-3 text-[15px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
-                />
-                <div className="text-[12px] leading-[1.45] text-[#6f7282]">
-                  Будет добавлено строк:{" "}
-                  <span className="font-medium text-[#0b1024]">{bulkText.split("\n").map((item) => item.trim()).filter(Boolean).length}</span>.
-                  Поля ниже — общие для всех изделий списка, как в окне «Добавить изделие».
-                </div>
-              </div>
-            ),
+            withPortion: false,
+            leading: bulkTable,
           })}
           <div className="flex flex-col-reverse gap-2 border-t bg-white px-6 py-4 sm:flex-row sm:justify-end">
             <Button
@@ -2030,8 +2163,8 @@ export function FinishedProductDocumentClient({
             <Button
               type="button"
               className="h-10 w-full rounded-xl bg-[#5566f6] px-5 text-[14px] font-medium text-white transition-colors hover:bg-[#4a5bf0] sm:w-auto"
-              onClick={addRowsFromText}
-              disabled={bulkText.split("\n").map((item) => item.trim()).filter(Boolean).length === 0}
+              onClick={addRowsFromTable}
+              disabled={bulkAddCount === 0}
             >
               Добавить
             </Button>

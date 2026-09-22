@@ -551,7 +551,7 @@ export default function MiniTodayPage() {
                 Вернули на переделку:
               </span>{" "}
               {data.myActive.verifierComment?.trim() ||
-                "комментария нет — уточните у заведующей."}
+                "комментария нет — уточните у заведующего производством."}
             </div>
           ) : null}
         </div>

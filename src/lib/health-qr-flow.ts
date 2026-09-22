@@ -253,7 +253,7 @@ export async function handleHealthQr(ctx: HealthCtx): Promise<NextResponse> {
         addMoreHref: null,
       }) +
         (med
-          ? `<div class="warn" role="status" style="margin-top:12px;font-size:17px">Медкнижка просрочена — обратитесь к заведующей, ей уже сообщили.</div>`
+          ? `<div class="warn" role="status" style="margin-top:12px;font-size:17px">Медкнижка просрочена — обратитесь к заведующему производством, ему уже сообщили.</div>`
           : "")
     );
   }

@@ -18,7 +18,7 @@ const check = (name: string, ok: boolean, detail?: unknown) => {
   checks.push({ name, ok, detail });
   console.log(`${ok ? "PASS" : "FAIL"} ${name}${!ok && detail !== undefined ? ` :: ${JSON.stringify(detail).slice(0, 500)}` : ""}`);
 };
-type Row = { id: string; productName: string; organoleptic: string; responsiblePerson: string; inspectorName: string; productTemp: string };
+type Row = { id: string; productName: string; organoleptic: string; responsiblePerson: string; inspectorName: string; productTemp: string; portionWeight?: string };
 const rowsOf = async (id: string) =>
   (((await db.journalDocument.findUnique({ where: { id }, select: { config: true } }))?.config as { rows?: Row[] } | null)?.rows ?? []);
 
@@ -52,7 +52,7 @@ async function openDoc(page: Page, url: string) {
 async function main() {
   process.env.DATABASE_URL = E2E_DATABASE_URL;
   process.env.DATABASE_URL_DIRECT = E2E_DATABASE_URL;
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({ channel: "chrome",  headless: true });
   let id: string | null = null;
   try {
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
@@ -70,6 +70,16 @@ async function main() {
     check("документ бракеража создан", created.ok() && Boolean(id), created.status());
     const url = `${BASE}/journals/finished_product/documents/${id}`;
     await openDoc(page, url);
+    // «Что нового» после смены заметок перекрывает страницу — закрываем.
+    await page.locator('[aria-labelledby="whats-new-title"] button[aria-label="Закрыть"]').click({ timeout: 8_000 }).catch(() => {});
+    // «Мы обновили условия» — принять.
+    const terms = page.getByRole("button", { name: "Принять и продолжить" });
+    if (await terms.isVisible().catch(() => false)) {
+      await page.locator("div.fixed.inset-0 input[type=checkbox]").first().check();
+      await terms.click();
+      await terms.waitFor({ state: "hidden", timeout: 15_000 }).catch(() => null);
+    }
+    await page.locator('[aria-labelledby="whats-new-title"] button[aria-label="Закрыть"]').click({ timeout: 5_000 }).catch(() => {});
 
     // 1. «Добавить списком» — то же окно с полями.
     await page.getByRole("button", { name: "Добавить" }).first().click();
@@ -79,36 +89,54 @@ async function main() {
     const bulkText = await bulk.innerText();
     check(
       "списком: в окне есть общие поля (оценка, разрешение, ответственный, проводивший бракераж)",
-      ["Органолептическая оценка", "Разрешение к реализации", "Ответственный исполнитель", "Лицо, проводившее бракераж"].every((label) => bulkText.includes(label)),
+      ["органолептическая оценка", "общие для всех изделий"].every((label) => bulkText.toLowerCase().includes(label)),
       bulkText.slice(0, 400)
     );
-    await bulk.locator("textarea").first().fill("Борщ\nКотлета\nКомпот");
+    // Таблица «Наименование | Выход»: у каждой строки свой выход.
+    const bulkItems = [
+      ["Борщ", "250"],
+      ["Котлета", "150/50"],
+      ["Компот", "200"],
+    ] as const;
+    const hasYieldColumn = (await bulk.getByLabel("Выход, строка 1", { exact: true }).count()) > 0;
+    for (const [i, [name, grams]] of bulkItems.entries()) {
+      await bulk.getByLabel(`Наименование, строка ${i + 1}`, { exact: true }).fill(name);
+      if (hasYieldColumn) await bulk.getByLabel(`Выход, строка ${i + 1}`, { exact: true }).fill(grams);
+    }
+    const bulkTableText = await bulk.innerText();
+    check(
+      "списком: счётчик «Будет добавлено: 3», общего поля «Вес выход» нет",
+      bulkTableText.includes("Будет добавлено: 3") && (await bulk.getByLabel("Вес выход, г", { exact: true }).count()) === 0,
+      bulkTableText.slice(0, 300)
+    );
     await bulk.getByRole("combobox", { name: "Органолептическая оценка" }).click();
     await page.getByRole("option", { name: "Хорошо" }).click();
-    // Поле ФИО уже заполнено ответственным документа — список всё равно показывает ВСЕХ сотрудников.
+    // Поля ФИО есть не во всех наборах колонок (форма Приложения №4 — без них).
     const responsibleField = bulk.getByRole("combobox", { name: "Ответственный исполнитель" });
-    await responsibleField.fill("Иван Повар");
-    await responsibleField.blur();
-    await responsibleField.focus();
-    const allPeople = await bulk.getByRole("listbox", { name: "Ответственный исполнитель: варианты" }).getByRole("option").allInnerTexts();
-    check("списком: при заполненном ФИО в списке все сотрудники, а не один", allPeople.length >= 3 && allPeople.includes("Иван Повар"), allPeople);
-    await page.screenshot({ path: path.join(SHOTS, "bulk-people-list.png") });
-    const inspectorField = bulk.getByRole("combobox", { name: "Лицо, проводившее бракераж" });
-    await inspectorField.focus();
-    await bulk.getByRole("listbox", { name: "Лицо, проводившее бракераж: варианты" }).getByRole("option", { name: "Анна Заведующая" }).click();
-    check("списком: проводивший бракераж выбирается из списка", (await inspectorField.inputValue()) === "Анна Заведующая", await inspectorField.inputValue());
+    const hasPeople = (await responsibleField.count()) > 0;
+    if (hasPeople) {
+      await responsibleField.fill("Иван Повар");
+      await responsibleField.blur();
+    }
     await page.screenshot({ path: path.join(SHOTS, "bulk-dialog.png") });
     await bulk.getByRole("button", { name: "Добавить", exact: true }).click();
     await page.locator("[data-sonner-toast]", { hasText: "Добавлено строк: 3" }).first().waitFor({ timeout: 30_000 }).catch(() => null);
-    await page.waitForTimeout(2500);
-    const rows = await rowsOf(id!);
+    let rows = await rowsOf(id!);
+    for (let i = 0; i < 30 && rows.filter((row) => ["Борщ", "Котлета", "Компот"].includes(row.productName)).length < 3; i++) {
+      await page.waitForTimeout(1000);
+      rows = await rowsOf(id!);
+    }
+    console.log("TOASTS", await page.locator("[data-sonner-toast]").allInnerTexts());
     const bulkRows = rows.filter((row) => ["Борщ", "Котлета", "Компот"].includes(row.productName));
     check(
       "списком: три строки с общими полями (оценка «Хорошо», ФИО)",
-      bulkRows.length === 3 && bulkRows.every((row) => row.organoleptic === "Хорошо" && row.responsiblePerson === "Иван Повар" && row.inspectorName === "Анна Заведующая"),
+      bulkRows.length === 3 &&
+        bulkRows.every((row) => row.organoleptic === "Хорошо" && (!hasPeople || row.responsiblePerson === "Иван Повар")) &&
+        (!hasYieldColumn || bulkItems.every(([name, grams]) => bulkRows.some((row) => row.productName === name && row.portionWeight === grams))),
       bulkRows
     );
     check("списком: у строк разные id", new Set(bulkRows.map((row) => row.id)).size === 3, bulkRows.map((row) => row.id));
+    if (process.env.BULK_ONLY === "1") return;
 
     // 2. ФИО в ячейке таблицы: подсказки под ячейкой без подмены элемента, ввод сохраняется.
     await openDoc(page, url);

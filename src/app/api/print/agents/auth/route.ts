@@ -81,7 +81,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "Подключить принтер может управляющий или заведующая производством",
+          "Подключить принтер может управляющий или заведующий производством",
       },
       { status: 403 },
     );

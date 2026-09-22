@@ -138,7 +138,8 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   "Колонки и шаблоны журналов": Table2,
   "Общий справочник блюд": ClipboardCheck,
   "Холодильники, склады и УФ-лампы": QrCode,
-  "Заведующей: права и личный QR": KeyRound,
+  "Заведующему производством: права и личный QR": KeyRound,
+  "График генеральных уборок и БЖГП": ClipboardCheck,
   "Проверка в конце смены": BellRing,
   "Telegram-бот": MessageCircle,
 };

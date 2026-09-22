@@ -93,7 +93,7 @@ export function OnboardingDocHealthCard({
               {missingVerifier > 0 ? (
                 <li className="flex items-start gap-1.5">
                   <span className="mt-1 inline-flex size-1.5 shrink-0 rounded-full bg-[#a13a32]" />
-                  {missingVerifier} без проверяющего — заведующая не получит
+                  {missingVerifier} без проверяющего — заведующий производством не получит
                   «проверь когда заполнят»
                 </li>
               ) : null}

@@ -6,6 +6,7 @@ import {
   getPrimarySlotId,
   getSchemaForJournal,
   getVerifierSlotId,
+  rankKindForSlot,
 } from "@/lib/journal-responsible-schemas";
 import {
   hasDocumentConfigPatcher,
@@ -20,6 +21,7 @@ import {
   rankRosterForSlot,
   type RosterUser,
 } from "@/lib/journal-roster";
+import { getUserDisplayTitle } from "@/lib/user-roles";
 
 /** Ростер для авто-подбора слотов (опционально — только выбранные должности). */
 async function loadSlotRoster(
@@ -210,7 +212,7 @@ export async function cascadeResponsibleToActiveDocuments(input: {
     // Проверяющий может совпадать с исполнителем.
     const pick = rankRosterForSlot(
       cascadeRoster,
-      { kind: slot.kind ?? "filler", positionKeywords: slot.positionKeywords },
+      { kind: rankKindForSlot(slot), positionKeywords: slot.positionKeywords },
       usedUserIds
     );
     if (pick) {
@@ -260,7 +262,13 @@ export async function cascadeResponsibleToActiveDocuments(input: {
         organizationId,
         ...ORG_ROSTER_WHERE,
       },
-      select: { id: true, name: true, jobPosition: { select: { name: true } } },
+      select: {
+        id: true,
+        name: true,
+        role: true,
+        positionTitle: true,
+        jobPosition: { select: { name: true } },
+      },
     });
     validUserIds = new Set(owned.map((u) => u.id));
 
@@ -273,7 +281,7 @@ export async function cascadeResponsibleToActiveDocuments(input: {
     // Patcher needs name+title — заведём lookup map.
     const userNameMap = new Map(owned.map((u) => [u.id, u.name] as const));
     const userPosMap = new Map(
-      owned.map((u) => [u.id, u.jobPosition?.name ?? ""] as const)
+      owned.map((u) => [u.id, getUserDisplayTitle(u)] as const)
     );
 
     // 4. Патчим document.config + ставим responsibleUserId.
@@ -508,7 +516,7 @@ export async function prefillResponsiblesForNewDocument(input: {
     // живые сотрудники. Проверяющий может совпадать с исполнителем.
     const pick = rankRosterForSlot(
       prefillRoster,
-      { kind: slot.kind ?? "filler", positionKeywords: slot.positionKeywords },
+      { kind: rankKindForSlot(slot), positionKeywords: slot.positionKeywords },
       usedIds
     );
     if (pick) {
@@ -540,12 +548,20 @@ export async function prefillResponsiblesForNewDocument(input: {
         organizationId,
         ...ORG_ROSTER_WHERE,
       },
-      select: { id: true, name: true, jobPosition: { select: { name: true } } },
+      select: {
+        id: true,
+        name: true,
+        role: true,
+        positionTitle: true,
+        jobPosition: { select: { name: true } },
+      },
     });
     validUserIds = new Set(owned.map((u) => u.id));
     userNameMap = new Map(owned.map((u) => [u.id, u.name] as const));
+    // Должность — как в карточке сотрудника: jobPosition → positionTitle →
+    // название роли. Её же печатает шапка («УТВЕРЖДАЮ», «Ответственный»).
     userPosMap = new Map(
-      owned.map((u) => [u.id, u.jobPosition?.name ?? ""] as const)
+      owned.map((u) => [u.id, getUserDisplayTitle(u)] as const)
     );
     for (const [k, v] of Object.entries(slots)) {
       if (v && !validUserIds.has(v)) slots[k] = null;

@@ -6,6 +6,7 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { areaSchema } from "@/lib/validators";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { guessRoomKind } from "@/lib/orphan-areas";
 
 export async function GET() {
   try {
@@ -69,6 +70,41 @@ export async function POST(request: Request) {
         organizationId: getActiveOrgId(session),
       },
     });
+
+    // Обратное зеркало Area → Room (к зеркалу Room → Area в
+    // api/settings/rooms/route.ts): новый цех сразу появляется и как
+    // помещение для уборки/климата. Только когда здание одно — иначе
+    // не угадать, куда класть; и только если помещения с таким названием
+    // (без учёта регистра) в организации ещё нет. Best-effort: цех уже
+    // создан, сбой здесь не должен ронять ответ.
+    try {
+      const orgId = getActiveOrgId(session);
+      const buildings = await db.building.findMany({
+        where: { organizationId: orgId },
+        select: { id: true },
+        take: 2,
+      });
+      if (buildings.length === 1) {
+        const sameRoom = await db.room.findFirst({
+          where: {
+            building: { organizationId: orgId },
+            name: { equals: area.name, mode: "insensitive" },
+          },
+          select: { id: true },
+        });
+        if (!sameRoom) {
+          await db.room.create({
+            data: {
+              buildingId: buildings[0].id,
+              name: area.name,
+              kind: guessRoomKind(area.name),
+            },
+          });
+        }
+      }
+    } catch (mirrorError) {
+      console.error("Area → Room mirror failed:", mirrorError);
+    }
 
     return NextResponse.json({ area }, { status: 201 });
   } catch (error) {

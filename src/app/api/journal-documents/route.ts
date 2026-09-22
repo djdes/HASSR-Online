@@ -134,6 +134,15 @@ import {
 import { findOrgUser } from "@/lib/journal-roster-db";
 import { seedEntriesForDocument } from "@/lib/journal-document-entries-seed";
 
+/**
+ * Журналы, где утверждающий шапки («УТВЕРЖДАЮ») — отдельный слот
+ * ответственных, а не основной. У остальных журналов утверждающий
+ * совпадает с основным слотом и уже берётся из диалога.
+ */
+const APPROVER_SLOT_BY_JOURNAL: Record<string, string> = {
+  [SANITATION_DAY_TEMPLATE_CODE]: "manager",
+};
+
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
@@ -843,6 +852,11 @@ export async function POST(request: Request) {
           ...(((initialConfig as Record<string, unknown>) || {}) as Record<string, unknown>),
           ...((rawConfig || {}) as Record<string, unknown>),
         }
+      : resolvedTemplateCode === SANITATION_DAY_TEMPLATE_CODE
+      ? // initialConfig уже слил поля диалога (approve*/responsible*) с
+        // помещениями справочника. Сырой `config` из тела без `rows`
+        // обнулил бы график — новый документ оставался без помещений.
+        normalizeJournalStaffBoundConfig(resolvedTemplateCode, initialConfig, allUsers)
       : normalizeJournalStaffBoundConfig(
           resolvedTemplateCode,
           config ?? initialConfig ?? undefined,
@@ -906,6 +920,18 @@ export async function POST(request: Request) {
   }
   if (bodyVerifierUserId) {
     slotOverrides[getVerifierSlotId(resolvedTemplateCode)] = bodyVerifierUserId;
+  }
+  // Утверждающий («УТВЕРЖДАЮ» в шапке) у части журналов — отдельный слот,
+  // а не основной. Диалог присылает его в `config.approveEmployeeId`;
+  // без override слот подбирался бы сам, и в шапке оказалась бы
+  // должность из диалога рядом с ФИО другого человека.
+  const approverSlotId = APPROVER_SLOT_BY_JOURNAL[resolvedTemplateCode];
+  const bodyApproveEmployeeId =
+    rawConfig && typeof rawConfig.approveEmployeeId === "string"
+      ? rawConfig.approveEmployeeId
+      : "";
+  if (approverSlotId && bodyApproveEmployeeId && orgUserIds.has(bodyApproveEmployeeId)) {
+    slotOverrides[approverSlotId] = bodyApproveEmployeeId;
   }
   const prefilled = await prefillResponsiblesForNewDocument({
     organizationId: getActiveOrgId(session),

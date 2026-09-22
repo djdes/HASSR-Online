@@ -7,9 +7,13 @@
  * создать новое помещение прямо здесь (POST /api/settings/rooms).
  *
  * Единый справочник помещений, 2026-09-04.
+ *
+ * 2026-09-22: отдельная группа «Цеха без помещения» — цеха из «Цеха и
+ * участки» (Area), для которых ещё нет Room с тем же названием. «+»
+ * создаёт помещение с названием цеха и дальше идёт по обычному onCreated.
  */
-import { useMemo, useState } from "react";
-import { Building2, Plus, Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Building2, Factory, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -20,7 +24,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { DirectoryBuilding, DirectoryRoom } from "@/lib/room-directory";
+import type { DirectoryBuilding, DirectoryRoom, OrphanArea } from "@/lib/room-directory";
+import { guessRoomKind, normalizePlaceName } from "@/lib/orphan-areas";
+import { pluralRu } from "@/lib/plural-ru";
+
+function equipmentLabel(count: number): string {
+  if (count <= 0) return "цех · без оборудования";
+  return `цех · ${count} ${pluralRu(count, "единица", "единицы", "единиц")} оборудования`;
+}
 
 const KIND_LABELS: Record<string, string> = {
   guest: "Гостевая зона",
@@ -91,9 +102,118 @@ export function RoomDirectoryPickerDialog(props: RoomDirectoryPickerDialogProps)
         .filter((g) => g.rooms.length > 0),
     [props.buildings, excluded, q],
   );
-  const nothingLeft = props.buildings.every((b) =>
+  // Цеха без помещения — подгружаем сами при открытии. Ошибка загрузки
+  // не ломает окно: группа просто не показывается.
+  const [orphans, setOrphans] = useState<OrphanArea[]>([]);
+  useEffect(() => {
+    if (!props.open) return;
+    let cancelled = false;
+    fetch("/api/settings/rooms/orphan-areas", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body: { areas?: OrphanArea[] } | null) => {
+        if (!cancelled) setOrphans(Array.isArray(body?.areas) ? body.areas : []);
+      })
+      .catch(() => {
+        if (!cancelled) setOrphans([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [props.open]);
+  const qNorm = normalizePlaceName(query);
+  const visibleOrphans = useMemo(
+    () => orphans.filter((a) => !qNorm || normalizePlaceName(a.name).includes(qNorm)),
+    [orphans, qNorm],
+  );
+  const roomsLeft = !props.buildings.every((b) =>
     b.rooms.every((r) => excluded.has(r.id)),
   );
+  const nothingLeft = !roomsLeft && orphans.length === 0;
+  const selectedBuildingId = newBuildingId || props.buildings[0]?.id || "";
+
+  async function postRoom(buildingId: string, name: string, kind: string): Promise<DirectoryRoom> {
+    const res = await fetch("/api/settings/rooms", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ buildingId, name, kind }),
+    });
+    const body = (await res.json().catch(() => ({}))) as { room?: Record<string, unknown>; error?: string };
+    if (!res.ok || !body.room) {
+      throw new Error(body.error ?? `HTTP ${res.status}`);
+    }
+    return createdToDirectoryRoom(body.room, name, kind);
+  }
+
+  async function createFromArea(area: OrphanArea) {
+    if (!selectedBuildingId) {
+      toast.error("Сначала заведите здание в «Настройки → Помещения»");
+      return;
+    }
+    setBusy(true);
+    try {
+      const room = await postRoom(selectedBuildingId, area.name, guessRoomKind(area.name));
+      setOrphans((prev) => prev.filter((a) => a.id !== area.id));
+      await props.onCreated(room);
+      props.onOpenChange(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Не удалось создать помещение");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const orphanGroup =
+    visibleOrphans.length > 0 ? (
+      <div>
+        <div className="mb-1 flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
+          <Factory className="size-3.5" />
+          Цеха без помещения
+        </div>
+        <p className="mb-2 text-[12px] leading-[1.5] text-[#6f7282]">
+          {props.buildings.length === 0
+            ? "Сначала заведите здание в «Настройки → Помещения» — тогда цех можно будет добавить в журнал."
+            : "Из «Цеха и участки». Нажмите +, и мы создадим помещение с тем же названием и добавим его в журнал."}
+        </p>
+        {props.buildings.length > 1 ? (
+          <label className="mb-2 flex items-center gap-2 text-[12px] text-[#6f7282]">
+            <span className="shrink-0">Создать в здании</span>
+            <select
+              value={selectedBuildingId}
+              onChange={(e) => setNewBuildingId(e.target.value)}
+              className="h-9 min-w-0 flex-1 rounded-2xl border border-[#dcdfed] bg-white px-3 text-[13px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
+            >
+              {props.buildings.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        <div className="space-y-1">
+          {visibleOrphans.map((area) => (
+            <button
+              key={area.id}
+              type="button"
+              disabled={busy || props.buildings.length === 0}
+              onClick={() => createFromArea(area)}
+              title="Создать помещение с этим названием и добавить в журнал"
+              className="flex w-full items-center justify-between gap-3 rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-2.5 text-left transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-50"
+            >
+              <span className="min-w-0">
+                <span className="block truncate text-[14px] font-medium text-[#0b1024]">
+                  {area.name}
+                </span>
+                <span className="block text-[11.5px] text-[#6f7282]">
+                  {equipmentLabel(area.equipmentCount)}
+                </span>
+              </span>
+              <Plus className="size-4 shrink-0 text-[#5566f6]" />
+            </button>
+          ))}
+        </div>
+      </div>
+    ) : null;
 
   async function pick(room: DirectoryRoom) {
     setBusy(true);
@@ -113,23 +233,14 @@ export function RoomDirectoryPickerDialog(props: RoomDirectoryPickerDialogProps)
       toast.error("Введите название помещения");
       return;
     }
-    const buildingId = newBuildingId || props.buildings[0]?.id;
+    const buildingId = selectedBuildingId;
     if (!buildingId) {
       toast.error("Сначала заведите здание в «Настройки → Помещения»");
       return;
     }
     setBusy(true);
     try {
-      const res = await fetch("/api/settings/rooms", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ buildingId, name, kind: newKind }),
-      });
-      const body = (await res.json().catch(() => ({}))) as { room?: Record<string, unknown>; error?: string };
-      if (!res.ok || !body.room) {
-        throw new Error(body.error ?? `HTTP ${res.status}`);
-      }
-      const room = createdToDirectoryRoom(body.room, name, newKind);
+      const room = await postRoom(buildingId, name, newKind);
       setNewName("");
       setCreating(false);
       await props.onCreated(room);
@@ -163,6 +274,9 @@ export function RoomDirectoryPickerDialog(props: RoomDirectoryPickerDialogProps)
                 Заведите здание и помещения в «Настройки → Помещения» — они появятся во всех журналах.
               </p>
             </div>
+          ) : null}
+          {props.buildings.length === 0 ? (
+            orphanGroup
           ) : (
             <>
               {!nothingLeft ? (
@@ -171,7 +285,7 @@ export function RoomDirectoryPickerDialog(props: RoomDirectoryPickerDialogProps)
                   <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Поиск помещения"
+                    placeholder={orphans.length > 0 ? "Поиск помещения или цеха" : "Поиск помещения"}
                     className="h-full w-full bg-transparent text-[14px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:outline-none"
                   />
                 </label>
@@ -181,10 +295,11 @@ export function RoomDirectoryPickerDialog(props: RoomDirectoryPickerDialogProps)
                 <p className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-3 text-[13px] text-[#6f7282]">
                   Все помещения справочника уже в этом документе. Можно создать новое.
                 </p>
-              ) : groups.length === 0 ? (
+              ) : groups.length === 0 && visibleOrphans.length === 0 ? (
                 <p className="px-1 text-[13px] text-[#6f7282]">Ничего не нашли.</p>
               ) : (
-                groups.map((g) => (
+                <>
+                {groups.map((g) => (
                   <div key={g.building.id}>
                     <div className="mb-1.5 flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
                       <Building2 className="size-3.5" />
@@ -212,7 +327,9 @@ export function RoomDirectoryPickerDialog(props: RoomDirectoryPickerDialogProps)
                       ))}
                     </div>
                   </div>
-                ))
+                ))}
+                {orphanGroup}
+                </>
               )}
 
               {creating ? (

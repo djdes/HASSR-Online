@@ -78,6 +78,7 @@ import {
 } from "@/components/journals/use-document-dialog-submit";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { resolveApprover } from "@/lib/approver-display";
 type UserItem = { id: string; name: string; role: string };
 
 type AuditPlanDocumentItem = {
@@ -578,7 +579,10 @@ export function AuditPlanDocumentsClient({
               <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
                 <div className={JOURNAL_CARD_LABEL_CLASS}>Должность &quot;Утверждаю&quot;</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
-                  {getAuditPlanApproveLabel(cfg.approveRole, cfg.approveEmployee)}
+                  {getAuditPlanApproveLabel(
+                    resolveApprover(cfg, users).title,
+                    resolveApprover(cfg, users).name
+                  )}
                 </div>
               </Link>
               <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>

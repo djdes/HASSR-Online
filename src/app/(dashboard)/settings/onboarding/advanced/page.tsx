@@ -298,7 +298,7 @@ export default async function OnboardingAdvancedPage() {
 
   const hierarchyItem: SetupItem = {
     title: "Иерархия управления",
-    description: "Заведующая видит свою подсменую через ManagerScope",
+    description: "Заведующий производством видит свою подсменую через ManagerScope",
     href: "/settings/staff-hierarchy",
     icon: Network,
     state: managerScopesCount === 0 ? "empty" : "complete",

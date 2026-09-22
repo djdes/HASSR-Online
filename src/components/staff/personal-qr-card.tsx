@@ -86,7 +86,7 @@ export function PersonalQrCard({ employeeId, employeeName }: { employeeId: strin
         <div className="min-w-0 flex-1">
           <div className="text-[14px] font-medium text-[#0b1024]">Личный QR-вход в кабинет</div>
           <p className="mt-0.5 text-[12px] leading-snug text-[#6f7282]">
-            Сотрудник сканирует свой QR, вводит PIN — и он в кабинете. Удобно для заведующей: с галкой «Разрешение
+            Сотрудник сканирует свой QR, вводит PIN — и он в кабинете. Удобно для заведующего производством: с галкой «Разрешение
             менять настройки» открываются все настройки.
             {status && !status.hasPin ? " Сначала задайте PIN ниже или выше — без него QR не пустит." : ""}
           </p>

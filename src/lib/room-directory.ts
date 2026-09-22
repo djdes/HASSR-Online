@@ -8,6 +8,7 @@
  * не расходились в наборе полей.
  */
 import { db } from "@/lib/db";
+import { orphanAreas } from "@/lib/orphan-areas";
 
 export const ROOM_DIRECTORY_SELECT = {
   id: true,
@@ -95,4 +96,33 @@ export async function loadDirectoryBuildings(
       climateNorms: r.climateNorms,
     })),
   }));
+}
+
+/** Цех (Area) без помещения с тем же названием — кандидат в помещение. */
+export type OrphanArea = {
+  id: string;
+  name: string;
+  equipmentCount: number;
+};
+
+/**
+ * Цеха организации, для которых нет Room с тем же названием (без регистра,
+ * ё=е). Показываются в окне «Добавить помещение» отдельной группой.
+ */
+export async function loadOrphanAreas(organizationId: string): Promise<OrphanArea[]> {
+  const [areas, rooms] = await Promise.all([
+    db.area.findMany({
+      where: { organizationId },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, _count: { select: { equipment: true } } },
+    }),
+    db.room.findMany({
+      where: { building: { organizationId } },
+      select: { name: true },
+    }),
+  ]);
+  return orphanAreas(
+    areas,
+    rooms.map((r) => r.name),
+  ).map((a) => ({ id: a.id, name: a.name, equipmentCount: a._count.equipment }));
 }

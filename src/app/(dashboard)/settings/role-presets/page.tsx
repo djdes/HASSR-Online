@@ -73,7 +73,7 @@ export default async function RolePresetsPage() {
       />
 
       <div className="rounded-3xl border border-[#ffe9b0] bg-[#fff8eb] p-4 text-[13px] text-[#a13a32]">
-        <strong>Заведующая (head_chef)</strong> по умолчанию НЕ имеет
+        <strong>Заведующий производством (head_chef)</strong> по умолчанию НЕ имеет
         capability <code className="rounded bg-white/50 px-1 font-mono">journals.view</code>
         — она видит «задачи» вместо «журналы», работает на Контрольной
         доске и проверяет выполненные задачи. Если нужно — поставь

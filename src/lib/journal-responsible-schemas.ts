@@ -38,7 +38,26 @@ export type ResponsibleSlot = {
    * (один verifier-слот).
    */
   kind?: "filler" | "verifier";
+  /**
+   * Порядок автоподбора сотрудника при создании документа.
+   * "management" — руководство первым (утверждающий шапки «УТВЕРЖДАЮ»).
+   * Влияет только на ранжирование: слот остаётся заполняющим (`kind`).
+   */
+  rank?: "management";
 };
+
+/**
+ * Порядок автоподбора сотрудника на слот (`rankRosterForSlot`).
+ * Утверждающий шапки (`rank: "management"`) ранжируется как проверяющий —
+ * руководство первым, — но остаётся заполняющим слотом во всём остальном
+ * (задачи TasksFlow, verifierUserId, секции настроек).
+ */
+export function rankKindForSlot(
+  slot: Pick<ResponsibleSlot, "kind" | "rank">
+): "filler" | "verifier" {
+  if (slot.rank === "management") return "verifier";
+  return slot.kind ?? "filler";
+}
 
 export type JournalResponsibleSchema = {
   code: string;
@@ -120,9 +139,10 @@ const SCHEMA_OVERRIDES: Record<string, readonly ResponsibleSlot[]> = {
     },
     {
       id: "manager",
-      label: "Контроль (менеджер)",
-      hint: "Подписывает акт",
-      positionKeywords: ["менеджер", "управляющ"],
+      label: "Утверждает (руководитель)",
+      hint: "Подписывает «УТВЕРЖДАЮ» в шапке графика",
+      positionKeywords: ["завед", "управляющ", "руковод", "директор", "менеджер"],
+      rank: "management",
     },
   ],
   cleaning_ventilation_checklist: [
@@ -139,7 +159,7 @@ const SCHEMA_OVERRIDES: Record<string, readonly ResponsibleSlot[]> = {
     {
       id: "main",
       label: "Кто проводит осмотр",
-      hint: "Шеф / заведующая утром перед сменой",
+      hint: "Шеф-повар или заведующий производством утром перед сменой",
       primary: true,
       positionKeywords: ["шеф", "заведующ", "управляющ", "менеджер"],
     },

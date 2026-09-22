@@ -48,30 +48,60 @@ function asArr<T = unknown>(v: unknown): T[] {
   return Array.isArray(v) ? (v as T[]) : [];
 }
 
-/** Помощник: подменить approveEmployeeId/Employee при наличии primary slot. */
+/**
+ * Помощник: подменить approveEmployeeId/Employee при наличии primary slot.
+ * `roleField` — у журналов, где шапка «УТВЕРЖДАЮ» печатает должность:
+ * пишем должность того же человека, иначе в шапке оставалась бы
+ * должность прежнего утверждающего рядом с новым ФИО.
+ */
 function patchApprove(
   cfg: ConfigObj,
   userId: string | null,
   ctx: DocPatcherCtx,
   fieldId = "approveEmployeeId",
-  fieldName = "approveEmployee"
+  fieldName = "approveEmployee",
+  roleField?: string
 ): ConfigObj {
   if (!userId) return cfg;
+  const title = roleField ? ctx.getPositionTitle(userId) : "";
   return {
     ...cfg,
     [fieldId]: userId,
     [fieldName]: ctx.getName(userId),
+    ...(roleField && title ? { [roleField]: title } : {}),
   };
 }
 
-/** Помощник: подменить responsibleEmployeeId. */
+/** Утверждающий шапки «УТВЕРЖДАЮ» вместе с должностью (approveRole). */
+function patchApproveWithRole(
+  cfg: ConfigObj,
+  userId: string | null,
+  ctx: DocPatcherCtx
+): ConfigObj {
+  return patchApprove(cfg, userId, ctx, "approveEmployeeId", "approveEmployee", "approveRole");
+}
+
+/**
+ * Помощник: подменить responsibleEmployeeId. С `named` — ещё ФИО и
+ * должность (responsibleEmployee / responsibleRole), если журнал
+ * печатает их в шапке.
+ */
 function patchResponsibleEmp(
   cfg: ConfigObj,
   userId: string | null,
-  field = "responsibleEmployeeId"
+  field = "responsibleEmployeeId",
+  named?: { ctx: DocPatcherCtx; nameField: string; roleField: string }
 ): ConfigObj {
   if (!userId) return cfg;
-  return { ...cfg, [field]: userId };
+  if (!named) return { ...cfg, [field]: userId };
+  const name = named.ctx.getName(userId);
+  const title = named.ctx.getPositionTitle(userId);
+  return {
+    ...cfg,
+    [field]: userId,
+    ...(name ? { [named.nameField]: name } : {}),
+    ...(title ? { [named.roleField]: title } : {}),
+  };
 }
 
 /** Помощник: подменить responsibleUserId / defaultResponsibleUserId. */
@@ -103,10 +133,10 @@ const PATCHERS: Record<string, Patcher> = {
   // Pattern A: single primary user → top-level config field
   // ═══════════════════════════════════════════════════════════════
   training_plan: (cfg, slots, ctx) =>
-    patchApprove(cfg, slots.main ?? null, ctx),
+    patchApproveWithRole(cfg, slots.main ?? null, ctx),
 
   audit_plan: (cfg, slots, ctx) =>
-    patchApprove(cfg, slots.main ?? null, ctx),
+    patchApproveWithRole(cfg, slots.main ?? null, ctx),
 
   audit_protocol: (cfg, slots, ctx) =>
     patchApprove(cfg, slots.main ?? null, ctx),
@@ -115,11 +145,11 @@ const PATCHERS: Record<string, Patcher> = {
     patchApprove(cfg, slots.main ?? null, ctx),
 
   equipment_calibration: (cfg, slots, ctx) =>
-    patchApprove(cfg, slots.main ?? null, ctx),
+    patchApproveWithRole(cfg, slots.main ?? null, ctx),
 
   equipment_maintenance: (cfg, slots, ctx) => {
     const u = slots.main ?? null;
-    let next = patchApprove(cfg, u, ctx);
+    let next = patchApproveWithRole(cfg, u, ctx);
     next = patchResponsibleEmp(next, u);
     return next;
   },
@@ -128,8 +158,12 @@ const PATCHERS: Record<string, Patcher> = {
     // Pattern B (2 slots): supervisor (старший бригады) + manager (контроль)
     const supervisor = slots.supervisor ?? slots.main ?? null;
     const manager = slots.manager ?? supervisor;
-    let next = patchApprove(cfg, manager, ctx);
-    next = patchResponsibleEmp(next, supervisor);
+    let next = patchApproveWithRole(cfg, manager, ctx);
+    next = patchResponsibleEmp(next, supervisor, "responsibleEmployeeId", {
+      ctx,
+      nameField: "responsibleEmployee",
+      roleField: "responsibleRole",
+    });
     return next;
   },
 

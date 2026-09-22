@@ -200,7 +200,7 @@ export async function POST(request: Request) {
     body.message?.trim() ||
     (body.scopeLabel
       ? `📌 Напоминание: <b>${escape(body.scopeLabel)}</b> — нужно выполнить.`
-      : `🔔 Заведующая просит начать смену — открой Wesetup и возьми задачи.`);
+      : `🔔 Заведующий производством просит начать смену — открой Wesetup и возьми задачи.`);
 
   let sent = 0;
   let failed = 0;

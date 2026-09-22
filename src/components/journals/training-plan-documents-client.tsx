@@ -71,6 +71,7 @@ import {
 import { useAutoDocumentTitle } from "@/components/journals/use-auto-document-title";
 import { localDayKey } from "@/lib/entry-defaults";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
+import { resolveApprover } from "@/lib/approver-display";
 import {
   DocumentDialogFeedback,
   readCreatedDocument,
@@ -533,7 +534,10 @@ export function TrainingPlanDocumentsClient({
               <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>
                 <div className={JOURNAL_CARD_LABEL_CLASS}>Должность &quot;Утверждаю&quot;</div>
                 <div className={JOURNAL_CARD_VALUE_CLASS}>
-                  {getTrainingPlanApproveLabel(config.approveRole, config.approveEmployee)}
+                  {getTrainingPlanApproveLabel(
+                    resolveApprover(config, users).title,
+                    resolveApprover(config, users).name
+                  )}
                 </div>
               </Link>
               <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>

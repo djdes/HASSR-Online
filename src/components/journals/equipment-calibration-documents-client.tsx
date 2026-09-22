@@ -47,6 +47,8 @@ import {
   usePositionEmployeeCascade,
 } from "@/components/shared/position-select";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
+import { resolveApprover } from "@/lib/approver-display";
+import { formatPositionWithName } from "@/lib/position-name-label";
 const POSITION_OPTIONS = USER_ROLE_LABEL_VALUES;
 
 type JournalListDocument = {
@@ -222,7 +224,12 @@ export function EquipmentCalibrationDocumentsClient({
               </div>
               <div className={JOURNAL_CARD_SECTION_CLASS}>
                 <div className={JOURNAL_CARD_LABEL_CLASS}>Должность &quot;Утверждаю&quot;</div>
-                <div className={JOURNAL_CARD_VALUE_CLASS}>{cfg.approveRole}: {cfg.approveEmployee}</div>
+                <div className={JOURNAL_CARD_VALUE_CLASS}>
+                  {formatPositionWithName(
+                    resolveApprover(cfg, users).title,
+                    resolveApprover(cfg, users).name
+                  )}
+                </div>
               </div>
               <div className={JOURNAL_CARD_SECTION_CLASS}>
                 <div className={JOURNAL_CARD_LABEL_CLASS}>Дата документа</div>

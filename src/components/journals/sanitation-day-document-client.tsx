@@ -98,6 +98,7 @@ import { JournalAddRow } from "@/components/journals/journal-add-row";
 import { JournalPaperHeaderRows } from "@/components/journals/journal-document-header";
 import { localDayKey } from "@/lib/entry-defaults";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { resolveApprover, resolveResponsible } from "@/lib/approver-display";
 
 /**
  * Screen ↔ print duality tokens (тот же приём, что в
@@ -791,6 +792,10 @@ export function SanitationDayDocumentClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config]);
   const saveChainRef = useRef<Promise<unknown>>(Promise.resolve());
+  // Шапка «УТВЕРЖДАЮ» и строка «Ответственный»: должность и ФИО одного
+  // человека — из его карточки, сохранённые строки только для уволенных.
+  const approver = resolveApprover(normalized, users);
+  const responsible = resolveResponsible(normalized, users);
   const userNameById = useMemo(
     () => new Map(users.map((u) => [u.id, u.name])),
     [users],
@@ -1093,14 +1098,14 @@ export function SanitationDayDocumentClient({
         <div className={`${DOC_PAPER_HEADER_CLASS} flex justify-end`}>
           <div className="w-full max-w-[320px] pr-2 text-right text-[13px] leading-snug">
             <div className="font-semibold">УТВЕРЖДАЮ</div>
-            <div>{normalized.approveRole}</div>
+            <div>{approver.title}</div>
             {/* G2: линия подписи и ФИО стоят В ОДНУ строку
                 («_________ Борисов Борис Борисович»), как на эталоне
                 (general_cleaning-2-doc.png). Раньше подчёркнутым был сам
                 текст ФИО, а места под подпись не оставалось вовсе. */}
             <div className="flex items-end justify-end gap-2 pt-1">
               <span aria-hidden className="h-[1em] w-[150px] border-b border-black" />
-              <span>{normalized.approveEmployee}</span>
+              <span>{approver.name}</span>
             </div>
             <div className="pt-1">
               {toViewDateLabel(normalized.documentDate)}
@@ -1412,8 +1417,8 @@ export function SanitationDayDocumentClient({
                   <span className={GRID_SERVICE_LABEL_CLASS}>
                     Ответственный:{" "}
                     {getSanitationApproveLabel(
-                      normalized.responsibleRole,
-                      normalized.responsibleEmployee,
+                      responsible.title,
+                      responsible.name,
                       ", ",
                     )}
                   </span>

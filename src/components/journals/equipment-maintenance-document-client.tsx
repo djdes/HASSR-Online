@@ -65,6 +65,7 @@ import {
 import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 import { formatPositionWithName } from "@/lib/position-name-label";
+import { resolveApprover } from "@/lib/approver-display";
 
 type Props = {
   documentId: string;
@@ -107,6 +108,8 @@ export function EquipmentMaintenanceDocumentClient({
   const [config, setConfig] = useState(() =>
     normalizeEquipmentMaintenanceConfig(initialConfig)
   );
+  // «УТВЕРЖДАЮ»: должность и ФИО одного человека — из его карточки.
+  const approver = resolveApprover(config, users);
   // Последний применённый конфиг — источник правды для быстрых подряд
   // идущих правок (см. mutateConfig).
   const configRef = useRef(config);
@@ -531,10 +534,10 @@ export function EquipmentMaintenanceDocumentClient({
             <div className="mt-4 flex justify-end">
               <div className="w-[400px] text-right text-sm leading-relaxed">
                 <div className="font-semibold uppercase">УТВЕРЖДАЮ</div>
-                <div>{config.approveRole}</div>
+                <div>{approver.title}</div>
                 <div className="mt-1 flex items-center justify-end gap-2">
                   <span className="inline-block w-[180px] border-b border-black" />
-                  <span>{config.approveEmployee}</span>
+                  <span>{approver.name}</span>
                 </div>
                 <div className="mt-1">
                   {config.documentDate

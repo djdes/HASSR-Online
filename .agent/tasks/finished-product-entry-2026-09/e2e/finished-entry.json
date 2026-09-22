@@ -7,78 +7,73 @@
   {
     "name": "списком: в окне есть общие поля (оценка, разрешение, ответственный, проводивший бракераж)",
     "ok": true,
-    "detail": "Close\nДобавить изделия списком\nНаименования изделий — каждое с новой строки\nБудет добавлено строк: 0. Поля ниже — общие для всех изделий списка, как в окне «Добавить изделие».\nДата и время изготовления\nВремя снятия бракеража\nОрганолептическая оценка\n— Выберите оценку —\nT°C внутри продукта\nКорректирующие действия\nРазрешение к реализации\nДа\nНет\nДата и время разрешения\nДата и время передачи блюд курь"
+    "detail": "Закрыть\nДобавить изделия списком\n№\nНАИМЕНОВАНИЕ\nВЫХОД, Г\n1\n2\n3\n4\n5\nЕщё строка\nБудет добавлено: 0\n\nМожно вставить из Excel сразу два столбца — наименование и выход: встаньте в первую ячейку и нажмите Ctrl+V.\n\nОБЩИЕ ДЛЯ ВСЕХ ИЗДЕЛИЙ\nДата и время изготовления\n−15 мин\n−30 мин\n−45 мин\n−1 ч\nСейчас\nВремя снятия бракеража\nСейчас (разрешение — через 5 мин)\nОрганолептическая оценка\nОтлично\nПримечание\nРазреш"
   },
   {
-    "name": "списком: при заполненном ФИО в списке все сотрудники, а не один",
+    "name": "списком: счётчик «Будет добавлено: 3», общего поля «Вес выход» нет",
     "ok": true,
-    "detail": [
-      "Иван Повар",
-      "Ольга Уборщица",
-      "Анна Заведующая",
-      "Мария Руководитель",
-      "owner-a@e2e.local"
-    ]
-  },
-  {
-    "name": "списком: проводивший бракераж выбирается из списка",
-    "ok": true,
-    "detail": "Анна Заведующая"
+    "detail": "Закрыть\nДобавить изделия списком\n№\nНАИМЕНОВАНИЕ\nВЫХОД, Г\n1\n2\n3\n4\n5\nЕщё строка\nБудет добавлено: 3\n\nМожно вставить из Excel сразу два столбца — наименование и выход: встаньте в первую ячейку и нажмите Ctrl+V.\n\nОБЩИЕ ДЛЯ ВСЕХ ИЗДЕЛИЙ\nДата и время изготовления\n−15 мин\n−30 мин\n−45 мин\n−1 ч\nСейчас\nВремя с"
   },
   {
     "name": "списком: три строки с общими полями (оценка «Хорошо», ФИО)",
     "ok": true,
     "detail": [
       {
-        "id": "finished-product-row-d9c30849-86e5-4cdc-899f-948d9e8feab9",
+        "id": "finished-product-row-a0519684-c1a4-49bc-8cc9-345112edaacd",
+        "note": "",
         "oxygenLevel": "",
         "productName": "Борщ",
         "productTemp": "",
         "organoleptic": "Хорошо",
         "inspectorName": "Анна Заведующая",
-        "rejectionTime": "2026-09-18 13:23",
+        "portionWeight": "250",
+        "rejectionTime": "2026-09-22 15:21",
         "releaseAllowed": "yes",
         "correctiveAction": "",
         "organolepticValue": "",
-        "responsiblePerson": "Иван Повар",
+        "responsiblePerson": "ZZ Пётр Тестов 97514",
         "organolepticResult": "",
-        "productionDateTime": "2026-09-18 13:23",
-        "courierTransferTime": "2026-09-18 13:23",
-        "releasePermissionTime": "2026-09-18 13:23"
+        "productionDateTime": "2026-09-22 15:16",
+        "courierTransferTime": "2026-09-22 15:46",
+        "releasePermissionTime": "2026-09-22 15:26"
       },
       {
-        "id": "finished-product-row-d77d6922-4cfb-4631-940d-3504f4005f35",
+        "id": "finished-product-row-5f859faf-9e47-42a7-ae79-15901ecace52",
+        "note": "",
         "oxygenLevel": "",
         "productName": "Котлета",
         "productTemp": "",
         "organoleptic": "Хорошо",
         "inspectorName": "Анна Заведующая",
-        "rejectionTime": "2026-09-18 13:23",
+        "portionWeight": "150/50",
+        "rejectionTime": "2026-09-22 15:21",
         "releaseAllowed": "yes",
         "correctiveAction": "",
         "organolepticValue": "",
-        "responsiblePerson": "Иван Повар",
+        "responsiblePerson": "ZZ Пётр Тестов 97514",
         "organolepticResult": "",
-        "productionDateTime": "2026-09-18 13:23",
-        "courierTransferTime": "2026-09-18 13:23",
-        "releasePermissionTime": "2026-09-18 13:23"
+        "productionDateTime": "2026-09-22 15:16",
+        "courierTransferTime": "2026-09-22 15:46",
+        "releasePermissionTime": "2026-09-22 15:26"
       },
       {
-        "id": "finished-product-row-032b12c9-7e5e-4e8d-832c-3eac4ba22f1a",
+        "id": "finished-product-row-c60cefcb-351e-49ac-b137-435d4b62e84d",
+        "note": "",
         "oxygenLevel": "",
         "productName": "Компот",
         "productTemp": "",
         "organoleptic": "Хорошо",
         "inspectorName": "Анна Заведующая",
-        "rejectionTime": "2026-09-18 13:23",
+        "portionWeight": "200",
+        "rejectionTime": "2026-09-22 15:21",
         "releaseAllowed": "yes",
         "correctiveAction": "",
         "organolepticValue": "",
-        "responsiblePerson": "Иван Повар",
+        "responsiblePerson": "ZZ Пётр Тестов 97514",
         "organolepticResult": "",
-        "productionDateTime": "2026-09-18 13:23",
-        "courierTransferTime": "2026-09-18 13:23",
-        "releasePermissionTime": "2026-09-18 13:23"
+        "productionDateTime": "2026-09-22 15:16",
+        "courierTransferTime": "2026-09-22 15:46",
+        "releasePermissionTime": "2026-09-22 15:26"
       }
     ]
   },
@@ -86,131 +81,9 @@
     "name": "списком: у строк разные id",
     "ok": true,
     "detail": [
-      "finished-product-row-d9c30849-86e5-4cdc-899f-948d9e8feab9",
-      "finished-product-row-d77d6922-4cfb-4631-940d-3504f4005f35",
-      "finished-product-row-032b12c9-7e5e-4e8d-832c-3eac4ba22f1a"
+      "finished-product-row-a0519684-c1a4-49bc-8cc9-345112edaacd",
+      "finished-product-row-5f859faf-9e47-42a7-ae79-15901ecace52",
+      "finished-product-row-c60cefcb-351e-49ac-b137-435d4b62e84d"
     ]
-  },
-  {
-    "name": "ячейка ФИО: при фокусе виден список подсказок сотрудников",
-    "ok": true
-  },
-  {
-    "name": "ячейка ФИО: поле не подменяется (тот же textarea в фокусе)",
-    "ok": true
-  },
-  {
-    "name": "ячейка ФИО: выбор подсказки подставляет значение",
-    "ok": true,
-    "detail": "Ольга Уборщица"
-  },
-  {
-    "name": "ячейка ФИО: ввод вручную сохраняется в документ",
-    "ok": true,
-    "detail": {
-      "id": "finished-product-row-d9c30849-86e5-4cdc-899f-948d9e8feab9",
-      "oxygenLevel": "",
-      "productName": "Борщ",
-      "productTemp": "",
-      "organoleptic": "Хорошо",
-      "inspectorName": "Анна Заведующая",
-      "rejectionTime": "2026-09-18 13:23",
-      "releaseAllowed": "yes",
-      "correctiveAction": "",
-      "organolepticValue": "",
-      "responsiblePerson": "Пётр Новый",
-      "organolepticResult": "",
-      "productionDateTime": "2026-09-18 13:23",
-      "courierTransferTime": "2026-09-18 13:23",
-      "releasePermissionTime": "2026-09-18 13:23"
-    }
-  },
-  {
-    "name": "телефон: после тапа ячейка ФИО в фокусе и подсказки видны",
-    "ok": true
-  },
-  {
-    "name": "телефон: ввод в ячейке ФИО сохраняется",
-    "ok": true,
-    "detail": {
-      "id": "finished-product-row-d77d6922-4cfb-4631-940d-3504f4005f35",
-      "oxygenLevel": "",
-      "productName": "Котлета",
-      "productTemp": "",
-      "organoleptic": "Хорошо",
-      "inspectorName": "Анна Заведующая",
-      "rejectionTime": "2026-09-18 13:23",
-      "releaseAllowed": "yes",
-      "correctiveAction": "",
-      "organolepticValue": "",
-      "responsiblePerson": "Ольга Тач",
-      "organolepticResult": "",
-      "productionDateTime": "2026-09-18 13:23",
-      "courierTransferTime": "2026-09-18 13:23",
-      "releasePermissionTime": "2026-09-18 13:23"
-    }
-  },
-  {
-    "name": "окно записи: список оценок",
-    "ok": true,
-    "detail": [
-      "Отлично",
-      "Хорошо",
-      "Удовлетворительно",
-      "Неудовлетворительно",
-      "Своя формулировка…"
-    ]
-  },
-  {
-    "name": "окно записи: своя формулировка сохраняется",
-    "ok": true,
-    "detail": {
-      "id": "finished-product-row-b994d90d-d4dd-481d-a4ee-92a897ae3c9a",
-      "oxygenLevel": "",
-      "productName": "Суп",
-      "productTemp": "",
-      "organoleptic": "Соответствует требованиям",
-      "inspectorName": "Анна Заведующая",
-      "rejectionTime": "2026-09-18 13:24",
-      "releaseAllowed": "yes",
-      "correctiveAction": "",
-      "organolepticValue": "",
-      "responsiblePerson": "Иван Повар",
-      "organolepticResult": "",
-      "productionDateTime": "2026-09-18 13:24",
-      "courierTransferTime": "2026-09-18 13:24",
-      "releasePermissionTime": "2026-09-18 13:24"
-    }
-  },
-  {
-    "name": "ячейка оценки: подсказки со стандартными оценками",
-    "ok": true,
-    "detail": [
-      "Отлично",
-      "Хорошо",
-      "Удовлетворительно",
-      "Неудовлетворительно"
-    ]
-  },
-  {
-    "name": "ячейка оценки: выбор подсказки сохраняется",
-    "ok": true,
-    "detail": {
-      "id": "finished-product-row-032b12c9-7e5e-4e8d-832c-3eac4ba22f1a",
-      "oxygenLevel": "",
-      "productName": "Компот",
-      "productTemp": "",
-      "organoleptic": "Удовлетворительно",
-      "inspectorName": "Анна Заведующая",
-      "rejectionTime": "2026-09-18 13:23",
-      "releaseAllowed": "yes",
-      "correctiveAction": "",
-      "organolepticValue": "",
-      "responsiblePerson": "Иван Повар",
-      "organolepticResult": "",
-      "productionDateTime": "2026-09-18 13:23",
-      "courierTransferTime": "2026-09-18 13:23",
-      "releasePermissionTime": "2026-09-18 13:23"
-    }
   }
 ]

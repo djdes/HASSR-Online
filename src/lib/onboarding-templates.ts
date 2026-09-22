@@ -78,7 +78,7 @@ export const ORG_TEMPLATES: OrgTemplate[] = [
     staffSize: "2-4 человека",
     positions: [
       { name: "Админ", categoryKey: "management", seesAllTasks: true },
-      { name: "Заведующая", categoryKey: "management" },
+      { name: "Заведующий", categoryKey: "management" },
       { name: "Продавец", categoryKey: "staff" },
     ],
     areas: [
@@ -194,7 +194,7 @@ export const ORG_TEMPLATES: OrgTemplate[] = [
     staffSize: "5-15 человек",
     positions: [
       { name: "Админ", categoryKey: "management", seesAllTasks: true },
-      { name: "Заведующая производством", categoryKey: "management" },
+      { name: "Заведующий производством", categoryKey: "management" },
       { name: "Шеф-повар", categoryKey: "management" },
       { name: "Технолог детского питания", categoryKey: "management" },
       { name: "Повар", categoryKey: "staff" },

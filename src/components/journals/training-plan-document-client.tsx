@@ -55,6 +55,7 @@ import {
 import { JournalSettingsModal } from "@/components/journals/v2/journal-settings-modal";
 import { localDayKey } from "@/lib/entry-defaults";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { resolveApprover } from "@/lib/approver-display";
 type UserItem = { id: string; name: string; role: string };
 
 type Props = {
@@ -524,6 +525,8 @@ export function TrainingPlanDocumentClient({
     { rowId: string; topicId: string } | null
   >(null);
   const normalized = normalizeTrainingPlanConfig(config);
+  // «УТВЕРЖДАЮ»: должность и ФИО одного человека — из его карточки.
+  const approver = resolveApprover(normalized, users);
   const readOnly = status === "closed";
 
   const settingsState: SettingsState = {
@@ -796,8 +799,8 @@ export function TrainingPlanDocumentClient({
             />
             <div className="ml-auto flex w-full max-w-[420px] flex-col items-end gap-1 text-right text-[14px] leading-tight">
               <div className="font-semibold">УТВЕРЖДАЮ</div>
-              <div>{normalized.approveRole}</div>
-              <div>{normalized.approveEmployee}</div>
+              <div>{approver.title}</div>
+              <div>{approver.name}</div>
               <div className="mt-1 h-px w-[230px] bg-black" />
               <div>{toViewDateLabel(normalized.documentDate)}</div>
             </div>

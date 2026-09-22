@@ -70,7 +70,7 @@ ${params.error ? `<div class="err">${esc(params.error)}</div>` : ""}
 <div class="hq-warn" role="note">Каждая отметка — ваша подпись в гигиеническом журнале. За заведомо ложные сведения о своём здоровье отвечает сотрудник: это нарушение санитарных правил.</div>
 <p class="hq-lead">Подписываю:</p>
 <div class="hq-list">${items}</div>
-<p class="hq-note">Отметьте то, что верно. Если что-то не так — не отмечайте: заведующая узнает сразу и решит о допуске. Запишется ${journals}.</p>
+<p class="hq-note">Отметьте то, что верно. Если что-то не так — не отмечайте: заведующий производством узнает сразу и решит о допуске. Запишется ${journals}.</p>
 <div class="sticky"><button class="btn" type="submit">Подписать</button></div>
 </form>`;
 }
@@ -78,7 +78,7 @@ ${params.error ? `<div class="err">${esc(params.error)}</div>` : ""}
 export function renderHealthSuspended(params: { who: string; complaints: string[]; timeLabel: string; backHref: string }): string {
   return `${HEALTH_CSS}${params.who}<div class="hq-bad" role="status" aria-live="polite"><b>Сегодня вы не допущены к работе</b>Причина: ${esc(
     params.complaints.join(", ")
-  )}.<br>Заведующая уже получила уведомление — дождитесь её решения. Отметка записана в ${esc(params.timeLabel)}.</div>
+  )}.<br>Заведующий производством уже получил уведомление — дождитесь его решения. Отметка записана в ${esc(params.timeLabel)}.</div>
 <div class="sticky"><a class="btn second" href="${esc(params.backHref)}">Исправить отметку</a></div>`;
 }
 

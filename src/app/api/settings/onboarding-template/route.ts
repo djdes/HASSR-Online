@@ -4,6 +4,7 @@ import { hasCapability } from "@/lib/permission-presets";
 import { db } from "@/lib/db";
 import { getOrgTemplate } from "@/lib/onboarding-templates";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
+import { positionMatchKey } from "@/lib/sphere-positions";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -57,16 +58,20 @@ export async function POST(request: NextRequest) {
   let equipmentCreated = 0;
 
   // 1. Должности
+  // Сравниваем по ключу, нечувствительному к регистру и роду: если в
+  // организации уже есть «Заведующая производством», шаблонная
+  // «Заведующий производством» — та же должность, не дубль.
+  const orgPositions = await db.jobPosition.findMany({
+    where: { organizationId },
+    select: { id: true, name: true, categoryKey: true, seesAllTasks: true },
+  });
   for (const [i, p] of template.positions.entries()) {
-    const existing = await db.jobPosition.findUnique({
-      where: {
-        organizationId_categoryKey_name: {
-          organizationId,
-          categoryKey: p.categoryKey,
-          name: p.name,
-        },
-      },
-    });
+    const key = positionMatchKey(p.name);
+    const existing = orgPositions.find(
+      (pos) =>
+        pos.categoryKey === p.categoryKey &&
+        (pos.name === p.name || positionMatchKey(pos.name) === key),
+    );
     if (existing) {
       // Обновляем seesAllTasks если шаблон требует.
       if (p.seesAllTasks && !existing.seesAllTasks) {
@@ -78,7 +83,7 @@ export async function POST(request: NextRequest) {
       }
       continue;
     }
-    await db.jobPosition.create({
+    const created = await db.jobPosition.create({
       data: {
         organizationId,
         name: p.name,
@@ -86,7 +91,9 @@ export async function POST(request: NextRequest) {
         sortOrder: i,
         seesAllTasks: p.seesAllTasks === true,
       },
+      select: { id: true, name: true, categoryKey: true, seesAllTasks: true },
     });
+    orgPositions.push(created);
     positionsCreated += 1;
   }
 

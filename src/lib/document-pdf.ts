@@ -5,6 +5,11 @@ import type { Prisma } from "@prisma/client";
 import { jsPDF } from "jspdf";
 import autoTable, { type CellDef, type CellHookData, type RowInput } from "jspdf-autotable";
 import { getCalendarDayKind } from "@/lib/production-calendar-data";
+import {
+  resolveApprover,
+  resolveResponsible,
+  type PersonDisplayUser,
+} from "@/lib/approver-display";
 import { db } from "@/lib/db";
 import { withBuildingLabel } from "@/lib/building-scope";
 import { resolveColumns, type ResolvedJournalColumn } from "@/lib/journal-columns";
@@ -4369,8 +4374,14 @@ function drawSanitationDayPdf(doc: jsPDF, params: {
   dateFrom: Date | string | null;
   dateTo: Date | string | null;
   config: ReturnType<typeof normalizeSanitationDayConfig>;
+  /** Ростер организации: должность и ФИО в шапке — из карточки человека. */
+  users?: readonly PersonDisplayUser[];
 }) {
   const cfg = params.config;
+  // «УТВЕРЖДАЮ» и «Ответственный»: должность и ФИО одного человека, как
+  // на экране. Сохранённые строки — только если человека нет в ростере.
+  const approver = resolveApprover(cfg, params.users);
+  const responsible = resolveResponsible(cfg, params.users);
   const pageWidth = doc.internal.pageSize.getWidth();
   const centerX = pageWidth / 2;
 
@@ -4404,9 +4415,9 @@ function drawSanitationDayPdf(doc: jsPDF, params: {
   doc.text("УТВЕРЖДАЮ", headerRight, approvalY, { align: "right" });
   doc.setFont("JournalUnicode", "normal");
   doc.setFontSize(9);
-  doc.text(cfg.approveRole || "", headerRight, approvalY + 6, { align: "right" });
+  doc.text(approver.title, headerRight, approvalY + 6, { align: "right" });
   doc.line(headerRight - 52, approvalY + 10, headerRight, approvalY + 10);
-  doc.text(cfg.approveEmployee || "", headerRight, approvalY + 14, { align: "right" });
+  doc.text(approver.name, headerRight, approvalY + 14, { align: "right" });
   doc.text(
     formatApprovalDateLong(cfg.documentDate, cfg.year),
     headerRight - 6,
@@ -4458,8 +4469,8 @@ function drawSanitationDayPdf(doc: jsPDF, params: {
       // Без сотрудника печаталось «Ответственный: Управляющий, » — запятая
       // с пустотой. Разделитель — только между непустыми частями.
       content: `Ответственный: ${formatPositionWithName(
-        cfg.responsibleRole,
-        cfg.responsibleEmployee,
+        responsible.title,
+        responsible.name,
         { separator: ", ", emptyValue: "—" }
       )}`,
       colSpan: 2,
@@ -7050,6 +7061,7 @@ export function renderJournalDocumentPdf(
         normalizeSanitationDayConfig(document.config),
         rooms,
       ),
+      users,
     });
   } else if (templateCode === TRAINING_PLAN_TEMPLATE_CODE) {
     drawTrainingPlanPdf(doc, {

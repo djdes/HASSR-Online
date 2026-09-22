@@ -54,6 +54,7 @@ import {
   usePositionEmployeeCascade,
 } from "@/components/shared/position-select";
 import { localDayKey } from "@/lib/entry-defaults";
+import { resolveApprover } from "@/lib/approver-display";
 type UserItem = { id: string; name: string; role: string };
 
 type Props = {
@@ -666,6 +667,8 @@ export function AuditPlanDocumentClient({
 }: Props) {
   const router = useRouter();
   const normalized = normalizeAuditPlanConfig(config, { organizationName, users });
+  // «УТВЕРЖДАЮ»: должность и ФИО одного человека — из его карточки.
+  const approver = resolveApprover(normalized, users);
   const readOnly = status === "closed";
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [manageSectionsOpen, setManageSectionsOpen] = useState(false);
@@ -905,8 +908,8 @@ export function AuditPlanDocumentClient({
             />
             <div className="ml-auto w-full max-w-[420px] text-right text-[14px] leading-tight">
               <div className="font-semibold">УТВЕРЖДАЮ</div>
-              <div>{normalized.approveRole}</div>
-              <div>{normalized.approveEmployee}</div>
+              <div>{approver.title}</div>
+              <div>{approver.name}</div>
               <div>{getAuditPlanPrintDateLabel(normalized.documentDate)}</div>
             </div>
           </>

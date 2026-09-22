@@ -836,7 +836,7 @@ export function StaffEditEmployeeDialog(props: {
                 </span>
                 <span className="block text-[12px] leading-snug text-[#6f7282]">
                   По QR журнала видит все блюда за сегодня и может исправить наименование и время. Обычно —
-                  заведующая производством.
+                  заведующий производством.
                 </span>
               </span>
             </label>
@@ -870,7 +870,7 @@ export function StaffEditEmployeeDialog(props: {
                 <span className="block text-[14px] font-medium text-[#0b1024]">Разрешение менять настройки</span>
                 <span className="block text-[12px] leading-snug text-[#6f7282]">
                   Открывает кабинет как у руководителя: все настройки, журналы, сотрудники, QR-плакаты,
-                  оборудование. Удобно для заведующей. Войти можно по личному QR и своему PIN. После изменения галки сотрудник входит заново.
+                  оборудование. Удобно для заведующего производством. Войти можно по личному QR и своему PIN. После изменения галки сотрудник входит заново.
                 </span>
               </span>
             </label>

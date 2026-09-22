@@ -79,7 +79,7 @@ const PRESET_CAPABILITIES: Record<PermissionPreset, Capability[]> = {
 
 const PRESET_LABELS: Record<PermissionPreset, string> = {
   admin: "Администратор",
-  head_chef: "Заведующая / Шеф",
+  head_chef: "Заведующий / Шеф",
   cook: "Повар",
   waiter: "Официант",
   seller: "Продавец",

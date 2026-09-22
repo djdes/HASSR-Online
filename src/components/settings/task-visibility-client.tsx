@@ -103,7 +103,7 @@ export function TaskVisibilityClient({ positions }: Props) {
             <p className="mt-2 text-[12px] text-[#6f7282]">
               <strong className="text-[#0b1024]">Рекомендация:</strong>{" "}
               отметь только одну должность — обычно «Админ» или «Владелец».
-              Заведующая и другие управляющие должны проверять только
+              Заведующий производством и другие управляющие должны проверять только
               своих подчинённых через иерархию (
               <a
                 href="/settings/staff-hierarchy"
