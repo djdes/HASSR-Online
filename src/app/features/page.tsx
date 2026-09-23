@@ -6,6 +6,7 @@ import {
   Cloud,
   Leaf,
   Plug,
+  QrCode,
   Sparkles,
   Timer,
   UserCheck,
@@ -62,6 +63,7 @@ export const metadata = {
 };
 
 const ICON_MAP: Record<string, LucideIcon> = {
+  QrCode,
   Plug,
   Wand2,
   Cloud,

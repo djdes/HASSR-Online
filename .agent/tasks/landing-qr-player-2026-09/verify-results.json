@@ -1,0 +1,552 @@
+[
+  {
+    "name": "360-day: тема дневная",
+    "ok": true,
+    "detail": "data-app-theme=light"
+  },
+  {
+    "name": "360-day: нет горизонтального скролла (верх)",
+    "ok": true,
+    "detail": "360 <= 360"
+  },
+  {
+    "name": "360-day: бумага не перекрашена",
+    "ok": true,
+    "detail": "rgb(255, 253, 248)"
+  },
+  {
+    "name": "360-day: нет горизонтального скролла (ролик)",
+    "ok": true,
+    "detail": "360 <= 360"
+  },
+  {
+    "name": "360-day: нет горизонтального скролла (низ)",
+    "ok": true,
+    "detail": "360 <= 360"
+  },
+  {
+    "name": "360-day: CLS от блока #qr < 0.01",
+    "ok": true,
+    "detail": "qr=0.0000; вся страница при прыжке к #start=0.9523 (DIV.flex items-center gap-3 sm:gap-6 | DIV.flex items-center gap-3 sm:gap-6 | DIV.flex items-center gap-3 sm:gap-6 | SECTION.mx-auto max-w-[1200px] scroll-mt-[72px] )"
+  },
+  {
+    "name": "360-day: нет ошибок консоли",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "360-night: тема ночная",
+    "ok": true,
+    "detail": "data-app-theme=dark"
+  },
+  {
+    "name": "360-night: нет горизонтального скролла (верх)",
+    "ok": true,
+    "detail": "360 <= 360"
+  },
+  {
+    "name": "360-night: бумага не перекрашена",
+    "ok": true,
+    "detail": "rgb(255, 253, 248)"
+  },
+  {
+    "name": "360-night: нет горизонтального скролла (ролик)",
+    "ok": true,
+    "detail": "360 <= 360"
+  },
+  {
+    "name": "360-night: нет горизонтального скролла (низ)",
+    "ok": true,
+    "detail": "360 <= 360"
+  },
+  {
+    "name": "360-night: CLS от блока #qr < 0.01",
+    "ok": true,
+    "detail": "qr=0.0043; вся страница при прыжке к #start=0.9529 (DIV.flex items-center gap-3 sm:gap-6 | DIV.flex items-center gap-3 sm:gap-6 | SECTION.mx-auto max-w-[1200px] scroll-mt-[72px] )"
+  },
+  {
+    "name": "360-night: нет ошибок консоли",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "390-day: тема дневная",
+    "ok": true,
+    "detail": "data-app-theme=light"
+  },
+  {
+    "name": "390-day: нет горизонтального скролла (верх)",
+    "ok": true,
+    "detail": "390 <= 390"
+  },
+  {
+    "name": "390-day: бумага не перекрашена",
+    "ok": true,
+    "detail": "rgb(255, 253, 248)"
+  },
+  {
+    "name": "390-day: нет горизонтального скролла (ролик)",
+    "ok": true,
+    "detail": "390 <= 390"
+  },
+  {
+    "name": "390-day: нет горизонтального скролла (низ)",
+    "ok": true,
+    "detail": "390 <= 390"
+  },
+  {
+    "name": "390-day: CLS от блока #qr < 0.01",
+    "ok": true,
+    "detail": "qr=0.0040; вся страница при прыжке к #start=0.7449 (SECTION.mx-auto max-w-[1200px] scroll-mt-[72px] )"
+  },
+  {
+    "name": "390-day: нет ошибок консоли",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "390-night: тема ночная",
+    "ok": true,
+    "detail": "data-app-theme=dark"
+  },
+  {
+    "name": "390-night: нет горизонтального скролла (верх)",
+    "ok": true,
+    "detail": "390 <= 390"
+  },
+  {
+    "name": "390-night: бумага не перекрашена",
+    "ok": true,
+    "detail": "rgb(255, 253, 248)"
+  },
+  {
+    "name": "390-night: нет горизонтального скролла (ролик)",
+    "ok": true,
+    "detail": "390 <= 390"
+  },
+  {
+    "name": "390-night: нет горизонтального скролла (низ)",
+    "ok": true,
+    "detail": "390 <= 390"
+  },
+  {
+    "name": "390-night: CLS от блока #qr < 0.01",
+    "ok": true,
+    "detail": "qr=0.0040; вся страница при прыжке к #start=0.7449 (SECTION.mx-auto max-w-[1200px] scroll-mt-[72px] )"
+  },
+  {
+    "name": "390-night: нет ошибок консоли",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "768-day: тема дневная",
+    "ok": true,
+    "detail": "data-app-theme=light"
+  },
+  {
+    "name": "768-day: нет горизонтального скролла (верх)",
+    "ok": true,
+    "detail": "768 <= 768"
+  },
+  {
+    "name": "768-day: бумага не перекрашена",
+    "ok": true,
+    "detail": "rgb(255, 253, 248)"
+  },
+  {
+    "name": "768-day: нет горизонтального скролла (ролик)",
+    "ok": true,
+    "detail": "768 <= 768"
+  },
+  {
+    "name": "768-day: нет горизонтального скролла (низ)",
+    "ok": true,
+    "detail": "768 <= 768"
+  },
+  {
+    "name": "768-day: CLS от блока #qr < 0.01",
+    "ok": true,
+    "detail": "qr=0.0001; вся страница при прыжке к #start=0.3834 (DIV.flex items-center gap-3 sm:gap-6 | SECTION.mx-auto max-w-[1200px] scroll-mt-[72px] )"
+  },
+  {
+    "name": "768-day: нет ошибок консоли",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "768-night: тема ночная",
+    "ok": true,
+    "detail": "data-app-theme=dark"
+  },
+  {
+    "name": "768-night: нет горизонтального скролла (верх)",
+    "ok": true,
+    "detail": "768 <= 768"
+  },
+  {
+    "name": "768-night: бумага не перекрашена",
+    "ok": true,
+    "detail": "rgb(255, 253, 248)"
+  },
+  {
+    "name": "768-night: нет горизонтального скролла (ролик)",
+    "ok": true,
+    "detail": "768 <= 768"
+  },
+  {
+    "name": "768-night: нет горизонтального скролла (низ)",
+    "ok": true,
+    "detail": "768 <= 768"
+  },
+  {
+    "name": "768-night: CLS от блока #qr < 0.01",
+    "ok": true,
+    "detail": "qr=0.0001; вся страница при прыжке к #start=0.3833 (DIV.flex items-center gap-3 sm:gap-6 | SECTION.mx-auto max-w-[1200px] scroll-mt-[72px] )"
+  },
+  {
+    "name": "768-night: нет ошибок консоли",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1280-day: тема дневная",
+    "ok": true,
+    "detail": "data-app-theme=light"
+  },
+  {
+    "name": "1280-day: нет горизонтального скролла (верх)",
+    "ok": true,
+    "detail": "1280 <= 1280"
+  },
+  {
+    "name": "1280-day: бумага не перекрашена",
+    "ok": true,
+    "detail": "rgb(255, 253, 248)"
+  },
+  {
+    "name": "1280-day: нет горизонтального скролла (ролик)",
+    "ok": true,
+    "detail": "1280 <= 1280"
+  },
+  {
+    "name": "1280-day: нет горизонтального скролла (низ)",
+    "ok": true,
+    "detail": "1280 <= 1280"
+  },
+  {
+    "name": "1280-day: CLS от блока #qr < 0.01",
+    "ok": true,
+    "detail": "qr=0.0003; вся страница при прыжке к #start=0.0074 (DIV.flex items-center gap-3 sm:gap-6)"
+  },
+  {
+    "name": "1280-day: нет ошибок консоли",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1280-night: тема ночная",
+    "ok": true,
+    "detail": "data-app-theme=dark"
+  },
+  {
+    "name": "1280-night: нет горизонтального скролла (верх)",
+    "ok": true,
+    "detail": "1280 <= 1280"
+  },
+  {
+    "name": "1280-night: бумага не перекрашена",
+    "ok": true,
+    "detail": "rgb(255, 253, 248)"
+  },
+  {
+    "name": "1280-night: нет горизонтального скролла (ролик)",
+    "ok": true,
+    "detail": "1280 <= 1280"
+  },
+  {
+    "name": "1280-night: нет горизонтального скролла (низ)",
+    "ok": true,
+    "detail": "1280 <= 1280"
+  },
+  {
+    "name": "1280-night: CLS от блока #qr < 0.01",
+    "ok": true,
+    "detail": "qr=0.0002; вся страница при прыжке к #start=0.0073 (DIV.flex items-center gap-3 sm:gap-6)"
+  },
+  {
+    "name": "1280-night: нет ошибок консоли",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1440-day: тема дневная",
+    "ok": true,
+    "detail": "data-app-theme=light"
+  },
+  {
+    "name": "1440-day: нет горизонтального скролла (верх)",
+    "ok": true,
+    "detail": "1440 <= 1440"
+  },
+  {
+    "name": "1440-day: бумага не перекрашена",
+    "ok": true,
+    "detail": "rgb(255, 253, 248)"
+  },
+  {
+    "name": "1440-day: нет горизонтального скролла (ролик)",
+    "ok": true,
+    "detail": "1440 <= 1440"
+  },
+  {
+    "name": "1440-day: нет горизонтального скролла (низ)",
+    "ok": true,
+    "detail": "1440 <= 1440"
+  },
+  {
+    "name": "1440-day: CLS от блока #qr < 0.01",
+    "ok": true,
+    "detail": "qr=0.0065; вся страница при прыжке к #start=0.0278 (DIV.flex items-center gap-3 sm:gap-6 | DIV.flex items-center gap-3 sm:gap-6 | SECTION.mx-auto max-w-[1200px] scroll-mt-[72px] )"
+  },
+  {
+    "name": "1440-day: нет ошибок консоли",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1440-night: тема ночная",
+    "ok": true,
+    "detail": "data-app-theme=dark"
+  },
+  {
+    "name": "1440-night: нет горизонтального скролла (верх)",
+    "ok": true,
+    "detail": "1440 <= 1440"
+  },
+  {
+    "name": "1440-night: бумага не перекрашена",
+    "ok": true,
+    "detail": "rgb(255, 253, 248)"
+  },
+  {
+    "name": "1440-night: нет горизонтального скролла (ролик)",
+    "ok": true,
+    "detail": "1440 <= 1440"
+  },
+  {
+    "name": "1440-night: нет горизонтального скролла (низ)",
+    "ok": true,
+    "detail": "1440 <= 1440"
+  },
+  {
+    "name": "1440-night: CLS от блока #qr < 0.01",
+    "ok": true,
+    "detail": "qr=0.0002; вся страница при прыжке к #start=0.0159 (DIV.flex items-center gap-3 sm:gap-6 | SECTION.mx-auto max-w-[1200px] scroll-mt-[72px] )"
+  },
+  {
+    "name": "1440-night: нет ошибок консоли",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "до прокрутки ролик стоит на кадре 0 (вне экрана)",
+    "ok": true,
+    "detail": "frame=0"
+  },
+  {
+    "name": "в зоне видимости ролик идёт сам",
+    "ok": true,
+    "detail": "frame=33"
+  },
+  {
+    "name": "скрытая вкладка — пауза",
+    "ok": true,
+    "detail": "frame 36 → 36"
+  },
+  {
+    "name": "вкладка снова видна — ролик продолжает",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "вне экрана — пауза",
+    "ok": true,
+    "detail": "frame 59 → 59"
+  },
+  {
+    "name": "скраббер: кадр 100",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "→ = +2 с (кадр 160)",
+    "ok": true,
+    "detail": "160"
+  },
+  {
+    "name": "← = −2 с (кадр 100)",
+    "ok": true,
+    "detail": "100"
+  },
+  {
+    "name": "Shift+→ = следующая глава (кадр 180)",
+    "ok": true,
+    "detail": "180"
+  },
+  {
+    "name": "Пробел — запуск",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Пробел — пауза",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "кадр детерминирован (300 → 900 → 300 даёт ту же сцену)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "главы — nav, без role=tablist",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "чип «Фритюр» → кадр 540",
+    "ok": true,
+    "detail": "540"
+  },
+  {
+    "name": "aria-current на текущей главе",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "холодильник 9 °C: кадр итога (168) и уведомление",
+    "ok": true,
+    "detail": "frame=168"
+  },
+  {
+    "name": "строка журнала красная (9 → цвет ячейки)",
+    "ok": true,
+    "detail": "rgb(163, 52, 44)@9"
+  },
+  {
+    "name": "холодильник 4 °C: уведомления нет",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "37,4 °C: «не допущены» и уведомление заведующей",
+    "ok": true,
+    "detail": "frame=348"
+  },
+  {
+    "name": "37,0 °C: «Допущен к работе»",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "37,1 °C: уже «не допущен»",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1280 интерактив: нет ошибок консоли",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "390 reduced: без автозапуска, итоговый кадр главы 1 (179)",
+    "ok": true,
+    "detail": "frame=179"
+  },
+  {
+    "name": "390 reduced: подпись «Раскадровка»",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "390 reduced: кнопка листает на итог главы 2 (359)",
+    "ok": true,
+    "detail": "359"
+  },
+  {
+    "name": "390 reduced: нет ошибок консоли",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1280 reduced: без автозапуска, итоговый кадр главы 1 (179)",
+    "ok": true,
+    "detail": "frame=179"
+  },
+  {
+    "name": "1280 reduced: подпись «Раскадровка»",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1280 reduced: кнопка листает на итог главы 2 (359)",
+    "ok": true,
+    "detail": "359"
+  },
+  {
+    "name": "1280 reduced: нет ошибок консоли",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "первый кадр отрисован на сервере",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "блока «Три экрана» нет",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "id=start на месте",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "JSON-LD FAQPage парсится",
+    "ok": true,
+    "detail": "13 вопросов"
+  },
+  {
+    "name": "FAQ JSON-LD: «Нужно ли сотрудникам ставить приложение или помнить пароль?»",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "FAQ JSON-LD: «Что будет, если сотрудник не отсканировал QR и не заполнил журнал?»",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "FAQ JSON-LD: «Можно ли подделать запись по QR?»",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "/features/qr отдаёт 200",
+    "ok": true,
+    "detail": "200"
+  },
+  {
+    "name": "/features/qr: заголовок",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "/features/qr 390: без горизонтального скролла",
+    "ok": true,
+    "detail": "390 <= 390"
+  }
+]

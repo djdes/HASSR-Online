@@ -11,19 +11,21 @@ import {
   Gift,
   Handshake,
   HelpCircle,
-  Leaf,
   NotebookText,
   Plug,
+  Printer,
+  QrCode,
   RotateCcw,
+  ScanLine,
   Send,
   ShieldCheck,
   Smartphone,
-  Sparkles,
   Store,
   Timer,
   UserCheck,
   Wand2,
   Wifi,
+  Refrigerator,
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { EquipmentPricing } from "@/components/landing/equipment-pricing";
@@ -51,7 +53,9 @@ import {
 } from "@/lib/hardware-pricing";
 import { PublicFooter } from "@/components/public/public-chrome";
 import { PublicThemeBootstrap, PublicThemeScope } from "@/components/theme/site-theme";
-import { ProductShowcase } from "@/components/public/screenshot-fan";
+import { QrPlayer } from "@/components/landing/qr-player/qr-player";
+import { buildQrMatrix } from "@/components/landing/qr-player/qr-matrix";
+import { QrSticker } from "@/components/landing/qr-player/qr-sticker";
 import { LandingMotion } from "@/components/public/landing-motion";
 import { CursorGlow } from "@/components/public/cursor-glow";
 import { AnchorScrollLink } from "@/components/public/anchor-scroll-link";
@@ -80,11 +84,17 @@ export const metadata = {
   // дублируется), поэтому «— WeSetup» пишем в строке вручную.
   title: "Электронные журналы СанПиН и ХАССП онлайн — WeSetup",
   description:
-    "35 электронных журналов СанПиН и ХАССП для общепита и производств. Автозаполнение, Telegram-бот, PDF для Роспотребнадзора. Бесплатно до 3 сотрудников.",
+    "35 электронных журналов СанПиН и ХАССП для общепита и производств. QR-наклейки на оборудовании: отсканировал, ввёл PIN — запись в журнале. PDF для Роспотребнадзора. Бесплатно до 3 сотрудников.",
   alternates: { canonical: "https://wesetup.ru/", types: { "application/rss+xml": [{ url: "https://wesetup.ru/blog/feed.xml", title: "WeSetup — блог" }, { url: "https://wesetup.ru/whats-new/feed.xml", title: "WeSetup — что нового" }] } },
 };
 
 const FEATURES = [
+  {
+    icon: QrCode,
+    slug: "qr",
+    title: "Заполнение по QR",
+    text: "Наклейка на холодильнике, лампе, фритюрнице, у термометра. Скан, PIN, значение — и запись уже в журнале.",
+  },
   {
     icon: Plug,
     slug: "sync-iiko-1c",
@@ -120,12 +130,6 @@ const FEATURES = [
     slug: "alerts",
     title: "Алерты о нарушениях",
     text: "Температура вне нормы, просрочка, отклонение — уведомление ответственному в реальном времени.",
-  },
-  {
-    icon: Leaf,
-    slug: "paperless",
-    title: "Без бумаги",
-    text: "Не нужно покупать журналы, заводить распечатки, хранить коробки — все записи сразу в электронном виде.",
   },
   {
     icon: Timer,
@@ -169,6 +173,18 @@ const FAQ = [
   {
     q: "Что если сервис не подойдёт — можно вернуть деньги?",
     a: "Да. В течение 14 дней с оплаты подписки вернём всю сумму по заявлению на support@wesetup.ru — без вопросов и без удержаний. Условия возврата закреплены в договоре-оферте, это обязательство, а не рекламное обещание.",
+  },
+  {
+    q: "Нужно ли сотрудникам ставить приложение или помнить пароль?",
+    a: "Нет. QR-наклейку сканирует обычная камера телефона — открывается страница нужного журнала. Сотрудник выбирает себя в списке и подтверждает запись личным PIN из 4–6 цифр. Приложение и вход в кабинет не нужны.",
+  },
+  {
+    q: "Что будет, если сотрудник не отсканировал QR и не заполнил журнал?",
+    a: "Графа останется пустой, и сервис это увидит. Руководителю придёт напоминание в Telegram в 12:00, в 17:00 — повторное и письмо на почту, в 21:00 — срочное. По гигиеническому журналу в конце смены ответственные получают список тех, кто не отметился.",
+  },
+  {
+    q: "Можно ли подделать запись по QR?",
+    a: "Запись подтверждается личным PIN сотрудника, после пяти неверных попыток ввод блокируется на 15 минут. Время ставит сервер, а в журнале действий остаётся, кто, когда и что записал. У каждого холодильника своя наклейка, и сменить оборудование в форме нельзя.",
   },
   {
     q: "Что такое электронный журнал для общепита?",
@@ -216,8 +232,8 @@ const FAQ = [
  * гарантия под кнопкой уезжает за сгиб экрана.
  */
 const HERO_POINTS = [
+  "**Скан QR-кода** — и запись в журнале",
   "**Автосоздание** и **автозаполнение** журналов",
-  "**Автоподбор** журналов под вашу компанию",
   "**Бесплатный** доступ ко всем журналам",
   "**Электронные и бумажные** журналы",
 ] as const;
@@ -238,6 +254,37 @@ function emphasize(text: string) {
     ),
   );
 }
+
+/** «Сегодня» для бланков в QR-ролике — по Москве. */
+function moscowSceneDay(now: Date) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Moscow",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const pick = (type: string) => Number(parts.find((part) => part.type === type)?.value ?? "0");
+  const year = pick("year");
+  const month = pick("month");
+  const day = pick("day");
+  const monthName = new Intl.DateTimeFormat("ru-RU", { month: "long", timeZone: "UTC" }).format(
+    new Date(Date.UTC(year, month - 1, 15))
+  );
+  return {
+    day,
+    month,
+    year,
+    daysInMonth: new Date(Date.UTC(year, month, 0)).getUTCDate(),
+    monthLabel: `${monthName} ${year}`,
+  };
+}
+
+/** Три шага финального блока: как завести QR у себя. */
+const QR_START_STEPS = [
+  { icon: Refrigerator, title: "Добавьте оборудование", text: "Холодильники, лампы, фритюрницы — в настройках, за пару минут." },
+  { icon: Printer, title: "Распечатайте наклейки", text: "Лист QR-наклеек на обычном принтере — и на места." },
+  { icon: ScanLine, title: "Сотрудники сканируют", text: "Камера телефона, PIN, значение — журнал ведётся сам." },
+] as const;
 
 export default async function LandingPage() {
   // Auth state — для адаптации nav/CTA. Лендинг остаётся публичным,
@@ -322,6 +369,12 @@ export default async function LandingPage() {
     docx: docxCodes.has(item.code),
   }));
 
+  // QR-ролик: дата «сегодня» по Москве считается здесь, чтобы первый кадр
+  // на сервере и после гидрации совпадал. QR на наклейках ролика и CTA —
+  // настоящий, ведёт на этот блок.
+  const qrMatrix = buildQrMatrix("https://wesetup.ru/#qr");
+  const sceneToday = moscowSceneDay(new Date());
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -351,7 +404,7 @@ export default async function LandingPage() {
         // отдельные native приложения. Когда они появятся, поменяем.
         operatingSystem: "Web",
         description:
-          "Электронные журналы СанПиН и ХАССП для общепита и пищевых производств. 35 журналов, автозаполнение, Telegram-бот, PDF для Роспотребнадзора.",
+          "Электронные журналы СанПиН и ХАССП для общепита и пищевых производств. 35 журналов, заполнение по QR-наклейкам на оборудовании, автозаполнение, PDF для Роспотребнадзора.",
         // image — required для SoftwareApplication rich result в Google.
         // Раньше отдавали icon-512 (квадрат), но Google рекомендует
         // landscape для product/app rich-результатов. /og-default —
@@ -378,7 +431,7 @@ export default async function LandingPage() {
         "@type": "Product",
         name: "WeSetup — электронные журналы СанПиН и ХАССП",
         description:
-          "35 журналов для общепита и пищевых производств. Telegram-бот, автозаполнение, PDF для проверок Роспотребнадзора.",
+          "35 журналов для общепита и пищевых производств. Заполнение по QR-коду с телефона, автозаполнение, PDF для проверок Роспотребнадзора.",
         // image — required для Product rich result. Без него Google не
         // показывает Offer-карточку с ценой/доступностью в выдаче.
         // 1200×630 landscape лучше квадрата для Product rich snippet.
@@ -663,11 +716,41 @@ export default async function LandingPage() {
               </>
             )}
           </div>
+        </div>
+      </section>
 
-          {/* Витрина продукта: тёмный блок с чек-листом и веером мокапов.
-              Высоту на sm+ держит сам блок — веер собран из
-              absolute-элементов. */}
-          <ProductShowcase />
+      {/* QR-РОЛИК — сразу после героя и отдельной секцией верхнего уровня:
+          LandingMotion даёт ей data-inview, иначе stagger-правило
+          globals.css спрятало бы детей. Раньше здесь был блок «Три
+          экрана» с макетом журнала уборки, который не совпадал с настоящим. */}
+      <section id="qr" className="mx-auto max-w-[1200px] scroll-mt-[72px] px-4 pb-20 sm:scroll-mt-24 sm:px-6">
+        <div className="relative overflow-hidden rounded-3xl border border-[#ececf4] bg-[#0b1024] text-white shadow-[0_20px_60px_-30px_rgba(11,16,36,0.55)]">
+          <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+            <div className="absolute -left-24 -top-24 size-[420px] rounded-full bg-[#5566f6] opacity-40 blur-[120px]" />
+            <div className="absolute -bottom-40 -right-32 size-[460px] rounded-full bg-[#7a5cff] opacity-30 blur-[140px]" />
+            <div className="absolute left-1/3 top-1/2 size-[280px] rounded-full bg-[#3d4efc] opacity-25 blur-[100px]" />
+          </div>
+          <div className="relative z-10 p-4 pt-7 sm:p-8 md:p-10">
+            <div className="max-w-[760px] px-1 sm:px-0">
+              <div className="mb-3 inline-flex items-center gap-2 text-[13px] font-medium text-[#8b97ff]">
+                <ScanLine className="size-4" />
+                QR-код на оборудовании
+              </div>
+              <h2 className="text-[clamp(1.625rem,2.4vw+1rem,2.5rem)] font-semibold leading-[1.1] tracking-[-0.02em]">
+                Отсканировал — и запись уже в журнале
+              </h2>
+              <p className="mt-3 text-[15px] leading-[1.6] text-white/75 sm:text-[16px]">
+                Наклейка висит на холодильнике, у термометра в раздевалке, на
+                УФ-лампе, на фритюрнице. Сотрудник сканирует её камерой
+                телефона, вводит PIN и значение — строка встаёт в журнал по
+                форме СанПиН. Без приложения и пароля. Пропустили — ответственный
+                узнает.
+              </p>
+            </div>
+            <div className="mt-7 sm:mt-9">
+              <QrPlayer qr={qrMatrix} today={sceneToday} />
+            </div>
+          </div>
         </div>
       </section>
 
@@ -1090,38 +1173,67 @@ export default async function LandingPage() {
           показывает «было/стало», а эта — навигацию по всем нишам. */}
       <IndustriesGrid />
 
-      {/* FINAL CTA */}
+      {/* FINAL CTA — акцент на QR: три шага и золотая наклейка (золото
+          в дизайн-системе — только QR, одно на экран). id="start" — сюда
+          ведут «Начать бесплатно» из тарифов. */}
       <section
         id="start"
         className="mx-auto max-w-[1200px] scroll-mt-[72px] px-4 pb-20 sm:scroll-mt-24 sm:px-6"
       >
-        <div className="rounded-3xl border border-[#ececf4] bg-[#f5f6ff] p-6 text-center sm:p-10 md:p-14">
-          <div className="mx-auto mb-5 inline-flex size-14 items-center justify-center rounded-2xl bg-[#5566f6] text-white shadow-[0_14px_36px_-14px_rgba(85,102,246,0.6)]">
-            <Sparkles className="size-7" />
-          </div>
-          <h3 className="text-[clamp(1.5rem,2vw+1rem,2rem)] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">
-            Готовы избавиться от бумаги?
-          </h3>
-          <p className="mx-auto mt-3 max-w-[480px] text-[15px] leading-[1.55] text-[#6f7282]">
-            Зарегистрируйте организацию за 3 шага и начните заполнять журналы
-            уже сегодня. Бесплатный тариф — без срока, без карты.
-          </p>
-          <div className="mt-7 flex flex-wrap justify-center gap-3">
-            {isAuthed ? (
-              <Link
-                href={homeHref}
-                className="inline-flex h-12 items-center gap-2 rounded-2xl bg-[#5566f6] px-6 text-[15px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors hover:bg-[#4a5bf0]"
-              >
-                Открыть кабинет
-                <ArrowRight className="size-4" />
-              </Link>
-            ) : (
-              <>
-                {/* Тот же одношаговый старт, что и в hero — человек
-                    дочитал страницу, не надо снова вести его на форму. */}
-                <HeroEmailStart place="final" />
-              </>
-            )}
+        <div className="overflow-hidden rounded-3xl border border-[#ececf4] bg-[#f5f6ff] p-6 sm:p-10 md:p-14">
+          <div className="flex flex-col gap-10 lg:flex-row lg:items-center lg:gap-14">
+            <div className="min-w-0 flex-1">
+              <h3 className="text-[clamp(1.5rem,2vw+1rem,2.25rem)] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">
+                Повесьте QR — журналы будут вестись у оборудования
+              </h3>
+              <p className="mt-3 max-w-[520px] text-[15px] leading-[1.6] text-[#3c4053]">
+                Бесплатный тариф — без срока и без карты. Наклейки печатаются
+                из кабинета, сотрудникам не нужно ничего устанавливать.
+              </p>
+              <ol className="mt-7 flex flex-col gap-3 sm:flex-row sm:gap-3">
+                {QR_START_STEPS.map((step, index) => (
+                  <li key={step.title} className="flex flex-1 items-start gap-3 rounded-2xl border border-[#ececf4] bg-white p-4 sm:flex-col sm:gap-3">
+                    <span className="relative flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#5566f6]">
+                      <step.icon className="size-5" />
+                      <span className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full bg-[#5566f6] text-[11px] font-semibold text-white tabular-nums">
+                        {index + 1}
+                      </span>
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-[15px] font-semibold text-[#0b1024]">{step.title}</span>
+                      <span className="mt-1 block text-[13.5px] leading-[1.5] text-[#6f7282]">{step.text}</span>
+                    </span>
+                  </li>
+                ))}
+              </ol>
+              <div className="mt-7 flex flex-wrap gap-3">
+                {isAuthed ? (
+                  <Link
+                    href={homeHref}
+                    className="inline-flex h-12 items-center gap-2 rounded-2xl bg-[#5566f6] px-6 text-[15px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors hover:bg-[#4a5bf0]"
+                  >
+                    Открыть кабинет
+                    <ArrowRight className="size-4" />
+                  </Link>
+                ) : (
+                  <>
+                    {/* Тот же одношаговый старт, что и в hero — человек
+                        дочитал страницу, не надо снова вести его на форму. */}
+                    <HeroEmailStart place="final" />
+                  </>
+                )}
+              </div>
+            </div>
+            {/* Наклейка — как её увидит сотрудник. Код настоящий: ведёт
+                к ролику на этой странице. */}
+            <div className="mx-auto w-[200px] shrink-0 sm:w-[240px] lg:mx-0">
+              <div className="rotate-[-3deg] text-[26px] sm:text-[30px]">
+                <QrSticker qr={qrMatrix} />
+              </div>
+              <p className="mt-5 text-center text-[13px] leading-[1.5] text-[#6f7282]">
+                Наведите камеру телефона — так сотрудник открывает журнал.
+              </p>
+            </div>
           </div>
         </div>
       </section>

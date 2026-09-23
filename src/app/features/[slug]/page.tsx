@@ -7,6 +7,7 @@ import {
   Cloud,
   Leaf,
   Plug,
+  QrCode,
   Sparkles,
   Timer,
   UserCheck,
@@ -26,6 +27,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const ICON_MAP: Record<string, LucideIcon> = {
+  QrCode,
   Plug,
   Wand2,
   Cloud,

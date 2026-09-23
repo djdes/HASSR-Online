@@ -1118,16 +1118,6 @@ html, body {
   }
 }
 
-@keyframes landing-float {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0);
-  }
-  50% {
-    transform: translate3d(0, -10px, 0);
-  }
-}
-
 @keyframes landing-ambient-a {
   0%,
   100% {
@@ -1184,8 +1174,7 @@ html, body {
 .hero-copy,
 .hero-point,
 .hero-cta,
-.hero-chips,
-.hero-fan {
+.hero-chips {
   will-change: transform, opacity, filter;
   animation: landing-rise 0.72s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
@@ -1218,19 +1207,6 @@ html, body {
 
 .hero-chips {
   animation-delay: 440ms;
-}
-
-.hero-fan {
-  animation-delay: 540ms;
-}
-
-/* Покачивание — только на десктопе. На телефоне мокапы лежат в
-   горизонтальном scroll-snap-ряду, и плавающие карточки мешали бы
-   попадать пальцем по нужной. */
-@media (min-width: 640px) {
-  .hero-fan > div {
-    animation: landing-float 7.5s ease-in-out 1.4s infinite;
-  }
 }
 
 .landing-hero [aria-hidden="true"] > div:nth-child(1) {
@@ -1277,12 +1253,6 @@ html, body {
   .landing-motion-ready .landing-page > section:not(.landing-hero),
   .landing-motion-ready .landing-page footer {
     transform: translate3d(0, 22px, 0) scale(0.996);
-  }
-
-  @media (min-width: 640px) {
-    .hero-fan > div {
-      animation-duration: 6.5s;
-    }
   }
 }
 
@@ -1561,16 +1531,6 @@ html, body {
 .hero-chips > div > div > span:nth-child(9) { animation-delay: 1180ms; }
 .hero-chips > div > div > span:nth-child(10) { animation-delay: 1240ms; }
 
-/* ---- 3. Phone mockups в hero-fan: subtle tilt-on-hover ---- */
-.hero-fan {
-  perspective: 1200px;
-}
-.hero-fan > div > div {
-  transition: transform 600ms var(--ease-out-expo);
-}
-.hero-fan > div > div:hover {
-  transform: translateY(-6px) rotateY(-2deg);
-}
 
 /* ---- 4. Feature cards: lift + indigo glow + icon spin ---- */
 .landing-page a[href^="/features/"] {
@@ -1713,26 +1673,6 @@ html, body {
     landing-mark-float 6s var(--ease-in-out-cubic) 1.2s infinite;
 }
 
-/* ---- 10. Tilt-phones в fan: bottom-rotate чуть-чуть качаются ---- */
-@keyframes landing-tilt-sway {
-  0%,
-  100% {
-    transform: rotate(var(--landing-tilt, 0deg)) translateY(0);
-  }
-  50% {
-    transform: rotate(calc(var(--landing-tilt, 0deg) + 1.5deg))
-      translateY(-4px);
-  }
-}
-.hero-fan > div:nth-child(2) {
-  --landing-tilt: -8deg;
-  animation: landing-tilt-sway 8s var(--ease-in-out-cubic) 2s infinite;
-}
-.hero-fan > div:nth-child(3) {
-  --landing-tilt: 8deg;
-  animation: landing-tilt-sway 8s var(--ease-in-out-cubic) 2.4s infinite reverse;
-}
-
 /* ---- 11. Hover-blob на dark CTA (footer-block) ---- */
 @keyframes landing-blob-drift {
   0%,
@@ -1764,10 +1704,6 @@ html, body {
   .hero-cta a[href="/register"]::after,
   .hero-chips,
   .hero-chips > div > div > span,
-  .hero-fan,
-  .hero-fan > div,
-  .hero-fan > div:nth-child(2),
-  .hero-fan > div:nth-child(3),
   .landing-hero [aria-hidden="true"] > div,
   .hero-title [aria-hidden="true"],
   .landing-page::before,
@@ -1789,7 +1725,6 @@ html, body {
 
   .landing-page a[href^="/features/"],
   .landing-page a[href^="/features/"] > div:first-child,
-  .hero-fan > div > div,
   .hero-chips > div > div > span,
   .landing-page a[href="/register"]:not(.hero-cta a)::after,
   .landing-motion-ready .landing-page > section .grid > *,
@@ -2463,4 +2398,81 @@ html, body {
 }
 @media print {
   .qr-point-sheen::after { display: none; }
+}
+
+/* ====================================================================
+ * QR-ролик лендинга (`src/components/landing/qr-player`): скраббер и
+ * ползунки «Попробуйте сами». Заливка слева от бегунка — через
+ * `--qrp-fill`, цвет — `--qrp-accent`. Классы свои, ночная тема их не
+ * трогает.
+ * ================================================================== */
+/* Кадр ролика — чистая функция времени. Плавная смена темы кабинета
+   (`.app-shell *` — transition цвета 0.18s в app-theme.css) здесь не
+   нужна: при перемотке кадр «доезжал» бы из прошлого состояния. */
+.app-shell [data-qr-stage],
+.app-shell [data-qr-stage] * {
+  transition: none !important;
+}
+
+.qrp-range {
+  --qrp-accent: #8b97ff;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 28px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: pan-y;
+}
+.qrp-range:focus {
+  outline: none;
+}
+.qrp-range::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--qrp-accent) 0,
+    var(--qrp-accent) var(--qrp-fill, 0%),
+    rgba(255, 255, 255, 0.16) var(--qrp-fill, 0%)
+  );
+}
+.qrp-range::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+}
+.qrp-range::-moz-range-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--qrp-accent);
+}
+.qrp-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -6px;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(139, 151, 255, 0.35), 0 4px 10px rgba(0, 0, 0, 0.4);
+  transition: box-shadow 150ms ease;
+}
+.qrp-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: 0;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(139, 151, 255, 0.35), 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+.qrp-range:hover::-webkit-slider-thumb,
+.qrp-range:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 6px rgba(139, 151, 255, 0.5), 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+.qrp-range:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 6px rgba(139, 151, 255, 0.5), 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+.qrp-range-try::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--qrp-accent) 40%, transparent), 0 4px 10px rgba(0, 0, 0, 0.4);
 }
