@@ -1,29 +1,26 @@
+import { QR_CHECK_CSS, QR_CHECK_SVG } from "@/lib/qr-pin-ui";
+
 /**
- * Зелёная анимированная галка экрана «Сохранено» на QR-формах: круг
- * рисуется обводкой, затем галка, лёгкий «pop». При
- * `prefers-reduced-motion` — сразу готовая. Ключевые кадры —
- * `.qr-success-*` в `globals.css`.
+ * Галка экрана «Записано» на QR-формах: залитый сине-зелёный круг с белой
+ * галкой и мягким ореолом, короткий «pop». Раньше — зелёный контурный круг,
+ * его путали с логотипом Сбербанка. Разметка и CSS — общие с серверными
+ * страницами (`QR_CHECK_*` в `qr-pin-ui.ts`); стиль подключается здесь же
+ * (React 19 дедуплицирует `<style href precedence>`), в `globals.css` не
+ * зависит. При `prefers-reduced-motion` — сразу готовая.
  */
-export function SuccessCheck({ label = "Сохранено" }: { label?: string }) {
+export function SuccessCheck({ label = "Сохранено", size = 112 }: { label?: string; size?: number }) {
   return (
-    <div
-      role="status"
-      aria-label={label}
-      className="qr-success-pop mx-auto mb-4 flex size-20 items-center justify-center rounded-full bg-[#ecfdf5] text-[#16a34a]"
-    >
-      <svg
-        viewBox="0 0 24 24"
-        className="size-14"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={2.2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        <circle className="qr-success-circle" cx="12" cy="12" r="10" />
-        <path className="qr-success-mark" d="m8 12.5 2.7 2.7L16.5 9.5" />
-      </svg>
+    <div className="mx-auto mb-5 flex justify-center p-3">
+      <style href="wesetup-qr-check" precedence="default">
+        {QR_CHECK_CSS}
+      </style>
+      <div
+        role="status"
+        aria-label={label}
+        className="qc"
+        style={{ ["--qc" as string]: `${size}px` }}
+        dangerouslySetInnerHTML={{ __html: QR_CHECK_SVG }}
+      />
     </div>
   );
 }

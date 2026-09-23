@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import { readRememberValue, rememberCookieName } from "@/lib/qr-remember";
+import { passEmployeeIdFromCookie } from "@/lib/qr-object-pass";
 
 import { db } from "@/lib/db";
 import { buildingWhere } from "@/lib/building-scope";
@@ -173,6 +174,7 @@ export default async function RoomFillPage({
       mode={qrMode}
       sessionEmployee={sessionEmployee}
       rememberedEmployeeId={qrMode === "auth" ? null : readRememberValue(organizationId, (await cookies()).get(rememberCookieName(organizationId))?.value)?.employeeId ?? null}
+      passEmployeeId={qrMode === "auth" ? null : await passEmployeeIdFromCookie(organizationId)}
       employees={(sessionEmployee && !sessionEmployee.canPickOthers
         ? employees.filter((employee) => employee.id === sessionEmployee!.id)
         : filterAllowedFillers(employees, room.fillerUserIds)

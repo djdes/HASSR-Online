@@ -127,7 +127,7 @@ export function QrCameraSheet({
       aria-modal="true"
       aria-label="Сканирование QR-кода"
     >
-      <div className="flex items-center justify-between px-4 pb-3 pt-[max(1rem,var(--mini-safe-t))]">
+      <div className="flex items-center justify-between px-4 pb-3 pt-[max(1rem,var(--mini-safe-t,0px))]">
         <span className="text-[15px] font-medium text-white">
           Наведите на QR-код
         </span>

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Lightbulb, LightbulbOff, Loader2 } from "lucide-react";
 
 import { EmployeePicker } from "@/components/qr-fill/employee-picker";
-import { QrPinOk, QrPinStep, QrPinUiStyles, QrRememberToggle, rememberQrEmployee } from "@/components/qr-fill/qr-pin-step";
+import { QrPassNote, QrPinOk, QrPinStep, QrPinUiStyles, QrRememberToggle, forgetQrPass, rememberQrEmployee } from "@/components/qr-fill/qr-pin-step";
 import { QrPageShell } from "@/components/qr-fill/qr-page-shell";
 import { SuccessCheck } from "@/components/qr-fill/success-check";
 import { WhoRow } from "@/components/qr-fill/who-row";
@@ -35,6 +35,8 @@ export function UvLampClient(props: {
   initialState: LampState;
   /** «Запомнить выбор на этом оборудовании» — сотрудник из cookie организации. */
   rememberedEmployeeId?: string | null;
+  /** Чей пропуск после PIN лежит в cookie организации (30 минут) — ему PIN не спрашиваем. */
+  passEmployeeId?: string | null;
 }) {
   const [state, setState] = useState<LampState>(props.initialState);
   const [employeeId, setEmployeeId] = useState("");
@@ -42,6 +44,8 @@ export function UvLampClient(props: {
   const [pass, setPass] = useState<string | null>(null);
   const [pinOk, setPinOk] = useState(false);
   const [remember, setRemember] = useState(true);
+  // Пропуск в cookie (F5, соседняя наклейка): действует для этого сотрудника.
+  const [cookiePassFor, setCookiePassFor] = useState<string | null>(props.passEmployeeId ?? null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<{ title: string; text: string; warn: string | null } | null>(null);
@@ -58,12 +62,26 @@ export function UvLampClient(props: {
       return;
     }
     try {
-      const remembered = props.rememberedEmployeeId ?? localStorage.getItem(LS_SHARED_EMPLOYEE_KEY);
+      const remembered = props.passEmployeeId ?? props.rememberedEmployeeId ?? localStorage.getItem(LS_SHARED_EMPLOYEE_KEY);
       if (remembered && props.employees.some((e) => e.id === remembered)) setEmployeeId(remembered);
     } catch {
       /* приватный режим */
     }
-  }, [props.employees, props.sessionEmployee, props.rememberedEmployeeId]);
+  }, [props.employees, props.sessionEmployee, props.rememberedEmployeeId, props.passEmployeeId]);
+
+  // «Не вы? Сменить»: снять пропуск и запомненный выбор — телефон общий.
+  const logout = () => {
+    void forgetQrPass({ kind: "equipment", objectId: props.lamp.id, token: props.token });
+    setCookiePassFor(null);
+    setPass(null);
+    setPinOk(false);
+    setEmployeeId("");
+    try {
+      localStorage.removeItem(LS_SHARED_EMPLOYEE_KEY);
+    } catch {
+      /* приватный режим */
+    }
+  };
 
   const pickEmployee = (id: string) => {
     setEmployeeId(id);
@@ -77,7 +95,8 @@ export function UvLampClient(props: {
 
   const selected = props.employees.find((e) => e.id === employeeId) ?? null;
   const pinRequired = props.mode !== "auth" && (props.mode === "pin" || Boolean(selected?.hasPin));
-  const pinStepNeeded = Boolean(employeeId) && pinRequired && !pass;
+  const hasPass = Boolean(pass) || (cookiePassFor !== null && cookiePassFor === employeeId);
+  const pinStepNeeded = Boolean(employeeId) && pinRequired && !hasPass;
   const running = Boolean(state.running);
 
   async function press() {
@@ -142,7 +161,8 @@ export function UvLampClient(props: {
             fixedName={fixed ? props.sessionEmployee?.name ?? null : null}
             label="Кто включает и выключает"
           />
-          {!fixed && props.mode !== "auth" && props.employees.length > 1 ? <QrRememberToggle checked={remember} onChange={setRemember} /> : null}
+          {pinRequired && hasPass && !fixed ? <QrPassNote remembered={cookiePassFor === employeeId} onLogout={logout} /> : null}
+          {!fixed && props.mode !== "auth" && props.employees.length > 1 && !(pinRequired && hasPass) ? <QrRememberToggle checked={remember} onChange={setRemember} /> : null}
           {pinStepNeeded && selected ? (
             <QrPinStep
               kind="equipment"
@@ -155,6 +175,7 @@ export function UvLampClient(props: {
               onPass={(value) => {
                 setPass(value);
                 setPinOk(true);
+                setCookiePassFor(remember ? selected.id : null);
               }}
             />
           ) : null}
@@ -173,7 +194,7 @@ export function UvLampClient(props: {
           <button
             type="button"
             onClick={() => void press()}
-            disabled={busy || !employeeId || (pinRequired && !pass)}
+            disabled={busy || !employeeId || (pinRequired && !hasPass)}
             data-testid="uv-toggle"
             className={`flex min-h-[140px] w-full flex-col items-center justify-center gap-2 rounded-3xl px-6 text-[26px] font-bold text-white shadow-[0_20px_50px_-20px_rgba(11,16,36,0.45)] transition-colors duration-150 disabled:opacity-60 ${
               running ? "bg-[#d2453d] hover:bg-[#bd3c35]" : "bg-[#16a34a] hover:bg-[#15803d]"

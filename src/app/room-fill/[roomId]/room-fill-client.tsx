@@ -10,7 +10,8 @@ import { QrPageShell } from "@/components/qr-fill/qr-page-shell";
 import { WhoRow } from "@/components/qr-fill/who-row";
 import { EmployeePicker } from "@/components/qr-fill/employee-picker";
 import { ReadingField } from "@/components/qr-fill/reading-field";
-import { QrPinOk, QrPinStep, QrPinUiStyles, QrRememberToggle, rememberQrEmployee } from "@/components/qr-fill/qr-pin-step";
+import { NextQrButton } from "@/components/qr-fill/next-qr-button";
+import { QrPassNote, QrPinOk, QrPinStep, QrPinUiStyles, QrRememberToggle, forgetQrPass, rememberQrEmployee } from "@/components/qr-fill/qr-pin-step";
 import { draftKeyFor, useFormDraft } from "@/components/qr-fill/use-form-draft";
 
 type Metric = { enabled: boolean; min: number | null; max: number | null };
@@ -36,6 +37,8 @@ type Props = {
   journalTitle: string;
   /** «Запомнить выбор на этом оборудовании» — сотрудник из cookie организации. */
   rememberedEmployeeId?: string | null;
+  /** Чей пропуск после PIN лежит в cookie организации (30 минут) — ему PIN не спрашиваем. */
+  passEmployeeId?: string | null;
 };
 
 const LS_EMPLOYEE_KEY = "wesetup.room-fill.employeeId";
@@ -57,12 +60,14 @@ function isOutside(value: number | null, metric: Metric): boolean {
  * Три шага, как на плакате: выбрать себя → ввести показания → «Сохранить».
  * Имя запоминается на телефоне, со второго раза остаётся ввести числа.
  */
-export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot, employees, mode = "public", sessionEmployee = null, todayValues = null, stamp = null, journalTitle, rememberedEmployeeId = null }: Props) {
+export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot, employees, mode = "public", sessionEmployee = null, todayValues = null, stamp = null, journalTitle, rememberedEmployeeId = null, passEmployeeId = null }: Props) {
   const [employeeId, setEmployeeId] = useState("");
   // Единые правила QR (2026-09-22): PIN — шагом до формы, дальше пропуск визита.
   const [pass, setPass] = useState<string | null>(null);
   const [pinOk, setPinOk] = useState(false);
   const [remember, setRemember] = useState(true);
+  // Пропуск в cookie (F5, соседняя наклейка): действует для этого сотрудника.
+  const [cookiePassFor, setCookiePassFor] = useState<string | null>(passEmployeeId);
   // Имя запоминаем сразу при выборе, а не только после записи: обновление страницы или обрыв связи не заставят выбирать заново.
   const rememberEmployee = (id: string) => {
     setEmployeeId(id);
@@ -121,14 +126,29 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
         setEmployeeId(sessionEmployee.id);
         return;
       }
-      const remembered = rememberedEmployeeId ?? localStorage.getItem(LS_SHARED_EMPLOYEE_KEY) ?? localStorage.getItem(LS_EMPLOYEE_KEY);
+      const remembered = passEmployeeId ?? rememberedEmployeeId ?? localStorage.getItem(LS_SHARED_EMPLOYEE_KEY) ?? localStorage.getItem(LS_EMPLOYEE_KEY);
       if (remembered && employees.some((employee) => employee.id === remembered)) {
         setEmployeeId(remembered);
       }
     } catch {
       /* приватный режим — выберут имя вручную */
     }
-  }, [employees, mode, sessionEmployee, rememberedEmployeeId]);
+  }, [employees, mode, sessionEmployee, rememberedEmployeeId, passEmployeeId]);
+
+  // «Не вы? Сменить»: снять пропуск и запомненный выбор — телефон общий.
+  function logout() {
+    void forgetQrPass({ kind: "room", objectId: room.id, token });
+    setCookiePassFor(null);
+    setPass(null);
+    setPinOk(false);
+    setEmployeeId("");
+    try {
+      localStorage.removeItem(LS_EMPLOYEE_KEY);
+      localStorage.removeItem(LS_SHARED_EMPLOYEE_KEY);
+    } catch {
+      /* приватный режим */
+    }
+  }
 
   const temperatureValue = useMemo(() => parseNumber(temperature), [temperature]);
   const humidityValue = useMemo(() => parseNumber(humidity), [humidity]);
@@ -195,7 +215,8 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
   const selectedEmployee = employees.find((item) => item.id === employeeId) ?? null;
   // PIN спрашиваем шагом до формы, когда он у сотрудника задан (или режим «имя + PIN»); вход в кабинет — без PIN.
   const pinRequired = mode !== "auth" && (mode === "pin" || Boolean(selectedEmployee?.hasPin));
-  const pinStepNeeded = Boolean(employeeId) && pinRequired && !pass;
+  const hasPass = Boolean(pass) || (cookiePassFor !== null && cookiePassFor === employeeId);
+  const pinStepNeeded = Boolean(employeeId) && pinRequired && !hasPass;
   // После сохранения текущий объект в списке сразу «снят» — с введёнными значениями.
 
   return (
@@ -227,7 +248,12 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                 Показание вне нормы — руководителю уже отправлено уведомление. Проветрите или сообщите о поломке.
               </p>
             ) : null}
-            <Button
+            {/* «Следующий QR» — главное действие: обход складов подряд без
+                повторного PIN. Ссылок на другие объекты нет — только камера. */}
+            <div className="mt-6">
+              <NextQrButton withoutPin={cookiePassFor === employeeId || !pinRequired} />
+            </div>
+            <button
               type="button"
               onClick={() => {
                 setSaved(null);
@@ -236,10 +262,10 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                 setCorrection("");
                 setError(null);
               }}
-              className="mt-6 h-12 rounded-2xl bg-[#5566f6] px-5 text-[15px] font-medium text-white transition-colors duration-150 hover:bg-[#4a5bf0]"
+              className="mt-3 h-12 w-full rounded-2xl border border-[#dcdfed] bg-white px-5 text-[15px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
             >
               Записать ещё замер
-            </Button>
+            </button>
           </div>
         ) : (
           <div>
@@ -251,7 +277,10 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                 fixedName={fixedEmployee ? sessionEmployee?.name ?? null : null}
                 hint={rememberedName && !pinStepNeeded ? "Запомнили с прошлого раза — можно сразу вводить показания." : rememberedName && selectedEmployee?.hasPin ? "Запомнили с прошлого раза — введите свой PIN." : null}
               />
-              {!fixedEmployee && mode !== "auth" ? <QrRememberToggle checked={remember} onChange={setRemember} /> : null}
+              {pinRequired && hasPass && !fixedEmployee ? (
+                <QrPassNote remembered={cookiePassFor === employeeId} onLogout={logout} />
+              ) : null}
+              {!fixedEmployee && mode !== "auth" && !(pinRequired && hasPass) ? <QrRememberToggle checked={remember} onChange={setRemember} /> : null}
 
               {pinStepNeeded && selectedEmployee ? (
                 <QrPinStep
@@ -265,6 +294,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                   onPass={(value) => {
                     setPass(value);
                     setPinOk(true);
+                    setCookiePassFor(remember ? selectedEmployee.id : null);
                   }}
                 />
               ) : null}
@@ -321,7 +351,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                 <Button
                   type="button"
                   onClick={save}
-                  disabled={submitting || !employeeId || !hasValue || !hasActiveDocument || correctionMissing || (pinRequired && !pass)}
+                  disabled={submitting || !employeeId || !hasValue || !hasActiveDocument || correctionMissing || (pinRequired && !hasPass)}
                   className="h-14 w-full rounded-2xl bg-[#5566f6] px-5 text-[18px] font-semibold text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] disabled:bg-[#c8cbe0]"
                 >
                   {submitting ? "Сохраняем…" : "Сохранить"}

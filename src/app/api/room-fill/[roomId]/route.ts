@@ -22,7 +22,7 @@ import {
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { ensureQrPeriodDocuments, qrRolloverMessage } from "@/lib/journal-qr-rollover";
 import { normalizeQrFillMode } from "@/lib/qr-fill-actor";
-import { resolveObjectActor } from "@/lib/qr-object-pass";
+import { readObjectPassCookie, resolveObjectActor } from "@/lib/qr-object-pass";
 import { verifyQrFillTokenFor } from "@/lib/qr-fill-token";
 import {
   QR_FILL_RATE_LIMIT_ERROR,
@@ -126,6 +126,7 @@ export async function POST(
     employeeId: body.employeeId,
     pin: body.pin,
     pass: body.pass,
+    cookiePass: await readObjectPassCookie(organizationId),
   });
   if (!actor.ok) {
     return NextResponse.json({ error: actor.error }, { status: actor.status });

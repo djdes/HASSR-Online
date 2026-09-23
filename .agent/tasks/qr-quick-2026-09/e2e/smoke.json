@@ -1,0 +1,174 @@
+{
+  "passed": 28,
+  "total": 28,
+  "checks": [
+    {
+      "name": "холодильник: шаг PIN до формы",
+      "ok": true
+    },
+    {
+      "name": "«PIN верный»: залитый круг #059669 ~120px без контура, ореол не режется",
+      "ok": true,
+      "detail": {
+        "okBox": {
+          "x": 135,
+          "y": 432.21875,
+          "width": 120,
+          "height": 120
+        },
+        "okStyle": {
+          "bg": "rgb(5, 150, 105)",
+          "border": "0px",
+          "shadow": "rgba(5, 150, 105, 0.14) 0px 0px 0px 10px"
+        },
+        "okClip": {
+          "top": 6,
+          "bottom": 8
+        }
+      }
+    },
+    {
+      "name": "cookie пропуска организации: HttpOnly, Lax, путь /, ~30 минут",
+      "ok": true,
+      "detail": {
+        "c1": {
+          "name": "wesetup.qr.pass.e2e-org-gq",
+          "value": "v3.e2e-gq-cook-a.e2e-org-gq.any.1790185908549._EhdtyD_.MUvmYXH0zQIhyGYk6bJNtDmIeiynZs3eN4WFnAvMw1Q",
+          "domain": "localhost",
+          "path": "/",
+          "expires": 1790185908.553379,
+          "httpOnly": true,
+          "secure": false,
+          "sameSite": "Lax"
+        },
+        "ttl": 1799.537379026413
+      }
+    },
+    {
+      "name": "холодильник: записано по пропуску",
+      "ok": true
+    },
+    {
+      "name": "«Записано»: новая галка ~112px",
+      "ok": true,
+      "detail": {
+        "x": 139,
+        "y": 231.046875,
+        "width": 112,
+        "height": 112
+      }
+    },
+    {
+      "name": "«Записано»: главная кнопка «Следующий QR» и второстепенная «Записать ещё замер»",
+      "ok": true
+    },
+    {
+      "name": "на экране «Записано» нет ссылок/токенов других объектов",
+      "ok": true
+    },
+    {
+      "name": "«Следующий QR» открывает сканер (в dev без камеры — понятная ошибка)",
+      "ok": true,
+      "detail": "Наведите на QR-код\n\nКамера не найдена."
+    },
+    {
+      "name": "F5 на холодильнике — без PIN, поля сразу",
+      "ok": true
+    },
+    {
+      "name": "под «Кто снимает» — «PIN подтверждён» и «Не вы? Сменить»",
+      "ok": true
+    },
+    {
+      "name": "другой холодильник той же организации — без PIN",
+      "ok": true
+    },
+    {
+      "name": "склад той же организации — без PIN",
+      "ok": true
+    },
+    {
+      "name": "склад: записано по cookie-пропуску, есть «Следующий QR»",
+      "ok": true
+    },
+    {
+      "name": "УФ-лампа той же организации — без PIN, кнопка активна",
+      "ok": true
+    },
+    {
+      "name": "другой сотрудник на том же телефоне — PIN снова",
+      "ok": true
+    },
+    {
+      "name": "API: cookie Анны не пишет за Бориса",
+      "ok": true,
+      "detail": {
+        "status": 401
+      }
+    },
+    {
+      "name": "пропуск одной организации не открывает другую",
+      "ok": true,
+      "detail": {
+        "status": 401
+      }
+    },
+    {
+      "name": "«Не вы? Сменить» снимает cookie пропуска",
+      "ok": true
+    },
+    {
+      "name": "после «Не вы?» — имя не выбрано, пропуска нет, сохранить нельзя",
+      "ok": true
+    },
+    {
+      "name": "«Запомнить» выключено — cookie пропуска нет",
+      "ok": true
+    },
+    {
+      "name": "«Запомнить» выключено — после F5 снова PIN",
+      "ok": true
+    },
+    {
+      "name": "JSON-пропуск без cookie (совместимость) — сохраняет",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "body": "{\"ok\":true,\"touched\":1,\"humidityTouched\":0,\"outOfRange\":false}"
+      }
+    },
+    {
+      "name": "API /pass с remember=true ставит cookie",
+      "ok": true
+    },
+    {
+      "name": "сохранение только по cookie — 200",
+      "ok": true,
+      "detail": "{\"ok\":true,\"touched\":1,\"humidityTouched\":0,\"outOfRange\":false}"
+    },
+    {
+      "name": "сброс PIN руководителем — cookie-пропуск больше не действует",
+      "ok": true,
+      "detail": {
+        "status": 401
+      }
+    },
+    {
+      "name": "сброс PIN — страница снова спрашивает PIN",
+      "ok": true
+    },
+    {
+      "name": "сотрудник заблокирован — пропуск не принимается (423)",
+      "ok": true,
+      "detail": {
+        "status": 423,
+        "body": "{\"error\":\"PIN заблокирован после ошибок. Попробуйте через 10 мин.\"}"
+      }
+    },
+    {
+      "name": "prefers-reduced-motion — галка без анимации",
+      "ok": true,
+      "detail": "none"
+    }
+  ]
+}

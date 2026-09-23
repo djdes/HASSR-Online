@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { verifyEquipmentQrToken } from "@/lib/equipment-qr-token";
 import { OBJECT_FILLER_DENIED } from "@/lib/object-fillers";
 import { normalizeQrFillMode } from "@/lib/qr-fill-actor";
-import { resolveObjectActor } from "@/lib/qr-object-pass";
+import { readObjectPassCookie, resolveObjectActor } from "@/lib/qr-object-pass";
 import { QR_FILL_RATE_LIMIT_ERROR, qrFillRateKey, recordQrFillAudit } from "@/lib/qr-fill-audit";
 import { qrFillRateLimiter } from "@/lib/rate-limit";
 import { orgTodayKey } from "@/lib/timezone";
@@ -60,6 +60,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ equ
     employeeId,
     pin: typeof body?.pin === "string" ? body.pin : null,
     pass: typeof body?.pass === "string" ? body.pass : null,
+    cookiePass: await readObjectPassCookie(organizationId),
   });
   if (!actor.ok) return NextResponse.json({ error: actor.error }, { status: actor.status });
 

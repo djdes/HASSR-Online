@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import { readRememberValue, rememberCookieName } from "@/lib/qr-remember";
+import { passEmployeeIdFromCookie } from "@/lib/qr-object-pass";
 import { db } from "@/lib/db";
 import { verifyEquipmentQrToken } from "@/lib/equipment-qr-token";
 import { resolveEquipmentFillTargets } from "@/lib/equipment-fill-targets";
@@ -113,6 +114,10 @@ export default async function EquipmentFillPage({
     if (resolved.ok) sessionEmployee = resolved.employee;
   }
 
+  // Пропуск после PIN в cookie организации (30 минут): F5 и соседняя
+  // наклейка — без PIN, если выбран тот же сотрудник.
+  const passEmployeeId = qrMode === "auth" ? null : await passEmployeeIdFromCookie(organizationId);
+
   // УФ-лампа: «Я включил / Я выключил» вместо замера (2026-09-22).
   if (isUvLampType(equipment.type)) {
     const lampTz = equipment.area.organization.timezone || "Europe/Moscow";
@@ -130,6 +135,7 @@ export default async function EquipmentFillPage({
         mode={qrMode}
         sessionEmployee={sessionEmployee}
         rememberedEmployeeId={qrMode === "auth" ? null : readRememberValue(organizationId, (await cookies()).get(rememberCookieName(organizationId))?.value)?.employeeId ?? null}
+        passEmployeeId={passEmployeeId}
         initialState={state ?? { running: null, lifetimeHours: null, usedHours: 0, remainingHours: null }}
       />
     );
@@ -195,6 +201,7 @@ export default async function EquipmentFillPage({
       mode={qrMode}
       sessionEmployee={sessionEmployee}
       rememberedEmployeeId={qrMode === "auth" ? null : readRememberValue(organizationId, (await cookies()).get(rememberCookieName(organizationId))?.value)?.employeeId ?? null}
+      passEmployeeId={passEmployeeId}
       employees={(sessionEmployee && !sessionEmployee.canPickOthers
         ? employees.filter((e) => e.id === sessionEmployee!.id)
         : filterAllowedFillers(employees, equipment.fillerUserIds)

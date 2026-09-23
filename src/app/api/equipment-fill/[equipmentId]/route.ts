@@ -30,7 +30,7 @@ import {
 import { clientIp } from "@/lib/client-ip";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { normalizeQrFillMode } from "@/lib/qr-fill-actor";
-import { resolveObjectActor } from "@/lib/qr-object-pass";
+import { readObjectPassCookie, resolveObjectActor } from "@/lib/qr-object-pass";
 import {
   QR_FILL_RATE_LIMIT_ERROR,
   qrFillRateKey,
@@ -135,6 +135,7 @@ export async function POST(
     employeeId: parsed.employeeId,
     pin: parsed.pin,
     pass: parsed.pass,
+    cookiePass: await readObjectPassCookie(organizationId),
   });
   if (!actor.ok) {
     return NextResponse.json({ error: actor.error }, { status: actor.status });
