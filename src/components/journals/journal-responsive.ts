@@ -58,7 +58,7 @@ export const JOURNAL_LIST_CARD_CLASS =
  * Название документа — 16px/700 тёмным, как на эталоне (S1 аудита).
  */
 export const JOURNAL_CARD_TITLE_CLASS =
-  "text-[16px] font-bold leading-[1.35] tracking-[-0.02em] text-black";
+  "text-[16px] font-bold leading-[1.35] tracking-[-0.02em] text-black [overflow-wrap:anywhere]";
 
 export const JOURNAL_CARD_LABEL_CLASS =
   "text-[12.5px] leading-[1.3] text-[#84849a] sm:whitespace-nowrap";
