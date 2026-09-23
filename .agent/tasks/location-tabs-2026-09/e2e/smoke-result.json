@@ -1,0 +1,1461 @@
+{
+  "at": "2026-09-23T16:25:52.271Z",
+  "total": 178,
+  "failed": 0,
+  "errors": [],
+  "results": [
+    {
+      "id": "AC1",
+      "name": "/dashboard 360 light: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 360,
+        "vw": 360
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/dashboard 360 light: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/dashboard 360 light: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/dashboard 360 light: шапка без второй строки (≈72px)",
+      "ok": true,
+      "details": {
+        "headerHeight": 73
+      }
+    },
+    {
+      "id": "AC2",
+      "name": "/dashboard 360 light: вкладки первым блоком",
+      "ok": true
+    },
+    {
+      "id": "AC2",
+      "name": "/dashboard 360 light: счётчики 4/4, 2/4, 0/4",
+      "ok": true,
+      "details": {
+        "counters": [
+          "4/4",
+          "2/4",
+          "0/4"
+        ]
+      }
+    },
+    {
+      "id": "AC2",
+      "name": "/dashboard 360 light: старого блока «Точки сегодня» нет",
+      "ok": true
+    },
+    {
+      "id": "AC1",
+      "name": "/journals 360 light: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 360,
+        "vw": 360
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals 360 light: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/journals 360 light: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/journals 360 light: шапка без второй строки (≈72px)",
+      "ok": true,
+      "details": {
+        "headerHeight": 73
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals 360 light: вкладки над крошками",
+      "ok": true,
+      "details": {
+        "navTop": 89,
+        "crumbsTop": 179
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals/hygiene 360 light: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 360,
+        "vw": 360
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals/hygiene 360 light: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/journals/hygiene 360 light: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/journals/hygiene 360 light: шапка без второй строки (≈72px)",
+      "ok": true,
+      "details": {
+        "headerHeight": 73
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals/hygiene 360 light: вкладки над крошками",
+      "ok": true,
+      "details": {
+        "navTop": 89,
+        "crumbsTop": 179
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/settings/users 360 light: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 360,
+        "vw": 360
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/settings/users 360 light: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/settings/users 360 light: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/settings/users 360 light: шапка без второй строки (≈72px)",
+      "ok": true,
+      "details": {
+        "headerHeight": 73
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/settings/users 360 light: вкладки над крошками",
+      "ok": true,
+      "details": {
+        "navTop": 89,
+        "crumbsTop": 179
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/dashboard 390 light: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 390,
+        "vw": 390
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/dashboard 390 light: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/dashboard 390 light: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/dashboard 390 light: шапка без второй строки (≈72px)",
+      "ok": true,
+      "details": {
+        "headerHeight": 73
+      }
+    },
+    {
+      "id": "AC2",
+      "name": "/dashboard 390 light: вкладки первым блоком",
+      "ok": true
+    },
+    {
+      "id": "AC2",
+      "name": "/dashboard 390 light: счётчики 4/4, 2/4, 0/4",
+      "ok": true,
+      "details": {
+        "counters": [
+          "4/4",
+          "2/4",
+          "0/4"
+        ]
+      }
+    },
+    {
+      "id": "AC2",
+      "name": "/dashboard 390 light: старого блока «Точки сегодня» нет",
+      "ok": true
+    },
+    {
+      "id": "AC1",
+      "name": "/journals 390 light: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 390,
+        "vw": 390
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals 390 light: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/journals 390 light: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/journals 390 light: шапка без второй строки (≈72px)",
+      "ok": true,
+      "details": {
+        "headerHeight": 73
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals 390 light: вкладки над крошками",
+      "ok": true,
+      "details": {
+        "navTop": 89,
+        "crumbsTop": 179
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals/hygiene 390 light: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 390,
+        "vw": 390
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals/hygiene 390 light: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/journals/hygiene 390 light: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/journals/hygiene 390 light: шапка без второй строки (≈72px)",
+      "ok": true,
+      "details": {
+        "headerHeight": 73
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals/hygiene 390 light: вкладки над крошками",
+      "ok": true,
+      "details": {
+        "navTop": 89,
+        "crumbsTop": 179
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/settings/users 390 light: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 390,
+        "vw": 390
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/settings/users 390 light: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/settings/users 390 light: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/settings/users 390 light: шапка без второй строки (≈72px)",
+      "ok": true,
+      "details": {
+        "headerHeight": 73
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/settings/users 390 light: вкладки над крошками",
+      "ok": true,
+      "details": {
+        "navTop": 89,
+        "crumbsTop": 179
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/dashboard 768 light: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 768,
+        "vw": 768
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/dashboard 768 light: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/dashboard 768 light: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC2",
+      "name": "/dashboard 768 light: вкладки первым блоком",
+      "ok": true
+    },
+    {
+      "id": "AC2",
+      "name": "/dashboard 768 light: счётчики 4/4, 2/4, 0/4",
+      "ok": true,
+      "details": {
+        "counters": [
+          "4/4",
+          "2/4",
+          "0/4"
+        ]
+      }
+    },
+    {
+      "id": "AC2",
+      "name": "/dashboard 768 light: старого блока «Точки сегодня» нет",
+      "ok": true
+    },
+    {
+      "id": "AC1",
+      "name": "/journals 768 light: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 768,
+        "vw": 768
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals 768 light: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/journals 768 light: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals 768 light: вкладки над крошками",
+      "ok": true,
+      "details": {
+        "navTop": 97,
+        "crumbsTop": 187
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals/hygiene 768 light: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 768,
+        "vw": 768
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals/hygiene 768 light: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/journals/hygiene 768 light: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals/hygiene 768 light: вкладки над крошками",
+      "ok": true,
+      "details": {
+        "navTop": 97,
+        "crumbsTop": 187
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/settings/users 768 light: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 768,
+        "vw": 768
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/settings/users 768 light: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/settings/users 768 light: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/settings/users 768 light: вкладки над крошками",
+      "ok": true,
+      "details": {
+        "navTop": 97,
+        "crumbsTop": 187
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/dashboard 1280 light: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 1280,
+        "vw": 1280
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/dashboard 1280 light: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/dashboard 1280 light: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC2",
+      "name": "/dashboard 1280 light: вкладки первым блоком",
+      "ok": true
+    },
+    {
+      "id": "AC2",
+      "name": "/dashboard 1280 light: счётчики 4/4, 2/4, 0/4",
+      "ok": true,
+      "details": {
+        "counters": [
+          "4/4",
+          "2/4",
+          "0/4"
+        ]
+      }
+    },
+    {
+      "id": "AC2",
+      "name": "/dashboard 1280 light: старого блока «Точки сегодня» нет",
+      "ok": true
+    },
+    {
+      "id": "AC1",
+      "name": "/journals 1280 light: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 1280,
+        "vw": 1280
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals 1280 light: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/journals 1280 light: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals 1280 light: вкладки над крошками",
+      "ok": true,
+      "details": {
+        "navTop": 97,
+        "crumbsTop": 187
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals/hygiene 1280 light: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 1280,
+        "vw": 1280
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals/hygiene 1280 light: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/journals/hygiene 1280 light: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals/hygiene 1280 light: вкладки над крошками",
+      "ok": true,
+      "details": {
+        "navTop": 97,
+        "crumbsTop": 187
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/settings/users 1280 light: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 1280,
+        "vw": 1280
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/settings/users 1280 light: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/settings/users 1280 light: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/settings/users 1280 light: вкладки над крошками",
+      "ok": true,
+      "details": {
+        "navTop": 97,
+        "crumbsTop": 187
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/dashboard 360 dark: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 360,
+        "vw": 360
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/dashboard 360 dark: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/dashboard 360 dark: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/dashboard 360 dark: шапка без второй строки (≈72px)",
+      "ok": true,
+      "details": {
+        "headerHeight": 73
+      }
+    },
+    {
+      "id": "AC2",
+      "name": "/dashboard 360 dark: вкладки первым блоком",
+      "ok": true
+    },
+    {
+      "id": "AC2",
+      "name": "/dashboard 360 dark: счётчики 4/4, 2/4, 0/4",
+      "ok": true,
+      "details": {
+        "counters": [
+          "4/4",
+          "2/4",
+          "0/4"
+        ]
+      }
+    },
+    {
+      "id": "AC2",
+      "name": "/dashboard 360 dark: старого блока «Точки сегодня» нет",
+      "ok": true
+    },
+    {
+      "id": "AC1",
+      "name": "/journals 360 dark: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 360,
+        "vw": 360
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals 360 dark: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/journals 360 dark: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/journals 360 dark: шапка без второй строки (≈72px)",
+      "ok": true,
+      "details": {
+        "headerHeight": 73
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals 360 dark: вкладки над крошками",
+      "ok": true,
+      "details": {
+        "navTop": 89,
+        "crumbsTop": 179
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals/hygiene 360 dark: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 360,
+        "vw": 360
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals/hygiene 360 dark: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/journals/hygiene 360 dark: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/journals/hygiene 360 dark: шапка без второй строки (≈72px)",
+      "ok": true,
+      "details": {
+        "headerHeight": 73
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals/hygiene 360 dark: вкладки над крошками",
+      "ok": true,
+      "details": {
+        "navTop": 89,
+        "crumbsTop": 179
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/settings/users 360 dark: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 360,
+        "vw": 360
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/settings/users 360 dark: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/settings/users 360 dark: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/settings/users 360 dark: шапка без второй строки (≈72px)",
+      "ok": true,
+      "details": {
+        "headerHeight": 73
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/settings/users 360 dark: вкладки над крошками",
+      "ok": true,
+      "details": {
+        "navTop": 89,
+        "crumbsTop": 179
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/dashboard 390 dark: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 390,
+        "vw": 390
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/dashboard 390 dark: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/dashboard 390 dark: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/dashboard 390 dark: шапка без второй строки (≈72px)",
+      "ok": true,
+      "details": {
+        "headerHeight": 73
+      }
+    },
+    {
+      "id": "AC2",
+      "name": "/dashboard 390 dark: вкладки первым блоком",
+      "ok": true
+    },
+    {
+      "id": "AC2",
+      "name": "/dashboard 390 dark: счётчики 4/4, 2/4, 0/4",
+      "ok": true,
+      "details": {
+        "counters": [
+          "4/4",
+          "2/4",
+          "0/4"
+        ]
+      }
+    },
+    {
+      "id": "AC2",
+      "name": "/dashboard 390 dark: старого блока «Точки сегодня» нет",
+      "ok": true
+    },
+    {
+      "id": "AC1",
+      "name": "/journals 390 dark: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 390,
+        "vw": 390
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals 390 dark: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/journals 390 dark: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/journals 390 dark: шапка без второй строки (≈72px)",
+      "ok": true,
+      "details": {
+        "headerHeight": 73
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals 390 dark: вкладки над крошками",
+      "ok": true,
+      "details": {
+        "navTop": 89,
+        "crumbsTop": 179
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals/hygiene 390 dark: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 390,
+        "vw": 390
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals/hygiene 390 dark: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/journals/hygiene 390 dark: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/journals/hygiene 390 dark: шапка без второй строки (≈72px)",
+      "ok": true,
+      "details": {
+        "headerHeight": 73
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals/hygiene 390 dark: вкладки над крошками",
+      "ok": true,
+      "details": {
+        "navTop": 89,
+        "crumbsTop": 179
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/settings/users 390 dark: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 390,
+        "vw": 390
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/settings/users 390 dark: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/settings/users 390 dark: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/settings/users 390 dark: шапка без второй строки (≈72px)",
+      "ok": true,
+      "details": {
+        "headerHeight": 73
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/settings/users 390 dark: вкладки над крошками",
+      "ok": true,
+      "details": {
+        "navTop": 89,
+        "crumbsTop": 179
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/dashboard 768 dark: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 768,
+        "vw": 768
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/dashboard 768 dark: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/dashboard 768 dark: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC2",
+      "name": "/dashboard 768 dark: вкладки первым блоком",
+      "ok": true
+    },
+    {
+      "id": "AC2",
+      "name": "/dashboard 768 dark: счётчики 4/4, 2/4, 0/4",
+      "ok": true,
+      "details": {
+        "counters": [
+          "4/4",
+          "2/4",
+          "0/4"
+        ]
+      }
+    },
+    {
+      "id": "AC2",
+      "name": "/dashboard 768 dark: старого блока «Точки сегодня» нет",
+      "ok": true
+    },
+    {
+      "id": "AC1",
+      "name": "/journals 768 dark: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 768,
+        "vw": 768
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals 768 dark: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/journals 768 dark: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals 768 dark: вкладки над крошками",
+      "ok": true,
+      "details": {
+        "navTop": 97,
+        "crumbsTop": 187
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals/hygiene 768 dark: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 768,
+        "vw": 768
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals/hygiene 768 dark: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/journals/hygiene 768 dark: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals/hygiene 768 dark: вкладки над крошками",
+      "ok": true,
+      "details": {
+        "navTop": 97,
+        "crumbsTop": 187
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/settings/users 768 dark: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 768,
+        "vw": 768
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/settings/users 768 dark: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/settings/users 768 dark: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/settings/users 768 dark: вкладки над крошками",
+      "ok": true,
+      "details": {
+        "navTop": 97,
+        "crumbsTop": 187
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/dashboard 1280 dark: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 1280,
+        "vw": 1280
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/dashboard 1280 dark: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/dashboard 1280 dark: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC2",
+      "name": "/dashboard 1280 dark: вкладки первым блоком",
+      "ok": true
+    },
+    {
+      "id": "AC2",
+      "name": "/dashboard 1280 dark: счётчики 4/4, 2/4, 0/4",
+      "ok": true,
+      "details": {
+        "counters": [
+          "4/4",
+          "2/4",
+          "0/4"
+        ]
+      }
+    },
+    {
+      "id": "AC2",
+      "name": "/dashboard 1280 dark: старого блока «Точки сегодня» нет",
+      "ok": true
+    },
+    {
+      "id": "AC1",
+      "name": "/journals 1280 dark: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 1280,
+        "vw": 1280
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals 1280 dark: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/journals 1280 dark: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals 1280 dark: вкладки над крошками",
+      "ok": true,
+      "details": {
+        "navTop": 97,
+        "crumbsTop": 187
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals/hygiene 1280 dark: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 1280,
+        "vw": 1280
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals/hygiene 1280 dark: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/journals/hygiene 1280 dark: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/journals/hygiene 1280 dark: вкладки над крошками",
+      "ok": true,
+      "details": {
+        "navTop": 97,
+        "crumbsTop": 187
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/settings/users 1280 dark: нет горизонтального выезда",
+      "ok": true,
+      "details": {
+        "scrollW": 1280,
+        "vw": 1280
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/settings/users 1280 dark: строка «Точки» с 3 вкладками",
+      "ok": true,
+      "details": {
+        "tabs": 3
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "/settings/users 1280 dark: в шапке нет пилюли точки",
+      "ok": true,
+      "details": {
+        "headerPill": 0
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "/settings/users 1280 dark: вкладки над крошками",
+      "ok": true,
+      "details": {
+        "navTop": 97,
+        "crumbsTop": 187
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "переключение с /journals: после reload активна вторая точка",
+      "ok": true,
+      "details": {
+        "before": "лордлор, ул. Пушкина, 1",
+        "afterJournals": "hgjhghj"
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "переключение с /dashboard: после reload активна третья точка",
+      "ok": true,
+      "details": {
+        "afterDashboard": "Какая то там вторая точка ленина 10 допустим, ул. Ленина, 10"
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "данные дашборда для новой точки: «2 из 4» → «0 из 4»",
+      "ok": true,
+      "details": {
+        "subtitleBefore": "Есть запись за сегодня: 2 из 4 включённых журналов.",
+        "subtitleAfter": "Есть запись за сегодня: 0 из 4 включённых журналов."
+      }
+    },
+    {
+      "id": "AC1",
+      "name": "активная вкладка прокручена в видимую часть строки",
+      "ok": true
+    },
+    {
+      "id": "AC5",
+      "name": "one-point /dashboard: вкладок нет",
+      "ok": true
+    },
+    {
+      "id": "AC5",
+      "name": "one-point /dashboard: пилюли в шапке нет",
+      "ok": true
+    },
+    {
+      "id": "AC5",
+      "name": "one-point /journals: вкладок нет",
+      "ok": true
+    },
+    {
+      "id": "AC5",
+      "name": "one-point /journals: пилюли в шапке нет",
+      "ok": true
+    },
+    {
+      "id": "AC5",
+      "name": "points-off /dashboard: вкладок нет",
+      "ok": true
+    },
+    {
+      "id": "AC5",
+      "name": "points-off /dashboard: пилюли в шапке нет",
+      "ok": true
+    },
+    {
+      "id": "AC5",
+      "name": "points-off /journals: вкладок нет",
+      "ok": true
+    },
+    {
+      "id": "AC5",
+      "name": "points-off /journals: пилюли в шапке нет",
+      "ok": true
+    },
+    {
+      "id": "AC6",
+      "name": "Mini App light: /dashboard в оболочке",
+      "ok": true
+    },
+    {
+      "id": "AC6",
+      "name": "Mini App light: вкладки со счётчиками",
+      "ok": true,
+      "details": {
+        "counters": [
+          "4/4",
+          "2/4",
+          "0/4"
+        ]
+      }
+    },
+    {
+      "id": "AC6",
+      "name": "Mini App light: ничего не переполняется на 390",
+      "ok": true,
+      "details": {
+        "scrollW": 390,
+        "vw": 390,
+        "overflow": {
+          "left": 16,
+          "right": 374,
+          "vw": 390
+        }
+      }
+    },
+    {
+      "id": "AC6",
+      "name": "Mini App dark: /dashboard в оболочке",
+      "ok": true
+    },
+    {
+      "id": "AC6",
+      "name": "Mini App dark: вкладки со счётчиками",
+      "ok": true,
+      "details": {
+        "counters": [
+          "4/4",
+          "2/4",
+          "0/4"
+        ]
+      }
+    },
+    {
+      "id": "AC6",
+      "name": "Mini App dark: ничего не переполняется на 390",
+      "ok": true,
+      "details": {
+        "scrollW": 390,
+        "vw": 390,
+        "overflow": {
+          "left": 16,
+          "right": 374,
+          "vw": 390
+        }
+      }
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { buildingWhere } from "@/lib/building-scope";
-import { getActiveCloseEvent } from "@/lib/journal-close-events";
+import { closeEventBuildingKey, getActiveCloseEvent } from "@/lib/journal-close-events";
 import {
   DAILY_JOURNAL_CODES,
   CONFIG_DAILY_CODES,
@@ -773,11 +773,18 @@ export async function getTemplatesFilledToday(
   // журнал считается заполненным (compliance ✅). Это обеспечивает
   // что «Не требуется сегодня» / «Завершить смену» / даже cron
   // auto-close не оставляют красные журналы на дашборде.
+  //
+  // Точка: считаются только её закрытия и общие закрытия организации
+  // (""), как в `getActiveCloseEvent`. Без фильтра «Закрыть день» на
+  // точке A зеленил журнал и точке B. Без точки — все закрытия, как было.
   const todayCloseEvents = await db.journalCloseEvent.findMany({
     where: {
       organizationId,
       date: todayStart,
       reopenedAt: null, // активные closures (не reopened)
+      ...(options.buildingId
+        ? { buildingKey: { in: [closeEventBuildingKey(options.buildingId), ""] } }
+        : {}),
     },
     select: { templateId: true, kind: true },
   });

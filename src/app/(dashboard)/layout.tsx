@@ -39,6 +39,7 @@ import { DEFAULT_ORG_NAME } from "@/lib/org-profile";
 import { listAccessibleOrganizations } from "@/lib/organization-access";
 import { BILLING_TEST_MODE, FREE_MAX_USERS } from "@/lib/plan-limits";
 import { PageNav, PageNavProvider } from "@/components/layout/page-nav";
+import { LayoutLocationTabs } from "@/components/layout/location-tabs";
 import { JournalUndoProvider } from "@/components/journals/journal-undo-slot";
 import { PartnerAccessBanner } from "@/components/dashboard/partner-access-banner";
 import {
@@ -420,6 +421,16 @@ export default async function DashboardLayout({
               {/* Провайдер оборачивает и навигацию, и контент: страницы
                   уточняют крошки через <PageCrumbs>, а рисует их PageNav. */}
               <PageNavProvider>
+                {/* Точки: строка вкладок над крошками — на всех страницах,
+                    кроме дашборда (там вкладки со счётчиками рисует сама
+                    страница). Не липкая: уезжает вместе со страницей. */}
+                <LayoutLocationTabs
+                  buildings={buildingContext.canSwitch ? buildingContext.buildings : []}
+                  activeBuildingId={buildingContext.activeBuildingId}
+                  manageHref={
+                    hasFullWorkspaceAccess(session.user) ? "/settings/buildings" : null
+                  }
+                />
                 <PageNav
                   organizationName={
                     impersonatedName ?? session.user.organizationName ?? ""

@@ -52,7 +52,7 @@ import { runOrgHealthCheck } from "@/lib/org-health-check";
 import { getTemplatesFilledToday } from "@/lib/today-compliance";
 import { CLOSE_DAY_JOURNAL_CODES } from "@/lib/daily-journal-codes";
 import { getActiveBuildingId, loadBuildingContext } from "@/lib/active-building";
-import { LocationsSummaryStrip } from "@/components/dashboard/locations-summary-strip";
+import { LocationTabs } from "@/components/layout/location-tabs";
 import { getStrugglingWorkers, getWorkerLeaderboard } from "@/lib/worker-leaderboard";
 import { normalizeSphere } from "@/lib/org-profile";
 import { paperJournalsFor } from "@/lib/sphere-journal-rules";
@@ -289,7 +289,6 @@ export default async function DashboardPage() {
             address: building.address,
             filled: selectedEnabledTemplates.filter((t) => filled.has(t.id)).length,
             total: selectedEnabledTemplates.length,
-            active: building.id === activeBuildingId,
           };
         })
       )
@@ -306,6 +305,19 @@ export default async function DashboardPage() {
       {/* Persist для DashboardSection (collapsible-блоки): inline-script
           читает localStorage и настраивает initial open state. */}
       <DashboardSectionPersistScript />
+      {/* Точки: первой строкой — вкладки со счётчиком «заполнено сегодня»
+          на каждой точке. Нажатие переключает точку, дашборд ниже — уже
+          для неё. */}
+      {locationItems.length >= 2 ? (
+        <LocationTabs
+          buildings={locationItems}
+          activeBuildingId={activeBuildingId}
+          counters={Object.fromEntries(
+            locationItems.map((item) => [item.id, { filled: item.filled, total: item.total }])
+          )}
+          manageHref="/settings/buildings"
+        />
+      ) : null}
       {/* Soft-block: nag-modal для админа когда CAPA открыты > 7 дней.
           Dismissable per-session, появляется снова после reload. */}
       <StaleCapaNag count={staleCapaCount} />
@@ -332,8 +344,6 @@ export default async function DashboardPage() {
       {/* Без собственной рамки: внутри уже лежат карточки-секции, и
           обёртка добавляла третий уровень коробок — «блок в блоке в
           блоке». Заголовок и прогресс просто стоят на фоне страницы. */}
-      {locationItems.length >= 2 ? <LocationsSummaryStrip items={locationItems} /> : null}
-
       <section className="space-y-4">
           {complianceItems.length > 0 && (
             <DashboardSection

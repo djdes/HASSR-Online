@@ -1,0 +1,49 @@
+{
+  "password": "E2eTest2026!",
+  "org": "e2e-org-loc",
+  "today": "2026-09-23T00:00:00.000Z",
+  "enabled": [
+    "hygiene",
+    "health_check",
+    "climate_control",
+    "cold_equipment_control"
+  ],
+  "buildings": [
+    {
+      "id": "cmueat0zg0000bw9ma4yjfqcu",
+      "name": "лордлор",
+      "address": "ул. Пушкина, 1",
+      "expected": "4/4"
+    },
+    {
+      "id": "cmueat0zm0001bw9m0x7lv6i5",
+      "name": "hgjhghj",
+      "address": null,
+      "expected": "2/4"
+    },
+    {
+      "id": "cmueat0zq0002bw9mn840wxa0",
+      "name": "Какая то там вторая точка ленина 10 допустим",
+      "address": "ул. Ленина, 10",
+      "expected": "0/4"
+    }
+  ],
+  "users": {
+    "manager": {
+      "id": "cmue9mnqh0005m49mhxu4zzbf",
+      "email": "loc-manager@e2e.local"
+    },
+    "cook": {
+      "id": "cmue9mnqr0006m49mca7k8fbf",
+      "email": "loc-cook@e2e.local"
+    },
+    "managerOne": {
+      "id": "cmue9mnvg000rm49mfu10icnq",
+      "email": "loc1-manager@e2e.local"
+    },
+    "managerOff": {
+      "id": "cmue9mnwh000vm49mzu9aoz90",
+      "email": "loc0-manager@e2e.local"
+    }
+  }
+}

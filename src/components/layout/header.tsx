@@ -56,7 +56,6 @@ import { planLabel } from "@/lib/plan-limits";
 import { orgDisplayName } from "@/lib/org-display-name";
 import {
   LocationSwitcherList,
-  LocationSwitcherPill,
 } from "@/components/layout/location-switcher";
 import type { BuildingOption } from "@/lib/building-scope";
 import {
@@ -401,16 +400,6 @@ export function Header({
               </div>
             ) : null}
           </div>
-
-          {/* Точки: пилюля активной точки со списком — рядом с организацией,
-              потому что журналы и «сегодня» показываются именно для неё. */}
-          {buildings.length >= 2 ? (
-            <LocationSwitcherPill
-              buildings={buildings}
-              activeBuildingId={activeBuildingId}
-              manageHref={fullAccess ? "/settings/buildings" : null}
-            />
-          ) : null}
 
           {/* «Сотрудники» — вытащено из дропдауна в постоянную pill-кнопку
               справа от org-pill. Это самое частое destination управляющего
@@ -873,21 +862,6 @@ export function Header({
           onClose={() => setCreateDialog(null)}
           organizationsCount={organizations.length}
         />
-      ) : null}
-      {/* Точки на телефоне: отдельная строка под шапкой. В верхней строке
-          места нет — логотип, меню, уведомления и аватар не оставляют
-          названию точки и 100px, а точка должна читаться целиком. */}
-      {buildings.length >= 2 ? (
-        <div className="border-t border-[#ececf4] md:hidden">
-          <div className="mx-auto flex h-10 w-full max-w-[1800px] items-center px-4">
-            <LocationSwitcherPill
-              buildings={buildings}
-              activeBuildingId={activeBuildingId}
-              compact
-              manageHref={fullAccess ? "/settings/buildings" : null}
-            />
-          </div>
-        </div>
       ) : null}
     </header>
   );
