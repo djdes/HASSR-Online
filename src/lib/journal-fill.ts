@@ -1,13 +1,15 @@
 import { db } from "@/lib/db";
 import { ORG_ROSTER_WHERE, ORG_SIGNER_WHERE } from "@/lib/journal-roster";
-import { parseJournalPeriodsJson, resolveJournalPeriodKind } from "@/lib/journal-period";
+import { isPerpetualDateTo, parseJournalPeriodsJson, resolveJournalPeriodKind } from "@/lib/journal-period";
 import { getAdapter } from "@/lib/tasksflow-adapters";
 import { rowKeyForEmployee } from "@/lib/tasksflow-adapters/row-key";
 import type { TaskFormSchema } from "@/lib/tasksflow-adapters/task-form";
 import { verifyQrFillToken } from "@/lib/qr-fill-token";
+import { JOURNAL_OBJECT_QR_KINDS } from "@/lib/journal-qr-target";
 import { orgTodayKey } from "@/lib/timezone";
 import { getUserDisplayTitle } from "@/lib/user-roles";
 import { DAILY_JOURNAL_CODES } from "@/lib/today-compliance";
+import { parseDisabledCodes } from "@/lib/disabled-journals";
 
 /**
  * QR-ввод в журнал без входа: «отсканировал → сотрудник → строка → форма
@@ -15,20 +17,68 @@ import { DAILY_JOURNAL_CODES } from "@/lib/today-compliance";
  * обслуживают TasksFlow (`getTaskForm` / `applyRemoteCompletion`), поэтому
  * логика журналов здесь не дублируется.
  *
- * Токен плаката: `journal:<orgId>:<code>` (журнал), `journal:<orgId>:all`
- * (хаб — все журналы), `journal:<orgId>:<code>:<documentId>` (плакат из
- * документа). Токен хаба принимается любым журналом организации.
+ * Токен плаката (подписанный субъект после `journal:`):
+ *   • `<orgId>:<code>` — основной QR журнала, бессрочный;
+ *   • `<orgId>:all` — хаб «Все журналы», принимается любым журналом;
+ *   • `<orgId>:<code>:<documentId>` — старый QR документа: ведёт в линию
+ *     документа (новый период той же точки), бессрочный;
+ *   • `<orgId>:<code>:<documentId>:<YYYY-MM-DD>` — дополнительный QR
+ *     документа (2026-09-23): только этот документ и только до конца его
+ *     периода (`dateTo`, бессрочный документ — 2099-12-31);
+ *   • `<orgId>:<code>:b~<buildingId>` — основной QR точки: документы этой
+ *     точки и общие, бессрочный.
+ * Дата в подписанной части: подмена даты ломает подпись. Разделитель
+ * токена «.» в датах не встречается — формат `qr-fill-token.ts` прежний.
  */
 
 export const JOURNAL_FILL_HUB_CODE = "all";
 export { normalizeQrFillMode, type QrFillMode } from "@/lib/qr-fill-actor";
 
-export function journalFillSubject(orgId: string, code: string, documentId?: string | null): string {
-  return documentId ? `${orgId}:${code}:${documentId}` : `${orgId}:${code}`;
+/** Срок дополнительного QR бессрочного документа. */
+export const JOURNAL_FILL_PERPETUAL_UNTIL = "2099-12-31";
+const BUILDING_SEGMENT_PREFIX = "b~";
+const DATE_KEY_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/** `YYYY-MM-DD` настоящей календарной даты. */
+function isDateKey(value: string): boolean {
+  const match = DATE_KEY_RE.exec(value);
+  if (!match) return false;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
+/** Срок дополнительного QR документа: `dateTo`, у бессрочного — 2099-12-31. */
+export function journalFillValidUntil(dateTo: Date | string): string {
+  if (isPerpetualDateTo(dateTo)) return JOURNAL_FILL_PERPETUAL_UNTIL;
+  return typeof dateTo === "string" ? dateTo.slice(0, 10) : dateTo.toISOString().slice(0, 10);
+}
+
+export function journalFillSubject(
+  orgId: string,
+  code: string,
+  documentId?: string | null,
+  options: { validUntil?: string | null; buildingId?: string | null } = {}
+): string {
+  if (options.validUntil) {
+    if (!documentId) throw new Error("Срок QR-кода задаётся только коду документа");
+    if (!isDateKey(options.validUntil)) throw new Error("Срок QR-кода — дата YYYY-MM-DD");
+    return `${orgId}:${code}:${documentId}:${options.validUntil}`;
+  }
+  if (documentId) return `${orgId}:${code}:${documentId}`;
+  if (options.buildingId) return `${orgId}:${code}:${BUILDING_SEGMENT_PREFIX}${options.buildingId}`;
+  return `${orgId}:${code}`;
 }
 
 export type JournalFillTokenCheck =
-  | { ok: true; documentId: string | null; hub: boolean }
+  | {
+      ok: true;
+      documentId: string | null;
+      hub: boolean;
+      /** Последний день действия (`YYYY-MM-DD`) — только у дополнительного QR документа. */
+      validUntil: string | null;
+      /** Точка основного QR (`b~<buildingId>`). Принадлежность организации проверяет вызывающий. */
+      buildingId: string | null;
+    }
   | { ok: false; reason: "bad-format" | "bad-sig" | "mismatch" };
 
 /** Токен подходит организации и журналу (или это токен хаба организации). */
@@ -36,35 +86,90 @@ export function verifyJournalFillToken(token: string, orgId: string, code: strin
   const verified = verifyQrFillToken(token);
   if (!verified.ok) return verified;
   if (verified.kind !== "journal") return { ok: false, reason: "mismatch" };
-  const [tokenOrg, tokenCode, tokenDocument] = verified.id.split(":");
+  const segments = verified.id.split(":");
+  if (segments.length < 2 || segments.length > 4 || segments.some((segment) => segment === "")) {
+    return { ok: false, reason: "bad-format" };
+  }
+  const [tokenOrg, tokenCode, third, fourth] = segments;
   if (tokenOrg !== orgId) return { ok: false, reason: "mismatch" };
-  if (tokenCode === JOURNAL_FILL_HUB_CODE) return { ok: true, documentId: null, hub: true };
+  const base = { ok: true as const, documentId: null, hub: false, validUntil: null, buildingId: null };
+  if (tokenCode === JOURNAL_FILL_HUB_CODE) {
+    return segments.length === 2 ? { ...base, hub: true } : { ok: false, reason: "bad-format" };
+  }
   // Плакат журнала открывает только свой журнал. Раньше пускал в любой
   // журнал организации — ради «Дальше →», которого больше нет (владелец,
   // 2026-09-21); ссылкой с одного плаката можно было писать в чужие журналы.
   if (tokenCode !== code) return { ok: false, reason: "mismatch" };
-  return { ok: true, documentId: tokenDocument ?? null, hub: false };
+  if (third === undefined) return base;
+  if (third.startsWith(BUILDING_SEGMENT_PREFIX)) {
+    const buildingId = third.slice(BUILDING_SEGMENT_PREFIX.length);
+    if (!buildingId || fourth !== undefined) return { ok: false, reason: "bad-format" };
+    return { ...base, buildingId };
+  }
+  if (fourth === undefined) return { ...base, documentId: third };
+  if (!isDateKey(fourth)) return { ok: false, reason: "bad-format" };
+  return { ...base, documentId: third, validUntil: fourth };
 }
 
 /**
- * Журналы объектов: холодильники и склады заполняются по наклейке на самом
- * объекте (`/equipment-fill`, `/room-fill`) — там понятно, что именно
- * замеряешь. Плакат журнала для них показывает «отсканируйте наклейку»,
- * в хабе «Все журналы» их нет.
+ * Срок дополнительного QR кончился: `todayKey` — сегодня по часовому поясу
+ * организации. В последний день периода код ещё работает.
  */
-export const OBJECT_QR_JOURNAL_CODES: ReadonlySet<string> = new Set(["cold_equipment_control", "climate_control"]);
+export function journalFillTokenExpired(check: JournalFillTokenCheck, todayKey: string): boolean {
+  return check.ok && check.validUntil !== null && todayKey > check.validUntil;
+}
+
+/**
+ * Документы основного QR точки: этой точки и общие. Точка не из списка
+ * точек организации (точки выключили) — без фильтра.
+ */
+export function scopeDocumentsToBuilding<T extends { buildingId: string | null }>(
+  docs: T[],
+  buildingId: string | null,
+  orgTargets: Array<string | null>
+): T[] {
+  if (!buildingId || !orgTargets.includes(buildingId)) return docs;
+  return docs.filter((doc) => doc.buildingId === null || doc.buildingId === buildingId);
+}
+
+/**
+ * Журналы объектов: холодильники, склады и УФ-лампы заполняются по
+ * наклейке на самом объекте (`/equipment-fill`, `/room-fill`) — там
+ * понятно, что именно замеряешь. Основной QR журнала для них показывает
+ * статус объектов и «отсканируйте наклейку», в хабе «Все журналы» их нет.
+ * Набор — из `JOURNAL_OBJECT_QR_KINDS`, чтобы страница плакатов и QR не
+ * расходились (УФ-лампа раньше заполнялась из хаба в обход наклеек).
+ */
+export const OBJECT_QR_JOURNAL_CODES: ReadonlySet<string> = new Set(Object.keys(JOURNAL_OBJECT_QR_KINDS));
+
+/**
+ * Журнал нельзя открыть или заполнить по QR журнала/хаба через JSON-API
+ * и общее ядро submit: журналы объектов — только по наклейке на объекте
+ * (решение 33d8559b), отключённый в организации — никак. HTML-маршрут
+ * показывает для них отдельные экраны; здесь — общий 403 для остальных путей.
+ */
+export function journalFillCodeBlock(code: string, disabledJournalCodes: unknown): { status: 403; error: string } | null {
+  if (OBJECT_QR_JOURNAL_CODES.has(code)) {
+    return { status: 403, error: "Этот журнал заполняют по наклейке на самом объекте — отсканируйте QR-код на холодильнике, лампе или в помещении." };
+  }
+  if (parseDisabledCodes(disabledJournalCodes).has(code)) return { status: 403, error: "Этот журнал отключён в организации" };
+  return null;
+}
 
 export const OBJECT_QR_JOURNAL_HINTS: Record<string, string> = {
   cold_equipment_control:
     "Температуру холодильников вносят по наклейке на самом холодильнике: отсканируйте QR-код на его дверце — откроется именно этот холодильник.",
   climate_control:
     "Температуру и влажность склада вносят по наклейке в самом помещении: отсканируйте QR-код на стене склада — откроется именно это помещение.",
+  uv_lamp_runtime:
+    "Работу УФ-лампы отмечают по наклейке на самой лампе: отсканируйте QR-код на лампе — откроется именно она.",
 };
 
 export type JournalFillDocument = {
   id: string;
   title: string;
   building: string | null;
+  buildingId: string | null;
   dateFrom: string;
   dateTo: string;
 };
@@ -103,6 +208,7 @@ export async function listJournalFillDocuments(orgId: string, code: string, toda
       title: true,
       dateFrom: true,
       dateTo: true,
+      buildingId: true,
       building: { select: { name: true } },
     },
     orderBy: [{ dateFrom: "desc" }, { title: "asc" }],
@@ -111,6 +217,7 @@ export async function listJournalFillDocuments(orgId: string, code: string, toda
     id: doc.id,
     title: doc.title,
     building: doc.building?.name ?? null,
+    buildingId: doc.buildingId ?? null,
     dateFrom: doc.dateFrom.toISOString().slice(0, 10),
     dateTo: doc.dateTo.toISOString().slice(0, 10),
   }));
@@ -273,7 +380,8 @@ export async function listEmployeeDailyStatus(params: {
   });
   const byCode = new Map<string, { code: string; name: string; documentId: string }>();
   for (const doc of docs) {
-    if (params.disabledCodes.includes(doc.template.code)) continue;
+    // Журналы объектов — по наклейке: id их документов QR журнала не раскрывает.
+    if (params.disabledCodes.includes(doc.template.code) || OBJECT_QR_JOURNAL_CODES.has(doc.template.code)) continue;
     if (!byCode.has(doc.template.code)) byCode.set(doc.template.code, { code: doc.template.code, name: doc.template.name, documentId: doc.id });
   }
   const entries = await db.journalDocumentEntry.findMany({

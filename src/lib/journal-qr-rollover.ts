@@ -2,7 +2,7 @@ import { recordAuditLog } from "@/lib/audit-log";
 import { buildingTargets } from "@/lib/building-targets";
 import { db } from "@/lib/db";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
-import { closeExpiredDocuments, restoreBrokenChainForTemplate, type CreateReport } from "@/lib/journal-auto-create";
+import { closeExpiredDocuments, createFirstDocumentForTemplate, restoreBrokenChainForTemplate, type CreateReport } from "@/lib/journal-auto-create";
 import { notifyManagement } from "@/lib/notifications";
 
 /**
@@ -28,6 +28,11 @@ import { notifyManagement } from "@/lib/notifications";
  *   • создание идемпотентно: advisory-замок «журнал × точка» + повторная
  *     проверка под ним (пять первых сканов после полуночи — один бланк);
  *   • каждое создание — в журнал аудита и колокольчик руководству.
+ *
+ * Первый документ (журналом ещё не пользовались, 2026-09-23) — только с
+ * `allowFirstDocument`, который передаёт лишь скан собственного основного
+ * QR журнала (`decideQrFirstDocument`). Хаб, QR документов, пара здоровья,
+ * JSON-API и submit его не передают никогда.
  */
 
 export type QrRolloverReason =
@@ -104,6 +109,8 @@ export async function announceQrRollover(args: {
   journalName: string;
   documentId: string;
   source?: string;
+  /** Первый документ журнала (не новый период): свой аудит и заголовок. */
+  first?: boolean;
 }): Promise<void> {
   const document = await db.journalDocument
     .findUnique({ where: { id: args.documentId }, select: { title: true, dateFrom: true, dateTo: true, buildingId: true } })
@@ -113,7 +120,7 @@ export async function announceQrRollover(args: {
     : null;
   await recordAuditLog({
     organizationId: args.organizationId,
-    action: "journal_document.qr_rollover",
+    action: args.first ? "journal_document.qr_first_document" : "journal_document.qr_rollover",
     entity: "JournalDocument",
     entityId: args.documentId,
     details: {
@@ -126,9 +133,11 @@ export async function announceQrRollover(args: {
   });
   await notifyManagement({
     organizationId: args.organizationId,
-    kind: "journal.qr-rollover",
-    dedupeKey: `qr-rollover:${args.documentId}`,
-    title: `Начат новый период «${args.journalName}» — документ создан при записи по QR`,
+    kind: args.first ? "journal.qr-first-document" : "journal.qr-rollover",
+    dedupeKey: `${args.first ? "qr-first" : "qr-rollover"}:${args.documentId}`,
+    title: args.first
+      ? `Создан первый документ «${args.journalName}» — по скану QR-кода журнала. Проверьте ответственных и состав журнала`
+      : `Начат новый период «${args.journalName}» — документ создан при записи по QR`,
     linkHref: `/journals/${args.templateCode}/documents/${args.documentId}`,
     linkLabel: "Открыть документ",
     items: [{ id: args.documentId, label: document?.title ?? args.journalName, ...(period ? { hint: period } : {}) }],
@@ -143,6 +152,11 @@ export async function ensureQrPeriodDocuments(params: {
   anchor?: QrRolloverAnchor;
   /** Откуда скан — в детали аудита. */
   source?: string;
+  /**
+   * Документов журнала нет совсем — создать первый. Только скан
+   * собственного основного QR журнала (`decideQrFirstDocument`).
+   */
+  allowFirstDocument?: boolean;
 }): Promise<QrRolloverResult> {
   try {
     return await ensureInner(params);
@@ -160,6 +174,7 @@ async function ensureInner(params: {
   todayKey: string;
   anchor?: QrRolloverAnchor;
   source?: string;
+  allowFirstDocument?: boolean;
 }): Promise<QrRolloverResult> {
   const { organizationId, templateCode, todayKey } = params;
   const day = dayStart(todayKey);
@@ -201,15 +216,16 @@ async function ensureInner(params: {
   // Полдень «сегодня» организации: период считается по её дате, а не по UTC.
   const now = new Date(`${todayKey}T12:00:00.000Z`);
   const reports: CreateReport[] = [];
+  const firstDocumentIds = new Set<string>();
+  const templateRef = { id: template.id, code: template.code, name: template.name };
   for (const buildingId of uncovered) {
-    reports.push(
-      await restoreBrokenChainForTemplate(db, {
-        organizationId,
-        template: { id: template.id, code: template.code, name: template.name },
-        buildingId,
-        now,
-      })
-    );
+    let report = await restoreBrokenChainForTemplate(db, { organizationId, template: templateRef, buildingId, now });
+    // Журналом не пользовались ни разу — первый документ, если разрешено.
+    if (report.reason === "no-previous-document" && params.allowFirstDocument) {
+      report = await createFirstDocumentForTemplate(db, { organizationId, template: templateRef, buildingId, now });
+      if (report.created && report.documentId) firstDocumentIds.add(report.documentId);
+    }
+    reports.push(report);
   }
   const created = reports.filter((report) => report.created && report.documentId);
   if (created.length > 0) {
@@ -225,6 +241,7 @@ async function ensureInner(params: {
         journalName: template.name,
         documentId: report.documentId,
         source: params.source,
+        first: firstDocumentIds.has(report.documentId),
       }).catch((error) => console.warn("[journal-qr-rollover] announce failed", error));
     }
   }
@@ -280,11 +297,19 @@ export function resolveTokenDocuments<T extends { id: string; buildingId: string
   tokenDocument: TokenDocumentInfo | null;
   activeDocuments: T[];
   todayKey: string;
+  /**
+   * `pinned` — дополнительный QR документа со сроком (2026-09-23): только
+   * свой активный документ, без перехода в новый период.
+   */
+  mode?: "lineage" | "pinned";
 }): { documents: T[]; reason?: TokenDocumentsReason } {
   const { tokenDocument, activeDocuments, todayKey } = args;
   if (!tokenDocument) return { documents: [], reason: "token-document-missing" };
   const own = activeDocuments.find((doc) => doc.id === tokenDocument.id);
   if (own) return { documents: [own] };
+  const coversToday = tokenDocument.dateFrom <= todayKey && tokenDocument.dateTo >= todayKey;
+  const noneReason: TokenDocumentsReason = tokenDocument.status === "closed" && coversToday ? "period-closed" : "no-successor";
+  if (args.mode === "pinned") return { documents: [], reason: noneReason };
   const building = tokenDocument.buildingId ?? null;
   const sameLine = activeDocuments.filter((doc) => (doc.buildingId ?? null) === building);
   if (sameLine.length > 0) return { documents: sameLine };
@@ -294,8 +319,7 @@ export function resolveTokenDocuments<T extends { id: string; buildingId: string
   } else if (activeDocuments.length > 0) {
     return { documents: activeDocuments };
   }
-  const coversToday = tokenDocument.dateFrom <= todayKey && tokenDocument.dateTo >= todayKey;
-  return { documents: [], reason: tokenDocument.status === "closed" && coversToday ? "period-closed" : "no-successor" };
+  return { documents: [], reason: noneReason };
 }
 
 /** То же с запросами: id документов для плаката документа `tokenDocumentId`. */
@@ -304,6 +328,7 @@ export async function resolveTokenDocumentIds(params: {
   templateCode: string;
   todayKey: string;
   tokenDocumentId: string;
+  mode?: "lineage" | "pinned";
 }): Promise<{ documentIds: string[]; reason?: TokenDocumentsReason }> {
   const day = dayStart(params.todayKey);
   const [tokenDocument, active] = await Promise.all([
@@ -335,12 +360,51 @@ export async function resolveTokenDocumentIds(params: {
       : null,
     activeDocuments: active,
     todayKey: params.todayKey,
+    mode: params.mode,
   });
   return { documentIds: resolved.documents.map((doc) => doc.id), reason: resolved.reason };
 }
 
-/** Текст для сотрудника у плаката, когда документа на сегодня нет. */
-export function qrRolloverMessage(reason: QrRolloverReason | TokenDocumentsReason | undefined): string {
+/**
+ * Документ `candidate` — из линии документа токена (сверка в submit и
+ * JSON-API): тот же документ; для документа точки — та же точка или общий;
+ * общий документ — вся линия журнала (организация могла перейти на точки).
+ * Организация и журнал уже отфильтрованы запросом вызывающего.
+ */
+export function documentInTokenLine(
+  tokenDocument: { id: string; buildingId: string | null },
+  candidate: { id: string; buildingId: string | null }
+): boolean {
+  if (candidate.id === tokenDocument.id) return true;
+  if (tokenDocument.buildingId === null) return true;
+  return candidate.buildingId === null || candidate.buildingId === tokenDocument.buildingId;
+}
+
+/**
+ * Можно ли по этому скану создать ПЕРВЫЙ документ журнала (C4, 2026-09-23).
+ * Только собственный основной QR журнала: хаб (правкой адреса наплодили
+ * бы документы во всех журналах) и QR документов — никогда. В организации
+ * с точками — только QR, привязанный к её точке: старый основной QR без
+ * точки не знает, на какую точку заводить документ.
+ */
+export function decideQrFirstDocument(args: {
+  hub: boolean;
+  documentId: string | null;
+  buildingId: string | null;
+  /** `buildingTargets(org)`: `[null]` — организация без точек. */
+  orgTargets: Array<string | null>;
+}): boolean {
+  if (args.hub || args.documentId) return false;
+  const withoutLocations = args.orgTargets.length === 1 && args.orgTargets[0] === null;
+  if (withoutLocations) return true;
+  return args.buildingId !== null && args.orgTargets.includes(args.buildingId);
+}
+
+/**
+ * Текст для сотрудника у плаката, когда документа на сегодня нет.
+ * `responsible` — «ФИО, должность» ответственного (`journal-responsible-person.ts`).
+ */
+export function qrRolloverMessage(reason: QrRolloverReason | TokenDocumentsReason | undefined, responsible?: string | null): string {
   if (reason === "period-closed") {
     return "Документ за этот период закрыт руководителем — попросите вернуть его в активные.";
   }
@@ -348,5 +412,8 @@ export function qrRolloverMessage(reason: QrRolloverReason | TokenDocumentsReaso
     return "Кабинет организации приостановлен — запись по QR снова заработает, когда руководитель возобновит его.";
   }
   if (reason === "journal-disabled") return "Этот журнал отключён в организации.";
+  if (responsible && responsible !== "руководитель") {
+    return `На сегодня нет активного документа этого журнала. Ответственный за журнал — ${responsible} — должен войти в кабинет и создать документ, после этого форма заработает сразу.`;
+  }
   return "На сегодня нет активного документа этого журнала. Попросите руководителя создать документ в кабинете — форма заработает сразу.";
 }

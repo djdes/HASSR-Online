@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { db } from "@/lib/db";
+import { parseDisabledCodes } from "@/lib/disabled-journals";
 import {
+  journalFillCodeBlock,
+  journalFillTokenExpired,
   listEmployeeDailyStatus,
   listJournalFillDocuments,
   loadJournalFillForm,
@@ -11,7 +14,7 @@ import {
   todayKeyFor,
   verifyJournalFillToken,
 } from "@/lib/journal-fill";
-import { submitJournalFill } from "@/lib/journal-fill-submit";
+import { JOURNAL_FILL_TOKEN_EXPIRED_ERROR, journalFillTokenAllowsDocument, submitJournalFill } from "@/lib/journal-fill-submit";
 import { ensureQrPeriodDocuments, qrRolloverMessage, resolveTokenDocumentIds } from "@/lib/journal-qr-rollover";
 import { rowKeyForEmployee } from "@/lib/tasksflow-adapters/row-key";
 import { journalFillHints } from "@/lib/journal-fill-hints";
@@ -29,7 +32,16 @@ export async function GET(request: Request, { params }: { params: Promise<{ orgI
   if (!check.ok) return NextResponse.json({ error: "QR-код недействителен" }, { status: 401 });
   const org = await loadOrganizationForFill(orgId);
   if (!org) return NextResponse.json({ error: "Организация не найдена" }, { status: 404 });
+  // Журналы объектов (по наклейке) и отключённые — до всех веток.
+  const blocked = journalFillCodeBlock(code, org.disabledJournalCodes);
+  if (blocked) return NextResponse.json({ error: blocked.error }, { status: blocked.status });
   const todayKey = todayKeyFor(org.timezone);
+  // Дополнительный QR документа кончился — 410 во всех ветках, до поиска документов.
+  if (journalFillTokenExpired(check, todayKey)) return NextResponse.json({ error: JOURNAL_FILL_TOKEN_EXPIRED_ERROR, reason: "token-expired" }, { status: 410 });
+  if (check.buildingId) {
+    const building = await db.building.findFirst({ where: { id: check.buildingId, organizationId: orgId }, select: { id: true } });
+    if (!building) return NextResponse.json({ error: "QR-код недействителен" }, { status: 401 });
+  }
 
   const scope = url.searchParams.get("scope");
   if (scope) {
@@ -40,14 +52,21 @@ export async function GET(request: Request, { params }: { params: Promise<{ orgI
   const employeeId = url.searchParams.get("employeeId") ?? "";
   if (url.searchParams.get("daily") === "1") {
     if (!employeeId) return NextResponse.json({ error: "Не указан сотрудник" }, { status: 400 });
-    const daily = await listEmployeeDailyStatus({ orgId, employeeId, disabledCodes: org.disabledJournalCodes as string[], todayKey });
+    const daily = await listEmployeeDailyStatus({ orgId, employeeId, disabledCodes: [...parseDisabledCodes(org.disabledJournalCodes)], todayKey });
     return NextResponse.json({ daily });
   }
 
   const requestedDocumentId = url.searchParams.get("documentId") ?? "";
   if (!requestedDocumentId || !employeeId) return NextResponse.json({ error: "Не указан документ или сотрудник" }, { status: 400 });
+  // QR документа открывает только свою линию (со сроком — только свой документ).
+  if (!(await journalFillTokenAllowsDocument({ check, orgId, code, documentId: requestedDocumentId }))) {
+    return NextResponse.json({ error: "Этот QR-код открывает другой документ" }, { status: 403 });
+  }
   let documentId = requestedDocumentId;
   let docs = await listJournalFillDocuments(orgId, code, todayKey);
+  if (!docs.some((doc) => doc.id === documentId) && check.validUntil !== null) {
+    return NextResponse.json({ error: "Документ не активен", reason: "no-successor", message: qrRolloverMessage("no-successor") }, { status: 404 });
+  }
   if (!docs.some((doc) => doc.id === documentId)) {
     // Период сменился, пока форма была открыта: документ нового периода той
     // же линии (создаётся по образцу прошлого, как у ночного крона).

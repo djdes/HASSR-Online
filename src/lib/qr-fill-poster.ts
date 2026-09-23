@@ -8,7 +8,8 @@ import {
 } from "@/lib/climate-document";
 import { db } from "@/lib/db";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
-import { JOURNAL_FILL_HUB_CODE, journalFillSubject, listHubJournals, todayKeyFor } from "@/lib/journal-fill";
+import { buildingTargets } from "@/lib/building-targets";
+import { JOURNAL_FILL_HUB_CODE, JOURNAL_FILL_PERPETUAL_UNTIL, journalFillSubject, journalFillValidUntil, listHubJournals, todayKeyFor } from "@/lib/journal-fill";
 import { parseJournalPeriodsJson, resolveJournalPeriodKind } from "@/lib/journal-period";
 import { HYGIENE_VERIFY_SUFFIX, splitJournalPosterId } from "@/lib/journal-qr-target";
 import { resolveOrgJournalName } from "@/lib/org-journal-name";
@@ -130,6 +131,55 @@ export async function buildRoomPoster(
 export { HYGIENE_VERIFY_SUFFIX };
 const HYGIENE_VERIFY_POSTER = { name: "Гигиенический журнал (сотрудники) — допуск", subtitle: "Для ответственного: «Допущен» или «Отстранён» каждому на смене" };
 
+// ---------------------------------------------------------------------------
+// Выпуск QR журнала (2026-09-23): основной — навсегда, в организации с
+// точками привязан к точке; дополнительный — на документ, до конца его
+// периода. Формат субъекта — `journal-fill.ts` (`journalFillSubject`).
+
+/**
+ * Точка основного QR журнала: активная точка, если у организации точки
+ * включены (≥ 2 точек) и эта точка — её. Иначе null (общий QR журнала).
+ */
+export async function resolveMainJournalQrBuilding(organizationId: string, activeBuildingId: string | null | undefined): Promise<string | null> {
+  if (!activeBuildingId) return null;
+  const targets = await buildingTargets(organizationId);
+  return targets.includes(activeBuildingId) ? activeBuildingId : null;
+}
+
+/**
+ * Адрес основного QR журнала. `activeBuildingId` — из `getActiveBuildingId`
+ * (шапка кабинета); хаб `all` к точке не привязывается. `verify` — второй
+ * основной QR гигиены («допуск»).
+ */
+export async function mainJournalQrUrl(params: {
+  organizationId: string;
+  code: string;
+  origin: string;
+  activeBuildingId?: string | null;
+  verify?: boolean;
+}): Promise<{ url: string; buildingId: string | null }> {
+  const buildingId =
+    params.code === JOURNAL_FILL_HUB_CODE ? null : await resolveMainJournalQrBuilding(params.organizationId, params.activeBuildingId);
+  const subject = journalFillSubject(params.organizationId, params.code, null, { buildingId });
+  return { url: qrFillUrl(params.origin, "journal", subject) + (params.verify ? "&view=all" : ""), buildingId };
+}
+
+/**
+ * Адрес дополнительного QR документа: действует по `dateTo` документа
+ * включительно (бессрочный — `2099-12-31`, в интерфейсе «бессрочно»).
+ */
+export function documentJournalQrUrl(params: {
+  organizationId: string;
+  code: string;
+  origin: string;
+  document: { id: string; dateTo: Date | string };
+  verify?: boolean;
+}): { url: string; validUntil: string } {
+  const validUntil = journalFillValidUntil(params.document.dateTo);
+  const subject = journalFillSubject(params.organizationId, params.code, params.document.id, { validUntil });
+  return { url: qrFillUrl(params.origin, "journal", subject) + (params.verify ? "&view=all" : ""), validUntil };
+}
+
 /** Плакат журнала: `documentId` сужает до конкретного документа (из его меню). */
 export async function buildJournalPoster(params: {
   organizationId: string;
@@ -141,8 +191,15 @@ export async function buildJournalPoster(params: {
   origin: string;
   /** Второй плакат гигиены — «Допуск сотрудников» для ответственного. */
   verify?: boolean;
+  /** Срок дополнительного QR документа (`journalFillValidUntil(dateTo)`); без него — старый бессрочный QR документа. */
+  validUntil?: string | null;
+  /** Точка основного QR (`resolveMainJournalQrBuilding`); только без `documentId`. */
+  buildingId?: string | null;
 }): Promise<QrPoster> {
-  const subject = journalFillSubject(params.organizationId, params.code, params.documentId);
+  const subject = journalFillSubject(params.organizationId, params.code, params.documentId, {
+    validUntil: params.documentId ? params.validUntil : null,
+    buildingId: params.documentId ? null : params.buildingId,
+  });
   const url = qrFillUrl(params.origin, "journal", subject) + (params.verify ? "&view=all" : "");
   const code = params.verify ? `${params.code}${HYGIENE_VERIFY_SUFFIX}` : params.code;
   return {
@@ -154,6 +211,9 @@ export async function buildJournalPoster(params: {
     norms: [],
     url,
     svg: await qrSvg(url),
+    journalCode: params.code,
+    documentId: params.documentId ?? null,
+    validUntil: params.documentId ? (params.validUntil ?? null) : null,
   };
 }
 
@@ -164,6 +224,8 @@ export async function buildJournalPoster(params: {
 export const QR_POSTER_NOTICE_LAPSED =
   "Прошлый период закончился — при первом сканировании откроется новый документ по образцу прошлого";
 export const QR_POSTER_NOTICE_EMPTY = "У журнала ещё нет документа — создайте первый";
+/** Основной QR журнала без документов: первый скан сам создаёт документ (C4). */
+export const QR_POSTER_NOTICE_FIRST_SCAN = "Документа ещё нет — он создастся при первом сканировании";
 export const QR_POSTER_NOTICE_MISSING = "На сегодня документа нет, а сам он не создаётся — создайте документ в журнале";
 export const QR_POSTER_NOTICE_CLOSED =
   "Документ за этот период закрыт — пока его не вернут в активные, запись по QR не пройдёт";
@@ -179,6 +241,23 @@ const NOTICE_BY_STATE: Record<JournalQrState, string | null> = {
   missing: QR_POSTER_NOTICE_MISSING,
   disabled: QR_POSTER_NOTICE_DISABLED,
 };
+
+/**
+ * Подсказки основных QR журналов (экран, не печать). Пустой журнал по
+ * основному QR сам создаёт первый документ — там подсказка другая.
+ */
+export async function loadMainJournalQrNotices(params: {
+  organizationId: string;
+  codes: string[];
+  todayKey: string;
+  disabledCodes: Set<string>;
+  journalPeriods: unknown;
+}): Promise<Map<string, string | null>> {
+  const states = await loadJournalQrStates(params);
+  const notices = new Map<string, string | null>();
+  for (const [code, state] of states) notices.set(code, state === "empty" ? QR_POSTER_NOTICE_FIRST_SCAN : NOTICE_BY_STATE[state]);
+  return notices;
+}
 
 /** Состояние журналов на сегодня — четыре запроса на весь лист плакатов. */
 async function loadJournalQrStates(params: {
@@ -241,6 +320,8 @@ async function buildJournalPosterById(params: {
   id: string;
   orgName: string;
   origin: string;
+  /** Активная точка кабинета: основной QR в сети точек привязан к ней. */
+  activeBuildingId?: string | null;
 }): Promise<ExplicitJournalPoster> {
   const { code, documentId, verify } = splitJournalPosterId(params.id);
   if (!code) return { missing: { id: params.id, label: params.id, reason: "Пустой код журнала" } };
@@ -276,6 +357,10 @@ async function buildJournalPosterById(params: {
     document = { status: found.status, dateFrom: found.dateFrom, dateTo: found.dateTo };
     subtitle = found.building?.name ? `${found.title} · ${found.building.name}` : found.title;
   }
+  // Документ — дополнительный QR до конца его периода; журнал — основной,
+  // в сети точек привязан к активной точке.
+  const validUntil = document ? journalFillValidUntil(document.dateTo) : null;
+  const buildingId = documentId ? null : await resolveMainJournalQrBuilding(params.organizationId, params.activeBuildingId);
   const poster = verify
     ? await buildJournalPoster({
         organizationId: params.organizationId,
@@ -285,6 +370,8 @@ async function buildJournalPosterById(params: {
         documentId,
         origin: params.origin,
         verify: true,
+        validUntil,
+        buildingId,
       })
     : await buildJournalPoster({
         organizationId: params.organizationId,
@@ -294,8 +381,21 @@ async function buildJournalPosterById(params: {
         orgName: params.orgName,
         documentId,
         origin: params.origin,
+        validUntil,
+        buildingId,
       });
+  if (document) poster.periodLabel = formatPeriodLabel(document.dateFrom, document.dateTo);
   return { poster, code, document };
+}
+
+const ddmm = (date: Date) => `${String(date.getUTCDate()).padStart(2, "0")}.${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+
+/** Период документа для подписи: «01.09–30.09.2026»; бессрочный — «с 01.09.2026». */
+export function formatPeriodLabel(dateFrom: Date, dateTo: Date): string {
+  const fromYear = dateFrom.getUTCFullYear();
+  if (journalFillValidUntil(dateTo) === JOURNAL_FILL_PERPETUAL_UNTIL) return `с ${ddmm(dateFrom)}.${fromYear}`;
+  const toYear = dateTo.getUTCFullYear();
+  return fromYear === toYear ? `${ddmm(dateFrom)}–${ddmm(dateTo)}.${toYear}` : `${ddmm(dateFrom)}.${fromYear}–${ddmm(dateTo)}.${toYear}`;
 }
 
 /** Подсказка плаката документа: сам документ важнее состояния журнала. */
@@ -445,10 +545,18 @@ export async function loadQrPoster(params: {
   kind: QrFillKind;
   id: string;
   origin: string;
+  /** Активная точка кабинета — для основного QR журнала в сети точек. */
+  activeBuildingId?: string | null;
 }): Promise<QrPoster | null> {
   const orgName = await loadPosterOrgName(params.organizationId);
   if (params.kind === "journal") {
-    const result = await buildJournalPosterById({ organizationId: params.organizationId, id: params.id, orgName, origin: params.origin });
+    const result = await buildJournalPosterById({
+      organizationId: params.organizationId,
+      id: params.id,
+      orgName,
+      origin: params.origin,
+      activeBuildingId: params.activeBuildingId,
+    });
     return "poster" in result ? result.poster : null;
   }
   if (params.kind === "room") {

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { ExternalLink, FileText, Printer, QrCode, RefreshCw, Sticker } from "lucide-react";
 
-import { posterDetailLine, type QrFillKind, type QrPoster } from "@/lib/qr-fill-types";
+import { formatQrValidUntil, posterDetailLine, type QrFillKind, type QrPoster } from "@/lib/qr-fill-types";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -13,6 +13,12 @@ type Props = {
   /** Что увидит человек, пока QR недоступен (строка не связана / контроль выключен). */
   emptyHint: string;
   className?: string;
+  /** Заголовок блока вместо «QR-код для заполнения с телефона». */
+  heading?: string;
+  /** Основной QR журнала — индиго-рамка (диалог QR документа, 2026-09-23). */
+  accent?: boolean;
+  /** Куда ведёт «Все коды» (у журнала — экран его QR-кодов). */
+  allHref?: string;
 };
 
 /** Результат последней загрузки; `key` — id объекта, для которого он получен. */
@@ -33,7 +39,7 @@ type State =
  * «Наклейка» (сетка на листе). Ссылки открываются в новой вкладке, чтобы
  * диалог с несохранёнными полями не потерялся.
  */
-export function QrFillPreview({ kind, id, emptyHint, className }: Props) {
+export function QrFillPreview({ kind, id, emptyHint, className, heading, accent = false, allHref }: Props) {
   const [result, setResult] = useState<Result | null>(null);
   const [attempt, setAttempt] = useState(0);
 
@@ -76,14 +82,16 @@ export function QrFillPreview({ kind, id, emptyHint, className }: Props) {
   return (
     <section
       data-qr-fill-preview={kind}
+      data-qr-preview-id={id ?? undefined}
       className={cn(
-        "rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4",
+        "rounded-2xl border p-4",
+        accent ? "border-[#5566f6]/50 bg-white shadow-[0_0_0_3px_rgba(85,102,246,0.08)]" : "border-[#ececf4] bg-[#fafbff]",
         className
       )}
     >
       <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
         <QrCode className="size-3.5 text-[#5566f6]" />
-        QR-код для заполнения с телефона
+        {heading ?? "QR-код для заполнения с телефона"}
       </div>
 
       {!id ? (
@@ -129,12 +137,20 @@ export function QrFillPreview({ kind, id, emptyHint, className }: Props) {
                 </div>
                 <p className="text-[12.5px] leading-[1.5] text-[#3c4053]">
                   {kind === "journal"
-                    ? "Сотрудник наводит камеру, выбирает себя и отвечает на вопросы формы — запись ложится в этот журнал за сегодня."
+                    ? state.poster.validUntil
+                      ? "Ведёт только в этот документ: сотрудник выбирает себя и отвечает на вопросы формы."
+                      : "Сотрудник наводит камеру, выбирает себя и отвечает на вопросы формы — запись ложится в действующий документ журнала."
                     : "Сотрудник наводит камеру, выбирает своё имя и вводит показание — запись ложится в журнал за сегодня."}
                 </p>
-                <div className="text-[11.5px] text-[#9b9fb3]">
-                  Код бессрочный — печатается один раз.
-                </div>
+                {state.poster.validUntil ? (
+                  <div data-qr-valid-until={state.poster.validUntil} className="inline-flex rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] font-medium tabular-nums text-[#3848c7]">
+                    {formatQrValidUntil(state.poster.validUntil) === "бессрочно"
+                      ? "Действует, пока действует документ"
+                      : `Действует до ${formatQrValidUntil(state.poster.validUntil).slice(0, 5)} — до конца периода документа`}
+                  </div>
+                ) : (
+                  <div className="text-[11.5px] text-[#9b9fb3]">Код бессрочный — печатается один раз.</div>
+                )}
               </>
             ) : (
               <div className="space-y-2">
@@ -187,7 +203,7 @@ export function QrFillPreview({ kind, id, emptyHint, className }: Props) {
                 Проверить ссылку
               </a>
               <a
-                href={`/settings/qr-posters?kind=${posterKind}`}
+                href={allHref ?? `/settings/qr-posters?kind=${posterKind}`}
                 target="_blank"
                 rel="noopener"
                 title="Все плакаты и наклейки организации"

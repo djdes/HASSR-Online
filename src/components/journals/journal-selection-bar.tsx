@@ -23,6 +23,12 @@ type Props = {
   hint?: string;
   /** Дополнительные действия журнала (слева от «Удалить»). */
   children?: ReactNode;
+  /** Где полоса: под шапкой (по умолчанию) или прибита к низу экрана. */
+  placement?: "top" | "bottom";
+  /** Показывать и при 0 (страница печати: кнопка видна, но неактивна). */
+  keepWhenEmpty?: boolean;
+  /** Своя подпись вместо «Выбрано: N» (например «Выбрано: 3 · 2 листа»). */
+  label?: ReactNode;
 };
 
 /**
@@ -47,6 +53,9 @@ export function JournalSelectionBar({
   deleting = false,
   hint,
   children,
+  placement = "top",
+  keepWhenEmpty = false,
+  label,
 }: Props) {
   // Портал обязателен: страницы журналов лежат в full-bleed обёртке с
   // `-translate-x-1/2`, а transform у предка превращает `position: fixed`
@@ -56,27 +65,43 @@ export function JournalSelectionBar({
     setPortalTarget(document.body);
   }, []);
 
-  if (count <= 0 || !portalTarget) return null;
+  if ((count <= 0 && !keepWhenEmpty) || !portalTarget) return null;
+  const bottom = placement === "bottom";
 
   return createPortal(
-    <div className={JOURNAL_DOCUMENT_SELECTION_BAR_CLASS}>
-      <div className={JOURNAL_DOCUMENT_SELECTION_BAR_INNER_CLASS}>
+    <div
+      className={bottom ? "fixed inset-x-0 bottom-0 z-40 print:hidden" : JOURNAL_DOCUMENT_SELECTION_BAR_CLASS}
+      data-selection-bar={placement}
+    >
+      <div
+        className={
+          bottom
+            ? "mx-auto w-full max-w-[1800px] px-4 pb-[max(12px,env(safe-area-inset-bottom))] md:px-8"
+            : JOURNAL_DOCUMENT_SELECTION_BAR_INNER_CLASS
+        }
+      >
         <div
           className={JOURNAL_DOCUMENT_SELECTION_BAR_PILL_CLASS}
           role="region"
           aria-label="Действия над выбранными строками"
         >
-          <button
-            type="button"
-            onClick={onClear}
-            title="Снять выделение"
-            aria-label="Снять выделение"
-            className="rounded-full p-1.5 text-[#6f7282] transition-colors duration-150 hover:bg-[#f1f2f8] hover:text-black focus:ring-4 focus:ring-[#5566f6]/15 focus:outline-none"
-          >
-            <X className="size-4" />
-          </button>
-          <span className="text-[14px] font-semibold text-[#0b1024]">
-            Выбрано: {count}
+          {count > 0 ? (
+            <button
+              type="button"
+              onClick={onClear}
+              title="Снять выделение"
+              aria-label="Снять выделение"
+              className={
+                bottom
+                  ? "-my-1.5 -ml-2 flex size-11 items-center justify-center rounded-full text-[#6f7282] transition-colors duration-150 hover:bg-[#f1f2f8] hover:text-black focus:ring-4 focus:ring-[#5566f6]/15 focus:outline-none"
+                  : "rounded-full p-1.5 text-[#6f7282] transition-colors duration-150 hover:bg-[#f1f2f8] hover:text-black focus:ring-4 focus:ring-[#5566f6]/15 focus:outline-none"
+              }
+            >
+              <X className="size-4" />
+            </button>
+          ) : null}
+          <span className="text-[14px] font-semibold tabular-nums text-[#0b1024]">
+            {label ?? `Выбрано: ${count}`}
           </span>
           {hint ? (
             <span className="hidden text-[13px] text-[#6f7282] sm:inline">{hint}</span>

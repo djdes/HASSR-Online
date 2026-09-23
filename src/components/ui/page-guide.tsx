@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { ChevronDown, HelpCircle, X } from "lucide-react";
 
 /**
@@ -21,9 +21,11 @@ export type PageGuideProps = {
   qa?: ReadonlyArray<{ q: string; a: string }>;
   /** Уникальный slug страницы для запоминания состояния. */
   storageKey: string;
+  /** Строка под пунктами — например ссылка на связанную настройку. */
+  footer?: ReactNode;
 };
 
-export function PageGuide({ title, bullets, qa = [], storageKey }: PageGuideProps) {
+export function PageGuide({ title, bullets, qa = [], storageKey, footer }: PageGuideProps) {
   const [open, setOpen] = useState(false);
   const [dismissed, setDismissed] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -103,6 +105,8 @@ export function PageGuide({ title, bullets, qa = [], storageKey }: PageGuideProp
               );
             })}
           </ul>
+
+          {footer ? <div className="pl-1 leading-relaxed text-[#3c4053]">{footer}</div> : null}
 
           {qa.length > 0 ? (
             <div className="mt-2 space-y-1.5 border-t border-[#dcdfed] pt-3">

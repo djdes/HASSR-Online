@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import {
   JOURNAL_FILL_HUB_CODE,
   OBJECT_QR_JOURNAL_CODES,
-  OBJECT_QR_JOURNAL_HINTS,
+  journalFillTokenExpired,
   listFillEmployees,
   listHubJournals,
   listJournalFillDocuments,
@@ -13,12 +13,16 @@ import {
   loadOrganizationForFill,
   normalizeQrFillMode,
   resolveJournalFillRows,
+  scopeDocumentsToBuilding,
   todayKeyFor,
   verifyJournalFillToken,
   type JournalFillEmployee,
 } from "@/lib/journal-fill";
 import { journalFillHints, type JournalFillHints } from "@/lib/journal-fill-hints";
-import { ensureQrPeriodDocuments, qrRolloverMessage, resolveTokenDocumentIds } from "@/lib/journal-qr-rollover";
+import { decideQrFirstDocument, ensureQrPeriodDocuments, qrRolloverMessage, resolveTokenDocumentIds } from "@/lib/journal-qr-rollover";
+import { buildingTargets } from "@/lib/building-targets";
+import { journalResponsibleLabel } from "@/lib/journal-responsible-person";
+import { loadObjectJournalStatus, renderObjectJournalStatus } from "@/lib/qr-object-journal-status";
 import {
   normRange,
   renderDocumentStep,
@@ -35,6 +39,7 @@ import {
   renderPinStep,
   renderResult,
   renderRowStep,
+  renderTokenExpired,
   renderWho,
   tempMetaScript,
   jsonForScript,
@@ -251,6 +256,18 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
   const page = (title: string, body: string, subtitle?: string | null, script?: string | null, status = 200, setCookies: string[] = []) =>
     html(renderPage({ orgName: org.name, title, subtitle, body, script }), status, setCookies);
 
+  // Дополнительный QR документа кончился (срок — в подписи, дата —
+  // сегодняшняя по часовому поясу организации). Проверяем до входа и до
+  // любого `ensureQrPeriodDocuments`: просроченный код ничего не создаёт.
+  if (journalFillTokenExpired(check, todayKey)) {
+    return page("QR-код больше не действует", renderTokenExpired({ validUntil: check.validUntil ?? todayKey }), null, null, 410);
+  }
+  // Основной QR точки — только точка этой организации.
+  if (check.buildingId) {
+    const building = await db.building.findFirst({ where: { id: check.buildingId, organizationId: orgId }, select: { id: true } });
+    if (!building) return html(renderInvalidLink(org.name), 200);
+  }
+
   const isBrakerage = isBrakerageJournalCode(code);
   // Сторонняя комиссия — только у бракеража готовой продукции (скоропорт — внутренний).
   const hasCommissionFlow = isCommissionJournalCode(code);
@@ -286,31 +303,55 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
   const title = template.name;
 
   if (disabledCodes.includes(code)) return page(title, renderMessage("muted", "Этот журнал отключён в организации."));
-  // Холодильники и склады — по наклейке на самом объекте.
-  if (OBJECT_QR_JOURNAL_CODES.has(code)) return page(title, renderMessage("muted", OBJECT_QR_JOURNAL_HINTS[code] ?? "Отсканируйте наклейку на самом объекте."));
+  // Холодильники, склады и УФ-лампы — по наклейке на самом объекте. Здесь
+  // только статус за сегодня, без ссылок на заполнение (решение 33d8559b).
+  if (OBJECT_QR_JOURNAL_CODES.has(code)) {
+    const groups = await loadObjectJournalStatus({ organizationId: orgId, code, todayKey, timezone, documentId: check.documentId });
+    const responsible = groups.length === 0 ? await journalResponsibleLabel({ organizationId: orgId, templateCode: code, todayKey, documentId: check.documentId }) : "";
+    return page(title, renderObjectJournalStatus({ code, groups, responsible }), "Статус за сегодня");
+  }
 
+  // Дополнительный QR документа со сроком «прибит» к своему документу:
+  // без перехода в новый период и без создания документов.
+  const pinned = check.validUntil !== null;
+  const orgTargets = await buildingTargets(orgId);
   // Период сменился (1-е число, прошлый документ до 30-го) — документ
   // нового периода по образцу прошлого создаётся здесь же, тем же правилом,
-  // что у ночного крона. Организация — из проверенного токена.
-  const rollover = await ensureQrPeriodDocuments({
-    organizationId: orgId,
-    templateCode: code,
-    todayKey,
-    anchor: check.documentId ? { documentId: check.documentId } : undefined,
-    source: "journal-fill",
-  });
+  // что у ночного крона. Журналом не пользовались — первый документ, но
+  // только по собственному основному QR журнала (не хаб, не QR документа).
+  // Организация — из проверенного токена.
+  const rollover = pinned
+    ? null
+    : await ensureQrPeriodDocuments({
+        organizationId: orgId,
+        templateCode: code,
+        todayKey,
+        anchor: check.documentId ? { documentId: check.documentId } : check.buildingId ? { buildingId: check.buildingId } : undefined,
+        source: "journal-fill",
+        allowFirstDocument: decideQrFirstDocument({ hub: check.hub, documentId: check.documentId, buildingId: check.buildingId, orgTargets }),
+      });
   const allDocs = await listJournalFillDocuments(orgId, code, todayKey);
   let documents = allDocs;
   let lineageReason: Awaited<ReturnType<typeof resolveTokenDocumentIds>>["reason"];
   if (check.documentId) {
     // Плакат документа ведёт в его «линию»: сам документ, пока он идёт,
-    // затем документ нового периода той же точки.
-    const lineage = await resolveTokenDocumentIds({ organizationId: orgId, templateCode: code, todayKey, tokenDocumentId: check.documentId });
+    // затем документ нового периода той же точки. QR со сроком — только свой.
+    const lineage = await resolveTokenDocumentIds({
+      organizationId: orgId,
+      templateCode: code,
+      todayKey,
+      tokenDocumentId: check.documentId,
+      mode: pinned ? "pinned" : "lineage",
+    });
     documents = allDocs.filter((doc) => lineage.documentIds.includes(doc.id));
     lineageReason = lineage.reason;
+  } else if (check.buildingId) {
+    // Основной QR точки: документы этой точки и общие.
+    documents = scopeDocumentsToBuilding(allDocs, check.buildingId, orgTargets);
   }
   if (documents.length === 0) {
-    return page(title, renderMessage("warn", qrRolloverMessage(lineageReason === "period-closed" ? lineageReason : rollover.reason ?? lineageReason)));
+    const responsible = await journalResponsibleLabel({ organizationId: orgId, templateCode: code, todayKey, documentId: check.documentId });
+    return page(title, renderMessage("warn", qrRolloverMessage(lineageReason === "period-closed" ? lineageReason : rollover?.reason ?? lineageReason, responsible)));
   }
 
   // ---- документ
@@ -717,7 +758,11 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
         }
       : loadedForm;
   if (!form) return page(title, `${who}${renderMessage("muted", "В этом документе пока нет строк, которые можно заполнить от вашего имени. Попросите руководителя назначить вас в журнале.")}`, null, null, 200, setCookies);
-  if (form.fields.length === 0) return page(title, `${who}${renderMessage("muted", "В документе пока нечего заполнять: список оборудования или строк пуст. Попросите руководителя настроить журнал.")}`, null, null, 200, setCookies);
+  if (form.fields.length === 0) {
+    const responsible = await journalResponsibleLabel({ organizationId: orgId, templateCode: code, todayKey, documentId: document.id });
+    const whoFixes = responsible === "руководитель" ? "Попросите руководителя настроить журнал." : `Ответственный за журнал — ${responsible} — должен войти в кабинет и настроить журнал.`;
+    return page(title, `${who}${renderMessage("muted", `В документе пока нечего заполнять: список оборудования или строк пуст. ${whoFixes}`)}`, null, null, 200, setCookies);
+  }
 
   const baseHints = journalFillHints(code);
   const suggestions: Record<string, { values: string[]; meta: Record<string, NameSuggestionMeta> }> = {};

@@ -1,0 +1,301 @@
+{
+  "base": "http://localhost:3025",
+  "at": "2026-09-23T18:57:23.293Z",
+  "checks": [
+    {
+      "id": "C2-1a",
+      "name": "просроченный QR — экран «срок закончился», 410",
+      "ok": true,
+      "detail": {
+        "status": 410
+      }
+    },
+    {
+      "id": "C2-1b",
+      "name": "на экране нет рабочих ссылок в журнал",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "C2-1c",
+      "name": "JSON-API и submit отвечают 410",
+      "ok": true,
+      "detail": [
+        410,
+        410,
+        410
+      ]
+    },
+    {
+      "id": "C2-1d",
+      "name": "число документов не меняется",
+      "ok": true,
+      "detail": {
+        "before": 1,
+        "after": 1
+      }
+    },
+    {
+      "id": "C2-1e",
+      "name": "подмена даты — «ссылка недействительна»",
+      "ok": true,
+      "detail": {
+        "status": 200
+      }
+    },
+    {
+      "id": "C2-1f",
+      "name": "и после подмены документы не создаются",
+      "ok": true
+    },
+    {
+      "id": "C2-2",
+      "name": "QR со сроком до конца месяца открывает свой документ",
+      "ok": true,
+      "detail": {
+        "status": 200
+      }
+    },
+    {
+      "id": "C2-3",
+      "name": "старый QR документа: создан документ нового периода, форма ведёт в него",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "fresh": {
+          "id": "cmuegt2s100n4ow9m61yy4l9m"
+        },
+        "snippet": "<main><div class=\"wrap\">\n<form method=\"get\" action=\"/journal-fill/e2e-org-qrc/product_writeoff\" class=\"card\"><input type=\"hidden\" name=\"token\" value=\"journal:e2e-org-qrc:product_writeoff:cmuegsgpf000ce09mb4s8x3ni.1790189836418.9pD6wQ2jincU0Kh8a4LO6pbshu3fENg1xGqKP4zzhis\"><input type=\"hidden\" name=\"doc\" value=\"cmuegt2s100n4ow9m61yy4l9m\"><input type=\"hidden\" name=\"rf\" value=\"1\"><p class=\"label\">Кто "
+      }
+    },
+    {
+      "id": "C4-1a",
+      "name": "5 параллельных сканов основного QR — ровно 1 документ",
+      "ok": true,
+      "detail": {
+        "before": 0,
+        "after": 1,
+        "statuses": [
+          200,
+          200,
+          200,
+          200,
+          200
+        ]
+      }
+    },
+    {
+      "id": "C4-1b",
+      "name": "все пять сканов получили страницу, не ошибку",
+      "ok": true,
+      "detail": [
+        200,
+        200,
+        200,
+        200,
+        200
+      ]
+    },
+    {
+      "id": "C4-1c",
+      "name": "аудит qr_first_document и уведомление руководству",
+      "ok": true,
+      "detail": {
+        "audit": 1,
+        "bell": 1
+      }
+    },
+    {
+      "id": "C4-2",
+      "name": "hub-токен первый документ не создаёт",
+      "ok": true,
+      "detail": {
+        "before": 0,
+        "after": 0,
+        "status": 200
+      }
+    },
+    {
+      "id": "C4-2b",
+      "name": "токен документа первый документ не создаёт",
+      "ok": true
+    },
+    {
+      "id": "C3-1a",
+      "name": "холодильники: статус за сегодня и «отсканируйте наклейку»",
+      "ok": true,
+      "detail": {
+        "status": 200
+      }
+    },
+    {
+      "id": "C3-1b",
+      "name": "в HTML статуса нет /equipment-fill/ и /room-fill/",
+      "ok": true
+    },
+    {
+      "id": "C3-1c",
+      "name": "УФ-лампы нет в «Все журналы»",
+      "ok": true,
+      "detail": {
+        "status": 200
+      }
+    },
+    {
+      "id": "C3-1d",
+      "name": "УФ-лампа по ручному hub-URL — только статус, заполнить нельзя",
+      "ok": true,
+      "detail": {
+        "status": 200
+      }
+    },
+    {
+      "id": "C3-2a",
+      "name": "нет оборудования — «Ответственный за журнал — Нина Точкова, заведующая — должен войти и добавить оборудование»",
+      "ok": true,
+      "detail": {
+        "snippet": "<main><div class=\"wrap\">\n<div class=\"card center os-empty\">\n<h2>Холодильники ещё не добавлены</h2>\n<p class=\"muted\">Ответственный за журнал — Нина Точкова, заведующая — должен войти и добавить оборудование. Затем на каждый объект печатается своя наклейка с QR-кодом — её и сканируют.</p>\n<a class=\"btn\" href=\"/login?next=/settings/equipment\">Войти и добавить оборудование</a>\n</div>\n</div></main>\n\n<script>\n(function(){\n  function hhmm(d){return (d.getHours()<10?\"0\":\"\")+d.getHours()+\":\"+(d.getMinutes()<10?\"0\":\"\")+d.getMinutes();}\n  function key(s){return String(s||\"\").replace(/\\s+/g,\" \").trim().to"
+      }
+    },
+    {
+      "id": "C3-2b",
+      "name": "климат без помещений — вход на /settings/buildings",
+      "ok": true
+    },
+    {
+      "id": "C2-4a",
+      "name": "QR со сроком: чужой documentId → 403, свой проходит сверку",
+      "ok": true,
+      "detail": {
+        "foreign": {
+          "status": 403,
+          "body": {
+            "error": "Этот QR-код открывает другой документ — отсканируйте QR-код заново."
+          }
+        },
+        "own": {
+          "status": 400,
+          "body": {
+            "error": "Не заполнено: «Количество использованного сырья (кг)», «Количество металлопримесей (г)»."
+          }
+        }
+      }
+    },
+    {
+      "id": "C2-4b",
+      "name": "JSON-API GET с чужим documentId → 403",
+      "ok": true,
+      "detail": 403
+    },
+    {
+      "id": "C2-4c",
+      "name": "старый QR документа точки: документ другой точки → 403",
+      "ok": true,
+      "detail": {
+        "status": 403,
+        "body": {
+          "error": "Этот QR-код открывает другой документ — отсканируйте QR-код заново."
+        }
+      }
+    },
+    {
+      "id": "C2-4d",
+      "name": "документ другой организации → 403",
+      "ok": true,
+      "detail": {
+        "status": 403,
+        "body": {
+          "error": "Этот QR-код открывает другой документ — отсканируйте QR-код заново."
+        }
+      }
+    },
+    {
+      "id": "C2-5a",
+      "name": "основной QR точки создаёт первый документ этой точки",
+      "ok": true,
+      "detail": {
+        "before": 0,
+        "docs": [
+          {
+            "buildingId": "cmuegsgon0007e09mqecz6kzd"
+          }
+        ],
+        "status": 200
+      }
+    },
+    {
+      "id": "C2-5b",
+      "name": "старый основной QR в организации с точками — 0 документов и имя ответственного",
+      "ok": true,
+      "detail": {
+        "snippet": "<main><div class=\"wrap\">\n<div class=\"warn\">На сегодня нет активного документа этого журнала. Ответственный за журнал — Нина Точкова, заведующая — должен войти в кабинет и создать документ, после этого форма заработает сразу.</div>\n</div></main>\n\n<script>\n(function(){\n  function hhmm(d){return (d.getHours()<10?\"0\":\"\")+d.getHours()+\":\"+(d.getMinutes()<10?\"0\":\"\")+d.getMinutes();}\n  function key(s){return String(s||\"\").replace(/\\s+/g,\" \").trim().toLowerCase();}\n  function fire(el){var ev=document.cr"
+      }
+    },
+    {
+      "id": "C2-5c",
+      "name": "здание чужой организации в b~ — «ссылка недействительна», 0 документов",
+      "ok": true,
+      "detail": {
+        "status": 200
+      }
+    },
+    {
+      "id": "C2-5d",
+      "name": "основной QR точки показывает документы только своей точки",
+      "ok": true,
+      "detail": {
+        "status": 200
+      }
+    },
+    {
+      "id": "C3-3a",
+      "name": "daily=1 с токеном хаба не раскрывает id документов УФ и холодильников",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "body": "{\"daily\":[]}"
+      }
+    },
+    {
+      "id": "C3-3b",
+      "name": "GET и POST /api/journal-fill для УФ и холодильников по хабу и основному QR → 403",
+      "ok": true,
+      "detail": {
+        "GET uv_lamp_runtime hub": 403,
+        "POST uv_lamp_runtime hub": 403,
+        "GET uv_lamp_runtime main": 403,
+        "POST uv_lamp_runtime main": 403,
+        "GET cold_equipment_control hub": 403,
+        "POST cold_equipment_control hub": 403,
+        "GET cold_equipment_control main": 403,
+        "POST cold_equipment_control main": 403
+      }
+    },
+    {
+      "id": "C3-3c",
+      "name": "в журналы объектов ничего не записано",
+      "ok": true,
+      "detail": {
+        "entriesBefore": 0,
+        "entriesAfter": 0
+      }
+    },
+    {
+      "id": "C2-6a",
+      "name": "отключённый журнал: GET и POST по токену хаба → 403",
+      "ok": true,
+      "detail": {
+        "get": 403,
+        "post": 403,
+        "postBody": {
+          "error": "Этот журнал отключён в организации"
+        }
+      }
+    },
+    {
+      "id": "C2-6b",
+      "name": "в отключённый журнал ничего не записано",
+      "ok": true
+    }
+  ]
+}

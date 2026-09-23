@@ -52,7 +52,7 @@ export const ROUTE_TITLES: Record<string, string> = {
   "/settings/consultant": "Консультант",
   "/settings/equipment": "Оборудование",
   "/settings/equipment/qr-sheet": "QR-наклейки оборудования",
-  "/settings/qr-posters": "QR-плакаты",
+  "/settings/qr-posters": "QR-коды",
   "/settings/experimental": "Бета-функции",
   "/settings/inspector-portal": "Портал инспектора",
   "/settings/integrations/tasksflow": "TasksFlow",

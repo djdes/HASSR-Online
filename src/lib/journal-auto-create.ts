@@ -1272,3 +1272,46 @@ export async function restoreBrokenChainForTemplate(
   const report = locked.value;
   return report.created ? { ...report, reason: "broken-chain-restored" } : report;
 }
+
+/**
+ * Первый документ журнала по скану его основного QR (2026-09-23). Журналом
+ * ещё не пользовались, а плакат уже висит: раньше сотрудник видел «нет
+ * документа — попросите руководителя», и запись терялась. Теперь документ
+ * текущего периода создаётся тем же `ensureActiveDocument`, что у
+ * руководителя в кабинете, — ответственные из «Ответственных за журналы»,
+ * структура из справочника (прошлого документа нет — переносить нечего).
+ *
+ * Решение «можно ли» принимает вызывающий (`decideQrFirstDocument` +
+ * защиты `ensureQrPeriodDocuments`: журнал включён, кабинет не на паузе,
+ * шаблон активен). Здесь — только идемпотентность: тот же advisory-замок
+ * «журнал × точка», что у восстановления цепочки, и повторная проверка
+ * активного документа внутри `ensureActiveDocument`, — пять первых сканов
+ * заводят один документ.
+ */
+export async function createFirstDocumentForTemplate(
+  db: PrismaClient,
+  args: {
+    organizationId: string;
+    template: { id: string; code: string; name: string };
+    buildingId: string | null;
+    now?: Date;
+  }
+): Promise<CreateReport> {
+  const locked = await withAdvisoryTryLock(
+    advisoryLockKey("journal-period", args.organizationId, args.template.code, args.buildingId),
+    () =>
+      ensureActiveDocument(db, {
+        organizationId: args.organizationId,
+        templateCode: args.template.code,
+        now: args.now,
+        carryPreviousStructure: false,
+        buildingId: args.buildingId,
+      }),
+    { client: db },
+  );
+  if (!locked.acquired) {
+    return { code: args.template.code, name: args.template.name, created: false, documentId: "", reason: "busy" };
+  }
+  const report = locked.value;
+  return report.created ? { ...report, reason: "first-document" } : report;
+}

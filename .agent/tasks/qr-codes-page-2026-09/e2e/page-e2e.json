@@ -1,0 +1,655 @@
+{
+  "base": "http://localhost:3025",
+  "at": "2026-09-23T18:56:34.371Z",
+  "passed": 39,
+  "failed": 0,
+  "checks": [
+    {
+      "id": "IN-01",
+      "name": "кнопка журнала (journalQrHref) гигиены / баннер гигиены — два основных отмечены, документы нет",
+      "ok": true,
+      "detail": {
+        "problems": [],
+        "selected": [
+          "hygiene",
+          "hygiene@verify"
+        ],
+        "ids": [
+          "hygiene",
+          "hygiene@verify",
+          "hygiene:cmuegn61t000p7g9mcmyolb5h",
+          "hygiene@verify:cmuegn61t000p7g9mcmyolb5h"
+        ]
+      }
+    },
+    {
+      "id": "IN-02",
+      "name": "кнопка журнала фритюра — основной отмечен, два действующих документа не отмечены, прошлый не показан",
+      "ok": true,
+      "detail": {
+        "problems": [],
+        "selected": [
+          "fryer_oil"
+        ],
+        "ids": [
+          "fryer_oil",
+          "fryer_oil:cmuegn624000r7g9mruwz1uw5",
+          "fryer_oil:cmuegn61z000q7g9mcq3jta55"
+        ]
+      }
+    },
+    {
+      "id": "IN-03",
+      "name": "старое kind=journals&ids=fryer_oil — отмечен ровно основной",
+      "ok": true,
+      "detail": {
+        "problems": [],
+        "selected": [
+          "fryer_oil"
+        ],
+        "ids": [
+          "fryer_oil",
+          "fryer_oil:cmuegn624000r7g9mruwz1uw5",
+          "fryer_oil:cmuegn61z000q7g9mcq3jta55"
+        ]
+      }
+    },
+    {
+      "id": "IN-04",
+      "name": "старая кнопка гигиены kind=journal&ids=hygiene,hygiene@verify",
+      "ok": true,
+      "detail": {
+        "problems": [],
+        "selected": [
+          "hygiene",
+          "hygiene@verify"
+        ],
+        "ids": [
+          "hygiene",
+          "hygiene@verify",
+          "hygiene:cmuegn61t000p7g9mcmyolb5h",
+          "hygiene@verify:cmuegn61t000p7g9mcmyolb5h"
+        ]
+      }
+    },
+    {
+      "id": "IN-05",
+      "name": "старая ссылка документа гигиены — отмечены ровно QR документа",
+      "ok": true,
+      "detail": {
+        "problems": [],
+        "selected": [
+          "hygiene:cmuegn61t000p7g9mcmyolb5h",
+          "hygiene@verify:cmuegn61t000p7g9mcmyolb5h"
+        ],
+        "ids": [
+          "hygiene",
+          "hygiene@verify",
+          "hygiene:cmuegn61t000p7g9mcmyolb5h",
+          "hygiene@verify:cmuegn61t000p7g9mcmyolb5h"
+        ]
+      }
+    },
+    {
+      "id": "IN-06",
+      "name": "qr-fill-preview «Плакат A4» документа — A4, печать сразу",
+      "ok": true,
+      "detail": {
+        "problems": [],
+        "selected": [
+          "fryer_oil:cmuegn61z000q7g9mcq3jta55"
+        ],
+        "ids": [
+          "fryer_oil",
+          "fryer_oil:cmuegn61z000q7g9mcq3jta55",
+          "fryer_oil:cmuegn624000r7g9mruwz1uw5"
+        ]
+      }
+    },
+    {
+      "id": "IN-07",
+      "name": "qr-fill-preview «Наклейка» основного QR журнала",
+      "ok": true,
+      "detail": {
+        "problems": [],
+        "selected": [
+          "fryer_oil"
+        ],
+        "ids": [
+          "fryer_oil",
+          "fryer_oil:cmuegn624000r7g9mruwz1uw5",
+          "fryer_oil:cmuegn61z000q7g9mcq3jta55"
+        ]
+      }
+    },
+    {
+      "id": "IN-08",
+      "name": "закончившийся документ в ids= — строка «срок истёк», не отмечена, печати нет",
+      "ok": true,
+      "detail": {
+        "problems": [],
+        "selected": [],
+        "ids": [
+          "fryer_oil",
+          "fryer_oil:cmuegn627000s7g9mvmkgkg3d",
+          "fryer_oil:cmuegn624000r7g9mruwz1uw5",
+          "fryer_oil:cmuegn61z000q7g9mcq3jta55"
+        ]
+      }
+    },
+    {
+      "id": "IN-09",
+      "name": "qr-fill-preview «Наклейка» холодильника — только он, наклейка, печать сразу",
+      "ok": true,
+      "detail": {
+        "problems": [],
+        "selected": [
+          "cmuegn5zz00057g9m0549uhbz"
+        ],
+        "ids": [
+          "cmuegn5zz00057g9m0549uhbz"
+        ]
+      }
+    },
+    {
+      "id": "IN-10",
+      "name": "«Все коды» журнала (kind=journals) — общий экран, отмечен «Все журналы»",
+      "ok": true,
+      "detail": {
+        "problems": [],
+        "selected": [
+          "all"
+        ],
+        "ids": [
+          "all",
+          "hygiene",
+          "hygiene@verify",
+          "fryer_oil"
+        ]
+      }
+    },
+    {
+      "id": "IN-11",
+      "name": "без параметров — общий экран",
+      "ok": true,
+      "detail": {
+        "problems": [],
+        "selected": [
+          "all"
+        ],
+        "ids": [
+          "all",
+          "hygiene",
+          "hygiene@verify",
+          "fryer_oil"
+        ]
+      }
+    },
+    {
+      "id": "IN-12",
+      "name": "выделение строк холодильников (ids=a,b, layout=sheet)",
+      "ok": true,
+      "detail": {
+        "problems": [],
+        "selected": [
+          "cmuegn5zu00047g9me003g7ma",
+          "cmuegn5zz00057g9m0549uhbz"
+        ],
+        "ids": [
+          "cmuegn5zz00057g9m0549uhbz",
+          "cmuegn5zu00047g9me003g7ma"
+        ]
+      }
+    },
+    {
+      "id": "IN-13",
+      "name": "меню холодильников (kind=equipment&doc=) — экран журнала: основной + наклейки документа",
+      "ok": true,
+      "detail": {
+        "problems": [],
+        "selected": [
+          "cmuegn5zu00047g9me003g7ma",
+          "cold_equipment_control"
+        ],
+        "ids": [
+          "cold_equipment_control",
+          "cmuegn5zu00047g9me003g7ma"
+        ]
+      }
+    },
+    {
+      "id": "IN-14",
+      "name": "меню климата (kind=rooms&doc=) — экран климата, в документе нет помещений",
+      "ok": true,
+      "detail": {
+        "problems": [],
+        "selected": [
+          "climate_control"
+        ],
+        "ids": [
+          "climate_control"
+        ]
+      }
+    },
+    {
+      "id": "IN-15",
+      "name": "старая кнопка журнала объектов (kind=equipment&layout=sheet&journal=&doc=)",
+      "ok": true,
+      "detail": {
+        "problems": [],
+        "selected": [
+          "cmuegn5zu00047g9me003g7ma",
+          "cold_equipment_control"
+        ],
+        "ids": [
+          "cold_equipment_control",
+          "cmuegn5zu00047g9me003g7ma"
+        ]
+      }
+    },
+    {
+      "id": "IN-16",
+      "name": "журнал объектов в ids= (бывший редирект)",
+      "ok": true,
+      "detail": {
+        "problems": [],
+        "selected": [
+          "cmuegn5zu00047g9me003g7ma",
+          "cold_equipment_control"
+        ],
+        "ids": [
+          "cold_equipment_control",
+          "cmuegn5zu00047g9me003g7ma"
+        ]
+      }
+    },
+    {
+      "id": "IN-17",
+      "name": "УФ-лампа — основной + наклейка лампы",
+      "ok": true,
+      "detail": {
+        "problems": [],
+        "selected": [
+          "cmuegn60200067g9mtllbj24w",
+          "uv_lamp_runtime"
+        ],
+        "ids": [
+          "uv_lamp_runtime",
+          "cmuegn60200067g9mtllbj24w"
+        ]
+      }
+    },
+    {
+      "id": "IN-18",
+      "name": "/settings/equipment «Наклейки» — всё оборудование, наклейки",
+      "ok": true,
+      "detail": {
+        "problems": [],
+        "selected": [
+          "cmuegn5zu00047g9me003g7ma",
+          "cmuegn5zz00057g9m0549uhbz",
+          "cmuegn60200067g9mtllbj24w",
+          "cmuegn60400077g9m3q2jtd7k",
+          "cmuegn60800087g9mcpd3apqd",
+          "cmuegn60b00097g9msxqdlhjp",
+          "cmuegn60e000a7g9mksxduwx4",
+          "cmuegn60h000b7g9mg7kaa3sl",
+          "cmuegn60k000c7g9mjkv24bzp",
+          "cmuegn60m000d7g9mc792dwok",
+          "cmuegn60o000e7g9mz1yxci62",
+          "cmuegn60p000f7g9mqqcth5ms",
+          "cmuegn60r000g7g9mow8yah6h",
+          "cmuegn60t000h7g9mg1b45nax",
+          "cmuegn60v000i7g9mw7rlpudi",
+          "cmuegn60x000j7g9mru7uef1z",
+          "cmuegn60z000k7g9mrc32l3f6"
+        ],
+        "ids": [
+          "cmuegn60400077g9m3q2jtd7k",
+          "cmuegn60800087g9mcpd3apqd",
+          "cmuegn60b00097g9msxqdlhjp",
+          "cmuegn60e000a7g9mksxduwx4",
+          "cmuegn60h000b7g9mg7kaa3sl",
+          "cmuegn60k000c7g9mjkv24bzp",
+          "cmuegn60m000d7g9mc792dwok",
+          "cmuegn60o000e7g9mz1yxci62",
+          "cmuegn60p000f7g9mqqcth5ms",
+          "cmuegn60r000g7g9mow8yah6h",
+          "cmuegn60t000h7g9mg1b45nax",
+          "cmuegn60v000i7g9mw7rlpudi",
+          "cmuegn60x000j7g9mru7uef1z",
+          "cmuegn60z000k7g9mrc32l3f6",
+          "cmuegn5zz00057g9m0549uhbz",
+          "cmuegn60200067g9mtllbj24w",
+          "cmuegn5zu00047g9me003g7ma"
+        ]
+      }
+    },
+    {
+      "id": "IN-19",
+      "name": "/settings/equipment «Плакаты» — всё оборудование, A4",
+      "ok": true,
+      "detail": {
+        "problems": [],
+        "selected": [
+          "cmuegn5zu00047g9me003g7ma",
+          "cmuegn5zz00057g9m0549uhbz",
+          "cmuegn60200067g9mtllbj24w",
+          "cmuegn60400077g9m3q2jtd7k",
+          "cmuegn60800087g9mcpd3apqd",
+          "cmuegn60b00097g9msxqdlhjp",
+          "cmuegn60e000a7g9mksxduwx4",
+          "cmuegn60h000b7g9mg7kaa3sl",
+          "cmuegn60k000c7g9mjkv24bzp",
+          "cmuegn60m000d7g9mc792dwok",
+          "cmuegn60o000e7g9mz1yxci62",
+          "cmuegn60p000f7g9mqqcth5ms",
+          "cmuegn60r000g7g9mow8yah6h",
+          "cmuegn60t000h7g9mg1b45nax",
+          "cmuegn60v000i7g9mw7rlpudi",
+          "cmuegn60x000j7g9mru7uef1z",
+          "cmuegn60z000k7g9mrc32l3f6"
+        ],
+        "ids": [
+          "cmuegn60400077g9m3q2jtd7k",
+          "cmuegn60800087g9mcpd3apqd",
+          "cmuegn60b00097g9msxqdlhjp",
+          "cmuegn60e000a7g9mksxduwx4",
+          "cmuegn60h000b7g9mg7kaa3sl",
+          "cmuegn60k000c7g9mjkv24bzp",
+          "cmuegn60m000d7g9mc792dwok",
+          "cmuegn60o000e7g9mz1yxci62",
+          "cmuegn60p000f7g9mqqcth5ms",
+          "cmuegn60r000g7g9mow8yah6h",
+          "cmuegn60t000h7g9mg1b45nax",
+          "cmuegn60v000i7g9mw7rlpudi",
+          "cmuegn60x000j7g9mru7uef1z",
+          "cmuegn60z000k7g9mrc32l3f6",
+          "cmuegn5zz00057g9m0549uhbz",
+          "cmuegn60200067g9mtllbj24w",
+          "cmuegn5zu00047g9me003g7ma"
+        ]
+      }
+    },
+    {
+      "id": "IN-20",
+      "name": "/settings/buildings — помещения",
+      "ok": true,
+      "detail": {
+        "problems": [],
+        "selected": [
+          "cmuegn617000m7g9m5l4wxp2r"
+        ],
+        "ids": [
+          "cmuegn617000m7g9m5l4wxp2r"
+        ]
+      }
+    },
+    {
+      "id": "IN-21",
+      "name": "несколько журналов в ids= — общий экран с этими отметками",
+      "ok": true,
+      "detail": {
+        "problems": [],
+        "selected": [
+          "all",
+          "fryer_oil"
+        ],
+        "ids": [
+          "all",
+          "hygiene",
+          "hygiene@verify",
+          "fryer_oil"
+        ]
+      }
+    },
+    {
+      "id": "IN-22",
+      "name": "старый /settings/equipment/qr-sheet — наклейки оборудования",
+      "ok": true,
+      "detail": {
+        "problems": [],
+        "selected": [
+          "cmuegn5zu00047g9me003g7ma",
+          "cmuegn5zz00057g9m0549uhbz",
+          "cmuegn60200067g9mtllbj24w",
+          "cmuegn60400077g9m3q2jtd7k",
+          "cmuegn60800087g9mcpd3apqd",
+          "cmuegn60b00097g9msxqdlhjp",
+          "cmuegn60e000a7g9mksxduwx4",
+          "cmuegn60h000b7g9mg7kaa3sl",
+          "cmuegn60k000c7g9mjkv24bzp",
+          "cmuegn60m000d7g9mc792dwok",
+          "cmuegn60o000e7g9mz1yxci62",
+          "cmuegn60p000f7g9mqqcth5ms",
+          "cmuegn60r000g7g9mow8yah6h",
+          "cmuegn60t000h7g9mg1b45nax",
+          "cmuegn60v000i7g9mw7rlpudi",
+          "cmuegn60x000j7g9mru7uef1z",
+          "cmuegn60z000k7g9mrc32l3f6"
+        ],
+        "ids": [
+          "cmuegn60400077g9m3q2jtd7k",
+          "cmuegn60800087g9mcpd3apqd",
+          "cmuegn60b00097g9msxqdlhjp",
+          "cmuegn60e000a7g9mksxduwx4",
+          "cmuegn60h000b7g9mg7kaa3sl",
+          "cmuegn60k000c7g9mjkv24bzp",
+          "cmuegn60m000d7g9mc792dwok",
+          "cmuegn60o000e7g9mz1yxci62",
+          "cmuegn60p000f7g9mqqcth5ms",
+          "cmuegn60r000g7g9mow8yah6h",
+          "cmuegn60t000h7g9mg1b45nax",
+          "cmuegn60v000i7g9mw7rlpudi",
+          "cmuegn60x000j7g9mru7uef1z",
+          "cmuegn60z000k7g9mrc32l3f6",
+          "cmuegn5zz00057g9m0549uhbz",
+          "cmuegn60200067g9mtllbj24w",
+          "cmuegn5zu00047g9me003g7ma"
+        ]
+      }
+    },
+    {
+      "id": "IN-23",
+      "name": "document-actions-bar «QR-наклейки объектов» (journal=&doc=)",
+      "ok": true,
+      "detail": {
+        "problems": [],
+        "selected": [
+          "cmuegn5zu00047g9me003g7ma",
+          "cold_equipment_control"
+        ],
+        "ids": [
+          "cold_equipment_control",
+          "cmuegn5zu00047g9me003g7ma"
+        ]
+      }
+    },
+    {
+      "id": "IN-24",
+      "name": "у дополнительного QR бейдж «до ДД.ММ.ГГГГ»",
+      "ok": true,
+      "detail": "Журнал учета использования фритюрных жиров — fryerA\n01.09–30.09.2026\nдо 30.09.2026"
+    },
+    {
+      "id": "IN-25",
+      "name": "токен дополнительного QR несёт документ и срок dateTo",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "documentId": "cmuegn61z000q7g9mcq3jta55",
+        "hub": false,
+        "validUntil": "2026-09-30",
+        "buildingId": null
+      }
+    },
+    {
+      "id": "IN-26",
+      "name": "основной QR без точек — бессрочный, без документа",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "documentId": null,
+        "hub": false,
+        "validUntil": null,
+        "buildingId": null
+      }
+    },
+    {
+      "id": "IN-27",
+      "name": "галка в строке-label включает карточку, формат — radiogroup (не tablist), «Выбрано: N · M листов»",
+      "ok": true,
+      "detail": {
+        "summary": "Выбрано: 2 · 2 листа"
+      }
+    },
+    {
+      "id": "IN-28",
+      "name": "при 0 выбранных «Распечатать» неактивна",
+      "ok": true
+    },
+    {
+      "id": "IN-29",
+      "name": "PageGuide свёрнут, старого абзаца нет, «Домен ссылок» только не на wesetup.ru",
+      "ok": true,
+      "detail": {
+        "guideOpen": false,
+        "originShown": 1,
+        "originOnProd": 0,
+        "oldParagraph": 0
+      }
+    },
+    {
+      "id": "PR-1",
+      "name": "выбор 1 A4 + 3 A5 + 13 наклеек, полоса «Выбрано: 17 · 5 листов»",
+      "ok": true,
+      "detail": {
+        "counts": {
+          "a4": 1,
+          "a5": 3,
+          "sticker": 13
+        },
+        "summary": "Выбрано: 17 · 5 листов"
+      }
+    },
+    {
+      "id": "PR-2",
+      "name": "печатное дерево: корень в body, листы — его прямые блочные дети, ≤ 250 мм, последний без разрыва, без header/footer/nav/aside/table, SVG в мм",
+      "ok": true,
+      "detail": {
+        "rootParentIsBody": true,
+        "rootDisplay": "block",
+        "sheetsAreDirectChildren": true,
+        "sheetFormats": [
+          "a4",
+          "a5",
+          "a5",
+          "sticker",
+          "sticker"
+        ],
+        "heightsMm": [
+          250,
+          250,
+          250,
+          250,
+          250
+        ],
+        "display": [
+          "block",
+          "block",
+          "block",
+          "block",
+          "block"
+        ],
+        "lastBreak": "auto",
+        "firstBreak": "page",
+        "forbidden": 0,
+        "svgMm": true,
+        "codes": 17,
+        "screenHidden": 0
+      }
+    },
+    {
+      "id": "PR-3",
+      "name": "page.pdf(preferCSSPageSize): 1 A4 + 3 A5 + 13 наклеек = 5 страниц",
+      "ok": true,
+      "detail": {
+        "pageCount": 5
+      }
+    },
+    {
+      "id": "PR-4",
+      "name": "каждый напечатанный QR (17) декодируется в свой адрес (≈ 288 dpi)",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "PR-5",
+      "name": "напечатаны ровно выбранные карточки (data-qr-url экрана)",
+      "ok": true,
+      "detail": {
+        "decoded": 17,
+        "selected": 17
+      }
+    },
+    {
+      "id": "PR-6",
+      "name": "самый длинный URL (200 символов, hygiene@verify + документ + &view=all) читается с наклейки 34 мм при 96 dpi",
+      "ok": true,
+      "detail": {
+        "mm": "34",
+        "box": {
+          "x": 51.65625,
+          "y": 10.4375,
+          "width": 128.5,
+          "height": 128.5
+        },
+        "lowRes": "http://localhost:3025/journal-fill/e2e-org-qrp/hygiene?token=journal%3Ae2e-org-qrp%3Ahygiene%3Acmuegn61t000p7g9mcmyolb5h%3A2026-09-30.1790189666728.yPt2DLk1Ej497Txqqwp0kfWvSbBdhMjzkK7307p9nBY&view=all",
+        "longUrl": "http://localhost:3025/journal-fill/e2e-org-qrp/hygiene?token=journal%3Ae2e-org-qrp%3Ahygiene%3Acmuegn61t000p7g9mcmyolb5h%3A2026-09-30.1790189666728.yPt2DLk1Ej497Txqqwp0kfWvSbBdhMjzkK7307p9nBY&view=all"
+      }
+    },
+    {
+      "id": "LOC-1",
+      "name": "в сети точек основной QR привязан к активной точке (b~), точка — в подписи",
+      "ok": true,
+      "detail": {
+        "tokenCheck": {
+          "ok": true,
+          "documentId": null,
+          "hub": false,
+          "validUntil": null,
+          "buildingId": "cmuegn61e000o7g9m8ee7tkp6"
+        },
+        "text": "Журнал учета использования фритюрных жиров\nБессрочный\n\nТочка на Мира\n\nСотрудник сканирует, выбирает себя и заполняет форму — запись ложится в действующий документ.\n\nA4\nA5\nНаклейка\nПроверить ссылку"
+      }
+    },
+    {
+      "id": "LOC-2",
+      "name": "дополнительный QR документа точки — в списке, точка в подписи",
+      "ok": true
+    },
+    {
+      "id": "DLG-1",
+      "name": "диалог QR документа: первым основной QR («Код бессрочный»), вторым QR документа «до ДД.ММ»",
+      "ok": true,
+      "detail": [
+        {
+          "id": "fryer_oil",
+          "text": "Основной QR журнала — работает всегда\nЖурнал учета использования фритюрных жировКафе «QR-страница»Запись в журнал с телефонаСотрудник наводит камеру, выбирает себя и отвечает на вопросы формы — запись",
+          "until": null
+        },
+        {
+          "id": "fryer_oil:cmuegn61z000q7g9mcq3jta55",
+          "text": "QR этого документа\nЖурнал учета использования фритюрных жировКафе «QR-страница»Журнал учета использования фритюрных жиров — fryerAВедёт только в этот документ: сотрудник выбирает себя и отвечает на во",
+          "until": "2026-09-30"
+        }
+      ]
+    },
+    {
+      "id": "VP-1",
+      "name": "360/390/1280 × светлая/тёмная: без горизонтального скролла, цели касания ≥ 44px",
+      "ok": true,
+      "detail": []
+    }
+  ]
+}

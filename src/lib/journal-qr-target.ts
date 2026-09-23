@@ -4,15 +4,12 @@ import type { QrFillKind } from "@/lib/qr-fill-types";
  * Куда ведёт кнопка «QR-точка контроля» журнала — чистый модуль без
  * серверных импортов (его берут клиентские кнопки и страница плакатов).
  *
- * ПОЧЕМУ отдельно: кнопка вела на `/settings/qr-posters?kind=journals&ids=
- * <код>`, а плакаты журналов собирались только для журналов «хаба». У
- * журналов объектов (холодильники, склады, УФ-лампы) плаката журнала нет
- * вовсе — запись идёт по наклейке на самом объекте, — и человек видел
- * «Выбранные объекты не найдены». Теперь адрес строится здесь, один раз:
- *   • журнал объектов → наклейки ЕГО объектов (`kind=equipment|rooms`,
- *     `layout=sheet`, `journal=<код>`, из документа — ещё `doc=`);
- *   • остальные → плакат журнала (`kind=journals&ids=<код>[:документ]`);
- *   • гигиена → оба плаката: сотрудникам и «допуск» ответственному.
+ * Адрес один на все журналы: `?journal=<код>[&doc=<документ>]` — экран
+ * «QR-коды журнала» (2026-09-23). Там основные QR (у гигиены два — сотрудникам
+ * и «допуск»), дополнительные QR документов, а у журналов объектов
+ * (холодильники, склады, УФ-лампы) ещё и наклейки на сами объекты; `doc=`
+ * сужает наклейки до строк документа. Старые адреса (`kind=journals&ids=…`,
+ * `kind=equipment&layout=sheet&journal=…`) разбирает `parseQrPostersRequest`.
  */
 
 /** Второй плакат гигиены — «Допуск сотрудников» для ответственного. */
@@ -30,21 +27,8 @@ export function isJournalObjectQrCode(code: string | null | undefined): boolean 
 }
 
 export function journalQrHref(templateCode: string, options: { documentId?: string | null } = {}): string {
-  const search = new URLSearchParams();
-  if (isJournalObjectQrCode(templateCode)) {
-    search.set("kind", JOURNAL_OBJECT_QR_KINDS[templateCode]);
-    search.set("layout", "sheet");
-    search.set("journal", templateCode);
-    if (options.documentId) search.set("doc", options.documentId);
-  } else {
-    const suffix = options.documentId ? `:${options.documentId}` : "";
-    const ids =
-      templateCode === "hygiene"
-        ? [`hygiene${suffix}`, `hygiene${HYGIENE_VERIFY_SUFFIX}${suffix}`]
-        : [`${templateCode}${suffix}`];
-    search.set("kind", "journals");
-    search.set("ids", ids.join(","));
-  }
+  const search = new URLSearchParams({ journal: templateCode });
+  if (options.documentId) search.set("doc", options.documentId);
   return `/settings/qr-posters?${search.toString()}`;
 }
 

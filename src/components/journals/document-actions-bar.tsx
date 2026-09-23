@@ -309,13 +309,24 @@ export function DocumentActionsBar({
             </DialogHeader>
             <div className="space-y-3 px-6 py-5">
               <p className="text-[13px] leading-[1.55] text-[#3c4053]">
-                Повесьте плакат в цехе: сотрудник сканирует, выбирает себя и
-                отвечает на вопросы формы — запись ложится в этот документ за
-                сегодня. Кто может записывать — «Настройки → Соответствие».
+                Основной QR журнала работает всегда — его и вешайте в цехе. QR
+                этого документа ведёт только в него и перестаёт работать после
+                последнего дня документа. Кто может записывать — «Настройки →
+                Строгость журналов».
               </p>
               <QrFillPreview
                 kind="journal"
+                id={journalCode as string}
+                heading="Основной QR журнала — работает всегда"
+                accent
+                allHref={journalQrHref(journalCode as string, { documentId })}
+                emptyHint="QR появится после сохранения документа."
+              />
+              <QrFillPreview
+                kind="journal"
                 id={`${journalCode}:${documentId}`}
+                heading="QR этого документа"
+                allHref={journalQrHref(journalCode as string, { documentId })}
                 emptyHint="QR появится после сохранения документа."
               />
             </div>

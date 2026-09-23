@@ -200,6 +200,16 @@ h2{font-size:21px;letter-spacing:-.02em;margin:0;font-weight:600}
 .bk-sub{font-size:12.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6f7282;margin:0 0 6px 2px}
 .btn.danger{background:#d2453d;box-shadow:0 10px 30px -12px rgba(210,69,61,.55)}
 .btn+.btn{margin-top:8px}
+.os-list{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:6px}
+.os-i{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px;padding:10px 14px;border:1px solid #ececf4;border-radius:14px;background:#fff}
+.os-i.done{border-color:#d4f5e3;background:#f3fdf7}
+.os-n{min-width:0;font-size:18px;font-weight:600;line-height:1.3;overflow-wrap:anywhere}
+.os-n small{display:block;font-size:14.5px;font-weight:400;color:#6f7282;margin-top:2px}
+.os-s{flex:none;width:32px;height:32px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:#dcfce7;color:#116b2a}
+.os-s.todo{background:#f3f4f8;color:#9b9fb3;font-weight:600}
+.os-foot{font-size:14.5px}
+.os-empty h2{margin-bottom:8px}
+.os-empty .muted{margin-bottom:14px}
 ${QR_PIN_UI_CSS}`;
 
 /** Инлайн-скрипт: только удобства, страница работает и без него. */
@@ -373,6 +383,16 @@ export function renderInvalidLink(orgName = "WeSetup"): string {
     body: `<div class="card center"><p class="muted">Плакат повреждён или не подходит к этой организации. Попросите руководителя распечатать плакат заново.</p></div>`,
     withJs: false,
   });
+}
+
+/**
+ * Дополнительный QR документа после конца периода (2026-09-23). Ни одной
+ * ссылки в журнал: ссылка несла бы тот же просроченный токен.
+ */
+export function renderTokenExpired(params: { validUntil: string }): string {
+  const [year, month, day] = params.validUntil.split("-");
+  return `<div class="card center"><h2>Срок этого QR-кода закончился</h2>
+<p class="muted" style="margin-top:8px">Код был на один документ и действовал по ${esc(`${day}.${month}.${year}`)}. Отсканируйте основной QR-код журнала — он работает всегда — или попросите руководителя распечатать новый.</p></div>`;
 }
 
 export function renderHub(items: Array<{ code: string; name: string; href: string }>): string {

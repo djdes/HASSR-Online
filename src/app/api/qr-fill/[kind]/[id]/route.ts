@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
+import { getActiveBuildingId } from "@/lib/active-building";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { loadQrPoster } from "@/lib/qr-fill-poster";
 import { resolveQrPosterOrigin } from "@/lib/qr-poster-origin";
@@ -43,6 +44,8 @@ export async function GET(
       kind,
       id,
       origin,
+      // Основной QR журнала в сети точек — на активную точку (как на странице QR-кодов).
+      activeBuildingId: kind === "journal" ? await getActiveBuildingId(session) : null,
     });
     if (!poster) {
       return NextResponse.json({ error: "Объект не найден" }, { status: 404 });

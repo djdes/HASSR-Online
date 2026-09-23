@@ -2,9 +2,21 @@ import { z } from "zod";
 
 import { clientIp } from "@/lib/client-ip";
 import { db } from "@/lib/db";
-import { isRowKeyAllowed, listJournalFillDocuments, loadJournalFillForm, loadOrganizationForFill, todayKeyFor, verifyJournalFillToken } from "@/lib/journal-fill";
+import {
+  isRowKeyAllowed,
+  journalFillCodeBlock,
+  journalFillTokenExpired,
+  listJournalFillDocuments,
+  loadJournalFillForm,
+  loadOrganizationForFill,
+  scopeDocumentsToBuilding,
+  todayKeyFor,
+  verifyJournalFillToken,
+  type JournalFillTokenCheck,
+} from "@/lib/journal-fill";
+import { buildingTargets } from "@/lib/building-targets";
 import { journalFillHints } from "@/lib/journal-fill-hints";
-import { ensureQrPeriodDocuments, qrRolloverMessage, resolveTokenDocumentIds } from "@/lib/journal-qr-rollover";
+import { documentInTokenLine, ensureQrPeriodDocuments, qrRolloverMessage, resolveTokenDocumentIds } from "@/lib/journal-qr-rollover";
 import { isNameSuggestionScope } from "@/lib/name-suggestions";
 import { rememberNames } from "@/lib/name-suggestions-db";
 import { isBrakerageJournalCode } from "@/lib/brakerage-row-merge";
@@ -59,6 +71,47 @@ export type JournalFillSubmitResult =
   | { ok: false; status: number; error: string; badKeys?: string[] }
   | { ok: true; mode: "appended" | "updated"; documentTitle: string; employeeName: string; employeeId: string; count: number };
 
+/** Текст 410 для дополнительного QR после конца периода документа. */
+export const JOURNAL_FILL_TOKEN_EXPIRED_ERROR =
+  "Срок этого QR-кода закончился — он был на один документ. Отсканируйте основной QR-код журнала.";
+
+/**
+ * Документ из запроса допустим для этого токена (2026-09-23). Раньше
+ * submit не сверял `documentId` с документом токена, и QR одного документа
+ * писал в любой документ журнала:
+ *   • QR со сроком — только свой документ;
+ *   • старый QR документа — документ той же линии (та же точка или общий);
+ *   • основной QR точки — документ этой точки или общий, и точка должна
+ *     принадлежать организации;
+ *   • основной QR журнала и хаб — как раньше (любой документ журнала).
+ * Организация и журнал документа сверяются запросом.
+ */
+export async function journalFillTokenAllowsDocument(params: {
+  check: Extract<JournalFillTokenCheck, { ok: true }>;
+  orgId: string;
+  code: string;
+  documentId: string;
+}): Promise<boolean> {
+  const { check, orgId, code, documentId } = params;
+  if (check.validUntil !== null) return documentId === check.documentId;
+  if (!check.documentId && !check.buildingId) return true;
+  const candidate = await db.journalDocument.findFirst({
+    where: { id: documentId, organizationId: orgId, template: { code } },
+    select: { id: true, buildingId: true },
+  });
+  if (!candidate) return false;
+  if (check.documentId) {
+    const tokenDocument = await db.journalDocument.findFirst({
+      where: { id: check.documentId, organizationId: orgId, template: { code } },
+      select: { id: true, buildingId: true },
+    });
+    return tokenDocument !== null && documentInTokenLine(tokenDocument, candidate);
+  }
+  const building = await db.building.findFirst({ where: { id: check.buildingId!, organizationId: orgId }, select: { id: true } });
+  if (!building) return false;
+  return scopeDocumentsToBuilding([candidate], check.buildingId, await buildingTargets(orgId)).length === 1;
+}
+
 export async function submitJournalFill(input: JournalFillSubmitInput): Promise<JournalFillSubmitResult> {
   const { request, orgId, code } = input;
   if (!qrFillRateLimiter.consume(qrFillRateKey(clientIp(request), "journal", input.documentId))) {
@@ -68,11 +121,24 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
   if (!check.ok) return { ok: false, status: 401, error: "QR-код недействителен" };
   const org = await loadOrganizationForFill(orgId);
   if (!org) return { ok: false, status: 404, error: "Организация не найдена" };
+  // Журналы объектов и отключённые — до поиска документа (QR журнала и хаб
+  // принимаются для любого кода; HTML-маршрут отсекает их раньше, JSON-API — здесь).
+  const blocked = journalFillCodeBlock(code, org.disabledJournalCodes);
+  if (blocked) return { ok: false, ...blocked };
   const mode = normalizeQrFillMode(org.qrFillMode);
   const todayKey = todayKeyFor(org.timezone);
+  // Срок — до поиска документа и до `ensureQrPeriodDocuments`.
+  if (journalFillTokenExpired(check, todayKey)) return { ok: false, status: 410, error: JOURNAL_FILL_TOKEN_EXPIRED_ERROR };
+  if (!(await journalFillTokenAllowsDocument({ check, orgId, code, documentId: input.documentId }))) {
+    return { ok: false, status: 403, error: "Этот QR-код открывает другой документ — отсканируйте QR-код заново." };
+  }
 
   let docs = await listJournalFillDocuments(orgId, code, todayKey);
   let document = docs.find((doc) => doc.id === input.documentId);
+  if (!document && check.validUntil !== null) {
+    // QR со сроком не переходит в новый период: документ закрыт или удалён.
+    return { ok: false, status: 409, error: "Документ этого QR-кода больше не активен — отсканируйте основной QR-код журнала." };
+  }
   if (!document) {
     // Форму открыли 30-го, «Сохранить» нажали 1-го: пишем в документ нового
     // периода той же линии (создаётся по образцу прошлого), а не 409.

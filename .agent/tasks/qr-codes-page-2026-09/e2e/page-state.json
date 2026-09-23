@@ -1,0 +1,37 @@
+{
+  "password": "qrp-e2e-2026",
+  "org": "e2e-org-qrp",
+  "orgLoc": "e2e-org-qrp-loc",
+  "today": "2026-09-23",
+  "periods": {
+    "prevMonthFrom": "2026-08-01",
+    "prevMonthTo": "2026-08-31",
+    "curMonthFrom": "2026-09-01",
+    "curMonthTo": "2026-09-30"
+  },
+  "users": {
+    "manager": "qrp-manager@e2e.local",
+    "managerLoc": "qrp-loc-manager@e2e.local"
+  },
+  "equipment": {
+    "fridge1": "cmuegn5zu00047g9me003g7ma",
+    "fridge2": "cmuegn5zz00057g9m0549uhbz",
+    "lamp": "cmuegn60200067g9mtllbj24w"
+  },
+  "rooms": {
+    "room": "cmuegn617000m7g9m5l4wxp2r"
+  },
+  "buildings": {
+    "b1": "cmuegn61b000n7g9mdrju3fpp",
+    "b2": "cmuegn61e000o7g9m8ee7tkp6"
+  },
+  "docs": {
+    "hygiene": "cmuegn61t000p7g9mcmyolb5h",
+    "fryerA": "cmuegn61z000q7g9mcq3jta55",
+    "fryerB": "cmuegn624000r7g9mruwz1uw5",
+    "fryerOld": "cmuegn627000s7g9mvmkgkg3d",
+    "cold": "cmuegn62b000t7g9m59fsoiso",
+    "climate": "cmuegn62e000u7g9mws7xf8y3",
+    "locFryerB2": "cmuegn62j000v7g9moxfdi7bx"
+  }
+}

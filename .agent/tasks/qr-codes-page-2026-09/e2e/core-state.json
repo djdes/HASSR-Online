@@ -1,0 +1,36 @@
+{
+  "org": "e2e-org-qrc",
+  "orgLoc": "e2e-org-qrc-loc",
+  "today": "2026-09-23",
+  "yesterday": "2026-09-22",
+  "periods": {
+    "prevMonthFrom": "2026-08-01",
+    "prevMonthTo": "2026-08-31",
+    "curMonthFrom": "2026-09-01",
+    "curMonthTo": "2026-09-30"
+  },
+  "users": {
+    "resp": "cmuecg79s0001lg9ma5nn0r2o",
+    "cook": "cmuecg7aa0003lg9mzln0j1m6",
+    "respLoc": "cmuecg7am0005lg9mh58xkbau"
+  },
+  "buildings": {
+    "b1": "cmuegsgon0007e09mqecz6kzd",
+    "b2": "cmuegsgor0008e09mw0eba5xs",
+    "foreign": "cmuegsgov0009e09mbo43svut"
+  },
+  "equipment": {
+    "fridge": "cmuegsgoa0005e09mld1lyrzd",
+    "lamp": "cmuegsgoi0006e09miew8mhwd"
+  },
+  "docs": {
+    "metalA": "cmuegsgp3000ae09mk0cqugss",
+    "metalB": "cmuegsgpa000be09mgvut577e",
+    "writeoffPrev": "cmuegsgpf000ce09mb4s8x3ni",
+    "expiredDoc": "cmuegsgpk000de09mhnj8u7lq",
+    "cold": "cmuegsgpq000ee09mc31pdvnd",
+    "uv": "cmuegsgpv000fe09mftkjl6cz",
+    "locMetalB1": "cmuegsgq2000ge09msdul7he7",
+    "locMetalB2": "cmuegsgq6000he09m3r3ue15t"
+  }
+}

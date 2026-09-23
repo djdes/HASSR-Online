@@ -15,48 +15,29 @@ function parse(href: string) {
 }
 
 describe("journalQrHref — куда ведёт кнопка QR журнала", () => {
-  it("холодильники — наклейки на оборудование этого журнала", () => {
-    assert.deepEqual(parse(journalQrHref("cold_equipment_control")), {
-      path: "/settings/qr-posters",
-      params: { kind: "equipment", layout: "sheet", journal: "cold_equipment_control" },
-    });
+  it("любой журнал — экран его QR-кодов (`journal=`)", () => {
+    assert.deepEqual(parse(journalQrHref("fryer_oil")), { path: "/settings/qr-posters", params: { journal: "fryer_oil" } });
+    assert.deepEqual(parse(journalQrHref("cold_equipment_control")).params, { journal: "cold_equipment_control" });
+    assert.deepEqual(parse(journalQrHref("climate_control")).params, { journal: "climate_control" });
+    assert.deepEqual(parse(journalQrHref("uv_lamp_runtime")).params, { journal: "uv_lamp_runtime" });
   });
 
-  it("климат — наклейки на помещения, УФ — на лампы", () => {
-    assert.equal(parse(journalQrHref("climate_control")).params.kind, "rooms");
-    assert.equal(parse(journalQrHref("climate_control")).params.journal, "climate_control");
-    assert.equal(parse(journalQrHref("uv_lamp_runtime")).params.kind, "equipment");
-    assert.equal(parse(journalQrHref("uv_lamp_runtime")).params.layout, "sheet");
+  it("гигиена — один адрес, оба основных QR страница добавит сама", () => {
+    assert.deepEqual(parse(journalQrHref("hygiene")).params, { journal: "hygiene" });
   });
 
-  it("журнал объектов из документа — наклейки объектов этого документа", () => {
+  it("из документа — ещё `doc=` (у объектов сужает наклейки)", () => {
     assert.deepEqual(parse(journalQrHref("cold_equipment_control", { documentId: "doc-1" })).params, {
-      kind: "equipment",
-      layout: "sheet",
       journal: "cold_equipment_control",
       doc: "doc-1",
     });
-  });
-
-  it("обычный журнал — его плакат (множественное kind)", () => {
-    assert.deepEqual(parse(journalQrHref("fryer_oil")).params, { kind: "journals", ids: "fryer_oil" });
-  });
-
-  it("из документа — плакат именно этого документа (id `код:документ`)", () => {
-    assert.deepEqual(parse(journalQrHref("fryer_oil", { documentId: "doc-9" })).params, {
-      kind: "journals",
-      ids: "fryer_oil:doc-9",
-    });
-  });
-
-  it("гигиена — оба плаката: сотрудникам и «допуск» ответственному", () => {
-    assert.equal(parse(journalQrHref("hygiene")).params.ids, "hygiene,hygiene@verify");
-    assert.equal(parse(journalQrHref("hygiene", { documentId: "d" })).params.ids, "hygiene:d,hygiene@verify:d");
+    assert.deepEqual(parse(journalQrHref("fryer_oil", { documentId: "doc-9" })).params, { journal: "fryer_oil", doc: "doc-9" });
+    assert.deepEqual(parse(journalQrHref("fryer_oil", { documentId: null })).params, { journal: "fryer_oil" });
   });
 
   it("спецсимволы кода и документа кодируются", () => {
     const href = journalQrHref("a b&c", { documentId: "x/y" });
-    assert.equal(parse(href).params.ids, "a b&c:x/y");
+    assert.deepEqual(parse(href).params, { journal: "a b&c", doc: "x/y" });
     assert.ok(!href.includes(" "));
   });
 });
