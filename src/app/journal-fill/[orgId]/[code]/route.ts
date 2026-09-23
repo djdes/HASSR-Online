@@ -62,7 +62,17 @@ import {
   normalizeFinishedProductDocumentConfig,
 } from "@/lib/finished-product-document";
 import { normalizePerishableRejectionConfig } from "@/lib/perishable-rejection-document";
-import { QR_PASS_COOKIE, QR_PASS_MAX_AGE_SEC, mintQrPass, newQrFlowId, verifyQrPass } from "@/lib/qr-pin-pass";
+import {
+  QR_PASS_COOKIE,
+  QR_PASS_MAX_AGE_SEC,
+  mintQrPass,
+  newQrFlowId,
+  qrPassCookieName,
+  qrPassSetCookie,
+  qrPinFingerprint,
+  verifyQrPass,
+} from "@/lib/qr-pin-pass";
+import { isObjectPassValid } from "@/lib/qr-object-pass";
 import { decidePinGate } from "@/lib/qr-pin-gate";
 import { HEALTH_QR_CODES } from "@/lib/health-qr";
 import { isManagementRole } from "@/lib/user-roles";
@@ -410,7 +420,16 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
 
   // Визит после PIN: `f` в адресе + пропуск в cookie. Новый скан — без `f`.
   const flow = q.get("f") ?? "";
-  const passValid = Boolean(employee && flow && verifyQrPass(cookies[QR_PASS_COOKIE], { employeeId: employee.id, orgId, flow }));
+  // Пропуск организации (30 минут, после PIN с «Запомнить выбор»): F5, другой
+  // плакат или наклейка той же организации — без PIN, если выбран тот же
+  // сотрудник. Проверяет отпечаток PIN и блокировку (`isObjectPassValid`).
+  const orgPassValid = Boolean(
+    employee &&
+      mode !== "auth" &&
+      (await isObjectPassValid({ organizationId: orgId, employeeId: employee.id, pass: cookies[qrPassCookieName(orgId)] }))
+  );
+  const passValid =
+    orgPassValid || Boolean(employee && flow && verifyQrPass(cookies[QR_PASS_COOKIE], { employeeId: employee.id, orgId, flow }));
   const keep = {
     employee: employee?.id ?? null,
     doc: document?.id ?? null,
@@ -594,6 +613,12 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
             "Cache-Control": "no-store",
           });
           headers.append("Set-Cookie", cookie(QR_PASS_COOKIE, mintQrPass({ employeeId: employee.id, orgId, flow: nextFlow }), cookiePath, QR_PASS_MAX_AGE_SEC, true, secure));
+          // «Запомнить выбор» включён — PIN помнится 30 минут и на других плакатах и наклейках.
+          if (mode !== "auth" && remembered?.employeeId === employee.id) {
+            const pinUser = await db.user.findUnique({ where: { id: employee.id }, select: { qrPinHash: true } });
+            const pinFp = qrPinFingerprint(pinUser?.qrPinHash);
+            if (pinFp) headers.append("Set-Cookie", qrPassSetCookie(orgId, mintQrPass({ employeeId: employee.id, orgId, flow: "any", pinFp }), { secure }));
+          }
           for (const item of setCookies) headers.append("Set-Cookie", item);
           return new NextResponse(null, { status: 303, headers });
         }

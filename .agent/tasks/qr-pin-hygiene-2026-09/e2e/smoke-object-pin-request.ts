@@ -172,10 +172,10 @@ async function main() {
     await form.waitFor({ timeout: 10_000 });
     const pins = form.locator(".qp-pin");
     check("форма: «Придумайте PIN» + «Повторите PIN», цифровая клавиатура", (await pins.count()) === 2 && (await pins.first().getAttribute("inputmode")) === "numeric" && /Придумайте PIN/.test((await form.textContent()) ?? ""));
-    await pins.nth(0).fill("1111");
-    await pins.nth(1).fill("1111");
-    await form.getByRole("button", { name: "Отправить запрос" }).click();
-    check("простой PIN — ошибка до отправки", /простой/.test((await form.locator(".qp-err").textContent().catch(() => "")) ?? ""));
+    // «Простые» PIN разрешены с 69035650 (любые 4–6 цифр); короткий не отправить — кнопка неактивна.
+    await pins.nth(0).fill("123");
+    await pins.nth(1).fill("123");
+    check("короткий PIN — «Отправить запрос» неактивна", await form.getByRole("button", { name: "Отправить запрос" }).isDisabled());
     await pins.nth(0).fill("5937");
     await pins.nth(1).fill("5938");
     await form.getByRole("button", { name: "Отправить запрос" }).click();

@@ -82,7 +82,13 @@ async function main() {
     const hub = await hubCtx.newPage();
     await hub.goto(`${BASE}/journal-fill/${ORG}/all?token=${encodeURIComponent(hubToken)}`, { waitUntil: "load", timeout: 240_000 });
     const hubText = await hub.locator("main").innerText();
-    check("в «Все журналы» — один пункт «Гигиена и здоровье»", hubText.includes("Гигиена и здоровье") && !hubText.includes("Журнал здоровья"), hubText.slice(0, 400));
+    // С 6c0c03b3 пункт называется «Гигиенический журнал (сотрудники) — отметка перед сменой»;
+    // журнал здоровья отдельным пунктом по-прежнему не показывается.
+    check(
+      "в «Все журналы» — один пункт гигиены «…— отметка перед сменой», без «Журнал здоровья»",
+      hubText.includes("Гигиенический журнал (сотрудники)") && hubText.includes("отметка перед сменой") && !hubText.includes("Журнал здоровья"),
+      hubText.slice(0, 400)
+    );
 
     // ---- повар: все пять
     const cookCtx = await browser.newContext(mobile);

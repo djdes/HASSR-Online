@@ -141,6 +141,8 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   "Заведующему производством: права и личный QR": KeyRound,
   "График генеральных уборок и БЖГП": ClipboardCheck,
   "QR-точка контроля": QrCode,
+  "QR-коды журнала": QrCode,
+  "Проверка Роспотребнадзора": ShieldCheck,
   "График генеральных уборок": CalendarCheck,
   "Переход между журналами": Search,
   "Проверка в конце смены": BellRing,
