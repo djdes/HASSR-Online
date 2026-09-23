@@ -1,0 +1,310 @@
+[
+  {
+    "id": "AC1-1",
+    "name": "QR создан в кабинете, есть превью SVG и адрес /inspector/<токен>",
+    "ok": true,
+    "detail": {
+      "tokenId": "cmueeehm500kwow9mo44dw10g",
+      "qrUrlRaw": "http://localhost:3025/inspector/OnYPuwmUHtW7xCBfcgF25hflxqKxcv_3KxW0X6Pz2Js",
+      "svgOk": true
+    }
+  },
+  {
+    "id": "AC1-2",
+    "name": "Строка токена: открытый период 2099-12-31, окно 12 месяцев, срок 7 дней",
+    "ok": true,
+    "detail": {
+      "id": "cmueeehm500kwow9mo44dw10g",
+      "organizationId": "e2e-org-insp",
+      "tokenHash": "9f7b409b80e994152c3b3cc63179f5c314301c3ff17de39a1d2832e07fb1a89f",
+      "label": "Плановая проверка РПН",
+      "periodFrom": "2025-09-23T00:00:00.000Z",
+      "periodTo": "2099-12-31T00:00:00.000Z",
+      "expiresAt": "2026-09-30T17:49:57.286Z",
+      "lastAccessedAt": null,
+      "accessCount": 0,
+      "revokedAt": null,
+      "createdAt": "2026-09-23T17:49:57.293Z",
+      "createdById": "cmuedmntx0002gg9m0zmwhi13"
+    }
+  },
+  {
+    "id": "AC1-3",
+    "name": "Лист A4 печатается повторно с тем же QR (1 страница, кириллица в PDF)",
+    "ok": true,
+    "detail": {
+      "sheetUrl1": "http://localhost:3025/inspector/OnYPuwmUHtW7xCBfcgF25hflxqKxcv_3KxW0X6Pz2Js",
+      "sheetUrl2": "http://localhost:3025/inspector/OnYPuwmUHtW7xCBfcgF25hflxqKxcv_3KxW0X6Pz2Js",
+      "sheetPages": 1,
+      "sheetText": "Для проверяющих органов   Роспотребнадзор, СЭС  Журналы производственного контроля  ведутся в электронном виде  ООО «Проверка»  ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ «ПРОВЕРКА»  ИНН 7701234567, 125"
+    }
+  },
+  {
+    "id": "AC2-1",
+    "name": "Скан открывает страницу без входа и PIN, реквизиты на месте",
+    "ok": true,
+    "detail": {
+      "status": 200,
+      "url": "http://localhost:3025/inspector/OnYPuwmUHtW7xCBfcgF25hflxqKxcv_3KxW0X6Pz2Js",
+      "title": "ООО «Проверка»",
+      "req": "ИНН7701234567Адрес125009, г Москва, ул Тверская, д 7Генеральный директорСоколова Марина Игоревна"
+    }
+  },
+  {
+    "id": "AC2-2",
+    "name": "Отключённого журнала (fryer_oil) нет в описи, включённые есть",
+    "ok": true,
+    "detail": [
+      "hygiene",
+      "health_check",
+      "climate_control",
+      "cold_equipment_control",
+      "cleaning_ventilation_checklist",
+      "cleaning",
+      "general_cleaning",
+      "uv_lamp_runtime",
+      "finished_product",
+      "perishable_rejection",
+      "incoming_control",
+      "med_books",
+      "training_plan",
+      "staff_training",
+      "disinfectant_usage",
+      "sanitary_day_control",
+      "equipment_maintenance",
+      "equipment_calibration",
+      "incoming_raw_materials_control",
+      "ppe_issuance",
+      "accident_journal",
+      "complaint_register",
+      "product_writeoff",
+      "metal_impurity",
+      "equipment_cleaning",
+      "intensive_cooling",
+      "glass_items_list",
+      "glass_control",
+      "pest_control",
+      "breakdown_history",
+      "audit_plan",
+      "audit_protocol",
+      "audit_report",
+      "traceability_test"
+    ]
+  },
+  {
+    "id": "AC2-3",
+    "name": "Опись сгруппирована: СанПиН / ХАССП / прочие",
+    "ok": true,
+    "detail": [
+      "sanpin",
+      "haccp"
+    ]
+  },
+  {
+    "id": "AC2-4",
+    "name": "Счётчики за период (по умолчанию — месяц)",
+    "ok": true,
+    "detail": "1.Гигиенический журнал2 док., 60 зап."
+  },
+  {
+    "id": "AC2-5",
+    "name": "Пресет «Сегодня» меняет счётчики (2 записи гигиены за день)",
+    "ok": true,
+    "detail": "1.Гигиенический журнал1 док., 2 зап."
+  },
+  {
+    "id": "AC2-6",
+    "name": "Свои даты зажимаются окном (12 месяцев … сегодня)",
+    "ok": true,
+    "detail": {
+      "fromVal": "2025-09-23",
+      "toVal": "2026-09-23"
+    }
+  },
+  {
+    "id": "AC5-1",
+    "name": "«Кто смотрит» сохраняется",
+    "ok": true
+  },
+  {
+    "id": "AC3-1",
+    "name": "Журнал открывается листами печатной формы (PNG загружены)",
+    "ok": true,
+    "detail": {
+      "docIds": [
+        "cmueedqdk001v5s9m0g8arfhe",
+        "cmueedq2n00045s9mbkty7u9p"
+      ],
+      "bad": [],
+      "total": 5
+    }
+  },
+  {
+    "id": "AC4-1",
+    "name": "После листов — электронная отметка с контрольным кодом, без печати организации",
+    "ok": true,
+    "detail": {
+      "codesOnPage": [
+        "15A5-311C-BAF9",
+        "0DDC-514E-6C2F"
+      ]
+    }
+  },
+  {
+    "id": "AC3-2",
+    "name": "PDF документа скачивается (та же форма, кириллица)",
+    "ok": true,
+    "detail": {
+      "status": 200,
+      "text": "ООО «Проверка» · ИНН 7701234567 · 125009, г Москва, ул Тверская, д 7 СИСТЕМА ХАССП ГИГИЕНИЧЕСКИЙ ЖУРНАЛ (СОТРУДНИКИ)  Начат   01-09-2026 Окончен   ____________ ",
+      "body": ""
+    }
+  },
+  {
+    "id": "AC3-3",
+    "name": "Чужой документ, вне окна, отключённый журнал, несуществующий лист и токен — 404",
+    "ok": true,
+    "detail": {
+      "foreignPdf": 404,
+      "foreignPng": 404,
+      "outPdf": 404,
+      "outPng": 404,
+      "disabledPdf": 404,
+      "disabledPng": 404,
+      "disabledPage": 404,
+      "badPage": 404,
+      "badToken": 404
+    }
+  },
+  {
+    "id": "AC6-1",
+    "name": "Сводный PDF с читаемой кириллицей",
+    "ok": true,
+    "detail": "СВОДКА ЖУРНАЛОВ ПРОИЗВОДСТВЕННОГО КОНТРОЛЯ  ООО «Проверка»  ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ «ПРОВЕРКА» ИНН 7701234567 Адрес: 125009, г Москва, ул Тверская, д 7 генеральный директор: Соколова Марина Игоревна Период: 26.06.2026 - 23.09.2026   Сформировано: 23.09.2026, 20:51:22  Журнал   Докум"
+  },
+  {
+    "id": "AC6-2",
+    "name": "Сертификат с кириллицей и не плодит токены",
+    "ok": true,
+    "detail": {
+      "before": 1,
+      "afterFirst": 2,
+      "afterSecond": 2,
+      "certText": "WeSetup - электронные журналы СанПиН и ХАССП  СЕРТИФИКАТ  соответствия Кафе «Проверка»  Настоящим подтверждается, что организация на протяжении периода с 2026-08-01 по 2026-09-23 вела электронные журн"
+    }
+  },
+  {
+    "id": "AC5-2",
+    "name": "Каждый просмотр пишется в журнал действий (страница, журнал, документ, PDF, представился)",
+    "ok": true,
+    "detail": {
+      "kinds": [
+        null,
+        "summary_page",
+        "introduce",
+        "journal_page",
+        "document",
+        "document_pdf",
+        "summary_pdf"
+      ],
+      "count": 17
+    }
+  },
+  {
+    "id": "AC5-3",
+    "name": "Счётчик просмотров растёт, визит записан",
+    "ok": true,
+    "detail": {
+      "tokenRow": {
+        "accessCount": 9,
+        "lastAccessedAt": "2026-09-23T17:51:21.809Z"
+      },
+      "visits": 1
+    }
+  },
+  {
+    "id": "AC5-4",
+    "name": "Визиты видны в кабинете (время, что открывали, кто)",
+    "ok": true,
+    "detail": [
+      "23 сент. 2026 г., 20:51Скачал сводный PDF за 26.06.2026 - 23.09.2026 — Иванова А. П., специалист-экспертПлановая проверка РПН, IP ::1",
+      "23 сент. 2026 г., 20:51Скачал PDF документа: Гигиенический журнал — Иванова А. П., специалист-экспертПлановая проверка РПН, IP ::1",
+      "23 сент. 2026 г., 20:51Просмотрел документ: Журнал бракеража готовой пищевой продукцииПлановая проверка РПН, IP ::1",
+      "23 сент. 2026 г., 20:51Открыл журнал: Журнал бракеража готовой пищевой продукцииПлановая проверка РПН, IP ::1"
+    ]
+  },
+  {
+    "id": "AC5-5",
+    "name": "Лимит запросов срабатывает (429)",
+    "ok": true,
+    "detail": [
+      404,
+      404,
+      404,
+      404,
+      404,
+      404,
+      404,
+      404,
+      404,
+      404,
+      404,
+      404,
+      404,
+      404,
+      404,
+      429,
+      429,
+      429,
+      429,
+      429,
+      429,
+      429,
+      429,
+      429,
+      429,
+      429
+    ]
+  },
+  {
+    "id": "AC7-1",
+    "name": "390 и 1280 без горизонтального скролла",
+    "ok": true,
+    "detail": {
+      "scrollMobLanding": {
+        "ok": true,
+        "sw": 390,
+        "cw": 390
+      },
+      "scrollDeskLanding": {
+        "ok": true,
+        "sw": 1280,
+        "cw": 1280
+      },
+      "scrollMobJournal": {
+        "ok": true,
+        "sw": 390,
+        "cw": 390
+      },
+      "scrollDeskJournal": {
+        "ok": true,
+        "sw": 1280,
+        "cw": 1280
+      },
+      "scrollMobCabinet": {
+        "ok": true,
+        "sw": 390,
+        "cw": 390
+      }
+    }
+  },
+  {
+    "id": "AC1-4",
+    "name": "После «Отозвать» — экран «Доступ отозван», листы 410",
+    "ok": true,
+    "detail": {
+      "revokedText": "Доступ отозван",
+      "revokedApi": 410
+    }
+  }
+]

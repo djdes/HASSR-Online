@@ -5,11 +5,8 @@ import QRCode from "qrcode";
 import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
-import {
-  buildInspectorUrl,
-  generateInspectorToken,
-  hashInspectorToken,
-} from "@/lib/inspector-tokens";
+import { findOrCreateOrgInspectorQr, inspectorQrUrl } from "@/lib/inspector-qr-service";
+import { registerUnicodeFont } from "@/lib/closing-documents/pdf-font";
 import { getTemplatesFilledToday } from "@/lib/today-compliance";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
 
@@ -26,8 +23,9 @@ export const dynamic = "force-dynamic";
  * scan and verify «yes, this place really keeps journals».
  *
  * Side-effects:
- *   - creates a new `InspectorToken` with a 90-day TTL, label
- *     "Сертификат соответствия / <period>", scoped to the period.
+ *   - QR ведёт на действующий «QR для проверяющих» организации; если его
+ *     нет — выпускается ОДИН (до отзыва). Раньше каждое скачивание
+ *     создавало новый 90-дневный токен.
  *
  * Returns: application/pdf attachment.
  *
@@ -137,24 +135,10 @@ export async function GET(request: Request) {
     (d) => d.total > 0 && d.filled === d.total
   ).length;
 
-  // Mint a 90-day inspector token scoped to this period — QR points there.
-  const rawToken = generateInspectorToken();
-  const tokenHash = hashInspectorToken(rawToken);
-  const expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
-  const periodToInclusive = new Date(periodTo);
-  periodToInclusive.setUTCHours(23, 59, 59, 999);
-  await db.inspectorToken.create({
-    data: {
-      organizationId: orgId,
-      tokenHash,
-      label: `Сертификат соответствия · ${parsed.from} — ${parsed.to}`,
-      periodFrom,
-      periodTo: periodToInclusive,
-      expiresAt,
-      createdById: session.user.id,
-    },
-  });
-  const verifyUrl = buildInspectorUrl(rawToken);
+  // QR — постоянный доступ проверяющих организации (переиспользуется).
+  const qrToken = await findOrCreateOrgInspectorQr(orgId, session.user.id);
+  const expiresAt = qrToken.expiresAt;
+  const verifyUrl = inspectorQrUrl(qrToken.id);
 
   // Generate QR data URL
   const qrDataUrl = await QRCode.toDataURL(verifyUrl, {
@@ -167,6 +151,8 @@ export async function GET(request: Request) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
+  // Кириллица: штатная helvetica jsPDF её не знает (кракозябры).
+  const font = registerUnicodeFont(doc);
 
   // Frame
   doc.setDrawColor(85, 102, 246);
@@ -179,29 +165,29 @@ export async function GET(request: Request) {
   // Header
   doc.setFontSize(11);
   doc.setTextColor(120);
-  doc.setFont("helvetica", "normal");
-  doc.text("WeSetup · электронные журналы СанПиН и ХАССП", pageW / 2, 26, {
+  doc.setFont(font, "normal");
+  doc.text("WeSetup - электронные журналы СанПиН и ХАССП", pageW / 2, 26, {
     align: "center",
   });
 
   doc.setFontSize(28);
   doc.setTextColor(11, 16, 36);
-  doc.setFont("helvetica", "bold");
+  doc.setFont(font, "normal");
   doc.text("СЕРТИФИКАТ", pageW / 2, 50, { align: "center" });
   doc.setFontSize(20);
-  doc.setFont("helvetica", "normal");
+  doc.setFont(font, "normal");
   doc.text("соответствия", pageW / 2, 60, { align: "center" });
 
   // Org name
   doc.setFontSize(20);
-  doc.setFont("helvetica", "bold");
+  doc.setFont(font, "normal");
   doc.setTextColor(56, 72, 199);
   doc.text(org.name, pageW / 2, 80, { align: "center" });
 
   // Body text
   doc.setFontSize(13);
   doc.setTextColor(60, 64, 83);
-  doc.setFont("helvetica", "normal");
+  doc.setFont(font, "normal");
   const bodyText = [
     "Настоящим подтверждается, что организация на протяжении периода",
     `с ${parsed.from} по ${parsed.to} вела электронные журналы`,
@@ -222,12 +208,12 @@ export async function GET(request: Request) {
   doc.text("Уровень соответствия", pageW / 2, 140, { align: "center" });
   doc.setFontSize(36);
   doc.setTextColor(85, 102, 246);
-  doc.setFont("helvetica", "bold");
+  doc.setFont(font, "normal");
   doc.text(`${compliancePct}%`, pageW / 2, 154, { align: "center" });
 
   doc.setFontSize(10);
   doc.setTextColor(120);
-  doc.setFont("helvetica", "normal");
+  doc.setFont(font, "normal");
   doc.text(
     `Дней с полной отчётностью: ${cleanDays} из ${totalDays}`,
     pageW / 2,
@@ -259,7 +245,7 @@ export async function GET(request: Request) {
     258,
     { align: "center" }
   );
-  doc.setFont("helvetica", "bold");
+  doc.setFont(font, "normal");
   doc.text(
     expiresAt.toLocaleDateString("ru-RU", {
       day: "2-digit",
@@ -272,7 +258,7 @@ export async function GET(request: Request) {
   );
 
   // Footer
-  doc.setFont("helvetica", "normal");
+  doc.setFont(font, "normal");
   doc.setFontSize(8);
   doc.setTextColor(150);
   doc.text(

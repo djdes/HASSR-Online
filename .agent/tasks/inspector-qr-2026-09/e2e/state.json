@@ -1,0 +1,33 @@
+{
+  "password": "E2eTest2026!",
+  "org": "e2e-org-insp",
+  "today": "2026-09-23",
+  "periods": {
+    "prevMonthFrom": "2026-08-01",
+    "prevMonthTo": "2026-08-31",
+    "curMonthFrom": "2026-09-01",
+    "curMonthTo": "2026-09-30",
+    "oldFrom": "2025-07-01",
+    "oldTo": "2025-07-31"
+  },
+  "users": {
+    "manager": {
+      "id": "cmuedmntx0002gg9m0zmwhi13",
+      "email": "insp-manager@e2e.local"
+    },
+    "cook": {
+      "id": "cmuedmnu80003gg9mn2appkwa",
+      "email": "insp-cook@e2e.local"
+    }
+  },
+  "docs": {
+    "hygienePrev": "cmueedq2n00045s9mbkty7u9p",
+    "hygieneCur": "cmueedqdk001v5s9m0g8arfhe",
+    "coldPrev": "cmueedqer00365s9mvfwk5yel",
+    "coldCur": "cmueedqfn00425s9mem7v8nq9",
+    "brakerage": "cmueedqgf004q5s9mkdevoeua",
+    "disabled": "cmueedqgm004r5s9m1nwa45pz",
+    "outOfWindow": "cmueedqgs004s5s9m4cqjl7q8"
+  },
+  "foreignDoc": "cmu7fcekl000r9o9my6ou02us"
+}

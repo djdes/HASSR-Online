@@ -9,6 +9,9 @@ import {
   hashInspectorToken,
   inspectorTokenExpiresAt,
 } from "@/lib/inspector-tokens";
+import { INSPECTOR_QR_TTL_DAYS, type InspectorQrTtl } from "@/lib/inspector-qr";
+import { createInspectorQrToken, loadCabinetInspectorData } from "@/lib/inspector-qr-service";
+import { recordAuditLog } from "@/lib/audit-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,8 +19,10 @@ export const dynamic = "force-dynamic";
 /**
  * Inspector tokens management API.
  *
- *   GET  → list tokens for current org (без raw values)
+ *   GET  → list tokens for current org (без raw values; у QR — адрес и SVG,
+ *          он выводится из id и показывается повторно) + последние визиты
  *   POST → create new token; raw value возвращается ОДИН раз
+ *   POST { mode: "qr", ttl, label } → постоянный «QR для проверяющих»
  *   DELETE ?id=… → revoke (set revokedAt)
  *
  * Read-only resolve happens on /inspector/<rawToken> page directly;
@@ -28,6 +33,12 @@ const createSchema = z.object({
   periodFrom: z.string().datetime().or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
   periodTo: z.string().datetime().or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
   ttlHours: z.number().int().min(1).max(24 * 14).optional(),
+});
+
+const qrSchema = z.object({
+  mode: z.literal("qr"),
+  label: z.string().trim().max(120).optional(),
+  ttl: z.enum(Object.keys(INSPECTOR_QR_TTL_DAYS) as [InspectorQrTtl, ...InspectorQrTtl[]]),
 });
 
 function toUtcMidnight(value: string): Date {
@@ -44,23 +55,8 @@ export async function GET() {
   }
   const orgId = getActiveOrgId(session);
 
-  const tokens = await db.inspectorToken.findMany({
-    where: { organizationId: orgId },
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      label: true,
-      periodFrom: true,
-      periodTo: true,
-      expiresAt: true,
-      lastAccessedAt: true,
-      accessCount: true,
-      revokedAt: true,
-      createdAt: true,
-      createdById: true,
-    },
-  });
-  return NextResponse.json({ tokens });
+  const data = await loadCabinetInspectorData(orgId);
+  return NextResponse.json(data);
 }
 
 export async function POST(request: Request) {
@@ -71,9 +67,35 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
+  const body = await request.json().catch(() => null);
+  if (body && typeof body === "object" && (body as { mode?: unknown }).mode === "qr") {
+    const qr = qrSchema.safeParse(body);
+    if (!qr.success) {
+      return NextResponse.json({ error: "Выберите срок действия QR" }, { status: 400 });
+    }
+    const orgId = getActiveOrgId(session);
+    const created = await createInspectorQrToken({
+      organizationId: orgId,
+      createdById: session.user.id,
+      ttl: qr.data.ttl,
+      label: qr.data.label || null,
+    });
+    await recordAuditLog({
+      request,
+      session,
+      organizationId: orgId,
+      action: "settings.inspector_qr.create",
+      entity: "InspectorToken",
+      entityId: created.id,
+      details: { ttl: qr.data.ttl, label: qr.data.label ?? null },
+    });
+    const data = await loadCabinetInspectorData(orgId);
+    return NextResponse.json({ ...data, createdId: created.id });
+  }
+
   let parsed;
   try {
-    parsed = createSchema.parse(await request.json());
+    parsed = createSchema.parse(body);
   } catch (err) {
     if (err instanceof z.ZodError) {
       return NextResponse.json(
@@ -152,6 +174,14 @@ export async function DELETE(request: Request) {
   await db.inspectorToken.update({
     where: { id },
     data: { revokedAt: new Date() },
+  });
+  await recordAuditLog({
+    request,
+    session,
+    organizationId: orgId,
+    action: "settings.inspector_token.revoke",
+    entity: "InspectorToken",
+    entityId: id,
   });
   return NextResponse.json({ ok: true });
 }

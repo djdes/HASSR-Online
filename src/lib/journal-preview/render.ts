@@ -52,11 +52,11 @@ function pdfjsDir(): string {
   return dir;
 }
 
-function workerFileUrl(): string {
+export function workerFileUrl(): string {
   return pathToFileURL(path.join(pdfjsDir(), "legacy", "build", "pdf.worker.mjs")).href;
 }
 
-function standardFontsDir(): string {
+export function standardFontsDir(): string {
   // pdfjs склеивает url + имя файла как строки, поэтому нужен trailing slash.
   return path.join(pdfjsDir(), "standard_fonts").split(path.sep).join("/") + "/";
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Copy, ExternalLink, Loader2, Plus, ShieldX, Trash2 } from "lucide-react";
+import { Copy, ExternalLink, Loader2, Plus, Printer, QrCode, ShieldX } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -14,21 +14,24 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-type TokenRow = {
-  id: string;
-  label: string | null;
-  periodFrom: string;
-  periodTo: string;
-  expiresAt: string;
-  lastAccessedAt: string | null;
-  accessCount: number;
-  revokedAt: string | null;
-  createdAt: string;
-};
+import type {
+  CabinetInspectorActivity,
+  CabinetInspectorToken,
+} from "@/lib/inspector-qr-service";
+
+type TokenRow = CabinetInspectorToken;
 
 type Props = {
   initialTokens: TokenRow[];
+  initialActivity: CabinetInspectorActivity[];
 };
+
+const QR_TTL_OPTIONS: Array<{ value: "1d" | "7d" | "30d" | "forever"; label: string; hint: string }> = [
+  { value: "1d", label: "1 день", hint: "на время визита" },
+  { value: "7d", label: "7 дней", hint: "плановая проверка" },
+  { value: "30d", label: "30 дней", hint: "проверка с доработками" },
+  { value: "forever", label: "До отзыва", hint: "постоянный лист в зале" },
+];
 
 function todayKey() {
   return new Date().toISOString().slice(0, 10);
@@ -56,8 +59,9 @@ function fmtDate(value: string): string {
   });
 }
 
-export function InspectorPortalClient({ initialTokens }: Props) {
+export function InspectorPortalClient({ initialTokens, initialActivity }: Props) {
   const [tokens, setTokens] = useState<TokenRow[]>(initialTokens);
+  const [activity, setActivity] = useState<CabinetInspectorActivity[]>(initialActivity);
   const [createOpen, setCreateOpen] = useState(false);
   /** id ссылки, которую просят отозвать — окно подтверждения. */
   const [tokenToRevoke, setTokenToRevoke] = useState<string | null>(null);
@@ -71,6 +75,7 @@ export function InspectorPortalClient({ initialTokens }: Props) {
     if (!response.ok) return;
     const data = await response.json();
     if (data.tokens) setTokens(data.tokens);
+    if (data.activity) setActivity(data.activity);
   }
 
   async function handleRevoke(id: string) {
@@ -82,15 +87,32 @@ export function InspectorPortalClient({ initialTokens }: Props) {
       toast.error("Не удалось отозвать");
       return;
     }
-    toast.success("Ссылка отозвана");
+    toast.success("Доступ отозван — QR и ссылка больше не открываются");
     refresh();
   }
 
   const [certOpen, setCertOpen] = useState(false);
+  const activeQrs = tokens.filter((t) => t.isQr && t.inspectorUrl);
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-end gap-2">
+      <InspectorQrCard
+        activeQrs={activeQrs}
+        onCreated={(data) => {
+          if (data.tokens) setTokens(data.tokens);
+          if (data.activity) setActivity(data.activity);
+        }}
+        onRevoke={(id) => setTokenToRevoke(id)}
+      />
+
+      <VisitsCard activity={activity} tokens={tokens} />
+
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
+        <div>
+          <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">Все доступы</h2>
+          <p className="text-[13px] text-[#6f7282]">QR и разовые ссылки с фиксированным периодом.</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
         <Button
           type="button"
           variant="outline"
@@ -105,8 +127,9 @@ export function InspectorPortalClient({ initialTokens }: Props) {
           className="h-11 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0]"
         >
           <Plus className="size-4" />
-          Создать ссылку
+          Разовая ссылка
         </Button>
+        </div>
       </div>
 
       {certOpen ? (
@@ -125,8 +148,8 @@ export function InspectorPortalClient({ initialTokens }: Props) {
           </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-[#ececf4] bg-white">
-          <table className="w-full text-[13px]">
+        <div className="overflow-x-auto rounded-2xl border border-[#ececf4] bg-white">
+          <table className="w-full min-w-[720px] text-[13px]">
             <thead className="bg-[#fafbff] text-[12px] uppercase tracking-[0.06em] text-[#6f7282]">
               <tr>
                 <th className="px-4 py-3 text-left">Назначение</th>
@@ -145,10 +168,13 @@ export function InspectorPortalClient({ initialTokens }: Props) {
                 return (
                   <tr key={t.id}>
                     <td className="px-4 py-3 text-[#0b1024]">
+                      <span className="mr-2 rounded-full bg-[#f5f6ff] px-2 py-0.5 text-[11px] text-[#3848c7]">
+                        {t.isQr ? "QR" : "Ссылка"}
+                      </span>
                       {t.label ?? <span className="text-[#9b9fb3]">без названия</span>}
                     </td>
                     <td className="px-4 py-3 text-[#3c4053]">
-                      {fmtDate(t.periodFrom)} — {fmtDate(t.periodTo)}
+                      {t.isQr ? "Выбирает проверяющий" : `${fmtDate(t.periodFrom)} — ${fmtDate(t.periodTo)}`}
                     </td>
                     <td className="px-4 py-3 text-[#3c4053]">{fmt(t.expiresAt)}</td>
                     <td className="px-4 py-3 text-[#3c4053]">
@@ -220,11 +246,12 @@ export function InspectorPortalClient({ initialTokens }: Props) {
           setTokenToRevoke(null);
           if (id) await handleRevoke(id);
         }}
-        title="Отозвать ссылку для проверяющего?"
-        description="Ссылка перестанет открываться сразу же."
+        title="Отозвать доступ для проверяющего?"
+        description="QR-код и ссылка перестанут открываться сразу же."
         bullets={[
-          { label: "Проверяющий больше не увидит журналы по этой ссылке", tone: "warn" },
-          { label: "Вернуть ссылку нельзя — понадобится выпустить новую", tone: "warn" },
+          { label: "По этому QR проверяющий увидит экран «Доступ отозван»", tone: "warn" },
+          { label: "Распечатанный лист с этим QR больше не работает — снимите его", tone: "warn" },
+          { label: "Вернуть доступ нельзя — понадобится выпустить новый QR", tone: "warn" },
         ]}
         confirmLabel="Отозвать"
         cancelLabel="Отмена"
@@ -496,9 +523,9 @@ function CertificateDialog({ onClose }: { onClose: () => void }) {
         <div className="space-y-4">
           <p className="text-[13px] leading-relaxed text-[#6f7282]">
             PDF на A4 с уровнем соответствия за период и QR-кодом для
-            проверки. Можно повесить в зале — гости и проверяющие
-            сканируют QR со смартфона и видят live-журналы. QR
-            действует <strong>90 дней</strong>.
+            проверки. QR ведёт на действующий «QR для проверяющих» — новый
+            доступ при каждом скачивании не создаётся. Если действующего QR
+            нет, будет выпущен один, «до отзыва».
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
@@ -546,5 +573,296 @@ function CertificateDialog({ onClose }: { onClose: () => void }) {
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/**
+ * «QR для проверяющих» — постоянный QR (схема не менялась: тот же
+ * InspectorToken, «открытый период», токен выводится из id строки).
+ * Превью и печать листа A4 — повторяемые, отзыв — через ConfirmDialog.
+ */
+function InspectorQrCard({
+  activeQrs,
+  onCreated,
+  onRevoke,
+}: {
+  activeQrs: TokenRow[];
+  onCreated: (data: { tokens?: TokenRow[]; activity?: CabinetInspectorActivity[] }) => void;
+  onRevoke: (id: string) => void;
+}) {
+  const [formOpen, setFormOpen] = useState(false);
+  const showForm = formOpen || activeQrs.length === 0;
+
+  return (
+    <section
+      className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-7"
+      data-inspector-qr-card
+    >
+      <div className="flex items-start gap-3">
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#3848c7]">
+          <QrCode className="size-5" />
+        </span>
+        <div className="min-w-0">
+          <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">QR для проверяющих</h2>
+          <p className="mt-1 max-w-[640px] text-[13.5px] leading-relaxed text-[#6f7282]">
+            Распечатайте лист с QR и отдайте проверяющему (или повесьте у входа).
+            Скан открывает журналы без входа и PIN: проверяющий сам выбирает
+            период за последние 12 месяцев и листает журналы как бумажные.
+          </p>
+        </div>
+      </div>
+
+      {activeQrs.map((t) => (
+        <ActiveQrRow key={t.id} token={t} onRevoke={() => onRevoke(t.id)} />
+      ))}
+
+      {showForm ? (
+        <CreateQrForm
+          onCancel={activeQrs.length > 0 ? () => setFormOpen(false) : undefined}
+          onCreated={(data) => {
+            onCreated(data);
+            setFormOpen(false);
+          }}
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={() => setFormOpen(true)}
+          className="mt-5 inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+        >
+          <Plus className="size-4 text-[#5566f6]" />
+          Выпустить ещё один QR
+        </button>
+      )}
+    </section>
+  );
+}
+
+function ActiveQrRow({ token, onRevoke }: { token: TokenRow; onRevoke: () => void }) {
+  async function copy() {
+    if (!token.inspectorUrl) return;
+    try {
+      await navigator.clipboard.writeText(token.inspectorUrl);
+      toast.success("Ссылка скопирована");
+    } catch {
+      toast.info(token.inspectorUrl);
+    }
+  }
+  const forever = new Date(token.expiresAt).getTime() - new Date(token.createdAt).getTime() > 300 * 86_400_000;
+  return (
+    <div
+      className="mt-5 grid gap-5 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4 sm:grid-cols-[168px_1fr] sm:p-5"
+      data-active-qr={token.id}
+    >
+      <div
+        className="mx-auto w-[168px] rounded-2xl border border-[#dcdfed] bg-white p-3 [&_svg]:block [&_svg]:h-auto [&_svg]:w-full"
+        aria-label="QR-код для проверяющих"
+        role="img"
+        data-qr-svg
+        // SVG строит сервер библиотекой qrcode из нашего же адреса — не пользовательский ввод.
+        dangerouslySetInnerHTML={{ __html: token.qrSvg ?? "" }}
+      />
+      <div className="min-w-0">
+        <div className="text-[15px] font-semibold text-[#0b1024]">
+          {token.label || "QR для проверяющих"}
+        </div>
+        <dl className="mt-2 grid gap-x-4 gap-y-1 text-[13px] sm:grid-cols-2">
+          <div className="flex gap-2">
+            <dt className="text-[#6f7282]">Действует</dt>
+            <dd className="text-[#0b1024]">{forever ? "до отзыва" : `до ${fmt(token.expiresAt)}`}</dd>
+          </div>
+          <div className="flex gap-2">
+            <dt className="text-[#6f7282]">Просмотров</dt>
+            <dd className="tabular-nums text-[#0b1024]" data-access-count>
+              {token.accessCount}
+              {token.lastAccessedAt ? (
+                <span className="text-[#9b9fb3]">, последний {fmt(token.lastAccessedAt)}</span>
+              ) : null}
+            </dd>
+          </div>
+        </dl>
+        <input
+          readOnly
+          value={token.inspectorUrl ?? ""}
+          onFocus={(e) => e.currentTarget.select()}
+          className="mt-3 w-full rounded-xl border border-[#dcdfed] bg-white px-3 py-2 font-mono text-[12px] text-[#3c4053] outline-none transition-shadow focus:ring-4 focus:ring-[#5566f6]/15"
+          aria-label="Адрес QR"
+          data-qr-url
+        />
+        <div className="mt-3 flex flex-wrap gap-2">
+          <a
+            href={`/inspector-sheet/${token.id}`}
+            target="_blank"
+            rel="noopener"
+            className="inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+            data-print-sheet
+          >
+            <Printer className="size-4" />
+            Печать листа A4
+          </a>
+          <a
+            href={token.inspectorUrl ?? "#"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+          >
+            <ExternalLink className="size-4 text-[#5566f6]" />
+            Как видит проверяющий
+          </a>
+          <button
+            type="button"
+            onClick={copy}
+            className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+          >
+            <Copy className="size-4 text-[#5566f6]" />
+            Скопировать ссылку
+          </button>
+          <button
+            type="button"
+            onClick={onRevoke}
+            className="inline-flex h-10 items-center gap-2 rounded-2xl px-3 text-[14px] font-medium text-[#a13a32] transition-colors duration-150 hover:bg-[#fff4f2]"
+            data-revoke-qr
+          >
+            <ShieldX className="size-4" />
+            Отозвать
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CreateQrForm({
+  onCancel,
+  onCreated,
+}: {
+  onCancel?: () => void;
+  onCreated: (data: { tokens?: TokenRow[]; activity?: CabinetInspectorActivity[] }) => void;
+}) {
+  const [ttl, setTtl] = useState<(typeof QR_TTL_OPTIONS)[number]["value"]>("7d");
+  const [label, setLabel] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  async function submit() {
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/settings/inspector-tokens", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "qr", ttl, label: label.trim() || undefined }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error ?? "Не удалось создать QR");
+      toast.success("QR для проверяющих создан — распечатайте лист A4");
+      setLabel("");
+      onCreated(data ?? {});
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Ошибка");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="mt-5 rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-4 sm:p-5" data-create-qr>
+      <div className="text-[13px] font-medium text-[#0b1024]">Срок действия QR</div>
+      <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4" role="radiogroup" aria-label="Срок действия QR">
+        {QR_TTL_OPTIONS.map((o) => {
+          const active = ttl === o.value;
+          return (
+            <button
+              key={o.value}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              onClick={() => setTtl(o.value)}
+              data-ttl={o.value}
+              className={`flex flex-col items-start rounded-2xl border px-3 py-2.5 text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 ${
+                active
+                  ? "border-[#5566f6] bg-[#eef1ff] text-[#3848c7]"
+                  : "border-[#dcdfed] bg-white text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+              }`}
+            >
+              <span className="text-[14px] font-semibold">{o.label}</span>
+              <span className="text-[12px] text-[#6f7282]">{o.hint}</span>
+            </button>
+          );
+        })}
+      </div>
+      <Label htmlFor="qr-label" className="mt-4 block text-[13px] text-[#6f7282]">
+        Заметка для себя (необязательно)
+      </Label>
+      <Input
+        id="qr-label"
+        value={label}
+        onChange={(e) => setLabel(e.target.value)}
+        maxLength={120}
+        placeholder="Плановая проверка РПН"
+        className="mt-1.5 h-11 rounded-2xl"
+      />
+      <p className="mt-2 text-[12.5px] text-[#6f7282]">
+        После создания появится QR и кнопка печати листа A4. Лист можно
+        печатать сколько угодно раз — QR не меняется, пока вы его не отзовёте.
+      </p>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Button
+          type="button"
+          onClick={submit}
+          disabled={submitting}
+          aria-busy={submitting}
+          className="h-11 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] hover:bg-[#4a5bf0]"
+          data-create-qr-submit
+        >
+          {submitting ? <Loader2 className="size-4 animate-spin" /> : <QrCode className="size-4" />}
+          Создать QR
+        </Button>
+        {onCancel ? (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            className="h-11 rounded-2xl border-[#dcdfed] px-4"
+          >
+            Отмена
+          </Button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function VisitsCard({ activity, tokens }: { activity: CabinetInspectorActivity[]; tokens: TokenRow[] }) {
+  const labels = new Map(tokens.map((t) => [t.id, t.label || (t.isQr ? "QR" : "Ссылка")]));
+  return (
+    <section
+      className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-7"
+      data-visits
+    >
+      <h2 className="text-[16px] font-semibold text-[#0b1024]">Последние просмотры</h2>
+      <p className="mt-0.5 text-[13px] text-[#6f7282]">
+        Что открывал проверяющий, когда и с какого адреса. Полный список — в журнале действий.
+      </p>
+      {activity.length === 0 ? (
+        <div className="mt-4 rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-8 text-center text-[13px] text-[#6f7282]">
+          Пока никто не открывал журналы по QR или ссылке.
+        </div>
+      ) : (
+        <ul className="mt-4 divide-y divide-[#ececf4]">
+          {activity.map((a) => (
+            <li key={a.id} className="grid gap-1 py-2.5 text-[13px] sm:grid-cols-[150px_1fr_auto] sm:gap-4" data-visit-row>
+              <span className="tabular-nums text-[#6f7282]">{fmt(a.at)}</span>
+              <span className="min-w-0 text-[#0b1024] [overflow-wrap:anywhere]">
+                {a.what}
+                {a.viewer ? <span className="text-[#3848c7]"> — {a.viewer}</span> : null}
+              </span>
+              <span className="text-[12px] text-[#9b9fb3]">
+                {a.tokenId ? labels.get(a.tokenId) ?? "" : ""}
+                {a.ip ? `, IP ${a.ip}` : ""}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }

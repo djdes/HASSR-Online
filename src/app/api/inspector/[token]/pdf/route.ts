@@ -1,227 +1,190 @@
-import { NextResponse } from "next/server";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import { db } from "@/lib/db";
-import { hashInspectorToken } from "@/lib/inspector-tokens";
 import { resolveOrgJournalName } from "@/lib/org-journal-name";
-import { buildingPrintName } from "@/lib/building-scope";
-import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
-import { getDisabledJournalCodes } from "@/lib/disabled-journals";
+import { buildOrgSnapshot } from "@/lib/orders/org-snapshot";
+import { registerUnicodeFont } from "@/lib/closing-documents/pdf-font";
+import {
+  inspectorClientIp,
+  inspectorLimitKey,
+  inspectorPdfLimiter,
+  inspectorViewerCookie,
+  loadInspectorAccess,
+  logInspectorEvent,
+  readInspectorViewer,
+} from "@/lib/inspector-access";
+import { loadInspectorJournals } from "@/lib/inspector-journals";
+import { formatDayKeyRu, inspectorControlCode, resolveInspectorPeriod } from "@/lib/inspector-qr";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * One-click PDF за весь период токена. Для инспектора: открыл портал →
- * нажал «Скачать PDF» — получил один документ с титулкой, оглавлением и
- * сводкой по каждому шаблону журнала: список документов + количество
- * записей + табличка legacy-entries.
+ * Сводный PDF для проверяющего за выбранный период (`?p=&from=&to=`,
+ * зажимается окном токена): реквизиты, таблица журналов по группам
+ * «СанПиН / ХАССП / прочие» с числом документов и записей, электронная
+ * отметка с контрольным кодом.
  *
- * Это summary-PDF, не полная распечатка каждой ячейки (для этого есть
- * существующий /api/journal-documents/[id]/pdf на конкретный документ).
- * Цель — дать инспектору общую картину «вели или не вели» с возможностью
- * углубиться в нужный журнал по веб-ссылке портала.
+ * Шрифт — DejaVu Sans через `registerUnicodeFont`: штатная Helvetica
+ * jsPDF кириллицы не знает, раньше русский текст печатался кракозябрами.
  */
 export async function GET(
-  _request: Request,
+  request: Request,
   ctx: { params: Promise<{ token: string }> }
 ) {
   const { token } = await ctx.params;
-  const tokenHash = hashInspectorToken(token);
-  const record = await db.inspectorToken.findUnique({
-    where: { tokenHash },
-    include: {
-      organization: {
-        select: { id: true, name: true, journalShortName: true, legalProfileJson: true },
-      },
-    },
+  const access = await loadInspectorAccess(token);
+  if (access.status === "not_found") return new Response("Не найдено", { status: 404 });
+  if (access.status !== "ok") return new Response("Доступ отозван или истёк", { status: 410 });
+  const key = inspectorLimitKey(access.token.id, inspectorClientIp(request.headers));
+  if (!inspectorPdfLimiter.consume(key)) {
+    return new Response("Слишком много запросов. Повторите через минуту.", { status: 429 });
+  }
+
+  const url = new URL(request.url);
+  const period = resolveInspectorPeriod({
+    window: access.window,
+    today: access.today,
+    preset: url.searchParams.get("p") ?? (access.isQr ? null : "custom"),
+    from: url.searchParams.get("from") ?? (access.isQr ? null : access.window.from),
+    to: url.searchParams.get("to") ?? (access.isQr ? null : access.window.to),
   });
-  if (!record) {
-    return NextResponse.json({ error: "Не найдено" }, { status: 404 });
-  }
-  if (record.revokedAt || record.expiresAt < new Date()) {
-    return NextResponse.json({ error: "Token expired/revoked" }, { status: 403 });
-  }
+  const groups = await loadInspectorJournals(access, period.from, period.to);
+  const snapshot = buildOrgSnapshot({
+    name: access.org.name,
+    inn: access.org.inn,
+    address: access.org.address,
+    legalProfileJson: access.org.legalProfileJson,
+  });
+  const orgTitle = resolveOrgJournalName(access.org);
+  const generatedAt = new Date();
+  const generatedText = generatedAt.toLocaleString("ru-RU", { timeZone: access.org.timezone || "Europe/Moscow" });
+  const periodText = `${formatDayKeyRu(period.from)} - ${formatDayKeyRu(period.to)}`;
 
-  const periodFrom = record.periodFrom;
-  const periodToInclusive = new Date(record.periodTo);
-  periodToInclusive.setUTCHours(23, 59, 59, 999);
-
-  // Раньше PDF включал все active templates: org, отключившая
-  // в /settings/journals скажем «температурный режим», получала в
-  // PDF секцию «Темп. режим — нет документов» — выглядит как
-  // нарушение для инспектора. Теперь скрываем отключённые.
-  const disabledCodes = await getDisabledJournalCodes(record.organizationId);
-
-  const [templatesAll, documents, legacyEntries] = await Promise.all([
-    db.journalTemplate.findMany({
-      where: { isActive: true },
-      orderBy: { sortOrder: "asc" },
-      select: { id: true, code: true, name: true, isMandatorySanpin: true, isMandatoryHaccp: true },
-    }),
-    db.journalDocument.findMany({
-      where: {
-        organizationId: record.organizationId,
-        OR: [
-          { dateFrom: { gte: periodFrom, lte: periodToInclusive } },
-          { dateTo: { gte: periodFrom, lte: periodToInclusive } },
-          { AND: [{ dateFrom: { lte: periodFrom } }, { dateTo: { gte: periodToInclusive } }] },
-        ],
-      },
-      select: {
-        id: true,
-        title: true,
-        templateId: true,
-        dateFrom: true,
-        dateTo: true,
-        status: true,
-        building: { select: { name: true, journalName: true } },
-        // Считаем только реально заполненные строки. _autoSeeded —
-        // это пустые матриксы (employee × day) которые bulk-assign и
-        // sync-* проставляют для рендера UI. Они НЕ являются
-        // заполнением — инспектор не должен видеть «5000 записей»
-        // когда сотрудник реально заполнил 50.
-        _count: { select: { entries: { where: NOT_AUTO_SEEDED } } },
-      },
-    }),
-    db.journalEntry.findMany({
-      where: {
-        organizationId: record.organizationId,
-        createdAt: { gte: periodFrom, lte: periodToInclusive },
-      },
-      select: { templateId: true },
-    }),
+  const rowsFlat = groups.flatMap((g) => g.rows);
+  const controlCode = inspectorControlCode([
+    access.org.id,
+    period.from,
+    period.to,
+    ...rowsFlat.map((r) => `${r.code}:${r.docCount}:${r.entryCount}`),
   ]);
 
-  const templates = templatesAll.filter((t) => !disabledCodes.has(t.code));
-
-  const docsByTemplate = new Map<string, typeof documents>();
-  for (const d of documents) {
-    const list = docsByTemplate.get(d.templateId) ?? [];
-    list.push(d);
-    docsByTemplate.set(d.templateId, list);
-  }
-  const legacyByTemplate = new Map<string, number>();
-  for (const e of legacyEntries) {
-    legacyByTemplate.set(e.templateId, (legacyByTemplate.get(e.templateId) ?? 0) + 1);
-  }
-
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-  const fmt = (d: Date) =>
-    d.toLocaleDateString("ru-RU", { day: "2-digit", month: "long", year: "numeric" });
+  const font = registerUnicodeFont(doc);
+  doc.setFont(font, "normal");
+  const pageW = doc.internal.pageSize.getWidth();
 
-  // Title page
-  doc.setFontSize(18);
-  doc.setFont("helvetica", "bold");
-  doc.text(resolveOrgJournalName(record.organization), 20, 30);
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "normal");
-  doc.text(
-    `Сводка журналов за период: ${fmt(periodFrom)} — ${fmt(record.periodTo)}`,
-    20,
-    40
-  );
-  doc.text(
-    `Сформировано: ${new Date().toLocaleString("ru-RU")}`,
-    20,
-    47
-  );
-  if (record.label) {
-    doc.text(`Назначение: ${record.label}`, 20, 54);
+  doc.setFontSize(9);
+  doc.setTextColor(110);
+  doc.text("СВОДКА ЖУРНАЛОВ ПРОИЗВОДСТВЕННОГО КОНТРОЛЯ", 20, 18);
+  doc.setDrawColor(40);
+  doc.setLineWidth(0.4);
+  doc.line(20, 21, pageW - 20, 21);
+
+  doc.setTextColor(20);
+  doc.setFontSize(16);
+  doc.text(doc.splitTextToSize(orgTitle, pageW - 40), 20, 31);
+  doc.setFontSize(10);
+  doc.setTextColor(60);
+  let y = 40;
+  const requisites = [
+    snapshot.orgName !== orgTitle ? snapshot.orgName : null,
+    snapshot.orgInn ? `ИНН ${snapshot.orgInn}` : null,
+    snapshot.orgAddress ? `Адрес: ${snapshot.orgAddress}` : null,
+    snapshot.directorName ? `${snapshot.directorPost ?? "Руководитель"}: ${snapshot.directorName}` : null,
+  ].filter((v): v is string => Boolean(v));
+  for (const line of requisites) {
+    const wrapped = doc.splitTextToSize(line, pageW - 40);
+    doc.text(wrapped, 20, y);
+    y += 5 * wrapped.length;
   }
+  y += 2;
+  doc.setTextColor(20);
+  doc.text(`Период: ${periodText}`, 20, y);
+  doc.text(`Сформировано: ${generatedText}`, pageW - 20, y, { align: "right" });
+  y += 6;
 
-  doc.setFontSize(8);
-  doc.setTextColor(120);
-  doc.text(
-    "Документ сформирован системой WeSetup для портала инспектора. Подтверждает наличие журналов и количество записей за указанный период.",
-    20,
-    270,
-    { maxWidth: 170 }
-  );
-  doc.setTextColor(0);
-
-  // Summary table
-  doc.addPage();
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
-  doc.text("Сводка по журналам", 20, 20);
-
-  const rows: Array<[string, string, string, string]> = templates.map((tpl) => {
-    const docs = docsByTemplate.get(tpl.id) ?? [];
-    const legacy = legacyByTemplate.get(tpl.id) ?? 0;
-    const totalEntries = docs.reduce((s, d) => s + d._count.entries, 0) + legacy;
-    const tags = [
-      tpl.isMandatorySanpin ? "СанПиН" : null,
-      tpl.isMandatoryHaccp ? "ХАССП" : null,
-    ]
-      .filter(Boolean)
-      .join(", ");
-    return [
-      tpl.name,
-      tags || "—",
-      String(docs.length),
-      String(totalEntries),
-    ];
-  });
+  const body: string[][] = [];
+  for (const g of groups) {
+    body.push([g.label, "", ""]);
+    for (const r of g.rows) {
+      body.push([r.name, String(r.docCount), r.entryCount === 0 ? "нет записей" : String(r.entryCount)]);
+    }
+  }
+  const groupLabels = new Set(groups.map((g) => g.label));
 
   autoTable(doc, {
-    startY: 28,
-    head: [["Журнал", "Обязательность", "Документов", "Записей"]],
-    body: rows,
-    headStyles: { fillColor: [85, 102, 246], textColor: 255, fontStyle: "bold" },
-    styles: { fontSize: 9, cellPadding: 2 },
+    startY: y,
+    margin: { left: 20, right: 20 },
+    head: [["Журнал", "Документов", "Записей за период"]],
+    body,
+    theme: "grid",
+    styles: { font, fontStyle: "normal", fontSize: 9, cellPadding: 1.8, lineColor: [60, 60, 60], lineWidth: 0.15, textColor: [20, 20, 20] },
+    headStyles: { font, fontStyle: "normal", fillColor: [236, 236, 236], textColor: [20, 20, 20] },
     columnStyles: {
-      0: { cellWidth: 90 },
-      1: { cellWidth: 35 },
-      2: { cellWidth: 25, halign: "right" },
-      3: { cellWidth: 25, halign: "right" },
+      0: { cellWidth: 110 },
+      1: { halign: "right" },
+      2: { halign: "right" },
+    },
+    didParseCell: (data) => {
+      if (data.section === "body" && data.column.index === 0 && groupLabels.has(String(data.cell.raw))) {
+        data.cell.colSpan = 3;
+        data.cell.styles.fillColor = [248, 248, 248];
+        data.cell.styles.textColor = [80, 80, 80];
+      }
     },
   });
 
-  // Per-template documents detail
-  for (const tpl of templates) {
-    const docs = docsByTemplate.get(tpl.id);
-    if (!docs || docs.length === 0) continue;
+  // Электронная отметка — не печать организации, а визуализация того,
+  // что документ собран системой, с кодом для сверки.
+  const lastY = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? y + 20;
+  let stampY = lastY + 10;
+  if (stampY > 245) {
     doc.addPage();
-    doc.setFontSize(13);
-    doc.setFont("helvetica", "bold");
-    doc.text(tpl.name, 20, 20);
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    autoTable(doc, {
-      startY: 28,
-      head: [["Документ", "Период", "Статус", "Записей"]],
-      body: docs.map((d) => [
-        [d.title, buildingPrintName(d.building)].filter(Boolean).join(" · "),
-        `${fmt(d.dateFrom)} — ${fmt(d.dateTo)}`,
-        d.status === "active" ? "Активен" : "Закрыт",
-        String(d._count.entries),
-      ]),
-      headStyles: { fillColor: [85, 102, 246], textColor: 255, fontStyle: "bold" },
-      styles: { fontSize: 9, cellPadding: 2 },
-    });
+    stampY = 20;
   }
+  doc.setDrawColor(31, 58, 138);
+  doc.setLineWidth(0.5);
+  doc.rect(20, stampY, 110, 30);
+  doc.setTextColor(31, 58, 138);
+  doc.setFontSize(8.5);
+  doc.text("ДОКУМЕНТ СФОРМИРОВАН В ЭЛЕКТРОННОМ ВИДЕ", 24, stampY + 6);
+  doc.setFontSize(8);
+  doc.text(doc.splitTextToSize(`Организация: ${snapshot.orgShortName}${snapshot.orgInn ? `, ИНН ${snapshot.orgInn}` : ""}`, 102), 24, stampY + 12);
+  doc.text(`Период: ${periodText}`, 24, stampY + 20);
+  doc.text(`Сформировано: ${generatedText}`, 24, stampY + 24);
+  doc.text(`Контрольный код: ${controlCode}`, 24, stampY + 28);
 
-  const buffer = Buffer.from(doc.output("arraybuffer"));
-  const filename = `wesetup-inspector-${record.organization.name.replace(/[^A-Za-zА-Яа-я0-9]+/g, "_")}-${periodFrom.toISOString().slice(0, 10)}.pdf`;
+  doc.setTextColor(120);
+  doc.setFontSize(7.5);
+  doc.text(
+    doc.splitTextToSize(
+      "Журналы ведутся в электронном виде в системе WeSetup. Записи подписываются сотрудниками (личный PIN или вход), время фиксируется автоматически. Отметка системы не является печатью организации.",
+      pageW - 40
+    ),
+    20,
+    285 - 8
+  );
 
-  // Bump access counter (download = considered access).
-  await db.inspectorToken
-    .update({
-      where: { id: record.id },
-      data: {
-        lastAccessedAt: new Date(),
-        accessCount: { increment: 1 },
-      },
-    })
-    .catch(() => null);
+  const viewer = readInspectorViewer(
+    request.headers.get("cookie")?.split(";").map((p) => p.trim()).find((p) => p.startsWith(`${inspectorViewerCookie(access.token.id)}=`))?.split("=").slice(1).join("=")
+  );
+  await logInspectorEvent({
+    access,
+    headers: request.headers,
+    action: "inspector.download",
+    viewer,
+    details: { kind: "summary_pdf", from: period.from, to: period.to, controlCode },
+  });
 
-  return new NextResponse(buffer, {
+  const buffer = new Uint8Array(doc.output("arraybuffer"));
+  const filename = `svodka-zhurnalov-${period.from}-${period.to}.pdf`;
+  return new Response(buffer, {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`,
-      "Cache-Control": "no-store",
+      "Cache-Control": "private, no-store",
+      "X-Robots-Tag": "noindex, nofollow",
     },
   });
 }
