@@ -108,6 +108,8 @@ const nextConfig: NextConfig = {
     //   и в разрешении НЕ нуждается — поэтому на сайте камера закрыта.
     //   Внутри /mini она открыта под сканер QR прямо в браузере: вне
     //   Telegram нативного `showScanQrPopup` нет, а сканировать нужно.
+    //   На наклейках холодильников и складов (/equipment-fill, /room-fill)
+    //   тоже открыта: «Следующий QR» сканирует камерой прямо на странице.
     const permissionsPolicy = (camera: "()" | "(self)") => ({
       key: "Permissions-Policy",
       value: `camera=${camera}, microphone=(self), geolocation=(self)`,
@@ -138,6 +140,14 @@ const nextConfig: NextConfig = {
       },
     ];
 
+    // Наклейки холодильников и складов: «Следующий QR» сканирует камерой
+    // прямо на странице (2026-09-23). Фреймы — как у остального сайта.
+    const objectStickerHeaders = [
+      ...commonSecurityHeaders,
+      permissionsPolicy("(self)"),
+      { key: "X-Frame-Options", value: "DENY" },
+    ];
+
     return [
       {
         // Mini App: разрешаем embedding в Telegram Web.
@@ -147,6 +157,14 @@ const nextConfig: NextConfig = {
       {
         source: "/mini",
         headers: miniFrameHeaders,
+      },
+      {
+        source: "/equipment-fill/:path*",
+        headers: objectStickerHeaders,
+      },
+      {
+        source: "/room-fill/:path*",
+        headers: objectStickerHeaders,
       },
       {
         // Все остальные пути (кроме /mini, /mini/*) — security headers
@@ -162,7 +180,7 @@ const nextConfig: NextConfig = {
         // показывает собственный образец во встроенном просмотре, а
         // X-Frame-Options: DENY запрещает даже свой же origin. В файле
         // нет ни сессии, ни чужих данных — вставлять его безопасно.
-        source: "/((?!mini(?:$|/)|api/journal-samples).*)",
+        source: "/((?!mini(?:$|/)|api/journal-samples|equipment-fill/|room-fill/).*)",
         headers: denyFrameHeaders,
       },
       {
