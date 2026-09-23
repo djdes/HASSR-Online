@@ -148,6 +148,18 @@ async function setup() {
 
 async function main() {
   const env = await setup();
+  // Сканирование без входа проверяется в режиме «public». Стенд e2e-org-a могут
+  // оставить в «auth» другие смоуки — выставляем public и возвращаем в finally.
+  const orgMode = await db.organization.findUniqueOrThrow({ where: { id: env.orgA }, select: { qrFillMode: true } });
+  await db.organization.update({ where: { id: env.orgA }, data: { qrFillMode: "public" } });
+  // PIN повара (его ставят смоуки PIN) здесь не проверяем — снимаем и возвращаем.
+  const cookPin = await db.user.findUniqueOrThrow({
+    where: { id: U.cookA.id },
+    select: { qrPinHash: true, qrPinEncrypted: true, qrPinFailedCount: true, qrPinLockedUntil: true },
+  });
+  await db.user.update({ where: { id: U.cookA.id }, data: { qrPinHash: null, qrPinEncrypted: null, qrPinFailedCount: 0, qrPinLockedUntil: null } });
+  const roomFillers = await db.room.findUniqueOrThrow({ where: { id: env.room.id }, select: { fillerUserIds: true } });
+  await db.room.update({ where: { id: env.room.id }, data: { fillerUserIds: [] } });
   const browser = await chromium.launch({ headless: true });
   try {
     // ── Плакаты помещений ─────────────────────────────────────────────
@@ -160,29 +172,52 @@ async function main() {
     const roomPoster = page.locator(`[data-qr-poster][data-qr-id="${env.room.id}"]`);
     const roomUrl = await roomPoster.getAttribute("data-qr-url");
     check("у плаката склада есть data-qr-url/kind", Boolean(roomUrl) && (await roomPoster.getAttribute("data-qr-kind")) === "room", roomUrl);
+    // С 733d5137 экранная карточка — название, превью и «Проверить ссылку»;
+    // шаги сканирования живут только в печатном дереве выбранных карточек.
     const posterText = await roomPoster.innerText();
+    const checkHref = await roomPoster.locator("[data-qr-check]").getAttribute("href").catch(() => null);
     check(
-      "плакат: название, три шага, срок действия",
-      posterText.includes("Склад сухих продуктов") &&
-        posterText.includes("Наведите камеру телефона на код") &&
-        posterText.includes("Выберите своё имя и введите показания") &&
-        posterText.includes("запись попадёт в журнал за сегодня") &&
-        posterText.includes("Код действует до"),
-      posterText
+      "карточка: название и «Проверить ссылку» на тот же URL, без шагов на экране",
+      posterText.includes("Склад сухих продуктов") && checkHref === roomUrl && !posterText.includes("Наведите камеру телефона на код"),
+      { posterText, checkHref }
     );
+    // Печать A4: отмечаем карточку и выбираем формат A4.
+    if ((await roomPoster.getAttribute("data-qr-selected")) !== "true") await roomPoster.locator("input[type=checkbox]").first().check();
+    await roomPoster.locator('[data-qr-format-option="a4"]').first().click();
+    await page.waitForFunction(
+      (url) => Array.from(document.querySelectorAll("[data-qr-print-url]")).some((node) => node.getAttribute("data-qr-print-url") === url && node.getAttribute("data-qr-print-mm") === "105"),
+      roomUrl,
+      { timeout: 30_000 }
+    ).catch(() => null);
+    const printCode = page.locator(`[data-qr-print-root] [data-qr-print-url="${roomUrl}"]`).first();
+    const printPoster = printCode.locator("xpath=..");
+    const printText = ((await printPoster.textContent().catch(() => "")) ?? "").replace(/\s+/g, " ");
+    check(
+      "печать A4: название и три шага сканирования",
+      printText.includes("Склад сухих продуктов") &&
+        printText.includes("Наведите камеру телефона на код") &&
+        printText.includes("Выберите своё имя и введите показание") &&
+        printText.includes("запись попадёт в журнал за сегодня"),
+      printText
+    );
+    const screenPrintVisible = await printCode.isVisible().catch(() => false);
     await page.screenshot({ path: path.join(SHOTS, "posters-rooms-screen.png"), fullPage: false });
     await page.emulateMedia({ media: "print" });
-    const qrWidthPx = await roomPoster.locator(".qr-box").evaluate((node) => node.getBoundingClientRect().width);
-    // 110 мм при 96 dpi ≈ 416 px.
-    check("печать: QR около 110 мм", Math.abs(qrWidthPx - 415.7) < 12, qrWidthPx);
+    const printVisible = await printCode.isVisible().catch(() => false);
+    const qrWidthPx = await printCode.locator("svg").first().evaluate((node) => node.getBoundingClientRect().width).catch(() => 0);
+    const mm = qrWidthPx / (96 / 25.4);
+    // A4: QR ≈ 100 мм (105 мм по разметке печати).
+    check("печать: QR около 100 мм, видно только в print-медиа", !screenPrintVisible && printVisible && mm >= 95 && mm <= 110, { qrWidthPx, mm: Number(mm.toFixed(1)), screenPrintVisible, printVisible });
     await page.pdf({ path: path.join(SHOTS, "posters-rooms-a4.pdf"), format: "A4", printBackground: true, preferCSSPageSize: true });
     await page.emulateMedia({ media: "screen" });
 
     // Ограничение документом и вкладка оборудования.
     await page.goto(`${BASE}/settings/qr-posters?kind=equipment&doc=${env.coldDoc.id}&origin=${encodeURIComponent(BASE)}`, { waitUntil: "load", timeout: 300_000 });
-    const docIds = await page.locator("[data-qr-poster]").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-qr-id")));
+    const docIds = await page
+      .locator('[data-qr-poster]:not([data-qr-kind="journal"])')
+      .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-qr-id")));
     check("?doc= ограничивает список строками документа", docIds.length === 1 && docIds[0] === env.fridge.id, docIds);
-    const fridgeUrl = await page.locator("[data-qr-poster]").first().getAttribute("data-qr-url");
+    const fridgeUrl = await page.locator('[data-qr-poster]:not([data-qr-kind="journal"])').first().getAttribute("data-qr-url");
 
     // Входы в плакаты.
     await page.goto(`${BASE}/settings/equipment`, { waitUntil: "load", timeout: 300_000 });
@@ -224,13 +259,20 @@ async function main() {
     await scan.screenshot({ path: path.join(SHOTS, "room-fill-form.png"), fullPage: true });
 
     const submit = async (temperature: string, humidity: string) => {
-      await scan.locator('button[role="combobox"]').first().click();
-      await scan.locator(`[role="option"]:has-text("${U.cookA.name}")`).first().click();
+      // Выбор сотрудника — строка «Кто снимает показания» → лист со списком.
+      const who = scan.locator('button:has-text("Выберите своё имя")');
+      if (await who.isVisible().catch(() => false)) {
+        await who.click();
+        await scan.locator(`[role="dialog"] button:has-text("${U.cookA.name}")`).first().click();
+      }
       await scan.fill("#room-fill-temperature", temperature);
       await scan.fill("#room-fill-humidity", humidity);
+      // Вне нормы форма просит написать, что сделали.
+      const correction = scan.locator("textarea").first();
+      if (await correction.isVisible().catch(() => false)) await correction.fill("Проветрили склад, сообщили руководителю");
       const [response] = await Promise.all([
         scan.waitForResponse((res) => res.url().includes(`/api/room-fill/${env.room.id}`) && res.request().method() === "POST", { timeout: 120_000 }),
-        scan.click('button:has-text("3. Сохранить")'),
+        scan.getByRole("button", { name: "Сохранить", exact: true }).click(),
       ]);
       await scan.locator("text=Записано").first().waitFor({ timeout: 60_000 });
       return { status: response.status(), json: await response.json() };
@@ -270,7 +312,8 @@ async function main() {
     const broken = await post(`/api/room-fill/${env.room.id}`, { token: `${roomToken.slice(0, -3)}abc`, employeeId: U.cookA.id, temperature: 20 });
     check("испорченный токен → 401", broken.status() === 401, await broken.json());
     const expired = await post(`/api/room-fill/${env.room.id}`, { token: mintToken(`room:${env.room.id}`, Date.now() - 400 * 86400_000), employeeId: U.cookA.id, temperature: 20 });
-    check("просроченный токен → 401", expired.status() === 401 && (await expired.json()).code === "expired", expired.status());
+    // С b2f40be2 (решение владельца, 2026-09-19) QR-коды бессрочные: код 400-дневной давности работает.
+    check("код 400-дневной давности по-прежнему принимается (коды бессрочные) → 200", expired.status() === 200, { status: expired.status(), body: await expired.text() });
     const foreignRoomToken = mintToken("room:some-other-room", Date.now());
     const foreign = await post(`/api/room-fill/${env.room.id}`, { token: foreignRoomToken, employeeId: U.cookA.id, temperature: 20 });
     check("токен другого помещения → 401", foreign.status() === 401, foreign.status());
@@ -319,6 +362,9 @@ async function main() {
     await anon.close();
   } finally {
     await browser.close();
+    await db.organization.update({ where: { id: env.orgA }, data: { qrFillMode: orgMode.qrFillMode } });
+    await db.user.update({ where: { id: U.cookA.id }, data: cookPin });
+    await db.room.update({ where: { id: env.room.id }, data: { fillerUserIds: roomFillers.fillerUserIds } });
   }
 
   fs.writeFileSync(path.join(HERE, "poster-scan.json"), JSON.stringify({ checks }, null, 2));

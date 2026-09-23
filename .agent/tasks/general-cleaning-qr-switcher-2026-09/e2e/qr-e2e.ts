@@ -19,6 +19,11 @@ const state = JSON.parse(fs.readFileSync(path.join(HERE, "qr-state.json"), "utf8
 const ORG: string = state.org;
 const TODAY: string = state.today;
 const DAY = new Date(`${TODAY}T00:00:00.000Z`);
+// Секрет QR-токена — тот же, что у dev-сервера (из .env берём только его).
+for (const line of fs.readFileSync(path.join(HERE, "..", "..", "..", "..", ".env"), "utf8").split(/\r?\n/)) {
+  const m = /^(EQUIPMENT_QR_TOKEN_SECRET|TELEGRAM_LINK_TOKEN_SECRET|NEXTAUTH_SECRET)=(.*)$/.exec(line);
+  if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^"|"$/g, "");
+}
 const ONLY = (process.env.ONLY ?? "").split(",").filter(Boolean);
 
 const checks: Array<{ id: string; name: string; ok: boolean; detail?: unknown }> = [];
@@ -129,13 +134,15 @@ async function main() {
     let lampStickers: Poster[] = [];
     if (wants("C-2") || wants("C-7")) {
       const cold = await posters(manager, "kind=journals&ids=cold_equipment_control");
-      const url = new URL(cold.url);
-      coldStickers = cold.posters;
+      // С 733d5137 страница журнала объектов — это основной QR журнала
+      // (data-qr-kind="journal", id = код) + наклейки его объектов, без редиректа.
+      const coldMain = cold.posters.filter((p) => p.kind === "journal");
+      coldStickers = cold.posters.filter((p) => p.kind !== "journal");
       check(
         "C-2",
-        "журнал холодильников: плакат журнала → наклейки его холодильников",
-        url.searchParams.get("kind") === "equipment" && url.searchParams.get("layout") === "sheet" && url.searchParams.get("journal") === "cold_equipment_control",
-        cold.url
+        "журнал холодильников: основной QR журнала + наклейки его холодильников",
+        coldMain.length === 1 && coldMain[0].id === "cold_equipment_control" && coldStickers.every((p) => p.kind === "equipment"),
+        cold.posters.map((p) => [p.kind, p.id])
       );
       check(
         "C-2",
@@ -143,17 +150,24 @@ async function main() {
         coldStickers.length === 2 && coldStickers.some((p) => p.id === state.equipment.fridge) && coldStickers.some((p) => p.id === state.equipment.freezer),
         coldStickers.map((p) => p.id)
       );
-      check("C-2", "вместо «Выбранные объекты не найдены» — область журнала", !cold.text.includes("Выбранные объекты не найдены") && cold.text.includes("объектов журнала"), cold.text.slice(0, 300));
+      check("C-2", "вместо «Выбранные объекты не найдены» — область журнала", !cold.text.includes("Выбранные объекты не найдены") && cold.text.includes("Наклейки на объекты"), cold.text.slice(0, 300));
       await manager.screenshot({ path: path.join(SHOTS, "qr-c2-cold-stickers.png"), fullPage: true });
 
       const climate = await posters(manager, new URL(journalQrHref("climate_control"), BASE).search.slice(1));
-      roomStickers = climate.posters;
-      check("C-2", "климат: наклейки обоих складов журнала", roomStickers.length === 2 && roomStickers.every((p) => p.kind === "room"), roomStickers.map((p) => p.id));
+      roomStickers = climate.posters.filter((p) => p.kind !== "journal");
+      check("C-2", "климат: основной QR журнала + наклейки обоих складов", climate.posters.some((p) => p.kind === "journal" && p.id === "climate_control") && roomStickers.length === 2 && roomStickers.every((p) => p.kind === "room"), climate.posters.map((p) => [p.kind, p.id]));
       const uv = await posters(manager, new URL(journalQrHref("uv_lamp_runtime"), BASE).search.slice(1));
-      lampStickers = uv.posters;
-      check("C-2", "УФ: наклейка лампы", lampStickers.length === 1 && lampStickers[0].id === state.equipment.lamp, lampStickers.map((p) => p.id));
+      lampStickers = uv.posters.filter((p) => p.kind !== "journal");
+      check("C-2", "УФ: основной QR журнала + наклейка лампы", uv.posters.some((p) => p.kind === "journal" && p.id === "uv_lamp_runtime") && lampStickers.length === 1 && lampStickers[0].id === state.equipment.lamp, uv.posters.map((p) => [p.kind, p.id]));
       const mismatched = await posters(manager, "kind=rooms&journal=cold_equipment_control");
-      check("C-2", "вид не совпал с журналом (склады ↔ холодильники) — на верные наклейки", new URL(mismatched.url).searchParams.get("kind") === "equipment", mismatched.url);
+      // Вид нормализуется на сервере без смены URL: показываются наклейки холодильников.
+      const mismatchedStickers = mismatched.posters.filter((p) => p.kind !== "journal");
+      check(
+        "C-2",
+        "вид не совпал с журналом (склады ↔ холодильники) — на верные наклейки",
+        mismatchedStickers.length === 2 && mismatchedStickers.every((p) => p.kind === "equipment") && mismatchedStickers.some((p) => p.id === state.equipment.fridge),
+        mismatched.posters.map((p) => [p.kind, p.id])
+      );
     }
 
     // ---------------------------------------------------------------- C-3 kind=journal, гигиена
@@ -167,7 +181,7 @@ async function main() {
         hygiene.posters.map((p) => p.id).sort().join(",") === "hygiene,hygiene@verify",
         hygiene.posters.map((p) => p.id)
       );
-      check("C-3", "журнал без документов — подсказка «создайте первый»", hygiene.posters.every((p) => /ещё нет документа/.test(p.notice ?? "")), hygiene.posters.map((p) => p.notice));
+      check("C-3", "журнал без документов — подсказка «создастся при первом сканировании»", hygiene.posters.every((p) => /Документа ещё нет — он создастся при первом сканировании/.test(p.notice ?? "")), hygiene.posters.map((p) => p.notice));
       const lapsedHub = singular.posters.find((p) => p.id === "cleaning_ventilation_checklist" || p.id === "metal_impurity");
       check("C-3", "лист «все журналы» включает журналы с кончившимся периодом", Boolean(lapsedHub), singular.posters.map((p) => p.id));
     }
@@ -176,10 +190,16 @@ async function main() {
     let oldDocPoster: Poster | undefined;
     if (wants("C-4") || wants("C-6")) {
       const res = await posters(manager, `kind=journals&ids=${encodeURIComponent(`cleaning_ventilation_checklist:${state.docs.checklistPrev}`)}`);
-      oldDocPoster = res.posters[0];
-      check("C-4", "ids=код:документ (печать из превью документа) — плакат этого документа", res.posters.length === 1 && oldDocPoster.id === `cleaning_ventilation_checklist:${state.docs.checklistPrev}`, res.posters.map((p) => p.id));
+      // Основной QR журнала + дополнительный QR этого документа.
+      oldDocPoster = res.posters.find((p) => p.id === `cleaning_ventilation_checklist:${state.docs.checklistPrev}`);
+      check(
+        "C-4",
+        "ids=код:документ (печать из превью документа) — основной QR журнала и QR этого документа",
+        res.posters.length === 2 && res.posters[0].id === "cleaning_ventilation_checklist" && Boolean(oldDocPoster),
+        res.posters.map((p) => p.id)
+      );
       const unknown = await posters(manager, "kind=journals&ids=no_such_journal");
-      check("C-4", "неизвестный журнал — причина, а не молчаливая пустота", unknown.posters.length === 0 && unknown.text.includes("Такого журнала нет") && unknown.text.includes("Выбранные журналы не найдены"), unknown.text.slice(0, 400));
+      check("C-4", "неизвестный журнал — причина, а не молчаливая пустота", unknown.posters.length === 0 && unknown.text.includes("Такого журнала нет") && unknown.text.includes("Журнал не найден"), unknown.text.slice(0, 400));
       await manager.screenshot({ path: path.join(SHOTS, "qr-c4-missing-reason.png"), fullPage: true });
     }
 
@@ -216,9 +236,17 @@ async function main() {
     // ---------------------------------------------------------------- C-6 плакат прошлого документа
     if (wants("C-6") && oldDocPoster) {
       const successor = (await activeToday("cleaning_ventilation_checklist"))[0];
+      // С 733d5137 дополнительный QR документа, выпущенный сейчас, несёт подписанный
+      // срок (конец периода) — у прошлого периода он уже истёк.
       await goto(scan, `${local(oldDocPoster.url)}&employee=${state.users.cook.id}`);
+      const expiredText = await scan.locator("body").innerText().catch(() => "");
+      check("C-6", "QR документа прошлого периода, напечатанный сейчас, — «срок закончился», отсылка к основному QR", /Срок этого QR-кода закончился/.test(expiredText) && /основной QR-код журнала/.test(expiredText), expiredText.slice(0, 300));
+      // Старые напечатанные коды (без срока в подписи) работают как раньше.
+      const { mintQrFillToken } = await import("../../../../src/lib/qr-fill-token");
+      const legacyToken = mintQrFillToken("journal", `${ORG}:cleaning_ventilation_checklist:${state.docs.checklistPrev}`);
+      await goto(scan, `${BASE}/journal-fill/${ORG}/cleaning_ventilation_checklist?token=${encodeURIComponent(legacyToken)}&employee=${state.users.cook.id}`);
       const formShown = await scan.locator("#qr-form").waitFor({ timeout: 120_000 }).then(() => true).catch(() => false);
-      check("C-6", "плакат, напечатанный из документа прошлого периода, открывает форму", formShown, (await scan.locator("main").innerText().catch(() => "")).slice(0, 300));
+      check("C-6", "плакат, напечатанный из документа прошлого периода (старый код без срока), открывает форму", formShown, (await scan.locator("main").innerText().catch(() => "")).slice(0, 300));
       if (formShown) {
         await scan.locator("#qr-form button[type=submit]").first().click();
         await scan.locator(".ok").waitFor({ timeout: 120_000 }).catch(() => null);
@@ -327,9 +355,13 @@ async function main() {
       } else check("C-8", "плакат выключенного журнала собирается", false);
       const perishable = (await posters(manager, "kind=journals&ids=perishable_rejection")).posters[0];
       if (perishable) {
+        const before = (await activeToday("perishable_rejection")).length;
         await goto(scan, `${local(perishable.url)}&employee=${state.users.cook.id}`);
         const text = await scan.locator("body").innerText();
-        check("C-8", "без прошлого документа — не создаём, просим создать", text.includes("Попросите руководителя создать документ") && (await activeToday("perishable_rejection")).length === 0, text.slice(0, 200));
+        // С 733d5137 основной QR журнала без документов создаёт первый документ.
+        const formShown = await scan.locator("#qr-form").count().then((n) => n > 0).catch(() => false);
+        const created = await activeToday("perishable_rejection");
+        check("C-8", "без прошлого документа — основной QR создаёт первый документ, форма открыта", before === 0 && formShown && !text.includes("Попросите руководителя создать документ") && created.length === 1, { text: text.slice(0, 200), before, docs: created.length });
       }
       const fryer = (await posters(manager, "kind=journals&ids=fryer_oil")).posters[0];
       if (fryer) {

@@ -44,6 +44,83 @@ function check(id: string, name: string, ok: boolean, detail?: unknown) {
 const require = createRequire(import.meta.url);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const ZX: any = require(path.join(ROOT, "node_modules/html5-qrcode/third_party/zxing-js.umd.js"));
+/** Усреднение по площади (как у камеры/принтера) до размера tw×th. */
+function resampleLuminance(src: Float32Array, w: number, h: number, tw: number, th: number): Float32Array {
+  const out = new Float32Array(tw * th);
+  const sx = w / tw;
+  const sy = h / th;
+  for (let y = 0; y < th; y += 1) {
+    for (let x = 0; x < tw; x += 1) {
+      const x0 = x * sx;
+      const x1 = x0 + sx;
+      const y0 = y * sy;
+      const y1 = y0 + sy;
+      let sum = 0;
+      let area = 0;
+      for (let yy = Math.floor(y0); yy < Math.min(h, Math.ceil(y1)); yy += 1) {
+        const wy = Math.min(y1, yy + 1) - Math.max(y0, yy);
+        for (let xx = Math.floor(x0); xx < Math.min(w, Math.ceil(x1)); xx += 1) {
+          const wx = Math.min(x1, xx + 1) - Math.max(x0, xx);
+          sum += src[yy * w + xx] * wx * wy;
+          area += wx * wy;
+        }
+      }
+      out[y * tw + x] = sum / area;
+    }
+  }
+  return out;
+}
+
+/**
+ * Запасной путь: ZXing-js на части кадров не находит finder-паттерны при
+ * одной ориентации (исходный QR при этом корректен — так выглядели «плавающие»
+ * промахи PR-4 на наклейках 34 мм при 288 dpi). Как телефон, который держат
+ * под другим углом: усреднение до нескольких размеров, поворот на 90°, порог.
+ */
+function decodeLuminanceRobust(png: PNG): string | null {
+  const w = png.width;
+  const h = png.height;
+  const lum = new Float32Array(w * h);
+  for (let i = 0; i < lum.length; i += 1) lum[i] = (png.data[i * 4] * 299 + png.data[i * 4 + 1] * 587 + png.data[i * 4 + 2] * 114) / 1000;
+  const hints = new Map();
+  hints.set(ZX.DecodeHintType.TRY_HARDER, true);
+  hints.set(ZX.DecodeHintType.POSSIBLE_FORMATS, [ZX.BarcodeFormat.QR_CODE]);
+  for (const factor of [1, 0.77, 0.62, 0.46, 0.41]) {
+    const tw = Math.max(60, Math.round(w * factor));
+    const th = Math.max(60, Math.round(h * factor));
+    const small = factor === 1 ? lum : resampleLuminance(lum, w, h, tw, th);
+    for (const rotate of [true, false]) {
+      for (const threshold of [false, true]) {
+        const pad = Math.round(tw / 20);
+        let W = tw + pad * 2;
+        let H = th + pad * 2;
+        let buf = new Uint8ClampedArray(W * H).fill(255);
+        for (let y = 0; y < th; y += 1) {
+          for (let x = 0; x < tw; x += 1) {
+            const v = small[y * tw + x];
+            buf[(y + pad) * W + x + pad] = threshold ? (v < 128 ? 0 : 255) : v;
+          }
+        }
+        if (rotate) {
+          const turned = new Uint8ClampedArray(W * H);
+          for (let y = 0; y < H; y += 1) for (let x = 0; x < W; x += 1) turned[x * H + (H - 1 - y)] = buf[y * W + x];
+          buf = turned;
+          [W, H] = [H, W];
+        }
+        for (const Binarizer of [ZX.HybridBinarizer, ZX.GlobalHistogramBinarizer]) {
+          try {
+            const source = new ZX.RGBLuminanceSource(buf, W, H);
+            return new ZX.QRCodeReader().decode(new ZX.BinaryBitmap(new Binarizer(source)), hints).getText();
+          } catch {
+            // следующий вариант
+          }
+        }
+      }
+    }
+  }
+  return null;
+}
+
 function decodePng(buffer: Buffer): string | null {
   const png = PNG.sync.read(buffer);
   // Белое поле вокруг кадра — как бумага вокруг наклейки: скриншот элемента
@@ -76,7 +153,7 @@ function decodePng(buffer: Buffer): string | null {
       }
     }
   }
-  return null;
+  return decodeLuminanceRobust(png);
 }
 
 async function goto(page: Page, url: string) {
@@ -408,6 +485,8 @@ async function main() {
     const codes = hiPage.locator("[data-qr-print-code]");
     const n = await codes.count();
     const failures: unknown[] = [];
+    const failDir = "C:/Users/Yaroslav/AppData/Local/Temp/18/claude/d--www-Wesetup-ru/6bdc8fdd-ce53-4489-a636-2e1b1e95d14d/scratchpad/c";
+    fs.mkdirSync(failDir, { recursive: true });
     const decodedUrls = new Set<string>();
     for (let i = 0; i < n; i += 1) {
       const node = codes.nth(i);
@@ -415,7 +494,7 @@ async function main() {
       const shot = await node.screenshot();
       const text = decodePng(shot);
       if (text) decodedUrls.add(text);
-      if (!text) fs.writeFileSync(`C:/Users/Yaroslav/AppData/Local/Temp/18/claude/d--www-Wesetup-ru/6bdc8fdd-ce53-4489-a636-2e1b1e95d14d/scratchpad/c/hifail-${i}.png`, shot);
+      if (!text) fs.writeFileSync(path.join(failDir, `hifail-${i}.png`), shot);
       if (!text || text !== expected) failures.push({ i, expected, text });
     }
     check("PR-4", `каждый напечатанный QR (${n}) декодируется в свой адрес (≈ 288 dpi)`, n === 17 && failures.length === 0, failures.slice(0, 3));

@@ -42,6 +42,42 @@ async function main() {
     where: { id: cook.id },
     select: { qrPinHash: true, qrPinEncrypted: true, qrPinFailedCount: true, qrPinLockedUntil: true },
   });
+  // Самодостаточность: морозилка/холодильник должны входить в активный документ
+  // холодильников на сегодня, иначе «Сохранить» неактивна (данные стенда меняют
+  // другие смоуки). Нет такого документа — создаём временный и удаляем в finally.
+  const tz = (await db.organization.findUniqueOrThrow({ where: { id: ORG }, select: { timezone: true } })).timezone || "Europe/Moscow";
+  const todayKey = new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  const today = new Date(`${todayKey}T00:00:00.000Z`);
+  const coldTemplate = await db.journalTemplate.findUniqueOrThrow({ where: { code: "cold_equipment_control" }, select: { id: true } });
+  const activeCold = await db.journalDocument.findMany({
+    where: { organizationId: ORG, templateId: coldTemplate.id, status: "active", dateFrom: { lte: today }, dateTo: { gte: today } },
+    select: { id: true, config: true },
+  });
+  const covered = activeCold.some((doc) =>
+    ((doc.config as { equipment?: Array<{ sourceEquipmentId?: string; equipmentId?: string }> } | null)?.equipment ?? []).some(
+      (item) => item.sourceEquipmentId === fridge.id || item.equipmentId === fridge.id
+    )
+  );
+  let tempColdDocId: string | null = null;
+  if (!covered) {
+    const fridgeRow = await db.equipment.findUniqueOrThrow({ where: { id: fridge.id }, select: { name: true } });
+    const created = await db.journalDocument.create({
+      data: {
+        organizationId: ORG,
+        templateId: coldTemplate.id,
+        title: "PIN E2E холодильники",
+        dateFrom: today,
+        dateTo: today,
+        responsibleUserId: cook.id,
+        config: {
+          equipment: [{ id: "pin-e2e-cold", sourceEquipmentId: fridge.id, name: fridgeRow.name, min: fridge.tempMin ?? 2, max: fridge.tempMax ?? 6 }],
+          skipWeekends: false,
+        },
+      },
+    });
+    tempColdDocId = created.id;
+  }
+  console.log(`холодильник ${fridge.id}: ${covered ? "уже в активном документе" : `создан временный документ ${tempColdDocId}`}`);
   const browser = await chromium.launch({ channel: "chrome" });
   const mobile = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 };
   try {
@@ -109,11 +145,35 @@ async function main() {
       (await page2.locator('[data-testid="qr-pin-step"]').isVisible().catch(() => false)) && (await page2.content()).includes(cook.name.split(" ")[0])
     );
 
+    // ---- пропуск на 30 минут (cookie wesetup.qr.pass.<org>) переезжает вместе с выбором: PIN не спрашивается
+    const passCookie = cookies.find((c) => c.name === `wesetup.qr.pass.${ORG}`);
+    check("после верного PIN с «Запомнить выбор» выдан пропуск wesetup.qr.pass.<org>", Boolean(passCookie), cookies.map((c) => c.name));
+    const ctx3 = await browser.newContext(mobile);
+    await ctx3.addCookies(cookies.filter((c) => c.name.startsWith("wesetup.qr.who.") || c.name === `wesetup.qr.pass.${ORG}`));
+    const page4 = await ctx3.newPage();
+    await page4.goto(url, { waitUntil: "load", timeout: 240_000 });
+    await page4.waitForLoadState("networkidle").catch(() => null);
+    const passStep = await page4.locator('[data-testid="qr-pin-step"]').isVisible().catch(() => false);
+    const passField = await page4.locator("#equipment-fill-temperature").count();
+    check("с копией пропуска wesetup.qr.pass.<org> PIN НЕ спрашивается, поля сразу", !passStep && passField === 1, { passStep, passField });
+    await ctx3.close();
+
     // ---- помещение: тот же шаг PIN
     if (room) {
       await db.room.update({ where: { id: room.id }, data: { fillerUserIds: [] } });
       const roomToken = mintQrFillToken("room", room.id);
-      const page3 = await ctx.newPage();
+      // Пропуск на 30 минут у ctx уже есть — PIN на помещении спрашиваем в контексте
+      // без пропуска (ctx2: только запомненный выбор).
+      const withPass = await ctx.newPage();
+      await withPass.goto(`${BASE}/room-fill/${room.id}?token=${encodeURIComponent(roomToken)}`, { waitUntil: "load", timeout: 240_000 });
+      await withPass.waitForLoadState("networkidle").catch(() => null);
+      check(
+        "помещение с действующим пропуском (30 минут) — PIN не спрашивается",
+        !(await withPass.locator('[data-testid="qr-pin-step"]').isVisible().catch(() => false)) &&
+          (await withPass.locator("#room-fill-temperature, #room-fill-humidity").count()) > 0
+      );
+      await withPass.close();
+      const page3 = await ctx2.newPage();
       await page3.goto(`${BASE}/room-fill/${room.id}?token=${encodeURIComponent(roomToken)}`, { waitUntil: "load", timeout: 240_000 });
       await page3.waitForLoadState("networkidle").catch(() => null);
       await page3.screenshot({ path: path.join(SHOTS, "62-room-pin-step.png"), fullPage: true });
@@ -130,6 +190,10 @@ async function main() {
     }
   } finally {
     await browser.close();
+    if (tempColdDocId) {
+      await db.journalDocumentEntry.deleteMany({ where: { documentId: tempColdDocId } });
+      await db.journalDocument.delete({ where: { id: tempColdDocId } }).catch(() => null);
+    }
     await db.organization.update({ where: { id: ORG }, data: { qrFillMode: org.qrFillMode } });
     await db.user.update({ where: { id: cook.id }, data: saved });
     await db.equipment.update({ where: { id: fridge.id }, data: { fillerUserIds: fridge.fillerUserIds } });
