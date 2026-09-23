@@ -162,10 +162,13 @@ function Tap({ t, at, x, y }: { t: number; at: number; x: string; y: string }) {
   );
 }
 
-/** Галка «Сохранено»: круг рисуется обводкой, затем галка. Кадровая, не CSS. */
-function DrawnCheck({ t, at, size = "4.4em", color = P.ok, tint = P.okTint }: { t: number; at: number; size?: string; color?: string; tint?: string }) {
-  const circle = progress(t, at, 0.4, ease.inOut);
-  const mark = progress(t, at + 0.3, 0.3, ease.out);
+/**
+ * Галка «Сохранено» — как в продукте (`QR_CHECK_SVG` в `src/lib/qr-pin-ui.ts`):
+ * залитый сине-зелёный круг с ореолом и белая галка, без контурного кольца.
+ * Круг появляется, затем рисуется галка. Кадровая, не CSS.
+ */
+function DrawnCheck({ t, at, size = "4.4em" }: { t: number; at: number; size?: string }) {
+  const mark = progress(t, at + 0.2, 0.3, ease.out);
   const pop = interpolate(t, [at, at + 0.35], [0.7, 1], { easing: ease.outBack });
   return (
     <div
@@ -174,17 +177,16 @@ function DrawnCheck({ t, at, size = "4.4em", color = P.ok, tint = P.okTint }: { 
         height: size,
         margin: "0 auto",
         borderRadius: "999px",
-        background: tint,
-        color,
+        background: "#059669",
+        boxShadow: "0 0 0 0.3em rgba(5,150,105,.14)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         transform: `scale(${pop})`,
       }}
     >
-      <svg viewBox="0 0 24 24" style={{ width: "72%", height: "72%" }} fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10" pathLength={1} strokeDasharray="1" strokeDashoffset={1 - circle} />
-        <path d="m8 12.5 2.7 2.7L16.5 9.5" pathLength={1} strokeDasharray="1" strokeDashoffset={1 - mark} />
+      <svg viewBox="0 0 24 24" style={{ width: "60%", height: "60%" }} fill="none" stroke="#ffffff" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+        <path d="m6.5 12.5 3.6 3.6 7.4-7.6" pathLength={1} strokeDasharray="1" strokeDashoffset={1 - mark} />
       </svg>
     </div>
   );
