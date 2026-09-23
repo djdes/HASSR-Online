@@ -132,7 +132,7 @@ import {
   todaySignatureText,
 } from "@/lib/brakerage-commission";
 import { orgTodayKey } from "@/lib/timezone";
-import { addMinutesToLocalDateTime, deriveBrakerageTimes } from "@/lib/brakerage-times";
+import { addMinutesToLocalDateTime, brakerageChainCaption, chainBrakerageTimes, deriveBrakerageTimes } from "@/lib/brakerage-times";
 type Props = {
   documentId: string;
   title: string;
@@ -874,11 +874,18 @@ export function FinishedProductDocumentClient({
   const rowFields = ({
     withProductName,
     withPortion = true,
+    chainTimes = false,
     leading,
   }: {
     withProductName: boolean;
     /** false — в окне «списком»: у каждой строки таблицы свой выход. */
     withPortion?: boolean;
+    /**
+     * Окно добавления (одно и списком): вводится только изготовление, время
+     * бракеража и разрешения считаются цепочкой (решение владельца
+     * 2026-09-23). В правке строки поля времени остаются.
+     */
+    chainTimes?: boolean;
     leading?: React.ReactNode;
   }) => (
     <div className="max-h-[calc(92vh-160px)] min-w-0 space-y-5 overflow-x-hidden overflow-y-auto px-6 py-5">
@@ -891,7 +898,21 @@ export function FinishedProductDocumentClient({
                 offsets={PRODUCTION_OFFSETS}
                 onChange={(next) => setDraftRow((prev) => ({ ...prev, productionDateTime: next }))}
               />
+              {chainTimes ? (
+                <p
+                  className="rounded-xl bg-[#f5f6ff] px-3 py-2 text-[12.5px] leading-snug text-[#3848c7]"
+                  data-testid="brakerage-chain-caption"
+                  aria-live="polite"
+                >
+                  {brakerageChainCaption({
+                    productionDateTime: draftRow.productionDateTime,
+                    releaseAllowed: draftRow.releaseAllowed,
+                    offsets: config.timeDefaults,
+                  })}
+                </p>
+              ) : null}
             </div>
+            {!chainTimes ? (
             <div className="space-y-2">
               <Label className="text-[13px] font-medium text-[#3c4053]">Время снятия бракеража</Label>
               <DateTimePair dateLabel="Дата снятия бракеража" timeLabel="Время снятия бракеража" value={draftRow.rejectionTime} onChange={(next) => setDraftRow((prev) => ({ ...prev, rejectionTime: next }))} />
@@ -909,6 +930,7 @@ export function FinishedProductDocumentClient({
                 nowLabel={`Сейчас (разрешение — через ${config.timeDefaults.releaseAfterRejectionMinutes} мин)`}
               />
             </div>
+            ) : null}
             {withProductName ? (
               <div className="space-y-2">
                 <Label className="text-[13px] font-medium text-[#3c4053]">Наименование изделия</Label>
@@ -1065,10 +1087,12 @@ export function FinishedProductDocumentClient({
               </div>
             </div>
             ) : null}
+            {!chainTimes ? (
             <div className="space-y-2">
               <Label className="text-[13px] font-medium text-[#3c4053]">Дата и время разрешения</Label>
               <DateTimePair dateLabel="Дата разрешения" timeLabel="Время разрешения" value={draftRow.releasePermissionTime} onChange={(next) => setDraftRow((prev) => ({ ...prev, releasePermissionTime: next }))} />
             </div>
+            ) : null}
             {isColumnVisible("courier") ? (
               <div className="space-y-2">
                 <Label className="text-[13px] font-medium text-[#3c4053]">{columnLabel("courier", "Дата и время передачи блюд курьеру")}</Label>
@@ -1376,7 +1400,7 @@ export function FinishedProductDocumentClient({
     }
     const withYield = isColumnVisible("portion");
     // Общие поля из окна (даты, оценка, ответственные) — каждому изделию списка.
-    const { id: _templateId, ...template } = draftRow;
+    const { id: _templateId, ...template } = withChainedTimes(draftRow);
     void _templateId;
     commitConfig(
       {
@@ -1427,6 +1451,18 @@ export function FinishedProductDocumentClient({
     });
   }
 
+  /** Время бракеража = изготовление + N1, разрешение = бракераж + N2 («Константы времени»). */
+  function withChainedTimes(row: FinishedProductDocumentRow): FinishedProductDocumentRow {
+    return {
+      ...row,
+      ...chainBrakerageTimes({
+        productionDateTime: row.productionDateTime,
+        releaseAllowed: row.releaseAllowed,
+        offsets: config.timeDefaults,
+      }),
+    };
+  }
+
   function openAddRow() {
     setEditingRowId(null);
     setOrganolepticCustom(false);
@@ -1472,11 +1508,13 @@ export function FinishedProductDocumentClient({
    * только наименование.
    */
   async function saveDraftRow(options: { keepOpen?: boolean } = {}) {
+    // Новая строка: бракераж и разрешение — цепочкой от изготовления.
+    const savedRow = editingRowId ? draftRow : withChainedTimes(draftRow);
     const nextConfig = {
       ...config,
       rows: editingRowId
-        ? config.rows.map((row) => (row.id === editingRowId ? draftRow : row))
-        : [...config.rows, draftRow],
+        ? config.rows.map((row) => (row.id === editingRowId ? savedRow : row))
+        : [...config.rows, savedRow],
     };
     setConfig(nextConfig);
     const saved = await saveConfig(nextConfig);
@@ -1939,7 +1977,7 @@ export function FinishedProductDocumentClient({
               {editingRowId ? `Изменение записи${seq.progress ? ` ${seq.progress}` : ""}` : "Добавление новой строки"}
             </DialogTitle>
           </DialogHeader>
-          {rowFields({ withProductName: true })}
+          {rowFields({ withProductName: true, chainTimes: !editingRowId })}
           <div className="flex flex-col-reverse gap-2 border-t bg-white px-6 py-4 sm:flex-row sm:justify-end">
             <Button type="button" variant="outline" className="h-9 w-full rounded-xl border-[#dcdfed] px-5 text-[14px] font-medium text-[#0b1024] shadow-none hover:bg-[#fafbff] sm:w-auto" onClick={closeRowModal}>Отмена</Button>
             {!editingRowId ? (
@@ -2149,6 +2187,7 @@ export function FinishedProductDocumentClient({
           {rowFields({
             withProductName: false,
             withPortion: false,
+            chainTimes: true,
             leading: bulkTable,
           })}
           <div className="flex flex-col-reverse gap-2 border-t bg-white px-6 py-4 sm:flex-row sm:justify-end">

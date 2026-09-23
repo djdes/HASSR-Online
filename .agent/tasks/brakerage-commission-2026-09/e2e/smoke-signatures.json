@@ -30,6 +30,16 @@
     "ok": true
   },
   {
+    "name": "гайд заполнения отмечен увиденным до захода",
+    "ok": true,
+    "detail": 200
+  },
+  {
+    "name": "условия приняты до захода (модалка не перекроет таблицу)",
+    "ok": true,
+    "detail": 200
+  },
+  {
     "name": "подпись в строке: заведующая, метод «вход в кабинет»",
     "ok": true,
     "detail": {
@@ -42,7 +52,7 @@
           "grade": "Отлично",
           "method": "session",
           "userId": "cmu2stnc80007wk9mhv7i9h0s",
-          "signedAt": "2026-09-21T18:07:33.095Z",
+          "signedAt": "2026-09-23T15:58:31.452Z",
           "snapshot": {
             "productName": "Суп смоук подписи",
             "organoleptic": "Отлично",
@@ -58,21 +68,21 @@
       "organoleptic": "Отлично",
       "inspectorName": "",
       "portionWeight": "",
-      "rejectionTime": "2026-09-21 21:07",
+      "rejectionTime": "2026-09-23 12:05",
       "releaseAllowed": "yes",
       "correctiveAction": "",
       "organolepticValue": "",
       "responsiblePerson": "",
       "organolepticResult": "",
-      "productionDateTime": "2026-09-21 12:00",
+      "productionDateTime": "2026-09-23 12:00",
       "courierTransferTime": "",
-      "releasePermissionTime": "2026-09-21 21:07"
+      "releasePermissionTime": "2026-09-23 12:10"
     }
   },
   {
     "name": "время снятия бракеража дописано подписью",
     "ok": true,
-    "detail": "2026-09-21 21:07"
+    "detail": "2026-09-23 12:05"
   },
   {
     "name": "событие в журнале подписей",
@@ -87,7 +97,7 @@
   {
     "name": "колонка «Подпись бракеражной комиссии» показывает подписавшего",
     "ok": true,
-    "detail": "\t\n\t\n\t\n\t\n\t\nРазрешено\nНе разрешено\n\t\nАнна З. · 21:07\n\t\n\t\n\t\n\t\n\t\n\t\n\t"
+    "detail": "\t\n\t\n\t\n\t\n\t\nРазрешено\nНе разрешено\n\t\nАнна З. · 18:58\n\t\n\t\n\t\n\t\n\t\n\t\n\t"
   },
   {
     "name": "сохранение устаревшей вкладки не стирает подпись",
@@ -102,7 +112,7 @@
             "grade": "Отлично",
             "method": "session",
             "userId": "cmu2stnc80007wk9mhv7i9h0s",
-            "signedAt": "2026-09-21T18:07:33.095Z",
+            "signedAt": "2026-09-23T15:58:31.452Z",
             "snapshot": {
               "productName": "Суп смоук подписи",
               "organoleptic": "Отлично",
@@ -115,14 +125,14 @@
         "productName": "Суп смоук подписи",
         "organoleptic": "Отлично",
         "releaseAllowed": "yes",
-        "productionDateTime": "2026-09-21 12:00"
+        "productionDateTime": "2026-09-23 12:00"
       }
     ]
   },
   {
     "name": "после подписи журнал закрывается",
     "ok": true,
-    "detail": "{\"document\":{\"id\":\"cmu3xu9lc005lks9mmmr8ltma\",\"templateId\":\"cmu2pwdro0003t49mw2klzjfs\",\"organizationId\":\"e2e-org-a\",\"title\":\"E2E колонки\",\"config\":{\"rows\":[{\"id\":\"smoke-sign-row-1\",\"signatures\":[{\"name\":\"Анна Заведующая\",\"role\":\"Председатель\",\"grade\":\"Отлично\",\"method\":\"session\",\"userId\":\"cmu2stnc80007wk9mhv7i9h0s\",\"signedAt\":\"2026-09-21T18:07:33.095Z\",\"snapshot\":{\"productName\":\"Суп смоук подписи\",\"organoleptic\":\"Отлично\",\"portionWeight\":\"\",\"releaseAllowed\":\"yes\",\"organolepticResult\":\"\"}}],\"productName\":\"Суп смоук подписи\",\"organoleptic\":\"Отлично\",\"releaseAllowed\":\"yes\",\"productionDateTime\":\"2026-09-21 12:00\"}],\"columns\":{\"hidden\":[\"responsible\"],\"labels\":{\"name\":\"Блюдо\"}},\"closedAt\":\"2026-09-21\",\"footerNote\":\"\",\"itemsCatalog\":[\"Сметана 20 %\",\"Творог 9 %\"],\"productLists\":[{\"id\":\"finished-product-list-00133cb9-0b72-4929-b93a-cdd2ce10fffa\",\"name\":\"Основной список\",\"items\":[\"Сметана 20 %\",\"Творог 9 %\"]},{\"id\":\"finished-product-list-1e62afaa-357e-48bb-b20f-4ec2bae0ee85\",\"name\":\"Сезонные позиции\",\"items\":[]}],\"fieldNameMode\":\"dish\",\"inspectorMode\":\"inspector_name\",\"showCourierTime\":true,\"showOxygenLevel\":true,\"showProductTemp\":true,\"commissionMembers\":[{\"id\":\"commission-cmu2stnc80007wk9mhv7i9h0s\",\"role\":\"Председатель\",\"employeeId\":\"cmu2stnc80007wk9mhv7i9h0s\",\"employeeName\":\"Анна Заведующая\"}],\"showCorrectiveAction\":true},\"dateFrom\":\"2026-09-01T00:00:00.000Z\",\"dateTo\":\"2026-09-30T00:00:00.000Z\",\"responsibleUserId\":\"cmu2stncc0008wk9m2yu67ip7\",\"responsibleTitle\":\"Повар\",\"verifierUserId\":\"cmu2stnc80007wk9mhv7i9h0s\",\"verificationStatus\":null,\"verificationDecidedById\":null,\"verificationDecidedAt\":null,\"verificationRejectReason\":null,\"status\":\"closed\",\"autoFill\":false,\"createdById\":\"cmu2stnbo0005wk9me2bn3w8b\",\"buildingId\":null,\"createdAt\":\"2026-09-16T10:08:38.160Z\",\"updatedAt\":\"2026-09-21T18:07:34.437Z\"}}"
+    "detail": "{\"document\":{\"id\":\"cmu3xu9lc005lks9mmmr8ltma\",\"templateId\":\"cmu2pwdro0003t49mw2klzjfs\",\"organizationId\":\"e2e-org-a\",\"title\":\"E2E колонки\",\"config\":{\"rows\":[{\"id\":\"smoke-sign-row-1\",\"signatures\":[{\"name\":\"Анна Заведующая\",\"role\":\"Председатель\",\"grade\":\"Отлично\",\"method\":\"session\",\"userId\":\"cmu2stnc80007wk9mhv7i9h0s\",\"signedAt\":\"2026-09-23T15:58:31.452Z\",\"snapshot\":{\"productName\":\"Суп смоук подписи\",\"organoleptic\":\"Отлично\",\"portionWeight\":\"\",\"releaseAllowed\":\"yes\",\"organolepticResult\":\"\"}}],\"productName\":\"Суп смоук подписи\",\"organoleptic\":\"Отлично\",\"releaseAllowed\":\"yes\",\"productionDateTime\":\"2026-09-23 12:00\"}],\"columns\":{\"hidden\":[\"responsible\"],\"labels\":{\"name\":\"Блюдо\"}},\"closedAt\":\"2026-09-23\",\"footerNote\":\"\",\"itemsCatalog\":[\"Сметана 20 %\",\"Творог 9 %\"],\"productLists\":[{\"id\":\"finished-product-list-00133cb9-0b72-4929-b93a-cdd2ce10fffa\",\"name\":\"Основной список\",\"items\":[\"Сметана 20 %\",\"Творог 9 %\"]},{\"id\":\"finished-product-list-1e62afaa-357e-48bb-b20f-4ec2bae0ee85\",\"name\":\"Сезонные позиции\",\"items\":[]}],\"fieldNameMode\":\"dish\",\"inspectorMode\":\"inspector_name\",\"showCourierTime\":true,\"showOxygenLevel\":true,\"showProductTemp\":true,\"commissionMembers\":[{\"id\":\"commission-cmu2stnc80007wk9mhv7i9h0s\",\"role\":\"Председатель\",\"employeeId\":\"cmu2stnc80007wk9mhv7i9h0s\",\"employeeName\":\"Анна Заведующая\"}],\"showCorrectiveAction\":true},\"dateFrom\":\"2026-09-01T00:00:00.000Z\",\"dateTo\":\"2026-09-30T00:00:00.000Z\",\"responsibleUserId\":\"cmu2stncc0008wk9m2yu67ip7\",\"responsibleTitle\":\"Повар\",\"verifierUserId\":\"cmu2stnc80007wk9mhv7i9h0s\",\"verificationStatus\":null,\"verificationDecidedById\":null,\"verificationDecidedAt\":null,\"verificationRejectReason\":null,\"status\":\"closed\",\"autoFill\":false,\"createdById\":\"cmu2stnbo0005wk9me2bn3w8b\",\"buildingId\":null,\"createdAt\":\"2026-09-16T10:08:38.160Z\",\"updatedAt\":\"2026-09-23T15:58:32.405Z\"}}"
   },
   {
     "name": "без ошибок в консоли страницы",

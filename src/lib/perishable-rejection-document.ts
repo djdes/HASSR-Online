@@ -28,8 +28,8 @@ export function formatPerishableResponsible(
 }
 
 /**
- * Результат органолептической оценки. «Доброкачественная» /
- * «Недоброкачественная» добавлены владельцем 2026-09-21 к прежним двум.
+ * Результат органолептической оценки. «Доброкачественно» /
+ * «Недоброкачественно» добавлены владельцем 2026-09-21 к прежним двум.
  */
 export const PERISHABLE_ORGANOLEPTIC_VALUES = ["compliant", "non_compliant", "good_quality", "poor_quality"] as const;
 export type PerishableOrganolepticResult = (typeof PERISHABLE_ORGANOLEPTIC_VALUES)[number];
@@ -40,7 +40,7 @@ export function normalizePerishableOrganoleptic(value: unknown): PerishableOrgan
     : "compliant";
 }
 
-/** Продукция забракована: «Не соответствует» или «Недоброкачественная». */
+/** Продукция забракована: «Не соответствует» или «Недоброкачественно». */
 export function isPerishableRejected(value: unknown): boolean {
   return value === "non_compliant" || value === "poor_quality";
 }
@@ -394,6 +394,6 @@ export const STORAGE_CONDITION_LABELS: Record<string, string> = {
 export const ORGANOLEPTIC_LABELS: Record<string, string> = {
   compliant: "Соответствует",
   non_compliant: "Не соответствует",
-  good_quality: "Доброкачественная",
-  poor_quality: "Недоброкачественная",
+  good_quality: "Доброкачественно",
+  poor_quality: "Недоброкачественно",
 };

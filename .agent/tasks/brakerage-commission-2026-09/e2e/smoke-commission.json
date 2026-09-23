@@ -4,10 +4,19 @@
     "ok": true,
     "detail": {
       "user": {
-        "id": "cmubjhp4o000c2k9m57tdgner",
+        "id": "cmuea7ynm00acow9mpax0t8yr",
         "name": "Сторонняя Проверяющая Е2Е"
       },
-      "pin": "8372"
+      "pin": "4610",
+      "members": [
+        {
+          "id": "commission-cmuea7ynm00acow9mpax0t8yr",
+          "role": "Член комиссии",
+          "employeeId": "cmuea7ynm00acow9mpax0t8yr",
+          "employeeName": "Сторонняя Проверяющая Е2Е"
+        }
+      ],
+      "updatedDocuments": 11
     }
   },
   {
@@ -19,7 +28,7 @@
         "categoryKey": "commission",
         "name": "Член бракеражной комиссии"
       },
-      "qrPinHash": "$2b$10$6vkMdW7E6ZOni64bBy6Jo.2rqeJkZf205yquh0WhVOAyb9ID7GzL2"
+      "qrPinHash": "$2b$10$W0FcuLErsAwa0tuUy0h7oOLiF2V8MN0NDgg3x.BhMCOH8I9.UUC5m"
     }
   },
   {
@@ -28,9 +37,9 @@
     "detail": {
       "members": [
         {
-          "id": "commission-cmubjhp4o000c2k9m57tdgner",
+          "id": "commission-cmuea7ynm00acow9mpax0t8yr",
           "role": "Председатель",
-          "employeeId": "cmubjhp4o000c2k9m57tdgner",
+          "employeeId": "cmuea7ynm00acow9mpax0t8yr",
           "employeeName": "Сторонняя Проверяющая Е2Е"
         },
         {
@@ -48,9 +57,9 @@
     "ok": true,
     "detail": [
       {
-        "id": "commission-cmubjhp4o000c2k9m57tdgner",
+        "id": "commission-cmuea7ynm00acow9mpax0t8yr",
         "role": "Председатель",
-        "employeeId": "cmubjhp4o000c2k9m57tdgner",
+        "employeeId": "cmuea7ynm00acow9mpax0t8yr",
         "employeeName": "Сторонняя Проверяющая Е2Е"
       },
       {
@@ -66,9 +75,9 @@
     "ok": true,
     "detail": [
       {
-        "id": "commission-cmubjhp4o000c2k9m57tdgner",
+        "id": "commission-cmuea7ynm00acow9mpax0t8yr",
         "role": "Председатель",
-        "employeeId": "cmubjhp4o000c2k9m57tdgner",
+        "employeeId": "cmuea7ynm00acow9mpax0t8yr",
         "employeeName": "Сторонняя Проверяющая Е2Е"
       },
       {

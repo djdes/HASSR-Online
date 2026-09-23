@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import type { BrakerageCommissionMember } from "@/lib/brakerage-commission";
+import { syncDocCommissionMember } from "@/lib/brakerage-commission-org";
 import { editBrakerageRows, listBrakerageDayRows } from "@/lib/brakerage-qr";
 import { parseBrakerageListPost } from "@/lib/brakerage-qr-post";
 import { renderBrakerageDeleteConfirm, renderBrakerageList } from "@/lib/brakerage-qr-html";
@@ -49,6 +51,8 @@ export async function handleBrakerageList(ctx: {
   documentId: string;
   employee: JournalFillEmployee;
   role: BrakerageQrRole;
+  /** Член состава организации, которого нет в копии документа (см. brakerage-qr-access). */
+  orgMember?: BrakerageCommissionMember | null;
   isFinished: boolean;
   tabs: string;
   who: string;
@@ -131,6 +135,12 @@ export async function handleBrakerageList(ctx: {
     return redirectTo(listHref);
   }
 
+  // Должность комиссии вне утверждённого состава — только просмотр. Сервер
+  // не доверяет форме: любая отправка списка от неё — отказ.
+  if (posted && !role.editor && !role.evaluator) {
+    return renderList("Подписывают только члены утверждённого состава комиссии. Попросите руководителя добавить вас: журнал → «Комиссия».", 403);
+  }
+
   if (posted && (action === "save" || action === "sign" || action === "edit")) {
     if (rateLimited()) return renderList(QR_FILL_RATE_LIMIT_ERROR, 429);
     const field = (name: string) => {
@@ -159,6 +169,9 @@ export async function handleBrakerageList(ctx: {
     }
     let signed = 0;
     for (const [documentId, entries] of signsByDoc) {
+      // Член состава организации, которого нет в копии документа, —
+      // дописываем в копию, иначе подпись вернёт 403.
+      if (ctx.orgMember) await syncDocCommissionMember(documentId, ctx.orgMember);
       const result = await signBrakerageRows({
         documentId,
         organizationId: ctx.orgId,

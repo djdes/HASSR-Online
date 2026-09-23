@@ -2,6 +2,7 @@
 // Запуск (dev на 3020 с wesetup_e2e): npx tsx .agent/tasks/brakerage-commission-2026-09/e2e/smoke-signatures.ts
 import fs from "node:fs";
 import path from "node:path";
+import { Prisma } from "@prisma/client";
 import { chromium, type Page } from "playwright";
 
 import { db } from "../../journal-responsibles-org-2026-09/e2e/db";
@@ -49,6 +50,12 @@ async function docRows(): Promise<{ status: string; rows: Row[] }> {
 async function main() {
   const original = await db.journalDocument.findUniqueOrThrow({ where: { id: FP_DOC }, select: { config: true, status: true } });
   const originalOrg = await db.organization.findUniqueOrThrow({ where: { id: ORG }, select: { journalCommissionJson: true } });
+  const originalHead = await db.user.findUniqueOrThrow({ where: { id: state.users.headA.id }, select: { seenNoticesJson: true, legalVersion: true } });
+  const startedAt = new Date();
+  const otherDocs = await db.journalDocument.findMany({
+    where: { organizationId: ORG, status: "active", template: { code: "finished_product" }, id: { not: FP_DOC } },
+    select: { id: true, config: true },
+  });
   const today = orgTodayKey();
   const browser = await chromium.launch({ channel: "chrome" });
   const managerCtx = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
@@ -104,14 +111,23 @@ async function main() {
 
     // Член комиссии подписывает на сайте.
     await login(head, state.users.headA.email);
+    // Первый визит открывает гайд заполнения (модалка z-[80] перекрывает
+    // клики), причём чуть позже загрузки — после ответа /api/me/notices.
+    // Отмечаем гайд увиденным заранее, как это сделал бы сам гайд.
+    const noticeSeen = await head.request.post(`${BASE}/api/me/notices`, { data: { key: "fill-guide:finished_product" } });
+    check("гайд заполнения отмечен увиденным до захода", noticeSeen.ok(), noticeSeen.status());
+    // «Мы обновили условия» (модалка z-[80]) у заведующей стенда ещё не принято —
+    // принимаем заранее тем же запросом, что кнопка модалки; в finally вернём.
+    const legal = await head.request.post(`${BASE}/api/legal/accept`, { data: { consent: true } });
+    check("условия приняты до захода (модалка не перекроет таблицу)", legal.ok(), legal.status());
     await head.goto(`${BASE}/journals/finished_product/documents/${FP_DOC}`, { waitUntil: "load", timeout: 240_000 });
     await head.getByTestId("brakerage-today-signatures").waitFor({ timeout: 60_000 });
-    // Первый визит открывает гайд заполнения — закрыть.
+    // Страховка: если гайд всё же открылся (отметка не записалась) — дождаться и закрыть.
     const guide = head.locator('[aria-labelledby="fill-guide-title"]');
-    if (await guide.isVisible().catch(() => false)) {
+    if (await guide.waitFor({ state: "visible", timeout: 3_000 }).then(() => true).catch(() => false)) {
       await head.keyboard.press("Escape");
       if (await guide.isVisible().catch(() => false)) await guide.getByRole("button", { name: "Закрыть" }).first().click({ force: true });
-      await guide.waitFor({ state: "hidden", timeout: 10_000 }).catch(() => null);
+      await guide.waitFor({ state: "hidden", timeout: 10_000 });
     }
     const rowCheckbox = head.locator("tbody tr").filter({ hasText: "Суп смоук подписи" }).getByRole("checkbox").first();
     await rowCheckbox.click();
@@ -156,6 +172,12 @@ async function main() {
     await db.signatureEvent.deleteMany({ where: { documentId: FP_DOC } });
     await db.journalDocument.update({ where: { id: FP_DOC }, data: { config: original.config as never, status: original.status } });
     await db.organization.update({ where: { id: ORG }, data: { journalCommissionJson: originalOrg.journalCommissionJson as never } });
+    for (const doc of otherDocs) await db.journalDocument.update({ where: { id: doc.id }, data: { config: doc.config as never } });
+    await db.user.update({
+      where: { id: state.users.headA.id },
+      data: { seenNoticesJson: (originalHead.seenNoticesJson ?? Prisma.DbNull) as never, legalVersion: originalHead.legalVersion },
+    });
+    await db.legalConsent.deleteMany({ where: { userId: state.users.headA.id, createdAt: { gte: startedAt } } });
     fs.writeFileSync(path.join(HERE, "smoke-signatures.json"), JSON.stringify(checks, null, 2));
     await db.$disconnect();
   }

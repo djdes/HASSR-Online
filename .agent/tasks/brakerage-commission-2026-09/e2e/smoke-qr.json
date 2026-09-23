@@ -4,10 +4,19 @@
     "ok": true,
     "detail": {
       "user": {
-        "id": "cmubkqhsm001m2k9m3t4siyiw",
+        "id": "cmueba72j00cgow9m51bq0e1c",
         "name": "Проверяющая QR Смоук"
       },
-      "pin": "9930"
+      "pin": "5556",
+      "members": [
+        {
+          "id": "commission-cmueba72j00cgow9m51bq0e1c",
+          "role": "Член комиссии",
+          "employeeId": "cmueba72j00cgow9m51bq0e1c",
+          "employeeName": "Проверяющая QR Смоук"
+        }
+      ],
+      "updatedDocuments": 11
     }
   },
   {
@@ -21,7 +30,7 @@
   {
     "name": "после сохранения: галка и «Добавлено: 3», без перехода в другие журналы",
     "ok": true,
-    "detail": "Добавлено: 3\n\nСохранено: E2E колонки · Иван Повар · 21:24\n\nДобавить ещё"
+    "detail": "Добавлено: 3\n\nСохранено: E2E колонки · Иван Повар · 19:22\n\nДобавить ещё"
   },
   {
     "name": "в журнале 3 строки",
@@ -39,7 +48,7 @@
   {
     "name": "список за сегодня: 3 блюда ждут подписи",
     "ok": true,
-    "detail": "КТО ЗАПОЛНЯЕТ\nПроверяющая QR Смоук\nСменить\nЗа сегодня\nДобавить блюдо\n\nЖдут подписи: 3. Оцените и отметьте строки — подпись ставится от вашего имени. Наименование и время меняет повар или заведующая.\n\nБорщ\n20:54\nЖдёт подписи\n\nОЦЕНКА\n\nОтлично\nХорошо\nУдовлетворительно\nНеудовлетворительно\nДоброкачественная\nНедоброкачественная\nРазрешено\nНе разрешено\nПодписать\nКотлета куриная\n20:54\nЖдёт подписи\n\nОЦЕНКА\n\nОтлично\nХорошо\nУдовлетворительно\nНеудовлетворительно\nДоброкачественная\nНедоброкачественная\nРазрешен"
+    "detail": "КТО ЗАПОЛНЯЕТ\nПроверяющая QR Смоук\nСменить\nЗа сегодня\nДобавить блюдо\n\nЖдут подписи: 3. Проверьте блюдо и отметьте «Допущено» или «Не допущено» — это ваша подпись. Оценку и время бракеража можно поправить.\n\nсегодня\nЖдёт подписи\nБорщ\nВРЕМЯ ИЗГОТОВЛЕНИЯ\n18:52\nВЫХОД, Г\n—\nОЦЕНКА\nОтлично\nХорошо\nУдовлетворительно\nНеудовлетворительно\nДоброкачественно\nНедоброкачественно\nВРЕМЯ БРАКЕРАЖА\n\nВАШЕ РЕШЕНИЕ — ЭТО ПОДПИСЬ\n\nДопущено\nНе допущено\nсегодня\nЖдёт подписи\nКотлета куриная\nВРЕМЯ ИЗГОТОВЛЕНИЯ\n18:52\nВЫХОД, Г"
   },
   {
     "name": "комиссия не может менять наименование и время",
@@ -48,6 +57,11 @@
   {
     "name": "список без горизонтальной прокрутки (390px)",
     "ok": true
+  },
+  {
+    "name": "кнопка «Подписать · 3»",
+    "ok": true,
+    "detail": "Подписать · 3"
   },
   {
     "name": "«Подписано: 3»",
@@ -63,8 +77,8 @@
           "role": "Председатель",
           "grade": "Отлично",
           "method": "qr",
-          "userId": "cmubkqhsm001m2k9m3t4siyiw",
-          "signedAt": "2026-09-21T18:24:06.170Z",
+          "userId": "cmueba72j00cgow9m51bq0e1c",
+          "signedAt": "2026-09-23T16:22:47.671Z",
           "snapshot": {
             "productName": "Борщ",
             "organoleptic": "Отлично",
@@ -80,8 +94,8 @@
           "role": "Председатель",
           "grade": "Хорошо",
           "method": "qr",
-          "userId": "cmubkqhsm001m2k9m3t4siyiw",
-          "signedAt": "2026-09-21T18:24:06.170Z",
+          "userId": "cmueba72j00cgow9m51bq0e1c",
+          "signedAt": "2026-09-23T16:22:47.671Z",
           "snapshot": {
             "productName": "Котлета куриная",
             "organoleptic": "Хорошо",
@@ -97,8 +111,8 @@
           "role": "Председатель",
           "grade": "Отлично",
           "method": "qr",
-          "userId": "cmubkqhsm001m2k9m3t4siyiw",
-          "signedAt": "2026-09-21T18:24:06.170Z",
+          "userId": "cmueba72j00cgow9m51bq0e1c",
+          "signedAt": "2026-09-23T16:22:47.671Z",
           "snapshot": {
             "productName": "Компот",
             "organoleptic": "Отлично",
@@ -114,7 +128,7 @@
     "name": "оценка «Хорошо» записана",
     "ok": true,
     "detail": {
-      "id": "bracerage-1790015042321-ziddly",
+      "id": "bracerage-1790180564587-x5t0j8",
       "note": "",
       "signatures": [
         {
@@ -122,8 +136,8 @@
           "role": "Председатель",
           "grade": "Хорошо",
           "method": "qr",
-          "userId": "cmubkqhsm001m2k9m3t4siyiw",
-          "signedAt": "2026-09-21T18:24:06.170Z",
+          "userId": "cmueba72j00cgow9m51bq0e1c",
+          "signedAt": "2026-09-23T16:22:47.671Z",
           "snapshot": {
             "productName": "Котлета куриная",
             "organoleptic": "Хорошо",
@@ -137,18 +151,18 @@
       "productName": "Котлета куриная",
       "productTemp": "",
       "organoleptic": "Хорошо",
-      "sourceRowKey": "employee-cmu2stncc0008wk9m2yu67ip7#qr-1790015042310",
+      "sourceRowKey": "employee-cmu2stncc0008wk9m2yu67ip7#qr-1790180564575",
       "inspectorName": "",
       "portionWeight": "",
-      "rejectionTime": "2026-09-21 21:24",
+      "rejectionTime": "2026-09-23 18:57",
       "releaseAllowed": "yes",
       "correctiveAction": "",
       "organolepticValue": "",
       "responsiblePerson": "Иван Повар",
       "organolepticResult": "",
-      "productionDateTime": "2026-09-21 20:54",
+      "productionDateTime": "2026-09-23 18:52",
       "courierTransferTime": "",
-      "releasePermissionTime": "2026-09-21 21:24"
+      "releasePermissionTime": "2026-09-23 19:02"
     }
   },
   {

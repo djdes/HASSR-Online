@@ -20,7 +20,7 @@ test("зав: правка блюда, времени изготовления, 
   const result = parseBrakerageListPost(
     form({ "name:r1": "Суп куриный", "time:r1": "12:35", "w:r1": "300", "grade:r1": "Хорошо", "adm:r1": "yes" }),
     rows,
-    { editor: true, evaluator: false },
+    { editor: true, evaluator: false, viewer: false },
     { isFinished: true, gradeValues: grades }
   );
   assert.deepEqual(result.editsByDoc.get("d1"), [{ rowId: "r1", name: "Суп куриный", time: "12:35", portionWeight: "300", grade: "Хорошо" }]);
@@ -31,7 +31,7 @@ test("комиссия: только оценка и время бракераж
   const result = parseBrakerageListPost(
     form({ "name:r1": "Взлом", "w:r1": "999", "grade:r1": "Хорошо", "rej:r1": "13:00", "adm:r1": "yes", "grade:r2": "Неудовлетворительно", "adm:r2": "no" }),
     rows,
-    { editor: false, evaluator: true },
+    { editor: false, evaluator: true, viewer: false },
     { isFinished: true, gradeValues: grades }
   );
   assert.equal(result.editsByDoc.size, 0);
@@ -42,12 +42,12 @@ test("комиссия: только оценка и время бракераж
 });
 
 test("комиссия без выбора допуска ничего не подписывает; мусор в оценке и времени отбрасывается", () => {
-  const none = parseBrakerageListPost(form({ "grade:r1": "Хорошо" }), rows, { editor: false, evaluator: true }, { isFinished: true, gradeValues: grades });
+  const none = parseBrakerageListPost(form({ "grade:r1": "Хорошо" }), rows, { editor: false, evaluator: true, viewer: false }, { isFinished: true, gradeValues: grades });
   assert.equal(none.signsByDoc.size, 0);
   const junk = parseBrakerageListPost(
     form({ "grade:r1": "<script>", "rej:r1": "99:99", "adm:r1": "yes" }),
     rows,
-    { editor: false, evaluator: true },
+    { editor: false, evaluator: true, viewer: false },
     { isFinished: true, gradeValues: grades }
   );
   assert.deepEqual(junk.signsByDoc.get("d1"), [{ rowId: "r1", releaseAllowed: "yes" }]);
@@ -57,9 +57,20 @@ test("зав в комиссии: правки как зав + подпись, �
   const result = parseBrakerageListPost(
     form({ "w:r1": "260", "grade:r1": "Хорошо", "adm:r1": "yes" }),
     rows,
-    { editor: true, evaluator: true },
+    { editor: true, evaluator: true, viewer: false },
     { isFinished: true, gradeValues: grades }
   );
   assert.deepEqual(result.editsByDoc.get("d1"), [{ rowId: "r1", portionWeight: "260" }]);
   assert.deepEqual(result.signsByDoc.get("d1"), [{ rowId: "r1", grade: "Хорошо", releaseAllowed: "yes" }]);
+});
+
+test("должность комиссии вне состава (только просмотр): ни правок, ни подписи, даже если поля пришли", () => {
+  const result = parseBrakerageListPost(
+    form({ "adm:r1": "yes", "grade:r1": "Хорошо", "name:r1": "Другое", "rej:r1": "13:00" }),
+    rows,
+    { editor: false, evaluator: false, viewer: true },
+    { isFinished: true, gradeValues: grades }
+  );
+  assert.equal(result.editsByDoc.size, 0);
+  assert.equal(result.signsByDoc.size, 0);
 });

@@ -14,7 +14,8 @@
  */
 import type { Prisma } from "@prisma/client";
 
-import { hasCommission } from "@/lib/brakerage-commission";
+import { hasCommission, normalizeRowSignatures } from "@/lib/brakerage-commission";
+import { chainBrakerageTimes, correctedBrakerageTimes } from "@/lib/brakerage-times";
 import { db } from "@/lib/db";
 import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import {
@@ -288,11 +289,27 @@ export async function appendFinishedProductRows(params: {
       };
       const existingIndex = rows.findIndex((row) => row.sourceRowKey === entry.rowKey);
       if (existingIndex >= 0) {
-        rows[existingIndex] = createFinishedProductRow({ ...rows[existingIndex], ...patch });
+        const existing = rows[existingIndex];
+        // Повтор задачи с другим временем изготовления: у неподписанной строки
+        // бракераж и разрешение идут за ним цепочкой, у подписанной — как есть.
+        const times = correctedBrakerageTimes({
+          row: { ...existing, releaseAllowed: patch.releaseAllowed },
+          nextProductionDateTime: patch.productionDateTime ?? existing.productionDateTime,
+          signed: normalizeRowSignatures(existing.signatures).length > 0,
+          offsets: config.timeDefaults,
+        });
+        rows[existingIndex] = createFinishedProductRow({ ...existing, ...patch, ...times });
       } else {
         rows.push(
           createFinishedProductRow({
             ...patch,
+            // Вводится только изготовление (решение владельца 2026-09-23):
+            // бракераж = +N1, разрешение = бракераж + N2 — сразу в строке.
+            ...chainBrakerageTimes({
+              productionDateTime: patch.productionDateTime ?? "",
+              releaseAllowed: patch.releaseAllowed,
+              offsets: config.timeDefaults,
+            }),
             id: `bracerage-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
             responsiblePerson: employee.name ?? "",
             inspectorName: inspector?.name ?? "",

@@ -1,0 +1,368 @@
+[
+  {
+    "name": "сайт: старые оценки показываются «Доброкачественно / Недоброкачественно»",
+    "ok": true,
+    "detail": [
+      "раж2026-09-23 11:00Суп легасиДоброкачественноРазрешеноНе разрешено2026-09",
+      "-23 11:10Каша легасиНедоброкачественноРазрешеноНе разрешеноДобавит",
+      "и по организации контроля за доброкачественностью готовой пищи",
+      "Доброкачественно",
+      "Недоброкачественно"
+    ]
+  },
+  {
+    "name": "PDF: оценки «Доброкачественно / Недоброкачественно», старых слов нет",
+    "ok": true,
+    "detail": [
+      "026-09-23 11:00 Суп легаси   Доброкачественно   Разрешено 2   2026-09-23 ",
+      "11:10 Каша легаси   Недоброкачественно   Разрешено  СТР. 1 ИЗ 1"
+    ]
+  },
+  {
+    "name": "«Новый человек»: ответ несёт состав, человек в составе организации и в копии документа",
+    "ok": true,
+    "detail": {
+      "status": 200,
+      "body": {
+        "user": {
+          "id": "cmueb9gjy00c6ow9mjuh3m4k6",
+          "name": "Член Списка Смоук"
+        },
+        "pin": "5931",
+        "members": [
+          {
+            "id": "commission-cmueb9gjy00c6ow9mjuh3m4k6",
+            "role": "Член комиссии",
+            "employeeId": "cmueb9gjy00c6ow9mjuh3m4k6",
+            "employeeName": "Член Списка Смоук"
+          }
+        ],
+        "updatedDocuments": 11
+      },
+      "orgMembers": [
+        "cmueb9gjy00c6ow9mjuh3m4k6"
+      ]
+    }
+  },
+  {
+    "name": "член комиссии: сначала PIN",
+    "ok": true
+  },
+  {
+    "name": "член комиссии видит список «За сегодня», а не форму «Одно блюдо / Несколько блюд»",
+    "ok": true,
+    "detail": "КТО ЗАПОЛНЯЕТ\nЧлен Списка Смоук\nСменить\nЗа сегодня\nДобавить блюдо\n\nЖдут подписи: 2. Проверьте блюдо и отметьте «Допущено» или «Не допущено» — это ваша подпись. Оценку и время бракеража можно поправить.\n\nсегодня\nЖдёт подписи\nСуп легаси\nВРЕМЯ ИЗГОТОВЛЕНИЯ\n11:00\nВЫХОД, Г\n—\nОЦЕНКА\nОтлично\nХорошо\nУдовлетворительно\nНеудовлетворительно\nДоброкачественно\nНедоброкачественно\nВРЕМЯ БРАКЕРАЖА\n\nВАШЕ РЕШЕНИЕ — Э"
+  },
+  {
+    "name": "QR: варианты оценки — новые слова, старая запись отмечена «Доброкачественно»",
+    "ok": true,
+    "detail": {
+      "legacyChecked": "Доброкачественно",
+      "sample": [
+        "Отлично",
+        "Хорошо",
+        "Удовлетворительно",
+        "Неудовлетворительно",
+        "Доброкачественно",
+        "Недоброкачественно"
+      ]
+    }
+  },
+  {
+    "name": "кнопка «Подписать · 1»",
+    "ok": true,
+    "detail": "Подписать · 1"
+  },
+  {
+    "name": "«Подписано: 1», подпись нового человека в строке (QR)",
+    "ok": true,
+    "detail": {
+      "signedText": "Подписано: 1\n\nСохранено: бракераж за сегодня · Член Списка Смоук · 19:22\n\nК списку за сегодня",
+      "r1": {
+        "id": "smoke-ml-r1",
+        "note": "",
+        "signatures": [
+          {
+            "name": "Член Списка Смоук",
+            "role": "Член комиссии",
+            "grade": "Доброкачественно",
+            "method": "qr",
+            "userId": "cmueb9gjy00c6ow9mjuh3m4k6",
+            "signedAt": "2026-09-23T16:22:07.797Z",
+            "snapshot": {
+              "productName": "Суп легаси",
+              "organoleptic": "Доброкачественно",
+              "portionWeight": "",
+              "releaseAllowed": "yes",
+              "organolepticResult": ""
+            }
+          }
+        ],
+        "oxygenLevel": "",
+        "productName": "Суп легаси",
+        "productTemp": "",
+        "organoleptic": "Доброкачественно",
+        "inspectorName": "",
+        "portionWeight": "",
+        "rejectionTime": "2026-09-23 11:05",
+        "releaseAllowed": "yes",
+        "correctiveAction": "",
+        "organolepticValue": "",
+        "responsiblePerson": "",
+        "organolepticResult": "",
+        "productionDateTime": "2026-09-23 11:00",
+        "courierTransferTime": "",
+        "releasePermissionTime": "2026-09-23 11:10"
+      }
+    }
+  },
+  {
+    "name": "должность без состава: плашка «Вас нет в утверждённом составе…»",
+    "ok": true,
+    "detail": "Вас нет в утверждённом составе бракеражной комиссии. Попросите руководителя добавить вас: журнал → «Комиссия»."
+  },
+  {
+    "name": "должность без состава: список без радио, полей оценки и кнопки подписи",
+    "ok": true
+  },
+  {
+    "name": "плашка — амбер #fff8eb / #a16d32, не красная",
+    "ok": true,
+    "detail": "rgb(255, 248, 235) rgb(161, 109, 50)"
+  },
+  {
+    "name": "подписанная без правок строка — «Подписано», без «изменено после подписи»",
+    "ok": true,
+    "detail": "Подписано: Член С. С. · 19:22"
+  },
+  {
+    "name": "должность без состава: прямой POST подписи — отказ 403, подписи нет",
+    "ok": true,
+    "detail": {
+      "status": 403,
+      "r2AfterForge": {
+        "id": "smoke-ml-r2",
+        "note": "",
+        "oxygenLevel": "",
+        "productName": "Каша легаси",
+        "productTemp": "",
+        "organoleptic": "Недоброкачественно",
+        "inspectorName": "",
+        "portionWeight": "",
+        "rejectionTime": "",
+        "releaseAllowed": "yes",
+        "correctiveAction": "",
+        "organolepticValue": "",
+        "responsiblePerson": "",
+        "organolepticResult": "",
+        "productionDateTime": "2026-09-23 11:10",
+        "courierTransferTime": "",
+        "releasePermissionTime": ""
+      }
+    }
+  },
+  {
+    "name": "член только состава организации: список с «Допущено / Не допущено»",
+    "ok": true
+  },
+  {
+    "name": "член только состава организации: «Подписано: 1», подпись в строке",
+    "ok": true,
+    "detail": {
+      "orgOnlyText": "Подписано: 1\n\nСохранено: бракераж за сегодня · Только Организация Смоук · 19:22\n\nК списку за сегодня",
+      "r2": {
+        "id": "smoke-ml-r2",
+        "note": "",
+        "signatures": [
+          {
+            "name": "Только Организация Смоук",
+            "role": "Член комиссии",
+            "grade": "Недоброкачественно",
+            "method": "qr",
+            "userId": "cmueb9l980001ro9m2ki3a7dt",
+            "signedAt": "2026-09-23T16:22:11.159Z",
+            "snapshot": {
+              "productName": "Каша легаси",
+              "organoleptic": "Недоброкачественно",
+              "portionWeight": "",
+              "releaseAllowed": "no",
+              "organolepticResult": ""
+            }
+          }
+        ],
+        "oxygenLevel": "",
+        "productName": "Каша легаси",
+        "productTemp": "",
+        "organoleptic": "Недоброкачественно",
+        "inspectorName": "",
+        "portionWeight": "",
+        "rejectionTime": "2026-09-23 11:15",
+        "releaseAllowed": "no",
+        "correctiveAction": "",
+        "organolepticValue": "",
+        "responsiblePerson": "",
+        "organolepticResult": "",
+        "productionDateTime": "2026-09-23 11:10",
+        "courierTransferTime": "",
+        "releasePermissionTime": ""
+      }
+    }
+  },
+  {
+    "name": "копия состава документа досинхронизирована (добавлен только он)",
+    "ok": true,
+    "detail": [
+      {
+        "id": "commission-cmueb9l980001ro9m2ki3a7dt",
+        "role": "Член комиссии",
+        "employeeId": "cmueb9l980001ro9m2ki3a7dt",
+        "employeeName": "Только Организация Смоук"
+      }
+    ]
+  },
+  {
+    "name": "повар: «Добавлено: 2»",
+    "ok": true
+  },
+  {
+    "name": "QR «Несколько блюд»: изготовление 12:40 → бракераж 12:45, разрешение 12:50 сразу в строках",
+    "ok": true,
+    "detail": [
+      [
+        "Плов смоук",
+        "2026-09-23 12:40",
+        "2026-09-23 12:45",
+        "2026-09-23 12:50"
+      ],
+      [
+        "Чай смоук",
+        "2026-09-23 12:40",
+        "2026-09-23 12:45",
+        "2026-09-23 12:50"
+      ]
+    ]
+  },
+  {
+    "name": "после «Сменить» член комиссии видит список, а не форму «Несколько блюд»",
+    "ok": true,
+    "detail": {
+      "url": "http://localhost:3025/journal-fill/e2e-org-a/finished_product?token=journal%3Ae2e-org-a%3Afinished_product%3Acmu3xu9lc005lks9mmmr8ltma.1790180494114.WPDlfvXd5LyHE7cYXOauP-__inEzPQ_IXPtr8-gEs3I&employee=cmueb9gjy00c6ow9mjuh3m4k6&doc=cmu3xu9lc005lks9mmmr8ltma&f=pFhx-2DK_SOfSSg2&ok=1",
+      "sheetOpened": true
+    }
+  },
+  {
+    "name": "заведующий с флагом: наименование и время правятся",
+    "ok": true
+  },
+  {
+    "name": "заведующий: наименование исправлено; изготовление 13:00 неподписанной строки → бракераж 13:05, разрешение 13:10",
+    "ok": true,
+    "detail": {
+      "id": "bracerage-1790180533596-bpb1nl",
+      "note": "",
+      "oxygenLevel": "",
+      "productName": "Плов узбекский смоук",
+      "productTemp": "",
+      "organoleptic": "Отлично",
+      "sourceRowKey": "employee-cmu2stncc0008wk9m2yu67ip7#qr-1790180533571",
+      "inspectorName": "",
+      "portionWeight": "",
+      "rejectionTime": "2026-09-23 13:05",
+      "releaseAllowed": "yes",
+      "correctiveAction": "",
+      "organolepticValue": "",
+      "responsiblePerson": "Иван Повар",
+      "organolepticResult": "",
+      "productionDateTime": "2026-09-23 13:00",
+      "courierTransferTime": "",
+      "releasePermissionTime": "2026-09-23 13:10"
+    }
+  },
+  {
+    "name": "подписанная строка: время бракеража и разрешения не пересчитаны",
+    "ok": true,
+    "detail": {
+      "before": {
+        "id": "smoke-ml-r1",
+        "note": "",
+        "signatures": [
+          {
+            "name": "Член Списка Смоук",
+            "role": "Член комиссии",
+            "grade": "Доброкачественно",
+            "method": "qr",
+            "userId": "cmueb9gjy00c6ow9mjuh3m4k6",
+            "signedAt": "2026-09-23T16:22:07.797Z",
+            "snapshot": {
+              "productName": "Суп легаси",
+              "organoleptic": "Доброкачественно",
+              "portionWeight": "",
+              "releaseAllowed": "yes",
+              "organolepticResult": ""
+            }
+          }
+        ],
+        "oxygenLevel": "",
+        "productName": "Суп легаси",
+        "productTemp": "",
+        "organoleptic": "Доброкачественно",
+        "inspectorName": "",
+        "portionWeight": "",
+        "rejectionTime": "2026-09-23 11:05",
+        "releaseAllowed": "yes",
+        "correctiveAction": "",
+        "organolepticValue": "",
+        "responsiblePerson": "",
+        "organolepticResult": "",
+        "productionDateTime": "2026-09-23 11:00",
+        "courierTransferTime": "",
+        "releasePermissionTime": "2026-09-23 11:10"
+      },
+      "after": {
+        "id": "smoke-ml-r1",
+        "note": "",
+        "signatures": [
+          {
+            "name": "Член Списка Смоук",
+            "role": "Член комиссии",
+            "grade": "Доброкачественно",
+            "method": "qr",
+            "userId": "cmueb9gjy00c6ow9mjuh3m4k6",
+            "signedAt": "2026-09-23T16:22:07.797Z",
+            "snapshot": {
+              "productName": "Суп легаси",
+              "organoleptic": "Доброкачественно",
+              "portionWeight": "",
+              "releaseAllowed": "yes",
+              "organolepticResult": ""
+            }
+          }
+        ],
+        "oxygenLevel": "",
+        "productName": "Суп легаси",
+        "productTemp": "",
+        "organoleptic": "Доброкачественно",
+        "inspectorName": "",
+        "portionWeight": "",
+        "rejectionTime": "2026-09-23 11:05",
+        "releaseAllowed": "yes",
+        "correctiveAction": "",
+        "organolepticValue": "",
+        "responsiblePerson": "",
+        "organolepticResult": "",
+        "productionDateTime": "2026-09-23 11:30",
+        "courierTransferTime": "",
+        "releasePermissionTime": "2026-09-23 11:10"
+      }
+    }
+  },
+  {
+    "name": "«только после входа» + «Я член комиссии» без сессии: сначала PIN, списка нет",
+    "ok": true,
+    "detail": "КТО ЗАПОЛНЯЕТ\nЧлен Списка Смоук\nСменить\nВаш PIN\nЗапросить смену PIN\n\nPIN подтверждает, что запись делаете именно вы.\n\nПродолжить"
+  },
+  {
+    "name": "после PIN — список за сегодня",
+    "ok": true
+  }
+]

@@ -1677,8 +1677,8 @@ export function PerishableRejectionDocumentClient({
                   [
                     ["compliant", "Соответствует", "#136b2a", "rgba(19,107,42,0.18)"],
                     ["non_compliant", "Не соответствует", "#d2453d", "rgba(210,69,61,0.18)"],
-                    ["good_quality", "Доброкачественная", "#136b2a", "rgba(19,107,42,0.18)"],
-                    ["poor_quality", "Недоброкачественная", "#d2453d", "rgba(210,69,61,0.18)"],
+                    ["good_quality", "Доброкачественно", "#136b2a", "rgba(19,107,42,0.18)"],
+                    ["poor_quality", "Недоброкачественно", "#d2453d", "rgba(210,69,61,0.18)"],
                   ] as const
                 ).map(([value, label, fg, bg]) => {
                   const active = draftRow.organolepticResult === value;

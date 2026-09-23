@@ -26,11 +26,19 @@ export function renderBulkSwitch(params: { bulk: boolean; oneHref: string; bulkH
   return `<nav class="tabs" aria-label="Сколько добавить"><a class="${params.bulk ? "" : "on"}" href="${esc(params.oneHref)}">${esc(params.one)}</a><a class="${params.bulk ? "on" : ""}" href="${esc(params.bulkHref)}">${esc(params.many)}</a></nav>`;
 }
 
-function signatureBadge(row: BrakerageQrRow, timeZone: string): string {
+function signatureBadge(row: BrakerageQrRow, timeZone: string, isFinished: boolean): string {
   if (row.signatures.length === 0) return `<span class="bk-s wait">Ждёт подписи</span>`;
-  const outdated = row.signatures.some((signature) =>
-    isSignatureOutdated({ productName: row.name, organoleptic: row.grade, organolepticResult: row.grade, releaseAllowed: row.releaseAllowed ?? undefined, portionWeight: row.portionWeight }, signature)
-  );
+  // Оценка лежит в своём поле журнала: у готовой продукции — `organoleptic`,
+  // у скоропорта — `organolepticResult`. Раньше оценку подставляли в оба, и
+  // пустой `organolepticResult` снимка готовой продукции давал «изменено
+  // после подписи» сразу после подписи.
+  const current = {
+    productName: row.name,
+    ...(isFinished ? { organoleptic: row.grade } : { organolepticResult: row.grade }),
+    releaseAllowed: row.releaseAllowed ?? undefined,
+    portionWeight: isFinished ? row.portionWeight : undefined,
+  };
+  const outdated = row.signatures.some((signature) => isSignatureOutdated(current, signature));
   return `<span class="bk-s signed">Подписано: ${esc(formatRowSignatures(row.signatures, timeZone))}${outdated ? " · изменено после подписи" : ""}</span>`;
 }
 
@@ -53,7 +61,18 @@ const BK_LIST_CSS = `<style>
 .bk-adm .segb{min-height:56px;font-size:17px}
 .bk-adm .segb.yes:has(input:checked){border-color:#16a34a;background:#ecfdf5;color:#116b2a;box-shadow:0 0 0 3px rgba(22,163,74,.15)}
 .bk-adm .segb.no:has(input:checked){border-color:#d2453d;background:#fff4f2;color:#a13a32;box-shadow:0 0 0 3px rgba(210,69,61,.15)}
+.bk-viewer{border:1px solid #f4dfb8;background:#fff8eb;color:#a16d32;border-radius:14px;padding:14px;margin:0 0 12px;font-size:15px;line-height:1.45;font-weight:500}
 </style>`;
+
+/** Должность комиссии вне утверждённого состава: список только для чтения. */
+export const BRAKERAGE_VIEWER_NOTICE =
+  "Вас нет в утверждённом составе бракеражной комиссии. Попросите руководителя добавить вас: журнал → «Комиссия».";
+
+function viewerNotice(role: BrakerageQrRole): string {
+  return role.viewer && !role.evaluator && !role.editor
+    ? `<div class="bk-viewer" role="note" data-viewer-notice>${esc(BRAKERAGE_VIEWER_NOTICE)}</div>`
+    : "";
+}
 
 /** Время 24 ч: текстовое поле «ЧЧ:ММ» — нативный time на iPhone с английской локалью показывает AM/PM. */
 function timeInput(name: string, value: string, label: string): string {
@@ -91,7 +110,7 @@ export function renderBrakerageList(params: {
   const { list, role } = params;
   const noun = params.isFinished ? "блюд" : "позиций";
   if (list.rows.length === 0) {
-    return `${params.who}${params.tabs}${renderMessage(
+    return `${BK_LIST_CSS}${params.who}${params.tabs}${viewerNotice(role)}${renderMessage(
       "muted",
       `За сегодня ${noun} пока нет. Их добавляет повар по этому же QR — или добавьте сами.`,
       `<div class="sticky"><a class="btn" href="${esc(params.addHref)}">Добавить</a></div>`
@@ -106,7 +125,7 @@ export function renderBrakerageList(params: {
       const title = role.editor
         ? field(params.isFinished ? "Блюдо" : "Продукт", `<input class="in" name="name:${esc(id)}" value="${esc(row.name)}" maxlength="200" aria-label="Наименование">`)
         : `<div class="bk-n" style="margin:0 2px 10px">${esc(row.name)}</div>`;
-      const head = `<div class="bk-h"><div class="bk-t">${row.fromYesterday ? "вчера" : "сегодня"}</div>${signatureBadge(row, params.timeZone)}</div>`;
+      const head = `<div class="bk-h"><div class="bk-t">${row.fromYesterday ? "вчера" : "сегодня"}</div>${signatureBadge(row, params.timeZone, params.isFinished)}</div>`;
       const production = role.editor ? field(productionLabel, timeInput(`time:${id}`, row.time, productionLabel)) : valueField(productionLabel, row.time);
       const output = params.isFinished
         ? role.editor
@@ -131,15 +150,24 @@ export function renderBrakerageList(params: {
     .join("");
 
   const waiting = list.rows.filter((row) => row.signatures.length === 0).length;
+  const readOnly = !role.evaluator && !role.editor;
   const lead = role.evaluator
     ? `<p class="today">${waiting > 0 ? `Ждут подписи: <b>${waiting}</b>. ` : "Всё подписано. "}Проверьте блюдо и отметьте «Допущено» или «Не допущено» — это ваша подпись. Оценку и время бракеража можно поправить.</p>`
-    : `<p class="today">Проверьте выход, оценку и время изготовления — исправьте, если нужно. Подписывает комиссия.</p>`;
+    : readOnly
+      ? `${viewerNotice(role)}<p class="today">${waiting > 0 ? `Ждут подписи: <b>${waiting}</b>. ` : "Всё подписано. "}Блюда за сегодня — только просмотр.</p>`
+      : `<p class="today">Проверьте выход, оценку и время изготовления — исправьте, если нужно. Подписывает комиссия.</p>`;
   const buttons = role.evaluator
     ? `<button class="btn" type="submit" name="action" value="save" data-sign-btn>${role.editor ? "Сохранить и подписать" : "Подписать"}</button>`
     : `<button class="btn" type="submit" name="action" value="save">Сохранить изменения</button>`;
   const script = role.evaluator
     ? `<script>(function(){var f=document.getElementById("bk-form");if(!f)return;var b=f.querySelector("[data-sign-btn]");var base=b.textContent;function u(){var n=f.querySelectorAll("[data-adm]:checked").length;b.textContent=n>0?base+" · "+n:base;}f.addEventListener("change",function(e){var t=e.target;if(t&&t.type==="radio"){var g=f.querySelectorAll('input[name="'+t.name+'"]');for(var i=0;i<g.length;i++)g[i].parentNode.classList.toggle("on",g[i].checked);}u();});u();})();</script>`
     : "";
+  if (readOnly) {
+    // Без формы: ни оценки, ни подписи — только карточки.
+    return `${BK_LIST_CSS}${params.who}${params.tabs}${lead}
+${params.error ? `<div class="err">${esc(params.error)}</div>` : ""}
+<div id="bk-view">${cards}</div>`;
+  }
   return `${BK_LIST_CSS}${params.who}${params.tabs}${lead}
 <form method="post" action="${esc(params.action)}" id="bk-form">
 ${params.error ? `<div class="err">${esc(params.error)}</div>` : ""}

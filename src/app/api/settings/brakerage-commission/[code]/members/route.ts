@@ -4,7 +4,7 @@ import { z } from "zod";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { authOptions } from "@/lib/auth";
 import { isCommissionJournalCode } from "@/lib/brakerage-commission";
-import { ensureCommissionPosition } from "@/lib/brakerage-commission-org";
+import { addOrgCommissionMember, ensureCommissionPosition } from "@/lib/brakerage-commission-org";
 import { recordAuditLog } from "@/lib/audit-log";
 import { generateEmployeeQrPin, setEmployeeQrPin } from "@/lib/qr-fill-actor";
 import { validateQrPin } from "@/lib/qr-pin-rules";
@@ -20,6 +20,8 @@ const Schema = z.object({
   phone: z.string().trim().optional(),
   // PIN из формы (руководитель видит его до создания); нет — сгенерируем.
   pin: z.string().trim().optional(),
+  // Роль в комиссии; нет — «Член комиссии».
+  role: z.string().trim().max(80).optional(),
 });
 
 /**
@@ -27,6 +29,8 @@ const Schema = z.object({
  * должности «Член бракеражной комиссии» (категория «Комиссия» на странице
  * сотрудников, доступ к бракеражу готовой продукции). ПИН показан в форме
  * до создания (можно поправить) — им член комиссии подписывает блюда по QR. Телефон по желанию; в TasksFlow не уходит.
+ * Человек сразу попадает в утверждённый состав организации (и его копию в
+ * активных документах) — «Сохранить состав» для этого не нужен.
  */
 export async function POST(request: Request, ctx: { params: Promise<{ code: string }> }) {
   const session = await getServerSession(authOptions);
@@ -57,6 +61,10 @@ export async function POST(request: Request, ctx: { params: Promise<{ code: stri
   if (!created.ok) return NextResponse.json({ error: created.error }, { status: created.status });
   const pin = requestedPin || generateEmployeeQrPin();
   const pinError = await setEmployeeQrPin(created.user.id, pin);
+  const commission = await addOrgCommissionMember(organizationId, code, {
+    employeeId: created.user.id,
+    role: parsed.data.role || "Член комиссии",
+  });
   await recordAuditLog({
     request,
     session,
@@ -69,5 +77,7 @@ export async function POST(request: Request, ctx: { params: Promise<{ code: stri
   return NextResponse.json({
     user: { id: created.user.id, name: created.user.name },
     pin: pinError ? null : pin,
+    members: commission.members,
+    updatedDocuments: commission.updatedDocuments,
   });
 }

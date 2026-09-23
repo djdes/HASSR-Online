@@ -7,19 +7,29 @@
   {
     "name": "списком: в окне есть общие поля (оценка, разрешение, ответственный, проводивший бракераж)",
     "ok": true,
-    "detail": "Закрыть\nДобавить изделия списком\n№\nНАИМЕНОВАНИЕ\nВЫХОД, Г\n1\n2\n3\n4\n5\nЕщё строка\nБудет добавлено: 0\n\nМожно вставить из Excel сразу два столбца — наименование и выход: встаньте в первую ячейку и нажмите Ctrl+V.\n\nОБЩИЕ ДЛЯ ВСЕХ ИЗДЕЛИЙ\nДата и время изготовления\n−15 мин\n−30 мин\n−45 мин\n−1 ч\nСейчас\nВремя снятия бракеража\nСейчас (разрешение — через 5 мин)\nОрганолептическая оценка\nОтлично\nПримечание\nРазреш"
+    "detail": "Закрыть\nДобавить изделия списком\n№\nНАИМЕНОВАНИЕ\nВЫХОД, Г\n1\n2\n3\n4\n5\nЕщё строка\nБудет добавлено: 0\n\nМожно вставить из Excel сразу два столбца — наименование и выход: встаньте в первую ячейку и нажмите Ctrl+V.\n\nОБЩИЕ ДЛЯ ВСЕХ ИЗДЕЛИЙ\nДата и время изготовления\n−15 мин\n−30 мин\n−45 мин\n−1 ч\nСейчас\n\nБракераж — 18:42, разрешение к реализации — 18:47 (через 5 и 5 мин, меняется в настройках журнала)\n\nОргано"
   },
   {
     "name": "списком: счётчик «Будет добавлено: 3», общего поля «Вес выход» нет",
     "ok": true,
-    "detail": "Закрыть\nДобавить изделия списком\n№\nНАИМЕНОВАНИЕ\nВЫХОД, Г\n1\n2\n3\n4\n5\nЕщё строка\nБудет добавлено: 3\n\nМожно вставить из Excel сразу два столбца — наименование и выход: встаньте в первую ячейку и нажмите Ctrl+V.\n\nОБЩИЕ ДЛЯ ВСЕХ ИЗДЕЛИЙ\nДата и время изготовления\n−15 мин\n−30 мин\n−45 мин\n−1 ч\nСейчас\nВремя с"
+    "detail": "Закрыть\nДобавить изделия списком\n№\nНАИМЕНОВАНИЕ\nВЫХОД, Г\n1\n2\n3\n4\n5\nЕщё строка\nБудет добавлено: 3\n\nМожно вставить из Excel сразу два столбца — наименование и выход: встаньте в первую ячейку и нажмите Ctrl+V.\n\nОБЩИЕ ДЛЯ ВСЕХ ИЗДЕЛИЙ\nДата и время изготовления\n−15 мин\n−30 мин\n−45 мин\n−1 ч\nСейчас\n\nБракер"
+  },
+  {
+    "name": "списком: полей «Время снятия бракеража» и «Дата и время разрешения» в окне нет",
+    "ok": true,
+    "detail": "Закрыть\nДобавить изделия списком\n№\nНАИМЕНОВАНИЕ\nВЫХОД, Г\n1\n2\n3\n4\n5\nЕщё строка\nБудет добавлено: 3\n\nМожно вставить из Excel сразу два столбца — наименование и выход: встаньте в первую ячейку и нажмите Ctrl+V.\n\nОБЩИЕ ДЛЯ ВСЕХ ИЗДЕЛИЙ\nДата и время изготовления\n−15 мин\n−30 мин\n−45 мин\n−1 ч\nСейчас\n\nБракераж — 18:42, разрешение к реализации — 18:47 (через 5 и 5 мин, меняется в настройках журнала)\n\nОрганолептическая оценка\nОтлично\nПримечание\nРазрешение к реализации\nРазрешено\nНе разрешено\nОтветственный исполнитель\nОтмена\nДобавить"
+  },
+  {
+    "name": "списком: живая подпись «Бракераж — 12:45, разрешение к реализации — 12:50»",
+    "ok": true,
+    "detail": "Бракераж — 12:45, разрешение к реализации — 12:50 (через 5 и 5 мин, меняется в настройках журнала)"
   },
   {
     "name": "списком: три строки с общими полями (оценка «Хорошо», ФИО)",
     "ok": true,
     "detail": [
       {
-        "id": "finished-product-row-a0519684-c1a4-49bc-8cc9-345112edaacd",
+        "id": "finished-product-row-7009ef7f-6476-489d-a711-098b81f2b383",
         "note": "",
         "oxygenLevel": "",
         "productName": "Борщ",
@@ -27,18 +37,18 @@
         "organoleptic": "Хорошо",
         "inspectorName": "Анна Заведующая",
         "portionWeight": "250",
-        "rejectionTime": "2026-09-22 15:21",
+        "rejectionTime": "2026-09-23 12:45",
         "releaseAllowed": "yes",
         "correctiveAction": "",
         "organolepticValue": "",
-        "responsiblePerson": "ZZ Пётр Тестов 97514",
+        "responsiblePerson": "Иван Повар",
         "organolepticResult": "",
-        "productionDateTime": "2026-09-22 15:16",
-        "courierTransferTime": "2026-09-22 15:46",
-        "releasePermissionTime": "2026-09-22 15:26"
+        "productionDateTime": "2026-09-23 12:40",
+        "courierTransferTime": "2026-09-23 19:07",
+        "releasePermissionTime": "2026-09-23 12:50"
       },
       {
-        "id": "finished-product-row-5f859faf-9e47-42a7-ae79-15901ecace52",
+        "id": "finished-product-row-c3a26a73-980b-42d8-abc8-31045caaccc9",
         "note": "",
         "oxygenLevel": "",
         "productName": "Котлета",
@@ -46,18 +56,18 @@
         "organoleptic": "Хорошо",
         "inspectorName": "Анна Заведующая",
         "portionWeight": "150/50",
-        "rejectionTime": "2026-09-22 15:21",
+        "rejectionTime": "2026-09-23 12:45",
         "releaseAllowed": "yes",
         "correctiveAction": "",
         "organolepticValue": "",
-        "responsiblePerson": "ZZ Пётр Тестов 97514",
+        "responsiblePerson": "Иван Повар",
         "organolepticResult": "",
-        "productionDateTime": "2026-09-22 15:16",
-        "courierTransferTime": "2026-09-22 15:46",
-        "releasePermissionTime": "2026-09-22 15:26"
+        "productionDateTime": "2026-09-23 12:40",
+        "courierTransferTime": "2026-09-23 19:07",
+        "releasePermissionTime": "2026-09-23 12:50"
       },
       {
-        "id": "finished-product-row-c60cefcb-351e-49ac-b137-435d4b62e84d",
+        "id": "finished-product-row-92893710-0dc4-4ed7-957d-5abd8f012b56",
         "note": "",
         "oxygenLevel": "",
         "productName": "Компот",
@@ -65,15 +75,15 @@
         "organoleptic": "Хорошо",
         "inspectorName": "Анна Заведующая",
         "portionWeight": "200",
-        "rejectionTime": "2026-09-22 15:21",
+        "rejectionTime": "2026-09-23 12:45",
         "releaseAllowed": "yes",
         "correctiveAction": "",
         "organolepticValue": "",
-        "responsiblePerson": "ZZ Пётр Тестов 97514",
+        "responsiblePerson": "Иван Повар",
         "organolepticResult": "",
-        "productionDateTime": "2026-09-22 15:16",
-        "courierTransferTime": "2026-09-22 15:46",
-        "releasePermissionTime": "2026-09-22 15:26"
+        "productionDateTime": "2026-09-23 12:40",
+        "courierTransferTime": "2026-09-23 19:07",
+        "releasePermissionTime": "2026-09-23 12:50"
       }
     ]
   },
@@ -81,9 +91,178 @@
     "name": "списком: у строк разные id",
     "ok": true,
     "detail": [
-      "finished-product-row-a0519684-c1a4-49bc-8cc9-345112edaacd",
-      "finished-product-row-5f859faf-9e47-42a7-ae79-15901ecace52",
-      "finished-product-row-c60cefcb-351e-49ac-b137-435d4b62e84d"
+      "finished-product-row-7009ef7f-6476-489d-a711-098b81f2b383",
+      "finished-product-row-c3a26a73-980b-42d8-abc8-31045caaccc9",
+      "finished-product-row-92893710-0dc4-4ed7-957d-5abd8f012b56"
     ]
+  },
+  {
+    "name": "списком: изготовление 12:40 → бракераж 12:45, разрешение 12:50",
+    "ok": true,
+    "detail": [
+      [
+        "2026-09-23 12:40",
+        "2026-09-23 12:45",
+        "2026-09-23 12:50"
+      ],
+      [
+        "2026-09-23 12:40",
+        "2026-09-23 12:45",
+        "2026-09-23 12:50"
+      ],
+      [
+        "2026-09-23 12:40",
+        "2026-09-23 12:45",
+        "2026-09-23 12:50"
+      ]
+    ]
+  },
+  {
+    "name": "ячейка ФИО: при фокусе виден список подсказок сотрудников",
+    "ok": true
+  },
+  {
+    "name": "ячейка ФИО: поле не подменяется (тот же textarea в фокусе)",
+    "ok": true
+  },
+  {
+    "name": "ячейка ФИО: выбор подсказки подставляет значение",
+    "ok": true,
+    "detail": "ZZ Пётр Тестов 97514"
+  },
+  {
+    "name": "ячейка ФИО: ввод вручную сохраняется в документ",
+    "ok": true,
+    "detail": {
+      "id": "finished-product-row-7009ef7f-6476-489d-a711-098b81f2b383",
+      "note": "",
+      "oxygenLevel": "",
+      "productName": "Борщ",
+      "productTemp": "",
+      "organoleptic": "Хорошо",
+      "inspectorName": "Анна Заведующая",
+      "portionWeight": "250",
+      "rejectionTime": "2026-09-23 12:45",
+      "releaseAllowed": "yes",
+      "correctiveAction": "",
+      "organolepticValue": "",
+      "responsiblePerson": "Пётр Новый",
+      "organolepticResult": "",
+      "productionDateTime": "2026-09-23 12:40",
+      "courierTransferTime": "2026-09-23 19:07",
+      "releasePermissionTime": "2026-09-23 12:50"
+    }
+  },
+  {
+    "name": "телефон: после тапа ячейка ФИО в фокусе и подсказки видны",
+    "ok": true
+  },
+  {
+    "name": "телефон: ввод в ячейке ФИО сохраняется",
+    "ok": true,
+    "detail": {
+      "id": "finished-product-row-c3a26a73-980b-42d8-abc8-31045caaccc9",
+      "note": "",
+      "oxygenLevel": "",
+      "productName": "Котлета",
+      "productTemp": "",
+      "organoleptic": "Хорошо",
+      "inspectorName": "Анна Заведующая",
+      "portionWeight": "150/50",
+      "rejectionTime": "2026-09-23 12:45",
+      "releaseAllowed": "yes",
+      "correctiveAction": "",
+      "organolepticValue": "",
+      "responsiblePerson": "Ольга Тач",
+      "organolepticResult": "",
+      "productionDateTime": "2026-09-23 12:40",
+      "courierTransferTime": "2026-09-23 19:07",
+      "releasePermissionTime": "2026-09-23 12:50"
+    }
+  },
+  {
+    "name": "окно «Добавить изделие»: только время изготовления и живая подпись цепочки",
+    "ok": true,
+    "detail": "Закрыть\nДобавление новой строки\nДата и время изготовления\n−15 мин\n−30 мин\n−45 мин\n−1 ч\nСейчас\n\nБракераж — 18:42, разрешение к реализации — 18:47 (через 5 и 5 мин, меняется в настройках журнала)\n\nНаименование изделия\nКомпот\nБорщ\nКотлета\nСуп\nКотлета куриная\nЧай смоук\nПлов смоук\nZZ6D59317 продукт\nZZZ-ПРОВЕРКА-ДУБЛЯ-1789839333329\nСметана 20 %\nТворог 9 %\nКомпот\nБорщ\nКотлета\nСуп\nКотлета куриная\nЧай смоук\nОрганолептическая оценка\nОтлично\nВес выход, г\n\nРезультат взвешивания порционных блюд\n\nПримечание\nР"
+  },
+  {
+    "name": "окно записи: список оценок",
+    "ok": true,
+    "detail": [
+      "Отлично",
+      "Хорошо",
+      "Удовлетворительно",
+      "Неудовлетворительно",
+      "Доброкачественно",
+      "Недоброкачественно",
+      "Своя формулировка…"
+    ]
+  },
+  {
+    "name": "окно записи: своя формулировка сохраняется",
+    "ok": true,
+    "detail": {
+      "id": "finished-product-row-cc6c7564-9cd7-4cf9-abea-68ff89875aa0",
+      "note": "",
+      "oxygenLevel": "",
+      "productName": "Суп",
+      "productTemp": "",
+      "organoleptic": "Соответствует требованиям",
+      "inspectorName": "Анна Заведующая",
+      "portionWeight": "",
+      "rejectionTime": "2026-09-23 09:10",
+      "releaseAllowed": "yes",
+      "correctiveAction": "",
+      "organolepticValue": "",
+      "responsiblePerson": "ZZ Пётр Тестов 97514",
+      "organolepticResult": "",
+      "productionDateTime": "2026-09-23 09:05",
+      "courierTransferTime": "2026-09-23 19:07",
+      "releasePermissionTime": "2026-09-23 09:15"
+    }
+  },
+  {
+    "name": "окно «Добавить изделие»: изготовление 09:05 → бракераж 09:10, разрешение 09:15",
+    "ok": true,
+    "detail": [
+      "2026-09-23 09:05",
+      "2026-09-23 09:10",
+      "2026-09-23 09:15"
+    ]
+  },
+  {
+    "name": "ячейка оценки: подсказки со стандартными оценками",
+    "ok": true,
+    "detail": [
+      "Отлично",
+      "Хорошо",
+      "Удовлетворительно",
+      "Неудовлетворительно",
+      "Доброкачественно",
+      "Недоброкачественно"
+    ]
+  },
+  {
+    "name": "ячейка оценки: выбор подсказки сохраняется",
+    "ok": true,
+    "detail": {
+      "id": "finished-product-row-92893710-0dc4-4ed7-957d-5abd8f012b56",
+      "note": "",
+      "oxygenLevel": "",
+      "productName": "Компот",
+      "productTemp": "",
+      "organoleptic": "Удовлетворительно",
+      "inspectorName": "Анна Заведующая",
+      "portionWeight": "200",
+      "rejectionTime": "2026-09-23 12:45",
+      "releaseAllowed": "yes",
+      "correctiveAction": "",
+      "organolepticValue": "",
+      "responsiblePerson": "Иван Повар",
+      "organolepticResult": "",
+      "productionDateTime": "2026-09-23 12:40",
+      "courierTransferTime": "2026-09-23 19:07",
+      "releasePermissionTime": "2026-09-23 12:50"
+    }
   }
 ]

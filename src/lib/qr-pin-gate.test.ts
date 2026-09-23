@@ -28,3 +28,13 @@ test("вход в кабинет (auth) и страница результата
   assert.equal(decidePinGate({ ...base, mode: "auth", hasPin: true, sessionVerified: true }), "open");
   assert.equal(decidePinGate({ ...base, hasPin: true, isResultPage: true }), "open");
 });
+
+test("«только после входа» + вход комиссии по PIN без сессии — PIN обязателен; с сессией — как было", () => {
+  const auth = { ...base, mode: "auth" as const, commissionOnly: true };
+  assert.equal(decidePinGate({ ...auth, hasPin: true }), "pin");
+  assert.equal(decidePinGate(auth), "no-pin");
+  assert.equal(decidePinGate({ ...auth, hasPin: true, passValid: true }), "open");
+  assert.equal(decidePinGate({ ...auth, hasPin: true, sessionVerified: true }), "open");
+  // Обычный вход по кабинету (не «Я член комиссии») — без PIN, как раньше.
+  assert.equal(decidePinGate({ ...base, mode: "auth", hasPin: true, requirePin: true }), "open");
+});

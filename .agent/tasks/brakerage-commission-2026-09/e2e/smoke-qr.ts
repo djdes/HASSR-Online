@@ -1,5 +1,7 @@
 // Смоук этапа F «QR бракеража»: повар «Несколько блюд», комиссия подписывает по PIN, редактор правит и удаляет.
-// Запуск (dev на 3020 с wesetup_e2e): npx tsx .agent/tasks/brakerage-commission-2026-09/e2e/smoke-qr.ts
+// UI после 6016db5e: «Допущено / Не допущено» (радио adm:<id>) — это подпись, кнопка «Подписать · N»,
+// редактор сохраняет кнопкой «Сохранить изменения» (action=save).
+// Запуск (dev с wesetup_e2e): BASE=http://localhost:3025 npx tsx .agent/tasks/brakerage-commission-2026-09/e2e/smoke-qr.ts
 import fs from "node:fs";
 import path from "node:path";
 import bcrypt from "bcryptjs";
@@ -61,6 +63,11 @@ async function main() {
     `${BASE}/journal-fill/${ORG}/finished_product?${new URLSearchParams({ token, ...params }).toString()}`;
 
   const originalDoc = await db.journalDocument.findUniqueOrThrow({ where: { id: FP_DOC }, select: { config: true, status: true } });
+  // Состав комиссии копируется во все активные документы журнала — вернём их все.
+  const otherDocs = await db.journalDocument.findMany({
+    where: { organizationId: ORG, status: "active", template: { code: "finished_product" }, id: { not: FP_DOC } },
+    select: { id: true, config: true },
+  });
   const originalOrg = await db.organization.findUniqueOrThrow({ where: { id: ORG }, select: { journalCommissionJson: true, qrFillMode: true } });
   const originalPins = await db.user.findMany({
     where: { id: { in: [state.users.cookA.id, state.users.managerA.id] } },
@@ -115,8 +122,8 @@ async function main() {
     const member = await commissionCtx.newPage();
     await member.goto(qr({ employee: memberId ?? "" }), { waitUntil: "load", timeout: 240_000 });
     check("член комиссии: сначала PIN", (await member.locator('input[name="pin"]').count()) === 1);
-    await member.fill('input[name="pin"]', memberPin);
-    await member.locator("form button[type=submit]").click();
+    await member.fill('#qr-pin input[name="pin"]', memberPin);
+    await member.locator("#qr-pin button[type=submit]").click();
     await member.locator("#bk-form").waitFor({ timeout: 60_000 });
     const listText = await member.locator("main").innerText();
     check("список за сегодня: 3 блюда ждут подписи", (listText.match(/Ждёт подписи/g) ?? []).length === 3, listText.slice(0, 500));
@@ -134,7 +141,11 @@ async function main() {
       input.value = "Подмена";
       document.getElementById("bk-form")?.appendChild(input);
     }, afterAdd[0].id);
-    await member.locator('button[value="sign"]').click();
+    // «Допущено» у всех трёх — это подпись; кнопка считает выбранные.
+    for (const row of afterAdd) await member.locator(`input[name="adm:${row.id}"][value="yes"]`).evaluate((el: HTMLInputElement) => el.click());
+    const signLabel = (await member.locator("[data-sign-btn]").innerText()).trim();
+    check("кнопка «Подписать · 3»", signLabel === "Подписать · 3", signLabel);
+    await member.locator("[data-sign-btn]").click();
     await member.locator(".ok").waitFor({ timeout: 60_000 });
     check("«Подписано: 3»", (await member.locator("main").innerText()).includes("Подписано: 3"));
     const afterSign = await rowsOf();
@@ -151,17 +162,22 @@ async function main() {
     // ---- редактор (руководитель): правит наименование, удаляет строку
     const editor = await editorCtx.newPage();
     await editor.goto(qr({ employee: state.users.managerA.id }), { waitUntil: "load", timeout: 240_000 });
-    await editor.fill('input[name="pin"]', EDITOR_PIN);
-    await editor.locator("form button[type=submit]").click();
+    await editor.fill('#qr-pin input[name="pin"]', EDITOR_PIN);
+    await editor.locator("#qr-pin button[type=submit]").click();
     await editor.locator("#bk-form").waitFor({ timeout: 60_000 });
     check("редактору видны вкладки «За сегодня / Добавить блюдо»", (await editor.locator("nav.tabs").first().innerText()).includes("Добавить блюдо"));
     await editor.locator(`input[name="name:${afterAdd[0].id}"]`).fill("Борщ красный");
     await editor.screenshot({ path: path.join(SHOTS, "153-qr-editor-list.png"), fullPage: true });
-    await editor.locator('button[value="edit"]').click();
+    await editor.locator('#bk-form button[name="action"][value="save"]').click();
     await editor.locator(".ok").waitFor({ timeout: 60_000 });
     const afterEdit = await rowsOf();
     check("редактор исправил наименование", afterEdit[0].productName === "Борщ красный", afterEdit[0].productName);
-    await editor.goto(qr({ employee: state.users.managerA.id, view: "list", del: afterAdd[2].id }), { waitUntil: "load", timeout: 240_000 });
+    // Удаление — в том же визите (пропуск PIN привязан к `f` в адресе).
+    const delUrl = new URL(editor.url());
+    for (const key of ["done", "n"]) delUrl.searchParams.delete(key);
+    delUrl.searchParams.set("view", "list");
+    delUrl.searchParams.set("del", afterAdd[2].id);
+    await editor.goto(delUrl.toString(), { waitUntil: "load", timeout: 240_000 });
     const confirmText = await editor.locator("main").innerText();
     check("удаление подписанной строки — с предупреждением", confirmText.includes("Удалить «Компот»?") && confirmText.includes("подпись останется"), confirmText);
     await editor.getByRole("button", { name: "Да, удалить" }).click();
@@ -172,6 +188,7 @@ async function main() {
     await browser.close();
     await db.signatureEvent.deleteMany({ where: { documentId: FP_DOC } });
     await db.journalDocument.update({ where: { id: FP_DOC }, data: { config: originalDoc.config as never, status: originalDoc.status } });
+    for (const doc of otherDocs) await db.journalDocument.update({ where: { id: doc.id }, data: { config: doc.config as never } });
     await db.organization.update({
       where: { id: ORG },
       data: { journalCommissionJson: originalOrg.journalCommissionJson as never, qrFillMode: originalOrg.qrFillMode },

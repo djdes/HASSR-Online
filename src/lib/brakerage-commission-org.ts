@@ -124,3 +124,42 @@ export async function ensureCommissionPosition(organizationId: string): Promise<
   }
   return position;
 }
+
+/**
+ * «Новый человек» из окна комиссии — сразу в утверждённом составе: к
+ * текущему составу организации добавляется он, дальше как при сохранении
+ * (копия в активные документы). Уже в составе — состав не меняется.
+ */
+export async function addOrgCommissionMember(
+  organizationId: string,
+  code: string,
+  member: { employeeId: string; role?: string }
+): Promise<{ members: BrakerageCommissionMember[]; updatedDocuments: number }> {
+  const current = await readOrgCommission(organizationId, code);
+  if (current.some((item) => item.employeeId === member.employeeId)) {
+    return { members: current, updatedDocuments: 0 };
+  }
+  return saveOrgCommission(organizationId, code, [
+    ...current.map((item) => ({ employeeId: item.employeeId, role: item.role })),
+    { employeeId: member.employeeId, role: member.role || "Член комиссии" },
+  ]);
+}
+
+/**
+ * Член состава организации, которого нет в копии документа (копию меняли
+ * до того, как его добавили): дописываем в копию только его — чужие правки
+ * состава документа не затираем. Под блокировкой документа, как
+ * `saveOrgCommission`; иначе подпись `signBrakerageRows` вернёт 403.
+ */
+export async function syncDocCommissionMember(documentId: string, member: BrakerageCommissionMember): Promise<boolean> {
+  const done = await withDocumentConfigLock<boolean>(documentId, async (locked) => {
+    if (locked.status !== "active" || !isCommissionJournalCode(locked.templateCode)) return { result: false };
+    const config = asRecord(locked.config);
+    const members = normalizeCommissionMembers(config.commissionMembers);
+    if (members.some((item) => item.employeeId === member.employeeId)) return { result: true };
+    const next = normalizeCommissionMembers([...members, member]);
+    if (!next.some((item) => item.employeeId === member.employeeId)) return { result: false };
+    return { config: { ...config, commissionMembers: next } as Prisma.InputJsonValue, result: true };
+  });
+  return done === true;
+}

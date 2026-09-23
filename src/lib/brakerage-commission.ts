@@ -9,6 +9,7 @@
  * которой владеет сервер (см. brakerage-row-merge.ts).
  */
 
+import { modernizeGradeWording } from "@/lib/brakerage-grade-wording";
 import { pluralRu } from "@/lib/plural-ru";
 
 export const BRAKERAGE_COMMISSION_MAX = 10;
@@ -116,13 +117,15 @@ export function normalizeRowSignatures(value: unknown): BrakerageRowSignature[] 
     const userId = text(record.userId, 64);
     const signedAt = text(record.signedAt, 40);
     if (!userId || !signedAt || Number.isNaN(Date.parse(signedAt))) continue;
-    const grade = text(record.grade, 80);
+    // Старые формулировки оценки — новыми словами, как в строке: иначе
+    // подпись под «Доброкачественная» выглядела бы «изменено после подписи».
+    const grade = modernizeGradeWording(text(record.grade, 80));
     const snapshotRaw = record.snapshot && typeof record.snapshot === "object" ? (record.snapshot as Record<string, unknown>) : null;
     const snapshot = snapshotRaw
       ? Object.fromEntries(
           Object.entries(snapshotRaw)
             .filter(([key, value]) => (SIGNATURE_SNAPSHOT_KEYS as readonly string[]).includes(key) && typeof value === "string")
-            .map(([key, value]) => [key, (value as string).slice(0, 200)])
+            .map(([key, value]) => [key, modernizeGradeWording((value as string).slice(0, 200))])
         )
       : null;
     const signature: BrakerageRowSignature = {

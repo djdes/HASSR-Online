@@ -43,11 +43,13 @@ import { submitJournalFill } from "@/lib/journal-fill-submit";
 import { listNameSuggestions } from "@/lib/name-suggestions-db";
 import type { NameSuggestionMeta } from "@/lib/name-suggestions";
 import { resolveQrFillActor, sessionEmployeeForQr } from "@/lib/qr-fill-actor";
-import { isCommissionJournalCode, isCommissionMember } from "@/lib/brakerage-commission";
+import { isCommissionJournalCode, isCommissionMember, type BrakerageCommissionMember } from "@/lib/brakerage-commission";
 import { listBrakerageDayRows } from "@/lib/brakerage-qr";
 import { handleBrakerageList } from "@/lib/brakerage-qr-flow";
 import { renderBrakerageTabs, renderBulkSwitch, renderCommissionGate } from "@/lib/brakerage-qr-html";
-import { brakerageQrDefaultView, brakerageQrRole, parseBulkNames, type BrakerageQrRole } from "@/lib/brakerage-qr-role";
+import { brakerageQrDefaultView, parseBulkNames, type BrakerageQrRole } from "@/lib/brakerage-qr-role";
+import { resolveBrakerageQrAccess } from "@/lib/brakerage-qr-access";
+import { readOrgCommission } from "@/lib/brakerage-commission-org";
 import { isBrakerageJournalCode } from "@/lib/brakerage-row-merge";
 import { clientIp } from "@/lib/client-ip";
 import {
@@ -342,6 +344,9 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
 
   // Выбор из списка (форма с `rf=1`): ставим или стираем «запомнить» и
   // уходим на чистый адрес, чтобы обновление страницы ничего не меняло.
+  // `view` / `bulk` держатся только у того же человека (PIN, ссылки шага):
+  // при смене сотрудника новый получает свой вид по умолчанию — иначе член
+  // комиссии после повара попадал в «Несколько блюд» вместо списка.
   const passthrough = { view: q.get("view"), bulk: q.get("bulk") };
   if (q.get("rf") === "1" && employee && employeeParam === employee.id && mode !== "auth") {
     const rememberCookies = [
@@ -349,7 +354,7 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
       cookie(LEGACY_EMPLOYEE_COOKIE, "", cookiePath, 0, false, secure),
       ...setCookies,
     ];
-    const target = link({ employee: employee.id, doc: document?.id ?? null, commission: commissionOnly ? "1" : null, ...passthrough });
+    const target = link({ employee: employee.id, doc: document?.id ?? null, commission: commissionOnly ? "1" : null });
     const headers = new Headers({ Location: safeInternalPath(target), "Cache-Control": "no-store" });
     for (const item of rememberCookies) headers.append("Set-Cookie", item);
     return new NextResponse(null, { status: 303, headers });
@@ -374,7 +379,7 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
   const pickForm = (currentDoc: string | null) => ({
     action: path,
     hidden: Object.fromEntries(
-      Object.entries({ token, doc: currentDoc, commission: keep.commission, ...passthrough }).filter((entry): entry is [string, string] => Boolean(entry[1]))
+      Object.entries({ token, doc: currentDoc, commission: keep.commission }).filter((entry): entry is [string, string] => Boolean(entry[1]))
     ),
     showRemember: mode !== "auth",
     rememberOn: true,
@@ -403,7 +408,11 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
           )
       : null;
   if (commissionOnly && brakerageConfig) {
-    const members = employees.filter((item) => isCommissionMember(brakerageConfig, item.id));
+    // Утверждённый состав: копия документа или (запасная проверка) состав организации.
+    const orgMembers = await readOrgCommission(orgId, code);
+    const members = employees.filter(
+      (item) => isCommissionMember(brakerageConfig, item.id) || isCommissionMember({ commissionMembers: orgMembers }, item.id)
+    );
     employees.splice(0, employees.length, ...members);
     if (employee && !members.some((item) => item.id === employee?.id)) employee = null;
   }
@@ -428,7 +437,7 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
     );
   }
 
-  const changeHref = sessionEmployee && !sessionEmployee.canPickOthers ? null : link({ doc: document.id, pick: "employee", commission: keep.commission, ...passthrough });
+  const changeHref = sessionEmployee && !sessionEmployee.canPickOthers ? null : link({ doc: document.id, pick: "employee", commission: keep.commission });
   const who = renderWho({
     employeeName: employee.name,
     changeHref,
@@ -440,19 +449,17 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
 
   // ---- бракераж: роль в списке «За сегодня» (нужна до шага PIN)
   let role: BrakerageQrRole | null = null;
+  let orgMember: BrakerageCommissionMember | null = null;
   let listCapable = false;
   let view: "list" | "add" = "add";
   if (isBrakerage && brakerageConfig) {
-    const person = await db.user.findUnique({ where: { id: employee.id }, select: { role: true, canEditBrakerageDishes: true } });
-    role = brakerageQrRole({
-      config: brakerageConfig,
-      employeeId: employee.id,
-      role: person?.role,
-      canEditBrakerageDishes: person?.canEditBrakerageDishes === true,
-    });
+    const access = await resolveBrakerageQrAccess({ organizationId: orgId, code, config: brakerageConfig, employeeId: employee.id });
+    role = access.role;
+    orgMember = access.orgMember;
     // Вошёл по PIN без кабинета — только оценка и подпись.
     if (commissionOnly) role.editor = false;
-    listCapable = role.evaluator || role.editor;
+    // Должность комиссии вне состава видит список только для чтения.
+    listCapable = role.evaluator || role.editor || role.viewer;
     const viewParam = q.get("view");
     view = commissionOnly ? "list" : viewParam === "add" || viewParam === "list" ? viewParam : brakerageQrDefaultView(role);
   }
@@ -517,6 +524,8 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
     // Гигиена по форме Приложения №1: отметка сотрудника и допуск — подписи, PIN всегда.
     requirePin: commissionOnly || (listCapable && view === "list") || isHealthQr,
     isResultPage: done === "appended" || done === "updated" || done === "signed" || done === "saved" || done === "admitted" || done === "suspended",
+    // «Я член комиссии — войти по PIN» в режиме «через вход»: без сессии PIN обязателен.
+    commissionOnly: commissionOnly && !sessionVerified,
   });
   if (gate === "no-pin") {
     const latest = await latestQrPinRequestFor({ organizationId: orgId, userId: employee.id });
@@ -618,6 +627,7 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
         documentId: document.id,
         employee,
         role,
+        orgMember,
         isFinished,
         tabs: brakerageTabs,
         who: whoOk,

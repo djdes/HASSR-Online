@@ -5,6 +5,7 @@ import {
   type JournalColumnsConfig,
 } from "@/lib/journal-columns";
 import { BRAKERAGE_TIME_OFFSETS_DEFAULT } from "@/lib/brakerage-times";
+import { modernizeGradeWording } from "@/lib/brakerage-grade-wording";
 import {
   formatRowSignatures,
   normalizeCommissionMembers as normalizeBrakerageCommission,
@@ -113,15 +114,15 @@ export const FINISHED_PRODUCT_ORGANOLEPTIC_DISH = [
   "Хорошо",
   "Удовлетворительно",
   "Неудовлетворительно",
-  "Доброкачественная",
-  "Недоброкачественная",
+  "Доброкачественно",
+  "Недоброкачественно",
 ];
 export const FINISHED_PRODUCT_ORGANOLEPTIC_SEMI = [
   "Соответствует",
   "Требует доработки",
   "Не соответствует",
-  "Доброкачественная",
-  "Недоброкачественная",
+  "Доброкачественно",
+  "Недоброкачественно",
 ];
 export const FINISHED_PRODUCT_ORGANOLEPTIC_MAX = 20;
 
@@ -223,7 +224,8 @@ export function normalizeOrganolepticOptions(value: unknown): string[] {
   return [
     ...new Set(
       value
-        .map((item) => (typeof item === "string" ? item.replace(/\s+/g, " ").trim().slice(0, 80) : ""))
+        // Старые «Доброкачественная» / «Не доброкачественная» — новыми словами.
+        .map((item) => (typeof item === "string" ? modernizeGradeWording(item.replace(/\s+/g, " ").trim().slice(0, 80)) : ""))
         .filter(Boolean)
     ),
   ].slice(0, FINISHED_PRODUCT_ORGANOLEPTIC_MAX);
@@ -247,7 +249,7 @@ export function createFinishedProductRow(
     productionDateTime: normalizeText(overrides.productionDateTime),
     rejectionTime: normalizeText(overrides.rejectionTime),
     productName: normalizeText(overrides.productName),
-    organoleptic: normalizeText(overrides.organoleptic),
+    organoleptic: modernizeGradeWording(normalizeText(overrides.organoleptic)),
     productTemp: normalizeText(overrides.productTemp),
     correctiveAction: normalizeText(overrides.correctiveAction),
     releasePermissionTime: normalizeText(overrides.releasePermissionTime),
@@ -255,8 +257,8 @@ export function createFinishedProductRow(
     oxygenLevel: normalizeText(overrides.oxygenLevel),
     responsiblePerson: normalizeText(overrides.responsiblePerson),
     inspectorName: normalizeText(overrides.inspectorName),
-    organolepticValue: normalizeText(overrides.organolepticValue),
-    organolepticResult: normalizeText(overrides.organolepticResult),
+    organolepticValue: modernizeGradeWording(normalizeText(overrides.organolepticValue)),
+    organolepticResult: modernizeGradeWording(normalizeText(overrides.organolepticResult)),
     releaseAllowed: overrides.releaseAllowed === "no" ? "no" : "yes",
     portionWeight: normalizeText(overrides.portionWeight).slice(0, 20),
     note: normalizeText(overrides.note).slice(0, 500),

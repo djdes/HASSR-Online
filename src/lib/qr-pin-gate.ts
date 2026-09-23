@@ -21,11 +21,17 @@ export function decidePinGate(params: {
   requirePin?: boolean;
   /** Экран «Сохранено» — повторно не спрашиваем. */
   isResultPage?: boolean;
+  /**
+   * Режим «через вход», но человек вошёл кнопкой «Я член комиссии —
+   * войти по PIN» (`?commission=1`): кабинета нет — личность подтверждает
+   * PIN. Раньше `auth` открывал форму без PIN и здесь.
+   */
+  commissionOnly?: boolean;
 }): PinGateDecision {
   if (params.isResultPage) return "open";
-  if (params.mode === "auth") return "open";
+  if (params.mode === "auth" && !params.commissionOnly) return "open";
   if (params.sessionVerified || params.passValid) return "open";
-  const required = params.mode === "pin" || params.hasPin || params.requirePin === true;
+  const required = params.mode === "pin" || params.hasPin || params.requirePin === true || params.commissionOnly === true;
   if (!required) return "open";
   return params.hasPin ? "pin" : "no-pin";
 }

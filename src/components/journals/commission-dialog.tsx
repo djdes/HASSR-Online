@@ -108,20 +108,32 @@ export function CommissionDialog({
       const response = await fetch(`/api/settings/brakerage-commission/${code}/members`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullName: newPerson.fullName, phone: newPerson.phone, pin: newPerson.pin }),
+        body: JSON.stringify({
+          fullName: newPerson.fullName,
+          phone: newPerson.phone,
+          pin: newPerson.pin,
+          role: newPerson.role.trim() || (members.length === 0 ? "Председатель" : "Член комиссии"),
+        }),
       });
       const body = (await response.json().catch(() => null)) as {
         user?: { id: string; name: string };
         pin?: string | null;
+        members?: BrakerageCommissionMember[];
         error?: string;
       } | null;
       if (!response.ok || !body?.user) throw new Error(body?.error || "Не удалось добавить человека");
       const user = body.user;
+      const saved = body.members ?? [];
       setCandidates((prev) => [...prev, { id: user.id, name: user.name, position: "Член бракеражной комиссии", group: "commission", hasPin: Boolean(body.pin) }]);
-      setMembers((prev) => [
-        ...prev,
-        { employeeId: user.id, name: user.name, role: newPerson.role.trim() || (prev.length === 0 ? "Председатель" : "Член комиссии") },
-      ]);
+      // Сервер уже записал человека в утверждённый состав — список из ответа;
+      // несохранённые правки окна (добавленные, но без «Сохранить состав») остаются.
+      setMembers((prev) => {
+        const fromServer = saved.map((m) => ({ employeeId: m.employeeId, role: m.role, name: m.employeeName }));
+        const serverIds = new Set(fromServer.map((m) => m.employeeId));
+        const pending = prev.filter((m) => !serverIds.has(m.employeeId));
+        return fromServer.length > 0 ? [...fromServer, ...pending] : [...prev, { employeeId: user.id, name: user.name, role: "Член комиссии" }];
+      });
+      if (saved.length > 0) onSaved?.(saved);
       if (body.pin) setIssuedPin({ name: user.name, pin: body.pin });
       setNewPerson(null);
       toast.success(`${user.name} — в комиссии и в сотрудниках, колонка «Комиссия»`);

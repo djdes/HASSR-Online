@@ -207,8 +207,8 @@ export default async function TaskFillPage({
         new Map([
           ["compliant", "Соответствует"],
           ["non_compliant", "Не соответствует"],
-          ["good_quality", "Доброкачественная"],
-          ["poor_quality", "Недоброкачественная"],
+          ["good_quality", "Доброкачественно"],
+          ["poor_quality", "Недоброкачественно"],
         ])
       );
     }

@@ -1,7 +1,7 @@
 import type { Prisma } from "@prisma/client";
 
 import { normalizeRowSignatures, type BrakerageRowSignature } from "@/lib/brakerage-commission";
-import { deriveBrakerageTimes } from "@/lib/brakerage-times";
+import { correctedBrakerageTimes, deriveBrakerageTimes } from "@/lib/brakerage-times";
 import { db } from "@/lib/db";
 import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import {
@@ -52,9 +52,9 @@ export type BrakerageQrList = {
 
 export const PERISHABLE_GRADE_LABELS: Record<string, string> = {
   compliant: "Соответствует",
-  good_quality: "Доброкачественная",
+  good_quality: "Доброкачественно",
   non_compliant: "Не соответствует",
-  poor_quality: "Недоброкачественная",
+  poor_quality: "Недоброкачественно",
 };
 
 function timeOf(raw: unknown): string {
@@ -216,8 +216,16 @@ export async function editBrakerageRows(params: {
             nextGrade !== row.organoleptic ||
             nextWeight !== row.portionWeight)
         ) {
+          // Изготовление поправили у неподписанной строки — бракераж и
+          // разрешение сдвигаются цепочкой; у подписанной остаются как были.
+          const times = correctedBrakerageTimes({
+            row,
+            nextProductionDateTime: nextDateTime,
+            signed: normalizeRowSignatures(row.signatures).length > 0,
+            offsets: config.timeDefaults,
+          });
           rows.push(
-            createFinishedProductRow({ ...row, productName: nextName, productionDateTime: nextDateTime, organoleptic: nextGrade, portionWeight: nextWeight })
+            createFinishedProductRow({ ...row, ...times, productName: nextName, productionDateTime: nextDateTime, organoleptic: nextGrade, portionWeight: nextWeight })
           );
           changed += 1;
         } else rows.push(row);

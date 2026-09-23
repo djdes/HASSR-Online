@@ -63,3 +63,60 @@ export function deriveBrakerageTimes(params: {
       : params.releasePermissionTime?.trim() || (rejectionTime ? addMinutesToLocalDateTime(rejectionTime, offsets.releaseAfterRejectionMinutes) : "");
   return { rejectionTime, releasePermissionTime };
 }
+
+/**
+ * Новая строка (сайт «Добавить блюдо» / «Добавить списком», QR «Одно блюдо» /
+ * «Несколько блюд»): вводится только изготовление, бракераж и разрешение
+ * считаются заново цепочкой — прежние значения окна не держим.
+ */
+export function chainBrakerageTimes(params: {
+  productionDateTime: string;
+  rejectionTime?: string | null;
+  releasePermissionTime?: string | null;
+  releaseAllowed?: string | null;
+  offsets?: Partial<BrakerageTimeOffsets> | null;
+}): { rejectionTime: string; releasePermissionTime: string } {
+  return deriveBrakerageTimes({
+    productionDateTime: params.productionDateTime,
+    releaseAllowed: params.releaseAllowed,
+    offsets: params.offsets,
+  });
+}
+
+/**
+ * Коррекция времени изготовления по QR: у неподписанной строки бракераж и
+ * разрешение сдвигаются цепочкой, у подписанной — остаются как подписаны.
+ */
+export function correctedBrakerageTimes(params: {
+  row: { productionDateTime: string; rejectionTime: string; releasePermissionTime: string; releaseAllowed?: string | null };
+  nextProductionDateTime: string;
+  signed: boolean;
+  offsets?: Partial<BrakerageTimeOffsets> | null;
+}): { rejectionTime: string; releasePermissionTime: string } {
+  const { row } = params;
+  if (params.signed || params.nextProductionDateTime === row.productionDateTime) {
+    return { rejectionTime: row.rejectionTime, releasePermissionTime: row.releasePermissionTime };
+  }
+  return chainBrakerageTimes({
+    productionDateTime: params.nextProductionDateTime,
+    releaseAllowed: row.releaseAllowed,
+    offsets: params.offsets,
+  });
+}
+
+/** Живая подпись в окне добавления: «Бракераж — 12:45, разрешение к реализации — 12:50 (…)». */
+export function brakerageChainCaption(params: {
+  productionDateTime: string;
+  releaseAllowed?: string | null;
+  offsets?: Partial<BrakerageTimeOffsets> | null;
+}): string {
+  const offsets = { ...BRAKERAGE_TIME_OFFSETS_DEFAULT, ...(params.offsets ?? {}) };
+  const times = chainBrakerageTimes(params);
+  const hhmm = (value: string) => value.slice(11, 16);
+  if (!times.rejectionTime) return "Укажите время изготовления — бракераж и разрешение посчитаются сами";
+  const settings = "меняется в настройках журнала";
+  if (params.releaseAllowed === "no") {
+    return `Бракераж — ${hhmm(times.rejectionTime)}, без разрешения к реализации (через ${offsets.rejectionAfterProductionMinutes} мин, ${settings})`;
+  }
+  return `Бракераж — ${hhmm(times.rejectionTime)}, разрешение к реализации — ${hhmm(times.releasePermissionTime)} (через ${offsets.rejectionAfterProductionMinutes} и ${offsets.releaseAfterRejectionMinutes} мин, ${settings})`;
+}

@@ -18,7 +18,18 @@ const check = (name: string, ok: boolean, detail?: unknown) => {
   checks.push({ name, ok, detail });
   console.log(`${ok ? "PASS" : "FAIL"} ${name}${!ok && detail !== undefined ? ` :: ${JSON.stringify(detail).slice(0, 500)}` : ""}`);
 };
-type Row = { id: string; productName: string; organoleptic: string; responsiblePerson: string; inspectorName: string; productTemp: string; portionWeight?: string };
+type Row = {
+  id: string;
+  productName: string;
+  organoleptic: string;
+  responsiblePerson: string;
+  inspectorName: string;
+  productTemp: string;
+  portionWeight?: string;
+  productionDateTime: string;
+  rejectionTime: string;
+  releasePermissionTime: string;
+};
 const rowsOf = async (id: string) =>
   (((await db.journalDocument.findUnique({ where: { id }, select: { config: true } }))?.config as { rows?: Row[] } | null)?.rows ?? []);
 
@@ -68,6 +79,15 @@ async function main() {
     });
     id = (await created.json().catch(() => null))?.document?.id ?? null;
     check("документ бракеража создан", created.ok() && Boolean(id), created.status());
+    // Новый документ — форма Приложения 4 (с 702c1801): колонки «Ответственный
+    // исполнитель» в ней нет, а раздел 2 проверяет именно её подсказки.
+    // Включаем колонку, как это сделал бы руководитель в настройках.
+    if (id) {
+      const fresh = (await db.journalDocument.findUniqueOrThrow({ where: { id }, select: { config: true } })).config as Record<string, unknown>;
+      const { columns: _columns, ...withoutColumns } = fresh;
+      void _columns;
+      await db.journalDocument.update({ where: { id }, data: { config: { ...withoutColumns, showResponsible: true } as never } });
+    }
     const url = `${BASE}/journals/finished_product/documents/${id}`;
     await openDoc(page, url);
     // «Что нового» после смены заметок перекрывает страницу — закрываем.
@@ -109,6 +129,19 @@ async function main() {
       bulkTableText.includes("Будет добавлено: 3") && (await bulk.getByLabel("Вес выход, г", { exact: true }).count()) === 0,
       bulkTableText.slice(0, 300)
     );
+    // Одно время — изготовление; бракераж и разрешение считаются цепочкой (+5, +5).
+    check(
+      "списком: полей «Время снятия бракеража» и «Дата и время разрешения» в окне нет",
+      !bulkTableText.includes("Время снятия бракеража") && !bulkTableText.includes("Дата и время разрешения"),
+      bulkTableText.slice(0, 600)
+    );
+    await bulk.getByLabel("Время изготовления", { exact: true }).fill("12:40");
+    const caption = await bulk.getByTestId("brakerage-chain-caption").innerText();
+    check(
+      "списком: живая подпись «Бракераж — 12:45, разрешение к реализации — 12:50»",
+      caption.includes("Бракераж — 12:45, разрешение к реализации — 12:50"),
+      caption
+    );
     await bulk.getByRole("combobox", { name: "Органолептическая оценка" }).click();
     await page.getByRole("option", { name: "Хорошо" }).click();
     // Поля ФИО есть не во всех наборах колонок (форма Приложения №4 — без них).
@@ -136,6 +169,12 @@ async function main() {
       bulkRows
     );
     check("списком: у строк разные id", new Set(bulkRows.map((row) => row.id)).size === 3, bulkRows.map((row) => row.id));
+    check(
+      "списком: изготовление 12:40 → бракераж 12:45, разрешение 12:50",
+      bulkRows.length === 3 &&
+        bulkRows.every((row) => row.productionDateTime.endsWith(" 12:40") && row.rejectionTime.endsWith(" 12:45") && row.releasePermissionTime.endsWith(" 12:50")),
+      bulkRows.map((row) => [row.productionDateTime, row.rejectionTime, row.releasePermissionTime])
+    );
     if (process.env.BULK_ONLY === "1") return;
 
     // 2. ФИО в ячейке таблицы: подсказки под ячейкой без подмены элемента, ввод сохраняется.
@@ -143,6 +182,7 @@ async function main() {
     const firstRow = page.locator("tbody tr", { hasText: "Борщ" }).first();
     const columnsHead = (await page.locator("thead th").allInnerTexts()).map((s) => s.replace(/\s+/g, " ").trim());
     const responsibleIdx = columnsHead.findIndex((text) => text.includes("Ответственный исполнитель"));
+    if (responsibleIdx < 0) throw new Error(`нет колонки «Ответственный исполнитель»: ${columnsHead.join(" | ")}`);
     const cell = firstRow.locator("td").nth(responsibleIdx).locator("textarea");
     await cell.click();
     const suggestions = page.getByRole("listbox", { name: "Подсказки" });
@@ -184,6 +224,13 @@ async function main() {
     const dialog = page.getByRole("dialog").filter({ hasText: "Добавление новой строки" }).first();
     await dialog.waitFor({ timeout: 30_000 });
     await dialog.getByRole("combobox", { name: "Наименование изделия" }).fill("Суп");
+    const addText = await dialog.innerText();
+    check(
+      "окно «Добавить изделие»: только время изготовления и живая подпись цепочки",
+      !addText.includes("Время снятия бракеража") && !addText.includes("Дата и время разрешения") && (await dialog.getByTestId("brakerage-chain-caption").count()) === 1,
+      addText.slice(0, 500)
+    );
+    await dialog.getByLabel("Время изготовления", { exact: true }).fill("09:05");
     await dialog.getByRole("combobox", { name: "Органолептическая оценка" }).click();
     const optionNames = await page.getByRole("option").allInnerTexts();
     check("окно записи: список оценок", ["Отлично", "Хорошо", "Удовлетворительно", "Неудовлетворительно", "Своя формулировка…"].every((o) => optionNames.includes(o)), optionNames);
@@ -194,7 +241,14 @@ async function main() {
     await page.waitForTimeout(2500);
     const soup = (await rowsOf(id!)).find((row) => row.productName === "Суп");
     check("окно записи: своя формулировка сохраняется", soup?.organoleptic === "Соответствует требованиям", soup);
-    const organoIdx = columnsHead.findIndex((text) => text.includes("Органолептическая оценка"));
+    check(
+      "окно «Добавить изделие»: изготовление 09:05 → бракераж 09:10, разрешение 09:15",
+      Boolean(soup?.productionDateTime.endsWith(" 09:05") && soup.rejectionTime.endsWith(" 09:10") && soup.releasePermissionTime.endsWith(" 09:15")),
+      soup && [soup.productionDateTime, soup.rejectionTime, soup.releasePermissionTime]
+    );
+    // С формы Приложения 4 колонка называется «Результаты органолептической оценки качества готовых блюд».
+    const organoIdx = columnsHead.findIndex((text) => /органолептическ/i.test(text));
+    if (organoIdx < 0) throw new Error(`нет колонки органолептической оценки: ${columnsHead.join(" | ")}`);
     const organoCell = page.locator("tbody tr", { hasText: "Компот" }).first().locator("td").nth(organoIdx).locator("textarea");
     await organoCell.click();
     const organoOptions = await page.getByRole("listbox", { name: "Подсказки" }).getByRole("option").allInnerTexts().catch(() => []);

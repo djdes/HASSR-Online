@@ -97,9 +97,9 @@ function buildPerishableForm(employeeName: string | null): TaskFormSchema {
         required: true,
         options: [
           { value: "compliant", label: "Соответствует — принято" },
-          { value: "good_quality", label: "Доброкачественная — принято" },
+          { value: "good_quality", label: "Доброкачественно — принято" },
           { value: "non_compliant", label: "Не соответствует — брак" },
-          { value: "poor_quality", label: "Недоброкачественная — брак" },
+          { value: "poor_quality", label: "Недоброкачественно — брак" },
         ],
         defaultValue: "compliant",
       },
