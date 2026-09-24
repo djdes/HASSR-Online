@@ -56,6 +56,18 @@ test("interpolate: зажим по краям и линейность", () => {
   assert.equal(interpolate(20, [0, 10], [0, 100], { clamp: false }), 200);
 });
 
+test("движок — Remotion: Player в плеере, useCurrentFrame в композиции", () => {
+  const player = read("src/components/landing/qr-player/qr-player.tsx");
+  assert.ok(player.includes('from "@remotion/player"'), "нет импорта @remotion/player");
+  assert.ok(player.includes("acknowledgeRemotionLicense"), "лицензия Remotion не подтверждена пропом");
+  const composition = read("src/components/landing/qr-player/composition.tsx");
+  assert.ok(composition.includes("useCurrentFrame"), "композиция не на useCurrentFrame");
+  const clock = read("src/components/landing/qr-player/clock.ts");
+  assert.ok(clock.includes('from "remotion"'), "тайминги не на remotion");
+  const pkg = JSON.parse(read("package.json")) as { dependencies: Record<string, string> };
+  assert.equal(pkg.dependencies.remotion, pkg.dependencies["@remotion/player"], "версии remotion и @remotion/player должны совпадать");
+});
+
 test("журналы в сценах — ровно из каталога", () => {
   const names = new Set<string>(ACTIVE_JOURNAL_CATALOG.map((item) => item.name));
   for (const name of Object.values(JOURNALS)) assert.ok(names.has(name), name);

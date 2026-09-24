@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
+import { Player, type CallbackListener, type PlayerRef } from "@remotion/player";
 import { ChevronDown, Pause, Play, SlidersHorizontal, Thermometer, Refrigerator } from "lucide-react";
 
-import { usePrefersReducedMotion } from "@/lib/use-media-query";
+import { useMediaQuery, usePrefersReducedMotion } from "@/lib/use-media-query";
 
-import { formatClock, useOnScreen, usePlayerClock } from "./clock";
+import { formatClock, useOnScreen } from "./clock";
 import {
   BODY_RANGE,
   CHAPTERS,
@@ -20,52 +21,131 @@ import {
   formatDecimal,
   fridgeOutOfRange,
 } from "./chapters";
+import { QrComposition } from "./composition";
 import { STAGE_BACKGROUND, SceneFrame, type SceneDay } from "./scene";
 import type { QrMatrix } from "./qr-sticker";
 
 /**
- * Интерактивный ролик «как работает QR» — механика Remotion Player своим
- * кодом: часы кадров, главы, скраббер, «Попробуйте сами» (значение меняет
- * исход сцены). Первый кадр рисуется на сервере; ролик идёт сам только в
- * зоне видимости и на видимой вкладке. При `prefers-reduced-motion` —
- * без автозапуска: раскадровка из итоговых кадров глав.
- *
- * Раскладка — минимум текста вокруг сцены: вкладки-главы одной строкой
- * НАД сценой (заливка активной = прогресс слайда), тонкая перемотка под
- * ней, одна короткая подпись, «Попробуйте сами» — свёрнут по умолчанию.
+ * Интерактивный ролик «как работает QR» на Remotion: кадр двигает
+ * `<Player>` из `@remotion/player`, картинка — композиция из scene.tsx
+ * (чистая функция кадра). Хром — наш: вкладки-главы одной строкой над
+ * сценой, тонкая перемотка, «Попробуйте сами» спойлером; управляет
+ * Плеером через PlayerRef. Ролик идёт сам только в зоне видимости и на
+ * видимой вкладке; при `prefers-reduced-motion` — без автозапуска,
+ * раскадровка из итоговых кадров глав.
  */
 
 const SEEK_STEP_SECONDS = 2;
+
+/* Размер композиции — по тому же брейкпоинту, что аспект сцены (md):
+   телефон 4:5, десктоп 16:9. Внутрисценовые md:-классы остаются
+   согласованы с формой кадра. */
+const MOBILE_COMPOSITION = { width: 480, height: 600 } as const;
+const DESKTOP_COMPOSITION = { width: 1120, height: 630 } as const;
+
+/** Текущий кадр Плеера — подписка на frameupdate/seeked (паттерн из
+    доков Remotion, useSyncExternalStore). До маунта Плеера — кадр 0. */
+function usePlayerFrame(player: PlayerRef | null): number {
+  const subscribe = useCallback(
+    (onChange: () => void) => {
+      if (!player) return () => undefined;
+      const onFrame: CallbackListener<"frameupdate"> = () => onChange();
+      const onSeek: CallbackListener<"seeked"> = () => onChange();
+      player.addEventListener("frameupdate", onFrame);
+      player.addEventListener("seeked", onSeek);
+      return () => {
+        player.removeEventListener("frameupdate", onFrame);
+        player.removeEventListener("seeked", onSeek);
+      };
+    },
+    [player]
+  );
+  return useSyncExternalStore(
+    subscribe,
+    () => player?.getCurrentFrame() ?? 0,
+    () => 0
+  );
+}
 
 export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
   const reduced = usePrefersReducedMotion();
   const onScreen = useOnScreen(rootRef);
-  const clock = usePlayerClock({ fps: FPS, durationInFrames: DURATION_IN_FRAMES, active: onScreen });
+  const desktop = useMediaQuery("(min-width: 768px)");
   const [fridgeTemp, setFridgeTemp] = useState<number>(FRIDGE_RANGE.initial);
   const [bodyTemp, setBodyTemp] = useState<number>(BODY_RANGE.initial);
   const [tryOpen, setTryOpen] = useState(false);
-  const autoStarted = useRef(false);
-  const { play, pause, seek } = clock;
 
-  // Автозапуск — один раз, когда ролик впервые попал в кадр. Если зритель
-  // поставил паузу, прокрутка туда-обратно его решение не отменяет.
+  // Плеер рендерится после маунта: SSR и первый клиентский кадр отдают
+  // статичную подложку с тем же кадром — расхождения разметки нет.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  // PlayerRef через callback-ref в state: слушатели вешаются, когда
+  // Плеер реально смонтирован, а не по таймеру.
+  const [player, setPlayer] = useState<PlayerRef | null>(null);
+  const playerRef = useCallback((instance: PlayerRef | null) => setPlayer(instance), []);
+
+  const frame = usePlayerFrame(player);
+
+  const [playing, setPlaying] = useState(false);
   useEffect(() => {
-    if (!onScreen || reduced || autoStarted.current) return;
-    autoStarted.current = true;
-    play();
-  }, [onScreen, reduced, play]);
+    if (!player) return;
+    setPlaying(player.isPlaying());
+    const onPlay = () => setPlaying(true);
+    const onPause = () => setPlaying(false);
+    player.addEventListener("play", onPlay);
+    player.addEventListener("pause", onPause);
+    return () => {
+      player.removeEventListener("play", onPlay);
+      player.removeEventListener("pause", onPause);
+    };
+  }, [player]);
+
+  // Намерение зрителя: пауза вне экрана его не отменяет.
+  const wantsPlay = useRef(false);
+  const autoStarted = useRef(false);
+
+  // Автозапуск — один раз, когда ролик впервые попал в кадр; вне зоны
+  // видимости и на фоновой вкладке Плеер стоит.
+  useEffect(() => {
+    if (!player) return;
+    if (!onScreen) {
+      player.pause();
+      return;
+    }
+    if (reduced) return;
+    if (!autoStarted.current) {
+      autoStarted.current = true;
+      wantsPlay.current = true;
+    }
+    if (wantsPlay.current) player.play();
+  }, [player, onScreen, reduced]);
 
   // reduced-motion: стоим на итоговом кадре главы — это раскадровка.
   useEffect(() => {
-    if (!reduced) return;
-    pause();
-    seek(finalFrameOf(0));
-  }, [reduced, pause, seek]);
+    if (!reduced || !player) return;
+    wantsPlay.current = false;
+    player.pause();
+    player.seekTo(finalFrameOf(0));
+  }, [reduced, player]);
 
-  const { chapter, index, local } = chapterAt(clock.frame);
-  const storyboard = reduced && !clock.playing;
+  const seek = useCallback(
+    (target: number) => {
+      player?.seekTo(Math.min(DURATION_IN_FRAMES - 1, Math.max(0, Math.round(target))));
+    },
+    [player]
+  );
+
+  const togglePlay = useCallback(() => {
+    if (!player) return;
+    wantsPlay.current = !player.isPlaying();
+    player.toggle();
+  }, [player]);
+
+  const { chapter, index, local } = chapterAt(frame);
+  const storyboard = reduced && !playing;
 
   // Активная вкладка сама подъезжает в видимую зону строки (только её
   // горизонтальный скролл — страницу не дёргаем).
@@ -85,7 +165,8 @@ export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
   };
 
   const showResult = (chapterIndex: number) => {
-    pause();
+    wantsPlay.current = false;
+    player?.pause();
     seek(CHAPTERS[chapterIndex].from + Math.round(RESULT_SECONDS * FPS));
   };
 
@@ -95,7 +176,7 @@ export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
     if (event.key === " " || event.key === "Spacebar") {
       if (target.tagName === "BUTTON") return;
       event.preventDefault();
-      clock.toggle();
+      togglePlay();
       return;
     }
     if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
@@ -105,16 +186,17 @@ export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
         goToChapter(index + sign);
         return;
       }
-      seek(Math.min(DURATION_IN_FRAMES - 1, Math.max(0, clock.frame + sign * SEEK_STEP_SECONDS * FPS)));
+      seek(frame + sign * SEEK_STEP_SECONDS * FPS);
     }
   };
 
   const tickPercents = CHAPTERS.slice(1).map((item) => (item.from / (DURATION_IN_FRAMES - 1)) * 100);
   const fridgeBad = fridgeOutOfRange(fridgeTemp);
   const fever = bodyFever(bodyTemp);
+  const composition = desktop ? DESKTOP_COMPOSITION : MOBILE_COMPOSITION;
 
   return (
-    <div ref={rootRef} onKeyDown={onKeyDown} data-qr-player="" data-frame={clock.frame} data-playing={clock.running ? "1" : "0"}>
+    <div ref={rootRef} onKeyDown={onKeyDown} data-qr-player="" data-frame={frame} data-playing={playing ? "1" : "0"}>
       {/* Вкладки-главы: одна строка со скроллом, заливка = прогресс слайда. */}
       <nav aria-label="Главы ролика" className="mb-3">
         <div ref={tabsRef} className="qrp-tabs relative -mx-1 flex gap-2 overflow-x-auto px-1 py-1">
@@ -150,8 +232,8 @@ export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
         role="group"
         aria-roledescription="ролик"
         aria-label={`Ролик «Как работает QR», глава ${index + 1} из ${CHAPTERS.length}: ${chapter.chip}. Пробел — пауза, стрелки — перемотка.`}
-        onClick={() => clock.toggle()}
-        className="relative aspect-[4/5] w-full cursor-pointer overflow-hidden rounded-2xl @container focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8b97ff]/60 md:aspect-video"
+        onClick={togglePlay}
+        className="relative aspect-[4/5] w-full cursor-pointer overflow-hidden rounded-2xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8b97ff]/60 md:aspect-video"
         style={{
           background: STAGE_BACKGROUND,
           backgroundImage:
@@ -160,14 +242,35 @@ export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
           boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.08)",
         }}
       >
-        <div aria-hidden="true" className="absolute inset-0">
-          <SceneFrame frame={clock.frame} fridgeTemp={fridgeTemp} bodyTemp={bodyTemp} today={today} qr={qr} />
-        </div>
+        {/* Подложка до маунта Плеера (и в SSR-HTML): тот же кадр 0. */}
+        {player === null ? (
+          <div aria-hidden="true" className="absolute inset-0 @container">
+            <SceneFrame frame={0} fridgeTemp={fridgeTemp} bodyTemp={bodyTemp} today={today} qr={qr} />
+          </div>
+        ) : null}
+        {mounted ? (
+          <div aria-hidden="true" className="absolute inset-0">
+            <Player
+              ref={playerRef}
+              component={QrComposition}
+              inputProps={{ fridgeTemp, bodyTemp, today, qr }}
+              durationInFrames={DURATION_IN_FRAMES}
+              fps={FPS}
+              compositionWidth={composition.width}
+              compositionHeight={composition.height}
+              loop
+              controls={false}
+              clickToPlay={false}
+              acknowledgeRemotionLicense
+              style={{ width: "100%", height: "100%" }}
+            />
+          </div>
+        ) : null}
         {/* Большая кнопка — только на обложке (кадр 0 на паузе). */}
-        {!clock.playing && !storyboard && clock.frame === 0 ? (
+        {!playing && !storyboard && frame === 0 ? (
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute left-1/2 top-1/2 flex size-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-white shadow-[0_18px_40px_-16px_rgba(0,0,0,0.8)] md:size-20"
+            className="pointer-events-none absolute left-1/2 top-1/2 z-10 flex size-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-white shadow-[0_18px_40px_-16px_rgba(0,0,0,0.8)] md:size-20"
             style={{ background: "rgba(85,102,246,0.92)" }}
           >
             <Play className="size-7 translate-x-0.5 md:size-8" fill="currentColor" />
@@ -188,12 +291,12 @@ export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
           min={0}
           max={DURATION_IN_FRAMES - 1}
           step={1}
-          value={clock.frame}
+          value={frame}
           onChange={(event) => seek(Number(event.target.value))}
           aria-label="Перемотка"
-          aria-valuetext={`${formatClock(clock.frame / FPS)} из ${formatClock(DURATION_IN_FRAMES / FPS)}, глава «${chapter.chip}»`}
+          aria-valuetext={`${formatClock(frame / FPS)} из ${formatClock(DURATION_IN_FRAMES / FPS)}, глава «${chapter.chip}»`}
           className="qrp-range qrp-range-thin relative block w-full"
-          style={{ ["--qrp-fill" as string]: `${(clock.frame / (DURATION_IN_FRAMES - 1)) * 100}%` }}
+          style={{ ["--qrp-fill" as string]: `${(frame / (DURATION_IN_FRAMES - 1)) * 100}%` }}
         />
       </div>
 
@@ -201,14 +304,14 @@ export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
       <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
         <button
           type="button"
-          onClick={clock.toggle}
-          aria-label={clock.playing ? "Пауза" : "Смотреть"}
+          onClick={togglePlay}
+          aria-label={playing ? "Пауза" : "Смотреть"}
           className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#5566f6] text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.8)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8b97ff]/50"
         >
-          {clock.playing ? <Pause className="size-4" fill="currentColor" /> : <Play className="size-4 translate-x-px" fill="currentColor" />}
+          {playing ? <Pause className="size-4" fill="currentColor" /> : <Play className="size-4 translate-x-px" fill="currentColor" />}
         </button>
         <span className="shrink-0 text-[12.5px] font-medium tabular-nums text-white/60">
-          {formatClock(clock.frame / FPS)} / {formatClock(DURATION_IN_FRAMES / FPS)}
+          {formatClock(frame / FPS)} / {formatClock(DURATION_IN_FRAMES / FPS)}
         </span>
         <p className="order-last w-full text-[13.5px] leading-[1.5] text-white/75 sm:order-none sm:w-auto sm:min-w-0 sm:flex-1">
           {storyboard ? `Раскадровка ${index + 1}/${CHAPTERS.length}. ${chapter.caption}` : chapter.short}

@@ -1,32 +1,33 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
+import { useEffect, useState, type RefObject } from "react";
+import { Easing as RemotionEasing, interpolate as remotionInterpolate } from "remotion";
 
 /**
- * Часы кадров — та же модель, что у Remotion: ролик — это чистая функция
- * номера кадра. Часы только двигают номер (requestAnimationFrame), а всё,
- * что видно в кадре, считается из него. Поэтому перемотка детерминирована:
- * кадр 210 всегда выглядит одинаково, как бы зритель до него ни дошёл.
+ * Тайминги ролика — на движке Remotion: `interpolate` и `Easing` берутся
+ * из пакета `remotion`. Локальная обёртка сохраняет прежнюю сигнатуру
+ * (`{ clamp }` вместо `extrapolateLeft/Right`) и допускает пустой входной
+ * отрезок, который Remotion считает ошибкой. Сам номер кадра двигает
+ * `<Player>` из `@remotion/player` (см. qr-player.tsx): ролик остаётся
+ * чистой функцией кадра, перемотка детерминирована — кадр 210 всегда
+ * выглядит одинаково, как бы зритель до него ни дошёл.
  */
 
 export type Easing = (t: number) => number;
 
 export const ease = {
-  linear: ((t) => t) as Easing,
-  out: ((t) => 1 - Math.pow(1 - t, 3)) as Easing,
-  inOut: ((t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)) as Easing,
-  /** Лёгкий «перелёт» — для появления карточек. */
-  outBack: ((t) => {
-    const c1 = 1.4;
-    const c3 = c1 + 1;
-    return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
-  }) as Easing,
+  linear: RemotionEasing.linear as Easing,
+  out: RemotionEasing.out(RemotionEasing.cubic) as Easing,
+  inOut: RemotionEasing.inOut(RemotionEasing.cubic) as Easing,
+  /** Лёгкий «перелёт» — для появления карточек. Easing.back(1.4) в
+      out-обёртке алгебраически совпадает с прежней формулой (c3 = c1+1). */
+  outBack: RemotionEasing.out(RemotionEasing.back(1.4)) as Easing,
 };
 
 /**
- * `interpolate(frame, [30, 45], [0, 1])` — как в Remotion: линейное
- * отображение отрезка входа на отрезок выхода, по умолчанию с зажимом
- * по краям и с необязательной функцией сглаживания.
+ * `interpolate(frame, [30, 45], [0, 1])` — линейное отображение отрезка
+ * входа на отрезок выхода, по умолчанию с зажимом по краям и с
+ * необязательной функцией сглаживания. Внутри — remotion.interpolate.
  */
 export function interpolate(
   input: number,
@@ -36,9 +37,12 @@ export function interpolate(
 ): number {
   const { easing = ease.linear, clamp = true } = options;
   if (inTo === inFrom) return input < inFrom ? outFrom : outTo;
-  let t = (input - inFrom) / (inTo - inFrom);
-  if (clamp) t = Math.min(1, Math.max(0, t));
-  return outFrom + (outTo - outFrom) * easing(t);
+  const extrapolate = clamp ? ("clamp" as const) : ("extend" as const);
+  return remotionInterpolate(input, [inFrom, inTo], [outFrom, outTo], {
+    easing,
+    extrapolateLeft: extrapolate,
+    extrapolateRight: extrapolate,
+  });
 }
 
 /** 0 → 1 на отрезке [from, from + duration] (в секундах сцены). */
@@ -86,66 +90,4 @@ export function useOnScreen(ref: RefObject<HTMLElement | null>, threshold = 0.35
   }, []);
 
   return inView && pageVisible;
-}
-
-export type PlayerClock = {
-  frame: number;
-  /** Зритель хочет, чтобы ролик шёл (пауза вне экрана это не сбрасывает). */
-  playing: boolean;
-  /** Ролик реально идёт сейчас. */
-  running: boolean;
-  play: () => void;
-  pause: () => void;
-  toggle: () => void;
-  seek: (frame: number) => void;
-};
-
-export function usePlayerClock(params: {
-  fps: number;
-  durationInFrames: number;
-  /** Можно ли идти: в зоне видимости и вкладка на экране. */
-  active: boolean;
-  initialFrame?: number;
-}): PlayerClock {
-  const { fps, durationInFrames, active } = params;
-  const [frame, setFrame] = useState(params.initialFrame ?? 0);
-  const [playing, setPlaying] = useState(false);
-  // Номер перемотки: после seek часы берут новую точку отсчёта.
-  const [epoch, setEpoch] = useState(0);
-  const frameRef = useRef(frame);
-  const running = playing && active;
-
-  useEffect(() => {
-    if (!running) return;
-    let raf = 0;
-    let startTime: number | null = null;
-    const startFrame = frameRef.current;
-    const tick = (now: number) => {
-      if (startTime === null) startTime = now;
-      const next = Math.floor(startFrame + ((now - startTime) / 1000) * fps) % durationInFrames;
-      if (next !== frameRef.current) {
-        frameRef.current = next;
-        setFrame(next);
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [running, fps, durationInFrames, epoch]);
-
-  const seek = useCallback(
-    (target: number) => {
-      const next = ((Math.round(target) % durationInFrames) + durationInFrames) % durationInFrames;
-      frameRef.current = next;
-      setFrame(next);
-      setEpoch((value) => value + 1);
-    },
-    [durationInFrames]
-  );
-
-  const play = useCallback(() => setPlaying(true), []);
-  const pause = useCallback(() => setPlaying(false), []);
-  const toggle = useCallback(() => setPlaying((value) => !value), []);
-
-  return { frame, playing, running, play, pause, toggle, seek };
 }
