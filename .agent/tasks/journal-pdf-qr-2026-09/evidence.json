@@ -1,0 +1,13 @@
+{
+  "task_id": "journal-pdf-qr-2026-09",
+  "verified_at": "2026-09-24",
+  "overall": "PASS",
+  "acceptance": [
+    {"id": "AC1", "status": "PASS", "evidence": ["raw/check-samples.log", "raw/check-samples.json", "raw/check-docs.log", "raw/check-docs.json", "shots/"], "summary": "41/41 образцов (57 стр.) и 41/41 настоящих раздутых документов (184 стр.): QR и подпись на каждой странице, 0 тёмных пикселей в зоне QR+подпись+1мм до штампа; проба и штамп ставят QR в одну точку"},
+    {"id": "AC2", "status": "PASS", "evidence": ["raw/check-docs.json", "raw/qj-follow-fill-page.txt", "src/lib/journal-pdf-qr-link.test.ts"], "summary": "jsQR читает /qj/<org>/<code>/<sig> на всех 184 стр., 0 расхождений модулей; dev: 307 → /journal-fill/<org>/<code>?token=… → 200 страница заполнения; неверная подпись → 404"},
+    {"id": "AC3", "status": "PASS", "evidence": ["raw/check-samples.json", "src/lib/journal-pdf-qr-link.test.ts"], "summary": "все 41 образец декодируются в https://wesetup.ru/journals-info/<code>"},
+    {"id": "AC4", "status": "PASS", "evidence": ["npm run typecheck: ok", "npm test: 2156/2156 pass", "npm run build (NEXT_DIST_DIR=.next-qr-build): ok, route /qj/[orgId]/[code]/[sig]"], "summary": "typecheck, тесты (15 новых), сборка зелёные"}
+  ],
+  "page_count_changes": {"samples": [], "real_inflated_docs": {"training_plan": "26→28", "disinfectant_usage": "12→13", "audit_plan": "3→4"}},
+  "qr_moved_above_corner": {"samples": ["uv_lamp_runtime (1/1)"], "real_inflated_docs": ["health_check (1/4)", "climate_control (27/32)", "uv_lamp_runtime (1/1)"]}
+}

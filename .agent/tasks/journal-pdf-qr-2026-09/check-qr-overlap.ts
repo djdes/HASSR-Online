@@ -1,0 +1,292 @@
+/**
+ * Автопроверка QR в углу печатных журналов (AC1–AC3).
+ *
+ * Для каждого журнала:
+ *   1. рендер БЕЗ QR (как было) — число страниц «до»;
+ *   2. рендер probe (место под QR зарезервировано и посчитано, но QR не
+ *      нарисован) → растр 200 dpi → «чернила» в прямоугольнике QR+подпись
+ *      (+1 мм поля) на каждой странице. Должно быть 0 тёмных пикселей;
+ *   3. рендер С QR → растр → (а) модули матрицы в центрах клеток сверяются с
+ *      `QRCode.create(url)`; (б) независимое декодирование jsQR (если путь к
+ *      нему передан в QR_DECODER) — строка должна совпасть с адресом.
+ *
+ * Запуск (из корня репо):
+ *   npx tsx .agent/tasks/journal-pdf-qr-2026-09/check-qr-overlap.ts samples
+ *   npx tsx .agent/tasks/journal-pdf-qr-2026-09/check-qr-overlap.ts docs <orgId> <docId,docId,...>
+ * Переменные: QR_DECODER=<путь к jsqr>, SHOTS=<код,код,...> — какие углы сохранить в shots/.
+ */
+import fs from "node:fs";
+import path from "node:path";
+import { createRequire } from "node:module";
+import { createCanvas } from "@napi-rs/canvas";
+
+import {
+  loadJournalDocumentPdfInput,
+  renderJournalDocumentPdf,
+  type JournalDocumentPdfInput,
+} from "@/lib/document-pdf";
+import { standardFontsDir, workerFileUrl } from "@/lib/journal-preview/render";
+import { journalPdfQrOrigin, journalSamplePdfQr } from "@/lib/journal-pdf-qr-link";
+import { SAMPLE_JOURNAL_CODES, buildJournalSampleInput } from "@/lib/journal-sample-fixtures";
+import { JOURNAL_QR_EDGE_MM, journalQrMatrix, type JournalQrPlacement } from "@/lib/pdf-journal-qr";
+
+const DPI = 200;
+const PX_PER_MM = DPI / 25.4;
+const TASK_DIR = path.join(process.cwd(), ".agent", "tasks", "journal-pdf-qr-2026-09");
+const SHOTS_DIR = path.join(TASK_DIR, "shots");
+const RAW_DIR = path.join(TASK_DIR, "raw");
+
+type Raster = { width: number; height: number; data: Uint8ClampedArray; widthMm: number; heightMm: number };
+
+async function rasterize(pdf: Buffer): Promise<Raster[]> {
+  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  if (!pdfjs.GlobalWorkerOptions.workerSrc) pdfjs.GlobalWorkerOptions.workerSrc = workerFileUrl();
+  const task = pdfjs.getDocument({
+    data: new Uint8Array(pdf),
+    disableWorker: true,
+    isEvalSupported: false,
+    useSystemFonts: false,
+    standardFontDataUrl: standardFontsDir(),
+  } as Parameters<typeof pdfjs.getDocument>[0]);
+  try {
+    const doc = await task.promise;
+    const out: Raster[] = [];
+    for (let n = 1; n <= doc.numPages; n += 1) {
+      const page = await doc.getPage(n);
+      const base = page.getViewport({ scale: 1 }); // 1 unit = 1 pt
+      const viewport = page.getViewport({ scale: DPI / 72 });
+      const canvas = createCanvas(Math.round(viewport.width), Math.round(viewport.height));
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      await page.render({ canvasContext: ctx as unknown as CanvasRenderingContext2D, viewport } as Parameters<
+        typeof page.render
+      >[0]).promise;
+      const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      out.push({
+        width: canvas.width,
+        height: canvas.height,
+        data: img.data,
+        widthMm: (base.width / 72) * 25.4,
+        heightMm: (base.height / 72) * 25.4,
+      });
+    }
+    return out;
+  } finally {
+    await task.destroy();
+  }
+}
+
+/**
+ * Модуль тёмный, если средняя яркость пикселей в его центре < 128.
+ * При 200 dpi модуль 41-модульного кода — 2,5 px: одиночный пиксель на
+ * границе модуля серый от сглаживания, поэтому берём среднее 3×3.
+ */
+function darkAt(r: Raster, px: number, py: number): boolean {
+  let sum = 0;
+  let n = 0;
+  for (let dy = -1; dy <= 1; dy += 1) {
+    for (let dx = -1; dx <= 1; dx += 1) {
+      const x = Math.min(r.width - 1, Math.max(0, Math.floor(px) + dx));
+      const y = Math.min(r.height - 1, Math.max(0, Math.floor(py) + dy));
+      const i = (y * r.width + x) * 4;
+      sum += (r.data[i] + r.data[i + 1] + r.data[i + 2]) / 3;
+      n += 1;
+    }
+  }
+  return sum / n < 128;
+}
+
+/** Тёмные пиксели (любой канал < 235) в прямоугольнике, мм. */
+function inkInBox(r: Raster, box: { x0: number; y0: number; x1: number; y1: number }): number {
+  let count = 0;
+  const x0 = Math.max(0, Math.floor(box.x0 * PX_PER_MM));
+  const y0 = Math.max(0, Math.floor(box.y0 * PX_PER_MM));
+  const x1 = Math.min(r.width, Math.ceil(box.x1 * PX_PER_MM));
+  const y1 = Math.min(r.height, Math.ceil(box.y1 * PX_PER_MM));
+  for (let y = y0; y < y1; y += 1) {
+    for (let x = x0; x < x1; x += 1) {
+      const i = (y * r.width + x) * 4;
+      if (Math.min(r.data[i], r.data[i + 1], r.data[i + 2]) < 235) count += 1;
+    }
+  }
+  return count;
+}
+
+function moduleMismatches(r: Raster, p: JournalQrPlacement, url: string): number {
+  const qr = journalQrMatrix(url);
+  const n = qr.modules.size;
+  const cell = p.size / n;
+  let bad = 0;
+  for (let row = 0; row < n; row += 1) {
+    for (let col = 0; col < n; col += 1) {
+      const cx = (p.x + (col + 0.5) * cell) * PX_PER_MM;
+      const cy = (p.y + (row + 0.5) * cell) * PX_PER_MM;
+      if (darkAt(r, cx, cy) !== Boolean(qr.modules.get(row, col))) bad += 1;
+    }
+  }
+  return bad;
+}
+
+type JsQr = (data: Uint8ClampedArray, w: number, h: number) => { data: string } | null;
+const decoder: JsQr | null = process.env.QR_DECODER
+  ? (createRequire(__filename)(process.env.QR_DECODER) as { default?: JsQr } & JsQr).default ??
+    (createRequire(__filename)(process.env.QR_DECODER) as JsQr)
+  : null;
+
+function decode(r: Raster, p: JournalQrPlacement): string | null {
+  if (!decoder) return null;
+  const margin = 3; // мм белого вокруг — тихая зона для декодера
+  const x0 = Math.max(0, Math.floor((p.x - margin) * PX_PER_MM));
+  const y0 = Math.max(0, Math.floor((p.y - margin) * PX_PER_MM));
+  const x1 = Math.min(r.width, Math.ceil((p.x + p.size + margin) * PX_PER_MM));
+  const y1 = Math.min(r.height, Math.ceil((p.y + p.size + margin) * PX_PER_MM));
+  const w = x1 - x0;
+  const h = y1 - y0;
+  const crop = new Uint8ClampedArray(w * h * 4);
+  for (let y = 0; y < h; y += 1) {
+    const from = ((y0 + y) * r.width + x0) * 4;
+    crop.set(r.data.subarray(from, from + w * 4), y * w * 4);
+  }
+  // Кроп — только QR + 3 мм вокруг: подпись слева в него не попадает.
+  return decoder(crop, w, h)?.data ?? null;
+}
+
+async function saveCorner(r: Raster, name: string, p: JournalQrPlacement) {
+  // Правый нижний угол листа: 95×45 мм (видно QR, подпись и край таблицы).
+  const wMm = 95;
+  const hMm = 45;
+  const x0 = Math.max(0, Math.round((r.widthMm - wMm) * PX_PER_MM));
+  const y0 = Math.max(0, Math.round((Math.min(r.heightMm, p.y + p.size + JOURNAL_QR_EDGE_MM) - hMm) * PX_PER_MM));
+  const w = Math.min(r.width - x0, Math.round(wMm * PX_PER_MM));
+  const h = Math.min(r.height - y0, Math.round(hMm * PX_PER_MM));
+  const canvas = createCanvas(w, h);
+  const ctx = canvas.getContext("2d");
+  const img = ctx.createImageData(w, h);
+  for (let y = 0; y < h; y += 1) {
+    const from = ((y0 + y) * r.width + x0) * 4;
+    img.data.set(r.data.subarray(from, from + w * 4), y * w * 4);
+  }
+  ctx.putImageData(img, 0, 0);
+  fs.mkdirSync(SHOTS_DIR, { recursive: true });
+  fs.writeFileSync(path.join(SHOTS_DIR, name), canvas.toBuffer("image/png"));
+}
+
+type PageResult = {
+  page: number;
+  orientation: "portrait" | "landscape";
+  qr: { x: number; y: number; size: number; modules: number; moved: boolean; bottomRow: boolean; overlap: boolean };
+  inkInZoneBeforeStamp: number;
+  moduleMismatches: number;
+  decoded: string | null;
+  decodedOk: boolean | null;
+};
+
+type JournalResult = {
+  label: string;
+  code: string;
+  url: string;
+  pagesWithoutQr: number;
+  pagesWithQr: number;
+  pages: PageResult[];
+  ok: boolean;
+};
+
+async function checkOne(label: string, input: JournalDocumentPdfInput, shotName: string | null): Promise<JournalResult> {
+  if (!input.qr) throw new Error(`${label}: нет qr во входе`);
+  const url = input.qr.url;
+  const plain = renderJournalDocumentPdf({ ...input, qr: null });
+  const probe = renderJournalDocumentPdf({ ...input, qr: { ...input.qr, probeOnly: true } });
+  const stamped = renderJournalDocumentPdf(input);
+  const plainPages = (await rasterize(plain.buffer)).length;
+  const probeRasters = await rasterize(probe.buffer);
+  const stampedRasters = await rasterize(stamped.buffer);
+  const placements = stamped.qrPlacements ?? [];
+  const probePlacements = probe.qrPlacements ?? [];
+  if (placements.length !== stampedRasters.length) throw new Error(`${label}: QR не на всех страницах`);
+  // Проба обязана поставить QR туда же, что и настоящий штамп.
+  const samePlaces =
+    probePlacements.length === placements.length &&
+    probePlacements.every((p, i) => Math.abs(p.x - placements[i].x) < 1e-6 && Math.abs(p.y - placements[i].y) < 1e-6);
+
+  const pages: PageResult[] = placements.map((p, index) => {
+    const probeP = probePlacements[index];
+    const zone = { x0: probeP.block.x0 - 1, y0: probeP.block.y0 - 1, x1: probeP.block.x1 + 1, y1: probeP.block.y1 + 1 };
+    const r = stampedRasters[index];
+    const decoded = decode(r, p);
+    return {
+      page: p.page,
+      orientation: r.widthMm > r.heightMm ? "landscape" : "portrait",
+      qr: { x: +p.x.toFixed(1), y: +p.y.toFixed(1), size: p.size, modules: p.modules, moved: p.moved, bottomRow: p.bottomRow, overlap: p.overlap },
+      inkInZoneBeforeStamp: inkInBox(probeRasters[index], zone),
+      moduleMismatches: moduleMismatches(r, p, url),
+      decoded,
+      decodedOk: decoder ? decoded === url : null,
+    };
+  });
+  if (shotName && placements[0]) {
+    const last = placements.length - 1;
+    await saveCorner(stampedRasters[0], `${shotName}-p1.png`, placements[0]);
+    if (last > 0) await saveCorner(stampedRasters[last], `${shotName}-p${last + 1}.png`, placements[last]);
+  }
+  const ok = samePlaces && pages.every(
+    (p) => p.inkInZoneBeforeStamp === 0 && p.moduleMismatches === 0 && !p.qr.overlap && p.decodedOk !== false,
+  );
+  return {
+    label,
+    code: input.document.template.code,
+    url,
+    pagesWithoutQr: plainPages,
+    pagesWithQr: stampedRasters.length,
+    pages,
+    ok,
+  };
+}
+
+async function main() {
+  const [mode, ...args] = process.argv.slice(2);
+  const shots = new Set((process.env.SHOTS ?? "").split(",").filter(Boolean));
+  const results: JournalResult[] = [];
+  if (mode === "samples") {
+    const origin = journalPdfQrOrigin();
+    const only = args[0] ? new Set(args[0].split(",")) : null;
+    for (const code of SAMPLE_JOURNAL_CODES) {
+      if (only && !only.has(code)) continue;
+      const input = { ...buildJournalSampleInput(code), qr: journalSamplePdfQr(origin, code) };
+      const started = Date.now();
+      const result = await checkOne(`sample:${code}`, input, shots.has(code) ? `sample-${code}` : null);
+      results.push(result);
+      console.log(
+        `${result.ok ? "OK  " : "FAIL"} ${code.padEnd(34)} pages ${result.pagesWithoutQr}→${result.pagesWithQr} ` +
+          `ink=${result.pages.map((p) => p.inkInZoneBeforeStamp).join("/")} ` +
+          `moved=${result.pages.filter((p) => p.qr.moved).length} up=${result.pages.filter((p) => !p.qr.bottomRow).length} mism=${result.pages.map((p) => p.moduleMismatches).join("/")} ` +
+          `dec=${result.pages.map((p) => (p.decodedOk === null ? "-" : p.decodedOk ? "y" : "N")).join("")} ${Date.now() - started}ms`,
+      );
+    }
+  } else if (mode === "docs") {
+    const [organizationId, ids] = args;
+    for (const documentId of (ids ?? "").split(",").filter(Boolean)) {
+      const input = await loadJournalDocumentPdfInput({ documentId, organizationId });
+      const code = input.document.template.code;
+      const result = await checkOne(`doc:${code}:${documentId}`, input, shots.has(code) ? `doc-${code}` : null);
+      results.push(result);
+      console.log(
+        `${result.ok ? "OK  " : "FAIL"} ${code.padEnd(34)} rows=${input.document.entries.length} pages ${result.pagesWithoutQr}→${result.pagesWithQr} ` +
+          `ink=${result.pages.map((p) => p.inkInZoneBeforeStamp).join("/")} moved=${result.pages.filter((p) => p.qr.moved).length} up=${result.pages.filter((p) => !p.qr.bottomRow).length} ` +
+          `mism=${result.pages.map((p) => p.moduleMismatches).join("/")} dec=${result.pages.map((p) => (p.decodedOk === null ? "-" : p.decodedOk ? "y" : "N")).join("")}`,
+      );
+    }
+  } else {
+    throw new Error("режим: samples | docs <orgId> <ids>");
+  }
+  fs.mkdirSync(RAW_DIR, { recursive: true });
+  fs.writeFileSync(path.join(RAW_DIR, `check-${mode}.json`), JSON.stringify(results, null, 2));
+  const failed = results.filter((r) => !r.ok);
+  console.log(`\n${results.length - failed.length}/${results.length} OK`);
+  process.exit(failed.length ? 1 : 0);
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exit(2);
+});
