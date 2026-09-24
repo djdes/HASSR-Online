@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle, Library, Loader2 } from "lucide-react";
+import { pluralRu } from "@/lib/plural-ru";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +23,11 @@ type Props = {
   status: Status;
   token: string;
   invite: { userId: string; expiresAt: Date } | null;
-  user: { name: string; email: string; organization: { name: string } } | null;
+  user: {
+    name: string;
+    email: string;
+    organization: { name: string; kind: string; poolObjects: number };
+  } | null;
 };
 
 export function InviteAcceptClient({ status, token, user }: Props) {
@@ -61,6 +66,9 @@ export function InviteAcceptClient({ status, token, user }: Props) {
     );
   }
 
+  const isDirectory = user.organization.kind === "directory";
+  const poolObjects = user.organization.poolObjects;
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -94,7 +102,8 @@ export function InviteAcceptClient({ status, token, user }: Props) {
       if (!login.ok) {
         router.push("/login?invite=accepted");
       } else {
-        router.push("/dashboard");
+        // Сотрудник бэк-офиса — сразу в мастер-кабинет, без крюка через /dashboard.
+        router.push(isDirectory ? "/master" : "/dashboard");
         router.refresh();
       }
     } catch (err) {
@@ -112,6 +121,24 @@ export function InviteAcceptClient({ status, token, user }: Props) {
           Вас пригласили в <strong>{user.organization.name}</strong>.
           Установите пароль, чтобы войти.
         </CardDescription>
+        {isDirectory && (
+          <div className="mt-3 flex gap-3 rounded-2xl bg-[#eef1ff] p-4 text-sm leading-relaxed text-[#3c4053]">
+            <Library className="mt-0.5 size-5 shrink-0 text-[#5566f6]" />
+            <div>
+              <p className="font-medium text-[#0b1024]">Мастер-кабинет справочников</p>
+              <p className="mt-1">
+                Вы загружаете меню и сырьё — из Excel, CSV или списком.
+                {poolObjects > 0
+                  ? ` ${poolObjects} ${pluralRu(poolObjects, "пищеблок получит", "пищеблока получат", "пищеблоков получат")} их сразу в журналы бракеража готовой продукции и скоропортящейся продукции.`
+                  : " Пищеблоки, подключённые по коду справочника, получат их сразу в журналы бракеража."}
+              </p>
+              <p className="mt-1 text-[#6f7282]">Журналы и сотрудники пищеблоков в кабинете не показываются — только эти два списка.</p>
+            </div>
+          </div>
+        )}
+        <p className="mt-3 text-sm text-[#6f7282]">
+          Логин для входа: <span className="font-medium text-[#0b1024]">{user.email}</span>
+        </p>
       </CardHeader>
       <form onSubmit={submit}>
         <CardContent className="space-y-4">

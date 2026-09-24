@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { resolveDishPoolOrgIds } from "@/lib/dish-pool";
 import { hashInviteToken } from "@/lib/invite-tokens";
 import { InviteAcceptClient } from "./invite-accept-client";
 
@@ -25,7 +26,11 @@ export default async function InviteAcceptPage({ params }: PageProps) {
 
   let status: "valid" | "expired" | "used" | "not_found" = "not_found";
   let invite: { userId: string; expiresAt: Date } | null = null;
-  let user: { name: string; email: string; organization: { name: string } } | null = null;
+  let user: {
+    name: string;
+    email: string;
+    organization: { name: string; kind: string; poolObjects: number };
+  } | null = null;
 
   if (raw.length > 0) {
     const tokenHash = hashInviteToken(raw);
@@ -36,7 +41,7 @@ export default async function InviteAcceptPage({ params }: PageProps) {
           select: {
             name: true,
             email: true,
-            organization: { select: { name: true } },
+            organization: { select: { id: true, name: true, kind: true } },
           },
         },
       },
@@ -50,10 +55,15 @@ export default async function InviteAcceptPage({ params }: PageProps) {
     } else {
       status = "valid";
       invite = { userId: row.userId, expiresAt: row.expiresAt };
+      // Мастер-кабинет справочников: сотруднику бэк-офиса сразу объясняем,
+      // скольким пищеблокам уходят его списки (пул служебного кода без самого кабинета).
+      const org = row.user.organization;
+      const poolObjects =
+        org.kind === "directory" ? Math.max(0, (await resolveDishPoolOrgIds(org.id)).length - 1) : 0;
       user = {
         name: row.user.name,
         email: row.user.email,
-        organization: { name: row.user.organization.name },
+        organization: { name: org.name, kind: org.kind, poolObjects },
       };
     }
   }

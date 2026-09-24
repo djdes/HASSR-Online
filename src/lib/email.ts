@@ -288,13 +288,21 @@ export async function sendInviteTokenEmail(params: {
   organizationName: string;
   inviteUrl: string;
   organizationId?: string | null;
+  /** Своя тема письма (по умолчанию «Вас пригласили в … — WeSetup»). */
+  subject?: string;
+  /** Абзац о роли приглашённого — например, для сотрудника мастер-кабинета справочников. */
+  intro?: string;
 }) {
-  const { to, name, organizationName, inviteUrl, organizationId } = params;
+  const { to, name, organizationName, inviteUrl, organizationId, intro } = params;
   const brand = await emailBrandForOrganization(organizationId);
-  const subject = `Вас пригласили в ${organizationName} — WeSetup`;
+  const subject = params.subject ?? `Вас пригласили в ${organizationName} — WeSetup`;
+  const introHtml = intro
+    ? `<p style="margin:0 0 16px;color:#3f3f46;line-height:1.6">${escapeHtml(intro)}</p>`
+    : "";
   const body = `
     <p style="margin:0 0 16px;color:#3f3f46;line-height:1.6">Здравствуйте, <strong>${escapeHtml(name)}</strong>!</p>
-    <p style="margin:0 0 16px;color:#3f3f46;line-height:1.6">Вас пригласили в организацию <strong>${escapeHtml(organizationName)}</strong>. Нажмите кнопку ниже, чтобы установить пароль и войти.</p>
+    <p style="margin:0 0 16px;color:#3f3f46;line-height:1.6">Вас пригласили в организацию <strong>${escapeHtml(organizationName)}</strong>. Нажмите кнопку ниже, чтобы установить пароль и войти.</p>${introHtml}
+    <p style="margin:0 0 16px;color:#71717a;font-size:13px;line-height:1.6">Логин для входа: <strong>${escapeHtml(to)}</strong></p>
     <a href="${inviteUrl}" style="display:inline-block;background:#5566f6;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px">Установить пароль</a>
     <p style="margin:24px 0 0;font-size:13px;color:#a1a1aa">Ссылка действительна 7 дней. После установки пароля приглашение станет недействительным.</p>`;
   return sendEmail(to, subject, layout(subject, body, brand));

@@ -115,16 +115,65 @@ export function parseSharedItemsFromText(text: string): SharedItem[] {
   return normalizeSharedItems(items);
 }
 
-type ColumnRole = "name" | "supplier" | "manufacturer";
+type ColumnRole = "name" | "supplier" | "manufacturer" | "type" | "code";
+type HeaderColumns = Partial<Record<ColumnRole, number>>;
 
-/** Роль колонки по заголовку. Поставщик/изготовитель проверяем первыми: «Наименование поставщика» — поставщик. */
-function headerRole(cell: unknown): ColumnRole | null {
-  const text = cleanText(cell).toLowerCase().replace(/ё/g, "е");
-  if (!text) return null;
-  if (/поставщик|supplier/.test(text)) return "supplier";
-  if (/изготовител|производител|manufacturer/.test(text)) return "manufacturer";
-  if (/наименование|название|блюдо|продукт|товар|номенклатур|сырье/.test(text) || text === "name") return "name";
-  return null;
+/** Сколько строк сверху просматриваем в поисках шапки: у выгрузок iiko/1С над ней заголовок отчёта. */
+const HEADER_SCAN_ROWS = 30;
+/**
+ * Заголовок колонки названий — строго: «Наименование», «Название товара», «Полное наименование».
+ * Заголовок отчёта («Номенклатура. Выгрузка из iiko…», «Товары на складах») шапкой не считается.
+ */
+const NAME_LABEL =
+  /^((полное|краткое|рабочее)\s+)?(наименование|название|блюдо|блюда|продукт|продукты|продукция|товар|товары|номенклатура|сырье|позиция|изделие|name|item)(\s+(блюда|блюд|товара|товаров|продукта|продуктов|продукции|позиции|номенклатуры|сырья|материала|изделия))?$/;
+const TYPE_LABEL = /^((тип|вид)(\s+(номенклатуры|позиции|товара))?|type)$/;
+const CODE_LABEL = /^(код|артикул|code|sku|id|№|номер)(\s+\S+)?$/;
+/** Строка-группа в колонке «Тип» выгрузки iiko/1С. */
+const GROUP_VALUE = /^(группа|папка|категория|раздел|group|folder|category)(\s+\S+)?$/;
+/** Итоговая строка отчёта. */
+const TOTAL_ROW = /^(итого|всего|total)(\s|:|$)/i;
+
+function headerLabel(cell: unknown): string {
+  return cleanText(cell)
+    .toLowerCase()
+    .replace(/ё/g, "е")
+    .replace(/^[\s*:.#]+|[\s*:.]+$/g, "");
+}
+
+/** Роли колонок строки-шапки. Поставщик/изготовитель проверяем первыми: «Наименование поставщика» — поставщик. */
+function headerColumns(row: unknown[]): HeaderColumns {
+  const columns: HeaderColumns = {};
+  row.forEach((cell, index) => {
+    const text = headerLabel(cell);
+    if (!text || text.length > 40) return;
+    let role: ColumnRole | null = null;
+    if (/поставщик|supplier/.test(text)) role = "supplier";
+    else if (/изготовител|производител|manufacturer/.test(text)) role = "manufacturer";
+    else if (NAME_LABEL.test(text)) role = "name";
+    else if (TYPE_LABEL.test(text)) role = "type";
+    else if (CODE_LABEL.test(text)) role = "code";
+    if (role && columns[role] === undefined) columns[role] = index;
+  });
+  return columns;
+}
+
+function hasLetter(text: string): boolean {
+  return /\p{L}/u.test(text);
+}
+
+/** Файл без шапки: колонка, где больше всего ячеек с буквами (названия, а не коды). */
+function pickNameColumn(rows: unknown[][]): number {
+  const counts: number[] = [];
+  for (const row of rows.slice(0, 200)) {
+    (row ?? []).forEach((cell, index) => {
+      if (hasLetter(cleanText(cell))) counts[index] = (counts[index] ?? 0) + 1;
+    });
+  }
+  let best = 0;
+  counts.forEach((count, index) => {
+    if (count > (counts[best] ?? 0)) best = index;
+  });
+  return best;
 }
 
 /** CSV без BOM читаем как UTF-8, а если это не UTF-8 — как Windows-1251 (выгрузки из Excel). */
@@ -157,25 +206,44 @@ export function parseSharedItemsFromSheet(buf: Buffer, filename: string): Shared
     blankrows: false,
     defval: "",
   });
-  const firstIndex = rows.findIndex((row) => Array.isArray(row) && row.some((cell) => cleanText(cell) !== ""));
-  if (firstIndex < 0) return [];
+  if (!rows.some((row) => Array.isArray(row) && row.some((cell) => cleanText(cell) !== ""))) return [];
 
-  const header = rows[firstIndex] ?? [];
-  const columns: Partial<Record<ColumnRole, number>> = {};
-  header.forEach((cell, index) => {
-    const role = headerRole(cell);
-    if (role && columns[role] === undefined) columns[role] = index;
-  });
+  // Шапка — первая строка сверху, где есть колонка названий; выше неё — заголовок отчёта.
+  let headerIndex = -1;
+  let columns: HeaderColumns = {};
+  for (let index = 0; index < Math.min(rows.length, HEADER_SCAN_ROWS); index += 1) {
+    const found = headerColumns(rows[index] ?? []);
+    if (found.name !== undefined) {
+      headerIndex = index;
+      columns = found;
+      break;
+    }
+  }
+  const hasHeader = headerIndex >= 0;
+  const dataRows = hasHeader ? rows.slice(headerIndex + 1) : rows;
+  const nameCol = hasHeader ? (columns.name as number) : pickNameColumn(rows);
 
-  const hasHeader = columns.name !== undefined;
-  const nameCol = columns.name ?? 0;
-  const dataRows = hasHeader ? rows.slice(firstIndex + 1) : rows.slice(firstIndex);
-  const items: SharedItem[] = dataRows.map((row) => ({
-    name: cleanText(row?.[nameCol]),
-    supplier: hasHeader && columns.supplier !== undefined ? cleanText(row?.[columns.supplier]) || null : null,
-    manufacturer:
-      hasHeader && columns.manufacturer !== undefined ? cleanText(row?.[columns.manufacturer]) || null : null,
-  }));
+  // Выгрузка без «Тип»: у позиций есть артикул, у строк-групп — нет.
+  const codeCol = columns.code;
+  let skipCodeless = false;
+  if (hasHeader && codeCol !== undefined && columns.type === undefined) {
+    const named = dataRows.filter((row) => hasLetter(cleanText(row?.[nameCol])));
+    const withCode = named.filter((row) => cleanText(row?.[codeCol]) !== "").length;
+    skipCodeless = named.length > 0 && withCode / named.length >= 0.5;
+  }
+
+  const items: SharedItem[] = [];
+  for (const row of dataRows) {
+    const name = cleanText(row?.[nameCol]);
+    if (!name || !hasLetter(name) || TOTAL_ROW.test(name)) continue;
+    if (columns.type !== undefined && GROUP_VALUE.test(headerLabel(row?.[columns.type]))) continue;
+    if (skipCodeless && codeCol !== undefined && cleanText(row?.[codeCol]) === "") continue;
+    items.push({
+      name,
+      supplier: columns.supplier !== undefined ? cleanText(row?.[columns.supplier]) || null : null,
+      manufacturer: columns.manufacturer !== undefined ? cleanText(row?.[columns.manufacturer]) || null : null,
+    });
+  }
   return normalizeSharedItems(items);
 }
 

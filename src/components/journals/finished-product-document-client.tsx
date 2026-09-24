@@ -2225,7 +2225,35 @@ export function FinishedProductDocumentClient({
                 Список пуст. Введите название изделия ниже и нажмите «+».
               </p>
             ) : null}
-            {Array.from(new Set(config.itemsCatalog)).map((item) => <div key={item} className="flex items-center gap-2 rounded-xl border border-[#e6e6f0] px-3 py-2"><div className="flex-1 text-[14px]">{item}</div><Button type="button" variant="ghost" title="Удалить изделие из списка" onClick={() => commitConfig({ ...config, itemsCatalog: config.itemsCatalog.filter((catalogItem) => catalogItem !== item) }, true)}><Trash2 className="size-4" /></Button></div>)}
+            {(() => {
+              // Позиции из мастер-кабинета справочников (config.sharedCatalog) — с пометкой:
+              // правит их бэк-офис, удалённая здесь вернётся при следующей рассылке.
+              const sharedKeys = new Set((config.sharedCatalog ?? []).map((name) => name.trim().toLowerCase()));
+              const items = Array.from(new Set(config.itemsCatalog));
+              return (
+                <>
+                  {items.some((item) => sharedKeys.has(item.trim().toLowerCase())) ? (
+                    <p className="rounded-[14px] bg-[#eef1ff] px-4 py-3 text-[13px] leading-relaxed text-[#3c4053]">
+                      Позиции с пометкой «Мастер-кабинет» присылает бэк-офис по коду справочника — меню удобнее менять там.
+                    </p>
+                  ) : null}
+                  {items.map((item) => (
+                    <div key={item} className="flex items-center gap-2 rounded-xl border border-[#e6e6f0] px-3 py-2">
+                      <div className="flex-1 text-[14px]">{item}</div>
+                      {sharedKeys.has(item.trim().toLowerCase()) ? (
+                        <span
+                          className="shrink-0 rounded-full bg-[#eef1ff] px-2 py-0.5 text-[11px] font-medium text-[#3848c7]"
+                          title="Позицию прислал мастер-кабинет справочников. Если удалить её здесь, при следующей рассылке она вернётся."
+                        >
+                          Мастер-кабинет
+                        </span>
+                      ) : null}
+                      <Button type="button" variant="ghost" title="Удалить изделие из списка" onClick={() => commitConfig({ ...config, itemsCatalog: config.itemsCatalog.filter((catalogItem) => catalogItem !== item) }, true)}><Trash2 className="size-4" /></Button>
+                    </div>
+                  ))}
+                </>
+              );
+            })()}
             <div className="flex gap-2"><Input value={newItemName} onChange={(e) => setNewItemName(e.target.value)} placeholder="Введите название нового изделия" className="h-10 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]" /><Button className="h-10 rounded-lg bg-[#5566f6] px-4 text-white hover:bg-[#4a5bf0]" title="Добавить изделие в список" onClick={() => { if (!newItemName.trim()) return; commitConfig({ ...config, itemsCatalog: Array.from(new Set([...config.itemsCatalog, newItemName.trim()])) }, true); setNewItemName(""); }}><Plus className="size-4" /></Button></div>
             <Button type="button" variant="outline" className="h-10 w-full rounded-xl border-[#dcdfed] text-[13.5px] font-medium text-[#3848c7] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]" onClick={() => setDirectoryOpen(true)} title="Добавить изделия из общего справочника организации">
               <Database className="mr-1.5 size-4" /> Из справочника организации

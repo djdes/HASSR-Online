@@ -2120,6 +2120,10 @@ export function PerishableRejectionDocumentClient({
                       (l) => l.id === activeListId
                     );
                     if (activeList) {
+                      // Сырьё из мастер-кабинета справочников — с пометкой (правит бэк-офис).
+                      const sharedKeys = new Set(
+                        (config.sharedProducts ?? []).map((name) => name.trim().toLowerCase())
+                      );
                       return Array.from(new Set(activeList.items)).map(
                         (item) => (
                           <div
@@ -2127,6 +2131,14 @@ export function PerishableRejectionDocumentClient({
                             className="flex items-center gap-2 rounded-lg border p-2"
                           >
                             <div className="flex-1">{item}</div>
+                            {sharedKeys.has(item.trim().toLowerCase()) ? (
+                              <span
+                                className="shrink-0 rounded-full bg-[#eef1ff] px-2 py-0.5 text-[11px] font-medium text-[#3848c7]"
+                                title="Позицию прислал мастер-кабинет справочников. Если удалить её здесь, при следующей рассылке она вернётся."
+                              >
+                                Мастер-кабинет
+                              </span>
+                            ) : null}
                             <Button
                               type="button"
                               variant="ghost"

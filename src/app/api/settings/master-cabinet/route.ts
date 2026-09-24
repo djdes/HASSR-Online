@@ -78,6 +78,9 @@ export async function POST(request: Request) {
       organizationName: result.masterName,
       inviteUrl: result.inviteUrl,
       organizationId: result.masterOrganizationId,
+      subject: "Мастер-кабинет справочников WeSetup: установите пароль",
+      intro:
+        "Вы будете вести справочники для пищеблоков: загружаете меню и сырьё (из Excel, CSV или списком), а пищеблоки, подключённые по коду справочника, сразу получают их в журналы бракеража готовой продукции и скоропортящейся продукции. Журналы и сотрудники пищеблоков в кабинете не показываются — только эти два списка.",
     });
   } catch (err) {
     emailSent = false;

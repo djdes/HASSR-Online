@@ -109,3 +109,49 @@ test("parseSharedItemsFromSheet: Windows-1251 CSV (Excel export) is decoded", ()
   ]);
   assert.deepEqual(parseSharedItemsFromSheet(bytes, "menu.csv").map((row) => row.name), ["Борщ"]);
 });
+
+test("parseSharedItemsFromSheet: iiko export — report title, header in row 3, groups by «Тип», duplicate, «Итого»", () => {
+  const buf = sheetBuffer([
+    ["Номенклатура. Выгрузка из iiko от 24.09.2026"],
+    [],
+    ["Код", "Наименование", "Тип", "Ед. изм.", "Цена"],
+    ["", "Супы", "Группа", "", ""],
+    ["00001", "Борщ со сметаной", "Блюдо", "порц", 95],
+    ["00002", "Суп куриный с лапшой", "Блюдо", "порц", 80],
+    ["", "Вторые блюда", "Группа", "", ""],
+    ["00003", "Котлета рыбная", "Блюдо", "порц", 110],
+    ["00005", "борщ со сметаной ", "Блюдо", "порц", 95],
+    ["00006", "Компот из сухофруктов", "Блюдо", "порц", 35],
+    ["", "Итого: 6 позиций", "", "", ""],
+  ]);
+  assert.deepEqual(
+    parseSharedItemsFromSheet(buf, "iiko.xlsx").map((row) => row.name),
+    ["Борщ со сметаной", "Суп куриный с лапшой", "Котлета рыбная", "Компот из сухофруктов"]
+  );
+});
+
+test("parseSharedItemsFromSheet: 1C export without «Тип» — group rows have no article and are skipped", () => {
+  const buf = sheetBuffer([
+    ["ТОВАРЫ НА СКЛАДАХ"],
+    ["Артикул", "Номенклатура", "Ед.", "Остаток"],
+    ["", "Молочная продукция", "", ""],
+    ["М-001", "Молоко 3,2%", "л", 40],
+    ["М-002", "Творог 9%", "кг", 12],
+    ["", "Овощи", "", ""],
+    ["О-001", "Картофель", "кг", 300],
+  ]);
+  assert.deepEqual(
+    parseSharedItemsFromSheet(buf, "1c.xlsx").map((row) => row.name),
+    ["Молоко 3,2%", "Творог 9%", "Картофель"]
+  );
+});
+
+test("parseSharedItemsFromSheet: no header — takes the column with names, not the codes", () => {
+  const buf = sheetBuffer([["00001", "Борщ"], ["00002", "Плов"], ["00003", "Компот"]]);
+  assert.deepEqual(parseSharedItemsFromSheet(buf, "menu.xlsx").map((row) => row.name), ["Борщ", "Плов", "Компот"]);
+});
+
+test("parseSharedItemsFromSheet: cells without letters are not items", () => {
+  const buf = sheetBuffer([["Наименование"], ["Борщ"], ["00123"], ["—"], ["Плов"]]);
+  assert.deepEqual(parseSharedItemsFromSheet(buf, "menu.xlsx").map((row) => row.name), ["Борщ", "Плов"]);
+});
