@@ -432,6 +432,8 @@ model Organization {
   /// фронтальной камеры прикладывается к подписи как доказательство «это
   /// был он». Снимается только при согласии сотрудника (User.kioskPhotoConsentAt).
   kioskPhotoRequired             Boolean                        @default(false)
+  /// Сканы приказов к журналам (2026-09-24, пожелание РПН).
+  journalOrderScans              JournalOrderScan[]
 
   @@index([isDemo, demoExpiresAt])
 }
@@ -3788,4 +3790,31 @@ model SharedDirectoryItem {
   updatedAt      DateTime     @updatedAt
 
   @@index([organizationId, kind])
+}
+
+/// Скан приказа к журналу организации (2026-09-24, пожелание РПН):
+/// приказ о назначении ответственного за гигиенический журнал, о
+/// бракеражной комиссии и т. п. Привязка — организация + код журнала, а
+/// не документ периода: приказ действует, пока его не заменят, и идёт со
+/// всеми документами журнала (просмотр, проверяющий, печать после страниц
+/// журнала). Файл — в БД (Bytes), как логотипы партнёров: отдаётся только
+/// через API с проверкой организации, прямой публичной ссылки нет.
+model JournalOrderScan {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  journalCode    String
+  /// Название приказа; по умолчанию — имя файла без расширения.
+  title          String
+  fileName       String
+  /// application/pdf | image/jpeg | image/png
+  mimeType       String
+  sizeBytes      Int
+  content        Bytes
+  uploadedById   String?
+  uploadedByName String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId, journalCode, createdAt])
 }

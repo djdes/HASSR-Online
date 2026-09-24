@@ -9,6 +9,7 @@ import { db } from "@/lib/db";
 import { logInspectorEvent } from "@/lib/inspector-access";
 import { getInspectorDocPdf, inspectorDocVersion } from "@/lib/inspector-doc-sheets";
 import { loadInspectorPage } from "@/lib/inspector-page";
+import { listOrderScans } from "@/lib/journal-order-scans-db";
 import { dayKeyOf, formatDayKeyRu, periodBounds } from "@/lib/inspector-qr";
 import { buildOrgSnapshot } from "@/lib/orders/org-snapshot";
 import { resolveOrgJournalName } from "@/lib/org-journal-name";
@@ -86,6 +87,9 @@ export default async function InspectorJournalPage({
     }),
   ]);
   const documents = documentsAll.slice(0, MAX_DOCS);
+  // Приказы к журналу (гигиена, БЖГП): список сверху; листами они же идут
+  // после страниц каждого документа (печатная форма).
+  const orderScans = await listOrderScans(orgId, template.code);
 
   const responsibleIds = [...new Set(documents.map((d) => d.responsibleUserId).filter((v): v is string => Boolean(v)))];
   const responsibles = responsibleIds.length
@@ -169,6 +173,37 @@ export default async function InspectorJournalPage({
             <PeriodPicker basePath={`${base}/${template.code}`} period={period} window={access.window} />
           </div>
         </Sheet>
+
+        {orderScans.length > 0 ? (
+          <Sheet className="max-w-none px-5 py-5 sm:px-10 sm:py-6">
+            <h2 className={`${SERIF} text-[19px] leading-snug`} data-order-scans>Приказы к журналу</h2>
+            <p className="mt-1 text-[13px] leading-relaxed text-[#5b6170]">
+              Сканы, приложенные организацией. Они же напечатаны листами после страниц каждого документа.
+            </p>
+            <ul className="mt-3 divide-y divide-[#e3e5ea] border-t border-[#e3e5ea]">
+              {orderScans.map((scan) => (
+                <li key={scan.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="text-[15px] leading-snug text-[#141821]">{scan.title}</p>
+                    <p className="text-[12.5px] tabular-nums text-[#5b6170]">
+                      {scan.mimeType === "application/pdf" ? "PDF" : "Изображение"}, загружен{" "}
+                      {new Date(scan.createdAt).toLocaleDateString("ru-RU", { timeZone: tz })}
+                    </p>
+                  </div>
+                  <a
+                    href={`/api/inspector/${token}/orders/${scan.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex h-10 shrink-0 items-center justify-center self-start rounded-[4px] border border-[#141821] bg-white px-4 text-[14px] font-medium text-[#141821] transition-colors duration-150 hover:bg-[#141821] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f3a8a]/35 sm:self-auto"
+                    data-order-scan-open
+                  >
+                    Открыть
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </Sheet>
+        ) : null}
 
         {documents.length === 0 && legacyEntries.length === 0 ? (
           <Sheet className="max-w-none px-6 py-12 text-center">

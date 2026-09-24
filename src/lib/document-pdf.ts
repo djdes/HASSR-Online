@@ -290,6 +290,8 @@ import {
 } from "@/lib/pdf-page-labels";
 import { getVisibleOrgBranding } from "@/lib/partners/branding";
 import { journalDocumentPdfQr, journalPdfQrOrigin } from "@/lib/journal-pdf-qr-link";
+import { loadOrderScansForPdf } from "@/lib/journal-order-scans-db";
+import { appendOrderScansToPdf, type OrderScanForPdf } from "@/lib/journal-order-scans-pdf";
 import {
   journalQrFooterInset,
   reserveJournalQrBottomMargin,
@@ -6561,6 +6563,10 @@ export type JournalDocumentPdfInput = {
   /// Маленький QR в правом нижнем углу каждой страницы (адрес + подпись).
   /// Нет поля — бланк печатается без QR, как раньше.
   qr?: JournalPdfQr | null;
+  /// Сканы приказов к журналу (гигиена, бракераж готовой продукции) —
+  /// страницы после журнала, без QR-штампа. Добавляет
+  /// `generateJournalDocumentPdf`; чистый рендер их не трогает.
+  orderScans?: OrderScanForPdf[];
 };
 
 export type PdfSignatureLine = {
@@ -6724,7 +6730,14 @@ export async function loadJournalDocumentPdfInput(params: {
     console.warn("[document-pdf] journal QR skipped", error instanceof Error ? error.message : error);
   }
 
-  return { document, users, equipment, rooms, branding, signatures, qr };
+  // Приказы к журналу (организация + код журнала) — печатаются после
+  // страниц журнала. Ошибка чтения не ломает печать самого журнала.
+  const orderScans = await loadOrderScansForPdf(organizationId, document.template.code).catch((error) => {
+    console.warn("[document-pdf] order scans skipped", error instanceof Error ? error.message : error);
+    return [] as OrderScanForPdf[];
+  });
+
+  return { document, users, equipment, rooms, branding, signatures, qr, orderScans };
 }
 
 async function loadPdfSignatureLines(params: {
@@ -6768,12 +6781,21 @@ async function loadPdfSignatureLines(params: {
   return Array.from(groups.values()).sort((a, b) => a.employeeName.localeCompare(b.employeeName, "ru"));
 }
 
-/** Совместимость: загрузка + рендер одним вызовом, как было раньше. */
+/**
+ * Загрузка + рендер одним вызовом — через него идут все печати журнала.
+ * Сканы приказов к журналу (если есть) приклеиваются после страниц
+ * журнала: уже после QR-штампа и нумерации, поэтому ни QR, ни «СТР. i ИЗ
+ * N» на них нет.
+ */
 export async function generateJournalDocumentPdf(params: {
   documentId: string;
   organizationId: string;
 }): Promise<{ buffer: Buffer; fileName: string }> {
-  return renderJournalDocumentPdf(await loadJournalDocumentPdfInput(params));
+  const input = await loadJournalDocumentPdfInput(params);
+  const rendered = renderJournalDocumentPdf(input);
+  if (!input.orderScans || input.orderScans.length === 0) return rendered;
+  const merged = await appendOrderScansToPdf(new Uint8Array(rendered.buffer), input.orderScans);
+  return { buffer: merged.buffer, fileName: rendered.fileName };
 }
 
 /**

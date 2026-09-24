@@ -32,6 +32,9 @@ import { AcceptanceDocumentClient } from "@/components/journals/acceptance-docum
 import { SanitationDayDocumentClient } from "@/components/journals/sanitation-day-document-client";
 import { HealthDocumentClient } from "@/components/journals/health-document-client";
 import { HygieneDocumentClient } from "@/components/journals/hygiene-document-client";
+import { JournalOrderScansPanel } from "@/components/journals/journal-order-scans-panel";
+import { supportsOrderScans } from "@/lib/journal-order-scans";
+import { canManageOrderScans, listOrderScans } from "@/lib/journal-order-scans-db";
 import { readControlPeriodicity } from "@/lib/control-periodicity";
 import { isJournalAutomationEnabled } from "@/lib/journal-automation";
 import {
@@ -492,38 +495,54 @@ async function JournalDocumentBody({
   // 03:00 МСК «сегодня» на сервере — вчерашний день (см. orgTodayKey).
   const todayKey = orgTodayKey(organization?.timezone);
 
+  // Приказы к журналу (гигиена, БЖГП) — блок под документом: один набор на
+  // журнал организации, печатается после страниц журнала.
+  const orderScans = supportsOrderScans(document.template.code)
+    ? await listOrderScans(getActiveOrgId(session), document.template.code)
+    : [];
+  const orderScansPanel = supportsOrderScans(document.template.code) ? (
+    <JournalOrderScansPanel
+      journalCode={document.template.code}
+      initialScans={orderScans}
+      canManage={canManageOrderScans(session.user)}
+    />
+  ) : null;
+
   if (document.template.code === "hygiene") {
     return (
-      <HygieneDocumentClient
-        hygieneFormVersion={readHygieneFormVersion(document.config)}
-        documentId={document.id}
-        controlPeriodicity={controlPeriodicity}
-        routeCode={code}
-        title={document.title}
-        organizationName={organizationName}
-        dateFrom={toDateKey(document.dateFrom)}
-        dateTo={toDateKey(document.dateTo)}
-        responsibleTitle={document.responsibleTitle}
-        responsibleUserId={document.responsibleUserId}
-        responsibleName={null}
-        status={document.status}
-        autoFill={document.autoFill}
-        employees={enrichedEmployees}
-        inactiveEmployees={inactiveEmployees}
-        initialEntries={document.entries.map((entry) => ({
-          employeeId: entry.employeeId,
-          date: toDateKey(entry.date),
-          data: normalizeHygieneEntryData(entry.data),
-        }))}
-        useV2={organization?.experimentalUiV2 ?? true}
-        pastDaysLocked={automationLocked}
-        todayKey={todayKey}
-        viewer={{
-          id: session.user.id,
-          role: session.user.role,
-          isRoot: session.user.isRoot === true,
-        }}
-      />
+      <>
+        <HygieneDocumentClient
+          hygieneFormVersion={readHygieneFormVersion(document.config)}
+          documentId={document.id}
+          controlPeriodicity={controlPeriodicity}
+          routeCode={code}
+          title={document.title}
+          organizationName={organizationName}
+          dateFrom={toDateKey(document.dateFrom)}
+          dateTo={toDateKey(document.dateTo)}
+          responsibleTitle={document.responsibleTitle}
+          responsibleUserId={document.responsibleUserId}
+          responsibleName={null}
+          status={document.status}
+          autoFill={document.autoFill}
+          employees={enrichedEmployees}
+          inactiveEmployees={inactiveEmployees}
+          initialEntries={document.entries.map((entry) => ({
+            employeeId: entry.employeeId,
+            date: toDateKey(entry.date),
+            data: normalizeHygieneEntryData(entry.data),
+          }))}
+          useV2={organization?.experimentalUiV2 ?? true}
+          pastDaysLocked={automationLocked}
+          todayKey={todayKey}
+          viewer={{
+            id: session.user.id,
+            role: session.user.role,
+            isRoot: session.user.isRoot === true,
+          }}
+        />
+        {orderScansPanel}
+      </>
     );
   }
 
@@ -1423,21 +1442,24 @@ async function JournalDocumentBody({
 
   if (document.template.code === FINISHED_PRODUCT_DOCUMENT_TEMPLATE_CODE) {
     return (
-      <FinishedProductDocumentClient
-        documentId={document.id}
-        currentUserId={session.user.id}
-        controlPeriodicity={controlPeriodicity}
-        title={document.title}
-        organizationName={organizationName}
-        dateFrom={toDateKey(document.dateFrom)}
-        dateTo={toDateKey(document.dateTo)}
-        status={document.status}
-        initialConfig={normalizeFinishedProductDocumentConfig(document.config)}
-        users={employees}
-        responsibleUserId={document.responsibleUserId}
-        verifierUserId={document.verifierUserId}
-        useV2={organization?.experimentalUiV2 ?? true}
-      />
+      <>
+        <FinishedProductDocumentClient
+          documentId={document.id}
+          currentUserId={session.user.id}
+          controlPeriodicity={controlPeriodicity}
+          title={document.title}
+          organizationName={organizationName}
+          dateFrom={toDateKey(document.dateFrom)}
+          dateTo={toDateKey(document.dateTo)}
+          status={document.status}
+          initialConfig={normalizeFinishedProductDocumentConfig(document.config)}
+          users={employees}
+          responsibleUserId={document.responsibleUserId}
+          verifierUserId={document.verifierUserId}
+          useV2={organization?.experimentalUiV2 ?? true}
+        />
+        {orderScansPanel}
+      </>
     );
   }
 

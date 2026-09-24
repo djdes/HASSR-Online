@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { ByteLru } from "@/lib/byte-lru";
 import { generateJournalDocumentPdf } from "@/lib/document-pdf";
 import { inspectorControlCode } from "@/lib/inspector-qr";
+import { orderScansVersion } from "@/lib/journal-order-scans-db";
 import { countPdfPages, renderPdfPageToPng } from "@/lib/journal-preview/render-pages";
 
 /**
@@ -34,13 +35,23 @@ function sizeOf(entry: CachedDoc): number {
 export type DocVersion = { key: string; controlCode: string; lastChangeAt: Date };
 
 export async function inspectorDocVersion(doc: { id: string; updatedAt: Date }): Promise<DocVersion> {
-  const agg = await db.journalDocumentEntry.aggregate({
-    where: { documentId: doc.id },
-    _max: { updatedAt: true },
-    _count: { _all: true },
-  });
+  const [agg, owner] = await Promise.all([
+    db.journalDocumentEntry.aggregate({
+      where: { documentId: doc.id },
+      _max: { updatedAt: true },
+      _count: { _all: true },
+    }),
+    db.journalDocument.findUnique({
+      where: { id: doc.id },
+      select: { organizationId: true, template: { select: { code: true } } },
+    }),
+  ]);
   const lastEntry = agg._max.updatedAt;
   const parts = [doc.id, doc.updatedAt.toISOString(), lastEntry?.toISOString() ?? "-", String(agg._count._all)];
+  // Сканы приказов к журналу печатаются листами после журнала — их правка
+  // тоже новая версия. Без приказов ключ (и контрольный код) прежний.
+  const scans = owner ? await orderScansVersion(owner.organizationId, owner.template.code) : "-";
+  if (scans !== "-" && !scans.startsWith("0:")) parts.push(`orders:${scans}`);
   const lastChangeAt = lastEntry && lastEntry > doc.updatedAt ? lastEntry : doc.updatedAt;
   return { key: parts.join("|"), controlCode: inspectorControlCode(parts), lastChangeAt };
 }

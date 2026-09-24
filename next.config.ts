@@ -40,6 +40,13 @@ const nextConfig: NextConfig = {
   // @napi-rs/canvas — нативный бинарник. Внутри серверного бандла ни то,
   // ни другое не работает — оставляем их обычными node_modules.
   serverExternalPackages: ["pdfjs-dist", "@napi-rs/canvas"],
+  experimental: {
+    // Proxy (src/proxy.ts) буферизует тело запроса и по умолчанию
+    // обрезает его на 10 МБ. Скан приказа к журналу — до 10 МБ
+    // (journal-order-scans.ts), плюс обёртка multipart: без запаса файл
+    // ровно в лимит приходил бы обрезанным.
+    proxyClientMaxBodySize: "12mb",
+  },
   typescript: {
     // Temporary deploy unblocker: unrelated dashboard pages still carry legacy Next build type errors.
     ignoreBuildErrors: true,
