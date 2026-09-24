@@ -1,6 +1,7 @@
 import * as XLSX from "xlsx";
 
 import { db } from "@/lib/db";
+import { cleanYield, normalizeMenuTime } from "@/lib/finished-product-bulk";
 import { resolveDishPoolOrgIds } from "@/lib/dish-pool";
 import { parseOrgKind, type OrgKind } from "@/lib/master-directory-access";
 
@@ -18,7 +19,17 @@ import { parseOrgKind, type OrgKind } from "@/lib/master-directory-access";
  */
 
 export type SharedKind = "dish" | "product";
-export type SharedItem = { name: string; supplier: string | null; manufacturer: string | null };
+/**
+ * Позиция списка. supplier/manufacturer — у сырья; portion (выход, как
+ * ввели: «200», «200/10», «1 шт.») и time (время изготовления «HH:MM») — у меню.
+ */
+export type SharedItem = {
+  name: string;
+  supplier: string | null;
+  manufacturer: string | null;
+  portion?: string | null;
+  time?: string | null;
+};
 
 export const MASTER_ORG_KIND = "directory";
 export const REGULAR_ORG_KIND = "regular";
@@ -59,9 +70,62 @@ export function normalizeSharedItems(raw: SharedItem[]): SharedItem[] {
       supplier: cleanText(entry.supplier).slice(0, 300) || null,
       manufacturer: cleanText(entry.manufacturer).slice(0, 300) || null,
     });
+    // Выход и время — только когда есть: у сырья их не бывает.
+    const portion = cleanYield(cleanText(entry.portion));
+    const time = normalizeMenuTime(entry.time);
+    if (portion) out[out.length - 1].portion = portion;
+    if (time) out[out.length - 1].time = time;
     if (out.length >= SHARED_ITEMS_MAX) break;
   }
   return out;
+}
+
+/**
+ * Позиции списка по виду: у сырья выход и время не используются, у меню —
+ * поставщик и изготовитель.
+ */
+export function sharedItemsForKind(kind: SharedKind, items: SharedItem[]): SharedItem[] {
+  return normalizeSharedItems(items).map((item) =>
+    kind === "dish"
+      ? {
+          name: item.name,
+          supplier: null,
+          manufacturer: null,
+          ...(item.portion ? { portion: item.portion } : {}),
+          ...(item.time ? { time: item.time } : {}),
+        }
+      : { name: item.name, supplier: item.supplier, manufacturer: item.manufacturer }
+  );
+}
+
+export type SharedDiff = { added: string[]; removed: string[]; changed: string[]; unchanged: number };
+
+/**
+ * Различия списков для предпросмотра: добавится / уберётся / изменится
+ * (та же позиция, другой выход или время — поля меню) / без изменений.
+ */
+export function diffSharedItems(current: SharedItem[], next: SharedItem[]): SharedDiff {
+  const names = diffSharedNames(
+    current.map((item) => item.name),
+    next.map((item) => item.name)
+  );
+  const before = new Map<string, SharedItem>();
+  for (const item of current) {
+    const key = keyOf(item.name);
+    if (key && !before.has(key)) before.set(key, item);
+  }
+  const changed: string[] = [];
+  const seen = new Set<string>();
+  for (const item of next) {
+    const key = keyOf(item.name);
+    const old = before.get(key);
+    if (!key || !old || seen.has(key)) continue;
+    seen.add(key);
+    if ((old.portion ?? "") !== (item.portion ?? "") || (old.time ?? "") !== (item.time ?? "")) {
+      changed.push(cleanText(item.name));
+    }
+  }
+  return { added: names.added, removed: names.removed, changed, unchanged: names.unchanged - changed.length };
 }
 
 /** Что добавится и что уйдёт при замене списка — без учёта регистра и крайних пробелов. */
@@ -102,20 +166,26 @@ export function diffSharedNames(
 
 /**
  * Вставленный текст: строка (или кусок между «;») = позиция;
- * «Название | Поставщик | Изготовитель» — поставщик и изготовитель по желанию.
+ * сырьё — «Название | Поставщик | Изготовитель», меню (kind="dish") —
+ * «Название | Выход | Время»; всё после названия по желанию.
  */
-export function parseSharedItemsFromText(text: string): SharedItem[] {
+export function parseSharedItemsFromText(text: string, kind: SharedKind = "product"): SharedItem[] {
   const pieces = String(text ?? "").split(/[\r\n;]+/);
   const items: SharedItem[] = [];
   for (const piece of pieces) {
-    const [name, supplier, manufacturer] = piece.split("|").map(cleanText);
+    const [name, second, third] = piece.split("|").map(cleanText);
     if (!name) continue;
-    items.push({ name, supplier: supplier || null, manufacturer: manufacturer || null });
+    // Меню — «Название | Выход | Время», сырьё — «Название | Поставщик | Изготовитель».
+    items.push(
+      kind === "dish"
+        ? { name, supplier: null, manufacturer: null, portion: second || null, time: third || null }
+        : { name, supplier: second || null, manufacturer: third || null }
+    );
   }
   return normalizeSharedItems(items);
 }
 
-type ColumnRole = "name" | "supplier" | "manufacturer" | "type" | "code";
+type ColumnRole = "name" | "supplier" | "manufacturer" | "type" | "code" | "portion" | "time";
 type HeaderColumns = Partial<Record<ColumnRole, number>>;
 
 /** Сколько строк сверху просматриваем в поисках шапки: у выгрузок iiko/1С над ней заголовок отчёта. */
@@ -126,6 +196,11 @@ const HEADER_SCAN_ROWS = 30;
  */
 const NAME_LABEL =
   /^((полное|краткое|рабочее)\s+)?(наименование|название|блюдо|блюда|продукт|продукты|продукция|товар|товары|номенклатура|сырье|позиция|изделие|name|item)(\s+(блюда|блюд|товара|товаров|продукта|продуктов|продукции|позиции|номенклатуры|сырья|материала|изделия))?$/;
+/** Выход меню: «Выход», «Вес», «Выход, г», «Вес порции», «Выход (г)». */
+const PORTION_LABEL =
+  /^(выход|вес)(\s+(порции|блюда|изделия|готового\s+блюда))?(\s*[,(]?\s*(г|гр|грамм|граммы|мл)\s*\)?)?$/;
+/** Время меню: «Время», «Время изготовления», «Время выдачи». */
+const TIME_LABEL = /^время(\s+(изготовления|выдачи|приготовления|производства))?$/;
 const TYPE_LABEL = /^((тип|вид)(\s+(номенклатуры|позиции|товара))?|type)$/;
 const CODE_LABEL = /^(код|артикул|code|sku|id|№|номер)(\s+\S+)?$/;
 /** Строка-группа в колонке «Тип» выгрузки iiko/1С. */
@@ -150,6 +225,8 @@ function headerColumns(row: unknown[]): HeaderColumns {
     if (/поставщик|supplier/.test(text)) role = "supplier";
     else if (/изготовител|производител|manufacturer/.test(text)) role = "manufacturer";
     else if (NAME_LABEL.test(text)) role = "name";
+    else if (PORTION_LABEL.test(text)) role = "portion";
+    else if (TIME_LABEL.test(text)) role = "time";
     else if (TYPE_LABEL.test(text)) role = "type";
     else if (CODE_LABEL.test(text)) role = "code";
     if (role && columns[role] === undefined) columns[role] = index;
@@ -242,6 +319,8 @@ export function parseSharedItemsFromSheet(buf: Buffer, filename: string): Shared
       name,
       supplier: columns.supplier !== undefined ? cleanText(row?.[columns.supplier]) || null : null,
       manufacturer: columns.manufacturer !== undefined ? cleanText(row?.[columns.manufacturer]) || null : null,
+      portion: columns.portion !== undefined ? cleanText(row?.[columns.portion]) || null : null,
+      time: columns.time !== undefined ? normalizeMenuTime(row?.[columns.time]) || null : null,
     });
   }
   return normalizeSharedItems(items);
@@ -281,10 +360,16 @@ export async function listSharedItems(masterOrgId: string, kind: SharedKind): Pr
   const rows = await db.sharedDirectoryItem.findMany({
     where: { organizationId: masterOrgId, kind },
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-    select: { name: true, supplier: true, manufacturer: true },
+    select: { name: true, supplier: true, manufacturer: true, portion: true, time: true },
     take: SHARED_ITEMS_MAX,
   });
-  return rows.map((row) => ({ name: row.name, supplier: row.supplier, manufacturer: row.manufacturer }));
+  return rows.map((row) => ({
+    name: row.name,
+    supplier: row.supplier,
+    manufacturer: row.manufacturer,
+    portion: row.portion,
+    time: row.time,
+  }));
 }
 
 /** Список мастера в пуле организации (пусто — мастера в пуле нет). */
@@ -304,7 +389,7 @@ export async function replaceSharedItems(
   kind: SharedKind,
   items: SharedItem[]
 ): Promise<{ total: number }> {
-  const normalized = normalizeSharedItems(items);
+  const normalized = sharedItemsForKind(kind, items);
   await db.$transaction(
     async (tx) => {
       await tx.sharedDirectoryItem.deleteMany({ where: { organizationId: masterOrgId, kind } });
@@ -316,6 +401,8 @@ export async function replaceSharedItems(
             name: item.name,
             supplier: item.supplier,
             manufacturer: item.manufacturer,
+            portion: item.portion ?? null,
+            time: item.time ?? null,
             sortOrder: index,
           })),
         });

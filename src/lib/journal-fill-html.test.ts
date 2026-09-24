@@ -8,13 +8,17 @@ import {
   formSteps,
   introHint,
   jsonForScript,
+  menuMetaScript,
   metricOf,
   normRange,
   renderEmployeeStep,
   renderForm,
   renderPinNoAccess,
   renderPinStep,
+  tempMetaScript,
+  QR_FILL_JS,
 } from "./journal-fill-html";
+import { journalFillHints } from "./journal-fill-hints";
 
 describe("journal-fill-html", () => {
   it("escapes html and keeps inline json safe", () => {
@@ -192,5 +196,36 @@ describe("journal-fill-html", () => {
       "Если оборудование выключено — оставьте поле пустым и сообщите начальнику."
     );
     assert.equal(introHint("Отметьте своё состояние перед сменой.", "Иванова"), null);
+  });
+});
+
+describe("journal-fill-html: меню мастер-кабинета в QR-форме", () => {
+  const hints = journalFillHints("finished_product");
+  const meta = {
+    "борщ": { productTemp: "75", portionWeight: "250", productionTime: "08:30" },
+    "плов": { productTemp: "80" },
+    "компот": { productionTime: "07:15" },
+  };
+  const suggestions = { dish: { values: ["Борщ", "Плов", "Компот"], meta } };
+
+  it("отдаёт выход и время по блюдам только для полей, которые есть в форме", () => {
+    const all = menuMetaScript(hints, suggestions, ["productName", "productionTime", "portionWeight"]);
+    assert.ok(all);
+    assert.match(all, /window\.__qrMenu=\{"борщ":\{"p":"250","h":"08:30"\},"компот":\{"h":"07:15"\}\};/);
+    assert.match(all, /window\.__qrMenuKeys=\{"name":"productName","portion":"portionWeight","time":"productionTime"\};/);
+    const noPortion = menuMetaScript(hints, suggestions, ["productName", "productionTime"]);
+    assert.ok(noPortion && !noPortion.includes('"p":') && noPortion.includes('"portion":null'));
+  });
+
+  it("без меню мастера (нет выхода/времени в meta) — скрипта нет, температура как раньше", () => {
+    const plain = { dish: { values: ["Плов"], meta: { "плов": { productTemp: "80" } } } };
+    assert.equal(menuMetaScript(hints, plain, ["productName", "productionTime", "portionWeight"]), null);
+    assert.equal(menuMetaScript({}, suggestions, ["productName", "productionTime"]), null);
+    assert.match(tempMetaScript(hints, plain) ?? "", /window\.__qrTemps=\{"плов":"80"\}/);
+  });
+
+  it("инлайн-скрипт заполняет только пустой выход и нетронутое время", () => {
+    assert.match(QR_FILL_JS, /mP\.value===""\|\|pAuto/);
+    assert.match(QR_FILL_JS, /if\(mT&&!tUser\)/);
   });
 });

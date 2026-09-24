@@ -3779,6 +3779,10 @@ model SharedDirectoryItem {
   name           String
   supplier       String?
   manufacturer   String?
+  /// Меню: выход, как ввели («200», «200/10», «1 шт.»).
+  portion        String?
+  /// Меню: время изготовления «HH:MM».
+  time           String?
   sortOrder      Int          @default(0)
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt

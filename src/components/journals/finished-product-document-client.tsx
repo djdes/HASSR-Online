@@ -169,6 +169,8 @@ type Props = {
 const BULK_ROWS_MAX = 50;
 /** Сколько пустых строк в таблице «Добавить списком» при открытии. */
 const BULK_TABLE_START_ROWS = 5;
+/** Строка «Добавить списком»; yieldAuto — выход подставлен из меню мастер-кабинета. */
+type BulkRow = DishYieldRow & { yieldAuto?: boolean };
 
 /** Пауза до автосохранения после последнего нажатия клавиши в ячейке. */
 const AUTOSAVE_DELAY_MS = 800;
@@ -436,7 +438,7 @@ export function FinishedProductDocumentClient({
   /** «Из справочника организации» для списка изделий этого журнала. */
   const [directoryOpen, setDirectoryOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
-  const [bulkRows, setBulkRows] = useState<DishYieldRow[]>(() => emptyDishYieldRows(BULK_TABLE_START_ROWS));
+  const [bulkRows, setBulkRows] = useState<BulkRow[]>(() => emptyDishYieldRows(BULK_TABLE_START_ROWS));
   const [newItemName, setNewItemName] = useState("");
   // Оценки документа: свои из настроек или стандартные по режиму
   // наименования (у полуфабрикатов — про соответствие, а не баллы).
@@ -450,6 +452,16 @@ export function FinishedProductDocumentClient({
    * Ручной ввод снимает флаг — смена блюда больше не перезапишет число.
    */
   const [productTempAuto, setProductTempAuto] = useState(false);
+  /**
+   * Выход и время изготовления подставлены из меню мастер-кабинета (meta
+   * блюда). Выход — только в пустое поле; время — пока человек сам его не
+   * трогал (productionTimeUser). Ручной ввод снимает «авто».
+   */
+  const [portionAuto, setPortionAuto] = useState(false);
+  const [productionTimeAuto, setProductionTimeAuto] = useState(false);
+  const [productionTimeUser, setProductionTimeUser] = useState(false);
+  /** Время изготовления до подстановки из меню — вернуть, если блюдо сменили на блюдо без времени. */
+  const productionTimeBase = useRef<string>("");
   const [guideOpen, setGuideOpen] = useState(false);
   const readOnly = status === "closed";
   // «Ответственные = исполнитель + комиссия» (владелец, 2026-09-21).
@@ -672,24 +684,77 @@ export function FinishedProductDocumentClient({
     return null;
   }
 
-  /** Выбор блюда (список, чип, ввод): при видимой колонке подставляет температуру, если поле пустое или было подставлено. */
+  /**
+   * Выбор блюда (список, чип, ввод): при видимой колонке подставляет
+   * температуру, если поле пустое или было подставлено. В окне новой строки
+   * ещё выход (пустой) и время изготовления (не тронутое вручную) — из меню
+   * мастер-кабинета; дата изготовления не меняется.
+   */
   function pickProductName(name: string) {
-    setDraftRow((prev) => {
-      const next = { ...prev, productName: name };
-      if (!isColumnVisible("temp")) return next;
-      if (prev.productTemp.trim() !== "" && !productTempAuto) return next;
+    const prev = draftRow;
+    let next: FinishedProductDocumentRow = { ...prev, productName: name };
+    if (isColumnVisible("temp") && (prev.productTemp.trim() === "" || productTempAuto)) {
       const temp = rememberedTemp(name);
       if (temp) {
         setProductTempAuto(true);
-        return { ...next, productTemp: temp };
-      }
-      if (productTempAuto) {
+        next = { ...next, productTemp: temp };
+      } else if (productTempAuto) {
         setProductTempAuto(false);
-        return { ...next, productTemp: "" };
+        next = { ...next, productTemp: "" };
       }
-      return next;
+    }
+    if (!editingRowId) {
+      const menu = name.trim() ? dishSuggestions.metaFor(name) : null;
+      if (isColumnVisible("portion") && (prev.portionWeight.trim() === "" || portionAuto)) {
+        if (menu?.portionWeight) {
+          setPortionAuto(true);
+          next = { ...next, portionWeight: menu.portionWeight };
+        } else if (portionAuto) {
+          setPortionAuto(false);
+          next = { ...next, portionWeight: "" };
+        }
+      }
+      if (!productionTimeUser) {
+        if (menu?.productionTime) {
+          if (!productionTimeAuto) productionTimeBase.current = prev.productionDateTime;
+          const date = prev.productionDateTime.slice(0, 10) || dateTimeMinutesAgo(0).slice(0, 10);
+          setProductionTimeAuto(true);
+          next = { ...next, productionDateTime: mergeDateTime(date, menu.productionTime) };
+        } else if (productionTimeAuto) {
+          setProductionTimeAuto(false);
+          next = { ...next, productionDateTime: productionTimeBase.current || prev.productionDateTime };
+        }
+      }
+    }
+    setDraftRow(next);
+  }
+
+  /** Время изготовления поменял человек — меню его больше не трогает. */
+  function setProductionByUser(value: string) {
+    setProductionTimeUser(true);
+    setProductionTimeAuto(false);
+    setDraftRow((prev) => ({ ...prev, productionDateTime: value }));
+  }
+
+  /** Сбросить подстановки из меню при открытии окна строки. */
+  function resetMenuAuto() {
+    setPortionAuto(false);
+    setProductionTimeAuto(false);
+    setProductionTimeUser(false);
+    productionTimeBase.current = "";
+  }
+
+  /** «Добавить списком»: пустой выход строки — из меню мастер-кабинета по наименованию. */
+  function fillBulkYields(rows: BulkRow[]): BulkRow[] {
+    if (!isColumnVisible("portion")) return rows;
+    return rows.map((row) => {
+      if (row.yield.trim() !== "" && !row.yieldAuto) return row;
+      const fromMenu = row.name.trim() ? dishSuggestions.metaFor(row.name)?.portionWeight : undefined;
+      if (fromMenu) return row.yield === fromMenu && row.yieldAuto ? row : { ...row, yield: fromMenu, yieldAuto: true };
+      return row.yieldAuto ? { ...row, yield: "", yieldAuto: false } : row;
     });
   }
+
   // Dedupe by name — multiple staff records can carry identical full
   // names ("Титов Максим Андреевич"), and React would warn about
   // duplicate keys in the <datalist> below. The select still falls
@@ -819,7 +884,9 @@ export function FinishedProductDocumentClient({
                   />
                   {bulkShowYield ? (
                     <input
-                      className={`${bulkInputClass} border-[#dcdfed] bg-white sm:w-[140px] sm:shrink-0`}
+                      className={`${bulkInputClass} sm:w-[140px] sm:shrink-0 ${row.yieldAuto ? "border-[#c8cdf7] bg-[#f5f6ff]" : "border-[#dcdfed] bg-white"}`}
+                      title={row.yieldAuto ? "Выход из меню — исправьте, если иначе" : undefined}
+                      data-yield-auto={row.yieldAuto ? "1" : undefined}
                       value={row.yield}
                       maxLength={20}
                       inputMode="decimal"
@@ -892,12 +959,17 @@ export function FinishedProductDocumentClient({
       {leading}
             <div className="space-y-2">
               <Label className="text-[13px] font-medium text-[#3c4053]">Дата и время изготовления</Label>
-              <DateTimePair dateLabel="Дата изготовления" timeLabel="Время изготовления" value={draftRow.productionDateTime} onChange={(next) => setDraftRow((prev) => ({ ...prev, productionDateTime: next }))} />
+              <DateTimePair dateLabel="Дата изготовления" timeLabel="Время изготовления" value={draftRow.productionDateTime} onChange={setProductionByUser} />
               <QuickTimeChips
                 value={draftRow.productionDateTime}
                 offsets={PRODUCTION_OFFSETS}
-                onChange={(next) => setDraftRow((prev) => ({ ...prev, productionDateTime: next }))}
+                onChange={setProductionByUser}
               />
+              {productionTimeAuto && !editingRowId ? (
+                <p className="text-[11.5px] leading-snug text-[#6f7282]" data-testid="production-time-menu-hint">
+                  Время изготовления — из меню «{draftRow.productName}». Исправьте, если сегодня иначе.
+                </p>
+              ) : null}
               {chainTimes ? (
                 <p
                   className="rounded-xl bg-[#f5f6ff] px-3 py-2 text-[12.5px] leading-snug text-[#3848c7]"
@@ -1023,9 +1095,16 @@ export function FinishedProductDocumentClient({
                   maxLength={20}
                   placeholder="Например: 150 или 200/10"
                   aria-label="Вес выход, г"
-                  onChange={(e) => setDraftRow((prev) => ({ ...prev, portionWeight: e.target.value }))}
+                  onChange={(e) => {
+                    setPortionAuto(false);
+                    setDraftRow((prev) => ({ ...prev, portionWeight: e.target.value }));
+                  }}
                 />
-                <p className="text-[11.5px] leading-snug text-[#6f7282]">{columnLabel("portion", "Результат взвешивания порционных блюд")}</p>
+                <p className="text-[11.5px] leading-snug text-[#6f7282]" data-testid={portionAuto ? "portion-menu-hint" : undefined}>
+                  {portionAuto && draftRow.portionWeight.trim() !== ""
+                    ? `Выход — из меню «${draftRow.productName}». Исправьте, если сегодня иначе.`
+                    : columnLabel("portion", "Результат взвешивания порционных блюд")}
+                </p>
               </div>
             ) : null}
             {isColumnVisible("note") ? (
@@ -1436,12 +1515,25 @@ export function FinishedProductDocumentClient({
       return;
     }
     const count = Math.min(parsed.rows.length, BULK_ROWS_MAX - index);
-    setBulkRows((prev) => applyPaste(prev, index, parsed));
+    setBulkRows((prev) =>
+      fillBulkYields(
+        applyPaste<BulkRow>(prev, index, parsed).map((row, i) =>
+          // Вставленный выход — ручной, меню его не перезапишет.
+          parsed.kind !== "names" && i >= index && i < index + count ? { ...row, yieldAuto: false } : row
+        )
+      )
+    );
     toast.success(`Вставлено строк: ${count}`);
   }
 
   function updateBulkRow(index: number, patch: Partial<DishYieldRow>) {
-    setBulkRows((prev) => prev.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+    setBulkRows((prev) =>
+      prev.map((row, i) => {
+        if (i !== index) return row;
+        if (patch.yield !== undefined) return { ...row, ...patch, yieldAuto: false };
+        return fillBulkYields([{ ...row, ...patch }])[0];
+      })
+    );
   }
 
   function removeBulkRow(index: number) {
@@ -1467,6 +1559,7 @@ export function FinishedProductDocumentClient({
     setEditingRowId(null);
     setOrganolepticCustom(false);
     setProductTempAuto(false);
+    resetMenuAuto();
     setDraftRow(createDraft(users, "", draftPeople, config.timeDefaults, organolepticOptions));
     setSignAsMember(false);
     setAddModalOpen(true);
@@ -1478,6 +1571,7 @@ export function FinishedProductDocumentClient({
     setEditingRowId(row.id);
     setOrganolepticCustom(false);
     setProductTempAuto(false);
+    resetMenuAuto();
     setDraftRow({ ...row });
     setSignAsMember(false);
     setAddModalOpen(true);
@@ -1530,6 +1624,7 @@ export function FinishedProductDocumentClient({
       draftRow.productTemp.trim() !== "" ? { [draftRow.productName]: { productTemp: draftRow.productTemp.trim() } } : undefined
     );
     setProductTempAuto(false);
+    setPortionAuto(false);
     if (options.keepOpen && !editingRowId) {
       toast.success(`Записано: ${draftRow.productName || "без названия"}. Следующее изделие.`);
       setDraftRow({

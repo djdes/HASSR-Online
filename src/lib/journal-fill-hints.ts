@@ -19,6 +19,12 @@ export type JournalFillHints = {
   defaults?: Record<string, string | number | boolean>;
   /** Поле температуры, подставляемое из памяти по наименованию. */
   tempField?: { nameKey: string; tempKey: string };
+  /**
+   * Выход и время изготовления из меню мастер-кабинета пула (meta
+   * `portionWeight` / `productionTime`): подставляются при выборе
+   * наименования, пока человек сам их не менял.
+   */
+  menuFields?: { nameKey: string; portionKey?: string; timeKey?: string };
   /** Строчный журнал: каждая запись по QR — новая строка («Добавить ещё»). */
   append?: boolean;
   /** Текстовое поле → готовые варианты одним касанием (своё значение тоже можно). */
@@ -47,6 +53,7 @@ const HINTS: Record<string, JournalFillHints> = {
     timeOffsetFields: ["productionTime"],
     // Оценки — варианты документа (select адаптера), первая по умолчанию.
     tempField: { nameKey: "productName", tempKey: "productTemp" },
+    menuFields: { nameKey: "productName", portionKey: "portionWeight", timeKey: "productionTime" },
   },
   intensive_cooling: {
     append: true,

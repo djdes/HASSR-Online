@@ -8,6 +8,7 @@ import {
   Loader2,
   Minus,
   Package,
+  PenLine,
   Plus,
   Search,
   Send,
@@ -16,14 +17,17 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { MasterMenuTableDialog } from "@/components/master/master-menu-table-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import type { MenuRow } from "@/lib/finished-product-bulk";
 import type { SharedItem, SharedKind } from "@/lib/master-directory";
 import { pluralRu } from "@/lib/plural-ru";
 import { cn } from "@/lib/utils";
 
 export type MasterTab = "menu" | "raw" | "objects";
 
-type Diff = { added: string[]; removed: string[]; unchanged: number };
+/** changed — та же позиция меню с другим выходом или временем. */
+type Diff = { added: string[]; removed: string[]; changed?: string[]; unchanged: number };
 type Preview = { kind: SharedKind; items: SharedItem[]; diff: Diff; source: string };
 
 const PREVIEW_LIMIT = 20;
@@ -44,8 +48,9 @@ const KIND_META: Record<
     title: "Меню для бракеража готовой продукции",
     journal: "журналы бракеража готовой продукции (БЖГП)",
     noun: ["блюдо", "блюда", "блюд"],
-    example: "Борщ со сметаной\nПлов с курицей\nКомпот из сухофруктов",
-    exampleFile: "колонка «Наименование» (или просто первая колонка)",
+    example: "Борщ со сметаной    250      08:30\nПлов с курицей      200/10   11:00\nКомпот из сухофруктов 200   07:30",
+    exampleFile:
+      "колонка «Наименование» (или просто первая колонка), по желанию «Выход» и «Время изготовления»",
   },
   product: {
     title: "Сырьё для скоропорта",
@@ -104,6 +109,8 @@ export function MasterDirectoryClient({
   const [pasteKind, setPasteKind] = useState<SharedKind | null>(null);
   const [pasteText, setPasteText] = useState("");
   const [uploading, setUploading] = useState<SharedKind | null>(null);
+  /** Меню вводится таблицей «Наименование | Выход | Время», сырьё — текстом. */
+  const [menuTableOpen, setMenuTableOpen] = useState(false);
   const fileInput = useRef<HTMLInputElement | null>(null);
   const fileKind = useRef<SharedKind>("dish");
 
@@ -115,12 +122,16 @@ export function MasterDirectoryClient({
     window.history.replaceState(null, "", url.toString());
   }
 
-  async function requestPreview(kind: SharedKind, body: FormData | { text: string }, source: string) {
+  async function requestPreview(
+    kind: SharedKind,
+    body: FormData | { text: string } | { items: SharedItem[] },
+    source: string
+  ) {
     const isForm = body instanceof FormData;
     const response = await fetch("/api/master/directory/preview", {
       method: "POST",
       headers: isForm ? undefined : { "Content-Type": "application/json" },
-      body: isForm ? body : JSON.stringify({ kind, text: body.text }),
+      body: isForm ? body : JSON.stringify({ kind, ...body }),
     }).catch(() => null);
     const json = (await response?.json().catch(() => null)) as
       | { error?: string; items?: SharedItem[]; diff?: Diff }
@@ -154,8 +165,28 @@ export function MasterDirectoryClient({
   }
 
   function openPaste(kind: SharedKind) {
+    if (kind === "dish") {
+      setMenuTableOpen(true);
+      return;
+    }
     setPasteText(itemsToText(kind, lists[kind]));
     setPasteKind(kind);
+  }
+
+  function submitMenuTable(rows: MenuRow[]) {
+    return requestPreview(
+      "dish",
+      {
+        items: rows.map((row) => ({
+          name: row.name,
+          supplier: null,
+          manufacturer: null,
+          portion: row.yield || null,
+          time: row.time || null,
+        })),
+      },
+      "таблица меню"
+    );
   }
 
   async function submitPaste() {
@@ -264,7 +295,14 @@ export function MasterDirectoryClient({
         <ObjectsPanel organizations={organizations} />
       )}
 
-      {/* Вставка списком: текущий список уже в поле — правьте, удаляйте строки, добавляйте новые. */}
+      <MasterMenuTableDialog
+        open={menuTableOpen}
+        items={lists.dish}
+        onClose={() => setMenuTableOpen(false)}
+        onSubmit={submitMenuTable}
+      />
+
+      {/* Вставка списком (сырьё): текущий список уже в поле — правьте, удаляйте строки, добавляйте новые. */}
       <ConfirmDialog
         open={pasteKind !== null}
         onClose={() => setPasteKind(null)}
@@ -323,18 +361,30 @@ export function MasterDirectoryClient({
 
 function PreviewBody({ preview }: { preview: Preview }) {
   const { added, removed, unchanged } = preview.diff;
+  const changed = preview.diff.changed ?? [];
+  const isMenu = preview.kind === "dish";
+  const byName = new Map(preview.items.map((item) => [item.name.toLowerCase(), item]));
+  /** «Борщ — 250 · 08:30»: что станет у изменённого блюда. */
+  const changedLabel = (name: string) => {
+    const item = byName.get(name.toLowerCase());
+    const parts = [item?.portion ? `выход ${item.portion}` : "без выхода", item?.time ? `время ${item.time}` : "без времени"];
+    return `${name} — ${parts.join(", ")}`;
+  };
   return (
     <div className="space-y-4" data-testid="master-preview">
-      <div className="grid grid-cols-3 gap-2 text-center">
+      <div className={cn("grid gap-2 text-center", isMenu ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3")}>
         <Stat label="Добавится" value={added.length} tone="ok" />
         <Stat label="Уберётся" value={removed.length} tone={removed.length > 0 ? "warn" : "neutral"} />
+        {isMenu ? <Stat label="Изменится" value={changed.length} tone="neutral" /> : null}
         <Stat label="Без изменений" value={unchanged} tone="neutral" />
       </div>
       <p className="text-[12.5px] text-[#6f7282]" data-testid="master-preview-summary">
-        Добавится {added.length} · Уберётся {removed.length} · Без изменений {unchanged} · всего в списке{" "}
+        Добавится {added.length} · Уберётся {removed.length}
+        {isMenu ? ` · Изменится ${changed.length}` : ""} · Без изменений {unchanged} · всего в списке{" "}
         {preview.items.length}
       </p>
       {added.length > 0 ? <NameList title="Новые" names={added} tone="ok" /> : null}
+      {changed.length > 0 ? <NameList title="Изменятся выход или время" names={changed.map(changedLabel)} tone="edit" /> : null}
       {removed.length > 0 ? (
         <>
           <NameList title="Уберутся" names={removed} tone="warn" />
@@ -343,9 +393,11 @@ function PreviewBody({ preview }: { preview: Preview }) {
           </p>
         </>
       ) : null}
-      {added.length === 0 && removed.length === 0 ? (
+      {added.length === 0 && removed.length === 0 && changed.length === 0 ? (
         <p className="rounded-2xl bg-[#fafbff] px-3 py-2 text-[12.5px] leading-[1.5] text-[#3c4053]">
-          Названия не изменились. Сохраните, если поменяли поставщиков или изготовителей.
+          {isMenu
+            ? "Меню не изменилось."
+            : "Названия не изменились. Сохраните, если поменяли поставщиков или изготовителей."}
         </p>
       ) : null}
     </div>
@@ -366,9 +418,9 @@ function Stat({ label, value, tone }: { label: string; value: number; tone: "ok"
   );
 }
 
-function NameList({ title, names, tone }: { title: string; names: string[]; tone: "ok" | "warn" }) {
+function NameList({ title, names, tone }: { title: string; names: string[]; tone: "ok" | "warn" | "edit" }) {
   const shown = names.slice(0, PREVIEW_LIMIT);
-  const Icon = tone === "ok" ? Plus : Minus;
+  const Icon = tone === "ok" ? Plus : tone === "edit" ? PenLine : Minus;
   return (
     <div>
       <div className="mb-1.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">
@@ -378,7 +430,12 @@ function NameList({ title, names, tone }: { title: string; names: string[]; tone
       <ul className="space-y-1">
         {shown.map((name) => (
           <li key={name} className="flex items-start gap-2 text-[13.5px] leading-[1.45] text-[#0b1024]">
-            <Icon className={cn("mt-0.5 size-3.5 shrink-0", tone === "ok" ? "text-[#116b2a]" : "text-[#a13a32]")} />
+            <Icon
+              className={cn(
+                "mt-0.5 size-3.5 shrink-0",
+                tone === "ok" ? "text-[#116b2a]" : tone === "edit" ? "text-[#3848c7]" : "text-[#a13a32]"
+              )}
+            />
             <span className="min-w-0 break-words">{name}</span>
           </li>
         ))}
@@ -463,7 +520,11 @@ function ListPanel({
           <div className="mx-auto mt-6 grid max-w-[640px] gap-3 text-left sm:grid-cols-2">
             <div className="rounded-2xl border border-[#ececf4] bg-white p-4">
               <div className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">Списком</div>
-              <p className="mt-1 text-[12.5px] text-[#3c4053]">Одна позиция в строке:</p>
+              <p className="mt-1 text-[12.5px] text-[#3c4053]">
+                {kind === "dish"
+                  ? "Таблица «Наименование — Выход — Время», можно вставить из Excel:"
+                  : "Одна позиция в строке:"}
+              </p>
               <pre className="mt-2 whitespace-pre-wrap break-words rounded-xl bg-[#f5f6ff] px-3 py-2 font-mono text-[12px] leading-[1.6] text-[#3848c7]">
                 {meta.example}
               </pre>
@@ -516,9 +577,11 @@ function ListPanel({
                 <span>Изготовитель</span>
               </div>
             ) : (
-              <div className="hidden grid-cols-[56px_minmax(0,1fr)] gap-3 border-b border-[#ececf4] bg-[#fafbff] px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#6f7282] md:grid">
+              <div className="hidden grid-cols-[56px_minmax(0,1fr)_120px_96px] gap-3 border-b border-[#ececf4] bg-[#fafbff] px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#6f7282] md:grid">
                 <span>№</span>
                 <span>Наименование</span>
+                <span>Выход</span>
+                <span>Время</span>
               </div>
             )}
             {visible.length === 0 ? (
@@ -534,7 +597,7 @@ function ListPanel({
                         "flex gap-3 px-4 py-2.5 text-[14px] text-[#0b1024] transition-colors duration-150 hover:bg-[#fafbff] md:grid md:items-center",
                         kind === "product"
                           ? "md:grid-cols-[56px_minmax(0,2fr)_minmax(0,1.3fr)_minmax(0,1.3fr)]"
-                          : "md:grid-cols-[56px_minmax(0,1fr)]"
+                          : "md:grid-cols-[56px_minmax(0,1fr)_120px_96px]"
                       )}
                     >
                       <span className="w-7 shrink-0 text-[12.5px] leading-[21px] tabular-nums text-[#9b9fb3] md:w-auto">{index}</span>
@@ -550,7 +613,18 @@ function ListPanel({
                           </span>
                         </>
                       ) : (
-                        <span className="min-w-0 flex-1 break-words">{item.name}</span>
+                        <span className="min-w-0 flex-1 md:contents">
+                          <span className="block break-words">{item.name}</span>
+                          {item.portion || item.time ? (
+                            <span className="mt-0.5 block text-[12.5px] tabular-nums text-[#6f7282] md:hidden">
+                              {[item.portion ? `Выход ${item.portion}` : "", item.time ? `время ${item.time}` : ""]
+                                .filter(Boolean)
+                                .join(" · ")}
+                            </span>
+                          ) : null}
+                          <span className="hidden tabular-nums text-[#3c4053] md:block">{item.portion || "—"}</span>
+                          <span className="hidden tabular-nums text-[#3c4053] md:block">{item.time || "—"}</span>
+                        </span>
                       )}
                     </li>
                   );

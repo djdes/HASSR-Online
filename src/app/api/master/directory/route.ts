@@ -4,13 +4,13 @@ import { z } from "zod";
 import { recordAuditLog } from "@/lib/audit-log";
 import { db } from "@/lib/db";
 import {
-  diffSharedNames,
+  diffSharedItems,
   isSharedKind,
   listPoolOrganizations,
   listSharedItems,
-  normalizeSharedItems,
   replaceSharedItems,
   SHARED_ITEMS_MAX,
+  sharedItemsForKind,
 } from "@/lib/master-directory";
 import { requireMasterDirectorySession } from "@/lib/master-directory-guard";
 import { pushSharedListsToPool } from "@/lib/master-directory-push";
@@ -48,6 +48,8 @@ const itemSchema = z.object({
   name: z.string().max(500),
   supplier: z.string().max(500).nullish(),
   manufacturer: z.string().max(500).nullish(),
+  portion: z.string().max(100).nullish(),
+  time: z.string().max(20).nullish(),
 });
 const putSchema = z.object({
   kind: z.enum(["dish", "product"]),
@@ -62,19 +64,19 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Список не распознан. Загрузите файл или вставьте текст заново." }, { status: 400 });
   }
   const { kind } = parsed.data;
-  const items = normalizeSharedItems(
+  const items = sharedItemsForKind(
+    kind,
     parsed.data.items.map((item) => ({
       name: item.name,
       supplier: item.supplier ?? null,
       manufacturer: item.manufacturer ?? null,
+      portion: item.portion ?? null,
+      time: item.time ?? null,
     }))
   );
 
   const current = await listSharedItems(auth.masterOrgId, kind);
-  const diff = diffSharedNames(
-    current.map((item) => item.name),
-    items.map((item) => item.name)
-  );
+  const diff = diffSharedItems(current, items);
   const { total } = await replaceSharedItems(auth.masterOrgId, kind, items);
   const pushed = await pushSharedListsToPool(auth.masterOrgId);
 
@@ -90,15 +92,27 @@ export async function PUT(request: Request) {
       total,
       added: diff.added.length,
       removed: diff.removed.length,
+      changed: diff.changed.length,
       organizations: pushed.organizations,
       documents: pushed.documents,
     },
+  });
+  console.info("[master-directory] saved and pushed", {
+    masterOrgId: auth.masterOrgId,
+    kind,
+    total,
+    added: diff.added.length,
+    removed: diff.removed.length,
+    changed: diff.changed.length,
+    organizations: pushed.organizations,
+    documents: pushed.documents,
   });
 
   return NextResponse.json({
     total,
     added: diff.added.length,
     removed: diff.removed.length,
+    changed: diff.changed.length,
     organizations: pushed.organizations,
     documents: pushed.documents,
   });

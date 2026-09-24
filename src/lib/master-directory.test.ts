@@ -3,10 +3,12 @@ import test from "node:test";
 import * as XLSX from "xlsx";
 
 import {
+  diffSharedItems,
   diffSharedNames,
   normalizeSharedItems,
   parseSharedItemsFromSheet,
   parseSharedItemsFromText,
+  sharedItemsForKind,
   type SharedItem,
 } from "@/lib/master-directory";
 
@@ -154,4 +156,78 @@ test("parseSharedItemsFromSheet: no header — takes the column with names, not 
 test("parseSharedItemsFromSheet: cells without letters are not items", () => {
   const buf = sheetBuffer([["Наименование"], ["Борщ"], ["00123"], ["—"], ["Плов"]]);
   assert.deepEqual(parseSharedItemsFromSheet(buf, "menu.xlsx").map((row) => row.name), ["Борщ", "Плов"]);
+});
+
+/* ─────────── меню: выход и время ─────────── */
+
+test("parseSharedItemsFromSheet: menu columns «Выход, г» and «Время изготовления»", () => {
+  const buf = sheetBuffer([
+    ["№", "Наименование", "Выход, г", "Время изготовления"],
+    ["1", "Борщ", "250", "8:30"],
+    ["2", "Плов", "200/10", "08.00"],
+    ["3", "Компот", "", "мусор"],
+  ]);
+  assert.deepEqual(parseSharedItemsFromSheet(buf, "menu.xlsx"), [
+    { name: "Борщ", supplier: null, manufacturer: null, portion: "250", time: "08:30" },
+    { name: "Плов", supplier: null, manufacturer: null, portion: "200/10", time: "08:00" },
+    { name: "Компот", supplier: null, manufacturer: null },
+  ]);
+});
+
+test("parseSharedItemsFromSheet: «Вес порции» / «Время выдачи» / «Вес» / «Время» headers (CSV)", () => {
+  const csv = Buffer.from("Блюдо;Вес порции;Время выдачи\nСырники;1 шт.;9-15\n", "utf8");
+  assert.deepEqual(parseSharedItemsFromSheet(csv, "menu.csv"), [
+    { name: "Сырники", supplier: null, manufacturer: null, portion: "1 шт.", time: "09:15" },
+  ]);
+  const plain = sheetBuffer([["Время", "Вес", "Наименование"], ["12:00", "150", "Котлета"]]);
+  assert.deepEqual(parseSharedItemsFromSheet(plain, "m.xlsx"), [
+    { name: "Котлета", supplier: null, manufacturer: null, portion: "150", time: "12:00" },
+  ]);
+});
+
+test("parseSharedItemsFromSheet: headers are strict — «Вес нетто на складе», «Время года» are not menu columns", () => {
+  const buf = sheetBuffer([["Наименование", "Вес нетто на складе", "Время года"], ["Борщ", "250", "8:30"]]);
+  assert.deepEqual(parseSharedItemsFromSheet(buf, "m.xlsx"), [item("Борщ")]);
+});
+
+test("parseSharedItemsFromText: menu kind reads «Название | Выход | Время»", () => {
+  assert.deepEqual(parseSharedItemsFromText("Борщ | 250 | 8:0\nПлов | 200/10\nКомпот", "dish"), [
+    { name: "Борщ", supplier: null, manufacturer: null, portion: "250", time: "08:00" },
+    { name: "Плов", supplier: null, manufacturer: null, portion: "200/10" },
+    item("Компот"),
+  ]);
+});
+
+test("sharedItemsForKind: raw materials drop portion/time, menu drops supplier/manufacturer", () => {
+  const raw = [{ name: "Борщ", supplier: "ИП", manufacturer: "ООО", portion: "250", time: "8:30" }];
+  assert.deepEqual(sharedItemsForKind("product", raw), [item("Борщ", "ИП", "ООО")]);
+  assert.deepEqual(sharedItemsForKind("dish", raw), [
+    { name: "Борщ", supplier: null, manufacturer: null, portion: "250", time: "08:30" },
+  ]);
+});
+
+test("diffSharedItems: counts changed portion/time of the same dish as «changed», not unchanged", () => {
+  const current = [
+    { name: "Борщ", supplier: null, manufacturer: null, portion: "250", time: "08:00" },
+    { name: "Плов", supplier: null, manufacturer: null, portion: null, time: null },
+    { name: "Компот", supplier: null, manufacturer: null, portion: "200", time: null },
+    { name: "Чай", supplier: null, manufacturer: null },
+  ];
+  const next = [
+    { name: "борщ", supplier: null, manufacturer: null, portion: "300", time: "08:00" },
+    { name: "Плов", supplier: null, manufacturer: null, time: "09:00" },
+    { name: "Компот", supplier: null, manufacturer: null, portion: "200" },
+    { name: "Сырники", supplier: null, manufacturer: null },
+  ];
+  assert.deepEqual(diffSharedItems(current, next), {
+    added: ["Сырники"],
+    removed: ["Чай"],
+    changed: ["борщ", "Плов"],
+    unchanged: 1,
+  });
+});
+
+test("diffSharedItems: raw materials — supplier changes are not «changed» (menu fields only)", () => {
+  const diff = diffSharedItems([item("Молоко", "А")], [item("Молоко", "Б")]);
+  assert.deepEqual(diff, { added: [], removed: [], changed: [], unchanged: 1 });
 });

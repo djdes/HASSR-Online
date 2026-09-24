@@ -1,7 +1,8 @@
 import { db } from "@/lib/db";
 import { resolveDishPoolOrgIds } from "@/lib/dish-pool";
-import { listPoolSharedNames } from "@/lib/master-directory";
+import { listPoolSharedItems } from "@/lib/master-directory";
 import {
+  mergeMasterMenuMeta,
   NAME_SUGGESTION_LIMIT,
   normalizeSuggestionMeta,
   normalizeSuggestionValue,
@@ -61,16 +62,21 @@ export async function listNameSuggestions(
   }
   // Меню (dish) и сырьё (product) мастер-кабинета справочников пула — после
   // своих и пуловых. Пул сырья не общий: из пула берём только список
-  // мастера. Нет мастера в пуле — список прежний.
+  // мастера. Нет мастера в пуле — список прежний. У блюд меню мастера ещё
+  // выход и время изготовления — в meta, под своими значениями пищеблока.
   if (scope === "dish" || scope === "product") {
-    const shared = await listPoolSharedNames(organizationId, scope).catch(() => [] as string[]);
+    const shared = await listPoolSharedItems(organizationId, scope).catch(() => []);
     if (shared.length > 0) {
       const seen = new Set(values.map(suggestionKey));
-      for (const value of shared) {
-        const key = suggestionKey(value);
+      for (const item of shared) {
+        const key = suggestionKey(item.name);
+        if (scope === "dish") {
+          const merged = mergeMasterMenuMeta(meta[key], item);
+          if (merged) meta[key] = merged;
+        }
         if (seen.has(key)) continue;
         seen.add(key);
-        values.push(value);
+        values.push(item.name);
       }
     }
   }

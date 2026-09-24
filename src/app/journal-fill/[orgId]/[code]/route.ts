@@ -41,6 +41,7 @@ import {
   renderRowStep,
   renderTokenExpired,
   renderWho,
+  menuMetaScript,
   tempMetaScript,
   jsonForScript,
 } from "@/lib/journal-fill-html";
@@ -817,7 +818,13 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
   const rowLabel = resolved.rows.find((row) => row.rowKey === rowKey)?.label ?? null;
   // Черновик формы в браузере: ключ — документ, строка, сотрудник, день.
   const draftKey = `qr-draft:${orgId}:${code}:${document.id}:${rowKey}:${employee.id}:${todayKey}`;
-  const script = [tempMetaScript(hints, suggestions), `window.__qrDraftKey=${jsonForScript(draftKey)};`].filter(Boolean).join("");
+  const script = [
+    tempMetaScript(hints, suggestions),
+    menuMetaScript(hints, suggestions, form.fields.map((field) => field.key)),
+    `window.__qrDraftKey=${jsonForScript(draftKey)};`,
+  ]
+    .filter(Boolean)
+    .join("");
   const correctionField = form.fields.find((field) => field.type === "text" && CORRECTION_KEY_RE.test(`${field.key} ${field.label}`)) ?? null;
 
   const renderFormPage = (values: Record<string, unknown>, extra: { error?: string | null; badKeys?: string[]; correction?: string; showDeviation?: boolean; deviationTitle?: string | null; offKeys?: string[] }, status = 200) =>

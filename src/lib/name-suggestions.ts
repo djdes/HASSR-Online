@@ -3,13 +3,19 @@
  * функции (без `@/lib/db`, см. memory `client-safe-lib-split`).
  */
 
+import { cleanYield, normalizeMenuTime } from "@/lib/finished-product-bulk";
+
 export const NAME_SUGGESTION_SCOPES = ["dish", "product", "partner"] as const;
 export type NameSuggestionScope = (typeof NAME_SUGGESTION_SCOPES)[number];
 
 export const NAME_SUGGESTION_MAX_LENGTH = 200;
 
-/** Сопутствующие значения последнего ввода по наименованию. */
-export type NameSuggestionMeta = { productTemp?: string };
+/**
+ * Сопутствующие значения по наименованию: `productTemp` — последний ввод
+ * пищеблока; `portionWeight` (выход) и `productionTime` («HH:MM») —
+ * из меню мастер-кабинета пула (своё значение пищеблока приоритетнее).
+ */
+export type NameSuggestionMeta = { productTemp?: string; portionWeight?: string; productionTime?: string };
 
 export function normalizeSuggestionMeta(raw: unknown): NameSuggestionMeta | null {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
@@ -18,7 +24,26 @@ export function normalizeSuggestionMeta(raw: unknown): NameSuggestionMeta | null
   if (typeof record.productTemp === "string" && record.productTemp.trim() !== "") {
     meta.productTemp = record.productTemp.trim().slice(0, 20);
   }
+  if (typeof record.portionWeight === "string") {
+    const portion = cleanYield(record.portionWeight);
+    if (portion) meta.portionWeight = portion;
+  }
+  const time = normalizeMenuTime(record.productionTime);
+  if (time) meta.productionTime = time;
   return Object.keys(meta).length > 0 ? meta : null;
+}
+
+/**
+ * Meta меню мастера под своей: поле пищеблока, если оно уже есть,
+ * приоритетнее мастерского.
+ */
+export function mergeMasterMenuMeta(
+  own: NameSuggestionMeta | null | undefined,
+  menu: { portion?: string | null; time?: string | null }
+): NameSuggestionMeta | null {
+  const fromMenu = normalizeSuggestionMeta({ portionWeight: menu.portion ?? "", productionTime: menu.time ?? "" });
+  if (!fromMenu) return own ?? null;
+  return { ...fromMenu, ...(own ?? {}) };
 }
 
 /** Ключ для поиска meta по имени — без учёта регистра и лишних пробелов. */

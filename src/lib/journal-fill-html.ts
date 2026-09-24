@@ -242,6 +242,21 @@ export const QR_FILL_JS = `
     });
     tempEl.addEventListener("input",function(){auto=false;if(hintEl)hintEl.hidden=true;});
   }
+  /* Меню мастер-кабинета: выход и время изготовления по блюду — пустой выход и нетронутое время. */
+  var menu=window.__qrMenu||null; var mk=window.__qrMenuKeys||{};
+  var mName=mk.name?document.getElementById("f-"+mk.name):null;
+  if(menu&&mName){
+    var mP=mk.portion?document.getElementById("f-"+mk.portion):null; var mT=mk.time?document.getElementById("f-"+mk.time):null;
+    var pAuto=false,tAuto=false,filling=false,tBase=mT?mT.value:""; var tUser=!!document.querySelector("#qr-form .err");
+    if(mT) mT.addEventListener("input",function(){ if(!filling){ tUser=true; tAuto=false; } });
+    if(mP) mP.addEventListener("input",function(){ if(!filling) pAuto=false; });
+    mName.addEventListener("input",function(){
+      var m=menu[key(mName.value)]||null; filling=true;
+      if(mP){ if(m&&m.p&&(mP.value===""||pAuto)){ mP.value=m.p; pAuto=true; fire(mP); } else if(pAuto&&!(m&&m.p)){ mP.value=""; pAuto=false; fire(mP); } }
+      if(mT&&!tUser){ if(m&&m.h){ if(!tAuto) tBase=mT.value; mT.value=m.h; tAuto=true; fire(mT); } else if(tAuto){ mT.value=tBase; tAuto=false; fire(mT); } }
+      filling=false;
+    });
+  }
   /* Живая проверка нормы: подсветка поля и подпись под ним прямо при вводе. */
   function live(t){
     var w=t.closest?t.closest(".fl"):null; if(!w) return null;
@@ -972,6 +987,29 @@ export function renderResult(params: {
   return `<div class="card center" role="status" aria-live="polite"><div class="ok">${qrCheckHtml({ size: 112 })}</div><h2>${esc(headline)}</h2><p class="muted" style="margin-top:8px">Сохранено: ${esc(params.documentTitle)} · ${esc(params.employeeName)} · ${esc(params.timeLabel)}</p>${offLine}${
     params.addMoreHref ? `<div class="sticky"><a class="btn" href="${esc(params.addMoreHref)}">${esc(params.addMoreLabel ?? "Добавить ещё")}</a></div>` : ""
   }</div>`;
+}
+
+/**
+ * Выход и время изготовления из меню мастер-кабинета для инлайн-скрипта:
+ * `{ "борщ": { p: "250", h: "08:30" } }`. Нет таких блюд — null (форма как раньше).
+ */
+export function menuMetaScript(hints: JournalFillHints, suggestions: Suggestions, fieldKeys: readonly string[]): string | null {
+  const fields = hints.menuFields;
+  if (!fields || !fieldKeys.includes(fields.nameKey)) return null;
+  const scope = hints.nameFields?.[fields.nameKey];
+  if (!scope) return null;
+  const portionKey = fields.portionKey && fieldKeys.includes(fields.portionKey) ? fields.portionKey : null;
+  const timeKey = fields.timeKey && fieldKeys.includes(fields.timeKey) ? fields.timeKey : null;
+  if (!portionKey && !timeKey) return null;
+  const map: Record<string, { p?: string; h?: string }> = {};
+  for (const [key, value] of Object.entries(suggestions[scope]?.meta ?? {})) {
+    const entry: { p?: string; h?: string } = {};
+    if (portionKey && value.portionWeight) entry.p = value.portionWeight;
+    if (timeKey && value.productionTime) entry.h = value.productionTime;
+    if (entry.p || entry.h) map[suggestionKey(key)] = entry;
+  }
+  if (Object.keys(map).length === 0) return null;
+  return `window.__qrMenu=${jsonForScript(map)};window.__qrMenuKeys=${jsonForScript({ name: fields.nameKey, portion: portionKey, time: timeKey })};`;
 }
 
 /** Мета температуры по блюдам для инлайн-скрипта: `{ "борщ": "75" }`. */

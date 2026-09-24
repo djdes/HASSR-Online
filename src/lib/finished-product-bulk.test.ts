@@ -2,10 +2,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  applyMenuPaste,
   applyPaste,
   emptyDishYieldRows,
   FINISHED_PRODUCT_BULK_MAX,
   isYieldValue,
+  menuRowsToSave,
+  normalizeMenuTime,
+  parseMenuPaste,
   parseDishYieldPaste,
 } from "@/lib/finished-product-bulk";
 
@@ -167,4 +171,94 @@ test("один столбец: «Блюдо дня» не принимается
     ["Блюдо дня", "Компот"]
   );
   assert.deepEqual(parseDishYieldPaste("Наименование\nКомпот").rows, [{ name: "Компот", yield: "" }]);
+});
+
+/* ─────────── меню мастер-кабинета: наименование | выход | время ─────────── */
+
+test("время по меню: 8:0, 08.00, 8-30 → HH:MM; мусор — пусто", () => {
+  assert.equal(normalizeMenuTime("8:0"), "08:00");
+  assert.equal(normalizeMenuTime("08.00"), "08:00");
+  assert.equal(normalizeMenuTime("8-30"), "08:30");
+  assert.equal(normalizeMenuTime(" 12:05:00 "), "12:05");
+  assert.equal(normalizeMenuTime("8ч30"), "08:30");
+  for (const bad of ["", "утро", "25:00", "12:75", "1230", "12", null, undefined]) {
+    assert.equal(normalizeMenuTime(bad), "", String(bad));
+  }
+});
+
+test("меню: три столбца из Excel без шапки", () => {
+  const parsed = parseMenuPaste("Борщ\t250\t8:30\nКотлета по-киевски\t150/50\t12:00\n", 5000);
+  assert.deepEqual(parsed.columns, ["name", "yield", "time"]);
+  assert.deepEqual(parsed.rows, [
+    { name: "Борщ", yield: "250", time: "08:30" },
+    { name: "Котлета по-киевски", yield: "150/50", time: "12:00" },
+  ]);
+});
+
+test("меню: три столбца с шапкой и нумерацией", () => {
+  const parsed = parseMenuPaste("№\tНаименование\tВыход, г\tВремя изготовления\n1\tБорщ\t250\t08.00\n2\tПлов\t200/10\t9-15", 5000);
+  assert.deepEqual(parsed.columns, ["name", "yield", "time"]);
+  assert.deepEqual(parsed.rows, [
+    { name: "Борщ", yield: "250", time: "08:00" },
+    { name: "Плов", yield: "200/10", time: "09:15" },
+  ]);
+});
+
+test("меню: нумерация отдельным столбцом без шапки не считается выходом", () => {
+  const parsed = parseMenuPaste("1\tБорщ\t7:30\n2\tПлов\t8:00\n3\tКомпот\t8:15", 5000);
+  assert.deepEqual(parsed.columns, ["name", "time"]);
+  assert.deepEqual(parsed.rows.map((row) => [row.name, row.time]), [
+    ["Борщ", "07:30"],
+    ["Плов", "08:00"],
+    ["Компот", "08:15"],
+  ]);
+});
+
+test("меню: два столбца — наименование и выход; наименование и время", () => {
+  const pairs = parseMenuPaste("Борщ\t250\nСырники\t1 шт.", 5000);
+  assert.deepEqual(pairs.columns, ["name", "yield"]);
+  assert.deepEqual(pairs.rows[1], { name: "Сырники", yield: "1 шт.", time: "" });
+  const timed = parseMenuPaste("Наименование;Время\nБорщ;8:30", 5000);
+  assert.deepEqual(timed.columns, ["name", "time"]);
+  assert.deepEqual(timed.rows, [{ name: "Борщ", yield: "", time: "08:30" }]);
+});
+
+test("меню: «08.00» без двоеточия — правый из двух числовых столбцов", () => {
+  const parsed = parseMenuPaste("Борщ\t250\t08.00\nПлов\t200\t09.30", 5000);
+  assert.deepEqual(parsed.columns, ["name", "yield", "time"]);
+  assert.deepEqual(parsed.rows[1], { name: "Плов", yield: "200", time: "09:30" });
+});
+
+test("меню: один столбец — наименования, выходы или время", () => {
+  assert.deepEqual(parseMenuPaste("1. Борщ\n2. Плов", 5000).columns, ["name"]);
+  assert.deepEqual(parseMenuPaste("1. Борщ\n2. Плов", 5000).rows.map((row) => row.name), ["Борщ", "Плов"]);
+  assert.deepEqual(parseMenuPaste("250\n200/10", 5000).columns, ["yield"]);
+  assert.deepEqual(parseMenuPaste("8:30\n9:00", 5000).columns, ["time"]);
+  assert.deepEqual(parseMenuPaste("Наименование\nБорщ", 5000).rows.map((row) => row.name), ["Борщ"]);
+});
+
+test("меню: вставка заполняет только свои столбцы и не больше лимита", () => {
+  const rows = [{ name: "Борщ", yield: "250", time: "08:00" }];
+  const times = parseMenuPaste("9:00\n10:00", 5000);
+  assert.deepEqual(applyMenuPaste(rows, 0, times, 5000), [
+    { name: "Борщ", yield: "250", time: "09:00" },
+    { name: "", yield: "", time: "10:00" },
+  ]);
+  const many = parseMenuPaste(Array.from({ length: 80 }, (_, i) => `Блюдо ${i + 1}\t${100 + i}`).join("\n"), 5000);
+  assert.equal(many.rows.length, 80, "лимит меню мастера — не 50");
+  assert.equal(applyMenuPaste([], 0, many, 60).length, 60);
+});
+
+test("меню: к сохранению — только строки с наименованием, время нормализовано", () => {
+  assert.deepEqual(
+    menuRowsToSave([
+      { name: "  Борщ  ", yield: " 250 ", time: "8.3" },
+      { name: "", yield: "100", time: "" },
+      { name: "Плов", yield: "", time: "мусор" },
+    ]),
+    [
+      { name: "Борщ", yield: "250", time: "08:03" },
+      { name: "Плов", yield: "", time: "" },
+    ]
+  );
 });
