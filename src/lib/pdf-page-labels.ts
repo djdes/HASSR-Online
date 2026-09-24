@@ -64,10 +64,20 @@ function drawCenteredLabel(
   });
 }
 
-export function stampJournalPageNumbers(doc: jsPDF, fontName = "JournalUnicode") {
+export function stampJournalPageNumbers(
+  doc: jsPDF,
+  fontName = "JournalUnicode",
+  options: {
+    /**
+     * Отступ правого края подписи «СТР. X ИЗ N» на странице без шапки
+     * (мм от правого края листа). По умолчанию 14; с QR-кодом в углу —
+     * левее QR-блока (`journalQrFooterInset`).
+     */
+    fallbackRightInset?: number;
+  } = {}
+) {
+  const fallbackRightInset = options.fallbackRightInset ?? 14;
   const totalPages = doc.getNumberOfPages();
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
   const byPage = new Map<number, PageLabelSlot>();
   for (const slot of pageLabelSlots) {
     if (!byPage.has(slot.page)) byPage.set(slot.page, slot);
@@ -75,6 +85,9 @@ export function stampJournalPageNumbers(doc: jsPDF, fontName = "JournalUnicode")
 
   for (let pageNumber = 1; pageNumber <= totalPages; pageNumber += 1) {
     doc.setPage(pageNumber);
+    // Размер листа — свой у каждой страницы (приложение бывает альбомным).
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
     const label = `СТР. ${pageNumber} ИЗ ${totalPages}`;
     const slot = byPage.get(pageNumber);
     doc.setFont(fontName, slot?.fontStyle ?? "bold");
@@ -82,7 +95,7 @@ export function stampJournalPageNumbers(doc: jsPDF, fontName = "JournalUnicode")
     if (slot) {
       drawCenteredLabel(doc, label, slot);
     } else {
-      doc.text(label, pageWidth - 14, pageHeight - 8, { align: "right" });
+      doc.text(label, pageWidth - fallbackRightInset, pageHeight - 8, { align: "right" });
     }
   }
 
@@ -110,22 +123,30 @@ export function partnerPdfFooterText(brand: PdfFooterBrand): string {
 export function stampPartnerPdfFooter(
   doc: jsPDF,
   brand: PdfFooterBrand | null | undefined,
-  fontName = "JournalUnicode"
+  fontName = "JournalUnicode",
+  options: {
+    /**
+     * Сколько места справа (мм) оставить под «СТР. X ИЗ N» (и QR-код в
+     * углу, если он печатается). По умолчанию 48.
+     */
+    rightReserve?: number;
+  } = {}
 ) {
   if (!brand) return;
   const totalPages = doc.getNumberOfPages();
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
-  // Справа оставляем место под «СТР. X ИЗ N» на страницах без шапки.
-  const maxWidth = pageWidth - 14 - 48;
+  const rightReserve = options.rightReserve ?? 48;
   const text = partnerPdfFooterText(brand);
 
   doc.setFont(fontName, "normal");
   doc.setFontSize(7);
   doc.setTextColor(111, 114, 130);
-  const lines = (doc.splitTextToSize(text, maxWidth) as string[]).slice(0, 2);
   for (let pageNumber = 1; pageNumber <= totalPages; pageNumber += 1) {
     doc.setPage(pageNumber);
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    // Справа оставляем место под «СТР. X ИЗ N» на страницах без шапки.
+    const maxWidth = pageWidth - 14 - rightReserve;
+    const lines = (doc.splitTextToSize(text, maxWidth) as string[]).slice(0, 2);
     lines.forEach((line, index) => {
       const y = pageHeight - 8 - (lines.length - 1 - index) * 3.4;
       doc.text(line, 14, y);

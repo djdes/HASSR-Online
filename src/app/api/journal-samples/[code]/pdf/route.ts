@@ -6,6 +6,7 @@ import {
 } from "@/lib/journal-sample-fixtures";
 import { clientIp } from "@/lib/client-ip";
 import { journalSampleRateLimiter } from "@/lib/rate-limit";
+import { journalPdfQrOrigin, journalSamplePdfQr } from "@/lib/journal-pdf-qr-link";
 
 export const runtime = "nodejs";
 
@@ -37,9 +38,11 @@ export async function GET(
   }
 
   try {
-    const { buffer, fileName } = renderJournalDocumentPdf(
-      buildJournalSampleInput(code)
-    );
+    // QR в углу образца ведёт на страницу журнала на сайте (без токенов).
+    const { buffer, fileName } = renderJournalDocumentPdf({
+      ...buildJournalSampleInput(code),
+      qr: journalSamplePdfQr(journalPdfQrOrigin(), code),
+    });
 
     // ?inline=1 — для встроенного просмотра на странице журнала:
     // attachment заставил бы браузер скачать файл вместо показа.

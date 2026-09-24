@@ -106,3 +106,32 @@ export function verifyQrFillTokenFor(
   if (result.kind !== kind || result.id !== id) return { ok: false, reason: "bad-sig" };
   return result;
 }
+
+/**
+ * Короткая подпись адреса `/qj/<orgId>/<code>/<sig>` — QR в углу печатного
+ * журнала. Полный адрес основного QR с токеном (~210 символов) дал бы
+ * матрицу 57×57, которую телефон не прочитает с 13-миллиметрового квадрата;
+ * короткий адрес укладывается в 37–41 модуль. Маршрут `/qj/...` проверяет
+ * подпись и перекидывает на обычный `qrFillUrl(..., "journal", "<orgId>:<code>")`.
+ *
+ * 12 символов base64url = 72 бита HMAC — подобрать перебором по сети нельзя.
+ * Префикс `qj|` отделяет эти подписи от токенов QR (там в подписанной части
+ * всегда есть точка).
+ */
+const JOURNAL_SHORT_SIG_LENGTH = 12;
+const SHORT_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+
+export function journalShortSig(orgId: string, code: string): string {
+  if (!SHORT_ID_RE.test(orgId) || !SHORT_ID_RE.test(code)) {
+    throw new Error("Некорректный id для короткой ссылки журнала");
+  }
+  return sign(`qj|${orgId}|${code}`).slice(0, JOURNAL_SHORT_SIG_LENGTH);
+}
+
+export function verifyJournalShortSig(orgId: string, code: string, sig: string): boolean {
+  if (typeof sig !== "string" || sig.length !== JOURNAL_SHORT_SIG_LENGTH) return false;
+  if (!SHORT_ID_RE.test(orgId) || !SHORT_ID_RE.test(code)) return false;
+  const expected = Buffer.from(journalShortSig(orgId, code));
+  const given = Buffer.from(sig);
+  return expected.length === given.length && crypto.timingSafeEqual(expected, given);
+}

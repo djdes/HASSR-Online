@@ -289,6 +289,15 @@ import {
   type PdfFooterBrand,
 } from "@/lib/pdf-page-labels";
 import { getVisibleOrgBranding } from "@/lib/partners/branding";
+import { journalDocumentPdfQr, journalPdfQrOrigin } from "@/lib/journal-pdf-qr-link";
+import {
+  journalQrFooterInset,
+  reserveJournalQrBottomMargin,
+  stampJournalQr,
+  trackPdfInk,
+  type JournalPdfQr,
+  type JournalQrPlacement,
+} from "@/lib/pdf-journal-qr";
 import {
   EQUIPMENT_CLEANING_DOCUMENT_TITLE,
   EQUIPMENT_CLEANING_TEMPLATE_CODE,
@@ -6549,6 +6558,9 @@ export type JournalDocumentPdfInput = {
   /// Подписи сотрудников через общий планшет (ПИН) за период документа —
   /// печатаются отдельной страницей-приложением. Пусто → страницы нет.
   signatures?: PdfSignatureLine[];
+  /// Маленький QR в правом нижнем углу каждой страницы (адрес + подпись).
+  /// Нет поля — бланк печатается без QR, как раньше.
+  qr?: JournalPdfQr | null;
 };
 
 export type PdfSignatureLine = {
@@ -6703,7 +6715,16 @@ export async function loadJournalDocumentPdfInput(params: {
     users,
   }).catch(() => []);
 
-  return { document, users, equipment, rooms, branding, signatures };
+  // Маленький QR в углу каждой страницы — на основной QR этого журнала.
+  // Нет секрета QR (стенд без настроек) — печатаем бланк без кода.
+  let qr: JournalPdfQr | null = null;
+  try {
+    qr = journalDocumentPdfQr(journalPdfQrOrigin(), organizationId, document.template.code);
+  } catch (error) {
+    console.warn("[document-pdf] journal QR skipped", error instanceof Error ? error.message : error);
+  }
+
+  return { document, users, equipment, rooms, branding, signatures, qr };
 }
 
 async function loadPdfSignatureLines(params: {
@@ -6778,13 +6799,43 @@ function clampPerpetualDocumentForPrint(
   };
 }
 
+export type RenderedJournalDocumentPdf = {
+  buffer: Buffer;
+  fileName: string;
+  /** Где встал QR на каждой странице (есть, только если во входе `qr`). */
+  qrPlacements?: JournalQrPlacement[];
+};
+
 /**
  * Чистый рендер: ни одного обращения к БД, только jsPDF поверх
  * переданных данных.
+ *
+ * С QR в углу — до двух проходов, чтобы не менять вёрстку без нужды:
+ *   1. как есть; если на каждой странице QR встал в нижнее поле (в угол
+ *      или левее по низу) — готово;
+ *   2. иначе (таблица дошла до низа листа) — с нижним полем таблиц под
+ *      QR (`reserveJournalQrBottomMargin`). Если от этого добавилась
+ *      страница, а в первом проходе QR всё же нашёл свободное место на
+ *      каждой странице (пусть не внизу), — остаётся первый: лишний лист
+ *      бумаги ради угла QR хуже, чем QR чуть выше.
  */
-export function renderJournalDocumentPdf(
-  input: JournalDocumentPdfInput
-): { buffer: Buffer; fileName: string } {
+export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): RenderedJournalDocumentPdf {
+  if (!input.qr?.url) return renderJournalDocumentPdfPass(input, false);
+  const first = renderJournalDocumentPdfPass(input, false);
+  const firstPlacements = first.qrPlacements ?? [];
+  if (firstPlacements.every((p) => p.bottomRow && !p.overlap)) return first;
+  const second = renderJournalDocumentPdfPass(input, true);
+  const secondPlacements = second.qrPlacements ?? [];
+  const firstFree = firstPlacements.every((p) => !p.overlap);
+  const secondFree = secondPlacements.every((p) => !p.overlap);
+  if (firstFree && (!secondFree || secondPlacements.length > firstPlacements.length)) return first;
+  return second;
+}
+
+function renderJournalDocumentPdfPass(
+  input: JournalDocumentPdfInput,
+  reserveQrBottom: boolean
+): RenderedJournalDocumentPdf {
   const { users, equipment, rooms, branding } = input;
   // Бессрочный документ (`dateTo = 31.12.2099`) печатается по сегодняшний
   // день: иначе сетка бланка растягивалась на десятки страниц будущих дат.
@@ -6798,6 +6849,12 @@ export function renderJournalDocumentPdf(
 
   const fontName = loadUnicodeFont(doc);
   doc.setFont(fontName, "normal");
+
+  // QR в углу: учёт нарисованного бланком (чтобы QR ничего не перекрыл) и
+  // нижнее поле таблиц под угол — до первой отрисовки.
+  const qr = input.qr?.url ? input.qr : null;
+  const inkTracker = qr ? trackPdfInk(doc) : null;
+  if (qr && reserveQrBottom) reserveJournalQrBottomMargin(doc);
 
   const templateCode = document.template.code;
   const dateKeys = buildDateKeys(document.dateFrom, document.dateTo);
@@ -7351,10 +7408,26 @@ export function renderJournalDocumentPdf(
 
   // Единый проход по готовому документу: «СТР. i ИЗ N» с честным N в
   // шапке каждой страницы (или в подвале, если шапки на странице нет).
-  stampJournalPageNumbers(doc);
+  // С QR в углу «СТР. X ИЗ N» на страницах без шапки встаёт левее QR.
+  const qrFooterInset = qr ? journalQrFooterInset(doc, qr.lines, fontName) : null;
+  stampJournalPageNumbers(
+    doc,
+    fontName,
+    qrFooterInset ? { fallbackRightInset: qrFooterInset } : {},
+  );
   // Подвал партнёра (white-label) — после нумерации, чтобы не спорить
   // за нижний край страницы.
-  stampPartnerPdfFooter(doc, branding);
+  stampPartnerPdfFooter(
+    doc,
+    branding,
+    fontName,
+    qrFooterInset ? { rightReserve: qrFooterInset + 34 } : {},
+  );
+  // QR — последним: он видит всё, что уже есть на странице (включая
+  // нумерацию и подвал), и встаёт только на свободное место.
+  const qrPlacements = qr
+    ? stampJournalQr(doc, { ...qr, fontName, tracker: inkTracker })
+    : undefined;
 
   activeControlPeriodicity = "";
   activeDocumentStatus = "";
@@ -7442,5 +7515,6 @@ export function renderJournalDocumentPdf(
   return {
     buffer,
     fileName: `${prefix}-${toDateKey(document.dateFrom)}-${toDateKey(document.dateTo)}.pdf`,
+    ...(qrPlacements ? { qrPlacements } : {}),
   };
 }
