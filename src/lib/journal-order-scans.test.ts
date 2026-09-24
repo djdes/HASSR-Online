@@ -142,7 +142,8 @@ test("печать: после журнала — страницы PDF-скан�
   assert.deepEqual([Math.round(portrait.width), Math.round(portrait.height)], [595, 842]);
 
   const texts = await pageTexts(new Uint8Array(merged.buffer));
-  const qrCaption = "Вести этот журнал электронно";
+  // Подпись берём из того же места, что и штамп: текст подписи меняется (24.09 — «Заполнение электронного журнала»).
+  const qrCaption = journalSamplePdfQr("https://wesetup.ru", "hygiene").lines[0];
   assert.ok(texts.slice(0, journalPages).every((text) => text.includes(qrCaption)), "QR есть на каждой странице журнала");
   assert.ok(texts.slice(journalPages).every((text) => !text.includes(qrCaption)), "на страницах приказов QR нет");
   assert.match(texts[journalPages], /ORDER SCAN PAGE 1/);
