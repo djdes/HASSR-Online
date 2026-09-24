@@ -24,7 +24,6 @@ import {
   Timer,
   UserCheck,
   Wand2,
-  Wifi,
   Refrigerator,
 } from "lucide-react";
 import { db } from "@/lib/db";
@@ -34,7 +33,6 @@ import { TestimonialsCarousel } from "@/components/landing/testimonials-carousel
 import { listPublicReviews } from "@/lib/balance/reviews";
 import { buildAggregateRating } from "@/lib/seo/aggregate-rating";
 import { IndustriesGrid } from "@/components/landing/industries-grid";
-import { AutomationScene } from "@/components/landing/automation-scene";
 import { SampleGallery } from "@/components/landing/sample-gallery";
 import { DOCX_SAMPLE_CODES } from "@/lib/document-docx";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
@@ -643,42 +641,29 @@ export default async function LandingPage() {
             ))}
           </ul>
 
-          {/* Цены компактной рамкой — до формы, а не через два экрана:
-              «сколько это стоит» человек спрашивает раньше, чем «как это
-              работает». Числа из констант, чтобы витрина не разошлась с
-              тарифом. */}
-          {/* Кликается целиком и уводит к разделу с тарифами: человек,
-              который вчитался в цены на первом экране, хочет подробностей
-              именно здесь, а не идёт искать их в меню. */}
+          {/* Цены — одной строкой-пилюлей, а не карточкой: ответ на
+              «сколько стоит» остаётся на первом экране, подробности — по
+              клику в #pricing. Карточка с тремя строками отжимала CTA под
+              сгиб на телефоне. Числа из тех же констант, что и тарифы. */}
           <AnchorScrollLink
             href="#pricing"
             ariaLabel="Перейти к тарифам"
-            className="group mx-auto mt-5 block max-w-[480px] rounded-2xl border border-[#dcdfed] sm:mt-6 bg-white/80 px-5 py-4 text-left backdrop-blur transition-all hover:-translate-y-0.5 hover:border-[#5566f6]/45 hover:bg-white hover:shadow-[0_16px_40px_-24px_rgba(85,102,246,0.45)]"
+            className="group mx-auto mt-5 flex w-fit max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-0.5 rounded-full border border-[#dcdfed] bg-white/80 px-4 py-2 text-[13.5px] text-[#3c4053] backdrop-blur transition-colors hover:border-[#5566f6]/45 hover:bg-white sm:mt-6 sm:text-[14px]"
           >
-            <dl className="space-y-2 text-[14px]">
-              <div className="flex items-baseline justify-between gap-3">
-                <dt className="text-[#6f7282]">До {FREE_MAX_USERS} сотрудников</dt>
-                <dd className="font-semibold text-[#0b1024]">бесплатно</dd>
-              </div>
-              <div className="flex items-baseline justify-between gap-3 border-t border-[#eef0f6] pt-2">
-                <dt className="text-[#6f7282]">
-                  До {SUBSCRIPTION_MAX_USERS} сотрудников
-                </dt>
-                <dd className="font-semibold tabular-nums text-[#0b1024]">
-                  {monthly.priceRub.toLocaleString("ru-RU")} ₽/мес
-                </dd>
-              </div>
-              <div className="flex items-baseline justify-between gap-3 border-t border-[#eef0f6] pt-2">
-                <dt className="text-[#6f7282]">Далее 1 сотрудник</dt>
-                <dd className="font-semibold tabular-nums text-[#0b1024]">
-                  {EXTRA_USER_PRICE_RUB} ₽/мес
-                </dd>
-              </div>
-            </dl>
-            <div className="mt-2.5 flex items-center gap-1 border-t border-[#eef0f6] pt-2.5 text-[12.5px] font-medium text-[#3848c7]">
-              Что входит в тарифы
-              <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-            </div>
+            <span>
+              До {FREE_MAX_USERS} сотрудников —{" "}
+              <span className="font-semibold text-[#0b1024]">бесплатно</span>
+            </span>
+            <span aria-hidden="true" className="hidden text-[#c9cddd] sm:inline">
+              ·
+            </span>
+            <span>
+              дальше от{" "}
+              <span className="font-semibold tabular-nums text-[#0b1024]">
+                {formatRub(monthly.priceRub)}/мес
+              </span>
+            </span>
+            <ArrowRight className="size-3.5 shrink-0 text-[#3848c7] transition-transform group-hover:translate-x-0.5" />
           </AnchorScrollLink>
 
           {/* Single big CTA — для залогиненного «Открыть кабинет»,
@@ -754,27 +739,10 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ЗАПОЛНЯЕТСЯ САМО — hero показывает поверхности продукта, но не
-          показывает главного: часть записей появляется без человека.
-          Один компактный блок, три шага слева направо: датчик → Wi-Fi в
-          WeSetup → строка журнала; сканер на приёмке — подписью внизу. */}
-      <section className="mx-auto max-w-[1200px] px-4 sm:px-6 pb-20">
-        <div className="mb-8 max-w-[720px]">
-          <div className="mb-3 inline-flex items-center gap-2 text-[12px] uppercase tracking-[0.18em] text-[#5566f6]">
-            <Wifi className="size-4" />
-            Автоматизация
-          </div>
-          <h2 className="text-[clamp(1.625rem,2.2vw+1rem,2.25rem)] font-semibold leading-tight tracking-[-0.02em]">
-            Температура пишется сама
-          </h2>
-          <p className="mt-3 text-[15px] text-[#6f7282]">
-            Датчик на холодильнике и сканер на приёмке заполняют журналы
-            без людей — повару остаётся только то, что нельзя измерить
-            прибором.
-          </p>
-        </div>
-        <AutomationScene />
-      </section>
+      {/* Отдельной секции «Заполняется само» больше нет: сюжет про
+          датчики рассказывает глава «Датчики» QR-ролика выше, а два
+          рассказа об одном и том же делали страницу на экран длиннее
+          (automation-scene.tsx удалён вместе со своим CSS). */}
 
       {/* FEATURES */}
       <section className="mx-auto max-w-[1200px] px-4 sm:px-6 py-20">
@@ -823,9 +791,8 @@ export default async function LandingPage() {
             Заполните журнал прямо здесь — без регистрации
           </h2>
           <p className="mt-3 text-[15px] text-[#6f7282]">
-            Пять самых частых журналов с настоящими полями. Переключите
-            вкладку, заполните и сохраните — а рядом скачайте
-            заполненный образец этого же бланка в PDF или Word.
+            Пять самых частых журналов с настоящими полями — заполните и
+            скачайте заполненный образец бланка в PDF или Word.
           </p>
         </div>
         <DemoJournalWidget />
@@ -1070,10 +1037,9 @@ export default async function LandingPage() {
               Так выглядит заполнение журнала на планшете
             </h2>
             <p className="mt-4 text-[15px] leading-[1.6] text-[#6f7282]">
-              Повар приходит на смену, открывает планшет на кухне, выбирает
-              журнал, вписывает значение, нажимает «Сохранить». Запись
-              автоматически подписывается логином сотрудника и попадает в
-              PDF для проверки. Никаких бумажек, никаких «забыл расписаться».
+              Планшет на кухне: выбрал журнал, вписал значение, нажал
+              «Сохранить» — запись подписана сотрудником и уже в PDF для
+              проверки.
             </p>
             <ul className="mt-5 space-y-2 text-[14px] text-[#3c4053]">
               <li className="flex items-start gap-2">
@@ -1251,8 +1217,7 @@ export default async function LandingPage() {
                 Как вести журналы и проходить проверки
               </h2>
               <p className="mt-4 text-[15px] text-[#6f7282]">
-                Разборы норм, чек-листы и истории клиентов. Короткие тексты —
-                читать можно в перерыве между заготовками.
+                Разборы норм, чек-листы и истории клиентов.
               </p>
             </div>
             <Link
