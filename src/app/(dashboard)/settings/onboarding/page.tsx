@@ -2,14 +2,27 @@ import { redirect } from "next/navigation";
 import {
   Building2,
   ClipboardList,
+  FileSignature,
   ListChecks,
   Users,
   Wrench,
 } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
+import { db } from "@/lib/db";
 import { getCoreSetupStatus } from "@/lib/onboarding-core-status";
+import { checklistJournalsForOrg } from "@/lib/onboarding-documents";
+import { rulesFor } from "@/lib/sphere-journal-rules";
+import { findOrderTemplate } from "@/lib/orders/catalog";
+import { listOrders } from "@/lib/orders/store";
+import { parseDisabledCodes } from "@/lib/disabled-journals";
+import { defaultChecklistFor } from "@/lib/checklist-defaults";
 import { OnboardingFinishCta } from "@/components/settings/onboarding-finish-cta";
+import {
+  OnboardingDocumentsPhase,
+  type OnboardingChecklistRow,
+  type OnboardingOrderRow,
+} from "@/components/settings/onboarding-documents-phase";
 import {
   PhaseCard,
   type Phase,
@@ -19,8 +32,8 @@ import {
 export const dynamic = "force-dynamic";
 
 /**
- * Быстрый старт — ровно 3 этапа по 2 карточки: объект → команда →
- * журналы. Всё остальное (Telegram, пресеты прав, иерархия,
+ * Быстрый старт — 4 этапа: объект → команда → журналы → документы
+ * (приказы и чек-листы, фаза добавлена 2026-09-24). Всё остальное (Telegram, пресеты прав, иерархия,
  * pipeline-инструкции, TasksFlow, «зрелость») живёт на
  * `/settings/onboarding/advanced` — там оно не мешает новичку, который
  * первый раз открыл настройки и должен за 3 шага довести компанию до
@@ -41,6 +54,82 @@ export default async function OnboardingPage() {
   // дашборд — «71%, завершите настройку».
   const status = await getCoreSetupStatus(organizationId);
   const activeDocumentsCount = status.activeDocumentsCount;
+
+  // === Документы: приказы и чек-листы сферы ===
+  const sphereRules = rulesFor(status.sphere);
+  const [orders, org, templates] = await Promise.all([
+    listOrders(organizationId),
+    db.organization.findUnique({
+      where: { id: organizationId },
+      select: { disabledJournalCodes: true, checklistsReviewedAt: true },
+    }),
+    db.journalTemplate.findMany({
+      where: { isActive: true, code: { in: sphereRules.checklistJournals } },
+      select: { code: true, name: true },
+    }),
+  ]);
+  // listOrders — свежие сверху, поэтому первый встреченный — последний
+  // оформленный приказ этого вида.
+  const latestOrderByCode = new Map<string, (typeof orders)[number]>();
+  for (const order of orders) {
+    if (!latestOrderByCode.has(order.templateCode)) {
+      latestOrderByCode.set(order.templateCode, order);
+    }
+  }
+  const toOrderRow = (code: string): OnboardingOrderRow | null => {
+    const template = findOrderTemplate(code);
+    if (!template) return null;
+    const issued = latestOrderByCode.get(code);
+    return {
+      code,
+      title: template.title,
+      issued: issued
+        ? {
+            id: issued.id,
+            number: issued.number,
+            issuedAt: issued.issuedAt.toISOString(),
+          }
+        : null,
+    };
+  };
+  const requiredOrders = status.documents.ordersRequired
+    .map(toOrderRow)
+    .filter((row): row is OnboardingOrderRow => row !== null);
+  const recommendedOrders = sphereRules.ordersRecommended
+    .map(toOrderRow)
+    .filter((row): row is OnboardingOrderRow => row !== null);
+
+  const disabled = parseDisabledCodes(org?.disabledJournalCodes);
+  const templateNameByCode = new Map(templates.map((t) => [t.code, t.name]));
+  const enabledCodes = new Set(
+    templates.map((t) => t.code).filter((code) => !disabled.has(code)),
+  );
+  const checklistCodes = checklistJournalsForOrg(status.sphere, enabledCodes);
+  const checklistCounts = checklistCodes.length
+    ? await db.journalChecklistItem.groupBy({
+        by: ["journalCode"],
+        where: {
+          organizationId,
+          journalCode: { in: checklistCodes },
+          archivedAt: null,
+          roomId: null,
+        },
+        _count: { _all: true },
+      })
+    : [];
+  const countByCode = new Map(
+    checklistCounts.map((row) => [row.journalCode, row._count._all]),
+  );
+  const checklists: OnboardingChecklistRow[] = checklistCodes.map((code) => {
+    const defaults = defaultChecklistFor(code);
+    return {
+      code,
+      name: templateNameByCode.get(code) ?? code,
+      itemsCount: countByCode.get(code) ?? 0,
+      defaultsCount: defaults.length,
+      defaultsExample: defaults[0]?.title ?? null,
+    };
+  });
 
   // === Items ===
 
@@ -110,19 +199,48 @@ export default async function OnboardingPage() {
       icon: ClipboardList,
       items: [journalsSetItem],
     },
+    {
+      id: "documents",
+      number: 4,
+      title: "Документы",
+      subtitle: "Приказы и чек-листы — чтобы к проверке было заполнено всё, а не только журналы.",
+      icon: FileSignature,
+      items: [],
+      // Счётчик этапа: обязательные приказы + отметка о чек-листах.
+      progress: {
+        done:
+          status.documents.ordersIssuedCount +
+          (status.documents.checklistsDone ? 1 : 0),
+        total: status.documents.ordersRequired.length + 1,
+      },
+      finalNode: (
+        <OnboardingDocumentsPhase
+          requiredOrders={requiredOrders}
+          recommendedOrders={recommendedOrders}
+          checklists={checklists}
+          checklistsReviewedAt={
+            org?.checklistsReviewedAt?.toISOString() ?? null
+          }
+        />
+      ),
+    },
   ];
 
   const statuses = phases.map((p) =>
-    p.items.every((i) => i.state === "complete")
+    (p.id === "documents"
+      ? status.documents.done
+      : p.items.every((i) => i.state === "complete"))
       ? ("complete" as const)
       : ("active" as const)
   );
   const firstActiveIdx = statuses.findIndex((s) => s !== "complete");
   const allDone = firstActiveIdx === -1;
 
-  // CTA доступен только когда все три этапа закрыты. Список «сначала
-  // закройте…» не передаём — шаги и так видны прямо над кнопкой.
-  const finishReady = allDone;
+  // Создать документы журналов можно, как только закрыты первые три
+  // этапа: приказы и чек-листы на сами журналы не влияют, и держать
+  // из-за них сотрудников без задач незачем. Список «сначала закройте…»
+  // не передаём — шаги и так видны над кнопкой.
+  const finishReady = status.coreComplete;
 
   return (
     <div className="space-y-5">
@@ -131,7 +249,8 @@ export default async function OnboardingPage() {
           Быстрый старт
         </h1>
         <p className="mt-1.5 text-[15px] text-[#6f7282]">
-          3 шага — и сотрудники получают задачи.
+          4 шага — сотрудники получают задачи, а к проверке готовы и
+          журналы, и приказы.
         </p>
       </header>
 

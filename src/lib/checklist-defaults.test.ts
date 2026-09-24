@@ -27,6 +27,10 @@ test("пункты заполнены: текст, частота и дни дл
     const titles = new Set<string>();
     for (const item of items) {
       assert.ok(item.title.trim().length >= 15, `${code}: слишком короткий пункт «${item.title}»`);
+      // Лимиты редактора чек-листа (/api/settings/journal-checklists):
+      // label ≤ 200, hint ≤ 500 — типовой пункт должен туда помещаться.
+      assert.ok(item.title.length <= 200, `${code}: пункт длиннее 200 символов`);
+      assert.ok((item.hint ?? "").length <= 500, `${code}: подсказка длиннее 500 символов`);
       assert.ok(!titles.has(item.title), `${code}: дубль «${item.title}»`);
       titles.add(item.title);
       if (item.frequency === "weekly") {

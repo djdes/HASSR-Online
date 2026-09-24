@@ -49,6 +49,12 @@ export type Phase = {
    * в этапе «TasksFlow» — кнопка «Открыть дашборд → отправить задачи».
    */
   finalNode?: React.ReactNode;
+  /**
+   * Счётчик «N/M» для этапа без карточек-ссылок (например, «Документы»,
+   * где содержимое — свой блок в finalNode). Если задан — заменяет
+   * подсчёт по items.
+   */
+  progress?: { done: number; total: number };
 };
 
 // ─────────────────────────────────────────────────────────────────────
@@ -67,8 +73,13 @@ export function PhaseCard({
   isLast: boolean;
 }) {
   const Icon = phase.icon;
-  const required = phase.items.filter((i) => !i.optional);
-  const requiredDone = required.filter((i) => i.state === "complete").length;
+  const requiredItems = phase.items.filter((i) => !i.optional);
+  const required = phase.progress
+    ? { length: phase.progress.total }
+    : requiredItems;
+  const requiredDone = phase.progress
+    ? phase.progress.done
+    : requiredItems.filter((i) => i.state === "complete").length;
 
   // Тон карточки.
   const tone =

@@ -50,6 +50,13 @@ export default async function OrderPage({
   const canManage = hasFullWorkspaceAccess(session.user);
 
   const existingId = typeof query.id === "string" ? query.id : null;
+  // Пришли из фазы «Документы» быстрого старта — после сохранения вернём
+  // туда же. Адрес возврата фиксированный: из query его не берём, чтобы
+  // ссылкой нельзя было увести человека на чужой сайт.
+  const returnTo =
+    query.from === "onboarding" && canManage
+      ? "/settings/onboarding#documents"
+      : null;
 
   const [org, existing, orders] = await Promise.all([
     currentOrgSnapshot(organizationId),
@@ -92,6 +99,7 @@ export default async function OrderPage({
       initialNumber={suggestNextNumber(orders)}
       initialIssuedAt={todayIso}
       initialValues={defaultOrderValues(template, today)}
+      returnTo={returnTo}
     />
   );
 }

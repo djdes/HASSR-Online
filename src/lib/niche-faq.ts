@@ -1,4 +1,5 @@
 import type { Niche } from "@/content/niches";
+import { buildSpherePublicContent } from "@/lib/sphere-public-content";
 
 /**
  * Вопросы-ответы для отраслевого лендинга `/dlya-*`.
@@ -26,10 +27,25 @@ export function buildNicheFaq(niche: Niche): NicheFaqItem[] {
   const who = lower(niche.navLabel);
   const items: NicheFaqItem[] = [];
 
-  if (niche.journals.length > 0) {
+  // Набор журналов — из правил сферы (SPHERE_RULES), тех же, по которым
+  // кабинет включает журналы при регистрации. Ручной список в нише
+  // расходился с кабинетом.
+  const content = buildSpherePublicContent(niche.sphere);
+  if (content.required.length > 0) {
+    const required = content.required
+      .map((journal) =>
+        journal.condition ? `${journal.name} (${journal.condition})` : journal.name,
+      )
+      .join("; ");
+    const recommended = content.recommended
+      .slice(0, 4)
+      .map((journal) => journal.name)
+      .join("; ");
     items.push({
       q: `Какие журналы обязательны для ${who}?`,
-      a: `Базовый набор: ${niche.journals.join("; ")}. Точный список зависит от меню и оборудования: если есть фритюр, добавляется учёт жиров, если работаете с сетями — прослеживаемость партий.`,
+      a: `Обязательный минимум для ${who}: ${required}.${
+        recommended ? ` Рекомендуем также: ${recommended}.` : ""
+      } Условные журналы нужны, только если условие про вас — например, есть соответствующее оборудование.`,
     });
   }
 
@@ -42,7 +58,7 @@ export function buildNicheFaq(niche: Niche): NicheFaqItem[] {
 
   items.push({
     q: `Можно ли вести журналы для ${who} в электронном виде?`,
-    a: "Да, СанПиН 2.3/2.4.4282-26 не требует бумаги. Важно, чтобы было видно, кто и когда внёс запись, и чтобы её нельзя было незаметно исправить задним числом. Для проверки журнал выводится на печать за нужный период.",
+    a: "Да, санитарные правила не требуют бумаги — для общепита это прямо сказано в СанПиН 2.3/2.4.4282-26. Важно, чтобы было видно, кто и когда внёс запись, и чтобы её нельзя было незаметно исправить задним числом. Для проверки журнал выводится на печать за нужный период.",
   });
 
   items.push({

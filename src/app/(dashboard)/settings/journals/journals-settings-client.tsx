@@ -4,6 +4,7 @@ import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
+  AlertTriangle,
   Check,
   CheckCircle2,
   ChevronDown,
@@ -425,7 +426,8 @@ export function JournalsSettingsClient({
     const isHighlighted = highlightCode === item.code;
     const dist = distState[item.code];
     const ModeIcon = FILL_MODE_LABELS[dist.fillMode].icon;
-    const basis = basisNote(requiredMap.get(item.code));
+    const rule = requiredMap.get(item.code);
+    const basis = basisNote(rule);
     return (
       <div
         key={item.code}
@@ -486,6 +488,26 @@ export function JournalsSettingsClient({
             >
               {basis}
             </div>
+          ) : null}
+
+          {/* Обязательный по сфере, но выключен — говорим прямо и даём
+              включить одним нажатием. Условный («при наличии бассейна»)
+              подсвечиваем мягче: условия у заведения может не быть. */}
+          {rule && !enabled ? (
+            <button
+              type="button"
+              onClick={() => toggle(item.code)}
+              className={`inline-flex items-start gap-1.5 rounded-xl px-2 py-1.5 text-left text-[11px] font-medium leading-snug transition-colors duration-150 ${
+                rule.condition
+                  ? "bg-[#fff8eb] text-[#a16d32] hover:bg-[#fff1d6]"
+                  : "bg-[#fff4f2] text-[#a13a32] hover:bg-[#ffe9e5]"
+              }`}
+            >
+              <AlertTriangle className="mt-px size-3.5 shrink-0" />
+              {rule.condition
+                ? "Обязателен при условии выше — включите, если оно про вас"
+                : "Обязателен для вашей сферы — включите"}
+            </button>
           ) : null}
 
           <div className="mt-auto flex flex-wrap items-center gap-1 pt-1">
@@ -1147,7 +1169,11 @@ function basisNote(rule: ElectronicRule | undefined): string | null {
   if (!rule) return null;
   const parts: string[] = [];
   if (rule.basis === "sanpin") parts.push(rule.note ?? "Требует СанПиН");
-  else if (rule.basis === "haccp") parts.push("Обязательная запись ХАССП");
+  else if (rule.basis === "haccp") {
+    parts.push(
+      `Обязательная запись ХАССП${rule.law ? ` (${rule.law.label})` : ""}`,
+    );
+  }
   else if (rule.basis === "practice") {
     parts.push(
       `Закон не обязывает, но спрашивают при проверках${

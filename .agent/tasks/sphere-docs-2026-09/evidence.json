@@ -1,0 +1,18 @@
+{
+  "task": "sphere-docs-2026-09",
+  "part": "B (B1 4cfa6a42 + B2)",
+  "checks": {
+    "typecheck": "pass",
+    "test": "2106/2106 pass",
+    "build": "pass (exit=0)",
+    "e2e": "14/14 pass (shots/b2-results.json)"
+  },
+  "acceptance": {
+    "AC-B1": { "status": "PASS", "evidence": ["B1: shots/01-06, seed-disable-run1/2.log", "B2: public/journal-samples for 6 new codes (fixes 404)"] },
+    "AC-B2": { "status": "PASS", "evidence": ["shots/b2-results.json: settings-required-enabled, settings-recommended-disabled", "shots/b2-01-settings-journals-1440.png", "B1: org-lookup-map.test.ts"] },
+    "AC-B3": { "status": "PASS", "evidence": ["sphere-journal-rules.test.ts", "checklist-defaults.test.ts", "sphere-public-content.test.ts"] },
+    "AC-B4": { "status": "PASS", "evidence": ["shots/b2-results.json: order-return-progress, checklist-fill-defaults, checklists-reviewed, documents-phase-closed, quickstart-card-step", "e2e/b2-db-check.json", "onboarding-documents.test.ts", "shots/b2-03..b2-06, b2-m1, b2-m3"] },
+    "AC-B5": { "status": "PASS", "evidence": ["shots/b2-results.json: public-fitness, public-education, industries-grid, sitemap", "shots/b2-07, b2-08, b2-m4, b2-m5", "route-slug-collisions.test.ts"] },
+    "AC-B6": { "status": "PASS", "evidence": ["typecheck, 2106/2106 tests, build exit=0", "B1: grep '35 журнал' (only whats-new-notes.ts)"] }
+  }
+}

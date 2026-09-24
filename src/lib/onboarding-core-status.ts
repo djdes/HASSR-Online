@@ -1,8 +1,13 @@
 import { db } from "@/lib/db";
+import { normalizeSphere, type OrgSphere } from "@/lib/org-profile";
+import {
+  computeDocumentsPhase,
+  type DocumentsPhaseStatus,
+} from "@/lib/onboarding-documents";
 
 /**
- * Состояние начальной настройки организации — три этапа быстрого старта
- * и документы журналов.
+ * Состояние начальной настройки организации — три этапа быстрого старта,
+ * документы журналов и фаза «Документы» (приказы и чек-листы).
  *
  * ПОЧЕМУ отдельный модуль. Раньше это считалось в двух местах и по разным
  * правилам: страница `/settings/onboarding` строила свои три этапа, а
@@ -32,10 +37,17 @@ export type CoreSetupStatus = {
   activeDocumentsCount: number;
   /** Все три этапа (объект / команда / журналы) закрыты. */
   coreComplete: boolean;
+  sphere: OrgSphere;
   /**
-   * Настройка закончена: этапы пройдены И документы созданы. Ровно по
-   * этому признаку карточка уходит с дашборда — пока документов нет,
-   * заполнять нечего, и звать в настройку ещё есть зачем.
+   * Фаза «Документы»: обязательные приказы сферы оформлены
+   * (`ordersDone`) и чек-листы отмечены проверенными (`checklistsDone`).
+   */
+  documents: DocumentsPhaseStatus;
+  /**
+   * Настройка закончена: этапы пройдены, документы журналов созданы,
+   * приказы оформлены и чек-листы проверены. Ровно по этому признаку
+   * карточка уходит с дашборда. У существующих организаций без приказов
+   * карточка вернётся — это намеренно: к проверке без приказов не готов.
    */
   setupFinished: boolean;
 };
@@ -52,10 +64,15 @@ export async function getCoreSetupStatus(
     equipmentCount,
     activeTemplates,
     activeDocumentsCount,
+    issuedOrders,
   ] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
-      select: { disabledJournalCodes: true },
+      select: {
+        disabledJournalCodes: true,
+        type: true,
+        checklistsReviewedAt: true,
+      },
     }),
     db.jobPosition.count({ where: { organizationId } }),
     db.user.count({
@@ -70,6 +87,11 @@ export async function getCoreSetupStatus(
     }),
     db.journalDocument.count({
       where: { organizationId, status: "active" },
+    }),
+    db.companyOrder.findMany({
+      where: { organizationId },
+      select: { templateCode: true },
+      distinct: ["templateCode"],
     }),
   ]);
 
@@ -124,6 +146,13 @@ export async function getCoreSetupStatus(
     users.state === "complete" &&
     journals.state === "complete";
 
+  const sphere = normalizeSphere(org?.type);
+  const documents = computeDocumentsPhase({
+    sphere,
+    issuedOrderCodes: issuedOrders.map((order) => order.templateCode),
+    checklistsReviewedAt: org?.checklistsReviewedAt ?? null,
+  });
+
   return {
     buildings,
     equipment,
@@ -132,6 +161,9 @@ export async function getCoreSetupStatus(
     journals,
     activeDocumentsCount,
     coreComplete,
-    setupFinished: coreComplete && activeDocumentsCount >= 1,
+    sphere,
+    documents,
+    setupFinished:
+      coreComplete && activeDocumentsCount >= 1 && documents.done,
   };
 }

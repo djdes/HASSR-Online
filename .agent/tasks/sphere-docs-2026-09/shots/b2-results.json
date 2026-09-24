@@ -1,0 +1,58 @@
+{
+  "settings-required-enabled": {
+    "ok": true,
+    "detail": "pest_control=true, pool_water_control=true, hygiene=true, cold_equipment_control=true"
+  },
+  "settings-recommended-disabled": {
+    "ok": true,
+    "detail": "cleaning=false, general_cleaning=false, disinfectant_usage=false, uv_lamp_runtime=false"
+  },
+  "settings-basis-condition": {
+    "ok": true,
+    "detail": "pool card: Увеличить Журнал контроля качества воды в бассейне проверить формулировку у юриста · нужен, если в клубе есть бассейн или ванны СанПиН Кому Задачи"
+  },
+  "settings-required-off-warning": {
+    "ok": true,
+    "detail": "warning shown when required pest_control switched off; one click re-enables it"
+  },
+  "order-return-progress": {
+    "ok": true,
+    "detail": "http://localhost:3032/orders/sanitary-responsible?from=onboarding → saved → back on /settings/onboarding, progress 0/4 → 1/4"
+  },
+  "checklist-fill-defaults": {
+    "ok": true,
+    "detail": "after «Заполнить типовыми»: Журнал контроля качества воды в бассейне 7 пунктов"
+  },
+  "checklists-reviewed": {
+    "ok": true,
+    "detail": "«Чек-листы проверены» → «Проверены DD.MM.YYYY»"
+  },
+  "documents-phase-closed": {
+    "ok": true,
+    "detail": "orders 4/4; phase header: Этап 4. Документы | ГОТОВО | 5/5"
+  },
+  "quickstart-card-step": {
+    "ok": true,
+    "detail": "QuickStartCard 14% → 29% after «Документы» phase"
+  },
+  "public-fitness": {
+    "ok": true,
+    "detail": "/dlya-fitnes-centra: pool journal + condition, disinfection order, checklists, paper journals; no internal legal notes"
+  },
+  "public-education": {
+    "ok": true,
+    "detail": "/dlya-detskogo-sada: daily samples journal, daily-samples order, practice basis"
+  },
+  "industries-grid": {
+    "ok": true,
+    "detail": "home page links to /dlya-fitnes-centra: 4"
+  },
+  "sitemap": {
+    "ok": true,
+    "detail": "sitemap.xml contains /dlya-fitnes-centra"
+  },
+  "mobile-390-no-hscroll": {
+    "ok": true,
+    "detail": "/settings/onboarding=0px, /settings/journals=0px, /orders/haccp-team?from=onboarding=0px, /dlya-fitnes-centra=0px, /dlya-detskogo-sada=0px"
+  }
+}

@@ -10,6 +10,9 @@
  * запущенный сайт и локальный Chromium от Playwright.
  *
  *   npx tsx scripts/render-journal-sample-thumbs.ts http://localhost:3010
+ *
+ * Только часть журналов (новые коды, без перерисовки остальных и бланков):
+ *   ONLY_CODES=daily_samples,vitaminization npx tsx scripts/render-journal-sample-thumbs.ts http://localhost:3010
  */
 import fs from "fs";
 import path from "path";
@@ -21,6 +24,10 @@ import { PAPER_JOURNALS } from "../src/lib/sphere-journal-rules";
 const BASE = process.argv[2] ?? "http://localhost:3000";
 const OUT = path.join(process.cwd(), "public", "journal-samples");
 const TMP = path.join(process.cwd(), ".sample-thumbs-tmp");
+const ONLY_CODES = (process.env.ONLY_CODES ?? "")
+  .split(",")
+  .map((code) => code.trim())
+  .filter(Boolean);
 
 function chromiumPath(): string {
   const root = path.join(process.env.LOCALAPPDATA ?? "", "ms-playwright");
@@ -95,14 +102,17 @@ async function main() {
     console.log(`OK   ${name}`);
   }
 
-  for (const code of SAMPLE_JOURNAL_CODES) {
+  const codes = ONLY_CODES.length
+    ? SAMPLE_JOURNAL_CODES.filter((code) => ONLY_CODES.includes(code))
+    : SAMPLE_JOURNAL_CODES;
+  for (const code of codes) {
     await shoot(`${BASE}/api/journal-samples/${code}/pdf?inline=1`, code);
   }
 
   // Бумажные бланки. Префикс paper_ — потому что id бланков живут в
   // своём пространстве имён и в теории могут совпасть с кодом
   // электронного журнала.
-  for (const journal of PAPER_JOURNALS) {
+  for (const journal of ONLY_CODES.length ? [] : PAPER_JOURNALS) {
     await shoot(
       `${BASE}/api/journal-samples/paper/${journal.id}/pdf?inline=1`,
       `paper_${journal.id}`,

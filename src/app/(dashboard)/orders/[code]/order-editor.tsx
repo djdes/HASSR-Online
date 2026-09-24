@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Info, Save } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, Info, Save } from "lucide-react";
 
 import { PageHeader } from "@/components/ui/page-header";
 import { PrintJournalButton } from "@/components/journals/print-journal-button";
@@ -33,6 +34,7 @@ export function OrderEditor({
   initialNumber,
   initialIssuedAt,
   initialValues,
+  returnTo = null,
 }: {
   template: OrderTemplate;
   org: OrderOrgSnapshot;
@@ -46,6 +48,8 @@ export function OrderEditor({
   initialNumber: string;
   initialIssuedAt: string;
   initialValues: OrderValues;
+  /** Куда вернуть после сохранения (быстрый старт, `?from=onboarding`). */
+  returnTo?: string | null;
 }) {
   const router = useRouter();
   const draftKey = `wesetup.order-draft:${template.code}`;
@@ -121,6 +125,13 @@ export function OrderEditor({
       } catch {
         /* ignore */
       }
+      if (returnTo) {
+        // Из быстрого старта: сразу назад, там прогресс «Оформлено N из M»
+        // уже учтёт этот приказ.
+        router.push(returnTo);
+        router.refresh();
+        return;
+      }
       if (!existing && data?.id) {
         router.replace(`/orders/${template.code}?id=${data.id}`);
       }
@@ -138,6 +149,21 @@ export function OrderEditor({
 
   return (
     <div className="space-y-5">
+      {returnTo ? (
+        <div className="flex flex-col gap-2 rounded-2xl border border-[#5566f6]/25 bg-[#f5f6ff] p-3.5 sm:flex-row sm:items-center sm:justify-between print:hidden">
+          <p className="text-[13px] leading-snug text-[#3c4053]">
+            Приказ из начальной настройки. После сохранения вернём вас к
+            шагу «Документы».
+          </p>
+          <Link
+            href={returnTo}
+            className="inline-flex h-9 shrink-0 items-center gap-1.5 self-start rounded-2xl border border-[#dcdfed] bg-white px-3.5 text-[13px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] sm:self-auto"
+          >
+            <ArrowLeft className="size-4 text-[#5566f6]" />
+            К начальной настройке
+          </Link>
+        </div>
+      ) : null}
       <div className="print:hidden">
         <PageHeader
           eyebrow="Приказ по предприятию"

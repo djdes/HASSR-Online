@@ -1,0 +1,20 @@
+logged in -> http://localhost:3032/dashboard
+terms accepted
+dashboard card before: Начальная настройка 14% Завершить
+PASS settings-required-enabled: pest_control=true, pool_water_control=true, hygiene=true, cold_equipment_control=true
+PASS settings-recommended-disabled: cleaning=false, general_cleaning=false, disinfectant_usage=false, uv_lamp_runtime=false
+PASS settings-basis-condition: pool card: Увеличить Журнал контроля качества воды в бассейне проверить формулировку у юриста · нужен, если в клубе есть бассейн или ванны СанПиН Кому Задачи
+PASS settings-required-off-warning: warning shown when required pest_control switched off; one click re-enables it
+orders progress start: 0/4
+PASS order-return-progress: http://localhost:3032/orders/sanitary-responsible?from=onboarding → saved → back on /settings/onboarding, progress 0/4 → 1/4
+empty checklists with defaults: 1
+PASS checklist-fill-defaults: after «Заполнить типовыми»: Журнал контроля качества воды в бассейне 7 пунктов
+PASS checklists-reviewed: «Чек-листы проверены» → «Проверены DD.MM.YYYY»
+PASS documents-phase-closed: orders 4/4; phase header: Этап 4. Документы | ГОТОВО | 5/5
+PASS quickstart-card-step: QuickStartCard 14% → 29% after «Документы» phase
+PASS public-fitness: /dlya-fitnes-centra: pool journal + condition, disinfection order, checklists, paper journals; no internal legal notes
+PASS public-education: /dlya-detskogo-sada: daily samples journal, daily-samples order, practice basis
+PASS industries-grid: home page links to /dlya-fitnes-centra: 4
+PASS sitemap: sitemap.xml contains /dlya-fitnes-centra
+logged in -> http://localhost:3032/dashboard
+PASS mobile-390-no-hscroll: /settings/onboarding=0px, /settings/journals=0px, /orders/haccp-team?from=onboarding=0px, /dlya-fitnes-centra=0px, /dlya-detskogo-sada=0px

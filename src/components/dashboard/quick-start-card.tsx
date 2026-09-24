@@ -26,9 +26,9 @@ export async function QuickStartCard({
 
   if (status.setupFinished) return null;
 
-  // Шесть шагов ровно в том составе, в каком они стоят на странице
-  // быстрого старта, плюс документы — иначе процент на главной и на
-  // онбординге снова разъедутся.
+  // Шаги ровно в том составе, в каком они стоят на странице быстрого
+  // старта, плюс документы журналов и шаг «Приказы и чек-листы» (фаза
+  // «Документы») — иначе процент на главной и на онбординге разъедутся.
   const steps = [
     status.buildings.state === "complete",
     status.equipment.state === "complete",
@@ -36,6 +36,9 @@ export async function QuickStartCard({
     status.users.state === "complete",
     status.journals.state === "complete",
     status.activeDocumentsCount >= 1,
+    // «Приказы и чек-листы»: обязательные приказы сферы оформлены и
+    // чек-листы отмечены проверенными.
+    status.documents.done,
   ];
 
   return (

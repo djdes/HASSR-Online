@@ -3,6 +3,8 @@ import { describe, it } from "node:test";
 
 import { NICHES } from "@/content/niches";
 import { buildNicheFaq, nicheFaqJsonLd } from "@/lib/niche-faq";
+import { journalName } from "@/lib/sphere-public-content";
+import { SPHERE_RULES } from "@/lib/sphere-journal-rules";
 
 describe("buildNicheFaq", () => {
   it("подставляет отрасль в вопросы", () => {
@@ -10,11 +12,12 @@ describe("buildNicheFaq", () => {
     assert.ok(faq.some((i) => i.q.includes("пекарни")));
   });
 
-  it("переносит набор журналов ниши в ответ", () => {
+  it("берёт набор журналов из правил сферы ниши", () => {
     const niche = NICHES["dlya-kafe"];
     const faq = buildNicheFaq(niche);
     const answer = faq.find((i) => i.q.startsWith("Какие журналы"))?.a ?? "";
-    assert.ok(answer.includes(niche.journals[0]));
+    const firstRequired = SPHERE_RULES[niche.sphere].electronicRequired[0].code;
+    assert.ok(answer.includes(journalName(firstRequired)));
   });
 
   it("даёт разный текст разным нишам — иначе это дубль на 12 страниц", () => {
@@ -33,8 +36,8 @@ describe("buildNicheFaq", () => {
     }
   });
 
-  it("не падает на нише без болей и журналов", () => {
-    const bare = { ...NICHES["dlya-bara"], pains: [], journals: [] };
+  it("не падает на нише без болей", () => {
+    const bare = { ...NICHES["dlya-bara"], pains: [] };
     const faq = buildNicheFaq(bare);
     assert.ok(faq.length >= 2);
   });

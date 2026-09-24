@@ -1,0 +1,45 @@
+{
+  "org": {
+    "checklistsReviewedAt": "2026-09-24T09:50:30.570Z",
+    "type": "fitness"
+  },
+  "orders": [
+    {
+      "templateCode": "disinfection",
+      "number": "4"
+    },
+    {
+      "templateCode": "journals-intro",
+      "number": "2"
+    },
+    {
+      "templateCode": "ppk-approval",
+      "number": "3"
+    },
+    {
+      "templateCode": "sanitary-responsible",
+      "number": "1"
+    }
+  ],
+  "checklistItems": 7,
+  "codes": [
+    "pool_water_control"
+  ],
+  "first": "1) До открытия возьмите пробу воды в чистую колбу → 2) измерьте свободный и связанный хлор и pH тестером → 3) запишите в журнал",
+  "audit": [
+    {
+      "action": "checklist.fill_defaults",
+      "details": {
+        "source": "onboarding",
+        "created": 7,
+        "journalCode": "pool_water_control"
+      }
+    },
+    {
+      "action": "onboarding.checklists_reviewed",
+      "details": {
+        "reviewedAt": "2026-09-24T09:50:30.570Z"
+      }
+    }
+  ]
+}

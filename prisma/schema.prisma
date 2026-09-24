@@ -170,6 +170,9 @@ model Organization {
   /// hide the journals that don't apply. Disabled journals are muted in
   /// the browser and excluded from dashboard compliance counts.
   disabledJournalCodes           Json                           @default("[]")
+  /// Когда руководитель нажал «Чек-листы проверены» в фазе «Документы»
+  /// начальной настройки. null — фаза не закрыта (onboarding-core-status).
+  checklistsReviewedAt           DateTime?
   /// Ids бумажных бланков (PAPER_JOURNALS), которые организация скрыла.
   /// Пусто = все бумажные журналы сферы показываются — хранение
   /// негативное, как у disabledJournalCodes: новый бланк в каталоге
