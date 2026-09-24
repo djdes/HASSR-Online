@@ -1,0 +1,13 @@
+{
+  "task": "master-menu-yield-time-2026-09",
+  "branch": "feat/master-menu-yield-time",
+  "commit": "6fea40b9",
+  "acceptance": {
+    "AC1": { "status": "PASS", "evidence": ["e2e/menu-yield-time-results.json#AC1", "src/lib/finished-product-bulk.test.ts", "src/lib/master-directory.test.ts", "shots/desktop-1440-02-master-table-pasted.png", "shots/desktop-1440-08-master-menu-list-file.png"] },
+    "AC2": { "status": "PASS", "evidence": ["e2e/menu-yield-time-results.json#AC2", "shots/desktop-1440-06-master-preview-changed.png", "shots/desktop-1440-07-master-preview-file.png"] },
+    "AC3": { "status": "PASS", "evidence": ["e2e/menu-yield-time-results.json#AC3 site/bulk/QR", "shots/desktop-1440-09-kitchen-dialog-prefilled.png", "shots/desktop-1440-11-kitchen-bulk-prefilled.png", "shots/mobile-390-04-qr-prefilled.png", "shots/mobile-390-05-qr-manual-kept.png"] },
+    "AC4": { "status": "PASS", "evidence": ["e2e/menu-yield-time-results.json#AC3/AC4", "src/lib/name-suggestions-meta.test.ts", "src/lib/journal-fill-html.test.ts", "../master-cabinet-2026-09/e2e/a1-integration.ts RF1"] },
+    "AC5": { "status": "PASS", "evidence": ["npm run typecheck: 0 errors", "npm test: 2186/2186", "e2e/build.log: exit=0", "e2e 11/11, a1 18/18, a2 15/15"] }
+  },
+  "checks": { "typecheck": "pass", "test": "2186/2186", "build": "exit 0", "e2e": "11/11", "regression_a1": "18/18", "regression_a2": "15/15" }
+}

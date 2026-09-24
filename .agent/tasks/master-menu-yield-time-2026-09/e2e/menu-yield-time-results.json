@@ -1,0 +1,350 @@
+{
+  "passed": 11,
+  "failed": 0,
+  "results": [
+    {
+      "check": "AC1: paste into the menu table — 3 columns with header and numbering, 2 columns without header, a time column",
+      "ok": true,
+      "detail": [
+        [
+          "Борщ",
+          "250",
+          "08:30"
+        ],
+        [
+          "Плов",
+          "200/10",
+          "11:00"
+        ],
+        [
+          "Компот",
+          "200",
+          "07:30"
+        ],
+        [
+          "Сырники",
+          "2 шт.",
+          "09:15"
+        ],
+        [
+          "Солянка",
+          "300",
+          "12:40"
+        ]
+      ]
+    },
+    {
+      "check": "AC1/AC2: preview +5, saved with yield/time, list shows «Выход» and «Время» columns",
+      "ok": true,
+      "detail": {
+        "preview1": "Добавится 5 · Уберётся 0 · Изменится 0 · Без изменений 0 · всего в списке 5",
+        "db1": [
+          [
+            "Борщ",
+            "250",
+            "08:30"
+          ],
+          [
+            "Плов",
+            "200/10",
+            "11:00"
+          ],
+          [
+            "Компот",
+            "200",
+            "07:30"
+          ],
+          [
+            "Сырники",
+            "2 шт.",
+            "09:15"
+          ],
+          [
+            "Солянка",
+            "300",
+            "12:40"
+          ]
+        ]
+      }
+    },
+    {
+      "check": "AC2: table opens with the current menu; preview shows added, removed and changed (yield) dishes",
+      "ok": true,
+      "detail": {
+        "preview2": "Добавится 1 · Уберётся 1 · Изменится 1 · Без изменений 3 · всего в списке 5",
+        "db2": [
+          [
+            "Борщ",
+            "300",
+            "08:30"
+          ],
+          [
+            "Плов",
+            "200/10",
+            "11:00"
+          ],
+          [
+            "Компот",
+            "200",
+            "07:30"
+          ],
+          [
+            "Сырники",
+            "2 шт.",
+            "09:15"
+          ],
+          [
+            "Омлет",
+            "150",
+            ""
+          ]
+        ]
+      }
+    },
+    {
+      "check": "AC1/AC2: xlsx with «Вес порции» and «Время выдачи» → +1, changed 2; names still reach itemsCatalog",
+      "ok": true,
+      "detail": {
+        "preview3": "Добавится 1 · Уберётся 0 · Изменится 2 · Без изменений 3 · всего в списке 6",
+        "put3Body": {
+          "total": 6,
+          "added": 1,
+          "removed": 0,
+          "changed": 2,
+          "organizations": 2,
+          "documents": 2
+        },
+        "db3": [
+          [
+            "Борщ",
+            "300",
+            "08:30"
+          ],
+          [
+            "Плов",
+            "250",
+            "11:00"
+          ],
+          [
+            "Компот",
+            "200",
+            "07:30"
+          ],
+          [
+            "Сырники",
+            "2 шт.",
+            "09:15"
+          ],
+          [
+            "Омлет",
+            "150",
+            "07:00"
+          ],
+          [
+            "Каша",
+            "250",
+            "08:00"
+          ]
+        ]
+      }
+    },
+    {
+      "check": "AC3/AC4: pool suggestions carry menu yield/time; kitchen's own value wins; org without master unchanged",
+      "ok": true,
+      "detail": {
+        "y": {
+          "борщ": {
+            "portionWeight": "300",
+            "productionTime": "08:30"
+          },
+          "компот": {
+            "portionWeight": "180",
+            "productionTime": "07:30"
+          }
+        },
+        "z": {
+          "values": [
+            "Борщ"
+          ],
+          "meta": {
+            "борщ": {
+              "productTemp": "70"
+            }
+          }
+        }
+      }
+    },
+    {
+      "check": "AC3 site: choosing a menu dish fills empty yield and untouched time (date kept); other dish resets; kitchen value wins",
+      "ok": true,
+      "detail": {
+        "defaultTime": "19:25",
+        "defaultDate": "2026-09-24",
+        "borsch": {
+          "portion": "300",
+          "time": "08:30",
+          "date": "2026-09-24"
+        },
+        "own": {
+          "portion": "",
+          "time": "19:25"
+        },
+        "kompot": {
+          "portion": "180",
+          "time": "07:30"
+        },
+        "saved": [
+          {
+            "id": "finished-product-row-861374c1-2fe0-4c16-af05-344f87091a1c",
+            "note": "",
+            "oxygenLevel": "",
+            "productName": "",
+            "productTemp": "",
+            "organoleptic": "",
+            "inspectorName": "",
+            "portionWeight": "",
+            "rejectionTime": "",
+            "releaseAllowed": "yes",
+            "correctiveAction": "",
+            "organolepticValue": "",
+            "responsiblePerson": "",
+            "organolepticResult": "",
+            "productionDateTime": "",
+            "courierTransferTime": "",
+            "releasePermissionTime": ""
+          },
+          {
+            "id": "finished-product-row-21182370-22e6-4bcf-baa5-322d80a82c5e",
+            "note": "",
+            "oxygenLevel": "",
+            "productName": "Борщ",
+            "productTemp": "",
+            "organoleptic": "Отлично",
+            "inspectorName": "",
+            "portionWeight": "300",
+            "rejectionTime": "2026-09-24 08:35",
+            "releaseAllowed": "yes",
+            "correctiveAction": "",
+            "organolepticValue": "",
+            "responsiblePerson": "",
+            "organolepticResult": "",
+            "productionDateTime": "2026-09-24 08:30",
+            "courierTransferTime": "2026-09-24 19:55",
+            "releasePermissionTime": "2026-09-24 08:40"
+          }
+        ]
+      }
+    },
+    {
+      "check": "AC3 site: manually entered yield and time are not overwritten by the menu",
+      "ok": true,
+      "detail": {
+        "portion": "999",
+        "time": "15:45"
+      }
+    },
+    {
+      "check": "AC3 site bulk: empty yield filled by name from the menu, manual yield kept, unknown dish stays empty",
+      "ok": true,
+      "detail": {
+        "bulkYields": [
+          "250",
+          "300",
+          "180",
+          "",
+          "111"
+        ],
+        "rows": [
+          [
+            "Плов",
+            "250"
+          ],
+          [
+            "Борщ",
+            "300"
+          ],
+          [
+            "Компот",
+            "180"
+          ],
+          [
+            "Новое блюдо",
+            ""
+          ],
+          [
+            "Каша",
+            "111"
+          ]
+        ]
+      }
+    },
+    {
+      "check": "AC3 QR: dish from the menu fills empty yield and untouched time; other dish resets; saved row has them; manual kept",
+      "ok": true,
+      "detail": {
+        "qrDefaultTime": "19:25",
+        "qrBorsch": {
+          "portion": "300",
+          "time": "08:30"
+        },
+        "qrOwn": {
+          "portion": "",
+          "time": "19:25"
+        },
+        "qrSaved": {
+          "id": "bracerage-1790268953245-7d7pux",
+          "note": "",
+          "oxygenLevel": "",
+          "productName": "Плов",
+          "productTemp": "",
+          "organoleptic": "Отлично",
+          "sourceRowKey": "employee-cmufrvzxu0004989mh5tympym#qr-1790268953219",
+          "inspectorName": "",
+          "portionWeight": "250",
+          "rejectionTime": "2026-09-24 11:05",
+          "releaseAllowed": "yes",
+          "correctiveAction": "",
+          "organolepticValue": "",
+          "responsiblePerson": "Руководитель Y",
+          "organolepticResult": "",
+          "productionDateTime": "2026-09-24 11:00",
+          "courierTransferTime": "",
+          "releasePermissionTime": "2026-09-24 11:10"
+        },
+        "qrManual": {
+          "portion": "77",
+          "time": "16:10"
+        }
+      }
+    },
+    {
+      "check": "390px: no horizontal page scroll (master menu, table, preview, QR form)",
+      "ok": true,
+      "detail": {
+        "mobile-390-master-menu": {
+          "scrollWidth": 390,
+          "innerWidth": 390
+        },
+        "mobile-390-master-table": {
+          "scrollWidth": 390,
+          "innerWidth": 390
+        },
+        "mobile-390-master-preview": {
+          "scrollWidth": 390,
+          "innerWidth": 390
+        },
+        "mobile-390-qr-prefilled": {
+          "scrollWidth": 390,
+          "innerWidth": 390
+        }
+      }
+    },
+    {
+      "check": "browser console errors (info)",
+      "ok": true,
+      "detail": [
+        "http://localhost:3036/master :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the"
+      ]
+    }
+  ]
+}

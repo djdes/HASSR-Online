@@ -266,7 +266,7 @@ async function main() {
   check(
     "AC-A3: menu is in active finished_product docs of X and Y (local items kept)",
     () => {
-      assert.deepEqual(putDishBody, { total: 3, added: 3, removed: 0, organizations: 2, documents: 4 });
+      assert.deepEqual(putDishBody, { total: 3, added: 3, removed: 0, changed: 0, organizations: 2, documents: 4 });
       assert.deepEqual(yFp1.itemsCatalog, ["Своё блюдо Y", "Борщ", "Плов", "Компот"]);
       assert.deepEqual(xFp1.itemsCatalog, ["Своё блюдо X", "Борщ", "Плов", "Компот"]);
     },
@@ -310,7 +310,7 @@ async function main() {
   check(
     "AC-A5: removing one dish at the master removes only it; local dish stays",
     () => {
-      assert.deepEqual(putDish2Body, { total: 2, added: 0, removed: 1, organizations: 2, documents: 4 });
+      assert.deepEqual(putDish2Body, { total: 2, added: 0, removed: 1, changed: 0, organizations: 2, documents: 4 });
       assert.deepEqual(yFp2.itemsCatalog, ["Своё блюдо Y", "Борщ", "Компот"]);
     },
     { y: yFp2.itemsCatalog }

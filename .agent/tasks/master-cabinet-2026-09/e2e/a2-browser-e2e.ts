@@ -250,7 +250,7 @@ async function main() {
     await check(
       "AC-A3: xlsx preview (+3) and save & distribute toast",
       () => {
-        assert.match(previewMenu, /Добавится 3 · Уберётся 0 · Без изменений 0/);
+        assert.match(previewMenu, /Добавится 3 · Уберётся 0 · Изменится 0 · Без изменений 0/);
         assert.match(toastMenu, /Готово: список обновлён в 2 объектах \(4 журнала\)/);
       },
       { previewMenu, toastMenu }
@@ -305,9 +305,13 @@ async function main() {
     /* ───────────── remove one dish via «Вставить списком» ───────────── */
     await master.getByTestId("master-tab-menu").click();
     await master.getByTestId("master-paste-dish").first().click();
-    const prefilled = await master.getByTestId("master-paste-text").inputValue();
-    await master.getByTestId("master-paste-text").fill("Борщ\nКомпот");
-    await master.getByRole("button", { name: "Показать изменения" }).click();
+    // Меню вводится таблицей «Наименование | Выход | Время» (2026-09-24): удаляем строку «Плов».
+    await master.getByTestId("master-menu-table-dialog").waitFor();
+    const prefilled = (
+      await Promise.all([0, 1, 2].map((i) => master.getByTestId(`menu-name-${i}`).inputValue()))
+    ).join("\n");
+    await master.getByRole("button", { name: "Удалить строку 2" }).click();
+    await master.getByTestId("master-menu-table-submit").click();
     await master.getByTestId("master-preview").waitFor({ timeout: 30_000 });
     const previewRemove = await master.getByTestId("master-preview-summary").innerText();
     await shot(master, "desktop-1440-master-preview-remove", false);
@@ -325,7 +329,7 @@ async function main() {
       "AC-A5: removing one dish removes only it; local dish of Y stays",
       () => {
         assert.equal(prefilled, "Борщ\nПлов\nКомпот");
-        assert.match(previewRemove, /Добавится 0 · Уберётся 1 · Без изменений 2/);
+        assert.match(previewRemove, /Добавится 0 · Уберётся 1 · Изменится 0 · Без изменений 2/);
         assert.deepEqual(cfg(yFp2).itemsCatalog, ["Своё блюдо Y", "Борщ", "Компот"]);
         assert.deepEqual(cfg(xFp2).itemsCatalog, ["Своё блюдо X", "Борщ", "Компот"]);
       },
@@ -386,8 +390,9 @@ async function main() {
     }
     await mobile.goto(`${BASE}/master`, { waitUntil: "load" });
     await mobile.getByTestId("master-paste-dish").first().click();
-    await mobile.getByTestId("master-paste-text").fill("Борщ\nКомпот\nСолянка");
-    await mobile.getByRole("button", { name: "Показать изменения" }).click();
+    await mobile.getByTestId("master-menu-table-dialog").waitFor();
+    await mobile.getByTestId("menu-name-2").fill("Солянка");
+    await mobile.getByTestId("master-menu-table-submit").click();
     await mobile.getByTestId("master-preview").waitFor();
     mobileWidths["mobile-390-master-preview"] = await noHorizontalScroll(mobile);
     await shot(mobile, "mobile-390-master-preview", false);
