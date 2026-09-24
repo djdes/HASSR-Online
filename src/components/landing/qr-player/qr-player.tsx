@@ -271,6 +271,7 @@ export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
               loop
               controls={false}
               clickToPlay={false}
+              numberOfSharedAudioTags={0}
               acknowledgeRemotionLicense
               style={{ width: "100%", height: "100%" }}
             />

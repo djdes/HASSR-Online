@@ -35,7 +35,7 @@ import {
   fridgeOutOfRange,
   type Chapter,
 } from "./chapters";
-import { QrSticker, type QrMatrix } from "./qr-sticker";
+import type { QrMatrix } from "./qr-sticker";
 
 /**
  * Кадр ролика — чистая функция `frame` и значений «Попробуйте сами».
@@ -362,6 +362,27 @@ function Screen({ t, from, to, children, pad = true }: { t: number; from: number
 type ScanObject = "fridge" | "thermometer" | "lamp" | "fryer";
 
 /** Видоискатель камеры: объект, золотая наклейка, рамка распознавания. */
+/**
+ * Куда смотрит камера и где висит наклейка — по главам. `pos` —
+ * objectPosition фото (прицел на осмысленную поверхность: дверца, стена,
+ * стальная панель), `left/top` — точка наклейки в кадре, `tilt` — наклон
+ * «приклеена руками», `title` — что написано на наклейке (объект — как в
+ * печатных наклейках продукта, у гигиены — название журнала).
+ */
+const VIEWFINDER_LAYOUT: Record<
+  ScanObject,
+  { pos: string; left: string; top: string; tilt: number; title: string; zoom?: { scale: number; origin: string } }
+> = {
+  // Телефон обрезается низом сцены: видимая зона видоискателя — верхняя
+  // половина экрана, наклейки держим в top ≤ 45%. Узкий кроп почти не
+  // слушается objectPosition, поэтому на дверцу и фритюрницу камера
+  // «подходит ближе» зумом (transform-origin в точку объекта на фото).
+  fridge: { pos: "50% 50%", left: "52%", top: "42%", tilt: -2.5, title: DEMO.fridge, zoom: { scale: 2.4, origin: "55% 56%" } },
+  thermometer: { pos: "40% 50%", left: "50%", top: "44%", tilt: 2, title: JOURNALS.hygiene },
+  lamp: { pos: "50% 34%", left: "50%", top: "44%", tilt: -2, title: DEMO.lamp },
+  fryer: { pos: "50% 50%", left: "50%", top: "40%", tilt: 2.5, title: DEMO.fryer, zoom: { scale: 2.2, origin: "58% 96%" } },
+};
+
 function Viewfinder({ t, object, qr, bodyTemp, photo }: { t: number; object: ScanObject; qr: QrMatrix; bodyTemp: number; photo?: string }) {
   const hide = progress(t, 0.85, 0.25, ease.inOut);
   if (hide >= 1) return null;
@@ -369,18 +390,37 @@ function Viewfinder({ t, object, qr, bodyTemp, photo }: { t: number; object: Sca
   const found = progress(t, 0.55, 0.2, ease.out);
   const bracket = interpolate(lock, [0, 1], [1.35, 1]);
   const scan = (t * 1.6) % 1;
+  const layout = VIEWFINDER_LAYOUT[object];
   return (
     <div style={fade(1 - hide, { position: "absolute", inset: 0, zIndex: 4, background: "#1a1f33", overflow: "hidden" })}>
       {photo ? (
         <>
-          {/* Камера смотрит на настоящее место — фото вместо рисунка. */}
+          {/* Камера смотрит на настоящее место; лёгкий дрейф — телефон в
+              руках, а не штатив. Всё — функции t, перемотка детерминирована. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={photo}
             alt=""
-            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "brightness(0.85) saturate(0.95)" }}
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              objectPosition: layout.pos,
+              filter: "brightness(0.9) saturate(0.95)",
+              transformOrigin: layout.zoom?.origin ?? "50% 50%",
+              transform: `translate(${Math.sin(t * 1.1) * 0.8}%, ${Math.cos(t * 0.8) * 0.6}%) scale(${layout.zoom?.scale ?? 1.07})`,
+            }}
           />
-          <div style={{ position: "absolute", inset: 0, background: "radial-gradient(130% 100% at 50% 42%, transparent 38%, rgba(8,11,24,0.6) 100%)" }} />
+          {/* Свет — на наклейку: остальное притемняется, глазу ясно, что сканировать. */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: `radial-gradient(46% 42% at ${layout.left} ${layout.top}, rgba(4,6,14,0) 42%, rgba(4,6,14,0.66) 100%)`,
+            }}
+          />
           {object === "thermometer" ? <ThermometerReadout bodyTemp={bodyTemp} /> : null}
         </>
       ) : (
@@ -389,13 +429,29 @@ function Viewfinder({ t, object, qr, bodyTemp, photo }: { t: number; object: Sca
       <div
         style={{
           position: "absolute",
-          left: "50%",
-          top: "42%",
-          width: "5.4em",
-          transform: `translate(-50%, -50%) scale(${1 + found * 0.06})`,
+          left: layout.left,
+          top: layout.top,
+          width: "6.6em",
+          transform: `translate(-50%, -50%) rotate(${layout.tilt}deg) scale(${1 + found * 0.05})`,
         }}
       >
-        <QrSticker qr={qr} caption={false} />
+        {/* Наклейка — как печатает продукт (формат «наклейка»): белая
+            карточка, QR, название объекта, организация. Приклеена с
+            наклоном и бросает тень на поверхность. */}
+        <div
+          style={{
+            borderRadius: "0.7em",
+            background: "#ffffff",
+            padding: "0.5em 0.5em 0.45em",
+            boxShadow: "0 1.1em 2.4em -0.7em rgba(0,0,0,0.7), 0 0.15em 0.45em rgba(0,0,0,0.4)",
+          }}
+        >
+          <svg viewBox={`0 0 ${qr.size} ${qr.size}`} shapeRendering="crispEdges" style={{ display: "block", width: "100%", height: "auto" }} aria-hidden="true">
+            <path d={qr.d} fill="#0b1024" />
+          </svg>
+          <div style={{ marginTop: "0.38em", textAlign: "center", color: P.ink, fontWeight: 700, fontSize: "0.6em", lineHeight: 1.15 }}>{layout.title}</div>
+          <div style={{ marginTop: "0.18em", textAlign: "center", color: P.muted, fontSize: "0.5em", lineHeight: 1.1 }}>{DEMO.org}</div>
+        </div>
         <div
           style={{
             position: "absolute",
@@ -1600,3 +1656,4 @@ export function SceneFrame({ frame, fridgeTemp, bodyTemp, today, qr }: SceneProp
 }
 
 export const STAGE_BACKGROUND = P.stage;
+
