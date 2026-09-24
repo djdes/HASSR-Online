@@ -1,4 +1,5 @@
 import { withNewHygieneFormVersion } from "@/lib/hygiene-v2";
+import { findHygieneAdmissionViolation } from "@/lib/hygiene-admission-guard";
 import { Prisma, type JournalDocument, type JournalTemplate } from "@prisma/client";
 import { db } from "@/lib/db";
 import { resolveJournalCodeAlias } from "@/lib/source-journal-map";
@@ -830,6 +831,18 @@ export async function dispatchExternalEntries(params: {
         error: `entry date ${entry.date.toISOString().slice(0, 10)} outside document range`,
       };
     }
+  }
+
+  // Гигиена: «Допущен» через внешний API — только после ответа
+  // сотрудника о здоровье за этот день (пожелание РПН).
+  const admissionError = await findHygieneAdmissionViolation(db, {
+    templateCode: template.code,
+    documentId: initialDoc.id,
+    config: initialDoc.config,
+    items: normalized,
+  });
+  if (admissionError) {
+    return { ok: false, httpStatus: 409, error: admissionError };
   }
 
   const context: WriterContext = {

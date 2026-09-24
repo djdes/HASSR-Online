@@ -35,3 +35,21 @@ test("допуск: без решения ничего не выбрано, с �
   // Ждущий допуска — сверху.
   assert.ok(html.indexOf("Иванова") < html.indexOf("Петрова"));
 });
+
+test("допуск без ответа о здоровье: «Допущен» недоступен с причиной, «Отстранён» доступен", () => {
+  const declared = { status: "healthy", confirmations: { temperature: true, infection: true, respiratorySkin: true }, confirmedAt: "06:50", source: "qr" };
+  const html = renderHealthDay({
+    action: "/x",
+    who: "",
+    tabs: "",
+    rows: [
+      { id: "a", name: "Иванова", position: null, mark: { state: "admitted", at: "06:50" }, hygiene: hygieneV2View(declared), answered: true },
+      { id: "b", name: "Петрова", position: null, mark: { state: "missing" }, hygiene: hygieneV2View(null), answered: false },
+    ],
+  });
+  assert.match(html, /name="st:a" value="admitted">/);
+  assert.match(html, /name="st:b" value="admitted" disabled/);
+  assert.doesNotMatch(html, /name="st:b" value="suspended" disabled/);
+  assert.match(html, /Допуск недоступен: сотрудник ещё не ответил на вопросы о здоровье/);
+  assert.equal((html.match(/data-admit-locked/g) ?? []).length, 1);
+});

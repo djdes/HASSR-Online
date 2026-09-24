@@ -11,6 +11,8 @@ import { DAILY_JOURNAL_CODES } from "@/lib/daily-journal-codes";
 import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
 import { resolveDayStart } from "@/lib/today-compliance";
 import { logAudit } from "@/lib/audit";
+import { isHygieneEntryCopyable } from "@/lib/hygiene-admission";
+import { readHygieneFormVersion } from "@/lib/hygiene-v2";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -277,7 +279,14 @@ export async function POST(request: Request) {
       organizationId,
       status: "active",
     },
-    select: { id: true, dateFrom: true, dateTo: true, templateId: true },
+    select: {
+      id: true,
+      dateFrom: true,
+      dateTo: true,
+      templateId: true,
+      config: true,
+      template: { select: { code: true } },
+    },
   });
   const docMap = new Map(docs.map((d) => [d.id, d]));
 
@@ -366,8 +375,13 @@ export async function POST(request: Request) {
       const filledSet = new Set(targetEntries.map((e) => e.employeeId));
 
       let copied = 0;
+      // Гигиена: подпись сотрудника и допуск — отметка своего дня, на
+      // другой день не переносятся («Допущен» только после ответа о
+      // здоровье за этот день, пожелание РПН).
+      const hygieneFormVersion = readHygieneFormVersion(doc.config);
       for (const e of sourceEntries) {
         if (filledSet.has(e.employeeId)) continue;
+        if (doc.template.code === "hygiene" && !isHygieneEntryCopyable(e.data, hygieneFormVersion)) continue;
         await db.journalDocumentEntry.upsert({
           where: {
             documentId_employeeId_date: {

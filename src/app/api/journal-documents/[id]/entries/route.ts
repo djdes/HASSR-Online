@@ -26,6 +26,7 @@ import {
 import { checkEntryScope } from "@/lib/journal-entry-write";
 import { orgTodayKey } from "@/lib/timezone";
 import { decideEntryMove } from "@/lib/tracked-document";
+import { findHygieneAdmissionViolation } from "@/lib/hygiene-admission-guard";
 
 /**
  * Контекст автоматического запрета «день в день» — для PATCH/DELETE,
@@ -170,6 +171,30 @@ export async function PUT(
       dates: [dateObj],
       templateCode: doc.template?.code ?? null,
     });
+  }
+
+  // Гигиена: «Допущен» — только после ответа сотрудника о здоровье за
+  // этот день (пожелание РПН). Ответ сверяется с записью в базе.
+  {
+    const editedEntry = entryId
+      ? await db.journalDocumentEntry.findFirst({
+          where: { id: entryId, documentId },
+          select: { data: true },
+        })
+      : null;
+    const admissionError = await findHygieneAdmissionViolation(db, {
+      templateCode: doc.template?.code,
+      documentId,
+      config: doc.config,
+      items: [{ employeeId, date: dateObj, data }],
+      previousOverride: editedEntry,
+    });
+    if (admissionError) {
+      return NextResponse.json(
+        { error: admissionError, code: "admission_needs_health_answer" },
+        { status: 409 }
+      );
+    }
   }
 
   const nextData = toPrismaJsonValue(reconcileEntryStaffFields(data, employee));
@@ -369,6 +394,20 @@ export async function PATCH(
 
   if (employees.length !== uniqueEmployeeIds.length) {
     return NextResponse.json({ error: "Сотрудник не найден" }, { status: 404 });
+  }
+
+  // Гигиена: «Допущен» — только после ответа сотрудника о здоровье.
+  const admissionError = await findHygieneAdmissionViolation(db, {
+    templateCode: doc.template?.code,
+    documentId,
+    config: doc.config,
+    items: normalizedEntries,
+  });
+  if (admissionError) {
+    return NextResponse.json(
+      { error: admissionError, code: "admission_needs_health_answer" },
+      { status: 409 }
+    );
   }
 
   try {

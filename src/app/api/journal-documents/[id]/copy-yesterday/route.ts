@@ -7,6 +7,7 @@ import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { HYGIENE_V2_NO_COPY_MESSAGE, readHygieneFormVersion } from "@/lib/hygiene-v2";
+import { isHygieneEntryCopyable } from "@/lib/hygiene-admission";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -144,9 +145,18 @@ export async function POST(
     todayEntries.map((e) => e.employeeId)
   );
 
+  // Гигиена: подпись сотрудника и допуск ответственного — отметка своего
+  // дня. Перенесённые на сегодня, они дали бы «Допущен» без сегодняшнего
+  // ответа о здоровье (пожелание РПН) — такие строки не копируем.
+  const hygieneFormVersion = readHygieneFormVersion(doc.config);
   let copied = 0;
   let kept = 0;
+  let signed = 0;
   for (const entry of yesterdayEntries) {
+    if (doc.template?.code === "hygiene" && !isHygieneEntryCopyable(entry.data, hygieneFormVersion)) {
+      signed += 1;
+      continue;
+    }
     const alreadyHasToday = todayFilledEmployeeIds.has(entry.employeeId);
     if (alreadyHasToday && !overwrite) {
       kept += 1;
@@ -176,6 +186,7 @@ export async function POST(
   return NextResponse.json({
     copied,
     kept,
+    ...(signed > 0 ? { skippedSigned: signed } : {}),
     yesterdayKey: yesterday.toISOString().slice(0, 10),
     todayKey: today.toISOString().slice(0, 10),
   });

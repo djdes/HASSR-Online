@@ -18,6 +18,7 @@ import {
 import { checkEntryScope } from "@/lib/journal-entry-write";
 import { orgTodayKey } from "@/lib/timezone";
 import { HYGIENE_V2_NO_COPY_MESSAGE, readHygieneFormVersion } from "@/lib/hygiene-v2";
+import { findHygieneAdmissionViolation } from "@/lib/hygiene-admission-guard";
 
 /**
  * POST /api/journal-documents/[id]/entries/bulk
@@ -218,6 +219,20 @@ export async function POST(
 
   if (accepted.length === 0) {
     return NextResponse.json({ saved: 0, skipped, reason: "past_day_locked" });
+  }
+
+  // Гигиена: «Допущен» — только после ответа сотрудника о здоровье.
+  const admissionError = await findHygieneAdmissionViolation(db, {
+    templateCode: doc.template?.code,
+    documentId,
+    config: doc.config,
+    items: accepted,
+  });
+  if (admissionError) {
+    return NextResponse.json(
+      { error: admissionError, code: "admission_needs_health_answer" },
+      { status: 409 }
+    );
   }
 
   await db.$transaction(

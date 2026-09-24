@@ -1,4 +1,5 @@
 import { HEALTH_CONFIRMATIONS, type DayMark } from "@/lib/health-qr";
+import { ADMISSION_NEEDS_HEALTH_ANSWER_MESSAGE } from "@/lib/hygiene-admission";
 import { signatureMark, type HygieneV2View } from "@/lib/hygiene-v2";
 import { esc } from "@/lib/journal-fill-html";
 
@@ -31,6 +32,8 @@ const HEALTH_CSS = `<style>
 .hq-row .segb{min-height:52px;font-size:17px}
 .hq-row .segb.yes:has(input:checked){border-color:#16a34a;background:#ecfdf5;color:#116b2a}
 .hq-row .segb.no:has(input:checked){border-color:#d2453d;background:#fff4f2;color:#a13a32}
+.hq-row .segb.off{opacity:.5;cursor:not-allowed;background:#f4f5f9;border-style:dashed}
+.hq-lock{font-size:15px;line-height:1.4;color:#9a5b00;margin:2px 0 0}
 </style>`;
 
 export function renderHealthTabs(params: { active: "me" | "all"; meHref: string; allHref: string; missing: number }): string {
@@ -95,7 +98,19 @@ const MARK_TEXT = (mark: DayMark): { cls: string; text: string } => {
   }
 };
 
-export type HealthDayRow = { id: string; name: string; position: string | null; mark: DayMark; hygiene: HygieneV2View };
+export type HealthDayRow = {
+  id: string;
+  name: string;
+  position: string | null;
+  mark: DayMark;
+  hygiene: HygieneV2View;
+  /**
+   * Сотрудник сегодня сам ответил на вопросы о здоровье
+   * (`hasHealthAnswer`). Без ответа «Допущен» недоступен. Не задано —
+   * по подписям в `hygiene`.
+   */
+  answered?: boolean;
+};
 
 const SIGNATURE_SHORT: ReadonlyArray<{ key: keyof HygieneV2View["signatures"]; label: string }> = [
   { key: "temperature", label: "t° до 37" },
@@ -150,11 +165,19 @@ export function renderHealthDay(params: {
             ? `<div class="hq-s ${row.mark.state === "suspended" ? "hq-sbad" : "hq-smiss"}">${row.mark.state === "suspended" ? "⚠ отметил жалобы — ждёт решения" : "ждёт допуска"}</div>`
             : `<div class="hq-s ${mark.cls}">${esc(mark.text)}</div>`;
       const checked = (value: "admitted" | "suspended") => h.result?.result === value;
-      const seg = `<div class="seg" role="radiogroup" aria-label="Допуск: ${esc(row.name)}"><label class="segb yes${checked("admitted") ? " on" : ""}"><input type="radio" name="st:${esc(row.id)}" value="admitted"${checked("admitted") ? " checked" : ""}><span>Допущен</span></label><label class="segb no${checked("suspended") ? " on" : ""}"><input type="radio" name="st:${esc(row.id)}" value="suspended"${checked("suspended") ? " checked" : ""}><span>Отстранён</span></label></div>`;
+      // «Допущен» — только после ответа сотрудника о здоровье (пожелание
+      // РПН); уже поставленный допуск не снимаем, «Отстранён» — всегда.
+      const admitLocked = !(row.answered ?? h.declared) && !checked("admitted");
+      const lockReason = `Допуск недоступен: ${ADMISSION_NEEDS_HEALTH_ANSWER_MESSAGE.toLowerCase()}.`;
+      const admitLabel = admitLocked
+        ? `<label class="segb yes off" aria-disabled="true" title="${esc(lockReason)}"><input type="radio" name="st:${esc(row.id)}" value="admitted" disabled><span>Допущен</span></label>`
+        : `<label class="segb yes${checked("admitted") ? " on" : ""}"><input type="radio" name="st:${esc(row.id)}" value="admitted"${checked("admitted") ? " checked" : ""}><span>Допущен</span></label>`;
+      const seg = `<div class="seg" role="radiogroup" aria-label="Допуск: ${esc(row.name)}">${admitLabel}<label class="segb no${checked("suspended") ? " on" : ""}"><input type="radio" name="st:${esc(row.id)}" value="suspended"${checked("suspended") ? " checked" : ""}><span>Отстранён</span></label></div>`;
       const absence = `<select class="in" name="ab:${esc(row.id)}" aria-label="Нет на смене: ${esc(row.name)}"><option value="">На смене</option>${ABSENCE_OPTIONS.map(
         (item) => `<option value="${item.value}"${h.absence === item.value ? " selected" : ""}>${item.label}</option>`
       ).join("")}</select>`;
-      return `<div class="hq-row"><div><div class="hq-n">${esc(row.name)}</div>${row.position ? `<div class="hint" style="margin:0">${esc(row.position)}</div>` : ""}${signatures}${state}</div>${seg}${absence}</div>`;
+      const lock = admitLocked && !h.absence ? `<p class="hq-lock" data-admit-locked>${esc(lockReason)}</p>` : "";
+      return `<div class="hq-row"><div><div class="hq-n">${esc(row.name)}</div>${row.position ? `<div class="hint" style="margin:0">${esc(row.position)}</div>` : ""}${signatures}${state}</div>${seg}${lock}${absence}</div>`;
     })
     .join("");
   const saved =
@@ -165,7 +188,7 @@ export function renderHealthDay(params: {
 <form method="post" action="${esc(params.action)}">
 <input type="hidden" name="action" value="health-keeper">
 ${params.error ? `<div class="err">${esc(params.error)}</div>` : ""}
-<p class="hq-note">Осмотрите сотрудника и отметьте «Допущен» или «Отстранён» — это ваша подпись ответственного в гигиеническом журнале. Кого нет на смене — выберите «Выходной», «Болен» или «Отпуск».</p>
+<p class="hq-note">Осмотрите сотрудника и отметьте «Допущен» или «Отстранён» — это ваша подпись ответственного в гигиеническом журнале. «Допущен» доступен, когда сотрудник сам ответил на вопросы о здоровье по QR журнала. Кого нет на смене — выберите «Выходной», «Болен» или «Отпуск».</p>
 ${rows || `<div class="card"><p class="muted">Сегодня в списке никого нет.</p></div>`}
 <div class="sticky"><button class="btn" type="submit">Подписать допуск</button></div>
 </form>`;

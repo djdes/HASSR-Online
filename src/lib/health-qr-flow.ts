@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { clientIp } from "@/lib/client-ip";
 import { db } from "@/lib/db";
 import { HEALTH_CONFIRMATIONS, dayMarkFromEntry, healthDecision, isRealHygieneEntry } from "@/lib/health-qr";
+import { ADMISSION_NEEDS_HEALTH_ANSWER_MESSAGE, canAdmitEmployee } from "@/lib/hygiene-admission";
 import { renderHealthDay, renderHealthForm, renderHealthSuspended, renderHealthTabs } from "@/lib/health-qr-html";
 import { notifyHygieneDeclaration } from "@/lib/hygiene-declaration-notify";
 import { applyHygieneVerification, hygieneV2View } from "@/lib/hygiene-v2";
@@ -142,6 +143,13 @@ export async function handleHealthQr(ctx: HealthCtx): Promise<NextResponse> {
       ? await db.journalDocumentEntry.findMany({ where: { documentId: pair.hygieneId, date: dayDate(ctx.todayKey) }, select: { employeeId: true, data: true } })
       : [];
     const byEmployee = new Map(entries.map((entry) => [entry.employeeId, entry.data]));
+    // Гигиенический журнал отключён — ответ сотрудника лежит в записи
+    // журнала здоровья (те же `confirmations`).
+    const healthOnly =
+      !pair.hygieneId && pair.healthId
+        ? await db.journalDocumentEntry.findMany({ where: { documentId: pair.healthId, date: dayDate(ctx.todayKey) }, select: { employeeId: true, data: true } })
+        : [];
+    const answerByEmployee = new Map(healthOnly.map((entry) => [entry.employeeId, entry.data]));
     const absences = await loadStaffAbsenceForDay(db, { organizationId: ctx.orgId, employeeIds: people.map((p) => p.id), dateKey: ctx.todayKey });
     return people.map((person) => {
       const absence = absences.get(person.id);
@@ -153,6 +161,9 @@ export async function handleHealthQr(ctx: HealthCtx): Promise<NextResponse> {
         data,
         mark: dayMarkFromEntry(data, absence ? STAFF_ABSENCE_LABEL[absence.status] : null),
         hygiene: hygieneV2View(isRealHygieneEntry(data) ? data : null),
+        answered:
+          canAdmitEmployee({ result: "admitted", entry: data }).ok ||
+          canAdmitEmployee({ result: "admitted", entry: answerByEmployee.get(person.id) }).ok,
       };
     });
   };
@@ -181,6 +192,28 @@ export async function handleHealthQr(ctx: HealthCtx): Promise<NextResponse> {
     if (ctx.view === "all") {
       if (ctx.posted && String(ctx.posted.get("action") ?? "") === "health-keeper") {
         if (rateLimited()) return ctx.page(renderHealthDay({ action: allHref, who: ctx.who, tabs, rows: day, error: QR_FILL_RATE_LIMIT_ERROR }), 429);
+        // «Допущен» — только тем, кто сегодня ответил на вопросы о здоровье
+        // (пожелание РПН). Проверка по записи в базе до любой записи: весь
+        // пакет отклоняется, чтобы допуск не лёг наполовину.
+        const blocked = day.filter((row) => {
+          const absence = String(ctx.posted?.get(`ab:${row.id}`) ?? "");
+          if (absence === "day_off" || absence === "sick_leave" || absence === "vacation") return false;
+          if (String(ctx.posted?.get(`st:${row.id}`) ?? "") !== "admitted") return false;
+          if (row.hygiene.result?.result === "admitted" && !row.hygiene.absence) return false;
+          return !row.answered;
+        });
+        if (blocked.length > 0) {
+          return ctx.page(
+            renderHealthDay({
+              action: allHref,
+              who: ctx.who,
+              tabs,
+              rows: day,
+              error: `${ADMISSION_NEEDS_HEALTH_ANSWER_MESSAGE}: ${blocked.map((row) => row.name).join(", ")}. Допуск не сохранён — попросите сотрудника отметиться по QR журнала.`,
+            }),
+            409
+          );
+        }
         let changed = 0;
         const at = hhmm(ctx.timezone);
         const title = ctx.employee.positionTitle ?? null;
