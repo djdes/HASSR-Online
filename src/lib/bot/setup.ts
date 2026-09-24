@@ -1,6 +1,8 @@
 import type { Bot } from "grammy";
 import { TELEGRAM_COMMANDS } from "@/lib/bot/start-response";
 import { buildMiniAppUrl } from "@/lib/journal-obligation-links";
+import { JOURNALS_TOTAL } from "@/lib/journal-catalog";
+import { pluralRu } from "@/lib/plural-ru";
 
 export const WESETUP_BOT_PROFILE = {
   name: "WeSetup · журналы ХАССП/СанПиН",
@@ -8,7 +10,7 @@ export const WESETUP_BOT_PROFILE = {
     "Электронные журналы СанПиН и ХАССП прямо в Telegram — без бумажек.",
   description:
     "WeSetup — электронные журналы СанПиН и ХАССП для кафе, ресторанов и пищевых производств.\n\n" +
-    "📋 35+ готовых журналов: гигиена, здоровье, температуры холодильников, бракераж, уборка, дезинфекция, приёмка сырья.\n" +
+    `📋 ${JOURNALS_TOTAL} ${pluralRu(JOURNALS_TOTAL, "готовый журнал", "готовых журнала", "готовых журналов")}: гигиена, здоровье, температуры холодильников, бракераж, уборка, дезинфекция, приёмка сырья.\n` +
     "✅ Заполнение в один клик прямо здесь — откройте Кабинет и отметьте строки за смену.\n" +
     "📊 PDF для Роспотребнадзора одним кликом — сборка «По звонку инспектора» за 7 дней.\n" +
     "🤖 Умные напоминания, голосовой ввод температур, офлайн-режим на кухне.\n\n" +

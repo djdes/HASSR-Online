@@ -33,6 +33,8 @@ import {
   isTrackedDocumentTemplate,
 } from "@/lib/tracked-document";
 import { COMPLAINT_REGISTER_TEMPLATE_CODE } from "@/lib/complaint-document";
+import { getRegisterDocumentTitle } from "@/lib/register-document";
+import { isGenericRegisterJournal, REGISTER_JOURNAL_CODES } from "@/lib/register-journals";
 import { AUDIT_PROTOCOL_TEMPLATE_CODE } from "@/lib/audit-protocol-document";
 import { AUDIT_REPORT_TEMPLATE_CODE } from "@/lib/audit-report-document";
 import {
@@ -207,6 +209,8 @@ export function isDocumentTemplate(templateCode: string) {
  */
 const DOCUMENT_UI_ONLY_TEMPLATE_CODES = new Set([
   COMPLAINT_REGISTER_TEMPLATE_CODE,
+  // Табличные реестры: заполняются строками внутри документа.
+  ...REGISTER_JOURNAL_CODES,
   AUDIT_PROTOCOL_TEMPLATE_CODE,
   AUDIT_REPORT_TEMPLATE_CODE,
 ]);
@@ -298,6 +302,9 @@ export function getJournalDocumentDefaultTitle(templateCode: string) {
   }
   if (isSanitaryDayChecklistTemplate(templateCode)) {
     return getSanitaryDayChecklistTitle(templateCode);
+  }
+  if (isGenericRegisterJournal(templateCode)) {
+    return getRegisterDocumentTitle(templateCode);
   }
   if (templateCode === "critical_limit_check") {
     return "Журнал учета критических показателей";

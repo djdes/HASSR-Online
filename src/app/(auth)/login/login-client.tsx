@@ -6,6 +6,7 @@ import Link from "next/link";
 import { BrandLogo } from "@/components/brand/logo";
 import { ArrowRight, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { looksLikePhoneInput, phoneQueryValue } from "@/lib/login-identifier";
+import { JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
 
 function LoginForm() {
   const router = useRouter();
@@ -231,7 +232,7 @@ function LoginForm() {
         <div className="relative z-10 mt-auto max-w-[520px]">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[12px] uppercase tracking-[0.18em] text-white/70 backdrop-blur">
             <span className="size-1.5 rounded-full bg-[#7cf5c0]" />
-            35 СанПиН / ХАССП журналов
+            {JOURNALS_TOTAL_LABEL} СанПиН / ХАССП
           </div>
           <h1 className="text-[46px] font-semibold leading-[1.05] tracking-[-0.03em]">
             Электронные журналы пищевого производства

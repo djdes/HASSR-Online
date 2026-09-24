@@ -64,6 +64,7 @@ import {
   getRegisterDocumentCreatePeriodBounds,
   isRegisterDocumentTemplate,
 } from "@/lib/register-document";
+import { isGenericRegisterJournal } from "@/lib/register-journals";
 import { resolveJournalPeriod, resolveJournalPeriodKind } from "@/lib/journal-period";
 import { getUserPositionLabel } from "@/lib/user-roles";
 import { useJournalCreateDefaults } from "@/components/journals/journal-create-defaults";
@@ -234,7 +235,8 @@ export function CreateDocumentDialog({
                   ? getEquipmentCleaningCreatePeriodBounds()
                 : templateCode === PRODUCT_WRITEOFF_TEMPLATE_CODE
                   ? getProductWriteoffCreatePeriodBounds()
-                : isRegisterDocumentTemplate(templateCode)
+                : isRegisterDocumentTemplate(templateCode) &&
+                    !isGenericRegisterJournal(templateCode)
                 ? getRegisterDocumentCreatePeriodBounds()
                 : resolveCreatePeriodBounds(templateCode),
     [templateCode]

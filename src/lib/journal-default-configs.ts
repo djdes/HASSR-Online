@@ -373,6 +373,14 @@ const PROVIDERS: Record<string, Provider> = {
   complaint_register: (orgData) => registerConfig(orgData),
   pest_control: (orgData) => registerConfig(orgData),
 
+  // ═══ ТАБЛИЧНЫЕ РЕЕСТРЫ (register-journals.ts) ═══
+  daily_samples: (orgData) => registerConfig(orgData),
+  vitaminization: (orgData) => registerConfig(orgData),
+  ration_control: (orgData) => registerConfig(orgData),
+  transport_temperature: (orgData) => registerConfig(orgData),
+  tableware_breakage: (orgData) => registerConfig(orgData),
+  pool_water_control: (orgData) => registerConfig(orgData),
+
   // ═══ АУДИТЫ ═══
   audit_plan: (orgData) =>
     getAuditPlanDefaultConfig({

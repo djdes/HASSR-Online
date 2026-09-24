@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { HeroEmailStart } from "@/components/landing/hero-email-start";
+import { JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
 
 /**
  * Интерактивное демо: посетитель «трогает» форму журнала без
@@ -445,7 +446,7 @@ export function DemoJournalWidget() {
           href="/journals-info"
           className="ml-auto text-[13px] font-medium text-[#3848c7] underline-offset-4 hover:underline"
         >
-          Все 35 журналов →
+          Все {JOURNALS_TOTAL_LABEL} →
         </Link>
       </div>
     </div>

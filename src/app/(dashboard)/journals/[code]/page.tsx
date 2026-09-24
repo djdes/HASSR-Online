@@ -64,6 +64,8 @@ import {
 } from "@/lib/cleaning-document";
 import { CleaningDocumentsClient } from "@/components/journals/cleaning-documents-client";
 import { ComplaintDocumentsClient } from "@/components/journals/complaint-documents-client";
+import { RegisterDocumentsClient } from "@/components/journals/register-documents-client";
+import { isGenericRegisterJournal } from "@/lib/register-journals";
 import {
   EQUIPMENT_CLEANING_TEMPLATE_CODE,
   getDefaultEquipmentCleaningConfig,
@@ -4058,6 +4060,42 @@ export default async function JournalDocumentsPage({
           dateFrom: document.dateFrom.toISOString().slice(0, 10),
           config: normalizeComplaintConfig(document.config as never),
         }))}
+      />
+    );
+  }
+
+  // Табличные реестры без своего экрана (суточные пробы, бассейн и др.):
+  // колонки и форма строятся из register-journals.ts.
+  if (isGenericRegisterJournal(resolvedCode)) {
+    const documents = await db.journalDocument.findMany({
+      where: {
+        organizationId: getActiveOrgId(session),
+        templateId: template.id,
+        status: activeTab,
+        ...buildingWhere(activeBuildingId),
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    return withBanner(
+      <RegisterDocumentsClient
+        activeTab={activeTab}
+        routeCode={code}
+        templateCode={resolvedCode}
+        templateName={template.name}
+        users={orgUsers}
+        documents={documents.map((document) => {
+          const rows = (document.config as { rows?: unknown } | null)?.rows;
+          return {
+            id: document.id,
+            shared: sharedDocumentFlag(document, documents),
+            title: document.title || template.name,
+            status: document.status as "active" | "closed",
+            dateFrom: document.dateFrom.toISOString().slice(0, 10),
+            dateTo: document.dateTo.toISOString().slice(0, 10),
+            rowsCount: Array.isArray(rows) ? rows.length : 0,
+          };
+        })}
       />
     );
   }

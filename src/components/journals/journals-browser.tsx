@@ -54,6 +54,11 @@ import {
   Wine,
   Wrench,
   X,
+  TestTube,
+  Pill,
+  Scale,
+  GlassWater,
+  Waves,
 } from "lucide-react";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
@@ -120,6 +125,12 @@ const JOURNAL_ICONS: Record<string, LucideIcon> = {
   glass_items_list: Wine,
   glass_control: Eye,
   pest_control: Bug,
+  daily_samples: TestTube,
+  vitaminization: Pill,
+  ration_control: Scale,
+  transport_temperature: Truck,
+  tableware_breakage: GlassWater,
+  pool_water_control: Waves,
 };
 
 export function JournalsBrowser({

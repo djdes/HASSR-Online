@@ -8,6 +8,7 @@ import { CookieConsent } from "@/components/public/cookie-consent";
 import "./globals.css";
 import "./app-theme.css";
 import "./public-theme.css";
+import { JOURNALS_TOTAL_ELECTRONIC_LABEL } from "@/lib/journal-catalog";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -50,7 +51,7 @@ export const metadata: Metadata = {
     template: "%s — WeSetup",
   },
   description:
-    "35 электронных журналов СанПиН и ХАССП для общепита и производств. QR-наклейки на оборудовании: отсканировал, ввёл PIN — запись в журнале. PDF для Роспотребнадзора. Бесплатно до 3 сотрудников.",
+    `${JOURNALS_TOTAL_ELECTRONIC_LABEL} СанПиН и ХАССП для общепита и производств. QR-наклейки на оборудовании: отсканировал, ввёл PIN — запись в журнале. PDF для Роспотребнадзора. Бесплатно до 3 сотрудников.`,
   keywords: [
     "электронные журналы",
     "журналы СанПиН",
@@ -74,7 +75,7 @@ export const metadata: Metadata = {
     title:
       "Электронные журналы СанПиН и ХАССП онлайн — WeSetup",
     description:
-      "35 электронных журналов СанПиН и ХАССП для общепита и производств. QR-наклейки на оборудовании: отсканировал, ввёл PIN — запись в журнале. PDF для Роспотребнадзора. Бесплатно до 3 сотрудников.",
+      `${JOURNALS_TOTAL_ELECTRONIC_LABEL} СанПиН и ХАССП для общепита и производств. QR-наклейки на оборудовании: отсканировал, ввёл PIN — запись в журнале. PDF для Роспотребнадзора. Бесплатно до 3 сотрудников.`,
     images: [
       {
         url: "https://wesetup.ru/og-default",
@@ -88,7 +89,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Электронные журналы СанПиН и ХАССП — WeSetup",
     description:
-      "35 электронных журналов СанПиН и ХАССП для общепита и производств. QR-наклейки на оборудовании: отсканировал, ввёл PIN — запись в журнале. PDF для Роспотребнадзора. Бесплатно до 3 сотрудников.",
+      `${JOURNALS_TOTAL_ELECTRONIC_LABEL} СанПиН и ХАССП для общепита и производств. QR-наклейки на оборудовании: отсканировал, ввёл PIN — запись в журнале. PDF для Роспотребнадзора. Бесплатно до 3 сотрудников.`,
     images: ["https://wesetup.ru/og-default"],
   },
   robots: {

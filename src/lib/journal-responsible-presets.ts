@@ -346,6 +346,55 @@ export const JOURNAL_RESPONSIBILITY_META: readonly JournalResponsibilityMeta[] =
     preferNamedPerson: true,
   },
   {
+    code: "tableware_breakage",
+    who: "Менеджер смены записывает каждый случай боя посуды и проверяет, что осколки собраны.",
+    keywords: [...LEAD_KEYWORDS],
+    mode: "single",
+    category: "incidents",
+  },
+
+  // ═══ ПИТАНИЕ В ДЕТСКИХ И МЕДИЦИНСКИХ ОРГАНИЗАЦИЯХ ═══
+  {
+    code: "daily_samples",
+    who: "Повар или шеф-повар отбирает суточные пробы от каждого приёма пищи и утилизирует их через 48 часов.",
+    keywords: ["шеф", "повар", ...LEAD_KEYWORDS],
+    mode: "single",
+    category: "production",
+    preferNamedPerson: true,
+  },
+  {
+    code: "vitaminization",
+    who: "Повар или медсестра вносит витамин в третье блюдо перед раздачей и делает запись.",
+    keywords: ["шеф", "повар", "медсестр", "медицин", ...LEAD_KEYWORDS],
+    mode: "single",
+    category: "production",
+    preferNamedPerson: true,
+  },
+  {
+    code: "ration_control",
+    who: "Заведующая или медсестра раз в 10 дней сверяет фактический рацион с нормами.",
+    keywords: ["медсестр", "медицин", "диетсестр", ...LEAD_KEYWORDS],
+    mode: "single",
+    category: "production",
+    preferNamedPerson: true,
+  },
+
+  // ═══ ПЕРЕВОЗКА И БАССЕЙН ═══
+  {
+    code: "transport_temperature",
+    who: "Водитель-экспедитор или кладовщик замеряет температуру продукции при загрузке и выгрузке.",
+    keywords: ["водител", "экспедитор", "кладов", "логист", ...LEAD_KEYWORDS],
+    mode: "shared",
+    category: "temperature",
+  },
+  {
+    code: "pool_water_control",
+    who: "Техник бассейна или инструктор делает замеры воды до открытия и по графику в течение дня.",
+    keywords: ["техник", "бассейн", "инженер", "инструктор", ...LEAD_KEYWORDS],
+    mode: "shared",
+    category: "other",
+  },
+  {
     code: "pest_control",
     who: "Менеджер или директор отмечает визиты подрядчика (СЭС/договор на дезинсекцию) и собственные осмотры на наличие следов грызунов/насекомых.",
     keywords: ["технолог", ...LEAD_KEYWORDS],

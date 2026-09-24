@@ -7,7 +7,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
+import { defaultChecklistFor } from "@/lib/checklist-defaults";
+import { JOURNAL_INFO } from "@/content/journal-info";
+import { ACTIVE_JOURNAL_CATALOG, JOURNALS_TOTAL } from "@/lib/journal-catalog";
+import { ORDER_TEMPLATES } from "@/lib/orders/catalog";
+import { REGISTER_DOCUMENT_TEMPLATE_CODES } from "@/lib/register-document";
 import { ALL_JOURNAL_CODES } from "@/lib/onboarding-presets";
 import { ORG_SPHERES, type OrgSphere } from "@/lib/org-profile";
 import { SPHERE_POSITION_SUGGESTIONS } from "@/lib/sphere-positions";
@@ -159,4 +163,93 @@ test("вступление ссылается на действующий Сан
       `${sphere}: во вступлении не действующий СанПиН`,
     );
   }
+});
+
+const orderCodes = new Set(ORDER_TEMPLATES.map((order) => order.code));
+
+/** Журналы, добавленные в сентябре 2026 как табличные реестры. */
+const NEW_REGISTER_CODES = [
+  "daily_samples",
+  "vitaminization",
+  "ration_control",
+  "transport_temperature",
+  "tableware_breakage",
+  "pool_water_control",
+];
+
+test("сфера «Фитнес» есть в словаре и в правилах", () => {
+  assert.ok(spheres.includes("fitness"));
+  const rules = SPHERE_RULES.fitness;
+  assert.deepEqual(requiredCodesFor("fitness").sort(), [
+    "cold_equipment_control",
+    "hygiene",
+    "pest_control",
+    "pool_water_control",
+  ]);
+  // Пищевые журналы у фитнеса — только при баре: условие обязательно.
+  for (const code of ["hygiene", "cold_equipment_control", "pool_water_control"]) {
+    const rule = rules.electronicRequired.find((item) => item.code === code);
+    assert.ok(rule?.condition, `fitness: у ${code} нет условия`);
+  }
+});
+
+test("приказы сфер существуют в каталоге приказов", () => {
+  for (const sphere of spheres) {
+    const rules = SPHERE_RULES[sphere];
+    assert.ok(rules.ordersRequired.length > 0, `${sphere}: нет обязательных приказов`);
+    assert.ok(rules.ordersRecommended.length > 0, `${sphere}: нет рекомендуемых приказов`);
+    for (const code of [...rules.ordersRequired, ...rules.ordersRecommended]) {
+      assert.ok(orderCodes.has(code), `${sphere}: приказа ${code} нет в ORDER_TEMPLATES`);
+    }
+    const required = new Set(rules.ordersRequired);
+    for (const code of rules.ordersRecommended) {
+      assert.ok(!required.has(code), `${sphere}: приказ ${code} и обязателен, и рекомендован`);
+    }
+  }
+});
+
+test("детским и медицинским организациям обязателен приказ о суточных пробах", () => {
+  for (const sphere of ["education", "medical"] as const) {
+    assert.ok(SPHERE_RULES[sphere].ordersRequired.includes("daily-samples"), sphere);
+    assert.ok(requiredCodesFor(sphere).includes("daily_samples"), sphere);
+    assert.ok(requiredCodesFor(sphere).includes("vitaminization"), sphere);
+  }
+});
+
+test("у каждой сферы есть журналы для чек-листов, и у каждого — типовые пункты", () => {
+  for (const sphere of spheres) {
+    const codes = SPHERE_RULES[sphere].checklistJournals;
+    assert.ok(codes.length > 0, `${sphere}: нет журналов для чек-листов`);
+    for (const code of codes) {
+      assert.ok(catalogCodes.has(code), `${sphere}: чек-лист для ${code}, которого нет в каталоге`);
+      assert.ok(defaultChecklistFor(code).length > 0, `${sphere}: у ${code} нет типовых пунктов`);
+    }
+  }
+});
+
+test("каждый журнал каталога (кроме журнала здоровья) нужен хотя бы одной сфере", () => {
+  const used = new Set<string>();
+  for (const sphere of spheres) {
+    for (const code of requiredCodesFor(sphere)) used.add(code);
+    for (const code of SPHERE_RULES[sphere].electronicRecommended) used.add(code);
+  }
+  for (const code of catalogCodes) {
+    if (code === "health_check") continue;
+    assert.ok(used.has(code), `журнал ${code} не отнесён ни к одной сфере`);
+  }
+});
+
+test("новые журналы — табличные реестры, есть в наборе кодов и в публичном описании", () => {
+  const registerCodes = new Set<string>(REGISTER_DOCUMENT_TEMPLATE_CODES);
+  for (const code of NEW_REGISTER_CODES) {
+    assert.ok(catalogCodes.has(code), `${code}: нет в каталоге`);
+    assert.ok(registerCodes.has(code), `${code}: нет в REGISTER_DOCUMENT_TEMPLATE_CODES`);
+    assert.ok(ALL_JOURNAL_CODES.includes(code), `${code}: нет в ALL_JOURNAL_CODES`);
+    assert.ok(JOURNAL_INFO[code], `${code}: нет в JOURNAL_INFO`);
+  }
+});
+
+test("каталог и список кодов онбординга совпадают, число журналов — из каталога", () => {
+  assert.deepEqual([...ALL_JOURNAL_CODES].sort(), [...catalogCodes].sort());
+  assert.equal(JOURNALS_TOTAL, ACTIVE_JOURNAL_CATALOG.length);
 });

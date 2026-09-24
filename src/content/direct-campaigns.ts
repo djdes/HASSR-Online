@@ -1,3 +1,5 @@
+import { JOURNALS_TOTAL_ELECTRONIC_LABEL, JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
+
 /**
  * Draft campaign spec for Yandex.Direct. Loaded by scripts/yandex-direct-setup.ts
  * which translates it into the API's campaign/adgroup/ad/keyword payload.
@@ -89,7 +91,7 @@ export const CAMPAIGNS: CampaignSpec[] = [
           {
             title1: "WeSetup — электронные журналы",
             title2: "СанПиН и ХАССП. Бесплатно",
-            text: "35 журналов, Telegram-бот, PDF для проверок. Бесплатный тариф до 3 сотрудников.",
+            text: `${JOURNALS_TOTAL_LABEL}, Telegram-бот, PDF для проверок. Бесплатный тариф до 3 сотрудников.`,
             href: u("/", "brand", "exact"),
             displayPath: "журналы/бесплатно",
           },
@@ -325,7 +327,7 @@ export const CAMPAIGNS: CampaignSpec[] = [
           {
             title1: "Журналы СанПиН бесплатно",
             title2: "Без срока, без карты",
-            text: "35 электронных журналов для общепита. До 3 сотрудников — навсегда бесплатно.",
+            text: `${JOURNALS_TOTAL_ELECTRONIC_LABEL} для общепита. До 3 сотрудников — навсегда бесплатно.`,
             href: u("/", "free-tier", "free-main"),
             displayPath: "бесплатно",
           },

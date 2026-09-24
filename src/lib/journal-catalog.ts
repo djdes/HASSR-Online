@@ -1,3 +1,5 @@
+import { pluralRu } from "./plural-ru";
+
 export type JournalTariffId = "basic" | "extended";
 
 export interface JournalCatalogItem {
@@ -100,11 +102,51 @@ const EXTENDED_ONLY_JOURNALS = [
     code: "pest_control",
     name: "Журнал учета дезинфекции, дезинсекции и дератизации",
   },
+  // Сентябрь 2026: табличные реестры (register-journals.ts). Добавлены в
+  // конец, чтобы не сдвигать sortOrder существующих шаблонов.
+  { code: "daily_samples", name: "Журнал отбора и хранения суточных проб" },
+  {
+    code: "vitaminization",
+    name: "Журнал проведения витаминизации третьих и сладких блюд",
+  },
+  { code: "ration_control", name: "Ведомость контроля за рационом питания" },
+  {
+    code: "transport_temperature",
+    name: "Журнал контроля температуры при транспортировке",
+  },
+  { code: "tableware_breakage", name: "Журнал учёта боя посуды" },
+  {
+    code: "pool_water_control",
+    name: "Журнал контроля качества воды в бассейне",
+  },
 ] as const satisfies readonly JournalCatalogItem[];
 
 export const BASIC_TARIFF_JOURNALS = BASIC_JOURNALS;
 export const EXTENDED_ONLY_TARIFF_JOURNALS = EXTENDED_ONLY_JOURNALS;
 export const ACTIVE_JOURNAL_CATALOG = [...BASIC_JOURNALS, ...EXTENDED_ONLY_JOURNALS] as const;
+
+/**
+ * Сколько журналов в каталоге. В текстах раньше было зашито конкретное число,
+ * и число расходилось с каталогом после каждого нового журнала — теперь
+ * все упоминания берут его отсюда (склонение — `journalsCountLabel`).
+ */
+export const JOURNALS_TOTAL = ACTIVE_JOURNAL_CATALOG.length;
+
+/** «41 журнал», «42 журнала», «45 журналов» — для любого числа. */
+export function journalsCountLabel(count: number = JOURNALS_TOTAL): string {
+  return `${count} ${pluralRu(count, "журнал", "журнала", "журналов")}`;
+}
+
+/** Готовая подпись для текстов: «41 журнал». */
+export const JOURNALS_TOTAL_LABEL = journalsCountLabel(JOURNALS_TOTAL);
+
+/** «41 электронный журнал», «42 электронных журнала». */
+export const JOURNALS_TOTAL_ELECTRONIC_LABEL = `${JOURNALS_TOTAL} ${pluralRu(
+  JOURNALS_TOTAL,
+  "электронный журнал",
+  "электронных журнала",
+  "электронных журналов"
+)}`;
 
 export const JOURNAL_TARIFFS: Record<JournalTariffId, JournalTariffDefinition> = {
   basic: {
@@ -134,6 +176,6 @@ export function formatJournalPreview(
   const hiddenCount = Math.max(journals.length - visible.length, 0);
 
   if (hiddenCount === 0) return visible.join(", ");
-  if (visible.length === 0) return `${journals.length} журналов`;
+  if (visible.length === 0) return journalsCountLabel(journals.length);
   return `${visible.join(", ")} и еще ${hiddenCount}`;
 }

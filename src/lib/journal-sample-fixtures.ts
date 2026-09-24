@@ -1,3 +1,4 @@
+import { getRegisterJournal } from "@/lib/register-journals";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { getDefaultConfigForJournal } from "@/lib/journal-default-configs";
 import {
@@ -160,7 +161,9 @@ function sampleTemplate(code: string, name: string) {
     code,
     name,
     description: null,
-    fields: [] as unknown as never,
+    // Реестрам без своего экрана колонки бланка дают поля шаблона —
+    // без них образец печатался бы одной колонкой «№».
+    fields: (getRegisterJournal(code)?.fields ?? []) as unknown as never,
     isActive: true,
     sortOrder: 0,
     isMandatorySanpin: true,
@@ -332,6 +335,38 @@ function buildColdEquipmentEntries(config: Record<string, unknown>) {
  * кабинете. Поэтому образец показывает реальную структуру бланка, а
  * не нарисованную отдельно копию.
  */
+/**
+ * Строки образца для табличных реестров (register-journals.ts): у них
+ * записи живут в `config.rows`, а штатный генератор конфигурации строк
+ * не создаёт — без этого образец был бы пустой таблицей.
+ */
+const SAMPLE_REGISTER_ROWS: Record<string, Array<Record<string, string>>> = {
+  daily_samples: [
+    { date: "2026-04-01", meal: "Завтрак", dish: "Каша овсяная молочная", mass: "150", takenAt: "08:10", storageTemp: "4", disposedAt: "03.04 в 08:15", responsible: "Иванова М. П." },
+    { date: "2026-04-01", meal: "Обед", dish: "Суп гороховый", mass: "100", takenAt: "12:05", storageTemp: "4", disposedAt: "03.04 в 12:10", responsible: "Иванова М. П." },
+  ],
+  vitaminization: [
+    { date: "2026-04-01", dish: "Компот из сухофруктов", preparation: "Аскорбиновая кислота", portions: "120", amount: "6", addedAt: "11:40", servedAt: "12:15", responsible: "Иванова М. П." },
+    { date: "2026-04-02", dish: "Кисель ягодный", preparation: "Аскорбиновая кислота", portions: "118", amount: "5.9", addedAt: "11:45", servedAt: "12:20", responsible: "Иванова М. П." },
+  ],
+  ration_control: [
+    { period: "01.04–10.04", productGroup: "Молоко и кисломолочные продукты", normPerPerson: "350", factPerPerson: "340", deviation: "-2.9", note: "" },
+    { period: "01.04–10.04", productGroup: "Овощи свежие", normPerPerson: "280", factPerPerson: "290", deviation: "3.6", note: "" },
+  ],
+  transport_temperature: [
+    { date: "2026-04-01", vehicle: "Газель А123БВ", route: "Школа № 5", product: "Обеды в термоконтейнерах", loadTemp: "75", unloadTemp: "68", time: "11:30", responsible: "Петров С. А." },
+    { date: "2026-04-02", vehicle: "Газель А123БВ", route: "Детсад «Солнышко»", product: "Молочная продукция", loadTemp: "3", unloadTemp: "5", time: "07:50", responsible: "Петров С. А." },
+  ],
+  tableware_breakage: [
+    { date: "2026-04-03", item: "Тарелка глубокая", quantity: "1", zone: "Зал", cause: "Упала с подноса", fragments: "Да", responsible: "Сидорова А. В." },
+    { date: "2026-04-09", item: "Стакан", quantity: "2", zone: "Бар", cause: "Трещина при мойке", fragments: "Да", responsible: "Сидорова А. В." },
+  ],
+  pool_water_control: [
+    { date: "2026-04-01", time: "07:00", pool: "Большой бассейн", waterTemp: "27", freeChlorine: "0.4", boundChlorine: "0.1", ph: "7.4", transparency: "Видна разметка дна", visitors: "", responsible: "Кузнецов Д. И." },
+    { date: "2026-04-01", time: "13:00", pool: "Большой бассейн", waterTemp: "27.5", freeChlorine: "0.5", boundChlorine: "0.1", ph: "7.3", transparency: "Видна разметка дна", visitors: "34", responsible: "Кузнецов Д. И." },
+  ],
+};
+
 export function buildJournalSampleInput(
   code: SampleJournalCode
 ): JournalDocumentPdfInput {
@@ -346,6 +381,13 @@ export function buildJournalSampleInput(
   });
 
   const title = SAMPLE_TITLES[code] ?? code;
+  const registerRows = SAMPLE_REGISTER_ROWS[code];
+  if (registerRows) {
+    config.rows = registerRows.map((values, index) => ({
+      id: `sample-row-${code}-${index + 1}`,
+      values,
+    }));
+  }
   const document = sampleDocument(code, title, config);
 
   let entries: ReturnType<typeof sampleEntry>[] = [];

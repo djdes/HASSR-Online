@@ -10,6 +10,7 @@ import { NICHES } from "@/content/niches";
 import { jsonLdSafeString } from "@/lib/json-ld";
 import { DEFAULT_TWITTER_CARD } from "@/lib/meta-defaults";
 import { ogImages, twitterImages } from "@/lib/og-image";
+import { JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
 
 export const dynamic = "force-static";
 
@@ -33,7 +34,7 @@ export function generateStaticParams() {
 function texts(slug: string) {
   const c = CITIES[slug];
   const title = `Электронные журналы СанПиН и ХАССП ${c.inCity}`;
-  const description = `Электронные журналы ХАССП для кафе и ресторанов ${c.inCity}: 35 журналов, заполнение с телефона, PDF к проверке Роспотребнадзора. Бесплатно до 3 сотрудников.`;
+  const description = `Электронные журналы ХАССП для кафе и ресторанов ${c.inCity}: ${JOURNALS_TOTAL_LABEL}, заполнение с телефона, PDF к проверке Роспотребнадзора. Бесплатно до 3 сотрудников.`;
   return { c, title, description, url: `${SITE}/v/${c.slug}` };
 }
 
@@ -96,7 +97,7 @@ export default async function CityLandingPage({ params }: { params: Promise<{ ci
             </div>
             <h1 className="mt-5 max-w-[820px] text-[36px] font-semibold leading-[1.08] tracking-[-0.02em] md:text-[52px]">{title}</h1>
             <p className="mt-5 max-w-[720px] text-[16px] leading-[1.7] text-white/80 md:text-[18px]">
-              35 журналов СанПиН и ХАССП в одном кабинете: сотрудники заполняют с телефона, руководитель видит пропуски в Telegram, инспектору — PDF за минуту. Особенность города: {c.note}.
+              {JOURNALS_TOTAL_LABEL} СанПиН и ХАССП в одном кабинете: сотрудники заполняют с телефона, руководитель видит пропуски в Telegram, инспектору — PDF за минуту. Особенность города: {c.note}.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/register" className="inline-flex h-12 items-center gap-2 rounded-2xl bg-[#5566f6] px-6 text-[15px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors hover:bg-[#4a5bf0]">
@@ -143,7 +144,7 @@ export default async function CityLandingPage({ params }: { params: Promise<{ ci
             ))}
           </ul>
           <Link href="/journals-info" className="mt-5 inline-flex items-center gap-1.5 text-[14px] font-medium text-[#3848c7] underline-offset-2 hover:underline">
-            Все 35 журналов каталога
+            Все {JOURNALS_TOTAL_LABEL} каталога
             <ArrowRight className="size-4" />
           </Link>
         </div>

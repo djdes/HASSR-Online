@@ -13,6 +13,7 @@ import {
   parseJournalAutomationJson,
   withJournalAutomation,
 } from "@/lib/journal-automation";
+import { NEW_JOURNAL_CODES_2026_09 } from "@/lib/new-journals-default-off";
 
 export const DEFAULT_OFF_JOURNAL_CODES = ["health_check"] as const;
 
@@ -40,7 +41,13 @@ export function withDefaultOffCodes(codes: string[]): string[] {
 export function isUntouchedDisabledCodes(
   codes: string[] | null | undefined
 ): boolean {
-  const defaults = new Set<string>(DEFAULT_OFF_JOURNAL_CODES);
+  // Новые журналы сентября 2026 у старых организаций выключил сидер, а
+  // не человек, — список с ними тоже считается нетронутым, иначе анкета
+  // перестала бы применять набор журналов сферы.
+  const defaults = new Set<string>([
+    ...DEFAULT_OFF_JOURNAL_CODES,
+    ...NEW_JOURNAL_CODES_2026_09,
+  ]);
   return toStringArray(codes).every((code) => defaults.has(code));
 }
 

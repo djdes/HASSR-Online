@@ -8,6 +8,7 @@ import {
   visibleWalkthroughSteps,
 } from "./journal-ui-walkthroughs";
 import { TOUR_ANCHOR_VALUES } from "./tour-anchors";
+import { JOURNALS_TOTAL } from "@/lib/journal-catalog";
 
 test("walkthrough есть у каждого журнала с инструкцией (v2)", () => {
   // v1 фиксировал прежний контракт: ручной разбор был только у hygiene и
@@ -15,8 +16,8 @@ test("walkthrough есть у каждого журнала с инструкц�
   // скелет. Теперь шаги достраиваются из `journal-filling-guides`, и
   // подсказка есть у всех журналов, для которых инструкция написана.
   assert.ok(
-    WALKTHROUGH_CODES.size >= 35,
-    `ожидали минимум 35 журналов с подсказкой, получили ${WALKTHROUGH_CODES.size}`
+    WALKTHROUGH_CODES.size >= JOURNALS_TOTAL,
+    `ожидали подсказку у всех ${JOURNALS_TOTAL} журналов каталога, получили ${WALKTHROUGH_CODES.size}`
   );
 
   // Ручные разборы никуда не делись и по-прежнему в приоритете.

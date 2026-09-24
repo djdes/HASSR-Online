@@ -198,6 +198,20 @@ const PATCHERS: Record<string, Patcher> = {
   complaint_register: (cfg, slots) =>
     patchResponsibleUser(cfg, slots.main ?? null, "defaultResponsibleUserId"),
 
+  // Табличные реестры (register-journals.ts) — тот же конфиг, что у жалоб.
+  daily_samples: (cfg, slots) =>
+    patchResponsibleUser(cfg, slots.main ?? null, "defaultResponsibleUserId"),
+  vitaminization: (cfg, slots) =>
+    patchResponsibleUser(cfg, slots.main ?? null, "defaultResponsibleUserId"),
+  ration_control: (cfg, slots) =>
+    patchResponsibleUser(cfg, slots.main ?? null, "defaultResponsibleUserId"),
+  transport_temperature: (cfg, slots) =>
+    patchResponsibleUser(cfg, slots.main ?? null, "defaultResponsibleUserId"),
+  tableware_breakage: (cfg, slots) =>
+    patchResponsibleUser(cfg, slots.main ?? null, "defaultResponsibleUserId"),
+  pool_water_control: (cfg, slots) =>
+    patchResponsibleUser(cfg, slots.main ?? null, "defaultResponsibleUserId"),
+
   intensive_cooling: (cfg, slots) =>
     patchResponsibleUser(cfg, slots.main ?? null, "defaultResponsibleUserId"),
 

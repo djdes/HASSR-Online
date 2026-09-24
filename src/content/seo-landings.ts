@@ -1,3 +1,6 @@
+import { JOURNALS_TOTAL, JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
+import { pluralRu } from "@/lib/plural-ru";
+
 /**
  * Конфиг SEO-лендингов под частотные запросы (/zhurnal-haccp и т.д.).
  *
@@ -81,7 +84,7 @@ export const SEO_LANDINGS: Record<string, SeoJournalConfig> = {
     navLabel: "Электронный журнал СанПиН",
     hero: "Электронный журнал СанПиН для общепита",
     metaTitle:
-      "Электронный журнал СанПиН — 35 форм онлайн",
+      `Электронный журнал СанПиН — ${JOURNALS_TOTAL} ${pluralRu(JOURNALS_TOTAL, "форма", "формы", "форм")} онлайн`,
     metaDescription:
       "Все журналы СанПиН 2.3/2.4.4282-26 онлайн: гигиена, температура, бракераж, уборка. Автозаполнение, PDF для проверок. Бесплатно до 3 сотрудников.",
     intro:
@@ -97,7 +100,7 @@ export const SEO_LANDINGS: Record<string, SeoJournalConfig> = {
       "Журнал жалоб гостей",
     ],
     weSetupBenefit:
-      "Регистрация — 5 минут, и ваша команда сразу видит свои журналы в Telegram-боте. Бесплатный тариф навсегда: до 3 сотрудников все 35 журналов включены, без привязки карты, без триал-периода.",
+      `Регистрация — 5 минут, и ваша команда сразу видит свои журналы в Telegram-боте. Бесплатный тариф навсегда: до 3 сотрудников все ${JOURNALS_TOTAL_LABEL} включены, без привязки карты, без триал-периода.`,
   },
   "brakerazhnyy-zhurnal": {
     slug: "brakerazhnyy-zhurnal",

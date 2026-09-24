@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
 
 // nodejs runtime: edge runtime требует wasm-bundle для resvg который
 // не залит в deploy.tar (видим как ENOENT на проде). Node.js использует
@@ -119,7 +120,7 @@ export async function GET() {
               lineHeight: 1.35,
             }}
           >
-            Скан QR на оборудовании — и запись в журнале. 35 журналов, PDF для проверок
+            Скан QR на оборудовании — и запись в журнале. {JOURNALS_TOTAL_LABEL}, PDF для проверок
           </div>
         </div>
 

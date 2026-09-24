@@ -5,7 +5,7 @@ import type { OrgSphere } from "@/lib/org-profile";
 /**
  * Какие журналы нужны заведению в зависимости от сферы деятельности.
  *
- * Раньше новая организация получала все 35 журналов включёнными, и на
+ * Раньше новая организация получала все журналы каталога включёнными, и на
  * дашборде висело «0/35» — человек видел объём, который в реальности к
  * нему не относится, и не понимал, с чего начать. Отсюда одна таблица
  * правды: обязательный минимум по сфере включаем, рекомендованное
@@ -101,6 +101,20 @@ export type SphereRules = {
   electronicRequired: ElectronicRule[];
   electronicRecommended: string[];
   paperRequired: string[];
+  /**
+   * Приказы, без которых заведение этой сферы не готово к проверке
+   * (коды `ORDER_TEMPLATES`, src/lib/orders/catalog.ts). Начальная
+   * настройка просит оформить их все.
+   */
+  ordersRequired: string[];
+  /** Приказы «желательно оформить» — показываем свёрнутым списком. */
+  ordersRecommended: string[];
+  /**
+   * Журналы, для которых сфере предлагаем настроить чек-лист (типовые
+   * пункты — src/lib/checklist-defaults.ts). Показываются, только если
+   * журнал у организации включён.
+   */
+  checklistJournals: string[];
 };
 
 const KOAP_66: LawRef = {
@@ -153,6 +167,77 @@ const MR_CHILD: LawRef = {
   label: "МР 2.4.0179-20",
   url: "https://files.stroyinf.ru/Data2/1/4293720/4293720726.htm",
 };
+
+/**
+ * Дезинфекция, дезинсекция, дератизация. Номер правил есть в коде
+ * (journal-doc-guides.ts); прямой адрес документа не подтверждён —
+ * ссылка ведёт на поиск по номеру.
+ */
+const SANPIN_3686: LawRef = {
+  label: "СанПиН 3.3686-21",
+  url: "https://www.consultant.ru/search/?q=%D0%A1%D0%B0%D0%BD%D0%9F%D0%B8%D0%9D%203.3686-21",
+};
+
+/**
+ * Эксплуатация помещений и сооружений, в том числе бассейнов. Пункт не
+ * указываем: формулировку требований к журналу контроля воды нужно
+ * сверить по полному тексту (см. note у правила). Ссылка — поиск по номеру.
+ */
+const SP_3678: LawRef = {
+  label: "СП 2.1.3678-20",
+  url: "https://www.consultant.ru/search/?q=%D0%A1%D0%9F%202.1.3678-20",
+};
+
+/**
+ * Фитнес-центры отвечают не по «пищевой» 6.6, а по общим статьям о
+ * санитарных требованиях к помещениям и сооружениям. Суммы штрафов в
+ * текст не выносим — требуют юр-сверки; ссылка — на кодекс целиком, без
+ * якоря (как KOAP_67).
+ */
+const KOAP_63_64: LawRef = {
+  label: "ст. 6.3 и 6.4 КоАП РФ",
+  url: "https://www.consultant.ru/document/cons_doc_LAW_34661/",
+};
+
+/**
+ * Суточные пробы, витаминизация и контроль рациона — требования к
+ * питанию в детских и медицинских организациях. План ссылался на
+ * СанПиН 2.3/2.4.3590-20, но с 01.09.2026 действует 4282-26 (см. шапку
+ * файла) — ссылаемся на действующий, без номера пункта: он требует
+ * юр-сверки по полному тексту.
+ */
+const CHILD_MED_NUTRITION_NOTE =
+  "СанПиН — питание в детских и медицинских организациях; номер пункта требует юр-сверки по полному тексту 4282-26";
+
+/** Приказы: общий набор для всех пищевых сфер. */
+const ORDERS_FOOD_REQUIRED = [
+  "haccp-responsible",
+  "sanitary-responsible",
+  "journals-intro",
+  "ppk-approval",
+];
+const ORDERS_FOOD_RECOMMENDED = [
+  "haccp-team",
+  "incoming-control",
+  "cleaning-schedule",
+  "disinfection",
+  "medical-examinations",
+  "workwear",
+];
+/** Детские и медицинские организации: плюс приказ о суточных пробах. */
+const ORDERS_CHILD_MED_REQUIRED = [...ORDERS_FOOD_REQUIRED, "daily-samples"];
+/** Пекарня и производство: плюс поверка средств измерений. */
+const ORDERS_PRODUCTION_RECOMMENDED = [...ORDERS_FOOD_RECOMMENDED, "metrology"];
+
+/** Чек-листы ежедневного контроля: пищевые сферы. */
+const CHECKLISTS_FOOD = [
+  "cleaning",
+  "general_cleaning",
+  "disinfectant_usage",
+  "cold_equipment_control",
+];
+/** Детские и медицинские: плюс бактерицидные установки. */
+const CHECKLISTS_CHILD_MED = [...CHECKLISTS_FOOD, "uv_lamp_runtime"];
 
 /**
  * Бланки для печати.
@@ -334,8 +419,14 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       "med_books",
       "general_cleaning",
       "disinfectant_usage",
+      "tableware_breakage",
+      "staff_training",
+      "complaint_register",
     ],
     paperRequired: PAPER_FULL,
+    ordersRequired: ORDERS_FOOD_REQUIRED,
+    ordersRecommended: ORDERS_FOOD_RECOMMENDED,
+    checklistJournals: CHECKLISTS_FOOD,
   },
   cafe: {
     sphere: "cafe",
@@ -351,8 +442,12 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       "perishable_rejection",
       "incoming_control",
       "med_books",
+      "tableware_breakage",
     ],
     paperRequired: PAPER_BASE,
+    ordersRequired: ORDERS_FOOD_REQUIRED,
+    ordersRecommended: ORDERS_FOOD_RECOMMENDED,
+    checklistJournals: CHECKLISTS_FOOD,
   },
   fastfood: {
     sphere: "fastfood",
@@ -376,8 +471,12 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       "disinfectant_usage",
       "uv_lamp_runtime",
       "product_writeoff",
+      "tableware_breakage",
     ],
     paperRequired: PAPER_FULL,
+    ordersRequired: ORDERS_FOOD_REQUIRED,
+    ordersRecommended: ORDERS_FOOD_RECOMMENDED,
+    checklistJournals: CHECKLISTS_FOOD,
   },
   education: {
     sphere: "education",
@@ -393,6 +492,8 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       // основание.
       { code: "finished_product", basis: "practice", law: MR_CHILD },
       { code: "perishable_rejection", basis: "practice", law: MR_CHILD },
+      { code: "daily_samples", basis: "sanpin", law: SANPIN_4282, note: CHILD_MED_NUTRITION_NOTE },
+      { code: "vitaminization", basis: "sanpin", law: SANPIN_4282, note: CHILD_MED_NUTRITION_NOTE },
     ],
     // health_check не рекомендуем ни одной сфере: это дубль гигиенического
     // журнала (форма осталась от отменённого СанПиН 2409-08), и он
@@ -405,8 +506,14 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       "uv_lamp_runtime",
       "cleaning_ventilation_checklist",
       "disinfectant_usage",
+      "ration_control",
+      "sanitary_day_control",
+      "staff_training",
     ],
     paperRequired: PAPER_FULL,
+    ordersRequired: ORDERS_CHILD_MED_REQUIRED,
+    ordersRecommended: ORDERS_FOOD_RECOMMENDED,
+    checklistJournals: CHECKLISTS_CHILD_MED,
   },
   bakery: {
     sphere: "bakery",
@@ -425,8 +532,14 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       "fryer_oil",
       "finished_product",
       "general_cleaning",
+      "training_plan",
+      "ppe_issuance",
+      "equipment_maintenance",
     ],
     paperRequired: PAPER_FULL,
+    ordersRequired: ORDERS_FOOD_REQUIRED,
+    ordersRecommended: ORDERS_PRODUCTION_RECOMMENDED,
+    checklistJournals: CHECKLISTS_FOOD,
   },
   production: {
     sphere: "production",
@@ -460,8 +573,19 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       "equipment_calibration",
       "glass_items_list",
       "glass_control",
+      "transport_temperature",
+      "training_plan",
+      "staff_training",
+      "ppe_issuance",
+      "accident_journal",
+      "equipment_maintenance",
+      "breakdown_history",
+      "sanitary_day_control",
     ],
     paperRequired: PAPER_FULL,
+    ordersRequired: ORDERS_FOOD_REQUIRED,
+    ordersRecommended: ORDERS_PRODUCTION_RECOMMENDED,
+    checklistJournals: CHECKLISTS_FOOD,
   },
   bar: {
     sphere: "bar",
@@ -480,8 +604,12 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       "fryer_oil",
       "perishable_rejection",
       "med_books",
+      "tableware_breakage",
     ],
     paperRequired: PAPER_BASE,
+    ordersRequired: ORDERS_FOOD_REQUIRED,
+    ordersRecommended: ORDERS_FOOD_RECOMMENDED,
+    checklistJournals: CHECKLISTS_FOOD,
   },
   canteen: {
     sphere: "canteen",
@@ -506,15 +634,23 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       "incoming_control",
       "intensive_cooling",
       "med_books",
+      "daily_samples",
+      "tableware_breakage",
+      "sanitary_day_control",
+      "staff_training",
     ],
     paperRequired: PAPER_FULL,
+    ordersRequired: ORDERS_FOOD_REQUIRED,
+    ordersRecommended: ORDERS_FOOD_RECOMMENDED,
+    checklistJournals: CHECKLISTS_FOOD,
   },
   hotel: {
     sphere: "hotel",
     intro: intro("Отель / Гостиница", PENALTY_FOOD),
     introLaw: KOAP_66,
     // Пищеблок отеля (завтраки, ресторан) — обычный общепит по СанПиН.
-    // Журналов бассейна и номерного фонда в каталоге нет — не обещаем.
+    // Бассейн есть не у каждого отеля, поэтому его журнал — в
+    // рекомендациях; журнала номерного фонда в каталоге нет — не обещаем.
     electronicRequired: [
       { code: "hygiene", basis: "sanpin", law: SANPIN_4282, note: "СанПиН — осмотр персонала ежедневно перед сменой" },
       { code: "cold_equipment_control", basis: "sanpin", law: SANPIN_4282, note: "СанПиН — ежедневно" },
@@ -528,8 +664,14 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       "perishable_rejection",
       "incoming_control",
       "med_books",
+      "daily_samples",
+      "pool_water_control",
+      "complaint_register",
     ],
     paperRequired: PAPER_FULL,
+    ordersRequired: ORDERS_FOOD_REQUIRED,
+    ordersRecommended: ORDERS_FOOD_RECOMMENDED,
+    checklistJournals: CHECKLISTS_FOOD,
   },
   medical: {
     sphere: "medical",
@@ -545,6 +687,8 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       { code: "climate_control", condition: CLIMATE_CONDITION, basis: "sanpin", law: SANPIN_4282, note: "СанПиН 2.3/2.4.4282-26" },
       { code: "finished_product", basis: "sanpin", law: SANPIN_4282, note: "Обязателен для медицинских и социальных организаций — требует юр-сверки по полному тексту 4282-26" },
       { code: "perishable_rejection", basis: "sanpin", law: SANPIN_4282, note: "Обязателен для медицинских и социальных организаций — требует юр-сверки по полному тексту 4282-26" },
+      { code: "daily_samples", basis: "sanpin", law: SANPIN_4282, note: CHILD_MED_NUTRITION_NOTE },
+      { code: "vitaminization", basis: "sanpin", law: SANPIN_4282, note: CHILD_MED_NUTRITION_NOTE },
     ],
     electronicRecommended: [
       "incoming_control",
@@ -553,8 +697,13 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       "uv_lamp_runtime",
       "disinfectant_usage",
       "med_books",
+      "ration_control",
+      "sanitary_day_control",
     ],
     paperRequired: PAPER_FULL,
+    ordersRequired: ORDERS_CHILD_MED_REQUIRED,
+    ordersRecommended: ORDERS_FOOD_RECOMMENDED,
+    checklistJournals: CHECKLISTS_CHILD_MED,
   },
   gas_station: {
     sphere: "gas_station",
@@ -578,15 +727,18 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       "med_books",
     ],
     paperRequired: PAPER_FULL,
+    ordersRequired: ORDERS_FOOD_REQUIRED,
+    ordersRecommended: ORDERS_FOOD_RECOMMENDED,
+    checklistJournals: CHECKLISTS_FOOD,
   },
   catering: {
     sphere: "catering",
     intro: intro("Кейтеринг / Доставка", PENALTY_FOOD),
     introLaw: KOAP_66,
     // Дарк-китчен и выездное обслуживание — обычный общепит плюс
-    // перевозка. Журнала температуры при транспортировке в каталоге
-    // пока нет; ключевой доступный контроль риска — интенсивное
-    // охлаждение перед упаковкой, оно в рекомендациях.
+    // перевозка: интенсивное охлаждение перед упаковкой и температура
+    // при транспортировке — в рекомендациях (обязанность вести их
+    // отдельным журналом зависит от плана ХАССП).
     electronicRequired: [
       { code: "hygiene", basis: "sanpin", law: SANPIN_4282, note: "СанПиН — осмотр персонала ежедневно перед сменой" },
       { code: "cold_equipment_control", basis: "sanpin", law: SANPIN_4282, note: "СанПиН — ежедневно" },
@@ -600,8 +752,13 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       "incoming_control",
       "cleaning",
       "med_books",
+      "daily_samples",
+      "transport_temperature",
     ],
     paperRequired: PAPER_FULL,
+    ordersRequired: ORDERS_FOOD_REQUIRED,
+    ordersRecommended: ORDERS_FOOD_RECOMMENDED,
+    checklistJournals: CHECKLISTS_FOOD,
   },
   retail: {
     sphere: "retail",
@@ -625,8 +782,74 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       "cleaning",
       "disinfectant_usage",
       "med_books",
+      "transport_temperature",
+      "complaint_register",
     ],
     paperRequired: PAPER_BASE,
+    ordersRequired: ORDERS_FOOD_REQUIRED,
+    ordersRecommended: ORDERS_FOOD_RECOMMENDED,
+    checklistJournals: CHECKLISTS_FOOD,
+  },
+  fitness: {
+    sphere: "fitness",
+    // Своё вступление: общий intro() говорит о пищевых журналах, а для
+    // фитнеса они нужны только при баре. Основа — бассейн, дезинфекция,
+    // уборки и охрана труда.
+    intro:
+      "Для сферы «Фитнес-центр / Спортклуб / Бассейн» основа санитарного контроля — вода в бассейне, дезинфекция, уборки и охрана труда: эти записи мы включили сразу, остальное вы решаете сами. Пищевые журналы нужны, только если у вас есть фитнес-бар с продуктами — тогда действует СанПиН 2.3/2.4.4282-26, и он прямо разрешает вести записи в электронном виде. Отсутствие производственного контроля при проверке — нарушение санитарных требований к эксплуатации помещений: штраф по ст. 6.3 и 6.4 КоАП РФ или приостановка деятельности.",
+    introLaw: KOAP_63_64,
+    electronicRequired: [
+      { code: "pest_control", basis: "sanpin", law: SANPIN_3686, note: "СанПиН 3.3686-21 — дезинсекция и дератизация по договору" },
+      {
+        code: "pool_water_control",
+        condition: "нужен, если в клубе есть бассейн или ванны",
+        basis: "sanpin",
+        law: SP_3678,
+        note: "проверить формулировку у юриста",
+      },
+      {
+        code: "hygiene",
+        condition: "нужен, если есть фитнес-бар с продуктами",
+        basis: "sanpin",
+        law: SANPIN_4282,
+        note: "СанПиН — осмотр персонала бара ежедневно перед сменой",
+      },
+      {
+        code: "cold_equipment_control",
+        condition: "нужен, если есть фитнес-бар с продуктами",
+        basis: "sanpin",
+        law: SANPIN_4282,
+        note: "СанПиН — ежедневно",
+      },
+    ],
+    electronicRecommended: [
+      "cleaning",
+      "general_cleaning",
+      "disinfectant_usage",
+      "uv_lamp_runtime",
+      "staff_training",
+      "accident_journal",
+      "complaint_register",
+      "climate_control",
+      "equipment_maintenance",
+      "breakdown_history",
+      "med_books",
+    ],
+    paperRequired: PAPER_FULL,
+    ordersRequired: [
+      "sanitary-responsible",
+      "journals-intro",
+      "ppk-approval",
+      "disinfection",
+    ],
+    ordersRecommended: ["cleaning-schedule", "medical-examinations", "workwear"],
+    checklistJournals: [
+      "cleaning",
+      "general_cleaning",
+      "disinfectant_usage",
+      "uv_lamp_runtime",
+      "pool_water_control",
+    ],
   },
   other: {
     sphere: "other",
@@ -643,6 +866,9 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       "incoming_control",
     ],
     paperRequired: PAPER_BASE,
+    ordersRequired: ORDERS_FOOD_REQUIRED,
+    ordersRecommended: ORDERS_FOOD_RECOMMENDED,
+    checklistJournals: CHECKLISTS_FOOD,
   },
 };
 

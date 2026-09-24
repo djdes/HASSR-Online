@@ -68,6 +68,12 @@ import { mergeSanitationTaskMarks } from "@/lib/general-cleaning-merge";
 const FINISHED_AT_JOURNAL_CODES = new Set([
   "accident_journal",
   "complaint_register",
+  "daily_samples",
+  "vitaminization",
+  "ration_control",
+  "transport_temperature",
+  "tableware_breakage",
+  "pool_water_control",
   "fryer_oil",
   "intensive_cooling",
   "perishable_rejection",

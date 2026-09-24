@@ -1,7 +1,7 @@
 /**
  * Onboarding-пресеты «должность → журналы» для типов организаций.
  *
- * Зачем: новая компания при регистрации получает 35 журналов и 0 должностей.
+ * Зачем: новая компания при регистрации получает все журналы каталога и 0 должностей.
  * При первом «Отправить всем на заполнение» все 23 задачи уходят первому
  * сотруднику в алфавите — потому что нет per-position visibility.
  *
@@ -41,7 +41,7 @@ export interface OrgTypePreset {
   label: string;
   positions: readonly PresetPosition[];
   /** Журналы которые этой компании скорее всего НЕ нужны (отключить
-   *  через disabledJournalCodes на старте). Пусто = оставить все 35. */
+   *  через disabledJournalCodes на старте). Пусто = оставить все. */
   disabledJournalCodes?: readonly string[];
   /** Какие журналы автосоздавать каждый месяц (Organization.autoJournalCodes).
    *  Подмножество active-журналов для типа. По умолчанию — ежедневные. */
@@ -92,6 +92,12 @@ export const ALL_JOURNAL_CODES: readonly string[] = [
   "audit_report",
   "accident_journal",
   "complaint_register",
+  "daily_samples",
+  "vitaminization",
+  "ration_control",
+  "transport_temperature",
+  "tableware_breakage",
+  "pool_water_control",
 ] as const;
 
 // Каноничные группы журналов — переиспользуем во всех пресетах.

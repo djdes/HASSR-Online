@@ -4,6 +4,7 @@ import "dotenv/config";
 import bcrypt from "bcryptjs";
 import pg from "pg";
 import { ACTIVE_JOURNAL_TEMPLATES as SHARED_ACTIVE_JOURNAL_TEMPLATES } from "../src/lib/journal-catalog";
+import { REGISTER_JOURNALS } from "../src/lib/register-journals";
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
@@ -641,6 +642,25 @@ const additionalJournalTemplates = [
 // allowedCodes` — старые JournalEntry/JournalDocument остаются в БД, но
 // невидимы пользователю.
 
+// Табличные реестры (сентябрь 2026): поля — из register-journals.ts, там же
+// их берёт экран документа, так что сид и экран не разъедутся.
+const registerJournalTemplates = REGISTER_JOURNALS.map((journal) => ({
+  code: journal.code,
+  name: journal.name,
+  description: journal.description,
+  sortOrder: 0,
+  isMandatorySanpin: journal.isMandatorySanpin,
+  isMandatoryHaccp: journal.isMandatoryHaccp,
+  fields: journal.fields.map((field) => ({
+    key: field.key,
+    label: field.label,
+    type: field.type,
+    required: field.required,
+    ...(field.options ? { options: field.options } : {}),
+    ...(field.step !== undefined ? { step: field.step } : {}),
+  })),
+}));
+
 const activeJournalTemplateMetaByCode = new Map(
   SHARED_ACTIVE_JOURNAL_TEMPLATES.map((item) => [item.code, item])
 );
@@ -723,6 +743,7 @@ async function main() {
     ...journalTemplates,
     ...additionalJournalTemplates,
     ...documentOnlyJournalTemplates,
+    ...registerJournalTemplates,
   ];
   const enabledTemplates = allTemplates
     .filter((template) => activeJournalTemplateMetaByCode.has(template.code))

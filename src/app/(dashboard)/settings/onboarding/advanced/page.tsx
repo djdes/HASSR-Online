@@ -329,7 +329,7 @@ export default async function OnboardingAdvancedPage() {
 
   const journalsSetItem: SetupItem = {
     title: "Набор журналов",
-    description: "Какие из 35 журналов реально ведёт ваша компания",
+    description: "Какие журналы каталога реально ведёт ваша компания",
     href: "/settings/journals",
     icon: ClipboardList,
     state:

@@ -1,5 +1,12 @@
 export const REGISTER_DOCUMENT_TEMPLATE_CODES = [
   "complaint_register",
+  // Реестры без собственного экрана — поля и описание в register-journals.ts.
+  "daily_samples",
+  "vitaminization",
+  "ration_control",
+  "transport_temperature",
+  "tableware_breakage",
+  "pool_water_control",
 ] as const;
 
 export type RegisterDocumentTemplateCode =
@@ -33,10 +40,18 @@ export type RegisterDocumentConfig = {
   rows: RegisterDocumentRow[];
   defaultResponsibleUserId: string | null;
   defaultResponsibleTitle: string | null;
+  /** Дата окончания в шапке бланка — ставится при закрытии журнала. */
+  finishedAt?: string | null;
 };
 
 const TITLES: Record<RegisterDocumentTemplateCode, string> = {
   complaint_register: "Журнал регистрации жалоб",
+  daily_samples: "Журнал отбора и хранения суточных проб",
+  vitaminization: "Журнал проведения витаминизации третьих и сладких блюд",
+  ration_control: "Ведомость контроля за рационом питания",
+  transport_temperature: "Журнал контроля температуры при транспортировке",
+  tableware_breakage: "Журнал учёта боя посуды",
+  pool_water_control: "Журнал контроля качества воды в бассейне",
 };
 
 function createId(prefix: string) {
@@ -214,5 +229,8 @@ export function normalizeRegisterDocumentConfig(
       record.defaultResponsibleTitle.trim() !== ""
         ? record.defaultResponsibleTitle
         : null,
+    ...(typeof record.finishedAt === "string" && record.finishedAt.trim() !== ""
+      ? { finishedAt: record.finishedAt }
+      : {}),
   };
 }

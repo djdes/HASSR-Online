@@ -25,6 +25,7 @@ import {
   RECURRING_OFFER_HREF,
   RECURRING_PERIOD_TEXT,
 } from "@/lib/recurring-consent";
+import { JOURNALS_TOTAL } from "@/lib/journal-catalog";
 
 type ReturnParams = {
   outSum: string;
@@ -382,7 +383,7 @@ function Checkout({
         Оформление подписки
       </h1>
       <p className="mt-3 text-[15px] leading-[1.7] text-[#3c4053]">
-        {tariff.title} — доступ ко всем 35 журналам СанПиН и ХАССП на{" "}
+        {tariff.title} — доступ ко всем журналам СанПиН и ХАССП ({JOURNALS_TOTAL}) на{" "}
         {tariff.periodDays} дней.
       </p>
 

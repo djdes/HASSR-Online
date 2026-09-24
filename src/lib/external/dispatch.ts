@@ -37,6 +37,7 @@ import {
   normalizeRegisterDocumentConfig,
   parseRegisterFields,
 } from "@/lib/register-document";
+import { REGISTER_JOURNAL_CODES } from "@/lib/register-journals";
 import {
   PPE_ISSUANCE_TEMPLATE_CODE,
   normalizePpeIssuanceConfig,
@@ -580,6 +581,15 @@ const CONFIG_WRITER_NORMALIZERS = new Map<string, ConfigNormalizer>([
     (value, template) =>
       normalizeRegisterDocumentConfig(value, parseRegisterFields(template.fields)),
   ],
+  // Табличные реестры (register-journals.ts): тот же нормализатор строк.
+  ...REGISTER_JOURNAL_CODES.map(
+    (code) =>
+      [
+        code,
+        ((value, template) =>
+          normalizeRegisterDocumentConfig(value, parseRegisterFields(template.fields))) as ConfigNormalizer,
+      ] as [string, ConfigNormalizer]
+  ),
   [
     PPE_ISSUANCE_TEMPLATE_CODE,
     (value, _template, users) => normalizePpeIssuanceConfig(value, users),

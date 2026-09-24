@@ -14,13 +14,14 @@ import {
   DEFAULT_TWITTER_CARD,
   DEFAULT_TWITTER_IMAGES,
 } from "@/lib/meta-defaults";
+import { JOURNALS_TOTAL_ELECTRONIC_LABEL } from "@/lib/journal-catalog";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const HUB_TITLE = "35 электронных журналов СанПиН и ХАССП — каталог";
+const HUB_TITLE = `${JOURNALS_TOTAL_ELECTRONIC_LABEL} СанПиН и ХАССП — каталог`;
 const HUB_DESC =
-  "Полный каталог из 35 электронных журналов ХАССП и СанПиН, которые ведёт WeSetup: гигиена, температуры, бракераж, уборка, ДДД и многое другое.";
+  `Полный каталог WeSetup: ${JOURNALS_TOTAL_ELECTRONIC_LABEL} ХАССП и СанПиН — гигиена, температуры, бракераж, уборка, ДДД и многое другое.`;
 
 export const metadata = {
   title: HUB_TITLE,

@@ -22,6 +22,14 @@ const OKVED_TO_SPHERE: Array<[prefix: string, sphere: OrgSphere]> = [
   ["85.", "education"],
   ["86.", "medical"],
   ["87.", "medical"],
+  // Спорт: 93.11 спортобъекты, 93.12 спортклубы, 93.13 фитнес-центры,
+  // 93.19 прочая спортивная деятельность; 96.04 — физкультурно-
+  // оздоровительная деятельность (бани, сауны, бассейны).
+  ["93.11", "fitness"],
+  ["93.12", "fitness"],
+  ["93.13", "fitness"],
+  ["93.19", "fitness"],
+  ["96.04", "fitness"],
 ];
 
 export function sphereFromOkved(okved: string | null | undefined): OrgSphere | null {

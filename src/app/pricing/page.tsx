@@ -19,6 +19,7 @@ import {
   EXTRA_USER_PRICE_RUB,
   SUBSCRIPTION_MAX_USERS,
 } from "@/lib/plan-catalog";
+import { JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -70,7 +71,7 @@ export default async function PricingPage() {
             Сколько стоит WeSetup
           </h1>
           <p className="mt-3 max-w-[640px] text-[16px] leading-relaxed text-[#3c4053]">
-            Все 35 журналов доступны бесплатно смене до {FREE_MAX_USERS}{" "}
+            Все {JOURNALS_TOTAL_LABEL} доступны бесплатно смене до {FREE_MAX_USERS}{" "}
             человек. Команда до {SUBSCRIPTION_MAX_USERS} — одна подписка{" "}
             {formatRub(monthly.priceRub)}/мес на всех, не за человека; каждый
             сотрудник сверх {SUBSCRIPTION_MAX_USERS} —{" "}
@@ -87,7 +88,7 @@ export default async function PricingPage() {
             description="Для заведения с небольшой сменой."
             points={[
               `До ${FREE_MAX_USERS} сотрудников`,
-              "Все 35 журналов СанПиН и ХАССП",
+              `Все ${JOURNALS_TOTAL_LABEL} СанПиН и ХАССП`,
               "Telegram-бот с пошаговым заполнением",
               "PDF для проверок, без привязки карты",
             ]}
@@ -144,7 +145,7 @@ export default async function PricingPage() {
             Что внутри после регистрации
           </h2>
           <p className="mt-2 max-w-[640px] text-[14px] leading-relaxed text-[#3c4053]">
-            35 готовых журналов СанПиН/ХАССП — от гигиены сотрудников и
+            {JOURNALS_TOTAL_LABEL} СанПиН/ХАССП — от гигиены сотрудников и
             контроля холодильников до бракеража и журнала уборок.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">

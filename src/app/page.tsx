@@ -72,6 +72,7 @@ import {
   TARIFF_MONTHLY,
 } from "@/lib/tariffs";
 import { PlanCard } from "@/components/pricing/plan-card";
+import { JOURNALS_TOTAL_ELECTRONIC_LABEL, JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -82,7 +83,7 @@ export const metadata = {
   // дублируется), поэтому «— WeSetup» пишем в строке вручную.
   title: "Электронные журналы СанПиН и ХАССП онлайн — WeSetup",
   description:
-    "35 электронных журналов СанПиН и ХАССП для общепита и производств. QR-наклейки на оборудовании: отсканировал, ввёл PIN — запись в журнале. PDF для Роспотребнадзора. Бесплатно до 3 сотрудников.",
+    `${JOURNALS_TOTAL_ELECTRONIC_LABEL} СанПиН и ХАССП для общепита и производств. QR-наклейки на оборудовании: отсканировал, ввёл PIN — запись в журнале. PDF для Роспотребнадзора. Бесплатно до 3 сотрудников.`,
   alternates: { canonical: "https://wesetup.ru/", types: { "application/rss+xml": [{ url: "https://wesetup.ru/blog/feed.xml", title: "WeSetup — блог" }, { url: "https://wesetup.ru/whats-new/feed.xml", title: "WeSetup — что нового" }] } },
 };
 
@@ -161,7 +162,7 @@ const JOURNAL_PREVIEW: Array<{ code: string; name: string }> = [
  * Оставили только перечень — он честный и проверяемый.
  */
 const INCLUDED_CHIPS = [
-  { icon: NotebookText, label: "35 журналов" },
+  { icon: NotebookText, label: JOURNALS_TOTAL_LABEL },
   { icon: Wand2, label: "Инструкции для смены" },
   { icon: Send, label: "Telegram-бот" },
   { icon: Handshake, label: "Помощь с настройкой" },
@@ -202,7 +203,7 @@ const FAQ = [
   },
   {
     q: "Можно попробовать бесплатно?",
-    a: "Да — бесплатный тариф действует навсегда: до 3 сотрудников все 35 журналов включены без ограничений по времени и без привязки карты. Подписку оформляете, только если нужно больше рабочих мест или автоматизация с датчиками.",
+    a: `Да — бесплатный тариф действует навсегда: до 3 сотрудников все ${JOURNALS_TOTAL_LABEL} включены без ограничений по времени и без привязки карты. Подписку оформляете, только если нужно больше рабочих мест или автоматизация с датчиками.`,
   },
   {
     q: "Что если пропадёт интернет?",
@@ -402,7 +403,7 @@ export default async function LandingPage() {
         // отдельные native приложения. Когда они появятся, поменяем.
         operatingSystem: "Web",
         description:
-          "Электронные журналы СанПиН и ХАССП для общепита и пищевых производств. 35 журналов, заполнение по QR-наклейкам на оборудовании, автозаполнение, PDF для Роспотребнадзора.",
+          `Электронные журналы СанПиН и ХАССП для общепита и пищевых производств. ${JOURNALS_TOTAL_LABEL}, заполнение по QR-наклейкам на оборудовании, автозаполнение, PDF для Роспотребнадзора.`,
         // image — required для SoftwareApplication rich result в Google.
         // Раньше отдавали icon-512 (квадрат), но Google рекомендует
         // landscape для product/app rich-результатов. /og-default —
@@ -429,7 +430,7 @@ export default async function LandingPage() {
         "@type": "Product",
         name: "WeSetup — электронные журналы СанПиН и ХАССП",
         description:
-          "35 журналов для общепита и пищевых производств. Заполнение по QR-коду с телефона, автозаполнение, PDF для проверок Роспотребнадзора.",
+          `${JOURNALS_TOTAL_LABEL} для общепита и пищевых производств. Заполнение по QR-коду с телефона, автозаполнение, PDF для проверок Роспотребнадзора.`,
         // image — required для Product rich result. Без него Google не
         // показывает Offer-карточку с ценой/доступностью в выдаче.
         // 1200×630 landscape лучше квадрата для Product rich snippet.
@@ -441,7 +442,7 @@ export default async function LandingPage() {
             name: "Бесплатный",
             price: "0",
             priceCurrency: "RUB",
-            description: "До 3 сотрудников, все 35 журналов, бессрочно",
+            description: `До 3 сотрудников, все ${JOURNALS_TOTAL_LABEL}, бессрочно`,
             availability: "https://schema.org/InStock",
           },
           {
@@ -853,7 +854,7 @@ export default async function LandingPage() {
         <div className="mb-10 flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
           <div className="max-w-[640px]">
             <div className="mb-3 text-[12px] uppercase tracking-[0.18em] text-[#5566f6]">
-              35 журналов
+              {JOURNALS_TOTAL_LABEL}
             </div>
             <h2 className="text-[clamp(1.625rem,2.2vw+1rem,2.25rem)] font-semibold leading-tight tracking-[-0.02em]">
               Какие журналы уже внутри
@@ -927,7 +928,7 @@ export default async function LandingPage() {
             period="навсегда"
             points={[
               `До ${FREE_MAX_USERS} сотрудников`,
-              "Все 35 журналов СанПиН и ХАССП",
+              `Все ${JOURNALS_TOTAL_LABEL} СанПиН и ХАССП`,
               "PDF для проверок, без карты",
             ]}
             ctaLabel={viewerOnFreePlan ? "Текущий" : "Начать бесплатно"}
@@ -1269,4 +1270,3 @@ export default async function LandingPage() {
     </div>
   );
 }
-

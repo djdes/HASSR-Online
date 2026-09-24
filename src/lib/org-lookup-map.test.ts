@@ -16,6 +16,13 @@ test("sphereFromOkved: общепит, производство, торговл�
   assert.equal(sphereFromOkved("55.10"), "hotel");
   assert.equal(sphereFromOkved("85.11"), "education");
   assert.equal(sphereFromOkved("86.21"), "medical");
+  assert.equal(sphereFromOkved("93.11"), "fitness");
+  assert.equal(sphereFromOkved("93.12"), "fitness");
+  assert.equal(sphereFromOkved("93.13"), "fitness");
+  assert.equal(sphereFromOkved("93.19"), "fitness");
+  assert.equal(sphereFromOkved("96.04"), "fitness");
+  // Развлечения (93.2x) — не фитнес.
+  assert.equal(sphereFromOkved("93.29"), null);
   assert.equal(sphereFromOkved("64.19"), null);
   assert.equal(sphereFromOkved(""), null);
 });

@@ -1,4 +1,5 @@
 import { FREE_MAX_USERS } from "@/lib/plan-limits";
+import { JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
 
 /**
  * Витрина тарифов — единственное место копирайта для `/settings/subscription`.
@@ -53,7 +54,7 @@ export const PLAN_CATALOG: CatalogPlan[] = [
     tagline: "Всё нужное для маленькой кухни — без оплаты и навсегда",
     features: [
       `До ${FREE_MAX_USERS} сотрудников`,
-      "Все 35 журналов СанПиН и ХАССП",
+      `Все ${JOURNALS_TOTAL_LABEL} СанПиН и ХАССП`,
       "Telegram-бот и Mini App",
       "PDF-отчёты для проверки",
       "Без ограничений по записям, датчикам и AI-сообщениям",

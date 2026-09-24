@@ -16,6 +16,7 @@ import {
   DEFAULT_TWITTER_CARD,
   } from "@/lib/meta-defaults";
 import { ogImages, twitterImages } from "@/lib/og-image";
+import { JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -247,7 +248,7 @@ export default async function BlogArticlePage({
             Вести этот журнал в WeSetup бесплатно
           </div>
           <p className="mx-auto mt-2 max-w-[480px] text-[14px] text-white/70">
-            Все 35 журналов СанПиН и ХАССП в одном кабинете. Бесплатный
+            Все {JOURNALS_TOTAL_LABEL} СанПиН и ХАССП в одном кабинете. Бесплатный
             тариф навсегда, до 3 сотрудников, без привязки карты.
           </p>
           <Link

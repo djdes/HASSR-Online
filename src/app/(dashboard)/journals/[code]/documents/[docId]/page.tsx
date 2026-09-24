@@ -183,6 +183,9 @@ import {
   normalizeEquipmentCleaningRowData,
 } from "@/lib/equipment-cleaning-document";
 import { ComplaintDocumentClient } from "@/components/journals/complaint-document-client";
+import { RegisterDocumentClient } from "@/components/journals/register-document-client";
+import { isGenericRegisterJournal } from "@/lib/register-journals";
+import { normalizeRegisterDocumentConfig, parseRegisterFields } from "@/lib/register-document";
 import { COMPLAINT_REGISTER_TEMPLATE_CODE, normalizeComplaintConfig } from "@/lib/complaint-document";
 import { isIntegrationCryptoConfigured } from "@/lib/integration-crypto";
 
@@ -815,6 +818,26 @@ async function JournalDocumentBody({
         dateTo={toDateKey(document.dateTo)}
         status={document.status}
         initialConfig={normalizeComplaintConfig(document.config)}
+        users={enrichedEmployees}
+        useV2={organization?.experimentalUiV2 ?? true}
+      />
+    );
+  }
+
+  if (isGenericRegisterJournal(document.template.code)) {
+    return (
+      <RegisterDocumentClient
+        documentId={document.id}
+        templateCode={document.template.code}
+        title={document.title}
+        organizationName={organizationName}
+        dateFrom={toDateKey(document.dateFrom)}
+        dateTo={toDateKey(document.dateTo)}
+        status={document.status}
+        initialConfig={normalizeRegisterDocumentConfig(
+          document.config,
+          parseRegisterFields(document.template.fields)
+        )}
         users={enrichedEmployees}
         useV2={organization?.experimentalUiV2 ?? true}
       />

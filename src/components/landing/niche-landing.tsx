@@ -11,6 +11,7 @@ import { PublicBreadcrumbs } from "@/components/public/public-breadcrumbs";
 import { jsonLdSafeString } from "@/lib/json-ld";
 import { buildNicheFaq, nicheFaqJsonLd } from "@/lib/niche-faq";
 import { NICHES, type Niche } from "@/content/niches";
+import { JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
 export { NICHES };
 export type { Niche };
 import {
@@ -30,7 +31,6 @@ import { ogImages, twitterImages } from "@/lib/og-image";
  *   /dlya-stolovoy     → stolovoy
  *   /dlya-proizvodstva → proizvodstva
  */
-
 
 /**
  * Build metadata for a route given the niche slug. Используется в
@@ -193,7 +193,7 @@ export function NicheLanding({ slug }: { slug: string }) {
             href="/journals-info"
             className="inline-flex h-11 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
           >
-            Смотреть все 35 журналов в каталоге
+            Смотреть все {JOURNALS_TOTAL_LABEL} в каталоге
             <ArrowRight className="size-4 text-[#5566f6]" />
           </Link>
         </div>
@@ -280,7 +280,7 @@ export function NicheLanding({ slug }: { slug: string }) {
             Начните вести журналы прямо сегодня
           </h2>
           <p className="mx-auto mt-3 max-w-[520px] text-[14px] text-white/80">
-            Бесплатный тариф навсегда: до 3 сотрудников, все 35 журналов
+            Бесплатный тариф навсегда: до 3 сотрудников, все {JOURNALS_TOTAL_LABEL}
             включены, без привязки карты.
           </p>
           <Link
