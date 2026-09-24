@@ -1,0 +1,34 @@
+{
+  "task": "qr-align-basic-tier-2026-09",
+  "branch": "fix/qr-align-basic-tier",
+  "verified_at": "2026-09-24",
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "summary": "QR flush with the right content border on every page where the metric applies (samples 60/60, docs 141/141, partner runs 60/60 and 39/39, max diff 0.38 mm <= 0.5 mm); 0 px ink in QR zone before stamp on 360/360 pages; 0 module mismatches; jsQR decodes the URL on 360/360 pages; caption 'Заполнение электронного журнала / wesetup.ru'; page labels and partner footer left of QR.",
+      "exceptions": [
+        "overflowSheet (metric not applicable, pre-existing layout bugs, table wider than the sheet): perishable_rejection p1 (sample+doc, out of scope - parallel task), climate_control p5-32 and training_plan p2-28 (inflated to 70 columns)",
+        "shiftedLeft (allowed by spec 'сдвиги при занятости — как сейчас'): climate_control with 70 rooms p2-3"
+      ],
+      "page_growth": "samples: none; inflated docs: training_plan 26->28, disinfectant_usage 12->13 (as before), equipment_calibration 4->5 (new: QR now under the table instead of right of it)",
+      "artifacts": [
+        "raw/check-samples.json", "raw/check-samples.log",
+        "raw/check-samples-partner.json", "raw/check-samples-partner.log",
+        "raw/check-docs.json", "raw/check-docs.log",
+        "raw/check-docs-partner.json", "raw/check-docs-partner.log",
+        "shots/*.png",
+        "src/lib/pdf-journal-qr.test.ts", "src/lib/journal-pdf-qr-link.test.ts"
+      ]
+    },
+    "AC2": {
+      "status": "PASS",
+      "summary": "daily_samples, vitaminization, ration_control are in BASIC_TARIFF_JOURNALS (16) and not in EXTENDED_ONLY (29); catalog order and sortOrder unchanged (36/37/38); tariff journal counts in PLANS computed from the catalog via journalsCountLabel. No per-tariff journal access enforcement exists in code (plan-limits is headcount only).",
+      "artifacts": ["src/lib/journal-catalog.test.ts", "raw/npm-test-summary.log"]
+    },
+    "AC3": {
+      "status": "PASS",
+      "summary": "npm run typecheck exit 0; npm test 2193/2193 pass; npm run build (NEXT_DIST_DIR=.next-qrfix-build) exit 0, dist dir deleted.",
+      "artifacts": ["raw/typecheck.log", "raw/npm-test-summary.log", "raw/build.log"]
+    }
+  }
+}

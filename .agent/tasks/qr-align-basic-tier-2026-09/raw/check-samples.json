@@ -1,0 +1,1916 @@
+[
+  {
+    "label": "sample:hygiene",
+    "code": "hygiene",
+    "url": "https://wesetup.ru/journals-info/hygiene",
+    "pagesWithoutQr": 3,
+    "pagesWithQr": 3,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 270.1,
+          "y": 192,
+          "size": 13,
+          "modules": 29,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 283.13,
+        "contentRightMm": 283.21,
+        "alignDiffMm": 0.08,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 283.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/hygiene",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "orientation": "landscape",
+        "qr": {
+          "x": 270.1,
+          "y": 192,
+          "size": 13,
+          "modules": 29,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 283.13,
+        "contentRightMm": 283.21,
+        "alignDiffMm": 0.08,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 283.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/hygiene",
+        "decodedOk": true
+      },
+      {
+        "page": 3,
+        "orientation": "landscape",
+        "qr": {
+          "x": 270.1,
+          "y": 192,
+          "size": 13,
+          "modules": 29,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 283.13,
+        "contentRightMm": 283.21,
+        "alignDiffMm": 0.08,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 283.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/hygiene",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:health_check",
+    "code": "health_check",
+    "url": "https://wesetup.ru/journals-info/health_check",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 270.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 283.13,
+        "contentRightMm": 283.21,
+        "alignDiffMm": 0.08,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 283.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/health_check",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:climate_control",
+    "code": "climate_control",
+    "url": "https://wesetup.ru/journals-info/climate_control",
+    "pagesWithoutQr": 2,
+    "pagesWithQr": 2,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/climate_control",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/climate_control",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:cold_equipment_control",
+    "code": "cold_equipment_control",
+    "url": "https://wesetup.ru/journals-info/cold_equipment_control",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/cold_equipment_control",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:cleaning_ventilation_checklist",
+    "code": "cleaning_ventilation_checklist",
+    "url": "https://wesetup.ru/journals-info/cleaning_ventilation_checklist",
+    "pagesWithoutQr": 9,
+    "pagesWithQr": 9,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 196.1,
+          "y": 192,
+          "size": 13,
+          "modules": 37,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 209.11,
+        "contentRightMm": 209.3,
+        "alignDiffMm": 0.18,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 209.11,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/cleaning_ventilation_checklist",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "orientation": "landscape",
+        "qr": {
+          "x": 196.1,
+          "y": 192,
+          "size": 13,
+          "modules": 37,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 209.11,
+        "contentRightMm": 209.3,
+        "alignDiffMm": 0.18,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 209.11,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/cleaning_ventilation_checklist",
+        "decodedOk": true
+      },
+      {
+        "page": 3,
+        "orientation": "landscape",
+        "qr": {
+          "x": 196.1,
+          "y": 192,
+          "size": 13,
+          "modules": 37,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 209.11,
+        "contentRightMm": 209.3,
+        "alignDiffMm": 0.18,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 209.11,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/cleaning_ventilation_checklist",
+        "decodedOk": true
+      },
+      {
+        "page": 4,
+        "orientation": "landscape",
+        "qr": {
+          "x": 196.1,
+          "y": 192,
+          "size": 13,
+          "modules": 37,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 209.11,
+        "contentRightMm": 209.3,
+        "alignDiffMm": 0.18,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 209.11,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/cleaning_ventilation_checklist",
+        "decodedOk": true
+      },
+      {
+        "page": 5,
+        "orientation": "landscape",
+        "qr": {
+          "x": 196.1,
+          "y": 192,
+          "size": 13,
+          "modules": 37,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 209.11,
+        "contentRightMm": 209.3,
+        "alignDiffMm": 0.18,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 209.11,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/cleaning_ventilation_checklist",
+        "decodedOk": true
+      },
+      {
+        "page": 6,
+        "orientation": "landscape",
+        "qr": {
+          "x": 196.1,
+          "y": 192,
+          "size": 13,
+          "modules": 37,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 209.11,
+        "contentRightMm": 209.3,
+        "alignDiffMm": 0.18,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 209.11,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/cleaning_ventilation_checklist",
+        "decodedOk": true
+      },
+      {
+        "page": 7,
+        "orientation": "landscape",
+        "qr": {
+          "x": 196.1,
+          "y": 192,
+          "size": 13,
+          "modules": 37,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 209.11,
+        "contentRightMm": 209.3,
+        "alignDiffMm": 0.18,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 209.11,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/cleaning_ventilation_checklist",
+        "decodedOk": true
+      },
+      {
+        "page": 8,
+        "orientation": "landscape",
+        "qr": {
+          "x": 196.1,
+          "y": 192,
+          "size": 13,
+          "modules": 37,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 209.11,
+        "contentRightMm": 209.3,
+        "alignDiffMm": 0.18,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 209.11,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/cleaning_ventilation_checklist",
+        "decodedOk": true
+      },
+      {
+        "page": 9,
+        "orientation": "landscape",
+        "qr": {
+          "x": 196.1,
+          "y": 192,
+          "size": 13,
+          "modules": 37,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 209.11,
+        "contentRightMm": 209.3,
+        "alignDiffMm": 0.18,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 209.11,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/cleaning_ventilation_checklist",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:cleaning",
+    "code": "cleaning",
+    "url": "https://wesetup.ru/journals-info/cleaning",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 268.1,
+          "y": 192,
+          "size": 13,
+          "modules": 29,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 281.13,
+        "contentRightMm": 281.18,
+        "alignDiffMm": 0.05,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 281.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/cleaning",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:general_cleaning",
+    "code": "general_cleaning",
+    "url": "https://wesetup.ru/journals-info/general_cleaning",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 268.7,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 281.73,
+        "contentRightMm": 281.43,
+        "alignDiffMm": 0.3,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 281.73,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/general_cleaning",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:uv_lamp_runtime",
+    "code": "uv_lamp_runtime",
+    "url": "https://wesetup.ru/journals-info/uv_lamp_runtime",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 72,
+          "size": 13,
+          "modules": 33,
+          "moved": true,
+          "bottomRow": false,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/uv_lamp_runtime",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:finished_product",
+    "code": "finished_product",
+    "url": "https://wesetup.ru/journals-info/finished_product",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/finished_product",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:perishable_rejection",
+    "code": "perishable_rejection",
+    "url": "https://wesetup.ru/journals-info/perishable_rejection",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 297.05,
+        "alignDiffMm": 9.93,
+        "overflowSheet": true,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": null,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/perishable_rejection",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:incoming_control",
+    "code": "incoming_control",
+    "url": "https://wesetup.ru/journals-info/incoming_control",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/incoming_control",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:fryer_oil",
+    "code": "fryer_oil",
+    "url": "https://wesetup.ru/journals-info/fryer_oil",
+    "pagesWithoutQr": 2,
+    "pagesWithQr": 2,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 29,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/fryer_oil",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 29,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/fryer_oil",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:med_books",
+    "code": "med_books",
+    "url": "https://wesetup.ru/journals-info/med_books",
+    "pagesWithoutQr": 3,
+    "pagesWithQr": 3,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 29,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/med_books",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 29,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/med_books",
+        "decodedOk": true
+      },
+      {
+        "page": 3,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 29,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/med_books",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:training_plan",
+    "code": "training_plan",
+    "url": "https://wesetup.ru/journals-info/training_plan",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 271.7,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 284.73,
+        "contentRightMm": 284.35,
+        "alignDiffMm": 0.38,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 284.73,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/training_plan",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:staff_training",
+    "code": "staff_training",
+    "url": "https://wesetup.ru/journals-info/staff_training",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/staff_training",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:disinfectant_usage",
+    "code": "disinfectant_usage",
+    "url": "https://wesetup.ru/journals-info/disinfectant_usage",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 270,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 283,
+        "contentRightMm": 283.08,
+        "alignDiffMm": 0.08,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 283,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/disinfectant_usage",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:sanitary_day_control",
+    "code": "sanitary_day_control",
+    "url": "https://wesetup.ru/journals-info/sanitary_day_control",
+    "pagesWithoutQr": 2,
+    "pagesWithQr": 2,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 270,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 283,
+        "contentRightMm": 283.21,
+        "alignDiffMm": 0.21,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 283,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/sanitary_day_control",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "orientation": "landscape",
+        "qr": {
+          "x": 270,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 283,
+        "contentRightMm": 283.21,
+        "alignDiffMm": 0.21,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 283,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/sanitary_day_control",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:equipment_maintenance",
+    "code": "equipment_maintenance",
+    "url": "https://wesetup.ru/journals-info/equipment_maintenance",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/equipment_maintenance",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:breakdown_history",
+    "code": "breakdown_history",
+    "url": "https://wesetup.ru/journals-info/breakdown_history",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 260.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 273.13,
+        "contentRightMm": 273.18,
+        "alignDiffMm": 0.05,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 273.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/breakdown_history",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:equipment_calibration",
+    "code": "equipment_calibration",
+    "url": "https://wesetup.ru/journals-info/equipment_calibration",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 271.7,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 284.73,
+        "contentRightMm": 284.35,
+        "alignDiffMm": 0.38,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 284.73,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/equipment_calibration",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:incoming_raw_materials_control",
+    "code": "incoming_raw_materials_control",
+    "url": "https://wesetup.ru/journals-info/incoming_raw_materials_control",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 37,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/incoming_raw_materials_control",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:ppe_issuance",
+    "code": "ppe_issuance",
+    "url": "https://wesetup.ru/journals-info/ppe_issuance",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/ppe_issuance",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:accident_journal",
+    "code": "accident_journal",
+    "url": "https://wesetup.ru/journals-info/accident_journal",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 266.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 279.13,
+        "contentRightMm": 279.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 279.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/accident_journal",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:complaint_register",
+    "code": "complaint_register",
+    "url": "https://wesetup.ru/journals-info/complaint_register",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/complaint_register",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:product_writeoff",
+    "code": "product_writeoff",
+    "url": "https://wesetup.ru/journals-info/product_writeoff",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/product_writeoff",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:audit_plan",
+    "code": "audit_plan",
+    "url": "https://wesetup.ru/journals-info/audit_plan",
+    "pagesWithoutQr": 2,
+    "pagesWithQr": 2,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/audit_plan",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.15,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/audit_plan",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:audit_protocol",
+    "code": "audit_protocol",
+    "url": "https://wesetup.ru/journals-info/audit_protocol",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/audit_protocol",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:audit_report",
+    "code": "audit_report",
+    "url": "https://wesetup.ru/journals-info/audit_report",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/audit_report",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:traceability_test",
+    "code": "traceability_test",
+    "url": "https://wesetup.ru/journals-info/traceability_test",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/traceability_test",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:metal_impurity",
+    "code": "metal_impurity",
+    "url": "https://wesetup.ru/journals-info/metal_impurity",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/metal_impurity",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:equipment_cleaning",
+    "code": "equipment_cleaning",
+    "url": "https://wesetup.ru/journals-info/equipment_cleaning",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 270.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 283.1,
+        "contentRightMm": 283.21,
+        "alignDiffMm": 0.11,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 283.1,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/equipment_cleaning",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:intensive_cooling",
+    "code": "intensive_cooling",
+    "url": "https://wesetup.ru/journals-info/intensive_cooling",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 261,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 274,
+        "contentRightMm": 274.07,
+        "alignDiffMm": 0.07,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 274,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/intensive_cooling",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:glass_items_list",
+    "code": "glass_items_list",
+    "url": "https://wesetup.ru/journals-info/glass_items_list",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 248,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 261,
+        "contentRightMm": 260.86,
+        "alignDiffMm": 0.14,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 261,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/glass_items_list",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:glass_control",
+    "code": "glass_control",
+    "url": "https://wesetup.ru/journals-info/glass_control",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/glass_control",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:pest_control",
+    "code": "pest_control",
+    "url": "https://wesetup.ru/journals-info/pest_control",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 263.8,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 276.8,
+        "contentRightMm": 276.61,
+        "alignDiffMm": 0.2,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 276.8,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/pest_control",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:daily_samples",
+    "code": "daily_samples",
+    "url": "https://wesetup.ru/journals-info/daily_samples",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/daily_samples",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:vitaminization",
+    "code": "vitaminization",
+    "url": "https://wesetup.ru/journals-info/vitaminization",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/vitaminization",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:ration_control",
+    "code": "ration_control",
+    "url": "https://wesetup.ru/journals-info/ration_control",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/ration_control",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:transport_temperature",
+    "code": "transport_temperature",
+    "url": "https://wesetup.ru/journals-info/transport_temperature",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/transport_temperature",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:tableware_breakage",
+    "code": "tableware_breakage",
+    "url": "https://wesetup.ru/journals-info/tableware_breakage",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/tableware_breakage",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:pool_water_control",
+    "code": "pool_water_control",
+    "url": "https://wesetup.ru/journals-info/pool_water_control",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/pool_water_control",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:inventory_condition",
+    "code": "inventory_condition",
+    "url": "https://wesetup.ru/journals-info/inventory_condition",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/inventory_condition",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:instrument_sterilization",
+    "code": "instrument_sterilization",
+    "url": "https://wesetup.ru/journals-info/instrument_sterilization",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/instrument_sterilization",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:medical_waste_b",
+    "code": "medical_waste_b",
+    "url": "https://wesetup.ru/journals-info/medical_waste_b",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/medical_waste_b",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:batch_release",
+    "code": "batch_release",
+    "url": "https://wesetup.ru/journals-info/batch_release",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.13,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.02,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.13,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/batch_release",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  }
+]

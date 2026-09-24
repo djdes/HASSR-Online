@@ -1,0 +1,30 @@
+NEXT_DIST_DIR=.next-qrfix-build npm run build → exit=0
+
+> haccp-online@0.1.0 prebuild
+> prisma generate
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma\schema.prisma.
+
+✔ Generated Prisma Client (v7.4.2) to .\node_modules\@prisma\client in 3.22s
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+
+> haccp-online@0.1.0 build
+> next build --webpack
+
+▲ Next.js 16.1.6 (webpack)
+- Environments: .env
+
+...
+└ ƒ /zhurnal-zdorovya
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
