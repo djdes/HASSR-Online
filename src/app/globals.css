@@ -2476,3 +2476,66 @@ html, body {
 .qrp-range-try::-webkit-slider-thumb {
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--qrp-accent) 40%, transparent), 0 4px 10px rgba(0, 0, 0, 0.4);
 }
+
+/* Тонкая перемотка под сценой: полоса всегда, бегунок проявляется на
+   hover/focus (как у видеоплееров). Кликабельная зона остаётся 22px. */
+.qrp-range-thin {
+  height: 22px;
+}
+.qrp-range-thin::-webkit-slider-runnable-track {
+  height: 5px;
+}
+.qrp-range-thin::-moz-range-track {
+  height: 5px;
+}
+.qrp-range-thin::-moz-range-progress {
+  height: 5px;
+}
+.qrp-range-thin::-webkit-slider-thumb {
+  width: 13px;
+  height: 13px;
+  margin-top: -4px;
+  opacity: 0;
+  transition: opacity 150ms ease, box-shadow 150ms ease;
+}
+.qrp-range-thin::-moz-range-thumb {
+  width: 13px;
+  height: 13px;
+  opacity: 0;
+  transition: opacity 150ms ease, box-shadow 150ms ease;
+}
+.qrp-range-thin:hover::-webkit-slider-thumb,
+.qrp-range-thin:focus-visible::-webkit-slider-thumb {
+  opacity: 1;
+}
+.qrp-range-thin:hover::-moz-range-thumb,
+.qrp-range-thin:focus-visible::-moz-range-thumb {
+  opacity: 1;
+}
+
+/* Вкладки-главы: одна строка, скроллбар спрятан, края растворяются. */
+.qrp-tabs {
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent);
+}
+.qrp-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+/* Спойлер «Попробуйте сами»: мягкое появление. */
+@keyframes qrp-try-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+[data-qrp-try]:not([hidden]) {
+  animation: qrp-try-in 180ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-qrp-try]:not([hidden]) {
+    animation: none;
+  }
+}

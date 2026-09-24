@@ -62,6 +62,14 @@ test("журналы в сценах — ровно из каталога", () =
   for (const chapter of CHAPTERS) assert.ok(names.has(chapter.journal), chapter.journal);
 });
 
+test("короткая подпись главы: есть, одна строка, короче полной", () => {
+  for (const chapter of CHAPTERS) {
+    assert.ok(chapter.short.length > 0, chapter.id);
+    assert.ok(chapter.short.length <= 80, `«${chapter.short}» длиннее 80 знаков`);
+    assert.ok(chapter.short.length < chapter.caption.length, chapter.id);
+  }
+});
+
 test("тексты экранов взяты из настоящих QR-форм", () => {
   for (const [key, text] of Object.entries(UI)) {
     const file = UI_SOURCES[key as keyof typeof UI];

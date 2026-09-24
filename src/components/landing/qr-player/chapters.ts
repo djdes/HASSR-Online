@@ -32,14 +32,16 @@ export const JOURNALS = {
 
 export type Chapter = {
   id: ChapterId;
-  /** Чип под роликом. */
+  /** Вкладка-глава над сценой. */
   chip: string;
   /** Где висит наклейка / что происходит — строка над сценой. */
   place: string;
   /** Журнал в кадре — ровно как в каталоге. */
   journal: string;
-  /** Подпись главы: текст для раскадровки и скринридера. */
+  /** Полная подпись: раскадровка reduced-motion и скринридер. */
   caption: string;
+  /** Короткая видимая подпись под сценой — одна строка. */
+  short: string;
   from: number;
   duration: number;
 };
@@ -52,6 +54,7 @@ const CHAPTER_DRAFTS: Array<Omit<Chapter, "from" | "duration">> = [
     journal: journalName("cold_equipment_control"),
     caption:
       "Повар сканирует наклейку на холодильнике, вводит PIN и температуру. Значение встаёт в журнал в графу сегодняшнего дня, рядом — код ответственного.",
+    short: "PIN и температура — запись в графе сегодняшнего дня.",
   },
   {
     id: "locker",
@@ -60,6 +63,7 @@ const CHAPTER_DRAFTS: Array<Omit<Chapter, "from" | "duration">> = [
     journal: journalName("hygiene"),
     caption:
       "Перед сменой сотрудник меряет температуру и подписывает три графы. Запись сразу в гигиенический журнал и журнал здоровья, заведующая ставит допуск.",
+    short: "Замер и три подписи перед сменой — допуск к работе.",
   },
   {
     id: "uv",
@@ -68,6 +72,7 @@ const CHAPTER_DRAFTS: Array<Omit<Chapter, "from" | "duration">> = [
     journal: journalName("uv_lamp_runtime"),
     caption:
       "Две кнопки: «Я включил» и «Я выключил». Время работы и остаток ресурса лампы считаются сами.",
+    short: "«Я включил» / «Я выключил» — ресурс лампы считается сам.",
   },
   {
     id: "fryer",
@@ -76,6 +81,7 @@ const CHAPTER_DRAFTS: Array<Omit<Chapter, "from" | "duration">> = [
     journal: journalName("fryer_oil"),
     caption:
       "Форма на фритюрнице спрашивает вид жира, продукцию и оценку качества по пятибалльной шкале. Строка ложится в журнал учёта фритюрных жиров.",
+    short: "Жир, продукция, оценка — строка в журнале фритюрных жиров.",
   },
   {
     id: "forgot",
@@ -84,6 +90,7 @@ const CHAPTER_DRAFTS: Array<Omit<Chapter, "from" | "duration">> = [
     journal: journalName("cold_equipment_control"),
     caption:
       "Не заполнили — руководитель получит напоминание в Telegram в 12:00, в 17:00 ещё и письмо, в 21:00 — «СРОЧНО».",
+    short: "Не заполнили — напоминания в 12:00, 17:00 и 21:00.",
   },
   {
     id: "sensor",
@@ -92,6 +99,7 @@ const CHAPTER_DRAFTS: Array<Omit<Chapter, "from" | "duration">> = [
     journal: journalName("cold_equipment_control"),
     caption:
       "Wi-Fi датчик раз в час сам пишет температуру в журнал. Вышла за норму — ответственный получает уведомление.",
+    short: "Датчик пишет температуру сам, о нарушении — уведомление.",
   },
 ];
 
