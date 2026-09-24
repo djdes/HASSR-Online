@@ -8,6 +8,7 @@ import {
   readInspectorViewer,
   inspectorViewerCookie,
 } from "@/lib/inspector-access";
+import { orderScanAccessible } from "@/lib/journal-order-scans";
 import { orderScanFileResponse } from "@/lib/journal-order-scans-http";
 
 export const runtime = "nodejs";
@@ -44,11 +45,14 @@ export async function GET(request: Request, ctx: { params: Promise<{ token: stri
     return plain(429, "Слишком много запросов. Повторите через минуту.", { "Retry-After": String(retry) });
   }
   if (!/^[A-Za-z0-9_-]{1,64}$/.test(id)) return plain(404, "Не найдено");
-  const scan = await db.journalOrderScan.findFirst({
-    where: { id, organizationId: access.token.organizationId },
-    select: { id: true, journalCode: true, title: true, mimeType: true, content: true },
+  const scan = await db.journalOrderScan.findUnique({
+    where: { id },
+    select: { id: true, organizationId: true, journalCode: true, title: true, mimeType: true },
   });
-  if (!scan || access.disabledCodes.has(scan.journalCode)) return plain(404, "Не найдено");
+  // Проверяющий видит все включённые журналы своей организации.
+  if (!scan || !orderScanAccessible({ scan, organizationId: access.token.organizationId, journalReadable: true, disabledCodes: access.disabledCodes })) {
+    return plain(404, "Не найдено");
+  }
 
   const viewer = readInspectorViewer(cookieValue(request.headers.get("cookie"), inspectorViewerCookie(access.token.id)));
   await logInspectorEvent({
@@ -58,5 +62,7 @@ export async function GET(request: Request, ctx: { params: Promise<{ token: stri
     viewer,
     details: { kind: "journal_order_scan", code: scan.journalCode, scanId: scan.id, title: scan.title },
   });
-  return orderScanFileResponse(scan);
+  const file = await db.journalOrderScan.findUnique({ where: { id }, select: { content: true } });
+  if (!file) return plain(404, "Не найдено");
+  return orderScanFileResponse({ ...scan, content: file.content });
 }

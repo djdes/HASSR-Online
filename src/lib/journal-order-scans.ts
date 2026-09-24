@@ -70,3 +70,23 @@ export function normalizeOrderScanTitle(value: unknown): string | null {
   const title = value.replace(/\s+/g, " ").trim().slice(0, ORDER_SCAN_TITLE_MAX);
   return title.length > 0 ? title : null;
 }
+
+/**
+ * Можно ли отдать файл скана: только своей организации (сессия или токен
+ * проверяющего), журнал с приказами, журнал доступен смотрящему и не
+ * отключён. Иначе маршрут отвечает 404 — не подсказывая, что файл есть.
+ */
+export function orderScanAccessible(input: {
+  scan: { organizationId: string; journalCode: string } | null;
+  /** Организация сессии или токена; null — ни того, ни другого. */
+  organizationId: string | null;
+  journalReadable: boolean;
+  disabledCodes?: ReadonlySet<string>;
+}): boolean {
+  const { scan } = input;
+  if (!scan || !input.organizationId) return false;
+  if (scan.organizationId !== input.organizationId) return false;
+  if (!supportsOrderScans(scan.journalCode)) return false;
+  if (input.disabledCodes?.has(scan.journalCode)) return false;
+  return input.journalReadable;
+}

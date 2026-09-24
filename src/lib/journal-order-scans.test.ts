@@ -11,6 +11,7 @@ import {
   ORDER_SCAN_MAX_BYTES,
   defaultOrderScanTitle,
   normalizeOrderScanTitle,
+  orderScanAccessible,
   sniffOrderScanType,
   supportsOrderScans,
 } from "@/lib/journal-order-scans";
@@ -153,4 +154,26 @@ test("печать без приказов — журнал как был", asyn
   const merged = await appendOrderScansToPdf(new Uint8Array(journal.buffer), []);
   assert.equal(merged.appendedPages, 0);
   assert.deepEqual(new Uint8Array(merged.buffer), new Uint8Array(journal.buffer));
+});
+
+test("доступ к файлу: только своя организация, журнал доступен и включён", () => {
+  const scan = { organizationId: "org-a", journalCode: "hygiene" };
+  assert.equal(orderScanAccessible({ scan, organizationId: "org-a", journalReadable: true }), true);
+  // Чужая организация (сессия или токен проверяющего другой организации).
+  assert.equal(orderScanAccessible({ scan, organizationId: "org-b", journalReadable: true }), false);
+  // Без сессии / токена.
+  assert.equal(orderScanAccessible({ scan, organizationId: null, journalReadable: true }), false);
+  // Журнал сотруднику не выдан.
+  assert.equal(orderScanAccessible({ scan, organizationId: "org-a", journalReadable: false }), false);
+  // Журнал отключён у организации — проверяющий его не видит.
+  assert.equal(
+    orderScanAccessible({ scan, organizationId: "org-a", journalReadable: true, disabledCodes: new Set(["hygiene"]) }),
+    false
+  );
+  // Нет файла или журнал без приказов.
+  assert.equal(orderScanAccessible({ scan: null, organizationId: "org-a", journalReadable: true }), false);
+  assert.equal(
+    orderScanAccessible({ scan: { organizationId: "org-a", journalCode: "perishable_rejection" }, organizationId: "org-a", journalReadable: true }),
+    false
+  );
 });
