@@ -3,7 +3,7 @@
  * Used in: payments/create, payments/webhook, subscription-manager UI, landing page.
  */
 
-import { JOURNAL_TARIFFS, formatJournalPreview } from "./journal-catalog";
+import { JOURNAL_TARIFFS, formatJournalPreview, journalsCountLabel } from "./journal-catalog";
 
 export type PlanId = "starter" | "standard" | "pro";
 
@@ -29,7 +29,7 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
     maxUsers: 3,
     features: [
       "До 3 пользователей",
-      `Тариф "${basicTariff.name}": ${basicTariff.journals.length} журналов`,
+      `Тариф "${basicTariff.name}": ${journalsCountLabel(basicTariff.journals.length)}`,
       formatJournalPreview(basicTariff.journals),
       "PDF-отчёты",
       "Email-уведомления",
@@ -43,7 +43,7 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
     maxUsers: 10,
     features: [
       "До 10 пользователей",
-      `Тариф "${extendedTariff.name}": ${extendedTariff.journals.length} журналов (${extendedTariff.subtitle})`,
+      `Тариф "${extendedTariff.name}": ${journalsCountLabel(extendedTariff.journals.length)} (${extendedTariff.subtitle})`,
       `Дополнительно: ${formatJournalPreview(extendedExtraJournals)}`,
       "IoT-мониторинг",
       "Telegram-уведомления",

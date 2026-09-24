@@ -15,7 +15,14 @@ export interface JournalTariffDefinition {
   extraJournals?: readonly JournalCatalogItem[];
 }
 
-const BASIC_JOURNALS = [
+/**
+ * Порядок каталога = порядок журналов в интерфейсе и `sortOrder` шаблонов.
+ * Первый блок — исторический «базовый» набор СанПиН, второй — всё, что
+ * добавлялось позже (ХАССП, реестры). Принадлежность к тарифу от порядка
+ * НЕ зависит: она задаётся `BASIC_TARIFF_CODES` ниже, чтобы перевод
+ * журнала в другой тариф не сдвигал сортировку.
+ */
+const CATALOG_HEAD_JOURNALS = [
   { code: "hygiene", name: "Гигиенический журнал (сотрудники)" },
   { code: "health_check", name: "Журнал здоровья" },
   { code: "climate_control", name: "Бланк контроля температуры и влажности на складах" },
@@ -49,7 +56,7 @@ const BASIC_JOURNALS = [
   { code: "med_books", name: "Медицинские книжки" },
 ] as const satisfies readonly JournalCatalogItem[];
 
-const EXTENDED_ONLY_JOURNALS = [
+const CATALOG_TAIL_JOURNALS = [
   { code: "training_plan", name: "План обучения персонала" },
   {
     code: "staff_training",
@@ -134,9 +141,36 @@ const EXTENDED_ONLY_JOURNALS = [
   },
 ] as const satisfies readonly JournalCatalogItem[];
 
-export const BASIC_TARIFF_JOURNALS = BASIC_JOURNALS;
-export const EXTENDED_ONLY_TARIFF_JOURNALS = EXTENDED_ONLY_JOURNALS;
-export const ACTIVE_JOURNAL_CATALOG = [...BASIC_JOURNALS, ...EXTENDED_ONLY_JOURNALS] as const;
+export const ACTIVE_JOURNAL_CATALOG = [...CATALOG_HEAD_JOURNALS, ...CATALOG_TAIL_JOURNALS] as const;
+
+type ActiveJournalCatalogItem = (typeof ACTIVE_JOURNAL_CATALOG)[number];
+
+/**
+ * Журналы для школ, садов и лечебного питания, открытые на базовом тарифе
+ * (сентябрь 2026, решение «открываем все»). В каталоге стоят на своих
+ * прежних местах — порядок и `sortOrder` не меняются.
+ */
+export const SCHOOL_JOURNAL_CODES_IN_BASIC = ["daily_samples", "vitaminization", "ration_control"] as const;
+
+/** Коды журналов базового тарифа. */
+export const BASIC_TARIFF_CODES: ReadonlySet<string> = new Set<string>([
+  ...CATALOG_HEAD_JOURNALS.map((item) => item.code),
+  ...SCHOOL_JOURNAL_CODES_IN_BASIC,
+]);
+
+/** Журналы базового тарифа — в порядке каталога. */
+export const BASIC_TARIFF_JOURNALS: readonly ActiveJournalCatalogItem[] = ACTIVE_JOURNAL_CATALOG.filter((item) =>
+  BASIC_TARIFF_CODES.has(item.code)
+);
+/** Журналы, которые есть только в расширенном тарифе, — в порядке каталога. */
+export const EXTENDED_ONLY_TARIFF_JOURNALS: readonly ActiveJournalCatalogItem[] = ACTIVE_JOURNAL_CATALOG.filter(
+  (item) => !BASIC_TARIFF_CODES.has(item.code)
+);
+
+/** Журнал входит в базовый тариф (расширенный включает все журналы каталога). */
+export function isBasicTariffJournal(code: string): boolean {
+  return BASIC_TARIFF_CODES.has(code);
+}
 
 /**
  * Сколько журналов в каталоге. В текстах раньше было зашито конкретное число,
@@ -165,14 +199,14 @@ export const JOURNAL_TARIFFS: Record<JournalTariffId, JournalTariffDefinition> =
   basic: {
     id: "basic",
     name: "Базовый",
-    journals: BASIC_JOURNALS,
+    journals: BASIC_TARIFF_JOURNALS,
   },
   extended: {
     id: "extended",
     name: "Расширенный",
     subtitle: 'включая "Базовый"',
     journals: ACTIVE_JOURNAL_CATALOG,
-    extraJournals: EXTENDED_ONLY_JOURNALS,
+    extraJournals: EXTENDED_ONLY_TARIFF_JOURNALS,
   },
 };
 
