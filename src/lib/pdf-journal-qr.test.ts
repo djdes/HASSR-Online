@@ -6,11 +6,16 @@ import autoTable from "jspdf-autotable";
 
 import {
   JOURNAL_QR_BOTTOM_RESERVE_MM,
+  JOURNAL_QR_DEFAULT_RIGHT_MARGIN_MM,
   JOURNAL_QR_EDGE_MM,
   JOURNAL_QR_MIN_MODULE_MM,
   JOURNAL_QR_SIZE_MM,
   findJournalQrSpot,
+  journalQrBlockWidth,
+  journalQrContentRight,
+  journalQrFooterInset,
   journalQrMatrix,
+  journalQrRightEdges,
   reserveJournalQrBottomMargin,
   stampJournalQr,
   trackPdfInk,
@@ -109,14 +114,18 @@ test("штамп: QR на каждой странице (книжная и ал�
   doc.rect(200, 185, 97, 25, "F");
   const placements = stampJournalQr(doc, {
     url: URL_41,
-    lines: ["Электронный журнал WeSetup", "Отсканируйте, чтобы заполнить с телефона"],
+    lines: ["Заполнение электронного журнала", "wesetup.ru"],
     fontName: "helvetica",
     tracker,
   });
   assert.equal(placements.length, 2);
   const [p1, p2] = placements;
-  // A4 в jsPDF — 210,0015 × 297,0000 мм.
-  assert.ok(Math.abs(p1.x - (210 - JOURNAL_QR_EDGE_MM - JOURNAL_QR_SIZE_MM)) < 0.01, `x=${p1.x}`);
+  // A4 в jsPDF — 210,0015 × 297,0000 мм. На стр. 1 только текст слева —
+  // равняться не на что, QR встаёт по полю по умолчанию.
+  assert.ok(
+    Math.abs(p1.x - (210.0015 - JOURNAL_QR_DEFAULT_RIGHT_MARGIN_MM - JOURNAL_QR_SIZE_MM)) < 0.01,
+    `x=${p1.x}`,
+  );
   assert.ok(Math.abs(p1.y - (297 - JOURNAL_QR_EDGE_MM - JOURNAL_QR_SIZE_MM)) < 0.01, `y=${p1.y}`);
   assert.equal(p1.moved, false);
   assert.equal(p2.overlap, false);
@@ -131,4 +140,77 @@ test("штамп: слишком длинный адрес (полный ток�
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const longUrl = `https://wesetup.ru/journal-fill/${"x".repeat(25)}/hygiene?token=${"y".repeat(170)}`;
   assert.throws(() => stampJournalQr(doc, { url: longUrl, lines: [], fontName: "helvetica" }), /слишком плотный/);
+});
+
+test("QR вровень с правой границей таблицы: правый край QR = правый край содержимого", () => {
+  // Таблица с полями 14 мм на альбомном листе: правая граница 297 − 14.
+  const tableRight = 297 - 14;
+  const spot = findJournalQrSpot({
+    ...spotParams,
+    rightEdge: tableRight,
+    boxes: [{ x0: 14, y0: 20, x1: tableRight, y1: 150 }],
+  });
+  assert.ok(spot);
+  assert.equal(spot.moved, false);
+  assert.ok(Math.abs(spot.x + 13 - tableRight) < 1e-9, `правый край QR ${spot.x + 13}`);
+  assert.equal(spot.y, 210 - JOURNAL_QR_EDGE_MM - 13);
+});
+
+test("граница содержимого: максимум правых краёв, пусто — поле по умолчанию, не за зоной непечати", () => {
+  assert.equal(journalQrContentRight([], 297), 297 - JOURNAL_QR_DEFAULT_RIGHT_MARGIN_MM);
+  assert.equal(
+    journalQrContentRight([{ x0: 10, y0: 10, x1: 30, y1: 20 }], 297),
+    297 - JOURNAL_QR_DEFAULT_RIGHT_MARGIN_MM,
+    "содержимое только слева — не равняемся на него",
+  );
+  assert.equal(
+    journalQrContentRight(
+      [
+        { x0: 10, y0: 10, x1: 273, y1: 20 },
+        { x0: 10, y0: 30, x1: 283.1, y1: 150 },
+      ],
+      297,
+    ),
+    283.1,
+  );
+  // Таблица шире листа (за зоной непечати) не считается — равняемся на шапку.
+  assert.equal(
+    journalQrContentRight(
+      [
+        { x0: 10, y0: 10, x1: 287.1, y1: 60 },
+        { x0: 10, y0: 70, x1: 310, y1: 90 },
+      ],
+      297,
+    ),
+    287.1,
+  );
+  assert.equal(journalQrContentRight([{ x0: 0, y0: 0, x1: 297.2, y1: 210 }], 297), 297 - JOURNAL_QR_DEFAULT_RIGHT_MARGIN_MM);
+});
+
+test("штамп: QR вровень с таблицей на каждой странице (поля 10, 14 и 24 мм), нумерация левее QR", () => {
+  const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  const tracker = trackPdfInk(doc);
+  const margins = [10, 14, 24];
+  margins.forEach((margin, index) => {
+    if (index > 0) doc.addPage("a4", "landscape");
+    autoTable(doc, {
+      head: [["№", "Текст"]],
+      body: Array.from({ length: 5 }, (_, i) => [String(i + 1), "строка"]),
+      margin: { left: margin, right: margin },
+      tableLineWidth: 0.2,
+    });
+  });
+  const edges = journalQrRightEdges(doc, tracker);
+  const lines = ["Заполнение электронного журнала", "wesetup.ru"];
+  const placements = stampJournalQr(doc, { url: URL_41, lines, fontName: "helvetica", tracker, rightEdges: edges });
+  assert.equal(placements.length, 3);
+  placements.forEach((p, index) => {
+    const tableRight = 297 - margins[index];
+    assert.ok(Math.abs(p.x + p.size - tableRight) <= 0.5, `стр. ${index + 1}: QR ${p.x + p.size}, таблица ${tableRight}`);
+    assert.equal(p.moved, false);
+    // «СТР. X ИЗ N» кончается левее блока QR (с подписью).
+    const inset = journalQrFooterInset(doc, lines, "helvetica", 297 - edges[index]);
+    assert.ok(297 - inset <= p.block.x0 - 2, `стр. ${index + 1}: подпись страницы ${297 - inset}, блок QR ${p.block.x0}`);
+  });
+  assert.ok(journalQrBlockWidth(doc, lines, "helvetica") > JOURNAL_QR_SIZE_MM);
 });

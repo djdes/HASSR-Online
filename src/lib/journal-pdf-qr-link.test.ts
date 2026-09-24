@@ -50,17 +50,17 @@ test("переадресация: неверная подпись, чужой ж
   assert.equal(verifyJournalShortSig(ORG, "hygiene", sig), true);
 });
 
-test("QR документа — короткий адрес, влезает в ≤ 41 модуль; подпись «Электронный журнал WeSetup»", () => {
+test("QR документа — короткий адрес, влезает в ≤ 41 модуль; подпись «Заполнение электронного журнала / wesetup.ru»", () => {
   const qr = journalDocumentPdfQr("https://wesetup.ru", ORG, "cleaning_ventilation_checklist");
   assert.ok(qr.url.includes("/qj/"));
-  assert.equal(qr.lines[0], "Электронный журнал WeSetup");
+  assert.deepEqual(qr.lines, ["Заполнение электронного журнала", "wesetup.ru"]);
   assert.ok(journalQrMatrix(qr.url).modules.size <= 41);
 });
 
 test("QR образца бланка → /journals-info/<code>, без токенов", () => {
   const qr = journalSamplePdfQr("https://wesetup.ru", "hygiene");
   assert.equal(qr.url, "https://wesetup.ru/journals-info/hygiene");
-  assert.deepEqual(qr.lines, ["Вести этот журнал электронно", "wesetup.ru"]);
+  assert.deepEqual(qr.lines, ["Заполнение электронного журнала", "wesetup.ru"]);
 });
 
 test("печать журнала: с qr — QR на каждой странице без наложений; без qr — как раньше", () => {

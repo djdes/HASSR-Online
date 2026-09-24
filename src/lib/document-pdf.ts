@@ -294,6 +294,7 @@ import { loadOrderScansForPdf } from "@/lib/journal-order-scans-db";
 import { appendOrderScansToPdf, type OrderScanForPdf } from "@/lib/journal-order-scans-pdf";
 import {
   journalQrFooterInset,
+  journalQrRightEdges,
   reserveJournalQrBottomMargin,
   stampJournalQr,
   trackPdfInk,
@@ -7430,8 +7431,17 @@ function renderJournalDocumentPdfPass(
 
   // Единый проход по готовому документу: «СТР. i ИЗ N» с честным N в
   // шапке каждой страницы (или в подвале, если шапки на странице нет).
-  // С QR в углу «СТР. X ИЗ N» на страницах без шапки встаёт левее QR.
-  const qrFooterInset = qr ? journalQrFooterInset(doc, qr.lines, fontName) : null;
+  // С QR в углу «СТР. X ИЗ N» на страницах без шапки встаёт левее QR, а
+  // QR — вровень с правой границей таблицы своей страницы.
+  const qrRightEdges = qr ? journalQrRightEdges(doc, inkTracker) : null;
+  const qrFooterInsets =
+    qr && qrRightEdges
+      ? qrRightEdges.map((edge, index) => {
+          doc.setPage(index + 1);
+          return journalQrFooterInset(doc, qr.lines, fontName, doc.internal.pageSize.getWidth() - edge);
+        })
+      : null;
+  const qrFooterInset = qrFooterInsets ? (page: number) => qrFooterInsets[page - 1] : null;
   stampJournalPageNumbers(
     doc,
     fontName,
@@ -7443,12 +7453,12 @@ function renderJournalDocumentPdfPass(
     doc,
     branding,
     fontName,
-    qrFooterInset ? { rightReserve: qrFooterInset + 34 } : {},
+    qrFooterInset ? { rightReserve: (page) => qrFooterInset(page) + 34 } : {},
   );
   // QR — последним: он видит всё, что уже есть на странице (включая
   // нумерацию и подвал), и встаёт только на свободное место.
   const qrPlacements = qr
-    ? stampJournalQr(doc, { ...qr, fontName, tracker: inkTracker })
+    ? stampJournalQr(doc, { ...qr, fontName, tracker: inkTracker, rightEdges: qrRightEdges })
     : undefined;
 
   activeControlPeriodicity = "";

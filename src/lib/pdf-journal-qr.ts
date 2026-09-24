@@ -15,7 +15,9 @@ import QRCode from "qrcode";
  *   2. `reserveJournalQrBottomMargin` поднимает нижнее поле ВСЕХ таблиц
  *      autoTable этого документа до `JOURNAL_QR_BOTTOM_RESERVE_MM`, чтобы
  *      у полной страницы таблицы угол под QR был свободен;
- *   3. `stampJournalQr` ставит QR в угол, а если угол занят (ручная
+ *   3. `stampJournalQr` ставит QR в нижний угол ВРОВЕНЬ с правой границей
+ *      содержимого страницы (правый край таблицы / рамки бланка — симметрично
+ *      левому полю, `journalQrRightEdges`), а если угол занят (ручная
  *      вёрстка, подписи внизу) — сдвигает его влево по нижнему полю, затем
  *      выше, в первое свободное место этой страницы.
  *
@@ -27,6 +29,11 @@ import QRCode from "qrcode";
 export const JOURNAL_QR_SIZE_MM = 13;
 /** Отступ QR-блока от края листа, мм (зона непечати принтера ≥ 4 мм). */
 export const JOURNAL_QR_EDGE_MM = 5;
+/**
+ * Правое поле по умолчанию, мм: QR встаёт в стольких мм от правого края
+ * листа, если на странице нет содержимого, по которому равняться.
+ */
+export const JOURNAL_QR_DEFAULT_RIGHT_MARGIN_MM = 10;
 /** Свободное поле вокруг блока (тихая зона QR + зазор до таблицы), мм. */
 export const JOURNAL_QR_PAD_MM = 1.5;
 /** Нижнее поле таблиц, при котором угол полной страницы свободен под QR. */
@@ -35,7 +42,8 @@ export const JOURNAL_QR_BOTTOM_RESERVE_MM = JOURNAL_QR_EDGE_MM + JOURNAL_QR_SIZE
 export const JOURNAL_QR_MIN_MODULE_MM = 0.3;
 
 const CAPTION_FONT_SIZE = 6;
-const CAPTION_MAX_WIDTH_MM = 30;
+// «Заполнение электронного журнала» — одной строкой (≈ 36 мм жирным 6 pt).
+const CAPTION_MAX_WIDTH_MM = 42;
 const CAPTION_GAP_MM = 1.5;
 const CAPTION_LINE_MM = 2.5;
 const SEARCH_STEP_MM = 2;
@@ -64,6 +72,8 @@ export type JournalQrPlacement = {
   modules: number;
   /** Прямоугольник QR + подпись (без поля), мм. */
   block: PdfBox;
+  /** Правая граница содержимого страницы, по которой равняется QR, мм. */
+  rightEdge: number;
   /** true — угол был занят, QR сдвинут в свободное место страницы. */
   moved: boolean;
   /** true — QR в нижнем поле листа (в углу или сдвинут влево по низу). */
@@ -321,9 +331,55 @@ export function journalQrBlockWidth(doc: jsPDF, lines: string[], fontName = "Jou
 /**
  * Правая граница подписи «СТР. X ИЗ N» на странице без шапки, считая от
  * правого края листа: левее QR-блока, чтобы номер не лёг под код.
+ * `rightInset` — отступ правого края QR от края листа на этой странице
+ * (`pageWidth - journalQrRightEdges(...)[page - 1]`).
  */
-export function journalQrFooterInset(doc: jsPDF, lines: string[], fontName = "JournalUnicode"): number {
-  return JOURNAL_QR_EDGE_MM + journalQrBlockWidth(doc, lines, fontName) + 3;
+export function journalQrFooterInset(
+  doc: jsPDF,
+  lines: string[],
+  fontName = "JournalUnicode",
+  rightInset = JOURNAL_QR_DEFAULT_RIGHT_MARGIN_MM,
+): number {
+  return rightInset + journalQrBlockWidth(doc, lines, fontName) + 3;
+}
+
+/**
+ * Правая граница содержимого страницы, мм от левого края листа: самый
+ * правый край нарисованного бланком (таблица, рамка, шапка). По ней QR
+ * встаёт вровень с таблицей — симметрично левому полю.
+ *
+ * Что заходит в зону непечати у края листа (таблица шире листа — ошибка
+ * вёрстки бланка), не считается: QR равняется на то, что на листе целиком
+ * (обычно рамка шапки). Нечего взять (пустая страница или содержимое только
+ * в левой половине листа) — поле по умолчанию.
+ */
+export function journalQrContentRight(boxes: PdfBox[], pageWidth: number): number {
+  const fallback = pageWidth - JOURNAL_QR_DEFAULT_RIGHT_MARGIN_MM;
+  const limit = pageWidth - JOURNAL_QR_EDGE_MM;
+  let right = -Infinity;
+  for (const box of boxes) {
+    if (isNum(box.x1) && box.x1 <= limit + 1e-6 && box.x1 > right) right = box.x1;
+  }
+  if (!Number.isFinite(right) || right < pageWidth / 2) return fallback;
+  return right;
+}
+
+/**
+ * Правая граница QR на каждой странице документа (индекс = страница − 1).
+ * Считать ДО нумерации страниц и подвала партнёра: их место зависит от
+ * положения QR, а сами они стоят левее и границу не сдвигают.
+ */
+export function journalQrRightEdges(doc: jsPDF, tracker: PdfInkTracker | null | undefined): number[] {
+  const edges: number[] = [];
+  const total = doc.getNumberOfPages();
+  const current = (doc as jsPDF & { getCurrentPageInfo: () => { pageNumber: number } }).getCurrentPageInfo().pageNumber;
+  for (let page = 1; page <= total; page += 1) {
+    // Размер листа — свой у каждой страницы (приложение бывает книжным).
+    doc.setPage(page);
+    edges.push(journalQrContentRight(tracker?.boxes(page) ?? [], doc.internal.pageSize.getWidth()));
+  }
+  doc.setPage(current);
+  return edges;
 }
 
 function intersects(a: PdfBox, b: PdfBox): boolean {
@@ -360,15 +416,21 @@ export function findJournalQrSpot(params: {
   captionWidth: number;
   captionHeight: number;
   boxes: PdfBox[];
+  /**
+   * Где должен кончаться QR справа, мм от левого края листа (правая граница
+   * таблицы). По умолчанию — `JOURNAL_QR_EDGE_MM` от края листа.
+   */
+  rightEdge?: number;
 }): { x: number; y: number; moved: boolean; bottomRow: boolean } | null {
   const { pageWidth, pageHeight, size, boxes } = params;
+  const rightEdge = Math.min(params.rightEdge ?? pageWidth - JOURNAL_QR_EDGE_MM, pageWidth - JOURNAL_QR_EDGE_MM);
   const caption: CaptionLayout = {
     lines: params.captionWidth > 0 ? [{ text: "", bold: false }] : [],
     width: params.captionWidth,
     height: params.captionHeight,
   };
   const leftmost = JOURNAL_QR_EDGE_MM + (params.captionWidth > 0 ? params.captionWidth + CAPTION_GAP_MM : 0);
-  const rightmost = pageWidth - JOURNAL_QR_EDGE_MM - size;
+  const rightmost = rightEdge - size;
   const bottom = pageHeight - JOURNAL_QR_EDGE_MM - size;
   const fits = (x: number, y: number) => {
     const block = blockAt(x, y, size, caption);
@@ -413,9 +475,15 @@ export function journalQrMatrix(url: string): QRCode.QRCode {
  */
 export function stampJournalQr(
   doc: jsPDF,
-  params: JournalPdfQr & { fontName?: string; tracker?: PdfInkTracker | null },
+  params: JournalPdfQr & {
+    fontName?: string;
+    tracker?: PdfInkTracker | null;
+    /** Правая граница QR по страницам (`journalQrRightEdges`); нет — считается здесь. */
+    rightEdges?: number[] | null;
+  },
 ): JournalQrPlacement[] {
   const fontName = params.fontName ?? "JournalUnicode";
+  const rightEdges = params.rightEdges ?? journalQrRightEdges(doc, params.tracker);
   params.tracker?.stop();
   const qr = journalQrMatrix(params.url);
   const modules = qr.modules.size;
@@ -432,6 +500,7 @@ export function stampJournalQr(
     doc.setPage(page);
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
+    const rightEdge = rightEdges[page - 1] ?? journalQrContentRight(params.tracker?.boxes(page) ?? [], pageWidth);
     const spot = findJournalQrSpot({
       pageWidth,
       pageHeight,
@@ -439,8 +508,9 @@ export function stampJournalQr(
       captionWidth,
       captionHeight: caption.height,
       boxes: params.tracker?.boxes(page) ?? [],
+      rightEdge,
     });
-    const x = spot?.x ?? pageWidth - JOURNAL_QR_EDGE_MM - size;
+    const x = spot?.x ?? Math.min(rightEdge, pageWidth - JOURNAL_QR_EDGE_MM) - size;
     const y = spot?.y ?? pageHeight - JOURNAL_QR_EDGE_MM - size;
     if (!params.probeOnly) drawMatrix(doc, qr, x, y, size);
 
@@ -465,6 +535,7 @@ export function stampJournalQr(
       size,
       modules,
       block: blockAt(x, y, size, caption),
+      rightEdge,
       moved: spot?.moved ?? false,
       bottomRow: spot?.bottomRow ?? true,
       overlap: spot === null,

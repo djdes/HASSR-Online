@@ -11,8 +11,10 @@ import { resolveQrPosterOrigin } from "@/lib/qr-poster-origin";
  * запись по PIN, работает всегда). Образец бланка → `/journals-info/<code>`.
  */
 
-export const JOURNAL_DOCUMENT_QR_LINES = ["Электронный журнал WeSetup", "Отсканируйте, чтобы заполнить с телефона"];
-export const JOURNAL_SAMPLE_QR_LINES = ["Вести этот журнал электронно", "wesetup.ru"];
+/** Подпись у QR — одна для настоящих документов и образцов бланков. */
+export const JOURNAL_QR_CAPTION_LINES = ["Заполнение электронного журнала", "wesetup.ru"];
+export const JOURNAL_DOCUMENT_QR_LINES = JOURNAL_QR_CAPTION_LINES;
+export const JOURNAL_SAMPLE_QR_LINES = JOURNAL_QR_CAPTION_LINES;
 
 /** Домен ссылок — как у QR-плакатов (на проде только свой домен). */
 export function journalPdfQrOrigin(): string {

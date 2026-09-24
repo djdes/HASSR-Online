@@ -71,12 +71,15 @@ export function stampJournalPageNumbers(
     /**
      * Отступ правого края подписи «СТР. X ИЗ N» на странице без шапки
      * (мм от правого края листа). По умолчанию 14; с QR-кодом в углу —
-     * левее QR-блока (`journalQrFooterInset`).
+     * левее QR-блока (`journalQrFooterInset`). Функция — свой отступ у
+     * каждой страницы (QR стоит вровень с таблицей, а поля у страниц разные).
      */
-    fallbackRightInset?: number;
+    fallbackRightInset?: number | ((pageNumber: number) => number);
   } = {}
 ) {
   const fallbackRightInset = options.fallbackRightInset ?? 14;
+  const rightInsetFor = (pageNumber: number) =>
+    typeof fallbackRightInset === "function" ? fallbackRightInset(pageNumber) : fallbackRightInset;
   const totalPages = doc.getNumberOfPages();
   const byPage = new Map<number, PageLabelSlot>();
   for (const slot of pageLabelSlots) {
@@ -95,7 +98,7 @@ export function stampJournalPageNumbers(
     if (slot) {
       drawCenteredLabel(doc, label, slot);
     } else {
-      doc.text(label, pageWidth - fallbackRightInset, pageHeight - 8, { align: "right" });
+      doc.text(label, pageWidth - rightInsetFor(pageNumber), pageHeight - 8, { align: "right" });
     }
   }
 
@@ -127,14 +130,17 @@ export function stampPartnerPdfFooter(
   options: {
     /**
      * Сколько места справа (мм) оставить под «СТР. X ИЗ N» (и QR-код в
-     * углу, если он печатается). По умолчанию 48.
+     * углу, если он печатается). По умолчанию 48. Функция — своё место у
+     * каждой страницы.
      */
-    rightReserve?: number;
+    rightReserve?: number | ((pageNumber: number) => number);
   } = {}
 ) {
   if (!brand) return;
   const totalPages = doc.getNumberOfPages();
-  const rightReserve = options.rightReserve ?? 48;
+  const rightReserveOption = options.rightReserve ?? 48;
+  const rightReserveFor = (pageNumber: number) =>
+    typeof rightReserveOption === "function" ? rightReserveOption(pageNumber) : rightReserveOption;
   const text = partnerPdfFooterText(brand);
 
   doc.setFont(fontName, "normal");
@@ -145,7 +151,7 @@ export function stampPartnerPdfFooter(
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     // Справа оставляем место под «СТР. X ИЗ N» на страницах без шапки.
-    const maxWidth = pageWidth - 14 - rightReserve;
+    const maxWidth = pageWidth - 14 - rightReserveFor(pageNumber);
     const lines = (doc.splitTextToSize(text, maxWidth) as string[]).slice(0, 2);
     lines.forEach((line, index) => {
       const y = pageHeight - 8 - (lines.length - 1 - index) * 3.4;
