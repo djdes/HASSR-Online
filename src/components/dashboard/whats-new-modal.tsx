@@ -3,6 +3,8 @@ import { lockBodyScroll, unlockBodyScroll } from "@/lib/use-body-scroll-lock";
 
 import { useEffect, useState } from "react";
 import {
+  Library,
+  Dumbbell,
   BellRing,
   ChevronDown,
   Camera,
@@ -80,6 +82,9 @@ function isCategoryNote(
  * нельзя (server→client serialization), поэтому держим mapping здесь.
  */
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  "Мастер-кабинет справочников": Library,
+  "Новые журналы и сферы": Dumbbell,
+  "Начальная настройка: приказы и чек-листы": ClipboardCheck,
   "Приказы и инструкции": ScrollText,
   "Услуги специалиста": Handshake,
   "Точки": MapPin,
