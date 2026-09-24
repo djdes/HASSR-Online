@@ -118,7 +118,7 @@ export function QrPinRequestForm({
     <form onSubmit={submit} noValidate className="qp-card" data-testid="qr-pin-request" data-kind={requestKind}>
       {change ? (
         <p className="qp-hint" style={{ margin: "4px 2px 14px", color: "#3c4053" }}>
-          Введите новый PIN — ответственный получит запрос, после одобрения вы получите уведомление. До этого действует старый PIN.
+          Новый PIN заработает после одобрения, до этого действует старый.
         </p>
       ) : null}
       {error ? (
@@ -165,7 +165,7 @@ export function QrPinRequestForm({
         onChange={(event) => setPin2(event.target.value.replace(/\D/g, ""))}
         placeholder="••••"
       />
-      {change ? null : <p className="qp-hint">Руководитель получит запрос — после его одобрения PIN заработает.</p>}
+      {change ? null : <p className="qp-hint">Заработает после одобрения руководителя.</p>}
       <button type="submit" disabled={busy || pin.length < 4 || pin2.length < 4} className={`${PRIMARY_BUTTON} mt-4 h-14 text-[19px]`}>
         {busy ? <Loader2 className="size-5 animate-spin" /> : null}
         Отправить запрос
@@ -213,7 +213,7 @@ export function QrPinNoAccess({
   if (view === "sent") return <QrPinRequestSent requestKind="issue" onDone={() => setView("idle")} />;
   return (
     <div data-testid="qr-pin-no-access">
-      <div className="qp-note">Нужен личный PIN: он подтверждает, что запись делаете именно вы.</div>
+      <div className="qp-note">Нужен личный PIN для подтверждения личности.</div>
       {status ? (
         <div className={status.tone === "bad" ? "qp-err" : "qp-ok-note"} role="status">
           {status.text}

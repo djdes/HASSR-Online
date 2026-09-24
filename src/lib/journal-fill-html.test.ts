@@ -90,11 +90,11 @@ describe("journal-fill-html", () => {
   });
 
   it("offers «request access» with a self-chosen PIN when the employee has none", () => {
-    const html = renderPinNoAccess({ who: "", action: "/x", status: { text: "Запрос на PIN отправлен и ждёт подтверждения руководителя.", tone: "wait" } });
+    const html = renderPinNoAccess({ who: "", action: "/x", status: { text: "Запрос отправлен, ждёт одобрения.", tone: "wait" } });
     assert.match(html, /<input type="hidden" name="action" value="pin-request"><input type="hidden" name="kind" value="issue">|name="action" value="pin-request">\n<input type="hidden" name="kind" value="issue">/);
     assert.match(html, /name="pin2"/);
     assert.match(html, />Запросить доступ<\/button>/);
-    assert.match(html, /qp-ok-note" role="status">Запрос на PIN отправлен/);
+    assert.match(html, /qp-ok-note" role="status">Запрос отправлен, ждёт одобрения/);
   });
 
   it("renders a plain form that works without scripts", () => {

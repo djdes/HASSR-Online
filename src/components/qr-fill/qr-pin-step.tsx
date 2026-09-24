@@ -177,7 +177,7 @@ function QrPinStepFor(props: QrPinStepProps) {
         placeholder="••••"
         aria-label="PIN"
       />
-      <p className="qp-hint">PIN подтверждает, что запись делаете именно вы.</p>
+      <p className="qp-hint">PIN для подтверждения личности</p>
       <button
         type="submit"
         disabled={busy || pin.length < 4}

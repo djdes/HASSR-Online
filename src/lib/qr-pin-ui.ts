@@ -1,8 +1,8 @@
 /**
- * Галка успеха QR-страниц (2026-09-23): залитый сине-зелёный круг #059669
- * с белой галкой и мягким ореолом. Раньше был зелёный КОНТУРНЫЙ круг на
- * светло-зелёном фоне — сотрудники путали его с логотипом Сбербанка
- * («вы что, в мой Сбербанк зашли?»). Одна разметка и один CSS на всех:
+ * Галка успеха QR-страниц: скруглённый квадрат фирменного индиго #5566f6
+ * с белой галкой и мягким ореолом. Круг не используем: и зелёный контурный
+ * круг, и залитый сине-зелёный (#059669, 23.09) люди принимали за логотип
+ * Сбербанка («вы что, в мой Сбербанк зашли?») — 24.09 сменили форму и цвет. Одна разметка и один CSS на всех:
  * «PIN верный» (`QR_PIN_OK_HTML`), «Записано» в React (`SuccessCheck`) и
  * серверные страницы журналов (`journal-fill-html.ts`).
  *
@@ -10,13 +10,13 @@
  * `box-shadow` 10px: контейнеру нужен отступ ≥ 10px, иначе ореол режется.
  * При `prefers-reduced-motion` — без анимации, сразу готовая галка.
  */
-export const QR_CHECK_COLOR = "#059669";
+export const QR_CHECK_COLOR = "#5566f6";
 
 /** Белая галка без круга: круг — фон `.qc`. Толщина линии 3 (viewBox 24). */
 export const QR_CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="qc-m" d="m6.5 12.5 3.6 3.6 7.4-7.6"/></svg>`;
 
 export const QR_CHECK_CSS = `
-.qc{--qc:112px;width:var(--qc);height:var(--qc);flex:none;border-radius:50%;background:${QR_CHECK_COLOR};box-shadow:0 0 0 10px rgba(5,150,105,.14);display:flex;align-items:center;justify-content:center;animation:qc-pop .42s cubic-bezier(.2,.9,.3,1.25) both}
+.qc{--qc:112px;width:var(--qc);height:var(--qc);flex:none;border-radius:28%;background:${QR_CHECK_COLOR};box-shadow:0 0 0 10px rgba(85,102,246,.14);display:flex;align-items:center;justify-content:center;animation:qc-pop .42s cubic-bezier(.2,.9,.3,1.25) both}
 .qc svg{width:58%;height:58%;display:block}
 .qc-m{stroke-dasharray:18;stroke-dashoffset:18;animation:qc-draw .28s ease-out .2s forwards}
 @keyframes qc-pop{0%{transform:scale(.5);opacity:0}70%{transform:scale(1.06);opacity:1}100%{transform:scale(1);opacity:1}}

@@ -51,18 +51,18 @@ test("статус: нет запроса — показывать нечего"
 test("статус: ждёт — спокойная строка, отклонён — красная с причиной", () => {
   const pending = qrPinRequestScreen({ kind: "issue", status: "pending" });
   assert.equal(pending.status?.tone, "wait");
-  assert.match(pending.status?.text ?? "", /ждёт подтверждения/);
+  assert.match(pending.status?.text ?? "", /ждёт одобрения/);
   assert.equal(pending.approvedNote, null);
   const rejected = qrPinRequestScreen({ kind: "change", status: "rejected", decisionNote: "Не узнал" });
   assert.equal(rejected.status?.tone, "bad");
-  assert.match(rejected.status?.text ?? "", /отклонил.*Не узнал/);
+  assert.match(rejected.status?.text ?? "", /отклонён.*Не узнал/);
 });
 
 test("одобрено: зелёная строка над шагом PIN три дня, на экране без PIN — нет", () => {
   const now = new Date("2026-09-22T10:00:00Z");
   const fresh = qrPinRequestScreen({ kind: "issue", status: "approved", decidedAt: new Date(now.getTime() - 3600_000) }, now);
   assert.equal(fresh.status, null);
-  assert.match(fresh.approvedNote ?? "", /одобрил/);
+  assert.match(fresh.approvedNote ?? "", /одобрен/);
   const old = qrPinRequestScreen({ kind: "change", status: "approved", decidedAt: new Date(now.getTime() - PIN_APPROVED_NOTE_MS - 1) }, now);
   assert.deepEqual(old, { status: null, approvedNote: null });
   assert.deepEqual(qrPinRequestScreen({ kind: "issue", status: "approved", decidedAt: null }, now), { status: null, approvedNote: null });

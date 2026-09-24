@@ -36,6 +36,9 @@ test("понятные подписи вида и статуса", () => {
   assert.equal(pinRequestKindLabel("issue"), "Новый PIN");
   assert.equal(pinRequestKindLabel("change"), "Смена PIN");
   assert.match(pinRequestStatusText({ status: "pending", kind: "issue" }) ?? "", /ждёт/);
-  assert.match(pinRequestStatusText({ status: "rejected", kind: "change", decisionNote: "Не узнал" }) ?? "", /отклонил.*Не узнал/);
+  assert.match(pinRequestStatusText({ status: "rejected", kind: "change", decisionNote: "Не узнал" }) ?? "", /отклонён.*Не узнал/);
+  // Коротко (24.09): «Новый PIN одобрен.» вместо «Руководитель одобрил новый PIN — входите с ним.»
+  assert.equal(pinRequestStatusText({ status: "approved", kind: "change" }), "Новый PIN одобрен.");
+  assert.equal(pinRequestStatusText({ status: "approved", kind: "issue" }), "PIN одобрен.");
   assert.equal(pinRequestStatusText({ status: "superseded", kind: "issue" }), null);
 });

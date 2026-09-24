@@ -472,7 +472,7 @@ export function renderPinStep(params: {
 <div class="qp-head"><label class="qp-k" for="qp-pin">Ваш PIN</label>${params.changePinHref ? `<a class="qp-link" href="${esc(params.changePinHref)}">Запросить смену PIN</a>` : ""}</div>
 ${params.error ? `<div class="qp-err" role="alert">${esc(params.error)}</div>` : ""}
 <input id="qp-pin" class="qp-pin" type="password" name="pin" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" placeholder="••••" required autofocus>
-<p class="qp-hint">PIN подтверждает, что запись делаете именно вы.</p>
+<p class="qp-hint">PIN для подтверждения личности</p>
 <div class="sticky"><button class="btn" type="submit">Продолжить</button></div>
 </form>`;
 }
@@ -501,14 +501,14 @@ export function renderPinNoAccess(params: {
   error?: string | null;
 }): string {
   return `${params.who}
-<div class="qp-note">Нужен личный PIN: он подтверждает, что запись делаете именно вы.</div>
+<div class="qp-note">Нужен личный PIN для подтверждения личности.</div>
 ${params.status ? `<div class="${params.status.tone === "bad" ? "qp-err" : "qp-ok-note"}" role="status">${esc(params.status.text)}</div>` : ""}
 <form method="post" action="${esc(params.action)}" id="qr-pin">
 <input type="hidden" name="action" value="pin-request">
 <input type="hidden" name="kind" value="issue">
 ${params.error ? `<div class="qp-err" role="alert">${esc(params.error)}</div>` : ""}
 ${pinPairInputs("Придумайте PIN")}
-<p class="qp-hint">4–6 цифр. Руководитель получит запрос — после его одобрения PIN заработает.</p>
+<p class="qp-hint">4–6 цифр. Заработает после одобрения руководителя.</p>
 <div class="sticky"><button class="btn" type="submit">Запросить доступ</button></div>
 </form>`;
 }
@@ -524,7 +524,7 @@ export function renderPinRequestForm(params: {
 <form method="post" action="${esc(params.action)}" id="qr-pin">
 <input type="hidden" name="action" value="pin-request">
 <input type="hidden" name="kind" value="change">
-<p class="qp-hint" style="margin:4px 2px 14px;color:#3c4053">Введите новый PIN — ответственный за смену PIN получит запрос. После одобрения придёт уведомление, до этого действует старый PIN.</p>
+<p class="qp-hint" style="margin:4px 2px 14px;color:#3c4053">Новый PIN заработает после одобрения, до этого действует старый.</p>
 ${params.error ? `<div class="qp-err" role="alert">${esc(params.error)}</div>` : ""}
 ${pinPairInputs("Новый PIN")}
 <div class="sticky"><button class="btn" type="submit">Запросить смену PIN</button><a class="btn second" href="${esc(params.backHref)}">Отмена</a></div>
@@ -538,8 +538,8 @@ export function renderPinRequestSent(params: { who: string; kind: "issue" | "cha
 <h2 class="center" style="margin:6px 0 10px">Запрос отправлен</h2>
 <p class="qp-hint center" style="color:#3c4053">${
     params.kind === "change"
-      ? "Руководитель получит уведомление. После одобрения новый PIN заработает, а пока действует старый."
-      : "Руководитель получит уведомление. После одобрения PIN заработает — отсканируйте QR-код снова."
+      ? "Новый PIN заработает после одобрения, пока действует старый."
+      : "PIN заработает после одобрения. Затем отсканируйте QR снова."
   }</p>
 <div class="sticky"><a class="btn second" href="${esc(params.backHref)}">${params.kind === "change" ? "Вернуться к вводу PIN" : "Готово"}</a></div>`;
 }

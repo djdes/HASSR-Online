@@ -22,7 +22,7 @@ export function PinPrompt({ value, onChange, error }: { value: string; onChange:
         aria-label="PIN для быстрой QR-авторизации"
         className="h-[72px] w-full rounded-2xl border border-[#dcdfed] bg-white pl-[0.5em] text-center text-[36px] font-semibold tracking-[0.5em] text-[#0b1024] placeholder:tracking-[0.3em] placeholder:text-[#c8cbe0] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
       />
-      <p className="mt-2 text-center text-[14px] text-[#6f7282]">PIN подтверждает, что запись сделали именно вы.</p>
+      <p className="mt-2 text-center text-[14px] text-[#6f7282]">PIN для подтверждения личности</p>
     </div>
   );
 }

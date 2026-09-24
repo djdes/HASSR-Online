@@ -192,7 +192,7 @@ export const UI = {
   // src/lib/journal-fill-html.ts
   whoFills: "Кто заполняет",
   pinLabel: "Ваш PIN",
-  pinHint: "PIN подтверждает, что запись делаете именно вы.",
+  pinHint: "PIN для подтверждения личности",
   pinContinue: "Продолжить",
   entrySaved: "Отметка записана",
   // src/app/equipment-fill/[equipmentId]/equipment-fill-client.tsx

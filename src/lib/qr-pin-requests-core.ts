@@ -42,11 +42,10 @@ export function pinRequestStatusText(request: {
   kind: string;
   decisionNote?: string | null;
 }): string | null {
-  const what = request.kind === "change" ? "смену PIN" : "PIN";
-  if (request.status === "pending") return `Запрос на ${what} отправлен и ждёт подтверждения руководителя.`;
-  if (request.status === "approved") return request.kind === "change" ? "Руководитель одобрил новый PIN — входите с ним." : "Руководитель одобрил ваш PIN — введите его.";
+  if (request.status === "pending") return "Запрос отправлен, ждёт одобрения.";
+  if (request.status === "approved") return request.kind === "change" ? "Новый PIN одобрен." : "PIN одобрен.";
   if (request.status === "rejected") {
-    return `Руководитель отклонил запрос${request.decisionNote ? `: ${request.decisionNote}` : ""}. Можно отправить новый.`;
+    return `Запрос отклонён${request.decisionNote ? `: ${request.decisionNote}` : ""}.`;
   }
   return null;
 }

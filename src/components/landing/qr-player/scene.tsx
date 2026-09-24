@@ -177,9 +177,10 @@ function DrawnCheck({ t, at, size = "4.4em" }: { t: number; at: number; size?: s
         width: size,
         height: size,
         margin: "0 auto",
-        borderRadius: "999px",
-        background: "#059669",
-        boxShadow: "0 0 0 0.3em rgba(5,150,105,.14)",
+        // Как на настоящих QR-страницах (qr-pin-ui.ts): скруглённый квадрат, не круг — не путать со Сбером.
+        borderRadius: "28%",
+        background: "#5566f6",
+        boxShadow: "0 0 0 0.3em rgba(85,102,246,.14)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
