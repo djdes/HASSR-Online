@@ -9,7 +9,7 @@ const exe = path.join(process.env.LOCALAPPDATA, "ms-playwright", "chromium-1232"
 const out = "D:/www/Wesetup.ru/.agent/tasks/qr-player-remotion-2026-09/shots";
 const prefix = process.argv[2] || "before";
 const baseUrl = process.argv[3] || "http://localhost:3020";
-const FRAMES = [90, 990];
+const FRAMES = (process.argv[4] || "90,990").split(",").map(Number);
 fs.mkdirSync(out, { recursive: true });
 
 const browser = await chromium.launch({ executablePath: exe, args: ["--use-gl=swiftshader", "--no-sandbox"] });

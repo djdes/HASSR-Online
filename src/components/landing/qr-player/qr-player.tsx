@@ -82,6 +82,14 @@ export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
+  // Фото мест подгружаются заранее: к моменту смены главы кадр уже в кеше.
+  useEffect(() => {
+    for (const item of CHAPTERS) {
+      const img = new window.Image();
+      img.src = item.photo;
+    }
+  }, []);
+
   // PlayerRef через callback-ref в state: слушатели вешаются, когда
   // Плеер реально смонтирован, а не по таймеру.
   const [player, setPlayer] = useState<PlayerRef | null>(null);
@@ -212,12 +220,14 @@ export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
                 className={`relative isolate inline-flex h-9 shrink-0 items-center gap-2 overflow-hidden whitespace-nowrap rounded-full px-3.5 text-[13px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8b97ff]/50 ${
                   current ? "text-[#141a44]" : "text-white/80 hover:bg-[rgba(255,255,255,0.12)] hover:text-white"
                 }`}
-                style={{ background: current ? "#f2f4ff" : "rgba(255,255,255,0.07)" }}
+                style={{ background: current ? item.accentSoft : "rgba(255,255,255,0.07)" }}
               >
                 {current ? (
-                  <span aria-hidden="true" className="absolute inset-y-0 left-0 -z-10" style={{ width: `${fill * 100}%`, background: "#dfe3ff" }} />
+                  <span aria-hidden="true" className="absolute inset-y-0 left-0 -z-10" style={{ width: `${fill * 100}%`, background: item.accentFill }} />
                 ) : null}
-                <span className="tabular-nums opacity-60">{chapterIndex + 1}</span>
+                <span className={`tabular-nums ${current ? "font-semibold" : "opacity-60"}`} style={current ? { color: item.accent } : undefined}>
+                  {chapterIndex + 1}
+                </span>
                 {item.chip}
               </button>
             );
@@ -296,7 +306,11 @@ export function QrPlayer({ qr, today }: { qr: QrMatrix; today: SceneDay }) {
           aria-label="Перемотка"
           aria-valuetext={`${formatClock(frame / FPS)} из ${formatClock(DURATION_IN_FRAMES / FPS)}, глава «${chapter.chip}»`}
           className="qrp-range qrp-range-thin relative block w-full"
-          style={{ ["--qrp-fill" as string]: `${(frame / (DURATION_IN_FRAMES - 1)) * 100}%` }}
+          style={{
+            ["--qrp-fill" as string]: `${(frame / (DURATION_IN_FRAMES - 1)) * 100}%`,
+            /* Полоса перемотки красится в цвет текущей главы. */
+            ["--qrp-accent" as string]: chapter.accent,
+          }}
         />
       </div>
 

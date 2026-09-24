@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import test from "node:test";
 
@@ -54,6 +54,19 @@ test("interpolate: зажим по краям и линейность", () => {
   assert.equal(interpolate(-5, [0, 10], [0, 100]), 0);
   assert.equal(interpolate(20, [0, 10], [0, 100]), 100);
   assert.equal(interpolate(20, [0, 10], [0, 100], { clamp: false }), 200);
+});
+
+test("смена помещения: у каждой главы свой цвет и существующее фото", () => {
+  const seen = new Set<string>();
+  for (const chapter of CHAPTERS) {
+    assert.match(chapter.accent, /^#[0-9a-f]{6}$/i, chapter.id);
+    assert.match(chapter.accentSoft, /^#[0-9a-f]{6}$/i, chapter.id);
+    assert.match(chapter.accentFill, /^#[0-9a-f]{6}$/i, chapter.id);
+    assert.ok(!seen.has(chapter.accent), `цвет ${chapter.accent} повторяется`);
+    seen.add(chapter.accent);
+    assert.ok(chapter.photo.startsWith("/landing/places/"), chapter.id);
+    assert.ok(existsSync(path.join(ROOT, "public", chapter.photo)), `нет файла ${chapter.photo}`);
+  }
 });
 
 test("движок — Remotion: Player в плеере, useCurrentFrame в композиции", () => {

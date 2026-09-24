@@ -42,6 +42,15 @@ export type Chapter = {
   caption: string;
   /** Короткая видимая подпись под сценой — одна строка. */
   short: string;
+  /** Цвет главы: активная вкладка, вуаль сцены, полоса перемотки. */
+  accent: string;
+  /** Светлая пастель — фон активной вкладки. */
+  accentSoft: string;
+  /** Заливка-прогресс активной вкладки (между soft и accent). */
+  accentFill: string;
+  /** Фото настоящего места (public/…): фон сцены и «камера» в
+      видоискателе. Лицензии — public/landing/places/CREDITS.md. */
+  photo: string;
   from: number;
   duration: number;
 };
@@ -49,6 +58,10 @@ export type Chapter = {
 const CHAPTER_DRAFTS: Array<Omit<Chapter, "from" | "duration">> = [
   {
     id: "fridge",
+    accent: "#5566f6",
+    accentSoft: "#eef1ff",
+    accentFill: "#dfe3ff",
+    photo: "/landing/places/fridge.webp",
     chip: "Холодильник",
     place: "Наклейка на дверце холодильника",
     journal: journalName("cold_equipment_control"),
@@ -58,6 +71,10 @@ const CHAPTER_DRAFTS: Array<Omit<Chapter, "from" | "duration">> = [
   },
   {
     id: "locker",
+    accent: "#14b8a6",
+    accentSoft: "#e4f9f5",
+    accentFill: "#c6efe8",
+    photo: "/landing/places/locker.webp",
     chip: "Раздевалка",
     place: "QR у термометра в раздевалке",
     journal: journalName("hygiene"),
@@ -67,6 +84,10 @@ const CHAPTER_DRAFTS: Array<Omit<Chapter, "from" | "duration">> = [
   },
   {
     id: "uv",
+    accent: "#8b5cf6",
+    accentSoft: "#f1ecff",
+    accentFill: "#e2d7fe",
+    photo: "/landing/places/uv.webp",
     chip: "УФ-лампа",
     place: "Наклейка на бактерицидной лампе",
     journal: journalName("uv_lamp_runtime"),
@@ -76,6 +97,10 @@ const CHAPTER_DRAFTS: Array<Omit<Chapter, "from" | "duration">> = [
   },
   {
     id: "fryer",
+    accent: "#f59e0b",
+    accentSoft: "#fdf3e1",
+    accentFill: "#fae3b5",
+    photo: "/landing/places/fryer.webp",
     chip: "Фритюр",
     place: "Наклейка на фритюрнице",
     journal: journalName("fryer_oil"),
@@ -85,6 +110,10 @@ const CHAPTER_DRAFTS: Array<Omit<Chapter, "from" | "duration">> = [
   },
   {
     id: "forgot",
+    accent: "#f43f5e",
+    accentSoft: "#ffe9ee",
+    accentFill: "#ffd2db",
+    photo: "/landing/places/forgot.webp",
     chip: "Забыли?",
     place: "Журнал сегодня не заполнен",
     journal: journalName("cold_equipment_control"),
@@ -94,6 +123,10 @@ const CHAPTER_DRAFTS: Array<Omit<Chapter, "from" | "duration">> = [
   },
   {
     id: "sensor",
+    accent: "#10b981",
+    accentSoft: "#e6f8f0",
+    accentFill: "#c8eedd",
+    photo: "/landing/places/sensor.webp",
     chip: "Датчики",
     place: "Wi-Fi датчик в холодильной витрине",
     journal: journalName("cold_equipment_control"),

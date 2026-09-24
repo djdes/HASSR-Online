@@ -21,6 +21,7 @@ import { formatDuration, formatHours } from "@/lib/uv-lamp";
 
 import { ease, interpolate, progress, windowed } from "./clock";
 import {
+  CHAPTER_SECONDS,
   DEMO,
   FPS,
   FRIDGE_NORM,
@@ -360,7 +361,7 @@ function Screen({ t, from, to, children, pad = true }: { t: number; from: number
 type ScanObject = "fridge" | "thermometer" | "lamp" | "fryer";
 
 /** Видоискатель камеры: объект, золотая наклейка, рамка распознавания. */
-function Viewfinder({ t, object, qr, bodyTemp }: { t: number; object: ScanObject; qr: QrMatrix; bodyTemp: number }) {
+function Viewfinder({ t, object, qr, bodyTemp, photo }: { t: number; object: ScanObject; qr: QrMatrix; bodyTemp: number; photo?: string }) {
   const hide = progress(t, 0.85, 0.25, ease.inOut);
   if (hide >= 1) return null;
   const lock = progress(t, 0.35, 0.3, ease.out);
@@ -369,7 +370,21 @@ function Viewfinder({ t, object, qr, bodyTemp }: { t: number; object: ScanObject
   const scan = (t * 1.6) % 1;
   return (
     <div style={fade(1 - hide, { position: "absolute", inset: 0, zIndex: 4, background: "#1a1f33", overflow: "hidden" })}>
-      <ObjectArt object={object} bodyTemp={bodyTemp} />
+      {photo ? (
+        <>
+          {/* Камера смотрит на настоящее место — фото вместо рисунка. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={photo}
+            alt=""
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "brightness(0.85) saturate(0.95)" }}
+          />
+          <div style={{ position: "absolute", inset: 0, background: "radial-gradient(130% 100% at 50% 42%, transparent 38%, rgba(8,11,24,0.6) 100%)" }} />
+          {object === "thermometer" ? <ThermometerReadout bodyTemp={bodyTemp} /> : null}
+        </>
+      ) : (
+        <ObjectArt object={object} bodyTemp={bodyTemp} />
+      )}
       <div
         style={{
           position: "absolute",
@@ -448,7 +463,36 @@ function Viewfinder({ t, object, qr, bodyTemp }: { t: number; object: ScanObject
   );
 }
 
-/** Условный рисунок того, на чём висит наклейка. */
+/** Показание настенного термометра — поверх фото или рисунка раздевалки. */
+function ThermometerReadout({ bodyTemp }: { bodyTemp: number }) {
+  const fever = bodyFever(bodyTemp);
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: "50%",
+        top: "66%",
+        transform: "translateX(-50%)",
+        display: "flex",
+        alignItems: "center",
+        gap: "0.4em",
+        padding: "0.4em 0.7em",
+        borderRadius: "0.7em",
+        background: "#e9ecf5",
+        color: fever ? P.bad : P.ink,
+        fontWeight: 700,
+        fontVariantNumeric: "tabular-nums",
+        whiteSpace: "nowrap",
+        boxShadow: "0 0.3em 1.2em rgba(0,0,0,0.35)",
+      }}
+    >
+      <Thermometer style={{ width: "1.1em", height: "1.1em" }} />
+      {formatDecimal(bodyTemp)} °C
+    </div>
+  );
+}
+
+/** Условный рисунок того, на чём висит наклейка (фолбэк без фото). */
 function ObjectArt({ object, bodyTemp }: { object: ScanObject; bodyTemp: number }) {
   if (object === "fridge") {
     return (
@@ -458,31 +502,10 @@ function ObjectArt({ object, bodyTemp }: { object: ScanObject; bodyTemp: number 
     );
   }
   if (object === "thermometer") {
-    const fever = bodyFever(bodyTemp);
     return (
       <>
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg,#39405c,#262b41)" }} />
-        <div
-          style={{
-            position: "absolute",
-            left: "50%",
-            top: "66%",
-            transform: "translateX(-50%)",
-            display: "flex",
-            alignItems: "center",
-            gap: "0.4em",
-            padding: "0.4em 0.7em",
-            borderRadius: "0.7em",
-            background: "#e9ecf5",
-            color: fever ? P.bad : P.ink,
-            fontWeight: 700,
-            fontVariantNumeric: "tabular-nums",
-            whiteSpace: "nowrap",
-          }}
-        >
-          <Thermometer style={{ width: "1.1em", height: "1.1em" }} />
-          {formatDecimal(bodyTemp)} °C
-        </div>
+        <ThermometerReadout bodyTemp={bodyTemp} />
       </>
     );
   }
@@ -882,6 +905,60 @@ function Rail({ t, steps }: { t: number; steps: RailStep[] }) {
   );
 }
 
+/**
+ * Фото настоящего места — «смена помещения» между главами: свой кадр и
+ * своя цветовая вуаль у каждой главы. Фото приглушено и затемнено книзу,
+ * чтобы журнал, телефон и рельса шагов читались как раньше; точечная
+ * сетка воспроизводится поверх — фактура ролика сохраняется. Всё —
+ * функция t: перемотка детерминирована.
+ */
+function Backdrop({ chapter, t }: { chapter: Chapter; t: number }) {
+  const enter = progress(t, 0, 0.45, ease.out);
+  const drift = progress(t, 0, CHAPTER_SECONDS, ease.linear);
+  return (
+    <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: P.stage }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={chapter.photo}
+        alt=""
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          opacity: 0.64 * enter,
+          filter: "saturate(0.78) brightness(0.7) contrast(1.06)",
+          transform: `scale(${1.09 - 0.05 * drift}) translateX(${(1 - enter) * 2.2}%)`,
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: `linear-gradient(180deg, ${chapter.accent}38 0%, rgba(11,15,34,0.5) 46%, rgba(11,15,34,0.84) 100%)`,
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: `radial-gradient(110% 80% at 0% 0%, ${chapter.accent}40, transparent 55%)`,
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          opacity: 0.55,
+          backgroundImage: "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.07) 1px, transparent 0)",
+          backgroundSize: "22px 22px",
+        }}
+      />
+    </div>
+  );
+}
+
 function Place({ chapter }: { chapter: Chapter }) {
   const Icon = { fridge: Refrigerator, locker: Thermometer, uv: Lightbulb, fryer: CookingPot, forgot: BellRing, sensor: Wifi }[chapter.id];
   return (
@@ -909,7 +986,7 @@ const SCAN_STEPS = (value: string, save: string): RailStep[] => [
   { label: save, at: 4.2 },
 ];
 
-function FridgeScene({ t, value, today, qr }: { t: number; value: number; today: SceneDay; qr: QrMatrix }) {
+function FridgeScene({ t, value, today, qr, photo }: { t: number; value: number; today: SceneDay; qr: QrMatrix; photo: string }) {
   const bad = fridgeOutOfRange(value);
   const shown = String(Math.round(value * 10) / 10).replace("-", "−");
   const typedValue = typed(formatDecimal(value), t, 3.0);
@@ -989,7 +1066,7 @@ function FridgeScene({ t, value, today, qr }: { t: number; value: number; today:
             </Done>
           </Screen>
         </div>
-        <Viewfinder t={t} object="fridge" qr={qr} bodyTemp={36.6} />
+        <Viewfinder t={t} object="fridge" qr={qr} bodyTemp={36.6} photo={photo} />
       </PhoneFrame>
       <Rail t={t} steps={SCAN_STEPS("Температура", UI.saveReading)} />
       {bad ? (
@@ -1005,7 +1082,7 @@ function FridgeScene({ t, value, today, qr }: { t: number; value: number; today:
   );
 }
 
-function LockerScene({ t, bodyTemp, today, qr }: { t: number; bodyTemp: number; today: SceneDay; qr: QrMatrix }) {
+function LockerScene({ t, bodyTemp, today, qr, photo }: { t: number; bodyTemp: number; today: SceneDay; qr: QrMatrix; photo: string }) {
   const fever = bodyFever(bodyTemp);
   const checkedKeys = HEALTH_CONFIRMATIONS.filter((item, index) => t >= 2.85 + index * 0.3 && !(fever && item.key === "temperature")).map((item) => item.key);
   // Решение — той же функцией, что и настоящий QR «Гигиена и здоровье».
@@ -1135,7 +1212,7 @@ function LockerScene({ t, bodyTemp, today, qr }: { t: number; bodyTemp: number; 
             )}
           </Screen>
         </div>
-        <Viewfinder t={t} object="thermometer" qr={qr} bodyTemp={bodyTemp} />
+        <Viewfinder t={t} object="thermometer" qr={qr} bodyTemp={bodyTemp} photo={photo} />
       </PhoneFrame>
       <Rail t={t} steps={SCAN_STEPS("Три подписи", UI.signButton)} />
       {decision.admitted ? null : (
@@ -1152,7 +1229,7 @@ function LockerScene({ t, bodyTemp, today, qr }: { t: number; bodyTemp: number; 
   );
 }
 
-function UvScene({ t, today, qr }: { t: number; today: SceneDay; qr: QrMatrix }) {
+function UvScene({ t, today, qr, photo }: { t: number; today: SceneDay; qr: QrMatrix; photo: string }) {
   const onAt = 2.55;
   const offAt = 4.35;
   const running = t >= onAt + 0.1 && t < offAt + 0.1;
@@ -1256,7 +1333,7 @@ function UvScene({ t, today, qr }: { t: number; today: SceneDay; qr: QrMatrix })
             </span>
           </div>
         ) : null}
-        <Viewfinder t={t} object="lamp" qr={qr} bodyTemp={36.6} />
+        <Viewfinder t={t} object="lamp" qr={qr} bodyTemp={36.6} photo={photo} />
       </PhoneFrame>
       <Rail
         t={t}
@@ -1272,7 +1349,7 @@ function UvScene({ t, today, qr }: { t: number; today: SceneDay; qr: QrMatrix })
   );
 }
 
-function FryerScene({ t, today, qr }: { t: number; today: SceneDay; qr: QrMatrix }) {
+function FryerScene({ t, today, qr, photo }: { t: number; today: SceneDay; qr: QrMatrix; photo: string }) {
   const save = 4.15;
   const fields: Array<{ label: string; value: string; at: number }> = [
     { label: FRYER_FIELDS.fat, value: DEMO.fat, at: 2.9 },
@@ -1364,7 +1441,7 @@ function FryerScene({ t, today, qr }: { t: number; today: SceneDay; qr: QrMatrix
             </Done>
           </Screen>
         </div>
-        <Viewfinder t={t} object="fryer" qr={qr} bodyTemp={36.6} />
+        <Viewfinder t={t} object="fryer" qr={qr} bodyTemp={36.6} photo={photo} />
       </PhoneFrame>
       <Rail t={t} steps={SCAN_STEPS("Жир и оценка", "Готово")} />
     </>
@@ -1509,11 +1586,12 @@ export function SceneFrame({ frame, fridgeTemp, bodyTemp, today, qr }: SceneProp
   const enter = interpolate(t, [0, 0.25], [0.35, 1], { easing: ease.out });
   return (
     <div style={{ position: "absolute", inset: 0, opacity: enter }}>
+      <Backdrop chapter={chapter} t={t} />
       <Place chapter={chapter} />
-      {chapter.id === "fridge" ? <FridgeScene t={t} value={fridgeTemp} today={today} qr={qr} /> : null}
-      {chapter.id === "locker" ? <LockerScene t={t} bodyTemp={bodyTemp} today={today} qr={qr} /> : null}
-      {chapter.id === "uv" ? <UvScene t={t} today={today} qr={qr} /> : null}
-      {chapter.id === "fryer" ? <FryerScene t={t} today={today} qr={qr} /> : null}
+      {chapter.id === "fridge" ? <FridgeScene t={t} value={fridgeTemp} today={today} qr={qr} photo={chapter.photo} /> : null}
+      {chapter.id === "locker" ? <LockerScene t={t} bodyTemp={bodyTemp} today={today} qr={qr} photo={chapter.photo} /> : null}
+      {chapter.id === "uv" ? <UvScene t={t} today={today} qr={qr} photo={chapter.photo} /> : null}
+      {chapter.id === "fryer" ? <FryerScene t={t} today={today} qr={qr} photo={chapter.photo} /> : null}
       {chapter.id === "forgot" ? <ForgotScene t={t} today={today} /> : null}
       {chapter.id === "sensor" ? <SensorScene t={t} today={today} /> : null}
     </div>
