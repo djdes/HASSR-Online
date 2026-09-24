@@ -1,0 +1,48 @@
+{
+  "task": "rpn-hygiene-orders-2026-09",
+  "branch": "feat/rpn-hygiene-orders",
+  "commits": ["22b482ad", "b0efcb50", "7029ca56", "bb340d91", "61a0d6d3", "67200105"],
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/hygiene-admission.test.ts (6 tests), src/lib/health-qr-html.test.ts (+1)",
+        "e2e: AC1.ui.disabled, AC1.ui.reason, AC1.server.qr (409), AC1.server.batch (409, пакет целиком), AC1.server.put/patch/bulk/external (409), AC1.server.catchUp, AC1.server.suspendAlways (200), AC1.ui.admit, AC1.server.answeredOk",
+        "shots/ac1-keeper-1440.png, shots/ac1-keeper-390.png, shots/ac1-keeper-saved-1440.png"
+      ],
+      "notes": "Старая форма (v1): «Здоров» в ячейке руками не изменён (там нет графы допуска). Ответ через старую форму задачи TasksFlow (без confirmations) ответом не считается."
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": [
+        "e2e: AC2.upload.ui, AC2.rename.delete, AC2.audit, AC2.view.image, AC2.view.pdf, AC2.heic, AC2.onlyTwoJournals, AC2.mobile, AC2.bjgp, AC2.employee.viewOnly, AC2.access, AC2.inspector, AC2.console",
+        "unit: orderScanAccessible (чужая организация / без сессии / журнал не выдан / журнал отключён)",
+        "shots/ac2-*.png"
+      ],
+      "storage": "JournalOrderScan.content Bytes (как PartnerBranding): файл только через API с проверкой организации; public/uploads открыт без сессии"
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": [
+        "e2e: AC3.hygiene.pages (2→6), AC3.bjgp.pages (1→2), AC3.noQrOnScans, AC3.imagesA4, AC3.noScansUnchanged",
+        "unit: печать после журнала без QR; печать без приказов побайтно без изменений",
+        "raw/hygiene-with-orders.pdf, raw/bjgp-with-orders.pdf",
+        "check-qr-overlap samples: 45/45 OK (raw/qr-overlap-samples.log)"
+      ],
+      "library": "pdf-lib 1.17.1 — векторная склейка без растеризации"
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": [
+        "npm run typecheck: 0 errors (raw/typecheck.log)",
+        "npm test: 2200/2200 pass (raw/npm-test-summary.log); new tests 16/16 (raw/new-tests.log)",
+        "npm run build (NEXT_DIST_DIR=.next-rpn-build): exit 0 (raw/build.log)",
+        "e2e 32/32 PASS (raw/e2e-results.json), screenshots 1440 + 390 in shots/"
+      ]
+    }
+  },
+  "risks": [
+    "nginx client_max_body_size на проде должен пропускать ~12 МБ (next.config proxyClientMaxBodySize = 12mb)",
+    "Сканы в БД увеличивают бэкап: не больше 100 МБ на журнал организации"
+  ]
+}

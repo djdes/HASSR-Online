@@ -1,0 +1,165 @@
+{
+  "at": "2026-09-24T19:10:13.616Z",
+  "results": [
+    {
+      "id": "AC1.ui.disabled",
+      "ok": true,
+      "detail": "без ответа «Допущен» disabled, «Отстранён» доступен; у ответившего «Допущен» доступен"
+    },
+    {
+      "id": "AC1.ui.reason",
+      "ok": true,
+      "detail": "причина на экране у 3 строк"
+    },
+    {
+      "id": "AC1.server.qr",
+      "ok": true,
+      "detail": "POST QR допуска без ответа → 409, допуск в БД: null"
+    },
+    {
+      "id": "AC1.server.batch",
+      "ok": true,
+      "detail": "массовый допуск с неответившим → 409, Иванов не допущен половинчато"
+    },
+    {
+      "id": "AC1.ui.admit",
+      "ok": true,
+      "detail": "Иванов (ответил) допущен кнопкой: admitted"
+    },
+    {
+      "id": "AC1.ui.suspend",
+      "ok": true,
+      "detail": "Петров (без ответа) отстранён: suspended"
+    },
+    {
+      "id": "AC1.server.put",
+      "ok": true,
+      "detail": "PUT ячейки «Допущен» без ответа (и с подставленными подписями) → 409 Сотрудник ещё не ответил на вопросы о здоровье"
+    },
+    {
+      "id": "AC1.server.patch",
+      "ok": true,
+      "detail": "PATCH массовой правки → 409 Сотрудник ещё не ответил на вопросы о здоровье"
+    },
+    {
+      "id": "AC1.server.bulk",
+      "ok": true,
+      "detail": "POST bulk (штрих) → 409 Сотрудник ещё не ответил на вопросы о здоровье"
+    },
+    {
+      "id": "AC1.server.external",
+      "ok": true,
+      "detail": "внешний API → 409 Сотрудник ещё не ответил на вопросы о здоровье"
+    },
+    {
+      "id": "AC1.server.nothingWritten",
+      "ok": true,
+      "detail": "у Орловой допуска нет ни одним путём"
+    },
+    {
+      "id": "AC1.server.suspendAlways",
+      "ok": true,
+      "detail": "«Отстранён» без ответа через API → 200"
+    },
+    {
+      "id": "AC1.server.answeredOk",
+      "ok": true,
+      "detail": "правка допущенного с ответом → 200"
+    },
+    {
+      "id": "AC1.server.catchUp",
+      "ok": true,
+      "detail": "catch-up на 2026-09-25: Иванов не скопирован (допуск) → null"
+    },
+    {
+      "id": "AC2.upload.ui",
+      "ok": true,
+      "detail": "загружено через UI: 4 файла (PDF, JPG, PNG, PDF)"
+    },
+    {
+      "id": "AC2.rename.delete",
+      "ok": true,
+      "detail": "в БД: prikaz-otvetstvennyi (application/pdf); Приказ № 7 о назначении ответственного (image/jpeg); prikaz-dopusk (image/png)"
+    },
+    {
+      "id": "AC2.audit",
+      "ok": true,
+      "detail": "AuditLog: journal_order_scan.upload, journal_order_scan.rename, journal_order_scan.delete (6 записей)"
+    },
+    {
+      "id": "AC2.view.image",
+      "ok": true,
+      "detail": "картинка открывается в лайтбоксе (файл загрузился по защищённой ссылке)"
+    },
+    {
+      "id": "AC2.view.pdf",
+      "ok": true,
+      "detail": "PDF «Открыть» — inline в новой вкладке: 200 application/pdf inline; filename*=UT"
+    },
+    {
+      "id": "AC2.heic",
+      "ok": true,
+      "detail": "HEIC → 400 Формат HEIC не поддерживается — сохраните фото как JPG (iPhone: Настройки → Камера → Форматы → «Наиболее совместимый») или отправьте PDF"
+    },
+    {
+      "id": "AC2.onlyTwoJournals",
+      "ok": true,
+      "detail": "скоропорт не поддерживает приказы → 400"
+    },
+    {
+      "id": "AC2.mobile",
+      "ok": true,
+      "detail": "блок приказов помещается в 390px"
+    },
+    {
+      "id": "AC2.bjgp",
+      "ok": true,
+      "detail": "БЖГП: «Приказ о бракеражной комиссии» (название по умолчанию — имя файла)"
+    },
+    {
+      "id": "AC2.employee.viewOnly",
+      "ok": true,
+      "detail": "сотрудник: список 200 (3), файл 200, загрузка 403, удаление 403, кнопок управления 0"
+    },
+    {
+      "id": "AC2.access",
+      "ok": true,
+      "detail": "чужая орг: файл 404, переименование 404, удаление 404, список 0; без сессии: файл 404, список 401; своя: 200 application/pdf; проверяющий своей орг 200, чужой 404"
+    },
+    {
+      "id": "AC3.hygiene.pages",
+      "ok": true,
+      "detail": "гигиена: 2 стр. журнала → 6 (PDF-скан 2 стр. + JPG + PNG), первая после журнала: «PRIKAZ No 12 (hygiene responsible) - pag»"
+    },
+    {
+      "id": "AC3.bjgp.pages",
+      "ok": true,
+      "detail": "БЖГП: 1 → 2"
+    },
+    {
+      "id": "AC3.noQrOnScans",
+      "ok": true,
+      "detail": "QR «Электронный журнал WeSetup» на страницах журнала: true; на страницах приказов нет: true"
+    },
+    {
+      "id": "AC3.imagesA4",
+      "ok": true,
+      "detail": "размеры страниц приказов: 595x842, 595x842, 842x595, 595x842 (альбомный JPG, книжный PNG)"
+    },
+    {
+      "id": "AC2.inspector",
+      "ok": true,
+      "detail": "проверяющий: приказов в списке 3, листов 6 (журнал 2 + приказы 4)"
+    },
+    {
+      "id": "AC3.noScansUnchanged",
+      "ok": true,
+      "detail": "БЖГП без приказов: 1 стр. (как до загрузки: 1)"
+    },
+    {
+      "id": "AC2.console",
+      "ok": true,
+      "detail": "на странице документа нет ошибок консоли"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+PASS AC1.ui.disabled — без ответа «Допущен» disabled, «Отстранён» доступен; у ответившего «Допущен» доступен
+PASS AC1.ui.reason — причина на экране у 3 строк
+PASS AC1.server.qr — POST QR допуска без ответа → 409, допуск в БД: null
+PASS AC1.server.batch — массовый допуск с неответившим → 409, Иванов не допущен половинчато
+PASS AC1.ui.admit — Иванов (ответил) допущен кнопкой: admitted
+PASS AC1.ui.suspend — Петров (без ответа) отстранён: suspended
+PASS AC1.server.put — PUT ячейки «Допущен» без ответа (и с подставленными подписями) → 409 Сотрудник ещё не ответил на вопросы о здоровье
+PASS AC1.server.patch — PATCH массовой правки → 409 Сотрудник ещё не ответил на вопросы о здоровье
+PASS AC1.server.bulk — POST bulk (штрих) → 409 Сотрудник ещё не ответил на вопросы о здоровье
+PASS AC1.server.external — внешний API → 409 Сотрудник ещё не ответил на вопросы о здоровье
+PASS AC1.server.nothingWritten — у Орловой допуска нет ни одним путём
+PASS AC1.server.suspendAlways — «Отстранён» без ответа через API → 200
+PASS AC1.server.answeredOk — правка допущенного с ответом → 200
+PASS AC1.server.catchUp — catch-up на 2026-09-25: Иванов не скопирован (допуск) → null
+PASS AC2.upload.ui — загружено через UI: 4 файла (PDF, JPG, PNG, PDF)
+PASS AC2.rename.delete — в БД: prikaz-otvetstvennyi (application/pdf); Приказ № 7 о назначении ответственного (image/jpeg); prikaz-dopusk (image/png)
+PASS AC2.audit — AuditLog: journal_order_scan.upload, journal_order_scan.rename, journal_order_scan.delete (6 записей)
+PASS AC2.view.image — картинка открывается в лайтбоксе (файл загрузился по защищённой ссылке)
+PASS AC2.view.pdf — PDF «Открыть» — inline в новой вкладке: 200 application/pdf inline; filename*=UT
+PASS AC2.heic — HEIC → 400 Формат HEIC не поддерживается — сохраните фото как JPG (iPhone: Настройки → Камера → Форматы → «Наиболее совместимый») или отправьте PDF
+PASS AC2.onlyTwoJournals — скоропорт не поддерживает приказы → 400
+PASS AC2.mobile — блок приказов помещается в 390px
+PASS AC2.bjgp — БЖГП: «Приказ о бракеражной комиссии» (название по умолчанию — имя файла)
+PASS AC2.employee.viewOnly — сотрудник: список 200 (3), файл 200, загрузка 403, удаление 403, кнопок управления 0
+PASS AC2.access — чужая орг: файл 404, переименование 404, удаление 404, список 0; без сессии: файл 404, список 401; своя: 200 application/pdf; проверяющий своей орг 200, чужой 404
+PASS AC3.hygiene.pages — гигиена: 2 стр. журнала → 6 (PDF-скан 2 стр. + JPG + PNG), первая после журнала: «PRIKAZ No 12 (hygiene responsible) - pag»
+PASS AC3.bjgp.pages — БЖГП: 1 → 2
+PASS AC3.noQrOnScans — QR «Электронный журнал WeSetup» на страницах журнала: true; на страницах приказов нет: true
+PASS AC3.imagesA4 — размеры страниц приказов: 595x842, 595x842, 842x595, 595x842 (альбомный JPG, книжный PNG)
+PASS AC2.inspector — проверяющий: приказов в списке 3, листов 6 (журнал 2 + приказы 4)
+PASS AC3.noScansUnchanged — БЖГП без приказов: 1 стр. (как до загрузки: 1)
+PASS AC2.console — на странице документа нет ошибок консоли
+
+32/32 PASS
