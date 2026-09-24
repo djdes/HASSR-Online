@@ -6,6 +6,7 @@ import { closeEventBuildingKey } from "@/lib/journal-close-events";
 import { checkCronSecret } from "@/lib/cron-auth";
 import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
 import { closeJournalForDay, utcDayStart } from "@/lib/journal-close-events";
+import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,7 +36,7 @@ async function handle(request: Request) {
   // Это позволяет ночным сменам ставить shiftEndHour=6 (закрытие в
   // 06:00 утра), и cron срабатывает на них только в 06 UTC.
   const orgs = await db.organization.findMany({
-    where: { shiftEndHour: currentHourUtc },
+    where: { shiftEndHour: currentHourUtc, ...NOT_DIRECTORY_ORG_WHERE },
     select: { id: true, shiftEndHour: true },
   });
 

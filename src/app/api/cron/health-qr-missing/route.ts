@@ -7,6 +7,7 @@ import { dayMarkFromEntry } from "@/lib/health-qr";
 import { listFillEmployees } from "@/lib/journal-fill";
 import { STAFF_ABSENCE_LABEL, loadStaffAbsenceForDay } from "@/lib/staff-absence";
 import { orgTodayKey } from "@/lib/timezone";
+import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,7 +40,7 @@ async function handle(request: Request) {
   const force = new URL(request.url).searchParams.get("force") === "1";
 
   const orgs = await db.organization.findMany({
-    where: { healthQrRequired: true },
+    where: { healthQrRequired: true, ...NOT_DIRECTORY_ORG_WHERE },
     select: { id: true, name: true, timezone: true, shiftEndHour: true, disabledJournalCodes: true },
   });
   const report: Array<{ orgId: string; missing: number; suspended: number; sent: boolean; skipped?: string }> = [];

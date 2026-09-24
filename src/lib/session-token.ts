@@ -92,6 +92,16 @@ export async function rewriteSessionClaims(
 
   Object.assign(decoded, patch);
 
+  // Смена организации меняет и вид организации: мастер-кабинет справочников
+  // proxy пускает только в /master (lib/master-directory-access.ts).
+  try {
+    const { readOrgKind } = await import("@/lib/master-directory");
+    const { tokenActiveOrgId } = await import("@/lib/master-directory-access");
+    decoded.orgKind = await readOrgKind(tokenActiveOrgId(decoded));
+  } catch {
+    /* оставляем прежнее значение */
+  }
+
   const fresh = await encode({
     token: decoded as Parameters<typeof encode>[0]["token"],
     secret,

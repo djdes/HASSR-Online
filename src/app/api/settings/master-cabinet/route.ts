@@ -1,0 +1,117 @@
+import { NextResponse } from "next/server";
+import { z } from "zod";
+
+import { getActiveOrgId } from "@/lib/auth-helpers";
+import { authOptions } from "@/lib/auth";
+import { recordAuditLog } from "@/lib/audit-log";
+import { sendInviteTokenEmail } from "@/lib/email";
+import { createOrInviteMasterCabinet, getMasterCabinetStatus, MasterCabinetError } from "@/lib/master-cabinet";
+import { createRateLimiter } from "@/lib/rate-limit";
+import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { getServerSession } from "@/lib/server-session";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+/** Как у dish-pool: 10 попыток в минуту на организацию. */
+const attempts = createRateLimiter({ tokensPerInterval: 10, intervalMs: 60_000 });
+
+const createSchema = z.object({
+  name: z.string().trim().min(2, "Укажите ФИО сотрудника бэк-офиса").max(120),
+  email: z.string().trim().email("Введите корректный email"),
+});
+
+/**
+ * Мастер-кабинет справочников пула служебного кода (у пищеблока).
+ *   GET                    — код пула, объекты пула, кабинет и его сотрудники;
+ *   POST { name, email }   — создать кабинет (если его нет) и пригласить
+ *                            сотрудника бэк-офиса; в ответе — ссылка приглашения.
+ */
+async function guard() {
+  const session = await getServerSession(authOptions);
+  if (!session) return { error: NextResponse.json({ error: "Не авторизован" }, { status: 401 }) } as const;
+  if (!hasFullWorkspaceAccess(session.user)) {
+    return { error: NextResponse.json({ error: "Это настройка руководителя" }, { status: 403 }) } as const;
+  }
+  return { session, organizationId: getActiveOrgId(session) } as const;
+}
+
+export async function GET() {
+  const auth = await guard();
+  if ("error" in auth) return auth.error;
+  return NextResponse.json(await getMasterCabinetStatus(auth.organizationId));
+}
+
+export async function POST(request: Request) {
+  const auth = await guard();
+  if ("error" in auth) return auth.error;
+  if (!attempts.consume(`master-cabinet:${auth.organizationId}`)) {
+    return NextResponse.json({ error: "Слишком много попыток. Подождите минуту." }, { status: 429 });
+  }
+  const parsed = createSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Проверьте ФИО и email" }, { status: 400 });
+  }
+
+  let result;
+  try {
+    result = await createOrInviteMasterCabinet({
+      organizationId: auth.organizationId,
+      actorUserId: auth.session.user.id,
+      name: parsed.data.name,
+      email: parsed.data.email,
+    });
+  } catch (err) {
+    if (err instanceof MasterCabinetError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
+    console.error("[master-cabinet] create failed", { organizationId: auth.organizationId }, err);
+    return NextResponse.json({ error: "Не удалось создать мастер-кабинет" }, { status: 500 });
+  }
+
+  // Письмо — best-effort: ссылка приглашения есть и в ответе.
+  let emailSent = true;
+  try {
+    await sendInviteTokenEmail({
+      to: result.user.email,
+      name: result.user.name,
+      organizationName: result.masterName,
+      inviteUrl: result.inviteUrl,
+      organizationId: result.masterOrganizationId,
+    });
+  } catch (err) {
+    emailSent = false;
+    console.error("[master-cabinet] invite email failed", { userId: result.user.id }, err);
+  }
+
+  if (result.created) {
+    await recordAuditLog({
+      request,
+      session: auth.session,
+      organizationId: auth.organizationId,
+      action: "master_cabinet.created",
+      entity: "Organization",
+      entityId: result.masterOrganizationId,
+      details: { name: result.masterName, code: result.code },
+    });
+  }
+  await recordAuditLog({
+    request,
+    session: auth.session,
+    organizationId: auth.organizationId,
+    action: "master_cabinet.invited",
+    entity: "User",
+    entityId: result.user.id,
+    details: { email: result.user.email, masterOrganizationId: result.masterOrganizationId, reinvited: result.reinvited },
+  });
+
+  return NextResponse.json({
+    created: result.created,
+    master: { organizationId: result.masterOrganizationId, name: result.masterName },
+    code: result.code,
+    user: result.user,
+    inviteUrl: result.inviteUrl,
+    emailSent,
+    status: await getMasterCabinetStatus(auth.organizationId),
+  });
+}

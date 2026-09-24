@@ -8,6 +8,7 @@ import { buildWeeklyDigestData, weeklyDigestRecipients } from "@/lib/weekly-dige
 import { renderWeeklyDigestEmail, renderWeeklyDigestTelegram } from "@/lib/weekly-digest/render";
 import { isDigestSlot, shouldSendWeeklyDigest } from "@/lib/weekly-digest/schedule";
 import { sendRootHealthEmail } from "@/lib/root-health-email";
+import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -40,7 +41,7 @@ async function handle(request: Request) {
   const baseUrl = process.env.NEXTAUTH_URL || "https://wesetup.ru";
 
   const orgs = await db.organization.findMany({
-    where: orgIdFilter ? { id: orgIdFilter } : {},
+    where: orgIdFilter ? { id: orgIdFilter, ...NOT_DIRECTORY_ORG_WHERE } : NOT_DIRECTORY_ORG_WHERE,
     select: { id: true, timezone: true, weeklyDigestSentAt: true },
   });
 

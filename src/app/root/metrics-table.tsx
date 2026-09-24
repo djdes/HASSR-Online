@@ -279,6 +279,13 @@ export function MetricsTable({
                               : ""}
                           </span>
                         ) : null}
+                        {m.isDirectory ? (
+                          // Служебный кабинет бэк-офиса пула служебного кода:
+                          // только меню и сырьё, журналов и оплаты нет.
+                          <span className="inline-flex items-center rounded-full bg-[#f5f6ff] px-2.5 py-0.5 text-[12px] font-medium text-[#3848c7]">
+                            Мастер-кабинет
+                          </span>
+                        ) : null}
                       </div>
                     </Link>
                   </td>

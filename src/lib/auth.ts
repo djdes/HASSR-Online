@@ -257,6 +257,16 @@ export const authOptions: NextAuthOptions = {
             typeof next === "string" && next.length > 0 ? next : null;
         }
       }
+      // Мастер-кабинет справочников: вид активной организации — в токен
+      // (вход, смена организации, каждое обновление сессии). Proxy читает
+      // только токен и по нему пускает сессию кабинета лишь в /master.
+      try {
+        const { readOrgKind } = await import("@/lib/master-directory");
+        const { tokenActiveOrgId } = await import("@/lib/master-directory-access");
+        token.orgKind = await readOrgKind(tokenActiveOrgId(token));
+      } catch {
+        /* оставляем прежнее значение */
+      }
       return token;
     },
     async session({ session, token }) {
@@ -286,6 +296,7 @@ export const authOptions: NextAuthOptions = {
         session.user.kioskDeviceId =
           token.kiosk === true && typeof token.deviceId === "string" ? token.deviceId : null;
         session.user.canManageSettings = token.canManageSettings === true;
+        session.user.orgKind = token.orgKind === "directory" ? "directory" : "regular";
         // Галка «Разрешение менять настройки» = права руководителя в своей
         // организации: одна галка вместо уровней доступа.
         if (token.canManageSettings === true && !session.user.isRoot) {
@@ -356,10 +367,13 @@ export const authOptions: NextAuthOptions = {
           if (activeOrgId) {
             const fresh = await db.organization.findUnique({
               where: { id: activeOrgId },
-              select: { name: true, presetCapabilitiesJson: true },
+              select: { name: true, presetCapabilitiesJson: true, kind: true },
             });
             if (fresh?.name) {
               session.user.organizationName = fresh.name;
+            }
+            if (fresh) {
+              session.user.orgKind = fresh.kind === "directory" ? "directory" : "regular";
             }
             session.user.orgPresetOverrides =
               fresh?.presetCapabilitiesJson &&

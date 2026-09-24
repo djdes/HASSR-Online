@@ -68,7 +68,8 @@ export async function ensurePlanForHeadcount(
   const scopeOrgIds = org.accountId
     ? (
         await db.organization.findMany({
-          where: { accountId: org.accountId, isDemo: false },
+          // Мастер-кабинет справочников — служебный кабинет бэк-офиса, в тариф не входит.
+          where: { accountId: org.accountId, isDemo: false, kind: { not: "directory" } },
           select: { id: true },
         })
       ).map((row) => row.id)

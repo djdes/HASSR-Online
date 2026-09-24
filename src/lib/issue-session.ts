@@ -95,12 +95,16 @@ export async function issueSession(
   // (bumpSessionVersion в /api/users/[id]), и новый вход берёт свежее.
   const { db } = await import("@/lib/db");
   const flags = await db.user.findUnique({ where: { id: user.id }, select: { canManageSettings: true } }).catch(() => null);
+  // Мастер-кабинет справочников: proxy пускает такую сессию только в /master.
+  const { readOrgKind } = await import("@/lib/master-directory");
+  const orgKind = await readOrgKind(user.organizationId).catch(() => "regular" as const);
 
   const token = await encode({
     secret,
     maxAge: MAX_AGE,
     token: {
       canManageSettings: flags?.canManageSettings === true,
+      orgKind,
       sub: user.id,
       id: user.id,
       email: user.email,

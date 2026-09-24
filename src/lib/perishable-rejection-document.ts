@@ -101,6 +101,14 @@ export type PerishableRejectionConfig = {
    * раньше в «Окончен» печаталась дата НАЧАЛА документа.
    */
   finishedAt?: string | null;
+  /**
+   * Что мастер-кабинет справочников прислал в прошлый раз
+   * (`src/lib/master-directory-push.ts`): изделия, поставщики, изготовители.
+   * Следующая раздача убирает только позиции мастера — свои остаются.
+   */
+  sharedProducts?: string[];
+  sharedSuppliers?: string[];
+  sharedManufacturers?: string[];
 };
 
 function createId(prefix: string) {
@@ -363,6 +371,18 @@ export function normalizePerishableRejectionConfig(
     ...(typeof record.finishedAt === "string" && record.finishedAt.trim() !== ""
       ? { finishedAt: record.finishedAt }
       : {}),
+    ...(["sharedProducts", "sharedSuppliers", "sharedManufacturers"] as const).reduce<
+      Partial<Pick<PerishableRejectionConfig, "sharedProducts" | "sharedSuppliers" | "sharedManufacturers">>
+    >((acc, key) => {
+      const list = record[key];
+      if (Array.isArray(list)) {
+        acc[key] = list
+          .filter((item): item is string => typeof item === "string")
+          .map((item) => item.trim())
+          .filter((item) => item.length > 0);
+      }
+      return acc;
+    }, {}),
   };
 }
 

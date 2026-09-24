@@ -13,6 +13,7 @@ import {
   buildManagerObligationDigest,
   buildStaffObligationDigest,
 } from "@/lib/telegram-obligation-digests";
+import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
 
 const CRON_SECRET = process.env.CRON_SECRET || "";
 
@@ -81,6 +82,7 @@ function createDefaultDeps(): MiniDigestDeps {
           id: {
             in: organizationIds,
           },
+          ...NOT_DIRECTORY_ORG_WHERE,
         },
         select: {
           id: true,

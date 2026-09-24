@@ -98,6 +98,10 @@ model Organization {
   /// Код чужой базы, к которой организация подключилась («Привязать журнал,
   /// служебный код»). Пусто — своя база.
   linkedServiceCode              String?
+  /// "regular" — обычный объект; "directory" — мастер-кабинет справочников
+  /// пула служебного кода (см. src/lib/master-directory.ts).
+  kind                           String                         @default("regular")
+  sharedDirectoryItems           SharedDirectoryItem[]
   journalColumnTemplates         JournalColumnTemplate[]
   /// Сфера заведения: restaurant | cafe | education | bakery | fastfood |
   /// production | other. Колонка переиспользована — раньше здесь лежал
@@ -3758,4 +3762,23 @@ model JournalColumnTemplate {
   updatedAt      DateTime     @updatedAt
 
   @@index([organizationId, journalCode])
+}
+
+/// Списки мастер-кабинета справочников: меню (для бракеража готовой
+/// продукции) и сырьё (для бракеража скоропорта). Раздаются всем
+/// организациям пула служебного кода (src/lib/master-directory-push.ts).
+model SharedDirectoryItem {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// "dish" — меню для БЖГП; "product" — сырьё для скоропорта
+  kind           String
+  name           String
+  supplier       String?
+  manufacturer   String?
+  sortOrder      Int          @default(0)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId, kind])
 }

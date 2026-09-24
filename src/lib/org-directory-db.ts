@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { resolveDishPoolOrgIds } from "@/lib/dish-pool";
+import { listPoolSharedItems, type SharedItem } from "@/lib/master-directory";
 import { ORG_DIRECTORY_KINDS, type OrgDirectoryKind } from "@/lib/org-directory";
 
 /**
@@ -14,6 +15,24 @@ import { ORG_DIRECTORY_KINDS, type OrgDirectoryKind } from "@/lib/org-directory"
 const LIMIT = 1000;
 
 export async function loadOrgDirectory(
+  organizationId: string,
+  kind: OrgDirectoryKind
+): Promise<string[]> {
+  const own = await loadOwnOrgDirectory(organizationId, kind);
+  // Списки мастер-кабинета справочников пула — после своих позиций
+  // (src/lib/master-directory.ts). Нет мастера — справочник прежний.
+  const shared = await loadMasterDirectory(organizationId, kind).catch(() => [] as string[]);
+  return shared.length > 0 ? unique([...own, ...shared]) : own;
+}
+
+async function loadMasterDirectory(organizationId: string, kind: OrgDirectoryKind): Promise<string[]> {
+  const items: SharedItem[] = await listPoolSharedItems(organizationId, kind === "dish" ? "dish" : "product");
+  if (kind === "supplier") return items.map((item) => item.supplier ?? "");
+  if (kind === "manufacturer") return items.map((item) => item.manufacturer ?? "");
+  return items.map((item) => item.name);
+}
+
+async function loadOwnOrgDirectory(
   organizationId: string,
   kind: OrgDirectoryKind
 ): Promise<string[]> {

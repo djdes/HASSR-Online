@@ -4,6 +4,8 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { authOptions } from "@/lib/auth";
 import { getDishPoolInfo, linkDishPool, previewDishPoolLink, unlinkDishPool } from "@/lib/dish-pool";
 import { recordAuditLog } from "@/lib/audit-log";
+import { findPoolMasterOrgId } from "@/lib/master-directory";
+import { pushSharedListsToOrg } from "@/lib/master-directory-push";
 import { createRateLimiter } from "@/lib/rate-limit";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getServerSession } from "@/lib/server-session";
@@ -60,7 +62,19 @@ export async function POST(request: Request) {
     entityId: auth.organizationId,
     details: { code: linked.code, organizationName: linked.organizationName },
   }).catch(() => null);
-  return NextResponse.json({ linked, info: await getDishPoolInfo(auth.organizationId) });
+  // В пуле есть мастер-кабинет справочников — его меню и сырьё сразу в
+  // активные БЖГП и скоропорт подключившейся организации. Сбой раздачи не
+  // отменяет подключение: следующее сохранение у мастера дошлёт списки.
+  let masterDocuments = 0;
+  try {
+    const masterOrgId = await findPoolMasterOrgId(auth.organizationId);
+    if (masterOrgId && masterOrgId !== auth.organizationId) {
+      masterDocuments = (await pushSharedListsToOrg(auth.organizationId, masterOrgId)).documents;
+    }
+  } catch (err) {
+    console.error("[dish-pool] master lists push failed", { organizationId: auth.organizationId }, err);
+  }
+  return NextResponse.json({ linked, masterDocuments, info: await getDishPoolInfo(auth.organizationId) });
 }
 
 export async function DELETE(request: Request) {

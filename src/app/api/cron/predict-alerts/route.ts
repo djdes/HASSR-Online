@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { checkCronSecret } from "@/lib/cron-auth";
 import { predictComplianceForecast } from "@/lib/compliance-predict";
 import { notifyOrganization } from "@/lib/telegram";
+import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,7 +22,7 @@ async function handle(request: Request) {
   const todayKey = now.toISOString().slice(0, 10);
 
   const orgs = await db.organization.findMany({
-    where: { subscriptionPlan: { notIn: ["paused", "cancelled"] } },
+    where: { subscriptionPlan: { notIn: ["paused", "cancelled"] }, ...NOT_DIRECTORY_ORG_WHERE },
     select: { id: true, name: true },
   });
 

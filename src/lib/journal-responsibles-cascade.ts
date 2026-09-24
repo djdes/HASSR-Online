@@ -2,6 +2,7 @@ import { withNewHygieneFormVersion } from "@/lib/hygiene-v2";
 import { db } from "@/lib/db";
 import { parseOrgColumnDefaults, withOrgColumnDefault } from "@/lib/journal-columns";
 import { withOrgCommission } from "@/lib/brakerage-commission-org";
+import { withMasterSharedLists } from "@/lib/master-directory-push";
 import {
   getPrimarySlotId,
   getSchemaForJournal,
@@ -598,6 +599,12 @@ export async function prefillResponsiblesForNewDocument(input: {
   // 6. Бракеражи: состав комиссии организации — новому документу
   // (окно «Сторонняя бракеражная комиссия», модель «копия»).
   config = await withOrgCommission(input.organizationId, journalCode, config ?? {});
+
+  // 6b. Бракеражи: меню и сырьё мастер-кабинета справочников пула
+  // (src/lib/master-directory-push.ts). Слияние с памятью `shared*`, поэтому
+  // повторный вызов для уже засеянного конфига ничего не дублирует. Нет
+  // мастера в пуле — конфиг не меняется.
+  config = await withMasterSharedLists(input.organizationId, journalCode, config ?? {});
 
   // 7. Гигиена: новый документ — по форме Приложения №1 СанПиН
   // (config.hygieneFormVersion = 2), в т.ч. когда конфиг перенесён из

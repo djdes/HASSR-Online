@@ -18,6 +18,7 @@ import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { resolveAutomationStaff } from "@/lib/journal-automation-staff";
 import { resolveDayStart } from "@/lib/today-compliance";
 import { notifyOrganization, escapeTelegramHtml as esc } from "@/lib/telegram";
+import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -272,7 +273,7 @@ async function handle(request: Request) {
   const orgs = await db.organization.findMany({
     // Пауза за неактивность обещает «автозаполнение остановится» —
     // выполняем обещание: приостановленные и отменённые не трогаем.
-    where: { subscriptionPlan: { notIn: ["paused", "cancelled"] } },
+    where: { subscriptionPlan: { notIn: ["paused", "cancelled"] }, ...NOT_DIRECTORY_ORG_WHERE },
     select: {
       id: true,
       name: true,

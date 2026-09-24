@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { resolveDishPoolOrgIds } from "@/lib/dish-pool";
+import { listPoolSharedNames } from "@/lib/master-directory";
 import {
   NAME_SUGGESTION_LIMIT,
   normalizeSuggestionMeta,
@@ -55,6 +56,21 @@ export async function listNameSuggestions(
         if (seen.has(key)) continue;
         seen.add(key);
         values.push(row.value);
+      }
+    }
+  }
+  // Меню (dish) и сырьё (product) мастер-кабинета справочников пула — после
+  // своих и пуловых. Пул сырья не общий: из пула берём только список
+  // мастера. Нет мастера в пуле — список прежний.
+  if (scope === "dish" || scope === "product") {
+    const shared = await listPoolSharedNames(organizationId, scope).catch(() => [] as string[]);
+    if (shared.length > 0) {
+      const seen = new Set(values.map(suggestionKey));
+      for (const value of shared) {
+        const key = suggestionKey(value);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        values.push(value);
       }
     }
   }

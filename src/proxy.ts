@@ -5,6 +5,7 @@ import {
   LEGACY_SESSION_COOKIES,
 } from "@/lib/auth-cookies";
 import { canAccessWebPath, hasFullWorkspaceAccess } from "@/lib/role-access";
+import { evaluateDirectoryRequest } from "@/lib/master-directory-access";
 import {
   MINI_SHELL_COOKIE,
   MINI_SHELL_VALUE,
@@ -213,6 +214,19 @@ export async function proxy(req: NextRequest) {
       return NextResponse.rewrite(new URL("/404", req.url), { status: 404 });
     }
     return withRequestContext(req, null);
+  }
+
+  // Мастер-кабинет справочников (orgKind="directory" в токене): сотрудник
+  // бэк-офиса видит только /master, остальные страницы → /master, API → 403.
+  // Обычной сессии /master закрыт. Решение — чистая функция с тестом.
+  if (token) {
+    const directory = evaluateDirectoryRequest(pathname, token.orgKind);
+    if (directory.action === "deny") {
+      return NextResponse.json({ error: directory.error }, { status: directory.status });
+    }
+    if (directory.action === "redirect") {
+      return NextResponse.redirect(new URL(directory.location, req.url));
+    }
   }
 
   // Партнёр в кабинете клиента: claim действует, только пока активная

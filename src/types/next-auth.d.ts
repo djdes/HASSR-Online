@@ -57,6 +57,11 @@ declare module "next-auth" {
        * heartbeat и кнопку «Выйти» обратно к списку сотрудников.
        */
       kioskDeviceId?: string | null;
+      /**
+       * Вид активной организации: "directory" — мастер-кабинет справочников
+       * (сессии открыт только /master, см. lib/master-directory-access.ts).
+       */
+      orgKind?: "regular" | "directory";
     } & DefaultSession["user"];
   }
 }
@@ -80,5 +85,7 @@ declare module "next-auth/jwt" {
     deviceId?: string;
     /** Абсолютные мс: после этого момента киоск-сессия заблокирована. */
     lockAt?: number;
+    /** Вид активной организации — proxy по нему пускает только в /master. */
+    orgKind?: "regular" | "directory";
   }
 }

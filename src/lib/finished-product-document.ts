@@ -161,6 +161,12 @@ export type FinishedProductDocumentConfig = {
   footerNote: string;
   productLists: Array<{ id: string; name: string; items: string[] }>;
   itemsCatalog: string[];
+  /**
+   * Меню, которое мастер-кабинет справочников прислал в прошлый раз
+   * (`src/lib/master-directory-push.ts`): по нему следующая раздача убирает
+   * из `itemsCatalog` только позиции мастера, а свои позиции кухни остаются.
+   */
+  sharedCatalog?: string[];
   /** Состав бракеражной комиссии — подписи под журналом и выбор в QR-форме. */
   commissionMembers: FinishedProductCommissionMember[];
   /** Константы времени для новой строки. */
@@ -420,7 +426,17 @@ export function normalizeFinishedProductDocumentConfig(
           .map((item) => item.trim())
           .filter((item) => item.length > 0)
       : defaults.itemsCatalog,
+    ...(Array.isArray(record.sharedCatalog)
+      ? { sharedCatalog: normalizeStringList(record.sharedCatalog) }
+      : {}),
   };
+}
+
+function normalizeStringList(value: unknown[]): string[] {
+  return value
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
 }
 
 /** «ЧЧ:ММ» из «YYYY-MM-DD ЧЧ:ММ» или «ЧЧ:ММ»; иначе пусто. */

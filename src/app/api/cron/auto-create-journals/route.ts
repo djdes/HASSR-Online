@@ -10,6 +10,7 @@ import {
 } from "@/lib/journal-auto-create";
 import { listAutomationOwnedCodes } from "@/lib/journal-automation";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
+import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,7 +44,7 @@ async function handle(request: Request) {
   if (cronAuth) return cronAuth;
   const orgs = await db.organization.findMany({
     // Приостановленные за неактивность организации автоматика не ведёт.
-    where: { subscriptionPlan: { notIn: ["paused", "cancelled"] } },
+    where: { subscriptionPlan: { notIn: ["paused", "cancelled"] }, ...NOT_DIRECTORY_ORG_WHERE },
     select: {
       id: true,
       autoJournalCodes: true,

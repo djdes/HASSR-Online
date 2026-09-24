@@ -4,6 +4,7 @@ import { enqueueAndWait } from "@/lib/ai-assistant/pf-client";
 import { checkCronSecret } from "@/lib/cron-auth";
 import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
 import { notifyOrganization } from "@/lib/telegram";
+import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -121,6 +122,7 @@ async function handle(request: Request) {
   const orgs = await db.organization.findMany({
     where: {
       subscriptionPlan: { notIn: ["paused", "cancelled"] },
+      ...NOT_DIRECTORY_ORG_WHERE,
     },
     select: { id: true, name: true },
   });

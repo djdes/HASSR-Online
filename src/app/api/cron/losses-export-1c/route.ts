@@ -3,6 +3,7 @@ import nodemailer from "nodemailer";
 import { db } from "@/lib/db";
 import { checkCronSecret } from "@/lib/cron-auth";
 import { buildLosses1cCsv } from "@/lib/losses-1c-export";
+import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,7 +27,7 @@ async function handle(request: Request) {
   const cronAuth = checkCronSecret(request);
   if (cronAuth) return cronAuth;
   const orgs = await db.organization.findMany({
-    where: { accountantEmail: { not: null } },
+    where: { accountantEmail: { not: null }, ...NOT_DIRECTORY_ORG_WHERE },
     select: {
       id: true,
       name: true,

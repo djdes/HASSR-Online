@@ -7,6 +7,7 @@ import { sendInactivityPausedEmail, sendInactivityWarningEmail } from "@/lib/ina
 import { notifyOrganization } from "@/lib/telegram";
 import { getDbRoleValuesWithLegacy, MANAGEMENT_ROLES } from "@/lib/user-roles";
 import { platformOrgId } from "@/lib/partners/partner-hint";
+import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -77,6 +78,8 @@ async function handle(request: Request) {
       id: { not: platformOrgId() },
       isDemo: false,
       subscriptionPlan: { notIn: PROTECTED_PLANS },
+      // Мастер-кабинет справочников записей в журналы не ведёт — не пауза.
+      ...NOT_DIRECTORY_ORG_WHERE,
     },
     select: {
       id: true,

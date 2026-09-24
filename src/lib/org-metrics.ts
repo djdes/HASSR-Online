@@ -31,6 +31,9 @@ export type OrgMetrics = {
   /// удалится в demoExpiresAt (cron purge-demo-orgs).
   isDemo: boolean;
   demoExpiresAt: string | null;
+  /// Мастер-кабинет справочников пула (Organization.kind="directory") —
+  /// служебный кабинет бэк-офиса, не пищеблок.
+  isDirectory?: boolean;
   /// Документов журналов всего — «сколько бумаги организация завела».
   documentsCount: number;
   subscriptionPlan: string;
@@ -157,6 +160,7 @@ export async function getAllOrgMetrics(
       inn: true,
       isDemo: true,
       demoExpiresAt: true,
+      kind: true,
       subscriptionPlan: true,
       subscriptionEnd: true,
       createdAt: true,
@@ -312,6 +316,7 @@ export async function getAllOrgMetrics(
       inn: org.inn ?? null,
       isDemo: org.isDemo,
       demoExpiresAt: org.demoExpiresAt?.toISOString() ?? null,
+      isDirectory: org.kind === "directory",
       documentsCount: org._count.journalDocuments,
       subscriptionPlan: org.subscriptionPlan,
       subscriptionEnd: org.subscriptionEnd?.toISOString() ?? null,

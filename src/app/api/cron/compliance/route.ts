@@ -6,6 +6,7 @@ import { sendComplianceReminderEmail } from "@/lib/email";
 import { getDbRoleValuesWithLegacy, MANAGEMENT_ROLES } from "@/lib/user-roles";
 import { getTemplatesFilledToday } from "@/lib/today-compliance";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
+import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
 
 const CRON_SECRET = process.env.CRON_SECRET || "";
 
@@ -62,6 +63,7 @@ async function handle(request: Request) {
 
     // Get all organizations (with their disabled-journal toggle).
     const organizations = await db.organization.findMany({
+      where: NOT_DIRECTORY_ORG_WHERE,
       select: { id: true, name: true, disabledJournalCodes: true },
     });
 
