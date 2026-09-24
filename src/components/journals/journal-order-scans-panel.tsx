@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { Check, ExternalLink, FileText, ImageIcon, Loader2, Pencil, Printer, Trash2, Upload, X } from "lucide-react";
 
@@ -344,9 +345,14 @@ export function JournalOrderScansPanel({ journalCode, initialScans, canManage }:
         confirmLabel="Удалить"
       />
 
-      {viewing ? (
-        <PhotoLightbox url={fileUrl(viewing.id)} filename={viewing.fileName} caption={viewing.title} onClose={() => setViewing(null)} />
-      ) : null}
+      {/* В портал: страница документа сдвинута `translate`-ом, и fixed-окно
+          внутри неё встало бы не по экрану, а по контейнеру. */}
+      {viewing
+        ? createPortal(
+            <PhotoLightbox url={fileUrl(viewing.id)} filename={viewing.fileName} caption={viewing.title} onClose={() => setViewing(null)} />,
+            document.body
+          )
+        : null}
     </section>
   );
 }
