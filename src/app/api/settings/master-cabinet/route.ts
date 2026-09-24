@@ -39,7 +39,7 @@ async function guard() {
 export async function GET() {
   const auth = await guard();
   if ("error" in auth) return auth.error;
-  return NextResponse.json(await getMasterCabinetStatus(auth.organizationId));
+  return NextResponse.json(await getMasterCabinetStatus(auth.organizationId, auth.session.user.id));
 }
 
 export async function POST(request: Request) {
@@ -112,6 +112,6 @@ export async function POST(request: Request) {
     user: result.user,
     inviteUrl: result.inviteUrl,
     emailSent,
-    status: await getMasterCabinetStatus(auth.organizationId),
+    status: await getMasterCabinetStatus(auth.organizationId, auth.session.user.id),
   });
 }

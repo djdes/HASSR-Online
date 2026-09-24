@@ -1,0 +1,25 @@
+{
+  "task": "master-cabinet-2026-09",
+  "part": "A (A1 dd7c9c4b + A2)",
+  "e2e": {
+    "a1": ".agent/tasks/master-cabinet-2026-09/e2e/a1-integration.ts (18/18, A1 run)",
+    "a2": ".agent/tasks/master-cabinet-2026-09/e2e/a2-browser-e2e.ts -> e2e/a2-results.json (14/14 PASS)"
+  },
+  "acceptance": {
+    "AC-A1": { "status": "PASS", "evidence": "Browser: /settings/master-cabinet form -> ConfirmDialog -> cabinet kind=directory linked to X code, invite link shown and accepted in a clean browser -> /master" },
+    "AC-A2": { "status": "PASS", "evidence": "Browser master session: /dashboard, /journals -> /master; /api/staff 403; /api/settings/master-cabinet 403; regular session /master -> /dashboard; evaluateDirectoryRequest unit test" },
+    "AC-A3": { "status": "PASS", "evidence": "xlsx upload preview 'Добавится 3 · Уберётся 0 · Без изменений 0', toast 'Готово: список обновлён в 2 объектах (4 журнала)'; X/Y itemsCatalog contain Борщ, Плов, Компот after own dish; dish suggestions include them" },
+    "AC-A4": { "status": "PASS", "evidence": "Pasted raw list -> X/Y productLists[0].items own + Молоко, Кефир, Творог; Y suppliers [Свой поставщик Y, ИП Иванов], manufacturers [Молокозавод]" },
+    "AC-A5": { "status": "PASS", "evidence": "Paste prefilled with current list, Плов removed -> preview 'Уберётся 1', PUT removed=1; Y itemsCatalog [Своё блюдо Y, Борщ, Компот]" },
+    "AC-A6": { "status": "PASS", "evidence": "New finished_product config for Y seeded [Борщ, Компот]; late joiner covered by A1 integration (Z masterDocuments=2)" },
+    "AC-A7": { "status": "PASS", "evidence": "A1 checks (pool without master unchanged, cron/plan exclusions); A2 did not change pool backend" },
+    "AC-A8": { "status": "PASS", "evidence": "npm run typecheck 0 errors; npm test 2109/2109; npm run build exit 0" }
+  },
+  "mobile390NoHorizontalScroll": true,
+  "screenshots": "shots/*.png (1440 + 390), gitignored (.agent/**/*.png)",
+  "a1Fixes": [
+    "master-directory-access: /api/build-info allowed for directory sessions (+test)",
+    "master-cabinet status: master.viewerCanOpen"
+  ],
+  "notes": ["Pre-existing dev hydration mismatch in ResponsiveMenu/Radix ids (also on dashboard /settings)"]
+}

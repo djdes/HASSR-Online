@@ -42,6 +42,8 @@ const DIRECTORY_ALLOWED_PREFIXES = [
   "/api/master",
   "/api/auth",
   "/api/me/active-organization",
+  // Проверка новой сборки (sw-register, build-version-watcher в корневом layout).
+  "/api/build-info",
   "/login",
   "/invite",
   "/_next",

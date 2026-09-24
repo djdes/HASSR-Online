@@ -15,6 +15,7 @@ import {
   Gauge,
   Wand2,
   KeyRound,
+  Library,
   ListChecks,
   Package,
   Palette,
@@ -403,6 +404,14 @@ const settingsCards = [
     bgClass: "bg-[#fff7ed]",
   },
   {
+    description:
+      "Бэк-офис один раз загружает меню и сырьё — все объекты с вашим кодом получают их в бракераж и скоропорт",
+    href: "/settings/master-cabinet",
+    icon: Library,
+    iconClass: "text-[#3848c7]",
+    bgClass: "bg-[#eef1ff]",
+  },
+  {
     description: "Светлая или тёмная тема кабинета",
     href: "/settings/appearance",
     icon: Palette,
@@ -646,6 +655,7 @@ const GROUP_JOURNALS = new Set([
   "/settings/journal-checklists",
   "/settings/journal-pipelines",
   "/settings/onboarding-template",
+  "/settings/master-cabinet",
   "/orders",
 ]);
 const GROUP_TASKS = new Set([

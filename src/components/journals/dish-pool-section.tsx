@@ -18,7 +18,15 @@ type Preview = { code: string; organizationName: string; poolSize: number };
  * Привязка и отвязка — только после предупреждения прямо в окне: поверх
  * Radix-модалки второе окно не получает кликов.
  */
-export function DishPoolSection() {
+export function DishPoolSection({
+  onChange,
+  hideTitle = false,
+}: {
+  /** Привязка/отвязка прошла — страница может перечитать свои данные пула. */
+  onChange?: () => void;
+  /** Заголовок секции рисует страница (настройки мастер-кабинета). */
+  hideTitle?: boolean;
+} = {}) {
   const [info, setInfo] = useState<Info | null>(null);
   const [code, setCode] = useState("");
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -65,7 +73,9 @@ export function DishPoolSection() {
 
   return (
     <div className="space-y-2">
-      <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Общий справочник блюд</div>
+      {hideTitle ? null : (
+        <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Общий справочник блюд</div>
+      )}
       <p className="text-[12.5px] leading-[1.45] text-[#6f7282]">
         Организации с одним служебным кодом видят общий список блюд: блюдо, внесённое в одной, сразу есть в
         выпадающих списках других.
@@ -121,6 +131,7 @@ export function DishPoolSection() {
                       setInfo(json.info);
                       setConfirmUnlink(false);
                       toast.success("Общий справочник отключён");
+                      onChange?.();
                     }
                   }}
                   className="inline-flex h-9 items-center rounded-xl bg-[#d2453d] px-4 text-[13px] font-medium text-white shadow-[0_8px_20px_-10px_rgba(210,69,61,0.6)] transition-colors duration-150 hover:bg-[#b93a33] disabled:opacity-50"
@@ -186,6 +197,7 @@ export function DishPoolSection() {
                   setPreview(null);
                   setCode("");
                   toast.success(`Подключено: общий справочник с «${preview.organizationName}»`);
+                  onChange?.();
                 }
               }}
               className="inline-flex h-9 items-center rounded-xl bg-[#5566f6] px-4 text-[13px] font-medium text-white transition-colors duration-150 hover:bg-[#4a5bf0] disabled:opacity-50"

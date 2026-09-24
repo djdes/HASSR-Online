@@ -90,6 +90,7 @@ export const ROUTE_TITLES: Record<string, string> = {
   "/settings/subscription": "Тарифы",
   "/settings/task-visibility": "Кто видит все задачи в TasksFlow",
   "/settings/kiosk": "Общий планшет",
+  "/settings/master-cabinet": "Мастер-кабинет справочников",
   "/settings/users": "Сотрудники",
   "/settings/users/invite": "Приглашение сотрудника",
   "/settings/workload-balance": "Нагрузка сотрудников",

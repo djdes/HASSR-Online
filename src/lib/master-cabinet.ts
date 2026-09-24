@@ -3,6 +3,7 @@ import { ensureServiceCode, resolveDishPoolOrgIds } from "@/lib/dish-pool";
 import { buildInviteUrl, generateInviteToken, hashInviteToken, inviteExpiresAt } from "@/lib/invite-tokens";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { MASTER_ORG_KIND, NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
+import { assertOrgMembership } from "@/lib/organization-access";
 
 /**
  * Создание мастер-кабинета справочников из настроек пищеблока
@@ -16,7 +17,13 @@ export type MasterCabinetUser = { id: string; name: string; email: string; invit
 export type MasterCabinetStatus = {
   code: string | null;
   poolOrganizations: Array<{ id: string; name: string }>;
-  master: null | { organizationId: string; name: string; users: MasterCabinetUser[] };
+  master: null | {
+    organizationId: string;
+    name: string;
+    users: MasterCabinetUser[];
+    /** Может ли смотрящий переключиться в кабинет (член кабинета). */
+    viewerCanOpen: boolean;
+  };
 };
 
 function poolCodeOf(org: { serviceCode: string | null; linkedServiceCode: string | null } | null): string | null {
@@ -40,7 +47,10 @@ async function listMasterUsers(masterOrgId: string): Promise<MasterCabinetUser[]
   return users.map((user) => ({ id: user.id, name: user.name, email: user.email, invited: !user.isActive }));
 }
 
-export async function getMasterCabinetStatus(organizationId: string): Promise<MasterCabinetStatus> {
+export async function getMasterCabinetStatus(
+  organizationId: string,
+  viewerUserId?: string
+): Promise<MasterCabinetStatus> {
   const org = await db.organization.findUnique({
     where: { id: organizationId },
     select: { serviceCode: true, linkedServiceCode: true },
@@ -60,7 +70,12 @@ export async function getMasterCabinetStatus(organizationId: string): Promise<Ma
     code,
     poolOrganizations,
     master: master
-      ? { organizationId: master.id, name: master.name, users: await listMasterUsers(master.id) }
+      ? {
+          organizationId: master.id,
+          name: master.name,
+          users: await listMasterUsers(master.id),
+          viewerCanOpen: viewerUserId ? await assertOrgMembership(viewerUserId, master.id) : false,
+        }
       : null,
   };
 }
