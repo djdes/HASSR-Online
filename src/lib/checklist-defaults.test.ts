@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { CHECKLIST_DEFAULTS, defaultChecklistFor } from "@/lib/checklist-defaults";
+import {
+  CHECKLIST_DEFAULTS,
+  CHECKLIST_DEFAULTS_BY_SPHERE,
+  defaultChecklistFor,
+} from "@/lib/checklist-defaults";
+import { ORG_SPHERES, type OrgSphere } from "@/lib/org-profile";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { SPHERE_RULES } from "@/lib/sphere-journal-rules";
 
@@ -10,8 +15,66 @@ const catalogCodes = new Set<string>(ACTIVE_JOURNAL_CATALOG.map((item) => item.c
 test("типовые чек-листы есть для каждого журнала из checklistJournals всех сфер", () => {
   for (const rules of Object.values(SPHERE_RULES)) {
     for (const code of rules.checklistJournals) {
-      const items = defaultChecklistFor(code);
-      assert.ok(items.length >= 5 && items.length <= 8, `${code}: ${items.length} пунктов, нужно 5–8`);
+      for (const items of [defaultChecklistFor(code), defaultChecklistFor(code, rules.sphere)]) {
+        assert.ok(items.length >= 5 && items.length <= 8, `${rules.sphere}/${code}: ${items.length} пунктов, нужно 5–8`);
+      }
+    }
+  }
+});
+
+const sphereValues = new Set<string>(ORG_SPHERES.map((item) => item.value));
+
+test("у фитнеса, отеля и салона — свои пункты уборок, у остальных — общие", () => {
+  const own: Array<[OrgSphere, string[]]> = [
+    ["fitness", ["cleaning", "general_cleaning", "disinfectant_usage"]],
+    ["hotel", ["cleaning", "general_cleaning"]],
+    ["beauty", ["cleaning", "general_cleaning"]],
+  ];
+  for (const [sphere, codes] of own) {
+    for (const code of codes) {
+      const items = defaultChecklistFor(code, sphere);
+      assert.notDeepEqual(items, CHECKLIST_DEFAULTS[code], `${sphere}/${code}: взялись общие пункты`);
+      assert.ok(items.length >= 5 && items.length <= 7, `${sphere}/${code}: ${items.length} пунктов, нужно 5–7`);
+    }
+  }
+  // Пищевых слов в пунктах уборки не-пищевых сфер быть не должно.
+  for (const sphere of ["fitness", "hotel", "beauty"] as const) {
+    const text = defaultChecklistFor("cleaning", sphere).map((item) => item.title).join(" ");
+    assert.doesNotMatch(text, /солонк|кухн/i, `${sphere}: в уборке пищевые пункты`);
+  }
+  assert.match(defaultChecklistFor("cleaning", "fitness").map((i) => i.title).join(" "), /тренаж/i);
+  assert.match(defaultChecklistFor("cleaning", "hotel").map((i) => i.title).join(" "), /выезд/i);
+  assert.match(defaultChecklistFor("cleaning", "beauty").map((i) => i.title).join(" "), /клиент/i);
+  for (const sphere of ["restaurant", "cafe", "education", "medical", "other"] as const) {
+    assert.deepEqual(defaultChecklistFor("cleaning", sphere), CHECKLIST_DEFAULTS.cleaning, sphere);
+  }
+  assert.deepEqual(defaultChecklistFor("cleaning", null), CHECKLIST_DEFAULTS.cleaning);
+});
+
+test("стерилизация инструментов — в общей таблице", () => {
+  assert.ok(CHECKLIST_DEFAULTS.instrument_sterilization.length >= 5);
+  assert.deepEqual(
+    defaultChecklistFor("instrument_sterilization", "beauty"),
+    CHECKLIST_DEFAULTS.instrument_sterilization,
+  );
+});
+
+test("сферные наборы — для существующих сфер и журналов каталога, поля заполнены", () => {
+  for (const [sphere, byCode] of Object.entries(CHECKLIST_DEFAULTS_BY_SPHERE)) {
+    assert.ok(sphereValues.has(sphere), `${sphere}: нет такой сферы`);
+    for (const [code, items] of Object.entries(byCode ?? {})) {
+      assert.ok(catalogCodes.has(code), `${sphere}/${code}: нет в каталоге`);
+      const titles = new Set<string>();
+      for (const item of items ?? []) {
+        assert.ok(item.title.trim().length >= 15 && item.title.length <= 200, `${sphere}/${code}: «${item.title}»`);
+        assert.ok((item.hint ?? "").length <= 500, `${sphere}/${code}: длинная подсказка`);
+        assert.ok(!titles.has(item.title), `${sphere}/${code}: дубль «${item.title}»`);
+        titles.add(item.title);
+        if (item.frequency === "weekly") assert.ok(item.weekDays?.length, `${sphere}/${code}: weekly без weekDays`);
+        if (item.frequency === "monthly") assert.ok(item.monthDay, `${sphere}/${code}: monthly без monthDay`);
+        assert.ok(item.category !== "current" && item.category !== "general", `${sphere}/${code}: служебная category`);
+      }
+      assert.ok((items ?? []).some((item) => item.required), `${sphere}/${code}: нет обязательных`);
     }
   }
 });

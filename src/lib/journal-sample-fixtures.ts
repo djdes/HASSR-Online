@@ -365,6 +365,23 @@ const SAMPLE_REGISTER_ROWS: Record<string, Array<Record<string, string>>> = {
     { date: "2026-04-01", time: "07:00", pool: "Большой бассейн", waterTemp: "27", freeChlorine: "0.4", boundChlorine: "0.1", ph: "7.4", transparency: "Видна разметка дна", visitors: "", responsible: "Кузнецов Д. И." },
     { date: "2026-04-01", time: "13:00", pool: "Большой бассейн", waterTemp: "27.5", freeChlorine: "0.5", boundChlorine: "0.1", ph: "7.3", transparency: "Видна разметка дна", visitors: "34", responsible: "Кузнецов Д. И." },
   ],
+  inventory_condition: [
+    { date: "2026-04-01", zone: "Холодный цех", item: "Доска разделочная «СО»", material: "Пластик", condition: "Исправен", action: "", responsible: "Иванова М. П." },
+    { date: "2026-04-01", zone: "Мясной цех", item: "Доска разделочная «СМ»", material: "Пластик", condition: "Изъят из работы", action: "Трещина по краю — заменена новой", responsible: "Иванова М. П." },
+    { date: "2026-04-01", zone: "Горячий цех", item: "Лопатка", material: "Металл", condition: "Исправен", action: "", responsible: "Иванова М. П." },
+  ],
+  instrument_sterilization: [
+    { date: "2026-04-01", instruments: "Кусачки — 3 шт., пушер — 2 шт.", method: "Воздушный (сухожар)", mode: "180 °C, 60 мин", indicator: "Да", sterilizer: "Сухожар ГП-20", responsible: "Смирнова О. Н." },
+    { date: "2026-04-01", instruments: "Ножницы — 2 шт., расчёски — 4 шт.", method: "Химический", mode: "Раствор 3 %, 60 мин", indicator: "Да", sterilizer: "Контейнер для дезинфекции", responsible: "Смирнова О. Н." },
+  ],
+  medical_waste_b: [
+    { date: "2026-04-01", wasteType: "Ватные диски, салфетки, перчатки", amount: "0.8", disinfection: "Дезраствор, 60 мин", packaging: "Жёлтый пакет", handedTo: "ООО «ЭкоВывоз», акт № 14", responsible: "Смирнова О. Н." },
+    { date: "2026-04-01", wasteType: "Иглы, лезвия", amount: "0.2", disinfection: "Дезраствор, 60 мин", packaging: "Жёлтый контейнер для острого", handedTo: "ООО «ЭкоВывоз», акт № 14", responsible: "Смирнова О. Н." },
+  ],
+  batch_release: [
+    { date: "2026-04-01", product: "Хлеб пшеничный формовой", batch: "260401-01", quantity: "320 шт.", checks: "Вкус и запах в норме, этикетка верна, упаковка целая", decision: "Допущено", responsible: "Петров С. А." },
+    { date: "2026-04-01", product: "Батон нарезной", batch: "260401-02", quantity: "180 шт.", checks: "Неверная дата на этикетке", decision: "Не допущено", responsible: "Петров С. А." },
+  ],
 };
 
 export function buildJournalSampleInput(

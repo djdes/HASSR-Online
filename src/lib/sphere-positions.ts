@@ -273,6 +273,15 @@ export const SPHERE_POSITION_SUGGESTIONS: Record<OrgSphere, SpherePositions> = {
       "Медицинская сестра",
     ],
   },
+  beauty: {
+    management: ["Управляющий", "Администратор"],
+    staff: [
+      "Парикмахер",
+      "Мастер маникюра",
+      "Косметолог",
+      "Уборщица",
+    ],
+  },
   other: {
     management: ["Управляющий", "Администратор", "Заведующий производством"],
     staff: [

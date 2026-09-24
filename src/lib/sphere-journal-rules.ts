@@ -189,6 +189,26 @@ const SP_3678: LawRef = {
 };
 
 /**
+ * Требования к организациям, которые оказывают бытовые услуги, в том
+ * числе парикмахерским и салонам красоты: стерилизация инструментов,
+ * уборки, дезинфекция. Номера пунктов не приводим — формулировки для
+ * салонов требуют юр-сверки по полному тексту. Ссылка — поиск по номеру.
+ */
+const SANPIN_3678: LawRef = {
+  label: "СанПиН 2.1.3678-20",
+  url: "https://www.consultant.ru/search/?q=%D0%A1%D0%B0%D0%BD%D0%9F%D0%B8%D0%9D%202.1.3678-20",
+};
+
+/**
+ * Обращение с отходами, в том числе медицинскими (класс Б —
+ * эпидемиологически опасные). Номер пункта не приводим; ссылка — поиск.
+ */
+const SANPIN_3684: LawRef = {
+  label: "СанПиН 2.1.3684-21",
+  url: "https://www.consultant.ru/search/?q=%D0%A1%D0%B0%D0%BD%D0%9F%D0%B8%D0%9D%202.1.3684-21",
+};
+
+/**
  * Фитнес-центры отвечают не по «пищевой» 6.6, а по общим статьям о
  * санитарных требованиях к помещениям и сооружениям. Суммы штрафов в
  * текст не выносим — требуют юр-сверки; ссылка — на кодекс целиком, без
@@ -236,6 +256,15 @@ const CHECKLISTS_FOOD = [
   "disinfectant_usage",
   "cold_equipment_control",
 ];
+/**
+ * Заметки «проверить у юриста» — для нас: на публичной странице их
+ * вырезает publicNote (sphere-public-content.ts).
+ */
+const BEAUTY_3678_NOTE =
+  "СанПиН 2.1.3678-20 — требования к парикмахерским и салонам красоты; номер пункта проверить у юриста";
+const BEAUTY_3684_NOTE =
+  "СанПиН 2.1.3684-21 — отходы класса Б собирают отдельно и обеззараживают; номер пункта проверить у юриста";
+
 /** Детские и медицинские: плюс бактерицидные установки. */
 const CHECKLISTS_CHILD_MED = [...CHECKLISTS_FOOD, "uv_lamp_runtime"];
 
@@ -422,6 +451,7 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       "tableware_breakage",
       "staff_training",
       "complaint_register",
+      "inventory_condition",
     ],
     paperRequired: PAPER_FULL,
     ordersRequired: ORDERS_FOOD_REQUIRED,
@@ -443,6 +473,7 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       "incoming_control",
       "med_books",
       "tableware_breakage",
+      "inventory_condition",
     ],
     paperRequired: PAPER_BASE,
     ordersRequired: ORDERS_FOOD_REQUIRED,
@@ -472,6 +503,7 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       "uv_lamp_runtime",
       "product_writeoff",
       "tableware_breakage",
+      "inventory_condition",
     ],
     paperRequired: PAPER_FULL,
     ordersRequired: ORDERS_FOOD_REQUIRED,
@@ -535,6 +567,8 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       "training_plan",
       "ppe_issuance",
       "equipment_maintenance",
+      "inventory_condition",
+      "batch_release",
     ],
     paperRequired: PAPER_FULL,
     ordersRequired: ORDERS_FOOD_REQUIRED,
@@ -581,6 +615,8 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       "equipment_maintenance",
       "breakdown_history",
       "sanitary_day_control",
+      "inventory_condition",
+      "batch_release",
     ],
     paperRequired: PAPER_FULL,
     ordersRequired: ORDERS_FOOD_REQUIRED,
@@ -638,6 +674,7 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       "tableware_breakage",
       "sanitary_day_control",
       "staff_training",
+      "inventory_condition",
     ],
     paperRequired: PAPER_FULL,
     ordersRequired: ORDERS_FOOD_REQUIRED,
@@ -699,6 +736,8 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       "med_books",
       "ration_control",
       "sanitary_day_control",
+      "instrument_sterilization",
+      "medical_waste_b",
     ],
     paperRequired: PAPER_FULL,
     ordersRequired: ORDERS_CHILD_MED_REQUIRED,
@@ -754,6 +793,7 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       "med_books",
       "daily_samples",
       "transport_temperature",
+      "inventory_condition",
     ],
     paperRequired: PAPER_FULL,
     ordersRequired: ORDERS_FOOD_REQUIRED,
@@ -849,6 +889,52 @@ export const SPHERE_RULES: Record<OrgSphere, SphereRules> = {
       "disinfectant_usage",
       "uv_lamp_runtime",
       "pool_water_control",
+    ],
+  },
+  beauty: {
+    sphere: "beauty",
+    // Своё вступление: общий intro() говорит о пищевых журналах, а салону
+    // они не нужны. Основа — стерилизация инструментов, дезинфекция и
+    // уборки; отходы класса Б — только при косметологии и инъекциях.
+    intro:
+      "Для сферы «Салон красоты / Барбершоп / Маникюр» основа санитарного контроля — стерилизация инструментов, дезинфекция и уборки: эти записи мы включили сразу, остальное вы решаете сами. Пищевые журналы салону не нужны: СанПиН 2.3/2.4.4282-26 написан для общепита, а к салонам относятся санитарные требования к бытовым услугам — СанПиН 2.1.3678-20. Вести записи можно в электронном виде и распечатать бланк к проверке в один клик. Отсутствие производственного контроля при проверке — нарушение санитарных требований: штраф по ст. 6.3 и 6.4 КоАП РФ или приостановка деятельности.",
+    introLaw: KOAP_63_64,
+    electronicRequired: [
+      { code: "instrument_sterilization", basis: "sanpin", law: SANPIN_3678, note: BEAUTY_3678_NOTE },
+      { code: "general_cleaning", basis: "sanpin", law: SANPIN_3678, note: BEAUTY_3678_NOTE },
+      { code: "disinfectant_usage", basis: "sanpin", law: SANPIN_3678, note: BEAUTY_3678_NOTE },
+      {
+        code: "medical_waste_b",
+        condition: "нужен, если в салоне есть косметология или инъекционные процедуры",
+        basis: "sanpin",
+        law: SANPIN_3684,
+        note: BEAUTY_3684_NOTE,
+      },
+    ],
+    electronicRecommended: [
+      "cleaning",
+      "uv_lamp_runtime",
+      "pest_control",
+      "staff_training",
+      "accident_journal",
+      "complaint_register",
+      "climate_control",
+      "med_books",
+    ],
+    paperRequired: PAPER_FULL,
+    ordersRequired: [
+      "sanitary-responsible",
+      "journals-intro",
+      "ppk-approval",
+      "disinfection",
+    ],
+    ordersRecommended: ["cleaning-schedule", "medical-examinations", "workwear"],
+    checklistJournals: [
+      "cleaning",
+      "general_cleaning",
+      "disinfectant_usage",
+      "uv_lamp_runtime",
+      "instrument_sterilization",
     ],
   },
   other: {

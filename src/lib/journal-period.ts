@@ -101,6 +101,8 @@ export const YEARLY_JOURNAL_CODES = new Set<string>([
   "complaint_register",
   // Бой посуды — событийный учёт, как аварии и жалобы: один бланк на год.
   "tableware_breakage",
+  // Отходы класса Б — тоже по событию (сбор и передача): бланк на год.
+  "medical_waste_b",
   "med_books",
   // Скан скринов lk.haccp-online.ru: «График и учёт генеральных
   // уборок» отдельной колонкой «Год 2025» + «Дата документа

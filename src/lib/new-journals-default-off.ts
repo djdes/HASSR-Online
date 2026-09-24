@@ -9,6 +9,11 @@
  *
  * Выключение делает one-shot сидер
  * `prisma/seed-disable-new-journals-2026-09.ts`. Модуль чистый — без БД.
+ *
+ * Вторая волна (`NEW_JOURNAL_CODES_2026_09B`: инвентарь, стерилизация
+ * инструментов, отходы класса Б, допуск партии) выключается своим сидером
+ * `prisma/seed-disable-new-journals-2026-09b.ts` со своим флагом: первый
+ * сидер на проде уже отработал и повторно не запустится.
  */
 
 export const NEW_JOURNAL_CODES_2026_09 = [
@@ -20,6 +25,23 @@ export const NEW_JOURNAL_CODES_2026_09 = [
   "pool_water_control",
 ] as const;
 
+/** Вторая волна сентября 2026 — после сверки каталога с Service Inspector. */
+export const NEW_JOURNAL_CODES_2026_09B = [
+  "inventory_condition",
+  "instrument_sterilization",
+  "medical_waste_b",
+  "batch_release",
+] as const;
+
+/**
+ * Все коды, которые у существующих организаций выключили сидеры, а не
+ * человек. Нужен анкете: список из одних таких кодов — «нетронутый».
+ */
+export const SEEDED_DEFAULT_OFF_CODES: readonly string[] = [
+  ...NEW_JOURNAL_CODES_2026_09,
+  ...NEW_JOURNAL_CODES_2026_09B,
+];
+
 function toStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.filter((item): item is string => typeof item === "string");
@@ -30,14 +52,17 @@ function toStringArray(value: unknown): string[] {
  * сохраняется, дубли не появляются; `changed=false`, если все коды уже
  * выключены — повторный прогон ничего не меняет.
  */
-export function applyNewJournalsDefaultOff(disabledJournalCodes: unknown): {
+export function applyNewJournalsDefaultOff(
+  disabledJournalCodes: unknown,
+  codes: readonly string[] = NEW_JOURNAL_CODES_2026_09,
+): {
   disabledJournalCodes: string[];
   added: string[];
   changed: boolean;
 } {
   const current = toStringArray(disabledJournalCodes);
   const present = new Set(current);
-  const added = NEW_JOURNAL_CODES_2026_09.filter((code) => !present.has(code));
+  const added = codes.filter((code) => !present.has(code));
   return {
     disabledJournalCodes: [...current, ...added],
     added,

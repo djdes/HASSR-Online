@@ -4,9 +4,10 @@
  * а экран, печать и внешний API строятся из этих полей общими
  * компонентами (`register-document-client.tsx`, `drawRegisterPdf`).
  *
- * Здесь — единый источник правды для шести журналов, добавленных в
- * сентябре 2026 (суточные пробы, витаминизация, рацион, перевозка, бой
- * посуды, вода в бассейне): из него берут поля и сид шаблонов
+ * Здесь — единый источник правды для журналов, добавленных в сентябре
+ * 2026 (суточные пробы, витаминизация, рацион, перевозка, бой посуды,
+ * вода в бассейне; затем инвентарь, стерилизация инструментов, отходы
+ * класса Б, допуск партии): из него берут поля и сид шаблонов
  * (`prisma/seed.ts`), и экран документа, и тесты. Добавить ещё один
  * такой журнал = одна запись здесь + строка в каталоге.
  *
@@ -195,6 +196,127 @@ export const REGISTER_JOURNALS: readonly RegisterJournalDefinition[] = [
       { key: "ph", label: "pH", type: "number", required: false, step: 0.1 },
       { key: "transparency", label: "Прозрачность", type: "text", required: false, placeholder: "Например, видна разметка дна" },
       { key: "visitors", label: "Посетителей за сеанс", type: "number", required: false, step: 1 },
+      RESPONSIBLE,
+    ],
+  },
+  {
+    code: "inventory_condition",
+    name: "Журнал оценки состояния металлического и пластикового инвентаря",
+    description:
+      "Осмотр ножей, досок, ёмкостей и другого инвентаря: сколы, трещины, отслоения",
+    hint: "Строка на каждую осмотренную единицу: где стоит, из чего сделана, в каком состоянии и что с ней сделали.",
+    dateKey: "date",
+    titleKey: "item",
+    isMandatorySanpin: false,
+    isMandatoryHaccp: true,
+    fields: [
+      { key: "date", label: "Дата", type: "date", required: true },
+      { key: "zone", label: "Цех / участок", type: "text", required: false, placeholder: "Например, холодный цех" },
+      { key: "item", label: "Инвентарь", type: "text", required: true, placeholder: "Например, доска разделочная «СР»" },
+      {
+        key: "material",
+        label: "Материал",
+        type: "select",
+        required: true,
+        options: ["Металл", "Пластик"].map(option),
+      },
+      {
+        key: "condition",
+        label: "Состояние",
+        type: "select",
+        required: true,
+        options: ["Исправен", "Есть повреждения", "Изъят из работы"].map(option),
+      },
+      { key: "action", label: "Что сделано", type: "text", required: false, placeholder: "Например, заменена новой" },
+      RESPONSIBLE,
+    ],
+  },
+  {
+    code: "instrument_sterilization",
+    name: "Журнал контроля стерилизации инструментов",
+    description:
+      "Учёт каждого цикла стерилизации инструментов: способ, режим и результат индикатора",
+    hint: "Строка на каждую закладку в стерилизатор: какие инструменты, каким способом, при каком режиме и сработал ли индикатор.",
+    dateKey: "date",
+    titleKey: "instruments",
+    isMandatorySanpin: true,
+    isMandatoryHaccp: false,
+    fields: [
+      { key: "date", label: "Дата", type: "date", required: true },
+      { key: "instruments", label: "Инструменты (наименование, кол-во)", type: "text", required: true, placeholder: "Например, кусачки — 3 шт., пушер — 2 шт." },
+      {
+        key: "method",
+        label: "Способ",
+        type: "select",
+        required: true,
+        options: [
+          "Воздушный (сухожар)",
+          "Паровой (автоклав)",
+          "Химический",
+          "Гласперленовый",
+        ].map(option),
+      },
+      { key: "mode", label: "Режим (°C, мин)", type: "text", required: false, placeholder: "Например, 180 °C, 60 мин" },
+      {
+        key: "indicator",
+        label: "Индикатор сработал",
+        type: "select",
+        required: false,
+        options: ["Да", "Нет"].map(option),
+      },
+      { key: "sterilizer", label: "Стерилизатор", type: "text", required: false, placeholder: "Например, сухожар ГП-20" },
+      RESPONSIBLE,
+    ],
+  },
+  {
+    code: "medical_waste_b",
+    name: "Журнал учёта отходов класса Б",
+    description:
+      "Учёт эпидемиологически опасных отходов: сколько собрано, как обеззаражено и кому передано",
+    hint: "Запись при каждом сборе и передаче отходов: что за отходы, сколько килограммов, как обеззаражены и кто забрал.",
+    dateKey: "date",
+    titleKey: "wasteType",
+    isMandatorySanpin: true,
+    isMandatoryHaccp: false,
+    fields: [
+      { key: "date", label: "Дата", type: "date", required: true },
+      { key: "wasteType", label: "Вид отходов", type: "text", required: true, placeholder: "Например, использованные иглы, ватные диски" },
+      { key: "amount", label: "Количество, кг", type: "number", required: false, step: 0.01 },
+      { key: "disinfection", label: "Обеззараживание", type: "text", required: false, placeholder: "Например, дезраствор, 60 мин" },
+      {
+        key: "packaging",
+        label: "Упаковка",
+        type: "select",
+        required: false,
+        options: ["Жёлтый пакет", "Жёлтый контейнер для острого"].map(option),
+      },
+      { key: "handedTo", label: "Кому передано", type: "text", required: false, placeholder: "Организация, акт / накладная" },
+      RESPONSIBLE,
+    ],
+  },
+  {
+    code: "batch_release",
+    name: "Журнал допуска партии продукции к отгрузке",
+    description:
+      "Решение о выпуске партии готовой продукции после проверки внешнего вида, маркировки и упаковки",
+    hint: "Строка на каждую партию перед отгрузкой: что проверили и допущена ли партия.",
+    dateKey: "date",
+    titleKey: "product",
+    isMandatorySanpin: false,
+    isMandatoryHaccp: true,
+    fields: [
+      { key: "date", label: "Дата", type: "date", required: true },
+      { key: "product", label: "Продукция", type: "text", required: true, placeholder: "Например, хлеб пшеничный формовой" },
+      { key: "batch", label: "Номер партии", type: "text", required: false, placeholder: "Например, 240926-01" },
+      { key: "quantity", label: "Количество", type: "text", required: false, placeholder: "Например, 320 шт." },
+      { key: "checks", label: "Проверено (органолептика, маркировка, упаковка)", type: "text", required: false, placeholder: "Например, вкус и запах в норме, этикетка верна" },
+      {
+        key: "decision",
+        label: "Решение",
+        type: "select",
+        required: true,
+        options: ["Допущено", "Не допущено"].map(option),
+      },
       RESPONSIBLE,
     ],
   },

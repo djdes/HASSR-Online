@@ -7,6 +7,10 @@ export const REGISTER_DOCUMENT_TEMPLATE_CODES = [
   "transport_temperature",
   "tableware_breakage",
   "pool_water_control",
+  "inventory_condition",
+  "instrument_sterilization",
+  "medical_waste_b",
+  "batch_release",
 ] as const;
 
 export type RegisterDocumentTemplateCode =
@@ -52,6 +56,11 @@ const TITLES: Record<RegisterDocumentTemplateCode, string> = {
   transport_temperature: "Журнал контроля температуры при транспортировке",
   tableware_breakage: "Журнал учёта боя посуды",
   pool_water_control: "Журнал контроля качества воды в бассейне",
+  inventory_condition:
+    "Журнал оценки состояния металлического и пластикового инвентаря",
+  instrument_sterilization: "Журнал контроля стерилизации инструментов",
+  medical_waste_b: "Журнал учёта отходов класса Б",
+  batch_release: "Журнал допуска партии продукции к отгрузке",
 };
 
 function createId(prefix: string) {

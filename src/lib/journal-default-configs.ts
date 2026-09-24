@@ -380,6 +380,10 @@ const PROVIDERS: Record<string, Provider> = {
   transport_temperature: (orgData) => registerConfig(orgData),
   tableware_breakage: (orgData) => registerConfig(orgData),
   pool_water_control: (orgData) => registerConfig(orgData),
+  inventory_condition: (orgData) => registerConfig(orgData),
+  instrument_sterilization: (orgData) => registerConfig(orgData),
+  medical_waste_b: (orgData) => registerConfig(orgData),
+  batch_release: (orgData) => registerConfig(orgData),
 
   // ═══ АУДИТЫ ═══
   audit_plan: (orgData) =>

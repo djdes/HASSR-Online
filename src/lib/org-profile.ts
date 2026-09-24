@@ -47,6 +47,13 @@ export const ORG_SPHERES = [
     label: "Фитнес-центр / Спортклуб / Бассейн",
     preset: "other",
   },
+  // Салоны красоты: основа — стерилизация инструментов, дезинфекция и
+  // уборки; пищевые журналы не нужны (см. SPHERE_RULES.beauty).
+  {
+    value: "beauty",
+    label: "Салон красоты / Барбершоп / Маникюр",
+    preset: "other",
+  },
   { value: "other", label: "Другое", preset: "other" },
 ] as const satisfies readonly {
   value: string;
@@ -117,7 +124,7 @@ export function normalizeLocationsCount(value: unknown): number {
 
 /**
  * Сфера → пресет онбординга. Пресеты не переписываем: их шесть, они
- * про производственный профиль, а сфер пятнадцать и они про язык клиента.
+ * про производственный профиль, а сфер шестнадцать и они про язык клиента.
  */
 export function sphereToPreset(value: unknown): OrgType {
   const sphere = normalizeSphere(value);

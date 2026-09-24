@@ -5,6 +5,7 @@ import { hasCapability } from "@/lib/permission-presets";
 import { db } from "@/lib/db";
 import { recordAuditLog } from "@/lib/audit-log";
 import { defaultChecklistFor } from "@/lib/checklist-defaults";
+import { normalizeSphere } from "@/lib/org-profile";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,7 +14,8 @@ export const dynamic = "force-dynamic";
  * Фаза «Документы» начальной настройки — чек-листы.
  *
  * POST { action: "fill-defaults", code } — вставить типовые пункты
- *   (`CHECKLIST_DEFAULTS`) в общий чек-лист журнала. Только если общих
+ *   (`defaultChecklistFor` с учётом сферы организации: у фитнеса, отеля
+ *   и салона свои наборы) в общий чек-лист журнала. Только если общих
  *   пунктов у журнала ещё нет: кнопка «Заполнить типовыми» не должна
  *   дублировать то, что руководитель уже настроил руками. Пункты уборки,
  *   привязанные к помещениям (roomId), не считаются — они живут своей
@@ -63,7 +65,12 @@ export async function POST(request: NextRequest) {
   }
 
   const { code } = parsed.data;
-  const defaults = defaultChecklistFor(code);
+  const org = await db.organization.findUnique({
+    where: { id: organizationId },
+    select: { type: true },
+  });
+  const sphere = normalizeSphere(org?.type);
+  const defaults = defaultChecklistFor(code, sphere);
   if (defaults.length === 0) {
     return NextResponse.json(
       { error: "Для этого журнала нет типового чек-листа" },
@@ -113,7 +120,7 @@ export async function POST(request: NextRequest) {
     action: "checklist.fill_defaults",
     entity: "JournalChecklistItem",
     entityId: code,
-    details: { journalCode: code, created: result.created, source: "onboarding" },
+    details: { journalCode: code, created: result.created, sphere, source: "onboarding" },
   });
 
   return NextResponse.json({ ok: true, created: result.created });

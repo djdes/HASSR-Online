@@ -1,0 +1,78 @@
+{
+  "legacy-new-codes-off": {
+    "ok": true,
+    "detail": "inventory_condition=false, instrument_sterilization=false, medical_waste_b=false, batch_release=false"
+  },
+  "legacy-new-codes-enable": {
+    "ok": true,
+    "detail": "after switching on + reload: inventory_condition=true, instrument_sterilization=true, medical_waste_b=true, batch_release=true"
+  },
+  "register-inventory_condition": {
+    "ok": true,
+    "detail": "doc cmufm0mvy002pp09mc2rxdcjp: row «Доска разделочная СО» persisted after reload=true, select «Изъят из работы» shown=true; PDF 200 application/pdf 436062 bytes"
+  },
+  "register-instrument_sterilization": {
+    "ok": true,
+    "detail": "doc cmufm14ra002qp09mqlkrjifn: row «Кусачки — 3 шт.» persisted after reload=true, select «Воздушный (сухожар)» shown=true; PDF 200 application/pdf 437254 bytes"
+  },
+  "register-medical_waste_b": {
+    "ok": true,
+    "detail": "doc cmufm1k01002rp09mwpwy3e1v: row «Ватные диски, перчатки» persisted after reload=true, select «Жёлтый пакет» shown=true; PDF 200 application/pdf 436936 bytes"
+  },
+  "register-batch_release": {
+    "ok": true,
+    "detail": "doc cmufm208q002sp09mh5tep7dh: row «Хлеб пшеничный» persisted after reload=true, select «Допущено» shown=true; PDF 200 application/pdf 434733 bytes"
+  },
+  "journals-info-pages": {
+    "ok": true,
+    "detail": "[{\"code\":\"inventory_condition\",\"status\":200,\"hasName\":true,\"legal\":false,\"sample\":200},{\"code\":\"instrument_sterilization\",\"status\":200,\"hasName\":true,\"legal\":false,\"sample\":200},{\"code\":\"medical_waste_b\",\"status\":200,\"hasName\":true,\"legal\":false,\"sample\":200},{\"code\":\"batch_release\",\"status\":200,\"hasName\":true,\"legal\":false,\"sample\":200}]; /journals-info lists 4/4"
+  },
+  "public-beauty": {
+    "ok": true,
+    "detail": "sterilization + basis + law, waste condition, disinfection order, beauty checklist example, paper journals; no internal legal notes"
+  },
+  "industries-grid": {
+    "ok": true,
+    "detail": "home: links to /dlya-salona-krasoty=5, group «Красота и уход»=1"
+  },
+  "sitemap": {
+    "ok": true,
+    "detail": "sitemap.xml contains /dlya-salona-krasoty"
+  },
+  "anketa-beauty": {
+    "ok": true,
+    "detail": "sphere options include «Салон красоты / Барбершоп / Маникюр»=true; /api/profile/complete → 200"
+  },
+  "beauty-required-enabled": {
+    "ok": true,
+    "detail": "instrument_sterilization=true, general_cleaning=true, disinfectant_usage=true, medical_waste_b=true"
+  },
+  "beauty-recommended-disabled": {
+    "ok": true,
+    "detail": "cleaning=false, uv_lamp_runtime=false, pest_control=false, staff_training=false, accident_journal=false, complaint_register=false, climate_control=false, med_books=false; food: hygiene=false, cold_equipment_control=false"
+  },
+  "beauty-waste-condition": {
+    "ok": true,
+    "detail": "medical_waste_b card: Увеличить Журнал учёта отходов класса Б СанПиН 2.1.3684-21 — отходы класса Б собирают отдельно и обеззараживают; номер пункта проверить у юриста · нужен, если в салоне есть косметология или инъекционн"
+  },
+  "beauty-onboarding-documents": {
+    "ok": true,
+    "detail": "orders «Оформлено 0 из 4»=true; «Заполнить типовыми» clicked 3×; after: Приказы Инспектор спрашивает не только журналы, но и кто за них отвечает. Оформлено 0 из 4 О назначении ответственного за санитарное состояние предприятия Не оформлен Оформить О введении в действие журналов производственного контроля Не оформлен Оформить Об ут"
+  },
+  "fill-fitness": {
+    "ok": true,
+    "detail": "cleaning 200 created=7; general_cleaning 200 created=6"
+  },
+  "fill-hotel": {
+    "ok": true,
+    "detail": "cleaning 200 created=7; general_cleaning 200 created=6"
+  },
+  "fill-restaurant": {
+    "ok": true,
+    "detail": "cleaning 200 created=7; general_cleaning 200 created=6"
+  },
+  "mobile-390-no-hscroll": {
+    "ok": true,
+    "detail": "/dlya-salona-krasoty=0px, /journals-info/instrument_sterilization=0px, /journals/instrument_sterilization=0px, /settings/journals=0px, /=0px"
+  }
+}

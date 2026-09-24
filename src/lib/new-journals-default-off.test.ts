@@ -5,6 +5,7 @@ import { isUntouchedDisabledCodes } from "@/lib/health-check-default-off";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import {
   NEW_JOURNAL_CODES_2026_09,
+  NEW_JOURNAL_CODES_2026_09B,
   applyNewJournalsDefaultOff,
 } from "@/lib/new-journals-default-off";
 
@@ -39,6 +40,28 @@ test("мусор в поле не ломает применение", () => {
   const result = applyNewJournalsDefaultOff({ not: "array" });
   assert.equal(result.changed, true);
   assert.equal(result.disabledJournalCodes.length, NEW_JOURNAL_CODES_2026_09.length);
+});
+
+test("вторая волна: свои коды, есть в каталоге, первая волна не задевается", () => {
+  const catalog = new Set<string>(ACTIVE_JOURNAL_CATALOG.map((item) => item.code));
+  for (const code of NEW_JOURNAL_CODES_2026_09B) {
+    assert.ok(catalog.has(code), code);
+    assert.ok(!(NEW_JOURNAL_CODES_2026_09 as readonly string[]).includes(code), code);
+  }
+  // Организация сама включила суточные пробы после первой волны — вторая
+  // волна дописывает только свои коды и суточные пробы не выключает.
+  const result = applyNewJournalsDefaultOff(["health_check"], NEW_JOURNAL_CODES_2026_09B);
+  assert.deepEqual(result.disabledJournalCodes, ["health_check", ...NEW_JOURNAL_CODES_2026_09B]);
+  assert.ok(!result.disabledJournalCodes.includes("daily_samples"));
+  const again = applyNewJournalsDefaultOff(result.disabledJournalCodes, NEW_JOURNAL_CODES_2026_09B);
+  assert.equal(again.changed, false);
+});
+
+test("список после обеих волн — «нетронутый» для анкеты", () => {
+  const first = applyNewJournalsDefaultOff(["health_check"]).disabledJournalCodes;
+  const both = applyNewJournalsDefaultOff(first, NEW_JOURNAL_CODES_2026_09B).disabledJournalCodes;
+  assert.equal(isUntouchedDisabledCodes(both), true);
+  assert.equal(isUntouchedDisabledCodes([...both, "hygiene"]), false);
 });
 
 test("список, выключенный сидером, остаётся «нетронутым» для анкеты", () => {

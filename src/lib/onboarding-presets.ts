@@ -98,6 +98,10 @@ export const ALL_JOURNAL_CODES: readonly string[] = [
   "transport_temperature",
   "tableware_breakage",
   "pool_water_control",
+  "inventory_condition",
+  "instrument_sterilization",
+  "medical_waste_b",
+  "batch_release",
 ] as const;
 
 // Каноничные группы журналов — переиспользуем во всех пресетах.

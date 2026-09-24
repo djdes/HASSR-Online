@@ -59,6 +59,9 @@ import {
   Scale,
   GlassWater,
   Waves,
+  UtensilsCrossed,
+  Scissors,
+  Biohazard,
 } from "lucide-react";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
@@ -131,6 +134,10 @@ const JOURNAL_ICONS: Record<string, LucideIcon> = {
   transport_temperature: Truck,
   tableware_breakage: GlassWater,
   pool_water_control: Waves,
+  inventory_condition: UtensilsCrossed,
+  instrument_sterilization: Scissors,
+  medical_waste_b: Biohazard,
+  batch_release: PackageCheck,
 };
 
 export function JournalsBrowser({

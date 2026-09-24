@@ -1,0 +1,274 @@
+[
+  {
+    "email": "e2e-bj-beauty@wesetup.local",
+    "org": {
+      "name": "Салон «Ножницы»",
+      "type": "beauty"
+    },
+    "newCodesEnabled": [
+      "instrument_sterilization",
+      "medical_waste_b"
+    ],
+    "enabledSample": [
+      "instrument_sterilization=true",
+      "general_cleaning=true",
+      "disinfectant_usage=true",
+      "medical_waste_b=true",
+      "cleaning=false",
+      "hygiene=false"
+    ],
+    "checklists": {
+      "cleaning": {
+        "count": 7,
+        "first": "1) После клиента уберите одноразовые материалы в мусор → 2) использованные инструменты сразу погрузите в контейнер с дезраствором"
+      },
+      "disinfectant_usage": {
+        "count": 6,
+        "first": "Проверьте срок годности дезсредства и целостность упаковки перед приготовлением раствора"
+      },
+      "general_cleaning": {
+        "count": 7,
+        "first": "1) Уберите с полок косметику и инструменты в закрытые шкафы → 2) вымойте стены и двери на всю высоту"
+      },
+      "instrument_sterilization": {
+        "count": 7,
+        "first": "1) Сразу после клиента погрузите использованные инструменты в контейнер с дезраствором → 2) выдержите время по инструкции средства"
+      }
+    },
+    "registerDocs": [],
+    "fillDefaultsAudit": [
+      {
+        "source": "onboarding",
+        "sphere": "beauty",
+        "created": 7,
+        "journalCode": "general_cleaning"
+      },
+      {
+        "source": "onboarding",
+        "sphere": "beauty",
+        "created": 6,
+        "journalCode": "disinfectant_usage"
+      },
+      {
+        "source": "onboarding",
+        "sphere": "beauty",
+        "created": 7,
+        "journalCode": "instrument_sterilization"
+      },
+      {
+        "source": "onboarding",
+        "sphere": "beauty",
+        "created": 7,
+        "journalCode": "cleaning"
+      }
+    ]
+  },
+  {
+    "email": "e2e-bj-fitness@wesetup.local",
+    "org": {
+      "name": "E2E fitness (bj)",
+      "type": "fitness"
+    },
+    "newCodesEnabled": [],
+    "enabledSample": [
+      "instrument_sterilization=false",
+      "general_cleaning=false",
+      "disinfectant_usage=false",
+      "medical_waste_b=false",
+      "cleaning=false",
+      "hygiene=true"
+    ],
+    "checklists": {
+      "cleaning": {
+        "count": 7,
+        "first": "1) Возьмите инвентарь «Для тренажёров» → 2) протрите ручки, сиденья и спинки тренажёров дезинфицирующими салфетками"
+      },
+      "general_cleaning": {
+        "count": 6,
+        "first": "1) Освободите раздевалки и душевые → 2) вымойте стены, перегородки и потолки на всю высоту"
+      }
+    },
+    "registerDocs": [],
+    "fillDefaultsAudit": [
+      {
+        "source": "onboarding",
+        "sphere": "fitness",
+        "created": 7,
+        "journalCode": "cleaning"
+      },
+      {
+        "source": "onboarding",
+        "sphere": "fitness",
+        "created": 6,
+        "journalCode": "general_cleaning"
+      }
+    ]
+  },
+  {
+    "email": "e2e-bj-hotel@wesetup.local",
+    "org": {
+      "name": "E2E hotel (bj)",
+      "type": "hotel"
+    },
+    "newCodesEnabled": [],
+    "enabledSample": [
+      "instrument_sterilization=false",
+      "general_cleaning=false",
+      "disinfectant_usage=false",
+      "medical_waste_b=false",
+      "cleaning=false",
+      "hygiene=true"
+    ],
+    "checklists": {
+      "cleaning": {
+        "count": 7,
+        "first": "1) После выезда гостя снимите всё постельное бельё и полотенца → 2) сложите в мешок для грязного белья"
+      },
+      "general_cleaning": {
+        "count": 6,
+        "first": "1) Снимите шторы и покрывала в стирку → 2) выбейте или пропылесосьте матрасы и подушки"
+      }
+    },
+    "registerDocs": [],
+    "fillDefaultsAudit": [
+      {
+        "source": "onboarding",
+        "sphere": "hotel",
+        "created": 7,
+        "journalCode": "cleaning"
+      },
+      {
+        "source": "onboarding",
+        "sphere": "hotel",
+        "created": 6,
+        "journalCode": "general_cleaning"
+      }
+    ]
+  },
+  {
+    "email": "e2e-bj-legacy@wesetup.local",
+    "org": {
+      "name": "E2E Старое кафе (bj)",
+      "type": "cafe"
+    },
+    "newCodesEnabled": [
+      "inventory_condition",
+      "instrument_sterilization",
+      "medical_waste_b",
+      "batch_release"
+    ],
+    "enabledSample": [
+      "instrument_sterilization=true",
+      "general_cleaning=true",
+      "disinfectant_usage=true",
+      "medical_waste_b=true",
+      "cleaning=true",
+      "hygiene=true"
+    ],
+    "checklists": {},
+    "registerDocs": [
+      {
+        "code": "inventory_condition",
+        "id": "cmufm0mvy002pp09mc2rxdcjp",
+        "rows": [
+          {
+            "date": "2026-09-24",
+            "item": "Доска разделочная СО",
+            "zone": "Холодный цех",
+            "action": "Трещина — заменена",
+            "material": "Пластик",
+            "condition": "Изъят из работы",
+            "responsible": "Ольга Старожилова"
+          }
+        ]
+      },
+      {
+        "code": "instrument_sterilization",
+        "id": "cmufm14ra002qp09mqlkrjifn",
+        "rows": [
+          {
+            "date": "2026-09-24",
+            "mode": "180 °C, 60 мин",
+            "method": "Воздушный (сухожар)",
+            "indicator": "Да",
+            "sterilizer": "Сухожар ГП-20",
+            "instruments": "Кусачки — 3 шт.",
+            "responsible": "Ольга Старожилова"
+          }
+        ]
+      },
+      {
+        "code": "medical_waste_b",
+        "id": "cmufm1k01002rp09mwpwy3e1v",
+        "rows": [
+          {
+            "date": "2026-09-24",
+            "amount": "0.6",
+            "handedTo": "ООО Вывоз, акт 1",
+            "packaging": "Жёлтый пакет",
+            "wasteType": "Ватные диски, перчатки",
+            "responsible": "Ольга Старожилова",
+            "disinfection": "Дезраствор, 60 мин"
+          }
+        ]
+      },
+      {
+        "code": "batch_release",
+        "id": "cmufm208q002sp09mh5tep7dh",
+        "rows": [
+          {
+            "date": "2026-09-24",
+            "batch": "240926-01",
+            "checks": "Органолептика, маркировка, упаковка — норма",
+            "product": "Хлеб пшеничный",
+            "decision": "Допущено",
+            "quantity": "320 шт.",
+            "responsible": "Ольга Старожилова"
+          }
+        ]
+      }
+    ],
+    "fillDefaultsAudit": []
+  },
+  {
+    "email": "e2e-bj-restaurant@wesetup.local",
+    "org": {
+      "name": "E2E restaurant (bj)",
+      "type": "restaurant"
+    },
+    "newCodesEnabled": [],
+    "enabledSample": [
+      "instrument_sterilization=false",
+      "general_cleaning=false",
+      "disinfectant_usage=false",
+      "medical_waste_b=false",
+      "cleaning=false",
+      "hygiene=true"
+    ],
+    "checklists": {
+      "cleaning": {
+        "count": 7,
+        "first": "1) Наденьте фартук и перчатки для уборки → 2) возьмите промаркированный инвентарь «Для столов» → 3) протрите рабочие столы и полки моющим раствором"
+      },
+      "general_cleaning": {
+        "count": 6,
+        "first": "1) Выключите и обесточьте оборудование → 2) уберите продукты и посуду с полок и столов в чистую зону"
+      }
+    },
+    "registerDocs": [],
+    "fillDefaultsAudit": [
+      {
+        "source": "onboarding",
+        "sphere": "restaurant",
+        "created": 7,
+        "journalCode": "cleaning"
+      },
+      {
+        "source": "onboarding",
+        "sphere": "restaurant",
+        "created": 6,
+        "journalCode": "general_cleaning"
+      }
+    ]
+  }
+]

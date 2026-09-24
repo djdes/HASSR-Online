@@ -587,6 +587,8 @@ jobs:
               npx tsx prisma/seed-disable-health-check.ts 2>&1 | tail -10 || echo "[warn] seed-disable-health-check failed — deploy continues"
               echo "=== Новые журналы сентября 2026: выключаем у существующих организаций (one-shot, PlatformSetting-guard) ==="
               npx tsx prisma/seed-disable-new-journals-2026-09.ts 2>&1 | tail -10 || echo "[warn] seed-disable-new-journals-2026-09 failed — deploy continues"
+              echo "=== Новые журналы сентября 2026, вторая волна (инвентарь, стерилизация, отходы Б, допуск партии): выключаем у существующих организаций (one-shot, PlatformSetting-guard) ==="
+              npx tsx prisma/seed-disable-new-journals-2026-09b.ts 2>&1 | tail -10 || echo "[warn] seed-disable-new-journals-2026-09b failed — deploy continues"
               echo "=== Шапка «УТВЕРЖДАЮ»: должность и ФИО одного человека + помещения в пустых графиках ген. уборок (one-shot, PlatformSetting-guard) ==="
               npx tsx prisma/seed-fix-approver-mismatch.ts --dry-run 2>&1 | tail -40 || echo "[warn] seed-fix-approver-mismatch dry-run failed"
               npx tsx prisma/seed-fix-approver-mismatch.ts 2>&1 | tail -40 || echo "[warn] seed-fix-approver-mismatch failed — deploy continues"

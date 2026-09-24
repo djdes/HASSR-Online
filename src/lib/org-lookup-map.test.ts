@@ -23,6 +23,12 @@ test("sphereFromOkved: общепит, производство, торговл�
   assert.equal(sphereFromOkved("96.04"), "fitness");
   // Развлечения (93.2x) — не фитнес.
   assert.equal(sphereFromOkved("93.29"), null);
+  assert.equal(sphereFromOkved("96.02"), "beauty");
+  assert.equal(sphereFromOkved("96.02.1"), "beauty");
+  assert.equal(sphereFromOkved("96.02.2"), "beauty");
+  // Химчистка (96.01) и ритуальные услуги (96.03) — не салон.
+  assert.equal(sphereFromOkved("96.01"), null);
+  assert.equal(sphereFromOkved("96.03"), null);
   assert.equal(sphereFromOkved("64.19"), null);
   assert.equal(sphereFromOkved(""), null);
 });

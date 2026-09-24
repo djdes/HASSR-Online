@@ -38,7 +38,8 @@ import { ogImages, twitterImages } from "@/lib/og-image";
  * улучшить релевантность для конкретного посетителя.
  *
  * Роуты подключают этот компонент по slug из `NICHES`
- * (`/dlya-kafe`, `/dlya-pekarni`, …, `/dlya-fitnes-centra`).
+ * (`/dlya-kafe`, `/dlya-pekarni`, …, `/dlya-fitnes-centra`,
+ * `/dlya-salona-krasoty`).
  */
 
 /**
@@ -147,7 +148,7 @@ export function NicheLanding({ slug }: { slug: string }) {
             </div>
             <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3.5 py-1.5 text-[12px] font-medium text-white/85 backdrop-blur">
               <ShieldCheck className="size-3.5 text-emerald-300" />
-              {data.sphere === "fitness"
+              {data.sphere === "fitness" || data.sphere === "beauty"
                 ? "Электронные записи производственного контроля — законно"
                 : "Разрешено СанПиН 2.3/2.4.4282-26"}
             </div>

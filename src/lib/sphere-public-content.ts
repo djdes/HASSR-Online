@@ -139,7 +139,7 @@ export function buildSpherePublicContent(
       .map(toOrder)
       .filter((order): order is PublicOrder => order !== null),
     checklists: rules.checklistJournals.map((code) => {
-      const items = defaultChecklistFor(code);
+      const items = defaultChecklistFor(code, rules.sphere);
       return {
         code,
         name: journalName(code),

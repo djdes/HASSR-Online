@@ -13,7 +13,7 @@ import {
   parseJournalAutomationJson,
   withJournalAutomation,
 } from "@/lib/journal-automation";
-import { NEW_JOURNAL_CODES_2026_09 } from "@/lib/new-journals-default-off";
+import { SEEDED_DEFAULT_OFF_CODES } from "@/lib/new-journals-default-off";
 
 export const DEFAULT_OFF_JOURNAL_CODES = ["health_check"] as const;
 
@@ -46,7 +46,7 @@ export function isUntouchedDisabledCodes(
   // перестала бы применять набор журналов сферы.
   const defaults = new Set<string>([
     ...DEFAULT_OFF_JOURNAL_CODES,
-    ...NEW_JOURNAL_CODES_2026_09,
+    ...SEEDED_DEFAULT_OFF_CODES,
   ]);
   return toStringArray(codes).every((code) => defaults.has(code));
 }

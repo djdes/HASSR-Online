@@ -7,6 +7,7 @@ import {
   GraduationCap,
   HeartPulse,
   Hotel,
+  Scissors,
   ShoppingCart,
   Store,
   UtensilsCrossed,
@@ -101,6 +102,16 @@ const INDUSTRY_GROUPS: IndustryGroup[] = [
     ],
   },
   {
+    title: "Красота и уход",
+    icon: Scissors,
+    items: [
+      { label: "Салоны красоты", href: "/dlya-salona-krasoty" },
+      { label: "Парикмахерские и барбершопы", href: "/dlya-salona-krasoty" },
+      { label: "Маникюр и педикюр", href: "/dlya-salona-krasoty" },
+      { label: "Косметология", href: "/dlya-salona-krasoty" },
+    ],
+  },
+  {
     title: "Ритейл и доставка",
     icon: ShoppingCart,
     items: [
@@ -125,7 +136,8 @@ export function IndustriesGrid() {
         <p className="mt-3 text-[15px] text-[#6f7282]">
           СанПиН 2.3/2.4.4282-26 распространяется на всё общественное
           питание — от кофейни до пищеблока больницы, а у фитнес-клуба с
-          бассейном свои санитарные правила. Найдите свою сферу и посмотрите,
+          бассейном и у салона красоты свои санитарные правила. Найдите
+          свою сферу и посмотрите,
           какие журналы, приказы и чек-листы нужны именно ей.
         </p>
       </div>

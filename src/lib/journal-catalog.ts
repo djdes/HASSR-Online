@@ -119,6 +119,19 @@ const EXTENDED_ONLY_JOURNALS = [
     code: "pool_water_control",
     name: "Журнал контроля качества воды в бассейне",
   },
+  {
+    code: "inventory_condition",
+    name: "Журнал оценки состояния металлического и пластикового инвентаря",
+  },
+  {
+    code: "instrument_sterilization",
+    name: "Журнал контроля стерилизации инструментов",
+  },
+  { code: "medical_waste_b", name: "Журнал учёта отходов класса Б" },
+  {
+    code: "batch_release",
+    name: "Журнал допуска партии продукции к отгрузке",
+  },
 ] as const satisfies readonly JournalCatalogItem[];
 
 export const BASIC_TARIFF_JOURNALS = BASIC_JOURNALS;

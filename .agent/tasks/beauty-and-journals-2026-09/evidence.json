@@ -1,0 +1,19 @@
+{
+  "task": "beauty-and-journals-2026-09",
+  "branch": "feat/beauty-journals",
+  "database": "wesetup_wt_mc",
+  "checks": {
+    "typecheck": "exit 0",
+    "npm_test": "2149/2149 pass",
+    "build": "exit 0 (NEXT_DIST_DIR=.next-bj-build), route /dlya-salona-krasoty present; first attempt ENOSPC, retried after freeing ignored build caches",
+    "e2e": "19/19 ok (shots/bj-results.json)"
+  },
+  "acceptance": {
+    "AC1": {"status": "PASS", "evidence": ["shots/bj-results.json: legacy-new-codes-off, legacy-new-codes-enable, register-*, journals-info-pages", "raw/seed-09b-run1.log", "raw/seed-09b-run2.log", "raw/seed-09b-db-after.json", "raw/db-after-e2e.json", "shots/bj-01, bj-02-*, bj-03"]},
+    "AC2": {"status": "PASS", "evidence": ["shots/bj-results.json: anketa-beauty, beauty-required-enabled, beauty-recommended-disabled, beauty-waste-condition", "src/lib/org-lookup-map.test.ts (96.02 -> beauty)", "shots/bj-06, bj-07"], "note": "OKVED suggestion verified by unit test only; inn-lookup needs DaData key (503 locally)"},
+    "AC3": {"status": "PASS", "evidence": ["src/lib/sphere-journal-rules.test.ts", "raw/npm-test.log"]},
+    "AC4": {"status": "PASS", "evidence": ["src/lib/checklist-defaults.test.ts", "raw/db-after-e2e.json (first cleaning item per sphere, audit sphere)", "shots/bj-results.json: beauty-onboarding-documents, fill-fitness, fill-hotel, fill-restaurant", "shots/bj-08, bj-09"]},
+    "AC5": {"status": "PASS", "evidence": ["shots/bj-results.json: public-beauty, industries-grid, sitemap", "src/lib/sphere-public-content.test.ts", "src/app/route-slug-collisions.test.ts", "shots/bj-04, bj-05, bj-m1"]},
+    "AC6": {"status": "PASS", "evidence": ["raw/typecheck.log", "raw/npm-test.log", "raw/build.log", "shots/bj-0*-1440.png", "shots/bj-m*-390.png", "mobile-390-no-hscroll"]}
+  }
+}

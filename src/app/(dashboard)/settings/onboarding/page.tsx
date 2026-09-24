@@ -121,7 +121,7 @@ export default async function OnboardingPage() {
     checklistCounts.map((row) => [row.journalCode, row._count._all]),
   );
   const checklists: OnboardingChecklistRow[] = checklistCodes.map((code) => {
-    const defaults = defaultChecklistFor(code);
+    const defaults = defaultChecklistFor(code, status.sphere);
     return {
       code,
       name: templateNameByCode.get(code) ?? code,

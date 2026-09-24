@@ -394,6 +394,38 @@ export const JOURNAL_RESPONSIBILITY_META: readonly JournalResponsibilityMeta[] =
     mode: "shared",
     category: "other",
   },
+
+  // ═══ ИНВЕНТАРЬ, САЛОНЫ, ВЫПУСК ПРОДУКЦИИ ═══
+  {
+    code: "inventory_condition",
+    who: "Шеф-повар или заведующая производством осматривает ножи, доски и ёмкости и убирает повреждённые из работы.",
+    keywords: ["шеф", "су-шеф", "технолог", ...LEAD_KEYWORDS],
+    mode: "single",
+    category: "equipment",
+  },
+  {
+    code: "instrument_sterilization",
+    who: "Мастер или администратор салона записывает каждую закладку инструментов в стерилизатор.",
+    keywords: ["мастер", "маникюр", "парикмахер", "косметолог", "админ", ...LEAD_KEYWORDS],
+    mode: "shared",
+    category: "cleaning",
+  },
+  {
+    code: "medical_waste_b",
+    who: "Косметолог или администратор собирает и обеззараживает отходы после процедур и передаёт их вывозящей организации.",
+    keywords: ["косметолог", "медсестр", "админ", ...LEAD_KEYWORDS],
+    mode: "single",
+    category: "cleaning",
+    preferNamedPerson: true,
+  },
+  {
+    code: "batch_release",
+    who: "Технолог или начальник производства проверяет партию перед отгрузкой и принимает решение о допуске.",
+    keywords: ["технолог", "качеств", "началь", ...LEAD_KEYWORDS],
+    mode: "single",
+    category: "production",
+    preferNamedPerson: true,
+  },
   {
     code: "pest_control",
     who: "Менеджер или директор отмечает визиты подрядчика (СЭС/договор на дезинсекцию) и собственные осмотры на наличие следов грызунов/насекомых.",

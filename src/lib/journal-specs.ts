@@ -596,6 +596,52 @@ const REGISTRY: Record<string, JournalSpec> = {
     photoRecommended: false,
     timeWindowHours: null,
   },
+
+  // ═══ ТАБЛИЧНЫЕ РЕЕСТРЫ: ИНВЕНТАРЬ, САЛОНЫ, ВЫПУСК ПРОДУКЦИИ ═══
+  inventory_condition: {
+    code: "inventory_condition",
+    category: "equipment",
+    shortDescription: "Осмотр инвентаря — сколы, трещины, ржавчина; повреждённое изымается.",
+    regulation: "Внутренняя процедура ХАССП (физические опасности)",
+    rollingAllowed: false,
+    multiRowAllowed: true,
+    photoRequired: false,
+    photoRecommended: true,
+    timeWindowHours: null,
+  },
+  instrument_sterilization: {
+    code: "instrument_sterilization",
+    category: "cleaning",
+    shortDescription: "Стерилизация инструментов — каждый цикл со способом, режимом и индикатором.",
+    regulation: "СанПиН 2.1.3678-20",
+    rollingAllowed: false,
+    multiRowAllowed: true,
+    photoRequired: false,
+    photoRecommended: false,
+    timeWindowHours: null,
+  },
+  medical_waste_b: {
+    code: "medical_waste_b",
+    category: "cleaning",
+    shortDescription: "Отходы класса Б — сбор, обеззараживание, передача вывозящей организации.",
+    regulation: "СанПиН 2.1.3684-21",
+    rollingAllowed: false,
+    multiRowAllowed: true,
+    photoRequired: false,
+    photoRecommended: false,
+    timeWindowHours: null,
+  },
+  batch_release: {
+    code: "batch_release",
+    category: "production",
+    shortDescription: "Допуск партии к отгрузке — что проверено и решение.",
+    regulation: "ТР ТС 021/2011",
+    rollingAllowed: false,
+    multiRowAllowed: true,
+    photoRequired: false,
+    photoRecommended: false,
+    timeWindowHours: null,
+  },
 };
 
 const DEFAULT_SPEC: JournalSpec = {

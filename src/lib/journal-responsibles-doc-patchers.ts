@@ -211,6 +211,14 @@ const PATCHERS: Record<string, Patcher> = {
     patchResponsibleUser(cfg, slots.main ?? null, "defaultResponsibleUserId"),
   pool_water_control: (cfg, slots) =>
     patchResponsibleUser(cfg, slots.main ?? null, "defaultResponsibleUserId"),
+  inventory_condition: (cfg, slots) =>
+    patchResponsibleUser(cfg, slots.main ?? null, "defaultResponsibleUserId"),
+  instrument_sterilization: (cfg, slots) =>
+    patchResponsibleUser(cfg, slots.main ?? null, "defaultResponsibleUserId"),
+  medical_waste_b: (cfg, slots) =>
+    patchResponsibleUser(cfg, slots.main ?? null, "defaultResponsibleUserId"),
+  batch_release: (cfg, slots) =>
+    patchResponsibleUser(cfg, slots.main ?? null, "defaultResponsibleUserId"),
 
   intensive_cooling: (cfg, slots) =>
     patchResponsibleUser(cfg, slots.main ?? null, "defaultResponsibleUserId"),

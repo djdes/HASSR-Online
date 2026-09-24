@@ -175,6 +175,10 @@ const NEW_REGISTER_CODES = [
   "transport_temperature",
   "tableware_breakage",
   "pool_water_control",
+  "inventory_condition",
+  "instrument_sterilization",
+  "medical_waste_b",
+  "batch_release",
 ];
 
 test("сфера «Фитнес» есть в словаре и в правилах", () => {
@@ -191,6 +195,50 @@ test("сфера «Фитнес» есть в словаре и в правил�
     const rule = rules.electronicRequired.find((item) => item.code === code);
     assert.ok(rule?.condition, `fitness: у ${code} нет условия`);
   }
+});
+
+test("сфера «Салон красоты» есть в словаре и в правилах", () => {
+  assert.ok(spheres.includes("beauty"));
+  const rules = SPHERE_RULES.beauty;
+  assert.deepEqual(requiredCodesFor("beauty").sort(), [
+    "disinfectant_usage",
+    "general_cleaning",
+    "instrument_sterilization",
+    "medical_waste_b",
+  ]);
+  // Отходы класса Б — только при косметологии и инъекциях.
+  const waste = rules.electronicRequired.find((item) => item.code === "medical_waste_b");
+  assert.ok(waste?.condition, "beauty: у medical_waste_b нет условия");
+  // Пищевых журналов у салона нет ни в обязательных, ни в рекомендуемых.
+  const all = [...requiredCodesFor("beauty"), ...rules.electronicRecommended];
+  for (const code of ["hygiene", "cold_equipment_control", "fryer_oil", "finished_product"]) {
+    assert.ok(!all.includes(code), `beauty: пищевой журнал ${code}`);
+  }
+  assert.deepEqual(rules.ordersRequired, [
+    "sanitary-responsible",
+    "journals-intro",
+    "ppk-approval",
+    "disinfection",
+  ]);
+  assert.ok(rules.checklistJournals.includes("instrument_sterilization"));
+  // Новая организация салона: обязательные включены, рекомендуемые выключены.
+  const disabled = new Set(defaultDisabledCodesFor("beauty"));
+  for (const code of requiredCodesFor("beauty")) assert.ok(!disabled.has(code), code);
+  for (const code of rules.electronicRecommended) assert.ok(disabled.has(code), code);
+});
+
+test("новые журналы второй волны разнесены по сферам", () => {
+  const recommended = (sphere: OrgSphere) => SPHERE_RULES[sphere].electronicRecommended;
+  for (const sphere of ["restaurant", "cafe", "canteen", "fastfood", "catering", "bakery", "production"] as const) {
+    assert.ok(recommended(sphere).includes("inventory_condition"), `${sphere}: inventory_condition`);
+  }
+  for (const sphere of ["production", "bakery"] as const) {
+    assert.ok(recommended(sphere).includes("batch_release"), `${sphere}: batch_release`);
+  }
+  assert.ok(requiredCodesFor("beauty").includes("instrument_sterilization"));
+  assert.ok(requiredCodesFor("beauty").includes("medical_waste_b"));
+  assert.ok(recommended("medical").includes("instrument_sterilization"));
+  assert.ok(recommended("medical").includes("medical_waste_b"));
 });
 
 test("приказы сфер существуют в каталоге приказов", () => {
