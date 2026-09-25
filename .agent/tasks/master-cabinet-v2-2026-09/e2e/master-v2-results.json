@@ -1,0 +1,330 @@
+{
+  "passed": 11,
+  "failed": 0,
+  "results": [
+    {
+      "check": "AC4: rename from the /master header — DB, header after reload, AuditLog",
+      "ok": true,
+      "detail": {
+        "renamed": {
+          "name": "Мастер-кабинет Школы"
+        },
+        "headerAfterReload": "Мастер-кабинет Школы",
+        "audit": {
+          "to": "Мастер-кабинет Школы",
+          "via": "master",
+          "from": "Мастер-кабинет — Пищеблок X muh2ei0n"
+        }
+      }
+    },
+    {
+      "check": "AC2/AC3: same bulk window; «Взять меню»; digits without colon; picker; fill below; paste; time for all rows",
+      "ok": true,
+      "detail": {
+        "sameWindow": {
+          "title": "Добавить в журналы на дату",
+          "hasBulkTable": true,
+          "commonLabel": true
+        },
+        "fromMenu": [
+          [
+            "Борщ",
+            "250",
+            "08:30"
+          ],
+          [
+            "Каша манная",
+            "200",
+            "07:30"
+          ],
+          [
+            "Компот",
+            "200",
+            ""
+          ]
+        ],
+        "typed": "07:30",
+        "picked": "07:45",
+        "afterFill": [
+          [
+            "Борщ",
+            "250",
+            "08:30"
+          ],
+          [
+            "Каша манная",
+            "200",
+            "07:45"
+          ],
+          [
+            "Компот",
+            "200",
+            "07:45"
+          ]
+        ],
+        "commonTime": "10:00",
+        "finalRows": [
+          [
+            "Борщ",
+            "250",
+            "08:30"
+          ],
+          [
+            "Каша манная",
+            "200",
+            "07:45"
+          ],
+          [
+            "Компот",
+            "200",
+            "07:45"
+          ],
+          [
+            "Сырники",
+            "2 шт.",
+            "09:10"
+          ],
+          [
+            "Чай с лимоном",
+            "200",
+            ""
+          ]
+        ]
+      }
+    },
+    {
+      "check": "AC1: preview per kitchen before sending (X: 4 + 1 duplicate skipped, Y: 5 with a new document, W: closed period)",
+      "ok": true,
+      "detail": "Пищеблок W muh2ei0n\nЖурнал за этот период уже сдан (закрыт) — строки не добавлены\nПищеблок X muh2ei0n\nБудет добавлено: 4 · уже есть, пропустим: 1\nв документ «БЖГП X»\nПищеблок Y muh2ei0n\nБудет добавлено: 5\nДокумента на эту дату нет — создадим новый"
+    },
+    {
+      "check": "AC1: rows land in every kitchen for date D (existing X document, new Y document), chain times per kitchen, per-kitchen result, audit",
+      "ok": true,
+      "detail": {
+        "resultText": "Пищеблок W muh2ei0n\nЖурнал за этот период уже сдан (закрыт) — строки не добавлены\nПищеблок X muh2ei0n\nДобавлено: 4 · уже есть, пропущено: 1\nв документ «БЖГП X»\nПищеблок Y muh2ei0n\nДобавлено: 5\nСоздан документ «Журнал бракеража готовой пищевой продукции — сентябрь 2026»",
+        "xRows": [
+          [
+            "Борщ",
+            "2026-09-25 08:30",
+            null,
+            null
+          ],
+          [
+            "Каша манная",
+            "2026-09-25 07:45",
+            "2026-09-25 07:55",
+            "2026-09-25 08:10"
+          ],
+          [
+            "Компот",
+            "2026-09-25 07:45",
+            "2026-09-25 07:55",
+            "2026-09-25 08:10"
+          ],
+          [
+            "Сырники",
+            "2026-09-25 09:10",
+            "2026-09-25 09:20",
+            "2026-09-25 09:35"
+          ],
+          [
+            "Чай с лимоном",
+            "2026-09-25 10:00",
+            "2026-09-25 10:10",
+            "2026-09-25 10:25"
+          ]
+        ],
+        "yRows": [
+          [
+            "Борщ",
+            "2026-09-25 08:30",
+            "2026-09-25 08:35",
+            "2026-09-25 08:40"
+          ],
+          [
+            "Каша манная",
+            "2026-09-25 07:45",
+            "2026-09-25 07:50",
+            "2026-09-25 07:55"
+          ],
+          [
+            "Компот",
+            "2026-09-25 07:45",
+            "2026-09-25 07:50",
+            "2026-09-25 07:55"
+          ],
+          [
+            "Сырники",
+            "2026-09-25 09:10",
+            "2026-09-25 09:15",
+            "2026-09-25 09:20"
+          ],
+          [
+            "Чай с лимоном",
+            "2026-09-25 10:00",
+            "2026-09-25 10:05",
+            "2026-09-25 10:10"
+          ]
+        ]
+      }
+    },
+    {
+      "check": "AC1: repeating the same add creates no duplicates",
+      "ok": true,
+      "detail": {
+        "dryRun": false,
+        "date": "2026-09-25",
+        "organizations": [
+          {
+            "organizationId": "cmuh2eilm0004u09mqs4dd3b8",
+            "organizationName": "Пищеблок W muh2ei0n",
+            "documentId": null,
+            "documentTitle": null,
+            "documentCreated": false,
+            "added": 0,
+            "skipped": 0,
+            "skippedNames": [],
+            "error": "Журнал за этот период уже сдан (закрыт) — строки не добавлены"
+          },
+          {
+            "organizationId": "cmuh2eikf0000u09m02m8v1fu",
+            "organizationName": "Пищеблок X muh2ei0n",
+            "documentId": "cmuh2eim00006u09mw4at6oqu",
+            "documentTitle": "БЖГП X",
+            "documentCreated": false,
+            "added": 0,
+            "skipped": 5,
+            "skippedNames": [
+              "Борщ",
+              "Каша манная",
+              "Компот",
+              "Сырники",
+              "Чай с лимоном"
+            ],
+            "error": null
+          },
+          {
+            "organizationId": "cmuh2eil90002u09mhvh3a38m",
+            "organizationName": "Пищеблок Y muh2ei0n",
+            "documentId": "cmuh2f93s00430o9mznk9eubo",
+            "documentTitle": "Журнал бракеража готовой пищевой продукции — сентябрь 2026",
+            "documentCreated": false,
+            "added": 0,
+            "skipped": 5,
+            "skippedNames": [
+              "Борщ",
+              "Каша манная",
+              "Компот",
+              "Сырники",
+              "Чай с лимоном"
+            ],
+            "error": null
+          }
+        ],
+        "totals": {
+          "added": 0,
+          "skipped": 10,
+          "organizations": 0,
+          "failed": 1
+        }
+      }
+    },
+    {
+      "check": "access: /api/master/brakerage only for the master cabinet session",
+      "ok": true,
+      "detail": {
+        "anon": 401,
+        "kitchen": 403
+      }
+    },
+    {
+      "check": "AC3: master menu table — digits without colon, picker, fill below, time for all rows; saved",
+      "ok": true,
+      "detail": {
+        "menuTyped": "12:15",
+        "menuFilledValues": [
+          "09:00",
+          "09:00",
+          "09:00"
+        ],
+        "menuAll": [
+          "11:30",
+          "11:30",
+          "11:30",
+          ""
+        ],
+        "savedMenu": [
+          {
+            "name": "Борщ",
+            "time": "11:30"
+          },
+          {
+            "name": "Каша манная",
+            "time": "11:30"
+          },
+          {
+            "name": "Компот",
+            "time": "11:30"
+          }
+        ]
+      }
+    },
+    {
+      "check": "AC2: kitchen БЖГП «Добавить изделия списком» works as before (shared component, no time column, chain caption)",
+      "ok": true,
+      "detail": {
+        "kPasted": [
+          [
+            "Запеканка",
+            "180"
+          ],
+          [
+            "Кисель",
+            "200"
+          ]
+        ],
+        "kChain": "Бракераж — 17:18, разрешение к реализации — 17:33 (через 10 и 15 мин, меняется в настройках журнала)",
+        "rows": 7
+      }
+    },
+    {
+      "check": "AC4: owner renames the cabinet in /settings/master-cabinet — DB + AuditLog in kitchen and cabinet; staff 403",
+      "ok": true,
+      "detail": {
+        "renamed2": {
+          "name": "Мастер-кабинет Гимназии"
+        },
+        "staffDenied": 403
+      }
+    },
+    {
+      "check": "390px: no horizontal page scroll (master, window, picker, preview)",
+      "ok": true,
+      "detail": {
+        "mobile-390-master": {
+          "scrollWidth": 390,
+          "innerWidth": 390
+        },
+        "mobile-390-dialog": {
+          "scrollWidth": 390,
+          "innerWidth": 390
+        },
+        "mobile-390-picker": {
+          "scrollWidth": 390,
+          "innerWidth": 390
+        },
+        "mobile-390-preview": {
+          "scrollWidth": 390,
+          "innerWidth": 390
+        }
+      }
+    },
+    {
+      "check": "browser console errors (info)",
+      "ok": true,
+      "detail": [
+        "http://localhost:3042/master :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the serv"
+      ]
+    }
+  ]
+}

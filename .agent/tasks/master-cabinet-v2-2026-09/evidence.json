@@ -1,0 +1,54 @@
+{
+  "task": "master-cabinet-v2-2026-09",
+  "branch": "feat/mk-2026-09-25",
+  "commits": { "spec": "501da087", "code": "7b94dfd7" },
+  "database": "wesetup_wt_blanks",
+  "devServer": "http://localhost:3042 (next dev --webpack)",
+  "verdict": "PASS",
+  "acceptance": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "evidence": [
+        "e2e/master-v2-results.json: preview per kitchen (X 4 + 1 skipped, Y 5 + new document, W closed period), rows in X existing doc with X time constants (+10/+15), new Y doc without blank row (+5/+5), W untouched, AuditLog added/received, repeat → added 0 skipped 10, access 403 for kitchen session",
+        "src/lib/master-brakerage-plan.test.ts"
+      ]
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "evidence": [
+        "shared component src/components/journals/finished-product-bulk-dialog.tsx used by BZhGP client and master dialog",
+        "e2e/master-v2-results.json: kitchen «Добавить изделия списком» — paste, chain caption, +2 rows persisted, no time column",
+        "e2e/regress/menu-yield-time-results.json 11/11 (kitchen bulk with menu yields)"
+      ]
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "evidence": [
+        "e2e/master-v2-results.json: 730→07:30, picker 07:45, fill below, time for all rows 1000→10:00; master menu table 1215→12:15, picker+fill below, «Время для всех строк» 1130 saved",
+        "src/lib/finished-product-bulk.test.ts (normalizeTypedTime, fillTimeBelow, setTimeForAll, menuRowsToSave)"
+      ]
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "evidence": [
+        "e2e/master-v2-results.json: header rename (DB, reload, AuditLog), settings rename (DB, AuditLog in kitchen and cabinet), staff 403",
+        "src/lib/master-brakerage-plan.test.ts (normalizeMasterCabinetName)"
+      ]
+    },
+    {
+      "id": "AC5",
+      "status": "PASS",
+      "evidence": [
+        "npm run typecheck: 0 errors",
+        "npm test (pre-commit test:gate): pass=2219 fail=0",
+        "new e2e 11/11; regress a1 18/18 (e2e/regress/a1-checks.txt), a2 15/15 (e2e/regress/a2-results.json), menu-yield-time 11/11, walk-backoffice problems=[]",
+        "shots/ 1440 and 390 (12 png, gitignored); no horizontal scroll at 390"
+      ],
+      "notes": "a2 and menu-yield-time needed reruns because of dev-server timing under heavy machine load (hydration/reload), passed on rerun without test changes; npm run build not run by instruction"
+    }
+  ]
+}

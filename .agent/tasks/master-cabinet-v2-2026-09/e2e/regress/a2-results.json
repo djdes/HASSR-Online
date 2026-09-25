@@ -1,0 +1,150 @@
+{
+  "passed": 15,
+  "failed": 0,
+  "results": [
+    {
+      "check": "settings hub has the «Мастер-кабинет справочников» card",
+      "ok": true
+    },
+    {
+      "check": "settings page shows pool code and both kitchens",
+      "ok": true
+    },
+    {
+      "check": "AC-A1: cabinet created from settings UI, invite link shown",
+      "ok": true,
+      "detail": {
+        "inviteUrl": "http://localhost:3000/invite/<token>",
+        "resultText": "Приглашение отправлено на e2e-a2-master-muh2b1cu@example.test\nСкопировать\n\nСсылка действует 7 дней. По ней сотрудник задаёт пароль и сразу попадает в мастер-кабинет."
+      }
+    },
+    {
+      "check": "AC-A1/A2: invite link works and lands on /master",
+      "ok": true
+    },
+    {
+      "check": "AC-A3: xlsx preview (+3) and save & distribute toast",
+      "ok": true,
+      "detail": {
+        "previewMenu": "Добавится 3 · Уберётся 0 · Изменится 0 · Без изменений 0 · всего в списке 3",
+        "toastMenu": "Готово: список обновлён в 2 объектах (4 журнала)"
+      }
+    },
+    {
+      "check": "AC-A3: menu is in active BЖГП documents of X and Y (+ suggestions)",
+      "ok": true,
+      "detail": {
+        "x": [
+          "Своё блюдо X",
+          "Борщ",
+          "Плов",
+          "Компот"
+        ],
+        "y": [
+          "Своё блюдо Y",
+          "Борщ",
+          "Плов",
+          "Компот"
+        ]
+      }
+    },
+    {
+      "check": "AC-A4: raw materials in perishable docs of X and Y (items, suppliers, manufacturers)",
+      "ok": true,
+      "detail": {
+        "previewRaw": "Добавится 3 · Уберётся 0 · Без изменений 0 · всего в списке 3",
+        "toastRaw": "Готово: список обновлён в 2 объектах (4 журнала)",
+        "yItems": [
+          "Своё сырьё Y",
+          "Молоко",
+          "Кефир",
+          "Творог"
+        ]
+      }
+    },
+    {
+      "check": "AC-A5: removing one dish removes only it; local dish of Y stays",
+      "ok": true,
+      "detail": {
+        "previewRemove": "Добавится 0 · Уберётся 1 · Изменится 0 · Без изменений 2 · всего в списке 2",
+        "y": [
+          "Своё блюдо Y",
+          "Борщ",
+          "Компот"
+        ]
+      }
+    },
+    {
+      "check": "AC-A6: new BЖГП document of Y is seeded with the master menu",
+      "ok": true
+    },
+    {
+      "check": "AC-A2: /dashboard and /journals → /master, /api/staff → 403",
+      "ok": true,
+      "detail": {
+        "dash": 200,
+        "afterDash": "http://localhost:3042/master",
+        "journals": 200,
+        "afterJournals": "http://localhost:3042/master",
+        "staff": 403
+      }
+    },
+    {
+      "check": "objects tab lists X and Y",
+      "ok": true
+    },
+    {
+      "check": "390px: no horizontal page scroll on /master tabs, preview and settings",
+      "ok": true,
+      "detail": {
+        "mobile-390-master-menu": {
+          "scrollWidth": 390,
+          "innerWidth": 390
+        },
+        "mobile-390-master-raw": {
+          "scrollWidth": 390,
+          "innerWidth": 390
+        },
+        "mobile-390-master-objects": {
+          "scrollWidth": 390,
+          "innerWidth": 390
+        },
+        "mobile-390-master-preview": {
+          "scrollWidth": 390,
+          "innerWidth": 390
+        },
+        "mobile-390-settings": {
+          "scrollWidth": 390,
+          "innerWidth": 390
+        }
+      }
+    },
+    {
+      "check": "owner: «Открыть мастер-кабинет» → /master, «Вернуться в …» → /dashboard",
+      "ok": true
+    },
+    {
+      "check": "regular session: /master → /dashboard",
+      "ok": true,
+      "detail": {
+        "status": 200
+      }
+    },
+    {
+      "check": "browser console errors (info)",
+      "ok": true,
+      "detail": [
+        "http://localhost:3042/master?tab=objects :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\n%s%s https://react.dev/link/hydration-mismatch \n\n  ...\n    <SegmentViewNode type=\"layout\" pagePath=\"master/lay...\">\n      <SegmentTrieNode>\n      <MasterLayout>\n        <AuthSessionProvider session={{...}}>\n          <SessionProvider session={{...}} refetchOnWindowFocus={false} refetchWhenOffline={false} refetchInterval={0}>\n            <SiteThemeProvider initialTheme=\"light\">\n              <SiteThemeBootstrap>\n              <div className=\"app-shell ...\" data-app-theme=\"light\" suppressHydrationWarning={true}>\n                <MasterShell organizationName=\"Мастер-каб...\" code=\"FUHFK-WYQQA\" objectsCount={2} ...>\n                  <div className=\"flex min-h...\">\n                    <header className=\"sticky top...\">\n                      <div className=\"mx-auto fl...\">\n                        <div>\n                        <div className=\"flex shrin...\">\n                          <ResponsiveMenu title=\"Бэк Офисов...\" contentClassName=\"w-[280px] ...\" items={[...]} ...>\n                            <button\n                              type=\"button\"\n                              aria-label=\"Профиль\"\n                              className=\"flex size-10 items-center justify-center rounded-full bg-[#eef1ff] text-[14px...\"\n                              onClick={function onClick}\n-                             id=\"radix-_R_55l5ralb_\"\n-                             aria-haspopup=\"menu\"\n-                             aria-expanded=\"false\"\n-                             data-state=\"closed\"\n-                             data-slot=\"dropdown-menu-trigger\"\n                            >\n+                             Б\n                            ...\n                      ...\n                    ...\n              ...\n",
+        "http://localhost:3042/master :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\n%s%s https://react.dev/link/hydration-mismatch \n\n  ...\n    <SegmentViewNode type=\"layout\" pagePath=\"master/lay...\">\n      <SegmentTrieNode>\n      <MasterLayout>\n        <AuthSessionProvider session={{...}}>\n          <SessionProvider session={{...}} refetchOnWindowFocus={false} refetchWhenOffline={false} refetchInterval={0}>\n            <SiteThemeProvider initialTheme=\"light\">\n              <SiteThemeBootstrap>\n              <div className=\"app-shell ...\" data-app-theme=\"light\" suppressHydrationWarning={true}>\n                <MasterShell organizationName=\"Мастер-каб...\" code=\"FUHFK-WYQQA\" objectsCount={2} ...>\n                  <div className=\"flex min-h...\">\n                    <header className=\"sticky top...\">\n                      <div className=\"mx-auto fl...\">\n                        <div>\n                        <div className=\"flex shrin...\">\n                          <ResponsiveMenu title=\"Бэк Офисов...\" contentClassName=\"w-[280px] ...\" items={[...]} ...>\n                            <button\n                              type=\"button\"\n                              aria-label=\"Профиль\"\n                              className=\"flex size-10 items-center justify-center rounded-full bg-[#eef1ff] text-[14px...\"\n                              onClick={function onClick}\n-                             id=\"radix-_R_55l5ralb_\"\n-                             aria-haspopup=\"menu\"\n-                             aria-expanded=\"false\"\n-                             data-state=\"closed\"\n-                             data-slot=\"dropdown-menu-trigger\"\n                            >\n+                             Б\n                            ...\n                      ...\n                    ...\n              ...\n",
+        "http://localhost:3042/settings/master-cabinet :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\n%s%s https://react.dev/link/hydration-mismatch \n\n  ...\n    <DashboardLayout>\n      <AuthSessionProvider session={{...}}>\n        ...\n          <SiteThemeProvider initialTheme=\"light\">\n            <SiteThemeBootstrap>\n            <div className=\"app-shell ...\" data-app-theme=\"light\" suppressHydrationWarning={true}>\n              <FabDockProvider>\n                <Suspense>\n                <JournalUndoProvider>\n                  <Header userName=\"Руководите...\" userEmail=\"e2e-a2-x-m...\" organizationName=\"Столовая X...\" ...>\n                    <header className=\"sticky top...\">\n                      <div className=\"mx-auto fl...\">\n                        <LinkComponent>\n                        <PartnerHint rates={{...}} className=\"-ml-1\">\n                          <button\n                            type=\"button\"\n                            aria-label=\"Партнёрская программа: ваш логотип вместо WeSetup\"\n                            title=\"Партнёрская программа\"\n                            onClick={function}\n                            className=\"inline-flex size-7 shrink-0 items-center justify-center rounded-full transition...\"\n-                           aria-haspopup=\"dialog\"\n-                           aria-expanded=\"false\"\n-                           aria-controls=\"radix-_R_24kcl5ralb_\"\n-                           data-state=\"closed\"\n                          >\n                          ...\n                        <div>\n                        <div>\n                        <Button>\n                        <BottomSheet>\n                        <div className=\"flex shrin...\">\n                          <OfflineIndicator>\n                          <LiveConnectionIndicator>\n                          <NotificationsBell>\n                          <LinkComponent>\n                          <button>\n                          <Button variant=\"ghost\" t",
+        "http://localhost:3042/master :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\n%s%s https://react.dev/link/hydration-mismatch \n\n  ...\n    <SegmentViewNode type=\"layout\" pagePath=\"master/lay...\">\n      <SegmentTrieNode>\n      <MasterLayout>\n        <AuthSessionProvider session={{...}}>\n          <SessionProvider session={{...}} refetchOnWindowFocus={false} refetchWhenOffline={false} refetchInterval={0}>\n            <SiteThemeProvider initialTheme=\"light\">\n              <SiteThemeBootstrap>\n              <div className=\"app-shell ...\" data-app-theme=\"light\" suppressHydrationWarning={true}>\n                <MasterShell organizationName=\"Мастер-каб...\" code=\"FUHFK-WYQQA\" objectsCount={2} ...>\n                  <div className=\"flex min-h...\">\n                    <header className=\"sticky top...\">\n                      <div className=\"mx-auto fl...\">\n                        <div>\n                        <div className=\"flex shrin...\">\n                          <ResponsiveMenu title=\"Бэк Офисов...\" contentClassName=\"w-[280px] ...\" items={[...]} ...>\n                            <button\n                              type=\"button\"\n                              aria-label=\"Профиль\"\n                              className=\"flex size-10 items-center justify-center rounded-full bg-[#eef1ff] text-[14px...\"\n                              onClick={function onClick}\n-                             id=\"radix-_R_55l5ralb_\"\n-                             aria-haspopup=\"menu\"\n-                             aria-expanded=\"false\"\n-                             data-state=\"closed\"\n-                             data-slot=\"dropdown-menu-trigger\"\n                            >\n+                             Б\n                            ...\n                      ...\n                    ...\n              ...\n",
+        "http://localhost:3042/settings/master-cabinet :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\n%s%s https://react.dev/link/hydration-mismatch \n\n  ...\n    <DashboardLayout>\n      <AuthSessionProvider session={{...}}>\n        ...\n          <SiteThemeProvider initialTheme=\"light\">\n            <SiteThemeBootstrap>\n            <div className=\"app-shell ...\" data-app-theme=\"light\" suppressHydrationWarning={true}>\n              <FabDockProvider>\n                <Suspense>\n                <JournalUndoProvider>\n                  <Header userName=\"Руководите...\" userEmail=\"e2e-a2-x-m...\" organizationName=\"Столовая X...\" ...>\n                    <header className=\"sticky top...\">\n                      <div className=\"mx-auto fl...\">\n                        <LinkComponent>\n                        <PartnerHint rates={{...}} className=\"-ml-1\">\n                          <button\n                            type=\"button\"\n                            aria-label=\"Партнёрская программа: ваш логотип вместо WeSetup\"\n                            title=\"Партнёрская программа\"\n                            onClick={function}\n                            className=\"inline-flex size-7 shrink-0 items-center justify-center rounded-full transition...\"\n-                           aria-haspopup=\"dialog\"\n-                           aria-expanded=\"false\"\n-                           aria-controls=\"radix-_R_24kcl5ralb_\"\n-                           data-state=\"closed\"\n                          >\n                          ...\n                        <div>\n                        <div>\n                        <Button>\n                        <BottomSheet>\n                        <div className=\"flex shrin...\">\n                          <OfflineIndicator>\n                          <LiveConnectionIndicator>\n                          <NotificationsBell>\n                          <LinkComponent>\n                          <button>\n                          <Button variant=\"ghost\" t",
+        "http://localhost:3042/master :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\n%s%s https://react.dev/link/hydration-mismatch \n\n  ...\n    <SegmentViewNode type=\"layout\" pagePath=\"master/lay...\">\n      <SegmentTrieNode>\n      <MasterLayout>\n        <AuthSessionProvider session={{...}}>\n          <SessionProvider session={{...}} refetchOnWindowFocus={false} refetchWhenOffline={false} refetchInterval={0}>\n            <SiteThemeProvider initialTheme=\"light\">\n              <SiteThemeBootstrap>\n              <div className=\"app-shell ...\" data-app-theme=\"light\" suppressHydrationWarning={true}>\n                <MasterShell organizationName=\"Мастер-каб...\" code=\"FUHFK-WYQQA\" objectsCount={2} ...>\n                  <div className=\"flex min-h...\">\n                    <header className=\"sticky top...\">\n                      <div className=\"mx-auto fl...\">\n                        <div>\n                        <div className=\"flex shrin...\">\n                          <ResponsiveMenu title=\"Бэк Офисов...\" contentClassName=\"w-[280px] ...\" items={[...]} ...>\n                            <button\n                              type=\"button\"\n                              aria-label=\"Профиль\"\n                              className=\"flex size-10 items-center justify-center rounded-full bg-[#eef1ff] text-[14px...\"\n                              onClick={function onClick}\n-                             id=\"radix-_R_55l5ralb_\"\n-                             aria-haspopup=\"menu\"\n-                             aria-expanded=\"false\"\n-                             data-state=\"closed\"\n-                             data-slot=\"dropdown-menu-trigger\"\n                            >\n+                             Б\n                            ...\n                      ...\n                    ...\n              ...\n",
+        "http://localhost:3042/settings/master-cabinet :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\n%s%s https://react.dev/link/hydration-mismatch \n\n  ...\n    <DashboardLayout>\n      <AuthSessionProvider session={{...}}>\n        ...\n          <SiteThemeProvider initialTheme=\"light\">\n            <SiteThemeBootstrap>\n            <div className=\"app-shell ...\" data-app-theme=\"light\" suppressHydrationWarning={true}>\n              <FabDockProvider>\n                <Suspense>\n                <JournalUndoProvider>\n                  <Header userName=\"Руководите...\" userEmail=\"e2e-a2-x-m...\" organizationName=\"Столовая X...\" ...>\n                    <header className=\"sticky top...\">\n                      <div className=\"mx-auto fl...\">\n                        <LinkComponent>\n                        <PartnerHint rates={{...}} className=\"-ml-1\">\n                          <button\n                            type=\"button\"\n                            aria-label=\"Партнёрская программа: ваш логотип вместо WeSetup\"\n                            title=\"Партнёрская программа\"\n                            onClick={function}\n                            className=\"inline-flex size-7 shrink-0 items-center justify-center rounded-full transition...\"\n-                           aria-haspopup=\"dialog\"\n-                           aria-expanded=\"false\"\n-                           aria-controls=\"radix-_R_24kcl5ralb_\"\n-                           data-state=\"closed\"\n                          >\n                          ...\n                        <div>\n                        <div>\n                        <Button>\n                        <BottomSheet>\n                        <div className=\"flex shrin...\">\n                          <OfflineIndicator>\n                          <LiveConnectionIndicator>\n                          <NotificationsBell>\n                          <LinkComponent>\n                          <button>\n                          <Button variant=\"ghost\" t",
+        "http://localhost:3042/dashboard :: Failed to sync build state: TypeError: Failed to fetch\n    at syncBuild (webpack-internal:///(app-pages-browser)/./src/components/layout/sw-register.tsx:44:40)",
+        "http://localhost:3042/master :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\n%s%s https://react.dev/link/hydration-mismatch \n\n  ...\n    <SegmentViewNode type=\"layout\" pagePath=\"master/lay...\">\n      <SegmentTrieNode>\n      <MasterLayout>\n        <AuthSessionProvider session={{...}}>\n          <SessionProvider session={{...}} refetchOnWindowFocus={false} refetchWhenOffline={false} refetchInterval={0}>\n            <SiteThemeProvider initialTheme=\"light\">\n              <SiteThemeBootstrap>\n              <div className=\"app-shell ...\" data-app-theme=\"light\" suppressHydrationWarning={true}>\n                <MasterShell organizationName=\"Мастер-каб...\" code=\"FUHFK-WYQQA\" objectsCount={2} ...>\n                  <div className=\"flex min-h...\">\n                    <header className=\"sticky top...\">\n                      <div className=\"mx-auto fl...\">\n                        <div>\n                        <div className=\"flex shrin...\">\n                          <ResponsiveMenu title=\"Бэк Офисов...\" contentClassName=\"w-[280px] ...\" items={[...]} ...>\n                            <button\n                              type=\"button\"\n                              aria-label=\"Профиль\"\n                              className=\"flex size-10 items-center justify-center rounded-full bg-[#eef1ff] text-[14px...\"\n                              onClick={function onClick}\n-                             id=\"radix-_R_55l5ralb_\"\n-                             aria-haspopup=\"menu\"\n-                             aria-expanded=\"false\"\n-                             data-state=\"closed\"\n-                             data-slot=\"dropdown-menu-trigger\"\n                            >\n+                             Б\n                            ...\n                      ...\n                    ...\n              ...\n",
+        "http://localhost:3042/settings/master-cabinet :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\n%s%s https://react.dev/link/hydration-mismatch \n\n  ...\n    <DashboardLayout>\n      <AuthSessionProvider session={{...}}>\n        ...\n          <SiteThemeProvider initialTheme=\"light\">\n            <SiteThemeBootstrap>\n            <div className=\"app-shell ...\" data-app-theme=\"light\" suppressHydrationWarning={true}>\n              <FabDockProvider>\n                <Suspense>\n                <JournalUndoProvider>\n                  <Header userName=\"Руководите...\" userEmail=\"e2e-a2-x-m...\" organizationName=\"Столовая X...\" ...>\n                    <header className=\"sticky top...\">\n                      <div className=\"mx-auto fl...\">\n                        <LinkComponent>\n                        <PartnerHint rates={{...}} className=\"-ml-1\">\n                          <button\n                            type=\"button\"\n                            aria-label=\"Партнёрская программа: ваш логотип вместо WeSetup\"\n                            title=\"Партнёрская программа\"\n                            onClick={function}\n                            className=\"inline-flex size-7 shrink-0 items-center justify-center rounded-full transition...\"\n-                           aria-haspopup=\"dialog\"\n-                           aria-expanded=\"false\"\n-                           aria-controls=\"radix-_R_24kcl5ralb_\"\n-                           data-state=\"closed\"\n                          >\n                          ...\n                        <div>\n                        <div>\n                        <Button>\n                        <BottomSheet>\n                        <div className=\"flex shrin...\">\n                          <OfflineIndicator>\n                          <LiveConnectionIndicator>\n                          <NotificationsBell>\n                          <LinkComponent>\n                          <button>\n                          <Button variant=\"ghost\" t"
+      ]
+    }
+  ]
+}

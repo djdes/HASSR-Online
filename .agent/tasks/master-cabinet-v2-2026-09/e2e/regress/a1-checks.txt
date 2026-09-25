@@ -1,0 +1,18 @@
+PASS RF1: pool without master - suggestions only from pool, config untouched
+PASS AC-A1: cabinet created as kind=directory in X pool with invite link
+PASS second POST in the same pool only invites into the existing cabinet
+PASS email taken by another user -> 409
+PASS AC-A2: master session - pages redirect to /master, other APIs 403
+PASS GET /api/master/directory - empty list, code and 2 objects
+PASS AC-A3: xlsx preview shows 3 added
+PASS AC-A3: menu is in active finished_product docs of X and Y (local items kept)
+PASS AC-A4: raw materials in perishable_rejection - items, suppliers, manufacturers
+PASS AC-A3/A4: suggestions (site + QR API) and org directory read master lists
+PASS AC-A5: removing one dish at the master removes only it; local dish stays
+PASS AC-A6: new finished_product/perishable document of a pool org has the master lists
+PASS AC-A6: org joining the code later receives the lists on link
+PASS AC-A7: cron organization queries skip kind=directory
+PASS regular session: /master -> /dashboard, /api/master -> 403, settings GET works
+PASS creator switches into the cabinet: orgKind in token -> /dashboard redirects to /master
+PASS switch back to the kitchen restores normal access
+PASS audit log records master_directory.updated

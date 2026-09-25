@@ -1,0 +1,12 @@
+after accept navigation chain: /invite/EDtPbUxfe7MJ1vLC2QtTUYL2H6w1MZfxUvJUjvGleeQ → /invite/EDtPbUxfe7MJ1vLC2QtTUYL2H6w1MZfxUvJUjvGleeQ → /master
+first screen text: Мастер-кабинет — Школа № 5 (пищеблок) muh1rq4g МАСТЕР-КАБИНЕТ СПРАВОЧНИКОВ П Код справочника VH57H-PQXKQ Подключено объектов: 2 Меню → БЖГП 0 Сырьё → Скоропорт 0 Об�
+menu preview: 5 Добавится 0 Уберётся 0 Изменится 0 Без изменений Добавится 5 · Уберётся 0 · Изменится 0 · Без изменений 0 · всего в списке 5 НОВЫЕ Борщ со сметаной Суп куриный с 
+bo /dashboard → /master
+bo /journals → /master
+bo /settings → /master
+bo /settings/users → /master
+bo /orders → /master
+bo / → /master
+relogin chain: /master
+Y itemsCatalog: ["Сырники со сметаной","Борщ со сметаной","Суп куриный с лапшой","Котлета рыбная","Плов из курицы","Компот из сухофруктов"]
+  "problems": []
