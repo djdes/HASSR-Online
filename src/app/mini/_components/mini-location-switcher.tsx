@@ -65,10 +65,8 @@ export function MiniLocationSwitcher() {
 
   return (
     <section className="mini-card p-4">
-      <div className="mb-2 text-[13px]" style={{ color: "var(--mini-text-muted)" }}>
-        Точка
-      </div>
-      <div className="space-y-1.5">
+      <div className="mini-label mb-2.5">Точка</div>
+      <div className="space-y-2">
         {location.buildings.map((building) => {
           const active = building.id === location.activeBuildingId;
           return (
@@ -76,11 +74,11 @@ export function MiniLocationSwitcher() {
               key={building.id}
               type="button"
               onClick={() => switchTo(building)}
-              className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left text-[14px] font-medium"
+              aria-pressed={active}
+              className="flex min-h-12 w-full items-center justify-between gap-3 rounded-[14px] border px-3.5 py-2.5 text-left text-[16px] font-semibold"
               style={{
-                background: active
-                  ? "var(--mini-accent-soft, rgba(85,102,246,0.12))"
-                  : "transparent",
+                background: active ? "var(--mini-accent-soft)" : "var(--mini-surface-1)",
+                borderColor: active ? "var(--mini-accent)" : "var(--mini-divider-strong)",
                 color: "var(--mini-text)",
               }}
             >
@@ -88,7 +86,7 @@ export function MiniLocationSwitcher() {
                 <span className="block truncate">{building.name}</span>
                 {building.address ? (
                   <span
-                    className="block truncate text-[12px] font-normal"
+                    className="block truncate text-[14px] font-normal"
                     style={{ color: "var(--mini-text-muted)" }}
                   >
                     {building.address}
@@ -98,7 +96,7 @@ export function MiniLocationSwitcher() {
               {busyId === building.id ? (
                 <span style={{ color: "var(--mini-text-muted)" }}>…</span>
               ) : active ? (
-                <span style={{ color: "var(--mini-accent, #5566f6)" }}>✓</span>
+                <span style={{ color: "var(--mini-accent-ink)" }}>✓</span>
               ) : null}
             </button>
           );

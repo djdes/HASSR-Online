@@ -115,36 +115,20 @@ export function MiniSectionsClient({
     return (
       <div className="flex flex-1 flex-col gap-4 pb-24">
         <section className="mini-card px-5 py-6 text-center">
-          <div
-            className="mx-auto flex size-12 items-center justify-center rounded-3xl"
-            style={{
-              background: "var(--mini-lime-soft)",
-              color: "var(--mini-lime)",
-            }}
-          >
+          <div className="mini-tile mx-auto" style={{ width: 48, height: 48 }}>
             <LayoutGrid className="size-6" />
           </div>
-          <h1
-            className="mt-4 text-[20px] font-semibold tracking-[-0.02em]"
-            style={{ color: "var(--mini-text)" }}
-          >
+          <h1 className="mini-h1 mt-4" style={{ fontSize: 21 }}>
             Сначала войдите
           </h1>
           <p
-            className="mt-2 text-[14px] leading-6"
+            className="mt-2 text-[16px] leading-relaxed"
             style={{ color: "var(--mini-text-muted)" }}
           >
             Разделы зависят от ваших прав, поэтому список появится после
             входа. Откройте экран входа — в Telegram он сработает сам.
           </p>
-          <Link
-            href="/mini"
-            className="mini-press mt-5 inline-flex h-12 w-full items-center justify-center rounded-2xl px-4 text-[14px] font-medium"
-            style={{
-              background: "var(--mini-lime)",
-              color: "var(--mini-primary-contrast)",
-            }}
-          >
+          <Link href="/mini" className="mini-btn-primary mini-press mt-5 w-full">
             Войти
           </Link>
         </section>
@@ -156,14 +140,9 @@ export function MiniSectionsClient({
     <div className="flex flex-1 flex-col gap-4 pb-24">
       <header className="mini-card px-5 py-5">
         <p className="mini-eyebrow">Кабинет</p>
-        <h1
-          className="mt-1 text-[22px] font-semibold tracking-[-0.02em]"
-          style={{ color: "var(--mini-text)" }}
-        >
-          Все разделы
-        </h1>
+        <h1 className="mini-h1 mt-1">Все разделы</h1>
         <p
-          className="mt-2 text-[13px] leading-5"
+          className="mt-2 text-[15px] leading-relaxed"
           style={{ color: "var(--mini-text-muted)" }}
         >
           Те же страницы, что и на сайте, — здесь они открываются прямо в
@@ -174,8 +153,8 @@ export function MiniSectionsClient({
       {total > 6 ? (
         <label className="relative block">
           <Search
-            className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2"
-            style={{ color: "var(--mini-text-faint)" }}
+            className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2"
+            style={{ color: "var(--mini-text-muted)" }}
           />
           <input
             type="search"
@@ -183,20 +162,16 @@ export function MiniSectionsClient({
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Поиск раздела"
             aria-label="Поиск раздела"
-            // 16px — меньше нельзя: iOS зумит страницу на фокусе поля.
-            className="h-12 w-full rounded-2xl pl-10 pr-4 text-[16px] outline-none"
-            style={{
-              background: "var(--mini-surface-1)",
-              border: "1px solid var(--mini-divider)",
-              color: "var(--mini-text)",
-            }}
+            // Поле QR-страниц: 56px, шрифт 17px (меньше 16px iOS зумит).
+            className="mini-input"
+            style={{ paddingLeft: 46 }}
           />
         </label>
       ) : null}
 
       {filtered.length === 0 ? (
         <p
-          className="px-1 text-[14px]"
+          className="px-1 text-[16px] leading-relaxed"
           style={{ color: "var(--mini-text-muted)" }}
         >
           Ничего не нашлось. Попробуйте другое слово — например «журнал»,
@@ -208,7 +183,7 @@ export function MiniSectionsClient({
         <section key={group.id} className="space-y-2">
           <div className="px-1">
             <h2
-              className="text-[15px] font-semibold"
+              className="text-[17px] font-semibold"
               style={{ color: "var(--mini-text)" }}
             >
               {group.title}
@@ -219,8 +194,8 @@ export function MiniSectionsClient({
                 подзаголовка нет вовсе, он уже написан на карточке. */}
             {group.items.length > 1 ? (
               <p
-                className="mt-0.5 text-[12px]"
-                style={{ color: "var(--mini-text-faint)" }}
+                className="mt-0.5 text-[14px] leading-snug"
+                style={{ color: "var(--mini-text-muted)" }}
               >
                 {group.items.map((item) => item.label).join(" · ")}
               </p>
@@ -229,37 +204,24 @@ export function MiniSectionsClient({
           {group.items.map((item) => {
             const Icon = SECTION_ICONS[item.icon] ?? LayoutGrid;
             return (
+              // Пункт — строка списка QR-страниц: плитка, название
+              // крупно, пояснение под ним.
               <Link
                 key={item.href}
                 href={item.href}
-                className="mini-card mini-press flex w-full items-center gap-3 px-4 py-3 text-left"
+                className="mini-item mini-press"
               >
-                <span
-                  className="flex size-10 shrink-0 items-center justify-center rounded-2xl"
-                  style={{
-                    background: "var(--mini-lime-soft)",
-                    color: "var(--mini-lime)",
-                  }}
-                >
+                <span className="mini-tile">
                   <Icon className="size-5" />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span
-                    className="block truncate text-[15px] font-medium"
-                    style={{ color: "var(--mini-text)" }}
-                  >
-                    {item.label}
-                  </span>
-                  <span
-                    className="mt-0.5 block text-[12px]"
-                    style={{ color: "var(--mini-text-muted)" }}
-                  >
-                    {item.hint}
-                  </span>
+                  <span className="block truncate">{item.label}</span>
+                  <span className="mini-item-hint">{item.hint}</span>
                 </span>
                 <ChevronRight
-                  className="size-4 shrink-0"
-                  style={{ color: "var(--mini-text-faint)" }}
+                  className="size-5 shrink-0"
+                  style={{ color: "var(--mini-text-muted)" }}
+                  aria-hidden
                 />
               </Link>
             );

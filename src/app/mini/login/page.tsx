@@ -27,11 +27,12 @@ export default async function MiniLoginPage({
 
   return (
     <div className="mx-auto flex min-h-[70vh] w-full max-w-[420px] flex-col justify-center">
-      <div className="mini-card p-6">
-        <h1 className="text-[24px] font-semibold leading-tight tracking-[-0.01em]">
-          Вход в кабинет
-        </h1>
-        <p className="mt-2 text-[14px] leading-[1.55] opacity-70">
+      <div className="mini-card p-5">
+        <h1 className="mini-h1">Вход в кабинет</h1>
+        <p
+          className="mt-2 text-[16px] leading-[1.5]"
+          style={{ color: "var(--mini-text-muted)" }}
+        >
           Телефон и пароль выдаёт руководитель. Если у вас есть Telegram —
           можно войти и через него, по персональной ссылке-приглашению.
         </p>

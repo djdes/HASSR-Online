@@ -36,6 +36,17 @@ const CUSTOM_EVENT = "wesetup-theme-change";
 /** Legacy key — only read for one-time migration. */
 const LEGACY_MINI_KEY = "wesetup-mini-theme";
 
+/**
+ * Цвет фирменной шапки — тот же, что `theme-color` QR-страниц. Шапка
+ * Telegram красится в него же и сливается с нашей в одну полосу.
+ */
+export const MINI_HERO_COLOR = "#0b1024";
+
+/** Фон экрана под шапкой: `--mini-bg` светлой и тёмной темы (mini-theme.css). */
+export function miniBackgroundColor(theme: MiniTheme): string {
+  return theme === "dark" ? "#2b2841" : "#fafbff";
+}
+
 type Ctx = {
   theme: MiniTheme;
   setTheme: (t: MiniTheme) => void;
@@ -241,10 +252,9 @@ function applyThemeToDOM(theme: MiniTheme) {
     }
   ).Telegram?.WebApp;
   if (tg) {
-    const chrome = theme === "dark" ? "#0a0b0f" : "#fafbff";
     try {
-      tg.setHeaderColor?.(chrome);
-      tg.setBackgroundColor?.(chrome);
+      tg.setHeaderColor?.(MINI_HERO_COLOR);
+      tg.setBackgroundColor?.(miniBackgroundColor(theme));
     } catch {
       /* old client — silent */
     }

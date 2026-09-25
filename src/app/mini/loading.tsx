@@ -11,10 +11,10 @@ export default function MiniLoading() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-3 py-16 text-center">
       <Loader2
-        className="size-6 animate-spin"
-        style={{ color: "var(--mini-lime)" }}
+        className="size-7 animate-spin"
+        style={{ color: "var(--mini-accent)" }}
       />
-      <div className="text-[15px] font-medium" style={{ color: "var(--mini-text)" }}>
+      <div className="text-[18px] font-semibold" style={{ color: "var(--mini-text)" }}>
         Открываем кабинет…
       </div>
     </div>

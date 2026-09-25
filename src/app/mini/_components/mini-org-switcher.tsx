@@ -79,13 +79,8 @@ export function MiniOrgSwitcher() {
 
   return (
     <section className="mini-card p-4">
-      <div
-        className="mb-2 text-[13px]"
-        style={{ color: "var(--mini-text-muted)" }}
-      >
-        Организация
-      </div>
-      <div className="space-y-1.5">
+      <div className="mini-label mb-2.5">Организация</div>
+      <div className="space-y-2">
         {organizations.map((organization) => {
           const active = organization.id === activeId;
           return (
@@ -93,11 +88,11 @@ export function MiniOrgSwitcher() {
               key={organization.id}
               type="button"
               onClick={() => switchTo(organization)}
-              className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left text-[14px] font-medium"
+              aria-pressed={active}
+              className="flex min-h-12 w-full items-center justify-between gap-3 rounded-[14px] border px-3.5 py-2.5 text-left text-[16px] font-semibold"
               style={{
-                background: active
-                  ? "var(--mini-accent-soft, rgba(85,102,246,0.12))"
-                  : "transparent",
+                background: active ? "var(--mini-accent-soft)" : "var(--mini-surface-1)",
+                borderColor: active ? "var(--mini-accent)" : "var(--mini-divider-strong)",
                 color: "var(--mini-text)",
               }}
             >
@@ -105,7 +100,7 @@ export function MiniOrgSwitcher() {
               {busyId === organization.id ? (
                 <span style={{ color: "var(--mini-text-muted)" }}>…</span>
               ) : active ? (
-                <span style={{ color: "var(--mini-accent, #5566f6)" }}>✓</span>
+                <span style={{ color: "var(--mini-accent-ink)" }}>✓</span>
               ) : null}
             </button>
           );

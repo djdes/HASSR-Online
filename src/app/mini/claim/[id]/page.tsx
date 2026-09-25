@@ -738,35 +738,20 @@ export default function ClaimPage({
     return (
       <div className="space-y-3 pb-24">
         <BackToday />
-        <div
-          className="rounded-2xl border p-4 text-[14px] leading-relaxed"
-          style={{
-            background: "var(--mini-crimson-soft)",
-            borderColor: "var(--mini-divider-strong)",
-            color: "var(--mini-text)",
-          }}
-        >
+        <div className="mini-err" style={{ color: "var(--mini-text)" }}>
           {error}
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-col gap-2">
             <button
               type="button"
               onClick={() => void loadClaim()}
-              className="mini-press inline-flex h-11 items-center gap-2 rounded-2xl px-5 text-[14px] font-semibold"
-              style={{
-                background: "var(--mini-lime)",
-                color: "var(--mini-primary-contrast)",
-              }}
+              className="mini-btn-primary mini-press w-full"
             >
-              <RotateCcw className="size-4" />
+              <RotateCcw className="size-5" />
               Попробовать ещё раз
             </button>
             <Link
               href="/mini/today"
-              className="mini-press inline-flex h-11 items-center rounded-2xl border px-5 text-[14px] font-medium"
-              style={{
-                borderColor: "var(--mini-divider-strong)",
-                color: "var(--mini-text)",
-              }}
+              className="mini-btn-secondary mini-press w-full"
             >
               К задачам на сегодня
             </Link>
@@ -780,7 +765,7 @@ export default function ClaimPage({
       <div className="space-y-3 pb-24">
         <BackToday />
         <div
-          className="flex h-40 items-center justify-center gap-2 text-[14px]"
+          className="flex h-40 items-center justify-center gap-2 text-[16px]"
           style={{ color: "var(--mini-text-muted)" }}
         >
           <Loader2 className="size-5 animate-spin" />
@@ -817,35 +802,34 @@ export default function ClaimPage({
     <div className="space-y-4 pb-40">
       <BackToday />
 
+      {/* «Что заполняем» — как строка «Кто / Что» QR-формы: подпись
+          капсом, значение крупно. */}
       <header
-        className="rounded-3xl border p-5"
+        className="mini-card p-4"
         style={{
-          background: "var(--mini-lime-soft)",
-          borderColor: "var(--mini-lime-strong)",
+          background: "var(--mini-accent-soft)",
+          borderColor: "var(--mini-accent-line)",
         }}
       >
-        <div className="flex items-start gap-3">
+        <div className="flex items-center gap-3">
           <span
-            className="flex size-10 shrink-0 items-center justify-center rounded-2xl"
+            className="mini-tile"
             style={{
-              background: "var(--mini-lime)",
-              color: "var(--mini-primary-contrast)",
+              width: 44,
+              height: 44,
+              background: "var(--mini-accent)",
+              color: "var(--mini-on-accent)",
             }}
           >
             <JournalIcon
               name={journalIconName(claim.journalCode)}
-              className="size-5"
+              className="size-6"
             />
           </span>
-          <div>
+          <div className="min-w-0">
+            <div className="mini-eyebrow">В работе</div>
             <div
-              className="text-[12px] uppercase tracking-[0.14em]"
-              style={{ color: "var(--mini-text-muted)" }}
-            >
-              В работе
-            </div>
-            <div
-              className="text-[18px] font-semibold leading-tight"
+              className="text-[20px] font-semibold leading-tight"
               style={{ color: "var(--mini-text)" }}
             >
               {claim.scopeLabel}
@@ -858,15 +842,8 @@ export default function ClaimPage({
           активную задачу и пустую форму — комментарий «Переделать» до
           него не доходил вовсе. */}
       {claim.verificationStatus === "rejected" ? (
-        <div
-          className="rounded-2xl border p-4 text-[13px] leading-relaxed"
-          style={{
-            background: "var(--mini-amber-soft)",
-            borderColor: "var(--mini-divider-strong)",
-            color: "var(--mini-text)",
-          }}
-        >
-          <div className="font-semibold" style={{ color: "var(--mini-amber)" }}>
+        <div className="mini-warn">
+          <div className="font-semibold" style={{ color: "var(--mini-warn)" }}>
             Вернули на переделку
           </div>
           <div className="mt-1">
@@ -891,12 +868,8 @@ export default function ClaimPage({
         <div className="space-y-3">
           {pipeline.intro ? (
             <div
-              className="rounded-2xl border p-3 text-[13px]"
-              style={{
-                background: "var(--mini-surface-1)",
-                borderColor: "var(--mini-divider)",
-                color: "var(--mini-text-muted)",
-              }}
+              className="mini-card p-4 text-[16px] leading-relaxed"
+              style={{ color: "var(--mini-text-secondary)" }}
             >
               {pipeline.intro}
             </div>
@@ -911,24 +884,21 @@ export default function ClaimPage({
               return (
                 <div
                   key={step.id}
-                  className="relative ml-4 rounded-2xl border p-4 transition-colors"
+                  className="mini-card relative ml-4 p-4 transition-colors"
                   style={
                     done
                       ? {
-                          background: "var(--mini-sage-soft)",
-                          borderColor: "var(--mini-sage)",
+                          background: "var(--mini-ok-soft)",
+                          borderColor: "var(--mini-ok-line)",
                         }
-                      : {
-                          background: "var(--mini-surface-1)",
-                          borderColor: "var(--mini-divider)",
-                        }
+                      : undefined
                   }
                 >
                   <div
-                    className="absolute -left-[24px] top-4 flex size-8 items-center justify-center rounded-full text-[12px] font-bold"
+                    className="absolute -left-[24px] top-4 flex size-8 items-center justify-center rounded-full text-[14px] font-bold"
                     style={{
-                      background: done ? "var(--mini-sage)" : "var(--mini-lime)",
-                      color: "var(--mini-primary-contrast)",
+                      background: done ? "var(--mini-ok-fill)" : "var(--mini-accent)",
+                      color: "#ffffff",
                     }}
                   >
                     {done ? "✓" : idx + 1}
@@ -942,7 +912,7 @@ export default function ClaimPage({
                     onClick={() =>
                       setPipelineProgress((p) => ({ ...p, [step.id]: !p[step.id] }))
                     }
-                    className="flex w-full items-start gap-2.5 text-left"
+                    className="flex w-full items-start gap-3 text-left"
                   >
                     <input
                       type="checkbox"
@@ -950,19 +920,19 @@ export default function ClaimPage({
                       readOnly
                       tabIndex={-1}
                       aria-hidden
-                      className="mt-1 size-5 shrink-0 pointer-events-none"
-                      style={{ accentColor: "var(--mini-lime)" }}
+                      className="mt-0.5 size-6 shrink-0 pointer-events-none"
+                      style={{ accentColor: "var(--mini-accent)" }}
                     />
                     <span className="min-w-0 flex-1">
                       <span
-                        className="block text-[15px] font-semibold leading-tight"
+                        className="block text-[17px] font-semibold leading-snug"
                         style={{ color: "var(--mini-text)" }}
                       >
                         {step.title}
                       </span>
                       {step.instruction ? (
                         <span
-                          className="mt-1 block text-[13px] leading-relaxed"
+                          className="mt-1 block text-[15px] leading-relaxed"
                           style={{ color: "var(--mini-text-muted)" }}
                         >
                           {step.instruction}
@@ -976,7 +946,7 @@ export default function ClaimPage({
                         const itemKey = `${step.id}::cl::${i}`;
                         const itemDone = Boolean(pipelineProgress[itemKey]);
                         return (
-                          <li key={i} className="flex items-start gap-2 text-[13px]">
+                          <li key={i} className="flex items-start gap-2.5 text-[16px] leading-snug">
                             <input
                               type="checkbox"
                               checked={itemDone}
@@ -986,14 +956,14 @@ export default function ClaimPage({
                                   [itemKey]: !p[itemKey],
                                 }))
                               }
-                              className="mt-0.5 size-4 shrink-0"
-                              style={{ accentColor: "var(--mini-lime)" }}
+                              className="mt-0.5 size-5 shrink-0"
+                              style={{ accentColor: "var(--mini-accent)" }}
                             />
                             <span
                               className={itemDone ? "line-through" : ""}
                               style={{
                                 color: itemDone
-                                  ? "var(--mini-sage)"
+                                  ? "var(--mini-ok)"
                                   : "var(--mini-text)",
                               }}
                             >
@@ -1020,13 +990,7 @@ export default function ClaimPage({
               );
             })}
           </div>
-          <div
-            className="rounded-2xl border border-dashed p-3 text-[12px]"
-            style={{
-              borderColor: "var(--mini-divider-strong)",
-              color: "var(--mini-text-muted)",
-            }}
-          >
+          <div className="mini-note">
             Отметь все шаги, заполни поля ниже — и нажми «Завершить».
           </div>
         </div>
@@ -1035,26 +999,14 @@ export default function ClaimPage({
       {form ? (
         <div className="space-y-3">
           {steps.length > 0 ? (
-            <div
-              className="px-1 text-[11px] font-semibold uppercase tracking-[0.14em]"
-              style={{ color: "var(--mini-text-faint)" }}
-            >
-              Запиши результат
-            </div>
+            <div className="mini-label px-1">Запиши результат</div>
           ) : null}
           {form.fields.map((f) =>
             // Числовое поле — тот же компонент, что в журналах: степпер
             // «−/+», «Готово» сохраняет, норма подписана под полем и
             // старт степпера от её середины.
             f.type === "number" ? (
-              <div
-                key={f.key}
-                className="rounded-2xl border p-4"
-                style={{
-                  background: "var(--mini-surface-1)",
-                  borderColor: "var(--mini-divider)",
-                }}
-              >
+              <div key={f.key} className="mini-card mini-number-field p-4">
                 <NumberField
                   label={f.label}
                   unit={unitFromLabel(f.label) ?? f.unit}
@@ -1089,7 +1041,7 @@ export default function ClaimPage({
         </div>
       ) : steps.length === 0 ? (
         <div
-          className="rounded-2xl border border-dashed p-4 text-[13px] leading-relaxed"
+          className="rounded-[20px] border border-dashed p-4 text-[16px] leading-relaxed"
           style={{
             borderColor: "var(--mini-divider-strong)",
             color: "var(--mini-text-muted)",
@@ -1101,49 +1053,29 @@ export default function ClaimPage({
       ) : null}
 
       {error ? (
-        <div
-          className="rounded-2xl border p-3 text-[13px] leading-relaxed"
-          style={{
-            background: "var(--mini-crimson-soft)",
-            borderColor: "var(--mini-divider-strong)",
-            color: "var(--mini-crimson)",
-          }}
-        >
+        <div className="mini-err">
           <AlertTriangle className="mr-1.5 inline size-4 align-text-bottom" />
           {error}
         </div>
       ) : null}
       {warnings.length > 0 ? (
-        <div
-          className="rounded-2xl border p-3 text-[13px] leading-relaxed"
-          style={{
-            background: "var(--mini-amber-soft)",
-            borderColor: "var(--mini-divider-strong)",
-            color: "var(--mini-amber)",
-          }}
-        >
+        <div className="mini-warn" style={{ color: "var(--mini-warn)" }}>
           <AlertTriangle className="mr-1.5 inline size-4 align-text-bottom" />
           {warnings.map((w) => w.message).join(" · ")}
         </div>
       ) : null}
 
       {skipMode ? (
-        <div
-          className="space-y-3 rounded-2xl border p-4"
-          style={{
-            background: "var(--mini-amber-soft)",
-            borderColor: "var(--mini-divider-strong)",
-          }}
-        >
+        <div className="mini-warn space-y-3 p-4">
           <div
-            className="text-[14px] font-medium"
+            className="text-[17px] font-semibold"
             style={{ color: "var(--mini-text)" }}
           >
             Сегодня не требуется заполнять?
           </div>
           <div
-            className="text-[12px] leading-relaxed"
-            style={{ color: "var(--mini-text-muted)" }}
+            className="text-[15px] leading-relaxed"
+            style={{ color: "var(--mini-text-secondary)" }}
           >
             {skipReasons.length > 0
               ? allowFreeSkipReason
@@ -1162,20 +1094,7 @@ export default function ClaimPage({
                     type="button"
                     aria-pressed={picked}
                     onClick={() => setSkipReason(picked ? "" : reason)}
-                    className="mini-press inline-flex min-h-9 items-center rounded-full border px-3 py-1.5 text-left text-[13px] transition-colors duration-150"
-                    style={
-                      picked
-                        ? {
-                            background: "var(--mini-lime)",
-                            borderColor: "transparent",
-                            color: "var(--mini-primary-contrast)",
-                          }
-                        : {
-                            background: "var(--mini-surface-1)",
-                            borderColor: "var(--mini-divider-strong)",
-                            color: "var(--mini-text)",
-                          }
-                    }
+                    className="mini-chip mini-press transition-colors duration-150"
                   >
                     {reason}
                   </button>
@@ -1193,7 +1112,7 @@ export default function ClaimPage({
                   ? "Или своя причина"
                   : "Причина (например: поставщик не приехал)"
               }
-              className="mini-input h-11 w-full rounded-xl px-3 text-[14px]"
+              className="mini-input"
             />
           ) : null}
           <div className="flex gap-2">
@@ -1201,11 +1120,7 @@ export default function ClaimPage({
               type="button"
               onClick={() => setSkipMode(false)}
               disabled={submitting}
-              className="mini-press inline-flex h-10 flex-1 items-center justify-center rounded-xl border text-[13px]"
-              style={{
-                borderColor: "var(--mini-divider-strong)",
-                color: "var(--mini-text)",
-              }}
+              className="mini-btn-secondary mini-press flex-1"
             >
               Отмена
             </button>
@@ -1213,13 +1128,9 @@ export default function ClaimPage({
               type="button"
               onClick={skipTask}
               disabled={submitting || !skipReasonValid}
-              className="mini-press inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl text-[13px] font-medium disabled:opacity-50"
-              style={{
-                background: "var(--mini-crimson)",
-                color: "var(--mini-primary-contrast)",
-              }}
+              className="mini-btn-danger mini-press flex-1"
             >
-              {submitting ? <Loader2 className="size-3.5 animate-spin" /> : <SkipForward className="size-3.5" />}
+              {submitting ? <Loader2 className="size-4 animate-spin" /> : <SkipForward className="size-4" />}
               Пропустить
             </button>
           </div>
@@ -1230,30 +1141,29 @@ export default function ClaimPage({
               пошаговой инструкции она при открытии экрана оказывалась
               ровно под меню. */}
           <div
-            className="sticky z-10 -mx-1 space-y-2 rounded-2xl px-1 py-1"
+            // Как `.sticky` QR-страниц: кнопка на фоне экрана, контент
+            // под ней мягко уходит в фон.
+            className="sticky z-10 -mx-1 space-y-2 px-1 pb-1 pt-3"
             style={{
-              bottom: "calc(var(--mini-safe-b, 0px) + var(--mini-nav-h, 64px) + 16px)",
-              background: "var(--mini-bg)",
+              bottom: "calc(var(--mini-safe-b, 0px) + var(--mini-nav-h, 70px) + 12px)",
+              background:
+                "linear-gradient(to top, var(--mini-bg) 78%, transparent)",
             }}
           >
           <button
             type="button"
             onClick={submit}
             disabled={submitting || !canSubmit}
-            className="mini-press inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-[15px] font-medium disabled:opacity-60"
-            style={{
-              background: "var(--mini-lime)",
-              color: "var(--mini-primary-contrast)",
-            }}
+            className="mini-btn-primary mini-press w-full"
           >
-            {submitting ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
+            {submitting ? <Loader2 className="size-5 animate-spin" /> : <CheckCircle2 className="size-5" />}
             {form?.submitLabel || "Завершить"}
           </button>
           {/* Кнопка серая — человек должен видеть, чего именно не хватает,
               а не гадать. */}
           {blockers.length > 0 ? (
             <div
-              className="px-1 text-center text-[12px] leading-relaxed"
+              className="px-1 text-center text-[14.5px] leading-snug"
               style={{ color: "var(--mini-text-muted)" }}
             >
               {blockers.join(" · ")}
@@ -1267,13 +1177,9 @@ export default function ClaimPage({
               type="button"
               onClick={() => setSkipMode(true)}
               disabled={submitting}
-              className="mini-press inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border text-[13px]"
-              style={{
-                borderColor: "var(--mini-divider-strong)",
-                color: "var(--mini-text-muted)",
-              }}
+              className="mini-btn-secondary mini-press w-full"
             >
-              <SkipForward className="size-3.5" />
+              <SkipForward className="size-4" />
               Сегодня не требуется
             </button>
           ) : null}
@@ -1283,10 +1189,9 @@ export default function ClaimPage({
             type="button"
             onClick={() => setConfirmRelease(true)}
             disabled={submitting}
-            className="mini-press inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-xl text-[13px]"
-            style={{ color: "var(--mini-text-muted)" }}
+            className="mini-btn-ghost mini-press w-full"
           >
-            <Undo2 className="size-3.5" />
+            <Undo2 className="size-4" />
             Вернуть задачу — её возьмёт кто-то другой
           </button>
         </div>
@@ -1317,10 +1222,9 @@ function BackToday() {
   return (
     <Link
       href="/mini/today"
-      className="mini-press inline-flex w-fit items-center gap-1.5 text-[13px]"
-      style={{ color: "var(--mini-text-muted)" }}
+      className="mini-btn-ghost mini-press -my-1 -ml-3.5 w-fit"
     >
-      <ArrowLeft className="size-4" />
+      <ArrowLeft className="size-5" />
       Сегодня
     </Link>
   );

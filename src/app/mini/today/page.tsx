@@ -305,23 +305,12 @@ export default function MiniTodayPage() {
         <div className="space-y-3 pb-24">
           {/* Столбиком: раньше кнопка подпирала текст сбоку и наезжала
               на него на узком экране. */}
-          <div
-            className="flex flex-col items-center gap-4 rounded-2xl px-4 py-5 text-center text-[14px] leading-relaxed"
-            style={{
-              background: "var(--mini-surface-1)",
-              border: "1px solid var(--mini-divider-strong)",
-              color: "var(--mini-text)",
-            }}
-          >
+          <div className="mini-card flex flex-col items-center gap-4 px-4 py-5 text-center text-[16px] leading-relaxed">
             <span>{loadError}</span>
             {needsSignIn ? (
               <Link
                 href={miniShellSignInHref("/mini/today")}
-                className="mini-press inline-flex h-11 items-center justify-center rounded-2xl px-5 text-[14px] font-semibold"
-                style={{
-                  background: "var(--mini-lime)",
-                  color: "var(--mini-primary-contrast)",
-                }}
+                className="mini-btn-primary mini-press w-full"
               >
                 Войти
               </Link>
@@ -332,11 +321,7 @@ export default function MiniTodayPage() {
                   setLoadError(null);
                   void load();
                 }}
-                className="mini-press inline-flex h-11 items-center justify-center rounded-2xl px-5 text-[14px] font-semibold"
-                style={{
-                  background: "var(--mini-lime)",
-                  color: "var(--mini-primary-contrast)",
-                }}
+                className="mini-btn-primary mini-press w-full"
               >
                 Попробовать ещё раз
               </button>
@@ -348,7 +333,7 @@ export default function MiniTodayPage() {
     return (
       <div className="space-y-3 pb-24">
         <div
-          className="flex h-40 items-center justify-center gap-2 text-[14px]"
+          className="flex h-40 items-center justify-center gap-2 text-[16px]"
           style={{ color: "var(--mini-text-muted)" }}
         >
           <Loader2 className="size-5 animate-spin" />
@@ -384,56 +369,24 @@ export default function MiniTodayPage() {
   return (
     <div className="space-y-4 pb-24">
 
-      <header
-        className="rounded-3xl border p-6"
-        style={{
-          background: "var(--mini-surface-1)",
-          borderColor: "var(--mini-divider-strong)",
-        }}
-      >
-        <div
-          className="text-[12px] uppercase tracking-[0.16em]"
-          style={{ color: "var(--mini-text-muted)" }}
-        >
+      {/* Карточка дня — как карточки QR-страниц: подпись капсом,
+          крупный заголовок, счётчики-пилюли. */}
+      <header className="mini-card p-5">
+        <div className="mini-eyebrow">
           {/* Дата приходит уже посчитанной по поясу организации.
               `new Date(dateKey)` разбирал её как UTC и в часть суток
               показывал соседний день — форматируем в UTC. */}
           {humanWeekday(data.dateKey)}
         </div>
-        <div
-          className="mt-2 text-[24px] font-semibold leading-tight"
-          style={{ color: "var(--mini-text)" }}
-        >
-          Сегодня
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2 text-[12px]">
-          <span
-            className="rounded-full px-2.5 py-1"
-            style={{
-              background: "var(--mini-surface-2)",
-              color: "var(--mini-text-muted)",
-            }}
-          >
-            Свободно: {totalAvailable}
-          </span>
+        <h1 className="mini-h1 mt-1.5">Сегодня</h1>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <span className="mini-pill">Свободно: {totalAvailable}</span>
           {totalMine > 0 ? (
-            <span
-              className="rounded-full px-2.5 py-1 font-medium"
-              style={{
-                background: "var(--mini-lime)",
-                color: "var(--mini-primary-contrast)",
-              }}
-            >
+            <span className="mini-pill" data-tone="accent">
               У меня: {totalMine}
             </span>
           ) : null}
-          <span
-            className="rounded-full px-2.5 py-1"
-            style={{
-              background: "var(--mini-sage-soft)",
-              color: "var(--mini-sage)",
-            }}
-          >
+          <span className="mini-pill" data-tone="ok">
             Готово: {totalDone}
           </span>
         </div>
@@ -443,18 +396,11 @@ export default function MiniTodayPage() {
           управляющая ставила больничный, а в приложении ничего не
           менялось. Задачи не прячем — человек может выйти на подмену. */}
       {scheduleText ? (
-        <div
-          className="flex items-start gap-2 rounded-2xl border p-3 text-[13px]"
-          style={{
-            background: "var(--mini-surface-2)",
-            borderColor: "var(--mini-divider-strong)",
-            color: "var(--mini-text)",
-          }}
-        >
+        <div className="mini-note flex items-start gap-2.5">
           {ScheduleIcon ? (
             <ScheduleIcon
-              className="mt-0.5 size-4 shrink-0"
-              style={{ color: "var(--mini-text-muted)" }}
+              className="mt-0.5 size-5 shrink-0"
+              style={{ color: "var(--mini-accent-ink)" }}
             />
           ) : null}
           <span>
@@ -468,33 +414,21 @@ export default function MiniTodayPage() {
           всё остальное, а открыть её было нельзя: экран отвечал «уже
           закрыта или её взял другой сотрудник». */}
       {(data.stuckClaims ?? []).map((stuck) => (
-        <div
-          key={stuck.id}
-          className="rounded-2xl border p-3 text-[13px]"
-          style={{
-            background: "var(--mini-amber-soft)",
-            borderColor: "var(--mini-divider-strong)",
-            color: "var(--mini-text)",
-          }}
-        >
-          <div className="flex items-start gap-2">
+        <div key={stuck.id} className="mini-warn">
+          <div className="flex items-start gap-2.5">
             <AlertTriangle
-              className="mt-0.5 size-4 shrink-0"
-              style={{ color: "var(--mini-amber)" }}
+              className="mt-0.5 size-5 shrink-0"
+              style={{ color: "var(--mini-warn)" }}
             />
             <div className="min-w-0 flex-1">
               <div>
                 Незавершённая задача за {humanDay(stuck.dateKey)}:{" "}
                 <span className="font-semibold">{stuck.scopeLabel}</span>
               </div>
-              <div className="mt-2 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap gap-2">
                 <Link
                   href={`/mini/claim/${stuck.id}`}
-                  className="mini-press inline-flex h-9 items-center rounded-xl px-3 text-[13px] font-medium"
-                  style={{
-                    background: "var(--mini-lime)",
-                    color: "var(--mini-primary-contrast)",
-                  }}
+                  className="mini-btn-primary mini-btn-sm mini-press"
                 >
                   Открыть
                 </Link>
@@ -502,16 +436,12 @@ export default function MiniTodayPage() {
                   type="button"
                   onClick={() => void releaseClaim(stuck.id)}
                   disabled={busy !== null}
-                  className="mini-press inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 text-[13px] font-medium disabled:opacity-50"
-                  style={{
-                    borderColor: "var(--mini-divider-strong)",
-                    color: "var(--mini-text)",
-                  }}
+                  className="mini-btn-secondary mini-btn-sm mini-press"
                 >
                   {busy === stuck.id ? (
-                    <Loader2 className="size-3.5 animate-spin" />
+                    <Loader2 className="size-4 animate-spin" />
                   ) : (
-                    <Undo2 className="size-3.5" />
+                    <Undo2 className="size-4" />
                   )}
                   Вернуть
                 </button>
@@ -522,31 +452,21 @@ export default function MiniTodayPage() {
       ))}
 
       {data.myActive ? (
-        <div
-          className="rounded-2xl border p-3 text-[13px]"
-          style={{
-            background: "var(--mini-lime-soft)",
-            borderColor: "var(--mini-lime-strong)",
-            color: "var(--mini-text)",
-          }}
-        >
-          <Lock className="mr-1.5 inline size-4 align-text-bottom" />
+        <div className="mini-note">
+          <Lock
+            className="mr-1.5 inline size-4 align-text-bottom"
+            style={{ color: "var(--mini-accent-ink)" }}
+          />
           Сейчас вы делаете:&nbsp;
           <span className="font-semibold">{data.myActive.scopeLabel}</span>
           &nbsp;— закончите её, тогда сможете взять следующую.
           {/* Отказ заведующей доходил только до Telegram: на экране была
               обычная активная задача без единого слова о переделке. */}
           {data.myActive.verificationStatus === "rejected" ? (
-            <div
-              className="mt-2 rounded-xl p-2.5"
-              style={{
-                background: "var(--mini-amber-soft)",
-                color: "var(--mini-text)",
-              }}
-            >
+            <div className="mini-warn mt-2.5">
               <span
                 className="font-semibold"
-                style={{ color: "var(--mini-amber)" }}
+                style={{ color: "var(--mini-warn)" }}
               >
                 Вернули на переделку:
               </span>{" "}
@@ -559,7 +479,7 @@ export default function MiniTodayPage() {
 
       {data.groups.length === 0 ? (
         <div
-          className="rounded-2xl border border-dashed px-6 py-10 text-center text-[14px]"
+          className="rounded-[20px] border border-dashed px-6 py-10 text-center text-[16px] leading-relaxed"
           style={{
             background: "var(--mini-surface-1)",
             borderColor: "var(--mini-divider-strong)",
@@ -574,10 +494,7 @@ export default function MiniTodayPage() {
 
       {data.groups.map((g) => (
         <section key={g.code} className="space-y-2">
-          <div
-            className="px-1 text-[11px] font-semibold uppercase tracking-[0.14em]"
-            style={{ color: "var(--mini-text-faint)" }}
-          >
+          <div className="mini-label px-1">
             {g.label} ({g.scopes.length})
           </div>
           {/* Сортируем scopes так, чтобы «можно взять» и «у меня» были
@@ -645,37 +562,31 @@ function ScopeRow({
   onComplete: () => void;
 }) {
   const av = scope.availability;
-  // Цвета берём из темы: экран открывается и в тёмном оформлении,
-  // а раньше здесь была жёстко светлая палитра.
+  // Строка — карточка QR-страниц. Цвета из темы: экран открывается и в
+  // тёмном оформлении. «Занято коллегой» не гасим прозрачностью (текст
+  // терял контраст) — тише делаем подложку.
   const rowStyle =
     av === "completed"
-      ? { background: "var(--mini-sage-soft)", borderColor: "var(--mini-sage)" }
+      ? { background: "var(--mini-ok-soft)", borderColor: "var(--mini-ok-line)" }
       : av === "mine"
-        ? { background: "var(--mini-lime-soft)", borderColor: "var(--mini-lime-strong)" }
-        : {
-            background: "var(--mini-surface-1)",
-            borderColor: "var(--mini-divider)",
-          };
+        ? { background: "var(--mini-accent-soft)", borderColor: "var(--mini-accent-line)" }
+        : av === "taken"
+          ? { background: "var(--mini-surface-2)", borderColor: "var(--mini-divider)" }
+          : undefined;
   const iconStyle =
     av === "completed"
-      ? { background: "var(--mini-sage-soft)", color: "var(--mini-sage)" }
+      ? { background: "var(--mini-ok-soft)", color: "var(--mini-ok)" }
       : av === "mine"
-        ? { background: "var(--mini-lime)", color: "var(--mini-primary-contrast)" }
+        ? { background: "var(--mini-accent)", color: "var(--mini-on-accent)" }
         : av === "taken"
-          ? { background: "var(--mini-surface-2)", color: "var(--mini-text-faint)" }
-          : { background: "var(--mini-lime-soft)", color: "var(--mini-lime)" };
+          ? { background: "var(--mini-surface-3)", color: "var(--mini-text-muted)" }
+          : undefined;
   return (
     <div
-      className={[
-        "flex items-start gap-3 rounded-2xl border p-3.5 transition-colors",
-        av === "taken" ? "opacity-70" : "",
-      ].join(" ")}
+      className="mini-card flex items-center gap-3 p-3.5 transition-colors"
       style={rowStyle}
     >
-      <span
-        className="flex size-9 shrink-0 items-center justify-center rounded-xl"
-        style={iconStyle}
-      >
+      <span className="mini-tile" style={iconStyle}>
         {av === "completed" ? (
           <CheckCircle2 className="size-5" />
         ) : av === "mine" ? (
@@ -694,14 +605,14 @@ function ScopeRow({
       </span>
       <div className="min-w-0 flex-1">
         <div
-          className="text-[15px] font-medium"
+          className="text-[17px] font-semibold leading-snug"
           style={{ color: "var(--mini-text)" }}
         >
           {scope.scopeLabel}
         </div>
         {scope.sublabel ? (
           <div
-            className="mt-0.5 text-[12px]"
+            className="mt-0.5 text-[14.5px] leading-snug"
             style={{ color: "var(--mini-text-muted)" }}
           >
             {scope.sublabel}
@@ -709,10 +620,10 @@ function ScopeRow({
         ) : null}
         {scope.claimUserName ? (
           <div
-            className="mt-1 flex items-center gap-1 text-[11px]"
+            className="mt-1 flex items-center gap-1 text-[14px]"
             style={{ color: "var(--mini-text-muted)" }}
           >
-            <Clock className="size-3" />
+            <Clock className="size-3.5" />
             {av === "completed" ? "Готово · " : av === "mine" ? "Я · " : "Занято · "}
             <span>{scope.claimUserName}</span>
           </div>
@@ -721,7 +632,7 @@ function ScopeRow({
       <div className="shrink-0">
         {av === "available" && !canSelfClaim ? (
           <span
-            className="inline-flex h-9 items-center rounded-xl px-2 text-[12px]"
+            className="inline-flex max-w-[7.5rem] items-center text-right text-[14px] leading-snug"
             style={{ color: "var(--mini-text-muted)" }}
           >
             Назначает руководитель
@@ -744,25 +655,24 @@ function ScopeRow({
             disabled={busy || disabled}
             title={locked ? lockedHint : undefined}
             className={[
-              "mini-press inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 text-[13px] font-medium",
+              locked
+                ? "mini-btn-secondary mini-btn-sm mini-press"
+                : "mini-btn-primary mini-btn-sm mini-press",
               disabled && !busy ? "opacity-50" : "",
             ].join(" ")}
+            // Под замком — тихая кнопка: видно, что взять пока нельзя.
             style={
               locked
                 ? {
                     background: "var(--mini-surface-2)",
-                    borderColor: "var(--mini-divider)",
-                    color: "var(--mini-text-faint)",
+                    borderColor: "var(--mini-divider-strong)",
+                    color: "var(--mini-text-muted)",
                   }
-                : {
-                    background: "var(--mini-lime)",
-                    borderColor: "transparent",
-                    color: "var(--mini-primary-contrast)",
-                  }
+                : undefined
             }
           >
-            {busy ? <Loader2 className="size-3.5 animate-spin" /> : null}
-            {locked ? <Lock className="size-3.5" /> : null}
+            {busy ? <Loader2 className="size-4 animate-spin" /> : null}
+            {locked ? <Lock className="size-4" /> : null}
             Взять
           </button>
         ) : null}
@@ -772,15 +682,11 @@ function ScopeRow({
             onClick={onComplete}
             disabled={busy || disabled}
             className={[
-              "mini-press inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-[13px] font-medium",
+              "mini-btn-ok mini-btn-sm mini-press",
               disabled && !busy ? "opacity-50" : "",
             ].join(" ")}
-            style={{
-              background: "var(--mini-sage)",
-              color: "var(--mini-primary-contrast)",
-            }}
           >
-            {busy ? <Loader2 className="size-3.5 animate-spin" /> : null}
+            {busy ? <Loader2 className="size-4 animate-spin" /> : null}
             Завершить
           </button>
         ) : null}

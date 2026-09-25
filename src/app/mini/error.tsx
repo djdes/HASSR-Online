@@ -34,17 +34,23 @@ export default function MiniError({
       role="alert"
     >
       <span
-        className="flex size-12 items-center justify-center rounded-2xl"
-        style={{ background: "var(--mini-crimson-soft)" }}
+        className="mini-tile"
+        style={{
+          width: 56,
+          height: 56,
+          borderRadius: 16,
+          background: "var(--mini-danger-soft)",
+          color: "var(--mini-danger)",
+        }}
       >
-        <ShieldAlert className="size-6" style={{ color: "var(--mini-crimson)" }} />
+        <ShieldAlert className="size-7" />
       </span>
       <div>
-        <div className="text-[16px] font-semibold" style={{ color: "var(--mini-text)" }}>
+        <div className="text-[19px] font-semibold" style={{ color: "var(--mini-text)" }}>
           Экран не открылся
         </div>
         <p
-          className="mt-1 text-[13px] leading-[1.5]"
+          className="mt-1.5 text-[16px] leading-relaxed"
           style={{ color: "var(--mini-text-muted)" }}
         >
           Обычно помогает повторить. Если не помогло — закройте и откройте
@@ -57,9 +63,9 @@ export default function MiniError({
           haptic("light");
           reset();
         }}
-        className="mini-btn-primary mini-press inline-flex items-center gap-2"
+        className="mini-btn-primary mini-press w-full"
       >
-        <RotateCcw className="size-4" />
+        <RotateCcw className="size-5" />
         Повторить
       </button>
     </div>

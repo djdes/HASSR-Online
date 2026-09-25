@@ -11,6 +11,7 @@ import { miniHomeHref } from "@/app/mini/_lib/nav-items";
 import { getUserPositionLabel, getUserRoleLabel } from "@/lib/user-roles";
 import {
   ArrowLeft,
+  ChevronRight,
   Coins,
   CreditCard,
   LogOut,
@@ -23,6 +24,7 @@ import {
   Unlink,
   LayoutGrid,
   MonitorSmartphone,
+  type LucideIcon,
 } from "lucide-react";
 import {
   buildMiniShellClearCookie,
@@ -78,7 +80,10 @@ export function MiniMeClient({
   // спиннер вечно нельзя: человеку надо дать дорогу на вход.
   if (status === "loading") {
     return (
-      <div className="flex flex-1 items-center justify-center text-sm text-slate-500">
+      <div
+        className="flex flex-1 items-center justify-center text-[16px]"
+        style={{ color: "var(--mini-text-muted)" }}
+      >
         Загружаем…
       </div>
     );
@@ -86,20 +91,21 @@ export function MiniMeClient({
 
   if (status !== "authenticated") {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 text-center">
-        <div className="text-[15px] font-semibold" style={{ color: "var(--mini-text)" }}>
-          Вы не вошли
+      <div className="flex flex-1 items-center justify-center">
+        <div className="mini-card flex w-full flex-col items-center gap-3 px-5 py-6 text-center">
+          <div className="text-[19px] font-semibold" style={{ color: "var(--mini-text)" }}>
+            Вы не вошли
+          </div>
+          <p className="text-[16px] leading-relaxed" style={{ color: "var(--mini-text-muted)" }}>
+            Профиль виден только после входа. В Telegram вход произойдёт сам.
+          </p>
+          <Link
+            href={miniShellSignInHref("/mini/me")}
+            className="mini-btn-primary mini-press mt-1 w-full"
+          >
+            Войти
+          </Link>
         </div>
-        <p className="text-[13px]" style={{ color: "var(--mini-text-muted)" }}>
-          Профиль виден только после входа. В Telegram вход произойдёт сам.
-        </p>
-        <Link
-          href={miniShellSignInHref("/mini/me")}
-          className="mini-press inline-flex min-h-11 items-center justify-center rounded-2xl px-5 text-[14px] font-semibold"
-          style={{ background: "var(--mini-text)", color: "var(--mini-bg)" }}
-        >
-          Войти
-        </Link>
       </div>
     );
   }
@@ -157,31 +163,27 @@ export function MiniMeClient({
     <div className="flex flex-1 flex-col gap-4 pb-24">
       <Link
         href={homeHref}
-        className="-my-2 min-h-9 mini-press inline-flex items-center gap-1 text-[13px] font-medium"
-        style={{ color: "var(--mini-text-muted)" }}
+        className="mini-btn-ghost mini-press -my-1 -ml-3.5 w-fit"
       >
-        <ArrowLeft className="size-4" />
+        <ArrowLeft className="size-5" />
         На главную
       </Link>
 
       <header className="px-1">
-        <h1
-          className="text-[22px] font-semibold"
-          style={{ color: "var(--mini-text)" }}
-        >
-          Профиль
-        </h1>
+        <h1 className="mini-h1">Профиль</h1>
       </header>
 
       <MiniOrgSwitcher />
       <MiniLocationSwitcher />
 
+      {/* Карточка человека — как карточки QR-страниц: подпись слева,
+          значение крупно справа. */}
       <section className="mini-card p-4">
-        <dl className="space-y-3 text-[14px]">
+        <dl className="space-y-3 text-[16px]">
           <div className="flex items-center justify-between gap-3">
             <dt style={{ color: "var(--mini-text-muted)" }}>Имя</dt>
             <dd
-              className="font-medium"
+              className="min-w-0 truncate text-right font-semibold"
               style={{ color: "var(--mini-text)" }}
             >
               {u.name || "—"}
@@ -190,7 +192,7 @@ export function MiniMeClient({
           <div className="flex items-center justify-between gap-3">
             <dt style={{ color: "var(--mini-text-muted)" }}>Организация</dt>
             <dd
-              className="font-medium"
+              className="min-w-0 truncate text-right font-semibold"
               style={{ color: "var(--mini-text)" }}
             >
               {u.organizationName || "—"}
@@ -207,7 +209,7 @@ export function MiniMeClient({
             <div className="flex items-center justify-between gap-3">
               <dt style={{ color: "var(--mini-text-muted)" }}>Роль</dt>
               <dd
-                className="font-medium"
+                className="min-w-0 truncate text-right font-semibold"
                 style={{ color: "var(--mini-text)" }}
               >
                 {roleLabel}
@@ -217,7 +219,7 @@ export function MiniMeClient({
           <div className="flex items-center justify-between gap-3">
             <dt style={{ color: "var(--mini-text-muted)" }}>Должность</dt>
             <dd
-              className="min-w-0 truncate font-medium"
+              className="min-w-0 truncate text-right font-semibold"
               style={{ color: "var(--mini-text)" }}
             >
               {positionLabel}
@@ -228,7 +230,7 @@ export function MiniMeClient({
           <div className="flex items-center justify-between gap-3">
             <dt style={{ color: "var(--mini-text-muted)" }}>Телефон</dt>
             <dd
-              className="min-w-0 truncate font-medium"
+              className="min-w-0 truncate text-right font-semibold"
               style={{ color: "var(--mini-text)" }}
             >
               {phone || "не указан"}
@@ -238,7 +240,7 @@ export function MiniMeClient({
             <div className="flex items-center justify-between gap-3">
               <dt style={{ color: "var(--mini-text-muted)" }}>Почта</dt>
               <dd
-                className="font-medium"
+                className="min-w-0 truncate text-right font-semibold"
                 style={{ color: "var(--mini-text)" }}
               >
                 {u.email}
@@ -248,53 +250,35 @@ export function MiniMeClient({
         </dl>
       </section>
 
-      {/* Theme toggle — сегментный переключатель «тёмная/светлая». */}
       <section className="mini-card p-4">
         <PasskeySettings dark />
       </section>
 
+      {/* Тема — переключатель как вкладки QR-страниц. */}
       <section className="mini-card p-4">
-        <div className="mb-3 flex items-center justify-between">
-          <div>
-            <div
-              className="text-[14px] font-semibold"
-              style={{ color: "var(--mini-text)" }}
-            >
-              Тема оформления
-            </div>
-            <div
-              className="mt-0.5 text-[12px]"
-              style={{ color: "var(--mini-text-muted)" }}
-            >
-              Выбор запоминается в вашем аккаунте
-            </div>
+        <div className="mb-3">
+          <div
+            className="text-[17px] font-semibold"
+            style={{ color: "var(--mini-text)" }}
+          >
+            Тема оформления
+          </div>
+          <div
+            className="mt-0.5 text-[14.5px]"
+            style={{ color: "var(--mini-text-muted)" }}
+          >
+            Выбор запоминается в вашем аккаунте
           </div>
         </div>
-        <div
-          role="radiogroup"
-          aria-label="Тема Mini App"
-          className="mini-press flex gap-1 rounded-2xl p-1"
-          style={{
-            background: "var(--mini-surface-2)",
-            border: "1px solid var(--mini-divider)",
-          }}
-        >
+        <div role="radiogroup" aria-label="Тема Mini App" className="mini-seg">
           <button
             type="button"
             role="radio"
             aria-checked={theme === "dark"}
             onClick={() => setTheme("dark")}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-colors"
-            style={{
-              background:
-                theme === "dark" ? "var(--mini-text)" : "transparent",
-              color:
-                theme === "dark"
-                  ? "var(--mini-bg)"
-                  : "var(--mini-text-muted)",
-            }}
+            className="mini-press"
           >
-            <Moon className="size-4" />
+            <Moon className="size-5" />
             Тёмная
           </button>
           <button
@@ -302,278 +286,135 @@ export function MiniMeClient({
             role="radio"
             aria-checked={theme === "light"}
             onClick={() => setTheme("light")}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-colors"
-            style={{
-              background:
-                theme === "light" ? "var(--mini-text)" : "transparent",
-              color:
-                theme === "light"
-                  ? "var(--mini-bg)"
-                  : "var(--mini-text-muted)",
-            }}
+            className="mini-press"
           >
-            <Sun className="size-4" />
+            <Sun className="size-5" />
             Светлая
           </button>
         </div>
       </section>
 
-      {/* Баланс и бонусы — тот же пункт, что в меню профиля на сайте. */}
-      <section>
-        <Link
-          href="/settings/balance"
-          className="mini-press flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left text-[14px] font-medium"
-          style={{
-            background: "var(--mini-card-solid-bg)",
-            color: "var(--mini-text)",
-            border: "1px solid var(--mini-divider)",
-          }}
-        >
-          <span className="inline-flex items-center gap-2">
-            <Coins className="size-4" style={{ color: "var(--mini-text-muted)" }} />
-            Баланс и бонусы
-          </span>
-          <span className="text-[11px]" style={{ color: "var(--mini-text-faint)" }}>
-            отзыв и приглашения
-          </span>
+      {/* Строки — как пункты списка QR-страниц: плитка иконки, название
+          крупно, пояснение под ним. Набор пунктов — тот же, что в меню
+          профиля на сайте (`components/layout/profile-sheet.tsx`); они
+          открываются здесь же, в оболочке приложения (П-3). */}
+      <section className="space-y-2">
+        {/* Баланс и бонусы — тот же пункт, что в меню профиля на сайте. */}
+        <Link href="/settings/balance" className="mini-item mini-press">
+          <ProfileRow icon={Coins} label="Баланс и бонусы" hint="отзыв и приглашения" />
         </Link>
-      </section>
-
-      {/* Дальше — ровно те же пункты, что в меню профиля на сайте
-          (`components/layout/profile-sheet.tsx`). Открываются здесь же,
-          в оболочке приложения, с рабочей кнопкой «назад» (П-3). */}
-      {fullAccess ? (
-        <section>
-          <Link
-            href="/settings/subscription"
-            className="mini-press flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left text-[14px] font-medium"
-            style={{
-              background: "var(--mini-card-solid-bg)",
-              color: "var(--mini-text)",
-              border: "1px solid var(--mini-divider)",
-            }}
-          >
-            <span className="inline-flex items-center gap-2">
-              <CreditCard className="size-4" style={{ color: "var(--mini-text-muted)" }} />
-              Тарифы и оплата
-            </span>
-            <span className="text-[11px]" style={{ color: "var(--mini-text-faint)" }}>
-              счета и автопродление
-            </span>
+        {fullAccess ? (
+          <>
+            <Link href="/settings/subscription" className="mini-item mini-press">
+              <ProfileRow
+                icon={CreditCard}
+                label="Тарифы и оплата"
+                hint="счета и автопродление"
+              />
+            </Link>
+            <Link href="/settings/appearance" className="mini-item mini-press">
+              <ProfileRow icon={Palette} label="Внешний вид" hint="логотип и цвета" />
+            </Link>
+            <Link href="/settings" className="mini-item mini-press">
+              <ProfileRow
+                icon={Settings}
+                label="Настройки"
+                hint="организация и журналы"
+              />
+            </Link>
+          </>
+        ) : null}
+        {u.isRoot ? (
+          <Link href="/root" className="mini-item mini-press">
+            <ProfileRow icon={ShieldCheck} label="Панель платформы" />
           </Link>
-          <Link
-            href="/settings/appearance"
-            className="mini-press mt-2 flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left text-[14px] font-medium"
-            style={{
-              background: "var(--mini-card-solid-bg)",
-              color: "var(--mini-text)",
-              border: "1px solid var(--mini-divider)",
-            }}
-          >
-            <span className="inline-flex items-center gap-2">
-              <Palette className="size-4" style={{ color: "var(--mini-text-muted)" }} />
-              Внешний вид
-            </span>
-            <span className="text-[11px]" style={{ color: "var(--mini-text-faint)" }}>
-              логотип и цвета
-            </span>
-          </Link>
-          <Link
-            href="/settings"
-            className="mini-press mt-2 flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left text-[14px] font-medium"
-            style={{
-              background: "var(--mini-card-solid-bg)",
-              color: "var(--mini-text)",
-              border: "1px solid var(--mini-divider)",
-            }}
-          >
-            <span className="inline-flex items-center gap-2">
-              <Settings className="size-4" style={{ color: "var(--mini-text-muted)" }} />
-              Настройки
-            </span>
-            <span className="text-[11px]" style={{ color: "var(--mini-text-faint)" }}>
-              организация и журналы
-            </span>
-          </Link>
-        </section>
-      ) : null}
-
-      {u.isRoot ? (
-        <section>
-          <Link
-            href="/root"
-            className="mini-press flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left text-[14px] font-medium"
-            style={{
-              background: "var(--mini-card-solid-bg)",
-              color: "var(--mini-text)",
-              border: "1px solid var(--mini-divider)",
-            }}
-          >
-            <span className="inline-flex items-center gap-2">
-              <ShieldCheck className="size-4" style={{ color: "var(--mini-text-muted)" }} />
-              Панель платформы
-            </span>
-          </Link>
-        </section>
-      ) : null}
-
-      {/* Все разделы кабинета — теми же правами, что на сайте. Вкладка
-          есть и в нижнем меню; здесь — на случай, если человек ищет
-          «где остальное» именно в профиле. */}
-      <section>
-        <Link
-          href="/mini/sections"
-          className="mini-press flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left text-[14px] font-medium"
-          style={{
-            background: "var(--mini-card-solid-bg)",
-            color: "var(--mini-text)",
-            border: "1px solid var(--mini-divider)",
-          }}
-        >
-          <span className="inline-flex items-center gap-2">
-            <LayoutGrid className="size-4" style={{ color: "var(--mini-text-muted)" }} />
-            Все разделы
-          </span>
-          <span className="text-[11px]" style={{ color: "var(--mini-text-faint)" }}>
-            журналы, отчёты, настройки
-          </span>
+        ) : null}
+        {/* Все разделы кабинета — теми же правами, что на сайте. Вкладка
+            есть и в нижнем меню; здесь — на случай, если человек ищет
+            «где остальное» именно в профиле. */}
+        <Link href="/mini/sections" className="mini-item mini-press">
+          <ProfileRow
+            icon={LayoutGrid}
+            label="Все разделы"
+            hint="журналы, отчёты, настройки"
+          />
         </Link>
-      </section>
-
-      {/* Обратная связь — паритет с сайтом (П-3): на сайте форма живёт
-          в шапке, в Mini App шапки нет, поэтому она стоит карточкой в
-          профиле. Форма и эндпоинт те же, что на сайте. */}
-      <section>
+        {/* Обратная связь — паритет с сайтом (П-3): на сайте форма живёт
+            в шапке, в Mini App шапки нет, поэтому она стоит карточкой в
+            профиле. Форма и эндпоинт те же, что на сайте. */}
         <FeedbackDialog
           telegramBotUsername={telegramBotUsername}
           trigger={
-            <button
-              type="button"
-              className="mini-press flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left text-[14px] font-medium"
-              style={{
-                background: "var(--mini-card-solid-bg)",
-                color: "var(--mini-text)",
-                border: "1px solid var(--mini-divider)",
-              }}
-            >
-              <span className="inline-flex items-center gap-2">
-                <MessageCircleMore
-                  className="size-4"
-                  style={{ color: "var(--mini-text-muted)" }}
-                />
-                Обратная связь
-              </span>
-              <span
-                className="text-[11px]"
-                style={{ color: "var(--mini-text-faint)" }}
-              >
-                ошибка или идея
-              </span>
+            <button type="button" className="mini-item mini-press">
+              <ProfileRow
+                icon={MessageCircleMore}
+                label="Обратная связь"
+                hint="ошибка или идея"
+              />
             </button>
           }
         />
-      </section>
+        {/* Полная версия сайта. Снимает режим оболочки и уводит в
+            обычный кабинет — нужно тем, кто открыл приложение на
+            планшете или ноутбуке и хочет широкие таблицы и шапку.
 
-      {error ? (
-        <div
-          className="rounded-2xl p-3 text-[13px]"
-          style={{
-            background: "var(--mini-crimson-soft)",
-            color: "var(--mini-crimson)",
-            border: "1px solid var(--mini-divider)",
-          }}
-        >
-          {error}
-        </div>
-      ) : null}
-
-      {/* Полная версия сайта. Снимает режим оболочки и уводит в
-          обычный кабинет — нужно тем, кто открыл приложение на
-          планшете или ноутбуке и хочет широкие таблицы и шапку.
-
-          У линейного сотрудника дом на сайте — тот же `/mini/today`,
-          и кнопка просто возвращала его на этот же экран. Не
-          показываем: обещание, которое нельзя выполнить. */}
-      {homeHref.startsWith("/mini") ? null : (
-      <section>
-        <button
-          type="button"
-          onClick={() => {
-            if (hasMiniShellCookie(document.cookie)) {
-              document.cookie = buildMiniShellClearCookie(
-                window.location.protocol === "https:"
-              );
-            }
-            // Полная перезагрузка, а не router.push: хром страницы
-            // выбирает сервер по куке, и клиентский переход отдал бы
-            // ту же оболочку.
-            window.location.href = homeHref;
-          }}
-          className="mini-press flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left text-[14px] font-medium"
-          style={{
-            background: "var(--mini-card-solid-bg)",
-            color: "var(--mini-text)",
-            border: "1px solid var(--mini-divider)",
-          }}
-        >
-          <span className="inline-flex items-center gap-2">
-            <MonitorSmartphone
-              className="size-4"
-              style={{ color: "var(--mini-text-muted)" }}
+            У линейного сотрудника дом на сайте — тот же `/mini/today`,
+            и кнопка просто возвращала его на этот же экран. Не
+            показываем: обещание, которое нельзя выполнить. */}
+        {homeHref.startsWith("/mini") ? null : (
+          <button
+            type="button"
+            onClick={() => {
+              if (hasMiniShellCookie(document.cookie)) {
+                document.cookie = buildMiniShellClearCookie(
+                  window.location.protocol === "https:"
+                );
+              }
+              // Полная перезагрузка, а не router.push: хром страницы
+              // выбирает сервер по куке, и клиентский переход отдал бы
+              // ту же оболочку.
+              window.location.href = homeHref;
+            }}
+            className="mini-item mini-press"
+          >
+            <ProfileRow
+              icon={MonitorSmartphone}
+              label="Открыть полную версию сайта"
+              hint="шапка и широкие таблицы"
             />
-            Открыть полную версию сайта
-          </span>
-          <span className="text-[11px]" style={{ color: "var(--mini-text-faint)" }}>
-            шапка и широкие таблицы
-          </span>
-        </button>
+          </button>
+        )}
       </section>
-      )}
+
+      {error ? <div className="mini-err">{error}</div> : null}
 
       <section className="space-y-2">
         <button
           type="button"
           onClick={() => setConfirmSignOutOpen(true)}
           disabled={busy !== "none"}
-          className="mini-press flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left text-[14px] font-medium disabled:opacity-50"
-          style={{
-            background: "var(--mini-card-solid-bg)",
-            color: "var(--mini-text)",
-            border: "1px solid var(--mini-divider)",
-          }}
+          className="mini-item mini-press disabled:opacity-50"
         >
-          <span className="inline-flex items-center gap-2">
-            <LogOut
-              className="size-4"
-              style={{ color: "var(--mini-text-muted)" }}
-            />
-            Выйти
-          </span>
-          <span
-            className="text-[11px]"
-            style={{ color: "var(--mini-text-faint)" }}
-          >
-            сессия сбросится
-          </span>
+          <ProfileRow icon={LogOut} label="Выйти" hint="сессия сбросится" chevron={false} />
         </button>
         <button
           type="button"
           onClick={() => setConfirmUnlinkOpen(true)}
           disabled={busy !== "none"}
-          className="mini-press flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left text-[14px] font-medium disabled:opacity-50"
+          className="mini-item mini-press disabled:opacity-50"
           style={{
-            background: "var(--mini-crimson-soft)",
-            color: "var(--mini-crimson)",
-            border: "1px solid var(--mini-divider)",
+            background: "var(--mini-danger-soft)",
+            borderColor: "var(--mini-danger-line)",
+            color: "var(--mini-danger)",
           }}
         >
-          <span className="inline-flex items-center gap-2">
-            <Unlink className="size-4" />
-            Отвязать Telegram
-          </span>
-          <span className="text-[11px] opacity-70">
-            {busy === "unlink" ? "…" : "понадобится новое приглашение"}
-          </span>
+          <ProfileRow
+            icon={Unlink}
+            label="Отвязать Telegram"
+            hint={busy === "unlink" ? "…" : "понадобится новое приглашение"}
+            tone="danger"
+            chevron={false}
+          />
         </button>
       </section>
 
@@ -614,5 +455,57 @@ export function MiniMeClient({
         typeToConfirm="ОТВЯЗАТЬ"
       />
     </div>
+  );
+}
+
+/**
+ * Содержимое строки профиля — как пункт списка QR-страниц: плитка иконки,
+ * название крупно, пояснение под ним, стрелка у переходов.
+ */
+function ProfileRow({
+  icon: Icon,
+  label,
+  hint,
+  tone = "default",
+  chevron = true,
+}: {
+  icon: LucideIcon;
+  label: string;
+  hint?: string;
+  tone?: "default" | "danger";
+  chevron?: boolean;
+}) {
+  const danger = tone === "danger";
+  return (
+    <>
+      <span
+        className="mini-tile"
+        style={
+          danger
+            ? { background: "var(--mini-surface-1)", color: "var(--mini-danger)" }
+            : undefined
+        }
+      >
+        <Icon className="size-5" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block">{label}</span>
+        {hint ? (
+          <span
+            className="mini-item-hint"
+            style={danger ? { color: "var(--mini-danger)" } : undefined}
+          >
+            {hint}
+          </span>
+        ) : null}
+      </span>
+      {chevron ? (
+        <ChevronRight
+          className="size-5 shrink-0"
+          style={{ color: "var(--mini-text-muted)" }}
+          aria-hidden
+        />
+      ) : null}
+    </>
   );
 }

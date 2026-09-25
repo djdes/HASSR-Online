@@ -14,8 +14,9 @@ import {
 } from "../_lib/journal-queue";
 import { notifyQueueSent, updateAppBadge } from "../_lib/app-badge";
 
-/** Отступ сверху: высота шапки приложения плюс безопасная зона iPhone. */
-const BELOW_TOP_BAR = "calc(var(--mini-safe-t, 12px) + 56px)";
+/** Отступ сверху: безопасная зона iPhone, высота шапки приложения и зазор. */
+const BELOW_TOP_BAR =
+  "calc(env(safe-area-inset-top, 0px) + var(--mini-topbar-h, 56px) + 8px)";
 
 /**
  * Полоса состояния отправки вверху экрана.
@@ -119,11 +120,12 @@ export function OfflineIndicator() {
   const visible = !isOnline || pending > 0 || justSent > 0;
   if (!visible || !mounted) return null;
 
+  // Заливки с белым текстом ≥ 4.5:1: янтарная и зелёная 500 давали 2–2.5:1.
   const tone = !isOnline
-    ? "bg-amber-500"
+    ? "bg-[#b45309]"
     : pending > 0
       ? "bg-[#5566f6]"
-      : "bg-emerald-500";
+      : "bg-[#15803d]";
 
   const text = !isOnline
     ? pending > 0
@@ -146,7 +148,7 @@ export function OfflineIndicator() {
       <Link
         href="/mini/outbox"
         role="status"
-        className={`fixed left-1/2 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-full px-4 py-1.5 text-center text-[12px] font-medium text-white shadow-lg transition-all ${tone}`}
+        className={`fixed left-1/2 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-full px-4 py-2 text-center text-[14px] font-semibold text-white shadow-lg transition-all ${tone}`}
         // Ниже шапки приложения: раньше полоса ложилась поверх логотипа,
         // названия экрана и колокольчика.
         style={{ zIndex: "var(--mini-z-overlay)", top: BELOW_TOP_BAR }}
@@ -156,7 +158,7 @@ export function OfflineIndicator() {
     ) : (
       <div
         role="status"
-        className={`fixed left-1/2 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-full px-4 py-1.5 text-center text-[12px] font-medium text-white shadow-lg transition-all ${tone}`}
+        className={`fixed left-1/2 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-full px-4 py-2 text-center text-[14px] font-semibold text-white shadow-lg transition-all ${tone}`}
         // Ниже шапки приложения: раньше полоса ложилась поверх логотипа,
         // названия экрана и колокольчика.
         style={{ zIndex: "var(--mini-z-overlay)", top: BELOW_TOP_BAR }}

@@ -122,20 +122,20 @@ export function QrCameraSheet({
   return createPortal(
     <div
       className="fixed inset-0 z-[100] flex flex-col"
-      style={{ background: "rgba(6,7,10,0.96)" }}
+      style={{ background: "rgba(11,16,36,0.97)" }}
       role="dialog"
       aria-modal="true"
       aria-label="Сканирование QR-кода"
     >
       <div className="flex items-center justify-between px-4 pb-3 pt-[max(1rem,var(--mini-safe-t,0px))]">
-        <span className="text-[15px] font-medium text-white">
+        <span className="text-[17px] font-semibold text-white">
           Наведите на QR-код
         </span>
         <button
           type="button"
           onClick={onClose}
           aria-label="Закрыть сканер"
-          className="flex size-11 items-center justify-center rounded-2xl text-white/80"
+          className="flex size-12 items-center justify-center rounded-2xl bg-white/10 text-white"
         >
           <X className="size-6" />
         </button>

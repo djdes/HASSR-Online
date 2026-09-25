@@ -20,8 +20,8 @@ import "@/app/app-theme.css";
  * visits because the initData-based sign-in happens client-side inside
  * `/mini` itself.
  *
- * Theme: "Dark Kitchen Operator" — editorial dark mode с fraunces-italic
- * заголовками, lime-accent, зерном на фоне. См. `mini-theme.css`.
+ * Оформление — как у QR-страниц заполнения: тёмно-синяя шапка, белые
+ * карточки, индиго #5566f6, крупные кнопки. См. `mini-theme.css`.
  */
 
 export const metadata: Metadata = {
@@ -35,8 +35,8 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "WeSetup",
-    // Тёмная тема кабинета — статус-бар в тон, иначе на iOS сверху
-    // остаётся светлая полоса поверх почти чёрного экрана.
+    // Шапка приложения тёмно-синяя в обеих темах — статус-бар в тон,
+    // иначе на iOS сверху остаётся светлая полоса над шапкой.
     statusBarStyle: "black-translucent",
   },
 };
@@ -46,7 +46,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#0a0b0f",
+  // Цвет фирменной шапки — тот же `theme-color`, что у QR-страниц.
+  themeColor: "#0b1024",
 };
 
 export default async function MiniLayout({

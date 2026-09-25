@@ -130,18 +130,9 @@ export function BonusSubmitForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div
-        className="rounded-2xl px-4 py-3 text-[13px] leading-5"
-        style={{
-          background: "rgba(200,255,90,0.10)",
-          border: "1px solid rgba(200,255,90,0.32)",
-          color: "var(--mini-text)",
-        }}
-      >
+      <div className="mini-ok-note" style={{ color: "var(--mini-text)" }}>
         Премия зафиксирована:{" "}
-        <strong style={{ color: "var(--mini-lime)" }}>
-          +{amountRubles} ₽
-        </strong>
+        <strong style={{ color: "var(--mini-ok)" }}>+{amountRubles} ₽</strong>
       </div>
 
       <section className="space-y-2">
@@ -149,25 +140,19 @@ export function BonusSubmitForm({
             звёздочку на телефоне не замечают. */}
         <div className="flex flex-wrap items-center gap-2">
           <label
-            className="text-[13px] font-medium"
+            className="text-[16px] font-semibold"
             style={{ color: "var(--mini-text)" }}
           >
             Фото результата
           </label>
-          <span
-            className="inline-flex items-center rounded-full px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.08em]"
-            style={{
-              background: "var(--mini-crimson-soft)",
-              color: "var(--mini-crimson)",
-            }}
-          >
+          <span className="mini-pill" data-tone="danger" style={{ minHeight: 26, fontSize: 12.5 }}>
             обязательно
           </span>
         </div>
         {/* Правило — ЗАРАНЕЕ, а не после отказа сервера: из галереи
             фото не подойдёт, проверяется время съёмки. */}
         <div
-          className="text-[12px] leading-5"
+          className="text-[14.5px] leading-snug"
           style={{ color: "var(--mini-text-muted)" }}
         >
           Снимите прямо сейчас, на месте: система смотрит время съёмки и
@@ -193,21 +178,16 @@ export function BonusSubmitForm({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-[13px] font-medium disabled:opacity-50"
-              style={{
-                background: "var(--mini-card-solid-bg)",
-                color: "var(--mini-text-muted)",
-                border: "1px solid var(--mini-divider)",
-              }}
+              className="mini-btn-secondary mini-btn-sm mini-press"
             >
               {uploading ? (
                 <>
-                  <Loader2 className="size-3.5 animate-spin" />
+                  <Loader2 className="size-4 animate-spin" />
                   Загрузка…
                 </>
               ) : (
                 <>
-                  <Camera className="size-3.5" />
+                  <Camera className="size-4" />
                   Сменить фото
                 </>
               )}
@@ -218,11 +198,11 @@ export function BonusSubmitForm({
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="mini-press flex h-32 w-full flex-col items-center justify-center gap-2 rounded-2xl text-[14px] font-medium disabled:opacity-50"
+            className="mini-press flex h-32 w-full flex-col items-center justify-center gap-2 rounded-[20px] text-[17px] font-semibold disabled:opacity-50"
             style={{
-              background: "rgba(200,255,90,0.06)",
-              border: "1px dashed rgba(200,255,90,0.42)",
-              color: "var(--mini-lime)",
+              background: "var(--mini-accent-soft)",
+              border: "1px dashed var(--mini-accent-line)",
+              color: "var(--mini-accent-ink)",
             }}
           >
             {uploading ? (
@@ -251,7 +231,7 @@ export function BonusSubmitForm({
 
       <section className="space-y-2">
         <label
-          className="block text-[13px] font-medium"
+          className="block text-[16px] font-semibold"
           style={{ color: "var(--mini-text)" }}
         >
           Заметка (необязательно)
@@ -262,27 +242,13 @@ export function BonusSubmitForm({
           rows={3}
           maxLength={500}
           placeholder="Что сделано, замечания, нюансы…"
-          className="mini-press w-full rounded-2xl px-3 py-2.5 text-[14px]"
-          style={{
-            background: "var(--mini-card-solid-bg)",
-            border: "1px solid var(--mini-divider)",
-            color: "var(--mini-text)",
-            outline: "none",
-          }}
+          className="mini-input"
+          style={{ minHeight: 96, resize: "vertical" }}
         />
       </section>
 
       {error ? (
-        <div
-          className="rounded-2xl px-3 py-2.5 text-[13px] leading-5"
-          style={{
-            background: "var(--mini-crimson-soft)",
-            border: "1px solid rgba(255,82,104,0.24)",
-            color: "var(--mini-crimson)",
-          }}
-        >
-          {error}
-        </div>
+        <div className="mini-err">{error}</div>
       ) : null}
 
       {/* Внутри Telegram отправка живёт в родной кнопке клиента — она
@@ -293,22 +259,16 @@ export function BonusSubmitForm({
         type="submit"
         hidden={mainButtonTaken}
         disabled={submitting || uploading || !photoUrl}
-        className="mini-press inline-flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-[15px] font-semibold disabled:opacity-50"
-        style={{
-          background: "var(--mini-lime)",
-          color: "var(--mini-bg)",
-          boxShadow:
-            "0 8px 24px -10px rgba(200,255,90,0.45), inset 0 -2px 0 rgba(0,0,0,0.06)",
-        }}
+        className="mini-btn-primary mini-press w-full"
       >
         {submitting ? (
           <>
-            <Loader2 className="size-4 animate-spin" />
+            <Loader2 className="size-5 animate-spin" />
             Отправляем…
           </>
         ) : (
           <>
-            <Check className="size-4" strokeWidth={2.4} />
+            <Check className="size-5" strokeWidth={2.4} />
             Готово, забрать премию
           </>
         )}

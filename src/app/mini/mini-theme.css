@@ -1,13 +1,20 @@
 /*
- * Mini App theme — Dual mode "Kitchen Operator".
+ * Mini App theme — «как QR-страницы».
  *
- * Две темы, обе distinctive и editorial: dark-charcoal (по умолчанию) и
- * light-linen (тёплый off-white + lime accent). Переключается через
- * `data-theme="light"` или `data-theme="dark"` на `.mini-root`.
+ * Мини-приложение должно узнаваться как та же система, что и QR-страницы
+ * заполнения (`lib/journal-fill-html.ts` → `QR_FILL_CSS`, `lib/qr-pin-ui.ts`,
+ * `components/qr-fill/*`): тёмно-синяя градиентная шапка с «WESETUP» и
+ * названием раздела, фон #fafbff, белые карточки с рамкой #ececf4 и
+ * скруглением 20px, индиго #5566f6, крупные кнопки и поля. Раньше здесь
+ * была отдельная «Kitchen Operator»-тема (почти чёрный фон, лаймовый
+ * акцент, засечки) — владелец: «ощущается какой-то иной системой».
  *
- * Shared tokens (шрифты, motion, shape) — в базовом правиле.
- * Цветовые переменные разные между `[data-theme="dark"]` и
- * `[data-theme="light"]`.
+ * Две темы по Telegram (`data-theme="light" | "dark"` на `.mini-root`):
+ *   • светлая — ровно палитра QR-страниц;
+ *   • тёмная — палитра тёмной темы кабинета (`app-theme.css`), чтобы
+ *     собственные экраны приложения и страницы сайта в оболочке выглядели
+ *     одинаково. Фирменная шапка остаётся тёмно-синей в обеих.
+ * Текст на своих фонах держит контраст ≥ 4.5:1 (проверено автозамером).
  */
 
 /*
@@ -22,13 +29,19 @@
  */
 :root,
 /* `.mini-scope` — метка для слоёв, которые живут в `<body>`: лист снизу,
-   лайтбокс. Она включает их в ту же палитру (см. блоки DARK/LIGHT ниже),
+   лайтбокс. Она включает их в ту же палитру (см. блоки LIGHT/DARK ниже),
    иначе цвета у них не разворачиваются и лист выходит прозрачным. */
 .mini-scope {
+  /* Безопасные поля экрана. Раньше `max(12px, env(safe-area-inset-*))`
+     жил двенадцатью копиями по компонентам — от нижней навигации до
+     листа сканера, и на iPhone с «чёлкой» они разъезжались. */
   --mini-safe-t: max(12px, env(safe-area-inset-top));
   --mini-safe-b: max(12px, env(safe-area-inset-bottom));
   --mini-safe-l: env(safe-area-inset-left);
   --mini-safe-r: env(safe-area-inset-right);
+
+  /* Слои: 40 шапка, 45 плавающие кнопки, 50 навигация, 60 листы и
+     полосы, 80 фото, 100 сканер. */
   --mini-z-topbar: 40;
   --mini-z-fab: 45;
   --mini-z-nav: 50;
@@ -36,15 +49,32 @@
   --mini-z-photo: 80;
   --mini-z-scanner: 100;
 
-  --mini-font-display: Georgia, "Times New Roman", serif;
-  --mini-font-body: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --mini-font-mono: "Geist Mono", "SF Mono", ui-monospace, Menlo, Monaco, monospace;
+  /* Шрифт QR-страниц — системный: на телефоне это SF / Roboto. */
+  --mini-font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --mini-font-display: var(--mini-font-body);
+  --mini-font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
+  /* Движение. Эталон — `.mini-press`: он ощущается правильно, остальные
+     длительности выведены от него. */
   --mini-ease: cubic-bezier(0.2, 0, 0, 1);
   --mini-dur-press: 0.12s;
   --mini-dur-fast: 0.18s;
   --mini-dur-screen: 0.22s;
-  --mini-nav-h: 64px;
+
+  /* Высота шапки без безопасного поля сверху — как у QR-шапки, но
+     компактнее (≈ 56px на телефоне). */
+  --mini-topbar-h: 56px;
+  /* Высота нижней навигации вместе с её внутренними отступами (вкладка
+     56px + рейка по 6px + рамка). Нужна всем, кто прижимается к низу:
+     отсчёт всегда от `--mini-safe-b`, а не от нуля экрана. */
+  --mini-nav-h: 70px;
+
+  /* Фирменная шапка QR-страниц — одна в обеих темах. */
+  --mini-hero-base: #0b1024;
+  --mini-hero: radial-gradient(circle at 8% 0%, rgba(85, 102, 246, 0.55), transparent 55%),
+    radial-gradient(circle at 100% 100%, rgba(122, 92, 255, 0.4), transparent 55%),
+    #0b1024;
 }
 
 .mini-scope {
@@ -53,188 +83,178 @@
 }
 
 .mini-root {
-  /* Type scales — те же в обеих темах */
-  /* Fraunces и Bricolage Grotesque убраны 2026-09-09: у них нет
-     кириллицы, в русском интерфейсе они не рисовали почти ничего, а
-     весили 338 КБ на двоих. Здесь остались те шрифты, которые и так
-     применялись фактически. */
-  --mini-font-display: Georgia, "Times New Roman", serif;
-  --mini-font-body: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --mini-font-mono: "Geist Mono", "SF Mono", ui-monospace, Menlo, Monaco, monospace;
-
-  /* Безопасные поля экрана. Раньше `max(12px, env(safe-area-inset-*))`
-     жил двенадцатью копиями по компонентам — от нижней навигации до
-     листа сканера. Значение одно, а правились копии по отдельности, и
-     на iPhone с «чёлкой» они разъезжались. */
-  --mini-safe-t: max(12px, env(safe-area-inset-top));
-  --mini-safe-b: max(12px, env(safe-area-inset-bottom));
-  --mini-safe-l: env(safe-area-inset-left);
-  --mini-safe-r: env(safe-area-inset-right);
-
-  /* Слои. Шкала существовала де-факто (40 шапка, 50 навигация, 60 тур
-     и офлайн, 80 фото, 100 сканер), но числами в разных файлах — и
-     новый оверлей приходилось подбирать наугад. */
-  --mini-z-topbar: 40;
-  --mini-z-fab: 45;
-  --mini-z-nav: 50;
-  --mini-z-overlay: 60;
-  --mini-z-photo: 80;
-  --mini-z-scanner: 100;
-
-  /* Движение. Эталон взят у `.mini-press` — он уже был в проекте и
-     ощущается правильно; остальные длительности выведены от него. */
-  --mini-ease: cubic-bezier(0.2, 0, 0, 1);
-  --mini-dur-press: 0.12s;
-  --mini-dur-fast: 0.18s;
-  --mini-dur-screen: 0.22s;
-
-  /* Высота нижней навигации вместе с её внутренними отступами
-     (рейл py-1.5 + ссылка py-2 с иконкой и подписью). Нужна всем,
-     кто прижимается к низу: кнопка «Новая запись» стояла на bottom-4
-     и уходила под навигацию целиком. Отсчёт всегда от
-     `--mini-safe-b`, а не от нуля экрана. */
-  --mini-nav-h: 64px;
-
   font-family: var(--mini-font-body);
-  font-feature-settings: "ss01", "ss02", "cv02";
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
   color: var(--mini-text);
   background-color: var(--mini-bg);
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/*
+ * Шрифт QR-страниц и на страницах кабинета, открытых в оболочке.
+ * `.app-shell` (app-theme.css) ставит Manrope корню и полям с кнопками;
+ * вес селекторов ниже выше, поэтому исход не зависит от порядка файлов.
+ */
+.mini-root.app-shell,
+.mini-root.app-shell :is(input, textarea, select, button):not(.font-mono),
+body:has(#mini-root),
+body:has(#mini-root)
+  :is(
+    [data-slot="dialog-content"],
+    [data-slot="popover-content"],
+    [data-slot="dropdown-menu-content"],
+    [data-radix-popper-content-wrapper],
+    [data-sonner-toaster]
+  ) {
+  font-family: var(--mini-font-body);
+}
+
 /* --------------------------------------------------------------------
- * DARK — "Command Deck" (default)
+ * LIGHT — палитра QR-страниц.
+ * ------------------------------------------------------------------ */
+.mini-root[data-theme="light"],
+.mini-scope[data-theme="light"] {
+  --mini-bg: #fafbff;
+  --mini-surface-1: #ffffff;      /* карточка, поле */
+  --mini-surface-2: #f5f6ff;      /* тихая подложка */
+  --mini-surface-3: #eef1ff;      /* плитка иконки, активное */
+  --mini-divider: #ececf4;        /* рамка карточки */
+  --mini-divider-strong: #dcdfed; /* рамка поля и строки-кнопки */
+
+  --mini-text: #0b1024;
+  --mini-text-secondary: #3c4053;
+  --mini-text-muted: #63667a;     /* ≥ 5:1 и на #eef1ff */
+  --mini-text-faint: #6f7282;     /* ≥ 4.5:1 на белом и #fafbff */
+  --mini-placeholder: #9b9fb3;
+
+  --mini-accent: #5566f6;
+  --mini-accent-hover: #4a5bf0;
+  --mini-on-accent: #ffffff;
+  --mini-accent-ink: #3848c7;     /* индиго-текст на светлом */
+  --mini-accent-soft: #eef1ff;
+  --mini-accent-line: rgba(85, 102, 246, 0.3);
+  --mini-accent-ring: rgba(85, 102, 246, 0.15);
+
+  --mini-ok: #116b2a;
+  --mini-ok-soft: #f3fdf7;
+  --mini-ok-line: #bbf0d0;
+  --mini-ok-fill: #15803d;
+  --mini-warn: #7a4a00;
+  --mini-warn-soft: #fff8eb;
+  --mini-warn-line: #ffe9b0;
+  --mini-danger: #a13a32;
+  --mini-danger-soft: #fff4f2;
+  --mini-danger-line: #ffd2cd;
+  --mini-danger-fill: #d2453d;
+
+  --mini-card-shadow: 0 0 0 1px rgba(240, 240, 250, 0.45);
+  --mini-btn-shadow: 0 10px 30px -12px rgba(85, 102, 246, 0.55);
+  --mini-nav-bg: rgba(255, 255, 255, 0.96);
+  --mini-nav-shadow: 0 18px 40px -18px rgba(11, 16, 36, 0.3),
+    0 0 0 1px rgba(240, 240, 250, 0.45);
+  --mini-skeleton-base: rgba(11, 16, 36, 0.06);
+  --mini-skeleton-shine: rgba(11, 16, 36, 0.12);
+  color-scheme: light;
+}
+
+/* --------------------------------------------------------------------
+ * DARK — тёмная тема кабинета (`app-theme.css`, «Nocturne Indigo»): те же
+ * фон и карточки, что у страниц сайта в оболочке. Акцент тот же индиго.
  * ------------------------------------------------------------------ */
 .mini-root[data-theme="dark"],
 .mini-root:not([data-theme]),
 .mini-scope[data-theme="dark"] {
-  --mini-bg: #0a0b0f;
-  --mini-surface-1: #15161b;
-  --mini-surface-2: #1f2128;
-  --mini-surface-3: #2a2d36;
-  --mini-divider: rgba(250, 247, 242, 0.08);
-  --mini-divider-strong: rgba(250, 247, 242, 0.14);
+  --mini-bg: #2b2841;
+  --mini-surface-1: #3a3757;
+  --mini-surface-2: #322f4b;
+  --mini-surface-3: #454165;
+  --mini-divider: rgba(255, 255, 255, 0.12);
+  --mini-divider-strong: rgba(255, 255, 255, 0.2);
 
-  --mini-text: #faf7f2;
-  --mini-text-muted: #8a8c94;
-  --mini-text-faint: #5a5c66;
+  --mini-text: #f2f3fb;
+  --mini-text-secondary: #cccee0;
+  --mini-text-muted: #bcbfd2;
+  --mini-text-faint: #a9acc0;
+  --mini-placeholder: #8a8da3;
 
-  --mini-lime: #c8ff5a;
-  --mini-lime-soft: rgba(200, 255, 90, 0.14);
-  --mini-lime-strong: rgba(200, 255, 90, 0.32);
-  --mini-amber: #ff9040;
-  --mini-amber-soft: rgba(255, 144, 64, 0.16);
-  --mini-ice: #6ab4ff;
-  --mini-ice-soft: rgba(106, 180, 255, 0.14);
-  --mini-crimson: #ff5268;
-  --mini-crimson-soft: rgba(255, 82, 104, 0.16);
-  --mini-sage: #9ad3a2;
-  --mini-sage-soft: rgba(154, 211, 162, 0.14);
+  --mini-accent: #5566f6;
+  --mini-accent-hover: #4a5bf0;
+  --mini-on-accent: #ffffff;
+  --mini-accent-ink: #c3c9ff;     /* ≥ 4.5:1 и на индиго-плашке */
+  --mini-accent-soft: rgba(126, 140, 255, 0.18);
+  --mini-accent-line: rgba(126, 140, 255, 0.45);
+  --mini-accent-ring: rgba(126, 140, 255, 0.3);
 
-  --mini-grain-opacity: 0.35;
-  --mini-glow-a: rgba(200, 255, 90, 0.06);
-  --mini-glow-b: rgba(106, 180, 255, 0.04);
-  --mini-glow-c: rgba(255, 144, 64, 0.04);
+  --mini-ok: #86f2c1;
+  --mini-ok-soft: rgba(124, 245, 192, 0.12);
+  --mini-ok-line: rgba(124, 245, 192, 0.38);
+  --mini-ok-fill: #15803d;
+  --mini-warn: #ffcc80;
+  --mini-warn-soft: rgba(255, 178, 80, 0.13);
+  --mini-warn-line: rgba(255, 178, 80, 0.38);
+  --mini-danger: #ffb4a8;
+  --mini-danger-soft: rgba(255, 144, 130, 0.15);
+  --mini-danger-line: rgba(255, 144, 130, 0.4);
+  --mini-danger-fill: #d2453d;
 
-  --mini-card-bg: linear-gradient(
-    180deg,
-    rgba(250, 247, 242, 0.035) 0%,
-    rgba(250, 247, 242, 0.015) 100%
-  );
-  --mini-card-solid-bg: #15161b;
-  --mini-nav-rail-bg: rgba(21, 22, 27, 0.88);
-  --mini-nav-rail-shadow: 0 -8px 40px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(250, 247, 242, 0.04);
-  --mini-primary-shadow: 0 8px 32px -12px rgba(200, 255, 90, 0.5);
-  --mini-primary-contrast: #0a0b0f;
+  --mini-card-shadow: none;
+  --mini-btn-shadow: 0 10px 30px -14px rgba(85, 102, 246, 0.75);
+  --mini-nav-bg: rgba(58, 55, 87, 0.96);
+  --mini-nav-shadow: 0 18px 40px -16px rgba(0, 0, 0, 0.55);
+  --mini-skeleton-base: rgba(255, 255, 255, 0.05);
+  --mini-skeleton-shine: rgba(255, 255, 255, 0.12);
+  color-scheme: dark;
 }
 
-/* --------------------------------------------------------------------
- * LIGHT — "Indigo Daylight"
- * Бело-индиго палитра как на wesetup.ru landing. Использует тот же
- * primary `#5566f6` и soft-surfaces `#fafbff` / `#f5f6ff` — оператор,
- * переходя с сайта в Mini App, не ощущает шва.
- * ------------------------------------------------------------------ */
-.mini-root[data-theme="light"],
-.mini-scope[data-theme="light"] {
-  --mini-bg: #fafbff;             /* soft-surface — тот же, что /dashboard */
-  --mini-surface-1: #ffffff;      /* card */
-  --mini-surface-2: #f5f6ff;      /* tint-indigo, inputs */
-  --mini-surface-3: #eef1ff;      /* tint-indigo-2, active tile */
-  --mini-divider: rgba(11, 16, 36, 0.06);
-  --mini-divider-strong: rgba(11, 16, 36, 0.12);
-
-  --mini-text: #0b1024;           /* dark-hero, тот же, что на сайте */
-  --mini-text-muted: #6f7282;
-  --mini-text-faint: #9b9fb3;
-
-  /* Primary indigo — full palette как в design-system. */
-  --mini-lime: #5566f6;           /* primary indigo, не lime */
-  --mini-lime-soft: rgba(85, 102, 246, 0.10);
-  --mini-lime-strong: rgba(85, 102, 246, 0.22);
-  --mini-amber: #c7631a;          /* burnt orange (warn-fg типа) */
-  --mini-amber-soft: rgba(199, 99, 26, 0.10);
-  --mini-ice: #3848c7;            /* indigo-deep — линки */
-  --mini-ice-soft: rgba(56, 72, 199, 0.10);
-  --mini-crimson: #a13a32;        /* warn-fg, тот же что на dashboard */
-  --mini-crimson-soft: rgba(161, 58, 50, 0.10);
-  --mini-sage: #116b2a;           /* success-fg */
-  --mini-sage-soft: rgba(17, 107, 42, 0.10);
-
-  --mini-grain-opacity: 0.18;
-  --mini-glow-a: rgba(85, 102, 246, 0.06);
-  --mini-glow-b: rgba(122, 92, 255, 0.05);
-  --mini-glow-c: rgba(61, 78, 252, 0.04);
-
-  --mini-card-bg: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.92) 0%,
-    rgba(255, 255, 255, 0.72) 100%
-  );
-  --mini-card-solid-bg: #ffffff;
-  --mini-nav-rail-bg: rgba(255, 255, 255, 0.88);
-  --mini-nav-rail-shadow: 0 -8px 32px rgba(85, 102, 246, 0.10),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  --mini-primary-shadow: 0 10px 30px -12px rgba(85, 102, 246, 0.55);
-  --mini-primary-contrast: #ffffff;
-}
-
-/* --------------------------------------------------------------------
- * Ambient layers — используют theme vars
- * ------------------------------------------------------------------ */
-.mini-root::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background:
-    radial-gradient(ellipse 90% 60% at 50% -10%, var(--mini-glow-a), transparent 60%),
-    radial-gradient(ellipse 70% 40% at 100% 100%, var(--mini-glow-b), transparent 60%),
-    radial-gradient(ellipse 60% 40% at 0% 100%, var(--mini-glow-c), transparent 60%);
-}
-
-/* Shared grain — works beautifully on both themes, с разной прозрачностью */
-.mini-root::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  opacity: var(--mini-grain-opacity);
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.04 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");
-  mix-blend-mode: overlay;
-}
-.mini-root[data-theme="light"]::after {
-  mix-blend-mode: multiply;
-  /* холодный сине-серый grain для indigo-daylight — чуть видно, не
-     доминирует, сохраняет «бумажный» feel без warm-warp */
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.08 0 0 0 0 0.09 0 0 0 0 0.13 0 0 0 0.04 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");
+/* Страницы кабинета в оболочке красят серый текст токенами app-theme:
+   `#82859b` на карточке давал 2.9:1. В оболочке поднимаем до ≥ 4.5:1.
+   `#mini-root` — чтобы перебить `.app-shell[data-app-theme="dark"]` на
+   том же элементе при любом порядке файлов. */
+#mini-root[data-app-theme="dark"] {
+  --app-text-muted: #c8ccde;
+  --app-text-faint: #c4c7d9;
+  /* Заливка кнопок кабинета: осветлённый #7081f8 давал белому тексту
+     3.4:1. В оболочке — индиго QR-страниц, как у кнопок приложения (4.55:1). */
+  --app-indigo: #5566f6;
+  --app-indigo-hover: #4a5bf0;
+  /* Индиго-текст кабинета (#3848c7 → #a3adff) на индиго-плашке — 3.7:1. */
+  --app-indigo-deep: #c3c9ff;
 }
 
 /*
- * Поднимаем содержимое над окружающими слоями (::before/::after —
- * свечение и зерно, оба `position: fixed; z-index: 0`).
+ * Прежние имена токенов. Ими пользуются компоненты кабинета с вариантом
+ * `mini` (баланс, NPS, подсказки) — смысл сохранён: `lime` — заливка
+ * акцентом, `sage/ice/amber/crimson` — цвет текста статуса.
+ */
+.mini-root,
+.mini-scope {
+  --mini-lime: var(--mini-accent);
+  --mini-lime-soft: var(--mini-accent-soft);
+  --mini-lime-strong: var(--mini-accent-line);
+  --mini-primary-contrast: var(--mini-on-accent);
+  --mini-primary-shadow: var(--mini-btn-shadow);
+  --mini-ice: var(--mini-accent-ink);
+  --mini-ice-soft: var(--mini-accent-soft);
+  --mini-sage: var(--mini-ok);
+  --mini-sage-soft: var(--mini-ok-soft);
+  --mini-amber: var(--mini-warn);
+  --mini-amber-soft: var(--mini-warn-soft);
+  --mini-crimson: var(--mini-danger);
+  --mini-crimson-soft: var(--mini-danger-soft);
+  --mini-card-bg: var(--mini-surface-1);
+  --mini-card-solid-bg: var(--mini-surface-1);
+  --mini-nav-rail-bg: var(--mini-nav-bg);
+  --mini-nav-rail-shadow: var(--mini-nav-shadow);
+  /* Имена, которых раньше не было вовсе (киоск брал тёмные запасные). */
+  --mini-surface: var(--mini-surface-1);
+  --mini-border: var(--mini-divider-strong);
+  --mini-muted: var(--mini-text-muted);
+}
+
+/*
+ * Поднимаем содержимое на первый слой.
  *
  * Ловушка: правило задаёт `position` всем прямым детям и тем самым
  * перебивает утилиты `.fixed` и `.sticky` — они того же веса (0-1-0), и
@@ -323,81 +343,122 @@
 }
 
 /* --------------------------------------------------------------------
- * Typography helpers (тема-агностические — используют текущий --mini-text)
+ * Типографика QR-страниц: заголовки без засечек, подписи капсом.
  * ------------------------------------------------------------------ */
-.mini-display {
-  font-family: var(--mini-font-display);
-  font-optical-sizing: auto;
-  font-variation-settings: "SOFT" 50, "WONK" 0;
-  font-style: italic;
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  line-height: 0.96;
-}
-
+.mini-display,
 .mini-display-bold {
-  font-family: var(--mini-font-display);
+  font-family: var(--mini-font-body);
   font-style: normal;
   font-weight: 600;
-  letter-spacing: -0.025em;
-  line-height: 1;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
-.mini-eyebrow {
-  font-family: var(--mini-font-mono);
-  font-size: 10px;
-  letter-spacing: 0.22em;
+/* Подпись секции — как `.label` QR-страниц. */
+.mini-eyebrow,
+.mini-label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  line-height: 1.3;
   text-transform: uppercase;
   color: var(--mini-text-muted);
 }
 
+/* `.mini-root .mini-h1` — чтобы `.app-shell main h1 { font-weight: 700 }`
+   (app-theme.css) не перебивал вес заголовка QR-страниц. */
+.mini-h1,
+.mini-root .mini-h1 {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--mini-text);
+}
+
 .mini-mono {
   font-family: var(--mini-font-mono);
-  font-feature-settings: "tnum" on, "ss01" on;
+  font-feature-settings: "tnum" on;
 }
 
 /* --------------------------------------------------------------------
- * Reusable components (обе темы)
+ * Компоненты QR-страниц (обе темы)
  * ------------------------------------------------------------------ */
-.mini-card {
-  background: var(--mini-card-bg);
+
+/* Карточка — `.card`: белая, рамка #ececf4, скругление 20px. */
+.mini-card,
+.mini-card-solid {
+  background: var(--mini-surface-1);
   border: 1px solid var(--mini-divider);
   border-radius: 20px;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--mini-card-shadow);
 }
 
-.mini-card-solid {
-  background: var(--mini-card-solid-bg);
-  border: 1px solid var(--mini-divider);
-  border-radius: 20px;
+/* Строка-кнопка списка — `.item`: крупно, рамка поля, скругление 14px. */
+.mini-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 64px;
+  padding: 12px 14px;
+  border: 1px solid var(--mini-divider-strong);
+  border-radius: 14px;
+  background: var(--mini-surface-1);
+  color: var(--mini-text);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: left;
+  text-decoration: none;
+  transition: border-color var(--mini-dur-fast) var(--mini-ease),
+    background-color var(--mini-dur-fast) var(--mini-ease);
+}
+.mini-item:active {
+  border-color: var(--mini-accent);
+  background: var(--mini-accent-soft);
+}
+.mini-item-hint {
+  display: block;
+  margin-top: 2px;
+  font-size: 14.5px;
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--mini-text-muted);
+}
+
+/* Поле числа с «−/+» (общий `NumberField` журналов) в карточке задачи:
+   между кнопками и полем 8px, а не 6px — под палец. */
+.mini-number-field .gap-1\.5 {
+  gap: 8px;
+}
+
+/* Плитка иконки в строке — `.ico` QR-шапки в светлом варианте. */
+.mini-tile {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--mini-accent-soft);
+  color: var(--mini-accent-ink);
 }
 
 .mini-press {
-  transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1);
+  transition: transform var(--mini-dur-press) var(--mini-ease);
 }
 .mini-press:active {
-  transform: scale(0.97);
-}
-
-@keyframes miniPulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.55; transform: scale(0.88); }
-}
-.mini-pulse-dot {
-  animation: miniPulse 2s ease-in-out infinite;
+  transform: scale(0.98);
 }
 
 /* Появление экрана.
  *
- * Только прозрачность, без `transform`. Раньше здесь был
- * `translateY(8px) → 0` с `animation-fill-mode: both`: после окончания
- * анимации на элементе НАВСЕГДА оставался `transform: translateY(0)`,
- * а любой transform делает элемент containing block для потомков с
- * `position: fixed`. Окна страниц кабинета, которые рисуются не
- * порталом в body, мерились тогда не от экрана, а от высоты страницы —
- * и открывались далеко за нижним краем. Та же причина, что в
- * `pull-to-refresh.tsx`. */
+ * Только прозрачность, без `transform`: после окончания анимации с
+ * `fill-mode: both` на элементе навсегда оставался бы transform, а он
+ * делает элемент containing block для потомков с `position: fixed` —
+ * окна страниц кабинета открывались бы далеко за нижним краем. */
 @keyframes miniReveal {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -406,10 +467,8 @@
   animation: miniReveal 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-/* Skeleton-плейсхолдер для loading-состояний.
- * Шиммер проходит слева направо за 1.6s — это короче чем стандартный
- * fetch /api/mini/home, поэтому пользователь успевает увидеть движение
- * хотя бы один раз и понимает что страница живая, а не зависла. */
+/* Скелетон: шиммер проходит слева направо за 1.6 с — человек успевает
+   увидеть движение и понимает, что экран живой, а не завис. */
 @keyframes miniSkeletonShimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
@@ -417,178 +476,402 @@
 .mini-skeleton-bar {
   background: linear-gradient(
     90deg,
-    var(--mini-skeleton-base, rgba(255, 255, 255, 0.04)) 0%,
-    var(--mini-skeleton-shine, rgba(255, 255, 255, 0.12)) 50%,
-    var(--mini-skeleton-base, rgba(255, 255, 255, 0.04)) 100%
+    var(--mini-skeleton-base) 0%,
+    var(--mini-skeleton-shine) 50%,
+    var(--mini-skeleton-base) 100%
   );
   background-size: 200% 100%;
   animation: miniSkeletonShimmer 1.6s ease-in-out infinite;
 }
-[data-theme="light"] .mini-skeleton-bar {
-  --mini-skeleton-base: rgba(11, 16, 36, 0.06);
-  --mini-skeleton-shine: rgba(11, 16, 36, 0.12);
-}
 
-.mini-dotted-sep {
-  border-top: 1px dashed var(--mini-divider-strong);
-}
-
+/* Пилюля статуса — как счётчик `.prog` QR-страниц. */
 .mini-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
+  min-height: 30px;
+  padding: 4px 12px;
   border-radius: 999px;
-  font-size: 11px;
-  font-weight: 500;
-  font-family: var(--mini-font-mono);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  line-height: 1;
-  border: 1px solid transparent;
-}
-.mini-pill[data-tone="lime"] { background: var(--mini-lime-soft); color: var(--mini-lime); border-color: var(--mini-lime-strong); }
-.mini-pill[data-tone="amber"] { background: var(--mini-amber-soft); color: var(--mini-amber); border-color: rgba(0,0,0,0.06); }
-.mini-pill[data-tone="ice"] { background: var(--mini-ice-soft); color: var(--mini-ice); border-color: rgba(0,0,0,0.06); }
-.mini-pill[data-tone="crimson"] { background: var(--mini-crimson-soft); color: var(--mini-crimson); border-color: rgba(0,0,0,0.06); }
-.mini-pill[data-tone="sage"] { background: var(--mini-sage-soft); color: var(--mini-sage); border-color: rgba(0,0,0,0.06); }
-.mini-pill[data-tone="neutral"] {
-  background: var(--mini-surface-2);
+  border: 1px solid var(--mini-divider);
+  background: var(--mini-surface-1);
   color: var(--mini-text-muted);
-  border-color: var(--mini-divider);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+.mini-pill[data-tone="accent"],
+.mini-pill[data-tone="lime"] {
+  background: var(--mini-accent);
+  border-color: var(--mini-accent);
+  color: var(--mini-on-accent);
+}
+.mini-pill[data-tone="ok"],
+.mini-pill[data-tone="sage"] {
+  background: var(--mini-ok-soft);
+  border-color: var(--mini-ok-line);
+  color: var(--mini-ok);
+}
+.mini-pill[data-tone="warn"],
+.mini-pill[data-tone="amber"] {
+  background: var(--mini-warn-soft);
+  border-color: var(--mini-warn-line);
+  color: var(--mini-warn);
+}
+.mini-pill[data-tone="danger"],
+.mini-pill[data-tone="crimson"] {
+  background: var(--mini-danger-soft);
+  border-color: var(--mini-danger-line);
+  color: var(--mini-danger);
+}
+.mini-pill[data-tone="ice"] {
+  background: var(--mini-accent-soft);
+  border-color: var(--mini-accent-line);
+  color: var(--mini-accent-ink);
 }
 
-.mini-btn-primary {
+/* Главная кнопка — `.btn` QR-страниц. */
+.mini-btn-primary,
+.mini-btn-secondary,
+.mini-btn-ghost,
+.mini-btn-danger,
+.mini-btn-ok {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 14px 20px;
-  border-radius: 16px;
-  background: var(--mini-lime);
-  color: var(--mini-primary-contrast);
-  font-weight: 600;
-  font-size: 15px;
-  letter-spacing: -0.01em;
-  border: none;
-  box-shadow: var(--mini-primary-shadow);
+  border-radius: 14px;
+  font-family: inherit;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--mini-dur-fast) var(--mini-ease),
+    border-color var(--mini-dur-fast) var(--mini-ease),
+    transform var(--mini-dur-press) var(--mini-ease);
 }
+.mini-btn-primary {
+  min-height: 56px;
+  padding: 0 20px;
+  border: 0;
+  background: var(--mini-accent);
+  color: var(--mini-on-accent);
+  font-size: 17px;
+  font-weight: 600;
+  box-shadow: var(--mini-btn-shadow);
+}
+.mini-btn-primary:active {
+  background: var(--mini-accent-hover);
+}
+/* Вторичная — `.btn.second`. */
 .mini-btn-secondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 14px 20px;
-  border-radius: 16px;
-  background: var(--mini-surface-2);
-  color: var(--mini-text);
-  font-weight: 500;
-  font-size: 15px;
-  border: 1px solid var(--mini-divider-strong);
+  min-height: 52px;
+  padding: 0 18px;
+  border: 1px solid var(--mini-accent-line);
+  background: var(--mini-accent-soft);
+  color: var(--mini-accent-ink);
+  font-size: 16px;
+  font-weight: 600;
 }
 .mini-btn-ghost {
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--mini-text-muted);
+  font-size: 15px;
+  font-weight: 500;
+}
+.mini-btn-ghost:active {
+  background: var(--mini-surface-2);
+}
+/* Опасное действие — `.btn.danger`. */
+.mini-btn-danger {
+  min-height: 52px;
+  padding: 0 18px;
+  border: 0;
+  background: var(--mini-danger-fill);
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+}
+.mini-btn-ok {
+  min-height: 48px;
+  padding: 0 16px;
+  border: 0;
+  background: var(--mini-ok-fill);
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+}
+/* Компактная — в строке списка рядом с текстом (всё равно ≥ 48px). */
+.mini-btn-sm {
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: 12px;
+  font-size: 16px;
+}
+:is(.mini-btn-primary, .mini-btn-secondary, .mini-btn-ghost, .mini-btn-danger, .mini-btn-ok):disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+:is(.mini-btn-primary, .mini-btn-secondary, .mini-btn-ghost, .mini-btn-danger, .mini-btn-ok):focus-visible,
+.mini-item:focus-visible,
+.mini-chip:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--mini-accent-ring);
+}
+
+/* Чип выбора — `.chip` QR-страниц, но под палец (≥ 48px). */
+.mini-chip {
   display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 16px;
+  border: 1px solid var(--mini-divider-strong);
+  border-radius: 999px;
+  background: var(--mini-surface-1);
+  color: var(--mini-text-secondary);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: left;
+}
+.mini-chip[aria-pressed="true"],
+.mini-chip[aria-checked="true"] {
+  border-color: var(--mini-accent);
+  background: var(--mini-accent-soft);
+  color: var(--mini-accent-ink);
+}
+
+/* Переключатель из двух-трёх вариантов — `.tabs` QR-страниц. */
+.mini-seg {
+  display: flex;
+  gap: 8px;
+  padding: 4px;
+  border-radius: 16px;
+  background: var(--mini-accent-soft);
+}
+.mini-seg > button {
+  display: inline-flex;
+  flex: 1;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 10px 14px;
+  min-height: 48px;
+  padding: 4px 8px;
   border-radius: 12px;
-  background: transparent;
-  color: var(--mini-text-muted);
-  font-size: 13px;
-  border: 1px solid transparent;
+  color: var(--mini-accent-ink);
+  font-size: 16px;
+  font-weight: 600;
+  transition: background-color var(--mini-dur-fast) var(--mini-ease);
 }
-.mini-btn-ghost:hover {
+.mini-seg > button[aria-checked="true"],
+.mini-seg > button[aria-pressed="true"] {
   background: var(--mini-surface-1);
   color: var(--mini-text);
+  box-shadow: 0 1px 3px rgba(11, 16, 36, 0.12);
 }
 
-.mini-nav-rail {
-  background: var(--mini-nav-rail-bg);
-  border: 1px solid var(--mini-divider);
-  backdrop-filter: blur(32px) saturate(160%);
-  -webkit-backdrop-filter: blur(32px) saturate(160%);
-  box-shadow: var(--mini-nav-rail-shadow);
-}
-
+/* Поле — `.in` QR-страниц: 56px, шрифт 17px (iOS не зумит от 16px). */
 .mini-input {
-  background: var(--mini-surface-2);
-  border: 1px solid var(--mini-divider);
+  display: block;
+  width: 100%;
+  min-height: 56px;
+  padding: 12px 15px;
+  border: 1px solid var(--mini-divider-strong);
   border-radius: 14px;
-  padding: 12px 16px;
+  background: var(--mini-surface-1);
   color: var(--mini-text);
   font-family: inherit;
-  font-size: 15px;
-  transition: border-color 0.15s, background-color 0.15s;
+  font-size: 17px;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.mini-input::placeholder {
+  color: var(--mini-placeholder);
 }
 .mini-input:focus {
   outline: none;
-  border-color: var(--mini-lime);
-  background: var(--mini-surface-3);
+  border-color: var(--mini-accent);
+  box-shadow: 0 0 0 4px var(--mini-accent-ring);
 }
 
-.mini-ring-track {
-  stroke: var(--mini-divider-strong);
+/* Плашки QR-страниц: `.note` (индиго), `.warn`, `.err`, «готово». */
+.mini-note,
+.mini-warn,
+.mini-err,
+.mini-ok-note {
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 16px;
+  line-height: 1.45;
+  border: 1px solid;
 }
-
-.mini-tab-row {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  scroll-snap-type: x proximity;
+.mini-note {
+  border-color: var(--mini-accent-line);
+  background: var(--mini-accent-soft);
+  color: var(--mini-text);
 }
-.mini-tab-row::-webkit-scrollbar { display: none; }
-.mini-tab-chip {
-  flex: 0 0 auto;
-  padding: 8px 14px;
-  border-radius: 12px;
-  background: var(--mini-surface-2);
-  color: var(--mini-text-muted);
-  font-size: 13px;
-  font-weight: 500;
-  border: 1px solid var(--mini-divider);
-  white-space: nowrap;
-  scroll-snap-align: start;
+.mini-warn {
+  border-color: var(--mini-warn-line);
+  background: var(--mini-warn-soft);
+  color: var(--mini-text);
 }
-.mini-tab-chip[data-active="true"] {
-  background: var(--mini-text);
-  color: var(--mini-bg);
-  border-color: var(--mini-text);
+.mini-err {
+  border-color: var(--mini-danger-line);
+  background: var(--mini-danger-soft);
+  color: var(--mini-danger);
+}
+.mini-ok-note {
+  border-color: var(--mini-ok-line);
+  background: var(--mini-ok-soft);
+  color: var(--mini-ok);
 }
 
 /* --------------------------------------------------------------------
- * Top bar — sticky blur. Фон зависит от темы чтобы Telegram chrome +
- * этот header визуально сливались. Dark = near-black, Light = soft-white.
+ * Шапка — как у QR-страниц: тёмно-синий градиент, белый текст, плитка
+ * слева, «WESETUP» капсом и название раздела. В обеих темах одна.
  * ------------------------------------------------------------------ */
 .mini-topbar {
-  background: linear-gradient(
-    180deg,
-    var(--mini-topbar-bg-top, rgba(10, 11, 15, 0.92)) 0%,
-    var(--mini-topbar-bg-bottom, rgba(10, 11, 15, 0.72)) 100%
-  );
+  color: #ffffff;
+  background: var(--mini-hero);
+  padding-top: env(safe-area-inset-top, 0px);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06), 0 10px 30px -22px rgba(11, 16, 36, 0.8);
+  /* Компоненты кабинета с вариантом `mini` (иконка партнёрки) красятся
+     токенами — на тёмной шапке текст белый в обеих темах. */
+  --mini-text: #ffffff;
+  --mini-text-muted: rgba(255, 255, 255, 0.72);
 }
-.mini-root[data-theme="light"] .mini-topbar {
-  background: linear-gradient(
-    180deg,
-    rgba(250, 251, 255, 0.94) 0%,
-    rgba(250, 251, 255, 0.78) 100%
-  );
+.mini-topbar-row {
+  min-height: var(--mini-topbar-h);
+}
+.mini-topbar-home {
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: 14px;
+}
+.mini-topbar-home:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35);
+}
+/* Плитка — `.ico` QR-шапки. */
+.mini-topbar-ico {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1;
+}
+.mini-topbar-eyebrow {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+}
+.mini-topbar-title {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+/* Кнопки шапки (назад, отмена правок, подсказки, колокольчик и иконка
+   партнёрки — последние три рисуют компоненты кабинета): белые иконки на
+   прозрачном, зона нажатия 48×48. `!important` — их собственные классы
+   красят индиго по светлому. */
+.mini-topbar-btn,
+.mini-topbar-actions button {
+  display: inline-flex !important;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 48px !important;
+  height: 48px !important;
+  border: 0 !important;
+  border-radius: 14px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+.mini-topbar-btn svg,
+.mini-topbar-actions button svg {
+  width: 22px;
+  height: 22px;
+}
+.mini-topbar-btn:active,
+.mini-topbar-actions button:active {
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+.mini-topbar-btn:focus-visible,
+.mini-topbar-actions button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35) !important;
+}
+.mini-topbar-actions button:disabled {
+  color: rgba(255, 255, 255, 0.38) !important;
+}
+/* Иконка партнёрской программы — «еле заметная» и на тёмной шапке. */
+.mini-topbar-actions button[aria-label^="Партнёрская"] {
+  color: rgba(255, 255, 255, 0.55) !important;
 }
 
-/* Brand monogram — «W» плитка. В dark это matt charcoal, в light —
-   soft indigo tint, чтобы перекликаться с primary на сайте. */
-.mini-monogram {
-  background: linear-gradient(135deg, #15161b 0%, #1f2128 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(250, 247, 242, 0.06),
-    0 6px 20px -12px rgba(0, 0, 0, 0.6);
+/* --------------------------------------------------------------------
+ * Нижнее меню — белая карточка QR-страниц, активная вкладка залита
+ * индиго, как главная кнопка.
+ * ------------------------------------------------------------------ */
+.mini-nav-rail {
+  background: var(--mini-nav-bg);
+  border: 1px solid var(--mini-divider);
+  border-radius: 22px;
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: var(--mini-nav-shadow);
 }
-.mini-root[data-theme="light"] .mini-monogram {
-  background: linear-gradient(135deg, #eef1ff 0%, #f5f6ff 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    0 6px 20px -12px rgba(85, 102, 246, 0.25);
+.mini-nav-tab {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 56px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 6px 4px;
+  border-radius: 16px;
+  color: var(--mini-text-muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  transition: background-color var(--mini-dur-fast) var(--mini-ease),
+    color var(--mini-dur-fast) var(--mini-ease);
+}
+.mini-nav-tab[aria-current="page"] {
+  background: var(--mini-accent);
+  color: var(--mini-on-accent);
+  box-shadow: var(--mini-btn-shadow);
+}
+.mini-nav-tab:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--mini-accent-ring);
 }
 
 /* --------------------------------------------------------------------
@@ -644,21 +927,82 @@
 }
 
 /* --------------------------------------------------------------------
+ * Под палец — и на страницах кабинета, открытых в оболочке.
+ *
+ * Кнопки и поля страниц сайта рассчитаны на мышь (32–40px). В приложении
+ * их нажимают пальцем, часто в перчатке, поэтому в оболочке поднимаем
+ * зону нажатия до 48px, а шрифт полей — до 16px (меньше — iOS зумит
+ * страницу на фокусе). Только высота: ширину кнопок с текстом не трогаем,
+ * у кнопок-иконок добираем и ширину. Галочки и переключатели не
+ * растягиваем — у них своя невидимая зона нажатия (ниже).
+ * `#mini-root` — чтобы перебить размеры утилит Tailwind без `!important`.
+ * ------------------------------------------------------------------ */
+#mini-root main :is(
+    button,
+    [role="button"],
+    [role="combobox"],
+    [role="tab"],
+    a.inline-flex[class*="rounded"],
+    a.flex[class*="rounded"]
+  ):not([role="checkbox"]):not([role="radio"]):not([role="switch"]) {
+  min-height: 48px;
+}
+#mini-root main :is(button, [role="button"], a):has(> svg:only-child) {
+  min-width: 48px;
+}
+#mini-root main :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not([type="hidden"]):not([type="image"]),
+    select,
+    textarea
+  ) {
+  min-height: 48px;
+}
+#mini-root main :is(input, select, textarea):is(
+    .text-xs,
+    .text-sm,
+    [class*="text-[11px]"],
+    [class*="text-[12px]"],
+    [class*="text-[13px]"],
+    [class*="text-[14px]"],
+    [class*="text-[15px]"]
+  ) {
+  font-size: 16px;
+}
+
+/* Серый текст подсказок кабинета (#9b9fb3) на белом — 2.6:1, на
+   индиго-плашке ещё ниже. В оболочке светлой темы держим ≥ 4.5:1; в тёмной
+   это делают токены выше. */
+#mini-root[data-app-theme="light"] main :is(.text-\[\#9b9fb3\], .text-\[\#8a8ea4\], .text-\[\#a1a4b5\], .text-\[\#b0b3c3\]) {
+  color: var(--mini-text-muted);
+}
+#mini-root[data-app-theme="light"] main :is(.text-\[\#6f7282\], .text-\[\#7a7c8e\]) {
+  color: var(--mini-text-muted);
+}
+/* Индиго и красный текст меток кабинета (#5566f6, #d2453d) на светлых
+   плашках — около 4:1, а в тёмной ещё ниже. В оболочке — «чернила» тех же
+   цветов (≥ 4.5:1 в обеих темах). */
+#mini-root main .text-\[\#5566f6\] {
+  color: var(--mini-accent-ink) !important;
+}
+#mini-root main .text-\[\#d2453d\] {
+  color: var(--mini-danger) !important;
+}
+#mini-root main .text-\[\#7a4a00\] {
+  color: var(--mini-warn) !important;
+}
+
+/* --------------------------------------------------------------------
  * Печать из мини-приложения.
  * Правил печати тут не было вовсе: на лист уходили шапка, нижнее меню,
- * плавающие кнопки и фоновые градиенты — в предпросмотре iPhone это
- * выглядело как чёрное пятно и синий круг поверх бланка. На бумагу должен
- * попадать только сам журнал, на белом.
+ * плавающие кнопки и фон — в предпросмотре iPhone это выглядело как
+ * чёрное пятно и синий круг поверх бланка. На бумагу должен попадать
+ * только сам журнал, на белом.
  * ------------------------------------------------------------------ */
 @media print {
   .mini-root {
     background: #fff !important;
     color: #000 !important;
     min-height: 0 !important;
-  }
-  .mini-root::before,
-  .mini-root::after {
-    display: none !important;
   }
   /* Всё, что лежит рядом с <main>: шапка, меню, тосты, индикаторы, помощник. */
   .mini-root > *:not(main) {

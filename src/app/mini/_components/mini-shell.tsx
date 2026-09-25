@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { BrandLogo } from "@/components/brand/logo";
 import { PartnerHint } from "@/components/partner/partner-hint";
 import type { PartnerHintRates } from "@/lib/partners/partner-hint";
 import { usePathname, useRouter } from "next/navigation";
@@ -21,7 +20,7 @@ import {
 } from "@/lib/mini-shell-cookie";
 import { getTelegramWebApp, isInsideTelegram } from "./telegram-web-app";
 import { haptic } from "./use-haptic";
-import { useMiniTheme } from "./mini-theme";
+import { MINI_HERO_COLOR, miniBackgroundColor, useMiniTheme } from "./mini-theme";
 
 // Собственных экранов у приложения осталось немного: остальные адреса
 // `/mini/*` только перекидывают на страницы кабинета, и их подписи
@@ -158,16 +157,17 @@ export function MiniTelegramRuntime({ homeHref }: { homeHref: string }) {
     };
   }, []);
 
-  // Синхронизируем Telegram chrome с текущей темой Mini App. Без этого
-  // при переключении dark↔light у пользователя остаётся старый header
-  // до следующего открытия бота — выглядит как баг.
+  // Синхронизируем Telegram chrome с оформлением Mini App. Шапка Telegram
+  // того же тёмно-синего, что и наша шапка (как `theme-color` QR-страниц),
+  // — они сливаются в одну полосу; фон под экраном — по теме. Без этого
+  // при переключении dark↔light у пользователя оставался старый цвет до
+  // следующего открытия бота — выглядит как баг.
   useEffect(() => {
     const tg = getTelegramWebApp();
     if (!tg) return;
-    const bg = theme === "dark" ? "#0a0b0f" : "#fafbff";
     try {
-      tg.setHeaderColor?.(bg);
-      tg.setBackgroundColor?.(bg);
+      tg.setHeaderColor?.(MINI_HERO_COLOR);
+      tg.setBackgroundColor?.(miniBackgroundColor(theme));
     } catch {
       /* old client — silent */
     }
@@ -226,41 +226,6 @@ export function MiniTelegramRuntime({ homeHref }: { homeHref: string }) {
 }
 
 /**
- * Живые часы в шапке. Mono-цифры, обновляется раз в секунду. Даёт
- * ощущение «command deck» — оператор видит текущее время, не теряется.
- */
-function LiveClock() {
-  const [now, setNow] = useState<string>(() => formatClock(new Date()));
-  useEffect(() => {
-    const id = setInterval(() => setNow(formatClock(new Date())), 1000);
-    return () => clearInterval(id);
-  }, []);
-  return (
-    <span
-      className="mini-mono tabular-nums"
-      // Время на сервере и в браузере разное — React ругался на
-      // гидрацию (#418) при каждом открытии. Часы по определению
-      // расходятся, предупреждение здесь бессмысленно.
-      suppressHydrationWarning
-      style={{
-        fontSize: 11,
-        color: "var(--mini-text-muted)",
-        letterSpacing: "0.08em",
-      }}
-    >
-      {now}
-    </span>
-  );
-}
-
-function formatClock(d: Date): string {
-  const h = String(d.getHours()).padStart(2, "0");
-  const m = String(d.getMinutes()).padStart(2, "0");
-  const s = String(d.getSeconds()).padStart(2, "0");
-  return `${h}:${m}:${s}`;
-}
-
-/**
  * Нужна ли собственная кнопка «назад».
  *
  * В Telegram её рисует сам клиент (`tg.BackButton` выше), в обычной
@@ -302,7 +267,7 @@ export function MiniTopBar({
 }: {
   /** «Корень» приложения: домашний адрес кабинета. */
   homeHref: string;
-  /** Ставки для иконки «партнёрская программа» у логотипа; null — скрыть. */
+  /** Ставки для иконки «партнёрская программа» в шапке; null — скрыть. */
   partnerHint?: PartnerHintRates | null;
   /** Активная точка (режим точек включён); null — не показывать. */
   locationName?: string | null;
@@ -317,17 +282,16 @@ export function MiniTopBar({
   // в шапке сайта. Пока документ не открыт, слот пуст и места не занимает.
   const headerUndo = useHeaderUndo();
 
+  // Шапка как у QR-страниц (`QR_FILL_CSS` → `.hero`): тёмно-синий
+  // градиент, плитка слева, «WESETUP» капсом и название раздела. Одна в
+  // обеих темах, высотой 56px — ниже, чем прежняя 69px. Цвета и размеры —
+  // `.mini-topbar*` в mini-theme.css.
   return (
     <header
-      className="mini-topbar sticky top-0 z-40"
-      style={{
-        borderBottom: "1px solid var(--mini-divider)",
-        backdropFilter: "blur(24px) saturate(160%)",
-        WebkitBackdropFilter: "blur(24px) saturate(160%)",
-        padding: "14px 16px 12px",
-      }}
+      className="mini-topbar sticky top-0"
+      style={{ zIndex: "var(--mini-z-topbar)" }}
     >
-      <div className="mx-auto flex w-full max-w-lg items-center justify-between gap-3">
+      <div className="mini-topbar-row mx-auto flex w-full max-w-lg items-center gap-1 px-3">
         {showBack ? (
           <button
             type="button"
@@ -339,90 +303,54 @@ export function MiniTopBar({
               else router.push(homeHref);
             }}
             aria-label="Назад"
-            className="mini-press -ml-1 flex size-10 shrink-0 items-center justify-center rounded-2xl"
-            style={{ border: "1px solid var(--mini-divider-strong)" }}
+            className="mini-topbar-btn mini-press -ml-1"
           >
-            <ArrowLeft className="size-5" />
+            <ArrowLeft />
           </button>
         ) : null}
         <Link
           href={homeHref}
-          className="flex min-w-0 items-center gap-3"
+          className="mini-topbar-home flex min-h-12 min-w-0 flex-1 items-center gap-2.5 pr-1"
           aria-label="На главный экран"
         >
-          {/* WS monogram — tactile brand glyph */}
-          <span
-            className="mini-monogram relative flex size-10 shrink-0 items-center justify-center rounded-2xl"
-            style={{
-              border: "1px solid var(--mini-divider-strong)",
-            }}
-          >
-            <span
-              className="mini-display-bold"
-              style={{ fontSize: 18, color: "var(--mini-lime)" }}
-            >
+          {/* Плитку прячем, когда в шапке кнопки отмены правок: на 360 px
+              иначе от названия экрана оставалось «Жу…». */}
+          {headerUndo ? null : (
+            <span className="mini-topbar-ico" aria-hidden>
               W
             </span>
-            {/* Breathing indicator — «live» dot */}
-            <span
-              className="mini-pulse-dot absolute right-1 top-1 size-1.5 rounded-full"
-              style={{ background: "var(--mini-lime)" }}
-            />
-          </span>
-          <div className="min-w-0">
-            <div className="mini-eyebrow flex items-center gap-1" style={{ opacity: 0.75 }}>
-              <BrandLogo height={14} title="WeSetup" />
-              {partnerHint ? (
-                // Внутри <Link> на главную: клик по иконке не должен
-                // уводить на /mini — гасим переход здесь.
-                <span
-                  onClick={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                  }}
-                  className="inline-flex"
-                >
-                  <PartnerHint rates={partnerHint} variant="mini" className="size-6" />
-                </span>
+          )}
+          <span className="min-w-0 flex-1">
+            <span className="mini-topbar-eyebrow">
+              WeSetup
+              {locationName ? (
+                <>
+                  {" · "}
+                  <MapPin className="-mt-0.5 inline size-3 align-middle" aria-hidden />{" "}
+                  {locationName}
+                </>
               ) : null}
-            </div>
-            <div
-              className="mini-display-bold truncate"
-              style={{ fontSize: 16, marginTop: 2 }}
-            >
-              {title}
-            </div>
-            {locationName ? (
-              <div
-                className="flex items-center gap-1 truncate text-[12px]"
-                style={{ color: "var(--mini-text-muted)", marginTop: 1 }}
-              >
-                <MapPin className="size-3 shrink-0" />
-                <span className="truncate">{locationName}</span>
-              </div>
-            ) : null}
-          </div>
+            </span>
+            <span className="mini-topbar-title">{title}</span>
+          </span>
         </Link>
 
-        <div className="flex items-center gap-2">
-          {/* Отмена/повтор правок журнала — там же, где на сайте.
-              Часы прячем, когда кнопки заняли место: на 360 px иначе
-              всё три элемента налезают друг на друга. */}
+        {/* Между кнопками 8px — чтобы не промахнуться пальцем. Иконку
+            партнёрки прячем на бланке с кнопками отмены: иначе от названия
+            экрана на 360 px ничего не оставалось. */}
+        <div className="mini-topbar-actions flex shrink-0 items-center gap-2">
+          {partnerHint && !headerUndo ? (
+            <PartnerHint rates={partnerHint} variant="mini" />
+          ) : null}
+          {/* Отмена/повтор правок журнала — там же, где на сайте. */}
           {headerUndo ? (
-            <UndoRedoButtons undo={headerUndo} />
-          ) : (
-            // На узком телефоне часы съедали место у названия экрана:
-            // «Оборудован…», «Баланс и бо…». Время и так есть в шапке Telegram.
-            <span className="max-[430px]:hidden">
-              <LiveClock />
-            </span>
-          )}
+            <UndoRedoButtons undo={headerUndo} className="flex items-center gap-2" />
+          ) : null}
           {/* Сюда док встраивает кнопку подсказок (см. `FabDockProvider`). */}
           <span id="mini-fab-slot" className="contents" />
           {showNotifications ? <NotificationsBell /> : null}
           {/* Кнопки профиля здесь нет: «Профиль» всегда есть в нижнем меню, а в
-              шапке она отнимала место у названия экрана — на бланке журнала
-              с кнопками отмены от него оставалось «Жу…». */}
+              шапке она отнимала место у названия экрана. */}
         </div>
       </div>
     </header>

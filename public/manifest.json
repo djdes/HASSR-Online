@@ -10,8 +10,8 @@
   "orientation": "portrait",
   "lang": "ru",
   "dir": "ltr",
-  "background_color": "#0a0b0f",
-  "theme_color": "#0a0b0f",
+  "background_color": "#0b1024",
+  "theme_color": "#0b1024",
   "icons": [
     {
       "src": "/icons/icon-192.png",

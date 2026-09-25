@@ -82,18 +82,17 @@ export default function OutboxPage() {
     <div className="flex flex-1 flex-col gap-4 pb-28">
       <Link
         href={miniHomeHref(session?.user ?? null)}
-        className="mini-press inline-flex w-fit items-center gap-1.5 text-[13px]"
-        style={{ color: "var(--mini-text-muted)" }}
+        className="mini-btn-ghost mini-press -my-1 -ml-3.5 w-fit"
       >
-        <ArrowLeft className="size-4" />
+        <ArrowLeft className="size-5" />
         Главная
       </Link>
 
-      <div>
+      <div className="px-1">
         <div className="mini-eyebrow">Отправка</div>
-        <h1 className="mini-display text-[26px]">Что не ушло</h1>
+        <h1 className="mini-h1 mt-1">Что не ушло</h1>
         <p
-          className="mt-1 text-[13px] leading-[1.5]"
+          className="mt-1.5 text-[16px] leading-relaxed"
           style={{ color: "var(--mini-text-muted)" }}
         >
           Записи хранятся на телефоне и уходят сами, как появится связь.
@@ -108,10 +107,10 @@ export default function OutboxPage() {
           className="mini-card flex flex-col items-center gap-2 p-8 text-center"
           role="status"
         >
-          <span className="text-[15px] font-medium" style={{ color: "var(--mini-text)" }}>
+          <span className="text-[18px] font-semibold" style={{ color: "var(--mini-text)" }}>
             Всё отправлено
           </span>
-          <span className="text-[13px]" style={{ color: "var(--mini-text-muted)" }}>
+          <span className="text-[16px]" style={{ color: "var(--mini-text-muted)" }}>
             Ни одной записи в очереди.
           </span>
         </div>
@@ -130,7 +129,7 @@ export default function OutboxPage() {
         <section className="flex flex-col gap-2">
           <div className="mini-eyebrow">Без автора · {orphans.length}</div>
           <p
-            className="text-[12.5px] leading-[1.5]"
+            className="text-[15px] leading-relaxed"
             style={{ color: "var(--mini-text-muted)" }}
           >
             Эти записи заполнены до обновления приложения, и кто их делал,
@@ -188,13 +187,13 @@ function EntryRow({
     <div className="mini-card flex items-center gap-3 p-3.5">
       <span className="min-w-0 flex-1">
         <span
-          className="block truncate text-[14.5px] font-medium"
+          className="block truncate text-[17px] font-semibold"
           style={{ color: "var(--mini-text)" }}
         >
           {entry.journalName}
         </span>
         <span
-          className="mt-0.5 flex items-center gap-1.5 text-[12px]"
+          className="mt-0.5 flex items-center gap-1.5 text-[14px]"
           style={{ color: "var(--mini-text-muted)" }}
         >
           <Clock className="size-3.5" />
@@ -212,9 +211,9 @@ function EntryRow({
         <button
           type="button"
           onClick={onClaim}
-          className="mini-btn-primary mini-press inline-flex shrink-0 items-center gap-1.5 text-[13px]"
+          className="mini-btn-primary mini-btn-sm mini-press shrink-0"
         >
-          <UserCheck className="size-4" />
+          <UserCheck className="size-5" />
           Моя
         </button>
       ) : (
@@ -222,10 +221,10 @@ function EntryRow({
           type="button"
           onClick={onRetry}
           aria-label="Повторить отправку"
-          className="mini-press inline-flex size-9 shrink-0 items-center justify-center rounded-full"
-          style={{ background: "var(--mini-surface-2)", color: "var(--mini-text-muted)" }}
+          className="mini-btn-secondary mini-btn-sm mini-press size-12 shrink-0"
+          style={{ padding: 0 }}
         >
-          <RotateCcw className="size-4" />
+          <RotateCcw className="size-5" />
         </button>
       )}
     </div>

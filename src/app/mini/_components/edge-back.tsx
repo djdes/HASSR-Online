@@ -119,24 +119,22 @@ export function EdgeBack({ homeHref }: { homeHref: string }) {
 
   if (isRoot || progress <= 0) return null;
 
+  // Язычок в цветах шапки (тёмно-синий, как у QR-страниц); порог
+  // пройден — заливается индиго, как главная кнопка.
   return (
     <div
       aria-hidden
-      className="pointer-events-none fixed left-0 top-1/2 flex size-12 -translate-y-1/2 items-center justify-center rounded-r-full"
+      className="pointer-events-none fixed left-0 top-1/2 flex size-14 -translate-y-1/2 items-center justify-center rounded-r-2xl text-white"
       style={{
         zIndex: "var(--mini-z-overlay)",
-        background: "var(--mini-surface-2)",
-        border: "1px solid var(--mini-divider-strong)",
-        borderLeft: "none",
+        background: progress >= 1 ? "var(--mini-accent)" : "var(--mini-hero)",
+        boxShadow: "0 10px 30px -12px rgba(11, 16, 36, 0.55)",
         // Панелька выезжает ровно настолько, насколько протянули.
         transform: `translate(${(progress - 1) * 30}px, -50%)`,
         opacity: 0.35 + progress * 0.65,
       }}
     >
-      <ChevronLeft
-        className="size-6"
-        style={{ color: progress >= 1 ? "var(--mini-lime)" : "var(--mini-text-muted)" }}
-      />
+      <ChevronLeft className="size-7" />
     </div>
   );
 }

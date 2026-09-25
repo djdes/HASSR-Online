@@ -53,15 +53,19 @@ export function MiniNav({ items }: { items: MiniNavItem[] }) {
   const activeHref = activeMiniNavHref(items, pathname);
   if (isSignInPath(pathname ?? "")) return null;
 
+  // Белая карточка QR-страниц, активная вкладка залита индиго, как главная
+  // кнопка; вкладки 56px в высоту, между ними 8px. Цвета — `.mini-nav-*`
+  // в mini-theme.css.
   return (
     <nav
-      className="mini-nav-rail fixed inset-x-3 rounded-3xl"
+      aria-label="Разделы приложения"
+      className="mini-nav-rail fixed inset-x-3"
       style={{
         bottom: "var(--mini-safe-b)",
         zIndex: "var(--mini-z-nav)",
       }}
     >
-      <div className="mx-auto flex w-full max-w-lg items-stretch gap-1 px-1.5 py-1.5">
+      <div className="mx-auto flex w-full max-w-lg items-stretch gap-2 p-1.5">
         {items.map((item) => {
           const isActive = item.href === activeHref;
           const Icon = NAV_ICONS[item.icon];
@@ -74,21 +78,12 @@ export function MiniNav({ items }: { items: MiniNavItem[] }) {
               onClick={() => {
                 if (!isActive) haptic("selection");
               }}
-              // Вкладок теперь не больше четырёх — они делят ширину
-              // поровну и помещаются целиком даже на экране 360 px,
-              // поэтому горизонтальной прокрутки у меню больше нет.
-              className="mini-press relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2"
-              style={{
-                color: isActive ? "var(--mini-bg)" : "var(--mini-text-muted)",
-                background: isActive ? "var(--mini-lime)" : "transparent",
-                fontSize: 10,
-                fontWeight: isActive ? 600 : 500,
-                letterSpacing: "0.02em",
-                transition:
-                  "background var(--mini-dur-fast) var(--mini-ease), color var(--mini-dur-fast) var(--mini-ease)",
-              }}
+              // Вкладок не больше четырёх — они делят ширину поровну и
+              // помещаются целиком даже на экране 360 px, поэтому
+              // горизонтальной прокрутки у меню нет.
+              className="mini-nav-tab mini-press"
             >
-              <Icon className="size-[18px]" strokeWidth={isActive ? 2.2 : 1.8} />
+              <Icon className="size-[22px]" strokeWidth={isActive ? 2.2 : 1.9} />
               <span className="max-w-full truncate">{item.label}</span>
             </Link>
           );

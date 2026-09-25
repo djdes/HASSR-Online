@@ -140,23 +140,25 @@ export default function MiniEntryPage() {
   if (localState.kind === "error") {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <section
-          className="w-full rounded-3xl px-6 py-8 text-center"
-          style={{
-            background: "var(--mini-crimson-soft)",
-            border: "1px solid var(--mini-divider-strong)",
-          }}
-        >
-          <ShieldAlert
-            className="mx-auto size-9"
-            style={{ color: "var(--mini-crimson)" }}
-          />
-          <h1 className="mini-display-bold mt-4" style={{ fontSize: 22 }}>
+        <section className="mini-card w-full px-6 py-8 text-center">
+          <span
+            className="mini-tile mx-auto"
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: 16,
+              background: "var(--mini-danger-soft)",
+              color: "var(--mini-danger)",
+            }}
+          >
+            <ShieldAlert className="size-7" />
+          </span>
+          <h1 className="mini-h1 mt-4" style={{ fontSize: 22 }}>
             Не получилось войти
           </h1>
           <p
-            className="mt-2 text-[14px] leading-6"
-            style={{ color: "var(--mini-crimson)" }}
+            className="mt-2 text-[16px] leading-relaxed"
+            style={{ color: "var(--mini-danger)" }}
           >
             {localState.message}
           </p>
@@ -174,12 +176,7 @@ export default function MiniEntryPage() {
                   /* старый клиент — кнопка просто ничего не сделает */
                 }
               }}
-              className="mini-press mt-5 inline-flex h-10 items-center gap-2 rounded-2xl px-5 text-[14px] font-medium"
-              style={{
-                background: "var(--mini-surface-2)",
-                border: "1px solid var(--mini-divider-strong)",
-                color: "var(--mini-text)",
-              }}
+              className="mini-btn-primary mini-press mt-5 w-full"
             >
               Закрыть приложение
             </button>
@@ -192,12 +189,7 @@ export default function MiniEntryPage() {
                 signInStarted.current = false;
                 setLocalState({ kind: "init" });
               }}
-              className="mini-press mt-5 inline-flex h-10 items-center gap-2 rounded-2xl px-5 text-[14px] font-medium"
-              style={{
-                background: "var(--mini-surface-2)",
-                border: "1px solid var(--mini-divider-strong)",
-                color: "var(--mini-text)",
-              }}
+              className="mini-btn-primary mini-press mt-5 w-full"
             >
               Попробовать ещё раз
             </button>
@@ -206,12 +198,8 @@ export default function MiniEntryPage() {
               Telegram» — тоже тупик: повторять вход бессмысленно, пока
               руководитель не привяжет аккаунт. Телефон и пароль
               работают независимо от привязки. */}
-          <div className="mt-3">
-            <Link
-              href="/mini/login"
-              className="text-[14px] underline"
-              style={{ color: "var(--mini-text-muted)" }}
-            >
+          <div className="mt-2">
+            <Link href="/mini/login" className="mini-btn-secondary mini-press w-full">
               Войти по телефону
             </Link>
           </div>
@@ -223,13 +211,13 @@ export default function MiniEntryPage() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-3 py-16 text-center">
       <Loader2
-        className="size-6 animate-spin"
-        style={{ color: "var(--mini-lime)" }}
+        className="size-7 animate-spin"
+        style={{ color: "var(--mini-accent)" }}
       />
-      <div className="text-[15px] font-medium" style={{ color: "var(--mini-text)" }}>
+      <div className="text-[18px] font-semibold" style={{ color: "var(--mini-text)" }}>
         Открываем кабинет…
       </div>
-      <p className="text-[13px]" style={{ color: "var(--mini-text-muted)" }}>
+      <p className="text-[16px]" style={{ color: "var(--mini-text-muted)" }}>
         Проверяем вход — это займёт пару секунд.
       </p>
     </div>

@@ -203,7 +203,7 @@ export function KioskScreen() {
   if (error) {
     return (
       <div className="flex min-h-[70vh] flex-col items-center justify-center px-6 text-center">
-        <p className="text-[15px] text-[var(--mini-text,#e7e9f3)]">{error}</p>
+        <p className="text-[16px] text-[var(--mini-text,#e7e9f3)]">{error}</p>
       </div>
     );
   }
@@ -211,52 +211,54 @@ export function KioskScreen() {
   if (!roster) {
     return (
       <div className="flex min-h-[70vh] items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-[var(--mini-muted,#9b9fb3)]" />
+        <Loader2 className="size-7 animate-spin text-[var(--mini-accent,#5566f6)]" />
       </div>
     );
   }
 
   return (
-    <div className="px-4 py-4">
-      <div className="mb-3">
-        <div className="text-[13px] text-[var(--mini-muted,#9b9fb3)]">{roster.organization.name}</div>
-        <h1 className="text-[20px] font-semibold text-[var(--mini-text,#e7e9f3)]">Кто заполняет?</h1>
+    <div className="py-1">
+      <div className="mb-4 px-1">
+        <div className="mini-eyebrow">{roster.organization.name}</div>
+        <h1 className="mini-h1 mt-1">Кто заполняет?</h1>
       </div>
 
       <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--mini-muted,#9b9fb3)]" />
+        <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-[var(--mini-muted,#9b9fb3)]" />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Поиск по имени"
-          className="h-11 w-full rounded-2xl border border-[var(--mini-border,#2a2c3a)] bg-[var(--mini-surface,#14161f)] pl-9 pr-3 text-[15px] text-[var(--mini-text,#e7e9f3)] placeholder:text-[var(--mini-muted,#9b9fb3)] focus:outline-none"
+          className="mini-input"
+          style={{ paddingLeft: 46 }}
         />
       </div>
 
+      {/* Плитки сотрудников — карточки QR-страниц. */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {filtered.map((e) => (
           <button
             key={e.id}
             disabled={!e.hasPin}
             onClick={() => setPicked(e)}
-            className="flex flex-col items-center gap-2 rounded-2xl border border-[var(--mini-border,#2a2c3a)] bg-[var(--mini-surface,#14161f)] p-4 text-center transition-transform active:scale-[0.97] disabled:opacity-40"
+            className="mini-card flex flex-col items-center gap-2 p-4 text-center transition-transform active:scale-[0.97] disabled:opacity-50"
           >
-            <span className="flex size-14 items-center justify-center rounded-full bg-[#5566f6] text-[18px] font-semibold text-white">
+            <span className="flex size-14 items-center justify-center rounded-full bg-[#5566f6] text-[19px] font-semibold text-white">
               {initials(e.name)}
             </span>
-            <span className="line-clamp-2 text-[14px] font-medium text-[var(--mini-text,#e7e9f3)]">{e.name}</span>
-            {!e.hasPin ? <span className="text-[11px] text-[var(--mini-muted,#9b9fb3)]">нет ПИН</span> : null}
+            <span className="line-clamp-2 text-[16px] font-semibold text-[var(--mini-text,#e7e9f3)]">{e.name}</span>
+            {!e.hasPin ? <span className="text-[13px] text-[var(--mini-muted,#9b9fb3)]">нет ПИН</span> : null}
           </button>
         ))}
         {filtered.length === 0 ? (
-          <p className="col-span-full py-10 text-center text-[14px] text-[var(--mini-muted,#9b9fb3)]">Никого не нашли</p>
+          <p className="col-span-full py-10 text-center text-[16px] text-[var(--mini-muted,#9b9fb3)]">Никого не нашли</p>
         ) : null}
       </div>
 
       {stage ? (
-        <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center gap-3 bg-[#0a0b0f]/90 text-[#e7e9f3]">
-          <Camera className="size-8 text-[#5566f6]" />
-          <p className="text-[15px]">{stage}</p>
+        <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center gap-3 bg-[#0b1024]/90 text-white">
+          <Camera className="size-8 text-[#a3adff]" />
+          <p className="text-[17px]">{stage}</p>
         </div>
       ) : null}
 
@@ -267,19 +269,22 @@ export function KioskScreen() {
         subtitle={consentFor?.name ?? ""}
       >
         <div className="space-y-4 pb-2">
-          <p className="text-[14px] leading-relaxed text-[#e7e9f3]">
+          <p className="text-[16px] leading-relaxed text-[var(--app-text,#0b1024)]">
             Организация включила фотофиксацию: при вводе ПИН планшет делает один кадр с фронтальной камеры и прикладывает его к вашей подписи в журнале — как подтверждение, что запись внесли именно вы. Это не распознавание лиц: кадр просто хранится вместе с записью для проверки.
           </p>
-          <p className="text-[13px] leading-relaxed text-[#9b9fb3]">
+          <p className="text-[15px] leading-relaxed text-[var(--app-text-muted,#6f7282)]">
             Согласие можно не давать — вы будете работать как обычно, без фото. Отозвать его можно у руководителя.
           </p>
           <button
             onClick={() => decideConsent(true)}
-            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] text-[15px] font-medium text-white"
+            className="inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-[14px] bg-[#5566f6] px-4 text-[17px] font-semibold text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)]"
           >
             <Camera className="size-5" /> Согласен, снимать фото при входе
           </button>
-          <button onClick={() => decideConsent(false)} className="h-11 w-full rounded-2xl text-[14px] text-[#9b9fb3]">
+          <button
+            onClick={() => decideConsent(false)}
+            className="min-h-12 w-full rounded-[14px] text-[16px] font-medium text-[var(--app-text-muted,#6f7282)]"
+          >
             Не сейчас — продолжить без фото
           </button>
         </div>
@@ -294,41 +299,63 @@ export function KioskScreen() {
         <div className="flex flex-col items-center gap-4 pb-2">
           <div className="flex gap-3">
             {[0, 1, 2, 3, 4, 5].slice(0, Math.max(4, pin.length)).map((i) => (
-              <span key={i} className={`size-4 rounded-full ${i < pin.length ? "bg-[#5566f6]" : "bg-[#2a2c3a]"}`} />
+              <span
+                key={i}
+                className={`size-4 rounded-full ${i < pin.length ? "bg-[#5566f6]" : "bg-[var(--app-border-strong,#dcdfed)]"}`}
+              />
             ))}
           </div>
-          {pinError ? <p className="text-[13px] text-[#ff8a8a]">{pinError}</p> : null}
+          {pinError ? (
+            <p className="text-[15px] font-medium text-[var(--app-warn-fg,#a13a32)]">{pinError}</p>
+          ) : null}
+          {/* Клавиши — как поле PIN QR-страниц: крупные, индиго-подложка. */}
           <div className="grid grid-cols-3 gap-3">
             {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((d) => (
               <button
                 key={d}
                 onClick={() => tapDigit(d)}
-                className="size-16 rounded-2xl bg-[#14161f] text-[24px] font-semibold text-[#e7e9f3] transition-transform active:scale-95"
+                className="size-16 rounded-2xl bg-[var(--app-tint-indigo,#f5f6ff)] text-[26px] font-semibold text-[var(--app-text,#0b1024)] transition-transform active:scale-95"
               >
                 {d}
               </button>
             ))}
-            <button onClick={() => setPin("")} className="size-16 rounded-2xl text-[13px] text-[#9b9fb3]">Сброс</button>
-            <button onClick={() => tapDigit("0")} className="size-16 rounded-2xl bg-[#14161f] text-[24px] font-semibold text-[#e7e9f3] transition-transform active:scale-95">0</button>
-            <button onClick={() => setPin((p) => p.slice(0, -1))} className="flex size-16 items-center justify-center rounded-2xl text-[#9b9fb3]">
+            <button
+              onClick={() => setPin("")}
+              className="size-16 rounded-2xl text-[15px] font-medium text-[var(--app-text-muted,#6f7282)]"
+            >
+              Сброс
+            </button>
+            <button
+              onClick={() => tapDigit("0")}
+              className="size-16 rounded-2xl bg-[var(--app-tint-indigo,#f5f6ff)] text-[26px] font-semibold text-[var(--app-text,#0b1024)] transition-transform active:scale-95"
+            >
+              0
+            </button>
+            <button
+              onClick={() => setPin((p) => p.slice(0, -1))}
+              aria-label="Стереть цифру"
+              className="flex size-16 items-center justify-center rounded-2xl text-[var(--app-text-muted,#6f7282)]"
+            >
               <Delete className="size-6" />
             </button>
           </div>
           <button
             onClick={submitPin}
             disabled={pin.length < 4 || submitting}
-            className="mt-1 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] text-[15px] font-medium text-white disabled:opacity-50"
+            className="mt-1 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-[14px] bg-[#5566f6] px-4 text-[17px] font-semibold text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] disabled:opacity-50"
           >
             {submitting ? <Loader2 className="size-5 animate-spin" /> : <UserRound className="size-5" />} Войти и заполнять
           </button>
           <button
             onClick={submitPasskey}
             disabled={submitting}
-            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-[#2a2c3a] text-[14px] font-medium text-[#e7e9f3] disabled:opacity-50"
+            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[14px] border border-[var(--app-border-strong,#dcdfed)] px-4 text-[16px] font-medium text-[var(--app-text,#0b1024)] disabled:opacity-50"
           >
             <Fingerprint className="size-5 text-[#5566f6]" /> Face ID / отпечаток своего телефона
           </button>
-          <p className="text-center text-[12px] leading-relaxed text-[#9b9fb3]">{KIOSK_PIN_EXPLAINER}</p>
+          <p className="text-center text-[14px] leading-relaxed text-[var(--app-text-muted,#6f7282)]">
+            {KIOSK_PIN_EXPLAINER}
+          </p>
         </div>
       </BottomSheet>
     </div>

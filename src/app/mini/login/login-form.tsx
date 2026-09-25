@@ -101,7 +101,7 @@ export function MiniLoginForm({
   if (challengeId) {
     return (
       <form onSubmit={submitCode} className="mt-5 space-y-3">
-        <p className="text-[14px] leading-[1.55] opacity-80">
+        <p className="text-[16px] leading-[1.5]" style={{ color: "var(--mini-text-secondary)" }}>
           Пароль верный. Код отправлен в ваш Telegram, действует 5 минут.
         </p>
         <input
@@ -112,21 +112,19 @@ export function MiniLoginForm({
           autoFocus
           placeholder="000000"
           aria-label="Код из Telegram"
-          className="mini-input h-14 w-full rounded-2xl px-4 text-center font-mono text-[24px] tracking-[0.4em]"
+          // Крупно, как поле PIN QR-страниц.
+          className="mini-input text-center tracking-[0.4em]"
+          style={{ minHeight: 64, fontSize: 26, fontWeight: 700, fontFamily: "var(--mini-font-mono)" }}
         />
         {error ? (
-          <p
-            role="alert"
-            className="text-[14px] leading-[1.5]"
-            style={{ color: "var(--mini-crimson)" }}
-          >
+          <p role="alert" className="mini-err">
             {error}
           </p>
         ) : null}
         <button
           type="submit"
           disabled={busy || code.length !== 6}
-          className="mini-btn-primary mini-press h-14 w-full text-[16px] disabled:opacity-50"
+          className="mini-btn-primary mini-press w-full"
         >
           {busy ? <Loader2 className="size-5 animate-spin" /> : null}
           Подтвердить
@@ -137,7 +135,7 @@ export function MiniLoginForm({
             setChallengeId(null);
             setError(null);
           }}
-          className="w-full text-center text-[13px] underline underline-offset-2 opacity-70"
+          className="mini-btn-ghost mini-press w-full underline underline-offset-2"
         >
           Назад — отправить код ещё раз
         </button>
@@ -148,7 +146,7 @@ export function MiniLoginForm({
   return (
     <form onSubmit={submit} className="mt-5 space-y-3">
       <div>
-        <label htmlFor="phone" className="mb-1.5 block text-[13px] opacity-70">
+        <label htmlFor="phone" className="mini-label mb-1.5 block">
           Телефон
         </label>
         <input
@@ -161,12 +159,12 @@ export function MiniLoginForm({
           value={phone}
           onChange={(e) => setPhone(formatRuPhoneInput(e.target.value))}
           placeholder="+7 999 123-45-67"
-          className="mini-input h-14 w-full rounded-2xl px-4 text-[17px]"
+          className="mini-input"
         />
       </div>
 
       <div>
-        <label htmlFor="password" className="mb-1.5 block text-[13px] opacity-70">
+        <label htmlFor="password" className="mini-label mb-1.5 block">
           Пароль
         </label>
         <div className="relative">
@@ -178,13 +176,15 @@ export function MiniLoginForm({
             autoFocus={Boolean(initialPhone)}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="mini-input h-14 w-full rounded-2xl px-4 pr-14 text-[17px]"
+            className="mini-input"
+            style={{ paddingRight: 60 }}
           />
           <button
             type="button"
             onClick={() => setShowPassword((v) => !v)}
             aria-label={showPassword ? "Скрыть пароль" : "Показать пароль"}
-            className="absolute right-2 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-xl opacity-70"
+            className="absolute right-1 top-1/2 flex size-12 -translate-y-1/2 items-center justify-center rounded-xl"
+            style={{ color: "var(--mini-text-muted)" }}
           >
             {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
           </button>
@@ -193,11 +193,7 @@ export function MiniLoginForm({
 
       {/* Светлая тема: #ff6b6b на белом почти не читался. */}
       {error ? (
-        <p
-          role="alert"
-          className="text-[14px] leading-[1.5]"
-          style={{ color: "var(--mini-crimson)" }}
-        >
+        <p role="alert" className="mini-err">
           {error}
         </p>
       ) : null}
@@ -205,13 +201,16 @@ export function MiniLoginForm({
       <button
         type="submit"
         disabled={busy || !phone || !password}
-        className="mini-btn-primary mini-press h-14 w-full text-[16px] disabled:opacity-50"
+        className="mini-btn-primary mini-press w-full"
       >
         {busy ? <Loader2 className="size-5 animate-spin" /> : null}
         Войти
       </button>
 
-      <p className="pt-1 text-[13px] leading-[1.5] opacity-60">
+      <p
+        className="pt-1 text-[15px] leading-[1.5]"
+        style={{ color: "var(--mini-text-muted)" }}
+      >
         Забыли пароль? Руководитель выдаст новый — попросите его открыть
         вашу карточку в разделе «Сотрудники».
       </p>

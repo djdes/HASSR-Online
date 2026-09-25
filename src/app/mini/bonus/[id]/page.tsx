@@ -64,32 +64,17 @@ export default async function MiniBonusFillPage({
       <div className="space-y-4 px-1">
         <Link
           href="/journals"
-          className="-my-2 min-h-9 inline-flex items-center gap-1 text-[13px] font-medium"
-          style={{ color: "var(--mini-text-muted)" }}
+          className="mini-btn-ghost mini-press -my-1 -ml-3.5 w-fit"
         >
-          <ArrowLeft className="size-4" />К журналам
+          <ArrowLeft className="size-5" />К журналам
         </Link>
-        <div
-          className="rounded-2xl px-4 py-4 text-[14px] leading-5"
-          style={{
-            background: "var(--mini-amber-soft)",
-            border: "1px solid rgba(255,144,64,0.22)",
-            color: "var(--mini-amber)",
-          }}
-        >
+        <div className="mini-warn" style={{ color: "var(--mini-warn)" }}>
           {nobodyTookIt
             ? "Эту задачу ещё никто не взял. Сначала возьмите её в списке «Сегодня» — и премия закрепится за вами."
             : "Эту премию уже забрал другой сотрудник."}
         </div>
         {nobodyTookIt ? (
-          <Link
-            href="/mini/today"
-            className="mini-press inline-flex h-11 items-center justify-center rounded-2xl px-5 text-[14px] font-semibold"
-            style={{
-              background: "var(--mini-lime)",
-              color: "var(--mini-primary-contrast)",
-            }}
-          >
+          <Link href="/mini/today" className="mini-btn-primary mini-press w-full">
             К задачам на сегодня
           </Link>
         ) : null}
@@ -101,20 +86,16 @@ export default async function MiniBonusFillPage({
     <div className="flex flex-1 flex-col gap-4 pb-24 px-1">
       <Link
         href="/journals"
-        className="-my-2 min-h-9 inline-flex items-center gap-1 text-[13px] font-medium"
-        style={{ color: "var(--mini-text-muted)" }}
+        className="mini-btn-ghost mini-press -my-1 -ml-3.5 w-fit"
       >
-        <ArrowLeft className="size-4" />К журналам
+        <ArrowLeft className="size-5" />К журналам
       </Link>
       <header>
-        <h1
-          className="text-[22px] font-semibold leading-7"
-          style={{ color: "var(--mini-text)" }}
-        >
+        <h1 className="mini-h1">
           Премия за {obligation.template.name.toLowerCase()}
         </h1>
         <p
-          className="mt-1 text-[13px] leading-5"
+          className="mt-1.5 text-[16px] leading-relaxed"
           style={{ color: "var(--mini-text-muted)" }}
         >
           Премия зафиксирована. Осталось снять фото результата — без него

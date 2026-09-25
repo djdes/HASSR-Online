@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 
+import { QR_FILL_CSS } from "@/lib/journal-fill-html";
+
 const CSS = readFileSync("src/app/mini/mini-theme.css", "utf8");
 
 /**
@@ -65,5 +67,57 @@ describe("mini-theme: токены", () => {
         `user-select: none на слишком широком селекторе: ${selector.trim()}`
       );
     }
+  });
+});
+
+/** Без пробелов и ведущих нулей: `rgba(85, 102, 246, 0.55)` ≡ `rgba(85,102,246,.55)`. */
+function compact(css: string): string {
+  return css.replace(/\s+/g, "").replace(/([,(])0\./g, "$1.");
+}
+
+/** Значение объявления внутри блока `selector { … }` (первое вхождение). */
+function declaration(css: string, selector: string, property: string): string | null {
+  const start = css.indexOf(`${selector} {`);
+  if (start < 0) return null;
+  const block = css.slice(start, css.indexOf("}", start));
+  const match = new RegExp(`${property}:\\s*([^;]+);`).exec(block);
+  return match ? match[1].trim() : null;
+}
+
+describe("mini-theme: узнаётся как QR-страницы", () => {
+  it("шапка — тот же тёмно-синий градиент, что у QR-страниц", () => {
+    // Владелец: мини-приложение «ощущается какой-то иной системой».
+    // Шапка — главный признак QR-страниц; разъедется — снова разные системы.
+    const qrHero = /\.hero\{[^}]*background:([^;}]+)/.exec(QR_FILL_CSS)?.[1];
+    assert.ok(qrHero, "в QR_FILL_CSS нет фона шапки .hero");
+    const miniHero = /--mini-hero:\s*([^;]+);/.exec(CSS)?.[1];
+    assert.ok(miniHero, "нет токена --mini-hero");
+    assert.equal(compact(miniHero), compact(qrHero));
+    assert.equal(declaration(CSS, ".mini-topbar", "background"), "var(--mini-hero)");
+  });
+
+  it("индиго QR-страниц — акцент в обеих темах", () => {
+    const accents = [...CSS.matchAll(/--mini-accent:\s*([^;]+);/g)].map((m) => m[1].trim());
+    assert.ok(accents.length >= 2, "акцент должен быть задан в обеих темах");
+    for (const accent of accents) assert.equal(accent, "#5566f6");
+  });
+
+  it("кнопки и поля в оболочке не ниже 48px, шрифт полей не меньше 16px", () => {
+    // Под палец, в том числе на страницах кабинета, открытых в оболочке.
+    const rules = CSS.split("}").filter((rule) => rule.includes("#mini-root main"));
+    assert.ok(
+      rules.some((rule) => /button/.test(rule) && /min-height:\s*48px/.test(rule)),
+      "нет правила min-height: 48px для кнопок в оболочке"
+    );
+    assert.ok(
+      rules.some((rule) => /textarea/.test(rule) && /min-height:\s*48px/.test(rule)),
+      "нет правила min-height: 48px для полей в оболочке"
+    );
+    assert.ok(
+      rules.some((rule) => /input, select, textarea/.test(rule) && /font-size:\s*16px/.test(rule)),
+      "нет правила font-size: 16px для полей в оболочке"
+    );
+    assert.equal(declaration(CSS, ".mini-input", "font-size"), "17px");
+    assert.equal(declaration(CSS, ".mini-btn-primary", "min-height"), "56px");
   });
 });

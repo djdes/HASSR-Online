@@ -75,24 +75,8 @@ export function MiniAppShell({
         src="https://telegram.org/js/telegram-web-app.js"
         strategy="beforeInteractive"
       />
-      {/* Шрифт грузится не блокируя отрисовку: `media="print"` плюс
-          переключение на `all` после гидратации. Подробности — в
-          истории `mini/layout.tsx`, правило не менялось. */}
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link
-        rel="preconnect"
-        href="https://fonts.gstatic.com"
-        crossOrigin="anonymous"
-      />
-      <link
-        rel="stylesheet"
-        media="print"
-        data-mini-fonts=""
-        href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&display=swap"
-      />
-      <Script id="mini-fonts-activate" strategy="afterInteractive">
-        {`document.querySelector('link[data-mini-fonts]')?.setAttribute('media','all')`}
-      </Script>
+      {/* Шрифт — системный, как у QR-страниц: внешний Geist Mono (часы и
+          моноширинные подписи прежней темы) больше не нужен и не грузится. */}
       <MiniThemeProvider initialTheme={initialTheme} profileTheme={profileTheme}>
         <MiniTelegramRuntime homeHref={homeHref} />
         <MiniServiceWorkerRegister />
@@ -125,9 +109,12 @@ export function MiniAppShell({
             {/* Безопасные зоны iPhone: сверху notch, снизу
                 home-indicator плюс высота нижнего меню. */}
             <main
-              className="mx-auto flex min-h-[calc(100dvh-64px)] w-full max-w-lg flex-col px-4"
+              className="mx-auto flex w-full max-w-lg flex-col px-4"
               style={{
-                paddingTop: "max(1rem, var(--mini-safe-t))",
+                minHeight: "calc(100dvh - var(--mini-topbar-h, 56px))",
+                // Безопасное поле сверху уже в шапке — здесь только
+                // отступ от неё, как у `main` QR-страниц.
+                paddingTop: "16px",
                 paddingBottom: "max(7rem, calc(var(--mini-safe-b) + 6rem))",
               }}
             >
@@ -147,7 +134,11 @@ export function MiniAppShell({
           {/* Сообщения — ниже шапки приложения. По умолчанию sonner
               кладёт их в самый верх экрана, и они закрывали логотип,
               название экрана и колокольчик. */}
-          <Toaster offset={{ top: "calc(var(--mini-safe-t, 12px) + 56px)" }} />
+          <Toaster
+            offset={{
+              top: "calc(env(safe-area-inset-top, 0px) + var(--mini-topbar-h, 56px) + 8px)",
+            }}
+          />
           <OfflineIndicator />
           {authed ? <LiveConnectionIndicator variant="mini" /> : null}
           <MiniNav items={navItems} />
