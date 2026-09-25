@@ -260,7 +260,7 @@ export function NpsBanner({ variant = "site", ask = true }: { variant?: "site" |
               placeholder="name@company.ru"
               aria-invalid={error?.field === "email"}
               aria-describedby={error?.field === "email" ? `${ids}-email-error` : undefined}
-              className={`mt-1.5 h-11 text-[15px] ${field}`}
+              className={`mt-1.5 h-12 text-[16px] sm:h-11 sm:text-[15px] ${field}`}
               data-testid="nps-recommend-email"
             />
             {fieldError("email")}
@@ -292,7 +292,7 @@ export function NpsBanner({ variant = "site", ask = true }: { variant?: "site" |
               }}
               aria-invalid={error?.field === "message"}
               aria-describedby={error?.field === "message" ? `${ids}-message-error` : undefined}
-              className={`mt-1.5 block resize-y py-3 text-[14px] leading-[1.55] ${field}`}
+              className={`mt-1.5 block resize-y py-3 text-[16px] leading-[1.55] sm:text-[14px] ${field}`}
               data-testid="nps-recommend-message"
             />
             {fieldError("message")}
@@ -331,7 +331,7 @@ export function NpsBanner({ variant = "site", ask = true }: { variant?: "site" |
               }}
               placeholder="Пара слов — прочитаем каждое сообщение"
               aria-invalid={error?.field === "comment"}
-              className={`mt-1.5 block resize-y py-3 text-[14px] leading-[1.55] ${field}`}
+              className={`mt-1.5 block resize-y py-3 text-[16px] leading-[1.55] sm:text-[14px] ${field}`}
               data-testid="nps-improve-comment"
             />
             {fieldError("comment")}
