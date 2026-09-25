@@ -6,6 +6,7 @@ import { Lightbulb, LightbulbOff, Loader2 } from "lucide-react";
 import { EmployeePicker } from "@/components/qr-fill/employee-picker";
 import { QrPassNote, QrPinOk, QrPinStep, QrPinUiStyles, QrRememberToggle, forgetQrPass, rememberQrEmployee } from "@/components/qr-fill/qr-pin-step";
 import { QrPageShell } from "@/components/qr-fill/qr-page-shell";
+import { SaveBlockedReason } from "@/components/qr-fill/save-blocked-reason";
 import { SuccessCheck } from "@/components/qr-fill/success-check";
 import { WhoRow } from "@/components/qr-fill/who-row";
 import { formatHours } from "@/lib/uv-lamp";
@@ -203,6 +204,7 @@ export function UvLampClient(props: {
             {busy ? <Loader2 className="size-10 animate-spin" /> : running ? <LightbulbOff className="size-10" /> : <Lightbulb className="size-10" />}
             {running ? "Я выключил облучатель" : "Я включил облучатель"}
           </button>
+          <SaveBlockedReason reason={!busy && !employeeId ? "Не выбран сотрудник" : null} />
           {state.lifetimeHours ? (
             <p className="text-center text-[15px] text-[#6f7282]">
               Наработка {formatHours(state.usedHours)} из {formatHours(state.lifetimeHours)}

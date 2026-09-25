@@ -259,17 +259,25 @@ export const coldEquipmentAdapter: JournalAdapter = {
     // Значения по замерам: что прислали — записываем, чего в форме не было — оставляем как было.
     const temperatures: Record<string, number | null> = { ...priorData.temperatures };
     const corrections: Record<string, string> = { ...(priorData.corrections ?? {}) };
+    // «обсл»/«рем» с наклейки: остаются, пока в замер не пришло новое значение.
+    const statuses = { ...(priorData.statuses ?? {}) };
     for (const slot of expandColdEquipmentReadingSlots(config)) {
       const key = fieldKeyForEquipment(slot.slotKey);
       if (off.has(key)) {
         temperatures[slot.slotKey] = null;
         corrections[slot.slotKey] = OFF_NOTE_EQUIPMENT;
+        delete statuses[slot.slotKey];
         continue;
       }
       if (!values || !(key in values)) {
         if (temperatures[slot.slotKey] === undefined) temperatures[slot.slotKey] = null;
         continue;
       }
+      if (statuses[slot.slotKey] && (values[key] === null || values[key] === undefined || values[key] === "")) {
+        // Пустое поле формы не снимает отметку «обсл»/«рем».
+        continue;
+      }
+      delete statuses[slot.slotKey];
       const raw = values[key];
       if (typeof raw === "number" && Number.isFinite(raw)) temperatures[slot.slotKey] = raw;
       else if (typeof raw === "string" && raw.trim() !== "") {
@@ -289,6 +297,7 @@ export const coldEquipmentAdapter: JournalAdapter = {
       responsibleTitle: priorData.responsibleTitle ?? null,
       temperatures,
       ...(Object.keys(corrections).length > 0 ? { corrections } : {}),
+      ...(Object.keys(statuses).length > 0 ? { statuses } : {}),
     };
 
     await db.journalDocumentEntry.upsert({

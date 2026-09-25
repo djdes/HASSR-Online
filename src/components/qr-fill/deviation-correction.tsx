@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect } from "react";
 import { AlertTriangle } from "lucide-react";
 
 import { Textarea } from "@/components/ui/textarea";
+import { QR_FILL_CORRECTION_PRESETS, QR_FILL_DEFAULT_CORRECTION } from "@/lib/qr-correction-presets";
 
 /**
  * Обязательное «Что сделали» при замере вне нормы.
@@ -15,12 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
  * Чипы — самые частые ответы в один тап; поле ниже остаётся для своего
  * текста и правит тот же самый ответ.
  */
-export const QR_FILL_CORRECTION_PRESETS = [
-  "Сообщил руководителю",
-  "Вызвал мастера",
-  "Переложил продукты",
-  "Повторю замер через 30 минут",
-] as const;
+export { QR_FILL_CORRECTION_PRESETS, QR_FILL_DEFAULT_CORRECTION };
 
 type Props = {
   /** Что именно вышло за норму — «Температура вне нормы». */
@@ -32,6 +29,13 @@ type Props = {
 };
 
 export function DeviationCorrection({ title, hint, value, onChange }: Props) {
+  // Блок появился (замер вышел за норму), а ответа ещё нет — сразу выбран
+  // вариант по умолчанию. Снятый руками выбор не возвращаем до следующего показа.
+  useEffect(() => {
+    if (value.trim() === "") onChange(QR_FILL_DEFAULT_CORRECTION);
+    // Только при появлении блока.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <div className="rounded-2xl border border-[#ffe9b0] bg-[#fff8eb] p-4">
       <div className="flex items-start gap-2.5">

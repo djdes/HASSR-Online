@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { SuccessCheck } from "@/components/qr-fill/success-check";
 
@@ -13,6 +13,7 @@ import { ReadingField } from "@/components/qr-fill/reading-field";
 import { NextQrButton } from "@/components/qr-fill/next-qr-button";
 import { QrPassNote, QrPinOk, QrPinStep, QrPinUiStyles, QrRememberToggle, forgetQrPass, rememberQrEmployee } from "@/components/qr-fill/qr-pin-step";
 import { draftKeyFor, useFormDraft } from "@/components/qr-fill/use-form-draft";
+import { SaveBlockedReason } from "@/components/qr-fill/save-blocked-reason";
 
 type Metric = { enabled: boolean; min: number | null; max: number | null };
 
@@ -62,6 +63,10 @@ function isOutside(value: number | null, metric: Metric): boolean {
  */
 export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot, employees, mode = "public", sessionEmployee = null, todayValues = null, stamp = null, journalTitle, rememberedEmployeeId = null, passEmployeeId = null }: Props) {
   const [employeeId, setEmployeeId] = useState("");
+  // Кого восстановили из памяти при входе: «Запомнили с прошлого раза» — только ему
+  // и только пока выбор не меняли руками.
+  const [restoredId, setRestoredId] = useState<string | null>(null);
+  const hydratedRef = useRef(false);
   // Единые правила QR (2026-09-22): PIN — шагом до формы, дальше пропуск визита.
   const [pass, setPass] = useState<string | null>(null);
   const [pinOk, setPinOk] = useState(false);
@@ -71,6 +76,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
   // Имя запоминаем сразу при выборе, а не только после записи: обновление страницы или обрыв связи не заставят выбирать заново.
   const rememberEmployee = (id: string) => {
     setEmployeeId(id);
+    setRestoredId(null);
     setPass(null);
     setPinOk(false);
     const next = employees.find((item) => item.id === id);
@@ -129,7 +135,10 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
       const remembered = passEmployeeId ?? rememberedEmployeeId ?? localStorage.getItem(LS_SHARED_EMPLOYEE_KEY) ?? localStorage.getItem(LS_EMPLOYEE_KEY);
       if (remembered && employees.some((employee) => employee.id === remembered)) {
         setEmployeeId(remembered);
+        // «Запомнили…» — только за восстановление при входе, не за позднее обновление пропсов.
+        if (!hydratedRef.current) setRestoredId(remembered);
       }
+      hydratedRef.current = true;
     } catch {
       /* приватный режим — выберут имя вручную */
     }
@@ -142,6 +151,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
     setPass(null);
     setPinOk(false);
     setEmployeeId("");
+    setRestoredId(null);
     try {
       localStorage.removeItem(LS_EMPLOYEE_KEY);
       localStorage.removeItem(LS_SHARED_EMPLOYEE_KEY);
@@ -189,7 +199,8 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
           employeeId,
           ...(norms.temperature.enabled && temperatureValue !== null ? { temperature: temperatureValue } : {}),
           ...(norms.humidity.enabled && humidityValue !== null && !humidityInvalid ? { humidity: humidityValue } : {}),
-          ...(correction.trim() ? { correction: correction.trim() } : {}),
+          // Комментарий — только к отклонению: вернули в норму — не отправляем.
+          ...(needsCorrection && correction.trim() ? { correction: correction.trim() } : {}),
           ...(pass ? { pass } : {}),
         }),
       });
@@ -217,6 +228,22 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
   const pinRequired = mode !== "auth" && (mode === "pin" || Boolean(selectedEmployee?.hasPin));
   const hasPass = Boolean(pass) || (cookiePassFor !== null && cookiePassFor === employeeId);
   const pinStepNeeded = Boolean(employeeId) && pinRequired && !hasPass;
+  // Почему «Сохранить» неактивна — пишем под кнопкой, а не оставляем серой загадкой.
+  const blockedReason = !hasActiveDocument
+    ? "Нет журнала на сегодня — запись некуда сохранить"
+    : !employeeId
+      ? "Не выбран сотрудник"
+      : pinRequired && !hasPass
+        ? "Не введён PIN"
+        : !hasValue
+          ? norms.temperature.enabled && norms.humidity.enabled
+            ? "Не указаны показания"
+            : norms.humidity.enabled
+              ? "Не указана влажность"
+              : "Не указана температура"
+          : correctionMissing
+            ? "Опишите, что сделали"
+            : null;
   // После сохранения текущий объект в списке сразу «снят» — с введёнными значениями.
 
   return (
@@ -275,7 +302,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                 value={employeeId}
                 onChange={rememberEmployee}
                 fixedName={fixedEmployee ? sessionEmployee?.name ?? null : null}
-                hint={rememberedName && !pinStepNeeded ? "Запомнили с прошлого раза — можно сразу вводить показания." : rememberedName && selectedEmployee?.hasPin ? "Запомнили с прошлого раза — введите свой PIN." : null}
+                hint={restoredId !== null && restoredId === employeeId ? (!pinStepNeeded ? "Запомнили с прошлого раза — можно сразу вводить показания." : selectedEmployee?.hasPin ? "Запомнили с прошлого раза — введите свой PIN." : null) : null}
               />
               {pinRequired && hasPass && !fixedEmployee ? (
                 <QrPassNote remembered={cookiePassFor === employeeId} onLogout={logout} />
@@ -351,11 +378,12 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                 <Button
                   type="button"
                   onClick={save}
-                  disabled={submitting || !employeeId || !hasValue || !hasActiveDocument || correctionMissing || (pinRequired && !hasPass)}
+                  disabled={submitting || blockedReason !== null}
                   className="h-14 w-full rounded-2xl bg-[#5566f6] px-5 text-[18px] font-semibold text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] disabled:bg-[#c8cbe0]"
                 >
                   {submitting ? "Сохраняем…" : "Сохранить"}
                 </Button>
+                <SaveBlockedReason reason={submitting ? null : blockedReason} />
                 {hasActiveDocument && nextSlot ? (
                   <p className="mt-2 text-center text-[14px] text-[#9b9fb3]">
                     Запись попадёт в журнал за сегодня, срок контроля {nextSlot}.

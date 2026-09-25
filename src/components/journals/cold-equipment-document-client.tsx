@@ -12,7 +12,14 @@ import {
   isColdEquipmentValueOutOfRange,
   COLD_EQUIPMENT_READING_MODES,
   expandColdEquipmentReadingSlots,
+  COLD_EQUIPMENT_STATUSES,
+  COLD_EQUIPMENT_STATUS_SHORT,
+  COLD_EQUIPMENT_STATUS_TITLE,
+  formatColdEquipmentCell,
+  parseColdEquipmentCellInput,
+  setColdEquipmentSlotStatus,
   type ColdEquipmentReadingModeId,
+  type ColdEquipmentStatus,
 } from "@/lib/cold-equipment-document";
 import {
   DOC_ADD_ROW_CLASS,
@@ -43,6 +50,7 @@ import {
   Plus,
   QrCode,
   UserPlus,
+  Wrench,
 } from "lucide-react";
 import { QrFillPreview } from "@/components/qr/qr-fill-preview";
 import {
@@ -983,12 +991,16 @@ function JournalSettingsDialog({
 function ColdTemperatureCell({
   inputId,
   value,
+  status = null,
   norm,
   onCommit,
 }: {
   inputId: string;
   value: number | string;
+  /** «обсл»/«рем» вместо температуры — ячейка показывает отметку. */
+  status?: ColdEquipmentStatus | null;
   norm: { min: number | null; max: number | null };
+  /** Число строкой, «обсл»/«рем» или пусто — разбирает `handleTemperatureBlur`. */
   onCommit: (next: string) => void;
 }) {
   const stored = value === "" || value == null ? "" : String(value);
@@ -998,6 +1010,24 @@ function ColdTemperatureCell({
   useEffect(() => {
     setDraft(stored);
   }, [stored]);
+
+  if (status) {
+    return (
+      <div className="flex min-h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-2xl border border-[#d6dcff] bg-[#eef1ff] px-3 py-1.5" data-testid="cold-cell-status">
+        <span className="min-w-0 truncate text-[15px] text-[#3848c7]">
+          <b className="font-semibold">{COLD_EQUIPMENT_STATUS_SHORT[status]}</b>
+          <span className="text-[13px]"> · {COLD_EQUIPMENT_STATUS_TITLE[status]}</span>
+        </span>
+        <button
+          type="button"
+          onClick={() => onCommit("")}
+          className="shrink-0 rounded-full px-2.5 py-1 text-[13px] font-medium text-[#3848c7] underline underline-offset-2 transition-colors duration-150 hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+        >
+          Снять
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-w-0 flex-1">
@@ -1040,6 +1070,26 @@ function ColdTemperatureCell({
               setDraft(String(n));
               onCommit(String(n));
             }}
+            />
+            {/* Вместо температуры — «обсл» (обслуживание) или «рем» (ремонт). */}
+            <ResponsiveMenu
+              title="Вместо температуры"
+              items={COLD_EQUIPMENT_STATUSES.map((option) => ({
+                key: option,
+                label: `${COLD_EQUIPMENT_STATUS_TITLE[option]} — «${COLD_EQUIPMENT_STATUS_SHORT[option]}»`,
+                icon: <Wrench className="size-4 text-[#6f7282]" />,
+                onSelect: () => onCommit(COLD_EQUIPMENT_STATUS_SHORT[option]),
+              }))}
+              trigger={
+                <button
+                  type="button"
+                  aria-label="Обслуживание или ремонт вместо температуры"
+                  title="Обслуживание («обсл») или ремонт («рем») вместо температуры"
+                  className="flex size-9 shrink-0 items-center justify-center rounded-full text-[#6f7282] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+                >
+                  <Wrench className="size-4" />
+                </button>
+              }
             />
           </div>
         }
@@ -1161,7 +1211,8 @@ export function ColdEquipmentDocumentClient({
     return periodDateKeys.filter((dateKey) => {
       const row = rows.find((item) => item.date === dateKey);
       const hasAnyValue = row
-        ? Object.values(row.data.temperatures ?? {}).some((value) => value != null)
+        ? Object.values(row.data.temperatures ?? {}).some((value) => value != null) ||
+          Object.keys(row.data.statuses ?? {}).length > 0
         : false;
       return !hasAnyValue;
     }).length;
@@ -1252,6 +1303,7 @@ export function ColdEquipmentDocumentClient({
             ...current.data,
             temperatures,
             corrections: { ...(current.data.corrections ?? {}), ...(row.data.corrections ?? {}) },
+            statuses: { ...(current.data.statuses ?? {}), ...(row.data.statuses ?? {}) },
           },
         };
       });
@@ -1281,7 +1333,8 @@ export function ColdEquipmentDocumentClient({
     const todayRow = rowByDate[todayKey];
     const filled = readingSlots.reduce((count, slot) => {
       const value = todayRow?.data.temperatures?.[slot.slotKey];
-      return count + (value != null ? 1 : 0);
+      // «обсл»/«рем» — тоже заполнено: замера нет по уважительной причине.
+      return count + (value != null || todayRow?.data.statuses?.[slot.slotKey] ? 1 : 0);
     }, 0);
     return { filled, total: readingSlots.length };
   }, [config.equipment, readingSlots, rowByDate, todayInPeriod, todayKey]);
@@ -1597,10 +1650,10 @@ export function ColdEquipmentDocumentClient({
     options?: { silent?: boolean }
   ) {
     const previousValue = rowByDate[dateKey]?.data.temperatures?.[equipmentId];
-    const previousRaw =
-      previousValue === null || previousValue === undefined
-        ? ""
-        : String(previousValue);
+    const previousRaw = formatColdEquipmentCell(
+      previousValue,
+      rowByDate[dateKey]?.data.statuses?.[equipmentId]
+    );
     // Строка дня записывается на того, кто уже в ней, на ответственного
     // документа или на вошедшего (если он в ростере) — не на «первого в
     // списке».
@@ -1620,8 +1673,11 @@ export function ColdEquipmentDocumentClient({
         ? dayRows
         : dayRows.filter((row) => row.employeeId === viewer.id);
     const ownerRow =
-      scopedDayRows.find((row) => row.data.temperatures?.[equipmentId] != null) ??
-      scopedDayRows[0];
+      scopedDayRows.find(
+        (row) =>
+          row.data.temperatures?.[equipmentId] != null ||
+          Boolean(row.data.statuses?.[equipmentId])
+      ) ?? scopedDayRows[0];
     const employeeId =
       viewerHasFullAccess || !viewer
         ? ownerRow?.employeeId || responsibleUserId || viewerId
@@ -1632,7 +1688,7 @@ export function ColdEquipmentDocumentClient({
     }
 
     const existingRow = ownerRow;
-    const nextData = existingRow
+    const baseData: ColdEquipmentEntryData = existingRow
       ? {
           ...createEmptyColdEquipmentEntryData(
             config,
@@ -1649,9 +1705,15 @@ export function ColdEquipmentDocumentClient({
         }
       : createEmptyColdEquipmentEntryData(config, responsibleTitle);
 
-    // `Number("-18,5")` → NaN: на экране «NaN», в базе пусто. parseNumeric
-    // понимает и запятую, и точку, и возвращает null на мусор.
-    nextData.temperatures[equipmentId] = parseNumeric(rawValue);
+    // Ячейка принимает число (запятая или точка) или «обсл»/«рем» —
+    // холодильник на обслуживании или в ремонте. Мусор — пустая ячейка.
+    const parsedCell = parseColdEquipmentCellInput(rawValue);
+    const nextData = setColdEquipmentSlotStatus(
+      { ...baseData, temperatures: { ...baseData.temperatures } },
+      equipmentId,
+      parsedCell.status
+    );
+    nextData.temperatures[equipmentId] = parsedCell.temperature;
 
     const submit = await submitWithOfflineFallback({
       method: "PUT",
@@ -2036,6 +2098,7 @@ export function ColdEquipmentDocumentClient({
             <DayFirstCards
               items={readingSlots.map((item) => {
                 const value = rowByDate[todayKey]?.data.temperatures[item.slotKey];
+                const cellStatus = rowByDate[todayKey]?.data.statuses?.[item.slotKey] ?? null;
                 return {
                   id: item.slotKey,
                   title: item.slotLabel ? `${item.name} · ${item.slotLabel}` : item.name,
@@ -2062,6 +2125,7 @@ export function ColdEquipmentDocumentClient({
                         <ColdTemperatureCell
                           inputId={`today-temp-${item.slotKey}`}
                           value={value ?? ""}
+                          status={cellStatus}
                           norm={{ min: item.min, max: item.max }}
                           onCommit={(next) =>
                             handleTemperatureBlur(todayKey, item.slotKey, next)
@@ -2070,7 +2134,7 @@ export function ColdEquipmentDocumentClient({
                       </div>
                     ) : (
                       <span className="text-[14px] text-[#0b1024]">
-                        {value ?? "—"}
+                        {formatColdEquipmentCell(value, cellStatus) || "—"}
                       </span>
                     ),
                 };
@@ -2102,7 +2166,7 @@ export function ColdEquipmentDocumentClient({
               const expanded = expandedEquipmentId === item.slotKey;
               const filledCount = dateKeys.reduce((acc, dk) => {
                 const val = rowByDate[dk]?.data.temperatures[item.slotKey];
-                return acc + (val != null ? 1 : 0);
+                return acc + (val != null || rowByDate[dk]?.data.statuses?.[item.slotKey] ? 1 : 0);
               }, 0);
               const isSelected = selectedEquipmentIds.includes(item.id);
               return (
@@ -2175,6 +2239,7 @@ export function ColdEquipmentDocumentClient({
                       {dateKeys.map((dateKey) => {
                         const row = rowByDate[dateKey];
                         const value = row?.data.temperatures[item.slotKey];
+                        const cellStatus = row?.data.statuses?.[item.slotKey] ?? null;
                         const weekend = isWeekend(dateKey);
                         return (
                           <div
@@ -2191,6 +2256,7 @@ export function ColdEquipmentDocumentClient({
                               <ColdTemperatureCell
                                 inputId={`temp-${item.slotKey}-${dateKey}`}
                                 value={value ?? ""}
+                                status={cellStatus}
                                 norm={{ min: item.min, max: item.max }}
                                 onCommit={(next) =>
                                   handleTemperatureBlur(dateKey, item.slotKey, next)
@@ -2201,7 +2267,7 @@ export function ColdEquipmentDocumentClient({
                                 title={dayLockReason(dateKey) ?? undefined}
                                 className="flex-1 rounded-lg bg-[#fafbff] px-3 py-2 text-[14px] text-[#0b1024]"
                               >
-                                {value ?? "—"}
+                                {formatColdEquipmentCell(value, cellStatus) || "—"}
                               </span>
                             )}
                             <span className="w-12 shrink-0 text-right text-[11px] text-[#9b9fb3]">
@@ -2441,6 +2507,8 @@ export function ColdEquipmentDocumentClient({
                   {dateKeys.map((dateKey) => {
                     const row = rowByDate[dateKey];
                     const value = row?.data.temperatures[item.slotKey];
+                    const cellStatus = row?.data.statuses?.[item.slotKey] ?? null;
+                    const cellText = formatColdEquipmentCell(value, cellStatus);
 
                     return (
                       <td
@@ -2449,17 +2517,21 @@ export function ColdEquipmentDocumentClient({
                         className={`${GRID_CELL_CLASS} p-1 text-center leading-tight`}
                       >
                         {status === "active" && !dayLockReason(dateKey) ? (
+                          // Текст, а не number: в ячейку можно вписать «обсл» или «рем».
                           <Input
-                            type="number"
-                            step="0.1"
-                            defaultValue={value ?? ""}
-                            onBlur={(event) =>
-                              handleTemperatureBlur(dateKey, item.slotKey, event.target.value)
-                            }
+                            key={cellText}
+                            type="text"
+                            defaultValue={cellText}
+                            title="Температура или «обсл» / «рем»"
+                            onBlur={(event) => {
+                              if (event.target.value.trim() === cellText) return;
+                              void handleTemperatureBlur(dateKey, item.slotKey, event.target.value);
+                            }}
                             className={cn(
                               "h-7 min-w-[44px] border-0 px-1 text-center text-[13px] shadow-none focus-visible:ring-1",
                               isColdEquipmentValueOutOfRange(value, item) &&
-                                "font-semibold text-[#d2453d]"
+                                "font-semibold text-[#d2453d]",
+                              cellStatus && "font-medium text-[#3848c7]"
                             )}
                           />
                         ) : (
@@ -2468,10 +2540,11 @@ export function ColdEquipmentDocumentClient({
                             className={cn(
                               "text-[13px]",
                               isColdEquipmentValueOutOfRange(value, item) &&
-                                "font-semibold text-[#d2453d]"
+                                "font-semibold text-[#d2453d]",
+                              cellStatus && "font-medium text-[#3848c7]"
                             )}
                           >
-                            {value ?? ""}
+                            {cellText}
                           </span>
                         )}
                       </td>
@@ -2541,7 +2614,7 @@ export function ColdEquipmentDocumentClient({
                   const hasMeasurements = row
                     ? Object.values(row.data.temperatures).some(
                         (value) => value != null
-                      )
+                      ) || Object.keys(row.data.statuses ?? {}).length > 0
                     : false;
                   const employeeId = hasMeasurements
                     ? row?.employeeId || responsibleUserId || ""
@@ -2662,15 +2735,17 @@ export function ColdEquipmentDocumentClient({
         onClose={() => setRunnerOpen(false)}
         steps={readingSlots.map((item) => {
           const value = rowByDate[todayKey]?.data.temperatures[item.slotKey];
+          const cellStatus = rowByDate[todayKey]?.data.statuses?.[item.slotKey] ?? null;
           return {
             id: item.slotKey,
             title: item.slotLabel ? `${item.name} · ${item.slotLabel}` : item.name,
             subtitle: formatRange(item.min, item.max),
-            done: value != null,
+            done: value != null || cellStatus !== null,
             render: () => (
               <ColdTemperatureCell
                 inputId={`runner-temp-${item.slotKey}`}
                 value={value ?? ""}
+                status={cellStatus}
                 norm={{ min: item.min, max: item.max }}
                 onCommit={(next) =>
                   handleTemperatureBlur(todayKey, item.slotKey, next)

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { SuccessCheck } from "@/components/qr-fill/success-check";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,9 @@ import { ReadingField } from "@/components/qr-fill/reading-field";
 import { NextQrButton } from "@/components/qr-fill/next-qr-button";
 import { QrPassNote, QrPinOk, QrPinStep, QrPinUiStyles, QrRememberToggle, forgetQrPass, rememberQrEmployee } from "@/components/qr-fill/qr-pin-step";
 import { draftKeyFor, useFormDraft } from "@/components/qr-fill/use-form-draft";
+import { EquipmentStatusChoice } from "@/components/qr-fill/equipment-status-choice";
+import { SaveBlockedReason } from "@/components/qr-fill/save-blocked-reason";
+import { COLD_EQUIPMENT_STATUS_SHORT, COLD_EQUIPMENT_STATUS_TITLE, parseColdEquipmentStatus, type ColdEquipmentStatus } from "@/lib/cold-equipment-document";
 
 type Employee = { id: string; name: string; positionTitle: string | null; hasPin?: boolean };
 
@@ -37,7 +40,7 @@ type Props = {
   /** В режиме «auth» — вошедший сотрудник; линейный не выбирает имя. */
   sessionEmployee?: { id: string; name: string; canPickOthers: boolean } | null;
   /** Уже записанная сегодня температура этого оборудования — подставляется для правки. */
-  todayValues?: { temperature?: number | null; humidity?: number | null } | null;
+  todayValues?: { temperature?: number | null; humidity?: number | null; status?: ColdEquipmentStatus | null } | null;
   /** «20.09.2026» и «18:31» по часовому поясу организации — подпись «за какой момент вносится». */
   stamp?: { date: string; time: string } | null;
   /** Шапка в две строки: организация и название журнала. */
@@ -74,6 +77,10 @@ export function EquipmentFillClient({
   passEmployeeId = null,
 }: Props) {
   const [employeeId, setEmployeeId] = useState<string>("");
+  // Кого восстановили из памяти при входе: «Запомнили с прошлого раза» — только ему
+  // и только пока выбор не меняли руками.
+  const [restoredId, setRestoredId] = useState<string | null>(null);
+  const hydratedRef = useRef(false);
   // Единые правила QR (2026-09-22): PIN — шагом до формы, дальше пропуск визита.
   const [pass, setPass] = useState<string | null>(null);
   const [pinOk, setPinOk] = useState(false);
@@ -83,6 +90,7 @@ export function EquipmentFillClient({
   // Имя запоминаем сразу при выборе, а не только после записи: обновление страницы или обрыв связи не заставят выбирать заново.
   const rememberEmployee = (id: string) => {
     setEmployeeId(id);
+    setRestoredId(null);
     setPass(null);
     setPinOk(false);
     const next = employees.find((item) => item.id === id);
@@ -100,7 +108,9 @@ export function EquipmentFillClient({
   const fixedEmployee = mode === "auth" && sessionEmployee && !sessionEmployee.canPickOthers;
   // Морозилка (норма ниже нуля) — минус стоит сразу: на цифровой клавиатуре
   // телефона его не набрать.
-  const hasToday = typeof todayValues?.temperature === "number";
+  const hasToday = typeof todayValues?.temperature === "number" || Boolean(todayValues?.status);
+  // «Обслуживание»/«Ремонт» вместо температуры — в журнале «обсл»/«рем».
+  const [status, setStatus] = useState<ColdEquipmentStatus | null>(todayValues?.status ?? null);
   const [temperature, setTemperature] = useState<string>(
     typeof todayValues?.temperature === "number" ? String(todayValues.temperature) : equipment.tempMax != null && equipment.tempMax < 0 ? "-" : ""
   );
@@ -123,9 +133,10 @@ export function EquipmentFillClient({
   // Черновик: обновил страницу или пропал интернет — введённое на месте; после записи стирается.
   const draft = useFormDraft(
     draftKeyFor(`equipment-fill:${equipment.id}`, stamp?.date),
-    { temperature, humidity, correction },
+    { temperature, humidity, correction, status: status ?? "" },
     (saved) => {
       if (typeof saved.temperature === "string") setTemperature(saved.temperature);
+      if (typeof saved.status === "string") setStatus(parseColdEquipmentStatus(saved.status));
       if (typeof saved.humidity === "string") setHumidity(saved.humidity);
       if (typeof saved.correction === "string") setCorrection(saved.correction);
     },
@@ -142,7 +153,10 @@ export function EquipmentFillClient({
     const remembered = passEmployeeId ?? rememberedEmployeeId ?? localStorage.getItem(LS_SHARED_EMPLOYEE_KEY) ?? localStorage.getItem(LS_EMPLOYEE_KEY);
     if (remembered && employees.some((e) => e.id === remembered)) {
       setEmployeeId(remembered);
+      // «Запомнили…» — только за восстановление при входе, не за позднее обновление пропсов.
+      if (!hydratedRef.current) setRestoredId(remembered);
     }
+    hydratedRef.current = true;
   }, [employees, mode, sessionEmployee, rememberedEmployeeId, passEmployeeId]);
 
   // «Не вы? Сменить»: снять пропуск и запомненный выбор — телефон общий.
@@ -152,6 +166,7 @@ export function EquipmentFillClient({
     setPass(null);
     setPinOk(false);
     setEmployeeId("");
+    setRestoredId(null);
     try {
       localStorage.removeItem(LS_EMPLOYEE_KEY);
       localStorage.removeItem(LS_SHARED_EMPLOYEE_KEY);
@@ -177,18 +192,18 @@ export function EquipmentFillClient({
   }, [humidity, equipment.hasHumidityField]);
 
   const outOfRange = useMemo(() => {
-    if (parsedTemp === null) return false;
+    if (status || parsedTemp === null) return false;
     if (equipment.tempMin != null && parsedTemp < equipment.tempMin) return true;
     if (equipment.tempMax != null && parsedTemp > equipment.tempMax) return true;
     return false;
-  }, [parsedTemp, equipment]);
+  }, [parsedTemp, equipment, status]);
 
   const humidityOutOfRange = useMemo(() => {
-    if (parsedHumidity === null || !humidityNorm) return false;
+    if (status || parsedHumidity === null || !humidityNorm) return false;
     if (humidityNorm.min != null && parsedHumidity < humidityNorm.min) return true;
     if (humidityNorm.max != null && parsedHumidity > humidityNorm.max) return true;
     return false;
-  }, [parsedHumidity, humidityNorm]);
+  }, [parsedHumidity, humidityNorm, status]);
 
   // Сервер проверяет то же самое и вернёт 400 — здесь только чтобы
   // человек не жал «Сохранить» вслепую.
@@ -204,7 +219,7 @@ export function EquipmentFillClient({
       setError("Выберите имя");
       return;
     }
-    if (parsedTemp === null) {
+    if (!status && parsedTemp === null) {
       setError("Введите температуру");
       return;
     }
@@ -222,11 +237,12 @@ export function EquipmentFillClient({
           body: JSON.stringify({
             token,
             employeeId,
-            temperature: parsedTemp,
-            ...(parsedHumidity !== null
+            ...(status ? { status } : { temperature: parsedTemp }),
+            ...(!status && parsedHumidity !== null
               ? { humidity: parsedHumidity }
               : {}),
-            ...(correction.trim() ? { correction: correction.trim() } : {}),
+            // Комментарий — только к отклонению: вернули в норму — не отправляем.
+            ...(needsCorrection && correction.trim() ? { correction: correction.trim() } : {}),
             ...(pass ? { pass } : {}),
           }),
         }
@@ -250,6 +266,18 @@ export function EquipmentFillClient({
   const pinRequired = mode !== "auth" && (mode === "pin" || Boolean(selectedEmployee?.hasPin));
   const hasPass = Boolean(pass) || (cookiePassFor !== null && cookiePassFor === employeeId);
   const pinStepNeeded = Boolean(employeeId) && pinRequired && !hasPass;
+  // Почему «Сохранить» неактивна — пишем под кнопкой, а не оставляем серой загадкой.
+  const blockedReason = !hasActiveDocument
+    ? "Нет журнала на сегодня — запись некуда сохранить"
+    : !employeeId
+      ? "Не выбран сотрудник"
+      : pinRequired && !hasPass
+        ? "Не введён PIN"
+        : !status && parsedTemp === null
+          ? "Не указана температура"
+          : correctionMissing
+            ? "Опишите, что сделали"
+            : null;
 
   return (
     <QrPageShell orgName={organizationName} title={journalTitle}>
@@ -277,7 +305,9 @@ export function EquipmentFillClient({
               Записано
             </h2>
             <p className="mt-2 text-[14px] leading-relaxed text-[#6f7282]">
-              Температура {parsedTemp}°C сохранена в журнал{" "}
+              {status
+                ? `${COLD_EQUIPMENT_STATUS_TITLE[status]}: в журнале «${COLD_EQUIPMENT_STATUS_SHORT[status]}»`
+                : `Температура ${parsedTemp}°C сохранена в журнал`}{" "}
               {rememberedName ? `на имя ${rememberedName}` : ""}.
             </p>
             {/* Раньше предупреждение о выходе за норму исчезало вместе с
@@ -300,6 +330,7 @@ export function EquipmentFillClient({
                 setTemperature(equipment.tempMax != null && equipment.tempMax < 0 ? "-" : "");
                 setHumidity("");
                 setCorrection("");
+                setStatus(null);
                 setError(null);
               }}
               className="mt-3 h-12 w-full rounded-2xl border border-[#dcdfed] bg-white px-5 text-[15px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
@@ -315,7 +346,7 @@ export function EquipmentFillClient({
                 value={employeeId}
                 onChange={rememberEmployee}
                 fixedName={fixedEmployee ? sessionEmployee?.name ?? null : null}
-                hint={rememberedName && !pinStepNeeded ? "Запомнили с прошлого раза — можно сразу вводить показания." : rememberedName && selectedEmployee?.hasPin ? "Запомнили с прошлого раза — введите свой PIN." : null}
+                hint={restoredId !== null && restoredId === employeeId ? (!pinStepNeeded ? "Запомнили с прошлого раза — можно сразу вводить показания." : selectedEmployee?.hasPin ? "Запомнили с прошлого раза — введите свой PIN." : null) : null}
               />
               {pinRequired && hasPass && !fixedEmployee ? (
                 <QrPassNote remembered={cookiePassFor === employeeId} onLogout={logout} />
@@ -355,11 +386,14 @@ export function EquipmentFillClient({
                   </button>
                 </p>
               ) : null}
-              <ReadingField id="equipment-fill-temperature" label="Температура" unit="°C" stamp={stampLabel} value={temperature} onChange={setTemperature} min={equipment.tempMin} max={equipment.tempMax} required />
+              {status ? null : (
+                <ReadingField id="equipment-fill-temperature" label="Температура" unit="°C" stamp={stampLabel} value={temperature} onChange={setTemperature} min={equipment.tempMin} max={equipment.tempMax} required />
+              )}
+              <EquipmentStatusChoice value={status} onChange={setStatus} />
 
               {/* Дополнительное поле для оборудования с climate-mapping
                   на humidity (например, кондиционер в кондитерской цехе). */}
-              {equipment.hasHumidityField ? (
+              {equipment.hasHumidityField && !status ? (
                 <ReadingField id="equipment-fill-humidity" label="Влажность" unit="%" stamp={stampLabel} value={humidity} onChange={setHumidity} min={humidityNorm?.min} max={humidityNorm?.max} invalidText={humidity.trim() && parsedHumidity === null ? "Влажность — число от 0 до 100, можно оставить пустым." : null} />
               ) : null}
 
@@ -386,21 +420,17 @@ export function EquipmentFillClient({
                 </div>
               ) : null}
 
-              <Button
-                type="button"
-                onClick={save}
-                disabled={
-                  submitting ||
-                  !employeeId ||
-                  parsedTemp === null ||
-                  !hasActiveDocument ||
-                  correctionMissing ||
-                  (pinRequired && !hasPass)
-                }
-                className="h-14 w-full rounded-2xl bg-[#5566f6] px-5 text-[18px] font-semibold text-white hover:bg-[#4a5bf0] shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] disabled:bg-[#c8cbe0]"
-              >
-                {submitting ? "Сохраняем…" : "Сохранить замер"}
-              </Button>
+              <div>
+                <Button
+                  type="button"
+                  onClick={save}
+                  disabled={submitting || blockedReason !== null}
+                  className="h-14 w-full rounded-2xl bg-[#5566f6] px-5 text-[18px] font-semibold text-white hover:bg-[#4a5bf0] shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] disabled:bg-[#c8cbe0]"
+                >
+                  {submitting ? "Сохраняем…" : "Сохранить замер"}
+                </Button>
+                <SaveBlockedReason reason={submitting ? null : blockedReason} />
+              </div>
               </div>
               )}
             </div>

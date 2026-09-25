@@ -19,6 +19,7 @@ import {
   QR_FILL_JS,
 } from "./journal-fill-html";
 import { journalFillHints } from "./journal-fill-hints";
+import { QR_FILL_CORRECTION_PRESETS, QR_FILL_DEFAULT_CORRECTION } from "@/lib/qr-correction-presets";
 
 describe("journal-fill-html", () => {
   it("escapes html and keeps inline json safe", () => {
@@ -81,6 +82,10 @@ describe("journal-fill-html", () => {
     assert.match(html, /<label class="qp-k" for="qp-pin">Ваш PIN<\/label><a class="qp-link" href="\/x\?pinreq=change">Запросить смену PIN<\/a>/);
     assert.match(html, /<input id="qp-pin" class="qp-pin" type="password" name="pin" inputmode="numeric"/);
     assert.match(html, /<div class="qp-err" role="alert">Неверный PIN. Осталось попыток: 4.<\/div>/);
+    // Кнопка шага PIN — «Войти», не «Продолжить».
+    assert.match(html, /<button class="btn" type="submit">Войти<\/button>/);
+    assert.equal(html.includes("Продолжить"), false);
+    assert.equal(QR_FILL_DEFAULT_CORRECTION, "Повторю через 30 минут.");
   });
 
   it("renders the employee picker as a plain GET form with «remember» checked", () => {
@@ -110,9 +115,13 @@ describe("journal-fill-html", () => {
       values: { productName: "Борщ <b>", productTemp: 75, s: "a" },
       suggestions: { dish: { values: ["Борщ <b>", "Плов"], meta: {} } },
       who: "",
-      correctionPresets: ["Сообщил руководителю"],
+      correctionPresets: QR_FILL_CORRECTION_PRESETS,
       openedAt: 1,
     });
+    // «Что сделали» по умолчанию — «Повторю через 30 минут.»: в поле и отмеченный чип.
+    assert.match(html, /<textarea class="in" name="__correction"[^>]*>Повторю через 30 минут\.<\/textarea>/);
+    assert.match(html, /<button type="button" class="chip on" data-fill="__correction" data-value="Повторю через 30 минут\.">/);
+    assert.match(html, /<button type="button" class="chip" data-fill="__correction" data-value="Сообщил руководителю">/);
     assert.match(html, /<form method="post" action="\/journal-fill\/o\/c\?token=t"/);
     assert.match(html, /name="productName"[^>]*value="Борщ &lt;b&gt;"/);
     assert.match(html, /data-min="-20" data-max="120"/);

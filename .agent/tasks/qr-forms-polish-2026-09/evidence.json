@@ -1,0 +1,23 @@
+{
+  "task": "qr-forms-polish-2026-09",
+  "date": "2026-09-25",
+  "verdict": "PASS",
+  "checks": {
+    "typecheck": { "command": "npm run typecheck", "exit": 0, "log": "typecheck.log" },
+    "unit": { "command": "npm test", "tests": 2212, "pass": 2212, "fail": 0, "log": "test-summary.txt" },
+    "e2e": { "command": "npx tsx --env-file=.env .agent/tasks/qr-forms-polish-2026-09/e2e/qr-forms.ts", "pass": 36, "total": 36, "raw": "e2e/qr-forms.json", "viewports": ["390x844 touch", "1440x900"] }
+  },
+  "acceptance": {
+    "AC1": { "status": "PASS", "evidence": ["e2e/qr-forms.json [AC1] x12", "src/lib/cold-equipment-document.test.ts", "shots/04-fridge-repair-390.jpg", "shots/06-site-cold-table-1440.jpg", "shots/09-site-cold-cards-390.jpg", "PDF text via pdfjs: обсл + рем"] },
+    "AC2": { "status": "PASS", "evidence": ["e2e/qr-forms.json [AC2] x4", "shots/01-fridge-no-employee-390.jpg"] },
+    "AC3": { "status": "PASS", "evidence": ["e2e/qr-forms.json [AC3] x2", "src/lib/journal-fill-html.test.ts", "shots/03-fridge-deviation-default-390.jpg"] },
+    "AC4": { "status": "PASS", "evidence": ["e2e/qr-forms.json [AC4] x9", "src/lib/journal-fill-html.test.ts (Войти)", "shots/02-fridge-pin-390.jpg", "shots/05-fridge-restored-390.jpg"] },
+    "AC5": { "status": "PASS", "evidence": ["e2e/qr-forms.json [AC5] x9", "src/lib/order-scan-camera.test.ts", "shots/07-site-order-camera-390.jpg", "shots/08-qr-hygiene-order-camera-390.jpg"] },
+    "AC6": { "status": "PASS", "evidence": ["typecheck.log", "test-summary.txt", "e2e/qr-forms.json"] }
+  },
+  "notes": [
+    "shots/*.jpg are gitignored (.agent/**/*.jpg) and stay local in the worktree",
+    "dev server needs --webpack: Turbopack panics on the junction node_modules",
+    "no production build was run (orchestrator builds at integration)"
+  ]
+}

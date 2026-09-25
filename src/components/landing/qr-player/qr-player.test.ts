@@ -137,7 +137,7 @@ test("напоминания 12:00 / 17:00 / 21:00 — ступени крона
 });
 
 test("пресеты «Что сделали» — из формы отклонения", () => {
-  const source = read("src/components/qr-fill/deviation-correction.tsx");
+  const source = read("src/lib/qr-correction-presets.ts");
   const scene = read("src/components/landing/qr-player/scene.tsx");
   for (const chip of ["Вызвал мастера", "Переложил продукты"]) {
     assert.ok(source.includes(chip) && scene.includes(chip), chip);

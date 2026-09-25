@@ -173,12 +173,14 @@ export function expandColdEquipmentReadingSlots(
 /** Ключ первого пустого замера оборудования за день; все заполнены — последний. */
 export function pickColdReadingSlotForWrite(
   item: ColdEquipmentConfigItem,
-  temperatures: Record<string, number | null | undefined>
+  temperatures: Record<string, number | null | undefined>,
+  /** Замеры с отметкой «обсл»/«рем» тоже заняты. */
+  statuses: Record<string, ColdEquipmentStatus | undefined> = {}
 ): string {
   const count = getColdEquipmentReadingCount(item);
   for (let index = 0; index < count; index += 1) {
     const key = coldReadingSlotKey(item.id, index);
-    if (temperatures[key] === null || temperatures[key] === undefined) return key;
+    if ((temperatures[key] === null || temperatures[key] === undefined) && !statuses[key]) return key;
   }
   return coldReadingSlotKey(item.id, count - 1);
 }
@@ -196,7 +198,101 @@ export type ColdEquipmentEntryData = {
    * норму. Ключ — id оборудования: у каждого холодильника своя история.
    */
   corrections?: Record<string, string>;
+  /**
+   * «обсл» / «рем» вместо температуры (2026-09-25): холодильник на
+   * обслуживании или в ремонте — замера нет, норма не проверяется. Ключ —
+   * тот же ключ замера, что в `temperatures`; температура там при этом `null`,
+   * так что отчёты и автозаполнение, читающие только числа, работают как раньше.
+   */
+  statuses?: Record<string, ColdEquipmentStatus>;
 };
+
+/** Отметка вместо температуры: обслуживание или ремонт. */
+export type ColdEquipmentStatus = "service" | "repair";
+
+export const COLD_EQUIPMENT_STATUSES: ColdEquipmentStatus[] = ["service", "repair"];
+
+/** Короткая запись в ячейке журнала и в печати. */
+export const COLD_EQUIPMENT_STATUS_SHORT: Record<ColdEquipmentStatus, string> = {
+  service: "обсл",
+  repair: "рем",
+};
+
+/** Полное название — кнопки QR-формы и меню ячейки. */
+export const COLD_EQUIPMENT_STATUS_TITLE: Record<ColdEquipmentStatus, string> = {
+  service: "Обслуживание",
+  repair: "Ремонт",
+};
+
+/**
+ * «обсл», «обсл.», «Обслуживание», «service», «рем», «ремонт», «repair» →
+ * отметка; всё остальное — `null`.
+ */
+export function parseColdEquipmentStatus(value: unknown): ColdEquipmentStatus | null {
+  if (typeof value !== "string") return null;
+  const text = value.trim().toLowerCase().replace(/\.$/, "");
+  if (!text) return null;
+  if (text === "service" || text.startsWith("обсл")) return "service";
+  if (text === "repair" || text.startsWith("рем")) return "repair";
+  return null;
+}
+
+/**
+ * Текст из ячейки на сайте: число (с запятой или точкой) или «обсл»/«рем».
+ * Пустое и мусор — пустая ячейка.
+ */
+export function parseColdEquipmentCellInput(raw: string): {
+  temperature: number | null;
+  status: ColdEquipmentStatus | null;
+} {
+  const status = parseColdEquipmentStatus(raw);
+  if (status) return { temperature: null, status };
+  const text = raw.trim().replace(",", ".");
+  if (!text) return { temperature: null, status: null };
+  const parsed = Number(text);
+  return { temperature: Number.isFinite(parsed) ? parsed : null, status: null };
+}
+
+/** Что показать в ячейке: «обсл»/«рем» или число (пусто — пустая строка). */
+export function formatColdEquipmentCell(
+  temperature: number | null | undefined,
+  status: ColdEquipmentStatus | null | undefined,
+): string {
+  if (status) return COLD_EQUIPMENT_STATUS_SHORT[status];
+  return temperature === null || temperature === undefined ? "" : String(temperature);
+}
+
+/**
+ * Записать в замер отметку «обсл»/«рем» (температура становится пустой) или
+ * снять её (`null`). Комментарий к отклонению у этого замера больше не нужен.
+ */
+export function setColdEquipmentSlotStatus(
+  data: ColdEquipmentEntryData,
+  slotKey: string,
+  status: ColdEquipmentStatus | null,
+): ColdEquipmentEntryData {
+  const statuses = { ...(data.statuses ?? {}) };
+  if (status) statuses[slotKey] = status;
+  else delete statuses[slotKey];
+  const next: ColdEquipmentEntryData = {
+    ...data,
+    temperatures: status ? { ...data.temperatures, [slotKey]: null } : data.temperatures,
+  };
+  if (Object.keys(statuses).length > 0) next.statuses = statuses;
+  else delete next.statuses;
+  return next;
+}
+
+/**
+ * Без отметок «обсл»/«рем»: обслуживание и ремонт — событие своего дня,
+ * «как вчера» и перенос значений на следующий день их не копируют.
+ */
+export function withoutColdEquipmentStatuses(data: ColdEquipmentEntryData): ColdEquipmentEntryData {
+  if (!data.statuses) return data;
+  const next = { ...data };
+  delete next.statuses;
+  return next;
+}
 
 export type ColdEquipmentDeviation = {
   key: string;
@@ -505,13 +601,27 @@ export function normalizeColdEquipmentEntryData(
   }
 
   const corrections = normalizeCorrections(record.corrections);
+  const statuses = normalizeStatuses(record.statuses);
+  // Отметка сильнее числа: у замера «обсл»/«рем» температуры нет.
+  if (statuses) for (const key of Object.keys(statuses)) temperatures[key] = null;
 
   return {
     responsibleTitle:
       typeof record.responsibleTitle === "string" ? record.responsibleTitle : null,
     temperatures,
     ...(corrections ? { corrections } : {}),
+    ...(statuses ? { statuses } : {}),
   };
+}
+
+function normalizeStatuses(value: unknown): Record<string, ColdEquipmentStatus> | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const statuses: Record<string, ColdEquipmentStatus> = {};
+  for (const [key, raw] of Object.entries(value as Record<string, unknown>)) {
+    const status = parseColdEquipmentStatus(raw);
+    if (status) statuses[key] = status;
+  }
+  return Object.keys(statuses).length ? statuses : undefined;
 }
 
 /**
@@ -591,6 +701,7 @@ export function syncColdEquipmentEntryDataWithConfig(
     next.temperatures[slot.slotKey] = entryData.temperatures[slot.slotKey] ?? null;
   });
   if (entryData.corrections) next.corrections = entryData.corrections;
+  if (entryData.statuses) next.statuses = entryData.statuses;
 
   return next;
 }
@@ -649,12 +760,15 @@ export function mergeColdEquipmentEntryData(
   };
 
   Object.keys(generatedData.temperatures).forEach((equipmentId) => {
-    next.temperatures[equipmentId] =
-      currentData.temperatures[equipmentId] ??
-      generatedData.temperatures[equipmentId] ??
-      null;
+    // «обсл»/«рем» за этот день — число автозаполнение не подставляет.
+    next.temperatures[equipmentId] = currentData.statuses?.[equipmentId]
+      ? null
+      : currentData.temperatures[equipmentId] ??
+        generatedData.temperatures[equipmentId] ??
+        null;
   });
   if (currentData.corrections) next.corrections = currentData.corrections;
+  if (currentData.statuses) next.statuses = currentData.statuses;
 
   return next;
 }

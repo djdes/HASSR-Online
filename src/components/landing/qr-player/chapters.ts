@@ -193,7 +193,7 @@ export const UI = {
   whoFills: "Кто заполняет",
   pinLabel: "Ваш PIN",
   pinHint: "PIN для подтверждения личности",
-  pinContinue: "Продолжить",
+  pinContinue: "Войти",
   entrySaved: "Отметка записана",
   // src/app/equipment-fill/[equipmentId]/equipment-fill-client.tsx
   equipment: "Оборудование",

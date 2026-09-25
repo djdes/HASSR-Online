@@ -10,9 +10,12 @@ import {
 import { verifyEquipmentQrToken } from "@/lib/equipment-qr-token";
 import {
   normalizeColdEquipmentEntryData,
+  COLD_EQUIPMENT_STATUS_SHORT,
   pickColdReadingSlotForWrite,
   setColdEquipmentCorrection,
+  setColdEquipmentSlotStatus,
   type ColdEquipmentEntryData,
+  type ColdEquipmentStatus,
 } from "@/lib/cold-equipment-document";
 import {
   climateCorrectionKey,
@@ -63,7 +66,13 @@ const bodySchema = z.object({
   pin: z.string().max(12).optional(),
   /** Пропуск визита после шага PIN (`/api/qr-fill/pass`). */
   pass: z.string().max(300).optional(),
-  temperature: z.number(),
+  /** Температура; не нужна, если вместо неё отметка `status`. */
+  temperature: z.number().optional(),
+  /**
+   * «Обслуживание» / «Ремонт» вместо температуры (2026-09-25): в ячейке
+   * журнала — «обсл»/«рем», норма не проверяется, комментарий не нужен.
+   */
+  status: z.enum(["service", "repair"]).optional(),
   /** Опциональная влажность для оборудования с climate-mapping. */
   humidity: z.number().min(0).max(100).optional(),
   /**
@@ -100,6 +109,12 @@ export async function POST(
       );
     }
     return NextResponse.json({ error: "Некорректные данные" }, { status: 400 });
+  }
+
+  const status: ColdEquipmentStatus | null = parsed.status ?? null;
+  const temperature = status ? null : parsed.temperature ?? null;
+  if (!status && temperature === null) {
+    return NextResponse.json({ error: "Введите температуру" }, { status: 400 });
   }
 
   const verify = verifyEquipmentQrToken(parsed.token);
@@ -189,13 +204,17 @@ export async function POST(
 
   // Отклонение → комментарий обязателен: иначе в журнале остаётся голое
   // число, и проверяющий не видит ни причины, ни действия.
+  // «обсл»/«рем» — замера нет: норма не проверяется, влажность не пишется.
+  const humidity = status ? undefined : parsed.humidity;
   const isOutOfRange =
-    (equipment.tempMin != null && parsed.temperature < equipment.tempMin) ||
-    (equipment.tempMax != null && parsed.temperature > equipment.tempMax);
+    temperature !== null &&
+    ((equipment.tempMin != null && temperature < equipment.tempMin) ||
+      (equipment.tempMax != null && temperature > equipment.tempMax));
   const humidityOutOfRange = targets.climate
-    ? isClimateValueOutOfRange(parsed.humidity, targets.climate.row.humidity)
+    ? isClimateValueOutOfRange(humidity, targets.climate.row.humidity)
     : false;
-  const correction = parsed.correction?.trim() ?? "";
+  // Комментарий пишем только к отклонению: в норме поле на форме скрыто.
+  const correction = isOutOfRange || humidityOutOfRange ? parsed.correction?.trim() ?? "" : "";
   if ((isOutOfRange || humidityOutOfRange) && !correction) {
     return NextResponse.json(
       {
@@ -233,24 +252,30 @@ export async function POST(
       select: { data: true },
     });
     const dayTemperatures: Record<string, number | null> = {};
+    const dayStatuses: Record<string, ColdEquipmentStatus> = {};
     for (const dayEntry of dayEntries) {
       const dayData = normalizeColdEquipmentEntryData(dayEntry.data ?? null);
       for (const [key, value] of Object.entries(dayData.temperatures)) {
         if (value != null) dayTemperatures[key] = value;
       }
+      Object.assign(dayStatuses, dayData.statuses ?? {});
     }
     const writtenSlotKeys: string[] = [];
-    for (const item of matching) {
-      const slotKey = pickColdReadingSlotForWrite(item, dayTemperatures);
-      temperatures[slotKey] = parsed.temperature;
-      dayTemperatures[slotKey] = parsed.temperature;
-      writtenSlotKeys.push(slotKey);
-    }
     let nextData: ColdEquipmentEntryData = {
       responsibleTitle: current.responsibleTitle,
       temperatures,
       ...(current.corrections ? { corrections: current.corrections } : {}),
+      ...(current.statuses ? { statuses: current.statuses } : {}),
     };
+    for (const item of matching) {
+      const slotKey = pickColdReadingSlotForWrite(item, dayTemperatures, dayStatuses);
+      // Число снимает прежнюю отметку замера, отметка очищает число.
+      nextData = setColdEquipmentSlotStatus(nextData, slotKey, status);
+      nextData.temperatures[slotKey] = temperature;
+      dayTemperatures[slotKey] = temperature;
+      if (status) dayStatuses[slotKey] = status;
+      writtenSlotKeys.push(slotKey);
+    }
     // Комментарий ложится к тому замеру, который только что записали —
     // журнал и печать читают его из `corrections` сами.
     for (const slotKey of writtenSlotKeys) {
@@ -281,7 +306,7 @@ export async function POST(
   // в active climate_control document. Используется в кондитерках,
   // где один датчик отвечает за temperature + humidity комнаты.
   let humidityTouched = 0;
-  if (typeof parsed.humidity === "number" && targets.climate) {
+  if (typeof humidity === "number" && targets.climate) {
     // Строка климата — цех оборудования (`room-area-<areaId>` или
     // совпадение названия): у самого оборудования строки в бланке нет.
     const { documentId: climateDocId, config: climateConfig, row: climateRow } =
@@ -298,13 +323,13 @@ export async function POST(
       select: { data: true },
     });
     let nextData = mergeClimateMeasurement(existing?.data ?? null, climateRow.id, slot, {
-      temperature: parsed.temperature,
-      humidity: parsed.humidity,
+      temperature: temperature ?? undefined,
+      humidity,
     });
     // Влажность вне нормы цеха — тот же комментарий, ключ замера climate.
     if (
       correction &&
-      isClimateValueOutOfRange(parsed.humidity, climateRow.humidity)
+      isClimateValueOutOfRange(humidity, climateRow.humidity)
     ) {
       nextData = mergeClimateCorrections(nextData, {
         [climateCorrectionKey(climateRow.id, slot, "humidity")]: correction,
@@ -343,16 +368,18 @@ export async function POST(
 
   // Отклонение → тот же обработчик, что у датчиков: ответственному за
   // журнал сразу, руководству — если не исправит (temperature-deviations).
-  await processTemperatureReading({
-    organizationId,
-    subjectKey: subjectKeyForEquipment(equipment.id),
-    subjectName: equipment.name,
-    value: parsed.temperature,
-    tempMin: equipment.tempMin,
-    tempMax: equipment.tempMax,
-    equipmentId: equipment.id,
-    source: `${employee.name} (QR)`,
-  });
+  if (temperature !== null) {
+    await processTemperatureReading({
+      organizationId,
+      subjectKey: subjectKeyForEquipment(equipment.id),
+      subjectName: equipment.name,
+      value: temperature,
+      tempMin: equipment.tempMin,
+      tempMax: equipment.tempMax,
+      equipmentId: equipment.id,
+      source: `${employee.name} (QR)`,
+    });
+  }
 
   await recordQrFillAudit({
     request,
@@ -363,9 +390,10 @@ export async function POST(
     employee,
     documentIds: touchedDocumentIds,
     dateKey,
-    temperature: parsed.temperature,
-    humidity: parsed.humidity,
+    temperature,
+    humidity,
     outOfRange: isOutOfRange || humidityOutOfRange,
+    ...(status ? { values: { status: COLD_EQUIPMENT_STATUS_SHORT[status] } } : {}),
   });
 
   return NextResponse.json({
@@ -373,5 +401,6 @@ export async function POST(
     touched,
     humidityTouched,
     outOfRange: isOutOfRange || humidityOutOfRange,
+    ...(status ? { status } : {}),
   });
 }

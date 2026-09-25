@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
-import { Check, ExternalLink, FileText, ImageIcon, Loader2, Pencil, Printer, Trash2, Upload, X } from "lucide-react";
+import { Camera, Check, ExternalLink, FileText, ImageIcon, Loader2, Pencil, Printer, Trash2, Upload, X } from "lucide-react";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PhotoLightbox } from "@/components/shared/photo-lightbox";
@@ -14,6 +14,7 @@ import {
   ORDER_SCAN_MAX_FILES,
   ORDER_SCAN_TITLE_MAX,
 } from "@/lib/journal-order-scans";
+import { ORDER_SCAN_CAMERA_ACCEPT, orderScanPhotoTitle, orderScanPhotoToJpeg } from "@/lib/order-scan-camera";
 
 /**
  * «Приказы к журналу» (пожелание РПН, 2026-09-24): сканы приказа о
@@ -70,6 +71,8 @@ export function JournalOrderScansPanel({ journalCode, initialScans, canManage }:
   const [deleting, setDeleting] = useState<OrderScanItem | null>(null);
   const [viewing, setViewing] = useState<OrderScanItem | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  // «Камера» на телефоне: снимок сразу с задней камеры, уходит как скан JPG.
+  const cameraRef = useRef<HTMLInputElement | null>(null);
 
   const example = ORDER_SCAN_JOURNALS[journalCode]?.example ?? "приказ о назначении ответственного";
   const full = scans.length >= ORDER_SCAN_MAX_FILES;
@@ -77,7 +80,7 @@ export function JournalOrderScansPanel({ journalCode, initialScans, canManage }:
   // Сотруднику без приказов показывать нечего — блок не занимает место.
   if (!canManage && scans.length === 0) return null;
 
-  async function upload(file: File) {
+  async function upload(file: File, title?: string) {
     if (file.size > ORDER_SCAN_MAX_BYTES) {
       toast.error(ORDER_SCAN_ERRORS.tooBig);
       return;
@@ -91,6 +94,7 @@ export function JournalOrderScansPanel({ journalCode, initialScans, canManage }:
       const form = new FormData();
       form.set("code", journalCode);
       form.set("file", file);
+      if (title) form.set("title", title);
       const response = await fetch("/api/journal-order-scans", { method: "POST", body: form });
       if (!response.ok) {
         toast.error(await readError(response, "Не удалось загрузить приказ"));
@@ -104,6 +108,7 @@ export function JournalOrderScansPanel({ journalCode, initialScans, canManage }:
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
+      if (cameraRef.current) cameraRef.current.value = "";
     }
   }
 
@@ -189,17 +194,57 @@ export function JournalOrderScansPanel({ journalCode, initialScans, canManage }:
                 if (file) void upload(file);
               }}
             />
-            <button
-              type="button"
-              disabled={uploading || full}
-              onClick={() => inputRef.current?.click()}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {uploading ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
-              {uploading ? "Загружаем…" : "Загрузить приказ"}
-            </button>
+            <input
+              ref={cameraRef}
+              type="file"
+              accept={ORDER_SCAN_CAMERA_ACCEPT}
+              capture="environment"
+              className="hidden"
+              data-order-scan-camera-input
+              onChange={(event) => {
+                const photo = event.target.files?.[0];
+                if (!photo) return;
+                const at = new Date();
+                // Фото телефона уменьшаем и сохраняем JPG: скан читается, лимит 10 МБ не мешает.
+                void orderScanPhotoToJpeg(photo, at).then((file) => upload(file, orderScanPhotoTitle(at)));
+              }}
+            />
+            <div className="flex gap-2">
+              {/* Камера — только на телефоне: на компьютере фото приказа загружают файлом. */}
+              <button
+                type="button"
+                disabled={uploading || full}
+                onClick={() => cameraRef.current?.click()}
+                data-order-scan-camera
+                className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:cursor-not-allowed disabled:opacity-50 sm:hidden"
+              >
+                <Camera className="size-4" />
+                Камера
+              </button>
+              <button
+                type="button"
+                disabled={uploading || full}
+                onClick={() => inputRef.current?.click()}
+                className="inline-flex h-11 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
+              >
+                {uploading ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
+                {uploading ? (
+                  "Загружаем…"
+                ) : (
+                  <>
+                    {/* На телефоне рядом «Камера» — короче, чтобы обе кнопки в одну строку. */}
+                    <span className="sm:hidden">Загрузить</span>
+                    <span className="hidden sm:inline">Загрузить приказ</span>
+                  </>
+                )}
+              </button>
+            </div>
             <span className="text-center text-[12px] text-[#9b9fb3] sm:text-right">
-              {full ? `Не больше ${ORDER_SCAN_MAX_FILES} файлов — удалите ненужный` : "PDF, JPG или PNG, до 10 МБ"}
+              {full ? `Не больше ${ORDER_SCAN_MAX_FILES} файлов — удалите ненужный` : (
+                <>
+                  <span className="sm:hidden">Сфотографируйте приказ или загрузите </span>PDF, JPG или PNG, до 10 МБ
+                </>
+              )}
             </span>
           </div>
         ) : null}

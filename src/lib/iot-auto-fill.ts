@@ -87,11 +87,15 @@ export async function autofillColdEquipmentReading(args: {
     );
     const temperatures = { ...current.temperatures };
     for (const item of matching) {
+      // Холодильник на обслуживании/в ремонте («обсл»/«рем») — датчик не пишет поверх отметки.
+      if (current.statuses?.[item.id]) continue;
       temperatures[item.id] = args.temperature;
     }
     const nextData: ColdEquipmentEntryData = {
       responsibleTitle: current.responsibleTitle,
       temperatures,
+      ...(current.corrections ? { corrections: current.corrections } : {}),
+      ...(current.statuses ? { statuses: current.statuses } : {}),
     };
 
     await db.journalDocumentEntry.upsert({

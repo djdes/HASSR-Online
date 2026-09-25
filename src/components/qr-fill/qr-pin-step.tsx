@@ -22,7 +22,7 @@ export function QrPinOk() {
 
 export function QrRememberToggle({ checked, onChange }: { checked: boolean; onChange: (value: boolean) => void }) {
   return (
-    <label className="qp-remember">
+    <label className="qp-remember qp-remember-mid">
       <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} data-testid="qr-remember" />
       <span>{QR_REMEMBER_LABEL}</span>
     </label>
@@ -184,7 +184,7 @@ function QrPinStepFor(props: QrPinStepProps) {
         className="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] text-[19px] font-semibold text-white transition-colors duration-150 hover:bg-[#4a5bf0] disabled:bg-[#c8cbe0]"
       >
         {busy ? <Loader2 className="size-5 animate-spin" /> : null}
-        Продолжить
+        Войти
       </button>
     </form>
   );

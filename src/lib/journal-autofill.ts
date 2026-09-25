@@ -45,6 +45,7 @@ import {
   normalizeColdEquipmentDocumentConfig,
   normalizeColdEquipmentEntryData,
   syncColdEquipmentEntryDataWithConfig,
+  withoutColdEquipmentStatuses,
   type ColdEquipmentDocumentConfig,
   type ColdEquipmentEntryData,
 } from "@/lib/cold-equipment-document";
@@ -638,11 +639,14 @@ export async function applyPerDayJournalAutoFill(
         ? clampColdEquipmentToNorms(
             mergeColdEquipmentEntryData(
               syncColdEquipmentEntryDataWithConfig(
-                normalizeColdEquipmentEntryData(
-                  copyForwardWithJitter(source, `${document.id}:${dateKey}`, {
-                    jitterPct: COPY_FORWARD_JITTER_PCT,
-                    overrides: { responsibleTitle: document.responsibleTitle },
-                  })
+                // «обсл»/«рем» — событие своего дня: в следующий день не переносим.
+                withoutColdEquipmentStatuses(
+                  normalizeColdEquipmentEntryData(
+                    copyForwardWithJitter(source, `${document.id}:${dateKey}`, {
+                      jitterPct: COPY_FORWARD_JITTER_PCT,
+                      overrides: { responsibleTitle: document.responsibleTitle },
+                    })
+                  )
                 ),
                 config
               ),

@@ -130,3 +130,56 @@ test("та же норма — записи в базу не требуется"
   });
   assert.equal(changed, false);
 });
+
+test("«обсл»/«рем»: разбор ячейки и подпись", async () => {
+  const { parseColdEquipmentCellInput, parseColdEquipmentStatus, formatColdEquipmentCell } = await import("@/lib/cold-equipment-document");
+  assert.deepEqual(parseColdEquipmentCellInput("обсл"), { temperature: null, status: "service" });
+  assert.deepEqual(parseColdEquipmentCellInput(" Рем. "), { temperature: null, status: "repair" });
+  assert.deepEqual(parseColdEquipmentCellInput("-18,5"), { temperature: -18.5, status: null });
+  assert.deepEqual(parseColdEquipmentCellInput(""), { temperature: null, status: null });
+  assert.equal(parseColdEquipmentStatus("Обслуживание"), "service");
+  assert.equal(parseColdEquipmentStatus("ремонт"), "repair");
+  assert.equal(parseColdEquipmentStatus("4"), null);
+  assert.equal(formatColdEquipmentCell(null, "service"), "обсл");
+  assert.equal(formatColdEquipmentCell(4, "repair"), "рем");
+  assert.equal(formatColdEquipmentCell(3.5, null), "3.5");
+});
+
+test("«обсл»/«рем»: хранение, слоты, автозаполнение не подставляет число и не переносит отметку", async () => {
+  const {
+    normalizeColdEquipmentEntryData,
+    setColdEquipmentSlotStatus,
+    mergeColdEquipmentEntryData,
+    buildColdEquipmentAutoFillEntryData,
+    withoutColdEquipmentStatuses,
+  } = await import("@/lib/cold-equipment-document");
+  const base = createEmptyColdEquipmentEntryData(config);
+  const firstKey = config.equipment[0].id;
+  const marked = setColdEquipmentSlotStatus({ ...base, temperatures: { ...base.temperatures, [firstKey]: 5 } }, firstKey, "repair");
+  assert.equal(marked.temperatures[firstKey], null);
+  assert.equal(marked.statuses?.[firstKey], "repair");
+
+  // Через JSON и normalize отметка доходит без потерь, число рядом стирается.
+  const roundTrip = normalizeColdEquipmentEntryData(JSON.parse(JSON.stringify({ ...marked, temperatures: { [firstKey]: 7 } })));
+  assert.equal(roundTrip.statuses?.[firstKey], "repair");
+  assert.equal(roundTrip.temperatures[firstKey], null);
+  assert.equal(syncColdEquipmentEntryDataWithConfig(roundTrip, config).statuses?.[firstKey], "repair");
+
+  // Слот с отметкой занят: следующий скан ложится в следующий замер.
+  const twice = { ...config.equipment[0], readingMode: "twice" as const };
+  assert.equal(pickColdReadingSlotForWrite(twice, {}, { [twice.id]: "service" }), coldReadingSlotKey(twice.id, 1));
+
+  const generated = buildColdEquipmentAutoFillEntryData({ config, dateKey: "2026-09-25", responsibleTitle: null });
+  const merged = mergeColdEquipmentEntryData(marked, generated);
+  assert.equal(merged.temperatures[firstKey], null);
+  assert.equal(merged.statuses?.[firstKey], "repair");
+
+  // «Как вчера»: без отметок — день заполняется числами.
+  const carried = mergeColdEquipmentEntryData(withoutColdEquipmentStatuses(marked), generated);
+  assert.equal(carried.statuses, undefined);
+  assert.equal(typeof carried.temperatures[firstKey], "number");
+
+  // Снятие отметки.
+  const cleared = setColdEquipmentSlotStatus(marked, firstKey, null);
+  assert.equal(cleared.statuses, undefined);
+});

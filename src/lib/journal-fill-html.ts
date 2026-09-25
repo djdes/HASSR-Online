@@ -65,7 +65,7 @@ button.item{width:100%;font-family:inherit;text-align:left;cursor:pointer;-webki
 .who .wl{min-width:0;flex:1;display:flex;flex-direction:column;gap:1px}
 .who .k{font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#9b9fb3}
 .who .v{font-size:22px;font-weight:600;color:#0b1024;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
-.who a{flex:none;font-size:15px;font-weight:500;text-decoration:none;color:#3848c7;padding:6px 10px;border-radius:999px;background:#f5f6ff}
+.who a{flex:none;align-self:center;display:inline-flex;align-items:center;min-height:44px;font-size:16px;font-weight:600;text-decoration:none;color:#3848c7;padding:0 16px;border-radius:999px;background:#eef1ff}
 .steps{margin:0 0 12px;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}
 .steps li{display:flex;gap:10px;font-size:16.5px;color:#3c4053;line-height:1.35}
 .steps .n{flex:none;width:24px;height:24px;border-radius:999px;background:#eef1ff;color:#3848c7;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;margin-top:1px}
@@ -488,7 +488,7 @@ export function renderPinStep(params: {
 ${params.error ? `<div class="qp-err" role="alert">${esc(params.error)}</div>` : ""}
 <input id="qp-pin" class="qp-pin" type="password" name="pin" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" placeholder="••••" required autofocus>
 <p class="qp-hint">PIN для подтверждения личности</p>
-<div class="sticky"><button class="btn" type="submit">Продолжить</button></div>
+<div class="sticky"><button class="btn" type="submit">Войти</button></div>
 </form>`;
 }
 
@@ -804,9 +804,13 @@ export function renderForm(params: {
         .join("")}</ol>`;
   const hint = introHint(params.form.intro, params.employeeName ?? "");
   const hasNumbers = params.form.fields.some((field) => field.type === "number" && (normRange(field).min != null || normRange(field).max != null));
+  // По умолчанию выбран первый вариант («Повторю через 30 минут.»): сервер
+  // берёт комментарий, только когда значение вне нормы, так что скрытый блок
+  // с готовым ответом ничего лишнего в журнал не пишет.
+  const correctionValue = params.correction ?? params.correctionPresets[0] ?? "";
   const deviation = hasNumbers
-    ? `<div class="dev" id="deviation"${params.showDeviation ? "" : " hidden"}><b id="deviation-title">${esc(params.deviationTitle ?? "Значение вне нормы")}</b><p>Напишите, что вы сделали — это попадёт в журнал рядом с записью.</p><textarea class="in" name="__correction" id="f-__correction" rows="2" placeholder="Что сделали">${esc(params.correction ?? "")}</textarea><div class="chips">${params.correctionPresets
-        .map((preset) => `<button type="button" class="chip" data-fill="__correction" data-value="${esc(preset)}">${esc(preset)}</button>`)
+    ? `<div class="dev" id="deviation"${params.showDeviation ? "" : " hidden"}><b id="deviation-title">${esc(params.deviationTitle ?? "Значение вне нормы")}</b><p>Напишите, что вы сделали — это попадёт в журнал рядом с записью.</p><textarea class="in" name="__correction" id="f-__correction" rows="2" placeholder="Что сделали">${esc(correctionValue)}</textarea><div class="chips">${params.correctionPresets
+        .map((preset) => `<button type="button" class="chip${preset === correctionValue ? " on" : ""}" data-fill="__correction" data-value="${esc(preset)}">${esc(preset)}</button>`)
         .join("")}</div></div>`
     : "";
   const today = params.stamp

@@ -93,6 +93,13 @@ import { qrFillRateLimiter } from "@/lib/rate-limit";
 import { relativeRedirect, safeInternalPath } from "@/lib/relative-redirect";
 import { rowKeyForEmployee } from "@/lib/tasksflow-adapters/row-key";
 import type { TaskFormField, TaskFormSchema } from "@/lib/tasksflow-adapters/task-form";
+import { QR_FILL_CORRECTION_PRESETS } from "@/lib/qr-correction-presets";
+import { authOptions } from "@/lib/auth";
+import { getActiveOrgId } from "@/lib/auth-helpers";
+import { getServerSession } from "@/lib/server-session";
+import { ORDER_SCAN_JOURNALS, ORDER_SCAN_MAX_FILES, supportsOrderScans } from "@/lib/journal-order-scans";
+import { canManageOrderScans } from "@/lib/journal-order-scans-db";
+import { ORDER_SCAN_CAMERA_CSS, ORDER_SCAN_CAMERA_JS, renderOrderScanCamera } from "@/lib/order-scan-camera";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -108,7 +115,7 @@ export const dynamic = "force-dynamic";
  * адресе, новый скан плаката его не несёт. Запоминается только сотрудник.
  */
 const CORRECTION_KEY_RE = /(correct|comment|note|remark|measure|action|коммент|действ)/i;
-const CORRECTION_PRESETS = ["Сообщил руководителю", "Вызвал мастера", "Переложил продукты", "Повторю замер через 30 минут"] as const;
+const CORRECTION_PRESETS = QR_FILL_CORRECTION_PRESETS;
 
 type Ctx = { params: Promise<{ orgId: string; code: string }> };
 
@@ -264,8 +271,21 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
   const timezone = org.timezone || "Europe/Moscow";
   const todayKey = todayKeyFor(org.timezone);
   const disabledCodes = org.disabledJournalCodes as string[];
+  // «Приказы к журналу» с камерой (гигиена, бракераж готовой продукции):
+  // ставится после шага PIN, только руководству, вошедшему в кабинет.
+  let orderScanBlock = "";
   const page = (title: string, body: string, subtitle?: string | null, script?: string | null, status = 200, setCookies: string[] = []) =>
-    html(renderPage({ orgName: org.name, title, subtitle, body, script }), status, setCookies);
+    html(
+      renderPage({
+        orgName: org.name,
+        title,
+        subtitle,
+        body: orderScanBlock ? `${body}<style>${ORDER_SCAN_CAMERA_CSS}</style>${orderScanBlock}` : body,
+        script: orderScanBlock ? `${script ?? ""}\n${ORDER_SCAN_CAMERA_JS}` : script,
+      }),
+      status,
+      setCookies
+    );
 
   // Дополнительный QR документа кончился (срок — в подписи, дата —
   // сегодняшняя по часовому поясу организации). Проверяем до входа и до
@@ -643,6 +663,23 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
       setCookies
     );
   }
+  // Приказы к журналу: права и API те же, что на сайте. Кто заполняет по QR
+  // (PIN, список) — не важно: кнопку видит только вошедший в кабинет этой
+  // организации руководитель (`canManageOrderScans`), и загрузка идёт с его
+  // сессией в `/api/journal-order-scans`, который проверяет то же самое.
+  if (supportsOrderScans(code)) {
+    const session = await getServerSession(authOptions).catch(() => null);
+    if (session && getActiveOrgId(session) === orgId && canManageOrderScans(session.user)) {
+      const count = await db.journalOrderScan.count({ where: { organizationId: orgId, journalCode: code } });
+      orderScanBlock = renderOrderScanCamera({
+        code,
+        count,
+        example: ORDER_SCAN_JOURNALS[code]?.example ?? "приказ о назначении ответственного",
+        max: ORDER_SCAN_MAX_FILES,
+      });
+    }
+  }
+
   // Сразу после верного PIN — зелёная галочка, поля всплывают под ней.
   const pinOk = passValid && q.get("ok") === "1";
   const whoOk = pinOk ? `${who}${renderPinOk()}` : who;
@@ -858,11 +895,14 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
 
   if (posted && posted.get("action") === "submit") {
     const { values, raw } = parseFormValues(posted, form);
-    const correction = String(posted.get("__correction") ?? "").trim();
+    // «Что сделали» уходит в журнал только при отклонении: поле предзаполнено
+    // вариантом по умолчанию и прячется, когда значения в норме.
+    const postedCorrection = String(posted.get("__correction") ?? "").trim();
     // Чекбоксы «Выключено / Нет показания» — `off:<ключ поля>`; работают и без скриптов.
     const off = Array.from(posted.keys()).filter((key) => key.startsWith("off:")).map((key) => key.slice(4));
     const outOfRange = form.fields.filter((field) => numberOutOfRange(field, values[field.key]));
     const deviationTitle = outOfRange.length > 0 ? `${outOfRange.map((field) => field.label).join(", ")} — вне нормы` : null;
+    const correction = outOfRange.length > 0 ? postedCorrection : "";
     if (outOfRange.length > 0 && correctionField && !correction) {
       return renderFormPage(raw, { error: "Значение вне нормы — напишите, что вы сделали", badKeys: outOfRange.map((field) => field.key), correction, showDeviation: true, deviationTitle, offKeys: off });
     }

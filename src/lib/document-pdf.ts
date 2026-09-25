@@ -37,6 +37,8 @@ import {
   normalizeColdEquipmentDocumentConfig,
   expandColdEquipmentReadingSlots,
   normalizeColdEquipmentEntryData,
+  COLD_EQUIPMENT_STATUS_SHORT,
+  type ColdEquipmentStatus,
 } from "@/lib/cold-equipment-document";
 import {
   CLEANING_DOCUMENT_TEMPLATE_CODE,
@@ -2097,7 +2099,7 @@ function drawColdEquipmentPdf(doc: jsPDF, params: {
   doc.setFont("JournalUnicode", "normal");
 
   // (dateKey → запись дня): у журнала одна строка на дату.
-  const rowByDate = new Map<string, { employeeId: string; temperatures: Record<string, number | null> }>();
+  const rowByDate = new Map<string, { employeeId: string; temperatures: Record<string, number | null>; statuses: Record<string, ColdEquipmentStatus> }>();
   params.entries.forEach((entry) => {
     const dateKey = toDateKey(entry.date);
     const data = normalizeColdEquipmentEntryData(entry.data);
@@ -2110,6 +2112,8 @@ function drawColdEquipmentPdf(doc: jsPDF, params: {
     rowByDate.set(dateKey, {
       employeeId: current?.employeeId ?? entry.employeeId,
       temperatures,
+      // «обсл»/«рем» вместо температуры — печатаются как есть.
+      statuses: { ...(current?.statuses ?? {}), ...(data.statuses ?? {}) },
     });
   });
 
@@ -2173,9 +2177,14 @@ function drawColdEquipmentPdf(doc: jsPDF, params: {
         colSpan: 2,
         styles: { halign: "left" as const, valign: "middle" as const },
       },
-      ...dateKeys.map((dateKey) =>
-        centerCell(formatNumberShort(rowByDate.get(dateKey)?.temperatures?.[item.slotKey]))
-      ),
+      ...dateKeys.map((dateKey) => {
+        const status = rowByDate.get(dateKey)?.statuses[item.slotKey];
+        return centerCell(
+          status
+            ? COLD_EQUIPMENT_STATUS_SHORT[status]
+            : formatNumberShort(rowByDate.get(dateKey)?.temperatures?.[item.slotKey])
+        );
+      }),
     ]);
   });
 
@@ -2193,7 +2202,8 @@ function drawColdEquipmentPdf(doc: jsPDF, params: {
       // Подпись С1 ставится ТОЛЬКО в дни с фактическими замерами —
       // иначе пустой журнал выглядел бы подписанным задним числом.
       const hasMeasurements = row
-        ? Object.values(row.temperatures).some((value) => value != null)
+        ? Object.values(row.temperatures).some((value) => value != null) ||
+          Object.keys(row.statuses).length > 0
         : false;
       return centerCell(
         hasMeasurements ? codeById.get(row?.employeeId ?? "") || "" : ""

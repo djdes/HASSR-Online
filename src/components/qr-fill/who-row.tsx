@@ -40,7 +40,8 @@ export function WhoRow({
           </span>
         </span>
         {onAction ? (
-          <span className="shrink-0 rounded-full bg-[#f5f6ff] px-3 py-1.5 text-[15px] font-medium text-[#3848c7]">{empty ? "Выбрать" : action ?? "Сменить"}</span>
+          // Крупная и по центру карточки по вертикали: в неё попадают пальцем на ходу.
+          <span className="inline-flex h-11 shrink-0 items-center self-center rounded-full bg-[#eef1ff] px-4 text-[16px] font-semibold text-[#3848c7]">{empty ? "Выбрать" : action ?? "Сменить"}</span>
         ) : null}
       </button>
       {children}

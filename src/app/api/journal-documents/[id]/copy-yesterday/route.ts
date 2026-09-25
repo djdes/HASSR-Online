@@ -8,6 +8,7 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { HYGIENE_V2_NO_COPY_MESSAGE, readHygieneFormVersion } from "@/lib/hygiene-v2";
 import { isHygieneEntryCopyable } from "@/lib/hygiene-admission";
+import { COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE } from "@/lib/cold-equipment-document";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -46,6 +47,14 @@ function toPrismaJsonValue(
   value: unknown
 ): Prisma.InputJsonValue | typeof Prisma.JsonNull {
   return value === null ? Prisma.JsonNull : (value as Prisma.InputJsonValue);
+}
+
+/** Сырые данные записи холодильников без `statuses` (остальное — как было). */
+function withoutColdStatusesRaw(data: unknown): unknown {
+  if (!data || typeof data !== "object" || Array.isArray(data) || !("statuses" in data)) return data;
+  const next = { ...(data as Record<string, unknown>) };
+  delete next.statuses;
+  return next;
 }
 
 export async function POST(
@@ -157,6 +166,9 @@ export async function POST(
       signed += 1;
       continue;
     }
+    // Холодильники: «обсл»/«рем» — событие вчерашнего дня, сегодня замер снимают заново.
+    const data =
+      doc.template?.code === COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE ? withoutColdStatusesRaw(entry.data) : entry.data;
     const alreadyHasToday = todayFilledEmployeeIds.has(entry.employeeId);
     if (alreadyHasToday && !overwrite) {
       kept += 1;
@@ -174,10 +186,10 @@ export async function POST(
         documentId,
         employeeId: entry.employeeId,
         date: today,
-        data: toPrismaJsonValue(entry.data),
+        data: toPrismaJsonValue(data),
       },
       update: {
-        data: toPrismaJsonValue(entry.data),
+        data: toPrismaJsonValue(data),
       },
     });
     copied += 1;

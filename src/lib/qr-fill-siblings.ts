@@ -7,7 +7,9 @@ import {
 import { pickNearestControlTime } from "@/lib/climate-fill";
 import {
   COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE,
+  COLD_EQUIPMENT_STATUS_SHORT,
   coldReadingSlotKey,
+  type ColdEquipmentStatus,
   normalizeColdEquipmentDocumentConfig,
   normalizeColdEquipmentEntryData,
 } from "@/lib/cold-equipment-document";
@@ -129,6 +131,16 @@ export async function listEquipmentSiblings(params: {
     }
     return null;
   };
+  // «обсл»/«рем» сегодня — объект тоже «снят», в форму подставляется отметка.
+  const statusOf = (documentId: string, itemId: string): ColdEquipmentStatus | null => {
+    const key = coldReadingSlotKey(itemId, 0);
+    for (const entry of entries) {
+      if (entry.documentId !== documentId) continue;
+      const status = normalizeColdEquipmentEntryData(entry.data ?? null).statuses?.[key];
+      if (status) return status;
+    }
+    return null;
+  };
 
   const items: QuickSwitchItem[] = [];
   const seen = new Set<string>();
@@ -139,14 +151,15 @@ export async function listEquipmentSiblings(params: {
       if (!equipmentId || seen.has(equipmentId)) continue;
       seen.add(equipmentId);
       const temperature = temperatureOf(doc.id, item.id);
+      const status = temperature === null ? statusOf(doc.id, item.id) : null;
       items.push({
         id: equipmentId,
         name: item.name,
         sublabel: null,
         href: `/equipment-fill/${equipmentId}?token=${encodeURIComponent(mintQrFillToken("equipment", equipmentId))}`,
-        filled: temperature !== null,
-        summary: formatValue(temperature, "°C"),
-        values: temperature !== null ? { temperature } : null,
+        filled: temperature !== null || status !== null,
+        summary: status ? COLD_EQUIPMENT_STATUS_SHORT[status] : formatValue(temperature, "°C"),
+        values: temperature !== null ? { temperature } : status ? { status } : null,
         current: equipmentId === params.currentEquipmentId,
       });
     }

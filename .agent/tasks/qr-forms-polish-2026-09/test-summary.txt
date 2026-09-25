@@ -1,0 +1,9 @@
+ℹ tests 2212
+ℹ suites 264
+ℹ pass 2212
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 66375.1295
+test exit 0

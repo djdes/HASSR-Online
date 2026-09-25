@@ -56,6 +56,8 @@ export const QR_PIN_UI_CSS = `
 .qp-note{border:1px solid #ffe9b0;background:#fff8eb;color:#7a4a00;border-radius:18px;padding:16px 18px;font-size:21px;line-height:1.4;font-weight:500;margin:0 0 14px}
 .qp-ok-note{border:1px solid #bbf0d0;background:#ecfdf5;color:#116b2a;border-radius:18px;padding:16px 18px;font-size:20px;line-height:1.4;margin:0 0 14px}
 .qp-remember{display:flex;align-items:center;gap:12px;margin:14px 2px 0;font-size:18px;color:#3c4053;cursor:pointer;line-height:1.35}
+/* Между карточкой «Кто заполняет» и карточкой PIN — одинаковый отступ сверху и снизу. */
+.qp-remember-mid{margin:14px 2px}
 .qp-remember input{width:26px;height:26px;margin:0;flex:none;accent-color:#5566f6}
 .qp-ok{display:flex;justify-content:center;overflow:hidden;max-height:190px;padding:16px 0 18px;margin:0 0 8px;animation:qp-out .3s ease-in .9s forwards}
 .qc-wrap{display:flex;justify-content:center;padding:12px 0;margin:0 0 12px}

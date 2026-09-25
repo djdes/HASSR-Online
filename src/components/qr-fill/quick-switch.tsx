@@ -19,7 +19,7 @@ export type QuickSwitchItem = {
   /** «22 °C · 45 %» — что уже записано сегодня. */
   summary?: string | null;
   /** Те же показания числами — чтобы подставить в форму текущего объекта. */
-  values?: { temperature?: number | null; humidity?: number | null } | null;
+  values?: { temperature?: number | null; humidity?: number | null; status?: "service" | "repair" | null } | null;
   current: boolean;
 };
 
