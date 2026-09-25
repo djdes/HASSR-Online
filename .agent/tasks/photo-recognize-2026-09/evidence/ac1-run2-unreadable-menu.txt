@@ -1,0 +1,4 @@
+[2026-09-25 20:32:22] Vision test: 1 image(s), no queue
+[2026-09-25 20:32:23]   vision: 1 image(s), 16 KB, model 'sonnet'
+[2026-09-25 20:32:37] Vision test OK (12 chars, cost 0.014816 USD)
+{"items":[]}

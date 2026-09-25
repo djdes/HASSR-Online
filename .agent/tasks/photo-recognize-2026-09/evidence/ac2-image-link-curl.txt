@@ -1,0 +1,5 @@
+valid link: HTTP 200 image/png 82780 bytes
+tampered sig: HTTP 403
+expired link: HTTP 410
+bad id (path traversal): HTTP 404
+no signature: HTTP 403

@@ -1,0 +1,28 @@
+=== -TestJobFile job-foreign-host.txt (SiteBaseUrl=http://localhost:3042)
+[2026-09-25 20:38:43] Vision test: job file C:/Users/Yaroslav/AppData/Local/Temp/18/claude/c--www-Users-OrdersFlow/219cb6e5-0fbd-4c76-b9bc-bdaadd99e88b/scratchpad/photo-agent/job-foreign-host.txt (site http://localhost:3042)
+[2026-09-25 20:38:43]   REFUSED image url (foreign_host): http://evil.example.com:3042/api/ai/vision-image/07d67f07238c12423e0f886ca07f3a6c-png
+[2026-09-25 20:38:43] Vision test FAILED: image_url_refused:foreign_host
+exit=1
+=== -TestJobFile job-foreign-port.txt (SiteBaseUrl=http://localhost:3042)
+[2026-09-25 20:38:45] Vision test: job file C:/Users/Yaroslav/AppData/Local/Temp/18/claude/c--www-Users-OrdersFlow/219cb6e5-0fbd-4c76-b9bc-bdaadd99e88b/scratchpad/photo-agent/job-foreign-port.txt (site http://localhost:3042)
+[2026-09-25 20:38:45]   REFUSED image url (foreign_port): http://localhost:3043/api/ai/vision-image/07d67f07238c12423e0f886ca07f3a6c-png
+[2026-09-25 20:38:45] Vision test FAILED: image_url_refused:foreign_port
+exit=1
+=== -TestJobFile job-foreign-path.txt (SiteBaseUrl=http://localhost:3042)
+[2026-09-25 20:38:46] Vision test: job file C:/Users/Yaroslav/AppData/Local/Temp/18/claude/c--www-Users-OrdersFlow/219cb6e5-0fbd-4c76-b9bc-bdaadd99e88b/scratchpad/photo-agent/job-foreign-path.txt (site http://localhost:3042)
+[2026-09-25 20:38:46]   REFUSED image url (foreign_path): http://localhost:3042/uploads/07d67f07238c12423e0f886ca07f3a6c-png
+[2026-09-25 20:38:46] Vision test FAILED: image_url_refused:foreign_path
+exit=1
+=== -TestJobFile job-tampered.txt (SiteBaseUrl=http://localhost:3042)
+[2026-09-25 20:38:47] Vision test: job file C:/Users/Yaroslav/AppData/Local/Temp/18/claude/c--www-Users-OrdersFlow/219cb6e5-0fbd-4c76-b9bc-bdaadd99e88b/scratchpad/photo-agent/job-tampered.txt (site http://localhost:3042)
+[2026-09-25 20:38:47] Vision test FAILED: image_download_failed:http_403
+exit=1
+=== -TestJobFile job-expired.txt (SiteBaseUrl=http://localhost:3042)
+[2026-09-25 20:38:49] Vision test: job file C:/Users/Yaroslav/AppData/Local/Temp/18/claude/c--www-Users-OrdersFlow/219cb6e5-0fbd-4c76-b9bc-bdaadd99e88b/scratchpad/photo-agent/job-expired.txt (site http://localhost:3042)
+[2026-09-25 20:38:49] Vision test FAILED: image_download_failed:http_410
+exit=1
+=== -TestJobFile job-ok.txt with the default dispatcher/config.json (SiteBaseUrl=https://wesetup.ru)
+[2026-09-25 20:39:00] Vision test: job file C:/Users/Yaroslav/AppData/Local/Temp/18/claude/c--www-Users-OrdersFlow/219cb6e5-0fbd-4c76-b9bc-bdaadd99e88b/scratchpad/photo-agent/job-ok.txt (site https://wesetup.ru)
+[2026-09-25 20:39:00]   REFUSED image url (foreign_scheme): http://localhost:3042/api/ai/vision-image/07d67f07238c12423e0f886ca07f3a6c-png
+[2026-09-25 20:39:00] Vision test FAILED: image_url_refused:foreign_scheme
+exit=1

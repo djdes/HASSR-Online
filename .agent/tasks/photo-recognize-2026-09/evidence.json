@@ -1,0 +1,61 @@
+{
+  "task": "photo-recognize-2026-09",
+  "branch": "feat/photo-2026-09-25",
+  "commits": [
+    "b0a5917f"
+  ],
+  "verdict": "PASS",
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": [
+        "evidence/ac1-run1-readable-menu.txt",
+        "evidence/ac1-run2-unreadable-menu.txt",
+        "evidence/ac1-run3-jobfile-invoice.txt",
+        "evidence/ac1-worker-refusals.txt",
+        "evidence/ac1-instruction-menu.txt",
+        "evidence/ac1-instruction-raw.txt"
+      ],
+      "summary": "readable Cyrillic menu -> exact JSON 5/5; unreadable image -> {\"items\":[]}; full job path downloads signed image from local site -> invoice 4/4; foreign host/port/path/scheme refused, tampered 403, expired 410",
+      "claudeRuns": 3
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": [
+        "evidence/ac2-api-e2e.txt",
+        "evidence/ac2-image-link-curl.txt",
+        "evidence/ac4-checks.txt"
+      ],
+      "summary": "API 19/19 with mock: rows returned, temp files present while waiting and deleted after, audit record, /api/ocr/label contract kept, limits 20/user and 60/org -> 429; image link 200/403/410/404; unit tests for signature, storage, limits"
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": [
+        "evidence/ac3-ui-e2e.txt",
+        "evidence/e2e-1440-*.png",
+        "evidence/e2e-390-*.png"
+      ],
+      "summary": "Playwright 38/38: BJGP bulk dialog (shared with master 'add to journals by date'), master menu table and menu/raw tabs, perishable bulk add and lists editor, incoming control bulk add; rows land in forms/journals/lists; 48px buttons at 390; no horizontal scroll"
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": [
+        "evidence/ac4-checks.txt"
+      ],
+      "summary": "typecheck exit 0; npm test 2291/2291 (baseline 2238, +53 new)"
+    }
+  },
+  "placesWired": [
+    "src/components/journals/finished-product-bulk-dialog.tsx (FinishedProductBulkTable: BJGP 'Добавить изделия списком' + master 'Добавить в журналы на дату')",
+    "src/components/master/master-menu-table-dialog.tsx (таблица меню)",
+    "src/components/master/master-directory-client.tsx (вкладки Меню и Сырьё: «С фото» → предпросмотр различий)",
+    "src/components/journals/perishable-rejection-document-client.tsx («Добавить списком» и «Редактировать списки → Изделия»)",
+    "src/components/journals/acceptance-document-client.tsx («Добавить несколько строк» → «С фото накладной»)"
+  ],
+  "openIssues": [
+    "/api/ai/check-photo and /api/ocr/reading still use Anthropic API",
+    "real ProjectsFlow round trip not exercised (by instruction)",
+    "burst limiter 6/min is in-memory",
+    "pre-existing hydration warning in Header on mobile (layout, not touched)"
+  ]
+}
