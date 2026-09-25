@@ -1,0 +1,269 @@
+{
+  "base": "http://localhost:3043",
+  "at": "2026-09-25T21:13:56.965Z",
+  "passed": 42,
+  "total": 42,
+  "checks": [
+    {
+      "id": "doc-created",
+      "ac": "setup",
+      "ok": true,
+      "detail": "POST /api/journal-documents → 201"
+    },
+    {
+      "id": "names-page-lists",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "страница показывает «Разделы меню», «Журналы» и официальные названия серым"
+    },
+    {
+      "id": "names-validation",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "1 символ → «От 2 до 80 символов» (кнопка disabled=true)"
+    },
+    {
+      "id": "names-search",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "поиск: по своему=true, по официальному=true"
+    },
+    {
+      "id": "names-dirty-counter",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "липкая панель: «Изменено: 4 названия Отменить Сохранить»"
+    },
+    {
+      "id": "shot:01-settings-names-filled-1440.png",
+      "ac": "AC5",
+      "ok": true,
+      "detail": "01-settings-names-filled-1440.png — 104 КБ"
+    },
+    {
+      "id": "names-save-api",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "PUT → 200, changed=4"
+    },
+    {
+      "id": "names-stored",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "Organization.customNamesJson = {\"journals\":{\"hygiene\":\"Гигиена персонала\",\"cleaning\":\"Уборка кухни\",\"finished_product\":\"Бракераж блюд\"},\"sections\":{\"journals\":\"Документы\"}}"
+    },
+    {
+      "id": "names-phone",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "390px: поле «Гигиена персонала»"
+    },
+    {
+      "id": "shot:02-settings-names-390.png",
+      "ac": "AC5",
+      "ok": true,
+      "detail": "02-settings-names-390.png — 67 КБ"
+    },
+    {
+      "id": "dashboard-card",
+      "ac": "AC2",
+      "ok": true,
+      "detail": "«Обязательные журналы»: своё название, официального в карточках нет"
+    },
+    {
+      "id": "menu-section",
+      "ac": "AC2",
+      "ok": true,
+      "detail": "меню шапки: Сотрудники | Документы | Производственный план | Нарушения | Отчёты | Идеи"
+    },
+    {
+      "id": "shot:03-dashboard-menu-1440.png",
+      "ac": "AC5",
+      "ok": true,
+      "detail": "03-dashboard-menu-1440.png — 334 КБ"
+    },
+    {
+      "id": "dashboard-search-official",
+      "ac": "AC2",
+      "ok": true,
+      "detail": "поиск на главной по «гигиенический» находит «Гигиена персонала»"
+    },
+    {
+      "id": "journals-list",
+      "ac": "AC2",
+      "ok": true,
+      "detail": "H1 «Документы», карточки со своими названиями, подсказка: «Официальное название: Гигиенический журнал (сотрудники)»"
+    },
+    {
+      "id": "shot:04-journals-list-1440.png",
+      "ac": "AC5",
+      "ok": true,
+      "detail": "04-journals-list-1440.png — 323 КБ"
+    },
+    {
+      "id": "journal-page-heading",
+      "ac": "AC2",
+      "ok": true,
+      "detail": "H1: «Гигиена персонала Официальное название: Гигиенический журнал (сотрудники)»; крошки: «Кафе «Ромашка» Документы Гигиена персонала»"
+    },
+    {
+      "id": "guide-dialog:журнал",
+      "ac": "AC2",
+      "ok": true,
+      "detail": "окно «Инструкция» (журнал): ИНСТРУКЦИЯ Гигиена персонала Как заполнять Правила 1 Создайт"
+    },
+    {
+      "id": "shot:05-journal-page-1440.png",
+      "ac": "AC5",
+      "ok": true,
+      "detail": "05-journal-page-1440.png — 98 КБ"
+    },
+    {
+      "id": "document-note",
+      "ac": "AC2",
+      "ok": true,
+      "detail": "подсказка: «Гигиена персонала · Официальное название: Гигиенический журнал (сотрудники)»; крошки: «Кафе «Ромашка» Документы Гигиена персонала Гигиенический журнал (сотрудники) — сентябрь 2026»"
+    },
+    {
+      "id": "document-paper-official",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "бумажная шапка бланка на экране — официальная («ГИГИЕНИЧЕСКИЙ ЖУРНАЛ»)"
+    },
+    {
+      "id": "shot:06-document-1440.png",
+      "ac": "AC5",
+      "ok": true,
+      "detail": "06-document-1440.png — 117 КБ"
+    },
+    {
+      "id": "shot:07-document-390.png",
+      "ac": "AC5",
+      "ok": true,
+      "detail": "07-document-390.png — 64 КБ"
+    },
+    {
+      "id": "search-both-names",
+      "ac": "AC2",
+      "ok": true,
+      "detail": "«гигиена персонала» → {\"kind\":\"template\",\"label\":\"Гигиена персонала\",\"hint\":\"СанПиН · Журнал · Гигиенический журнал (сотрудники)\",\"href\":\"/journals/hygiene\"}; «гигиенический» → {\"kind\":\"template\",\"label\":\"Гигиена персонала\",\"hint\":\"СанПиН · Журнал · Гигиенический журнал (сотрудники)\",\"href\":\"/journals/hygiene\"}"
+    },
+    {
+      "id": "qr-title",
+      "ac": "AC2",
+      "ok": true,
+      "detail": "QR-форма уборки: H1 «Уборка кухни»"
+    },
+    {
+      "id": "shot:08-qr-fill-390.png",
+      "ac": "AC5",
+      "ok": true,
+      "detail": "08-qr-fill-390.png — 36 КБ"
+    },
+    {
+      "id": "qr-hub",
+      "ac": "AC2",
+      "ok": true,
+      "detail": "хаб QR: КАФЕ «РОМАШКА» Все журналы Выберите журнал — дальше два-три касания. ЧТО ЗАПОЛНИТЬ Гигиена персонала — отметка перед сменой › Уборка кухни ›"
+    },
+    {
+      "id": "mini-journals",
+      "ac": "AC2",
+      "ok": true,
+      "detail": "мини: список со своими названиями; верхняя строка «Документы»; меню: «Главная Документы Разделы Профиль»"
+    },
+    {
+      "id": "shot:09-mini-journals-390.png",
+      "ac": "AC5",
+      "ok": true,
+      "detail": "09-mini-journals-390.png — 152 КБ"
+    },
+    {
+      "id": "mini-sections",
+      "ac": "AC2",
+      "ok": true,
+      "detail": "«Разделы» мини-приложения — своё название раздела"
+    },
+    {
+      "id": "mini-today",
+      "ac": "AC2",
+      "ok": true,
+      "detail": "«Сегодня»: группа гигиены «Гигиена персонала»; группы: [\"Гигиена персонала\",\"Бракераж блюд\",\"Фритюр\",\"Сан. день\"]"
+    },
+    {
+      "id": "pdf-official",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "PDF 200, 446323 байт; «Гигиенический журнал» есть: true; своего нет: true"
+    },
+    {
+      "id": "inspector-official",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "проверяющий: официальное есть=true, своих нет=true"
+    },
+    {
+      "id": "shot:10-inspector-1440.png",
+      "ac": "AC5",
+      "ok": true,
+      "detail": "10-inspector-1440.png — 66 КБ"
+    },
+    {
+      "id": "org-b-standard",
+      "ac": "AC4",
+      "ok": true,
+      "detail": "организация B: «Журналы», официальные названия; меню: Сотрудники | Журналы | Производственный план | Нарушения | Отчёты | Идеи"
+    },
+    {
+      "id": "shot:11-org-b-journals-1440.png",
+      "ac": "AC5",
+      "ok": true,
+      "detail": "11-org-b-journals-1440.png — 324 КБ"
+    },
+    {
+      "id": "org-b-search",
+      "ac": "AC4",
+      "ok": true,
+      "detail": "поиск B по «гигиена персонала» — журналов нет (чужое название)"
+    },
+    {
+      "id": "org-b-db",
+      "ac": "AC4",
+      "ok": true,
+      "detail": "B.customNamesJson = {}"
+    },
+    {
+      "id": "names-reset-field",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "«Вернуть стандартное» очистило поле: «»"
+    },
+    {
+      "id": "names-reset",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "«Вернуть стандартное» у уборки → 200, changed=1"
+    },
+    {
+      "id": "audit",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "AuditLog: [{\"user\":\"Анна Смирнова\",\"details\":{\"count\":4,\"Раздел «Журналы»\":{\"to\":\"Документы\",\"from\":\"стандартное\"},\"Журнал «Журнал уборки»\":{\"to\":\"Уборка кухни\",\"from\":\"стандартное\"},\"Журнал «Гигиенический журнал (сотрудники)»\":{\"to\":\"Гигиена персонала\",\"from\":\"стандартное\"},\"Журнал «Журнал бракеража готовой пищевой продукции»\":{\"to\":\"Бракераж блюд\",\"from\":\"стандартное\"}}},{\"user\":\"Анна Смирнова\",\"details\":{\"count\":1,\"Журнал «Журнал уборки»\":{\"to\":\"стандартное\",\"from\":\"Уборка кухни\"}}}]"
+    },
+    {
+      "id": "audit-page",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "«Журнал действий» показывает запись по-русски"
+    }
+  ],
+  "consoleErrors": [
+    "A /settings/names console: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client [diff: - A server/client branch `if (typeof window !== 'undefined')`. | - Variable input such as `Date.now()` or `Math.random()` which changes each time it's called. | - Date formatting in a user's locale which doesn't match the server. | - External changing data without sending a snapshot of it along with the HTML. | - Invalid HTML tag nesting. | -                       aria-haspopup=\"dialog\"]",
+    "A /dashboard console: Failed to sync build state: TypeError: Failed to fetch\n    at syncBuild (webpack-internal:///(app-pages-browser)/./src/components/layout/sw-register.tsx:44:40)",
+    "A /journals/hygiene/documents/cmuhg4gzd005l2g9myutynkqc console: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client [diff: - A server/client branch `if (typeof window !== 'undefined')`. | - Variable input such as `Date.now()` or `Math.random()` which changes each time it's called. | - Date formatting in a user's locale which doesn't match the server. | - External changing data without sending a snapshot of it along with the HTML. | - Invalid HTML tag nesting. | -                       aria-haspopup=\"dialog\"]",
+    "mini /journals console: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client [diff: - A server/client branch `if (typeof window !== 'undefined')`. | - Variable input such as `Date.now()` or `Math.random()` which changes each time it's called. | - Date formatting in a user's locale which doesn't match the server. | - External changing data without sending a snapshot of it along with the HTML. | - Invalid HTML tag nesting. | -                         style={{--tg-viewport-height:\"1]",
+    "mini /mini/sections console: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client [diff: - A server/client branch `if (typeof window !== 'undefined')`. | - Variable input such as `Date.now()` or `Math.random()` which changes each time it's called. | - Date formatting in a user's locale which doesn't match the server. | - External changing data without sending a snapshot of it along with the HTML. | - Invalid HTML tag nesting. | -                         style={{--tg-viewport-height:\"1]",
+    "A /journals/hygiene/documents/cmuhg4gzd005l2g9myutynkqc console: Can't perform a React state update on a component that hasn't mounted yet. This indicates that you have a side-effect in your render function that asynchronousl",
+    "A /settings/names console: Failed to sync build state: TypeError: Failed to fetch\n    at syncBuild (webpack-internal:///(app-pages-browser)/./src/components/layout/sw-register.tsx:44:40)"
+  ]
+}

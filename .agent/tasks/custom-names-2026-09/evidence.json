@@ -1,0 +1,56 @@
+{
+  "task": "custom-names-2026-09",
+  "branch": "feat/names-2026-09-25",
+  "spec": ".agent/tasks/custom-names-2026-09/spec.md",
+  "verdict": "PASS",
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "summary": "/settings/names: задать и сбросить свои названия разделов и журналов, одна кнопка «Сохранить», AuditLog «было → стало»",
+      "e2e": ["names-page-lists", "names-validation", "names-search", "names-dirty-counter", "names-save-api", "names-stored", "names-phone", "names-reset-field", "names-reset", "audit", "audit-page"],
+      "unit": ["src/lib/custom-names.test.ts", "src/lib/custom-names-save.test.ts"],
+      "screenshots": ["evidence/01-settings-names-filled-1440.png", "evidence/02-settings-names-390.png"]
+    },
+    "AC2": {
+      "status": "PASS",
+      "summary": "своё название в меню, на главной, в списке журналов, на странице журнала и документа (с «Официальное название: …»), на QR-страницах и в мини-приложении; поиск по обоим названиям",
+      "e2e": ["menu-section", "dashboard-card", "dashboard-search-official", "journals-list", "journal-page-heading", "guide-dialog:журнал", "document-note", "search-both-names", "qr-title", "qr-hub", "mini-journals", "mini-sections", "mini-today"],
+      "screenshots": ["evidence/03-dashboard-menu-1440.png", "evidence/04-journals-list-1440.png", "evidence/05-journal-page-1440.png", "evidence/06-document-1440.png", "evidence/07-document-390.png", "evidence/08-qr-fill-390.png", "evidence/09-mini-journals-390.png"]
+    },
+    "AC3": {
+      "status": "PASS",
+      "summary": "PDF документа и страница проверяющего — официальные названия; модули печати, проверяющего, образцов и отчётов не читают свои названия",
+      "e2e": ["pdf-official", "inspector-official", "document-paper-official"],
+      "unit": ["src/lib/custom-names-official.test.ts"],
+      "screenshots": ["evidence/10-inspector-1440.png"]
+    },
+    "AC4": {
+      "status": "PASS",
+      "summary": "у второй организации стандартные названия в меню, списке и поиске, её customNamesJson не изменился",
+      "e2e": ["org-b-standard", "org-b-search", "org-b-db"],
+      "unit": ["изоляция: названия одной организации не касаются другой", "API: сохраняет свои названия только своей организации"],
+      "screenshots": ["evidence/11-org-b-journals-1440.png"]
+    },
+    "AC5": {
+      "status": "PASS",
+      "summary": "typecheck и npm test зелёные, e2e на своей базе 42/42 со снимками 390 и 1440",
+      "e2e_results": "evidence/e2e-results.json",
+      "e2e_passed": 42,
+      "e2e_total": 42
+    }
+  },
+  "schema": {
+    "change": "Organization.customNamesJson Json @default(\"{}\")",
+    "db_push": ["wesetup_wt_ui", "wesetup_wt_pdf", "wesetup_wt_qrforms", "wesetup_wt_blanks"],
+    "partial_index_recreated": "PartnerClient_one_active_per_org (во всех четырёх)",
+    "generate": "после push во все базы, из C:/wt/blanks (схема с NpsResponse.scale)"
+  },
+  "commands": {
+    "typecheck": "npm run typecheck",
+    "test": "npm test",
+    "e2e_setup": "npx tsx .agent/tasks/custom-names-2026-09/e2e/setup.ts > .agent/tasks/custom-names-2026-09/e2e/setup-output.json",
+    "e2e": "npx tsx .agent/tasks/custom-names-2026-09/e2e/names-e2e.ts",
+    "dev_server": "NEXT_DIST_DIR=.next-e2e node node_modules/next/dist/bin/next dev --webpack -p 3043"
+  },
+  "console_warnings_in_e2e": "только гидратация, не связанная с задачей: style у <html> от Telegram WebApp, aria-* Radix у PartnerHint; Failed to fetch у sw-register dev-сервера; один React-варнинг о состоянии до монтирования на странице документа после закрытия окна «Инструкция» — на чистом заходе (e2e/hydration-probe.ts) не воспроизводится"
+}
