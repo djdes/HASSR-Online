@@ -551,7 +551,7 @@ function CrumbSheetMenu({ crumb, menu, isLast, navigate, children }: CrumbMenuVa
               <button
                 type="button"
                 onClick={() => pick(link.href)}
-                className="inline-flex min-h-9 items-center gap-1 rounded-lg font-medium text-[#3848c7] transition-colors duration-150 hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5566f6]/30"
+                className="inline-flex min-h-9 items-center gap-1 rounded-lg font-medium text-[#3848c7] transition-colors duration-150 hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5566f6]/30 touch:min-h-12"
               >
                 {link.label}
                 <ArrowRight aria-hidden className="size-3.5" />

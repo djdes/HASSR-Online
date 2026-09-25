@@ -782,9 +782,10 @@ export function StaffPageClient(props: StaffPageProps) {
         </div>
       ) : null}
 
-      {/* Bulk-action toolbar. */}
+      {/* Bulk-action toolbar. На телефоне шапка кабинета 56px — прилипаем
+          ровно под неё (`touch:top-14`), иначе в щель просвечивал список. */}
       {anySelected ? (
-        <div className="sticky top-[60px] z-20 flex flex-wrap items-center gap-2 rounded-2xl border border-[#ececf4] bg-white px-4 py-2.5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
+        <div className="sticky top-[60px] z-20 flex flex-wrap items-center gap-2 rounded-2xl border border-[#ececf4] bg-white px-4 py-2.5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] touch:top-14">
           <button
             type="button"
             onClick={clearSelection}
@@ -938,8 +939,13 @@ export function StaffPageClient(props: StaffPageProps) {
           убрали: название и так есть в hero и в крошках, а лишний
           аккордеон только отодвигал список вниз. */}
       <div className="overflow-hidden rounded-2xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
+        {/* `touch:grid-cols-1!` — на телефоне колонка `minmax(0, 1fr)`:
+            общее правило globals.css ставит `1fr !important`, такая колонка
+            не ужимается уже самой широкой строки, и на 360px сетка вылезала
+            за карточку — «+ Должность» обрезалась. Слоёный !important
+            утилиты сильнее неслоёного, поэтому здесь восклицательный знак. */}
         <div
-          className={`grid gap-6 bg-[#f4f5fb] p-5 md:grid-cols-2 md:gap-8 md:p-6 ${
+          className={`grid gap-6 bg-[#f4f5fb] p-5 md:grid-cols-2 md:gap-8 md:p-6 touch:grid-cols-1! ${
             positionsByCategory.commission.length > 0 ? "xl:grid-cols-3" : ""
           }`}
         >

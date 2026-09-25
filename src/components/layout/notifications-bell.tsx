@@ -93,7 +93,15 @@ const REFRESH_INTERVAL_MS = 60 * 1000;
 /** Ссылка уведомлений поддержки — см. support-threads.ts. */
 const SUPPORT_CHAT_HREF = "/dashboard?support=chat";
 
-export function NotificationsBell() {
+const TRIGGER_CLASS =
+  "relative inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#5566f6]/[0.04] text-[#5566f6] transition-colors duration-200 hover:bg-[#5566f6]/[0.09]";
+
+/**
+ * `triggerClassName` — добавка к кнопке-колокольчику. Шапка сайта
+ * передаёт `max-sm:size-11`: на телефоне кнопки шапки 44×44. Мини-
+ * приложение его не передаёт и остаётся со своими размерами.
+ */
+export function NotificationsBell({ triggerClassName }: { triggerClassName?: string } = {}) {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"unread" | "read">("unread");
   const [data, setData] = useState<ApiResponse>({
@@ -357,7 +365,7 @@ export function NotificationsBell() {
         type="button"
         aria-label="Уведомления"
         onClick={() => (open ? closePanel() : openPanel())}
-        className="relative inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#5566f6]/[0.04] text-[#5566f6] transition-colors duration-200 hover:bg-[#5566f6]/[0.09]"
+        className={triggerClassName ? `${TRIGGER_CLASS} ${triggerClassName}` : TRIGGER_CLASS}
       >
         <Bell className="size-5" />
         {headerCount > 0 && (
@@ -384,7 +392,11 @@ export function NotificationsBell() {
           onClick={closePanel}
         >
           <BodyScrollLock />
+          {/* `data-touch-zone` — окно живёт в <body>, вне `main`; метка
+              включает на телефоне правила «крупнее» кабинета (app-theme.css).
+              В мини-приложении метка ничего не делает. */}
           <div
+            data-touch-zone=""
             className="flex max-h-[80vh] supports-[height:100dvh]:max-h-[80dvh] w-full max-w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-3xl border border-[#ececf4] bg-white shadow-[0_30px_80px_-20px_rgba(11,16,36,0.35)] sm:max-w-[640px]"
             onClick={(e) => e.stopPropagation()}
           >

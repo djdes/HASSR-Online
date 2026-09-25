@@ -56,7 +56,7 @@ export function TodayProgressStrip({
           <button
             type="button"
             onClick={onWarningAction}
-            className="inline-flex shrink-0 items-center rounded-full border border-[#d9a441]/40 bg-white/70 px-3.5 py-1.5 text-[12.5px] font-semibold text-[#8a5a12] transition-colors duration-150 hover:border-[#d9a441] hover:bg-white focus:outline-none focus-visible:ring-4 focus-visible:ring-[#d9a441]/20 max-sm:min-h-[36px]"
+            className="inline-flex shrink-0 items-center rounded-full border border-[#d9a441]/40 bg-white/70 px-3.5 py-1.5 text-[12.5px] font-semibold text-[#8a5a12] transition-colors duration-150 hover:border-[#d9a441] hover:bg-white focus:outline-none focus-visible:ring-4 focus-visible:ring-[#d9a441]/20 max-sm:min-h-[36px] touch:min-h-12"
           >
             {warningActionLabel ?? "Перейти"}
           </button>
@@ -90,7 +90,7 @@ export function TodayProgressStrip({
           <button
             type="button"
             onClick={onJumpToToday}
-            className="inline-flex shrink-0 items-center rounded-full border border-[#5566f6]/25 bg-white/70 px-3.5 py-1.5 text-[12.5px] font-semibold text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-white focus:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 max-sm:min-h-[36px]"
+            className="inline-flex shrink-0 items-center rounded-full border border-[#5566f6]/25 bg-white/70 px-3.5 py-1.5 text-[12.5px] font-semibold text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-white focus:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 max-sm:min-h-[36px] touch:min-h-12"
           >
             Перейти
           </button>

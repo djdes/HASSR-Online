@@ -36,7 +36,8 @@ export function OfflineIndicator() {
           : "Нет интернета. Записи сохраняются локально и отправятся, когда сеть вернётся."
       }
       className={cn(
-        "inline-flex h-10 items-center gap-1.5 rounded-lg px-3 text-[13px] font-semibold transition-colors duration-200",
+        // На телефоне 44px — как остальные кнопки шапки.
+        "inline-flex h-11 items-center gap-1.5 rounded-lg px-3 text-[13px] font-semibold transition-colors duration-200 sm:h-10",
         online
           ? "bg-[#fff8eb] text-[#b25f00] hover:bg-[#fff4d9]"
           : "bg-[#fff4f2] text-[#a13a32] hover:bg-[#ffe9e4]"

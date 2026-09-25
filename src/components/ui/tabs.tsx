@@ -25,8 +25,10 @@ function Tabs({
   )
 }
 
+// Телефон в кабинете (`touch:`): вкладки там 48px (app-theme.css), поэтому
+// у горизонтального списка высота по содержимому, а не 36px.
 const tabsListVariants = cva(
-  "group/tabs-list inline-flex w-fit items-center justify-center rounded-lg p-[3px] text-muted-foreground group-data-[orientation=horizontal]/tabs:h-9 group-data-[orientation=vertical]/tabs:h-fit group-data-[orientation=vertical]/tabs:flex-col data-[variant=line]:rounded-none",
+  "group/tabs-list inline-flex w-fit items-center justify-center rounded-lg p-[3px] text-muted-foreground group-data-[orientation=horizontal]/tabs:h-9 group-data-[orientation=vertical]/tabs:h-fit group-data-[orientation=vertical]/tabs:flex-col data-[variant=line]:rounded-none touch:group-data-[orientation=horizontal]/tabs:h-auto",
   {
     variants: {
       variant: {

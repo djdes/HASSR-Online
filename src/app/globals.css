@@ -3,6 +3,24 @@
 
 @custom-variant dark (&:where(.dark, .dark *, [data-app-theme="dark"], [data-app-theme="dark"] *));
 
+/* `touch:` — телефон (< 640px, как `max-sm:`) в кабинете: содержимое
+   страницы (`main`) и всплывающие слои кабинета (окна, листы, меню —
+   порталы в <body>; свой портал без роли окна — с меткой
+   `data-touch-zone`). Не действует в мини-приложении (`.mini-root`, у
+   него своя тема), на публичных страницах (`public-theme` на <body>), в
+   таблицах и сетках бланков, в баннерах объявления, удаления и опроса и
+   в зонах `data-touch-compact`; не действует при печати. Та же зона, что
+   у правил «крупнее на телефоне» в app-theme.css; вариант — для размеров,
+   которые правилом не задать (геометрия переключателя, галочки, раскладка
+   подсказки). */
+@custom-variant touch {
+  @media screen and (width < 40rem) {
+    &:where(.app-shell:not(.mini-root, .public-theme) main *, body:has(.app-shell:not(.mini-root, .public-theme)) :is([role="dialog"], [role="alertdialog"], [data-radix-popper-content-wrapper], [data-touch-zone]) *):not(:where(table, table *, [role="grid"], [role="grid"] *, [data-touch-compact], [data-touch-compact] *, [data-testid="nps-banner"], [data-testid="nps-banner"] *, [data-testid="deletion-banner"], [data-testid="deletion-banner"] *, [role="status"]:has(> [aria-label="Скрыть объявление"]), [role="status"]:has(> [aria-label="Скрыть объявление"]) *)) {
+      @slot;
+    }
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

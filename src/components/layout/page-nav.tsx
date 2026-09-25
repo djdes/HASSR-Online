@@ -165,8 +165,10 @@ export function PageNav({ organizationName }: { organizationName: string }) {
   // Кнопка и крошки — одной строкой. Раньше они стояли друг под другом в
   // 6px и одинаковым серым: читались как две строки одного текста, а не
   // как «кнопка» и «где я». Круглая кнопка слева задаёт строке начало.
+  // На телефоне строка выше (кнопки 48px — app-theme.css), поэтому отступ
+  // под ней 12px, а не 20: иначе выигрыш от тонкой шапки съедался.
   return (
-    <div className="mb-5 flex min-w-0 items-center gap-3 print:hidden">
+    <div className="mb-5 flex min-w-0 items-center gap-3 print:hidden max-sm:mb-3">
       <PageBackLink fallbackHref={parentHref} />
       <Breadcrumbs items={crumbs} className="min-w-0 flex-1" />
     </div>

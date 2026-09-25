@@ -17,6 +17,11 @@ import { cn } from "@/lib/utils"
  * а вариант используется в сотне мест — переименовывать все вызовы дороже,
  * чем поменять его наполнение. Если где-то реально нужна рамка — это
  * `variant="ghost"` + собственный border-класс.
+ *
+ * Телефон в кабинете (< 640px): высота не ниже 48px, кнопка-иконка 48×48,
+ * подпись 16px — это правила «крупнее на телефоне» в app-theme.css, а не
+ * классы здесь: так они действуют и на самописные кнопки, и не уменьшают
+ * кнопку, которую страница сама сделала крупнее.
  */
 const buttonVariants = cva(
   "inline-flex shrink-0 items-center justify-center gap-2 rounded-lg text-[14px] font-semibold whitespace-nowrap transition-colors duration-200 outline-none focus-visible:ring-[3px] focus-visible:ring-[#5566f6]/25 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",

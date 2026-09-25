@@ -289,15 +289,18 @@ export function Header({
 
   return (
     <header className="sticky top-0 z-30 border-b bg-white">
-      {/* Высота шапки — 72px, как на эталоне (замер: headerBar h=73px). */}
+      {/* Высота шапки — 72px, как на эталоне (замер: headerBar h=73px).
+          На телефоне (< 640px) — 56px вместе с рамкой: экран узкий и
+          короткий, каждый пиксель шапки отнят у страницы. Кнопки-иконки
+          там 44×44 — палец попадает, шапка остаётся тонкой. */}
       {/* Горизонтальная геометрия шапки ДОЛЖНА совпадать с контейнером
           контента ((dashboard)/layout.tsx): max-w-[1800px] + px-4 md:px-8
           внутри этой же коробки. Любое расхождение сразу читается как
           «шапка одной ширины, страница другой». */}
-      <div className="mx-auto flex h-[72px] w-full max-w-[1800px] items-center gap-2 px-4 md:gap-4 md:px-8">
+      <div className="mx-auto flex h-[55px] w-full max-w-[1800px] items-center gap-2 px-4 sm:h-[72px] md:gap-4 md:px-8">
         <Link
           href={homeHref}
-          className="shrink-0 flex items-center gap-2"
+          className="shrink-0 flex items-center gap-2 max-sm:min-h-11"
           aria-label={`${organizationName || "WeSetup"} — на дашборд`}
         >
           {organizationLogoUrl ? (
@@ -309,14 +312,14 @@ export function Header({
               <img
                 src={organizationLogoUrl}
                 alt=""
-                className="h-7 w-auto max-w-[140px] object-contain"
+                className="h-6 w-auto max-w-[140px] object-contain sm:h-7"
                 referrerPolicy="no-referrer"
                 loading="lazy"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = "none";
                 }}
               />
-              <span className="text-[14px] font-semibold text-[#0b1024]">
+              <span className="text-[13px] font-semibold text-[#0b1024] sm:text-[14px]">
                 {organizationName || "WeSetup"}
               </span>
             </>
@@ -325,12 +328,14 @@ export function Header({
             // `text-[#0b1024]` перекрашивается слоем app-theme.css,
             // отдельный dark:-вариант не нужен и был бы опасен: он
             // сработал бы по системной теме на светлом кабинете.
-            <span className="text-[#0b1024]">
+            // На телефоне знак ниже (18px) — под тонкую шапку.
+            <span className="text-[#0b1024] max-sm:[--logo-h:18px]">
               <BrandLogo height={22} title="" />
             </span>
           )}
         </Link>
-        {partnerHint ? <PartnerHint rates={partnerHint} className="-ml-1" /> : null}
+        {/* На телефоне зона нажатия 44×44 — значок тот же, еле заметный. */}
+        {partnerHint ? <PartnerHint rates={partnerHint} className="-ml-1 max-sm:size-11" /> : null}
 
         {/*
           Desktop: only the home pill is visible. Secondary nav lives in a
@@ -525,7 +530,7 @@ export function Header({
           variant="ghost"
           size="icon"
           onClick={() => setMobileNavOpen(true)}
-          className="size-10 shrink-0 rounded-lg bg-[#5566f6]/[0.04] text-[#5566f6] transition-colors duration-200 md:hidden hover:bg-[#5566f6]/[0.09] hover:text-[#5566f6]"
+          className="size-11 shrink-0 rounded-lg bg-[#5566f6]/[0.04] text-[#5566f6] transition-colors duration-200 sm:size-10 md:hidden hover:bg-[#5566f6]/[0.09] hover:text-[#5566f6]"
         >
           <Menu className="size-5" />
           <span className="sr-only">Меню</span>
@@ -640,10 +645,10 @@ export function Header({
             Обратная связь отсюда убрана: вход в поддержку был в двух
             местах сразу — здесь и пузырём внизу, — и человек не понимал,
             чем они отличаются. Остался пузырь: там же и онлайн-чат. */}
-        <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-1.5 md:gap-2">
           <OfflineIndicator />
           <LiveConnectionIndicator />
-          <NotificationsBell />
+          <NotificationsBell triggerClassName="max-sm:size-11" />
 
           {partnerCabinet ? (
             <Link
@@ -690,10 +695,10 @@ export function Header({
               variant="ghost"
               type="button"
               onClick={() => setProfileSheetOpen(true)}
-              className="relative size-10 shrink-0 rounded-full p-0"
+              className="relative size-11 shrink-0 rounded-full p-0 sm:size-10"
               aria-label="Профиль"
             >
-              <Avatar size="lg">
+              <Avatar size="lg" className="max-sm:data-[size=lg]:size-11">
                 <AvatarFallback className="bg-[#5566f6]/[0.09] text-[13px] font-semibold text-[#5566f6]">
                   {getInitials(userName)}
                 </AvatarFallback>
@@ -704,12 +709,13 @@ export function Header({
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="relative size-10 shrink-0 rounded-full p-0"
+                className="relative size-11 shrink-0 rounded-full p-0 sm:size-10"
                 aria-label="Профиль"
               >
                 {/* Аватар остаётся кругом (это аватар), но размер
-                    согласован с остальными контролами шапки — size-10. */}
-                <Avatar size="lg">
+                    согласован с остальными контролами шапки — size-10
+                    (на телефоне size-11, как все кнопки шапки). */}
+                <Avatar size="lg" className="max-sm:data-[size=lg]:size-11">
                   <AvatarFallback className="bg-[#5566f6]/[0.09] text-[13px] font-semibold text-[#5566f6]">
                     {getInitials(userName)}
                   </AvatarFallback>

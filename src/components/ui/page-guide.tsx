@@ -62,11 +62,15 @@ export function PageGuide({ title, bullets, qa = [], storageKey, footer }: PageG
   }
 
   return (
-    <div className="rounded-3xl border border-[#dcdfed] bg-[#f5f6ff] p-4 text-[13px] text-[#3c4053]">
+    // Телефон в кабинете (`touch:`): кнопка занимает всю плашку — поле
+    // карточки переезжает внутрь кнопки и раскрытого текста, поэтому
+    // нажать можно в любом месте плашки, а не только по строке в 20px.
+    // Плашка при этом не растёт: 48px кнопки вместо 16 + 20 + 16.
+    <div className="rounded-3xl border border-[#dcdfed] bg-[#f5f6ff] p-4 text-[13px] text-[#3c4053] touch:p-0">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center gap-2 text-left"
+        className="flex w-full items-center gap-2 text-left touch:rounded-3xl touch:px-4 touch:py-3"
       >
         <HelpCircle className="size-4 text-[#5566f6]" />
         <span className="flex-1 font-medium text-[#0b1024]">{title}</span>
@@ -78,7 +82,7 @@ export function PageGuide({ title, bullets, qa = [], storageKey, footer }: PageG
       </button>
 
       {open ? (
-        <div className="mt-3 space-y-3">
+        <div className="mt-3 space-y-3 touch:mt-0 touch:px-4 touch:pb-4">
           <ul className="space-y-1.5 pl-1">
             {bullets.map((b, i) => {
               if (typeof b === "string") {

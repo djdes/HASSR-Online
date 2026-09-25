@@ -2,6 +2,10 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * Телефон в кабинете (< 640px): шрифт 16px (`text-base`), высота не ниже
+ * 48px — правило «крупнее на телефоне» в app-theme.css.
+ */
 function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
   return (
     <textarea

@@ -1380,3 +1380,170 @@ body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hygie
   }
 }
 
+/* ════════════════════════════════════════════════════════════════════
+ * ТЕЛЕФОН (< 640px): крупнее кнопки, поля и текст — во всём кабинете
+ *
+ * Владелец: «шрифт и кнопки везде покрупнее, а то иногда трудно
+ * попасть». Кабинетом пользуются на кухне — на ходу и мокрыми руками.
+ *
+ * Зона — та же, что у варианта `touch:` (globals.css): содержимое
+ * страницы (`main`) и всплывающие слои кабинета (окна, листы, меню —
+ * порталы в <body>; свой портал без роли окна помечается
+ * `data-touch-zone`, как полоса выделения журнала). Хлебные крошки
+ * остаются 13px: на глубоких страницах крупный текст режет звенья
+ * до «Жу…». Не трогаем: шапку (у неё свои размеры, кнопки 44px —
+ * header.tsx), мини-приложение (`.mini-root`, своя тема), публичные
+ * страницы (`public-theme`), таблицы и сетки бланков — и сам `table`,
+ * и всё внутри (бумажная сетка, прокручиваются внутри себя), баннеры
+ * объявления, удаления и опроса, зоны `data-touch-compact` (например,
+ * анкета «Завершите регистрацию» — она сверстана под один экран
+ * телефона). Планшет и десктоп (≥ 640px) не меняются; печать — тоже
+ * (`screen`). Граница — `width < 40rem`, как у `max-sm:` Tailwind.
+ *
+ * Два яруса:
+ *  1. Минимальные размеры — в слое `components`. Он ниже утилит, поэтому
+ *     правило только ПОДНИМАЕТ мелкое до 48px и никогда не уменьшает то,
+ *     что уже крупнее (`min-h-[52px]`, `size-[52px]`). Высоту `h-9` /
+ *     `size-7` оно перекрывает: `min-height` сильнее `height`. Элементу,
+ *     которому 48px не нужны, хватает утилиты (`touch:min-h-0`).
+ *  2. Кегль — вне слоёв: иначе утилиты `text-[14px]` его перебили бы.
+ *     Шкала сдвигается целиком, порядок размеров сохраняется: подпись
+ *     остаётся мельче заголовка. 11px и мельче (надстрочные подписи,
+ *     бейджи) и 16px+ (заголовки) не трогаем.
+ *
+ * Зона и исключения повторены в каждом правиле: CSS не умеет переменных
+ * для селекторов, а вложенность не везде поддерживается (iOS < 16.5).
+ * ════════════════════════════════════════════════════════════════════ */
+@layer components {
+  @media screen and (width < 40rem) {
+    /* Кнопки, ссылки-кнопки, вкладки, пункты меню — не ниже 48px.
+       Обычные ссылки в тексте (display: inline) не затрагиваются:
+       `min-height` на них не действует, а ссылки-кнопки узнаются по
+       раскладке (`flex`, `block`, …). */
+    :where(.app-shell:not(.mini-root, .public-theme) main, body:has(.app-shell:not(.mini-root, .public-theme)) :is([role="dialog"], [role="alertdialog"], [data-radix-popper-content-wrapper], [data-touch-zone]))
+      :where(
+        button:not([role="checkbox"], [role="switch"]),
+        [role="button"],
+        [role="tab"],
+        [role="menuitem"],
+        [role="menuitemcheckbox"],
+        [role="menuitemradio"],
+        [role="option"],
+        summary,
+        input:is([type="button"], [type="submit"], [type="reset"]),
+        a[href]:is(.flex, .inline-flex, .grid, .inline-grid, .block, .inline-block)
+      ):not(:where(table, table *, [role="grid"], [role="grid"] *, [data-touch-compact], [data-touch-compact] *, [data-testid="nps-banner"], [data-testid="nps-banner"] *, [data-testid="deletion-banner"], [data-testid="deletion-banner"] *, [role="status"]:has(> [aria-label="Скрыть объявление"]), [role="status"]:has(> [aria-label="Скрыть объявление"]) *)) {
+      min-height: 48px;
+    }
+
+    /* Та же ловушка по вертикали: `min-height` снимает автоматический
+       минимум, и в колонке ограниченной высоты (`flex-col` + `max-h-*`)
+       строка-кнопка могла бы сжаться ниже своего текста. Не сжимаем —
+       как было до правила; явные `flex-1` / `shrink` сильнее (утилиты). */
+    :where(.app-shell:not(.mini-root, .public-theme) main, body:has(.app-shell:not(.mini-root, .public-theme)) :is([role="dialog"], [role="alertdialog"], [data-radix-popper-content-wrapper], [data-touch-zone]))
+      :where(.flex-col, .flex-col-reverse) > :where(button, [role="button"], [role="tab"], [role="menuitem"], [role="option"], summary, a[href]:is(.flex, .inline-flex, .grid, .inline-grid, .block, .inline-block)):not(:where(table, table *, [role="grid"], [role="grid"] *, [data-touch-compact], [data-touch-compact] *, [data-testid="nps-banner"], [data-testid="nps-banner"] *, [data-testid="deletion-banner"], [data-testid="deletion-banner"] *, [role="status"]:has(> [aria-label="Скрыть объявление"]), [role="status"]:has(> [aria-label="Скрыть объявление"]) *)) {
+      flex-shrink: 0;
+    }
+
+    /* Кнопка-иконка — квадрат 48×48. Только она: `min-width` у кнопки с
+       текстом заменил бы автоматический минимум флекс-элемента (ширину
+       содержимого), и в тесном ряду кнопка сжималась бы, а подпись
+       вылезала за край. Кнопку-иконку узнаём по квадратному размеру:
+       `size-*` (свой класс) или `data-size="icon…"` (Button из ui/). */
+    :where(.app-shell:not(.mini-root, .public-theme) main, body:has(.app-shell:not(.mini-root, .public-theme)) :is([role="dialog"], [role="alertdialog"], [data-radix-popper-content-wrapper], [data-touch-zone]))
+      :where(button, [role="button"], a[href]):where([data-size^="icon"], [class~="size-5"], [class~="size-6"], [class~="size-7"], [class~="size-8"], [class~="size-9"], [class~="size-10"], [class~="size-11"], [class^="size-["], [class*=" size-["]):not(:where([role="checkbox"], [role="switch"], table, table *, [role="grid"], [role="grid"] *, [data-touch-compact], [data-touch-compact] *, [data-testid="nps-banner"], [data-testid="nps-banner"] *, [data-testid="deletion-banner"], [data-testid="deletion-banner"] *, [role="status"]:has(> [aria-label="Скрыть объявление"]), [role="status"]:has(> [aria-label="Скрыть объявление"]) *)) {
+      min-width: 48px;
+    }
+
+    /* Поля ввода и выпадающие списки — не ниже 48px. */
+    :where(.app-shell:not(.mini-root, .public-theme) main, body:has(.app-shell:not(.mini-root, .public-theme)) :is([role="dialog"], [role="alertdialog"], [data-radix-popper-content-wrapper], [data-touch-zone]))
+      :where(
+        input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="color"], [type="hidden"], [type="image"], [type="button"], [type="submit"], [type="reset"]),
+        select,
+        textarea,
+        [role="combobox"]
+      ):not(:where(table, table *, [role="grid"], [role="grid"] *, [data-touch-compact], [data-touch-compact] *, [data-testid="nps-banner"], [data-testid="nps-banner"] *, [data-testid="deletion-banner"], [data-testid="deletion-banner"] *, [role="status"]:has(> [aria-label="Скрыть объявление"]), [role="status"]:has(> [aria-label="Скрыть объявление"]) *)) {
+      min-height: 48px;
+    }
+
+    /* Галочки: сама галочка крупнее (22px вместо 16–20). Скрытые поля
+       (`sr-only`, прозрачная подложка на всю карточку) не страдают:
+       они позиционированы абсолютно и места в строке не занимают. */
+    :where(.app-shell:not(.mini-root, .public-theme) main, body:has(.app-shell:not(.mini-root, .public-theme)) :is([role="dialog"], [role="alertdialog"], [data-radix-popper-content-wrapper], [data-touch-zone]))
+      :where(input:is([type="checkbox"], [type="radio"])):not(:where(table, table *, [role="grid"], [role="grid"] *, [data-touch-compact], [data-touch-compact] *, [data-testid="nps-banner"], [data-testid="nps-banner"] *, [data-testid="deletion-banner"], [data-testid="deletion-banner"] *, [role="status"]:has(> [aria-label="Скрыть объявление"]), [role="status"]:has(> [aria-label="Скрыть объявление"]) *)) {
+      min-width: 22px;
+      min-height: 22px;
+    }
+
+    /* Галочка и переключатель из ui/: зона нажатия шире видимой части
+       (≈ 44px) — невидимой подложкой, вёрстка строки не меняется. Сами
+       размеры — в checkbox.tsx / switch.tsx (вариант `touch:`). */
+    :where(.app-shell:not(.mini-root, .public-theme) main, body:has(.app-shell:not(.mini-root, .public-theme)) :is([role="dialog"], [role="alertdialog"], [data-radix-popper-content-wrapper], [data-touch-zone]))
+      :where([data-slot="checkbox"], [data-slot="switch"]):not(:where(table, table *, [role="grid"], [role="grid"] *, [data-touch-compact], [data-touch-compact] *, [data-testid="nps-banner"], [data-testid="nps-banner"] *, [data-testid="deletion-banner"], [data-testid="deletion-banner"] *, [role="status"]:has(> [aria-label="Скрыть объявление"]), [role="status"]:has(> [aria-label="Скрыть объявление"]) *)) {
+      position: relative;
+    }
+    :where(.app-shell:not(.mini-root, .public-theme) main, body:has(.app-shell:not(.mini-root, .public-theme)) :is([role="dialog"], [role="alertdialog"], [data-radix-popper-content-wrapper], [data-touch-zone]))
+      :where([data-slot="checkbox"], [data-slot="switch"]):not(:where(table, table *, [role="grid"], [role="grid"] *, [data-touch-compact], [data-touch-compact] *, [data-testid="nps-banner"], [data-testid="nps-banner"] *, [data-testid="deletion-banner"], [data-testid="deletion-banner"] *, [role="status"]:has(> [aria-label="Скрыть объявление"]), [role="status"]:has(> [aria-label="Скрыть объявление"]) *))::after {
+      content: "";
+      position: absolute;
+      inset: -11px;
+    }
+  }
+}
+
+@media screen and (width < 40rem) {
+  /* Кегль: основной текст 14–15px → 16px, вторичный 12.5–13px → 15px,
+     подписи 12px → 13px. Поля ввода исключены — у них свой минимум 16px
+     (globals.css), таблицы бланков — у них бумажная сетка (исключён и сам
+     `table`: класс кегля часто стоит на нём, и ячейки его наследуют). */
+  :where(.app-shell:not(.mini-root, .public-theme) main, body:has(.app-shell:not(.mini-root, .public-theme)) :is([role="dialog"], [role="alertdialog"], [data-radix-popper-content-wrapper], [data-touch-zone]))
+    :is(.text-xs, .text-\[12px\]):not(:where(input, textarea, select, [aria-label="Хлебные крошки"], [aria-label="Хлебные крошки"] *, table, table *, [role="grid"], [role="grid"] *, [data-touch-compact], [data-touch-compact] *, [data-testid="nps-banner"], [data-testid="nps-banner"] *, [data-testid="deletion-banner"], [data-testid="deletion-banner"] *, [role="status"]:has(> [aria-label="Скрыть объявление"]), [role="status"]:has(> [aria-label="Скрыть объявление"]) *)) {
+    font-size: 13px;
+  }
+  :where(.app-shell:not(.mini-root, .public-theme) main, body:has(.app-shell:not(.mini-root, .public-theme)) :is([role="dialog"], [role="alertdialog"], [data-radix-popper-content-wrapper], [data-touch-zone]))
+    :is(.text-\[12\.5px\], .text-\[13px\], .text-\[13\.5px\]):not(:where(input, textarea, select, [aria-label="Хлебные крошки"], [aria-label="Хлебные крошки"] *, table, table *, [role="grid"], [role="grid"] *, [data-touch-compact], [data-touch-compact] *, [data-testid="nps-banner"], [data-testid="nps-banner"] *, [data-testid="deletion-banner"], [data-testid="deletion-banner"] *, [role="status"]:has(> [aria-label="Скрыть объявление"]), [role="status"]:has(> [aria-label="Скрыть объявление"]) *)) {
+    font-size: 15px;
+  }
+  :where(.app-shell:not(.mini-root, .public-theme) main, body:has(.app-shell:not(.mini-root, .public-theme)) :is([role="dialog"], [role="alertdialog"], [data-radix-popper-content-wrapper], [data-touch-zone]))
+    :is(.text-sm, .text-\[14px\], .text-\[14\.5px\], .text-\[15px\]):not(:where(input, textarea, select, [aria-label="Хлебные крошки"], [aria-label="Хлебные крошки"] *, table, table *, [role="grid"], [role="grid"] *, [data-touch-compact], [data-touch-compact] *, [data-testid="nps-banner"], [data-testid="nps-banner"] *, [data-testid="deletion-banner"], [data-testid="deletion-banner"] *, [role="status"]:has(> [aria-label="Скрыть объявление"]), [role="status"]:has(> [aria-label="Скрыть объявление"]) *)) {
+    font-size: 16px;
+  }
+
+  /* Выпадающий список (Select) — как поле ввода: 16px, иначе iOS
+     приближает экран при нажатии. `:is`, а не `:where`: вес как у правил
+     кегля выше, и правило стоит после них — побеждает, даже если у
+     триггера свой `text-[13px]`. */
+  :where(.app-shell:not(.mini-root, .public-theme) main, body:has(.app-shell:not(.mini-root, .public-theme)) :is([role="dialog"], [role="alertdialog"], [data-radix-popper-content-wrapper], [data-touch-zone]))
+    :is([role="combobox"], [data-slot="select-trigger"]):not(:where(table, table *, [role="grid"], [role="grid"] *, [data-touch-compact], [data-touch-compact] *, [data-testid="nps-banner"], [data-testid="nps-banner"] *, [data-testid="deletion-banner"], [data-testid="deletion-banner"] *, [role="status"]:has(> [aria-label="Скрыть объявление"]), [role="status"]:has(> [aria-label="Скрыть объявление"]) *)) {
+    font-size: max(16px, 1rem);
+  }
+
+  /* Соседние кнопки не ближе 8px: ряд из двух и более кнопок/ссылок с
+     зазором 2–6px получает 8px — иначе палец задевает соседнюю. */
+  :where(.app-shell:not(.mini-root, .public-theme) main, body:has(.app-shell:not(.mini-root, .public-theme)) :is([role="dialog"], [role="alertdialog"], [data-radix-popper-content-wrapper], [data-touch-zone]))
+    :is(.gap-0\.5, .gap-1, .gap-1\.5):not([class*="gap-x-"], [class*="gap-y-"]):has(> :is(button, a[href], [role="button"]) ~ :is(button, a[href], [role="button"])):not(:where(table, table *, [role="grid"], [role="grid"] *, [data-touch-compact], [data-touch-compact] *, [data-testid="nps-banner"], [data-testid="nps-banner"] *, [data-testid="deletion-banner"], [data-testid="deletion-banner"] *, [role="status"]:has(> [aria-label="Скрыть объявление"]), [role="status"]:has(> [aria-label="Скрыть объявление"]) *)) {
+    gap: 8px;
+  }
+  :where(.app-shell:not(.mini-root, .public-theme) main, body:has(.app-shell:not(.mini-root, .public-theme)) :is([role="dialog"], [role="alertdialog"], [data-radix-popper-content-wrapper], [data-touch-zone]))
+    :is(.gap-x-0\.5, .gap-x-1, .gap-x-1\.5):has(> :is(button, a[href], [role="button"]) ~ :is(button, a[href], [role="button"])):not(:where(table, table *, [role="grid"], [role="grid"] *, [data-touch-compact], [data-touch-compact] *, [data-testid="nps-banner"], [data-testid="nps-banner"] *, [data-testid="deletion-banner"], [data-testid="deletion-banner"] *, [role="status"]:has(> [aria-label="Скрыть объявление"]), [role="status"]:has(> [aria-label="Скрыть объявление"]) *)) {
+    column-gap: 8px;
+  }
+  :where(.app-shell:not(.mini-root, .public-theme) main, body:has(.app-shell:not(.mini-root, .public-theme)) :is([role="dialog"], [role="alertdialog"], [data-radix-popper-content-wrapper], [data-touch-zone]))
+    :is(.gap-y-0\.5, .gap-y-1, .gap-y-1\.5):has(> :is(button, a[href], [role="button"]) ~ :is(button, a[href], [role="button"])):not(:where(table, table *, [role="grid"], [role="grid"] *, [data-touch-compact], [data-touch-compact] *, [data-testid="nps-banner"], [data-testid="nps-banner"] *, [data-testid="deletion-banner"], [data-testid="deletion-banner"] *, [role="status"]:has(> [aria-label="Скрыть объявление"]), [role="status"]:has(> [aria-label="Скрыть объявление"]) *)) {
+    row-gap: 8px;
+  }
+  /* То же для списков-стопок (`space-y-1`, `space-y-1.5`): между
+     соседними строками-ссылками 8px. */
+  :where(.app-shell:not(.mini-root, .public-theme) main, body:has(.app-shell:not(.mini-root, .public-theme)) :is([role="dialog"], [role="alertdialog"], [data-radix-popper-content-wrapper], [data-touch-zone]))
+    :is(.space-y-0\.5, .space-y-1, .space-y-1\.5) > :is(button, a[href], [role="button"]):has(+ :is(button, a[href], [role="button"])):not(:where(table, table *, [role="grid"], [role="grid"] *, [data-touch-compact], [data-touch-compact] *, [data-testid="nps-banner"], [data-testid="nps-banner"] *, [data-testid="deletion-banner"], [data-testid="deletion-banner"] *, [role="status"]:has(> [aria-label="Скрыть объявление"]), [role="status"]:has(> [aria-label="Скрыть объявление"]) *)) {
+    margin-block-end: 8px;
+  }
+
+  /* Полоса действий над выделенными строками документа прибита под
+     шапкой (`top-[72px]`, journal-responsive.ts). Шапка кабинета на
+     телефоне — 56px, и под ней оставалась щель, в которой ехала таблица.
+     Только в кабинете: у мини-приложения своя верхняя полоса. */
+  body:has(.app-shell:not(.mini-root, .public-theme)) [data-selection-bar="top"] {
+    top: 56px;
+  }
+}

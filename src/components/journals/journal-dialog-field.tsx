@@ -383,7 +383,7 @@ export function DateField({
                     new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1)
                   )
                 }
-                className="rounded-lg p-1 text-[#5566f6] transition-colors duration-150 hover:bg-[#f3f4fe]"
+                className="rounded-lg p-1 text-[#5566f6] transition-colors duration-150 hover:bg-[#f3f4fe] touch:flex touch:size-12 touch:items-center touch:justify-center"
               >
                 <ChevronLeft className="size-4" />
               </button>
@@ -398,13 +398,16 @@ export function DateField({
                     new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1)
                   )
                 }
-                className="rounded-lg p-1 text-[#5566f6] transition-colors duration-150 hover:bg-[#f3f4fe]"
+                className="rounded-lg p-1 text-[#5566f6] transition-colors duration-150 hover:bg-[#f3f4fe] touch:flex touch:size-12 touch:items-center touch:justify-center"
               >
                 <ChevronRight className="size-4" />
               </button>
             </div>
 
-            <div className="grid grid-cols-7 gap-y-1">
+            {/* Сетка дней — как таблица: на телефоне кнопки дней не растягиваем
+                до 48px (`data-touch-compact`), иначе в 7 колонок по 38px круги
+                наезжали друг на друга. Стрелки месяца выше — 48×48. */}
+            <div className="grid grid-cols-7 gap-y-1" data-touch-compact="">
               {WEEKDAYS_RU.map((day) => (
                 <div
                   key={day}

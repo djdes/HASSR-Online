@@ -96,7 +96,7 @@ export function TimeEntryField({
           <PopoverTrigger asChild>
             <button
               type="button"
-              className="absolute right-1 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-[#6f7282] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#3848c7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+              className="absolute right-1 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-[#6f7282] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#3848c7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 touch:min-w-8"
               aria-label={`Выбрать время: ${ariaLabel}`}
               title="Выбрать время"
               data-testid={testId ? `${testId}-picker` : undefined}

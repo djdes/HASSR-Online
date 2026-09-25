@@ -81,7 +81,10 @@ export function MasterShell({
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-30 border-b border-[#ececf4] bg-white/90 backdrop-blur">
-        <div className="mx-auto flex h-16 w-full max-w-[1200px] items-center justify-between gap-3 px-4 md:px-8">
+        {/* На телефоне строка ниже (56px), кнопки-иконки — 44×44: зона
+            нажатия растёт отрицательными отступами, строка и «пилюля» кода
+            своей высоты не меняют. */}
+        <div className="mx-auto flex h-14 w-full max-w-[1200px] items-center justify-between gap-3 px-4 sm:h-16 md:px-8">
           <div className="flex min-w-0 items-center gap-3">
             <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#eef1ff] text-[#5566f6]">
               <Library className="size-5" />
@@ -94,7 +97,7 @@ export function MasterShell({
                 <button
                   type="button"
                   onClick={() => void rename()}
-                  className="flex size-7 shrink-0 items-center justify-center rounded-lg text-[#9b9fb3] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#3848c7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+                  className="flex size-7 shrink-0 items-center justify-center rounded-lg text-[#9b9fb3] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#3848c7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 max-sm:-my-2 max-sm:size-11"
                   aria-label="Переименовать мастер-кабинет"
                   title="Переименовать"
                   data-testid="master-rename"
@@ -118,7 +121,7 @@ export function MasterShell({
                 <button
                   type="button"
                   aria-label="Профиль"
-                  className="flex size-10 items-center justify-center rounded-full bg-[#eef1ff] text-[14px] font-semibold text-[#3848c7] transition-colors duration-150 hover:bg-[#e3e8ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+                  className="flex size-11 items-center justify-center rounded-full bg-[#eef1ff] text-[14px] font-semibold text-[#3848c7] transition-colors duration-150 hover:bg-[#e3e8ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 sm:size-10"
                 >
                   {initials}
                 </button>
@@ -144,7 +147,7 @@ export function MasterShell({
                     () => toast.error("Не удалось скопировать")
                   );
                 }}
-                className="flex size-7 shrink-0 items-center justify-center rounded-full transition-colors duration-150 hover:bg-white"
+                className="flex size-7 shrink-0 items-center justify-center rounded-full transition-colors duration-150 hover:bg-white max-sm:-my-2 max-sm:size-11"
                 aria-label="Скопировать код справочника"
                 title="Скопировать код"
               >

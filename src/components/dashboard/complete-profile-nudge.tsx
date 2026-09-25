@@ -471,11 +471,15 @@ function CompleteProfileModal({
   }
 
   return (
+    // `data-touch-compact`: анкета сверстана под один экран телефона
+    // (поля с подписью в рамке уже ≥ 56px, шрифт 16px), общие правила
+    // «крупнее на телефоне» её растягивали и сжимали счётчик «Точек» в ноль.
     <div
       className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0b1024]/45 p-3 backdrop-blur-sm sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="complete-profile-title"
+      data-touch-compact=""
     >
       {/* dvh, а не vh: на iPhone Safari vh считается без учёта панелей
           браузера, и низ модалки уезжал под нижнюю панель. */}

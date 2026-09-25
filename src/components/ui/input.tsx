@@ -2,6 +2,11 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * Телефон в кабинете (< 640px): высота не ниже 48px — правило «крупнее на
+ * телефоне» в app-theme.css; шрифт 16px даёт `text-base` (`md:text-sm` —
+ * только с 768px), иначе iOS приближает экран при нажатии.
+ */
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
     <input

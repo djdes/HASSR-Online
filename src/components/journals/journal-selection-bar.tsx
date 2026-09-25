@@ -69,9 +69,12 @@ export function JournalSelectionBar({
   const bottom = placement === "bottom";
 
   return createPortal(
+    // `data-touch-zone` — полоса живёт в <body>, вне `main`; метка
+    // включает на телефоне правила «крупнее» кабинета (app-theme.css).
     <div
       className={bottom ? "fixed inset-x-0 bottom-0 z-40 print:hidden" : JOURNAL_DOCUMENT_SELECTION_BAR_CLASS}
       data-selection-bar={placement}
+      data-touch-zone=""
     >
       <div
         className={
@@ -94,7 +97,7 @@ export function JournalSelectionBar({
               className={
                 bottom
                   ? "-my-1.5 -ml-2 flex size-11 items-center justify-center rounded-full text-[#6f7282] transition-colors duration-150 hover:bg-[#f1f2f8] hover:text-black focus:ring-4 focus:ring-[#5566f6]/15 focus:outline-none"
-                  : "rounded-full p-1.5 text-[#6f7282] transition-colors duration-150 hover:bg-[#f1f2f8] hover:text-black focus:ring-4 focus:ring-[#5566f6]/15 focus:outline-none"
+                  : "rounded-full p-1.5 text-[#6f7282] transition-colors duration-150 hover:bg-[#f1f2f8] hover:text-black focus:ring-4 focus:ring-[#5566f6]/15 focus:outline-none touch:-my-1.5 touch:-ml-2 touch:flex touch:size-12 touch:items-center touch:justify-center"
               }
             >
               <X className="size-4" />

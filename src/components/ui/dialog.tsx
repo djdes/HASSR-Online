@@ -137,9 +137,12 @@ function DialogContent({
         <DialogPrimitive.Close ref={closeRef} tabIndex={-1} aria-hidden className="hidden" />
         {showCloseButton && (
           <div className="sticky top-0 z-30 h-0">
+            {/* Телефон в кабинете (`touch:`): крестик — круг 48×48 чуть выше
+                угла; без этого общий минимум высоты вытягивал его в
+                «таблетку» 24×48, и значок съезжал вниз. */}
             <DialogPrimitive.Close
               data-slot="dialog-close"
-              className="absolute top-4 right-4 rounded-full bg-white/80 p-1 text-[#6f7282] opacity-90 backdrop-blur-sm ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+              className="absolute top-4 right-4 rounded-full bg-white/80 p-1 text-[#6f7282] opacity-90 backdrop-blur-sm ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 touch:top-2 touch:right-2 touch:flex touch:size-12 touch:items-center touch:justify-center touch:[&_svg:not([class*='size-'])]:size-5"
             >
               <XIcon />
               <span className="sr-only">Закрыть</span>

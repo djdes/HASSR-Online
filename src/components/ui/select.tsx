@@ -47,6 +47,11 @@ function SelectValue({
   return <SelectPrimitive.Value data-slot="select-value" {...props} />
 }
 
+/**
+ * Телефон в кабинете (< 640px): высота не ниже 48px и шрифт 16px — правила
+ * «крупнее на телефоне» в app-theme.css (сильнее `h-9` / `text-sm` здесь и
+ * `text-[13px]` страницы), иначе iOS приближает экран при нажатии.
+ */
 function SelectTrigger({
   className,
   size = "default",

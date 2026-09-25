@@ -140,7 +140,7 @@ export function DashboardJournalsGrid({
               type="button"
               onClick={() => setQuery("")}
               aria-label="Очистить поиск"
-              className="absolute right-2 top-1/2 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-[#9b9fb3] transition-colors hover:bg-[#f5f6ff] hover:text-[#5566f6]"
+              className="absolute right-2 top-1/2 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-[#9b9fb3] transition-colors hover:bg-[#f5f6ff] hover:text-[#5566f6] touch:min-w-8"
             >
               <X className="size-4" />
             </button>

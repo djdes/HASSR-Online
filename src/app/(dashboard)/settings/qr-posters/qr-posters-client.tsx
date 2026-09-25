@@ -192,8 +192,11 @@ export function QrPostersClient({ view }: { view: QrPostersView }) {
         }
       />
 
-      {/* Цель касания гайда — 44px (сам PageGuide общий, правим только здесь). */}
-      <div className="space-y-2 [&_button]:min-h-11 [&>div:first-child]:py-0.5" data-qr-guide="">
+      {/* Цель касания гайда — 44px (сам PageGuide общий, правим только здесь).
+          На телефоне в кабинете (`touch:`) — 48px, как у всех кнопок, а поле
+          плашки отдано самой кнопке (PageGuide); в мини-приложении и с 640px
+          всё как было. */}
+      <div className="space-y-2 [&_button]:min-h-11 [&>div:first-child]:py-0.5 touch:[&_button]:min-h-12 touch:[&>div:first-child]:py-0" data-qr-guide="">
         <PageGuide
           title="Как это работает"
           storageKey="qr-posters-v2"

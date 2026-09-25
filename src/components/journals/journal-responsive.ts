@@ -298,9 +298,14 @@ export const JOURNAL_DIALOG_FIELD_INVALID_CLASS =
 export const JOURNAL_DIALOG_FIELD_LABEL_CLASS =
   "block text-[11.5px] leading-[1.35] font-normal text-[#8a8fa3]";
 
-/** Инпут внутри рамки: своей рамки/фона/тени нет — их даёт контейнер. */
+/**
+ * Инпут внутри рамки: своей рамки/фона/тени нет — их даёт контейнер.
+ * `touch:min-h-0` — на телефоне общий минимум 48px (app-theme.css) здесь
+ * не нужен: цель нажатия — рамка поля (≈ 60px вместе с подписью), а
+ * вытянутый инпут раздувал каждое поле на 20px пустоты.
+ */
 export const JOURNAL_DIALOG_FIELD_CONTROL_CLASS =
-  "h-7 w-full min-w-0 rounded-none border-0 bg-transparent p-0 text-[15px] leading-[1.5] text-[#0b1024] shadow-none outline-none placeholder:text-[#9b9fb3] focus-visible:border-0 focus-visible:ring-0 disabled:opacity-60 md:text-[15px]";
+  "h-7 w-full min-w-0 rounded-none border-0 bg-transparent p-0 text-[15px] leading-[1.5] text-[#0b1024] shadow-none outline-none placeholder:text-[#9b9fb3] focus-visible:border-0 focus-visible:ring-0 disabled:opacity-60 md:text-[15px] touch:min-h-0";
 
 /** Textarea внутри рамки (периодичность контроля, примечания). */
 export const JOURNAL_DIALOG_FIELD_TEXTAREA_CLASS =
@@ -312,7 +317,7 @@ export const JOURNAL_DIALOG_FIELD_TEXTAREA_CLASS =
  * пилюлю ~50px, когда предзаполненного значения не было в списке опций.
  */
 export const JOURNAL_DIALOG_FIELD_TRIGGER_CLASS =
-  "h-7 w-full justify-between rounded-none border-0 bg-transparent p-0 text-[15px] text-[#0b1024] shadow-none focus-visible:ring-0 data-[size=default]:h-7 data-[size=sm]:h-7 data-[placeholder]:text-[#9b9fb3] [&>span]:truncate";
+  "h-7 w-full justify-between rounded-none border-0 bg-transparent p-0 text-[15px] text-[#0b1024] shadow-none focus-visible:ring-0 data-[size=default]:h-7 data-[size=sm]:h-7 data-[placeholder]:text-[#9b9fb3] [&>span]:truncate touch:min-h-0";
 
 /** Заметный (amber) хинт под полем — «сотрудников на должности нет». */
 export const JOURNAL_DIALOG_HINT_CLASS =

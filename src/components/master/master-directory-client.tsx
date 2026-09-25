@@ -283,7 +283,10 @@ export function MasterDirectoryClient({
                 )}
                 data-testid={`master-tab-${item.key}`}
               >
-                <Icon className="size-4 shrink-0" />
+                {/* На телефоне без значка: подписи там крупнее (16px), и
+                    три вкладки со значками и счётчиками в строку не
+                    помещались — третья уезжала за край. */}
+                <Icon className="size-4 shrink-0 max-sm:hidden" />
                 <span className="sm:hidden">{item.short}</span>
                 <span className="hidden sm:inline">{item.label}</span>
                 <span
