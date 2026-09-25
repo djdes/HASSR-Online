@@ -1,0 +1,341 @@
+--- CLAUDE.md.orig	2026-09-25 23:58:33.139166800 +0300
++++ CLAUDE.md.new	2026-09-25 23:59:51.383791400 +0300
+@@ -7,11 +7,11 @@
+ Утверждены 2026-05-09 в brainstorming-сессии с владельцем проекта.
+ Полная спецификация: [`docs/superpowers/specs/2026-05-09-wesetup-tasksflow-integration-design.md`](./docs/superpowers/specs/2026-05-09-wesetup-tasksflow-integration-design.md).
+ 
+-**ВАЖНО:** перед любой правкой касающейся интеграции с TasksFlow (адаптеры
+-`src/lib/tasksflow-adapters/*`, эндпоинты `src/app/api/integrations/tasksflow/*`,
+-`TasksFlowTaskLink`, `TasksFlowUserLink`, `TasksFlowOutbox`, claim/verify-flow,
+-race-mode, siblings cleanup) **ОБЯЗАТЕЛЬНО** перечитать соответствующий
+-принцип ниже и spec — иначе риск поломать архитектуру.
++Перед правкой интеграции с TasksFlow (адаптеры `src/lib/tasksflow-adapters/*`,
++эндпоинты `src/app/api/integrations/tasksflow/*`, `TasksFlowTaskLink`,
++`TasksFlowUserLink`, `TasksFlowOutbox`, claim/verify-flow, race-mode, siblings
++cleanup) перечитай нужный принцип ниже и spec: эти места легко сломать, не
++заметив нарушения границ между системами.
+ 
+ ### Границы систем (system boundary)
+ 
+@@ -146,12 +146,12 @@
+    общих слов («помой холодный цех» vs «1) возьми тряпку → 2) холодный
+    цех → 3) протри столы и подоконники»).
+ 
+-4. **Используй superpowers.**
+-   Для сложных задач (нетривиальный refactor, multi-step feature, новые
+-   архитектурные элементы) — обязательно вызывать релевантные skills из
+-   superpowers (brainstorming, systematic-debugging, test-driven-development,
+-   verification-before-completion, frontend-design). Skills не optional —
+-   они часть процесса.
++4. **Скилы superpowers — для сложных задач.**
++   Нетривиальный рефакторинг, многошаговая фича, новые архитектурные
++   элементы — бери подходящие скилы superpowers (brainstorming,
++   systematic-debugging, test-driven-development,
++   verification-before-completion, frontend-design), когда они помогают
++   зафиксировать объём, найти причину или доказать результат.
+ 
+ 5. **«Просто» в коде = «просто» в UI.**
+    Если UI выглядит сложным — код тоже сложный. Если код запутанный —
+@@ -196,21 +196,16 @@
+      `UserPicker` (см. references), `PageGuide` (объяснения и Q/A
+      наверху страницы), `WhatsNewModal` (release notes).
+ 
+-7. **Новинки после деплоя — `WhatsNewModal` обязателен.**
+-   Источник: `src/lib/whats-new-notes.ts`. После значимого изменения
+-   для пользователя:
+-
+-   - Обновить `LATEST_NOTES_BUILD_SHA` на короткий sha коммита, в
+-     который попадают изменения (`648a1e9`, `3b1b3d7` и т.п.).
+-   - Дописать или переписать `WHATS_NEW_NOTES` — короткие фразы
+-     «что появилось / что починили» с точки зрения пользователя.
+-   - Не дёргать SHA на каждый push — только когда юзер заметит
+-     изменение. Иначе модалка надоест.
+-
+-   Modal привязан к сравнению `localStorage["wesetup.last-seen-build-sha"]`
+-   с переданным `buildSha`. То есть он сработает один раз после
+-   first reload каждого юзера после нового деплоя — это именно та
+-   «после перезагрузки страницы» точка, которую пользователь хочет.
++7. **Новинки после деплоя — `WhatsNewModal`.**
++   Источник: `src/lib/whats-new-notes.ts`. Значимое для пользователя
++   изменение не закончено, пока в `WHATS_NEW_NOTES` нет коротких фраз
++   «что появилось / что починили» с точки зрения пользователя — это часть
++   задачи, а не follow-up. Мелкие фиксы и рефакторинг туда не пишем, иначе
++   модалка надоест.
++
++   Показ модалки зависит от отпечатка текста заметок (`whatsNewVersion`):
++   изменили список — каждый пользователь увидит модалку один раз после
++   перезагрузки страницы. `LATEST_NOTES_BUILD_SHA` ни на что не влияет.
+ 
+    **Размер и UX модалки — обязательные требования:**
+ 
+@@ -221,8 +216,8 @@
+    - Если новостей больше 4-5 пунктов — **группировать в категории**
+      (`Журналы`, `Распределение задач`, `Интерфейс`, `Интеграции`,
+      `Раньше — тоже полезное`). `WhatsNewNote` поддерживает оба
+-     формата: `string` (плоский) и `{ category, icon, items[] }`
+-     (accordion).
++     формата: `string` (плоский) и `{ category, items[] }` (accordion;
++     иконка категории — в `CATEGORY_ICONS`, см. ниже).
+    - **Accordion — одна категория открыта за раз.** По умолчанию —
+      первая. Клик на заголовок переключает; клик на уже открытую —
+      закрывает.
+@@ -236,16 +231,12 @@
+      даёт runtime error. Если появилась новая категория — добавить
+      иконку в map, не в `whats-new-notes.ts`.
+ 
+-   После деплоя ВАЖНОГО для пользователя изменения — обязательно
+-   обновляй `whats-new-notes.ts`. Это часть «доделать таску до конца»,
+-   а не follow-up.
+-
+ ## Git Workflow
+ 
+-**ВАЖНО:**
+-- Все сообщения коммитов писать на **русском языке**
+-- После каждого коммита автоматически делать `git push origin master`
+-- Формат коммита: краткое описание изменений на русском
++- Все сообщения коммитов пишем на **русском языке**: краткое описание изменений.
++- После коммита — `git push origin master`: push в master запускает деплой на прод.
++- Хуки не обходим (`--no-verify` нельзя): pre-commit гоняет проверку секретов,
++  typecheck и тесты, pre-push — typecheck и тесты. Упало — чиним причину.
+ 
+ Пример:
+ ```bash
+@@ -260,7 +251,7 @@
+ 
+ # make changes
+ git add path/to/file1 path/to/file2
+-git commit -m "feat: short description"
++git commit -m "Журнал уборки: отметка «выполнено» по QR"
+ git push origin master
+ ```
+ 
+@@ -270,16 +261,18 @@
+ - Local scratch files seen before: `test.txt`, `_seed_remote.py`, `docs/plans/*`.
+ - If git reports dubious ownership in this workspace, fix it with:
+ ```bash
+-git config --global --add safe.directory C:/www/Wesetup.ru
++git config --global --add safe.directory D:/www/Wesetup.ru
+ ```
+ - Git Credential Manager is available on this machine.
+ 
+ ## Build & Development Commands
+ 
+ ```bash
+-npm run dev              # Start dev server (Next.js 16, port 3000)
+-npm run build            # Build for production
++npm run dev              # Start dev server (Next.js 16, port 3000); predev runs prisma generate
++npm run build            # Build for production; prebuild runs prisma generate
+ npm run lint             # ESLint check
++npm run typecheck        # tsc --noEmit (tsconfig.typecheck.json)
++npm test                 # node --test via tsx over src/**/*.test.ts
+ npm start                # Run production build (PM2 on server)
+ npx prisma generate      # Generate Prisma Client
+ npx prisma db push       # Push schema changes to DB
+@@ -306,9 +299,8 @@
+ npm run dev
+ ```
+ 
+-Local database options:
+-- **PGlite** (default dev): `npx @electric-sql/pglite-socket` runs socket server on port 5433
+-- **PostgreSQL**: set `DATABASE_URL` to real Postgres instance
++Local database: PostgreSQL on `localhost:5432` — `DATABASE_URL` from `.env.shared`
++(`?sslmode=disable`).
+ 
+ ## Architecture Overview
+ 
+@@ -341,7 +333,7 @@
+ │   │   │   ├── plans/page.tsx
+ │   │   │   ├── reports/page.tsx
+ │   │   │   └── settings/integrations/tasksflow/page.tsx
+-│   │   ├── (root)/            # ROOT-only platform pages
++│   │   ├── root/              # ROOT-only platform pages
+ │   │   │   ├── root/page.tsx
+ │   │   │   ├── root/organizations/page.tsx
+ │   │   │   ├── root/telegram-logs/page.tsx
+@@ -385,7 +377,7 @@
+ │   │   ├── telegram.ts        # sendTelegramMessage, notifyOrganization
+ │   │   ├── tasksflow-adapters/ # TasksFlow integration adapters
+ │   │   ├── validators.ts      # Zod schemas
+-│   │   ├── email.ts           # Email sending (Resend)
++│   │   ├── email.ts           # Email sending (nodemailer → SMTP relay)
+ │   │   ├── invite-tokens.ts   # SHA-256 token generation
+ │   │   ├── registration.ts    # 6-digit code + bcrypt
+ │   │   ├── pdf.ts             # PDF generation
+@@ -393,95 +385,14 @@
+ │   ├── types/
+ │   │   └── next-auth.d.ts     # Extended JWT/session types
+ │   ├── content/               # Blog articles (MDX)
+-│   └── middleware.ts          # Route protection + org impersonation
++│   └── proxy.ts               # Next.js 16 proxy (ex-middleware): route protection + org impersonation
+ ├── prisma/
+-│   ├── schema.prisma          # Full Prisma schema (870+ lines)
++│   ├── schema.prisma          # Full Prisma schema
+ │   └── seed.ts                # Demo data seed
+ ├── public/                    # Static assets, icons
+ └── scripts/                   # Utility scripts
+ ```
+ 
+-## Detailed File Descriptions
+-
+-### Frontend (src/app/)
+-
+-#### (dashboard)/journals/[code]/page.tsx
+-- Journal detail page (desktop)
+-- Shows entries list or document-based table
+-- Links to new entry form
+-
+-#### (dashboard)/journals/[code]/documents/[docId]/page.tsx
+-- Document journal grid (employee × day table)
+-- Inline cell editing
+-- Used for hygiene logs, temperature checks, etc.
+-
+-#### mini/page.tsx
+-- Mini App home (SPA entry point)
+-- Telegram WebApp auth via `signIn("telegram", ...)`
+-- Shows: staff journals / manager summary / all journals list
+-- Geo reminders, QR scanner button
+-
+-#### mini/journals/[code]/page.tsx
+-- Mini App journal entries
+-- Field-based: card list with "Fill like yesterday" + photo attachments
+-- Document-based: list of documents → `/mini/documents/[id]`
+-- Fixed bottom "New entry" button
+-
+-#### mini/journals/[code]/new/page.tsx
+-- New entry form inside Mini App
+-- Reuses `DynamicForm` with `journalsBasePath="/mini/journals"`
+-
+-#### mini/documents/[id]/page.tsx
+-- Document journal grid inside Mini App
+-- `EntryCard` with tap-to-edit inline mode
+-- No tables — all cards for mobile UX
+-
+-### Backend (src/app/api/)
+-
+-#### auth/[...nextauth]/route.ts
+-- NextAuth.js with JWT strategy
+-- Credentials provider (email/password)
+-- Telegram provider (Mini App auth)
+-
+-#### mini/home/route.ts
+-- Returns user data, journal templates, obligations
+-- Filters by `assignableCodes` vs `allowedCodes` depending on scope
+-- Returns mode: "manager" | "staff" | "readonly"
+-
+-#### mini/journals/[code]/entries/route.ts
+-- GET: entries for a journal (last 7 days)
+-- POST: create new entry
+-
+-#### integrations/tasksflow/route.ts
+-- TasksFlow integration settings
+-- Sync users, sync tasks
+-
+-#### settings/external-token/route.ts
+-- External API token management
+-
+-### Core Library (src/lib/)
+-
+-#### db.ts
+-- Prisma singleton with `$extends` for logging
+-
+-#### auth.ts / auth-helpers.ts
+-- `getActiveOrgId(session)` — returns currently-viewed org
+-- `requireAuth()` / `requireRole()` / `requireRoot()`
+-- `isImpersonating()` — check if ROOT is acting as another org
+-
+-#### journal-acl.ts
+-- `hasJournalAccess(userId, journalCode)` — LRU-cached (60s)
+-- `canWriteJournal()` / `canFinalizeJournal()`
+-- `invalidateJournalAcl(userId)` — call after ACL changes
+-
+-#### telegram.ts
+-- `sendTelegramMessage()` with TelegramLog + 429 retry
+-- `notifyOrganization()` — bulk send to org subscribers
+-- Link-token HMAC verification
+-
+-#### tasksflow-adapters/index.ts
+-- TasksFlow integration data adapters
+-
+ ## Data Flow
+ 
+ ### 1. Registration
+@@ -555,7 +466,7 @@
+ 
+ ## Database
+ 
+-PostgreSQL with Prisma ORM. Schema in `prisma/schema.prisma` (870+ lines).
++PostgreSQL with Prisma ORM. Schema in `prisma/schema.prisma`.
+ 
+ **Key models:**
+ - `User` — employees, managers, ROOT
+@@ -570,10 +481,6 @@
+ - `TasksFlowIntegration` / `TasksFlowUserLink` / `TasksFlowTaskLink` — TasksFlow sync
+ - `Area` — production areas with lat/lng
+ 
+-**Local dev:**
+-- PGlite socket server: `npx @electric-sql/pglite-socket` (port 5433)
+-- Prisma may need `?sslmode=disable` for PGlite connection
+-
+ ## Auth
+ 
+ NextAuth.js 4 with JWT strategy.
+@@ -636,12 +543,6 @@
+ 
+ ## Known Issues & Workarounds
+ 
+-### Prisma + PGlite connection (local dev)
+-- PGlite runs on port 5433 but Prisma may fail with `P1001 Can't reach database server`
+-- Try adding `?sslmode=disable` to `DATABASE_URL`
+-- Or use `npx prisma db push` instead of `migrate dev` (PGlite has migration limitations)
+-- Alternative: run real PostgreSQL via Docker
+-
+ ### Next.js dev server stability
+ - Background tasks may timeout after 900s
+ - If port 3000 is occupied, kill the old process and restart `npm run dev`
+@@ -669,18 +570,18 @@
+ 
+ ## Skills and Agents Discovery
+ 
+-At the start of every session, check what's available before acting:
+-
+-- **Skills** — all `.claude/skills/*` are auto-discovered by the Skill tool. Relevant namespaces:
+-  - `wesetup-design` — our design system (invoke before any UI edit)
+-  - `karpathy-guidelines` — coding discipline
+-  - `anthropic-*` — claude-api, mcp-builder, skill-creator, webapp-testing, frontend-design
+-  - `everything-*` — backend/frontend-patterns, tdd-workflow, security-review, coding-standards
+-- **Agents** — all `.claude/agents/*.md` are available via the Agent tool. 140 VoltAgent specialists plus task-proof-loop agents.
++- **Skills** — `.claude/skills/*` are auto-discovered by the Skill tool:
++  - `wesetup-design` — our design system. Load it before changing any visible `.tsx` surface:
++    every screen must look like one product (see П-11 and UX principle 6).
++  - `karpathy-guidelines` — coding discipline for non-trivial refactors.
++  - `anthropic-*` — mcp-builder, skill-creator, webapp-testing, frontend-design. For Claude API
++    work use the bundled `claude-api` skill (it tracks current models).
++  - `everything-*` — backend/frontend-patterns, tdd-workflow, security-review, coding-standards.
++- **Agents** — `.claude/agents/*.md`: task-proof-loop agents plus a short list of specialists for
++  this stack (Next.js, React, TypeScript, Postgres, security, accessibility, UI, QA, SEO).
++  The rest of the VoltAgent collection is archived in `.claude/references/agents-archive/`.
+ - **References** — `.claude/references/prompt-guide/`, `.claude/references/awesome-claude-code/`
+ 
+-Rule: **invoke relevant skills before acting, not after.** `wesetup-design` before any `.tsx` change on a visible surface. `karpathy-guidelines` before a non-trivial refactor. For new features touching existing code, invoke `superpowers:brainstorming` first to lock scope.
+-
+ ## Conventions
+ 
+ - UI text is Russian.
+@@ -694,10 +595,16 @@
+ ## Testing
+ 
+ ```bash
+-npx tsc --noEmit --skipLibCheck   # TypeScript type check
++npm run typecheck                  # TypeScript type check (tsconfig.typecheck.json)
++npm test                           # Unit tests: node --test via tsx over src/**/*.test.ts
++npm run test:gate                  # Same, gated by the baseline tests/.legacy-failures.txt
+ npm run lint                       # ESLint
+ ```
+ 
++Hooks: pre-commit runs the secrets check, `typecheck` and `test:gate` when `.ts/.tsx` files are
++staged; pre-push runs `typecheck` and `test:gate` (the deploy runs typecheck too). A new failing
++test blocks the commit — fix the cause.
++
+ ## Required Env Vars
+ 
+ ```bash

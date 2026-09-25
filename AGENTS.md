@@ -59,13 +59,13 @@ The application is a Next.js 16 monolith deployed on a Linux VPS behind Nginx, m
 | QR/Barcode | html5-qrcode, qrcode |
 | Bot framework | grammy (Telegram bot) |
 | IOT | Tuya Connector NodeJS |
-| AI SDK | @anthropic-ai/sdk |
+| AI | Queue of the AI dispatcher (`docs/ai-dispatcher.md`): the site never calls a model directly |
 | Runtime | Node.js 22+ |
 
 ## Project Structure
 
 ```
-c:\www\Wesetup.ru
+Wesetup.ru/
 ├── src/
 │   ├── app/                     # Next.js App Router
 │   │   ├── (auth)/              # Public routes: /login, /register
@@ -117,7 +117,7 @@ c:\www\Wesetup.ru
 ├── public/                      # Static assets
 ├── .github/workflows/deploy.yml # CI/CD pipeline
 ├── next.config.ts               # Next.js config (build markers, cache headers)
-├── middleware.ts                # No-cache headers for app pages
+├── src/proxy.ts                 # Next.js 16 proxy (ex-middleware): route guards, redirects, no-cache headers
 ├── postcss.config.mjs           # Tailwind PostCSS config
 ├── components.json              # shadcn/ui config
 └── tsconfig.json                # TypeScript config
@@ -216,17 +216,20 @@ npx tsx prisma/seed-job-positions.ts
 npx tsx scripts/telegram-poller.ts   # Run bot poller locally
 npm run test:bot         # Run bot wizard smoke tests
 
-# Testing
-# Unit tests are co-located in src/lib/*.test.ts and run with tsx + node --test
-# Example: npx tsx --test src/lib/role-access.test.ts
+# Checks (the git hooks run them too)
+npm run typecheck        # tsc --noEmit (tsconfig.typecheck.json)
+npm test                 # node --test via tsx over src/**/*.test.ts
+npm run test:gate        # npm test gated by the baseline tests/.legacy-failures.txt
+# One file: npx tsx --test src/lib/role-access.test.ts
 ```
 
 ## Testing Strategy
 
-- **Unit tests**: Co-located as `*.test.ts` inside `src/lib/`. Uses Node.js built-in `node:test` / `assert`. Run manually with `npx tsx --test <file>`.
+- **Unit tests**: Co-located as `*.test.ts` under `src/`. Node.js built-in `node:test` / `assert`, run through tsx.
+- **Git hooks**: pre-commit runs the secrets check, `typecheck` and `test:gate` when `.ts/.tsx` files are staged; pre-push runs `typecheck` and `test:gate`. Do not bypass them with `--no-verify`; a new failing test must be fixed, not skipped.
 - **Smoke tests**: `scripts/test-bot-wizard.ts` validates the Telegram bot registration wizard end-to-end.
 - **Screenshot capture**: `scripts/capture-screenshots.ts` for visual regression evidence.
-- **No automated CI test suite**: The deploy workflow runs `test:bot` but does not fail the deploy on test failure (warn-only).
+- **CI**: the deploy workflow runs `npm run typecheck` (fails the deploy) and `test:bot` (warn-only).
 - **Production verification**: HTTP probes against `127.0.0.1:3002`, PM2 status checks, `.build-sha` / `.build-time` verification.
 
 ## Code Style Guidelines
@@ -272,7 +275,7 @@ Critical env vars (see `.env.shared` for template):
 - `PLATFORM_ORG_ID=platform`
 - `ROOT_EMAIL`, `ROOT_PASSWORD_HASH` (or `ROOT_PASSWORD` for dev)
 - `NEXTAUTH_SECRET`, `NEXTAUTH_URL`
-- `EMAIL_SERVER_*`, `EMAIL_FROM` — SMTP configuration
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_FROM` — SMTP relay (see `src/lib/email.ts`; empty `SMTP_HOST` in dev = emails only logged)
 - `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_LINK_TOKEN_SECRET`, `TELEGRAM_WEBHOOK_SECRET`
 - `EMAIL_VERIFICATION_TTL_MIN`, `TELEGRAM_LOG_RETENTION_DAYS`
 - `INTEGRATION_KEY_SECRET` — for encrypting third-party API keys
@@ -291,8 +294,7 @@ Critical env vars (see `.env.shared` for template):
 
 ## Conventions for AI Agents
 
-- Before any UI edit on a visible surface, invoke the `wesetup-design` skill (project-specific design system).
-- Before non-trivial refactors, invoke `karpathy-guidelines`.
-- For new features touching existing code, invoke `superpowers:brainstorming` first to lock scope.
+- Visible UI follows the project design system (`wesetup-design` skill, `.claude/skills/design-system`): every screen must look like one product.
+- For non-trivial refactors, `karpathy-guidelines` is the coding discipline to follow; for a new feature that touches existing code, lock the scope first (a frozen spec, see the proof loop above).
 - The `.cursorrules` file in repo root contains additional style rules (notably the git branch workflow).
-- The `CLAUDE.md` file contains operational memory (SSH credentials, production probes, detailed architecture notes). Refer to it for deployment commands and troubleshooting.
+- The local `CLAUDE.md` (not in git) holds operational notes: production probes, SSH access (the password stays in the local `.env`), architecture principles. Refer to it for deployment commands and troubleshooting.
