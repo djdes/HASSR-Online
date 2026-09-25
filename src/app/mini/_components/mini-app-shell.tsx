@@ -126,7 +126,9 @@ export function MiniAppShell({
                   variant="mini"
                 />
               ) : null}
-              {askNps ? <NpsBanner variant="mini" /> : null}
+              {/* Всегда в дереве: начатый ответ переживает «потянуть,
+                  чтобы обновить», когда после оценки askNps становится false. */}
+              <NpsBanner variant="mini" ask={askNps} />
               {/* «Потянуть, чтобы обновить» — на всех экранах сразу. */}
               <RefreshProvider>{children}</RefreshProvider>
             </main>
