@@ -57,6 +57,30 @@ test("каждый шаблон каталога уникален и запол�
   }
 });
 
+test("СанПиН общепита в основаниях — действующий 4282-26 и его пункты", () => {
+  const CURRENT = "СанПиН 2.3/2.4.4282-26";
+  let checked = 0;
+  for (const template of ORDER_TEMPLATES) {
+    for (const item of template.basis) {
+      if (!item.startsWith("СанПиН 2.3/2.4")) continue;
+      checked += 1;
+      assert.ok(
+        item === CURRENT || item.startsWith(`${CURRENT}, `),
+        `${template.code}: основание ссылается не на действующий СанПиН — ${item}`
+      );
+      // Нумерация 4282-26 сквозная, пункты 1–65. Номер вида «2.18» —
+      // это пункт отменённого предшественника, в новых правилах его нет.
+      for (const number of item.slice(CURRENT.length).match(/\d+(?:\.\d+)*/g) ?? []) {
+        assert.match(number, /^\d+$/, `${template.code}: номер «${number}» не из 4282-26`);
+        const point = Number(number);
+        assert.ok(point >= 1 && point <= 65, `${template.code}: пункта ${point} в 4282-26 нет`);
+      }
+    }
+  }
+  // Ссылки на санитарные правила не должны просто исчезнуть из приказов.
+  assert.ok(checked >= 8, `оснований на СанПиН общепита осталось ${checked}`);
+});
+
 test("каждый плейсхолдер тела известен: реквизиты или поле формы", () => {
   const orgKeys = new Set([
     "orgName",

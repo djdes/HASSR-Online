@@ -1,0 +1,44 @@
+{
+  "task": "sanpin-4282-refs-2026-09",
+  "branch": "feat/sanpin-refs-2026-09-26",
+  "base": "70f09cdd (origin/master)",
+  "sources": {
+    "sanpin_4282_26": "https://www.consultant.ru/document/cons_doc_LAW_535846/",
+    "sanpin_4282_26_crosscheck": "https://www.garant.ru/products/ipo/prime/doc/414229257/",
+    "official_publication": "http://publication.pravo.gov.ru/document/0001202606020084",
+    "sanpin_3590_20": "https://www.consultant.ru/document/cons_doc_LAW_367564/"
+  },
+  "mapping": [
+    { "where": "src/lib/orders/catalog.ts journals-intro", "was": "СанПиН 2.3/2.4.3590-20", "now": "СанПиН 2.3/2.4.4282-26, пункты 4, 25, 35, 44" },
+    { "where": "src/lib/orders/catalog.ts incoming-control", "was": "СанПиН 2.3/2.4.3590-20, раздел II (п. 2.2)", "now": "СанПиН 2.3/2.4.4282-26, пункт 5" },
+    { "where": "src/lib/orders/catalog.ts sanitary-responsible", "was": "СанПиН 2.3/2.4.3590-20", "now": "СанПиН 2.3/2.4.4282-26, пункты 21, 46" },
+    { "where": "src/lib/orders/catalog.ts cleaning-schedule", "was": "СанПиН 2.3/2.4.3590-20, раздел II (п. 2.18)", "now": "СанПиН 2.3/2.4.4282-26, пункты 21, 46" },
+    { "where": "src/lib/orders/catalog.ts disinfection", "was": "СанПиН 2.3/2.4.3590-20", "now": "СанПиН 2.3/2.4.4282-26, пункты 26, 45" },
+    { "where": "src/lib/orders/catalog.ts daily-samples", "was": "СанПиН 2.3/2.4.3590-20, раздел VIII (п. 8.1.10)", "now": "СанПиН 2.3/2.4.4282-26, подпункт 4 пункта 56 и подпункт 10 пункта 59" },
+    { "where": "src/lib/orders/catalog.ts medical-examinations", "was": "СанПиН 2.3/2.4.3590-20, раздел I (ошибочно; по смыслу пп. 2.21, 2.22)", "now": "СанПиН 2.3/2.4.4282-26, пункты 24, 25" },
+    { "where": "src/lib/orders/catalog.ts workwear", "was": "СанПиН 2.3/2.4.3590-20, раздел I (ошибочно; по смыслу п. 3.4)", "now": "СанПиН 2.3/2.4.4282-26, пункт 31" },
+    { "where": "src/lib/sphere-journal-rules.ts:495 comment", "was": "пп. 7.1.3, 7.1.13, 7.1.14", "now": "СанПиН 2.3/2.4.4282-26, п. 56, подп. 3, 13, 14" },
+    { "where": "src/lib/sphere-journal-rules.ts:656 comment", "was": "в 3590-20 это пп. 7.1.13–7.1.14; в 4282-26 номер требует юр-сверки", "now": "СанПиН 2.3/2.4.4282-26, п. 56, подп. 3, 13, 14" }
+  ],
+  "checks": {
+    "typecheck": "pass (exit 0)",
+    "test": "2384/2384 pass (baseline 2380/2380, +4 new)",
+    "mutation_check": "4/4 new tests fail on HEAD sources",
+    "eslint_changed_files": "pass (exit 0)",
+    "grep_3590_20_src": "7 lines in 5 files, all explanatory (was 16 lines)"
+  },
+  "acceptance": {
+    "AC1": { "status": "PASS", "evidence": ["evidence.md: таблица соответствия", "raw/sanpin-4282-26-quotes.md", "raw/sanpin-3590-20-quotes.md", "raw/diff-3590-20-vs-4282-26.txt", "raw/cross-check-garant.txt", "raw/rendered-preambles.txt"] },
+    "AC2": { "status": "PASS", "evidence": ["raw/grep-before.txt", "raw/grep-after.txt", "evidence.md: список оставшихся упоминаний"] },
+    "AC3": { "status": "PASS", "evidence": ["src/content/journal-info.ts perishable_rejection", "raw/sanpin-4282-26-quotes.md: приложение № 5, 13 граф", "src/lib/journal-faq.test.ts: «журнал скоропорта: публичное описание совпадает с формой»"] },
+    "AC4": { "status": "PASS", "evidence": ["raw/typecheck.log", "raw/test-summary.txt", "raw/mutation-check.txt"] }
+  },
+  "open_issues": [
+    "daily-samples purpose и FAQ /prikazy: «столовым и кейтерингу» шире, чем требует 4282-26 (п. 56 подп. 4, 12, 14; п. 59 подп. 10; п. 65 подп. 3)",
+    "гайды заполнения скоропорта (journal-filling-guides.ts, journal-doc-guides.ts) велят фиксировать температуру — графы в форме нет",
+    "journal-seo.ts perishable_rejection: «связывает партию с накладной», «связывается со списанием» — не сверено с кодом",
+    "подсказки сфер «требует юр-сверки 4282-26» можно заменить на сверенные пункты (п. 56 подп. 3, 4, 13; п. 59 подп. 6, 10)",
+    "FAQ на главной «Где указано…» можно дополнить пунктами 25, 35, 44",
+    "преамбула «В соответствии с требованиями Приказ Минздрава…» — падеж (было и до правки)"
+  ]
+}

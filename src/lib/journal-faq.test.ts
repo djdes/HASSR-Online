@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 
 import { JOURNAL_INFO } from "@/content/journal-info";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
+import { getColumnRegistry } from "@/lib/journal-columns";
 import { buildJournalFaq, journalFaqJsonLd } from "@/lib/journal-faq";
 
 const hygiene = JOURNAL_INFO.hygiene;
@@ -67,6 +68,58 @@ describe("buildJournalFaq", () => {
       return faq[0].a;
     });
     assert.equal(new Set(firstAnswers).size, firstAnswers.length);
+  });
+});
+
+describe("журнал скоропорта: публичное описание совпадает с формой", () => {
+  const info = JOURNAL_INFO.perishable_rejection;
+  const whatToFill = info.whatToFill.join("; ").toLowerCase();
+
+  it("в форме нет графы температуры — описание её не обещает", () => {
+    const labels = getColumnRegistry("perishable_rejection").map((column) =>
+      typeof column.label === "function" ? column.label({}) : column.label
+    );
+    assert.ok(labels.length > 0, "у скоропорта пропал реестр колонок");
+    assert.ok(labels.every((label) => !/температур/i.test(label)));
+    assert.doesNotMatch(
+      [info.why, whatToFill, ...info.tips].join(" "),
+      /температур/i
+    );
+  });
+
+  it("перечисляет все 13 граф приложения № 5 к СанПиН 2.3/2.4.4282-26", () => {
+    for (const column of [
+      "дата и час поступления",
+      "наименование",
+      "фасовка",
+      "дата выработки",
+      "изготовитель",
+      "поставщик",
+      "количество",
+      "документа, подтверждающего безопасность",
+      "органолептической оценки",
+      "условия хранения",
+      "конечный срок реализации",
+      "фактической реализации",
+      "подпись ответственного лица",
+      "примечание",
+    ]) {
+      assert.ok(whatToFill.includes(column), `в описании нет графы «${column}»`);
+    }
+    assert.ok(
+      info.normative.some(
+        (norm) => norm.title.includes("4282-26") && norm.pointer?.includes("приложение № 5")
+      ),
+      "норматив не указывает на форму приложения № 5"
+    );
+  });
+
+  it("ответ FAQ «что писать» строится из граф формы", () => {
+    const faq = buildJournalFaq(info, "Журнал бракеража скоропортящейся пищевой продукции");
+    const fields = faq.find((item) => item.q.startsWith("Что писать"));
+    assert.ok(fields);
+    assert.match(fields.a, /органолептической оценки/);
+    assert.doesNotMatch(fields.a, /температур/i);
   });
 });
 

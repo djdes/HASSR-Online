@@ -1,0 +1,19 @@
+# Проверка, что новые тесты ловят регресс: исходники catalog.ts и journal-info.ts откатаны к HEAD (70f09cdd), тесты — новые.
+# node --import tsx --test src/lib/orders/render.test.ts src/lib/journal-faq.test.ts
+  ✖ в форме нет графы температуры — описание её не обещает (4.5456ms)
+  ✖ перечисляет все 13 граф приложения № 5 к СанПиН 2.3/2.4.4282-26 (0.567ms)
+  ✖ ответ FAQ «что писать» строится из граф формы (0.5611ms)
+✖ журнал скоропорта: публичное описание совпадает с формой (6.1568ms)
+✖ СанПиН общепита в основаниях — действующий 4282-26 и его пункты (4.0635ms)
+ℹ tests 20
+ℹ pass 16
+ℹ fail 4
+✖ failing tests:
+✖ в форме нет графы температуры — описание её не обещает (4.5456ms)
+  AssertionError [ERR_ASSERTION]: The input was expected to not match the regular expression /температур/i. Input:
+✖ перечисляет все 13 граф приложения № 5 к СанПиН 2.3/2.4.4282-26 (0.567ms)
+  AssertionError [ERR_ASSERTION]: в описании нет графы «дата и час поступления»
+✖ ответ FAQ «что писать» строится из граф формы (0.5611ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /органолептической оценки/. Input:
+✖ СанПиН общепита в основаниях — действующий 4282-26 и его пункты (4.0635ms)
+  AssertionError [ERR_ASSERTION]: journals-intro: основание ссылается не на действующий СанПиН — СанПиН 2.3/2.4.3590-20
