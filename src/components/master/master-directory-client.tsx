@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import {
   Building2,
+  CalendarPlus,
   ClipboardPaste,
   FileSpreadsheet,
   Loader2,
@@ -17,6 +18,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { MasterBrakerageDialog } from "@/components/master/master-brakerage-dialog";
 import { MasterMenuTableDialog } from "@/components/master/master-menu-table-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { MenuRow } from "@/lib/finished-product-bulk";
@@ -111,6 +113,8 @@ export function MasterDirectoryClient({
   const [uploading, setUploading] = useState<SharedKind | null>(null);
   /** Меню вводится таблицей «Наименование | Выход | Время», сырьё — текстом. */
   const [menuTableOpen, setMenuTableOpen] = useState(false);
+  /** «Добавить в журналы на дату» — строки БЖГП во все пищеблоки пула. */
+  const [brakerageOpen, setBrakerageOpen] = useState(false);
   const fileInput = useRef<HTMLInputElement | null>(null);
   const fileKind = useRef<SharedKind>("dish");
 
@@ -281,6 +285,10 @@ export function MasterDirectoryClient({
         </div>
       </nav>
 
+      {tab === "menu" ? (
+        <BrakerageCard objectsCount={organizations.length} onOpen={() => setBrakerageOpen(true)} />
+      ) : null}
+
       {tab === "menu" || tab === "raw" ? (
         <ListPanel
           key={tab}
@@ -294,6 +302,13 @@ export function MasterDirectoryClient({
       ) : (
         <ObjectsPanel organizations={organizations} />
       )}
+
+      <MasterBrakerageDialog
+        open={brakerageOpen}
+        onOpenChange={setBrakerageOpen}
+        menu={lists.dish}
+        organizationsCount={organizations.length}
+      />
 
       <MasterMenuTableDialog
         open={menuTableOpen}
@@ -356,6 +371,50 @@ export function MasterDirectoryClient({
         {preview ? <PreviewBody preview={preview} /> : null}
       </ConfirmDialog>
     </div>
+  );
+}
+
+/**
+ * Главное действие вкладки меню: строки бракеража на дату — в БЖГП всех
+ * пищеблоков. Меню ниже — справочник подсказок и «Взять меню».
+ */
+function BrakerageCard({ objectsCount, onOpen }: { objectsCount: number; onOpen: () => void }) {
+  return (
+    <section
+      className="rounded-3xl border border-[#dfe3ff] bg-gradient-to-br from-[#f5f6ff] to-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] sm:p-6"
+      aria-labelledby="master-brakerage-title"
+    >
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex min-w-0 items-start gap-3">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#5566f6]">
+            <CalendarPlus className="size-5" />
+          </span>
+          <div className="min-w-0">
+            <h2 id="master-brakerage-title" className="text-[18px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">
+              Бракераж на дату — во все пищеблоки
+            </h2>
+            <p className="mt-1 text-[13.5px] leading-[1.55] text-[#6f7282]">
+              Составьте список блюд на день — строки появятся в журнале бракеража готовой продукции{" "}
+              {objectsCount === 1 ? "подключённого пищеблока" : `всех ${objectsCount} ${pluralRu(objectsCount, "пищеблока", "пищеблоков", "пищеблоков")}`}{" "}
+              на выбранную дату.
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onOpen}
+          disabled={objectsCount === 0}
+          className={cn(PRIMARY, "shrink-0")}
+          data-testid="master-brakerage-open"
+        >
+          <CalendarPlus className="size-4" />
+          Добавить в журналы на дату
+        </button>
+      </div>
+      {objectsCount === 0 ? (
+        <p className="mt-3 text-[12.5px] text-[#a13a32]">Пока ни один пищеблок не подключён к коду справочника.</p>
+      ) : null}
+    </section>
   );
 }
 

@@ -7,10 +7,13 @@ import {
   emptyDishYieldRows,
   FINISHED_PRODUCT_BULK_MAX,
   isYieldValue,
+  fillTimeBelow,
   menuRowsToSave,
   normalizeMenuTime,
+  normalizeTypedTime,
   parseMenuPaste,
   parseDishYieldPaste,
+  setTimeForAll,
 } from "@/lib/finished-product-bulk";
 
 test("вид выхода: 150, 200/10, 150 г, 250/10/5", () => {
@@ -261,4 +264,66 @@ test("меню: к сохранению — только строки с наи�
       { name: "Плов", yield: "", time: "" },
     ]
   );
+});
+
+test("время руками: цифры без двоеточия → ЧЧ:ММ", () => {
+  const cases: Array<[string, string]> = [
+    ["0800", "08:00"],
+    ["800", "08:00"],
+    ["8", "08:00"],
+    ["08", "08:00"],
+    ["0830", "08:30"],
+    ["830", "08:30"],
+    ["1230", "12:30"],
+    ["12", "12:00"],
+    ["8 30", "08:30"],
+    ["8:30", "08:30"],
+    ["08.15", "08:15"],
+    ["23:59", "23:59"],
+  ];
+  for (const [input, expected] of cases) assert.equal(normalizeTypedTime(input), expected, input);
+  for (const bad of ["", "24", "2400", "975", "12345", "утро", "8:75", null, undefined]) {
+    assert.equal(normalizeTypedTime(bad), "", String(bad));
+  }
+  // Разбор файлов и вставки остаётся строгим.
+  assert.equal(normalizeMenuTime("1230"), "");
+});
+
+test("проставить всем ниже: время строки — строкам ниже с наименованием", () => {
+  const rows = [
+    { name: "Каша", time: "07:30" },
+    { name: "Борщ", time: "0830" },
+    { name: "Плов", time: "" },
+    { name: "", time: "" },
+    { name: "Компот", time: "12:00" },
+  ];
+  assert.deepEqual(fillTimeBelow(rows, 1), [
+    { name: "Каша", time: "07:30" },
+    { name: "Борщ", time: "08:30" },
+    { name: "Плов", time: "08:30" },
+    { name: "", time: "" },
+    { name: "Компот", time: "08:30" },
+  ]);
+  // Пустое/непонятное время не раздаём.
+  assert.equal(fillTimeBelow(rows, 2), rows);
+});
+
+test("время для всех строк: только строки с наименованием", () => {
+  const rows = [
+    { name: "Каша", time: "07:30" },
+    { name: "", time: "" },
+    { name: "Плов", time: "" },
+  ];
+  assert.deepEqual(setTimeForAll(rows, "900"), [
+    { name: "Каша", time: "09:00" },
+    { name: "", time: "" },
+    { name: "Плов", time: "09:00" },
+  ]);
+  assert.equal(setTimeForAll(rows, "мусор"), rows);
+});
+
+test("меню к сохранению: время, набранное без двоеточия", () => {
+  assert.deepEqual(menuRowsToSave([{ name: "Каша", yield: "200", time: "0830" }]), [
+    { name: "Каша", yield: "200", time: "08:30" },
+  ]);
 });

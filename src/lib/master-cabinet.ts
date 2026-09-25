@@ -236,3 +236,40 @@ export async function createOrInviteMasterCabinet(input: {
     reinvited: Boolean(existingUser),
   };
 }
+
+/* ─────────── Название кабинета ─────────── */
+
+export const MASTER_CABINET_NAME_MIN = 2;
+export const MASTER_CABINET_NAME_MAX = 120;
+
+/** Название кабинета: пробелы схлопнуты; короче 2 или длиннее 120 символов — null. */
+export function normalizeMasterCabinetName(raw: unknown): string | null {
+  if (typeof raw !== "string") return null;
+  const name = raw.replace(/\s+/g, " ").trim();
+  if (name.length < MASTER_CABINET_NAME_MIN || name.length > MASTER_CABINET_NAME_MAX) return null;
+  return name;
+}
+
+/**
+ * Переименовать мастер-кабинет (организацию `kind="directory"`). Имя при
+ * создании собирается как «Мастер-кабинет — <организация>»; дальше его
+ * меняют сотрудник кабинета (шапка `/master`) или владелец пищеблока
+ * (`/settings/master-cabinet`).
+ */
+export async function renameMasterCabinet(
+  masterOrgId: string,
+  rawName: unknown
+): Promise<{ previousName: string; name: string; changed: boolean }> {
+  const name = normalizeMasterCabinetName(rawName);
+  if (!name) {
+    throw new MasterCabinetError(
+      `Название — от ${MASTER_CABINET_NAME_MIN} до ${MASTER_CABINET_NAME_MAX} символов`,
+      400
+    );
+  }
+  const org = await db.organization.findUnique({ where: { id: masterOrgId }, select: { name: true, kind: true } });
+  if (!org || org.kind !== MASTER_ORG_KIND) throw new MasterCabinetError("Мастер-кабинет не найден", 404);
+  if (org.name === name) return { previousName: org.name, name, changed: false };
+  await db.organization.update({ where: { id: masterOrgId }, data: { name } });
+  return { previousName: org.name, name, changed: true };
+}

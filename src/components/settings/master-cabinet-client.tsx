@@ -11,12 +11,14 @@ import {
   Link2,
   Loader2,
   Mail,
+  PenLine,
   RefreshCw,
   UserPlus,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { DishPoolSection } from "@/components/journals/dish-pool-section";
+import { renameMasterCabinetDialog } from "@/components/master/rename-master-cabinet";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PageGuide } from "@/components/ui/page-guide";
 import type { MasterCabinetStatus } from "@/lib/master-cabinet";
@@ -144,6 +146,16 @@ export function MasterCabinetClient({
     } finally {
       setResendingId(null);
     }
+  }
+
+  /** Переименовать кабинет пула (название в шапке кабинета и в списке организаций). */
+  async function rename() {
+    if (!master) return;
+    const result = await renameMasterCabinetDialog({ currentName: master.name, endpoint: "/api/settings/master-cabinet" });
+    if (!result) return;
+    const next = result.body.status as MasterCabinetStatus | undefined;
+    if (next) setStatus(next);
+    else setStatus((prev) => (prev.master ? { ...prev, master: { ...prev.master, name: result.name } } : prev));
   }
 
   async function openCabinet() {
@@ -346,9 +358,21 @@ export function MasterCabinetClient({
                 <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#5566f6]">
                   <Library className="size-5" />
                 </span>
-                <div className="min-w-0">
-                  <div className="text-[16px] font-semibold leading-snug text-[#0b1024]" data-testid="master-cabinet-name">
-                    {master.name}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start gap-1.5">
+                    <div className="min-w-0 break-words text-[16px] font-semibold leading-snug text-[#0b1024]" data-testid="master-cabinet-name">
+                      {master.name}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void rename()}
+                      className="-mt-1 flex size-8 shrink-0 items-center justify-center rounded-xl text-[#6f7282] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#3848c7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+                      aria-label="Переименовать мастер-кабинет"
+                      title="Переименовать"
+                      data-testid="master-cabinet-rename"
+                    >
+                      <PenLine className="size-4" />
+                    </button>
                   </div>
                   <div className="mt-0.5 text-[13px] text-[#6f7282]">
                     Раздаёт меню и сырьё в {objectsCount} {pluralRu(objectsCount, "объект", "объекта", "объектов")}

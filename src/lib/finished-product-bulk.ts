@@ -175,6 +175,59 @@ export function normalizeMenuTime(value: unknown): string {
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 }
 
+/**
+ * Время, которое человек набирает руками: двоеточие не обязательно.
+ * «8» / «08» → «08:00», «800» / «0800» → «08:00», «830» / «0830» → «08:30»,
+ * «1230» → «12:30», «8 30» → «08:30»; с разделителями — как normalizeMenuTime.
+ * Непонятное (25, 975, «утро») — пустая строка. Разбор файлов и вставки
+ * остаётся строгим (normalizeMenuTime): там «1230» может быть выходом.
+ */
+export function normalizeTypedTime(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  const text = collapse(String(value));
+  if (text === "") return "";
+  const loose = normalizeMenuTime(text);
+  if (loose) return loose;
+  let hours: number;
+  let minutes: number;
+  const spaced = /^(\d{1,2})\s+(\d{2})$/.exec(text);
+  if (spaced) {
+    hours = Number(spaced[1]);
+    minutes = Number(spaced[2]);
+  } else if (/^\d{1,2}$/.test(text)) {
+    hours = Number(text);
+    minutes = 0;
+  } else if (/^\d{3,4}$/.test(text)) {
+    hours = Number(text.slice(0, text.length - 2));
+    minutes = Number(text.slice(-2));
+  } else {
+    return "";
+  }
+  if (hours > 23 || minutes > 59) return "";
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+}
+
+type TimedRow = { time?: string; name?: string };
+
+/** Пустая строка таблицы (без наименования) — время ей не раздаём, иначе она станет «ошибкой». */
+function isNamelessRow(row: TimedRow): boolean {
+  return typeof row.name === "string" && row.name.trim() === "";
+}
+
+/** Время строки index — всем строкам ниже с наименованием (пустое время не раздаём). */
+export function fillTimeBelow<T extends TimedRow>(rows: T[], index: number): T[] {
+  const time = normalizeTypedTime(rows[index]?.time ?? "");
+  if (!time) return rows;
+  return rows.map((row, i) => (i === index || (i > index && !isNamelessRow(row)) ? { ...row, time } : row));
+}
+
+/** «Время для всех строк»: одно время каждой строке таблицы с наименованием. */
+export function setTimeForAll<T extends TimedRow>(rows: T[], value: string): T[] {
+  const time = normalizeTypedTime(value);
+  if (!time) return rows;
+  return rows.map((row) => (isNamelessRow(row) ? row : { ...row, time }));
+}
+
 /** Ячейка точно время: с двоеточием («8:30», «08:30:00»). */
 function isStrictTime(value: string): boolean {
   return /^\d{1,2}:\d{2}(?::\d{2})?$/.test(value) && normalizeMenuTime(value) !== "";
@@ -346,7 +399,7 @@ export function menuRowsToSave(rows: MenuRow[]): MenuRow[] {
     .map((row) => ({
       name: collapse(row.name).slice(0, NAME_MAX),
       yield: cleanYield(row.yield),
-      time: normalizeMenuTime(row.time),
+      time: normalizeTypedTime(row.time),
     }))
     .filter((row) => row.name !== "");
 }

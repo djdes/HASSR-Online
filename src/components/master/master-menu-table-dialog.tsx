@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, X } from "lucide-react";
+import { ListChecks, Loader2, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -10,13 +10,16 @@ import {
   JOURNAL_DIALOG_HEADER_CLASS,
   JOURNAL_DIALOG_TITLE_CLASS,
 } from "@/components/journals/journal-responsive";
+import { TimeEntryField, isBadTypedTime } from "@/components/journals/time-entry-field";
 import {
   applyMenuPaste,
   emptyMenuRows,
+  fillTimeBelow,
   isMultiCellPaste,
   menuRowsToSave,
-  normalizeMenuTime,
+  normalizeTypedTime,
   parseMenuPaste,
+  setTimeForAll,
   type MenuRow,
 } from "@/lib/finished-product-bulk";
 import type { SharedItem } from "@/lib/master-directory";
@@ -38,9 +41,9 @@ function rowsFromItems(items: SharedItem[]): MenuRow[] {
   return rows.length > 0 ? [...rows, ...emptyMenuRows(1)] : emptyMenuRows(START_EMPTY_ROWS);
 }
 
-/** Время введено, но не похоже на «ЧЧ:ММ» — подсветим, в список оно не уйдёт. */
+/** Время введено, но не распознаётся даже без двоеточия — подсветим, в список оно не уйдёт. */
 function badTime(value: string): boolean {
-  return value.trim() !== "" && normalizeMenuTime(value) === "";
+  return isBadTypedTime(value);
 }
 
 /**
@@ -64,6 +67,8 @@ export function MasterMenuTableDialog({
   const [rows, setRows] = useState<MenuRow[]>(() => rowsFromItems(items));
   const [shown, setShown] = useState(RENDER_CHUNK);
   const [submitting, setSubmitting] = useState(false);
+  /** «Время для всех строк» — одно время каждой строке. */
+  const [allTime, setAllTime] = useState("");
 
   // Каждое открытие — заново с текущим списком мастера.
   useEffect(() => {
@@ -136,6 +141,33 @@ export function MasterMenuTableDialog({
             время (или только наименования). В таблице уже текущее меню: удалите строку — блюдо уберётся из меню.
           </p>
 
+          <div className="flex flex-col gap-2 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-3 sm:flex-row sm:items-center">
+            <span className="shrink-0 text-[13px] font-medium text-[#3c4053]">Время для всех строк</span>
+            <TimeEntryField
+              className="sm:w-[176px]"
+              value={allTime}
+              onChange={setAllTime}
+              ariaLabel="Время для всех строк"
+              placeholder="08:00"
+              testId="menu-time-all"
+            />
+            <button
+              type="button"
+              disabled={!normalizeTypedTime(allTime)}
+              onClick={() => {
+                const time = normalizeTypedTime(allTime);
+                setRows((prev) => setTimeForAll(prev, time));
+                toast.success(`Время ${time} — всем строкам`);
+              }}
+              className="inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:cursor-not-allowed disabled:opacity-50"
+              data-testid="menu-time-all-apply"
+            >
+              <ListChecks className="size-4" />
+              Проставить всем
+            </button>
+            <span className="text-[12px] leading-snug text-[#6f7282]">Можно без двоеточия: 0830 → 08:30.</span>
+          </div>
+
           <div
             className="hidden items-center gap-2 px-1 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#6f7282] sm:flex"
             aria-hidden
@@ -143,7 +175,7 @@ export function MasterMenuTableDialog({
             <span className="w-8 shrink-0 text-center">№</span>
             <span className="min-w-0 flex-1">Наименование</span>
             <span className="w-[120px] shrink-0">Выход</span>
-            <span className="w-[96px] shrink-0">Время</span>
+            <span className="w-[176px] shrink-0">Время</span>
             <span className="w-9 shrink-0" />
           </div>
 
@@ -164,7 +196,7 @@ export function MasterMenuTableDialog({
                     <span className="mt-2.5 w-8 shrink-0 text-center text-[13px] font-medium tabular-nums text-[#9b9fb3]">
                       {n}
                     </span>
-                    <div className="grid min-w-0 flex-1 grid-cols-2 gap-2 sm:flex sm:flex-row">
+                    <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] gap-2 sm:flex sm:flex-row">
                       <input
                         className={cn(
                           INPUT,
@@ -190,25 +222,19 @@ export function MasterMenuTableDialog({
                         onPaste={(event) => paste(event, index)}
                         data-testid={`menu-yield-${index}`}
                       />
-                      <input
-                        className={cn(
-                          INPUT,
-                          "sm:w-[96px] sm:shrink-0",
-                          wrongTime ? "border-[#e8a39a] bg-[#fff4f2]" : "border-[#dcdfed] bg-white"
-                        )}
+                      <TimeEntryField
+                        className="sm:w-[176px] sm:shrink-0"
                         value={row.time}
-                        maxLength={8}
-                        inputMode="numeric"
-                        placeholder={index === 0 ? "08:30" : "Время"}
-                        aria-label={`Время изготовления, строка ${n}`}
-                        aria-invalid={wrongTime || undefined}
-                        onChange={(event) => update(index, { time: event.target.value })}
-                        onBlur={(event) => {
-                          const normalized = normalizeMenuTime(event.target.value);
-                          if (normalized) update(index, { time: normalized });
+                        onChange={(time) => update(index, { time })}
+                        onFillBelow={() => {
+                          setRows((prev) => fillTimeBelow(prev, index));
+                          setShown((value) => Math.max(value, rows.length));
                         }}
+                        fillBelowDisabled={index >= rows.length - 1}
+                        ariaLabel={`Время изготовления, строка ${n}`}
+                        placeholder={index === 0 ? "08:30" : "Время"}
+                        testId={`menu-time-${index}`}
                         onPaste={(event) => paste(event, index)}
-                        data-testid={`menu-time-${index}`}
                       />
                     </div>
                     <button
@@ -227,7 +253,7 @@ export function MasterMenuTableDialog({
                     </p>
                   ) : wrongTime ? (
                     <p className="mt-1.5 pl-10 text-[12px] leading-snug text-[#a13a32]">
-                      время — в виде ЧЧ:ММ, например 08:30
+                      время — в виде ЧЧ:ММ, например 08:30 (можно 0830)
                     </p>
                   ) : null}
                 </li>
@@ -269,7 +295,7 @@ export function MasterMenuTableDialog({
           {badTimes > 0 ? (
             <p className="rounded-xl bg-[#fff4f2] px-3 py-2 text-[12.5px] leading-snug text-[#a13a32]">
               {badTimes} {pluralRu(badTimes, "строка", "строки", "строк")} с непонятным временем — оно не сохранится.
-              Исправьте на ЧЧ:ММ или сотрите.
+              Исправьте (например 08:30 или 0830) или сотрите.
             </p>
           ) : null}
         </div>

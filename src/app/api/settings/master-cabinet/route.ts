@@ -5,7 +5,12 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { authOptions } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit-log";
 import { sendInviteTokenEmail } from "@/lib/email";
-import { createOrInviteMasterCabinet, getMasterCabinetStatus, MasterCabinetError } from "@/lib/master-cabinet";
+import {
+  createOrInviteMasterCabinet,
+  getMasterCabinetStatus,
+  MasterCabinetError,
+  renameMasterCabinet,
+} from "@/lib/master-cabinet";
 import { createRateLimiter } from "@/lib/rate-limit";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getServerSession } from "@/lib/server-session";
@@ -40,6 +45,51 @@ export async function GET() {
   const auth = await guard();
   if ("error" in auth) return auth.error;
   return NextResponse.json(await getMasterCabinetStatus(auth.organizationId, auth.session.user.id));
+}
+
+/** PATCH { name } — переименовать мастер-кабинет пула (владелец / руководитель пищеблока). */
+export async function PATCH(request: Request) {
+  const auth = await guard();
+  if ("error" in auth) return auth.error;
+  const body = (await request.json().catch(() => null)) as { name?: unknown } | null;
+  const status = await getMasterCabinetStatus(auth.organizationId, auth.session.user.id);
+  if (!status.master) {
+    return NextResponse.json({ error: "Мастер-кабинета в вашем пуле пока нет" }, { status: 404 });
+  }
+  try {
+    const result = await renameMasterCabinet(status.master.organizationId, body?.name);
+    if (result.changed) {
+      const details = { from: result.previousName, to: result.name, via: "settings", masterOrganizationId: status.master.organizationId };
+      await recordAuditLog({
+        request,
+        session: auth.session,
+        organizationId: auth.organizationId,
+        action: "master_cabinet.renamed",
+        entity: "Organization",
+        entityId: status.master.organizationId,
+        details,
+      });
+      await recordAuditLog({
+        request,
+        session: auth.session,
+        organizationId: status.master.organizationId,
+        action: "master_cabinet.renamed",
+        entity: "Organization",
+        entityId: status.master.organizationId,
+        details,
+      });
+      console.info("[master-cabinet] renamed", { organizationId: auth.organizationId, ...details });
+    }
+    return NextResponse.json({
+      name: result.name,
+      changed: result.changed,
+      status: await getMasterCabinetStatus(auth.organizationId, auth.session.user.id),
+    });
+  } catch (err) {
+    if (err instanceof MasterCabinetError) return NextResponse.json({ error: err.message }, { status: err.status });
+    console.error("[master-cabinet] rename failed", { organizationId: auth.organizationId }, err);
+    return NextResponse.json({ error: "Не удалось переименовать кабинет" }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {

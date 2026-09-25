@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, Copy, Library, Loader2, LogOut } from "lucide-react";
+import { Building2, Copy, Library, Loader2, LogOut, PenLine } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { toast } from "sonner";
 
 import { BrandLogo } from "@/components/brand/logo";
+import { renameMasterCabinetDialog } from "@/components/master/rename-master-cabinet";
 import { ResponsiveMenu, type ResponsiveMenuItem } from "@/components/ui/responsive-menu";
 
 export type MasterShellProps = {
@@ -34,6 +35,13 @@ export function MasterShell({
   children,
 }: MasterShellProps) {
   const [switching, setSwitching] = useState(false);
+  /** Название кабинета — переименовывается карандашом в шапке. */
+  const [name, setName] = useState(organizationName);
+
+  async function rename() {
+    const result = await renameMasterCabinetDialog({ currentName: name, endpoint: "/api/master/cabinet" });
+    if (result) setName(result.name);
+  }
   const initials = (userName || userEmail || "?").trim().slice(0, 1).toUpperCase();
 
   async function returnTo(target: { id: string; name: string }) {
@@ -79,8 +87,20 @@ export function MasterShell({
               <Library className="size-5" />
             </span>
             <span className="min-w-0">
-              <span className="block truncate text-[15px] font-semibold text-[#0b1024]" data-testid="master-org-name">
-                {organizationName}
+              <span className="flex min-w-0 items-center gap-1">
+                <span className="block truncate text-[15px] font-semibold text-[#0b1024]" data-testid="master-org-name">
+                  {name}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => void rename()}
+                  className="flex size-7 shrink-0 items-center justify-center rounded-lg text-[#9b9fb3] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#3848c7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+                  aria-label="Переименовать мастер-кабинет"
+                  title="Переименовать"
+                  data-testid="master-rename"
+                >
+                  <PenLine className="size-3.5" />
+                </button>
               </span>
               <span className="block truncate text-[11px] font-medium uppercase tracking-[0.14em] text-[#6f7282]">
                 Мастер-кабинет справочников
