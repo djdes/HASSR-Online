@@ -1,4 +1,5 @@
 import { requireRoot } from "@/lib/auth-helpers";
+import { BLANK_DOWNLOAD_AUDIT_ACTION } from "@/lib/blank-download";
 import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +39,9 @@ export default async function RootAuditPage() {
   await requireRoot();
 
   const logs = await db.auditLog.findMany({
+    // Скачивания шаблонов с сайта — лиды, а не действия админов: у них
+    // свой список (/root/blank-downloads), здесь они вытеснили бы аудит.
+    where: { action: { not: BLANK_DOWNLOAD_AUDIT_ACTION } },
     orderBy: { createdAt: "desc" },
     take: 200,
   });

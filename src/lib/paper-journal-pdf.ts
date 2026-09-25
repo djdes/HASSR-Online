@@ -5,6 +5,13 @@ import autoTable from "jspdf-autotable";
 import type { PaperJournal } from "@/lib/sphere-journal-rules";
 import { stampPartnerPdfFooter, type PdfFooterBrand } from "@/lib/pdf-page-labels";
 import { formatJournalPeriodLabel } from "@/lib/journal-document-title";
+import {
+  reserveJournalQrBottomMargin,
+  stampJournalQr,
+  trackPdfInk,
+  type JournalPdfQr,
+  type JournalQrPlacement,
+} from "@/lib/pdf-journal-qr";
 
 /**
  * Бланк бумажного журнала для печати.
@@ -44,7 +51,7 @@ export type PaperJournalOrg = {
   address?: string | null;
 };
 
-export function renderPaperJournalPdf(params: {
+export type PaperJournalPdfParams = {
   journal: PaperJournal;
   organization: PaperJournalOrg;
   /** Заполненные строки. Пусто — печатаем чистый бланк. */
@@ -58,7 +65,42 @@ export function renderPaperJournalPdf(params: {
    * журнала; черновик и публичный семпл печатаются без него.
    */
   period?: { from: string | null; to: string | null } | null;
-}): Buffer {
+  /**
+   * QR с подписью в свободном углу каждой страницы (публичный бланк с
+   * сайта: копирайт и QR на /qb). Нет — бланк как раньше (кабинет).
+   */
+  qr?: JournalPdfQr | null;
+};
+
+export function renderPaperJournalPdf(params: PaperJournalPdfParams): Buffer {
+  return renderPaperJournalPdfDetailed(params).buffer;
+}
+
+/**
+ * С QR — до двух проходов, как у электронных журналов (document-pdf):
+ * сначала как есть; если хоть на одной странице угол занят таблицей —
+ * с нижним полем таблицы под QR. Лишний лист ради угла не добавляем.
+ */
+export function renderPaperJournalPdfDetailed(params: PaperJournalPdfParams): {
+  buffer: Buffer;
+  qrPlacements?: JournalQrPlacement[];
+} {
+  if (!params.qr?.url) return renderPaperJournalPdfPass(params, false);
+  const first = renderPaperJournalPdfPass(params, false);
+  const firstPlacements = first.qrPlacements ?? [];
+  if (firstPlacements.every((p) => p.bottomRow && !p.overlap)) return first;
+  const second = renderPaperJournalPdfPass(params, true);
+  const secondPlacements = second.qrPlacements ?? [];
+  const firstFree = firstPlacements.every((p) => !p.overlap);
+  const secondFree = secondPlacements.every((p) => !p.overlap);
+  if (firstFree && (!secondFree || secondPlacements.length > firstPlacements.length)) return first;
+  return second;
+}
+
+function renderPaperJournalPdfPass(
+  params: PaperJournalPdfParams,
+  reserveQrBottom: boolean,
+): { buffer: Buffer; qrPlacements?: JournalQrPlacement[] } {
   const {
     journal,
     organization,
@@ -72,6 +114,10 @@ export function renderPaperJournalPdf(params: {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
   const font = loadUnicodeFont(doc);
   const pageWidth = doc.internal.pageSize.getWidth();
+  // QR: учёт нарисованного бланком — до первой отрисовки.
+  const qr = params.qr?.url ? params.qr : null;
+  const inkTracker = qr ? trackPdfInk(doc) : null;
+  if (qr && reserveQrBottom) reserveJournalQrBottomMargin(doc);
 
   doc.setFont(font, "bold");
   doc.setFontSize(13);
@@ -154,6 +200,11 @@ export function renderPaperJournalPdf(params: {
   });
 
   stampPartnerPdfFooter(doc, branding, font);
+  // QR — последним: встаёт только на свободное место страницы.
+  const qrPlacements = qr ? stampJournalQr(doc, { ...qr, fontName: font, tracker: inkTracker }) : undefined;
 
-  return Buffer.from(doc.output("arraybuffer"));
+  return {
+    buffer: Buffer.from(doc.output("arraybuffer")),
+    ...(qrPlacements ? { qrPlacements } : {}),
+  };
 }

@@ -849,3 +849,56 @@ export async function sendTemperatureAlertEmail(params: {
 
   return sendEmail(to, subject, layout("Температурный алерт", body, brand));
 }
+
+/**
+ * Письмо со ссылками на скачанный с сайта шаблон журнала. Файл уже
+ * скачался в браузере — письмо дублирует его, чтобы шаблон можно было
+ * открыть с другого устройства или переслать. Ссылки подписаны и живут
+ * `expiresDays` дней; адрес печатается и текстом — кнопки режут
+ * некоторые почтовые клиенты.
+ *
+ * Сборка отделена от отправки ради тестов: письмо проверяется целиком,
+ * без SMTP.
+ */
+export function buildBlankDownloadEmail(params: {
+  journalTitle: string;
+  /** Первая ссылка — скачанный формат, дальше — другие форматы того же шаблона. */
+  files: Array<{ label: string; url: string }>;
+  pageUrl: string | null;
+  registerUrl: string;
+  expiresDays: number;
+}): { subject: string; html: string } {
+  const { journalTitle, files, pageUrl, registerUrl, expiresDays } = params;
+  const subject = `Шаблон «${journalTitle}» — WeSetup`;
+  const [main, ...more] = files;
+  const moreHtml = more
+    .map(
+      (file) =>
+        `<p style="margin:12px 0 0;font-size:14px"><a href="${escapeHtml(file.url)}" style="color:#3848c7">${escapeHtml(file.label)}</a></p>`
+    )
+    .join("");
+  const pageHtml = pageUrl
+    ? `<p style="margin:16px 0 0;color:#3f3f46;font-size:14px;line-height:1.6">Что заполнять и на каком основании ведётся журнал — <a href="${escapeHtml(pageUrl)}" style="color:#3848c7">на странице журнала</a>.</p>`
+    : "";
+
+  const body = `
+    <p style="margin:0 0 16px;color:#3f3f46;line-height:1.6">Здравствуйте!</p>
+    <p style="margin:0 0 20px;color:#3f3f46;line-height:1.6">Вы скачали на сайте WeSetup шаблон журнала <strong>«${escapeHtml(journalTitle)}»</strong>. Копия — по ссылке ниже, она работает ${expiresDays} дней.</p>
+    ${main ? `<a href="${escapeHtml(main.url)}" style="display:inline-block;background:#5566f6;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px">${escapeHtml(main.label)}</a>
+    <p style="margin:12px 0 0;color:#a1a1aa;font-size:12px;line-height:1.5;word-break:break-all">Если кнопка не открывается, скопируйте адрес: ${escapeHtml(main.url)}</p>` : ""}${moreHtml}${pageHtml}
+    <div style="background:#f5f6ff;border-radius:8px;padding:20px;margin:24px 0 0">
+      <p style="margin:0 0 8px;font-size:14px;font-weight:600;color:#18181b">Этот журнал можно не печатать</p>
+      <p style="margin:0 0 16px;color:#3f3f46;font-size:14px;line-height:1.6">В WeSetup его заполняют с телефона по QR-коду — тому же, что стоит в углу шаблона. Без бумаги, с напоминаниями, если смена забыла отметиться. Бесплатно до ${FREE_MAX_USERS} сотрудников.</p>
+      <a href="${escapeHtml(registerUrl)}" style="display:inline-block;background:#18181b;color:#fff;text-decoration:none;padding:10px 20px;border-radius:8px;font-weight:600;font-size:14px">Вести журнал в WeSetup</a>
+    </div>
+    <p style="margin:24px 0 0;font-size:12px;color:#a1a1aa;line-height:1.5">Письмо пришло, потому что этот адрес указали при скачивании шаблона на wesetup.ru. Если это были не вы — просто не отвечайте на него.</p>`;
+
+  return { subject, html: layout(`Шаблон «${escapeHtml(journalTitle)}»`, body) };
+}
+
+export async function sendBlankDownloadEmail(
+  params: Parameters<typeof buildBlankDownloadEmail>[0] & { to: string }
+): Promise<boolean> {
+  const { subject, html } = buildBlankDownloadEmail(params);
+  return sendEmail(params.to, subject, html);
+}

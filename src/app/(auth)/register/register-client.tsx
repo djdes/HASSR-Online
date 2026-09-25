@@ -13,6 +13,7 @@ import {
   rememberSignupSource,
   ymGoal,
 } from "@/lib/signup-source";
+import { blankSignupPlace } from "@/lib/blank-download";
 
 /** Те же цели Метрики, что у форм на лендинге, с местом «register». */
 const GOAL_PARAMS = { place: "register" };
@@ -56,6 +57,15 @@ function RegisterScreen() {
     return raw.startsWith("/") && !raw.startsWith("//") && raw.length <= 500 ? raw : null;
   })();
 
+  // Пришли по QR со скачанного шаблона журнала (/qb): источник «бланк» и
+  // код журнала уходят местом формы в уведомление о регистрации, а журнал
+  // называем прямо здесь — человек должен понимать, что откроется после.
+  const blankSource = searchParams.get("source") === "blank";
+  const signupPlace = blankSource ? blankSignupPlace(searchParams.get("journal")) : "register";
+  const blankJournalName = blankSource
+    ? ACTIVE_JOURNAL_CATALOG.find((j) => j.code === searchParams.get("journal"))?.name ?? null
+    : null;
+
   const field = useEmailField(prefilled);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -87,7 +97,7 @@ function RegisterScreen() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: value,
-          source: readSignupSource("register"),
+          source: readSignupSource(signupPlace),
           consent: true,
           consentPlace: "register",
         }),
@@ -214,6 +224,15 @@ function RegisterScreen() {
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#dcdfed] bg-[#f5f6ff] px-3 py-1.5 text-[12.5px] font-medium text-[#3848c7]">
               <Gift className="size-3.5" />
               Вас пригласили: 14 дней теста для вас, бонус — другу
+            </div>
+          ) : null}
+          {blankJournalName ? (
+            <div
+              data-testid="register-blank-journal"
+              className="mb-4 inline-flex items-center gap-2 rounded-2xl border border-[#dcdfed] bg-[#f5f6ff] px-3 py-1.5 text-[12.5px] font-medium leading-[1.4] text-[#3848c7]"
+            >
+              <CheckCircle2 className="size-3.5 shrink-0" />
+              «{blankJournalName}» откроется сразу после регистрации
             </div>
           ) : null}
 

@@ -29,6 +29,7 @@ import {
   } from "@/lib/meta-defaults";
 import { FILLING_GUIDES } from "@/lib/journal-filling-guides";
 import { ogImageUrl, ogImages, twitterImages } from "@/lib/og-image";
+import { BlankDownloadButton } from "@/components/public/blank-download";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -75,13 +76,19 @@ const DOCX_CODES = new Set<string>(DOCX_SAMPLE_CODES);
 
 export default async function JournalInfoDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ code: string }>;
+  searchParams: Promise<{ download?: string; expired?: string }>;
 }) {
   const { code } = await params;
   const info = JOURNAL_INFO[code];
   if (!info) notFound();
   const seo = JOURNAL_SEO[code];
+  // `?download=pdf|docx` — пришли по ссылке на файл без токена (старая
+  // ссылка из блога или поиска, протухшее письмо): окно email открывается
+  // сразу у кнопки этого формата.
+  const { download, expired } = await searchParams;
 
   // Название из каталога («Гигиенический журнал», «Журнал уборки») — это
   // и есть та фраза, по которой страницу ищут. Раньше оно использовалось
@@ -92,6 +99,8 @@ export default async function JournalInfoDetailPage({
     info.tagline
   );
   const faq = buildJournalFaq(info, journalName);
+  // Название шаблона в окне скачивания — то же, что уйдёт в письмо.
+  const catalogName = ACTIVE_JOURNAL_CATALOG.find((j) => j.code === code)?.name ?? journalName;
 
   const related = Object.values(JOURNAL_INFO)
     .filter((j) => j.category === info.category && j.code !== info.code)
@@ -241,21 +250,33 @@ export default async function JournalInfoDetailPage({
                 </p>
               </div>
               <div className="flex gap-2">
-                <a
-                  href={`/api/journal-samples/${code}/pdf`}
+                {/* Скачивание — после email (окно «Куда прислать шаблон?»);
+                    встроенный просмотр ниже остаётся без почты. */}
+                <BlankDownloadButton
+                  target={{ kind: "code", code }}
+                  format="pdf"
+                  title={catalogName}
+                  autoOpen={download === "pdf"}
+                  expired={download === "pdf" && expired === "1"}
+                  place="journal-page"
                   className="inline-flex h-11 items-center gap-1.5 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
                 >
                   <FileDown className="size-4" />
                   PDF
-                </a>
+                </BlankDownloadButton>
                 {DOCX_CODES.has(code) ? (
-                  <a
-                    href={`/api/journal-samples/${code}/docx`}
+                  <BlankDownloadButton
+                    target={{ kind: "code", code }}
+                    format="docx"
+                    title={catalogName}
+                    autoOpen={download === "docx"}
+                    expired={download === "docx" && expired === "1"}
+                    place="journal-page"
                     className="inline-flex h-11 items-center gap-1.5 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
                   >
                     <FileDown className="size-4 text-[#5566f6]" />
                     DOCX
-                  </a>
+                  </BlankDownloadButton>
                 ) : null}
               </div>
             </div>

@@ -1,15 +1,21 @@
 import {
   AlignmentType,
   Document,
+  Footer,
   HeadingLevel,
+  ImageRun,
   Packer,
   Paragraph,
   Table,
+  TableBorders,
   TableCell,
+  TableLayoutType,
   TableRow,
   TextRun,
+  VerticalAlignTable,
   WidthType,
 } from "docx";
+import QRCode from "qrcode";
 import type { JournalDocumentPdfInput } from "@/lib/document-pdf";
 
 /**
@@ -238,12 +244,91 @@ const REGISTER_COLUMNS: Record<string, string[]> = {
 };
 
 /**
+ * Подвал скачанного шаблона: строки подписи (первая — жирная) и QR справа.
+ * Подвал Word повторяется на каждой странице сам.
+ */
+export type DocxBlankFooter = {
+  /** Адрес, который кодирует QR. */
+  qrUrl: string;
+  /** «Заполнять с телефона — wesetup.ru», строка копирайта. */
+  lines: string[];
+};
+
+/** Сторона QR в подвале, px Word (96 dpi): 68 px ≈ 18 мм. */
+const FOOTER_QR_PX = 68;
+/**
+ * Колонки подвала, twips: ширина текста A4 при полях 2,54 см — 9026.
+ * Сетка задаётся явно: проценты у ячеек LibreOffice игнорирует и делит
+ * таблицу пополам — подпись уезжала от QR на середину листа.
+ */
+const FOOTER_COLUMNS = [7426, 1600];
+
+async function blankFooter(footer: DocxBlankFooter): Promise<Footer> {
+  const png = await QRCode.toBuffer(footer.qrUrl, {
+    errorCorrectionLevel: "M",
+    margin: 1,
+    width: 300,
+    type: "png",
+  });
+  const [caption = "", ...rest] = footer.lines;
+  const text = new TableCell({
+    width: { size: FOOTER_COLUMNS[0], type: WidthType.DXA },
+    verticalAlign: VerticalAlignTable.CENTER,
+    children: [
+      new Paragraph({
+        alignment: AlignmentType.RIGHT,
+        children: [new TextRun({ text: caption, bold: true, size: 16, color: "3C4053" })],
+      }),
+      ...rest.map(
+        (line) =>
+          new Paragraph({
+            alignment: AlignmentType.RIGHT,
+            children: [new TextRun({ text: line, size: 14, color: "6F7282" })],
+          })
+      ),
+    ],
+  });
+  const qr = new TableCell({
+    width: { size: FOOTER_COLUMNS[1], type: WidthType.DXA },
+    verticalAlign: VerticalAlignTable.CENTER,
+    children: [
+      new Paragraph({
+        alignment: AlignmentType.RIGHT,
+        children: [
+          new ImageRun({
+            type: "png",
+            data: png,
+            transformation: { width: FOOTER_QR_PX, height: FOOTER_QR_PX },
+            altText: { name: "QR", description: caption, title: "QR-код" },
+          }),
+        ],
+      }),
+    ],
+  });
+  return new Footer({
+    children: [
+      new Table({
+        width: { size: FOOTER_COLUMNS[0] + FOOTER_COLUMNS[1], type: WidthType.DXA },
+        columnWidths: FOOTER_COLUMNS,
+        layout: TableLayoutType.FIXED,
+        borders: TableBorders.NONE,
+        rows: [new TableRow({ children: [text, qr] })],
+      }),
+    ],
+  });
+}
+
+/**
  * Собирает DOCX. Возвращает буфер и имя файла — та же пара, что у
  * рендерера PDF, чтобы роуты выглядели одинаково.
+ *
+ * `options.footer` — копирайт и QR на каждой странице (скачивание
+ * шаблона с сайта). Без него файл собирается как раньше.
  */
 export async function renderJournalDocumentDocx(
   input: JournalDocumentPdfInput,
-  code: DocxSampleCode
+  code: DocxSampleCode,
+  options: { footer?: DocxBlankFooter | null } = {}
 ): Promise<{ buffer: Buffer; fileName: string }> {
   const title = input.document.title;
 
@@ -279,7 +364,10 @@ export async function renderJournalDocumentDocx(
     })
   );
 
-  const doc = new Document({ sections: [{ children: body }] });
+  const footer = options.footer ? await blankFooter(options.footer) : null;
+  const doc = new Document({
+    sections: [{ children: body, ...(footer ? { footers: { default: footer } } : {}) }],
+  });
   const buffer = await Packer.toBuffer(doc);
 
   return {

@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState, useEffect } from "react";
 import { Check, ChevronDown, Download, FileText, Search } from "lucide-react";
+import { BlankDownloadButton } from "@/components/public/blank-download";
 
 /**
  * Галерея образцов: выбираешь любой из наших журналов — видишь его
@@ -162,21 +163,28 @@ export function SampleGallery({ items }: { items: SampleGalleryItem[] }) {
           </p>
 
           <div className="mt-5 flex flex-wrap gap-2">
-            <a
-              href={`/api/journal-samples/${active.code}/pdf`}
+            {/* Скачивание — после почты: окно «Куда прислать шаблон?». */}
+            <BlankDownloadButton
+              target={{ kind: "code", code: active.code }}
+              format="pdf"
+              title={active.name}
+              place="landing-gallery"
               className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
             >
               <FileText className="size-4" />
               Скачать PDF
-            </a>
+            </BlankDownloadButton>
             {active.docx ? (
-              <a
-                href={`/api/journal-samples/${active.code}/docx`}
+              <BlankDownloadButton
+                target={{ kind: "code", code: active.code }}
+                format="docx"
+                title={active.name}
+                place="landing-gallery"
                 className="inline-flex h-11 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-5 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
               >
                 <Download className="size-4 text-[#5566f6]" />
                 Скачать DOCX
-              </a>
+              </BlankDownloadButton>
             ) : (
               <span className="inline-flex h-11 items-center rounded-2xl bg-[#fafbff] px-4 text-[13px] text-[#9b9fb3]">
                 Этот бланк — только в PDF
@@ -185,7 +193,7 @@ export function SampleGallery({ items }: { items: SampleGalleryItem[] }) {
           </div>
 
           <p className="mt-3 text-[12px] leading-[1.5] text-[#9b9fb3]">
-            Данные в образце вымышленные. Скачивание без регистрации.
+            Данные в образце вымышленные. Без регистрации — копия придёт на почту.
           </p>
         </div>
       </div>

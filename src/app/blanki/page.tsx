@@ -12,6 +12,8 @@ import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { DOCX_SAMPLE_CODES } from "@/lib/document-docx";
 import { SAMPLE_JOURNAL_CODES } from "@/lib/journal-sample-fixtures";
 import { jsonLdSafeString } from "@/lib/json-ld";
+import { paperJournalById } from "@/lib/sphere-journal-rules";
+import { BlankDownloadButton } from "@/components/public/blank-download";
 import {
   DEFAULT_OG_IMAGES,
   DEFAULT_TWITTER_CARD,
@@ -82,7 +84,7 @@ const CATEGORY_ORDER: Array<JournalInfo["category"]> = [
 const FAQ = [
   {
     q: "Бланки правда бесплатные и без регистрации?",
-    a: "Да. PDF каждого журнала скачивается по прямой ссылке, почта и регистрация не нужны. Это тот же бланк, который сервис печатает для проверки.",
+    a: "Да. Регистрация не нужна: перед скачиванием укажите почту — файл скачается сразу, а копия со ссылкой придёт письмом. Это тот же бланк, который сервис печатает для проверки.",
   },
   {
     q: "Можно вести эти журналы на бумаге?",
@@ -102,7 +104,15 @@ const FAQ = [
   },
 ];
 
-export default function BlankiHubPage() {
+export default async function BlankiHubPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ download?: string; paper?: string; expired?: string }>;
+}) {
+  // Ссылка на бумажный бланк без токена (`/api/journal-samples/paper/<id>/pdf`)
+  // приводит сюда: окно email для этого бланка открывается сразу.
+  const { download, paper, expired } = await searchParams;
+  const autoPaper = download === "pdf" && paper ? paperJournalById(paper) : null;
   const catalogName = new Map<string, string>(
     ACTIVE_JOURNAL_CATALOG.map((item) => [item.code, item.name]),
   );
@@ -148,6 +158,17 @@ export default function BlankiHubPage() {
         dangerouslySetInnerHTML={{ __html: jsonLdSafeString(jsonLd) }}
       />
       <PublicHeader activeSection="journals-info" />
+      {autoPaper ? (
+        <BlankDownloadButton
+          target={{ kind: "paper", paperId: autoPaper.id }}
+          format="pdf"
+          title={autoPaper.name}
+          autoOpen
+          hideTrigger
+          expired={expired === "1"}
+          place="blanki-paper"
+        />
+      ) : null}
 
       <section className="mx-auto max-w-[1200px] px-4 pt-8 sm:px-6">
         <div className="relative overflow-hidden rounded-3xl bg-[#0b1024] px-5 py-12 text-white sm:px-6 sm:py-16 md:px-12 md:py-20">
@@ -173,7 +194,7 @@ export default function BlankiHubPage() {
             <p className="mt-4 max-w-[720px] text-[16px] leading-[1.65] text-white/80 md:text-[18px]">
               {total} пустых бланков в PDF: скачайте, распечатайте и заполняйте
               от руки. У каждого журнала указано, на основании чего он ведётся.
-              Почту оставлять не нужно.
+              Перед скачиванием укажите почту — копия файла придёт письмом.
             </p>
           </div>
         </div>
@@ -226,22 +247,28 @@ export default function BlankiHubPage() {
 
                   <div className="flex shrink-0 flex-wrap gap-2">
                     {pdfCodes.has(info.code) ? (
-                      <a
-                        href={"/api/journal-samples/" + info.code + "/pdf"}
+                      <BlankDownloadButton
+                        target={{ kind: "code", code: info.code }}
+                        format="pdf"
+                        title={catalogName.get(info.code) ?? info.tagline}
+                        place="blanki"
                         className="inline-flex h-10 items-center gap-1.5 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0]"
                       >
                         <FileDown className="size-4" />
                         PDF
-                      </a>
+                      </BlankDownloadButton>
                     ) : null}
                     {docxCodes.has(info.code) ? (
-                      <a
-                        href={"/api/journal-samples/" + info.code + "/docx"}
+                      <BlankDownloadButton
+                        target={{ kind: "code", code: info.code }}
+                        format="docx"
+                        title={catalogName.get(info.code) ?? info.tagline}
+                        place="blanki"
                         className="inline-flex h-10 items-center gap-1.5 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
                       >
                         <FileText className="size-4 text-[#5566f6]" />
                         DOCX
-                      </a>
+                      </BlankDownloadButton>
                     ) : null}
                   </div>
                 </div>

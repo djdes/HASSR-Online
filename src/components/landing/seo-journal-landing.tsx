@@ -15,6 +15,8 @@ import {
   DEFAULT_TWITTER_CARD,
   } from "@/lib/meta-defaults";
 import { ogImages, twitterImages } from "@/lib/og-image";
+import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
+import { BlankDownloadButton } from "@/components/public/blank-download";
 
 /**
  * E17 — SEO-лендинги под ключевые поисковые запросы.
@@ -53,17 +55,16 @@ const SAMPLE_CODES = new Set([
 ]);
 
 /**
- * Ссылка на образец. Раньше кнопка «Скачать шаблон PDF» была
+ * Образец для кнопки «Скачать заполненный образец». Раньше кнопка была
  * свёрстана, но `downloadHref` никто не заполнял — она просто не
- * показывалась. Теперь путь выводится из relatedCode: отдельное поле
- * пришлось бы держать в актуальном состоянии руками.
+ * показывалась. Теперь журнал выводится из relatedCode: отдельное поле
+ * пришлось бы держать в актуальном состоянии руками. Скачивание — после
+ * почты (окно «Куда прислать шаблон?»); явный `downloadHref` остаётся
+ * обычной ссылкой.
  */
-function sampleHref(c: SeoJournalConfig): string | undefined {
-  if (c.downloadHref) return c.downloadHref;
-  if (c.relatedCode && SAMPLE_CODES.has(c.relatedCode)) {
-    return `/api/journal-samples/${c.relatedCode}/pdf`;
-  }
-  return undefined;
+function sampleCode(c: SeoJournalConfig): string | undefined {
+  if (c.downloadHref) return undefined;
+  return c.relatedCode && SAMPLE_CODES.has(c.relatedCode) ? c.relatedCode : undefined;
 }
 
 export function getSeoMetadata(c: SeoJournalConfig) {
@@ -136,9 +137,9 @@ export function SeoJournalLanding({ config }: { config: SeoJournalConfig }) {
               Вести этот журнал бесплатно
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
             </Link>
-            {sampleHref(c) ? (
+            {c.downloadHref ? (
               <a
-                href={sampleHref(c)}
+                href={c.downloadHref}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex h-12 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-5 text-[15px] font-medium text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#fafbff]"
@@ -146,6 +147,17 @@ export function SeoJournalLanding({ config }: { config: SeoJournalConfig }) {
                 <Download className="size-4" />
                 Скачать заполненный образец
               </a>
+            ) : sampleCode(c) ? (
+              <BlankDownloadButton
+                target={{ kind: "code", code: sampleCode(c) as string }}
+                format="pdf"
+                title={ACTIVE_JOURNAL_CATALOG.find((j) => j.code === sampleCode(c))?.name ?? c.navLabel}
+                place={`seo:${c.slug}`}
+                className="inline-flex h-12 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-5 text-[15px] font-medium text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#fafbff]"
+              >
+                <Download className="size-4" />
+                Скачать заполненный образец
+              </BlankDownloadButton>
             ) : null}
           </div>
         </div>

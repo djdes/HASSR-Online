@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { HeroEmailStart } from "@/components/landing/hero-email-start";
+import { BlankDownloadButton } from "@/components/public/blank-download";
 import { JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
 
 /**
@@ -426,21 +427,27 @@ export function DemoJournalWidget() {
         <span className="text-[13px] text-[#6f7282]">
           Скачать заполненный образец:
         </span>
-        <a
-          href={`/api/journal-samples/${journal.code}/pdf`}
+        <BlankDownloadButton
+          target={{ kind: "code", code: journal.code }}
+          format="pdf"
+          title={journal.title}
+          place="landing-demo"
           className="inline-flex h-10 items-center gap-1.5 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
         >
           <FileText className="size-4 text-[#5566f6]" />
           PDF
-        </a>
+        </BlankDownloadButton>
         {journal.docx ? (
-          <a
-            href={`/api/journal-samples/${journal.code}/docx`}
+          <BlankDownloadButton
+            target={{ kind: "code", code: journal.code }}
+            format="docx"
+            title={journal.title}
+            place="landing-demo"
             className="inline-flex h-10 items-center gap-1.5 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
           >
             <Download className="size-4 text-[#5566f6]" />
             DOCX
-          </a>
+          </BlankDownloadButton>
         ) : null}
         <Link
           href="/journals-info"
