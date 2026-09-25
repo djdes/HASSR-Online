@@ -1,0 +1,64 @@
+{
+  "task_id": "cabinet-nav-dashboard-2026-09",
+  "verified_at": "2026-09-25",
+  "environment": "local next dev :3040, DB wesetup_wt_ui, org e2e-nav-dashboard-org",
+  "overall": "PASS",
+  "acceptance": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "evidence": [
+        "raw/e2e-results.json: desktopMenu.hiddenPresent=[], staffBeforeJournals=true, gearHref=/settings",
+        "raw/e2e-results.json: mobileMenu rows h=52 font=17px icon=24, gear.sameRowAsOrg=true, settingsRowPresent=false",
+        "raw/e2e-results.json: palette.hiddenMatches all 0 (sanity Отчёты=1)",
+        "raw/e2e-results.json: hiddenPages /batches /changes /losses /competencies /bonuses -> 200",
+        "src/lib/app-sections.test.ts: убранные из меню разделы не возвращаются",
+        "shots/ac1-mobile-menu-390-light.jpg, shots/ac1-mobile-menu-390-dark.jpg, shots/ac1-desktop-menu-1440-light.jpg"
+      ]
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "evidence": [
+        "raw/e2e-results.json: card.layout=centered, titleCenterOffsetPx=0, buttons=[Автозаполнить, QR-коды], hasOldSubtitle=false, hasCloseDay=false",
+        "raw/e2e-results.json: autofillSheet.text=true, illustration=2; autofillRun.status=200, toast 'Заполнено: 7 журналов, 140 отметок, создано 6 документов'",
+        "raw/e2e-results.json: qr.url=/settings/qr-posters after clicking QR-коды; autofillMobile.bottomAligned=true",
+        "src/lib/journals-autofill.test.ts (3 tests)",
+        "shots/ac2-card-1440-light.jpg, shots/ac2-card-390-light.jpg, shots/ac2-autofill-sheet-1440-light.jpg, shots/ac2-autofill-sheet-390-light.jpg, shots/ac2-autofill-toast-1440-light.jpg, shots/ac2-dashboard-1440-dark.jpg, shots/ac2-dashboard-390-dark.jpg"
+      ]
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "evidence": [
+        "raw/qr-list-before-after.json: before 1 journal (fryer_oil), no hygiene; after 41 journals + 3 object journals, hygiene + verify",
+        "raw/e2e-results.json: qr.sections=[main,journals,objects], mainCards=2 (hub + допуск), journalsRows=41, journalsHasHygiene=true, objectsRows=3",
+        "src/lib/qr-posters-overview.test.ts (5 tests)",
+        "shots/ac3-qr-1440-light.jpg, shots/ac3-qr-journals-1440-light.jpg, shots/ac3-qr-1440-dark.jpg"
+      ]
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "evidence": [
+        "raw/e2e-results.json: darkProfileHover/darkProfileFocus contrast 8.13 (Выйти 5.21)",
+        "raw/e2e-results.json: darkNavHover contrast 7.05",
+        "raw/e2e-results.json: darkVariantsHoverFocus call-site hex variants 8.13 / red 5.21",
+        "shots/ac4-profile-menu-hover-1440-dark.jpg, shots/ac4-nav-menu-hover-1440-dark.jpg, shots/ac4-variants-hover-1440-dark.jpg"
+      ]
+    },
+    {
+      "id": "AC5",
+      "status": "PASS",
+      "evidence": [
+        "raw/typecheck.log: exit=0",
+        "raw/npm-test-summary.txt: 2217 pass, 0 fail",
+        "e2e screenshots 390 and 1440, light and dark (shots/, local only — .gitignore .agent/**/*.jpg)"
+      ]
+    }
+  ],
+  "notes": [
+    "Pre-existing hydration mismatch on the Профиль button (useIsNarrowViewport) shows Next dev '1 Issue'; unrelated to this task",
+    "Production build not run (disk constraint; orchestrator builds at integration)"
+  ]
+}

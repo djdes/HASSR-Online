@@ -6,6 +6,7 @@ import {
   appSectionLabel,
   canSeeAppSection,
   headerNavSections,
+  MENU_HIDDEN_HREFS,
   visibleAppSectionGroups,
   visibleAppSections,
   type AppSectionActor,
@@ -75,16 +76,11 @@ test("у заведующей в разделах ровно то, что отк
     "/journals-progress",
     "/team",
     "/settings/schedule",
-    "/batches",
     "/plans",
-    "/changes",
-    "/losses",
     "/capa",
-    "/competencies",
     "/orders",
     "/mercury",
     "/reports",
-    "/bonuses",
     "/settings/balance",
     "/ideas",
     "/settings/users",
@@ -212,11 +208,25 @@ test("всё, что было отдельными вкладками в при�
 
 test("меню шапки собирается из того же списка", () => {
   const items = headerNavSections();
-  assert.equal(items.length, 10);
-  assert.equal(items[0].href, "/journals");
-  assert.equal(items[2].label, "Производственный план");
-  assert.equal(items[9].label, "Идеи");
+  assert.deepEqual(
+    items.map((item) => item.href),
+    ["/journals", "/plans", "/capa", "/reports", "/ideas"]
+  );
+  assert.equal(items[1].label, "Производственный план");
+  assert.equal(items[4].label, "Идеи");
   for (const item of items) {
     assert.ok(APP_SECTIONS.some((s) => s.href === item.href));
+  }
+});
+
+test("убранные из меню разделы не возвращаются ни в шапку, ни в «Разделы»", () => {
+  // Партии, Изменения, Потери, Компетенции, Премии — страницы живут по
+  // адресу, но в меню их нет (решение владельца 2026-09-25).
+  assert.equal(MENU_HIDDEN_HREFS.length, 5);
+  const header = headerNavSections().map((item) => item.href);
+  const sections = APP_SECTIONS.map((section) => section.href);
+  for (const href of MENU_HIDDEN_HREFS) {
+    assert.ok(!header.includes(href), `в шапке: ${href}`);
+    assert.ok(!sections.includes(href), `в разделах: ${href}`);
   }
 });

@@ -98,17 +98,16 @@ const ACTION_ITEMS: StaticItem[] = [
   },
 ];
 
+// «Партии», «Изменения», «Потери», «Компетенции» и «Премии» убраны из
+// поиска вместе с меню (решение владельца 2026-09-25) — страницы
+// открываются по адресу. Список — `MENU_HIDDEN_HREFS` в `app-sections.ts`.
 const ROUTE_ITEMS: StaticItem[] = [
   { kind: "route", label: "Главная", href: "/dashboard", icon: Sparkles, keywords: ["dashboard", "главная"] },
   { kind: "route", label: "Журналы", href: "/journals", icon: ClipboardList, keywords: ["journals", "журналы"] },
   { kind: "route", label: "Отчёты", href: "/reports", icon: FileSpreadsheet, keywords: ["reports", "compliance", "heatmap"] },
   { kind: "route", label: "CAPA", href: "/capa", icon: Cog, keywords: ["capa", "корректирующее"] },
-  { kind: "route", label: "Партии", href: "/batches", icon: Boxes, keywords: ["batches", "партии"] },
-  { kind: "route", label: "Потери", href: "/losses", icon: Cog, keywords: ["losses", "потери"] },
   { kind: "route", label: "Идеи и голосование", href: "/ideas", icon: Lightbulb, keywords: ["ideas", "идеи", "голосование", "предложить"] },
   { kind: "route", label: "Планы", href: "/plans", icon: Cog, keywords: ["plans"] },
-  { kind: "route", label: "Изменения", href: "/changes", icon: Cog, keywords: ["changes"] },
-  { kind: "route", label: "Компетенции", href: "/competencies", icon: User, keywords: ["staff competency", "медкнижка"] },
   { kind: "route", label: "Настройки — Сотрудники", href: "/settings/users", icon: User, keywords: ["staff", "users"] },
   { kind: "route", label: "Настройки — Журналы", href: "/settings/journals", icon: ClipboardList, keywords: ["templates"] },
   { kind: "route", label: "Настройки — Оборудование", href: "/settings/equipment", icon: Boxes, keywords: ["equipment", "холодильник"] },

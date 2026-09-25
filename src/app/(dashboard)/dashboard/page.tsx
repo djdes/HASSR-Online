@@ -11,7 +11,6 @@ import {
   FileDown,
   GraduationCap,
   Inbox,
-  ListChecks,
   Medal,
   Package,
   Printer,
@@ -50,7 +49,6 @@ import { QuickStartCard } from "@/components/dashboard/quick-start-card";
 import { PrintAgentCard } from "@/components/dashboard/print-agent-card";
 import { runOrgHealthCheck } from "@/lib/org-health-check";
 import { getTemplatesFilledToday } from "@/lib/today-compliance";
-import { CLOSE_DAY_JOURNAL_CODES } from "@/lib/daily-journal-codes";
 import { getActiveBuildingId, loadBuildingContext } from "@/lib/active-building";
 import { LocationTabs } from "@/components/layout/location-tabs";
 import { getStrugglingWorkers, getWorkerLeaderboard } from "@/lib/worker-leaderboard";
@@ -261,12 +259,6 @@ export default async function DashboardPage() {
     .filter((t) => disabledCodes.has(t.code))
     .map((t) => ({ id: t.id, name: t.name, code: t.code, description: t.description }));
   const unfilledCount = complianceItems.filter((c) => !c.filled).length;
-  // «Закрыть день» умеет только ежедневные журналы: без этой цифры
-  // подтверждение обещало закрыть все незаполненные (включая журналы
-  // «по событию»), а закрывало горстку.
-  const closableUnfilledCount = complianceItems.filter(
-    (c) => !c.filled && CLOSE_DAY_JOURNAL_CODES.has(c.code)
-  ).length;
   const filledCount = complianceItems.length - unfilledCount;
   // Точки: сводка по точкам — заполнено сегодня на каждой, клик переключает.
   const buildingContext = await loadBuildingContext(session);
@@ -349,32 +341,20 @@ export default async function DashboardPage() {
             <DashboardSection
               storageKey="compliance-grid"
               title="Обязательные журналы"
-              // Без подписи цифру «1/35» читали как «сегодня сделано 1 из
-              // 35 дел», хотя часть журналов сегодня вести и не надо.
-              subtitle={`Есть запись за сегодня: ${filledCount} из ${complianceItems.length} включённых журналов.`}
-              icon={ListChecks}
+              // Заголовок со счётчиком N/M по центру, под ним две кнопки
+              // (решение владельца 2026-09-25). Подпись «Есть запись за
+              // сегодня: N из M…» убрана — счётчик рядом с названием.
+              centered
               defaultOpen={true}
-              actions={
-                <CloseDayCard
-                  unfilledCount={unfilledCount}
-                  closableCount={closableUnfilledCount}
-                  compact
-                />
-              }
+              actions={<CloseDayCard />}
               titleAside={
                 <Link
                   href="/settings/journals"
                   title="Выбрать, какие журналы вести"
                   aria-label="Настройка журналов"
-                  // Обычная кнопка с рамкой, а не мягкая плашка: слева
-                  // в шапке секции стоит такая же по форме плашка с
-                  // иконкой, и было непонятно, что из двух нажимается.
-                  // На телефоне — только иконка: со словом «Настройка»
-                  // строка заголовка не вмещала счётчик и стрелку.
-                  className="inline-flex size-9 items-center justify-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white text-[13px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] hover:text-[#3848c7] sm:w-auto sm:px-3"
+                  className="inline-flex size-10 items-center justify-center rounded-xl border border-[#dcdfed] bg-white text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] hover:text-[#3848c7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
                 >
                   <SlidersHorizontal className="size-4 text-[#5566f6]" />
-                  <span className="hidden sm:inline">Настройка</span>
                 </Link>
               }
               badge={

@@ -87,12 +87,12 @@ export const APP_SECTION_GROUPS: {
   {
     id: "production",
     title: "Производство",
-    subtitle: "Партии, план, отклонения, обучение",
+    subtitle: "План, отклонения, приказы",
   },
   {
     id: "money",
     title: "Отчёты и деньги",
-    subtitle: "Выгрузки, премии, баланс, идеи",
+    subtitle: "Выгрузки, баланс, идеи",
   },
   {
     id: "settings",
@@ -104,9 +104,9 @@ export const APP_SECTION_GROUPS: {
 /**
  * Полный список разделов. Порядок внутри группы — порядок показа.
  *
- * Первые десять пунктов (от «Журналов» до «Идей») повторяют меню шапки
- * сайта один в один: его собирает `headerNavSections()` ниже, чтобы
- * список нельзя было поменять в одном месте и забыть про другое.
+ * Меню шапки сайта — подмножество этого списка: его собирает
+ * `headerNavSections()` ниже, чтобы список нельзя было поменять в одном
+ * месте и забыть про другое.
  */
 export const APP_SECTIONS: AppSection[] = [
   // ---- Работа --------------------------------------------------------
@@ -156,13 +156,6 @@ export const APP_SECTIONS: AppSection[] = [
   },
   // ---- Производство --------------------------------------------------
   {
-    href: "/batches",
-    hint: "Прослеживаемость сырья и готовых блюд",
-    icon: "Package",
-    group: "production",
-    access: WEB_PATH,
-  },
-  {
     href: "/plans",
     hint: "Что и сколько готовим",
     icon: "CalendarRange",
@@ -170,30 +163,9 @@ export const APP_SECTIONS: AppSection[] = [
     access: WEB_PATH,
   },
   {
-    href: "/changes",
-    hint: "Новое оборудование, рецептура, поставщик",
-    icon: "GitBranch",
-    group: "production",
-    access: WEB_PATH,
-  },
-  {
-    href: "/losses",
-    hint: "Испорченные и просроченные продукты",
-    icon: "TrendingDown",
-    group: "production",
-    access: WEB_PATH,
-  },
-  {
     href: "/capa",
     hint: "Что нашли и как исправили",
     icon: "AlertTriangle",
-    group: "production",
-    access: WEB_PATH,
-  },
-  {
-    href: "/competencies",
-    hint: "Кто что прошёл и когда повторять",
-    icon: "GraduationCap",
     group: "production",
     access: WEB_PATH,
   },
@@ -227,13 +199,6 @@ export const APP_SECTIONS: AppSection[] = [
     group: "money",
     // Страница проверяет `hasFullWorkspaceAccess`, а НЕ `reports.view`:
     // заведующая её открывает, и раньше пункта у неё не было.
-    access: FULL_ACCESS,
-  },
-  {
-    href: "/bonuses",
-    hint: "Сколько начислено команде за журналы",
-    icon: "Coins",
-    group: "money",
     access: FULL_ACCESS,
   },
   {
@@ -452,15 +417,25 @@ export function visibleAppSectionGroups(
  */
 const HEADER_NAV_HREFS = [
   "/journals",
-  "/batches",
   "/plans",
+  "/capa",
+  "/reports",
+  "/ideas",
+] as const;
+
+/**
+ * Разделы, убранные из меню по решению владельца (2026-09-25): «Партии»,
+ * «Изменения», «Потери», «Компетенции», «Премии». Страницы остаются и
+ * открываются по адресу — их просто нет ни в меню шапки, ни в «Разделах»
+ * мини-приложения, ни в быстром поиске. Список нужен тестам: чтобы пункт
+ * не вернулся в меню случайно.
+ */
+export const MENU_HIDDEN_HREFS = [
+  "/batches",
   "/changes",
   "/losses",
   "/competencies",
-  "/capa",
-  "/reports",
   "/bonuses",
-  "/ideas",
 ] as const;
 
 const HEADER_NAV_LABELS: Record<string, string> = {

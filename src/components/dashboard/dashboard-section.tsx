@@ -34,6 +34,14 @@ type Props = {
    * <summary>, поэтому содержимое обязано само гасить событие.
    */
   actions?: React.ReactNode;
+  /**
+   * Заголовок со счётчиком — по центру карточки, действия — строкой под
+   * ним по центру, настройка (`titleAside`) — в левом углу, стрелка — в
+   * правом. Иконка и подпись в этом режиме не рисуются. Нужен карточке
+   * «Обязательные журналы» (решение владельца 2026-09-25): главное —
+   * название и N/M, под ними две кнопки.
+   */
+  centered?: boolean;
   children: React.ReactNode;
 };
 
@@ -64,12 +72,64 @@ export function DashboardSection({
   titleAside,
   defaultOpen = false,
   actions,
+  centered = false,
   children,
 }: Props) {
   // «Обязательные журналы» → head «Обязательные », tail «журналы».
   const lastSpace = title.lastIndexOf(" ");
   const titleHead = lastSpace > 0 ? title.slice(0, lastSpace + 1) : "";
   const titleTail = lastSpace > 0 ? title.slice(lastSpace + 1) : title;
+
+  const badgeEl = badge ? (
+    <span
+      className={`ml-1.5 inline-flex translate-y-[-1px] items-center rounded-full px-2 py-0.5 align-middle text-[11px] font-semibold ${TONE_CLS[badge.tone ?? "default"]}`}
+    >
+      {badge.text}
+    </span>
+  ) : null;
+
+  if (centered) {
+    return (
+      <details
+        {...(defaultOpen ? { open: true } : {})}
+        data-storage-key={storageKey}
+        data-section-layout="centered"
+        className="group overflow-hidden rounded-3xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]"
+      >
+        {/* Строка заголовка — сетка «угол | заголовок | угол» с равными
+            боковыми колонками: так название стоит ровно по центру, а не
+            «по центру остатка» после кнопки настройки. */}
+        <summary className="flex cursor-pointer list-none flex-col gap-3 p-4 transition-colors hover:bg-[#fafbff] sm:p-5">
+          <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2">
+            <div className="flex items-center justify-start">{titleAside}</div>
+            <h3 className="text-center text-[16px] font-semibold leading-tight tracking-[-0.01em] text-[#0b1024] sm:text-[18px]">
+              {badge ? (
+                <>
+                  {titleHead}
+                  <span className="whitespace-nowrap">
+                    {titleTail}
+                    {badgeEl}
+                  </span>
+                </>
+              ) : (
+                title
+              )}
+            </h3>
+            <div className="flex items-center justify-end">
+              <ChevronDown
+                className="size-5 shrink-0 text-[#9b9fb3] transition-transform group-open:rotate-180 group-open:text-[#5566f6]"
+                aria-hidden
+              />
+            </div>
+          </div>
+          {actions ? (
+            <div className="flex w-full justify-center">{actions}</div>
+          ) : null}
+        </summary>
+        <div className="border-t border-[#ececf4] p-4 sm:p-5">{children}</div>
+      </details>
+    );
+  }
 
   return (
     <details
@@ -126,11 +186,7 @@ export function DashboardSection({
                     {titleHead}
                     <span className="whitespace-nowrap">
                       {titleTail}
-                      <span
-                        className={`ml-1.5 inline-flex translate-y-[-1px] items-center rounded-full px-2 py-0.5 align-middle text-[11px] font-semibold ${TONE_CLS[badge.tone ?? "default"]}`}
-                      >
-                        {badge.text}
-                      </span>
+                      {badgeEl}
                     </span>
                   </>
                 ) : (

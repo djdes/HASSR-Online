@@ -141,7 +141,7 @@ function SelectItem({
       data-slot="select-item"
       className={cn(
         MENU_ITEM_CLASS,
-        "pr-9 data-[state=checked]:bg-[#eef1ff] data-[state=checked]:font-medium data-[state=checked]:text-[#3848c7] data-[state=checked]:focus:bg-[#e6eaff] *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+        "pr-9 data-[state=checked]:bg-[var(--app-tint-indigo-2)] data-[state=checked]:font-medium data-[state=checked]:text-[var(--app-indigo-deep)] data-[state=checked]:focus:bg-[var(--app-tint-indigo-2)] *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
         className
       )}
       {...props}

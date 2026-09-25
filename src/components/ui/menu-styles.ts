@@ -14,9 +14,17 @@ export const MENU_PANEL_CLASS =
 /** Внутренний отступ панели — «воздух» вокруг пунктов. */
 export const MENU_PANEL_PADDING_CLASS = "p-1.5";
 
-/** Пункт меню / опция селекта. */
+/**
+ * Пункт меню / опция селекта.
+ *
+ * Подсветка при наведении и фокусе — через токен темы `--app-tint-indigo`,
+ * а не хекс: хекс `#f5f6ff` в тёмной теме не
+ * перекрашивался, и под курсором светлая плашка ложилась под светлый
+ * текст — пункт становился невидимым (2026-09-25). Токены объявлены на
+ * `:root`, поэтому работают и в порталах вне `.app-shell`.
+ */
 export const MENU_ITEM_CLASS =
-  "relative flex w-full cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2 max-sm:min-h-[44px] text-[13.5px] leading-[1.25] text-[#0b1024] outline-hidden select-none transition-colors duration-150 focus:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 data-[highlighted]:bg-[#f5f6ff] data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-[#9b9fb3]";
+  "relative flex w-full cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2 max-sm:min-h-[44px] text-[13.5px] leading-[1.25] text-[#0b1024] outline-hidden select-none transition-colors duration-150 focus:bg-[var(--app-tint-indigo)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 data-[highlighted]:bg-[var(--app-tint-indigo)] data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-[#9b9fb3]";
 
 /** Выбранный / текущий пункт. */
 export const MENU_ITEM_ACTIVE_CLASS = "bg-[#eef1ff] font-medium text-[#3848c7]";

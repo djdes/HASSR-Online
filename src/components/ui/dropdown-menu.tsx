@@ -106,7 +106,7 @@ function DropdownMenuCheckboxItem({
       data-slot="dropdown-menu-checkbox-item"
       className={cn(
         MENU_ITEM_CLASS,
-        "pl-9 data-[state=checked]:font-medium data-[state=checked]:text-[#3848c7]",
+        "pl-9 data-[state=checked]:font-medium data-[state=checked]:text-[var(--app-indigo-deep)]",
         className
       )}
       checked={checked}
@@ -143,7 +143,7 @@ function DropdownMenuRadioItem({
       data-slot="dropdown-menu-radio-item"
       className={cn(
         MENU_ITEM_CLASS,
-        "pl-9 data-[state=checked]:font-medium data-[state=checked]:text-[#3848c7]",
+        "pl-9 data-[state=checked]:font-medium data-[state=checked]:text-[var(--app-indigo-deep)]",
         className
       )}
       {...props}
@@ -224,7 +224,7 @@ function DropdownMenuSubTrigger({
       data-inset={inset}
       className={cn(
         MENU_ITEM_CLASS,
-        "data-[inset]:pl-9 data-[state=open]:bg-[#f5f6ff]",
+        "data-[inset]:pl-9 data-[state=open]:bg-[var(--app-tint-indigo)]",
         className
       )}
       {...props}

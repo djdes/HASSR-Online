@@ -1,0 +1,20 @@
+{
+  "before": {
+    "count": 1,
+    "codes": [
+      "fryer_oil"
+    ],
+    "hasHygiene": false
+  },
+  "after": {
+    "journals": 41,
+    "objectJournals": [
+      "climate_control",
+      "cold_equipment_control",
+      "uv_lamp_runtime"
+    ],
+    "hasHygiene": true,
+    "hygieneVerify": true,
+    "enabledTemplates": 45
+  }
+}

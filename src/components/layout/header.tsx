@@ -17,16 +17,12 @@ import {
   Coins,
   CreditCard,
   FileText,
-  GitBranch,
-  GraduationCap,
   Handshake,
   LogOut,
   Menu,
-  Package,
   Palette,
   Settings,
   ShieldCheck,
-  TrendingDown,
   UserRound,
   Users,
   Lightbulb,
@@ -72,14 +68,9 @@ import type { AccessibleOrganization } from "@/lib/organization-access";
 // в общем модуле лежат имена иконок, а не они сами.
 const NAV_ICONS: Record<string, typeof ClipboardList> = {
   ClipboardList,
-  Package,
   CalendarRange,
-  GitBranch,
-  TrendingDown,
-  GraduationCap,
   AlertTriangle,
   FileText,
-  Coins,
   Lightbulb,
 };
 
@@ -97,6 +88,11 @@ const STAFF_NAV_ITEM = {
   href: "/settings/users",
   icon: Users,
 };
+
+// Строка мобильного меню. Пунктов стало меньше (владелец убрал пять
+// разделов), поэтому они крупнее: высота от 52px, шрифт 17px, иконка 24px.
+const MOBILE_NAV_ROW_CLASS =
+  "flex min-h-[52px] items-center gap-3.5 rounded-2xl px-3.5 py-3 text-[17px] font-medium leading-tight transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
 
 function getInitials(name: string): string {
   return name
@@ -271,16 +267,25 @@ export function Header({
   const showOrgSwitchInNav = showsOrg && multiOrg;
   const navPanelVisible =
     visibleSecondaryNavItems.length > 0 || showOrgSwitchInNav;
-  const navItems = [
-    { label: homeLabel, href: homeHref, icon: HomeIcon, tooltip: homeTooltip },
-    ...visibleSecondaryNavItems.map((i) => ({ ...i, tooltip: i.label })),
-    // «Сотрудники» добавлен отдельно — он вытащен из secondaryNavItems
-    // в pill на десктопе, но в мобильном Sheet-меню должен
-    // присутствовать рядом с остальными разделами.
+  // Мобильное меню: строка организации (с шестерёнкой настроек) и под
+  // ней разделы. «Сотрудники» — над «Журналами»: это самый частый пункт
+  // управляющего (решение владельца 2026-09-25). «Настройки» отдельной
+  // строкой больше нет — вместо неё шестерёнка в строке организации.
+  const homeNavItem = { label: homeLabel, href: homeHref, icon: HomeIcon, tooltip: homeTooltip };
+  const sectionNavItems = [
     ...(fullAccess
       ? [{ ...STAFF_NAV_ITEM, tooltip: STAFF_NAV_ITEM.label }]
       : []),
+    ...visibleSecondaryNavItems.map((i) => ({ ...i, tooltip: i.label })),
   ];
+  // Десктопное выпадающее меню под пилюлей организации — тот же порядок.
+  // Пилюля «Сотрудники» справа видна только с lg, поэтому на 768–1023px
+  // без этого пункта в меню раздел было не найти.
+  const desktopMenuItems = fullAccess
+    ? [STAFF_NAV_ITEM, ...visibleSecondaryNavItems]
+    : visibleSecondaryNavItems;
+  const settingsActive =
+    pathname === "/settings" || pathname.startsWith("/settings/");
 
   return (
     <header className="sticky top-0 z-30 border-b bg-white">
@@ -376,7 +381,7 @@ export function Header({
                     ) : null}
                   </>
                 ) : null}
-                {visibleSecondaryNavItems.map((item) => {
+                {desktopMenuItems.map((item) => {
                   const isActive =
                     pathname === item.href ||
                     pathname.startsWith(item.href + "/");
@@ -389,7 +394,10 @@ export function Header({
                         "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                         isActive
                           ? "bg-[#5566f6]/[0.09] text-[#5566f6]"
-                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground focus-visible:outline-none"
+                          : // Токены дизайн-системы вместо shadcn-серых: в тёмной
+                            // теме `text-muted-foreground` перекрашивался слоем
+                            // app-theme.css и при наведении оставался серым.
+                            "text-[#3c4053] hover:bg-[#f5f6ff] hover:text-[#0b1024] focus-visible:bg-[#f5f6ff] focus-visible:text-[#0b1024] focus-visible:outline-none"
                       )}
                     >
                       <item.icon className="size-4 shrink-0" />
@@ -400,6 +408,24 @@ export function Header({
               </div>
             ) : null}
           </div>
+
+          {/* Шестерёнка настроек — сразу у названия организации, как и в
+              мобильном меню: настройки относятся к организации, а не к
+              выходу и аватару справа. */}
+          {fullAccess ? (
+            <Link
+              href="/settings"
+              aria-label="Настройки"
+              title="Настройки"
+              data-nav-settings=""
+              className={cn(
+                "ml-1 inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#5566f6]/[0.04] text-[#5566f6] transition-colors duration-200 hover:bg-[#5566f6]/[0.09] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15",
+                settingsActive && "bg-[#5566f6]/[0.09]"
+              )}
+            >
+              <Settings className="size-5" />
+            </Link>
+          ) : null}
 
           {/* «Сотрудники» — вытащено из дропдауна в постоянную pill-кнопку
               справа от org-pill. Это самое частое destination управляющего
@@ -517,9 +543,9 @@ export function Header({
               <button
                 type="button"
                 onClick={handleLogout}
-                className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-[14px] font-medium text-[#a13a32] transition-colors hover:bg-[#fff4f2]"
+                className="flex min-h-[52px] w-full items-center gap-3.5 rounded-2xl px-3.5 py-3 text-[17px] font-medium text-[#a13a32] transition-colors hover:bg-[#fff4f2]"
               >
-                <LogOut className="size-5 shrink-0" />
+                <LogOut className="size-6 shrink-0" />
                 Выйти
               </button>
             }
@@ -543,7 +569,46 @@ export function Header({
                   </div>
                 </>
               ) : null}
-              {navItems.map((item) => {
+              {/* Строка организации: ссылка на главную и шестерёнка
+                  настроек справа — отдельной строки «Настройки» в списке
+                  больше нет. */}
+              <div className="flex items-center gap-2">
+                <Link
+                  href={homeNavItem.href}
+                  className={cn(
+                    MOBILE_NAV_ROW_CLASS,
+                    "min-w-0 flex-1",
+                    pathname === homeNavItem.href
+                      ? "bg-[#f5f6ff] text-[#5566f6]"
+                      : "text-[#0b1024] hover:bg-[#fafbff]"
+                  )}
+                >
+                  <homeNavItem.icon
+                    className={cn(
+                      "size-6 shrink-0",
+                      pathname === homeNavItem.href ? "text-[#5566f6]" : "text-[#6f7282]"
+                    )}
+                  />
+                  <span className="truncate font-semibold">{homeNavItem.label}</span>
+                </Link>
+                {fullAccess ? (
+                  <Link
+                    href="/settings"
+                    aria-label="Настройки"
+                    title="Настройки"
+                    data-nav-settings=""
+                    className={cn(
+                      "flex size-[52px] shrink-0 items-center justify-center rounded-2xl border transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15",
+                      settingsActive
+                        ? "border-[#5566f6]/30 bg-[#f5f6ff] text-[#5566f6]"
+                        : "border-[#ececf4] bg-white text-[#5566f6] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+                    )}
+                  >
+                    <Settings className="size-6" />
+                  </Link>
+                ) : null}
+              </div>
+              {sectionNavItems.map((item) => {
                 const isActive =
                   pathname === item.href || pathname.startsWith(item.href + "/");
 
@@ -552,7 +617,7 @@ export function Header({
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "flex items-center gap-3 rounded-xl px-3 py-3 text-[14px] font-medium transition-colors",
+                      MOBILE_NAV_ROW_CLASS,
                       isActive
                         ? "bg-[#f5f6ff] text-[#5566f6]"
                         : "text-[#3c4053] hover:bg-[#fafbff]"
@@ -560,7 +625,7 @@ export function Header({
                   >
                     <item.icon
                       className={cn(
-                        "size-5 shrink-0",
+                        "size-6 shrink-0",
                         isActive ? "text-[#5566f6]" : "text-[#6f7282]"
                       )}
                     />
@@ -568,32 +633,10 @@ export function Header({
                   </Link>
                 );
               })}
-              {fullAccess ? (
-                <Link
-                  href="/settings"
-                  className={cn(
-                    "flex items-center gap-3 rounded-xl px-3 py-3 text-[14px] font-medium transition-colors",
-                    pathname === "/settings" || pathname.startsWith("/settings/")
-                      ? "bg-[#f5f6ff] text-[#5566f6]"
-                      : "text-[#3c4053] hover:bg-[#fafbff]"
-                  )}
-                >
-                  <Settings
-                    className={cn(
-                      "size-5 shrink-0",
-                      pathname === "/settings" ||
-                        pathname.startsWith("/settings/")
-                        ? "text-[#5566f6]"
-                        : "text-[#6f7282]"
-                    )}
-                  />
-                  Настройки
-                </Link>
-              ) : null}
             </nav>
           </BottomSheet>
 
-        {/* Right cluster: settings shortcut + logout + avatar.
+        {/* Right cluster: logout + avatar (настройки — у названия организации).
             Обратная связь отсюда убрана: вход в поддержку был в двух
             местах сразу — здесь и пузырём внизу, — и человек не понимал,
             чем они отличаются. Остался пузырь: там же и онлайн-чат. */}
@@ -629,21 +672,6 @@ export function Header({
             >
               <ShieldCheck className="size-5 shrink-0" />
               <span className="hidden xl:inline">Панель платформы</span>
-            </Link>
-          ) : null}
-
-          {fullAccess ? (
-            <Link
-              href="/settings"
-              aria-label="Настройки"
-              title="Настройки"
-              className={cn(
-                "hidden size-10 shrink-0 items-center justify-center rounded-lg bg-[#5566f6]/[0.04] text-[#5566f6] transition-colors duration-200 md:inline-flex hover:bg-[#5566f6]/[0.09]",
-                (pathname === "/settings" || pathname.startsWith("/settings/")) &&
-                  "bg-[#5566f6]/[0.09]"
-              )}
-            >
-              <Settings className="size-5" />
             </Link>
           ) : null}
 

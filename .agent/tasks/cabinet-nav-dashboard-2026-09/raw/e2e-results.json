@@ -1,0 +1,357 @@
+{
+  "card": {
+    "layout": "centered",
+    "title": "Обязательные журналы0/45",
+    "textAlign": "center",
+    "titleCenterOffsetPx": 0,
+    "headingBox": {
+      "left": 105,
+      "width": 1230
+    },
+    "buttons": [
+      "Автозаполнить",
+      "QR-коды"
+    ],
+    "qrHref": "/settings/qr-posters",
+    "hasOldSubtitle": false,
+    "hasCloseDay": false
+  },
+  "desktopMenu": {
+    "items": [
+      {
+        "label": "Сотрудники",
+        "href": "/settings/users"
+      },
+      {
+        "label": "Журналы",
+        "href": "/journals"
+      },
+      {
+        "label": "Производственный план",
+        "href": "/plans"
+      },
+      {
+        "label": "Нарушения",
+        "href": "/capa"
+      },
+      {
+        "label": "Отчёты",
+        "href": "/reports"
+      },
+      {
+        "label": "Идеи",
+        "href": "/ideas"
+      }
+    ],
+    "hiddenPresent": [],
+    "staffBeforeJournals": true,
+    "gearHref": "/settings",
+    "gearGapToOrgPillPx": 4
+  },
+  "palette": {
+    "hiddenMatches": {
+      "Партии": 0,
+      "Изменения": 0,
+      "Потери": 0,
+      "Компетенции": 0,
+      "Премии": 0
+    },
+    "sanityReportsExact": 1
+  },
+  "autofillSheet": {
+    "title": "Автозаполнить журналы?",
+    "text": true,
+    "illustration": 2
+  },
+  "autofillRun": {
+    "status": 200,
+    "totalFilled": 140,
+    "documentsCreated": 6,
+    "processed": 8,
+    "toast": "Заполнено: 7 журналов, 140 отметок, создано 6 документовПо 25 сентября. Данные можно поправить в самих журналах."
+  },
+  "qr": {
+    "url": "/settings/qr-posters",
+    "sections": [
+      "main",
+      "journals",
+      "objects"
+    ],
+    "mainTitle": "Универсальные — не привязаны к одному журналу",
+    "mainCards": 2,
+    "mainHasHub": true,
+    "mainHasVerify": true,
+    "journalsRows": 41,
+    "journalsHasHygiene": true,
+    "journalsHasFryer": true,
+    "objectsRows": 3,
+    "objectsText": "Объекты — холодильники, склады, лампыЗаписывают по наклейке на самом объекте. QR журнала показывает статус объектов за сегодня.Бланк контроля температуры и влажности на складахЖурнал контроля температурного режима холодильного и морозильного оборудованияЖурнал учета работы УФ бактерицидной установки",
+    "sample": [
+      "Гигиенический журнал (сотрудники) — отметка перед сменой",
+      "Гигиенический журнал (сотрудники) — отметка перед сменой",
+      "Чек-лист уборки и проветривания помещений"
+    ]
+  },
+  "hiddenPages": {
+    "/batches": {
+      "status": 200,
+      "path": "/batches"
+    },
+    "/changes": {
+      "status": 200,
+      "path": "/changes"
+    },
+    "/losses": {
+      "status": 200,
+      "path": "/losses"
+    },
+    "/competencies": {
+      "status": 200,
+      "path": "/competencies"
+    },
+    "/bonuses": {
+      "status": 200,
+      "path": "/bonuses"
+    }
+  },
+  "cardMobile": {
+    "titleCenterOffsetPx": 0,
+    "btns": [
+      {
+        "text": "Автозаполнить",
+        "h": 44,
+        "w": 158
+      },
+      {
+        "text": "QR-коды",
+        "h": 44,
+        "w": 158
+      }
+    ],
+    "overflowX": false
+  },
+  "mobileMenu": {
+    "links": [
+      {
+        "label": "Кафе «Навигация»",
+        "href": "/dashboard",
+        "h": 52,
+        "font": "17px",
+        "icon": 24,
+        "top": 374
+      },
+      {
+        "label": "Настройки",
+        "href": "/settings",
+        "h": 52,
+        "font": "16px",
+        "icon": 24,
+        "top": 374
+      },
+      {
+        "label": "Сотрудники",
+        "href": "/settings/users",
+        "h": 52,
+        "font": "17px",
+        "icon": 24,
+        "top": 430
+      },
+      {
+        "label": "Журналы",
+        "href": "/journals",
+        "h": 52,
+        "font": "17px",
+        "icon": 24,
+        "top": 486
+      },
+      {
+        "label": "Производственный план",
+        "href": "/plans",
+        "h": 52,
+        "font": "17px",
+        "icon": 24,
+        "top": 542
+      },
+      {
+        "label": "Нарушения",
+        "href": "/capa",
+        "h": 52,
+        "font": "17px",
+        "icon": 24,
+        "top": 598
+      },
+      {
+        "label": "Отчёты",
+        "href": "/reports",
+        "h": 52,
+        "font": "17px",
+        "icon": 24,
+        "top": 654
+      },
+      {
+        "label": "Идеи",
+        "href": "/ideas",
+        "h": 52,
+        "font": "17px",
+        "icon": 24,
+        "top": 710
+      }
+    ],
+    "hiddenPresent": [],
+    "settingsRowPresent": false,
+    "gear": {
+      "href": "/settings",
+      "sameRowAsOrg": true
+    },
+    "staffBeforeJournals": true
+  },
+  "autofillMobile": {
+    "bottomAligned": true,
+    "width": 390
+  },
+  "darkTheme": "dark",
+  "darkProfileHover": [
+    {
+      "label": "Баланс и бонусы0 ₽",
+      "highlighted": true,
+      "fg": "rgb(242, 243, 251)",
+      "bg": "rgb(69,69,114)",
+      "ratio": 8.13
+    },
+    {
+      "label": "Тарифы и оплата",
+      "highlighted": true,
+      "fg": "rgb(242, 243, 251)",
+      "bg": "rgb(69,69,114)",
+      "ratio": 8.13
+    },
+    {
+      "label": "Внешний вид",
+      "highlighted": true,
+      "fg": "rgb(242, 243, 251)",
+      "bg": "rgb(69,69,114)",
+      "ratio": 8.13
+    },
+    {
+      "label": "Настройки",
+      "highlighted": true,
+      "fg": "rgb(242, 243, 251)",
+      "bg": "rgb(69,69,114)",
+      "ratio": 8.13
+    },
+    {
+      "label": "Выйти",
+      "highlighted": true,
+      "fg": "rgb(240, 190, 182)",
+      "bg": "rgb(90,69,94)",
+      "ratio": 5.21
+    }
+  ],
+  "darkProfileFocus": [
+    {
+      "label": "Баланс и бонусы0 ₽",
+      "role": "menuitem",
+      "fg": "rgb(242, 243, 251)",
+      "bg": "rgb(69,69,114)",
+      "ratio": 8.13
+    },
+    {
+      "label": "Тарифы и оплата",
+      "role": "menuitem",
+      "fg": "rgb(242, 243, 251)",
+      "bg": "rgb(69,69,114)",
+      "ratio": 8.13
+    },
+    {
+      "label": "Внешний вид",
+      "role": "menuitem",
+      "fg": "rgb(242, 243, 251)",
+      "bg": "rgb(69,68,113)",
+      "ratio": 8.16
+    },
+    {
+      "label": "Настройки",
+      "role": "menuitem",
+      "fg": "rgb(242, 243, 251)",
+      "bg": "rgb(69,69,114)",
+      "ratio": 8.13
+    },
+    {
+      "label": "Выйти",
+      "role": "menuitem",
+      "fg": "rgb(239, 189, 181)",
+      "bg": "rgb(89,69,94)",
+      "ratio": 5.18
+    }
+  ],
+  "darkNavHover": [
+    {
+      "label": "Сотрудники",
+      "fg": "rgb(242, 243, 251)",
+      "bg": "rgb(76,77,131)",
+      "ratio": 7.05
+    },
+    {
+      "label": "Журналы",
+      "fg": "rgb(242, 243, 251)",
+      "bg": "rgb(76,77,131)",
+      "ratio": 7.05
+    },
+    {
+      "label": "Производственный план",
+      "fg": "rgb(242, 243, 251)",
+      "bg": "rgb(76,77,131)",
+      "ratio": 7.05
+    },
+    {
+      "label": "Нарушения",
+      "fg": "rgb(242, 243, 251)",
+      "bg": "rgb(76,77,131)",
+      "ratio": 7.05
+    },
+    {
+      "label": "Отчёты",
+      "fg": "rgb(242, 243, 251)",
+      "bg": "rgb(76,77,131)",
+      "ratio": 7.05
+    },
+    {
+      "label": "Идеи",
+      "fg": "rgb(242, 243, 251)",
+      "bg": "rgb(76,77,131)",
+      "ratio": 7.05
+    }
+  ],
+  "darkVariantsHoverFocus": [
+    {
+      "cls": "rounded-xl px-3 py-2 text-[#0b1024] focus:bg-[#f5f6ff]",
+      "fg": "rgb(242, 243, 251)",
+      "bg": "rgb(69,69,114)",
+      "ratio": 8.13
+    },
+    {
+      "cls": "rounded-xl px-3 py-2 text-[#0b1024] data-[highlighted]:bg-[#f5f6ff]",
+      "fg": "rgb(242, 243, 251)",
+      "bg": "rgb(69,69,114)",
+      "ratio": 8.13
+    },
+    {
+      "cls": "rounded-xl px-3 py-2 text-[#6f7282] hover:bg-white hover:text-[#0b1024]",
+      "fg": "rgb(242, 243, 251)",
+      "bg": "rgb(69,69,114)",
+      "ratio": 8.13
+    },
+    {
+      "cls": "rounded-xl px-3 py-2 text-[#3c4053] hover:bg-[#f5f6ff] hover:text-[#0b1024]",
+      "fg": "rgb(242, 243, 251)",
+      "bg": "rgb(69,69,114)",
+      "ratio": 8.13
+    },
+    {
+      "cls": "rounded-xl px-3 py-2 text-[#a13a32] focus:bg-[#fff4f2] focus:text-[#a13a32]",
+      "fg": "rgb(240, 190, 182)",
+      "bg": "rgb(90,69,94)",
+      "ratio": 5.21
+    }
+  ]
+}

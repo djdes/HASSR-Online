@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
-import { JOURNAL_FILL_HUB_CODE, journalFillValidUntil, listHubJournals, todayKeyFor } from "@/lib/journal-fill";
+import { JOURNAL_FILL_HUB_CODE, journalFillValidUntil, todayKeyFor } from "@/lib/journal-fill";
 import { HYGIENE_VERIFY_SUFFIX, isJournalObjectQrCode, splitJournalPosterId } from "@/lib/journal-qr-target";
 import { journalResponsibleLabel } from "@/lib/journal-responsible-person";
 import { resolveOrgJournalName } from "@/lib/org-journal-name";
@@ -14,6 +14,7 @@ import {
 } from "@/lib/qr-fill-poster";
 import type { QrPoster, QrPosterItem, QrPosterMissing, QrPrintFormat } from "@/lib/qr-fill-types";
 import { resolveJournalObjectScope } from "@/lib/qr-journal-scope";
+import { planQrOverview } from "@/lib/qr-posters-overview";
 import type { QrPostersRequest } from "@/lib/qr-posters-request";
 
 /**
@@ -25,7 +26,8 @@ import type { QrPostersRequest } from "@/lib/qr-posters-request";
  *     дополнительные QR активных документов (не отмечены, со сроком), а у
  *     журналов объектов вместо дополнительных — наклейки объектов (отмечены);
  *   • objects  — наклейки оборудования / помещений (отмечены);
- *   • overview — «Все журналы» (отмечен) и основные QR отдельных журналов.
+ *   • overview — универсальные («Все журналы», «Допуск»; отмечены), основные
+ *     QR ВСЕХ включённых журналов и журналов объектов (`qr-posters-overview.ts`).
  * `selectedIds` (старые ссылки с `ids=`) отмечает ровно эти карточки.
  */
 
@@ -298,6 +300,25 @@ async function objectsScreen(ctx: OrgContext, request: QrPostersRequest, kind: "
 
 async function overviewScreen(ctx: OrgContext, request: QrPostersRequest): Promise<Omit<QrPostersView, "origin" | "autoprint">> {
   const format = request.format ?? "a4";
+  // Все включённые журналы организации — так же, как считает главная
+  // (активные шаблоны минус выключенные). См. `qr-posters-overview.ts`:
+  // раньше журналы без действующего документа (например, гигиена с
+  // закрытым документом месяца) на странице пропадали.
+  const templates = await db.journalTemplate.findMany({
+    where: { isActive: true },
+    orderBy: { sortOrder: "asc" },
+    select: { code: true, name: true },
+  });
+  const plan = planQrOverview(templates, ctx.disabledCodes, JOURNAL_FILL_HUB_CODE);
+  const buildingId = await resolveMainJournalQrBuilding(ctx.organizationId, ctx.activeBuildingId);
+  const point = await buildingName(buildingId);
+  const notices = await loadMainJournalQrNotices({
+    ...ctx,
+    codes: [...plan.journals, ...plan.objectJournals].map((journal) => journal.code),
+  });
+  const pointSubtitle = point ? `${point} · запись с телефона` : "Запись в журнал с телефона";
+
+  // Универсальные — каждый отдельной карточкой, отмечены для печати.
   const items: QrPosterItem[] = [
     {
       key: JOURNAL_FILL_HUB_CODE,
@@ -317,38 +338,59 @@ async function overviewScreen(ctx: OrgContext, request: QrPostersRequest): Promi
       caption: CAPTION.hub,
     },
   ];
-  const journals = await listHubJournals(ctx.organizationId, Array.from(ctx.disabledCodes), ctx.todayKey, { includeLapsed: true });
-  const notices = await loadMainJournalQrNotices({ ...ctx, codes: journals.map((journal) => journal.code) });
-  const buildingId = await resolveMainJournalQrBuilding(ctx.organizationId, ctx.activeBuildingId);
-  const point = await buildingName(buildingId);
-  for (const journal of journals) {
-    const variants = journal.code === "hygiene" ? [false, true] : [false];
-    for (const verify of variants) {
-      const key = verify ? `${journal.code}${HYGIENE_VERIFY_SUFFIX}` : journal.code;
-      items.push({
-        key,
-        group: "extra",
-        poster: {
-          ...(await buildJournalPoster({
-            organizationId: ctx.organizationId,
-            code: journal.code,
-            name: verify ? HYGIENE_VERIFY_TITLE : journal.name,
-            subtitle: verify ? HYGIENE_VERIFY_SUBTITLE : point ? `${point} · запись с телефона` : "Запись в журнал с телефона",
-            orgName: ctx.orgName,
-            origin: ctx.origin,
-            buildingId,
-            verify,
-          })),
-          notice: notices.get(journal.code) ?? null,
-        },
-        defaultSelected: pick(request.selectedIds, key, false),
-        defaultFormat: format,
-        label: verify ? "Гигиена — допуск сотрудников" : journal.name,
-        sublabel: point,
-        caption: verify ? CAPTION.verify : CAPTION.main,
-        buildingName: point,
-      });
-    }
+  if (plan.hygieneVerify) {
+    const key = `hygiene${HYGIENE_VERIFY_SUFFIX}`;
+    items.push({
+      key,
+      group: "main",
+      poster: {
+        ...(await buildJournalPoster({
+          organizationId: ctx.organizationId,
+          code: "hygiene",
+          name: HYGIENE_VERIFY_TITLE,
+          subtitle: point ? `${point} · ${HYGIENE_VERIFY_SUBTITLE}` : HYGIENE_VERIFY_SUBTITLE,
+          orgName: ctx.orgName,
+          origin: ctx.origin,
+          buildingId,
+          verify: true,
+        })),
+        notice: notices.get("hygiene") ?? null,
+      },
+      defaultSelected: pick(request.selectedIds, key, true),
+      defaultFormat: format,
+      label: "Допуск сотрудников к смене",
+      sublabel: point,
+      caption: CAPTION.verify,
+      buildingName: point,
+    });
+  }
+
+  // Журналы и журналы объектов — основной QR каждого, не отмечены.
+  // Журналы объектов отличает клиент по коду (`isJournalObjectQrCode`).
+  for (const journal of [...plan.journals, ...plan.objectJournals]) {
+    const isObject = isJournalObjectQrCode(journal.code);
+    items.push({
+      key: journal.code,
+      group: "extra",
+      poster: {
+        ...(await buildJournalPoster({
+          organizationId: ctx.organizationId,
+          code: journal.code,
+          name: journal.name,
+          subtitle: isObject ? objectSubtitle(journal.code) : pointSubtitle,
+          orgName: ctx.orgName,
+          origin: ctx.origin,
+          buildingId,
+        })),
+        notice: notices.get(journal.code) ?? null,
+      },
+      defaultSelected: pick(request.selectedIds, journal.code, false),
+      defaultFormat: format,
+      label: journal.name,
+      sublabel: point,
+      caption: isObject ? CAPTION.objectMain : CAPTION.main,
+      buildingName: point,
+    });
   }
   // Старые ссылки на несколько журналов: чего нет в списке — собрать по id.
   const missing: QrPosterMissing[] = [];

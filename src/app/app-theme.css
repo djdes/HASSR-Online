@@ -728,6 +728,84 @@ body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hover
   background-color: var(--app-tint-indigo-2);
 }
 
+/* --- Hover / focus / «подсвечен» в тёмной теме (2026-09-25) ----------
+   Выше перекрашены только сами классы (`bg-white`, `text-[#0b1024]`), а их
+   варианты состояний — нет. В выпадающих списках (меню профиля, селекты,
+   поповеры выбора) под курсором или фокусом ложилась СВЕТЛАЯ плашка
+   (`focus:bg-[#f5f6ff]`, `data-[highlighted]:…`, `hover:bg-white`) под
+   светлый текст, а `hover:text-[#0b1024]` красил текст почти в цвет фона:
+   пункт становился невидимым. Здесь — все такие варианты, что есть в
+   коде. Общие примитивы (`menu-styles.ts`, `select.tsx`,
+   `dropdown-menu.tsx`) сами берут токены — это страховка для классов,
+   которые дописаны на месте вызова. `!important` — потому что базовые
+   перекраски (`text-[#3c4053]`, `text-[#a13a32]` в globals.css) тоже
+   `!important`, и без него состояние наведения им проигрывало. */
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hover\:bg-white:hover,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hover\:bg-\[\#fbfbff\]:hover,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hover\:bg-\[\#f3f4fe\]:hover,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hover\:bg-\[\#f3f4fb\]:hover,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hover\:bg-\[\#f1f2f8\]:hover,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hover\:bg-gray-100:hover,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .focus\:bg-\[\#f5f6ff\]:focus,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .focus\:bg-\[\#fafbff\]:focus,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .focus-visible\:bg-\[\#f5f6ff\]:focus-visible,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .active\:bg-\[\#f5f6ff\]:active,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .data-\[highlighted\]\:bg-\[\#f5f6ff\][data-highlighted],
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .data-\[state\=open\]\:bg-\[\#f5f6ff\][data-state="open"],
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .data-\[state\=open\]\:bg-\[\#fafbff\][data-state="open"] {
+  background-color: var(--app-tint-indigo) !important;
+}
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .focus\:bg-\[\#eef1ff\]:focus,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .active\:bg-\[\#eef1ff\]:active,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hover\:bg-\[\#eef0ff\]:hover,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hover\:bg-\[\#e5e9ff\]:hover,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hover\:bg-\[\#e3e8ff\]:hover,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hover\:bg-\[\#e2e7ff\]:hover,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .data-\[state\=checked\]\:bg-\[\#eef1ff\][data-state="checked"],
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .data-\[state\=checked\]\:focus\:bg-\[\#e6eaff\][data-state="checked"]:focus {
+  background-color: var(--app-tint-indigo-2) !important;
+}
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .focus\:bg-\[\#fff4f2\]:focus,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hover\:bg-\[\#fff3f2\]:hover,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hover\:bg-\[\#fff2f1\]:hover,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hover\:bg-\[\#ffecea\]:hover,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hover\:bg-\[\#ffe9e5\]:hover,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hover\:bg-\[\#ffe5e1\]:hover,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hover\:bg-\[\#ffe6e1\]:hover,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .active\:bg-\[\#ffe9e5\]:active {
+  background-color: rgba(255, 144, 130, 0.16) !important;
+}
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hover\:bg-\[\#ecfdf5\]:hover {
+  background-color: rgba(124, 245, 192, 0.2) !important;
+}
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hover\:text-\[\#0b1024\]:hover,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hover\:text-black:hover,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hover\:text-slate-700:hover,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .focus\:text-\[\#0b1024\]:focus,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .focus-visible\:text-\[\#0b1024\]:focus-visible,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .group:hover .group-hover\:text-\[\#0b1024\] {
+  color: var(--app-text) !important;
+}
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hover\:text-\[\#3c4053\]:hover {
+  color: var(--app-text-secondary) !important;
+}
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hover\:text-\[\#6f7282\]:hover {
+  color: var(--app-text-muted) !important;
+}
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .focus\:text-\[\#a13a32\]:focus,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hover\:text-\[\#a13a32\]:hover,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .data-\[highlighted\]\:text-\[\#a13a32\][data-highlighted] {
+  /* На шаг светлее пыльно-розового `--app-warn-fg` (#dba59c): на розовой
+     подсветке пункта «Выйти» тот давал контраст ~4:1. */
+  color: #f0beb6 !important;
+}
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hover\:text-\[\#3848c7\]:hover,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .focus\:text-\[\#3848c7\]:focus,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .group:hover .group-hover\:text-\[\#3848c7\],
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .data-\[state\=checked\]\:text-\[\#3848c7\][data-state="checked"] {
+  color: var(--app-indigo-deep) !important;
+}
+
 /* shadcn Card/Popover/Dialog — они используют bg-popover / bg-card
    которые мапятся через shadcn CSS var. Переопределяем */
 body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) {

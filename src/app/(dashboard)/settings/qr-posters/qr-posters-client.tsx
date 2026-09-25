@@ -7,6 +7,7 @@ import { AlertTriangle, ArrowRight, LayoutGrid, Printer, Refrigerator, Warehouse
 import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
 import { PageGuide } from "@/components/ui/page-guide";
 import { PageHeader, PageHeaderStat } from "@/components/ui/page-header";
+import { isJournalObjectQrCode } from "@/lib/journal-qr-target";
 import type { QrPoster, QrPosterItem, QrPrintFormat } from "@/lib/qr-fill-types";
 import { composeQrPrintPages, sheetsLabel } from "@/lib/qr-print-layout";
 import type { QrPostersView } from "@/lib/qr-posters-view";
@@ -152,15 +153,17 @@ export function QrPostersClient({ view }: { view: QrPostersView }) {
         ? view.objectKind === "room"
           ? "Наклейки на склады и помещения: сотрудник сканирует и вносит температуру и влажность."
           : "Наклейки на холодильники и оборудование: сотрудник сканирует и вносит показание."
-        : "Код «Все журналы» на стену у входа и коды отдельных журналов.";
+        : "Универсальные коды, QR каждого включённого журнала и наклейки на объекты.";
 
-  const extraTitle = view.screen === "overview" ? "Отдельные журналы — тоже бессрочные" : "Дополнительные — на один документ";
-  const extraHint =
-    view.screen === "overview" ? (
-      <>Код ведёт сразу в журнал, без выбора. Все коды журнала, включая дополнительные, — по ссылке «QR-точка контроля» в самом журнале.</>
-    ) : (
-      "Ведут только в свой документ и перестают работать после его последнего дня. Не отмечены — отметьте, если нужны."
-    );
+  const extraTitle = "Дополнительные — на один документ";
+  const extraHint = "Ведут только в свой документ и перестают работать после его последнего дня. Не отмечены — отметьте, если нужны.";
+  // Общий экран: основные QR журналов делятся на обычные журналы и
+  // журналы объектов (холодильники, склады, лампы).
+  const overviewJournals = groups.extra.filter((item) => !isJournalObjectQrCode(item.key));
+  const overviewObjectJournals = groups.extra.filter((item) => isJournalObjectQrCode(item.key));
+  const overviewJournalsSelectable = overviewJournals.filter((item) => !item.expired);
+  const overviewJournalsAllSelected =
+    overviewJournalsSelectable.length > 0 && overviewJournalsSelectable.every((item) => selected[item.key]);
   const objectsAllSelected = groups.object.length > 0 && groups.object.every((item) => selected[item.key]);
   const extraSelectable = groups.extra.filter((item) => !item.expired);
   const extraAllSelected = extraSelectable.length > 0 && extraSelectable.every((item) => selected[item.key]);
@@ -231,8 +234,12 @@ export function QrPostersClient({ view }: { view: QrPostersView }) {
       {groups.main.length > 0 ? (
         <Section
           testId="main"
-          title="Основные — работают всегда"
-          hint="Отмечены для печати. Код бессрочный: повесили один раз — и он работает."
+          title={view.screen === "overview" ? "Универсальные — не привязаны к одному журналу" : "Основные — работают всегда"}
+          hint={
+            view.screen === "overview"
+              ? "Каждый — отдельный плакат, отмечены для печати. «Все журналы» — на стену у входа: сотрудник сам выбирает журнал. «Допуск» — для ответственного за смену."
+              : "Отмечены для печати. Код бессрочный: повесили один раз — и он работает."
+          }
         >
           <div className="grid gap-4 md:grid-cols-2">
             {groups.main.map((item) => (
@@ -285,10 +292,29 @@ export function QrPostersClient({ view }: { view: QrPostersView }) {
 
       {view.screen === "overview" ? (
         <>
-          {groups.extra.length > 0 ? (
-            <Section testId="extra" title={extraTitle} hint={extraHint}>
+          <Section
+            testId="journals"
+            title="Журналы — у каждого свой QR"
+            hint={
+              <>
+                Все включённые журналы. Код ведёт сразу в журнал, без выбора, и работает всегда: нет документа — он создастся при первом скане. Дополнительные коды на отдельный документ — по кнопке «QR-точка контроля» в самом журнале.
+              </>
+            }
+            actions={
+              overviewJournalsSelectable.length > 1 ? (
+                <button
+                  type="button"
+                  className={TEXT_BUTTON_CLASS}
+                  onClick={() => setGroupSelected(overviewJournalsSelectable, !overviewJournalsAllSelected)}
+                >
+                  {overviewJournalsAllSelected ? "Снять все" : "Отметить все"}
+                </button>
+              ) : null
+            }
+          >
+            {overviewJournals.length > 0 ? (
               <div className="space-y-2">
-                {groups.extra.map((item) => (
+                {overviewJournals.map((item) => (
                   <QrCompactRow
                     key={item.key}
                     item={item}
@@ -299,13 +325,38 @@ export function QrPostersClient({ view }: { view: QrPostersView }) {
                   />
                 ))}
               </div>
-            </Section>
-          ) : null}
-          <Section testId="links" title="Наклейки на объекты" hint="Холодильники, склады и лампы заполняют по наклейке на самом объекте.">
+            ) : (
+              <p className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-3 text-[13px] text-[#6f7282]">
+                Нет включённых журналов.{" "}
+                <Link href="/settings/journals" className={LINK_CLASS}>
+                  Выбрать журналы
+                </Link>
+              </p>
+            )}
+          </Section>
+          <Section
+            testId="objects"
+            title="Объекты — холодильники, склады, лампы"
+            hint="Записывают по наклейке на самом объекте. QR журнала показывает статус объектов за сегодня."
+          >
+            {overviewObjectJournals.length > 0 ? (
+              <div className="space-y-2">
+                {overviewObjectJournals.map((item) => (
+                  <QrCompactRow
+                    key={item.key}
+                    item={item}
+                    selected={Boolean(selected[item.key])}
+                    format={formats[item.key]}
+                    onToggle={(value) => toggle(item.key, value)}
+                    onFormat={(format) => setFormat(item.key, format)}
+                  />
+                ))}
+              </div>
+            ) : null}
             <div className="grid gap-2 sm:grid-cols-2">
               {[
-                { href: "/settings/qr-posters?kind=equipment&layout=sheet", label: "Оборудование", count: view.counts?.equipment ?? 0, icon: Refrigerator },
-                { href: "/settings/qr-posters?kind=rooms&layout=sheet", label: "Склады и помещения", count: view.counts?.rooms ?? 0, icon: Warehouse },
+                { href: "/settings/qr-posters?kind=equipment&layout=sheet", label: "Наклейки на оборудование", count: view.counts?.equipment ?? 0, icon: Refrigerator },
+                { href: "/settings/qr-posters?kind=rooms&layout=sheet", label: "Наклейки на склады и помещения", count: view.counts?.rooms ?? 0, icon: Warehouse },
               ].map((link) => {
                 const Icon = link.icon;
                 return (
