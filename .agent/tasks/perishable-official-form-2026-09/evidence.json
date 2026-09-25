@@ -1,0 +1,61 @@
+{
+  "task": "perishable-official-form-2026-09",
+  "branch": "feat/perishable-form-2026-09-26",
+  "codeCommit": "74a5db80",
+  "verdict": "PASS",
+  "officialForm": {
+    "source": "https://www.consultant.ru/document/cons_doc_LAW_367564/15a82b5d40ffcdc51dd1c9b58231208328d29b5d/",
+    "crossChecks": [
+      "https://strgimn1.ru/wp-content/uploads/2021/04/sanpin-2-3-2-4-3590-20.pdf (стр. 31, raw/sanpin-3590-20-p31-appendix5.txt)",
+      "https://sudact.ru/law/postanovlenie-glavnogo-gosudarstvennogo-sanitarnogo-vracha-rf-ot_1355/prilozhenie/prilozhenie-n-5/",
+      "https://www.consultant.ru/document/cons_doc_LAW_535846/69a4e66e601ed4919acae75846d702f7dc32e941/ (СанПиН 2.3/2.4.4282-26, та же форма)"
+    ],
+    "sanpinChange": "С 01.09.2026 действует СанПиН 2.3/2.4.4282-26 (https://www.consultant.ru/law/hotdocs/94329.html); приложение № 5 то же",
+    "columns": [
+      "Дата и час, поступления пищевой продукции",
+      "Наименование",
+      "Фасовка",
+      "Дата выработки",
+      "Изготовитель",
+      "Поставщик",
+      "Количество поступившего продукта (в кг, литрах, шт)",
+      "Номер документа, подтверждающего безопасность принятого пищевого продукта (декларация о соответствии, свидетельство о государственной регистрации, документы по результатам ветеринарно-санитарной экспертизы)",
+      "Результаты органолептической оценки, поступившего продовольственного сырья и пищевых продуктов",
+      "Условия хранения, конечный срок реализации",
+      "Дата и час фактической реализации",
+      "Подпись ответственного лица",
+      "Примечание"
+    ],
+    "footnote": null
+  },
+  "acceptance": {
+    "AC1": { "status": "PASS", "evidence": ["evidence.md#AC1", "raw/sanpin-3590-20-p31-appendix5.txt"] },
+    "AC2": {
+      "status": "PASS",
+      "evidence": [
+        "raw/pdf-before.json",
+        "raw/pdf-after.json",
+        "raw/e2e.json",
+        "src/lib/perishable-official-form.test.ts",
+        "shots/pdf-*-before.png, shots/pdf-*-after.png, shots/site-*.png (локально, .gitignore)"
+      ]
+    },
+    "AC3": { "status": "PASS", "evidence": ["raw/e2e.json (29/29)", "raw/e2e-run.log", "raw/pdf-after.json (docE2E)"] },
+    "AC4": { "status": "PASS", "evidence": ["raw/check-samples.json", "raw/check-samples-before.json", "raw/check-docs.json"] },
+    "AC5": { "status": "PASS", "evidence": ["raw/checks.log (typecheck 0, npm test 2392/2392)"] }
+  },
+  "checks": {
+    "unit": "node --import tsx --test src/lib/perishable-official-form.test.ts → 12/12",
+    "typecheck": "npm run typecheck → 0 errors",
+    "tests": "npm test → 2392 pass, 0 fail",
+    "e2e": "e2e/e2e.ts on dev :3041, db wesetup_wt_pdf → 29/29 PASS",
+    "pdf": "e2e/pdf-render.ts after → 5 PDF, 13 граф, 0 «could not fit page»",
+    "qr": "check-qr-overlap.ts samples perishable_rejection → OK (align 0.05 мм); docs → 4/4 OK, 6/6 страниц"
+  },
+  "decisions": {
+    "responsibleSignature": "«Подпись ответственного лица» = row.responsiblePerson (ФИО, должность принявшего)",
+    "commissionSignatures": "подписи прежней комиссии — блоком под таблицей на сайте и в печати; графы в форме нет",
+    "legacyColumns": "upgradeSavedColumns: прежний стандарт → форма; свой порядок сохраняется, новые графы за «родителем», видимость наследуется",
+    "legacyRows": "без миграции; склейка «␠/␠поставщик» не повторяется в показе"
+  }
+}

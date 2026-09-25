@@ -1,0 +1,24 @@
+## npm run typecheck
+
+> haccp-online@0.1.0 typecheck
+> tsc --noEmit --skipLibCheck -p tsconfig.typecheck.json
+
+typecheck exit=0
+
+## npm test (хвост)
+  ✔ направление: сначала по ходу движения (0.2449ms)
+  ✔ всё закрыто — -1 (0.151ms)
+✔ nearestEnabledIndex (1.2348ms)
+ℹ tests 2392
+ℹ suites 277
+ℹ pass 2392
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 41346.5279
+test exit=0
+
+## eslint (изменённые файлы)
+journal-columns.ts, journal-column-templates.ts, perishable-rejection-document.ts, perishable-rejection-document-client.tsx, perishable-official-form.test.ts, journal-columns.test.ts — 0 problems
+document-pdf.ts — 0 errors, 7 warnings (неиспользуемые переменные в чужих функциях: formatDateTime, roomsModeControllerCellValue, monthColWidth, dateFromStr ×2, marginLeft, pageWidth — к правке не относятся)

@@ -1,0 +1,36 @@
+[
+  {
+    "label": "sample:perishable_rejection",
+    "code": "perishable_rejection",
+    "url": "https://wesetup.ru/journals-info/perishable_rejection",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "orientation": "landscape",
+        "qr": {
+          "x": 274.1,
+          "y": 192,
+          "size": 13,
+          "modules": 33,
+          "moved": false,
+          "bottomRow": true,
+          "overlap": false
+        },
+        "inkInZoneBeforeStamp": 0,
+        "qrRightMm": 287.1,
+        "contentRightMm": 287.15,
+        "alignDiffMm": 0.05,
+        "overflowSheet": false,
+        "shiftedLeft": false,
+        "stampRightEdgeMm": 287.1,
+        "aligned": true,
+        "moduleMismatches": 0,
+        "decoded": "https://wesetup.ru/journals-info/perishable_rejection",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  }
+]
