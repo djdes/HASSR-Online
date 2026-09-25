@@ -1029,71 +1029,77 @@ function ColdTemperatureCell({
     );
   }
 
+  // Кнопки ввода (щуп, фото дисплея, голос, «обсл»/«рем») стоят в одном ряду с
+  // полем, только когда карточке хватает ширины (контейнерный запрос, а не
+  // ширина экрана: ячейка живёт и в карточке «Сегодня», и в строке дня, и в
+  // «Заполнить подряд»). Иначе — строкой под полем: раньше всё в одном ряду
+  // сжимало поле до ~55 px, и «-18,5» за «°C» не было видно.
   return (
-    <div className="min-w-0 flex-1">
-      <NumberField
-        id={inputId}
-        value={draft}
-        onChange={setDraft}
-        onCommit={onCommit}
-        unit="°C"
-        step={0.1}
-        min={-40}
-        max={30}
-        norm={norm}
-        trailing={
-          <div className="flex items-center gap-1.5">
-            {/* Быстрее всего — не набирать: щуп по Bluetooth и снимок
-                дисплея. Кнопка щупа появляется только там, где Web
-                Bluetooth реально есть. */}
-            <BluetoothProbeButton
-              onReading={(celsius) => {
-                const text = String(celsius);
-                setDraft(text);
-                onCommit(text);
-              }}
-            />
-            <DisplayOcrButton
-              onReading={(value) => {
-                const text = String(value);
-                setDraft(text);
-                onCommit(text);
-              }}
-            />
-            <VoiceNumberInput
-            // `VoiceNumberInput` ждёт число, а черновик — строка (в ней
-            // может стоять русская запятая и незаконченный ввод).
-            value={parseNumeric(draft) ?? ""}
-            inputId={inputId}
-            onChange={(n) => {
-              if (n === null) return;
-              setDraft(String(n));
-              onCommit(String(n));
+    <div className="@container min-w-0 flex-1">
+      <div className="flex flex-col gap-1.5 @min-[420px]:flex-row @min-[420px]:items-start">
+        <NumberField
+          id={inputId}
+          value={draft}
+          onChange={setDraft}
+          onCommit={onCommit}
+          unit="°C"
+          step={0.1}
+          min={-40}
+          max={30}
+          norm={norm}
+          className="flex-1"
+        />
+        <div className="flex shrink-0 items-center justify-end gap-1.5 @min-[420px]:h-12" data-testid="cold-cell-tools">
+          {/* Быстрее всего — не набирать: щуп по Bluetooth и снимок
+              дисплея. Кнопка щупа появляется только там, где Web
+              Bluetooth реально есть. */}
+          <BluetoothProbeButton
+            onReading={(celsius) => {
+              const text = String(celsius);
+              setDraft(text);
+              onCommit(text);
             }}
-            />
-            {/* Вместо температуры — «обсл» (обслуживание) или «рем» (ремонт). */}
-            <ResponsiveMenu
-              title="Вместо температуры"
-              items={COLD_EQUIPMENT_STATUSES.map((option) => ({
-                key: option,
-                label: `${COLD_EQUIPMENT_STATUS_TITLE[option]} — «${COLD_EQUIPMENT_STATUS_SHORT[option]}»`,
-                icon: <Wrench className="size-4 text-[#6f7282]" />,
-                onSelect: () => onCommit(COLD_EQUIPMENT_STATUS_SHORT[option]),
-              }))}
-              trigger={
-                <button
-                  type="button"
-                  aria-label="Обслуживание или ремонт вместо температуры"
-                  title="Обслуживание («обсл») или ремонт («рем») вместо температуры"
-                  className="flex size-9 shrink-0 items-center justify-center rounded-full text-[#6f7282] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
-                >
-                  <Wrench className="size-4" />
-                </button>
-              }
-            />
-          </div>
-        }
-      />
+          />
+          <DisplayOcrButton
+            onReading={(value) => {
+              const text = String(value);
+              setDraft(text);
+              onCommit(text);
+            }}
+          />
+          <VoiceNumberInput
+          // `VoiceNumberInput` ждёт число, а черновик — строка (в ней
+          // может стоять русская запятая и незаконченный ввод).
+          value={parseNumeric(draft) ?? ""}
+          inputId={inputId}
+          onChange={(n) => {
+            if (n === null) return;
+            setDraft(String(n));
+            onCommit(String(n));
+          }}
+          />
+          {/* Вместо температуры — «обсл» (обслуживание) или «рем» (ремонт). */}
+          <ResponsiveMenu
+            title="Вместо температуры"
+            items={COLD_EQUIPMENT_STATUSES.map((option) => ({
+              key: option,
+              label: `${COLD_EQUIPMENT_STATUS_TITLE[option]} — «${COLD_EQUIPMENT_STATUS_SHORT[option]}»`,
+              icon: <Wrench className="size-4 text-[#6f7282]" />,
+              onSelect: () => onCommit(COLD_EQUIPMENT_STATUS_SHORT[option]),
+            }))}
+            trigger={
+              <button
+                type="button"
+                aria-label="Обслуживание или ремонт вместо температуры"
+                title="Обслуживание («обсл») или ремонт («рем») вместо температуры"
+                className="flex size-9 shrink-0 items-center justify-center rounded-full text-[#6f7282] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+              >
+                <Wrench className="size-4" />
+              </button>
+            }
+          />
+        </div>
+      </div>
     </div>
   );
 }
@@ -2120,8 +2126,10 @@ export function ColdEquipmentDocumentClient({
                   trailing:
                     status === "active" ? (
                       // На телефоне управление стоит отдельной строкой (см. day-first-cards) —
-                      // отдаём ему всю ширину, в 190px кнопки ± и камера не помещались.
-                      <div className="w-[190px] max-sm:w-full">
+                      // отдаём ему всю ширину. В 190px поле с ± и кнопками сжималось до
+                      // ~55 px и число за «°C» не было видно: теперь 260px (кнопки строкой
+                      // под полем), с 1024px — 440px (всё в один ряд).
+                      <div className="w-full sm:w-[260px] lg:w-[440px]">
                         <ColdTemperatureCell
                           inputId={`today-temp-${item.slotKey}`}
                           value={value ?? ""}
