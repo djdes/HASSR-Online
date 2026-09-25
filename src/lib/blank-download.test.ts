@@ -48,7 +48,7 @@ test("адреса: файл без токена, страница с окном
   assert.equal(blankFilePath(paper, "pdf"), "/api/journal-samples/paper/ot_intro/pdf");
   assert.equal(blankPagePath(code, "docx"), "/journals-info/hygiene?download=docx");
   assert.equal(blankPagePath(paper, "pdf"), "/blanki?download=pdf&paper=ot_intro");
-  assert.equal(blankCabinetPath(code), "/journals/hygiene");
+  assert.equal(blankCabinetPath(code), "/journals/hygiene?from=qb");
   assert.equal(blankCabinetPath(paper), "/settings/journals/paper/ot_intro");
 
   const register = new URL(blankRegisterHref({ email: "a@example.com", target: code }), "https://wesetup.ru");
@@ -56,13 +56,13 @@ test("адреса: файл без токена, страница с окном
   assert.equal(register.searchParams.get("email"), "a@example.com");
   assert.equal(register.searchParams.get("source"), "blank");
   assert.equal(register.searchParams.get("journal"), "hygiene");
-  assert.equal(register.searchParams.get("next"), "/journals/hygiene");
+  assert.equal(register.searchParams.get("next"), "/journals/hygiene?from=qb");
   assert.equal(blankRegisterHref({}), "/register?source=blank");
 
   const login = new URL(blankLoginHref({ email: "a@example.com", target: code }), "https://wesetup.ru");
   assert.equal(login.pathname, "/login");
   assert.equal(login.searchParams.get("email"), "a@example.com");
-  assert.equal(login.searchParams.get("next"), "/journals/hygiene");
+  assert.equal(login.searchParams.get("next"), "/journals/hygiene?from=qb");
   assert.equal(blankLoginHref({}), "/login");
 });
 

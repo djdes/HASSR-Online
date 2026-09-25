@@ -1,9 +1,65 @@
 {
   "base": "http://localhost:3043",
-  "newEmail": "blank.e2e.muh8x72u@example.com",
-  "startedAt": "2026-09-25T17:39:50.934Z",
+  "newEmail": "blank.e2e.muhalxxg@example.com",
+  "startedAt": "2026-09-25T18:27:05.092Z",
+  "signupOrg": {
+    "organizationId": "cmuhapis7000ln89m7x1c0ezr",
+    "disabledJournalCodes": [
+      "cleaning",
+      "general_cleaning",
+      "cleaning_ventilation_checklist",
+      "uv_lamp_runtime",
+      "disinfectant_usage",
+      "sanitary_day_control",
+      "pest_control",
+      "intensive_cooling",
+      "finished_product",
+      "perishable_rejection",
+      "incoming_control",
+      "incoming_raw_materials_control",
+      "fryer_oil",
+      "product_writeoff",
+      "metal_impurity",
+      "traceability_test",
+      "equipment_cleaning",
+      "equipment_maintenance",
+      "breakdown_history",
+      "equipment_calibration",
+      "glass_items_list",
+      "glass_control",
+      "med_books",
+      "training_plan",
+      "staff_training",
+      "ppe_issuance",
+      "audit_plan",
+      "audit_protocol",
+      "audit_report",
+      "accident_journal",
+      "complaint_register",
+      "daily_samples",
+      "vitaminization",
+      "ration_control",
+      "transport_temperature",
+      "tableware_breakage",
+      "pool_water_control",
+      "inventory_condition",
+      "instrument_sterilization",
+      "medical_waste_b",
+      "batch_release"
+    ],
+    "audit": [
+      {
+        "userId": "cmuhapisj000mn89munb1bgbs",
+        "entityId": "health_check",
+        "details": {
+          "via": "blank-qr-signup",
+          "journalCode": "health_check"
+        }
+      }
+    ]
+  },
   "rateLimits": {
-    "ipLimitIp": "203.0.113.102",
+    "ipLimitIp": "203.0.113.3",
     "ipStatuses": [
       200,
       200,
@@ -37,7 +93,7 @@
       200,
       429
     ],
-    "emailLimit": "limit.email.muh8x72u@example.com",
+    "emailLimit": "limit.email.muhalxxg@example.com",
     "emailStatuses": [
       200,
       200,
@@ -95,71 +151,71 @@
   },
   "consents": [
     {
-      "id": "cmuh8zveo001fdk9ma2vi7sko",
-      "email": "blank.e2e.muh8x72u@example.com",
+      "id": "cmuhan6bf000hn89m5y63fcqj",
+      "email": "blank.e2e.muhalxxg@example.com",
       "source": "blank-download",
       "version": "2026-09-22",
       "statementText": "Даю согласие на обработку персональных данных и ознакомлен с политикой конфиденциальности",
       "ipAddress": "::1",
       "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
       "userId": null,
-      "createdAt": "2026-09-25T17:41:55.776Z"
+      "createdAt": "2026-09-25T18:28:02.619Z"
     },
     {
-      "id": "cmuh903o7001hdk9mh0zifxbb",
-      "email": "blank.e2e.muh8x72u@example.com",
+      "id": "cmuhanco8000jn89mhm9w8dg7",
+      "email": "blank.e2e.muhalxxg@example.com",
       "source": "blank-download",
       "version": "2026-09-22",
       "statementText": "Даю согласие на обработку персональных данных и ознакомлен с политикой конфиденциальности",
       "ipAddress": "::1",
       "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
       "userId": null,
-      "createdAt": "2026-09-25T17:42:06.487Z"
+      "createdAt": "2026-09-25T18:28:10.856Z"
     },
     {
-      "id": "cmuh94efv001ndk9my0vlycsm",
-      "email": "blank.e2e.muh8x72u@example.com",
+      "id": "cmuhapiu7000qn89m7n753qib",
+      "email": "blank.e2e.muhalxxg@example.com",
       "source": "register",
       "version": "2026-09-22",
       "statementText": "Принимаю условия оферты и пользовательского соглашения, ознакомлен с политикой конфиденциальности и даю согласие на обработку персональных данных",
       "ipAddress": "::1",
       "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
-      "userId": "cmuh94edf001kdk9mxj6lhu36",
-      "createdAt": "2026-09-25T17:45:27.067Z"
+      "userId": "cmuhapisj000mn89munb1bgbs",
+      "createdAt": "2026-09-25T18:29:52.159Z"
     }
   ],
   "auditDetails": [
     {
-      "entityId": "cmuh8zveo001fdk9ma2vi7sko",
+      "entityId": "cmuhan6bf000hn89m5y63fcqj",
       "organizationId": "platform",
       "details": {
-        "code": "hygiene",
-        "email": "blank.e2e.muh8x72u@example.com",
-        "title": "Гигиенический журнал (сотрудники)",
+        "code": "health_check",
+        "email": "blank.e2e.muhalxxg@example.com",
+        "title": "Журнал здоровья",
         "format": "pdf"
       }
     },
     {
-      "entityId": "cmuh903o7001hdk9mh0zifxbb",
+      "entityId": "cmuhanco8000jn89mhm9w8dg7",
       "organizationId": "platform",
       "details": {
-        "code": "hygiene",
-        "email": "blank.e2e.muh8x72u@example.com",
-        "title": "Гигиенический журнал (сотрудники)",
+        "code": "health_check",
+        "email": "blank.e2e.muhalxxg@example.com",
+        "title": "Журнал здоровья",
         "format": "docx"
       }
     }
   ],
   "emailLog": [
-    "[email/dev] SMTP не настроен — письмо не отправлено на blank.e2e.muh8x72u@example.com.",
-    "[email/dev] Subject: Шаблон «Гигиенический журнал (сотрудники)» — WeSetup",
-    "[email/dev] Body:    Шаблон «Гигиенический журнал (сотрудники)» Здравствуйте! Вы скачали на сайте WeSetup шаблон журнала «Гигиенический журнал (сотрудники)» . Копия — по ссылке ниже, она работает 7 дней. Скачать PDF Если кнопка не открывается, скопируйте адрес: http://localhost:3043/api/journal-samples/hygiene/pdf?t=eyJ2IjoxLCJlIjoiYmxhbmsuZTJlLm11aDh4NzJ1QGV4YW1wbGUuY29tIiwidCI6ImNvZGU6aHlnaWVuZSIsImYiOiJwZGYiLCJ4IjoxNzkwOTYyOTE2fQ.N1MdOB8VrewtGCo4jOfxsXGzrXM71VyEBLaD2HxU5Rk Скачать Word Что заполнять и на каком основании ведётся журнал — на странице журнала . Этот журнал можно не печатать В WeSetup его заполняют с телефона по QR-коду — тому же, что стоит в углу шаблона. Без бумаги, с напоминаниями, если смена забыла отметиться. Бесплатно до 3 сотрудников. Вести журнал в WeSetup Письмо пришло, потому что этот адрес указали при скачивании шаблона на wesetup.ru. Если это были не вы — просто не отвечайте на него. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.",
-    "[email/dev] SMTP не настроен — письмо не отправлено на blank.e2e.muh8x72u@example.com.",
-    "[email/dev] Subject: Шаблон «Гигиенический журнал (сотрудники)» — WeSetup",
-    "[email/dev] Body:    Шаблон «Гигиенический журнал (сотрудники)» Здравствуйте! Вы скачали на сайте WeSetup шаблон журнала «Гигиенический журнал (сотрудники)» . Копия — по ссылке ниже, она работает 7 дней. Скачать Word Если кнопка не открывается, скопируйте адрес: http://localhost:3043/api/journal-samples/hygiene/docx?t=eyJ2IjoxLCJlIjoiYmxhbmsuZTJlLm11aDh4NzJ1QGV4YW1wbGUuY29tIiwidCI6ImNvZGU6aHlnaWVuZSIsImYiOiJkb2N4IiwieCI6MTc5MDk2MjkyNn0.yOuRXmMG-8RhgzhUAfyXblWXQvRA37KztbEtMqgH2Y0 Скачать PDF Что заполнять и на каком основании ведётся журнал — на странице журнала . Этот журнал можно не печатать В WeSetup его заполняют с телефона по QR-коду — тому же, что стоит в углу шаблона. Без бумаги, с напоминаниями, если смена забыла отметиться. Бесплатно до 3 сотрудников. Вести журнал в WeSetup Письмо пришло, потому что этот адрес указали при скачивании шаблона на wesetup.ru. Если это были не вы — просто не отвечайте на него. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.",
-    "[email/dev] SMTP не настроен — письмо не отправлено на blank.e2e.muh8x72u@example.com.",
+    "[email/dev] SMTP не настроен — письмо не отправлено на blank.e2e.muhalxxg@example.com.",
+    "[email/dev] Subject: Шаблон «Журнал здоровья» — WeSetup",
+    "[email/dev] Body:    Шаблон «Журнал здоровья» Здравствуйте! Вы скачали на сайте WeSetup шаблон журнала «Журнал здоровья» . Копия — по ссылке ниже, она работает 7 дней. Скачать PDF Если кнопка не открывается, скопируйте адрес: http://localhost:3043/api/journal-samples/health_check/pdf?t=eyJ2IjoxLCJlIjoiYmxhbmsuZTJlLm11aGFseHhnQGV4YW1wbGUuY29tIiwidCI6ImNvZGU6aGVhbHRoX2NoZWNrIiwiZiI6InBkZiIsIngiOjE3OTA5NjU2ODJ9.Y6Ivt4y0On92E64owaYoJpzS6TLL6_DQtqkC7hwJxWc Скачать Word Что заполнять и на каком основании ведётся журнал — на странице журнала . Этот журнал можно не печатать В WeSetup его заполняют с телефона по QR-коду — тому же, что стоит в углу шаблона. Без бумаги, с напоминаниями, если смена забыла отметиться. Бесплатно до 3 сотрудников. Вести журнал в WeSetup Письмо пришло, потому что этот адрес указали при скачивании шаблона на wesetup.ru. Если это были не вы — просто не отвечайте на него. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.",
+    "[email/dev] SMTP не настроен — письмо не отправлено на blank.e2e.muhalxxg@example.com.",
+    "[email/dev] Subject: Шаблон «Журнал здоровья» — WeSetup",
+    "[email/dev] Body:    Шаблон «Журнал здоровья» Здравствуйте! Вы скачали на сайте WeSetup шаблон журнала «Журнал здоровья» . Копия — по ссылке ниже, она работает 7 дней. Скачать Word Если кнопка не открывается, скопируйте адрес: http://localhost:3043/api/journal-samples/health_check/docx?t=eyJ2IjoxLCJlIjoiYmxhbmsuZTJlLm11aGFseHhnQGV4YW1wbGUuY29tIiwidCI6ImNvZGU6aGVhbHRoX2NoZWNrIiwiZiI6ImRvY3giLCJ4IjoxNzkwOTY1NjkwfQ.FZPoM1_q331XsNT-ZAvbPD9wpv5Xq06xlhCMk5MxLE0 Скачать PDF Что заполнять и на каком основании ведётся журнал — на странице журнала . Этот журнал можно не печатать В WeSetup его заполняют с телефона по QR-коду — тому же, что стоит в углу шаблона. Без бумаги, с напоминаниями, если смена забыла отметиться. Бесплатно до 3 сотрудников. Вести журнал в WeSetup Письмо пришло, потому что этот адрес указали при скачивании шаблона на wesetup.ru. Если это были не вы — просто не отвечайте на него. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.",
+    "[email/dev] SMTP не настроен — письмо не отправлено на blank.e2e.muhalxxg@example.com.",
     "[email/dev] Subject: Ваш аккаунт WeSetup создан — пароль внутри",
-    "[email/dev] Body:    Аккаунт создан Здравствуйте! Аккаунт создан, вы уже вошли в кабинет. Сохраните данные для входа с других устройств: Логин: blank.e2e.muh8x72u@example.com Пароль: *** Открыть кабинет Пароль можно сменить в настройках профиля. В кабинете осталось заполнить данные организации — они попадают в шапку журналов и PDF для проверок. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП."
+    "[email/dev] Body:    Аккаунт создан Здравствуйте! Аккаунт создан, вы уже вошли в кабинет. Сохраните данные для входа с других устройств: Логин: blank.e2e.muhalxxg@example.com Пароль: *** Открыть кабинет Пароль можно сменить в настройках профиля. В кабинете осталось заполнить данные организации — они попадают в шапку журналов и PDF для проверок. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП."
   ],
   "checks": [
     {
@@ -173,19 +229,19 @@
     {
       "name": "AC1 файл скачан по подписанной ссылке (?t=)",
       "ok": true,
-      "detail": "/api/journal-samples/hygiene/pdf"
+      "detail": "/api/journal-samples/health_check/pdf"
     },
     {
       "name": "файл — PDF",
       "ok": true,
-      "detail": "obrazec-hygiene-journal-2026-04-01-2026-04-14.pdf"
+      "detail": "obrazec-health-journal-2026-04-01-2026-04-14.pdf"
     },
     {
       "name": "AC1 второй шаблон (Word) — без окна, та же почта на сервере",
       "ok": true,
       "detail": {
-        "email": "blank.e2e.muh8x72u@example.com",
-        "code": "hygiene",
+        "email": "blank.e2e.muhalxxg@example.com",
+        "code": "health_check",
         "format": "docx",
         "consent": true,
         "remembered": true,
@@ -201,7 +257,7 @@
       "ok": true,
       "detail": {
         "status": 200,
-        "disposition": "inline; filename*=UTF-8''obrazec-hygiene-journal-2026-04-01-2026-04-14.pdf",
+        "disposition": "inline; filename*=UTF-8''obrazec-health-journal-2026-04-01-2026-04-14.pdf",
         "cache": "public, max-age=86400, s-maxage=86400"
       }
     },
@@ -212,7 +268,7 @@
         "status": 403,
         "body": {
           "error": "Шаблон скачивается после ввода email на странице журнала.",
-          "page": "/journals-info/hygiene?download=pdf"
+          "page": "/journals-info/health_check?download=pdf"
         }
       }
     },
@@ -221,7 +277,7 @@
       "ok": true,
       "detail": {
         "status": 307,
-        "location": "/journals-info/hygiene?download=docx"
+        "location": "/journals-info/health_check?download=docx"
       }
     },
     {
@@ -254,11 +310,11 @@
       "name": "AC3 QR скачанного PDF (OpenCV) → /qb/<токен> с почтой и журналом",
       "ok": true,
       "detail": {
-        "qbUrl": "http://localhost:3043/qb/EMJISO6TGFACY66TV2SLCXIAO2OAWJ2PLSDAQA6J67VWYCHIMBAEYFOF77Y6UKMVOT7VEB2YYX7TBDQATACTW4YDZF4CAPL4MIZDM2F4JQ",
-        "email": "blank.e2e.muh8x72u@example.com",
+        "qbUrl": "http://localhost:3043/qb/32CMCO7X5HPZIVSM2ZY2MPFQESFFSSN57TY6AYAEUU67GXQ2JULTXTBDSR5BQMGIJ4GKIFKAI5PCZWFWJTX6E675M7SBJX6RTTS7EXAVHY",
+        "email": "blank.e2e.muhalxxg@example.com",
         "target": {
           "kind": "code",
-          "code": "hygiene"
+          "code": "health_check"
         }
       }
     },
@@ -266,8 +322,8 @@
       "name": "AC3 Word: QR в подвале (LibreOffice → OpenCV) → /qb с той же почтой",
       "ok": true,
       "detail": {
-        "docxQr": "http://localhost:3043/qb/PAGURQFLB5DRZUROMGYMWHZMUSZ63YE2JYT4MUJWJDSYMG4IYHAQOKODXLKU6PE724CQ5TESLAZZ2Y4CGCUUY47TCYX5JE72G2VPYFQHUI",
-        "email": "blank.e2e.muh8x72u@example.com",
+        "docxQr": "http://localhost:3043/qb/F3DHNNSW45LP3U5HOPKQA7AZZDTY2KULDPVKJH4WRAF2LU27ARHUKT4ESELHJXPYUMN63SZ3UP76IKOIKMPLSW55NBSOWSGRF6VGNLJNRY",
+        "email": "blank.e2e.muhalxxg@example.com",
         "soffice": 0
       }
     },
@@ -280,15 +336,46 @@
       "name": "AC4 регистрация: почта подставлена, source=blank, журнал",
       "ok": true,
       "detail": {
-        "prefilled": "blank.e2e.muh8x72u@example.com",
-        "query": "?email=blank.e2e.muh8x72u%40example.com&source=blank&journal=hygiene&next=%2Fjournals%2Fhygiene",
-        "pill": "«Гигиенический журнал (сотрудники)» откроется сразу после регистрации"
+        "prefilled": "blank.e2e.muhalxxg@example.com",
+        "query": "?email=blank.e2e.muhalxxg%40example.com&source=blank&journal=health_check&next=%2Fjournals%2Fhealth_check%3Ffrom%3Dqb",
+        "pill": "«Журнал здоровья» откроется сразу после регистрации"
       }
     },
     {
-      "name": "AC4 после регистрации открылся журнал /journals/hygiene",
+      "name": "AC4 после регистрации открылся журнал /journals/health_check",
       "ok": true,
-      "detail": "http://localhost:3043/journals/hygiene"
+      "detail": "http://localhost:3043/journals/health_check?from=qb"
+    },
+    {
+      "name": "follow-up: регистрация по QR — «Журнал здоровья» включён у новой организации и открыт без экрана «отключён»",
+      "ok": true,
+      "detail": {
+        "disabledScreen": 0,
+        "mainDisabled": false,
+        "disabledCount": 41
+      }
+    },
+    {
+      "name": "follow-up: остальной набор новой организации — дефолтный (журнал здоровья включён только из-за QR)",
+      "ok": true,
+      "detail": {
+        "cleaning": true,
+        "hygiene": false
+      }
+    },
+    {
+      "name": "follow-up: включение при регистрации записано в AuditLog организации",
+      "ok": true,
+      "detail": [
+        {
+          "userId": "cmuhapisj000mn89munb1bgbs",
+          "entityId": "health_check",
+          "details": {
+            "via": "blank-qr-signup",
+            "journalCode": "health_check"
+          }
+        }
+      ]
     },
     {
       "name": "пароль нового аккаунта найден в письме (dev-лог)",
@@ -302,17 +389,47 @@
     {
       "name": "AC4 вход: почта подставлена, возврат на журнал",
       "ok": true,
-      "detail": "?email=blank.e2e.muh8x72u%40example.com&next=%2Fjournals%2Fhygiene"
+      "detail": "?email=blank.e2e.muhalxxg%40example.com&next=%2Fjournals%2Fhealth_check%3Ffrom%3Dqb"
     },
     {
-      "name": "AC4 после входа открылся журнал /journals/hygiene",
+      "name": "AC4 после входа открылся журнал /journals/health_check",
       "ok": true,
-      "detail": "http://localhost:3043/journals/hygiene"
+      "detail": "http://localhost:3043/journals/health_check?from=qb"
     },
     {
       "name": "/qb, уже вошли: «Открыть журнал»",
       "ok": true,
       "detail": "Журнал уже в вашем кабинете"
+    },
+    {
+      "name": "follow-up: существующая организация — журнал по QR выключен, организацию молча не меняли, есть «Включить журнал»",
+      "ok": true,
+      "detail": {
+        "url": "http://localhost:3043/journals/cleaning?from=qb",
+        "text": "Этот журнал отключён\n\nВы открыли его по QR со скачанного шаблона. «Журнал уборки» отключён для вашей организации: он не показывается на дашборде и сотрудникам. Включите его одним нажатием — записи и документы за прошлые "
+      }
+    },
+    {
+      "name": "follow-up: одно нажатие «Включить журнал» — журнал открыт, включение в AuditLog",
+      "ok": true,
+      "detail": [
+        {
+          "userId": "cmuhapisj000mn89munb1bgbs",
+          "details": {
+            "via": "blank-qr",
+            "journalCode": "cleaning"
+          }
+        }
+      ]
+    },
+    {
+      "name": "follow-up: сотрудник без прав — без кнопки, подсказка «Включить его может руководитель», API 403, журнал выключен",
+      "ok": true,
+      "detail": {
+        "login": 200,
+        "deny": 403,
+        "text": "Этот журнал отключён\n\nВы открыли его по QR со скачанного шаблона. «График и учет генеральных уборок» отключён для вашей организации: он не показывается на дашборде и сотрудникам. Включить его может ру"
+      }
     },
     {
       "name": "AC4 битый токен → заглушка без почты и журнала",
@@ -347,7 +464,7 @@
         "ok": 30,
         "last": {
           "status": 429,
-          "retryAfter": "3598",
+          "retryAfter": "3597",
           "body": {
             "error": "Слишком много скачиваний с этого адреса. Попробуйте через час"
           }
@@ -361,7 +478,7 @@
         "ok": 50,
         "last": {
           "status": 429,
-          "retryAfter": "86397",
+          "retryAfter": "86398",
           "body": {
             "error": "На эту почту сегодня скачали слишком много шаблонов. Попробуйте завтра"
           }
@@ -381,15 +498,15 @@
       "ok": true,
       "detail": [
         {
-          "code": "hygiene",
-          "email": "blank.e2e.muh8x72u@example.com",
-          "title": "Гигиенический журнал (сотрудники)",
+          "code": "health_check",
+          "email": "blank.e2e.muhalxxg@example.com",
+          "title": "Журнал здоровья",
           "format": "pdf"
         },
         {
-          "code": "hygiene",
-          "email": "blank.e2e.muh8x72u@example.com",
-          "title": "Гигиенический журнал (сотрудники)",
+          "code": "health_check",
+          "email": "blank.e2e.muhalxxg@example.com",
+          "title": "Журнал здоровья",
           "format": "docx"
         }
       ]
@@ -406,5 +523,5 @@
       "ok": true
     }
   ],
-  "finishedAt": "2026-09-25T17:47:49.388Z"
+  "finishedAt": "2026-09-25T18:32:30.556Z"
 }

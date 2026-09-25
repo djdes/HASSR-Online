@@ -94,11 +94,15 @@ export function blankPagePath(target: BlankTarget, format: BlankFormat): string 
   return `/journals-info/${encodeURIComponent(target.code)}?download=${format}`;
 }
 
-/** Журнал в кабинете, который откроется после входа или регистрации. */
+/**
+ * Журнал в кабинете, который откроется после входа или регистрации.
+ * `from=qb`: если у организации журнал выключен, экран «Этот журнал
+ * отключён» скажет, откуда человек пришёл, и даст включить одним нажатием.
+ */
 export function blankCabinetPath(target: BlankTarget): string {
   return target.kind === "paper"
     ? `/settings/journals/paper/${encodeURIComponent(target.paperId)}`
-    : `/journals/${encodeURIComponent(target.code)}`;
+    : `/journals/${encodeURIComponent(target.code)}?from=qb`;
 }
 
 /** Регистрация с подставленной почтой и отметкой источника «бланк». */

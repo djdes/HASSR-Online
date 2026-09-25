@@ -62,6 +62,7 @@ export const AUDIT_ACTION_LABELS: Record<string, AuditActionLabel> = {
   "journal.delete_all_documents": { label: "Все бланки журнала удалены", variant: "destructive" },
   "journal.backfill_verifiers": { label: "Проставлены проверяющие", variant: "secondary" },
   "journal.automation.run": { label: "Автозаполнение выполнено", variant: "outline" },
+  "journal.enable": { label: "Журнал включён", variant: "default" },
   "journal_entry.copy": { label: "Запись скопирована", variant: "secondary" },
   "journals.export": { label: "Журналы выгружены", variant: "outline" },
   "journal_document.approve_all": { label: "Бланк подтверждён целиком", variant: "default" },
@@ -400,6 +401,10 @@ const HIDDEN_DETAIL_KEYS = new Set([
 /** Значения-перечисления по ключу → по-русски. */
 const DETAIL_VALUE_LABELS: Record<string, Record<string, string>> = {
   via: {
+    // Журнал включён (journal.enable, lib/blank-signup.ts).
+    "blank-qr-signup": "регистрация по QR со скачанного шаблона",
+    "blank-qr": "«Включить журнал» после QR со скачанного шаблона",
+    "journal-page": "кнопка «Включить журнал»",
     qr_join_token: "QR-приглашение",
     "dashboard.close_day": "кнопка «Закрыть день»",
     "dashboard.catch_up": "«Догнать пропуски»",

@@ -62,9 +62,12 @@ function RegisterScreen() {
   // называем прямо здесь — человек должен понимать, что откроется после.
   const blankSource = searchParams.get("source") === "blank";
   const signupPlace = blankSource ? blankSignupPlace(searchParams.get("journal")) : "register";
-  const blankJournalName = blankSource
-    ? ACTIVE_JOURNAL_CATALOG.find((j) => j.code === searchParams.get("journal"))?.name ?? null
+  // Журнал каталога, за которым пришли: сервер включит его новой
+  // организации, чтобы после регистрации он открылся готовым к заполнению.
+  const blankJournal = blankSource
+    ? ACTIVE_JOURNAL_CATALOG.find((j) => j.code === searchParams.get("journal")) ?? null
     : null;
+  const blankJournalName = blankJournal?.name ?? null;
 
   const field = useEmailField(prefilled);
   const [loading, setLoading] = useState(false);
@@ -100,6 +103,7 @@ function RegisterScreen() {
           source: readSignupSource(signupPlace),
           consent: true,
           consentPlace: "register",
+          ...(blankJournal ? { blankJournal: blankJournal.code } : {}),
         }),
       });
       const data = await res.json().catch(() => ({}));

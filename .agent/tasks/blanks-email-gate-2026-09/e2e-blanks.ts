@@ -14,8 +14,11 @@ import { spawnSync } from "node:child_process";
 import { createCanvas } from "@napi-rs/canvas";
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright-core";
 
-import { openBlankQrToken } from "@/lib/blank-qr-token";
+import bcrypt from "bcryptjs";
+
+import { blankQrUrl, openBlankQrToken } from "@/lib/blank-qr-token";
 import { db } from "@/lib/db";
+import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { standardFontsDir, workerFileUrl } from "@/lib/journal-preview/render";
 
 const BASE = process.env.BASE ?? "http://localhost:3043";
@@ -28,6 +31,11 @@ const CHROME =
 const DEV_LOG = process.env.DEV_LOG ?? "";
 const RUN = Date.now().toString(36);
 const NEW_EMAIL = `blank.e2e.${RUN}@example.com`;
+// Основной журнал сценария — журнал здоровья: у новых организаций он
+// выключен по умолчанию, поэтому регистрация по его QR — самый строгий
+// случай «журнал открывается включённым».
+const MAIN = "health_check";
+const MAIN_NAME = ACTIVE_JOURNAL_CATALOG.find((j) => j.code === MAIN)?.name ?? MAIN;
 
 const report: Record<string, unknown> = { base: BASE, newEmail: NEW_EMAIL, startedAt: new Date().toISOString() };
 const checks: Array<{ name: string; ok: boolean; detail?: unknown }> = [];
@@ -129,6 +137,12 @@ async function waitHydrated(page: Page, selector: string) {
   throw new Error(`не дождались гидрации ${selector}`);
 }
 
+/** Детали AuditLog (JSONB в Postgres переставляет ключи) — сравниваем по полям. */
+function sameDetails(actual: unknown, expected: Record<string, string>): boolean {
+  const value = (actual && typeof actual === "object" ? actual : {}) as Record<string, unknown>;
+  return Object.keys(value).length === Object.keys(expected).length && Object.entries(expected).every(([k, v]) => value[k] === v);
+}
+
 async function waitDialog(page: Page) {
   await page.getByTestId("blank-download-dialog").waitFor({ state: "visible", timeout: 60_000 });
   // Окно въезжает анимацией (на телефоне — шторка снизу, 300 мс).
@@ -154,7 +168,7 @@ async function main() {
     // ── 1. Страница журнала, 1440: окно email → согласие → файл ──────────
     const desk = await context(browser, 1440);
     const page = await desk.newPage();
-    await page.goto(`${BASE}/journals-info/hygiene`, { waitUntil: "networkidle", timeout: 180_000 });
+    await page.goto(`${BASE}/journals-info/${MAIN}`, { waitUntil: "networkidle", timeout: 180_000 });
     await page.getByTestId("blank-download-pdf").click();
     await waitDialog(page);
     check("AC1 клик «PDF» открывает окно «Куда прислать шаблон?»", await page.getByText("Куда прислать шаблон?").isVisible());
@@ -169,10 +183,10 @@ async function main() {
       page.waitForEvent("download", { timeout: 120_000 }),
       page.getByTestId("blank-download-submit").click(),
     ]);
-    const pdfFile = path.join(TMP, "hygiene.pdf");
+    const pdfFile = path.join(TMP, `${MAIN}.pdf`);
     await pdfDownload.saveAs(pdfFile);
     const pdfUrl = new URL(pdfDownload.url());
-    check("AC1 файл скачан по подписанной ссылке (?t=)", pdfUrl.pathname === "/api/journal-samples/hygiene/pdf" && Boolean(pdfUrl.searchParams.get("t")), pdfUrl.pathname);
+    check("AC1 файл скачан по подписанной ссылке (?t=)", pdfUrl.pathname === `/api/journal-samples/${MAIN}/pdf` && Boolean(pdfUrl.searchParams.get("t")), pdfUrl.pathname);
     check("файл — PDF", fs.readFileSync(pdfFile).subarray(0, 5).toString() === "%PDF-", pdfDownload.suggestedFilename());
     await page.getByText("Шаблон скачивается").waitFor({ timeout: 30_000 });
     await shot(page, "02-journal-done-1440.png");
@@ -197,25 +211,25 @@ async function main() {
     const dialogShown = await page.getByTestId("blank-download-dialog").isVisible().catch(() => false);
     await shot(page, "03-remembered-notice-1440.png");
     const docxDownload = await docxDownloadPromise;
-    const docxFile = path.join(TMP, "word-hygiene.docx");
+    const docxFile = path.join(TMP, `word-${MAIN}.docx`);
     await docxDownload.saveAs(docxFile);
     check("AC1 второй шаблон (Word) — без окна, та же почта на сервере", !dialogShown && posts[0]?.email === NEW_EMAIL && posts[0]?.remembered === true, posts[0]);
     check("Word скачан по подписанной ссылке", new URL(docxDownload.url()).searchParams.has("t") && fs.readFileSync(docxFile).subarray(0, 2).toString() === "PK");
 
     // ── 3. Встроенный просмотр публичный, файл без токена — нет ─────────
-    const inline = await desk.request.get(`${BASE}/api/journal-samples/hygiene/pdf?inline=1`);
+    const inline = await desk.request.get(`${BASE}/api/journal-samples/${MAIN}/pdf?inline=1`);
     check("AC1 встроенный просмотр без почты: 200 inline, кеш public", inline.status() === 200 && /^inline/.test(inline.headers()["content-disposition"] ?? "") && (inline.headers()["cache-control"] ?? "").startsWith("public"), {
       status: inline.status(),
       disposition: inline.headers()["content-disposition"],
       cache: inline.headers()["cache-control"],
     });
-    const bare = await desk.request.get(`${BASE}/api/journal-samples/hygiene/pdf`, { maxRedirects: 0 });
+    const bare = await desk.request.get(`${BASE}/api/journal-samples/${MAIN}/pdf`, { maxRedirects: 0 });
     check("AC1 прямой URL без токена (не браузер) → 403", bare.status() === 403, { status: bare.status(), body: await bare.json() });
-    const bareBrowser = await desk.request.get(`${BASE}/api/journal-samples/hygiene/docx`, {
+    const bareBrowser = await desk.request.get(`${BASE}/api/journal-samples/${MAIN}/docx`, {
       maxRedirects: 0,
       headers: { "sec-fetch-mode": "navigate", accept: "text/html" },
     });
-    check("AC1 прямой URL без токена (браузер) → редирект на страницу журнала", bareBrowser.status() === 307 && bareBrowser.headers()["location"] === "/journals-info/hygiene?download=docx", {
+    check("AC1 прямой URL без токена (браузер) → редирект на страницу журнала", bareBrowser.status() === 307 && bareBrowser.headers()["location"] === `/journals-info/${MAIN}?download=docx`, {
       status: bareBrowser.status(),
       location: bareBrowser.headers()["location"],
     });
@@ -269,11 +283,11 @@ async function main() {
     await seoCtx.close();
 
     // ── 7. QR из скачанного PDF и Word ─────────────────────────────────
-    const pdfPng = await pdfPagePng(fs.readFileSync(pdfFile), path.join(TMP, "hygiene-p1.png"));
+    const pdfPng = await pdfPagePng(fs.readFileSync(pdfFile), path.join(TMP, `${MAIN}-p1.png`));
     const qbUrl = decodeQr(pdfPng);
     const qbToken = qbUrl?.split("/qb/")[1] ?? "";
     const opened = qbToken ? openBlankQrToken(qbToken) : null;
-    check("AC3 QR скачанного PDF (OpenCV) → /qb/<токен> с почтой и журналом", Boolean(qbUrl?.startsWith(`${BASE}/qb/`)) && opened?.email === NEW_EMAIL && opened?.target?.kind === "code", {
+    check("AC3 QR скачанного PDF (OpenCV) → /qb/<токен> с почтой и журналом", Boolean(qbUrl?.startsWith(`${BASE}/qb/`)) && opened?.email === NEW_EMAIL && opened?.target?.kind === "code" && opened.target.code === MAIN, {
       qbUrl,
       email: opened?.email,
       target: opened?.target,
@@ -285,7 +299,7 @@ async function main() {
       encoding: "utf8",
       timeout: 180_000,
     });
-    const converted = path.join(TMP, "word-hygiene.pdf");
+    const converted = path.join(TMP, `word-${MAIN}.pdf`);
     let docxQr: string | null = null;
     if (conv.status === 0 && fs.existsSync(converted)) {
       const png = await pdfPagePng(fs.readFileSync(converted), path.join(TMP, "docx-p1.png"), 200);
@@ -297,7 +311,7 @@ async function main() {
       const h = Math.round(img.height * 0.2);
       const canvas = createCanvas(w, h);
       canvas.getContext("2d").drawImage(img, img.width - w, img.height - h, w, h, 0, 0, w, h);
-      fs.writeFileSync(path.join(EVIDENCE, "docx-footer-hygiene.png"), canvas.toBuffer("image/png"));
+      fs.writeFileSync(path.join(EVIDENCE, "docx-footer.png"), canvas.toBuffer("image/png"));
     }
     const docxOpened = docxQr ? openBlankQrToken(docxQr.split("/qb/")[1] ?? "") : null;
     check("AC3 Word: QR в подвале (LibreOffice → OpenCV) → /qb с той же почтой", docxOpened?.email === NEW_EMAIL, { docxQr, email: docxOpened?.email, soffice: conv.status });
@@ -314,7 +328,7 @@ async function main() {
     const registerUrl = new URL(qpage.url());
     await qpage.locator("#register-email").waitFor({ timeout: 60_000 });
     const prefilled = await qpage.locator("#register-email").inputValue();
-    check("AC4 регистрация: почта подставлена, source=blank, журнал", prefilled === NEW_EMAIL && registerUrl.searchParams.get("source") === "blank" && registerUrl.searchParams.get("journal") === "hygiene", {
+    check("AC4 регистрация: почта подставлена, source=blank, журнал", prefilled === NEW_EMAIL && registerUrl.searchParams.get("source") === "blank" && registerUrl.searchParams.get("journal") === MAIN, {
       prefilled,
       query: registerUrl.search,
       pill: await qpage.getByTestId("register-blank-journal").innerText().catch(() => null),
@@ -323,9 +337,41 @@ async function main() {
     const beforeRegister = devLogSize();
     await qpage.getByTestId("legal-consent").check();
     await qpage.getByRole("button", { name: /Создать аккаунт/ }).click();
-    await qpage.waitForURL(/\/journals\/hygiene/, { timeout: 180_000 });
+    await qpage.waitForURL(new RegExp(`/journals/${MAIN}`), { timeout: 180_000 });
     await qpage.waitForLoadState("networkidle", { timeout: 120_000 }).catch(() => undefined);
-    check("AC4 после регистрации открылся журнал /journals/hygiene", new URL(qpage.url()).pathname === "/journals/hygiene", qpage.url());
+    check(`AC4 после регистрации открылся журнал /journals/${MAIN}`, new URL(qpage.url()).pathname === `/journals/${MAIN}`, qpage.url());
+    // Follow-up: журнал, за которым пришли по QR (здесь — журнал здоровья,
+    // выключенный у новых организаций по умолчанию), открыт включённым.
+    await qpage.waitForTimeout(1500);
+    const disabledAfterRegister = await qpage.getByTestId("journal-disabled").count();
+    const newUser = await db.user.findUnique({ where: { email: NEW_EMAIL }, select: { id: true, organizationId: true } });
+    const newOrg = newUser
+      ? await db.organization.findUnique({ where: { id: newUser.organizationId }, select: { disabledJournalCodes: true } })
+      : null;
+    const newOrgDisabled = Array.isArray(newOrg?.disabledJournalCodes) ? (newOrg?.disabledJournalCodes as string[]) : [];
+    const signupAudit = newUser
+      ? await db.auditLog.findMany({
+          where: { organizationId: newUser.organizationId, action: "journal.enable" },
+          select: { userId: true, entityId: true, details: true },
+        })
+      : [];
+    check(
+      `follow-up: регистрация по QR — «${MAIN_NAME}» включён у новой организации и открыт без экрана «отключён»`,
+      disabledAfterRegister === 0 && Boolean(newOrg) && !newOrgDisabled.includes(MAIN),
+      { disabledScreen: disabledAfterRegister, mainDisabled: newOrgDisabled.includes(MAIN), disabledCount: newOrgDisabled.length },
+    );
+    check(
+      "follow-up: остальной набор новой организации — дефолтный (журнал здоровья включён только из-за QR)",
+      newOrgDisabled.includes("cleaning") && newOrgDisabled.includes("general_cleaning") && !newOrgDisabled.includes("hygiene"),
+      { cleaning: newOrgDisabled.includes("cleaning"), hygiene: newOrgDisabled.includes("hygiene") },
+    );
+    check(
+      "follow-up: включение при регистрации записано в AuditLog организации",
+      signupAudit.length === 1 && signupAudit[0].entityId === MAIN && signupAudit[0].userId === newUser?.id &&
+        sameDetails(signupAudit[0].details, { journalCode: MAIN, via: "blank-qr-signup" }),
+      signupAudit,
+    );
+    report.signupOrg = { organizationId: newUser?.organizationId, disabledJournalCodes: newOrgDisabled, audit: signupAudit };
     await shot(qpage, "08-journal-after-register-390.png");
     await qbNewCtx.close();
 
@@ -345,20 +391,109 @@ async function main() {
     await opage.getByTestId("qb-primary").click();
     await opage.waitForURL(/\/login\?/, { timeout: 120_000 });
     const loginUrl = new URL(opage.url());
-    check("AC4 вход: почта подставлена, возврат на журнал", loginUrl.searchParams.get("email") === NEW_EMAIL && loginUrl.searchParams.get("next") === "/journals/hygiene", loginUrl.search);
+    check("AC4 вход: почта подставлена, возврат на журнал", loginUrl.searchParams.get("email") === NEW_EMAIL && loginUrl.searchParams.get("next") === `/journals/${MAIN}?from=qb`, loginUrl.search);
     if (password) {
       await waitHydrated(opage, "#password");
       await opage.locator("#password").fill(password);
       await opage.getByRole("button", { name: "Войти", exact: true }).click();
-      await opage.waitForURL(/\/journals\/hygiene/, { timeout: 180_000 });
+      await opage.waitForURL(new RegExp(`/journals/${MAIN}`), { timeout: 180_000 });
       await opage.waitForLoadState("networkidle", { timeout: 120_000 }).catch(() => undefined);
-      check("AC4 после входа открылся журнал /journals/hygiene", new URL(opage.url()).pathname === "/journals/hygiene", opage.url());
+      check(`AC4 после входа открылся журнал /journals/${MAIN}`, new URL(opage.url()).pathname === `/journals/${MAIN}` && (await opage.getByTestId("journal-disabled").count()) === 0, opage.url());
       await shot(opage, "10-journal-after-login-1440.png");
       await opage.goto(qbUrl ?? `${BASE}/qb/x`, { waitUntil: "networkidle", timeout: 120_000 });
       const sessionTitle = await opage.getByTestId("qb-title").innerText();
       check("/qb, уже вошли: «Открыть журнал»", (await opage.getByTestId("qb-primary").innerText()).includes("Открыть журнал"), sessionTitle);
     }
     await qbOldCtx.close();
+
+    // ── 9a. Follow-up: существующая организация, журнал выключен → по QR
+    // человек видит «Включить журнал» (одно нажатие), молча ничего не меняется.
+    const cleaningQb = blankQrUrl(BASE, { target: { kind: "code", code: "cleaning" }, email: NEW_EMAIL }).url;
+    const enableCtx = await context(browser, 1440);
+    const epage = await enableCtx.newPage();
+    await epage.goto(cleaningQb, { waitUntil: "networkidle", timeout: 180_000 });
+    await epage.getByTestId("qb-primary").click();
+    await epage.waitForURL(/\/login\?/, { timeout: 120_000 });
+    if (password) {
+      await waitHydrated(epage, "#password");
+      await epage.locator("#password").fill(password);
+      await epage.getByRole("button", { name: "Войти", exact: true }).click();
+    }
+    await epage.waitForURL(/\/journals\/cleaning/, { timeout: 180_000 });
+    const disabledScreen = epage.getByTestId("journal-disabled");
+    await disabledScreen.waitFor({ timeout: 120_000 });
+    const disabledText = await disabledScreen.innerText();
+    const orgBefore = await db.organization.findUnique({ where: { id: newUser?.organizationId ?? "" }, select: { disabledJournalCodes: true } });
+    check(
+      "follow-up: существующая организация — журнал по QR выключен, организацию молча не меняли, есть «Включить журнал»",
+      disabledText.includes("Вы открыли его по QR со скачанного шаблона") &&
+        (await epage.getByTestId("journal-enable").isVisible()) &&
+        ((orgBefore?.disabledJournalCodes as string[] | undefined) ?? []).includes("cleaning"),
+      { url: epage.url(), text: disabledText.slice(0, 220) },
+    );
+    await epage.waitForTimeout(400);
+    await shot(epage, "14-journal-disabled-from-qr-1440.png");
+    await epage.getByTestId("journal-enable").click();
+    await disabledScreen.waitFor({ state: "detached", timeout: 120_000 });
+    await epage.waitForLoadState("networkidle", { timeout: 120_000 }).catch(() => undefined);
+    const orgAfter = await db.organization.findUnique({ where: { id: newUser?.organizationId ?? "" }, select: { disabledJournalCodes: true } });
+    const enableAudit = await db.auditLog.findMany({
+      where: { organizationId: newUser?.organizationId ?? "", action: "journal.enable", entityId: "cleaning" },
+      select: { userId: true, details: true },
+    });
+    check(
+      "follow-up: одно нажатие «Включить журнал» — журнал открыт, включение в AuditLog",
+      !((orgAfter?.disabledJournalCodes as string[] | undefined) ?? []).includes("cleaning") &&
+        enableAudit.length === 1 &&
+        sameDetails(enableAudit[0].details, { journalCode: "cleaning", via: "blank-qr" }),
+      enableAudit,
+    );
+    await epage.waitForTimeout(800);
+    await shot(epage, "15-journal-enabled-1440.png");
+    await enableCtx.close();
+
+    // ── 9b. Follow-up: сотрудник без прав на набор журналов — кнопки нет,
+    // API отказывает (403), организация не меняется.
+    const staffEmail = `blank.staff.${RUN}@example.com`;
+    const staffPassword = `Staff-${RUN}-pw1`;
+    await db.user.create({
+      data: {
+        email: staffEmail,
+        name: "Повар E2E",
+        passwordHash: await bcrypt.hash(staffPassword, 10),
+        role: "cook",
+        organizationId: newUser?.organizationId ?? "",
+      },
+    });
+    const staffCtx = await context(browser, 390);
+    const staffLogin = await staffCtx.request.post(`${BASE}/api/auth/login`, {
+      data: { email: staffEmail, password: staffPassword },
+      headers: { "x-forwarded-for": "192.0.2.51" },
+    });
+    const staffPage = await staffCtx.newPage();
+    // domcontentloaded: у шапки кабинета в dev есть предупреждение гидрации
+    // (PartnerHint, не наше), оверлей Next и опрос уведомлений не дают
+    // странице «затихнуть» для networkidle.
+    await staffPage.goto(`${BASE}/journals/general_cleaning?from=qb`, { waitUntil: "domcontentloaded", timeout: 180_000 });
+    const staffScreen = staffPage.getByTestId("journal-disabled");
+    await staffScreen.waitFor({ timeout: 120_000 });
+    const staffText = await staffScreen.innerText();
+    const staffDeny = await staffCtx.request.post(`${BASE}/api/settings/journals/general_cleaning/enable`, {
+      data: { source: "blank-qr" },
+    });
+    const orgStaff = await db.organization.findUnique({ where: { id: newUser?.organizationId ?? "" }, select: { disabledJournalCodes: true } });
+    check(
+      "follow-up: сотрудник без прав — без кнопки, подсказка «Включить его может руководитель», API 403, журнал выключен",
+      staffLogin.ok() &&
+        (await staffPage.getByTestId("journal-enable").count()) === 0 &&
+        staffText.includes("Включить его может руководитель") &&
+        staffDeny.status() === 403 &&
+        ((orgStaff?.disabledJournalCodes as string[] | undefined) ?? []).includes("general_cleaning"),
+      { login: staffLogin.status(), deny: staffDeny.status(), text: staffText.slice(0, 200) },
+    );
+    await staffPage.waitForTimeout(400);
+    await shot(staffPage, "16-journal-disabled-staff-390.png");
+    await staffCtx.close();
 
     // ── 10. Битый токен → заглушка без почты ───────────────────────────
     const brokenCtx = await context(browser, 390);
@@ -391,7 +526,7 @@ async function main() {
         check(`ROOT вошёл (${width})`, login.ok(), login.status());
         await rpage.goto(`${BASE}/root/blank-downloads`, { waitUntil: "networkidle", timeout: 180_000 });
         const table = await rpage.getByTestId(width === 1440 ? "blank-downloads-table" : "blank-downloads-list").innerText();
-        check(`/root/blank-downloads (${width}): почта, журнал, формат, дата`, table.includes(NEW_EMAIL) && table.includes("Гигиенический журнал") && table.includes("Word") && table.includes("PDF"));
+        check(`/root/blank-downloads (${width}): почта, журнал, формат, дата`, table.includes(NEW_EMAIL) && table.includes(MAIN_NAME) && table.includes("Word") && table.includes("PDF"));
         await shot(rpage, `${width === 1440 ? "12" : "13"}-root-downloads-${width}.png`);
         await rootCtx.close();
       }
@@ -469,7 +604,7 @@ async function main() {
   const limitLetters = lines.filter((line) => line.includes(`письмо не отправлено на limit.email.${RUN}@example.com`)).length;
   check("AC2 писем на одну почту — не больше 10 в сутки (51 скачивание → 10 писем)", limitLetters === 10, { limitLetters });
   report.emailLog = letters.map((line) => line.replace(/Пароль: \S+/, "Пароль: ***").slice(0, 1200));
-  check("AC2 письмо со ссылками сформировано (dev-лог)", letters.some((line) => line.includes("Subject: Шаблон «Гигиенический журнал (сотрудники)» — WeSetup")) && letters.some((line) => line.includes("/api/journal-samples/hygiene/pdf?t=")));
+  check("AC2 письмо со ссылками сформировано (dev-лог)", letters.some((line) => line.includes(`Subject: Шаблон «${MAIN_NAME}» — WeSetup`)) && letters.some((line) => line.includes(`/api/journal-samples/${MAIN}/pdf?t=`)));
 
   report.checks = checks;
   report.finishedAt = new Date().toISOString();

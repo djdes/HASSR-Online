@@ -25,6 +25,7 @@ import {
   JournalEnabledIndicator,
   JournalToggleProvider,
 } from "@/components/journals/journal-enabled-indicator";
+import { JournalEnableButton } from "@/components/journals/journal-enable-button";
 import {
   getJournalAutomation,
   isAutomationSupported,
@@ -1319,11 +1320,13 @@ export default async function JournalDocumentsPage({
   searchParams,
 }: {
   params: Promise<{ code: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; from?: string }>;
 }) {
   const { code } = await params;
   const resolvedCode = resolveJournalCodeAlias(code);
-  const { tab } = await searchParams;
+  // `from=qb` — пришли по QR со скачанного шаблона (/qb): если журнал у
+  // организации выключен, объясняем это и даём включить одним нажатием.
+  const { tab, from } = await searchParams;
   const session = await requireAuth();
 
   const template = await db.journalTemplate.findUnique({
@@ -1370,30 +1373,50 @@ export default async function JournalDocumentsPage({
     ? (orgSettings?.disabledJournalCodes as string[])
     : [];
   if (disabledCodes.includes(resolvedCode)) {
+    // Включить может тот, кому доступен «Набор журналов»; остальным —
+    // статус и подсказка, к кому идти. Молча организацию не меняем.
+    const canEnable = hasFullWorkspaceAccess(session.user);
+    const fromQr = from === "qb";
     return (
-      <div className="mx-auto max-w-[640px] space-y-6 rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-16 text-center">
+      <div
+        data-testid="journal-disabled"
+        className="mx-auto max-w-[640px] space-y-6 rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-16 text-center"
+      >
         <div className="text-[20px] font-semibold text-[#0b1024]">
           Этот журнал отключён
         </div>
         <p className="text-[14px] leading-[1.6] text-[#6f7282]">
+          {fromQr ? "Вы открыли его по QR со скачанного шаблона. " : null}
           «{template.name}» отключён для вашей организации: он не показывается
-          на дашборде и сотрудникам. Включите его здесь же — записи и
-          документы за прошлые периоды никуда не делись.
+          на дашборде и сотрудникам.{" "}
+          {canEnable
+            ? "Включите его одним нажатием — записи и документы за прошлые периоды никуда не делись."
+            : "Включить его может руководитель — в «Настройки → Набор журналов»."}
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
-          <JournalEnabledIndicator
-            code={resolvedCode}
-            name={template.name}
-            disabled
-            disabledCodes={disabledCodes}
-            canToggle={hasFullWorkspaceAccess(session.user)}
-          />
-          <a
-            href="/settings/journals"
-            className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
-          >
-            Весь набор журналов
-          </a>
+          {canEnable ? (
+            <>
+              <JournalEnableButton
+                code={resolvedCode}
+                name={template.name}
+                source={fromQr ? "blank-qr" : "journal-page"}
+              />
+              <a
+                href="/settings/journals"
+                className="inline-flex h-12 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+              >
+                Весь набор журналов
+              </a>
+            </>
+          ) : (
+            <JournalEnabledIndicator
+              code={resolvedCode}
+              name={template.name}
+              disabled
+              disabledCodes={disabledCodes}
+              canToggle={false}
+            />
+          )}
         </div>
       </div>
     );

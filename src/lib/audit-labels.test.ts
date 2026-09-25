@@ -50,6 +50,7 @@ test("новые действия по задачам и настройкам п
     "organization.settings.update",
     "equipment.update",
     "dashboard.close_day",
+    "journal.enable",
   ]) {
     assert.notEqual(auditActionLabel(code).label, code, code);
   }

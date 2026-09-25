@@ -19,6 +19,7 @@ const ACTION_LABELS: Record<string, string> = {
   "position.delete": "Удаление должности",
   "user.invite": "Приглашение пользователя",
   "user.archive": "Архивирование пользователя",
+  "journal.enable": "Журнал включён (QR шаблона / одним нажатием)",
   // Чек-листы (Phase 3) — каждое действие админа и сотрудника.
   "checklist.item.create": "Чек-лист: добавлен пункт",
   "checklist.item.update": "Чек-лист: обновлён пункт",

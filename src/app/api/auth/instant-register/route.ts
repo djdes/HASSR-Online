@@ -11,7 +11,11 @@ import { notifyPlatformAdmin } from "@/lib/platform-admin";
 import { registrationCodeRateLimiter } from "@/lib/rate-limit";
 import { domainAcceptsMail } from "@/lib/mail-domain";
 import { DEFAULT_ORG_NAME } from "@/lib/org-profile";
-import { defaultDisabledCodesFor } from "@/lib/sphere-journal-rules";
+import {
+  JOURNAL_ENABLE_AUDIT_ACTION,
+  blankSignupJournal,
+  signupDisabledJournalCodes,
+} from "@/lib/blank-signup";
 import { defaultJournalAutomationJson } from "@/lib/journal-automation";
 import {
   attachOrganizationByRef,
@@ -68,6 +72,12 @@ export async function POST(request: Request) {
   // Обязательное согласие с документами (2026-09-22): без галки — отказ.
   const consentGiven = (body as { consent?: unknown } | null)?.consent === true;
   const consentPlace = (body as { consentPlace?: unknown } | null)?.consentPlace === "landing" ? "landing" : "register";
+  // Пришли по QR со скачанного шаблона (/qb): этот журнал у новой
+  // организации включаем сразу — после регистрации он открывается готовым
+  // к заполнению, а не экраном «Этот журнал отключён» (lib/blank-signup.ts).
+  const signupJournals = signupDisabledJournalCodes(
+    blankSignupJournal((body as { blankJournal?: unknown } | null)?.blankJournal),
+  );
 
   // Мусор отсекаем ДО расхода лимита, чтобы бот пустыми запросами не
   // выжигал квоту живому пользователю с того же IP (общий офисный NAT).
@@ -131,8 +141,9 @@ export async function POST(request: Request) {
           type: "other",
           // Сразу минимальный набор журналов, а не весь каталог: иначе до
           // анкеты дашборд встречает человека счётчиком «0 из N» на весь каталог.
-          // Сферу спросим в анкете — тогда набор пересчитается.
-          disabledJournalCodes: defaultDisabledCodesFor("other"),
+          // Сферу спросим в анкете — тогда набор пересчитается. С QR шаблона
+          // журнал, за которым пришли, в наборе включён.
+          disabledJournalCodes: signupJournals.disabledJournalCodes,
           // Автоматика гигиенического журнала — сразу, см.
           // defaultJournalAutomationJson.
           journalAutomationJson: defaultJournalAutomationJson(),
@@ -166,6 +177,22 @@ export async function POST(request: Request) {
         subscriptionPlan: organization.subscriptionPlan,
         subscriptionEnd: organization.subscriptionEnd,
       });
+      // Журнал включён не человеком в настройках, а регистрацией по QR —
+      // в аудите организации это видно.
+      if (signupJournals.enabledByBlank) {
+        await tx.auditLog.create({
+          data: {
+            organizationId: organization.id,
+            userId: user.id,
+            userName: email,
+            action: JOURNAL_ENABLE_AUDIT_ACTION,
+            entity: "JournalTemplate",
+            entityId: signupJournals.enabledByBlank,
+            details: { journalCode: signupJournals.enabledByBlank, via: "blank-qr-signup" },
+            ipAddress: ipForLog,
+          },
+        });
+      }
       return { organization, user };
     });
   } catch (error) {
@@ -180,6 +207,13 @@ export async function POST(request: Request) {
       { error: "Не получилось создать аккаунт. Попробуйте ещё раз" },
       { status: 500 },
     );
+  }
+
+  if (signupJournals.enabledByBlank) {
+    console.info("[instant-register] journal enabled for blank QR signup", {
+      organizationId: created.organization.id,
+      code: signupJournals.enabledByBlank,
+    });
   }
 
   await recordLegalConsent({

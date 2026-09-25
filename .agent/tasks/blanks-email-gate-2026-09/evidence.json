@@ -38,15 +38,16 @@
       "evidence": [
         "raw/e2e.json: new email → stub + register with prefilled email, source=blank, journal=hygiene → /journals/hygiene; existing email → 'Войдите — и этот журнал откроется для заполнения' → /login?email=&next=/journals/hygiene → /journals/hygiene; logged in → 'Открыть журнал'; broken token → stub without email and journal",
         "src/lib/blank-qr-token.test.ts: seal/open, tamper, wrong secret, all 50 targets resolve, long email fallback",
-        "evidence/06-qb-new-390.png, 07-register-prefilled-390.png, 08-journal-after-register-390.png, 09-qb-existing-1440.png, 10-journal-after-login-1440.png, 11-qb-broken-390.png"
+        "evidence/06-qb-new-390.png, 07-register-prefilled-390.png, 08-journal-after-register-390.png, 09-qb-existing-1440.png, 10-journal-after-login-1440.png, 11-qb-broken-390.png",
+        "follow-up: raw/e2e.json 'follow-up:' checks — QR registration enables the journal (health_check) for the new org and opens it without the disabled screen; AuditLog journal.enable via blank-qr-signup; existing org with the journal disabled → «Включить журнал» one tap (AuditLog via blank-qr); staff → no button, API 403"
       ]
     },
     "AC5": {
       "status": "PASS",
       "evidence": [
         "npm run typecheck: exit 0",
-        "npm test: 2268 pass / 0 fail (baseline 2238, +30 new)",
-        "e2e: 36/36 PASS, screenshots at 390 and 1440 (evidence/01..13)",
+        "npm test: 2274 pass / 0 fail (baseline 2238, +36 new incl. blank-signup.test.ts)",
+        "e2e: 42/42 PASS, screenshots at 390 and 1440 (evidence/01..16)",
         "root list: evidence/12-root-downloads-1440.png, evidence/13-root-downloads-390.png"
       ]
     }
@@ -63,7 +64,11 @@
     "journal and format stored in platform AuditLog (no LegalConsent columns, schema unchanged); 365-day retention",
     "email in QR up to 39 chars on wesetup.ru; longer → QR without email",
     "public/journal-samples/*.webp thumbnails not regenerated",
-    "journal may be disabled for a new org after registration from QR (3 of 45 enabled by default) — page offers one-click enable; no auto-enable (health_check is off for new orgs on purpose)",
     "/prikazy order blanks not gated (not journal templates)"
-  ]
+  ],
+  "followUp": {
+    "request": "QR registration lands in that journal enabled; existing orgs get a one-tap «Включить журнал» for users with journal-settings rights; log/AuditLog the enable",
+    "status": "PASS",
+    "commitNote": "see git log on feat/blanks-gate-2026-09-25"
+  }
 }
