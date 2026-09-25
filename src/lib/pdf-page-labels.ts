@@ -49,19 +49,57 @@ export function registerPageLabelSlot(
   pageLabelSlots.push({ ...slot, page: currentPageNumber(doc) });
 }
 
+/** Высота прописной буквы DejaVu Sans в долях кегля. */
+const CAP_HEIGHT_EM = 0.73;
+/** Межстрочный интервал текста в ячейках бланка, в долях кегля. */
+const LINE_HEIGHT_EM = 1.3;
+
+/** Кегль текущего шрифта документа, мм. */
+export function currentFontSizeMm(doc: jsPDF): number {
+  return (doc.getFontSize() * 25.4) / 72;
+}
+
+/** Межстрочный интервал для текущего кегля, мм (10 pt → 4,6 мм). */
+export function journalLineHeightMm(doc: jsPDF): number {
+  return currentFontSizeMm(doc) * LINE_HEIGHT_EM;
+}
+
+/**
+ * Базовые линии строк, чтобы блок из `lineCount` строк стоял ровно по
+ * центру по вертикали относительно `centerY`. Раньше базовую линию ставили
+ * в центр ячейки, и текст «висел» над серединой — в шапке надписи липли
+ * к верхней рамке.
+ */
+export function centeredBaselines(doc: jsPDF, centerY: number, lineCount: number): number[] {
+  const lineHeight = journalLineHeightMm(doc);
+  const capHeight = currentFontSizeMm(doc) * CAP_HEIGHT_EM;
+  const first = centerY - ((lineCount - 1) * lineHeight) / 2 + capHeight / 2;
+  return Array.from({ length: lineCount }, (_, index) => first + index * lineHeight);
+}
+
+/**
+ * Текст по центру прямоугольника (по обеим осям) с переносом по `maxWidth`.
+ * Возвращает число строк.
+ */
+export function drawTextCenteredInBox(
+  doc: jsPDF,
+  text: string,
+  box: { x: number; y: number; width: number; height: number; maxWidth: number },
+): number {
+  const lines = doc.splitTextToSize(text, box.maxWidth) as string[];
+  const baselines = centeredBaselines(doc, box.y + box.height / 2, lines.length);
+  lines.forEach((line, index) => {
+    doc.text(line, box.x + box.width / 2, baselines[index], { align: "center" });
+  });
+  return lines.length;
+}
+
 function drawCenteredLabel(
   doc: jsPDF,
   text: string,
   slot: PageLabelSlot
 ) {
-  const lines = doc.splitTextToSize(text, slot.maxWidth) as string[];
-  const lineHeight = 4.6;
-  const startY = slot.y + slot.height / 2 - ((lines.length - 1) * lineHeight) / 2;
-  lines.forEach((line, index) => {
-    doc.text(line, slot.x + slot.width / 2, startY + index * lineHeight, {
-      align: "center",
-    });
-  });
+  drawTextCenteredInBox(doc, text, slot);
 }
 
 export function stampJournalPageNumbers(

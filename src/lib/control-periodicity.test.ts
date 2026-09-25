@@ -5,7 +5,9 @@ import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import {
   DEFAULT_CONTROL_PERIODICITY,
   FALLBACK_CONTROL_PERIODICITY,
+  LEGACY_DEFAULT_CONTROL_PERIODICITY,
   getDefaultControlPeriodicity,
+  readControlPeriodicity,
 } from "@/lib/control-periodicity";
 
 test("у каждого журнала каталога своя периодичность контроля", () => {
@@ -35,4 +37,37 @@ test("запасной текст нейтральный, а не «ежесме
     getDefaultControlPeriodicity("custom_journal_of_some_org"),
     FALLBACK_CONTROL_PERIODICITY
   );
+});
+
+test("тексты периодичности короткие — одна строка шапки бланка", () => {
+  // Замечание владельца по печати: длинные формулировки про смены
+  // раздували строку «Периодичность контроля» на 2–3 строки.
+  for (const [code, text] of Object.entries(DEFAULT_CONTROL_PERIODICITY)) {
+    assert.ok(text.length <= 100, `${code}: ${text.length} символов — «${text}»`);
+  }
+  assert.equal(
+    getDefaultControlPeriodicity("hygiene"),
+    "Перед каждой сменой — сотрудники производства; остальные — перед входом на участок"
+  );
+});
+
+test("старый длинный дефолт в config документа читается как новый короткий", () => {
+  for (const [code, texts] of Object.entries(LEGACY_DEFAULT_CONTROL_PERIODICITY)) {
+    for (const text of texts) {
+      assert.equal(
+        readControlPeriodicity({ controlPeriodicity: `  ${text.replace(/ /g, "  ")} ` }, code),
+        getDefaultControlPeriodicity(code),
+        code
+      );
+    }
+  }
+  // Свой текст владельца не трогаем, пустую строку — тоже.
+  assert.equal(
+    readControlPeriodicity({ controlPeriodicity: "Два раза в смену" }, "hygiene"),
+    "Два раза в смену"
+  );
+  assert.equal(readControlPeriodicity({ controlPeriodicity: "" }, "hygiene"), "");
+  // Старый дефолт ДРУГОГО журнала — это уже текст владельца.
+  const hygieneOld = LEGACY_DEFAULT_CONTROL_PERIODICITY.hygiene[0];
+  assert.equal(readControlPeriodicity({ controlPeriodicity: hygieneOld }, "health_check"), hygieneOld);
 });

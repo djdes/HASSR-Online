@@ -1,0 +1,17 @@
+{
+  "task": "pdf-headers-cells-2026-09",
+  "date": "2026-09-25",
+  "verdict": "PASS",
+  "acceptance": [
+    {"id": "AC1", "status": "PASS", "evidence": ["raw/headers-before.json (42/45: accident_journal, intensive_cooling, pest_control — шапка не совпадала с таблицей)", "raw/headers-after.json (45/45: края совпадают, двойных линий 0, толщина одна)", "shots/before-*.png, shots/after-*.png — 12 журналов", "src/lib/pdf-journal-table.test.ts: рамки 0,2 мм у head/body"]},
+    {"id": "AC2", "status": "PASS", "evidence": ["src/lib/pdf-journal-table.test.ts: valign middle у каждой ячейки, в т.ч. поверх valign top", "centeredBaselines/drawTextCenteredInBox в шапке", "shots/full-hygiene.png, shots/full-finished_product.png"]},
+    {"id": "AC3", "status": "PASS", "evidence": ["src/lib/pdf-fonts/DejaVuSans-Bold.ttf (DejaVu 2.37, subset 197 КБ)", "pdf-journal-table.test.ts: bold шире normal ×1.05 на кириллице; head рисуется bold и влезает в ячейку", "shots/after-*.png"]},
+    {"id": "AC4", "status": "PASS", "evidence": ["src/lib/control-periodicity.ts: 31 дефолт + гигиена сокращены, LEGACY_DEFAULT_CONTROL_PERIODICITY", "control-periodicity.test.ts: все ≤100 символов; старый дефолт в config → новый короткий; свой текст не трогается"]},
+    {"id": "AC5", "status": "PASS", "evidence": ["raw/qr-samples.log: samples 45/45 OK, 57/57 вровень, 0 px в зоне", "raw/qr-docs.log + raw/check-docs.json: docs 45/45 OK, 582 стр., 0 px в зоне, 0 несовпадений модулей", "baseline/: HEAD-код samples 61 стр. → 58 (чек-лист уборки 9→6)", "npm run typecheck — ок; npm test 2214/2214 (raw/npm-test.txt)"]}
+  ],
+  "notes": [
+    "jsQR отсутствует в node_modules — независимое декодирование не запускалось, матрица модулей сверена по растру",
+    "базовый docs-прогон на HEAD остановлен на audit_plan (49 ГБ памяти); сравнение страниц — по 25 документам",
+    "prisma db push --skip-generate не поддерживается Prisma 7 — выполнен prisma db push"
+  ]
+}

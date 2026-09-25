@@ -1,9 +1,9 @@
 import { formatRowSignatures, normalizeRowSignatures } from "@/lib/brakerage-commission";
-import fs from "fs";
-import path from "path";
 import type { Prisma } from "@prisma/client";
 import { jsPDF } from "jspdf";
-import autoTable, { type CellDef, type CellHookData, type RowInput } from "jspdf-autotable";
+import type { CellDef, CellHookData, RowInput } from "jspdf-autotable";
+import { registerJournalUnicodeFont } from "@/lib/pdf-journal-font";
+import { JOURNAL_LINE_WIDTH, journalAutoTable as autoTable } from "@/lib/pdf-journal-table";
 import { getCalendarDayKind } from "@/lib/production-calendar-data";
 import {
   resolveApprover,
@@ -286,6 +286,9 @@ import {
   resetPageLabelSlots,
   stampJournalPageNumbers,
   stampPartnerPdfFooter,
+  centeredBaselines,
+  drawTextCenteredInBox,
+  journalLineHeightMm,
   type PdfFooterBrand,
 } from "@/lib/pdf-page-labels";
 import { getVisibleOrgBranding } from "@/lib/partners/branding";
@@ -335,43 +338,12 @@ import {
 } from "@/lib/med-book-document";
 
 /**
- * Шрифт для PDF. Первым идёт свой, лежащий в репозитории: раньше список
- * состоял только из системных путей, и на машине без единого из них
- * jsPDF откатывался на helvetica — а она не знает кириллицы, и весь
- * журнал печатался кракозябрами. Системные пути оставлены запасными.
- *
- * DejaVu распространяется по лицензии Bitstream Vera; её текст лежит
- * рядом в LICENSE-DejaVu.txt, как эта лицензия и требует.
+ * Шрифт для PDF — «JournalUnicode» из репозитория (DejaVu Sans + настоящий
+ * жирный, см. `pdf-journal-font.ts`). Без файла jsPDF откатывается на
+ * helvetica, а она не знает кириллицы.
  */
-const BUNDLED_FONT_PATH = path.join(
-  process.cwd(),
-  "src",
-  "lib",
-  "pdf-fonts",
-  "DejaVuSans.ttf"
-);
-
-const FONT_CANDIDATES = [
-  BUNDLED_FONT_PATH,
-  "C:\\Windows\\Fonts\\arial.ttf",
-  "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-  "/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf",
-  "/usr/share/fonts/truetype/msttcorefonts/Arial.ttf",
-];
-
 function loadUnicodeFont(doc: jsPDF) {
-  const fontPath = FONT_CANDIDATES.find((candidate) => fs.existsSync(candidate));
-
-  if (!fontPath) {
-    return "helvetica";
-  }
-
-  const base64 = fs.readFileSync(fontPath).toString("base64");
-  doc.addFileToVFS("journal-unicode.ttf", base64);
-  doc.addFont("journal-unicode.ttf", "JournalUnicode", "normal");
-  doc.addFont("journal-unicode.ttf", "JournalUnicode", "bold");
-  doc.addFont("journal-unicode.ttf", "JournalUnicode", "italic");
-  return "JournalUnicode";
+  return registerJournalUnicodeFont(doc);
 }
 
 function makeCellKey(employeeId: string, dateKey: string) {
@@ -387,13 +359,8 @@ function drawCenteredText(
   height: number,
   maxWidth: number
 ) {
-  const lines = doc.splitTextToSize(text, maxWidth) as string[];
-  const lineHeight = 4.6;
-  const startY = y + height / 2 - ((lines.length - 1) * lineHeight) / 2;
-
-  lines.forEach((line, index) => {
-    doc.text(line, x + width / 2, startY + index * lineHeight, { align: "center" });
-  });
+  // По центру ячейки по обеим осям; интервал — от текущего кегля.
+  drawTextCenteredInBox(doc, text, { x, y, width, height, maxWidth });
 }
 
 /** Название бланка мед. книжек в штампе ХАССП — как на экране. */
@@ -843,7 +810,7 @@ function formatHeaderDate(value: Date | string | null | undefined) {
  *   ┌──────────────┬────────────────────────────┬────────────┐
  *   │              │       СИСТЕМА ХАССП        │ Начат ...  │  ← row 1
  *   │ Организация  ├────────────────────────────┼────────────┤
- *   │              │     ЖУРНАЛ ... (italic)    │ СТР. X/Y   │  ← row 2
+ *   │              │     ЖУРНАЛ ... (жирный)    │ СТР. X/Y   │  ← row 2
  *   ├──────────────┴────────────────────────────┴────────────┤
  *   │ Периодичность│ <объединённое значение, без вертикалей> │  ← row 3
  *   └──────────────┴────────────────────────────────────────-┘
@@ -862,6 +829,9 @@ function formatHeaderDate(value: Date | string | null | undefined) {
  * @returns Y нижней границы шапки (мм) — заголовок журнала рисуется
  *          строго ПОСЛЕ неё с отступом (см. HEADER_TITLE_GAP).
  */
+/** Кегль реквизитов организации в шапке ХАССП (pt). */
+const ORG_FONT_SIZE = 9;
+
 function drawJournalHeader(doc: jsPDF, params: {
   organizationName: string;
   journalLabel: string;
@@ -905,28 +875,50 @@ function drawJournalHeader(doc: jsPDF, params: {
   // же во всех журналах, чтобы шапки были единообразны.
   const rightWidth = 42;
   const middleWidth = width - leftWidth - rightWidth;
+  const journalTitle = headerTitleOr(journalLabel).toUpperCase();
+
+  // Высоты строк — по фактическому числу строк текста (кегль 10): длинное
+  // название журнала или организации раздвигает строку, а не вылезает
+  // за рамку. Минимум — 10 мм, как было.
+  doc.setFontSize(10);
+  const lineHeight = journalLineHeightMm(doc);
+  const rowHeightFor = (lines: number, height = lineHeight) => Math.max(10, lines * height + 2.8);
+  doc.setFont("JournalUnicode", "bold");
+  const titleLines = (doc.splitTextToSize(journalTitle, middleWidth - 8) as string[]).length;
+  // Организация — жирным 9 pt: жирный шире обычного, а 4 строки реквизитов
+  // («название · ИНН · адрес») должны по-прежнему влезать в 20 мм.
+  doc.setFontSize(ORG_FONT_SIZE);
+  const orgLines = (doc.splitTextToSize(organizationName, leftWidth - 6) as string[]).length;
+  const orgHeight = rowHeightFor(orgLines, journalLineHeightMm(doc));
+  doc.setFontSize(10);
   const topHeight = 10;
-  const secondHeight = 10;
+  const secondHeight = Math.max(rowHeightFor(titleLines), orgHeight - topHeight);
   const gridBottom = y + topHeight + secondHeight;
 
-  doc.setFontSize(10);
+  doc.setFont("JournalUnicode", "normal");
   const periodicityLines = withPeriodicity
     ? (doc.splitTextToSize(periodicityText, width - leftWidth - 8) as string[])
     : [];
+  doc.setFont("JournalUnicode", "bold");
+  const periodicityLabelLines = (doc.splitTextToSize("Периодичность контроля", leftWidth - 6) as string[]).length;
+  doc.setFont("JournalUnicode", "normal");
+  // Строка не ниже двух строк подписи «Периодичность / контроля».
   const periodicityHeight = withPeriodicity
-    ? Math.max(12, periodicityLines.length * 4.6 + 4.4)
+    ? rowHeightFor(Math.max(periodicityLines.length, periodicityLabelLines))
     : 0;
   const totalHeight = topHeight + secondHeight + periodicityHeight;
 
-  doc.setLineWidth(0.25);
+  // Одна толщина всех линий шапки — та же, что у рамок таблиц бланка;
+  // каждая внутренняя линия рисуется один раз и упирается в рамку.
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(JOURNAL_LINE_WIDTH);
   doc.rect(x, y, width, totalHeight);
   // Вертикаль «организация | остальное» — на всю высоту: в row3 она
   // отделяет label «Периодичность контроля» от значения.
   doc.line(x + leftWidth, y, x + leftWidth, y + totalHeight);
   // Вертикаль «журнал | Начат/СТР» — только по сетке row1+row2.
   doc.line(x + leftWidth + middleWidth, y, x + leftWidth + middleWidth, gridBottom);
-  doc.line(x + leftWidth, y + topHeight, x + leftWidth + middleWidth, y + topHeight);
-  doc.line(x + leftWidth + middleWidth, y + topHeight, x + width, y + topHeight);
+  doc.line(x + leftWidth, y + topHeight, x + width, y + topHeight);
   if (withPeriodicity) {
     // Полная горизонталь над строкой периодичности (включая участок
     // под ячейкой организации) — иначе шапка «протекает» вниз.
@@ -934,35 +926,31 @@ function drawJournalHeader(doc: jsPDF, params: {
   }
 
   doc.setFont("JournalUnicode", "bold");
-  drawCenteredText(doc, organizationName, x + 3, y, leftWidth - 6, topHeight + secondHeight, leftWidth - 10);
+  doc.setFontSize(ORG_FONT_SIZE);
+  drawCenteredText(doc, organizationName, x + 3, y, leftWidth - 6, topHeight + secondHeight, leftWidth - 6);
+  doc.setFontSize(10);
+  drawCenteredText(doc, "СИСТЕМА ХАССП", x + leftWidth, y, middleWidth, topHeight, middleWidth - 8);
+  drawCenteredText(doc, journalTitle, x + leftWidth, y + topHeight, middleWidth, secondHeight, middleWidth - 8);
 
-  doc.setFont("JournalUnicode", "normal");
-  drawCenteredText(doc, "СИСТЕМА ХАССП", x + leftWidth, y, middleWidth, topHeight, middleWidth - 10);
-
-  doc.setFont("JournalUnicode", "italic");
-  drawCenteredText(
-    doc,
-    headerTitleOr(journalLabel).toUpperCase(),
-    x + leftWidth,
-    y + topHeight,
-    middleWidth,
-    secondHeight,
-    middleWidth - 10
-  );
-
-  doc.setFont("JournalUnicode", "normal");
+  // «Начат / Окончен»: подписи жирным, значения обычным, в одну колонку;
+  // пара строк — по центру ячейки.
   const started = formatHeaderDate(params.startedDate);
   const finished = formatHeaderDate(resolveFinishedDate(params.finishedDate));
   doc.setFontSize(9);
-  doc.text(`Начат  ${started}`, x + leftWidth + middleWidth + 3, y + 4.2);
+  const labelX = x + leftWidth + middleWidth + 3;
+  doc.setFont("JournalUnicode", "bold");
+  const valueX = labelX + Math.max(doc.getTextWidth("Начат"), doc.getTextWidth("Окончен")) + 2;
+  const [startedY, finishedY] = centeredBaselines(doc, y + topHeight / 2, 2);
+  doc.text("Начат", labelX, startedY);
+  doc.text("Окончен", labelX, finishedY);
+  doc.setFont("JournalUnicode", "normal");
+  doc.text(started, valueX, startedY);
   // Линия «Окончен ______» не должна вылезать за правую рамку штампа
   // (аудит r5, п.2): подчёркивание подрезаем под остаток ячейки.
   doc.text(
-    finished
-      ? `Окончен  ${finished}`
-      : fitUnderscoreLabel(doc, "Окончен  ", rightWidth - 6),
-    x + leftWidth + middleWidth + 3,
-    y + 8.4
+    finished || fitUnderscoreLabel(doc, "", x + width - 3 - valueX),
+    valueX,
+    finishedY
   );
   doc.setFontSize(10);
   registerPageLabelSlot(doc, {
@@ -972,20 +960,19 @@ function drawJournalHeader(doc: jsPDF, params: {
     height: secondHeight,
     maxWidth: rightWidth - 6,
     fontSize: 10,
-    fontStyle: "normal",
+    fontStyle: "bold",
   });
 
   if (withPeriodicity) {
     doc.setFont("JournalUnicode", "bold");
-    drawCenteredText(doc, "Периодичность контроля", x + 3, gridBottom, leftWidth - 6, periodicityHeight, leftWidth - 10);
+    drawCenteredText(doc, "Периодичность контроля", x + 3, gridBottom, leftWidth - 6, periodicityHeight, leftWidth - 6);
 
     doc.setFont("JournalUnicode", "normal");
     // Значение — единая объединённая ячейка leftWidth → width, без
-    // пересекающих вертикалей.
-    let cursorY = gridBottom + (periodicityHeight - periodicityLines.length * 4.6) / 2 + 3.4;
-    periodicityLines.forEach((chunk) => {
-      doc.text(chunk, x + leftWidth + 4, cursorY);
-      cursorY += 4.6;
+    // пересекающих вертикалей; строки — по центру ячейки по вертикали.
+    const baselines = centeredBaselines(doc, gridBottom + periodicityHeight / 2, periodicityLines.length);
+    periodicityLines.forEach((chunk, index) => {
+      doc.text(chunk, x + leftWidth + 4, baselines[index]);
     });
   }
 
@@ -1034,6 +1021,21 @@ function afterHeader(headerBottom: number, fallbackY: number) {
   return Math.max(fallbackY, headerBottom + HEADER_TITLE_GAP);
 }
 
+/**
+ * Фиксированные ширины столбцов → те же пропорции на всю ширину листа
+ * между полями `marginX`. Таблицы с жёсткими ширинами были уже штампа
+ * ХАССП, и правый край таблицы не совпадал с рамкой шапки.
+ */
+function fitColumnWidths(doc: jsPDF, widths: number[], marginX: number) {
+  const available = doc.internal.pageSize.getWidth() - marginX * 2;
+  const total = widths.reduce((sum, value) => sum + value, 0) || 1;
+  // Чуть меньше единицы: сумма дробных ширин не должна превысить лист.
+  const scale = (available / total) * 0.99999;
+  return Object.fromEntries(
+    widths.map((value, index) => [index, { cellWidth: value * scale }])
+  ) as Record<number, { cellWidth: number }>;
+}
+
 /** Месяцы в родительном падеже — «01 января», как на экране и в печати. */
 const RU_MONTHS_GENITIVE = [
   "января", "февраля", "марта", "апреля", "мая", "июня",
@@ -1059,12 +1061,16 @@ function formatApprovalDateLong(dateKey: string, year: number | string) {
 }
 
 function drawTitle(doc: jsPDF, title: string) {
-  doc.setFont("JournalUnicode", "normal");
+  // Название журнала — жирным (замечание владельца по печати).
+  doc.setFont("JournalUnicode", "bold");
   // Auto-shrink long h1 so titles like "Журнал контроля температурного режима
   // холодильного и морозильного оборудования" don't get truncated by the right
   // page edge. We measure the rendered width and pick a font size that fits.
   const pageWidth = doc.internal.pageSize.getWidth();
-  const maxWidth = pageWidth - 28; // 14mm margin each side
+  // Слева поле 14 мм; справа заголовок не выходит за правую рамку самой
+  // узкой шапки (поля 24 мм) — жирный шире, и длинное название вылезало
+  // правее таблицы, сбивая выравнивание QR по краю бланка.
+  const maxWidth = pageWidth - 14 - 24;
   const sizes = [26, 22, 18, 16, 14];
   let chosen = sizes[sizes.length - 1];
   for (const size of sizes) {
@@ -1076,6 +1082,7 @@ function drawTitle(doc: jsPDF, title: string) {
   }
   doc.setFontSize(chosen);
   doc.text(title, 14, 15);
+  doc.setFont("JournalUnicode", "normal");
 }
 
 /** `config.printEmptyRows` документа → неотрицательное число. */
@@ -3782,67 +3789,39 @@ function drawGlassListPdf(doc: jsPDF, params: {
   doc.setFontSize(22);
   doc.text(params.title || "Перечень изделий", 14, 18);
 
-  const x = 42;
-  const y = 34;
-  const width = pageWidth - 84;
-  const leftWidth = 38;
-  const rightWidth = 22;
-  const middleWidth = width - leftWidth - rightWidth;
-
-  doc.setLineWidth(0.2);
-  doc.rect(x, y, width, 22);
-  doc.line(x + leftWidth, y, x + leftWidth, y + 22);
-  doc.line(x + leftWidth + middleWidth, y, x + leftWidth + middleWidth, y + 22);
-  doc.line(x + leftWidth, y + 11, x + leftWidth + middleWidth, y + 11);
-
-  doc.setFont("JournalUnicode", "bold");
-  doc.setFontSize(12);
-  drawCenteredText(doc, params.organizationName, x, y, leftWidth, 22, leftWidth - 6);
-
-  doc.setFont("JournalUnicode", "normal");
-  doc.setFontSize(11);
-  drawCenteredText(doc, "СИСТЕМА ХАССП", x + leftWidth, y, middleWidth, 11, middleWidth - 6);
-
-  doc.setFont("JournalUnicode", "italic");
-  drawCenteredText(
-    doc,
-    headerTitleOr("ПЕРЕЧЕНЬ ИЗДЕЛИЙ ИЗ СТЕКЛА И ХРУПКОГО ПЛАСТИКА").toUpperCase(),
-    x + leftWidth,
-    y + 11,
-    middleWidth,
-    11,
-    middleWidth - 10
-  );
-  registerPageLabelSlot(doc, {
-    x: x + leftWidth + middleWidth,
-    y,
-    width: rightWidth,
-    height: 22,
-    maxWidth: rightWidth - 4,
-    fontSize: 10,
-    fontStyle: "normal",
+  // Общая шапка ХАССП — той же ширины, что таблица перечня (поля 42 мм).
+  const headerBottom = drawJournalHeader(doc, {
+    organizationName: params.organizationName,
+    journalLabel: "ПЕРЕЧЕНЬ ИЗДЕЛИЙ ИЗ СТЕКЛА И ХРУПКОГО ПЛАСТИКА",
+    withPeriodicity: false,
+    startedDate: params.dateFrom,
+    finishedDate: null,
+    marginX: 42,
   });
+  // Блок «УТВЕРЖДАЮ» и таблица сдвигаются вниз, если шапка выросла.
+  // Прежний зазор: рамка шапки (низ 56 мм) → «УТВЕРЖДАЮ» (72 мм) = 16 мм.
+  const shift = Math.max(0, headerBottom + 16 - 72);
 
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(12);
-  doc.text("УТВЕРЖДАЮ", pageWidth - 36, 72, { align: "right" });
+  doc.text("УТВЕРЖДАЮ", pageWidth - 42, 72 + shift, { align: "right" });
   doc.setFont("JournalUnicode", "normal");
   doc.setFontSize(11);
-  doc.text(config.responsibleTitle || "Управляющий", pageWidth - 36, 80, { align: "right" });
-  doc.text(`____________________ ${params.responsibleName}`, pageWidth - 36, 88, { align: "right" });
-  doc.text(`«${formatGlassListDateLong(documentDate)}» г.`, pageWidth - 36, 96, { align: "right" });
+  doc.text(config.responsibleTitle || "Управляющий", pageWidth - 42, 80 + shift, { align: "right" });
+  doc.text(`____________________ ${params.responsibleName}`, pageWidth - 42, 88 + shift, { align: "right" });
+  doc.text(`«${formatGlassListDateLong(documentDate)}» г.`, pageWidth - 42, 96 + shift, { align: "right" });
 
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(14);
   doc.text(
     "ПЕРЕЧЕНЬ ИЗДЕЛИЙ ИЗ СТЕКЛА И ХРУПКОГО ПЛАСТИКА",
     pageWidth / 2,
-    106,
+    106 + shift,
     { align: "center" }
   );
 
   autoTable(doc, {
-    startY: 114,
+    startY: 114 + shift,
     margin: { left: 42, right: 42 },
     head: [[
       "",
@@ -3904,51 +3883,20 @@ function drawBreakdownHistoryPdf(doc: jsPDF, params: {
 
   drawTitle(doc, params.title || BREAKDOWN_HISTORY_HEADING);
 
-  const x = 24;
-  const y = 28;
-  const width = pageWidth - 48;
-  const leftWidth = 56;
-  const rightWidth = 32;
-  const middleWidth = width - leftWidth - rightWidth;
-  const topHeight = 10;
-  const secondHeight = 10;
-  const totalHeight = topHeight + secondHeight;
-
-  doc.setLineWidth(0.25);
-  doc.rect(x, y, width, totalHeight);
-  doc.line(x + leftWidth, y, x + leftWidth, y + totalHeight);
-  doc.line(x + leftWidth + middleWidth, y, x + leftWidth + middleWidth, y + totalHeight);
-  doc.line(x + leftWidth, y + topHeight, x + leftWidth + middleWidth, y + topHeight);
-
-  doc.setFontSize(10);
-  doc.setFont("JournalUnicode", "bold");
-  drawCenteredText(doc, params.organizationName, x + 3, y, leftWidth - 6, totalHeight, leftWidth - 10);
-
-  doc.setFont("JournalUnicode", "normal");
-  drawCenteredText(doc, "СИСТЕМА ХАССП", x + leftWidth, y, middleWidth, topHeight, middleWidth - 10);
-
-  doc.setFont("JournalUnicode", "italic");
-  drawCenteredText(doc, headerTitleOr("КАРТОЧКА ИСТОРИИ ПОЛОМОК").toUpperCase(), x + leftWidth, y + topHeight, middleWidth, secondHeight, middleWidth - 10);
-
-  const dateFromStr = params.dateFrom instanceof Date
-    ? formatBreakdownDateRu(params.dateFrom.toISOString().slice(0, 10))
-    : formatBreakdownDateRu(String(params.dateFrom).slice(0, 10));
-
-  doc.setFont("JournalUnicode", "normal");
-  drawCenteredText(doc, `Начат  ${dateFromStr}\nОкончен _________`, x + leftWidth + middleWidth, y, rightWidth, topHeight, rightWidth - 4);
-  registerPageLabelSlot(doc, {
-    x: x + leftWidth + middleWidth,
-    y: y + topHeight,
-    width: rightWidth,
-    height: secondHeight,
-    maxWidth: rightWidth - 4,
-    fontSize: 10,
-    fontStyle: "normal",
+  // Общая шапка ХАССП — той же ширины, что таблица (поля 24 мм).
+  const headerBottom = drawJournalHeader(doc, {
+    organizationName: params.organizationName,
+    journalLabel: "КАРТОЧКА ИСТОРИИ ПОЛОМОК",
+    withPeriodicity: false,
+    startedDate: params.dateFrom,
+    finishedDate: null,
+    marginX: 24,
   });
+  const breakdownTitleY = afterHeader(headerBottom, 0) + 6;
 
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(12);
-  doc.text("КАРТОЧКА ИСТОРИИ ПОЛОМОК", centerX, y + totalHeight + 12, { align: "center" });
+  doc.text("КАРТОЧКА ИСТОРИИ ПОЛОМОК", centerX, breakdownTitleY, { align: "center" });
 
   const head: RowInput[] = [[
     { content: "Дата и\nвремя\nначала\nработ", styles: { halign: "center", valign: "middle" } },
@@ -3981,7 +3929,7 @@ function drawBreakdownHistoryPdf(doc: jsPDF, params: {
   }
 
   autoTable(doc, {
-    startY: y + totalHeight + 18,
+    startY: breakdownTitleY + 6,
     margin: { left: 24, right: 24 },
     head,
     body,
@@ -4017,51 +3965,20 @@ function drawAccidentPdf(doc: jsPDF, params: {
 
   drawTitle(doc, params.title || ACCIDENT_DOCUMENT_HEADING);
 
-  const x = 18;
-  const y = 28;
-  const width = pageWidth - 36;
-  const leftWidth = 48;
-  const rightWidth = 40;
-  const middleWidth = width - leftWidth - rightWidth;
-  const topHeight = 10;
-  const secondHeight = 10;
-  const totalHeight = topHeight + secondHeight;
-
-  doc.setLineWidth(0.25);
-  doc.rect(x, y, width, totalHeight);
-  doc.line(x + leftWidth, y, x + leftWidth, y + totalHeight);
-  doc.line(x + leftWidth + middleWidth, y, x + leftWidth + middleWidth, y + totalHeight);
-  doc.line(x + leftWidth, y + topHeight, x + leftWidth + middleWidth, y + topHeight);
-
-  doc.setFontSize(10);
-  doc.setFont("JournalUnicode", "bold");
-  drawCenteredText(doc, params.organizationName, x + 3, y, leftWidth - 6, totalHeight, leftWidth - 10);
-
-  doc.setFont("JournalUnicode", "normal");
-  drawCenteredText(doc, "СИСТЕМА ХАССП", x + leftWidth, y, middleWidth, topHeight, middleWidth - 10);
-
-  doc.setFont("JournalUnicode", "italic");
-  drawCenteredText(doc, headerTitleOr("ЖУРНАЛ УЧЕТА АВАРИЙ").toUpperCase(), x + leftWidth, y + topHeight, middleWidth, secondHeight, middleWidth - 10);
-
-  const dateFromStr = params.dateFrom instanceof Date
-    ? formatBreakdownDateRu(params.dateFrom.toISOString().slice(0, 10))
-    : formatBreakdownDateRu(String(params.dateFrom).slice(0, 10));
-
-  doc.setFont("JournalUnicode", "normal");
-  drawCenteredText(doc, `Начат  ${dateFromStr}\nОкончен __________`, x + leftWidth + middleWidth, y, rightWidth, topHeight, rightWidth - 4);
-  registerPageLabelSlot(doc, {
-    x: x + leftWidth + middleWidth,
-    y: y + topHeight,
-    width: rightWidth,
-    height: secondHeight,
-    maxWidth: rightWidth - 4,
-    fontSize: 10,
-    fontStyle: "normal",
+  // Общая шапка ХАССП — той же ширины, что таблица (поля 10 мм).
+  const headerBottom = drawJournalHeader(doc, {
+    organizationName: params.organizationName,
+    journalLabel: "ЖУРНАЛ УЧЕТА АВАРИЙ",
+    withPeriodicity: false,
+    startedDate: params.dateFrom,
+    finishedDate: null,
+    marginX: PDF_SHEET_MARGIN,
   });
+  const accidentTitleY = afterHeader(headerBottom, 0) + 6;
 
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(12);
-  doc.text("ЖУРНАЛ УЧЕТА АВАРИЙ", centerX, y + totalHeight + 12, { align: "center" });
+  doc.text("ЖУРНАЛ УЧЕТА АВАРИЙ", centerX, accidentTitleY, { align: "center" });
 
   const head: RowInput[] = [[
     { content: "", styles: { halign: "center", valign: "middle" } },
@@ -4094,7 +4011,7 @@ function drawAccidentPdf(doc: jsPDF, params: {
   }
 
   autoTable(doc, {
-    startY: y + totalHeight + 18,
+    startY: accidentTitleY + 6,
     margin: { left: 10, right: 10 },
     head,
     body,
@@ -4115,17 +4032,9 @@ function drawAccidentPdf(doc: jsPDF, params: {
       fontStyle: "bold",
     },
     bodyStyles: { lineWidth: 0.2 },
-    columnStyles: {
-      0: { cellWidth: 8 },
-      1: { cellWidth: 14 },
-      2: { cellWidth: 24 },
-      3: { cellWidth: 30 },
-      4: { cellWidth: 44 },
-      5: { cellWidth: 38 },
-      6: { cellWidth: 28 },
-      7: { cellWidth: 30 },
-      8: { cellWidth: 42 },
-    },
+    // Пропорции столбцов — прежние, но в сумме на всю ширину листа:
+    // таблица совпадает по краям со штампом ХАССП.
+    columnStyles: fitColumnWidths(doc, [8, 14, 24, 30, 44, 38, 28, 30, 42], PDF_SHEET_MARGIN),
   });
 }
 
@@ -4647,60 +4556,26 @@ function drawPestControlPdf(doc: jsPDF, params: {
 
   drawTitle(doc, params.title || PEST_CONTROL_DOCUMENT_TITLE);
 
-  const x = 24;
-  const y = 28;
-  const width = pageWidth - 48;
-  const leftWidth = 56;
-  const rightWidth = 32;
-  const middleWidth = width - leftWidth - rightWidth;
-  const topHeight = 10;
-  const secondHeight = 10;
-
-  doc.setLineWidth(0.25);
-  doc.rect(x, y, width, topHeight + secondHeight);
-  doc.line(x + leftWidth, y, x + leftWidth, y + topHeight + secondHeight);
-  doc.line(x + leftWidth + middleWidth, y, x + leftWidth + middleWidth, y + topHeight + secondHeight);
-  doc.line(x + leftWidth, y + topHeight, x + width, y + topHeight);
-
-  doc.setFont("JournalUnicode", "bold");
-  doc.setFontSize(10);
-  drawCenteredText(doc, params.organizationName, x + 3, y, leftWidth - 6, topHeight + secondHeight, leftWidth - 10);
-
-  doc.setFont("JournalUnicode", "normal");
-  drawCenteredText(doc, "СИСТЕМА ХАССП", x + leftWidth, y, middleWidth, topHeight, middleWidth - 10);
-
-  doc.setFont("JournalUnicode", "italic");
   // В шапке — официальное название ЖУРНАЛА, как у остальных бланков.
   // Раньше сюда уезжало название документа, и инспектор видел
   // «ZZ5 PEST_CONTROL» вместо «Журнал учёта дезинсекции и дератизации».
   const pestJournalLabel = journalNameOr(PEST_CONTROL_DOCUMENT_TITLE);
-  drawCenteredText(doc, headerTitleOr(pestJournalLabel).toUpperCase(), x + leftWidth, y + topHeight, middleWidth, secondHeight, middleWidth - 12);
-
-  doc.setFont("JournalUnicode", "bold");
-  doc.setFontSize(9);
-  // Даты шапки — ДД-ММ-ГГГГ, как на экране и в остальных бланках
-  // (раньше здесь были точки). Дата окончания печатается ВМЕСТО
-  // прочерка: раньше рядом стояли и «__________», и сама дата.
-  doc.text(`Начат   ${formatPdfDate(startDate)}`, x + leftWidth + middleWidth + 2, y + 5);
-  doc.text(
-    endDate ? `Окончен ${formatPdfDate(endDate)}` : "Окончен __________",
-    x + leftWidth + middleWidth + 2,
-    y + 10
-  );
-  doc.setFont("JournalUnicode", "normal");
-  registerPageLabelSlot(doc, {
-    x: x + width - 42,
-    y: y + 12,
-    width: 40,
-    height: 6,
-    maxWidth: 38,
-    fontSize: 10,
-    fontStyle: "normal",
+  // Общая шапка ХАССП — той же ширины, что таблица (поля 24 мм). Даты —
+  // ДД-ММ-ГГГГ; дата окончания печатается ВМЕСТО прочерка.
+  const headerBottom = drawJournalHeader(doc, {
+    organizationName: params.organizationName,
+    journalLabel: pestJournalLabel,
+    withPeriodicity: false,
+    startedDate: startDate,
+    finishedDate: endDate || null,
+    marginX: 24,
   });
+  // Прежний зазор: рамка шапки (низ 48 мм) → заголовок (58 мм) = 10 мм.
+  const shift = Math.max(0, headerBottom + 10 - 58);
 
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(14);
-  doc.text(pestJournalLabel.toUpperCase(), pageWidth / 2, 58, { align: "center" });
+  doc.text(pestJournalLabel.toUpperCase(), pageWidth / 2, 58 + shift, { align: "center" });
   // Название документа — отдельной строкой и только если оно отличается
   // от названия журнала (у бланка «ZZ5 pest_control» это заголовок
   // документа, а не журнала).
@@ -4708,7 +4583,7 @@ function drawPestControlPdf(doc: jsPDF, params: {
   if (pestDocumentName && pestDocumentName !== pestJournalLabel) {
     doc.setFont("JournalUnicode", "normal");
     doc.setFontSize(10);
-    doc.text(pestDocumentName, pageWidth / 2, 64, { align: "center" });
+    doc.text(pestDocumentName, pageWidth / 2, 64 + shift, { align: "center" });
   }
 
   // Порядок — как на экране (дата, затем время): запросом строки
@@ -4767,7 +4642,7 @@ function drawPestControlPdf(doc: jsPDF, params: {
   }
 
   autoTable(doc, {
-    startY: 66,
+    startY: 66 + shift,
     margin: { left: 24, right: 24 },
     head: [[
       "",
@@ -4804,16 +4679,8 @@ function drawPestControlPdf(doc: jsPDF, params: {
       halign: "center",
       valign: "middle",
     },
-    columnStyles: {
-      0: { cellWidth: 7, halign: "center" },
-      1: { cellWidth: 24, halign: "center" },
-      2: { cellWidth: 34, halign: "center" },
-      3: { cellWidth: 22, halign: "center" },
-      4: { cellWidth: 31, halign: "center" },
-      5: { cellWidth: 56, halign: "center" },
-      6: { cellWidth: 31, halign: "center" },
-      7: { cellWidth: 33, halign: "center" },
-    },
+    // Прежние пропорции на всю ширину между полями — край в край со штампом.
+    columnStyles: fitColumnWidths(doc, [7, 24, 34, 22, 31, 56, 31, 33], 24),
   });
 }
 
@@ -4836,63 +4703,25 @@ function drawEquipmentCleaningPdf(doc: jsPDF, params: {
   const currentFont = doc.getFont().fontName || "helvetica";
 
   drawTitle(doc, params.title || EQUIPMENT_CLEANING_DOCUMENT_TITLE);
-  let currentY = 22;
 
-  doc.setFontSize(11);
-  doc.setFont(currentFont, "bold");
-
-  autoTable(doc, {
-    startY: currentY,
-    margin: { left: marginX, right: marginX },
-    theme: "grid",
-    tableLineColor: [0, 0, 0],
-    tableLineWidth: 0.2,
-    styles: {
-      font: currentFont,
-      textColor: [0, 0, 0],
-      lineColor: [0, 0, 0],
-      lineWidth: 0.2,
-      cellPadding: 2,
-      halign: "center",
-      valign: "middle",
-      fontSize: 11,
-    },
-    body: [
-      [
-        { content: params.organizationName, rowSpan: 2, styles: { fontStyle: "bold" } },
-        { content: "СИСТЕМА ХАССП" },
-        {
-          content: `Начат  ${toDateKey(params.dateFrom).split("-").reverse().join("-")}\nОкончен __________`,
-          styles: { halign: "left" },
-        },
-      ],
-      [
-        { content: headerTitleOr("ЖУРНАЛ МОЙКИ И ДЕЗИНФЕКЦИИ ОБОРУДОВАНИЯ").toUpperCase(), styles: { fontStyle: "italic" } },
-        // Пусто: «СТР. i ИЗ N» штампуется stampJournalPageNumbers по слоту,
-        // который регистрируем в didDrawCell — иначе N всегда «1».
-        { content: "" },
-      ],
-    ],
-    didDrawCell: (data) => {
-      if (data.section === "body" && data.row.index === 1 && data.column.index === 2) {
-        registerPageLabelSlot(doc, {
-          x: data.cell.x,
-          y: data.cell.y,
-          width: data.cell.width,
-          height: data.cell.height,
-          maxWidth: data.cell.width - 4,
-          fontSize: 10,
-          fontStyle: "normal",
-        });
-      }
-    },
+  // Общая шапка ХАССП (раньше — своя таблица-штамп без строки
+  // периодичности) той же ширины, что таблица журнала.
+  const headerBottom = drawJournalHeader(doc, {
+    organizationName: params.organizationName,
+    journalLabel: "ЖУРНАЛ МОЙКИ И ДЕЗИНФЕКЦИИ ОБОРУДОВАНИЯ",
+    withPeriodicity: false,
+    startedDate: params.dateFrom,
+    finishedDate: null,
+    marginX,
   });
-
-  currentY = (doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY || 48;
+  const titleY = afterHeader(headerBottom, 0) + 6;
+  doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(14);
-  doc.text("ЖУРНАЛ МОЙКИ И ДЕЗИНФЕКЦИИ ОБОРУДОВАНИЯ", 105, currentY + 10, {
+  // По центру листа (раньше x = 105 — середина КНИЖНОГО листа, а бланк альбомный).
+  doc.text("ЖУРНАЛ МОЙКИ И ДЕЗИНФЕКЦИИ ОБОРУДОВАНИЯ", doc.internal.pageSize.getWidth() / 2, titleY, {
     align: "center",
   });
+  doc.setFont(currentFont, "normal");
 
   // Порядок — как на экране (дата+время). Запросом строки приходят
   // в порядке (employeeId, date), и печать расходилась с бланком.
@@ -4934,7 +4763,7 @@ function drawEquipmentCleaningPdf(doc: jsPDF, params: {
   });
 
   autoTable(doc, {
-    startY: currentY + 18,
+    startY: titleY + 6,
     margin: { left: marginX, right: marginX },
     theme: "grid",
     tableLineColor: [0, 0, 0],
@@ -6024,64 +5853,24 @@ function drawIntensiveCoolingPdf(doc: jsPDF, params: {
   users: PdfPositionUser[];
 }) {
   const pageWidth = doc.internal.pageSize.getWidth();
-  const x = 24;
-  const y = 28;
-  const width = pageWidth - 48;
-  const leftWidth = 56;
-  const rightWidth = 36;
-  const middleWidth = width - leftWidth - rightWidth;
-  const topHeight = 10;
-  const secondHeight = 10;
-  const totalHeight = topHeight + secondHeight;
 
   drawTitle(doc, params.title);
 
-  doc.setLineWidth(0.25);
-  doc.rect(x, y, width, totalHeight);
-  doc.line(x + leftWidth, y, x + leftWidth, y + totalHeight);
-  doc.line(x + leftWidth + middleWidth, y, x + leftWidth + middleWidth, y + totalHeight);
-  doc.line(x + leftWidth, y + topHeight, x + leftWidth + middleWidth, y + topHeight);
-
-  doc.setFontSize(10);
-  doc.setFont("JournalUnicode", "bold");
-  drawCenteredText(doc, params.organizationName, x + 3, y, leftWidth - 6, totalHeight, leftWidth - 10);
-
-  doc.setFont("JournalUnicode", "normal");
-  drawCenteredText(doc, "СИСТЕМА ХАССП", x + leftWidth, y, middleWidth, topHeight, middleWidth - 10);
-
-  doc.setFont("JournalUnicode", "italic");
-  drawCenteredText(
-    doc,
-    headerTitleOr(INTENSIVE_COOLING_DOCUMENT_TITLE).toUpperCase(),
-    x + leftWidth,
-    y + topHeight,
-    middleWidth,
-    secondHeight,
-    middleWidth - 10
-  );
-
-  const startedAt =
-    params.dateFrom instanceof Date
-      ? params.dateFrom.toISOString().slice(0, 10)
-      : String(params.dateFrom).slice(0, 10);
-
-  doc.setFont("JournalUnicode", "bold");
-  doc.text(`Начат  ${formatIntensiveCoolingDate(startedAt)}`, x + leftWidth + middleWidth + 2, y + 6);
-  doc.text(`Окончен __________`, x + leftWidth + middleWidth + 2, y + 13);
-  doc.setFont("JournalUnicode", "normal");
-  registerPageLabelSlot(doc, {
-    x: x + width - 60,
-    y: y + 14,
-    width: 40,
-    height: 6,
-    maxWidth: 38,
-    fontSize: 10,
-    fontStyle: "normal",
+  // Общая шапка ХАССП той же ширины, что таблица (поля 10 мм): раньше
+  // своя шапка была уже таблицы, а «СТР. 1 ИЗ 1» наезжала на рамку.
+  const headerBottom = drawJournalHeader(doc, {
+    organizationName: params.organizationName,
+    journalLabel: INTENSIVE_COOLING_DOCUMENT_TITLE,
+    withPeriodicity: false,
+    startedDate: params.dateFrom,
+    finishedDate: null,
+    marginX: PDF_SHEET_MARGIN,
   });
+  const coolingTitleY = afterHeader(headerBottom, 0) + 6;
 
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(13);
-  doc.text(INTENSIVE_COOLING_DOCUMENT_TITLE.toUpperCase(), pageWidth / 2, y + totalHeight + 12, {
+  doc.text(INTENSIVE_COOLING_DOCUMENT_TITLE.toUpperCase(), pageWidth / 2, coolingTitleY, {
     align: "center",
   });
 
@@ -6122,7 +5911,7 @@ function drawIntensiveCoolingPdf(doc: jsPDF, params: {
       : ensurePdfBodyRows([], 8);
 
   autoTable(doc, {
-    startY: y + totalHeight + 18,
+    startY: coolingTitleY + 6,
     head,
     body,
     theme: "grid",
@@ -6143,16 +5932,8 @@ function drawIntensiveCoolingPdf(doc: jsPDF, params: {
       lineColor: [0, 0, 0],
     },
     margin: { left: 10, right: 10 },
-    columnStyles: {
-      0: { cellWidth: 12 },
-      1: { cellWidth: 34 },
-      2: { cellWidth: 34 },
-      3: { cellWidth: 28 },
-      4: { cellWidth: 24 },
-      5: { cellWidth: 62 },
-      6: { cellWidth: 28 },
-      7: { cellWidth: 42 },
-    },
+    // Прежние пропорции на всю ширину между полями — край в край со штампом.
+    columnStyles: fitColumnWidths(doc, [12, 34, 34, 28, 24, 62, 28, 42], PDF_SHEET_MARGIN),
   });
 }
 
@@ -7386,6 +7167,17 @@ function renderJournalDocumentPdfPass(
         data: entry.data,
       })),
       users,
+      // Общая шапка ХАССП — как у остальных журналов.
+      drawHeader: (target, options) =>
+        drawJournalHeader(target, {
+          organizationName,
+          journalLabel: "ЧЕК-ЛИСТ УБОРКИ И ПРОВЕТРИВАНИЯ ПОМЕЩЕНИЙ",
+          withPeriodicity: false,
+          startedDate: document.dateFrom,
+          finishedDate: document.dateTo,
+          marginX: options.marginX,
+          top: options.top,
+        }),
     });
   } else if (templateCode === SANITARY_DAY_CHECKLIST_TEMPLATE_CODE) {
     drawSanitaryDayChecklistPdf(doc, {
@@ -7398,6 +7190,17 @@ function renderJournalDocumentPdfPass(
         data: entry.data,
       })),
       users,
+      // Общая шапка ХАССП — как у остальных журналов.
+      drawHeader: (target, options) =>
+        drawJournalHeader(target, {
+          organizationName,
+          journalLabel: "ЧЕК-ЛИСТ (ПАМЯТКА) ПРОВЕДЕНИЯ САНИТАРНОГО ДНЯ",
+          withPeriodicity: false,
+          startedDate: document.dateFrom,
+          finishedDate: document.dateTo,
+          marginX: options.marginX,
+          top: options.top,
+        }),
     });
   } else if (isTrackedDocumentTemplate(templateCode)) {
     drawTrackedPdf(doc, {

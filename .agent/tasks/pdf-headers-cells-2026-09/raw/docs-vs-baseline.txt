@@ -1,0 +1,4 @@
+docs 45 ok 45 pages 582 ink>0 pages 0 mism>0 0
+PAGES hygiene 8 -> 7
+PAGES cleaning_ventilation_checklist 14 -> 9
+baseline compared 25

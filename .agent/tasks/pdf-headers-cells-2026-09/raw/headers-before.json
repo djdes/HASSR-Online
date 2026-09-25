@@ -1,0 +1,902 @@
+[
+  {
+    "code": "hygiene",
+    "headerLines": 1,
+    "header": [
+      13.89,
+      283.13
+    ],
+    "table": [
+      13.89,
+      283.13
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "health_check",
+    "headerLines": 1,
+    "header": [
+      13.89,
+      283.13
+    ],
+    "table": [
+      13.89,
+      283.13
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "climate_control",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "cold_equipment_control",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "cleaning_ventilation_checklist",
+    "headerLines": 1,
+    "header": [
+      14.05,
+      209.3
+    ],
+    "table": [
+      14.05,
+      209.3
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "cleaning",
+    "headerLines": 1,
+    "header": [
+      15.92,
+      281.09
+    ],
+    "table": [
+      15.92,
+      281.09
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "general_cleaning",
+    "headerLines": 1,
+    "header": [
+      26.92,
+      270.09
+    ],
+    "table": [
+      26.92,
+      270.09
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "uv_lamp_runtime",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "finished_product",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "perishable_rejection",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "incoming_control",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "fryer_oil",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "med_books",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "training_plan",
+    "headerLines": 1,
+    "header": [
+      23.88,
+      273.13
+    ],
+    "table": [
+      23.88,
+      273.13
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "staff_training",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "disinfectant_usage",
+    "headerLines": 1,
+    "header": [
+      13.89,
+      283.13
+    ],
+    "table": [
+      13.89,
+      283.13
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      1
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "sanitary_day_control",
+    "headerLines": 1,
+    "header": [
+      13.89,
+      283.13
+    ],
+    "table": [
+      13.89,
+      283.13
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      1
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "equipment_maintenance",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "breakdown_history",
+    "headerLines": 1,
+    "header": [
+      23.88,
+      273.13
+    ],
+    "table": [
+      23.88,
+      273.13
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "equipment_calibration",
+    "headerLines": 1,
+    "header": [
+      23.88,
+      273.13
+    ],
+    "table": [
+      23.88,
+      273.13
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "incoming_raw_materials_control",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "ppe_issuance",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "accident_journal",
+    "headerLines": 1,
+    "header": [
+      17.78,
+      279.06
+    ],
+    "table": [
+      9.99,
+      279.06
+    ],
+    "leftDiff": 7.79,
+    "rightDiff": 0,
+    "widthOk": false,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "complaint_register",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "product_writeoff",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "audit_plan",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "audit_protocol",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "audit_report",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "traceability_test",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "metal_impurity",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "equipment_cleaning",
+    "headerLines": 1,
+    "header": [
+      13.89,
+      283.13
+    ],
+    "table": [
+      13.89,
+      283.13
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "intensive_cooling",
+    "headerLines": 1,
+    "header": [
+      23.88,
+      273.13
+    ],
+    "table": [
+      9.99,
+      274.15
+    ],
+    "leftDiff": 13.89,
+    "rightDiff": 1.02,
+    "widthOk": false,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "glass_items_list",
+    "headerLines": 1,
+    "header": [
+      41.83,
+      255.19
+    ],
+    "table": [
+      41.83,
+      255.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "glass_control",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "pest_control",
+    "headerLines": 1,
+    "header": [
+      23.88,
+      273.13
+    ],
+    "table": [
+      23.88,
+      274.32
+    ],
+    "leftDiff": 0,
+    "rightDiff": 1.19,
+    "widthOk": false,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "daily_samples",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "vitaminization",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "ration_control",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "transport_temperature",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "tableware_breakage",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "pool_water_control",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "inventory_condition",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "instrument_sterilization",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "medical_waste_b",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  },
+  {
+    "code": "batch_release",
+    "headerLines": 1,
+    "header": [
+      9.82,
+      287.19
+    ],
+    "table": [
+      9.82,
+      287.19
+    ],
+    "leftDiff": 0,
+    "rightDiff": 0,
+    "widthOk": true,
+    "thicknessPx": [
+      2
+    ],
+    "thickOk": true,
+    "doubles": 0
+  }
+]

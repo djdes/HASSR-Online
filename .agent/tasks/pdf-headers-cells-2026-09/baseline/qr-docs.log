@@ -1,0 +1,77 @@
+OK   hygiene                            rows=630 pages 8→8 ink=0/0/0/0/0/0/0/0 moved=0 up=0 mism=0/0/0/0/0/0/0/0 dec=-------- align=0.08/0.04/0.04/0.04/0.04/0.04/0.08/0.08
+OK   health_check                       rows=630 pages 4→4 ink=0/0/0/0 moved=1 up=1 mism=0/0/0/0 dec=---- align=0.08/0.04/0.04/0.08
+OK   climate_control                    rows=14 pages 32→32 ink=0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0 moved=29 up=27 mism=0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0 dec=-------------------------------- align=0.02/224.02/224.02/0.02/5.17/5.17/5.17/5.17/5.17/5.17/5.17/5.17/5.17/5.17/5.17/5.17/5.17/5.17/5.17/5.17/5.17/5.17/5.17/5.17/5.17/5.17/5.17/5.17/5.17/5.17/5.17/5.17
+OK   cold_equipment_control             rows=14 pages 4→4 ink=0/0/0/0 moved=0 up=0 mism=0/0/0/0 dec=---- align=0.02/0.02/0.02/0.02
+OK   cleaning_ventilation_checklist     rows=0 pages 14→14 ink=0/0/0/0/0/0/0/0/0/0/0/0/0/0 moved=0 up=0 mism=0/0/0/0/0/0/0/0/0/0/0/0/0/0 dec=-------------- align=0.18/0.18/0.18/0.18/0.18/0.18/0.18/0.18/0.18/0.18/0.18/0.18/0.18/0.18
+OK   cleaning                           rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05
+OK   general_cleaning                   rows=0 pages 6→6 ink=0/0/0/0/0/0 moved=0 up=0 mism=0/0/0/0/0/0 dec=------ align=0.30/0.14/0.14/0.14/0.14/0.14
+OK   uv_lamp_runtime                    rows=0 pages 1→1 ink=0 moved=1 up=1 mism=0 dec=- align=0.02
+OK   finished_product                   rows=0 pages 4→4 ink=0/0/0/0 moved=0 up=0 mism=0/0/0/0 dec=---- align=0.02/0.15/0.15/0.15
+OK   perishable_rejection               rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=9.93
+OK   incoming_control                   rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.02
+OK   fryer_oil                          rows=0 pages 2→2 ink=0/0 moved=0 up=0 mism=0/0 dec=-- align=0.02/0.02
+OK   med_books                          rows=0 pages 3→3 ink=0/0/0 moved=0 up=0 mism=0/0/0 dec=--- align=0.02/0.02/0.02
+Will not be able to print row 2 correctly since it's minimum height is larger than page height
+Will not be able to print row 5 correctly since it's minimum height is larger than page height
+Will not be able to print row 7 correctly since it's minimum height is larger than page height
+Will not be able to print row 10 correctly since it's minimum height is larger than page height
+Will not be able to print row 13 correctly since it's minimum height is larger than page height
+Will not be able to print row 15 correctly since it's minimum height is larger than page height
+Will not be able to print row 18 correctly since it's minimum height is larger than page height
+Will not be able to print row 20 correctly since it's minimum height is larger than page height
+Will not be able to print row 23 correctly since it's minimum height is larger than page height
+Will not be able to print row 26 correctly since it's minimum height is larger than page height
+Will not be able to print row 28 correctly since it's minimum height is larger than page height
+Will not be able to print row 31 correctly since it's minimum height is larger than page height
+Will not be able to print row 33 correctly since it's minimum height is larger than page height
+Will not be able to print row 36 correctly since it's minimum height is larger than page height
+Will not be able to print row 39 correctly since it's minimum height is larger than page height
+Will not be able to print row 41 correctly since it's minimum height is larger than page height
+Will not be able to print row 44 correctly since it's minimum height is larger than page height
+Will not be able to print row 46 correctly since it's minimum height is larger than page height
+Will not be able to print row 49 correctly since it's minimum height is larger than page height
+Will not be able to print row 52 correctly since it's minimum height is larger than page height
+Will not be able to print row 54 correctly since it's minimum height is larger than page height
+Will not be able to print row 57 correctly since it's minimum height is larger than page height
+Will not be able to print row 59 correctly since it's minimum height is larger than page height
+Will not be able to print row 62 correctly since it's minimum height is larger than page height
+Will not be able to print row 65 correctly since it's minimum height is larger than page height
+Will not be able to print row 67 correctly since it's minimum height is larger than page height
+Will not be able to print row 2 correctly since it's minimum height is larger than page height
+Will not be able to print row 5 correctly since it's minimum height is larger than page height
+Will not be able to print row 7 correctly since it's minimum height is larger than page height
+Will not be able to print row 10 correctly since it's minimum height is larger than page height
+Will not be able to print row 13 correctly since it's minimum height is larger than page height
+Will not be able to print row 15 correctly since it's minimum height is larger than page height
+Will not be able to print row 18 correctly since it's minimum height is larger than page height
+Will not be able to print row 20 correctly since it's minimum height is larger than page height
+Will not be able to print row 23 correctly since it's minimum height is larger than page height
+Will not be able to print row 26 correctly since it's minimum height is larger than page height
+Will not be able to print row 28 correctly since it's minimum height is larger than page height
+Will not be able to print row 31 correctly since it's minimum height is larger than page height
+Will not be able to print row 33 correctly since it's minimum height is larger than page height
+Will not be able to print row 36 correctly since it's minimum height is larger than page height
+Will not be able to print row 39 correctly since it's minimum height is larger than page height
+Will not be able to print row 41 correctly since it's minimum height is larger than page height
+Will not be able to print row 44 correctly since it's minimum height is larger than page height
+Will not be able to print row 46 correctly since it's minimum height is larger than page height
+Will not be able to print row 49 correctly since it's minimum height is larger than page height
+Will not be able to print row 52 correctly since it's minimum height is larger than page height
+Will not be able to print row 54 correctly since it's minimum height is larger than page height
+Will not be able to print row 57 correctly since it's minimum height is larger than page height
+Will not be able to print row 59 correctly since it's minimum height is larger than page height
+Will not be able to print row 62 correctly since it's minimum height is larger than page height
+Will not be able to print row 65 correctly since it's minimum height is larger than page height
+Will not be able to print row 67 correctly since it's minimum height is larger than page height
+OK   training_plan                      rows=0 pages 26→28 ink=0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0 moved=0 up=0 mism=0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0 dec=---------------------------- align=0.38/5.36/5.36/5.36/5.36/5.36/5.36/5.36/5.36/5.36/5.36/5.36/5.36/5.36/5.36/5.36/5.36/5.36/5.36/5.36/5.36/5.36/5.36/5.36/5.36/5.36/5.36/5.36
+OK   staff_training                     rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.02
+OK   disinfectant_usage                 rows=0 pages 12→13 ink=0/0/0/0/0/0/0/0/0/0/0/0/0 moved=0 up=0 mism=0/0/0/0/0/0/0/0/0/0/0/0/0 dec=------------- align=0.08/0.08/0.08/0.08/0.08/0.08/0.08/0.08/0.08/0.08/0.08/0.08/0.08
+OK   sanitary_day_control               rows=0 pages 9→9 ink=0/0/0/0/0/0/0/0/0 moved=0 up=0 mism=0/0/0/0/0/0/0/0/0 dec=--------- align=0.21/0.21/0.21/0.21/0.21/0.21/0.21/0.21/0.21
+OK   equipment_maintenance              rows=0 pages 5→5 ink=0/0/0/0/0 moved=0 up=0 mism=0/0/0/0/0 dec=----- align=0.02/0.15/0.15/0.15/0.15
+OK   breakdown_history                  rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05
+OK   equipment_calibration              rows=0 pages 4→5 ink=0/0/0/0/0 moved=0 up=0 mism=0/0/0/0/0 dec=----- align=0.38/0.13/0.13/0.13/0.13
+OK   incoming_raw_materials_control     rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.02
+OK   ppe_issuance                       rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.02
+OK   accident_journal                   rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.02
+OK   complaint_register                 rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.02
+OK   product_writeoff                   rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.02

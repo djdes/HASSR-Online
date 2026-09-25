@@ -1,7 +1,6 @@
 import type { jsPDF } from "jspdf";
-import autoTable, { type RowInput } from "jspdf-autotable";
-import { readHeaderTitleOverride } from "@/lib/journal-header-title";
-import { registerPageLabelSlot } from "@/lib/pdf-page-labels";
+import type { RowInput } from "jspdf-autotable";
+import { journalAutoTable as autoTable } from "@/lib/pdf-journal-table";
 import {
   getItemNumber,
   mergeSdcEntries,
@@ -36,6 +35,12 @@ export function drawSanitaryDayChecklistPdf(
     config: unknown;
     entries: EntryItem[];
     users: BasicUser[];
+    /**
+     * Общая шапка ХАССП бланков (`drawJournalHeader` из document-pdf):
+     * штамп с полями `marginX` и верхом `top`, возвращает Y нижней
+     * границы. Раньше здесь была своя таблица-штамп другого вида.
+     */
+    drawHeader: (doc: jsPDF, options: { marginX: number; top: number }) => number;
   }
 ) {
   const config = normalizeSdcConfig(params.config);
@@ -46,65 +51,8 @@ export function drawSanitaryDayChecklistPdf(
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 14;
 
-  // ─── Header table (organization | СИСТЕМА ХАССП / title | СТР. 1 ИЗ 1) ───
-  doc.setFont("JournalUnicode", "normal");
-  autoTable(doc, {
-    startY: 14,
-    theme: "grid",
-    styles: {
-      font: "JournalUnicode",
-      fontSize: 9,
-      lineColor: [0, 0, 0],
-      lineWidth: 0.2,
-      cellPadding: 2.2,
-      valign: "middle",
-      halign: "center",
-    },
-    columnStyles: {
-      0: { cellWidth: 58 },
-      1: { cellWidth: pageWidth - margin * 2 - 58 - 28 },
-      2: { cellWidth: 28 },
-    },
-    body: [
-      [
-        {
-          content: params.organizationName || "",
-          rowSpan: 2,
-          styles: { fontStyle: "bold", fontSize: 10 },
-        },
-        { content: "СИСТЕМА ХАССП" },
-        // Пусто: «СТР. i ИЗ N» штампуется после вёрстки по слоту.
-        { content: "", rowSpan: 2 },
-      ],
-      [
-        {
-          // Название документа, заданное в шапке документа, — как на экране.
-          content: (
-            readHeaderTitleOverride(params.config) ?? "ЧЕК-ЛИСТ (ПАМЯТКА) ПРОВЕДЕНИЯ САНИТАРНОГО ДНЯ"
-          ).toUpperCase(),
-          styles: { fontStyle: "italic" },
-        },
-      ],
-    ],
-    margin: { left: margin, right: margin },
-    didDrawCell: (data) => {
-      if (data.section === "body" && data.row.index === 0 && data.column.index === 2) {
-        registerPageLabelSlot(doc, {
-          x: data.cell.x,
-          y: data.cell.y,
-          width: data.cell.width,
-          height: data.cell.height,
-          maxWidth: data.cell.width - 4,
-          fontSize: 9,
-          fontStyle: "normal",
-        });
-      }
-    },
-  });
-
-  // ─── Дата проведения ───
-  const lastY = (doc as jsPDF & { lastAutoTable?: { finalY?: number } })
-    .lastAutoTable?.finalY ?? 40;
+  // ─── Шапка ХАССП — общая для всех бланков ───
+  const lastY = params.drawHeader(doc, { marginX: margin, top: 14 });
 
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(10);
