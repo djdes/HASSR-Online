@@ -1,0 +1,29 @@
+PASS  reading: без входа — 401  — status=401
+PASS  вход admin@haccp.local
+PASS  reading: мок ```json → прежний контракт { value, unit, confidence }  — {"value":-18.5,"unit":"C","confidence":"high"}
+PASS  reading: фото лежало во временной папке и удалено после ответа  — максимум=1, после=0
+PASS  reading: запись в журнале действий (вид reading, 1 строка)  — {"photos":1,"result":"ok","durationMs":2656,"recognized":1,"visionKind":"reading"}
+PASS  reading: нечитаемо — value null, единица и уверенность не выдумываются  — {"value":null,"unit":null,"confidence":"low"}
+PASS  reading: строка «−4,5» → -4.5  — {"value":-4.5,"unit":"C","confidence":"medium"}
+PASS  reading: ответ без JSON — 422 как раньше  — 422 Не удалось разобрать ответ. Попробуйте другое фото.
+PASS  reading: не успели — 504, «введите значение вручную»  — 504 Не успели распознать показание — попробуйте ещё раз или введите значение вручную.
+PASS  reading: не картинка — 415  — 415 Поддерживаются только JPEG, PNG или WEBP
+PASS  reading: больше 5 МБ — 413  — 413 Файл слишком большой
+PASS  reading: без фото — 400  — status=400
+PASS  reading: временная папка пуста  — files=0
+PASS  check-photo: без входа — 401  — status=401
+PASS  check-photo: мок с текстом вокруг JSON → { valid, confidence, kind, reason }  — {"valid":true,"confidence":0.92,"kind":"food","reason":"На фото тарелка супа, снимок чёткий."}
+PASS  check-photo: запись в журнале действий (вид photo_check)  — {"photos":1,"result":"ok","durationMs":2545,"recognized":1,"visionKind":"photo_check"}
+PASS  check-photo: ответ без JSON — 502 { error, raw } как раньше  — {"error":"AI вернул некорректный JSON","raw":"Не могу оценить."}
+PASS  check-photo: внешний URL — 400 (SSRF закрыт)  — 400 imageUrl должен быть из /uploads/
+PASS  check-photo: обход каталога — 400  — 400 imageUrl должен быть из /uploads/
+PASS  check-photo: нет файла — 400 «Не удалось прочитать фото»  — 400 Не удалось прочитать фото
+PASS  check-photo: GIF — 400 с понятным текстом  — 400 Проверка поддерживает фото JPG, PNG или WEBP
+PASS  check-photo: битый JSON — 400  — 400 Bad input
+PASS  check-photo: временная папка пуста  — files=0
+PASS  лимиты общие: 20 распознаваний «С фото»/этикеток/показаний → 21-е показание — 429  — 429 На сегодня распознавания закончились: не больше 20 в сутки на сотрудника. Заполните вручную или попробуйте завтра.
+PASS  лимиты общие: проверка фото тоже — 429  — 429 На сегодня распознавания закончились: не больше 20 в сутки на сотрудника. Заполните вручную или попробуйте завтра.
+PASS  лимиты общие: «С фото» — тоже 429  — status=429
+PASS  отказы по лимиту не оставили файлов  — files=0
+
+27/27 PASS

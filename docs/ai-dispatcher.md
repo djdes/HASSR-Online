@@ -56,7 +56,7 @@ Agent-токен PF подхватывается из `C:\www\ralph\mcp-projects
 | `wesetup_period_report` | Отчёт за период | Текст отчёта |
 | `wesetup_capa_suggest` | Подсказки CAPA | Строго JSON `{"suggestions":[{title,text}×3]}` |
 | `wesetup_weekly_digest` | Cron еженедельной AI-сводки | Текст для Telegram (HTML `<b>/<i>` можно) |
-| `wesetup_vision_extract` | Кнопка «С фото» (`/api/ai/vision-extract`) и этикетка (`/api/ocr/label`) | Строго один JSON, формат — в инструкции задания (см. ниже) |
+| `wesetup_vision_extract` | Кнопка «С фото» (`/api/ai/vision-extract`), этикетка (`/api/ocr/label`), показание дисплея (`/api/ocr/reading`), проверка фото-доказательства (`/api/ai/check-photo`) | Строго один JSON, формат — в инструкции задания (см. ниже) |
 
 Задания чата поддержки (без `type:`-префикса, с `prompt_url`/`reply_url`)
 живут отдельно — см. `src/lib/assistant/dispatch.ts`.
@@ -73,7 +73,7 @@ image_url: …            (1–3 строки)
 <инструкция: что распознать и в каком JSON ответить>
 ```
 
-**Сайт** (`src/lib/ai-vision/run.ts`): кнопка «С фото»
+**Сайт** (`src/lib/ai-vision/run.ts`, общий `runVisionJob` для всех четырёх маршрутов): кнопка «С фото»
 (`src/components/ai/recognize-from-photo.tsx`) ужимает 1–3 снимка до
 ~1600 px JPEG и шлёт их в `POST /api/ai/vision-extract` (`kind`: `menu` |
 `raw` | `generic`). Сервер кладёт фото в `os.tmpdir()/wesetup-vision/` под
@@ -99,6 +99,12 @@ image_url: …            (1–3 строки)
 | `raw` | `{"items":[{"name","manufacturer","supplier","quantity","productionDate","expiryDate"}]}` — даты ГГГГ-ММ-ДД или null |
 | `generic` | `{"items":[{"name"}]}` |
 | `label` (`/api/ocr/label`) | объект полей этикетки (`productName`, `supplier`, даты, `quantity`, `unit`, `barcode`, …, `confidence`) |
+| `reading` (`/api/ocr/reading`) | `{"value","unit","confidence"}` — value: число или null, unit: C, % или h (или null), confidence: high, medium или low; нечитаемое число — `value: null`, знак и цифры не угадывать |
+| `photo_check` (`/api/ai/check-photo`) | `{"valid","confidence"(0…1),"kind","reason"}` — при сомнении `valid: false` |
+
+Вид — это только инструкция и разбор ответа на сайте: тип задания у всех
+один, поэтому новый вид воркеру объяснять не нужно. Лимиты общие для всех
+четырёх маршрутов.
 
 **Воркер** (`dispatcher/wesetup-worker.ps1`): берёт ссылки из строк
 `image_url:` до первой `---`, инструкцию — после неё. Скачивает картинки
@@ -142,9 +148,13 @@ powershell -ExecutionPolicy Bypass -File dispatcher\wesetup-worker.ps1 -TestJobF
 честно пишет «Не получилось распознать фото — попробуйте ещё раз или
 введите строки вручную».
 
-## Не мигрировано (остаётся на Anthropic API с сайта)
+## Прямых вызовов модели с сайта нет
 
-`/api/ai/check-photo` и `/api/ocr/reading` — vision-запросы с ключом сайта
-(на проде ключа нет). Их можно перевести тем же путём, что `/api/ocr/label`
-(`runVisionJob` + своя инструкция и разбор). `/api/ocr/label` переведён на
-`wesetup_vision_extract` с прежним контрактом `{ result }`.
+Все AI-запросы сайта, включая распознавание фото, идут через очередь
+диспетчера. Бывшие vision-маршруты на Anthropic API переведены на
+`wesetup_vision_extract` с прежними контрактами: `/api/ocr/label` →
+`{ result }`, `/api/ocr/reading` → `{ value, unit, confidence }`,
+`/api/ai/check-photo` → `{ valid, confidence, kind, reason }`.
+`ANTHROPIC_API_KEY` сайту не нужен. Пакет `@anthropic-ai/sdk` в
+`package.json` больше нигде не импортируется — его можно убрать отдельной
+правкой зависимостей.

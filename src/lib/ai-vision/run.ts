@@ -10,8 +10,10 @@ import { resolveAssistantConfig } from "@/lib/assistant/config";
 import { createRateLimiter } from "@/lib/rate-limit";
 
 /**
- * Один прогон «Распознать с фото» — общий для `/api/ai/vision-extract`
- * (строки номенклатуры) и `/api/ocr/label` (этикетка).
+ * Один прогон распознавания фото — общий для `/api/ai/vision-extract`
+ * (строки номенклатуры), `/api/ocr/label` (этикетка), `/api/ocr/reading`
+ * (показание дисплея) и `/api/ai/check-photo` (проверка фото-доказательства).
+ * Лимиты у всех общие: одно распознавание — одна запись в журнале действий.
  *
  * Порядок: настроено ли → частота и суточные лимиты → фото во временную
  * папку → задание `wesetup_vision_extract` со ссылками (подпись + 15 минут)
@@ -22,7 +24,10 @@ import { createRateLimiter } from "@/lib/rate-limit";
 /** Сколько ждём ответ диспетчера: воркер опрашивает очередь раз в 10 с, модель думает 5–40 с. */
 export const VISION_DEADLINE_MS = 100_000;
 
-export const VISION_ERRORS: Record<"not_configured" | "timeout" | "failed" | "burst", string> = {
+export type VisionErrorMessages = Record<"not_configured" | "timeout" | "failed" | "burst", string>;
+
+/** Тексты по умолчанию — для списков («С фото»); маршруты с одним полем передают свои. */
+export const VISION_ERRORS: VisionErrorMessages = {
   not_configured: "Распознавание с фото пока не подключено. Введите строки вручную.",
   timeout: "Не успели распознать — попробуйте ещё раз или введите строки вручную.",
   failed: "Не получилось распознать фото — попробуйте ещё раз или введите строки вручную.",
@@ -53,9 +58,12 @@ export async function runVisionJob<T>(input: {
   orgId: string;
   user: { id: string; name?: string | null };
   parse: (text: string) => VisionParseOutcome<T>;
+  /** Свои тексты ошибок («введите значение вручную» вместо «строки»). */
+  messages?: Partial<VisionErrorMessages>;
 }): Promise<VisionRunSuccess<T> | VisionRunFailure> {
   const started = Date.now();
   const { purpose, images, orgId, user } = input;
+  const errors: VisionErrorMessages = { ...VISION_ERRORS, ...input.messages };
   const photos = images.length;
   if (photos < 1 || photos > VISION_MAX_PHOTOS) return fail("bad_request", 400, `Нужно от 1 до ${VISION_MAX_PHOTOS} фото`);
 
@@ -63,10 +71,10 @@ export async function runVisionJob<T>(input: {
   const config = mock ? null : await resolveAssistantConfig();
   if (!mock && !config) {
     console.warn(`[ai-vision] not configured purpose=${purpose} org=${orgId}`);
-    return fail("not_configured", 503, VISION_ERRORS.not_configured);
+    return fail("not_configured", 503, errors.not_configured);
   }
 
-  if (!burstLimiter.consume(user.id)) return fail("limit", 429, VISION_ERRORS.burst);
+  if (!burstLimiter.consume(user.id)) return fail("limit", 429, errors.burst);
   const verdict = checkVisionQuota(await countVisionUsage({ orgId, userId: user.id }));
   if (!verdict.ok) {
     console.warn(`[ai-vision] daily limit (${verdict.scope}) org=${orgId} user=${user.id}`);
@@ -108,9 +116,9 @@ export async function runVisionJob<T>(input: {
       console.error(`[ai-vision] failed purpose=${purpose} code=${reply.code} ms=${durationMs} org=${orgId}`);
       if (reply.code === "enqueue_failed" || reply.code === "not_configured") await forgetVisionUsage(usageId);
       else await finishVisionUsage(usageId, { visionKind: purpose, photos, result: reply.code === "timeout" ? "timeout" : "failed", durationMs });
-      if (reply.code === "not_configured") return fail("not_configured", 503, VISION_ERRORS.not_configured);
-      if (reply.code === "timeout") return fail("timeout", 504, VISION_ERRORS.timeout);
-      return fail("failed", 502, VISION_ERRORS.failed);
+      if (reply.code === "not_configured") return fail("not_configured", 503, errors.not_configured);
+      if (reply.code === "timeout") return fail("timeout", 504, errors.timeout);
+      return fail("failed", 502, errors.failed);
     }
 
     let parsed: VisionParseOutcome<T>;
@@ -119,7 +127,7 @@ export async function runVisionJob<T>(input: {
     } catch (error) {
       console.error(`[ai-vision] parse error purpose=${purpose}:`, error);
       await finishVisionUsage(usageId, { visionKind: purpose, photos, result: "failed", durationMs });
-      return fail("failed", 502, VISION_ERRORS.failed);
+      return fail("failed", 502, errors.failed);
     }
     await finishVisionUsage(usageId, {
       visionKind: purpose,

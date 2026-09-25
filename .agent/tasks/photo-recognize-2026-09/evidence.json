@@ -42,7 +42,7 @@
       "evidence": [
         "evidence/ac4-checks.txt"
       ],
-      "summary": "typecheck exit 0; npm test 2291/2291 (baseline 2238, +53 new)"
+      "summary": "typecheck exit 0; npm test 2298/2298 after the follow-up (baseline 2238)"
     }
   },
   "placesWired": [
@@ -53,9 +53,26 @@
     "src/components/journals/acceptance-document-client.tsx («Добавить несколько строк» → «С фото накладной»)"
   ],
   "openIssues": [
-    "/api/ai/check-photo and /api/ocr/reading still use Anthropic API",
+    "@anthropic-ai/sdk is unused now; remove from package.json in a separate dependency change",
     "real ProjectsFlow round trip not exercised (by instruction)",
     "burst limiter 6/min is in-memory",
+    "cold-equipment card NumberField hides the number at narrow width (pre-existing layout)",
     "pre-existing hydration warning in Header on mobile (layout, not touched)"
-  ]
+  ],
+  "followUp": {
+    "status": "PASS",
+    "summary": "/api/ocr/reading and /api/ai/check-photo migrated to wesetup_vision_extract (instruction kinds reading/photo_check, worker unchanged), contracts kept, shared limits; no direct Anthropic calls left in src",
+    "evidence": [
+      "evidence/fu-run4-reading-readable.txt",
+      "evidence/fu-run5-reading-unreadable.txt",
+      "evidence/fu-instruction-reading.txt",
+      "evidence/fu-api-e2e.txt",
+      "evidence/fu-ui-e2e.txt",
+      "evidence/fu-*.png"
+    ],
+    "claudeRuns": 2,
+    "apiChecks": "27/27",
+    "uiChecks": "10/10",
+    "tests": "2298/2298"
+  }
 }

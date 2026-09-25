@@ -48,6 +48,18 @@ test("ответ из файла (WESETUP_VISION_MOCK_FILE), на проде ф�
   assert.equal(resolveVisionMock({ WESETUP_VISION_MOCK_FILE: "missing.json" }, "raw", () => null), null);
 });
 
+test("ответы для показания дисплея и проверки фото — по своим ключам", () => {
+  const env = {
+    WESETUP_VISION_MOCK_REPLY: JSON.stringify({ reading: { value: -18.5, unit: "C", confidence: "high" }, photo_check: "__failed__" }),
+  };
+  assert.deepEqual(resolveVisionMock(env, "reading"), {
+    outcome: "reply",
+    text: '{"value":-18.5,"unit":"C","confidence":"high"}',
+    delayMs: 0,
+  });
+  assert.deepEqual(resolveVisionMock(env, "photo_check"), { outcome: "failed", delayMs: 0 });
+});
+
 test("особые исходы и потолок паузы", () => {
   const env = { WESETUP_VISION_MOCK_REPLY: JSON.stringify({ menu: "__timeout__", raw: "__failed__" }), WESETUP_VISION_MOCK_DELAY_MS: "999999" };
   assert.deepEqual(resolveVisionMock(env, "menu"), { outcome: "timeout", delayMs: 60_000 });

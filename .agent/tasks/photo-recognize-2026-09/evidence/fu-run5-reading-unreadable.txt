@@ -1,0 +1,4 @@
+[2026-09-25 22:40:45] Vision test: 1 image(s), no queue
+[2026-09-25 22:40:45]   vision: 1 image(s), 9 KB, model 'sonnet'
+[2026-09-25 22:40:51] Vision test OK (44 chars, cost 0.013243 USD)
+{"value":null,"unit":"C","confidence":"low"}

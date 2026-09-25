@@ -325,3 +325,93 @@ export function parseLabelReply(raw: string): VisionLabelResult | null {
     confidence: confidence === "high" || confidence === "medium" ? confidence : "low",
   };
 }
+
+/* ─────────── Показание дисплея (`/api/ocr/reading`, контракт DisplayOcrButton) ─────────── */
+
+export type VisionReadingResult = {
+  value: number | null;
+  unit: "C" | "%" | "h" | null;
+  confidence: "high" | "medium" | "low";
+};
+
+function readingObject(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const entry = value as Record<string, unknown>;
+  return "value" in entry || "confidence" in entry ? entry : null;
+}
+
+/**
+ * Число с дисплея: число как есть; строку — только если это одно число
+ * («-18.5», «−18,5», «+4»). «18?», «-1_», «около 5» — null: угадывать
+ * цифры и знак нельзя.
+ */
+export function normalizeReadingValue(value: unknown): number | null {
+  let number: number;
+  if (typeof value === "number") {
+    number = value;
+  } else if (typeof value === "string") {
+    const text = value.replace(/\s+/g, "").replace(/[−–—]/g, "-").replace(",", ".");
+    if (!/^[-+]?\d+(?:\.\d+)?$/.test(text)) return null;
+    number = Number(text);
+  } else {
+    return null;
+  }
+  return Number.isFinite(number) && Math.abs(number) < 1_000_000 ? number : null;
+}
+
+function normalizeReadingUnit(value: unknown): VisionReadingResult["unit"] {
+  const text = asText(value).toLowerCase().replace(/[°\s]/g, "");
+  if (text === "c" || text === "с" || text === "celsius") return "C";
+  if (text === "%" || text === "rh" || text === "%rh") return "%";
+  if (text === "h" || text === "ч" || text === "hours") return "h";
+  return null;
+}
+
+/** Ответ по дисплею → { value, unit, confidence }; null — JSON показания в ответе нет. */
+export function parseReadingReply(raw: string): VisionReadingResult | null {
+  const entry = extractJsonValue(raw, readingObject);
+  if (!entry) return null;
+  const value = normalizeReadingValue(entry.value);
+  const confidence = asText(entry.confidence).toLowerCase();
+  return {
+    value,
+    unit: value === null ? null : normalizeReadingUnit(entry.unit),
+    confidence: value !== null && (confidence === "high" || confidence === "medium") ? confidence : "low",
+  };
+}
+
+/* ─────────── Проверка фото-доказательства (`/api/ai/check-photo`) ─────────── */
+
+export const PHOTO_CHECK_KINDS = ["food", "equipment", "document", "blur", "finger", "dark", "other"] as const;
+
+export type VisionPhotoCheckResult = {
+  valid: boolean;
+  confidence: number;
+  kind: (typeof PHOTO_CHECK_KINDS)[number];
+  reason: string;
+};
+
+function photoCheckObject(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  return "valid" in (value as Record<string, unknown>) ? (value as Record<string, unknown>) : null;
+}
+
+/**
+ * Ответ по фото → { valid, confidence, kind, reason }; null — JSON оценки в
+ * ответе нет. valid — только явное true: «может быть», пусто и мусор — не
+ * годится; confidence приводится к 0…1.
+ */
+export function parsePhotoCheckReply(raw: string): VisionPhotoCheckResult | null {
+  const entry = extractJsonValue(raw, photoCheckObject);
+  if (!entry) return null;
+  const valid = entry.valid === true || (typeof entry.valid === "string" && entry.valid.trim().toLowerCase() === "true");
+  const confidenceRaw = typeof entry.confidence === "number" ? entry.confidence : Number(asText(entry.confidence).replace(",", "."));
+  const confidence = Number.isFinite(confidenceRaw) ? Math.min(1, Math.max(0, confidenceRaw)) : 0;
+  const kind = asText(entry.kind).toLowerCase();
+  return {
+    valid,
+    confidence: Math.round(confidence * 100) / 100,
+    kind: (PHOTO_CHECK_KINDS as readonly string[]).includes(kind) ? (kind as VisionPhotoCheckResult["kind"]) : "other",
+    reason: asText(entry.reason).slice(0, 300),
+  };
+}

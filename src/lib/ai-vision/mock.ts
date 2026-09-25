@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs";
  * `WESETUP_VISION_MOCK_REPLY` в окружении копии (dev/e2e) — готовый «ответ
  * воркера»: либо сырой текст (как вернула бы модель), либо JSON-объект по
  * видам `{"menu": "...", "raw": "...", "generic": "...", "label": "...",
- * "default": "..."}`. Вместо переменной можно указать файл с тем же
+ * "reading": "...", "photo_check": "...", "default": "..."}`. Вместо переменной можно указать файл с тем же
  * содержимым: `WESETUP_VISION_MOCK_FILE`. Особые значения: `__timeout__` —
  * «не успели», `__failed__` — «исполнитель не справился».
  * `WESETUP_VISION_MOCK_DELAY_MS` — пауза перед ответом (до 60 с), чтобы
@@ -20,7 +20,7 @@ export type VisionMock =
   | { outcome: "reply"; text: string; delayMs: number }
   | { outcome: "timeout" | "failed"; delayMs: number };
 
-const KEYED = ["menu", "raw", "generic", "label", "default"];
+const KEYED = ["menu", "raw", "generic", "label", "reading", "photo_check", "default"];
 
 function readMockFile(path: string): string | null {
   try {

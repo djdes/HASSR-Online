@@ -19,7 +19,7 @@ test("20-е за сутки у сотрудника было — 21-е нель�
   if (verdict.ok) return;
   assert.equal(verdict.scope, "user");
   assert.match(verdict.error, /не больше 20 в сутки на сотрудника/);
-  assert.match(verdict.error, /Введите строки вручную/);
+  assert.match(verdict.error, /Заполните вручную или попробуйте завтра/);
 });
 
 test("организация выбрала 60 — нельзя даже новому сотруднику", () => {

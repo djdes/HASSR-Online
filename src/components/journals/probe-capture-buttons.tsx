@@ -98,6 +98,10 @@ export function DisplayOcrButton({
 
   async function recognize(file: File) {
     setBusy(true);
+    // Распознаёт диспетчер (очередь) — это 10–40 секунд, а не мгновенно:
+    // без подсказки крутящаяся иконка выглядит как зависание. Тот же тост
+    // потом превращается в результат.
+    const toastId = toast.loading("Распознаём показание… обычно 10–40 секунд");
     try {
       const compressed = await compressImageIfWorthwhile(file);
       const form = new FormData();
@@ -110,21 +114,22 @@ export function DisplayOcrButton({
       const data = await response.json().catch(() => null);
 
       if (!response.ok) {
-        toast.error(data?.error || "Не удалось распознать показание");
+        toast.error(data?.error || "Не удалось распознать показание", { id: toastId });
         return;
       }
       if (typeof data?.value !== "number") {
-        toast.error("На снимке не видно числа — попробуйте снять ближе");
+        toast.error("На снимке не видно числа — попробуйте снять ближе", { id: toastId });
         return;
       }
       onReading(data.value);
       toast.success(
         data.confidence === "low"
           ? `Распознано ${data.value} — проверьте, снимок нечёткий`
-          : `Распознано: ${data.value}`
+          : `Распознано: ${data.value}`,
+        { id: toastId }
       );
     } catch {
-      toast.error("Нет связи — распознавание недоступно");
+      toast.error("Нет связи — распознавание недоступно", { id: toastId });
     } finally {
       setBusy(false);
     }

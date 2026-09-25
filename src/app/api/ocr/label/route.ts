@@ -25,6 +25,12 @@ export const maxDuration = 120;
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
+const MESSAGES = {
+  not_configured: "Распознавание этикеток пока не подключено — заполните поля вручную.",
+  timeout: "Не успели распознать этикетку — попробуйте ещё раз или заполните поля вручную.",
+  failed: "Не получилось распознать этикетку — попробуйте ещё раз или заполните поля вручную.",
+};
+
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -58,6 +64,7 @@ export async function POST(request: Request) {
     images: [bytes],
     orgId: getActiveOrgId(session),
     user: { id: session.user.id, name: session.user.name },
+    messages: MESSAGES,
     parse: (text) => {
       const result = parseLabelReply(text);
       if (!result) console.warn(`[ai-vision] label reply without JSON: ${text.slice(0, 160)}`);

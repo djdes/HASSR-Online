@@ -408,7 +408,14 @@ const HIDDEN_DETAIL_KEYS = new Set([
 
 /** Значения-перечисления по ключу → по-русски. */
 const DETAIL_VALUE_LABELS: Record<string, Record<string, string>> = {
-  visionKind: { menu: "меню", raw: "сырьё", generic: "список", label: "этикетка" },
+  visionKind: {
+    menu: "меню",
+    raw: "сырьё",
+    generic: "список",
+    label: "этикетка",
+    reading: "показание прибора",
+    photo_check: "проверка фото",
+  },
   result: { ok: "распознано", empty: "ничего не распознано", timeout: "не успели", failed: "ошибка" },
   via: {
     // Журнал включён (journal.enable, lib/blank-signup.ts).
