@@ -53,3 +53,22 @@ test("допуск без ответа о здоровье: «Допущен» �
   assert.match(html, /Допуск недоступен: сотрудник ещё не ответил на вопросы о здоровье/);
   assert.equal((html.match(/data-admit-locked/g) ?? []).length, 1);
 });
+
+test("не отметившиеся — ярко-красные (пожелание РПН), ответившие и отсутствующие — нет", () => {
+  const declared = { status: "healthy", confirmations: { temperature: true, infection: true, respiratorySkin: true }, confirmedAt: "06:50", source: "qr" };
+  const html = renderHealthDay({
+    action: "/x",
+    who: "",
+    tabs: "",
+    rows: [
+      { id: "a", name: "Иванова", position: null, mark: { state: "admitted", at: "06:50" }, hygiene: hygieneV2View(declared), answered: true },
+      { id: "b", name: "Петрова", position: null, mark: { state: "missing" }, hygiene: hygieneV2View(null), answered: false },
+      { id: "c", name: "Сидорова", position: null, mark: { state: "missing" }, hygiene: hygieneV2View(null), answered: false },
+    ],
+  });
+  assert.equal((html.match(/class="hq-row hq-miss"/g) ?? []).length, 2);
+  assert.equal((html.match(/hq-snone">⚠ Не отметился/g) ?? []).length, 2);
+  assert.match(html, /background:#fee2e2;color:#b91c1c">не отметились 2/);
+  // Ответившая Иванова — обычная карточка.
+  assert.match(html, /<div class="hq-row"><div><div class="hq-n">Иванова/);
+});

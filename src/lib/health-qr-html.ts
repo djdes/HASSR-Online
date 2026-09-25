@@ -22,6 +22,9 @@ const HEALTH_CSS = `<style>
 .hq-row .hq-n{font-size:18px;font-weight:600;color:#0b1024}
 .hq-row .hq-s{font-size:15px}
 .hq-s.hq-sok{color:#116b2a}.hq-s.hq-sbad{color:#b42318}.hq-s.hq-smiss{color:#9a5b00}.hq-s.hq-soff{color:#6f7282}
+.hq-s.hq-snone{color:#dc2626;font-weight:700;font-size:16px}
+.hq-row.hq-miss{border:2px solid #ef4444;background:#fef2f2;box-shadow:0 0 0 3px rgba(239,68,68,.12)}
+.hq-row.hq-miss .hq-lock{color:#b91c1c}
 .hq-row select{min-height:48px;font-size:16px}
 .hq-sum{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
 .hq-sum span{padding:6px 12px;border-radius:999px;font-size:15px;font-weight:600}
@@ -94,7 +97,8 @@ const MARK_TEXT = (mark: DayMark): { cls: string; text: string } => {
     case "absent":
       return { cls: "hq-soff", text: mark.label };
     default:
-      return { cls: "hq-smiss", text: "не отметился" };
+      // Не отметился — ярко-красным (пожелание РПН): сразу видно, кого нельзя допускать.
+      return { cls: "hq-snone", text: "⚠ Не отметился" };
   }
 };
 
@@ -139,7 +143,7 @@ export function renderHealthDay(params: {
 }): string {
   const waiting = (row: HealthDayRow) => row.hygiene.declared && !row.hygiene.result && !row.hygiene.absence;
   const count = (test: (row: HealthDayRow) => boolean) => params.rows.filter(test).length;
-  const summary = `<div class="hq-sum"><span style="background:#eef1ff;color:#3848c7">ждут допуска ${count(waiting)}</span><span style="background:#fff8eb;color:#9a5b00">не отметились ${count(
+  const summary = `<div class="hq-sum"><span style="background:#eef1ff;color:#3848c7">ждут допуска ${count(waiting)}</span><span style="background:#fee2e2;color:#b91c1c">не отметились ${count(
     (row) => row.mark.state === "missing"
   )}</span><span style="background:#f0fdf4;color:#116b2a">допущено ${count((row) => row.hygiene.result?.result === "admitted")}</span><span style="background:#fef2f2;color:#b42318">отстранено ${count(
     (row) => row.hygiene.result?.result === "suspended"
@@ -177,7 +181,9 @@ export function renderHealthDay(params: {
         (item) => `<option value="${item.value}"${h.absence === item.value ? " selected" : ""}>${item.label}</option>`
       ).join("")}</select>`;
       const lock = admitLocked && !h.absence ? `<p class="hq-lock" data-admit-locked>${esc(lockReason)}</p>` : "";
-      return `<div class="hq-row"><div><div class="hq-n">${esc(row.name)}</div>${row.position ? `<div class="hint" style="margin:0">${esc(row.position)}</div>` : ""}${signatures}${state}</div>${seg}${lock}${absence}</div>`;
+      // Не ответил о здоровье, решения нет и он не в отсутствии — карточка ярко-красная.
+      const notCheckedIn = !h.result && !h.absence && !(row.answered ?? h.declared);
+      return `<div class="hq-row${notCheckedIn ? " hq-miss" : ""}"><div><div class="hq-n">${esc(row.name)}</div>${row.position ? `<div class="hint" style="margin:0">${esc(row.position)}</div>` : ""}${signatures}${state}</div>${seg}${lock}${absence}</div>`;
     })
     .join("");
   const saved =
