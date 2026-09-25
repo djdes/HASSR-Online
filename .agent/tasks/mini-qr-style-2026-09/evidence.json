@@ -1,0 +1,61 @@
+{
+  "task": "mini-qr-style-2026-09",
+  "spec": ".agent/tasks/mini-qr-style-2026-09/spec.md",
+  "branch": "feat/mini-2026-09-25",
+  "codeCommit": "0817b27c",
+  "viewport": { "width": 390, "height": 844, "dpr": 1, "mobile": true, "touch": true },
+  "themes": ["light", "dark"],
+  "stand": {
+    "database": "wesetup_wt_pdf (localhost:5432)",
+    "server": "next dev --webpack -p 3041, NEXT_DIST_DIR=.next-e2e",
+    "login": "Telegram initData signed with the bot token from .env via real telegram-web-app.js + tg-host.js emulator (signIn('telegram')), no auth changes"
+  },
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "summary": "Header = QR .hero gradient (#0b1024 + indigo/violet glows), W tile, WESETUP eyebrow + section title, 56px in both themes; QR palette (#fafbff, white 20px cards, #5566f6), QR-style buttons/inputs/items/chips; nav and back in the same style.",
+      "evidence": [
+        "evidence/compare-light.png",
+        "evidence/compare-dark.png",
+        "evidence/qr-reference.png",
+        "evidence/before/*.png",
+        "evidence/after/*.png",
+        "src/app/mini/mini-theme.test.ts: 'mini-theme: узнаётся как QR-страницы' (hero gradient equals QR_FILL_CSS .hero, accent #5566f6 in both themes)"
+      ]
+    },
+    "AC2": {
+      "status": "PASS",
+      "summary": "20 screens at 390px: controls below 48px 247 -> 0 (of 592 after), input font below 16px 0, horizontal page scroll 0, header max 56px.",
+      "evidence": ["evidence/summary.md", "evidence/summary.json", "evidence/after/report.json", "evidence/before/report.json"],
+      "totals": { "screens": 20, "smallBefore": 247, "smallAfter": 0, "smallFontAfter": 0, "hScrollAfter": 0, "headerMaxAfter": 56, "controlsAfter": 592 },
+      "notes": "Gaps below 8px remain only in a cabinet dashboard widget (site component) and the show-password button placed inside its field on /mini/login."
+    },
+    "AC3": {
+      "status": "PASS",
+      "summary": "Both themes captured for every screen; WCAG text contrast below 4.5:1 (3:1 for large): before 118 of 582 texts, after 0 of 1126 texts. Brand header dark blue in both themes.",
+      "evidence": ["evidence/after/light-*.png", "evidence/after/dark-*.png", "evidence/after/report.json (lowContrast, textChecked)"]
+    },
+    "AC4": {
+      "status": "PASS",
+      "summary": "npm run typecheck clean; npm test 2241 pass / 0 fail; pre-commit hook (secrets, typecheck, test gate pass=2241 fail=0) passed on commit 0817b27c without --no-verify.",
+      "evidence": ["npm run typecheck", "npm test"]
+    }
+  },
+  "scripts": [
+    "e2e/setup.ts",
+    "e2e/prepare.ts",
+    "e2e/tg.ts",
+    "e2e/shots.ts",
+    "e2e/probe.js",
+    "e2e/summary.ts",
+    "e2e/qr-reference.ts",
+    "e2e/compare.ts"
+  ],
+  "residual": [
+    "Cabinet pages inside the shell keep their own typography (11-14px labels); only touch size, input font and contrast are lifted inside #mini-root.",
+    "Dashboard widget rows 6px apart / setup-check button adjacent (cabinet component, untouched).",
+    "Partner-program icon hidden in the header while journal undo/redo buttons are shown.",
+    "Dev server reloads pages on rebuild; shots.ts waits for a settled screen.",
+    "Stand setup triggered Telegram notifications to fake chat ids (400 chat not found) because .env holds the real bot token."
+  ]
+}
