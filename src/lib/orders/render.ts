@@ -146,9 +146,29 @@ function buildDictionary(
   return dictionary;
 }
 
+/**
+ * Основание в родительном падеже — для «В соответствии с требованиями …».
+ * В каталоге основания записаны в именительном («Приказ Минздрава…»), как их
+ * показывают в списках; аббревиатуры (СанПиН, ТР ТС, СП) не склоняются.
+ */
+const GENITIVE_PREFIXES: [RegExp, string][] = [
+  // `\b` в JS не видит границу кириллического слова — только пробел после.
+  [/^Приказ(?=\s)/, "приказа"],
+  [/^Федеральный закон(?=\s)/, "Федерального закона"],
+  [/^Трудовой кодекс(?=\s)/, "Трудового кодекса"],
+  [/^Постановление(?=\s)/, "постановления"],
+];
+
+export function basisInGenitive(basis: string): string {
+  for (const [pattern, genitive] of GENITIVE_PREFIXES) {
+    if (pattern.test(basis)) return basis.replace(pattern, genitive);
+  }
+  return basis;
+}
+
 /** Преамбула: перечисление нормативных оснований. */
 function buildPreamble(template: OrderTemplate, org: OrderOrgSnapshot): string {
-  const basis = template.basis.join("; ");
+  const basis = template.basis.map(basisInGenitive).join("; ");
   const where = org.orgName || org.orgShortName;
   return `В соответствии с требованиями ${basis}, в целях обеспечения безопасности пищевой продукции на предприятии ${where}`;
 }

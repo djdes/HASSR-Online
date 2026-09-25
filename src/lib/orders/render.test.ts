@@ -3,6 +3,7 @@ import test from "node:test";
 
 import { findOrderTemplate, ORDER_TEMPLATES } from "@/lib/orders/catalog";
 import {
+  basisInGenitive,
   BLANK,
   defaultOrderValues,
   fillPlaceholders,
@@ -211,4 +212,21 @@ test("значения по умолчанию заполняют даты се�
   const values = defaultOrderValues(template, new Date(2026, 8, 10));
   assert.equal(values.effectiveDate, "2026-09-10");
   assert.equal(values.journalList, "");
+});
+
+test("основания в преамбуле — в родительном падеже: «требованиями приказа Минздрава»", () => {
+  assert.equal(basisInGenitive("Приказ Минздрава России № 29н"), "приказа Минздрава России № 29н");
+  assert.equal(basisInGenitive("Федеральный закон № 52-ФЗ"), "Федерального закона № 52-ФЗ");
+  assert.equal(basisInGenitive("Трудовой кодекс РФ, статья 221"), "Трудового кодекса РФ, статья 221");
+  assert.equal(basisInGenitive("СанПиН 2.3/2.4.4282-26, пункт 5"), "СанПиН 2.3/2.4.4282-26, пункт 5");
+  for (const template of ORDER_TEMPLATES) {
+    const order = renderOrder({
+      template,
+      org: buildOrgSnapshot({ name: "ООО Ромашка", inn: null, address: null, legalProfileJson: null }),
+      values: {},
+      number: "1",
+      issuedAt: "2026-09-26",
+    });
+    assert.doesNotMatch(order.preamble, /требованиями (Приказ|Федеральный закон|Трудовой кодекс)/, template.code);
+  }
 });
