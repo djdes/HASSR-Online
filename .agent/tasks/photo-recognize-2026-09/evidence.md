@@ -134,3 +134,13 @@ ESLint по новым файлам — без замечаний (в измен
 - Лимит частоты 6/мин живёт в памяти процесса (суточные лимиты — в базе и переживают перезапуск).
 - На dev-странице журналов в телефонном виде есть давнее предупреждение гидратации в шапке (`Header`,
   `src/components/layout/*` — не трогал) и предупреждения Radix «Missing Description» у старых окон журналов.
+
+## Как повторить
+
+Скрипты — в [e2e/](e2e/) (пути в них — абсолютные для этой машины; пароль admin берётся из `.env` копии):
+`make-test-images.cjs` — картинки AC1; `gen-instructions.mts` — инструкции сайта в файлы для `-TestPromptFile`;
+`gen-jobs.mts` — тексты заданий с подписанными ссылками на dev-сервер для `-TestJobFile`; `api-test.mjs` — AC2;
+`ui-e2e.mjs`, `ui-e2e-mobile-master.mjs`, `ui-e2e-lists.mjs` — AC3; `vision-mock.json` — ответы мока.
+Dev-сервер: `NEXT_DIST_DIR=.next-e2e NEXTAUTH_URL=http://localhost:3042 WESETUP_VISION_MOCK_FILE=<vision-mock.json>
+WESETUP_VISION_MOCK_DELAY_MS=3000 node node_modules/next/dist/bin/next dev --webpack -p 3042`.
+Скриншоты (`evidence/*.png`) лежат в папке задачи локально — `.gitignore` не пускает `.agent/**/*.png` в git.
