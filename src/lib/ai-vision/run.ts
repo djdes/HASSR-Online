@@ -2,6 +2,7 @@ import { enqueueAndWait } from "@/lib/ai-assistant/pf-client";
 import { signedVisionImageUrl } from "@/lib/ai-vision/image-link";
 import { buildVisionJobText, type VisionInstructionKind } from "@/lib/ai-vision/instructions";
 import { resolveVisionMock } from "@/lib/ai-vision/mock";
+import { shouldRetryWrongWorker } from "@/lib/ai-vision/retry";
 import { checkVisionQuota } from "@/lib/ai-vision/quota";
 import { VISION_MAX_PHOTOS, type VisionErrorCode } from "@/lib/ai-vision/shared";
 import { deleteVisionImages, saveVisionImage, sweepExpiredVisionImages } from "@/lib/ai-vision/temp-store";
@@ -107,7 +108,15 @@ export async function runVisionJob<T>(input: {
       if (mock.delayMs > 0) await sleep(mock.delayMs);
       reply = mock.outcome === "reply" ? { ok: true, text: mock.text } : { ok: false, code: mock.outcome === "timeout" ? "timeout" : "job_failed" };
     } else {
-      const result = await enqueueAndWait(jobText, { deadlineMs: VISION_DEADLINE_MS });
+      const deadline = started + VISION_DEADLINE_MS;
+      let result = await enqueueAndWait(jobText, { deadlineMs: VISION_DEADLINE_MS });
+      // Воркер без поддержки фото (старая версия, пока её не перезапустили)
+      // закрывает такие задания «wrong_worker» за секунды. Ставим задание
+      // заново — его заберёт воркер с поддержкой фото.
+      for (let attempt = 1; shouldRetryWrongWorker(result, attempt, deadline - Date.now()); attempt += 1) {
+        console.warn(`[ai-vision] wrong_worker, retry ${attempt} purpose=${purpose} org=${orgId}`);
+        result = await enqueueAndWait(jobText, { deadlineMs: deadline - Date.now() });
+      }
       reply = result.ok ? { ok: true, text: result.text } : { ok: false, code: result.code };
     }
     const durationMs = Date.now() - started;

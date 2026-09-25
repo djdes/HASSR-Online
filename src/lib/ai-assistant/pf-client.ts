@@ -34,7 +34,13 @@ const DEFAULT_DEADLINE_MS = 90_000;
 
 export type PfJobResult =
   | { ok: true; text: string; jobId: string }
-  | { ok: false; error: string; code: "not_configured" | "enqueue_failed" | "timeout" | "job_failed" };
+  | {
+      ok: false;
+      error: string;
+      code: "not_configured" | "enqueue_failed" | "timeout" | "job_failed";
+      /** Сырая причина от исполнителя (например `wrong_worker:<тип>`) — только у job_failed. */
+      workerError?: string;
+    };
 
 type PfJobStatusResponse = {
   jobId?: string;
@@ -156,6 +162,7 @@ export async function enqueueAndWait(
       return {
         ok: false,
         code: "job_failed",
+        workerError: job.error ?? undefined,
         error:
           job.error === "dispatcher_timeout"
             ? "ИИ-помощник не ответил вовремя. Попробуйте ещё раз"
