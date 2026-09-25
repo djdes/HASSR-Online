@@ -1,0 +1,8 @@
+
+> haccp-online@0.1.0 typecheck
+> tsc --noEmit --skipLibCheck -p tsconfig.typecheck.json
+
+
+real	0m24.837s
+user	0m0.060s
+sys	0m0.289s

@@ -1,0 +1,25 @@
+ℹ tests 2275
+ℹ suites 275
+ℹ pass 2275
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 50404.8802
+
+real	0m51.756s
+user	0m0.075s
+sys	0m0.275s
+✔ buildColleagueRecommendationEmail (7.7997ms)
+✔ sendColleagueRecommendationEmail без SMTP (dev) (3.9413ms)
+✔ parseNpsRecommendation (19.4766ms)
+✔ recommendationLink (1.4812ms)
+✔ имя и адрес для ответа (2.8972ms)
+✔ runNpsRecommendation (63.7909ms)
+✔ журнал действий (/settings/audit) (1.8302ms)
+✔ shouldAskNps (4.4342ms)
+✔ computeNps (2.4793ms)
+✔ шкалы NPS (2.7651ms)
+✔ computeNpsReport (3.5793ms)
+✔ parseNpsAnswer (POST /api/nps) (2.961ms)
+✔ parseNpsUpdate (PATCH /api/nps) (1.7076ms)

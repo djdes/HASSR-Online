@@ -1,0 +1,48 @@
+[
+  {
+    "name": "390: сообщение по умолчанию видно целиком, 14px",
+    "ok": false,
+    "detail": {
+      "fontSize": "16px",
+      "fits": true
+    }
+  },
+  {
+    "name": "router.refresh() после оценки: блок и введённая почта на месте",
+    "ok": true,
+    "detail": {
+      "still": "colleague.refresh@example.com"
+    }
+  },
+  {
+    "name": "закрыть после оценки — блок скрыт",
+    "ok": true
+  },
+  {
+    "name": "закрытие после оценки не шлёт «не сейчас» повторно — npsAskedAt от ответа",
+    "ok": true,
+    "detail": {
+      "npsAskedAt": "2026-09-25T13:27:01.969Z"
+    }
+  },
+  {
+    "name": "1440: заголовок, шкала и крестик — в одной строке",
+    "ok": true,
+    "detail": {
+      "titleLines": 1,
+      "titleCenterY": 136,
+      "scaleCenterY": 138,
+      "closeCenterY": 138,
+      "sameRowButtons": true,
+      "scrollWidth": 1440,
+      "innerWidth": 1440
+    }
+  },
+  {
+    "name": "крестик до оценки — «не сейчас» (dismiss)",
+    "ok": true,
+    "detail": {
+      "dismiss": true
+    }
+  }
+]

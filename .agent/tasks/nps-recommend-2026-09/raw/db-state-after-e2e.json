@@ -1,0 +1,123 @@
+{
+  "auditLogNpsRecommend": [
+    {
+      "createdAt": "2026-09-25T13:24:00.239Z",
+      "organizationId": "cmugz8a670000kw9mfvb6611i",
+      "userId": "cmugz8a6e0001kw9m0n9a1rra",
+      "userName": "Денис Управляющий",
+      "action": "nps.recommend",
+      "entity": "NpsResponse",
+      "entityId": "cmuh66ux2000cy49m2xrfoomm",
+      "details": {
+        "delivery": "logged",
+        "npsScore": 5,
+        "referral": false,
+        "colleagueEmail": "colleague1@example.com"
+      }
+    },
+    {
+      "createdAt": "2026-09-25T13:24:04.267Z",
+      "organizationId": "cmugz8a670000kw9mfvb6611i",
+      "userId": "cmugz8a6e0001kw9m0n9a1rra",
+      "userName": "Денис Управляющий",
+      "action": "nps.recommend",
+      "entity": "NpsResponse",
+      "entityId": "cmuh66ux2000cy49m2xrfoomm",
+      "details": {
+        "delivery": "logged",
+        "npsScore": 5,
+        "referral": true,
+        "colleagueEmail": "colleague2@example.com"
+      }
+    },
+    {
+      "createdAt": "2026-09-25T13:24:04.551Z",
+      "organizationId": "cmugz8a670000kw9mfvb6611i",
+      "userId": "cmugz8a6e0001kw9m0n9a1rra",
+      "userName": "Денис Управляющий",
+      "action": "nps.recommend",
+      "entity": "NpsResponse",
+      "entityId": "cmuh66ux2000cy49m2xrfoomm",
+      "details": {
+        "delivery": "logged",
+        "npsScore": 5,
+        "referral": true,
+        "colleagueEmail": "colleague3@example.com"
+      }
+    },
+    {
+      "createdAt": "2026-09-25T13:24:07.068Z",
+      "organizationId": "cmugz8a670000kw9mfvb6611i",
+      "userId": "cmugz8a6e0001kw9m0n9a1rra",
+      "userName": "Денис Управляющий",
+      "action": "nps.recommend",
+      "entity": "NpsResponse",
+      "entityId": "cmuh66ux2000cy49m2xrfoomm",
+      "details": {
+        "delivery": "logged",
+        "npsScore": 5,
+        "referral": true,
+        "colleagueEmail": "colleague4@example.com"
+      }
+    },
+    {
+      "createdAt": "2026-09-25T13:24:07.312Z",
+      "organizationId": "cmugz8a670000kw9mfvb6611i",
+      "userId": "cmugz8a6e0001kw9m0n9a1rra",
+      "userName": "Денис Управляющий",
+      "action": "nps.recommend",
+      "entity": "NpsResponse",
+      "entityId": "cmuh66ux2000cy49m2xrfoomm",
+      "details": {
+        "delivery": "logged",
+        "npsScore": 5,
+        "referral": true,
+        "colleagueEmail": "colleague5@example.com"
+      }
+    }
+  ],
+  "npsResponses": [
+    {
+      "id": "cmuh66ux2000cy49m2xrfoomm",
+      "score": 5,
+      "scale": 5,
+      "comment": null,
+      "createdAt": "2026-09-25T13:23:22.885Z"
+    },
+    {
+      "id": "cmuh67tkj000iy49mv1br98hb",
+      "score": 9,
+      "scale": 10,
+      "comment": "Старый клиент: формат 0–10 без scale",
+      "createdAt": "2026-09-25T13:24:07.795Z"
+    },
+    {
+      "id": "cmuh67tqk000jy49m81kiwffm",
+      "score": 6,
+      "scale": 10,
+      "comment": null,
+      "createdAt": "2026-09-25T13:24:08.012Z"
+    },
+    {
+      "id": "cmuh67ygu000ky49md15hybbg",
+      "score": 2,
+      "scale": 5,
+      "comment": "Хочется выгрузку журналов одним архивом",
+      "createdAt": "2026-09-25T13:24:14.142Z"
+    },
+    {
+      "id": "cmuh68bj1000my49mb552gte3",
+      "score": 5,
+      "scale": 5,
+      "comment": null,
+      "createdAt": "2026-09-25T13:24:31.069Z"
+    },
+    {
+      "id": "cmuh6bjyw000qy49mixbd8cqe",
+      "score": 5,
+      "scale": 5,
+      "comment": null,
+      "createdAt": "2026-09-25T13:27:01.976Z"
+    }
+  ]
+}

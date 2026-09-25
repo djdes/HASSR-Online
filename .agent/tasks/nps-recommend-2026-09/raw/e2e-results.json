@@ -1,0 +1,404 @@
+[
+  {
+    "name": "login admin (390)",
+    "ok": true,
+    "detail": {
+      "status": 200,
+      "session": true
+    }
+  },
+  {
+    "name": "390: заголовок «Посоветуете WeSetup коллегам?» в одну строку",
+    "ok": true,
+    "detail": {
+      "viewport": 390,
+      "pageScrollWidth": 390,
+      "titleText": "Посоветуете WeSetup коллегам?",
+      "titleContentHeight": 20,
+      "titleLineHeight": 20,
+      "titleLines": 1,
+      "titleWidth": 257,
+      "titleBoxWidth": 276,
+      "buttonTops": [
+        144,
+        144,
+        144,
+        144,
+        144
+      ],
+      "buttonSizes": [
+        [
+          49,
+          48
+        ],
+        [
+          49,
+          48
+        ],
+        [
+          49,
+          48
+        ],
+        [
+          49,
+          48
+        ],
+        [
+          49,
+          48
+        ]
+      ]
+    }
+  },
+  {
+    "name": "390: шкала 1–5 в одну строку, кнопки ≥ 44×44",
+    "ok": true,
+    "detail": {
+      "tops": [
+        144,
+        144,
+        144,
+        144,
+        144
+      ],
+      "sizes": [
+        [
+          49,
+          48
+        ],
+        [
+          49,
+          48
+        ],
+        [
+          49,
+          48
+        ],
+        [
+          49,
+          48
+        ],
+        [
+          49,
+          48
+        ]
+      ]
+    }
+  },
+  {
+    "name": "390: нет горизонтальной прокрутки",
+    "ok": true,
+    "detail": {
+      "scrollWidth": 390
+    }
+  },
+  {
+    "name": "клик по 5 сразу сохраняет ответ (POST /api/nps {score:5, scale:5})",
+    "ok": true,
+    "detail": {
+      "status": 200,
+      "request": {
+        "score": 5,
+        "scale": 5
+      }
+    }
+  },
+  {
+    "name": "в базе ответ score=5, scale=5",
+    "ok": true,
+    "detail": {
+      "score": 5,
+      "scale": 5,
+      "comment": null
+    }
+  },
+  {
+    "name": "4–5: поля «Почта коллеги» и «Сообщение» с текстом по умолчанию",
+    "ok": true,
+    "detail": {
+      "defaultMessage": "Привет! Мы ведём журналы ХАССП и СанПиН в WeSetup — заполняем с телефона по QR, проверки проходим спокойно. Посмотри, ссылка ниже."
+    }
+  },
+  {
+    "name": "своя почта (контактная, другой регистр) — 400 и ошибка у поля",
+    "ok": true,
+    "detail": {
+      "status": 400,
+      "ownError": "Это ваша почта — укажите адрес коллеги"
+    }
+  },
+  {
+    "name": "своя почта-логин — 400",
+    "ok": true,
+    "detail": {
+      "error": "Это ваша почта — укажите адрес коллеги",
+      "field": "email"
+    }
+  },
+  {
+    "name": "почта сотрудника своей организации — 400 и ошибка",
+    "ok": true,
+    "detail": {
+      "status": 400,
+      "staffError": "Это почта сотрудника вашей организации — укажите коллегу из другого заведения"
+    }
+  },
+  {
+    "name": "отказы не пишутся в AuditLog и не шлют писем",
+    "ok": true,
+    "detail": {
+      "n": 0
+    }
+  },
+  {
+    "name": "отправка коллеге → 200",
+    "ok": true,
+    "detail": {
+      "ok": true,
+      "referral": false,
+      "delivery": "logged"
+    }
+  },
+  {
+    "name": "после отправки — «Спасибо! Письмо отправлено»",
+    "ok": true,
+    "detail": {
+      "done": "Спасибо! Письмо отправлено"
+    }
+  },
+  {
+    "name": "блок скрывается после ответа",
+    "ok": true
+  },
+  {
+    "name": "повтор на тот же адрес в течение суток → 429",
+    "ok": true,
+    "detail": {
+      "status": 429,
+      "body": {
+        "error": "Этому адресу сегодня уже отправляли рекомендацию",
+        "field": "email"
+      }
+    }
+  },
+  {
+    "name": "у организации есть реферальный код → referral=true",
+    "ok": true,
+    "detail": {
+      "status": 200,
+      "body": {
+        "ok": true,
+        "referral": true,
+        "delivery": "logged"
+      }
+    }
+  },
+  {
+    "name": "рекомендация №3 → 200",
+    "ok": true,
+    "detail": {
+      "status": 200,
+      "body": {
+        "ok": true,
+        "referral": true,
+        "delivery": "logged"
+      }
+    }
+  },
+  {
+    "name": "рекомендация №4 → 200",
+    "ok": true,
+    "detail": {
+      "status": 200,
+      "body": {
+        "ok": true,
+        "referral": true,
+        "delivery": "logged"
+      }
+    }
+  },
+  {
+    "name": "рекомендация №5 → 200",
+    "ok": true,
+    "detail": {
+      "status": 200,
+      "body": {
+        "ok": true,
+        "referral": true,
+        "delivery": "logged"
+      }
+    }
+  },
+  {
+    "name": "6-я за сутки → 429 «Не больше 5 рекомендаций в сутки»",
+    "ok": true,
+    "detail": {
+      "status": 429,
+      "body": {
+        "error": "Не больше 5 рекомендаций в сутки — попробуйте завтра"
+      }
+    }
+  },
+  {
+    "name": "текст > 1000 символов → 400",
+    "ok": true,
+    "detail": {
+      "status": 400,
+      "body": {
+        "error": "Сообщение длиннее 1000 символов — сократите его",
+        "field": "message"
+      }
+    }
+  },
+  {
+    "name": "кривая почта → 400",
+    "ok": true,
+    "detail": {
+      "status": 400,
+      "body": {
+        "error": "В адресе не хватает символа @",
+        "field": "email"
+      }
+    }
+  },
+  {
+    "name": "старый формат {score: 9} → 200",
+    "ok": true,
+    "detail": {
+      "status": 200,
+      "body": {
+        "ok": true,
+        "id": "cmuh67tkj000iy49mv1br98hb"
+      }
+    }
+  },
+  {
+    "name": "старый ответ записан со scale=10",
+    "ok": true,
+    "detail": {
+      "score": 9,
+      "scale": 10,
+      "comment": "Старый клиент: формат 0–10 без scale"
+    }
+  },
+  {
+    "name": "старый формат {score: 6} → 200",
+    "ok": true,
+    "detail": {
+      "status": 200,
+      "body": {
+        "ok": true,
+        "id": "cmuh67tqk000jy49m81kiwffm"
+      }
+    }
+  },
+  {
+    "name": "{score: 0, scale: 5} → 400 «Оценка — от 1 до 5»",
+    "ok": true,
+    "detail": {
+      "status": 400,
+      "body": {
+        "error": "Оценка — от 1 до 5"
+      }
+    }
+  },
+  {
+    "name": "{scale: 7} → 400",
+    "ok": true,
+    "detail": {
+      "status": 400,
+      "body": {
+        "error": "Неизвестная шкала оценки"
+      }
+    }
+  },
+  {
+    "name": "1–3: форма «Что улучшить?», без полей письма",
+    "ok": true
+  },
+  {
+    "name": "«Отправить» → PATCH /api/nps 200",
+    "ok": true
+  },
+  {
+    "name": "комментарий сохранён в этом ответе (score=2, scale=5)",
+    "ok": true,
+    "detail": {
+      "score": 2,
+      "scale": 5,
+      "comment": "Хочется выгрузку журналов одним архивом"
+    }
+  },
+  {
+    "name": "1440: заголовок и шкала в одной строке",
+    "ok": false,
+    "detail": {
+      "titleTop": 114,
+      "titleHeight": 32,
+      "first": [
+        114,
+        48
+      ],
+      "last": [
+        114,
+        48
+      ]
+    }
+  },
+  {
+    "name": "смена оценки 4 → 5 — PATCH того же ответа",
+    "ok": true
+  },
+  {
+    "name": "закрыть после оценки — блок скрыт, оценка уже сохранена",
+    "ok": true
+  },
+  {
+    "name": "login root",
+    "ok": true,
+    "detail": {
+      "status": 200,
+      "session": true
+    }
+  },
+  {
+    "name": "/root/nps открывается и показывает обе шкалы",
+    "ok": true,
+    "detail": {
+      "overall": [
+        "20",
+        "20"
+      ],
+      "scale5": [
+        "33",
+        "33"
+      ],
+      "scale10": [
+        "0",
+        "0"
+      ]
+    }
+  },
+  {
+    "name": "GET /api/root/nps: общий и по шкалам",
+    "ok": true,
+    "detail": {
+      "last90": {
+        "total": 5,
+        "promoters": 3,
+        "passives": 0,
+        "detractors": 2,
+        "nps": 20,
+        "average": null
+      },
+      "scale5": {
+        "total": 3,
+        "nps": 33
+      },
+      "scale10": {
+        "total": 2,
+        "nps": 0
+      }
+    }
+  }
+]

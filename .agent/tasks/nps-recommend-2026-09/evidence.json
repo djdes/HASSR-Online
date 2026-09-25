@@ -1,0 +1,72 @@
+{
+  "task": "nps-recommend-2026-09",
+  "branch": "feat/nps-2026-09-25",
+  "commits": { "specAndCode": "85110ea5" },
+  "database": "wesetup_wt_qrforms",
+  "schemaPushedTo": ["wesetup_wt_ui", "wesetup_wt_pdf", "wesetup_wt_qrforms", "wesetup_wt_blanks"],
+  "devServer": "http://localhost:3042 (next dev --webpack, stopped after e2e, .next-e2e removed)",
+  "verdict": "PASS",
+  "acceptance": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "evidence": [
+        "evidence/ac1-390-ask.png",
+        "evidence/ac1-1440-ask.png",
+        "evidence/mini-390-recommend-form.png",
+        "raw/e2e-results.json: 390 title 1 line (257px text in 276px box), 5 buttons same top, 49x48px, scrollWidth 390",
+        "raw/e2e-results-2.json: 1440 title/scale/close on one row (centers 136/138/138)"
+      ]
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "evidence": [
+        "evidence/ac2-390-recommend-form.png",
+        "evidence/ac2-1440-recommend-form.png",
+        "evidence/ac2-390-own-email-error.png",
+        "raw/e2e-results.json: own email (contact + login) 400, org staff 400, send 200 + done text + banner hidden, same address 429, referral=true with org code, 6th per day 429, message 1001 chars 400, bad email 400",
+        "raw/email-dev-log.txt: subject with sender name and org, Reply-To sender, escaped user text, /register link without code, /r/E2EWSTQR link with code",
+        "raw/db-state-after-e2e.json: 5 AuditLog nps.recommend rows {colleagueEmail, referral, npsScore, delivery}, no message text",
+        "src/lib/nps-recommend.test.ts",
+        "src/lib/email-colleague-recommendation.test.ts"
+      ]
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "evidence": [
+        "evidence/ac3-390-improve.png",
+        "raw/e2e-results.json: improve form without email fields, PATCH /api/nps 200, DB score 2 scale 5 comment saved"
+      ]
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "evidence": [
+        "evidence/ac4-1440-root-nps.png",
+        "raw/e2e-results.json: /root/nps 200 with both scale blocks; /api/root/nps overall 20, scale5 33 (3), scale10 0 (2); legacy POST {score: 9} -> scale 10",
+        "src/lib/nps.test.ts: legacy rows without scale == computeNps, both-scale report, parseNpsAnswer legacy/new formats"
+      ]
+    },
+    {
+      "id": "AC5",
+      "status": "PASS",
+      "evidence": [
+        "raw/typecheck.log (exit 0)",
+        "raw/npm-test-summary.log: 2275/2275 pass",
+        "pre-commit hook on 85110ea5: secrets + typecheck + test:gate passed",
+        "npx eslint on changed files: clean"
+      ]
+    }
+  ],
+  "notes": [
+    "raw/e2e-results.json contains one false FAIL (1440 check measured padding); re-verified in raw/e2e-results-2.json",
+    "prisma db push dropped the partial index PartnerClient_one_active_per_org in each DB; restored immediately with the app's own CREATE UNIQUE INDEX IF NOT EXISTS (raw/schema-push.log)"
+  ],
+  "openIssues": [
+    "Mini App shell renders the banner only while askNps is true; pull-to-refresh mid-answer hides the form (src/app/mini/* out of scope; fix: <NpsBanner variant=\"mini\" ask={askNps} />)",
+    "Referral link only when the organization already has a referral code (per spec); ensureReferralCode could make it always referral",
+    "NPS recommendations are not listed in «Баланс и бонусы» ReferralInvite list"
+  ]
+}

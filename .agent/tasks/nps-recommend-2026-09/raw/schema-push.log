@@ -1,0 +1,42 @@
+=== wesetup_wt_ui: prisma db push ===
+Loaded Prisma config from prisma.config.ts.
+Prisma schema loaded from prisma\schema.prisma.
+Datasource "db": PostgreSQL database "wesetup_wt_ui", schema "public" at "localhost:5432"
+Your database is now in sync with your Prisma schema. Done in 1.87s
+--- wesetup_wt_ui: restore partial index (same SQL as src/lib/partners/schema-extras.ts) ---
+Loaded Prisma config from prisma.config.ts.
+Script executed successfully.
+=== wesetup_wt_pdf: prisma db push ===
+Loaded Prisma config from prisma.config.ts.
+Prisma schema loaded from prisma\schema.prisma.
+Datasource "db": PostgreSQL database "wesetup_wt_pdf", schema "public" at "localhost:5432"
+Your database is now in sync with your Prisma schema. Done in 1.03s
+--- wesetup_wt_pdf: restore partial index (same SQL as src/lib/partners/schema-extras.ts) ---
+Loaded Prisma config from prisma.config.ts.
+Script executed successfully.
+=== wesetup_wt_qrforms: prisma db push ===
+Loaded Prisma config from prisma.config.ts.
+Prisma schema loaded from prisma\schema.prisma.
+Datasource "db": PostgreSQL database "wesetup_wt_qrforms", schema "public" at "localhost:5432"
+Your database is now in sync with your Prisma schema. Done in 3.65s
+--- wesetup_wt_qrforms: restore partial index (same SQL as src/lib/partners/schema-extras.ts) ---
+Loaded Prisma config from prisma.config.ts.
+Script executed successfully.
+=== wesetup_wt_blanks: prisma db push ===
+Loaded Prisma config from prisma.config.ts.
+Prisma schema loaded from prisma\schema.prisma.
+Datasource "db": PostgreSQL database "wesetup_wt_blanks", schema "public" at "localhost:5432"
+Your database is now in sync with your Prisma schema. Done in 1.23s
+--- wesetup_wt_blanks: restore partial index (same SQL as src/lib/partners/schema-extras.ts) ---
+Loaded Prisma config from prisma.config.ts.
+Script executed successfully.
+wesetup_wt_ui {"column_name":"scale","data_type":"integer","column_default":"10","is_nullable":"NO"} partialIndex=true rowsByScale=[]
+wesetup_wt_pdf {"column_name":"scale","data_type":"integer","column_default":"10","is_nullable":"NO"} partialIndex=true rowsByScale=[]
+wesetup_wt_qrforms {"column_name":"scale","data_type":"integer","column_default":"10","is_nullable":"NO"} partialIndex=true rowsByScale=[]
+wesetup_wt_blanks {"column_name":"scale","data_type":"integer","column_default":"10","is_nullable":"NO"} partialIndex=true rowsByScale=[]
+=== npx prisma generate (after all 4 pushes) ===
+Loaded Prisma config from prisma.config.ts.
+Prisma schema loaded from prisma\schema.prisma.
+✔ Generated Prisma Client (v7.4.2) to .\..\ui\node_modules\@prisma\client in 3.31s
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+3657:  scale          Int      @default(10)
