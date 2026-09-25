@@ -1,25 +1,30 @@
-ℹ tests 2275
+ℹ tests 2278
 ℹ suites 275
-ℹ pass 2275
+ℹ pass 2278
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 50404.8802
+ℹ duration_ms 54807.3922
 
-real	0m51.756s
-user	0m0.075s
-sys	0m0.275s
-✔ buildColleagueRecommendationEmail (7.7997ms)
-✔ sendColleagueRecommendationEmail без SMTP (dev) (3.9413ms)
-✔ parseNpsRecommendation (19.4766ms)
-✔ recommendationLink (1.4812ms)
-✔ имя и адрес для ответа (2.8972ms)
-✔ runNpsRecommendation (63.7909ms)
-✔ журнал действий (/settings/audit) (1.8302ms)
-✔ shouldAskNps (4.4342ms)
-✔ computeNps (2.4793ms)
-✔ шкалы NPS (2.7651ms)
-✔ computeNpsReport (3.5793ms)
-✔ parseNpsAnswer (POST /api/nps) (2.961ms)
-✔ parseNpsUpdate (PATCH /api/nps) (1.7076ms)
+real	0m56.732s
+user	0m0.138s
+sys	0m0.259s
+✔ buildReferralInviteEmail — одно письмо для «Баланс и бонусы» и опроса (7.6054ms)
+✔ sendReferralInviteEmail без SMTP (dev) (3.9552ms)
+✔ inviteColleague: «Баланс и бонусы» ведёт себя как раньше (25.9491ms)
+✔ inviteColleague: опрос «Посоветуете WeSetup коллегам?» (source = nps) (12.6618ms)
+✔ ссылка, имя и адрес для ответа (2.3523ms)
+✔ база награды по чистой подписке — вся сумма заказа (2.9834ms)
+✔ оплата подписки баллами всё равно даёт награду рекомендателю (0.4655ms)
+✔ частичная оплата баллами: база — подписка целиком, не остаток (0.3127ms)
+✔ нормализация реферального кода (0.5513ms)
+✔ runNpsRecommendation (7.9175ms)
+✔ журнал действий (/settings/audit) (1.6769ms)
+✔ shouldAskNps (4.1859ms)
+✔ computeNps (2.7237ms)
+✔ шкалы NPS (2.3739ms)
+✔ computeNpsReport (3.3137ms)
+✔ parseNpsAnswer (POST /api/nps) (2.4236ms)
+✔ parseNpsUpdate (PATCH /api/nps) (1.7741ms)
+0

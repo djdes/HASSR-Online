@@ -376,7 +376,6 @@ const DETAIL_KEY_LABELS: Record<string, string> = {
   subscriptionEnd: "Подписка до",
   // Рекомендация коллеге из опроса NPS
   colleagueEmail: "Почта коллеги",
-  referral: "Реферальная ссылка",
   npsScore: "Оценка",
   delivery: "Доставка",
 };

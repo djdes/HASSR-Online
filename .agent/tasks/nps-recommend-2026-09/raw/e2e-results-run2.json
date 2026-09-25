@@ -1,0 +1,299 @@
+[
+  {
+    "name": "login admin",
+    "ok": true
+  },
+  {
+    "name": "390: заголовок 1 строка, шкала 1 ряд, без горизонтальной прокрутки",
+    "ok": true,
+    "detail": {
+      "titleLines": 1,
+      "scaleRows": 1,
+      "scrollWidth": 390
+    }
+  },
+  {
+    "name": "оценка 5 сохранена по клику",
+    "ok": true,
+    "detail": {
+      "responseId": "cmuh7653d0001d09mhoxbo844"
+    }
+  },
+  {
+    "name": "своя контактная почта → 400 у поля",
+    "ok": true,
+    "detail": {
+      "status": 400,
+      "body": {
+        "error": "Это ваша почта — укажите адрес коллеги",
+        "field": "email"
+      },
+      "alert": "Это ваша почта — укажите адрес коллеги"
+    }
+  },
+  {
+    "name": "почта сотрудника своей организации → 400",
+    "ok": true,
+    "detail": {
+      "status": 400,
+      "body": {
+        "error": "Это почта сотрудника вашей организации — укажите коллегу из другого заведения",
+        "field": "email"
+      },
+      "alert": "Это почта сотрудника вашей организации — укажите коллегу из другого заведения"
+    }
+  },
+  {
+    "name": "уже зарегистрирован в WeSetup → 409 (общая проверка)",
+    "ok": true,
+    "detail": {
+      "status": 409,
+      "body": {
+        "error": "Этот адрес уже зарегистрирован в WeSetup — приглашение не нужно",
+        "field": "email"
+      },
+      "alert": "Этот адрес уже зарегистрирован в WeSetup — приглашение не нужно"
+    }
+  },
+  {
+    "name": "отправка коллеге → 200",
+    "ok": true,
+    "detail": {
+      "ok": true,
+      "delivery": "logged"
+    }
+  },
+  {
+    "name": "«Спасибо! Письмо отправлено»",
+    "ok": true
+  },
+  {
+    "name": "блок скрыт после отправки",
+    "ok": true
+  },
+  {
+    "name": "ensureReferralCode выдал код организации (ссылка всегда реферальная)",
+    "ok": true,
+    "detail": {
+      "referralCode": "YKJTVMFD"
+    }
+  },
+  {
+    "name": "рекомендация записана в ReferralInvite (видна в «Баланс и бонусы»)",
+    "ok": true,
+    "detail": {
+      "email": "colleague1@example.com",
+      "invitedByUserId": "cmugz8a6e0001kw9m0n9a1rra"
+    }
+  },
+  {
+    "name": "повтор на тот же адрес → 429 (общий антиспам)",
+    "ok": true,
+    "detail": {
+      "status": 429,
+      "body": {
+        "error": "На этот адрес уже отправляли приглашение сегодня",
+        "field": "email"
+      }
+    }
+  },
+  {
+    "name": "рекомендация №2 → 200",
+    "ok": true,
+    "detail": {
+      "status": 200,
+      "body": {
+        "ok": true,
+        "delivery": "logged"
+      }
+    }
+  },
+  {
+    "name": "рекомендация №3 → 200",
+    "ok": true,
+    "detail": {
+      "status": 200,
+      "body": {
+        "ok": true,
+        "delivery": "logged"
+      }
+    }
+  },
+  {
+    "name": "рекомендация №4 → 200",
+    "ok": true,
+    "detail": {
+      "status": 200,
+      "body": {
+        "ok": true,
+        "delivery": "logged"
+      }
+    }
+  },
+  {
+    "name": "рекомендация №5 → 200",
+    "ok": true,
+    "detail": {
+      "status": 200,
+      "body": {
+        "ok": true,
+        "delivery": "logged"
+      }
+    }
+  },
+  {
+    "name": "6-я за сутки → 429 «Не больше 5 рекомендаций в сутки»",
+    "ok": true,
+    "detail": {
+      "status": 429,
+      "body": {
+        "error": "Не больше 5 рекомендаций в сутки — попробуйте завтра"
+      }
+    }
+  },
+  {
+    "name": "текст > 1000 символов → 400 (message)",
+    "ok": true,
+    "detail": {
+      "status": 400,
+      "body": {
+        "error": "Сообщение длиннее 1000 символов — сократите его",
+        "field": "message"
+      }
+    }
+  },
+  {
+    "name": "кривая почта → 400 (email)",
+    "ok": true,
+    "detail": {
+      "status": 400,
+      "body": {
+        "error": "В адресе не хватает символа @",
+        "field": "email"
+      }
+    }
+  },
+  {
+    "name": "AuditLog nps.recommend: 5 строк, кому и оценка, без текста письма",
+    "ok": true,
+    "detail": [
+      {
+        "delivery": "logged",
+        "npsScore": 5,
+        "colleagueEmail": "colleague1@example.com"
+      },
+      {
+        "delivery": "logged",
+        "npsScore": 5,
+        "colleagueEmail": "colleague2@example.com"
+      },
+      {
+        "delivery": "logged",
+        "npsScore": 5,
+        "colleagueEmail": "colleague3@example.com"
+      },
+      {
+        "delivery": "logged",
+        "npsScore": 5,
+        "colleagueEmail": "colleague4@example.com"
+      },
+      {
+        "delivery": "logged",
+        "npsScore": 5,
+        "colleagueEmail": "colleague5@example.com"
+      }
+    ]
+  },
+  {
+    "name": "GET /api/balance: рекомендации из опроса в списке приглашений",
+    "ok": true,
+    "detail": [
+      "colleague5@example.com",
+      "colleague4@example.com",
+      "colleague3@example.com",
+      "colleague2@example.com",
+      "colleague1@example.com"
+    ]
+  },
+  {
+    "name": "баланс: приглашение → 200 { ok, invites }",
+    "ok": true,
+    "detail": {
+      "status": 200,
+      "invites": 6
+    }
+  },
+  {
+    "name": "баланс: свой адрес → 400 «Это ваш собственный адрес»",
+    "ok": true,
+    "detail": {
+      "status": 400,
+      "body": {
+        "error": "Это ваш собственный адрес",
+        "field": "email"
+      }
+    }
+  },
+  {
+    "name": "баланс: зарегистрирован → 409 «…бонуса не будет»",
+    "ok": true,
+    "detail": {
+      "status": 409,
+      "body": {
+        "error": "Этот адрес уже зарегистрирован в WeSetup — бонуса не будет",
+        "field": "email"
+      }
+    }
+  },
+  {
+    "name": "баланс: повтор → 429",
+    "ok": true,
+    "detail": {
+      "status": 429,
+      "body": {
+        "error": "На этот адрес уже отправляли приглашение сегодня",
+        "field": "email"
+      }
+    }
+  },
+  {
+    "name": "баланс: кривая почта → 400 «Укажите корректный адрес…»",
+    "ok": true,
+    "detail": {
+      "status": 400,
+      "body": {
+        "error": "Укажите корректный адрес электронной почты"
+      }
+    }
+  },
+  {
+    "name": "баланс: сообщение > 500 → 400 как раньше",
+    "ok": true,
+    "detail": {
+      "status": 400,
+      "body": {
+        "error": "Укажите корректный адрес электронной почты"
+      }
+    }
+  },
+  {
+    "name": "баланс UI: форма → подтверждение → 200",
+    "ok": true,
+    "detail": {
+      "status": 200
+    }
+  },
+  {
+    "name": "баланс UI: в списке и форма баланса, и рекомендации из опроса",
+    "ok": true,
+    "detail": [
+      "friend.ui@example.comприглашение отправлено",
+      "friend.balance@example.comприглашение отправлено",
+      "colleague5@example.comприглашение отправлено",
+      "colleague4@example.comприглашение отправлено",
+      "colleague3@example.comприглашение отправлено",
+      "colleague2@example.comприглашение отправлено",
+      "colleague1@example.comприглашение отправлено"
+    ]
+  }
+]

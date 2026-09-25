@@ -7,3 +7,7 @@ reset after first run: responses deleted 1 audit deleted 0
 reset after second run: responses deleted 3 audit deleted 5
 restored org {"createdAt":"2026-09-25T07:08:31.993Z","referralCode":null} admin {"showWhatsNew":true,"contactEmail":null,"npsAskedAt":"2026-09-25T13:29:07.082Z"}
 org createdAt raw restored to 2026-09-25 13:08:31.993 (original raw value; node-pg shows it as 10:08:31.993Z)
+--- run 2 (shared inviteColleague) ---
+org before {"raw":"2026-09-25 13:08:31.993","referralCode":null}
+cleared responses 7 nps audit 5 referral invites 0 ; org createdAt -30d, referralCode=null; admin npsAskedAt=null showWhatsNew=false contactEmail=denis.manager@example.com
+restored after run 2: org {"raw":"2026-09-25 13:08:31.993","referralCode":null} admin {"showWhatsNew":true,"contactEmail":null} ; ReferralInvite rows kept as evidence: 7

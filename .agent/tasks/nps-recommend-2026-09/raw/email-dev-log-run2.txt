@@ -1,0 +1,53 @@
+ POST /api/nps 200 in 10.8s (compile: 6.2s, proxy.ts: 4.3s, render: 220ms)
+ POST /api/nps/recommend 400 in 10.3s (compile: 8.9s, proxy.ts: 1259ms, render: 160ms)
+ POST /api/nps/recommend 400 in 669ms (compile: 57ms, proxy.ts: 360ms, render: 252ms)
+ POST /api/nps/recommend 409 in 63ms (compile: 7ms, proxy.ts: 18ms, render: 38ms)
+[email/dev] SMTP не настроен — письмо не отправлено на colleague1@example.com.
+[email/dev] Subject: Денис Управляющий из «Ресторан «Вкусная Гавань»» рекомендует WeSetup — электронные журналы СанПиН
+[email/dev] Reply-To: denis.manager@example.com
+[email/dev] Body:    Вам рекомендуют WeSetup Здравствуйте! Денис Управляющий из «Ресторан «Вкусная Гавань»» рекомендует вам WeSetup — сервис электронных журналов СанПиН и ХАССП: сотрудники заполняют их с телефона по QR-коду, а к проверке всё готово. Привет! Пишу из WeSetup &lt;b&gt;тест&lt;/b&gt; — журналы с телефона по QR. Посмотри, ссылка ниже. — Денис Управляющий, Ресторан «Вкусная Гавань» По этой ссылке вы начнёте бесплатно — до 3 сотрудников, без ограничений по записям, — а рекомендателю начислим бонус на баланс, когда вы оформите подписку. Попробовать WeSetup Ссылка: http://localhost:3000/r/YKJTVMFD?email=colleague1%40example.com Если ответите на это письмо, ответ получит Денис Управляющий. Если письмо пришло по ошибке — просто не переходите по ссылке, больше мы не напишем. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.
+[nps] рекомендация коллеге: user=cmugz8a6e0001kw9m0n9a1rra delivery=logged
+ POST /api/nps/recommend 200 in 4.8s (compile: 14ms, proxy.ts: 63ms, render: 4.7s)
+ POST /api/nps/recommend 429 in 432ms (compile: 8ms, proxy.ts: 18ms, render: 406ms)
+[email/dev] SMTP не настроен — письмо не отправлено на colleague2@example.com.
+[email/dev] Subject: Денис Управляющий из «Ресторан «Вкусная Гавань»» рекомендует WeSetup — электронные журналы СанПиН
+[email/dev] Reply-To: denis.manager@example.com
+[email/dev] Body:    Вам рекомендуют WeSetup Здравствуйте! Денис Управляющий из «Ресторан «Вкусная Гавань»» рекомендует вам WeSetup — сервис электронных журналов СанПиН и ХАССП: сотрудники заполняют их с телефона по QR-коду, а к проверке всё готово. Коллеге №2 — Денис Управляющий, Ресторан «Вкусная Гавань» По этой ссылке вы начнёте бесплатно — до 3 сотрудников, без ограничений по записям, — а рекомендателю начислим бонус на баланс, когда вы оформите подписку. Попробовать WeSetup Ссылка: http://localhost:3000/r/YKJTVMFD?email=colleague2%40example.com Если ответите на это письмо, ответ получит Денис Управляющий. Если письмо пришло по ошибке — просто не переходите по ссылке, больше мы не напишем. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.
+[nps] рекомендация коллеге: user=cmugz8a6e0001kw9m0n9a1rra delivery=logged
+ POST /api/nps/recommend 200 in 202ms (compile: 8ms, proxy.ts: 15ms, render: 180ms)
+[email/dev] SMTP не настроен — письмо не отправлено на colleague3@example.com.
+[email/dev] Subject: Денис Управляющий из «Ресторан «Вкусная Гавань»» рекомендует WeSetup — электронные журналы СанПиН
+[email/dev] Reply-To: denis.manager@example.com
+[email/dev] Body:    Вам рекомендуют WeSetup Здравствуйте! Денис Управляющий из «Ресторан «Вкусная Гавань»» рекомендует вам WeSetup — сервис электронных журналов СанПиН и ХАССП: сотрудники заполняют их с телефона по QR-коду, а к проверке всё готово. Коллеге №3 — Денис Управляющий, Ресторан «Вкусная Гавань» По этой ссылке вы начнёте бесплатно — до 3 сотрудников, без ограничений по записям, — а рекомендателю начислим бонус на баланс, когда вы оформите подписку. Попробовать WeSetup Ссылка: http://localhost:3000/r/YKJTVMFD?email=colleague3%40example.com Если ответите на это письмо, ответ получит Денис Управляющий. Если письмо пришло по ошибке — просто не переходите по ссылке, больше мы не напишем. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.
+[nps] рекомендация коллеге: user=cmugz8a6e0001kw9m0n9a1rra delivery=logged
+ POST /api/nps/recommend 200 in 226ms (compile: 6ms, proxy.ts: 12ms, render: 208ms)
+[email/dev] SMTP не настроен — письмо не отправлено на colleague4@example.com.
+[email/dev] Subject: Денис Управляющий из «Ресторан «Вкусная Гавань»» рекомендует WeSetup — электронные журналы СанПиН
+[email/dev] Reply-To: denis.manager@example.com
+[email/dev] Body:    Вам рекомендуют WeSetup Здравствуйте! Денис Управляющий из «Ресторан «Вкусная Гавань»» рекомендует вам WeSetup — сервис электронных журналов СанПиН и ХАССП: сотрудники заполняют их с телефона по QR-коду, а к проверке всё готово. Коллеге №4 — Денис Управляющий, Ресторан «Вкусная Гавань» По этой ссылке вы начнёте бесплатно — до 3 сотрудников, без ограничений по записям, — а рекомендателю начислим бонус на баланс, когда вы оформите подписку. Попробовать WeSetup Ссылка: http://localhost:3000/r/YKJTVMFD?email=colleague4%40example.com Если ответите на это письмо, ответ получит Денис Управляющий. Если письмо пришло по ошибке — просто не переходите по ссылке, больше мы не напишем. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.
+[nps] рекомендация коллеге: user=cmugz8a6e0001kw9m0n9a1rra delivery=logged
+ POST /api/nps/recommend 200 in 212ms (compile: 7ms, proxy.ts: 15ms, render: 190ms)
+[email/dev] SMTP не настроен — письмо не отправлено на colleague5@example.com.
+[email/dev] Subject: Денис Управляющий из «Ресторан «Вкусная Гавань»» рекомендует WeSetup — электронные журналы СанПиН
+[email/dev] Reply-To: denis.manager@example.com
+[email/dev] Body:    Вам рекомендуют WeSetup Здравствуйте! Денис Управляющий из «Ресторан «Вкусная Гавань»» рекомендует вам WeSetup — сервис электронных журналов СанПиН и ХАССП: сотрудники заполняют их с телефона по QR-коду, а к проверке всё готово. Коллеге №5 — Денис Управляющий, Ресторан «Вкусная Гавань» По этой ссылке вы начнёте бесплатно — до 3 сотрудников, без ограничений по записям, — а рекомендателю начислим бонус на баланс, когда вы оформите подписку. Попробовать WeSetup Ссылка: http://localhost:3000/r/YKJTVMFD?email=colleague5%40example.com Если ответите на это письмо, ответ получит Денис Управляющий. Если письмо пришло по ошибке — просто не переходите по ссылке, больше мы не напишем. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.
+[nps] рекомендация коллеге: user=cmugz8a6e0001kw9m0n9a1rra delivery=logged
+ POST /api/nps/recommend 200 in 206ms (compile: 10ms, proxy.ts: 18ms, render: 178ms)
+ POST /api/nps/recommend 429 in 164ms (compile: 5ms, proxy.ts: 12ms, render: 146ms)
+ POST /api/nps/recommend 400 in 46ms (compile: 6ms, proxy.ts: 15ms, render: 26ms)
+ POST /api/nps/recommend 400 in 44ms (compile: 7ms, proxy.ts: 15ms, render: 22ms)
+[email/dev] SMTP не настроен — письмо не отправлено на friend.balance@example.com.
+[email/dev] Subject: Денис Управляющий из «Ресторан «Вкусная Гавань»» рекомендует WeSetup — электронные журналы СанПиН
+[email/dev] Reply-To: denis.manager@example.com
+[email/dev] Body:    Вам рекомендуют WeSetup Здравствуйте! Денис Управляющий из «Ресторан «Вкусная Гавань»» рекомендует вам WeSetup — сервис электронных журналов СанПиН и ХАССП: сотрудники заполняют их с телефона по QR-коду, а к проверке всё готово. Пара слов от себя — Денис Управляющий, Ресторан «Вкусная Гавань» По этой ссылке вы начнёте бесплатно — до 3 сотрудников, без ограничений по записям, — а рекомендателю начислим бонус на баланс, когда вы оформите подписку. Попробовать WeSetup Ссылка: http://localhost:3000/r/YKJTVMFD?email=friend.balance%40example.com Если ответите на это письмо, ответ получит Денис Управляющий. Если письмо пришло по ошибке — просто не переходите по ссылке, больше мы не напишем. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.
+ POST /api/balance/referrals 200 in 6.6s (compile: 5.9s, proxy.ts: 177ms, render: 515ms)
+ POST /api/balance/referrals 400 in 46ms (compile: 6ms, proxy.ts: 12ms, render: 29ms)
+ POST /api/balance/referrals 409 in 39ms (compile: 5ms, proxy.ts: 11ms, render: 23ms)
+ POST /api/balance/referrals 429 in 183ms (compile: 6ms, proxy.ts: 12ms, render: 165ms)
+ POST /api/balance/referrals 400 in 37ms (compile: 5ms, proxy.ts: 13ms, render: 19ms)
+ POST /api/balance/referrals 400 in 39ms (compile: 5ms, proxy.ts: 12ms, render: 22ms)
+[email/dev] SMTP не настроен — письмо не отправлено на friend.ui@example.com.
+[email/dev] Subject: Денис Управляющий из «Ресторан «Вкусная Гавань»» рекомендует WeSetup — электронные журналы СанПиН
+[email/dev] Reply-To: denis.manager@example.com
+[email/dev] Body:    Вам рекомендуют WeSetup Здравствуйте! Денис Управляющий из «Ресторан «Вкусная Гавань»» рекомендует вам WeSetup — сервис электронных журналов СанПиН и ХАССП: сотрудники заполняют их с телефона по QR-коду, а к проверке всё готово. Попробуй — с QR заполнять удобно — Денис Управляющий, Ресторан «Вкусная Гавань» По этой ссылке вы начнёте бесплатно — до 3 сотрудников, без ограничений по записям, — а рекомендателю начислим бонус на баланс, когда вы оформите подписку. Попробовать WeSetup Ссылка: http://localhost:3000/r/YKJTVMFD?email=friend.ui%40example.com Если ответите на это письмо, ответ получит Денис Управляющий. Если письмо пришло по ошибке — просто не переходите по ссылке, больше мы не напишем. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.
+ POST /api/balance/referrals 200 in 549ms (compile: 66ms, proxy.ts: 13ms, render: 469ms)

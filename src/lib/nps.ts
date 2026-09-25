@@ -18,11 +18,16 @@ export const NPS_EDIT_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export const NPS_COMMENT_MAX_LENGTH = 1000;
 
-/** Рекомендация коллеге после оценки 4–5: письмо от WeSetup с текстом пользователя. */
+/**
+ * Рекомендация коллеге после оценки 4–5 — то же приглашение, что в
+ * «Баланс и бонусы» (src/lib/balance/invite-colleague.ts), с лимитом
+ * организации оттуда же; здесь — только добавки опроса.
+ */
 export const NPS_RECOMMEND_MESSAGE_MAX_LENGTH = 1000;
 export const NPS_RECOMMEND_PER_USER_PER_DAY = 5;
-/** Заслон от рассылки с одной организации несколькими руководителями. */
-export const NPS_RECOMMEND_PER_ORG_PER_DAY = 20;
+/** Строка AuditLog на каждое письмо из опроса (кому, оценка — без текста). */
+export const NPS_RECOMMEND_AUDIT_ACTION = "nps.recommend";
+export const NPS_RECOMMEND_AUDIT_ENTITY = "NpsResponse";
 export const NPS_RECOMMEND_DEFAULT_MESSAGE =
   "Привет! Мы ведём журналы ХАССП и СанПиН в WeSetup — заполняем с телефона по QR, проверки проходим спокойно. Посмотри, ссылка ниже.";
 
