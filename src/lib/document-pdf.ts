@@ -1,4 +1,3 @@
-import { formatRowSignatures, normalizeRowSignatures } from "@/lib/brakerage-commission";
 import type { Prisma } from "@prisma/client";
 import { jsPDF } from "jspdf";
 import type { CellDef, CellHookData, RowInput } from "jspdf-autotable";
@@ -68,14 +67,15 @@ import {
   normalizeFinishedProductDocumentConfig,
 } from "@/lib/finished-product-document";
 import {
+  PERISHABLE_LEGACY_SIGNATURES_TITLE,
   PERISHABLE_REJECTION_TEMPLATE_CODE,
-  formatPerishableDateTime,
-  formatPerishableExpiry,
   getPerishableRejectionDocumentTitle,
   getPerishableRejectionFilePrefix,
   normalizePerishableRejectionConfig,
-  ORGANOLEPTIC_LABELS,
-  STORAGE_CONDITION_LABELS,
+  perishableCellText,
+  perishableLegacySignatureLines,
+  perishablePrintColumns,
+  type PerishableRejectionRow,
 } from "@/lib/perishable-rejection-document";
 import {
   PRODUCT_WRITEOFF_DOCUMENT_TITLE,
@@ -3620,7 +3620,7 @@ function drawPerishableRejectionPdf(doc: jsPDF, params: {
   // подставляет дефолты «Соответствует» / «от +2 до +6» — печать
   // повторяет это, иначе инспектор видит «оценку» там, где записи нет.
   const isBlankForm = params.config.rows.length === 0;
-  const rows = isBlankForm
+  const rows: PerishableRejectionRow[] = isBlankForm
     ? [
         {
           id: "",
@@ -3645,103 +3645,34 @@ function drawPerishableRejectionPdf(doc: jsPDF, params: {
       ]
     : params.config.rows;
 
-  // Колонки как в таблице документа (`resolveColumns`). Заголовки — ПОЛНЫЕ
-  // экранные формулировки: укороченные вроде «Документ» теряли смысл графы
-  // для инспектора. `softenSlashBreaks` разбивает «Фасовка/Кол-во» на
+  // Графы — ровно как в таблице документа (`perishablePrintColumns`: форма
+  // приложения № 5 СанПиН или свой набор организации; свои колонки — на
+  // своих местах, как на экране). Текст ячейки — тот же, что на экране и в
+  // карточке (`perishableCellText`). Ширины подгоняются под лист: раньше
+  // сумма фиксированных ширин была 295 мм при 277 мм листа, и правая графа
+  // («Подпись бракеражной комиссии», которой у скоропорта нет) уходила за
+  // край. `softenSlashBreaks` разбивает «А/Б» в своих подписях на
   // переносимые слова — иначе autoTable рвал длинный токен посимвольно.
-  type PerishableRow = (typeof rows)[number];
-  const perishableColumns = pdfColumns("perishable_rejection", params.config);
-  type PerishablePrintColumn = {
-    key: string;
-    head: string;
-    cell: (row: PerishableRow) => string;
-    style: { cellWidth: number; halign?: "center" };
-  };
-  const perishablePrint = ([
-    {
-      key: "arrival",
-      head: perishableColumns.label("arrival", "Дата, время поступления пищ. продукции"),
-      // Тем же хелпером, что и экран: раньше в PDF уезжал сырой ISO
-      // «2026-09-15» вместо «15.09.2026».
-      cell: (row) => formatPerishableDateTime(row.arrivalDate, row.arrivalTime),
-      style: { cellWidth: 24 },
-    },
-    { key: "product", head: perishableColumns.label("product", "Наименование"), cell: (row) => row.productName, style: { cellWidth: 26 } },
-    {
-      key: "productionDate",
-      head: perishableColumns.label("productionDate", "Дата выработки"),
-      cell: (row) => row.productionDate,
-      style: { cellWidth: 19, halign: "center" },
-    },
-    {
-      key: "manufacturer",
-      head: softenSlashBreaks(perishableColumns.label("manufacturer", "Изготовитель/поставщик")),
-      cell: (row) => [row.manufacturer, row.supplier].filter(Boolean).join("\n"),
-      style: { cellWidth: 28 },
-    },
-    {
-      key: "packaging",
-      head: softenSlashBreaks(perishableColumns.label("packaging", "Фасовка/Кол-во поступившего продукта (в кг, литрах, шт)")),
-      cell: (row) => [row.packaging, row.quantity].filter(Boolean).join("\n"),
-      style: { cellWidth: 24, halign: "center" },
-    },
-    {
-      key: "document",
-      head: perishableColumns.label("document", "Номер документа, подтверждающего безопасность"),
-      cell: (row) => row.documentNumber,
-      style: { cellWidth: 24 },
-    },
-    {
-      key: "organoleptic",
-      head: perishableColumns.label("organoleptic", "Результаты органолептической оценки"),
-      cell: (row) => ORGANOLEPTIC_LABELS[row.organolepticResult] || row.organolepticResult || "",
-      style: { cellWidth: 24 },
-    },
-    {
-      key: "storage",
-      head: perishableColumns.label("storage", "Условия хранения, конечный срок реализации"),
-      cell: (row) =>
-        [
-          STORAGE_CONDITION_LABELS[row.storageCondition] || row.storageCondition || "",
-          // Для скоропорта важен час срока, а не только дата.
-          formatPerishableExpiry(row),
-        ]
-          .filter(Boolean)
-          .join("\n"),
-      style: { cellWidth: 27 },
-    },
-    {
-      key: "sale",
-      head: perishableColumns.label("sale", "Дата, время фактической реализации"),
-      cell: (row) => formatPerishableDateTime(row.actualSaleDate, row.actualSaleTime),
-      style: { cellWidth: 22, halign: "center" },
-    },
-    {
-      key: "responsible",
-      head: perishableColumns.label("responsible", "Ответственное лицо (ФИО, должность)"),
-      cell: (row) => row.responsiblePerson,
-      style: { cellWidth: 27 },
-    },
-    {
-      key: "signatures",
-      head: perishableColumns.label("signatures", "Подпись бракеражной комиссии"),
-      cell: (row) => formatRowSignatures(normalizeRowSignatures((row as { signatures?: unknown }).signatures)),
-      style: { cellWidth: 26 },
-    },
-    { key: "note", head: perishableColumns.label("note", "Примечание"), cell: (row) => row.note, style: { cellWidth: 24 } },
-  ] satisfies PerishablePrintColumn[])
-    .filter((column) => perishableColumns.visible(column.key))
-    .sort((a, b) => perishableColumns.rank(a.key) - perishableColumns.rank(b.key))
-    // Свои колонки организации печатаются последними — в том же порядке,
-    // что на экране.
-    .concat(
-      perishableColumns.custom().map((column) => ({
-        key: column.key,
-        head: column.label,
-        cell: (row: PerishableRow) => row.custom?.[column.key] || "",
-        style: { cellWidth: 22, halign: "center" as const },
-      }))
-    );
+  const printColumns = perishablePrintColumns(params.config);
+  const perishableMarginX = 10;
+  const perishableWidths = fitColumnWidths(
+    doc,
+    printColumns.map((column) => column.width),
+    perishableMarginX
+  );
+  const perishableHeadPadding = 1;
+  const perishableHeads = printColumns.map((column) => softenSlashBreaks(column.head));
+  // Кегль шапки — самый крупный (до 6,6 pt), при котором каждое слово шапки
+  // помещается в свою графу: слова вроде «продовольственного» не рвутся
+  // («ветеринарно-санитарной» переносится после дефиса, см. ниже).
+  const perishableHeadFontSize = fitHeadFontSize(
+    doc,
+    perishableHeads.map((text, index) => ({
+      text,
+      width: (perishableWidths[index]?.cellWidth ?? 0) - perishableHeadPadding * 2,
+    })),
+    { max: 6.6, min: 5.4 }
+  );
 
   autoTable(doc, {
     startY: perishableTitleY + 8,
@@ -3749,7 +3680,7 @@ function drawPerishableRejectionPdf(doc: jsPDF, params: {
     styles: {
       font: "JournalUnicode",
       fontSize: 7,
-      cellPadding: 1.4,
+      cellPadding: { top: 1.2, bottom: 1.2, left: 1, right: 1 },
       lineColor: [0, 0, 0],
       lineWidth: 0.2,
       valign: "middle",
@@ -3759,29 +3690,117 @@ function drawPerishableRejectionPdf(doc: jsPDF, params: {
     headStyles: {
       font: "JournalUnicode",
       fontStyle: "bold",
-      // Мелкий кегль шапки — чтобы длинные формулировки ломались по
-      // границам СЛОВ, а не по символам.
-      fontSize: 6.6,
-      cellPadding: 1,
+      fontSize: perishableHeadFontSize,
+      cellPadding: perishableHeadPadding,
       fillColor: [255, 255, 255],
       textColor: [0, 0, 0],
       halign: "center",
       valign: "middle",
     },
-    margin: { left: 10, right: 10 },
-    // Заголовки — ПОЛНЫЕ экранные формулировки
-    // (perishable-rejection-document-client). Укороченные варианты
-    // вроде «Документ» теряли смысл графы для инспектора.
+    margin: { left: perishableMarginX, right: perishableMarginX },
     // Колонки «№» нет ни на экране, ни в печати браузера.
-    // `softenSlashBreaks` разбивает «Фасовка/Кол-во» на переносимые
-    // слова — иначе autoTable рвал длинный токен ПОСИМВОЛЬНО
-    // («Фасовка/Ко|л-во посту|пившего»).
-    head: [perishablePrint.map((column) => column.head)],
-    body: rows.map((row) => perishablePrint.map((column) => column.cell(row))),
-    // Ширины — по колонкам, которые печатаются: скрытая колонка не сдвигает
-    // ширины остальных.
-    columnStyles: Object.fromEntries(perishablePrint.map((column, index) => [index, column.style])),
+    head: [perishableHeads],
+    body: rows.map((row) =>
+      printColumns.map((column) => perishableCellText(row, column.key, { joiner: "\n" }))
+    ),
+    columnStyles: Object.fromEntries(
+      printColumns.map((column, index) => [
+        index,
+        { cellWidth: perishableWidths[index]?.cellWidth, halign: column.halign },
+      ])
+    ),
+    // Ширина — из подогнанных ширин графы: у ячеек шапки `columnStyles` не
+    // применяются, и `styles.cellWidth` там «auto».
+    didParseCell: (data) => breakWideHyphenatedWords(doc, data, perishableWidths[data.column.index]?.cellWidth ?? 0),
   });
+
+  // Подписи прежней бракеражной комиссии (у скоропорта её больше нет, графы
+  // в форме приложения № 5 для них нет) — отдельным блоком под таблицей,
+  // чтобы подписанные ранее записи не потеряли подписи в печати.
+  const legacySignatures = perishableLegacySignatureLines(params.config.rows);
+  if (legacySignatures.length > 0) {
+    const tableEnd =
+      (doc as unknown as { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY ?? perishableTitleY + 8;
+    autoTable(doc, {
+      startY: tableEnd + 5,
+      theme: "plain",
+      // Заголовок блока не остаётся один внизу листа: не помещается весь
+      // блок — он целиком переходит на следующий лист.
+      pageBreak: "avoid",
+      margin: { left: perishableMarginX, right: perishableMarginX },
+      styles: {
+        font: "JournalUnicode",
+        fontSize: 7,
+        cellPadding: 0.8,
+        textColor: [0, 0, 0],
+        overflow: "linebreak",
+      },
+      headStyles: {
+        font: "JournalUnicode",
+        fontStyle: "bold",
+        fontSize: 7.5,
+        fillColor: [255, 255, 255],
+        textColor: [0, 0, 0],
+      },
+      head: [[PERISHABLE_LEGACY_SIGNATURES_TITLE]],
+      body: legacySignatures.map((line) => [line]),
+    });
+  }
+}
+
+/**
+ * Кусочки слова, между которыми можно перенести строку: после дефиса
+ * («ветеринарно-» + «санитарной»). Слово без дефиса — один кусок.
+ */
+function hyphenParts(word: string): string[] {
+  return word.split(/(?<=[^\s-]-)(?=[^\s-])/);
+}
+
+/**
+ * Кегль шапки таблицы, при котором самое длинное слово каждой графы
+ * помещается в её ширину (`width` — без полей ячейки, мм). autoTable иначе
+ * рвёт не влезающее слово посимвольно («орган|олептической»). Слово с
+ * дефисом должно поместиться кусками: перенос после дефиса даёт
+ * `breakWideHyphenatedWords`.
+ */
+function fitHeadFontSize(
+  doc: jsPDF,
+  cells: Array<{ text: string; width: number }>,
+  range: { max: number; min: number }
+): number {
+  doc.setFont("JournalUnicode", "bold");
+  const scale = doc.internal.scaleFactor;
+  for (let size = range.max; size >= range.min - 1e-6; size = Math.round((size - 0.2) * 10) / 10) {
+    const fits = cells.every(({ text, width }) =>
+      text
+        .split(/\s+/)
+        .flatMap(hyphenParts)
+        .every((part) => !part || (doc.getStringUnitWidth(part) * size) / scale <= width - 0.2)
+    );
+    if (fits) return size;
+  }
+  return range.min;
+}
+
+/**
+ * Слово шире графы autoTable рвёт посимвольно («Поставк|а-Юг»). Если в таком
+ * слове есть дефис — даём перенос после дефиса. Пробел ставим только в
+ * слова, которые в графу целиком всё равно не помещаются, поэтому лишнего
+ * пробела в строке не бывает: строка всё равно перенесётся именно там.
+ */
+function breakWideHyphenatedWords(doc: jsPDF, data: CellHookData, width: number) {
+  const styles = data.cell.styles;
+  if (width <= 0) return;
+  const available = width - data.cell.padding("horizontal") - 0.2;
+  doc.setFont(styles.font, styles.fontStyle);
+  const measure = (text: string) => (doc.getStringUnitWidth(text) * styles.fontSize) / doc.internal.scaleFactor;
+  const lines = Array.isArray(data.cell.text) ? data.cell.text : [String(data.cell.text ?? "")];
+  data.cell.text = lines.map((line) =>
+    line
+      .split(" ")
+      .map((word) => (word.includes("-") && measure(word) > available ? hyphenParts(word).join(" ") : word))
+      .join(" ")
+  );
 }
 
 function drawGlassListPdf(doc: jsPDF, params: {

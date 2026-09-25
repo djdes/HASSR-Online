@@ -62,6 +62,8 @@ const BUILT_IN: Record<string, JournalColumnTemplate[]> = {
   ],
   perishable_rejection: [
     {
+      // Ровно форма приложения № 5 СанПиН: 13 граф реестра в его порядке и
+      // с его подписями (см. PERISHABLE_REJECTION_COLUMNS).
       id: "builtin:standard",
       name: "Стандартная форма (Приложение №5 СанПиН)",
       journalCode: "perishable_rejection",
@@ -146,11 +148,16 @@ const SYNONYMS: Record<string, Array<{ key: string; any: string[][] }>> = {
     { key: "name", any: [["наименован"], ["блюд"], ["издели"], ["полуфабрикат"]] },
     { key: "note", any: [["примечан"], ["комментар"]] },
   ],
+  // Графы формы приложения № 5: изготовитель и поставщик, фасовка и
+  // количество — отдельные колонки. Склеенная подпись старой формы
+  // («Изготовитель/поставщик») достаётся изготовителю — он проверяется первым.
   perishable_rejection: [
     { key: "arrival", any: [["поступлен"], ["дата", "час", "поступ"]] },
     { key: "productionDate", any: [["выработк"], ["дата", "изготовлен"]] },
-    { key: "manufacturer", any: [["изготовител"], ["поставщик"], ["производител"]] },
-    { key: "packaging", any: [["фасовк"], ["количеств"], ["кол во"]] },
+    { key: "manufacturer", any: [["изготовител"], ["производител"]] },
+    { key: "supplier", any: [["поставщик"]] },
+    { key: "packaging", any: [["фасовк"]] },
+    { key: "quantity", any: [["количеств"], ["кол во"]] },
     { key: "document", any: [["документ"], ["сертификат"], ["декларац"]] },
     { key: "organoleptic", any: [["органолепт"]] },
     { key: "storage", any: [["хранен"], ["срок", "реализац"]] },
@@ -241,7 +248,10 @@ export function columnsFromHeaderLabels(code: string, labels: readonly string[])
       const standardLabel = column ? (typeof column.label === "function" ? column.label({}) : column.label) : key;
       matched.push({ label, key, standardLabel });
       order.push(key);
-      if (label !== standardLabel) labelsOut[key] = label;
+      // Сверяем ПОЛНУЮ подпись из файла (не обрезанную до 60 символов) без
+      // учёта регистра и знаков: шапка по форме СанПиН длиннее 60 символов,
+      // и обрезок иначе сохранился бы «своей» подписью вместо стандартной.
+      if (norm(raw) !== norm(standardLabel)) labelsOut[key] = label;
       continue;
     }
     if (custom.length >= JOURNAL_CUSTOM_COLUMNS_MAX) {

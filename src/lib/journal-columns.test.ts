@@ -18,10 +18,10 @@ import {
 
 const keys = (columns: Array<{ key: string }>) => columns.map((column) => column.key);
 
-test("реестр: 15 колонок бракеража готовой продукции и 11 — скоропорта", () => {
+test("реестр: 15 колонок бракеража готовой продукции и 13 граф формы приложения № 5 — скоропорта", () => {
   // Восемь колонок формы Приложения 4 + семь колонок расширенной формы.
   assert.equal(resolveColumns("finished_product", {}).length, 15);
-  assert.equal(resolveColumns("perishable_rejection", {}).length, 11);
+  assert.equal(resolveColumns("perishable_rejection", {}).length, 13);
   assert.deepEqual(resolveColumns("hygiene", {}), []);
 });
 

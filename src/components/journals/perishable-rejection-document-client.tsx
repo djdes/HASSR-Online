@@ -47,11 +47,12 @@ import { ResponsiveMenu } from "@/components/ui/responsive-menu";
 import {
   addHoursToLocalDateTime,
   createPerishableRejectionRow,
-  formatPerishableDateTime,
-  formatPerishableExpiry,
   formatPerishableResponsible,
   normalizePerishableRejectionConfig,
   PERISHABLE_EXPIRY_PRESET_HOURS,
+  PERISHABLE_LEGACY_SIGNATURES_TITLE,
+  perishableCellText,
+  perishableLegacySignatureLines,
   STORAGE_CONDITION_LABELS,
   ORGANOLEPTIC_LABELS,
   PERISHABLE_ORGANOLEPTIC_VALUES,
@@ -182,15 +183,31 @@ const BULK_ROWS_MAX = 50;
 const CHECKBOX_COL_PERCENT = 2.6;
 
 /**
- * Заголовок колонки бланка бракеража (P8).
+ * Заголовок графы бланка бракеража.
  *
- * Раньше стоял `break-words` (`overflow-wrap: break-word`) — он разрешает
- * рвать слово В ЛЮБОМ месте, если оно не влезает, и на узких колонках
- * давал «Кол- во» и оторванную скобку в «(ФИО, должность )». Перенос
- * теперь ТОЛЬКО по словам; место освободили сами колонки (см. веса выше)
- * и шрифт 11.5px, как в бракераже готовой продукции.
+ * Форма приложения № 5 СанПиН — 13 граф с дословными длинными подписями
+ * («продовольственного», «ветеринарно-санитарной»). Переносим по словам,
+ * длинное слово — по слогам (`hyphens-auto`, страница `lang="ru"`);
+ * `overflow-wrap: break-word` — только последний запас, чтобы слово не
+ * вылезало за рамку, если браузер не умеет переносить по-русски. Шрифт 11px
+ * (было 11.5px на 11 графах).
  */
-const HEAD_CELL_CLASS = `${GRID_HEAD_CELL_CLASS} px-1.5 py-1.5 text-[11.5px] font-semibold leading-[1.25] [overflow-wrap:normal] [word-break:normal] hyphens-none`;
+const HEAD_CELL_CLASS = `${GRID_HEAD_CELL_CLASS} px-1.5 py-1.5 text-[11px] font-semibold leading-[1.25] hyphens-auto [overflow-wrap:break-word] [word-break:normal]`;
+
+/** Короткие подписи граф в карточке на телефоне (если своей подписи нет). */
+const CARD_LABELS: Record<string, string> = {
+  packaging: "Фасовка",
+  productionDate: "Дата выработки",
+  manufacturer: "Изготовитель",
+  supplier: "Поставщик",
+  quantity: "Количество",
+  document: "Документ безопасности",
+  organoleptic: "Органолептика",
+  storage: "Хранение и срок",
+  sale: "Фактическая реализация",
+  responsible: "Ответственное лицо",
+  note: "Примечание",
+};
 
 /** Пауза до автосохранения после последнего нажатия клавиши. */
 const AUTOSAVE_DELAY_MS = 900;
@@ -224,12 +241,14 @@ function mergeHM(h: string, m: string) {
 /**
  * Ячейка «только показать, править в окне строки».
  *
- * Нужна там, где в одной колонке бланка живут ДВА поля строки
- * («Изготовитель / поставщик», «Фасовка / Кол-во», «Условия хранения,
- * срок») или значение — код, а не текст (органолептика). Правка на месте
- * писала всю склейку в одно поле: данные портились и удлинялись с каждым
- * заходом, а органолептика молча становилась «Соответствует» при любом
- * написании, кроме «не соответ».
+ * Нужна там, где в графе живут ДВА поля строки («Условия хранения,
+ * конечный срок реализации», дата и час), значение — код, а не текст
+ * (органолептика), или показ отличается от записанного: у старых строк
+ * графа «Изготовитель» / «Фасовка» показывается без склеенного хвоста
+ * «␠/␠поставщик» (`perishableCellText`). Правка на месте писала всю
+ * склейку в одно поле: данные портились и удлинялись с каждым заходом, а
+ * органолептика молча становилась «Соответствует» при любом написании,
+ * кроме «не соответ».
  */
 function JournalCellOpensRow({
   value,
@@ -241,9 +260,11 @@ function JournalCellOpensRow({
   disabled?: boolean;
 }) {
   const text = value.trim();
+  // `break-words`: в узких графах формы (13 граф) длинное слово
+  // («птицефабрика»», «пластиковый») переносится, а не вылезает за рамку.
   if (disabled) {
     return (
-      <div className="min-h-7 px-1.5 py-[5px] text-[12.5px] leading-[1.35] text-[#0b1024]">
+      <div className="min-h-7 break-words px-1.5 py-[5px] text-[12.5px] leading-[1.35] text-[#0b1024]">
         {text}
       </div>
     );
@@ -253,7 +274,7 @@ function JournalCellOpensRow({
       type="button"
       onClick={onOpen}
       title="Нажмите, чтобы открыть окно записи"
-      className="block min-h-7 w-full rounded-md px-1.5 py-[5px] text-left text-[12.5px] leading-[1.35] text-[#0b1024] transition-colors duration-150 hover:bg-[#f5f6ff] focus-visible:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+      className="block min-h-7 w-full break-words rounded-md px-1.5 py-[5px] text-left text-[12.5px] leading-[1.35] text-[#0b1024] transition-colors duration-150 hover:bg-[#f5f6ff] focus-visible:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
     >
       {text || <span className="text-[#9b9fb3]">—</span>}
     </button>
@@ -368,71 +389,17 @@ export function PerishableRejectionDocumentClient({
         className="size-5"
       />
     ) : null,
-    fields: [
-      isColumnVisible("productionDate")
-        ? { label: columnLabel("productionDate", "Дата выработки"), value: row.productionDate, hideIfEmpty: true }
-        : null,
-      // В одной колонке бланка живут два поля; карточка показывала только
-      // первое — поставщик и фасовка с телефона были не видны вообще.
-      isColumnVisible("manufacturer")
-        ? {
-            label: columnLabel("manufacturer", "Изготовитель/поставщик"),
-            value: [row.manufacturer, row.supplier].filter(Boolean).join(" / "),
-            hideIfEmpty: true,
-          }
-        : null,
-      isColumnVisible("packaging")
-        ? {
-            label: columnLabel("packaging", "Фасовка/количество"),
-            value: [row.packaging, row.quantity].filter(Boolean).join(" / "),
-            hideIfEmpty: true,
-          }
-        : null,
-      isColumnVisible("document")
-        ? { label: columnLabel("document", "Документ безопасности"), value: row.documentNumber, hideIfEmpty: true }
-        : null,
-      isColumnVisible("organoleptic")
-        ? {
-            label: columnLabel("organoleptic", "Органолептика"),
-            value: ORGANOLEPTIC_LABELS[row.organolepticResult] || row.organolepticResult,
-            hideIfEmpty: true,
-          }
-        : null,
-      isColumnVisible("storage")
-        ? {
-            label: columnLabel("storage", "Условия хранения"),
-            value: STORAGE_CONDITION_LABELS[row.storageCondition] || row.storageCondition,
-            hideIfEmpty: true,
-          }
-        : null,
-      // Срок реализации в карточке раньше не показывался вообще — с
-      // телефона его нельзя было даже прочитать, не открывая запись.
-      isColumnVisible("storage")
-        ? {
-            label: "Срок реализации",
-            value: formatPerishableExpiry(row),
-            hideIfEmpty: true,
-          }
-        : null,
-      isColumnVisible("sale")
-        ? {
-            label: columnLabel("sale", "Реализовано"),
-            value: `${row.actualSaleDate || ""} ${row.actualSaleTime || ""}`.trim(),
-            hideIfEmpty: true,
-          }
-        : null,
-      isColumnVisible("responsible")
-        ? { label: columnLabel("responsible", "Ответственный"), value: row.responsiblePerson, hideIfEmpty: true }
-        : null,
-      isColumnVisible("note") ? { label: columnLabel("note", "Примечание"), value: row.note, hideIfEmpty: true } : null,
-      // Свои колонки организации — и в карточке на телефоне, иначе с
-      // телефона их вообще не видно.
-      ...customColumns.map(({ column }) => ({
-        label: column.label,
-        value: customCellValue(row, column.key),
+    // Графы — в порядке таблицы (форма приложения № 5 или свой набор),
+    // текст — тот же, что в таблице и печати (`perishableCellText`).
+    // Дата поступления и наименование — уже в заголовке карточки. Свои
+    // колонки организации — тоже здесь, иначе с телефона их не видно.
+    fields: visibleColumnsView
+      .filter((column) => column.key !== "arrival" && column.key !== "product")
+      .map((column) => ({
+        label: column.custom ? column.label : columnLabel(column.key, CARD_LABELS[column.key] ?? column.label),
+        value: column.custom ? customCellValue(row, column.key) : perishableCellText(row, column.key),
         hideIfEmpty: true,
       })),
-    ].filter((field): field is { label: string; value: string; hideIfEmpty: boolean } => field !== null),
   }));
   const [addModalOpen, setAddModalOpen] = useState(false);
   /** «Применить ко всем выделенным» — одно окно на несколько строк. */
@@ -615,7 +582,7 @@ export function PerishableRejectionDocumentClient({
     const opens = (value: string) => (
       <JournalCellOpensRow value={value} onOpen={() => openEditRow(row)} disabled={readOnly} />
     );
-    const text = (field: "productName" | "productionDate" | "documentNumber" | "responsiblePerson" | "note") => (
+    const text = (field: "productName" | "documentNumber" | "responsiblePerson" | "note") => (
       <JournalCellInput
         value={row[field]}
         onChange={(e) => updateRow(row.id, { [field]: e.target.value } as Partial<PerishableRejectionRow>)}
@@ -624,34 +591,29 @@ export function PerishableRejectionDocumentClient({
       />
     );
     switch (column.key) {
-      case "arrival":
-        // Дата и время — только через окно строки: свободный ввод делился
-        // по пробелу и молча портил оба поля.
-        return opens(formatPerishableDateTime(row.arrivalDate, row.arrivalTime));
       case "product":
         return text("productName");
-      case "productionDate":
-        return text("productionDate");
-      case "manufacturer":
-        return opens([row.manufacturer, row.supplier].filter(Boolean).join(" / "));
-      case "packaging":
-        return opens([row.packaging, row.quantity].filter(Boolean).join(" / "));
       case "document":
         return text("documentNumber");
-      case "organoleptic":
-        return opens(ORGANOLEPTIC_LABELS[row.organolepticResult] || row.organolepticResult);
-      case "storage":
-        return opens(
-          [STORAGE_CONDITION_LABELS[row.storageCondition] || row.storageCondition, formatPerishableExpiry(row)]
-            .filter(Boolean)
-            .join(", ")
-        );
-      case "sale":
-        return opens(formatPerishableDateTime(row.actualSaleDate, row.actualSaleTime));
       case "responsible":
         return text("responsiblePerson");
       case "note":
         return text("note");
+      // Даты — только через окно строки (там поле даты): свободный ввод
+      // делился по пробелу и молча портил поля, а «2026-09-22» в узкой графе
+      // рвался по дефису; показ — «22.09.2026», как в печати. Изготовитель /
+      // поставщик и фасовка / количество — отдельные графы формы; правятся в
+      // окне строки, где у них списки организации (мастер-кабинет, справочник).
+      case "arrival":
+      case "productionDate":
+      case "packaging":
+      case "manufacturer":
+      case "supplier":
+      case "quantity":
+      case "organoleptic":
+      case "storage":
+      case "sale":
+        return opens(perishableCellText(row, column.key));
       default:
         return null;
     }
@@ -841,11 +803,12 @@ export function PerishableRejectionDocumentClient({
     toast.success(`Добавлено строк: ${items.length}`);
   }
 
-  /** Поля сырья с фото — только те, чьи колонки видны в журнале. */
+  /** Поля сырья с фото — только те, чьи графы видны в журнале. */
   const photoRawFields: Array<VisionFieldKey & keyof VisionRawItem> = [
     "name",
-    ...(isColumnVisible("manufacturer") ? (["manufacturer", "supplier"] as const) : []),
-    ...(isColumnVisible("packaging") ? (["quantity"] as const) : []),
+    ...(isColumnVisible("manufacturer") ? (["manufacturer"] as const) : []),
+    ...(isColumnVisible("supplier") ? (["supplier"] as const) : []),
+    ...(isColumnVisible("quantity") ? (["quantity"] as const) : []),
     ...(isColumnVisible("productionDate") ? (["productionDate"] as const) : []),
     ...(isColumnVisible("storage") ? (["expiryDate"] as const) : []),
   ];
@@ -1131,18 +1094,16 @@ export function PerishableRejectionDocumentClient({
   const todayFocusRowId = config.rows.find((row) => row.arrivalDate === todayKey)?.id;
 
   /**
-   * Ширины колонок бланка бракеража (P8).
+   * Ширины граф бланка бракеража (P8).
    *
-   * Веса, а не готовые проценты: опциональное «Примечание» просто
-   * добавляется в массив, и сетка пересчитывается сама — как в
-   * `finished-product-document-client.tsx`. Сумма ВСЕГДА равна 100%
-   * вместе с колонкой чекбокса, поэтому `table-fixed` не раздувает
-   * таблицу шире бумажного полотна (1150px).
+   * Веса, а не готовые проценты: скрытая графа или своя колонка просто
+   * выпадает из массива / добавляется в него, и сетка пересчитывается
+   * сама — как в `finished-product-document-client.tsx`. Сумма ВСЕГДА
+   * равна 100% вместе с колонкой чекбокса, поэтому `table-fixed` не
+   * раздувает таблицу шире бумажного полотна.
    *
-   * Порядок весов = порядок `<th>` ниже:
-   * дата поступления · наименование · дата выработки · изготовитель ·
-   * фасовка · номер документа · органолептика · условия хранения ·
-   * дата реализации · ответственное лицо · (примечание).
+   * Порядок весов = порядок `<th>` ниже = набор колонок документа (форма
+   * приложения № 5: 13 граф, веса — в реестре `journal-columns.ts`).
    */
   const columnWeights = visibleColumnsView.map((column) => column.weight);
   const columnWeightsTotal = columnWeights.reduce((sum, weight) => sum + weight, 0);
@@ -1150,6 +1111,8 @@ export function PerishableRejectionDocumentClient({
     (weight) =>
       `${((weight / columnWeightsTotal) * (100 - CHECKBOX_COL_PERCENT)).toFixed(3)}%`
   );
+  /** Подписи прежней комиссии — блоком под таблицей (графы для них нет). */
+  const legacySignatureLines = useMemo(() => perishableLegacySignatureLines(config.rows), [config.rows]);
 
   return (
     <div className="text-black">
@@ -1356,10 +1319,12 @@ export function PerishableRejectionDocumentClient({
               Теперь ВСЕ колонки, включая чекбокс, заданы процентами от
               одной суммы 100%, а ширины считаются из весов — включение
               опционального «Примечания» пересчитывает сетку, а не ломает
-              её. Минимум опущен до 1040px: на десктопе таблица ровно по
-              полотну (правая рамка видна), на узких экранах остаётся
-              скролл внутри viewport'а. */}
-          <table className="w-full min-w-[1040px] table-fixed border-collapse text-[12.5px]">
+              её. На десктопе таблица ровно по полотну (правая рамка видна),
+              на узких экранах остаётся скролл внутри viewport'а.
+
+              Форма приложения № 5 (2026-09-26): 13 граф вместо 11, минимум
+              1120px — иначе длинные слова шапки не помещались в графы. */}
+          <table className="w-full min-w-[1120px] table-fixed border-collapse text-[12.5px]">
             <colgroup>
               {/* Q2-3: служебная колонка выделения не печатается. */}
               <col className="print:hidden" style={{ width: `${CHECKBOX_COL_PERCENT}%` }} />
@@ -1444,14 +1409,10 @@ export function PerishableRejectionDocumentClient({
                   заготовка», а замена таблицы бланком без строк, поэтому
                   её не трогаем.
                   leading=1 (чекбокс), labelSpan=2 — подпись растянута на
-                  «Дата, время поступления» + «Наименование»: вместе они
+                  «Дата и час, поступления» + «Наименование»: вместе они
                   опознают запись (когда и что поступило). Остальные
-                  колонки (дата выработки, изготовитель, фасовка, документ,
-                  органолептика, условия хранения, дата реализации,
-                  ответственный и опциональное примечание) — данные,
-                  пустые в новой строке: trailing = config.showNote ? 9 : 8.
-                  Сумма 1+2+(9 или 8) = 12 или 11 — тот же colSpan, что был
-                  раньше. */}
+                  видимые графы — данные, пустые в новой строке:
+                  trailing = видимых граф − 2. Сумма = число колонок таблицы. */}
               {!readOnly ? (
                 <JournalAddRow
                   leading={1}
@@ -1464,6 +1425,19 @@ export function PerishableRejectionDocumentClient({
             </tbody>
           </table>
         </MobileViewTableWrapper>
+        {/* Подписи прежней бракеражной комиссии: у скоропорта её больше
+            нет, в форме приложения № 5 для них нет графы — подписанные
+            раньше записи не теряют подписи (так же блоком в печати). */}
+        {legacySignatureLines.length > 0 ? (
+          <div className="rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3 print:rounded-none print:border-black print:bg-white">
+            <div className="text-[13px] font-semibold text-[#0b1024]">{PERISHABLE_LEGACY_SIGNATURES_TITLE}</div>
+            <ul className="mt-1.5 space-y-1 text-[12.5px] leading-[1.45] text-[#3c4053]">
+              {legacySignatureLines.map((line, index) => (
+                <li key={index}>{line}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
         {headerMenu.element}
       </div>
 
@@ -1624,10 +1598,10 @@ export function PerishableRejectionDocumentClient({
               />
             </div>
 
-            {/* Поставщик */}
-            <div className={`space-y-2${isColumnVisible("manufacturer") ? "" : " hidden"}`}>
+            {/* Поставщик — своя графа формы приложения № 5 */}
+            <div className={`space-y-2${isColumnVisible("supplier") ? "" : " hidden"}`}>
               <Label className="text-[13px] font-medium text-[#3c4053]">
-                Поставщик
+                {columnLabel("supplier", "Поставщик")}
               </Label>
               <Select
                 value={toNone(
@@ -1671,14 +1645,20 @@ export function PerishableRejectionDocumentClient({
               />
             </div>
 
-            {/* Фасовка + Кол-во side-by-side */}
-            <div className={`grid grid-cols-1 gap-3 sm:grid-cols-2${isColumnVisible("packaging") ? "" : " hidden"}`}>
-              <div className="space-y-2">
+            {/* Фасовка + количество рядом — разные графы формы, у каждой
+                своя видимость */}
+            <div
+              className={`grid grid-cols-1 gap-3 sm:grid-cols-2${
+                isColumnVisible("packaging") || isColumnVisible("quantity") ? "" : " hidden"
+              }`}
+            >
+              <div className={`space-y-2${isColumnVisible("packaging") ? "" : " hidden"}`}>
                 <Label className="text-[13px] font-medium text-[#3c4053]">
-                  Фасовка
+                  {columnLabel("packaging", "Фасовка")}
                 </Label>
                 <Input
                   className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
+                  placeholder="Например: пакет 1 кг"
                   value={draftRow.packaging}
                   onChange={(e) =>
                     setDraftRow((prev) => ({
@@ -1688,12 +1668,13 @@ export function PerishableRejectionDocumentClient({
                   }
                 />
               </div>
-              <div className="space-y-2">
+              <div className={`space-y-2${isColumnVisible("quantity") ? "" : " hidden"}`}>
                 <Label className="text-[13px] font-medium text-[#3c4053]">
-                  Количество
+                  {columnLabel("quantity", "Количество (кг, л, шт)")}
                 </Label>
                 <Input
                   className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
+                  placeholder="Например: 20 кг"
                   value={draftRow.quantity}
                   onChange={(e) =>
                     setDraftRow((prev) => ({
@@ -1964,14 +1945,21 @@ export function PerishableRejectionDocumentClient({
                 </Select>
               </div>
             </div>
+            {isColumnVisible("responsible") ? (
+              <p className="-mt-2 text-[12px] leading-[1.5] text-[#6f7282]">
+                В графу «{columnLabel("responsible", "Подпись ответственного лица")}» попадут ФИО и должность
+                выбранного сотрудника.
+              </p>
+            ) : null}
 
-            {/* Примечание */}
+            {/* Примечание — факты списания, возврата и т. п. */}
             <div className={`space-y-2${isColumnVisible("note") ? "" : " hidden"}`}>
               <Label className="text-[13px] font-medium text-[#3c4053]">
                 {columnLabel("note", "Примечание")}
               </Label>
               <Input
                 className="h-9 rounded-xl border-[#dcdfed] px-3.5 text-[13.5px]"
+                placeholder="Например: возврат поставщику, списание"
                 value={draftRow.note}
                 onChange={(e) =>
                   setDraftRow((prev) => ({ ...prev, note: e.target.value }))

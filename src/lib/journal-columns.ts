@@ -219,23 +219,48 @@ const FINISHED_PRODUCT_COLUMNS: JournalColumnDef[] = [
   },
 ];
 
+/**
+ * Реестр бракеража скоропортящейся продукции — графы рекомендуемого образца
+ * «Журнал бракеража скоропортящейся пищевой продукции» (приложение № 5 к
+ * СанПиН 2.3/2.4.3590-20; та же форма — приложение № 5 к СанПиН
+ * 2.3/2.4.4282-26, действует с 01.09.2026). 13 граф, порядок и подписи —
+ * дословно, включая запятые образца («Дата и час, поступления…»,
+ * «…оценки, поступившего…»); первая буква подписи — заглавная. Сверка с
+ * текстом правил: `.agent/tasks/perishable-official-form-2026-09/evidence.md`.
+ *
+ * До 2026-09-26 изготовитель с поставщиком и фасовка с количеством были
+ * склеены в одну графу; «Поставщик» и «Количество…» выделены из них, старые
+ * сохранённые наборы колонок читаются через `REGISTRY_REVISIONS`.
+ * Колонки подписей комиссии нет: сторонняя комиссия — только у бракеража
+ * готовой продукции (решение владельца 2026-09-22); подписи из прежних
+ * записей печатаются отдельным блоком под таблицей.
+ */
 const PERISHABLE_REJECTION_COLUMNS: JournalColumnDef[] = [
-  { key: "arrival", label: "Дата, время поступления пищ. продукции", weight: 95 },
-  { key: "product", label: "Наименование", weight: 110 },
-  { key: "productionDate", label: "Дата выработки", weight: 78 },
-  { key: "manufacturer", label: "Изготовитель/поставщик", weight: 100 },
-  { key: "packaging", label: "Фасовка/Кол-во поступившего продукта (в кг, литрах, шт)", weight: 92 },
-  { key: "document", label: "Номер документа, подтверждающего безопасность", weight: 92 },
-  { key: "organoleptic", label: "Результаты органолептической оценки", weight: 100 },
-  { key: "storage", label: "Условия хранения, конечный срок реализации", weight: 100 },
-  { key: "sale", label: "Дата, время фактической реализации", weight: 84 },
-  { key: "responsible", label: "Ответственное лицо (ФИО, должность)", weight: 96 },
-  // Колонки подписей комиссии нет: сторонняя комиссия — только у бракеража
-  // готовой продукции, скоропорт — внутренний (решение владельца 2026-09-22).
+  { key: "arrival", label: "Дата и час, поступления пищевой продукции", weight: 84 },
+  { key: "product", label: "Наименование", weight: 95 },
+  { key: "packaging", label: "Фасовка", weight: 68 },
+  { key: "productionDate", label: "Дата выработки", weight: 84 },
+  { key: "manufacturer", label: "Изготовитель", weight: 94 },
+  { key: "supplier", label: "Поставщик", weight: 92 },
+  { key: "quantity", label: "Количество поступившего продукта (в кг, литрах, шт)", weight: 90 },
+  {
+    key: "document",
+    label:
+      "Номер документа, подтверждающего безопасность принятого пищевого продукта (декларация о соответствии, свидетельство о государственной регистрации, документы по результатам ветеринарно-санитарной экспертизы)",
+    weight: 120,
+  },
+  {
+    key: "organoleptic",
+    label: "Результаты органолептической оценки, поступившего продовольственного сырья и пищевых продуктов",
+    weight: 122,
+  },
+  { key: "storage", label: "Условия хранения, конечный срок реализации", weight: 96 },
+  { key: "sale", label: "Дата и час фактической реализации", weight: 86 },
+  { key: "responsible", label: "Подпись ответственного лица", weight: 99 },
   {
     key: "note",
     label: "Примечание",
-    weight: 70,
+    weight: 90,
     legacyFlag: { key: "showNote", defaultVisible: true },
   },
 ];
@@ -244,6 +269,107 @@ const REGISTRY: Record<string, JournalColumnDef[]> = {
   finished_product: FINISHED_PRODUCT_COLUMNS,
   perishable_rejection: PERISHABLE_REJECTION_COLUMNS,
 };
+
+/**
+ * Смена состава реестра без миграции данных. Колонка из `splitFrom`
+ * выделена из прежней склеенной колонки-«родителя» (её данные раньше
+ * выводились в нём). `previousOrder` — порядок реестра до смены.
+ */
+type RegistryRevision = {
+  splitFrom: Readonly<Record<string, string>>;
+  previousOrder: readonly string[];
+};
+
+const REGISTRY_REVISIONS: Record<string, RegistryRevision> = {
+  // 2026-09-26: скоропорт по форме приложения № 5 СанПиН.
+  perishable_rejection: {
+    splitFrom: { supplier: "manufacturer", quantity: "packaging" },
+    previousOrder: [
+      "arrival",
+      "product",
+      "productionDate",
+      "manufacturer",
+      "packaging",
+      "document",
+      "organoleptic",
+      "storage",
+      "sale",
+      "responsible",
+      "note",
+    ],
+  },
+};
+
+function stringList(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+}
+
+function sameKeys(a: readonly string[], b: readonly string[]): boolean {
+  return a.length === b.length && a.every((key, index) => key === b[index]);
+}
+
+/**
+ * Сохранённый набор колонок (документа, общий организации, свой шаблон),
+ * сделанный до смены реестра, — к новому реестру. Набор «не знает» новую
+ * колонку, если её ключа нет ни в скрытых, ни в порядке, ни в подписях, ни
+ * в обязательных. Тогда:
+ *   • скрыт или обязателен «родитель» — новая колонка тоже (раньше её
+ *     данные были в нём);
+ *   • порядок не переставляли (колонки бланка стоят прежним стандартом) —
+ *     новый стандартный порядок, свои колонки остаются за той колонкой
+ *     бланка, за которой стояли;
+ *   • порядок переставлен человеком — новая колонка сразу за «родителем».
+ * Набор, уже знающий новые ключи, не трогаем; повторный вызов ничего не
+ * меняет. Данные строк не меняются никогда.
+ */
+export function upgradeSavedColumns(code: string, record: ConfigRecord): ConfigRecord {
+  const revision = REGISTRY_REVISIONS[code];
+  if (!revision) return record;
+  const hidden = stringList(record.hidden);
+  const order = stringList(record.order);
+  const mustFill = stringList(record.mustFill);
+  const labels = asRecord(record.labels);
+  const known = (key: string) =>
+    hidden.includes(key) ||
+    order.includes(key) ||
+    mustFill.includes(key) ||
+    Object.prototype.hasOwnProperty.call(labels, key);
+  const added = Object.keys(revision.splitFrom).filter((key) => !known(key));
+  if (added.length === 0) return record;
+
+  const next: ConfigRecord = { ...record };
+  let changed = false;
+  const inherit = (field: "hidden" | "mustFill", list: string[]) => {
+    const extra = added.filter((key) => list.includes(revision.splitFrom[key]));
+    if (extra.length === 0) return;
+    next[field] = [...list, ...extra];
+    changed = true;
+  };
+  inherit("hidden", hidden);
+  inherit("mustFill", mustFill);
+  if (order.length === 0) return changed ? next : record;
+
+  const registryKeys = getColumnRegistry(code).map((column) => column.key);
+  const registrySet = new Set(registryKeys);
+  if (sameKeys(order.filter((key) => registrySet.has(key)), revision.previousOrder)) {
+    const after = new Map<string | null, string[]>();
+    let anchor: string | null = null;
+    for (const key of order) {
+      if (registrySet.has(key)) anchor = key;
+      else after.set(anchor, [...(after.get(anchor) ?? []), key]);
+    }
+    next.order = [...(after.get(null) ?? []), ...registryKeys.flatMap((key) => [key, ...(after.get(key) ?? [])])];
+    return next;
+  }
+  const nextOrder = [...order];
+  for (const key of added) {
+    const at = nextOrder.indexOf(revision.splitFrom[key]);
+    if (at < 0) nextOrder.push(key);
+    else nextOrder.splice(at + 1, 0, key);
+  }
+  next.order = nextOrder;
+  return next;
+}
 
 export const JOURNAL_COLUMN_CODES = Object.keys(REGISTRY);
 
@@ -321,7 +447,8 @@ export function sanitizeColumnsConfig(
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
   const registry = getColumnRegistry(code);
   if (registry.length === 0) return null;
-  const record = raw as ConfigRecord;
+  // Набор, сохранённый до смены реестра, — к текущему составу колонок.
+  const record = upgradeSavedColumns(code, raw as ConfigRecord);
   const configRecord = asRecord(config);
   const byKey = new Map(registry.map((column) => [column.key, column]));
 

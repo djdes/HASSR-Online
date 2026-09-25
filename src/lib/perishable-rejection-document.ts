@@ -1,5 +1,6 @@
 import {
   legacyFlagsFromColumns,
+  resolveColumns,
   sanitizeColumnsConfig,
   type JournalColumnsConfig,
 } from "@/lib/journal-columns";
@@ -16,9 +17,10 @@ export const PERISHABLE_REJECTION_DOCUMENT_TITLE =
   "Журнал бракеража скоропортящейся пищевой продукции";
 
 /**
- * «ФИО, должность» для колонки «Ответственное лицо». Строка хранится
- * склеенной (без id человека), поэтому должность берём из его карточки в
- * момент записи — а не метку из фильтра или «Управляющий» по умолчанию.
+ * «ФИО, должность» для графы «Подпись ответственного лица» (электронная
+ * запись того, кто принял продукцию). Строка хранится склеенной (без id
+ * человека), поэтому должность берём из его карточки в момент записи — а
+ * не метку из фильтра или «Управляющий» по умолчанию.
  */
 export function formatPerishableResponsible(
   user: { name: string } & NonNullable<Parameters<typeof getUserDisplayTitle>[0]>
@@ -417,3 +419,179 @@ export const ORGANOLEPTIC_LABELS: Record<string, string> = {
   good_quality: "Доброкачественно",
   poor_quality: "Недоброкачественно",
 };
+
+/**
+ * Прежняя правка ячейки «Изготовитель / поставщик» на месте записывала всю
+ * склейку в поле изготовителя («Ополье / ИП Смирнов» при поставщике «ИП
+ * Смирнов»), и с каждым заходом хвост повторялся. У поставщика теперь своя
+ * графа: хвост «␠/␠<поставщик>» в графе изготовителя не повторяем (так же
+ * фасовка / количество). Данные в базе не меняются; что записано одной
+ * строкой без такого хвоста, показывается в своей графе как есть.
+ */
+export function withoutGluedTail(value: string, tail: string): string {
+  let text = normalizeText(value);
+  const suffix = normalizeText(tail);
+  if (!suffix) return text;
+  for (let guard = 0; guard < 10 && text.endsWith(suffix); guard += 1) {
+    const head = text.slice(0, text.length - suffix.length);
+    if (!head.endsWith(" / ")) break;
+    const rest = head.slice(0, -3).trim();
+    if (!rest) break;
+    text = rest;
+  }
+  return text;
+}
+
+/**
+ * Текст графы формы — одно место для таблицы на сайте, карточки на
+ * телефоне и печати (как `finishedProductCellText`). `joiner` — чем
+ * соединять условия хранения и конечный срок: на экране «, », в печати —
+ * перенос строки. Свои колонки организации — `row.custom[key]`.
+ */
+export function perishableCellText(
+  row: PerishableRejectionRow,
+  key: string,
+  options: { joiner?: string } = {}
+): string {
+  switch (key) {
+    case "arrival":
+      return formatPerishableDateTime(row.arrivalDate, row.arrivalTime);
+    case "product":
+      return row.productName;
+    case "packaging":
+      return withoutGluedTail(row.packaging, row.quantity);
+    case "productionDate":
+      return formatPerishableDateTime(row.productionDate, "");
+    case "manufacturer":
+      return withoutGluedTail(row.manufacturer, row.supplier);
+    case "supplier":
+      return row.supplier;
+    case "quantity":
+      return row.quantity;
+    case "document":
+      return row.documentNumber;
+    case "organoleptic":
+      return ORGANOLEPTIC_LABELS[row.organolepticResult] || row.organolepticResult || "";
+    case "storage":
+      return [STORAGE_CONDITION_LABELS[row.storageCondition] || row.storageCondition || "", formatPerishableExpiry(row)]
+        .filter(Boolean)
+        .join(options.joiner ?? ", ");
+    case "sale":
+      return formatPerishableDateTime(row.actualSaleDate, row.actualSaleTime);
+    case "responsible":
+      return row.responsiblePerson;
+    case "note":
+      return row.note;
+    default:
+      return row.custom?.[key] ?? "";
+  }
+}
+
+/**
+ * Относительные ширины граф в печати (мм до подгонки под лист, сумма —
+ * ширина листа А4 альбомом без полей, 277 мм). Подобраны так, чтобы шапка
+ * шла кеглем не меньше 6 pt без разрыва слов («поступившего»,
+ * «фактической», «продовольственного»), а значения 7 pt — тоже целыми
+ * («Недоброкачественно», «22.09.2026», «Управляющий»); «Примечание» —
+ * свободный текст, ему тоже место.
+ */
+const PERISHABLE_PRINT_WIDTHS: Record<string, number> = {
+  arrival: 18,
+  product: 21,
+  packaging: 19.5,
+  productionDate: 16.5,
+  manufacturer: 23,
+  supplier: 22,
+  quantity: 20,
+  document: 26.5,
+  organoleptic: 30,
+  storage: 20.5,
+  sale: 19,
+  responsible: 21.5,
+  note: 19.5,
+};
+const PERISHABLE_PRINT_CUSTOM_WIDTH = 20;
+const PERISHABLE_PRINT_CENTERED = new Set(["arrival", "packaging", "productionDate", "quantity", "sale"]);
+
+export type PerishablePrintColumn = {
+  key: string;
+  head: string;
+  /** Относительная ширина, мм до подгонки под лист. */
+  width: number;
+  halign: "left" | "center";
+  custom: boolean;
+};
+
+/**
+ * Графы печати — ровно как в таблице документа: видимые колонки набора в
+ * его порядке (свои колонки — на своих местах), подписи — стандартные
+ * формы или свои. Одна функция для PDF и проверки печати.
+ */
+export function perishablePrintColumns(config: unknown): PerishablePrintColumn[] {
+  return resolveColumns(PERISHABLE_REJECTION_TEMPLATE_CODE, config)
+    .filter((column) => !column.hidden)
+    .map((column) => ({
+      key: column.key,
+      head: column.label,
+      width: column.custom ? PERISHABLE_PRINT_CUSTOM_WIDTH : PERISHABLE_PRINT_WIDTHS[column.key] ?? PERISHABLE_PRINT_CUSTOM_WIDTH,
+      halign: column.custom ? (column.custom.type === "text" ? "left" : "center") : PERISHABLE_PRINT_CENTERED.has(column.key) ? "center" : "left",
+      custom: column.custom !== null,
+    }));
+}
+
+/** Заголовок блока подписей прежней комиссии — под таблицей на сайте и в печати. */
+export const PERISHABLE_LEGACY_SIGNATURES_TITLE =
+  "Подписи бракеражной комиссии к записям (сохранены из прежней формы журнала)";
+
+/** «21.09.2026 11:40» в поясе организации. */
+function signedAtText(iso: string, timeZone = "Europe/Moscow"): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  try {
+    return new Intl.DateTimeFormat("ru-RU", {
+      timeZone,
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    })
+      .format(date)
+      .replace(",", "");
+  } catch {
+    return iso.slice(0, 16).replace("T", " ");
+  }
+}
+
+/**
+ * Подписи прежней бракеражной комиссии под строками (у скоропорта комиссии
+ * больше нет, графы для них в форме приложения № 5 нет). Не теряем: одна
+ * строка на запись — «Салат листовой, поступление 21.09.2026 11:05 —
+ * Мария Смирнова (Председатель комиссии), 21.09.2026 11:40». Пустой
+ * список — блока нет.
+ */
+export function perishableLegacySignatureLines(
+  rows: readonly PerishableRejectionRow[],
+  timeZone?: string
+): string[] {
+  return rows.flatMap((row) => {
+    const signatures = normalizeRowSignatures(row.signatures);
+    if (signatures.length === 0) return [];
+    const arrival = formatPerishableDateTime(row.arrivalDate, row.arrivalTime);
+    const what = [row.productName.trim() || "Без наименования", arrival ? `поступление ${arrival}` : ""]
+      .filter(Boolean)
+      .join(", ");
+    const who = signatures
+      .map((signature) =>
+        [
+          `${signature.name || "Без имени"}${signature.role ? ` (${signature.role})` : ""}`,
+          signedAtText(signature.signedAt, timeZone),
+        ]
+          .filter(Boolean)
+          .join(", ")
+      )
+      .join("; ");
+    return [`${what} — ${who}`];
+  });
+}
