@@ -83,6 +83,8 @@ type EmailTransport = {
     subject: string;
     html: string;
     attachments?: EmailAttachment[];
+    /** Куда уйдёт ответ получателя (например, рекомендующему коллеге). */
+    replyTo?: string;
   }): Promise<void>;
 };
 
@@ -101,12 +103,13 @@ function getTransport(): EmailTransport {
   const smtp = createSmtpTransport();
   cachedTransport = {
     name: "smtp",
-    async deliver({ to, subject, html, attachments }) {
+    async deliver({ to, subject, html, attachments, replyTo }) {
       await smtp.sendMail({
         from: FROM,
         to,
         subject,
         html,
+        ...(replyTo ? { replyTo } : {}),
         ...(attachments && attachments.length > 0 ? { attachments } : {}),
       });
     },
@@ -232,6 +235,16 @@ function isSmtpConfigured(): boolean {
 }
 
 /**
+ * Настроена ли реальная отправка. `false` от `send*Email` при
+ * ненастроенной почте означает «письмо записано в лог» (dev), а не сбой —
+ * вызывающему, который показывает человеку «письмо не ушло», нужно это
+ * различать.
+ */
+export function isEmailDeliveryConfigured(): boolean {
+  return isSmtpConfigured();
+}
+
+/**
  * Возвращает true, если письмо принято транспортом. Раньше функция
  * возвращала void и глотала ошибку в console.error — вызывающий код не мог
  * отличить «ушло» от «упало», и в панели обращений было не видно, что
@@ -241,8 +254,10 @@ async function sendEmail(
   to: string,
   subject: string,
   html: string,
-  attachments?: EmailAttachment[]
+  attachments?: EmailAttachment[],
+  options?: { replyTo?: string | null }
 ): Promise<boolean> {
+  const replyTo = options?.replyTo?.trim() || undefined;
   if (!isSmtpConfigured()) {
     const stripped = html
       .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
@@ -253,11 +268,12 @@ async function sendEmail(
       `[email/dev] SMTP не настроен — письмо не отправлено на ${to}.`
     );
     console.info(`[email/dev] Subject: ${subject}`);
+    if (replyTo) console.info(`[email/dev] Reply-To: ${replyTo}`);
     console.info(`[email/dev] Body:    ${stripped}`);
     return false;
   }
   try {
-    await getTransport().deliver({ to, subject, html, attachments });
+    await getTransport().deliver({ to, subject, html, attachments, replyTo });
     return true;
   } catch (error) {
     console.error("Email send error:", error);
@@ -715,6 +731,84 @@ export async function sendFeedbackReplyEmail(params: {
     <p style="margin:24px 0 0;color:#71717a;font-size:13px">Ответить можно прямо на это письмо или написать боту @wesetupbot в Telegram.</p>`;
 
   return sendEmail(to, subject, layout("Ответ поддержки", body));
+}
+
+export type ColleagueRecommendationEmailParams = {
+  to: string;
+  /** Имя рекомендующего — в теме и в тексте; null — «Коллега из …». */
+  fromUserName: string | null;
+  fromOrganizationName: string;
+  /** Текст рекомендующего как есть; экранируется при сборке. Пустой — без блока. */
+  message: string;
+  /** Ссылка на регистрацию: реферальная `/r/<код>` или обычная `/register`. */
+  link: string;
+  /** Ссылка реферальная — упоминаем бонус рекомендующему. */
+  referral: boolean;
+  /** Почта рекомендующего для ответа; null — служебная или её нет. */
+  replyTo: string | null;
+};
+
+/** Одна строка для заголовка письма: без переводов строк и не бесконечная. */
+function headerText(value: string, max = 80): string {
+  const chars = Array.from(value, (ch) => {
+    const code = ch.charCodeAt(0);
+    return code < 32 || code === 127 ? " " : ch;
+  });
+  const text = chars.join("").replace(/\s+/g, " ").trim();
+  const points = Array.from(text);
+  return points.length > max ? `${points.slice(0, max - 1).join("").trimEnd()}…` : text;
+}
+
+/**
+ * Письмо коллеге из опроса «Посоветуете WeSetup коллегам?» (оценка 4–5).
+ * Отправитель — WeSetup (как у приглашений «порекомендуй другу»), имя и
+ * организация рекомендующего — в теме и в тексте, ответ уходит ему
+ * (Reply-To). Сборка отдельно от отправки — чтобы проверять тестом.
+ */
+export function buildColleagueRecommendationEmail(params: ColleagueRecommendationEmailParams): {
+  subject: string;
+  html: string;
+  replyTo: string | null;
+} {
+  // Имена не склоняем — все фразы с именем в именительном падеже.
+  const name = headerText(params.fromUserName ?? "");
+  const organization = headerText(params.fromOrganizationName);
+  const author = name || "Коллега";
+  const subject = organization ? `${author} из «${organization}» советует WeSetup` : `${author} советует WeSetup`;
+  const whoName = name ? `<strong>${escapeHtml(name)}</strong>` : "Ваш коллега";
+  const who = organization ? `${whoName} из «${escapeHtml(organization)}»` : whoName;
+  const signature = [name, organization].filter(Boolean).map((part) => escapeHtml(part)).join(", ");
+  const message = params.message.trim();
+  const P = 'style="margin:0 0 16px;color:#3f3f46;line-height:1.6"';
+  const MUTED = 'style="margin:16px 0 0;font-size:13px;color:#71717a;line-height:1.5"';
+  const personal = message
+    ? `<div style="background:#f5f6ff;border:1px solid #dcdfed;border-radius:8px;padding:20px;margin:0 0 20px">
+      <p style="margin:0;white-space:pre-wrap;color:#18181b;font-size:14px;line-height:1.6">${escapeHtml(message)}</p>${
+        signature ? `\n      <p style="margin:12px 0 0;font-size:13px;color:#71717a">— ${signature}</p>` : ""
+      }
+    </div>`
+    : "";
+  const bonus = params.referral
+    ? " По этой ссылке автору рекомендации начислят бонус, когда вы оформите подписку."
+    : "";
+  const reply = params.replyTo
+    ? `<p ${MUTED}>Если ответите на это письмо, ответ получит ${name ? escapeHtml(name) : "автор рекомендации"}.</p>`
+    : "";
+  const body = `
+    <p ${P}>Здравствуйте!</p>
+    <p ${P}>${who} советует вам WeSetup — электронные журналы ХАССП и СанПиН: сотрудники заполняют их с телефона по QR-коду, а журналы всегда готовы к проверке.</p>
+    ${personal}
+    <p ${P}>Начать можно бесплатно — до ${FREE_MAX_USERS} сотрудников, без ограничений по записям.${bonus}</p>
+    <a href="${escapeHtml(params.link)}" style="display:inline-block;background:#5566f6;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px">Попробовать WeSetup</a>
+    <p ${MUTED}>Ссылка: ${escapeHtml(params.link)}</p>
+    ${reply}
+    <p ${MUTED}>Письмо отправлено через WeSetup по просьбе автора рекомендации. Если оно пришло по ошибке — просто удалите его, больше мы не напишем.</p>`;
+  return { subject, html: layout("Вам советуют WeSetup", body), replyTo: params.replyTo };
+}
+
+export async function sendColleagueRecommendationEmail(params: ColleagueRecommendationEmailParams): Promise<boolean> {
+  const email = buildColleagueRecommendationEmail(params);
+  return sendEmail(params.to, email.subject, email.html, undefined, { replyTo: email.replyTo });
 }
 
 /**

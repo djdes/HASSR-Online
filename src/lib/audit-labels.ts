@@ -201,6 +201,7 @@ export const AUDIT_ACTION_LABELS: Record<string, AuditActionLabel> = {
   "yandex_backup.failed": { label: "Резервная копия не создалась", variant: "destructive" },
 
   // --- Прочее -------------------------------------------------------------
+  "nps.recommend": { label: "Рекомендация WeSetup коллеге", variant: "outline" },
   "ai_assistant.action": { label: "Действие помощника", variant: "outline" },
   "closing-document.refresh-buyer": { label: "Реквизиты покупателя обновлены", variant: "secondary" },
   "tasksflow.cleanup_pending": { label: "Очистка задач TasksFlow", variant: "secondary" },
@@ -249,6 +250,7 @@ const ENTITY_LABELS_LOWER: Record<string, string> = {
   partner: "Консультант",
   backup: "Резервная копия",
   settings: "Настройки",
+  npsresponse: "Опрос «Посоветуете WeSetup коллегам?»",
 };
 
 /** Список для выпадающего фильтра: код сущности → название. */
@@ -372,6 +374,11 @@ const DETAIL_KEY_LABELS: Record<string, string> = {
   accountantEmail: "Почта бухгалтера",
   subscriptionPlan: "Тариф",
   subscriptionEnd: "Подписка до",
+  // Рекомендация коллеге из опроса NPS
+  colleagueEmail: "Почта коллеги",
+  referral: "Реферальная ссылка",
+  npsScore: "Оценка",
+  delivery: "Доставка",
 };
 
 /**
@@ -410,6 +417,7 @@ const DETAIL_VALUE_LABELS: Record<string, Record<string, string>> = {
     manual: "Только руководитель назначает",
   },
   taskScope: { personal: "личная", shared: "общая задача смены" },
+  delivery: { sent: "письмо отправлено", logged: "почта не настроена — письмо в логе сервера" },
   role: {
     owner: "владелец",
     manager: "руководитель",

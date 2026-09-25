@@ -440,7 +440,9 @@ export default async function DashboardLayout({
                     закрывается и запоминается по id. */}
                 <AnnouncementBanner announcement={announcement} />
                 {deletionDue ? <DeletionBanner dueAt={deletionDue} canCancel={hasCapability(session.user, "admin.full")} /> : null}
-                {askNps ? <NpsBanner /> : null}
+                {/* Всегда в дереве: начатый ответ переживает router.refresh(),
+                    когда после оценки askNps становится false. */}
+                <NpsBanner ask={askNps} />
                 {children}
               </PageNavProvider>
             </div>

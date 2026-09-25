@@ -3647,12 +3647,15 @@ model WebhookDelivery {
   @@index([webhookId, createdAt])
 }
 
-/// Ответ на вопрос NPS (0–10) руководителя организации.
+/// Ответ на вопрос NPS руководителя организации.
 model NpsResponse {
   id             String   @id @default(cuid())
   organizationId String
   userId         String
   score          Int
+  /// Шкала ответа: 5 — оценка 1–5 (с сентября 2026), 10 — старые ответы 0–10.
+  /// Категории промоутер/критик считаются по своей шкале (src/lib/nps.ts).
+  scale          Int      @default(10)
   comment        String?
   createdAt      DateTime @default(now())
 
