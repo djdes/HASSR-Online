@@ -1,125 +1,74 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "@/lib/server-session";
+
+import { buildVisionInstruction } from "@/lib/ai-vision/instructions";
+import { parseLabelReply } from "@/lib/ai-vision/parse";
+import { runVisionJob } from "@/lib/ai-vision/run";
+import { sniffImageMime } from "@/lib/ai-vision/temp-store";
 import { authOptions } from "@/lib/auth";
-import Anthropic from "@anthropic-ai/sdk";
+import { getActiveOrgId } from "@/lib/auth-helpers";
+import { getServerSession } from "@/lib/server-session";
 
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const maxDuration = 120;
 
-// Claude vision accepts up to ~5MB per image; larger files are expensive
-// (we pay per token) and open the door to billing-drain DoS.
+/**
+ * POST /api/ocr/label — распознать этикетку продукта (PhotoCapture в
+ * DynamicForm). Контракт прежний: multipart `photo` → `{ result }` с полями
+ * OcrResult, ошибка — `{ error }`.
+ *
+ * Раньше маршрут ходил в Anthropic API с ключом сайта — на проде ключа нет.
+ * Теперь тем же путём, что «Распознать с фото»: задание
+ * `wesetup_vision_extract` диспетчеру со ссылкой на фото (подпись + 15 мин),
+ * см. `src/lib/ai-vision/run.ts`. Лимиты — общие с «С фото».
+ */
+
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
-const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 
 export async function POST(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
+  }
+
+  let file: File | null = null;
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
-    }
-
-    if (!ANTHROPIC_API_KEY) {
-      return NextResponse.json(
-        { error: "OCR не настроен: отсутствует ANTHROPIC_API_KEY" },
-        { status: 503 }
-      );
-    }
-
-    const formData = await request.formData();
-    const file = formData.get("photo") as File | null;
-
-    if (!file) {
-      return NextResponse.json(
-        { error: "Фото не загружено" },
-        { status: 400 }
-      );
-    }
-
-    if (file.size > MAX_PHOTO_BYTES) {
-      return NextResponse.json(
-        { error: `Файл слишком большой (максимум ${MAX_PHOTO_BYTES / 1024 / 1024} MB)` },
-        { status: 413 }
-      );
-    }
-
-    if (!ALLOWED_MIME.has(file.type)) {
-      return NextResponse.json(
-        { error: "Поддерживаются только JPEG, PNG, WEBP или GIF" },
-        { status: 415 }
-      );
-    }
-
-    // Convert to base64
-    const bytes = await file.arrayBuffer();
-    const base64 = Buffer.from(bytes).toString("base64");
-    const mediaType = file.type as "image/jpeg" | "image/png" | "image/webp" | "image/gif";
-
-    const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY, timeout: 30_000 });
-
-    const response = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 1024,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "image",
-              source: { type: "base64", media_type: mediaType, data: base64 },
-            },
-            {
-              type: "text",
-              text: `Ты помощник для системы ХАССП на пищевом производстве. Проанализируй фото этикетки/упаковки продукта и извлеки данные.
-
-Верни ТОЛЬКО JSON (без markdown, без \`\`\`) в формате:
-{
-  "productName": "название продукта",
-  "supplier": "производитель/поставщик",
-  "manufactureDate": "YYYY-MM-DD или null",
-  "expiryDate": "YYYY-MM-DD или null",
-  "quantity": null,
-  "unit": "kg" | "l" | "pcs" | null,
-  "barcode": "штрих-код если виден или null",
-  "batchNumber": "номер партии если виден или null",
-  "storageTemp": "температура хранения если указана или null",
-  "composition": "краткий состав если виден или null",
-  "confidence": "high" | "medium" | "low"
-}
-
-Если дату невозможно распознать — пиши null. Даты всегда в формате YYYY-MM-DD.
-Если поле невозможно определить — пиши null.`,
-            },
-          ],
-        },
-      ],
-    });
-
-    // Extract text from response
-    const textBlock = response.content.find((b) => b.type === "text");
-    if (!textBlock || textBlock.type !== "text") {
-      return NextResponse.json(
-        { error: "Не удалось распознать данные" },
-        { status: 422 }
-      );
-    }
-
-    // Parse JSON from response
-    const jsonStr = textBlock.text.trim();
-    const result = JSON.parse(jsonStr);
-
-    return NextResponse.json({ result });
-  } catch (error) {
-    console.error("OCR error:", error);
-
-    if (error instanceof SyntaxError) {
-      return NextResponse.json(
-        { error: "Не удалось разобрать ответ AI. Попробуйте другое фото." },
-        { status: 422 }
-      );
-    }
-
+    const value = (await request.formData()).get("photo");
+    file = value && typeof value === "object" ? (value as File) : null;
+  } catch {
+    file = null;
+  }
+  if (!file) {
+    return NextResponse.json({ error: "Фото не загружено" }, { status: 400 });
+  }
+  if (file.size > MAX_PHOTO_BYTES) {
     return NextResponse.json(
-      { error: "Ошибка распознавания. Попробуйте ещё раз." },
-      { status: 500 }
+      { error: `Файл слишком большой (максимум ${MAX_PHOTO_BYTES / 1024 / 1024} MB)` },
+      { status: 413 }
     );
   }
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (!sniffImageMime(bytes)) {
+    return NextResponse.json({ error: "Поддерживаются только JPEG, PNG или WEBP" }, { status: 415 });
+  }
+
+  const outcome = await runVisionJob({
+    purpose: "label",
+    instruction: buildVisionInstruction("label"),
+    images: [bytes],
+    orgId: getActiveOrgId(session),
+    user: { id: session.user.id, name: session.user.name },
+    parse: (text) => {
+      const result = parseLabelReply(text);
+      if (!result) console.warn(`[ai-vision] label reply without JSON: ${text.slice(0, 160)}`);
+      return { value: result, rows: result?.productName ? 1 : 0 };
+    },
+  });
+  if (!outcome.ok) {
+    return NextResponse.json({ error: outcome.error }, { status: outcome.status });
+  }
+  if (!outcome.value) {
+    return NextResponse.json({ error: "Не удалось разобрать этикетку. Попробуйте другое фото." }, { status: 422 });
+  }
+  return NextResponse.json({ result: outcome.value });
 }

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ListChecks, Loader2, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 
+import { RecognizeFromPhoto } from "@/components/ai/recognize-from-photo";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   JOURNAL_DIALOG_CONTENT_WIDE_CLASS,
@@ -11,6 +12,8 @@ import {
   JOURNAL_DIALOG_TITLE_CLASS,
 } from "@/components/journals/journal-responsive";
 import { TimeEntryField, isBadTypedTime } from "@/components/journals/time-entry-field";
+import { mergeMenuItemsIntoRows } from "@/lib/ai-vision/merge";
+import type { VisionMenuItem } from "@/lib/ai-vision/shared";
 import {
   applyMenuPaste,
   emptyMenuRows,
@@ -99,6 +102,19 @@ export function MasterMenuTableDialog({
     setShown((value) => Math.max(value, rows.length + 1));
   }
 
+  /** «С фото»: распознанные блюда — в пустые строки, потом в конец меню. */
+  function addFromPhoto(items: VisionMenuItem[]) {
+    const result = mergeMenuItemsIntoRows(rows, items, {
+      maxRows: MASTER_MENU_ROWS_MAX,
+      withYield: true,
+      withTime: true,
+      make: (values) => values,
+    });
+    setRows(result.rows);
+    setShown((value) => Math.max(value, result.rows.length));
+    return result;
+  }
+
   /** Блок из Excel / списка в ячейку — заполняет вниз от этой строки. */
   function paste(event: React.ClipboardEvent<HTMLInputElement>, index: number) {
     const text = event.clipboardData.getData("text/plain");
@@ -138,7 +154,8 @@ export function MasterMenuTableDialog({
         <div className="min-w-0 space-y-3 px-4 py-4 sm:px-6 sm:py-5">
           <p className="text-[13px] leading-[1.55] text-[#3c4053]">
             Встаньте в ячейку и нажмите Ctrl+V — из Excel можно вставить сразу три столбца: наименование, выход и
-            время (или только наименования). В таблице уже текущее меню: удалите строку — блюдо уберётся из меню.
+            время (или только наименования). Меню на бумаге — «С фото» внизу. В таблице уже текущее меню: удалите
+            строку — блюдо уберётся из меню.
           </p>
 
           <div className="flex flex-col gap-2 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-3 sm:flex-row sm:items-center">
@@ -273,15 +290,24 @@ export function MasterMenuTableDialog({
           </ol>
 
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <button
-              type="button"
-              onClick={addRow}
-              disabled={rows.length >= MASTER_MENU_ROWS_MAX}
-              className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-dashed border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Plus className="size-4" />
-              Ещё строка
-            </button>
+            <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+              <button
+                type="button"
+                onClick={addRow}
+                disabled={rows.length >= MASTER_MENU_ROWS_MAX}
+                className="inline-flex h-12 flex-1 items-center justify-center gap-1.5 rounded-2xl border border-dashed border-[#dcdfed] bg-white px-4 text-[15px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:cursor-not-allowed disabled:opacity-50 sm:h-10 sm:flex-none sm:rounded-xl sm:text-[14px]"
+              >
+                <Plus className="size-4" />
+                Ещё строка
+              </button>
+              <RecognizeFromPhoto
+                kind="menu"
+                onItems={addFromPhoto}
+                resultLabel="В меню добавлено"
+                className="flex-1 sm:flex-none"
+                testId="menu-photo"
+              />
+            </div>
             <span className="rounded-full bg-[#f5f6ff] px-3 py-1 text-[13px] text-[#3848c7]" data-testid="master-menu-table-count">
               В меню: <span className="font-semibold tabular-nums">{toSave.length}</span>
               {toSave.length > 0 ? (

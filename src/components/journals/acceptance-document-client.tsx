@@ -112,6 +112,8 @@ import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 import { OrgDirectoryDialog } from "@/components/journals/org-directory-dialog";
 import { mergeIntoList, type OrgDirectoryKind } from "@/lib/org-directory";
+import { RecognizeFromPhoto, type RecognizeResult } from "@/components/ai/recognize-from-photo";
+import type { VisionRawItem } from "@/lib/ai-vision/shared";
 
 type User = { id: string; name: string; role: string };
 
@@ -1987,6 +1989,8 @@ function AddMultipleRowsDialog(props: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (count: number) => Promise<void>;
+  /** «С фото накладной»: распознанные позиции — сразу строками журнала. */
+  onPhotoItems: (items: VisionRawItem[]) => Promise<RecognizeResult>;
 }) {
   const [count, setCount] = useState("5");
   const [submitting, setSubmitting] = useState(false);
@@ -2026,8 +2030,26 @@ function AddMultipleRowsDialog(props: {
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-5 px-6 py-5">
+          <div className="space-y-2 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-3">
+            <p className="text-[13px] leading-[1.5] text-[#3c4053]">
+              Накладная на бумаге — сфотографируйте её: строки добавятся сразу, с наименованием, изготовителем,
+              поставщиком и сроком годности.
+            </p>
+            <RecognizeFromPhoto
+              kind="raw"
+              onItems={async (items) => {
+                const result = await props.onPhotoItems(items);
+                props.onOpenChange(false);
+                return result;
+              }}
+              label="С фото накладной"
+              resultLabel="В журнал добавлено"
+              className="w-full sm:w-auto"
+              testId="acceptance-photo"
+            />
+          </div>
           <div className="space-y-2">
-            <Label className="text-[13px] font-medium text-[#3c4053]">Количество строк</Label>
+            <Label className="text-[13px] font-medium text-[#3c4053]">Количество пустых строк</Label>
             <Input
               type="number"
               inputMode="decimal"
@@ -2358,6 +2380,32 @@ export function AcceptanceDocumentClient(props: Props) {
     }
     await persist(title, dateFrom, { ...config, rows: nextRows });
     setBulkAddOpen(false);
+  }
+
+  /**
+   * «С фото накладной»: распознанное сырьё — строками журнала. Количество и
+   * дата выработки — в «Объем, номер партии, дата пр-ва», срок — в «Годен до».
+   */
+  async function addRowsFromPhoto(items: VisionRawItem[]) {
+    const rows = items.slice(0, 100).map((item) =>
+      createAcceptanceRow({
+        responsibleUserId,
+        responsibleTitle,
+        productName: item.name,
+        manufacturer: item.manufacturer,
+        supplier: item.supplier,
+        expiryDate: item.expiryDate,
+        batchInfo: [
+          item.quantity,
+          item.productionDate ? `дата пр-ва ${item.productionDate.split("-").reverse().join(".")}` : "",
+        ]
+          .filter(Boolean)
+          .join(", "),
+      })
+    );
+    await persist(title, dateFrom, { ...config, rows: [...config.rows, ...rows] });
+    void productSuggestions.remember(items.map((item) => item.name));
+    return { added: rows.length };
   }
 
   async function handleImportFile(file: File) {
@@ -2968,7 +3016,12 @@ export function AcceptanceDocumentClient(props: Props) {
         <RowDialog open={rowDialogOpen} onOpenChange={(open) => { if (open) setRowDialogOpen(true); else seq.cancelled(); }} users={props.users} config={config} initialRow={editingRow} titleSuffix={seq.progress ?? undefined} recentProducts={productSuggestions.recent} onSave={handleSaveRow} onCreateBatch={isClosed ? undefined : handleCreateBatchFromRow} />
       )}
       <ImportRowsDialog open={rowsImportOpen} onOpenChange={setRowsImportOpen} users={props.users} responsibleTitle={responsibleTitle} responsibleUserId={responsibleUserId} isProductAcceptance={isProductAcceptance} onFileSelect={handleImportFile} />
-      <AddMultipleRowsDialog open={bulkAddOpen} onOpenChange={setBulkAddOpen} onSubmit={addMultipleRows} />
+      <AddMultipleRowsDialog
+        open={bulkAddOpen}
+        onOpenChange={setBulkAddOpen}
+        onSubmit={addMultipleRows}
+        onPhotoItems={addRowsFromPhoto}
+      />
       <IikoDialog open={iikoOpen} onOpenChange={setIikoOpen} />
     </div>
   );

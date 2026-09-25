@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Archive, Check, ChevronDown, List, ListPlus, Plus, Trash2 } from "lucide-react";
+import { RecognizeFromPhoto } from "@/components/ai/recognize-from-photo";
 import { ApplyToSelectedDialog, type ApplyToSelectedField } from "@/components/journals/apply-to-selected-dialog";
 import {
   SelectionApplyButton,
@@ -109,6 +110,7 @@ import {
 } from "@/components/journals/journal-custom-cell";
 import { OrgDirectoryDialog } from "@/components/journals/org-directory-dialog";
 import { mergeIntoList, type OrgDirectoryKind } from "@/lib/org-directory";
+import type { VisionFieldKey, VisionRawItem } from "@/lib/ai-vision/shared";
 
 import { useTodayKey } from "@/lib/use-today-key";
 import { TodayStripForJournal } from "@/components/journals/today-strip-for-journal";
@@ -837,6 +839,59 @@ export function PerishableRejectionDocumentClient({
     setBulkText("");
     setBulkOpen(false);
     toast.success(`Добавлено строк: ${items.length}`);
+  }
+
+  /** Поля сырья с фото — только те, чьи колонки видны в журнале. */
+  const photoRawFields: Array<VisionFieldKey & keyof VisionRawItem> = [
+    "name",
+    ...(isColumnVisible("manufacturer") ? (["manufacturer", "supplier"] as const) : []),
+    ...(isColumnVisible("packaging") ? (["quantity"] as const) : []),
+    ...(isColumnVisible("productionDate") ? (["productionDate"] as const) : []),
+    ...(isColumnVisible("storage") ? (["expiryDate"] as const) : []),
+  ];
+
+  /**
+   * «С фото» в «Добавить списком»: распознанное сырьё сразу строками журнала —
+   * с изготовителем, поставщиком, количеством и сроками; поступление — сейчас.
+   */
+  function addRowsFromPhoto(items: VisionRawItem[]) {
+    if (readOnly || items.length === 0) return { added: 0 };
+    const arrivalDate = nowDate();
+    const arrivalTime = mergeHM(nowHour(), nowMinute());
+    const rows = items.map((item) =>
+      createPerishableRejectionRow({
+        productName: item.name,
+        manufacturer: item.manufacturer,
+        supplier: item.supplier,
+        quantity: item.quantity,
+        productionDate: item.productionDate,
+        expiryDate: item.expiryDate,
+        arrivalDate,
+        arrivalTime,
+        organolepticResult: "compliant",
+        storageCondition: "2_6",
+        responsiblePerson: defaultResponsibleName,
+      })
+    );
+    applyConfig((prev) => ({ ...prev, rows: [...prev.rows, ...rows] }), true);
+    void productSuggestions.remember(items.map((item) => item.name));
+    setBulkText("");
+    setBulkOpen(false);
+    return { added: rows.length };
+  }
+
+  /** «С фото» в «Редактировать списки»: изделия, изготовители и поставщики — в списки документа. */
+  function addListsFromPhoto(items: VisionRawItem[]) {
+    if (readOnly || items.length === 0) return { added: 0 };
+    const list = config.productLists[0];
+    const names = items.map((item) => item.name);
+    const before = list ? list.items.length : 0;
+    const merged = list ? mergeIntoList(list.items, names) : [];
+    addItemsToSection("products", names);
+    addItemsToSection("manufacturers", items.map((item) => item.manufacturer).filter(Boolean));
+    addItemsToSection("suppliers", items.map((item) => item.supplier).filter(Boolean));
+    const added = merged.length - before;
+    return { added, skipped: names.length - added };
   }
 
   function resetDraftRow() {
@@ -1984,7 +2039,9 @@ export function PerishableRejectionDocumentClient({
           <div className="space-y-3 px-6 py-5">
             <p className="text-[13px] leading-[1.55] text-[#6f7282]">
               Вставьте наименования изделий — каждое с новой строки. Для каждой строки
-              создастся запись с текущей датой и временем поступления.
+              создастся запись с текущей датой и временем поступления. Накладная или
+              этикетка на бумаге — «С фото»: строки добавятся сразу, с изготовителем,
+              поставщиком и сроками.
             </p>
             <Textarea
               value={bulkText}
@@ -1992,9 +2049,19 @@ export function PerishableRejectionDocumentClient({
               placeholder={"Молоко 3,2%\nТворог 9%\nСметана 20%"}
               className="min-h-[180px] rounded-2xl border-[#dcdfed] px-4 py-3 text-[15px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
             />
-            <div className="text-[12px] text-[#9b9fb3]">
-              Будет добавлено строк:{" "}
-              {bulkText.split("\n").map((item) => item.trim()).filter(Boolean).length}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <RecognizeFromPhoto
+                kind="raw"
+                fields={photoRawFields}
+                onItems={addRowsFromPhoto}
+                resultLabel="В журнал добавлено"
+                className="w-full sm:w-auto"
+                testId="perishable-photo"
+              />
+              <div className="text-[12px] text-[#9b9fb3]">
+                Будет добавлено строк:{" "}
+                {bulkText.split("\n").map((item) => item.trim()).filter(Boolean).length}
+              </div>
             </div>
           </div>
           <div className="flex flex-col-reverse gap-2 border-t bg-white px-6 py-4 sm:flex-row sm:justify-end">
@@ -2207,6 +2274,14 @@ export function PerishableRejectionDocumentClient({
                     >
                       Из справочника организации
                     </button>
+                    <RecognizeFromPhoto
+                      kind="raw"
+                      fields={["name", "manufacturer", "supplier"]}
+                      onItems={addListsFromPhoto}
+                      resultLabel="В список изделий добавлено"
+                      hint="Сфотографируйте накладную или список сырья — изделия попадут в список, изготовители и поставщики — в свои списки. До 3 фото."
+                      testId="perishable-lists-photo"
+                    />
                   </div>
                 </div>
               </div>

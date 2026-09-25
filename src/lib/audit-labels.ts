@@ -204,6 +204,7 @@ export const AUDIT_ACTION_LABELS: Record<string, AuditActionLabel> = {
   // --- Прочее -------------------------------------------------------------
   "nps.recommend": { label: "Рекомендация WeSetup коллеге", variant: "outline" },
   "ai_assistant.action": { label: "Действие помощника", variant: "outline" },
+  "ai.vision_extract": { label: "Распознавание с фото", variant: "outline" },
   "closing-document.refresh-buyer": { label: "Реквизиты покупателя обновлены", variant: "secondary" },
   "tasksflow.cleanup_pending": { label: "Очистка задач TasksFlow", variant: "secondary" },
   "tasksflow.bulk_assign.force_wipe": { label: "Массовое переназначение задач", variant: "destructive" },
@@ -252,6 +253,7 @@ const ENTITY_LABELS_LOWER: Record<string, string> = {
   backup: "Резервная копия",
   settings: "Настройки",
   npsresponse: "Опрос «Посоветуете WeSetup коллегам?»",
+  ai_vision: "Распознавание с фото",
 };
 
 /** Список для выпадающего фильтра: код сущности → название. */
@@ -379,6 +381,12 @@ const DETAIL_KEY_LABELS: Record<string, string> = {
   colleagueEmail: "Почта коллеги",
   npsScore: "Оценка",
   delivery: "Доставка",
+  // Распознавание с фото
+  visionKind: "Что распознавали",
+  photos: "Фото",
+  recognized: "Распознано строк",
+  result: "Итог",
+  durationMs: "Длительность, мс",
 };
 
 /**
@@ -400,6 +408,8 @@ const HIDDEN_DETAIL_KEYS = new Set([
 
 /** Значения-перечисления по ключу → по-русски. */
 const DETAIL_VALUE_LABELS: Record<string, Record<string, string>> = {
+  visionKind: { menu: "меню", raw: "сырьё", generic: "список", label: "этикетка" },
+  result: { ok: "распознано", empty: "ничего не распознано", timeout: "не успели", failed: "ошибка" },
   via: {
     // Журнал включён (journal.enable, lib/blank-signup.ts).
     "blank-qr-signup": "регистрация по QR со скачанного шаблона",

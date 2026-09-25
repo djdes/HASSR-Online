@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { Camera, Loader2, X, Check, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { downscaleImageFile } from "@/lib/ai-vision/downscale";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
 export interface OcrResult {
@@ -39,8 +40,12 @@ export function PhotoCapture({ onResult }: PhotoCaptureProps) {
     setIsProcessing(true);
 
     try {
+      // Снимок телефона (4–8 МБ) ужимаем до ~1600 px JPEG: быстрее по
+      // мобильной связи и не упирается в лимит 5 МБ. Не открылся (HEIC на
+      // компьютере) — отправляем как есть, сервер скажет, что не так.
+      const upload = await downscaleImageFile(file).catch(() => file);
       const formData = new FormData();
-      formData.append("photo", file);
+      formData.append("photo", upload, upload === file ? file.name : "label.jpg");
 
       const res = await fetch("/api/ocr/label", {
         method: "POST",
@@ -129,7 +134,7 @@ export function PhotoCapture({ onResult }: PhotoCaptureProps) {
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                 <div className="flex items-center gap-2 text-white bg-black/70 rounded-full px-4 py-2">
                   <Loader2 className="size-4 animate-spin" />
-                  <span className="text-sm">Распознаю этикетку...</span>
+                  <span className="text-sm">Распознаю этикетку… обычно 10–40 секунд</span>
                 </div>
               </div>
             )}

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { RecognizeFromPhoto, type RecognizeResult } from "@/components/ai/recognize-from-photo";
 import { MasterBrakerageDialog } from "@/components/master/master-brakerage-dialog";
 import { MasterMenuTableDialog } from "@/components/master/master-menu-table-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -193,6 +194,20 @@ export function MasterDirectoryClient({
     );
   }
 
+  /**
+   * «С фото»: распознанные позиции — тем же путём, что файл и текст:
+   * текущий список + новые → предпросмотр различий → «Сохранить и
+   * разослать». То, что уже есть в списке (по наименованию), не дублируем.
+   */
+  async function addFromPhoto(kind: SharedKind, items: SharedItem[]) {
+    const known = new Set(lists[kind].map((item) => item.name.replace(/\s+/g, " ").trim().toLowerCase()));
+    const fresh = items.filter((item) => !known.has(item.name.replace(/\s+/g, " ").trim().toLowerCase()));
+    if (fresh.length === 0) return { added: 0, skipped: items.length };
+    const ok = await requestPreview(kind, { items: [...lists[kind], ...fresh] }, "распознанное фото");
+    if (!ok) throw new Error("Не удалось подготовить изменения — попробуйте ещё раз");
+    return { added: fresh.length, skipped: items.length - fresh.length };
+  }
+
   async function submitPaste() {
     if (!pasteKind) return;
     const ok = await requestPreview(pasteKind, { text: pasteText }, "вставленный список");
@@ -298,6 +313,7 @@ export function MasterDirectoryClient({
           uploading={uploading === (tab === "menu" ? "dish" : "product")}
           onUpload={pickFile}
           onPaste={openPaste}
+          onPhotoItems={addFromPhoto}
         />
       ) : (
         <ObjectsPanel organizations={organizations} />
@@ -510,6 +526,7 @@ function ListPanel({
   uploading,
   onUpload,
   onPaste,
+  onPhotoItems,
 }: {
   kind: SharedKind;
   items: SharedItem[];
@@ -517,6 +534,8 @@ function ListPanel({
   uploading: boolean;
   onUpload: (kind: SharedKind) => void;
   onPaste: (kind: SharedKind) => void;
+  /** «С фото»: распознанные позиции → предпросмотр различий. */
+  onPhotoItems: (kind: SharedKind, items: SharedItem[]) => Promise<RecognizeResult>;
 }) {
   const meta = KIND_META[kind];
   const [query, setQuery] = useState("");
@@ -551,6 +570,44 @@ function ListPanel({
         <ClipboardPaste className="size-4 text-[#5566f6]" />
         Вставить списком
       </button>
+      {kind === "dish" ? (
+        <RecognizeFromPhoto
+          kind="menu"
+          onItems={(photoItems) =>
+            onPhotoItems(
+              "dish",
+              photoItems.map((item) => ({
+                name: item.name,
+                supplier: null,
+                manufacturer: null,
+                portion: item.yield || null,
+                time: item.time || null,
+              }))
+            )
+          }
+          resultLabel="Новых блюд"
+          className="sm:h-11 sm:rounded-2xl"
+          testId="master-photo-dish"
+        />
+      ) : (
+        <RecognizeFromPhoto
+          kind="raw"
+          fields={["name", "supplier", "manufacturer"]}
+          onItems={(photoItems) =>
+            onPhotoItems(
+              "product",
+              photoItems.map((item) => ({
+                name: item.name,
+                supplier: item.supplier || null,
+                manufacturer: item.manufacturer || null,
+              }))
+            )
+          }
+          resultLabel="Новых позиций"
+          className="sm:h-11 sm:rounded-2xl"
+          testId="master-photo-product"
+        />
+      )}
     </div>
   );
 
@@ -581,8 +638,8 @@ function ListPanel({
               <div className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">Списком</div>
               <p className="mt-1 text-[12.5px] text-[#3c4053]">
                 {kind === "dish"
-                  ? "Таблица «Наименование — Выход — Время», можно вставить из Excel:"
-                  : "Одна позиция в строке:"}
+                  ? "Таблица «Наименование — Выход — Время», можно вставить из Excel или сфотографировать меню («С фото»):"
+                  : "Одна позиция в строке — или сфотографируйте накладную («С фото»):"}
               </p>
               <pre className="mt-2 whitespace-pre-wrap break-words rounded-xl bg-[#f5f6ff] px-3 py-2 font-mono text-[12px] leading-[1.6] text-[#3848c7]">
                 {meta.example}

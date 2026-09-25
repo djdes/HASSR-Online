@@ -2,5 +2,6 @@
   "ApiUrl": "https://projectsflow.ru/api",
   "ProjectId": "5c2c38fa-f022-44b8-b125-f67a8caa0bf4",
   "Model": "sonnet",
-  "TimeoutSec": 100
+  "TimeoutSec": 100,
+  "SiteBaseUrl": "https://wesetup.ru"
 }

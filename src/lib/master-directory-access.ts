@@ -44,6 +44,8 @@ const DIRECTORY_ALLOWED_PREFIXES = [
   "/api/me/active-organization",
   // Проверка новой сборки (sw-register, build-version-watcher в корневом layout).
   "/api/build-info",
+  // «С фото» в таблице меню и справочнике сырья — распознавание через диспетчер.
+  "/api/ai/vision-extract",
   "/login",
   "/invite",
   "/_next",

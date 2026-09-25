@@ -35,6 +35,15 @@ test("directory session: auth, org switch, login, invite and assets stay open", 
   }
 });
 
+test("directory session: «С фото» (распознавание) открыто, остальной /api/ai — нет", () => {
+  assert.deepEqual(evaluateDirectoryRequest("/api/ai/vision-extract", "directory"), allow);
+  for (const path of ["/api/ai/sanpin-chat", "/api/ai/translate", "/api/ai/vision-extractor", "/api/ai/vision-image/x.jpg"]) {
+    assert.deepEqual(evaluateDirectoryRequest(path, "directory"), deny, path);
+  }
+  // Обычной сессии распознавание тоже открыто.
+  assert.deepEqual(evaluateDirectoryRequest("/api/ai/vision-extract", "regular"), allow);
+});
+
 test("directory session: other pages redirect to /master", () => {
   for (const path of ["/", "/dashboard", "/journals", "/journals/finished_product", "/settings", "/staff", "/root-like", "/masterclass"]) {
     assert.deepEqual(evaluateDirectoryRequest(path, "directory"), toMaster, path);

@@ -3,6 +3,7 @@
 import { Loader2, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 
+import { RecognizeFromPhoto } from "@/components/ai/recognize-from-photo";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -11,6 +12,8 @@ import {
   JOURNAL_DIALOG_TITLE_CLASS,
 } from "@/components/journals/journal-responsive";
 import { TimeEntryField } from "@/components/journals/time-entry-field";
+import { mergeMenuItemsIntoRows } from "@/lib/ai-vision/merge";
+import type { VisionMenuItem } from "@/lib/ai-vision/shared";
 import {
   applyMenuPaste,
   applyPaste,
@@ -73,6 +76,19 @@ export function FinishedProductBulkTable({
         return fill([{ ...row, ...patch }])[0];
       })
     );
+  }
+
+  /** «С фото»: распознанные блюда — в пустые строки, потом в конец таблицы. */
+  function addFromPhoto(items: VisionMenuItem[]) {
+    const result = mergeMenuItemsIntoRows(rows, items, {
+      maxRows,
+      withYield: showYield,
+      withTime: showTime,
+      // Выход с фото — ручной: меню мастера его не перезапишет.
+      make: (values) => ({ ...values, yieldAuto: false }),
+    });
+    onRowsChange(fill(result.rows));
+    return result;
   }
 
   function remove(index: number) {
@@ -217,20 +233,31 @@ export function FinishedProductBulkTable({
         })}
       </ol>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <button
-          type="button"
-          onClick={() => onRowsChange((prev) => (prev.length >= maxRows ? prev : [...prev, ...emptyBulkDishRows(1)]))}
-          disabled={rows.length >= maxRows}
-          className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-dashed border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <Plus className="size-4" />
-          Ещё строка
-        </button>
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+          <button
+            type="button"
+            onClick={() => onRowsChange((prev) => (prev.length >= maxRows ? prev : [...prev, ...emptyBulkDishRows(1)]))}
+            disabled={rows.length >= maxRows}
+            className="inline-flex h-12 flex-1 items-center justify-center gap-1.5 rounded-2xl border border-dashed border-[#dcdfed] bg-white px-4 text-[15px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:cursor-not-allowed disabled:opacity-50 sm:h-10 sm:flex-none sm:rounded-xl sm:text-[14px]"
+          >
+            <Plus className="size-4" />
+            Ещё строка
+          </button>
+          <RecognizeFromPhoto
+            kind="menu"
+            fields={["name", ...(showYield ? (["yield"] as const) : []), ...(showTime ? (["time"] as const) : [])]}
+            onItems={addFromPhoto}
+            resultLabel="В таблицу добавлено"
+            className="flex-1 sm:flex-none"
+            testId="bulk-photo"
+          />
+        </div>
         <span className="rounded-full bg-[#f5f6ff] px-3 py-1 text-[13px] text-[#3848c7]" data-testid="bulk-dish-count">
           Будет добавлено: <span className="font-semibold tabular-nums">{addCount}</span>
         </span>
       </div>
       <p className="text-[12px] leading-[1.45] text-[#6f7282]">
+        Меню на бумаге или на доске — нажмите «С фото»: строки заполнятся сами.{" "}
         {showTime
           ? showYield
             ? "Можно вставить из Excel сразу три столбца — наименование, выход и время: встаньте в первую ячейку и нажмите Ctrl+V. Время можно набирать без двоеточия: 0830 → 08:30."
