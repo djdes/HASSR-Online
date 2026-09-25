@@ -60,6 +60,8 @@ import {
 import { PARTNER_HEADER_PATH } from "@/lib/partners/request-context";
 import { MiniAppShell } from "@/app/mini/_components/mini-app-shell";
 import { loadMiniShellData } from "@/app/mini/_components/mini-shell-data";
+import { CustomNamesProvider } from "@/components/shared/custom-names-provider";
+import { getOrgCustomNames } from "@/lib/org-custom-names";
 import "@/app/app-theme.css";
 // Оболочка мини-приложения показывает эти же страницы в телефоне, и её
 // стили должны быть загружены вместе с ними. Все правила файла
@@ -219,9 +221,12 @@ export default async function DashboardLayout({
     : null;
 
   const announcement = await currentAnnouncement();
-  const [askNps, deletionState] = await Promise.all([
+  const [askNps, deletionState, customNames] = await Promise.all([
     askNpsFor(session).catch(() => false),
     db.organization.findUnique({ where: { id: activeOrgId }, select: { deletionRequestedAt: true } }).catch(() => null),
+    // Свои названия разделов и журналов — один раз на запрос, дальше их
+    // берут меню, крошки и страницы через CustomNamesProvider.
+    getOrgCustomNames(activeOrgId),
   ]);
   const deletionDue = deletionState?.deletionRequestedAt ? deletionDueAt(deletionState.deletionRequestedAt).toISOString() : null;
   const impersonatedName = impersonatedOrg?.name ?? null;
@@ -290,6 +295,7 @@ export default async function DashboardLayout({
 
   return (
     <AuthSessionProvider session={session}>
+      <CustomNamesProvider names={customNames}>
       <KioskSessionGuard />
       <SiteThemeProvider initialTheme={initialTheme}>
         <SiteThemeBootstrap />
@@ -499,6 +505,7 @@ export default async function DashboardLayout({
         </div>
         <Toaster />
       </SiteThemeProvider>
+      </CustomNamesProvider>
     </AuthSessionProvider>
   );
 }
@@ -539,7 +546,7 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
       : getActiveOrgId(session);
   const partnerAccess = session.user.partnerAccess ?? null;
 
-  const [shell, impersonatedOrg, orgRow, ownedAccount, partnerAccessBrand] =
+  const [shell, impersonatedOrg, orgRow, ownedAccount, partnerAccessBrand, customNames] =
     await Promise.all([
       loadMiniShellData(session),
       isImpersonating(session) && session.user.actingAsOrganizationId
@@ -575,12 +582,15 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
       partnerAccess
         ? getPartnerBrandById(partnerAccess.partnerId).catch(() => null)
         : Promise.resolve(null),
+      // Свои названия — те же, что на сайте (П-3).
+      getOrgCustomNames(activeOrgId),
     ]);
 
   const impersonatedName = impersonatedOrg?.name ?? null;
 
   return (
     <AuthSessionProvider session={session}>
+      <CustomNamesProvider names={customNames}>
       <KioskSessionGuard />
       {/* Тему в оболочке ведёт MiniThemeProvider (профиль → устройство →
           Telegram → по умолчанию). SiteThemeProvider оставлен ради
@@ -623,6 +633,7 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
             </PageNavProvider>
         </MiniAppShell>
       </SiteThemeProvider>
+      </CustomNamesProvider>
     </AuthSessionProvider>
   );
 }

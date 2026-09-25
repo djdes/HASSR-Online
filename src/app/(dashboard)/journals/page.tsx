@@ -15,6 +15,7 @@ import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getJournalPreviewMap } from "@/lib/journal-preview/service";
 import { hasCapability } from "@/lib/permission-presets";
+import { resolveSectionName } from "@/lib/org-custom-names";
 
 export const dynamic = "force-dynamic";
 
@@ -115,7 +116,8 @@ export default async function JournalsPage() {
       {/* Крошки даёт глобальный PageNav из (dashboard)/layout.tsx —
           локальные тут дублировали бы ту же строку. */}
       <PageHeader
-        title="Журналы"
+        // Своё название раздела организации, если его задали.
+        title={await resolveSectionName(getActiveOrgId(session), "journals")}
         description="Электронные журналы СанПиН и ХАССП — откройте, чтобы заполнить или распечатать."
         actions={
           <>

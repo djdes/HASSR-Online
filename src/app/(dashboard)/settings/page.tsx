@@ -36,6 +36,7 @@ import {
   Award,
   CalendarDays,
   Webhook,
+  PenLine,
 } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { PageGuide } from "@/components/ui/page-guide";
@@ -118,6 +119,14 @@ const settingsCards = [
     icon: ClipboardList,
     iconClass: "text-[#d946ef]",
     bgClass: "bg-[#fdf4ff]",
+  },
+  {
+    description:
+      "Свои названия журналов и разделов меню — для вашей команды. В печати и у проверяющего остаются официальные",
+    href: "/settings/names",
+    icon: PenLine,
+    iconClass: "text-[#5566f6]",
+    bgClass: "bg-[#eef1ff]",
   },
   {
     description:
@@ -647,6 +656,7 @@ const GROUP_TEAM = new Set([
 ]);
 const GROUP_JOURNALS = new Set([
   "/settings/journals",
+  "/settings/names",
   "/settings/journal-responsibles",
   "/settings/auto-journals",
   "/settings/journal-periods",

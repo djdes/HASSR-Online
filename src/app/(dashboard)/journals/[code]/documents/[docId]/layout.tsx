@@ -9,6 +9,7 @@ import {
 import { DOCUMENT_STATUS_LEGEND } from "@/lib/crumb-menu";
 import { orgTodayKey } from "@/lib/timezone";
 import { TodayKeyProvider } from "@/lib/today-key-context";
+import { CurrentJournalProvider } from "@/components/shared/custom-names-provider";
 
 const ORG_NAME_FALLBACK = "Организация";
 
@@ -51,7 +52,7 @@ export default async function JournalDocumentLayout({
       select: {
         title: true,
         organizationId: true,
-        template: { select: { name: true } },
+        template: { select: { name: true, code: true } },
       },
     }),
     db.organization.findUnique({
@@ -74,7 +75,14 @@ export default async function JournalDocumentLayout({
       ])
     : [undefined, undefined];
 
-  return (
+  // Журнал документа: по нему шапка документа покажет своё название
+  // организации и «Официальное название: …» (JournalOfficialNameNote).
+  // Чужому документу — ничего: страница всё равно отдаст 404.
+  const currentJournal = showCrumbs && document
+    ? { code: document.template.code, officialName: document.template.name }
+    : null;
+
+  const content = (
     <>
       {/* A1 аудита: маркер альбомной ориентации печати. @page нельзя
           навесить селектором, поэтому globals.css ловит этот узел через
@@ -113,5 +121,13 @@ export default async function JournalDocumentLayout({
         </TodayKeyProvider>
       </div>
     </>
+  );
+
+  return currentJournal ? (
+    <CurrentJournalProvider code={currentJournal.code} officialName={currentJournal.officialName}>
+      {content}
+    </CurrentJournalProvider>
+  ) : (
+    content
   );
 }

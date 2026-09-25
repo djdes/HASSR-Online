@@ -1,5 +1,6 @@
 "use client";
 
+import { JournalHeadingName } from "@/components/shared/custom-names-provider";
 import {
   JOURNAL_ACTION_CREATE_CLASS,
   JOURNAL_LIST_HEADER_ROW_CLASS,
@@ -428,7 +429,7 @@ export function TraceabilityDocumentsClient({
           телефоне кнопка создания оказывалась ПОСЛЕ вкладок. */}
       <div className={JOURNAL_LIST_HEADER_ROW_CLASS}>
         <h1 className={JOURNAL_LIST_TITLE_CLASS}>
-          {heading}
+          <JournalHeadingName fallback={heading} />
         </h1>
         <JournalListActions
           templateCode="traceability_test"

@@ -1,5 +1,6 @@
 "use client";
 
+import { JournalHeadingName } from "@/components/shared/custom-names-provider";
 import {
   JOURNAL_ACTION_CREATE_CLASS,
   JOURNAL_LIST_HEADER_ROW_CLASS,
@@ -471,7 +472,7 @@ export function GlassListDocumentsClient(props: Props) {
       <div className="space-y-10">
         <div className={JOURNAL_LIST_HEADER_ROW_CLASS}>
           <h1 className={JOURNAL_LIST_TITLE_CLASS}>
-            {GLASS_LIST_PAGE_TITLE}
+            <JournalHeadingName fallback={GLASS_LIST_PAGE_TITLE} />
           </h1>
           <JournalListActions
             templateCode="glass_items_list"

@@ -1,5 +1,6 @@
 "use client";
 
+import { JournalHeadingName } from "@/components/shared/custom-names-provider";
 import {
   JOURNAL_ACTION_CREATE_CLASS,
   JOURNAL_LIST_HEADER_ROW_CLASS,
@@ -511,7 +512,7 @@ export function AuditPlanDocumentsClient({
     <div className="space-y-5">
       <div className={JOURNAL_LIST_HEADER_ROW_CLASS}>
         <h1 className={JOURNAL_LIST_TITLE_CLASS}>
-          {AUDIT_PLAN_HEADING}
+          <JournalHeadingName fallback={AUDIT_PLAN_HEADING} />
         </h1>
         <JournalListActions
           templateCode={templateCode}

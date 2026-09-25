@@ -12,6 +12,8 @@ import {
   hasJournalAccess,
 } from "@/lib/journal-acl";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { journalDisplayName } from "@/lib/custom-names";
+import { getOrgCustomNames } from "@/lib/org-custom-names";
 
 /**
  * Bot-driven journal editor navigation.
@@ -88,6 +90,8 @@ async function buildTemplateListView(
   if (templates.length === 0) {
     return null;
   }
+  // Своё название журнала организации — как на сайте и в приложении.
+  const customNames = await getOrgCustomNames(user.organizationId);
 
   const start = page * TEMPLATE_PAGE_SIZE;
   const slice = templates.slice(start, start + TEMPLATE_PAGE_SIZE);
@@ -96,7 +100,7 @@ async function buildTemplateListView(
 
   const rows: InlineKeyboardButton[][] = slice.map((t) => [
     {
-      text: `${EMOJI_ACTIVE} ${t.name}`,
+      text: `${EMOJI_ACTIVE} ${journalDisplayName(customNames, t.code, t.name)}`,
       callback_data: `edit:t:${t.code}`,
     },
   ]);
@@ -236,8 +240,13 @@ async function buildTemplateDocumentsView(
       }.`
     : "Пока нет активных документов — нажмите «Новая запись».";
 
+  const journalName = journalDisplayName(
+    await getOrgCustomNames(user.organizationId),
+    template.code,
+    template.name
+  );
   const text =
-    `<b>${escapeHtml(template.name)}</b>\n` +
+    `<b>${escapeHtml(journalName)}</b>\n` +
     `${escapeHtml(template.description ?? "")}\n\n${docLine}${managerHint}`;
 
   return { text, keyboard: { inline_keyboard: rows } };

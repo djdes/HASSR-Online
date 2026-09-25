@@ -16,6 +16,8 @@ import {
 } from "@/lib/today-compliance";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
+import { journalDisplayName } from "@/lib/custom-names";
+import { getOrgCustomNames } from "@/lib/org-custom-names";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -120,11 +122,13 @@ export async function GET() {
     docIds: string[];
   };
   const byTemplate = new Map<string, TemplateAcc>();
+  // Своё название журнала организации — для «Прогресса по журналам».
+  const customNames = await getOrgCustomNames(organizationId);
   for (const doc of activeDocs) {
     if (disabledCodes.has(doc.template.code)) continue;
     const acc = byTemplate.get(doc.templateId) ?? {
       code: doc.template.code,
-      name: doc.template.name,
+      name: journalDisplayName(customNames, doc.template.code, doc.template.name),
       realCount: 0,
       totalCount: 0,
       docIds: [],

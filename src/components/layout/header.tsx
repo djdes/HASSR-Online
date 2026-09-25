@@ -29,6 +29,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { headerNavSections } from "@/lib/app-sections";
+import { customSectionNameByHref } from "@/lib/custom-names";
+import { useCustomNames } from "@/components/shared/custom-names-provider";
 import { isManagementRole } from "@/lib/user-roles";
 import { getWebHomeHref, hasFullWorkspaceAccess } from "@/lib/role-access";
 import { Button } from "@/components/ui/button";
@@ -83,7 +85,7 @@ const secondaryNavItems = headerNavSections().map((item) => ({
   icon: NAV_ICONS[item.icon] ?? ClipboardList,
 }));
 
-const STAFF_NAV_ITEM = {
+const STAFF_NAV_ITEM_DEFAULT = {
   label: "Сотрудники",
   href: "/settings/users",
   icon: Users,
@@ -186,6 +188,14 @@ export function Header({
 }: HeaderProps) {
   const pathname = usePathname();
   const headerUndo = useHeaderUndo();
+  // Свои названия разделов организации («Настройки → Названия»).
+  const customNames = useCustomNames();
+  const STAFF_NAV_ITEM = {
+    ...STAFF_NAV_ITEM_DEFAULT,
+    label:
+      customSectionNameByHref(customNames, STAFF_NAV_ITEM_DEFAULT.href) ??
+      STAFF_NAV_ITEM_DEFAULT.label,
+  };
   const fullAccess = hasFullWorkspaceAccess({ role: userRole, isRoot });
   // На телефоне меню профиля — лист снизу (как в приложениях), на
   // компьютере остаётся выпадающее меню.
@@ -260,7 +270,12 @@ export function Header({
   // настроек, о котором ещё нужно догадаться.
   const canManagePlan = fullAccess;
 
-  const visibleSecondaryNavItems = fullAccess ? secondaryNavItems : [];
+  const visibleSecondaryNavItems = fullAccess
+    ? secondaryNavItems.map((item) => ({
+        ...item,
+        label: customSectionNameByHref(customNames, item.href) ?? item.label,
+      }))
+    : [];
   // Пилюля в шапке показывает название активной точки — значит именно
   // на неё логично навести, чтобы уйти в соседнюю. Дублирует меню
   // профиля намеренно: там это «настройка аккаунта», здесь — навигация.

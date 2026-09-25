@@ -18,6 +18,7 @@ import { TOUR } from "@/lib/tour-anchors";
 import { ResponsiveMenu } from "@/components/ui/responsive-menu";
 import { LinkPendingSpinner } from "@/components/ui/link-pending";
 import { JournalEnabledIndicatorSlot } from "@/components/journals/journal-enabled-indicator";
+import { JournalHeadingName } from "@/components/shared/custom-names-provider";
 import { cn } from "@/lib/utils";
 
 /**
@@ -313,7 +314,12 @@ export function JournalTopBar(props: {
             `w-full` на h1 индикатор всегда переносился под него, а
             просили рядом. */}
         <h1 className={cn(JOURNAL_LIST_HEADING_CLASS, "w-auto max-w-full sm:max-w-none")}>
-          {props.heading}
+          {/* Своё название организации — вместо стандартного, под ним
+              мелко официальное. Без своего — прежний заголовок. */}
+          <JournalHeadingName
+            fallback={props.heading}
+            suffix={props.activeTab === "closed" ? " (закрытые)" : null}
+          />
         </h1>
         <JournalEnabledIndicatorSlot />
       </div>

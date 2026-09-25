@@ -12,6 +12,8 @@ import { journalIconName, looksLikeJournalCode } from "@/lib/journal-label";
 import { formatStaffAbsenceNote, isStaffAbsentOnDay } from "@/lib/staff-absence";
 import { canSelfClaim, normalizeTaskFlowMode } from "@/lib/journal-task-flow-rules";
 import { hasCapability } from "@/lib/permission-presets";
+import { customJournalName } from "@/lib/custom-names";
+import { getOrgCustomNames } from "@/lib/org-custom-names";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -179,7 +181,11 @@ export async function GET() {
         })
       : [];
   const templateName = new Map(templates.map((t) => [t.code, t.name.trim()]));
+  // Своё название организации («Настройки → Названия») — самое первое:
+  // сотрудник видит журнал так, как его называют в заведении.
+  const customNames = await getOrgCustomNames(organizationId);
   const journalName = (code: string): string =>
+    customJournalName(customNames, code) ||
     // Короткая подпись из словаря — первой: полное название журнала
     // («Журнал контроля температурного режима холодильного и морозильного
     // оборудования») в заголовке группы на телефоне не помещается.

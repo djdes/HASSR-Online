@@ -28,6 +28,7 @@ import { DOC_TITLE_ROW_CLASS } from "@/components/journals/journal-responsive";
 import type { DocumentBarUndo } from "@/components/journals/undo-redo-buttons";
 import { usePublishUndoToHeader } from "@/components/journals/journal-undo-slot";
 import { useCanManageJournalDocument } from "@/components/journals/journal-header-edit";
+import { JournalOfficialNameNote } from "@/components/shared/custom-names-provider";
 import { cn } from "@/lib/utils";
 
 /**
@@ -176,7 +177,14 @@ export function DocumentActionsBar({
           className
         )}
       >
-        {heading ? <div className="min-w-0 flex-1">{heading}</div> : null}
+        {heading ? (
+          <div className="min-w-0 flex-1">
+            {heading}
+            {/* Своё название журнала организации и официальное — мелко под
+                заголовком документа. Без своего названия строки нет. */}
+            <JournalOfficialNameNote />
+          </div>
+        ) : null}
         {/* shrink-0: кнопки не должны отжимать заголовок в ноль. На
             мобиле ряд и так разложен в колонку — они встают под ним. */}
         <div className="flex shrink-0 flex-wrap items-center gap-2">

@@ -1,5 +1,6 @@
 "use client";
 
+import { JournalHeadingName } from "@/components/shared/custom-names-provider";
 import {
   JOURNAL_ACTION_CREATE_CLASS,
   JOURNAL_LIST_HEADER_ROW_CLASS,
@@ -393,7 +394,9 @@ function TrackedDocumentsClientImpl({
     <>
       <div className={JOURNAL_LIST_STACK_CLASS}>
         <div className={JOURNAL_LIST_HEADER_ROW_CLASS}>
-          <h1 className={JOURNAL_LIST_TITLE_CLASS}>{heading}</h1>
+          <h1 className={JOURNAL_LIST_TITLE_CLASS}>
+            <JournalHeadingName fallback={heading} />
+          </h1>
           {/* «QR-точка контроля» над рядом «Создать документ | Инструкция». */}
           <JournalListActions
             templateCode={templateCode}

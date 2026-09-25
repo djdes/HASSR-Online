@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 
 import { PageHeader } from "@/components/ui/page-header";
-import { requireAuth } from "@/lib/auth-helpers";
+import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
+import { resolveSectionName } from "@/lib/org-custom-names";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 
 import { IdeasClient } from "./ideas-client";
@@ -18,7 +19,8 @@ export default async function IdeasPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Идеи и голосование"
+        // Своё название раздела организации, если его задали.
+        title={await resolveSectionName(getActiveOrgId(session), "ideas", "Идеи и голосование")}
         description="Чего не хватает в WeSetup? Предложите — или поддержите чужую идею голосом. Что набирает голоса, попадает в план; что вышло — на wesetup.ru/whats-new."
       />
       <IdeasClient />

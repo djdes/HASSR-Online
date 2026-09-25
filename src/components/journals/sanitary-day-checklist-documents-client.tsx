@@ -1,5 +1,6 @@
 "use client";
 
+import { JournalHeadingName } from "@/components/shared/custom-names-provider";
 import {
   JOURNAL_ACTION_CREATE_CLASS,
   JOURNAL_LIST_HEADER_ROW_CLASS,
@@ -358,8 +359,15 @@ export function SanitaryDayChecklistDocumentsClient({
     <div className="space-y-5">
       <div className={JOURNAL_LIST_HEADER_ROW_CLASS}>
         <h1 className={JOURNAL_LIST_TITLE_CLASS}>
-          {checklistTitle}
-          {activeTab === "closed" && " (Закрытые)"}
+          <JournalHeadingName
+            fallback={
+              <>
+                {checklistTitle}
+                {activeTab === "closed" && " (Закрытые)"}
+              </>
+            }
+            suffix={activeTab === "closed" ? " (Закрытые)" : null}
+          />
         </h1>
         <JournalListActions
           templateCode={templateCode}

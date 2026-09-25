@@ -15,7 +15,20 @@ import {
 import { toast } from "sonner";
 
 import { journalMatchesQuery, normalizeJournalSearch } from "@/lib/journal-search";
+import { customJournalName } from "@/lib/custom-names";
+import { useCustomNames } from "@/components/shared/custom-names-provider";
 import { cn } from "@/lib/utils";
+
+/**
+ * Своё название организации вместо официального; официальное остаётся
+ * в `officialName` — для поиска и подсказки при наведении.
+ */
+function withCustomName<T extends { code: string; name: string }>(
+  item: T,
+  custom: string | null,
+): T & { officialName?: string } {
+  return custom ? { ...item, name: custom, officialName: item.name } : item;
+}
 
 /**
  * Сетка журналов на дашборде + поиск над ней.
@@ -52,9 +65,9 @@ export type DashboardDisabledItem = {
 };
 
 export function DashboardJournalsGrid({
-  items,
+  items: rawItems,
   paperItems,
-  disabledItems,
+  disabledItems: rawDisabledItems,
   disabledCodes,
   sampleCodes,
   canToggle,
@@ -74,11 +87,25 @@ export function DashboardJournalsGrid({
   const normalizedQuery = normalizeJournalSearch(deferredQuery);
   const [enablingCode, setEnablingCode] = useState<string | null>(null);
   const samples = useMemo(() => new Set(sampleCodes), [sampleCodes]);
+  // Свои названия журналов организации («Настройки → Названия»).
+  const customNames = useCustomNames();
+  const items = useMemo(
+    () => rawItems.map((item) => withCustomName(item, customJournalName(customNames, item.code))),
+    [rawItems, customNames],
+  );
+  const disabledItems = useMemo(
+    () =>
+      rawDisabledItems.map((item) => withCustomName(item, customJournalName(customNames, item.code))),
+    [rawDisabledItems, customNames],
+  );
 
   const foundItems = useMemo(
     () =>
       items.filter((item) =>
-        journalMatchesQuery([item.name, item.description, item.code], normalizedQuery),
+        journalMatchesQuery(
+          [item.name, item.officialName, item.description, item.code],
+          normalizedQuery,
+        ),
       ),
     [items, normalizedQuery],
   );
@@ -93,7 +120,10 @@ export function DashboardJournalsGrid({
     () =>
       normalizedQuery
         ? disabledItems.filter((item) =>
-            journalMatchesQuery([item.name, item.description, item.code], normalizedQuery),
+            journalMatchesQuery(
+              [item.name, item.officialName, item.description, item.code],
+              normalizedQuery,
+            ),
           )
         : [],
     [disabledItems, normalizedQuery],
@@ -230,6 +260,7 @@ export function DashboardJournalsGrid({
                     "line-clamp-2 min-w-0 flex-1 break-words text-[15px] font-semibold leading-snug tracking-[-0.01em]",
                     item.filled ? "text-[#136b2a]" : "text-[#a1362f]",
                   )}
+                  title={item.officialName ? `Официальное название: ${item.officialName}` : undefined}
                 >
                   {item.name}
                 </span>

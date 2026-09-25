@@ -48,6 +48,7 @@ import {
 } from "@/lib/journal-fill-html";
 import type { ColdEquipmentStatus } from "@/lib/cold-equipment-document";
 import { submitJournalFill } from "@/lib/journal-fill-submit";
+import { journalDisplayName, parseCustomNames } from "@/lib/custom-names";
 import { listNameSuggestions } from "@/lib/name-suggestions-db";
 import type { NameSuggestionMeta } from "@/lib/name-suggestions";
 import { resolveQrFillActor, sessionEmployeeForQr } from "@/lib/qr-fill-actor";
@@ -270,6 +271,9 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
   if (!check.ok || !org) return html(renderInvalidLink(), 200);
 
   const mode = normalizeQrFillMode(org.qrFillMode);
+  // Свои названия организации: сотрудник видит журнал под привычным
+  // названием. Официальное остаётся в печати и у проверяющего.
+  const customNames = parseCustomNames(org.customNamesJson);
   const timezone = org.timezone || "Europe/Moscow";
   const todayKey = todayKeyFor(org.timezone);
   const disabledCodes = org.disabledJournalCodes as string[];
@@ -314,7 +318,7 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
     const loginHref = `/login?next=${encodeURIComponent(`${path}${url.search}`)}`;
     if (!resolved.ok && resolved.reason === "no-session" && hasCommissionFlow && !commissionOnly) {
       const gateTemplate = await db.journalTemplate.findFirst({ where: { code }, select: { name: true } });
-      return page(gateTemplate?.name ?? "Бракераж", renderCommissionGate({ loginHref, pinHref: link({ commission: "1" }) }));
+      return page(gateTemplate ? journalDisplayName(customNames, code, gateTemplate.name) : "Бракераж", renderCommissionGate({ loginHref, pinHref: link({ commission: "1" }) }));
     }
     if (!resolved.ok && resolved.reason === "no-session" && !commissionOnly) return relativeRedirect(loginHref);
     if (!resolved.ok && !commissionOnly) {
@@ -327,13 +331,13 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
   if (code === JOURNAL_FILL_HUB_CODE) {
     // Журналы с кончившимся периодом тоже в списке: документ нового
     // периода откроется при входе в журнал (ниже).
-    const journals = await listHubJournals(orgId, disabledCodes, todayKey, { includeLapsed: true });
+    const journals = await listHubJournals(orgId, disabledCodes, todayKey, { includeLapsed: true, names: customNames });
     return page("Все журналы", renderHub(journals.map((item) => ({ ...item, href: link({}, item.code) }))), "Выберите журнал — дальше два-три касания.");
   }
 
   const template = await db.journalTemplate.findFirst({ where: { code }, select: { name: true } });
   if (!template) return html(renderInvalidLink(org.name), 404);
-  const title = template.name;
+  const title = journalDisplayName(customNames, code, template.name);
 
   if (disabledCodes.includes(code)) return page(title, renderMessage("muted", "Этот журнал отключён в организации."));
   // Холодильники, склады и УФ-лампы — по наклейке на самом объекте. Здесь

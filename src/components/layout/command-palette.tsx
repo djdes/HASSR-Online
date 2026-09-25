@@ -18,6 +18,8 @@ import {
   Lightbulb,
 } from "lucide-react";
 import { toast } from "sonner";
+import { customSectionNameByHref } from "@/lib/custom-names";
+import { useCustomNames } from "@/components/shared/custom-names-provider";
 
 /**
  * J5+ — ⌘K / Ctrl+K command palette.
@@ -154,6 +156,18 @@ export function CommandPalette() {
   const [actionRunning, setActionRunning] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const reqIdRef = useRef(0);
+  // Свои названия разделов организации; стандартное остаётся в поиске.
+  const customNames = useCustomNames();
+  const routeItems = useMemo(
+    () =>
+      ROUTE_ITEMS.map((item) => {
+        const custom = customSectionNameByHref(customNames, item.href);
+        if (!custom) return item;
+        const prefix = item.label.startsWith("Настройки — ") ? "Настройки — " : "";
+        return { ...item, label: `${prefix}${custom}`, keywords: [...(item.keywords ?? []), item.label] };
+      }),
+    [customNames]
+  );
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -217,8 +231,8 @@ export function CommandPalette() {
         : ACTION_ITEMS.filter((a) => fuzzyMatch(a, q));
     const filteredRoutes =
       q.length === 0
-        ? ROUTE_ITEMS.slice(0, 8)
-        : ROUTE_ITEMS.filter((r) => fuzzyMatch(r, q)).slice(0, 8);
+        ? routeItems.slice(0, 8)
+        : routeItems.filter((r) => fuzzyMatch(r, q)).slice(0, 8);
 
     const liveByKind = new Map<Hit["kind"], Hit[]>();
     for (const h of hits) {
@@ -249,7 +263,7 @@ export function CommandPalette() {
       });
     }
     return blocks;
-  }, [query, hits]);
+  }, [query, hits, routeItems]);
 
   const flatItems = useMemo<FlatItem[]>(() => {
     return sections.flatMap((s) => s.items);

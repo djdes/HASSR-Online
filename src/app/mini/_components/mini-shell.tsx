@@ -10,6 +10,8 @@ import { NotificationsBell } from "@/components/layout/notifications-bell";
 import { UndoRedoButtons } from "@/components/journals/undo-redo-buttons";
 import { useHeaderUndo } from "@/components/journals/journal-undo-slot";
 import { getDynamicRouteTitle, getRouteTitle } from "@/lib/route-titles";
+import { customSectionTitleForPath } from "@/lib/custom-names";
+import { useCustomNames } from "@/components/shared/custom-names-provider";
 import {
   buildMiniShellClearCookie,
   buildMiniShellCookie,
@@ -275,7 +277,8 @@ export function MiniTopBar({
   showNotifications?: boolean;
 }) {
   const pathname = usePathname();
-  const title = titleForPath(pathname);
+  // Своё название раздела организации (провайдер — в оболочке кабинета).
+  const title = customSectionTitleForPath(useCustomNames(), pathname) ?? titleForPath(pathname);
   const router = useRouter();
   const showBack = useNeedsOwnBackButton(pathname);
   // Кнопки «отменить / повторить» открытого журнала — тот же слот, что

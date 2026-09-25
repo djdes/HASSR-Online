@@ -92,6 +92,12 @@ model Organization {
   /// Копируется в config.commissionMembers активных и новых документов
   /// (см. src/lib/brakerage-commission-org.ts).
   journalCommissionJson          Json                           @default("{}")
+  /// Свои названия разделов меню и журналов организации:
+  /// { "journals": { "<код журнала>": "Своё" }, "sections": { "<ключ раздела>": "Своё" } }.
+  /// Только для показа в кабинете, мини-приложении, QR-формах и Telegram;
+  /// коды, адреса и данные не меняются, в печати, у проверяющего и в
+  /// отчётах остаются официальные названия (см. src/lib/custom-names.ts).
+  customNamesJson                Json                           @default("{}")
   /// Служебный код базы организации — по нему другие организации
   /// подключаются к общему справочнику блюд (см. src/lib/dish-pool.ts).
   serviceCode                    String?                        @unique

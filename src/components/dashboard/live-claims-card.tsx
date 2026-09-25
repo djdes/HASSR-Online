@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { customJournalName } from "@/lib/custom-names";
+import { useCustomNames } from "@/components/shared/custom-names-provider";
 import {
   Activity,
   CheckCircle2,
@@ -78,6 +80,10 @@ const JOURNAL_LABELS: Record<string, string> = {
  */
 export function LiveClaimsCard() {
   const [data, setData] = useState<Response | null>(null);
+  // Своё название журнала организации — первым, затем короткая подпись.
+  const customNames = useCustomNames();
+  const journalLabel = (code: string) =>
+    customJournalName(customNames, code) ?? JOURNAL_LABELS[code] ?? code;
   const [loading, setLoading] = useState(true);
 
   async function load() {
@@ -158,7 +164,7 @@ export function LiveClaimsCard() {
                       {c.userName || "сотрудник"}
                     </span>
                     <span>·</span>
-                    <span>{JOURNAL_LABELS[c.journalCode] ?? c.journalCode}</span>
+                    <span>{journalLabel(c.journalCode)}</span>
                     <span>·</span>
                     <Clock className="size-3" />
                     {timeAgo(c.claimedAt)}
@@ -193,7 +199,7 @@ export function LiveClaimsCard() {
                       {c.userName || "сотрудник"}
                     </span>
                     <span>·</span>
-                    <span>{JOURNAL_LABELS[c.journalCode] ?? c.journalCode}</span>
+                    <span>{journalLabel(c.journalCode)}</span>
                   </div>
                 </div>
               </div>

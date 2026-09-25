@@ -6,6 +6,7 @@ import { sendComplianceReminderEmail } from "@/lib/email";
 import { getDbRoleValuesWithLegacy, MANAGEMENT_ROLES } from "@/lib/user-roles";
 import { getTemplatesFilledToday } from "@/lib/today-compliance";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
+import { journalDisplayName, parseCustomNames } from "@/lib/custom-names";
 import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
 
 const CRON_SECRET = process.env.CRON_SECRET || "";
@@ -64,7 +65,7 @@ async function handle(request: Request) {
     // Get all organizations (with their disabled-journal toggle).
     const organizations = await db.organization.findMany({
       where: NOT_DIRECTORY_ORG_WHERE,
-      select: { id: true, name: true, disabledJournalCodes: true },
+      select: { id: true, name: true, disabledJournalCodes: true, customNamesJson: true },
     });
 
     // Get all mandatory journal templates
@@ -103,7 +104,11 @@ async function handle(request: Request) {
 
       if (missingTemplates.length === 0) continue;
 
-      const missingNames = missingTemplates.map((t) => t.name);
+      // Своё название журнала организации — так его зовут в заведении.
+      const customNames = parseCustomNames(org.customNamesJson);
+      const missingNames = missingTemplates.map((t) =>
+        journalDisplayName(customNames, t.code, t.name)
+      );
 
       results.push({ org: org.name, missing: missingNames });
 

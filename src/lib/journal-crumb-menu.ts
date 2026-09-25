@@ -8,6 +8,8 @@ import { getTemplatesFilledToday } from "@/lib/today-compliance";
 import { getActiveBuildingId } from "@/lib/active-building";
 import { buildingWhere } from "@/lib/building-scope";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { withJournalDisplayNames } from "@/lib/custom-names";
+import { getOrgCustomNames } from "@/lib/org-custom-names";
 import {
   JOURNAL_SWITCHER_SHOW_ALL_HREF,
   buildJournalSwitcherMenu,
@@ -44,7 +46,7 @@ export const getJournalCrumbMenu = cache(
       aclActorFromSession(session),
     );
 
-    const [templates, organization] = await Promise.all([
+    const [templates, organization, customNames] = await Promise.all([
       db.journalTemplate.findMany({
         where: {
           isActive: true,
@@ -57,6 +59,7 @@ export const getJournalCrumbMenu = cache(
         where: { id: organizationId },
         select: { disabledJournalCodes: true },
       }),
+      getOrgCustomNames(organizationId),
     ]);
 
     const disabledCodes = parseDisabledCodes(organization?.disabledJournalCodes);
@@ -71,7 +74,8 @@ export const getJournalCrumbMenu = cache(
     );
 
     return buildJournalSwitcherMenu({
-      templates,
+      // Свои названия организации; официальное остаётся для поиска.
+      templates: withJournalDisplayNames(templates, customNames),
       disabledCodes,
       filledTemplateIds,
       currentCode,

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { User, MapPin, Wrench, Clock, Wifi, CheckCircle2, XCircle } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
+import { resolveJournalDisplayName } from "@/lib/org-custom-names";
 import { db } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { EntryApprovalActions } from "@/components/journals/entry-approval";
@@ -152,7 +153,8 @@ export default async function EntryDetailPage({
       {/* Тёмный hero снят: карточка записи — это данные, а не баннер. */}
       <PageHeader
         eyebrow="Запись"
-        title={entry.template.name}
+        // Своё название журнала организации (официальное — в печати).
+        title={await resolveJournalDisplayName(getActiveOrgId(session), resolvedCode, entry.template.name)}
         description={`от ${entry.createdAt.toLocaleString("ru-RU")}`}
         actions={<StatusBadge status={entry.status} />}
       />

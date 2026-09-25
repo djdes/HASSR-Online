@@ -135,7 +135,11 @@ export type JournalSwitcherMenu = {
 export const JOURNAL_SWITCHER_SHOW_ALL_HREF = "/settings/journals";
 
 export function buildJournalSwitcherMenu(input: {
-  templates: ReadonlyArray<{ id: string; code: string; name: string }>;
+  /**
+   * `name` — название для людей организации (своё или официальное),
+   * `officialName` — официальное: по нему журнал тоже находится в поиске.
+   */
+  templates: ReadonlyArray<{ id: string; code: string; name: string; officialName?: string }>;
   disabledCodes: ReadonlySet<string>;
   filledTemplateIds: ReadonlySet<string>;
   currentCode?: string;
@@ -165,7 +169,10 @@ export function buildJournalSwitcherMenu(input: {
       // Наведение на строку раскрывает документы этого журнала —
       // второй уровень подгружается лениво, по одному запросу.
       submenuJournalCode: template.code,
-      keywords: [template.code],
+      keywords:
+        template.officialName && template.officialName !== template.name
+          ? [template.code, template.officialName]
+          : [template.code],
     });
   }
 

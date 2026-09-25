@@ -140,6 +140,7 @@ export const AUDIT_ACTION_LABELS: Record<string, AuditActionLabel> = {
   "onboarding.apply-preset": { label: "Применён готовый набор настроек", variant: "default" },
   "settings.journal_scope.update": { label: "Настройки задач журнала изменены", variant: "secondary" },
   "settings.task_flow_mode.update": { label: "Режим распределения задач изменён", variant: "secondary" },
+  "settings.custom_names.update": { label: "Названия разделов и журналов изменены", variant: "secondary" },
   "equipment.add": { label: "Оборудование добавлено", variant: "default" },
   "equipment.update": { label: "Карточка оборудования изменена", variant: "secondary" },
   "staff.add": { label: "Сотрудник добавлен", variant: "default" },

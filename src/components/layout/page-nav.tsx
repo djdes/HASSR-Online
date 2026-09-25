@@ -5,6 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Breadcrumbs, type Crumb } from "@/components/ui/breadcrumbs";
 import { getRouteTitle, getSiblingRoutes } from "@/lib/route-titles";
+import { customSectionNameByHref } from "@/lib/custom-names";
+import { useCustomNames } from "@/components/shared/custom-names-provider";
 
 /**
  * Единая навигация страницы кабинета: «← Назад» + хлебные крошки.
@@ -115,6 +117,8 @@ function isJournalCodeSubtree(pathname: string): boolean {
 export function PageNav({ organizationName }: { organizationName: string }) {
   const pathname = usePathname() || "/";
   const { override } = useContext(BreadcrumbContext);
+  // Свои названия разделов организации — и в звене, и в списке соседей.
+  const customNames = useCustomNames();
 
   // Каждое звено раскрывается в соседей по уровню: из «Здания и
   // помещения» — сразу в «Оборудование», не возвращаясь в список
@@ -126,11 +130,14 @@ export function PageNav({ organizationName }: { organizationName: string }) {
     let prefix = "";
     parts.forEach((segment, index) => {
       prefix += `/${segment}`;
-      const title = getRouteTitle(prefix);
+      const title = customSectionNameByHref(customNames, prefix) ?? getRouteTitle(prefix);
       if (!title) return;
       const isLast = index === parts.length - 1;
       const here = prefix;
-      const siblings = getSiblingRoutes(here);
+      const siblings = getSiblingRoutes(here).map((sibling) => ({
+        ...sibling,
+        title: customSectionNameByHref(customNames, sibling.path) ?? sibling.title,
+      }));
       result.push({
         label: title,
         href: isLast ? undefined : here,
@@ -145,7 +152,7 @@ export function PageNav({ organizationName }: { organizationName: string }) {
       });
     });
     return result;
-  }, [pathname]);
+  }, [pathname, customNames]);
 
   const crumbs: Crumb[] = [
     { label: organizationName, href: "/dashboard" },

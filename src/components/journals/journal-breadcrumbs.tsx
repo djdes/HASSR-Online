@@ -1,9 +1,13 @@
+"use client";
+
 import { Breadcrumbs, type Crumb } from "@/components/ui/breadcrumbs";
 import { PageBackLink } from "@/components/layout/page-nav";
+import { useCustomNames } from "@/components/shared/custom-names-provider";
 import {
   journalSwitcherOptions,
   type JournalSwitcherMenu,
 } from "@/lib/crumb-menu";
+import { customJournalName, customSectionName } from "@/lib/custom-names";
 
 /**
  * Хлебные крошки раздела журналов:
@@ -19,6 +23,10 @@ import {
  * Серверный рендер — ещё и причина, почему раздел не пользуется глобальным
  * `PageNav`: тот собирает крошки на клиенте, и на странице журнала имя
  * подставлялось бы вторым кадром, после вспышки «Журналы».
+ *
+ * Свои названия организации («Журналы» и название журнала) берутся из
+ * `CustomNamesProvider`: его значение приходит с сервера вместе с
+ * разметкой, поэтому своё название видно в первом же кадре.
  */
 
 export type JournalCrumb = Crumb;
@@ -67,11 +75,15 @@ export function JournalPageCrumbs({
   // обоих звеньев: в Mini App на телефоне видно только одно из них
   // (второе прячет mini-theme.css), и переключатель должен быть в любом.
   const switcher = journalMenu ? journalSwitcherOptions(journalMenu) : {};
+  const customNames = useCustomNames();
+  const journalLabel = journalName
+    ? customJournalName(customNames, journalCode) ?? journalName
+    : journalName;
 
   const items: JournalCrumb[] = [
     { label: organizationName, href: "/dashboard" },
     {
-      label: "Журналы",
+      label: customSectionName(customNames, "journals") ?? "Журналы",
       href: "/journals",
       // Двухуровневое, как «Проекты» в ProjectsFlow: журнал → его
       // документы. Отсюда можно попасть сразу в нужный бланк, не
@@ -82,7 +94,7 @@ export function JournalPageCrumbs({
     },
   ];
 
-  if (journalName) {
+  if (journalLabel) {
     // Ссылкой журнал становится, только когда он не последнее звено —
     // ссылка «сам на себя» на текущей странице сбивает с толку. Меню при
     // этом есть всегда: перейти в соседний журнал полезно и с него самого.
@@ -91,7 +103,7 @@ export function JournalPageCrumbs({
     // «журнал → журнал» по цвету точки, а вложенность только добавила бы
     // шаг к тому же самому.
     items.push({
-      label: journalName,
+      label: journalLabel,
       href: tail.length > 0 && journalCode ? `/journals/${journalCode}` : undefined,
       menu: journalMenu?.items.map(({ submenuJournalCode: _drop, ...rest }) => rest),
       menuTitle: journalMenu ? "Журналы набора" : undefined,

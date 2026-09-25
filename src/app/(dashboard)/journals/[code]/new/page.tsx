@@ -5,6 +5,7 @@ import { JournalPageCrumbs } from "@/components/journals/journal-breadcrumbs";
 import { getJournalCrumbMenu } from "@/lib/journal-crumb-menu";
 import { getCrumbOrganizationName } from "@/lib/crumb-organization";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
+import { resolveJournalDisplayName } from "@/lib/org-custom-names";
 import { loadGuideNodesForUI } from "@/lib/journal-guide-tree";
 import { db } from "@/lib/db";
 import { DynamicForm } from "@/components/journals/dynamic-form";
@@ -167,7 +168,8 @@ export default async function NewJournalEntryPage({
           достаточно одной строки. */}
       <PageHeader
         eyebrow="Новая запись"
-        title={template.name}
+        // Своё название журнала организации; в форму и данные — официальное.
+        title={await resolveJournalDisplayName(getActiveOrgId(session), resolvedCode, template.name)}
         description={template.description ?? undefined}
       />
 

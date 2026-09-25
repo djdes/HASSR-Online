@@ -7,6 +7,8 @@ import { hasCapability } from "@/lib/permission-presets";
 import { generatePoolForDay } from "@/lib/journal-task-pool";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { resolveDayStart } from "@/lib/today-compliance";
+import { customJournalName } from "@/lib/custom-names";
+import { getOrgCustomNames } from "@/lib/org-custom-names";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -94,6 +96,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
   const organizationId = getActiveOrgId(session);
+  // Своё название журнала организации — вместо короткой подписи.
+  const customNames = await getOrgCustomNames(organizationId);
+  const labelFor = (code: string): string =>
+    customJournalName(customNames, code) ?? JOURNAL_LABELS[code] ?? code;
   const url = new URL(request.url);
   const histFilter = url.searchParams.get("hist"); // approved | rejected | null
 
@@ -184,7 +190,7 @@ export async function GET(request: Request) {
       if (taken.has(s.scopeKey)) continue;
       notTaken.push({
         journalCode: code,
-        journalLabel: JOURNAL_LABELS[code] ?? code,
+        journalLabel: labelFor(code),
         scopeKey: s.scopeKey,
         scopeLabel: s.scopeLabel,
         sublabel: s.sublabel,
@@ -215,7 +221,7 @@ export async function GET(request: Request) {
     }
   }
   const withNorm = (c: Parameters<typeof toItem>[0] & { scopeKey: string }) => ({
-    ...toItem(c),
+    ...toItem(c, labelFor),
     temperatureNorm:
       normByEquipment.get(/^fridge:([^:]+):/.exec(c.scopeKey)?.[1] ?? "") ?? null,
   });
@@ -227,7 +233,7 @@ export async function GET(request: Request) {
       id: c.id,
       scopeLabel: c.scopeLabel,
       journalCode: c.journalCode,
-      journalLabel: JOURNAL_LABELS[c.journalCode] ?? c.journalCode,
+      journalLabel: labelFor(c.journalCode),
       executedBy: c.user.name,
       executedById: c.user.id,
       claimedAt: c.claimedAt.toISOString(),
@@ -260,12 +266,12 @@ function toItem(c: {
   verifierComment: string | null;
   completionData: unknown;
   dateKey: Date;
-}) {
+}, labelFor: (code: string) => string = (code) => JOURNAL_LABELS[code] ?? code) {
   return {
     id: c.id,
     scopeLabel: c.scopeLabel,
     journalCode: c.journalCode,
-    journalLabel: JOURNAL_LABELS[c.journalCode] ?? c.journalCode,
+    journalLabel: labelFor(c.journalCode),
     executedBy: c.user.name,
     executedById: c.user.id,
     completedAt: c.completedAt?.toISOString() ?? null,

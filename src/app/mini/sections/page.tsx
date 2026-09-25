@@ -1,6 +1,9 @@
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "@/lib/server-session";
 import { appSectionLabel, visibleAppSectionGroups } from "@/lib/app-sections";
+import { getActiveOrgId } from "@/lib/auth-helpers";
+import { customSectionNameByHref } from "@/lib/custom-names";
+import { getOrgCustomNames } from "@/lib/org-custom-names";
 
 import { MiniSectionsClient, type MiniSectionGroupView } from "./sections-client";
 
@@ -22,6 +25,8 @@ export const dynamic = "force-dynamic";
 export default async function MiniSectionsPage() {
   const session = await getServerSession(authOptions).catch(() => null);
   const user = session?.user ?? null;
+  // Свои названия разделов организации — те же, что в меню сайта.
+  const customNames = session ? await getOrgCustomNames(getActiveOrgId(session)) : null;
 
   const groups: MiniSectionGroupView[] = user
     ? visibleAppSectionGroups(user).map((group) => ({
@@ -30,7 +35,7 @@ export default async function MiniSectionsPage() {
         subtitle: group.subtitle,
         items: group.sections.map((section) => ({
           href: section.href,
-          label: appSectionLabel(section),
+          label: customSectionNameByHref(customNames, section.href) ?? appSectionLabel(section),
           hint: section.hint,
           icon: section.icon,
         })),

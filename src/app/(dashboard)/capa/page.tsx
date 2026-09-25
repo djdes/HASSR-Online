@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Clock, Plus } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
+import { resolveSectionName } from "@/lib/org-custom-names";
 import { db } from "@/lib/db";
 import { CapaAutoDetectButton } from "@/components/capa/auto-detect-button";
 
@@ -73,7 +74,8 @@ export default async function CapaPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
-            Нарушения
+            {/* Своё название раздела организации, если его задали. */}
+            {await resolveSectionName(getActiveOrgId(session), "capa")}
           </h1>
           <p className="mt-1.5 text-[14px] text-[#6f7282]">
             Корректирующие и предупреждающие действия (CAPA)

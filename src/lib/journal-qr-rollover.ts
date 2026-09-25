@@ -1,4 +1,5 @@
 import { recordAuditLog } from "@/lib/audit-log";
+import { resolveJournalDisplayName } from "@/lib/org-custom-names";
 import { buildingTargets } from "@/lib/building-targets";
 import { db } from "@/lib/db";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
@@ -131,16 +132,22 @@ export async function announceQrRollover(args: {
       source: args.source ?? "qr",
     },
   });
+  // В колокольчике — название журнала, как его зовут в организации.
+  const journalName = await resolveJournalDisplayName(
+    args.organizationId,
+    args.templateCode,
+    args.journalName
+  );
   await notifyManagement({
     organizationId: args.organizationId,
     kind: args.first ? "journal.qr-first-document" : "journal.qr-rollover",
     dedupeKey: `${args.first ? "qr-first" : "qr-rollover"}:${args.documentId}`,
     title: args.first
-      ? `Создан первый документ «${args.journalName}» — по скану QR-кода журнала. Проверьте ответственных и состав журнала`
-      : `Начат новый период «${args.journalName}» — документ создан при записи по QR`,
+      ? `Создан первый документ «${journalName}» — по скану QR-кода журнала. Проверьте ответственных и состав журнала`
+      : `Начат новый период «${journalName}» — документ создан при записи по QR`,
     linkHref: `/journals/${args.templateCode}/documents/${args.documentId}`,
     linkLabel: "Открыть документ",
-    items: [{ id: args.documentId, label: document?.title ?? args.journalName, ...(period ? { hint: period } : {}) }],
+    items: [{ id: args.documentId, label: document?.title ?? journalName, ...(period ? { hint: period } : {}) }],
   }).catch((error) => console.warn("[journal-qr-rollover] notify failed", error));
 }
 

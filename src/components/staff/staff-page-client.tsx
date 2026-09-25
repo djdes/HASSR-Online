@@ -9,6 +9,8 @@ import {
   useTransition,
 } from "react";
 import { PageHeader, PageHeaderStat } from "@/components/ui/page-header";
+import { useCustomNames } from "@/components/shared/custom-names-provider";
+import { customSectionName } from "@/lib/custom-names";
 import { useRouter } from "next/navigation";
 import {
   MapPin,
@@ -165,6 +167,8 @@ type StaffSort = { field: StaffSortField; order: SortOrder } | null;
 
 export function StaffPageClient(props: StaffPageProps) {
   const router = useRouter();
+  // Своё название раздела «Сотрудники» у организации, если его задали.
+  const staffTitle = customSectionName(useCustomNames(), "staff") ?? "Сотрудники";
   const [isPending, startTransition] = useTransition();
   const [bulkAddOpen, setBulkAddOpen] = useState(false);
 
@@ -726,7 +730,7 @@ export function StaffPageClient(props: StaffPageProps) {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Сотрудники"
+        title={staffTitle}
         description="Должности и графики: по ним раздаются задачи и заполняется Гигиенический журнал."
         actions={
           <>

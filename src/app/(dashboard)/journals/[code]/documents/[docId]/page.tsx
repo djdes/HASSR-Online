@@ -60,6 +60,7 @@ import { withBuildingLabel } from "@/lib/building-scope";
 import { JournalHeaderEditProvider } from "@/components/journals/journal-header-edit";
 import { readHeaderTitleOverride } from "@/lib/journal-header-title";
 import { readHeaderOrgNameOverride, resolveOrgJournalName } from "@/lib/org-journal-name";
+import { resolveJournalDisplayName } from "@/lib/org-custom-names";
 import { hasCapability } from "@/lib/permission-presets";
 import { isManagementRole } from "@/lib/user-roles";
 import { isTrackedDocumentTemplate } from "@/lib/tracked-document";
@@ -457,13 +458,19 @@ async function JournalDocumentBody({
     ? (organization?.disabledJournalCodes as string[])
     : [];
   if (disabledJournalCodes.includes(resolvedCode)) {
+    // Название — как его видят люди организации (своё или официальное).
+    const disabledJournalName = await resolveJournalDisplayName(
+      getActiveOrgId(session),
+      document.template.code,
+      document.template.name
+    );
     return (
       <div className="mx-auto max-w-[640px] space-y-6 rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-16 text-center">
         <div className="text-[20px] font-semibold text-[#0b1024]">
           Этот журнал отключён
         </div>
         <p className="text-[14px] leading-[1.6] text-[#6f7282]">
-          «{document.template.name}» отключён для вашей организации. Старые
+          «{disabledJournalName}» отключён для вашей организации. Старые
           записи сохранены — включите журнал в настройках, чтобы продолжить
           их редактирование.
         </p>

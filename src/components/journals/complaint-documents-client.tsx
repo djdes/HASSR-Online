@@ -1,5 +1,6 @@
 "use client";
 
+import { JournalHeadingName } from "@/components/shared/custom-names-provider";
 import {
   JOURNAL_ACTION_CREATE_CLASS,
   JOURNAL_LIST_HEADER_ROW_CLASS,
@@ -354,7 +355,7 @@ export function ComplaintDocumentsClient({
       <div className="space-y-10">
         <div className={JOURNAL_LIST_HEADER_ROW_CLASS}>
           <h1 className={JOURNAL_LIST_TITLE_CLASS}>
-            {COMPLAINT_REGISTER_TITLE}
+            <JournalHeadingName fallback={COMPLAINT_REGISTER_TITLE} />
           </h1>
           <JournalListActions
             templateCode="complaint_register"

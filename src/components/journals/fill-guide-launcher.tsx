@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { BookOpenText } from "lucide-react";
 import { toast } from "sonner";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
+import { customJournalName } from "@/lib/custom-names";
+import { useCustomNames } from "@/components/shared/custom-names-provider";
 import { getJournalDocGuide } from "@/lib/journal-doc-guides";
 import {
   getJournalWalkthroughOrGeneric,
@@ -76,7 +78,11 @@ export function FillGuideLauncher({
   // Окно открывается у ЛЮБОГО журнала: свои шаги, если есть, иначе общие.
   const steps = getJournalWalkthroughOrGeneric(code);
   const guide = getJournalDocGuide(code);
+  // Своё название журнала организации — первым: инструкция открывается
+  // рядом с заголовком, где журнал уже назван по-своему.
+  const customName = customJournalName(useCustomNames(), code);
   const name =
+    customName ??
     journalName ??
     ACTIVE_JOURNAL_CATALOG.find((item) => item.code === code)?.name ??
     "Журнал";

@@ -55,6 +55,8 @@ import { getStrugglingWorkers, getWorkerLeaderboard } from "@/lib/worker-leaderb
 import { normalizeSphere } from "@/lib/org-profile";
 import { paperJournalsFor } from "@/lib/sphere-journal-rules";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
+import { journalDisplayName } from "@/lib/custom-names";
+import { getOrgCustomNames } from "@/lib/org-custom-names";
 import { cn } from "@/lib/utils";
 import { orgDisplayName } from "@/lib/org-display-name";
 import { ConsultantCard } from "@/components/dashboard/consultant-card";
@@ -289,6 +291,9 @@ export default async function DashboardPage() {
   // после стартовой карточки. null — партнёра нет или клиент выбрал
   // стандартный интерфейс WeSetup.
   const consultant = toConsultantContact(await getVisibleOrgBranding(organizationId));
+  // Свои названия журналов — для ленты последних записей (карточки
+  // журналов берут их сами, из CustomNamesProvider).
+  const customNames = await getOrgCustomNames(organizationId);
   return (
     <div className="space-y-5">
       {/* Сотрудник отметился с телефона — «сегодня осталось» и карточки
@@ -752,7 +757,7 @@ export default async function DashboardPage() {
                           href={`/journals/${entry.template.code}`}
                           className="font-medium text-[#5566f6] hover:underline"
                         >
-                          {entry.template.name}
+                          {journalDisplayName(customNames, entry.template.code, entry.template.name)}
                         </Link>
                       </td>
                       <td className="px-5 py-3">

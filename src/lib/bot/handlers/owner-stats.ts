@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getManagerObligationSummary } from "@/lib/journal-obligations";
 import { escapeTelegramHtml as esc, personalizeMessage } from "@/lib/telegram";
+import { journalDisplayName } from "@/lib/custom-names";
+import { getOrgCustomNames } from "@/lib/org-custom-names";
 
 /**
  * Команды бота для руководителя (manager / head_chef / owner / technologist /
@@ -124,9 +126,11 @@ export function registerOwnerStatsHandlers(composer: Composer<Context>): void {
       return;
     }
 
+    // Своё название журнала организации — как на сайте.
+    const customNames = await getOrgCustomNames(user.organizationId);
     const grouped = new Map<string, string[]>();
     for (const row of pending) {
-      const key = row.template.name;
+      const key = journalDisplayName(customNames, row.template.code, row.template.name);
       const arr = grouped.get(key) ?? [];
       arr.push(row.user.name?.trim() || "—");
       grouped.set(key, arr);

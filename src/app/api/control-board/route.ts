@@ -8,6 +8,8 @@ import { generatePoolForDay, type TaskScope } from "@/lib/journal-task-pool";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { resolveDayStart } from "@/lib/today-compliance";
 import { STAFF_ABSENCE_LABEL, loadStaffAbsenceForDay } from "@/lib/staff-absence";
+import { customJournalName } from "@/lib/custom-names";
+import { getOrgCustomNames } from "@/lib/org-custom-names";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -163,6 +165,8 @@ export async function GET() {
     select: { disabledJournalCodes: true },
   });
   const disabled = parseDisabledCodes(org?.disabledJournalCodes);
+  // Своё название журнала организации — вместо короткой подписи.
+  const customNames = await getOrgCustomNames(organizationId);
 
   type TaskRow = {
     journalCode: string;
@@ -218,7 +222,12 @@ export async function GET() {
 
     for (const scope of pool.scopes) {
       const claim = byScope.get(scope.scopeKey);
-      const row = buildTaskRow(code, JOURNAL_LABELS[code] ?? code, scope, claim);
+      const row = buildTaskRow(
+        code,
+        customJournalName(customNames, code) ?? JOURNAL_LABELS[code] ?? code,
+        scope,
+        claim
+      );
       tasks.push(row);
     }
   }

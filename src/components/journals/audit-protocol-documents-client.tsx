@@ -1,5 +1,6 @@
 "use client";
 
+import { JournalHeadingName } from "@/components/shared/custom-names-provider";
 import {
   JOURNAL_ACTION_CREATE_CLASS,
   JOURNAL_LIST_HEADER_ROW_CLASS,
@@ -321,9 +322,14 @@ export function AuditProtocolDocumentsClient({
       <div className="space-y-10">
         <div className={JOURNAL_LIST_HEADER_ROW_CLASS}>
           <h1 className={JOURNAL_LIST_TITLE_CLASS}>
-            {activeTab === "closed"
-              ? `${AUDIT_PROTOCOL_DOCUMENT_TITLE} (закрытые)`
-              : AUDIT_PROTOCOL_DOCUMENT_TITLE}
+            <JournalHeadingName
+              fallback={
+                activeTab === "closed"
+                  ? `${AUDIT_PROTOCOL_DOCUMENT_TITLE} (закрытые)`
+                  : AUDIT_PROTOCOL_DOCUMENT_TITLE
+              }
+              suffix={activeTab === "closed" ? " (закрытые)" : null}
+            />
           </h1>
           <JournalListActions
             templateCode="audit_protocol"

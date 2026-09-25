@@ -9,6 +9,8 @@ import { getPartnerHintRates } from "@/lib/partners/partner-hint";
 import { currentAnnouncement } from "@/lib/platform-status";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { miniHomeHref, miniNavItems } from "@/app/mini/_lib/nav-items";
+import { customSectionNameByHref } from "@/lib/custom-names";
+import { getOrgCustomNames } from "@/lib/org-custom-names";
 
 /**
  * Данные, которые нужны оболочке мини-приложения.
@@ -81,11 +83,18 @@ export async function loadMiniShellData(session: Session | null) {
   // оттуда человека сразу перекидывало дальше — лишний прыжок и
   // мигающий экран.
   const actor = session?.user ?? null;
+  // Свои названия разделов организации (вкладка «Журналы» и т. п.).
+  const customNames = session?.user
+    ? await getOrgCustomNames(getActiveOrgId(session))
+    : null;
 
   return {
     authed: Boolean(session?.user),
     homeHref: miniHomeHref(actor),
-    navItems: miniNavItems(actor),
+    navItems: miniNavItems(actor).map((item) => ({
+      ...item,
+      label: customSectionNameByHref(customNames, item.href) ?? item.label,
+    })),
     initialTheme: (profileTheme ?? "dark") as "light" | "dark",
     profileTheme,
     announcement,

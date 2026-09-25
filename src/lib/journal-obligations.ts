@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { journalDisplayName, parseCustomNames } from "@/lib/custom-names";
 import { buildingTargets, userBuildingTargets } from "@/lib/building-targets";
 import { buildingWhere } from "@/lib/building-scope";
 import { ALL_DAILY_JOURNAL_CODES } from "@/lib/daily-journal-codes";
@@ -389,6 +390,9 @@ function createDefaultDeps(): ObligationDeps {
               description: true,
             },
           },
+          // Свои названия организации: Telegram-дайджест, «Сегодня» в
+          // боте и мини-приложении берут название журнала отсюда.
+          organization: { select: { customNamesJson: true } },
         },
         orderBy: [{ template: { name: "asc" } }, { createdAt: "asc" }],
       });
@@ -396,7 +400,14 @@ function createDefaultDeps(): ObligationDeps {
         id: row.id,
         journalCode: row.journalCode,
         targetPath: row.targetPath,
-        template: row.template,
+        template: {
+          ...row.template,
+          name: journalDisplayName(
+            parseCustomNames(row.organization?.customNamesJson),
+            row.journalCode,
+            row.template.name
+          ),
+        },
         buildingId: row.buildingId,
         buildingName: row.building?.name ?? null,
       }));

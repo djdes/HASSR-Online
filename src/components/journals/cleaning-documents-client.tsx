@@ -1,5 +1,6 @@
 "use client";
 
+import { JournalHeadingName } from "@/components/shared/custom-names-provider";
 import {
   JOURNAL_ACTION_CREATE_CLASS,
   JOURNAL_LIST_HEADER_ROW_CLASS,
@@ -596,7 +597,7 @@ export function CleaningDocumentsClient(props: Props) {
       <div className={JOURNAL_LIST_STACK_CLASS}>
         <div className={JOURNAL_LIST_HEADER_ROW_CLASS}>
           <h1 className={JOURNAL_LIST_TITLE_CLASS}>
-            {CLEANING_PAGE_TITLE}
+            <JournalHeadingName fallback={CLEANING_PAGE_TITLE} />
           </h1>
           <JournalListActions
             templateCode="cleaning"

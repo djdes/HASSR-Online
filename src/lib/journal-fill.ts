@@ -10,6 +10,7 @@ import { orgTodayKey } from "@/lib/timezone";
 import { getUserDisplayTitle } from "@/lib/user-roles";
 import { DAILY_JOURNAL_CODES } from "@/lib/today-compliance";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
+import { journalDisplayName, type CustomNames } from "@/lib/custom-names";
 
 /**
  * QR-ввод в журнал без входа: «отсканировал → сотрудник → строка → форма
@@ -188,6 +189,9 @@ export async function loadOrganizationForFill(orgId: string) {
       qrFillMode: true,
       disabledJournalCodes: true,
       requireAdminForJournalEdit: true,
+      // Свои названия журналов: сотрудник на QR-странице видит журнал так,
+      // как его называют в заведении (печатные плакаты — официальное).
+      customNamesJson: true,
     },
   });
 }
@@ -270,7 +274,11 @@ export async function listHubJournals(
   orgId: string,
   disabledCodes: string[],
   todayKey: string,
-  options: { includeLapsed?: boolean } = {}
+  options: {
+    includeLapsed?: boolean;
+    /** Свои названия организации — для экрана QR. Плакаты их не передают. */
+    names?: CustomNames | null;
+  } = {}
 ) {
   const day = new Date(`${todayKey}T00:00:00.000Z`);
   const docs = await db.journalDocument.findMany({
@@ -293,13 +301,21 @@ export async function listHubJournals(
   // Гигиена и здоровье — один QR на оба журнала (health-qr-flow.ts). Без
   // гигиены (выключена или на сегодня нет документа) QR пишет только в
   // журнал здоровья — и называется по нему.
+  const named = (code: string, official: string) =>
+    journalDisplayName(options.names, code, official);
   if (seen.has("hygiene")) {
-    seen.set("hygiene", "Гигиенический журнал (сотрудники) — отметка перед сменой");
+    seen.set(
+      "hygiene",
+      `${named("hygiene", "Гигиенический журнал (сотрудники)")} — отметка перед сменой`
+    );
     seen.delete("health_check");
   } else if (seen.has("health_check")) {
-    seen.set("health_check", "Журнал здоровья — отметка перед сменой");
+    seen.set("health_check", `${named("health_check", "Журнал здоровья")} — отметка перед сменой`);
   }
-  return Array.from(seen.entries()).map(([code, name]) => ({ code, name }));
+  return Array.from(seen.entries()).map(([code, name]) => ({
+    code,
+    name: code === "hygiene" || code === "health_check" ? name : named(code, name),
+  }));
 }
 
 /**

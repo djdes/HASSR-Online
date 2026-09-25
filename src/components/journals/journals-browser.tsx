@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { journalMatchesQuery, normalizeJournalSearch } from "@/lib/journal-search";
+import { customJournalName } from "@/lib/custom-names";
+import { useCustomNames } from "@/components/shared/custom-names-provider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ALL_DAILY_JOURNAL_CODES } from "@/lib/daily-journal-codes";
@@ -69,6 +71,11 @@ type JournalTemplateListItem = {
   id: string;
   code: string;
   name: string;
+  /**
+   * Официальное название, если организация назвала журнал по-своему
+   * (`name` тогда — своё). Поиск находит журнал по обоим.
+   */
+  officialName?: string;
   description: string | null;
   isMandatorySanpin: boolean;
   isMandatoryHaccp: boolean;
@@ -141,11 +148,22 @@ const JOURNAL_ICONS: Record<string, LucideIcon> = {
 };
 
 export function JournalsBrowser({
-  templates,
+  templates: rawTemplates,
   canBulkCreate = false,
   canToggle = false,
 }: JournalsBrowserProps) {
   const router = useRouter();
+  // Свои названия организации («Настройки → Названия»): карточки и
+  // подтверждения показывают своё, поиск ищет и по официальному.
+  const customNames = useCustomNames();
+  const templates = useMemo(
+    () =>
+      rawTemplates.map((template) => {
+        const custom = customJournalName(customNames, template.code);
+        return custom ? { ...template, name: custom, officialName: template.name } : template;
+      }),
+    [rawTemplates, customNames],
+  );
   // Полный список отключённых кодов: PATCH /api/settings/journals ждёт
   // весь набор, а не дельту, поэтому карточка добавляет/убирает свой
   // код к этому списку.
@@ -163,7 +181,7 @@ export function JournalsBrowser({
     if (!normalizedQuery) return templates;
     return templates.filter((template) => {
       return journalMatchesQuery(
-        [template.name, template.description, template.code],
+        [template.name, template.officialName, template.description, template.code],
         normalizedQuery,
       );
     });
@@ -624,7 +642,14 @@ function TemplateCard({
 
           <div className="flex min-w-0 flex-1 flex-col gap-2 px-3.5 py-3">
             <div className="flex items-start justify-between gap-2">
-              <div className="line-clamp-3 min-w-0 flex-1 text-[14px] font-semibold leading-snug tracking-[-0.01em] text-[#0b1024] sm:line-clamp-2">
+              <div
+                className="line-clamp-3 min-w-0 flex-1 text-[14px] font-semibold leading-snug tracking-[-0.01em] text-[#0b1024] sm:line-clamp-2"
+                title={
+                  template.officialName
+                    ? `Официальное название: ${template.officialName}`
+                    : undefined
+                }
+              >
                 {template.name}
               </div>
               <ArrowRight className="size-4 shrink-0 translate-y-0.5 text-[#c7ccea] transition-transform group-hover:translate-x-0.5 group-hover:text-[#5566f6]" />

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
+import { resolveSectionName } from "@/lib/org-custom-names";
 import { loadBuildingContext } from "@/lib/active-building";
 import { buildingWhere } from "@/lib/building-scope";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -165,7 +166,8 @@ export default async function ReportsPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
-            Отчёты
+            {/* Своё название раздела организации, если его задали. */}
+            {await resolveSectionName(getActiveOrgId(session), "reports")}
           </h1>
           <p className="mt-1.5 text-[14px] text-[#6f7282]">
             Выгрузки журналов за период — PDF и Excel для проверок

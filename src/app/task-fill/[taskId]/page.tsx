@@ -5,6 +5,7 @@ import { verifyTaskFillToken } from "@/lib/task-fill-token";
 import { getAdapter } from "@/lib/tasksflow-adapters";
 import { extractEmployeeId } from "@/lib/tasksflow-adapters/row-key";
 import { isManagementRole } from "@/lib/user-roles";
+import { resolveJournalDisplayName } from "@/lib/org-custom-names";
 import {
   getActiveCloseEvent,
   utcDayStart, documentBuildingId } from "@/lib/journal-close-events";
@@ -296,7 +297,12 @@ export default async function TaskFillPage({
       <TaskVerifyClient
         taskId={taskId}
         token={token}
-        journalLabel={doc.template.name}
+        // Своё название журнала организации (официальное — в печати).
+        journalLabel={await resolveJournalDisplayName(
+          link.integration.organizationId,
+          doc.template.code,
+          doc.template.name
+        )}
         documentTitle={doc.title}
         documentClosed={false}
         documentVerificationStatus={doc.verificationStatus}
@@ -406,7 +412,15 @@ export default async function TaskFillPage({
       token={token}
       journalCode={link.journalCode}
       returnUrl={returnUrl ?? null}
-      journalLabel={template?.name ?? link.journalCode}
+      journalLabel={
+        template
+          ? await resolveJournalDisplayName(
+              link.integration.organizationId,
+              link.journalCode,
+              template.name
+            )
+          : link.journalCode
+      }
       documentTitle={doc.title}
       employeeName={employee?.name ?? null}
       employeePositionTitle={employee?.positionTitle ?? null}

@@ -71,6 +71,7 @@ export const ROUTE_TITLES: Record<string, string> = {
   "/settings/journal-task-mode": "Раздача и проверка задач",
   "/settings/journals": "Набор журналов",
   "/settings/journals-by-position": "Матрица «должность × журнал»",
+  "/settings/names": "Названия",
   "/settings/journals/paper": "Бумажные журналы",
   "/settings/notifications": "Уведомления",
   "/settings/onboarding": "Быстрая настройка",

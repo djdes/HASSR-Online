@@ -5,6 +5,12 @@ import { db } from "@/lib/db";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getDisabledJournalCodes } from "@/lib/disabled-journals";
+import {
+  customJournalName,
+  journalDisplayName,
+  journalMatchesCustomQuery,
+} from "@/lib/custom-names";
+import { getOrgCustomNames } from "@/lib/org-custom-names";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -64,6 +70,12 @@ export async function GET(request: Request) {
   // /settings/journals — клик по такому результату вёл бы на
   // disabled-страницу, и сотрудник терял бы 5 секунд на возврат.
   const disabledCodes = await getDisabledJournalCodes(organizationId);
+  // Журнал ищется и по своему названию организации, и по официальному.
+  // Своё живёт в Organization.customNamesJson, а не в шаблоне, поэтому
+  // журналы (их меньше полусотни) фильтруем здесь общим матчером поиска
+  // журналов: он же не зависит от локали базы — ILIKE с локалью «C» не
+  // знает, что «Г» и «г» одна буква, и «гигиенический» не находил ничего.
+  const customNames = await getOrgCustomNames(organizationId);
 
   const [users, templates, documents, equipment] = await Promise.all([
     // Сотрудники только management-ролям; обычным юзерам список
@@ -90,21 +102,22 @@ export async function GET(request: Request) {
           orderBy: { name: "asc" },
         })
       : Promise.resolve([]),
-    db.journalTemplate.findMany({
-      where: {
-        isActive: true,
-        ...(disabledCodes.size > 0
-          ? { code: { notIn: Array.from(disabledCodes) } }
-          : {}),
-        OR: [
-          { name: { contains: q, mode: "insensitive" } },
-          { code: { contains: q, mode: "insensitive" } },
-        ],
-      },
-      select: { code: true, name: true, isMandatorySanpin: true },
-      take: LIMIT_PER_KIND,
-      orderBy: { sortOrder: "asc" },
-    }),
+    db.journalTemplate
+      .findMany({
+        where: {
+          isActive: true,
+          ...(disabledCodes.size > 0
+            ? { code: { notIn: Array.from(disabledCodes) } }
+            : {}),
+        },
+        select: { code: true, name: true, isMandatorySanpin: true },
+        orderBy: { sortOrder: "asc" },
+      })
+      .then((rows) =>
+        rows
+          .filter((t) => journalMatchesCustomQuery(customNames, t.code, t.name, q, t.code))
+          .slice(0, LIMIT_PER_KIND)
+      ),
     db.journalDocument.findMany({
       where: {
         organizationId,
@@ -155,10 +168,14 @@ export async function GET(request: Request) {
     });
   }
   for (const t of templates) {
+    const kindHint = t.isMandatorySanpin ? "СанПиН · Журнал" : "Журнал";
+    const custom = customJournalName(customNames, t.code);
     hits.push({
       kind: "template",
-      label: t.name,
-      hint: t.isMandatorySanpin ? "СанПиН · Журнал" : "Журнал",
+      // Своё название — главным, официальное — справа, чтобы было ясно,
+      // что это один и тот же журнал.
+      label: custom ?? t.name,
+      hint: custom ? `${kindHint} · ${t.name}` : kindHint,
       href: `/journals/${t.code}`,
     });
   }
@@ -166,7 +183,11 @@ export async function GET(request: Request) {
     hits.push({
       kind: "document",
       label: d.title,
-      hint: [d.template.name, d.building?.name, d.status === "closed" ? "Закрыт" : "Активный"]
+      hint: [
+        journalDisplayName(customNames, d.template.code, d.template.name),
+        d.building?.name,
+        d.status === "closed" ? "Закрыт" : "Активный",
+      ]
         .filter(Boolean)
         .join(" · "),
       href: `/journals/${d.template.code}/documents/${d.id}`,

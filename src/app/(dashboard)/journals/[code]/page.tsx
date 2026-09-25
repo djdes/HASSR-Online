@@ -276,6 +276,9 @@ import { JournalManageProvider } from "@/components/journals/document-list-ui";
 import { parseOrgColumnDefaults } from "@/lib/journal-columns";
 import { getPrimarySlotId } from "@/lib/journal-responsible-schemas";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
+import { CurrentJournalProvider } from "@/components/shared/custom-names-provider";
+import { customJournalName } from "@/lib/custom-names";
+import { getOrgCustomNames } from "@/lib/org-custom-names";
 
 export const dynamic = "force-dynamic";
 const SOURCE_STYLE_TRACKED_DEMO_CODES = new Set([
@@ -1367,8 +1370,16 @@ export default async function JournalDocumentsPage({
   // ними не должен стоить возврата в список.
   const journalMenu = await getJournalCrumbMenu(session, resolvedCode);
   // Локальная копия названия: внутри `withBanner` TS уже не помнит, что
-  // `template` прошёл проверку на null выше.
-  const journalTitle = template.name;
+  // `template` прошёл проверку на null выше. Название — для людей
+  // организации: своё («Настройки → Названия»), иначе официальное.
+  // Официальное (`template.name`) остаётся в диалогах создания документа
+  // и в печати.
+  const officialJournalTitle = template.name;
+  const customJournalTitle = customJournalName(
+    await getOrgCustomNames(getActiveOrgId(session)),
+    resolvedCode
+  );
+  const journalTitle = customJournalTitle ?? officialJournalTitle;
   const disabledCodes = Array.isArray(orgSettings?.disabledJournalCodes)
     ? (orgSettings?.disabledJournalCodes as string[])
     : [];
@@ -1387,7 +1398,7 @@ export default async function JournalDocumentsPage({
         </div>
         <p className="text-[14px] leading-[1.6] text-[#6f7282]">
           {fromQr ? "Вы открыли его по QR со скачанного шаблона. " : null}
-          «{template.name}» отключён для вашей организации: он не показывается
+          «{journalTitle}» отключён для вашей организации: он не показывается
           на дашборде и сотрудникам.{" "}
           {canEnable
             ? "Включите его одним нажатием — записи и документы за прошлые периоды никуда не делись."
@@ -1398,7 +1409,7 @@ export default async function JournalDocumentsPage({
             <>
               <JournalEnableButton
                 code={resolvedCode}
-                name={template.name}
+                name={journalTitle}
                 source={fromQr ? "blank-qr" : "journal-page"}
               />
               <a
@@ -1411,7 +1422,7 @@ export default async function JournalDocumentsPage({
           ) : (
             <JournalEnabledIndicator
               code={resolvedCode}
-              name={template.name}
+              name={journalTitle}
               disabled
               disabledCodes={disabledCodes}
               canToggle={false}
@@ -1473,6 +1484,9 @@ export default async function JournalDocumentsPage({
 
   function withBanner(children: React.ReactNode) {
     return (
+      // Какой журнал открыт — для заголовка со своим названием и строки
+      // «Официальное название: …» (JournalHeadingName в клиентах журналов).
+      <CurrentJournalProvider code={resolvedCode} officialName={officialJournalTitle}>
       <div className="space-y-5">
         <JournalPageCrumbs
           organizationName={orgSettings?.name || ORG_NAME_FALLBACK}
@@ -1516,6 +1530,7 @@ export default async function JournalDocumentsPage({
           </JournalCreateDefaultsProvider>
         </JournalToggleProvider>
       </div>
+      </CurrentJournalProvider>
     );
   }
   // Образцы документов сеются ТОЛЬКО в демо-организацию (флаг в самой
@@ -4201,13 +4216,18 @@ export default async function JournalDocumentsPage({
           экран, а название журнала и так стоит в крошках PageNav. */}
       <PageHeader
         eyebrow="Журнал"
-        title={template.name}
-        description={template.description ?? undefined}
+        title={journalTitle}
+        description={
+          // Своё название — сразу под ним официальное, чтобы не путались.
+          customJournalTitle
+            ? `Официальное название: ${officialJournalTitle}`
+            : template.description ?? undefined
+        }
         actions={
           <>
             <JournalEnabledIndicator
               code={resolvedCode}
-              name={template.name}
+              name={journalTitle}
               disabled={false}
               disabledCodes={disabledCodes}
               canToggle={hasFullWorkspaceAccess(session.user)}
