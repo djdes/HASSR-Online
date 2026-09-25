@@ -678,6 +678,8 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
         count,
         example: ORDER_SCAN_JOURNALS[code]?.example ?? "приказ о назначении ответственного",
         max: ORDER_SCAN_MAX_FILES,
+        // Камера — на сенсорных экранах; с компьютера — файлом в кабинете (там тот же блок «Приказы»).
+        cabinetHref: `/journals/${encodeURIComponent(code)}/documents/${encodeURIComponent(document.id)}`,
       });
     }
   }

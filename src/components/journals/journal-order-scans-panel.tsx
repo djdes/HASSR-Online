@@ -71,7 +71,7 @@ export function JournalOrderScansPanel({ journalCode, initialScans, canManage }:
   const [deleting, setDeleting] = useState<OrderScanItem | null>(null);
   const [viewing, setViewing] = useState<OrderScanItem | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
-  // «Камера» на телефоне: снимок сразу с задней камеры, уходит как скан JPG.
+  // «Камера» на сенсорном экране (телефон, планшет): снимок сразу с задней камеры, уходит как скан JPG.
   const cameraRef = useRef<HTMLInputElement | null>(null);
 
   const example = ORDER_SCAN_JOURNALS[journalCode]?.example ?? "приказ о назначении ответственного";
@@ -210,13 +210,15 @@ export function JournalOrderScansPanel({ journalCode, initialScans, canManage }:
               }}
             />
             <div className="flex gap-2">
-              {/* Камера — только на телефоне: на компьютере фото приказа загружают файлом. */}
+              {/* Камера — на устройствах с сенсорным экраном (телефон, планшет любой
+                  ширины: `any-pointer: coarse`); на компьютере с мышью фото приказа
+                  загружают файлом. */}
               <button
                 type="button"
                 disabled={uploading || full}
                 onClick={() => cameraRef.current?.click()}
                 data-order-scan-camera
-                className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:cursor-not-allowed disabled:opacity-50 sm:hidden"
+                className="hidden h-11 flex-1 items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:cursor-not-allowed disabled:opacity-50 any-pointer-coarse:inline-flex"
               >
                 <Camera className="size-4" />
                 Камера
@@ -242,7 +244,7 @@ export function JournalOrderScansPanel({ journalCode, initialScans, canManage }:
             <span className="text-center text-[12px] text-[#9b9fb3] sm:text-right">
               {full ? `Не больше ${ORDER_SCAN_MAX_FILES} файлов — удалите ненужный` : (
                 <>
-                  <span className="sm:hidden">Сфотографируйте приказ или загрузите </span>PDF, JPG или PNG, до 10 МБ
+                  <span className="hidden any-pointer-coarse:inline">Сфотографируйте приказ или загрузите </span>PDF, JPG или PNG, до 10 МБ
                 </>
               )}
             </span>

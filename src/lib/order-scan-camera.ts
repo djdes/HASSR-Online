@@ -68,12 +68,20 @@ function esc(value: string): string {
 }
 
 /**
+ * Кнопку камеры видят устройства с сенсорным экраном — телефоны и планшеты
+ * любой ширины (`any-pointer: coarse` покрывает и `pointer: coarse`). На
+ * компьютере с мышью её нет: там приказ загружают файлом в кабинете.
+ */
+export const ORDER_SCAN_TOUCH_MEDIA = "(any-pointer: coarse)";
+
+/**
  * Блок «Приказы к журналу» на QR-странице журнала (гигиена, бракераж готовой
  * продукции) — только для руководства, вошедшего в кабинет на этом телефоне.
  * Без скриптов работает как обычная форма; со скриптами — фото уменьшается и
- * уходит в фоне, результат пишется под кнопкой.
+ * уходит в фоне, результат пишется под кнопкой. `cabinetHref` — страница
+ * журнала в кабинете: с компьютера приказ загружают там.
  */
-export function renderOrderScanCamera(params: { code: string; count: number; example: string; max: number }): string {
+export function renderOrderScanCamera(params: { code: string; count: number; example: string; max: number; cabinetHref?: string | null }): string {
   const full = params.count >= params.max;
   return `<section class="card oscan" id="order-scans" data-code="${esc(params.code)}">
 <p class="label">Приказы к журналу</p>
@@ -87,6 +95,9 @@ ${
 <input id="oscan-file" class="oscan-in" type="file" name="file" accept="${ORDER_SCAN_CAMERA_ACCEPT}" capture="environment">
 <noscript><button class="btn" type="submit">Загрузить</button></noscript>
 </form>
+<p class="muted oscan-t oscan-desk">Сфотографировать приказ можно с телефона или планшета. С компьютера загрузите файл в кабинете${
+        params.cabinetHref ? ` — <a href="${esc(params.cabinetHref)}">открыть журнал</a>` : ""
+      }.</p>
 <p class="oscan-st" id="oscan-status" role="status" aria-live="polite" hidden></p>`
 }
 </section>`;
@@ -96,6 +107,8 @@ export const ORDER_SCAN_CAMERA_CSS = `
 .oscan{margin-top:18px}
 .oscan-t{font-size:15px;margin:0 0 12px}
 .oscan-cam{gap:10px;min-height:56px;font-size:17px}
+.btn.oscan-cam{display:none}
+@media ${ORDER_SCAN_TOUCH_MEDIA}{.btn.oscan-cam{display:flex}.oscan-desk{display:none}}
 .oscan-in{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 .oscan-st{margin:10px 2px 0;font-size:16px;line-height:1.4;color:#116b2a}
 .oscan-st.bad{color:#a13a32}
