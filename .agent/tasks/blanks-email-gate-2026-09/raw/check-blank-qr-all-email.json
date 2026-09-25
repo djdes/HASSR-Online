@@ -1,0 +1,1486 @@
+[
+  {
+    "label": "sample:hygiene",
+    "target": "code:hygiene",
+    "url": "https://wesetup.ru/qb/JGAHHJVVFFTQ7RBQQ5IWQYWNFSXVVMW65NI32EEPZULSFUFC5D2QLM2CZW3N4KLDBIYHL5HMNJXMTYCHRBTIYJJULFSSVBPBOM3WOMTCDMNNOXWH2KUQRMNX",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:hygiene",
+    "pagesWithoutQr": 3,
+    "pagesWithQr": 3,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/JGAHHJVVFFTQ7RBQQ5IWQYWNFSXVVMW65NI32EEPZULSFUFC5D2QLM2CZW3N4KLDBIYHL5HMNJXMTYCHRBTIYJJULFSSVBPBOM3WOMTCDMNNOXWH2KUQRMNX",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/JGAHHJVVFFTQ7RBQQ5IWQYWNFSXVVMW65NI32EEPZULSFUFC5D2QLM2CZW3N4KLDBIYHL5HMNJXMTYCHRBTIYJJULFSSVBPBOM3WOMTCDMNNOXWH2KUQRMNX",
+        "decodedOk": true
+      },
+      {
+        "page": 3,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/JGAHHJVVFFTQ7RBQQ5IWQYWNFSXVVMW65NI32EEPZULSFUFC5D2QLM2CZW3N4KLDBIYHL5HMNJXMTYCHRBTIYJJULFSSVBPBOM3WOMTCDMNNOXWH2KUQRMNX",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:health_check",
+    "target": "code:health_check",
+    "url": "https://wesetup.ru/qb/MEREVOMMPMGX7YG4DDW5ZTG6S3SC2FKQMJBM56YSUDURGIKEDIDNL6VKWVD3Q2KRDI4APNCB6JG66O372WE732LPXV7ZBLLSNCLECSEKDA73SA4L4DFYJK5W",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:health_check",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": true,
+        "bottomRow": false,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/MEREVOMMPMGX7YG4DDW5ZTG6S3SC2FKQMJBM56YSUDURGIKEDIDNL6VKWVD3Q2KRDI4APNCB6JG66O372WE732LPXV7ZBLLSNCLECSEKDA73SA4L4DFYJK5W",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:climate_control",
+    "target": "code:climate_control",
+    "url": "https://wesetup.ru/qb/BGKKHTBOJ3OVJMKDDUUO74CGVZAVL6QHEVORUZ3H7RVDALOIUFH3CQTKI5NCSXJGMYGENERPUGLGLY2GACTFCIIX4CSL5SZSRJ7IL44ONJIEXUJONPCIAING",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:climate_control",
+    "pagesWithoutQr": 2,
+    "pagesWithQr": 2,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/BGKKHTBOJ3OVJMKDDUUO74CGVZAVL6QHEVORUZ3H7RVDALOIUFH3CQTKI5NCSXJGMYGENERPUGLGLY2GACTFCIIX4CSL5SZSRJ7IL44ONJIEXUJONPCIAING",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/BGKKHTBOJ3OVJMKDDUUO74CGVZAVL6QHEVORUZ3H7RVDALOIUFH3CQTKI5NCSXJGMYGENERPUGLGLY2GACTFCIIX4CSL5SZSRJ7IL44ONJIEXUJONPCIAING",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:cold_equipment_control",
+    "target": "code:cold_equipment_control",
+    "url": "https://wesetup.ru/qb/RTNFCY7CEBP3UG7PWHLL2LOKFWSHS7QAOGHHH3JX3P2PGDHW2TY4JDX56SHZQOUWYNR4I6MAX7EVLMJNQWFGRB2FYBN6K7BOSCUHNARAXCNU74DUEPRRMD4S",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:cold_equipment_control",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/RTNFCY7CEBP3UG7PWHLL2LOKFWSHS7QAOGHHH3JX3P2PGDHW2TY4JDX56SHZQOUWYNR4I6MAX7EVLMJNQWFGRB2FYBN6K7BOSCUHNARAXCNU74DUEPRRMD4S",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:cleaning_ventilation_checklist",
+    "target": "code:cleaning_ventilation_checklist",
+    "url": "https://wesetup.ru/qb/MDARDPCIH5ZNQ67ECKJNPZ3FXLUMTM7RGN7ZAC4KBWUFHNZIU2D63EVUHJYFAFOBTCGDGLLAR5FOO5RR6JJW4O6K5WXJ7TW5WO3SY332IKYYJVAK3SJCYGQ3",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:cleaning_ventilation_checklist",
+    "pagesWithoutQr": 6,
+    "pagesWithQr": 6,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/MDARDPCIH5ZNQ67ECKJNPZ3FXLUMTM7RGN7ZAC4KBWUFHNZIU2D63EVUHJYFAFOBTCGDGLLAR5FOO5RR6JJW4O6K5WXJ7TW5WO3SY332IKYYJVAK3SJCYGQ3",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/MDARDPCIH5ZNQ67ECKJNPZ3FXLUMTM7RGN7ZAC4KBWUFHNZIU2D63EVUHJYFAFOBTCGDGLLAR5FOO5RR6JJW4O6K5WXJ7TW5WO3SY332IKYYJVAK3SJCYGQ3",
+        "decodedOk": true
+      },
+      {
+        "page": 3,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/MDARDPCIH5ZNQ67ECKJNPZ3FXLUMTM7RGN7ZAC4KBWUFHNZIU2D63EVUHJYFAFOBTCGDGLLAR5FOO5RR6JJW4O6K5WXJ7TW5WO3SY332IKYYJVAK3SJCYGQ3",
+        "decodedOk": true
+      },
+      {
+        "page": 4,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/MDARDPCIH5ZNQ67ECKJNPZ3FXLUMTM7RGN7ZAC4KBWUFHNZIU2D63EVUHJYFAFOBTCGDGLLAR5FOO5RR6JJW4O6K5WXJ7TW5WO3SY332IKYYJVAK3SJCYGQ3",
+        "decodedOk": true
+      },
+      {
+        "page": 5,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/MDARDPCIH5ZNQ67ECKJNPZ3FXLUMTM7RGN7ZAC4KBWUFHNZIU2D63EVUHJYFAFOBTCGDGLLAR5FOO5RR6JJW4O6K5WXJ7TW5WO3SY332IKYYJVAK3SJCYGQ3",
+        "decodedOk": true
+      },
+      {
+        "page": 6,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/MDARDPCIH5ZNQ67ECKJNPZ3FXLUMTM7RGN7ZAC4KBWUFHNZIU2D63EVUHJYFAFOBTCGDGLLAR5FOO5RR6JJW4O6K5WXJ7TW5WO3SY332IKYYJVAK3SJCYGQ3",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:cleaning",
+    "target": "code:cleaning",
+    "url": "https://wesetup.ru/qb/5XT4ZMUEV7C43KFT4U3RJBZLGSJB3SKKTHCT6UHXUQ227NNN6BNMG45JQJWYT5KQDGNH2GLGBFXZZG4IHXKBFCVUHTWFRE4ZZMATRC3V4C54AJ4LKVQDCHGK",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:cleaning",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/5XT4ZMUEV7C43KFT4U3RJBZLGSJB3SKKTHCT6UHXUQ227NNN6BNMG45JQJWYT5KQDGNH2GLGBFXZZG4IHXKBFCVUHTWFRE4ZZMATRC3V4C54AJ4LKVQDCHGK",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:general_cleaning",
+    "target": "code:general_cleaning",
+    "url": "https://wesetup.ru/qb/CLY4SPJ7VA5N3YUIJK3LBDSW2ESPAKUAHV2Y7V4JQCPLQ6LIBZ5IDZOC6JZUKNJI4QL52Y46DBA5OKG4QTSOOXSZELSXHCXEIUVEB7MA54MHQJR2I44MCODP",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:general_cleaning",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/CLY4SPJ7VA5N3YUIJK3LBDSW2ESPAKUAHV2Y7V4JQCPLQ6LIBZ5IDZOC6JZUKNJI4QL52Y46DBA5OKG4QTSOOXSZELSXHCXEIUVEB7MA54MHQJR2I44MCODP",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:uv_lamp_runtime",
+    "target": "code:uv_lamp_runtime",
+    "url": "https://wesetup.ru/qb/7MLLNDLSRYVYCRHPQRLOUJ5KEJTKM2JC2X57ZVGAN66B5RHB3BADTFSP6TN33FJ2WGA4IFO2AOHJN2XXHYWTJP3LRDTCVW5VDKWMVAYK5UTAJTNEWCS72CKD",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:uv_lamp_runtime",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": true,
+        "bottomRow": false,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/7MLLNDLSRYVYCRHPQRLOUJ5KEJTKM2JC2X57ZVGAN66B5RHB3BADTFSP6TN33FJ2WGA4IFO2AOHJN2XXHYWTJP3LRDTCVW5VDKWMVAYK5UTAJTNEWCS72CKD",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:finished_product",
+    "target": "code:finished_product",
+    "url": "https://wesetup.ru/qb/JQG2F254BLIKJB3DMDRRXZLLD7NJQZCZQAJPI2CAJAZVMVMZECIKAHF52S3EK4KMPRWSU64BWFHDWGZAGDLNGZOMBZBEMVDNCUD64N2MOCMO7QTYMSCBLWKZ",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:finished_product",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/JQG2F254BLIKJB3DMDRRXZLLD7NJQZCZQAJPI2CAJAZVMVMZECIKAHF52S3EK4KMPRWSU64BWFHDWGZAGDLNGZOMBZBEMVDNCUD64N2MOCMO7QTYMSCBLWKZ",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:perishable_rejection",
+    "target": "code:perishable_rejection",
+    "url": "https://wesetup.ru/qb/LIH7J3AJFDBYELGVJPWPILJS4CVXWNZQDYFINJPP6ZCANLH2EZBNMHKW2TBIJMIF7LJUXNAW7TJZWI7VX6KFG2CGRBUAEOU4TWQVOFGMT5YPSJMUJ6SDO4QP",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:perishable_rejection",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/LIH7J3AJFDBYELGVJPWPILJS4CVXWNZQDYFINJPP6ZCANLH2EZBNMHKW2TBIJMIF7LJUXNAW7TJZWI7VX6KFG2CGRBUAEOU4TWQVOFGMT5YPSJMUJ6SDO4QP",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:incoming_control",
+    "target": "code:incoming_control",
+    "url": "https://wesetup.ru/qb/RYCTGXJOANFQME7PBK5CTWAHCQTQ3WLBO2EW7OJNQFUMNGFO2BB7GOATU47H67DIM7SDFEP4PSKLG5734QPMD5R5FWZJCVAOX2PLBOFVLOMHFCP3U4B73LHJ",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:incoming_control",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/RYCTGXJOANFQME7PBK5CTWAHCQTQ3WLBO2EW7OJNQFUMNGFO2BB7GOATU47H67DIM7SDFEP4PSKLG5734QPMD5R5FWZJCVAOX2PLBOFVLOMHFCP3U4B73LHJ",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:fryer_oil",
+    "target": "code:fryer_oil",
+    "url": "https://wesetup.ru/qb/PORWKEMRVEZVCT347CU54TFYQTAWTKD4DJ2KH7V3T6BRUAR3YTAZ5Y5TBQIIJFPPEZKFI4SQSOUUTKG7WFR4YV4S3BDHDFZX2U3J6GPIDUY2RR4WBMWP7GB7",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:fryer_oil",
+    "pagesWithoutQr": 2,
+    "pagesWithQr": 2,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/PORWKEMRVEZVCT347CU54TFYQTAWTKD4DJ2KH7V3T6BRUAR3YTAZ5Y5TBQIIJFPPEZKFI4SQSOUUTKG7WFR4YV4S3BDHDFZX2U3J6GPIDUY2RR4WBMWP7GB7",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/PORWKEMRVEZVCT347CU54TFYQTAWTKD4DJ2KH7V3T6BRUAR3YTAZ5Y5TBQIIJFPPEZKFI4SQSOUUTKG7WFR4YV4S3BDHDFZX2U3J6GPIDUY2RR4WBMWP7GB7",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:med_books",
+    "target": "code:med_books",
+    "url": "https://wesetup.ru/qb/T5D22FIXIGISFN3PWZY57JO5PVGR4A5OCXUWLSU3WOFNVBBXLO2UUNZTOIEKBXJW57SQSXJ7LN63CWIWMY54Z37LNAEQY5NLR6K4WZTG5N6FGGHG5DCMNDDN",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:med_books",
+    "pagesWithoutQr": 3,
+    "pagesWithQr": 3,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/T5D22FIXIGISFN3PWZY57JO5PVGR4A5OCXUWLSU3WOFNVBBXLO2UUNZTOIEKBXJW57SQSXJ7LN63CWIWMY54Z37LNAEQY5NLR6K4WZTG5N6FGGHG5DCMNDDN",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/T5D22FIXIGISFN3PWZY57JO5PVGR4A5OCXUWLSU3WOFNVBBXLO2UUNZTOIEKBXJW57SQSXJ7LN63CWIWMY54Z37LNAEQY5NLR6K4WZTG5N6FGGHG5DCMNDDN",
+        "decodedOk": true
+      },
+      {
+        "page": 3,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/T5D22FIXIGISFN3PWZY57JO5PVGR4A5OCXUWLSU3WOFNVBBXLO2UUNZTOIEKBXJW57SQSXJ7LN63CWIWMY54Z37LNAEQY5NLR6K4WZTG5N6FGGHG5DCMNDDN",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:training_plan",
+    "target": "code:training_plan",
+    "url": "https://wesetup.ru/qb/J2O3N2LQVBYPERF77YC4RV2CAW2YZ363CJ3EAQS2WNRPIPDI5LKWIKFFWFMA4ZHAXLSE3DFA64O2TMY5OUFDRRQSPY6TN545OTTBCFMHGPFXPXBM62AQDDNY",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:training_plan",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/J2O3N2LQVBYPERF77YC4RV2CAW2YZ363CJ3EAQS2WNRPIPDI5LKWIKFFWFMA4ZHAXLSE3DFA64O2TMY5OUFDRRQSPY6TN545OTTBCFMHGPFXPXBM62AQDDNY",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:staff_training",
+    "target": "code:staff_training",
+    "url": "https://wesetup.ru/qb/GJF5M2CWUZPBQP3XALAPARVR4Z4QA7ZC4P3Z7ZK5XBPHZ6IDPEWUHICO42OAUIAOM37IOVBXH777JMU7ABASJVQ6BWKLGE3CVRPOOYBFUYQHGSIGPNLW2HVE",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:staff_training",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/GJF5M2CWUZPBQP3XALAPARVR4Z4QA7ZC4P3Z7ZK5XBPHZ6IDPEWUHICO42OAUIAOM37IOVBXH777JMU7ABASJVQ6BWKLGE3CVRPOOYBFUYQHGSIGPNLW2HVE",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:disinfectant_usage",
+    "target": "code:disinfectant_usage",
+    "url": "https://wesetup.ru/qb/A3E7CXFDIPZKEUP46LTFIJR7TOITIINHVZX7VLT6WMECDP4356M63QUXM32OZO4AS2IJWSBDSDY4ZIQQVBGEIU6CNUE7JLYRH5YBLTQ5KFPC3UFLU4QVTW2J",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:disinfectant_usage",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/A3E7CXFDIPZKEUP46LTFIJR7TOITIINHVZX7VLT6WMECDP4356M63QUXM32OZO4AS2IJWSBDSDY4ZIQQVBGEIU6CNUE7JLYRH5YBLTQ5KFPC3UFLU4QVTW2J",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:sanitary_day_control",
+    "target": "code:sanitary_day_control",
+    "url": "https://wesetup.ru/qb/3MHSS6IHJCRUQFABKIORX5AI4CQZ3EEAGWIOYOFPX4TLX56ONTLQ5CGVM7M5UPCJPLFHQLKF4YWG2MLFTRO5NX5SLQXJOYCIPZZQ4AU2JQ7LGFTNEYDFNRED",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:sanitary_day_control",
+    "pagesWithoutQr": 2,
+    "pagesWithQr": 2,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/3MHSS6IHJCRUQFABKIORX5AI4CQZ3EEAGWIOYOFPX4TLX56ONTLQ5CGVM7M5UPCJPLFHQLKF4YWG2MLFTRO5NX5SLQXJOYCIPZZQ4AU2JQ7LGFTNEYDFNRED",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/3MHSS6IHJCRUQFABKIORX5AI4CQZ3EEAGWIOYOFPX4TLX56ONTLQ5CGVM7M5UPCJPLFHQLKF4YWG2MLFTRO5NX5SLQXJOYCIPZZQ4AU2JQ7LGFTNEYDFNRED",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:equipment_maintenance",
+    "target": "code:equipment_maintenance",
+    "url": "https://wesetup.ru/qb/F4GFYBU3KLCYF323EKG6ZN3IPJTEKL5LJWVBOQDARLZE7NBZRCOFLXZDVS6TLUHBXHPDKWNQBXZVGJ7IAOS6YBXZB5GPZJVA32QBKD74CMSD34ZT4PNUSFLI",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:equipment_maintenance",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/F4GFYBU3KLCYF323EKG6ZN3IPJTEKL5LJWVBOQDARLZE7NBZRCOFLXZDVS6TLUHBXHPDKWNQBXZVGJ7IAOS6YBXZB5GPZJVA32QBKD74CMSD34ZT4PNUSFLI",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:breakdown_history",
+    "target": "code:breakdown_history",
+    "url": "https://wesetup.ru/qb/VD466TH43VEJD5LCXK6J7VQNJM36RYWIGIR7I5P6IOR2TQYGBYQQDXCAVRKXDYZY4QKJHCAYCRN566XGYAHNAZO6VGT7C3PPP6I4DDE5BNUU47NRSD6IY3NQ",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:breakdown_history",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/VD466TH43VEJD5LCXK6J7VQNJM36RYWIGIR7I5P6IOR2TQYGBYQQDXCAVRKXDYZY4QKJHCAYCRN566XGYAHNAZO6VGT7C3PPP6I4DDE5BNUU47NRSD6IY3NQ",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:equipment_calibration",
+    "target": "code:equipment_calibration",
+    "url": "https://wesetup.ru/qb/RKPDMLQT52FVO6GT3TTWP3RCPJQDJOYMR2BRHIII5RUKYFLWQMOFEDWLQTWNJUHVQEPOQK3C6BCBTPNB7AAFXUE5OLIOY6EVZXUUKGPRPSAU3HP33AU2MF6R",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:equipment_calibration",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/RKPDMLQT52FVO6GT3TTWP3RCPJQDJOYMR2BRHIII5RUKYFLWQMOFEDWLQTWNJUHVQEPOQK3C6BCBTPNB7AAFXUE5OLIOY6EVZXUUKGPRPSAU3HP33AU2MF6R",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:incoming_raw_materials_control",
+    "target": "code:incoming_raw_materials_control",
+    "url": "https://wesetup.ru/qb/VSBMHTDQV6UW2HUKVAMSCKNHRXR6JSPPL35K7RUH45TEVOAQQKYU62KNXKQB5FE7E6QW7UXBLDBIJAUGX3YWZSTPLMUERO62VLY7ZU2WTCZHGUBNCGVKL3GX",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:incoming_raw_materials_control",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/VSBMHTDQV6UW2HUKVAMSCKNHRXR6JSPPL35K7RUH45TEVOAQQKYU62KNXKQB5FE7E6QW7UXBLDBIJAUGX3YWZSTPLMUERO62VLY7ZU2WTCZHGUBNCGVKL3GX",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:ppe_issuance",
+    "target": "code:ppe_issuance",
+    "url": "https://wesetup.ru/qb/AAPX37GS6SJ4MIOK7RPQH6OARFGRMRL55GG55XEQFNK2PXQLFPJP2DUJ532VD2JENQ3TB3TO6W3OSFEOTXRGFGACFLB3SDMVRG6XZU6BJYTBVDGXYOXZKE3R",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:ppe_issuance",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/AAPX37GS6SJ4MIOK7RPQH6OARFGRMRL55GG55XEQFNK2PXQLFPJP2DUJ532VD2JENQ3TB3TO6W3OSFEOTXRGFGACFLB3SDMVRG6XZU6BJYTBVDGXYOXZKE3R",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:accident_journal",
+    "target": "code:accident_journal",
+    "url": "https://wesetup.ru/qb/PTQCHFIOPZYSNKL7CCY4MLTON43Z3BGXPH45SJM33PMAPFEVHSVC53ZC7DKGZZTQ7IB6GWRK6FI724TA54IFVZIBQST6P77WXL67J4HRCZ5A37VS6W4CU6AN",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:accident_journal",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/PTQCHFIOPZYSNKL7CCY4MLTON43Z3BGXPH45SJM33PMAPFEVHSVC53ZC7DKGZZTQ7IB6GWRK6FI724TA54IFVZIBQST6P77WXL67J4HRCZ5A37VS6W4CU6AN",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:complaint_register",
+    "target": "code:complaint_register",
+    "url": "https://wesetup.ru/qb/FUGI73JW7OUQUU5ZMP3VRUTX3LMATO57ZD4LX2PL2DKWVOK4YTXBJ2XFHITVDA6CZLIILU7RWRH6FCSYK7U3XW4UZW7PWP7K5WDGJ6BHVAVJ4OH4QFOEV5QZ",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:complaint_register",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/FUGI73JW7OUQUU5ZMP3VRUTX3LMATO57ZD4LX2PL2DKWVOK4YTXBJ2XFHITVDA6CZLIILU7RWRH6FCSYK7U3XW4UZW7PWP7K5WDGJ6BHVAVJ4OH4QFOEV5QZ",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:product_writeoff",
+    "target": "code:product_writeoff",
+    "url": "https://wesetup.ru/qb/5VE3BURG4DLPPU2MDGM5LNFY3NNMX3GOR3SLQAVTMKP74TCUQUJR3AFJH4OXGZTOETA7L7SVKCYPBUS7272WNYH7WUMDOXHXGQPXVCOKZF6ZGWNWYGCQKWAK",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:product_writeoff",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/5VE3BURG4DLPPU2MDGM5LNFY3NNMX3GOR3SLQAVTMKP74TCUQUJR3AFJH4OXGZTOETA7L7SVKCYPBUS7272WNYH7WUMDOXHXGQPXVCOKZF6ZGWNWYGCQKWAK",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:audit_plan",
+    "target": "code:audit_plan",
+    "url": "https://wesetup.ru/qb/IYCXG6WF3LZ2GS4LTPOYJAXEYTWRCV2BESKIGCKVMUBHAJDG77V3MMS747SZ3JVYDGGOTZJCHS6FTXUTHQQXIPOBWZ23RP7J6HSIAN3QK6TCEI5IDX47DXQR",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:audit_plan",
+    "pagesWithoutQr": 2,
+    "pagesWithQr": 2,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/IYCXG6WF3LZ2GS4LTPOYJAXEYTWRCV2BESKIGCKVMUBHAJDG77V3MMS747SZ3JVYDGGOTZJCHS6FTXUTHQQXIPOBWZ23RP7J6HSIAN3QK6TCEI5IDX47DXQR",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/IYCXG6WF3LZ2GS4LTPOYJAXEYTWRCV2BESKIGCKVMUBHAJDG77V3MMS747SZ3JVYDGGOTZJCHS6FTXUTHQQXIPOBWZ23RP7J6HSIAN3QK6TCEI5IDX47DXQR",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:audit_protocol",
+    "target": "code:audit_protocol",
+    "url": "https://wesetup.ru/qb/23CZEVE2CZHARPQCD3YOBBYBCDDE56OHND6WU6VOONMZCHWLPBOCELH552F7HLXF7JVS25KKF3D44AZGX57TO6DY4ZOLRZCULY6WCTVFRVHBPYXUBKQD7EBP",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:audit_protocol",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/23CZEVE2CZHARPQCD3YOBBYBCDDE56OHND6WU6VOONMZCHWLPBOCELH552F7HLXF7JVS25KKF3D44AZGX57TO6DY4ZOLRZCULY6WCTVFRVHBPYXUBKQD7EBP",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:audit_report",
+    "target": "code:audit_report",
+    "url": "https://wesetup.ru/qb/7OXGXJQPL6FINVBX74GM3RFA2TXZY75Q2WW5M452BHNXWCU4QNPNWUMMICAPWDZZZYTDNY4XETTL7WF333QPEX3ZZED44PTQLZKO2LO77GNU3XRRMMA65BXN",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:audit_report",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/7OXGXJQPL6FINVBX74GM3RFA2TXZY75Q2WW5M452BHNXWCU4QNPNWUMMICAPWDZZZYTDNY4XETTL7WF333QPEX3ZZED44PTQLZKO2LO77GNU3XRRMMA65BXN",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:traceability_test",
+    "target": "code:traceability_test",
+    "url": "https://wesetup.ru/qb/7CS2KJLWZUN4TQZR56VMWADSUQ7EKELN7Q62XFVBBXPV2U7GHMKQZH6DUMUJOHIDDPCZSO4TNQ75BTR6WORRT62BR2YZFXFT23ZWRMXC3S7YKCH7J23IW525",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:traceability_test",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/7CS2KJLWZUN4TQZR56VMWADSUQ7EKELN7Q62XFVBBXPV2U7GHMKQZH6DUMUJOHIDDPCZSO4TNQ75BTR6WORRT62BR2YZFXFT23ZWRMXC3S7YKCH7J23IW525",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:metal_impurity",
+    "target": "code:metal_impurity",
+    "url": "https://wesetup.ru/qb/VYMTLTDTCAJC6WFHQVEBK5YSKV3OWDMTH3KAGGAHLYU43KJECWIEQ4JXMFYKDOG6MXFBFJIC5JK4ARE2IN2X4FEJIUMU2Y6PCCZGIV2J7K66IGTACIE77FOJ",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:metal_impurity",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/VYMTLTDTCAJC6WFHQVEBK5YSKV3OWDMTH3KAGGAHLYU43KJECWIEQ4JXMFYKDOG6MXFBFJIC5JK4ARE2IN2X4FEJIUMU2Y6PCCZGIV2J7K66IGTACIE77FOJ",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:equipment_cleaning",
+    "target": "code:equipment_cleaning",
+    "url": "https://wesetup.ru/qb/WYFVVPLLXGJREIFX32ODUXQWC7EV3XOMRYMRXMMC5BUSHV7LUNJDVMFOVKRS4HJ7RJPCCAXSAQ7BFW3OAZITIMJHCHEP42VFVBVFJP3ICCIBUVU72AX75SPT",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:equipment_cleaning",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/WYFVVPLLXGJREIFX32ODUXQWC7EV3XOMRYMRXMMC5BUSHV7LUNJDVMFOVKRS4HJ7RJPCCAXSAQ7BFW3OAZITIMJHCHEP42VFVBVFJP3ICCIBUVU72AX75SPT",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:intensive_cooling",
+    "target": "code:intensive_cooling",
+    "url": "https://wesetup.ru/qb/J3CQDKWK3FI5KUNND3B5D7TRELDIR6WTUV2JWHCOQXYBGDC3AZEMWC7LTEXH3BOJ5KP7L2NFXMY5KDO2M4HGTN5EKNOPYMNPDQP6YISEENVDGSGVOFGNOGJO",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:intensive_cooling",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/J3CQDKWK3FI5KUNND3B5D7TRELDIR6WTUV2JWHCOQXYBGDC3AZEMWC7LTEXH3BOJ5KP7L2NFXMY5KDO2M4HGTN5EKNOPYMNPDQP6YISEENVDGSGVOFGNOGJO",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:glass_items_list",
+    "target": "code:glass_items_list",
+    "url": "https://wesetup.ru/qb/2UGDPHD4E7PUO73G2CCI7AUWHSNQDRTDNMUAWSDTAJRNARN6WGJNR63GWBKEL35EMHXCOADXBKTERXA63OH7PSKXMMMF7GSXDXL6LUHWFAVY3YFZ3X7ETT2F",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:glass_items_list",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/2UGDPHD4E7PUO73G2CCI7AUWHSNQDRTDNMUAWSDTAJRNARN6WGJNR63GWBKEL35EMHXCOADXBKTERXA63OH7PSKXMMMF7GSXDXL6LUHWFAVY3YFZ3X7ETT2F",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:glass_control",
+    "target": "code:glass_control",
+    "url": "https://wesetup.ru/qb/TMU3QGBHIU5AQZ5LVWIKHO7FXGEN7E7YKOGTRP4AILWZ6J2T7ZVSGKGOTL4R3LDZ2XMF7OC2LCL6V27KIYN7EUOR6RV5OABP356OH52E67VYCMV6GVARZ45N",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:glass_control",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/TMU3QGBHIU5AQZ5LVWIKHO7FXGEN7E7YKOGTRP4AILWZ6J2T7ZVSGKGOTL4R3LDZ2XMF7OC2LCL6V27KIYN7EUOR6RV5OABP356OH52E67VYCMV6GVARZ45N",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:pest_control",
+    "target": "code:pest_control",
+    "url": "https://wesetup.ru/qb/M2EQAID7OPN34OXRIOG745KHHPFXWR7CZAXTKWS52UW3QZ23627FAABBV6X6TXERUCFORGBQF4UKHXBNNRW7SOUV5D6QOI2L5JZWVO6RDLQ2XGVXOLZ7KAQH",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:pest_control",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/M2EQAID7OPN34OXRIOG745KHHPFXWR7CZAXTKWS52UW3QZ23627FAABBV6X6TXERUCFORGBQF4UKHXBNNRW7SOUV5D6QOI2L5JZWVO6RDLQ2XGVXOLZ7KAQH",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:daily_samples",
+    "target": "code:daily_samples",
+    "url": "https://wesetup.ru/qb/TZZTXJVNMTN2SOFRXD2LMIRB7BMGZDGKQR2O7YVCCCQX2BQA43E37K4ITZPOZ5PAZV6CBLMZSV5VWQBYSMF4X3ZGNFAVOPONWOQQGK67PYV4G3US6L4EZZIQ",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:daily_samples",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/TZZTXJVNMTN2SOFRXD2LMIRB7BMGZDGKQR2O7YVCCCQX2BQA43E37K4ITZPOZ5PAZV6CBLMZSV5VWQBYSMF4X3ZGNFAVOPONWOQQGK67PYV4G3US6L4EZZIQ",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:vitaminization",
+    "target": "code:vitaminization",
+    "url": "https://wesetup.ru/qb/7EJOTU45YWL56JBINZMVBXMAAQDAWHH64H3XVVULI6PH73RSVTL6ITUUMXEGYWLZ2V4NOZRZEUFIDTX22L4MDHWV7HT7G3IH2H54Q7HDSDAPTWFO7YEVUT2B",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:vitaminization",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/7EJOTU45YWL56JBINZMVBXMAAQDAWHH64H3XVVULI6PH73RSVTL6ITUUMXEGYWLZ2V4NOZRZEUFIDTX22L4MDHWV7HT7G3IH2H54Q7HDSDAPTWFO7YEVUT2B",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:ration_control",
+    "target": "code:ration_control",
+    "url": "https://wesetup.ru/qb/YYN5Y4MRARZ3HD3WX6OD2Z5RXKXICSH2NOKPTWFQGO62GU76CI5C46WSLLXAQOGQHLNY5XQSC64QCIV7NDNKGIJ7MR5D52D52WXDHVHN24G6IAVZFJLV2QZY",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:ration_control",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/YYN5Y4MRARZ3HD3WX6OD2Z5RXKXICSH2NOKPTWFQGO62GU76CI5C46WSLLXAQOGQHLNY5XQSC64QCIV7NDNKGIJ7MR5D52D52WXDHVHN24G6IAVZFJLV2QZY",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:transport_temperature",
+    "target": "code:transport_temperature",
+    "url": "https://wesetup.ru/qb/E2YF5L4FTOROMLTYTXKFKBHPQJUVWE2CEZ4D2PNGDERQR2EHXWOSS2MFQWD7SOLPWJVR7HDGKL2LH63H6JB6GKB7RERICMYDJUB34GBXA5NNR5SYTEJUX7L4",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:transport_temperature",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/E2YF5L4FTOROMLTYTXKFKBHPQJUVWE2CEZ4D2PNGDERQR2EHXWOSS2MFQWD7SOLPWJVR7HDGKL2LH63H6JB6GKB7RERICMYDJUB34GBXA5NNR5SYTEJUX7L4",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:tableware_breakage",
+    "target": "code:tableware_breakage",
+    "url": "https://wesetup.ru/qb/IDJJSN3RCA3YQ7BMBOQGIUKMERIVUNSZESQMP4XSMDLVNDU35IOW62UJB6EZ2UG6EKFMODKIW6J346FJ24IHK6AJEAE46KJ4PNJKAEA3YPEBT3QHCKUH7KR7",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:tableware_breakage",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/IDJJSN3RCA3YQ7BMBOQGIUKMERIVUNSZESQMP4XSMDLVNDU35IOW62UJB6EZ2UG6EKFMODKIW6J346FJ24IHK6AJEAE46KJ4PNJKAEA3YPEBT3QHCKUH7KR7",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:pool_water_control",
+    "target": "code:pool_water_control",
+    "url": "https://wesetup.ru/qb/RQ4CFRZEPMCKH774ZHCJZKUVHH4DXF6PAL5XONO7YBRS2MKG3I4TYGAU2YTKWCTRMT32ADLFLRBOJLWZOUW2ECZK67DA3TEH4OVMECMG5XQO3H6ARB7WIT75",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:pool_water_control",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/RQ4CFRZEPMCKH774ZHCJZKUVHH4DXF6PAL5XONO7YBRS2MKG3I4TYGAU2YTKWCTRMT32ADLFLRBOJLWZOUW2ECZK67DA3TEH4OVMECMG5XQO3H6ARB7WIT75",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:inventory_condition",
+    "target": "code:inventory_condition",
+    "url": "https://wesetup.ru/qb/OXJT2XLM4BTPFCDJGPJDBX4W4HCPRRTA5XL65K6BEEGJEC7QFIA2A5OVX55I2H2GJSBP66YLSEJNJXHU6WVCAILVLLDK2FZMUDQZN52YYXOEUZIOI4POYUHB",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:inventory_condition",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/OXJT2XLM4BTPFCDJGPJDBX4W4HCPRRTA5XL65K6BEEGJEC7QFIA2A5OVX55I2H2GJSBP66YLSEJNJXHU6WVCAILVLLDK2FZMUDQZN52YYXOEUZIOI4POYUHB",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:instrument_sterilization",
+    "target": "code:instrument_sterilization",
+    "url": "https://wesetup.ru/qb/ETUYLXFWAWEXUBLWB3NYL7HICXURQNUH7D4SLRIZCKCV2R3BQR7OKU5I3VN4FLIQ5TO6PLBVGP2X5HYQOUWUQ2RKFPEPL3KH665CXRPFYQDOKZKUHFS7EARD",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:instrument_sterilization",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/ETUYLXFWAWEXUBLWB3NYL7HICXURQNUH7D4SLRIZCKCV2R3BQR7OKU5I3VN4FLIQ5TO6PLBVGP2X5HYQOUWUQ2RKFPEPL3KH665CXRPFYQDOKZKUHFS7EARD",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:medical_waste_b",
+    "target": "code:medical_waste_b",
+    "url": "https://wesetup.ru/qb/6AZDSP2CBUWDPEXQ6K4D3OE7L26E55ZQZNSRASLORLF4D3O6SQZB4IRRJ7SA75CSU5HJ5YZPRNDLFDAMI4HLRAHKLJ7CV6WKADB5IR3TX6BV3PP23POKZODA",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:medical_waste_b",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/6AZDSP2CBUWDPEXQ6K4D3OE7L26E55ZQZNSRASLORLF4D3O6SQZB4IRRJ7SA75CSU5HJ5YZPRNDLFDAMI4HLRAHKLJ7CV6WKADB5IR3TX6BV3PP23POKZODA",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:batch_release",
+    "target": "code:batch_release",
+    "url": "https://wesetup.ru/qb/HASVPIP7CRZKW2IIVDKBMI7OJWJUZD46I4L7IWUDPHOT4PMVWM6IZQQUCJDX2MLFAHFWGKSPTHQYP6NTLKSVYJWFROL5XF4XCZA7JNLYZOIWM6BLDVET5JTG",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "code:batch_release",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/HASVPIP7CRZKW2IIVDKBMI7OJWJUZD46I4L7IWUDPHOT4PMVWM6IZQQUCJDX2MLFAHFWGKSPTHQYP6NTLKSVYJWFROL5XF4XCZA7JNLYZOIWM6BLDVET5JTG",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "paper:ot_intro",
+    "target": "paper:ot_intro",
+    "url": "https://wesetup.ru/qb/2QTGVOVYRXIJSRNPZXLY5NJG5WDUNQKHVNPO3DV26LL3RWAJ5PCPAVA6E3MHRFYP6FQXBGDSYPLGRKF7Z6V4JEPMUV3QYN7OYNPMPB6UX7UQMFDNGF22Y25Q",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "paper:ot_intro",
+    "pagesWithoutQr": 2,
+    "pagesWithQr": 2,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/2QTGVOVYRXIJSRNPZXLY5NJG5WDUNQKHVNPO3DV26LL3RWAJ5PCPAVA6E3MHRFYP6FQXBGDSYPLGRKF7Z6V4JEPMUV3QYN7OYNPMPB6UX7UQMFDNGF22Y25Q",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/2QTGVOVYRXIJSRNPZXLY5NJG5WDUNQKHVNPO3DV26LL3RWAJ5PCPAVA6E3MHRFYP6FQXBGDSYPLGRKF7Z6V4JEPMUV3QYN7OYNPMPB6UX7UQMFDNGF22Y25Q",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "paper:ot_workplace",
+    "target": "paper:ot_workplace",
+    "url": "https://wesetup.ru/qb/HTOI6SCA2YY52RYV6T3ZVTJVQ5DAFDFX4H64L74RC5WZAZZSOSH7K62QNVKPJXWQ5AF6QZQ574HORT26YX6MPHQUV5AS3GXB5OOEPLHLZZTSAO5W56B33KCR",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "paper:ot_workplace",
+    "pagesWithoutQr": 2,
+    "pagesWithQr": 2,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/HTOI6SCA2YY52RYV6T3ZVTJVQ5DAFDFX4H64L74RC5WZAZZSOSH7K62QNVKPJXWQ5AF6QZQ574HORT26YX6MPHQUV5AS3GXB5OOEPLHLZZTSAO5W56B33KCR",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/HTOI6SCA2YY52RYV6T3ZVTJVQ5DAFDFX4H64L74RC5WZAZZSOSH7K62QNVKPJXWQ5AF6QZQ574HORT26YX6MPHQUV5AS3GXB5OOEPLHLZZTSAO5W56B33KCR",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "paper:fire_safety",
+    "target": "paper:fire_safety",
+    "url": "https://wesetup.ru/qb/G26KG2VV3IMU2FXZ2M5XTOVUKOSQLMGJ3IXNWJL5YNI3TS3YDPI2ENHXPKJXRIJW3TWRZZSE3PST765MXCHQUOTD663UFLBS2NQYUCOOJ7RVE4LKF5J5ZFUL",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "paper:fire_safety",
+    "pagesWithoutQr": 2,
+    "pagesWithQr": 2,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/G26KG2VV3IMU2FXZ2M5XTOVUKOSQLMGJ3IXNWJL5YNI3TS3YDPI2ENHXPKJXRIJW3TWRZZSE3PST765MXCHQUOTD663UFLBS2NQYUCOOJ7RVE4LKF5J5ZFUL",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/G26KG2VV3IMU2FXZ2M5XTOVUKOSQLMGJ3IXNWJL5YNI3TS3YDPI2ENHXPKJXRIJW3TWRZZSE3PST765MXCHQUOTD663UFLBS2NQYUCOOJ7RVE4LKF5J5ZFUL",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "paper:fire_extinguishers",
+    "target": "paper:fire_extinguishers",
+    "url": "https://wesetup.ru/qb/IEUGKVFCRK75K7C3EZEGSWDKG7ZULD4U6I3EQWJ3LAJ4GSOIBLUCMBFUIUG324KJBQE7I6BCAYFUWSV3BXNLQ5DUPDRJ5G52ZUMMQI2YDJN5XF6UUDK57ZOF",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "paper:fire_extinguishers",
+    "pagesWithoutQr": 2,
+    "pagesWithQr": 2,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/IEUGKVFCRK75K7C3EZEGSWDKG7ZULD4U6I3EQWJ3LAJ4GSOIBLUCMBFUIUG324KJBQE7I6BCAYFUWSV3BXNLQ5DUPDRJ5G52ZUMMQI2YDJN5XF6UUDK57ZOF",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/IEUGKVFCRK75K7C3EZEGSWDKG7ZULD4U6I3EQWJ3LAJ4GSOIBLUCMBFUIUG324KJBQE7I6BCAYFUWSV3BXNLQ5DUPDRJ5G52ZUMMQI2YDJN5XF6UUDK57ZOF",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "paper:electrical_safety",
+    "target": "paper:electrical_safety",
+    "url": "https://wesetup.ru/qb/KXD6SDIQERMKGVBWHER3GGUPFDVKA2YQEGJNFLM3RTPWOEZ2M4Z4Z5EU2MI5DFONEEYKK6XNTEEWGR5N5U6ZERXWEHTC5PVEZRHHCM4QDZQLQOOGXXK4FPNX",
+    "tokenEmail": "zaveduyushchaya.proizv@kombinat-pita.ru",
+    "tokenTarget": "paper:electrical_safety",
+    "pagesWithoutQr": 2,
+    "pagesWithQr": 2,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/KXD6SDIQERMKGVBWHER3GGUPFDVKA2YQEGJNFLM3RTPWOEZ2M4Z4Z5EU2MI5DFONEEYKK6XNTEEWGR5N5U6ZERXWEHTC5PVEZRHHCM4QDZQLQOOGXXK4FPNX",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 41,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/KXD6SDIQERMKGVBWHER3GGUPFDVKA2YQEGJNFLM3RTPWOEZ2M4Z4Z5EU2MI5DFONEEYKK6XNTEEWGR5N5U6ZERXWEHTC5PVEZRHHCM4QDZQLQOOGXXK4FPNX",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  }
+]

@@ -1,0 +1,69 @@
+{
+  "task": "blanks-email-gate-2026-09",
+  "spec": ".agent/tasks/blanks-email-gate-2026-09/spec.md",
+  "branch": "feat/blanks-gate-2026-09-25",
+  "verdict": "PASS",
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": [
+        "raw/e2e.json: 15 AC1 checks PASS (modal on /journals-info/hygiene, /blanki, landing gallery, /zhurnal-zdorovya; consent required; download via ?t=; remembered email → no modal, same email server-side; inline 200 public cache; tokenless 403 (script) / 307 → /journals-info/<code>?download=<fmt> (browser); forged token 403; old link in browser → page with modal; paper blank → /blanki modal)",
+        "src/app/api/journal-samples/journal-samples-gate.test.ts (5 tests)",
+        "evidence/01-journal-modal-1440.png, 02-journal-done-1440.png, 03-remembered-notice-1440.png, 04-redirect-modal-390.png, 05-blanki-modal-390.png"
+      ]
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": [
+        "raw/e2e.json consents: source=blank-download, version=2026-09-22, statementText verbatim, ipAddress, userAgent",
+        "raw/e2e.json auditDetails: platform AuditLog action blank.download with code/title/format, entityId = consent id",
+        "raw/e2e.json rateLimits: per-IP 30x200 then 429 (Retry-After 3598); per-email 50x200 then 429 (Retry-After 86397); 10 letters for 51 downloads",
+        "raw/e2e.json emailLog: Subject 'Шаблон «Гигиенический журнал (сотрудники)» — WeSetup', body with /api/journal-samples/hygiene/pdf?t=…",
+        "src/lib/blank-download.test.ts (limits, request parsing), src/lib/blank-download-email.test.ts"
+      ]
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": [
+        "raw/check-blank-qr-all-email.json: 50/50 OK, 68 pages, ink-in-zone 0, module mismatches 0, 41 modules, copyright+caption text on every page, OpenCV decode == url on every page",
+        "raw/check-blank-qr-all-noemail.json: 50/50 OK, 68 pages, 37 modules",
+        "raw/e2e.json: downloaded PDF QR (OpenCV) → /qb token with the e2e email; downloaded DOCX → LibreOffice → OpenCV → /qb token with the same email",
+        "src/lib/blank-qr-token.test.ts: PDF sample and paper blank have copyright on every page; DOCX footer has copyright, caption and QR PNG equal to QRCode.toBuffer(url)",
+        "evidence/pdf-corner-*.png, evidence/docx-footer-hygiene.png"
+      ],
+      "notes": "health_check block moved to the top-right corner (wider caption does not fit next to the bottom note); uv_lamp_runtime was already moved up before this change; no overlaps anywhere"
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": [
+        "raw/e2e.json: new email → stub + register with prefilled email, source=blank, journal=hygiene → /journals/hygiene; existing email → 'Войдите — и этот журнал откроется для заполнения' → /login?email=&next=/journals/hygiene → /journals/hygiene; logged in → 'Открыть журнал'; broken token → stub without email and journal",
+        "src/lib/blank-qr-token.test.ts: seal/open, tamper, wrong secret, all 50 targets resolve, long email fallback",
+        "evidence/06-qb-new-390.png, 07-register-prefilled-390.png, 08-journal-after-register-390.png, 09-qb-existing-1440.png, 10-journal-after-login-1440.png, 11-qb-broken-390.png"
+      ]
+    },
+    "AC5": {
+      "status": "PASS",
+      "evidence": [
+        "npm run typecheck: exit 0",
+        "npm test: 2268 pass / 0 fail (baseline 2238, +30 new)",
+        "e2e: 36/36 PASS, screenshots at 390 and 1440 (evidence/01..13)",
+        "root list: evidence/12-root-downloads-1440.png, evidence/13-root-downloads-390.png"
+      ]
+    }
+  },
+  "commands": [
+    "npm run typecheck",
+    "npm test",
+    "NEXTAUTH_SECRET=<test> npx tsx .agent/tasks/blanks-email-gate-2026-09/check-blank-qr.ts all",
+    "NEXTAUTH_SECRET=<test> BLANK_EMAIL=none npx tsx .agent/tasks/blanks-email-gate-2026-09/check-blank-qr.ts all",
+    "DEV_LOG=<dev log> node --env-file=.env --import tsx .agent/tasks/blanks-email-gate-2026-09/e2e-blanks.ts"
+  ],
+  "openIssues": [
+    "/consent does not list template downloads or sales contact; advertising e-mails need a separate consent (38-FZ art. 18) — owner/lawyer decision",
+    "journal and format stored in platform AuditLog (no LegalConsent columns, schema unchanged); 365-day retention",
+    "email in QR up to 39 chars on wesetup.ru; longer → QR without email",
+    "public/journal-samples/*.webp thumbnails not regenerated",
+    "journal may be disabled for a new org after registration from QR (3 of 45 enabled by default) — page offers one-click enable; no auto-enable (health_check is off for new orgs on purpose)",
+    "/prikazy order blanks not gated (not journal templates)"
+  ]
+}

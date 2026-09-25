@@ -1,0 +1,1486 @@
+[
+  {
+    "label": "sample:hygiene",
+    "target": "code:hygiene",
+    "url": "https://wesetup.ru/qb/QPW6AU5JC2UFJL3EZ7XN7FJ67AM6VRN7GCLQ4JFSGIJT3NORBDUSMD74R4",
+    "tokenEmail": null,
+    "tokenTarget": "code:hygiene",
+    "pagesWithoutQr": 3,
+    "pagesWithQr": 3,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/QPW6AU5JC2UFJL3EZ7XN7FJ67AM6VRN7GCLQ4JFSGIJT3NORBDUSMD74R4",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/QPW6AU5JC2UFJL3EZ7XN7FJ67AM6VRN7GCLQ4JFSGIJT3NORBDUSMD74R4",
+        "decodedOk": true
+      },
+      {
+        "page": 3,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/QPW6AU5JC2UFJL3EZ7XN7FJ67AM6VRN7GCLQ4JFSGIJT3NORBDUSMD74R4",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:health_check",
+    "target": "code:health_check",
+    "url": "https://wesetup.ru/qb/3AQM2WNMTVR6XLXQZCQIWTRIAFEUYC5EPHIUCPIW3ZY7CFDSBJ72Q7DKAA",
+    "tokenEmail": null,
+    "tokenTarget": "code:health_check",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": true,
+        "bottomRow": false,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/3AQM2WNMTVR6XLXQZCQIWTRIAFEUYC5EPHIUCPIW3ZY7CFDSBJ72Q7DKAA",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:climate_control",
+    "target": "code:climate_control",
+    "url": "https://wesetup.ru/qb/ISSQQ4ZQ4JMIFGTIK4JZQT63FDPRIXQBRZH3UOCVPJJRF4XBD2XAW4YPPY",
+    "tokenEmail": null,
+    "tokenTarget": "code:climate_control",
+    "pagesWithoutQr": 2,
+    "pagesWithQr": 2,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/ISSQQ4ZQ4JMIFGTIK4JZQT63FDPRIXQBRZH3UOCVPJJRF4XBD2XAW4YPPY",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/ISSQQ4ZQ4JMIFGTIK4JZQT63FDPRIXQBRZH3UOCVPJJRF4XBD2XAW4YPPY",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:cold_equipment_control",
+    "target": "code:cold_equipment_control",
+    "url": "https://wesetup.ru/qb/A5S4BDKJ35XJDUTUQOPPFE3UFHKJHODXRSYQG75UH4SRCDHGH2YIHZZC5Y",
+    "tokenEmail": null,
+    "tokenTarget": "code:cold_equipment_control",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/A5S4BDKJ35XJDUTUQOPPFE3UFHKJHODXRSYQG75UH4SRCDHGH2YIHZZC5Y",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:cleaning_ventilation_checklist",
+    "target": "code:cleaning_ventilation_checklist",
+    "url": "https://wesetup.ru/qb/XGSG3VAB2XBPHU2GRK4OIMFCGQQ5LBGAPMQNV3LZ4Z3JJAJWDNWRQOPY5A",
+    "tokenEmail": null,
+    "tokenTarget": "code:cleaning_ventilation_checklist",
+    "pagesWithoutQr": 6,
+    "pagesWithQr": 6,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/XGSG3VAB2XBPHU2GRK4OIMFCGQQ5LBGAPMQNV3LZ4Z3JJAJWDNWRQOPY5A",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/XGSG3VAB2XBPHU2GRK4OIMFCGQQ5LBGAPMQNV3LZ4Z3JJAJWDNWRQOPY5A",
+        "decodedOk": true
+      },
+      {
+        "page": 3,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/XGSG3VAB2XBPHU2GRK4OIMFCGQQ5LBGAPMQNV3LZ4Z3JJAJWDNWRQOPY5A",
+        "decodedOk": true
+      },
+      {
+        "page": 4,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/XGSG3VAB2XBPHU2GRK4OIMFCGQQ5LBGAPMQNV3LZ4Z3JJAJWDNWRQOPY5A",
+        "decodedOk": true
+      },
+      {
+        "page": 5,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/XGSG3VAB2XBPHU2GRK4OIMFCGQQ5LBGAPMQNV3LZ4Z3JJAJWDNWRQOPY5A",
+        "decodedOk": true
+      },
+      {
+        "page": 6,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/XGSG3VAB2XBPHU2GRK4OIMFCGQQ5LBGAPMQNV3LZ4Z3JJAJWDNWRQOPY5A",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:cleaning",
+    "target": "code:cleaning",
+    "url": "https://wesetup.ru/qb/VMIBLRR6MUO7F23PFRAAFIXJK2N5H2QFQWEDKM4DHUHWBYRXDN2Z2O5NE4",
+    "tokenEmail": null,
+    "tokenTarget": "code:cleaning",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/VMIBLRR6MUO7F23PFRAAFIXJK2N5H2QFQWEDKM4DHUHWBYRXDN2Z2O5NE4",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:general_cleaning",
+    "target": "code:general_cleaning",
+    "url": "https://wesetup.ru/qb/TUHAVNAGD63BOZZLWJT64KWBUZUSRTJ75MUUFFY2CIJJ2LHOTE3X6PQAXY",
+    "tokenEmail": null,
+    "tokenTarget": "code:general_cleaning",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/TUHAVNAGD63BOZZLWJT64KWBUZUSRTJ75MUUFFY2CIJJ2LHOTE3X6PQAXY",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:uv_lamp_runtime",
+    "target": "code:uv_lamp_runtime",
+    "url": "https://wesetup.ru/qb/6G7AYVIJZDAGAGPVHHPATPGHI7AHU3PJD4OH3LIOKAXKHCHMF3KOOJLWYE",
+    "tokenEmail": null,
+    "tokenTarget": "code:uv_lamp_runtime",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": true,
+        "bottomRow": false,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/6G7AYVIJZDAGAGPVHHPATPGHI7AHU3PJD4OH3LIOKAXKHCHMF3KOOJLWYE",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:finished_product",
+    "target": "code:finished_product",
+    "url": "https://wesetup.ru/qb/ZIVYSMS4B6XQVQWKJNRDLZL7BJFJQ7QH6JNA77OLC5SX2SVVQRCZEUH2MU",
+    "tokenEmail": null,
+    "tokenTarget": "code:finished_product",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/ZIVYSMS4B6XQVQWKJNRDLZL7BJFJQ7QH6JNA77OLC5SX2SVVQRCZEUH2MU",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:perishable_rejection",
+    "target": "code:perishable_rejection",
+    "url": "https://wesetup.ru/qb/OV5F6X3W4YVGBRADAWYKXZB4DFVQHJSA2PW7BYRCUNUXAHCONRZL55DUUE",
+    "tokenEmail": null,
+    "tokenTarget": "code:perishable_rejection",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/OV5F6X3W4YVGBRADAWYKXZB4DFVQHJSA2PW7BYRCUNUXAHCONRZL55DUUE",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:incoming_control",
+    "target": "code:incoming_control",
+    "url": "https://wesetup.ru/qb/MGSSTULJS4H27SGERNRNP7COJHYMS4KOKE5U3KXLBSROUIADJ4LP62FVRE",
+    "tokenEmail": null,
+    "tokenTarget": "code:incoming_control",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/MGSSTULJS4H27SGERNRNP7COJHYMS4KOKE5U3KXLBSROUIADJ4LP62FVRE",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:fryer_oil",
+    "target": "code:fryer_oil",
+    "url": "https://wesetup.ru/qb/FIB37D3S3WEX6OVSUYGHPX2W3NUOSRCXG7Z46GH7J5E25A3VERSIVWLNTQ",
+    "tokenEmail": null,
+    "tokenTarget": "code:fryer_oil",
+    "pagesWithoutQr": 2,
+    "pagesWithQr": 2,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/FIB37D3S3WEX6OVSUYGHPX2W3NUOSRCXG7Z46GH7J5E25A3VERSIVWLNTQ",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/FIB37D3S3WEX6OVSUYGHPX2W3NUOSRCXG7Z46GH7J5E25A3VERSIVWLNTQ",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:med_books",
+    "target": "code:med_books",
+    "url": "https://wesetup.ru/qb/6TD3GHVHS7F2XIDXIGWOGK7C2OVDWWFRMMJR6Y2E6OYJGVN5YYHUWUWYW4",
+    "tokenEmail": null,
+    "tokenTarget": "code:med_books",
+    "pagesWithoutQr": 3,
+    "pagesWithQr": 3,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/6TD3GHVHS7F2XIDXIGWOGK7C2OVDWWFRMMJR6Y2E6OYJGVN5YYHUWUWYW4",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/6TD3GHVHS7F2XIDXIGWOGK7C2OVDWWFRMMJR6Y2E6OYJGVN5YYHUWUWYW4",
+        "decodedOk": true
+      },
+      {
+        "page": 3,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/6TD3GHVHS7F2XIDXIGWOGK7C2OVDWWFRMMJR6Y2E6OYJGVN5YYHUWUWYW4",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:training_plan",
+    "target": "code:training_plan",
+    "url": "https://wesetup.ru/qb/REMWSEQ5RBAQNABJH5HPILTVYKD55QG4BMSMZYKTUSTX3VBHMWKQO4HNAM",
+    "tokenEmail": null,
+    "tokenTarget": "code:training_plan",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/REMWSEQ5RBAQNABJH5HPILTVYKD55QG4BMSMZYKTUSTX3VBHMWKQO4HNAM",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:staff_training",
+    "target": "code:staff_training",
+    "url": "https://wesetup.ru/qb/3YI2IJ2C6CT4RLKY5436P4QQA5M5B46PSUGLVPZQKKTC3NUFB77FAXRUXQ",
+    "tokenEmail": null,
+    "tokenTarget": "code:staff_training",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/3YI2IJ2C6CT4RLKY5436P4QQA5M5B46PSUGLVPZQKKTC3NUFB77FAXRUXQ",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:disinfectant_usage",
+    "target": "code:disinfectant_usage",
+    "url": "https://wesetup.ru/qb/7ST3OSFETZCITL2DANMFWKXGZO6NDFAHD5DMJUXB4HK4RAXZ4KJUSO2V7I",
+    "tokenEmail": null,
+    "tokenTarget": "code:disinfectant_usage",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/7ST3OSFETZCITL2DANMFWKXGZO6NDFAHD5DMJUXB4HK4RAXZ4KJUSO2V7I",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:sanitary_day_control",
+    "target": "code:sanitary_day_control",
+    "url": "https://wesetup.ru/qb/6P74SPEFU2Q5DUS3GW3ZWJD7WWLEMF5UGMIGO3ZKWP7KC4GNZOU74N3UX4",
+    "tokenEmail": null,
+    "tokenTarget": "code:sanitary_day_control",
+    "pagesWithoutQr": 2,
+    "pagesWithQr": 2,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/6P74SPEFU2Q5DUS3GW3ZWJD7WWLEMF5UGMIGO3ZKWP7KC4GNZOU74N3UX4",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/6P74SPEFU2Q5DUS3GW3ZWJD7WWLEMF5UGMIGO3ZKWP7KC4GNZOU74N3UX4",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:equipment_maintenance",
+    "target": "code:equipment_maintenance",
+    "url": "https://wesetup.ru/qb/5JV4N6BR3I2MBP676774FBWEFT4TV4Y2LM5TY5KQRR3RM3TKXOC47AHS5Y",
+    "tokenEmail": null,
+    "tokenTarget": "code:equipment_maintenance",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/5JV4N6BR3I2MBP676774FBWEFT4TV4Y2LM5TY5KQRR3RM3TKXOC47AHS5Y",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:breakdown_history",
+    "target": "code:breakdown_history",
+    "url": "https://wesetup.ru/qb/R4DIQPR3B3WKGPQ7QCHIW33AQ43KJYFMBMDE2SPYGVQMOXJPNTPTKMAOJA",
+    "tokenEmail": null,
+    "tokenTarget": "code:breakdown_history",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/R4DIQPR3B3WKGPQ7QCHIW33AQ43KJYFMBMDE2SPYGVQMOXJPNTPTKMAOJA",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:equipment_calibration",
+    "target": "code:equipment_calibration",
+    "url": "https://wesetup.ru/qb/GHZLGSER7XOC752NNORYLZVRVRS4XDDSKPPW2JBGBXHLMSJHT4QMIJMSMM",
+    "tokenEmail": null,
+    "tokenTarget": "code:equipment_calibration",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/GHZLGSER7XOC752NNORYLZVRVRS4XDDSKPPW2JBGBXHLMSJHT4QMIJMSMM",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:incoming_raw_materials_control",
+    "target": "code:incoming_raw_materials_control",
+    "url": "https://wesetup.ru/qb/C3TRXCL6FA46N5OIDPWOXX5TGGQJ3CDB2ETGMYYZ65L73PI4NLTBS2WLJM",
+    "tokenEmail": null,
+    "tokenTarget": "code:incoming_raw_materials_control",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/C3TRXCL6FA46N5OIDPWOXX5TGGQJ3CDB2ETGMYYZ65L73PI4NLTBS2WLJM",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:ppe_issuance",
+    "target": "code:ppe_issuance",
+    "url": "https://wesetup.ru/qb/W2UYPBGNKBFF7BPRHUT6FIMOHKOFHOGMUI2B4U6KREYMUP2AZKCBEN32ZI",
+    "tokenEmail": null,
+    "tokenTarget": "code:ppe_issuance",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/W2UYPBGNKBFF7BPRHUT6FIMOHKOFHOGMUI2B4U6KREYMUP2AZKCBEN32ZI",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:accident_journal",
+    "target": "code:accident_journal",
+    "url": "https://wesetup.ru/qb/KQS35PSCDIAFP42NCMHFJAEPH4OAZ6OVHBMHLT2YMTIKFIKR3TQGOT5QUE",
+    "tokenEmail": null,
+    "tokenTarget": "code:accident_journal",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/KQS35PSCDIAFP42NCMHFJAEPH4OAZ6OVHBMHLT2YMTIKFIKR3TQGOT5QUE",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:complaint_register",
+    "target": "code:complaint_register",
+    "url": "https://wesetup.ru/qb/ILU56A4EGZVLJ6Q6XPB7H4ZDAKRENKRXP7YTPUF2CL4KWL43JK24YV47CM",
+    "tokenEmail": null,
+    "tokenTarget": "code:complaint_register",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/ILU56A4EGZVLJ6Q6XPB7H4ZDAKRENKRXP7YTPUF2CL4KWL43JK24YV47CM",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:product_writeoff",
+    "target": "code:product_writeoff",
+    "url": "https://wesetup.ru/qb/XFUELFMADDBMLOAGPEFYMY6BIUNAM74NDKAH42YFIVA45O7JM2NMWXQFL4",
+    "tokenEmail": null,
+    "tokenTarget": "code:product_writeoff",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/XFUELFMADDBMLOAGPEFYMY6BIUNAM74NDKAH42YFIVA45O7JM2NMWXQFL4",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:audit_plan",
+    "target": "code:audit_plan",
+    "url": "https://wesetup.ru/qb/WEHBXRMCO4FSJLUEJXXFCICSQZ2ZLA7BT6SAUJUFKUZVO2QO2AVWWILWLM",
+    "tokenEmail": null,
+    "tokenTarget": "code:audit_plan",
+    "pagesWithoutQr": 2,
+    "pagesWithQr": 2,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/WEHBXRMCO4FSJLUEJXXFCICSQZ2ZLA7BT6SAUJUFKUZVO2QO2AVWWILWLM",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/WEHBXRMCO4FSJLUEJXXFCICSQZ2ZLA7BT6SAUJUFKUZVO2QO2AVWWILWLM",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:audit_protocol",
+    "target": "code:audit_protocol",
+    "url": "https://wesetup.ru/qb/TWT2EOO5BIA6KY7CGZAQSVDFNKYLEEUQ6Z6MR5KW26YH5JNNYKPBRFHECA",
+    "tokenEmail": null,
+    "tokenTarget": "code:audit_protocol",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/TWT2EOO5BIA6KY7CGZAQSVDFNKYLEEUQ6Z6MR5KW26YH5JNNYKPBRFHECA",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:audit_report",
+    "target": "code:audit_report",
+    "url": "https://wesetup.ru/qb/GJQSB2YHT2MV2JQVXQJGRKBET3UO2CEJ4HLVX7WM4ARXQR2SBS6VYKOVN4",
+    "tokenEmail": null,
+    "tokenTarget": "code:audit_report",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/GJQSB2YHT2MV2JQVXQJGRKBET3UO2CEJ4HLVX7WM4ARXQR2SBS6VYKOVN4",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:traceability_test",
+    "target": "code:traceability_test",
+    "url": "https://wesetup.ru/qb/X3NMVEZWGFWXQYC46UVBBFJPE7TVGCOB463R2JTUP5T3J7BS2XQUYUM5L4",
+    "tokenEmail": null,
+    "tokenTarget": "code:traceability_test",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/X3NMVEZWGFWXQYC46UVBBFJPE7TVGCOB463R2JTUP5T3J7BS2XQUYUM5L4",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:metal_impurity",
+    "target": "code:metal_impurity",
+    "url": "https://wesetup.ru/qb/BH57HMUVXH2IURSCKBFYSFFQZWJDDHHCAPTOWF3RVWMWQZE3DMXCRSVASU",
+    "tokenEmail": null,
+    "tokenTarget": "code:metal_impurity",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/BH57HMUVXH2IURSCKBFYSFFQZWJDDHHCAPTOWF3RVWMWQZE3DMXCRSVASU",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:equipment_cleaning",
+    "target": "code:equipment_cleaning",
+    "url": "https://wesetup.ru/qb/HK6RUO3TDUJN6HKZYV46H27VLHWU52RJD2N66EKNA22TVIAE47KPMB5EC4",
+    "tokenEmail": null,
+    "tokenTarget": "code:equipment_cleaning",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/HK6RUO3TDUJN6HKZYV46H27VLHWU52RJD2N66EKNA22TVIAE47KPMB5EC4",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:intensive_cooling",
+    "target": "code:intensive_cooling",
+    "url": "https://wesetup.ru/qb/XQT2A6CQ5XFPOQDN45Y2HXECWOSBHSQTCED5G3Z7JZWZN5OGFVXYZWGL3E",
+    "tokenEmail": null,
+    "tokenTarget": "code:intensive_cooling",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/XQT2A6CQ5XFPOQDN45Y2HXECWOSBHSQTCED5G3Z7JZWZN5OGFVXYZWGL3E",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:glass_items_list",
+    "target": "code:glass_items_list",
+    "url": "https://wesetup.ru/qb/LRRLKGKSXODRUIMGFRJQWXM2OL4JUMERFDO2GIYJMINEJXHM6Z6QZJC2MY",
+    "tokenEmail": null,
+    "tokenTarget": "code:glass_items_list",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/LRRLKGKSXODRUIMGFRJQWXM2OL4JUMERFDO2GIYJMINEJXHM6Z6QZJC2MY",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:glass_control",
+    "target": "code:glass_control",
+    "url": "https://wesetup.ru/qb/G36CL5HVWVSOKTA4Z4ULICAFSZIISYEAE4V65VQM5SM4URYALUYZKJ2CA4",
+    "tokenEmail": null,
+    "tokenTarget": "code:glass_control",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/G36CL5HVWVSOKTA4Z4ULICAFSZIISYEAE4V65VQM5SM4URYALUYZKJ2CA4",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:pest_control",
+    "target": "code:pest_control",
+    "url": "https://wesetup.ru/qb/2GWWILSAGBTAQN3LBCELLA7MOO3S5JDY4IDAMELEXPF5FPQL4E3VJ53HHI",
+    "tokenEmail": null,
+    "tokenTarget": "code:pest_control",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/2GWWILSAGBTAQN3LBCELLA7MOO3S5JDY4IDAMELEXPF5FPQL4E3VJ53HHI",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:daily_samples",
+    "target": "code:daily_samples",
+    "url": "https://wesetup.ru/qb/Z5DZPB5LTEMOEBAIRNWM6I2UJFYRSQ5P23RLFRPSRXPGY3DAVXFRHA3NIU",
+    "tokenEmail": null,
+    "tokenTarget": "code:daily_samples",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/Z5DZPB5LTEMOEBAIRNWM6I2UJFYRSQ5P23RLFRPSRXPGY3DAVXFRHA3NIU",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:vitaminization",
+    "target": "code:vitaminization",
+    "url": "https://wesetup.ru/qb/OBRE5XQ7FRGBLSXL4FNUCCYQ2LUULN6Y2RTSLE2YKCOVYKP5Q7UFAB6QB4",
+    "tokenEmail": null,
+    "tokenTarget": "code:vitaminization",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/OBRE5XQ7FRGBLSXL4FNUCCYQ2LUULN6Y2RTSLE2YKCOVYKP5Q7UFAB6QB4",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:ration_control",
+    "target": "code:ration_control",
+    "url": "https://wesetup.ru/qb/B5ASVWSBX5E5ZJQ3ROYCWVSU2BWSTT5NACL3NE77IVSA5ITELAZQ6EWP6U",
+    "tokenEmail": null,
+    "tokenTarget": "code:ration_control",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/B5ASVWSBX5E5ZJQ3ROYCWVSU2BWSTT5NACL3NE77IVSA5ITELAZQ6EWP6U",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:transport_temperature",
+    "target": "code:transport_temperature",
+    "url": "https://wesetup.ru/qb/B4IT2MQSHJ6MLR2RHO5XG7RDQNAAVCN3OUDYQN5SZ7MS6AI5ZPA2JFWE2U",
+    "tokenEmail": null,
+    "tokenTarget": "code:transport_temperature",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/B4IT2MQSHJ6MLR2RHO5XG7RDQNAAVCN3OUDYQN5SZ7MS6AI5ZPA2JFWE2U",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:tableware_breakage",
+    "target": "code:tableware_breakage",
+    "url": "https://wesetup.ru/qb/MKTHGSDLFNOCNOZM2HNS6ZK64RAJTVBOQ6YEM2BZNRJXASA74FYNICT45U",
+    "tokenEmail": null,
+    "tokenTarget": "code:tableware_breakage",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/MKTHGSDLFNOCNOZM2HNS6ZK64RAJTVBOQ6YEM2BZNRJXASA74FYNICT45U",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:pool_water_control",
+    "target": "code:pool_water_control",
+    "url": "https://wesetup.ru/qb/XOWKREIG5QN23IDGBVBYIV7QFQC65BCSWKOLAI7VTB3SBFQWYW52JDA54I",
+    "tokenEmail": null,
+    "tokenTarget": "code:pool_water_control",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/XOWKREIG5QN23IDGBVBYIV7QFQC65BCSWKOLAI7VTB3SBFQWYW52JDA54I",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:inventory_condition",
+    "target": "code:inventory_condition",
+    "url": "https://wesetup.ru/qb/K2GMOK73QR6QK5IRCO4JDCNXWWO77WLSWP4QVNW2726O7WFOT4GVGNKSL4",
+    "tokenEmail": null,
+    "tokenTarget": "code:inventory_condition",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/K2GMOK73QR6QK5IRCO4JDCNXWWO77WLSWP4QVNW2726O7WFOT4GVGNKSL4",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:instrument_sterilization",
+    "target": "code:instrument_sterilization",
+    "url": "https://wesetup.ru/qb/IH5DVIWNLTUDZMOQ2OGKQMG5WHQVXVG2QNBI725KFMR5LDFPIJMRCVWQCQ",
+    "tokenEmail": null,
+    "tokenTarget": "code:instrument_sterilization",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/IH5DVIWNLTUDZMOQ2OGKQMG5WHQVXVG2QNBI725KFMR5LDFPIJMRCVWQCQ",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:medical_waste_b",
+    "target": "code:medical_waste_b",
+    "url": "https://wesetup.ru/qb/PSY5PY4CLXHGMXW5WSGWEFKWRX5AFO2GYGKKCAJD3BSNY7Q4D24SQZQPYA",
+    "tokenEmail": null,
+    "tokenTarget": "code:medical_waste_b",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/PSY5PY4CLXHGMXW5WSGWEFKWRX5AFO2GYGKKCAJD3BSNY7Q4D24SQZQPYA",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "sample:batch_release",
+    "target": "code:batch_release",
+    "url": "https://wesetup.ru/qb/5PLWQFFOBDVGT7UF6J2F3D5T3FMA6D6DYJPUXKNFQL43SHOGA6BGTLD3D4",
+    "tokenEmail": null,
+    "tokenTarget": "code:batch_release",
+    "pagesWithoutQr": 1,
+    "pagesWithQr": 1,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/5PLWQFFOBDVGT7UF6J2F3D5T3FMA6D6DYJPUXKNFQL43SHOGA6BGTLD3D4",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "paper:ot_intro",
+    "target": "paper:ot_intro",
+    "url": "https://wesetup.ru/qb/BXT5JNV5JCDY7FP4ZBDSCWCE6O3FYISAVGAR47SWSCMTD4CAD5YSAXOLCM",
+    "tokenEmail": null,
+    "tokenTarget": "paper:ot_intro",
+    "pagesWithoutQr": 2,
+    "pagesWithQr": 2,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/BXT5JNV5JCDY7FP4ZBDSCWCE6O3FYISAVGAR47SWSCMTD4CAD5YSAXOLCM",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/BXT5JNV5JCDY7FP4ZBDSCWCE6O3FYISAVGAR47SWSCMTD4CAD5YSAXOLCM",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "paper:ot_workplace",
+    "target": "paper:ot_workplace",
+    "url": "https://wesetup.ru/qb/LVVZTVL3EA2WBA55ZITFTTAT6H2UHPV6YNDQGNJOC47J466M5K3Z4T3L6Y",
+    "tokenEmail": null,
+    "tokenTarget": "paper:ot_workplace",
+    "pagesWithoutQr": 2,
+    "pagesWithQr": 2,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/LVVZTVL3EA2WBA55ZITFTTAT6H2UHPV6YNDQGNJOC47J466M5K3Z4T3L6Y",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/LVVZTVL3EA2WBA55ZITFTTAT6H2UHPV6YNDQGNJOC47J466M5K3Z4T3L6Y",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "paper:fire_safety",
+    "target": "paper:fire_safety",
+    "url": "https://wesetup.ru/qb/P6W7OT26YK6VQCJRH7JDOTCWUJ5DYSRAMN6HHJHSDIUCFA7XFQ6F3TOWHU",
+    "tokenEmail": null,
+    "tokenTarget": "paper:fire_safety",
+    "pagesWithoutQr": 2,
+    "pagesWithQr": 2,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/P6W7OT26YK6VQCJRH7JDOTCWUJ5DYSRAMN6HHJHSDIUCFA7XFQ6F3TOWHU",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/P6W7OT26YK6VQCJRH7JDOTCWUJ5DYSRAMN6HHJHSDIUCFA7XFQ6F3TOWHU",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "paper:fire_extinguishers",
+    "target": "paper:fire_extinguishers",
+    "url": "https://wesetup.ru/qb/DA2CEVD7CG2KSVCSXNAAAMWCTA23N4PQTHYA5I75MKMCZ7ZYAHVO4NRB3U",
+    "tokenEmail": null,
+    "tokenTarget": "paper:fire_extinguishers",
+    "pagesWithoutQr": 2,
+    "pagesWithQr": 2,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/DA2CEVD7CG2KSVCSXNAAAMWCTA23N4PQTHYA5I75MKMCZ7ZYAHVO4NRB3U",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/DA2CEVD7CG2KSVCSXNAAAMWCTA23N4PQTHYA5I75MKMCZ7ZYAHVO4NRB3U",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  },
+  {
+    "label": "paper:electrical_safety",
+    "target": "paper:electrical_safety",
+    "url": "https://wesetup.ru/qb/K54SEYVXOIY3DUHM7RTYAHH4KS3DXIJRBRDR4NYD2U3UAUMXR6LNRMBKUQ",
+    "tokenEmail": null,
+    "tokenTarget": "paper:electrical_safety",
+    "pagesWithoutQr": 2,
+    "pagesWithQr": 2,
+    "pages": [
+      {
+        "page": 1,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/K54SEYVXOIY3DUHM7RTYAHH4KS3DXIJRBRDR4NYD2U3UAUMXR6LNRMBKUQ",
+        "decodedOk": true
+      },
+      {
+        "page": 2,
+        "moved": false,
+        "bottomRow": true,
+        "overlap": false,
+        "modules": 37,
+        "inkInZoneBeforeStamp": 0,
+        "moduleMismatches": 0,
+        "copyright": true,
+        "caption": true,
+        "decoded": "https://wesetup.ru/qb/K54SEYVXOIY3DUHM7RTYAHH4KS3DXIJRBRDR4NYD2U3UAUMXR6LNRMBKUQ",
+        "decodedOk": true
+      }
+    ],
+    "ok": true
+  }
+]

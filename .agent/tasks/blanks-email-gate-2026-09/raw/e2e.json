@@ -1,0 +1,410 @@
+{
+  "base": "http://localhost:3043",
+  "newEmail": "blank.e2e.muh8x72u@example.com",
+  "startedAt": "2026-09-25T17:39:50.934Z",
+  "rateLimits": {
+    "ipLimitIp": "203.0.113.102",
+    "ipStatuses": [
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      429
+    ],
+    "emailLimit": "limit.email.muh8x72u@example.com",
+    "emailStatuses": [
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      429
+    ],
+    "consentsForLimitEmail": 50
+  },
+  "consents": [
+    {
+      "id": "cmuh8zveo001fdk9ma2vi7sko",
+      "email": "blank.e2e.muh8x72u@example.com",
+      "source": "blank-download",
+      "version": "2026-09-22",
+      "statementText": "Даю согласие на обработку персональных данных и ознакомлен с политикой конфиденциальности",
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+      "userId": null,
+      "createdAt": "2026-09-25T17:41:55.776Z"
+    },
+    {
+      "id": "cmuh903o7001hdk9mh0zifxbb",
+      "email": "blank.e2e.muh8x72u@example.com",
+      "source": "blank-download",
+      "version": "2026-09-22",
+      "statementText": "Даю согласие на обработку персональных данных и ознакомлен с политикой конфиденциальности",
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+      "userId": null,
+      "createdAt": "2026-09-25T17:42:06.487Z"
+    },
+    {
+      "id": "cmuh94efv001ndk9my0vlycsm",
+      "email": "blank.e2e.muh8x72u@example.com",
+      "source": "register",
+      "version": "2026-09-22",
+      "statementText": "Принимаю условия оферты и пользовательского соглашения, ознакомлен с политикой конфиденциальности и даю согласие на обработку персональных данных",
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+      "userId": "cmuh94edf001kdk9mxj6lhu36",
+      "createdAt": "2026-09-25T17:45:27.067Z"
+    }
+  ],
+  "auditDetails": [
+    {
+      "entityId": "cmuh8zveo001fdk9ma2vi7sko",
+      "organizationId": "platform",
+      "details": {
+        "code": "hygiene",
+        "email": "blank.e2e.muh8x72u@example.com",
+        "title": "Гигиенический журнал (сотрудники)",
+        "format": "pdf"
+      }
+    },
+    {
+      "entityId": "cmuh903o7001hdk9mh0zifxbb",
+      "organizationId": "platform",
+      "details": {
+        "code": "hygiene",
+        "email": "blank.e2e.muh8x72u@example.com",
+        "title": "Гигиенический журнал (сотрудники)",
+        "format": "docx"
+      }
+    }
+  ],
+  "emailLog": [
+    "[email/dev] SMTP не настроен — письмо не отправлено на blank.e2e.muh8x72u@example.com.",
+    "[email/dev] Subject: Шаблон «Гигиенический журнал (сотрудники)» — WeSetup",
+    "[email/dev] Body:    Шаблон «Гигиенический журнал (сотрудники)» Здравствуйте! Вы скачали на сайте WeSetup шаблон журнала «Гигиенический журнал (сотрудники)» . Копия — по ссылке ниже, она работает 7 дней. Скачать PDF Если кнопка не открывается, скопируйте адрес: http://localhost:3043/api/journal-samples/hygiene/pdf?t=eyJ2IjoxLCJlIjoiYmxhbmsuZTJlLm11aDh4NzJ1QGV4YW1wbGUuY29tIiwidCI6ImNvZGU6aHlnaWVuZSIsImYiOiJwZGYiLCJ4IjoxNzkwOTYyOTE2fQ.N1MdOB8VrewtGCo4jOfxsXGzrXM71VyEBLaD2HxU5Rk Скачать Word Что заполнять и на каком основании ведётся журнал — на странице журнала . Этот журнал можно не печатать В WeSetup его заполняют с телефона по QR-коду — тому же, что стоит в углу шаблона. Без бумаги, с напоминаниями, если смена забыла отметиться. Бесплатно до 3 сотрудников. Вести журнал в WeSetup Письмо пришло, потому что этот адрес указали при скачивании шаблона на wesetup.ru. Если это были не вы — просто не отвечайте на него. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.",
+    "[email/dev] SMTP не настроен — письмо не отправлено на blank.e2e.muh8x72u@example.com.",
+    "[email/dev] Subject: Шаблон «Гигиенический журнал (сотрудники)» — WeSetup",
+    "[email/dev] Body:    Шаблон «Гигиенический журнал (сотрудники)» Здравствуйте! Вы скачали на сайте WeSetup шаблон журнала «Гигиенический журнал (сотрудники)» . Копия — по ссылке ниже, она работает 7 дней. Скачать Word Если кнопка не открывается, скопируйте адрес: http://localhost:3043/api/journal-samples/hygiene/docx?t=eyJ2IjoxLCJlIjoiYmxhbmsuZTJlLm11aDh4NzJ1QGV4YW1wbGUuY29tIiwidCI6ImNvZGU6aHlnaWVuZSIsImYiOiJkb2N4IiwieCI6MTc5MDk2MjkyNn0.yOuRXmMG-8RhgzhUAfyXblWXQvRA37KztbEtMqgH2Y0 Скачать PDF Что заполнять и на каком основании ведётся журнал — на странице журнала . Этот журнал можно не печатать В WeSetup его заполняют с телефона по QR-коду — тому же, что стоит в углу шаблона. Без бумаги, с напоминаниями, если смена забыла отметиться. Бесплатно до 3 сотрудников. Вести журнал в WeSetup Письмо пришло, потому что этот адрес указали при скачивании шаблона на wesetup.ru. Если это были не вы — просто не отвечайте на него. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.",
+    "[email/dev] SMTP не настроен — письмо не отправлено на blank.e2e.muh8x72u@example.com.",
+    "[email/dev] Subject: Ваш аккаунт WeSetup создан — пароль внутри",
+    "[email/dev] Body:    Аккаунт создан Здравствуйте! Аккаунт создан, вы уже вошли в кабинет. Сохраните данные для входа с других устройств: Логин: blank.e2e.muh8x72u@example.com Пароль: *** Открыть кабинет Пароль можно сменить в настройках профиля. В кабинете осталось заполнить данные организации — они попадают в шапку журналов и PDF для проверок. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП."
+  ],
+  "checks": [
+    {
+      "name": "AC1 клик «PDF» открывает окно «Куда прислать шаблон?»",
+      "ok": true
+    },
+    {
+      "name": "AC1 без галки согласия файл не скачивается",
+      "ok": true
+    },
+    {
+      "name": "AC1 файл скачан по подписанной ссылке (?t=)",
+      "ok": true,
+      "detail": "/api/journal-samples/hygiene/pdf"
+    },
+    {
+      "name": "файл — PDF",
+      "ok": true,
+      "detail": "obrazec-hygiene-journal-2026-04-01-2026-04-14.pdf"
+    },
+    {
+      "name": "AC1 второй шаблон (Word) — без окна, та же почта на сервере",
+      "ok": true,
+      "detail": {
+        "email": "blank.e2e.muh8x72u@example.com",
+        "code": "hygiene",
+        "format": "docx",
+        "consent": true,
+        "remembered": true,
+        "consentVersion": "2026-09-22"
+      }
+    },
+    {
+      "name": "Word скачан по подписанной ссылке",
+      "ok": true
+    },
+    {
+      "name": "AC1 встроенный просмотр без почты: 200 inline, кеш public",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "disposition": "inline; filename*=UTF-8''obrazec-hygiene-journal-2026-04-01-2026-04-14.pdf",
+        "cache": "public, max-age=86400, s-maxage=86400"
+      }
+    },
+    {
+      "name": "AC1 прямой URL без токена (не браузер) → 403",
+      "ok": true,
+      "detail": {
+        "status": 403,
+        "body": {
+          "error": "Шаблон скачивается после ввода email на странице журнала.",
+          "page": "/journals-info/hygiene?download=pdf"
+        }
+      }
+    },
+    {
+      "name": "AC1 прямой URL без токена (браузер) → редирект на страницу журнала",
+      "ok": true,
+      "detail": {
+        "status": 307,
+        "location": "/journals-info/hygiene?download=docx"
+      }
+    },
+    {
+      "name": "AC1 подделанный токен → 403",
+      "ok": true,
+      "detail": 403
+    },
+    {
+      "name": "AC1 браузер со старой ссылкой → /journals-info/cleaning, окно открыто, параметр убран",
+      "ok": true,
+      "detail": "http://localhost:3043/journals-info/cleaning"
+    },
+    {
+      "name": "AC1 /blanki: скачивание — через окно email",
+      "ok": true
+    },
+    {
+      "name": "AC1 бумажный бланк без токена → /blanki с окном этого бланка",
+      "ok": true
+    },
+    {
+      "name": "AC1 главная (галерея образцов): скачивание — через окно email",
+      "ok": true
+    },
+    {
+      "name": "AC1 SEO-лендинг /zhurnal-zdorovya: скачивание — через окно email",
+      "ok": true
+    },
+    {
+      "name": "AC3 QR скачанного PDF (OpenCV) → /qb/<токен> с почтой и журналом",
+      "ok": true,
+      "detail": {
+        "qbUrl": "http://localhost:3043/qb/EMJISO6TGFACY66TV2SLCXIAO2OAWJ2PLSDAQA6J67VWYCHIMBAEYFOF77Y6UKMVOT7VEB2YYX7TBDQATACTW4YDZF4CAPL4MIZDM2F4JQ",
+        "email": "blank.e2e.muh8x72u@example.com",
+        "target": {
+          "kind": "code",
+          "code": "hygiene"
+        }
+      }
+    },
+    {
+      "name": "AC3 Word: QR в подвале (LibreOffice → OpenCV) → /qb с той же почтой",
+      "ok": true,
+      "detail": {
+        "docxQr": "http://localhost:3043/qb/PAGURQFLB5DRZUROMGYMWHZMUSZ63YE2JYT4MUJWJDSYMG4IYHAQOKODXLKU6PE724CQ5TESLAZZ2Y4CGCUUY47TCYX5JE72G2VPYFQHUI",
+        "email": "blank.e2e.muh8x72u@example.com",
+        "soffice": 0
+      }
+    },
+    {
+      "name": "AC4 /qb с новой почтой: заглушка «Заполняйте этот журнал с телефона»",
+      "ok": true,
+      "detail": "Заполняйте этот журнал с телефона"
+    },
+    {
+      "name": "AC4 регистрация: почта подставлена, source=blank, журнал",
+      "ok": true,
+      "detail": {
+        "prefilled": "blank.e2e.muh8x72u@example.com",
+        "query": "?email=blank.e2e.muh8x72u%40example.com&source=blank&journal=hygiene&next=%2Fjournals%2Fhygiene",
+        "pill": "«Гигиенический журнал (сотрудники)» откроется сразу после регистрации"
+      }
+    },
+    {
+      "name": "AC4 после регистрации открылся журнал /journals/hygiene",
+      "ok": true,
+      "detail": "http://localhost:3043/journals/hygiene"
+    },
+    {
+      "name": "пароль нового аккаунта найден в письме (dev-лог)",
+      "ok": true
+    },
+    {
+      "name": "AC4 /qb с почтой существующего пользователя: «Войдите — и этот журнал откроется для заполнения»",
+      "ok": true,
+      "detail": "Войдите — и этот журнал откроется для заполнения"
+    },
+    {
+      "name": "AC4 вход: почта подставлена, возврат на журнал",
+      "ok": true,
+      "detail": "?email=blank.e2e.muh8x72u%40example.com&next=%2Fjournals%2Fhygiene"
+    },
+    {
+      "name": "AC4 после входа открылся журнал /journals/hygiene",
+      "ok": true,
+      "detail": "http://localhost:3043/journals/hygiene"
+    },
+    {
+      "name": "/qb, уже вошли: «Открыть журнал»",
+      "ok": true,
+      "detail": "Журнал уже в вашем кабинете"
+    },
+    {
+      "name": "AC4 битый токен → заглушка без почты и журнала",
+      "ok": true,
+      "detail": {
+        "brokenTitle": "Журналы СанПиН и ХАССП — с телефона",
+        "brokenHref": "/register?source=blank"
+      }
+    },
+    {
+      "name": "ROOT вошёл (1440)",
+      "ok": true,
+      "detail": 200
+    },
+    {
+      "name": "/root/blank-downloads (1440): почта, журнал, формат, дата",
+      "ok": true
+    },
+    {
+      "name": "ROOT вошёл (390)",
+      "ok": true,
+      "detail": 200
+    },
+    {
+      "name": "/root/blank-downloads (390): почта, журнал, формат, дата",
+      "ok": true
+    },
+    {
+      "name": "AC2 лимит по адресу: 30 скачиваний в час, 31-е — 429",
+      "ok": true,
+      "detail": {
+        "ok": 30,
+        "last": {
+          "status": 429,
+          "retryAfter": "3598",
+          "body": {
+            "error": "Слишком много скачиваний с этого адреса. Попробуйте через час"
+          }
+        }
+      }
+    },
+    {
+      "name": "AC2 лимит по почте: 50 скачиваний в сутки, 51-е — 429",
+      "ok": true,
+      "detail": {
+        "ok": 50,
+        "last": {
+          "status": 429,
+          "retryAfter": "86397",
+          "body": {
+            "error": "На эту почту сегодня скачали слишком много шаблонов. Попробуйте завтра"
+          }
+        }
+      }
+    },
+    {
+      "name": "AC2 LegalConsent: 2 записи source=blank-download (PDF и Word), дословный текст, UA",
+      "ok": true,
+      "detail": [
+        "blank-download",
+        "blank-download"
+      ]
+    },
+    {
+      "name": "AC2 детали скачиваний (журнал, формат) — в AuditLog платформы",
+      "ok": true,
+      "detail": [
+        {
+          "code": "hygiene",
+          "email": "blank.e2e.muh8x72u@example.com",
+          "title": "Гигиенический журнал (сотрудники)",
+          "format": "pdf"
+        },
+        {
+          "code": "hygiene",
+          "email": "blank.e2e.muh8x72u@example.com",
+          "title": "Гигиенический журнал (сотрудники)",
+          "format": "docx"
+        }
+      ]
+    },
+    {
+      "name": "AC2 писем на одну почту — не больше 10 в сутки (51 скачивание → 10 писем)",
+      "ok": true,
+      "detail": {
+        "limitLetters": 10
+      }
+    },
+    {
+      "name": "AC2 письмо со ссылками сформировано (dev-лог)",
+      "ok": true
+    }
+  ],
+  "finishedAt": "2026-09-25T17:47:49.388Z"
+}
