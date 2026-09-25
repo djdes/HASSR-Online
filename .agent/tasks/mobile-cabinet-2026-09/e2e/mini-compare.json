@@ -1,0 +1,192 @@
+{
+  "__sticky": {
+    "before": {
+      "390": {
+        "scrollY": 1200,
+        "headerTop": 0,
+        "headerHeight": 73,
+        "position": "sticky"
+      },
+      "1440": {
+        "scrollY": 1200,
+        "headerTop": 0,
+        "headerHeight": 73,
+        "position": "sticky"
+      }
+    },
+    "after": {
+      "390": {
+        "scrollY": 1200,
+        "headerTop": 0,
+        "headerHeight": 56,
+        "position": "sticky"
+      },
+      "1440": {
+        "scrollY": 1200,
+        "headerTop": 0,
+        "headerHeight": 73,
+        "position": "sticky"
+      }
+    }
+  },
+  "__contentStart": {
+    "before": {
+      "/dashboard": {
+        "header": 73,
+        "h1Top": null,
+        "firstTop": 89,
+        "navRow": null
+      },
+      "/journals": {
+        "header": 73,
+        "h1Top": 145,
+        "firstTop": 145,
+        "navRow": {
+          "top": 89,
+          "height": 36
+        }
+      },
+      "/journals/hygiene/documents/cmuh505d60001yg9mchq13ee7": {
+        "header": 73,
+        "h1Top": 137,
+        "firstTop": 137,
+        "navRow": {
+          "top": 89,
+          "height": 36
+        }
+      },
+      "/settings": {
+        "header": 73,
+        "h1Top": 382,
+        "firstTop": 382,
+        "navRow": {
+          "top": 89,
+          "height": 36
+        }
+      },
+      "/settings/users": {
+        "header": 73,
+        "h1Top": 145,
+        "firstTop": 145,
+        "navRow": {
+          "top": 89,
+          "height": 36
+        }
+      },
+      "/settings/qr-posters": {
+        "header": 73,
+        "h1Top": 145,
+        "firstTop": 145,
+        "navRow": {
+          "top": 89,
+          "height": 36
+        }
+      },
+      "/orders": {
+        "header": 73,
+        "h1Top": 145,
+        "firstTop": 145,
+        "navRow": {
+          "top": 89,
+          "height": 36
+        }
+      }
+    },
+    "after": {
+      "/dashboard": {
+        "header": 56,
+        "h1Top": null,
+        "firstTop": 72,
+        "navRow": null
+      },
+      "/journals": {
+        "header": 56,
+        "h1Top": 132,
+        "firstTop": 132,
+        "navRow": {
+          "top": 72,
+          "height": 48
+        }
+      },
+      "/journals/hygiene/documents/cmuh505d60001yg9mchq13ee7": {
+        "header": 56,
+        "h1Top": 132,
+        "firstTop": 132,
+        "navRow": {
+          "top": 72,
+          "height": 48
+        }
+      },
+      "/settings": {
+        "header": 56,
+        "h1Top": 406,
+        "firstTop": 406,
+        "navRow": {
+          "top": 72,
+          "height": 48
+        }
+      },
+      "/settings/users": {
+        "header": 56,
+        "h1Top": 132,
+        "firstTop": 132,
+        "navRow": {
+          "top": 72,
+          "height": 48
+        }
+      },
+      "/settings/qr-posters": {
+        "header": 56,
+        "h1Top": 132,
+        "firstTop": 132,
+        "navRow": {
+          "top": 72,
+          "height": 48
+        }
+      },
+      "/orders": {
+        "header": 56,
+        "h1Top": 132,
+        "firstTop": 132,
+        "navRow": {
+          "top": 72,
+          "height": 48
+        }
+      }
+    }
+  },
+  "/journals": {
+    "miniRoot": true,
+    "finalUrl": "/journals",
+    "elements": 1164,
+    "diffs": 0,
+    "firstDiffs": []
+  },
+  "/settings/users": {
+    "miniRoot": true,
+    "finalUrl": "/settings/users",
+    "elements": 1515,
+    "diffs": 9,
+    "firstDiffs": [
+      "#0: div 0,0 390x2930 16px 844px → div 0,0 390x2948 16px 844px",
+      "#26: main 0,69 390x2861 16px 780px → main 0,69 390x2879 16px 780px",
+      "#27: div 16,85 358x2733 16px 0px → div 16,85 358x2751 16px 0px",
+      "#32: div 16,85 358x2733 16px 0px → div 16,85 358x2751 16px 0px",
+      "#33: div 16,85 358x2733 16px auto → div 16,85 358x2751 16px auto"
+    ]
+  },
+  "/settings/qr-posters": {
+    "miniRoot": true,
+    "finalUrl": "/settings/qr-posters",
+    "elements": 658,
+    "diffs": 0,
+    "firstDiffs": []
+  },
+  "/journals/hygiene/documents/cmuh505d60001yg9mchq13ee7": {
+    "miniRoot": true,
+    "finalUrl": "/journals/hygiene/documents/cmuh505d60001yg9mchq13ee7",
+    "elements": 152,
+    "diffs": 0,
+    "firstDiffs": []
+  }
+}

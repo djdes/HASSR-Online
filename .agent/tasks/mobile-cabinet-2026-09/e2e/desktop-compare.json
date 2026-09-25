@@ -1,0 +1,136 @@
+{
+  "/dashboard": {
+    "elements": 839,
+    "samplesBefore": "main run",
+    "samplesAfter": 3,
+    "diffs": 6,
+    "firstDiffs": [
+      "#699: svg 74,3373 16x16 16px 0px/0px → svg 71.5,3370.5 21x21 16px 0px/0px",
+      "#700: path 76,3375 12x12 16px 0px/0px → path 74,3373 16x16 16px 0px/0px",
+      "#717: svg 74,3471 16x16 16px 0px/0px → svg 71.5,3468.5 21x21 16px 0px/0px",
+      "#718: path 76,3473 12x12 16px 0px/0px → path 74,3471 16x16 16px 0px/0px"
+    ]
+  },
+  "/journals": {
+    "elements": 1146,
+    "samplesBefore": "main run",
+    "samplesAfter": 3,
+    "diffs": 0,
+    "firstDiffs": []
+  },
+  "/journals/hygiene/documents/cmuh505d60001yg9mchq13ee7": {
+    "elements": 172,
+    "samplesBefore": "main run",
+    "samplesAfter": 2,
+    "diffs": 0,
+    "firstDiffs": []
+  },
+  "/settings": {
+    "elements": 775,
+    "samplesBefore": "main run",
+    "samplesAfter": 3,
+    "diffs": 0,
+    "firstDiffs": []
+  },
+  "/settings/users": {
+    "elements": 1552,
+    "samplesBefore": "main run",
+    "samplesAfter": 3,
+    "diffs": 0,
+    "firstDiffs": []
+  },
+  "/settings/qr-posters": {
+    "elements": 687,
+    "samplesBefore": "main run",
+    "samplesAfter": 3,
+    "diffs": 0,
+    "firstDiffs": []
+  },
+  "/orders": {
+    "elements": 246,
+    "samplesBefore": "main run",
+    "samplesAfter": 3,
+    "diffs": 0,
+    "firstDiffs": []
+  },
+  "/master": {
+    "elements": 120,
+    "samplesBefore": "main run",
+    "samplesAfter": 2,
+    "diffs": 0,
+    "firstDiffs": []
+  },
+  "/journals/health_check/documents/cmuh505pp005wyg9mlbtlpby1": {
+    "elements": 585,
+    "samplesBefore": "main run",
+    "samplesAfter": 2,
+    "diffs": 5,
+    "firstDiffs": [
+      "#571: div 1324,836 96x44 16px 0px/0px → div 1272,836 148x44 16px 0px/0px",
+      "#581: — → button 1272,836 44x44 16px 0px/0px",
+      "#582: — → svg 1286,850 16x16 16px 0px/0px",
+      "#583: — → path 1287.5,852 13.5x12 16px 0px/0px"
+    ]
+  },
+  "/journals/fryer_oil/documents/cmuh505wv00bryg9m89aclv9c": {
+    "elements": 802,
+    "samplesBefore": "main run",
+    "samplesAfter": 2,
+    "diffs": 5,
+    "firstDiffs": [
+      "#788: div 1324,836 96x44 16px 0px/0px → div 1272,836 148x44 16px 0px/0px",
+      "#798: — → button 1272,836 44x44 16px 0px/0px",
+      "#799: — → svg 1286,850 16x16 16px 0px/0px",
+      "#800: — → path 1287.5,852 13.5x12 16px 0px/0px"
+    ]
+  },
+  "/reports": {
+    "elements": 4046,
+    "samplesBefore": "main run",
+    "samplesAfter": 3,
+    "diffs": 0,
+    "firstDiffs": []
+  },
+  "/control-board": {
+    "elements": 84,
+    "samplesBefore": "main run",
+    "samplesAfter": 3,
+    "diffs": 2,
+    "firstDiffs": [
+      "#60: svg 706.5,239.5 27.5x27.5 16px 0px/0px → svg 707.5,240.5 25x25 16px 0px/0px",
+      "#61: path 710,243 20.5x20.5 16px 0px/0px → path 710.5,243.5 19x19 16px 0px/0px"
+    ]
+  },
+  "/journals-progress": {
+    "elements": 138,
+    "samplesBefore": "main run",
+    "samplesAfter": 8,
+    "diffs": 69,
+    "firstDiffs": [
+      "#45: div 0,97 1440x313.5 16px 0px/32px → div 0,97 1440x486.5 16px 0px/32px",
+      "#59: div 32,153 1376x257.5 16px 0px/0px → div 32,153 1376x430.5 16px 0px/0px",
+      "#71: div 32,256.5 1376x154 16px 64px/64px → div 32,256.5 1376x327 16px 0px/0px",
+      "#72: svg 629,322 22.5x22.5 16px 0px/0px → div 32,256.5 910.5x327 16px 0px/0px"
+    ]
+  },
+  "/team": {
+    "elements": 84,
+    "samplesBefore": "main run",
+    "samplesAfter": 4,
+    "diffs": 2,
+    "firstDiffs": [
+      "#60: svg 709,242 22x22 16px 0px/0px → svg 708,241 23.5x23.5 16px 0px/0px",
+      "#61: path 712,245 16.5x16.5 16px 0px/0px → path 711,244 18x18 16px 0px/0px"
+    ]
+  },
+  "/verifications": {
+    "elements": 84,
+    "samplesBefore": "main run",
+    "samplesAfter": 3,
+    "diffs": 2,
+    "firstDiffs": [
+      "#60: svg 707,240 26.5x26.5 16px 0px/0px → svg 706,239 28x28 16px 0px/0px",
+      "#61: path 710,243 20x20 16px 0px/0px → path 709.5,242.5 21x21 16px 0px/0px"
+    ]
+  }
+}

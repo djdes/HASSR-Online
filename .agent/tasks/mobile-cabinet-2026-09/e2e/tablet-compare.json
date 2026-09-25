@@ -1,0 +1,98 @@
+{
+  "/dashboard": {
+    "768": {
+      "elements": 832,
+      "diffs": 0,
+      "firstDiffs": []
+    },
+    "1024": {
+      "elements": 839,
+      "diffs": 0,
+      "firstDiffs": []
+    }
+  },
+  "/journals": {
+    "768": {
+      "elements": 1139,
+      "diffs": 0,
+      "firstDiffs": []
+    },
+    "1024": {
+      "elements": 1146,
+      "diffs": 0,
+      "firstDiffs": []
+    }
+  },
+  "/journals/hygiene/documents/cmuh505d60001yg9mchq13ee7": {
+    "768": {
+      "elements": 165,
+      "diffs": 0,
+      "firstDiffs": []
+    },
+    "1024": {
+      "elements": 172,
+      "diffs": 0,
+      "firstDiffs": []
+    }
+  },
+  "/settings": {
+    "768": {
+      "elements": 768,
+      "diffs": 0,
+      "firstDiffs": []
+    },
+    "1024": {
+      "elements": 775,
+      "diffs": 0,
+      "firstDiffs": []
+    }
+  },
+  "/settings/users": {
+    "768": {
+      "elements": 1545,
+      "diffs": 0,
+      "firstDiffs": []
+    },
+    "1024": {
+      "elements": 1552,
+      "diffs": 0,
+      "firstDiffs": []
+    }
+  },
+  "/settings/qr-posters": {
+    "768": {
+      "elements": 680,
+      "diffs": 0,
+      "firstDiffs": []
+    },
+    "1024": {
+      "elements": 687,
+      "diffs": 0,
+      "firstDiffs": []
+    }
+  },
+  "/orders": {
+    "768": {
+      "elements": 239,
+      "diffs": 0,
+      "firstDiffs": []
+    },
+    "1024": {
+      "elements": 246,
+      "diffs": 0,
+      "firstDiffs": []
+    }
+  },
+  "/master": {
+    "768": {
+      "elements": 120,
+      "diffs": 0,
+      "firstDiffs": []
+    },
+    "1024": {
+      "elements": 120,
+      "diffs": 0,
+      "firstDiffs": []
+    }
+  }
+}

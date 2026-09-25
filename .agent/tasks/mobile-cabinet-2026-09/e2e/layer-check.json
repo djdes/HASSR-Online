@@ -1,0 +1,89 @@
+{
+  "menuSheet": [
+    {
+      "text": "Кафе «Ромашка»",
+      "cls52": true,
+      "minHeight": "52px",
+      "height": 52
+    },
+    {
+      "text": "",
+      "cls52": false,
+      "minHeight": "48px",
+      "height": 52
+    },
+    {
+      "text": "Сотрудники",
+      "cls52": true,
+      "minHeight": "52px",
+      "height": 52
+    },
+    {
+      "text": "Журналы",
+      "cls52": true,
+      "minHeight": "52px",
+      "height": 52
+    },
+    {
+      "text": "Производственный план",
+      "cls52": true,
+      "minHeight": "52px",
+      "height": 52
+    },
+    {
+      "text": "Нарушения",
+      "cls52": true,
+      "minHeight": "52px",
+      "height": 52
+    }
+  ],
+  "textRemap": {
+    "text-[14px]": "16px",
+    "text-[13px]": "15px",
+    "text-[12px]": "13px",
+    "text-[11px]": "11px"
+  },
+  "healthStripButtons": [
+    {
+      "text": "Перейти",
+      "height": 48
+    }
+  ],
+  "progressStripButtons": [],
+  "switchSite": {
+    "track": "52x30",
+    "thumb": 24,
+    "hitArea": "-11px"
+  },
+  "switchMini": {
+    "track": "44x24",
+    "thumb": 18
+  },
+  "miniButtons": [
+    {
+      "text": "Назад",
+      "minHeight": "auto",
+      "height": 36
+    },
+    {
+      "text": "Кафе «Ромашка»",
+      "minHeight": "0px",
+      "height": 0
+    },
+    {
+      "text": "Журналы",
+      "minHeight": "0px",
+      "height": 0
+    },
+    {
+      "text": "Гигиенический журнал",
+      "minHeight": "auto",
+      "height": 28
+    },
+    {
+      "text": "Гигиенический журнал",
+      "minHeight": "auto",
+      "height": 28
+    }
+  ]
+}

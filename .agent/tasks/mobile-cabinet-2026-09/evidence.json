@@ -1,0 +1,1364 @@
+{
+  "task": "mobile-cabinet-2026-09",
+  "generatedAt": "2026-09-25T20:05:27.543Z",
+  "before": {
+    "at": "2026-09-25T17:04:39.892Z"
+  },
+  "after": {
+    "at": "2026-09-25T18:39:54.128Z"
+  },
+  "verdict": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "problems": {
+      "AC1": [],
+      "AC2": [],
+      "AC3": []
+    },
+    "signals": [
+      "03-journal-doc: 1440 main run 72 diffs from render timing, stable recheck 0 diffs",
+      "05-staff: hidden overflow 247px → 324px [{\"el\":\"div «График выходных дней График отпусков Гра»\",\"client\":358,\"scroll\":682}]"
+    ]
+  },
+  "dialog390": {
+    "before": {
+      "shot": "before-390-09-doc-settings-dialog.png",
+      "title": "Настройки документа",
+      "controls": 9,
+      "small": [
+        {
+          "kind": "button",
+          "el": "button «Закрыть»",
+          "h": 36,
+          "fs": 16
+        },
+        {
+          "kind": "field",
+          "el": "input «Введите название документа»",
+          "h": 36,
+          "fs": 16
+        },
+        {
+          "kind": "field",
+          "el": "button «Управляющий»",
+          "h": 36,
+          "fs": 13.5
+        },
+        {
+          "kind": "field",
+          "el": "button «Иванова Анна Сергеевна»",
+          "h": 36,
+          "fs": 13.5
+        },
+        {
+          "kind": "field",
+          "el": "input «Период документа: с»",
+          "h": 40,
+          "fs": 16
+        },
+        {
+          "kind": "field",
+          "el": "input «Период документа: по»",
+          "h": 40,
+          "fs": 16
+        },
+        {
+          "kind": "button",
+          "el": "button «Отмена»",
+          "h": 44,
+          "fs": 14
+        },
+        {
+          "kind": "button",
+          "el": "button «Сохранить»",
+          "h": 44,
+          "fs": 14
+        }
+      ],
+      "smallFieldFont": [
+        {
+          "kind": "field",
+          "el": "button «Управляющий»",
+          "h": 36,
+          "fs": 13.5
+        },
+        {
+          "kind": "field",
+          "el": "button «Иванова Анна Сергеевна»",
+          "h": 36,
+          "fs": 13.5
+        }
+      ]
+    },
+    "after": {
+      "shot": "after-390-09-doc-settings-dialog.png",
+      "title": "Настройки документа",
+      "controls": 9,
+      "small": [],
+      "smallFieldFont": []
+    }
+  },
+  "consoleErrors": {
+    "before": 35,
+    "after": 37
+  },
+  "pages": {
+    "01-dashboard": {
+      "path": "/dashboard",
+      "shots": {
+        "before390": "before-390-01-dashboard.png",
+        "after390": "after-390-01-dashboard.png",
+        "before1440": "before-1440-01-dashboard.png",
+        "after1440": "after-1440-01-dashboard.png"
+      },
+      "header390": {
+        "before": 73,
+        "after": 56
+      },
+      "headerIcons390After": [
+        "44x44",
+        "44x44",
+        "44x44",
+        "44x44"
+      ],
+      "header1440": {
+        "before": 73,
+        "after": 73
+      },
+      "controls390": {
+        "before": 65,
+        "after": 65
+      },
+      "below48": {
+        "before": 1,
+        "after": 0
+      },
+      "fieldFontBelow16": {
+        "before": 0,
+        "after": 0
+      },
+      "tightPairsBelow8": {
+        "before": 0,
+        "after": 0
+      },
+      "tightPairsExcludingFloatingDock": {
+        "before": 0,
+        "after": 0,
+        "afterPairs": []
+      },
+      "toggles390After": [],
+      "textMedianPx": {
+        "before": 15,
+        "after": 16
+      },
+      "textShareGe15": {
+        "before": 68.1,
+        "after": 83.8
+      },
+      "textShareGe16": {
+        "before": 1.2,
+        "after": 71.6
+      },
+      "overflow390After": {
+        "scrollWidth": 390,
+        "offenders": 0,
+        "hiddenOverflow": []
+      },
+      "hiddenOverflow390Before": [],
+      "desktop1440": {
+        "elements": 839,
+        "geometryDiffs": 0,
+        "firstDiffs": [],
+        "pixels": {
+          "sameSize": true,
+          "diff": 0,
+          "total": 1296000
+        }
+      }
+    },
+    "02-journals": {
+      "path": "/journals",
+      "shots": {
+        "before390": "before-390-02-journals.png",
+        "after390": "after-390-02-journals.png",
+        "before1440": "before-1440-02-journals.png",
+        "after1440": "after-1440-02-journals.png"
+      },
+      "header390": {
+        "before": 73,
+        "after": 56
+      },
+      "headerIcons390After": [
+        "44x44",
+        "44x44",
+        "44x44",
+        "44x44"
+      ],
+      "header1440": {
+        "before": 73,
+        "after": 73
+      },
+      "controls390": {
+        "before": 141,
+        "after": 141
+      },
+      "below48": {
+        "before": 52,
+        "after": 0
+      },
+      "fieldFontBelow16": {
+        "before": 0,
+        "after": 0
+      },
+      "tightPairsBelow8": {
+        "before": 0,
+        "after": 0
+      },
+      "tightPairsExcludingFloatingDock": {
+        "before": 0,
+        "after": 0,
+        "afterPairs": []
+      },
+      "toggles390After": [
+        {
+          "el": "button[role=checkbox][slot=checkbox] «Выбрать «Бланк контроля температуры и вл»",
+          "w": 22,
+          "h": 22
+        },
+        {
+          "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал контроля температурного »",
+          "w": 22,
+          "h": 22
+        },
+        {
+          "el": "button[role=checkbox][slot=checkbox] «Выбрать «Чек-лист уборки и проветривания»",
+          "w": 22,
+          "h": 22
+        }
+      ],
+      "textMedianPx": {
+        "before": 14,
+        "after": 16
+      },
+      "textShareGe15": {
+        "before": 0.3,
+        "after": 79.5
+      },
+      "textShareGe16": {
+        "before": 0.3,
+        "after": 74.7
+      },
+      "overflow390After": {
+        "scrollWidth": 390,
+        "offenders": 0,
+        "hiddenOverflow": []
+      },
+      "hiddenOverflow390Before": [],
+      "desktop1440": {
+        "elements": 1146,
+        "geometryDiffs": 0,
+        "firstDiffs": [],
+        "pixels": {
+          "sameSize": true,
+          "diff": 0,
+          "total": 1296000
+        }
+      }
+    },
+    "03-journal-doc": {
+      "path": "/journals/hygiene/documents/cmuh505d60001yg9mchq13ee7",
+      "shots": {
+        "before390": "before-390-03-journal-doc.png",
+        "after390": "after-390-03-journal-doc.png",
+        "before1440": "before-1440-03-journal-doc.png",
+        "after1440": "after-1440-03-journal-doc.png"
+      },
+      "header390": {
+        "before": 73,
+        "after": 56
+      },
+      "headerIcons390After": [
+        "44x44",
+        "44x44",
+        "44x44",
+        "44x44"
+      ],
+      "header1440": {
+        "before": 73,
+        "after": 73
+      },
+      "controls390": {
+        "before": 14,
+        "after": 14
+      },
+      "below48": {
+        "before": 12,
+        "after": 0
+      },
+      "fieldFontBelow16": {
+        "before": 0,
+        "after": 0
+      },
+      "tightPairsBelow8": {
+        "before": 0,
+        "after": 0
+      },
+      "tightPairsExcludingFloatingDock": {
+        "before": 0,
+        "after": 0,
+        "afterPairs": []
+      },
+      "toggles390After": [
+        {
+          "el": "button[role=switch][slot=switch] «» .peer.group/switch.inline-flex.shrink-0.items-center.rounded-full",
+          "w": 52,
+          "h": 30
+        }
+      ],
+      "textMedianPx": {
+        "before": 13,
+        "after": 15
+      },
+      "textShareGe15": {
+        "before": 11.9,
+        "after": 76.6
+      },
+      "textShareGe16": {
+        "before": 5.2,
+        "after": 34.6
+      },
+      "overflow390After": {
+        "scrollWidth": 390,
+        "offenders": 0,
+        "hiddenOverflow": []
+      },
+      "hiddenOverflow390Before": [],
+      "desktop1440": {
+        "elements": 159,
+        "geometryDiffs": 72,
+        "firstDiffs": [
+          "#98: span 88,247 252x19 15px 0px/0px → input 19,250 13x13 16px 0px/0px",
+          "#99: div 32,320.5 1376x383 16px 0px/0px → span 88,247 252x19 15px 0px/0px",
+          "#101: div 32,320.5 1376x85.5 16px 20px/20px → div 32,320.5 1376x383 16px 0px/0px",
+          "#102: div 53,343 40x40 16px 0px/0px → div 32,320.5 1376x85.5 16px 20px/20px",
+          "#103: svg 63,353 20x20 16px 0px/0px → div 53,343 40x40 16px 0px/0px"
+        ],
+        "pixels": {
+          "sameSize": true,
+          "diff": 1215,
+          "total": 1296000
+        }
+      }
+    },
+    "04-settings": {
+      "path": "/settings",
+      "shots": {
+        "before390": "before-390-04-settings.png",
+        "after390": "after-390-04-settings.png",
+        "before1440": "before-1440-04-settings.png",
+        "after1440": "after-1440-04-settings.png"
+      },
+      "header390": {
+        "before": 73,
+        "after": 56
+      },
+      "headerIcons390After": [
+        "44x44",
+        "44x44",
+        "44x44",
+        "44x44"
+      ],
+      "header1440": {
+        "before": 73,
+        "after": 73
+      },
+      "controls390": {
+        "before": 56,
+        "after": 56
+      },
+      "below48": {
+        "before": 5,
+        "after": 0
+      },
+      "fieldFontBelow16": {
+        "before": 0,
+        "after": 0
+      },
+      "tightPairsBelow8": {
+        "before": 0,
+        "after": 0
+      },
+      "tightPairsExcludingFloatingDock": {
+        "before": 0,
+        "after": 0,
+        "afterPairs": []
+      },
+      "toggles390After": [],
+      "textMedianPx": {
+        "before": 13,
+        "after": 15
+      },
+      "textShareGe15": {
+        "before": 21.3,
+        "after": 91.7
+      },
+      "textShareGe16": {
+        "before": 2.9,
+        "after": 21.6
+      },
+      "overflow390After": {
+        "scrollWidth": 390,
+        "offenders": 0,
+        "hiddenOverflow": []
+      },
+      "hiddenOverflow390Before": [],
+      "desktop1440": {
+        "elements": 775,
+        "geometryDiffs": 0,
+        "firstDiffs": [],
+        "pixels": {
+          "sameSize": true,
+          "diff": 0,
+          "total": 1296000
+        }
+      }
+    },
+    "05-staff": {
+      "path": "/settings/users",
+      "shots": {
+        "before390": "before-390-05-staff.png",
+        "after390": "after-390-05-staff.png",
+        "before1440": "before-1440-05-staff.png",
+        "after1440": "after-1440-05-staff.png"
+      },
+      "header390": {
+        "before": 73,
+        "after": 56
+      },
+      "headerIcons390After": [
+        "44x44",
+        "44x44",
+        "44x44",
+        "44x44"
+      ],
+      "header1440": {
+        "before": 73,
+        "after": 73
+      },
+      "controls390": {
+        "before": 53,
+        "after": 53
+      },
+      "below48": {
+        "before": 47,
+        "after": 0
+      },
+      "fieldFontBelow16": {
+        "before": 0,
+        "after": 0
+      },
+      "tightPairsBelow8": {
+        "before": 4,
+        "after": 1
+      },
+      "tightPairsExcludingFloatingDock": {
+        "before": 4,
+        "after": 0,
+        "afterPairs": [
+          {
+            "a": "button «Пригласить в TG»",
+            "b": "button «Помощь и подсказки»",
+            "gap": -0.5
+          }
+        ]
+      },
+      "toggles390After": [
+        {
+          "el": "input «» .size-4.cursor-pointer.rounded.border-[#d0d4e6].text-[#5566f6].focus:ring-[#5566f6]",
+          "w": 22,
+          "h": 22
+        },
+        {
+          "el": "input «» .size-4.cursor-pointer.rounded.border-[#d0d4e6].text-[#5566f6].focus:ring-[#5566f6]",
+          "w": 22,
+          "h": 22
+        },
+        {
+          "el": "input «» .size-4.cursor-pointer.rounded.border-[#d0d4e6].text-[#5566f6].focus:ring-[#5566f6]",
+          "w": 22,
+          "h": 22
+        }
+      ],
+      "textMedianPx": {
+        "before": 13,
+        "after": 15
+      },
+      "textShareGe15": {
+        "before": 3.8,
+        "after": 82.4
+      },
+      "textShareGe16": {
+        "before": 2.2,
+        "after": 24.4
+      },
+      "overflow390After": {
+        "scrollWidth": 390,
+        "offenders": 0,
+        "hiddenOverflow": [
+          {
+            "el": "div «График выходных дней График отпусков Гра»",
+            "client": 358,
+            "scroll": 682
+          }
+        ]
+      },
+      "hiddenOverflow390Before": [
+        {
+          "el": "div «График выходных дней График отпусков Гра»",
+          "client": 358,
+          "scroll": 605
+        }
+      ],
+      "desktop1440": {
+        "elements": 1552,
+        "geometryDiffs": 0,
+        "firstDiffs": [],
+        "pixels": {
+          "sameSize": true,
+          "diff": 0,
+          "total": 1296000
+        }
+      }
+    },
+    "06-qr-posters": {
+      "path": "/settings/qr-posters",
+      "shots": {
+        "before390": "before-390-06-qr-posters.png",
+        "after390": "after-390-06-qr-posters.png",
+        "before1440": "before-1440-06-qr-posters.png",
+        "after1440": "after-1440-06-qr-posters.png"
+      },
+      "header390": {
+        "before": 73,
+        "after": 56
+      },
+      "headerIcons390After": [
+        "44x44",
+        "44x44",
+        "44x44",
+        "44x44"
+      ],
+      "header1440": {
+        "before": 73,
+        "after": 73
+      },
+      "controls390": {
+        "before": 108,
+        "after": 108
+      },
+      "below48": {
+        "before": 53,
+        "after": 0
+      },
+      "fieldFontBelow16": {
+        "before": 0,
+        "after": 0
+      },
+      "tightPairsBelow8": {
+        "before": 0,
+        "after": 0
+      },
+      "tightPairsExcludingFloatingDock": {
+        "before": 0,
+        "after": 0,
+        "afterPairs": []
+      },
+      "toggles390After": [
+        {
+          "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+          "w": 22,
+          "h": 22
+        },
+        {
+          "el": "button[role=radio] «A4»",
+          "w": 56,
+          "h": 48
+        },
+        {
+          "el": "button[role=radio] «A5»",
+          "w": 56,
+          "h": 48
+        }
+      ],
+      "textMedianPx": {
+        "before": 14,
+        "after": 16
+      },
+      "textShareGe15": {
+        "before": 5.5,
+        "after": 97.7
+      },
+      "textShareGe16": {
+        "before": 5.5,
+        "after": 72.3
+      },
+      "overflow390After": {
+        "scrollWidth": 390,
+        "offenders": 0,
+        "hiddenOverflow": []
+      },
+      "hiddenOverflow390Before": [],
+      "desktop1440": {
+        "elements": 687,
+        "geometryDiffs": 0,
+        "firstDiffs": [],
+        "pixels": {
+          "sameSize": true,
+          "diff": 2195,
+          "total": 1296000
+        }
+      }
+    },
+    "07-orders": {
+      "path": "/orders",
+      "shots": {
+        "before390": "before-390-07-orders.png",
+        "after390": "after-390-07-orders.png",
+        "before1440": "before-1440-07-orders.png",
+        "after1440": "after-1440-07-orders.png"
+      },
+      "header390": {
+        "before": 73,
+        "after": 56
+      },
+      "headerIcons390After": [
+        "44x44",
+        "44x44",
+        "44x44",
+        "44x44"
+      ],
+      "header1440": {
+        "before": 73,
+        "after": 73
+      },
+      "controls390": {
+        "before": 16,
+        "after": 16
+      },
+      "below48": {
+        "before": 3,
+        "after": 0
+      },
+      "fieldFontBelow16": {
+        "before": 0,
+        "after": 0
+      },
+      "tightPairsBelow8": {
+        "before": 0,
+        "after": 0
+      },
+      "tightPairsExcludingFloatingDock": {
+        "before": 0,
+        "after": 0,
+        "afterPairs": []
+      },
+      "toggles390After": [],
+      "textMedianPx": {
+        "before": 13,
+        "after": 15
+      },
+      "textShareGe15": {
+        "before": 3.2,
+        "after": 94.5
+      },
+      "textShareGe16": {
+        "before": 2,
+        "after": 42.1
+      },
+      "overflow390After": {
+        "scrollWidth": 390,
+        "offenders": 0,
+        "hiddenOverflow": []
+      },
+      "hiddenOverflow390Before": [],
+      "desktop1440": {
+        "elements": 246,
+        "geometryDiffs": 0,
+        "firstDiffs": [],
+        "pixels": {
+          "sameSize": true,
+          "diff": 0,
+          "total": 1296000
+        }
+      }
+    },
+    "08-master": {
+      "path": "/master",
+      "shots": {
+        "before390": "before-390-08-master.png",
+        "after390": "after-390-08-master.png",
+        "before1440": "before-1440-08-master.png",
+        "after1440": "after-1440-08-master.png"
+      },
+      "header390": {
+        "before": 152.5,
+        "after": 144.5
+      },
+      "headerIcons390After": [
+        "44x44",
+        "44x44",
+        "44x44"
+      ],
+      "header1440": {
+        "before": 113,
+        "after": 113
+      },
+      "controls390": {
+        "before": 7,
+        "after": 7
+      },
+      "below48": {
+        "before": 7,
+        "after": 0
+      },
+      "fieldFontBelow16": {
+        "before": 0,
+        "after": 0
+      },
+      "tightPairsBelow8": {
+        "before": 2,
+        "after": 0
+      },
+      "tightPairsExcludingFloatingDock": {
+        "before": 2,
+        "after": 0,
+        "afterPairs": []
+      },
+      "toggles390After": [],
+      "textMedianPx": {
+        "before": 14,
+        "after": 16
+      },
+      "textShareGe15": {
+        "before": 15,
+        "after": 99.4
+      },
+      "textShareGe16": {
+        "before": 15,
+        "after": 57.1
+      },
+      "overflow390After": {
+        "scrollWidth": 390,
+        "offenders": 0,
+        "hiddenOverflow": []
+      },
+      "hiddenOverflow390Before": [
+        {
+          "el": "div[role=tablist] «Меню 3 Сырьё 0 Объекты 1»",
+          "client": 356,
+          "scroll": 360
+        }
+      ],
+      "desktop1440": {
+        "elements": 120,
+        "geometryDiffs": 0,
+        "firstDiffs": [],
+        "pixels": {
+          "sameSize": true,
+          "diff": 0,
+          "total": 1296000
+        }
+      }
+    }
+  },
+  "extraPages": {
+    "note": "регрессионный обход: 390 и 1440 без скриншотов",
+    "regressions": [
+      "x03 /journals/health_check/documents/cmuh505pp005wyg9mlbtlpby1: offenders=0 newHidden=[] geomDiffs=9 errors=",
+      "x04 /journals/fryer_oil/documents/cmuh505wv00bryg9m89aclv9c: offenders=0 newHidden=[] geomDiffs=9 errors=",
+      "x15 /reports: offenders=0 newHidden=[] geomDiffs=3942 errors=",
+      "x16 /control-board: offenders=0 newHidden=[] geomDiffs=2 errors=",
+      "x17 /journals-progress: offenders=0 newHidden=[] geomDiffs=30 errors=",
+      "x18 /team: offenders=0 newHidden=[] geomDiffs=2 errors="
+    ],
+    "rows": {
+      "x01": {
+        "path": "/journals/hygiene",
+        "finalUrl": "/journals/hygiene",
+        "below48": {
+          "before": 11,
+          "after": 1
+        },
+        "fieldFontBelow16": {
+          "before": 0,
+          "after": 0
+        },
+        "tight": {
+          "before": 1,
+          "after": 0
+        },
+        "textMedianPx": {
+          "before": 13.5,
+          "after": 15
+        },
+        "offendersAfter": [],
+        "newHiddenOverflow": [],
+        "desktop1440GeometryDiffs": 0,
+        "errors": []
+      },
+      "x02": {
+        "path": "/journals/health_check",
+        "finalUrl": "/journals/health_check",
+        "below48": {
+          "before": 21,
+          "after": 1
+        },
+        "fieldFontBelow16": {
+          "before": 0,
+          "after": 0
+        },
+        "tight": {
+          "before": 4,
+          "after": 0
+        },
+        "textMedianPx": {
+          "before": 13.5,
+          "after": 15
+        },
+        "offendersAfter": [],
+        "newHiddenOverflow": [],
+        "desktop1440GeometryDiffs": 0,
+        "errors": []
+      },
+      "x03": {
+        "path": "/journals/health_check/documents/cmuh505pp005wyg9mlbtlpby1",
+        "finalUrl": "/journals/health_check/documents/cmuh505pp005wyg9mlbtlpby1",
+        "below48": {
+          "before": 17,
+          "after": 1
+        },
+        "fieldFontBelow16": {
+          "before": 0,
+          "after": 0
+        },
+        "tight": {
+          "before": 1,
+          "after": 1
+        },
+        "textMedianPx": {
+          "before": 14,
+          "after": 16
+        },
+        "offendersAfter": [],
+        "newHiddenOverflow": [],
+        "desktop1440GeometryDiffs": 9,
+        "errors": []
+      },
+      "x04": {
+        "path": "/journals/fryer_oil/documents/cmuh505wv00bryg9m89aclv9c",
+        "finalUrl": "/journals/fryer_oil/documents/cmuh505wv00bryg9m89aclv9c",
+        "below48": {
+          "before": 81,
+          "after": 0
+        },
+        "fieldFontBelow16": {
+          "before": 0,
+          "after": 0
+        },
+        "tight": {
+          "before": 4,
+          "after": 2
+        },
+        "textMedianPx": {
+          "before": 13.5,
+          "after": 15
+        },
+        "offendersAfter": [],
+        "newHiddenOverflow": [],
+        "desktop1440GeometryDiffs": 9,
+        "errors": []
+      },
+      "x05": {
+        "path": "/settings/journals",
+        "finalUrl": "/settings/journals",
+        "below48": {
+          "before": 118,
+          "after": 0
+        },
+        "fieldFontBelow16": {
+          "before": 0,
+          "after": 0
+        },
+        "tight": {
+          "before": 51,
+          "after": 0
+        },
+        "textMedianPx": {
+          "before": 13,
+          "after": 15
+        },
+        "offendersAfter": [],
+        "newHiddenOverflow": [],
+        "desktop1440GeometryDiffs": 0,
+        "errors": []
+      },
+      "x06": {
+        "path": "/settings/organization",
+        "finalUrl": "/settings/organization",
+        "below48": {
+          "before": 22,
+          "after": 0
+        },
+        "fieldFontBelow16": {
+          "before": 0,
+          "after": 0
+        },
+        "tight": {
+          "before": 0,
+          "after": 0
+        },
+        "textMedianPx": {
+          "before": 12.5,
+          "after": 15
+        },
+        "offendersAfter": [],
+        "newHiddenOverflow": [],
+        "desktop1440GeometryDiffs": 0,
+        "errors": []
+      },
+      "x07": {
+        "path": "/settings/equipment",
+        "finalUrl": "/settings/equipment",
+        "below48": {
+          "before": 5,
+          "after": 0
+        },
+        "fieldFontBelow16": {
+          "before": 0,
+          "after": 0
+        },
+        "tight": {
+          "before": 0,
+          "after": 0
+        },
+        "textMedianPx": {
+          "before": 14,
+          "after": 16
+        },
+        "offendersAfter": [],
+        "newHiddenOverflow": [],
+        "desktop1440GeometryDiffs": 0,
+        "errors": []
+      },
+      "x08": {
+        "path": "/settings/areas",
+        "finalUrl": "/settings/areas",
+        "below48": {
+          "before": 5,
+          "after": 0
+        },
+        "fieldFontBelow16": {
+          "before": 0,
+          "after": 0
+        },
+        "tight": {
+          "before": 0,
+          "after": 0
+        },
+        "textMedianPx": {
+          "before": 14,
+          "after": 16
+        },
+        "offendersAfter": [],
+        "newHiddenOverflow": [],
+        "desktop1440GeometryDiffs": 0,
+        "errors": []
+      },
+      "x09": {
+        "path": "/settings/journal-responsibles",
+        "finalUrl": "/settings/journal-responsibles",
+        "below48": {
+          "before": 214,
+          "after": 0
+        },
+        "fieldFontBelow16": {
+          "before": 0,
+          "after": 0
+        },
+        "tight": {
+          "before": 0,
+          "after": 0
+        },
+        "textMedianPx": {
+          "before": 12,
+          "after": 13
+        },
+        "offendersAfter": [],
+        "newHiddenOverflow": [],
+        "desktop1440GeometryDiffs": 0,
+        "errors": []
+      },
+      "x10": {
+        "path": "/settings/permissions",
+        "finalUrl": "/settings/permissions",
+        "below48": {
+          "before": 15,
+          "after": 0
+        },
+        "fieldFontBelow16": {
+          "before": 0,
+          "after": 0
+        },
+        "tight": {
+          "before": 0,
+          "after": 1
+        },
+        "textMedianPx": {
+          "before": 13,
+          "after": 15
+        },
+        "offendersAfter": [],
+        "newHiddenOverflow": [],
+        "desktop1440GeometryDiffs": 0,
+        "errors": []
+      },
+      "x11": {
+        "path": "/settings/subscription",
+        "finalUrl": "/settings/subscription",
+        "below48": {
+          "before": 7,
+          "after": 0
+        },
+        "fieldFontBelow16": {
+          "before": 0,
+          "after": 0
+        },
+        "tight": {
+          "before": 0,
+          "after": 0
+        },
+        "textMedianPx": {
+          "before": 13,
+          "after": 15
+        },
+        "offendersAfter": [],
+        "newHiddenOverflow": [],
+        "desktop1440GeometryDiffs": 0,
+        "errors": []
+      },
+      "x12": {
+        "path": "/settings/appearance",
+        "finalUrl": "/settings/appearance",
+        "below48": {
+          "before": 3,
+          "after": 0
+        },
+        "fieldFontBelow16": {
+          "before": 0,
+          "after": 0
+        },
+        "tight": {
+          "before": 0,
+          "after": 0
+        },
+        "textMedianPx": {
+          "before": 13,
+          "after": 15
+        },
+        "offendersAfter": [],
+        "newHiddenOverflow": [],
+        "desktop1440GeometryDiffs": 0,
+        "errors": []
+      },
+      "x13": {
+        "path": "/settings/notifications",
+        "finalUrl": "/settings/notifications",
+        "below48": {
+          "before": 3,
+          "after": 0
+        },
+        "fieldFontBelow16": {
+          "before": 0,
+          "after": 0
+        },
+        "tight": {
+          "before": 0,
+          "after": 0
+        },
+        "textMedianPx": {
+          "before": 14,
+          "after": 16
+        },
+        "offendersAfter": [],
+        "newHiddenOverflow": [],
+        "desktop1440GeometryDiffs": 0,
+        "errors": []
+      },
+      "x14": {
+        "path": "/settings/master-cabinet",
+        "finalUrl": "/settings/master-cabinet",
+        "below48": {
+          "before": 6,
+          "after": 0
+        },
+        "fieldFontBelow16": {
+          "before": 0,
+          "after": 0
+        },
+        "tight": {
+          "before": 0,
+          "after": 0
+        },
+        "textMedianPx": {
+          "before": 14,
+          "after": 16
+        },
+        "offendersAfter": [],
+        "newHiddenOverflow": [],
+        "desktop1440GeometryDiffs": 0,
+        "errors": []
+      },
+      "x15": {
+        "path": "/reports",
+        "finalUrl": "/reports",
+        "below48": {
+          "before": 20,
+          "after": 0
+        },
+        "fieldFontBelow16": {
+          "before": 2,
+          "after": 0
+        },
+        "tight": {
+          "before": 0,
+          "after": 0
+        },
+        "textMedianPx": {
+          "before": 13,
+          "after": 15
+        },
+        "offendersAfter": [],
+        "newHiddenOverflow": [],
+        "desktop1440GeometryDiffs": 3942,
+        "errors": []
+      },
+      "x16": {
+        "path": "/control-board",
+        "finalUrl": "/control-board",
+        "below48": {
+          "before": 3,
+          "after": 0
+        },
+        "fieldFontBelow16": {
+          "before": 0,
+          "after": 0
+        },
+        "tight": {
+          "before": 0,
+          "after": 0
+        },
+        "textMedianPx": {
+          "before": 13,
+          "after": 13
+        },
+        "offendersAfter": [],
+        "newHiddenOverflow": [],
+        "desktop1440GeometryDiffs": 2,
+        "errors": []
+      },
+      "x17": {
+        "path": "/journals-progress",
+        "finalUrl": "/journals-progress",
+        "below48": {
+          "before": 4,
+          "after": 0
+        },
+        "fieldFontBelow16": {
+          "before": 0,
+          "after": 0
+        },
+        "tight": {
+          "before": 0,
+          "after": 0
+        },
+        "textMedianPx": {
+          "before": 14,
+          "after": 16
+        },
+        "offendersAfter": [],
+        "newHiddenOverflow": [],
+        "desktop1440GeometryDiffs": 30,
+        "errors": []
+      },
+      "x18": {
+        "path": "/team",
+        "finalUrl": "/team",
+        "below48": {
+          "before": 3,
+          "after": 0
+        },
+        "fieldFontBelow16": {
+          "before": 0,
+          "after": 0
+        },
+        "tight": {
+          "before": 0,
+          "after": 0
+        },
+        "textMedianPx": {
+          "before": 13,
+          "after": 13
+        },
+        "offendersAfter": [],
+        "newHiddenOverflow": [],
+        "desktop1440GeometryDiffs": 2,
+        "errors": []
+      },
+      "x19": {
+        "path": "/verifications",
+        "finalUrl": "/verifications",
+        "below48": {
+          "before": 3,
+          "after": 0
+        },
+        "fieldFontBelow16": {
+          "before": 0,
+          "after": 0
+        },
+        "tight": {
+          "before": 0,
+          "after": 0
+        },
+        "textMedianPx": {
+          "before": 13,
+          "after": 13
+        },
+        "offendersAfter": [],
+        "newHiddenOverflow": [],
+        "desktop1440GeometryDiffs": 0,
+        "errors": []
+      },
+      "x20": {
+        "path": "/capa",
+        "finalUrl": "/capa",
+        "below48": {
+          "before": 5,
+          "after": 0
+        },
+        "fieldFontBelow16": {
+          "before": 0,
+          "after": 0
+        },
+        "tight": {
+          "before": 0,
+          "after": 0
+        },
+        "textMedianPx": {
+          "before": 12,
+          "after": 13
+        },
+        "offendersAfter": [],
+        "newHiddenOverflow": [],
+        "desktop1440GeometryDiffs": 0,
+        "errors": []
+      },
+      "x21": {
+        "path": "/batches",
+        "finalUrl": "/batches",
+        "below48": {
+          "before": 11,
+          "after": 0
+        },
+        "fieldFontBelow16": {
+          "before": 0,
+          "after": 0
+        },
+        "tight": {
+          "before": 0,
+          "after": 0
+        },
+        "textMedianPx": {
+          "before": 13,
+          "after": 15
+        },
+        "offendersAfter": [],
+        "newHiddenOverflow": [],
+        "desktop1440GeometryDiffs": 0,
+        "errors": []
+      },
+      "x22": {
+        "path": "/losses",
+        "finalUrl": "/losses",
+        "below48": {
+          "before": 4,
+          "after": 0
+        },
+        "fieldFontBelow16": {
+          "before": 0,
+          "after": 0
+        },
+        "tight": {
+          "before": 0,
+          "after": 0
+        },
+        "textMedianPx": {
+          "before": 14,
+          "after": 16
+        },
+        "offendersAfter": [],
+        "newHiddenOverflow": [],
+        "desktop1440GeometryDiffs": 0,
+        "errors": []
+      },
+      "x23": {
+        "path": "/competencies",
+        "finalUrl": "/competencies",
+        "below48": {
+          "before": 3,
+          "after": 0
+        },
+        "fieldFontBelow16": {
+          "before": 0,
+          "after": 0
+        },
+        "tight": {
+          "before": 0,
+          "after": 0
+        },
+        "textMedianPx": {
+          "before": 13,
+          "after": 13
+        },
+        "offendersAfter": [],
+        "newHiddenOverflow": [],
+        "desktop1440GeometryDiffs": 0,
+        "errors": []
+      },
+      "x24": {
+        "path": "/sanpin",
+        "finalUrl": "/sanpin",
+        "below48": {
+          "before": 3,
+          "after": 0
+        },
+        "fieldFontBelow16": {
+          "before": 0,
+          "after": 0
+        },
+        "tight": {
+          "before": 0,
+          "after": 0
+        },
+        "textMedianPx": {
+          "before": 14,
+          "after": 16
+        },
+        "offendersAfter": [],
+        "newHiddenOverflow": [],
+        "desktop1440GeometryDiffs": 0,
+        "errors": []
+      }
+    }
+  }
+}

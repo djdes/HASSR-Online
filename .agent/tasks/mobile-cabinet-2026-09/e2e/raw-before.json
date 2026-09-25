@@ -1,0 +1,8403 @@
+{
+ "phase": "before",
+ "base": "http://localhost:3040",
+ "at": "2026-09-25T17:04:39.892Z",
+ "pages": {
+  "01-dashboard": {
+   "390": {
+    "shot": "before-390-01-dashboard.png",
+    "hiddenOverflow": [],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 65,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "a «Все журналы»",
+      "w": 127.5,
+      "h": 35.5
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 2816,
+     "medianPx": 15,
+     "shareGe15": 68.1,
+     "shareGe16": 1.2,
+     "sizes": {
+      "11": 56,
+      "12": 401,
+      "13": 343,
+      "14": 99,
+      "15": 1882,
+      "16": 19,
+      "18": 16
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "shot": "before-1440-01-dashboard.png",
+    "headerHeight": 73,
+    "count": 839,
+    "geometry": {
+     "count": 839,
+     "sha1": "4df87a8707c7489af331f643f9d04fb8163ca867"
+    }
+   },
+   "path": "/dashboard",
+   "finalUrl": "/dashboard"
+  },
+  "02-journals": {
+   "390": {
+    "shot": "before-390-02-journals.png",
+    "hiddenOverflow": [],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 141,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Кафе «Ромашка»»",
+      "w": 119.7,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Журналы»",
+      "w": 73.7,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "a «Настроить набор»",
+      "w": 174.5,
+      "h": 40
+     },
+     {
+      "kind": "button",
+      "el": "button «Как работать с журналами»",
+      "w": 324,
+      "h": 19.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать все»",
+      "w": 98.2,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Создать выбранные»",
+      "w": 182.5,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Гигиенический журнал (сотрудники»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Журнал здоровья» с дашборда»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Бланк контроля температуры и вла»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Журнал контроля температурного р»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Чек-лист уборки и проветривания »",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Журнал уборки» с дашборда»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Журнал учета работы УФ бактерици»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Журнал бракеража готовой пищевой»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Журнал бракеража скоропортящейся»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Журнал учета использования фритю»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «График и учет генеральных уборок»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Журнал приемки и входного контро»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Медицинские книжки» с дашборда»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «План обучения персонала» с дашбо»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Журнал регистрации инструктажей »",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Журнал учета дезинфицирующих сре»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Чек-лист (памятка) проведения са»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «График профилактического обслужи»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Карточка истории поломок» с дашб»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «График поверки средств измерений»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Журнал входного контроля сырья, »",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Журнал учета выдачи СИЗ» с дашбо»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Журнал учета аварий» с дашборда»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Журнал регистрации жалоб» с дашб»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Акт забраковки» с дашборда»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «План-программа внутренних аудито»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Протокол внутреннего аудита» с д»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Отчет о внутреннем аудите» с даш»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Журнал прослеживаемости продукци»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Журнал учета металлопримесей в с»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Журнал мойки и дезинфекции обору»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Журнал контроля интенсивного охл»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Перечень изделий из стекла и хру»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Журнал контроля изделий из стекл»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Журнал учета дезинфекции, дезинс»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Журнал отбора и хранения суточны»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Журнал проведения витаминизации »",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Ведомость контроля за рационом п»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Журнал контроля температуры при »",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Журнал учёта боя посуды» с дашбо»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Журнал контроля качества воды в »",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Журнал оценки состояния металлич»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Журнал контроля стерилизации инс»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Журнал учёта отходов класса Б» с»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Скрыть «Журнал допуска партии продукции »",
+      "w": 28,
+      "h": 28
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Бланк контроля температуры и вл»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал контроля температурного »",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Чек-лист уборки и проветривания»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал уборки» для массового со»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал учета работы УФ бактериц»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал бракеража готовой пищево»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал бракеража скоропортящейс»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «График и учет генеральных уборо»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал приемки и входного контр»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Медицинские книжки» для массово»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «План обучения персонала» для ма»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал регистрации инструктажей»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал учета дезинфицирующих ср»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Чек-лист (памятка) проведения с»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «График профилактического обслуж»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Карточка истории поломок» для м»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «График поверки средств измерени»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал входного контроля сырья,»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал учета выдачи СИЗ» для ма»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал учета аварий» для массов»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал регистрации жалоб» для м»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Акт забраковки» для массового с»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «План-программа внутренних аудит»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Протокол внутреннего аудита» дл»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Отчет о внутреннем аудите» для »",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал прослеживаемости продукц»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал учета металлопримесей в »",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал мойки и дезинфекции обор»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал контроля интенсивного ох»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Перечень изделий из стекла и хр»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал контроля изделий из стек»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал учета дезинфекции, дезин»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал отбора и хранения суточн»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал проведения витаминизации»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Ведомость контроля за рационом »",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал контроля температуры при»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал учёта боя посуды» для ма»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал контроля качества воды в»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал оценки состояния металли»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал контроля стерилизации ин»",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал учёта отходов класса Б» »",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал допуска партии продукции»",
+      "w": 16,
+      "h": 16
+     }
+    ],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 2443,
+     "medianPx": 14,
+     "shareGe15": 0.3,
+     "shareGe16": 0.3,
+     "sizes": {
+      "11": 470,
+      "12": 11,
+      "13": 136,
+      "14": 1819,
+      "26": 7
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "shot": "before-1440-02-journals.png",
+    "headerHeight": 73,
+    "count": 1146,
+    "geometry": {
+     "count": 1146,
+     "sha1": "d50c7bf9bc32129655cc1824a69b8f41ea7d546b"
+    }
+   },
+   "path": "/journals",
+   "finalUrl": "/journals"
+  },
+  "03-journal-doc": {
+   "390": {
+    "shot": "before-390-03-journal-doc.png",
+    "hiddenOverflow": [],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 14,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Журналы»",
+      "w": 50,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Гигиенический журнал (сотрудники)»",
+      "w": 93.5,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Гигиенический журнал (сотрудники) — сент»",
+      "w": 126.5,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "a «Распечатать»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button[slot=button] «Настройки документа»",
+      "w": 203.2,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Ещё действия»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "a «QR-плакаты»",
+      "w": 139.3,
+      "h": 40
+     },
+     {
+      "kind": "button",
+      "el": "button[role=tab] «Весь период»",
+      "w": 107.1,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button[role=tab] «Сегодня, 25.09»",
+      "w": 124.9,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Камера»",
+      "w": 155,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "button «Загрузить»",
+      "w": 153,
+      "h": 44
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [
+     {
+      "el": "button[role=switch][slot=switch] «» .peer.group/switch.inline-flex.shrink-0.items-center.rounded-full",
+      "w": 44,
+      "h": 24
+     }
+    ],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 960,
+     "medianPx": 13,
+     "shareGe15": 11.9,
+     "shareGe16": 5.2,
+     "sizes": {
+      "12": 136,
+      "13": 492,
+      "14": 218,
+      "15": 64,
+      "16": 17,
+      "28": 33
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "shot": "before-1440-03-journal-doc.png",
+    "headerHeight": 73,
+    "count": 172,
+    "geometry": {
+     "count": 172,
+     "sha1": "3713c9146cae154faea6543221a07e5852fd7dc0"
+    }
+   },
+   "path": "/journals/hygiene/documents/cmuh505d60001yg9mchq13ee7",
+   "finalUrl": "/journals/hygiene/documents/cmuh505d60001yg9mchq13ee7"
+  },
+  "04-settings": {
+   "390": {
+    "shot": "before-390-04-settings.png",
+    "hiddenOverflow": [],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 56,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Кафе «Ромашка»»",
+      "w": 119.7,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Настройки»",
+      "w": 83.6,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Отправить код»",
+      "w": 316,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "button «С чего начать новой команде»",
+      "w": 324,
+      "h": 19.5
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 4576,
+     "medianPx": 13,
+     "shareGe15": 21.3,
+     "shareGe16": 2.9,
+     "sizes": {
+      "10": 37,
+      "12": 319,
+      "13": 3231,
+      "14": 13,
+      "15": 844,
+      "16": 106,
+      "18": 13,
+      "20": 4,
+      "28": 9
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "shot": "before-1440-04-settings.png",
+    "headerHeight": 73,
+    "count": 775,
+    "geometry": {
+     "count": 775,
+     "sha1": "b999121e42ab4698a7f34807c83831832423b906"
+    }
+   },
+   "path": "/settings",
+   "finalUrl": "/settings"
+  },
+  "05-staff": {
+   "390": {
+    "shot": "before-390-05-staff.png",
+    "hiddenOverflow": [
+     {
+      "el": "div «График выходных дней График отпусков Гра»",
+      "client": 358,
+      "scroll": 605
+     }
+    ],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 53,
+     "inlineLinks": 0,
+     "gridSkipped": 261
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Настройки»",
+      "w": 82.4,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Сотрудники»",
+      "w": 91.5,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "a «Шаблон»",
+      "w": 112,
+      "h": 40
+     },
+     {
+      "kind": "button",
+      "el": "a «Выгрузить»",
+      "w": 128.8,
+      "h": 40
+     },
+     {
+      "kind": "button",
+      "el": "button «Загрузить»",
+      "w": 126.9,
+      "h": 40
+     },
+     {
+      "kind": "button",
+      "el": "button «Несколько сразу»",
+      "w": 172.2,
+      "h": 40
+     },
+     {
+      "kind": "button",
+      "el": "button «Пригласить по QR»",
+      "w": 177.1,
+      "h": 40
+     },
+     {
+      "kind": "button",
+      "el": "button «Инструкция»",
+      "w": 138.7,
+      "h": 40
+     },
+     {
+      "kind": "button",
+      "el": "button «Руководство 1»",
+      "w": 183.4,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Должность»",
+      "w": 118.3,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Управляющий 1»",
+      "w": 174,
+      "h": 21
+     },
+     {
+      "kind": "button",
+      "el": "button «Добавить в «Управляющий»»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Редактировать должность»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Раскрыть»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Редактировать сотрудника»",
+      "w": 32,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Пригласить в TG»",
+      "w": 32,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Добавить»",
+      "w": 314,
+      "h": 40.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Сотрудники 6»",
+      "w": 179.6,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Должность»",
+      "w": 118.3,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Повар 3»",
+      "w": 174,
+      "h": 21
+     },
+     {
+      "kind": "button",
+      "el": "button «Добавить в «Повар»»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Редактировать должность»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Раскрыть»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Редактировать сотрудника»",
+      "w": 32,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Пригласить в TG»",
+      "w": 32,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Редактировать сотрудника»",
+      "w": 32,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Пригласить в TG»",
+      "w": 32,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Редактировать сотрудника»",
+      "w": 32,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Пригласить в TG»",
+      "w": 32,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Добавить»",
+      "w": 314,
+      "h": 40.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Официант 2»",
+      "w": 174,
+      "h": 21
+     },
+     {
+      "kind": "button",
+      "el": "button «Добавить в «Официант»»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Редактировать должность»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Раскрыть»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Уборщица 1»",
+      "w": 174,
+      "h": 21
+     },
+     {
+      "kind": "button",
+      "el": "button «Добавить в «Уборщица»»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Редактировать должность»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Раскрыть»",
+      "w": 28,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «График выходных дней»",
+      "w": 154.7,
+      "h": 37
+     },
+     {
+      "kind": "button",
+      "el": "button «График отпусков»",
+      "w": 113.1,
+      "h": 37
+     },
+     {
+      "kind": "button",
+      "el": "button «График больничных»",
+      "w": 133.6,
+      "h": 37
+     },
+     {
+      "kind": "button",
+      "el": "button «График увольнений»",
+      "w": 132,
+      "h": 37
+     },
+     {
+      "kind": "button",
+      "el": "button «Предыдущий месяц»",
+      "w": 36,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Следующий месяц»",
+      "w": 36,
+      "h": 28
+     },
+     {
+      "kind": "button",
+      "el": "button «Распечатать»",
+      "w": 141,
+      "h": 40
+     },
+     {
+      "kind": "button",
+      "el": "button[slot=button] «Заполнить выходные дни из Айко»",
+      "w": 276.7,
+      "h": 40
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [
+     {
+      "el": "input «» .size-4.cursor-pointer.rounded.border-[#d0d4e6].text-[#5566f6].focus:ring-[#5566f6]",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "input «» .size-4.cursor-pointer.rounded.border-[#d0d4e6].text-[#5566f6].focus:ring-[#5566f6]",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "input «» .size-4.cursor-pointer.rounded.border-[#d0d4e6].text-[#5566f6].focus:ring-[#5566f6]",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "input «» .size-4.cursor-pointer.rounded.border-[#d0d4e6].text-[#5566f6].focus:ring-[#5566f6]",
+      "w": 16,
+      "h": 16
+     }
+    ],
+    "tight": [
+     {
+      "a": "button «Редактировать сотрудника»",
+      "b": "button «Пригласить в TG»",
+      "gap": 4
+     },
+     {
+      "a": "button «Редактировать сотрудника»",
+      "b": "button «Пригласить в TG»",
+      "gap": 4
+     },
+     {
+      "a": "button «Редактировать сотрудника»",
+      "b": "button «Пригласить в TG»",
+      "gap": 4
+     },
+     {
+      "a": "button «Редактировать сотрудника»",
+      "b": "button «Пригласить в TG»",
+      "gap": 4
+     }
+    ],
+    "tightCount": 4,
+    "text": {
+     "chars": 1338,
+     "medianPx": 13,
+     "shareGe15": 3.8,
+     "shareGe16": 2.2,
+     "sizes": {
+      "10": 4,
+      "11": 6,
+      "12": 206,
+      "13": 771,
+      "14": 276,
+      "15": 21,
+      "18": 20,
+      "26": 10,
+      "13.5": 24
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "shot": "before-1440-05-staff.png",
+    "headerHeight": 73,
+    "count": 1552,
+    "geometry": {
+     "count": 1552,
+     "sha1": "51f5812f8fb4595247224f719ecd539e42f5d2df"
+    }
+   },
+   "path": "/settings/users",
+   "finalUrl": "/settings/users"
+  },
+  "06-qr-posters": {
+   "390": {
+    "shot": "before-390-06-qr-posters.png",
+    "hiddenOverflow": [],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 108,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Настройки»",
+      "w": 82.4,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «QR-коды»",
+      "w": 70.6,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Как это работает»",
+      "w": 324,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 166.3,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 166.3,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "button «Отметить все»",
+      "w": 112.9,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Проверить ссылку»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "button «Снять выделение»",
+      "w": 44,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "button «Распечатать»",
+      "w": 150.1,
+      "h": 44
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=radio] «A4»",
+      "w": 56,
+      "h": 44
+     },
+     {
+      "el": "button[role=radio] «A5»",
+      "w": 56,
+      "h": 44
+     },
+     {
+      "el": "button[role=radio] «Наклейка»",
+      "w": 86,
+      "h": 44
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=radio] «A4»",
+      "w": 56,
+      "h": 44
+     },
+     {
+      "el": "button[role=radio] «A5»",
+      "w": 56,
+      "h": 44
+     },
+     {
+      "el": "button[role=radio] «Наклейка»",
+      "w": 86,
+      "h": 44
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 20,
+      "h": 20
+     }
+    ],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 2784,
+     "medianPx": 14,
+     "shareGe15": 5.5,
+     "shareGe16": 5.5,
+     "sizes": {
+      "12": 47,
+      "13": 656,
+      "14": 1860,
+      "16": 37,
+      "17": 109,
+      "26": 7,
+      "13.5": 68
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "shot": "before-1440-06-qr-posters.png",
+    "headerHeight": 73,
+    "count": 687,
+    "geometry": {
+     "count": 687,
+     "sha1": "93787cca1c4b991865906ab2bcc315b4033e4e49"
+    }
+   },
+   "path": "/settings/qr-posters",
+   "finalUrl": "/settings/qr-posters"
+  },
+  "07-orders": {
+   "390": {
+    "shot": "before-390-07-orders.png",
+    "hiddenOverflow": [],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 16,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Кафе «Ромашка»»",
+      "w": 119.7,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Приказы»",
+      "w": 70.1,
+      "h": 27.5
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 1907,
+     "medianPx": 13,
+     "shareGe15": 3.2,
+     "shareGe16": 2,
+     "sizes": {
+      "12": 83,
+      "13": 186,
+      "14": 742,
+      "15": 22,
+      "18": 32,
+      "26": 7,
+      "12.5": 835
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "shot": "before-1440-07-orders.png",
+    "headerHeight": 73,
+    "count": 246,
+    "geometry": {
+     "count": 246,
+     "sha1": "95c63a8d96660f6b4619f731af13ca96073d6eae"
+    }
+   },
+   "path": "/orders",
+   "finalUrl": "/orders"
+  },
+  "08-master": {
+   "390": {
+    "shot": "before-390-08-master.png",
+    "hiddenOverflow": [
+     {
+      "el": "div[role=tablist] «Меню 3 Сырьё 0 Объекты 1»",
+      "client": 356,
+      "scroll": 360
+     }
+    ],
+    "header": {
+     "height": 152.5,
+     "controls": [
+      {
+       "el": "button «Переименовать мастер-кабинет»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Скопировать код справочника»",
+       "w": 28,
+       "h": 28
+      }
+     ]
+    },
+    "counts": {
+     "controls": 7,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button[role=tab] «Меню 3»",
+      "w": 107,
+      "h": 40
+     },
+     {
+      "kind": "button",
+      "el": "button[role=tab] «Сырьё 0»",
+      "w": 111.3,
+      "h": 40
+     },
+     {
+      "kind": "button",
+      "el": "button[role=tab] «Объекты 1»",
+      "w": 126,
+      "h": 40
+     },
+     {
+      "kind": "button",
+      "el": "button «Добавить в журналы на дату»",
+      "w": 316,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "button «Загрузить Excel/CSV»",
+      "w": 316,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "button «Вставить списком»",
+      "w": 316,
+      "h": 44
+     },
+     {
+      "kind": "field",
+      "el": "input «Поиск по списку»",
+      "w": 316,
+      "h": 44
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [
+     {
+      "a": "button[role=tab] «Меню 3»",
+      "b": "button[role=tab] «Сырьё 0»",
+      "gap": 4
+     },
+     {
+      "a": "button[role=tab] «Сырьё 0»",
+      "b": "button[role=tab] «Объекты 1»",
+      "gap": 4
+     }
+    ],
+    "tightCount": 2,
+    "text": {
+     "chars": 473,
+     "medianPx": 14,
+     "shareGe15": 15,
+     "shareGe16": 15,
+     "sizes": {
+      "13": 16,
+      "14": 199,
+      "18": 35,
+      "22": 36,
+      "11.5": 3,
+      "13.5": 126,
+      "12.5": 58
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "shot": "before-1440-08-master.png",
+    "headerHeight": 113,
+    "count": 120,
+    "geometry": {
+     "count": 120,
+     "sha1": "07f103e1b957814434ed742a385634b218078887"
+    }
+   },
+   "path": "/master",
+   "finalUrl": "/master"
+  }
+ },
+ "dialog": {
+  "shot": "before-390-09-doc-settings-dialog.png",
+  "title": "Настройки документа",
+  "controls": 9,
+  "small": [
+   {
+    "kind": "button",
+    "el": "button «Закрыть»",
+    "h": 36,
+    "fs": 16
+   },
+   {
+    "kind": "field",
+    "el": "input «Введите название документа»",
+    "h": 36,
+    "fs": 16
+   },
+   {
+    "kind": "field",
+    "el": "button «Управляющий»",
+    "h": 36,
+    "fs": 13.5
+   },
+   {
+    "kind": "field",
+    "el": "button «Иванова Анна Сергеевна»",
+    "h": 36,
+    "fs": 13.5
+   },
+   {
+    "kind": "field",
+    "el": "input «Период документа: с»",
+    "h": 40,
+    "fs": 16
+   },
+   {
+    "kind": "field",
+    "el": "input «Период документа: по»",
+    "h": 40,
+    "fs": 16
+   },
+   {
+    "kind": "button",
+    "el": "button «Отмена»",
+    "h": 44,
+    "fs": 14
+   },
+   {
+    "kind": "button",
+    "el": "button «Сохранить»",
+    "h": 44,
+    "fs": 14
+   }
+  ],
+  "smallFieldFont": [
+   {
+    "kind": "field",
+    "el": "button «Управляющий»",
+    "h": 36,
+    "fs": 13.5
+   },
+   {
+    "kind": "field",
+    "el": "button «Иванова Анна Сергеевна»",
+    "h": 36,
+    "fs": 13.5
+   }
+  ]
+ },
+ "extra": {
+  "x01": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 17,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Журналы»",
+      "w": 72.7,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Гигиенический журнал (сотрудники)»",
+      "w": 192,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Отключить журнал «Гигиенический журнал (»",
+      "w": 171.5,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button[slot=dialog-trigger] «Создать документ»",
+      "w": 175,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "button «Инструкция»",
+      "w": 175,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Активные»",
+      "w": 65.5,
+      "h": 41
+     },
+     {
+      "kind": "button",
+      "el": "a «Закрытые»",
+      "w": 68.4,
+      "h": 41
+     },
+     {
+      "kind": "button",
+      "el": "button «Как журнал ведётся сам»",
+      "w": 324,
+      "h": 19.5
+     },
+     {
+      "kind": "button",
+      "el": "a «Гигиенический журнал (сотрудники) — сент»",
+      "w": 324,
+      "h": 43.2
+     },
+     {
+      "kind": "button",
+      "el": "button[slot=dropdown-menu-trigger] «Действия с документом»",
+      "w": 121,
+      "h": 44
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [
+     {
+      "el": "button[role=switch][slot=switch] «» .peer.group/switch.inline-flex.shrink-0.items-center.rounded-full",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «» .peer.group/switch.inline-flex.shrink-0.items-center.rounded-full",
+      "w": 44,
+      "h": 24
+     }
+    ],
+    "tight": [
+     {
+      "a": "a «Период Сентябрь с 1 по 30»",
+      "b": "button «Помощь и подсказки»",
+      "gap": -0.5
+     }
+    ],
+    "tightCount": 1,
+    "text": {
+     "chars": 347,
+     "medianPx": 13.5,
+     "shareGe15": 28.5,
+     "shareGe16": 23.6,
+     "sizes": {
+      "12": 10,
+      "13": 62,
+      "14": 42,
+      "15": 17,
+      "16": 49,
+      "28": 33,
+      "13.5": 97,
+      "12.5": 37
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 161,
+    "geometry": {
+     "count": 161,
+     "sha1": "d50ccf7ceb446596a13bb8292b60b556844a0bfe"
+    }
+   },
+   "path": "/journals/hygiene",
+   "finalUrl": "/journals/hygiene"
+  },
+  "x02": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 27,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Журналы»",
+      "w": 72.7,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Журнал здоровья»",
+      "w": 126.7,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Отключить журнал «Журнал здоровья»»",
+      "w": 171.5,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button[slot=dialog-trigger] «Создать документ»",
+      "w": 175,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "button «Инструкция»",
+      "w": 175,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Активные»",
+      "w": 65.5,
+      "h": 41
+     },
+     {
+      "kind": "button",
+      "el": "a «Закрытые»",
+      "w": 68.4,
+      "h": 41
+     },
+     {
+      "kind": "button",
+      "el": "button «Как журнал ведётся сам»",
+      "w": 324,
+      "h": 19.5
+     },
+     {
+      "kind": "button",
+      "el": "a «Журнал здоровья — сентябрь 2026»",
+      "w": 324,
+      "h": 21.6
+     },
+     {
+      "kind": "button",
+      "el": "button[slot=dropdown-menu-trigger] «Действия с документом»",
+      "w": 121,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "button «Закрыть»",
+      "w": 32,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button[role=tab] «Как заполнять»",
+      "w": 169,
+      "h": 35.5
+     },
+     {
+      "kind": "button",
+      "el": "button[role=tab] «Правила»",
+      "w": 169,
+      "h": 35.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Показать на экране»",
+      "w": 141.5,
+      "h": 19.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Показать на экране»",
+      "w": 141.5,
+      "h": 19.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Показать на экране»",
+      "w": 141.5,
+      "h": 19.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Показать на экране»",
+      "w": 141.5,
+      "h": 19.5
+     },
+     {
+      "kind": "button",
+      "el": "a «Полная инструкция»",
+      "w": 356,
+      "h": 19.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Показать на экране»",
+      "w": 171,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "button «Понятно»",
+      "w": 177,
+      "h": 44
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [
+     {
+      "el": "button[role=switch][slot=switch] «» .peer.group/switch.inline-flex.shrink-0.items-center.rounded-full",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «» .peer.group/switch.inline-flex.shrink-0.items-center.rounded-full",
+      "w": 44,
+      "h": 24
+     }
+    ],
+    "tight": [
+     {
+      "a": "a «Журнал здоровья — сентябрь 2026»",
+      "b": "button «Показать на экране»",
+      "gap": 3
+     },
+     {
+      "a": "button[slot=dropdown-menu-trigger] «Действия с документом»",
+      "b": "a «Полная инструкция»",
+      "gap": 6.8
+     },
+     {
+      "a": "button «Помощь и подсказки»",
+      "b": "a «Полная инструкция»",
+      "gap": 1
+     },
+     {
+      "a": "button[role=tab] «Как заполнять»",
+      "b": "button[role=tab] «Правила»",
+      "gap": 0
+     }
+    ],
+    "tightCount": 4,
+    "text": {
+     "chars": 258,
+     "medianPx": 13.5,
+     "shareGe15": 24.4,
+     "shareGe16": 17.8,
+     "sizes": {
+      "12": 10,
+      "13": 44,
+      "14": 42,
+      "15": 17,
+      "16": 31,
+      "28": 15,
+      "13.5": 86,
+      "12.5": 13
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 158,
+    "geometry": {
+     "count": 158,
+     "sha1": "0b1313002c57afad71062d063c953946162edf81"
+    }
+   },
+   "path": "/journals/health_check",
+   "finalUrl": "/journals/health_check"
+  },
+  "x03": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 26,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Журналы»",
+      "w": 52.2,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Журнал здоровья»",
+      "w": 84.8,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Журнал здоровья — сентябрь 2026»",
+      "w": 132.9,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "a «Распечатать»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button[slot=button] «Настройки документа»",
+      "w": 203.2,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Ещё действия»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Перейти»",
+      "w": 82.8,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button[role=tab] «Карточки»",
+      "w": 174,
+      "h": 35.5
+     },
+     {
+      "kind": "button",
+      "el": "button[role=tab] «Таблица»",
+      "w": 174,
+      "h": 35.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Иванова Анна Сергеевна Управляющий 0/30»",
+      "w": 300,
+      "h": 37.3
+     },
+     {
+      "kind": "button",
+      "el": "button «Кузнецов Дмитрий Андреевич Повар 0/30»",
+      "w": 300,
+      "h": 37.3
+     },
+     {
+      "kind": "button",
+      "el": "button «Петров Иван Николаевич Повар 0/30»",
+      "w": 300,
+      "h": 37.3
+     },
+     {
+      "kind": "button",
+      "el": "button «Смирнова Ольга Викторовна Повар 0/30»",
+      "w": 300,
+      "h": 37.3
+     },
+     {
+      "kind": "button",
+      "el": "button «Васильева Елена Петровна Официант 0/30»",
+      "w": 300,
+      "h": 37.3
+     },
+     {
+      "kind": "button",
+      "el": "button «Попова Мария Игоревна Официант 0/30»",
+      "w": 300,
+      "h": 37.3
+     },
+     {
+      "kind": "button",
+      "el": "button «Соколова Галина Ивановна Уборщица 0/30»",
+      "w": 300,
+      "h": 37.3
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [
+     {
+      "el": "button[role=switch][slot=switch] «» .peer.group/switch.inline-flex.shrink-0.items-center.rounded-full",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     }
+    ],
+    "tight": [
+     {
+      "a": "button[role=tab] «Карточки»",
+      "b": "button[role=tab] «Таблица»",
+      "gap": 0
+     }
+    ],
+    "tightCount": 1,
+    "text": {
+     "chars": 431,
+     "medianPx": 14,
+     "shareGe15": 14.6,
+     "shareGe16": 3.5,
+     "sizes": {
+      "11": 28,
+      "12": 50,
+      "13": 68,
+      "14": 183,
+      "15": 48,
+      "28": 15,
+      "13.5": 32,
+      "12.5": 7
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 581,
+    "geometry": {
+     "count": 581,
+     "sha1": "51dbaf9ed8049ecba12d9a7f61626cee1a51be80"
+    }
+   },
+   "path": "/journals/health_check/documents/cmuh505pp005wyg9mlbtlpby1",
+   "finalUrl": "/journals/health_check/documents/cmuh505pp005wyg9mlbtlpby1"
+  },
+  "x04": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 113,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Журналы»",
+      "w": 50,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Журнал учета использования фритюрных жир»",
+      "w": 93.5,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Журнал учета использования фритюрных жир»",
+      "w": 126.5,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "a «Распечатать»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button[slot=button] «Настройки документа»",
+      "w": 203.2,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Ещё действия»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button[role=tab] «Карточки»",
+      "w": 174,
+      "h": 35.5
+     },
+     {
+      "kind": "button",
+      "el": "button[role=tab] «Таблица»",
+      "w": 174,
+      "h": 35.5
+     },
+     {
+      "kind": "button",
+      "el": "button[slot=button] «Добавить»",
+      "w": 127.2,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "button[slot=button] «Редактировать списки»",
+      "w": 206.8,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "button «№1 · 01.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «№2 · 02.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «№3 · 03.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «№4 · 04.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «№5 · 05.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «№6 · 06.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «№7 · 07.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «№8 · 08.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «№9 · 09.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «№10 · 10.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «№11 · 11.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «№12 · 12.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «№13 · 13.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «№14 · 14.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «№15 · 15.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «№16 · 16.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «№17 · 17.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «№18 · 18.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «№19 · 19.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «№20 · 20.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «№21 · 21.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «№22 · 22.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «№23 · 23.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «№24 · 24.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «№25 · 25.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «№26 · 26.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «№27 · 27.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «№28 · 28.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «№29 · 29.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «№30 · 30.09.2026»",
+      "w": 207.5,
+      "h": 19.3
+     },
+     {
+      "kind": "button",
+      "el": "button «изменить»",
+      "w": 80.5,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "button «Закрыть»",
+      "w": 32,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button[role=tab] «Как заполнять»",
+      "w": 169,
+      "h": 35.5
+     },
+     {
+      "kind": "button",
+      "el": "button[role=tab] «Правила»",
+      "w": 169,
+      "h": 35.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Показать на экране»",
+      "w": 141.5,
+      "h": 19.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Показать на экране»",
+      "w": 141.5,
+      "h": 19.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Показать на экране»",
+      "w": 141.5,
+      "h": 19.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Показать на экране»",
+      "w": 141.5,
+      "h": 19.5
+     },
+     {
+      "kind": "button",
+      "el": "a «Полная инструкция»",
+      "w": 356,
+      "h": 19.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Показать на экране»",
+      "w": 171,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "button «Понятно»",
+      "w": 177,
+      "h": 44
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 20,
+      "h": 20
+     }
+    ],
+    "tight": [
+     {
+      "a": "button[role=tab] «Карточки»",
+      "b": "button[role=tab] «Таблица»",
+      "gap": 0
+     },
+     {
+      "a": "button «изменить»",
+      "b": "button «Помощь и подсказки»",
+      "gap": 1.3
+     },
+     {
+      "a": "button «Помощь и подсказки»",
+      "b": "a «Полная инструкция»",
+      "gap": 1
+     },
+     {
+      "a": "button[role=tab] «Как заполнять»",
+      "b": "button[role=tab] «Правила»",
+      "gap": 0
+     }
+    ],
+    "tightCount": 4,
+    "text": {
+     "chars": 1236,
+     "medianPx": 13.5,
+     "shareGe15": 7,
+     "shareGe16": 4.7,
+     "sizes": {
+      "12": 240,
+      "13": 314,
+      "14": 490,
+      "15": 28,
+      "28": 58,
+      "13.5": 106
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 798,
+    "geometry": {
+     "count": 798,
+     "sha1": "4b318efb3ddba695c6a0cd97e9c2144da7c677d7"
+    }
+   },
+   "path": "/journals/fryer_oil/documents/cmuh505wv00bryg9m89aclv9c",
+   "finalUrl": "/journals/fryer_oil/documents/cmuh505wv00bryg9m89aclv9c"
+  },
+  "x05": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 266,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Настройки»",
+      "w": 82.4,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Набор журналов»",
+      "w": 120,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Как выбрать набор журналов»",
+      "w": 324,
+      "h": 19.5
+     },
+     {
+      "kind": "button",
+      "el": "a «ст. 6.6 КоАП РФ»",
+      "w": 117.2,
+      "h": 22.8
+     },
+     {
+      "kind": "field",
+      "el": "select «Ресторан Кафе / Кофейня Бар / Паб Столов»",
+      "w": 316,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "button «Включить обязательные»",
+      "w": 316,
+      "h": 40
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Гигиенический жур»",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Гигиенический журнал (со»",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Бланк контроля те»",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Бланк контроля температу»",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Журнал контроля т»",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Журнал контроля температ»",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Журнал учета испо»",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Журнал учета использован»",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «ст. 5.27.1 КоАП РФ»",
+      "w": 93.6,
+      "h": 15
+     },
+     {
+      "kind": "button",
+      "el": "a «Бланк»",
+      "w": 71.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Заполнить»",
+      "w": 69.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «ст. 5.27.1 КоАП РФ»",
+      "w": 93.6,
+      "h": 15
+     },
+     {
+      "kind": "button",
+      "el": "a «Бланк»",
+      "w": 71.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Заполнить»",
+      "w": 69.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «ст. 20.4 КоАП РФ»",
+      "w": 89.9,
+      "h": 15
+     },
+     {
+      "kind": "button",
+      "el": "a «Бланк»",
+      "w": 71.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Заполнить»",
+      "w": 69.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Приказ Минтруда № 903н, п. 2.3»",
+      "w": 147,
+      "h": 30
+     },
+     {
+      "kind": "button",
+      "el": "a «Бланк»",
+      "w": 71.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Заполнить»",
+      "w": 69.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «ППР № 1479, п. 60»",
+      "w": 96.3,
+      "h": 15
+     },
+     {
+      "kind": "button",
+      "el": "a «Бланк»",
+      "w": 71.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Заполнить»",
+      "w": 69.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Журнал уборки»",
+      "w": 95,
+      "h": 35.8
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Журнал уборки»»",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Журнал уборки»»",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «График и учет ген»",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «График и учет генеральны»",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Журнал бракеража »",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Журнал бракеража готовой»",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Журнал бракеража »",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Журнал бракеража скоропо»",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Журнал приемки и »",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Журнал приемки и входног»",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Медицинские книжки»",
+      "w": 95,
+      "h": 35.8
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Медицинские книжк»",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Медицинские книжки»»",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Журнал регистраци»",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Журнал регистрации инстр»",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Журнал учета дези»",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Журнал учета дезинфициру»",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Журнал регистраци»",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Журнал регистрации жалоб»",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Журнал учёта боя посуды»",
+      "w": 95,
+      "h": 35.8
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Журнал учёта боя »",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Журнал учёта боя посуды»»",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Журнал оценки сос»",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Журнал оценки состояния »",
+      "w": 70.5,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Журнал здоровья»",
+      "w": 74,
+      "h": 35.8
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Журнал здоровья»»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Журнал здоровья»»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Чек-лист уборки и»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Чек-лист уборки и провет»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Журнал учета рабо»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Журнал учета работы УФ б»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «План обучения пер»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «План обучения персонала»»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Чек-лист (памятка»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Чек-лист (памятка) прове»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «График профилакти»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «График профилактического»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Карточка истории »",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Карточка истории поломок»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «График поверки ср»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «График поверки средств и»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Журнал входного к»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Журнал входного контроля»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Журнал учета выда»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Журнал учета выдачи СИЗ»»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Журнал учета авар»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Журнал учета аварий»»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Акт забраковки»",
+      "w": 74,
+      "h": 35.8
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Акт забраковки»»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Акт забраковки»»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «План-программа вн»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «План-программа внутренни»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Протокол внутренн»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Протокол внутреннего ауд»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Отчет о внутренне»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Отчет о внутреннем аудит»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Журнал прослежива»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Журнал прослеживаемости »",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Журнал учета мета»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Журнал учета металлоприм»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Журнал мойки и де»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Журнал мойки и дезинфекц»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Журнал контроля и»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Журнал контроля интенсив»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Перечень изделий »",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Перечень изделий из стек»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Журнал контроля и»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Журнал контроля изделий »",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Журнал учета дези»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Журнал учета дезинфекции»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Журнал отбора и х»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Журнал отбора и хранения»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Журнал проведения»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Журнал проведения витами»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Ведомость контрол»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Ведомость контроля за ра»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Журнал контроля т»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Журнал контроля температ»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Журнал контроля к»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Журнал контроля качества»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Журнал контроля с»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Журнал контроля стерилиз»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Журнал учёта отхо»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Журнал учёта отходов кла»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Кому заполнять журнал «Журнал допуска па»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "a «Задачи журнала «Журнал допуска партии пр»",
+      "w": 60,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Отключить все, кроме обязательных»",
+      "w": 255.1,
+      "h": 19.5
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Гигиенический журнал (сотр»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Бланк контроля температуры»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал контроля температур»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал учета использования»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести бумажный журнал «Журнал вводного и»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести бумажный журнал «Журнал инструктаж»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести бумажный журнал «Журнал инструктаж»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести бумажный журнал «Журнал присвоения»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести бумажный журнал «Журнал эксплуатац»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал уборки»»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «График и учет генеральных »",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал бракеража готовой п»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал бракеража скоропорт»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал приемки и входного »",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Медицинские книжки»»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал регистрации инструк»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал учета дезинфицирующ»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал регистрации жалоб»»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал учёта боя посуды»»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал оценки состояния ме»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал здоровья»»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Чек-лист уборки и проветри»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал учета работы УФ бак»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «План обучения персонала»»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Чек-лист (памятка) проведе»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «График профилактического о»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Карточка истории поломок»»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «График поверки средств изм»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал входного контроля с»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал учета выдачи СИЗ»»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал учета аварий»»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Акт забраковки»»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «План-программа внутренних »",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Протокол внутреннего аудит»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Отчет о внутреннем аудите»»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал прослеживаемости пр»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал учета металлопримес»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал мойки и дезинфекции»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал контроля интенсивно»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Перечень изделий из стекла»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал контроля изделий из»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал учета дезинфекции, »",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал отбора и хранения с»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал проведения витамини»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Ведомость контроля за раци»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал контроля температур»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал контроля качества в»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал контроля стерилизац»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал учёта отходов класс»",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал допуска партии прод»",
+      "w": 44,
+      "h": 24
+     }
+    ],
+    "tight": [
+     {
+      "a": "button «Включить обязательные»",
+      "b": "button «Помощь и подсказки»",
+      "gap": 1.5
+     },
+     {
+      "a": "button «Кому заполнять журнал «Гигиенический жур»",
+      "b": "a «Задачи журнала «Гигиенический журнал (со»",
+      "gap": 6
+     },
+     {
+      "a": "button «Кому заполнять журнал «Бланк контроля те»",
+      "b": "a «Задачи журнала «Бланк контроля температу»",
+      "gap": 6
+     },
+     {
+      "a": "button «Кому заполнять журнал «Журнал контроля т»",
+      "b": "a «Задачи журнала «Журнал контроля температ»",
+      "gap": 6
+     },
+     {
+      "a": "button «Кому заполнять журнал «Журнал учета испо»",
+      "b": "a «Задачи журнала «Журнал учета использован»",
+      "gap": 6
+     },
+     {
+      "a": "a «Бланк»",
+      "b": "a «Заполнить»",
+      "gap": 6
+     },
+     {
+      "a": "a «Бланк»",
+      "b": "a «Заполнить»",
+      "gap": 6
+     },
+     {
+      "a": "a «Бланк»",
+      "b": "a «Заполнить»",
+      "gap": 6
+     },
+     {
+      "a": "a «Бланк»",
+      "b": "a «Заполнить»",
+      "gap": 6
+     },
+     {
+      "a": "a «Бланк»",
+      "b": "a «Заполнить»",
+      "gap": 6
+     },
+     {
+      "a": "button «Кому заполнять журнал «Журнал уборки»»",
+      "b": "a «Задачи журнала «Журнал уборки»»",
+      "gap": 6
+     },
+     {
+      "a": "button «Кому заполнять журнал «График и учет ген»",
+      "b": "a «Задачи журнала «График и учет генеральны»",
+      "gap": 6
+     },
+     {
+      "a": "button «Кому заполнять журнал «Журнал бракеража »",
+      "b": "a «Задачи журнала «Журнал бракеража готовой»",
+      "gap": 6
+     },
+     {
+      "a": "button «Кому заполнять журнал «Журнал бракеража »",
+      "b": "a «Задачи журнала «Журнал бракеража скоропо»",
+      "gap": 6
+     },
+     {
+      "a": "button «Кому заполнять журнал «Журнал приемки и »",
+      "b": "a «Задачи журнала «Журнал приемки и входног»",
+      "gap": 6
+     },
+     {
+      "a": "button «Кому заполнять журнал «Медицинские книжк»",
+      "b": "a «Задачи журнала «Медицинские книжки»»",
+      "gap": 6
+     },
+     {
+      "a": "button «Кому заполнять журнал «Журнал регистраци»",
+      "b": "a «Задачи журнала «Журнал регистрации инстр»",
+      "gap": 6
+     },
+     {
+      "a": "button «Кому заполнять журнал «Журнал учета дези»",
+      "b": "a «Задачи журнала «Журнал учета дезинфициру»",
+      "gap": 6
+     },
+     {
+      "a": "button «Кому заполнять журнал «Журнал регистраци»",
+      "b": "a «Задачи журнала «Журнал регистрации жалоб»",
+      "gap": 6
+     },
+     {
+      "a": "button «Кому заполнять журнал «Журнал учёта боя »",
+      "b": "a «Задачи журнала «Журнал учёта боя посуды»»",
+      "gap": 6
+     },
+     {
+      "a": "button «Кому заполнять журнал «Журнал оценки сос»",
+      "b": "a «Задачи журнала «Журнал оценки состояния »",
+      "gap": 6
+     },
+     {
+      "a": "button «Кому заполнять журнал «Журнал здоровья»»",
+      "b": "a «Задачи журнала «Журнал здоровья»»",
+      "gap": 6
+     },
+     {
+      "a": "button «Кому заполнять журнал «Чек-лист уборки и»",
+      "b": "a «Задачи журнала «Чек-лист уборки и провет»",
+      "gap": 6
+     },
+     {
+      "a": "button «Кому заполнять журнал «Журнал учета рабо»",
+      "b": "a «Задачи журнала «Журнал учета работы УФ б»",
+      "gap": 6
+     },
+     {
+      "a": "button «Кому заполнять журнал «План обучения пер»",
+      "b": "a «Задачи журнала «План обучения персонала»»",
+      "gap": 6
+     },
+     {
+      "a": "button «Кому заполнять журнал «Чек-лист (памятка»",
+      "b": "a «Задачи журнала «Чек-лист (памятка) прове»",
+      "gap": 6
+     },
+     {
+      "a": "button «Кому заполнять журнал «График профилакти»",
+      "b": "a «Задачи журнала «График профилактического»",
+      "gap": 6
+     },
+     {
+      "a": "button «Кому заполнять журнал «Карточка истории »",
+      "b": "a «Задачи журнала «Карточка истории поломок»",
+      "gap": 6
+     },
+     {
+      "a": "button «Кому заполнять журнал «График поверки ср»",
+      "b": "a «Задачи журнала «График поверки средств и»",
+      "gap": 6
+     },
+     {
+      "a": "button «Кому заполнять журнал «Журнал входного к»",
+      "b": "a «Задачи журнала «Журнал входного контроля»",
+      "gap": 6
+     }
+    ],
+    "tightCount": 51,
+    "text": {
+     "chars": 4912,
+     "medianPx": 13,
+     "shareGe15": 1.5,
+     "shareGe16": 0.3,
+     "sizes": {
+      "10": 479,
+      "11": 1707,
+      "12": 38,
+      "13": 2187,
+      "14": 426,
+      "15": 61,
+      "20": 14
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 1995,
+    "geometry": {
+     "count": 1995,
+     "sha1": "d91ccc134078c290f71bf683236ddb3ddbc590fb"
+    }
+   },
+   "path": "/settings/journals",
+   "finalUrl": "/settings/journals"
+  },
+  "x06": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 25,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button[slot=dropdown-menu-trigger] «Настройки»",
+      "w": 82.4,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button[slot=dropdown-menu-trigger] «Информация об организации»",
+      "w": 192,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Что заполнить в реквизитах»",
+      "w": 324,
+      "h": 19.5
+     },
+     {
+      "kind": "field",
+      "el": "input «ООО \"Пекарня\"»",
+      "w": 184,
+      "h": 24
+     },
+     {
+      "kind": "field",
+      "el": "input «Кафе «Ромашка»»",
+      "w": 184,
+      "h": 24
+     },
+     {
+      "kind": "field",
+      "el": "select «Ресторан Кафе / Кофейня Бар / Паб Столов»",
+      "w": 318,
+      "h": 24
+     },
+     {
+      "kind": "field",
+      "el": "select «Частное Сетевое Государственное Другое»",
+      "w": 154,
+      "h": 24
+     },
+     {
+      "kind": "field",
+      "el": "input «7700123456»",
+      "w": 223.8,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "button «Найти»",
+      "w": 84.2,
+      "h": 44
+     },
+     {
+      "kind": "field",
+      "el": "input «+7 999 123-45-67»",
+      "w": 184,
+      "h": 24
+     },
+     {
+      "kind": "button",
+      "el": "button «Обновить из ЕГРЮЛ»",
+      "w": 174,
+      "h": 40
+     },
+     {
+      "kind": "field",
+      "el": "input «accountant@company.ru»",
+      "w": 184,
+      "h": 24
+     },
+     {
+      "kind": "field",
+      "el": "select «Europe/Kaliningrad Europe/Moscow Europe/»",
+      "w": 161,
+      "h": 24
+     },
+     {
+      "kind": "field",
+      "el": "select «Русский English»",
+      "w": 82,
+      "h": 24
+     },
+     {
+      "kind": "field",
+      "el": "input «#5566f6»",
+      "w": 252,
+      "h": 24
+     },
+     {
+      "kind": "field",
+      "el": "input «https://example.com/logo.png»",
+      "w": 184,
+      "h": 24
+     },
+     {
+      "kind": "field",
+      "el": "input «» .jsx-967e89b4a7e24766.form-input.w-32",
+      "w": 128,
+      "h": 24
+     },
+     {
+      "kind": "button",
+      "el": "a «Управление подпиской →»",
+      "w": 200.8,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Сохранить изменения»",
+      "w": 214.9,
+      "h": 40
+     },
+     {
+      "kind": "button",
+      "el": "button «Включить бейдж»",
+      "w": 176.1,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "button «Запланировать удаление»",
+      "w": 236.2,
+      "h": 44
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [
+     {
+      "el": "button[role=switch] «» .relative.mt-0.5.inline-flex.h-6.w-11.shrink-0",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch] «» .relative.mt-0.5.inline-flex.h-6.w-11.shrink-0",
+      "w": 44,
+      "h": 24
+     }
+    ],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 2976,
+     "medianPx": 12.5,
+     "shareGe15": 7.1,
+     "shareGe16": 4.9,
+     "sizes": {
+      "11": 911,
+      "12": 492,
+      "13": 912,
+      "14": 249,
+      "15": 63,
+      "16": 122,
+      "26": 25,
+      "12.5": 202
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 350,
+    "geometry": {
+     "count": 350,
+     "sha1": "fac29ade67c2c631aa326b2b4439ed326ad879d6"
+    }
+   },
+   "path": "/settings/organization",
+   "finalUrl": "/settings/organization"
+  },
+  "x07": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 6,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Настройки»",
+      "w": 82.4,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Оборудование»",
+      "w": 108.4,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Как настроить оборудование»",
+      "w": 324,
+      "h": 19.5
+     },
+     {
+      "kind": "button",
+      "el": "button[slot=dialog-trigger] «Добавить оборудование»",
+      "w": 220.5,
+      "h": 40
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 186,
+     "medianPx": 14,
+     "shareGe15": 17.7,
+     "shareGe16": 17.7,
+     "sizes": {
+      "13": 47,
+      "14": 106,
+      "17": 21,
+      "28": 12
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 113,
+    "geometry": {
+     "count": 113,
+     "sha1": "0cf33e02542d528bcd5051f8c99a21372363b052"
+    }
+   },
+   "path": "/settings/equipment",
+   "finalUrl": "/settings/equipment"
+  },
+  "x08": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 6,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Настройки»",
+      "w": 82.4,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Цеха и участки»",
+      "w": 109.2,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button[slot=dialog-trigger] «Добавить цех»",
+      "w": 145.9,
+      "h": 40
+     },
+     {
+      "kind": "button",
+      "el": "button «Зачем нужны цеха»",
+      "w": 324,
+      "h": 19.5
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 163,
+     "medianPx": 14,
+     "shareGe15": 17.2,
+     "shareGe16": 17.2,
+     "sizes": {
+      "13": 39,
+      "14": 96,
+      "17": 14,
+      "28": 14
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 116,
+    "geometry": {
+     "count": 116,
+     "sha1": "65d23e13a5c92f07d84eb15e51fbde1c36b91543"
+    }
+   },
+   "path": "/settings/areas",
+   "finalUrl": "/settings/areas"
+  },
+  "x09": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 215,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Настройки»",
+      "w": 82.4,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Ответственные за журналы»",
+      "w": 189.4,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Как назначить ответственных по журналам»",
+      "w": 324,
+      "h": 19.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Применить умные пресеты ко всем»",
+      "w": 293.3,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "button «Перезаписать в документах»",
+      "w": 234.5,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "button «Пересоздать документы»",
+      "w": 213,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "button «Удалить все документы»",
+      "w": 204.3,
+      "h": 44
+     },
+     {
+      "kind": "field",
+      "el": "input «Поиск по журналу или роли…»",
+      "w": 280,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "button «ГИГИЕНА СОТРУДНИКОВ · 3»",
+      "w": 191.4,
+      "h": 42
+     },
+     {
+      "kind": "button",
+      "el": "button «Применить пресет»",
+      "w": 150.6,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «УБОРКА И САНИТАРИЯ · 9»",
+      "w": 191.4,
+      "h": 42
+     },
+     {
+      "kind": "button",
+      "el": "button «Применить пресет»",
+      "w": 150.6,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «ТЕМПЕРАТУРА И ХОЛОД · 5»",
+      "w": 191.4,
+      "h": 42
+     },
+     {
+      "kind": "button",
+      "el": "button «Применить пресет»",
+      "w": 150.6,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «БРАКЕРАЖ И ВЫПУСК · 6»",
+      "w": 191.4,
+      "h": 42
+     },
+     {
+      "kind": "button",
+      "el": "button «Применить пресет»",
+      "w": 150.6,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Изменить»",
+      "w": 85.3,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «ПРИЁМКА И СЫРЬЁ · 5»",
+      "w": 191.4,
+      "h": 42
+     },
+     {
+      "kind": "button",
+      "el": "button «Применить пресет»",
+      "w": 150.6,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «ОБОРУДОВАНИЕ · 6»",
+      "w": 191.4,
+      "h": 21
+     },
+     {
+      "kind": "button",
+      "el": "button «Применить пресет»",
+      "w": 150.6,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «ОБУЧЕНИЕ И СИЗ · 3»",
+      "w": 191.4,
+      "h": 21
+     },
+     {
+      "kind": "button",
+      "el": "button «Применить пресет»",
+      "w": 150.6,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «ИНЦИДЕНТЫ И ЧП · 4»",
+      "w": 191.4,
+      "h": 21
+     },
+     {
+      "kind": "button",
+      "el": "button «Применить пресет»",
+      "w": 150.6,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «АУДИТЫ И КОНТРОЛЬ · 3»",
+      "w": 191.4,
+      "h": 42
+     },
+     {
+      "kind": "button",
+      "el": "button «Применить пресет»",
+      "w": 150.6,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «ПРОЧЕЕ · 1»",
+      "w": 191.4,
+      "h": 21
+     },
+     {
+      "kind": "button",
+      "el": "button «Применить пресет»",
+      "w": 150.6,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Умный пресет»",
+      "w": 120.1,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "summary «Добавить должность»",
+      "w": 138.5,
+      "h": 18
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Выбрать сотрудника»",
+      "w": 296,
+      "h": 37.5
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 20822,
+     "medianPx": 12,
+     "shareGe15": 8.4,
+     "shareGe16": 0.1,
+     "sizes": {
+      "9": 315,
+      "10": 2297,
+      "11": 6261,
+      "12": 7913,
+      "13": 1832,
+      "14": 447,
+      "15": 1725,
+      "26": 24,
+      "12.5": 8
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 3042,
+    "geometry": {
+     "count": 3042,
+     "sha1": "15ad39f406a839583fae27fa01c91cb512d53734"
+    }
+   },
+   "path": "/settings/journal-responsibles",
+   "finalUrl": "/settings/journal-responsibles"
+  },
+  "x10": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 16,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Настройки»",
+      "w": 82.4,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Права доступа»",
+      "w": 108.6,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Управляющий · 1 человек по умолчанию для»",
+      "w": 316,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Повар · 3 человека по умолчанию для груп»",
+      "w": 316,
+      "h": 21
+     },
+     {
+      "kind": "button",
+      "el": "button «Официант · 2 человека по умолчанию для г»",
+      "w": 316,
+      "h": 21
+     },
+     {
+      "kind": "button",
+      "el": "button «Уборщица · 1 человек по умолчанию для гр»",
+      "w": 316,
+      "h": 21
+     },
+     {
+      "kind": "button",
+      "el": "button «Васильева Елена Петровна · Официант от г»",
+      "w": 316,
+      "h": 42
+     },
+     {
+      "kind": "button",
+      "el": "button «Иванова Анна Сергеевна · Управляющий от »",
+      "w": 316,
+      "h": 42
+     },
+     {
+      "kind": "button",
+      "el": "button «Кузнецов Дмитрий Андреевич · Повар от гр»",
+      "w": 316,
+      "h": 42
+     },
+     {
+      "kind": "button",
+      "el": "button «Петров Иван Николаевич · Повар от группы»",
+      "w": 316,
+      "h": 21
+     },
+     {
+      "kind": "button",
+      "el": "button «Попова Мария Игоревна · Официант от груп»",
+      "w": 316,
+      "h": 42
+     },
+     {
+      "kind": "button",
+      "el": "button «Смирнова Ольга Викторовна · Повар от гру»",
+      "w": 316,
+      "h": 42
+     },
+     {
+      "kind": "button",
+      "el": "button «Соколова Галина Ивановна · Уборщица от г»",
+      "w": 316,
+      "h": 42
+     },
+     {
+      "kind": "button",
+      "el": "button[slot=button] «Сохранить»",
+      "w": 125.6,
+      "h": 44
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 1053,
+     "medianPx": 13,
+     "shareGe15": 4,
+     "shareGe16": 1.2,
+     "sizes": {
+      "11": 166,
+      "12": 136,
+      "13": 297,
+      "14": 412,
+      "15": 29,
+      "28": 13
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 244,
+    "geometry": {
+     "count": 244,
+     "sha1": "35087b957e0ac358142ab5120fae872adb86d3c1"
+    }
+   },
+   "path": "/settings/permissions",
+   "finalUrl": "/settings/permissions"
+  },
+  "x11": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 8,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Настройки»",
+      "w": 82.4,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Тарифы»",
+      "w": 64.1,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "a «Оплатить картой»",
+      "w": 268,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "button «Подобрать комплект»",
+      "w": 266,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "a «Связаться с поддержкой»",
+      "w": 186.3,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "a «Включить автопродление»",
+      "w": 230.5,
+      "h": 44
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 1787,
+     "medianPx": 13,
+     "shareGe15": 9.5,
+     "shareGe16": 7.4,
+     "sizes": {
+      "11": 29,
+      "12": 194,
+      "13": 814,
+      "14": 273,
+      "15": 36,
+      "16": 29,
+      "18": 42,
+      "20": 18,
+      "26": 34,
+      "34": 10,
+      "12.5": 60,
+      "13.5": 248
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 270,
+    "geometry": {
+     "count": 270,
+     "sha1": "6b5a1b43cff55f7767b8874676da5e554da0ddca"
+    }
+   },
+   "path": "/settings/subscription",
+   "finalUrl": "/settings/subscription"
+  },
+  "x12": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 9,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Настройки»",
+      "w": 82.4,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Внешний вид»",
+      "w": 97.7,
+      "h": 27.5
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [
+     {
+      "el": "button[role=radio] «Системная»",
+      "w": 152,
+      "h": 71.3
+     },
+     {
+      "el": "button[role=radio] «Светлая»",
+      "w": 152,
+      "h": 71.3
+     },
+     {
+      "el": "button[role=radio] «Тёмная»",
+      "w": 152,
+      "h": 71.3
+     },
+     {
+      "el": "input «» .mt-0.5.size-4.cursor-pointer.accent-[#5566f6]",
+      "w": 16,
+      "h": 16
+     },
+     {
+      "el": "button[role=switch] «Окно «Что нового» Короткий список измене»",
+      "w": 316,
+      "h": 156
+     }
+    ],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 430,
+     "medianPx": 13,
+     "shareGe15": 13,
+     "shareGe16": 2.6,
+     "sizes": {
+      "13": 221,
+      "14": 49,
+      "15": 45,
+      "26": 11,
+      "11.5": 104
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 132,
+    "geometry": {
+     "count": 132,
+     "sha1": "7cbf954ac19d2e676d5a009ce6a4112f4bf805d1"
+    }
+   },
+   "path": "/settings/appearance",
+   "finalUrl": "/settings/appearance"
+  },
+  "x13": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 4,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Настройки»",
+      "w": 82.4,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Уведомления»",
+      "w": 101.4,
+      "h": 27.5
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 90,
+     "medianPx": 14,
+     "shareGe15": 12.2,
+     "shareGe16": 12.2,
+     "sizes": {
+      "13": 20,
+      "14": 59,
+      "26": 11
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 94,
+    "geometry": {
+     "count": 94,
+     "sha1": "b52d7a8fbd4bf87394c4738f3b7cfe1dfcfe9cae"
+    }
+   },
+   "path": "/settings/notifications",
+   "finalUrl": "/settings/notifications"
+  },
+  "x14": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 10,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Настройки»",
+      "w": 82.4,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Мастер-кабинет справочников»",
+      "w": 192,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Как работает мастер-кабинет»",
+      "w": 324,
+      "h": 19.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Скопировать»",
+      "w": 147,
+      "h": 40
+     },
+     {
+      "kind": "button",
+      "el": "button «Переименовать мастер-кабинет»",
+      "w": 32,
+      "h": 32
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 566,
+     "medianPx": 14,
+     "shareGe15": 16.1,
+     "shareGe16": 12.2,
+     "sizes": {
+      "12": 35,
+      "13": 155,
+      "14": 254,
+      "15": 22,
+      "16": 31,
+      "26": 38,
+      "12.5": 31
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 163,
+    "geometry": {
+     "count": 163,
+     "sha1": "865fbcc2a733db61a5ac3d80d2d524c622fbad85"
+    }
+   },
+   "path": "/settings/master-cabinet",
+   "finalUrl": "/settings/master-cabinet"
+  },
+  "x15": {
+   "390": {
+    "hiddenOverflow": [
+     {
+      "el": "table «Журнал авг. 27 28 29 30 31 сент. 1 2 3 4»",
+      "client": 316,
+      "scroll": 824
+     },
+     {
+      "el": "table «Журнал Пн Вт Ср Чт Пт Сб Вс Гигиенически»",
+      "client": 316,
+      "scroll": 508
+     }
+    ],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 21,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Кафе «Ромашка»»",
+      "w": 119.7,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Отчёты»",
+      "w": 62.7,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "a «✉ Поделиться по email»",
+      "w": 358,
+      "h": 40
+     },
+     {
+      "kind": "field",
+      "el": "input[slot=input] «» .h-9.w-full.min-w-0.border.border-input.bg-transparent",
+      "w": 252,
+      "h": 36
+     },
+     {
+      "kind": "field",
+      "el": "input[slot=input] «» .h-9.w-full.min-w-0.border.border-input.bg-transparent",
+      "w": 252,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button[slot=button] «Сгенерировать»",
+      "w": 252,
+      "h": 40
+     },
+     {
+      "kind": "button",
+      "el": "button «По звонку инспектора (7 дней)»",
+      "w": 204.7,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Текущий месяц»",
+      "w": 114.2,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Прошлый месяц»",
+      "w": 119.3,
+      "h": 32
+     },
+     {
+      "kind": "button",
+      "el": "button «Текущий квартал»",
+      "w": 124,
+      "h": 32
+     },
+     {
+      "kind": "field",
+      "el": "input[slot=input] «» .w-full.min-w-0.border.bg-transparent.px-3.py-1",
+      "w": 248,
+      "h": 44
+     },
+     {
+      "kind": "field",
+      "el": "input[slot=input] «» .w-full.min-w-0.border.bg-transparent.px-3.py-1",
+      "w": 248,
+      "h": 44
+     },
+     {
+      "kind": "button",
+      "el": "button[slot=button] «Скачать архив»",
+      "w": 149.7,
+      "h": 44
+     },
+     {
+      "kind": "field",
+      "el": "button[role=combobox][slot=select-trigger] «Выберите журнал»",
+      "w": 258,
+      "h": 36
+     },
+     {
+      "kind": "field",
+      "el": "input[slot=input] «» .h-9.w-full.min-w-0.rounded-md.border.border-input",
+      "w": 258,
+      "h": 36
+     },
+     {
+      "kind": "field",
+      "el": "input[slot=input] «» .h-9.w-full.min-w-0.rounded-md.border.border-input",
+      "w": 258,
+      "h": 36
+     },
+     {
+      "kind": "field",
+      "el": "button[role=combobox][slot=select-trigger] «Все участки»",
+      "w": 258,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button[slot=button] «Скачать PDF»",
+      "w": 258,
+      "h": 40
+     },
+     {
+      "kind": "button",
+      "el": "button[slot=button] «Скачать Excel»",
+      "w": 258,
+      "h": 40
+     }
+    ],
+    "smallFieldFont": [
+     {
+      "el": "button[role=combobox][slot=select-trigger] «Выберите журнал»",
+      "fs": 14
+     },
+     {
+      "el": "button[role=combobox][slot=select-trigger] «Все участки»",
+      "fs": 14
+     }
+    ],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 1335,
+     "medianPx": 13,
+     "shareGe15": 11.8,
+     "shareGe16": 10.5,
+     "sizes": {
+      "12": 285,
+      "13": 637,
+      "14": 255,
+      "15": 18,
+      "16": 106,
+      "18": 26,
+      "28": 8
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 4046,
+    "geometry": {
+     "count": 4046,
+     "sha1": "1e3d5baa7fda4595984376fa6584633f9ee1b193"
+    }
+   },
+   "path": "/reports",
+   "finalUrl": "/reports"
+  },
+  "x16": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 4,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Кафе «Ромашка»»",
+      "w": 119.7,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Панель контроля»",
+      "w": 124.6,
+      "h": 27.5
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 29,
+     "medianPx": 13,
+     "shareGe15": 0,
+     "shareGe16": 0,
+     "sizes": {
+      "13": 29
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 84,
+    "geometry": {
+     "count": 84,
+     "sha1": "4a2313ea223a3991b84a612d83963f615e7b747e"
+    }
+   },
+   "path": "/control-board",
+   "finalUrl": "/control-board"
+  },
+  "x17": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 5,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Кафе «Ромашка»»",
+      "w": 119.7,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Прогресс по журналам»",
+      "w": 160.6,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Обновить»",
+      "w": 123.9,
+      "h": 40
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 210,
+     "medianPx": 14,
+     "shareGe15": 21.9,
+     "shareGe16": 21.9,
+     "sizes": {
+      "13": 34,
+      "14": 130,
+      "16": 17,
+      "26": 29
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 96,
+    "geometry": {
+     "count": 96,
+     "sha1": "9a573287490ae86ffcb4b48d6c66da72f31722c8"
+    }
+   },
+   "path": "/journals-progress",
+   "finalUrl": "/journals-progress"
+  },
+  "x18": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 4,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Кафе «Ромашка»»",
+      "w": 119.7,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Команда»",
+      "w": 70.8,
+      "h": 27.5
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 21,
+     "medianPx": 13,
+     "shareGe15": 0,
+     "shareGe16": 0,
+     "sizes": {
+      "13": 21
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 84,
+    "geometry": {
+     "count": 84,
+     "sha1": "5402c031495e1236bb51d4475194a037f8a583df"
+    }
+   },
+   "path": "/team",
+   "finalUrl": "/team"
+  },
+  "x19": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 4,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Кафе «Ромашка»»",
+      "w": 119.7,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Подтверждения»",
+      "w": 117.3,
+      "h": 27.5
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 27,
+     "medianPx": 13,
+     "shareGe15": 0,
+     "shareGe16": 0,
+     "sizes": {
+      "13": 27
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 84,
+    "geometry": {
+     "count": 84,
+     "sha1": "570b65d8e261de36b5cd4df3e61a3f3dc8169803"
+    }
+   },
+   "path": "/verifications",
+   "finalUrl": "/verifications"
+  },
+  "x20": {
+   "390": {
+    "hiddenOverflow": [
+     {
+      "el": "div «ОТКРЫТО 0 Пусто РАССЛЕДОВАНИЕ 0 Пусто КО»",
+      "client": 390,
+      "scroll": 852
+     }
+    ],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 6,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Кафе «Ромашка»»",
+      "w": 119.7,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Нарушения»",
+      "w": 87.3,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Проверить отклонения»",
+      "w": 358,
+      "h": 40
+     },
+     {
+      "kind": "button",
+      "el": "a «Новое нарушение»",
+      "w": 358,
+      "h": 40
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 247,
+     "medianPx": 12,
+     "shareGe15": 5.3,
+     "shareGe16": 5.3,
+     "sizes": {
+      "11": 51,
+      "12": 77,
+      "13": 23,
+      "14": 83,
+      "28": 13
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 142,
+    "geometry": {
+     "count": 142,
+     "sha1": "3885bba3cba3353929a62f4e31d02d3eff1280fa"
+    }
+   },
+   "path": "/capa",
+   "finalUrl": "/capa"
+  },
+  "x21": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 12,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Кафе «Ромашка»»",
+      "w": 119.7,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Партии»",
+      "w": 62.1,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "a «Новая партия»",
+      "w": 358,
+      "h": 40
+     },
+     {
+      "kind": "button",
+      "el": "a «Все»",
+      "w": 55,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "a «Принято»",
+      "w": 88,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "a «В работе»",
+      "w": 89.4,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "a «Готово»",
+      "w": 76.8,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "a «Отгружено»",
+      "w": 103.3,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "a «Просрочено»",
+      "w": 112.2,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "a «Списано»",
+      "w": 88.7,
+      "h": 36
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 163,
+     "medianPx": 13,
+     "shareGe15": 5.5,
+     "shareGe16": 5.5,
+     "sizes": {
+      "12": 38,
+      "13": 70,
+      "14": 46,
+      "28": 9
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 121,
+    "geometry": {
+     "count": 121,
+     "sha1": "dc2a2b401a996c2c611d4a50e29ee68f3bfd4bd7"
+    }
+   },
+   "path": "/batches",
+   "finalUrl": "/batches"
+  },
+  "x22": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 5,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Кафе «Ромашка»»",
+      "w": 119.7,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Потери»",
+      "w": 62.5,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "a «Записать потерю»",
+      "w": 358,
+      "h": 40
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 140,
+     "medianPx": 14,
+     "shareGe15": 20,
+     "shareGe16": 7.9,
+     "sizes": {
+      "12": 9,
+      "13": 53,
+      "14": 50,
+      "15": 17,
+      "28": 11
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 115,
+    "geometry": {
+     "count": 115,
+     "sha1": "929ac88b3721edeb346d35b4e9e9cb64098db6d2"
+    }
+   },
+   "path": "/losses",
+   "finalUrl": "/losses"
+  },
+  "x23": {
+   "390": {
+    "hiddenOverflow": [
+     {
+      "el": "table «СОТРУДНИК БЕЗОПАСНОСТЬ СТАБИЛЬНОСТЬ СКОР»",
+      "client": 718,
+      "scroll": 734
+     }
+    ],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 4,
+     "inlineLinks": 0,
+     "gridSkipped": 42
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Кафе «Ромашка»»",
+      "w": 119.7,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Компетенции»",
+      "w": 101,
+      "h": 27.5
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 146,
+     "medianPx": 13,
+     "shareGe15": 12.3,
+     "shareGe16": 12.3,
+     "sizes": {
+      "12": 53,
+      "13": 25,
+      "14": 50,
+      "28": 18
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 235,
+    "geometry": {
+     "count": 235,
+     "sha1": "37aee4eb13677223eb01f7f4cbaf60205b9f3282"
+    }
+   },
+   "path": "/competencies",
+   "finalUrl": "/competencies"
+  },
+  "x24": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 73,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 82.8,
+       "h": 22
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 28,
+       "h": 28
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 40,
+       "h": 40
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 40,
+       "h": 40
+      }
+     ]
+    },
+    "counts": {
+     "controls": 4,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Назад»",
+      "w": 36,
+      "h": 36
+     },
+     {
+      "kind": "button",
+      "el": "button «Кафе «Ромашка»»",
+      "w": 119.7,
+      "h": 27.5
+     },
+     {
+      "kind": "button",
+      "el": "button «Справочник СанПиН»",
+      "w": 145.1,
+      "h": 27.5
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 5294,
+     "medianPx": 14,
+     "shareGe15": 6,
+     "shareGe16": 6,
+     "sizes": {
+      "12": 1007,
+      "13": 31,
+      "14": 3937,
+      "16": 104,
+      "18": 198,
+      "28": 17
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 399,
+    "geometry": {
+     "count": 399,
+     "sha1": "a312efac76427810ae296ab02ce42e9f04c493f4"
+    }
+   },
+   "path": "/sanpin",
+   "finalUrl": "/sanpin"
+  }
+ },
+ "consoleErrors": [
+  "390 http://localhost:3040/dashboard :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/dashboard :: Failed to sync build state: TypeError: Failed to fetch\n    at syncBuild (webpack-internal:///(app-pages-browser)/./src/components/layout/sw-register.tsx:44:40)",
+  "390 http://localhost:3040/dashboard :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/journals :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/journals/hygiene/documents/cmuh505d60001yg9mchq13ee7 :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/settings :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/settings/users :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/settings/qr-posters :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/orders :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/master :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/journals/hygiene :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/journals/hygiene :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/journals/health_check :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/journals/health_check :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/journals/health_check/documents/cmuh505pp005wyg9mlbtlpby1 :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/journals/fryer_oil/documents/cmuh505wv00bryg9m89aclv9c :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/settings/journals :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/settings/equipment :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/settings/areas :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/settings/journal-responsibles :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/settings/permissions :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/settings/subscription :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/settings/appearance :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/settings/notifications :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/settings/master-cabinet :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/reports :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/control-board :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/journals-progress :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/team :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/verifications :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/capa :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/batches :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/losses :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/competencies :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/sanpin :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh"
+ ]
+}

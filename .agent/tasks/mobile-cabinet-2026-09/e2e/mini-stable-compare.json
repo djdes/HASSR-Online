@@ -1,0 +1,23 @@
+{
+  "/settings/users": {
+    "elements": 1515,
+    "samplesAfter": 2,
+    "diffs": 0,
+    "first": []
+  },
+  "/settings/qr-posters": {
+    "elements": 658,
+    "samplesAfter": 3,
+    "diffs": 0,
+    "first": []
+  },
+  "/journals": {
+    "elements": 1122,
+    "samplesAfter": 2,
+    "diffs": 1037,
+    "first": [
+      "#127: input 18.5,847 13x13 16px 0px -> a 16,831.5 171x284 16px 0px",
+      "#128: a 16,831.5 171x284 16px 0px -> div 16,831.5 171x284 16px 0px"
+    ]
+  }
+}

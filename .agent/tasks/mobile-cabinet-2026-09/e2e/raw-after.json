@@ -1,0 +1,3461 @@
+{
+ "phase": "after",
+ "base": "http://localhost:3040",
+ "at": "2026-09-25T18:39:54.128Z",
+ "pages": {
+  "01-dashboard": {
+   "390": {
+    "shot": "after-390-01-dashboard.png",
+    "hiddenOverflow": [],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 65,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 2816,
+     "medianPx": 16,
+     "shareGe15": 83.8,
+     "shareGe16": 71.6,
+     "sizes": {
+      "11": 56,
+      "13": 401,
+      "15": 343,
+      "16": 2000,
+      "18": 16
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "shot": "after-1440-01-dashboard.png",
+    "headerHeight": 73,
+    "count": 839,
+    "geometry": {
+     "count": 839,
+     "sha1": "4df87a8707c7489af331f643f9d04fb8163ca867"
+    }
+   },
+   "path": "/dashboard",
+   "finalUrl": "/dashboard"
+  },
+  "02-journals": {
+   "390": {
+    "shot": "after-390-02-journals.png",
+    "hiddenOverflow": [],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 141,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [],
+    "smallFieldFont": [],
+    "toggles": [
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Бланк контроля температуры и вл»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал контроля температурного »",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Чек-лист уборки и проветривания»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал уборки» для массового со»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал учета работы УФ бактериц»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал бракеража готовой пищево»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал бракеража скоропортящейс»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «График и учет генеральных уборо»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал приемки и входного контр»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Медицинские книжки» для массово»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «План обучения персонала» для ма»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал регистрации инструктажей»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал учета дезинфицирующих ср»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Чек-лист (памятка) проведения с»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «График профилактического обслуж»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Карточка истории поломок» для м»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «График поверки средств измерени»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал входного контроля сырья,»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал учета выдачи СИЗ» для ма»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал учета аварий» для массов»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал регистрации жалоб» для м»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Акт забраковки» для массового с»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «План-программа внутренних аудит»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Протокол внутреннего аудита» дл»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Отчет о внутреннем аудите» для »",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал прослеживаемости продукц»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал учета металлопримесей в »",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал мойки и дезинфекции обор»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал контроля интенсивного ох»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Перечень изделий из стекла и хр»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал контроля изделий из стек»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал учета дезинфекции, дезин»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал отбора и хранения суточн»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал проведения витаминизации»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Ведомость контроля за рационом »",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал контроля температуры при»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал учёта боя посуды» для ма»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал контроля качества воды в»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал оценки состояния металли»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал контроля стерилизации ин»",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал учёта отходов класса Б» »",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «Выбрать «Журнал допуска партии продукции»",
+      "w": 22,
+      "h": 22
+     }
+    ],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 2443,
+     "medianPx": 16,
+     "shareGe15": 79.5,
+     "shareGe16": 74.7,
+     "sizes": {
+      "11": 470,
+      "13": 32,
+      "15": 115,
+      "16": 1819,
+      "26": 7
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "shot": "after-1440-02-journals.png",
+    "headerHeight": 73,
+    "count": 1146,
+    "geometry": {
+     "count": 1146,
+     "sha1": "d50c7bf9bc32129655cc1824a69b8f41ea7d546b"
+    }
+   },
+   "path": "/journals",
+   "finalUrl": "/journals"
+  },
+  "03-journal-doc": {
+   "390": {
+    "shot": "after-390-03-journal-doc.png",
+    "hiddenOverflow": [],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 14,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [],
+    "smallFieldFont": [],
+    "toggles": [
+     {
+      "el": "button[role=switch][slot=switch] «» .peer.group/switch.inline-flex.shrink-0.items-center.rounded-full",
+      "w": 52,
+      "h": 30
+     }
+    ],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 960,
+     "medianPx": 15,
+     "shareGe15": 76.6,
+     "shareGe16": 34.6,
+     "sizes": {
+      "13": 225,
+      "15": 403,
+      "16": 299,
+      "28": 33
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "shot": "after-1440-03-journal-doc.png",
+    "headerHeight": 73,
+    "count": 159,
+    "geometry": {
+     "count": 159,
+     "sha1": "a2062054da58d02f4095f78b658654ac00a29613"
+    }
+   },
+   "path": "/journals/hygiene/documents/cmuh505d60001yg9mchq13ee7",
+   "finalUrl": "/journals/hygiene/documents/cmuh505d60001yg9mchq13ee7"
+  },
+  "04-settings": {
+   "390": {
+    "shot": "after-390-04-settings.png",
+    "hiddenOverflow": [],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 56,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 4576,
+     "medianPx": 15,
+     "shareGe15": 91.7,
+     "shareGe16": 21.6,
+     "sizes": {
+      "10": 37,
+      "13": 342,
+      "15": 3208,
+      "16": 963,
+      "18": 13,
+      "20": 4,
+      "28": 9
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "shot": "after-1440-04-settings.png",
+    "headerHeight": 73,
+    "count": 775,
+    "geometry": {
+     "count": 775,
+     "sha1": "b999121e42ab4698a7f34807c83831832423b906"
+    }
+   },
+   "path": "/settings",
+   "finalUrl": "/settings"
+  },
+  "05-staff": {
+   "390": {
+    "shot": "after-390-05-staff.png",
+    "hiddenOverflow": [
+     {
+      "el": "div «График выходных дней График отпусков Гра»",
+      "client": 358,
+      "scroll": 682
+     }
+    ],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 53,
+     "inlineLinks": 0,
+     "gridSkipped": 261
+    },
+    "small": [],
+    "smallFieldFont": [],
+    "toggles": [
+     {
+      "el": "input «» .size-4.cursor-pointer.rounded.border-[#d0d4e6].text-[#5566f6].focus:ring-[#5566f6]",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-4.cursor-pointer.rounded.border-[#d0d4e6].text-[#5566f6].focus:ring-[#5566f6]",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-4.cursor-pointer.rounded.border-[#d0d4e6].text-[#5566f6].focus:ring-[#5566f6]",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-4.cursor-pointer.rounded.border-[#d0d4e6].text-[#5566f6].focus:ring-[#5566f6]",
+      "w": 22,
+      "h": 22
+     }
+    ],
+    "tight": [
+     {
+      "a": "button «Пригласить в TG»",
+      "b": "button «Помощь и подсказки»",
+      "gap": -0.5
+     }
+    ],
+    "tightCount": 1,
+    "text": {
+     "chars": 1338,
+     "medianPx": 15,
+     "shareGe15": 82.4,
+     "shareGe16": 24.4,
+     "sizes": {
+      "10": 4,
+      "11": 6,
+      "13": 225,
+      "15": 776,
+      "16": 297,
+      "18": 20,
+      "26": 10
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "shot": "after-1440-05-staff.png",
+    "headerHeight": 73,
+    "count": 1552,
+    "geometry": {
+     "count": 1552,
+     "sha1": "51f5812f8fb4595247224f719ecd539e42f5d2df"
+    }
+   },
+   "path": "/settings/users",
+   "finalUrl": "/settings/users"
+  },
+  "06-qr-posters": {
+   "390": {
+    "shot": "after-390-06-qr-posters.png",
+    "hiddenOverflow": [],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 108,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [],
+    "smallFieldFont": [],
+    "toggles": [
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=radio] «A4»",
+      "w": 56,
+      "h": 48
+     },
+     {
+      "el": "button[role=radio] «A5»",
+      "w": 56,
+      "h": 48
+     },
+     {
+      "el": "button[role=radio] «Наклейка»",
+      "w": 92.9,
+      "h": 48
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=radio] «A4»",
+      "w": 56,
+      "h": 48
+     },
+     {
+      "el": "button[role=radio] «A5»",
+      "w": 56,
+      "h": 48
+     },
+     {
+      "el": "button[role=radio] «Наклейка»",
+      "w": 92.9,
+      "h": 48
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "input «» .size-5.shrink-0.cursor-pointer.rounded-md.accent-[#5566f6].focus-visible:outline-none",
+      "w": 22,
+      "h": 22
+     }
+    ],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 2784,
+     "medianPx": 16,
+     "shareGe15": 97.7,
+     "shareGe16": 72.3,
+     "sizes": {
+      "13": 63,
+      "15": 708,
+      "16": 1897,
+      "17": 109,
+      "26": 7
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "shot": "after-1440-06-qr-posters.png",
+    "headerHeight": 73,
+    "count": 687,
+    "geometry": {
+     "count": 687,
+     "sha1": "93787cca1c4b991865906ab2bcc315b4033e4e49"
+    }
+   },
+   "path": "/settings/qr-posters",
+   "finalUrl": "/settings/qr-posters"
+  },
+  "07-orders": {
+   "390": {
+    "shot": "after-390-07-orders.png",
+    "hiddenOverflow": [],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 16,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 1907,
+     "medianPx": 15,
+     "shareGe15": 94.5,
+     "shareGe16": 42.1,
+     "sizes": {
+      "13": 104,
+      "15": 1000,
+      "16": 764,
+      "18": 32,
+      "26": 7
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "shot": "after-1440-07-orders.png",
+    "headerHeight": 73,
+    "count": 246,
+    "geometry": {
+     "count": 246,
+     "sha1": "95c63a8d96660f6b4619f731af13ca96073d6eae"
+    }
+   },
+   "path": "/orders",
+   "finalUrl": "/orders"
+  },
+  "08-master": {
+   "390": {
+    "shot": "after-390-08-master.png",
+    "hiddenOverflow": [],
+    "header": {
+     "height": 144.5,
+     "controls": [
+      {
+       "el": "button «Переименовать мастер-кабинет»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Скопировать код справочника»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 7,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 473,
+     "medianPx": 16,
+     "shareGe15": 99.4,
+     "shareGe16": 57.1,
+     "sizes": {
+      "15": 200,
+      "16": 199,
+      "18": 35,
+      "22": 36,
+      "11.5": 3
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "shot": "after-1440-08-master.png",
+    "headerHeight": 113,
+    "count": 120,
+    "geometry": {
+     "count": 120,
+     "sha1": "07f103e1b957814434ed742a385634b218078887"
+    }
+   },
+   "path": "/master",
+   "finalUrl": "/master"
+  }
+ },
+ "dialog": {
+  "shot": "after-390-09-doc-settings-dialog.png",
+  "title": "Настройки документа",
+  "controls": 9,
+  "small": [],
+  "smallFieldFont": []
+ },
+ "extra": {
+  "x01": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 17,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "a «Гигиенический журнал (сотрудники) — сент»",
+      "w": 324,
+      "h": 43.2
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [
+     {
+      "el": "button[role=switch][slot=switch] «» .peer.group/switch.inline-flex.shrink-0.items-center.rounded-full",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «» .peer.group/switch.inline-flex.shrink-0.items-center.rounded-full",
+      "w": 52,
+      "h": 30
+     }
+    ],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 347,
+     "medianPx": 15,
+     "shareGe15": 85.6,
+     "shareGe16": 40.6,
+     "sizes": {
+      "13": 50,
+      "15": 156,
+      "16": 108,
+      "28": 33
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 161,
+    "geometry": {
+     "count": 161,
+     "sha1": "d50ccf7ceb446596a13bb8292b60b556844a0bfe"
+    }
+   },
+   "path": "/journals/hygiene",
+   "finalUrl": "/journals/hygiene"
+  },
+  "x02": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 16,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "a «Журнал здоровья — сентябрь 2026»",
+      "w": 324,
+      "h": 21.6
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [
+     {
+      "el": "button[role=switch][slot=switch] «» .peer.group/switch.inline-flex.shrink-0.items-center.rounded-full",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «» .peer.group/switch.inline-flex.shrink-0.items-center.rounded-full",
+      "w": 52,
+      "h": 30
+     }
+    ],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 258,
+     "medianPx": 15,
+     "shareGe15": 87.6,
+     "shareGe16": 40.7,
+     "sizes": {
+      "13": 32,
+      "15": 121,
+      "16": 90,
+      "28": 15
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 158,
+    "geometry": {
+     "count": 158,
+     "sha1": "0b1313002c57afad71062d063c953946162edf81"
+    }
+   },
+   "path": "/journals/health_check",
+   "finalUrl": "/journals/health_check"
+  },
+  "x03": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 26,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [
+     {
+      "kind": "button",
+      "el": "button «Перейти»",
+      "w": 93.4,
+      "h": 36.5
+     }
+    ],
+    "smallFieldFont": [],
+    "toggles": [
+     {
+      "el": "button[role=switch][slot=switch] «» .peer.group/switch.inline-flex.shrink-0.items-center.rounded-full",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     }
+    ],
+    "tight": [
+     {
+      "a": "button[role=tab] «Карточки»",
+      "b": "button[role=tab] «Таблица»",
+      "gap": 0
+     }
+    ],
+    "tightCount": 1,
+    "text": {
+     "chars": 431,
+     "medianPx": 16,
+     "shareGe15": 69.6,
+     "shareGe16": 57.1,
+     "sizes": {
+      "11": 28,
+      "13": 103,
+      "15": 54,
+      "16": 231,
+      "28": 15
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 585,
+    "geometry": {
+     "count": 585,
+     "sha1": "6b50b4ad13e2fa0c872f781e825f87a1797f45a4"
+    }
+   },
+   "path": "/journals/health_check/documents/cmuh505pp005wyg9mlbtlpby1",
+   "finalUrl": "/journals/health_check/documents/cmuh505pp005wyg9mlbtlpby1"
+  },
+  "x04": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 102,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [],
+    "smallFieldFont": [],
+    "toggles": [
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=checkbox][slot=checkbox] «» .peer.shrink-0.rounded-[4px].border.border-input.shadow-xs",
+      "w": 22,
+      "h": 22
+     }
+    ],
+    "tight": [
+     {
+      "a": "button[role=tab] «Карточки»",
+      "b": "button[role=tab] «Таблица»",
+      "gap": 0
+     },
+     {
+      "a": "button «изменить»",
+      "b": "button «Помощь и подсказки»",
+      "gap": 5.3
+     }
+    ],
+    "tightCount": 2,
+    "text": {
+     "chars": 1236,
+     "medianPx": 15,
+     "shareGe15": 71.9,
+     "shareGe16": 46.6,
+     "sizes": {
+      "13": 347,
+      "15": 313,
+      "16": 518,
+      "28": 58
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 802,
+    "geometry": {
+     "count": 802,
+     "sha1": "84b3eb48af9befd2f9bfec70e2c00bd3ca4b68f5"
+    }
+   },
+   "path": "/journals/fryer_oil/documents/cmuh505wv00bryg9m89aclv9c",
+   "finalUrl": "/journals/fryer_oil/documents/cmuh505wv00bryg9m89aclv9c"
+  },
+  "x05": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 266,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [],
+    "smallFieldFont": [],
+    "toggles": [
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Гигиенический журнал (сотр»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Бланк контроля температуры»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал контроля температур»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал учета использования»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести бумажный журнал «Журнал вводного и»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести бумажный журнал «Журнал инструктаж»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести бумажный журнал «Журнал инструктаж»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести бумажный журнал «Журнал присвоения»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести бумажный журнал «Журнал эксплуатац»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал уборки»»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «График и учет генеральных »",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал бракеража готовой п»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал бракеража скоропорт»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал приемки и входного »",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Медицинские книжки»»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал регистрации инструк»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал учета дезинфицирующ»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал регистрации жалоб»»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал учёта боя посуды»»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал оценки состояния ме»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал здоровья»»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Чек-лист уборки и проветри»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал учета работы УФ бак»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «План обучения персонала»»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Чек-лист (памятка) проведе»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «График профилактического о»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Карточка истории поломок»»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «График поверки средств изм»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал входного контроля с»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал учета выдачи СИЗ»»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал учета аварий»»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Акт забраковки»»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «План-программа внутренних »",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Протокол внутреннего аудит»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Отчет о внутреннем аудите»»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал прослеживаемости пр»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал учета металлопримес»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал мойки и дезинфекции»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал контроля интенсивно»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Перечень изделий из стекла»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал контроля изделий из»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал учета дезинфекции, »",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал отбора и хранения с»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал проведения витамини»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Ведомость контроля за раци»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал контроля температур»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал контроля качества в»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал контроля стерилизац»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал учёта отходов класс»",
+      "w": 52,
+      "h": 30
+     },
+     {
+      "el": "button[role=switch][slot=switch] «Вести журнал «Журнал допуска партии прод»",
+      "w": 52,
+      "h": 30
+     }
+    ],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 4912,
+     "medianPx": 15,
+     "shareGe15": 54.3,
+     "shareGe16": 10.2,
+     "sizes": {
+      "10": 479,
+      "11": 1707,
+      "13": 61,
+      "15": 2164,
+      "16": 487,
+      "20": 14
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 1995,
+    "geometry": {
+     "count": 1995,
+     "sha1": "d91ccc134078c290f71bf683236ddb3ddbc590fb"
+    }
+   },
+   "path": "/settings/journals",
+   "finalUrl": "/settings/journals"
+  },
+  "x06": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 26,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [],
+    "smallFieldFont": [],
+    "toggles": [
+     {
+      "el": "button[role=switch] «» .relative.mt-0.5.inline-flex.h-6.w-11.shrink-0",
+      "w": 44,
+      "h": 24
+     },
+     {
+      "el": "button[role=switch] «» .relative.mt-0.5.inline-flex.h-6.w-11.shrink-0",
+      "w": 44,
+      "h": 24
+     }
+    ],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 2976,
+     "medianPx": 15,
+     "shareGe15": 51.7,
+     "shareGe16": 15.4,
+     "sizes": {
+      "11": 911,
+      "13": 526,
+      "15": 1080,
+      "16": 434,
+      "26": 25
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 350,
+    "geometry": {
+     "count": 350,
+     "sha1": "fac29ade67c2c631aa326b2b4439ed326ad879d6"
+    }
+   },
+   "path": "/settings/organization",
+   "finalUrl": "/settings/organization"
+  },
+  "x07": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 6,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 186,
+     "medianPx": 16,
+     "shareGe15": 88.7,
+     "shareGe16": 74.7,
+     "sizes": {
+      "13": 21,
+      "15": 26,
+      "16": 106,
+      "17": 21,
+      "28": 12
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 113,
+    "geometry": {
+     "count": 113,
+     "sha1": "0cf33e02542d528bcd5051f8c99a21372363b052"
+    }
+   },
+   "path": "/settings/equipment",
+   "finalUrl": "/settings/equipment"
+  },
+  "x08": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 6,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 163,
+     "medianPx": 16,
+     "shareGe15": 85.9,
+     "shareGe16": 76.1,
+     "sizes": {
+      "13": 23,
+      "15": 16,
+      "16": 96,
+      "17": 14,
+      "28": 14
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 116,
+    "geometry": {
+     "count": 116,
+     "sha1": "65d23e13a5c92f07d84eb15e51fbde1c36b91543"
+    }
+   },
+   "path": "/settings/areas",
+   "finalUrl": "/settings/areas"
+  },
+  "x09": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 215,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 20822,
+     "medianPx": 13,
+     "shareGe15": 19.2,
+     "shareGe16": 10.5,
+     "sizes": {
+      "9": 315,
+      "10": 2297,
+      "11": 6261,
+      "13": 7946,
+      "15": 1807,
+      "16": 2172,
+      "26": 24
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 3042,
+    "geometry": {
+     "count": 3042,
+     "sha1": "15ad39f406a839583fae27fa01c91cb512d53734"
+    }
+   },
+   "path": "/settings/journal-responsibles",
+   "finalUrl": "/settings/journal-responsibles"
+  },
+  "x10": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 16,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [
+     {
+      "a": "button «Управляющий · 1 человек по умолчанию для»",
+      "b": "button[slot=button] «Сохранить»",
+      "gap": 5.7
+     }
+    ],
+    "tightCount": 1,
+    "text": {
+     "chars": 1053,
+     "medianPx": 15,
+     "shareGe15": 69.2,
+     "shareGe16": 43.1,
+     "sizes": {
+      "11": 166,
+      "13": 158,
+      "15": 275,
+      "16": 441,
+      "28": 13
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 244,
+    "geometry": {
+     "count": 244,
+     "sha1": "35087b957e0ac358142ab5120fae872adb86d3c1"
+    }
+   },
+   "path": "/settings/permissions",
+   "finalUrl": "/settings/permissions"
+  },
+  "x11": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 8,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 1787,
+     "medianPx": 15,
+     "shareGe15": 86.7,
+     "shareGe16": 24.7,
+     "sizes": {
+      "11": 29,
+      "13": 209,
+      "15": 1107,
+      "16": 338,
+      "18": 42,
+      "20": 18,
+      "26": 34,
+      "34": 10
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 270,
+    "geometry": {
+     "count": 270,
+     "sha1": "6b5a1b43cff55f7767b8874676da5e554da0ddca"
+    }
+   },
+   "path": "/settings/subscription",
+   "finalUrl": "/settings/subscription"
+  },
+  "x12": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 9,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [],
+    "smallFieldFont": [],
+    "toggles": [
+     {
+      "el": "button[role=radio] «Системная»",
+      "w": 150,
+      "h": 71.3
+     },
+     {
+      "el": "button[role=radio] «Светлая»",
+      "w": 150,
+      "h": 71.3
+     },
+     {
+      "el": "button[role=radio] «Тёмная»",
+      "w": 150,
+      "h": 71.3
+     },
+     {
+      "el": "input «» .mt-0.5.size-4.cursor-pointer.accent-[#5566f6]",
+      "w": 22,
+      "h": 22
+     },
+     {
+      "el": "button[role=switch] «Окно «Что нового» Короткий список измене»",
+      "w": 316,
+      "h": 195
+     }
+    ],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 430,
+     "medianPx": 15,
+     "shareGe15": 71.2,
+     "shareGe16": 24.4,
+     "sizes": {
+      "13": 20,
+      "15": 201,
+      "16": 94,
+      "26": 11,
+      "11.5": 104
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 132,
+    "geometry": {
+     "count": 132,
+     "sha1": "7cbf954ac19d2e676d5a009ce6a4112f4bf805d1"
+    }
+   },
+   "path": "/settings/appearance",
+   "finalUrl": "/settings/appearance"
+  },
+  "x13": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 4,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 90,
+     "medianPx": 16,
+     "shareGe15": 77.8,
+     "shareGe16": 77.8,
+     "sizes": {
+      "13": 20,
+      "16": 59,
+      "26": 11
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 94,
+    "geometry": {
+     "count": 94,
+     "sha1": "b52d7a8fbd4bf87394c4738f3b7cfe1dfcfe9cae"
+    }
+   },
+   "path": "/settings/notifications",
+   "finalUrl": "/settings/notifications"
+  },
+  "x14": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 10,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 566,
+     "medianPx": 16,
+     "shareGe15": 87.5,
+     "shareGe16": 61,
+     "sizes": {
+      "13": 71,
+      "15": 150,
+      "16": 307,
+      "26": 38
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 163,
+    "geometry": {
+     "count": 163,
+     "sha1": "865fbcc2a733db61a5ac3d80d2d524c622fbad85"
+    }
+   },
+   "path": "/settings/master-cabinet",
+   "finalUrl": "/settings/master-cabinet"
+  },
+  "x15": {
+   "390": {
+    "hiddenOverflow": [
+     {
+      "el": "table «Журнал авг. 27 28 29 30 31 сент. 1 2 3 4»",
+      "client": 316,
+      "scroll": 824
+     },
+     {
+      "el": "table «Журнал Пн Вт Ср Чт Пт Сб Вс Гигиенически»",
+      "client": 316,
+      "scroll": 508
+     }
+    ],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 21,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 1362,
+     "medianPx": 15,
+     "shareGe15": 75.6,
+     "shareGe16": 30.3,
+     "sizes": {
+      "11": 27,
+      "13": 305,
+      "15": 617,
+      "16": 379,
+      "18": 26,
+      "28": 8
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 3962,
+    "geometry": {
+     "count": 3962,
+     "sha1": "fb144d3fce158daf7789f652274f22b182cbd8e5"
+    }
+   },
+   "path": "/reports",
+   "finalUrl": "/reports"
+  },
+  "x16": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 4,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 29,
+     "medianPx": 13,
+     "shareGe15": 0,
+     "shareGe16": 0,
+     "sizes": {
+      "13": 29
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 84,
+    "geometry": {
+     "count": 84,
+     "sha1": "ee0079cec712d89aa63d612c1da3f5e76f741ccf"
+    }
+   },
+   "path": "/control-board",
+   "finalUrl": "/control-board"
+  },
+  "x17": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 5,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 210,
+     "medianPx": 16,
+     "shareGe15": 83.8,
+     "shareGe16": 83.8,
+     "sizes": {
+      "13": 34,
+      "16": 147,
+      "26": 29
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 93,
+    "geometry": {
+     "count": 93,
+     "sha1": "7adeaec8bb5784950727c42a64719c803a524efe"
+    }
+   },
+   "path": "/journals-progress",
+   "finalUrl": "/journals-progress"
+  },
+  "x18": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 4,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 21,
+     "medianPx": 13,
+     "shareGe15": 0,
+     "shareGe16": 0,
+     "sizes": {
+      "13": 21
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 84,
+    "geometry": {
+     "count": 84,
+     "sha1": "3eacff22fb73f0b8ee8fc1ea73564f805228756c"
+    }
+   },
+   "path": "/team",
+   "finalUrl": "/team"
+  },
+  "x19": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 4,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 27,
+     "medianPx": 13,
+     "shareGe15": 0,
+     "shareGe16": 0,
+     "sizes": {
+      "13": 27
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 84,
+    "geometry": {
+     "count": 84,
+     "sha1": "570b65d8e261de36b5cd4df3e61a3f3dc8169803"
+    }
+   },
+   "path": "/verifications",
+   "finalUrl": "/verifications"
+  },
+  "x20": {
+   "390": {
+    "hiddenOverflow": [
+     {
+      "el": "div «ОТКРЫТО 0 Пусто РАССЛЕДОВАНИЕ 0 Пусто КО»",
+      "client": 390,
+      "scroll": 852
+     }
+    ],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 6,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 247,
+     "medianPx": 13,
+     "shareGe15": 38.9,
+     "shareGe16": 38.9,
+     "sizes": {
+      "11": 51,
+      "13": 100,
+      "16": 83,
+      "28": 13
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 142,
+    "geometry": {
+     "count": 142,
+     "sha1": "3885bba3cba3353929a62f4e31d02d3eff1280fa"
+    }
+   },
+   "path": "/capa",
+   "finalUrl": "/capa"
+  },
+  "x21": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 12,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 163,
+     "medianPx": 15,
+     "shareGe15": 64.4,
+     "shareGe16": 33.7,
+     "sizes": {
+      "13": 58,
+      "15": 50,
+      "16": 46,
+      "28": 9
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 121,
+    "geometry": {
+     "count": 121,
+     "sha1": "dc2a2b401a996c2c611d4a50e29ee68f3bfd4bd7"
+    }
+   },
+   "path": "/batches",
+   "finalUrl": "/batches"
+  },
+  "x22": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 5,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 140,
+     "medianPx": 16,
+     "shareGe15": 79.3,
+     "shareGe16": 55.7,
+     "sizes": {
+      "13": 29,
+      "15": 33,
+      "16": 67,
+      "28": 11
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 115,
+    "geometry": {
+     "count": 115,
+     "sha1": "929ac88b3721edeb346d35b4e9e9cb64098db6d2"
+    }
+   },
+   "path": "/losses",
+   "finalUrl": "/losses"
+  },
+  "x23": {
+   "390": {
+    "hiddenOverflow": [
+     {
+      "el": "table «СОТРУДНИК БЕЗОПАСНОСТЬ СТАБИЛЬНОСТЬ СКОР»",
+      "client": 718,
+      "scroll": 734
+     }
+    ],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 4,
+     "inlineLinks": 0,
+     "gridSkipped": 42
+    },
+    "small": [],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 146,
+     "medianPx": 13,
+     "shareGe15": 46.6,
+     "shareGe16": 46.6,
+     "sizes": {
+      "13": 78,
+      "16": 50,
+      "28": 18
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 235,
+    "geometry": {
+     "count": 235,
+     "sha1": "37aee4eb13677223eb01f7f4cbaf60205b9f3282"
+    }
+   },
+   "path": "/competencies",
+   "finalUrl": "/competencies"
+  },
+  "x24": {
+   "390": {
+    "hiddenOverflow": [],
+    "header": {
+     "height": 56,
+     "controls": [
+      {
+       "el": "a «Кафе «Ромашка» — на дашборд»",
+       "w": 67.7,
+       "h": 44
+      },
+      {
+       "el": "button «Партнёрская программа: ваш логотип вмест»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=button] «Меню»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button «Уведомления»",
+       "w": 44,
+       "h": 44
+      },
+      {
+       "el": "button[slot=dropdown-menu-trigger] «Профиль»",
+       "w": 44,
+       "h": 44
+      }
+     ]
+    },
+    "counts": {
+     "controls": 4,
+     "inlineLinks": 0,
+     "gridSkipped": 0
+    },
+    "small": [],
+    "smallFieldFont": [],
+    "toggles": [],
+    "tight": [],
+    "tightCount": 0,
+    "text": {
+     "chars": 5294,
+     "medianPx": 16,
+     "shareGe15": 80.4,
+     "shareGe16": 80.4,
+     "sizes": {
+      "13": 1038,
+      "16": 4041,
+      "18": 198,
+      "28": 17
+     }
+    },
+    "overflow": {
+     "scrollWidth": 390,
+     "innerWidth": 390,
+     "offenders": []
+    }
+   },
+   "1440": {
+    "headerHeight": 73,
+    "count": 399,
+    "geometry": {
+     "count": 399,
+     "sha1": "a312efac76427810ae296ab02ce42e9f04c493f4"
+    }
+   },
+   "path": "/sanpin",
+   "finalUrl": "/sanpin"
+  }
+ },
+ "consoleErrors": [
+  "390 http://localhost:3040/dashboard :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/dashboard :: Failed to sync build state: TypeError: Failed to fetch\n    at syncBuild (webpack-internal:///(app-pages-browser)/./src/components/layout/sw-register.tsx:44:40)",
+  "390 http://localhost:3040/dashboard :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/journals :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/journals/hygiene/documents/cmuh505d60001yg9mchq13ee7 :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/settings :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/settings/users :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/settings/qr-posters :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/orders :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/master :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/journals/hygiene :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/journals/hygiene :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/journals/health_check :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/journals/health_check :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/journals/health_check/documents/cmuh505pp005wyg9mlbtlpby1 :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/journals/fryer_oil/documents/cmuh505wv00bryg9m89aclv9c :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/settings/journals :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/settings/organization :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/settings/equipment :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/settings/areas :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/settings/journal-responsibles :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/settings/permissions :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/settings/subscription :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/settings/appearance :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/settings/notifications :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/settings/master-cabinet :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/reports :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/control-board :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/journals-progress :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/team :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/verifications :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/capa :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/batches :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/losses :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/competencies :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "390 http://localhost:3040/sanpin :: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh",
+  "1440 http://localhost:3040/journals/hygiene/documents/cmuh505d60001yg9mchq13ee7 :: pageerror SyntaxError: Invalid or unexpected token"
+ ]
+}
