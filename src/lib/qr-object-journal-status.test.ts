@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { objectJournalSetupHref, renderObjectJournalStatus } from "@/lib/qr-object-journal-status";
+import { coldEquipmentDaySummary, objectJournalSetupHref, renderObjectJournalStatus } from "@/lib/qr-object-journal-status";
 
 /**
  * Основной QR журнала объектов — только статус: заполнять холодильник «из
@@ -46,5 +46,15 @@ describe("renderObjectJournalStatus", () => {
       responsible: "",
     });
     assert.doesNotMatch(html, /<script>/);
+  });
+});
+
+describe("coldEquipmentDaySummary", () => {
+  it("«обсл»/«рем» за сегодня — отметка дня, а не «замера ещё нет»; показание важнее", () => {
+    assert.deepEqual(coldEquipmentDaySummary(3, null), { state: "done", summary: "замер снят: +3 °C" });
+    assert.deepEqual(coldEquipmentDaySummary(null, "repair"), { state: "done", summary: "ремонт — в журнале «рем»" });
+    assert.deepEqual(coldEquipmentDaySummary(null, "service"), { state: "done", summary: "обслуживание — в журнале «обсл»" });
+    assert.deepEqual(coldEquipmentDaySummary(-18, "repair"), { state: "done", summary: "замер снят: -18 °C" });
+    assert.deepEqual(coldEquipmentDaySummary(null, null), { state: "todo", summary: "сегодня замера ещё нет" });
   });
 });

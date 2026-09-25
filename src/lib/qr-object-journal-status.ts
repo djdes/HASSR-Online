@@ -1,5 +1,12 @@
 import { CLIMATE_DOCUMENT_TEMPLATE_CODE, normalizeClimateDocumentConfig, type ClimateMeasurement } from "@/lib/climate-document";
-import { COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE, normalizeColdEquipmentDocumentConfig, normalizeColdEquipmentEntryData } from "@/lib/cold-equipment-document";
+import {
+  COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE,
+  COLD_EQUIPMENT_STATUS_SHORT,
+  COLD_EQUIPMENT_STATUS_TITLE,
+  normalizeColdEquipmentDocumentConfig,
+  normalizeColdEquipmentEntryData,
+  type ColdEquipmentStatus,
+} from "@/lib/cold-equipment-document";
 import { db } from "@/lib/db";
 import { esc } from "@/lib/journal-fill-html";
 import { resolveJournalObjectScope } from "@/lib/qr-journal-scope";
@@ -83,6 +90,22 @@ export function objectJournalSetupHref(code: string): string {
 function formatNumber(value: number, unit: string): string {
   const sign = value > 0 && unit === "°C" ? "+" : "";
   return `${sign}${value} ${unit}`;
+}
+
+/**
+ * Холодильник за сегодня. Показание — «замер снят: +3 °C»; «Обслуживание»/
+ * «Ремонт» (в журнале «обсл»/«рем», с наклейки или из формы) — тоже отметка
+ * дня, а не «замера ещё нет».
+ */
+export function coldEquipmentDaySummary(
+  temperature: number | null,
+  status: ColdEquipmentStatus | null
+): Pick<ObjectStatusItem, "state" | "summary"> {
+  if (temperature !== null) return { state: "done", summary: `замер снят: ${formatNumber(temperature, "°C")}` };
+  if (status) {
+    return { state: "done", summary: `${COLD_EQUIPMENT_STATUS_TITLE[status].toLowerCase()} — в журнале «${COLD_EQUIPMENT_STATUS_SHORT[status]}»` };
+  }
+  return { state: "todo", summary: "сегодня замера ещё нет" };
 }
 
 function groupBy(items: Array<ObjectStatusItem & { group: string }>): ObjectStatusGroup[] {
@@ -190,32 +213,37 @@ export async function loadObjectJournalStatus(params: {
     );
   }
 
-  // Холодильники: последнее показание за сегодня по любому активному документу.
-  const lastTemperature = (equipmentId: string): number | null => {
+  // Холодильники: последнее показание за сегодня по любому активному документу
+  // и отметка «обсл»/«рем», если показания нет.
+  const lastReading = (equipmentId: string): { temperature: number | null; status: ColdEquipmentStatus | null } => {
     let found: number | null = null;
+    let status: ColdEquipmentStatus | null = null;
     for (const doc of activeDocs) {
       const items = normalizeColdEquipmentDocumentConfig(doc.config).equipment.filter((item) => item.sourceEquipmentId === equipmentId);
       for (const item of items) {
         for (const entry of entries) {
           if (entry.documentId !== doc.id) continue;
-          const temperatures = normalizeColdEquipmentEntryData(entry.data ?? null).temperatures;
-          for (const [key, value] of Object.entries(temperatures)) {
-            if ((key === item.id || key.startsWith(`${item.id}#`)) && typeof value === "number") found = value;
+          const data = normalizeColdEquipmentEntryData(entry.data ?? null);
+          const ofItem = (key: string) => key === item.id || key.startsWith(`${item.id}#`);
+          for (const [key, value] of Object.entries(data.temperatures)) {
+            if (ofItem(key) && typeof value === "number") found = value;
+          }
+          for (const [key, value] of Object.entries(data.statuses ?? {})) {
+            if (ofItem(key) && value) status = value;
           }
         }
       }
     }
-    return found;
+    return { temperature: found, status };
   };
   return groupBy(
     equipment.map((item) => {
-      const temperature = lastTemperature(item.id);
+      const reading = lastReading(item.id);
       return {
         id: item.id,
         name: item.name,
         group: item.area.name,
-        state: temperature !== null ? "done" : "todo",
-        summary: temperature !== null ? `замер снят: ${formatNumber(temperature, "°C")}` : "сегодня замера ещё нет",
+        ...coldEquipmentDaySummary(reading.temperature, reading.status),
       };
     })
   );
