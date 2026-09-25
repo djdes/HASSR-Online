@@ -17,6 +17,8 @@
  */
 import { z } from "zod";
 
+import { parseColdEquipmentStatus, type ColdEquipmentStatus } from "@/lib/cold-equipment-document";
+
 export type TaskFormOption = {
   value: string;
   label: string;
@@ -192,6 +194,12 @@ export type PipelineStep = {
  */
 export const TASK_FORM_OFF_KEY = "__off";
 export const TASK_FORM_CORRECTION_KEY = "__correction";
+/**
+ * Поля с отметкой «Обслуживание»/«Ремонт» вместо показания (холодильники):
+ * JSON `{ "<ключ поля>": "service" | "repair" }`. Ключи полей холодильников
+ * содержат `#` (второй замер), поэтому не список через запятую, как у `__off`.
+ */
+export const TASK_FORM_STATUS_KEY = "__status";
 /** Пометка в журнале вместо показания: оборудование выключено. */
 export const OFF_NOTE_EQUIPMENT = "Выключено";
 /** Пометка в журнале вместо показания: снять нельзя (склад закрыт, прибор не работает). */
@@ -200,6 +208,30 @@ export const OFF_NOTE_READING = "Нет показания";
 export function parseOffKeys(values: Record<string, unknown> | null | undefined): Set<string> {
   const raw = values?.[TASK_FORM_OFF_KEY];
   return new Set(typeof raw === "string" && raw ? raw.split(",").filter(Boolean) : []);
+}
+
+/** Отметки «Обслуживание»/«Ремонт» → значение служебного ключа `__status`. */
+export function encodeStatusMarks(marks: Record<string, ColdEquipmentStatus>): string {
+  return JSON.stringify(marks);
+}
+
+/** Отметки «Обслуживание»/«Ремонт» из `values`; мусор и неизвестные отметки пропускаются. */
+export function parseStatusMarks(values: Record<string, unknown> | null | undefined): Map<string, ColdEquipmentStatus> {
+  const raw = values?.[TASK_FORM_STATUS_KEY];
+  const out = new Map<string, ColdEquipmentStatus>();
+  if (typeof raw !== "string" || !raw) return out;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return out;
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return out;
+  for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
+    const status = parseColdEquipmentStatus(value);
+    if (key && status) out.set(key, status);
+  }
+  return out;
 }
 
 export function correctionFromValues(values: Record<string, unknown> | null | undefined): string {
@@ -216,6 +248,14 @@ export type TaskFormSchema = {
   notice?: string;
   /** Поля, у которых сегодня уже стоит пометка «Выключено / Нет показания» — форма показывает их отмеченными. */
   prefilledOff?: string[];
+  /**
+   * Поля, где вместо показания можно отметить «Обслуживание» или «Ремонт»
+   * (холодильники): QR-форма журнала ставит эти кнопки рядом с «Выключено».
+   * Клиенты, которые отметок не знают, просто не показывают кнопки.
+   */
+  statusFields?: string[];
+  /** Отметки «Обслуживание»/«Ремонт», уже записанные сегодня (в том числе с наклейки) — форма показывает их выбранными. */
+  prefilledStatuses?: Record<string, ColdEquipmentStatus>;
   fields: TaskFormField[];
   /**
    * Опциональный пошаговый pipeline. Если задан, task-fill UI

@@ -42,9 +42,11 @@ import {
   renderTokenExpired,
   renderWho,
   menuMetaScript,
+  readPostedMarks,
   tempMetaScript,
   jsonForScript,
 } from "@/lib/journal-fill-html";
+import type { ColdEquipmentStatus } from "@/lib/cold-equipment-document";
 import { submitJournalFill } from "@/lib/journal-fill-submit";
 import { listNameSuggestions } from "@/lib/name-suggestions-db";
 import type { NameSuggestionMeta } from "@/lib/name-suggestions";
@@ -772,6 +774,7 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
         employeeName: employee.name,
         timeLabel: nowParts(timezone).time,
         offCount: Number(q.get("off") ?? 0) || 0,
+        statusCount: Number(q.get("st") ?? 0) || 0,
         addMoreHref:
           hints.append || done === "appended"
             ? link({ ...keep, row: resolved.perEmployee ? null : rowKey, bulk: q.get("bulk"), view: brakerageTabs ? "add" : null })
@@ -864,7 +867,11 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
     .join("");
   const correctionField = form.fields.find((field) => field.type === "text" && CORRECTION_KEY_RE.test(`${field.key} ${field.label}`)) ?? null;
 
-  const renderFormPage = (values: Record<string, unknown>, extra: { error?: string | null; badKeys?: string[]; correction?: string; showDeviation?: boolean; deviationTitle?: string | null; offKeys?: string[] }, status = 200) =>
+  const renderFormPage = (
+    values: Record<string, unknown>,
+    extra: { error?: string | null; badKeys?: string[]; correction?: string; showDeviation?: boolean; deviationTitle?: string | null; offKeys?: string[]; statusMarks?: Record<string, ColdEquipmentStatus> },
+    status = 200
+  ) =>
     page(
       title,
       renderForm({
@@ -885,6 +892,7 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
         openedAt: Date.now(),
         stamp: stampFor(timezone),
         offKeys: extra.offKeys,
+        statusMarks: extra.statusMarks,
         pinOk,
       }).replace(`id="f-productNames"`, `id="f-productNames" data-lines`),
       rowLabel,
@@ -898,13 +906,17 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
     // «Что сделали» уходит в журнал только при отклонении: поле предзаполнено
     // вариантом по умолчанию и прячется, когда значения в норме.
     const postedCorrection = String(posted.get("__correction") ?? "").trim();
-    // Чекбоксы «Выключено / Нет показания» — `off:<ключ поля>`; работают и без скриптов.
-    const off = Array.from(posted.keys()).filter((key) => key.startsWith("off:")).map((key) => key.slice(4));
-    const outOfRange = form.fields.filter((field) => numberOutOfRange(field, values[field.key]));
+    // Отметки вместо показания — «Выключено / Нет показания» (`off:<ключ поля>`) и у
+    // холодильников «Обслуживание»/«Ремонт» (`status:<ключ поля>`); работают и без скриптов.
+    const { off, statuses } = readPostedMarks(posted, form);
+    const statusCount = Object.keys(statuses).length;
+    // У отмеченного поля показания нет — норму не проверяем.
+    const marked = new Set([...off, ...Object.keys(statuses)]);
+    const outOfRange = form.fields.filter((field) => !marked.has(field.key) && numberOutOfRange(field, values[field.key]));
     const deviationTitle = outOfRange.length > 0 ? `${outOfRange.map((field) => field.label).join(", ")} — вне нормы` : null;
     const correction = outOfRange.length > 0 ? postedCorrection : "";
     if (outOfRange.length > 0 && correctionField && !correction) {
-      return renderFormPage(raw, { error: "Значение вне нормы — напишите, что вы сделали", badKeys: outOfRange.map((field) => field.key), correction, showDeviation: true, deviationTitle, offKeys: off });
+      return renderFormPage(raw, { error: "Значение вне нормы — напишите, что вы сделали", badKeys: outOfRange.map((field) => field.key), correction, showDeviation: true, deviationTitle, offKeys: off, statusMarks: statuses });
     }
     if (correctionField && correction) {
       const existing = String(values[correctionField.key] ?? "").trim();
@@ -915,7 +927,7 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
     if (bulk) {
       bulkNames = parseBulkNames(String(values.productNames ?? ""));
       if (bulkNames.length === 0) {
-        return renderFormPage(raw, { error: "Не заполнено: впишите хотя бы одно наименование — каждое с новой строки.", badKeys: ["productNames"], correction, offKeys: off });
+        return renderFormPage(raw, { error: "Не заполнено: впишите хотя бы одно наименование — каждое с новой строки.", badKeys: ["productNames"], correction, offKeys: off, statusMarks: statuses });
       }
       delete values.productNames;
       values.productName = bulkNames[0];
@@ -930,6 +942,7 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
       rowKey,
       values,
       off,
+      statuses,
       correction: correction || null,
       pin: null,
       // PIN подтверждён на своём шаге до формы (или вход по кабинету).
@@ -938,7 +951,7 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
       bulkNames,
     });
     if (!result.ok) {
-      return renderFormPage(raw, { error: result.error, badKeys: result.badKeys, correction, showDeviation: outOfRange.length > 0, deviationTitle, offKeys: off }, result.status >= 500 ? 500 : 200);
+      return renderFormPage(raw, { error: result.error, badKeys: result.badKeys, correction, showDeviation: outOfRange.length > 0, deviationTitle, offKeys: off, statusMarks: statuses }, result.status >= 500 ? 500 : 200);
     }
     // Журналы «добавить ещё» (бракераж) держат пропуск визита до конца 15
     // минут; остальные — стирают сразу: следующий человек у того же
@@ -950,6 +963,7 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
       row: resolved.perEmployee ? null : rowKey,
       done: result.mode,
       off: off.length > 0 ? String(off.length) : null,
+      st: statusCount > 0 ? String(statusCount) : null,
       n: result.count > 1 ? String(result.count) : null,
       bulk: bulk ? "1" : null,
       view: brakerageTabs ? "add" : null,
@@ -960,5 +974,5 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
     return new NextResponse(null, { status: 303, headers });
   }
 
-  return renderFormPage(initialValues(form, hints, employee.name, timezone), { offKeys: form.prefilledOff });
+  return renderFormPage(initialValues(form, hints, employee.name, timezone), { offKeys: form.prefilledOff, statusMarks: form.prefilledStatuses });
 }

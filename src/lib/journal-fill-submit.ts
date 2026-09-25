@@ -30,8 +30,15 @@ import { QR_FILL_RATE_LIMIT_ERROR, qrFillRateKey, recordQrFillAudit } from "@/li
 import { qrFillRateLimiter } from "@/lib/rate-limit";
 import { getAdapter } from "@/lib/tasksflow-adapters";
 import { rowKeyWithQrAppend } from "@/lib/tasksflow-adapters/row-key";
-import { TASK_FORM_CORRECTION_KEY, TASK_FORM_OFF_KEY, buildCompletionValidator } from "@/lib/tasksflow-adapters/task-form";
-import { cleanLabel, isObjectField } from "@/lib/journal-fill-html";
+import {
+  TASK_FORM_CORRECTION_KEY,
+  TASK_FORM_OFF_KEY,
+  TASK_FORM_STATUS_KEY,
+  buildCompletionValidator,
+  encodeStatusMarks,
+} from "@/lib/tasksflow-adapters/task-form";
+import { cleanLabel, isObjectField, resolveFillMarks } from "@/lib/journal-fill-html";
+import { COLD_EQUIPMENT_STATUS_SHORT, type ColdEquipmentStatus } from "@/lib/cold-equipment-document";
 import { notifyManagement } from "@/lib/notifications";
 import { stampFor } from "@/lib/quick-values";
 import { notifyOrganization } from "@/lib/telegram";
@@ -57,6 +64,11 @@ export type JournalFillSubmitInput = {
   values: Record<string, unknown>;
   /** Поля, отмеченные «Выключено / Нет показания»: в журнал идёт прочерк с пометкой, руководитель получает уведомление. */
   off?: string[];
+  /**
+   * «Обслуживание»/«Ремонт» вместо показания (холодильники, `statusFields`
+   * формы): в журнале «обсл»/«рем», температура пустая, норма не проверяется.
+   */
+  statuses?: Record<string, ColdEquipmentStatus>;
   /** «Что сделали» при отклонении — адаптеры кладут его к строке/карточке с отклонением. */
   correction?: string | null;
   pin?: string | null;
@@ -206,9 +218,12 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
   }
 
   const schema = await loadJournalFillForm(code, documentId, input.rowKey);
-  // «Выключено / Нет показания» снимает обязательность с числового поля — вместо
-  // цифры в журнал идёт прочерк с пометкой, а не выдуманный ноль.
-  const offKeys = new Set((input.off ?? []).filter((key) => schema?.fields.some((field) => field.key === key && field.type === "number")));
+  // «Выключено / Нет показания» и «Обслуживание»/«Ремонт» снимают обязательность с
+  // числового поля — вместо цифры в журнал идёт прочерк с пометкой или «обсл»/«рем»,
+  // а не выдуманный ноль.
+  const marks = resolveFillMarks(schema, input.off, input.statuses);
+  const offKeys = marks.offKeys;
+  const statusKeys = new Set(Object.keys(marks.statuses));
   let values: Record<string, string | number | boolean | null> = {};
   if (schema) {
     // «Несколько сразу»: температура у каждого блюда своя — общая необязательна.
@@ -216,11 +231,14 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
     const effective = {
       ...schema,
       fields: schema.fields.map((field) =>
-        field.type === "number" && (offKeys.has(field.key) || bulkOptional(field.key)) ? { ...field, required: false } : field
+        field.type === "number" && (offKeys.has(field.key) || statusKeys.has(field.key) || bulkOptional(field.key)) ? { ...field, required: false } : field
       ),
     };
+    // У отмеченного поля показания нет: что бы ни осталось в самом поле — не проверяем и не пишем.
+    const submitted = { ...input.values };
+    for (const key of [...offKeys, ...statusKeys]) delete submitted[key];
     try {
-      values = buildCompletionValidator(effective).parse(input.values) as typeof values;
+      values = buildCompletionValidator(effective).parse(submitted) as typeof values;
     } catch (error) {
       if (error instanceof z.ZodError) {
         const labelOf = (issue: z.ZodIssue) => {
@@ -233,9 +251,11 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
         if (missing.length > 0) {
           const items = missing.map(labelOf);
           const hasObjects = schema.fields.some((field) => isObjectField(field));
-          const hint = hasObjects
-            ? " Если оборудование выключено или показание снять нельзя — отметьте это в карточке: в журнал попадёт прочерк с пометкой, руководитель получит уведомление."
-            : "";
+          const hint = !hasObjects
+            ? ""
+            : (schema.statusFields?.length ?? 0) > 0
+              ? " Если холодильник выключен, на обслуживании или в ремонте — отметьте это в его карточке вместо температуры: «Выключено», «Обслуживание» или «Ремонт»."
+              : " Если оборудование выключено или показание снять нельзя — отметьте это в карточке: в журнал попадёт прочерк с пометкой, руководитель получит уведомление.";
           return { ok: false, status: 400, error: `Не заполнено: ${items.map((item) => `«${item.label}»`).join(", ")}.${hint}`, badKeys: items.map((item) => item.key).filter((key): key is string => key !== null) };
         }
         const first = labelOf(error.issues[0]);
@@ -248,6 +268,7 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
   const adapterValues: Record<string, string | number | boolean | null> = {
     ...values,
     ...(offKeys.size > 0 ? { [TASK_FORM_OFF_KEY]: Array.from(offKeys).join(",") } : {}),
+    ...(statusKeys.size > 0 ? { [TASK_FORM_STATUS_KEY]: encodeStatusMarks(marks.statuses) } : {}),
     ...(correction ? { [TASK_FORM_CORRECTION_KEY]: correction } : {}),
   };
 
@@ -332,7 +353,11 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
     documentIds: [documentId],
     dateKey: todayKey,
     authMode: mode,
-    values,
+    // «обсл»/«рем» — в аудите тем же словом, что в журнале.
+    values:
+      statusKeys.size > 0
+        ? { ...values, ...Object.fromEntries(Object.entries(marks.statuses).map(([key, status]) => [key, COLD_EQUIPMENT_STATUS_SHORT[status]])) }
+        : values,
   });
 
   if (template && typeof input.openedAt === "number" && input.openedAt > 0) {

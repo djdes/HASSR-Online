@@ -1,4 +1,11 @@
 import { normFromLabel, quickValues } from "@/lib/quick-values";
+import {
+  COLD_EQUIPMENT_STATUSES,
+  COLD_EQUIPMENT_STATUS_SHORT,
+  COLD_EQUIPMENT_STATUS_TITLE,
+  parseColdEquipmentStatus,
+  type ColdEquipmentStatus,
+} from "@/lib/cold-equipment-document";
 import { OFF_NOTE_EQUIPMENT, OFF_NOTE_READING } from "@/lib/tasksflow-adapters/task-form";
 import type { JournalFillHints } from "@/lib/journal-fill-hints";
 import { TIME_OFFSET_CHIPS } from "@/lib/journal-fill-hints";
@@ -101,6 +108,7 @@ button.item{width:100%;font-family:inherit;text-align:left;cursor:pointer;-webki
 .chip.offc{color:#6f7282;border-style:dashed;gap:8px;height:38px;padding:0 12px 0 9px;cursor:pointer}
 .chip.offc input{width:20px;height:20px;margin:0;accent-color:#5566f6}
 .chip.offc.on{background:#f5f6ff;border-style:solid;border-color:#5566f6;color:#3848c7}
+.chips.offrow.sts{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:6px 0 4px}
 .fl.is-off .box .in{background:#f3f4f8;color:#9b9fb3}
 .fl.is-off .stp,.fl.is-off .qv{opacity:.35;pointer-events:none}
 .fl.is-off .st{color:#3848c7}
@@ -206,6 +214,13 @@ h2{font-size:21px;letter-spacing:-.02em;margin:0;font-weight:600}
 .os-empty .muted{margin-bottom:14px}
 ${QR_PIN_UI_CSS}`;
 
+/** Подпись под полем с отметкой «Обслуживание»/«Ремонт» — одна для сервера и инлайн-скрипта. */
+export function statusMarkNote(status: ColdEquipmentStatus): string {
+  return `${COLD_EQUIPMENT_STATUS_TITLE[status]} — в журнал «${COLD_EQUIPMENT_STATUS_SHORT[status]}», норма не проверяется`;
+}
+
+const STATUS_MARK_NOTES: Record<string, string> = Object.fromEntries(COLD_EQUIPMENT_STATUSES.map((status) => [status, statusMarkNote(status)]));
+
 /** Инлайн-скрипт: только удобства, страница работает и без него. */
 export const QR_FILL_JS = `
 (function(){
@@ -285,16 +300,25 @@ export const QR_FILL_JS = `
     var er=document.querySelector(".err[data-missing]"); if(er) er.hidden=done===req.length;
     prog.textContent=done===req.length?"Всё заполнено ✓":"Заполнено "+done+" из "+req.length;
   }
-  /* «Выключено / Нет показания»: поле гаснет и перестаёт быть обязательным, в журнал уйдёт прочерк с пометкой. */
-  document.addEventListener("change",function(e){
-    var t=e.target; if(!t||!t.name||t.name.indexOf("off:")!==0) return;
-    var el=document.getElementById("f-"+t.name.slice(4)); var w=el&&el.closest?el.closest(".fl"):null; if(!el||!w) return;
-    var lab=t.closest?t.closest(".offc"):null; if(lab) lab.classList.toggle("on",t.checked);
-    w.classList.toggle("is-off",t.checked); var st=w.querySelector(".st"); var pill=w.querySelector(".pill");
-    if(t.checked){ if(!el.hasAttribute("data-req")) el.setAttribute("data-req",el.hasAttribute("aria-required")?"1":"0"); el.removeAttribute("aria-required"); el.value=""; w.classList.remove("bad","good"); if(pill) pill.textContent=""; if(st) st.textContent=w.querySelector(".box.flat")?"Уведомим руководителя":(lab&&lab.textContent.trim()==="${OFF_NOTE_EQUIPMENT}"?"Выключено — руководитель получит уведомление":"Нет показания — руководитель получит уведомление"); }
-    else { if(el.getAttribute("data-req")==="1") el.setAttribute("aria-required","true"); if(st) st.textContent=""; fire(el); }
+  /* Отметки вместо показания: «Выключено / Нет показания» (галочка) и у холодильников «Обслуживание»/«Ремонт».
+     Не больше одной на поле — новая снимает прежнюю; поле гаснет и перестаёт быть обязательным, норма не
+     проверяется. Повторное касание выбранной «Обслуживание»/«Ремонт» снимает её. */
+  var stNotes=${jsonForScript(STATUS_MARK_NOTES)};
+  function marks(t,tap){
+    var el=document.getElementById("f-"+t.name.slice(t.name.indexOf(":")+1)); var w=el&&el.closest?el.closest(".fl"):null; if(!el||!w) return;
+    if(tap&&t.type==="radio"&&t.getAttribute("data-on")==="1") t.checked=false;
+    var all=w.querySelectorAll(".offrow input"); var on=null;
+    for(var i=0;i<all.length;i++){ var x=all[i]; if(t.checked&&x!==t) x.checked=false; if(x.checked) on=x; x.setAttribute("data-on",x.checked?"1":"0"); var lb=x.closest?x.closest(".offc"):null; if(lb) lb.classList.toggle("on",x.checked); }
+    var was=w.classList.contains("is-off"); w.classList.toggle("is-off",!!on); var st=w.querySelector(".st"); var pill=w.querySelector(".pill");
+    if(on){ if(!el.hasAttribute("data-req")) el.setAttribute("data-req",el.hasAttribute("aria-required")?"1":"0"); el.removeAttribute("aria-required"); el.value=""; w.classList.remove("bad","good"); if(pill) pill.textContent="";
+      if(st) st.textContent=on.type==="radio"?(stNotes[on.value]||""):(w.querySelector(".box.flat")?"Уведомим руководителя":(on.parentNode&&on.parentNode.textContent.trim()==="${OFF_NOTE_EQUIPMENT}"?"Выключено — руководитель получит уведомление":"Нет показания — руководитель получит уведомление")); }
+    else if(was){ if(el.getAttribute("data-req")==="1") el.setAttribute("aria-required","true"); if(st) st.textContent=""; fire(el); }
     progress(); if(typeof checkAll==="function") checkAll();
-  });
+  }
+  function isMark(t){ return !!(t&&t.name&&(t.name.indexOf("off:")===0||t.name.indexOf("status:")===0)); }
+  var rd=document.querySelectorAll('.offrow input[type=radio]'); for(var ri=0;ri<rd.length;ri++) rd[ri].setAttribute("data-on",rd[ri].checked?"1":"0");
+  document.addEventListener("change",function(e){ if(isMark(e.target)) marks(e.target,false); });
+  document.addEventListener("click",function(e){ var t=e.target; if(isMark(t)&&t.type==="radio") marks(t,true); });
   document.addEventListener("change",function(e){ var t=e.target; if(!t||t.type!=="radio") return; var wrap=t.closest?t.closest(".seg"):null; if(!wrap) return; var ls=wrap.querySelectorAll(".segb"); for(var i=0;i<ls.length;i++){ var inp=ls[i].querySelector("input"); ls[i].classList.toggle("on",!!(inp&&inp.checked)); } });
   /* Смена сотрудника — шторка с поиском на той же странице (без скриптов — ссылка на шаг выбора). */
   var sheet=document.getElementById("emp-sheet");
@@ -327,10 +351,13 @@ export const QR_FILL_JS = `
   var dk=window.__qrDraftKey||null;
   function draftFields(){ var f=document.getElementById("qr-form"); if(!f) return []; var out=[]; var els=f.querySelectorAll("input,select,textarea"); for(var i=0;i<els.length;i++){ var el=els[i]; if(!el.name||el.type==="hidden"||el.type==="submit"||el.type==="button"||el.type==="password") continue; out.push(el); } return out; }
   function draftRead(){ if(!dk) return null; try{ var raw=localStorage.getItem(dk); if(!raw) return null; var d=JSON.parse(raw); if(!d||!d.t||Date.now()-d.t>43200000){ localStorage.removeItem(dk); return null; } return d; }catch(e){ return null; } }
-  function draftSave(){ if(!dk) return; try{ var v={}; var any=false; var els=draftFields(); for(var i=0;i<els.length;i++){ var el=els[i]; var val=el.type==="checkbox"?(el.checked?"1":""):el.value; v[el.name]=val; if(val!==""&&val!=="-") any=true; } if(any) localStorage.setItem(dk,JSON.stringify({t:Date.now(),v:v})); else localStorage.removeItem(dk); }catch(e){} }
+  /* Радио («Обслуживание»/«Ремонт») — одно значение на имя: выбранное или пусто. */
+  function draftSave(){ if(!dk) return; try{ var v={}; var any=false; var els=draftFields(); for(var i=0;i<els.length;i++){ var el=els[i];
+      if(el.type==="radio"){ if(el.checked){ v[el.name]=el.value; any=true; } else if(!Object.prototype.hasOwnProperty.call(v,el.name)) v[el.name]=""; continue; }
+      var val=el.type==="checkbox"?(el.checked?"1":""):el.value; v[el.name]=val; if(val!==""&&val!=="-") any=true; } if(any) localStorage.setItem(dk,JSON.stringify({t:Date.now(),v:v})); else localStorage.removeItem(dk); }catch(e){} }
   function draftRestore(){ var d=draftRead(); if(!d||!d.v) return; var els=draftFields(); var n=0;
     for(var i=0;i<els.length;i++){ var el=els[i]; if(!Object.prototype.hasOwnProperty.call(d.v,el.name)) continue; var val=d.v[el.name];
-      if(el.type==="checkbox"){ var c=val==="1"; if(el.checked!==c){ el.checked=c; n++; var ce=document.createEvent("Event"); ce.initEvent("change",true,true); el.dispatchEvent(ce); } }
+      if(el.type==="checkbox"||el.type==="radio"){ var c=el.type==="radio"?el.value===val:val==="1"; if(el.checked!==c){ el.checked=c; n++; var ce=document.createEvent("Event"); ce.initEvent("change",true,true); el.dispatchEvent(ce); } }
       else if(el.value!==val&&val!==""){ el.value=val; n++; fire(el); } }
     if(n>0){ var f=document.getElementById("qr-form"); var note=document.createElement("div"); note.className="note draft"; note.setAttribute("id","draft-note");
       note.innerHTML='<span>Восстановили введённое после обновления страницы.</span><button type="button" class="lnk" id="draft-reset">Начать заново</button>';
@@ -634,6 +661,53 @@ export function isObjectField(field: TaskFormField): boolean {
   return field.type === "number" && (/норма/i.test(field.label) || metricOf(field.label).metric !== null);
 }
 
+/** Имена отметок в HTML-форме: `off:<ключ>` — «Выключено / Нет показания», `status:<ключ>` — «Обслуживание»/«Ремонт». */
+export const OFF_MARK_PREFIX = "off:";
+export const STATUS_MARK_PREFIX = "status:";
+
+/**
+ * Отметки вместо показания из POST формы (работают и без скриптов):
+ * «Выключено / Нет показания» — у числовых полей, «Обслуживание»/«Ремонт» —
+ * только у полей из `form.statusFields` (холодильники). Прислали обе у
+ * одного поля (без скриптов их можно отметить вместе) — остаётся
+ * «Обслуживание»/«Ремонт»: отметки не смешиваются.
+ */
+export function readPostedMarks(
+  posted: Pick<FormData, "keys" | "get">,
+  form: TaskFormSchema
+): { off: string[]; statuses: Record<string, ColdEquipmentStatus> } {
+  const statuses: Record<string, unknown> = {};
+  for (const key of form.statusFields ?? []) statuses[key] = posted.get(`${STATUS_MARK_PREFIX}${key}`);
+  const off = Array.from(new Set(Array.from(posted.keys())))
+    .filter((name) => name.startsWith(OFF_MARK_PREFIX))
+    .map((name) => name.slice(OFF_MARK_PREFIX.length));
+  const resolved = resolveFillMarks(form, off, statuses);
+  return { off: Array.from(resolved.offKeys), statuses: resolved.statuses };
+}
+
+/**
+ * Отметки вместо показания → что уходит в адаптер (`submitJournalFill`).
+ * «Обслуживание»/«Ремонт» — только у числовых полей из `statusFields` формы
+ * (холодильники), «Выключено / Нет показания» — у числовых полей без такой
+ * отметки: обе у одного поля не смешиваются. Отмеченные поля необязательны,
+ * их значения не проверяются и не пишутся.
+ */
+export function resolveFillMarks(
+  schema: Pick<TaskFormSchema, "fields" | "statusFields"> | null,
+  off: readonly string[] | undefined,
+  statuses: Record<string, unknown> | undefined
+): { offKeys: Set<string>; statuses: Record<string, ColdEquipmentStatus> } {
+  const numberKeys = new Set((schema?.fields ?? []).filter((field) => field.type === "number").map((field) => field.key));
+  const statusFields = new Set(schema?.statusFields ?? []);
+  const resolved: Record<string, ColdEquipmentStatus> = {};
+  for (const [key, raw] of Object.entries(statuses ?? {})) {
+    const status = parseColdEquipmentStatus(raw);
+    if (status && numberKeys.has(key) && statusFields.has(key)) resolved[key] = status;
+  }
+  const offKeys = new Set((off ?? []).filter((key) => numberKeys.has(key) && !resolved[key]));
+  return { offKeys, statuses: resolved };
+}
+
 type NumberField = Extract<TaskFormField, { type: "number" }>;
 
 function lower(text: string): string {
@@ -767,6 +841,8 @@ export function renderForm(params: {
   stamp?: { date: string; time: string } | null;
   /** Поля, отмеченные «Выключено / Нет показания» (при повторном показе формы). */
   offKeys?: string[];
+  /** Поля с выбранным «Обслуживание»/«Ремонт» (уже записано сегодня или повторный показ формы). */
+  statusMarks?: Record<string, ColdEquipmentStatus>;
   /**
    * PIN только что подтверждён на своём шаге: галочка над формой, поля
    * всплывают снизу. Сам PIN в форме больше не спрашивается — он ДО формы.
@@ -774,6 +850,11 @@ export function renderForm(params: {
   pinOk?: boolean;
 }): string {
   const bad = new Set(params.badKeys ?? []);
+  const marks: ObjectMarks = {
+    off: new Set(params.offKeys ?? []),
+    statusKeys: new Set(params.form.statusFields ?? []),
+    statuses: params.statusMarks ?? {},
+  };
   // Поля объектов (склад/холодильник) — карточкой: «Склад Бакалея» и в ней температура + влажность рядом.
   const parts: string[] = [];
   const fieldsList = params.form.fields;
@@ -789,7 +870,7 @@ export function renderForm(params: {
           i += 1;
         } else break;
       }
-      parts.push(renderObjectCard(base, group, params.values, bad, params.stamp ?? null, new Set(params.offKeys ?? [])));
+      parts.push(renderObjectCard(base, group, params.values, bad, params.stamp ?? null, marks));
       continue;
     }
     parts.push(renderField(field, params.values[field.key], params.hints, params.suggestions, bad.has(field.key), params.stamp ?? null));
@@ -829,8 +910,24 @@ ${deviation}
   return params.pinOk ? `${params.who}${renderPinOk()}<div class="qp-rise">${body}</div>` : `${params.who}${body}`;
 }
 
+/** Отметки вместо показания в карточках объектов: что выбрано и где можно «Обслуживание»/«Ремонт». */
+type ObjectMarks = {
+  /** «Выключено / Нет показания». */
+  off: Set<string>;
+  /** Поля холодильников — у них рядом с «Выключено» ещё «Обслуживание» и «Ремонт». */
+  statusKeys: Set<string>;
+  statuses: Record<string, ColdEquipmentStatus>;
+};
+
 /** Карточка объекта: название и его числовые поля в две колонки, норма в подписи поля, статус пилюлей. */
-function renderObjectCard(base: string, group: Extract<TaskFormField, { type: "number" }>[], values: Record<string, unknown>, bad: Set<string>, stamp: { date: string; time: string } | null, off: Set<string> = new Set()): string {
+function renderObjectCard(
+  base: string,
+  group: Extract<TaskFormField, { type: "number" }>[],
+  values: Record<string, unknown>,
+  bad: Set<string>,
+  stamp: { date: string; time: string } | null,
+  marks: ObjectMarks = { off: new Set(), statusKeys: new Set(), statuses: {} }
+): string {
   // Один стиль для холодильников и складов: название объекта целиком, под ним поля во всю ширину
   // («Температура», «Влажность», «1-й замер», «2-й замер»), показание крупно по центру.
   const inputs = group
@@ -842,14 +939,33 @@ function renderObjectCard(base: string, group: Extract<TaskFormField, { type: "n
       const required = field.required === true;
       const unit = field.unit ? ` ${field.unit}` : "";
       const normText = norm.min != null && norm.max != null ? `${norm.min}…${norm.max}${unit}` : "";
-      const isOff = off.has(field.key);
+      const withStatuses = marks.statusKeys.has(field.key);
+      const statusMark = withStatuses ? marks.statuses[field.key] ?? null : null;
+      // Отметка сильнее «Выключено» — так же решает сервер, если форма без скриптов прислала обе.
+      const isOff = !statusMark && marks.off.has(field.key);
+      const isMarked = isOff || statusMark !== null;
       const offNote = metricName(field) === "Влажность" ? OFF_NOTE_READING : OFF_NOTE_EQUIPMENT;
       const labelBody = `${esc(metricName(field))}${stampHtml(stamp)}${required ? `<span class="req" aria-hidden="true">*</span>` : ""}`;
-      const status = isOff ? `${offNote} — руководитель получит уведомление` : bad.has(field.key) ? `Вне нормы ${normText}` : normText ? `Норма ${normText}` : "";
-      const input = `<input class="in" id="${esc(id)}" name="${esc(field.key)}" type="text" inputmode="decimal" value="${isOff ? "" : esc(value)}" placeholder=" "${norm.min != null ? ` data-min="${esc(norm.min)}"` : ""}${norm.max != null ? ` data-max="${esc(norm.max)}"` : ""}${field.unit ? ` data-unit="${esc(field.unit)}"` : ""} data-plain="1" data-label="${esc(`${base} · ${lower(metricName(field))}`)}"${required && !isOff ? ` aria-required="true"` : ""}${required && isOff ? ` data-req="1"` : ""}>`;
+      const status = statusMark
+        ? statusMarkNote(statusMark)
+        : isOff
+          ? `${offNote} — руководитель получит уведомление`
+          : bad.has(field.key)
+            ? `Вне нормы ${normText}`
+            : normText
+              ? `Норма ${normText}`
+              : "";
+      const input = `<input class="in" id="${esc(id)}" name="${esc(field.key)}" type="text" inputmode="decimal" value="${isMarked ? "" : esc(value)}" placeholder=" "${norm.min != null ? ` data-min="${esc(norm.min)}"` : ""}${norm.max != null ? ` data-max="${esc(norm.max)}"` : ""}${field.unit ? ` data-unit="${esc(field.unit)}"` : ""} data-plain="1" data-label="${esc(`${base} · ${lower(metricName(field))}`)}"${required && !isMarked ? ` aria-required="true"` : ""}${required && isMarked ? ` data-req="1"` : ""}>`;
       const box = `<div class="box">${stepButton(field.key, -1)}${input}<label for="${esc(id)}">${labelBody}</label><span class="pill" aria-hidden="true"></span>${stepButton(field.key, 1)}</div>`;
       const offChip = `<div class="chips offrow"><label class="chip offc${isOff ? " on" : ""}"><input type="checkbox" name="off:${esc(field.key)}" value="1"${isOff ? " checked" : ""}>${esc(offNote)}</label></div>`;
-      return `<div class="fl up has-step big${bad.has(field.key) ? " bad" : ""}${isOff ? " is-off" : ""}">${box}<p class="st">${esc(status)}</p>${quickChips(field.key, norm, value)}${offChip}</div>`;
+      // Холодильник: рядом с «Выключено» — «Обслуживание» и «Ремонт» (в журнале «обсл»/«рем», как с наклейки).
+      const statusChips = withStatuses
+        ? `<div class="chips offrow sts" role="group" aria-label="Вместо температуры">${COLD_EQUIPMENT_STATUSES.map(
+            (option) =>
+              `<label class="chip offc${statusMark === option ? " on" : ""}"><input type="radio" name="status:${esc(field.key)}" value="${option}"${statusMark === option ? " checked" : ""}>${esc(COLD_EQUIPMENT_STATUS_TITLE[option])}</label>`
+          ).join("")}</div>`
+        : "";
+      return `<div class="fl up has-step big${bad.has(field.key) ? " bad" : ""}${isMarked ? " is-off" : ""}">${box}<p class="st">${esc(status)}</p>${quickChips(field.key, norm, isMarked ? "" : value)}${offChip}${statusChips}</div>`;
     })
     .join("");
   return `<div class="obj"><div class="obj-t">${esc(base)}</div><div class="cols one">${inputs}</div></div>`;
@@ -977,6 +1093,8 @@ export function renderResult(params: {
   addMoreHref: string | null;
   /** Сколько карточек отмечено «Выключено / Нет показания» — руководитель уведомлён. */
   offCount?: number;
+  /** Сколько холодильников отмечено «Обслуживание»/«Ремонт» — в журнале «обсл»/«рем». */
+  statusCount?: number;
   /** Своя строка заголовка — «Добавлено блюд: 7», «Подписано: 5». */
   headline?: string | null;
   /** Подпись кнопки под галкой (по умолчанию «Добавить ещё»). */
@@ -985,10 +1103,13 @@ export function renderResult(params: {
   const offLine = params.offCount && params.offCount > 0
     ? `<p class="muted" style="margin-top:6px">Отмечено «Выключено / Нет показания»: ${params.offCount}. В журнале прочерк с пометкой, руководитель получил уведомление.</p>`
     : "";
+  const statusLine = params.statusCount && params.statusCount > 0
+    ? `<p class="muted" style="margin-top:6px">Отмечено «Обслуживание» или «Ремонт»: ${params.statusCount}. В журнале вместо температуры «${COLD_EQUIPMENT_STATUS_SHORT.service}» или «${COLD_EQUIPMENT_STATUS_SHORT.repair}».</p>`
+    : "";
   // Экран успеха остаётся в этом журнале: переходов в другие журналы здесь нет
   // (владелец, 2026-09-21) — только «Добавить ещё» для строчных журналов.
   const headline = params.headline ?? (params.mode === "appended" ? "Строка добавлена" : "Отметка записана");
-  return `<div class="card center" role="status" aria-live="polite"><div class="ok">${qrCheckHtml({ size: 112 })}</div><h2>${esc(headline)}</h2><p class="muted" style="margin-top:8px">Сохранено: ${esc(params.documentTitle)} · ${esc(params.employeeName)} · ${esc(params.timeLabel)}</p>${offLine}${
+  return `<div class="card center" role="status" aria-live="polite"><div class="ok">${qrCheckHtml({ size: 112 })}</div><h2>${esc(headline)}</h2><p class="muted" style="margin-top:8px">Сохранено: ${esc(params.documentTitle)} · ${esc(params.employeeName)} · ${esc(params.timeLabel)}</p>${offLine}${statusLine}${
     params.addMoreHref ? `<div class="sticky"><a class="btn" href="${esc(params.addMoreHref)}">${esc(params.addMoreLabel ?? "Добавить ещё")}</a></div>` : ""
   }</div>`;
 }

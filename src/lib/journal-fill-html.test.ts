@@ -11,13 +11,17 @@ import {
   menuMetaScript,
   metricOf,
   normRange,
+  readPostedMarks,
   renderEmployeeStep,
   renderForm,
   renderPinNoAccess,
   renderPinStep,
+  renderResult,
+  resolveFillMarks,
   tempMetaScript,
   QR_FILL_JS,
 } from "./journal-fill-html";
+import type { TaskFormSchema } from "./tasksflow-adapters/task-form";
 import { journalFillHints } from "./journal-fill-hints";
 import { QR_FILL_CORRECTION_PRESETS, QR_FILL_DEFAULT_CORRECTION } from "@/lib/qr-correction-presets";
 
@@ -236,5 +240,96 @@ describe("journal-fill-html: меню мастер-кабинета в QR-фор
   it("инлайн-скрипт заполняет только пустой выход и нетронутое время", () => {
     assert.match(QR_FILL_JS, /mP\.value===""\|\|pAuto/);
     assert.match(QR_FILL_JS, /if\(mT&&!tUser\)/);
+  });
+});
+
+describe("journal-fill-html: «Обслуживание»/«Ремонт» у холодильников", () => {
+  const fridgeForm: TaskFormSchema = {
+    fields: [
+      { type: "number", key: "t_a", label: "Холодильник №1 — t° · норма 2…6", unit: "°C", required: true, min: -40, max: 30 },
+      { type: "number", key: "t_b#2", label: "Морозильник — 2-й замер · норма -20…-18", unit: "°C", required: true, min: -40, max: 30 },
+    ],
+    statusFields: ["t_a", "t_b#2"],
+    submitLabel: "Сохранить замеры",
+  };
+  const base = { action: "/x", token: "t", who: "", correctionPresets: [] as string[], openedAt: 1, suggestions: {}, hints: {}, values: {} };
+  /** Кусок разметки одного поля: от его input до следующего поля. */
+  const fieldHtml = (html: string, key: string) => {
+    const start = html.indexOf(`id="f-${key}"`);
+    const next = html.indexOf(`<div class="fl `, start);
+    return html.slice(html.lastIndexOf(`<div class="fl `, start), next === -1 ? undefined : next);
+  };
+
+  it("рядом с «Выключено» — «Обслуживание» и «Ремонт», и только у холодильников", () => {
+    const html = renderForm({ ...base, form: fridgeForm });
+    assert.match(
+      html,
+      /<div class="chips offrow"><label class="chip offc"><input type="checkbox" name="off:t_a" value="1">Выключено<\/label><\/div><div class="chips offrow sts" role="group" aria-label="Вместо температуры"><label class="chip offc"><input type="radio" name="status:t_a" value="service">Обслуживание<\/label><label class="chip offc"><input type="radio" name="status:t_a" value="repair">Ремонт<\/label><\/div>/
+    );
+    // У каждого замера своя пара: `t_b#2` — второй замер морозильника.
+    assert.equal((html.match(/type="radio" name="status:/g) ?? []).length, 4);
+    assert.match(html, /name="status:t_b#2" value="repair"/);
+    // Склад (журнал климата) — только «Выключено», без отметок холодильника.
+    const climate = renderForm({ ...base, form: { fields: [{ type: "number", key: "r1t", label: "Склад Бакалея — t° · норма 18…22", unit: "°C", required: true }] } });
+    assert.match(climate, /name="off:r1t"/);
+    assert.doesNotMatch(climate, /name="status:|Обслуживание|Ремонт/);
+    // Форма без `statusFields` (другой клиент адаптера) — кнопок тоже нет.
+    assert.doesNotMatch(renderForm({ ...base, form: { fields: fridgeForm.fields } }), /name="status:/);
+  });
+
+  it("выбранная отметка: поле пустое, гаснет и не обязательно, подпись «в журнал «рем»»; с «Выключено» не смешивается", () => {
+    const html = renderForm({ ...base, values: { t_a: 4 }, form: fridgeForm, statusMarks: { t_a: "repair" }, offKeys: ["t_a", "t_b#2"] });
+    const a = fieldHtml(html, "t_a");
+    assert.match(a, /^<div class="fl up has-step big is-off">/);
+    assert.match(a, /id="f-t_a"[^>]*value=""/);
+    assert.match(a, /id="f-t_a"[^>]*data-req="1">/);
+    assert.doesNotMatch(a, /aria-required/);
+    assert.match(a, /<p class="st">Ремонт — в журнал «рем», норма не проверяется<\/p>/);
+    assert.match(a, /<label class="chip offc on"><input type="radio" name="status:t_a" value="repair" checked>Ремонт<\/label>/);
+    // «Выключено» у того же поля не отмечено: отметка сильнее.
+    assert.match(a, /<label class="chip offc"><input type="checkbox" name="off:t_a" value="1">Выключено<\/label>/);
+    const b = fieldHtml(html, "t_b#2");
+    assert.match(b, /<label class="chip offc on"><input type="checkbox" name="off:t_b#2" value="1" checked>Выключено<\/label>/);
+    assert.doesNotMatch(b, / checked>(Обслуживание|Ремонт)/);
+  });
+
+  it("разбор POST: отметки только у холодильников, «Обслуживание»/«Ремонт» сильнее «Выключено»", () => {
+    const posted = new FormData();
+    posted.set("action", "submit");
+    posted.set("t_a", "");
+    posted.set("off:t_a", "1");
+    posted.set("status:t_a", "repair");
+    posted.set("off:t_b#2", "1");
+    posted.set("status:t_b#2", "мусор");
+    posted.set("status:t_x", "service");
+    posted.set("off:comment", "1");
+    assert.deepEqual(readPostedMarks(posted, fridgeForm), { off: ["t_b#2"], statuses: { t_a: "repair" } });
+    const service = new FormData();
+    service.set("status:t_b#2", "service");
+    assert.deepEqual(readPostedMarks(service, fridgeForm), { off: [], statuses: { "t_b#2": "service" } });
+    // Склад: статуса нет в форме — `status:` игнорируется, «Выключено» остаётся.
+    const climate: TaskFormSchema = { fields: [{ type: "number", key: "r1t", label: "Склад — t° · норма 18…22", unit: "°C" }] };
+    const climatePosted = new FormData();
+    climatePosted.set("off:r1t", "1");
+    climatePosted.set("status:r1t", "repair");
+    assert.deepEqual(readPostedMarks(climatePosted, climate), { off: ["r1t"], statuses: {} });
+  });
+
+  it("в адаптер уходят только допустимые отметки (ядро записи по QR)", () => {
+    const schema = { ...fridgeForm, fields: [...fridgeForm.fields, { type: "text" as const, key: "comment", label: "Комментарий" }] };
+    const marks = resolveFillMarks(schema, ["t_a", "t_b#2", "comment", "nope"], { t_a: "service", comment: "repair", "t_b#2": "x" });
+    assert.deepEqual(marks.statuses, { t_a: "service" });
+    assert.deepEqual(Array.from(marks.offKeys), ["t_b#2"]);
+    assert.deepEqual(resolveFillMarks(null, ["t_a"], { t_a: "repair" }), { offKeys: new Set(), statuses: {} });
+  });
+
+  it("экран «Записано» называет отметки, скрипт держит одну отметку на поле и помнит выбор в черновике", () => {
+    const html = renderResult({ mode: "updated", documentTitle: "Журнал", employeeName: "Иванова", timeLabel: "18:31", addMoreHref: null, statusCount: 2 });
+    assert.match(html, /Отмечено «Обслуживание» или «Ремонт»: 2\. В журнале вместо температуры «обсл» или «рем»\./);
+    assert.doesNotMatch(renderResult({ mode: "updated", documentTitle: "Журнал", employeeName: "Иванова", timeLabel: "18:31", addMoreHref: null }), /Обслуживание/);
+    assert.match(QR_FILL_JS, /t\.name\.indexOf\("status:"\)===0/);
+    assert.match(QR_FILL_JS, /if\(t\.checked&&x!==t\) x\.checked=false;/);
+    assert.match(QR_FILL_JS, /"repair":"Ремонт — в журнал «рем», норма не проверяется"/);
+    assert.match(QR_FILL_JS, /if\(el\.type==="radio"\)\{ if\(el\.checked\)\{ v\[el\.name\]=el\.value;/);
   });
 });

@@ -24,6 +24,7 @@ import {
   type ColdEquipmentConfigItem,
   type ColdEquipmentDocumentConfig,
   type ColdEquipmentEntryData,
+  type ColdEquipmentStatus,
 } from "@/lib/cold-equipment-document";
 import { findTaskEmployee } from "@/lib/journal-roster-db";
 import {
@@ -33,7 +34,7 @@ import {
   type JournalAdapter,
   type TaskSchedule,
 } from "./types";
-import { OFF_NOTE_EQUIPMENT, correctionFromValues, parseOffKeys, type TaskFormField, type TaskFormSchema } from "./task-form";
+import { OFF_NOTE_EQUIPMENT, correctionFromValues, parseOffKeys, parseStatusMarks, type TaskFormField, type TaskFormSchema } from "./task-form";
 import { extractEmployeeId as employeeIdFromRowKey, rowKeyForEmployee } from "./row-key";
 import { NOT_COMMISSION_WHERE } from "@/lib/journal-roster";
 
@@ -42,7 +43,7 @@ const toDateKey = (d: Date) =>
   `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
 
 /** Ключ поля = ключ замера (`id` для первого, `id#2` для второго): первый замер совместим со старым `t_<id>`. */
-function fieldKeyForEquipment(slotKey: string) {
+export function fieldKeyForEquipment(slotKey: string) {
   return `t_${slotKey}`;
 }
 
@@ -55,7 +56,7 @@ function normFor(item: ColdEquipmentConfigItem, directory: NormMap): { min: numb
   return { min: item.min ?? fromDirectory?.min ?? null, max: item.max ?? fromDirectory?.max ?? null };
 }
 
-function buildFormFromConfig(
+export function buildFormFromConfig(
   config: ColdEquipmentDocumentConfig,
   employeeName: string | null,
   directory: NormMap = new Map()
@@ -82,7 +83,55 @@ function buildFormFromConfig(
       "Если оборудование выключено — отметьте «Выключено» в его карточке: в журнал попадёт пометка, руководитель получит уведомление.",
     submitLabel: "Сохранить замеры",
     fields,
+    // У каждого холодильника рядом с «Выключено» — «Обслуживание» и «Ремонт» (как на наклейке).
+    statusFields: fields.map((field) => field.key),
   };
+}
+
+/**
+ * Записи дня (своя первой) → значения формы: число, «Обслуживание»/«Ремонт»
+ * (в том числе поставленные с наклейки) или «Выключено». Чистая функция —
+ * её и проверяют тесты.
+ */
+export function prefillColdEquipmentForm(
+  form: TaskFormSchema,
+  config: ColdEquipmentDocumentConfig,
+  datas: ColdEquipmentEntryData[]
+): void {
+  let filled = 0;
+  const prefilledOff: string[] = [];
+  const prefilledStatuses: Record<string, ColdEquipmentStatus> = {};
+  const slots = expandColdEquipmentReadingSlots(config);
+  for (const field of form.fields) {
+    if (field.type !== "number") continue;
+    const slot = slots.find((candidate) => fieldKeyForEquipment(candidate.slotKey) === field.key);
+    if (!slot) continue;
+    for (const data of datas) {
+      const value = data.temperatures[slot.slotKey];
+      if (typeof value === "number" && Number.isFinite(value)) {
+        field.defaultValue = value;
+        filled += 1;
+        break;
+      }
+      // Отметка сильнее «Выключено»: в документе и в печати ячейка тоже «обсл»/«рем».
+      const status = data.statuses?.[slot.slotKey];
+      if (status) {
+        prefilledStatuses[field.key] = status;
+        filled += 1;
+        break;
+      }
+      if (data.corrections?.[slot.slotKey] === OFF_NOTE_EQUIPMENT) {
+        prefilledOff.push(field.key);
+        filled += 1;
+        break;
+      }
+    }
+  }
+  if (prefilledOff.length > 0) form.prefilledOff = prefilledOff;
+  if (Object.keys(prefilledStatuses).length > 0) form.prefilledStatuses = prefilledStatuses;
+  if (filled > 0) {
+    form.notice = `Сегодня уже записано: ${filled} из ${slots.length}. Значения подставлены — проверьте и измените, что нужно.`;
+  }
 }
 
 /**
@@ -106,32 +155,84 @@ async function prefillFromToday(
   if (entries.length === 0) return;
   const own = entries.find((entry) => entry.employeeId === employeeId) ?? null;
   const ordered = own ? [own, ...entries.filter((entry) => entry !== own)] : entries;
-  const datas = ordered.map((entry) => normalizeColdEquipmentEntryData(entry.data ?? null));
-  let filled = 0;
-  const prefilledOff: string[] = [];
-  const slots = expandColdEquipmentReadingSlots(config);
-  for (const field of form.fields) {
-    if (field.type !== "number") continue;
-    const slot = slots.find((candidate) => fieldKeyForEquipment(candidate.slotKey) === field.key);
-    if (!slot) continue;
-    for (const data of datas) {
-      const value = data.temperatures[slot.slotKey];
-      if (typeof value === "number" && Number.isFinite(value)) {
-        field.defaultValue = value;
-        filled += 1;
-        break;
-      }
-      if (data.corrections?.[slot.slotKey] === OFF_NOTE_EQUIPMENT) {
-        prefilledOff.push(field.key);
-        filled += 1;
-        break;
-      }
+  prefillColdEquipmentForm(
+    form,
+    config,
+    ordered.map((entry) => normalizeColdEquipmentEntryData(entry.data ?? null))
+  );
+}
+
+/**
+ * Что форма (QR журнала, TasksFlow) делает с записью сотрудника за день —
+ * по каждому замеру:
+ *   • «Обслуживание»/«Ремонт» — `statuses[замер]`, температура `null`, как
+ *     с наклейки (пометка «Выключено» у замера снимается — не смешиваются);
+ *   • «Выключено» — прочерк с пометкой, отметка «обсл»/«рем» снимается;
+ *   • число — температура, отметка снимается; вне нормы — комментарий;
+ *   • пустое поле или поля нет — как было (отметку с наклейки не снимаем).
+ * Отметка сильнее «Выключено», если форма без скриптов прислала обе.
+ */
+export function mergeColdEquipmentFormValues(params: {
+  config: ColdEquipmentDocumentConfig;
+  prior: ColdEquipmentEntryData;
+  values: Record<string, unknown> | null;
+  directory?: NormMap;
+}): ColdEquipmentEntryData {
+  const { config, prior, values } = params;
+  const directory = params.directory ?? new Map();
+  const off = parseOffKeys(values);
+  const marks = parseStatusMarks(values);
+  const correction = correctionFromValues(values);
+  // Значения по замерам: что прислали — записываем, чего в форме не было — оставляем как было.
+  const temperatures: Record<string, number | null> = { ...prior.temperatures };
+  const corrections: Record<string, string> = { ...(prior.corrections ?? {}) };
+  // «обсл»/«рем» с наклейки: остаются, пока в замер не пришло новое значение.
+  const statuses: Record<string, ColdEquipmentStatus> = { ...(prior.statuses ?? {}) };
+  for (const slot of expandColdEquipmentReadingSlots(config)) {
+    const key = fieldKeyForEquipment(slot.slotKey);
+    const mark = marks.get(key);
+    if (mark) {
+      temperatures[slot.slotKey] = null;
+      statuses[slot.slotKey] = mark;
+      if (corrections[slot.slotKey] === OFF_NOTE_EQUIPMENT) delete corrections[slot.slotKey];
+      continue;
     }
+    if (off.has(key)) {
+      temperatures[slot.slotKey] = null;
+      corrections[slot.slotKey] = OFF_NOTE_EQUIPMENT;
+      delete statuses[slot.slotKey];
+      continue;
+    }
+    if (!values || !(key in values)) {
+      if (temperatures[slot.slotKey] === undefined) temperatures[slot.slotKey] = null;
+      continue;
+    }
+    if (statuses[slot.slotKey] && (values[key] === null || values[key] === undefined || values[key] === "")) {
+      // Пустое поле формы не снимает отметку «обсл»/«рем».
+      continue;
+    }
+    delete statuses[slot.slotKey];
+    const raw = values[key];
+    if (typeof raw === "number" && Number.isFinite(raw)) temperatures[slot.slotKey] = raw;
+    else if (typeof raw === "string" && raw.trim() !== "") {
+      const parsed = Number(raw);
+      temperatures[slot.slotKey] = Number.isFinite(parsed) ? parsed : null;
+    } else temperatures[slot.slotKey] = null;
+    if (corrections[slot.slotKey] === OFF_NOTE_EQUIPMENT) delete corrections[slot.slotKey];
+    const t = temperatures[slot.slotKey];
+    const norm = normFor(slot, directory);
+    const lo = typeof norm.min === "number" && typeof norm.max === "number" ? Math.min(norm.min, norm.max) : norm.min;
+    const hi = typeof norm.min === "number" && typeof norm.max === "number" ? Math.max(norm.min, norm.max) : norm.max;
+    const outside = typeof t === "number" && ((typeof lo === "number" && t < lo) || (typeof hi === "number" && t > hi));
+    if (outside && correction) corrections[slot.slotKey] = correction;
   }
-  if (prefilledOff.length > 0) form.prefilledOff = prefilledOff;
-  if (filled > 0) {
-    form.notice = `Сегодня уже записано: ${filled} из ${slots.length}. Значения подставлены — проверьте и измените, что нужно.`;
-  }
+
+  return {
+    responsibleTitle: prior.responsibleTitle ?? null,
+    temperatures,
+    ...(Object.keys(corrections).length > 0 ? { corrections } : {}),
+    ...(Object.keys(statuses).length > 0 ? { statuses } : {}),
+  };
 }
 
 /** Нормы из справочника оборудования для строк, где в журнале норма не задана. */
@@ -243,62 +344,19 @@ export const coldEquipmentAdapter: JournalAdapter = {
     if (!employee) return false;
     const config = normalizeColdEquipmentDocumentConfig(doc.config);
 
-    // Walk config.equipment, pick matching `t_<equipmentId>` value
-    // from submitted form. Missing = null (equipment skipped).
-    // «Выключено» — прочерк с пометкой вместо показания; комментарий «что
-    // сделали» — к тем замерам, где температура вне нормы. Прежние пометки
-    // той же записи сохраняем, снятую пометку «Выключено» убираем.
-    const off = parseOffKeys(values ?? null);
-    const correction = correctionFromValues(values ?? null);
+    // По замерам: число, «Выключено» (прочерк с пометкой), «Обслуживание»/
+    // «Ремонт» (`statuses`, как с наклейки) или «как было»; комментарий «что
+    // сделали» — к замерам вне нормы. См. `mergeColdEquipmentFormValues`.
     const prior = await db.journalDocumentEntry.findUnique({
       where: { documentId_employeeId_date: { documentId, employeeId, date: dateObj } },
       select: { data: true },
     });
-    const priorData = normalizeColdEquipmentEntryData(prior?.data ?? null);
-    const directory = await loadDirectoryNorms(config);
-    // Значения по замерам: что прислали — записываем, чего в форме не было — оставляем как было.
-    const temperatures: Record<string, number | null> = { ...priorData.temperatures };
-    const corrections: Record<string, string> = { ...(priorData.corrections ?? {}) };
-    // «обсл»/«рем» с наклейки: остаются, пока в замер не пришло новое значение.
-    const statuses = { ...(priorData.statuses ?? {}) };
-    for (const slot of expandColdEquipmentReadingSlots(config)) {
-      const key = fieldKeyForEquipment(slot.slotKey);
-      if (off.has(key)) {
-        temperatures[slot.slotKey] = null;
-        corrections[slot.slotKey] = OFF_NOTE_EQUIPMENT;
-        delete statuses[slot.slotKey];
-        continue;
-      }
-      if (!values || !(key in values)) {
-        if (temperatures[slot.slotKey] === undefined) temperatures[slot.slotKey] = null;
-        continue;
-      }
-      if (statuses[slot.slotKey] && (values[key] === null || values[key] === undefined || values[key] === "")) {
-        // Пустое поле формы не снимает отметку «обсл»/«рем».
-        continue;
-      }
-      delete statuses[slot.slotKey];
-      const raw = values[key];
-      if (typeof raw === "number" && Number.isFinite(raw)) temperatures[slot.slotKey] = raw;
-      else if (typeof raw === "string" && raw.trim() !== "") {
-        const parsed = Number(raw);
-        temperatures[slot.slotKey] = Number.isFinite(parsed) ? parsed : null;
-      } else temperatures[slot.slotKey] = null;
-      if (corrections[slot.slotKey] === OFF_NOTE_EQUIPMENT) delete corrections[slot.slotKey];
-      const t = temperatures[slot.slotKey];
-      const norm = normFor(slot, directory);
-      const lo = typeof norm.min === "number" && typeof norm.max === "number" ? Math.min(norm.min, norm.max) : norm.min;
-      const hi = typeof norm.min === "number" && typeof norm.max === "number" ? Math.max(norm.min, norm.max) : norm.max;
-      const outside = typeof t === "number" && ((typeof lo === "number" && t < lo) || (typeof hi === "number" && t > hi));
-      if (outside && correction) corrections[slot.slotKey] = correction;
-    }
-
-    const data: ColdEquipmentEntryData = {
-      responsibleTitle: priorData.responsibleTitle ?? null,
-      temperatures,
-      ...(Object.keys(corrections).length > 0 ? { corrections } : {}),
-      ...(Object.keys(statuses).length > 0 ? { statuses } : {}),
-    };
+    const data: ColdEquipmentEntryData = mergeColdEquipmentFormValues({
+      config,
+      prior: normalizeColdEquipmentEntryData(prior?.data ?? null),
+      values: values ?? null,
+      directory: await loadDirectoryNorms(config),
+    });
 
     await db.journalDocumentEntry.upsert({
       where: {
