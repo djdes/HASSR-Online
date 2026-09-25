@@ -1,0 +1,465 @@
+{
+  "at": "2026-09-25T21:22:01.774Z",
+  "base": "http://localhost:3042",
+  "checks": [
+    {
+      "ac": "AC1",
+      "name": "живой маршрут: у журнала холодильников основной QR — только «Статус за сегодня», формы нет",
+      "ok": true,
+      "detail": {
+        "status": 200
+      }
+    },
+    {
+      "ac": "AC1",
+      "name": "наклейка: «Обслуживание» у X записано (200)",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "body": "{\"ok\":true,\"touched\":1,\"humidityTouched\":0,\"outOfRange\":false,\"status\":\"service\"}"
+      }
+    },
+    {
+      "ac": "AC1",
+      "name": "у каждого замера холодильника «Обслуживание» и «Ремонт»",
+      "ok": true,
+      "detail": {
+        "radios": 14,
+        "fields": 7
+      }
+    },
+    {
+      "ac": "AC1",
+      "name": "отметка с наклейки подставлена: X — «Обслуживание», поле пустое и погашено",
+      "ok": true,
+      "detail": {
+        "value": "",
+        "dimmed": true,
+        "required": false,
+        "note": "Обслуживание — в журнал «обсл», норма не проверяется",
+        "status": "service",
+        "off": false
+      }
+    },
+    {
+      "ac": "AC1",
+      "name": "«Ремонт»: поле очищено, погашено, не обязательно, норма не проверяется",
+      "ok": true,
+      "detail": {
+        "devShown": true,
+        "devAfter": false,
+        "y1": {
+          "value": "",
+          "dimmed": true,
+          "required": false,
+          "note": "Ремонт — в журнал «рем», норма не проверяется",
+          "status": "repair",
+          "off": false
+        }
+      }
+    },
+    {
+      "ac": "AC1",
+      "name": "«Выключено», «Обслуживание», «Ремонт» взаимоисключающие",
+      "ok": true,
+      "detail": {
+        "y2": {
+          "value": "",
+          "dimmed": true,
+          "required": false,
+          "note": "Выключено — руководитель получит уведомление",
+          "status": null,
+          "off": true
+        },
+        "y3": {
+          "value": "",
+          "dimmed": true,
+          "required": false,
+          "note": "Обслуживание — в журнал «обсл», норма не проверяется",
+          "status": "service",
+          "off": false
+        },
+        "y4": {
+          "value": "",
+          "dimmed": true,
+          "required": false,
+          "note": "Ремонт — в журнал «рем», норма не проверяется",
+          "status": "repair",
+          "off": false
+        }
+      }
+    },
+    {
+      "ac": "AC1",
+      "name": "повторное касание снимает «Ремонт», поле снова обязательное",
+      "ok": true,
+      "detail": {
+        "y5": {
+          "value": "",
+          "dimmed": false,
+          "required": true,
+          "note": "Норма 2…6 °C",
+          "status": null,
+          "off": false
+        },
+        "y6": {
+          "value": "",
+          "dimmed": true,
+          "required": false,
+          "note": "Ремонт — в журнал «рем», норма не проверяется",
+          "status": "repair",
+          "off": false
+        }
+      }
+    },
+    {
+      "ac": "AC1",
+      "name": "ошибка «Не заполнено» только про пустой Z, с подсказкой про «Обслуживание»/«Ремонт»",
+      "ok": true,
+      "detail": "Не заполнено: «Стол с охлаждаемой ванной». Если холодильник выключен, на обслуживании или в ремонте — отметьте это в его карточке вместо температуры: «Выключено», «Обслуживание» или «Ремонт»."
+    },
+    {
+      "ac": "AC1",
+      "name": "повторный показ формы сохраняет выбор (X «Обслуживание», Y и W «Ремонт»)",
+      "ok": true,
+      "detail": {
+        "xR": {
+          "value": "",
+          "dimmed": true,
+          "required": false,
+          "note": "Обслуживание — в журнал «обсл», норма не проверяется",
+          "status": "service",
+          "off": false
+        },
+        "yR": {
+          "value": "",
+          "dimmed": true,
+          "required": false,
+          "note": "Ремонт — в журнал «рем», норма не проверяется",
+          "status": "repair",
+          "off": false
+        },
+        "wR": {
+          "value": "",
+          "dimmed": true,
+          "required": false,
+          "note": "Ремонт — в журнал «рем», норма не проверяется",
+          "status": "repair",
+          "off": false
+        }
+      }
+    },
+    {
+      "ac": "AC1",
+      "name": "«Записано»: отмечено «Обслуживание» или «Ремонт»: 3",
+      "ok": true,
+      "detail": "Отметка записанаСохранено: Журнал контроля температурного режима холодильного и морозильного оборудования · Сентябрь 2026, с 16 по 30 · Алексей Орлов · 00:20Отмечено «Обслуживание» или «Ремонт»: 3. В журнале вместо температуры «обсл» или «рем»."
+    },
+    {
+      "ac": "AC1",
+      "name": "в записи — как с наклейки: statuses X=service, Y=repair, W=repair, температуры null; Z=4; без «Выключено» и комментариев",
+      "ok": true,
+      "detail": {
+        "responsibleTitle": null,
+        "temperatures": {
+          "cold-equipment-13bb6999-ea92-4471-ac2b-9210aedac733": null,
+          "cold-equipment-1fa9ecd5-5a6c-4b96-aaa0-a19fb89569ad": -19,
+          "cold-equipment-539ae403-dec1-413b-a6f3-81d2b5cefeb3": 4,
+          "cold-equipment-6f895bbb-7b6f-44bc-9fa3-d27d7bc8bf7c": 4,
+          "cold-equipment-81370756-e7fc-4ed4-8047-42ffeef4a01e": null,
+          "cold-equipment-b9ee8535-26bf-4817-a4ce-ffb7dc0bb8b5": null,
+          "cold-equipment-c0b147dc-a7f8-4700-b6c9-59c2dd7411f7": 2
+        },
+        "statuses": {
+          "cold-equipment-13bb6999-ea92-4471-ac2b-9210aedac733": "service",
+          "cold-equipment-81370756-e7fc-4ed4-8047-42ffeef4a01e": "repair",
+          "cold-equipment-b9ee8535-26bf-4817-a4ce-ffb7dc0bb8b5": "repair"
+        }
+      }
+    },
+    {
+      "ac": "AC1",
+      "name": "запись с наклейки не тронута (X — service у сотрудника Б)",
+      "ok": true,
+      "detail": {
+        "cold-equipment-13bb6999-ea92-4471-ac2b-9210aedac733": "service"
+      }
+    },
+    {
+      "ac": "AC1",
+      "name": "повторное открытие: своя отметка W «Ремонт» выбрана, Z=4 подставлено",
+      "ok": true,
+      "detail": {
+        "w0": {
+          "value": "",
+          "dimmed": true,
+          "required": false,
+          "note": "Ремонт — в журнал «рем», норма не проверяется",
+          "status": "repair",
+          "off": false
+        },
+        "z0": {
+          "value": "4",
+          "dimmed": false,
+          "required": true,
+          "note": "В норме",
+          "status": null,
+          "off": false
+        }
+      }
+    },
+    {
+      "ac": "AC1",
+      "name": "снятие отметки + температура: W=-19 без отметки, Y «рем» и X «обсл» на месте",
+      "ok": true,
+      "detail": {
+        "responsibleTitle": null,
+        "temperatures": {
+          "cold-equipment-13bb6999-ea92-4471-ac2b-9210aedac733": null,
+          "cold-equipment-1fa9ecd5-5a6c-4b96-aaa0-a19fb89569ad": -19,
+          "cold-equipment-539ae403-dec1-413b-a6f3-81d2b5cefeb3": 4,
+          "cold-equipment-6f895bbb-7b6f-44bc-9fa3-d27d7bc8bf7c": 4,
+          "cold-equipment-81370756-e7fc-4ed4-8047-42ffeef4a01e": -19,
+          "cold-equipment-b9ee8535-26bf-4817-a4ce-ffb7dc0bb8b5": null,
+          "cold-equipment-c0b147dc-a7f8-4700-b6c9-59c2dd7411f7": 2
+        },
+        "statuses": {
+          "cold-equipment-13bb6999-ea92-4471-ac2b-9210aedac733": "service",
+          "cold-equipment-b9ee8535-26bf-4817-a4ce-ffb7dc0bb8b5": "repair"
+        }
+      }
+    },
+    {
+      "ac": "AC1",
+      "name": "в документе на сайте: X «обсл», Y «рем», Z 4, W -19",
+      "ok": true,
+      "detail": {
+        "X": "обсл",
+        "Y": "рем",
+        "Z": "4",
+        "W": "-19"
+      }
+    },
+    {
+      "ac": "AC1",
+      "name": "в печати (PDF) есть «обсл» и «рем»",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "obsl": 1,
+        "rem": 1
+      }
+    },
+    {
+      "ac": "AC1+",
+      "name": "«Статус за сегодня» (живой QR журнала): X «обслуживание — в журнале «обсл»», Y «ремонт — в журнале «рем»»",
+      "ok": true,
+      "detail": {
+        "X": "обслуживание — в журнале «обсл»",
+        "Y": "ремонт — в журнале «рем»",
+        "Z": "замер снят: +4 °C"
+      }
+    },
+    {
+      "ac": "AC2",
+      "name": "сайт, телефон 390 (touch): «Камера» видна, «Загрузить» есть",
+      "ok": true,
+      "detail": {
+        "cameraVisible": true,
+        "uploadVisible": true,
+        "media": {
+          "pointerCoarse": true,
+          "anyPointerCoarse": true,
+          "width": 390
+        }
+      }
+    },
+    {
+      "ac": "AC2",
+      "name": "QR-страница, телефон 390 (touch): «Сфотографировать приказ» видна",
+      "ok": true,
+      "detail": {
+        "qrCamera": true,
+        "qrDesk": false,
+        "deskLink": "/journals/hygiene/documents/cmugz8bb40044kw9mytpdsioo"
+      }
+    },
+    {
+      "ac": "AC2",
+      "name": "сайт, планшет 1024 (touch): «Камера» видна, «Загрузить» есть",
+      "ok": true,
+      "detail": {
+        "cameraVisible": true,
+        "uploadVisible": true,
+        "media": {
+          "pointerCoarse": true,
+          "anyPointerCoarse": true,
+          "width": 1024
+        }
+      }
+    },
+    {
+      "ac": "AC2",
+      "name": "QR-страница, планшет 1024 (touch): «Сфотографировать приказ» видна",
+      "ok": true,
+      "detail": {
+        "qrCamera": true,
+        "qrDesk": false,
+        "deskLink": "/journals/hygiene/documents/cmugz8bb40044kw9mytpdsioo"
+      }
+    },
+    {
+      "ac": "AC2",
+      "name": "сайт, компьютер 1024 (мышь): «Камера» скрыта, «Загрузить» есть",
+      "ok": true,
+      "detail": {
+        "cameraVisible": false,
+        "uploadVisible": true,
+        "media": {
+          "pointerCoarse": false,
+          "anyPointerCoarse": false,
+          "width": 1024
+        }
+      }
+    },
+    {
+      "ac": "AC2",
+      "name": "QR-страница, компьютер 1024 (мышь): «Сфотографировать приказ» скрыта, вместо неё — «загрузите файл в кабинете»",
+      "ok": true,
+      "detail": {
+        "qrCamera": false,
+        "qrDesk": true,
+        "deskLink": "/journals/hygiene/documents/cmugz8bb40044kw9mytpdsioo"
+      }
+    },
+    {
+      "ac": "AC2",
+      "name": "сайт, компьютер 1440 (мышь): «Камера» скрыта, «Загрузить» есть",
+      "ok": true,
+      "detail": {
+        "cameraVisible": false,
+        "uploadVisible": true,
+        "media": {
+          "pointerCoarse": false,
+          "anyPointerCoarse": false,
+          "width": 1440
+        }
+      }
+    },
+    {
+      "ac": "AC2",
+      "name": "QR-страница, компьютер 1440 (мышь): «Сфотографировать приказ» скрыта, вместо неё — «загрузите файл в кабинете»",
+      "ok": true,
+      "detail": {
+        "qrCamera": false,
+        "qrDesk": true,
+        "deskLink": "/journals/hygiene/documents/cmugz8bb40044kw9mytpdsioo"
+      }
+    },
+    {
+      "ac": "AC3",
+      "name": "today-390: «-18,5» помещается в поле (место под текст ≥ ширины числа), кнопки не вылезают",
+      "ok": true,
+      "detail": [
+        {
+          "w": 224,
+          "text": 168,
+          "need": 36,
+          "below": true
+        },
+        {
+          "w": 224,
+          "text": 168,
+          "need": 36,
+          "below": true
+        },
+        {
+          "w": 224,
+          "text": 168,
+          "need": 36,
+          "below": true
+        }
+      ]
+    },
+    {
+      "ac": "AC3",
+      "name": "entity-390: «-18,5» помещается в поле (место под текст ≥ ширины числа), кнопки не вылезают",
+      "ok": true,
+      "detail": [
+        {
+          "w": 96,
+          "text": 40,
+          "need": 36,
+          "below": true
+        },
+        {
+          "w": 96,
+          "text": 40,
+          "need": 36,
+          "below": true
+        },
+        {
+          "w": 96,
+          "text": 40,
+          "need": 36,
+          "below": true
+        }
+      ]
+    },
+    {
+      "ac": "AC3",
+      "name": "today-1440: «-18,5» помещается в поле (место под текст ≥ ширины числа), кнопки не вылезают",
+      "ok": true,
+      "detail": [
+        {
+          "w": 140,
+          "text": 84,
+          "need": 36,
+          "below": false
+        },
+        {
+          "w": 140,
+          "text": 84,
+          "need": 36,
+          "below": false
+        },
+        {
+          "w": 140,
+          "text": 84,
+          "need": 36,
+          "below": false
+        }
+      ]
+    },
+    {
+      "ac": "AC3",
+      "name": "entity-1440: «-18,5» помещается в поле (место под текст ≥ ширины числа), кнопки не вылезают",
+      "ok": true,
+      "detail": [
+        {
+          "w": 306,
+          "text": 250,
+          "need": 36,
+          "below": false
+        },
+        {
+          "w": 306,
+          "text": 250,
+          "need": 36,
+          "below": false
+        },
+        {
+          "w": 306,
+          "text": 250,
+          "need": 36,
+          "below": false
+        }
+      ]
+    }
+  ],
+  "consoleErrors": {
+    "site-hygiene телефон 390 (touch)": [
+      "A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh"
+    ]
+  }
+}

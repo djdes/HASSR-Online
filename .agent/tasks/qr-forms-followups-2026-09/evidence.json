@@ -1,0 +1,43 @@
+{
+  "task": "qr-forms-followups-2026-09",
+  "date": "2026-09-26",
+  "verdict": "PASS",
+  "checks": {
+    "typecheck": { "command": "npm run typecheck", "exit": 0, "log": "typecheck.log" },
+    "unit": { "command": "npm test", "tests": 2312, "pass": 2312, "fail": 0, "log": "test-summary.txt" },
+    "lint": { "command": "npx eslint <changed files>", "errors": 0, "warnings": 3, "note": "pre-existing unused imports in cold-equipment-document-client.tsx" },
+    "e2e": {
+      "command": "npx tsx --env-file=.env .agent/tasks/qr-forms-followups-2026-09/e2e/qr-followups.ts",
+      "pass": 29,
+      "total": 29,
+      "raw": "e2e/qr-followups.json",
+      "viewports": ["390x844 touch", "1024x1366 touch", "1024x768", "1440x900"]
+    }
+  },
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "caveat": "on the live route the fridge journal's main QR shows only the day status (object-journal gate since f4f2da11/33d8559b); the form was driven through the real route handlers with only that gate lifted in the test process",
+      "evidence": ["e2e/qr-followups.json [AC1] x16", "src/lib/tasksflow-adapters/cold-equipment.test.ts", "src/lib/journal-fill-html.test.ts", "evidence/ac1-qr-fridge-repair-390.png", "evidence/ac1-site-cold-table-1440.png", "PDF text via pdfjs: обсл + рем"]
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": ["e2e/qr-followups.json [AC2] x8", "src/lib/order-scan-camera.test.ts", "evidence/ac2-site-tablet-1024-touch.png", "evidence/ac2-site-desktop-1024.png", "evidence/ac2-qr-tablet-1024-touch.png", "evidence/ac2-qr-desktop-1440.png"]
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": ["e2e/qr-followups.json [AC3] x4", "evidence/before-cold-cards-390.png", "evidence/before-cold-cards-1440.png", "evidence/ac3-today-390.png", "evidence/ac3-today-1440.png", "evidence/ac3-entity-390.png", "evidence/ac3-entity-1440.png"]
+    },
+    "AC4": { "status": "PASS", "evidence": ["typecheck.log", "test-summary.txt"] }
+  },
+  "extra": ["«Статус за сегодня» of the fridge journal main QR names обсл/рем (coldEquipmentDaySummary, e2e [AC1+])"],
+  "open_issues": [
+    "general QR form for fridges is gated to status-only by product decision — the new buttons are latent until the owner reopens it",
+    "a same-day status in another employee's entry still overrides a later reading in own entry (same on the sticker)",
+    "pre-existing hydration warning in the dashboard header on phones (layout, unrelated)"
+  ],
+  "notes": [
+    "evidence/*.png are gitignored (.agent/**/*.png) and stay local in the worktree",
+    "no production build was run; dev server stopped and .next-e2e deleted after the run"
+  ]
+}
