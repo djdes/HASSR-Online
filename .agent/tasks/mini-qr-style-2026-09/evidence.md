@@ -15,6 +15,8 @@
 
 ## Как проверяли
 
+Снимки (`evidence/before/*.png`, `evidence/after/*.png`, `evidence/compare-*.png`, `evidence/qr-reference.png`) лежат рядом в папке задачи этой копии (`C:/wt/pdf`); по правилу `.gitignore` `.agent/**/*.png` в git не попадают — как и у остальных задач. В git — отчёты автопроверки (`evidence/*/report.json`, `evidence/summary.*`) и скрипты, которыми снимки воспроизводятся.
+
 - Стенд: личная БД `wesetup_wt_pdf`; dev-сервер `next dev --webpack -p 3041` (`NEXT_DIST_DIR=.next-e2e`), запущен из `C:/wt/pdf`.
 - Данные: [`e2e/setup.ts`](e2e/setup.ts) — организация «Кафе «Север»», руководитель и повар с привязанным Telegram; [`e2e/prepare.ts`](e2e/prepare.ts) — 5 документов через `POST /api/journal-documents` и одна задача, взятая поваром через `POST /api/journal-task-claims`.
 - Вход «как в Telegram» ([`e2e/tg.ts`](e2e/tg.ts)): настоящий `telegram-web-app.js`, эмулятор клиента `mini-sweep-2026-09/tg-host.js` и `initData`, подписанный токеном бота из `.env`, — тот же путь `signIn("telegram")`, что в проде. Код входа не менялся и не ослаблялся. Тема Telegram — `tgWebAppThemeParams` (светлая/тёмная), тема профиля выставляется та же.
