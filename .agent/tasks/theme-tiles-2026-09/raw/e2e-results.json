@@ -1,0 +1,609 @@
+{
+  "run": "muim59bv",
+  "startedAt": "2026-09-26T16:37:48.283Z",
+  "checks": [
+    {
+      "ac": "setup",
+      "name": "мгновенная регистрация владельца → новая организация и вход",
+      "ok": true,
+      "detail": {
+        "status": 200
+      }
+    },
+    {
+      "ac": "setup",
+      "name": "владелец организации, тема в профиле по умолчанию",
+      "ok": true,
+      "detail": {
+        "role": "manager",
+        "themePreference": "light"
+      }
+    },
+    {
+      "ac": "AC2",
+      "name": "1440: в меню профиля блок «Тема» — три карточки в ряд, подписи «Светлая / Тёмная / Как на устройстве»",
+      "ok": true,
+      "detail": {
+        "states": [
+          {
+            "mode": "light",
+            "checked": "true",
+            "label": "Светлая",
+            "role": "menuitemradio"
+          },
+          {
+            "mode": "dark",
+            "checked": "false",
+            "label": "Тёмная",
+            "role": "menuitemradio"
+          },
+          {
+            "mode": "system",
+            "checked": "false",
+            "label": "Как на устройстве",
+            "role": "menuitemradio"
+          }
+        ],
+        "tiles": [
+          {
+            "x": 1129,
+            "y": 426,
+            "w": 87,
+            "h": 106
+          },
+          {
+            "x": 1220,
+            "y": 426,
+            "w": 87,
+            "h": 106
+          },
+          {
+            "x": 1312,
+            "y": 426,
+            "w": 87,
+            "h": 106
+          }
+        ],
+        "frames": [
+          {
+            "x": 1133,
+            "y": 430,
+            "w": 79,
+            "h": 56
+          },
+          {
+            "x": 1224,
+            "y": 430,
+            "w": 79,
+            "h": 56
+          },
+          {
+            "x": 1316,
+            "y": 430,
+            "w": 79,
+            "h": 56
+          }
+        ],
+        "labelFontSize": "12px",
+        "labelLines": [
+          1,
+          1,
+          2
+        ]
+      }
+    },
+    {
+      "ac": "AC2",
+      "name": "1440: выбрана карточка текущей темы (светлая), остальные — нет",
+      "ok": true,
+      "detail": {
+        "start": {
+          "theme": "light",
+          "storage": {
+            "mode": "light",
+            "auto": null,
+            "effective": "light"
+          }
+        },
+        "checked": [
+          "light"
+        ]
+      }
+    },
+    {
+      "ac": "AC2",
+      "name": "1440: пункта «Внешний вид» в меню больше нет; владельцу — маленькая ссылка «Логотип и цвета» в «Брендинг»",
+      "ok": true,
+      "detail": {
+        "hasAppearanceItem": false,
+        "brandingHref": "/settings/organization#branding"
+      }
+    },
+    {
+      "ac": "AC4",
+      "name": "1440 светлая: выбранная — рамка #5566f6 и индиго-подпись; контраст подписи ≥ 4.5",
+      "ok": true,
+      "detail": {
+        "selected": {
+          "checked": "true",
+          "frameBorder": "rgb(85, 102, 246)",
+          "labelColor": "rgb(56, 72, 199)",
+          "labelWeight": "600"
+        },
+        "unselected": {
+          "checked": "false",
+          "frameBorder": "rgb(220, 223, 237)",
+          "labelColor": "rgb(60, 64, 83)",
+          "labelWeight": "500"
+        },
+        "panelBg": "rgb(255, 255, 255)",
+        "labelContrast": 7.19,
+        "unselectedContrast": 10.24
+      }
+    },
+    {
+      "ac": "AC2",
+      "name": "1440: «Тёмная» — кабинет тёмный сразу, меню не закрылось, выбрана «Тёмная»",
+      "ok": true,
+      "detail": {
+        "ms": 372,
+        "checked": [
+          "dark"
+        ]
+      }
+    },
+    {
+      "ac": "AC2",
+      "name": "сохранение как раньше: POST /api/me/theme { theme: 'dark' }, в localStorage режим dark",
+      "ok": true,
+      "detail": {
+        "post": {
+          "theme": "dark",
+          "status": 200
+        },
+        "storage": {
+          "mode": "dark",
+          "auto": "0",
+          "effective": "dark"
+        }
+      }
+    },
+    {
+      "ac": "AC4",
+      "name": "1440 тёмная: превью не перекрашиваются (светлая карточка белая), рамка и подпись выбранной — индиго тёмной темы, контраст ≥ 4.5",
+      "ok": true,
+      "detail": {
+        "previews": {
+          "lightCard": "rgb(255, 255, 255)",
+          "lightDot": "rgb(85, 102, 246)",
+          "darkCard": "rgb(58, 55, 87)",
+          "darkDot": "rgb(112, 129, 248)",
+          "systemLayers": 2,
+          "systemLightCard": "rgb(255, 255, 255)",
+          "systemDarkCard": "rgb(58, 55, 87)",
+          "systemClip": "polygon(100% 0px, 100% 100%, 0px 100%)"
+        },
+        "selected": {
+          "checked": "true",
+          "frameBorder": "rgb(112, 129, 248)",
+          "labelColor": "rgb(163, 173, 255)",
+          "labelWeight": "600"
+        },
+        "panelBg": "rgb(58, 55, 87)",
+        "labelContrast": 5.35,
+        "unselectedContrast": 7.23
+      }
+    },
+    {
+      "ac": "AC2",
+      "name": "1440: клавиатура — стрелка влево ведёт по ряду, Enter выбирает, меню не закрывается",
+      "ok": true,
+      "detail": {
+        "focusedAfterArrowLeft": "light",
+        "checked": [
+          "light"
+        ]
+      }
+    },
+    {
+      "ac": "AC2",
+      "name": "1440: вверх-вниз карточки — обычные пункты меню: с последней карточки стрелка вниз ведёт к «Логотип и цвета»",
+      "ok": true,
+      "detail": {
+        "lastTile": "system",
+        "afterDown": "theme-branding-link"
+      }
+    },
+    {
+      "ac": "AC2",
+      "name": "1440: после перезагрузки тема тёмная (localStorage + User.themePreference), без мигания светлой и без лишних POST",
+      "ok": true,
+      "detail": {
+        "theme": "dark",
+        "storage": {
+          "mode": "dark",
+          "auto": "0",
+          "effective": "dark"
+        },
+        "posts": [],
+        "flips": [
+          "dcl@872:dark"
+        ],
+        "db": "dark"
+      }
+    },
+    {
+      "ac": "AC3",
+      "name": "«Как на устройстве» следует системной теме на лету (prefers-color-scheme light → dark → light)",
+      "ok": true,
+      "detail": {
+        "sysLight": {
+          "theme": "light",
+          "storage": {
+            "mode": "system",
+            "auto": "0",
+            "effective": "light"
+          },
+          "checked": [
+            "system"
+          ]
+        },
+        "sysDark": "dark",
+        "sysBack": "light"
+      }
+    },
+    {
+      "ac": "AC3",
+      "name": "«Как на устройстве»: система стала тёмной — страница сама перешла на тёмную и сохранила её; после перезагрузки тёмная, без мигания и лишних POST",
+      "ok": true,
+      "detail": {
+        "osPostStatus": 200,
+        "theme": "dark",
+        "storage": {
+          "mode": "system",
+          "auto": "0",
+          "effective": "dark"
+        },
+        "posts": [],
+        "flips": [
+          "dcl@259:dark"
+        ],
+        "db": "dark"
+      }
+    },
+    {
+      "ac": "AC3",
+      "name": "включена смена по времени суток: тема по часу, ни одна карточка не выбрана, подсказка «выбор выключит смену»",
+      "ok": true,
+      "detail": {
+        "byHour": "dark",
+        "theme": "dark",
+        "checked": [],
+        "note": "Сейчас тема меняется по времени суток. Выберите вариант — смена по времени выключится.",
+        "state": "on"
+      }
+    },
+    {
+      "ac": "AC3",
+      "name": "нажатие на карточку выключает смену по времени суток — и меню говорит «выключена»",
+      "ok": true,
+      "detail": {
+        "theme": "light",
+        "storage": {
+          "mode": "light",
+          "auto": "0",
+          "effective": "light"
+        },
+        "checked": [
+          "light"
+        ],
+        "note": "Смена по времени суток выключена.\nВключить снова",
+        "state": "turned-off"
+      }
+    },
+    {
+      "ac": "AC3",
+      "name": "«Включить снова» возвращает смену по времени суток",
+      "ok": true,
+      "detail": {
+        "theme": "dark",
+        "storage": {
+          "mode": "light",
+          "auto": "1",
+          "effective": "dark"
+        },
+        "checked": [],
+        "state": "on"
+      }
+    },
+    {
+      "ac": "AC3",
+      "name": "снова карточка → смена по времени выключена, «Светлая»",
+      "ok": true,
+      "detail": {
+        "mode": "light",
+        "auto": "0",
+        "effective": "light"
+      }
+    },
+    {
+      "ac": "AC3",
+      "name": "/settings/appearance: те же карточки; галочка «Менять по времени суток» снимается нажатием на карточку",
+      "ok": true,
+      "detail": {
+        "settingsAuto": {
+          "checked": [],
+          "storage": {
+            "mode": "light",
+            "auto": "1",
+            "effective": "dark"
+          },
+          "note": 0
+        },
+        "settingsAfter": {
+          "box": false,
+          "storage": {
+            "mode": "light",
+            "auto": "0",
+            "effective": "light"
+          },
+          "checked": [
+            "light"
+          ]
+        }
+      }
+    },
+    {
+      "ac": "setup",
+      "name": "вход владельца с телефона",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "session": true
+      }
+    },
+    {
+      "ac": "AC1",
+      "name": "390: в меню профиля (лист снизу) подзаголовок «Тема» и три карточки в один ряд, крупные",
+      "ok": true,
+      "detail": {
+        "tiles": [
+          {
+            "x": 21,
+            "y": 597,
+            "w": 109,
+            "h": 133
+          },
+          {
+            "x": 140,
+            "y": 597,
+            "w": 109,
+            "h": 133
+          },
+          {
+            "x": 260,
+            "y": 597,
+            "w": 109,
+            "h": 133
+          }
+        ],
+        "frames": [
+          {
+            "x": 21,
+            "y": 597,
+            "w": 109,
+            "h": 77
+          },
+          {
+            "x": 140,
+            "y": 597,
+            "w": 109,
+            "h": 77
+          },
+          {
+            "x": 260,
+            "y": 597,
+            "w": 109,
+            "h": 77
+          }
+        ],
+        "labelFontSize": "16px",
+        "labelLines": [
+          1,
+          1,
+          2
+        ]
+      }
+    },
+    {
+      "ac": "AC1",
+      "name": "390: строки «Внешний вид» нет; «Логотип и цвета» — маленькая ссылка под карточками (владельцу)",
+      "ok": true,
+      "detail": {
+        "hasAppearanceRow": false
+      }
+    },
+    {
+      "ac": "AC1",
+      "name": "390: без горизонтальной прокрутки",
+      "ok": true,
+      "detail": {
+        "pageScrollWidth": 390,
+        "root": {
+          "client": 388,
+          "scroll": 388
+        },
+        "sheetScroll": {
+          "sheetHeight": 743,
+          "bodyClient": 579,
+          "bodyScroll": 602
+        }
+      }
+    },
+    {
+      "ac": "AC1",
+      "name": "390: новая сессия телефона открылась в теме из профиля (другое устройство)",
+      "ok": true,
+      "detail": {
+        "theme": "light",
+        "db": "light"
+      }
+    },
+    {
+      "ac": "AC4",
+      "name": "390 светлая: выбранная карточка — рамка #5566f6 и индиго-подпись, контраст ≥ 4.5",
+      "ok": true,
+      "detail": {
+        "selected": {
+          "checked": "true",
+          "frameBorder": "rgb(85, 102, 246)",
+          "labelColor": "rgb(56, 72, 199)",
+          "labelWeight": "600"
+        },
+        "panelBg": "rgb(255, 255, 255)",
+        "labelContrast": 7.19
+      }
+    },
+    {
+      "ac": "AC1",
+      "name": "390: нажатие «Тёмная» — тема сразу тёмная, лист остаётся открытым, сохранено на сервер",
+      "ok": true,
+      "detail": {
+        "ms": 137,
+        "post": {
+          "theme": "dark",
+          "status": 200
+        }
+      }
+    },
+    {
+      "ac": "AC4",
+      "name": "390 тёмная: превью остаются собой, подпись выбранной читается (контраст ≥ 4.5)",
+      "ok": true,
+      "detail": {
+        "previews": {
+          "lightCard": "rgb(255, 255, 255)",
+          "lightDot": "rgb(85, 102, 246)",
+          "darkCard": "rgb(58, 55, 87)",
+          "darkDot": "rgb(112, 129, 248)",
+          "systemLayers": 2,
+          "systemLightCard": "rgb(255, 255, 255)",
+          "systemDarkCard": "rgb(58, 55, 87)",
+          "systemClip": "polygon(100% 0px, 100% 100%, 0px 100%)"
+        },
+        "selected": {
+          "checked": "true",
+          "frameBorder": "rgb(112, 129, 248)",
+          "labelColor": "rgb(163, 173, 255)",
+          "labelWeight": "600"
+        },
+        "panelBg": "rgb(58, 55, 87)",
+        "labelContrast": 5.35
+      }
+    },
+    {
+      "ac": "AC4",
+      "name": "390 тёмная: разделители листа — тёмная линия темы, а не белая полоса",
+      "ok": true,
+      "detail": {
+        "separators": [
+          "rgba(255, 255, 255, 0.12)",
+          "rgba(255, 255, 255, 0.12)"
+        ]
+      }
+    },
+    {
+      "ac": "AC1",
+      "name": "390: выбор сохраняется после перезагрузки (тёмная → перезагрузка → тёмная; светлая → перезагрузка → светлая), без мигания и лишних POST",
+      "ok": true,
+      "detail": {
+        "phoneReload1": {
+          "theme": "dark",
+          "storage": {
+            "mode": "dark",
+            "auto": "0",
+            "effective": "dark"
+          },
+          "posts": [],
+          "flips": [
+            "dcl@521:dark"
+          ],
+          "db": "dark"
+        },
+        "phoneChecked1": [
+          "dark"
+        ],
+        "phoneReload2": {
+          "theme": "light",
+          "storage": {
+            "mode": "light",
+            "auto": "0",
+            "effective": "light"
+          },
+          "posts": [],
+          "flips": [
+            "dcl@192:light"
+          ],
+          "db": "light"
+        }
+      }
+    },
+    {
+      "ac": "AC1",
+      "name": "390: клавиатура в листе — стрелка вправо выбирает «Тёмную», влево — обратно",
+      "ok": true,
+      "detail": {
+        "focused": "dark",
+        "checked": [
+          "dark"
+        ]
+      }
+    },
+    {
+      "ac": "AC1",
+      "name": "«Логотип и цвета» ведёт в «Настройки → Организация», блок «Брендинг» (логотип и цвет — там), лист закрыт",
+      "ok": true,
+      "detail": {
+        "url": "http://localhost:3046/settings/organization#branding",
+        "branding": {
+          "top": 96,
+          "text": "Брендинг\n\nWhite-label: ваш цвет и логотип на дашборде, печат",
+          "sheetOpen": false
+        }
+      }
+    },
+    {
+      "ac": "AC1",
+      "name": "повар: карточки темы есть и работают (тема личная), ссылки «Логотип и цвета» нет",
+      "ok": true,
+      "detail": {
+        "cookLink": 0,
+        "switchedTo": "dark",
+        "db": "dark"
+      }
+    },
+    {
+      "ac": "AC2",
+      "name": "шеф (без admin.full): карточки есть, ссылки «Логотип и цвета» нет — страница его всё равно не пускает",
+      "ok": true,
+      "detail": {
+        "chefLink": 0,
+        "redirectedTo": "http://localhost:3046/settings"
+      }
+    }
+  ],
+  "pageErrors": [
+    {
+      "page": "owner-390",
+      "message": "Invalid or unexpected token"
+    },
+    {
+      "page": "owner-390",
+      "message": "Loading chunk app/layout failed.\n(timeout: http://localhost:3046/_next/static/chunks/app/layout.js)"
+    }
+  ],
+  "devReloadRetries": 1,
+  "finishedAt": "2026-09-26T16:42:34.526Z",
+  "total": 33,
+  "passed": 33
+}

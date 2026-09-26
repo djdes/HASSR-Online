@@ -1,0 +1,217 @@
+{
+  "task": "theme-tiles-2026-09",
+  "spec": ".agent/tasks/theme-tiles-2026-09/spec.md",
+  "branch": "feat/theme-tiles-2026-09-26",
+  "base": "657125d3",
+  "pushed": false,
+  "status": "PASS",
+  "commits": [
+    {
+      "hash": "1536d620",
+      "subject": "Тема прямо в меню профиля: три карточки «Светлая / Тёмная / Как на устройстве»"
+    },
+    {
+      "hash": "e3ad115b",
+      "subject": "Тема: без мигания и лишних сохранений при загрузке страницы"
+    },
+    {
+      "hash": "e4f9a736",
+      "subject": "Тёмная тема: разделители листа снизу и окна подтверждения без белых полос"
+    }
+  ],
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "text": "на телефоне (390) в меню профиля три карточки темы; нажатие меняет тему сразу и сохраняется после перезагрузки",
+      "status": "PASS",
+      "e2eChecks": [
+        21,
+        22,
+        23,
+        24,
+        26,
+        29,
+        30,
+        31,
+        32
+      ],
+      "facts": {
+        "tiles390": "3 × 109×133 px в одном ряду, превью 109×77, подпись 16 px, role=radio",
+        "switchMs": 137,
+        "post": {
+          "theme": "dark",
+          "status": 200
+        },
+        "reload": "тёмная → перезагрузка → тёмная, светлая → перезагрузка → светлая; 0 POST и без кадров другой темы",
+        "brandingLink": "/settings/organization#branding (блок «Брендинг» в 96 px от верха)",
+        "cook": "карточки есть и работают, ссылки «Логотип и цвета» нет"
+      },
+      "artifacts": [
+        "raw/e2e-results.json",
+        "raw/e2e-run.log",
+        "evidence/ac4-390-light-sheet.png",
+        "evidence/ac4-390-dark-sheet.png"
+      ]
+    },
+    {
+      "id": "AC2",
+      "text": "на компьютере (1440) в меню профиля те же карточки, тема меняется сразу",
+      "status": "PASS",
+      "e2eChecks": [
+        3,
+        4,
+        5,
+        7,
+        8,
+        10,
+        11,
+        12,
+        33
+      ],
+      "facts": {
+        "tiles1440": "3 × 87×106 px (menuitemradio), превью 79×56, подпись 12 px",
+        "switchMs": 372,
+        "menuStaysOpen": true,
+        "keyboard": "←/→ по ряду, Enter выбирает, ↓ с последней карточки — к «Логотип и цвета»",
+        "appearanceItemRemoved": true,
+        "headChef": "карточки есть, ссылки нет (нет admin.full; /settings/organization уводит на /settings)"
+      },
+      "artifacts": [
+        "raw/e2e-results.json",
+        "evidence/ac4-1440-light-menu.png",
+        "evidence/ac4-1440-dark-menu.png"
+      ]
+    },
+    {
+      "id": "AC3",
+      "text": "«Как на устройстве» следует системной теме (эмуляция prefers-color-scheme), «менять по времени суток» выключается при выборе карточки",
+      "status": "PASS",
+      "e2eChecks": [
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "facts": {
+        "systemFollows": "light → dark → light на лету; после перезагрузки при тёмной системе — тёмная, 0 POST",
+        "autoOn": "ни одна карточка не выбрана, подсказка data-state=on",
+        "autoTurnedOff": "нажатие → wesetup-theme-auto-schedule=0, строка «Смена по времени суток выключена», «Включить снова» → 1",
+        "settingsPage": "галочка «Менять по времени суток» снимается нажатием на карточку"
+      },
+      "artifacts": [
+        "evidence/ac3-1440-auto-note.png",
+        "evidence/ac3-1440-auto-turned-off.png",
+        "evidence/settings-appearance-1440.png"
+      ]
+    },
+    {
+      "id": "AC4",
+      "text": "скриншоты меню в светлой и тёмной теме на 390 и 1440",
+      "status": "PASS",
+      "e2eChecks": [
+        6,
+        9,
+        25,
+        27,
+        28
+      ],
+      "facts": {
+        "lightSelected": {
+          "frame": "#5566f6",
+          "label": "#3848c7",
+          "labelContrast": 7.19,
+          "unselectedContrast": 10.24
+        },
+        "darkSelected": {
+          "frame": "#7081f8",
+          "label": "#a3adff",
+          "panel": "#3a3757",
+          "labelContrast": 5.35,
+          "unselectedContrast": 7.23
+        },
+        "previewsKeepColors": "карточка «Светлой» в тёмной теме rgb(255,255,255); «Как на устройстве» — clip-path polygon(100% 0, 100% 100%, 0 100%)",
+        "darkSheetSeparators": "rgba(255,255,255,0.12)"
+      },
+      "artifacts": [
+        "evidence/ac4-390-light-sheet.png",
+        "evidence/ac4-390-dark-sheet.png",
+        "evidence/ac4-390-dark-full.png",
+        "evidence/ac4-1440-light-menu.png",
+        "evidence/ac4-1440-dark-menu.png"
+      ],
+      "note": "PNG в .gitignore (.agent/**/*.png) — лежат локально в worktree"
+    },
+    {
+      "id": "AC5",
+      "text": "typecheck и npm test зелёные",
+      "status": "PASS",
+      "facts": {
+        "typecheck": "0 ошибок",
+        "npmTest": "2480/2480, fail 0",
+        "newUnitTests": 13,
+        "eslintChangedFiles": "0 замечаний"
+      },
+      "artifacts": [
+        "raw/typecheck.log",
+        "raw/npm-test-summary.log",
+        "raw/pre-commit-1536d620.log",
+        "raw/pre-commit-e3ad115b.log",
+        "raw/eslint.log",
+        "raw/pre-commit-e4f9a736.log"
+      ]
+    }
+  ],
+  "e2e": {
+    "script": "raw/e2e-theme-tiles.cjs",
+    "run": "muim59bv",
+    "passed": 33,
+    "total": 33,
+    "pageErrors": 2,
+    "pageErrorsNote": "обе — недописанный чанк dev-сервера после компиляции по требованию (Loading chunk app/layout failed / Invalid or unexpected token); одна повторная перезагрузка; предыдущий прогон того же сценария — 33/33 и 0 ошибок",
+    "browser": "playwright-core 1.59.1, headless Chromium 1232",
+    "server": "next dev --webpack -p 3046, NEXT_DIST_DIR=.next-e2e, база wesetup_wt_theme"
+  },
+  "reloadProbe": {
+    "script": "raw/reload-probe.cjs",
+    "results": "raw/reload-probe.json",
+    "scenario": "выбор «Тёмная», система светлая, полная загрузка /dashboard",
+    "before": {
+      "code": "site-theme.tsx как в origin/master",
+      "lightFrames": 17,
+      "lightVisibleMs": 328,
+      "posts": "light×8, dark×4"
+    },
+    "after": {
+      "code": "e3ad115b (флаг hydrated)",
+      "lightFrames": 0,
+      "posts": "нет"
+    }
+  },
+  "miniApp": {
+    "decision": "оставлено как есть",
+    "reason": "тему /mini/me ведёт MiniThemeProvider (useMiniTheme), а не useSiteTheme: два состояния light/dark, фолбэк — Telegram.WebApp.colorScheme; «как на устройстве» потребовало бы третьего состояния в User.themePreference (менять хранение темы запрещено спецификацией); сайтовая шапка с меню в оболочке приложения не рисуется"
+  },
+  "deviations": [
+    "«Логотип и цвета» → /settings/organization#branding (на /settings/appearance логотипа и цветов нет); константа BRANDING_SETTINGS_HREF",
+    "видимость ссылки — admin.full (как у самих страниц настроек), а не fullAccess",
+    "/settings/appearance показывает те же карточки через ThemeModeControls (страница не правилась)",
+    "исправлена гонка SiteThemeProvider на загрузке (отдельный коммит e3ad115b), хранение не менялось",
+    "app-theme.css: border-[#f0f1f7] в тёмных рамках (отдельный коммит e4f9a736)"
+  ],
+  "openIssues": [
+    "SiteThemeBootstrap стоит перед .app-shell в (dashboard)/root/partner/master layout — до гидрации видна тема из профиля",
+    "расхождение гидратации кнопки-аватара на телефоне (useIsNarrowViewport), было до задачи",
+    "подписи «логотип и цвета» у /settings/appearance в /mini/me и app-sections.ts неверны",
+    "лист профиля владельца на 390×844 упирается в 88dvh: середина прокручивается на 23 px",
+    "dev-only: недописанные чанки после компиляции по требованию"
+  ],
+  "cleanup": {
+    "devServerStopped": true,
+    "nextE2eDeleted": true,
+    "tsconfigRestored": true,
+    "nodeModulesKept": "используется junction'ами C:/wt/jtitle и C:/wt/tphoto"
+  }
+}

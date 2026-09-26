@@ -1,0 +1,21 @@
+→ Проверка на секреты...
+→ TypeScript type-check...
+
+> haccp-online@0.1.0 typecheck
+> tsc --noEmit --skipLibCheck -p tsconfig.typecheck.json
+
+→ Tests (baseline gate)...
+
+> haccp-online@0.1.0 test:gate
+> bash scripts/test-with-baseline.sh
+
+
+=== Test stats: pass=2480, fail=0 ===
+✓ Все тесты прошли.
+✓ pre-commit OK
+[feat/theme-tiles-2026-09-26 1536d620] Тема прямо в меню профиля: три карточки «Светлая / Тёмная / Как на устройстве»
+ 9 files changed, 706 insertions(+), 101 deletions(-)
+ create mode 100644 .agent/tasks/theme-tiles-2026-09/spec.md
+ create mode 100644 src/components/theme/theme-tiles-model.test.ts
+ create mode 100644 src/components/theme/theme-tiles-model.ts
+ create mode 100644 src/components/theme/theme-tiles.tsx

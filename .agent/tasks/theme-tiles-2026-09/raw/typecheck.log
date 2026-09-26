@@ -1,0 +1,10 @@
+# npm run typecheck — 2026-09-26T19:44:08+03:00
+
+> haccp-online@0.1.0 typecheck
+> tsc --noEmit --skipLibCheck -p tsconfig.typecheck.json
+
+
+real	2m53.740s
+user	0m0.152s
+sys	0m0.338s
+EXIT=0
