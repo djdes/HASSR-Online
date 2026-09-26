@@ -66,7 +66,7 @@ Phone: [второй аккаунт — телефон]
 Password: [второй аккаунт — пароль]
 Deletion erases the employee's contact and sign-in data (e-mail, phone, Telegram link, PIN and sign-in keys); the person's name stays in the food-safety logbook records they made, together with the account holder, because Russian sanitary law (SanPiN/HACCP) requires keeping the author of a record — this is disclosed before deletion. Deletion is also available on the web: https://wesetup.ru/delete-account
 
-The app is free and has no purchases, top-ups, subscriptions or links to payment of any kind on either platform, and no ads. Companies subscribe to WeSetup directly with us under a business contract, managed on our website, not in the app; the app is a companion for that business service and does not sell any digital goods.
+The app is free and has no ads. On either platform it has no purchases, top-ups or payment buttons, and no links to payment of any kind. Companies subscribe to WeSetup directly with us under a business contract, paid on our website, not in the app. The only related screen, "Тариф", is read-only: it shows the company's subscription status (plan name, active until or ended, amounts of past payments) with no purchase, renewal, top-up or payment buttons or links. The app is a companion for that business service and does not sell any digital goods.
 
 Contact: support@wesetup.ru
 ```
@@ -94,9 +94,11 @@ iOS; 3) отчёты открываются в меню «Поделиться»
 это требование СанПиН и ХАССП, о нём предупреждают перед удалением. Также на сайте:
 https://wesetup.ru/delete-account.
 
-Приложение бесплатное, без покупок, пополнений, подписок и ссылок на оплату на любой из платформ, без рекламы.
-Компании оплачивают WeSetup напрямую по договору на сайте, а не в приложении; приложение — лишь спутник этого
-бизнес-сервиса и не продаёт никаких цифровых товаров.
+Приложение бесплатное, без рекламы. На любой из платформ в нём нет покупок, пополнений, кнопок оплаты и ссылок
+на оплату. Компании оплачивают WeSetup напрямую по договору на сайте, а не в приложении. Единственный связанный
+экран, «Тариф», только для чтения: статус подписки компании (название тарифа, до какого числа действует или что
+закончился, суммы прошлых платежей) без кнопок и ссылок на покупку, продление, пополнение и оплату. Приложение —
+лишь спутник этого бизнес-сервиса и не продаёт никаких цифровых товаров.
 
 **Перед отправкой разработчик сверяет названия кнопок («Печать», микрофон, «Профиль», «Удалить аккаунт»)
 с демо-аккаунтом** — если в интерфейсе они называются иначе, поправьте текст.
@@ -136,7 +138,8 @@ Play Console → **Правила и программы** → **Содержан
 - В демо-компании пусто — проверяющий решает, что приложение ничего не умеет (правило 4.2).
 - Проверяющий удалил основной демо-аккаунт — поэтому для удаления даём второй.
 - В карточке или внутри приложения (на любой платформе) есть призыв оплатить тариф — отказ по правилу 3.1.1
-  (Apple) или аналогичному у Google. В приложении нет ни экрана «Тарифы и оплата», ни ссылок на оплату — это
-  сделано в коде сайта заранее, а не как реакция на отказ. Если проверяющий всё же спросит про 3.1.1 — ответ:
-  приложение — спутник бизнес-сервиса, никакие цифровые товары в нём не продаются, экрана покупок и ссылок на
-  оплату нет.
+  (Apple) или аналогичному у Google. В приложении есть только экран «Тариф» для чтения: название тарифа, до
+  какого числа действует (или что закончился) и история прошлых платежей — без кнопок покупки, продления,
+  пополнения и оплаты и без ссылок на них. Это сделано в коде сайта заранее, а не как реакция на отказ. Если
+  проверяющий всё же спросит про 3.1.1 — ответ: приложение — спутник бизнес-сервиса, никакие цифровые товары в
+  нём не продаются, оно только показывает состояние подписки, купить или оплатить в нём ничего нельзя.

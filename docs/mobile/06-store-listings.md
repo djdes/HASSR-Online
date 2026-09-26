@@ -55,6 +55,21 @@ Play Console → WeSetup → **Рост пользователей (Grow users)*
 
 Нажмите **Сохранить**.
 
+## Готовые картинки
+
+Разработчик уже подготовил все картинки и передаст их вам архивом (в репозитории — папки `docs/mobile/screenshots`
+и `docs/mobile/store-graphics`):
+
+| Что | Файлы | Куда загрузить |
+|---|---|---|
+| Скриншоты iPhone 6.9" (1320×2868) | `screenshots/ios/01-control-board.png` … `06-notifications.png` | App Store Connect → **iPhone screenshots** |
+| Скриншоты Android (1080×1920) | `screenshots/android/01-control-board.png` … `06-notifications.png` | Play Console → **Скриншоты телефона** |
+| Значок 512×512 | `store-graphics/icon-512.png` | Play Console → **Значок приложения** |
+| Баннер 1024×500 | `store-graphics/feature-graphic.png` | Play Console → **Графический баннер** |
+
+Порядок одинаковый на обеих платформах: панель контроля руководителя, «Сегодня» повара, журнал уборки,
+температура холодильников, «Все разделы», уведомления. Данные на скриншотах — демо-компания «Кафе «Демо»».
+
 ## Требования к картинкам (для разработчика)
 
 **App Store**

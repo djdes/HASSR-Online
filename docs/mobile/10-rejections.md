@@ -17,7 +17,7 @@
 |---|---|---|
 | **4.2 / 4.2.2** Minimum Functionality | «Приложение похоже на сайт, упакованный в приложение» | Ответ А ниже. Если откажут повторно — разработчик добавляет заметную нативную пользу, затем апелляция |
 | **2.1** App Completeness / Information Needed | «Не смогли войти» или «нужна дополнительная информация» | Проверить демо-вход ([08](08-review.md)), ответ Б |
-| **3.1.1** In-App Purchase | «Приложение даёт доступ к оплате мимо встроенных покупок» | В приложении на обеих платформах изначально нет ни экрана «Тарифы и оплата», ни ссылок на оплату — правка не нужна, достаточно ответа В |
+| **3.1.1** In-App Purchase | «Приложение даёт доступ к оплате мимо встроенных покупок» | В приложении на обеих платформах изначально нет оплаты: экран «Тариф» только показывает статус подписки, без кнопок и ссылок на покупку и оплату — правка не нужна, достаточно ответа В |
 | **5.1.1(v)** Account Deletion | «Нет удаления аккаунта» или «только деактивация» | Ответ Г |
 | **5.1.1(ii)** Permission | «Непонятно, зачем камера/микрофон» | Разработчик уточняет тексты запросов разрешений; новая сборка |
 | **2.3.x** Accurate Metadata | Скриншоты не из приложения, упоминание других платформ | Исправить карточку ([06](06-store-listings.md)), сборка не нужна |
@@ -75,13 +75,15 @@ WeSetup team
 
 ### Ответ В — правило 3.1.1 (оплата)
 
-Правка сборки не нужна: в приложении на обеих платформах никогда не было экрана «Тарифы и оплата» и ссылок на
-оплату — это сделано в коде сайта, который приложение просто показывает. Ответ:
+Правка сборки не нужна: в приложении на обеих платформах никогда не было оплаты. Есть только экран «Тариф» для
+чтения — название тарифа, до какого числа действует (или что закончился) и суммы прошлых платежей; кнопок
+покупки, продления, пополнения и оплаты и ссылок на них там нет. Это сделано в коде сайта, который приложение
+просто показывает. Ответ:
 
 ```text
 Hello,
 
-Thank you for the review. WeSetup is a companion app for our own business service, not a storefront: it never shows pricing, payment screens, top-ups or links to any purchase. No digital goods are sold in the app, so there is no purchase UI to add.
+Thank you for the review. WeSetup is a companion app for our own business service, not a storefront: it has no purchase, top-up, renewal or payment buttons and no links to any purchase or payment. The only related screen, "Тариф", is read-only: it shows the company's subscription status (plan name, active until or ended, amounts of past payments) and offers no way to buy or pay. No digital goods are sold in the app, so there is no purchase UI to add.
 
 WeSetup is sold directly to businesses under a contract for use by their employees (Guideline 3.1.3(c) Enterprise Services), managed on our website, not in the app; the app only lets these employees access the service their company has already arranged.
 
