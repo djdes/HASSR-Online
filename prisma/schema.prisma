@@ -417,6 +417,7 @@ model Organization {
   mercuryOutbox                  MercuryOutbox[]
   staffPairTokens                StaffPairToken[]
   webPushSubscriptions           WebPushSubscription[]
+  mobileDevices                  MobileDevice[]
   paperJournalDocuments          PaperJournalDocument[]
   printAgents                    PrintAgent[]
   printJobs                      PrintJob[]
@@ -832,6 +833,7 @@ model User {
   botInviteToken              BotInviteToken?
   staffPairToken              StaffPairToken?
   webPushSubscriptions        WebPushSubscription[]
+  mobileDevices               MobileDevice[]
   workOffDays                 StaffWorkOffDay[]
   vacations                   StaffVacation[]
   sickLeaves                  StaffSickLeave[]
@@ -3464,6 +3466,34 @@ model WebPushSubscription {
   /// — такую удаляем сразу; счётчик нужен для остальных случаев.
   failureCount   Int          @default(0)
   lastSuccessAt  DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@index([userId])
+  @@index([organizationId])
+}
+
+/// Телефон с приложением WeSetup, куда можно слать push через Firebase.
+///
+/// `token` уникален ГЛОБАЛЬНО: это адрес конкретной установки приложения,
+/// выданный Firebase. Если телефон передали другому сотруднику и тот
+/// вошёл, запись ПЕРЕЕЗЖАЕТ на него (как `WebPushSubscription`) — иначе
+/// прошлый владелец получал бы чужие задачи.
+model MobileDevice {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// "ios" | "android"
+  platform       String
+  token          String       @unique
+  /// Версия приложения из User-Agent (`WeSetupApp/<версия>`).
+  appVersion     String
+  /// Переключатель «Уведомления на этом телефоне» в профиле.
+  pushEnabled    Boolean      @default(true)
+  /// Подряд идущие сбои. Мёртвый ключ (UNREGISTERED) удаляем сразу.
+  failureCount   Int          @default(0)
+  lastSeenAt     DateTime     @default(now())
   createdAt      DateTime     @default(now())
 
   @@index([userId])

@@ -66,6 +66,11 @@ export type MiniShellEnvironment = {
   insideTelegram: boolean;
   /** Установлено на домашний экран (display-mode / navigator.standalone). */
   standalone: boolean;
+  /**
+   * Открыто в приложении WeSetup для Android/iOS (приписка
+   * `WeSetupApp/…` в User-Agent, см. `lib/mobile-app.ts`).
+   */
+  insideApp: boolean;
   /** Ширина окна в CSS-пикселях. */
   viewportWidth: number;
 };
@@ -73,12 +78,18 @@ export type MiniShellEnvironment = {
 /**
  * Ставить ли куку режима.
  *
- * Мы внутри Telegram, либо приложение установлено на домашний экран,
- * либо человек просто открыл экран мини-приложения в браузере — во всех
- * трёх случаях дальше он должен видеть мобильную оболочку.
+ * Мы внутри Telegram, в приложении WeSetup, либо приложение установлено
+ * на домашний экран, либо человек просто открыл экран мини-приложения в
+ * браузере — во всех этих случаях дальше он должен видеть мобильную
+ * оболочку.
  */
 export function shouldSetMiniShell(env: MiniShellEnvironment): boolean {
-  return env.insideTelegram || env.standalone || isMiniPath(env.pathname);
+  return (
+    env.insideTelegram ||
+    env.standalone ||
+    env.insideApp ||
+    isMiniPath(env.pathname)
+  );
 }
 
 /**
@@ -90,9 +101,13 @@ export function shouldSetMiniShell(env: MiniShellEnvironment): boolean {
  *
  * Пути `/mini/*` исключены намеренно: там оболочка — это и есть сам
  * экран, а не обёртка вокруг страницы сайта.
+ *
+ * В приложении WeSetup не снимаем никогда, даже на планшете шире
+ * 1024 px: сервер ставит куку приложению по User-Agent на каждом
+ * запросе, и снятие с перезагрузкой крутилось бы по кругу.
  */
 export function shouldDropMiniShell(env: MiniShellEnvironment): boolean {
-  if (env.insideTelegram || env.standalone) return false;
+  if (env.insideTelegram || env.standalone || env.insideApp) return false;
   if (isMiniPath(env.pathname)) return false;
   return env.viewportWidth >= MINI_SHELL_DESKTOP_WIDTH;
 }

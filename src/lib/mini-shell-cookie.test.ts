@@ -51,6 +51,7 @@ const base = {
   pathname: "/journals",
   insideTelegram: false,
   standalone: false,
+  insideApp: false,
   viewportWidth: 390,
 };
 
@@ -59,6 +60,15 @@ test("режим включается в Telegram, в установленном
   assert.equal(shouldSetMiniShell({ ...base, standalone: true }), true);
   assert.equal(shouldSetMiniShell({ ...base, pathname: "/mini" }), true);
   assert.equal(shouldSetMiniShell(base), false);
+});
+
+test("в приложении WeSetup кука оболочки ставится и не снимается даже на широком экране", () => {
+  // Планшет в приложении шире 1024 px: снимать куку нельзя — сторож
+  // перезагружал бы страницу, а сервер снова ставил бы куку по User-Agent.
+  const env = { ...base, pathname: "/dashboard", insideApp: true, viewportWidth: 1366 };
+  assert.equal(shouldSetMiniShell(env), true);
+  assert.equal(shouldDropMiniShell(env), false);
+  assert.equal(shouldSetMiniShell({ ...env, pathname: "/mini" }), true);
 });
 
 test("на компьютере режим снимается", () => {

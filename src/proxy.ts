@@ -13,6 +13,7 @@ import {
   isMiniShellValue,
   miniShellSignInHref,
 } from "@/lib/mini-shell-cookie";
+import { isMobileAppUserAgent } from "@/lib/mobile-app";
 import {
   evaluatePartnerRequest,
   parsePartnerAccessClaim,
@@ -38,6 +39,20 @@ function withRequestContext(
   headers.set(PARTNER_HEADER_METHOD, req.method);
   headers.set(PARTNER_HEADER_PATH, req.nextUrl.pathname);
   if (claim) headers.set(PARTNER_HEADER_PARTNER_ID, claim.partnerId);
+  // Приложение WeSetup пришло без куки оболочки (первый запуск, ссылка
+  // из уведомления сразу на страницу кабинета): кука в ответе доедет
+  // только до следующего запроса, а layout читает её уже сейчас.
+  // Подкладываем её и в сам запрос — первый же экран будет в оболочке.
+  if (
+    isMobileAppUserAgent(req.headers.get("user-agent")) &&
+    !isMiniShellValue(req.cookies.get(MINI_SHELL_COOKIE)?.value)
+  ) {
+    const cookie = headers.get("cookie");
+    headers.set(
+      "cookie",
+      `${cookie ? `${cookie}; ` : ""}${MINI_SHELL_COOKIE}=${MINI_SHELL_VALUE}`
+    );
+  }
   const res = NextResponse.next({ request: { headers } });
   markMiniShell(req, res);
   // Страницы кабинета не кэшируем (раньше это делал отдельный корневой
@@ -72,10 +87,16 @@ function withRequestContext(
  * серверным редиректом — клиентский код там не успевает выполниться, и
  * без этой куки человек, пришедший по ссылке из бота первый раз,
  * получил бы внутри Telegram широкий хром сайта.
+ *
+ * Приложению WeSetup (приписка `WeSetupApp/…` в User-Agent) кука
+ * ставится на любом пути: первый же ответ на `/mini?src=app` и любая
+ * страница кабинета после него — в оболочке, без перезагрузки.
  */
 function markMiniShell(req: NextRequest, res: NextResponse): void {
   const { pathname } = req.nextUrl;
-  if (!isMiniPath(pathname)) return;
+  if (!isMiniPath(pathname) && !isMobileAppUserAgent(req.headers.get("user-agent"))) {
+    return;
+  }
   if (isMiniShellValue(req.cookies.get(MINI_SHELL_COOKIE)?.value)) return;
 
   // Telegram открывает мини-приложение во фрейме: на https кука доедет
@@ -186,7 +207,11 @@ export async function proxy(req: NextRequest) {
   // Оболочка мини-приложения: страницы кабинета открыты в телефоне.
   // Права она НЕ меняет — меняет только, куда вести отказ: на сайте это
   // `/login` и `/journals`, в приложении — его собственный главный экран.
-  const miniShell = isMiniShellValue(req.cookies.get(MINI_SHELL_COOKIE)?.value);
+  // Приложение WeSetup — оболочка всегда, даже на самом первом запросе,
+  // когда куки ещё нет.
+  const miniShell =
+    isMiniShellValue(req.cookies.get(MINI_SHELL_COOKIE)?.value) ||
+    isMobileAppUserAgent(req.headers.get("user-agent"));
 
   if (!rawToken) {
     if (miniShell && isStaffRestrictedWebPath(pathname)) {

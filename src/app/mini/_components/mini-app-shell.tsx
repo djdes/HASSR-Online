@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import Script from "next/script";
 import { Suspense, type ReactNode } from "react";
 
@@ -9,10 +10,12 @@ import { SanpinChatWidget } from "@/components/ai/sanpin-chat-widget";
 import { FabDockProvider } from "@/components/layout/fab-dock";
 import { JournalUndoProvider } from "@/components/journals/journal-undo-slot";
 import { Toaster } from "@/components/ui/sonner";
+import { appStoreUrl, appUpdateRequirement } from "@/lib/mobile-app";
 import type { PartnerHintRates } from "@/lib/partners/partner-hint";
 
 import type { MiniNavItem } from "@/app/mini/_lib/nav-items";
 
+import { AppUpdateGate } from "./app-update-gate";
 import { EdgeBack } from "./edge-back";
 import { MiniNav } from "./mini-nav";
 import { MiniServiceWorkerRegister } from "./mini-sw-register";
@@ -37,7 +40,7 @@ type AnnouncementProp = React.ComponentProps<
  * безопасных зон разъехались бы в первый же месяц, и мини-приложение
  * перестало бы быть зеркалом сайта (П-3).
  */
-export function MiniAppShell({
+export async function MiniAppShell({
   children,
   initialTheme,
   profileTheme,
@@ -72,6 +75,25 @@ export function MiniAppShell({
   /** Есть серверная сессия: живые индикаторы и помощник имеют смысл. */
   authed?: boolean;
 }) {
+  // Приложение WeSetup старше `MOBILE_APP_MIN_VERSION` — вместо любого
+  // экрана просим обновиться. Переменная серверная и читается на каждом
+  // запросе: поднять минимальную версию можно без пересборки сайта.
+  // Без переменной не проверяем ничего. Оболочка общая для `/mini/*` и
+  // страниц кабинета — а в приложении кабинет всегда в оболочке (кука по
+  // User-Agent в `proxy.ts`), так что экран закрывает всё.
+  const outdated = appUpdateRequirement(
+    (await headers()).get("user-agent"),
+    process.env.MOBILE_APP_MIN_VERSION
+  );
+  if (outdated) {
+    return (
+      <AppUpdateGate
+        platform={outdated.platform}
+        version={outdated.version}
+        storeUrl={appStoreUrl(outdated.platform, process.env.APPLE_APP_ID)}
+      />
+    );
+  }
   return (
     <>
       <Script

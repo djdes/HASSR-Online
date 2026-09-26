@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { publishToUser } from "@/lib/live-events";
+import { sendMobilePushInBackground } from "@/lib/mobile-push";
 import { getDbRoleValuesWithLegacy, MANAGEMENT_ROLES } from "@/lib/user-roles";
 
 /**
@@ -69,16 +70,28 @@ function pushNotification(args: {
   linkHref?: string | null;
   items: NotificationItem[];
 }): void {
+  const first = args.items[0]?.label;
+  const body =
+    args.items.length > 1
+      ? `${first} и ещё ${args.items.length - 1}`
+      : (first ?? "Откройте, чтобы посмотреть");
+  // Приложение WeSetup (Firebase) — отдельно от веб-push: сбой одного
+  // не должен отменять другой. Сама отправка в фоне и не бросает.
+  try {
+    sendMobilePushInBackground(
+      args.userId,
+      { title: args.title, body, url: toMiniUrl(args.linkHref), tag: args.dedupeKey },
+      "bell"
+    );
+  } catch (error) {
+    console.error("[notifications] mobile push failed", error);
+  }
   void (async () => {
     try {
       const { sendPushToUser } = await import("@/lib/web-push");
-      const first = args.items[0]?.label;
       await sendPushToUser(args.userId, {
         title: args.title,
-        body:
-          args.items.length > 1
-            ? `${first} и ещё ${args.items.length - 1}`
-            : (first ?? "Откройте, чтобы посмотреть"),
+        body,
         url: toMiniUrl(args.linkHref),
         // Тег — тот же ключ дедупликации: повторное уведомление о том же
         // заменит прежнее в шторке, а не ляжет рядом.

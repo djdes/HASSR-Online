@@ -581,7 +581,14 @@ export async function notifyEmployee(
       notificationPrefs: true,
     },
   });
-  if (!user || !user.isActive || !user.telegramChatId) {
+  if (!user || !user.isActive) {
+    return;
+  }
+  // Без Telegram человеку может прийти только push в приложение WeSetup.
+  // Если и его отправить некуда — дальше делать нечего.
+  const { isMobilePushConfigured, pushTextFromTelegramHtml, sendMobilePushInBackground } =
+    await import("./mobile-push");
+  if (!user.telegramChatId && !isMobilePushConfigured()) {
     return;
   }
 
@@ -619,14 +626,32 @@ export async function notifyEmployee(
   }
 
   const delivery = normalizeTelegramDeliveryMetadata(opts?.delivery);
-  if (!isUrgentKind(delivery.kind)) {
-    const until = await quietUntilForUser(user.id);
-    if (until) {
-      await db.telegramLog.create({
-        data: { chatId: user.telegramChatId, body: text, userId: user.id, organizationId: delivery.organizationId, kind: delivery.kind, dedupeKey: delivery.dedupeKey, status: "deferred", deliverAfter: until, attempts: 0 },
-      });
-      return;
+  const quietUntilAt = isUrgentKind(delivery.kind) ? null : await quietUntilForUser(user.id);
+
+  // Тот же текст — push в приложение WeSetup (в фоне, без ожидания).
+  // После проверок «активен», snooze и повтора, но до проверки Telegram:
+  // сотрудник без Telegram тоже должен узнать о задаче. В тихие часы
+  // push не шлём: сообщение бота отложено до утра, а будить ночью
+  // уведомлением на телефоне нельзя.
+  if (!quietUntilAt) {
+    const pushBody = pushTextFromTelegramHtml(text);
+    if (pushBody) {
+      sendMobilePushInBackground(
+        user.id,
+        { title: "WeSetup", body: pushBody, url: action?.miniAppUrl ?? null },
+        "bot"
+      );
     }
+  }
+
+  if (!user.telegramChatId) {
+    return;
+  }
+  if (quietUntilAt) {
+    await db.telegramLog.create({
+      data: { chatId: user.telegramChatId, body: text, userId: user.id, organizationId: delivery.organizationId, kind: delivery.kind, dedupeKey: delivery.dedupeKey, status: "deferred", deliverAfter: quietUntilAt, attempts: 0 },
+    });
+    return;
   }
   const log = await db.telegramLog.create({
     data: {

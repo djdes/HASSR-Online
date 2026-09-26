@@ -20,6 +20,7 @@ import {
   shouldDropMiniShell,
   shouldSetMiniShell,
 } from "@/lib/mini-shell-cookie";
+import { isInsideMobileApp } from "@/lib/mobile-app";
 import { getTelegramWebApp, isInsideTelegram } from "./telegram-web-app";
 import { haptic } from "./use-haptic";
 import { MINI_HERO_COLOR, miniBackgroundColor, useMiniTheme } from "./mini-theme";
@@ -103,16 +104,17 @@ export function MiniTelegramRuntime({ homeHref }: { homeHref: string }) {
   const router = useRouter();
 
   // Режим оболочки (кука `ws-shell=mini`). Ставим, когда человек явно
-  // в приложении: внутри Telegram, в установленном на домашний экран
-  // приложении или просто на экране `/mini/*`. Снимаем, когда он на
-  // широком экране открыл страницу сайта — там оболочка с нижним меню
-  // не нужна. Правила и формат куки — в `lib/mini-shell-cookie.ts`.
+  // в приложении: внутри Telegram, в приложении WeSetup для телефона, в
+  // установленном на домашний экран приложении или просто на экране
+  // `/mini/*`. Снимаем, когда он на широком экране открыл страницу
+  // сайта — там оболочка с нижним меню не нужна. Правила и формат куки — в `lib/mini-shell-cookie.ts`.
   useEffect(() => {
     if (typeof document === "undefined") return;
     const env = {
       pathname,
       insideTelegram: isInsideTelegram(),
       standalone: isStandaloneDisplay(),
+      insideApp: isInsideMobileApp(),
       viewportWidth: window.innerWidth,
     };
     const secure = window.location.protocol === "https:";
@@ -234,7 +236,8 @@ export function MiniTelegramRuntime({ homeHref }: { homeHref: string }) {
  * вкладке есть кнопка браузера. А вот в установленном на домашний экран
  * приложении нет ни того, ни другого: адресной строки нет, системного
  * жеста на iOS в standalone тоже нет — и человек застревает на экране
- * заполнения без единого выхода.
+ * заполнения без единого выхода. То же в приложении WeSetup: адресной
+ * строки нет, а на iOS нет и системной кнопки «назад».
  */
 function useNeedsOwnBackButton(pathname: string): boolean {
   const [standalone, setStandalone] = useState(false);
@@ -252,7 +255,8 @@ function useNeedsOwnBackButton(pathname: string): boolean {
     const iosStandalone =
       (navigator as unknown as { standalone?: boolean }).standalone === true;
 
-    const sync = () => setStandalone(query.matches || iosStandalone);
+    const inApp = isInsideMobileApp();
+    const sync = () => setStandalone(query.matches || iosStandalone || inApp);
     sync();
     query.addEventListener("change", sync);
     return () => query.removeEventListener("change", sync);
