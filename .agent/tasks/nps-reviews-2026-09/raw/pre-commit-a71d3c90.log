@@ -1,0 +1,21 @@
+→ Проверка на секреты...
+→ TypeScript type-check...
+
+> haccp-online@0.1.0 typecheck
+> tsc --noEmit --skipLibCheck -p tsconfig.typecheck.json
+
+→ Tests (baseline gate)...
+
+> haccp-online@0.1.0 test:gate
+> bash scripts/test-with-baseline.sh
+
+
+=== Test stats: pass=2466, fail=0 ===
+✓ Все тесты прошли.
+✓ pre-commit OK
+[feat/nps-reviews-2026-09-26 a71d3c90] Опрос «Посоветуете WeSetup коллегам?»: просмотр по ?nps=1 и «Оставить отзыв» при 4–5
+ 18 files changed, 848 insertions(+), 92 deletions(-)
+ create mode 100644 .agent/tasks/nps-reviews-2026-09/spec.md
+ create mode 100644 src/app/api/nps/review/route.ts
+ create mode 100644 src/lib/nps-review.test.ts
+ create mode 100644 src/lib/nps-review.ts

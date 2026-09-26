@@ -1,0 +1,25 @@
+# Выдержка из лога dev-сервера (:3045, SMTP пуст — письма только в логе), финальный прогон muiey371.
+# Письмо коллеге из опроса (AC3) — текст по умолчанию, общий для письма и отзыва:
+[email/dev] SMTP не настроен — письмо не отправлено на colleague-muiey371@example.com.
+[email/dev] Subject: Анна Смирнова из «Кафе «Ромашка»» рекомендует WeSetup — электронные журналы СанПиН
+[email/dev] Reply-To: nps-rv-muiey371@example.com
+[email/dev] Body:    Вам рекомендуют WeSetup Здравствуйте! Анна Смирнова из «Кафе «Ромашка»» рекомендует вам WeSetup — сервис электронных журналов СанПиН и ХАССП: сотрудники заполняют их с телефона по QR-коду, а к проверке всё готово. Мы ведём журналы ХАССП и СанПиН в WeSetup — заполняем с телефона по QR, проверки проходим спокойно. Советую! — Анна Смирнова, Кафе «Ромашка» По этой ссылке вы начнёте бесплатно — до 3 сотрудников, без ограничений по записям, — а рекомендателю начислим бонус на баланс, когда вы оформите подписку. Попробовать WeSetup Ссылка: http://localhost:3000/r/57XU4YX5?email=colleague-muiey371%40example.com Если ответите на это письмо, ответ получит Анна Смирнова. Если письмо пришло по ошибке — просто не переходите по ссылке, больше мы не напишем. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.
+
+# Запросы опроса и строки [nps] финального прогона (номера строк — от начала прогона в логе):
+695: POST /api/nps 200 in 7.1s (compile: 6.7s, proxy.ts: 251ms, render: 93ms)
+794:[nps] отзыв из опроса: user=cmuieyevb002l0g9m1xffsshk review=cmuiezuxd002q0g9mfke1dwaf
+795: POST /api/nps/review 200 in 8.6s (compile: 8.2s, proxy.ts: 265ms, render: 183ms)
+1064: POST /api/nps 200 in 105ms (compile: 22ms, proxy.ts: 42ms, render: 41ms)
+1153: POST /api/nps/review 409 in 1175ms (compile: 1051ms, proxy.ts: 65ms, render: 59ms)
+1233: POST /api/nps/recommend 400 in 9.8s (compile: 9.4s, proxy.ts: 220ms, render: 137ms)
+1329:[nps] рекомендация коллеге: user=cmuieyevb002l0g9m1xffsshk delivery=logged
+1330: POST /api/nps/recommend 200 in 860ms (compile: 132ms, proxy.ts: 82ms, render: 646ms)
+1442: POST /api/nps 200 in 55ms (compile: 14ms, proxy.ts: 11ms, render: 30ms)
+1452: POST /api/nps/review 409 in 116ms (compile: 67ms, proxy.ts: 10ms, render: 39ms)
+1643: POST /api/nps 200 in 260ms (compile: 83ms, proxy.ts: 59ms, render: 118ms)
+1890: POST /api/nps 200 in 266ms (compile: 31ms, proxy.ts: 20ms, render: 215ms)
+2022: PATCH /api/nps 200 in 714ms (compile: 126ms, proxy.ts: 307ms, render: 281ms)
+2462: POST /api/root/reviews/cmuiezuxd002q0g9mfke1dwaf/approve 200 in 11.9s (compile: 10.1s, proxy.ts: 55ms, render: 1717ms)
+2527: POST /api/nps 200 in 69ms (compile: 22ms, proxy.ts: 17ms, render: 30ms)
+2537: POST /api/nps/review 409 in 366ms (compile: 249ms, proxy.ts: 12ms, render: 105ms)
+2953: POST /api/nps 200 in 162ms (compile: 35ms, proxy.ts: 82ms, render: 45ms)

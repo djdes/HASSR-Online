@@ -1,0 +1,88 @@
+{
+  "task": "nps-reviews-2026-09",
+  "branch": "feat/nps-reviews-2026-09-26",
+  "base": "7941f785 (origin/master)",
+  "commits": {
+    "specAndCode": "a71d3c90",
+    "evidence": "see git log: «Доказательства: опрос по ?nps=1 и «Оставить отзыв»…»"
+  },
+  "database": "wesetup_wt_nps2 (schema unchanged)",
+  "devServer": "http://localhost:3045 (next dev --webpack, NEXT_DIST_DIR=.next-e2e; stopped, .next-e2e and next-env.d.ts removed, tsconfig.json restored)",
+  "e2e": {
+    "script": "raw/e2e-nps-reviews.cjs",
+    "results": "raw/e2e-results.json",
+    "log": "raw/e2e-run.log",
+    "run": "muiey371",
+    "passed": 38,
+    "failed": 0,
+    "hydrationRetries": 0
+  },
+  "verdict": "PASS",
+  "acceptance": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "evidence": [
+        "raw/e2e-results.json [AC1]: fresh org — no banner on /dashboard, banner on /dashboard?nps=1; close without answer → 0 POST /api/nps, npsAskedAt null; reopen → visible, npsAskedAt null; answer 4 → npsAskedAt set (as before)",
+        "raw/e2e-results.json [AC1]: rules unchanged — org aged 30 days shows banner without ?nps=1, close → {dismiss:true} + npsAskedAt; cook with ?nps=1 → no banner",
+        "raw/e2e-results.json [AC1]: /mini?nps=1 → /dashboard?nps=1 inside the mini shell, banner visible, close sends no dismiss",
+        "evidence/ac1-1440-preview.png",
+        "evidence/mini-390-preview.png",
+        "src/lib/nps.test.ts («просмотр опроса по ссылке ?nps=1»)"
+      ]
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "evidence": [
+        "raw/e2e-results.json [AC2]: POST /api/nps/review 200, done text «Спасибо! Отзыв отправлен на проверку, после одобрения начислим баллы»; CustomerReview pending, rating 4, same text, consentPublic, author «Анна Смирнова», place «Кафе «Ромашка»»; AuditLog nps.review {customerReviewId, npsScore}",
+        "raw/e2e-results.json [AC2]: short text / unchecked consent → inline error, no request; same manager → 409 «Ваш отзыв уже на проверке — дождитесь решения»; other manager of the org → 409 «У вашей организации уже есть отзыв на проверке — дождитесь решения»; one review in DB",
+        "raw/e2e-results.json [AC2]: /root/reviews pill «из опроса»; /root/nps «оставил отзыв» exactly on responses with nps.review (this run: only the 4/5 answer)",
+        "raw/e2e-results.json [AC2]: ROOT approve → BalanceTransaction review_reward +300; review on the landing (guest); after approval «Отзыв уже принят. Спасибо!»",
+        "evidence/ac2-390-review-done.png",
+        "evidence/ac2-1440-review-pending.png",
+        "evidence/ac2-1440-root-reviews.png",
+        "evidence/ac2-1440-root-nps.png",
+        "src/lib/nps-review.test.ts (10 tests)"
+      ]
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "evidence": [
+        "raw/e2e-results.json [AC3]: own email → 400 at the field; send → 200 delivery logged, «Спасибо! Письмо отправлено», block hidden after 2.5 s; ReferralInvite + AuditLog nps.recommend written",
+        "raw/dev-log-excerpt.txt: the logged colleague email (subject with name and org, Reply-To, default text, referral link)",
+        "raw/e2e-results.json [regress]: 1–3 «Что улучшить?» saved via PATCH as before",
+        "src/lib/nps-recommend.test.ts, src/lib/balance/invite-colleague.test.ts green"
+      ]
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "evidence": [
+        "raw/e2e-results.json [AC4] 390: title 1 line, scores 48x48 in one row, close 48x48, action buttons 316x48 full width, scrollWidth 390",
+        "raw/e2e-results.json [AC4] 1440: title in a row with the scale, action buttons 196x44 in one right column, email field in a row with «Отправить коллеге»",
+        "raw/e2e-results.json [AC4] mini 390: title 1 line, scores 49x48, close 48, buttons 324x48, no horizontal scroll",
+        "evidence/ac4-390-ask.png",
+        "evidence/ac4-390-form.png",
+        "evidence/ac4-1440-form.png",
+        "evidence/mini-390-form.png"
+      ]
+    },
+    {
+      "id": "AC5",
+      "status": "PASS",
+      "evidence": [
+        "raw/typecheck.log: exit 0",
+        "raw/npm-test-summary.log: 2466 tests, 2466 pass, 0 fail (baseline 2453/2453)",
+        "raw/pre-commit-a71d3c90.log: secrets + typecheck + test:gate 2466/0",
+        "raw/eslint.log: exit 0"
+      ]
+    }
+  ],
+  "openIssues": [
+    "Pre-existing, unrelated: in dev, after /mini registers /mini-sw.js, a hard reload of /dashboard in the mini shell under mobile emulation loops; reproduced on base 7941f785 with the task's edits stashed; not reproduced when the shell cookie is set without visiting /mini.",
+    "To confirm with the owner: shared default text also changes the colleague email; one action closes the block (email and review not both at once); consent pre-checked like the balance form; author fallback «Руководитель»; review tied to the survey answer's (home) organization; the anti-duplicate lock covers the survey path only.",
+    "Telegram moderator notice not verified live (fake token); production build not run (disk)."
+  ]
+}

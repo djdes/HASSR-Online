@@ -1,0 +1,19 @@
+$ npx eslint <17 изменённых файлов>   (2026-09-26T16:22:07+03:00)
+src/components/layout/nps-banner.tsx
+src/lib/nps.ts
+src/lib/nps-data.ts
+src/lib/nps-review.ts
+src/lib/nps-review.test.ts
+src/lib/nps.test.ts
+src/app/api/nps/review/route.ts
+src/app/(dashboard)/layout.tsx
+src/app/mini/_components/mini-app-shell.tsx
+src/app/mini/_components/mini-shell-data.ts
+src/app/mini/page.tsx
+src/app/root/nps/page.tsx
+src/app/root/reviews/page.tsx
+src/app/root/reviews/reviews-client.tsx
+src/lib/audit-labels.ts
+src/lib/balance/constants.ts
+src/lib/balance/reviews.ts
+exit=0
