@@ -21,6 +21,7 @@ import {
   Settings,
   ShieldCheck,
   Sun,
+  Trash2,
   Unlink,
   LayoutGrid,
   MonitorSmartphone,
@@ -32,6 +33,7 @@ import {
   miniShellSignInHref,
 } from "@/lib/mini-shell-cookie";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { DeleteAccountFlow } from "@/app/delete-account/delete-account-client";
 import { FeedbackDialog } from "@/components/layout/feedback-dialog";
 import { PasskeySettings } from "@/components/auth/passkey-settings";
 import { useMiniTheme } from "../_components/mini-theme";
@@ -441,6 +443,28 @@ export function MiniMeClient({
             chevron={false}
           />
         </button>
+        {/* Удаление аккаунта — требование App Store и Google Play. Диалог
+            и запрос общие со страницей /delete-account. */}
+        <DeleteAccountFlow
+          renderTrigger={(open, deleting) => (
+            <button
+              type="button"
+              onClick={open}
+              disabled={busy !== "none" || deleting}
+              className="mini-item mini-press disabled:opacity-50"
+              style={{ color: "var(--mini-danger)" }}
+              data-testid="me-delete-account"
+            >
+              <ProfileRow
+                icon={Trash2}
+                label="Удалить аккаунт"
+                hint={deleting ? "…" : "телефон и вход удалятся, журналы останутся у компании"}
+                tone="danger"
+                chevron={false}
+              />
+            </button>
+          )}
+        />
       </section>
 
       <ConfirmDialog

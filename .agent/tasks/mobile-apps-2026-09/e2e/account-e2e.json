@@ -1,0 +1,179 @@
+{
+  "at": "2026-09-26T18:00:17.637Z",
+  "results": [
+    {
+      "check": "/.well-known/apple-app-site-association 200 json no redirect",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "type": "application/json",
+        "body": "{\"applinks\":{\"details\":[{\"appIDs\":[\"TEST123456.ru.wesetup.app\"],\"components\":[{\"/\":\"/mini\"},{\"/\":\"/mini/*\"},{\"/\":\"/journals/*\"},{\"/\":\"/join/*\"},{\"/\":\"/journal-fill/*\"},{\"/\":\"/equipment-fill/*\"},{\"/\":\"/room-fill/*\"},{\"/\":\"/task-fill/*\"},{\"/\":\"/delete-account\"}]}]},\"webcredentials\":{\"apps\":[\"TEST123456.ru.wesetup.app\"]}}"
+      }
+    },
+    {
+      "check": "/.well-known/assetlinks.json 200 json no redirect",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "type": "application/json",
+        "body": "[{\"relation\":[\"delegate_permission/common.handle_all_urls\",\"delegate_permission/common.get_login_creds\"],\"target\":{\"namespace\":\"android_app\",\"package_name\":\"ru.wesetup.app\",\"sha256_cert_fingerprints\":[\"AA:BB:CC\"]}}]"
+      }
+    },
+    {
+      "check": "/delete-account anon light 200",
+      "ok": true,
+      "detail": 200
+    },
+    {
+      "check": "/delete-account anon light login link",
+      "ok": true
+    },
+    {
+      "check": "/delete-account anon light no horizontal overflow",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "check": "/delete-account anon dark 200",
+      "ok": true,
+      "detail": 200
+    },
+    {
+      "check": "/delete-account anon dark login link",
+      "ok": true
+    },
+    {
+      "check": "/delete-account anon dark no horizontal overflow",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "check": "victim login light",
+      "ok": true
+    },
+    {
+      "check": "/delete-account signed-in shows button",
+      "ok": true
+    },
+    {
+      "check": "victim login dark",
+      "ok": true
+    },
+    {
+      "check": "redirect to /mini/login?deleted=1",
+      "ok": true,
+      "detail": "http://localhost:3022/mini/login?deleted=1"
+    },
+    {
+      "check": "old session revoked",
+      "ok": true
+    },
+    {
+      "check": "old cookie /mini/me still renders (signed-out view)",
+      "ok": true,
+      "detail": 200
+    },
+    {
+      "check": "cannot sign in again by email",
+      "ok": true,
+      "detail": 401
+    },
+    {
+      "check": "cannot sign in again by phone",
+      "ok": true,
+      "detail": 401
+    },
+    {
+      "check": "isActive false",
+      "ok": true
+    },
+    {
+      "check": "archivedAt set",
+      "ok": true
+    },
+    {
+      "check": "name anonymized",
+      "ok": true,
+      "detail": "Удалённый сотрудник"
+    },
+    {
+      "check": "email anonymized",
+      "ok": true,
+      "detail": "deleted-cmuip0v5a0000q49msrlz1z69@deleted.wesetup.local"
+    },
+    {
+      "check": "phone/contact/telegram null",
+      "ok": true
+    },
+    {
+      "check": "sessionVersion bumped",
+      "ok": true,
+      "detail": 2
+    },
+    {
+      "check": "web push removed",
+      "ok": true
+    },
+    {
+      "check": "journal slot freed",
+      "ok": true,
+      "detail": {
+        "filler": null
+      }
+    },
+    {
+      "check": "audit log written",
+      "ok": true,
+      "detail": "Удалённый сотрудник"
+    },
+    {
+      "check": "ownerA login",
+      "ok": true
+    },
+    {
+      "check": "no confirm -> 400",
+      "ok": true,
+      "detail": {
+        "error": "Введите УДАЛИТЬ"
+      }
+    },
+    {
+      "check": "owner -> 409 redirect",
+      "ok": true,
+      "detail": {
+        "error": "Вы владелец компании: удалите компанию — аккаунт удалится вместе с ней",
+        "redirect": "/settings/organization#delete"
+      }
+    },
+    {
+      "check": "owner navigates to /settings/organization#delete",
+      "ok": true,
+      "detail": "http://localhost:3022/settings/organization#delete"
+    },
+    {
+      "check": "owner untouched",
+      "ok": true,
+      "detail": {
+        "isActive": true,
+        "name": "owner-a@e2e.local"
+      }
+    },
+    {
+      "check": "root login",
+      "ok": true,
+      "detail": 200
+    },
+    {
+      "check": "root -> 403",
+      "ok": true,
+      "detail": {
+        "error": "Аккаунт администратора платформы удаляется только вручную."
+      }
+    },
+    {
+      "check": "anon -> 401",
+      "ok": true,
+      "detail": 401
+    }
+  ]
+}
