@@ -636,6 +636,9 @@ body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .borde
 body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .border-\[\#efefef\],
 body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .border-\[\#f0f0f0\],
 body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .border-\[\#f0f1f8\],
+/* Разделители листа снизу (меню профиля) и окна подтверждения: без этого
+   в тёмной теме — почти белые полосы под шапкой и над подвалом листа. */
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .border-\[\#f0f1f7\],
 body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .border-gray-200 {
   border-color: var(--app-border);
 }
