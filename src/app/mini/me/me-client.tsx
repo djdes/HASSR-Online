@@ -132,8 +132,13 @@ export function MiniMeClient({
             "Не удалось отвязать Telegram. Проверьте связь и попробуйте ещё раз."
         );
       }
-      await signOut({ redirect: false });
-      window.location.href = "/mini";
+      // Как «Выйти»: полный выход со всеми куками сессии. Один `signOut`
+      // оставлял в браузере старую куку, и сессия возвращалась.
+      await signOutOnThisDevice({
+        fetch: (input, init) => fetch(input, init),
+        signOut: () => signOut({ redirect: false }),
+      }).catch(() => undefined);
+      window.location.replace("/mini/login");
     } catch (err) {
       setError(
         err instanceof Error && err.message
