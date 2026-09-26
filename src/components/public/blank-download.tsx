@@ -17,6 +17,8 @@ import {
   BLANK_CONSENT_PARTS,
   BLANK_EMAIL_STORAGE_KEY,
   BLANK_FORMAT_LABEL,
+  BLANK_MARKETING_CONSENT_LABEL,
+  BLANK_MARKETING_CONSENT_NOTE,
   blankFilePath,
   blankRegisterHref,
   readRememberedBlankEmail,
@@ -31,8 +33,10 @@ import { cn } from "@/lib/utils";
  * Кнопка «Скачать PDF / Word» шаблона журнала на публичных страницах.
  *
  * Первый раз — окно «Куда прислать шаблон?»: почта, галка согласия на
- * обработку персональных данных, «Скачать». Сервер записывает согласие и
- * отдаёт подписанную ссылку — файл скачивается сразу, копия уходит письмом.
+ * обработку персональных данных, необязательная (снятая) галка «Присылать
+ * полезные материалы и новости», «Скачать». Сервер записывает согласие
+ * (и согласие на письма, если отмечено) и отдаёт подписанную ссылку —
+ * файл скачивается сразу, копия уходит письмом.
  * Почта запоминается в браузере: следующий шаблон скачивается по одному
  * нажатию (сервер получает ту же почту), а внизу экрана — плашка «копия —
  * на …» с кнопкой сменить почту.
@@ -98,6 +102,8 @@ async function requestDownload(params: {
   target: BlankTarget;
   format: BlankFormat;
   remembered?: RememberedBlankEmail | null;
+  /** Отмечена галка «Присылать полезные материалы и новости». */
+  marketing?: boolean;
 }): Promise<RequestResult> {
   try {
     const res = await fetch("/api/public/blank-download", {
@@ -108,6 +114,7 @@ async function requestDownload(params: {
         ...(params.target.kind === "code" ? { code: params.target.code } : { paperId: params.target.paperId }),
         format: params.format,
         consent: true,
+        ...(params.marketing ? { marketing: true } : {}),
         ...(params.remembered ? { remembered: true, consentVersion: params.remembered.consentVersion } : {}),
       }),
     });
@@ -220,10 +227,10 @@ export function BlankDownloadButton({
     [],
   );
 
-  async function submit(value: string) {
+  async function submit(value: string, marketing: boolean) {
     setError(null);
     setPhase("sending");
-    const result = await requestDownload({ email: value, target, format });
+    const result = await requestDownload({ email: value, target, format, marketing });
     if (!result.ok) {
       setError(result.error);
       setPhase("form");
@@ -231,7 +238,7 @@ export function BlankDownloadButton({
     }
     remember({ email: value, consentVersion: result.consentVersion });
     triggerDownload(result.url);
-    ymGoal("blank_download_done", goal);
+    ymGoal("blank_download_done", marketing ? { ...goal, marketing: "1" } : goal);
     setEmail(value);
     setFileUrl(result.url);
     setEmailed(result.emailed);
@@ -334,10 +341,13 @@ function FormView({
   error: string | null;
   expired: boolean;
   sending: boolean;
-  onSubmit: (email: string) => void;
+  onSubmit: (email: string, marketing: boolean) => void;
 }) {
   const field = useEmailField(initialEmail);
   const [consent, setConsent] = useState(false);
+  // Согласие на письма — необязательное и по умолчанию снято: на
+  // скачивание не влияет (спека landing-pack-2026-09).
+  const [marketing, setMarketing] = useState(false);
   const [consentMissing, setConsentMissing] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const domainMissing = field.check.status === "ok" && field.domainState === "missing";
@@ -352,7 +362,7 @@ function FormView({
       return;
     }
     setLocalError(null);
-    onSubmit(field.value.trim().toLowerCase());
+    onSubmit(field.value.trim().toLowerCase(), marketing);
   }
 
   const shownError = localError ?? error;
@@ -443,6 +453,20 @@ function FormView({
                 <span key={part.text}>{part.text}</span>
               ),
             )}
+          </span>
+        </label>
+
+        <label className="mt-1 flex cursor-pointer items-start gap-2.5 rounded-2xl px-1 py-1 text-left text-[12.5px] leading-[1.5] text-[#6f7282]">
+          <input
+            type="checkbox"
+            checked={marketing}
+            onChange={(event) => setMarketing(event.target.checked)}
+            className="mt-0.5 size-[18px] shrink-0 accent-[#5566f6]"
+            data-testid="blank-download-marketing"
+          />
+          <span>
+            <span className="text-[#3c4053]">{BLANK_MARKETING_CONSENT_LABEL}</span>
+            <span className="block">{BLANK_MARKETING_CONSENT_NOTE}.</span>
           </span>
         </label>
 

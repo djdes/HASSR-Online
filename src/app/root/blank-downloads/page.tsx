@@ -1,7 +1,9 @@
 import { requireRoot } from "@/lib/auth-helpers";
 import {
+  BLANK_CONSENT_SOURCE,
   BLANK_DOWNLOAD_AUDIT_ACTION,
   BLANK_FORMAT_LABEL,
+  BLANK_MARKETING_CONSENT_SOURCE,
   type BlankFormat,
 } from "@/lib/blank-download";
 import { db } from "@/lib/db";
@@ -44,7 +46,10 @@ function formatDate(date: Date): string {
  * Источник — согласия в LegalConsent (source "blank-download"): каждое
  * скачивание = запись согласия с почтой и датой. Журнал и формат лежат в
  * AuditLog платформы (action "blank.download", entityId = id согласия).
- * «Аккаунт» — есть ли уже пользователь с этой почтой.
+ * «Аккаунт» — есть ли уже пользователь с этой почтой. «Рассылка» — дала ли
+ * эта почта согласие на письма (необязательная галка в том же окне,
+ * запись LegalConsent с source "blank-download-marketing"): согласие —
+ * про человека, поэтому «да» стоит у всех его скачиваний.
  */
 export default async function RootBlankDownloadsPage() {
   await requireRoot();
@@ -52,18 +57,18 @@ export default async function RootBlankDownloadsPage() {
   const since = thirtyDaysAgo();
   const [consents, total30, unique30] = await Promise.all([
     db.legalConsent.findMany({
-      where: { source: "blank-download" },
+      where: { source: BLANK_CONSENT_SOURCE },
       orderBy: { createdAt: "desc" },
       take: LIMIT,
       select: { id: true, email: true, createdAt: true },
     }),
-    db.legalConsent.count({ where: { source: "blank-download", createdAt: { gte: since } } }),
-    db.legalConsent.groupBy({ by: ["email"], where: { source: "blank-download", createdAt: { gte: since } } }),
+    db.legalConsent.count({ where: { source: BLANK_CONSENT_SOURCE, createdAt: { gte: since } } }),
+    db.legalConsent.groupBy({ by: ["email"], where: { source: BLANK_CONSENT_SOURCE, createdAt: { gte: since } } }),
   ]);
 
   const ids = consents.map((consent) => consent.id);
   const emails = [...new Set(consents.map((consent) => consent.email))];
-  const [details, users] = await Promise.all([
+  const [details, users, marketing] = await Promise.all([
     ids.length
       ? db.auditLog.findMany({
           where: { action: BLANK_DOWNLOAD_AUDIT_ACTION, entityId: { in: ids } },
@@ -73,16 +78,25 @@ export default async function RootBlankDownloadsPage() {
     emails.length
       ? db.user.findMany({ where: { email: { in: emails } }, select: { email: true } })
       : Promise.resolve([]),
+    emails.length
+      ? db.legalConsent.findMany({
+          where: { source: BLANK_MARKETING_CONSENT_SOURCE, email: { in: emails } },
+          select: { email: true },
+          distinct: ["email"],
+        })
+      : Promise.resolve([]),
   ]);
   const detailsById = new Map(details.map((row) => [row.entityId, readDetails(row.details)]));
   const withAccount = new Set(users.map((user) => user.email));
+  const withMarketing = new Set(marketing.map((row) => row.email));
 
   return (
     <div className="mx-auto max-w-[1100px]">
       <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-[#0b1024]">Скачивания шаблонов</h1>
       <p className="mt-2 max-w-[720px] text-[14px] leading-[1.6] text-[#6f7282]">
         Кто скачал шаблон журнала с сайта: почта, журнал, формат и дата. Перед скачиванием человек отмечает
-        согласие на обработку персональных данных — оно хранится дословно. Последние {LIMIT} скачиваний.
+        согласие на обработку персональных данных — оно хранится дословно. «Рассылка: да» — почта отметила
+        необязательную галку «Присылать полезные материалы и новости». Последние {LIMIT} скачиваний.
       </p>
 
       <div className="mt-5 flex flex-wrap gap-2">
@@ -123,13 +137,22 @@ export default async function RootBlankDownloadsPage() {
                   {withAccount.has(consent.email) ? (
                     <span className="rounded-full bg-[#ecfdf5] px-2.5 py-0.5 text-[12px] text-[#116b2a]">аккаунт есть</span>
                   ) : null}
+                  <span
+                    className={
+                      withMarketing.has(consent.email)
+                        ? "rounded-full bg-[#eef1ff] px-2.5 py-0.5 text-[12px] text-[#3848c7]"
+                        : "text-[12px] text-[#9b9fb3]"
+                    }
+                  >
+                    Рассылка: {withMarketing.has(consent.email) ? "да" : "нет"}
+                  </span>
                 </div>
               </li>
             );
           })}
         </ul>
         <div className="mt-6 hidden overflow-x-auto rounded-2xl border border-[#ececf4] bg-white sm:block">
-          <table className="w-full min-w-[720px] text-[14px]" data-testid="blank-downloads-table">
+          <table className="w-full min-w-[820px] text-[14px]" data-testid="blank-downloads-table">
             <thead className="bg-[#fafbff] text-[13px] text-[#6f7282]">
               <tr>
                 <th className="px-4 py-3 text-left font-medium">Дата, МСК</th>
@@ -137,6 +160,7 @@ export default async function RootBlankDownloadsPage() {
                 <th className="px-4 py-3 text-left font-medium">Журнал</th>
                 <th className="px-4 py-3 text-left font-medium">Формат</th>
                 <th className="px-4 py-3 text-left font-medium">Аккаунт</th>
+                <th className="px-4 py-3 text-left font-medium">Рассылка</th>
               </tr>
             </thead>
             <tbody>
@@ -166,6 +190,13 @@ export default async function RootBlankDownloadsPage() {
                     <td className="px-4 py-3">
                       {withAccount.has(consent.email) ? (
                         <span className="rounded-full bg-[#ecfdf5] px-2.5 py-1 text-[12px] text-[#116b2a]">есть</span>
+                      ) : (
+                        <span className="text-[13px] text-[#9b9fb3]">нет</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3" data-testid="blank-download-marketing-cell">
+                      {withMarketing.has(consent.email) ? (
+                        <span className="rounded-full bg-[#eef1ff] px-2.5 py-1 text-[12px] text-[#3848c7]">да</span>
                       ) : (
                         <span className="text-[13px] text-[#9b9fb3]">нет</span>
                       )}

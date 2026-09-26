@@ -36,6 +36,55 @@ export const BLANK_CONSENT_PARTS = [
 
 export const BLANK_CONSENT_TEXT = BLANK_CONSENT_PARTS.map((part) => part.text).join("");
 
+/** `source` основного согласия в LegalConsent — оно же учёт скачиваний. */
+export const BLANK_CONSENT_SOURCE = "blank-download";
+
+/**
+ * Необязательная галка «присылать материалы» в том же окне (спека
+ * landing-pack-2026-09). По умолчанию снята, на скачивание не влияет.
+ * Отмечена — отдельная запись LegalConsent с этим `source` и дословным
+ * текстом: подпись галки и пометка под ней, как их видит человек.
+ */
+export const BLANK_MARKETING_CONSENT_LABEL = "Присылать полезные материалы и новости WeSetup";
+export const BLANK_MARKETING_CONSENT_NOTE = "Согласие можно отозвать в любой момент";
+export const BLANK_MARKETING_CONSENT_TEXT = `${BLANK_MARKETING_CONSENT_LABEL}. ${BLANK_MARKETING_CONSENT_NOTE}.`;
+export const BLANK_MARKETING_CONSENT_SOURCE = "blank-download-marketing";
+
+/** Строка LegalConsent без id и даты — то, что пишет POST /api/public/blank-download. */
+export type BlankConsentRow = {
+  email: string;
+  version: string;
+  statementText: string;
+  source: string;
+  ipAddress: string | null;
+  userAgent: string | null;
+};
+
+/**
+ * Какие согласия записать при скачивании: основное — всегда, согласие на
+ * письма — только если галка отмечена. Обе строки с одной почтой, IP и
+ * браузером; чистая функция, чтобы проверить без БД.
+ */
+export function blankConsentRows(params: {
+  email: string;
+  version: string;
+  marketing: boolean;
+  ipAddress: string | null;
+  userAgent: string | null;
+}): BlankConsentRow[] {
+  const base = {
+    email: params.email,
+    version: params.version,
+    ipAddress: params.ipAddress,
+    userAgent: params.userAgent,
+  };
+  const rows: BlankConsentRow[] = [{ ...base, statementText: BLANK_CONSENT_TEXT, source: BLANK_CONSENT_SOURCE }];
+  if (params.marketing) {
+    rows.push({ ...base, statementText: BLANK_MARKETING_CONSENT_TEXT, source: BLANK_MARKETING_CONSENT_SOURCE });
+  }
+  return rows;
+}
+
 /** Подпись у QR в скачанном файле. */
 export const BLANK_QR_CAPTION = "Заполнять с телефона — wesetup.ru";
 /** Строка копирайта на каждой странице скачанного файла. */

@@ -2,9 +2,9 @@ import { NextResponse, after } from "next/server";
 
 import { recordAuditLog } from "@/lib/audit-log";
 import {
-  BLANK_CONSENT_TEXT,
   BLANK_DOWNLOAD_AUDIT_ACTION,
   BLANK_FORMAT_LABEL,
+  blankConsentRows,
   blankPagePath,
   blankRegisterHref,
   type BlankFormat,
@@ -44,11 +44,14 @@ async function domainOk(domain: string): Promise<boolean> {
 /**
  * POST /api/public/blank-download — шаблон журнала после email.
  *
- * Тело: `{ email, code | paperId, format, consent: true, remembered?, consentVersion? }`.
+ * Тело: `{ email, code | paperId, format, consent: true, marketing?, remembered?, consentVersion? }`.
  * Ответ: `{ url }` — подписанная ссылка на файл (7 дней). По пути:
  *   1. согласие записывается в LegalConsent (source "blank-download",
  *      дословный текст галки, IP, браузер) — это же учёт лидов для /root;
- *      журнал и формат — в AuditLog платформы со ссылкой на согласие;
+ *      отмечена необязательная галка «Присылать полезные материалы» —
+ *      рядом вторая запись (source "blank-download-marketing") с её
+ *      текстом, в той же транзакции; журнал и формат — в AuditLog
+ *      платформы со ссылкой на согласие;
  *   2. ссылки дублируются письмом (после ответа, ошибки письма не мешают
  *      скачиванию).
  */
@@ -61,7 +64,7 @@ export async function POST(request: Request) {
       { status: parsed.status },
     );
   }
-  const { email, info, format } = parsed.value;
+  const { email, info, format, marketing } = parsed.value;
 
   const ip = clientIp(request) ?? "unknown";
   const limited = blankDownloadLimiter.consume(ip, email);
@@ -85,19 +88,20 @@ export async function POST(request: Request) {
   }
 
   let consentId: string;
+  let marketingConsentId: string | null = null;
   try {
-    const consent = await db.legalConsent.create({
-      data: {
-        email,
-        version: LEGAL_VERSION,
-        statementText: BLANK_CONSENT_TEXT,
-        source: "blank-download",
-        ipAddress: ip === "unknown" ? null : ip,
-        userAgent: request.headers.get("user-agent")?.slice(0, 400) ?? null,
-      },
-      select: { id: true },
+    const rows = blankConsentRows({
+      email,
+      version: LEGAL_VERSION,
+      marketing,
+      ipAddress: ip === "unknown" ? null : ip,
+      userAgent: request.headers.get("user-agent")?.slice(0, 400) ?? null,
     });
-    consentId = consent.id;
+    const created = await db.$transaction(
+      rows.map((data) => db.legalConsent.create({ data, select: { id: true } })),
+    );
+    consentId = created[0].id;
+    marketingConsentId = created[1]?.id ?? null;
   } catch (error) {
     console.error("[blank-download] consent record failed", error);
     return NextResponse.json({ error: "Не получилось подготовить шаблон. Попробуйте ещё раз" }, { status: 500 });
@@ -115,6 +119,8 @@ export async function POST(request: Request) {
       format,
       title: info.title,
       ...(target.kind === "code" ? { code: target.code } : { paperId: target.paperId }),
+      marketing: marketingConsentId !== null,
+      ...(marketingConsentId ? { marketingConsentId } : {}),
     },
   });
 

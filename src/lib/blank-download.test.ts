@@ -3,8 +3,14 @@ import test from "node:test";
 
 import {
   BLANK_CONSENT_PARTS,
+  BLANK_CONSENT_SOURCE,
   BLANK_CONSENT_TEXT,
+  BLANK_MARKETING_CONSENT_LABEL,
+  BLANK_MARKETING_CONSENT_NOTE,
+  BLANK_MARKETING_CONSENT_SOURCE,
+  BLANK_MARKETING_CONSENT_TEXT,
   blankCabinetPath,
+  blankConsentRows,
   blankFilePath,
   blankLoginHref,
   blankPagePath,
@@ -30,6 +36,36 @@ test("текст галки согласия: то, что видит челов
   );
   const links = BLANK_CONSENT_PARTS.filter((part) => "href" in part).map((part) => ("href" in part ? part.href : ""));
   assert.deepEqual(links, ["/consent", "/privacy"], "ссылки на действующие документы, как у регистрации");
+});
+
+test("галка согласия на письма: дословный текст (подпись + пометка) и свой source", () => {
+  assert.equal(BLANK_MARKETING_CONSENT_LABEL, "Присылать полезные материалы и новости WeSetup");
+  assert.equal(BLANK_MARKETING_CONSENT_NOTE, "Согласие можно отозвать в любой момент");
+  assert.equal(
+    BLANK_MARKETING_CONSENT_TEXT,
+    "Присылать полезные материалы и новости WeSetup. Согласие можно отозвать в любой момент.",
+  );
+  assert.equal(BLANK_CONSENT_SOURCE, "blank-download");
+  assert.equal(BLANK_MARKETING_CONSENT_SOURCE, "blank-download-marketing");
+  assert.notEqual(BLANK_MARKETING_CONSENT_TEXT, BLANK_CONSENT_TEXT, "основное согласие не меняется");
+});
+
+test("согласия при скачивании: основное всегда, на письма — только с галкой", () => {
+  const common = { email: "a@example.com", version: "2026-09-22", ipAddress: "10.0.0.1", userAgent: "UA" };
+  const plain = blankConsentRows({ ...common, marketing: false });
+  assert.deepEqual(plain, [{ ...common, statementText: BLANK_CONSENT_TEXT, source: "blank-download" }]);
+
+  const withMarketing = blankConsentRows({ ...common, marketing: true });
+  assert.equal(withMarketing.length, 2);
+  assert.deepEqual(withMarketing[0], plain[0], "основное согласие то же самое");
+  assert.deepEqual(withMarketing[1], {
+    ...common,
+    statementText: BLANK_MARKETING_CONSENT_TEXT,
+    source: "blank-download-marketing",
+  });
+
+  const anonymous = blankConsentRows({ ...common, ipAddress: null, userAgent: null, marketing: true });
+  assert.ok(anonymous.every((row) => row.ipAddress === null && row.userAgent === null));
 });
 
 test("почта: канонический вид, мусор и слишком длинные — null", () => {
@@ -99,7 +135,19 @@ test("запрос на скачивание: почта, цель, формат
     assert.equal(ok.value.info.title, "Гигиенический журнал (сотрудники)", "название из каталога — как в письме");
     assert.deepEqual(ok.value.info.formats, ["pdf", "docx"]);
     assert.equal(ok.value.format, "docx");
+    assert.equal(ok.value.marketing, false, "галка на письма по умолчанию снята");
   }
+
+  const marketing = parseBlankDownloadRequest(
+    { email: "a@example.com", code: "hygiene", format: "pdf", consent: true, marketing: true },
+    "2026-09-22",
+  );
+  assert.equal(marketing.ok && marketing.value.marketing, true);
+  const marketingOff = parseBlankDownloadRequest(
+    { email: "a@example.com", code: "hygiene", format: "pdf", consent: true, marketing: false },
+    "2026-09-22",
+  );
+  assert.equal(marketingOff.ok && marketingOff.value.marketing, false);
 
   const paper = parseBlankDownloadRequest({ email: "a@example.com", paperId: "ot_intro", format: "pdf", consent: true }, "v");
   assert.equal(paper.ok && paper.value.info.target.kind, "paper");
@@ -114,6 +162,7 @@ test("запрос на скачивание: почта, цель, формат
     [{ email: "a@example.com", code: "med_books", format: "docx", consent: true }, 400, "Word только у шести журналов"],
     [{ email: "a@example.com", paperId: "ot_intro", format: "docx", consent: true }, 400, "бумажный бланк — только PDF"],
     [{ email: "a@example.com", code: "hygiene", format: "xlsx", consent: true }, 400, "неизвестный формат"],
+    [{ email: "a@example.com", code: "hygiene", format: "pdf", consent: true, marketing: "да" }, 400, "галка на письма — только true/false"],
     [null, 400, "пустое тело"],
   ];
   for (const [body, status, label] of cases) {

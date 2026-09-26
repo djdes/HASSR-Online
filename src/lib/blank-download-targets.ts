@@ -42,12 +42,16 @@ const bodySchema = z.object({
   remembered: z.boolean().optional(),
   /// Редакция документов, с которой браузер запомнил согласие.
   consentVersion: z.string().max(32).optional(),
+  /// Необязательная галка «Присылать полезные материалы и новости».
+  marketing: z.boolean().optional(),
 });
 
 export type BlankDownloadRequest = {
   email: string;
   info: BlankTargetInfo;
   format: BlankFormat;
+  /** Отмечена галка согласия на письма — записать отдельное согласие. */
+  marketing: boolean;
 };
 
 export type BlankDownloadParse =
@@ -96,5 +100,5 @@ export function parseBlankDownloadRequest(body: unknown, legalVersion: string): 
       needConsent: true,
     };
   }
-  return { ok: true, value: { email, info, format: data.format } };
+  return { ok: true, value: { email, info, format: data.format, marketing: data.marketing === true } };
 }
