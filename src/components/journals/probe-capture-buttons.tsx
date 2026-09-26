@@ -153,9 +153,10 @@ export function DisplayOcrButton({
     };
   }, []);
 
-  function showPaidOnly(tariffsHref: string | null, id?: string | number) {
+  function showPaidOnly(tariffsHref: string | null, id: string | number = "reading-photo-paid-only") {
+    // Один тост на страницу: повторные нажатия не складывают подсказки стопкой.
     toast.info(READING_PHOTO_TEXT.paidOnly, {
-      ...(id !== undefined ? { id } : {}),
+      id,
       ...(tariffsHref
         ? { action: { label: READING_PHOTO_TEXT.tariffsLink, onClick: () => router.push(tariffsHref) } }
         : {}),

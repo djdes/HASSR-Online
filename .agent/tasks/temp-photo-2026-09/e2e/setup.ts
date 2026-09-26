@@ -17,6 +17,7 @@ import { buildColdEquipmentConfigFromEquipment } from "@/lib/cold-equipment-docu
 import { climateRoomFromDirectory } from "@/lib/climate-document";
 import { mintEquipmentQrToken } from "@/lib/equipment-qr-token";
 import { mintQrFillToken } from "@/lib/qr-fill-token";
+import { LEGAL_VERSION } from "@/lib/legal-consent";
 
 const ORG_NAME = "Кафе «Фото-тест»";
 const MANAGER_EMAIL = "tphoto-manager@haccp.local";
@@ -41,14 +42,14 @@ async function main() {
   const passwordHash = await bcrypt.hash(PASSWORD, 10);
   const manager = await db.user.upsert({
     where: { email: MANAGER_EMAIL },
-    create: { email: MANAGER_EMAIL, name: "Ольга Смирнова", passwordHash, role: "manager", organizationId: org.id, isActive: true, journalAccessMigrated: true, emailVerifiedAt: new Date() },
-    update: { passwordHash, role: "manager", organizationId: org.id, isActive: true, archivedAt: null },
+    create: { email: MANAGER_EMAIL, name: "Ольга Смирнова", passwordHash, role: "manager", organizationId: org.id, isActive: true, journalAccessMigrated: true, emailVerifiedAt: new Date(), legalVersion: LEGAL_VERSION },
+    update: { passwordHash, role: "manager", organizationId: org.id, isActive: true, archivedAt: null, legalVersion: LEGAL_VERSION },
     select: { id: true },
   });
   const cook = await db.user.upsert({
     where: { email: COOK_EMAIL },
-    create: { email: COOK_EMAIL, name: "Иван Петров", passwordHash, role: "cook", organizationId: org.id, isActive: true, emailVerifiedAt: new Date() },
-    update: { passwordHash, role: "cook", organizationId: org.id, isActive: true, archivedAt: null },
+    create: { email: COOK_EMAIL, name: "Иван Петров", passwordHash, role: "cook", organizationId: org.id, isActive: true, emailVerifiedAt: new Date(), legalVersion: LEGAL_VERSION },
+    update: { passwordHash, role: "cook", organizationId: org.id, isActive: true, archivedAt: null, legalVersion: LEGAL_VERSION },
     select: { id: true },
   });
   if (!org.accountId) {

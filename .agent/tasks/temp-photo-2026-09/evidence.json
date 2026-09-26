@@ -1,0 +1,69 @@
+{
+  "task": "temp-photo-2026-09",
+  "branch": "feat/temp-photo-2026-09-26",
+  "codeCommit": "7aee9497",
+  "verdict": "PASS",
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "summary": "QR-наклейка холодильника на 390: «Фото» у температуры (48 px, capture=environment), снимок прикреплён к замеру (readingPhotos[ключ замера]) и виден в документе на сайте — значок в ячейке, миниатюра в карточках, просмотр крупно; то же для склада.",
+      "evidence": [
+        "evidence/ui-e2e.txt",
+        "evidence/api-e2e.txt",
+        "evidence/390-01-qr-photo-button.jpg",
+        "evidence/390-02-qr-free-photo-attached.jpg",
+        "evidence/390-03-qr-free-saved.jpg",
+        "evidence/1440-01-document-photo-in-cell.jpg",
+        "evidence/1440-02-document-photo-lightbox.jpg",
+        "evidence/390-09-document-card-thumb.jpg",
+        "evidence/390-08-room-paid-filled.jpg",
+        "evidence/1440-05-climate-photo-in-cell.jpg"
+      ]
+    },
+    "AC2": {
+      "status": "PASS",
+      "summary": "Платный тариф: показание 4.5 подставлено с пометкой «с фото — проверьте», правка снимает пометку; нечитаемое → поле пустое и «Не разобрали цифры — введите вручную»; «48 %» в поле температуры не подставляется; мок ответа диспетчера.",
+      "evidence": [
+        "evidence/ui-e2e.txt",
+        "evidence/api-e2e.txt",
+        "e2e/vision-mock-readable.json",
+        "e2e/vision-mock-unreadable.json",
+        "e2e/vision-mock-humidity.json",
+        "evidence/390-05-qr-paid-recognizing.jpg",
+        "evidence/390-06-qr-paid-filled.jpg",
+        "evidence/390-07-qr-paid-unreadable.jpg",
+        "evidence/1440-04-document-paid-recognized.jpg"
+      ]
+    },
+    "AC3": {
+      "status": "PASS",
+      "summary": "Бесплатный тариф: фото прикрепляется, автоввода нет, «Автоввод с фото — на платном тарифе» (руководителю — ссылка на тарифы); сервер отказывает в распознавании — 402 paid_only в QR-форме и в документе.",
+      "evidence": [
+        "evidence/ui-e2e.txt",
+        "evidence/api-e2e.txt",
+        "evidence/390-02-qr-free-photo-attached.jpg",
+        "evidence/390-04-qr-free-manager-tariffs.jpg",
+        "evidence/1440-03-document-free-hint.jpg"
+      ]
+    },
+    "AC4": {
+      "status": "PASS",
+      "summary": "Скриншоты 390 и 1440; npm run typecheck — exit 0; npm test — 2481/2481 (14 новых); ESLint по файлам задачи — чисто.",
+      "evidence": ["evidence/checks.txt"]
+    }
+  },
+  "runs": {
+    "apiE2e": { "result": "30/30 PASS", "file": "evidence/api-e2e.txt" },
+    "uiE2e": { "result": "35/35 PASS", "file": "evidence/ui-e2e.txt" },
+    "typecheck": { "exit": 0 },
+    "npmTest": { "tests": 2481, "pass": 2481, "fail": 0 }
+  },
+  "openIssues": [
+    "Снимки без сохранения замера остаются в uploads/readings — уборки нет (ограничено 60 снимками в сутки на сотрудника).",
+    "Кнопка камеры в документе на сайте только распознаёт (по тарифу) и снимок к записи не прикладывает — по спецификации.",
+    "«Фото» только у температуры; у влажности нет — по спецификации.",
+    "Фото не выводятся в печать/PDF.",
+    "Реальная очередь ProjectsFlow не прогонялась (мок); новую строку инструкции reading о показателе стоит проверить -TestImage после выката.",
+    "Прежние предупреждения гидратации на dev (PartnerHint, ResponsiveMenu) — не из этой правки."
+  ]
+}

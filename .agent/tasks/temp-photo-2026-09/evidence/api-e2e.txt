@@ -1,0 +1,32 @@
+API e2e «Фото к замеру» — 2026-09-26T17:43:30.592Z — 30/30 PASS
+
+PASS  free: фото с наклейки прикрепляется (200, ссылка /uploads/readings/…)  — {"ok":true,"url":"/uploads/readings/564bf04545c71a2566d2a573154749ff.jpg","autofill":false,"tariffsHref":null}
+PASS  free: автоввода нет (autofill=false), сотруднику — без ссылки на тарифы
+PASS  free: файл снимка лежит в каталоге загрузок
+PASS  free: руководителю — ссылка на тарифы  — {"ok":true,"url":"/uploads/readings/ffd10576ad4c105b1f338cc70ddd9e7f.jpg","autofill":false,"tariffsHref":"/settings/subscription"}
+PASS  free: сервер отказывает в распознавании — 402 «Автоввод с фото — на платном тарифе»  — 402 {"error":"Автоввод с фото — на платном тарифе","code":"paid_only","tariffsHref":null}
+PASS  free: замер с фото сохранён (photoAttached)  — {"ok":true,"touched":1,"humidityTouched":0,"outOfRange":false,"photoAttached":true}
+PASS  free: в записи журнала холодильников фото рядом со значением (readingPhotos[ключ замера])  — {"temperatures":{"cold-equipment-95246a12-1f9e-4c22-8ac6-948b0d496223":4.5},"readingPhotos":{"cold-equipment-95246a12-1f9e-4c22-8ac6-948b0d496223":"/uploads/readings/564bf04545c71a2566d2a573154749ff.jpg"},"responsibleTitle":"Повар"}
+PASS  повторный замер без фото прежний снимок не стирает  — {"temperatures":{"cold-equipment-95246a12-1f9e-4c22-8ac6-948b0d496223":5},"readingPhotos":{"cold-equipment-95246a12-1f9e-4c22-8ac6-948b0d496223":"/uploads/readings/564bf04545c71a2566d2a573154749ff.jpg"},"responsibleTitle":"Повар"}
+PASS  сохранение с фото «чужой адрес» — 400, в журнал не попадает  — Фото не найдено — снимите ещё раз или сохраните замер без фото
+PASS  сохранение с фото «javascript:» — 400, в журнал не попадает  — Фото не найдено — снимите ещё раз или сохраните замер без фото
+PASS  сохранение с фото «несуществующий снимок» — 400, в журнал не попадает  — Фото не найдено — снимите ещё раз или сохраните замер без фото
+PASS  загрузка с чужим токеном наклейки — 401  — {"error":"QR-наклейка не подходит"}
+PASS  не картинка под видом JPEG — 415  — {"error":"Нужен снимок JPG, PNG или WEBP"}
+PASS  без фото — 400
+PASS  сотрудник не из организации — 404  — {"error":"Сотрудник не найден"}
+PASS  склад: фото к температуре в бланке климата (ключ строка:срок:temperature)  — {"status":200,"photoKey":"room-cmuimag3p0007yw9mgrqh2t3d:17:00:temperature","slot":"17:00"}
+PASS  вход руководителя в кабинет  — tphoto-manager@haccp.local
+PASS  сайт free: GET /api/ocr/reading → autofill=false, руководителю ссылка на тарифы  — {"autofill":false,"tariffsHref":"/settings/subscription"}
+PASS  сайт free: POST /api/ocr/reading — 402 paid_only  — {"error":"Автоввод с фото — на платном тарифе","code":"paid_only","tariffsHref":"/settings/subscription"}
+PASS  сайт free: сотруднику — без ссылки на тарифы  — {"autofill":false,"tariffsHref":null}
+PASS  paid: фото прикрепляется, autofill=true  — {"ok":true,"url":"/uploads/readings/5fab8bc590b75cfd7d19a05ec3bd6c29.jpg","autofill":true,"tariffsHref":null}
+PASS  paid: показание распознано — 4.5 °C  — 200 {"value":4.5,"unit":"C","confidence":"high"} 2730ms
+PASS  paid: распознавание в общем учёте «С фото» (ai.vision_extract, visionKind reading, на сотрудника)  — {"entityId":"cmuimag0h0002yw9mctupad6k","details":{"photos":1,"result":"ok","durationMs":2533,"recognized":1,"visionKind":"reading"}}
+PASS  paid: нечитаемый снимок — value null (ничего не выдумано)  — {"value":null,"unit":null,"confidence":"low"}
+PASS  paid: влажность «48 %» в поле температуры не подставляется — value null  — {"value":null,"unit":null,"confidence":"low"}
+PASS  paid: склад — температура с термогигрометра 21.5  — {"value":21.5,"unit":"C","confidence":"high"}
+PASS  paid: распознавание чужой ссылки — 400  — {"error":"Фото не найдено — снимите ещё раз"}
+PASS  сайт paid: GET /api/ocr/reading → autofill=true  — {"autofill":true,"tariffsHref":null}
+PASS  сайт paid: POST /api/ocr/reading — 4.5 (прежний контракт value/unit/confidence)  — {"value":4.5,"unit":"C","confidence":"high"}
+PASS  лимиты общие с «С фото»: после 20 распознаваний за сутки — 429 и понятный текст  — 429 На сегодня распознавания закончились: не больше 20 в сутки на сотрудника. Заполните вручную или попробуйте завтра.
