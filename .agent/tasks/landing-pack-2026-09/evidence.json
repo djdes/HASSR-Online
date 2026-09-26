@@ -1,0 +1,81 @@
+{
+  "task": "landing-pack-2026-09",
+  "branch": "feat/landing-2026-09-26",
+  "base": "70f09cdd",
+  "commits": {
+    "landing": "2e33d96b",
+    "marketingConsent": "9408261f"
+  },
+  "verifiedAt": "2026-09-26",
+  "verdict": "PASS",
+  "acceptanceCriteria": {
+    "AC1": {
+      "status": "PASS",
+      "summary": "Таблица решений по 16 блокам в evidence.md: оставить — шапка, хиро (сокращено), QR-ролик (как есть), тарифы (сокращены), отзывы (сеткой), вопросы (12 → 10), финальный призыв (сокращён), подвал; слить — «Какие журналы внутри», «Кому подходит», карусель «было/стало», галерея образцов → «Журналы СанПиН и ХАССП для вашей сферы»; сократить — 8 карточек «Что внутри» → 4; убрать — демо-журнал, баннер «Бесплатно навсегда», «планшет», блог.",
+      "blocks": { "before": 16, "after": 10 },
+      "pageHeightPx": { "390": { "before": 19485, "after": 9516 }, "1440": { "before": 12465, "after": 6975 } }
+    },
+    "AC2": {
+      "status": "PASS",
+      "screenshots": [
+        "evidence/before-full-390.png",
+        "evidence/before-full-1440.png",
+        "evidence/before-first-screen-390.png",
+        "evidence/after-full-390.png",
+        "evidence/after-full-1440.png",
+        "evidence/after-first-screen-390.png",
+        "evidence/after-dark-first-screen-390.png"
+      ],
+      "at390": {
+        "horizontalScroll": { "before": false, "after": false },
+        "sideInsetsPx": { "before": "16/16, карусели 0/0 и 16/0", "after": "16/16 у всех блоков" },
+        "gapBetweenBlocksPx": { "before": [56, 160, 80, 81, 96], "after": [64] },
+        "controlsUnder48": { "before": 63, "after": 0, "afterTotal": 39, "afterMinHeight": 48 },
+        "textNodesUnder16": { "before": 287, "after": 0, "afterTotal": 129, "afterMinSize": 16 },
+        "exemptFinePrint": ["legal consent text 12.5px (LegalConsentCheckbox, не меняем)", "badge «Популярный» 11px"],
+        "outOfScope": ["#qr — по спеке без изменений", "подвал — общий для 25 страниц"]
+      },
+      "extraWidths": { "360": "без прокрутки, 0 кнопок < 48, 0 текста < 16", "768": "без прокрутки" },
+      "tool": "e2e/landing-audit.mjs → raw/audit-summary.json"
+    },
+    "AC3": {
+      "status": "PASS",
+      "qrPlayer": "автозапуск, пауза, переход по главе, «Попробуйте сами» — 390 и 1440",
+      "links": { "/blanki": "тело + подвал", "/journals-info": "тело + шапка + подвал", "/dlya-*": "14 из 14 в теле + подвал", "http": "все 200" },
+      "seo": "title, description, canonical, H1 и типы JSON-LD без изменений; FAQPage — 10 вопросов",
+      "tool": "e2e/landing-e2e.mjs → raw/e2e.json (25/25 PASS)",
+      "screenshot": "evidence/after-qr-block-390.png"
+    },
+    "AC4": {
+      "status": "PASS",
+      "defaultUnchecked": true,
+      "legalConsentSource": "blank-download-marketing",
+      "statementText": "Присылать полезные материалы и новости WeSetup. Согласие можно отозвать в любой момент.",
+      "db": "без галки — 1 запись blank-download; с галкой — + blank-download-marketing с тем же IP, браузером и редакцией; AuditLog marketing true/false",
+      "root": "колонка «Рассылка» да/нет (1440), «Рассылка: да/нет» в карточке (390)",
+      "screenshots": [
+        "evidence/after-modal-default-390.png",
+        "evidence/after-modal-marketing-1440.png",
+        "evidence/after-root-downloads-1440.png",
+        "evidence/after-root-downloads-390.png"
+      ],
+      "unitTests": "src/lib/blank-download.test.ts"
+    },
+    "AC5": {
+      "status": "PASS",
+      "typecheck": "clean",
+      "npmTest": { "pass": 2382, "fail": 0 },
+      "preCommitTestGate": { "pass": 2382, "fail": 0 },
+      "eslintChangedFiles": "clean"
+    }
+  },
+  "sharedComponents": {
+    "PlanCard": "флаг touch только на главной; без флага классы идентичны HEAD (raw/shared-plancard.txt); кабинет /settings/subscription снят: evidence/after-cabinet-subscription-390.png, -1440.png",
+    "BlankDownloadButton": "новая необязательная галка в окне на /blanki, /journals-info/*, SEO-страницах журналов"
+  },
+  "notes": [
+    "Для «до» в свою БД временно добавлены 3 статьи блога (как на проде) и 2 отзыва; после замеров удалены.",
+    "Пре-существующее: /api/live → 401 у гостя; предупреждение гидрации у кнопки «Профиль» в шапке кабинета.",
+    "Предложение отдельной задачей: подвал на телефоне в две колонки ссылок (общий компонент 25 страниц)."
+  ]
+}

@@ -1,0 +1,16 @@
+SAME plain period: text-[13px] text-[#9b9fb3]
+SAME plain pointsIntro: mt-6 font-medium text-[13px] text-[#9b9fb3]
+SAME plain points: flex-1 space-y-2.5 pb-8 text-[14px] mt-6 text-[#3c4053]
+SAME plain note: mt-auto mb-2.5 text-center text-[12px] leading-snug text-[#6f7282]
+SAME plain cta: inline-flex w-full items-center justify-center gap-2 rounded-2xl font-medium transition-colors h-11 text-[15px] bg-[#5566f6] text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] hover:bg-[#4a5bf0]
+SAME highlighted period: text-[13px] text-white/60
+SAME highlighted pointsIntro: mt-6 font-medium text-[13px] text-white/60
+SAME highlighted points: flex-1 space-y-2.5 pb-8 text-[14px] mt-3 text-white/85
+SAME highlighted note: mt-auto mb-2.5 text-center text-[12px] leading-snug text-white/70
+SAME highlighted cta: inline-flex w-full items-center justify-center gap-2 rounded-2xl font-medium transition-colors h-11 text-[15px] bg-white text-[#0b1024] hover:bg-white/90
+SAME disabled cta: inline-flex w-full cursor-default items-center justify-center gap-2 rounded-2xl border border-[#c7ccea] bg-[#eef1ff] font-medium text-[#3848c7] h-11 text-[15px]
+RESULT classes without touch: identical to HEAD
+login 390: 200
+subscription 390: [{"text":"Текущий","h":44,"cls":true},{"text":"Оплатить картой","h":48,"cls":true}]
+login 1440: 200
+subscription 1440: [{"text":"Текущий","h":44,"cls":true},{"text":"Оплатить картой","h":44,"cls":true}]

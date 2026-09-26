@@ -1,0 +1,292 @@
+{
+  "base": "http://localhost:3040",
+  "run": "mui4crso",
+  "startedAt": "2026-09-26T08:19:45.720Z",
+  "checks": [
+    {
+      "name": "AC3 390: ролик идёт сам в зоне видимости",
+      "ok": true,
+      "details": {
+        "start": {
+          "frame": 19,
+          "playing": "1",
+          "chapter": "1Холодильник"
+        },
+        "later": {
+          "frame": 58,
+          "playing": "1",
+          "chapter": "1Холодильник"
+        }
+      }
+    },
+    {
+      "name": "AC3 390: пауза",
+      "ok": true,
+      "details": {
+        "paused": {
+          "frame": 77,
+          "playing": "0",
+          "chapter": "1Холодильник"
+        },
+        "stillPaused": {
+          "frame": 77,
+          "playing": "0",
+          "chapter": "1Холодильник"
+        }
+      }
+    },
+    {
+      "name": "AC3 390: переход на главу «Фритюр»",
+      "ok": true,
+      "details": {
+        "frame": 540,
+        "playing": "0",
+        "chapter": "4Фритюр"
+      }
+    },
+    {
+      "name": "AC3 390: «Попробуйте сами» — +8 °C вне нормы, ролик на итоге главы",
+      "ok": true,
+      "details": {
+        "tryText": "Температура в холодильнике 8,0 °C Вне нормы +2…+6 °C: строка в журнале красная, ответствен",
+        "afterTry": {
+          "frame": 168,
+          "playing": "0",
+          "chapter": "1Холодильник"
+        }
+      }
+    },
+    {
+      "name": "AC3 390: /blanki и /journals-info в теле страницы и в подвале",
+      "ok": true,
+      "details": {
+        "blanki": 2,
+        "journalsInfo": 3
+      }
+    },
+    {
+      "name": "AC3 390: все 14 страниц сфер /dlya-* в блоке «Журналы для вашей сферы»",
+      "ok": true,
+      "details": {
+        "missing": []
+      }
+    },
+    {
+      "name": "AC3 1440: ролик идёт сам в зоне видимости",
+      "ok": true,
+      "details": {
+        "start": {
+          "frame": 15,
+          "playing": "1",
+          "chapter": "1Холодильник"
+        },
+        "later": {
+          "frame": 51,
+          "playing": "1",
+          "chapter": "1Холодильник"
+        }
+      }
+    },
+    {
+      "name": "AC3 1440: пауза",
+      "ok": true,
+      "details": {
+        "paused": {
+          "frame": 71,
+          "playing": "0",
+          "chapter": "1Холодильник"
+        },
+        "stillPaused": {
+          "frame": 71,
+          "playing": "0",
+          "chapter": "1Холодильник"
+        }
+      }
+    },
+    {
+      "name": "AC3 1440: переход на главу «Фритюр»",
+      "ok": true,
+      "details": {
+        "frame": 540,
+        "playing": "0",
+        "chapter": "4Фритюр"
+      }
+    },
+    {
+      "name": "AC3 1440: «Попробуйте сами» — +8 °C вне нормы, ролик на итоге главы",
+      "ok": true,
+      "details": {
+        "tryText": "Температура в холодильнике 8,0 °C Вне нормы +2…+6 °C: строка в журнале красная, ответствен",
+        "afterTry": {
+          "frame": 168,
+          "playing": "0",
+          "chapter": "1Холодильник"
+        }
+      }
+    },
+    {
+      "name": "AC3 1440: /blanki и /journals-info в теле страницы и в подвале",
+      "ok": true,
+      "details": {
+        "blanki": 2,
+        "journalsInfo": 3
+      }
+    },
+    {
+      "name": "AC3 1440: все 14 страниц сфер /dlya-* в блоке «Журналы для вашей сферы»",
+      "ok": true,
+      "details": {
+        "missing": []
+      }
+    },
+    {
+      "name": "AC3: /blanki, /journals-info и все /dlya-* отвечают 200",
+      "ok": true,
+      "details": {
+        "/blanki": 200,
+        "/journals-info": 200,
+        "/journals-info/hygiene": 200,
+        "/dlya-kafe": 200,
+        "/dlya-pekarni": 200,
+        "/dlya-stolovoy": 200,
+        "/dlya-proizvodstva": 200,
+        "/dlya-bara": 200,
+        "/dlya-fastfuda": 200,
+        "/dlya-keyteringa": 200,
+        "/dlya-otelya": 200,
+        "/dlya-medcentra": 200,
+        "/dlya-azs": 200,
+        "/dlya-magazina": 200,
+        "/dlya-detskogo-sada": 200,
+        "/dlya-fitnes-centra": 200,
+        "/dlya-salona-krasoty": 200
+      }
+    },
+    {
+      "name": "AC4: галка «Присылать полезные материалы» по умолчанию снята (390)",
+      "ok": true,
+      "details": {
+        "defaultChecked": false,
+        "labelText": "Присылать полезные материалы и новости WeSetup Согласие можно отозвать в любой момент."
+      }
+    },
+    {
+      "name": "AC4: текст галки и пометка об отзыве согласия",
+      "ok": true,
+      "details": "Присылать полезные материалы и новости WeSetup Согласие можно отозвать в любой момент."
+    },
+    {
+      "name": "AC4: галка снята по умолчанию и на 1440",
+      "ok": true
+    },
+    {
+      "name": "AC4: без галки — только основное согласие (скачивание прошло)",
+      "ok": true,
+      "details": [
+        "blank-download"
+      ]
+    },
+    {
+      "name": "AC4: с галкой — отдельная запись blank-download-marketing рядом с основной",
+      "ok": true,
+      "details": [
+        "blank-download",
+        "blank-download-marketing"
+      ]
+    },
+    {
+      "name": "AC4: дословный текст галки в statementText",
+      "ok": true,
+      "details": "Присылать полезные материалы и новости WeSetup. Согласие можно отозвать в любой момент."
+    },
+    {
+      "name": "AC4: IP и браузер записаны, как у основного согласия",
+      "ok": true,
+      "details": {
+        "ip": "198.51.100.22",
+        "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "version": "2026-09-22"
+      }
+    },
+    {
+      "name": "AC4: в журнале скачивания отмечено, была ли галка",
+      "ok": true,
+      "details": {
+        "auditMkt": {
+          "code": "hygiene",
+          "email": "lp.mkt.mui4crso@example.com",
+          "title": "Гигиенический журнал (сотрудники)",
+          "format": "pdf",
+          "marketing": true,
+          "marketingConsentId": "cmui4fl2f000l9s9m7vx6gakp"
+        },
+        "auditPlain": {
+          "code": "hygiene",
+          "email": "lp.nomkt.mui4crso@example.com",
+          "title": "Гигиенический журнал (сотрудники)",
+          "format": "pdf",
+          "marketing": false
+        }
+      }
+    },
+    {
+      "name": "AC4 /root 1440: ROOT вошёл",
+      "ok": true,
+      "details": 200
+    },
+    {
+      "name": "AC4 /root 1440: колонка «Рассылка» — да/нет",
+      "ok": true,
+      "details": {
+        "header": "Дата, МСК Почта Журнал Формат Аккаунт Рассылка ",
+        "cellMkt": "да",
+        "cellPlain": "нет"
+      }
+    },
+    {
+      "name": "AC4 /root 390: ROOT вошёл",
+      "ok": true,
+      "details": 200
+    },
+    {
+      "name": "AC4 /root 390: в карточке «Рассылка: да/нет»",
+      "ok": true,
+      "details": {
+        "itemMkt": "lp.mkt.mui4crso@example.com Гигиенический журнал (сотрудники) PDF · 26.09.2026, 11:21 Рассылка: да",
+        "itemPlain": "lp.nomkt.mui4crso@example.com Гигиенический журнал (сотрудники) PDF · 26.09.2026, 11:21 Рассылка: нет"
+      }
+    }
+  ],
+  "consentRows": [
+    {
+      "id": "cmui4fl2a000k9s9mwha14umx",
+      "email": "lp.mkt.mui4crso@example.com",
+      "source": "blank-download",
+      "statementText": "Даю согласие на обработку персональных данных и ознакомлен с политикой конфиденциальности",
+      "ipAddress": "198.51.100.22",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)",
+      "version": "2026-09-22"
+    },
+    {
+      "id": "cmui4fl2f000l9s9m7vx6gakp",
+      "email": "lp.mkt.mui4crso@example.com",
+      "source": "blank-download-marketing",
+      "statementText": "Присылать полезные материалы и новости WeSetup. Согласие можно отозвать в любой момент.",
+      "ipAddress": "198.51.100.22",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)",
+      "version": "2026-09-22"
+    },
+    {
+      "id": "cmui4f2yr000i9s9mv5y88xg3",
+      "email": "lp.nomkt.mui4crso@example.com",
+      "source": "blank-download",
+      "statementText": "Даю согласие на обработку персональных данных и ознакомлен с политикой конфиденциальности",
+      "ipAddress": "198.51.100.21",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)",
+      "version": "2026-09-22"
+    }
+  ],
+  "finishedAt": "2026-09-26T08:22:11.824Z",
+  "passed": 25,
+  "failed": 0
+}
