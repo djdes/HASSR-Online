@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ArrowRight, Building2, CheckCircle2, Gift, Users } from "lucide-react";
 
+import { cn } from "@/lib/utils";
+
 /**
  * Карточка тарифа — одна на лендинг и на кабинет.
  *
@@ -26,6 +28,7 @@ export function PlanCard({
   badge,
   note,
   ctaDisabled,
+  touch = false,
 }: {
   kind: "free" | "team" | "network";
   name: string;
@@ -44,6 +47,10 @@ export function PlanCard({
   note?: string;
   /// Кнопка неактивна: тариф уже действует у этого человека.
   ctaDisabled?: boolean;
+  /// Крупнее на телефоне: текст от 16 px, кнопка 48 px (главная,
+  /// спека landing-pack-2026-09). С sm и без флага — как было, поэтому
+  /// кабинет (/settings/subscription) не меняется.
+  touch?: boolean;
 }) {
   const Icon =
     kind === "free" ? Gift : kind === "network" ? Building2 : Users;
@@ -76,7 +83,10 @@ export function PlanCard({
             {name}
           </div>
           {badge && (
-            <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-[#7cf5c0]/20 px-2.5 py-1 text-[11px] font-medium uppercase tracking-wider text-[#7cf5c0]">
+            <span
+              data-fine-print="badge"
+              className="ml-auto inline-flex items-center gap-1 rounded-full bg-[#7cf5c0]/20 px-2.5 py-1 text-[11px] font-medium uppercase tracking-wider text-[#7cf5c0]"
+            >
               {badge}
             </span>
           )}
@@ -86,32 +96,31 @@ export function PlanCard({
             {from}
           </span>
           <span
-            className={
-              highlighted
-                ? "text-[13px] text-white/60"
-                : "text-[13px] text-[#9b9fb3]"
-            }
+            className={cn(
+              touch ? "text-[16px] sm:text-[13px]" : "text-[13px]",
+              highlighted ? "text-white/60" : "text-[#9b9fb3]",
+            )}
           >
             {period}
           </span>
         </div>
         {pointsIntro ? (
           <div
-            className={
-              highlighted
-                ? "mt-6 text-[13px] font-medium text-white/60"
-                : "mt-6 text-[13px] font-medium text-[#9b9fb3]"
-            }
+            className={cn(
+              "mt-6 font-medium",
+              touch ? "text-[16px] sm:text-[13px]" : "text-[13px]",
+              highlighted ? "text-white/60" : "text-[#9b9fb3]",
+            )}
           >
             {pointsIntro}
           </div>
         ) : null}
         <ul
-          className={
-            highlighted
-              ? "mt-3 flex-1 space-y-2.5 pb-8 text-[14px] text-white/85"
-              : "mt-6 flex-1 space-y-2.5 pb-8 text-[14px] text-[#3c4053]"
-          }
+          className={cn(
+            "flex-1 space-y-2.5 pb-8",
+            touch ? "text-[16px] sm:text-[14px]" : "text-[14px]",
+            highlighted ? "mt-3 text-white/85" : "mt-6 text-[#3c4053]",
+          )}
         >
           {points.map((p) => (
             <li key={p} className="flex items-start gap-2">
@@ -130,11 +139,14 @@ export function PlanCard({
             того, как нажать, а не после. */}
         {note ? (
           <div
-            className={
-              highlighted
-                ? "mt-auto mb-2.5 text-center text-[12px] leading-snug text-white/70"
-                : "mt-auto mb-2.5 text-center text-[12px] leading-snug text-[#6f7282]"
-            }
+            className={cn(
+              "mt-auto mb-2.5 text-center",
+              touch ? "text-[16px] sm:text-[12px]" : "text-[12px]",
+              // После размера: tailwind-merge снимает leading-*, если
+              // text-[размер] идёт позже.
+              "leading-snug",
+              highlighted ? "text-white/70" : "text-[#6f7282]",
+            )}
           >
             {note}
           </div>
@@ -142,18 +154,23 @@ export function PlanCard({
         {ctaDisabled ? (
           <span
             aria-disabled="true"
-            className="inline-flex h-11 w-full cursor-default items-center justify-center gap-2 rounded-2xl border border-[#c7ccea] bg-[#eef1ff] text-[15px] font-medium text-[#3848c7]"
+            className={cn(
+              "inline-flex w-full cursor-default items-center justify-center gap-2 rounded-2xl border border-[#c7ccea] bg-[#eef1ff] font-medium text-[#3848c7]",
+              touch ? "h-12 text-[16px] sm:h-11 sm:text-[15px]" : "h-11 text-[15px]",
+            )}
           >
             {ctaLabel}
           </span>
         ) : (
           <Link
             href={ctaHref}
-            className={
+            className={cn(
+              "inline-flex w-full items-center justify-center gap-2 rounded-2xl font-medium transition-colors",
+              touch ? "h-12 text-[16px] sm:h-11 sm:text-[15px]" : "h-11 text-[15px]",
               highlighted
-                ? "inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-white text-[15px] font-medium text-[#0b1024] transition-colors hover:bg-white/90"
-                : "inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] text-[15px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
-            }
+                ? "bg-white text-[#0b1024] hover:bg-white/90"
+                : "bg-[#5566f6] text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] hover:bg-[#4a5bf0]",
+            )}
           >
             {ctaLabel}
             <ArrowRight className="size-4" />

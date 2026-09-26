@@ -49,20 +49,22 @@ export function EquipmentPricing({
             <span className="text-[34px] font-semibold tracking-[-0.02em] text-[#0b1024]">
               от {hardwareFromRub.toLocaleString("ru-RU")} ₽
             </span>
-            <span className="text-[13px] text-[#9b9fb3]">разово</span>
+            <span className="text-[16px] text-[#9b9fb3] sm:text-[13px]">разово</span>
           </div>
 
-          <ul className="mt-6 space-y-2.5 pb-8 text-[14px] text-[#3c4053]">
+          {/* На телефоне текст 16 px и кнопка 48 px — как у карточек рядом
+              (PlanCard touch); с sm — прежние размеры. */}
+          <ul className="mt-6 space-y-2.5 pb-8 text-[16px] text-[#3c4053] sm:text-[14px]">
             <li className="flex items-start gap-2">
-              <span className="mt-[7px] size-1.5 shrink-0 rounded-full bg-[#5566f6]" />
+              <span className="mt-[9px] size-1.5 shrink-0 rounded-full bg-[#5566f6] sm:mt-[7px]" />
               <span>Датчики в холодильники — температура пишется сама</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="mt-[7px] size-1.5 shrink-0 rounded-full bg-[#5566f6]" />
+              <span className="mt-[9px] size-1.5 shrink-0 rounded-full bg-[#5566f6] sm:mt-[7px]" />
               <span>Планшет на кухне и NFC-брелоки для смены</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="mt-[7px] size-1.5 shrink-0 rounded-full bg-[#5566f6]" />
+              <span className="mt-[9px] size-1.5 shrink-0 rounded-full bg-[#5566f6] sm:mt-[7px]" />
               <span>Выезд, монтаж и обучение смены</span>
             </li>
           </ul>
@@ -75,7 +77,7 @@ export function EquipmentPricing({
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
             aria-controls="equipment-calculator"
-            className="mt-auto inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white text-[15px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+            className="mt-auto inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white text-[16px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] sm:h-11 sm:text-[15px]"
           >
             {open ? "Свернуть подбор" : "Подобрать оборудование"}
             <ChevronDown

@@ -1428,6 +1428,10 @@ html, body {
 .landing-motion-ready .landing-page > section[data-inview="true"] ul > li:nth-child(11) { transition-delay: 540ms; }
 .landing-motion-ready .landing-page > section[data-inview="true"] .grid > *:nth-child(12),
 .landing-motion-ready .landing-page > section[data-inview="true"] ul > li:nth-child(12) { transition-delay: 580ms; }
+/* Сетка сфер на главной — 14 плиток: 13-я и 14-я без задержки
+   появлялись бы раньше остальных. */
+.landing-motion-ready .landing-page > section[data-inview="true"] .grid > *:nth-child(n + 13),
+.landing-motion-ready .landing-page > section[data-inview="true"] ul > li:nth-child(n + 13) { transition-delay: 620ms; }
 
 /* ====================================================================
  * OFFSCREEN OPTIMIZATION — секции вне зоны видимости получают

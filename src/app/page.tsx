@@ -1,41 +1,24 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  Bell,
   BellRing,
   Check,
-  CheckCircle2,
+  Download,
+  FileText,
   LogIn,
-  Clock,
-  Cloud,
-  Gift,
-  Handshake,
-  HelpCircle,
-  NotebookText,
   Plug,
-  Printer,
-  QrCode,
   RotateCcw,
   ScanLine,
-  Send,
   ShieldCheck,
-  Smartphone,
-  Store,
-  Timer,
-  UserCheck,
   Wand2,
-  Refrigerator,
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { EquipmentPricing } from "@/components/landing/equipment-pricing";
-import { AudienceCarousel } from "@/components/landing/audience-carousel";
-import { TestimonialsCarousel } from "@/components/landing/testimonials-carousel";
+import { Testimonials } from "@/components/landing/testimonials";
+import { LANDING_SECTION_CLASS, LandingSectionHeader } from "@/components/landing/landing-section";
 import { listPublicReviews } from "@/lib/balance/reviews";
 import { buildAggregateRating } from "@/lib/seo/aggregate-rating";
-import { IndustriesGrid } from "@/components/landing/industries-grid";
-import { SampleGallery } from "@/components/landing/sample-gallery";
-import { DOCX_SAMPLE_CODES } from "@/lib/document-docx";
-import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
+import { NICHES } from "@/content/niches";
 import { FREE_MAX_USERS } from "@/lib/plan-limits";
 import {
   catalogPlanIdFor,
@@ -57,10 +40,8 @@ import { QrSticker } from "@/components/landing/qr-player/qr-sticker";
 import { LandingMotion } from "@/components/public/landing-motion";
 import { CursorGlow } from "@/components/public/cursor-glow";
 import { AnchorScrollLink } from "@/components/public/anchor-scroll-link";
-import { DemoJournalWidget } from "@/components/landing/demo-journal-widget";
 import { HeroEmailStart } from "@/components/landing/hero-email-start";
 import { NavStartButton } from "@/components/landing/nav-start-button";
-import { JournalAutoplayVideo } from "@/components/landing/journal-autoplay-video";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { getWebHomeHref } from "@/lib/role-access";
@@ -87,87 +68,65 @@ export const metadata = {
   alternates: { canonical: "https://wesetup.ru/", types: { "application/rss+xml": [{ url: "https://wesetup.ru/blog/feed.xml", title: "WeSetup — блог" }, { url: "https://wesetup.ru/whats-new/feed.xml", title: "WeSetup — что нового" }] } },
 };
 
-const FEATURES = [
+/*
+ * Главная «упакована» (спека .agent/tasks/landing-pack-2026-09): первый
+ * экран → QR-ролик → что ещё умеет → журналы для сферы → тарифы → отзывы
+ * → вопросы → финальный призыв → подвал. Убраны дубли: второй
+ * интерактивный журнал и «планшет» (то же показывает QR-ролик), баннер
+ * «Бесплатно навсегда» (третья форма почты подряд), карусель «было/стало»
+ * и сетка сфер на два экрана (сферы — одной сеткой ссылок на /dlya-*),
+ * галерея образцов (бланки — на /blanki), блок блога (он в шапке и
+ * подвале). Восемь карточек «Что внутри» сжаты до четырёх строк.
+ */
+
+/**
+ * Что сервис делает кроме QR — по одной строке. Карточки ведут на
+ * /features/*, полный список возможностей есть в подвале.
+ */
+const CAPABILITIES = [
   {
-    icon: QrCode,
-    slug: "qr",
-    title: "Заполнение по QR",
-    text: "Наклейка на холодильнике, лампе, фритюрнице, у термометра. Скан, PIN, значение — и запись уже в журнале.",
-  },
-  {
-    icon: Plug,
-    slug: "sync-iiko-1c",
-    title: "Синхронизация с iiko / 1С",
-    text: "Подтягиваем поставщиков, продукты и поступления — бракераж и входной контроль заполняются автоматически.",
+    icon: BellRing,
+    slug: "reminders",
+    title: "Напоминания и тревоги",
+    text: "Журнал пропущен или температура вне нормы — Telegram и почта сообщат ответственному.",
   },
   {
     icon: Wand2,
     slug: "autofill",
     title: "Автозаполнение",
-    text: "Гигиена, температуры, уборка — сервис подставляет значения там, где это безопасно и разрешено.",
+    text: "Гигиена, температуры, уборка — значения подставляются сами там, где это разрешено.",
   },
   {
-    icon: Cloud,
-    slug: "cloud",
-    title: "Всё в облаке",
-    text: "Журналы доступны из любой точки — компьютер, планшет у шефа, телефон в цехе. История сохраняется.",
+    icon: FileText,
+    slug: "paperless",
+    title: "PDF для проверки",
+    text: "Инспектору — PDF со всеми записями за нужный период, в один клик.",
   },
   {
-    icon: UserCheck,
-    slug: "role-access",
-    title: "Доступы по ролям",
-    text: "Каждый сотрудник видит только свои журналы. Управляющий видит всех и может закрыть период.",
+    icon: Plug,
+    slug: "sync-iiko-1c",
+    title: "iiko и 1С",
+    text: "Поставщики и поступления подтягиваются сами — в бракераж и входной контроль.",
   },
-  {
-    icon: BellRing,
-    slug: "reminders",
-    title: "Напоминания",
-    text: "Почта и Telegram пишут, если до конца смены остался незаполненный журнал. Конец дня — журналы закрыты.",
-  },
-  {
-    icon: Bell,
-    slug: "alerts",
-    title: "Алерты о нарушениях",
-    text: "Температура вне нормы, просрочка, отклонение — уведомление ответственному в реальном времени.",
-  },
-  {
-    icon: Timer,
-    slug: "time-saving",
-    title: "Экономия времени",
-    text: "5–10 минут на заполнение всех журналов в конце смены вместо часа возни с бумагой и пастами.",
-  },
-];
+] as const;
 
-const JOURNAL_PREVIEW: Array<{ code: string; name: string }> = [
-  { code: "hygiene", name: "Гигиенический журнал" },
-  { code: "health_check", name: "Журнал здоровья (ЗОЖ)" },
-  { code: "climate_control", name: "Контроль температуры и влажности" },
-  { code: "cleaning", name: "Журнал уборки помещений" },
-  { code: "uv_lamp_runtime", name: "Работа УФ-бактерицидной установки" },
-  { code: "finished_product", name: "Бракераж готовой продукции" },
-  { code: "fryer_oil", name: "Учёт фритюрных жиров" },
-  { code: "cold_equipment_control", name: "Температура холодильного оборудования" },
-  { code: "cleaning_ventilation_checklist", name: "Чек-лист проветривания" },
-  { code: "general_cleaning", name: "График генеральных уборок" },
-  { code: "incoming_control", name: "Приёмка и входной контроль сырья" },
-  { code: "med_books", name: "Медицинские книжки" },
+/** Самые частые журналы — ссылками в строку под сферами. */
+const POPULAR_JOURNALS: Array<{ code: string; name: string }> = [
+  { code: "hygiene", name: "гигиенический журнал" },
+  { code: "health_check", name: "журнал здоровья" },
+  { code: "cold_equipment_control", name: "температура холодильников" },
+  { code: "finished_product", name: "бракераж готовой продукции" },
+  { code: "cleaning", name: "журнал уборки" },
+  { code: "incoming_control", name: "входной контроль сырья" },
 ];
 
 /**
- * Что входит в подписку — чипами на блоке гарантии.
- *
- * Раньше здесь был «бонусный стек» с зачёркнутыми ценами и итогом
- * «отдельно это стоило бы 49 000 ₽». Суммы были оценкой, а не
- * прайсом подрядчика, и на странице читались как рекламный приём.
- * Оставили только перечень — он честный и проверяемый.
+ * Вопросы — от возражений к справке. Было 12: «Можно попробовать
+ * бесплатно?» отвечают тарифы прямо над блоком, «Где указано, что можно
+ * вести журналы в электронном виде?» слит с «Что такое электронный
+ * журнал» (оба цитировали один СанПиН), «Подходит ли для школ и больниц»
+ * отвечает сетка сфер. Список уходит и в разметку FAQPage.
  */
-const INCLUDED_CHIPS = [
-  { icon: NotebookText, label: JOURNALS_TOTAL_LABEL },
-  { icon: Wand2, label: "Инструкции для смены" },
-  { icon: Send, label: "Telegram-бот" },
-  { icon: Handshake, label: "Помощь с настройкой" },
-] as const;
-
 const FAQ = [
   {
     q: "Что если сервис не подойдёт — можно вернуть деньги?",
@@ -187,7 +146,7 @@ const FAQ = [
   },
   {
     q: "Что такое электронный журнал для общепита?",
-    a: "Веб-сервис, куда сотрудники вносят те же записи, что раньше делали в бумажных журналах — гигиена, температура, бракераж и так далее. Такой формат прямо разрешён СанПиН 2.3/2.4.4282-26, который действует с 1 сентября 2026 года.",
+    a: "Веб-сервис, куда сотрудники вносят те же записи, что раньше делали в бумажных журналах — гигиена, температура, бракераж и так далее. Электронная форма прямо разрешена СанПиН 2.3/2.4.4282-26 «Санитарно-эпидемиологические требования к организации общественного питания населения»: он действует с 1 сентября 2026 года и заменил прежний 2.3/2.4.3590-20.",
   },
   {
     q: "Как проходит проверка Роспотребнадзором?",
@@ -196,14 +155,6 @@ const FAQ = [
   {
     q: "Есть ли синхронизация с iiko и 1С?",
     a: "Да. Поставщики, продукты, поступления и бракераж подтягиваются автоматически, чтобы руками вбивать не приходилось. Настройка — около 30 минут вместе с нашим инженером.",
-  },
-  {
-    q: "Где указано, что можно вести журналы в электронном виде?",
-    a: "СанПиН 2.3/2.4.4282-26 «Санитарно-эпидемиологические требования к организации общественного питания населения», действует с 1 сентября 2026 года и заменил прежний 2.3/2.4.3590-20. Электронная форма прямо разрешена.",
-  },
-  {
-    q: "Можно попробовать бесплатно?",
-    a: `Да — бесплатный тариф действует навсегда: до 3 сотрудников все ${JOURNALS_TOTAL_LABEL} включены без ограничений по времени и без привязки карты. Подписку оформляете, только если нужно больше рабочих мест или автоматизация с датчиками.`,
   },
   {
     q: "Что если пропадёт интернет?",
@@ -217,29 +168,25 @@ const FAQ = [
     q: "Можно ли перенести данные из Excel/бумаги?",
     a: "Да. Импорт сотрудников, оборудования и поставщиков — из Excel-таблицы. Старые бумажные записи остаются у вас, новые ведутся в WeSetup; можно опционально оцифровать архив за деньги.",
   },
-  {
-    q: "Подходит ли для школьного питания / больниц / детских садов?",
-    a: "Да. Те же СанПиН-журналы (гигиена, термообработка, бракераж, входной контроль) обязательны и для школ/больниц. Шаблоны общие; адаптация под специфику — в настройках.",
-  },
 ];
 
 /**
  * Пункты первого экрана. Появляются по очереди — см. `.hero-point`.
  * Порядок не случайный: сверху то, ради чего сервис и покупают.
- * Длина строк — не длиннее «Автосоздание и автозаполнение журналов»:
- * на телефоне (360–390 px) каждая должна умещаться в одну строку, иначе
- * гарантия под кнопкой уезжает за сгиб экрана.
+ * Пункта «Бесплатный доступ ко всем журналам» больше нет: строкой ниже
+ * то же самое сказано с цифрами («До 3 сотрудников — бесплатно»).
+ * На телефоне строки 16 px и могут переноситься — список выровнен по
+ * левому краю, галочка стоит у первой строки.
  */
 const HERO_POINTS = [
   "**Скан QR-кода** — и запись в журнале",
   "**Автосоздание** и **автозаполнение** журналов",
-  "**Бесплатный** доступ ко всем журналам",
   "**Электронные и бумажные** журналы",
 ] as const;
 
 /**
  * `**слово**` → <strong>. На первом экране читают не строки, а ключевые
- * слова, поэтому суть выделена жирным. Markdown ради четырёх строк не
+ * слова, поэтому суть выделена жирным. Markdown ради трёх строк не
  * тащим.
  */
 function emphasize(text: string) {
@@ -280,10 +227,14 @@ function moscowSceneDay(now: Date) {
 
 /** Три шага финального блока: как завести QR у себя. */
 const QR_START_STEPS = [
-  { icon: Refrigerator, title: "Добавьте оборудование", text: "Холодильники, лампы, фритюрницы — в настройках, за пару минут." },
-  { icon: Printer, title: "Распечатайте наклейки", text: "Лист QR-наклеек на обычном принтере — и на места." },
-  { icon: ScanLine, title: "Сотрудники сканируют", text: "Камера телефона, PIN, значение — журнал ведётся сам." },
+  { title: "Добавьте оборудование", text: "Холодильники, лампы, фритюрницы — в настройках, за пару минут." },
+  { title: "Распечатайте наклейки", text: "Лист QR-наклеек на обычном принтере — и на места." },
+  { title: "Сотрудники сканируют", text: "Камера телефона, PIN, значение — журнал ведётся сам." },
 ] as const;
+
+/** Контурная кнопка-ссылка: 48 px на телефоне, как все кнопки главной. */
+const OUTLINE_BUTTON_CLASS =
+  "inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-5 text-[16px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] sm:text-[15px]";
 
 export default async function LandingPage() {
   // Auth state — для адаптации nav/CTA. Лендинг остаётся публичным,
@@ -319,26 +270,6 @@ export default async function LandingPage() {
     : null;
   const viewerOnFreePlan = isAuthed && catalogPlanIdFor(viewerPlan) === "free";
 
-  const latestArticles = await db.article
-    .findMany({
-      where: { publishedAt: { not: null } },
-      orderBy: { publishedAt: "desc" },
-      take: 3,
-      select: {
-        slug: true,
-        title: true,
-        excerpt: true,
-        tags: true,
-        readMinutes: true,
-        publishedAt: true,
-      },
-    })
-    .catch((error) => {
-      const message = error instanceof Error ? error.message : String(error);
-      console.error(`[landing] Failed to load latest articles: ${message}`);
-      return [];
-    });
-
   // Цены тарифов живут в БД и правятся ROOT'ом в /root/tariffs — карточки,
   // калькулятор и JSON-LD читают одно и то же значение, поэтому смена
   // цены не требует деплоя. Страница уже force-dynamic.
@@ -358,15 +289,6 @@ export default async function LandingPage() {
   // Считаем, а не хардкодим: состав комплектов меняется в
   // lib/hardware-pricing.ts, и цена на лендинге обязана идти следом.
   const hardwareFromRub = Math.min(...HARDWARE_BUNDLES.map(bundleTotal));
-
-  // Список для галереи образцов собираем на сервере: клиенту незачем
-  // тянуть каталог и модуль DOCX ради тринадцати строк.
-  const docxCodes = new Set<string>(DOCX_SAMPLE_CODES);
-  const sampleGalleryItems = ACTIVE_JOURNAL_CATALOG.map((item) => ({
-    code: item.code,
-    name: item.name,
-    docx: docxCodes.has(item.code),
-  }));
 
   // QR-ролик: дата «сегодня» по Москве считается здесь, чтобы первый кадр
   // на сервере и после гидрации совпадал. QR на наклейках ролика и CTA —
@@ -475,13 +397,15 @@ export default async function LandingPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdSafeString(jsonLd) }}
       />
-      {/* NAV — solid white, sticky so hero blobs don't bleed through on scroll */}
+      {/* NAV — solid white, sticky so hero blobs don't bleed through on scroll.
+          На телефоне кнопки и «Тарифы» — 48 px в высоту: в них попадают
+          пальцем, а не курсором. */}
       <div className="landing-nav sticky top-0 z-40 border-b border-[#ececf4] bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
-        <nav className="mx-auto flex max-w-[1200px] items-center justify-between px-4 py-2.5 sm:px-6 sm:py-5">
+        <nav className="mx-auto flex max-w-[1200px] items-center justify-between px-4 py-2 sm:px-6 sm:py-5">
           <Link href="/" className="text-[#0b1024]" aria-label="WeSetup — на главную">
             <BrandLogo height={30} className="sm:[--logo-h:26px]" title="" />
           </Link>
-          <div className="flex items-center gap-3 sm:gap-6">
+          <div className="flex items-center gap-2 sm:gap-6">
             <Link
               href="/journals-info"
               className="hidden text-[14px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024] sm:inline"
@@ -499,7 +423,7 @@ export default async function LandingPage() {
                 отдельная страница: тарифы тут же, ниже по этой же. */}
             <AnchorScrollLink
               href="#pricing"
-              className="nav-tariffs text-[14px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024]"
+              className="nav-tariffs inline-flex h-12 items-center px-2 text-[16px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024] sm:h-auto sm:px-0 sm:text-[14px]"
             >
               Тарифы
             </AnchorScrollLink>
@@ -507,7 +431,7 @@ export default async function LandingPage() {
               <>
                 <Link
                   href={homeHref}
-                  className="inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6] px-3.5 text-[13px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0] sm:px-4 sm:text-[14px]"
+                  className="inline-flex h-12 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[16px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0] sm:h-10 sm:text-[14px]"
                 >
                   Открыть кабинет
                   <ArrowRight className="size-4" />
@@ -530,7 +454,7 @@ export default async function LandingPage() {
                 <NavStartButton />
                 <Link
                   href="/login"
-                  className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-3.5 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] sm:px-4"
+                  className="inline-flex h-12 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[16px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] sm:h-10 sm:text-[14px]"
                 >
                   Войти
                   <LogIn className="size-4 text-[#5566f6]" />
@@ -541,11 +465,12 @@ export default async function LandingPage() {
         </nav>
       </div>
 
-      {/* HERO — centered stack, megaplan-inspired */}
-      {/* overflow-x-clip contains the tilted phones horizontally, but lets
-          vertical shadows + natural-height children extend freely so they
-          don't get guillotined by the section boundary. */}
-      <section className="landing-hero relative overflow-x-clip pb-14 sm:pb-32">
+      {/* HERO. На телефоне — одна левая ось с остальными секциями
+          (раньше заголовок стоял по центру, список — блоком по центру,
+          согласие — от левого края, и первый экран читался вразнобой).
+          С sm — прежняя центрированная композиция. overflow-x-clip держит
+          фоновые пятна по горизонтали, не обрезая тени по вертикали. */}
+      <section className="landing-hero relative overflow-x-clip pb-8 sm:pb-12">
         {/* Soft ambient gradient wash */}
         <div
           className="pointer-events-none absolute inset-0 -z-0"
@@ -569,14 +494,14 @@ export default async function LandingPage() {
           <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-white" />
         </div>
 
-        <div className="relative mx-auto max-w-[1100px] px-4 pt-6 text-center sm:px-6 sm:pt-16">
+        <div className="relative mx-auto max-w-[1100px] px-4 pt-6 sm:px-6 sm:pt-16 sm:text-center">
           {/* Отметка о реестре — рукописной заметкой со стрелкой на
               заголовок, а не пилюлей: пилюля на первом экране читалась
               как ещё одна кнопка и конкурировала с призывом к действию.
               Буквы запечены в контуры SVG, потому что прод не ходит в
               Google Fonts (см. layout.tsx) — держать ради одной строки
               ещё один self-hosted шрифт дороже, чем статика с кешем. */}
-          <div className="hero-mark mx-auto w-[220px] max-w-[72vw] sm:w-[340px]">
+          <div className="hero-mark w-[210px] max-w-[64vw] sm:mx-auto sm:w-[340px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/brand/registry-mark.svg"
@@ -594,13 +519,10 @@ export default async function LandingPage() {
             />
           </div>
 
-          {/* Headline — fluid scale: ~22 px at 320 → 72 px on desktop.
-              7vw подобран так, чтобы «Журналы СанПиН и ХАССП» на телефоне
-              помещались в одну строку (≈12.5em в Segoe UI при tracking
-              -0.02em: 360px → 25px → 315px из 328); нижняя граница 22px —
-              ради 320px. nowrap не ставим — при более широком системном
-              шрифте перенос лучше обрезки. */}
-          <h1 className="hero-title mx-auto mt-3 max-w-[920px] text-[clamp(1.375rem,7vw,4.5rem)] font-semibold leading-[1.05] tracking-[-0.02em] text-[#0b1024] sm:mt-8">
+          {/* Headline — fluid scale: 26 px at 320 → 30 px at 390 → 72 px
+              on desktop. «Электронные журналы» на телефоне — одной
+              строкой (≈10.9em в Segoe UI при tracking -0.02em). */}
+          <h1 className="hero-title mt-3 max-w-[920px] text-[clamp(1.625rem,7.6vw,4.5rem)] font-semibold leading-[1.08] tracking-[-0.02em] text-[#0b1024] sm:mx-auto sm:mt-8">
             Электронные журналы{" "}
             <span className="relative inline-block">
               <span className="relative z-10">СанПиН и ХАССП</span>
@@ -611,30 +533,19 @@ export default async function LandingPage() {
             </span>
           </h1>
 
-          {/* Subhead — все четыре рычага уравнения ценности: результат
-              (проверка без штрафов), вероятность (реестр ПО, СанПиН —
-              бейджи рядом), время (5 минут), усилия (шаблоны, Telegram,
-              PDF в один клик). */}
-          {/* Вместо абзаца — четыре пункта, появляющиеся по очереди.
-              Абзац читали через строчку: человек на первом экране не
-              читает, а сканирует. Анимация на чистом CSS тем же
-              keyframe'ом, что и остальной hero, — клиентский компонент
-              ради четырёх строк не нужен, и `prefers-reduced-motion`
-              уже обработан общими правилами. */}
-          {/* Список по центру как блок (`w-fit`), а строки внутри — от
-              левого края: так галочки стоят в одну колонку, а не
-              «лесенкой», как при центрировании каждой строки. */}
-          <ul className="mx-auto mt-5 flex w-fit max-w-full flex-col items-start gap-1.5 text-left sm:mt-7 sm:gap-2">
+          {/* Вместо абзаца — пункты, появляющиеся по очереди: человек на
+              первом экране не читает, а сканирует. Анимация на чистом CSS
+              тем же keyframe'ом, что и остальной hero. На десктопе список
+              стоит по центру блоком (`w-fit`), строки внутри — от левого
+              края: галочки в одну колонку, а не «лесенкой». */}
+          <ul className="mt-5 flex flex-col items-start gap-2 text-left sm:mx-auto sm:mt-7 sm:w-fit sm:max-w-full">
             {HERO_POINTS.map((point, index) => (
               <li
                 key={point}
-                // 14px на телефоне: самая длинная строка с жирными
-                // словами — 282px, а на 360px под текст остаётся 296.
-                // При 15px она уже не влезала и уходила на две строки.
-                className="hero-point flex items-center gap-2.5 text-[14px] leading-snug text-[#3c4053] sm:text-[16px]"
+                className="hero-point flex items-start gap-2.5 text-[16px] leading-[1.45] text-[#3c4053]"
                 style={{ animationDelay: `${250 + index * 150}ms` }}
               >
-                <span className="inline-flex size-[22px] shrink-0 items-center justify-center rounded-full bg-[#eef1ff] text-[#5566f6]">
+                <span className="mt-px inline-flex size-[22px] shrink-0 items-center justify-center rounded-full bg-[#eef1ff] text-[#5566f6]">
                   <Check className="size-3" strokeWidth={3} />
                 </span>
                 <span>{emphasize(point)}</span>
@@ -642,20 +553,41 @@ export default async function LandingPage() {
             ))}
           </ul>
 
-          {/* Цены — одной строкой-пилюлей, а не карточкой: ответ на
-              «сколько стоит» остаётся на первом экране, подробности — по
-              клику в #pricing. Карточка с тремя строками отжимала CTA под
-              сгиб на телефоне. Числа из тех же констант, что и тарифы. */}
+          {/* Цены — одной строкой: ответ на «сколько стоит» остаётся на
+              первом экране, подробности — по клику в #pricing. Числа из
+              тех же констант, что и тарифы. На телефоне — строка-ссылка
+              от левого края (пилюля там переносилась на две строки и
+              становилась овалом), с sm — прежняя пилюля. Два элемента, а
+              не один с sm:-классами: ночная тема красит всё, в чьём
+              классе есть «bg-white/», и на телефоне под строкой вылезала
+              плашка. */}
           <AnchorScrollLink
             href="#pricing"
             ariaLabel="Перейти к тарифам"
-            className="group mx-auto mt-5 flex w-fit max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-0.5 rounded-full border border-[#dcdfed] bg-white/80 px-4 py-2 text-[13.5px] text-[#3c4053] backdrop-blur transition-colors hover:border-[#5566f6]/45 hover:bg-white sm:mt-6 sm:text-[14px]"
+            className="group mt-4 flex min-h-12 max-w-full flex-wrap items-center gap-x-1.5 text-left text-[16px] leading-[1.45] text-[#3c4053] sm:hidden"
+          >
+            <span>
+              До {FREE_MAX_USERS} сотрудников —{" "}
+              <span className="font-semibold text-[#0b1024]">бесплатно</span>,
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              дальше от{" "}
+              <span className="font-semibold tabular-nums text-[#0b1024]">
+                {formatRub(monthly.priceRub)}/мес
+              </span>
+              <ArrowRight className="size-4 shrink-0 text-[#3848c7]" />
+            </span>
+          </AnchorScrollLink>
+          <AnchorScrollLink
+            href="#pricing"
+            ariaLabel="Перейти к тарифам"
+            className="group mx-auto mt-6 hidden w-fit max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-0.5 rounded-full border border-[#dcdfed] bg-white/80 px-4 py-2 text-[14px] text-[#3c4053] backdrop-blur transition-colors hover:border-[#5566f6]/45 hover:bg-white sm:flex"
           >
             <span>
               До {FREE_MAX_USERS} сотрудников —{" "}
               <span className="font-semibold text-[#0b1024]">бесплатно</span>
             </span>
-            <span aria-hidden="true" className="hidden text-[#c9cddd] sm:inline">
+            <span aria-hidden="true" className="text-[#c9cddd]">
               ·
             </span>
             <span>
@@ -669,18 +601,18 @@ export default async function LandingPage() {
 
           {/* Single big CTA — для залогиненного «Открыть кабинет»,
               для анонимного — «Начать бесплатно» (регистрация) */}
-          <div className="hero-cta mt-6 flex flex-col items-center gap-3 sm:mt-10">
+          <div className="hero-cta mt-5 flex flex-col items-stretch gap-3 sm:mt-10 sm:items-center">
             {isAuthed ? (
               <>
                 <Link
                   href={homeHref}
-                  className="group inline-flex h-12 items-center gap-2 rounded-2xl bg-[#5566f6] px-6 text-[15px] font-semibold text-white shadow-[0_20px_50px_-20px_rgba(85,102,246,0.55)] transition-all hover:-translate-y-0.5 hover:bg-[#4a5bf0] hover:shadow-[0_24px_55px_-18px_rgba(85,102,246,0.65)] sm:h-[56px] sm:px-8 sm:text-[16px]"
+                  className="group inline-flex h-14 items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-6 text-[16px] font-semibold text-white shadow-[0_20px_50px_-20px_rgba(85,102,246,0.55)] transition-all hover:-translate-y-0.5 hover:bg-[#4a5bf0] hover:shadow-[0_24px_55px_-18px_rgba(85,102,246,0.65)] sm:px-8"
                 >
                   Открыть кабинет
                   <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
                 </Link>
-                <div className="text-[12px] text-[#9b9fb3]">
-                  Залогинены как {session?.user?.name ?? ""}
+                <div className="text-[16px] text-[#6f7282] sm:text-[13px]">
+                  Вы вошли как {session?.user?.name ?? ""}
                 </div>
               </>
             ) : (
@@ -695,8 +627,8 @@ export default async function LandingPage() {
                 />
                 {/* Гарантия — прямо в первом экране: снимать риск нужно
                     там же, где просим действие, а не через два экрана. */}
-                <div className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-[#116b2a]">
-                  <ShieldCheck className="size-3.5" />
+                <div className="inline-flex items-center gap-2 text-[16px] font-medium text-[#116b2a] sm:text-[14px]">
+                  <ShieldCheck className="size-4 shrink-0" />
                   Гарантия возврата: 14 дней после оплаты.
                 </div>
               </>
@@ -707,9 +639,9 @@ export default async function LandingPage() {
 
       {/* QR-РОЛИК — сразу после героя и отдельной секцией верхнего уровня:
           LandingMotion даёт ей data-inview, иначе stagger-правило
-          globals.css спрятало бы детей. Раньше здесь был блок «Три
-          экрана» с макетом журнала уборки, который не совпадал с настоящим. */}
-      <section id="qr" className="mx-auto max-w-[1200px] scroll-mt-[72px] px-4 pb-20 sm:scroll-mt-24 sm:px-6">
+          globals.css спрятало бы детей. Внутри блока ничего не меняем
+          (спека): только общий вертикальный ритм снаружи. */}
+      <section id="qr" className={`${LANDING_SECTION_CLASS} scroll-mt-[72px] sm:scroll-mt-24`}>
         <div className="relative overflow-hidden rounded-3xl border border-[#ececf4] bg-[#0b1024] text-white shadow-[0_20px_60px_-30px_rgba(11,16,36,0.55)]">
           <div className="pointer-events-none absolute inset-0" aria-hidden="true">
             <div className="absolute -left-24 -top-24 size-[420px] rounded-full bg-[#5566f6] opacity-40 blur-[120px]" />
@@ -740,183 +672,106 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* Отдельной секции «Заполняется само» больше нет: сюжет про
-          датчики рассказывает глава «Датчики» QR-ролика выше, а два
-          рассказа об одном и том же делали страницу на экран длиннее
-          (automation-scene.tsx удалён вместе со своим CSS). */}
-
-      {/* FEATURES */}
-      <section className="mx-auto max-w-[1200px] px-4 sm:px-6 py-20">
-        <div className="mb-12 max-w-[720px]">
-          <div className="mb-3 text-[12px] uppercase tracking-[0.18em] text-[#5566f6]">
-            Что внутри
-          </div>
-          <h2 className="text-[clamp(1.625rem,2.2vw+1rem,2.25rem)] font-semibold leading-tight tracking-[-0.02em]">
-            Всё, что нужно, чтобы журналы действительно вели — а не «для галочки»
-          </h2>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {FEATURES.map((f) => (
-            <Link
-              key={f.title}
-              href={`/features/${f.slug}`}
-              className="group flex flex-col rounded-2xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] transition-all hover:-translate-y-0.5 hover:border-[#5566f6]/40 hover:shadow-[0_14px_32px_-16px_rgba(85,102,246,0.28)]"
-            >
-              <div className="mb-4 flex size-12 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#5566f6] transition-transform group-hover:scale-105">
-                <f.icon className="size-6" />
-              </div>
-              <div className="text-[16px] font-semibold tracking-[-0.01em] text-[#0b1024] group-hover:text-[#3848c7]">
-                {f.title}
-              </div>
-              <p className="mt-2 flex-1 text-[13px] leading-[1.55] text-[#6f7282]">
-                {f.text}
-              </p>
-              <span className="mt-4 inline-flex items-center gap-1 text-[12px] font-medium text-[#3848c7] opacity-0 transition-opacity group-hover:opacity-100">
-                Подробнее
-                <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-              </span>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* C9 — interactive demo journal: позволяет посетителю «потрогать»
-          форму без регистрации. Снимает страх «слишком сложно». */}
-      <section className="mx-auto max-w-[1200px] px-4 sm:px-6 pb-20">
-        <div className="mb-8 max-w-[640px]">
-          <div className="mb-3 inline-flex items-center gap-2 text-[12px] uppercase tracking-[0.18em] text-[#5566f6]">
-            <Wand2 className="size-4" />
-            Попробуйте сами
-          </div>
-          <h2 className="text-[clamp(1.625rem,2.2vw+1rem,2.25rem)] font-semibold leading-tight tracking-[-0.02em]">
-            Заполните журнал прямо здесь — без регистрации
-          </h2>
-          <p className="mt-3 text-[15px] text-[#6f7282]">
-            Пять самых частых журналов с настоящими полями — заполните и
-            скачайте заполненный образец бланка в PDF или Word.
-          </p>
-        </div>
-        <DemoJournalWidget />
-
-        {/* Галерея образцов: все журналы каталога с превью бланка и
-            кнопками скачивания. Демо-виджет выше даёт «потрогать
-            форму», здесь — посмотреть готовый документ. */}
-        <div className="mt-6">
-          <SampleGallery items={sampleGalleryItems} />
-        </div>
-      </section>
-
-      {/* TRIAL BANNER */}
-      <section className="mx-auto max-w-[1200px] px-4 sm:px-6 pb-20">
-        <div className="relative overflow-hidden rounded-3xl bg-[#0b1024] px-5 py-10 text-white sm:px-8 sm:py-14 md:px-16">
-          <div className="pointer-events-none absolute inset-0">
-            <div className="absolute -top-24 right-0 size-[400px] rounded-full bg-[#7cf5c0] opacity-20 blur-[120px]" />
-            <div className="absolute -bottom-24 -left-10 size-[420px] rounded-full bg-[#5566f6] opacity-30 blur-[120px]" />
-          </div>
-          <div className="relative z-10 flex flex-col items-start gap-6 md:flex-row md:items-center md:justify-between">
-            <div className="max-w-[560px]">
-              <h3 className="text-[clamp(1.5rem,2vw+1rem,2rem)] font-semibold leading-tight tracking-[-0.02em]">
-                Бесплатно навсегда. Без карты.
-              </h3>
-              <p className="mt-3 text-[15px] text-white/70">
-                Создайте организацию за 10 минут и начните вести
-                журналы прямо сегодня. Платите, только если нужно больше
-                рабочих мест или автоматизация.
-              </p>
-            </div>
-            {/* Та же форма в одно поле, что и в hero: ссылка на
-                /register была лишним переходом на самом мотивированном
-                участке страницы. */}
-            {isAuthed ? (
+      {/* ЧТО ЕЩЁ УМЕЕТ — вместо восьми карточек «Что внутри» (2 200 px на
+          телефоне): четыре строки о том, чего не показывает ролик. «Всё в
+          облаке» и «Экономия времени» ничего не добавляли, «Напоминания» и
+          «Алерты» — одна мысль, QR уже рассказан выше. Остальные
+          возможности — в подвале, ряд «Возможности». */}
+      <section className={LANDING_SECTION_CLASS}>
+        <LandingSectionHeader
+          title="Напомнит, заполнит и соберёт PDF для проверки"
+          lead="QR — только вход. Остальное сервис делает сам."
+        />
+        <ul className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
+          {CAPABILITIES.map((item) => (
+            <li key={item.slug}>
               <Link
-                href={homeHref}
-                className="inline-flex h-12 items-center gap-2 rounded-2xl bg-white px-6 text-[15px] font-medium text-[#0b1024] transition-colors hover:bg-white/90"
+                href={`/features/${item.slug}`}
+                className="group flex h-full items-start gap-4 rounded-2xl border border-[#ececf4] bg-white p-4 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] transition-[border-color,box-shadow] duration-200 hover:border-[#5566f6]/40 hover:shadow-[0_14px_32px_-16px_rgba(85,102,246,0.28)] sm:flex-col sm:gap-3 sm:p-5"
               >
-                Открыть кабинет
-                <ArrowRight className="size-4 text-[#5566f6]" />
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#5566f6]">
+                  <item.icon className="size-5" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-[17px] font-semibold leading-snug tracking-[-0.01em] text-[#0b1024] group-hover:text-[#3848c7]">
+                    {item.title}
+                  </span>
+                  <span className="mt-1 block text-[16px] leading-[1.5] text-[#3c4053] sm:text-[15px]">
+                    {item.text}
+                  </span>
+                </span>
               </Link>
-            ) : (
-              <div className="w-full md:max-w-[520px]">
-                <HeroEmailStart
-                  tone="dark"
-                  place="banner"
-                  buttonLabel="Начать бесплатно"
-                  showLoginLink={false}
-                />
-              </div>
-            )}
-          </div>
-        </div>
+            </li>
+          ))}
+        </ul>
       </section>
 
-      {/* JOURNALS CATALOG */}
-      <section className="mx-auto max-w-[1200px] px-4 sm:px-6 pb-20">
-        <div className="mb-10 flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
-          <div className="max-w-[640px]">
-            <div className="mb-3 text-[12px] uppercase tracking-[0.18em] text-[#5566f6]">
-              {JOURNALS_TOTAL_LABEL}
-            </div>
-            <h2 className="text-[clamp(1.625rem,2.2vw+1rem,2.25rem)] font-semibold leading-tight tracking-[-0.02em]">
-              Какие журналы уже внутри
-            </h2>
-            <p className="mt-4 text-[15px] text-[#6f7282]">
-              Ежедневные санитарные журналы и полный ХАССП: аудиты, обучение,
-              поверки, прослеживаемость, обслуживание оборудования, жалобы,
-              СИЗ. Все журналы — бесплатно, без ограничений по времени.
-            </p>
-          </div>
-          <Link
-            href="/journals-info"
-            className="inline-flex h-11 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
-          >
-            Смотреть весь список
+      {/* ЖУРНАЛЫ ДЛЯ СФЕРЫ — вместо четырёх блоков: «Какие журналы уже
+          внутри» (12 строк), «Кому подходит» (9 групп чипов, 2 200 px на
+          телефоне), карусель «было/стало» и галерея образцов. Сферы —
+          одной сеткой ссылок на /dlya-* (тот же список, что в подвале),
+          самые частые журналы — ссылками в строку, весь каталог и бланки —
+          двумя кнопками. Ссылки нужны и для поиска. */}
+      <section id="journals" className={`${LANDING_SECTION_CLASS} scroll-mt-[72px] sm:scroll-mt-24`}>
+        <LandingSectionHeader
+          title="Журналы СанПиН и ХАССП для вашей сферы"
+          lead={`${JOURNALS_TOTAL_LABEL}: ежедневные санитарные и полный ХАССП. Выберите сферу — покажем журналы, приказы и чек-листы именно для неё.`}
+        />
+        <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4">
+          {Object.values(NICHES).map((niche) => (
+            <li key={niche.slug}>
+              <Link
+                href={`/${niche.slug}`}
+                className="group flex h-full min-h-12 items-center justify-between gap-2 rounded-2xl border border-[#ececf4] bg-white px-3.5 py-2.5 text-[16px] font-medium leading-snug text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] hover:text-[#3848c7] sm:px-4 sm:text-[15px]"
+              >
+                <span className="min-w-0">{niche.navLabel}</span>
+                {/* Стрелка — с sm: на телефоне в две колонки она съедала
+                    место, и половина названий переносилась. Рамка плитки и
+                    так читается как кнопка. */}
+                <ArrowRight className="hidden size-4 shrink-0 text-[#5566f6] transition-transform duration-150 group-hover:translate-x-0.5 sm:block" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-6 max-w-[860px] text-[16px] leading-[1.75] text-[#3c4053]">
+          Чаще всего ведут:{" "}
+          {POPULAR_JOURNALS.map((journal, index) => (
+            <span key={journal.code}>
+              <Link
+                href={`/journals-info/${journal.code}`}
+                className="font-medium text-[#3848c7] underline decoration-[#3848c7]/30 underline-offset-4 transition-colors duration-150 hover:decoration-[#3848c7]"
+              >
+                {journal.name}
+              </Link>
+              {index < POPULAR_JOURNALS.length - 1 ? ", " : "."}
+            </span>
+          ))}
+        </p>
+        <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:gap-3">
+          <Link href="/journals-info" className={OUTLINE_BUTTON_CLASS}>
+            Все {JOURNALS_TOTAL_LABEL}
             <ArrowRight className="size-4 text-[#5566f6]" />
           </Link>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {JOURNAL_PREVIEW.map((j, idx) => (
-            <Link
-              key={j.code}
-              href={`/journals-info/${j.code}`}
-              className="group flex w-full min-w-0 items-center gap-3 rounded-2xl border border-[#ececf4] bg-white px-4 py-3 text-[14px] font-medium text-[#0b1024] shadow-[0_0_0_1px_rgba(240,240,250,0.45)] transition-all hover:-translate-y-0.5 hover:border-[#5566f6]/40 hover:shadow-[0_12px_28px_-16px_rgba(85,102,246,0.22)]"
-            >
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#f5f6ff] text-[12px] font-semibold text-[#5566f6]">
-                {String(idx + 1).padStart(2, "0")}
-              </span>
-              <span className="min-w-0 flex-1 leading-snug group-hover:text-[#3848c7]">
-                {j.name}
-              </span>
-              <ArrowRight className="size-4 shrink-0 text-[#5566f6] opacity-0 transition-opacity group-hover:opacity-100" />
-            </Link>
-          ))}
+          <Link href="/blanki" className={OUTLINE_BUTTON_CLASS}>
+            <Download className="size-4 text-[#5566f6]" />
+            Бланки журналов: PDF и Word
+          </Link>
         </div>
       </section>
 
       {/* PRICING */}
       <section
         id="pricing"
-        className="mx-auto max-w-[1200px] scroll-mt-[72px] px-4 pb-20 sm:scroll-mt-24 sm:px-6"
+        className={`${LANDING_SECTION_CLASS} scroll-mt-[72px] sm:scroll-mt-24`}
       >
-        <div className="mb-10 max-w-[720px]">
-          <div className="mb-3 inline-flex items-center gap-2 text-[12px] uppercase tracking-[0.18em] text-[#5566f6]">
-            <Gift className="size-4" />
-            Тарифы
-          </div>
-          <h2 className="text-[clamp(1.625rem,2.2vw+1rem,2.25rem)] font-semibold leading-tight tracking-[-0.02em]">
-            Все журналы бесплатно. Платите за автоматизацию.
-          </h2>
-          <p className="mt-4 text-[15px] text-[#6f7282]">
-            Подписка единая — {formatRub(monthly.priceRub)}/мес. Пакеты отличаются только
-            набором оборудования и услугами: приехать, подключить
-            датчики к холодильникам, настроить профили и обучить смену.
-            Всё железо — разовая покупка.
-          </p>
-        </div>
+        {/* Абзаца под заголовком больше нет: что входит в подписку и
+            оборудование, сказано в самих карточках. */}
+        <LandingSectionHeader title="Все журналы бесплатно. Платите за автоматизацию." />
 
-        {/* Три карточки одной высоты. Длинные описания убраны: в ряду
-            тарифов человек сравнивает цену и три отличия, а не читает
-            абзацы. Подписка перечисляет только то, чего нет в
-            бесплатном, — иначе половина списка дублируется. */}
+        {/* Три карточки одной высоты. Подписка перечисляет только то,
+            чего нет в бесплатном, — иначе половина списка дублируется.
+            `touch` — крупнее на телефоне (текст 16 px, кнопка 48 px);
+            на десктопе и в кабинете (там флага нет) — как было. */}
         <EquipmentPricing
           subscriptionMonthly={monthly.priceRub}
           hardwareFromRub={hardwareFromRub}
@@ -935,6 +790,7 @@ export default async function LandingPage() {
             ctaHref="#start"
             ctaDisabled={viewerOnFreePlan}
             note={FREE_PLAN_NOTE}
+            touch
           />
 
           <PlanCard
@@ -952,140 +808,66 @@ export default async function LandingPage() {
             ctaHref="/order?plan=monthly"
             highlighted
             badge="Популярный"
+            touch
           />
         </EquipmentPricing>
+
         {/* Сверх лимита тарифа — фиксированная доплата за сотрудника;
             места сверх лимита оформляются через поддержку, поэтому рядом
             кнопка связи. Промолчать нельзя — человек оплатит и упрётся
             в лимит. */}
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3">
-          <span className="text-[13.5px] text-[#3c4053]">{LARGE_TEAM_NOTE}</span>
+        <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <span className="text-[16px] leading-[1.5] text-[#3c4053] sm:text-[15px]">{LARGE_TEAM_NOTE}</span>
           <a
             href="https://t.me/wesetupbot"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+            className={`${OUTLINE_BUTTON_CLASS} shrink-0 sm:h-10 sm:px-4 sm:text-[14px]`}
           >
             Связаться с поддержкой
           </a>
         </div>
-        <div className="mt-4 text-center text-[13px] text-[#9b9fb3]">
-          Подписка оплачивается помесячно. Железо — один раз.
-        </div>
 
-        {/* ГАРАНТИЯ — один светлый блок во всю ширину. Раньше здесь
-            стояли тёмная карточка и список бонусов с зачёркнутыми
-            ценами: «отдельно это стоило бы 49 000» считывалось как
-            рекламный приём, а не как факт, и уводило внимание от
-            единственного, что тут важно, — что деньги можно вернуть. */}
-        <div className="mt-14 overflow-hidden rounded-3xl border border-[#5566f6]/20 bg-gradient-to-br from-[#f5f6ff] to-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] sm:p-9">
-          <div className="grid gap-8 lg:grid-cols-[1.1fr_1fr] lg:items-center">
-            <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-start">
-              <span className="flex size-16 shrink-0 items-center justify-center rounded-full bg-[#5566f6] text-white shadow-[0_16px_40px_-16px_rgba(85,102,246,0.65)]">
-                <RotateCcw className="size-8" />
-              </span>
-              <div className="min-w-0">
-                <div className="text-[clamp(1.375rem,1.4vw+1rem,1.75rem)] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">
-                  Не понравится — вернём деньги
-                </div>
-                <p className="mt-3 max-w-[520px] text-[15px] leading-[1.65] text-[#3c4053]">
-                  Автоматический возврат всей суммы в течение 14 дней
-                  после оформления. Без вопросов и удержаний.
-                </p>
-                <Link
-                  href="/oferta"
-                  className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-[#3848c7] underline-offset-4 hover:underline"
-                >
-                  Условия в договоре-оферте
-                  <ArrowRight className="size-3.5" />
-                </Link>
+        {/* ГАРАНТИЯ — одной строкой под тарифами. Раньше это был блок в
+            полэкрана с иконкой 64 px и чипами «Всё включено» (их содержание
+            уже есть в карточках тарифов); риск снимается там же, где цена. */}
+        <div className="mt-4 flex items-start gap-4 rounded-2xl border border-[#5566f6]/20 bg-gradient-to-br from-[#f5f6ff] to-white p-4 sm:items-center sm:px-6 sm:py-5">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[#5566f6] text-white shadow-[0_12px_30px_-14px_rgba(85,102,246,0.65)]">
+            <RotateCcw className="size-5" />
+          </span>
+          <div className="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between sm:gap-6">
+            <div className="min-w-0">
+              <div className="text-[18px] font-semibold leading-snug tracking-[-0.01em] text-[#0b1024]">
+                Не понравится — вернём деньги
               </div>
+              <p className="mt-1 text-[16px] leading-[1.5] text-[#3c4053] sm:text-[15px]">
+                Вся сумма в течение 14 дней после оплаты, без вопросов и удержаний.
+              </p>
             </div>
-
-            {/* Что входит — чипами, без цен. Список нужен, чтобы было
-                видно объём, а не чтобы считать «экономию». */}
-            <div className="lg:border-l lg:border-[#dcdfed] lg:pl-8">
-              <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#9b9fb3]">
-                Всё включено
-              </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {INCLUDED_CHIPS.map((chip) => (
-                  <span
-                    key={chip.label}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-[#ececf4] bg-white px-3 py-1.5 text-[13px] font-medium text-[#3c4053]"
-                  >
-                    <chip.icon className="size-3.5 text-[#5566f6]" />
-                    {chip.label}
-                  </span>
-                ))}
-              </div>
-            </div>
+            <Link
+              href="/oferta"
+              className="mt-1 inline-flex min-h-12 shrink-0 items-center gap-1.5 text-[16px] font-medium text-[#3848c7] underline-offset-4 hover:underline sm:mt-0 sm:text-[14px]"
+            >
+              Условия в договоре-оферте
+              <ArrowRight className="size-4" />
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* C10 — синтетическое «видео»: auto-playing цикличная анимация
-          планшета с заполнением журнала. Замена реальной съёмки повара
-          на кухне до тех пор, пока не появится исходник. */}
-      <section className="mx-auto max-w-[1200px] px-4 sm:px-6 pb-20">
-        <div className="grid items-center gap-10 md:grid-cols-2">
-          <div>
-            <div className="mb-3 inline-flex items-center gap-2 text-[12px] uppercase tracking-[0.18em] text-[#5566f6]">
-              <Smartphone className="size-4" />
-              30 секунд на смену
-            </div>
-            <h2 className="text-[clamp(1.625rem,2.2vw+1rem,2.25rem)] font-semibold leading-tight tracking-[-0.02em]">
-              Так выглядит заполнение журнала на планшете
-            </h2>
-            <p className="mt-4 text-[15px] leading-[1.6] text-[#6f7282]">
-              Планшет на кухне: выбрал журнал, вписал значение, нажал
-              «Сохранить» — запись подписана сотрудником и уже в PDF для
-              проверки.
-            </p>
-            <ul className="mt-5 space-y-2 text-[14px] text-[#3c4053]">
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />
-                <span>
-                  Автоматическая отметка «в норме / отклонение» по СанПиН
-                  диапазону
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />
-                <span>
-                  Время заполнения подставляется само — не переписать задним
-                  числом
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />
-                <span>
-                  Автозаполнение «как вчера» для постоянных значений
-                </span>
-              </li>
-            </ul>
-          </div>
-          <JournalAutoplayVideo />
-        </div>
-      </section>
+      {/* Отзывы — только одобренные и разрешённые к публикации; нет таких —
+          секции нет. Сеткой в общей колонке, а не каруселью во всю ширину. */}
+      <Testimonials reviews={publicReviews} />
 
       {/* FAQ */}
-      <section className="mx-auto max-w-[1200px] px-4 sm:px-6 pb-20">
-        <div className="mb-10 max-w-[640px]">
-          <div className="mb-3 inline-flex items-center gap-2 text-[12px] uppercase tracking-[0.18em] text-[#5566f6]">
-            <HelpCircle className="size-4" />
-            Вопросы и ответы
-          </div>
-          <h2 className="text-[clamp(1.625rem,2.2vw+1rem,2.25rem)] font-semibold leading-tight tracking-[-0.02em]">
-            Быстрая справка перед регистрацией
-          </h2>
-        </div>
+      <section className={LANDING_SECTION_CLASS}>
+        <LandingSectionHeader title="Вопросы и ответы" />
         <div className="divide-y divide-[#ececf4] overflow-hidden rounded-2xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
           {FAQ.map((item) => (
             <details key={item.q} className="group">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-5 text-[16px] font-medium text-[#0b1024] hover:bg-[#fafbff]">
+              <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 text-[16px] font-medium leading-snug text-[#0b1024] transition-colors duration-150 hover:bg-[#fafbff] sm:px-5 sm:py-5 [&::-webkit-details-marker]:hidden">
                 <span>{item.q}</span>
-                <span className="flex size-7 items-center justify-center rounded-full bg-[#f5f6ff] text-[#5566f6] transition-transform group-open:rotate-45">
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#f5f6ff] text-[#5566f6] transition-transform group-open:rotate-45">
                   <svg
                     viewBox="0 0 24 24"
                     width="16"
@@ -1099,7 +881,7 @@ export default async function LandingPage() {
                   </svg>
                 </span>
               </summary>
-              <div className="px-5 pb-5 text-[14px] leading-[1.6] text-[#6f7282]">
+              <div className="px-4 pb-5 text-[16px] leading-[1.6] text-[#3c4053] sm:px-5 sm:text-[15px]">
                 {item.a}
               </div>
             </details>
@@ -1107,94 +889,58 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ПОДХОДИТ ДЛЯ — было рядом чипов в герое. Слова «Рестораны,
-          Кафе, Пекарни» говорили, кому продают, но не говорили, что у
-          человека меняется; карточки «было / стало» отвечают именно на
-          это. Секция вынесена из героя: карусель на первом экране
-          отодвигала бы кнопку регистрации. */}
-      {/* Секция во всю ширину экрана: карусель должна доходить до краёв,
-          чтобы боковые карточки уходили за границу кадра — так видно,
-          что ряд продолжается. Заголовок при этом остаётся в общей
-          колонке 1200px, иначе он оторвётся от остального лендинга. */}
-      <section className="pb-20">
-        <div className="mx-auto mb-10 max-w-[1200px] px-4 sm:px-6">
-          <div className="mb-3 inline-flex items-center gap-2 text-[12px] uppercase tracking-[0.18em] text-[#5566f6]">
-            <Store className="size-4" />
-            Подходит для
-          </div>
-          <h2 className="text-[clamp(1.625rem,2.2vw+1rem,2.25rem)] font-semibold leading-tight tracking-[-0.02em]">
-            Кухня любого размера — от одной точки до сети
-          </h2>
-          <p className="mt-3 text-[15px] text-[#6f7282]">
-            Найдите своё заведение и посмотрите, что меняется в первую
-            неделю после перехода с бумаги.
-          </p>
-        </div>
-        <AudienceCarousel />
-      </section>
-
-      <TestimonialsCarousel reviews={publicReviews} />
-
-      {/* КОМУ ПОДХОДИТ — полный список сфер/типов бизнеса со ссылками на
-          посадочные /dlya-*. Стоит под каруселью «Подходит для»: та
-          показывает «было/стало», а эта — навигацию по всем нишам. */}
-      <IndustriesGrid />
-
       {/* FINAL CTA — акцент на QR: три шага и золотая наклейка (золото
           в дизайн-системе — только QR, одно на экран). id="start" — сюда
-          ведут «Начать бесплатно» из тарифов. */}
+          ведут «Начать бесплатно» из тарифов. Наклейка — только на
+          широком экране: навести на неё камеру можно лишь с другого
+          устройства, на телефоне это просто картинка на полэкрана. */}
       <section
         id="start"
-        className="mx-auto max-w-[1200px] scroll-mt-[72px] px-4 pb-20 sm:scroll-mt-24 sm:px-6"
+        className={`${LANDING_SECTION_CLASS} scroll-mt-[72px] sm:scroll-mt-24`}
       >
-        <div className="overflow-hidden rounded-3xl border border-[#ececf4] bg-[#f5f6ff] p-6 sm:p-10 md:p-14">
-          <div className="flex flex-col gap-10 lg:flex-row lg:items-center lg:gap-14">
+        <div className="overflow-hidden rounded-3xl border border-[#ececf4] bg-[#f5f6ff] p-5 sm:p-10 md:p-14">
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:gap-14">
             <div className="min-w-0 flex-1">
-              <h3 className="text-[clamp(1.5rem,2vw+1rem,2.25rem)] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">
+              <h2 className="text-[clamp(1.5rem,2vw+1rem,2.25rem)] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">
                 Повесьте QR — журналы будут вестись у оборудования
-              </h3>
-              <p className="mt-3 max-w-[520px] text-[15px] leading-[1.6] text-[#3c4053]">
+              </h2>
+              <p className="mt-3 max-w-[560px] text-[16px] leading-[1.6] text-[#3c4053]">
                 Бесплатный тариф — без срока и без карты. Наклейки печатаются
                 из кабинета, сотрудникам не нужно ничего устанавливать.
               </p>
-              <ol className="mt-7 flex flex-col gap-3 sm:flex-row sm:gap-3">
+              <ol className="mt-6 grid gap-3 sm:grid-cols-3">
                 {QR_START_STEPS.map((step, index) => (
-                  <li key={step.title} className="flex flex-1 items-start gap-3 rounded-2xl border border-[#ececf4] bg-white p-4 sm:flex-col sm:gap-3">
-                    <span className="relative flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#5566f6]">
-                      <step.icon className="size-5" />
-                      <span className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full bg-[#5566f6] text-[11px] font-semibold text-white tabular-nums">
-                        {index + 1}
-                      </span>
+                  <li key={step.title} className="flex items-start gap-3 rounded-2xl border border-[#ececf4] bg-white p-4">
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#5566f6] text-[16px] font-semibold tabular-nums text-white">
+                      {index + 1}
                     </span>
                     <span className="min-w-0">
-                      <span className="block text-[15px] font-semibold text-[#0b1024]">{step.title}</span>
-                      <span className="mt-1 block text-[13.5px] leading-[1.5] text-[#6f7282]">{step.text}</span>
+                      <span className="block text-[16px] font-semibold leading-snug text-[#0b1024]">{step.title}</span>
+                      <span className="mt-1 block text-[16px] leading-[1.5] text-[#3c4053] sm:text-[14px]">{step.text}</span>
                     </span>
                   </li>
                 ))}
               </ol>
-              <div className="mt-7 flex flex-wrap gap-3">
+              <div className="mt-6">
                 {isAuthed ? (
                   <Link
                     href={homeHref}
-                    className="inline-flex h-12 items-center gap-2 rounded-2xl bg-[#5566f6] px-6 text-[15px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors hover:bg-[#4a5bf0]"
+                    className="inline-flex h-12 items-center gap-2 rounded-2xl bg-[#5566f6] px-6 text-[16px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors hover:bg-[#4a5bf0]"
                   >
                     Открыть кабинет
                     <ArrowRight className="size-4" />
                   </Link>
                 ) : (
-                  <>
-                    {/* Тот же одношаговый старт, что и в hero — человек
-                        дочитал страницу, не надо снова вести его на форму. */}
-                    <HeroEmailStart place="final" />
-                  </>
+                  // Тот же одношаговый старт, что и в hero — человек
+                  // дочитал страницу, не надо снова вести его на форму.
+                  <HeroEmailStart place="final" align="start" showLoginLink={false} />
                 )}
               </div>
             </div>
             {/* Наклейка — как её увидит сотрудник. Код настоящий: ведёт
                 к ролику на этой странице. */}
-            <div className="mx-auto w-[200px] shrink-0 sm:w-[240px] lg:mx-0">
-              <div className="rotate-[-3deg] text-[26px] sm:text-[30px]">
+            <div className="hidden w-[240px] shrink-0 lg:block">
+              <div className="rotate-[-3deg] text-[30px]">
                 <QrSticker qr={qrMatrix} />
               </div>
               <p className="mt-5 text-center text-[13px] leading-[1.5] text-[#6f7282]">
@@ -1205,67 +951,8 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* BLOG */}
-      {latestArticles.length > 0 && (
-        <section className="mx-auto max-w-[1200px] px-4 sm:px-6 pb-20">
-          <div className="mb-10 flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
-            <div className="max-w-[640px]">
-              <div className="mb-3 inline-flex items-center gap-2 text-[12px] uppercase tracking-[0.18em] text-[#5566f6]">
-                <NotebookText className="size-4" />
-                Блог
-              </div>
-              <h2 className="text-[clamp(1.625rem,2.2vw+1rem,2.25rem)] font-semibold leading-tight tracking-[-0.02em]">
-                Как вести журналы и проходить проверки
-              </h2>
-              <p className="mt-4 text-[15px] text-[#6f7282]">
-                Разборы норм, чек-листы и истории клиентов.
-              </p>
-            </div>
-            <Link
-              href="/blog"
-              className="inline-flex h-11 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
-            >
-              Все статьи
-              <ArrowRight className="size-4 text-[#5566f6]" />
-            </Link>
-          </div>
-          <div className="grid gap-5 md:grid-cols-3">
-            {latestArticles.map((a) => (
-              <Link
-                key={a.slug}
-                href={`/blog/${a.slug}`}
-                className="group flex flex-col rounded-3xl border border-[#ececf4] bg-white p-6 transition-all hover:-translate-y-0.5 hover:border-[#5566f6]/40 hover:shadow-[0_20px_50px_-30px_rgba(85,102,246,0.35)]"
-              >
-                <div className="flex flex-wrap items-center gap-2 text-[12px] text-[#6f7282]">
-                  {a.tags.slice(0, 2).map((t) => (
-                    <span
-                      key={t}
-                      className="rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[#3848c7]"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                  <span className="ml-auto inline-flex items-center gap-1">
-                    <Clock className="size-3.5" /> {a.readMinutes} мин
-                  </span>
-                </div>
-                <h3 className="mt-4 text-[19px] font-semibold leading-snug tracking-[-0.01em] text-[#0b1024] group-hover:text-[#3848c7]">
-                  {a.title}
-                </h3>
-                <p className="mt-3 line-clamp-3 flex-1 text-[14px] leading-[1.6] text-[#6f7282]">
-                  {a.excerpt}
-                </p>
-                <span className="mt-5 inline-flex items-center gap-1 text-[13px] font-medium text-[#3848c7]">
-                  Читать
-                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-                </span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* FOOTER */}
+      {/* FOOTER — юридические ссылки, реквизиты и перелинковка: /blanki,
+          /journals-info, все /dlya-*, возможности. */}
       <PublicFooter />
     </div>
   );

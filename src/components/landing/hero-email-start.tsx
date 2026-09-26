@@ -27,10 +27,11 @@ export function HeroEmailStart({
   layout = "row",
   showLoginLink = true,
   place = "hero",
+  align = "center",
 }: {
-  /// Где стоит форма: hero | banner | demo | final. Уходит параметром в
-  /// цели Метрики и в instant-register, а также даёт полю уникальный
-  /// id — на странице таких форм несколько.
+  /// Где стоит форма: hero | final. Уходит параметром в цели Метрики и
+  /// в instant-register, а также даёт полю уникальный id — на странице
+  /// таких форм несколько.
   place?: string;
   /// "dark" — для размещения на тёмной секции (финальный CTA).
   tone?: "light" | "dark";
@@ -41,6 +42,9 @@ export function HeroEmailStart({
   /// Ссылка «Уже есть аккаунт» под формой. На первом экране не нужна —
   /// «Войти» стоит в шапке, и вторая точка входа только отвлекает.
   showLoginLink?: boolean;
+  /// "start" — форма у левого края колонки (финальный блок: заголовок и
+  /// шаги там слева, форма по центру под ними смотрелась отдельно).
+  align?: "center" | "start";
 }) {
   const router = useRouter();
   const field = useEmailField();
@@ -115,7 +119,7 @@ export function HeroEmailStart({
   }
 
   return (
-    <div className="mx-auto w-full max-w-[480px]">
+    <div className={"w-full " + (align === "start" ? "max-w-[560px]" : "mx-auto max-w-[480px]")}>
       <form
         onSubmit={submit}
         className={
@@ -163,7 +167,7 @@ export function HeroEmailStart({
           type="submit"
           disabled={loading || !field.valid}
           className={
-            "group inline-flex h-[56px] shrink-0 items-center justify-center gap-2 rounded-2xl px-6 text-[15px] font-semibold transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 sm:h-[60px] sm:px-7 sm:text-[16px] " +
+            "group inline-flex h-[56px] shrink-0 items-center justify-center gap-2 rounded-2xl px-6 text-[16px] font-semibold transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 sm:h-[60px] sm:px-7 " +
             (layout === "stack" ? "w-full " : "") +
             (dark
               ? "bg-white text-[#0b1024] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.5)] hover:bg-white/90"
@@ -192,19 +196,23 @@ export function HeroEmailStart({
         tone={tone}
       />
 
-      <LegalConsentCheckbox
-        checked={consent}
-        onChange={(value) => {
-          setConsent(value);
-          if (value) {
-            setConsentMissing(false);
-            setError(null);
-          }
-        }}
-        tone={dark ? "dark" : "light"}
-        highlight={consentMissing}
-        className="mt-2.5"
-      />
+      {/* Юридический текст согласия — мелкой строкой, как на регистрации:
+          формулировку не меняем, это не «основной текст» страницы. */}
+      <div data-fine-print="legal">
+        <LegalConsentCheckbox
+          checked={consent}
+          onChange={(value) => {
+            setConsent(value);
+            if (value) {
+              setConsentMissing(false);
+              setError(null);
+            }
+          }}
+          tone={dark ? "dark" : "light"}
+          highlight={consentMissing}
+          className="mt-2.5"
+        />
+      </div>
 
       {/* Подсказки «аккаунт создадим сразу» под полем больше нет: на
           телефоне она сталкивала гарантию за сгиб. Что произойдёт после
