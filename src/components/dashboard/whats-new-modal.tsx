@@ -82,6 +82,7 @@ function isCategoryNote(
  * нельзя (server→client serialization), поэтому держим mapping здесь.
  */
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  "Тема, названия и фото замеров": Camera,
   "Свои названия разделов и журналов": SquarePen,
   "Распознавание с фото": Camera,
   "На телефоне и в мини-приложении": Smartphone,
