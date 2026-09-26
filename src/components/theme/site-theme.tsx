@@ -132,6 +132,13 @@ export function SiteThemeProvider({
   );
   const [autoBySchedule, setAutoState] = useState<boolean>(false);
   const [theme, setThemeState] = useState<SiteTheme>(initialTheme);
+  // Выбор человека ещё не прочитан из localStorage. До этого `mode` —
+  // значение по умолчанию ("system"), и пересчёт по нему на первом кадре
+  // перекрашивал страницу в тему устройства и отправлял её в профиль —
+  // при каждой загрузке у тех, чей выбор с темой устройства не совпадает:
+  // мигание и пачка лишних POST /api/me/theme, из которых последним мог
+  // доехать неверный.
+  const [hydrated, setHydrated] = useState(false);
 
   // Hydrate из localStorage (см. file-level eslint-disable выше — это
   // legit hydration pattern, SSR-mismatch снимается SiteThemeBootstrap).
@@ -160,6 +167,7 @@ export function SiteThemeProvider({
     const next = computeEffective(effectiveMode, storedAuto, storedEffective);
     setThemeState(next);
     applyThemeToDOM(next);
+    setHydrated(true);
 
     // Seed effective storage для bootstrap script на следующем reload.
     if (typeof window !== "undefined") {
@@ -212,6 +220,8 @@ export function SiteThemeProvider({
     // `MiniThemeProvider`, а его выбор доезжает сюда событием
     // `wesetup-theme-change` (слушатель выше).
     if (controlled) return;
+    // Пока выбор не прочитан — пересчитывать не по чему (см. `hydrated`).
+    if (!hydrated) return;
     function recompute() {
       // Functional setState — читаем актуальное значение `theme` без него
       // в deps (иначе цикл: setTheme → useEffect re-run → setTheme).
@@ -260,7 +270,7 @@ export function SiteThemeProvider({
       if (mqlCleanup) mqlCleanup();
       if (intervalId) clearInterval(intervalId);
     };
-  }, [controlled, mode, autoBySchedule]);
+  }, [controlled, mode, autoBySchedule, hydrated]);
 
   /**
    * Переключение темы внутри оболочки приложения. Пишем ОБА ключа
