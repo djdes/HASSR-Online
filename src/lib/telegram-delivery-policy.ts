@@ -1,3 +1,9 @@
+import {
+  isMobilePushConfigured,
+  pushTextFromTelegramHtml,
+  sendMobilePushInBackground,
+} from "./mobile-push";
+
 export type TelegramDeliveryMetadata = {
   organizationId?: string | null;
   kind?: string | null;
@@ -35,10 +41,24 @@ const DEFAULT_LOOKBACK_MS = 36 * 60 * 60 * 1000;
  * `skipOnRerun` не видел прошлой доставки — push уходил снова и снова.
  * Такая строка пишется с пустым `chatId`; отправщики Telegram её не
  * берут (отложенные ищут только `deferred`), в Telegram она не уходит.
+ * Этот же статус получает отложенный тихими часами push (`deferred` с
+ * пустым `chatId`), когда утром он отправлен.
  */
 export const PUSH_ONLY_STATUS = "push_only";
 
-const RERUN_SKIP_STATUSES = ["queued", "sent", "rate_limited", PUSH_ONLY_STATUS] as const;
+/**
+ * Отложено тихими часами (`deliverAfter`). Утром уйдёт — повтор крона
+ * ночью не должен откладывать ту же доставку второй раз.
+ */
+export const DEFERRED_STATUS = "deferred";
+
+const RERUN_SKIP_STATUSES = [
+  "queued",
+  "sent",
+  "rate_limited",
+  PUSH_ONLY_STATUS,
+  DEFERRED_STATUS,
+] as const;
 
 function normalizeNullableText(value: string | null | undefined): string | null {
   const trimmed = value?.trim();
@@ -197,4 +217,184 @@ export async function recordPushOnlyDelivery(
     status: PUSH_ONLY_STATUS,
   });
   return true;
+}
+
+/**
+ * Отложенная тихими часами строка TelegramLog.
+ *
+ * `chatId` пустой — это push в приложение WeSetup, а не сообщение в
+ * Telegram: сотрудник без Telegram (или push к сообщению бота, которое
+ * отложено отдельной строкой) получит его утром.
+ */
+export type DeferredDeliveryRow = {
+  chatId: string;
+  body: string;
+  userId: string;
+  organizationId: string | null;
+  kind: string | null;
+  dedupeKey: string | null;
+  status: typeof DEFERRED_STATUS;
+  deliverAfter: Date;
+};
+
+export type AppPushMessage = { title: string; body: string; url: string | null };
+
+type EmployeeDeliveryDeps = PushOnlyDeliveryDeps & {
+  isPushConfigured: () => boolean;
+  /** Начать push в фоне; true — отправка действительно начата. */
+  startPush: (userId: string, msg: AppPushMessage) => boolean;
+  createDeferred: (row: DeferredDeliveryRow) => Promise<void>;
+};
+
+function defaultEmployeeDeliveryDeps(): EmployeeDeliveryDeps {
+  return {
+    ...defaultPushOnlyDeps(),
+    isPushConfigured: isMobilePushConfigured,
+    startPush: (userId, msg) => sendMobilePushInBackground(userId, msg, "bot"),
+    async createDeferred(row) {
+      const { db } = await import("./db");
+      await db.telegramLog.create({ data: { ...row, attempts: 0 } });
+    },
+  };
+}
+
+export type EmployeeDeliveryOutcome = {
+  /** sent — push начат; deferred — записан на утро; skipped — push нет. */
+  push: "sent" | "deferred" | "skipped";
+  /** send — отправить в Telegram сейчас; deferred — отложено; none — Telegram нет. */
+  telegram: "send" | "deferred" | "none";
+};
+
+/**
+ * Каналы личного сообщения сотруднику (`notifyEmployee`) после проверок
+ * «активен», snooze и повтора крона.
+ *
+ * Днём: push в приложение (если `appPush` не выключен) и Telegram. Без
+ * Telegram начатый push записывается строкой `push_only` для проверки
+ * повтора — только если он действительно начат.
+ *
+ * В тихие часы (`quietUntilAt`) ночью ничего не будит: Telegram
+ * откладывается строкой `deferred` с `chatId`, push — отдельной строкой
+ * `deferred` с пустым `chatId`, если push есть куда отправить (Firebase
+ * настроен и у человека есть телефон с включёнными уведомлениями).
+ * Утром `flushDeferredDeliveries` отправит обе. Без обоих каналов строк
+ * нет.
+ *
+ * `appPush: false` — событие уже прислало push колокольчика этому же
+ * человеку; второй push про то же самое не нужен.
+ */
+export async function routeEmployeeDelivery(
+  args: {
+    userId: string;
+    telegramChatId: string | null;
+    /** Текст сообщения бота (HTML Telegram). */
+    text: string;
+    url?: string | null;
+    appPush?: boolean;
+    quietUntilAt: Date | null;
+    delivery?: TelegramDeliveryMetadata | null;
+    policy?: TelegramDeliveryPolicyOptions;
+  },
+  overrides?: Partial<EmployeeDeliveryDeps>
+): Promise<EmployeeDeliveryOutcome> {
+  const deps = { ...defaultEmployeeDeliveryDeps(), ...overrides };
+  const pushBody = args.appPush === false ? "" : pushTextFromTelegramHtml(args.text);
+  const meta = {
+    organizationId: normalizeNullableText(args.delivery?.organizationId),
+    kind: normalizeNullableText(args.delivery?.kind),
+    dedupeKey: normalizeNullableText(args.delivery?.dedupeKey),
+  };
+
+  if (args.quietUntilAt) {
+    let push: EmployeeDeliveryOutcome["push"] = "skipped";
+    if (pushBody && deps.isPushConfigured() && (await deps.hasPushDevice(args.userId))) {
+      await deps.createDeferred({
+        chatId: "",
+        body: args.text,
+        userId: args.userId,
+        ...meta,
+        status: DEFERRED_STATUS,
+        deliverAfter: args.quietUntilAt,
+      });
+      push = "deferred";
+    }
+    let telegram: EmployeeDeliveryOutcome["telegram"] = "none";
+    if (args.telegramChatId) {
+      await deps.createDeferred({
+        chatId: args.telegramChatId,
+        body: args.text,
+        userId: args.userId,
+        ...meta,
+        status: DEFERRED_STATUS,
+        deliverAfter: args.quietUntilAt,
+      });
+      telegram = "deferred";
+    }
+    return { push, telegram };
+  }
+
+  let push: EmployeeDeliveryOutcome["push"] = "skipped";
+  if (pushBody && deps.startPush(args.userId, { title: "WeSetup", body: pushBody, url: args.url ?? null })) {
+    push = "sent";
+    if (!args.telegramChatId) {
+      // Без Telegram строки в TelegramLog нет, и повтор крона с
+      // `skipOnRerun` прислал бы тот же push снова.
+      await recordPushOnlyDelivery(
+        {
+          userId: args.userId,
+          hasTelegram: false,
+          body: args.text,
+          delivery: args.delivery,
+          policy: args.policy,
+        },
+        { hasPushDevice: deps.hasPushDevice, recordPushOnly: deps.recordPushOnly }
+      ).catch((error) => console.error("[telegram] push_only log failed", error));
+    }
+  }
+  return { push, telegram: args.telegramChatId ? "send" : "none" };
+}
+
+export type DueDeferredRow = { id: string; chatId: string; body: string; userId: string | null };
+
+export type FlushDeferredDeps = {
+  findDue: (now: Date) => Promise<DueDeferredRow[]>;
+  /** Отправить в Telegram и отметить строку (как обычная отправка). */
+  sendTelegram: (row: DueDeferredRow) => Promise<boolean>;
+  startPush: (userId: string, msg: AppPushMessage) => boolean;
+  markPushed: (id: string, at: Date) => Promise<void>;
+  markFailed: (id: string, error: string) => Promise<void>;
+};
+
+/**
+ * Утро после тихих часов: отправить отложенные строки, чьё время пришло.
+ * С `chatId` — в Telegram, как раньше. С пустым `chatId` — push в
+ * приложение; строка становится `push_only` (её видит проверка повтора)
+ * или `failed`, если push не начат.
+ */
+export async function flushDeferredDeliveries(
+  now: Date,
+  deps: FlushDeferredDeps
+): Promise<{ sent: number; failed: number }> {
+  const due = await deps.findDue(now);
+  let sent = 0;
+  let failed = 0;
+  for (const row of due) {
+    if (row.chatId) {
+      if (await deps.sendTelegram(row)) sent += 1;
+      else failed += 1;
+      continue;
+    }
+    const body = pushTextFromTelegramHtml(row.body);
+    const started =
+      Boolean(row.userId && body) &&
+      deps.startPush(row.userId as string, { title: "WeSetup", body, url: null });
+    if (started) {
+      await deps.markPushed(row.id, now);
+      sent += 1;
+    } else {
+      await deps.markFailed(row.id, "push not sent");
+      failed += 1;
+    }
+  }
+  return { sent, failed };
 }

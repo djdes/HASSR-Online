@@ -832,6 +832,28 @@ body:has(#mini-root)
 .mini-topbar-actions button[aria-label^="Партнёрская"] {
   color: rgba(255, 255, 255, 0.55) !important;
 }
+/* Узкие телефоны (360–399 px): в шапке до шести кнопок, и от названия
+   экрана оставалось «Жур…», «Все …». Прячем иконку партнёрки и плитку «W»
+   рядом с «назад», кнопки 44 px шириной (высота нажатия прежняя, 48 px),
+   промежутки и поля поуже. От 400 px шапка не меняется. */
+@media (max-width: 399.98px) {
+  .mini-topbar-row {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  .mini-topbar-partner,
+  .mini-topbar-ico--beside-back {
+    display: none !important;
+  }
+  .mini-topbar-btn,
+  .mini-topbar-actions button {
+    width: 44px !important;
+  }
+  .mini-topbar-actions,
+  .mini-topbar-actions .mini-topbar-undo {
+    gap: 4px;
+  }
+}
 
 /* --------------------------------------------------------------------
  * Нижнее меню — белая карточка QR-страниц, активная вкладка залита

@@ -6,7 +6,10 @@ import { Agent, fetch as undiciFetch, setGlobalDispatcher } from "undici";
 import crypto from "node:crypto";
 import { escapeHtml } from "@/lib/html-escape";
 import {
-  recordPushOnlyDelivery,
+  DEFERRED_STATUS,
+  flushDeferredDeliveries,
+  PUSH_ONLY_STATUS,
+  routeEmployeeDelivery,
   shouldSkipTelegramDelivery,
   type TelegramDeliveryMetadata,
   type TelegramDeliveryPolicyOptions,
@@ -569,6 +572,12 @@ export async function notifyEmployee(
      * обновлённый список (одной задачей меньше) не открывая Mini App.
      */
     addRefreshButton?: boolean;
+    /**
+     * false — не слать push в приложение WeSetup. Передают там, где то же
+     * событие уже создаёт уведомление в колокольчике этому человеку
+     * (`upsertNotification` сам шлёт push): одно событие — один push.
+     */
+    appPush?: boolean;
   }
 ): Promise<void> {
   const { db } = await import("./db");
@@ -587,9 +596,8 @@ export async function notifyEmployee(
   }
   // Без Telegram человеку может прийти только push в приложение WeSetup.
   // Если и его отправить некуда — дальше делать нечего.
-  const { isMobilePushConfigured, pushTextFromTelegramHtml, sendMobilePushInBackground } =
-    await import("./mobile-push");
-  if (!user.telegramChatId && !isMobilePushConfigured()) {
+  const { isMobilePushConfigured } = await import("./mobile-push");
+  if (!user.telegramChatId && (opts?.appPush === false || !isMobilePushConfigured())) {
     return;
   }
 
@@ -632,40 +640,19 @@ export async function notifyEmployee(
   // Тот же текст — push в приложение WeSetup (в фоне, без ожидания).
   // После проверок «активен», snooze и повтора, но до проверки Telegram:
   // сотрудник без Telegram тоже должен узнать о задаче. В тихие часы
-  // push не шлём: сообщение бота отложено до утра, а будить ночью
-  // уведомлением на телефоне нельзя.
-  let pushSent = false;
-  if (!quietUntilAt) {
-    const pushBody = pushTextFromTelegramHtml(text);
-    if (pushBody) {
-      sendMobilePushInBackground(
-        user.id,
-        { title: "WeSetup", body: pushBody, url: action?.miniAppUrl ?? null },
-        "bot"
-      );
-      pushSent = isMobilePushConfigured();
-    }
-  }
-
-  if (!user.telegramChatId) {
-    // Без Telegram строки в TelegramLog нет, и повтор крона с
-    // `skipOnRerun` прислал бы тот же push снова. Отмечаем доставку
-    // строкой `push_only` — её видит проверка повтора.
-    if (pushSent) {
-      await recordPushOnlyDelivery({
-        userId: user.id,
-        hasTelegram: false,
-        body: text,
-        delivery: opts?.delivery,
-        policy: opts?.policy,
-      }).catch((error) => console.error("[telegram] push_only log failed", error));
-    }
-    return;
-  }
-  if (quietUntilAt) {
-    await db.telegramLog.create({
-      data: { chatId: user.telegramChatId, body: text, userId: user.id, organizationId: delivery.organizationId, kind: delivery.kind, dedupeKey: delivery.dedupeKey, status: "deferred", deliverAfter: quietUntilAt, attempts: 0 },
-    });
+  // ночью не будим ни push, ни Telegram: обе доставки откладываются
+  // строками `deferred` и уходят утром (`sendDeferredTelegramLogs`).
+  const route = await routeEmployeeDelivery({
+    userId: user.id,
+    telegramChatId: user.telegramChatId,
+    text,
+    url: action?.miniAppUrl ?? null,
+    appPush: opts?.appPush,
+    quietUntilAt,
+    delivery: opts?.delivery,
+    policy: opts?.policy,
+  });
+  if (route.telegram !== "send" || !user.telegramChatId) {
     return;
   }
   const log = await db.telegramLog.create({
@@ -822,7 +809,15 @@ export async function notifyOrganization(
   message: string,
   roles: string[] = ["owner", "technologist"],
   type?: NotificationType,
-  action?: { label: string; miniAppUrl: string }
+  action?: { label: string; miniAppUrl: string },
+  opts?: {
+    /**
+     * false — без push в приложение: то же событие уже создаёт
+     * уведомление в колокольчике руководителям (`notifyManagement`),
+     * и push уходит оттуда. Одно событие — один push.
+     */
+    appPush?: boolean;
+  }
 ): Promise<void> {
   // Import db here to avoid circular deps
   const { db } = await import("./db");
@@ -842,9 +837,10 @@ export async function notifyOrganization(
   // Push в приложение: руководитель, который пользуется только
   // приложением, без Telegram, тоже должен узнать о тревоге. Сводки и
   // отчёты push'ем не шлём — правило в `organizationAlertPush`.
-  const alertPush = mobilePush.isMobilePushConfigured()
-    ? mobilePush.organizationAlertPush(message, type)
-    : null;
+  const alertPush =
+    opts?.appPush !== false && mobilePush.isMobilePushConfigured()
+      ? mobilePush.organizationAlertPush(message, type)
+      : null;
 
   const users = await db.user.findMany({
     where: {
@@ -887,8 +883,8 @@ export async function notifyOrganization(
   if (alertPush) {
     // Как в notifyEmployee: «Отложить» глушит и push; в тихие часы
     // push молчит, кроме срочного (температура, отклонения — см.
-    // `isUrgentKind`). Копия того, что уже ушло push'ем колокольчика
-    // в последние секунды, отбрасывается (`source: "bot"`).
+    // `isUrgentKind`). Где то же событие шлёт push колокольчика,
+    // вызывающий передаёт `appPush: false`.
     const now = new Date();
     const urgent = isUrgentKind(type ?? null);
     await Promise.allSettled(
@@ -1010,26 +1006,36 @@ async function quietUntilForUser(userId: string): Promise<Date | null> {
   return quietUntil(new Date(), user.organization?.timezone ?? "Europe/Moscow", quiet);
 }
 
-/** Крон: отправить отложенные тихими часами сообщения, чьё время пришло. */
+/**
+ * Крон: отправить отложенные тихими часами сообщения, чьё время пришло.
+ * Строка с `chatId` уходит в Telegram; с пустым `chatId` — это push в
+ * приложение WeSetup (сотрудник без Telegram или push к отложенному
+ * сообщению бота), правила — в `flushDeferredDeliveries`.
+ */
 export async function sendDeferredTelegramLogs(now: Date = new Date()): Promise<{ sent: number; failed: number }> {
   const { db } = await import("./db");
-  const due = await db.telegramLog.findMany({
-    where: { status: "deferred", deliverAfter: { lte: now } },
-    orderBy: { deliverAfter: "asc" },
-    take: 100,
-    select: { id: true, chatId: true, body: true },
+  const { sendMobilePushInBackground } = await import("./mobile-push");
+  return flushDeferredDeliveries(now, {
+    findDue: (dueBy) =>
+      db.telegramLog.findMany({
+        where: { status: DEFERRED_STATUS, deliverAfter: { lte: dueBy } },
+        orderBy: { deliverAfter: "asc" },
+        take: 100,
+        select: { id: true, chatId: true, body: true, userId: true },
+      }),
+    async sendTelegram(log) {
+      if (!bot) {
+        await db.telegramLog.update({ where: { id: log.id }, data: { status: "failed", error: "bot not configured" } });
+        return false;
+      }
+      return executeTelegramSend(log.id, () => bot.api.sendMessage(log.chatId, log.body, { parse_mode: "HTML" }), "deferred");
+    },
+    startPush: (userId, msg) => sendMobilePushInBackground(userId, msg, "bot"),
+    async markPushed(id, at) {
+      await db.telegramLog.update({ where: { id }, data: { status: PUSH_ONLY_STATUS, sentAt: at } });
+    },
+    async markFailed(id, error) {
+      await db.telegramLog.update({ where: { id }, data: { status: "failed", error } });
+    },
   });
-  let sent = 0;
-  let failed = 0;
-  for (const log of due) {
-    if (!bot) {
-      await db.telegramLog.update({ where: { id: log.id }, data: { status: "failed", error: "bot not configured" } });
-      failed += 1;
-      continue;
-    }
-    const ok = await executeTelegramSend(log.id, () => bot.api.sendMessage(log.chatId, log.body, { parse_mode: "HTML" }), "deferred");
-    if (ok) sent += 1;
-    else failed += 1;
-  }
-  return { sent, failed };
 }

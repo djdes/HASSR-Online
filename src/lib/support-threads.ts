@@ -541,7 +541,12 @@ export async function deliverOperatorMessage(ctx: {
         body: ctx.message.body || "📎 Вложение",
         escape: escapeTelegramHtml,
         appUrl: APP_URL,
-      })
+      }),
+      undefined,
+      undefined,
+      undefined,
+      // Push уходит из колокольчика (notifyManagement ниже).
+      { appPush: false }
     );
     result.telegram = true;
   } catch (error) {

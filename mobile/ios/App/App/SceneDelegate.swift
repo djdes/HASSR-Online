@@ -7,6 +7,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = scene as? UIWindowScene else { return }
 
+        // Единственный путь запуска экрана: Main.storyboard в Info.plist не подключён
+        // (UIMainStoryboardFile и UISceneStoryboardFile убраны), иначе UIKit поднял бы
+        // второй контроллер — два WebView и двойная регистрация push при старте.
         window = UIWindow(windowScene: windowScene)
         // Свой подкласс вместо CAPBridgeViewController: в нём регистрируется WebPrint.
         window?.rootViewController = WeSetupViewController()

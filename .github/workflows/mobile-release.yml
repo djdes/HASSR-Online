@@ -151,8 +151,16 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.4"
-          bundler-cache: true
+          # Gemfile.lock не хранится в репозитории, поэтому без кеша Bundler:
+          # fastlane ставится явно шагом ниже по версии из Gemfile (~> 2.239).
+          bundler-cache: false
           working-directory: mobile/ios/App
+
+      - name: fastlane
+        working-directory: mobile/ios/App
+        env:
+          BUNDLE_PATH: vendor/bundle
+        run: bundle install --jobs 4 --retry 3
 
       - name: Сборка и TestFlight
         working-directory: mobile/ios/App
@@ -162,6 +170,7 @@ jobs:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_KEY_PATH: ${{ runner.temp }}/asc_key.p8
+          BUNDLE_PATH: vendor/bundle
         run: bundle exec fastlane beta
 
       - uses: actions/upload-artifact@v7

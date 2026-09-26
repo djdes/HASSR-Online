@@ -23,7 +23,6 @@ test("внутренние ссылки не перехватываются", ()
   assert.equal(classifyLink("/mini/today?tab=1#x", O, false), "internal");
   assert.equal(classifyLink("#top", O, false), "internal");
   assert.equal(classifyLink("", O, false), "internal");
-  assert.equal(classifyLink("javascript:void(0)", O, false), "internal");
   // Вход и выход NextAuth — не файлы.
   assert.equal(classifyLink("/api/auth/signout", O, false), "internal");
 });
@@ -51,6 +50,25 @@ test("чужие сайты — в браузер, почта и звонки �
   assert.equal(classifyLink("tel:+79990000000", O, false), "system");
   assert.equal(classifyLink("sms:+79990000000", O, false), "system");
   assert.equal(classifyLink("tg://resolve?domain=wesetupbot", O, false), "system");
+});
+
+test("прочие схемы в приложении заблокированы: не открываем чужие обработчики из ссылок в комментариях и ответах", () => {
+  for (const href of [
+    "intent://scan/#Intent;scheme=zxing;package=com.evil;end",
+    "file:///data/data/ru.wesetup.app/shared_prefs/x.xml",
+    "content://com.android.contacts/contacts",
+    "javascript:void(0)",
+    "JavaScript:alert(1)",
+    "data:text/html;base64,PHNjcmlwdD4=",
+    "whatsapp://send?text=x",
+    "myapp://do-something",
+    "ftp://example.com/x",
+  ]) {
+    assert.equal(classifyLink(href, O, false), "blocked", href);
+  }
+  // Белый список не зависит от регистра и пробелов по краям.
+  assert.equal(classifyLink(" MAILTO:support@wesetup.ru", O, false), "system");
+  assert.equal(classifyLink("TG://resolve?domain=wesetupbot", O, false), "system");
 });
 
 test("имя файла из Content-Disposition: filename* важнее filename", () => {

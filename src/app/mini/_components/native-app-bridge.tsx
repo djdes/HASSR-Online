@@ -141,6 +141,9 @@ function handleAnchor(bridge: NativeBridge, a: HTMLAnchorElement): boolean {
   const raw = a.getAttribute("href") ?? "";
   const href = /^javascript:/i.test(raw.trim()) ? raw : a.href || raw;
   const kind = classifyLink(href, window.location.origin, a.hasAttribute("download"));
+  // intent:, file:, content:, javascript:, чужие схемы — не открываем ничего:
+  // ссылка из комментария или ответа помощника не запускает сторонний обработчик.
+  if (kind === "blocked") return true;
   if (kind === "download") {
     void downloadFile(href, { fileName: a.getAttribute("download") || null });
     return true;
@@ -196,11 +199,13 @@ function installInterceptors(bridge: NativeBridge): () => void {
     if (!href || href === "about:blank") return stubWindow();
     let abs = href;
     try {
-      abs = /^(blob|data|mailto|tel|sms):/i.test(href) ? href : new URL(href, window.location.href).href;
+      abs = /^(blob|data|mailto|tel|sms|tg):/i.test(href) ? href : new URL(href, window.location.href).href;
     } catch {
       return originalOpen.call(window, url, target, features);
     }
     const kind = classifyLink(abs, window.location.origin, false);
+    // Чужая схема (intent:, file:, javascript: …) — как заблокированное всплывающее окно.
+    if (kind === "blocked") return null;
     if (kind === "download") {
       void downloadFile(abs);
       return stubWindow();

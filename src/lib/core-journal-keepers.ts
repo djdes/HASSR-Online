@@ -78,7 +78,8 @@ export async function notifyCoreJournalRecipients(params: {
         linkLabel: params.linkLabel,
         items: params.items,
       }),
-      notifyEmployee(recipient.id, params.telegramText),
+      // Push уходит из колокольчика (upsertNotification выше) — второй не нужен.
+      notifyEmployee(recipient.id, params.telegramText, undefined, { appPush: false }),
       recipient.email
         ? sendRawEmail(recipient.email, params.emailSubject, renderEmailLayout(params.title, params.emailBodyHtml))
         : Promise.resolve(false),

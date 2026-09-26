@@ -258,20 +258,6 @@ export function buildFcmMessage(token: string, msg: MobilePushMessage): FcmMessa
   };
 }
 
-/** Окно, в котором копия сообщения бота молчит после push колокольчика. */
-const BOT_AFTER_BELL_MS = 20_000;
-
-/**
- * Одно событие часто рождает и уведомление в колокольчике, и личное
- * сообщение бота (запрос PIN, ответ на обращение). Push колокольчика
- * уже ушёл — второй, про то же самое, только будил бы человека дважды.
- */
-export function shouldSkipBotPush(lastBellPushAt: number | undefined, now: number): boolean {
-  return lastBellPushAt !== undefined && now - lastBellPushAt < BOT_AFTER_BELL_MS;
-}
-
-const lastBellPushAt = new Map<string, number>();
-
 /**
  * Отправить push на все телефоны человека с включёнными уведомлениями.
  * Мёртвые ключи удаляет, остальным считает сбои. Бросает только при
@@ -334,29 +320,30 @@ export async function sendMobilePushToUser(
 }
 
 /**
- * Push в фоне: не ждём и не бросаем. `source` — откуда событие:
- * `bell` — уведомление колокольчика, `bot` — копия личного сообщения
- * бота (см. `shouldSkipBotPush`).
+ * Push в фоне: не ждём и не бросаем.
+ *
+ * Возвращает true, только если отправка действительно начата (Firebase
+ * настроен). По этому флагу вызывающий код отмечает доставку — запись
+ * о несостоявшемся push не даст повтору крона прислать его позже.
+ *
+ * `source` — откуда событие (`bell` — колокольчик, `bot` — копия
+ * сообщения бота), только для чтения кода: отправку он не меняет.
+ * Раньше push колокольчика глушил 20 секунд любой push бота тому же
+ * человеку — и терял push про другое событие. Теперь одно событие —
+ * один push обеспечивает вызывающий: там, где событие уже создаёт
+ * уведомление в колокольчике, `notifyEmployee` зовут с `appPush: false`.
+ *
+ * `overrides.send` — подмена отправки для тестов.
  */
 export function sendMobilePushInBackground(
   userId: string,
   msg: MobilePushMessage,
-  source: "bell" | "bot"
-): void {
-  if (!isMobilePushConfigured()) return;
-  const now = Date.now();
-  if (source === "bell") {
-    lastBellPushAt.set(userId, now);
-    // Память не растёт бесконечно: старые отметки больше не нужны.
-    if (lastBellPushAt.size > 5000) {
-      for (const [id, at] of lastBellPushAt) {
-        if (now - at >= BOT_AFTER_BELL_MS) lastBellPushAt.delete(id);
-      }
-    }
-  } else if (shouldSkipBotPush(lastBellPushAt.get(userId), now)) {
-    return;
-  }
-  void sendMobilePushToUser(userId, msg).catch((error) =>
-    console.error("[mobile-push] send failed", error)
-  );
+  source?: "bell" | "bot",
+  overrides?: { send?: (userId: string, msg: MobilePushMessage) => Promise<unknown> }
+): boolean {
+  void source;
+  if (!isMobilePushConfigured()) return false;
+  const send = overrides?.send ?? sendMobilePushToUser;
+  void send(userId, msg).catch((error) => console.error("[mobile-push] send failed", error));
+  return true;
 }

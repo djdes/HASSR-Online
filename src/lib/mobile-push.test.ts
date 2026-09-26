@@ -8,7 +8,7 @@ import {
   normalizePushUrl,
   organizationAlertPush,
   pushTextFromTelegramHtml,
-  shouldSkipBotPush,
+  sendMobilePushInBackground,
 } from "./mobile-push";
 
 test("ссылка push остаётся внутренней", () => {
@@ -100,11 +100,46 @@ test("сообщение FCM несёт ссылку в data и тег для з
   assert.deepEqual(noTag.apns, { payload: { aps: { sound: "default" } } });
 });
 
-test("копия сообщения бота молчит сразу после push колокольчика", () => {
-  const now = 1_000_000;
-  assert.equal(shouldSkipBotPush(undefined, now), false);
-  assert.equal(shouldSkipBotPush(now - 5_000, now), true);
-  assert.equal(shouldSkipBotPush(now - 60_000, now), false);
+// Раньше push колокольчика на 20 секунд глушил любой следующий push
+// бота тому же человеку — даже про другое событие (тревога температуры,
+// сводка). Теперь каждый вызов отправляет; одно событие — один push —
+// обеспечивают вызывающие (опция appPush: false у notifyEmployee).
+test("push колокольчика не глушит следующий push бота про другое событие", () => {
+  const saved = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  process.env.FIREBASE_SERVICE_ACCOUNT_JSON = JSON.stringify({
+    project_id: "p",
+    client_email: "e@p.iam.gserviceaccount.com",
+    private_key: "k",
+  });
+  try {
+    const sent: string[] = [];
+    const send = async (_userId: string, msg: { title: string }) => {
+      sent.push(msg.title);
+      return { sent: 1, removed: 0 };
+    };
+    assert.equal(sendMobilePushInBackground("u1", { title: "Колокольчик", body: "b" }, "bell", { send }), true);
+    assert.equal(sendMobilePushInBackground("u1", { title: "Температура", body: "b" }, "bot", { send }), true);
+    assert.deepEqual(sent, ["Колокольчик", "Температура"]);
+  } finally {
+    if (saved === undefined) delete process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+    else process.env.FIREBASE_SERVICE_ACCOUNT_JSON = saved;
+  }
+});
+
+test("без ключа Firebase push не отправляется и отправка не считается начатой", () => {
+  const saved = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  delete process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  try {
+    let called = false;
+    const send = async () => {
+      called = true;
+      return { sent: 0, removed: 0 };
+    };
+    assert.equal(sendMobilePushInBackground("u1", { title: "T", body: "b" }, "bot", { send }), false);
+    assert.equal(called, false);
+  } finally {
+    if (saved !== undefined) process.env.FIREBASE_SERVICE_ACCOUNT_JSON = saved;
+  }
 });
 
 test("тревога руководству уходит push'ем: заголовок — первая строка", () => {

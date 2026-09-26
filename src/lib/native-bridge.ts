@@ -18,7 +18,10 @@ import { normalizePushUrl } from "@/lib/push-url";
 
 // ─── Чистые функции ────────────────────────────────────────────────────
 
-export type LinkKind = "internal" | "download" | "external" | "system";
+export type LinkKind = "internal" | "download" | "external" | "system" | "blocked";
+
+/** Схемы, которые приложение отдаёт системе: почта, звонок, SMS, Telegram. */
+const SYSTEM_SCHEME_RE = /^(mailto|tel|sms|tg):/i;
 
 /** Расширения, которые на сайте бывают только файлами. */
 const FILE_EXT_RE = /\.(pdf|xlsx|xls|csv|zip|docx|doc|txt)$/i;
@@ -30,7 +33,12 @@ const FILE_EXT_RE = /\.(pdf|xlsx|xls|csv|zip|docx|doc|txt)$/i;
  *   • `download` — файл: скачать и открыть лист «Поделиться» (в WebView
  *     скачивание иначе молча ничего не делает);
  *   • `external` — чужой сайт: в браузер телефона;
- *   • `system` — почта, звонок, Telegram: в системное приложение.
+ *   • `system` — почта, звонок, SMS, Telegram (только `mailto:`, `tel:`,
+ *     `sms:`, `tg:`): в системное приложение;
+ *   • `blocked` — любая другая схема (`intent:`, `file:`, `content:`,
+ *     `javascript:`, `data:` без `download`, чужие `myapp:`): ссылка из
+ *     комментария или ответа помощника не должна запускать сторонний
+ *     обработчик — нажатие гасим и ничего не открываем.
  *
  * Все обработчики `/api/*`, на которые сайт ставит ссылки, отдают файлы
  * (отчёты, PDF, CSV, счета) — кроме входа и выхода NextAuth.
@@ -41,16 +49,17 @@ export function classifyLink(
   hasDownloadAttr: boolean
 ): LinkKind {
   const raw = href.trim();
-  if (!raw || raw.startsWith("#") || /^javascript:/i.test(raw)) return "internal";
-  if (/^(mailto|tel|sms):/i.test(raw)) return "system";
-  if (/^(blob|data):/i.test(raw)) return "download";
+  if (!raw || raw.startsWith("#")) return "internal";
+  if (SYSTEM_SCHEME_RE.test(raw)) return "system";
+  // blob: сайт создаёт сам (выгрузки); data: — только как явный файл с `download`.
+  if (/^blob:/i.test(raw) || (hasDownloadAttr && /^data:/i.test(raw))) return "download";
   let url: URL;
   try {
     url = new URL(raw, currentOrigin);
   } catch {
     return "internal";
   }
-  if (url.protocol !== "http:" && url.protocol !== "https:") return "system";
+  if (url.protocol !== "http:" && url.protocol !== "https:") return "blocked";
   if (url.origin !== currentOrigin) return "external";
   if (hasDownloadAttr) return "download";
   const path = url.pathname;

@@ -11,10 +11,13 @@ const STATUS_STYLES: Record<string, string> = {
   // Push в приложение человеку без Telegram: запись нужна, чтобы при
   // повторном прогоне рассылки не слать push второй раз.
   push_only: "bg-[#eef0fb] text-[#6f7282]",
+  // Тихие часы: сообщение (или push в приложение) уйдёт утром.
+  deferred: "bg-[#f5f3ff] text-[#6d5bd0]",
 };
 
 const STATUS_LABELS: Record<string, string> = {
   push_only: "только push",
+  deferred: "отложено",
 };
 
 export default async function RootTelegramLogsPage() {
@@ -98,7 +101,7 @@ export default async function RootTelegramLogsPage() {
                     )}
                   </td>
                   <td className="px-6 py-3 font-mono text-[12px] text-[#6f7282]">
-                    {log.chatId || "—"}
+                    {log.chatId || "приложение"}
                   </td>
                   <td className="px-6 py-3 max-w-[420px]">
                     <div className="truncate" title={log.body}>

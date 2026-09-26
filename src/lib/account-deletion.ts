@@ -11,9 +11,10 @@ import crypto from "node:crypto";
  *
  * Правила:
  *   • ROOT платформы свой аккаунт так не удаляет — только вручную;
- *   • владелец компании (или последний руководитель, если владельца нет)
- *     идёт в удаление компании с отсрочкой 30 дней — иначе компания
- *     молча осталась бы без руководителя;
+ *   • владелец компании идёт в удаление компании с отсрочкой 30 дней;
+ *   • руководитель-не владелец, если других активных руководителей нет,
+ *     удалить аккаунт пока не может: компания осталась бы без
+ *     руководства, а удалять чужую компанию ему нельзя;
  *   • остальные — как архивирование сотрудника + обезличивание: имя,
  *     почта, телефон, Telegram, PIN, ключи входа стираются, а записи
  *     журналов остаются у компании (это данные компании, СанПиН/ХАССП).
@@ -37,6 +38,10 @@ export type AccountDeletionSubject = {
   isDemoOrganization: boolean;
 };
 
+/** Руководитель-не владелец, кроме которого в компании руководителей нет. */
+export const LAST_MANAGER_REASON =
+  "Вы единственный активный руководитель компании. Назначьте другого руководителя в «Сотрудниках» или напишите нам на support@wesetup.ru — тогда аккаунт можно будет удалить.";
+
 export type AccountDeletionPlan =
   | { kind: "anonymize" }
   | { kind: "organization"; href: string }
@@ -49,9 +54,11 @@ export function planAccountDeletion(user: AccountDeletionSubject): AccountDeleti
       reason: "Аккаунт администратора платформы удаляется только вручную.",
     };
   }
-  const leavesCompanyWithoutHead =
-    user.isOwnerOfOrganization || (user.isManagement && user.otherManagersCount <= 0);
-  if (leavesCompanyWithoutHead) {
+  // Компанию удаляет только владелец. Руководитель-не владелец, у
+  // которого нет второго активного руководителя, не может ни удалить
+  // чужую компанию, ни оставить её без руководства — удаление аккаунта
+  // ему пока запрещено.
+  if (user.isOwnerOfOrganization) {
     if (user.isDemoOrganization) {
       return {
         kind: "forbidden",
@@ -59,6 +66,9 @@ export function planAccountDeletion(user: AccountDeletionSubject): AccountDeleti
       };
     }
     return { kind: "organization", href: ORGANIZATION_DELETION_HREF };
+  }
+  if (user.isManagement && user.otherManagersCount <= 0) {
+    return { kind: "forbidden", reason: LAST_MANAGER_REASON };
   }
   return { kind: "anonymize" };
 }

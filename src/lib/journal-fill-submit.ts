@@ -306,7 +306,8 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
     const stamp = stampFor(org.timezone || "Europe/Moscow");
     const text = `⚠️ ${document.title}: ${actor.employee.name} отметил(а) «Выключено / нет показания» — ${labels.join(", ")} (${stamp.date} ${stamp.time}, по QR). Показание не снято, в журнале прочерк с пометкой.`;
     await Promise.all([
-      notifyOrganization(orgId, text, ["owner", "technologist"], "temperature").catch(() => null),
+      // Push уходит из колокольчика (notifyManagement ниже) — у бота без второго.
+      notifyOrganization(orgId, text, ["owner", "technologist"], "temperature", undefined, { appPush: false }).catch(() => null),
       notifyManagement({
         organizationId: orgId,
         kind: "qr-fill-off",

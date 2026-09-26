@@ -28,10 +28,23 @@ test("сотрудник обезличивается, владелец идёт
 });
 
 test("последний руководитель без владельца не оставляет компанию без руководства", () => {
+  // Не владелец не может удалить чужую компанию: удаление запрещено,
+  // пока не появится другой руководитель.
   assert.deepEqual(
     planAccountDeletion({ ...employee, isManagement: true, otherManagersCount: 0 }),
+    {
+      kind: "forbidden",
+      reason:
+        "Вы единственный активный руководитель компании. Назначьте другого руководителя в «Сотрудниках» или напишите нам на support@wesetup.ru — тогда аккаунт можно будет удалить.",
+    },
+  );
+  // Владелец — в удаление компании, даже если он единственный руководитель.
+  assert.deepEqual(
+    planAccountDeletion({ ...employee, isManagement: true, isOwnerOfOrganization: true, otherManagersCount: 0 }),
     { kind: "organization", href: "/settings/organization#delete" },
   );
+  // Сотрудник без руководящей роли — обезличивание.
+  assert.deepEqual(planAccountDeletion({ ...employee, otherManagersCount: 0 }), { kind: "anonymize" });
   // Есть ещё руководитель — обычное обезличивание.
   assert.deepEqual(
     planAccountDeletion({ ...employee, isManagement: true, otherManagersCount: 1 }),

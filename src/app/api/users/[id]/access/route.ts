@@ -6,9 +6,8 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { invalidateJournalAcl } from "@/lib/journal-acl";
 import { isManagementRole } from "@/lib/user-roles";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
-import { sendTelegramMessage, escapeTelegramHtml } from "@/lib/telegram";
+import { escapeTelegramHtml, notifyEmployee } from "@/lib/telegram";
 import { orgLoginPrefix } from "@/lib/login-prefix";
-import { pushTextFromTelegramHtml, sendMobilePushInBackground } from "@/lib/mobile-push";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -229,17 +228,12 @@ export async function PUT(request: Request, { params }: RouteParams) {
         .map((name) => `• ${escapeTelegramHtml(name)}`)
         .join("\n");
       const body = `<b>Вам назначены журналы:</b>\n${names}`;
-      // Push в приложение — и тем, у кого нет Telegram.
-      sendMobilePushInBackground(
-        id,
-        { title: "WeSetup", body: pushTextFromTelegramHtml(body), url: "/journals" },
-        "bot"
+      // Личное сообщение — через notifyEmployee: Telegram и push в
+      // приложение (и тем, у кого нет Telegram), тихие часы и snooze —
+      // ночью оба канала откладываются до утра.
+      notifyEmployee(id, body, { label: "Открыть журналы", miniAppUrl: "/journals" }).catch(
+        (err) => console.error("assignment notify failed", err)
       );
-      if (target.telegramChatId) {
-        sendTelegramMessage(target.telegramChatId, body, { userId: id }).catch(
-          (err) => console.error("TG assignment notify failed", err)
-        );
-      }
     }
   }
 

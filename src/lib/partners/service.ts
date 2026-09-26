@@ -739,6 +739,10 @@ async function notifyClientAccessLevelChanged(input: {
         ? `🔐 У службы сопровождения WeSetup изменён уровень доступа.\nТеперь доступно: ${human}.\nВернуть «только просмотр» или отключить сопровождение — ${APP_URL}/settings/consultant`
         : `🔐 Консультант <b>${escapeTelegramHtml(input.brandName)}</b> изменил свой уровень доступа.\nТеперь ему доступно: ${human}.\nВернуть «только просмотр» или отключить консультанта — ${APP_URL}/settings/consultant`,
       ["owner"],
+      undefined,
+      undefined,
+      // Push уходит из колокольчика (notifyManagement выше).
+      { appPush: false },
     ),
     (async () => {
       const to = await findOrganizationOwnerEmail(input.organizationId);

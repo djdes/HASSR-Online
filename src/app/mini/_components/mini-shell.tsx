@@ -322,8 +322,13 @@ export function MiniTopBar({
         >
           {/* Плитку прячем, когда в шапке кнопки отмены правок: на 360 px
               иначе от названия экрана оставалось «Жу…». */}
+          {/* Рядом с «назад» уже есть кнопка слева: на экранах уже 400 px
+              плитку прячем (mini-theme.css), иначе «Все разделы» → «Все …». */}
           {headerUndo ? null : (
-            <span className="mini-topbar-ico" aria-hidden>
+            <span
+              className={showBack ? "mini-topbar-ico mini-topbar-ico--beside-back" : "mini-topbar-ico"}
+              aria-hidden
+            >
               W
             </span>
           )}
@@ -346,12 +351,16 @@ export function MiniTopBar({
             партнёрки прячем на бланке с кнопками отмены: иначе от названия
             экрана на 360 px ничего не оставалось. */}
         <div className="mini-topbar-actions flex shrink-0 items-center gap-2">
+          {/* На экранах уже 400 px иконку партнёрки тоже прячем (mini-theme.css):
+              название экрана важнее. */}
           {partnerHint && !headerUndo ? (
-            <PartnerHint rates={partnerHint} variant="mini" />
+            <span className="mini-topbar-partner contents">
+              <PartnerHint rates={partnerHint} variant="mini" />
+            </span>
           ) : null}
           {/* Отмена/повтор правок журнала — там же, где на сайте. */}
           {headerUndo ? (
-            <UndoRedoButtons undo={headerUndo} className="flex items-center gap-2" />
+            <UndoRedoButtons undo={headerUndo} className="mini-topbar-undo flex items-center gap-2" />
           ) : null}
           {/* Сюда док встраивает кнопку подсказок (см. `FabDockProvider`). */}
           <span id="mini-fab-slot" className="contents" />

@@ -130,7 +130,9 @@ async function notifyPinRequest(params: {
       await notifyEmployee(
         userId,
         `🔑 ${params.employeeName} просит ${params.kind === "change" ? "сменить PIN" : "выдать PIN"} для QR-журналов. Одобрите или отклоните в разделе «Сотрудники».`,
-        { label: "Открыть запросы", miniAppUrl: "/mini/staff" }
+        { label: "Открыть запросы", miniAppUrl: "/mini/staff" },
+        // Push уже ушёл из колокольчика (upsertNotification выше).
+        { appPush: false }
       ).catch(() => undefined);
     })
   );
