@@ -1,0 +1,15 @@
+# Выдержка из лога dev-сервера (next dev, порт 3044), фаза «до», сценарий S1: «Выйти» в Telegram.
+# Шум (уведомления, сборка, фоновые API) убран. Видно: signOut → /mini → бутстрап уводит на /mini?next=/mini/me →
+# /mini снова входит по Telegram (callback/telegram 200) → человек опять в профиле A.
+ GET /api/auth/csrf 200 in 7.2s
+ POST /api/auth/signout 200 in 781ms
+ GET /mini/me 200 in 1984ms
+ GET /api/auth/session 200 in 172ms
+ GET /api/auth/session 200 in 117ms
+ GET /mini 200 in 667ms
+ GET /mini?next=%2Fmini%2Fme 200 in 190ms
+ GET /api/auth/providers 200 in 115ms
+ GET /api/auth/csrf 200 in 75ms
+ POST /api/auth/callback/telegram 200 in 353ms
+ GET /api/auth/session 200 in 74ms
+ GET /mini/me 200 in 251ms

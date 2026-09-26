@@ -1,0 +1,90 @@
+{
+  "task": "mini-signout-2026-09",
+  "spec": ".agent/tasks/mini-signout-2026-09/spec.md",
+  "branch": "fix/mini-signout-2026-09-26",
+  "baseCommit": "deea027e",
+  "codeCommit": "d9b54ffc",
+  "stand": {
+    "database": "wesetup_wt_fix (localhost:5432), prisma db push + prisma/seed.ts + e2e/setup.ts",
+    "server": "next dev --webpack -p 3044, NEXT_DIST_DIR=.next-e2e, run from C:/wt/fix",
+    "telegram": "real telegram-web-app.js + mini-sweep-2026-09/tg-host.js client emulator + initData signed with the (fake) bot token from .env; initData verification unchanged",
+    "sessionProbe": "/api/mini/session (project getServerSession, all session cookie names) and /api/auth/session (next-auth)",
+    "viewports": ["390x844 mobile touch", "1440x900 desktop (site logout)"]
+  },
+  "runs": {
+    "before": { "code": "deea027e", "results": "evidence/before/results.json", "passed": 14, "total": 19 },
+    "after": { "code": "d9b54ffc", "results": "evidence/after/results.json", "passed": 33, "total": 33, "devServerRetries": 0 }
+  },
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "summary": "In Telegram emulation after «Выйти» A stays signed out (7 s settle and reopen from the bot with fresh initData): /mini/login with «Войти через Telegram» and the password form, no session cookies, mark set. Phone+password login of B gives session B (server and next-auth); email+password login of the owner also works; every login clears the mark. Before the fix: back on /mini/me as A.",
+      "evidence": [
+        "evidence/after/results.json: S1-telegram/signout-stays-out, login-screen, mark-set, cookies-cleared, reopen-from-bot, signout-again, password-login-B, mark-cleared-by-password, email-login-owner, mark-cleared-by-email",
+        "evidence/before/results.json: S1-telegram/signout-stays-out FAIL (session A again)",
+        "evidence/before/server-requests-S1.txt",
+        "evidence/after/server-requests-S1.txt",
+        "evidence/before/tg-after-signout.png",
+        "evidence/after/tg-after-signout.png",
+        "evidence/after/tg-logged-in-as-B.png",
+        "evidence/after/tg-login-by-email.png"
+      ]
+    },
+    "AC2": {
+      "status": "PASS",
+      "summary": "«Войти через Telegram» after sign-out clears the mark and signs A back in through /mini (callback/telegram 200, /api/mini/session = A).",
+      "evidence": [
+        "evidence/after/results.json: S1-telegram/telegram-button-signs-in-A, mark-cleared-by-telegram",
+        "evidence/after/server-requests-S1.txt"
+      ]
+    },
+    "AC3": {
+      "status": "PASS",
+      "summary": "Phone browser outside Telegram with the mini shell: after «Выйти» no session (server, next-auth, cookies), /mini and the cabinet page /journals in the shell open /mini/login; no Telegram button outside Telegram. Before the fix the leftover next-auth.session-token brought session B back.",
+      "evidence": [
+        "evidence/after/results.json: S2-browser/*",
+        "evidence/before/results.json: S2-browser/signout-no-session FAIL",
+        "evidence/before/browser-after-signout.png",
+        "evidence/after/browser-after-signout.png"
+      ]
+    },
+    "AC4": {
+      "status": "PASS",
+      "summary": "Site logout (desktop header, phone menu) and «Отвязать Telegram» behave the same before and after: /login without session; unlink clears User.telegramChatId, /mini shows «Аккаунт не связан с Telegram», no signed-out mark.",
+      "evidence": [
+        "evidence/before/results.json + evidence/after/results.json: S3-site-desktop/*, S3-site-phone/*, S4-unlink/*",
+        "evidence/before/tg-after-unlink.png",
+        "evidence/after/tg-after-unlink.png"
+      ]
+    },
+    "AC5": {
+      "status": "PASS",
+      "summary": "npm run typecheck clean; npm test 2453 pass / 0 fail; pre-commit hook (secrets, typecheck, test:gate pass=2453 fail=0) passed on d9b54ffc without --no-verify; 20 new tests on the mark logic; eslint on changed files clean.",
+      "evidence": [
+        "src/app/mini/_lib/signed-out-mark.test.ts",
+        "npm run typecheck",
+        "npm test"
+      ]
+    }
+  },
+  "extra": [
+    "S4-unlink/error-screen-phone-link: «Войти по телефону» from the Telegram error screen now stays on /mini/login (before: bounced back to /mini and the same error).",
+    "S5-logout-fails: POST /api/auth/logout 500 -> error shown, session A kept, no mark (evidence/after/tg-logout-failed.png)."
+  ],
+  "scripts": [
+    "e2e/db.ts",
+    "e2e/fixtures.ts",
+    "e2e/setup.ts",
+    "e2e/tg.ts",
+    "e2e/run.ts",
+    "e2e/unlink-browser-probe.ts"
+  ],
+  "residual": [
+    "The mark is set right after the server confirms POST /api/auth/logout and before next-auth signOut (spec wording: 'потом помечает'), so the session provider never races the redirect to /mini/login.",
+    "«Отвязать Telegram» unchanged per spec: outside Telegram after a phone login the unlink still leaves the legacy session cookie (evidence/after/unlink-browser-probe.json) — candidate for a follow-up.",
+    "Anonymous-state hints 'В Telegram вход произойдёт сам' on /mini/today and /mini/me unchanged.",
+    "Two-factor code step not exercised e2e (fake bot token); it shares finishLogin() with the password path.",
+    "next-auth CLIENT_FETCH_ERROR console noise when a background session fetch is cut by navigation.",
+    "Dev-server ChunkLoadError during webpack rebuilds is retried by run.ts; the final run needed no retries."
+  ]
+}

@@ -1,0 +1,22 @@
+# Выдержка из лога dev-сервера (next dev, порт 3044), фаза «после», сценарий S1.
+# «Выйти»: POST /api/auth/logout → signOut → /mini/login, без входа по Telegram. Затем проверка /api/mini/session (401),
+# повторное открытие из бота (/mini → /mini/login?next=%2Fmini, снова без входа) и «Войти через Telegram»
+# (/mini → callback/telegram 200 → /api/mini/session 200: снова A).
+ GET /api/mini/session 200 in 39ms
+ GET /mini/me 200 in 418ms
+ POST /api/auth/logout 200 in 148ms
+ GET /api/auth/csrf 200 in 115ms
+ POST /api/auth/signout 200 in 36ms
+ GET /api/auth/session 200 in 42ms
+ GET /mini/login 200 in 201ms
+ GET /api/mini/session 401 in 24ms
+ GET /api/auth/session 200 in 43ms
+ GET /mini 200 in 137ms
+ GET /mini/login?next=%2Fmini 200 in 153ms
+ GET /api/mini/session 401 in 33ms
+ GET /mini 200 in 174ms
+ GET /api/auth/providers 200 in 1073ms
+ GET /api/auth/csrf 200 in 59ms
+ POST /api/auth/callback/telegram 200 in 228ms
+ GET /api/auth/session 200 in 68ms
+ GET /api/mini/session 200 in 59ms

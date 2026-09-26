@@ -1,0 +1,242 @@
+{
+  "phase": "after",
+  "base": "http://localhost:3044",
+  "finishedAt": "2026-09-26T10:53:44.610Z",
+  "total": 33,
+  "passed": 33,
+  "failed": 0,
+  "devServerRetries": [],
+  "checks": [
+    {
+      "scenario": "S1-telegram",
+      "ac": "AC1",
+      "id": "auto-login-A",
+      "ok": true,
+      "detail": "открыли из бота → /mini/today, сессия: A (Анна Кузнецова) (автовход как раньше)"
+    },
+    {
+      "scenario": "S1-telegram",
+      "ac": "AC1",
+      "id": "signout-stays-out",
+      "ok": true,
+      "detail": "после «Выйти» и 7 с: экран /mini/login, сервер: нет сессии, next-auth: нет сессии"
+    },
+    {
+      "scenario": "S1-telegram",
+      "ac": "AC1",
+      "id": "login-screen",
+      "ok": true,
+      "detail": "экран /mini/login: «Войти через Telegram» есть, форма пароля есть; пометка=есть"
+    },
+    {
+      "scenario": "S1-telegram",
+      "ac": "AC1",
+      "id": "mark-set",
+      "ok": true,
+      "detail": "localStorage[wesetup.mini.signed-out] = \"1790419786587\""
+    },
+    {
+      "scenario": "S1-telegram",
+      "ac": "AC1",
+      "id": "cookies-cleared",
+      "ok": true,
+      "detail": "куки сессии после выхода: нет"
+    },
+    {
+      "scenario": "S1-telegram",
+      "ac": "AC1",
+      "id": "reopen-from-bot",
+      "ok": true,
+      "detail": "снова открыли из бота → /mini/login, сессия: нет сессии"
+    },
+    {
+      "scenario": "S1-telegram",
+      "ac": "AC2",
+      "id": "telegram-button-signs-in-A",
+      "ok": true,
+      "detail": "«Войти через Telegram» → /mini/today, сессия: A (Анна Кузнецова)"
+    },
+    {
+      "scenario": "S1-telegram",
+      "ac": "AC2",
+      "id": "mark-cleared-by-telegram",
+      "ok": true,
+      "detail": "пометка после входа через Telegram: null"
+    },
+    {
+      "scenario": "S1-telegram",
+      "ac": "AC1",
+      "id": "signout-again",
+      "ok": true,
+      "detail": "второй выход → /mini/login"
+    },
+    {
+      "scenario": "S1-telegram",
+      "ac": "AC1",
+      "id": "password-login-B",
+      "ok": true,
+      "detail": "вход по телефону и паролю B → /mini/today, сервер: B (Борис Орлов), next-auth: B (Борис Орлов)"
+    },
+    {
+      "scenario": "S1-telegram",
+      "ac": "AC1",
+      "id": "mark-cleared-by-password",
+      "ok": true,
+      "detail": "пометка после входа по паролю: null"
+    },
+    {
+      "scenario": "S1-telegram",
+      "ac": "AC1",
+      "id": "email-login-owner",
+      "ok": true,
+      "detail": "вход по почте и паролю → /dashboard, сессия: OWNER (Ольга Власова)"
+    },
+    {
+      "scenario": "S1-telegram",
+      "ac": "AC1",
+      "id": "mark-cleared-by-email",
+      "ok": true,
+      "detail": "пометка после входа по почте снята"
+    },
+    {
+      "scenario": "S2-browser",
+      "ac": "AC3",
+      "id": "no-session-login",
+      "ok": true,
+      "detail": "без сессии /mini → /mini/login"
+    },
+    {
+      "scenario": "S2-browser",
+      "ac": "AC3",
+      "id": "login-B",
+      "ok": true,
+      "detail": "вход по телефону → /mini/today, сессия: B (Борис Орлов), куки: haccp-online.session-token, next-auth.session-token"
+    },
+    {
+      "scenario": "S2-browser",
+      "ac": "AC3",
+      "id": "mini-shell-on",
+      "ok": true,
+      "detail": "кука оболочки ws-shell=mini: есть"
+    },
+    {
+      "scenario": "S2-browser",
+      "ac": "AC3",
+      "id": "signout-no-session",
+      "ok": true,
+      "detail": "после «Выйти» → /mini/login, сервер: нет сессии, next-auth: нет сессии, куки сессии: нет"
+    },
+    {
+      "scenario": "S2-browser",
+      "ac": "AC3",
+      "id": "mini-opens-login",
+      "ok": true,
+      "detail": "снова /mini → /mini/login, сессия: нет сессии"
+    },
+    {
+      "scenario": "S2-browser",
+      "ac": "AC3",
+      "id": "cabinet-in-shell",
+      "ok": true,
+      "detail": "/journals в оболочке после выхода → /mini/login, сессия: нет сессии"
+    },
+    {
+      "scenario": "S2-browser",
+      "ac": "AC3",
+      "id": "no-telegram-button-outside",
+      "ok": true,
+      "detail": "кнопка «Войти через Telegram» вне Telegram: не показана"
+    },
+    {
+      "scenario": "S3-site-desktop",
+      "ac": "AC4",
+      "id": "site-login",
+      "ok": true,
+      "detail": "вход на сайте по почте → /dashboard, сессия: OWNER (Ольга Власова)"
+    },
+    {
+      "scenario": "S3-site-desktop",
+      "ac": "AC4",
+      "id": "site-logout",
+      "ok": true,
+      "detail": "«Выйти» в шапке → /login, сессия: нет сессии, куки сессии: нет"
+    },
+    {
+      "scenario": "S3-site-desktop",
+      "ac": "AC4",
+      "id": "site-dashboard-closed",
+      "ok": true,
+      "detail": "/dashboard после выхода → /login"
+    },
+    {
+      "scenario": "S3-site-phone",
+      "ac": "AC4",
+      "id": "site-login-phone",
+      "ok": true,
+      "detail": "вход на сайте с телефона → /dashboard, сессия: OWNER (Ольга Власова)"
+    },
+    {
+      "scenario": "S3-site-phone",
+      "ac": "AC4",
+      "id": "site-logout-phone",
+      "ok": true,
+      "detail": "«Меню» → «Выйти» → /login, сессия: нет сессии"
+    },
+    {
+      "scenario": "S3-site-phone",
+      "ac": "AC4",
+      "id": "mini-after-site-logout",
+      "ok": true,
+      "detail": "/mini после выхода с сайта → /mini/login, сессия: нет сессии"
+    },
+    {
+      "scenario": "S4-unlink",
+      "ac": "AC4",
+      "id": "auto-login-A",
+      "ok": true,
+      "detail": "открыли из бота → /mini/today, сессия: A (Анна Кузнецова)"
+    },
+    {
+      "scenario": "S4-unlink",
+      "ac": "AC4",
+      "id": "unlink-clears-link",
+      "ok": true,
+      "detail": "User.telegramChatId после отвязки: null"
+    },
+    {
+      "scenario": "S4-unlink",
+      "ac": "AC4",
+      "id": "unlink-signed-out",
+      "ok": true,
+      "detail": "после отвязки → /mini, «Аккаунт не связан с Telegram» показано, сессия: нет сессии"
+    },
+    {
+      "scenario": "S4-unlink",
+      "ac": "AC4",
+      "id": "unlink-no-mark",
+      "ok": true,
+      "detail": "пометка «вышел вручную» после отвязки: null (отвязка её не ставит — как раньше)"
+    },
+    {
+      "scenario": "S4-unlink",
+      "ac": "extra",
+      "id": "error-screen-phone-link",
+      "ok": true,
+      "detail": "«Войти по телефону» с экрана ошибки → /mini/login"
+    },
+    {
+      "scenario": "S5-logout-fails",
+      "ac": "extra",
+      "id": "logout-error-shown",
+      "ok": true,
+      "detail": "выход не подтверждён (HTTP 500) → /mini/me, ошибка показана"
+    },
+    {
+      "scenario": "S5-logout-fails",
+      "ac": "extra",
+      "id": "logout-error-keeps-session",
+      "ok": true,
+      "detail": "сессия: A (Анна Кузнецова), пометка: null — «вышел» не пишем, пока сервер не подтвердил"
+    }
+  ]
+}

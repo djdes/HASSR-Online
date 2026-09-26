@@ -1,0 +1,5 @@
+{
+  "probe": "e2e/unlink-browser-probe.ts — «Отвязать Telegram» в обычном браузере после входа A по телефону (отвязка по спеке не менялась)",
+  "result": {"finalPath":"/mini/today","serverSession":"Анна Кузнецова","telegramChatId":null,"sessionCookies":["next-auth.session-token"]},
+  "reading": "Связь с Telegram снята, но вне Telegram сессия остаётся по легаси-куке next-auth.session-token — так было и до правки (отвязка делает только signOut). Не критерий этой спеки; кандидат в отдельную задачу."
+}
