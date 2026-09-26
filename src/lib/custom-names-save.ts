@@ -1,6 +1,7 @@
 import {
   customNamesAuditDetails,
   diffCustomNames,
+  mergeCustomNamesPatch,
   parseCustomNames,
   validateCustomNamesInput,
   type CustomNameChange,
@@ -9,16 +10,21 @@ import {
 import { hasFullWorkspaceAccess, type RoleAccessActor } from "@/lib/role-access";
 
 /**
- * Сохранение страницы «Настройки → Названия» (`PUT /api/settings/custom-names`).
+ * Сохранение своих названий организации: страница «Настройки → Названия»
+ * (`PUT /api/settings/custom-names`) и окно «Своё название журнала» на
+ * странице журнала (`PATCH` того же адреса).
  *
  * Логика вынесена из маршрута, чтобы её можно было проверить тестом без
  * базы и сессии: доступ, проверка ввода, запись только в свою
  * организацию и `AuditLog` «было → стало».
  *
- * Тело запроса — ПОЛНЫЙ набор названий, как у «Набора журналов»:
- * страница отправляет все поля разом одной кнопкой, пустое поле значит
- * «стандартное». Частичных правок нет, поэтому две вкладки не затирают
- * друг другу половину правок молча.
+ * `PUT` — ПОЛНЫЙ набор названий, как у «Набора журналов»: страница
+ * отправляет все поля разом одной кнопкой, пустое поле значит
+ * «стандартное», поэтому две вкладки не затирают друг другу половину
+ * правок молча. `PATCH` — одно-два поля поверх сохранённого набора
+ * (`mergeCustomNamesPatch`): окно на странице журнала видит только свой
+ * журнал и не должно трогать остальные названия. Дальше путь общий:
+ * те же проверки, дифф, запись и аудит.
  */
 
 export const CUSTOM_NAMES_AUDIT_ACTION = "settings.custom_names.update";
@@ -38,6 +44,12 @@ export type SaveCustomNamesInput = {
   /** Активная организация сессии (`getActiveOrgId`). */
   organizationId: string | null;
   body: unknown;
+  /**
+   * `replace` (по умолчанию) — тело и есть полный набор (`PUT`, страница
+   * «Названия»); `merge` — только присланные поля поверх сохранённых
+   * (`PATCH`, окно на странице журнала).
+   */
+  mode?: "replace" | "merge";
 };
 
 export type SaveCustomNamesResponse = {
@@ -63,7 +75,15 @@ export async function saveCustomNames(
     journals.map((journal) => [journal.code, journal.name])
   );
 
-  const validation = validateCustomNamesInput(input.body, officialNames);
+  const before = parseCustomNames(await deps.loadStored(input.organizationId));
+  // Тело не того вида `mergeCustomNamesPatch` не склеивает — тогда его
+  // проверяет `validateCustomNamesInput` и отвечает той же ошибкой, что PUT.
+  const body =
+    input.mode === "merge"
+      ? mergeCustomNamesPatch(before, input.body, officialNames) ?? input.body
+      : input.body;
+
+  const validation = validateCustomNamesInput(body, officialNames);
   if (!validation.ok) {
     return {
       status: 400,
@@ -71,7 +91,6 @@ export async function saveCustomNames(
     };
   }
 
-  const before = parseCustomNames(await deps.loadStored(input.organizationId));
   const changes = diffCustomNames(before, validation.names, officialNames);
   if (changes.length > 0) {
     await deps.store(input.organizationId, validation.names);

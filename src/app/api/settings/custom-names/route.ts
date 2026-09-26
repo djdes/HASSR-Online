@@ -17,6 +17,24 @@ export const dynamic = "force-dynamic";
  * название. Права, проверки и аудит — в `lib/custom-names-save.ts`.
  */
 export async function PUT(request: Request) {
+  return save(request, "replace");
+}
+
+/**
+ * PATCH /api/settings/custom-names
+ *
+ * Body: { journals?: { <код>: "Своё" | "" }, sections?: { <ключ>: "Своё" | "" } }
+ *
+ * Только присланные названия поверх сохранённых — окно «Своё название
+ * журнала» на странице журнала (пустое — «Вернуть стандартное»). Права,
+ * проверки (2–80 символов, без повторов) и запись в журнал действий — те
+ * же, что у PUT: один помощник `saveCustomNames`.
+ */
+export async function PATCH(request: Request) {
+  return save(request, "merge");
+}
+
+async function save(request: Request, mode: "replace" | "merge") {
   const auth = await requireApiAuth();
   if (!auth.ok) return auth.response;
   const session = auth.session;
@@ -24,7 +42,7 @@ export async function PUT(request: Request) {
 
   const body = await request.json().catch(() => null);
   const result = await saveCustomNames(
-    { actor: session.user, organizationId, body },
+    { actor: session.user, organizationId, body, mode },
     {
       loadStored: async (id) =>
         (

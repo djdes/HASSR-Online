@@ -9,6 +9,7 @@ import {
   RENAMABLE_SECTIONS,
   STANDARD_NAME_AUDIT_LABEL,
   checkCustomNamesInput,
+  checkJournalRename,
   countCustomNames,
   customJournalName,
   customNamesAuditDetails,
@@ -18,6 +19,7 @@ import {
   emptyCustomNames,
   journalDisplayName,
   journalMatchesCustomQuery,
+  mergeCustomNamesPatch,
   parseCustomNames,
   sanitizeCustomName,
   sectionDisplayName,
@@ -272,4 +274,80 @@ test("журнал действий: что было → что стало, ст
     [`Журнал «${OFFICIAL.cleaning}»`]: { from: STANDARD_NAME_AUDIT_LABEL, to: "Уборка зала" },
   });
   assert.deepEqual(diffCustomNames(before, before, OFFICIAL), []);
+});
+
+test("проверка ввода: `constructor` и `toString` — не коды журналов, ответ 400, а не падение", () => {
+  const result = validateCustomNamesInput(
+    { journals: { constructor: "Своё", toString: "Ещё своё" } },
+    OFFICIAL
+  );
+  assert.equal(result.ok, false);
+  if (result.ok) return;
+  assert.deepEqual(
+    result.errors.map((error) => `${error.key}: ${error.message}`),
+    ["constructor: Такого журнала нет", "toString: Такого журнала нет"]
+  );
+  assert.equal(result.message, "Журнал «constructor»: такого журнала нет");
+});
+
+test("окно журнала: правка одного журнала ложится поверх сохранённых названий", () => {
+  const stored = names({
+    journals: { hygiene: "Гигиена персонала", removed_journal: "Журнала больше нет" },
+    sections: { journals: "Документы" },
+  });
+  // Остальные названия организации окно не видит — и не затирает.
+  assert.deepEqual(mergeCustomNamesPatch(stored, { journals: { cleaning: "Уборка кухни" } }, OFFICIAL), {
+    journals: { hygiene: "Гигиена персонала", cleaning: "Уборка кухни" },
+    sections: { journals: "Документы" },
+  });
+  // Пусто — «Вернуть стандартное» только у этого журнала.
+  const reset = mergeCustomNamesPatch(stored, { journals: { hygiene: "" } }, OFFICIAL);
+  assert.deepEqual(reset, { journals: { hygiene: "" }, sections: { journals: "Документы" } });
+  const validated = validateCustomNamesInput(reset, OFFICIAL);
+  assert.equal(validated.ok, true);
+  if (validated.ok) {
+    assert.deepEqual(validated.names, { journals: {}, sections: { journals: "Документы" } });
+  }
+  // Тело не того вида — null: ошибку даёт та же проверка, что у PUT.
+  assert.equal(mergeCustomNamesPatch(stored, null, OFFICIAL), null);
+  assert.equal(mergeCustomNamesPatch(stored, { journals: "Уборка" }, OFFICIAL), null);
+  assert.equal(mergeCustomNamesPatch(stored, { sections: [] }, OFFICIAL), null);
+});
+
+test("окно журнала: пусто или официальное — стандартное, своё — от 2 до 80 символов", () => {
+  const official = OFFICIAL.cleaning;
+  // Открыли и ничего не меняли — сохранять нечего.
+  assert.deepEqual(checkJournalRename({ value: official, officialName: official, customName: null }), {
+    name: null,
+    error: null,
+    changed: false,
+  });
+  assert.deepEqual(
+    checkJournalRename({ value: "  Уборка   кухни ", officialName: official, customName: null }),
+    { name: "Уборка кухни", error: null, changed: true }
+  );
+  assert.deepEqual(checkJournalRename({ value: "У", officialName: official, customName: null }), {
+    name: "У",
+    error: CUSTOM_NAME_LENGTH_ERROR,
+    changed: true,
+  });
+  assert.equal(
+    checkJournalRename({ value: "я".repeat(80), officialName: official, customName: null }).error,
+    null
+  );
+  // Своё уже сохранено: то же самое — без изменений; пусто или
+  // официальное (регистр и пробелы не важны) — вернуть стандартное.
+  assert.equal(
+    checkJournalRename({ value: "Уборка кухни", officialName: official, customName: "Уборка кухни" }).changed,
+    false
+  );
+  assert.deepEqual(checkJournalRename({ value: "", officialName: official, customName: "Уборка кухни" }), {
+    name: null,
+    error: null,
+    changed: true,
+  });
+  assert.deepEqual(
+    checkJournalRename({ value: " журнал  УБОРКИ ", officialName: official, customName: "Уборка кухни" }),
+    { name: null, error: null, changed: true }
+  );
 });

@@ -77,6 +77,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /**
+ * Свой ключ объекта, а не унаследованный: `constructor` или `toString`
+ * из тела запроса — не код журнала (иначе вместо 400 падали бы с 500).
+ */
+function hasOwnKey(record: object, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(record, key);
+}
+
+/**
  * Нормализация ввода: управляющие символы убраны, пробелы (в том числе
  * переносы строк и табуляция) схлопнуты, края обрезаны. Не строка → "".
  */
@@ -301,7 +309,7 @@ export function checkCustomNamesInput(
   const rawSections = isRecord(input.sections) ? input.sections : {};
 
   for (const [code, value] of Object.entries(rawJournals)) {
-    const official = journalOfficialNames[code];
+    const official = hasOwnKey(journalOfficialNames, code) ? journalOfficialNames[code] : undefined;
     if (official === undefined) {
       errors.push({ kind: "journal", key: code, message: "Такого журнала нет" });
       continue;
@@ -379,14 +387,82 @@ export function validateCustomNamesInput(
   const { names, errors } = checkCustomNamesInput({ journals, sections }, journalOfficialNames);
   if (errors.length > 0) {
     const first = errors[0];
+    const official = hasOwnKey(journalOfficialNames, first.key)
+      ? journalOfficialNames[first.key]
+      : undefined;
     const where =
       first.kind === "section"
         ? `Раздел «${SECTION_BY_KEY.get(first.key)?.label ?? first.key}»`
-        : `Журнал «${journalOfficialNames[first.key] ?? first.key}»`;
+        : `Журнал «${official ?? first.key}»`;
     const text = first.message.charAt(0).toLocaleLowerCase("ru-RU") + first.message.slice(1);
     return { ok: false, message: `${where}: ${text}`, errors };
   }
   return { ok: true, names };
+}
+
+/**
+ * Правка части названий — окно «Своё название журнала» на странице
+ * журнала (`PATCH /api/settings/custom-names`).
+ *
+ * Присланные поля ложатся поверх сохранённого набора, и получается
+ * ПОЛНЫЙ набор — ровно тот, что ушёл бы со страницы «Названия», если там
+ * поменять одно поле и нажать «Сохранить». Дальше он проходит те же
+ * проверки, дифф и аудит (`validateCustomNamesInput`): логика одна.
+ * Остальные названия организации окно не видит — и не затирает.
+ *
+ * Сохранённые названия журналов, которых больше нет в каталоге,
+ * отпадают — страница «Названия» их тоже не отправляет.
+ *
+ * Присланные поля идут первыми: при повторе ошибка (и её текст в
+ * ответе) — про тот журнал, который переименовывают.
+ *
+ * null — тело не того вида; ошибку тогда даёт `validateCustomNamesInput`.
+ */
+export function mergeCustomNamesPatch(
+  stored: CustomNames,
+  patch: unknown,
+  journalOfficialNames: Readonly<Record<string, string>>
+): { journals: Record<string, unknown>; sections: Record<string, unknown> } | null {
+  if (!isRecord(patch)) return null;
+  const { journals = {}, sections = {} } = patch;
+  if (!isRecord(journals) || !isRecord(sections)) return null;
+  const keptJournals = Object.entries(stored.journals).filter(
+    ([code]) => hasOwnKey(journalOfficialNames, code) && !hasOwnKey(journals, code)
+  );
+  const keptSections = Object.entries(stored.sections).filter(([key]) => !hasOwnKey(sections, key));
+  return {
+    journals: { ...journals, ...Object.fromEntries(keptJournals) },
+    sections: { ...sections, ...Object.fromEntries(keptSections) },
+  };
+}
+
+/** Что покажет поле окна «Своё название журнала». */
+export type JournalRenameCheck = {
+  /** Своё название, которое сохранится; null — стандартное (официальное). */
+  name: string | null;
+  /** Ошибка поля или null. */
+  error: string | null;
+  /** Отличается ли от того, что сохранено сейчас (есть что сохранять). */
+  changed: boolean;
+};
+
+/**
+ * Поле окна «Своё название журнала» на странице журнала — по правилам
+ * страницы «Названия» (`checkCustomNamesInput`): пустое поле или
+ * официальное название — стандартное, иначе 2–80 символов после обрезки
+ * пробелов. Повторы с другими журналами проверяет сервер: каталога
+ * журналов на странице журнала нет.
+ */
+export function checkJournalRename(input: {
+  value: string;
+  officialName: string;
+  /** Своё название, сохранённое сейчас, или null. */
+  customName: string | null;
+}): JournalRenameCheck {
+  const clean = sanitizeCustomName(input.value);
+  const name = !clean || sameName(clean, input.officialName) ? null : clean;
+  const error = name !== null && !isCustomNameLengthOk(name) ? CUSTOM_NAME_LENGTH_ERROR : null;
+  return { name, error, changed: name !== (input.customName ?? null) };
 }
 
 function duplicateErrors(

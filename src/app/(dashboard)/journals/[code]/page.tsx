@@ -276,7 +276,11 @@ import { JournalManageProvider } from "@/components/journals/document-list-ui";
 import { parseOrgColumnDefaults } from "@/lib/journal-columns";
 import { getPrimarySlotId } from "@/lib/journal-responsible-schemas";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
-import { CurrentJournalProvider } from "@/components/shared/custom-names-provider";
+import {
+  CurrentJournalProvider,
+  JournalHeadingName,
+} from "@/components/shared/custom-names-provider";
+import { JournalTitleControls } from "@/components/journals/journal-title-controls";
 import { customJournalName } from "@/lib/custom-names";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
 
@@ -1486,7 +1490,15 @@ export default async function JournalDocumentsPage({
     return (
       // Какой журнал открыт — для заголовка со своим названием и строки
       // «Официальное название: …» (JournalHeadingName в клиентах журналов).
-      <CurrentJournalProvider code={resolvedCode} officialName={officialJournalTitle}>
+      // За названием — карандаш «Своё название журнала» (права — как у
+      // «Настройки → Названия») и переключатель «Включён».
+      <CurrentJournalProvider
+        code={resolvedCode}
+        officialName={officialJournalTitle}
+        titleActions={
+          <JournalTitleControls canRename={hasFullWorkspaceAccess(session.user)} />
+        }
+      >
       <div className="space-y-5">
         <JournalPageCrumbs
           organizationName={orgSettings?.name || ORG_NAME_FALLBACK}
@@ -1510,12 +1522,11 @@ export default async function JournalDocumentsPage({
             autofillSupported={isAutomationSupported(resolvedCode)}
           />
         ) : null}
-        {/* Индикатор «включён / отключён» рисует общая шапка документных
-            журналов; данные о наборе и правах она получает отсюда. */}
+        {/* Переключатель «Включён» стоит в строке с названием журнала
+            (JournalTitleControls); данные о наборе и правах — отсюда. */}
         <JournalToggleProvider
           value={{
             code: resolvedCode,
-            name: journalTitle,
             disabledCodes,
             canToggle: hasFullWorkspaceAccess(session.user),
           }}
@@ -4216,22 +4227,12 @@ export default async function JournalDocumentsPage({
           экран, а название журнала и так стоит в крошках PageNav. */}
       <PageHeader
         eyebrow="Журнал"
-        title={journalTitle}
-        description={
-          // Своё название — сразу под ним официальное, чтобы не путались.
-          customJournalTitle
-            ? `Официальное название: ${officialJournalTitle}`
-            : template.description ?? undefined
-        }
+        // Своё название с карандашом и «Включён» сразу за ним, под ним
+        // официальное — как у документных журналов.
+        title={<JournalHeadingName fallback={officialJournalTitle} />}
+        description={customJournalTitle ? undefined : template.description ?? undefined}
         actions={
           <>
-            <JournalEnabledIndicator
-              code={resolvedCode}
-              name={journalTitle}
-              disabled={false}
-              disabledCodes={disabledCodes}
-              canToggle={hasFullWorkspaceAccess(session.user)}
-            />
             <PageHeaderStat>
               {entries.length} {entries.length === 1 ? "запись" : "записей"}
             </PageHeaderStat>

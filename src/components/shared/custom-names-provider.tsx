@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, useContext, useMemo, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 
 import {
   customJournalName,
@@ -23,6 +30,12 @@ const EMPTY = emptyCustomNames();
 
 const CustomNamesContext = createContext<CustomNames>(EMPTY);
 
+type ApplyCustomNames = (names: CustomNames) => void;
+
+const ApplyCustomNamesContext = createContext<ApplyCustomNames | null>(null);
+
+function ignoreNames() {}
+
 export function CustomNamesProvider({
   names,
   children,
@@ -30,12 +43,34 @@ export function CustomNamesProvider({
   names: CustomNames;
   children: ReactNode;
 }) {
-  return <CustomNamesContext.Provider value={names}>{children}</CustomNamesContext.Provider>;
+  // Названия, только что сохранённые прямо на странице (окно «Своё
+  // название журнала»): заголовок, крошки и меню меняются сразу, не
+  // дожидаясь, пока `router.refresh()` принесёт свежий layout. Как только
+  // сервер прислал новые `names`, снова верим серверу.
+  const [saved, setSaved] = useState<{ base: CustomNames; names: CustomNames } | null>(null);
+  const value = saved && saved.base === names ? saved.names : names;
+  const apply = useCallback<ApplyCustomNames>(
+    (next) => setSaved({ base: names, names: next }),
+    [names]
+  );
+  return (
+    <ApplyCustomNamesContext.Provider value={apply}>
+      <CustomNamesContext.Provider value={value}>{children}</CustomNamesContext.Provider>
+    </ApplyCustomNamesContext.Provider>
+  );
 }
 
 /** Свои названия активной организации (пустые — всё стандартное). */
 export function useCustomNames(): CustomNames {
   return useContext(CustomNamesContext);
+}
+
+/**
+ * Показать только что сохранённый набор названий (ответ API) сразу, до
+ * обновления страницы. Без провайдера ничего не делает.
+ */
+export function useApplyCustomNames(): ApplyCustomNames {
+  return useContext(ApplyCustomNamesContext) ?? ignoreNames;
 }
 
 /** Название журнала для человека: своё, если задано, иначе официальное. */
@@ -48,17 +83,25 @@ export function useJournalDisplayName(code: string, officialName: string): strin
  * Кладёт его сервер страницы — по нему заголовок и строка «Официальное
  * название: …» узнают, о каком журнале речь, без новых пропсов в
  * тридцати клиентах журналов.
+ *
+ * `titleActions` — кнопки в строку с названием (карандаш «Своё название
+ * журнала», переключатель «Включён»): их рисует `JournalHeadingName`
+ * сразу после названия, а решает, какие нужны, страница журнала.
  */
-type CurrentJournal = { code: string; officialName: string };
+type CurrentJournal = { code: string; officialName: string; titleActions?: ReactNode };
 
 const CurrentJournalContext = createContext<CurrentJournal | null>(null);
 
 export function CurrentJournalProvider({
   code,
   officialName,
+  titleActions,
   children,
 }: CurrentJournal & { children: ReactNode }) {
-  const value = useMemo(() => ({ code, officialName }), [code, officialName]);
+  const value = useMemo(
+    () => ({ code, officialName, titleActions }),
+    [code, officialName, titleActions]
+  );
   return <CurrentJournalContext.Provider value={value}>{children}</CurrentJournalContext.Provider>;
 }
 
@@ -73,7 +116,11 @@ export function useCurrentJournalNames(): CurrentJournalNames | null {
   const current = useContext(CurrentJournalContext);
   const names = useCustomNames();
   if (!current) return null;
-  return { ...current, customName: customJournalName(names, current.code) };
+  return {
+    code: current.code,
+    officialName: current.officialName,
+    customName: customJournalName(names, current.code),
+  };
 }
 
 const OFFICIAL_HINT_CLASS =
@@ -87,6 +134,7 @@ const OFFICIAL_HINT_CLASS =
  * `fallback` — ровно то, что заголовок показывал раньше (вместе с
  * «(закрытые)»): без своего названия экран не меняется ни на символ.
  * `suffix` дописывается к своему названию на вкладке закрытых.
+ * Кнопки страницы (`titleActions`) встают сразу за названием.
  */
 export function JournalHeadingName({
   fallback,
@@ -96,11 +144,20 @@ export function JournalHeadingName({
   suffix?: string | null;
 }) {
   const current = useCurrentJournalNames();
-  if (!current?.customName) return <>{fallback}</>;
+  const actions = useContext(CurrentJournalContext)?.titleActions ?? null;
+  if (!current?.customName) {
+    return (
+      <>
+        {fallback}
+        {actions}
+      </>
+    );
+  }
   return (
     <>
       {current.customName}
       {suffix ?? null}
+      {actions}
       <span className={cn("mt-1 block", OFFICIAL_HINT_CLASS)} data-official-name="">
         Официальное название: {current.officialName}
       </span>

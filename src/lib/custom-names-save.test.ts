@@ -132,3 +132,133 @@ test("API: «Вернуть стандартное» — пустое поле �
   assert.equal(result.status, 200);
   assert.deepEqual(writes[0].names, { journals: {}, sections: {} });
 });
+
+test("PATCH (окно на странице журнала): без входа — 401, сотруднику — 403, ничего не пишется", async () => {
+  const { deps, writes, audits } = fakeDeps({ org_a: { journals: { cleaning: "Уборка" } } });
+  const anonymous = await saveCustomNames(
+    { actor: null, organizationId: null, body: { journals: { hygiene: "Гигиена" } }, mode: "merge" },
+    deps
+  );
+  assert.equal(anonymous.status, 401);
+  const staff = await saveCustomNames(
+    { actor: cook, organizationId: "org_a", body: { journals: { hygiene: "Гигиена" } }, mode: "merge" },
+    deps
+  );
+  assert.equal(staff.status, 403);
+  assert.equal(staff.body.error, "Это действие доступно руководителю");
+  assert.equal(writes.length, 0);
+  assert.equal(audits.length, 0);
+});
+
+test("PATCH: меняет только присланный журнал, остальные названия остаются, аудит — про него", async () => {
+  const { deps, writes, audits, stored } = fakeDeps({
+    org_a: { journals: { cleaning: "Уборка" }, sections: { reports: "Выгрузки" } },
+    org_b: { journals: { hygiene: "Чужое название" } },
+  });
+  const result = await saveCustomNames(
+    {
+      actor: manager,
+      organizationId: "org_a",
+      body: { journals: { hygiene: "  Гигиена   персонала " } },
+      mode: "merge",
+    },
+    deps
+  );
+  assert.equal(result.status, 200);
+  assert.equal(result.body.changed, 1);
+  assert.deepEqual(result.body.names, {
+    journals: { cleaning: "Уборка", hygiene: "Гигиена персонала" },
+    sections: { reports: "Выгрузки" },
+  });
+  assert.deepEqual(writes, [
+    {
+      organizationId: "org_a",
+      names: {
+        journals: { cleaning: "Уборка", hygiene: "Гигиена персонала" },
+        sections: { reports: "Выгрузки" },
+      },
+    },
+  ]);
+  assert.deepEqual(stored.org_b, { journals: { hygiene: "Чужое название" } });
+  // Та же запись в журнал действий, что у страницы «Названия».
+  assert.deepEqual(audits, [
+    {
+      organizationId: "org_a",
+      details: {
+        count: 1,
+        "Журнал «Гигиенический журнал (сотрудники)»": { from: "стандартное", to: "Гигиена персонала" },
+      },
+    },
+  ]);
+});
+
+test("PATCH: пустое название — «Вернуть стандартное» только у этого журнала", async () => {
+  const { deps, writes, audits } = fakeDeps({
+    org_a: { journals: { hygiene: "Гигиена персонала", cleaning: "Уборка" }, sections: {} },
+  });
+  const result = await saveCustomNames(
+    { actor: manager, organizationId: "org_a", body: { journals: { hygiene: "" } }, mode: "merge" },
+    deps
+  );
+  assert.equal(result.status, 200);
+  assert.deepEqual(writes[0].names, { journals: { cleaning: "Уборка" }, sections: {} });
+  assert.deepEqual(audits[0].details, {
+    count: 1,
+    "Журнал «Гигиенический журнал (сотрудники)»": { from: "Гигиена персонала", to: "стандартное" },
+  });
+});
+
+test("PATCH: те же проверки — 2–80 символов и без повторов с другими журналами", async () => {
+  const { deps, writes, audits } = fakeDeps({ org_a: { journals: { cleaning: "Уборка" } } });
+  const short = await saveCustomNames(
+    { actor: manager, organizationId: "org_a", body: { journals: { hygiene: "Г" } }, mode: "merge" },
+    deps
+  );
+  assert.equal(short.status, 400);
+  assert.deepEqual(short.body.errors, [
+    { kind: "journal", key: "hygiene", message: "От 2 до 80 символов" },
+  ]);
+
+  // Повтор со своим названием другого журнала, сохранённым раньше. Текст
+  // ответа — про журнал, который переименовывают.
+  const taken = await saveCustomNames(
+    { actor: manager, organizationId: "org_a", body: { journals: { hygiene: "уборка" } }, mode: "merge" },
+    deps
+  );
+  assert.equal(taken.status, 400);
+  assert.equal(
+    taken.body.error,
+    "Журнал «Гигиенический журнал (сотрудники)»: так уже назван журнал «Журнал уборки»"
+  );
+  assert.deepEqual((taken.body.errors as Array<{ key: string }>)[0], {
+    kind: "journal",
+    key: "hygiene",
+    message: "Так уже назван журнал «Журнал уборки»",
+  });
+
+  // Повтор с официальным названием другого журнала (у гигиенического
+  // своего названия нет — его официальное занято).
+  const official = await saveCustomNames(
+    {
+      actor: manager,
+      organizationId: "org_a",
+      body: { journals: { cleaning: "гигиенический журнал (сотрудники)" } },
+      mode: "merge",
+    },
+    deps
+  );
+  assert.equal(official.status, 400);
+  assert.equal(
+    official.body.error,
+    "Журнал «Журнал уборки»: так называется журнал «Гигиенический журнал (сотрудники)»"
+  );
+
+  const badShape = await saveCustomNames(
+    { actor: manager, organizationId: "org_a", body: { journals: "Гигиена" }, mode: "merge" },
+    deps
+  );
+  assert.equal(badShape.status, 400);
+  assert.equal(badShape.body.error, "Неверный формат названий");
+  assert.equal(writes.length, 0);
+  assert.equal(audits.length, 0);
+});

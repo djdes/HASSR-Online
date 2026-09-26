@@ -17,7 +17,6 @@ import { JOURNAL_ACTION_CREATE_CLASS, JournalListActions } from "@/components/jo
 import { TOUR } from "@/lib/tour-anchors";
 import { ResponsiveMenu } from "@/components/ui/responsive-menu";
 import { LinkPendingSpinner } from "@/components/ui/link-pending";
-import { JournalEnabledIndicatorSlot } from "@/components/journals/journal-enabled-indicator";
 import { JournalHeadingName } from "@/components/shared/custom-names-provider";
 import { cn } from "@/lib/utils";
 
@@ -302,26 +301,20 @@ export function JournalTopBar(props: {
     // документ» центрируются по высоте блока заголовка, а не липнут к первой
     // строке (P4 сводной таблицы аудита).
     <div className="flex flex-wrap items-start justify-between gap-4 sm:items-center">
-      {/* Индикатор «журнал включён» — вплотную к заголовку: решение
-          «этот журнал нам не нужен» принимают, когда открыли его и
-          посмотрели. Данные приходят контекстом из страницы раздела;
-          в Mini App провайдера нет, и слот ничего не рисует.
-          Заголовок занимает всё место рядом с блоком кнопок (440 px) и
+      {/* Заголовок занимает всё место рядом с блоком кнопок (440 px) и
           переносится внутри него; блок уходит под заголовок, только
           когда рядом не остаётся и 18rem. */}
       <div className="flex min-w-0 flex-1 basis-[18rem] flex-wrap items-center gap-x-3 gap-y-2">
-        {/* Ограничение ширины переехало с заголовка на эту строку: с
-            `w-full` на h1 индикатор всегда переносился под него, а
-            просили рядом. */}
         <h1 className={cn(JOURNAL_LIST_HEADING_CLASS, "w-auto max-w-full sm:max-w-none")}>
           {/* Своё название организации — вместо стандартного, под ним
-              мелко официальное. Без своего — прежний заголовок. */}
+              мелко официальное. Без своего — прежний заголовок. Сразу
+              за названием — карандаш и переключатель «Включён»
+              (`JournalTitleControls`, их кладёт страница раздела). */}
           <JournalHeadingName
             fallback={props.heading}
             suffix={props.activeTab === "closed" ? " (закрытые)" : null}
           />
         </h1>
-        <JournalEnabledIndicatorSlot />
       </div>
       {/* «QR-точка контроля» (золотая, во всю ширину) над рядом «Создать
           документ | Инструкция» — один блок у всех журналов. «Инструкция»
