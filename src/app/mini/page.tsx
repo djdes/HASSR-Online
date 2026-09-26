@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, ShieldAlert } from "lucide-react";
 
 import { adoptCookieSession } from "./_lib/cookie-session";
+import { isSignedOutManually, miniEntryStep } from "./_lib/signed-out-mark";
 import { sanitizeMiniAppRedirectPath } from "@/lib/journal-obligation-links";
 import { miniHomeHref } from "@/app/mini/_lib/nav-items";
 import { getTelegramWebApp } from "./_components/telegram-web-app";
@@ -23,6 +24,11 @@ import {
  * `/dashboard` у руководства и `/journals` у остальных. Этот экран
  * делает ровно три вещи: входит по Telegram initData, подхватывает уже
  * живую куку и уводит человека туда, куда он шёл (`?next=`) или домой.
+ *
+ * Исключение — человек сам нажал «Выйти» (пометка из
+ * `_lib/signed-out-mark.ts`): тогда в Telegram сами не входим, а открываем
+ * экран входа. Иначе он тут же оказывался в том же аккаунте и не мог
+ * войти в другой.
  */
 
 type LocalState =
@@ -62,15 +68,19 @@ export default function MiniEntryPage() {
     if (status !== "unauthenticated" || signInStarted.current) return;
 
     const webApp = getTelegramWebApp();
-    if (!webApp || !webApp.initData) {
+    const back = window.location.pathname + window.location.search;
+    const loginUrl = `/mini/login?next=${encodeURIComponent(back)}`;
+    const step = miniEntryStep({
+      hasInitData: Boolean(webApp?.initData),
+      signedOut: isSignedOutManually(),
+    });
+    if (step === "cookie-or-login" || !webApp) {
       // Вне Telegram ведём на вход по телефону и паролю: кабинет должен
       // открываться и обычной вкладкой браузера. Кука уже может быть
       // (вход по телефону, установленное приложение), но провайдер сам
       // её не перечитает — см. `_lib/cookie-session.ts`. Страховка на
       // 4 с: лучше форма входа, чем вечное «Открываем кабинет…».
       signInStarted.current = true;
-      const back = window.location.pathname + window.location.search;
-      const loginUrl = `/mini/login?next=${encodeURIComponent(back)}`;
       void (async () => {
         const adopted = await adoptCookieSession();
         if (!adopted) {
@@ -81,6 +91,15 @@ export default function MiniEntryPage() {
           if (statusRef.current !== "authenticated") router.replace(loginUrl);
         }, 4000);
       })();
+      return;
+    }
+    if (step === "login-screen") {
+      // Человек сам нажал «Выйти»: входить за него по Telegram нельзя —
+      // Telegram привязан к одному аккаунту, и в другой он бы уже не
+      // попал. Экран входа: «Войти через Telegram» или телефон/почта и
+      // пароль. Пометку снимает любой успешный вход.
+      signInStarted.current = true;
+      router.replace(loginUrl);
       return;
     }
     try {

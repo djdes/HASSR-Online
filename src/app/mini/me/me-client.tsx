@@ -35,6 +35,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FeedbackDialog } from "@/components/layout/feedback-dialog";
 import { PasskeySettings } from "@/components/auth/passkey-settings";
 import { useMiniTheme } from "../_components/mini-theme";
+import { signOutOnThisDevice } from "../_lib/signed-out-mark";
 
 /**
  * Профиль в мини-приложении.
@@ -46,7 +47,10 @@ import { useMiniTheme } from "../_components/mini-theme";
  * QR-плакатов и всё про установку на домашний экран отсюда убраны.
  *
  * Два действия необратимы:
- *   • «Выйти» — сбрасывает сессию на этом телефоне;
+ *   • «Выйти» — тот же полный выход, что на сайте (все куки сессии), и
+ *     пометка «вышел вручную»: в Telegram приложение больше не входит
+ *     само, а открывает экран входа — вернуться через Telegram или войти
+ *     в другой аккаунт (`_lib/signed-out-mark.ts`);
  *   • «Отвязать Telegram» — ещё и стирает `User.telegramChatId`, после
  *     чего понадобится новое приглашение. Это аналог выхода именно для
  *     Telegram, поэтому он остаётся.
@@ -141,9 +145,25 @@ export function MiniMeClient({
   }
 
   async function handleSignOut() {
+    setError(null);
     setBusy("signout");
-    await signOut({ redirect: false });
-    window.location.href = "/mini";
+    try {
+      // Раньше здесь был один `signOut`: он снимал только куку next-auth,
+      // а `/mini` в Telegram тут же входил обратно по initData — выйти и
+      // войти в другой аккаунт было нельзя.
+      await signOutOnThisDevice({
+        fetch: (input, init) => fetch(input, init),
+        signOut: () => signOut({ redirect: false }),
+      });
+    } catch {
+      setError("Не удалось выйти. Проверьте связь и попробуйте ещё раз.");
+      setBusy("none");
+      return;
+    }
+    // Экран входа, а не `/mini`: там можно вернуться через Telegram или
+    // войти в другой аккаунт. `replace` — чтобы «назад» не вёл в профиль
+    // того, кто только что вышел.
+    window.location.replace("/mini/login");
   }
 
   const fullAccess = hasFullWorkspaceAccess(u);
@@ -426,7 +446,7 @@ export function MiniMeClient({
           await handleSignOut();
         }}
         title="Выйти из аккаунта?"
-        description="Приложение забудет вас на этом телефоне. Чтобы вернуться, откройте приложение заново через бота в Telegram — вход произойдёт сам, пароль вводить не нужно."
+        description="Приложение забудет вас на этом телефоне и само входить больше не будет. Откроется экран входа: там можно вернуться в свой аккаунт или войти в другой."
         confirmLabel="Выйти"
         cancelLabel="Отмена"
         variant="info"

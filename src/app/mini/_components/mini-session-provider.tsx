@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 
 import { adoptCookieSession } from "../_lib/cookie-session";
+import { clearSignedOutMark, isSignedOutManually } from "../_lib/signed-out-mark";
 import { getTelegramWebApp } from "./telegram-web-app";
 
 /**
@@ -26,11 +27,29 @@ function CookieSessionBootstrap() {
   const { status } = useSession();
   const pathname = usePathname();
   const started = useRef(false);
+
+  // Любой успешный вход снимает пометку «вышел вручную»
+  // (`_lib/signed-out-mark.ts`): Telegram, телефон, почта, вход на сайте в
+  // этом же браузере. Сессия есть — в следующий раз снова входим сами.
+  useEffect(() => {
+    if (status === "authenticated") clearSignedOutMark();
+  }, [status]);
+
   useEffect(() => {
     if (status !== "unauthenticated" || started.current) return;
     const insideTelegram = Boolean(getTelegramWebApp()?.initData);
-    // В Telegram вход делает главная через signIn("telegram") — не мешаем.
-    if (insideTelegram && pathname === "/mini") return;
+    if (insideTelegram) {
+      // В Telegram вход делает главная через signIn("telegram") — не мешаем.
+      if (pathname === "/mini") return;
+      // Экран входа сам и есть вход. Раньше и с него уводило на главную, та
+      // входила по Telegram — и войти в другой аккаунт (или по телефону,
+      // когда Telegram не привязан) было нельзя.
+      if (pathname === "/mini/login") return;
+      // Человек сам нажал «Выйти» — никуда не уводим: главная всё равно
+      // открыла бы экран входа, а в момент выхода этот переход спорил бы
+      // с переходом профиля на экран входа.
+      if (isSignedOutManually()) return;
+    }
     started.current = true;
     void adoptCookieSession().then((adopted) => {
       // Любой другой экран в Telegram (обновление страницы, прямая
