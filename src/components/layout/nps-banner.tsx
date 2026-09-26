@@ -1,22 +1,31 @@
 "use client";
 
 import { X } from "lucide-react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useId, useRef, useState, type CSSProperties, type FormEvent } from "react";
 import { toast } from "sonner";
 
+import { REVIEW_TEXT_MIN_LENGTH } from "@/lib/balance/constants";
 import { checkEmail, replaceDomain } from "@/lib/email-validation";
 import {
   NPS_COMMENT_MAX_LENGTH,
   NPS_CURRENT_SCALE,
+  NPS_PREVIEW_PARAM,
   NPS_RECOMMEND_DEFAULT_MESSAGE,
   NPS_RECOMMEND_MESSAGE_MAX_LENGTH,
+  NPS_REVIEW_DONE_TEXT,
+  isNpsPreviewRequested,
   npsInvitesRecommendation,
 } from "@/lib/nps";
 
 const SCORES = [1, 2, 3, 4, 5] as const;
+/** «Отправить коллеге» и «Оставить отзыв» на широком экране — одной колонкой справа. */
+const ACTION_WIDTH = "sm:w-[196px] sm:shrink-0";
 
 type Phase = "ask" | "answered" | "done" | "hidden";
-type FormError = { field: "email" | "message" | "comment" | "form"; text: string } | null;
+type FieldName = "email" | "message" | "comment" | "consent" | "form";
+type FormError = { field: FieldName; text: string } | null;
+type Pending = "recommend" | "review" | "comment" | null;
 
 async function requestJson(url: string, method: "POST" | "PATCH", body: unknown): Promise<{ ok: boolean; data: Record<string, unknown> }> {
   const response = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -30,31 +39,45 @@ function errorText(data: Record<string, unknown>, fallback: string): string {
 
 /**
  * Опрос «Посоветуете WeSetup коллегам?»: шкала 1–5 в одну строку, оценка
- * сохраняется сразу по клику. 4–5 — тут же письмо коллеге (почта +
- * сообщение с текстом по умолчанию), 1–3 — «Что улучшить?». Закрыть можно
- * в любой момент: оценка уже записана. Когда показывать, решает сервер
- * (lib/nps-data.ts) — флагом `ask`.
+ * сохраняется сразу по клику. 4–5 — одно поле текста (по умолчанию —
+ * готовый текст, его можно поправить) и два действия: «Отправить коллеге»
+ * (письмо на почту коллеги) и «Оставить отзыв» (тот же текст — в отзывы
+ * «Баланс и бонусы»: проверка, баллы, показ на главной). 1–3 — «Что
+ * улучшить?». Закрыть можно в любой момент: оценка уже записана.
+ *
+ * Когда спрашивать, решает сервер (lib/nps-data.ts) — флагом `ask`.
+ * `canPreview` — руководителю, которому опрос вообще задают, блок можно
+ * показать в любой момент по `?nps=1` (`/dashboard?nps=1`, в мини-приложении
+ * `/mini?nps=1`). Такой просмотр не считается вопросом: крестик без оценки
+ * не шлёт «не сейчас», `npsAskedAt` меняет только ответ.
  *
  * `ask` может смениться на false прямо во время ответа: оценка ставит
  * `npsAskedAt`, а дашборд перечитывает серверную часть по живым событиям
  * (`router.refresh()`). Начатый ответ при этом не пропадает — блок
  * держится, пока человек не отправит письмо, отзыв или не закроет его.
  */
-export function NpsBanner({ variant = "site", ask = true }: { variant?: "site" | "mini"; ask?: boolean }) {
+export function NpsBanner({ variant = "site", ask = true, canPreview = false }: { variant?: "site" | "mini"; ask?: boolean; canPreview?: boolean }) {
   const [phase, setPhase] = useState<Phase>("ask");
   const [score, setScore] = useState<number | null>(null);
   const [doneText, setDoneText] = useState("");
   const [email, setEmail] = useState("");
   const [emailTouched, setEmailTouched] = useState(false);
   const [message, setMessage] = useState(NPS_RECOMMEND_DEFAULT_MESSAGE);
+  const [consent, setConsent] = useState(true);
   const [comment, setComment] = useState("");
   const [error, setError] = useState<FormError>(null);
-  const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState<Pending>(null);
   const responseId = useRef<string | null>(null);
   // Сохранения оценки идут строго по очереди: второй клик, пока первый
   // запрос в пути, правит тот же ответ, а не создаёт второй.
   const saving = useRef<Promise<void>>(Promise.resolve());
   const ids = useId();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  // `/mini` — экран входа мини-приложения: он сразу уводит на главную и
+  // сам переносит туда `?nps=1`, поэтому здесь блок не мелькает.
+  const preview = canPreview && pathname !== "/mini" && isNpsPreviewRequested(searchParams.get(NPS_PREVIEW_PARAM));
+  const busy = pending !== null;
 
   function saveScore(value: number): Promise<void> {
     const run = async () => {
@@ -88,11 +111,11 @@ export function NpsBanner({ variant = "site", ask = true }: { variant?: "site" |
     return responseId.current;
   }
 
-  function finish(text: string) {
+  function finish(text: string, holdMs = 2500) {
     setDoneText(text);
     setPhase("done");
     toast.success(text);
-    window.setTimeout(() => setPhase("hidden"), 2500);
+    window.setTimeout(() => setPhase("hidden"), holdMs);
   }
 
   async function sendRecommendation(event: FormEvent) {
@@ -101,7 +124,7 @@ export function NpsBanner({ variant = "site", ask = true }: { variant?: "site" |
     const check = checkEmail(email);
     if (check.status === "empty") return setError({ field: "email", text: "Укажите почту коллеги" });
     if (check.status === "invalid") return setError({ field: "email", text: check.message });
-    setBusy(true);
+    setPending("recommend");
     setError(null);
     try {
       const id = await savedResponseId();
@@ -115,7 +138,32 @@ export function NpsBanner({ variant = "site", ask = true }: { variant?: "site" |
     } catch {
       setError({ field: "form", text: "Нет связи — попробуйте ещё раз" });
     } finally {
-      setBusy(false);
+      setPending(null);
+    }
+  }
+
+  async function sendReview() {
+    if (busy) return;
+    const text = message.trim();
+    if (text.length < REVIEW_TEXT_MIN_LENGTH) {
+      return setError({ field: "message", text: `Для отзыва напишите хотя бы пару предложений — от ${REVIEW_TEXT_MIN_LENGTH} символов` });
+    }
+    if (!consent) return setError({ field: "consent", text: "Без согласия на публикацию отзыв опубликовать нельзя" });
+    setPending("review");
+    setError(null);
+    try {
+      const id = await savedResponseId();
+      if (!id) return setError({ field: "form", text: "Оценка не сохранилась — выберите её ещё раз" });
+      const { ok, data } = await requestJson("/api/nps/review", "POST", { responseId: id, text, consent });
+      if (!ok) {
+        const field = data.field === "message" || data.field === "consent" ? data.field : "form";
+        return setError({ field, text: errorText(data, "Не удалось отправить отзыв") });
+      }
+      finish(NPS_REVIEW_DONE_TEXT, 5000);
+    } catch {
+      setError({ field: "form", text: "Нет связи — попробуйте ещё раз" });
+    } finally {
+      setPending(null);
     }
   }
 
@@ -123,7 +171,7 @@ export function NpsBanner({ variant = "site", ask = true }: { variant?: "site" |
     event.preventDefault();
     const text = comment.trim();
     if (busy || !text) return;
-    setBusy(true);
+    setPending("comment");
     setError(null);
     try {
       const id = await savedResponseId();
@@ -134,18 +182,20 @@ export function NpsBanner({ variant = "site", ask = true }: { variant?: "site" |
     } catch {
       setError({ field: "form", text: "Нет связи — попробуйте ещё раз" });
     } finally {
-      setBusy(false);
+      setPending(null);
     }
   }
 
   function close() {
     setPhase("hidden");
     // Оценку уже поставили — она сохранена, «не сейчас» слать незачем.
-    if (score === null) void requestJson("/api/nps", "POST", { dismiss: true }).catch(() => null);
+    // Просмотр по `?nps=1` без вопроса по правилам — тоже: пока человек
+    // не ответил, `npsAskedAt` не трогаем.
+    if (score === null && ask) void requestJson("/api/nps", "POST", { dismiss: true }).catch(() => null);
   }
 
   if (phase === "hidden") return null;
-  if (!ask && phase === "ask" && score === null) return null;
+  if (!ask && !preview && phase === "ask" && score === null) return null;
 
   const mini = variant === "mini";
   const recommend = score !== null && npsInvitesRecommendation(score, NPS_CURRENT_SCALE);
@@ -163,16 +213,25 @@ export function NpsBanner({ variant = "site", ask = true }: { variant?: "site" |
   const faint = tone("text-[#9b9fb3]", "--mini-text-faint");
   const danger = tone("text-[#a13a32]", "--mini-crimson");
   const success = tone("text-[#116b2a]", "--mini-sage");
+  const body = tone("text-[#3c4053]", "--mini-text-muted");
   const field = mini
     ? "mini-input w-full"
     : "w-full rounded-2xl border border-[#dcdfed] bg-white px-4 text-[#0b1024] placeholder:text-[#9b9fb3] transition-colors duration-150 focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15";
   const label = mini ? "text-[13px] font-medium" : "text-[13px] font-medium text-[#3c4053]";
+  // Кнопки на телефоне — 48 px (под палец) во всю ширину, на широком
+  // экране — 44 px; ширину на широком экране задаёт форма (ACTION_WIDTH).
   const submit =
-    "inline-flex h-11 w-full items-center justify-center rounded-2xl bg-[#5566f6] px-6 text-[15px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto";
+    "inline-flex h-12 w-full items-center justify-center rounded-2xl bg-[#5566f6] px-6 text-[15px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 disabled:cursor-not-allowed disabled:opacity-60 sm:h-11";
+  const secondary = `inline-flex h-12 w-full items-center justify-center rounded-2xl border px-6 text-[15px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 disabled:cursor-not-allowed disabled:opacity-60 sm:h-11 ${
+    mini ? "" : "border-[#dcdfed] bg-white text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+  }`;
+  const secondaryStyle: CSSProperties | undefined = mini
+    ? { background: "var(--mini-accent-soft)", borderColor: "var(--mini-accent-line)", color: "var(--mini-accent-ink)" }
+    : undefined;
   const emailCheck = checkEmail(email);
   const emailSuggestion = emailTouched && emailCheck.status === "typo" ? emailCheck : null;
 
-  const fieldError = (name: "email" | "message" | "comment" | "form") =>
+  const fieldError = (name: FieldName) =>
     error?.field === name ? (
       <p id={`${ids}-${name}-error`} role="alert" className={`mt-1.5 text-[13px] leading-[1.5] ${danger.className ?? ""}`} style={danger.style}>
         {error.text}
@@ -219,12 +278,13 @@ export function NpsBanner({ variant = "site", ask = true }: { variant?: "site" |
             </div>
           )}
         </div>
+        {/* На телефоне — 48 px под палец (иконка на прежнем месте), на широком экране — 36 px. */}
         <button
           type="button"
           onClick={close}
           aria-label={score === null ? "Не сейчас" : "Закрыть"}
           title={score === null ? "Не сейчас" : "Закрыть — оценка уже сохранена"}
-          className={`-mr-2 -mt-1 flex size-9 shrink-0 items-center justify-center rounded-full transition-colors duration-150 sm:mt-1.5 ${
+          className={`-mr-3.5 -mt-2.5 flex size-12 shrink-0 items-center justify-center rounded-full transition-colors duration-150 sm:-mr-2 sm:mt-1.5 sm:size-9 ${
             mini ? "opacity-60 hover:opacity-100" : "text-[#9b9fb3] hover:bg-[#f5f6ff] hover:text-[#0b1024]"
           }`}
           data-testid="nps-close"
@@ -241,42 +301,6 @@ export function NpsBanner({ variant = "site", ask = true }: { variant?: "site" |
 
       {phase === "answered" && recommend ? (
         <form onSubmit={sendRecommendation} noValidate className="mt-4 space-y-3 sm:max-w-[640px]" data-testid="nps-recommend-form">
-          <div>
-            <label htmlFor={`${ids}-email`} className={label}>
-              Почта коллеги
-            </label>
-            <input
-              id={`${ids}-email`}
-              type="email"
-              inputMode="email"
-              autoComplete="off"
-              spellCheck={false}
-              value={email}
-              onChange={(event) => {
-                setEmail(event.target.value);
-                if (error?.field === "email") setError(null);
-              }}
-              onBlur={() => setEmailTouched(true)}
-              placeholder="name@company.ru"
-              aria-invalid={error?.field === "email"}
-              aria-describedby={error?.field === "email" ? `${ids}-email-error` : undefined}
-              className={`mt-1.5 h-12 text-[16px] sm:h-11 sm:text-[15px] ${field}`}
-              data-testid="nps-recommend-email"
-            />
-            {fieldError("email")}
-            {emailSuggestion && error?.field !== "email" ? (
-              <p className={`mt-1.5 text-[13px] leading-[1.5] ${muted.className ?? ""}`} style={muted.style}>
-                {emailSuggestion.message}.{" "}
-                <button
-                  type="button"
-                  onClick={() => setEmail(replaceDomain(email.trim(), emailSuggestion.suggestion))}
-                  className="font-semibold text-[#3848c7] underline underline-offset-2"
-                >
-                  Исправить
-                </button>
-              </p>
-            ) : null}
-          </div>
           <div>
             <label htmlFor={`${ids}-message`} className={label}>
               Сообщение
@@ -302,15 +326,82 @@ export function NpsBanner({ variant = "site", ask = true }: { variant?: "site" |
               </p>
             ) : null}
           </div>
-          {fieldError("form")}
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-            <button type="submit" disabled={busy} className={submit} data-testid="nps-recommend-submit">
-              {busy ? "Отправляем…" : "Отправить"}
-            </button>
-            <p className={`text-[12px] leading-[1.5] ${faint.className ?? ""}`} style={faint.style}>
-              Письмо придёт от WeSetup с вашим именем. Не хотите — просто закройте: оценка сохранена.
-            </p>
+          <div>
+            <label htmlFor={`${ids}-email`} className={label}>
+              Почта коллеги
+            </label>
+            <div className="mt-1.5 flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-3">
+              <div className="min-w-0 flex-1">
+                <input
+                  id={`${ids}-email`}
+                  type="email"
+                  inputMode="email"
+                  autoComplete="off"
+                  spellCheck={false}
+                  value={email}
+                  onChange={(event) => {
+                    setEmail(event.target.value);
+                    if (error?.field === "email") setError(null);
+                  }}
+                  onBlur={() => setEmailTouched(true)}
+                  placeholder="name@company.ru"
+                  aria-invalid={error?.field === "email"}
+                  aria-describedby={error?.field === "email" ? `${ids}-email-error` : undefined}
+                  className={`h-12 text-[16px] sm:h-11 sm:text-[15px] ${field}`}
+                  data-testid="nps-recommend-email"
+                />
+                {fieldError("email")}
+                {emailSuggestion && error?.field !== "email" ? (
+                  <p className={`mt-1.5 text-[13px] leading-[1.5] ${muted.className ?? ""}`} style={muted.style}>
+                    {emailSuggestion.message}.{" "}
+                    <button
+                      type="button"
+                      onClick={() => setEmail(replaceDomain(email.trim(), emailSuggestion.suggestion))}
+                      className="font-semibold text-[#3848c7] underline underline-offset-2"
+                    >
+                      Исправить
+                    </button>
+                  </p>
+                ) : null}
+              </div>
+              <button type="submit" disabled={busy} className={`${submit} ${ACTION_WIDTH}`} data-testid="nps-recommend-submit">
+                {pending === "recommend" ? "Отправляем…" : "Отправить коллеге"}
+              </button>
+            </div>
           </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+            <label className="flex min-w-0 flex-1 cursor-pointer items-start gap-2.5">
+              <input
+                type="checkbox"
+                checked={consent}
+                onChange={(event) => {
+                  setConsent(event.target.checked);
+                  if (error?.field === "consent") setError(null);
+                }}
+                aria-describedby={error?.field === "consent" ? `${ids}-consent-error` : undefined}
+                className="mt-0.5 size-4 shrink-0 accent-[#5566f6]"
+                data-testid="nps-review-consent"
+              />
+              <span className={`text-[13px] leading-[1.5] ${body.className ?? ""}`} style={body.style}>
+                Согласен на публикацию отзыва, имени и заведения на сайте wesetup.ru и в соцсетях.
+              </span>
+            </label>
+            <button
+              type="button"
+              onClick={sendReview}
+              disabled={busy}
+              className={`${secondary} ${ACTION_WIDTH}`}
+              style={secondaryStyle}
+              data-testid="nps-review-submit"
+            >
+              {pending === "review" ? "Отправляем…" : "Оставить отзыв"}
+            </button>
+          </div>
+          {fieldError("consent")}
+          {fieldError("form")}
+          <p className={`text-[12px] leading-[1.5] ${faint.className ?? ""}`} style={faint.style}>
+            Письмо придёт от WeSetup с вашим именем. Отзыв с этим текстом опубликуем после проверки и начислим баллы. Не хотите — просто закройте: оценка сохранена.
+          </p>
         </form>
       ) : null}
 
@@ -338,8 +429,8 @@ export function NpsBanner({ variant = "site", ask = true }: { variant?: "site" |
           </div>
           {fieldError("form")}
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-            <button type="submit" disabled={busy || !comment.trim()} className={submit} data-testid="nps-improve-submit">
-              {busy ? "Отправляем…" : "Отправить"}
+            <button type="submit" disabled={busy || !comment.trim()} className={`${submit} sm:w-auto`} data-testid="nps-improve-submit">
+              {pending === "comment" ? "Отправляем…" : "Отправить"}
             </button>
             <p className={`text-[12px] leading-[1.5] ${faint.className ?? ""}`} style={faint.style}>
               Оценка уже сохранена.

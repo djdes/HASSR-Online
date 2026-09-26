@@ -27,7 +27,8 @@ import { WhatsNewModal } from "@/components/dashboard/whats-new-modal";
 import { AnnouncementBanner } from "@/components/layout/announcement-banner";
 import { DeletionBanner } from "@/components/layout/deletion-banner";
 import { NpsBanner } from "@/components/layout/nps-banner";
-import { askNpsFor } from "@/lib/nps-data";
+import { NPS_HIDDEN } from "@/lib/nps";
+import { npsVisibilityFor } from "@/lib/nps-data";
 import { deletionDueAt } from "@/lib/org-deletion";
 import { currentAnnouncement } from "@/lib/platform-status";
 import { WHATS_NEW_NOTES, notesWithoutPartnerProgram, whatsNewVersion } from "@/lib/whats-new-notes";
@@ -221,8 +222,8 @@ export default async function DashboardLayout({
     : null;
 
   const announcement = await currentAnnouncement();
-  const [askNps, deletionState, customNames] = await Promise.all([
-    askNpsFor(session).catch(() => false),
+  const [nps, deletionState, customNames] = await Promise.all([
+    npsVisibilityFor(session).catch(() => NPS_HIDDEN),
     db.organization.findUnique({ where: { id: activeOrgId }, select: { deletionRequestedAt: true } }).catch(() => null),
     // Свои названия разделов и журналов — один раз на запрос, дальше их
     // берут меню, крошки и страницы через CustomNamesProvider.
@@ -447,8 +448,12 @@ export default async function DashboardLayout({
                 <AnnouncementBanner announcement={announcement} />
                 {deletionDue ? <DeletionBanner dueAt={deletionDue} canCancel={hasCapability(session.user, "admin.full")} /> : null}
                 {/* Всегда в дереве: начатый ответ переживает router.refresh(),
-                    когда после оценки askNps становится false. */}
-                <NpsBanner ask={askNps} />
+                    когда после оценки ask становится false. `?nps=1` —
+                    показать руководителю сразу (canPreview); Suspense —
+                    блок читает адрес через useSearchParams. */}
+                <Suspense fallback={null}>
+                  <NpsBanner ask={nps.ask} canPreview={nps.eligible} />
+                </Suspense>
                 {children}
               </PageNavProvider>
             </div>

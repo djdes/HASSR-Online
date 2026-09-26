@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 
 import {
   REVIEW_TEXT_MAX_LENGTH,
+  REVIEW_TEXT_MIN_LENGTH,
   isReviewKind,
   reviewKindFromMime,
   reviewRewardFor,
@@ -97,8 +98,8 @@ export type SubmitReviewInput = {
 /** Новый отзыв «на проверке». Один активный отзыв на пользователя. */
 export async function submitReview(input: SubmitReviewInput): Promise<ReviewView> {
   const text = input.text.trim();
-  if (text.length < 30) {
-    throw new ReviewError("Напишите хотя бы пару предложений — от 30 символов");
+  if (text.length < REVIEW_TEXT_MIN_LENGTH) {
+    throw new ReviewError(`Напишите хотя бы пару предложений — от ${REVIEW_TEXT_MIN_LENGTH} символов`);
   }
   if (text.length > REVIEW_TEXT_MAX_LENGTH) {
     throw new ReviewError(`Не больше ${REVIEW_TEXT_MAX_LENGTH} символов`);

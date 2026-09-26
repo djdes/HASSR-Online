@@ -1,17 +1,23 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
+import { REVIEW_TEXT_MAX_LENGTH, REVIEW_TEXT_MIN_LENGTH } from "@/lib/balance/constants";
 import {
   NPS_COMMENT_MAX_LENGTH,
+  NPS_PREVIEW_PARAM,
+  NPS_RECOMMEND_DEFAULT_MESSAGE,
+  NPS_RECOMMEND_MESSAGE_MAX_LENGTH,
   canEditNpsResponse,
   computeNps,
   computeNpsReport,
+  isNpsPreviewRequested,
   normalizeNpsScale,
   npsCategory,
   npsInvitesRecommendation,
   parseNpsAnswer,
   parseNpsUpdate,
   shouldAskNps,
+  withNpsPreview,
 } from "@/lib/nps";
 
 const now = new Date("2026-09-10T12:00:00.000Z");
@@ -22,6 +28,32 @@ describe("shouldAskNps", () => {
     assert.equal(shouldAskNps({ orgCreatedAt: new Date("2026-06-01"), npsAskedAt: null, now }), true);
     assert.equal(shouldAskNps({ orgCreatedAt: new Date("2026-06-01"), npsAskedAt: new Date("2026-08-01"), now }), false);
     assert.equal(shouldAskNps({ orgCreatedAt: new Date("2026-06-01"), npsAskedAt: new Date("2026-05-01"), now }), true);
+  });
+});
+
+describe("просмотр опроса по ссылке ?nps=1", () => {
+  it("метка — ровно nps=1", () => {
+    assert.equal(NPS_PREVIEW_PARAM, "nps");
+    assert.equal(isNpsPreviewRequested("1"), true);
+    assert.equal(isNpsPreviewRequested("0"), false);
+    assert.equal(isNpsPreviewRequested("true"), false);
+    assert.equal(isNpsPreviewRequested(""), false);
+    assert.equal(isNpsPreviewRequested(null), false);
+    assert.equal(isNpsPreviewRequested(undefined), false);
+  });
+
+  it("мини-приложение несёт метку на главную: прочие параметры и якорь — как были", () => {
+    assert.equal(withNpsPreview("/dashboard"), "/dashboard?nps=1");
+    assert.equal(withNpsPreview("/journals/hygiene?date=2026-09-26"), "/journals/hygiene?date=2026-09-26&nps=1");
+    assert.equal(withNpsPreview("/dashboard?nps=0#top"), "/dashboard?nps=1#top");
+  });
+});
+
+describe("текст по умолчанию при 4–5", () => {
+  it("один на письмо коллеге и отзыв: проходит по длине отзыва, без обращения и «ссылки ниже»", () => {
+    assert.ok(NPS_RECOMMEND_DEFAULT_MESSAGE.length >= REVIEW_TEXT_MIN_LENGTH);
+    assert.ok(NPS_RECOMMEND_DEFAULT_MESSAGE.length <= Math.min(REVIEW_TEXT_MAX_LENGTH, NPS_RECOMMEND_MESSAGE_MAX_LENGTH));
+    assert.doesNotMatch(NPS_RECOMMEND_DEFAULT_MESSAGE, /привет|ссылка ниже/i);
   });
 });
 

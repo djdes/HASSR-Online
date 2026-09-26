@@ -2,6 +2,7 @@ import { Star } from "lucide-react";
 
 import { requireRoot } from "@/lib/auth-helpers";
 import { listReviewsForModeration } from "@/lib/balance/reviews";
+import { reviewIdsFromNps } from "@/lib/nps-review";
 import { ReviewsClient } from "./reviews-client";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +12,8 @@ export const dynamic = "force-dynamic";
  *
  * Три вкладки — на проверке, одобренные, отклонённые. Начисление
  * происходит в момент одобрения, поэтому именно здесь платформа решает,
- * сколько заплатить, и может понизить тариф.
+ * сколько заплатить, и может понизить тариф. Отзывы, оставленные из
+ * опроса «Посоветуете WeSetup коллегам?», помечены «из опроса».
  */
 export default async function RootReviewsPage() {
   await requireRoot();
@@ -21,6 +23,10 @@ export default async function RootReviewsPage() {
     listReviewsForModeration("approved"),
     listReviewsForModeration("rejected"),
   ]);
+  const organizationIds = Array.from(
+    new Set([...pending, ...approved, ...rejected].map((review) => review.organizationId)),
+  );
+  const fromSurvey = await reviewIdsFromNps(organizationIds).catch(() => new Set<string>());
 
   return (
     <div className="space-y-6">
@@ -44,6 +50,7 @@ export default async function RootReviewsPage() {
         pending={pending}
         approved={approved}
         rejected={rejected}
+        fromSurveyIds={Array.from(fromSurvey)}
       />
     </div>
   );

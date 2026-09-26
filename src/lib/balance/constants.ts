@@ -40,6 +40,8 @@ export const REFERRAL_INVITES_PER_DAY = 20;
 export const REFERRAL_INVITE_REPEAT_HOURS = 24;
 
 export const REVIEW_TEXT_MAX_LENGTH = 1000;
+/** Отзыв короче — «пара предложений» не набирается. */
+export const REVIEW_TEXT_MIN_LENGTH = 30;
 
 /** Что принимаем вложением к отзыву. HEIC отклоняем — не отрисуется на лендинге. */
 export const PHOTO_MIMES = [

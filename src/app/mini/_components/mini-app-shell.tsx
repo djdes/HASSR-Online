@@ -1,5 +1,5 @@
 import Script from "next/script";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 
 import { AnnouncementBanner } from "@/components/layout/announcement-banner";
 import { DeletionBanner } from "@/components/layout/deletion-banner";
@@ -49,6 +49,7 @@ export function MiniAppShell({
   deletionDue = null,
   canCancelDeletion = false,
   askNps = false,
+  canPreviewNps = false,
   authed = false,
 }: {
   children: ReactNode;
@@ -66,6 +67,8 @@ export function MiniAppShell({
   deletionDue?: string | null;
   canCancelDeletion?: boolean;
   askNps?: boolean;
+  /** Опрос можно показать по `?nps=1` (руководитель, которому его задают). */
+  canPreviewNps?: boolean;
   /** Есть серверная сессия: живые индикаторы и помощник имеют смысл. */
   authed?: boolean;
 }) {
@@ -127,8 +130,11 @@ export function MiniAppShell({
                 />
               ) : null}
               {/* Всегда в дереве: начатый ответ переживает «потянуть,
-                  чтобы обновить», когда после оценки askNps становится false. */}
-              <NpsBanner variant="mini" ask={askNps} />
+                  чтобы обновить», когда после оценки askNps становится false.
+                  Suspense — блок читает `?nps=1` через useSearchParams. */}
+              <Suspense fallback={null}>
+                <NpsBanner variant="mini" ask={askNps} canPreview={canPreviewNps} />
+              </Suspense>
               {/* «Потянуть, чтобы обновить» — на всех экранах сразу. */}
               <RefreshProvider>{children}</RefreshProvider>
             </main>

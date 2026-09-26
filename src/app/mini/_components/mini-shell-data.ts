@@ -3,7 +3,8 @@ import type { Session } from "next-auth";
 import { loadBuildingContext } from "@/lib/active-building";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { askNpsFor } from "@/lib/nps-data";
+import { NPS_HIDDEN } from "@/lib/nps";
+import { npsVisibilityFor } from "@/lib/nps-data";
 import { deletionDueAt } from "@/lib/org-deletion";
 import { getPartnerHintRates } from "@/lib/partners/partner-hint";
 import { currentAnnouncement } from "@/lib/platform-status";
@@ -30,7 +31,7 @@ export async function loadMiniShellData(session: Session | null) {
   // Тема из профиля — она же выбор человека. До входа её нет вовсе:
   // тогда разметка идёт со значением по умолчанию, а клиент подставит
   // тему самого Telegram (см. MiniThemeBootstrap / MiniThemeProvider).
-  const [announcement, profileRow, askNps, deletionState] = await Promise.all([
+  const [announcement, profileRow, nps, deletionState] = await Promise.all([
     currentAnnouncement(),
     userId
       ? db.user
@@ -40,7 +41,7 @@ export async function loadMiniShellData(session: Session | null) {
           })
           .catch(() => null)
       : Promise.resolve(null),
-    session?.user ? askNpsFor(session).catch(() => false) : Promise.resolve(false),
+    session?.user ? npsVisibilityFor(session).catch(() => NPS_HIDDEN) : Promise.resolve(NPS_HIDDEN),
     session?.user
       ? db.organization
           .findUnique({
@@ -98,7 +99,9 @@ export async function loadMiniShellData(session: Session | null) {
     initialTheme: (profileTheme ?? "dark") as "light" | "dark",
     profileTheme,
     announcement,
-    askNps,
+    askNps: nps.ask,
+    // Руководитель, которому опрос задают: по `?nps=1` блок — сразу.
+    canPreviewNps: nps.eligible,
     deletionDue: deletionState?.deletionRequestedAt
       ? deletionDueAt(deletionState.deletionRequestedAt).toISOString()
       : null,

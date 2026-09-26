@@ -28,8 +28,47 @@ export const NPS_RECOMMEND_PER_USER_PER_DAY = 5;
 /** Строка AuditLog на каждое письмо из опроса (кому, оценка — без текста). */
 export const NPS_RECOMMEND_AUDIT_ACTION = "nps.recommend";
 export const NPS_RECOMMEND_AUDIT_ENTITY = "NpsResponse";
+/**
+ * Строка AuditLog, когда по ответу оставили отзыв (src/lib/nps-review.ts):
+ * сущность та же — ответ опроса, в деталях id отзыва и оценка, без текста.
+ */
+export const NPS_REVIEW_AUDIT_ACTION = "nps.review";
+/**
+ * Текст по умолчанию при 4–5 — одно поле на два действия: письмо коллеге
+ * и отзыв на сайт. Поэтому без «Привет!» и «ссылка ниже»: в письме
+ * приветствие и кнопка уже есть, а в отзыве на главной они были бы лишними.
+ */
 export const NPS_RECOMMEND_DEFAULT_MESSAGE =
-  "Привет! Мы ведём журналы ХАССП и СанПиН в WeSetup — заполняем с телефона по QR, проверки проходим спокойно. Посмотри, ссылка ниже.";
+  "Мы ведём журналы ХАССП и СанПиН в WeSetup — заполняем с телефона по QR, проверки проходим спокойно. Советую!";
+/** Итог после «Оставить отзыв». */
+export const NPS_REVIEW_DONE_TEXT = "Спасибо! Отзыв отправлен на проверку, после одобрения начислим баллы";
+
+/**
+ * Посмотреть опрос в любой момент — `?nps=1` на странице кабинета
+ * (`/dashboard?nps=1`) или `/mini?nps=1` в мини-приложении. Блок видит
+ * руководитель, которому опрос вообще задают, без правил 14/90 дней.
+ * Просмотр не считается вопросом: пока человек не ответил, `npsAskedAt`
+ * не меняется.
+ */
+export const NPS_PREVIEW_PARAM = "nps";
+
+export function isNpsPreviewRequested(value: string | null | undefined): boolean {
+  return value === "1";
+}
+
+/** Тот же адрес внутри сайта с `?nps=1` (прочие параметры и якорь — как были). */
+export function withNpsPreview(href: string): string {
+  const url = new URL(href, "https://wesetup.invalid");
+  url.searchParams.set(NPS_PREVIEW_PARAM, "1");
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
+/**
+ * Показ опроса: `eligible` — руководитель, которому опрос задают вообще
+ * (не ROOT, не демо); `ask` — пора спросить по правилам 14/90 дней.
+ */
+export type NpsVisibility = { eligible: boolean; ask: boolean };
+export const NPS_HIDDEN: NpsVisibility = { eligible: false, ask: false };
 
 export type NpsScale = 5 | 10;
 /** Шкала, которую спрашивает опрос сейчас. */

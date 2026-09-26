@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { requireRoot } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import {
@@ -10,6 +12,7 @@ import {
   type NpsReport,
   type NpsScaleReport,
 } from "@/lib/nps";
+import { npsResponsesWithReview } from "@/lib/nps-review";
 
 export const dynamic = "force-dynamic";
 
@@ -93,7 +96,7 @@ export default async function RootNpsPage() {
     db.npsResponse.findMany({ orderBy: { createdAt: "desc" }, take: 50 }),
   ]);
   const orgIds = Array.from(new Set(latest.map((r) => r.organizationId)));
-  const [orgs, recommendations] = await Promise.all([
+  const [orgs, recommendations, reviewed] = await Promise.all([
     orgIds.length ? db.organization.findMany({ where: { id: { in: orgIds } }, select: { id: true, name: true } }) : Promise.resolve([]),
     latest.length
       ? db.auditLog.findMany({
@@ -101,6 +104,8 @@ export default async function RootNpsPage() {
           select: { entityId: true },
         })
       : Promise.resolve([]),
+    // «Оставить отзыв» из опроса — строка AuditLog nps.review у ответа.
+    npsResponsesWithReview(latest.map((r) => r.id)),
   ]);
   const orgName = new Map(orgs.map((o) => [o.id, o.name]));
   const recommendedCount = new Map<string, number>();
@@ -114,6 +119,11 @@ export default async function RootNpsPage() {
         <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-[#0b1024]">NPS клиентов</h1>
         <p className="mt-1 max-w-[760px] text-[14px] leading-relaxed text-[#6f7282]">
           Один вопрос руководителю раз в 90 дней: «Посоветуете WeSetup коллегам?» Сейчас — шкала 1–5, старые ответы 0–10 считаются по своей шкале. NPS = доля промоутеров минус доля критиков; общий — по всем ответам обеих шкал.
+        </p>
+        <p className="mt-1 max-w-[760px] text-[13px] leading-relaxed text-[#6f7282]">
+          Посмотреть блок сразу, без правил 14/90 дней: войдите руководителем организации и откройте{" "}
+          <code className="rounded-md bg-[#f5f6ff] px-1.5 py-0.5 text-[12px] text-[#3848c7]">/dashboard?nps=1</code> (в мини-приложении —{" "}
+          <code className="rounded-md bg-[#f5f6ff] px-1.5 py-0.5 text-[12px] text-[#3848c7]">/mini?nps=1</code>). Пока нет ответа, это не считается вопросом.
         </p>
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
@@ -140,6 +150,16 @@ export default async function RootNpsPage() {
                       <span className="ml-2 rounded-full bg-[#f5f6ff] px-2 py-0.5 text-[12px] text-[#3848c7]">
                         {sent === 1 ? "письмо коллеге" : `писем коллегам: ${sent}`}
                       </span>
+                    ) : null}
+                    {reviewed.has(r.id) ? (
+                      <Link
+                        href="/root/reviews"
+                        className="ml-2 rounded-full bg-[#f5f6ff] px-2 py-0.5 text-[12px] text-[#3848c7] transition-colors hover:bg-[#eef1ff]"
+                        title="По этому ответу оставлен отзыв — модерация в разделе «Отзывы»"
+                        data-testid="nps-review-left"
+                      >
+                        оставил отзыв
+                      </Link>
                     ) : null}
                   </div>
                   {r.comment ? <p className="mt-1 text-[14px] leading-relaxed text-[#0b1024]">{r.comment}</p> : null}

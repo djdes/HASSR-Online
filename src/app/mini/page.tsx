@@ -9,6 +9,7 @@ import { Loader2, ShieldAlert } from "lucide-react";
 import { adoptCookieSession } from "./_lib/cookie-session";
 import { isSignedOutManually, miniEntryStep } from "./_lib/signed-out-mark";
 import { sanitizeMiniAppRedirectPath } from "@/lib/journal-obligation-links";
+import { NPS_PREVIEW_PARAM, isNpsPreviewRequested, withNpsPreview } from "@/lib/nps";
 import { miniHomeHref } from "@/app/mini/_lib/nav-items";
 import { getTelegramWebApp } from "./_components/telegram-web-app";
 import {
@@ -63,6 +64,9 @@ export default function MiniEntryPage() {
     const target = sanitizeMiniAppRedirectPath(raw);
     return target === "/mini" || target === "/" ? null : target;
   })();
+  // `/mini?nps=1` — показать опрос «Посоветуете WeSetup коллегам?» сразу:
+  // своей главной у приложения нет, поэтому метку несём туда, куда уводим.
+  const npsPreview = isNpsPreviewRequested(searchParams.get(NPS_PREVIEW_PARAM));
 
   useEffect(() => {
     if (status !== "unauthenticated" || signInStarted.current) return;
@@ -153,8 +157,9 @@ export default function MiniEntryPage() {
     // это «Сегодня», у заведующей — контрольная доска. Раньше всех
     // вели на `/journals`, откуда сразу перекидывало дальше — лишний
     // прыжок и мигающий экран.
-    router.replace(nextPath ?? miniHomeHref(session?.user ?? null));
-  }, [nextPath, router, session?.user, status]);
+    const target = nextPath ?? miniHomeHref(session?.user ?? null);
+    router.replace(npsPreview ? withNpsPreview(target) : target);
+  }, [nextPath, npsPreview, router, session?.user, status]);
 
   if (localState.kind === "error") {
     return (

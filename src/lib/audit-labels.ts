@@ -204,6 +204,7 @@ export const AUDIT_ACTION_LABELS: Record<string, AuditActionLabel> = {
 
   // --- Прочее -------------------------------------------------------------
   "nps.recommend": { label: "Рекомендация WeSetup коллеге", variant: "outline" },
+  "nps.review": { label: "Отзыв о WeSetup из опроса", variant: "outline" },
   "ai_assistant.action": { label: "Действие помощника", variant: "outline" },
   "ai.vision_extract": { label: "Распознавание с фото", variant: "outline" },
   "closing-document.refresh-buyer": { label: "Реквизиты покупателя обновлены", variant: "secondary" },
@@ -405,6 +406,7 @@ const HIDDEN_DETAIL_KEYS = new Set([
   "documentId",
   "entryId",
   "parentId",
+  "customerReviewId",
 ]);
 
 /** Значения-перечисления по ключу → по-русски. */

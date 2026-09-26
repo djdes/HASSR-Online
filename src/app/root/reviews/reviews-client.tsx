@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Copy, Loader2, Star, X } from "lucide-react";
 import { toast } from "sonner";
@@ -38,12 +38,16 @@ export function ReviewsClient({
   pending,
   approved,
   rejected,
+  fromSurveyIds = [],
 }: {
   pending: ReviewView[];
   approved: ReviewView[];
   rejected: ReviewView[];
+  /** Отзывы, оставленные из опроса «Посоветуете WeSetup коллегам?». */
+  fromSurveyIds?: string[];
 }) {
   const [tab, setTab] = useState<Tab>("pending");
+  const fromSurvey = useMemo(() => new Set(fromSurveyIds), [fromSurveyIds]);
   const rows = tab === "pending" ? pending : tab === "approved" ? approved : rejected;
   const counts = {
     pending: pending.length,
@@ -85,7 +89,7 @@ export function ReviewsClient({
       ) : (
         <div className="grid gap-4">
           {rows.map((review) => (
-            <ReviewCard key={review.id} review={review} />
+            <ReviewCard key={review.id} review={review} fromSurvey={fromSurvey.has(review.id)} />
           ))}
         </div>
       )}
@@ -93,7 +97,7 @@ export function ReviewsClient({
   );
 }
 
-function ReviewCard({ review }: { review: ReviewView }) {
+function ReviewCard({ review, fromSurvey }: { review: ReviewView; fromSurvey: boolean }) {
   const router = useRouter();
   const [approveOpen, setApproveOpen] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
@@ -194,7 +198,16 @@ function ReviewCard({ review }: { review: ReviewView }) {
             {new Date(review.createdAt).toLocaleDateString("ru-RU")}
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {fromSurvey ? (
+            <span
+              className="rounded-full bg-[#eef1ff] px-2.5 py-1 text-[12px] font-medium text-[#3848c7]"
+              title="Оставлен из опроса «Посоветуете WeSetup коллегам?» после оценки 4–5"
+              data-testid="review-from-survey"
+            >
+              из опроса
+            </span>
+          ) : null}
           <span className="rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] text-[#3848c7]">
             {KIND_LABELS[review.kind]}
           </span>
