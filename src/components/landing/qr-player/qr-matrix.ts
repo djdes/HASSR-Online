@@ -1,28 +1,19 @@
-import QRCode from "qrcode";
+import { brandQrSvg } from "@/lib/brand-qr";
 
 import type { QrMatrix } from "./qr-sticker";
 
+/** SVG тянется по ширине родителя (у помощника — фиксированные px). */
+function fluid(svg: string): string {
+  return svg.replace(/ width="\d+" height="\d+"/, ' style="display:block;width:100%;height:auto"');
+}
+
 /**
- * Матрица QR для наклеек лендинга — на сервере. Соседние тёмные модули
- * склеиваются в горизонтальные полосы, чтобы `d` был короче.
+ * Фирменный QR для наклеек лендинга (`brand-qr.ts`) — собирается на
+ * сервере: пакет `qrcode` в клиентский бандл не попадает. Два вида:
+ * золотой наклейке подпись даёт её рамка, а наклейка в ролике — как её
+ * печатает продукт, с плашкой «Отсканировать».
  */
-export function buildQrMatrix(text: string): QrMatrix {
-  const qr = QRCode.create(text, { errorCorrectionLevel: "M" });
-  const size = qr.modules.size;
-  const data = qr.modules.data;
-  let d = "";
-  for (let y = 0; y < size; y += 1) {
-    let x = 0;
-    while (x < size) {
-      if (!data[y * size + x]) {
-        x += 1;
-        continue;
-      }
-      let run = 1;
-      while (x + run < size && data[y * size + x + run]) run += 1;
-      d += `M${x} ${y}h${run}v1h-${run}z`;
-      x += run;
-    }
-  }
-  return { size, d };
+export async function buildQrMatrix(text: string): Promise<QrMatrix> {
+  const [bare, printed] = await Promise.all([brandQrSvg(text, { caption: false }), brandQrSvg(text)]);
+  return { bare: fluid(bare), printed: fluid(printed) };
 }

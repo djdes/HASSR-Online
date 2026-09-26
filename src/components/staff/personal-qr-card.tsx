@@ -70,7 +70,7 @@ export function PersonalQrCard({ employeeId, employeeName }: { employeeId: strin
   function print() {
     if (!issued) return;
     const safeName = employeeName.replace(/[<>&]/g, "");
-    const html = `<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Личный QR — ${safeName}</title><style>body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;display:flex;justify-content:center}.card{width:105mm;padding:8mm;border:1px dashed #9b9fb3;border-radius:6mm;margin:10mm;text-align:center}h1{font-size:18px;margin:0 0 2mm}p{font-size:12px;color:#3c4053;margin:2mm 0}svg{width:70mm;height:70mm}</style></head><body><div class="card"><h1>${safeName}</h1><p>Личный вход в WeSetup</p>${issued.svg}<p>Отсканируйте камерой телефона и введите свой PIN.</p><p style="color:#9b9fb3">Храните при себе. Потеряли — попросите новый, этот перестанет работать.</p></div><script>window.onload=function(){window.print()}</script></body></html>`;
+    const html = `<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Личный QR — ${safeName}</title><style>body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;display:flex;justify-content:center}.card{width:105mm;padding:8mm;border:1px dashed #9b9fb3;border-radius:6mm;margin:10mm;text-align:center}h1{font-size:18px;margin:0 0 2mm}p{font-size:12px;color:#3c4053;margin:2mm 0}svg{display:block;margin:2mm auto;width:70mm;height:auto}</style></head><body><div class="card"><h1>${safeName}</h1><p>Личный вход в WeSetup</p>${issued.svg}<p>Отсканируйте камерой телефона и введите свой PIN.</p><p style="color:#9b9fb3">Храните при себе. Потеряли — попросите новый, этот перестанет работать.</p></div><script>window.onload=function(){window.print()}</script></body></html>`;
     // В приложении WeSetup новых окон нет — печатаем карточку системной печатью.
     if (getNativeBridge()) {
       void printHtml(html);
@@ -107,7 +107,7 @@ export function PersonalQrCard({ employeeId, employeeName }: { employeeId: strin
 
       {issued ? (
         <div className="mt-3 flex flex-col items-center gap-2 rounded-2xl bg-[#fafbff] p-3">
-          <div className="size-[180px] [&_svg]:h-full [&_svg]:w-full" dangerouslySetInnerHTML={{ __html: issued.svg }} />
+          <div className="w-[180px] [&_svg]:block [&_svg]:h-auto [&_svg]:w-full" dangerouslySetInnerHTML={{ __html: issued.svg }} />
           <div className="break-all text-center text-[11px] text-[#9b9fb3]">{issued.url}</div>
         </div>
       ) : null}

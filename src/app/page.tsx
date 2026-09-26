@@ -298,7 +298,7 @@ export default async function LandingPage() {
   // QR-ролик: дата «сегодня» по Москве считается здесь, чтобы первый кадр
   // на сервере и после гидрации совпадал. QR на наклейках ролика и CTA —
   // настоящий, ведёт на этот блок.
-  const qrMatrix = buildQrMatrix("https://wesetup.ru/#qr");
+  const qrMatrix = await buildQrMatrix("https://wesetup.ru/#qr");
   const sceneToday = moscowSceneDay(new Date());
 
   const jsonLd = {

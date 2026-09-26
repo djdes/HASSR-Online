@@ -15,7 +15,7 @@ import {
   VerticalAlignTable,
   WidthType,
 } from "docx";
-import QRCode from "qrcode";
+import { brandQrPng } from "@/lib/brand-qr";
 import type { JournalDocumentPdfInput } from "@/lib/document-pdf";
 
 /**
@@ -245,7 +245,9 @@ const REGISTER_COLUMNS: Record<string, string[]> = {
 
 /**
  * Подвал скачанного шаблона: строки подписи (первая — жирная) и QR справа.
- * Подвал Word повторяется на каждой странице сам.
+ * Подвал Word повторяется на каждой странице сам. QR — компактный
+ * фирменный (`brand-qr.ts`), как угловой QR у PDF того же шаблона: на
+ * 18 мм логотип потребовал бы коррекции H и модуль вышел бы меньше 0,3 мм.
  */
 export type DocxBlankFooter = {
   /** Адрес, который кодирует QR. */
@@ -264,12 +266,7 @@ const FOOTER_QR_PX = 68;
 const FOOTER_COLUMNS = [7426, 1600];
 
 async function blankFooter(footer: DocxBlankFooter): Promise<Footer> {
-  const png = await QRCode.toBuffer(footer.qrUrl, {
-    errorCorrectionLevel: "M",
-    margin: 1,
-    width: 300,
-    type: "png",
-  });
+  const png = await brandQrPng(footer.qrUrl, { variant: "compact", width: 300 });
   const [caption = "", ...rest] = footer.lines;
   const text = new TableCell({
     width: { size: FOOTER_COLUMNS[0], type: WidthType.DXA },

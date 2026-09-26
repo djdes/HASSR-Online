@@ -75,7 +75,7 @@ function QrPreview({ svg, className }: { svg: string; className?: string }) {
     <div
       aria-hidden
       className={cn("qr-box shrink-0 rounded-2xl border border-[#ececf4] bg-white p-1.5", className)}
-      // SVG собран на сервере библиотекой qrcode — безопасно встраивать.
+      // SVG собран на сервере (brand-qr.ts) из нашего адреса — безопасно встраивать.
       dangerouslySetInnerHTML={{ __html: svg }}
     />
   );

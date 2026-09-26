@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import QRCode from "qrcode";
+import { brandQrPngDataUrl } from "@/lib/brand-qr";
 import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -94,11 +94,8 @@ export async function POST(request: Request) {
   const base =
     process.env.NEXTAUTH_URL?.replace(/\/+$/, "") ?? "https://wesetup.ru";
   const joinUrl = `${base}/join/${raw}`;
-  const qrPngDataUrl = await QRCode.toDataURL(joinUrl, {
-    margin: 1,
-    width: 320,
-    errorCorrectionLevel: "M",
-  });
+  // Фирменный QR (`brand-qr.ts`): его показывают в окне и печатают (320 px ≈ 85 мм).
+  const qrPngDataUrl = await brandQrPngDataUrl(joinUrl, { width: 640 });
 
   return NextResponse.json({
     id: created.id,

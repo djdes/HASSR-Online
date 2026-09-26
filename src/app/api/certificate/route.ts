@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { jsPDF } from "jspdf";
-import QRCode from "qrcode";
+import { brandQrPngDataUrl } from "@/lib/brand-qr";
 import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -140,12 +140,9 @@ export async function GET(request: Request) {
   const expiresAt = qrToken.expiresAt;
   const verifyUrl = inspectorQrUrl(qrToken.id);
 
-  // Generate QR data URL
-  const qrDataUrl = await QRCode.toDataURL(verifyUrl, {
-    margin: 1,
-    width: 320,
-    errorCorrectionLevel: "M",
-  });
+  // Фирменный QR (`brand-qr.ts`): сертификат печатают и вешают в зале.
+  // ~1000 px на 50 мм — больше 500 dpi, чётко на любом принтере.
+  const qrDataUrl = await brandQrPngDataUrl(verifyUrl, { width: 1000 });
 
   // Generate PDF (A4 portrait, premium-look certificate)
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
@@ -227,10 +224,13 @@ export async function GET(request: Request) {
     { align: "center" }
   );
 
-  // QR code
+  // QR code — плитка с плашкой «Отсканировать» выше квадрата: высота по
+  // пропорции картинки, верх поднят с 195 до 187 мм, чтобы до подписи
+  // под кодом (253 мм) осталось поле.
   const qrSize = 50;
   const qrX = (pageW - qrSize) / 2;
-  doc.addImage(qrDataUrl, "PNG", qrX, 195, qrSize, qrSize);
+  const qrImage = doc.getImageProperties(qrDataUrl);
+  doc.addImage(qrDataUrl, "PNG", qrX, 187, qrSize, (qrSize * qrImage.height) / qrImage.width);
   doc.setFontSize(9);
   doc.setTextColor(120);
   doc.text(

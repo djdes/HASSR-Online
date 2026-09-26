@@ -4,7 +4,6 @@ import test from "node:test";
 process.env.NEXTAUTH_SECRET = "test-secret-for-blank-qr-token-0123456789";
 
 import JSZip from "jszip";
-import QRCode from "qrcode";
 
 import { BLANK_COPYRIGHT, BLANK_QR_CAPTION, blankTargetKey } from "@/lib/blank-download";
 import {
@@ -18,6 +17,7 @@ import {
   openBlankQrToken,
   sealBlankQrToken,
 } from "@/lib/blank-qr-token";
+import { brandQrPng } from "@/lib/brand-qr";
 import { renderJournalDocumentDocx } from "@/lib/document-docx";
 import { renderJournalDocumentPdf } from "@/lib/document-pdf";
 import { standardFontsDir, workerFileUrl } from "@/lib/journal-preview/render";
@@ -200,7 +200,8 @@ test("Word: копирайт и QR в подвале (повторяется н�
   const media = Object.keys(zip.files).filter((name) => name.startsWith("word/media/") && !zip.files[name].dir);
   assert.equal(media.length, 1);
   const png = await zip.file(media[0])!.async("nodebuffer");
-  const expected = await QRCode.toBuffer(url, { errorCorrectionLevel: "M", margin: 1, width: 300, type: "png" });
+  // Компактный фирменный QR (коррекция M, без логотипа — как угловой QR у PDF шаблона).
+  const expected = await brandQrPng(url, { variant: "compact", width: 300 });
   assert.ok(png.equals(expected), "в подвале ровно QR этого адреса");
 
   // Без подвала — файл как раньше.

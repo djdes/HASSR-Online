@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
-import QRCode from "qrcode";
 
+import { brandQrSvg } from "@/lib/brand-qr";
 import { db } from "@/lib/db";
 
 /**
@@ -19,8 +19,9 @@ export function personalLoginUrl(raw: string): string {
   return `${APP_URL}/q/${raw}`;
 }
 
+/** Фирменный QR: карточку входа печатают (ч/б принтер) — `brand-qr.ts`. */
 export async function personalLoginQrSvg(url: string): Promise<string> {
-  return QRCode.toString(url, { type: "svg", errorCorrectionLevel: "M", margin: 1, width: 480 });
+  return brandQrSvg(url);
 }
 
 /** Новый токен: старые этого человека отзываются. Возвращает «сырой» токен (показывается один раз). */

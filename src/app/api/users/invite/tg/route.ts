@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import QRCode from "qrcode";
 import { z } from "zod";
 import { authOptions } from "@/lib/auth";
+import { brandQrPngDataUrl } from "@/lib/brand-qr";
 import { db } from "@/lib/db";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { ensurePlanForHeadcount } from "@/lib/plan-limits.server";
@@ -143,11 +143,8 @@ export async function POST(request: Request) {
     const planCheck = await ensurePlanForHeadcount(organizationId);
 
     const inviteUrl = buildBotInviteUrl(raw);
-    const qrPngDataUrl = await QRCode.toDataURL(inviteUrl, {
-      errorCorrectionLevel: "M",
-      margin: 1,
-      width: 320,
-    });
+    // Фирменный QR (`brand-qr.ts`); ×2 к размеру в окне — чётко на ретине.
+    const qrPngDataUrl = await brandQrPngDataUrl(inviteUrl, { width: 480 });
 
     return NextResponse.json(
       {

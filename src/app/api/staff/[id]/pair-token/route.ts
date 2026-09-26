@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import QRCode from "qrcode";
 
 import { authOptions } from "@/lib/auth";
+import { brandQrPngDataUrl } from "@/lib/brand-qr";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import {
@@ -95,11 +95,8 @@ export async function POST(
   const base =
     process.env.NEXTAUTH_URL?.replace(/\/+$/, "") ?? "https://wesetup.ru";
   const pairUrl = `${base}/pair/${raw}`;
-  const qrPngDataUrl = await QRCode.toDataURL(pairUrl, {
-    margin: 1,
-    width: 320,
-    errorCorrectionLevel: "M",
-  });
+  // Фирменный QR (`brand-qr.ts`); ×2 к размеру в окне — чётко на ретине.
+  const qrPngDataUrl = await brandQrPngDataUrl(pairUrl, { width: 560 });
 
   return NextResponse.json({
     pairUrl,

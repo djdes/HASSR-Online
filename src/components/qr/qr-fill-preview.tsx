@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ExternalLink, FileText, Printer, QrCode, RefreshCw, Sticker } from "lucide-react";
 
+import { BRAND_QR_CAPTION_ASPECT } from "@/lib/brand-qr-shared";
 import { formatQrValidUntil, posterDetailLine, type QrFillKind, type QrPoster } from "@/lib/qr-fill-types";
 import { cn } from "@/lib/utils";
 
@@ -113,14 +114,15 @@ export function QrFillPreview({ kind, id, emptyHint, className, heading, accent 
       ) : (
         <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-start">
           <div
-            className="qr-fill-preview-box mx-auto w-full max-w-[168px] shrink-0 rounded-2xl border border-[#ececf4] bg-white p-2 sm:mx-0"
+            className="qr-fill-preview-box mx-auto w-full max-w-[200px] shrink-0 rounded-2xl border border-[#ececf4] bg-white p-2 sm:mx-0"
             aria-busy={state.status !== "ready"}
           >
             {state.status === "ready" ? (
-              // SVG собран на сервере библиотекой qrcode — безопасно встраивать.
+              // SVG собран на сервере (brand-qr.ts) из нашего адреса — безопасно встраивать.
               <div dangerouslySetInnerHTML={{ __html: state.poster.svg }} />
             ) : (
-              <div className="aspect-square w-full animate-pulse rounded-xl bg-[#eef1ff]" />
+              // Заглушка — в пропорциях фирменного QR (с плашкой), без прыжка при загрузке.
+              <div className="w-full animate-pulse rounded-xl bg-[#eef1ff]" style={{ aspectRatio: `1 / ${BRAND_QR_CAPTION_ASPECT}` }} />
             )}
           </div>
           <div className="min-w-0 flex-1 space-y-2">

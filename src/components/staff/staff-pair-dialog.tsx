@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { brandQrHeightFor } from "@/lib/brand-qr-shared";
 
 type PairPayload = {
   pairUrl: string;
@@ -106,8 +107,8 @@ export function StaffPairDialog({
                 src={payload.qrPngDataUrl}
                 alt="QR-код для входа"
                 width={280}
-                height={280}
-                className="rounded-2xl border border-[#ececf4] bg-white p-2"
+                height={brandQrHeightFor(280)}
+                className="h-auto rounded-2xl border border-[#ececf4] bg-white p-2"
               />
             </div>
 

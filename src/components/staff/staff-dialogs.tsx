@@ -3,6 +3,7 @@ import { RU_PHONE_PLACEHOLDER, phoneInputProps } from "@/lib/phone-input";
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import { brandQrHeightFor } from "@/lib/brand-qr-shared";
 import { toast } from "sonner";
 import { useSubmitLock } from "@/lib/use-submit-lock";
 import { formatDaysRu } from "@/lib/format-days";
@@ -1064,7 +1065,8 @@ export function StaffTelegramInviteDialog(props: {
                     src={invite.qrPngDataUrl}
                     alt="QR-код приглашения в Telegram"
                     width={220}
-                    height={220}
+                    height={brandQrHeightFor(220)}
+                    className="h-auto"
                     unoptimized
                   />
                 </div>

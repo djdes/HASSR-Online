@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import QRCode from "qrcode";
+import { brandQrPngDataUrl } from "@/lib/brand-qr";
 import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -75,7 +75,7 @@ export async function POST(request: Request) {
     production: process.env.NODE_ENV === "production",
   });
   const claimUrl = `${origin}/api/kiosk/claim/${enrollToken}`;
-  const qrPngDataUrl = await QRCode.toDataURL(claimUrl, { errorCorrectionLevel: "M", margin: 1, width: 600 });
+  const qrPngDataUrl = await brandQrPngDataUrl(claimUrl, { width: 600 });
 
   return NextResponse.json({
     id: device.id,

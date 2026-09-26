@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
+import { brandQrHeightFor } from "@/lib/brand-qr-shared";
 import { Copy, Dices, Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -338,10 +339,11 @@ export function StaffAccessDialog({
                       <Image
                         src={invite.qrPngDataUrl}
                         alt="QR-код приглашения"
-                        width={96}
-                        height={96}
+                        width={128}
+                        height={brandQrHeightFor(128)}
                         unoptimized
-                        className="size-24 shrink-0 rounded-lg"
+                        // 128 px: фирменный QR (коррекция H) плотнее — на 96 px с экрана читался хуже.
+                        className="h-auto w-32 shrink-0 rounded-lg"
                       />
                       <div className="min-w-0 flex-1 space-y-1.5">
                         <p className="text-[12.5px] leading-snug text-[#6f7282]">

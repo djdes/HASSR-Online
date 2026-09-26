@@ -85,7 +85,7 @@ export function StaffQrInviteDialog({ open, onClose, positions }: Props) {
       <html><head><title>QR-код для регистрации</title>
       <style>
         body { font-family: -apple-system, system-ui, sans-serif; padding: 40px; text-align: center; color: #0b1024; }
-        img { width: 320px; height: 320px; margin: 24px auto; display: block; }
+        img { width: 320px; height: auto; margin: 24px auto; display: block; }
         h1 { font-size: 22px; margin-bottom: 4px; }
         p { color: #6f7282; margin: 4px 0; font-size: 14px; }
         .url { font-family: monospace; font-size: 12px; word-break: break-all; margin-top: 16px; color: #3848c7; }
@@ -200,7 +200,7 @@ export function StaffQrInviteDialog({ open, onClose, positions }: Props) {
               <img
                 src={token.qrPngDataUrl}
                 alt="QR-код"
-                className="size-[260px] rounded-md bg-white"
+                className="h-auto w-[260px] rounded-md bg-white"
               />
             </div>
 

@@ -1,5 +1,7 @@
 import type { jsPDF } from "jspdf";
-import QRCode from "qrcode";
+import type { QRCode } from "qrcode";
+
+import { brandQrLayout, brandQrMatrix, drawBrandQrMatrixPdf } from "@/lib/brand-qr";
 
 /**
  * Маленький QR-код в правом нижнем углу КАЖДОЙ страницы печатного журнала.
@@ -22,7 +24,10 @@ import QRCode from "qrcode";
  *      выше, в первое свободное место этой страницы.
  *
  * Матрица рисуется векторными квадратами jsPDF (синхронно, чётко на любом
- * принтере), без растровой картинки.
+ * принтере), без растровой картинки. Код — компактный вариант фирменного
+ * QR (`brand-qr.ts`): коррекция M, чёрные квадратные модули и «глаза», без
+ * логотипа и плашки. Логотип на 13 мм потребовал бы коррекции H — матрица
+ * стала бы плотнее, модуль меньше 0,3 мм (проверка: `.agent/tasks/qr-brand-2026-09`).
  */
 
 /** Сторона QR (без «тихой зоны»), мм. 41 модуль → 0,32 мм на модуль. */
@@ -445,28 +450,9 @@ export function findJournalQrSpot(params: {
   return null;
 }
 
-function drawMatrix(doc: jsPDF, qr: QRCode.QRCode, x: number, y: number, size: number) {
-  const n = qr.modules.size;
-  const cell = size / n;
-  doc.setFillColor(0, 0, 0);
-  for (let row = 0; row < n; row += 1) {
-    // Подряд идущие тёмные модули строки — одним прямоугольником.
-    let col = 0;
-    while (col < n) {
-      if (!qr.modules.get(row, col)) {
-        col += 1;
-        continue;
-      }
-      const start = col;
-      while (col < n && qr.modules.get(row, col)) col += 1;
-      // +0.01 мм — без «волосяных» щелей между соседними строками.
-      doc.rect(x + start * cell, y + row * cell, (col - start) * cell, cell + 0.01, "F");
-    }
-  }
-}
-
-export function journalQrMatrix(url: string): QRCode.QRCode {
-  return QRCode.create(url, { errorCorrectionLevel: "M" });
+/** Матрица углового QR — компактный фирменный QR (коррекция M). */
+export function journalQrMatrix(url: string): QRCode {
+  return brandQrMatrix(url, { variant: "compact" });
 }
 
 /**
@@ -485,8 +471,8 @@ export function stampJournalQr(
   const fontName = params.fontName ?? "JournalUnicode";
   const rightEdges = params.rightEdges ?? journalQrRightEdges(doc, params.tracker);
   params.tracker?.stop();
-  const qr = journalQrMatrix(params.url);
-  const modules = qr.modules.size;
+  const qr = brandQrLayout(params.url, { variant: "compact" });
+  const modules = qr.size;
   const size = JOURNAL_QR_SIZE_MM;
   if (size / modules < JOURNAL_QR_MIN_MODULE_MM - 1e-9) {
     throw new Error(`QR слишком плотный для печати: ${modules} модулей на ${size} мм`);
@@ -512,7 +498,7 @@ export function stampJournalQr(
     });
     const x = spot?.x ?? Math.min(rightEdge, pageWidth - JOURNAL_QR_EDGE_MM) - size;
     const y = spot?.y ?? pageHeight - JOURNAL_QR_EDGE_MM - size;
-    if (!params.probeOnly) drawMatrix(doc, qr, x, y, size);
+    if (!params.probeOnly) drawBrandQrMatrixPdf(doc, qr, x, y, size);
 
     if (caption.lines.length && !params.probeOnly) {
       doc.setFontSize(CAPTION_FONT_SIZE);

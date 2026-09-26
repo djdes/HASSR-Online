@@ -1,5 +1,4 @@
-import QRCode from "qrcode";
-
+import { brandQrPngDataUrl } from "@/lib/brand-qr";
 import { db } from "@/lib/db";
 import {
   botInviteExpiresAt,
@@ -119,11 +118,8 @@ function defaultDeps(): StaffTelegramInviteDeps {
       return { rawToken, expiresAt };
     },
     async makeQrDataUrl(inviteUrl) {
-      return QRCode.toDataURL(inviteUrl, {
-        errorCorrectionLevel: "M",
-        margin: 1,
-        width: 320,
-      });
+      // Фирменный QR; ×2 к размеру в окне (220 px) — чётко на ретине.
+      return brandQrPngDataUrl(inviteUrl, { width: 440 });
     },
     async upsertSiteNotification(payload) {
       await upsertNotification(payload);

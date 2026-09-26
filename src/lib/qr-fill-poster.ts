@@ -1,5 +1,3 @@
-import QRCode from "qrcode";
-
 import {
   DEFAULT_CLIMATE_HUMIDITY,
   DEFAULT_CLIMATE_TEMPERATURE,
@@ -8,6 +6,7 @@ import {
 } from "@/lib/climate-document";
 import { db } from "@/lib/db";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
+import { brandQrSvg } from "@/lib/brand-qr";
 import { buildingTargets } from "@/lib/building-targets";
 import { JOURNAL_FILL_HUB_CODE, JOURNAL_FILL_PERPETUAL_UNTIL, journalFillSubject, journalFillValidUntil, listHubJournals, todayKeyFor } from "@/lib/journal-fill";
 import { parseJournalPeriodsJson, resolveJournalPeriodKind } from "@/lib/journal-period";
@@ -25,7 +24,7 @@ import { loadDirectoryBuildings } from "@/lib/room-directory";
  * Виды: `equipment` (холодильник), `room` (помещение), `journal`
  * (запись в журнал: `id` = `<code>` или `<code>:<documentId>`; хаб — `all`).
  *
- * Server-only (db + qrcode + HMAC-секрет): в клиент не импортировать,
+ * Server-only (db + фирменный QR + HMAC-секрет): в клиент не импортировать,
  * типы брать из `@/lib/qr-fill-types`.
  */
 
@@ -41,8 +40,9 @@ export function rangeLabel(min: number | null, max: number | null, unit: string)
   return null;
 }
 
+/** Фирменный QR (`brand-qr.ts`): логотип, коррекция H, плашка «Отсканировать». */
 async function qrSvg(url: string): Promise<string> {
-  return QRCode.toString(url, { type: "svg", errorCorrectionLevel: "M", margin: 1, width: 600 });
+  return brandQrSvg(url);
 }
 
 export function qrFillUrl(origin: string, kind: QrFillKind, id: string): string {

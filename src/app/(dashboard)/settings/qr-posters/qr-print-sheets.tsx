@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
+import { BRAND_QR_CAPTION_ASPECT } from "@/lib/brand-qr-shared";
 import { isJournalObjectQrCode } from "@/lib/journal-qr-target";
 import { formatQrValidUntil, posterDetailLine, type QrPoster, type QrPrintFormat } from "@/lib/qr-fill-types";
 import type { QrPrintPage } from "@/lib/qr-print-layout";
@@ -18,7 +19,8 @@ import type { QrPrintPage } from "@/lib/qr-print-layout";
  *   • у последнего листа `break-after: auto` — иначе в конце пустой лист;
  *   • высота листа 250 мм: iOS Safari игнорирует поля `@page` и печатает
  *     со своими, лист в 277 мм уезжал на вторую страницу;
- *   • у SVG явные размеры в мм — масштаб печати не «ужимает» код;
+ *   • у SVG явные размеры в мм — масштаб печати не «ужимает» код (у
+ *     наклейки — наибольший, что влезает над текстом, 29–36 мм по ширине);
  *   • внутри нет header/footer/nav/aside/table: общий печатный CSS
  *     (`globals.css`, `@media print`) их прячет и перекрашивает.
  * Цвета — свои классы с явными значениями: тёмная тема кабинета
@@ -52,20 +54,32 @@ function validityLine(poster: QrPoster): string | null {
   return until === "бессрочно" ? "Код этого документа" : `Действует до ${until} включительно`;
 }
 
-/** SVG с явными размерами в мм (библиотека qrcode ставит width/height в px). */
+const SVG_SIZE = /<svg([^>]*?)\swidth="[^"]*"\s+height="[^"]*"/;
+
+/**
+ * SVG с явными размерами в мм (помощник `brand-qr.ts` ставит width/height
+ * в px): ширина `mm`, высота — по пропорции `viewBox` (у фирменного QR под
+ * кодом плашка «Отсканировать», плитка выше квадрата).
+ */
 function sizedSvg(svg: string, mm: number): string {
-  return svg.replace(/<svg([^>]*?)\swidth="[^"]*"\s+height="[^"]*"/, `<svg$1 width="${mm}mm" height="${mm}mm"`);
+  const box = /viewBox="0 0 ([\d.]+) ([\d.]+)"/.exec(svg);
+  const height = box ? (mm * Number(box[2])) / Number(box[1]) : mm;
+  return svg.replace(SVG_SIZE, `<svg$1 width="${mm}mm" height="${height.toFixed(2)}mm"`);
 }
 
-function Code({ poster, mm, className }: { poster: QrPoster; mm: number; className: string }) {
+/**
+ * `fluid` — без размеров: наклейка занимает высоту, что осталась над
+ * текстом (CSS `.qrp-sticker-code`), а `mm` — наибольшая ширина.
+ */
+function Code({ poster, mm, className, fluid = false }: { poster: QrPoster; mm: number; className: string; fluid?: boolean }) {
   return (
     <div
       className={className}
       data-qr-print-code=""
       data-qr-print-url={poster.url}
       data-qr-print-mm={mm}
-      // SVG собран на сервере библиотекой qrcode — безопасно встраивать.
-      dangerouslySetInnerHTML={{ __html: sizedSvg(poster.svg, mm) }}
+      // SVG собран на сервере (brand-qr.ts) из нашего адреса — безопасно встраивать.
+      dangerouslySetInnerHTML={{ __html: fluid ? poster.svg.replace(SVG_SIZE, "<svg$1") : sizedSvg(poster.svg, mm) }}
     />
   );
 }
@@ -121,7 +135,7 @@ function Sticker({ poster }: { poster: QrPoster }) {
   const validity = validityLine(poster);
   return (
     <div className="qrp-sticker">
-      <Code poster={poster} mm={34} className="qrp-sticker-code" />
+      <Code poster={poster} mm={36} className="qrp-sticker-code" fluid />
       <div className="qrp-sticker-title">{poster.title}</div>
       <div className="qrp-sticker-org">{poster.orgName}</div>
       {detail ? <div className="qrp-sticker-detail">{detail}</div> : null}
@@ -207,10 +221,21 @@ const PRINT_CSS = `
   .qrp-sticker-grid { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(4, 60mm); gap: 3mm; height: 249mm; }
   .qrp-sticker {
     display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
-    border: 0.3mm dashed #777 !important; padding: 2.5mm; overflow: hidden;
+    border: 0.3mm dashed #777 !important; padding: 2mm 2.5mm; overflow: hidden;
   }
-  .qrp-sticker-title { font-size: 10pt; font-weight: 700; line-height: 1.15; margin-top: 2mm; max-height: 2.4em; overflow: hidden; }
-  .qrp-sticker-org { font-size: 7.5pt; margin-top: 0.8mm; }
-  .qrp-sticker-detail { font-size: 7.5pt; font-weight: 600; margin-top: 0.5mm; }
+  /* Код наклейки — всё, что осталось над текстом: от 29 до 36 мм по ширине
+     (высота плитки = ширина × пропорция с плашкой). Текст под кодом —
+     не больше пяти строк: название — две, организация, период/документ и
+     срок — по одной (длинные обрезаются многоточием), поэтому код самой
+     длинной наклейки (допуск гигиены по документу) — около 30 мм, а не 22. */
+  .qrp-sticker-code {
+    flex: 1 1 0; min-height: ${(29 * BRAND_QR_CAPTION_ASPECT).toFixed(2)}mm; max-height: ${(36 * BRAND_QR_CAPTION_ASPECT).toFixed(2)}mm;
+    width: 100%; display: flex; justify-content: center;
+  }
+  .qrp-sticker-code svg { height: 100%; width: auto; }
+  .qrp-sticker-title { font-size: 10pt; font-weight: 700; line-height: 1.1; margin-top: 1.5mm; max-height: 2.2em; overflow: hidden; }
+  .qrp-sticker-org { font-size: 7.5pt; line-height: 1.15; margin-top: 0.6mm; }
+  .qrp-sticker-detail { font-size: 7.5pt; font-weight: 600; line-height: 1.15; margin-top: 0.3mm; }
+  .qrp-sticker-org, .qrp-sticker-detail { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
 `;

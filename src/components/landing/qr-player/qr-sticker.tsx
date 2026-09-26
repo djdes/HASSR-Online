@@ -7,10 +7,16 @@ import { QrCode } from "lucide-react";
  * ночная тема не перекрасила белую подложку кода. Размеры в `em`: наклейку
  * масштабирует `font-size` родителя.
  *
- * Матрица собирается на сервере (`buildQrMatrix` в `qr-matrix.ts`) — пакет
- * `qrcode` в клиентский бандл не попадает.
+ * Код — фирменный QR (логотип по центру), SVG собирается на сервере
+ * (`buildQrMatrix` в `qr-matrix.ts`) — пакет `qrcode` в клиентский бандл
+ * не попадает.
  */
-export type QrMatrix = { size: number; d: string };
+export type QrMatrix = {
+  /** Без плашки «Отсканировать»: подпись даёт золотая рамка наклейки. */
+  bare: string;
+  /** Как печатает продукт (формат «наклейка»): с плашкой. */
+  printed: string;
+};
 
 export function QrSticker({
   qr,
@@ -34,16 +40,12 @@ export function QrSticker({
         ...style,
       }}
     >
-      <div style={{ background: "#ffffff", borderRadius: "0.6em", padding: "0.4em" }}>
-        <svg
-          viewBox={`0 0 ${qr.size} ${qr.size}`}
-          shapeRendering="crispEdges"
-          style={{ display: "block", width: "100%", height: "auto" }}
-          aria-hidden="true"
-        >
-          <path d={qr.d} fill="#0b1024" />
-        </svg>
-      </div>
+      <div
+        style={{ background: "#ffffff", borderRadius: "0.6em", padding: "0.4em" }}
+        aria-hidden="true"
+        // SVG собран на сервере из нашего же адреса — безопасно встраивать.
+        dangerouslySetInnerHTML={{ __html: qr.bare }}
+      />
       {caption ? (
         <div
           style={{

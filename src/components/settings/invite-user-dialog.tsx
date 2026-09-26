@@ -5,6 +5,7 @@ import { useSubmitLock } from "@/lib/use-submit-lock";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { brandQrHeightFor } from "@/lib/brand-qr-shared";
 import { Copy, Plus, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -167,7 +168,8 @@ export function InviteUserDialog() {
                   src={tgResult.qrPngDataUrl}
                   alt="QR-код приглашения"
                   width={240}
-                  height={240}
+                  height={brandQrHeightFor(240)}
+                  className="h-auto"
                   unoptimized
                 />
               </div>

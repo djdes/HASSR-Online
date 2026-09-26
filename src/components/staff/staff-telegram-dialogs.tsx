@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { brandQrHeightFor } from "@/lib/brand-qr-shared";
 import { toast } from "sonner";
 import { Copy, ExternalLink } from "lucide-react";
 import {
@@ -99,7 +100,8 @@ export function StaffTelegramInviteDialog(props: {
                     src={invite.qrPngDataUrl}
                     alt="QR-код приглашения в Telegram"
                     width={220}
-                    height={220}
+                    height={brandQrHeightFor(220)}
+                    className="h-auto"
                     unoptimized
                   />
                 </div>

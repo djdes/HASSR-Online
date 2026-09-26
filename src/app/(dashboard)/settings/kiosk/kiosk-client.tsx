@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { brandQrHeightFor } from "@/lib/brand-qr-shared";
 import { Eye, KeyRound, Loader2, Plus, RefreshCw, Trash2, TabletSmartphone } from "lucide-react";
 import { toast } from "sonner";
 
@@ -280,7 +281,7 @@ export function KioskClient({
           variant="info"
         >
           <div className="flex flex-col items-center gap-3">
-            <Image src={enrollQr.qr} alt="QR" width={220} height={220} unoptimized className="rounded-2xl border border-[#ececf4]" />
+            <Image src={enrollQr.qr} alt="QR" width={220} height={brandQrHeightFor(220)} unoptimized className="h-auto rounded-2xl border border-[#ececf4]" />
             <code className="break-all rounded-xl bg-[#f5f6ff] px-3 py-2 text-[12px] text-[#3848c7]">{enrollQr.url}</code>
           </div>
         </ConfirmDialog>
