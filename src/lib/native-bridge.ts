@@ -14,6 +14,7 @@
 import { toast } from "sonner";
 
 import { isMobileAppUserAgent } from "@/lib/mobile-app";
+import { normalizePushUrl } from "@/lib/push-url";
 
 // ─── Чистые функции ────────────────────────────────────────────────────
 
@@ -122,34 +123,11 @@ export function downloadFileName(input: {
 }
 
 /**
- * Ссылка из системы или уведомления → путь внутри сайта.
- *
- * Те же правила, что у `normalizePushUrl` (`mobile-push.ts`) — тест
- * сверяет их на одном наборе адресов. Копия, а не импорт: `mobile-push.ts`
- * серверный (node:crypto) и в браузер не попадает.
+ * Ссылка из системы или уведомления → путь внутри сайта. Те же правила,
+ * что у push на сервере: общий клиентский модуль `push-url.ts`.
+ * Имя `normalizeAppUrl` оставлено для прежних импортов.
  */
-export function normalizeAppUrl(href: string | null | undefined, extraHosts: string[] = []): string {
-  const HOME = "/mini";
-  if (!href) return HOME;
-  let path = href.trim();
-  if (!path) return HOME;
-  if (/^https?:\/\//i.test(path)) {
-    let url: URL;
-    try {
-      url = new URL(path);
-    } catch {
-      return HOME;
-    }
-    const own = new Set(["wesetup.ru", "www.wesetup.ru", ...extraHosts.map((h) => h.toLowerCase())]);
-    if (!own.has(url.host.toLowerCase())) return HOME;
-    path = `${url.pathname}${url.search}${url.hash}`;
-  }
-  if (/[\u0000-\u001f\\]/.test(path)) return HOME;
-  if (!path.startsWith("/") || path.startsWith("//")) return HOME;
-  const pathname = path.split(/[?#]/)[0];
-  if (pathname === "/api" || pathname.startsWith("/api/")) return HOME;
-  return path;
-}
+export { normalizePushUrl as normalizeAppUrl };
 
 /**
  * Куда перейти по ссылке, которой открыли приложение. null — никуда:
@@ -161,7 +139,7 @@ export function deepLinkPath(
   ownHosts: string[] = []
 ): string | null {
   if (!url || !/^https?:\/\//i.test(url)) return null;
-  const path = normalizeAppUrl(url, ownHosts);
+  const path = normalizePushUrl(url, ownHosts);
   const pathname = path.split(/[?#]/)[0];
   if (pathname === "/mini") return null;
   return path === current ? null : path;
@@ -218,6 +196,27 @@ export function pushExplainerAction(
 export function statusBarStyle(input: { darkHeader: boolean; theme: "light" | "dark" }): "DARK" | "LIGHT" {
   if (input.darkHeader) return "DARK";
   return input.theme === "dark" ? "DARK" : "LIGHT";
+}
+
+/**
+ * Стиль строки состояния по цвету верха страницы — для страниц вне
+ * оболочки (QR-страницы, удаление аккаунта, политика): у них своя шапка,
+ * и значки должны читаться на ней. Тёмный фон — светлые значки (`DARK`),
+ * светлый — тёмные (`LIGHT`). Прозрачный или непонятный цвет — `null`:
+ * решает фон родителя.
+ */
+export function statusBarStyleForBackground(color: string): "DARK" | "LIGHT" | null {
+  const m = /^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)(?:[\s,/]+([\d.]+%?))?\s*\)$/i.exec(color.trim());
+  if (!m) return null;
+  const alphaRaw = m[4];
+  const alpha = alphaRaw === undefined ? 1 : alphaRaw.endsWith("%") ? Number.parseFloat(alphaRaw) / 100 : Number(alphaRaw);
+  if (!(alpha >= 0.5)) return null;
+  const lin = (v: string) => {
+    const c = Number(v) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  const luminance = 0.2126 * lin(m[1]) + 0.7152 * lin(m[2]) + 0.0722 * lin(m[3]);
+  return luminance < 0.4 ? "DARK" : "LIGHT";
 }
 
 /** Кнопка «назад» Android: назад по истории, с домашнего экрана — свернуть. */

@@ -27,8 +27,8 @@ export function AppUpdateGate({
     <div
       className="flex min-h-dvh items-center justify-center bg-[#fafbff] px-4"
       style={{
-        paddingTop: "max(24px, env(safe-area-inset-top, 0px))",
-        paddingBottom: "max(24px, env(safe-area-inset-bottom, 0px))",
+        paddingTop: "max(24px, var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))",
+        paddingBottom: "max(24px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))",
       }}
       data-testid="app-update-gate"
     >

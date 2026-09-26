@@ -67,7 +67,7 @@ export function NextQrButton({
         ? createPortal(
             <div
               role="alert"
-              className="fixed inset-x-4 bottom-[max(1.5rem,env(safe-area-inset-bottom))] z-[110] mx-auto max-w-[360px] rounded-2xl bg-[#fff4f2] px-4 py-3 text-center text-[15px] font-medium text-[#a13a32] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.6)]"
+              className="fixed inset-x-4 bottom-[max(1.5rem,var(--safe-area-inset-bottom,env(safe-area-inset-bottom)))] z-[110] mx-auto max-w-[360px] rounded-2xl bg-[#fff4f2] px-4 py-3 text-center text-[15px] font-medium text-[#a13a32] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.6)]"
             >
               {hint}
             </div>,

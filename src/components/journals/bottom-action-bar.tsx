@@ -19,7 +19,7 @@ import { haptic } from "@/app/mini/_components/use-haptic";
  * Появляется, только когда делать действительно есть что: иначе полоса
  * молча съедала бы место у последней строки списка.
  *
- * Нижний отступ считает `env(safe-area-inset-bottom)` — на айфонах с
+ * Нижний отступ считает `var(--safe-area-inset-bottom, env(safe-area-inset-bottom))` — на айфонах с
  * домашней полосой кнопка иначе оказывается наполовину под ней.
  */
 export function BottomActionBar({

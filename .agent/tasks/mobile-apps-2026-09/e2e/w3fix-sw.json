@@ -1,0 +1,26 @@
+{
+  "browser": {
+    "first": [
+      "http://localhost:3021/mini-sw.js"
+    ],
+    "second": [
+      "http://localhost:3021/mini-sw.js"
+    ],
+    "viewport": "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+  },
+  "app": {
+    "first": [],
+    "second": [],
+    "viewport": "width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no"
+  },
+  "legacyInstalled": [
+    "http://localhost:3021/mini-sw.js"
+  ],
+  "legacyControlledOnFirstVisit": true,
+  "legacyAfterFirst": [],
+  "legacyLoadsAfterFirst": 1,
+  "legacyAfterSecond": [],
+  "legacyControlledOnSecondVisit": false,
+  "legacyViewport": "width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no",
+  "ok": true
+}

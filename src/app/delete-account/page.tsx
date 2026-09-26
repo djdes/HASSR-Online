@@ -52,7 +52,15 @@ export default async function DeleteAccountPage() {
 
   return (
     <DeleteAccountThemeRoot theme={theme}>
-      <main className="mx-auto flex w-full max-w-[560px] flex-col gap-4 px-4 pb-12 pt-4">
+      {/* В приложении страница под вырезом экрана (viewport-fit=cover):
+          отступ сверху — на высоту строки состояния. На сайте он 0. */}
+      <main
+        className="mx-auto flex w-full max-w-[560px] flex-col gap-4 px-4"
+        style={{
+          paddingTop: "calc(16px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))",
+          paddingBottom: "calc(48px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))",
+        }}
+      >
         <Link href={userId ? "/mini/me" : "/"} className="mini-btn-ghost mini-press -ml-3.5 w-fit">
           <ArrowLeft className="size-5" />
           {userId ? "В профиль" : "На сайт"}

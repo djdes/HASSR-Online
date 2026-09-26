@@ -19,6 +19,7 @@ import {
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
 import { AppStoresTeaser } from "@/components/public/app-stores-teaser";
+import { useInsideMobileApp } from "@/lib/use-inside-mobile-app";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface NotificationSettingsProps {
@@ -584,6 +585,9 @@ function Bubble({
  * должно — это чистая картинка-превью переписки.
  */
 function SmsAndAppTeaser() {
+  // В самом приложении анонс «Приложение скоро в App Store» — бессмыслица:
+  // push там настраиваются в «Профиле».
+  const inApp = useInsideMobileApp();
   const [interestBusy, setInterestBusy] = useState(false);
   const [interestSent, setInterestSent] = useState(false);
 
@@ -665,9 +669,11 @@ function SmsAndAppTeaser() {
       {/* Мобильное приложение — та же заглушка, что в подвале сайта, и
           намеренно тот же компонент: разъехавшиеся даты запуска выглядят
           хуже, чем их отсутствие. */}
-      <div className="rounded-3xl border border-[#eceef7] bg-white p-6 md:p-7">
-        <AppStoresTeaser tone="card" />
-      </div>
+      {inApp ? null : (
+        <div className="rounded-3xl border border-[#eceef7] bg-white p-6 md:p-7">
+          <AppStoresTeaser tone="card" />
+        </div>
+      )}
     </>
   );
 }

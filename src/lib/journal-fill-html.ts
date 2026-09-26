@@ -46,7 +46,7 @@ export const QR_FILL_CSS = `
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:#fafbff;color:#0b1024;font:18px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
 a{color:#3848c7}
-.hero{color:#fff;padding:14px 0;background:radial-gradient(circle at 8% 0%,rgba(85,102,246,.55),transparent 55%),radial-gradient(circle at 100% 100%,rgba(122,92,255,.4),transparent 55%),#0b1024}
+.hero{color:#fff;padding:calc(14px + var(--safe-area-inset-top,env(safe-area-inset-top,0px))) 0 14px;background:radial-gradient(circle at 8% 0%,rgba(85,102,246,.55),transparent 55%),radial-gradient(circle at 100% 100%,rgba(122,92,255,.4),transparent 55%),#0b1024}
 .wrap{max-width:36rem;margin:0 auto;padding:0 16px}
 .hero .top{display:flex;gap:10px;align-items:center}
 .hero .ht{min-width:0;flex:1}
@@ -67,7 +67,7 @@ button.item{width:100%;font-family:inherit;text-align:left;cursor:pointer;-webki
 .btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:60px;border:0;border-radius:14px;background:#5566f6;color:#fff;font:inherit;font-size:19px;font-weight:600;text-decoration:none;box-shadow:0 10px 30px -12px rgba(85,102,246,.55);cursor:pointer}
 .btn:disabled{opacity:.6}
 .btn.second{background:#f5f6ff;color:#3848c7;box-shadow:none;border:1px solid rgba(85,102,246,.3);font-weight:500}
-.sticky{position:sticky;bottom:0;z-index:5;padding:12px 0 max(env(safe-area-inset-bottom),10px);background:linear-gradient(to top,#fafbff 72%,rgba(250,251,255,0))}
+.sticky{position:sticky;bottom:0;z-index:5;padding:12px 0 max(var(--safe-area-inset-bottom,env(safe-area-inset-bottom)),10px);background:linear-gradient(to top,#fafbff 72%,rgba(250,251,255,0))}
 .who{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px;padding:8px 12px;border:1px solid #ececf4;border-radius:14px;background:#fff}
 .who .wl{min-width:0;flex:1;display:flex;flex-direction:column;gap:1px}
 .who .k{font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#9b9fb3}
@@ -126,7 +126,7 @@ button.item{width:100%;font-family:inherit;text-align:left;cursor:pointer;-webki
 .sheet .sh-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 16px 8px;font-size:19px;font-weight:600}
 .sheet .sh-x{width:40px;height:40px;border-radius:999px;border:0;background:#fff;box-shadow:0 0 0 1px #ececf4;font-size:22px;color:#6f7282;cursor:pointer}
 .sheet .sh-s{padding:0 16px 8px}
-.sheet .sh-l{flex:1;overflow-y:auto;padding:0 16px max(env(safe-area-inset-bottom),16px)}
+.sheet .sh-l{flex:1;overflow-y:auto;padding:0 16px max(var(--safe-area-inset-bottom,env(safe-area-inset-bottom)),16px)}
 .who.emp{cursor:pointer}
 .fl.big .in{min-height:96px;padding-top:34px;padding-bottom:8px;font-size:44px;line-height:1;font-weight:700;text-align:center}
 .fl.big .box>label{top:10px}

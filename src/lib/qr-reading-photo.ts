@@ -1,6 +1,9 @@
+import { headers } from "next/headers";
+
 import { db } from "@/lib/db";
 import { verifyEquipmentQrToken } from "@/lib/equipment-qr-token";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
+import { isMobileAppUserAgent } from "@/lib/mobile-app";
 import { OBJECT_FILLER_DENIED, canFillObject } from "@/lib/object-fillers";
 import { hasPaidPlan } from "@/lib/plan-limits.server";
 import { normalizeQrFillMode } from "@/lib/qr-fill-actor";
@@ -16,7 +19,8 @@ import { isManagementRole } from "@/lib/user-roles";
  * (PIN / пропуск / вход в кабинет) → «Кто заполняет» объект.
  *
  * Здесь же — тариф организации: автоввод с фото только на платном; ссылку
- * на тарифы видит руководитель (страница тарифов — только для руководства).
+ * на тарифы видит руководитель (страница тарифов — только для руководства),
+ * и только не в приложении WeSetup.
  */
 
 export type QrReadingPhotoActor = {
@@ -28,6 +32,22 @@ export type QrReadingPhotoActor = {
   /** Ссылка на тарифы — руководителю на бесплатном тарифе; сотруднику — нет. */
   tariffsHref: string | null;
 };
+
+/**
+ * Ссылка на тарифы в подсказке «автоввод только на платном тарифе».
+ * Есть только на бесплатном тарифе и только у того, кто может открыть
+ * страницу тарифов. В приложении WeSetup ссылки нет никогда: правила
+ * App Store и Google Play запрещают вести к оплате вне магазина.
+ */
+export function readingTariffsHref(input: {
+  autofill: boolean;
+  mayOpenTariffs: boolean;
+  userAgent: string | null | undefined;
+}): string | null {
+  if (input.autofill || !input.mayOpenTariffs) return null;
+  if (isMobileAppUserAgent(input.userAgent)) return null;
+  return TARIFFS_HREF;
+}
 
 export type QrReadingPhotoAuth =
   | { ok: true; actor: QrReadingPhotoActor }
@@ -79,6 +99,8 @@ export async function authorizeQrReadingPhoto(input: {
   employeeId: string;
   pin?: string | null;
   pass?: string | null;
+  /** User-Agent запроса; не передан — берём из заголовков текущего запроса. */
+  userAgent?: string | null;
 }): Promise<QrReadingPhotoAuth> {
   const object = await loadObject(input.kind, input.objectId, input.token);
   if (!object) return { ok: false, status: 401, error: "QR-наклейка не подходит" };
@@ -101,6 +123,8 @@ export async function authorizeQrReadingPhoto(input: {
   if (!canFillObject(object.fillerUserIds, employee)) return { ok: false, status: 403, error: OBJECT_FILLER_DENIED };
 
   const autofill = await hasPaidPlan(object.organizationId);
+  const userAgent =
+    input.userAgent !== undefined ? input.userAgent : (await headers()).get("user-agent");
   return {
     ok: true,
     actor: {
@@ -108,7 +132,11 @@ export async function authorizeQrReadingPhoto(input: {
       objectName: object.name,
       employee: { id: employee.id, name: employee.name, role: employee.role },
       autofill,
-      tariffsHref: !autofill && isManagementRole(employee.role) ? TARIFFS_HREF : null,
+      tariffsHref: readingTariffsHref({
+        autofill,
+        mayOpenTariffs: isManagementRole(employee.role),
+        userAgent,
+      }),
     },
   };
 }

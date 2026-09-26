@@ -8,6 +8,13 @@ const STATUS_STYLES: Record<string, string> = {
   queued: "bg-[#eef1ff] text-[#5566f6]",
   failed: "bg-[#fff4f2] text-[#d2453d]",
   rate_limited: "bg-[#fff7e6] text-[#a3690a]",
+  // Push в приложение человеку без Telegram: запись нужна, чтобы при
+  // повторном прогоне рассылки не слать push второй раз.
+  push_only: "bg-[#eef0fb] text-[#6f7282]",
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  push_only: "только push",
 };
 
 export default async function RootTelegramLogsPage() {
@@ -91,7 +98,7 @@ export default async function RootTelegramLogsPage() {
                     )}
                   </td>
                   <td className="px-6 py-3 font-mono text-[12px] text-[#6f7282]">
-                    {log.chatId}
+                    {log.chatId || "—"}
                   </td>
                   <td className="px-6 py-3 max-w-[420px]">
                     <div className="truncate" title={log.body}>
@@ -107,7 +114,7 @@ export default async function RootTelegramLogsPage() {
                     <span
                       className={`inline-flex rounded-full px-3 py-1 text-[12px] font-medium ${statusClass}`}
                     >
-                      {log.status}
+                      {STATUS_LABELS[log.status] ?? log.status}
                     </span>
                   </td>
                   <td className="px-6 py-3 text-center text-[#6f7282]">

@@ -11,8 +11,9 @@ import {
   parsePushAskState,
   pushExplainerAction,
   statusBarStyle,
+  statusBarStyleForBackground,
 } from "./native-bridge";
-import { normalizePushUrl } from "./mobile-push";
+import { normalizePushUrl } from "./push-url";
 
 const O = "https://wesetup.ru";
 
@@ -114,27 +115,9 @@ test("имя файла: заголовок, затем download, затем а�
   );
 });
 
-test("ссылки из системы и уведомлений: те же правила, что у normalizePushUrl", () => {
-  const hosts = ["localhost:3021"];
-  const cases = [
-    null,
-    "",
-    "/journals/hygiene?x=1#a",
-    "https://wesetup.ru/mini/today",
-    "https://www.wesetup.ru/task-fill/1",
-    "http://localhost:3021/mini/me",
-    "https://evil.example/mini",
-    "//evil.example/x",
-    "/\\evil.example",
-    "javascript:alert(1)",
-    "/api/reports/pdf",
-    "/api",
-    "mini/today",
-    "https://wesetup.ru:bad",
-  ];
-  for (const href of cases) {
-    assert.equal(normalizeAppUrl(href, hosts), normalizePushUrl(href, hosts), String(href));
-  }
+test("ссылки из системы и уведомлений: та же функция, что у push (push-url.ts)", () => {
+  // Сами правила проверяет push-url.test.ts; здесь — что копии больше нет.
+  assert.equal(normalizeAppUrl, normalizePushUrl);
 });
 
 test("deepLinkPath: переход только когда адрес другой", () => {
@@ -193,4 +176,19 @@ test("кнопка «назад» Android", () => {
   assert.equal(backButtonAction({ isRoot: true, canGoBack: true }), "minimize");
   assert.equal(backButtonAction({ isRoot: false, canGoBack: true }), "back");
   assert.equal(backButtonAction({ isRoot: false, canGoBack: false }), "home");
+});
+
+test("строка состояния вне оболочки: значки под цвет верха страницы", () => {
+  // Тёмная шапка (QR-страницы, тёмная тема) — светлые значки.
+  assert.equal(statusBarStyleForBackground("rgb(11, 16, 36)"), "DARK");
+  assert.equal(statusBarStyleForBackground("rgba(18, 24, 53, 0.96)"), "DARK");
+  // Светлые страницы (удаление аккаунта, политика) — тёмные значки.
+  assert.equal(statusBarStyleForBackground("rgb(255, 255, 255)"), "LIGHT");
+  assert.equal(statusBarStyleForBackground("rgb(250, 251, 255)"), "LIGHT");
+  // Индиго бренда — тёмный фон.
+  assert.equal(statusBarStyleForBackground("rgb(85, 102, 246)"), "DARK");
+  // Прозрачный или непонятный цвет — решать нечего.
+  assert.equal(statusBarStyleForBackground("rgba(0, 0, 0, 0)"), null);
+  assert.equal(statusBarStyleForBackground("transparent"), null);
+  assert.equal(statusBarStyleForBackground(""), null);
 });

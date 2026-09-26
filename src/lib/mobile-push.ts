@@ -1,5 +1,7 @@
 import crypto from "node:crypto";
 
+import { hostsFromUrls, normalizePushUrl as normalizePushUrlPure } from "@/lib/push-url";
+
 /**
  * Push в приложение WeSetup через Firebase Cloud Messaging HTTP v1.
  *
@@ -115,57 +117,18 @@ async function accessToken(sa: ServiceAccount): Promise<string> {
 
 /** Свои адреса, кроме боевого домена: адрес этого сервера из окружения. */
 function ownHostsFromEnv(): string[] {
-  const hosts: string[] = [];
-  for (const raw of [process.env.NEXTAUTH_URL, process.env.MINI_APP_BASE_URL]) {
-    if (!raw) continue;
-    try {
-      hosts.push(new URL(raw).host.toLowerCase());
-    } catch {
-      /* битый адрес в окружении — просто не считаем его своим */
-    }
-  }
-  return hosts;
+  return hostsFromUrls([process.env.NEXTAUTH_URL, process.env.MINI_APP_BASE_URL]);
 }
 
 /**
- * Ссылка из уведомления → путь внутри сайта.
- *
- * Абсолютный адрес своего домена превращаем в путь; чужой домен,
- * `//host`, `javascript:`, обработчики `/api/*` и прочее непонятное
- * ведём на главный экран `/mini` — оттуда сайт сам разведёт человека по
- * правам. Экран, куда у человека нет прав, тоже разруливает сайт (он
- * уводит на главный), а не приложение.
+ * Ссылка из уведомления → путь внутри сайта (правила — в `push-url.ts`).
+ * На сервере своими считаем ещё и адреса из окружения (стенд, зеркало).
  */
 export function normalizePushUrl(
   href: string | null | undefined,
   extraHosts: string[] = ownHostsFromEnv()
 ): string {
-  const HOME = "/mini";
-  if (!href) return HOME;
-  let path = href.trim();
-  if (!path) return HOME;
-  if (/^https?:\/\//i.test(path)) {
-    let url: URL;
-    try {
-      url = new URL(path);
-    } catch {
-      return HOME;
-    }
-    const own = new Set([
-      "wesetup.ru",
-      "www.wesetup.ru",
-      ...extraHosts.map((host) => host.toLowerCase()),
-    ]);
-    if (!own.has(url.host.toLowerCase())) return HOME;
-    path = `${url.pathname}${url.search}${url.hash}`;
-  }
-  // Управляющие символы и обратный слэш: `/\evil.example` браузер
-  // понимает как `//evil.example`.
-  if (/[\u0000-\u001f\\]/.test(path)) return HOME;
-  if (!path.startsWith("/") || path.startsWith("//")) return HOME;
-  const pathname = path.split(/[?#]/)[0];
-  if (pathname === "/api" || pathname.startsWith("/api/")) return HOME;
-  return path;
+  return normalizePushUrlPure(href, extraHosts);
 }
 
 /**

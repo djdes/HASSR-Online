@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  appLoginHref,
   appStoreUrl,
   appUpdateRequirement,
   compareAppVersion,
@@ -62,4 +63,18 @@ test("ссылка на магазин по платформе", () => {
   assert.equal(appStoreUrl("ios", ""), "https://apps.apple.com/ru/search?term=WeSetup");
   assert.equal(appStoreUrl("ios", undefined), "https://apps.apple.com/ru/search?term=WeSetup");
   assert.equal(appStoreUrl("ios", "id64/../x"), "https://apps.apple.com/ru/search?term=WeSetup");
+});
+
+test("вход сайта в приложении ведёт на вход приложения с тем же возвратом", () => {
+  assert.equal(appLoginHref(null), "/mini/login");
+  assert.equal(appLoginHref(""), "/mini/login");
+  assert.equal(
+    appLoginHref("/room-fill/r1?token=room%3Ar1.1.sig"),
+    "/mini/login?next=%2Froom-fill%2Fr1%3Ftoken%3Droom%253Ar1.1.sig"
+  );
+  assert.equal(appLoginHref("/mini"), "/mini/login");
+  // Чужой адрес и API в возврат не попадают.
+  assert.equal(appLoginHref("//evil.example/x"), "/mini/login");
+  assert.equal(appLoginHref("https://evil.example"), "/mini/login");
+  assert.equal(appLoginHref("/api/auth/session"), "/mini/login");
 });

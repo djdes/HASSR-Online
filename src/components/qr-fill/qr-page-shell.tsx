@@ -14,6 +14,10 @@ export function QrPageShell({ orgName, title, children }: { orgName: string; tit
         style={{
           background:
             "radial-gradient(circle at 8% 0%, rgba(85,102,246,.55), transparent 55%), radial-gradient(circle at 100% 100%, rgba(122,92,255,.4), transparent 55%), #0b1024",
+          // В приложении WeSetup страница под вырезом экрана (viewport-fit=cover):
+          // тёмная шапка уходит под строку состояния, текст — ниже неё.
+          // В браузере и Telegram отступ 0.
+          paddingTop: "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))",
         }}
       >
         <div className="mx-auto flex max-w-[36rem] items-center gap-2.5 px-4 py-3.5">
@@ -28,7 +32,12 @@ export function QrPageShell({ orgName, title, children }: { orgName: string; tit
           </div>
         </div>
       </header>
-      <div className="mx-auto max-w-[36rem] px-4 pb-6 pt-3.5">{children}</div>
+      <div
+        className="mx-auto max-w-[36rem] px-4 pt-3.5"
+        style={{ paddingBottom: "calc(24px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))" }}
+      >
+        {children}
+      </div>
     </main>
   );
 }

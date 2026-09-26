@@ -79,7 +79,7 @@ export function JournalSelectionBar({
       <div
         className={
           bottom
-            ? "mx-auto w-full max-w-[1800px] px-4 pb-[max(12px,env(safe-area-inset-bottom))] md:px-8"
+            ? "mx-auto w-full max-w-[1800px] px-4 pb-[max(12px,var(--safe-area-inset-bottom,env(safe-area-inset-bottom)))] md:px-8"
             : JOURNAL_DOCUMENT_SELECTION_BAR_INNER_CLASS
         }
       >

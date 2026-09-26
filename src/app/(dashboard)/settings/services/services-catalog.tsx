@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { CheckCircle2, Lock, Sparkles } from "lucide-react";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useInsideMobileApp } from "@/lib/use-inside-mobile-app";
 import {
   formatServicePrice,
   isInstantPayable,
@@ -41,6 +42,9 @@ export function ServicesCatalog({
   contact: { name: string; phone: string; email: string };
 }) {
   const router = useRouter();
+  // В приложении WeSetup без слова «оплатить»: правила магазинов про
+  // покупки. Услуга всё равно оказывается вне приложения, списываются баллы.
+  const insideApp = useInsideMobileApp();
   const [active, setActive] = useState<PlatformServiceItem | null>(null);
   const [form, setForm] = useState(contact);
   const [comment, setComment] = useState("");
@@ -213,7 +217,13 @@ export function ServicesCatalog({
                 ]
         }
         confirmLabel={
-          sending ? "Отправляем…" : enoughBalance ? "Оплатить и заказать" : "Отправить заявку"
+          sending
+            ? "Отправляем…"
+            : enoughBalance
+              ? insideApp
+                ? "Заказать"
+                : "Оплатить и заказать"
+              : "Отправить заявку"
         }
         confirmDisabled={sending}
       >

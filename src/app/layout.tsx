@@ -5,6 +5,7 @@ import { ServiceWorkerRegister } from "@/components/layout/sw-register";
 import { BuildVersionWatcher } from "@/components/layout/build-version-watcher";
 import { YandexMetrika } from "@/components/layout/yandex-metrika";
 import { CookieConsent } from "@/components/public/cookie-consent";
+import { NativeStatusBar } from "@/app/mini/_components/native-status-bar";
 import "./globals.css";
 import "./app-theme.css";
 import "./public-theme.css";
@@ -161,6 +162,9 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <ScrollToTop />
+        {/* Приложение WeSetup: значки строки состояния под цвет шапки на
+            страницах вне оболочки (QR, удаление аккаунта, политика). */}
+        <NativeStatusBar />
         {children}
         <ServiceWorkerRegister />
         <BuildVersionWatcher />

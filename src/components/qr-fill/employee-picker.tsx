@@ -88,7 +88,7 @@ export function EmployeePicker({
                 />
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto px-4 pb-[max(env(safe-area-inset-bottom),16px)]">
+            <div className="flex-1 overflow-y-auto px-4 pb-[max(var(--safe-area-inset-bottom,env(safe-area-inset-bottom)),16px)]">
               {filtered.length === 0 ? (
                 <p className="py-6 text-center text-[16px] text-[#9b9fb3]">Никого не нашли. Попробуйте по-другому написать фамилию.</p>
               ) : (

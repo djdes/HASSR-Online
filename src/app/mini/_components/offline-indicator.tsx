@@ -16,7 +16,7 @@ import { notifyQueueSent, updateAppBadge } from "../_lib/app-badge";
 
 /** Отступ сверху: безопасная зона iPhone, высота шапки приложения и зазор. */
 const BELOW_TOP_BAR =
-  "calc(env(safe-area-inset-top, 0px) + var(--mini-topbar-h, 56px) + 8px)";
+  "calc(var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + var(--mini-topbar-h, 56px) + 8px)";
 
 /**
  * Полоса состояния отправки вверху экрана.

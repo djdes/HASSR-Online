@@ -130,7 +130,7 @@ export function FillRunner({
       <footer
         className="shrink-0 border-t border-[#ececf4] bg-white px-4 py-3"
         style={{
-          paddingBottom: `max(0.75rem, calc(env(safe-area-inset-bottom) + ${keyboardInset}px))`,
+          paddingBottom: `max(0.75rem, calc(var(--safe-area-inset-bottom, env(safe-area-inset-bottom)) + ${keyboardInset}px))`,
         }}
       >
         {rolling ? (

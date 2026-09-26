@@ -5,7 +5,8 @@ import { sniffImageMime } from "@/lib/ai-vision/temp-store";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { hasPaidPlan } from "@/lib/plan-limits.server";
-import { READING_PHOTO_TEXT, TARIFFS_HREF, isReadingMetric } from "@/lib/reading-photos";
+import { readingTariffsHref } from "@/lib/qr-reading-photo";
+import { READING_PHOTO_TEXT, isReadingMetric } from "@/lib/reading-photos";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getServerSession } from "@/lib/server-session";
 
@@ -17,9 +18,16 @@ const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
 type SessionUser = { role?: string | null; isRoot?: boolean | null };
 
-/** Ссылку на тарифы видит тот, кто может открыть страницу тарифов, — руководство. */
-function tariffsHrefFor(user: SessionUser): string | null {
-  return hasFullWorkspaceAccess({ role: user.role ?? "", isRoot: user.isRoot === true }) ? TARIFFS_HREF : null;
+/**
+ * Ссылку на тарифы видит тот, кто может открыть страницу тарифов, —
+ * руководство, и только не в приложении WeSetup (правила магазинов).
+ */
+function tariffsHrefFor(user: SessionUser, request: Request, autofill = false): string | null {
+  return readingTariffsHref({
+    autofill,
+    mayOpenTariffs: hasFullWorkspaceAccess({ role: user.role ?? "", isRoot: user.isRoot === true }),
+    userAgent: request.headers.get("user-agent"),
+  });
 }
 
 /**
@@ -27,13 +35,13 @@ function tariffsHrefFor(user: SessionUser): string | null {
  * `{ autofill, tariffsHref }`. Кнопка камеры в документе журнала узнаёт
  * тариф заранее, чтобы на бесплатном не просить снимок впустую.
  */
-export async function GET() {
+export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session) {
     return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
   }
   const autofill = await hasPaidPlan(getActiveOrgId(session));
-  return NextResponse.json({ autofill, tariffsHref: autofill ? null : tariffsHrefFor(session.user) });
+  return NextResponse.json({ autofill, tariffsHref: tariffsHrefFor(session.user, request, autofill) });
 }
 
 /**
@@ -65,7 +73,7 @@ export async function POST(request: Request) {
   if (!(await hasPaidPlan(orgId))) {
     console.info(`[reading-photo] site recognize refused: free plan org=${orgId} user=${session.user.id}`);
     return NextResponse.json(
-      { error: READING_PHOTO_TEXT.paidOnly, code: READING_PAID_ONLY_CODE, tariffsHref: tariffsHrefFor(session.user) },
+      { error: READING_PHOTO_TEXT.paidOnly, code: READING_PAID_ONLY_CODE, tariffsHref: tariffsHrefFor(session.user, request) },
       { status: 402 }
     );
   }

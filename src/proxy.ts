@@ -13,7 +13,7 @@ import {
   isMiniShellValue,
   miniShellSignInHref,
 } from "@/lib/mini-shell-cookie";
-import { isMobileAppUserAgent } from "@/lib/mobile-app";
+import { appLoginHref, isMobileAppUserAgent } from "@/lib/mobile-app";
 import {
   evaluatePartnerRequest,
   parsePartnerAccessClaim,
@@ -214,6 +214,21 @@ export async function proxy(req: NextRequest) {
     isMobileAppUserAgent(req.headers.get("user-agent"));
 
   if (!rawToken) {
+    // Приложение на входе сайта (сюда ведут QR-страницы в режиме «через
+    // вход»): у приложения свой вход — по телефону или почте, с тем же
+    // возвратом. Вход сайта — только по почте, сотрудник с телефоном там
+    // застревал.
+    if (pathname === "/login" && isMobileAppUserAgent(req.headers.get("user-agent"))) {
+      return NextResponse.redirect(
+        new URL(
+          appLoginHref(
+            req.nextUrl.searchParams.get("next") ??
+              req.nextUrl.searchParams.get("callbackUrl")
+          ),
+          req.url
+        )
+      );
+    }
     if (miniShell && isStaffRestrictedWebPath(pathname)) {
       return NextResponse.redirect(
         new URL(miniShellSignInHref(pathname), req.url)

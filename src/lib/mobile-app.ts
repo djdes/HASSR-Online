@@ -87,3 +87,19 @@ export function appStoreUrl(
   if (id && /^\d+$/.test(id)) return `https://apps.apple.com/app/id${id}`;
   return "https://apps.apple.com/ru/search?term=WeSetup";
 }
+
+/**
+ * Куда вести приложение со страницы входа сайта `/login`: у приложения свой
+ * вход (`/mini/login`, по телефону или почте), а вход сайта — только по
+ * почте, и сотрудник с телефоном на нём застревал. Сюда попадают, например,
+ * с QR-страниц в режиме «через вход». `next` — возврат после входа, только
+ * внутренний адрес страницы (не API и не чужой домен).
+ */
+export function appLoginHref(next: string | null | undefined): string {
+  if (!next || !next.startsWith("/") || next.startsWith("//") || next.startsWith("/\\")) {
+    return "/mini/login";
+  }
+  const path = next.split(/[?#]/, 1)[0];
+  if (path === "/mini" || path === "/api" || path.startsWith("/api/")) return "/mini/login";
+  return `/mini/login?next=${encodeURIComponent(next)}`;
+}

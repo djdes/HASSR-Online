@@ -9,6 +9,7 @@ import { ArrowRight, LogIn } from "lucide-react";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { getWebHomeHref } from "@/lib/role-access";
+import { isMobileAppRequest } from "@/lib/mobile-app-payments";
 import { PublicThemeBootstrap, PublicThemeScope } from "@/components/theme/site-theme";
 
 /**
@@ -30,6 +31,9 @@ export async function PublicHeader({
   activeSection?: "blog" | "journals-info" | "home";
 }) {
   const session = await getServerSession(authOptions).catch(() => null);
+  // В приложении WeSetup нет оплаты и ссылок к ней (правила магазинов) —
+  // «Тарифы» не показываем.
+  const inApp = await isMobileAppRequest();
   const link = (section: string, label: string, href: string) => (
     <Link
       href={href}
@@ -45,7 +49,12 @@ export async function PublicHeader({
   );
 
   return (
-    <div className="public-header sticky top-0 z-40 border-b border-[#ececf4] bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+    <div
+      className="public-header sticky top-0 z-40 border-b border-[#ececf4] bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80"
+      // В приложении страница под вырезом экрана (viewport-fit=cover): шапка
+      // уходит под строку состояния, кнопки — ниже неё. На сайте отступ 0.
+      style={{ paddingTop: "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))" }}
+    >
       {/* Ночная тема публичных страниц — см. usePublicAutoTheme. Шапка
           стоит первой на каждой странице, поэтому скрипт успевает до отрисовки. */}
       <PublicThemeBootstrap />
@@ -64,7 +73,7 @@ export async function PublicHeader({
               isRoot={session.user.isRoot === true}
             />
           ) : (
-            <PublicHeaderAnon />
+            <PublicHeaderAnon showPricing={!inApp} />
           )}
         </div>
       </nav>
@@ -72,15 +81,17 @@ export async function PublicHeader({
   );
 }
 
-function PublicHeaderAnon() {
+function PublicHeaderAnon({ showPricing }: { showPricing: boolean }) {
   return (
     <>
-      <Link
-        href="/pricing"
-        className="text-[14px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024]"
-      >
-        Тарифы
-      </Link>
+      {showPricing ? (
+        <Link
+          href="/pricing"
+          className="text-[14px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024]"
+        >
+          Тарифы
+        </Link>
+      ) : null}
       <Link
         href="/login"
         className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-3.5 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] sm:px-4"
@@ -134,7 +145,10 @@ function getInitials(name: string): string {
     .slice(0, 2);
 }
 
-export function PublicFooter() {
+export async function PublicFooter() {
+  // В приложении WeSetup: без «Тарифов» (оплаты в приложении нет) и без
+  // анонса «Приложение скоро» — человек уже в нём.
+  const inApp = await isMobileAppRequest();
   return (
     <footer className="public-footer border-t border-[#ececf4]">
       {/* Пузырь поддержки живёт в подвале, а не в корневом layout'е:
@@ -205,7 +219,7 @@ export function PublicFooter() {
             </Link>
           </div>
 
-          <AppStoresTeaser />
+          {inApp ? null : <AppStoresTeaser />}
         </div>
 
         <div className="flex flex-col flex-wrap text-[13px] text-[#6f7282] md:items-end">
@@ -223,7 +237,9 @@ export function PublicFooter() {
           <Link href="/blanki" className="py-2.5 transition-colors hover:text-[#0b1024]">Бланки</Link>
           <Link href="/prikazy" className="py-2.5 transition-colors hover:text-[#0b1024]">Приказы</Link>
           <Link href="/uslugi" className="py-2.5 transition-colors hover:text-[#0b1024]">Услуги</Link>
-          <Link href="/pricing" className="py-2.5 transition-colors hover:text-[#0b1024]">Тарифы</Link>
+          {inApp ? null : (
+            <Link href="/pricing" className="py-2.5 transition-colors hover:text-[#0b1024]">Тарифы</Link>
+          )}
           <Link href="/login" className="py-2.5 transition-colors hover:text-[#0b1024]">Войти</Link>
           <Link href="/register" className="py-2.5 transition-colors hover:text-[#0b1024]">Регистрация</Link>
           <Link href="/partners" className="py-2.5 transition-colors hover:text-[#0b1024]">Партнёрам</Link>

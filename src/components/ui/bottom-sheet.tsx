@@ -94,7 +94,7 @@ export function BottomSheet({
               {footer}
             </div>
           ) : (
-            <div className="shrink-0 pb-[env(safe-area-inset-bottom)]" />
+            <div className="shrink-0 pb-[var(--safe-area-inset-bottom,env(safe-area-inset-bottom))]" />
           )}
         </Drawer.Content>
       </Drawer.Portal>
