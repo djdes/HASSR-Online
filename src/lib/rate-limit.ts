@@ -120,6 +120,16 @@ export const miniAttachmentRateLimiter = createRateLimiter({
 });
 
 /**
+ * Фото к замеру с QR-наклейки (`/api/qr-fill/reading-photo`): 60 снимков
+ * в сутки на сотрудника — обход холодильников два раза в день с запасом,
+ * а утёкшая ссылка наклейки не забьёт диск.
+ */
+export const readingPhotoRateLimiter = createRateLimiter({
+  tokensPerInterval: 60,
+  intervalMs: 24 * 60 * 60 * 1000,
+});
+
+/**
  * Вложения поддержки (чат с оператором + обратная связь). Файлы до 50 МБ,
  * поэтому лимит жёстче журнальных фото: 30 загрузок в час на отправителя
  * (userId или guest-id) — живому человеку хватает с запасом, disk-fill

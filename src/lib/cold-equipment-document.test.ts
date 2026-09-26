@@ -183,3 +183,34 @@ test("«обсл»/«рем»: хранение, слоты, автозапол�
   const cleared = setColdEquipmentSlotStatus(marked, firstKey, null);
   assert.equal(cleared.statuses, undefined);
 });
+
+test("фото замера: хранится под ключом замера, переживает normalize/sync/merge, чужие ссылки отбрасываются", async () => {
+  const {
+    normalizeColdEquipmentEntryData,
+    setColdEquipmentSlotPhoto,
+    mergeColdEquipmentEntryData,
+    buildColdEquipmentAutoFillEntryData,
+  } = await import("@/lib/cold-equipment-document");
+  const photo = `/uploads/readings/${"a1".repeat(16)}.jpg`;
+  const retake = `/uploads/readings/${"b2".repeat(16)}.png`;
+  const base = createEmptyColdEquipmentEntryData(config);
+
+  const withPhoto = setColdEquipmentSlotPhoto({ ...base, temperatures: { ...base.temperatures, "fridge#2": 4.5 } }, "fridge#2", photo);
+  assert.deepEqual(withPhoto.readingPhotos, { "fridge#2": photo });
+  // Новое фото заменяет прежнее, запись без снимка прежний не стирает.
+  assert.deepEqual(setColdEquipmentSlotPhoto(withPhoto, "fridge#2", retake).readingPhotos, { "fridge#2": retake });
+  assert.equal(setColdEquipmentSlotPhoto(withPhoto, "fridge#2", null), withPhoto);
+
+  const roundTrip = normalizeColdEquipmentEntryData(
+    JSON.parse(JSON.stringify({ ...withPhoto, readingPhotos: { ...withPhoto.readingPhotos, freezer: "javascript:alert(1)" } }))
+  );
+  assert.deepEqual(roundTrip.readingPhotos, { "fridge#2": photo });
+  assert.equal("readingPhotos" in normalizeColdEquipmentEntryData({ temperatures: {} }), false);
+  assert.deepEqual(syncColdEquipmentEntryDataWithConfig(roundTrip, config).readingPhotos, { "fridge#2": photo });
+
+  // Автозаполнение дописывает пустые замеры, фото остаётся только у своего.
+  const generated = buildColdEquipmentAutoFillEntryData({ config, dateKey: "2026-09-26", responsibleTitle: null });
+  const merged = mergeColdEquipmentEntryData(roundTrip, { ...generated, readingPhotos: { freezer: retake } });
+  assert.deepEqual(merged.readingPhotos, { "fridge#2": photo });
+  assert.equal(merged.temperatures["fridge#2"], 4.5);
+});

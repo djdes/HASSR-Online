@@ -17,8 +17,11 @@ import {
   findClimateRowForRoom,
   mergeClimateCorrections,
   mergeClimateMeasurement,
+  mergeClimateReadingPhoto,
   pickNearestControlTime,
 } from "@/lib/climate-fill";
+import { readingPhotoExists } from "@/lib/reading-photo-store";
+import { isReadingPhotoUrl } from "@/lib/reading-photos";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { ensureQrPeriodDocuments, qrRolloverMessage } from "@/lib/journal-qr-rollover";
 import { normalizeQrFillMode } from "@/lib/qr-fill-actor";
@@ -63,6 +66,12 @@ const bodySchema = z
      * мало: в журнале должно быть видно и причину, и действие.
      */
     correction: z.string().trim().max(300).optional(),
+    /**
+     * Фото к замеру температуры (кнопка «Фото», 2026-09-26): ссылка из
+     * `/api/qr-fill/reading-photo`. Ложится в `readingPhotos` замера и
+     * видна в бланке рядом со значением.
+     */
+    photo: z.string().max(200).optional(),
   })
   .refine((body) => typeof body.temperature === "number" || typeof body.humidity === "number", {
     message: "Введите температуру или влажность",
@@ -95,6 +104,15 @@ export async function POST(
         code: verify.reason,
       },
       { status: 401 }
+    );
+  }
+
+  // Фото — к температуре и только наша ссылка на снимок, который есть в каталоге.
+  const photo = typeof body.temperature === "number" && body.photo ? body.photo : null;
+  if (photo && !(isReadingPhotoUrl(photo) && (await readingPhotoExists(photo)))) {
+    return NextResponse.json(
+      { error: "Фото не найдено — снимите ещё раз или сохраните замер без фото" },
+      { status: 400 }
     );
   }
 
@@ -241,6 +259,10 @@ export async function POST(
         : {}),
     });
   }
+  if (photo && row.temperature.enabled) {
+    // Снимок дисплея держится за свой замер — ключ тот же, что у комментария.
+    data = mergeClimateReadingPhoto(data, climateCorrectionKey(row.id, slot, "temperature"), photo);
+  }
   await db.journalDocumentEntry.upsert({
     where: { documentId_employeeId_date: { documentId: document.id, employeeId: employee.id, date: day } },
     create: { documentId: document.id, employeeId: employee.id, date: day, data: data as Prisma.InputJsonValue },
@@ -262,6 +284,7 @@ export async function POST(
     });
   }
 
+  const photoAttached = Boolean(photo && row.temperature.enabled);
   await recordQrFillAudit({
     request,
     organizationId,
@@ -275,7 +298,11 @@ export async function POST(
     temperature: body.temperature,
     humidity: body.humidity,
     outOfRange: temperatureOutOfRange || humidityOutOfRange,
+    ...(photoAttached ? { values: { photo } } : {}),
   });
+  if (photoAttached) {
+    console.info(`[reading-photo] attached room=${room.id} doc=${document.id} slot=${slot} org=${organizationId} user=${employee.id}`);
+  }
 
   return NextResponse.json({
     ok: true,
@@ -284,5 +311,6 @@ export async function POST(
     slot,
     temperatureOutOfRange,
     humidityOutOfRange,
+    ...(photoAttached ? { photoAttached: true } : {}),
   });
 }

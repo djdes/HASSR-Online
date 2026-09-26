@@ -10,6 +10,8 @@ import { QrPageShell } from "@/components/qr-fill/qr-page-shell";
 import { WhoRow } from "@/components/qr-fill/who-row";
 import { EmployeePicker } from "@/components/qr-fill/employee-picker";
 import { ReadingField } from "@/components/qr-fill/reading-field";
+import { ReadingPhoto } from "@/components/qr-fill/reading-photo";
+import { READING_PHOTO_TEXT, isReadingPhotoUrl } from "@/lib/reading-photos";
 import { NextQrButton } from "@/components/qr-fill/next-qr-button";
 import { QrPassNote, QrPinOk, QrPinStep, QrPinUiStyles, QrRememberToggle, forgetQrPass, rememberQrEmployee } from "@/components/qr-fill/qr-pin-step";
 import { draftKeyFor, useFormDraft } from "@/components/qr-fill/use-form-draft";
@@ -40,6 +42,8 @@ type Props = {
   rememberedEmployeeId?: string | null;
   /** Чей пропуск после PIN лежит в cookie организации (30 минут) — ему PIN не спрашиваем. */
   passEmployeeId?: string | null;
+  /** Платный тариф: показание со снимка («Фото» у температуры) заполняется само. */
+  photoAutofill?: boolean;
 };
 
 const LS_EMPLOYEE_KEY = "wesetup.room-fill.employeeId";
@@ -61,7 +65,7 @@ function isOutside(value: number | null, metric: Metric): boolean {
  * Три шага, как на плакате: выбрать себя → ввести показания → «Сохранить».
  * Имя запоминается на телефоне, со второго раза остаётся ввести числа.
  */
-export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot, employees, mode = "public", sessionEmployee = null, todayValues = null, stamp = null, journalTitle, rememberedEmployeeId = null, passEmployeeId = null }: Props) {
+export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot, employees, mode = "public", sessionEmployee = null, todayValues = null, stamp = null, journalTitle, rememberedEmployeeId = null, passEmployeeId = null, photoAutofill = false }: Props) {
   const [employeeId, setEmployeeId] = useState("");
   // Кого восстановили из памяти при входе: «Запомнили с прошлого раза» — только ему
   // и только пока выбор не меняли руками.
@@ -98,6 +102,10 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
     typeof todayValues?.temperature === "number" ? String(todayValues.temperature) : norms.temperature.max !== null && norms.temperature.max < 0 ? "-" : ""
   );
   const [humidity, setHumidity] = useState(typeof todayValues?.humidity === "number" ? String(todayValues.humidity) : "");
+  // «Фото» у температуры: снимок дисплея прикрепляется к замеру (всем),
+  // на платном тарифе показание со снимка подставляется в поле.
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [recognizedTemperature, setRecognizedTemperature] = useState<string | null>(null);
   // «Что сделали» — обязательно, когда замер вышел за норму.
   const [correction, setCorrection] = useState("");
   // Время в подписи идёт по часам телефона: страницу могут держать открытой долго.
@@ -113,15 +121,16 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
   const stampLabel = stamp ? `${stamp.date} ${stampTime}` : "";
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState<{ slot: string; outOfRange: boolean } | null>(null);
+  const [saved, setSaved] = useState<{ slot: string; outOfRange: boolean; photoAttached: boolean } | null>(null);
   // Черновик: обновил страницу или пропал интернет — введённое на месте; после записи стирается.
   const draft = useFormDraft(
     draftKeyFor(`room-fill:${room.id}`, stamp?.date),
-    { temperature, humidity, correction },
+    { temperature, humidity, correction, photo: photo ?? "" },
     (saved) => {
       if (typeof saved.temperature === "string") setTemperature(saved.temperature);
       if (typeof saved.humidity === "string") setHumidity(saved.humidity);
       if (typeof saved.correction === "string") setCorrection(saved.correction);
+      if (isReadingPhotoUrl(saved.photo)) setPhoto(saved.photo);
     },
     Boolean(saved)
   );
@@ -201,6 +210,8 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
           ...(norms.humidity.enabled && humidityValue !== null && !humidityInvalid ? { humidity: humidityValue } : {}),
           // Комментарий — только к отклонению: вернули в норму — не отправляем.
           ...(needsCorrection && correction.trim() ? { correction: correction.trim() } : {}),
+          // Снимок дисплея — к температуре.
+          ...(norms.temperature.enabled && temperatureValue !== null && photo ? { photo } : {}),
           ...(pass ? { pass } : {}),
         }),
       });
@@ -215,6 +226,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
       setSaved({
         slot: typeof data?.slot === "string" ? data.slot : nextSlot ?? "",
         outOfRange: Boolean(data?.temperatureOutOfRange || data?.humidityOutOfRange),
+        photoAttached: data?.photoAttached === true,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Не удалось сохранить");
@@ -269,6 +281,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
             <p className="mt-2 text-[14px] leading-relaxed text-[#6f7282]">
               Записано в бланк за сегодня{saved.slot ? `, ${saved.slot}` : ""}
               {rememberedName ? ` — на имя ${rememberedName}` : ""}.
+              {saved.photoAttached ? " Фото дисплея — в бланке рядом со значением." : ""}
             </p>
             {saved.outOfRange ? (
               <p className="mt-3 rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-3 text-[13px] text-[#a13a32]">
@@ -287,6 +300,8 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                 setTemperature(norms.temperature.max !== null && norms.temperature.max < 0 ? "-" : "");
                 setHumidity("");
                 setCorrection("");
+                setPhoto(null);
+                setRecognizedTemperature(null);
                 setError(null);
               }}
               className="mt-3 h-12 w-full rounded-2xl border border-[#dcdfed] bg-white px-5 text-[15px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
@@ -345,7 +360,37 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                   </p>
                 ) : null}
                 {norms.temperature.enabled ? (
-                  <ReadingField id="room-fill-temperature" label="Температура" unit="°C" stamp={stampLabel} value={temperature} onChange={setTemperature} min={norms.temperature.min} max={norms.temperature.max} required />
+                  <ReadingField
+                    id="room-fill-temperature"
+                    label="Температура"
+                    unit="°C"
+                    stamp={stampLabel}
+                    value={temperature}
+                    onChange={setTemperature}
+                    min={norms.temperature.min}
+                    max={norms.temperature.max}
+                    required
+                    // Число подставлено со снимка и не правилось — пусть человек сверит.
+                    mark={recognizedTemperature !== null && temperature.trim() === recognizedTemperature ? READING_PHOTO_TEXT.checkMark : null}
+                    footer={
+                      <ReadingPhoto
+                        kind="room"
+                        objectId={room.id}
+                        token={token}
+                        employeeId={employeeId}
+                        pass={pass}
+                        autofill={photoAutofill}
+                        photoUrl={photo}
+                        onPhotoChange={setPhoto}
+                        value={temperature}
+                        onRecognized={(text) => {
+                          setTemperature(text);
+                          setRecognizedTemperature(text);
+                        }}
+                        disabledReason={employeeId ? null : "Сначала выберите своё имя"}
+                      />
+                    }
+                  />
                 ) : null}
 
                 {norms.humidity.enabled ? (

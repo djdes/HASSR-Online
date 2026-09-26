@@ -110,6 +110,18 @@ describe("cold-equipment adapter: «Обслуживание»/«Ремонт» 
     assert.deepEqual(replaced.statuses, { b: "repair" });
   });
 
+  it("фото замера с наклейки общая форма не стирает", () => {
+    const photo = `/uploads/readings/${"a1".repeat(16)}.jpg`;
+    const data = mergeColdEquipmentFormValues({
+      config,
+      prior: { ...empty, temperatures: { a: 4 }, readingPhotos: { a: photo } },
+      values: { t_a: 4.5, t_b: -19 },
+    });
+    assert.equal(data.temperatures.a, 4.5);
+    assert.deepEqual(data.readingPhotos, { a: photo });
+    assert.equal("readingPhotos" in mergeColdEquipmentFormValues({ config, prior: empty, values: { t_a: 3 } }), false);
+  });
+
   it("комментарий к прежнему отклонению при отметке не пропадает", () => {
     const data = mergeColdEquipmentFormValues({
       config,

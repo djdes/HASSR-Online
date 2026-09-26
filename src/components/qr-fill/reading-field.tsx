@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
+import { Camera } from "lucide-react";
 import { QuickValues } from "@/components/qr-fill/quick-values";
 import { stepNumber } from "@/lib/quick-values";
 
@@ -8,7 +9,8 @@ import { stepNumber } from "@/lib/quick-values";
  * Поле показания в том же виде, что карточка в HTML-форме холодильников:
  * подпись внутри поля, «−»/«+» по краям, пилюля ✓/!, строка нормы/статуса и
  * кнопки быстрого ввода под полем. Без иконок — одинаково для температуры,
- * влажности и любого другого показателя.
+ * влажности и любого другого показателя. Под полем — место для кнопки
+ * «Фото» (`footer`), у значения — пометка «с фото — проверьте» (`mark`).
  */
 export function ReadingField({
   id,
@@ -21,6 +23,8 @@ export function ReadingField({
   max,
   required = false,
   invalidText = null,
+  mark = null,
+  footer = null,
 }: {
   id: string;
   label: string;
@@ -33,6 +37,10 @@ export function ReadingField({
   required?: boolean;
   /** Своя ошибка формата (например, влажность вне 0…100). */
   invalidText?: string | null;
+  /** Пометка у значения — «с фото — проверьте», когда число подставлено со снимка. */
+  mark?: string | null;
+  /** Под полем, после быстрого ввода: кнопка «Фото» и прикреплённый снимок. */
+  footer?: ReactNode;
 }) {
   const lo = typeof min === "number" && typeof max === "number" ? Math.min(min, max) : min ?? null;
   const hi = typeof min === "number" && typeof max === "number" ? Math.max(min, max) : max ?? null;
@@ -95,10 +103,23 @@ export function ReadingField({
           +
         </button>
       </div>
-      {status ? (
+      {mark ? (
+        <div className="ml-[3px] mt-1 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+          {status ? (
+            <p className={`text-[14.5px] leading-[1.3] ${tone === "bad" ? "font-medium text-[#7a4a00]" : tone === "good" ? "text-[#116b2a]" : "text-[#9b9fb3]"}`}>{status}</p>
+          ) : (
+            <span />
+          )}
+          <span className="inline-flex items-center gap-1 rounded-full bg-[#eef1ff] px-2.5 py-1 text-[12.5px] font-medium text-[#3848c7]" data-testid="reading-mark">
+            <Camera className="size-3.5" />
+            {mark}
+          </span>
+        </div>
+      ) : status ? (
         <p className={`ml-[3px] mt-1 text-[14.5px] leading-[1.3] ${tone === "bad" ? "font-medium text-[#7a4a00]" : tone === "good" ? "text-[#116b2a]" : "text-[#9b9fb3]"}`}>{status}</p>
       ) : null}
       <QuickValues min={lo} max={hi} value={value} onPick={onChange} label={`Быстрый ввод: ${label.toLowerCase()}`} />
+      {footer}
     </div>
   );
 }

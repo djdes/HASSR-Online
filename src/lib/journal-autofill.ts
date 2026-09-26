@@ -148,7 +148,8 @@ function isRawEntryDataEmpty(data: unknown): boolean {
 /**
  * Ключи, которые НЕ переносятся copy-forward'ом: повторяющийся каждый
  * день текст инцидента/корректировки выглядит абсурдно, а сид-маркер —
- * служебный.
+ * служебный. Фото замера — доказательство своего дня: вчерашний снимок
+ * рядом с сегодняшним числом был бы подлогом.
  */
 export const COPY_FORWARD_SKIP_KEYS: readonly string[] = [
   "corrections",
@@ -157,6 +158,7 @@ export const COPY_FORWARD_SKIP_KEYS: readonly string[] = [
   "note",
   "damageInfo",
   "_autoSeeded",
+  "readingPhotos",
 ];
 
 /** Детерминированный хеш строки → [0, 1). FNV-1a 32-bit. */

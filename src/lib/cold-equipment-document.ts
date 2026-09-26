@@ -5,6 +5,7 @@ import {
   isWeekend,
   toDateKey,
 } from "@/lib/hygiene-document";
+import { normalizeReadingPhotos, withReadingPhoto } from "@/lib/reading-photos";
 
 export const COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE = "cold_equipment_control";
 export const COLD_EQUIPMENT_DOCUMENT_TITLE =
@@ -205,6 +206,12 @@ export type ColdEquipmentEntryData = {
    * так что отчёты и автозаполнение, читающие только числа, работают как раньше.
    */
   statuses?: Record<string, ColdEquipmentStatus>;
+  /**
+   * Фото замера (2026-09-26): снимок дисплея из QR-формы — ссылка
+   * `/uploads/readings/…` под тем же ключом замера, что в `temperatures`.
+   * Показывается в документе рядом со значением. См. `reading-photos.ts`.
+   */
+  readingPhotos?: Record<string, string>;
 };
 
 /** Отметка вместо температуры: обслуживание или ремонт. */
@@ -604,6 +611,7 @@ export function normalizeColdEquipmentEntryData(
   const statuses = normalizeStatuses(record.statuses);
   // Отметка сильнее числа: у замера «обсл»/«рем» температуры нет.
   if (statuses) for (const key of Object.keys(statuses)) temperatures[key] = null;
+  const readingPhotos = normalizeReadingPhotos(record.readingPhotos);
 
   return {
     responsibleTitle:
@@ -611,7 +619,23 @@ export function normalizeColdEquipmentEntryData(
     temperatures,
     ...(corrections ? { corrections } : {}),
     ...(statuses ? { statuses } : {}),
+    ...(readingPhotos ? { readingPhotos } : {}),
   };
+}
+
+/**
+ * Фото к замеру (снимок дисплея из QR-формы). Новое фото заменяет прежнее;
+ * без ссылки запись не меняется — повторное сохранение без снимка не
+ * стирает доказательство.
+ */
+export function setColdEquipmentSlotPhoto(
+  data: ColdEquipmentEntryData,
+  slotKey: string,
+  url: string | null | undefined
+): ColdEquipmentEntryData {
+  const readingPhotos = withReadingPhoto(data.readingPhotos, slotKey, url);
+  if (readingPhotos === data.readingPhotos) return data;
+  return { ...data, ...(readingPhotos ? { readingPhotos } : {}) };
 }
 
 function normalizeStatuses(value: unknown): Record<string, ColdEquipmentStatus> | undefined {
@@ -702,6 +726,7 @@ export function syncColdEquipmentEntryDataWithConfig(
   });
   if (entryData.corrections) next.corrections = entryData.corrections;
   if (entryData.statuses) next.statuses = entryData.statuses;
+  if (entryData.readingPhotos) next.readingPhotos = entryData.readingPhotos;
 
   return next;
 }
@@ -769,6 +794,8 @@ export function mergeColdEquipmentEntryData(
   });
   if (currentData.corrections) next.corrections = currentData.corrections;
   if (currentData.statuses) next.statuses = currentData.statuses;
+  // Фото — только к своим замерам: из сгенерированных данных не берём.
+  if (currentData.readingPhotos) next.readingPhotos = currentData.readingPhotos;
 
   return next;
 }

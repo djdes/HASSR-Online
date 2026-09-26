@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 
-import { buildVisionInstruction } from "@/lib/ai-vision/instructions";
-import { parseReadingReply } from "@/lib/ai-vision/parse";
-import { runVisionJob } from "@/lib/ai-vision/run";
+import { READING_PAID_ONLY_CODE, recognizeReading } from "@/lib/ai-vision/reading";
 import { sniffImageMime } from "@/lib/ai-vision/temp-store";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
+import { hasPaidPlan } from "@/lib/plan-limits.server";
+import { READING_PHOTO_TEXT, TARIFFS_HREF, isReadingMetric } from "@/lib/reading-photos";
+import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getServerSession } from "@/lib/server-session";
 
 export const runtime = "nodejs";
@@ -14,11 +15,26 @@ export const maxDuration = 120;
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
-const MESSAGES = {
-  not_configured: "Распознавание показаний пока не подключено — введите значение вручную.",
-  timeout: "Не успели распознать показание — попробуйте ещё раз или введите значение вручную.",
-  failed: "Не получилось распознать показание — попробуйте ещё раз или введите значение вручную.",
-};
+type SessionUser = { role?: string | null; isRoot?: boolean | null };
+
+/** Ссылку на тарифы видит тот, кто может открыть страницу тарифов, — руководство. */
+function tariffsHrefFor(user: SessionUser): string | null {
+  return hasFullWorkspaceAccess({ role: user.role ?? "", isRoot: user.isRoot === true }) ? TARIFFS_HREF : null;
+}
+
+/**
+ * GET /api/ocr/reading — доступен ли автоввод с фото организации:
+ * `{ autofill, tariffsHref }`. Кнопка камеры в документе журнала узнаёт
+ * тариф заранее, чтобы на бесплатном не просить снимок впустую.
+ */
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
+  }
+  const autofill = await hasPaidPlan(getActiveOrgId(session));
+  return NextResponse.json({ autofill, tariffsHref: autofill ? null : tariffsHrefFor(session.user) });
+}
 
 /**
  * POST /api/ocr/reading — распознать ОДНО число с дисплея прибора
@@ -30,22 +46,37 @@ const MESSAGES = {
  * счётчика УФ-установки. Распознанное значение подставляется в поле, но
  * сохраняет его человек — подтверждение остаётся за ним.
  *
- * Контракт прежний: multipart `photo` → `{ value, unit, confidence }`,
- * ошибка — `{ error }`. Раньше маршрут ходил в Anthropic API с ключом сайта
- * (на проде ключа нет); теперь — задание `wesetup_vision_extract`
- * диспетчеру со ссылкой на фото (подпись + 15 минут), инструкция вида
- * `reading`, лимиты общие с «С фото». См. `src/lib/ai-vision/run.ts`.
+ * Автоввод с фото — только на платном тарифе (2026-09-26): бесплатному —
+ * 402 `{ error: "Автоввод с фото — на платном тарифе", code: "paid_only" }`,
+ * проверка на сервере, не только в интерфейсе.
+ *
+ * Контракт прежний: multipart `photo` (+ необязательный `metric`:
+ * temperature | humidity — какое число нужно) → `{ value, unit, confidence }`,
+ * ошибка — `{ error }`. Задание `wesetup_vision_extract` диспетчеру со
+ * ссылкой на фото (подпись + 15 минут), инструкция вида `reading`, лимиты
+ * общие с «С фото». См. `src/lib/ai-vision/reading.ts`.
  */
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session) {
     return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
   }
+  const orgId = getActiveOrgId(session);
+  if (!(await hasPaidPlan(orgId))) {
+    console.info(`[reading-photo] site recognize refused: free plan org=${orgId} user=${session.user.id}`);
+    return NextResponse.json(
+      { error: READING_PHOTO_TEXT.paidOnly, code: READING_PAID_ONLY_CODE, tariffsHref: tariffsHrefFor(session.user) },
+      { status: 402 }
+    );
+  }
 
   let file: File | null = null;
+  let metricRaw: FormDataEntryValue | null = null;
   try {
-    const value = (await request.formData()).get("photo");
+    const form = await request.formData();
+    const value = form.get("photo");
     file = value && typeof value === "object" ? (value as File) : null;
+    metricRaw = form.get("metric");
   } catch {
     file = null;
   }
@@ -60,24 +91,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Поддерживаются только JPEG, PNG или WEBP" }, { status: 415 });
   }
 
-  const outcome = await runVisionJob({
-    purpose: "reading",
-    instruction: buildVisionInstruction("reading"),
-    images: [bytes],
-    orgId: getActiveOrgId(session),
+  const outcome = await recognizeReading({
+    bytes,
+    orgId,
     user: { id: session.user.id, name: session.user.name },
-    messages: MESSAGES,
-    parse: (text) => {
-      const result = parseReadingReply(text);
-      if (!result) console.warn(`[ai-vision] reading reply without JSON: ${text.slice(0, 160)}`);
-      return { value: result, rows: result && result.value !== null ? 1 : 0 };
-    },
+    metric: isReadingMetric(metricRaw) ? metricRaw : null,
   });
   if (!outcome.ok) {
     return NextResponse.json({ error: outcome.error }, { status: outcome.status });
   }
-  if (!outcome.value) {
-    return NextResponse.json({ error: "Не удалось разобрать ответ. Попробуйте другое фото." }, { status: 422 });
-  }
-  return NextResponse.json(outcome.value);
+  return NextResponse.json(outcome.result);
 }

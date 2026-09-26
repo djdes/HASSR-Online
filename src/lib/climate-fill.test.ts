@@ -93,3 +93,22 @@ test("комментарий к отклонению: пишется в correcti
   const fresh = mergeClimateCorrections(null, { [key]: "Вызвал мастера" }) as typeof existing;
   assert.deepEqual(fresh.corrections, { [key]: "Вызвал мастера" });
 });
+
+test("фото замера склада: ключ как у комментария, новое заменяет, без ссылки ничего не меняется", async () => {
+  const { mergeClimateReadingPhoto, mergeClimateMeasurement } = await import("@/lib/climate-fill");
+  const { climateCorrectionKey } = await import("@/lib/climate-document");
+  const photo = `/uploads/readings/${"a1".repeat(16)}.jpg`;
+  const retake = `/uploads/readings/${"b2".repeat(16)}.webp`;
+  const key = climateCorrectionKey("room-1", "10:00", "temperature");
+  const measured = mergeClimateMeasurement({ responsibleTitle: "Кладовщик", corrections: { x: "y" } }, "room-1", "10:00", { temperature: 18 });
+  const withPhoto = mergeClimateReadingPhoto(measured, key, photo);
+  assert.deepEqual(withPhoto.readingPhotos, { [key]: photo });
+  assert.equal(withPhoto.responsibleTitle, "Кладовщик");
+  assert.deepEqual(withPhoto.corrections, { x: "y" });
+  assert.deepEqual((withPhoto.measurements as Record<string, unknown>)["room-1"], { "10:00": { temperature: 18, humidity: null } });
+  const other = mergeClimateReadingPhoto(withPhoto, climateCorrectionKey("room-2", "10:00", "temperature"), retake);
+  assert.deepEqual(Object.keys(other.readingPhotos as object).sort(), [key, "room-2:10:00:temperature"].sort());
+  assert.deepEqual(mergeClimateReadingPhoto(withPhoto, key, retake).readingPhotos, { [key]: retake });
+  assert.equal(mergeClimateReadingPhoto(withPhoto, key, null), withPhoto);
+  assert.equal(mergeClimateReadingPhoto(withPhoto, key, "https://evil.example/a.jpg"), withPhoto);
+});

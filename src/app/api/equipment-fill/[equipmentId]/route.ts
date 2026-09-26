@@ -13,10 +13,13 @@ import {
   COLD_EQUIPMENT_STATUS_SHORT,
   pickColdReadingSlotForWrite,
   setColdEquipmentCorrection,
+  setColdEquipmentSlotPhoto,
   setColdEquipmentSlotStatus,
   type ColdEquipmentEntryData,
   type ColdEquipmentStatus,
 } from "@/lib/cold-equipment-document";
+import { readingPhotoExists } from "@/lib/reading-photo-store";
+import { isReadingPhotoUrl } from "@/lib/reading-photos";
 import {
   climateCorrectionKey,
   isClimateValueOutOfRange,
@@ -80,6 +83,12 @@ const bodySchema = z.object({
    * мало: в журнале должно быть видно и причину, и действие.
    */
   correction: z.string().trim().max(300).optional(),
+  /**
+   * Фото к замеру (кнопка «Фото» у температуры, 2026-09-26): ссылка из
+   * `/api/qr-fill/reading-photo`. Ложится в `readingPhotos` записанного
+   * замера и видна в документе журнала рядом со значением.
+   */
+  photo: z.string().max(200).optional(),
 });
 
 function toPrismaJsonValue(
@@ -122,6 +131,16 @@ export async function POST(
     return NextResponse.json(
       { error: "Неверная QR-наклейка" },
       { status: 401 }
+    );
+  }
+
+  // Фото — только к числу (у «обсл»/«рем» поля температуры нет) и только
+  // наша ссылка на снимок, который действительно лежит в каталоге.
+  const photo = temperature !== null && parsed.photo ? parsed.photo : null;
+  if (photo && !(isReadingPhotoUrl(photo) && (await readingPhotoExists(photo)))) {
+    return NextResponse.json(
+      { error: "Фото не найдено — снимите ещё раз или сохраните замер без фото" },
+      { status: 400 }
     );
   }
 
@@ -266,12 +285,15 @@ export async function POST(
       temperatures,
       ...(current.corrections ? { corrections: current.corrections } : {}),
       ...(current.statuses ? { statuses: current.statuses } : {}),
+      ...(current.readingPhotos ? { readingPhotos: current.readingPhotos } : {}),
     };
     for (const item of matching) {
       const slotKey = pickColdReadingSlotForWrite(item, dayTemperatures, dayStatuses);
       // Число снимает прежнюю отметку замера, отметка очищает число.
       nextData = setColdEquipmentSlotStatus(nextData, slotKey, status);
       nextData.temperatures[slotKey] = temperature;
+      // Снимок дисплея — к этому же замеру; без нового фото прежнее остаётся.
+      nextData = setColdEquipmentSlotPhoto(nextData, slotKey, photo);
       dayTemperatures[slotKey] = temperature;
       if (status) dayStatuses[slotKey] = status;
       writtenSlotKeys.push(slotKey);
@@ -381,6 +403,10 @@ export async function POST(
     });
   }
 
+  const auditValues: Record<string, unknown> = {
+    ...(status ? { status: COLD_EQUIPMENT_STATUS_SHORT[status] } : {}),
+    ...(photo && touched > 0 ? { photo } : {}),
+  };
   await recordQrFillAudit({
     request,
     organizationId,
@@ -393,8 +419,11 @@ export async function POST(
     temperature,
     humidity,
     outOfRange: isOutOfRange || humidityOutOfRange,
-    ...(status ? { values: { status: COLD_EQUIPMENT_STATUS_SHORT[status] } } : {}),
+    ...(Object.keys(auditValues).length > 0 ? { values: auditValues } : {}),
   });
+  if (photo && touched > 0) {
+    console.info(`[reading-photo] attached equipment=${equipment.id} docs=${touched} org=${organizationId} user=${employee.id}`);
+  }
 
   return NextResponse.json({
     ok: true,
@@ -402,5 +431,6 @@ export async function POST(
     humidityTouched,
     outOfRange: isOutOfRange || humidityOutOfRange,
     ...(status ? { status } : {}),
+    ...(photo && touched > 0 ? { photoAttached: true } : {}),
   });
 }

@@ -76,6 +76,7 @@ import {
   BluetoothProbeButton,
   DisplayOcrButton,
 } from "@/components/journals/probe-capture-buttons";
+import { ReadingPhotoView } from "@/components/journals/reading-photo-view";
 import { submitWithOfflineFallback } from "@/lib/use-offline-submit";
 import {
   Select,
@@ -155,6 +156,9 @@ type EntryRow = {
   date: string;
   data: ColdEquipmentEntryData;
 };
+
+/** Фото замера для показа: ссылка на снимок и подпись под ним. */
+type ReadingPhotoRef = { url: string; caption: string };
 
 type Props = {
   documentId: string;
@@ -994,6 +998,7 @@ function ColdTemperatureCell({
   status = null,
   norm,
   onCommit,
+  photo = null,
 }: {
   inputId: string;
   value: number | string;
@@ -1002,6 +1007,8 @@ function ColdTemperatureCell({
   norm: { min: number | null; max: number | null };
   /** Число строкой, «обсл»/«рем» или пусто — разбирает `handleTemperatureBlur`. */
   onCommit: (next: string) => void;
+  /** Фото замера из QR-формы — миниатюра рядом с полем, открывается крупно. */
+  photo?: ReadingPhotoRef | null;
 }) {
   const stored = value === "" || value == null ? "" : String(value);
   const [draft, setDraft] = useState(stored);
@@ -1050,6 +1057,8 @@ function ColdTemperatureCell({
           className="flex-1"
         />
         <div className="flex shrink-0 items-center justify-end gap-1.5 @min-[420px]:h-12" data-testid="cold-cell-tools">
+          {/* Снимок дисплея из QR-формы — доказательство замера. */}
+          {photo ? <ReadingPhotoView url={photo.url} caption={photo.caption} /> : null}
           {/* Быстрее всего — не набирать: щуп по Bluetooth и снимок
               дисплея. Кнопка щупа появляется только там, где Web
               Bluetooth реально есть. */}
@@ -1300,8 +1309,15 @@ export function ColdEquipmentDocumentClient({
           return;
         }
         const temperatures = { ...current.data.temperatures };
+        // Фото замера — от той же записи, чьё значение показываем: иначе
+        // рядом с числом одного сотрудника оказался бы снимок другого.
+        const readingPhotos = { ...(current.data.readingPhotos ?? {}) };
         Object.entries(row.data.temperatures).forEach(([key, value]) => {
-          if (value != null) temperatures[key] = value;
+          if (value == null) return;
+          temperatures[key] = value;
+          const photo = row.data.readingPhotos?.[key];
+          if (photo) readingPhotos[key] = photo;
+          else delete readingPhotos[key];
         });
         map[row.date] = {
           ...current,
@@ -1310,6 +1326,7 @@ export function ColdEquipmentDocumentClient({
             temperatures,
             corrections: { ...(current.data.corrections ?? {}), ...(row.data.corrections ?? {}) },
             statuses: { ...(current.data.statuses ?? {}), ...(row.data.statuses ?? {}) },
+            readingPhotos,
           },
         };
       });
@@ -1317,6 +1334,31 @@ export function ColdEquipmentDocumentClient({
   }, [rows]);
   // Строки сетки: оборудование × замер за день (режим «2 раза в день» даёт две строки).
   const readingSlots = useMemo(() => expandColdEquipmentReadingSlots(config), [config]);
+
+  /**
+   * Фото замера за день (снимок дисплея из QR-формы) с подписью для
+   * просмотра: что, когда и какое значение записано рядом.
+   */
+  function photoFor(
+    dateKey: string,
+    slot: { slotKey: string; name: string; slotLabel: string }
+  ): ReadingPhotoRef | null {
+    const data = rowByDate[dateKey]?.data;
+    const url = data?.readingPhotos?.[slot.slotKey];
+    if (!data || !url) return null;
+    const value = data.temperatures?.[slot.slotKey];
+    const cell = formatColdEquipmentCell(value, data.statuses?.[slot.slotKey]);
+    return {
+      url,
+      caption: [
+        slot.slotLabel ? `${slot.name} · ${slot.slotLabel}` : slot.name,
+        getColdEquipmentDateLabel(dateKey),
+        typeof value === "number" ? `${value} °C` : cell || null,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+    };
+  }
   const responsibleCodes = useMemo(
     () => buildResponsibleCodes(employees, rows, responsibleUserId),
     [employees, responsibleUserId, rows]
@@ -2138,11 +2180,16 @@ export function ColdEquipmentDocumentClient({
                           onCommit={(next) =>
                             handleTemperatureBlur(todayKey, item.slotKey, next)
                           }
+                          photo={photoFor(todayKey, item)}
                         />
                       </div>
                     ) : (
-                      <span className="text-[14px] text-[#0b1024]">
+                      <span className="flex items-center gap-2 text-[14px] text-[#0b1024]">
                         {formatColdEquipmentCell(value, cellStatus) || "—"}
+                        {(() => {
+                          const photo = photoFor(todayKey, item);
+                          return photo ? <ReadingPhotoView url={photo.url} caption={photo.caption} /> : null;
+                        })()}
                       </span>
                     ),
                 };
@@ -2269,14 +2316,21 @@ export function ColdEquipmentDocumentClient({
                                 onCommit={(next) =>
                                   handleTemperatureBlur(dateKey, item.slotKey, next)
                                 }
+                                photo={photoFor(dateKey, item)}
                               />
                             ) : (
-                              <span
-                                title={dayLockReason(dateKey) ?? undefined}
-                                className="flex-1 rounded-lg bg-[#fafbff] px-3 py-2 text-[14px] text-[#0b1024]"
-                              >
-                                {formatColdEquipmentCell(value, cellStatus) || "—"}
-                              </span>
+                              <>
+                                <span
+                                  title={dayLockReason(dateKey) ?? undefined}
+                                  className="flex-1 rounded-lg bg-[#fafbff] px-3 py-2 text-[14px] text-[#0b1024]"
+                                >
+                                  {formatColdEquipmentCell(value, cellStatus) || "—"}
+                                </span>
+                                {(() => {
+                                  const photo = photoFor(dateKey, item);
+                                  return photo ? <ReadingPhotoView url={photo.url} caption={photo.caption} /> : null;
+                                })()}
+                              </>
                             )}
                             <span className="w-12 shrink-0 text-right text-[11px] text-[#9b9fb3]">
                               {responsibleCodes.codeMap[
@@ -2517,13 +2571,23 @@ export function ColdEquipmentDocumentClient({
                     const value = row?.data.temperatures[item.slotKey];
                     const cellStatus = row?.data.statuses?.[item.slotKey] ?? null;
                     const cellText = formatColdEquipmentCell(value, cellStatus);
+                    const photo = photoFor(dateKey, item);
 
                     return (
                       <td
                         key={`${item.slotKey}:${dateKey}`}
                         data-grid-day
-                        className={`${GRID_CELL_CLASS} p-1 text-center leading-tight`}
+                        className={`${GRID_CELL_CLASS} relative p-1 text-center leading-tight`}
                       >
+                        {/* Фото замера из QR-формы — значок в углу ячейки, крупно по нажатию. */}
+                        {photo ? (
+                          <ReadingPhotoView
+                            variant="cell"
+                            url={photo.url}
+                            caption={photo.caption}
+                            className="absolute -right-px -top-px z-[1]"
+                          />
+                        ) : null}
                         {status === "active" && !dayLockReason(dateKey) ? (
                           // Текст, а не number: в ячейку можно вписать «обсл» или «рем».
                           <Input
@@ -2758,6 +2822,7 @@ export function ColdEquipmentDocumentClient({
                 onCommit={(next) =>
                   handleTemperatureBlur(todayKey, item.slotKey, next)
                 }
+                photo={photoFor(todayKey, item)}
               />
             ),
           };

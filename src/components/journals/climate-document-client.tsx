@@ -102,8 +102,10 @@ import {
 } from "@/components/journals/card-edit-sheet";
 import {
   RecordCardsView,
+  type RecordCardField,
   type RecordCardItem,
 } from "@/components/journals/record-cards-view";
+import { ReadingPhotoView } from "@/components/journals/reading-photo-view";
 
 import { toast } from "sonner";
 import { confirmAsync } from "@/components/ui/confirm-async";
@@ -1396,6 +1398,39 @@ export function ClimateDocumentClient({
     [config.rooms]
   );
 
+  /**
+   * Карточки на телефоне: фото замеров температуры из QR-формы склада —
+   * отдельной строкой карточки, миниатюры открываются крупно.
+   */
+  function climatePhotoFields(row: RowItem): RecordCardField[] {
+    const photos = visibleRooms.flatMap((room) =>
+      room.temperature.enabled
+        ? config.controlTimes.flatMap((time) => {
+            const url = row.data.readingPhotos?.[climateCorrectionKey(room.id, time, "temperature")];
+            if (!url) return [];
+            const value = row.data.measurements[room.id]?.[time]?.temperature;
+            const caption = [room.name, `${getClimateDateLabel(row.date)} ${time}`, typeof value === "number" ? `${value} °C` : null]
+              .filter(Boolean)
+              .join(" · ");
+            return [{ url, caption }];
+          })
+        : []
+    );
+    if (photos.length === 0) return [];
+    return [
+      {
+        label: "Фото замеров",
+        value: (
+          <div className="flex flex-wrap gap-2">
+            {photos.map((photo) => (
+              <ReadingPhotoView key={photo.url} url={photo.url} caption={photo.caption} />
+            ))}
+          </div>
+        ),
+      },
+    ];
+  }
+
   const totalMeasurementColumns = useMemo(
     () =>
       visibleRooms.reduce(
@@ -2571,7 +2606,7 @@ export function ClimateDocumentClient({
                     className="size-5"
                   />
                 ) : null,
-                fields: visibleRooms.map((room) => {
+                fields: [...visibleRooms.map((room) => {
                   const measurements = row.data.measurements[room.id] || {};
                   const lines = config.controlTimes
                     .map((time) => {
@@ -2602,7 +2637,7 @@ export function ClimateDocumentClient({
                         ? "нажмите, чтобы внести замеры"
                         : undefined,
                   };
-                }),
+                }), ...climatePhotoFields(row)],
               };
             })}
             emptyLabel="Записей по микроклимату нет."
@@ -2743,12 +2778,30 @@ export function ClimateDocumentClient({
                       ) : null}
                     </td>
                     {visibleRooms.flatMap((room) =>
-                      config.controlTimes.flatMap((time) => [
+                      config.controlTimes.flatMap((time) => {
+                        // Фото замера температуры из QR-формы склада — значок в углу ячейки.
+                        const photoUrl = row.data.readingPhotos?.[climateCorrectionKey(room.id, time, "temperature")];
+                        const temperatureValue = row.data.measurements[room.id]?.[time]?.temperature;
+                        return [
                         room.temperature.enabled ? (
                           <td
                             key={`${row.id}:${room.id}:${time}:temperature`}
-                            className={`${GRID_CELL_CLASS} p-1 text-center leading-tight`}
+                            className={`${GRID_CELL_CLASS} relative p-1 text-center leading-tight`}
                           >
+                            {photoUrl ? (
+                              <ReadingPhotoView
+                                variant="cell"
+                                url={photoUrl}
+                                caption={[
+                                  room.name,
+                                  `${getClimateDateLabel(row.date)} ${time}`,
+                                  typeof temperatureValue === "number" ? `${temperatureValue} °C` : null,
+                                ]
+                                  .filter(Boolean)
+                                  .join(" · ")}
+                                className="absolute -right-px -top-px z-[1]"
+                              />
+                            ) : null}
                             {canEditRow ? (
                               <Input
                                 type="number"
@@ -2834,7 +2887,8 @@ export function ClimateDocumentClient({
                             )}
                           </td>
                         ) : null,
-                      ])
+                        ];
+                      })
                     )}
                     <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>
                       <button

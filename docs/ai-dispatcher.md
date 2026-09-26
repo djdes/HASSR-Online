@@ -99,7 +99,7 @@ image_url: …            (1–3 строки)
 | `raw` | `{"items":[{"name","manufacturer","supplier","quantity","productionDate","expiryDate"}]}` — даты ГГГГ-ММ-ДД или null |
 | `generic` | `{"items":[{"name"}]}` |
 | `label` (`/api/ocr/label`) | объект полей этикетки (`productName`, `supplier`, даты, `quantity`, `unit`, `barcode`, …, `confidence`) |
-| `reading` (`/api/ocr/reading`) | `{"value","unit","confidence"}` — value: число или null, unit: C, % или h (или null), confidence: high, medium или low; нечитаемое число — `value: null`, знак и цифры не угадывать |
+| `reading` (`/api/ocr/reading`, `/api/qr-fill/reading-photo/recognize`) | `{"value","unit","confidence"}` — value: число или null, unit: C, % или h (или null), confidence: high, medium или low; нечитаемое число — `value: null`, знак и цифры не угадывать. Кнопка «Фото» у поля передаёт показатель (`metric`: temperature / humidity) — инструкция просит именно его, а сайт не подставляет число с чужой единицей или вне −60…80 °C / 0…100 %. Только на платном тарифе (бесплатному — 402 `paid_only`) |
 | `photo_check` (`/api/ai/check-photo`) | `{"valid","confidence"(0…1),"kind","reason"}` — при сомнении `valid: false` |
 
 Вид — это только инструкция и разбор ответа на сайте: тип задания у всех

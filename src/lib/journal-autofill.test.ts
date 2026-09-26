@@ -100,6 +100,21 @@ test("skip-list закрывает повторяющийся текст инц�
   }
 });
 
+test("фото замеров не переносятся на следующий день: вчерашний снимок — не доказательство сегодня", () => {
+  const photo = `/uploads/readings/${"a1".repeat(16)}.jpg`;
+  const copied = copyForwardWithJitter(
+    { responsibleTitle: "Повар", temperatures: { fridge: 4 }, readingPhotos: { fridge: photo } },
+    "doc:2026-09-27"
+  );
+  assert.equal("readingPhotos" in copied, false);
+  assert.equal((copied.temperatures as Record<string, number>).fridge, 4);
+  const climate = copyForwardWithJitter(
+    { measurements: { r: { "10:00": { temperature: 18, humidity: 50 } } }, readingPhotos: { "r:10:00:temperature": photo } },
+    "doc:2026-09-27"
+  );
+  assert.equal("readingPhotos" in climate, false);
+});
+
 test("pickCopyForwardCandidate пропускает болванки и пустые строки", () => {
   const filled = {
     startDate: "2026-09-01",

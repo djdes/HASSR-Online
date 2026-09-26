@@ -9,6 +9,7 @@ import {
   type ClimateDocumentConfig,
   type ClimateRoomConfig,
 } from "@/lib/climate-document";
+import { normalizeReadingPhotos, withReadingPhoto } from "@/lib/reading-photos";
 
 const TIME_RE = /^(\d{1,2}):(\d{2})$/;
 
@@ -149,4 +150,22 @@ export function mergeClimateCorrections(
   }
   if (!changed) return base;
   return { ...base, corrections };
+}
+
+/**
+ * Фото замера из QR-формы склада — в `readingPhotos[roomId:время:метрика]`,
+ * тот же ключ, что у комментария к отклонению. Новое фото заменяет
+ * прежнее; без ссылки запись не меняется (доказательство не стирается).
+ * Соседние фото и остальные данные записи не трогаем.
+ */
+export function mergeClimateReadingPhoto(
+  existingData: unknown,
+  key: string,
+  url: string | null | undefined
+): Record<string, unknown> {
+  const base = asRecord(existingData);
+  const current = normalizeReadingPhotos(base.readingPhotos);
+  const next = withReadingPhoto(current, key, url);
+  if (next === current) return base;
+  return { ...base, readingPhotos: next };
 }

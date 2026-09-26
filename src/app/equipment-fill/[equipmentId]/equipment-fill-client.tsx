@@ -9,6 +9,8 @@ import { QrPageShell } from "@/components/qr-fill/qr-page-shell";
 import { WhoRow } from "@/components/qr-fill/who-row";
 import { EmployeePicker } from "@/components/qr-fill/employee-picker";
 import { ReadingField } from "@/components/qr-fill/reading-field";
+import { ReadingPhoto } from "@/components/qr-fill/reading-photo";
+import { READING_PHOTO_TEXT, isReadingPhotoUrl } from "@/lib/reading-photos";
 import { NextQrButton } from "@/components/qr-fill/next-qr-button";
 import { QrPassNote, QrPinOk, QrPinStep, QrPinUiStyles, QrRememberToggle, forgetQrPass, rememberQrEmployee } from "@/components/qr-fill/qr-pin-step";
 import { draftKeyFor, useFormDraft } from "@/components/qr-fill/use-form-draft";
@@ -50,6 +52,8 @@ type Props = {
   rememberedEmployeeId?: string | null;
   /** Чей пропуск после PIN лежит в cookie организации (30 минут) — ему PIN не спрашиваем. */
   passEmployeeId?: string | null;
+  /** Платный тариф: показание со снимка («Фото» у температуры) заполняется само. */
+  photoAutofill?: boolean;
 };
 
 const LS_EMPLOYEE_KEY = "wesetup.equipment-fill.employeeId";
@@ -75,6 +79,7 @@ export function EquipmentFillClient({
   journalTitle,
   rememberedEmployeeId = null,
   passEmployeeId = null,
+  photoAutofill = false,
 }: Props) {
   const [employeeId, setEmployeeId] = useState<string>("");
   // Кого восстановили из памяти при входе: «Запомнили с прошлого раза» — только ему
@@ -115,6 +120,11 @@ export function EquipmentFillClient({
     typeof todayValues?.temperature === "number" ? String(todayValues.temperature) : equipment.tempMax != null && equipment.tempMax < 0 ? "-" : ""
   );
   const [humidity, setHumidity] = useState<string>("");
+  // «Фото» у температуры: снимок дисплея прикрепляется к замеру (всем),
+  // на платном тарифе показание со снимка подставляется в поле.
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [recognizedTemperature, setRecognizedTemperature] = useState<string | null>(null);
+  const [photoAttached, setPhotoAttached] = useState(false);
   // «Что сделали» — обязательно, когда замер вышел за норму.
   const [correction, setCorrection] = useState("");
   // Время в подписи идёт по часам телефона: страницу могут держать открытой долго.
@@ -133,12 +143,13 @@ export function EquipmentFillClient({
   // Черновик: обновил страницу или пропал интернет — введённое на месте; после записи стирается.
   const draft = useFormDraft(
     draftKeyFor(`equipment-fill:${equipment.id}`, stamp?.date),
-    { temperature, humidity, correction, status: status ?? "" },
+    { temperature, humidity, correction, status: status ?? "", photo: photo ?? "" },
     (saved) => {
       if (typeof saved.temperature === "string") setTemperature(saved.temperature);
       if (typeof saved.status === "string") setStatus(parseColdEquipmentStatus(saved.status));
       if (typeof saved.humidity === "string") setHumidity(saved.humidity);
       if (typeof saved.correction === "string") setCorrection(saved.correction);
+      if (isReadingPhotoUrl(saved.photo)) setPhoto(saved.photo);
     },
     Boolean(done)
   );
@@ -243,6 +254,8 @@ export function EquipmentFillClient({
               : {}),
             // Комментарий — только к отклонению: вернули в норму — не отправляем.
             ...(needsCorrection && correction.trim() ? { correction: correction.trim() } : {}),
+            // Снимок дисплея — к числу; у «обсл»/«рем» поля температуры нет.
+            ...(!status && photo ? { photo } : {}),
             ...(pass ? { pass } : {}),
           }),
         }
@@ -253,6 +266,7 @@ export function EquipmentFillClient({
       }
       localStorage.setItem(LS_EMPLOYEE_KEY, employeeId);
       localStorage.setItem(LS_SHARED_EMPLOYEE_KEY, employeeId);
+      setPhotoAttached(data?.photoAttached === true);
       setDone(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка сохранения");
@@ -309,6 +323,7 @@ export function EquipmentFillClient({
                 ? `${COLD_EQUIPMENT_STATUS_TITLE[status]}: в журнале «${COLD_EQUIPMENT_STATUS_SHORT[status]}»`
                 : `Температура ${parsedTemp}°C сохранена в журнал`}{" "}
               {rememberedName ? `на имя ${rememberedName}` : ""}.
+              {photoAttached ? " Фото дисплея — в журнале рядом со значением." : ""}
             </p>
             {/* Раньше предупреждение о выходе за норму исчезало вместе с
                 формой, и человек уходил, не зная, что делать дальше. */}
@@ -331,6 +346,9 @@ export function EquipmentFillClient({
                 setHumidity("");
                 setCorrection("");
                 setStatus(null);
+                setPhoto(null);
+                setRecognizedTemperature(null);
+                setPhotoAttached(false);
                 setError(null);
               }}
               className="mt-3 h-12 w-full rounded-2xl border border-[#dcdfed] bg-white px-5 text-[15px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
@@ -387,7 +405,37 @@ export function EquipmentFillClient({
                 </p>
               ) : null}
               {status ? null : (
-                <ReadingField id="equipment-fill-temperature" label="Температура" unit="°C" stamp={stampLabel} value={temperature} onChange={setTemperature} min={equipment.tempMin} max={equipment.tempMax} required />
+                <ReadingField
+                  id="equipment-fill-temperature"
+                  label="Температура"
+                  unit="°C"
+                  stamp={stampLabel}
+                  value={temperature}
+                  onChange={setTemperature}
+                  min={equipment.tempMin}
+                  max={equipment.tempMax}
+                  required
+                  // Число подставлено со снимка и не правилось — пусть человек сверит.
+                  mark={recognizedTemperature !== null && temperature.trim() === recognizedTemperature ? READING_PHOTO_TEXT.checkMark : null}
+                  footer={
+                    <ReadingPhoto
+                      kind="equipment"
+                      objectId={equipment.id}
+                      token={token}
+                      employeeId={employeeId}
+                      pass={pass}
+                      autofill={photoAutofill}
+                      photoUrl={photo}
+                      onPhotoChange={setPhoto}
+                      value={temperature}
+                      onRecognized={(text) => {
+                        setTemperature(text);
+                        setRecognizedTemperature(text);
+                      }}
+                      disabledReason={employeeId ? null : "Сначала выберите своё имя"}
+                    />
+                  }
+                />
               )}
               <EquipmentStatusChoice value={status} onChange={setStatus} />
 

@@ -2,6 +2,7 @@ import {
   BILLING_TEST_MODE,
   FREE_MAX_USERS,
   isFreePlan,
+  isPaidPlan,
 } from "@/lib/plan-limits";
 import { db } from "@/lib/db";
 import { NOT_COMMISSION_WHERE } from "@/lib/journal-roster";
@@ -13,6 +14,22 @@ import { NOT_COMMISSION_WHERE } from "@/lib/journal-roster";
  * шапка кабинета — клиентский компонент. Если в том же модуле лежит
  * `db`, webpack тянет `pg` в браузерный бандл и сборка падает на `fs`.
  */
+
+/**
+ * Платный ли тариф у организации — для платных возможностей (автоввод
+ * температуры с фото). Тариф живёт на аккаунте (legacy-зеркало — в
+ * организации), как в шапке кабинета; приостановленная или отменённая
+ * организация — без платных возможностей, даже если аккаунт платный.
+ */
+export async function hasPaidPlan(organizationId: string): Promise<boolean> {
+  const org = await db.organization.findUnique({
+    where: { id: organizationId },
+    select: { subscriptionPlan: true, account: { select: { subscriptionPlan: true } } },
+  });
+  if (!org) return false;
+  if (org.subscriptionPlan === "paused" || org.subscriptionPlan === "cancelled") return false;
+  return isPaidPlan(org.account?.subscriptionPlan ?? org.subscriptionPlan);
+}
 
 export type EnsurePlanResult = {
   /** Перевели ли организацию на платный прямо сейчас. */

@@ -394,6 +394,8 @@ export const climateAdapter: JournalAdapter = {
       responsibleTitle: currentData.responsibleTitle,
       measurements,
       ...(Object.keys(corrections).length > 0 ? { corrections } : {}),
+      // Фото замеров с QR-плаката (снимок дисплея) остаются: форма их не присылает.
+      ...(currentData.readingPhotos ? { readingPhotos: currentData.readingPhotos } : {}),
     };
 
     await db.journalDocumentEntry.upsert({

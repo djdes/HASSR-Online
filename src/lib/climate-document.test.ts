@@ -38,3 +38,37 @@ test("считаем, сколько замеров потеряется при 
   // Пустой день не ломает подсчёт.
   assert.equal(countClimateTimeValues([{ data: {} }], "10:00"), 0);
 });
+
+test("фото замеров склада: переживают normalize/sync/merge, переезжают со временем контроля, чужие ссылки отбрасываются", async () => {
+  const {
+    createClimateRoomConfig,
+    mergeClimateEntryData,
+    normalizeClimateEntryData,
+    renameClimateControlTimes,
+    syncClimateEntryDataWithConfig,
+  } = await import("@/lib/climate-document");
+  const photo = `/uploads/readings/${"a1".repeat(16)}.jpg`;
+  const raw = {
+    responsibleTitle: null,
+    measurements: { "room-1": { "10:00": { temperature: 18, humidity: 50 } } },
+    readingPhotos: { "room-1:10:00:temperature": photo, "room-1:10:00:humidity": "https://evil.example/a.jpg" },
+  };
+  const data = normalizeClimateEntryData(JSON.parse(JSON.stringify(raw)));
+  assert.deepEqual(data.readingPhotos, { "room-1:10:00:temperature": photo });
+  assert.equal("readingPhotos" in normalizeClimateEntryData({ measurements: {} }), false);
+
+  const config = {
+    rooms: [createClimateRoomConfig({ id: "room-1", name: "Склад" })],
+    controlTimes: ["10:00"],
+    skipWeekends: false,
+  };
+  const synced = syncClimateEntryDataWithConfig(data, config);
+  assert.deepEqual(synced.readingPhotos, { "room-1:10:00:temperature": photo });
+
+  const merged = mergeClimateEntryData(synced, { ...synced, readingPhotos: { "room-1:10:00:humidity": photo } });
+  assert.deepEqual(merged.readingPhotos, { "room-1:10:00:temperature": photo });
+
+  const renamed = renameClimateControlTimes(synced, { "10:00": "09:30" });
+  assert.deepEqual(renamed.readingPhotos, { "room-1:09:30:temperature": photo });
+  assert.equal(renamed.measurements["room-1"]["09:30"]?.temperature, 18);
+});

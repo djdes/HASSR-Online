@@ -9,6 +9,7 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { HYGIENE_V2_NO_COPY_MESSAGE, readHygieneFormVersion } from "@/lib/hygiene-v2";
 import { isHygieneEntryCopyable } from "@/lib/hygiene-admission";
 import { COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE } from "@/lib/cold-equipment-document";
+import { READING_PHOTOS_KEY } from "@/lib/reading-photos";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -54,6 +55,17 @@ function withoutColdStatusesRaw(data: unknown): unknown {
   if (!data || typeof data !== "object" || Array.isArray(data) || !("statuses" in data)) return data;
   const next = { ...(data as Record<string, unknown>) };
   delete next.statuses;
+  return next;
+}
+
+/**
+ * Без фото замеров (холодильники, склады): снимок — доказательство
+ * вчерашнего показания, рядом с сегодняшним числом он был бы подлогом.
+ */
+function withoutReadingPhotosRaw(data: unknown): unknown {
+  if (!data || typeof data !== "object" || Array.isArray(data) || !(READING_PHOTOS_KEY in data)) return data;
+  const next = { ...(data as Record<string, unknown>) };
+  delete next[READING_PHOTOS_KEY];
   return next;
 }
 
@@ -167,8 +179,10 @@ export async function POST(
       continue;
     }
     // Холодильники: «обсл»/«рем» — событие вчерашнего дня, сегодня замер снимают заново.
-    const data =
-      doc.template?.code === COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE ? withoutColdStatusesRaw(entry.data) : entry.data;
+    // Фото замеров тоже не копируем — ни у холодильников, ни у складов.
+    const data = withoutReadingPhotosRaw(
+      doc.template?.code === COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE ? withoutColdStatusesRaw(entry.data) : entry.data
+    );
     const alreadyHasToday = todayFilledEmployeeIds.has(entry.employeeId);
     if (alreadyHasToday && !overwrite) {
       kept += 1;

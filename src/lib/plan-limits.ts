@@ -48,3 +48,14 @@ export function isFreePlan(plan: string | null | undefined): boolean {
   // `trial` — legacy alias бесплатного тарифа, см. PLAN_LABELS.
   return key === "free" || key === "trial";
 }
+
+/**
+ * true — действующий платный тариф: платные возможности включены
+ * (автоввод температуры с фото). Бесплатный, приостановленный и
+ * отменённый — нет. Старые значения вроде `pro` — платные.
+ */
+export function isPaidPlan(plan: string | null | undefined): boolean {
+  const key = (plan ?? "free").trim();
+  if (!key || isFreePlan(key)) return false;
+  return key !== "paused" && key !== "cancelled";
+}

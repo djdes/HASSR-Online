@@ -232,6 +232,8 @@ export function mergeColdEquipmentFormValues(params: {
     temperatures,
     ...(Object.keys(corrections).length > 0 ? { corrections } : {}),
     ...(Object.keys(statuses).length > 0 ? { statuses } : {}),
+    // Фото замеров с наклейки (снимок дисплея) остаются: форма их не присылает.
+    ...(prior.readingPhotos ? { readingPhotos: prior.readingPhotos } : {}),
   };
 }
 

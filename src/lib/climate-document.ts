@@ -5,6 +5,7 @@ import {
   isWeekend,
   toDateKey,
 } from "@/lib/hygiene-document";
+import { normalizeReadingPhotos } from "@/lib/reading-photos";
 
 export const CLIMATE_DOCUMENT_TEMPLATE_CODE = "climate_control";
 export const CLIMATE_DOCUMENT_TITLE =
@@ -97,6 +98,12 @@ export type ClimateEntryData = {
    * из нормы и температура утром, и влажность вечером.
    */
   corrections?: Record<string, string>;
+  /**
+   * Фото замера (2026-09-26): снимок дисплея из QR-формы склада — ссылка
+   * `/uploads/readings/…`. Ключ тот же, что у комментария:
+   * `roomId:time:metric`. См. `reading-photos.ts`.
+   */
+  readingPhotos?: Record<string, string>;
 };
 
 export type ClimateMetricKind = "temperature" | "humidity";
@@ -546,12 +553,14 @@ export function normalizeClimateEntryData(value: unknown): ClimateEntryData {
   }
 
   const corrections = normalizeCorrections(record.corrections);
+  const readingPhotos = normalizeReadingPhotos(record.readingPhotos);
 
   return {
     responsibleTitle:
       typeof record.responsibleTitle === "string" ? record.responsibleTitle : null,
     measurements,
     ...(corrections ? { corrections } : {}),
+    ...(readingPhotos ? { readingPhotos } : {}),
   };
 }
 
@@ -668,6 +677,7 @@ export function syncClimateEntryDataWithConfig(
     });
   });
   if (entryData.corrections) next.corrections = entryData.corrections;
+  if (entryData.readingPhotos) next.readingPhotos = entryData.readingPhotos;
 
   return next;
 }
@@ -709,30 +719,34 @@ export function renameClimateControlTimes(
     measurements[roomId] = nextByTime;
   });
 
-  let corrections: Record<string, string> | undefined;
-  if (entryData.corrections) {
-    corrections = {};
-    Object.entries(entryData.corrections).forEach(([key, text]) => {
-      // Ключ `roomId:ЧЧ:ММ:metric` — время само содержит двоеточие,
-      // поэтому режем по первому и последнему разделителю.
+  // Ключ `roomId:ЧЧ:ММ:metric` — время само содержит двоеточие,
+  // поэтому режем по первому и последнему разделителю. Тот же ключ у
+  // комментариев и у фото замеров — переезжают вместе со временем.
+  const renameKeys = (source: Record<string, string>): Record<string, string> => {
+    const out: Record<string, string> = {};
+    Object.entries(source).forEach(([key, value]) => {
       const first = key.indexOf(":");
       const last = key.lastIndexOf(":");
       if (first < 0 || last <= first) {
-        corrections![key] = text;
+        out[key] = value;
         return;
       }
       const roomId = key.slice(0, first);
       const time = key.slice(first + 1, last);
       const metric = key.slice(last + 1);
       const to = mapping[time];
-      corrections![to ? climateCorrectionKey(roomId, to, metric as ClimateMetricKind) : key] = text;
+      out[to ? climateCorrectionKey(roomId, to, metric as ClimateMetricKind) : key] = value;
     });
-  }
+    return out;
+  };
+  const corrections = entryData.corrections ? renameKeys(entryData.corrections) : undefined;
+  const readingPhotos = entryData.readingPhotos ? renameKeys(entryData.readingPhotos) : undefined;
 
   return {
     ...entryData,
     measurements,
     ...(corrections ? { corrections } : {}),
+    ...(readingPhotos ? { readingPhotos } : {}),
   };
 }
 
@@ -774,6 +788,8 @@ export function mergeClimateEntryData(
     });
   });
   if (currentData.corrections) next.corrections = currentData.corrections;
+  // Фото — только к своим замерам: из сгенерированных данных не берём.
+  if (currentData.readingPhotos) next.readingPhotos = currentData.readingPhotos;
 
   return next;
 }

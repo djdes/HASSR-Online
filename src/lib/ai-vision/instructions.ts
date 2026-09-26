@@ -1,4 +1,5 @@
 import { VISION_MAX_PHOTOS, type VisionKind } from "@/lib/ai-vision/shared";
+import type { ReadingMetric } from "@/lib/reading-photos";
 
 /**
  * Текст задания «Распознать с фото» для диспетчера ProjectsFlow.
@@ -70,6 +71,21 @@ const SINGLE_SAFETY_RULES: Record<"label" | "reading" | "photo_check", readonly 
   ],
 };
 
+/** Без подсказки, какой показатель нужен, из нескольких чисел берём основное. */
+const READING_SEVERAL_NUMBERS = "Если чисел несколько (например, температура и влажность), верни основное — самое крупное показание.";
+
+/**
+ * Кнопка «Фото» у поля знает, какой показатель снимают: у термогигрометра
+ * на дисплее и температура, и влажность — «самое крупное» могло оказаться
+ * не тем числом.
+ */
+const READING_METRIC_HINTS: Record<ReadingMetric, string> = {
+  temperature:
+    "Нужна температура в градусах Цельсия. Если на дисплее несколько чисел (например, температура и влажность), верни температуру, unit — C. Если температуры на дисплее нет — value: null.",
+  humidity:
+    "Нужна относительная влажность в процентах. Если на дисплее несколько чисел (например, температура и влажность), верни влажность, unit — %. Если влажности на дисплее нет — value: null.",
+};
+
 const PHOTO_CHECK_HINTS: Record<PhotoCheckExpected, string> = {
   food: "еда, готовое блюдо или продукт",
   equipment: "кухонное оборудование (холодильник, печь, посуда)",
@@ -122,7 +138,7 @@ const TASKS: Record<VisionInstructionKind, Task> = {
     details: [
       "value — ровно то число, что показывает дисплей; десятичный разделитель — точка. unit — C (градусы), % (влажность) или h (часы), если единица видна или однозначна по прибору; иначе null.",
       "Знак минус важен: на морозильниках показания отрицательные. Если минус не виден однозначно — confidence не выше medium.",
-      "Если чисел несколько (например, температура и влажность), верни основное — самое крупное показание.",
+      READING_SEVERAL_NUMBERS,
       "confidence — high, если число читается чётко; medium — если есть сомнение в знаке или цифре; low — если снимок плохой.",
     ],
     format: '{"value":<число или null>,"unit":"C|%|h или null","confidence":"high|medium|low"}',
@@ -149,20 +165,26 @@ function safetyRules(kind: VisionInstructionKind): readonly string[] {
 
 /**
  * Инструкция исполнителю для вида. Всё, что нужно модели, — здесь; фото —
- * отдельными блоками. Для проверки фото-доказательства — что на нём должно быть.
+ * отдельными блоками. Для проверки фото-доказательства — что на нём должно
+ * быть; для показания дисплея — какой показатель нужен (кнопка «Фото» у
+ * поля температуры или влажности).
  */
 export function buildVisionInstruction(
   kind: VisionInstructionKind,
-  options: { expected?: PhotoCheckExpected } = {}
+  options: { expected?: PhotoCheckExpected; metric?: ReadingMetric } = {}
 ): string {
   const task = TASKS[kind];
   const intro = task.intro ?? `Задача: распознать текст на фото и вернуть ${task.what}. Фото — это снимки документа с телефона.`;
   const context = kind === "photo_check" ? [`Что должно быть на фото: ${PHOTO_CHECK_HINTS[options.expected ?? "any"]}.`] : [];
+  const metric = kind === "reading" ? options.metric : undefined;
+  const details = metric
+    ? task.details.map((line) => (line === READING_SEVERAL_NUMBERS ? READING_METRIC_HINTS[metric] : line))
+    : task.details;
   return [
     intro,
     ...context,
     "",
-    ...task.details,
+    ...details,
     "",
     "Правила:",
     ...safetyRules(kind).map((rule, index) => `${index + 1}. ${rule}`),
