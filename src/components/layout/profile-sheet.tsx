@@ -27,6 +27,7 @@ import {
   ThemeTiles,
 } from "@/components/theme/theme-tiles";
 import type { AccessibleOrganization } from "@/lib/organization-access";
+import { useInsideMobileApp } from "@/lib/use-inside-mobile-app";
 
 /**
  * Меню профиля на телефоне — лист снизу, как в мобильных приложениях.
@@ -78,6 +79,7 @@ export function ProfileSheet({
   isRoot: boolean;
   onLogout: () => void;
 }) {
+  const inApp = useInsideMobileApp();
   return (
     <BottomSheet
       open={open}
@@ -138,7 +140,7 @@ export function ProfileSheet({
 
       {canManagePlan ? (
         <Link href="/settings/subscription" onClick={onClose} className={SHEET_ROW_CLASS}>
-          {onFreePlan ? (
+          {onFreePlan && !inApp ? (
             <>
               <CircleArrowUp className="size-5 shrink-0 text-[#5566f6]" />
               <span className="min-w-0 flex-1 text-[#5566f6]">Улучшить тариф</span>
@@ -146,7 +148,8 @@ export function ProfileSheet({
           ) : (
             <>
               <CreditCard className="size-5 shrink-0 text-[#5566f6]" />
-              <span className="min-w-0 flex-1">Тарифы и оплата</span>
+              {/* В приложении не зовём к оплате (правила магазинов). */}
+              <span className="min-w-0 flex-1">{inApp ? "Тариф" : "Тарифы и оплата"}</span>
             </>
           )}
         </Link>

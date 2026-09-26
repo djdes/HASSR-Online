@@ -27,7 +27,18 @@ type TelegramDeliveryPolicyDeps = {
 };
 
 const DEFAULT_LOOKBACK_MS = 36 * 60 * 60 * 1000;
-const RERUN_SKIP_STATUSES = ["queued", "sent", "rate_limited"] as const;
+
+/**
+ * Статус строки TelegramLog «сообщение ушло только push в приложение».
+ *
+ * У сотрудника без Telegram строки лога не было, и повтор крона с
+ * `skipOnRerun` не видел прошлой доставки — push уходил снова и снова.
+ * Такая строка пишется с пустым `chatId`; отправщики Telegram её не
+ * берут (отложенные ищут только `deferred`), в Telegram она не уходит.
+ */
+export const PUSH_ONLY_STATUS = "push_only";
+
+const RERUN_SKIP_STATUSES = ["queued", "sent", "rate_limited", PUSH_ONLY_STATUS] as const;
 
 function normalizeNullableText(value: string | null | undefined): string | null {
   const trimmed = value?.trim();
@@ -107,4 +118,83 @@ export async function shouldSkipTelegramDelivery(
   });
 
   return Boolean(existing);
+}
+
+export type PushOnlyDeliveryRow = {
+  userId: string;
+  organizationId: string | null;
+  kind: string;
+  dedupeKey: string;
+  body: string;
+  status: typeof PUSH_ONLY_STATUS;
+};
+
+type PushOnlyDeliveryDeps = {
+  /** Есть ли у человека телефон с включёнными уведомлениями. */
+  hasPushDevice: (userId: string) => Promise<boolean>;
+  recordPushOnly: (row: PushOnlyDeliveryRow) => Promise<void>;
+};
+
+function defaultPushOnlyDeps(): PushOnlyDeliveryDeps {
+  return {
+    async hasPushDevice(userId) {
+      const { db } = await import("./db");
+      const device = await db.mobileDevice.findFirst({
+        where: { userId, pushEnabled: true },
+        select: { id: true },
+      });
+      return Boolean(device);
+    },
+    async recordPushOnly(row) {
+      const { db } = await import("./db");
+      await db.telegramLog.create({
+        data: {
+          chatId: "",
+          body: row.body,
+          userId: row.userId,
+          organizationId: row.organizationId,
+          kind: row.kind,
+          dedupeKey: row.dedupeKey,
+          status: row.status,
+          attempts: 0,
+          sentAt: new Date(),
+        },
+      });
+    },
+  };
+}
+
+/**
+ * Записать, что сообщение ушло только push'ем, — для проверки повтора.
+ *
+ * Пишем, только когда запись кому-то нужна: у человека нет Telegram
+ * (иначе строку пишет сама отправка в Telegram), вызов просит
+ * \`skipOnRerun\` и несёт \`kind\` + \`dedupeKey\`, и push было куда
+ * отправить. Возвращает true, если строка записана.
+ */
+export async function recordPushOnlyDelivery(
+  args: {
+    userId: string;
+    hasTelegram: boolean;
+    body: string;
+    delivery?: TelegramDeliveryMetadata | null;
+    policy?: TelegramDeliveryPolicyOptions;
+  },
+  overrides?: Partial<PushOnlyDeliveryDeps>
+): Promise<boolean> {
+  if (args.hasTelegram || !args.policy?.skipOnRerun) return false;
+  const userId = normalizeNullableText(args.userId);
+  const delivery = normalizeDeliveryMetadata(args.delivery);
+  if (!userId || !delivery) return false;
+  const deps = { ...defaultPushOnlyDeps(), ...overrides };
+  if (!(await deps.hasPushDevice(userId))) return false;
+  await deps.recordPushOnly({
+    userId,
+    organizationId: delivery.organizationId,
+    kind: delivery.kind,
+    dedupeKey: delivery.dedupeKey,
+    body: args.body,
+    status: PUSH_ONLY_STATUS,
+  });
+  return true;
 }

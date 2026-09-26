@@ -192,7 +192,13 @@ export function isDeadTokenError(body: unknown): boolean {
 
 /** Текст сообщения бота (HTML Telegram) → короткий текст для шторки. */
 export function pushTextFromTelegramHtml(html: string): string {
-  const text = html
+  const text = plainTextFromTelegramHtml(html);
+  return text.length > 180 ? `${text.slice(0, 179)}…` : text;
+}
+
+/** HTML Telegram → текст в одну строку, без обрезки. */
+function plainTextFromTelegramHtml(html: string): string {
+  return html
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<[^>]+>/g, "")
     .replace(/&nbsp;/g, " ")
@@ -203,7 +209,63 @@ export function pushTextFromTelegramHtml(html: string): string {
     .replace(/&amp;/g, "&")
     .replace(/\s+/g, " ")
     .trim();
-  return text.length > 180 ? `${text.slice(0, 179)}…` : text;
+}
+
+/**
+ * Типы уведомлений руководству (`NotificationType` в `telegram.ts`),
+ * которые сами по себе тревога: о них push уходит при любой длине.
+ */
+const ALERT_TYPES = new Set(["temperature", "deviations", "expiry", "compliance"]);
+/** Заголовок сводки или отчёта: это читают в Telegram, а не в шторке. */
+const DIGEST_HEADER = /сводк|дайджест|отч[её]т|итог/i;
+/** Сообщение без типа тревоги длиннее этого — уже отчёт, а не тревога. */
+const UNTYPED_ALERT_MAX_CHARS = 600;
+const PUSH_TITLE_MAX = 80;
+
+/**
+ * Сообщение руководству (`notifyOrganization`) → push, или null, если
+ * push не нужен.
+ *
+ * Правило:
+ * - заголовок (первая непустая строка) похож на сводку или отчёт
+ *   («Сводка за неделю», «AI-сводка», «Дайджест», «Отчёт», «Итоги») —
+ *   без push: длинный текст в шторке не читают, он остаётся в Telegram;
+ * - тип тревоги (температура, отклонения, сроки, незаполненные
+ *   журналы) — push всегда, текст обрезан;
+ * - без типа — push, если текст не длиннее 600 знаков.
+ *
+ * Заголовок push — первая строка сообщения, текст — остальное. Если
+ * строка одна, заголовок «WeSetup».
+ */
+export function organizationAlertPush(
+  html: string,
+  type?: string | null
+): { title: string; body: string } | null {
+  const lines = html
+    .split(/\n|<br\s*\/?>/i)
+    .map((line) => plainTextFromTelegramHtml(line))
+    .filter(Boolean);
+  if (lines.length === 0) return null;
+  const [header, ...rest] = lines;
+  if (DIGEST_HEADER.test(header)) return null;
+  const isAlertType = Boolean(type && ALERT_TYPES.has(type));
+  if (!isAlertType && lines.join(" ").length > UNTYPED_ALERT_MAX_CHARS) return null;
+  if (rest.length === 0) return { title: "WeSetup", body: header };
+  const title =
+    header.length > PUSH_TITLE_MAX ? `${header.slice(0, PUSH_TITLE_MAX - 1)}…` : header;
+  return { title, body: pushTextFromTelegramHtml(rest.join(" ")) };
+}
+
+/**
+ * Человек нажал «Отложить» в сообщении бота: `notificationPrefs.
+ * snoozedUntil` в будущем. Так же молчит и push.
+ */
+export function isNotificationSnoozed(prefs: unknown, now: Date): boolean {
+  if (!prefs || typeof prefs !== "object") return false;
+  const raw = (prefs as { snoozedUntil?: unknown }).snoozedUntil;
+  if (typeof raw !== "string" && typeof raw !== "number") return false;
+  const until = new Date(raw);
+  return Number.isFinite(until.getTime()) && until > now;
 }
 
 export type FcmMessage = {

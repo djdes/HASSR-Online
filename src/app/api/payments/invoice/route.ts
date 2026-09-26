@@ -5,6 +5,7 @@ import { createInvoiceOrder, deliverInvoice } from "@/lib/invoices/service";
 import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { TARIFF_MONTHLY } from "@/lib/tariffs";
+import { refuseMobileAppPayment } from "@/lib/mobile-app-payments";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,6 +16,8 @@ export const dynamic = "force-dynamic";
  * ответа: клиент не должен ждать SMTP.
  */
 export async function POST(request: Request) {
+  const appRefusal = refuseMobileAppPayment(request);
+  if (appRefusal) return appRefusal;
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user) || isImpersonating(session)) {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });

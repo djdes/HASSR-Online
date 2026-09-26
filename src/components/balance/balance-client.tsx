@@ -44,9 +44,17 @@ const APP_ORIGIN = "https://wesetup.ru";
 export function BalanceClient({
   initial,
   variant = "site",
+  inApp = false,
 }: {
   initial: BalanceOverview;
   variant?: BalanceVariant;
+  /**
+   * Открыто в приложении WeSetup: только баланс и история. Без «Оплатить
+   * с баллами», приглашений и отзывов за баллы — это скидки на оплату
+   * мимо магазина, звать к ней в приложении правила App Store и Google
+   * Play не разрешают. Решает сервер по User-Agent.
+   */
+  inApp?: boolean;
 }) {
   const [data, setData] = useState(initial);
   const mini = variant === "mini";
@@ -88,20 +96,22 @@ export function BalanceClient({
 
   return (
     <div className={mini ? "space-y-4" : "space-y-5"}>
-      <HeroCard data={data} mini={mini} />
+      <HeroCard data={data} mini={mini} inApp={inApp} />
 
-      <ReferralSection
-        data={data}
-        mini={mini}
-        referralLink={referralLink}
-        onSent={refresh}
-      />
+      {inApp ? null : (
+        <ReferralSection
+          data={data}
+          mini={mini}
+          referralLink={referralLink}
+          onSent={refresh}
+        />
+      )}
 
-      <ReviewSection data={data} mini={mini} onSent={refresh} />
+      {inApp ? null : <ReviewSection data={data} mini={mini} onSent={refresh} />}
 
-      {data.canSeeBalance ? <HistorySection data={data} mini={mini} /> : null}
+      {data.canSeeBalance ? <HistorySection data={data} mini={mini} inApp={inApp} /> : null}
 
-      {!mini ? (
+      {!mini && !inApp ? (
         <PageGuide
           storageKey="settings-balance"
           title="Как работают баллы"
@@ -145,7 +155,15 @@ export function BalanceClient({
 
 /* --------------------------------------------------------------- hero */
 
-function HeroCard({ data, mini }: { data: BalanceOverview; mini: boolean }) {
+function HeroCard({
+  data,
+  mini,
+  inApp,
+}: {
+  data: BalanceOverview;
+  mini: boolean;
+  inApp: boolean;
+}) {
   if (!data.canSeeBalance) {
     return (
       <section
@@ -184,7 +202,9 @@ function HeroCard({ data, mini }: { data: BalanceOverview; mini: boolean }) {
               }
               style={mini ? { color: "var(--mini-text-muted)" } : undefined}
             >
-              Баллы тратит руководитель — при оплате подписки. Вы принесли{" "}
+              {inApp
+                ? "Бонусы начисляются на баланс организации. Вы принесли "
+                : "Баллы тратит руководитель — при оплате подписки. Вы принесли "}
               <strong>{formatPoints(data.myEarnedRub)}</strong>: за отзыв и за
               коллег, которые пришли по вашей рекомендации.
             </p>
@@ -229,12 +249,13 @@ function HeroCard({ data, mini }: { data: BalanceOverview; mini: boolean }) {
             className={mini ? "mt-2 text-[13px]" : "mt-2 text-[14px] text-[#6f7282]"}
             style={mini ? { color: "var(--mini-text-muted)" } : undefined}
           >
-            1 балл = 1 ₽. Списываются при оплате подписки — оборудование за
-            баллы не продаём.
+            {inApp
+              ? "1 балл = 1 ₽."
+              : "1 балл = 1 ₽. Списываются при оплате подписки — оборудование за баллы не продаём."}
           </p>
         </div>
 
-        {data.balanceRub > 0 ? (
+        {data.balanceRub > 0 && !inApp ? (
           <Link
             href="/order?plan=monthly"
             className={
@@ -856,14 +877,26 @@ function ReviewForm({
 
 /* ----------------------------------------------------------- история */
 
-function HistorySection({ data, mini }: { data: BalanceOverview; mini: boolean }) {
+function HistorySection({
+  data,
+  mini,
+  inApp,
+}: {
+  data: BalanceOverview;
+  mini: boolean;
+  inApp: boolean;
+}) {
   if (data.transactions.length === 0) {
     return (
       <Section
         mini={mini}
         icon={<Coins className={mini ? "size-5" : "size-5 text-[#3848c7]"} />}
         title="История начислений"
-        subtitle="Пока пусто. Пригласите коллегу или оставьте отзыв — первые баллы появятся здесь."
+        subtitle={
+          inApp
+            ? "Пока пусто."
+            : "Пока пусто. Пригласите коллегу или оставьте отзыв — первые баллы появятся здесь."
+        }
       >
         {null}
       </Section>

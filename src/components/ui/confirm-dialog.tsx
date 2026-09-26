@@ -23,6 +23,8 @@ const VARIANT_STYLES: Record<
     confirmHover: string;
     confirmRing: string;
     accentBg: string;
+    /** Тёмная тема: светлая шапка с посветлевшим текстом не читалась. */
+    dark: { accentBg: string; iconBg: string; iconColor: string };
   }
 > = {
   default: {
@@ -32,6 +34,11 @@ const VARIANT_STYLES: Record<
     confirmHover: "hover:bg-[#4a5bf0]",
     confirmRing: "shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)]",
     accentBg: "bg-gradient-to-br from-[#f5f6ff] to-white",
+    dark: {
+      accentBg: "bg-gradient-to-br from-[#46437c] to-[#3a3757]",
+      iconBg: "bg-[rgba(126,140,255,0.22)]",
+      iconColor: "text-[#c3c9ff]",
+    },
   },
   info: {
     iconBg: "bg-[#eef1ff]",
@@ -40,6 +47,11 @@ const VARIANT_STYLES: Record<
     confirmHover: "hover:bg-[#4a5bf0]",
     confirmRing: "shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)]",
     accentBg: "bg-gradient-to-br from-[#f5f6ff] to-white",
+    dark: {
+      accentBg: "bg-gradient-to-br from-[#46437c] to-[#3a3757]",
+      iconBg: "bg-[rgba(126,140,255,0.22)]",
+      iconColor: "text-[#c3c9ff]",
+    },
   },
   warn: {
     iconBg: "bg-[#fff8eb]",
@@ -48,6 +60,11 @@ const VARIANT_STYLES: Record<
     confirmHover: "hover:bg-[#b45309]",
     confirmRing: "shadow-[0_10px_30px_-12px_rgba(217,119,6,0.45)]",
     accentBg: "bg-gradient-to-br from-[#fff8eb] to-white",
+    dark: {
+      accentBg: "bg-gradient-to-br from-[#56484a] to-[#3a3757]",
+      iconBg: "bg-[rgba(255,178,80,0.18)]",
+      iconColor: "text-[#ffcc80]",
+    },
   },
   danger: {
     iconBg: "bg-[#fff4f2]",
@@ -56,8 +73,30 @@ const VARIANT_STYLES: Record<
     confirmHover: "hover:bg-[#8b3128]",
     confirmRing: "shadow-[0_10px_30px_-12px_rgba(161,58,50,0.55)]",
     accentBg: "bg-gradient-to-br from-[#fff4f2] to-white",
+    dark: {
+      accentBg: "bg-gradient-to-br from-[#583f56] to-[#3a3757]",
+      iconBg: "bg-[rgba(255,144,130,0.18)]",
+      iconColor: "text-[#ffb4a8]",
+    },
   },
 };
+
+/**
+ * Тёмная тема кабинета и мини-приложения — та же метка, по которой
+ * `app-theme.css` перекрашивает страницу. Окно порталится в `<body>`,
+ * вне `.app-shell`, поэтому вариант `dark:` до него не доходит.
+ */
+const DARK_THEME_SELECTOR =
+  '[data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])';
+
+function isDarkTheme(): boolean {
+  try {
+    return document.body.matches(DARK_THEME_SELECTOR);
+  } catch {
+    // Браузер без :has() — остаётся светлая шапка.
+    return false;
+  }
+}
 
 const VARIANT_ICONS: Record<Variant, typeof Sparkles> = {
   default: Sparkles,
@@ -163,6 +202,7 @@ export function ConfirmDialog({
   const phraseOk =
     !typeToConfirm || phrase.trim().toUpperCase() === typeToConfirm.toUpperCase();
   const canConfirm = phraseOk && !submitting && !confirmDisabled;
+  const tone = isDarkTheme() ? { ...styles, ...styles.dark } : styles;
 
   async function handleConfirm() {
     if (!canConfirm) return;
@@ -224,13 +264,13 @@ export function ConfirmDialog({
         className={`relative flex max-h-[90vh] outline-none supports-[height:100dvh]:max-h-[90dvh] w-full max-w-[480px] flex-col overflow-hidden rounded-t-3xl border border-[#ececf4] bg-white sm:rounded-3xl shadow-[0_30px_80px_-30px_rgba(11,16,36,0.55)]`}
       >
         {/* Header — gradient accent */}
-        <div className={`relative shrink-0 overflow-hidden ${styles.accentBg} p-6`}>
+        <div className={`relative shrink-0 overflow-hidden ${tone.accentBg} p-6`}>
           <div className="pointer-events-none absolute -right-12 -top-12 size-[200px] rounded-full bg-[#5566f6]/8 blur-3xl" />
           <div className="relative flex items-start gap-3">
             <div
-              className={`flex size-12 shrink-0 items-center justify-center rounded-2xl ${styles.iconBg}`}
+              className={`flex size-12 shrink-0 items-center justify-center rounded-2xl ${tone.iconBg}`}
             >
-              <Icon className={`size-6 ${styles.iconColor}`} />
+              <Icon className={`size-6 ${tone.iconColor}`} />
             </div>
             <div className="min-w-0 flex-1">
               <h2

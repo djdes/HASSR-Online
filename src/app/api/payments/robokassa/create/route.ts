@@ -28,6 +28,7 @@ import { REFERRAL_COOKIE, readCookie } from "@/lib/balance/constants";
 import { createOrderWithPoints } from "@/lib/balance/checkout";
 import { resolveReferrerByCode } from "@/lib/balance/referral";
 import { completePaidOrder } from "@/lib/payment-fulfillment";
+import { refuseMobileAppPayment } from "@/lib/mobile-app-payments";
 
 export const dynamic = "force-dynamic";
 
@@ -76,6 +77,8 @@ function expirationDate(from: Date): string {
 }
 
 export async function POST(request: NextRequest) {
+  const appRefusal = refuseMobileAppPayment(request);
+  if (appRefusal) return appRefusal;
   if (!createOrderRateLimiter.consume(clientIp(request))) {
     return NextResponse.json(
       { error: "Слишком много попыток. Попробуйте через несколько минут" },

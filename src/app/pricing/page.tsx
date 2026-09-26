@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { isMobileAppRequest, MOBILE_APP_HOME } from "@/lib/mobile-app-payments";
 import { ArrowRight, Check, Wrench } from "lucide-react";
 import { RoiCalculator } from "@/components/landing/roi-calculator";
 import { PublicHeader, PublicFooter } from "@/components/public/public-chrome";
@@ -57,6 +59,8 @@ export const metadata = {
  * дальше доплата за каждого.
  */
 export default async function PricingPage() {
+  // Витрина с кнопками оплаты — не для приложения (правила магазинов).
+  if (await isMobileAppRequest()) redirect(MOBILE_APP_HOME);
   const tariffs = await readTariffs().catch(() => fallbackTariffs());
   const monthly =
     tariffs.find((t) => t.key === TARIFF_MONTHLY) ?? fallbackTariffs()[0];

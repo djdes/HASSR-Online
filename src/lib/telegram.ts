@@ -6,6 +6,7 @@ import { Agent, fetch as undiciFetch, setGlobalDispatcher } from "undici";
 import crypto from "node:crypto";
 import { escapeHtml } from "@/lib/html-escape";
 import {
+  recordPushOnlyDelivery,
   shouldSkipTelegramDelivery,
   type TelegramDeliveryMetadata,
   type TelegramDeliveryPolicyOptions,
@@ -633,6 +634,7 @@ export async function notifyEmployee(
   // сотрудник без Telegram тоже должен узнать о задаче. В тихие часы
   // push не шлём: сообщение бота отложено до утра, а будить ночью
   // уведомлением на телефоне нельзя.
+  let pushSent = false;
   if (!quietUntilAt) {
     const pushBody = pushTextFromTelegramHtml(text);
     if (pushBody) {
@@ -641,10 +643,23 @@ export async function notifyEmployee(
         { title: "WeSetup", body: pushBody, url: action?.miniAppUrl ?? null },
         "bot"
       );
+      pushSent = isMobilePushConfigured();
     }
   }
 
   if (!user.telegramChatId) {
+    // Без Telegram строки в TelegramLog нет, и повтор крона с
+    // `skipOnRerun` прислал бы тот же push снова. Отмечаем доставку
+    // строкой `push_only` — её видит проверка повтора.
+    if (pushSent) {
+      await recordPushOnlyDelivery({
+        userId: user.id,
+        hasTelegram: false,
+        body: text,
+        delivery: opts?.delivery,
+        policy: opts?.policy,
+      }).catch((error) => console.error("[telegram] push_only log failed", error));
+    }
     return;
   }
   if (quietUntilAt) {
@@ -823,11 +838,26 @@ export async function notifyOrganization(
   // партнёра нет или клиент скрыл брендинг.
   const consultantFooter = await telegramConsultantFooter(organizationId);
 
+  const mobilePush = await import("./mobile-push");
+  // Push в приложение: руководитель, который пользуется только
+  // приложением, без Telegram, тоже должен узнать о тревоге. Сводки и
+  // отчёты push'ем не шлём — правило в `organizationAlertPush`.
+  const alertPush = mobilePush.isMobilePushConfigured()
+    ? mobilePush.organizationAlertPush(message, type)
+    : null;
+
   const users = await db.user.findMany({
     where: {
       organizationId,
       role: { in: dbRoles },
-      telegramChatId: { not: null },
+      ...(alertPush
+        ? {
+            OR: [
+              { telegramChatId: { not: null } },
+              { mobileDevices: { some: { pushEnabled: true } } },
+            ],
+          }
+        : { telegramChatId: { not: null } }),
       isActive: true,
     },
     select: {
@@ -854,21 +884,48 @@ export async function notifyOrganization(
       })
     : undefined;
 
+  if (alertPush) {
+    // Как в notifyEmployee: «Отложить» глушит и push; в тихие часы
+    // push молчит, кроме срочного (температура, отклонения — см.
+    // `isUrgentKind`). Копия того, что уже ушло push'ем колокольчика
+    // в последние секунды, отбрасывается (`source: "bot"`).
+    const now = new Date();
+    const urgent = isUrgentKind(type ?? null);
+    await Promise.allSettled(
+      filtered.map(async (u) => {
+        if (mobilePush.isNotificationSnoozed(u.notificationPrefs, now)) return;
+        if (!urgent && (await quietUntilForUser(u.id))) return;
+        const personal = mobilePush.organizationAlertPush(
+          personalizeMessage(message, { name: u.name }),
+          type
+        );
+        if (!personal) return;
+        mobilePush.sendMobilePushInBackground(
+          u.id,
+          { ...personal, url: action?.miniAppUrl ?? null },
+          "bot"
+        );
+      })
+    );
+  }
+
   await Promise.allSettled(
-    filtered.map((u) =>
-      // Persoналиize per-user: каждый менеджер видит своё имя и
-      // приветствие. Без placeholder'ов в `message` — `personalizeMessage`
-      // отдаёт текст без изменений, так что callers без шаблонов
-      // не страдают.
-      sendTelegramMessage(
-        u.telegramChatId!,
-        personalizeMessage(message, { name: u.name }) + consultantFooter,
-        {
-          userId: u.id ?? null,
-          reply_markup: replyMarkup,
-        }
+    filtered
+      .filter((u) => u.telegramChatId)
+      .map((u) =>
+        // Persoналиize per-user: каждый менеджер видит своё имя и
+        // приветствие. Без placeholder'ов в `message` — `personalizeMessage`
+        // отдаёт текст без изменений, так что callers без шаблонов
+        // не страдают.
+        sendTelegramMessage(
+          u.telegramChatId!,
+          personalizeMessage(message, { name: u.name }) + consultantFooter,
+          {
+            userId: u.id ?? null,
+            reply_markup: replyMarkup,
+          }
+        )
       )
-    )
   );
 }
 

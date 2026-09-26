@@ -43,6 +43,8 @@ import { AnchorScrollLink } from "@/components/public/anchor-scroll-link";
 import { HeroEmailStart } from "@/components/landing/hero-email-start";
 import { NavStartButton } from "@/components/landing/nav-start-button";
 import { getServerSession } from "@/lib/server-session";
+import { redirect } from "next/navigation";
+import { isMobileAppRequest, MOBILE_APP_HOME } from "@/lib/mobile-app-payments";
 import { authOptions } from "@/lib/auth";
 import { getWebHomeHref } from "@/lib/role-access";
 import { jsonLdSafeString } from "@/lib/json-ld";
@@ -237,6 +239,9 @@ const OUTLINE_BUTTON_CLASS =
   "inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-5 text-[16px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] sm:text-[15px]";
 
 export default async function LandingPage() {
+  // В приложении лендинг с тарифами и кнопками оплаты не показываем
+  // (правила магазинов) — сразу главный экран приложения.
+  if (await isMobileAppRequest()) redirect(MOBILE_APP_HOME);
   // Auth state — для адаптации nav/CTA. Лендинг остаётся публичным,
   // но залогиненный видит «Открыть кабинет» вместо «Войти/Начать».
   const session = await getServerSession(authOptions).catch(() => null);

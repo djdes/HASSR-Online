@@ -8,6 +8,7 @@ import { isManagementRole } from "@/lib/user-roles";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { sendTelegramMessage, escapeTelegramHtml } from "@/lib/telegram";
 import { orgLoginPrefix } from "@/lib/login-prefix";
+import { pushTextFromTelegramHtml, sendMobilePushInBackground } from "@/lib/mobile-push";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -219,7 +220,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
     const prefs = (target?.notificationPrefs as
       | Record<string, boolean>
       | null) ?? {};
-    if (target?.telegramChatId && prefs.assignments !== false) {
+    if (target && prefs.assignments !== false) {
       const codeToName = new Map<string, string>(
         ACTIVE_JOURNAL_CATALOG.map((item) => [item.code, item.name])
       );
@@ -228,9 +229,17 @@ export async function PUT(request: Request, { params }: RouteParams) {
         .map((name) => `• ${escapeTelegramHtml(name)}`)
         .join("\n");
       const body = `<b>Вам назначены журналы:</b>\n${names}`;
-      sendTelegramMessage(target.telegramChatId, body, { userId: id }).catch(
-        (err) => console.error("TG assignment notify failed", err)
+      // Push в приложение — и тем, у кого нет Telegram.
+      sendMobilePushInBackground(
+        id,
+        { title: "WeSetup", body: pushTextFromTelegramHtml(body), url: "/journals" },
+        "bot"
       );
+      if (target.telegramChatId) {
+        sendTelegramMessage(target.telegramChatId, body, { userId: id }).catch(
+          (err) => console.error("TG assignment notify failed", err)
+        );
+      }
     }
   }
 

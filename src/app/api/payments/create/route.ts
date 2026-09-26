@@ -5,10 +5,13 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { PLANS, isValidPlanId } from "@/lib/plans";
 import { isManagerRole } from "@/lib/user-roles";
+import { refuseMobileAppPayment } from "@/lib/mobile-app-payments";
 
 const YOOKASSA_API = "https://api.yookassa.ru/v3";
 
 export async function POST(request: Request) {
+  const appRefusal = refuseMobileAppPayment(request);
+  if (appRefusal) return appRefusal;
   try {
     const session = await getServerSession(authOptions);
     if (!session) {

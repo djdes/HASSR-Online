@@ -1,0 +1,211 @@
+[
+  {
+    "check": "/settings/subscription web still has payment actions",
+    "ok": true,
+    "detail": {
+      "links": [
+        "/order?plan=monthly",
+        "/order?plan=monthly&recurring=1"
+      ],
+      "words": [
+        "Оплатить картой",
+        "Включить автопродление"
+      ]
+    }
+  },
+  {
+    "check": "/settings/balance web still has payment actions",
+    "ok": true,
+    "detail": {
+      "links": [
+        "/order?plan=monthly"
+      ],
+      "words": [
+        "Оплатить с баллами"
+      ]
+    }
+  },
+  {
+    "check": "/pricing web stays",
+    "ok": true,
+    "detail": "http://localhost:3022/pricing"
+  },
+  {
+    "check": "/settings/subscription app light 200",
+    "ok": true,
+    "detail": 200
+  },
+  {
+    "check": "/settings/subscription app light no payment links/buttons",
+    "ok": true,
+    "detail": {
+      "links": [],
+      "words": []
+    }
+  },
+  {
+    "check": "/settings/balance app light 200",
+    "ok": true,
+    "detail": 200
+  },
+  {
+    "check": "/settings/balance app light no payment links/buttons",
+    "ok": true,
+    "detail": {
+      "links": [],
+      "words": []
+    }
+  },
+  {
+    "check": "/pricing app -> /mini",
+    "ok": true,
+    "detail": "/mini"
+  },
+  {
+    "check": "/order?plan=monthly app -> /mini",
+    "ok": true,
+    "detail": "/mini"
+  },
+  {
+    "check": "/ app -> /mini",
+    "ok": true,
+    "detail": "/mini"
+  },
+  {
+    "check": "robokassa create from app 403",
+    "ok": true,
+    "detail": 403
+  },
+  {
+    "check": "invoice from app 403",
+    "ok": true,
+    "detail": 403
+  },
+  {
+    "check": "expired app text",
+    "ok": true,
+    "detail": "Подписка компании закончилась. Обратитесь к владельцу компании."
+  },
+  {
+    "check": "expired app no payment",
+    "ok": true,
+    "detail": {
+      "links": [],
+      "words": []
+    }
+  },
+  {
+    "check": "/settings/subscription app dark 200",
+    "ok": true,
+    "detail": 200
+  },
+  {
+    "check": "/settings/subscription app dark no payment links/buttons",
+    "ok": true,
+    "detail": {
+      "links": [],
+      "words": []
+    }
+  },
+  {
+    "check": "/settings/balance app dark 200",
+    "ok": true,
+    "detail": 200
+  },
+  {
+    "check": "/settings/balance app dark no payment links/buttons",
+    "ok": true,
+    "detail": {
+      "links": [],
+      "words": []
+    }
+  },
+  {
+    "check": "metrika web: counter loads",
+    "ok": true,
+    "detail": {
+      "hits": 1,
+      "state": {
+        "ym": "function",
+        "tagScripts": 1
+      }
+    }
+  },
+  {
+    "check": "metrika app: no request to mc.yandex",
+    "ok": true,
+    "detail": []
+  },
+  {
+    "check": "metrika app: no ym, no tag.js",
+    "ok": true,
+    "detail": {
+      "ym": "undefined",
+      "tagScripts": 0
+    }
+  },
+  {
+    "check": "dialog default light",
+    "ok": true,
+    "detail": {
+      "title": "rgb(11, 16, 36)",
+      "headerBg": "linear-gradient(to right bottom in oklab, rgb(245, 246, 255) 0%, rgb(255, 255, 255) 100%)"
+    }
+  },
+  {
+    "check": "dialog info light",
+    "ok": true,
+    "detail": {
+      "title": "rgb(11, 16, 36)",
+      "headerBg": "linear-gradient(to right bottom in oklab, rgb(245, 246, 255) 0%, rgb(255, 255, 255) 100%)"
+    }
+  },
+  {
+    "check": "dialog warn light",
+    "ok": true,
+    "detail": {
+      "title": "rgb(11, 16, 36)",
+      "headerBg": "linear-gradient(to right bottom in oklab, rgb(255, 248, 235) 0%, rgb(255, 255, 255) 100%)"
+    }
+  },
+  {
+    "check": "dialog danger light",
+    "ok": true,
+    "detail": {
+      "title": "rgb(11, 16, 36)",
+      "headerBg": "linear-gradient(to right bottom in oklab, rgb(255, 244, 242) 0%, rgb(255, 255, 255) 100%)"
+    }
+  },
+  {
+    "check": "dialog default dark",
+    "ok": true,
+    "detail": {
+      "title": "rgb(242, 243, 251)",
+      "headerBg": "linear-gradient(to right bottom in oklab, rgb(70, 67, 124) 0%, rgb(58, 55, 87) 100%)"
+    }
+  },
+  {
+    "check": "dialog info dark",
+    "ok": true,
+    "detail": {
+      "title": "rgb(242, 243, 251)",
+      "headerBg": "linear-gradient(to right bottom in oklab, rgb(70, 67, 124) 0%, rgb(58, 55, 87) 100%)"
+    }
+  },
+  {
+    "check": "dialog warn dark",
+    "ok": true,
+    "detail": {
+      "title": "rgb(242, 243, 251)",
+      "headerBg": "linear-gradient(to right bottom in oklab, rgb(86, 72, 74) 0%, rgb(58, 55, 87) 100%)"
+    }
+  },
+  {
+    "check": "dialog danger dark",
+    "ok": true,
+    "detail": {
+      "title": "rgb(242, 243, 251)",
+      "headerBg": "linear-gradient(to right bottom in oklab, rgb(88, 63, 86) 0%, rgb(58, 55, 87) 100%)"
+    }
+  }
+]

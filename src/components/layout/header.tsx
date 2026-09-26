@@ -55,6 +55,7 @@ import { useHeaderUndo } from "@/components/journals/journal-undo-slot";
 import { OfflineIndicator } from "@/components/layout/offline-indicator";
 import { LiveConnectionIndicator } from "@/components/live/live-connection-indicator";
 import { planLabel } from "@/lib/plan-limits";
+import { useInsideMobileApp } from "@/lib/use-inside-mobile-app";
 import { orgDisplayName } from "@/lib/org-display-name";
 import {
   LocationSwitcherList,
@@ -280,6 +281,10 @@ export function Header({
   // автопродление: попасть на страницу можно было лишь через хаб
   // настроек, о котором ещё нужно догадаться.
   const canManagePlan = fullAccess;
+  // В приложении WeSetup не зовём к оплате (правила магазинов): пункт
+  // ведёт на страницу тарифа только для просмотра — «Тариф».
+  const inApp = useInsideMobileApp();
+  const upsellPlan = onFreePlan && !inApp;
 
   const visibleSecondaryNavItems = fullAccess
     ? secondaryNavItems.map((item) => ({
@@ -822,13 +827,13 @@ export function Header({
                   <DropdownMenuItem
                     asChild
                     className={
-                      onFreePlan
+                      upsellPlan
                         ? "text-[#5566f6] focus:bg-[#f5f6ff] focus:text-[#5566f6]"
                         : "focus:bg-[#f5f6ff]"
                     }
                   >
                     <Link href="/settings/subscription">
-                      {onFreePlan ? (
+                      {upsellPlan ? (
                         <>
                           <CircleArrowUp className="mr-2 size-4 text-[#5566f6]" />
                           Улучшить тариф
@@ -836,7 +841,7 @@ export function Header({
                       ) : (
                         <>
                           <CreditCard className="mr-2 size-4 text-[#5566f6]" />
-                          Тарифы и оплата
+                          {inApp ? "Тариф" : "Тарифы и оплата"}
                         </>
                       )}
                     </Link>

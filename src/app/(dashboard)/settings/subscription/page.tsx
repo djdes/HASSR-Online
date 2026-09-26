@@ -31,6 +31,7 @@ import {
   planLabel,
 } from "@/lib/plan-limits";
 import { RecurringCard } from "@/components/settings/recurring-card";
+import { isMobileAppRequest } from "@/lib/mobile-app-payments";
 
 export default async function SubscriptionPage() {
   // Раньше здесь стоял `requireRole(["owner"])`, и страница была
@@ -117,6 +118,31 @@ export default async function SubscriptionPage() {
     !payment.isTest &&
     !payment.refundedAt &&
     Number(payment.amountRub) > 0;
+
+  // Приложение WeSetup: только состояние тарифа, без оплаты, счетов и
+  // ссылок на оплату (App Store 3.1.1 / 3.1.3(b), Google Play).
+  if (await isMobileAppRequest()) {
+    const activeUntil = isFreePlan(plan) ? null : (org?.subscriptionEnd ?? null);
+    return (
+      <InAppSubscriptionStatus
+        planLabel={planLabel(plan)}
+        planNote={planNote}
+        paused={plan === "paused"}
+        activeUntil={activeUntil}
+        expired={activeUntil !== null && activeUntil.getTime() < new Date().getTime()}
+        employees={employees}
+        balanceRub={org?.balanceRub ?? 0}
+        payments={payments.map((payment) => ({
+          id: payment.id,
+          at: payment.paidAt ?? payment.createdAt,
+          description: payment.description,
+          status: orderStatusLabel(payment),
+          paid: payment.status === "paid",
+          amountRub: Number(payment.amountRub),
+        }))}
+      />
+    );
+  }
 
   return (
     <div className="space-y-5">
@@ -416,6 +442,113 @@ function PricingStat({
         {value}
       </div>
       <div className="mt-1.5 text-[12px]">{hint}</div>
+    </div>
+  );
+}
+
+/**
+ * Тариф в приложении WeSetup: только состояние. Ни кнопок оплаты, ни
+ * счетов, ни слов «оплатите на сайте» — правила App Store и Google Play
+ * запрещают звать к оплате мимо магазина. Возобновить работу после
+ * паузы можно: это бесплатно.
+ */
+function InAppSubscriptionStatus({
+  planLabel: label,
+  planNote,
+  paused,
+  activeUntil,
+  expired,
+  employees,
+  balanceRub,
+  payments,
+}: {
+  planLabel: string;
+  planNote: string | null;
+  paused: boolean;
+  activeUntil: Date | null;
+  expired: boolean;
+  employees: number;
+  balanceRub: number;
+  payments: Array<{
+    id: number;
+    at: Date;
+    description: string;
+    status: string;
+    paid: boolean;
+    amountRub: number;
+  }>;
+}) {
+  return (
+    <div className="space-y-5">
+      <h1 className="text-[32px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">
+        Тариф
+      </h1>
+
+      {paused ? <ResumePausedCard /> : null}
+
+      <section className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-7">
+        <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
+          Тариф компании
+        </div>
+        <div className="mt-2 text-[24px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">
+          {label}
+        </div>
+        {planNote ? (
+          <p className="mt-1.5 text-[13.5px] leading-[1.5] text-[#6f7282]">{planNote}</p>
+        ) : null}
+
+        {expired ? (
+          <p
+            data-testid="subscription-expired"
+            className="mt-4 rounded-2xl bg-[#fff4f2] px-4 py-3 text-[14px] leading-[1.5] text-[#a13a32]"
+          >
+            Подписка компании закончилась. Обратитесь к владельцу компании.
+          </p>
+        ) : null}
+
+        <dl className="mt-5 grid gap-3 sm:grid-cols-3">
+          <StatusCell
+            label={expired ? "Закончилась" : "Действует до"}
+            value={activeUntil ? activeUntil.toLocaleDateString("ru-RU") : "без срока"}
+          />
+          <StatusCell label="Сотрудников" value={String(employees)} />
+          <StatusCell label="Баланс баллов" value={`${balanceRub.toLocaleString("ru-RU")} ₽`} />
+        </dl>
+      </section>
+
+      {payments.length > 0 ? (
+        <section className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-7">
+          <h2 className="text-[16px] font-semibold text-[#0b1024]">История платежей</h2>
+          <ul className="mt-3 divide-y divide-[#f2f3f8]">
+            {payments.map((payment) => (
+              <li key={payment.id} className="flex items-start justify-between gap-3 py-3">
+                <div className="min-w-0">
+                  <div className="text-[14px] text-[#0b1024]">{payment.description}</div>
+                  <div className="mt-0.5 text-[12.5px] text-[#6f7282]">
+                    {payment.at.toLocaleDateString("ru-RU")} · {payment.status}
+                  </div>
+                </div>
+                <div
+                  className={`shrink-0 text-[14px] tabular-nums ${payment.paid ? "text-[#0b1024]" : "text-[#6f7282]"}`}
+                >
+                  {payment.amountRub.toLocaleString("ru-RU")} ₽
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+    </div>
+  );
+}
+
+function StatusCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3">
+      <dt className="text-[12px] font-medium uppercase tracking-[0.06em] text-[#6f7282]">
+        {label}
+      </dt>
+      <dd className="mt-1 text-[18px] font-semibold tabular-nums text-[#0b1024]">{value}</dd>
     </div>
   );
 }

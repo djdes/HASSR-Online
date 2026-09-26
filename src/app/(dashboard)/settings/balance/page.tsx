@@ -3,6 +3,7 @@ import { Coins } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { loadBalanceOverview } from "@/lib/balance/overview";
 import { BalanceClient } from "@/components/balance/balance-client";
+import { isMobileAppRequest } from "@/lib/mobile-app-payments";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,9 @@ export default async function BalanceSettingsPage() {
     getActiveOrgId(session),
     session.user,
   );
+  // Приложение WeSetup: только баланс и история, без оплаты и без
+  // заработка баллов на скидку к оплате (правила магазинов).
+  const inApp = await isMobileAppRequest();
 
   return (
     <div className="space-y-5">
@@ -32,14 +36,14 @@ export default async function BalanceSettingsPage() {
             Баланс и бонусы
           </h1>
           <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
-            Баллы — это скидка на подписку: 1 балл = 1 ₽. Зарабатываются
-            двумя способами: рекомендацией коллегам и отзывом о сервисе.
-            Тратятся автоматически при оплате.
+            {inApp
+              ? "Бонусные баллы вашей организации и история начислений."
+              : "Баллы — это скидка на подписку: 1 балл = 1 ₽. Зарабатываются двумя способами: рекомендацией коллегам и отзывом о сервисе. Тратятся автоматически при оплате."}
           </p>
         </div>
       </div>
 
-      <BalanceClient initial={overview} variant="site" />
+      <BalanceClient initial={overview} variant="site" inApp={inApp} />
     </div>
   );
 }

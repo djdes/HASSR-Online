@@ -10,6 +10,11 @@ import Script from "next/script";
  * doesn't block first paint. Settings match the stock snippet from
  * the Metrika dashboard: webvisor, clickmap, accurate bounce,
  * ecommerce dataLayer, manual referrer + url for SPA navigations.
+ *
+ * Inside the WeSetup app the inline guard checks the User-Agent before
+ * anything is created: no tag.js, no `ym` call, no request to
+ * mc.yandex.ru. The `<noscript>` pixel never fires there — the app's
+ * WebView always runs JavaScript.
  */
 export function YandexMetrika() {
   const id = process.env.NEXT_PUBLIC_YANDEX_METRIKA_ID;
@@ -29,7 +34,11 @@ export function YandexMetrika() {
             /* Условие блоком, а не return: у встроенного скрипта нет функции-обёртки,
                и return на верхнем уровне — синтаксическая ошибка, с которой счётчик
                не запускался ни на одной странице. */
-            if (!/^\\/(journal-fill|equipment-fill|room-fill|task-fill)(\\/|$)/.test(location.pathname)) {
+            /* Приложение WeSetup (User-Agent «WeSetupApp/<версия> (ios|android)»,
+               см. src/lib/mobile-app.ts): в анкетах магазинов сказано, что
+               приложение не собирает аналитику, — счётчик не грузим вовсе. */
+            if (!/(?:^|[\\s;(])WeSetupApp\\//i.test(navigator.userAgent) &&
+                !/^\\/(journal-fill|equipment-fill|room-fill|task-fill)(\\/|$)/.test(location.pathname)) {
             (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
             m[i].l=1*new Date();
             for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}

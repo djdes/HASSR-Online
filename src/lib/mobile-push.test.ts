@@ -4,7 +4,9 @@ import assert from "node:assert/strict";
 import {
   buildFcmMessage,
   isDeadTokenError,
+  isNotificationSnoozed,
   normalizePushUrl,
+  organizationAlertPush,
   pushTextFromTelegramHtml,
   shouldSkipBotPush,
 } from "./mobile-push";
@@ -103,4 +105,59 @@ test("копия сообщения бота молчит сразу после 
   assert.equal(shouldSkipBotPush(undefined, now), false);
   assert.equal(shouldSkipBotPush(now - 5_000, now), true);
   assert.equal(shouldSkipBotPush(now - 60_000, now), false);
+});
+
+test("тревога руководству уходит push'ем: заголовок — первая строка", () => {
+  const push = organizationAlertPush(
+    "🔴 <b>Превышение температуры — открыт CAPA</b>\n\nХолодильник №2: 9.1°C (2…6°C, выше)\nДлительность 40 мин.",
+    "temperature"
+  );
+  assert.deepEqual(push, {
+    title: "🔴 Превышение температуры — открыт CAPA",
+    body: "Холодильник №2: 9.1°C (2…6°C, выше) Длительность 40 мин.",
+  });
+});
+
+test("однострочная тревога: заголовок WeSetup, текст целиком", () => {
+  assert.deepEqual(
+    organizationAlertPush("Отзыв Анны опубликован — начислено <b>500 ₽</b>."),
+    { title: "WeSetup", body: "Отзыв Анны опубликован — начислено 500 ₽." }
+  );
+});
+
+test("сводки и отчёты push'ем не уходят", () => {
+  assert.equal(
+    organizationAlertPush("<b>📊 Сводка за неделю · Кафе</b>\n\nЗаполнено: 90%", "compliance"),
+    null
+  );
+  assert.equal(organizationAlertPush("🤖 <b>AI-сводка за неделю</b>\n\nВсё хорошо"), null);
+  assert.equal(organizationAlertPush("<b>Дайджест</b>\nтекст"), null);
+  assert.equal(organizationAlertPush("<b>Отчёт за смену</b>\nтекст"), null);
+  // Длинное сообщение без типа тревоги — это отчёт, а не тревога.
+  assert.equal(organizationAlertPush(`<b>Новости</b>\n${"слово ".repeat(150)}`), null);
+});
+
+test("длинная тревога с типом всё равно уходит, текст обрезан", () => {
+  const lines = Array.from({ length: 40 }, (_, i) => `• Журнал номер ${i + 1}`).join("\n");
+  const push = organizationAlertPush(
+    `⚠️ <b>Внимание: незаполненные журналы за сегодня</b>\n\n${lines}`,
+    "compliance"
+  );
+  assert.ok(push);
+  assert.equal(push.title, "⚠️ Внимание: незаполненные журналы за сегодня");
+  assert.ok(push.body.length <= 180);
+});
+
+test("пустое сообщение — без push", () => {
+  assert.equal(organizationAlertPush("  <b></b> "), null);
+});
+
+test("отложенные уведомления: push молчит до конца откладывания", () => {
+  const now = new Date("2026-09-26T10:00:00.000Z");
+  assert.equal(isNotificationSnoozed(null, now), false);
+  assert.equal(isNotificationSnoozed({}, now), false);
+  assert.equal(isNotificationSnoozed({ snoozedUntil: "2026-09-26T10:30:00.000Z" }, now), true);
+  assert.equal(isNotificationSnoozed({ snoozedUntil: "2026-09-26T09:30:00.000Z" }, now), false);
+  assert.equal(isNotificationSnoozed({ snoozedUntil: "мусор" }, now), false);
+  assert.equal(isNotificationSnoozed({ snoozedUntil: now.getTime() + 1000 }, now), true);
 });

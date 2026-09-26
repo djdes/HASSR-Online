@@ -7,6 +7,8 @@ import { getBalance } from "@/lib/balance/ledger";
 import { readTariffs, fallbackTariffs, TARIFF_BUNDLE } from "@/lib/tariffs";
 import { normalizeHardwareConfig, hardwareTotal } from "@/lib/hardware-pricing";
 import { OrderClient } from "./order-client";
+import { redirect } from "next/navigation";
+import { isMobileAppRequest, MOBILE_APP_HOME } from "@/lib/mobile-app-payments";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -31,6 +33,8 @@ export default async function OrderPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  // Оформление и оплата — не в приложении (правила магазинов).
+  if (await isMobileAppRequest()) redirect(MOBILE_APP_HOME);
   const params = await searchParams;
   const first = (key: string): string => {
     const value = params[key];

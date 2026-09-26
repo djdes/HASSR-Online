@@ -196,7 +196,7 @@ export async function POST(request: Request) {
 
     // 3. Все способы входа и личное вне карточки.
     await tx.webPushSubscription.deleteMany({ where: { userId } });
-    // Устройства приложения (push через Firebase): удалить строки MobileDevice здесь же.
+    await tx.mobileDevice.deleteMany({ where: { userId } });
     await tx.webAuthnCredential.deleteMany({ where: { userId } });
     await tx.webAuthnChallenge.deleteMany({ where: { userId } });
     await tx.inviteToken.deleteMany({ where: { userId } });
