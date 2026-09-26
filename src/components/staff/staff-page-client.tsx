@@ -84,6 +84,7 @@ import type {
   StaffTelegramInvitePayload,
 } from "@/components/staff/staff-types";
 import { StaffAccessDialog } from "@/components/staff/staff-access-dialog";
+import { printPage } from "@/lib/native-bridge";
 
 type TabKey = "work-off" | "vacations" | "sick-leaves" | "dismissals";
 
@@ -1103,7 +1104,7 @@ export function StaffPageClient(props: StaffPageProps) {
 
           <button
             type="button"
-            onClick={() => window.print()}
+            onClick={() => void printPage()}
             className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[13.5px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
             title="Лист A4, альбомная ориентация"
           >

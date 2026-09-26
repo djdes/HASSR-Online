@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { QrFormatSwitch } from "./qr-format-switch";
 import { QrCompactRow, QrMainCard, QrObjectCard } from "./qr-poster-card";
 import { QrPrintSheets, useHydrated } from "./qr-print-sheets";
+import { printPage } from "@/lib/native-bridge";
 
 export type { QrPoster } from "@/lib/qr-fill-types";
 
@@ -130,7 +131,7 @@ export function QrPostersClient({ view }: { view: QrPostersView }) {
     printedRef.current = true;
     let second = 0;
     const first = window.requestAnimationFrame(() => {
-      second = window.requestAnimationFrame(() => window.print());
+      second = window.requestAnimationFrame(() => void printPage());
     });
     return () => {
       window.cancelAnimationFrame(first);
@@ -447,7 +448,7 @@ export function QrPostersClient({ view }: { view: QrPostersView }) {
       >
         <button
           type="button"
-          onClick={() => window.print()}
+          onClick={() => void printPage()}
           disabled={chosen.length === 0}
           data-qr-print=""
           className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 disabled:cursor-not-allowed disabled:bg-[#c8cbe0] disabled:shadow-none"

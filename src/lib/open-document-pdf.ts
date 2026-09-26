@@ -1,5 +1,7 @@
 "use client";
 
+import { downloadFileName, getNativeBridge, saveBlob } from "@/lib/native-bridge";
+
 export async function openDocumentPdf(documentId: string) {
   const response = await fetch(`/api/journal-documents/${documentId}/pdf`, {
     method: "GET",
@@ -13,6 +15,19 @@ export async function openDocumentPdf(documentId: string) {
   }
 
   const blob = await response.blob();
+  // В приложении WeSetup новых вкладок нет — файл и лист «Поделиться».
+  if (getNativeBridge()) {
+    await saveBlob(
+      blob,
+      downloadFileName({
+        contentDisposition: response.headers.get("content-disposition"),
+        downloadAttr: null,
+        url: `/api/journal-documents/${documentId}/pdf`,
+        contentType: contentType,
+      })
+    );
+    return;
+  }
   const blobUrl = URL.createObjectURL(blob);
   const nextWindow = window.open(blobUrl, "_blank", "noopener,noreferrer");
 

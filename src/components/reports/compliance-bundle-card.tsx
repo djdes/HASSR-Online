@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { CalendarRange, Download, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
+import { saveBlob } from "@/lib/native-bridge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { localDayKey } from "@/lib/entry-defaults";
@@ -98,14 +99,8 @@ export function ComplianceBundleCard() {
       const included = response.headers.get("x-compliance-included");
       const failed = response.headers.get("x-compliance-failed");
       const blob = await response.blob();
-      const downloadUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = downloadUrl;
-      a.download = `compliance-${from}__${to}.zip`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(downloadUrl);
+      // В браузере — скачивание, в приложении WeSetup — «Поделиться».
+      await saveBlob(blob, `compliance-${from}__${to}.zip`);
       const parts = [`включено ${included ?? "?"}`];
       if (failed && failed !== "0") parts.push(`ошибок ${failed}`);
       toast.success(`Архив скачан · ${parts.join(" · ")}`);

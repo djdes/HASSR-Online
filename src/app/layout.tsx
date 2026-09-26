@@ -9,6 +9,8 @@ import "./globals.css";
 import "./app-theme.css";
 import "./public-theme.css";
 import { JOURNALS_TOTAL_ELECTRONIC_LABEL } from "@/lib/journal-catalog";
+import { headers } from "next/headers";
+import { isMobileAppUserAgent } from "@/lib/mobile-app";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -107,7 +109,7 @@ export const metadata: Metadata = {
  * WCAG 1.4.4 (слабовидящие не смогут увеличить текст). Причина
  * авто-зума — шрифты полей меньше 16px, они подняты до 16px.
  */
-export const viewport: Viewport = {
+const BASE_VIEWPORT: Viewport = {
   width: "device-width",
   initialScale: 1,
   // Владелец дважды просил убрать самопроизвольное увеличение на
@@ -120,6 +122,18 @@ export const viewport: Viewport = {
   // сайта совсем.
   maximumScale: 1,
 };
+
+/**
+ * В приложении WeSetup страница рисуется под строкой состояния и полоской
+ * «домой» (Android 15+ всегда во весь экран, на iOS отступов нет).
+ * `viewport-fit=cover` включает env(safe-area-inset-*), и отступы берёт
+ * сама вёрстка. Только для приложения: в Telegram, браузере и на
+ * домашнем экране всё как раньше.
+ */
+export async function generateViewport(): Promise<Viewport> {
+  const inApp = isMobileAppUserAgent((await headers()).get("user-agent"));
+  return inApp ? { ...BASE_VIEWPORT, viewportFit: "cover" } : BASE_VIEWPORT;
+}
 
 export default function RootLayout({
   children,

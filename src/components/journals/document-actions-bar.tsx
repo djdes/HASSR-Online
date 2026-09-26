@@ -12,6 +12,7 @@ import {
   Sticker,
 } from "lucide-react";
 import { toast } from "sonner";
+import { downloadFile, printPage } from "@/lib/native-bridge";
 import { QrCode } from "lucide-react";
 import { isJournalObjectQrCode, journalQrHref } from "@/lib/journal-qr-target";
 import { resolveJournalCodeAlias } from "@/lib/source-journal-map";
@@ -215,7 +216,7 @@ export function DocumentActionsBar({
           ) : (
             <button
               type="button"
-              onClick={() => window.print()}
+              onClick={() => void printPage()}
               aria-label="Распечатать"
               title="Распечатать"
               className="relative z-[1] flex size-9 items-center justify-center rounded-lg border-0 bg-[#5566f6]/[0.04] text-[#5566f6] transition-colors duration-150 hover:bg-[#5566f6]/[0.09] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
@@ -247,12 +248,16 @@ export function DocumentActionsBar({
                         key: "print-pdf",
                         label: "Печать",
                         icon: <Printer className="size-4 text-[#6f7282]" />,
+                        // В приложении — файл и «Поделиться», иначе новая вкладка.
                         onSelect: () =>
-                          window.open(
-                            `/api/journal-documents/${documentId}/pdf`,
-                            "_blank",
-                            "noopener,noreferrer"
-                          ),
+                          void downloadFile(`/api/journal-documents/${documentId}/pdf`, {
+                            fallback: () =>
+                              window.open(
+                                `/api/journal-documents/${documentId}/pdf`,
+                                "_blank",
+                                "noopener,noreferrer"
+                              ),
+                          }),
                       },
                       {
                         key: "print-agent",

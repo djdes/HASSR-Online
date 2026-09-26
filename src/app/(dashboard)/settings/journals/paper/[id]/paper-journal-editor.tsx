@@ -10,6 +10,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { toast } from "sonner";
+import { saveBlob } from "@/lib/native-bridge";
 import type { PaperJournal } from "@/lib/sphere-journal-rules";
 import {
   fillRowForStaff,
@@ -181,12 +182,8 @@ export function PaperJournalEditor({
       );
       if (!response.ok) throw new Error("Не удалось собрать бланк");
       const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `${journal.id}.pdf`;
-      link.click();
-      URL.revokeObjectURL(url);
+      // В браузере — скачивание, в приложении WeSetup — «Поделиться».
+      await saveBlob(blob, `${journal.id}.pdf`);
       toast.success("Бланк готов — откройте файл и распечатайте");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Ошибка");

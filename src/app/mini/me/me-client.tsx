@@ -3,8 +3,11 @@
 import Link from "next/link";
 import { MiniOrgSwitcher } from "@/app/mini/_components/mini-org-switcher";
 import { MiniLocationSwitcher } from "@/app/mini/_components/mini-location-switcher";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
+import { parseMobileAppUserAgent, type MobileAppPlatform } from "@/lib/mobile-app";
+import { unregisterPushDevice } from "@/lib/native-bridge";
+import { AppPushSettings } from "@/app/mini/_components/app-push-settings";
 
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { miniHomeHref } from "@/app/mini/_lib/nav-items";
@@ -78,6 +81,12 @@ export function MiniMeClient({
   // bullet-описанием последствий.
   const [confirmSignOutOpen, setConfirmSignOutOpen] = useState(false);
   const [confirmUnlinkOpen, setConfirmUnlinkOpen] = useState(false);
+  // Приложение WeSetup для телефона (по User-Agent). Узнаём после
+  // монтирования: сервер рисует профиль так же, как для браузера.
+  const [appPlatform, setAppPlatform] = useState<MobileAppPlatform | null>(null);
+  useEffect(() => {
+    setAppPlatform(parseMobileAppUserAgent(navigator.userAgent)?.platform ?? null);
+  }, []);
 
   // Профиль нужен и линейному сотруднику: выйти, отвязать Telegram,
   // переключить тему, посмотреть баллы. Поэтому гейта по правам здесь
@@ -134,6 +143,8 @@ export function MiniMeClient({
             "Не удалось отвязать Telegram. Проверьте связь и попробуйте ещё раз."
         );
       }
+      // Push на этот телефон больше не нужны — отвязываем, пока сессия жива.
+      await unregisterPushDevice();
       // Как «Выйти»: полный выход со всеми куками сессии. Один `signOut`
       // оставлял в браузере старую куку, и сессия возвращалась.
       await signOutOnThisDevice({
@@ -154,6 +165,10 @@ export function MiniMeClient({
   async function handleSignOut() {
     setError(null);
     setBusy("signout");
+    // Приложение: отвязать телефон от push ДО выхода — без сессии сервер
+    // ответит 401, и уведомления этого человека продолжили бы приходить
+    // на телефон, которым уже пользуется другой. Ошибки не мешают выйти.
+    await unregisterPushDevice();
     try {
       // Раньше здесь был один `signOut`: он снимал только куку next-auth,
       // а `/mini` в Telegram тут же входил обратно по initData — выйти и
@@ -277,9 +292,16 @@ export function MiniMeClient({
         </dl>
       </section>
 
-      <section className="mini-card p-4">
-        <PasskeySettings dark />
-      </section>
+      {/* Ключи входа: во встроенном браузере Android-приложения WebAuthn не
+          гарантирован — там не предлагаем. На iOS работают. */}
+      {appPlatform === "android" ? null : (
+        <section className="mini-card p-4">
+          <PasskeySettings dark />
+        </section>
+      )}
+
+      {/* Только в приложении WeSetup: push на этот телефон. */}
+      {appPlatform ? <AppPushSettings /> : null}
 
       {/* Тема — переключатель как вкладки QR-страниц. */}
       <section className="mini-card p-4">
@@ -332,13 +354,17 @@ export function MiniMeClient({
         </Link>
         {fullAccess ? (
           <>
-            <Link href="/settings/subscription" className="mini-item mini-press">
-              <ProfileRow
-                icon={CreditCard}
-                label="Тарифы и оплата"
-                hint="счета и автопродление"
-              />
-            </Link>
+            {/* В приложении оплату не показываем: правила App Store и
+                Google Play запрещают вести на оплату мимо магазина. */}
+            {appPlatform ? null : (
+              <Link href="/settings/subscription" className="mini-item mini-press">
+                <ProfileRow
+                  icon={CreditCard}
+                  label="Тарифы и оплата"
+                  hint="счета и автопродление"
+                />
+              </Link>
+            )}
             <Link href="/settings/appearance" className="mini-item mini-press">
               <ProfileRow icon={Palette} label="Внешний вид" hint="логотип и цвета" />
             </Link>

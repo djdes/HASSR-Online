@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { Copy, ExternalLink, Loader2, Plus, Printer, QrCode, ShieldX } from "lucide-react";
 import { toast } from "sonner";
+import { fileNameFromContentDisposition, saveBlob } from "@/lib/native-bridge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
@@ -494,15 +495,12 @@ function CertificateDialog({ onClose }: { onClose: () => void }) {
         throw new Error(data?.error ?? "Не удалось сформировать");
       }
       const blob = await response.blob();
-      const objectUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = objectUrl;
-      a.download =
-        response.headers
-          .get("content-disposition")
-          ?.match(/filename\*?=(?:UTF-8'')?([^;]+)/)?.[1] ?? "certificate.pdf";
-      a.click();
-      URL.revokeObjectURL(objectUrl);
+      // В браузере — скачивание, в приложении WeSetup — «Поделиться».
+      await saveBlob(
+        blob,
+        fileNameFromContentDisposition(response.headers.get("content-disposition")) ??
+          "certificate.pdf"
+      );
       toast.success("Сертификат скачан — печатайте на A4 и вешайте в зале");
       onClose();
     } catch (err) {

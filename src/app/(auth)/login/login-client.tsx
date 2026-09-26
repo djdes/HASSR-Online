@@ -1,6 +1,7 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { parseMobileAppUserAgent } from "@/lib/mobile-app";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand/logo";
@@ -12,6 +13,14 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const registered = searchParams.get("registered") === "true";
+  // После «Удалить аккаунт» (`/delete-account`, профиль приложения).
+  const accountDeleted = searchParams.get("deleted") === "1";
+  // Во встроенном браузере Android-приложения WeSetup вход по ключу
+  // (WebAuthn) не гарантирован — кнопку там не показываем. На iOS работает.
+  const [androidApp, setAndroidApp] = useState(false);
+  useEffect(() => {
+    setAndroidApp(parseMobileAppUserAgent(navigator.userAgent)?.platform === "android");
+  }, []);
   const inviteAccepted = searchParams.get("invite") === "accepted";
   // Пришли с лендинга, где почта уже занята: подставляем её и объясняем,
   // почему вместо регистрации показан вход.
@@ -309,6 +318,17 @@ function LoginForm() {
             </div>
           )}
 
+          {accountDeleted && (
+            <div
+              className="mt-6 flex items-start gap-2 rounded-2xl border border-[#dcdfed] bg-[#f5f6ff] px-4 py-3 text-[13px] text-[#3c4053]"
+              role="status"
+              data-testid="login-account-deleted"
+            >
+              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#5566f6]" />
+              <span>Аккаунт удалён.</span>
+            </div>
+          )}
+
           {(registered || inviteAccepted) && (
             <div className="mt-6 flex items-start gap-2 rounded-2xl border border-[#c8f0d5] bg-[#effaf1] px-4 py-3 text-[13px] text-[#136b2a]">
               <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
@@ -452,15 +472,17 @@ function LoginForm() {
                     : "Ссылка не подошла — запросите новую."}
             </p>
           ) : null}
-          <button
-            type="button"
-            onClick={handlePasskey}
-            disabled={passkeyBusy}
-            data-testid="passkey-login-button"
-            className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-60"
-          >
-            {passkeyBusy ? "Подтверждаем…" : "Войти по Face ID / отпечатку"}
-          </button>
+          {androidApp ? null : (
+            <button
+              type="button"
+              onClick={handlePasskey}
+              disabled={passkeyBusy}
+              data-testid="passkey-login-button"
+              className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-60"
+            >
+              {passkeyBusy ? "Подтверждаем…" : "Войти по Face ID / отпечатку"}
+            </button>
+          )}
 
           {magicState === "sent" ? (
             <p className="mt-4 rounded-2xl border border-[#c8f0d5] bg-[#effaf1] px-4 py-3 text-[13px] text-[#136b2a]" data-testid="magic-sent">

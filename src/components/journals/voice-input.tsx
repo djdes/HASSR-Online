@@ -1,7 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
+
+import { getNativeBridge } from "@/lib/native-bridge";
 
 declare global {
   interface Window {
@@ -36,6 +38,8 @@ interface SpeechRecognitionResult {
   [index: number]: { transcript: string };
 }
 
+const noopSubscribe = () => () => {};
+
 export function VoiceInput({
   value,
   onChange,
@@ -53,17 +57,112 @@ export function VoiceInput({
 }) {
   const [recording, setRecording] = useState(false);
   const [unsupported, setUnsupported] = useState(false);
+  // Приложение WeSetup для телефона: системное распознавание речи через
+  // плагин — во встроенном браузере Web Speech API нет или он не работает.
+  const native = useSyncExternalStore(
+    noopSubscribe,
+    () => Boolean(getNativeBridge()?.plugin("SpeechRecognition")),
+    () => false
+  );
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const nativeCleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
+    if (native) return;
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       setUnsupported(true);
     }
-  }, []);
+  }, [native]);
+
+  useEffect(() => () => nativeCleanupRef.current?.(), []);
+
+  const toggleNative = useCallback(async () => {
+    const bridge = getNativeBridge();
+    if (!bridge) return;
+    if (recording) {
+      await bridge.call("SpeechRecognition", "stop").catch(() => undefined);
+      nativeCleanupRef.current?.();
+      setRecording(false);
+      return;
+    }
+    const denied = "Разрешите микрофон и распознавание речи в настройках телефона";
+    try {
+      const available = await bridge.call<{ available?: boolean }>("SpeechRecognition", "available");
+      if (available?.available === false) {
+        toast.error("Распознавание речи на этом телефоне недоступно. Наберите текст вручную.");
+        return;
+      }
+      const permission = await bridge.call<{ speechRecognition?: string }>(
+        "SpeechRecognition",
+        "requestPermissions"
+      );
+      if (permission?.speechRecognition !== "granted") {
+        toast.error(denied);
+        return;
+      }
+      // Новый текст — через пробел после уже набранного.
+      const base = value.trim() ? value.replace(/\s*$/, " ") : "";
+      setRecording(true);
+      if (bridge.platform === "android") {
+        // Системное окошко Android само слушает до паузы и возвращает текст.
+        const res = await bridge.call<{ matches?: string[] }>("SpeechRecognition", "start", {
+          language: "ru-RU",
+          maxResults: 1,
+          partialResults: false,
+          popup: true,
+          prompt: "Говорите",
+        });
+        const text = res?.matches?.[0];
+        if (text) onChange(base + text);
+        setRecording(false);
+        return;
+      }
+      // iOS: текст приходит по ходу речи, запись останавливает кнопка.
+      let latest = "";
+      const handles = [
+        bridge.on("SpeechRecognition", "partialResults", (payload) => {
+          const text = (payload as { matches?: string[] } | null)?.matches?.[0];
+          if (!text) return;
+          latest = text;
+          onChange(base + latest);
+        }),
+        bridge.on("SpeechRecognition", "listeningState", (payload) => {
+          if ((payload as { status?: string } | null)?.status === "stopped") {
+            nativeCleanupRef.current?.();
+            setRecording(false);
+          }
+        }),
+      ];
+      nativeCleanupRef.current = () => {
+        nativeCleanupRef.current = null;
+        for (const h of handles) void h.then((x) => x?.remove()).catch(() => undefined);
+      };
+      await bridge.call("SpeechRecognition", "start", {
+        language: "ru-RU",
+        maxResults: 1,
+        partialResults: true,
+      });
+    } catch (err) {
+      nativeCleanupRef.current?.();
+      setRecording(false);
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error(
+        /permission|denied|access/i.test(message)
+          ? denied
+          : /no match|didn.t understand/i.test(message)
+            ? "Ничего не расслышали. Попробуйте ещё раз поближе к телефону."
+            : "Запись прервалась. Попробуйте ещё раз или наберите текст вручную."
+      );
+    }
+  }, [recording, value, onChange]);
 
   const toggleRecording = useCallback(() => {
+    if (native) {
+      void toggleNative();
+      return;
+    }
     if (recording) {
       recognitionRef.current?.stop();
       setRecording(false);
@@ -121,9 +220,9 @@ export function VoiceInput({
     recognitionRef.current = rec;
     rec.start();
     setRecording(true);
-  }, [recording, value, onChange]);
+  }, [native, toggleNative, recording, value, onChange]);
 
-  if (unsupported) {
+  if (unsupported && !native) {
     return (
       <textarea
         id={id}

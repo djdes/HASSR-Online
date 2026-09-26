@@ -35,10 +35,10 @@
   /* Безопасные поля экрана. Раньше `max(12px, env(safe-area-inset-*))`
      жил двенадцатью копиями по компонентам — от нижней навигации до
      листа сканера, и на iPhone с «чёлкой» они разъезжались. */
-  --mini-safe-t: max(12px, env(safe-area-inset-top));
-  --mini-safe-b: max(12px, env(safe-area-inset-bottom));
-  --mini-safe-l: env(safe-area-inset-left);
-  --mini-safe-r: env(safe-area-inset-right);
+  --mini-safe-t: max(12px, var(--safe-area-inset-top, env(safe-area-inset-top)));
+  --mini-safe-b: max(12px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
+  --mini-safe-l: var(--safe-area-inset-left, env(safe-area-inset-left));
+  --mini-safe-r: var(--safe-area-inset-right, env(safe-area-inset-right));
 
   /* Слои: 40 шапка, 45 плавающие кнопки, 50 навигация, 60 листы и
      полосы, 80 фото, 100 сканер. */
@@ -736,7 +736,7 @@ body:has(#mini-root)
 .mini-topbar {
   color: #ffffff;
   background: var(--mini-hero);
-  padding-top: env(safe-area-inset-top, 0px);
+  padding-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06), 0 10px 30px -22px rgba(11, 16, 36, 0.8);
   /* Компоненты кабинета с вариантом `mini` (иконка партнёрки) красятся
      токенами — на тёмной шапке текст белый в обеих темах. */

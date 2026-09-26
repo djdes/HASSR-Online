@@ -19,6 +19,7 @@ import { AppUpdateGate } from "./app-update-gate";
 import { EdgeBack } from "./edge-back";
 import { MiniNav } from "./mini-nav";
 import { MiniServiceWorkerRegister } from "./mini-sw-register";
+import { NativeAppBridge } from "./native-app-bridge";
 import { MiniTelegramRuntime, MiniTopBar } from "./mini-shell";
 import { MiniThemeBootstrap, MiniThemeProvider } from "./mini-theme";
 import { OfflineIndicator } from "./offline-indicator";
@@ -104,6 +105,9 @@ export async function MiniAppShell({
           моноширинные подписи прежней темы) больше не нужен и не грузится. */}
       <MiniThemeProvider initialTheme={initialTheme} profileTheme={profileTheme}>
         <MiniTelegramRuntime homeHref={homeHref} />
+        {/* Приложение WeSetup для телефона: печать, файлы, ссылки,
+            «назад», push. Вне приложения ничего не делает. */}
+        <NativeAppBridge homeHref={homeHref} />
         <MiniServiceWorkerRegister />
         {/* `id="mini-root"` ищут pre-hydration скрипт темы и
             `applyThemeToDOM`. `class="app-shell"` + `data-app-theme`
@@ -166,7 +170,9 @@ export async function MiniAppShell({
               название экрана и колокольчик. */}
           <Toaster
             offset={{
-              top: "calc(env(safe-area-inset-top, 0px) + var(--mini-topbar-h, 56px) + 8px)",
+              // Android-приложение отдаёт вырез экрана переменной
+              // `--safe-area-inset-top`, остальные — через env().
+              top: "calc(var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + var(--mini-topbar-h, 56px) + 8px)",
             }}
           />
           <OfflineIndicator />

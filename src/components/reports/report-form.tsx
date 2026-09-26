@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/card";
 import { FileDown, FileSpreadsheet, Loader2 } from "lucide-react";
 import { isInsideTelegram } from "@/app/mini/_components/telegram-web-app";
+import { saveBlob } from "@/lib/native-bridge";
 
 interface Template {
   id: string;
@@ -114,14 +115,8 @@ export function ReportForm({
         return;
       }
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `report_${templateCode}_${dateFrom}_${dateTo}.${extension}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      // В браузере — скачивание, в приложении WeSetup — «Поделиться».
+      await saveBlob(blob, `report_${templateCode}_${dateFrom}_${dateTo}.${extension}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка при формировании отчёта");
     } finally {

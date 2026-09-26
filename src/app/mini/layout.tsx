@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
+import { headers } from "next/headers";
+import { isMobileAppUserAgent } from "@/lib/mobile-app";
 import { MiniSessionProvider } from "./_components/mini-session-provider";
 import { MiniAppShell } from "./_components/mini-app-shell";
 import { loadMiniShellData } from "./_components/mini-shell-data";
@@ -41,7 +43,7 @@ export const metadata: Metadata = {
   },
 };
 
-export const viewport: Viewport = {
+const BASE_VIEWPORT: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -49,6 +51,12 @@ export const viewport: Viewport = {
   // Цвет фирменной шапки — тот же `theme-color`, что у QR-страниц.
   themeColor: "#0b1024",
 };
+
+/** В приложении WeSetup — во весь экран, отступы считает вёрстка (см. корневой layout). */
+export async function generateViewport(): Promise<Viewport> {
+  const inApp = isMobileAppUserAgent((await headers()).get("user-agent"));
+  return inApp ? { ...BASE_VIEWPORT, viewportFit: "cover" } : BASE_VIEWPORT;
+}
 
 export default async function MiniLayout({
   children,

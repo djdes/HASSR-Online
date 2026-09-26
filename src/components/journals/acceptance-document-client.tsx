@@ -90,6 +90,7 @@ import { JournalClosedBanner } from "@/components/journals/journal-closed-banner
 import { useJournalDocumentActions } from "@/components/journals/use-journal-document-actions";
 import { confirmAsync } from "@/components/ui/confirm-async";
 import { toast } from "sonner";
+import { saveBlob } from "@/lib/native-bridge";
 import { useMobileView } from "@/lib/use-mobile-view";
 import { formatCardDateTime } from "@/lib/journal-card-date";
 import {
@@ -272,14 +273,13 @@ function downloadAcceptanceImportTemplate(isProductAcceptance: boolean) {
   const blob = new Blob([[header, sample].join("\n")], {
     type: "text/csv;charset=utf-8",
   });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = isProductAcceptance
-    ? "incoming-control-import-example.csv"
-    : "incoming-raw-materials-import-example.csv";
-  link.click();
-  URL.revokeObjectURL(url);
+  // В браузере — скачивание, в приложении WeSetup — «Поделиться».
+  void saveBlob(
+    blob,
+    isProductAcceptance
+      ? "incoming-control-import-example.csv"
+      : "incoming-raw-materials-import-example.csv"
+  );
 }
 
 /**

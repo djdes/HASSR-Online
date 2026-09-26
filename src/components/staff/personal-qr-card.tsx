@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { Loader2, Mail, Printer, QrCode, Send, ShieldOff } from "lucide-react";
 import { toast } from "sonner";
 
+import { getNativeBridge, printHtml } from "@/lib/native-bridge";
+
 type Status = { active: boolean; createdAt: string | null; lastUsedAt: string | null; hasPin: boolean; canTelegram: boolean; email: string | null };
 
 /**
@@ -67,12 +69,16 @@ export function PersonalQrCard({ employeeId, employeeName }: { employeeId: strin
 
   function print() {
     if (!issued) return;
+    const safeName = employeeName.replace(/[<>&]/g, "");
+    const html = `<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Личный QR — ${safeName}</title><style>body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;display:flex;justify-content:center}.card{width:105mm;padding:8mm;border:1px dashed #9b9fb3;border-radius:6mm;margin:10mm;text-align:center}h1{font-size:18px;margin:0 0 2mm}p{font-size:12px;color:#3c4053;margin:2mm 0}svg{width:70mm;height:70mm}</style></head><body><div class="card"><h1>${safeName}</h1><p>Личный вход в WeSetup</p>${issued.svg}<p>Отсканируйте камерой телефона и введите свой PIN.</p><p style="color:#9b9fb3">Храните при себе. Потеряли — попросите новый, этот перестанет работать.</p></div><script>window.onload=function(){window.print()}</script></body></html>`;
+    // В приложении WeSetup новых окон нет — печатаем карточку системной печатью.
+    if (getNativeBridge()) {
+      void printHtml(html);
+      return;
+    }
     const w = window.open("", "_blank", "width=520,height=720");
     if (!w) return;
-    const safeName = employeeName.replace(/[<>&]/g, "");
-    w.document.write(
-      `<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Личный QR — ${safeName}</title><style>body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;display:flex;justify-content:center}.card{width:105mm;padding:8mm;border:1px dashed #9b9fb3;border-radius:6mm;margin:10mm;text-align:center}h1{font-size:18px;margin:0 0 2mm}p{font-size:12px;color:#3c4053;margin:2mm 0}svg{width:70mm;height:70mm}</style></head><body><div class="card"><h1>${safeName}</h1><p>Личный вход в WeSetup</p>${issued.svg}<p>Отсканируйте камерой телефона и введите свой PIN.</p><p style="color:#9b9fb3">Храните при себе. Потеряли — попросите новый, этот перестанет работать.</p></div><script>window.onload=function(){window.print()}</script></body></html>`
-    );
+    w.document.write(html);
     w.document.close();
   }
 

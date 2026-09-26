@@ -881,8 +881,8 @@
   /* Безопасные поля экрана — один источник вместо копий по компонентам.
      Mini App держит свои `--mini-safe-*` с тем же смыслом: у него своя
      оболочка и свой минимум отступа. */
-  --safe-t: max(12px, env(safe-area-inset-top));
-  --safe-b: max(12px, env(safe-area-inset-bottom));
+  --safe-t: max(12px, var(--safe-area-inset-top, env(safe-area-inset-top)));
+  --safe-b: max(12px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom)));
 }
 
 html, body {

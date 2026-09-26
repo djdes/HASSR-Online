@@ -1,0 +1,139 @@
+{
+  "pushSeq": [
+    "requestPermissions",
+    "getToken"
+  ],
+  "pushPosts": [
+    "POST {\"token\":\"fcm-e2e-token-0000000000000000000001\",\"platform\":\"android\"}"
+  ],
+  "pushRow": {
+    "userId": "cmu2stnc30006wk9mo57z0txk",
+    "platform": "android",
+    "pushEnabled": true
+  },
+  "explainerGone": 0,
+  "statusBar": [
+    {
+      "style": "DARK"
+    }
+  ],
+  "notificationNav": "/journals/hygiene",
+  "explainerAgain": 0,
+  "backNested": "/dashboard",
+  "backHomeMinimize": 1,
+  "printCalls": 1,
+  "printCalls2": 2,
+  "docPdf": [
+    "hygiene-journal-2026-09-01-2026-09-30.pdf"
+  ],
+  "docPdfPath": "/journals/hygiene/documents/cmu3xjc390004ks9mroi7qi9i",
+  "reportFiles": [
+    {
+      "path": "hygiene-journal-2026-09-01-2026-09-30.pdf",
+      "data": "JVBERi0xLjMKJbrfrOAKMyAwIG9iago8PC9UeXBl",
+      "directory": "CACHE",
+      "len": 647640
+    },
+    {
+      "path": "report_hygiene_2026-08-28_2026-09-26.xlsx",
+      "data": "UEsDBAoAAAAIAOGZOl2R28AJWQEAAPAEAAATAAAA",
+      "directory": "CACHE",
+      "len": 10884
+    },
+    {
+      "path": "report_hygiene_2026-08-28_2026-09-26.pdf",
+      "data": "JVBERi0xLjMKJbrfrOAKMyAwIG9iago8PC9UeXBl",
+      "directory": "CACHE",
+      "len": 332176
+    }
+  ],
+  "reportShares": [
+    {
+      "title": "hygiene-journal-2026-09-01-2026-09-30.pdf",
+      "files": [
+        "file:///cache/hygiene-journal-2026-09-01-2026-09-30.pdf"
+      ],
+      "dialogTitle": "Открыть или отправить"
+    },
+    {
+      "title": "report_hygiene_2026-08-28_2026-09-26.xlsx",
+      "files": [
+        "file:///cache/report_hygiene_2026-08-28_2026-09-26.xlsx"
+      ],
+      "dialogTitle": "Открыть или отправить"
+    },
+    {
+      "title": "report_hygiene_2026-08-28_2026-09-26.pdf",
+      "files": [
+        "file:///cache/report_hygiene_2026-08-28_2026-09-26.pdf"
+      ],
+      "dialogTitle": "Открыть или отправить"
+    }
+  ],
+  "detachedBlob": {
+    "path": "detached.csv",
+    "data": "YTtiCjE7Mg==",
+    "directory": "CACHE",
+    "len": 12
+  },
+  "openUrl": [
+    "mailto:support@wesetup.ru",
+    "https://example.com/page"
+  ],
+  "pagesAfterExternal": 1,
+  "blankNav": "/journals",
+  "pagesAfterBlank": 1,
+  "windowOpenNav": "/mini/sections",
+  "plainNav": "/mini/me",
+  "plainIntercepted": 0,
+  "launchNav": "/journals/hygiene?from=link",
+  "launchOnce": "/dashboard",
+  "appUrlOpenNav": "/mini/me",
+  "foreignDeepLink": "/mini/me",
+  "tariffRowInApp": 0,
+  "toggleBefore": true,
+  "toggleAfter": false,
+  "toggleBack": true,
+  "signOutOrder": [
+    "DELETE devices",
+    "signout /api/auth/signout"
+  ],
+  "rowAfterSignOut": 0,
+  "statusBarDark": [
+    {
+      "style": "DARK"
+    },
+    {
+      "style": "DARK"
+    }
+  ],
+  "openSettings": true,
+  "voicePath": "/journals/e2e_voice/new",
+  "voiceButtons": 1,
+  "voiceCalls": [
+    "available",
+    "requestPermissions",
+    "start"
+  ],
+  "voiceText": "проверка голоса",
+  "passkeyAndroid": 0,
+  "miniDeleted": 1,
+  "passkeyIos": 1,
+  "loginDeleted": 1,
+  "viewportApp": "width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover",
+  "viewportAppMini": "width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no",
+  "topbarPaddingApp": "47px",
+  "miniSafeT": "max(12px, 47px)",
+  "plainSheet": 0,
+  "plainProfileSection": 0,
+  "plainTariffRow": 1,
+  "plainPrintNative": true,
+  "plainOpenNative": true,
+  "plainAnchorClickNative": true,
+  "plainViewport": "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
+  "plainTopbarPadding": "0px",
+  "plainMiniSafeT": "max(12px, 0px)",
+  "plainDownload": "plain.csv",
+  "plainCalls": [],
+  "result": "PASS"
+}

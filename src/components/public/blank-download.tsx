@@ -28,6 +28,7 @@ import {
 } from "@/lib/blank-download";
 import { ymGoal } from "@/lib/signup-source";
 import { cn } from "@/lib/utils";
+import { downloadFile } from "@/lib/native-bridge";
 
 /**
  * Кнопка «Скачать PDF / Word» шаблона журнала на публичных страницах.
@@ -82,15 +83,22 @@ function remember(value: RememberedBlankEmail | null) {
   }
 }
 
-/** Скачать по ссылке, не уходя со страницы (ответ — attachment). */
+/**
+ * Скачать по ссылке, не уходя со страницы (ответ — attachment). В
+ * приложении WeSetup — файл и лист «Поделиться».
+ */
 function triggerDownload(url: string) {
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "";
-  link.rel = "noopener";
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
+  void downloadFile(url, {
+    fallback: () => {
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "";
+      link.rel = "noopener";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    },
+  });
 }
 
 type RequestResult =

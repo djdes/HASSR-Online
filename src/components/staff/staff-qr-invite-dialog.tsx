@@ -5,6 +5,7 @@ import { useSubmitLock } from "@/lib/use-submit-lock";
 import { useState } from "react";
 import { Copy, Loader2, Printer, RefreshCcw, X } from "lucide-react";
 import { toast } from "sonner";
+import { getNativeBridge, printHtml } from "@/lib/native-bridge";
 import type { StaffPosition } from "@/components/staff/staff-types";
 
 type Props = {
@@ -79,12 +80,7 @@ export function StaffQrInviteDialog({ open, onClose, positions }: Props) {
 
   function printQr() {
     if (!token) return;
-    const w = window.open("", "_blank", "width=600,height=800");
-    if (!w) {
-      toast.error("Разрешите всплывающие окна для печати");
-      return;
-    }
-    w.document.write(`
+    const html = `
       <!doctype html>
       <html><head><title>QR-код для регистрации</title>
       <style>
@@ -102,7 +98,18 @@ export function StaffQrInviteDialog({ open, onClose, positions }: Props) {
         <div class="url">${token.joinUrl}</div>
         <p style="margin-top:24px;font-size:12px">Ссылка одноразовая, действует 7 дней.</p>
       </body></html>
-    `);
+    `;
+    // В приложении WeSetup новых окон нет — печатаем листок системной печатью.
+    if (getNativeBridge()) {
+      void printHtml(html);
+      return;
+    }
+    const w = window.open("", "_blank", "width=600,height=800");
+    if (!w) {
+      toast.error("Разрешите всплывающие окна для печати");
+      return;
+    }
+    w.document.write(html);
     w.document.close();
     w.focus();
     setTimeout(() => w.print(), 250);

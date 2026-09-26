@@ -21,12 +21,23 @@ export const metadata: Metadata = {
 export default async function MiniLoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string; phone?: string }>;
+  searchParams: Promise<{ next?: string; phone?: string; deleted?: string }>;
 }) {
-  const { next, phone } = await searchParams;
+  const { next, phone, deleted } = await searchParams;
 
   return (
     <div className="mx-auto flex min-h-[70vh] w-full max-w-[420px] flex-col justify-center">
+      {/* После «Удалить аккаунт» в профиле: короткое подтверждение. */}
+      {deleted === "1" ? (
+        <div
+          className="mini-card mb-3 px-5 py-3 text-[16px] font-semibold"
+          style={{ color: "var(--mini-text)" }}
+          role="status"
+          data-testid="mini-login-account-deleted"
+        >
+          Аккаунт удалён
+        </div>
+      ) : null}
       <div className="mini-card p-5">
         <h1 className="mini-h1">Вход в кабинет</h1>
         <p
