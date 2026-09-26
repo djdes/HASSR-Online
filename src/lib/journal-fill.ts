@@ -137,7 +137,8 @@ export function scopeDocumentsToBuilding<T extends { buildingId: string | null }
  * Журналы объектов: холодильники, склады и УФ-лампы заполняются по
  * наклейке на самом объекте (`/equipment-fill`, `/room-fill`) — там
  * понятно, что именно замеряешь. Основной QR журнала для них показывает
- * статус объектов и «отсканируйте наклейку», в хабе «Все журналы» их нет.
+ * статус объектов и «отсканируйте наклейку»; в хабе «Все журналы» они в
+ * конце списка с подписью и ведут на тот же статус (владелец, 2026-09-26).
  * Набор — из `JOURNAL_OBJECT_QR_KINDS`, чтобы страница плакатов и QR не
  * расходились (УФ-лампа раньше заполнялась из хаба в обход наклеек).
  */
@@ -278,6 +279,11 @@ export async function listHubJournals(
     includeLapsed?: boolean;
     /** Свои названия организации — для экрана QR. Плакаты их не передают. */
     names?: CustomNames | null;
+    /**
+     * Объектные журналы (холодильники, склады, УФ-лампы) в конце списка с
+     * подписью — для экрана хаба. Плакатам они не нужны: у объектов свои наклейки.
+     */
+    includeObjects?: boolean;
   } = {}
 ) {
   const day = new Date(`${todayKey}T00:00:00.000Z`);
@@ -286,16 +292,22 @@ export async function listHubJournals(
     select: { template: { select: { code: true, name: true } } },
   });
   const seen = new Map<string, string>();
+  // Холодильники, склады и УФ-лампы заполняют по наклейке на самом объекте
+  // (решение 33d8559b), но в хабе они есть: ссылка ведёт на «Статус за
+  // сегодня» этого журнала — видно, какие объекты уже записаны.
+  const objects = new Map<string, string>();
+  const add = (code: string, name: string) => {
+    const target = OBJECT_QR_JOURNAL_CODES.has(code) ? objects : seen;
+    if (!target.has(code)) target.set(code, name);
+  };
   for (const doc of docs) {
     if (disabledCodes.includes(doc.template.code)) continue;
-    // Холодильники и склады — по наклейке на объекте, не из хаба.
-    if (OBJECT_QR_JOURNAL_CODES.has(doc.template.code)) continue;
-    if (!seen.has(doc.template.code)) seen.set(doc.template.code, doc.template.name);
+    add(doc.template.code, doc.template.name);
   }
   if (options.includeLapsed) {
     for (const journal of await listLapsedJournals(orgId, day)) {
-      if (disabledCodes.includes(journal.code) || OBJECT_QR_JOURNAL_CODES.has(journal.code)) continue;
-      if (!seen.has(journal.code)) seen.set(journal.code, journal.name);
+      if (disabledCodes.includes(journal.code)) continue;
+      add(journal.code, journal.name);
     }
   }
   // Гигиена и здоровье — один QR на оба журнала (health-qr-flow.ts). Без
@@ -312,11 +324,20 @@ export async function listHubJournals(
   } else if (seen.has("health_check")) {
     seen.set("health_check", `${named("health_check", "Журнал здоровья")} — отметка перед сменой`);
   }
-  return Array.from(seen.entries()).map(([code, name]) => ({
+  const fillable = Array.from(seen.entries()).map(([code, name]) => ({
     code,
     name: code === "hygiene" || code === "health_check" ? name : named(code, name),
   }));
+  const byObject = Array.from(objects.entries()).map(([code, name]) => ({
+    code,
+    name: named(code, name),
+    note: HUB_OBJECT_JOURNAL_NOTE,
+  }));
+  return options.includeObjects ? [...fillable, ...byObject] : fillable;
 }
+
+/** Подпись объектных журналов в хабе: заполняют не отсюда, а по наклейке. */
+export const HUB_OBJECT_JOURNAL_NOTE = "Статус за сегодня · записывают по наклейке на объекте";
 
 /**
  * Строки документа для выбора. Per-employee адаптеры (все rowKey

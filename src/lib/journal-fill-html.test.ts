@@ -14,6 +14,7 @@ import {
   readPostedMarks,
   renderEmployeeStep,
   renderForm,
+  renderHub,
   renderPinNoAccess,
   renderPinStep,
   renderResult,
@@ -331,5 +332,16 @@ describe("journal-fill-html: «Обслуживание»/«Ремонт» у х
     assert.match(QR_FILL_JS, /if\(t\.checked&&x!==t\) x\.checked=false;/);
     assert.match(QR_FILL_JS, /"repair":"Ремонт — в журнал «рем», норма не проверяется"/);
     assert.match(QR_FILL_JS, /if\(el\.type==="radio"\)\{ if\(el\.checked\)\{ v\[el\.name\]=el\.value;/);
+  });
+});
+
+describe("journal-fill-html: хаб «Все журналы»", () => {
+  it("объектный журнал — с подписью, обычный — без", () => {
+    const html = renderHub([
+      { code: "hygiene", name: "Гигиенический журнал", href: "/h" },
+      { code: "cold_equipment_control", name: "Холодильники", href: "/c", note: "Статус за сегодня · записывают по наклейке на объекте" },
+    ]);
+    assert.match(html, /Холодильники<small>Статус за сегодня · записывают по наклейке на объекте<\/small>/);
+    assert.match(html, /Гигиенический журнал<\/span>/);
   });
 });

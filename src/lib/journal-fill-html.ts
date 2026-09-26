@@ -430,10 +430,10 @@ export function renderTokenExpired(params: { validUntil: string }): string {
 <p class="muted" style="margin-top:8px">Код был на один документ и действовал по ${esc(`${day}.${month}.${year}`)}. Отсканируйте основной QR-код журнала — он работает всегда — или попросите руководителя распечатать новый.</p></div>`;
 }
 
-export function renderHub(items: Array<{ code: string; name: string; href: string }>): string {
+export function renderHub(items: Array<{ code: string; name: string; href: string; note?: string }>): string {
   if (items.length === 0) return renderMessage("warn", "Сегодня нет ни одного активного документа. Попросите руководителя открыть журналы на этот период.");
   return `<div class="card"><p class="label">Что заполнить</p><div class="list">${items
-    .map((item) => `<a class="item" href="${esc(item.href)}"><span>${esc(item.name)}</span>${ARROW}</a>`)
+    .map((item) => `<a class="item" href="${esc(item.href)}"><span>${esc(item.name)}${item.note ? `<small>${esc(item.note)}</small>` : ""}</span>${ARROW}</a>`)
     .join("")}</div></div>`;
 }
 

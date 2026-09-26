@@ -331,7 +331,7 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
   if (code === JOURNAL_FILL_HUB_CODE) {
     // Журналы с кончившимся периодом тоже в списке: документ нового
     // периода откроется при входе в журнал (ниже).
-    const journals = await listHubJournals(orgId, disabledCodes, todayKey, { includeLapsed: true, names: customNames });
+    const journals = await listHubJournals(orgId, disabledCodes, todayKey, { includeLapsed: true, names: customNames, includeObjects: true });
     return page("Все журналы", renderHub(journals.map((item) => ({ ...item, href: link({}, item.code) }))), "Выберите журнал — дальше два-три касания.");
   }
 
