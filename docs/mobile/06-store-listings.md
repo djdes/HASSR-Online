@@ -19,7 +19,6 @@ App Store Connect → **Apps** → WeSetup → слева в блоке **iOS Ap
 | Поле | Что вписать | Зачем |
 |---|---|---|
 | **iPhone screenshots (6.9" Display)** | 3–6 скриншотов от разработчика | Обязательны; для остальных размеров iPhone App Store уменьшит эти |
-| **iPad screenshots (13" Display)** | 3–6 скриншотов от разработчика | Обязательны, если приложение работает на iPad |
 | **Promotional Text** | из [store-listing.md](store-listing.md) | Можно менять в любой момент без проверки |
 | **Description** | полное описание из [store-listing.md](store-listing.md) | |
 | **Keywords** | ключевые слова из [store-listing.md](store-listing.md) | Для поиска; без пробелов после запятых |
@@ -30,6 +29,9 @@ App Store Connect → **Apps** → WeSetup → слева в блоке **iOS Ap
 | **Build** | выбирается после загрузки сборки ([09](09-release.md)) | |
 | **App Review Information** | см. [08-review.md](08-review.md) | Вход и заметка для проверяющих |
 | **Version Release** | **Manually release this version** | Выпустите сами, когда будете готовы |
+
+iPad-скриншоты не нужны: сборка собирается только под iPhone (`TARGETED_DEVICE_FAMILY = 1`), в App Store Connect
+блока «iPad screenshots» для такой сборки просто не будет.
 
 Поле «What's New in This Version» у первой версии не показывается — оно появится с версии 1.1 ([11](11-updates.md)).
 
@@ -59,7 +61,8 @@ Play Console → WeSetup → **Рост пользователей (Grow users)*
 
 - Формат PNG или JPEG, без прозрачности (без альфа-канала), от 1 до 10 штук на размер.
 - iPhone 6.9": **1320×2868** (также принимаются 1290×2796 и 1260×2736), вертикально.
-- iPad 13": **2064×2752** (или 2048×2732), вертикально — нужны, если сборка поддерживает iPad.
+- iPad-скриншоты не нужны: сборка iOS собирается только под iPhone (`TARGETED_DEVICE_FAMILY = 1`), приложение
+  на iPad не ставится.
 - Только интерфейс приложения; без рамок устройств с чужими логотипами и без слов «Android», «Google Play».
 
 **Google Play**

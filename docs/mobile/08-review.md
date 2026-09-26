@@ -64,9 +64,9 @@ ACCOUNT DELETION
 Profile screen ("Профиль") → "Удалить аккаунт". Please use the second demo account to test deletion:
 Phone: [второй аккаунт — телефон]
 Password: [второй аккаунт — пароль]
-Deletion is also available on the web: https://wesetup.ru/delete-account
+Deletion erases the employee's contact and sign-in data (e-mail, phone, Telegram link, PIN and sign-in keys); the person's name stays in the food-safety logbook records they made, together with the account holder, because Russian sanitary law (SanPiN/HACCP) requires keeping the author of a record — this is disclosed before deletion. Deletion is also available on the web: https://wesetup.ru/delete-account
 
-The app is free. It has no in-app purchases and no ads. Companies subscribe to WeSetup directly with us under a business contract; the app does not offer or link to any purchases.
+The app is free and has no purchases, top-ups, subscriptions or links to payment of any kind on either platform, and no ads. Companies subscribe to WeSetup directly with us under a business contract, managed on our website, not in the app; the app is a companion for that business service and does not sell any digital goods.
 
 Contact: support@wesetup.ru
 ```
@@ -89,11 +89,14 @@ iOS; 3) отчёты открываются в меню «Поделиться»
 открывают нужный журнал в приложении — во вложении QR-плакат демо-компании, наведите на него камеру iPhone;
 7) экран «Нет связи» с кнопкой «Повторить».
 
-Удаление аккаунта: «Профиль» → «Удалить аккаунт», проверять — на втором демо-аккаунте. Также на сайте:
+Удаление аккаунта: «Профиль» → «Удалить аккаунт», проверять — на втором демо-аккаунте. У сотрудника стираются
+телефон, почта, привязка Telegram, ПИН и ключи входа; имя остаётся в записях журналов, которые он заполнял, —
+это требование СанПиН и ХАССП, о нём предупреждают перед удалением. Также на сайте:
 https://wesetup.ru/delete-account.
 
-Приложение бесплатное, без покупок и рекламы. Компании оплачивают WeSetup напрямую по договору; приложение
-не предлагает покупок и не ведёт на них.
+Приложение бесплатное, без покупок, пополнений, подписок и ссылок на оплату на любой из платформ, без рекламы.
+Компании оплачивают WeSetup напрямую по договору на сайте, а не в приложении; приложение — лишь спутник этого
+бизнес-сервиса и не продаёт никаких цифровых товаров.
 
 **Перед отправкой разработчик сверяет названия кнопок («Печать», микрофон, «Профиль», «Удалить аккаунт»)
 с демо-аккаунтом** — если в интерфейсе они называются иначе, поправьте текст.
@@ -132,5 +135,8 @@ Play Console → **Правила и программы** → **Содержан
   самый частый отказ по правилу 2.1.
 - В демо-компании пусто — проверяющий решает, что приложение ничего не умеет (правило 4.2).
 - Проверяющий удалил основной демо-аккаунт — поэтому для удаления даём второй.
-- В карточке или внутри приложения на iPhone есть призыв оплатить тариф на сайте — отказ по правилу 3.1.1.
-  Объяснить проверяющему в заметке, как компании платят по договору, можно: это не призыв к покупке.
+- В карточке или внутри приложения (на любой платформе) есть призыв оплатить тариф — отказ по правилу 3.1.1
+  (Apple) или аналогичному у Google. В приложении нет ни экрана «Тарифы и оплата», ни ссылок на оплату — это
+  сделано в коде сайта заранее, а не как реакция на отказ. Если проверяющий всё же спросит про 3.1.1 — ответ:
+  приложение — спутник бизнес-сервиса, никакие цифровые товары в нём не продаются, экрана покупок и ссылок на
+  оплату нет.

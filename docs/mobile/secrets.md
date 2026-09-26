@@ -28,38 +28,58 @@ gh secret list -R djdes/HACCP-Online
 
 | Секрет | Что это | Откуда | Как положить |
 |---|---|---|---|
-| `ANDROID_KEYSTORE_BASE64` | Ключ загрузки Android `upload.jks` | Генерирует разработчик (раздел ниже) | base64 файла |
-| `ANDROID_KEYSTORE_PASSWORD` | Пароль хранилища ключей | Задаёт разработчик при генерации | текст |
+| `ANDROID_KEYSTORE_BASE64` | Ключ загрузки Android `upload.jks` | Уже создан, лежит в `C:\Users\Yaroslav\wesetup-android\upload.jks` (раздел ниже) | base64 файла |
+| `ANDROID_KEYSTORE_PASSWORD` | Пароль хранилища ключей | В `README.txt` рядом с файлом (не в git) | текст |
 | `ANDROID_KEY_ALIAS` | Имя ключа в хранилище: `wesetup-upload` | При генерации | текст |
-| `ANDROID_KEY_PASSWORD` | Пароль ключа. Для хранилища PKCS12 (формат `keytool` по умолчанию) он **совпадает** с паролем хранилища | При генерации | текст |
+| `ANDROID_KEY_PASSWORD` | Пароль ключа. Для хранилища PKCS12 (формат `keytool` по умолчанию) он **совпадает** с паролем хранилища | Тот же, что `ANDROID_KEYSTORE_PASSWORD` | текст |
 | `GOOGLE_SERVICES_JSON_BASE64` | `google-services.json` Android-приложения Firebase | Начальник, [04](04-firebase.md) шаг 2 | base64 файла |
 | `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` | JSON-ключ сервисного аккаунта `play-publisher` | Начальник, [03](03-google-play-console.md) шаг 6 | **текст JSON как есть**, не base64: `Get-Content -Raw C:\путь\play.json \| gh secret set GOOGLE_PLAY_SERVICE_ACCOUNT_JSON -R djdes/HACCP-Online` |
 | `APPLE_TEAM_ID` | Team ID (10 символов) | Начальник, [01](01-apple-developer.md) шаг 3 | текст |
 | `ASC_KEY_ID` | Key ID ключа App Store Connect API | Начальник, [02](02-app-store-connect.md) шаг 4 | текст |
 | `ASC_ISSUER_ID` | Issuer ID ключа App Store Connect API | Там же | текст |
-| `ASC_KEY_P8_BASE64` | Файл `AuthKey_XXXXXXXXXX.p8` ключа App Store Connect API (роль Admin) | Там же | base64 файла |
+| `ASC_KEY_P8_BASE64` | Файл `AuthKey_XXXXXXXXXX.p8` ключа App Store Connect API — обязательно **командный ключ** (Team Key), роль **Admin**: только она даёт `xcodebuild -allowProvisioningUpdates` доступ к сертификатам и облачной подписи | Там же | base64 файла |
 | `GOOGLE_SERVICE_INFO_PLIST_BASE64` | `GoogleService-Info.plist` iOS-приложения Firebase | Начальник, [04](04-firebase.md) шаг 3 | base64 файла |
 
 Не путать: ключ **APNs** (`.p8` для push) в GitHub не нужен — начальник загружает его в Firebase.
+
+**Перед первым выпуском iOS.** В App Store Connect должна уже существовать запись приложения с Bundle ID
+`ru.wesetup.app` (начальник создаёт её по [02-app-store-connect.md](02-app-store-connect.md), шаг 1) — без неё
+`xcodebuild -allowProvisioningUpdates` не сможет создать сборку. Сама подпись автоматическая: `xcodebuild`
+ключом App Store Connect API сам заводит сертификаты и профили, а архив подписывается **облачным сертификатом
+распространения** Apple. При этом на **чистом** CI-раннере (новая машина, новый кэш) `xcodebuild` может завести
+себе новый сертификат «Apple Development» — они копятся и упираются в лимит Apple. Как их отзывать —
+`mobile/README.md` → раздел «Подпись iOS без сертификатов в секретах».
 
 Проверка: **Actions** → **Выпуск приложений** → **Run workflow**. Ошибка `base64: invalid input` — секрет вставлен
 с переносами или не тот файл; `Keystore was tampered with, or password was incorrect` — неверный пароль.
 
 ## Ключ загрузки Android
 
-Генерирует разработчик один раз. Хранится в `C:\Users\Yaroslav\wesetup-android\` (вне репозитория). Копию файла и
-пароль получает начальник ([05-handoff.md](05-handoff.md)) и хранит сам.
+Уже создан, лежит в `C:\Users\Yaroslav\wesetup-android\upload.jks` (PKCS12, вне репозитория, alias
+`wesetup-upload`). Пароль хранилища (= пароль ключа для PKCS12) — в `README.txt` рядом с файлом, **не в git**.
+Отпечаток SHA-256 ключа загрузки:
+
+```text
+8C:28:3E:01:28:7C:9A:D3:4B:1D:32:8F:5E:4F:2D:D0:6B:49:CF:91:54:4C:B8:DE:6D:65:5D:21:F9:6A:60:2D
+```
+
+Этот отпечаток идёт в секрет `ANDROID_CERT_SHA256` **вместе** с отпечатком ключа подписи приложения (Play App
+Signing) из Play Console — через запятую, без пробела (см. таблицу переменных сервера ниже).
+
+Занести файл в GitHub Secret (пароль — из `README.txt`, вставить как обычный текстовый секрет так же, как файл — base64):
 
 ```powershell
-New-Item -ItemType Directory -Force C:\Users\Yaroslav\wesetup-android | Out-Null
-Set-Location C:\Users\Yaroslav\wesetup-android
-# keytool входит в JDK (Android Studio: <папка Android Studio>\jbr\bin\keytool.exe)
-keytool -genkeypair -v -keystore upload.jks -alias wesetup-upload -keyalg RSA -keysize 4096 -validity 10000 -dname "CN=WeSetup, O=WeSetup, C=RU"
-# keytool спросит пароль. Пароль — случайный, от 20 символов, сразу в менеджер паролей.
-# Для PKCS12 отдельный пароль ключа не поддерживается: ANDROID_KEY_PASSWORD = ANDROID_KEYSTORE_PASSWORD.
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\Users\Yaroslav\wesetup-android\upload.jks")) | gh secret set ANDROID_KEYSTORE_BASE64 -R djdes/HACCP-Online
+gh secret set ANDROID_KEY_ALIAS -R djdes/HACCP-Online -b "wesetup-upload"
+# ANDROID_KEYSTORE_PASSWORD и ANDROID_KEY_PASSWORD — тем же способом, значение из README.txt (не вставлять в команду открытым текстом в общем терминале)
+```
 
-# Отпечаток SHA-256 ключа загрузки (для сверки с Play Console):
-keytool -list -v -keystore upload.jks -alias wesetup-upload
+Если хранилище когда-нибудь придётся пересоздать — команда генерации:
+
+```powershell
+keytool -genkeypair -v -keystore upload-2.jks -alias wesetup-upload -keyalg RSA -keysize 4096 -validity 10000 -dname "CN=WeSetup, O=WeSetup, C=RU"
+# Отпечаток SHA-256 нового хранилища:
+keytool -list -v -keystore upload-2.jks -alias wesetup-upload
 ```
 
 **Почему его нельзя терять.** Этим ключом подписана каждая сборка, которую мы загружаем в Google Play. Приложение
@@ -89,7 +109,7 @@ keytool -list -v -keystore upload.jks -alias wesetup-upload
 |---|---|---|---|
 | `FIREBASE_SERVICE_ACCOUNT_JSON` | Ключ сервисного аккаунта Firebase для отправки push (FCM HTTP v1) | Начальник, [04](04-firebase.md) шаг 6 | JSON **одной строкой в одинарных кавычках**, см. ниже. Пусто — push в приложения выключен |
 | `APPLE_TEAM_ID` | Team ID для `/.well-known/apple-app-site-association` | Начальник, [01](01-apple-developer.md) шаг 3 | `A1B2C3D4E5` |
-| `ANDROID_CERT_SHA256` | Отпечатки SHA-256 для `/.well-known/assetlinks.json`: ключ подписи приложения из Play Console **и** ключ загрузки | Начальник, [03](03-google-play-console.md) шаг 7 | через запятую без пробелов: `AB:CD:...:EF,12:34:...:56` |
+| `ANDROID_CERT_SHA256` | Отпечатки SHA-256 для `/.well-known/assetlinks.json`: ключ подписи приложения из Play Console (Play App Signing, начальник передаёт после первой загрузки, [03](03-google-play-console.md) шаг 7) **и** отпечаток ключа загрузки — тот всегда `8C:28:3E:01:28:7C:9A:D3:4B:1D:32:8F:5E:4F:2D:D0:6B:49:CF:91:54:4C:B8:DE:6D:65:5D:21:F9:6A:60:2D` | Разработчик (ключ загрузки) + начальник (ключ подписи приложения) | через запятую без пробелов: `AB:CD:...:EF,8C:28:...:2D` |
 | `APPLE_APP_ID` | Числовой Apple ID приложения для кнопки «Обновить» | Начальник, [02](02-app-store-connect.md) шаг 2 | `6740000000` |
 | `MOBILE_APP_MIN_VERSION` | Минимальная версия приложения; ниже — экран «Обновите приложение» | Решает разработчик ([11](11-updates.md)) | `1.0.0`; пусто — без проверки |
 
