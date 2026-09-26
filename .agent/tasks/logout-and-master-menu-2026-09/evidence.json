@@ -1,0 +1,53 @@
+{
+  "task": "logout-and-master-menu-2026-09",
+  "spec": "spec.md",
+  "branch": "feat/master-in-cabinet-menu-2026-09-26",
+  "base": "199d0494",
+  "commits": {
+    "spec": "f4cbe5a9",
+    "code": "ee78ae4d"
+  },
+  "pushed": false,
+  "rootCause": {
+    "confirmed": true,
+    "summary": "Session lived under four cookie names: own logins (issue-session.ts) wrote all of them, next-auth only __Secure-haccp-online.session-token (prod), while proxy/getServerSession read haccp-online.session-token first. next-auth signOut() in master/partner shells cleared one cookie; the rest kept the session and /login bounced back to /master. After a next-auth login as B, proxy/pages still saw A (prod). Also NextResponse.cookies.set() wiped Set-Cookie lines added via headers.append: /api/auth/logout never cleared ws-shell, logout-all never cleared legacy names.",
+    "artifacts": ["evidence/before/rootcause.json", "evidence/after/rootcause.json", "../../../src/proxy.test.ts"],
+    "before": { "loggedOutBySignOut": false, "afterSignOutHops": ["/dashboard", "/master", "200"], "logoutClearsShellCookie": false },
+    "after": { "loggedOutBySignOut": true, "afterSignOutHops": [], "logoutClearsShellCookie": true }
+  },
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": "evidence/after/results.json — 14 login-path × logout-button scenarios (S01–S13), every logout-* check: no session cookies, next-auth and getServerSession see nobody, /login 200, /dashboard and /master 307 to a sign-in screen; master cabinet logout S02/S07/S09; route unit tests for /api/auth/logout and /api/kiosk/lock (production and development attributes)."
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": "S14 (master password → owner password), S15 (Telegram/next-auth → owner personal QR), S16 (mini phone → master password): next-auth, pages and proxy all see B, one session cookie; src/proxy.test.ts (6 tests, production and dev cookie naming, real JWTs)."
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": "S02 desktop profile menu, S04 phone profile sheet, S07 mini-app profile: master cabinets only in «Кабинет», not in «Организации»; tap opens /master; «Моя организация» in /master returns to /dashboard; backoffice user has no return item (S09); cabinet-menu.test.ts."
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": "npm run typecheck: 0 errors; npm test: 2578 pass / 0 fail; pre-commit hook of ee78ae4d: secrets, typecheck, test:gate pass=2578 fail=0; eslint on changed files clean."
+    }
+  },
+  "e2e": {
+    "server": "NEXT_DIST_DIR=.next-e2e next dev --webpack -p 3053 (3050 was occupied by a foreign dev server of D:/www/Wesetup.ru, untouched)",
+    "finalRun": { "file": "evidence/after/results.json", "total": 42, "passed": 42, "failed": 0, "devServerRetries": 0 },
+    "afterLastHeaderEdit": { "file": "evidence/after/results-S02_S04_S03.json", "total": 10, "passed": 10, "failed": 0 },
+    "firstRun": { "total": 40, "passed": 35, "failed": 5, "note": "all five were harness issues (alphabetical order of cabinet rows, cook's phone opens the mini shell, kiosk cook redirected to /mini/today); fixed in the harness, app code unchanged" }
+  },
+  "checks": {
+    "typecheck": { "command": "npm run typecheck", "errors": 0, "baselineNote": "before the orchestrator regenerated the shared Prisma client, the clean tree had 13 pre-existing mobileDevice errors; the error list with my changes was identical" },
+    "unitTests": { "command": "npm test", "tests": 2578, "pass": 2578, "fail": 0, "baseline": 2547 },
+    "eslint": "clean on all changed files"
+  },
+  "openIssues": [
+    "Kiosk: a line cook's /journals redirects to /mini/today, which has no kiosk «Выйти» pill or heartbeat (pre-existing, out of scope); kiosk logout verified with a management user.",
+    "Production cookie names cannot run under next dev (NODE_ENV=development); covered by unit tests with NODE_ENV=production.",
+    "Sessions issued before deploy keep working via fallback names until the next login/logout/next-auth session refresh converges them to one cookie.",
+    "Theoretical race between a next-auth session refresh and rewriteSessionClaims now that both write the same cookie (pre-existing for the next-auth cookie)."
+  ]
+}

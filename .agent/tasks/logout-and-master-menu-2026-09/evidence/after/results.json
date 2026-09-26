@@ -1,0 +1,516 @@
+{
+  "base": "http://localhost:3053",
+  "finishedAt": "2026-09-26T21:25:35.322Z",
+  "summary": {
+    "total": 42,
+    "passed": 42,
+    "failed": 0
+  },
+  "devServerRetries": [],
+  "checks": [
+    {
+      "scenario": "S01-site-password-desktop-header-icon",
+      "ac": "AC1",
+      "id": "login",
+      "ok": true,
+      "detail": "вход паролем → /dashboard; {\"nextAuth\":\"cmuiu8yug0001xc9mxt3okd34\",\"pages\":\"cmuiu8yug0001xc9mxt3okd34\",\"proxyOrg\":\"regular\",\"proxyRole\":\"management\",\"cookies\":[\"haccp-online.session-token\"]}"
+    },
+    {
+      "scenario": "S01-site-password-desktop-header-icon",
+      "ac": "AC1",
+      "id": "one-cookie",
+      "ok": true,
+      "detail": "кук сессии после входа: haccp-online.session-token"
+    },
+    {
+      "scenario": "S01-site-password-desktop-header-icon",
+      "ac": "AC1",
+      "id": "logout-header-icon",
+      "ok": true,
+      "detail": "страница /login; {\"nextAuth\":null,\"pages\":null,\"proxyOrg\":\"none(307→/login)\",\"proxyRole\":\"none\",\"cookies\":[],\"loginStatus\":200,\"dashboard\":\"307→/login\",\"masterPage\":\"307→/login\"}"
+    },
+    {
+      "scenario": "S02-site-desktop-menu-master-logout",
+      "ac": "AC3",
+      "id": "desktop-cabinet-section",
+      "ok": true,
+      "detail": "«Кабинет»: 1; строки мастер-кабинетов: [\"Мастер-кабинет Лицея\",\"Мастер-кабинет Школы\"]"
+    },
+    {
+      "scenario": "S02-site-desktop-menu-master-logout",
+      "ac": "AC3",
+      "id": "desktop-not-in-organizations",
+      "ok": true,
+      "detail": "кнопки списка «Организации»: [\"Кафе «Выход»\",\"Добавить организацию\",\"Создать демо-организацию\"]"
+    },
+    {
+      "scenario": "S02-site-desktop-menu-master-logout",
+      "ac": "AC3",
+      "id": "desktop-opens-master",
+      "ok": true,
+      "detail": "→ /master «Мастер-кабинет Школы»; {\"nextAuth\":\"cmuiu8yug0001xc9mxt3okd34\",\"pages\":\"directory(403)\",\"proxyOrg\":\"directory\",\"proxyRole\":\"directory\",\"cookies\":[\"haccp-online.session-token\"]}"
+    },
+    {
+      "scenario": "S02-site-desktop-menu-master-logout",
+      "ac": "AC1",
+      "id": "logout-master-desktop",
+      "ok": true,
+      "detail": "страница /login; {\"nextAuth\":null,\"pages\":null,\"proxyOrg\":\"none(307→/login)\",\"proxyRole\":\"none\",\"cookies\":[],\"loginStatus\":200,\"dashboard\":\"307→/login\",\"masterPage\":\"307→/login\"}"
+    },
+    {
+      "scenario": "S03-site-desktop-dropdown-logout",
+      "ac": "AC1",
+      "id": "logout-profile-dropdown",
+      "ok": true,
+      "detail": "страница /login; {\"nextAuth\":null,\"pages\":null,\"proxyOrg\":\"none(307→/login)\",\"proxyRole\":\"none\",\"cookies\":[],\"loginStatus\":200,\"dashboard\":\"307→/login\",\"masterPage\":\"307→/login\"}"
+    },
+    {
+      "scenario": "S04-site-phone-sheet-master-back-logout",
+      "ac": "AC3",
+      "id": "phone-cabinet-section",
+      "ok": true,
+      "detail": "«Кабинет»: 1; строки: [\"Мастер-кабинет Лицея\",\"Мастер-кабинет Школы\"]"
+    },
+    {
+      "scenario": "S04-site-phone-sheet-master-back-logout",
+      "ac": "AC3",
+      "id": "phone-not-in-organizations",
+      "ok": true,
+      "detail": "кнопки листа: [\"\",\"Кафе «Выход»\",\"Добавить организацию\",\"Создать демо-организацию\",\"Мастер-кабинет Лицея\",\"Мастер-кабинет Школы\",\"Выйти\"] (мастер-кабинеты — только строки «Кабинета»)"
+    },
+    {
+      "scenario": "S04-site-phone-sheet-master-back-logout",
+      "ac": "AC3",
+      "id": "phone-opens-master",
+      "ok": true,
+      "detail": "→ /master «Мастер-кабинет Лицея»"
+    },
+    {
+      "scenario": "S04-site-phone-sheet-master-back-logout",
+      "ac": "AC3",
+      "id": "master-my-organization",
+      "ok": true,
+      "detail": "«Моя организация» → /dashboard; {\"nextAuth\":\"cmuiu8yug0001xc9mxt3okd34\",\"pages\":\"cmuiu8yug0001xc9mxt3okd34\",\"proxyOrg\":\"regular\",\"proxyRole\":\"management\",\"cookies\":[\"haccp-online.session-token\"]}"
+    },
+    {
+      "scenario": "S04-site-phone-sheet-master-back-logout",
+      "ac": "AC1",
+      "id": "logout-profile-sheet",
+      "ok": true,
+      "detail": "страница /login; {\"nextAuth\":null,\"pages\":null,\"proxyOrg\":\"none(307→/login)\",\"proxyRole\":\"none\",\"cookies\":[],\"loginStatus\":200,\"dashboard\":\"307→/login\",\"masterPage\":\"307→/login\"}"
+    },
+    {
+      "scenario": "S05-site-phone-menu-sheet-logout",
+      "ac": "AC1",
+      "id": "logout-menu-sheet",
+      "ok": true,
+      "detail": "страница /login; {\"nextAuth\":null,\"pages\":null,\"proxyOrg\":\"none(307→/login)\",\"proxyRole\":\"none\",\"cookies\":[],\"loginStatus\":200,\"dashboard\":\"307→/login\",\"masterPage\":\"307→/login\"}"
+    },
+    {
+      "scenario": "S06-mini-phone-login-mini-logout",
+      "ac": "AC1",
+      "id": "login",
+      "ok": true,
+      "detail": "телефон и пароль → /mini/today; {\"nextAuth\":\"cmuiu8yvs0005xc9mv8dfvidm\",\"pages\":\"cmuiu8yvs0005xc9mv8dfvidm\",\"proxyOrg\":\"regular\",\"proxyRole\":\"staff\",\"cookies\":[\"haccp-online.session-token\"]}"
+    },
+    {
+      "scenario": "S06-mini-phone-login-mini-logout",
+      "ac": "AC1",
+      "id": "logout-mini",
+      "ok": true,
+      "detail": "страница /mini/login; {\"nextAuth\":null,\"pages\":null,\"proxyOrg\":\"none(307→/login)\",\"proxyRole\":\"none\",\"cookies\":[],\"loginStatus\":200,\"dashboard\":\"307→/mini\",\"masterPage\":\"307→/login\"}"
+    },
+    {
+      "scenario": "S06-mini-phone-login-mini-logout",
+      "ac": "AC1",
+      "id": "signed-out-mark",
+      "ok": true,
+      "detail": "пометка «вышел вручную»: 1790457277109"
+    },
+    {
+      "scenario": "S07-mini-email-owner-master-switcher",
+      "ac": "AC1",
+      "id": "login",
+      "ok": true,
+      "detail": "почта и пароль → /dashboard; {\"nextAuth\":\"cmuiu8yug0001xc9mxt3okd34\",\"pages\":\"cmuiu8yug0001xc9mxt3okd34\",\"proxyOrg\":\"regular\",\"proxyRole\":\"management\",\"cookies\":[\"haccp-online.session-token\"]}"
+    },
+    {
+      "scenario": "S07-mini-email-owner-master-switcher",
+      "ac": "AC3",
+      "id": "mini-cabinet-card",
+      "ok": true,
+      "detail": "«Кабинет»: [\"Мастер-кабинет Лицея\",\"Мастер-кабинет Школы\"]; карточка «Организация» (одна обычная организация — не нужна): 0"
+    },
+    {
+      "scenario": "S07-mini-email-owner-master-switcher",
+      "ac": "AC3",
+      "id": "mini-opens-master",
+      "ok": true,
+      "detail": "→ /master «Мастер-кабинет Школы»"
+    },
+    {
+      "scenario": "S07-mini-email-owner-master-switcher",
+      "ac": "AC1",
+      "id": "logout-master-phone",
+      "ok": true,
+      "detail": "страница /login; {\"nextAuth\":null,\"pages\":null,\"proxyOrg\":\"none(307→/login)\",\"proxyRole\":\"none\",\"cookies\":[],\"loginStatus\":200,\"dashboard\":\"307→/login\",\"masterPage\":\"307→/login\"}"
+    },
+    {
+      "scenario": "S08-personal-qr-cook-phone-logout",
+      "ac": "AC1",
+      "id": "login",
+      "ok": true,
+      "detail": "личный QR + PIN → /mini/today; {\"nextAuth\":\"cmuiu8yvs0005xc9mv8dfvidm\",\"pages\":\"cmuiu8yvs0005xc9mv8dfvidm\",\"proxyOrg\":\"regular\",\"proxyRole\":\"staff\",\"cookies\":[\"haccp-online.session-token\"]}"
+    },
+    {
+      "scenario": "S08-personal-qr-cook-phone-logout",
+      "ac": "AC1",
+      "id": "logout-mini",
+      "ok": true,
+      "detail": "страница /mini/login; {\"nextAuth\":null,\"pages\":null,\"proxyOrg\":\"none(307→/login)\",\"proxyRole\":\"none\",\"cookies\":[],\"loginStatus\":200,\"dashboard\":\"307→/mini\",\"masterPage\":\"307→/login\"}"
+    },
+    {
+      "scenario": "S08b-personal-qr-owner-desktop-logout",
+      "ac": "AC1",
+      "id": "login",
+      "ok": true,
+      "detail": "личный QR + PIN → /dashboard; {\"nextAuth\":\"cmuiu8yug0001xc9mxt3okd34\",\"pages\":\"cmuiu8yug0001xc9mxt3okd34\",\"proxyOrg\":\"regular\",\"proxyRole\":\"management\",\"cookies\":[\"haccp-online.session-token\"]}"
+    },
+    {
+      "scenario": "S08b-personal-qr-owner-desktop-logout",
+      "ac": "AC1",
+      "id": "logout-header-icon",
+      "ok": true,
+      "detail": "страница /login; {\"nextAuth\":null,\"pages\":null,\"proxyOrg\":\"none(307→/login)\",\"proxyRole\":\"none\",\"cookies\":[],\"loginStatus\":200,\"dashboard\":\"307→/login\",\"masterPage\":\"307→/login\"}"
+    },
+    {
+      "scenario": "S09-invite-master-logout",
+      "ac": "AC1",
+      "id": "login",
+      "ok": true,
+      "detail": "приглашение → /master; {\"nextAuth\":\"cmuiu8yv70003xc9m1mnc1puo\",\"pages\":\"directory(403)\",\"proxyOrg\":\"directory\",\"proxyRole\":\"directory\",\"cookies\":[\"haccp-online.session-token\"]}"
+    },
+    {
+      "scenario": "S09-invite-master-logout",
+      "ac": "AC3",
+      "id": "backoffice-no-return",
+      "ok": true,
+      "detail": "меню сотрудника бэк-офиса: [\"Выйти\"]"
+    },
+    {
+      "scenario": "S09-invite-master-logout",
+      "ac": "AC1",
+      "id": "logout-master-desktop",
+      "ok": true,
+      "detail": "страница /login; {\"nextAuth\":null,\"pages\":null,\"proxyOrg\":\"none(307→/login)\",\"proxyRole\":\"none\",\"cookies\":[],\"loginStatus\":200,\"dashboard\":\"307→/login\",\"masterPage\":\"307→/login\"}"
+    },
+    {
+      "scenario": "S10-partner-shell-logout",
+      "ac": "AC1",
+      "id": "login",
+      "ok": true,
+      "detail": "вход паролем → /partner; {\"nextAuth\":\"cmuiu8yxf0008xc9m8yh7hb2y\",\"pages\":\"cmuiu8yxf0008xc9m8yh7hb2y\",\"proxyOrg\":\"regular\",\"proxyRole\":\"management\",\"cookies\":[\"haccp-online.session-token\"]}"
+    },
+    {
+      "scenario": "S10-partner-shell-logout",
+      "ac": "AC1",
+      "id": "logout-partner",
+      "ok": true,
+      "detail": "страница /login; {\"nextAuth\":null,\"pages\":null,\"proxyOrg\":\"none(307→/login)\",\"proxyRole\":\"none\",\"cookies\":[],\"loginStatus\":200,\"dashboard\":\"307→/login\",\"masterPage\":\"307→/login\"}"
+    },
+    {
+      "scenario": "S11-logout-all",
+      "ac": "AC1",
+      "id": "logout-all",
+      "ok": true,
+      "detail": "страница /login; {\"nextAuth\":null,\"pages\":null,\"proxyOrg\":\"none(307→/login)\",\"proxyRole\":\"none\",\"cookies\":[],\"loginStatus\":200,\"dashboard\":\"307→/login\",\"masterPage\":\"307→/login\"}"
+    },
+    {
+      "scenario": "S12-kiosk-logout",
+      "ac": "AC1",
+      "id": "kiosk-unlock",
+      "ok": true,
+      "detail": "ПИН на планшете → 200; куки: haccp-online.session-token"
+    },
+    {
+      "scenario": "S12-kiosk-logout",
+      "ac": "AC1",
+      "id": "logout-kiosk",
+      "ok": true,
+      "detail": "страница /mini/kiosk; {\"nextAuth\":null,\"pages\":null,\"proxyOrg\":\"none(307→/mini/kiosk)\",\"proxyRole\":\"none\",\"cookies\":[],\"loginStatus\":200,\"dashboard\":\"307→/mini\",\"masterPage\":\"307→/mini/kiosk\"}"
+    },
+    {
+      "scenario": "S12-kiosk-logout",
+      "ac": "AC1",
+      "id": "kiosk-device-kept",
+      "ok": true,
+      "detail": "кука планшета осталась: true; после выхода: []"
+    },
+    {
+      "scenario": "S13-telegram-login-mini-logout",
+      "ac": "AC1",
+      "id": "login",
+      "ok": true,
+      "detail": "Telegram (next-auth) → /mini/today; {\"nextAuth\":\"cmuiu8ywr0006xc9mlx888n0u\",\"pages\":\"cmuiu8ywr0006xc9mlx888n0u\",\"proxyOrg\":\"regular\",\"proxyRole\":\"staff\",\"cookies\":[\"haccp-online.session-token\"]}"
+    },
+    {
+      "scenario": "S13-telegram-login-mini-logout",
+      "ac": "AC1",
+      "id": "logout-mini-telegram",
+      "ok": true,
+      "detail": "страница /mini/login; {\"nextAuth\":null,\"pages\":null,\"proxyOrg\":\"none(307→/login)\",\"proxyRole\":\"none\",\"cookies\":[],\"loginStatus\":200,\"dashboard\":\"307→/mini\",\"masterPage\":\"307→/login\"}"
+    },
+    {
+      "scenario": "S14-switch-master-to-owner",
+      "ac": "AC2",
+      "id": "A-master",
+      "ok": true,
+      "detail": "A: сотрудник бэк-офиса паролем → /master; {\"nextAuth\":\"cmuiu8yv70003xc9m1mnc1puo\",\"pages\":\"directory(403)\",\"proxyOrg\":\"directory\",\"proxyRole\":\"directory\",\"cookies\":[\"haccp-online.session-token\"]}"
+    },
+    {
+      "scenario": "S14-switch-master-to-owner",
+      "ac": "AC2",
+      "id": "B-owner",
+      "ok": true,
+      "detail": "B: владелец паролем → /dashboard; next-auth: owner, страницы: owner, proxy: regular/management; {\"nextAuth\":\"cmuiu8yug0001xc9mxt3okd34\",\"pages\":\"cmuiu8yug0001xc9mxt3okd34\",\"proxyOrg\":\"regular\",\"proxyRole\":\"management\",\"cookies\":[\"haccp-online.session-token\"]}"
+    },
+    {
+      "scenario": "S15-switch-telegram-to-qr-owner",
+      "ac": "AC2",
+      "id": "A-telegram",
+      "ok": true,
+      "detail": "A: повар через Telegram; {\"nextAuth\":\"cmuiu8ywr0006xc9mlx888n0u\",\"pages\":\"cmuiu8ywr0006xc9mlx888n0u\",\"proxyOrg\":\"regular\",\"proxyRole\":\"staff\",\"cookies\":[\"haccp-online.session-token\"]}"
+    },
+    {
+      "scenario": "S15-switch-telegram-to-qr-owner",
+      "ac": "AC2",
+      "id": "B-owner-qr",
+      "ok": true,
+      "detail": "B: владелец по личному QR → /dashboard; next-auth: owner, страницы: owner, proxy: regular/management; {\"nextAuth\":\"cmuiu8yug0001xc9mxt3okd34\",\"pages\":\"cmuiu8yug0001xc9mxt3okd34\",\"proxyOrg\":\"regular\",\"proxyRole\":\"management\",\"cookies\":[\"haccp-online.session-token\"]}"
+    },
+    {
+      "scenario": "S16-switch-mini-cook-to-master",
+      "ac": "AC2",
+      "id": "A-cook",
+      "ok": true,
+      "detail": "A: повар в мини-приложении; {\"nextAuth\":\"cmuiu8yvs0005xc9mv8dfvidm\",\"pages\":\"cmuiu8yvs0005xc9mv8dfvidm\",\"proxyOrg\":\"regular\",\"proxyRole\":\"staff\",\"cookies\":[\"haccp-online.session-token\"]}"
+    },
+    {
+      "scenario": "S16-switch-mini-cook-to-master",
+      "ac": "AC2",
+      "id": "B-master",
+      "ok": true,
+      "detail": "B: сотрудник бэк-офиса паролем → /master «Мастер-кабинет Школы»; next-auth: master, proxy: directory; {\"nextAuth\":\"cmuiu8yv70003xc9m1mnc1puo\",\"pages\":\"directory(403)\",\"proxyOrg\":\"directory\",\"proxyRole\":\"directory\",\"cookies\":[\"haccp-online.session-token\"]}"
+    }
+  ],
+  "flows": [
+    {
+      "scenario": "S01-site-password-desktop-header-icon",
+      "requests": [
+        "POST /api/auth/login",
+        "GET /api/auth/session",
+        "POST /api/auth/logout",
+        "GET /api/auth/csrf",
+        "POST /api/auth/signout",
+        "GET /api/auth/session"
+      ]
+    },
+    {
+      "scenario": "S02-site-desktop-menu-master-logout",
+      "requests": [
+        "POST /api/auth/login",
+        "GET /api/auth/session",
+        "POST /api/me/active-organization",
+        "POST /api/auth/logout",
+        "GET /api/auth/csrf",
+        "POST /api/auth/signout",
+        "GET /api/auth/session"
+      ]
+    },
+    {
+      "scenario": "S03-site-desktop-dropdown-logout",
+      "requests": [
+        "POST /api/auth/login",
+        "GET /api/auth/session",
+        "POST /api/auth/logout",
+        "GET /api/auth/csrf",
+        "POST /api/auth/signout",
+        "GET /api/auth/session"
+      ]
+    },
+    {
+      "scenario": "S04-site-phone-sheet-master-back-logout",
+      "requests": [
+        "POST /api/auth/login",
+        "GET /api/auth/session",
+        "POST /api/me/active-organization",
+        "POST /api/me/active-organization",
+        "POST /api/auth/logout",
+        "GET /api/auth/csrf",
+        "POST /api/auth/signout",
+        "GET /api/auth/session"
+      ]
+    },
+    {
+      "scenario": "S05-site-phone-menu-sheet-logout",
+      "requests": [
+        "POST /api/auth/login",
+        "GET /api/auth/session",
+        "POST /api/auth/logout",
+        "GET /api/auth/csrf",
+        "POST /api/auth/signout",
+        "GET /api/auth/session"
+      ]
+    },
+    {
+      "scenario": "S06-mini-phone-login-mini-logout",
+      "requests": [
+        "GET /api/auth/session",
+        "POST /api/mini/login",
+        "POST /api/auth/logout",
+        "GET /api/auth/csrf",
+        "POST /api/auth/signout",
+        "GET /api/auth/session",
+        "GET /api/auth/session",
+        "GET /api/auth/session"
+      ]
+    },
+    {
+      "scenario": "S07-mini-email-owner-master-switcher",
+      "requests": [
+        "GET /api/auth/session",
+        "POST /api/auth/login",
+        "GET /api/auth/session",
+        "GET /api/auth/session",
+        "POST /api/me/active-organization",
+        "POST /api/auth/logout",
+        "GET /api/auth/csrf",
+        "POST /api/auth/signout",
+        "GET /api/auth/session"
+      ]
+    },
+    {
+      "scenario": "S08-personal-qr-cook-phone-logout",
+      "requests": [
+        "POST /api/q/login",
+        "POST /api/auth/logout",
+        "GET /api/auth/csrf",
+        "POST /api/auth/signout",
+        "GET /api/auth/session",
+        "GET /api/auth/session",
+        "GET /api/auth/session"
+      ]
+    },
+    {
+      "scenario": "S08b-personal-qr-owner-desktop-logout",
+      "requests": [
+        "POST /api/q/login",
+        "POST /api/auth/logout",
+        "GET /api/auth/csrf",
+        "POST /api/auth/signout",
+        "GET /api/auth/session"
+      ]
+    },
+    {
+      "scenario": "S09-invite-master-logout",
+      "requests": [
+        "POST /api/invite/lmm-invite-token-0123456789abcdefghijklmnopqrstu/accept",
+        "POST /api/auth/login",
+        "GET /api/auth/session",
+        "POST /api/auth/logout",
+        "GET /api/auth/csrf",
+        "POST /api/auth/signout",
+        "GET /api/auth/session"
+      ]
+    },
+    {
+      "scenario": "S10-partner-shell-logout",
+      "requests": [
+        "POST /api/auth/login",
+        "GET /api/auth/session",
+        "POST /api/auth/logout",
+        "GET /api/auth/csrf",
+        "POST /api/auth/signout",
+        "GET /api/auth/session"
+      ]
+    },
+    {
+      "scenario": "S11-logout-all",
+      "requests": [
+        "POST /api/auth/login",
+        "GET /api/auth/session",
+        "POST /api/security/logout-all",
+        "GET /api/auth/csrf",
+        "POST /api/auth/signout",
+        "GET /api/auth/session"
+      ]
+    },
+    {
+      "scenario": "S12-kiosk-logout",
+      "requests": [
+        "POST /api/kiosk/lock",
+        "GET /api/auth/csrf",
+        "POST /api/auth/signout",
+        "GET /api/auth/session",
+        "GET /api/auth/session"
+      ]
+    },
+    {
+      "scenario": "S13-telegram-login-mini-logout",
+      "requests": [
+        "GET /api/auth/providers",
+        "GET /api/auth/csrf",
+        "POST /api/auth/callback/telegram",
+        "GET /api/auth/session",
+        "POST /api/auth/logout",
+        "GET /api/auth/csrf",
+        "POST /api/auth/signout",
+        "GET /api/auth/session"
+      ]
+    },
+    {
+      "scenario": "S14-switch-master-to-owner",
+      "requests": [
+        "POST /api/auth/login",
+        "GET /api/auth/session",
+        "POST /api/auth/logout",
+        "GET /api/auth/csrf",
+        "POST /api/auth/signout",
+        "GET /api/auth/session",
+        "POST /api/auth/login",
+        "GET /api/auth/session"
+      ]
+    },
+    {
+      "scenario": "S15-switch-telegram-to-qr-owner",
+      "requests": [
+        "GET /api/auth/providers",
+        "GET /api/auth/csrf",
+        "POST /api/auth/callback/telegram",
+        "GET /api/auth/session",
+        "POST /api/auth/logout",
+        "GET /api/auth/csrf",
+        "POST /api/auth/signout",
+        "GET /api/auth/session",
+        "POST /api/q/login"
+      ]
+    },
+    {
+      "scenario": "S16-switch-mini-cook-to-master",
+      "requests": [
+        "GET /api/auth/session",
+        "POST /api/mini/login",
+        "POST /api/auth/logout",
+        "GET /api/auth/csrf",
+        "POST /api/auth/signout",
+        "GET /api/auth/session",
+        "GET /api/auth/session",
+        "POST /api/auth/_log",
+        "GET /api/auth/session",
+        "POST /api/auth/_log",
+        "POST /api/auth/login",
+        "GET /api/auth/session"
+      ]
+    }
+  ]
+}

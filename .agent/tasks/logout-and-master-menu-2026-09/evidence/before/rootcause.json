@@ -1,0 +1,97 @@
+{
+  "phase": "before",
+  "base": "http://localhost:3053",
+  "loggedOutBySignOut": false,
+  "afterSignOutHops": [
+    "/dashboard",
+    "/master",
+    "200"
+  ],
+  "logoutClearsShellCookie": false,
+  "steps": [
+    {
+      "step": "1. вход паролем POST /api/auth/login",
+      "status": 200,
+      "setCookie": [
+        "__Host-next-auth.csrf-token: ОТКЛОНЕНА браузером (префикс без Secure)",
+        "next-auth.csrf-token: удалена",
+        "__Secure-next-auth.callback-url: ОТКЛОНЕНА браузером (префикс без Secure)",
+        "next-auth.callback-url: удалена",
+        "haccp-online.session-token: поставлена",
+        "__Secure-haccp-online.session-token: ОТКЛОНЕНА браузером (префикс без Secure)",
+        "__Secure-next-auth.session-token: ОТКЛОНЕНА браузером (префикс без Secure)",
+        "next-auth.session-token: поставлена"
+      ],
+      "jarSessionCookies": [
+        "haccp-online.session-token",
+        "next-auth.session-token"
+      ]
+    },
+    {
+      "step": "2. переход в мастер-кабинет",
+      "status": 200,
+      "setCookie": [
+        "haccp-online.session-token: поставлена",
+        "next-auth.session-token: поставлена"
+      ],
+      "jarSessionCookies": [
+        "haccp-online.session-token",
+        "next-auth.session-token"
+      ]
+    },
+    {
+      "step": "3. GET /master",
+      "status": 200,
+      "location": null,
+      "jarSessionCookies": [
+        "haccp-online.session-token",
+        "next-auth.session-token"
+      ]
+    },
+    {
+      "step": "4. «Выйти» = signOut next-auth (POST /api/auth/signout)",
+      "status": 200,
+      "setCookie": [
+        "haccp-online.callback-url: поставлена",
+        "haccp-online.session-token: удалена"
+      ],
+      "jarSessionCookies": [
+        "next-auth.session-token"
+      ]
+    },
+    {
+      "step": "5. GET /login",
+      "status": 307,
+      "location": "/dashboard",
+      "jarSessionCookies": [
+        "next-auth.session-token"
+      ]
+    },
+    {
+      "step": "6. куда уводит /login после «Выйти»",
+      "hops": [
+        "/dashboard",
+        "/master",
+        "200"
+      ],
+      "jarSessionCookies": [
+        "next-auth.session-token"
+      ]
+    },
+    {
+      "step": "7. POST /api/auth/logout",
+      "status": 200,
+      "setCookie": [
+        "haccp-online.session-token: удалена",
+        "__Secure-haccp-online.session-token: ОТКЛОНЕНА браузером (префикс без Secure)",
+        "__Secure-next-auth.session-token: ОТКЛОНЕНА браузером (префикс без Secure)",
+        "next-auth.session-token: удалена",
+        "__Host-next-auth.csrf-token: ОТКЛОНЕНА браузером (префикс без Secure)",
+        "next-auth.csrf-token: удалена",
+        "__Secure-next-auth.callback-url: ОТКЛОНЕНА браузером (префикс без Secure)",
+        "next-auth.callback-url: удалена"
+      ],
+      "jarSessionCookies": []
+    }
+  ]
+}

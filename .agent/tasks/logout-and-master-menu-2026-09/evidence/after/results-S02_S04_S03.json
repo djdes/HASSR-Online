@@ -1,0 +1,120 @@
+{
+  "base": "http://localhost:3053",
+  "finishedAt": "2026-09-26T21:27:33.866Z",
+  "summary": {
+    "total": 10,
+    "passed": 10,
+    "failed": 0
+  },
+  "devServerRetries": [],
+  "checks": [
+    {
+      "scenario": "S02-site-desktop-menu-master-logout",
+      "ac": "AC3",
+      "id": "desktop-cabinet-section",
+      "ok": true,
+      "detail": "«Кабинет»: 1; строки мастер-кабинетов: [\"Мастер-кабинет Лицея\",\"Мастер-кабинет Школы\"]"
+    },
+    {
+      "scenario": "S02-site-desktop-menu-master-logout",
+      "ac": "AC3",
+      "id": "desktop-not-in-organizations",
+      "ok": true,
+      "detail": "кнопки списка «Организации»: [\"Кафе «Выход»\",\"Добавить организацию\",\"Создать демо-организацию\"]"
+    },
+    {
+      "scenario": "S02-site-desktop-menu-master-logout",
+      "ac": "AC3",
+      "id": "desktop-opens-master",
+      "ok": true,
+      "detail": "→ /master «Мастер-кабинет Школы»; {\"nextAuth\":\"cmuiu8yug0001xc9mxt3okd34\",\"pages\":\"directory(403)\",\"proxyOrg\":\"directory\",\"proxyRole\":\"directory\",\"cookies\":[\"haccp-online.session-token\"]}"
+    },
+    {
+      "scenario": "S02-site-desktop-menu-master-logout",
+      "ac": "AC1",
+      "id": "logout-master-desktop",
+      "ok": true,
+      "detail": "страница /login; {\"nextAuth\":null,\"pages\":null,\"proxyOrg\":\"none(307→/login)\",\"proxyRole\":\"none\",\"cookies\":[],\"loginStatus\":200,\"dashboard\":\"307→/login\",\"masterPage\":\"307→/login\"}"
+    },
+    {
+      "scenario": "S03-site-desktop-dropdown-logout",
+      "ac": "AC1",
+      "id": "logout-profile-dropdown",
+      "ok": true,
+      "detail": "страница /login; {\"nextAuth\":null,\"pages\":null,\"proxyOrg\":\"none(307→/login)\",\"proxyRole\":\"none\",\"cookies\":[],\"loginStatus\":200,\"dashboard\":\"307→/login\",\"masterPage\":\"307→/login\"}"
+    },
+    {
+      "scenario": "S04-site-phone-sheet-master-back-logout",
+      "ac": "AC3",
+      "id": "phone-cabinet-section",
+      "ok": true,
+      "detail": "«Кабинет»: 1; строки: [\"Мастер-кабинет Лицея\",\"Мастер-кабинет Школы\"]"
+    },
+    {
+      "scenario": "S04-site-phone-sheet-master-back-logout",
+      "ac": "AC3",
+      "id": "phone-not-in-organizations",
+      "ok": true,
+      "detail": "кнопки листа: [\"\",\"Кафе «Выход»\",\"Добавить организацию\",\"Создать демо-организацию\",\"Мастер-кабинет Лицея\",\"Мастер-кабинет Школы\",\"Выйти\"] (мастер-кабинеты — только строки «Кабинета»)"
+    },
+    {
+      "scenario": "S04-site-phone-sheet-master-back-logout",
+      "ac": "AC3",
+      "id": "phone-opens-master",
+      "ok": true,
+      "detail": "→ /master «Мастер-кабинет Лицея»"
+    },
+    {
+      "scenario": "S04-site-phone-sheet-master-back-logout",
+      "ac": "AC3",
+      "id": "master-my-organization",
+      "ok": true,
+      "detail": "«Моя организация» → /dashboard; {\"nextAuth\":\"cmuiu8yug0001xc9mxt3okd34\",\"pages\":\"cmuiu8yug0001xc9mxt3okd34\",\"proxyOrg\":\"regular\",\"proxyRole\":\"management\",\"cookies\":[\"haccp-online.session-token\"]}"
+    },
+    {
+      "scenario": "S04-site-phone-sheet-master-back-logout",
+      "ac": "AC1",
+      "id": "logout-profile-sheet",
+      "ok": true,
+      "detail": "страница /login; {\"nextAuth\":null,\"pages\":null,\"proxyOrg\":\"none(307→/login)\",\"proxyRole\":\"none\",\"cookies\":[],\"loginStatus\":200,\"dashboard\":\"307→/login\",\"masterPage\":\"307→/login\"}"
+    }
+  ],
+  "flows": [
+    {
+      "scenario": "S02-site-desktop-menu-master-logout",
+      "requests": [
+        "POST /api/auth/login",
+        "GET /api/auth/session",
+        "POST /api/me/active-organization",
+        "POST /api/auth/logout",
+        "GET /api/auth/csrf",
+        "POST /api/auth/signout",
+        "GET /api/auth/session"
+      ]
+    },
+    {
+      "scenario": "S03-site-desktop-dropdown-logout",
+      "requests": [
+        "POST /api/auth/login",
+        "GET /api/auth/session",
+        "POST /api/auth/logout",
+        "GET /api/auth/csrf",
+        "POST /api/auth/signout",
+        "GET /api/auth/session"
+      ]
+    },
+    {
+      "scenario": "S04-site-phone-sheet-master-back-logout",
+      "requests": [
+        "POST /api/auth/login",
+        "GET /api/auth/session",
+        "POST /api/me/active-organization",
+        "POST /api/me/active-organization",
+        "POST /api/auth/logout",
+        "GET /api/auth/csrf",
+        "POST /api/auth/signout",
+        "GET /api/auth/session"
+      ]
+    }
+  ]
+}

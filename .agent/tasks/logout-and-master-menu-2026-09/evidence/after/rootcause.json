@@ -1,0 +1,86 @@
+{
+  "phase": "after",
+  "base": "http://localhost:3053",
+  "loggedOutBySignOut": true,
+  "afterSignOutHops": [],
+  "logoutClearsShellCookie": true,
+  "steps": [
+    {
+      "step": "1. вход паролем POST /api/auth/login",
+      "status": 200,
+      "setCookie": [
+        "__Secure-haccp-online.session-token: удалена",
+        "__Secure-next-auth.session-token: удалена",
+        "next-auth.session-token: удалена",
+        "haccp-online.session-token: поставлена",
+        "__Host-next-auth.csrf-token: удалена",
+        "next-auth.csrf-token: удалена",
+        "__Secure-next-auth.callback-url: удалена",
+        "next-auth.callback-url: удалена"
+      ],
+      "jarSessionCookies": [
+        "haccp-online.session-token"
+      ]
+    },
+    {
+      "step": "2. переход в мастер-кабинет",
+      "status": 200,
+      "setCookie": [
+        "haccp-online.session-token: поставлена",
+        "__Secure-haccp-online.session-token: удалена",
+        "__Secure-next-auth.session-token: удалена",
+        "next-auth.session-token: удалена"
+      ],
+      "jarSessionCookies": [
+        "haccp-online.session-token"
+      ]
+    },
+    {
+      "step": "3. GET /master",
+      "status": 200,
+      "location": null,
+      "jarSessionCookies": [
+        "haccp-online.session-token"
+      ]
+    },
+    {
+      "step": "4. «Выйти» = signOut next-auth (POST /api/auth/signout)",
+      "status": 200,
+      "setCookie": [
+        "haccp-online.callback-url: поставлена",
+        "haccp-online.session-token: удалена",
+        "__Secure-haccp-online.session-token: удалена",
+        "__Secure-next-auth.session-token: удалена",
+        "next-auth.session-token: удалена"
+      ],
+      "jarSessionCookies": []
+    },
+    {
+      "step": "5. GET /login",
+      "status": 200,
+      "location": null,
+      "jarSessionCookies": []
+    },
+    {
+      "step": "6. куда уводит /login после «Выйти»",
+      "hops": [],
+      "jarSessionCookies": []
+    },
+    {
+      "step": "7. POST /api/auth/logout",
+      "status": 200,
+      "setCookie": [
+        "__Secure-haccp-online.session-token: удалена",
+        "haccp-online.session-token: удалена",
+        "__Secure-next-auth.session-token: удалена",
+        "next-auth.session-token: удалена",
+        "__Host-next-auth.csrf-token: удалена",
+        "next-auth.csrf-token: удалена",
+        "__Secure-next-auth.callback-url: удалена",
+        "next-auth.callback-url: удалена",
+        "ws-shell: удалена"
+      ],
+      "jarSessionCookies": []
+    }
+  ]
+}
