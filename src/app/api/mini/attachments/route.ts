@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+// Обёртка проекта, а не next-auth: та же кука и те же проверки (версия
+// сессии, блокировка киоска), что у proxy и остальных API.
+import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";

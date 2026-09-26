@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { LOGOUT_ALL_URL, signOutAndOpen } from "@/lib/sign-out";
 
 type LoginRow = {
   id: string;
@@ -51,15 +52,12 @@ export function SecurityClient({
   async function logoutAll() {
     setBusy(true);
     try {
-      const response = await fetch("/api/security/logout-all", { method: "POST" });
-      const data = (await response.json().catch(() => null)) as { redirect?: string; error?: string } | null;
-      if (!response.ok) throw new Error(data?.error ?? "Не удалось");
-      toast.success("Все сессии завершены — войдите заново");
-      // Полная перезагрузка: сессия отозвана на сервере, клиентское
-      // состояние про неё уже врёт.
-      window.location.assign(data?.redirect ?? "/login");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      // Тот же полный выход, что у «Выйти» (`lib/sign-out.ts`), только
+      // сервер ещё и отзывает сессии на всех устройствах. Дальше — полная
+      // перезагрузка на /login: клиентское состояние про сессию уже врёт.
+      await signOutAndOpen("/login", { logoutUrl: LOGOUT_ALL_URL });
+    } catch {
+      toast.error("Не удалось завершить сессии. Проверьте связь и попробуйте ещё раз.");
       setBusy(false);
     }
   }

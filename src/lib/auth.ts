@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { getPermissionRole } from "@/lib/user-roles";
 import { verifyTelegramInitData } from "@/lib/telegram-init-data";
 import { telegramSignInMessageFor } from "@/lib/telegram-auth-messages";
+import { sessionCookieName } from "@/lib/auth-cookies";
 
 /** User-Agent из мешка заголовков NextAuth (настоящего Request здесь нет). */
 function userAgentFromHeaderBag(headers: unknown): string | null {
@@ -27,10 +28,9 @@ export const authOptions: NextAuthOptions = {
   },
   cookies: {
     sessionToken: {
-      name:
-        process.env.NODE_ENV === "production"
-          ? "__Secure-haccp-online.session-token"
-          : "haccp-online.session-token",
+      // Одно имя на всё приложение: его же ставят свои входы
+      // (`issue-session.ts`) и читают proxy и `getServerSession` проекта.
+      name: sessionCookieName(),
       options: {
         httpOnly: true,
         sameSite: "lax",

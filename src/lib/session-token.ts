@@ -1,10 +1,6 @@
 import { cookies } from "next/headers";
 import { decode, encode } from "next-auth/jwt";
-import {
-  ALL_SESSION_COOKIES,
-  CUSTOM_SESSION_COOKIE,
-  LEGACY_SESSION_COOKIES,
-} from "@/lib/auth-cookies";
+import { sessionCookieReadOrder, setSessionCookie } from "@/lib/auth-cookies";
 
 /**
  * Правка claim'ов в уже выданном session-cookie.
@@ -12,19 +8,15 @@ import {
  * Через `update()` из NextAuth v4 на Next.js 16 это не работает надёжно:
  * вызов возвращает успех, но cookie не всегда попадает в ответ, и
  * следующий `getServerSession()` видит старый JWT. Поэтому пишем cookie
- * сами — тем же секретом и теми же именами, что и вход.
+ * сами — тем же секретом и под тем же именем, что и вход.
  *
- * ВАЖНО про несколько cookie. `issueSession` при входе кладёт токен
- * СРАЗУ в несколько имён: основное `haccp-online.session-token` и
- * легаси-имена (совместимость со старыми вкладками и мобильными
- * клиентами). Читатель — `lib/server-session.ts` и middleware — берёт
- * первое существующее в порядке `CUSTOM → LEGACY`.
- *
- * Пока правилось только одно имя, impersonation не работал вовсе:
- * claim уходил в `__Secure-…`, а читатель брал основную cookie, которая
- * оставалась со старым токеном. Ошибки при этом не было — «Войти как»
- * просто не давало эффекта. Поэтому переписываем ВСЕ присутствующие
- * cookie сессии, а не одну.
+ * Про несколько cookie. Читатели (`lib/server-session.ts`, `proxy.ts`)
+ * берут первое имя в порядке `sessionCookieReadOrder`: актуальное имя
+ * сессии, прочие — только если его нет. Пока правилась одна cookie из
+ * нескольких, impersonation не работал вовсе: claim уходил в одно имя,
+ * а читатель брал другое. Поэтому свежий токен кладётся под актуальное
+ * имя, а остальные гасятся (`setSessionCookie`) — читатель гарантированно
+ * увидит правку.
  *
  * Общий код для двух сценариев смены организации: ROOT-impersonation
  * (`actingAsOrganizationId`) и переключения между своими организациями
@@ -35,28 +27,15 @@ import {
 const MAX_AGE_SEC = 365 * 24 * 60 * 60;
 
 /**
- * Порядок, в котором читатель ищет токен. Совпадает с
- * `lib/server-session.ts` и `middleware.ts` — расходиться им нельзя.
+ * Имя cookie, из которого читатель возьмёт токен. Порядок тот же, что у
+ * `lib/server-session.ts` и `proxy.ts` (`sessionCookieReadOrder`) —
+ * расходиться им нельзя.
  */
-const READ_ORDER = [CUSTOM_SESSION_COOKIE, ...LEGACY_SESSION_COOKIES] as const;
-
-/** Имя cookie, из которого читатель возьмёт токен. */
 export function findSessionCookieName(
-  has: (name: string) => boolean
+  has: (name: string) => boolean,
+  production?: boolean,
 ): string | null {
-  return READ_ORDER.find((name) => has(name)) ?? null;
-}
-
-/**
- * Все имена сессии, которые сейчас есть в запросе.
- *
- * Переписать нужно каждое: оставшаяся со старым токеном cookie рано или
- * поздно окажется первой в порядке чтения и отменит правку.
- */
-export function listPresentSessionCookies(
-  has: (name: string) => boolean
-): string[] {
-  return ALL_SESSION_COOKIES.filter((name) => has(name));
+  return sessionCookieReadOrder(production).find((name) => has(name)) ?? null;
 }
 
 export type RewriteResult = { ok: true } | { ok: false; reason: string };
@@ -108,18 +87,9 @@ export async function rewriteSessionClaims(
     maxAge: MAX_AGE_SEC,
   });
 
-  for (const name of listPresentSessionCookies(has)) {
-    cookieStore.set(name, fresh, {
-      httpOnly: true,
-      // Имя с префиксом `__Secure-` браузер принимает только с secure:true;
-      // остальным флаг ставим по окружению, как это делает вход.
-      secure:
-        name.startsWith("__Secure-") || process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: MAX_AGE_SEC,
-    });
-  }
+  // Под актуальное имя; прочие имена (сессия, выданная до перехода на одно
+  // имя) гасятся — иначе одна из них осталась бы со старым токеном.
+  setSessionCookie(cookieStore, fresh, MAX_AGE_SEC);
 
   return { ok: true };
 }

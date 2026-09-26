@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Library } from "lucide-react";
 import { toast } from "sonner";
+import { useOpenMasterCabinet } from "@/components/master/use-open-master-cabinet";
+import { splitCabinetMenu } from "@/lib/cabinet-menu";
 import type { AccessibleOrganization } from "@/lib/organization-access";
 
 /**
@@ -15,6 +18,10 @@ import type { AccessibleOrganization } from "@/lib/organization-access";
  * Список тянем клиентом: серверный `/mini/me` рендерится из сессии и
  * ничего не знает про членство, а лишний запрос на каждом заходе в
  * профиль дешевле, чем тянуть его в общий layout.
+ *
+ * Мастер-кабинеты справочников — не в списке организаций, а отдельной
+ * карточкой «Кабинет», как в меню профиля сайта: нажатие переключает на
+ * кабинет и открывает `/master` (`lib/cabinet-menu.ts`).
  */
 export function MiniOrgSwitcher() {
   const router = useRouter();
@@ -23,6 +30,7 @@ export function MiniOrgSwitcher() {
   );
   const [activeId, setActiveId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const openMaster = useOpenMasterCabinet();
 
   useEffect(() => {
     let cancelled = false;
@@ -53,7 +61,9 @@ export function MiniOrgSwitcher() {
     };
   }, []);
 
-  if (organizations.length < 2) return null;
+  const { organizations: regular, masterCabinets } = splitCabinetMenu(organizations);
+  const showOrganizations = regular.length >= 2;
+  if (!showOrganizations && masterCabinets.length === 0) return null;
 
   async function switchTo(organization: AccessibleOrganization) {
     if (organization.id === activeId || busyId) return;
@@ -78,34 +88,65 @@ export function MiniOrgSwitcher() {
   }
 
   return (
-    <section className="mini-card p-4">
-      <div className="mini-label mb-2.5">Организация</div>
-      <div className="space-y-2">
-        {organizations.map((organization) => {
-          const active = organization.id === activeId;
-          return (
-            <button
-              key={organization.id}
-              type="button"
-              onClick={() => switchTo(organization)}
-              aria-pressed={active}
-              className="flex min-h-12 w-full items-center justify-between gap-3 rounded-[14px] border px-3.5 py-2.5 text-left text-[16px] font-semibold"
-              style={{
-                background: active ? "var(--mini-accent-soft)" : "var(--mini-surface-1)",
-                borderColor: active ? "var(--mini-accent)" : "var(--mini-divider-strong)",
-                color: "var(--mini-text)",
-              }}
-            >
-              <span className="min-w-0 flex-1 truncate">{organization.name}</span>
-              {busyId === organization.id ? (
-                <span style={{ color: "var(--mini-text-muted)" }}>…</span>
-              ) : active ? (
-                <span style={{ color: "var(--mini-accent-ink)" }}>✓</span>
-              ) : null}
-            </button>
-          );
-        })}
-      </div>
-    </section>
+    <>
+      {showOrganizations ? (
+        <section className="mini-card p-4">
+          <div className="mini-label mb-2.5">Организация</div>
+          <div className="space-y-2">
+            {regular.map((organization) => {
+              const active = organization.id === activeId;
+              return (
+                <button
+                  key={organization.id}
+                  type="button"
+                  onClick={() => switchTo(organization)}
+                  aria-pressed={active}
+                  className="flex min-h-12 w-full items-center justify-between gap-3 rounded-[14px] border px-3.5 py-2.5 text-left text-[16px] font-semibold"
+                  style={{
+                    background: active ? "var(--mini-accent-soft)" : "var(--mini-surface-1)",
+                    borderColor: active ? "var(--mini-accent)" : "var(--mini-divider-strong)",
+                    color: "var(--mini-text)",
+                  }}
+                >
+                  <span className="min-w-0 flex-1 truncate">{organization.name}</span>
+                  {busyId === organization.id ? (
+                    <span style={{ color: "var(--mini-text-muted)" }}>…</span>
+                  ) : active ? (
+                    <span style={{ color: "var(--mini-accent-ink)" }}>✓</span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
+      {masterCabinets.length > 0 ? (
+        <section className="mini-card p-4">
+          <div className="mini-label mb-2.5">Кабинет</div>
+          <div className="space-y-2">
+            {masterCabinets.map((cabinet) => (
+              <button
+                key={cabinet.id}
+                type="button"
+                onClick={() => void openMaster.open(cabinet)}
+                data-testid="mini-master-cabinet"
+                className="flex min-h-12 w-full items-center gap-3 rounded-[14px] border px-3.5 py-2.5 text-left text-[16px] font-semibold"
+                style={{
+                  background: "var(--mini-surface-1)",
+                  borderColor: "var(--mini-divider-strong)",
+                  color: "var(--mini-text)",
+                }}
+              >
+                <Library className="size-5 shrink-0" style={{ color: "var(--mini-accent-ink)" }} />
+                <span className="min-w-0 flex-1 truncate">{cabinet.name}</span>
+                {openMaster.openingId === cabinet.id ? (
+                  <span style={{ color: "var(--mini-text-muted)" }}>…</span>
+                ) : null}
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : null}
+    </>
   );
 }

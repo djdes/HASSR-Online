@@ -1,7 +1,7 @@
 import type { NextAuthOptions, Session } from "next-auth";
 import { decode } from "next-auth/jwt";
 import { cookies } from "next/headers";
-import { CUSTOM_SESSION_COOKIE, LEGACY_SESSION_COOKIES } from "@/lib/auth-cookies";
+import { pickSessionCookie } from "@/lib/auth-cookies";
 import { evaluatePartnerRequest } from "@/lib/partners/access-guard";
 import { isSessionVersionCurrent } from "@/lib/session-version";
 import { PARTNER_HEADER_METHOD, PARTNER_HEADER_PATH } from "@/lib/partners/request-context";
@@ -10,9 +10,9 @@ export async function getServerSession(
   options?: NextAuthOptions
 ): Promise<Session | null> {
   const cookieStore = await cookies();
-  const rawToken =
-    cookieStore.get(CUSTOM_SESSION_COOKIE)?.value ??
-    LEGACY_SESSION_COOKIES.map((name) => cookieStore.get(name)?.value).find(Boolean);
+  // Та же кука, что у proxy и next-auth (`useSession`): актуальное имя,
+  // прочие — только если его нет (`lib/auth-cookies.ts`).
+  const rawToken = pickSessionCookie((name) => cookieStore.get(name)?.value)?.value;
 
   if (!rawToken) {
     return null;

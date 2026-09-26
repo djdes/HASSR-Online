@@ -14,12 +14,13 @@ import {
   Palette,
   Users,
 } from "lucide-react";
-import { signOut } from "next-auth/react";
+import { toast } from "sonner";
 import { BrandLogo } from "@/components/brand/logo";
 import { IncomingMessagePopup } from "@/components/support/incoming-message-popup";
 import { useIncomingMessages } from "@/components/support/use-incoming-messages";
 import { cn } from "@/lib/utils";
 import { ResponsiveMenu } from "@/components/ui/responsive-menu";
+import { signOutAndOpen } from "@/lib/sign-out";
 
 const NAV = [
   { href: "/partner", label: "Обзор", icon: LayoutDashboard, exact: true },
@@ -149,7 +150,12 @@ export function PartnerShell({
                   key: "logout",
                   label: "Выйти",
                   icon: <LogOut className="size-4 text-[#6f7282]" />,
-                  onSelect: () => void signOut({ callbackUrl: "/login" }),
+                  // Полный выход, как везде (`lib/sign-out.ts`): одного
+                  // `signOut` next-auth мало — оставались другие куки сессии.
+                  onSelect: () =>
+                    void signOutAndOpen("/login").catch(() =>
+                      toast.error("Не удалось выйти. Проверьте связь и попробуйте ещё раз.")
+                    ),
                   tone: "danger" as const,
                 },
               ]}

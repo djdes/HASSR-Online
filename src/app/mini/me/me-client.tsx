@@ -41,6 +41,7 @@ import { FeedbackDialog } from "@/components/layout/feedback-dialog";
 import { PasskeySettings } from "@/components/auth/passkey-settings";
 import { useMiniTheme } from "../_components/mini-theme";
 import { signOutOnThisDevice } from "../_lib/signed-out-mark";
+import { signOutAndOpen } from "@/lib/sign-out";
 
 /**
  * Профиль в мини-приложении.
@@ -165,27 +166,19 @@ export function MiniMeClient({
   async function handleSignOut() {
     setError(null);
     setBusy("signout");
-    // Приложение: отвязать телефон от push ДО выхода — без сессии сервер
-    // ответит 401, и уведомления этого человека продолжили бы приходить
-    // на телефон, которым уже пользуется другой. Ошибки не мешают выйти.
-    await unregisterPushDevice();
     try {
-      // Раньше здесь был один `signOut`: он снимал только куку next-auth,
-      // а `/mini` в Telegram тут же входил обратно по initData — выйти и
-      // войти в другой аккаунт было нельзя.
-      await signOutOnThisDevice({
-        fetch: (input, init) => fetch(input, init),
-        signOut: () => signOut({ redirect: false }),
-      });
+      // Общий полный выход (`lib/sign-out.ts`), тот же, что на сайте:
+      // push этого телефона отвязывается, все куки сессии гаснут, ставится
+      // пометка «вышел вручную» — `/mini` в Telegram сам не войдёт. Раньше
+      // здесь был один `signOut`: он снимал только куку next-auth, а
+      // `/mini` тут же входил обратно по initData. Экран входа, а не
+      // `/mini`: там можно вернуться через Telegram или войти в другой
+      // аккаунт.
+      await signOutAndOpen("/mini/login");
     } catch {
       setError("Не удалось выйти. Проверьте связь и попробуйте ещё раз.");
       setBusy("none");
-      return;
     }
-    // Экран входа, а не `/mini`: там можно вернуться через Telegram или
-    // войти в другой аккаунт. `replace` — чтобы «назад» не вёл в профиль
-    // того, кто только что вышел.
-    window.location.replace("/mini/login");
   }
 
   const fullAccess = hasFullWorkspaceAccess(u);

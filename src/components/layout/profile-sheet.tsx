@@ -7,6 +7,8 @@ import {
   Coins,
   CreditCard,
   Handshake,
+  Library,
+  Loader2,
   LogOut,
   Palette,
   Settings,
@@ -26,6 +28,7 @@ import {
   BRANDING_SETTINGS_HREF,
   ThemeTiles,
 } from "@/components/theme/theme-tiles";
+import { useOpenMasterCabinet } from "@/components/master/use-open-master-cabinet";
 import type { AccessibleOrganization } from "@/lib/organization-access";
 import { useInsideMobileApp } from "@/lib/use-inside-mobile-app";
 
@@ -48,6 +51,7 @@ export function ProfileSheet({
   userEmail,
   planLine,
   organizations,
+  masterCabinets,
   activeOrganizationId,
   canCreateOrganization,
   onOpenCreate,
@@ -66,6 +70,8 @@ export function ProfileSheet({
   userEmail: string;
   planLine: string;
   organizations: AccessibleOrganization[];
+  /** Мастер-кабинеты справочников — строками в «Кабинете», открывают `/master`. */
+  masterCabinets: AccessibleOrganization[];
   activeOrganizationId: string;
   canCreateOrganization: boolean;
   onOpenCreate: (kind: CreateDialogKind) => void;
@@ -80,6 +86,7 @@ export function ProfileSheet({
   onLogout: () => void;
 }) {
   const inApp = useInsideMobileApp();
+  const openMaster = useOpenMasterCabinet();
   return (
     <BottomSheet
       open={open}
@@ -109,7 +116,10 @@ export function ProfileSheet({
         />
       </div>
 
-      {partnerCabinet ? (
+      {/* «Кабинет»: где человек сейчас и куда ещё можно перейти —
+          партнёрский кабинет, мастер-кабинеты справочников (они здесь, а не
+          в «Организациях»: у них своя оболочка `/master`). */}
+      {partnerCabinet || masterCabinets.length > 0 ? (
         <>
           <div className={SHEET_GROUP_LABEL_CLASS}>Кабинет</div>
           <Link href="/dashboard" onClick={onClose} className={`${SHEET_ROW_CLASS} bg-[#f5f6ff]`}>
@@ -117,13 +127,30 @@ export function ProfileSheet({
             <span className="min-w-0 flex-1 truncate">Моя организация</span>
             <span className="shrink-0 text-[12px] text-[#3848c7]">сейчас</span>
           </Link>
-          <Link href="/partner" onClick={onClose} className={SHEET_ROW_CLASS}>
-            <Handshake className="size-5 shrink-0 text-[#5566f6]" />
-            <span className="min-w-0 flex-1 truncate">Партнёрский кабинет</span>
-            <span className="max-w-[110px] shrink-0 truncate text-[12px] text-[#6f7282]">
-              {partnerCabinet.brandName}
-            </span>
-          </Link>
+          {partnerCabinet ? (
+            <Link href="/partner" onClick={onClose} className={SHEET_ROW_CLASS}>
+              <Handshake className="size-5 shrink-0 text-[#5566f6]" />
+              <span className="min-w-0 flex-1 truncate">Партнёрский кабинет</span>
+              <span className="max-w-[110px] shrink-0 truncate text-[12px] text-[#6f7282]">
+                {partnerCabinet.brandName}
+              </span>
+            </Link>
+          ) : null}
+          {masterCabinets.map((cabinet) => (
+            <button
+              key={cabinet.id}
+              type="button"
+              onClick={() => void openMaster.open(cabinet)}
+              className={SHEET_ROW_CLASS}
+              data-testid="profile-master-cabinet"
+            >
+              <Library className="size-5 shrink-0 text-[#5566f6]" />
+              <span className="min-w-0 flex-1 truncate">{cabinet.name}</span>
+              {openMaster.openingId === cabinet.id ? (
+                <Loader2 className="size-5 shrink-0 animate-spin text-[#5566f6]" />
+              ) : null}
+            </button>
+          ))}
         </>
       ) : null}
 

@@ -7,6 +7,7 @@ import { BottomSheet } from "@/components/ui/bottom-sheet";
 import type { PartnerHintRates } from "@/lib/partners/partner-hint";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
+import { toast } from "sonner";
 import {
   AlertTriangle,
   Building2,
@@ -18,6 +19,8 @@ import {
   CreditCard,
   FileText,
   Handshake,
+  Library,
+  Loader2,
   LogOut,
   Menu,
   Palette,
@@ -68,6 +71,9 @@ import {
 import { CreateOrganizationDialog } from "@/components/layout/create-organization-dialog";
 import { CreateDemoDialog } from "@/components/layout/create-demo-dialog";
 import type { AccessibleOrganization } from "@/lib/organization-access";
+import { signOutAndOpen } from "@/lib/sign-out";
+import { splitCabinetMenu } from "@/lib/cabinet-menu";
+import { useOpenMasterCabinet } from "@/components/master/use-open-master-cabinet";
 
 // Иконки разделов: сам перечень живёт в `lib/app-sections.ts` (один
 // список на сайт и мини-приложение), а компоненты lucide подставляются
@@ -230,10 +236,19 @@ export function Header({
     setProfileMenuOpen(false);
     setCreateDialog(kind);
   };
+  // Мастер-кабинеты справочников — не в «Организациях», а в «Кабинете»
+  // (`lib/cabinet-menu.ts`): у них своя оболочка `/master`.
+  const { organizations: regularOrganizations, masterCabinets } =
+    splitCabinetMenu(organizations);
+  const openMaster = useOpenMasterCabinet();
 
-  const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    window.location.href = "/login";
+  // Общий полный выход (`lib/sign-out.ts`): все куки сессии, next-auth,
+  // соседние вкладки. Раньше ответ сервера не проверялся — при сбое
+  // человек попадал на /login, оставаясь в аккаунте.
+  const handleLogout = () => {
+    signOutAndOpen("/login").catch(() => {
+      toast.error("Не удалось выйти. Проверьте связь и попробуйте ещё раз.");
+    });
   };
 
   // First slot: company name for managers/root, "Фамилия И.О. · должность"
@@ -262,7 +277,7 @@ export function Header({
   const onFreePlan = subscriptionPlan === "trial" || subscriptionPlan === "free";
   // Мест считаем по всем организациям аккаунта — иначе владелец сети
   // видел бы «2/5» в каждой точке и не понимал, откуда взялся платный.
-  const multiOrg = organizations.length > 1;
+  const multiOrg = regularOrganizations.length > 1;
   const headcountSuffix = multiOrg
     ? " сотрудников по всем организациям"
     : " сотрудников";
@@ -780,16 +795,17 @@ export function Header({
                   canCreate={canCreateOrganization}
                   onOpenCreate={openCreateDialog}
                 />
-                {organizations.length > 1 || canCreateOrganization ? (
+                {regularOrganizations.length > 1 || canCreateOrganization ? (
                   <DropdownMenuSeparator className="my-1" />
                 ) : null}
-                {partnerCabinet ? (
+                {partnerCabinet || masterCabinets.length > 0 ? (
                   <>
-                    {/* Контекст: «Моя организация» — текущий кабинет,
-                        «Партнёрский кабинет» — /partner. Активный пункт
-                        подсвечен, чтобы было видно, где человек сейчас. */}
+                    {/* «Кабинет» (как в листе на телефоне): «Моя организация» —
+                        текущий кабинет, «Партнёрский кабинет» — /partner,
+                        мастер-кабинеты справочников — /master. Активный
+                        пункт подсвечен, чтобы было видно, где человек сейчас. */}
                     <div className="px-2 pb-1 pt-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
-                      Контекст
+                      Кабинет
                     </div>
                     <DropdownMenuItem asChild className="bg-[#f5f6ff] focus:bg-[#eef1ff]">
                       <Link href="/dashboard">
@@ -798,15 +814,37 @@ export function Header({
                         <span className="text-[11px] text-[#3848c7]">сейчас</span>
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild className="focus:bg-[#f5f6ff]">
-                      <Link href="/partner">
-                        <Handshake className="mr-2 size-4 text-[#5566f6]" />
-                        <span className="flex-1 truncate">Партнёрский кабинет</span>
-                        <span className="max-w-[120px] truncate text-[11px] text-[#6f7282]">
-                          {partnerCabinet.brandName}
-                        </span>
-                      </Link>
-                    </DropdownMenuItem>
+                    {partnerCabinet ? (
+                      <DropdownMenuItem asChild className="focus:bg-[#f5f6ff]">
+                        <Link href="/partner">
+                          <Handshake className="mr-2 size-4 text-[#5566f6]" />
+                          <span className="flex-1 truncate">Партнёрский кабинет</span>
+                          <span className="max-w-[120px] truncate text-[11px] text-[#6f7282]">
+                            {partnerCabinet.brandName}
+                          </span>
+                        </Link>
+                      </DropdownMenuItem>
+                    ) : null}
+                    {masterCabinets.map((cabinet) => (
+                      <DropdownMenuItem
+                        key={cabinet.id}
+                        className="focus:bg-[#f5f6ff]"
+                        title="Мастер-кабинет справочников: меню и сырьё для пищеблоков"
+                        data-testid="profile-master-cabinet"
+                        onSelect={(event) => {
+                          // Меню не закрываем: видно, что идёт переключение,
+                          // дальше — полная загрузка /master.
+                          event.preventDefault();
+                          void openMaster.open(cabinet);
+                        }}
+                      >
+                        <Library className="mr-2 size-4 text-[#5566f6]" />
+                        <span className="flex-1 truncate">{cabinet.name}</span>
+                        {openMaster.openingId === cabinet.id ? (
+                          <Loader2 className="size-4 shrink-0 animate-spin text-[#5566f6]" />
+                        ) : null}
+                      </DropdownMenuItem>
+                    ))}
                     <DropdownMenuSeparator className="my-1" />
                   </>
                 ) : null}
@@ -915,7 +953,8 @@ export function Header({
         userName={userName}
         userEmail={userEmail}
         planLine={planLine}
-        organizations={organizations}
+        organizations={regularOrganizations}
+        masterCabinets={masterCabinets}
         activeOrganizationId={activeOrganizationId}
         canCreateOrganization={canCreateOrganization}
         onOpenCreate={openCreateDialog}
@@ -942,7 +981,7 @@ export function Header({
             organizations.find((item) => item.id === activeOrganizationId)?.name ?? ""
           }
           onClose={() => setCreateDialog(null)}
-          organizationsCount={organizations.length}
+          organizationsCount={regularOrganizations.length}
         />
       ) : null}
     </header>

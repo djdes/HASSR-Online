@@ -11,6 +11,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import { splitCabinetMenu } from "@/lib/cabinet-menu";
 import type { AccessibleOrganization } from "@/lib/organization-access";
 
 /**
@@ -20,6 +21,10 @@ import type { AccessibleOrganization } from "@/lib/organization-access";
  * точек в один экран, а переключаем активную. Так проще и честнее —
  * журнал, задача и сотрудник всегда принадлежат одному объекту.
  *
+ * Мастер-кабинеты справочников сюда не попадают: у них своя оболочка
+ * `/master`, и в меню профиля они стоят в разделе «Кабинет»
+ * (`lib/cabinet-menu.ts`).
+ *
  * Модалки создания (организации и демо) живут у родителя: этот список
  * рендерится внутри Radix-меню с transform/overflow, и `fixed`-оверлей
  * из него не выберется — его бы обрезало по ширине меню.
@@ -28,7 +33,7 @@ import type { AccessibleOrganization } from "@/lib/organization-access";
 export type CreateDialogKind = "organization" | "demo";
 
 export function OrganizationSwitcher({
-  organizations,
+  organizations: allOrganizations,
   activeId,
   canCreate,
   onOpenCreate,
@@ -45,6 +50,7 @@ export function OrganizationSwitcher({
   const router = useRouter();
   const [switchingId, setSwitchingId] = useState<string | null>(null);
   const canOpenCreate = canCreate && Boolean(onOpenCreate);
+  const { organizations } = splitCabinetMenu(allOrganizations);
 
   // Одна организация и создавать нельзя — показывать нечего.
   if (organizations.length < 2 && !canOpenCreate) return null;

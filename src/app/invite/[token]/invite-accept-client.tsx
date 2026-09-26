@@ -91,9 +91,9 @@ export function InviteAcceptClient({ status, token, user }: Props) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body?.error || "Не удалось установить пароль");
       }
-      // Use the custom login endpoint so we write the site's primary
-      // session cookie (`haccp-online.session-token`) rather than the
-      // NextAuth cookie which our server components ignore.
+      // The regular password login issues the session cookie (the same
+      // single name next-auth uses, see lib/auth-cookies.ts) and clears any
+      // other session left in this browser.
       const login = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

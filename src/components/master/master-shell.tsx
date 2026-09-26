@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { Building2, Copy, Library, Loader2, LogOut, PenLine } from "lucide-react";
-import { signOut } from "next-auth/react";
 import { toast } from "sonner";
 
 import { BrandLogo } from "@/components/brand/logo";
 import { renameMasterCabinetDialog } from "@/components/master/rename-master-cabinet";
-import { ResponsiveMenu, type ResponsiveMenuItem } from "@/components/ui/responsive-menu";
+import { ResponsiveMenu, type ResponsiveMenuEntry } from "@/components/ui/responsive-menu";
+import { signOutAndOpen } from "@/lib/sign-out";
+import { switchOrganizationAndOpen } from "@/lib/switch-organization";
 
 export type MasterShellProps = {
   organizationName: string;
@@ -15,7 +16,7 @@ export type MasterShellProps = {
   objectsCount: number;
   userName: string;
   userEmail: string;
-  /** Обычные организации пользователя — пункты «Вернуться в …». */
+  /** Обычные организации пользователя — пункт «Моя организация». */
   returnTargets: Array<{ id: string; name: string }>;
   children: React.ReactNode;
 };
@@ -47,33 +48,50 @@ export function MasterShell({
   async function returnTo(target: { id: string; name: string }) {
     setSwitching(true);
     try {
-      const response = await fetch("/api/me/active-organization", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ organizationId: target.id }),
-      });
-      const json = (await response.json().catch(() => null)) as { error?: string } | null;
-      if (!response.ok) throw new Error(json?.error ?? "Не удалось переключиться");
-      window.location.assign("/dashboard");
+      await switchOrganizationAndOpen(target.id, "/dashboard");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Не удалось переключиться");
       setSwitching(false);
     }
   }
 
-  const menuItems: ResponsiveMenuItem[] = [
-    ...returnTargets.map((target) => ({
-      key: `return-${target.id}`,
-      label: `Вернуться в «${target.name}»`,
-      icon: <Building2 className="size-4 text-[#5566f6]" />,
-      onSelect: () => void returnTo(target),
-      disabled: switching,
-    })),
+  // «Моя организация» — обратно из кабинета (зеркало раздела «Кабинет» в
+  // меню профиля сайта). Одна организация — один пункт, несколько — группа
+  // «Моя организация» с названиями.
+  const returnItems = returnTargets.map((target) => ({
+    key: `return-${target.id}`,
+    label: target.name,
+    icon: <Building2 className="size-4 text-[#5566f6]" />,
+    onSelect: () => void returnTo(target),
+    disabled: switching,
+  }));
+  const returnEntries: ResponsiveMenuEntry[] =
+    returnItems.length === 1
+      ? [{ ...returnItems[0], label: "Моя организация", title: returnTargets[0].name }]
+      : returnItems.length > 1
+        ? [
+            {
+              key: "return",
+              label: "Моя организация",
+              icon: <Building2 className="size-4 text-[#5566f6]" />,
+              items: returnItems,
+            },
+          ]
+        : [];
+
+  const menuItems: ResponsiveMenuEntry[] = [
+    ...returnEntries,
     {
       key: "logout",
       label: "Выйти",
       icon: <LogOut className="size-4 text-[#6f7282]" />,
-      onSelect: () => void signOut({ callbackUrl: "/login" }),
+      // Полный выход (`lib/sign-out.ts`). Раньше `signOut` next-auth гасил
+      // одну свою куку, по остальным proxy возвращал в кабинет — выйти
+      // из мастер-кабинета было нельзя.
+      onSelect: () =>
+        void signOutAndOpen("/login").catch(() =>
+          toast.error("Не удалось выйти. Проверьте связь и попробуйте ещё раз.")
+        ),
       tone: "danger" as const,
     },
   ];

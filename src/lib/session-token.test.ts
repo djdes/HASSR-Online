@@ -2,55 +2,36 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
-  CUSTOM_SESSION_COOKIE,
-  LEGACY_SESSION_COOKIES,
+  ALL_SESSION_COOKIES,
+  SESSION_COOKIE_DEV,
+  SESSION_COOKIE_PROD,
 } from "@/lib/auth-cookies";
-import {
-  findSessionCookieName,
-  listPresentSessionCookies,
-} from "@/lib/session-token";
+import { findSessionCookieName } from "@/lib/session-token";
 
-/** Как выглядят cookie после обычного входа: токен во всех именах сразу. */
-const AFTER_LOGIN = new Set([CUSTOM_SESSION_COOKIE, ...LEGACY_SESSION_COOKIES]);
+/** Сессия, выданная до перехода на одно имя: токен во всех именах сразу. */
+const OLD_LOGIN = new Set(ALL_SESSION_COOKIES);
 
-test("findSessionCookieName matches the reader order", () => {
-  // `server-session.ts` и middleware берут первое существующее имя в
-  // порядке CUSTOM → LEGACY. Если здесь порядок другой, правка claim'а
+test("findSessionCookieName: на проде — кука next-auth, как у читателей", () => {
+  // `server-session.ts` и proxy берут первое имя в порядке
+  // `sessionCookieReadOrder`. Если здесь порядок другой, правка claim'а
   // уйдёт не в ту cookie и просто не подействует.
-  assert.equal(
-    findSessionCookieName((name) => AFTER_LOGIN.has(name)),
-    CUSTOM_SESSION_COOKIE
-  );
+  assert.equal(findSessionCookieName((name) => OLD_LOGIN.has(name), true), SESSION_COOKIE_PROD);
 });
 
-test("findSessionCookieName falls back to a legacy cookie", () => {
-  // Старая вкладка или мобильный клиент: основной cookie нет.
+test("findSessionCookieName: в dev — своё имя next-auth", () => {
+  assert.equal(findSessionCookieName((name) => OLD_LOGIN.has(name), false), SESSION_COOKIE_DEV);
+});
+
+test("findSessionCookieName: без актуальной куки — запасное имя", () => {
+  // Старая вкладка или сессия до правки: актуальной cookie нет.
   assert.equal(
-    findSessionCookieName((name) => name === "__Secure-haccp-online.session-token"),
-    "__Secure-haccp-online.session-token"
+    findSessionCookieName((name) => name === "next-auth.session-token", true),
+    "next-auth.session-token",
   );
+  assert.equal(findSessionCookieName((name) => name === SESSION_COOKIE_DEV, true), SESSION_COOKIE_DEV);
 });
 
 test("findSessionCookieName returns null without a session", () => {
-  assert.equal(findSessionCookieName(() => false), null);
-});
-
-test("listPresentSessionCookies returns every cookie the login wrote", () => {
-  // Ровно тот баг, из-за которого «Войти как» не работало: правилась
-  // одна cookie, а читатель брал другую — она оставалась со старым
-  // токеном и отменяла правку. Переписать нужно все присутствующие.
-  const present = listPresentSessionCookies((name) => AFTER_LOGIN.has(name));
-
-  assert.ok(present.includes(CUSTOM_SESSION_COOKIE));
-  for (const legacy of LEGACY_SESSION_COOKIES) {
-    assert.ok(present.includes(legacy), `не переписывается ${legacy}`);
-  }
-});
-
-test("listPresentSessionCookies ignores cookies that are absent", () => {
-  const present = listPresentSessionCookies(
-    (name) => name === CUSTOM_SESSION_COOKIE
-  );
-
-  assert.deepEqual(present, [CUSTOM_SESSION_COOKIE]);
+  assert.equal(findSessionCookieName(() => false, true), null);
+  assert.equal(findSessionCookieName(() => false, false), null);
 });

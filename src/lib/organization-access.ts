@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { parseOrgKind, type OrgKind } from "@/lib/master-directory-access";
 
 /**
  * Организации, в которых человек имеет право работать: домашняя плюс
@@ -12,9 +13,15 @@ export type AccessibleOrganization = {
   isHome: boolean;
   /** Демо-песочница аккаунта: в списке идёт последней и помечена пилюлей. */
   isDemo: boolean;
+  /**
+   * `directory` — мастер-кабинет справочников: в меню профиля он не в
+   * «Организациях», а в разделе «Кабинет» и открывает `/master`
+   * (`lib/cabinet-menu.ts`).
+   */
+  kind: OrgKind;
 };
 
-const ORG_SELECT = { id: true, name: true, isDemo: true } as const;
+const ORG_SELECT = { id: true, name: true, isDemo: true, kind: true } as const;
 
 export async function listAccessibleOrganizations(
   userId: string,
@@ -42,6 +49,7 @@ export async function listAccessibleOrganizations(
       role: "home",
       isHome: true,
       isDemo: user.organization.isDemo,
+      kind: parseOrgKind(user.organization.kind),
     });
   }
   for (const membership of user.organizationMemberships) {
@@ -52,6 +60,7 @@ export async function listAccessibleOrganizations(
       role: membership.role === "owner" ? "owner" : "manager",
       isHome: existing?.isHome ?? false,
       isDemo: membership.organization.isDemo,
+      kind: parseOrgKind(membership.organization.kind),
     });
   }
 

@@ -1,9 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { decode } from "next-auth/jwt";
-import {
-  CUSTOM_SESSION_COOKIE,
-  LEGACY_SESSION_COOKIES,
-} from "@/lib/auth-cookies";
+import { pickSessionCookie } from "@/lib/auth-cookies";
 import { canAccessWebPath, hasFullWorkspaceAccess } from "@/lib/role-access";
 import { evaluateDirectoryRequest } from "@/lib/master-directory-access";
 import {
@@ -163,8 +160,8 @@ function isStaffRestrictedWebPath(pathname: string): boolean {
  *
  * 2. `/api/root/*` is the matching API surface; same 404 policy.
  *
- * We decode the JWT manually (not via getToken) so we can read the custom
- * cookie this project installed on top of NextAuth.
+ * We decode the JWT manually (not via getToken) so the fallback cookie names
+ * (sessions issued before the single-cookie switch) keep working.
  */
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -198,11 +195,11 @@ export async function proxy(req: NextRequest) {
     return NextResponse.redirect(url, 308);
   }
 
-  const rawToken =
-    req.cookies.get(CUSTOM_SESSION_COOKIE)?.value ??
-    LEGACY_SESSION_COOKIES.map((name) => req.cookies.get(name)?.value).find(
-      Boolean
-    );
+  // Та же кука, что у `getServerSession` проекта и next-auth: актуальное
+  // имя сессии, устаревшие — только если его нет. Раньше первой шла своя
+  // кука входов, и после входа другим аккаунтом через next-auth proxy
+  // видел прежнего человека, а страницы — нового.
+  const rawToken = pickSessionCookie((name) => req.cookies.get(name)?.value)?.value;
 
   // Оболочка мини-приложения: страницы кабинета открыты в телефоне.
   // Права она НЕ меняет — меняет только, куда вести отказ: на сайте это

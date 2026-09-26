@@ -1,22 +1,17 @@
 import { NextResponse } from "next/server";
 import { encode } from "next-auth/jwt";
 import { getSessionVersion } from "@/lib/session-version";
-import {
-  ALL_SESSION_COOKIES,
-  CUSTOM_SESSION_COOKIE,
-  LEGACY_SESSION_COOKIES,
-  LEGACY_AUX_COOKIES,
-} from "@/lib/auth-cookies";
+import { expireLegacyAuxCookies, setSessionCookie } from "@/lib/auth-cookies";
 
 /**
  * Выдача сессии в обход NextAuth.
  *
- * Проект минтит JWT вручную и кладёт его в собственную куку плюс
- * несколько легаси-имён (историческая совместимость со старыми
- * вкладками и мобильными клиентами). Логика жила только в
- * `/api/auth/login`; после появления мгновенной регистрации она нужна
- * в двух местах, поэтому вынесена сюда — чтобы поведение кук было
- * ровно одинаковым и не разъехалось при правках.
+ * Проект минтит JWT вручную (вход по паролю, телефону, личному QR,
+ * приглашению, мгновенная регистрация, киоск…) и кладёт его в ту же
+ * куку, что ставит next-auth (`sessionCookieName`), а прочие имена
+ * сессии гасит (`setSessionCookie`, `lib/auth-cookies.ts`). Раньше токен
+ * раскладывался ещё и по легаси-именам — и `signOut` next-auth, гасивший
+ * одну свою куку, оставлял человека в аккаунте.
  */
 
 const MAX_AGE = 365 * 24 * 60 * 60;
@@ -30,51 +25,6 @@ export type SessionUser = {
   isRoot?: boolean | null;
   permissionPreset?: string | null;
 };
-
-function appendSessionCookie(
-  response: NextResponse,
-  cookieName: string,
-  token: string,
-) {
-  const expires = new Date(Date.now() + MAX_AGE * 1000).toUTCString();
-  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
-
-  response.headers.append(
-    "Set-Cookie",
-    `${cookieName}=${token}; Path=/; Expires=${expires}; Max-Age=${MAX_AGE}; HttpOnly; SameSite=Lax${secure}`,
-  );
-}
-
-function appendExpiredCookie(response: NextResponse, cookieName: string) {
-  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
-
-  response.headers.append(
-    "Set-Cookie",
-    `${cookieName}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax${secure}`,
-  );
-}
-
-/**
- * Гасим все посторонние куки сессии. Важно при входе: иначе можно
- * унаследовать чужую impersonation-сессию, оставшуюся от ROOT'а.
- */
-export function clearLegacyCookies(response: NextResponse) {
-  for (const cookieName of LEGACY_SESSION_COOKIES) {
-    appendExpiredCookie(response, cookieName);
-  }
-
-  for (const cookieName of [...ALL_SESSION_COOKIES, ...LEGACY_AUX_COOKIES]) {
-    if (cookieName === CUSTOM_SESSION_COOKIE) continue;
-    if (LEGACY_SESSION_COOKIES.includes(cookieName)) continue;
-    response.cookies.set(cookieName, "", {
-      path: "/",
-      expires: new Date(0),
-      httpOnly: cookieName.includes("session-token"),
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-    });
-  }
-}
 
 /**
  * Кладёт свежую сессию в переданный ответ и возвращает его же.
@@ -119,18 +69,10 @@ export async function issueSession(
     },
   });
 
-  clearLegacyCookies(response);
-  response.cookies.set(CUSTOM_SESSION_COOKIE, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    maxAge: MAX_AGE,
-    secure: process.env.NODE_ENV === "production",
-  });
-  for (const cookieName of LEGACY_SESSION_COOKIES) {
-    appendSessionCookie(response, cookieName, token);
-  }
-
+  // Прочие имена сессии гасятся: иначе можно унаследовать чужую сессию,
+  // оставшуюся в браузере (например, «Войти как» ROOT'а).
+  setSessionCookie(response.cookies, token, MAX_AGE);
+  expireLegacyAuxCookies(response.cookies);
   return response;
 }
 
@@ -179,17 +121,7 @@ export async function issueKioskSession(
     },
   });
 
-  clearLegacyCookies(response);
-  response.cookies.set(CUSTOM_SESSION_COOKIE, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    maxAge,
-    secure: process.env.NODE_ENV === "production",
-  });
-  for (const cookieName of LEGACY_SESSION_COOKIES) {
-    appendSessionCookie(response, cookieName, token);
-  }
-
+  setSessionCookie(response.cookies, token, maxAge);
+  expireLegacyAuxCookies(response.cookies);
   return response;
 }

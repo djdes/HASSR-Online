@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { LogOut, TabletSmartphone } from "lucide-react";
 
+import { KIOSK_LOCK_URL, signOutAndOpen } from "@/lib/sign-out";
+
 /** Не чаще раза в 25 с — при idle 90 с по умолчанию окно продлевается с запасом. */
 const HEARTBEAT_MIN_MS = 25_000;
 
@@ -64,8 +66,12 @@ export function KioskSessionGuard() {
   async function leave() {
     setLeaving(true);
     try {
-      await fetch("/api/kiosk/lock", { method: "POST" });
-    } finally {
+      // Общий выход (`lib/sign-out.ts`) с киоск-адресом: гаснут все куки
+      // сессии, планшет остаётся киоском (его кука не трогается).
+      await signOutAndOpen("/mini/kiosk", { logoutUrl: KIOSK_LOCK_URL });
+    } catch {
+      // Как раньше: к списку сотрудников в любом случае — киоск-сессия
+      // сама заблокируется по бездействию.
       window.location.href = "/mini/kiosk";
     }
   }

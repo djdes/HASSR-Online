@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
+  LOGOUT_URL,
   SIGNED_OUT_MARK_KEY,
   browserMarkStorage,
   clearSignedOutMark,
@@ -245,6 +246,29 @@ describe("signOutOnThisDevice — полный выход, как на сайт�
     });
     assert.ok(Date.now() - started < 2000);
     assert.equal(isSignedOutManually(r.storage), true);
+  });
+
+  it("другой адрес выхода (киоск, «на всех устройствах») — тот же порядок", async () => {
+    for (const logoutUrl of ["/api/kiosk/lock", "/api/security/logout-all"]) {
+      const r = recorder();
+      await signOutOnThisDevice({
+        fetch: r.fetch,
+        signOut: async () => {
+          r.calls.push("signOut");
+        },
+        storage: r.trackedStorage,
+        logoutUrl,
+      });
+      assert.deepEqual(r.fetchCalls, [{ input: logoutUrl, init: { method: "POST" } }]);
+      assert.deepEqual(r.calls, ["logout", "mark", "signOut"]);
+    }
+  });
+
+  it("по умолчанию — POST /api/auth/logout (LOGOUT_URL)", async () => {
+    const r = recorder();
+    await signOutOnThisDevice({ fetch: r.fetch, signOut: async () => undefined, storage: r.storage });
+    assert.equal(r.fetchCalls[0]?.input, LOGOUT_URL);
+    assert.equal(LOGOUT_URL, "/api/auth/logout");
   });
 
   it("хранилище недоступно — выход всё равно проходит", async () => {

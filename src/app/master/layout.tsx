@@ -38,10 +38,11 @@ export default async function MasterLayout({ children }: { children: React.React
     listAccessibleOrganizations(session.user.id),
   ]);
   const initialTheme: "light" | "dark" = profile?.themePreference === "dark" ? "dark" : "light";
-  // «Вернуться в …» — для владельца/руководителя, у которого кроме кабинета
-  // есть обычные организации. Сотруднику бэк-офиса возвращаться некуда.
+  // «Моя организация» — для владельца/руководителя, у которого кроме
+  // кабинета есть обычные организации (не мастер-кабинеты и не демо).
+  // Сотруднику бэк-офиса возвращаться некуда.
   const returnTargets = accessible
-    .filter((item) => item.id !== org.id && !item.isDemo)
+    .filter((item) => item.id !== org.id && !item.isDemo && item.kind !== MASTER_ORG_KIND)
     .map((item) => ({ id: item.id, name: item.name }));
 
   return (

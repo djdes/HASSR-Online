@@ -111,15 +111,23 @@ export function telegramSignInHref(next: string | null | undefined): string {
   return buildMiniAppAuthBootstrapPath(target);
 }
 
+/** Обычный выход на этом устройстве. */
+export const LOGOUT_URL = "/api/auth/logout";
+
 /**
- * Полный выход на этом устройстве — тот же, что на сайте, плюс пометка.
+ * Полный выход на этом устройстве — ОДИН для всех кнопок «Выйти»: сайт
+ * (шапка, лист профиля), мастер-кабинет, партнёрский кабинет,
+ * мини-приложение, киоск, «Выйти на всех устройствах». В браузере его
+ * зовут через `signOutAndOpen` (`lib/sign-out.ts`).
  *
- *   1. `POST /api/auth/logout` гасит ВСЕ куки сессии (и легаси-имена,
- *      которые ставит вход по телефону или почте) и куку оболочки. Одного
- *      `signOut` next-auth мало: он снимает только свою куку, и вне
- *      Telegram сессия возвращалась по оставшимся.
+ *   1. `POST logoutUrl` (по умолчанию `/api/auth/logout`) гасит ВСЕ куки
+ *      сессии (актуальное имя и легаси) и куку оболочки. Одного `signOut`
+ *      next-auth мало: он снимает только свою куку, и сессия возвращалась
+ *      по оставшимся (из мастер-кабинета было не выйти). Киоск передаёт
+ *      `/api/kiosk/lock`, «на всех устройствах» — `/api/security/logout-all`.
  *   2. Пометка «вышел вручную» — как только сервер сессию снял: дальше
- *      `/mini` в Telegram сам не входит.
+ *      `/mini` в Telegram сам не входит. Вне Telegram она ни на что не
+ *      влияет, а любой вход её снимает.
  *   3. `signOut({ redirect: false })` — чтобы next-auth и соседние вкладки
  *      узнали о выходе. Сбой или зависание здесь не страшны: сессии на
  *      сервере уже нет, поэтому ждём не дольше `timeoutMs`.
@@ -132,8 +140,10 @@ export async function signOutOnThisDevice(deps: {
   signOut: () => Promise<unknown>;
   storage?: MarkStorage | null;
   timeoutMs?: number;
+  /** Адрес выхода на сервере; по умолчанию `LOGOUT_URL`. */
+  logoutUrl?: string;
 }): Promise<void> {
-  const response = await deps.fetch("/api/auth/logout", { method: "POST" });
+  const response = await deps.fetch(deps.logoutUrl ?? LOGOUT_URL, { method: "POST" });
   if (!response.ok) {
     throw new Error(`logout failed: HTTP ${response.status}`);
   }

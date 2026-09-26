@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ALL_SESSION_COOKIES } from "@/lib/auth-cookies";
+import { expireSessionCookies } from "@/lib/auth-cookies";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,14 +12,7 @@ export const dynamic = "force-dynamic";
  */
 export async function POST() {
   const response = NextResponse.json({ ok: true });
-  for (const name of ALL_SESSION_COOKIES) {
-    response.cookies.set(name, "", {
-      path: "/",
-      expires: new Date(0),
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-    });
-  }
+  // Все имена сессии, с атрибутами как при установке (`__Secure-` — с Secure).
+  expireSessionCookies(response.cookies);
   return response;
 }
