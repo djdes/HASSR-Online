@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">WeSetup</string>
+    <string name="title_activity_main">WeSetup</string>
+    <string name="package_name">ru.wesetup.app</string>
+    <string name="custom_url_scheme">ru.wesetup.app</string>
+</resources>

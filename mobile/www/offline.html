@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <title>Нет связи — WeSetup</title>
+  <style>
+    html, body { margin: 0; height: 100%; }
+    body {
+      background: #0b1024;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: env(safe-area-inset-top) 24px env(safe-area-inset-bottom);
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .glow {
+      position: fixed; left: 50%; top: 38%;
+      width: 420px; height: 420px; margin: -210px 0 0 -210px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(85, 102, 246, 0.35), rgba(85, 102, 246, 0) 70%);
+      pointer-events: none;
+    }
+    main { position: relative; max-width: 360px; width: 100%; text-align: center; }
+    .icon {
+      width: 72px; height: 72px; margin: 0 auto 24px;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      display: flex; align-items: center; justify-content: center;
+    }
+    h1 { margin: 0 0 10px; font-size: 22px; line-height: 1.25; font-weight: 700; }
+    p { margin: 0 0 28px; font-size: 16px; line-height: 1.45; color: rgba(255, 255, 255, 0.72); }
+    button {
+      appearance: none; border: 0; cursor: pointer;
+      width: 100%; min-height: 52px; border-radius: 16px;
+      background: #5566f6; color: #ffffff;
+      font: inherit; font-size: 17px; font-weight: 600;
+      box-shadow: 0 10px 30px -10px rgba(85, 102, 246, 0.7);
+      transition: background-color 0.15s ease, transform 0.15s ease;
+    }
+    button:hover { background: #4a5bf0; }
+    button:active { transform: scale(0.98); }
+    button:focus-visible { outline: 3px solid rgba(85, 102, 246, 0.45); outline-offset: 3px; }
+    button[disabled] { opacity: 0.7; }
+  </style>
+</head>
+<body>
+  <div class="glow" aria-hidden="true"></div>
+  <main>
+    <div class="icon" aria-hidden="true">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 20h.01"/>
+        <path d="M8.5 16.43a5 5 0 0 1 7 0"/>
+        <path d="M5 12.86a10 10 0 0 1 5.17-2.69"/>
+        <path d="M19 12.86a10 10 0 0 0-2-1.43"/>
+        <path d="M2 8.82a15 15 0 0 1 4.18-2.65"/>
+        <path d="M22 8.82a15 15 0 0 0-11.29-3.76"/>
+        <path d="m2 2 20 20"/>
+      </svg>
+    </div>
+    <h1>Нет связи с интернетом</h1>
+    <p>Проверьте Wi-Fi или мобильный интернет</p>
+    <button id="retry" type="button">Повторить</button>
+  </main>
+  <script>
+    // Сайт не открылся: ждём нажатия «Повторить» (или возврата сети) и снова
+    // открываем стартовый адрес приложения.
+    var START_URL = "https://wesetup.ru/mini?src=app";
+    var button = document.getElementById("retry");
+    function retry() {
+      button.disabled = true;
+      button.textContent = "Открываем…";
+      location.href = START_URL;
+    }
+    button.addEventListener("click", retry);
+    window.addEventListener("online", retry);
+  </script>
+</body>
+</html>

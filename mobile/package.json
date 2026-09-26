@@ -1,0 +1,29 @@
+{
+  "name": "wesetup-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "description": "WeSetup: приложения для Android и iOS (Capacitor-оболочка вокруг https://wesetup.ru/mini)",
+  "scripts": {
+    "sync": "cap sync",
+    "assets": "node scripts/make-assets.mjs && capacitor-assets generate --android --ios --iconBackgroundColor \"#0b1024\" --iconBackgroundColorDark \"#0b1024\" --splashBackgroundColor \"#0b1024\" --splashBackgroundColorDark \"#0b1024\"",
+    "android:debug": "cap sync android && cd android && gradlew assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor-community/speech-recognition": "7.0.1",
+    "@capacitor-firebase/messaging": "8.5.2",
+    "@capacitor/android": "8.5.2",
+    "@capacitor/app": "8.1.1",
+    "@capacitor/app-launcher": "8.0.1",
+    "@capacitor/cli": "8.5.2",
+    "@capacitor/core": "8.5.2",
+    "@capacitor/filesystem": "8.1.3",
+    "@capacitor/ios": "8.5.2",
+    "@capacitor/share": "8.0.2",
+    "@capacitor/splash-screen": "8.0.2",
+    "@capacitor/status-bar": "8.0.3"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "3.0.5",
+    "typescript": "5.9.3"
+  }
+}

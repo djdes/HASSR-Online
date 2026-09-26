@@ -1,0 +1,4 @@
+# gradlew запускается на Linux/macOS раннерах — только LF; .bat — только CRLF.
+gradlew text eol=lf
+*.bat text eol=crlf
+*.sh text eol=lf

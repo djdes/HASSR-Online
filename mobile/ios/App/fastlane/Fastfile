@@ -1,0 +1,72 @@
+# Сборка iOS и отправка в TestFlight (запускает .github/workflows/mobile-release.yml).
+#
+# Подпись — автоматическая, по ключу App Store Connect API: xcodebuild сам
+# создаёт профили и сертификаты (-allowProvisioningUpdates), для выгрузки
+# используется облачный сертификат распространения Apple. Файлы сертификатов
+# в секретах не нужны. Роль ключа — Admin (см. mobile/README.md).
+#
+# Переменные окружения:
+#   APPLE_TEAM_ID            — Team ID из developer.apple.com → Membership
+#   ASC_KEY_ID, ASC_ISSUER_ID — ключ App Store Connect API
+#   ASC_KEY_PATH             — путь к файлу .p8 этого ключа (кладёт CI)
+#   BUILD_NUMBER             — номер сборки (номер запуска workflow)
+require "json"
+require "shellwords"
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Подписанная сборка App Store → TestFlight"
+  lane :beta do
+    %w[APPLE_TEAM_ID ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_PATH BUILD_NUMBER].each do |name|
+      UI.user_error!("Не задана переменная окружения #{name}") if ENV[name].to_s.strip.empty?
+    end
+
+    # Временная связка ключей на CI: сюда Xcode положит сертификат разработчика.
+    setup_ci if ENV["CI"]
+
+    key_path = File.expand_path(ENV["ASC_KEY_PATH"])
+    api_key = app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_filepath: key_path,
+      in_house: false
+    )
+
+    # Версия одна на Android и iOS — из mobile/package.json.
+    version = JSON.parse(File.read(File.expand_path("../../../package.json", __dir__)))["version"]
+    build_number = ENV["BUILD_NUMBER"]
+    team_id = ENV["APPLE_TEAM_ID"]
+
+    auth = [
+      "-allowProvisioningUpdates",
+      "-authenticationKeyPath #{key_path.shellescape}",
+      "-authenticationKeyID #{ENV['ASC_KEY_ID']}",
+      "-authenticationKeyIssuerID #{ENV['ASC_ISSUER_ID']}"
+    ].join(" ")
+
+    build_app(
+      workspace: "App.xcworkspace",
+      scheme: "App",
+      configuration: "Release",
+      clean: true,
+      output_directory: "build",
+      output_name: "WeSetup.ipa",
+      export_method: "app-store",
+      xcargs: "#{auth} DEVELOPMENT_TEAM=#{team_id} CODE_SIGN_STYLE=Automatic " \
+              "MARKETING_VERSION=#{version} CURRENT_PROJECT_VERSION=#{build_number}",
+      export_xcargs: auth,
+      export_options: {
+        signingStyle: "automatic",
+        teamID: team_id,
+        uploadSymbols: true
+      }
+    )
+
+    upload_to_testflight(
+      api_key: api_key,
+      ipa: "build/WeSetup.ipa",
+      skip_waiting_for_build_processing: true
+    )
+  end
+end

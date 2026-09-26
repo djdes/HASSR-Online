@@ -1,0 +1,95 @@
+# Проверка мобильного проекта без секретов: собирается ли Android (отладочный APK —
+# можно скачать из артефактов и поставить на телефон) и iOS (для симулятора, без
+# подписи). Запускается сам при изменениях в mobile/ и вручную.
+# macOS-минуты в приватном репозитории стоят в 10 раз дороже — задание iOS
+# держим коротким: без архива и подписи, одна сборка под симулятор.
+name: Проверка приложений
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "mobile/**"
+      - ".github/workflows/mobile-*.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: mobile-check-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    name: Android — отладочный APK
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+          cache-dependency-path: |
+            mobile/android/*.gradle*
+            mobile/android/**/gradle-wrapper.properties
+
+      - run: npm ci
+      - run: npx cap sync android
+
+      - name: Сборка APK
+        working-directory: mobile/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wesetup-debug-apk-${{ github.run_number }}
+          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
+
+  ios:
+    name: iOS — сборка для симулятора
+    runs-on: macos-26
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - run: npm ci
+      - run: npx cap sync ios
+
+      - name: Сборка без подписи
+        working-directory: mobile/ios/App
+        run: |
+          xcodebuild build -quiet \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination "generic/platform=iOS Simulator" \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            COMPILER_INDEX_STORE_ENABLE=NO

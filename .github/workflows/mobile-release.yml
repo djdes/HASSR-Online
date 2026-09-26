@@ -1,0 +1,176 @@
+# Выпуск приложений WeSetup: Android (AAB → Google Play, внутреннее тестирование)
+# и iOS (→ TestFlight). Запуск вручную: Actions → «Выпуск приложений» → Run workflow.
+# Номер сборки = номер запуска этого workflow, версия — из mobile/package.json.
+# Секреты и где их взять — docs/mobile/secrets.md.
+name: Выпуск приложений
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: "Что собрать"
+        type: choice
+        options: [both, android, ios]
+        default: both
+      track:
+        description: "Куда отправить Android"
+        type: choice
+        options: [internal, none]
+        default: internal
+      play_status:
+        description: "Статус выпуска в Google Play (draft — пока приложение ни разу не выпускалось)"
+        type: choice
+        options: [completed, draft]
+        default: completed
+
+concurrency:
+  group: mobile-release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    name: Android — подписанный AAB
+    if: inputs.platform != 'ios'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+          cache-dependency-path: |
+            mobile/android/*.gradle*
+            mobile/android/**/gradle-wrapper.properties
+
+      - run: npm ci
+
+      - name: Секреты сборки
+        env:
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "::error::Нет секрета ANDROID_KEYSTORE_BASE64 — без ключа загрузки Google Play не примет сборку (docs/mobile/secrets.md)"
+            exit 1
+          fi
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/upload.jks
+          if [ -n "$GOOGLE_SERVICES_JSON_BASE64" ]; then
+            echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 -d > android/app/google-services.json
+          else
+            echo "::warning::Нет секрета GOOGLE_SERVICES_JSON_BASE64 — сборка будет без push-уведомлений"
+          fi
+
+      - run: npx cap sync android
+
+      - name: Подписанный AAB
+        working-directory: mobile/android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          ./gradlew bundleRelease -PversionCode=${{ github.run_number }} --no-daemon
+          # Сборка без подписи Google Play не примет — проверяем до загрузки.
+          jarsigner -verify app/build/outputs/bundle/release/app-release.aab | grep -q "jar verified"
+
+      - name: Убрать ключ с раннера
+        if: always()
+        run: rm -f android/app/upload.jks android/app/google-services.json
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wesetup-android-${{ github.run_number }}
+          path: mobile/android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+
+      - name: Внутреннее тестирование Google Play
+        if: inputs.track == 'internal'
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: ru.wesetup.app
+          releaseFiles: mobile/android/app/build/outputs/bundle/release/app-release.aab
+          track: internal
+          status: ${{ inputs.play_status }}
+
+  ios:
+    name: iOS — TestFlight
+    if: inputs.platform != 'android'
+    # macOS 26 + Xcode 26: App Store принимает только сборки на SDK iOS 26.
+    runs-on: macos-26
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - run: npm ci
+
+      - name: Секреты сборки
+        env:
+          GOOGLE_SERVICE_INFO_PLIST_BASE64: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_BASE64 }}
+          ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
+        run: |
+          if [ -z "$ASC_KEY_P8_BASE64" ]; then
+            echo "::error::Нет секрета ASC_KEY_P8_BASE64 — без ключа App Store Connect API сборку не подписать (docs/mobile/secrets.md)"
+            exit 1
+          fi
+          echo "$ASC_KEY_P8_BASE64" | base64 --decode > "$RUNNER_TEMP/asc_key.p8"
+          if [ -n "$GOOGLE_SERVICE_INFO_PLIST_BASE64" ]; then
+            echo "$GOOGLE_SERVICE_INFO_PLIST_BASE64" | base64 --decode > ios/App/App/GoogleService-Info.plist
+          else
+            echo "::warning::Нет секрета GOOGLE_SERVICE_INFO_PLIST_BASE64 — сборка будет без push-уведомлений"
+          fi
+
+      # Ставит CocoaPods-зависимости (pod install) — CocoaPods есть на раннере.
+      - run: npx cap sync ios
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+          working-directory: mobile/ios/App
+
+      - name: Сборка и TestFlight
+        working-directory: mobile/ios/App
+        env:
+          BUILD_NUMBER: ${{ github.run_number }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_PATH: ${{ runner.temp }}/asc_key.p8
+        run: bundle exec fastlane beta
+
+      - uses: actions/upload-artifact@v7
+        if: success()
+        with:
+          name: wesetup-ios-${{ github.run_number }}
+          path: mobile/ios/App/build/WeSetup.ipa
+          if-no-files-found: warn
+
+      - name: Убрать ключи с раннера
+        if: always()
+        run: rm -f "$RUNNER_TEMP/asc_key.p8" ios/App/App/GoogleService-Info.plist

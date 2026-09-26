@@ -1,0 +1,2 @@
+# Приложение, для которого fastlane ищет запись в App Store Connect.
+app_identifier("ru.wesetup.app")

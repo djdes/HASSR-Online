@@ -1,0 +1,4 @@
+source "https://rubygems.org"
+
+# Сборка и отправка iOS в TestFlight (fastlane/Fastfile).
+gem "fastlane", "~> 2.239"

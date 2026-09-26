@@ -1,0 +1,30 @@
+# Зависимости и сборки
+node_modules/
+android/.gradle/
+android/build/
+android/app/build/
+android/capacitor-cordova-android-plugins/build/
+android/local.properties
+android/.idea/
+*.apk
+*.aab
+ios/App/Pods/
+ios/App/build/
+ios/DerivedData/
+ios/App/App.xcworkspace/xcuserdata/
+ios/App/App.xcodeproj/xcuserdata/
+ios/App/fastlane/report.xml
+ios/App/fastlane/README.md
+ios/App/fastlane/test_output/
+ios/App/vendor/
+ios/App/.bundle/
+
+# Файлы Firebase и ключи подписи — только в GitHub Secrets, в git никогда
+android/app/google-services.json
+ios/App/App/GoogleService-Info.plist
+android/app/upload.jks
+*.jks
+*.keystore
+*.p8
+*.p12
+*.mobileprovision

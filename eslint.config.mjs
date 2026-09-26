@@ -29,6 +29,9 @@ const eslintConfig = defineConfig([
     "voltagent-subagents/**",
     "prompt-guide/**",
     "docs/**",
+    // Мобильный проект Capacitor (свои node_modules, сгенерированный
+    // нативный код и сборки Android/iOS) — не код сайта.
+    "mobile/**",
     // Отчёты и dev-only артефакты.
     "eslint-report.json",
     "*.log",

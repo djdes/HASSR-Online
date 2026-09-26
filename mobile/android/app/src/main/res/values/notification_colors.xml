@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Фирменный индиго WeSetup: цвет значка push-уведомления. -->
+    <color name="notification_accent">#5566F6</color>
+</resources>
