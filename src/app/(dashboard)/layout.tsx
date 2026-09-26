@@ -389,6 +389,7 @@ export default async function DashboardLayout({
             organizationSphere={brandedOrg?.type ?? "restaurant"}
             partnerCabinet={partnerCabinet}
             partnerHint={partnerHint}
+            canEditBranding={hasCapability(session.user, "admin.full")}
           />
           {/* Быстрый старт только что созданной точки. Живёт в layout'е,
               а не на странице дашборда: баннер сам решает показываться

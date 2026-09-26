@@ -36,6 +36,10 @@ import { getWebHomeHref, hasFullWorkspaceAccess } from "@/lib/role-access";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ProfileSheet } from "@/components/layout/profile-sheet";
+import {
+  BRANDING_SETTINGS_HREF,
+  ThemeTilesMenu,
+} from "@/components/theme/theme-tiles";
 import { useIsNarrowViewport } from "@/components/ui/spotlight-tour";
 import {
   DropdownMenu,
@@ -162,6 +166,12 @@ type HeaderProps = {
    * платформенная организация). См. `getPartnerHintRates`.
    */
   partnerHint?: PartnerHintRates | null;
+  /**
+   * Может открыть настройки организации — там логотип и цвет
+   * (`admin.full`, как у самой страницы). Тогда под карточками темы —
+   * ссылка «Логотип и цвета».
+   */
+  canEditBranding?: boolean;
 };
 
 export function Header({
@@ -185,6 +195,7 @@ export function Header({
   billingTestMode,
   partnerCabinet = null,
   partnerHint = null,
+  canEditBranding = false,
 }: HeaderProps) {
   const pathname = usePathname();
   const headerUndo = useHeaderUndo();
@@ -834,15 +845,6 @@ export function Header({
 
                 {fullAccess ? (
                   <DropdownMenuItem asChild>
-                    <Link href="/settings/appearance">
-                      <Palette className="mr-2 size-4" />
-                      Внешний вид
-                    </Link>
-                  </DropdownMenuItem>
-                ) : null}
-
-                {fullAccess ? (
-                  <DropdownMenuItem asChild>
                     <Link href="/settings">
                       <Settings className="mr-2 size-4" />
                       Настройки
@@ -855,6 +857,31 @@ export function Header({
                     <Link href="/root">
                       <ShieldCheck className="mr-2 size-4" />
                       Панель платформы
+                    </Link>
+                  </DropdownMenuItem>
+                ) : null}
+              </div>
+
+              <DropdownMenuSeparator className="my-0" />
+
+              {/* Тема — три карточки, как блок Appearance в приложении
+                  Claude, всем (личная настройка). Меню при выборе не
+                  закрывается: видно, как перекрасился кабинет. */}
+              <div className="px-2 pb-2 pt-1.5" data-testid="profile-theme">
+                <div className="px-1 pb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
+                  Тема
+                </div>
+                <ThemeTilesMenu />
+                {canEditBranding ? (
+                  <DropdownMenuItem
+                    asChild
+                    className="mt-1 w-fit gap-1.5 px-2 py-1.5 text-[13px]"
+                  >
+                    <Link href={BRANDING_SETTINGS_HREF} data-testid="theme-branding-link">
+                      <Palette className="size-3.5 text-[var(--app-indigo-deep)]" aria-hidden />
+                      <span className="font-medium text-[var(--app-indigo-deep)]">
+                        Логотип и цвета
+                      </span>
                     </Link>
                   </DropdownMenuItem>
                 ) : null}
@@ -892,6 +919,7 @@ export function Header({
         canManagePlan={canManagePlan}
         onFreePlan={onFreePlan}
         fullAccess={fullAccess}
+        canEditBranding={canEditBranding}
         isRoot={isRoot}
         onLogout={handleLogout}
       />

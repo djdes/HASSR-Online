@@ -22,6 +22,10 @@ import {
   OrganizationSwitcher,
   type CreateDialogKind,
 } from "@/components/layout/organization-switcher";
+import {
+  BRANDING_SETTINGS_HREF,
+  ThemeTiles,
+} from "@/components/theme/theme-tiles";
 import type { AccessibleOrganization } from "@/lib/organization-access";
 
 /**
@@ -29,8 +33,9 @@ import type { AccessibleOrganization } from "@/lib/organization-access";
  *
  * Раньше это было то же выпадающее меню, что и на компьютере: узкое
  * «облако» у правого края, мелкие пункты и подменю «Тема» вторым
- * уровнем, который на 360px уезжал за экран. Тема переехала в
- * «Настройки → Внешний вид», остальное — крупными строками.
+ * уровнем, который на 360px уезжал за экран. Теперь пункты — крупными
+ * строками, а тема — тремя карточками прямо в листе (как блок
+ * Appearance в приложении Claude): нажал — тема сменилась сразу.
  *
  * Пункты те же, что в меню на компьютере, поэтому человек, привыкший к
  * одному, найдёт то же самое и в другом.
@@ -50,6 +55,7 @@ export function ProfileSheet({
   canManagePlan,
   onFreePlan,
   fullAccess,
+  canEditBranding,
   isRoot,
   onLogout,
 }: {
@@ -67,6 +73,8 @@ export function ProfileSheet({
   canManagePlan: boolean;
   onFreePlan: boolean;
   fullAccess: boolean;
+  /** Может открыть настройки организации (логотип и цвет) — `admin.full`. */
+  canEditBranding: boolean;
   isRoot: boolean;
   onLogout: () => void;
 }) {
@@ -145,22 +153,32 @@ export function ProfileSheet({
       ) : null}
 
       {fullAccess ? (
-        <>
-          <Link href="/settings/appearance" onClick={onClose} className={SHEET_ROW_CLASS}>
-            <Palette className="size-5 shrink-0 text-[#5566f6]" />
-            <span className="min-w-0 flex-1">Внешний вид</span>
-          </Link>
-          <Link href="/settings" onClick={onClose} className={SHEET_ROW_CLASS}>
-            <Settings className="size-5 shrink-0 text-[#6f7282]" />
-            <span className="min-w-0 flex-1">Настройки</span>
-          </Link>
-        </>
+        <Link href="/settings" onClick={onClose} className={SHEET_ROW_CLASS}>
+          <Settings className="size-5 shrink-0 text-[#6f7282]" />
+          <span className="min-w-0 flex-1">Настройки</span>
+        </Link>
       ) : null}
 
       {isRoot ? (
         <Link href="/root" onClick={onClose} className={SHEET_ROW_CLASS}>
           <ShieldCheck className="size-5 shrink-0 text-[#5566f6]" />
           <span className="min-w-0 flex-1">Панель платформы</span>
+        </Link>
+      ) : null}
+
+      {/* Тема — всем: это личная настройка, а не настройка организации.
+          Лист при выборе не закрывается — видно, как перекрасился экран. */}
+      <div className={SHEET_GROUP_LABEL_CLASS}>Тема</div>
+      <ThemeTiles className="px-2 pb-1 pt-1" />
+      {canEditBranding ? (
+        <Link
+          href={BRANDING_SETTINGS_HREF}
+          onClick={onClose}
+          data-testid="theme-branding-link"
+          className="mx-1 mt-1 inline-flex items-center gap-1.5 rounded-xl px-2 py-2 text-[13px] font-medium text-[var(--app-indigo-deep)] transition-colors hover:bg-[var(--app-tint-indigo)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+        >
+          <Palette className="size-4 shrink-0" aria-hidden />
+          Логотип и цвета
         </Link>
       ) : null}
     </BottomSheet>

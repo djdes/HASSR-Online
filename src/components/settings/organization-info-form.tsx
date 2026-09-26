@@ -521,7 +521,9 @@ export function OrganizationInfoForm({
       </FormSection>
 
       {/* === БРЕНДИНГ === */}
+      {/* id — сюда ведёт «Логотип и цвета» из меню профиля. */}
       <FormSection
+        id="branding"
         title="Брендинг"
         subtitle="White-label: ваш цвет и логотип на дашборде, печатных журналах, портале инспектора"
         icon={<Palette className="size-4" />}
@@ -869,18 +871,24 @@ function LegalProfileView({
 }
 
 function FormSection({
+  id,
   title,
   subtitle,
   icon,
   children,
 }: {
+  /** Якорь для ссылок на раздел; отступ — чтобы заголовок не ушёл под шапку. */
+  id?: string;
   title: string;
   subtitle?: string;
   icon: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-3xl border border-[#ececf4] bg-white p-5 md:p-7">
+    <section
+      id={id}
+      className="scroll-mt-24 rounded-3xl border border-[#ececf4] bg-white p-5 md:p-7"
+    >
       <div className="mb-5 flex items-start gap-3">
         <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#eef1ff] text-[#5566f6]">
           {icon}
