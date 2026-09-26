@@ -1,0 +1,9 @@
+PASS API-join POST /api/staff/join-token — QR-регистрация: фирменный PNG, читается, ведёт на joinUrl
+PASS API-pair POST /api/staff/[id]/pair-token — сопряжение: фирменный PNG, ведёт на pairUrl
+PASS API-kiosk POST /api/kiosk/enroll — планшет: фирменный PNG, ведёт на claimUrl
+PASS API-invite-tg-staff POST /api/staff/[id]/invite-tg — приглашение в Telegram: фирменный PNG, ведёт на inviteUrl
+PASS API-invite-tg-user POST /api/users/invite/tg — приглашение нового сотрудника в Telegram: фирменный PNG
+PASS API-certificate GET /api/certificate — в PDF фирменный QR, читается с листа при 300 dpi и ведёт на портал проверяющих
+PASS LANDING лендинг: наклейки со знаком сайта (золотая — без плашки, в ролике — с «Отсканировать»), без ошибок на странице
+
+7/7 PASS

@@ -1,0 +1,43 @@
+{
+  "task_id": "qr-brand-2026-09",
+  "verified_at": "2026-09-26",
+  "implementation_commit": "7175db73",
+  "overall": "PASS",
+  "owner_clarification": "ч/б печать: модули и «глаза» чёрные во всех печатных вариантах, плашка — градиент серый→чёрный с белым «Отсканировать» / «wesetup.ru», в проверку добавлены оттенки серого, порог и ч/б растр (добавлено в spec.md как «Уточнение владельца»)",
+  "acceptance": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "evidence": ["evidence.md#что-сделано (таблица мест)", "raw/e2e-brand-qr.log", "raw/e2e-checks.json", "raw/e2e-api-qr.log", "raw/e2e-api-checks.json", "src/lib/brand-qr.test.ts"],
+      "summary": "12 мест выдачи QR через src/lib/brand-qr.ts (поиск QRCode. по src — только помощник); вид: знак сайта на белой подложке ≤ 20 %, коррекция H, чёрные квадратные модули и «глаза», плашка «Отсканировать / wesetup.ru»; угол журнала и подвал Word — компактный вариант (AC3). E2E на dev-сервере 15/15 и 7/7 (все API с PNG-кодами, сертификат, лендинг)."
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "evidence": ["raw/decode-table.md", "raw/decode-results.json", "raw/check-brand-qr.log", "raw/e2e-decode.json", "raw/ablation-rounded-eyes.txt", "shots/gallery-variants.png"],
+      "summary": "20 мест на реальных размерах; печать 600 dpi → снимки 150/200/300 dpi; clean, ч/б (серый, порог, растр лазера), «телефон» (поворот + размытие), ч/б + телефон. Приёмка (300 dpi — все снимки, 200 dpi — растр печати, экран ×2/×3): jsQR 165/165, zxing-cpp 165/165, OpenCV 150/165; печать Chrome (PDF страницы кодов): jsQR 113/113, zxing-cpp 113/113. Стресс (150 dpi и др.) — в таблице: не читаются только снимки ≤ 3,1 px на модуль.",
+      "acceptance_set": {"snapshots": 165, "jsqr": 165, "zxing_cpp": 165, "opencv": 150, "two_of_three": 165},
+      "chrome_print_e2e": {"snapshots": 113, "jsqr": 113, "zxing_cpp": 113, "opencv": 105},
+      "stress_set": {"snapshots": 179, "jsqr": 155, "zxing_cpp": 168, "opencv": 131, "two_of_three": 154}
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "evidence": ["raw/check-brand-qr.log (строки «Опыт» и «Угловые QR 13 мм как есть»)", "raw/check-qr-overlap-samples.log", "raw/check-qr-overlap-docs.log", "raw/check-qr-overlap-summary.json"],
+      "summary": "Угловой QR журнала 13 мм — без логотипа (компактный: M, чёрный): с логотипом нужна H → модуль 0,265/0,228 мм < 0,3 мм, чтение 13-мм кодов с логотипом jsQR 18/42, zxing 28/42 против 32/42 и 36/42 у компактных (при 300 dpi — 100 %). Подвал Word 18 мм — так же. check-qr-overlap.ts без изменений: образцы 45/45 (58 стр.), настоящие документы 45/45 (582 стр.) — 0 чернил в зоне, 0 расхождений модулей, jsQR читает каждую страницу."
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "evidence": ["shots/posters-screen-1440.png", "shots/posters-screen-390.png", "shots/print-a4-poster.png", "shots/print-stickers-objects.png", "shots/print-stickers-journal.png", "shots/print-sticker-longest-300dpi.png", "shots/personal-login-card.png", "shots/certificate-qr.png", "shots/landing-gold-sticker.png", "shots/gallery-variants.png", "npm run typecheck: ok", "npm test: 2510/2510 pass"],
+      "summary": "Скриншоты плаката, наклеек и QR входа; typecheck и npm test (2510/2510) зелёные."
+    }
+  ],
+  "decisions": {
+    "eyes": "квадратные: скруглённые OpenCV не находит (0 % против 100 %)",
+    "screen_qr": "тот же чёрно-белый вид, что в печати (без индиго-«глаз»)",
+    "sticker_code_mm": {"min": 29, "max": 36, "measured_objects": 36, "measured_longest_url": 30.29},
+    "svg_gradient": "полосами без id — печатный лист не теряет плашку",
+    "page_weight_50_posters": {"before_kb": 250, "after_kb": 972, "gzip_before_kb": 39, "gzip_after_kb": 95, "brotli_before_kb": 28, "brotli_after_kb": 58}
+  }
+}

@@ -1,0 +1,36 @@
+OK   training_plan                      rows=0 pages 26→28 ink=0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0 moved=0 up=0 mism=0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0 dec=yyyyyyyyyyyyyyyyyyyyyyyyyyyy align=0.38/5.52/5.52/5.52/5.52/5.52/5.52/5.52/5.52/5.52/5.52/5.52/5.52/5.52/5.52/5.52/5.52/5.52/5.52/5.52/5.52/5.52/5.52/5.52/5.52/5.52/5.52/5.52
+OK   staff_training                     rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=y align=0.05
+OK   disinfectant_usage                 rows=0 pages 12→13 ink=0/0/0/0/0/0/0/0/0/0/0/0/0 moved=0 up=0 mism=0/0/0/0/0/0/0/0/0/0/0/0/0 dec=yyyyyyyyyyyyy align=0.21/0.21/0.21/0.21/0.21/0.21/0.21/0.21/0.21/0.21/0.21/0.21/0.21
+OK   sanitary_day_control               rows=0 pages 9→9 ink=0/0/0/0/0/0/0/0/0 moved=0 up=0 mism=0/0/0/0/0/0/0/0/0 dec=yyyyyyyyy align=0.11/0.21/0.21/0.21/0.21/0.21/0.21/0.21/0.21
+OK   equipment_maintenance              rows=0 pages 5→5 ink=0/0/0/0/0 moved=0 up=0 mism=0/0/0/0/0 dec=yyyyy align=0.05/0.15/0.15/0.15/0.15
+OK   breakdown_history                  rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=y align=0.08
+OK   equipment_calibration              rows=0 pages 4→5 ink=0/0/0/0/0 moved=0 up=0 mism=0/0/0/0/0 dec=yyyyy align=0.38/0.13/0.13/0.13/0.13
+OK   incoming_raw_materials_control     rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=y align=0.05
+OK   ppe_issuance                       rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=y align=0.05
+OK   accident_journal                   rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=y align=0.05
+OK   complaint_register                 rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=y align=0.05
+OK   product_writeoff                   rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=y align=0.05
+OK   audit_plan                         rows=0 pages 334→394 ink=0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0
+OK   audit_protocol                     rows=0 pages 3→3 ink=0/0/0 moved=0 up=0 mism=0/0/0 dec=yyy align=0.05/0.15/0.15
+OK   audit_report                       rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=y align=0.05
+OK   traceability_test                  rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=y align=0.05
+OK   metal_impurity                     rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=y align=0.05
+OK   glass_items_list                   rows=0 pages 5→5 ink=0/0/0/0/0 moved=0 up=0 mism=0/0/0/0/0 dec=yyyyy align=0.04/0.22/0.22/0.22/0.22
+OK   glass_control                      rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=y align=0.05
+OK   pest_control                       rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=y align=0.08
+OK   daily_samples                      rows=0 pages 3→3 ink=0/0/0 moved=0 up=0 mism=0/0/0 dec=yyy align=0.05/0.15/0.15
+OK   vitaminization                     rows=0 pages 3→3 ink=0/0/0 moved=0 up=0 mism=0/0/0 dec=yyy align=0.05/0.15/0.15
+OK   ration_control                     rows=0 pages 3→3 ink=0/0/0 moved=0 up=0 mism=0/0/0 dec=yyy align=0.05/0.15/0.15
+OK   transport_temperature              rows=0 pages 3→3 ink=0/0/0 moved=0 up=0 mism=0/0/0 dec=yyy align=0.05/0.15/0.15
+OK   tableware_breakage                 rows=0 pages 3→3 ink=0/0/0 moved=0 up=0 mism=0/0/0 dec=yyy align=0.05/0.15/0.15
+OK   pool_water_control                 rows=0 pages 3→3 ink=0/0/0 moved=0 up=0 mism=0/0/0 dec=yyy align=0.05/0.15/0.15
+OK   inventory_condition                rows=0 pages 3→3 ink=0/0/0 moved=0 up=0 mism=0/0/0 dec=yyy align=0.05/0.15/0.15
+OK   instrument_sterilization           rows=0 pages 3→3 ink=0/0/0 moved=0 up=0 mism=0/0/0 dec=yyy align=0.05/0.15/0.15
+OK   medical_waste_b                    rows=0 pages 3→3 ink=0/0/0 moved=0 up=0 mism=0/0/0 dec=yyy align=0.05/0.15/0.15
+OK   batch_release                      rows=0 pages 3→3 ink=0/0/0 moved=0 up=0 mism=0/0/0 dec=yyy align=0.05/0.15/0.15
+
+выравнивание: 525/525 страниц вровень (≤ 0.5 мм), макс. разница 0.38 мм; пустых страниц 0; таблица за краем листа (метрика не применима): climate_control стр. 5, climate_control стр. 6, climate_control стр. 7, climate_control стр. 8, climate_control стр. 9, climate_control стр. 10, climat
+
+45/45 OK
+
+[exited with code 0]

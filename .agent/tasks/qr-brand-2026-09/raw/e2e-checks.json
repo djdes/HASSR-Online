@@ -1,0 +1,194 @@
+[
+  {
+    "id": "SCR-1",
+    "ok": true,
+    "what": "экран QR-кодов журнала открылся, у основного QR есть адрес",
+    "details": [
+      "hygiene",
+      "hygiene@verify",
+      "hygiene:cmuitu7cd000b389m1s9a2ysf",
+      "hygiene@verify:cmuitu7cd000b389m1s9a2ysf"
+    ]
+  },
+  {
+    "id": "SCR-2",
+    "ok": true,
+    "what": "превью карточки — фирменный QR: знак сайта и плашка «Отсканировать / wesetup.ru», пропорции плитки",
+    "details": {
+      "text": [
+        "Отсканировать",
+        "wesetup.ru"
+      ],
+      "image": true,
+      "width": 98,
+      "height": 116.125
+    }
+  },
+  {
+    "id": "PR-1",
+    "ok": true,
+    "what": "плакат A4: код 105 мм по ширине, плитка с плашкой (≈ 124 мм)",
+    "details": {
+      "widthMm": 104.9982421875,
+      "heightMm": 124.42858072916665
+    }
+  },
+  {
+    "id": "PR-2",
+    "ok": true,
+    "what": "плакат A4 целиком на листе (последняя строка выше низа листа 250 мм)",
+    "details": {
+      "sheetBottom": 944.875,
+      "lastBottom": 777.84375
+    }
+  },
+  {
+    "id": "PR-3@150",
+    "ok": true,
+    "what": "печать Chrome (PDF) плаката A4, вся страница при 150 dpi — jsQR читает адрес"
+  },
+  {
+    "id": "PR-3@200",
+    "ok": true,
+    "what": "печать Chrome (PDF) плаката A4, вся страница при 200 dpi — jsQR читает адрес"
+  },
+  {
+    "id": "PR-3@300",
+    "ok": true,
+    "what": "печать Chrome (PDF) плаката A4, вся страница при 300 dpi — jsQR читает адрес"
+  },
+  {
+    "id": "ST-1",
+    "ok": true,
+    "what": "наклейки холодильников отмечены по умолчанию",
+    "details": 8
+  },
+  {
+    "id": "ST-2-objects",
+    "ok": true,
+    "what": "наклейки (objects): код 29–36 мм по ширине, пропорция плитки сохранена, текст не вылезает за наклейку",
+    "details": [
+      {
+        "url": "http://localhost:3049/equipment-fill/cmuitu7bp0004389mvxsq38wk?token=cmuitu7bp0004389mvxsq38wk.1790453981474.h1CPbJnQYfs-SWNsE3EhE3fduW_uiEDBBFEWudKZ9VQ",
+        "title": "Витрина 01",
+        "widthMm": 35.99986979166666,
+        "heightMm": 42.65992838541666,
+        "overflow": false
+      },
+      {
+        "url": "http://localhost:3049/equipment-fill/cmuitu7bs0005389mxj91p0u4?token=cmuitu7bs0005389mxj91p0u4.1790453981519.ZyC19ljbmNxWjhJbz0ToN03vTMHeAOsmt3AevZCIgMY",
+        "title": "Витрина 02",
+        "widthMm": 35.99986979166666,
+        "heightMm": 42.65992838541666,
+        "overflow": false
+      },
+      {
+        "url": "http://localhost:3049/equipment-fill/cmuitu7bu0006389mbvsk9yow?token=cmuitu7bu0006389mbvsk9yow.1790453981549.8ThvrsFdpfZmzzw-kaRVu8Fsj06y9hzG7FXDswMoGBY",
+        "title": "Витрина 03",
+        "widthMm": 35.99986979166666,
+        "heightMm": 42.65992838541666,
+        "overflow": false
+      },
+      {
+        "url": "http://localhost:3049/equipment-fill/cmuitu7bx0007389mcw9g0fdd?token=cmuitu7bx0007389mcw9g0fdd.1790453981585.aAylGpqxzom_7FqGgVvfGLHw0ZLm0Sz2W7GgGtd3ZGE",
+        "title": "Витрина 04",
+        "widthMm": 35.99986979166666,
+        "heightMm": 42.65992838541666,
+        "overflow": false
+      },
+      {
+        "url": "http://localhost:3049/equipment-fill/cmuitu7bz0008389mz1lubhhz?token=cmuitu7bz0008389mz1lubhhz.1790453981621.TyHJdmjaNPmy8igF8qDoYBSCqyvVd8zcwCQQdlYf3hY",
+        "title": "Витрина 05",
+        "widthMm": 35.99986979166666,
+        "heightMm": 42.65992838541666,
+        "overflow": false
+      },
+      {
+        "url": "http://localhost:3049/equipment-fill/cmuitu7c20009389mlilgby7u?token=cmuitu7c20009389mlilgby7u.1790453981656.RoK28LSfF6Ez05SVJ4C7uL5pqv4Iq2ApRZZni2z3WmE",
+        "title": "Витрина 06",
+        "widthMm": 35.99986979166666,
+        "heightMm": 42.65992838541666,
+        "overflow": false
+      },
+      {
+        "url": "http://localhost:3049/equipment-fill/cmuitu7c4000a389m2u7ii0tb?token=cmuitu7c4000a389m2u7ii0tb.1790453981691.TZ6xJsnC3SdR9wL7Muv8fPGO_hnfdv5Aq8wR3aVRh4o",
+        "title": "Витрина 07",
+        "widthMm": 35.99986979166666,
+        "heightMm": 42.65992838541666,
+        "overflow": false
+      },
+      {
+        "url": "http://localhost:3049/equipment-fill/cmuitu7bm0003389mo59smmki?token=cmuitu7bm0003389mo59smmki.1790453981719.IArlCjceOuAz-mWup6lHiYWPS4MJb0WpmtWhka-H12A",
+        "title": "Холодильник №1",
+        "widthMm": 35.99986979166666,
+        "heightMm": 42.65992838541666,
+        "overflow": false
+      }
+    ]
+  },
+  {
+    "id": "ST-2-journal",
+    "ok": true,
+    "what": "наклейки (journal): код 29–36 мм по ширине, пропорция плитки сохранена, текст не вылезает за наклейку",
+    "details": [
+      {
+        "url": "http://localhost:3049/journal-fill/e2e-org-qrbrand/hygiene?token=journal%3Ae2e-org-qrbrand%3Ahygiene%3Acmuitu7cd000b389m1s9a2ysf%3A2026-09-30.1790454006911.oXbg0DrC0yVwjpoUNIrNuNofD7rmnPDxq7Ia4L0S_CE",
+        "title": "Гигиенический журнал (сотрудники)",
+        "widthMm": 30.294791666666665,
+        "heightMm": 35.90065104166666,
+        "overflow": false
+      },
+      {
+        "url": "http://localhost:3049/journal-fill/e2e-org-qrbrand/hygiene?token=journal%3Ae2e-org-qrbrand%3Ahygiene%3Acmuitu7cd000b389m1s9a2ysf%3A2026-09-30.1790454006972.DtfMXJqlJvUkDD2ISB1WbaKjje-X16pFIqVVOVzZYx4&view=all",
+        "title": "Гигиенический журнал (сотрудники) — допуск",
+        "widthMm": 30.294791666666665,
+        "heightMm": 35.90065104166666,
+        "overflow": false
+      }
+    ]
+  },
+  {
+    "id": "ST-3",
+    "ok": true,
+    "what": "самый длинный адрес (208 симв.) на наклейке: ширина кода 30.29 мм",
+    "details": {
+      "name": "journal",
+      "id": "?",
+      "widthMm": 30.29,
+      "heightMm": 35.9,
+      "url": "http://localhost:3049/journal-fill/e2e-org-qrbrand/hygiene?token=journal%3Ae2e-org-qrbrand%3Ahygiene%3Acmuitu7cd000b389m1s9a2ysf%3A2026-09-30.1790454006972.DtfMXJqlJvUkDD2ISB1WbaKjje-X16pFIqVVOVzZYx4&view=all",
+      "title": "Гигиенический журнал (сотрудники) — допуск"
+    }
+  },
+  {
+    "id": "LG-1",
+    "ok": true,
+    "what": "карточка «Личный вход»: фирменный QR 180 px по ширине, плашка «Отсканировать»",
+    "details": {
+      "width": 180,
+      "height": 213.296875,
+      "text": [
+        "Отсканировать",
+        "wesetup.ru"
+      ]
+    }
+  },
+  {
+    "id": "LG-2@x1",
+    "ok": true,
+    "what": "QR входа с экрана (плотность ×1) — jsQR читает выданную ссылку",
+    "details": "http://localhost:3000/q/8_q4cgRL9XCuj0gjlvXHd8LbC00f8Yke"
+  },
+  {
+    "id": "LG-2@x2",
+    "ok": true,
+    "what": "QR входа с экрана (плотность ×2) — jsQR читает выданную ссылку",
+    "details": "http://localhost:3000/q/8_q4cgRL9XCuj0gjlvXHd8LbC00f8Yke"
+  },
+  {
+    "id": "DEC-1",
+    "ok": true,
+    "what": "печать Chrome (PDF) и экран: приёмочный набор читают jsQR и zxing-cpp — 100 %",
+    "details": []
+  }
+]

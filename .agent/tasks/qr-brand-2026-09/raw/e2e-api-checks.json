@@ -1,0 +1,79 @@
+[
+  {
+    "id": "API-join",
+    "ok": true,
+    "what": "POST /api/staff/join-token — QR-регистрация: фирменный PNG, читается, ведёт на joinUrl",
+    "details": {
+      "url": "http://localhost:3000/join/CAS6OiJNIRLFkiTRxF0bYquVzGRfikHvquGNyDfSNgo",
+      "decoded": "http://localhost:3000/join/CAS6OiJNIRLFkiTRxF0bYquVzGRfikHvquGNyDfSNgo",
+      "size": "689×816"
+    }
+  },
+  {
+    "id": "API-pair",
+    "ok": true,
+    "what": "POST /api/staff/[id]/pair-token — сопряжение: фирменный PNG, ведёт на pairUrl",
+    "details": {
+      "url": "http://localhost:3000/pair/CBornLfLpab7YZUb_c8bPmi2W-xoV8NlpLO12KvD_Co",
+      "decoded": "http://localhost:3000/pair/CBornLfLpab7YZUb_c8bPmi2W-xoV8NlpLO12KvD_Co",
+      "size": "583×691"
+    }
+  },
+  {
+    "id": "API-kiosk",
+    "ok": true,
+    "what": "POST /api/kiosk/enroll — планшет: фирменный PNG, ведёт на claimUrl",
+    "details": {
+      "url": "http://localhost:3000/api/kiosk/claim/VKClS9DtPlZ2jmzCdMbmNh5FcWHjigWPAGKIzQpTIzY",
+      "decoded": "http://localhost:3000/api/kiosk/claim/VKClS9DtPlZ2jmzCdMbmNh5FcWHjigWPAGKIzQpTIzY",
+      "size": "636×754"
+    }
+  },
+  {
+    "id": "API-invite-tg-staff",
+    "ok": true,
+    "what": "POST /api/staff/[id]/invite-tg — приглашение в Telegram: фирменный PNG, ведёт на inviteUrl",
+    "details": {
+      "url": "https://t.me/wesetupbot?start=inv_-6ACXpZy5whVSRlCMQCpiiHEhpbGHX3k",
+      "decoded": "https://t.me/wesetupbot?start=inv_-6ACXpZy5whVSRlCMQCpiiHEhpbGHX3k",
+      "size": "477×565"
+    }
+  },
+  {
+    "id": "API-invite-tg-user",
+    "ok": true,
+    "what": "POST /api/users/invite/tg — приглашение нового сотрудника в Telegram: фирменный PNG",
+    "details": {
+      "url": "https://t.me/wesetupbot?start=inv_tCu3XYbYA316YXCldX9T52ANJ-07JrP-",
+      "decoded": "https://t.me/wesetupbot?start=inv_tCu3XYbYA316YXCldX9T52ANJ-07JrP-",
+      "size": "530×628"
+    }
+  },
+  {
+    "id": "API-certificate",
+    "ok": true,
+    "what": "GET /api/certificate — в PDF фирменный QR, читается с листа при 300 dpi и ведёт на портал проверяющих",
+    "details": {
+      "status": 200,
+      "decoded": "http://localhost:3000/inspector/wWrFIoWNKRLJSZnIRbQ9zv9QY3Ju1O_9LXb7vD66asc"
+    }
+  },
+  {
+    "id": "LANDING",
+    "ok": true,
+    "what": "лендинг: наклейки со знаком сайта (золотая — без плашки, в ролике — с «Отсканировать»), без ошибок на странице",
+    "details": {
+      "stickers": [
+        {
+          "image": true,
+          "text": "Отсканировать|wesetup.ru"
+        },
+        {
+          "image": true,
+          "text": ""
+        }
+      ],
+      "errors": []
+    }
+  }
+]

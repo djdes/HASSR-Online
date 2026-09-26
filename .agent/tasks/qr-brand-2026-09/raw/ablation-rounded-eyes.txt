@@ -1,0 +1,20 @@
+Опыт: что мешает OpenCV читать фирменный QR (плакат A4 журнала, PNG помощника 1100 px, масштабы 1 / 0.5 / 0.25).
+Скруглённые «глаза» (радиус 1,6 модуля) — OpenCV (QRCodeDetector и QRCodeDetectorAruco) не читает НИ ОДНОГО варианта;
+логотип и плашка на OpenCV не влияют. zxing-cpp читает всё. Решение: «глаза» квадратные (спека: «надёжность важнее декора»).
+
+full                         x1.0: det=- aruco=- zx=Y | x0.5: det=- aruco=- zx=Y | x0.25: det=- aruco=- zx=Y
+square eyes                  x1.0: det=Y aruco=Y zx=Y | x0.5: det=Y aruco=Y zx=Y | x0.25: det=Y aruco=Y zx=Y
+no logo                      x1.0: det=- aruco=- zx=Y | x0.5: det=- aruco=- zx=Y | x0.25: det=- aruco=- zx=Y
+no plate (white)             x1.0: det=- aruco=- zx=Y | x0.5: det=- aruco=- zx=Y | x0.25: det=- aruco=- zx=Y
+plate cropped                x1.0: det=- aruco=- zx=Y | x0.5: det=- aruco=- zx=Y | x0.25: det=- aruco=- zx=Y
+square+nologo                x1.0: det=Y aruco=Y zx=Y | x0.5: det=Y aruco=Y zx=Y | x0.25: det=Y aruco=Y zx=Y
+square+noplate               x1.0: det=Y aruco=Y zx=Y | x0.5: det=Y aruco=Y zx=Y | x0.25: det=Y aruco=Y zx=Y
+nologo+noplate               x1.0: det=- aruco=- zx=Y | x0.5: det=- aruco=- zx=Y | x0.25: det=- aruco=- zx=Y
+square+nologo+noplate        x1.0: det=Y aruco=Y zx=Y | x0.5: det=Y aruco=Y zx=Y | x0.25: det=Y aruco=Y zx=Y
+
+Первый прогон всей матрицы со скруглёнными «глазами»: OpenCV 102/285 снимков; со квадратными — 234/285 (тот же набор).
+
+Опыт: jsQR и «рамка» снимка (плакат A4, самый длинный адрес, 150 dpi, чистый снимок — jsQR null):
+тот же снимок ×0.98 → читается; ×1.03 → читается; +60 px белого поля → читается; без плашки / без логотипа → null.
+Вывод: промах jsQR — чувствительность к масштабу и сетке блоков 8×8 его бинаризатора, а не вид кода;
+OpenCV и zxing-cpp этот снимок читают. Так же на наклейке 30 мм при 300 dpi (ч/б + «жёсткий телефон»): ×1.03 → читается.
