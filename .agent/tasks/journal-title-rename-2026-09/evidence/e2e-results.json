@@ -1,0 +1,364 @@
+{
+  "finishedAt": "2026-09-26T17:08:10.665Z",
+  "base": "http://localhost:3047",
+  "total": 58,
+  "passed": 58,
+  "failed": [],
+  "checks": [
+    {
+      "id": "pencil-visible:1440",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "карандаш у заголовка виден руководителю"
+    },
+    {
+      "id": "pencil-in-h1:1440",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "карандаш — в строке заголовка (внутри H1, сразу за названием)"
+    },
+    {
+      "id": "switch-on:1440",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "переключатель «Вести журнал» включён, подпись: Включён"
+    },
+    {
+      "id": "compact-in-title-line:1440",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "h1 {\"x\":32,\"y\":291,\"w\":920,\"h\":74,\"bottom\":365}, «Включён» {\"x\":525,\"y\":339,\"w\":97,\"h\":20,\"bottom\":359}, строка 37px"
+    },
+    {
+      "id": "compact-size:1440",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "высота «Включён» 20px (было 36px), старой пилюли «· отключить» нет: true"
+    },
+    {
+      "id": "old-pill-gone:1440",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "текста «· отключить» на странице нет"
+    },
+    {
+      "id": "shot:after-manager-1440.png",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "after-manager-1440.png — 103 КБ"
+    },
+    {
+      "id": "dialog-title",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "окно «Своё название журнала» — общий диалог проекта (ConfirmDialog)"
+    },
+    {
+      "id": "dialog-field-prefilled",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "поле заполнено текущим: «Журнал контроля температурного режима холодильного и морозильного оборудования»"
+    },
+    {
+      "id": "dialog-warning-text",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "предупреждение: «Это название увидят ваши сотрудники в кабинете, на QR и в Telegram. В печати и у проверяющего останется официальное: «Журнал контроля температурного режима холодильного и морозильного оборудования» — так требуют правила. Вернуть стандартное»"
+    },
+    {
+      "id": "dialog-reset-in-warning",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "«Вернуть стандартное» — в самом предупреждении"
+    },
+    {
+      "id": "dialog-reset-disabled-when-standard",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "официальное уже стоит — «Вернуть стандартное» неактивна"
+    },
+    {
+      "id": "dialog-save-disabled-unchanged",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "без изменений «Сохранить» неактивна"
+    },
+    {
+      "id": "dialog-cancel",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "есть «Отмена»"
+    },
+    {
+      "id": "shot:rename-dialog-1440.png",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "rename-dialog-1440.png — 177 КБ"
+    },
+    {
+      "id": "validate-length",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "1 символ → «От 2 до 80 символов», «Сохранить» неактивна"
+    },
+    {
+      "id": "validate-maxlength",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "поле не даёт ввести больше 80 символов"
+    },
+    {
+      "id": "validate-duplicate-custom",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "своё название другого журнала → 400, у поля «Так уже назван журнал «Гигиенический журнал (сотрудники)»», окно не закрылось"
+    },
+    {
+      "id": "validate-duplicate-official",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "официальное название другого журнала (Enter) → 400, у поля «Так называется журнал «Журнал уборки»»"
+    },
+    {
+      "id": "validate-nothing-saved",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "после отказов в базе всё как было"
+    },
+    {
+      "id": "save-same-api",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "PATCH /api/settings/custom-names → 200 {\"names\":{\"journals\":{\"cold_equipment_control\":\"Холодильники\",\"hygiene\":\"Гигиена персонала\"},\"sections\":{\"reports\":\"Выгрузки\"}},\"changed\":1}"
+    },
+    {
+      "id": "title-updated",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "H1: «Холодильники Включён Официальное название: Журнал контроля температурного режима холодильного и морозильного оборудования»"
+    },
+    {
+      "id": "toast",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "уведомление: «Журнал переименован: «Холодильники»»"
+    },
+    {
+      "id": "no-reload",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "без перезагрузки: метка «same-document», timeOrigin тот же: true, новых загрузок документа: 0"
+    },
+    {
+      "id": "crumb-updated",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "крошка журнала: «Холодильники»"
+    },
+    {
+      "id": "menu-updated",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "меню «Журналы набора»: ЖУРНАЛЫ НАБОРА Гигиена персонала , ждёт заполнения Бланк контроля температуры и влажности на складах , ждёт заполнения Холодильники , ждёт заполнения Журнал учета использования фритюрных жиров , ждёт "
+    },
+    {
+      "id": "shot:renamed-1440.png",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "renamed-1440.png — 94 КБ"
+    },
+    {
+      "id": "db-merged",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "customNamesJson: {\"journals\":{\"hygiene\":\"Гигиена персонала\",\"cold_equipment_control\":\"Холодильники\"},\"sections\":{\"reports\":\"Выгрузки\"}}"
+    },
+    {
+      "id": "audit-rename",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "AuditLog settings.custom_names.update: [{\"count\":1,\"Журнал «Журнал контроля температурного режима холодильного и морозильного оборудования»\":{\"to\":\"Холодильники\",\"from\":\"стандартное\"}}]"
+    },
+    {
+      "id": "persisted-after-reload",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "после перезагрузки заголовок — своё название"
+    },
+    {
+      "id": "settings-names-same-storage",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "«Настройки → Названия»: cold_equipment_control=«Холодильники», hygiene=«Гигиена персонала», reports=«Выгрузки»"
+    },
+    {
+      "id": "journals-list-updated",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "список журналов показывает своё название"
+    },
+    {
+      "id": "keyboard",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "Enter открывает, фокус в поле: true; Esc закрывает, фокус на карандаше: Переименовать журнал"
+    },
+    {
+      "id": "reset-prefilled-custom",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "поле заполнено своим: «Холодильники»"
+    },
+    {
+      "id": "reset-fills-official",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "поле: «Журнал контроля температурного режима холодильного и морозильного оборудования», подсказка: «Сохраните — сотрудники снова увидят официальное название»"
+    },
+    {
+      "id": "reset-title",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "H1 после сброса: «Журнал контроля температурного режима холодильного и морозильного оборудования Включён»"
+    },
+    {
+      "id": "reset-db",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "customNamesJson: {\"journals\":{\"hygiene\":\"Гигиена персонала\"},\"sections\":{\"reports\":\"Выгрузки\"}}"
+    },
+    {
+      "id": "audit-reset",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "AuditLog: [{\"count\":1,\"Журнал «Журнал контроля температурного режима холодильного и морозильного оборудования»\":{\"to\":\"стандартное\",\"from\":\"Холодильники\"}}]"
+    },
+    {
+      "id": "toggle-confirm",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "подтверждение: Отключить журнал? «Журнал контроля температурного режима холодильного и морозильного оборудования» перестанет считаться обязательным для вашей организации. Исче"
+    },
+    {
+      "id": "toggle-cancel",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "«Отмена» — журнал остался включён"
+    },
+    {
+      "id": "toggle-off",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "Space → «Отключить» — журнал отключён (заглушка «Этот журнал отключён»)"
+    },
+    {
+      "id": "toggle-on-again",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "«Включить журнал» — снова включён, переключатель на месте"
+    },
+    {
+      "id": "compact-in-title-line:390",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "h1 {\"x\":16,\"y\":291,\"w\":358,\"h\":162,\"bottom\":453}, «Включён» {\"x\":252,\"y\":427,\"w\":114,\"h\":24,\"bottom\":451}, строка 32px"
+    },
+    {
+      "id": "compact-size:390",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "высота «Включён» 24px (было 48px), старой пилюли «· отключить» нет: true"
+    },
+    {
+      "id": "old-pill-gone:390",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "текста «· отключить» на странице нет"
+    },
+    {
+      "id": "phone-row-saved",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "390: от низа заголовка до «QR-точки» 16px (раньше под заголовком шла строка пилюли +56px)"
+    },
+    {
+      "id": "shot:after-manager-390.png",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "after-manager-390.png — 75 КБ"
+    },
+    {
+      "id": "shot:rename-dialog-390.png",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "rename-dialog-390.png — 87 КБ"
+    },
+    {
+      "id": "phone-renamed",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "390: H1 «Холодильники Включён Официальное название: Журнал контроля температурного режима холодильного и морозильного оборудования»"
+    },
+    {
+      "id": "shot:renamed-390.png",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "renamed-390.png — 72 КБ"
+    },
+    {
+      "id": "cook-no-pencil",
+      "ac": "AC2",
+      "ok": true,
+      "detail": "у повара карандаша нет"
+    },
+    {
+      "id": "cook-no-switch",
+      "ac": "AC2",
+      "ok": true,
+      "detail": "переключателя нет, только статус «Включён»"
+    },
+    {
+      "id": "cook-sees-custom",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "сотрудник видит своё название: «Холодильники Включён Официальное название: Журнал контроля температурного режима холодильного и морозильного оборудования»"
+    },
+    {
+      "id": "shot:after-cook-390.png",
+      "ac": "AC2",
+      "ok": true,
+      "detail": "after-cook-390.png — 49 КБ"
+    },
+    {
+      "id": "cook-api-403",
+      "ac": "AC2",
+      "ok": true,
+      "detail": "повар: PATCH → 403 {\"error\":\"Это действие доступно руководителю\"}, PUT → 403"
+    },
+    {
+      "id": "manager-api-control",
+      "ac": "AC2",
+      "ok": true,
+      "detail": "руководитель тем же запросом: PATCH → 200 {\"names\":{\"journals\":{\"cold_equipment_control\":\"Холодильники\",\"hygiene\":\"Гигиена персонала\"},\"sections\":{\"reports\":\"Выгр"
+    },
+    {
+      "id": "anon-api-401",
+      "ac": "AC2",
+      "ok": true,
+      "detail": "без входа: PATCH → 401"
+    },
+    {
+      "id": "cook-nothing-saved",
+      "ac": "AC2",
+      "ok": true,
+      "detail": "после попыток повара в базе: «Холодильники»"
+    }
+  ],
+  "consoleErrors": [
+    "manager-1440 /journals/cold_equipment_control console: Failed to load resource: the server responded with a status of 400 (Bad Request)",
+    "manager-1440 /journals/cold_equipment_control console: Failed to load resource: the server responded with a status of 400 (Bad Request)",
+    "manager-1440 /journals console: Failed to sync build state: TypeError: Failed to fetch\n    at syncBuild (webpack-internal:///(app-pages-browser)/./src/components/layout/sw-register.tsx:44:40)",
+    "manager-390 /journals/cold_equipment_control console: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client [diff: - A server/client branch `if (typeof window !== 'undefined')`. | - Variable input such as `Date.now()` or `Math.random()` which changes each time it's called. | - Date formatting in a user's locale which doesn't match the server. | - External changing data without sending a snapshot of it along with the HTML. | - Invalid HTML tag nesting. | -                       aria-haspopup=\"dialog\"]",
+    "cook-390 /journals/cold_equipment_control console: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client [diff: - A server/client branch `if (typeof window !== 'undefined')`. | - Variable input such as `Date.now()` or `Math.random()` which changes each time it's called. | - Date formatting in a user's locale which doesn't match the server. | - External changing data without sending a snapshot of it along with the HTML. | - Invalid HTML tag nesting. | -                       aria-haspopup=\"dialog\"]"
+  ]
+}

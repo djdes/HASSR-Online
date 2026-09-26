@@ -1,0 +1,69 @@
+A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+%s%s https://react.dev/link/hydration-mismatch 
+
+  ...
+    <CustomNamesProvider names={{journals:{...}, ...}}>
+      <KioskSessionGuard>
+      <SiteThemeProvider initialTheme="light">
+        <SiteThemeBootstrap>
+        <div className="app-shell ..." data-app-theme="light" suppressHydrationWarning={true}>
+          <FabDockProvider>
+            <JournalUndoProvider>
+              <Header userName="Иван Поваров" userEmail="jtitle.coo..." organizationName="Кафе «Рома..." ...>
+                <header className="sticky top...">
+                  <div className="mx-auto fl...">
+                    <LinkComponent>
+                    <PartnerHint rates={{...}} className="-ml-1 max-...">
+                      <button
+                        type="button"
+                        aria-label="Партнёрская программа: ваш логотип вместо WeSetup"
+                        title="Партнёрская программа"
+                        onClick={function}
+                        className="inline-flex size-7 shrink-0 items-center justify-center rounded-full transition-col..."
+-                       aria-haspopup="dialog"
+-                       aria-expanded="false"
+-                       aria-controls="radix-_R_24kcl5ralb_"
+-                       data-state="closed"
+                      >
+                      ...
+                    <div>
+                    <div>
+                    <Button>
+                    <BottomSheet>
+                    <div className="flex shrin...">
+                      <OfflineIndicator>
+                      <LiveConnectionIndicator>
+                      <NotificationsBell>
+                      <button>
+                      <Button variant="ghost" type="button" onClick={function onClick} className="relative s..." ...>
+                        <button
++                         data-slot="button"
+-                         data-slot="dropdown-menu-trigger"
+                          data-variant="ghost"
+                          data-size="default"
+                          data-loading={undefined}
+                          aria-busy={undefined}
+                          disabled={false}
+                          className={"inline-flex items-center justify-center gap-2 text-[14px] font-semibold whitesp..."}
+                          type="button"
+                          onClick={function onClick}
+                          aria-label="Профиль"
+-                         id="radix-_R_1v4kcl5ralb_"
+-                         aria-haspopup="menu"
+-                         aria-expanded="false"
+-                         data-state="closed"
+                        >
+                  ...
+              ...
+            ...
+            ...
+        ...

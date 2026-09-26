@@ -1,0 +1,65 @@
+{
+  "task": "journal-title-rename-2026-09",
+  "branch": "feat/journal-title-rename-2026-09-26",
+  "spec": ".agent/tasks/journal-title-rename-2026-09/spec.md",
+  "code_commit": "9e76aa25",
+  "verdict": "PASS",
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "summary": "карандаш у заголовка → общий ConfirmDialog с полем, предупреждением и «Вернуть стандартное»; сохранение тем же API/помощником (PATCH → saveCustomNames merge) меняет заголовок, крошку и меню без перезагрузки; сброс возвращает стандартное; AuditLog «было → стало»",
+      "e2e": ["pencil-visible:1440", "pencil-in-h1:1440", "dialog-title", "dialog-field-prefilled", "dialog-warning-text", "dialog-reset-in-warning", "dialog-reset-disabled-when-standard", "dialog-save-disabled-unchanged", "dialog-cancel", "validate-length", "validate-maxlength", "validate-duplicate-custom", "validate-duplicate-official", "validate-nothing-saved", "save-same-api", "title-updated", "toast", "no-reload", "crumb-updated", "menu-updated", "db-merged", "audit-rename", "persisted-after-reload", "settings-names-same-storage", "journals-list-updated", "keyboard", "reset-prefilled-custom", "reset-fills-official", "reset-title", "reset-db", "audit-reset", "phone-renamed", "cook-sees-custom"],
+      "unit": ["src/lib/custom-names.test.ts", "src/lib/custom-names-save.test.ts", "src/components/journals/journal-title-controls.test.ts"],
+      "screenshots": ["evidence/rename-dialog-1440.png", "evidence/rename-dialog-390.png", "evidence/renamed-1440.png", "evidence/renamed-390.png"]
+    },
+    "AC2": {
+      "status": "PASS",
+      "summary": "повар не видит карандаша (и переключателя — только статус «● Включён»); PATCH и PUT от повара → 403, без входа → 401, тот же запрос руководителя → 200",
+      "e2e": ["cook-no-pencil", "cook-no-switch", "cook-api-403", "manager-api-control", "anon-api-401", "cook-nothing-saved"],
+      "unit": ["PATCH (окно на странице журнала): без входа — 401, сотруднику — 403, ничего не пишется", "карандаш — у тех же, кому доступна «Названия»; сервер проверяет те же права"],
+      "screenshots": ["evidence/before-cook-390.png", "evidence/after-cook-390.png"]
+    },
+    "AC3": {
+      "status": "PASS",
+      "summary": "пилюля «Включён · отключить» → маленький переключатель «Включён» в строке с названием и карандашом; 1440: 172×36 отдельной строкой → 97×20 в строке заголовка; 390: 188×48 отдельной строкой → 114×24, строка под заголовком ушла; подтверждение, отключение и включение — как раньше",
+      "e2e": ["switch-on:1440", "compact-in-title-line:1440", "compact-size:1440", "old-pill-gone:1440", "compact-in-title-line:390", "compact-size:390", "old-pill-gone:390", "phone-row-saved", "toggle-confirm", "toggle-cancel", "toggle-off", "toggle-on-again"],
+      "geometry": {
+        "before": "evidence/before-geometry.json",
+        "after_1440": { "toggle": { "w": 97, "h": 20 }, "in_title_last_line": true },
+        "after_390": { "toggle": { "w": 114, "h": 24 }, "in_title_last_line": true, "title_to_qr_gap_px": 16 }
+      },
+      "screenshots": ["evidence/before-manager-1440.png", "evidence/after-manager-1440.png", "evidence/before-manager-390.png", "evidence/after-manager-390.png"]
+    },
+    "AC4": {
+      "status": "PASS",
+      "summary": "npm run typecheck — без ошибок; npm test — 2477/2477 (было 2467, +10 новых); pre-commit test:gate pass=2477 fail=0",
+      "typecheck": "exit 0",
+      "tests": { "total": 2477, "pass": 2477, "fail": 0, "baseline_before": 2467 }
+    }
+  },
+  "e2e": {
+    "results": "evidence/e2e-results.json",
+    "passed": 58,
+    "total": 58,
+    "finished_at": "2026-09-26T17:08:10.665Z",
+    "base": "http://localhost:3047",
+    "database": "wesetup_wt_jtitle"
+  },
+  "commands": {
+    "db": "npx prisma db push && npx tsx prisma/seed.ts",
+    "dev_server": "NEXT_DIST_DIR=.next-e2e node node_modules/next/dist/bin/next dev --webpack -p 3047",
+    "e2e_setup": "npx tsx .agent/tasks/journal-title-rename-2026-09/e2e/setup.ts > .agent/tasks/journal-title-rename-2026-09/e2e/setup-output.json",
+    "shots_before": "npx tsx .agent/tasks/journal-title-rename-2026-09/e2e/shots-before.ts",
+    "e2e": "npx tsx .agent/tasks/journal-title-rename-2026-09/e2e/rename-e2e.ts",
+    "hydration_probe": "npx tsx .agent/tasks/journal-title-rename-2026-09/e2e/hydration-probe.ts",
+    "typecheck": "npm run typecheck",
+    "test": "npm test"
+  },
+  "console_warnings_in_e2e": "два 400 — нарочно вызванные повторы названий; «Failed to sync build state» у sw-register dev-сервера; гидратация на 390 в шапке (PartnerHint aria-*, кнопка меню профиля на телефоне — evidence/hydration-390.txt), не связана с задачей и есть у повара без карандаша",
+  "known_limitations": [
+    "карандаш и переключатель внутри H1: доступное имя заголовка включает «Переименовать журнал» и «Вести журнал»",
+    "переключатель «Включён» теперь и у 19 журналов с собственной шапкой, где пилюли не было",
+    "повторы с другими журналами проверяет сервер — ошибка у поля после «Сохранить»",
+    "ветка «журналов записей» (PageHeader) не покрыта e2e: ни один активный шаблон в неё не попадает"
+  ]
+}
