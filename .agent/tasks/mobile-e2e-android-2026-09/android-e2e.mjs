@@ -612,7 +612,7 @@ async function main() {
     const p = page;
     await goto(p, screens[2][1]);
     let btn = p.getByRole("button", { name: /печат/i }).first();
-    if (!(await btn.count())) btn = p.locator('[aria-label*="Печат"], [title*="Печат"]').first();
+    if (!(await btn.count())) btn = p.locator('[aria-label*="ечат"], [title*="ечат"]').first();
     if (!(await btn.count())) {
       btn = p.locator("button:has(svg.lucide-printer)").first();
       if (await btn.count()) s.data.printButtonName = await btn.evaluate((b) => b.getAttribute("aria-label") || b.getAttribute("title") || b.textContent?.trim() || "");
@@ -636,7 +636,10 @@ async function main() {
     s.shots.push(shot("print-system-ui"));
     s.data.ui = uiSummary(nodes);
     const spooler = nodes.some((n) => /printspooler/.test(n.package ?? ""));
-    check(spooler, `system print UI not shown (top: ${topActivity()}; toast: ${await toastText(p)})`);
+    const shareSheet = nodes.some((n) => /intentresolver|^android$/.test(n.package ?? ""));
+    s.data.outcome = spooler ? "print dialog" : shareSheet ? "share sheet" : "nothing";
+    s.data.shareTargets = nodes.filter((n) => /intentresolver|^android$/.test(n.package ?? "")).map((n) => n.text).filter(Boolean);
+    check(spooler, `system print UI not shown — ${s.data.outcome} (top: ${topActivity().split(String.fromCharCode(10))[0]}; toast: ${await toastText(p)})`);
     key(4);
     await sleep(2500);
     if (nodes.some((n) => /printspooler/.test(n.package ?? "")) && /printspooler/.test(topActivity())) key(4);
