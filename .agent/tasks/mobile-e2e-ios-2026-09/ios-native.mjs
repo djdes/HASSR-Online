@@ -58,12 +58,26 @@ const q = (s) => JSON.stringify(s);
 function shot(name) {
   const f = `${String(++shotN).padStart(3, "0")}-${name}.png`;
   try {
-    execFileSync("xcrun", ["simctl", "io", UDID, "screenshot", path.join(OUT, f)], { stdio: "ignore", timeout: 15000 });
+    execFileSync("xcrun", ["simctl", "io", UDID, "screenshot", path.join(OUT, f)], { stdio: "ignore", timeout: 10000 });
     return f;
   } catch (e) {
     log("screenshot failed", name, e.message);
     return null;
   }
+}
+
+/** Кадр без ожидания (simctl в фоне): опрос дерева не стоит, пока снимается экран. */
+function shotAsync(name) {
+  const f = `${String(++shotN).padStart(3, "0")}-${name}.png`;
+  const c = als.getStore();
+  try {
+    const pr = spawn("xcrun", ["simctl", "io", UDID, "screenshot", path.join(OUT, f)], { stdio: "ignore" });
+    pr.on("error", () => undefined);
+    if (c) c.r.shots.push(f);
+  } catch (e) {
+    log("async screenshot failed", name, e.message);
+  }
+  return f;
 }
 
 function save() {
@@ -983,8 +997,12 @@ async function openJournal(ctx, search, cardText, docTitle) {
   ctx.d[`open_${search}`] = doc;
   if (!doc) await source(`${ctx.r.id}-journal-${search}`);
   if (doc === "list") {
-    await dismissGuide(ctx);
-    await tap({ type: "link", contains: period }, { scrolls: 4, settle: 3000 * SLOW });
+    // Раунд 6 (S04, кадр 041): шторка «Инструкция» появилась позже 1,5 с и закрыла список.
+    await dismissGuide(ctx, 5000);
+    if (!(await tryTap({ type: "link", contains: period }, { scrolls: 4, settle: 3000 * SLOW, timeout: 20000 }))) {
+      await dismissGuide(ctx, 5000);
+      await tap({ type: "link", contains: period }, { scrolls: 4, settle: 3000 * SLOW });
+    }
     let opened = await waitFor(() => has({ type: ["link", "button"], contains: "Распечатать" }), 40000 * SLOW);
     // Раунд 5 (S04, кадры 019/020): после нажатия на карточку документ не открылся
     // за 40 с (переход по ссылке не завершился) — второе нажатие, с кадром.
@@ -1004,8 +1022,8 @@ async function openJournal(ctx, search, cardText, docTitle) {
  * Шторка «Инструкция» журнала при первом заходе (раунд 4, кадр 021: закрыла список
  * документов холодильников) — закрываем «Понятно».
  */
-async function dismissGuide(ctx) {
-  const ok = await tryTap({ type: "button", label: "Понятно" }, { scrolls: 0, anywhere: true, ignoreKeyboard: true, timeout: 1500 });
+async function dismissGuide(ctx, timeout = 1500) {
+  const ok = await tryTap({ type: "button", label: "Понятно" }, { scrolls: 0, anywhere: true, ignoreKeyboard: true, timeout });
   if (ok) {
     ctx.d.guideDismissed = (ctx.d.guideDismissed || 0) + 1;
     await sleep(1000);
@@ -1073,9 +1091,10 @@ async function sectionsGo(label) {
 
 // Порядок раунда 6: вход, затем доказательства правок мастера (S13k, S08m, S11b), затем
 // то, что в раунде 5 не дошло до проверки (S04, S05, S06, S07, S03a). S12 — всегда последним.
-const ORDER = (env.ORDER || "S01,S02,S13k,S08m,S11b,S04,S05,S06,S07,S03a,S12").split(",");
+// Второй прогон раунда 6: S11b, S07, S03a доказаны в первом (прогон 36352483952) — не повторяем.
+const ORDER = (env.ORDER || "S01,S02,S13k,S08m,S04,S05,S06,S12").split(",");
 // Потолок на сценарий (мс); общий бюджет — TEST_BUDGET_MIN.
-const LIMITS = { S01: 90000, S02: 300000, S03a: 300000, S03b: 360000, S04: 300000, S05: 300000, S06: 240000, S07: 300000, S08: 240000, S09: 120000, S10: 150000, S11: 360000, S12: 60000, S13: 240000, S13k: 200000, S08m: 180000, S11b: 330000 };
+const LIMITS = { S01: 90000, S02: 300000, S03a: 300000, S03b: 360000, S04: 300000, S05: 330000, S06: 330000, S07: 300000, S08: 240000, S09: 120000, S10: 150000, S11: 360000, S12: 60000, S13: 240000, S13k: 330000, S08m: 180000, S11b: 330000 };
 const plan = new Map();
 function def(id, name, fn, timeoutMs) {
   plan.set(id, { name, fn, timeoutMs: LIMITS[id] ?? timeoutMs ?? 300000 });
@@ -1307,16 +1326,18 @@ async function main() {
     const form = await waitFor(() => has({ contains: "Выберите журнал" }), 30000 * SLOW);
     ctx.shot("reports");
     ctx.check("страница отчётов открылась", form);
-    await tap({ type: ["button", "other"], contains: "Выберите журнал" }, { scrolls: 6 });
+    // Раунд 6: у выпадающего списка нет подписи, только значение «Выберите журнал»,
+    // и форма — в самом низу длинной страницы отчётов.
+    await tap({ type: ["button", "other", "XCUIElementTypePopUpButton", "XCUIElementTypeComboBox"], value: "Выберите журнал" }, { scrolls: 20 });
     await sleep(1200);
     ctx.shot("reports-select");
     await tap({ contains: "Журнал уборки" }, { scrolls: 4, within: (r) => r.y > 60, pick: "last" });
     await sleep(1000);
     let before = await source("S05-before-xlsx");
-    await tap({ type: "button", contains: "Скачать Excel" }, { scrolls: 6 });
+    await tap({ type: "button", contains: "Скачать Excel" }, { scrolls: 12 });
     await shareCheck(ctx, "report-xlsx", "xlsx", before);
     before = await source("S05-before-pdf");
-    await tap({ type: "button", contains: "Скачать PDF" }, { scrolls: 6 });
+    await tap({ type: "button", contains: "Скачать PDF" }, { scrolls: 12 });
     await shareCheck(ctx, "report-pdf", "pdf", before);
   }, 360000);
 
@@ -1537,57 +1558,67 @@ async function main() {
     const r0 = await formRects();
     ctx.d.rectsNoKeyboard = r0;
     if (r0.save && r0.nav) ctx.check("без клавиатуры: подвал формы над нижним меню", r0.save.y + r0.save.height <= r0.nav.y + 1, { save: r0.save, nav: r0.nav });
-    // «Заметка» — строго выше липкого подвала; нажимаем в левую верхнюю часть поля (справа — микрофон).
-    const footerTop = r0.cancel ? Math.min(r0.cancel.y, r0.save ? r0.save.y : 1e9) : W.height * 0.55;
-    let note = r0.note;
-    if (!note || note.y + 30 > footerTop - 8 || note.y < band().top) {
-      ctx.d.noteScrolled = true;
-      const t = await tryTap({ type: ["XCUIElementTypeTextView", "field"], label: "Заметка" }, { scrolls: 4, maxY: Math.min(W.height * 0.55, footerTop - 8), settle: 600, timeout: 15000 });
-      if (t) await hideKeyboard();
-      note = (await formRects()).note;
+    // Два случая iPhone (раунд 6): «Заметка» низко — iOS сдвигает экран к полю
+    // (кадр 012 первого прогона: меню вылезло над клавиатурой); «Заметка» у верха —
+    // видимая часть просто укорачивается. Меряем оба.
+    const measureAt = async (tag) => {
+      const rr = await formRects();
+      const footerTop = rr.cancel ? Math.min(rr.cancel.y, rr.save ? rr.save.y : 1e9) : W.height * 0.55;
+      const note = rr.note;
+      if (!note) throw new Error("нет поля «Заметка»");
+      const ty = Math.min(note.y + 24, footerTop - 12);
+      ctx.d[`${tag}_noteTap`] = { x: Math.round(note.x + note.width * 0.3), y: Math.round(ty), note, footerTop };
+      ctx.check(`${tag}: нажатие в «Заметку» выше подвала формы`, ty < footerTop - 8 && ty > 110, ctx.d[`${tag}_noteTap`]);
+      await tapXY(note.x + note.width * 0.3, ty);
+      await waitFor(keyboard, 6000);
+      await sleep(2000);
+      const fk = ctx.shot(`${tag}-keyboard-open`);
+      await source(`S13k-${tag}-keyboard-open`);
+      const r = await formRects();
+      ctx.d[`${tag}_rectsKeyboard`] = r;
+      ctx.check(`${tag}: клавиатура открыта`, Boolean(r.kb), r.kb);
+      ctx.check(`${tag}: в дереве есть «Сохранить запись», «Отмена», «Заметка»`, Boolean(r.save && r.cancel && r.note), r);
+      if (!(r.kb && r.save && r.cancel && r.note)) return;
+      const barTop = r.bar ? r.bar.y : r.done ? r.done.y - 5 : null;
+      const edge = barTop ?? r.kb.y;
+      const saveBottom = r.save.y + r.save.height;
+      const gap = Math.round((edge - saveBottom) * 10) / 10;
+      const footerTopK = Math.min(r.cancel.y, r.save.y);
+      const noteTopRoom = Math.round((footerTopK - 12 - (r.note.y + 40)) * 10) / 10;
+      const navLinks = (await all({ type: "link", begins: "Главная" })).map((x) => x.r).filter((q) => q.y > 0 && q.y < W.height);
+      const m = { tapY: Math.round(ty), saveTop: r.save.y, saveBottom, cancelTop: r.cancel.y, noteTop: r.note.y, noteBottom: r.note.y + r.note.height, barTop, barSource: r.bar ? "Toolbar" : r.done ? "Готово-5" : null, keyboardTop: r.kb.y, gap, noteTopRoom, navOnScreen: navLinks, file: fk };
+      ctx.d[`${tag}_measure`] = m;
+      log(`   S13k ${tag} measure`, JSON.stringify(m));
+      ctx.check(`${tag}: зазор низ «Сохранить запись» → верх ${barTop != null ? "панели ^ v ✓" : "клавиатуры"} = ${gap} pt (0…40)`, gap >= 0 && gap <= 40, m);
+      ctx.check(`${tag}: верхние 40 pt «Заметки» выше (верх «Отмена» − 12 pt): запас ${noteTopRoom} pt`, noteTopRoom >= 0, m);
+      ctx.check(`${tag}: подвал формы не под клавиатурой`, saveBottom <= r.kb.y + 0.5 && (barTop == null || saveBottom <= barTop + 0.5), m);
+      // Закрыть клавиатуру: ✓ на панели (или нажатие на заголовок).
+      await hideKeyboard();
+      if (await keyboard()) {
+        await tapXY(W.width / 2, 150);
+        await sleep(800);
+      }
+      await sleep(1500);
+      const fc = ctx.shot(`${tag}-keyboard-closed`);
+      const rc = await formRects();
+      ctx.d[`${tag}_rectsClosed`] = rc;
+      ctx.check(`${tag}: клавиатура закрыта`, !(await keyboard()));
+      if (rc.save && rc.nav) ctx.check(`${tag}: после клавиатуры подвал снова над нижним меню`, rc.save.y + rc.save.height <= rc.nav.y + 1, { save: rc.save, nav: rc.nav });
+      else ctx.check(`${tag}: после клавиатуры подвал и меню в дереве`, false, rc);
+      const nav = regionStats(fc, 772, 842);
+      ctx.d[`${tag}_navPaint`] = nav;
+      ctx.check(`${tag}: после клавиатуры нижнее меню нарисовано (индиго ${nav.indigoFrac})`, nav.indigoFrac >= 0.02, nav);
+    };
+    await measureAt("low");
+    // «Заметку» — к верху экрана (под шапку), и снова.
+    const n1 = (await formRects()).note;
+    if (n1 && n1.y > 200) {
+      const d = Math.min(n1.y - 150, W.height * 0.5);
+      await drag(W.height * 0.62, W.height * 0.62 - d, Math.round(W.width * 0.62), 600);
+      await sleep(1200);
     }
-    if (!note) throw new Error("нет поля «Заметка»");
-    const ty = Math.min(note.y + 24, footerTop - 12);
-    ctx.d.noteTap = { x: Math.round(note.x + note.width * 0.3), y: Math.round(ty), note, footerTop };
-    ctx.check("нажатие в «Заметку» выше подвала формы", ty < footerTop - 8 && ty > 110, ctx.d.noteTap);
-    await tapXY(note.x + note.width * 0.3, ty);
-    await waitFor(keyboard, 6000);
-    await sleep(2000);
-    const fk = ctx.shot("keyboard-open");
-    await source("S13k-keyboard-open");
-    const r = await formRects();
-    ctx.d.rectsKeyboard = r;
-    ctx.check("клавиатура открыта", Boolean(r.kb), r.kb);
-    ctx.check("в дереве есть «Сохранить запись», «Отмена», «Заметка»", Boolean(r.save && r.cancel && r.note), r);
-    if (!(r.kb && r.save && r.cancel && r.note)) return;
-    const barTop = r.bar ? r.bar.y : r.done ? r.done.y - 5 : null;
-    const edge = barTop ?? r.kb.y;
-    const saveBottom = r.save.y + r.save.height;
-    const gap = Math.round((edge - saveBottom) * 10) / 10;
-    const footerTopK = Math.min(r.cancel.y, r.save.y);
-    const noteTopRoom = Math.round((footerTopK - 12 - (r.note.y + 40)) * 10) / 10;
-    const m = { saveTop: r.save.y, saveBottom, cancelTop: r.cancel.y, noteTop: r.note.y, noteBottom: r.note.y + r.note.height, barTop, barSource: r.bar ? "Toolbar" : r.done ? "Готово-5" : null, keyboardTop: r.kb.y, gap, noteTopRoom, file: fk };
-    ctx.d.measure = m;
-    log("   S13k measure", JSON.stringify(m));
-    ctx.check(`зазор низ «Сохранить запись» → верх ${barTop != null ? "панели ^ v ✓" : "клавиатуры"} = ${gap} pt (0…40)`, gap >= 0 && gap <= 40, m);
-    ctx.check(`верхние 40 pt «Заметки» выше (верх «Отмена» − 12 pt): запас ${noteTopRoom} pt`, noteTopRoom >= 0, m);
-    ctx.check("подвал формы не под клавиатурой", saveBottom <= r.kb.y + 0.5 && (barTop == null || saveBottom <= barTop + 0.5), m);
-    // Закрыть клавиатуру: ✓ на панели (или нажатие на заголовок).
-    await hideKeyboard();
-    if (await keyboard()) {
-      await tapXY(W.width / 2, 150);
-      await sleep(800);
-    }
-    await sleep(1500);
-    const fc = ctx.shot("keyboard-closed");
-    const rc = await formRects();
-    ctx.d.rectsClosed = rc;
-    ctx.check("клавиатура закрыта", !(await keyboard()));
-    if (rc.save && rc.nav) ctx.check("после клавиатуры: подвал снова над нижним меню", rc.save.y + rc.save.height <= rc.nav.y + 1, { save: rc.save, nav: rc.nav });
-    else ctx.check("после клавиатуры: подвал и меню в дереве", false, rc);
-    const nav = regionStats(fc, 772, 842);
-    ctx.d.navPaint = nav;
-    ctx.check(`после клавиатуры: нижнее меню нарисовано (индиго ${nav.indigoFrac})`, nav.indigoFrac >= 0.02, nav);
+    ctx.d.noteBeforeHigh = (await formRects()).note;
+    await measureAt("high");
     const after = await backToJournalCount(ctx);
     ctx.check("без ввода запись не сохранилась", sameCount(ctx.d.entriesBefore, after), { before: ctx.d.entriesBefore, after });
   });
@@ -1618,19 +1649,30 @@ async function main() {
     const t0 = Date.now();
     ctx.d.stopTapped = Boolean(stop);
     // Распознаватель мог остановиться и сам (в симуляторе нет речи) — тогда тост уже мог быть.
+    // Раунд 6, первый прогон: кадры simctl снимались по 5–15 с, опрос дерева между
+    // ними пропускал тост (живёт 4 с). Теперь — только опрос, кадры в фоне.
     let toast = null;
-    let n = 0;
+    const polls = [];
+    const asyncShots = [];
     while (Date.now() - t0 < 5000) {
-      const t = await textsWith(["расслышали"]);
-      if (t.length) {
-        toast = { ms: Date.now() - t0, text: t[0] };
+      const ms = Date.now() - t0;
+      if ((ms > 600 && asyncShots.length === 0) || (ms > 2000 && asyncShots.length === 1)) asyncShots.push(shotAsync(`${ctx.r.id}-after-stop-${ms}ms`));
+      const els = await all({ type: "text", contains: "расслышали" }, 3).catch(() => []);
+      polls.push(Date.now() - t0);
+      if (els.length) {
+        toast = { ms: Date.now() - t0, text: els[0].label, rect: els[0].r };
+        asyncShots.push(shotAsync(`${ctx.r.id}-toast-found`));
         break;
       }
-      if (n++ < 3) ctx.shot(`after-stop-${n}`);
-      await sleep(400);
+      await sleep(150);
     }
+    ctx.d.polls = polls;
+    ctx.d.asyncShots = asyncShots;
     ctx.d.toast = toast;
+    if (!toast) ctx.d.anyToastTexts = await textsWith(["Запись прервалась", "Разрешите", "недоступно", "расслышали"]);
+    await sleep(1500);
     const f = ctx.shot("toast");
+    if (toast) ctx.check("тост на экране (между шапкой и низом)", toast.rect.y >= ISLAND_BOTTOM && toast.rect.y + toast.rect.height <= W.height, toast.rect);
     await source("S08m-after-stop");
     ctx.check(`тост «Ничего не расслышали…» за 5 с после «Остановить запись»${toast ? ` (${toast.ms} мс)` : ""}`, Boolean(toast && /Ничего не расслышали\. Попробуйте ещё раз поближе к телефону/.test(toast.text)), { toast, file: f });
     const hang = await has({ type: "button", label: "Остановить запись" });
