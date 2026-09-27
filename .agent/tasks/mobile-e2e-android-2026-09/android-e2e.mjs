@@ -143,6 +143,16 @@ let current = null;
 async function scenario(name, fn) {
   log(`=== ${name}`);
   current = { name, ok: false, details: "", shots: [], data: {} };
+  // Окно «… isn't responding» (перегруженный эмулятор) не должно висеть
+  // поверх следующих сценариев: uiXml() жмёт «Wait» и считает такие случаи.
+  // Чужое окно поверх приложения (например, запоздавшее разрешение) — пишем.
+  uiXml();
+  const topNow = topActivity().split(/\r?\n/)[0];
+  if (results.scenarios.length && !/ru\.wesetup\.app|nexuslauncher/.test(topNow)) {
+    current.data.foreignWindowAtStart = topNow;
+    key(4);
+    execFileSync("sleep", ["1.5"]);
+  }
   results.scenarios.push(current);
   const t0 = Date.now();
   try {
@@ -584,9 +594,14 @@ async function main() {
     s.shots.push(shot("push-explainer"));
     if (!sheet) return;
     await screenTap(p, p.getByTestId("push-explainer-enable"));
-    await sleep(2500);
-    let nodes = uiNodes();
-    const allow = findNode(nodes, /permission_allow_button|^Allow$|Разрешить/);
+    // Медленный эмулятор: системное окно разрешения может появиться через 4–5 с.
+    let nodes = [];
+    let allow = null;
+    for (let i = 0; i < 8 && !allow; i++) {
+      await sleep(2000);
+      nodes = uiNodes();
+      allow = findNode(nodes, /permission_allow_button|^Allow$|Разрешить/);
+    }
     s.shots.push(shot("push-os-permission"));
     s.data.permissionUi = uiSummary(nodes);
     if (Number(results.device.sdk) >= 33) check(Boolean(allow), "OS notification permission dialog did not appear");
