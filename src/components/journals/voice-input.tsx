@@ -40,6 +40,8 @@ interface SpeechRecognitionResult {
 
 const noopSubscribe = () => () => {};
 
+const NOTHING_HEARD = "Ничего не расслышали. Попробуйте ещё раз поближе к телефону.";
+
 export function VoiceInput({
   value,
   onChange,
@@ -66,6 +68,8 @@ export function VoiceInput({
   );
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const nativeCleanupRef = useRef<(() => void) | null>(null);
+  // iOS: завершение записи (кнопкой или паузой) — одно на запись.
+  const nativeFinishRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     if (native) return;
@@ -76,15 +80,30 @@ export function VoiceInput({
     }
   }, [native]);
 
-  useEffect(() => () => nativeCleanupRef.current?.(), []);
+  // Ушли со страницы во время записи — выключаем микрофон, а не только
+  // перестаём слушать ответы.
+  useEffect(
+    () => () => {
+      if (nativeFinishRef.current) {
+        void getNativeBridge()?.call("SpeechRecognition", "stop").catch(() => undefined);
+      }
+      nativeFinishRef.current = null;
+      nativeCleanupRef.current?.();
+    },
+    []
+  );
 
   const toggleNative = useCallback(async () => {
     const bridge = getNativeBridge();
     if (!bridge) return;
     if (recording) {
       await bridge.call("SpeechRecognition", "stop").catch(() => undefined);
-      nativeCleanupRef.current?.();
-      setRecording(false);
+      if (nativeFinishRef.current) {
+        nativeFinishRef.current();
+      } else {
+        nativeCleanupRef.current?.();
+        setRecording(false);
+      }
       return;
     }
     const denied = "Разрешите микрофон и распознавание речи в настройках телефона";
@@ -121,6 +140,18 @@ export function VoiceInput({
       }
       // iOS: текст приходит по ходу речи, запись останавливает кнопка.
       let latest = "";
+      const finish = () => {
+        // Уже завершили (кнопкой, ошибкой, уходом со страницы) — второй
+        // сигнал «запись остановлена» ничего не делает.
+        if (nativeFinishRef.current !== finish) return;
+        nativeFinishRef.current = null;
+        nativeCleanupRef.current?.();
+        setRecording(false);
+        // iOS молча выключает запись, если речи не было: без сообщения
+        // человек не понимал, почему поле осталось пустым.
+        if (!latest) toast.error(NOTHING_HEARD);
+      };
+      nativeFinishRef.current = finish;
       const handles = [
         bridge.on("SpeechRecognition", "partialResults", (payload) => {
           const text = (payload as { matches?: string[] } | null)?.matches?.[0];
@@ -129,10 +160,7 @@ export function VoiceInput({
           onChange(base + latest);
         }),
         bridge.on("SpeechRecognition", "listeningState", (payload) => {
-          if ((payload as { status?: string } | null)?.status === "stopped") {
-            nativeCleanupRef.current?.();
-            setRecording(false);
-          }
+          if ((payload as { status?: string } | null)?.status === "stopped") finish();
         }),
       ];
       nativeCleanupRef.current = () => {
@@ -145,6 +173,7 @@ export function VoiceInput({
         partialResults: true,
       });
     } catch (err) {
+      nativeFinishRef.current = null;
       nativeCleanupRef.current?.();
       setRecording(false);
       const message = err instanceof Error ? err.message : String(err);
@@ -152,7 +181,7 @@ export function VoiceInput({
         /permission|denied|access/i.test(message)
           ? denied
           : /no match|didn.t understand/i.test(message)
-            ? "Ничего не расслышали. Попробуйте ещё раз поближе к телефону."
+            ? NOTHING_HEARD
             : "Запись прервалась. Попробуйте ещё раз или наберите текст вручную."
       );
     }
@@ -204,7 +233,7 @@ export function VoiceInput({
         code === "not-allowed" || code === "service-not-allowed"
           ? "Доступ к микрофону запрещён. Разрешите его в настройках телефона или наберите текст вручную."
           : code === "no-speech"
-            ? "Ничего не расслышали. Попробуйте ещё раз поближе к телефону."
+            ? NOTHING_HEARD
             : code === "audio-capture"
               ? "Микрофон недоступен. Наберите текст вручную."
               : code === "network"
