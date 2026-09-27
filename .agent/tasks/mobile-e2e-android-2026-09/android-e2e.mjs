@@ -44,12 +44,29 @@ function shot(name) {
   }
   return file;
 }
-function uiXml() {
+function rawUiXml() {
   for (let i = 0; i < 4; i++) {
     const r = sh("uiautomator dump /sdcard/ui.xml 2>&1");
     if (/dumped to/i.test(r)) return sh("cat /sdcard/ui.xml");
   }
   return "";
+}
+/**
+ * Перегруженный эмулятор CI иногда показывает «Pixel Launcher isn't
+ * responding» (ANR чужого приложения) — жмём «Wait» и считаем такие случаи.
+ */
+function uiXml() {
+  let xml = rawUiXml();
+  for (let i = 0; i < 3 && /aerr_wait/.test(xml); i++) {
+    const wait = uiNodes(xml).find((n) => n["resource-id"] === "android:id/aerr_wait");
+    results.systemAnrDismissed = (results.systemAnrDismissed ?? 0) + 1;
+    results.systemAnrText = (/alertTitle[^>]*text="([^"]*)"/.exec(xml) ?? /text="([^"]*isn't responding[^"]*)"/.exec(xml))?.[1] ?? "?";
+    if (wait?.rect) tapNode(wait);
+    else key(4);
+    execFileSync("sleep", ["1.5"]);
+    xml = rawUiXml();
+  }
+  return xml;
 }
 function uiNodes(xml = uiXml()) {
   const out = [];
@@ -222,6 +239,7 @@ function pathOf(p) {
 
 /** Геометрия страницы против системных полос: всё видимое — между ними. */
 async function layoutProbe(p, label) {
+  let res0Note = null;
   const ins = systemInsets();
   const wv = webViewRect();
   const info = await p.evaluate(() => {
@@ -270,16 +288,17 @@ async function layoutProbe(p, label) {
         .map((el) => `${el.tagName}.${String(el.className).slice(0, 60)} right=${Math.round(el.getBoundingClientRect().right)}`),
     };
   });
+  if (!wv) res0Note = "webview bounds unknown (uiautomator)";
   const wvTop = wv?.y1 ?? 0;
   const toScreen = (y) => Math.round(wvTop + y * info.dpr);
-  const res = { label, insets: ins, webView: wv, ...info, issues: [] };
+  const res = { label, insets: ins, webView: wv, ...info, issues: [], note: res0Note };
   if (info.scrollWidth > info.innerWidth + 1) res.issues.push(`horizontal overflow: scrollWidth ${info.scrollWidth} > ${info.innerWidth} (${info.overflowers.join(", ")})`);
-  const sbBottom = ins.statusBar?.y2 ?? 0;
+  const sbBottom = wv ? ins.statusBar?.y2 ?? 0 : 0;
   if (info.topRow && toScreen(info.topRow.top) < sbBottom - 1)
     res.issues.push(`top bar content under status bar: row top ${toScreen(info.topRow.top)}px < status bar bottom ${sbBottom}px`);
   if (!info.topRow && info.heading?.rect && info.heading.rect.top >= 0 && toScreen(info.heading.rect.top) < sbBottom - 1)
     res.issues.push(`heading under status bar: ${toScreen(info.heading.rect.top)} < ${sbBottom}`);
-  const nbTop = ins.navBar && ins.navBar.y1 > 0 ? ins.navBar.y1 : null;
+  const nbTop = wv && ins.navBar && ins.navBar.y1 > 0 ? ins.navBar.y1 : null;
   if (nbTop && info.tabs.length) {
     const lowest = Math.max(...info.tabs.map((t) => t.bottom));
     if (toScreen(lowest) > nbTop + 1) res.issues.push(`bottom nav under system navigation: tabs bottom ${toScreen(lowest)}px > nav bar top ${nbTop}px`);
@@ -298,6 +317,7 @@ async function login(p, email) {
   await settle(p, 2500);
 }
 async function screenTap(p, locator) {
+  uiXml(); // закрыть системный ANR, если висит
   const box = await locator.boundingBox();
   if (!box) throw new Error("element has no box");
   const wv = webViewRect() ?? { x1: 0, y1: 0 };

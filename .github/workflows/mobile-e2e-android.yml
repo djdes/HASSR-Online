@@ -166,6 +166,7 @@ jobs:
           arch: x86_64
           profile: pixel_7
           ram-size: 4096M
+          cores: 3
           disk-size: 4000M
           force-avd-creation: true
           emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back emulated
