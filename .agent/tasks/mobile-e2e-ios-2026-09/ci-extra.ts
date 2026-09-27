@@ -41,6 +41,14 @@ async function main() {
     create: { code: "e2e_voice", name: "E2E голос и фото", fields: VOICE_FIELDS },
     update: { fields: VOICE_FIELDS },
   });
+  // Раунд 3: у шефа пресет head_chef — «Журналы скрыты» (так задумано: проверяет
+  // задачи). Сценариям 3–8 нужны журналы, документы, печать и отчёты — в копии
+  // сайта для проверки шеф получает пресет «Администратор». Только e2e-база.
+  const chefRow = await db.user.findUnique({ where: { email: "chef@cafe-demo.local" }, select: { id: true, permissionPreset: true } });
+  if (chefRow) {
+    await db.user.update({ where: { id: chefRow.id }, data: { permissionPreset: "admin" } });
+    console.log(`chef permissionPreset ${chefRow.permissionPreset ?? "(по должности)"} -> admin`);
+  }
   const doc = async (code: string) =>
     (
       await db.journalDocument.findFirst({

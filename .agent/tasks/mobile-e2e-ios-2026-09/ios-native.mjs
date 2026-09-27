@@ -81,6 +81,7 @@ async function waitFor(fn, timeout = 20000, step = 600) {
   const end = Date.now() + timeout;
   let v;
   while (Date.now() < end) {
+    alive();
     try {
       v = await fn();
       if (v) return v;
@@ -118,10 +119,12 @@ function pred({ type, label, contains, begins, value }) {
   return parts.join(" AND ");
 }
 
-async function all(spec) {
-  const els = await driver.$$(`-ios predicate string:${pred(spec)}`);
+async function all(spec, max = 30) {
+  alive();
+  const els = await driver.$(`-ios predicate string:${pred(spec)}`);
   const out = [];
-  for (const el of els) {
+  for (const el of els.slice(0, max)) {
+    alive();
     try {
       const r = await driver.getElementRect(el.elementId);
       if (r.width <= 0 || r.height <= 0) continue;
@@ -133,7 +136,17 @@ async function all(spec) {
   return out;
 }
 
+/** Подписи текстов, содержащие любое из слов, — один запрос. */
+async function textsWith(words) {
+  const cond = words.map((w) => `label CONTAINS[c] ${q(w)}`).join(" OR ");
+  const els = await driver.$(`-ios predicate string:type == ${q(T.text)} AND (${cond})`);
+  const out = [];
+  for (const el of els.slice(0, 10)) out.push(await el.getAttribute("label").catch(() => null));
+  return out.filter(Boolean);
+}
+
 async function has(spec) {
+  alive();
   const els = await driver.$$(`-ios predicate string:${pred(spec)}`);
   return els.length > 0;
 }
@@ -172,7 +185,7 @@ async function toTop() {
  * Найти элемент (при необходимости долистать) и нажать пальцем в центр.
  * pick: "first" | "last" | "lowest" (по y) | функция отбора.
  */
-async function tap(spec, { scrolls = 8, pick = "first", within = null, anywhere = false, ignoreKeyboard = false, timeout = 12000 * SLOW, settle = 700 } = {}) {
+async function tap(spec, { scrolls = 8, pick = "first", within = null, anywhere = false, ignoreKeyboard = false, timeout = 30000 * SLOW, settle = 700 } = {}) {
   const end = Date.now() + timeout;
   let found = [];
   for (let i = 0; ; i++) {
@@ -294,7 +307,55 @@ async function acceptAlert(buttons) {
 
 async function keyboard() {
   const k = await all({ type: "kb" });
-  return k[0]?.r ?? null;
+  const rr = k[0]?.r ?? null;
+  // Раунд 3: после clearValue (WDA шлёт аппаратные клавиши) iOS решила, что подключена
+  // аппаратная клавиатура, и увела экранную за нижний край (y=952 при высоте 874).
+  if (rr && rr.y >= W.height - 20) return null;
+  return rr;
+}
+
+/**
+ * Очистить поле экранной клавишей «delete», а не clearValue: clearValue в WDA —
+ * аппаратные клавиши, после них iOS прячет экранную клавиатуру до конца сессии.
+ */
+async function softClear(el) {
+  const v = await readValue(el);
+  const ph = await el.getAttribute("placeholderValue").catch(() => null);
+  const n = v && v !== ph ? [...v].length : 0;
+  if (!n) return "empty";
+  const rr = await driver.getElementRect(el.elementId);
+  await tapXY(rr.x + rr.width * 0.72, rr.y + rr.height / 2); // курсор в конец текста
+  await sleep(400);
+  const del = await driver.$(`-ios predicate string:type == "XCUIElementTypeKey" AND (name == "delete" OR label IN {"delete","удалить","Удалить"})`);
+  const kb = await keyboard();
+  const d = del.length ? await driver.getElementRect(del[0].elementId).catch(() => null) : null;
+  if (kb && d && d.y < W.height) {
+    for (let i = 0; i < n + 2; i++) await tapXY(d.x + d.width / 2, d.y + d.height / 2);
+    await sleep(300);
+    const left = await readValue(el);
+    if (!left || left === ph) return "delete-key";
+  }
+  await el.clearValue().catch(() => undefined);
+  return "clearValue";
+}
+
+/** Клавиша ввода экранной клавиатуры — пальцем; нет экранной — «\n». */
+async function pressReturn(el) {
+  const kb = await keyboard();
+  if (kb) {
+    const names = ["return", "Return", "next", "Next", "Next:", "go", "Go", "Go:", "done", "Done", "search", "Search", "Далее", "Перейти", "Готово", "Найти", "Ввод", "Возврат"];
+    const list = names.map(q).join(",");
+    const els = await driver.$(`-ios predicate string:type IN {"XCUIElementTypeButton","XCUIElementTypeKey"} AND (label IN {${list}} OR name IN {${list}})`);
+    for (const e of els) {
+      const rr = await driver.getElementRect(e.elementId).catch(() => null);
+      if (rr && rr.y >= kb.y - 2 && rr.y < W.height) {
+        await tapXY(rr.x + rr.width / 2, rr.y + rr.height / 2);
+        return "key";
+      }
+    }
+  }
+  await el.addValue("\n").catch(() => undefined);
+  return "newline";
 }
 
 /** Верх видимой области над клавиатурой: панель «Готово» или сама клавиатура. */
@@ -394,14 +455,14 @@ async function pasteInto(el, text) {
 async function typeVerified(el, text, { secure = false, clear = true } = {}) {
   const ok = (v) => (secure ? typeof v === "string" && [...v].length === [...text].length : v === text);
   const tries = [];
-  if (clear) await el.clearValue().catch(() => undefined);
+  if (clear) tries.push({ clear: await softClear(el) });
   const layout = await ensureLayout(text);
   await el.addValue(text).catch((e) => tries.push(`addValue: ${e.message.slice(0, 120)}`));
   await sleep(300);
   let v = await readValue(el);
   tries.push({ method: "keys", layout, value: secure ? `len ${v ? [...v].length : null}` : v });
   if (ok(v)) return { ok: true, method: "keys", tries };
-  await el.clearValue().catch(() => undefined);
+  tries.push({ clear: await softClear(el) });
   await sleep(300);
   const how = await pasteInto(el, text).catch((e) => `paste error: ${e.message.slice(0, 120)}`);
   v = await readValue(el);
@@ -709,7 +770,7 @@ async function signIn(ctx, email, tag) {
   ctx.check(`${tag}: почта набрана точно`, emailVal === email, { emailVal, te });
   // Клавиша ввода в почте ведёт к паролю (enterKeyHint="next").
   const retBefore = await returnKeyLabel();
-  await ef.el.addValue("\n").catch(() => undefined);
+  ctx.d[`${tag}_enterInEmailVia`] = await pressReturn(ef.el);
   await sleep(1200);
   let pf = await passField();
   if (!pf) throw new Error("нет поля пароля");
@@ -763,7 +824,7 @@ async function signIn(ctx, email, tag) {
   // Вход клавишей ввода (enterKeyHint="go"); не ушли за 12 с — нажимаем «Войти».
   const t0 = Date.now();
   const sp = await passField();
-  if (sp) await sp.addValue("\n").catch(() => undefined);
+  if (sp) ctx.d[`${tag}_submitKeyVia`] = await pressReturn(sp);
   const leftOnEnter = await waitFor(async () => !(await onLogin()), 12000 * SLOW, 800);
   ctx.d[`${tag}_submitVia`] = leftOnEnter ? "клавиша ввода" : "кнопка «Войти»";
   ctx.check(`${tag}: клавиша ввода в пароле отправляет форму`, leftOnEnter);
@@ -776,7 +837,7 @@ async function signIn(ctx, email, tag) {
   ctx.d[`${tag}_loginMs`] = Date.now() - t0;
   if (!left) {
     ctx.shot(`${tag}-login-failed`);
-    const errs = (await all({ type: "text" })).map((e) => e.label).filter((l) => /невер|ошиб|не удалось|не найден/i.test(l || ""));
+    const errs = await textsWith(["невер", "ошиб", "не удалось", "не найден"]);
     throw new Error(`вход ${email} не удался: ${errs.join(" | ")}`);
   }
   await sleep(1500);
@@ -899,7 +960,7 @@ async function main() {
   meta.caps = caps;
   driver = await remote({ hostname: "127.0.0.1", port: 4723, path: "/", logLevel: "warn", connectionRetryTimeout: 900000, connectionRetryCount: 1, capabilities: caps });
   log("session", driver.sessionId);
-  await driver.updateSettings({ snapshotMaxDepth: 62, customSnapshotTimeout: 30, pageSourceExcludedAttributes: "" }).catch((e) => log("settings", e.message));
+  await driver.updateSettings({ snapshotMaxDepth: 62, customSnapshotTimeout: 30, pageSourceExcludedAttributes: "", waitForIdleTimeout: 0, animationCoolOffTimeout: 0 }).catch((e) => log("settings", e.message));
   await driver.execute("mobile: activateApp", { bundleId: BUNDLE });
   await sleep(1500);
   W = await driver.getWindowRect();
@@ -990,7 +1051,7 @@ async function main() {
     ctx.shot("after-allow");
     ctx.check("приложение живо", (await appState()) === 4);
     ctx.check("лист закрылся", !(await has({ type: "button", label: "Включить" })));
-    const errToast = (await all({ type: "text" })).map((e) => e.label).filter((l) => /не удалось|ошибк|error/i.test(l || ""));
+    const errToast = await textsWith(["не удалось", "ошибк", "error"]);
     ctx.d.errorTexts = errToast;
     ctx.check("без сообщений об ошибке", errToast.length === 0, errToast);
     // Страница откликается: вкладка «Разделы» открывается.
