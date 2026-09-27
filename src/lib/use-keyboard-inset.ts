@@ -111,19 +111,65 @@ export function scrollDeltaToReveal(
 }
 
 /**
+ * Открыта ли экранная клавиатура и на сколько поднять над низом раскладки
+ * то, что должно стоять прямо над ней.
+ *
+ * iPhone делает по-разному. Поле вверху экрана — видимая часть просто
+ * укорачивается (offsetTop = 0), низ раскладки под клавиатурой: поднять
+ * нужно на всю её высоту. Поле внизу экрана — iOS сдвигает видимую часть
+ * вниз по раскладке (offsetTop ≈ высота клавиатуры): низ раскладки почти у
+ * клавиатуры, поднимать почти не на что. `useKeyboardInset` во втором случае
+ * отдаёт 0 («клавиатуры нет»), и подвал формы оставался над нижним меню —
+ * выше клавиатуры на 81pt, а меню вылезало над клавиатурой (раунд 6, кадр 012).
+ * Поэтому «открыта» считаем по высоте видимой части, а подъём — отдельно.
+ */
+export function keyboardStateFrom(
+  innerHeight: number,
+  viewportHeight: number,
+  viewportOffsetTop: number
+): { open: boolean; bottom: number } {
+  if (!(innerHeight - viewportHeight > KEYBOARD_MIN_HEIGHT)) return { open: false, bottom: 0 };
+  return { open: true, bottom: Math.max(0, Math.round(innerHeight - viewportHeight - viewportOffsetTop)) };
+}
+
+/** Состояние клавиатуры для липких подвалов (см. `keyboardStateFrom`). */
+export function useKeyboardState(): { open: boolean; bottom: number } {
+  const [state, setState] = useState({ open: false, bottom: 0 });
+
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const update = () => {
+      const next = keyboardStateFrom(window.innerHeight, viewport.height, viewport.offsetTop);
+      setState((prev) => (prev.open === next.open && prev.bottom === next.bottom ? prev : next));
+    };
+    update();
+    viewport.addEventListener("resize", update);
+    viewport.addEventListener("scroll", update);
+    return () => {
+      viewport.removeEventListener("resize", update);
+      viewport.removeEventListener("scroll", update);
+    };
+  }, []);
+
+  return state;
+}
+
+/**
  * Стиль липкого подвала формы с кнопками «Сохранить» / «Отмена».
  *
  * Клавиатуры нет — подвал у низа экрана (в мини-приложении CSS поднимает
  * его над нижним меню), снизу поле под полоску «домой». Клавиатура
- * открыта — подвал встаёт прямо над ней: меню и полоска всё равно под
- * клавиатурой. Раньше высота клавиатуры прибавлялась к этим отступам, и
- * на iPhone между кнопками и клавиатурой оставалась пустая полоса ~140pt,
- * а подвал закрывал поле, в котором человек печатал (раунд 5, кадр 015).
+ * открыта — подвал встаёт прямо над ней (`bottom` из `keyboardStateFrom`,
+ * в том числе 0), нижнее меню на это время прячется (`data-keyboard-open`).
+ * Раньше высота клавиатуры прибавлялась к отступам, и на iPhone между
+ * кнопками и клавиатурой оставалась пустая полоса ~140pt, а подвал закрывал
+ * поле, в котором человек печатал (раунд 5, кадр 015).
  */
-export function stickyFooterStyle(keyboardInset: number): {
+export function stickyFooterStyle(keyboard: { open: boolean; bottom: number }): {
   bottom?: number;
   paddingBottom: string;
 } {
-  if (keyboardInset > 0) return { bottom: keyboardInset, paddingBottom: "0.75rem" };
+  if (keyboard.open) return { bottom: keyboard.bottom, paddingBottom: "0.75rem" };
   return { paddingBottom: "max(0.75rem, var(--safe-b))" };
 }
