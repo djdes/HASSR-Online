@@ -18,6 +18,8 @@ import { cn } from "@/lib/utils";
  *   ┌──────────── QR-точка контроля ────────────┐  ← золотая, во всю ширину
  *   ├──── Создать документ ────┬─ Инструкция ───┤  ← два столбца
  *
+ * Все зазоры вокруг QR одинаковые — 12 px (см. `JOURNAL_LIST_ACTIONS_GRID_CLASS`).
+ *
  * На телефоне блок во всю ширину под заголовком, на компьютере — справа
  * от заголовка шириной 440 px. Одна кнопка во втором ряду (нет прав на
  * создание, вкладка «Закрытые», пустой журнал — там своя большая кнопка в
@@ -43,16 +45,28 @@ export const JOURNAL_ACTION_CREATE_CLASS =
 export const JOURNAL_ACTION_GUIDE_CLASS =
   "inline-flex h-11 w-full min-w-0 items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-2.5 text-[14px] font-semibold text-[#0b1024] transition-colors duration-200 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 [&>svg]:shrink-0 [&>svg]:text-[#5566f6]";
 
-/** Сетка блока: на телефоне во всю ширину, на компьютере 440 px справа от заголовка. */
-export const JOURNAL_LIST_ACTIONS_GRID_CLASS = "grid w-full grid-cols-2 gap-2 sm:w-[440px] sm:shrink-0";
+/**
+ * Сетка блока: на телефоне во всю ширину, на компьютере 440 px справа от заголовка.
+ *
+ * Шаг сетки (`gap-3`, 12 px) — тот же, что у строки «заголовок + блок»
+ * (`JOURNAL_LIST_HEADER_ROW_CLASS`). Владелец, 2026-09-27: «Кнопку QR как-то
+ * близко к кнопкам „Создать документ“ — сделать чуть дальше, симметрично».
+ * Было: над QR 16 px (от заголовка), под ней 8 px, между кнопками ряда 8 px.
+ * Стало: 12 / 12 / 12 — QR посередине, ряд на прежнем месте. Шире 12 px
+ * нельзя: на телефоне кнопке «+ Создать документ» (16 px) и так остаётся
+ * пара пикселей до краёв. Скелет `journals/[code]/loading.tsx` повторяет
+ * оба класса (проверяет `journal-page-polish.test.ts`).
+ */
+export const JOURNAL_LIST_ACTIONS_GRID_CLASS = "grid w-full grid-cols-2 gap-3 sm:w-[440px] sm:shrink-0";
 
 /**
- * Строка «заголовок + блок кнопок» в собственных шапках журналов. Блок
- * стоит справа, пока рядом с ним заголовку остаётся хотя бы 18rem, иначе
- * (планшет, узкое окно) уходит под заголовок — длинный заголовок не
- * рвётся посреди слова. Та же раскладка у общей шапки `JournalTopBar`.
+ * Строка «заголовок + блок кнопок» — у общей шапки `JournalTopBar` и у
+ * собственных шапок журналов. Блок стоит справа, пока рядом с ним
+ * заголовку остаётся хотя бы 18rem, иначе (телефон, планшет, узкое окно)
+ * уходит под заголовок — длинный заголовок не рвётся посреди слова.
+ * `gap-3` — тот же шаг, что внутри блока кнопок.
  */
-export const JOURNAL_LIST_HEADER_ROW_CLASS = "flex flex-wrap items-start justify-between gap-4 sm:items-center";
+export const JOURNAL_LIST_HEADER_ROW_CLASS = "flex flex-wrap items-start justify-between gap-3 sm:items-center";
 
 /** H1 списка журнала в этой строке: всё место рядом с блоком, перенос внутри. */
 export const JOURNAL_LIST_TITLE_CLASS = cn(JOURNAL_LIST_HEADING_CLASS, "min-w-0 flex-1 basis-[18rem] sm:max-w-none");

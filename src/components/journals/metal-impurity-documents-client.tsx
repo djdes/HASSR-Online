@@ -52,6 +52,7 @@ import {
   restoreMenuItems,
   useRestoreDocument,
   useCanManageDocuments,
+  JournalTabs,
 } from "@/components/journals/document-list-ui";
 import { resolveJournalPeriodForDate } from "@/lib/journal-period";
 import {
@@ -530,30 +531,7 @@ export function MetalImpurityDocumentsClient({
           />
         </div>
 
-        <div className="border-b border-[#d9dce8]">
-          <div className="flex gap-9 text-[15px]">
-            <Link
-              href={`/journals/${routeCode}`}
-              className={`relative pb-4 ${
-                activeTab === "active"
-                  ? "font-medium text-black after:absolute after:bottom-[-1px] after:left-0 after:h-[2px] after:w-full after:bg-[#5566f6]"
-                  : "text-[#6f7282]"
-              }`}
-            >
-              Активные
-            </Link>
-            <Link
-              href={`/journals/${routeCode}?tab=closed`}
-              className={`relative pb-4 ${
-                activeTab === "closed"
-                  ? "font-medium text-black after:absolute after:bottom-[-1px] after:left-0 after:h-[2px] after:w-full after:bg-[#5566f6]"
-                  : "text-[#6f7282]"
-              }`}
-            >
-              Закрытые
-            </Link>
-          </div>
-        </div>
+        <JournalTabs activeTab={activeTab} templateCode={routeCode} />
 
         <div className={JOURNAL_LIST_CARDS_CLASS}>
           {documents.length === 0 && (

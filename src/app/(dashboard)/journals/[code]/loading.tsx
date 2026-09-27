@@ -1,33 +1,45 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  JOURNAL_LIST_CARDS_CLASS,
+  JOURNAL_LIST_STACK_CLASS,
+  JOURNAL_TAB_RAIL_CLASS,
+} from "@/components/journals/journal-responsive";
 
 /**
  * Skeleton списка документов внутри журнала (`/journals/[code]`).
  * Повторяет `JournalTopBar` (заголовок + блок кнопок `JournalListActions`:
  * «QR-точка контроля» во всю ширину над рядом «Создать документ |
  * Инструкция»), `JournalTabs` («Активные / Закрытые») и карточки документов.
+ *
+ * Строка шапки и сетка кнопок — те же классы, что
+ * `JOURNAL_LIST_HEADER_ROW_CLASS` и `JOURNAL_LIST_ACTIONS_GRID_CLASS`
+ * (journal-list-actions.tsx — клиентский модуль, серверный скелет не может
+ * взять оттуда строку, поэтому совпадение держит тест
+ * `journal-page-polish.test.ts`). Вкладки — без полосы под рядом, как
+ * `JournalTabs`. Шаг между шапкой, вкладками и карточками — те же токены,
+ * что у списков (`JOURNAL_LIST_STACK_CLASS`, `JOURNAL_LIST_CARDS_CLASS`):
+ * страница после загрузки не прыгает.
  */
 export default function JournalCodeLoading() {
   return (
-    <div className="space-y-5 sm:space-y-14" aria-busy="true" aria-live="polite">
+    <div className={JOURNAL_LIST_STACK_CLASS} aria-busy="true" aria-live="polite">
       <span className="sr-only">Загружаем документы журнала…</span>
 
-      <div className="flex flex-wrap items-start justify-between gap-4 sm:items-center">
+      <div className="flex flex-wrap items-start justify-between gap-3 sm:items-center">
         <Skeleton className="h-9 w-[320px] max-w-full rounded-2xl" />
-        <div className="grid w-full grid-cols-2 gap-2 sm:w-[440px] sm:shrink-0">
+        <div className="grid w-full grid-cols-2 gap-3 sm:w-[440px] sm:shrink-0">
           <Skeleton className="col-span-2 h-12 w-full rounded-2xl" />
           <Skeleton className="h-11 w-full rounded-2xl" />
           <Skeleton className="h-11 w-full rounded-2xl" />
         </div>
       </div>
 
-      <div className="border-b border-[#ececf4] pb-5">
-        <div className="flex gap-8 sm:gap-12">
-          <Skeleton className="h-5 w-[90px] rounded-lg" />
-          <Skeleton className="h-5 w-[90px] rounded-lg" />
-        </div>
+      <div className={JOURNAL_TAB_RAIL_CLASS}>
+        <Skeleton className="h-5 w-[72px] rounded-lg" />
+        <Skeleton className="h-5 w-[72px] rounded-lg" />
       </div>
 
-      <div className="space-y-4 sm:space-y-6">
+      <div className={JOURNAL_LIST_CARDS_CLASS}>
         {Array.from({ length: 4 }).map((_, index) => (
           <div
             key={index}

@@ -10,10 +10,19 @@ import { confirmAsync } from "@/components/ui/confirm-async";
 import { findOverlappingDocument } from "@/lib/journal-document-overlap";
 import {
   JOURNAL_LIST_HEADING_CLASS,
+  JOURNAL_TAB_ACTIVE_CLASS,
+  JOURNAL_TAB_INACTIVE_CLASS,
+  JOURNAL_TAB_LABEL_CLASS,
+  JOURNAL_TAB_LINK_CLASS,
   JOURNAL_TAB_RAIL_CLASS,
+  JOURNAL_TAB_UNDERLINE_CLASS,
   JOURNAL_TAB_VIEWPORT_CLASS,
 } from "@/components/journals/journal-responsive";
-import { JOURNAL_ACTION_CREATE_CLASS, JournalListActions } from "@/components/journals/journal-list-actions";
+import {
+  JOURNAL_ACTION_CREATE_CLASS,
+  JOURNAL_LIST_HEADER_ROW_CLASS,
+  JournalListActions,
+} from "@/components/journals/journal-list-actions";
 import { TOUR } from "@/lib/tour-anchors";
 import { ResponsiveMenu } from "@/components/ui/responsive-menu";
 import { LinkPendingSpinner } from "@/components/ui/link-pending";
@@ -299,8 +308,9 @@ export function JournalTopBar(props: {
     // `sm:items-center` — когда длинный H1 («Журнал бракеража скоропортящейся
     // продукции») переносится в две строки, кнопки «Инструкция» / «Создать
     // документ» центрируются по высоте блока заголовка, а не липнут к первой
-    // строке (P4 сводной таблицы аудита).
-    <div className="flex flex-wrap items-start justify-between gap-4 sm:items-center">
+    // строке (P4 сводной таблицы аудита). Строка — общий токен с
+    // собственными шапками журналов: тот же шаг, что внутри блока кнопок.
+    <div className={JOURNAL_LIST_HEADER_ROW_CLASS}>
       {/* Заголовок занимает всё место рядом с блоком кнопок (440 px) и
           переносится внутри него; блок уходит под заголовок, только
           когда рядом не остаётся и 18rem. */}
@@ -363,40 +373,48 @@ function restyleCreateSlot(slot: React.ReactNode): React.ReactNode {
   return slot;
 }
 
+const JOURNAL_TABS = [
+  { key: "active", label: "Активные", query: "" },
+  { key: "closed", label: "Закрытые", query: "?tab=closed" },
+] as const;
+
+/**
+ * Вкладки «Активные / Закрытые» — одни на все журналы (раньше у 19
+ * журналов была своя вёрстка с разными отступами). Подчёркивание — у
+ * подписи активной вкладки, по её ширине и в 6 px под текстом; общей
+ * полосы под рядом нет (токены — в journal-responsive.ts).
+ *
+ * `templateCode` — код журнала в адресе (`/journals/<code>`): списки
+ * передают сюда свой `routeCode`.
+ */
 export function JournalTabs(props: {
   activeTab: "active" | "closed";
   templateCode: string;
-  compact?: boolean;
 }) {
   return (
-    <div className={props.compact ?? true ? "border-b border-[#d9dce8]" : "border-b border-[#ececf4]"}>
-      <div className={JOURNAL_TAB_VIEWPORT_CLASS}>
-        <div className={JOURNAL_TAB_RAIL_CLASS}>
-          <Link
-            href={`/journals/${props.templateCode}`}
-            className={`relative flex items-center gap-1.5 pb-5 ${
-              props.activeTab === "active"
-                ? "font-medium text-black after:absolute after:bottom-[-1px] after:left-0 after:h-[3px] after:w-full after:bg-[#5566f6]"
-                : "text-[#6f7282]"
-            }`}
-          >
-            Активные
-            <LinkPendingSpinner />
-          </Link>
-          <Link
-            href={`/journals/${props.templateCode}?tab=closed`}
-            className={`relative flex items-center gap-1.5 pb-5 ${
-              props.activeTab === "closed"
-                ? "font-medium text-black after:absolute after:bottom-[-1px] after:left-0 after:h-[3px] after:w-full after:bg-[#5566f6]"
-                : "text-[#6f7282]"
-            }`}
-          >
-            Закрытые
-            <LinkPendingSpinner />
-          </Link>
-        </div>
+    <nav aria-label="Документы журнала" className={JOURNAL_TAB_VIEWPORT_CLASS}>
+      <div className={JOURNAL_TAB_RAIL_CLASS}>
+        {JOURNAL_TABS.map((tab) => {
+          const active = props.activeTab === tab.key;
+          return (
+            <Link
+              key={tab.key}
+              href={`/journals/${props.templateCode}${tab.query}`}
+              aria-current={active ? "page" : undefined}
+              className={cn(
+                JOURNAL_TAB_LINK_CLASS,
+                active ? JOURNAL_TAB_ACTIVE_CLASS : JOURNAL_TAB_INACTIVE_CLASS
+              )}
+            >
+              <span className={cn(JOURNAL_TAB_LABEL_CLASS, active && JOURNAL_TAB_UNDERLINE_CLASS)}>
+                {tab.label}
+              </span>
+              <LinkPendingSpinner />
+            </Link>
+          );
+        })}
       </div>
-    </div>
+    </nav>
   );
 }
 
