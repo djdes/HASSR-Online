@@ -320,6 +320,39 @@ async function layoutProbe(p, label) {
 }
 
 // ─── Шаги приложения ────────────────────────────────────────────────────
+// 3-й круг: вход как человек — поле почты с экранной клавиатуры, Enter
+// (KEYCODE_ENTER) ведёт к паролю, Enter в пароле входит. Без клика «Войти».
+async function loginByKeyboard(p, email, s) {
+  if (!pathOf(p).startsWith("/mini/login")) await goto(p, "/mini/login");
+  await p.getByRole("radio", { name: "Почта" }).click();
+  await sleep(500);
+  await p.fill("#email", "");
+  await p.fill("#password", "");
+  await screenTap(p, p.locator("#email"));
+  await sleep(1500);
+  sh(`input text '${email}'`);
+  await sleep(1000);
+  const typed = await p.evaluate(() => document.querySelector("#email")?.value ?? "");
+  check(typed === email, `email typed via keyboard: got "${typed}"`);
+  key(66);
+  await sleep(1200);
+  const afterEmailEnter = await p.evaluate(() => ({ focused: document.activeElement?.id, path: location.pathname, password: document.querySelector("#password")?.value?.length ?? -1 }));
+  s.data.afterEmailEnter = afterEmailEnter;
+  check(afterEmailEnter.focused === "password", `Enter in the email field did not move focus to the password: focused "${afterEmailEnter.focused}"`);
+  check(afterEmailEnter.path.startsWith("/mini/login"), `Enter in the email field submitted the form: ${afterEmailEnter.path}`);
+  s.shots.push(shot("login-after-email-enter"));
+  sh(`input text '${PASSWORD}'`);
+  await sleep(1200);
+  s.data.passwordTyped = await p.evaluate(() => document.querySelector("#password")?.value?.length ?? 0);
+  check(s.data.passwordTyped === PASSWORD.length, `password typed via keyboard: ${s.data.passwordTyped} of ${PASSWORD.length} chars`);
+  s.shots.push(shot("login-password-typed"));
+  key(66);
+  const ok = await p.waitForURL((u) => !u.pathname.startsWith("/mini/login"), { timeout: 90000 }).then(() => true, () => false);
+  check(ok, `Enter in the password field did not log in (still ${pathOf(p)})`);
+  s.data.loggedInByEnter = ok;
+  await settle(p, 2500);
+  return ok;
+}
 async function login(p, email) {
   if (!pathOf(p).startsWith("/mini/login")) await goto(p, "/mini/login");
   await p.getByRole("radio", { name: "Почта" }).click();
@@ -328,6 +361,31 @@ async function login(p, email) {
   await p.getByRole("button", { name: "Войти", exact: true }).click();
   await p.waitForURL((u) => !u.pathname.startsWith("/mini/login"), { timeout: 90000 });
   await settle(p, 2500);
+}
+// 3-й круг: iOS-подложка под строкой состояния (IosStatusBarBackdrop) не
+// должна появляться на Android — ищем фиксированный элемент у верхнего края
+// во всю ширину высотой env(safe-area-inset-top) / цвета #0b1024.
+async function iosBackdropProbe(p) {
+  return p.evaluate(() => {
+    const probe = document.createElement("div");
+    probe.style.cssText = "position:fixed;top:0;left:0;width:1px;height:env(safe-area-inset-top,0px);visibility:hidden";
+    document.body.appendChild(probe);
+    const envTop = probe.getBoundingClientRect().height;
+    probe.remove();
+    const found = [];
+    for (const el of document.querySelectorAll("body *")) {
+      const cs = getComputedStyle(el);
+      if (cs.position !== "fixed") continue;
+      const r = el.getBoundingClientRect();
+      const inline = el.getAttribute("style") || "";
+      const bySafeArea = /(^|;)\s*height:\s*env\(safe-area-inset-top/.test(inline);
+      const byColor = cs.backgroundColor === "rgb(11, 16, 36)" && r.top <= 1 && r.height <= 80;
+      const byShape = r.top <= 1 && r.width >= innerWidth - 1 && r.height > 0 && r.height <= 80 && Math.abs(r.height - envTop) < 1 && cs.pointerEvents === "none";
+      if (bySafeArea || byColor || byShape)
+        found.push({ tag: el.tagName, cls: String(el.className).slice(0, 80), style: inline.slice(0, 160), top: r.top, height: r.height, width: r.width, bg: cs.backgroundColor, z: cs.zIndex });
+    }
+    return { envTop, found };
+  });
 }
 async function screenTap(p, locator) {
   uiXml(); // закрыть системный ANR, если висит
@@ -519,7 +577,27 @@ async function main() {
     const imeTop = ins.ime?.y1 ?? null;
     const toScreen = (y) => (wv?.y1 ?? 0) + y * geo.dpr;
     if (imeTop && geo.email) check(toScreen(geo.email.bottom) <= imeTop + 2, `email field hidden by keyboard: field bottom ${Math.round(toScreen(geo.email.bottom))} > keyboard top ${imeTop}`);
-    // Пароль и кнопка: переходим в поле пароля, как человек.
+    // 3-й круг: подсказки клавиши ввода и Enter в почте -> пароль (без отправки).
+    s.data.enterKeyHints = await p.evaluate(() => ({
+      email: document.querySelector("#email")?.getAttribute("enterkeyhint"),
+      phone: document.querySelector("#phone")?.getAttribute("enterkeyhint") ?? "(no #phone in email mode)",
+      password: document.querySelector("#password")?.getAttribute("enterkeyhint"),
+    }));
+    check(s.data.enterKeyHints.email === "next", `#email enterkeyhint: ${s.data.enterKeyHints.email}`);
+    check(s.data.enterKeyHints.password === "go", `#password enterkeyhint: ${s.data.enterKeyHints.password}`);
+    sh("input text 'x@y.ru'");
+    await sleep(800);
+    key(66);
+    await sleep(1200);
+    s.data.afterEmailEnter = await p.evaluate(() => ({ focused: document.activeElement?.id, path: location.pathname, email: document.querySelector("#email")?.value }));
+    s.data.imeAfterEmailEnter = systemInsets().imeShown;
+    s.shots.push(shot("keyboard-after-email-enter"));
+    check(s.data.afterEmailEnter.focused === "password", `Enter in email: focus on "${s.data.afterEmailEnter.focused}", expected password`);
+    check(s.data.afterEmailEnter.path.startsWith("/mini/login"), `Enter in email left the login page: ${s.data.afterEmailEnter.path}`);
+    // Подложка iOS не должна рисоваться на Android — ни на входе, ни с клавиатурой.
+    s.data.iosBackdrop = await iosBackdropProbe(p);
+    check(!s.data.iosBackdrop.found.length, `iOS status-bar backdrop rendered on Android: ${JSON.stringify(s.data.iosBackdrop.found)}`);
+    // Пароль и кнопка: переходим в поле пароля, как человек (фокус уже там после Enter).
     await screenTap(p, p.locator("#password"));
     await sleep(800);
     // Набираем пароль с экранной клавиатуры, как человек (2-й круг: «Войти» над клавиатурой при наборе).
@@ -546,6 +624,7 @@ async function main() {
     }
     s.data.typed = await p.evaluate(() => document.querySelector("#password")?.value?.length ?? 0);
     await p.fill("#password", "");
+    await p.fill("#email", "");
     note(`innerHeight with keyboard ${geo2.innerHeight} (was ${geo.innerHeight}), ime ${JSON.stringify(ins2.ime)}`);
     key(4); // спрятать клавиатуру
     await sleep(800);
@@ -585,7 +664,8 @@ async function main() {
 
   await scenario("2 Login as chef -> home, push explainer, Включить -> OS permission -> allow", async (s) => {
     const p = page;
-    await login(p, CHEF);
+    // 3-й круг: вход целиком с клавиатуры — Enter в почте -> пароль, Enter в пароле -> вход.
+    if (!(await loginByKeyboard(p, CHEF, s))) await login(p, CHEF);
     s.shots.push(shot("chef-home"));
     s.data.home = pathOf(p);
     const sheet = await p.waitForSelector('[data-testid="push-explainer"]', { timeout: 45000 }).catch(() => null);
@@ -656,6 +736,9 @@ async function main() {
         const lay = await layoutProbe(p, name);
         s.data.screens.push({ name, dialogs, url: pathOf(p), heading: lay.heading?.text, issues: lay.issues, capTop: lay.capTop, envTop: lay.envTop, capBottom: lay.capBottom, theme: lay.theme });
         for (const i of lay.issues) check(false, `${name}: ${i}`);
+        const bd = await iosBackdropProbe(p);
+        s.data.screens.at(-1).iosBackdrop = bd.found.length;
+        check(!bd.found.length, `${name}: iOS status-bar backdrop rendered on Android: ${JSON.stringify(bd.found)}`);
         if (name === "profile") {
           const push = await p.locator('[data-testid="app-push-settings"]').count();
           check(push > 0, "profile: section «Уведомления на этом телефоне» missing");
