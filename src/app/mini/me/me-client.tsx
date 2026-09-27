@@ -65,6 +65,7 @@ export function MiniMeClient({
   telegramBotUsername,
   positionTitle = null,
   phone = null,
+  telegramLinked = false,
 }: {
   // Читается на сервере в page.tsx: TELEGRAM_BOT_USERNAME — не
   // NEXT_PUBLIC-переменная, из клиентского компонента её не видно.
@@ -72,6 +73,10 @@ export function MiniMeClient({
   /** Должность и телефон в сессии не лежат — приходят из page.tsx. */
   positionTitle?: string | null;
   phone?: string | null;
+  /** Привязан ли Telegram. Нет — кнопки «Отвязать Telegram» нет: в приложении
+   *  для телефона человек входит по паролю, и кнопка только пугала бы и
+   *  выкидывала из аккаунта. */
+  telegramLinked?: boolean;
 }) {
   const { data: session, status } = useSession();
   const { theme, setTheme } = useMiniTheme();
@@ -443,6 +448,7 @@ export function MiniMeClient({
         >
           <ProfileRow icon={LogOut} label="Выйти" hint="сессия сбросится" chevron={false} />
         </button>
+        {telegramLinked ? (
         <button
           type="button"
           onClick={() => setConfirmUnlinkOpen(true)}
@@ -462,6 +468,7 @@ export function MiniMeClient({
             chevron={false}
           />
         </button>
+        ) : null}
         {/* Удаление аккаунта — требование App Store и Google Play. Диалог
             и запрос общие со страницей /delete-account. */}
         <DeleteAccountFlow
