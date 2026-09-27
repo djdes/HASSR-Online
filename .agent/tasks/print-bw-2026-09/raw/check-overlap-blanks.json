@@ -1,0 +1,2602 @@
+[
+ {
+  "set": "blanks",
+  "label": "hygiene",
+  "url": "https://wesetup.ru/qb/XWC2WMLJRAQN6KVEJPBISU6B4ZQGBZB4GPMJOWX4X5SKA7L47ZPJESROYKK5B2TGPOKYXKQ7BJUZFHQMGBO5NY3IUIXK2OJT4Y4WMOUOBSWY2",
+  "modules": 53,
+  "pagesPlain": 2,
+  "pages": 2,
+  "pagesHeader": 2,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 10.15,
+     "x1": 286.85008333333326,
+     "y1": 33.85
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 10,
+     "x1": 287.0000833333333,
+     "y1": 34
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.7,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   },
+   {
+    "page": 2,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 10.15,
+     "x1": 286.85008333333326,
+     "y1": 33.85
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 10,
+     "x1": 287.0000833333333,
+     "y1": 34
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.7,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "health_check",
+  "url": "https://wesetup.ru/qb/537BSGVTQMD7EXFOGM2W4OQ4N63K3KFVPEFH6BXM7Q627QNC24GW57ZASQCQF2FG55JZ5CRPVJ2GQHW3F2YZPXHWQUV2F2ANYFT3E2CT4IM4E",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 10.15,
+     "x1": 286.85008333333326,
+     "y1": 33.85
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 10,
+     "x1": 287.0000833333333,
+     "y1": 34
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.7,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "climate_control",
+  "url": "https://wesetup.ru/qb/DO6PTDJJDHDP6YUYWDGJRW3YJTHCOYSCAXW24NVKDE4OQQOEPE477FJNZLSKTJ56EMAXIJM45OM52F66743LT3WTHSYCAJECF7RY5RECJP5YU",
+  "modules": 53,
+  "pagesPlain": 2,
+  "pages": 2,
+  "pagesHeader": 2,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 10.15,
+     "x1": 286.85008333333326,
+     "y1": 33.85
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 10,
+     "x1": 287.0000833333333,
+     "y1": 34
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.7,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   },
+   {
+    "page": 2,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 10.15,
+     "x1": 286.85008333333326,
+     "y1": 33.85
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 10,
+     "x1": 287.0000833333333,
+     "y1": 34
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.7,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "cold_equipment_control",
+  "url": "https://wesetup.ru/qb/7LXQLEUFAW3CAMJVODIUQTQD5RLVEDJUA2WAMA3GDH7IAHMJVJREFJSCP53ALPTILJ5RTN7H4VTN4RMONBR7XTXEJGBQQ4MSLELTYEU3TDQKM",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 10.15,
+     "x1": 286.85008333333326,
+     "y1": 33.85
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 10,
+     "x1": 287.0000833333333,
+     "y1": 34
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.7,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "cleaning_ventilation_checklist",
+  "url": "https://wesetup.ru/qb/MZGCBYRUCDMXSJ5IZ3WIHA7BRXIVE4VCEGJPFUTXFV6ZGWSVA6S4BWPNRUX3NXK2RYPUZMCICRCKAX6XHBSQI6YGV2MGDPXOIX4IN5H6EBTSO",
+  "modules": 53,
+  "pagesPlain": 6,
+  "pages": 6,
+  "pagesHeader": 6,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 18.598527777777775,
+     "x1": 286.85008333333326,
+     "y1": 42.29852777777778
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 18.448527777777777,
+     "x1": 287.0000833333333,
+     "y1": 42.44852777777778
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.7,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   },
+   {
+    "page": 2,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 10.15,
+     "x1": 286.85008333333326,
+     "y1": 33.85
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 10,
+     "x1": 287.0000833333333,
+     "y1": 34
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.7,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   },
+   {
+    "page": 3,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 10.15,
+     "x1": 286.85008333333326,
+     "y1": 33.85
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 10,
+     "x1": 287.0000833333333,
+     "y1": 34
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.7,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   },
+   {
+    "page": 4,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 10.15,
+     "x1": 286.85008333333326,
+     "y1": 33.85
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 10,
+     "x1": 287.0000833333333,
+     "y1": 34
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.7,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   },
+   {
+    "page": 5,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 10.15,
+     "x1": 286.85008333333326,
+     "y1": 33.85
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 10,
+     "x1": 287.0000833333333,
+     "y1": 34
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.7,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   },
+   {
+    "page": 6,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 10.15,
+     "x1": 286.85008333333326,
+     "y1": 33.85
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 10,
+     "x1": 287.0000833333333,
+     "y1": 34
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.7,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "cleaning",
+  "url": "https://wesetup.ru/qb/FWIAA4ITKMPFTQAWJZCIG4EWYTYBCUI4XRWGH2QYDNDUSIVR2EW5M4E6JMALB27AN5B6V7T72HIFDD6K5UUN446SLGNCAX56JJE7NQX2ZEROA",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 10.15,
+     "x1": 286.85008333333326,
+     "y1": 33.85
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 10,
+     "x1": 287.0000833333333,
+     "y1": 34
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.7,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "general_cleaning",
+  "url": "https://wesetup.ru/qb/DP7FCIFAEJS2EBMIGMCIBIPMSCYQRA6DTA23JXMOCMPBTIGPLIWMM4VK6HD65PNHL3I2F6HFGRIXU36R3XRW2FYIXYEMOFBFUV7O3236MTAWC",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 23.047055555555556,
+     "x1": 286.85008333333326,
+     "y1": 46.747055555555555
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 22.897055555555557,
+     "x1": 287.0000833333333,
+     "y1": 46.89705555555555
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.4,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "uv_lamp_runtime",
+  "url": "https://wesetup.ru/qb/VNFQ27CGNKV4CHDMBSMOBEOVX55X35XUOPX4G23MPBI2B6RAPXXDNJIZTLBQWYIVNT7FQAFDRWVALU6TUFIONC7PF4Q34E6Y2OLA77XRT57ZA",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 21.678277777777776,
+     "x1": 286.85008333333326,
+     "y1": 45.378277777777775
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 21.528277777777777,
+     "x1": 287.0000833333333,
+     "y1": 45.528277777777774
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.4,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "finished_product",
+  "url": "https://wesetup.ru/qb/EOUHTGVSLJ65IF74H3FDW3H3HEQUOUMZT6TAPJIQR5WP27IVXOADOEHG5YIBLP2YA55PWDAJNZLD4VC4BUZCLS4B74A7Q7UL6TFDXGAQYZSWI",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 21.678277777777776,
+     "x1": 286.85008333333326,
+     "y1": 45.378277777777775
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 21.528277777777777,
+     "x1": 287.0000833333333,
+     "y1": 45.528277777777774
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.4,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "perishable_rejection",
+  "url": "https://wesetup.ru/qb/RD5L2VVJ5UHRUO7OCFTEU3UHJKNSNKOTMQQSZ6HI6I7V622O3LABLRMXMTSXNFJIT5SETPQM766L4ZYHTUS2XZNZ4XQJF7MQODWQYBCEOOMGA",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 20.3095,
+     "x1": 286.85008333333326,
+     "y1": 44.0095
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 20.1595,
+     "x1": 287.0000833333333,
+     "y1": 44.1595
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.4,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "incoming_control",
+  "url": "https://wesetup.ru/qb/PA4PPGLEJU3P6NPSSFX7GWBLYIKCZKWEXG5GI25YECCBS32CVJMJBCKPGMZJTN3ACJ2DY2TTIGNNYVDZ5EWSNMPU7WRHWKU3SOE3IX35B6QGI",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 21.678277777777776,
+     "x1": 286.85008333333326,
+     "y1": 45.378277777777775
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 21.528277777777777,
+     "x1": 287.0000833333333,
+     "y1": 45.528277777777774
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.9,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "fryer_oil",
+  "url": "https://wesetup.ru/qb/NRNS2CRRCIDT2MJP7BQH5TBSCRF2KHALLDS2LM5MLL3PTA6Q4S5H5WQ4JA433WCUYXN4TEFIKNUVYD4MSD37BGDVB4WQ242JHTBSVXVQ2QRAQ",
+  "modules": 53,
+  "pagesPlain": 2,
+  "pages": 2,
+  "pagesHeader": 2,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 21.678277777777776,
+     "x1": 286.85008333333326,
+     "y1": 45.378277777777775
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 21.528277777777777,
+     "x1": 287.0000833333333,
+     "y1": 45.528277777777774
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.7,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   },
+   {
+    "page": 2,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 10.15,
+     "x1": 286.85008333333326,
+     "y1": 33.85
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 10,
+     "x1": 287.0000833333333,
+     "y1": 34
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.7,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "med_books",
+  "url": "https://wesetup.ru/qb/3B455RYAAILA4K7SHZIHYWVSUTCYKZO3D7SLQA2F6EMRGEZVZ6ZJU23LRD2FLOG6DA4AV3XIKA7KWLCWDSRNMOQW3TTFVXDCE7FOL25KLLBNK",
+  "modules": 53,
+  "pagesPlain": 3,
+  "pages": 3,
+  "pagesHeader": 3,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 23.047055555555556,
+     "x1": 286.85008333333326,
+     "y1": 46.747055555555555
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 22.897055555555557,
+     "x1": 287.0000833333333,
+     "y1": 46.89705555555555
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.9,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   },
+   {
+    "page": 2,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 10.15,
+     "x1": 286.85008333333326,
+     "y1": 33.85
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 10,
+     "x1": 287.0000833333333,
+     "y1": 34
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.7,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   },
+   {
+    "page": 3,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 10.15,
+     "x1": 286.85008333333326,
+     "y1": 33.85
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 10,
+     "x1": 287.0000833333333,
+     "y1": 34
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.7,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "training_plan",
+  "url": "https://wesetup.ru/qb/TZ54IZQ7GD2MABZ2MSAUMOUUQKIWXA4RSQBQPEM34MONQJRA2ZYNNN6TFUQLXPQ7CYHPNXV6MMEKYXCD7NXESZB6H4TAV5I6YTGI7VG4SECL6",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 23.047055555555556,
+     "x1": 286.85008333333326,
+     "y1": 46.747055555555555
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 22.897055555555557,
+     "x1": 287.0000833333333,
+     "y1": 46.89705555555555
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.4,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "staff_training",
+  "url": "https://wesetup.ru/qb/UJXFWKKVOZ65GPBOFG4YPX6I6BOSH4AZSPG2WT3CPKR3KFKPAH4AHZNEF4RZVKSPKZX3KERJRYEGSLFXSQRIY6VHKV7LDWGVGABNLNQBL3H4K",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 20.3095,
+     "x1": 286.85008333333326,
+     "y1": 44.0095
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 20.1595,
+     "x1": 287.0000833333333,
+     "y1": 44.1595
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.4,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "disinfectant_usage",
+  "url": "https://wesetup.ru/qb/5GD5I6I3OPSXXOB2N3CSY4YCEAKD732J5CE7TADYZPQQTHCPURGMYICY5ZCMM6T4OG2MAUEYAUE4GGJCFOL3XQNR2AHZP3JVAIEELJWSJ6L6K",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 0,
+  "pagesCorner": 1,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "corner",
+    "box": {
+     "x0": 267.0000833333333,
+     "y0": 10,
+     "x1": 287.0000833333333,
+     "y1": 33.7
+    },
+    "slot": null,
+    "hasHeader": false,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.27,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.9,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "sanitary_day_control",
+  "url": "https://wesetup.ru/qb/OEQJ36CKAJLBTATXZE7TSBEMKHWYJROLHF4HEPVQ44AB4JLKFYACAH4E6AKLIHQVFT7NQHT245BITAHFLOIVE5WMCRXIIYRS7MP5XVOQGCCVW",
+  "modules": 53,
+  "pagesPlain": 2,
+  "pages": 2,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 1,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 10.15,
+     "x1": 286.85008333333326,
+     "y1": 33.85
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 10,
+     "x1": 287.0000833333333,
+     "y1": 34
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.7,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   },
+   {
+    "page": 2,
+    "where": "none",
+    "box": null,
+    "slot": null,
+    "hasHeader": false,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": null,
+    "alignDiffMm": null,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.7,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "equipment_maintenance",
+  "url": "https://wesetup.ru/qb/VHT6JF2GEDVE6NNLPYZ5O4ZTQQ2MD5G2LLGR4XRZ3TBGWLORYNLPU7ZSU47YXO2ORGLPKYSL4X6AUAZUURGHNLV3GBK4OQIIY2W2YQKL7T4VC",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 20.3095,
+     "x1": 286.85008333333326,
+     "y1": 44.0095
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 20.1595,
+     "x1": 287.0000833333333,
+     "y1": 44.1595
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.4,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "breakdown_history",
+  "url": "https://wesetup.ru/qb/MF3V36HUNHCSOGNRJI3HAGCP5J22XRRYUC5TZKWODRCHJ2LWNZLJJOR3U2PXIO66RU67MZLHPESQRBBMCMEBX4SLNYRDEJBIBWFXQK6EV67CQ",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 23.047055555555556,
+     "x1": 286.85008333333326,
+     "y1": 46.747055555555555
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 22.897055555555557,
+     "x1": 287.0000833333333,
+     "y1": 46.89705555555555
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.9,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "equipment_calibration",
+  "url": "https://wesetup.ru/qb/PL3ORM3OXOH6FISVUBNPKPVTON6WN5U3HTUO7UFQYJQIQBWF22OA4BTZGRRGEVA3UAFRHWYZD32K3QSTS4F32CV3E7CCXTYFNRGSQJQWBZ6MG",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 23.047055555555556,
+     "x1": 286.85008333333326,
+     "y1": 46.747055555555555
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 22.897055555555557,
+     "x1": 287.0000833333333,
+     "y1": 46.89705555555555
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.7,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "incoming_raw_materials_control",
+  "url": "https://wesetup.ru/qb/AG2K2D3WMEWVGEJ5ZDKVCS3RXIL77KQB2LJKYVOQ7FEQP3YMG5YM25WSLYF52QHAAUPRJBR2WFQYKFYCHCHS4N6OT25CYQAOGXSTZGNE5FSU6",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 19.62511111111111,
+     "x1": 286.85008333333326,
+     "y1": 43.32511111111111
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 19.47511111111111,
+     "x1": 287.0000833333333,
+     "y1": 43.47511111111111
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.9,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "ppe_issuance",
+  "url": "https://wesetup.ru/qb/XKISOOZFRZRXWUF4RX6Y2KUXAB43GEY2XITYIOPEY73SB4OILEVHYP5DKRSOWSE5IJRHEXNFOX4IIDJP6LOMUUEVAFDMCEMUDAYPDOMOWG37Q",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 23.047055555555556,
+     "x1": 286.85008333333326,
+     "y1": 46.747055555555555
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 22.897055555555557,
+     "x1": 287.0000833333333,
+     "y1": 46.89705555555555
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.9,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "accident_journal",
+  "url": "https://wesetup.ru/qb/G7QKEWLYZGPTKDOVKLDMZ7SLV23EOZHAON6TFMIZ4XU7MPVQULMRM3L5V3A32MXNHPZM6IMSE6CLRK7VM6CWRO4B5EKVW5XMR5Q26KPVYYUJM",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 23.047055555555556,
+     "x1": 286.85008333333326,
+     "y1": 46.747055555555555
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 22.897055555555557,
+     "x1": 287.0000833333333,
+     "y1": 46.89705555555555
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.7,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "complaint_register",
+  "url": "https://wesetup.ru/qb/KHIVAFMXSSE3LVAUAO3MXJIDEBT72BU5BNKWIRWTKAVKJXMITUFNMWHWYVDKKRJBPSC3LFWNHIHYVPGDDRMUBBZ4DVKQNH2B3QYEPSBNDDRX6",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 23.047055555555556,
+     "x1": 286.85008333333326,
+     "y1": 46.747055555555555
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 22.897055555555557,
+     "x1": 287.0000833333333,
+     "y1": 46.89705555555555
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.4,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "product_writeoff",
+  "url": "https://wesetup.ru/qb/RKVSGB5MIEEC7GMRZ5L4WLCF6RUL2GCDBHMRZGNIMYYGBXT2RN5DNQ4QTKGYMVDOQJWCFHPFYTXN4X5URCFRGOYYPCLGYGS2Z6ZKMCLLB5G44",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 23.047055555555556,
+     "x1": 286.85008333333326,
+     "y1": 46.747055555555555
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 22.897055555555557,
+     "x1": 287.0000833333333,
+     "y1": 46.89705555555555
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.4,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "audit_plan",
+  "url": "https://wesetup.ru/qb/43NTPGWX5CR4NYMS25KKD5PST4Y2LVDYEM6PDRCKJ2O7R47SCL2Q2DRXSVXYI4DI6A5VENTZXSNESINQZZMU66GC5W6T7VXE47EIST5SZ62VA",
+  "modules": 53,
+  "pagesPlain": 2,
+  "pages": 2,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 1,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 23.047055555555556,
+     "x1": 286.85008333333326,
+     "y1": 46.747055555555555
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 22.897055555555557,
+     "x1": 287.0000833333333,
+     "y1": 46.89705555555555
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.9,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   },
+   {
+    "page": 2,
+    "where": "none",
+    "box": null,
+    "slot": null,
+    "hasHeader": false,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": null,
+    "alignDiffMm": null,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.7,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "audit_protocol",
+  "url": "https://wesetup.ru/qb/6F74RKFPLJQTCOPWFICTSBAS5BUUMAN2AQUQGVQO3OMJIOS47QOV2CEI6UESIAP7VMBE4PUSVYAXLA52YPIAYOL5ZKEO2FUSH3ZWQAACZSPWK",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 23.047055555555556,
+     "x1": 286.85008333333326,
+     "y1": 46.747055555555555
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 22.897055555555557,
+     "x1": 287.0000833333333,
+     "y1": 46.89705555555555
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.9,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "audit_report",
+  "url": "https://wesetup.ru/qb/EH7UKSXKZYEPOXYGUGAVQZALGZ7V7UGPZJK6T73LZZ5SMOW3YNS46RIMAYU5FIV6JBXTO5N2IDKLQSJHV72SGEUUNR6IZEHPFLWIZUBNFPDOW",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 23.047055555555556,
+     "x1": 286.85008333333326,
+     "y1": 46.747055555555555
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 22.897055555555557,
+     "x1": 287.0000833333333,
+     "y1": 46.89705555555555
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.9,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "traceability_test",
+  "url": "https://wesetup.ru/qb/ZX2DGMUATN3GBWJMI5HCGWHJI47RFMREAC7ZPOKJLIBMOS7JCFQWVFXAA47TG4CF2IEP4MGMQIJKOBX5J7G37OSSE4OZYG64DBJIINJLYVLPY",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 23.047055555555556,
+     "x1": 286.85008333333326,
+     "y1": 46.747055555555555
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 22.897055555555557,
+     "x1": 287.0000833333333,
+     "y1": 46.89705555555555
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.9,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "metal_impurity",
+  "url": "https://wesetup.ru/qb/GLC4FQ5MUQXYRAOR6LIJXQSQ2XWUKGFWQDCKTTTV75Y3OOELQQVJBJCPZ2IFAFU353XXHQD6BC4WPKX6D7BE43LV53OIYOWP7KLJTXRVAKPD4",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 23.047055555555556,
+     "x1": 286.85008333333326,
+     "y1": 46.747055555555555
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 22.897055555555557,
+     "x1": 287.0000833333333,
+     "y1": 46.89705555555555
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.7,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "equipment_cleaning",
+  "url": "https://wesetup.ru/qb/AQF3PXFXXVV6GXNQLYZYSYW3JSSXIURSSTXWIO5VSHJEVBHAILGSFSIKQ4MOCISOCCE3US2SXPPI5X54PG6OV6JC33LWCLB67KYY7JRV4Q72M",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 23.047055555555556,
+     "x1": 286.85008333333326,
+     "y1": 46.747055555555555
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 22.897055555555557,
+     "x1": 287.0000833333333,
+     "y1": 46.89705555555555
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.4,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "intensive_cooling",
+  "url": "https://wesetup.ru/qb/BL6ASRUI4G6IB3RNZP6P5PT5RRCXUFUQWKKR4CB3ZB2BJXICBXZJSOVXH5CCOOCDIZFFJLZWNA5XDOUJ4PI4VJCXAO2Q43H7D2Y23IC4I2ZNY",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 20.3095,
+     "x1": 286.85008333333326,
+     "y1": 44.0095
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 20.1595,
+     "x1": 287.0000833333333,
+     "y1": 44.1595
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.4,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "glass_items_list",
+  "url": "https://wesetup.ru/qb/7GMVKHT57UGCEM2RC4TQKN4746WOXK54237JB6EXRJAYGTRHEVMAEI5LTY3YYBAYIONWVY75JIPBSHUHFZRJJPF3NQP2U2RJPNBH4SETQ3EPI",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 21.678277777777776,
+     "x1": 286.85008333333326,
+     "y1": 45.378277777777775
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 21.528277777777777,
+     "x1": 287.0000833333333,
+     "y1": 45.528277777777774
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.7,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "glass_control",
+  "url": "https://wesetup.ru/qb/SP6PTUE4DNB35DTL4RXPUUNMJFC4PTD7V7I3RH2VHTEOKIZQGALOOXEKKNR6PZ3HKQNJRKHSE74RLVBQUMUXCV664Z6JZT4T5GULOK5Y7S2DI",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 20.3095,
+     "x1": 286.85008333333326,
+     "y1": 44.0095
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 20.1595,
+     "x1": 287.0000833333333,
+     "y1": 44.1595
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.7,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "pest_control",
+  "url": "https://wesetup.ru/qb/GDTNBV7BBD23FNHEY57KFIRXDNWKONZOSPEGFOAVAHMSCPMRAZ62KP3Z3ZT6D5Q2LMRA72WFUAPZYJPN5LBWS2ZHHDA7LH5J6FKDEFLADOERO",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 20.3095,
+     "x1": 286.85008333333326,
+     "y1": 44.0095
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 20.1595,
+     "x1": 287.0000833333333,
+     "y1": 44.1595
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.7,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "daily_samples",
+  "url": "https://wesetup.ru/qb/ZPET3WSDNEWBZFGRGZ5KVIRMBEPR3Y5L3F4OXP5KPAM3ATFZJANVT6MOO4D4CPP64CQ3ATG5S7662QFCQJ57CL4BDJQIYSNB7O4EFFQX7L5KM",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 23.047055555555556,
+     "x1": 286.85008333333326,
+     "y1": 46.747055555555555
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 22.897055555555557,
+     "x1": 287.0000833333333,
+     "y1": 46.89705555555555
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.4,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "vitaminization",
+  "url": "https://wesetup.ru/qb/24VMI3VAS6EVXBAJ6QACMWIGAKE2WCLV2SC5EUCR4BUTO2J37L4JBB3L46NNQWX6HY3NW7RVZLCA6QHYMDZ6UYGSZ3WADLOCQ6OCXURFSBNUG",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 20.3095,
+     "x1": 286.85008333333326,
+     "y1": 44.0095
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 20.1595,
+     "x1": 287.0000833333333,
+     "y1": 44.1595
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.4,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "ration_control",
+  "url": "https://wesetup.ru/qb/YMASIYMYLXABF7ZS2IQ5RCPRSDZXW37FHTTI42TK5CQ26EIUYB4ORV7JBM7R2JEWC4EPGB2JAJHLV7R5GFFP666ZANABUBR5KQHCI5OTOAKUA",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 23.047055555555556,
+     "x1": 286.85008333333326,
+     "y1": 46.747055555555555
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 22.897055555555557,
+     "x1": 287.0000833333333,
+     "y1": 46.89705555555555
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.9,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "transport_temperature",
+  "url": "https://wesetup.ru/qb/IIV7R7UQM36P3QP3AQCJCQPVAXI4PJWNGN52TOX5D6ZLHATJ7IGUA2FDHBJQZXCESF6BN345MAX2BYT7LZYDMZCH7HJL2T2XQMQR7IOSAXMNY",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 21.678277777777776,
+     "x1": 286.85008333333326,
+     "y1": 45.378277777777775
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 21.528277777777777,
+     "x1": 287.0000833333333,
+     "y1": 45.528277777777774
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.9,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "tableware_breakage",
+  "url": "https://wesetup.ru/qb/TST6HAQDKGTSRPWEWFZWJ6DWWH6DV45B2DXMSOJWZAFJZNMWQQWPHFUQKCXPLQIE6LFXRLVVMU5RKBAIOEH4KKGZZDLSVTXWCHMM5L27RDVYS",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 23.047055555555556,
+     "x1": 286.85008333333326,
+     "y1": 46.747055555555555
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 22.897055555555557,
+     "x1": 287.0000833333333,
+     "y1": 46.89705555555555
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.4,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "pool_water_control",
+  "url": "https://wesetup.ru/qb/GQHOPVGMTYICOH7P7M7JUM2ZI2JE32IM54AJLUOB4AQXS3SJEB6NT37OOBV7CTCR4YWW4VGBG2RQ3IWPJGPABDW5YXPXDN32UTTCOEZ3MFGDY",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 23.047055555555556,
+     "x1": 286.85008333333326,
+     "y1": 46.747055555555555
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 22.897055555555557,
+     "x1": 287.0000833333333,
+     "y1": 46.89705555555555
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.4,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "inventory_condition",
+  "url": "https://wesetup.ru/qb/WA6UERJNBFCWJMOKVDZXI7HB6DB6PCF3ZM6UWLOU5ZNXLOBFRRPKVA3KT3WB4U22WZLP4N7REHSXY4CANQJ7BOCIX2XFFV3SXQ4GXHDMTDGHU",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 19.62511111111111,
+     "x1": 286.85008333333326,
+     "y1": 43.32511111111111
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 19.47511111111111,
+     "x1": 287.0000833333333,
+     "y1": 43.47511111111111
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.9,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "instrument_sterilization",
+  "url": "https://wesetup.ru/qb/U2CQBIDIPH4BCT3NHS5FNJVVGG4EFU6QI6BQ3SPVBBKTAXL646S3E2J6FNG7SXHO5SHYL564DO3FNFJ2SKTX6WI743EX2DZOUHCWRQNIDYGFC",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 23.047055555555556,
+     "x1": 286.85008333333326,
+     "y1": 46.747055555555555
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 22.897055555555557,
+     "x1": 287.0000833333333,
+     "y1": 46.89705555555555
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.9,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "medical_waste_b",
+  "url": "https://wesetup.ru/qb/ODIPWMRNJWVOTDOLA66KCPDGVRLEENP74IJDHXMSQFOZ76SS6YAK7LMDKHP4QUJENHFI6WARJDOZ7R5FEE3FWPMNC66S2P5KQXKCN7NPEGLK4",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 23.047055555555556,
+     "x1": 286.85008333333326,
+     "y1": 46.747055555555555
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 22.897055555555557,
+     "x1": 287.0000833333333,
+     "y1": 46.89705555555555
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.4,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "blanks",
+  "label": "batch_release",
+  "url": "https://wesetup.ru/qb/CNHIKGJOIHL4USRVAXKV4FSJSCTETY6EALLBWJJ4AC4QRZNM3J3G3VQXFIADTI4II46CBMVBFXRAVFEDXHZMDKLPQAGYXQY6TWF3SW4UUBXCM",
+  "modules": 53,
+  "pagesPlain": 1,
+  "pages": 1,
+  "pagesHeader": 1,
+  "pagesCorner": 0,
+  "pagesNone": 0,
+  "results": [
+   {
+    "page": 1,
+    "where": "header",
+    "box": {
+     "x0": 266.85008333333326,
+     "y0": 23.047055555555556,
+     "x1": 286.85008333333326,
+     "y1": 46.747055555555555
+    },
+    "slot": {
+     "x0": 266.7000833333333,
+     "y0": 22.897055555555557,
+     "x1": 287.0000833333333,
+     "y1": 46.89705555555555
+    },
+    "hasHeader": true,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.17,
+    "overflowSheet": false,
+    "margins": {
+     "top": 9.9,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ }
+]

@@ -69,21 +69,25 @@ export const GRID_VIEWPORT_CLASS = `${JOURNAL_TABLE_VIEWPORT_CLASS} ${GRID_VIEWP
 export const GRID_VIEWPORT_WIDE_CLASS = `${JOURNAL_TABLE_VIEWPORT_CLASS} ${GRID_VIEWPORT_SCROLLBAR_CLASS} lg:overflow-visible print:mx-0 print:overflow-visible print:rounded-none print:border-0 print:bg-transparent print:px-0 print:shadow-none`;
 
 /**
- * Пастельная заливка КОЛОНКИ ДНЯ по производственному календарю РФ
- * (H4 аудита). Эталон lk.haccp-online.ru красит весь столбец нерабочего
- * дня розовым — так проверяющий сразу видит, почему в этот день пусто.
+ * Заливка КОЛОНКИ ДНЯ по производственному календарю РФ (H4 аудита):
+ * весь столбец нерабочего дня закрашен — так проверяющий сразу видит,
+ * почему в этот день пусто.
  *
  * Механика ровно та же, что в `cleaning-document-client.tsx`
- * (`getCalendarDayKind` → розовый / бежевый), просто вынесена в общий
+ * (`getCalendarDayKind` → выходной / сокращённый), просто вынесена в общий
  * токен, чтобы hygiene / health_check не заводили свою копию.
  *
- * Насыщенность выровнена по эталону: у него выходной столбец —
- * rgb(244,204,204), то есть отчётливо розовый, а не бледный `#fff4f2`,
- * который на проде читался как белый.
+ * Цвет — ТОЛЬКО серый (2026-09-27, владелец: «у всех чёрно-белые
+ * принтеры»). Прежние розовый #f8d7d4 и бежевый #fdeeda на ч/б листе
+ * выходили почти одинаково бледными. Серые разной светлоты различимы и на
+ * ч/б печати: выходной/праздник — #d4d4d4, сокращённый — #ebebeb. Те же
+ * значения печатает PDF (`PDF_DAY_OFF_FILL` / `PDF_DAY_SHORT_FILL` в
+ * `document-pdf.ts`, сверяет `print-colors.test.ts`); тёмная тема и печать
+ * из тёмной темы — `app-theme.css` («КАЛЕНДАРНЫЕ ДНИ В СЕТКЕ»).
  *
- * A18 аудита: заливка теперь ПЕЧАТАЕТСЯ. Раньше здесь стоял
+ * A18 аудита: заливка ПЕЧАТАЕТСЯ. Раньше здесь стоял
  * `print:bg-transparent`, и на бумаге проверяющий видел просто пустые
- * строки без объяснения — «журнал не заполняли». Розовый столбец
+ * строки без объяснения — «журнал не заполняли». Серый столбец
  * выходного и есть объяснение, поэтому он идёт на печать.
  *
  * Механика опт-аута: тотальный светлый сброс печати
@@ -92,8 +96,8 @@ export const GRID_VIEWPORT_WIDE_CLASS = `${JOURNAL_TABLE_VIEWPORT_CLASS} ${GRID_
  * атрибутом `data-print-keep-bg`. Поэтому одного класса мало — ячейка
  * дня обязана нести и атрибут, см. `getDayColumnPrintKeepBg()`.
  */
-export const GRID_DAY_OFF_BG_CLASS = "bg-[#f8d7d4]";
-export const GRID_DAY_SHORT_BG_CLASS = "bg-[#fdeeda]";
+export const GRID_DAY_OFF_BG_CLASS = "bg-[#d4d4d4]";
+export const GRID_DAY_SHORT_BG_CLASS = "bg-[#ebebeb]";
 
 export function getDayColumnBgClass(dateKey: string): string {
   const kind = getCalendarDayKind(dateKey).kind;

@@ -110,7 +110,7 @@ export function renderInvoicePdf(draft: InvoiceDraft, images: InvoiceImages): Bu
       money(line.sumRub),
     ]),
     styles: { font, fontSize: 8.5, cellPadding: 1.6, lineColor: [0, 0, 0], lineWidth: 0.2, textColor: [0, 0, 0], overflow: "linebreak", valign: "middle" },
-    headStyles: { fillColor: [235, 237, 245], fontStyle: "normal", halign: "center" },
+    headStyles: { fillColor: [236, 236, 236], fontStyle: "normal", halign: "center" },
     columnStyles: {
       0: { cellWidth: 9, halign: "center" },
       1: { cellWidth: 97 },

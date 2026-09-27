@@ -108,12 +108,18 @@ export function renderClosingDocumentPdf(
     { align: "center" }
   );
   if (options.sample) {
-    doc.setTextColor(190, 60, 60);
+    // Пометка образца — чёрная в рамке: красный на ч/б принтере выходил
+    // обычным тёмным текстом и не бросался в глаза.
+    const sampleText = "ОБРАЗЕЦ — покупатель и строки условные";
     size(8);
     bold();
-    doc.text("ОБРАЗЕЦ — покупатель и строки условные", PAGE_W - MARGIN, MARGIN + 4, { align: "right" });
+    const sampleW = doc.getTextWidth(sampleText);
+    // Рамка правым краем — по полю листа, текст — внутри неё.
+    doc.text(sampleText, PAGE_W - MARGIN - 1.5, MARGIN + 4, { align: "right" });
+    doc.setLineWidth(0.4);
+    doc.rect(PAGE_W - MARGIN - sampleW - 3, MARGIN + 0.8, sampleW + 3, 4.4);
+    doc.setLineWidth(0.2);
     normal();
-    doc.setTextColor(0, 0, 0);
   }
 
   // ---- реквизиты сторон
@@ -202,8 +208,9 @@ export function renderClosingDocumentPdf(
     foot,
     theme: "grid",
     styles: { font, fontSize: 6.5, cellPadding: 1, lineColor: [0, 0, 0], lineWidth: 0.15, textColor: [0, 0, 0], overflow: "linebreak", valign: "middle" },
-    headStyles: { fillColor: [235, 237, 245], fontStyle: "normal", halign: "center" },
-    footStyles: { fillColor: [245, 246, 250], fontStyle: "normal" },
+    // Заливки — серые (ч/б принтеры), без сине-серого оттенка.
+    headStyles: { fillColor: [236, 236, 236], fontStyle: "normal", halign: "center" },
+    footStyles: { fillColor: [246, 246, 246], fontStyle: "normal" },
     columnStyles: {
       0: { cellWidth: 8, halign: "center" },
       1: { cellWidth: 82 },

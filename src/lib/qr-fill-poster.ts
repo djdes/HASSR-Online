@@ -15,6 +15,7 @@ import { resolveOrgJournalName } from "@/lib/org-journal-name";
 import { mintQrFillToken } from "@/lib/qr-fill-token";
 import type { QrFillKind, QrPoster, QrPosterMissing } from "@/lib/qr-fill-types";
 import { loadDirectoryBuildings } from "@/lib/room-directory";
+import { encodeRouteParam } from "@/lib/route-param";
 
 /**
  * Единый билдер QR-плакатов: страница `/settings/qr-posters` и
@@ -53,7 +54,7 @@ export function qrFillUrl(origin: string, kind: QrFillKind, id: string): string 
     return `${base}/journal-fill/${orgId}/${code}?token=${encodeURIComponent(token)}`;
   }
   const path = kind === "room" ? "room-fill" : "equipment-fill";
-  return `${base}/${path}/${id}?token=${encodeURIComponent(token)}`;
+  return `${base}/${path}/${encodeRouteParam(id)}?token=${encodeURIComponent(token)}`;
 }
 
 /**

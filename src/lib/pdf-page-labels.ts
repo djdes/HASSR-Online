@@ -164,7 +164,8 @@ export function stampPartnerPdfFooter(
 
   doc.setFont(fontName, "normal");
   doc.setFontSize(7);
-  doc.setTextColor(111, 114, 130);
+  // Серый, не сине-серый: бланки печатают на ч/б принтерах.
+  doc.setTextColor(115, 115, 115);
   for (let pageNumber = 1; pageNumber <= totalPages; pageNumber += 1) {
     doc.setPage(pageNumber);
     const pageWidth = doc.internal.pageSize.getWidth();

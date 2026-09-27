@@ -4,12 +4,17 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
 import {
+  BUILD_ID_STORAGE_KEY,
+  clearBuildCaches,
+  fetchServerBuildId,
+  readReloadedFor,
+  reloadOntoBuild,
+} from "@/components/layout/build-reload";
+import { buildCheckAction, pageBuildId } from "@/lib/build-version";
+import {
   isMiniCacheName,
   isMiniServiceWorkerScope,
 } from "@/lib/service-worker-scope";
-
-const BUILD_ID_STORAGE_KEY = "wesetup-build-id";
-const BUILD_RELOAD_FLAG = "wesetup-build-reloaded";
 
 /**
  * Снос исторических воркеров.
@@ -42,6 +47,30 @@ async function disableLegacyServiceWorkers() {
 /** Публичные QR-формы: без проверки сборки и воркеров — меньше работы на слабом телефоне. */
 const FILL_ROUTE_RE = /^\/(journal-fill|equipment-fill|room-fill|task-fill)(\/|$)/;
 
+function readStoredBuildId(): string | null {
+  try {
+    return window.localStorage.getItem(BUILD_ID_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function storeBuildId(buildId: string) {
+  try {
+    window.localStorage.setItem(BUILD_ID_STORAGE_KEY, buildId);
+  } catch {
+    // Приватный режим — уборка кешей просто случится ещё раз.
+  }
+}
+
+/**
+ * Загрузка страницы: страница из старой сборки (вкладку восстановил
+ * браузер, HTML отдал старый сервер в момент переключения) — сразу
+ * перезагрузка на новую; страница уже новая — только уборка кешей на смене
+ * сборки, без лишней перезагрузки (раньше после каждого деплоя первый
+ * заход перезагружался ещё раз: сравнивалась не версия страницы, а
+ * запомненная в браузере). Решение — `buildCheckAction` (тест).
+ */
 export function ServiceWorkerRegister() {
   const pathname = usePathname();
   const isFillRoute = FILL_ROUTE_RE.test(pathname ?? "");
@@ -52,36 +81,28 @@ export function ServiceWorkerRegister() {
     async function syncBuild() {
       await disableLegacyServiceWorkers();
 
-      const response = await fetch("/api/build-info", { cache: "no-store" });
-      if (!response.ok || cancelled) return;
+      const serverBuildId = await fetchServerBuildId();
+      if (!serverBuildId || cancelled) return;
 
-      const data = await response.json();
-      const nextBuildId = typeof data?.buildId === "string" ? data.buildId : "";
-      if (!nextBuildId || cancelled) return;
-
-      const previousBuildId = window.localStorage.getItem(BUILD_ID_STORAGE_KEY);
-      const reloadFlag = window.sessionStorage.getItem(BUILD_RELOAD_FLAG);
-
-      if (previousBuildId && previousBuildId !== nextBuildId && reloadFlag !== nextBuildId) {
-        // Здесь кеши кабинета чистятся НАМЕРЕННО, в отличие от
-        // `disableLegacyServiceWorkers`: воркер держит статику по
-        // хешированным именам, и без уборки на смене сборки она копилась
-        // бы бесконечно. Сама регистрация при этом остаётся.
-        if ("caches" in window) {
-          const cacheKeys = await caches.keys();
-          await Promise.all(cacheKeys.map((key) => caches.delete(key)));
-        }
-
-        window.localStorage.setItem(BUILD_ID_STORAGE_KEY, nextBuildId);
-        window.sessionStorage.setItem(BUILD_RELOAD_FLAG, nextBuildId);
-        window.location.reload();
+      const action = buildCheckAction({
+        reason: "start",
+        pageBuildId: pageBuildId(),
+        serverBuildId,
+        reloadedFor: readReloadedFor(),
+        notified: false,
+      });
+      if (action === "reload") {
+        await reloadOntoBuild(serverBuildId);
         return;
       }
 
-      window.localStorage.setItem(BUILD_ID_STORAGE_KEY, nextBuildId);
-      if (reloadFlag === nextBuildId) {
-        window.sessionStorage.removeItem(BUILD_RELOAD_FLAG);
+      const previousBuildId = readStoredBuildId();
+      if (previousBuildId && previousBuildId !== serverBuildId) {
+        // Воркер кабинета держит статику по хешированным именам — без уборки
+        // на смене сборки она копилась бы бесконечно. Регистрация остаётся.
+        await clearBuildCaches();
       }
+      storeBuildId(serverBuildId);
     }
 
     syncBuild().catch((error) => {

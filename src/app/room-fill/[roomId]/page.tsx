@@ -26,6 +26,7 @@ import { stampFor } from "@/lib/quick-values";
 import { hasPaidPlan } from "@/lib/plan-limits.server";
 import { getReadingPhotoSettings } from "@/lib/reading-photo-fixation.server";
 import { RoomFillClient } from "./room-fill-client";
+import { decodeRouteParam } from "@/lib/route-param";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -48,12 +49,13 @@ export default async function RoomFillPage({
   params: Promise<{ roomId: string }>;
   searchParams: Promise<{ token?: string }>;
 }) {
-  const { roomId } = await params;
+  const roomId = decodeRouteParam((await params).roomId);
   const { token } = await searchParams;
   if (!token) notFound();
 
   const verify = verifyQrFillTokenFor(token, "room", roomId);
   if (!verify.ok) {
+    console.warn(`[qr-fill] poster rejected kind=room reason=${verify.reason}`);
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#fafbff] px-4 py-10">
         <div className="w-full max-w-md rounded-3xl border border-[#ececf4] bg-white p-8 text-center shadow-[0_20px_60px_-30px_rgba(11,16,36,0.2)]">
@@ -98,7 +100,7 @@ export default async function RoomFillPage({
   if (qrMode === "auth") {
     const resolved = await sessionEmployeeForQr(organizationId);
     if (!resolved.ok && resolved.reason === "no-session") {
-      redirect(`/login?next=${encodeURIComponent(`/room-fill/${roomId}?token=${encodeURIComponent(token)}`)}`);
+      redirect(`/login?next=${encodeURIComponent(`/room-fill/${encodeURIComponent(roomId)}?token=${encodeURIComponent(token)}`)}`);
     }
     if (resolved.ok) sessionEmployee = resolved.employee;
   }

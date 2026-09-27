@@ -16,6 +16,7 @@ import {
 import { db } from "@/lib/db";
 import { mintQrFillToken } from "@/lib/qr-fill-token";
 import type { QuickSwitchItem } from "@/components/qr-fill/quick-switch";
+import { encodeRouteParam } from "@/lib/route-param";
 
 /**
  * Соседние объекты для быстрой смены на QR-страницах замера: ответственный
@@ -86,7 +87,7 @@ export async function listRoomSiblings(params: {
       id: row.roomId,
       name: row.name,
       sublabel: null,
-      href: `/room-fill/${row.roomId}?token=${encodeURIComponent(mintQrFillToken("room", row.roomId))}`,
+      href: `/room-fill/${encodeRouteParam(row.roomId)}?token=${encodeURIComponent(mintQrFillToken("room", row.roomId))}`,
       filled: cell !== null,
       summary: summary || null,
       values: cell ? { temperature: cell.temperature ?? null, humidity: cell.humidity ?? null } : null,
@@ -156,7 +157,7 @@ export async function listEquipmentSiblings(params: {
         id: equipmentId,
         name: item.name,
         sublabel: null,
-        href: `/equipment-fill/${equipmentId}?token=${encodeURIComponent(mintQrFillToken("equipment", equipmentId))}`,
+        href: `/equipment-fill/${encodeRouteParam(equipmentId)}?token=${encodeURIComponent(mintQrFillToken("equipment", equipmentId))}`,
         filled: temperature !== null || status !== null,
         summary: status ? COLD_EQUIPMENT_STATUS_SHORT[status] : formatValue(temperature, "°C"),
         values: temperature !== null ? { temperature } : status ? { status } : null,

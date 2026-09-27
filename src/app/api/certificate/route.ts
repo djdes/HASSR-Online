@@ -151,8 +151,9 @@ export async function GET(request: Request) {
   // Кириллица: штатная helvetica jsPDF её не знает (кракозябры).
   const font = registerUnicodeFont(doc);
 
-  // Frame
-  doc.setDrawColor(85, 102, 246);
+  // Frame. Сертификат печатают на ч/б принтерах: рамка и акценты —
+  // чёрный и серые, без фирменного индиго.
+  doc.setDrawColor(64);
   doc.setLineWidth(2);
   doc.rect(8, 8, pageW - 16, pageH - 16, "S");
   doc.setLineWidth(0.5);
@@ -168,7 +169,7 @@ export async function GET(request: Request) {
   });
 
   doc.setFontSize(28);
-  doc.setTextColor(11, 16, 36);
+  doc.setTextColor(0);
   doc.setFont(font, "normal");
   doc.text("СЕРТИФИКАТ", pageW / 2, 50, { align: "center" });
   doc.setFontSize(20);
@@ -178,12 +179,12 @@ export async function GET(request: Request) {
   // Org name
   doc.setFontSize(20);
   doc.setFont(font, "normal");
-  doc.setTextColor(56, 72, 199);
+  doc.setTextColor(0);
   doc.text(org.name, pageW / 2, 80, { align: "center" });
 
   // Body text
   doc.setFontSize(13);
-  doc.setTextColor(60, 64, 83);
+  doc.setTextColor(64);
   doc.setFont(font, "normal");
   const bodyText = [
     "Настоящим подтверждается, что организация на протяжении периода",
@@ -198,13 +199,13 @@ export async function GET(request: Request) {
   }
 
   // Stats
-  doc.setFillColor(245, 246, 255);
+  doc.setFillColor(242, 242, 242);
   doc.rect(30, 130, pageW - 60, 30, "F");
   doc.setFontSize(11);
   doc.setTextColor(120);
   doc.text("Уровень соответствия", pageW / 2, 140, { align: "center" });
   doc.setFontSize(36);
-  doc.setTextColor(85, 102, 246);
+  doc.setTextColor(0);
   doc.setFont(font, "normal");
   doc.text(`${compliancePct}%`, pageW / 2, 154, { align: "center" });
 

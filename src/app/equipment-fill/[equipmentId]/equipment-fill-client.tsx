@@ -299,7 +299,7 @@ export function EquipmentFillClient({
     setSubmitting(true);
     try {
       const response = await fetch(
-        `/api/equipment-fill/${equipment.id}`,
+        `/api/equipment-fill/${encodeURIComponent(equipment.id)}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

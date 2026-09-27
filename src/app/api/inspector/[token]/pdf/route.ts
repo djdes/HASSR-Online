@@ -135,17 +135,19 @@ export async function GET(
   });
 
   // Электронная отметка — не печать организации, а визуализация того,
-  // что документ собран системой, с кодом для сверки.
+  // что документ собран системой, с кодом для сверки. Чёрная: синие
+  // «чернила» на ч/б принтере выходили тёмно-серыми, отметку и так
+  // выделяют рамка и заголовок.
   const lastY = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? y + 20;
   let stampY = lastY + 10;
   if (stampY > 245) {
     doc.addPage();
     stampY = 20;
   }
-  doc.setDrawColor(31, 58, 138);
+  doc.setDrawColor(0, 0, 0);
   doc.setLineWidth(0.5);
   doc.rect(20, stampY, 110, 30);
-  doc.setTextColor(31, 58, 138);
+  doc.setTextColor(0, 0, 0);
   doc.setFontSize(8.5);
   doc.text("ДОКУМЕНТ СФОРМИРОВАН В ЭЛЕКТРОННОМ ВИДЕ", 24, stampY + 6);
   doc.setFontSize(8);

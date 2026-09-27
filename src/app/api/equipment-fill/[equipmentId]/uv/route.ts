@@ -12,6 +12,7 @@ import { orgTodayKey } from "@/lib/timezone";
 import { isUvLampType } from "@/lib/uv-lamp";
 import { ensureUvDocumentForLamp, lampState, listLampOperators, toggleLamp } from "@/lib/uv-lamp-runs";
 import { isManagementRole } from "@/lib/user-roles";
+import { decodeRouteParam } from "@/lib/route-param";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,7 +23,7 @@ export const dynamic = "force-dynamic";
  * «Я выключил»: сеанс в журнал учёта работы лампы, наработка у лампы.
  */
 export async function POST(request: Request, { params }: { params: Promise<{ equipmentId: string }> }) {
-  const { equipmentId } = await params;
+  const equipmentId = decodeRouteParam((await params).equipmentId);
   if (!qrFillRateLimiter.consume(qrFillRateKey(clientIp(request), "equipment", equipmentId))) {
     return NextResponse.json({ error: QR_FILL_RATE_LIMIT_ERROR }, { status: 429 });
   }

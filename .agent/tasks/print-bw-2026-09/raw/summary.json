@@ -1,0 +1,1908 @@
+{
+ "samples": {
+  "docs": 45,
+  "pages": [
+   57,
+   57
+  ],
+  "coloredDocs": [
+   3,
+   0
+  ],
+  "opsOutsideQr": [
+   106,
+   0
+  ],
+  "pixelsOutsideQr": [
+   81317,
+   0
+  ]
+ },
+ "blanks": {
+  "docs": 45,
+  "pages": [
+   57,
+   57
+  ],
+  "coloredDocs": [
+   45,
+   0
+  ],
+  "opsOutsideQr": [
+   163,
+   0
+  ],
+  "pixelsOutsideQr": [
+   110966,
+   0
+  ]
+ },
+ "long": {
+  "docs": 45,
+  "pages": [
+   486,
+   486
+  ],
+  "coloredDocs": [
+   3,
+   0
+  ],
+  "opsOutsideQr": [
+   606,
+   0
+  ],
+  "pixelsOutsideQr": [
+   487210,
+   0
+  ]
+ },
+ "paper": {
+  "docs": 5,
+  "pages": [
+   10,
+   10
+  ],
+  "coloredDocs": [
+   5,
+   0
+  ],
+  "opsOutsideQr": [
+   1732,
+   0
+  ],
+  "pixelsOutsideQr": [
+   357031,
+   0
+  ]
+ },
+ "portrait": {
+  "docs": 45,
+  "pages": [
+   56,
+   56
+  ],
+  "coloredDocs": [
+   3,
+   0
+  ],
+  "opsOutsideQr": [
+   106,
+   0
+  ],
+  "pixelsOutsideQr": [
+   42437,
+   0
+  ]
+ },
+ "variants": {
+  "docs": 46,
+  "pages": [
+   62,
+   62
+  ],
+  "coloredDocs": [
+   45,
+   0
+  ],
+  "opsOutsideQr": [
+   163,
+   0
+  ],
+  "pixelsOutsideQr": [
+   150173,
+   0
+  ]
+ },
+ "extra": {
+  "docs": 2,
+  "pages": [
+   4,
+   4
+  ],
+  "coloredDocs": [
+   2,
+   0
+  ],
+  "opsOutsideQr": [
+   79,
+   0
+  ],
+  "pixelsOutsideQr": [
+   65597,
+   0
+  ]
+ },
+ "checklists": {
+  "docs": 2,
+  "pages": [
+   8,
+   8
+  ],
+  "coloredDocs": [
+   0,
+   0
+  ],
+  "opsOutsideQr": [
+   0,
+   0
+  ],
+  "pixelsOutsideQr": [
+   0,
+   0
+  ]
+ },
+ "regulator": {
+  "docs": 2,
+  "pages": [
+   2,
+   2
+  ],
+  "coloredDocs": [
+   1,
+   0
+  ],
+  "opsOutsideQr": [
+   8,
+   0
+  ],
+  "pixelsOutsideQr": [
+   9957,
+   0
+  ]
+ },
+ "orders": {
+  "docs": 12,
+  "pages": [
+   14,
+   14
+  ],
+  "coloredDocs": [
+   0,
+   0
+  ],
+  "opsOutsideQr": [
+   0,
+   0
+  ],
+  "pixelsOutsideQr": [
+   0,
+   0
+  ]
+ },
+ "billing": {
+  "docs": 3,
+  "pages": [
+   3,
+   3
+  ],
+  "coloredDocs": [
+   3,
+   0
+  ],
+  "opsOutsideQr": [
+   97,
+   0
+  ],
+  "pixelsOutsideQr": [
+   106350,
+   0
+  ]
+ },
+ "docx": {
+  "docs": 12,
+  "coloredDocs": [
+   12,
+   0
+  ],
+  "attrs": [
+   102,
+   0
+  ]
+ },
+ "e2e": {
+  "before": [
+   {
+    "name": "print-hygiene",
+    "kind": "browser-print",
+    "pages": 2,
+    "coloredOps": 56,
+    "coloredOutsideQr": 28,
+    "rasterColored": 51929,
+    "rasterVisible": 41511,
+    "palette": {
+     "248,215,212": 15,
+     "253,238,218": 13
+    },
+    "examples": [
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.973,
+       0.843,
+       0.831
+      ],
+      "box": {
+       "x0": 173.3,
+       "y0": 61.9,
+       "x1": 176.7,
+       "y1": 73
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.992,
+       0.933,
+       0.855
+      ],
+      "box": {
+       "x0": 197.4,
+       "y0": 61.9,
+       "x1": 201.1,
+       "y1": 73
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.973,
+       0.843,
+       0.831
+      ],
+      "box": {
+       "x0": 201.1,
+       "y0": 61.9,
+       "x1": 204.5,
+       "y1": 73
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.992,
+       0.933,
+       0.855
+      ],
+      "box": {
+       "x0": 197.4,
+       "y0": 73,
+       "x1": 201.1,
+       "y1": 84.1
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.973,
+       0.843,
+       0.831
+      ],
+      "box": {
+       "x0": 201.1,
+       "y0": 73,
+       "x1": 204.5,
+       "y1": 84.1
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.992,
+       0.933,
+       0.855
+      ],
+      "box": {
+       "x0": 197.4,
+       "y0": 84.1,
+       "x1": 201.1,
+       "y1": 95.2
+      }
+     }
+    ],
+    "excluded": "—",
+    "note": "перезахват в тех же условиях, что «после» (первый снимок «фон вкл.» у холодильников вышел книжным листом — артефакт момента съёмки)"
+   },
+   {
+    "name": "print-hygiene (фон вкл.)",
+    "kind": "browser-print",
+    "pages": 2,
+    "coloredOps": 56,
+    "coloredOutsideQr": 28,
+    "rasterColored": 51929,
+    "rasterVisible": 41511,
+    "palette": {
+     "248,215,212": 15,
+     "253,238,218": 13
+    },
+    "examples": [
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.973,
+       0.843,
+       0.831
+      ],
+      "box": {
+       "x0": 173.3,
+       "y0": 61.9,
+       "x1": 176.7,
+       "y1": 73
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.992,
+       0.933,
+       0.855
+      ],
+      "box": {
+       "x0": 197.4,
+       "y0": 61.9,
+       "x1": 201.1,
+       "y1": 73
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.973,
+       0.843,
+       0.831
+      ],
+      "box": {
+       "x0": 201.1,
+       "y0": 61.9,
+       "x1": 204.5,
+       "y1": 73
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.992,
+       0.933,
+       0.855
+      ],
+      "box": {
+       "x0": 197.4,
+       "y0": 73,
+       "x1": 201.1,
+       "y1": 84.1
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.973,
+       0.843,
+       0.831
+      ],
+      "box": {
+       "x0": 201.1,
+       "y0": 73,
+       "x1": 204.5,
+       "y1": 84.1
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.992,
+       0.933,
+       0.855
+      ],
+      "box": {
+       "x0": 197.4,
+       "y0": 84.1,
+       "x1": 201.1,
+       "y1": 95.2
+      }
+     }
+    ],
+    "excluded": "—",
+    "note": "перезахват в тех же условиях, что «после» (первый снимок «фон вкл.» у холодильников вышел книжным листом — артефакт момента съёмки)"
+   },
+   {
+    "name": "print-health_check",
+    "kind": "browser-print",
+    "pages": 1,
+    "coloredOps": 30,
+    "coloredOutsideQr": 15,
+    "rasterColored": 13372,
+    "rasterVisible": 10218,
+    "palette": {
+     "248,215,212": 8,
+     "253,238,218": 7
+    },
+    "examples": [
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.973,
+       0.843,
+       0.831
+      ],
+      "box": {
+       "x0": 146.8,
+       "y0": 67.7,
+       "x1": 149.5,
+       "y1": 74.9
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.992,
+       0.933,
+       0.855
+      ],
+      "box": {
+       "x0": 165.1,
+       "y0": 67.7,
+       "x1": 167.7,
+       "y1": 74.9
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.973,
+       0.843,
+       0.831
+      ],
+      "box": {
+       "x0": 167.7,
+       "y0": 67.7,
+       "x1": 170.1,
+       "y1": 74.9
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.992,
+       0.933,
+       0.855
+      ],
+      "box": {
+       "x0": 165.1,
+       "y0": 74.9,
+       "x1": 167.7,
+       "y1": 81.8
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.973,
+       0.843,
+       0.831
+      ],
+      "box": {
+       "x0": 167.7,
+       "y0": 74.9,
+       "x1": 170.1,
+       "y1": 81.8
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.992,
+       0.933,
+       0.855
+      ],
+      "box": {
+       "x0": 165.1,
+       "y0": 81.8,
+       "x1": 167.7,
+       "y1": 88.6
+      }
+     }
+    ],
+    "excluded": "—",
+    "note": "перезахват в тех же условиях, что «после» (первый снимок «фон вкл.» у холодильников вышел книжным листом — артефакт момента съёмки)"
+   },
+   {
+    "name": "print-health_check (фон вкл.)",
+    "kind": "browser-print",
+    "pages": 1,
+    "coloredOps": 30,
+    "coloredOutsideQr": 15,
+    "rasterColored": 13372,
+    "rasterVisible": 10218,
+    "palette": {
+     "248,215,212": 8,
+     "253,238,218": 7
+    },
+    "examples": [
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.973,
+       0.843,
+       0.831
+      ],
+      "box": {
+       "x0": 146.8,
+       "y0": 67.7,
+       "x1": 149.5,
+       "y1": 74.9
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.992,
+       0.933,
+       0.855
+      ],
+      "box": {
+       "x0": 165.1,
+       "y0": 67.7,
+       "x1": 167.7,
+       "y1": 74.9
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.973,
+       0.843,
+       0.831
+      ],
+      "box": {
+       "x0": 167.7,
+       "y0": 67.7,
+       "x1": 170.1,
+       "y1": 74.9
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.992,
+       0.933,
+       0.855
+      ],
+      "box": {
+       "x0": 165.1,
+       "y0": 74.9,
+       "x1": 167.7,
+       "y1": 81.8
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.973,
+       0.843,
+       0.831
+      ],
+      "box": {
+       "x0": 167.7,
+       "y0": 74.9,
+       "x1": 170.1,
+       "y1": 81.8
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.992,
+       0.933,
+       0.855
+      ],
+      "box": {
+       "x0": 165.1,
+       "y0": 81.8,
+       "x1": 167.7,
+       "y1": 88.6
+      }
+     }
+    ],
+    "excluded": "—",
+    "note": "перезахват в тех же условиях, что «после» (первый снимок «фон вкл.» у холодильников вышел книжным листом — артефакт момента съёмки)"
+   },
+   {
+    "name": "print-cleaning",
+    "kind": "browser-print",
+    "pages": 1,
+    "coloredOps": 26,
+    "coloredOutsideQr": 13,
+    "rasterColored": 11540,
+    "rasterVisible": 8812,
+    "palette": {
+     "248,215,212": 5,
+     "253,238,218": 4,
+     "236,236,244": 2,
+     "240,182,177": 1,
+     "242,211,166": 1
+    },
+    "examples": [
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.973,
+       0.843,
+       0.831
+      ],
+      "box": {
+       "x0": 130.4,
+       "y0": 63,
+       "x1": 133.9,
+       "y1": 69.8
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.992,
+       0.933,
+       0.855
+      ],
+      "box": {
+       "x0": 154.8,
+       "y0": 63,
+       "x1": 158.5,
+       "y1": 69.8
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.973,
+       0.843,
+       0.831
+      ],
+      "box": {
+       "x0": 158.5,
+       "y0": 63,
+       "x1": 161.9,
+       "y1": 69.8
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.992,
+       0.933,
+       0.855
+      ],
+      "box": {
+       "x0": 154.8,
+       "y0": 69.8,
+       "x1": 158.5,
+       "y1": 77
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.973,
+       0.843,
+       0.831
+      ],
+      "box": {
+       "x0": 158.5,
+       "y0": 69.8,
+       "x1": 161.9,
+       "y1": 77
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.992,
+       0.933,
+       0.855
+      ],
+      "box": {
+       "x0": 154.8,
+       "y0": 77,
+       "x1": 158.5,
+       "y1": 83.9
+      }
+     }
+    ],
+    "excluded": "—",
+    "note": "перезахват в тех же условиях, что «после» (первый снимок «фон вкл.» у холодильников вышел книжным листом — артефакт момента съёмки)"
+   },
+   {
+    "name": "print-cleaning (фон вкл.)",
+    "kind": "browser-print",
+    "pages": 1,
+    "coloredOps": 26,
+    "coloredOutsideQr": 13,
+    "rasterColored": 11540,
+    "rasterVisible": 8812,
+    "palette": {
+     "248,215,212": 5,
+     "253,238,218": 4,
+     "236,236,244": 2,
+     "240,182,177": 1,
+     "242,211,166": 1
+    },
+    "examples": [
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.973,
+       0.843,
+       0.831
+      ],
+      "box": {
+       "x0": 130.4,
+       "y0": 63,
+       "x1": 133.9,
+       "y1": 69.8
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.992,
+       0.933,
+       0.855
+      ],
+      "box": {
+       "x0": 154.8,
+       "y0": 63,
+       "x1": 158.5,
+       "y1": 69.8
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.973,
+       0.843,
+       0.831
+      ],
+      "box": {
+       "x0": 158.5,
+       "y0": 63,
+       "x1": 161.9,
+       "y1": 69.8
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.992,
+       0.933,
+       0.855
+      ],
+      "box": {
+       "x0": 154.8,
+       "y0": 69.8,
+       "x1": 158.5,
+       "y1": 77
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.973,
+       0.843,
+       0.831
+      ],
+      "box": {
+       "x0": 158.5,
+       "y0": 69.8,
+       "x1": 161.9,
+       "y1": 77
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.992,
+       0.933,
+       0.855
+      ],
+      "box": {
+       "x0": 154.8,
+       "y0": 77,
+       "x1": 158.5,
+       "y1": 83.9
+      }
+     }
+    ],
+    "excluded": "—",
+    "note": "перезахват в тех же условиях, что «после» (первый снимок «фон вкл.» у холодильников вышел книжным листом — артефакт момента съёмки)"
+   },
+   {
+    "name": "print-cold_equipment_control",
+    "kind": "browser-print",
+    "pages": 2,
+    "coloredOps": 2,
+    "coloredOutsideQr": 1,
+    "rasterColored": 788,
+    "rasterVisible": 0,
+    "palette": {
+     "236,236,244": 1
+    },
+    "examples": [
+     {
+      "page": 1,
+      "op": "RG",
+      "comps": [
+       0.925,
+       0.925,
+       0.957
+      ],
+      "box": {
+       "x0": 16.8,
+       "y0": 1.7,
+       "x1": 280.6,
+       "y1": 15.7
+      }
+     }
+    ],
+    "excluded": "—",
+    "note": "перезахват в тех же условиях, что «после» (первый снимок «фон вкл.» у холодильников вышел книжным листом — артефакт момента съёмки)"
+   },
+   {
+    "name": "print-cold_equipment_control (фон вкл.)",
+    "kind": "browser-print",
+    "pages": 2,
+    "coloredOps": 2,
+    "coloredOutsideQr": 1,
+    "rasterColored": 788,
+    "rasterVisible": 0,
+    "palette": {
+     "236,236,244": 1
+    },
+    "examples": [
+     {
+      "page": 1,
+      "op": "RG",
+      "comps": [
+       0.925,
+       0.925,
+       0.957
+      ],
+      "box": {
+       "x0": 16.8,
+       "y0": 1.7,
+       "x1": 280.6,
+       "y1": 15.7
+      }
+     }
+    ],
+    "excluded": "—",
+    "note": "перезахват в тех же условиях, что «после» (первый снимок «фон вкл.» у холодильников вышел книжным листом — артефакт момента съёмки)"
+   },
+   {
+    "name": "print-order-haccp-responsible",
+    "kind": "browser-print",
+    "pages": 1,
+    "coloredOps": 4,
+    "coloredOutsideQr": 2,
+    "rasterColored": 2130,
+    "rasterVisible": 0,
+    "palette": {
+     "11,16,36": 1,
+     "220,223,237": 1
+    },
+    "examples": [
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.043,
+       0.063,
+       0.141
+      ],
+      "box": {
+       "x0": 48.9,
+       "y0": 185.7,
+       "x1": 140.8,
+       "y1": 186
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.863,
+       0.875,
+       0.929
+      ],
+      "box": {
+       "x0": 18.5,
+       "y0": 205.1,
+       "x1": 135.7,
+       "y1": 205.3
+      }
+     }
+    ],
+    "excluded": "—",
+    "note": "перезахват в тех же условиях, что «после» (первый снимок «фон вкл.» у холодильников вышел книжным листом — артефакт момента съёмки)"
+   },
+   {
+    "name": "print-order-haccp-responsible (фон вкл.)",
+    "kind": "browser-print",
+    "pages": 1,
+    "coloredOps": 4,
+    "coloredOutsideQr": 2,
+    "rasterColored": 2130,
+    "rasterVisible": 0,
+    "palette": {
+     "11,16,36": 1,
+     "220,223,237": 1
+    },
+    "examples": [
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.043,
+       0.063,
+       0.141
+      ],
+      "box": {
+       "x0": 48.9,
+       "y0": 185.7,
+       "x1": 140.8,
+       "y1": 186
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.863,
+       0.875,
+       0.929
+      ],
+      "box": {
+       "x0": 18.5,
+       "y0": 205.1,
+       "x1": 135.7,
+       "y1": 205.3
+      }
+     }
+    ],
+    "excluded": "—",
+    "note": "перезахват в тех же условиях, что «после» (первый снимок «фон вкл.» у холодильников вышел книжным листом — артефакт момента съёмки)"
+   },
+   {
+    "name": "print-inspector-sheet",
+    "kind": "browser-print",
+    "pages": 1,
+    "coloredOps": 68,
+    "coloredOutsideQr": 9,
+    "rasterColored": 6362,
+    "rasterVisible": 0,
+    "palette": {
+     "20,24,33": 2,
+     "91,97,112": 4,
+     "213,216,222": 1,
+     "58,63,76": 1,
+     "63,66,72": 1
+    },
+    "examples": [
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.078,
+       0.094,
+       0.129
+      ],
+      "box": {
+       "x0": 16.9,
+       "y0": 22,
+       "x1": 193.1,
+       "y1": 22.5
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.357,
+       0.38,
+       0.439
+      ],
+      "box": {
+       "x0": 16.8,
+       "y0": 16,
+       "x1": 16.8,
+       "y1": 18.8
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.357,
+       0.38,
+       0.439
+      ],
+      "box": {
+       "x0": 79.2,
+       "y0": 44.2,
+       "x1": 79.2,
+       "y1": 47.4
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.835,
+       0.847,
+       0.871
+      ],
+      "box": {
+       "x0": 16.9,
+       "y0": 57.1,
+       "x1": 193.1,
+       "y1": 57.4
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.357,
+       0.38,
+       0.439
+      ],
+      "box": {
+       "x0": 62.3,
+       "y0": 72,
+       "x1": 62.3,
+       "y1": 74.9
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.228,
+       0.247,
+       0.298
+      ],
+      "box": {
+       "x0": 36,
+       "y0": 228.1,
+       "x1": 36,
+       "y1": 231
+      }
+     }
+    ],
+    "excluded": "QR 64–146 × 88–184 мм",
+    "note": "перезахвачено в режиме печати (первый прогон ошибочно печатал экранную вёрстку)"
+   },
+   {
+    "name": "server-certificate",
+    "kind": "server-pdf",
+    "pages": 1,
+    "coloredOps": 10,
+    "coloredOutsideQr": 10,
+    "rasterColored": 66490,
+    "rasterVisible": 26005,
+    "palette": {
+     "84,102,245": 1,
+     "11,16,36": 2,
+     "56,72,199": 1,
+     "60,64,83": 4,
+     "245,245,255": 1,
+     "85,102,246": 1
+    },
+    "examples": [
+     {
+      "page": 1,
+      "op": "RG",
+      "comps": [
+       0.33,
+       0.4,
+       0.96
+      ],
+      "box": {
+       "x0": 8,
+       "y0": 8,
+       "x1": 202,
+       "y1": 289
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.043,
+       0.063,
+       0.141
+      ],
+      "box": {
+       "x0": 70.9,
+       "y0": 42.1,
+       "x1": 70.9,
+       "y1": 50
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.043,
+       0.063,
+       0.141
+      ],
+      "box": {
+       "x0": 79.9,
+       "y0": 54.4,
+       "x1": 79.9,
+       "y1": 60
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.22,
+       0.282,
+       0.78
+      ],
+      "box": {
+       "x0": 74.6,
+       "y0": 74.4,
+       "x1": 74.6,
+       "y1": 80
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.235,
+       0.251,
+       0.325
+      ],
+      "box": {
+       "x0": 17.7,
+       "y0": 92.3,
+       "x1": 17.7,
+       "y1": 96
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.235,
+       0.251,
+       0.325
+      ],
+      "box": {
+       "x0": 37.2,
+       "y0": 98.3,
+       "x1": 37.2,
+       "y1": 102
+      }
+     }
+    ],
+    "excluded": "картинки (QR-плитка PNG)"
+   },
+   {
+    "name": "server-certificate-staff",
+    "kind": "server-pdf",
+    "pages": 1,
+    "coloredOps": 10,
+    "coloredOutsideQr": 10,
+    "rasterColored": 31115,
+    "rasterVisible": 25327,
+    "palette": {
+     "84,102,245": 1,
+     "111,114,130": 1,
+     "11,16,36": 2,
+     "85,102,246": 1,
+     "60,64,83": 2,
+     "155,159,179": 3
+    },
+    "examples": [
+     {
+      "page": 1,
+      "op": "RG",
+      "comps": [
+       0.33,
+       0.4,
+       0.96
+      ],
+      "box": {
+       "x0": 15,
+       "y0": 15,
+       "x1": 282,
+       "y1": 195
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.435,
+       0.447,
+       0.51
+      ],
+      "box": {
+       "x0": 135,
+       "y0": 31.9,
+       "x1": 135,
+       "y1": 35
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.043,
+       0.063,
+       0.141
+      ],
+      "box": {
+       "x0": 114.3,
+       "y0": 54.8,
+       "x1": 114.3,
+       "y1": 65
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.333,
+       0.4,
+       0.965
+      ],
+      "box": {
+       "x0": 122.6,
+       "y0": 74.4,
+       "x1": 122.6,
+       "y1": 80
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.235,
+       0.251,
+       0.325
+      ],
+      "box": {
+       "x0": 123.1,
+       "y0": 96,
+       "x1": 123.1,
+       "y1": 100
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.043,
+       0.063,
+       0.141
+      ],
+      "box": {
+       "x0": 87.6,
+       "y0": 112.1,
+       "x1": 87.6,
+       "y1": 120
+      }
+     }
+    ],
+    "excluded": "—"
+   },
+   {
+    "name": "server-inspector-summary",
+    "kind": "server-pdf",
+    "pages": 2,
+    "coloredOps": 6,
+    "coloredOutsideQr": 6,
+    "rasterColored": 4874,
+    "rasterVisible": 3982,
+    "palette": {
+     "31,59,138": 1,
+     "31,58,138": 5
+    },
+    "examples": [
+     {
+      "page": 2,
+      "op": "RG",
+      "comps": [
+       0.12,
+       0.23,
+       0.54
+      ],
+      "box": {
+       "x0": 20,
+       "y0": 172.8,
+       "x1": 130,
+       "y1": 202.8
+      }
+     },
+     {
+      "page": 2,
+      "op": "rg",
+      "comps": [
+       0.122,
+       0.227,
+       0.541
+      ],
+      "box": {
+       "x0": 24,
+       "y0": 176.4,
+       "x1": 24,
+       "y1": 178.8
+      }
+     },
+     {
+      "page": 2,
+      "op": "rg",
+      "comps": [
+       0.122,
+       0.227,
+       0.541
+      ],
+      "box": {
+       "x0": 24,
+       "y0": 182.5,
+       "x1": 24,
+       "y1": 184.8
+      }
+     },
+     {
+      "page": 2,
+      "op": "rg",
+      "comps": [
+       0.122,
+       0.227,
+       0.541
+      ],
+      "box": {
+       "x0": 24,
+       "y0": 190.5,
+       "x1": 24,
+       "y1": 192.8
+      }
+     },
+     {
+      "page": 2,
+      "op": "rg",
+      "comps": [
+       0.122,
+       0.227,
+       0.541
+      ],
+      "box": {
+       "x0": 24,
+       "y0": 194.5,
+       "x1": 24,
+       "y1": 196.8
+      }
+     },
+     {
+      "page": 2,
+      "op": "rg",
+      "comps": [
+       0.122,
+       0.227,
+       0.541
+      ],
+      "box": {
+       "x0": 24,
+       "y0": 198.5,
+       "x1": 24,
+       "y1": 200.8
+      }
+     }
+    ],
+    "excluded": "—"
+   },
+   {
+    "name": "server-report-hygiene",
+    "kind": "server-pdf",
+    "pages": 6,
+    "coloredOps": 60,
+    "coloredOutsideQr": 30,
+    "rasterColored": 87102,
+    "rasterVisible": 87078,
+    "palette": {
+     "41,128,186": 30
+    },
+    "examples": [
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.16,
+       0.5,
+       0.73
+      ],
+      "box": {
+       "x0": 14,
+       "y0": 35,
+       "x1": 24,
+       "y1": 41.8
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.16,
+       0.5,
+       0.73
+      ],
+      "box": {
+       "x0": 24,
+       "y0": 35,
+       "x1": 69.3,
+       "y1": 41.8
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.16,
+       0.5,
+       0.73
+      ],
+      "box": {
+       "x0": 69.3,
+       "y0": 35,
+       "x1": 173.8,
+       "y1": 41.8
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.16,
+       0.5,
+       0.73
+      ],
+      "box": {
+       "x0": 173.8,
+       "y0": 35,
+       "x1": 206.9,
+       "y1": 41.8
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.16,
+       0.5,
+       0.73
+      ],
+      "box": {
+       "x0": 206.9,
+       "y0": 35,
+       "x1": 283,
+       "y1": 41.8
+      }
+     },
+     {
+      "page": 2,
+      "op": "rg",
+      "comps": [
+       0.16,
+       0.5,
+       0.73
+      ],
+      "box": {
+       "x0": 14,
+       "y0": 35,
+       "x1": 24,
+       "y1": 41.8
+      }
+     }
+    ],
+    "excluded": "—"
+   },
+   {
+    "name": "server-report-cold",
+    "kind": "server-pdf",
+    "pages": 2,
+    "coloredOps": 20,
+    "coloredOutsideQr": 10,
+    "rasterColored": 29036,
+    "rasterVisible": 29026,
+    "palette": {
+     "41,128,186": 10
+    },
+    "examples": [
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.16,
+       0.5,
+       0.73
+      ],
+      "box": {
+       "x0": 14,
+       "y0": 35,
+       "x1": 24,
+       "y1": 41.8
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.16,
+       0.5,
+       0.73
+      ],
+      "box": {
+       "x0": 24,
+       "y0": 35,
+       "x1": 42.1,
+       "y1": 41.8
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.16,
+       0.5,
+       0.73
+      ],
+      "box": {
+       "x0": 42.1,
+       "y0": 35,
+       "x1": 71.1,
+       "y1": 41.8
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.16,
+       0.5,
+       0.73
+      ],
+      "box": {
+       "x0": 71.1,
+       "y0": 35,
+       "x1": 259.4,
+       "y1": 41.8
+      }
+     },
+     {
+      "page": 1,
+      "op": "rg",
+      "comps": [
+       0.16,
+       0.5,
+       0.73
+      ],
+      "box": {
+       "x0": 259.4,
+       "y0": 35,
+       "x1": 283,
+       "y1": 41.8
+      }
+     },
+     {
+      "page": 2,
+      "op": "rg",
+      "comps": [
+       0.16,
+       0.5,
+       0.73
+      ],
+      "box": {
+       "x0": 14,
+       "y0": 35,
+       "x1": 24,
+       "y1": 41.8
+      }
+     }
+    ],
+    "excluded": "—"
+   }
+  ],
+  "after": [
+   {
+    "name": "print-hygiene",
+    "kind": "browser-print",
+    "pages": 2,
+    "coloredOps": 0,
+    "coloredOutsideQr": 0,
+    "rasterColored": 0,
+    "rasterVisible": 0,
+    "palette": {},
+    "examples": [],
+    "excluded": "—"
+   },
+   {
+    "name": "print-hygiene (фон вкл.)",
+    "kind": "browser-print",
+    "pages": 2,
+    "coloredOps": 0,
+    "coloredOutsideQr": 0,
+    "rasterColored": 0,
+    "rasterVisible": 0,
+    "palette": {},
+    "examples": [],
+    "excluded": "—"
+   },
+   {
+    "name": "print-health_check",
+    "kind": "browser-print",
+    "pages": 1,
+    "coloredOps": 0,
+    "coloredOutsideQr": 0,
+    "rasterColored": 0,
+    "rasterVisible": 0,
+    "palette": {},
+    "examples": [],
+    "excluded": "—"
+   },
+   {
+    "name": "print-health_check (фон вкл.)",
+    "kind": "browser-print",
+    "pages": 1,
+    "coloredOps": 0,
+    "coloredOutsideQr": 0,
+    "rasterColored": 0,
+    "rasterVisible": 0,
+    "palette": {},
+    "examples": [],
+    "excluded": "—"
+   },
+   {
+    "name": "print-cleaning",
+    "kind": "browser-print",
+    "pages": 1,
+    "coloredOps": 0,
+    "coloredOutsideQr": 0,
+    "rasterColored": 0,
+    "rasterVisible": 0,
+    "palette": {},
+    "examples": [],
+    "excluded": "—"
+   },
+   {
+    "name": "print-cleaning (фон вкл.)",
+    "kind": "browser-print",
+    "pages": 1,
+    "coloredOps": 0,
+    "coloredOutsideQr": 0,
+    "rasterColored": 0,
+    "rasterVisible": 0,
+    "palette": {},
+    "examples": [],
+    "excluded": "—"
+   },
+   {
+    "name": "print-cold_equipment_control",
+    "kind": "browser-print",
+    "pages": 2,
+    "coloredOps": 0,
+    "coloredOutsideQr": 0,
+    "rasterColored": 0,
+    "rasterVisible": 0,
+    "palette": {},
+    "examples": [],
+    "excluded": "—"
+   },
+   {
+    "name": "print-cold_equipment_control (фон вкл.)",
+    "kind": "browser-print",
+    "pages": 2,
+    "coloredOps": 0,
+    "coloredOutsideQr": 0,
+    "rasterColored": 0,
+    "rasterVisible": 0,
+    "palette": {},
+    "examples": [],
+    "excluded": "—"
+   },
+   {
+    "name": "print-order-haccp-responsible",
+    "kind": "browser-print",
+    "pages": 1,
+    "coloredOps": 0,
+    "coloredOutsideQr": 0,
+    "rasterColored": 0,
+    "rasterVisible": 0,
+    "palette": {},
+    "examples": [],
+    "excluded": "—"
+   },
+   {
+    "name": "print-order-haccp-responsible (фон вкл.)",
+    "kind": "browser-print",
+    "pages": 1,
+    "coloredOps": 0,
+    "coloredOutsideQr": 0,
+    "rasterColored": 0,
+    "rasterVisible": 0,
+    "palette": {},
+    "examples": [],
+    "excluded": "—"
+   },
+   {
+    "name": "print-inspector-sheet",
+    "kind": "browser-print",
+    "pages": 1,
+    "coloredOps": 50,
+    "coloredOutsideQr": 0,
+    "rasterColored": 0,
+    "rasterVisible": 0,
+    "palette": {},
+    "examples": [],
+    "excluded": "QR 64–146 × 88–184 мм"
+   },
+   {
+    "name": "server-certificate",
+    "kind": "server-pdf",
+    "pages": 1,
+    "coloredOps": 0,
+    "coloredOutsideQr": 0,
+    "rasterColored": 0,
+    "rasterVisible": 0,
+    "palette": {},
+    "examples": [],
+    "excluded": "картинки (QR-плитка PNG)"
+   },
+   {
+    "name": "server-certificate-staff",
+    "kind": "server-pdf",
+    "pages": 1,
+    "coloredOps": 0,
+    "coloredOutsideQr": 0,
+    "rasterColored": 0,
+    "rasterVisible": 0,
+    "palette": {},
+    "examples": [],
+    "excluded": "—"
+   },
+   {
+    "name": "server-inspector-summary",
+    "kind": "server-pdf",
+    "pages": 2,
+    "coloredOps": 0,
+    "coloredOutsideQr": 0,
+    "rasterColored": 0,
+    "rasterVisible": 0,
+    "palette": {},
+    "examples": [],
+    "excluded": "—"
+   },
+   {
+    "name": "server-report-hygiene",
+    "kind": "server-pdf",
+    "pages": 6,
+    "coloredOps": 0,
+    "coloredOutsideQr": 0,
+    "rasterColored": 0,
+    "rasterVisible": 0,
+    "palette": {},
+    "examples": [],
+    "excluded": "—"
+   },
+   {
+    "name": "server-report-cold",
+    "kind": "server-pdf",
+    "pages": 2,
+    "coloredOps": 0,
+    "coloredOutsideQr": 0,
+    "rasterColored": 0,
+    "rasterVisible": 0,
+    "palette": {},
+    "examples": [],
+    "excluded": "—"
+   },
+   {
+    "name": "print-hygiene (тёмная тема)",
+    "kind": "browser-print",
+    "pages": 2,
+    "coloredOps": 0,
+    "coloredOutsideQr": 0,
+    "rasterColored": 0,
+    "rasterVisible": 0,
+    "palette": {},
+    "examples": [],
+    "excluded": "—"
+   }
+  ]
+ },
+ "totals": {
+  "docs": 264,
+  "pagesBefore": 759,
+  "pagesAfter": 759,
+  "coloredDocsBefore": 122,
+  "coloredDocsAfter": 0,
+  "opsBefore": 3060,
+  "opsAfter": 0,
+  "pixBefore": 1411038,
+  "pixAfter": 0,
+  "docxAttrsBefore": 102,
+  "docxAttrsAfter": 0
+ },
+ "pageRegressions": [],
+ "paletteBefore": {
+  "247,214,212": 1089,
+  "252,237,217": 5,
+  "111,114,130": 124,
+  "10,15,36": 820,
+  "237,242,255": 97,
+  "11,16,36": 827,
+  "220,38,38": 1,
+  "235,237,245": 66,
+  "245,245,250": 30,
+  "190,60,60": 1
+ }
+}
