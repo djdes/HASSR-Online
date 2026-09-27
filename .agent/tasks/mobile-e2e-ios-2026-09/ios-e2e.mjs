@@ -351,6 +351,19 @@ async function source(tag) {
   }
 }
 
+/** Подписи элементов нативного дерева (label/name). */
+function labelsOf(xml) {
+  const set = new Set();
+  for (const m of (xml || "").matchAll(/(?:label|name)="([^"]{1,120})"/g)) set.add(m[1]);
+  return set;
+}
+
+/** Подписи, которых не было до действия, — то, что открыла система. */
+function newLabels(before, after) {
+  const b = labelsOf(before);
+  return Array.from(labelsOf(after)).filter((l) => !b.has(l));
+}
+
 async function nativeButton(labels, timeout = 6000) {
   await native();
   const q = labels.map((l) => `label == ${JSON.stringify(l)} OR name == ${JSON.stringify(l)}`).join(" OR ");
@@ -358,7 +371,7 @@ async function nativeButton(labels, timeout = 6000) {
   while (Date.now() < end) {
     try {
       const els = await driver.$$(`-ios predicate string:(type == "XCUIElementTypeButton") AND (${q})`);
-      for (const el of els) if (await el.isDisplayed()) return el;
+      for (const el of els) if (await el.isDisplayed().catch(() => true)) return el;
     } catch {
       /* ещё нет */
     }
@@ -390,16 +403,37 @@ async function recover(tag) {
   }
 }
 
+async function getLogsRaw(type) {
+  try {
+    return await driver.getLogs(type);
+  } catch (e1) {
+    for (const ep of ["se/log", "log"]) {
+      try {
+        const res = await fetch(`http://127.0.0.1:4723/session/${driver.sessionId}/${ep}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type }),
+        });
+        const body = await res.json();
+        if (res.ok && Array.isArray(body.value)) return body.value;
+      } catch {
+        /* следующий адрес */
+      }
+    }
+    throw e1;
+  }
+}
+
 async function collectLogs(tag) {
   try {
     if (cur === "NATIVE_APP") await web(10000);
-    const c = await driver.getLogs("safariConsole");
+    const c = await getLogsRaw("safariConsole");
     if (c?.length) fs.appendFileSync(path.join(OUT, "safari-console.jsonl"), c.map((x) => JSON.stringify({ tag, ...x })).join("\n") + "\n");
     for (const e of c || []) {
       const s = JSON.stringify(e);
       if (/"level":"(error|warning|SEVERE|WARNING)"|"type":"error"|Error|error/i.test(s)) consoleErrors.push({ tag, e: s.slice(0, 700) });
     }
-    const n = await driver.getLogs("safariNetwork");
+    const n = await getLogsRaw("safariNetwork");
     if (n?.length) fs.appendFileSync(path.join(OUT, "safari-network.jsonl"), n.map((x) => JSON.stringify({ tag, ...x })).join("\n") + "\n");
     for (const e of n || []) {
       const s = JSON.stringify(e);
@@ -874,13 +908,16 @@ async function main() {
     ctx.shot("guide");
     const hasBtn = await exists("button", { text: "Распечатать журнал" });
     ctx.d.button = hasBtn;
+    const before = await source("S04-before");
     if (hasBtn) await tapWeb("button", { text: "Распечатать журнал" });
     else await js("window.print(); return 1");
     await sleep(3500);
     const xml = await source("S04-print");
     ctx.shot("print-sheet");
-    const shown = /Принтер|Printer|Параметры|Options|Печать|Print/.test(xml);
-    ctx.check("окно печати появилось", shown);
+    const fresh = newLabels(before, xml);
+    ctx.d.newLabels = fresh.slice(0, 60);
+    const shown = fresh.some((l) => /Принтер|Printer|копи|Cop(y|ies)|Параметры|Options|Печать|Print/i.test(l));
+    ctx.check("окно печати появилось", shown, fresh.slice(0, 30));
     const cancel = await nativeButton(["Отменить", "Отмена", "Cancel", "Закрыть", "Close"], 5000);
     ctx.d.cancel = Boolean(cancel);
     if (cancel) await cancel.click();
@@ -888,20 +925,24 @@ async function main() {
     await sleep(2000);
     ctx.shot("print-dismissed");
     const after = await source("S04-after");
-    ctx.check("окно печати закрылось", !/Принтер|Printer/.test(after));
+    const left = newLabels(before, after).filter((l) => /Принтер|Printer|копи|Cop(y|ies)/i.test(l));
+    ctx.check("окно печати закрылось", left.length === 0, left);
     ctx.check("приложение живо", (await appState()) === 4);
     ctx.d.toasts = await toasts();
   });
 
   // 5. Файлы
-  async function shareCheck(ctx, tag, ext) {
+  async function shareCheck(ctx, tag, ext, before) {
+    let fresh = [];
     const xml = await waitFor(async () => {
       const s = await source(`S05-${tag}`);
-      return /ActivityListView|Сохранить в|Save to Files|AirDrop|Скопировать|Copy|Напечатать|Print/.test(s) ? s : null;
+      fresh = newLabels(before, s);
+      return fresh.some((l) => /ActivityListView|Сохранить в|Save to|AirDrop|Скопировать|Copy|Напечатать|Print|Файлы|Files|Сообщения|Messages/i.test(l)) ? s : null;
     }, 25000, 1500);
     ctx.shot(`${tag}-share-sheet`);
-    ctx.check(`${tag}: лист «Поделиться» появился`, Boolean(xml));
-    const names = xml ? Array.from(new Set((xml.match(new RegExp(`[^"<>]{1,120}\\.${ext}`, "gi")) || []).map((s) => s.trim()))) : [];
+    ctx.d[`${tag}_newLabels`] = fresh.slice(0, 60);
+    ctx.check(`${tag}: лист «Поделиться» появился`, Boolean(xml), fresh.slice(0, 30));
+    const names = fresh.filter((l) => l.toLowerCase().includes("." + ext));
     ctx.d[`${tag}_fileNames`] = names;
     ctx.check(`${tag}: имя файла .${ext} видно в листе`, names.length > 0, names);
     const close = await nativeButton(["Закрыть", "Close", "Отменить", "Cancel", "Готово", "Done"], 4000);
@@ -920,8 +961,9 @@ async function main() {
       const pdf = await exists("[data-testid=print-pdf-link]");
       ctx.d.pdfLink = pdf;
       if (pdf) {
+        const before = await source("S05-doc-before");
         await tapWeb("[data-testid=print-pdf-link]");
-        await shareCheck(ctx, "doc-pdf", "pdf");
+        await shareCheck(ctx, "doc-pdf", "pdf", before);
       } else ctx.check("кнопка PDF у документа уборки", false);
     }
     await go("/reports");
@@ -942,8 +984,9 @@ async function main() {
       ctx.check("кнопка Excel на /reports", false, (await layout()).text);
       return;
     }
+    const before = await source("S05-report-before");
     await tapWeb("button", { text: "Excel" });
-    await shareCheck(ctx, "report-xlsx", "xlsx");
+    await shareCheck(ctx, "report-xlsx", "xlsx", before);
   });
 
   // 7 и 8: фото и голос в полевом журнале
@@ -956,15 +999,16 @@ async function main() {
     if (!btn) return ctx.check("кнопка «Снять фото»", false, (await layout()).text);
     const inputs = await js("return Array.from(document.querySelectorAll('input[type=file]')).map(i => ({ accept: i.accept, capture: i.getAttribute('capture') }))");
     ctx.d.inputs = inputs;
+    const before = await source("S07-before");
     await tapWeb("button", { text: "Снять фото" });
     await sleep(3000);
     const xml = await source("S07-chooser");
     ctx.shot("chooser");
     const b = await alertButtons(1500);
     ctx.d.alert = b ? { b, text: await alertText() } : null;
-    const labels = Array.from(new Set((xml.match(/label="([^"]{2,60})"/g) || []).map((s) => s.slice(7, -1)))).slice(0, 80);
+    const labels = newLabels(before, xml).slice(0, 80);
     ctx.d.labels = labels;
-    const chooser = /Медиатека|Photo Library|Снять фото|Take Photo|Выбрать файл|Choose File|Фото|Photos|Камера|Camera/.test(xml) || Boolean(b);
+    const chooser = labels.some((l) => /Медиатека|Photo Library|Снять|Take Photo|Выбрать файл|Choose File|Фото|Photos|Камера|Camera/i.test(l)) || Boolean(b);
     ctx.check("системный выбор фото появился", chooser);
     if (b) await driver.execute("mobile: alert", { action: "accept", buttonLabel: b.find((x) => /ok|ок/i.test(x)) ?? b[b.length - 1] }).catch(() => undefined);
     const cancel = await nativeButton(["Отменить", "Отмена", "Cancel", "Закрыть", "Close"], 4000);
@@ -1039,6 +1083,29 @@ async function main() {
       ctx.d.coldSpeech = speech;
       ctx.shot("cold-doc");
     }
+  });
+
+  // 15. Прерванные переходы не должны показывать «Нет связи»
+  await scenario("S15", "Надёжность: два перехода подряд и файл без моста не дают экран «Нет связи»", async (ctx) => {
+    await go("/mini");
+    await js("location.assign('/mini/sections'); setTimeout(() => location.assign('/mini/me'), 40); return 1");
+    await sleep(6000);
+    const a = await where().catch((e) => ({ err: e.message }));
+    ctx.shot("double-navigation");
+    ctx.d.doubleNav = a;
+    ctx.check("два перехода подряд: открылся второй экран, не «Нет связи»", /^\/mini\/me/.test(a.path || "") && !/offline/.test(a.href || ""), a);
+    if (/offline/.test(a.href || "")) await go("/mini");
+    await go("/mini/sections");
+    await js("location.assign('/api/staff/export'); return 1");
+    await sleep(6000);
+    const b = await where().catch((e) => ({ err: e.message }));
+    ctx.d.attachmentNav = b;
+    ctx.d.attachmentText = await js("return (document.body.innerText || '').slice(0, 200)").catch(() => null);
+    ctx.shot("attachment-navigation");
+    const st = await appState();
+    ctx.check("файл-вложение без моста: приложение живо", st === 4, st);
+    ctx.check("файл-вложение без моста: не экран «Нет связи»", !/offline/.test(b.href || ""), b);
+    await go("/mini");
   });
 
   // 3b. Тёмная тема
