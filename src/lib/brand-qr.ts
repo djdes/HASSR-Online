@@ -362,7 +362,8 @@ function canvasPainter(ctx: Ctx): Painter {
 /**
  * PNG плитки. `width` — желаемая ширина, px: модуль — целое число пикселей
  * (чёткие края), рамка — целое число пикселей (≥ 1), поэтому итог не уже
- * `width`, а пропорция — `brandQrLayout` с точностью до пикселя.
+ * `width` (с точностью до пикселя рамки), а пропорция — `brandQrLayout` с
+ * точностью до пикселя.
  */
 export async function brandQrPng(url: string, options: BrandQrOptions & { width?: number } = {}): Promise<Buffer> {
   const layout = brandQrLayout(url, options);

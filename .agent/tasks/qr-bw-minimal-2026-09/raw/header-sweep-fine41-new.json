@@ -1,0 +1,82 @@
+[
+ {
+  "pick": "samples:transport_temperature",
+  "modules": 41,
+  "module": 0.3711,
+  "strength": "лёгкий",
+  "jsqr": 176,
+  "zxing": 0,
+  "n": 176,
+  "missed": []
+ },
+ {
+  "pick": "samples:cold_equipment_control",
+  "modules": 41,
+  "module": 0.3711,
+  "strength": "лёгкий",
+  "jsqr": 176,
+  "zxing": 0,
+  "n": 176,
+  "missed": []
+ },
+ {
+  "pick": "samples:health_check",
+  "modules": 41,
+  "module": 0.3711,
+  "strength": "лёгкий",
+  "jsqr": 176,
+  "zxing": 0,
+  "n": 176,
+  "missed": []
+ },
+ {
+  "pick": "samples:general_cleaning",
+  "modules": 41,
+  "module": 0.3711,
+  "strength": "лёгкий",
+  "jsqr": 176,
+  "zxing": 0,
+  "n": 176,
+  "missed": []
+ },
+ {
+  "pick": "samples:sanitary_day_control",
+  "modules": 41,
+  "module": 0.3711,
+  "strength": "лёгкий",
+  "jsqr": 176,
+  "zxing": 0,
+  "n": 176,
+  "missed": []
+ },
+ {
+  "pick": "samples:inventory_condition",
+  "modules": 41,
+  "module": 0.3711,
+  "strength": "лёгкий",
+  "jsqr": 176,
+  "zxing": 0,
+  "n": 176,
+  "missed": []
+ },
+ {
+  "pick": "samples:batch_release",
+  "modules": 41,
+  "module": 0.3711,
+  "strength": "лёгкий",
+  "jsqr": 176,
+  "zxing": 0,
+  "n": 176,
+  "missed": []
+ },
+ {
+  "pick": "samples:audit_report",
+  "modules": 41,
+  "module": 0.3711,
+  "strength": "лёгкий",
+  "jsqr": 176,
+  "zxing": 0,
+  "n": 176,
+  "missed": []
+ }
+]

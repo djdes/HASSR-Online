@@ -1,0 +1,2306 @@
+{
+ "table": [
+  {
+   "id": "poster-a4",
+   "place": "Плакат A4 журнала (основной QR)",
+   "kind": "print",
+   "size": "105 мм; H v13, 69 мод.; модуль 1.404 мм",
+   "accept300": {
+    "n": 5,
+    "jsqr": 5,
+    "zxing": 5
+   },
+   "accept150": {
+    "n": 5,
+    "jsqr": 5,
+    "zxing": 5
+   },
+   "screen": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "screen1x": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "stress": {
+    "n": 4,
+    "jsqr": 4,
+    "zxing": 4
+   }
+  },
+  {
+   "id": "poster-a4-longest",
+   "place": "Плакат A4, самый длинный адрес",
+   "kind": "print",
+   "size": "105 мм; H v15, 77 мод.; модуль 1.265 мм",
+   "accept300": {
+    "n": 5,
+    "jsqr": 5,
+    "zxing": 5
+   },
+   "accept150": {
+    "n": 5,
+    "jsqr": 5,
+    "zxing": 5
+   },
+   "screen": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "screen1x": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "stress": {
+    "n": 4,
+    "jsqr": 4,
+    "zxing": 4
+   }
+  },
+  {
+   "id": "poster-a5-longest",
+   "place": "Плакат A5, самый длинный адрес",
+   "kind": "print",
+   "size": "78 мм; H v15, 77 мод.; модуль 0.940 мм",
+   "accept300": {
+    "n": 5,
+    "jsqr": 5,
+    "zxing": 5
+   },
+   "accept150": {
+    "n": 5,
+    "jsqr": 5,
+    "zxing": 5
+   },
+   "screen": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "screen1x": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "stress": {
+    "n": 4,
+    "jsqr": 4,
+    "zxing": 4
+   }
+  },
+  {
+   "id": "sticker-object",
+   "place": "Наклейка на холодильник (самая широкая)",
+   "kind": "print",
+   "size": "36 мм; H v12, 65 мод.; модуль 0.509 мм",
+   "accept300": {
+    "n": 5,
+    "jsqr": 5,
+    "zxing": 5
+   },
+   "accept150": {
+    "n": 5,
+    "jsqr": 5,
+    "zxing": 5
+   },
+   "screen": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "screen1x": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "stress": {
+    "n": 4,
+    "jsqr": 2,
+    "zxing": 4
+   }
+  },
+  {
+   "id": "sticker-longest-min",
+   "place": "Наклейка, самый длинный адрес, самая узкая",
+   "kind": "print",
+   "size": "29 мм; H v15, 77 мод.; модуль 0.349 мм",
+   "accept300": {
+    "n": 5,
+    "jsqr": 5,
+    "zxing": 5
+   },
+   "accept150": {
+    "n": 5,
+    "jsqr": 0,
+    "zxing": 5
+   },
+   "screen": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "screen1x": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "stress": {
+    "n": 4,
+    "jsqr": 0,
+    "zxing": 4
+   }
+  },
+  {
+   "id": "inspector-sheet",
+   "place": "Лист A4 «Для проверяющих»",
+   "kind": "print",
+   "size": "73 мм; H v8, 49 мод.; модуль 1.344 мм",
+   "accept300": {
+    "n": 5,
+    "jsqr": 5,
+    "zxing": 5
+   },
+   "accept150": {
+    "n": 5,
+    "jsqr": 5,
+    "zxing": 5
+   },
+   "screen": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "screen1x": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "stress": {
+    "n": 4,
+    "jsqr": 4,
+    "zxing": 4
+   }
+  },
+  {
+   "id": "personal-card",
+   "place": "Карточка «Личный вход» (печать)",
+   "kind": "print",
+   "size": "70 мм; H v6, 41 мод.; модуль 1.518 мм",
+   "accept300": {
+    "n": 5,
+    "jsqr": 5,
+    "zxing": 5
+   },
+   "accept150": {
+    "n": 5,
+    "jsqr": 5,
+    "zxing": 5
+   },
+   "screen": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "screen1x": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "stress": {
+    "n": 4,
+    "jsqr": 4,
+    "zxing": 4
+   }
+  },
+  {
+   "id": "join-print",
+   "place": "QR-регистрация сотрудника (печать окна)",
+   "kind": "print",
+   "size": "320 CSS px = 84,7 мм; H v8, 49 мод.; модуль 1.559 мм",
+   "accept300": {
+    "n": 5,
+    "jsqr": 5,
+    "zxing": 5
+   },
+   "accept150": {
+    "n": 5,
+    "jsqr": 5,
+    "zxing": 5
+   },
+   "screen": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "screen1x": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "stress": {
+    "n": 4,
+    "jsqr": 4,
+    "zxing": 4
+   }
+  },
+  {
+   "id": "certificate",
+   "place": "Сертификат соответствия (PDF, A4)",
+   "kind": "print",
+   "size": "50 мм; H v8, 49 мод.; модуль 0.921 мм",
+   "accept300": {
+    "n": 5,
+    "jsqr": 5,
+    "zxing": 5
+   },
+   "accept150": {
+    "n": 5,
+    "jsqr": 5,
+    "zxing": 5
+   },
+   "screen": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "screen1x": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "stress": {
+    "n": 4,
+    "jsqr": 4,
+    "zxing": 4
+   }
+  },
+  {
+   "id": "docx-footer",
+   "place": "Подвал шаблона Word (DOCX → LibreOffice → PDF)",
+   "kind": "print",
+   "size": "81 px Word ≈ 21,4 мм; H v9, 53 мод.; модуль 0.367 мм",
+   "accept300": {
+    "n": 5,
+    "jsqr": 5,
+    "zxing": 5
+   },
+   "accept150": {
+    "n": 5,
+    "jsqr": 3,
+    "zxing": 5
+   },
+   "screen": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "screen1x": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "stress": {
+    "n": 4,
+    "jsqr": 2,
+    "zxing": 4
+   }
+  },
+  {
+   "id": "login-screen",
+   "place": "QR входа на экране (карточка сотрудника)",
+   "kind": "screen",
+   "size": "180 CSS px; H v6, 41 мод.; 3.90 CSS px/мод.",
+   "accept300": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "accept150": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "screen": {
+    "n": 4,
+    "jsqr": 4,
+    "zxing": 4
+   },
+   "screen1x": {
+    "n": 2,
+    "jsqr": 2,
+    "zxing": 2
+   },
+   "stress": {
+    "n": 2,
+    "jsqr": 2,
+    "zxing": 2
+   }
+  },
+  {
+   "id": "tg-invite",
+   "place": "Приглашение в Telegram (окно сотрудника)",
+   "kind": "screen",
+   "size": "220 CSS px; H v8, 49 мод.; 4.05 CSS px/мод.",
+   "accept300": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "accept150": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "screen": {
+    "n": 4,
+    "jsqr": 4,
+    "zxing": 4
+   },
+   "screen1x": {
+    "n": 2,
+    "jsqr": 2,
+    "zxing": 2
+   },
+   "stress": {
+    "n": 2,
+    "jsqr": 2,
+    "zxing": 2
+   }
+  },
+  {
+   "id": "tg-invite-thumb",
+   "place": "Приглашение в Telegram (миниатюра в «Доступе»)",
+   "kind": "screen",
+   "size": "128 CSS px; H v8, 49 мод.; 2.36 CSS px/мод.",
+   "accept300": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "accept150": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "screen": {
+    "n": 4,
+    "jsqr": 4,
+    "zxing": 4
+   },
+   "screen1x": {
+    "n": 2,
+    "jsqr": 1,
+    "zxing": 2
+   },
+   "stress": {
+    "n": 2,
+    "jsqr": 1,
+    "zxing": 2
+   }
+  },
+  {
+   "id": "pair",
+   "place": "Сопряжение (окно)",
+   "kind": "screen",
+   "size": "280 CSS px; H v8, 49 мод.; 5.16 CSS px/мод.",
+   "accept300": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "accept150": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "screen": {
+    "n": 4,
+    "jsqr": 4,
+    "zxing": 4
+   },
+   "screen1x": {
+    "n": 2,
+    "jsqr": 2,
+    "zxing": 2
+   },
+   "stress": {
+    "n": 2,
+    "jsqr": 2,
+    "zxing": 2
+   }
+  },
+  {
+   "id": "join-dialog",
+   "place": "QR-регистрация (окно)",
+   "kind": "screen",
+   "size": "260 CSS px; H v8, 49 мод.; 4.79 CSS px/мод.",
+   "accept300": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "accept150": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "screen": {
+    "n": 4,
+    "jsqr": 4,
+    "zxing": 4
+   },
+   "screen1x": {
+    "n": 2,
+    "jsqr": 2,
+    "zxing": 2
+   },
+   "stress": {
+    "n": 2,
+    "jsqr": 2,
+    "zxing": 2
+   }
+  },
+  {
+   "id": "kiosk",
+   "place": "Планшет-киоск (окно)",
+   "kind": "screen",
+   "size": "220 CSS px; H v8, 49 мод.; 4.05 CSS px/мод.",
+   "accept300": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "accept150": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "screen": {
+    "n": 4,
+    "jsqr": 4,
+    "zxing": 4
+   },
+   "screen1x": {
+    "n": 2,
+    "jsqr": 2,
+    "zxing": 2
+   },
+   "stress": {
+    "n": 2,
+    "jsqr": 2,
+    "zxing": 2
+   }
+  },
+  {
+   "id": "poster-preview-dialog",
+   "place": "Превью плаката в окне журнала",
+   "kind": "screen",
+   "size": "184 CSS px; H v12, 65 мод.; 2.60 CSS px/мод.",
+   "accept300": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "accept150": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "screen": {
+    "n": 4,
+    "jsqr": 4,
+    "zxing": 4
+   },
+   "screen1x": {
+    "n": 2,
+    "jsqr": 0,
+    "zxing": 1
+   },
+   "stress": {
+    "n": 2,
+    "jsqr": 0,
+    "zxing": 1
+   }
+  },
+  {
+   "id": "landing-sticker",
+   "place": "Золотая наклейка лендинга (без полосы)",
+   "kind": "screen",
+   "size": "240 CSS px; H v3, 29 мод.; 7.27 CSS px/мод.",
+   "accept300": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "accept150": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "screen": {
+    "n": 2,
+    "jsqr": 2,
+    "zxing": 2
+   },
+   "screen1x": {
+    "n": 2,
+    "jsqr": 2,
+    "zxing": 2
+   },
+   "stress": {
+    "n": 2,
+    "jsqr": 2,
+    "zxing": 2
+   }
+  },
+  {
+   "id": "landing-video-sticker",
+   "place": "Наклейка в ролике лендинга (как печатает продукт)",
+   "kind": "screen",
+   "size": "150 CSS px; H v3, 29 мод.; 4.44 CSS px/мод.",
+   "accept300": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "accept150": {
+    "n": 0,
+    "jsqr": 0,
+    "zxing": 0
+   },
+   "screen": {
+    "n": 2,
+    "jsqr": 2,
+    "zxing": 2
+   },
+   "screen1x": {
+    "n": 2,
+    "jsqr": 2,
+    "zxing": 2
+   },
+   "stress": {
+    "n": 2,
+    "jsqr": 2,
+    "zxing": 2
+   }
+  }
+ ],
+ "misses": [],
+ "rows": [
+  {
+   "id": "poster-a4",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "clean",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "poster-a4",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "poster-a4",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-print",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "poster-a4",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "poster-a4",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "poster-a4",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "poster-a4",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "poster-a4",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "clean",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "poster-a4",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "poster-a4",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-print",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "poster-a4",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "poster-a4",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "poster-a4",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "poster-a4",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "poster-a4-longest",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "clean",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "poster-a4-longest",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "poster-a4-longest",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-print",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "poster-a4-longest",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "poster-a4-longest",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "poster-a4-longest",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "poster-a4-longest",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "poster-a4-longest",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "clean",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "poster-a4-longest",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "poster-a4-longest",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-print",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "poster-a4-longest",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "poster-a4-longest",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "poster-a4-longest",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "poster-a4-longest",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "poster-a5-longest",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "clean",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "poster-a5-longest",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "poster-a5-longest",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-print",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "poster-a5-longest",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "poster-a5-longest",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "poster-a5-longest",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "poster-a5-longest",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "poster-a5-longest",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "clean",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "poster-a5-longest",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "poster-a5-longest",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-print",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "poster-a5-longest",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "poster-a5-longest",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "poster-a5-longest",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "poster-a5-longest",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "sticker-object",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "clean",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "sticker-object",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "sticker-object",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-print",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "sticker-object",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "sticker-object",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "sticker-object",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "sticker-object",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "sticker-object",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "clean",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "sticker-object",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "sticker-object",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-print",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "sticker-object",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "sticker-object",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "sticker-object",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "phone-hard",
+   "jsqr": false,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "sticker-object",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-phone-hard",
+   "jsqr": false,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "sticker-longest-min",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "clean",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "sticker-longest-min",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "sticker-longest-min",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-print",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "sticker-longest-min",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "sticker-longest-min",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "sticker-longest-min",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "phone-hard",
+   "jsqr": false,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "sticker-longest-min",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-phone-hard",
+   "jsqr": false,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "sticker-longest-min",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "clean",
+   "jsqr": false,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "sticker-longest-min",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw",
+   "jsqr": false,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "sticker-longest-min",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-print",
+   "jsqr": false,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "sticker-longest-min",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "phone",
+   "jsqr": false,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "sticker-longest-min",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-phone",
+   "jsqr": false,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "sticker-longest-min",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "phone-hard",
+   "jsqr": false,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "sticker-longest-min",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-phone-hard",
+   "jsqr": false,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "inspector-sheet",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "clean",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "inspector-sheet",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "inspector-sheet",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-print",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "inspector-sheet",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "inspector-sheet",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "inspector-sheet",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "inspector-sheet",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "inspector-sheet",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "clean",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "inspector-sheet",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "inspector-sheet",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-print",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "inspector-sheet",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "inspector-sheet",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "inspector-sheet",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "inspector-sheet",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "personal-card",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "clean",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "personal-card",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "personal-card",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-print",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "personal-card",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "personal-card",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "personal-card",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "personal-card",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "personal-card",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "clean",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "personal-card",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "personal-card",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-print",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "personal-card",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "personal-card",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "personal-card",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "personal-card",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "join-print",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "clean",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "join-print",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "join-print",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-print",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "join-print",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "join-print",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "join-print",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "join-print",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "join-print",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "clean",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "join-print",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "join-print",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-print",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "join-print",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "join-print",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "join-print",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "join-print",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "certificate",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "clean",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "certificate",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "certificate",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-print",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "certificate",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "certificate",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "certificate",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "certificate",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "certificate",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "clean",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "certificate",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "certificate",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-print",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "certificate",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "certificate",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "certificate",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "certificate",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "docx-footer",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "clean",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "docx-footer",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "docx-footer",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-print",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "docx-footer",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "docx-footer",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "docx-footer",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "docx-footer",
+   "kind": "print",
+   "dpi": 300,
+   "shot": "bw-phone-hard",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "docx-footer",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "clean",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "docx-footer",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "docx-footer",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-print",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "docx-footer",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "phone",
+   "jsqr": false,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "docx-footer",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-phone",
+   "jsqr": false,
+   "zxing": true,
+   "acceptance": "zxing"
+  },
+  {
+   "id": "docx-footer",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "phone-hard",
+   "jsqr": false,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "docx-footer",
+   "kind": "print",
+   "dpi": 150,
+   "shot": "bw-phone-hard",
+   "jsqr": false,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "login-screen",
+   "kind": "screen",
+   "dpi": 96,
+   "shot": "screen",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "login-screen",
+   "kind": "screen",
+   "dpi": 96,
+   "shot": "screen-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "login-screen",
+   "kind": "screen",
+   "dpi": 192,
+   "shot": "screen",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "login-screen",
+   "kind": "screen",
+   "dpi": 192,
+   "shot": "screen-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "login-screen",
+   "kind": "screen",
+   "dpi": 288,
+   "shot": "screen",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "login-screen",
+   "kind": "screen",
+   "dpi": 288,
+   "shot": "screen-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "tg-invite",
+   "kind": "screen",
+   "dpi": 96,
+   "shot": "screen",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "tg-invite",
+   "kind": "screen",
+   "dpi": 96,
+   "shot": "screen-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "tg-invite",
+   "kind": "screen",
+   "dpi": 192,
+   "shot": "screen",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "tg-invite",
+   "kind": "screen",
+   "dpi": 192,
+   "shot": "screen-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "tg-invite",
+   "kind": "screen",
+   "dpi": 288,
+   "shot": "screen",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "tg-invite",
+   "kind": "screen",
+   "dpi": 288,
+   "shot": "screen-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "tg-invite-thumb",
+   "kind": "screen",
+   "dpi": 96,
+   "shot": "screen",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "tg-invite-thumb",
+   "kind": "screen",
+   "dpi": 96,
+   "shot": "screen-phone",
+   "jsqr": false,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "tg-invite-thumb",
+   "kind": "screen",
+   "dpi": 192,
+   "shot": "screen",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "tg-invite-thumb",
+   "kind": "screen",
+   "dpi": 192,
+   "shot": "screen-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "tg-invite-thumb",
+   "kind": "screen",
+   "dpi": 288,
+   "shot": "screen",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "tg-invite-thumb",
+   "kind": "screen",
+   "dpi": 288,
+   "shot": "screen-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "pair",
+   "kind": "screen",
+   "dpi": 96,
+   "shot": "screen",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "pair",
+   "kind": "screen",
+   "dpi": 96,
+   "shot": "screen-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "pair",
+   "kind": "screen",
+   "dpi": 192,
+   "shot": "screen",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "pair",
+   "kind": "screen",
+   "dpi": 192,
+   "shot": "screen-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "pair",
+   "kind": "screen",
+   "dpi": 288,
+   "shot": "screen",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "pair",
+   "kind": "screen",
+   "dpi": 288,
+   "shot": "screen-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "join-dialog",
+   "kind": "screen",
+   "dpi": 96,
+   "shot": "screen",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "join-dialog",
+   "kind": "screen",
+   "dpi": 96,
+   "shot": "screen-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "join-dialog",
+   "kind": "screen",
+   "dpi": 192,
+   "shot": "screen",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "join-dialog",
+   "kind": "screen",
+   "dpi": 192,
+   "shot": "screen-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "join-dialog",
+   "kind": "screen",
+   "dpi": 288,
+   "shot": "screen",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "join-dialog",
+   "kind": "screen",
+   "dpi": 288,
+   "shot": "screen-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "kiosk",
+   "kind": "screen",
+   "dpi": 96,
+   "shot": "screen",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "kiosk",
+   "kind": "screen",
+   "dpi": 96,
+   "shot": "screen-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "kiosk",
+   "kind": "screen",
+   "dpi": 192,
+   "shot": "screen",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "kiosk",
+   "kind": "screen",
+   "dpi": 192,
+   "shot": "screen-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "kiosk",
+   "kind": "screen",
+   "dpi": 288,
+   "shot": "screen",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "kiosk",
+   "kind": "screen",
+   "dpi": 288,
+   "shot": "screen-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "poster-preview-dialog",
+   "kind": "screen",
+   "dpi": 96,
+   "shot": "screen",
+   "jsqr": false,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "poster-preview-dialog",
+   "kind": "screen",
+   "dpi": 96,
+   "shot": "screen-phone",
+   "jsqr": false,
+   "zxing": false,
+   "acceptance": "stress"
+  },
+  {
+   "id": "poster-preview-dialog",
+   "kind": "screen",
+   "dpi": 192,
+   "shot": "screen",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "poster-preview-dialog",
+   "kind": "screen",
+   "dpi": 192,
+   "shot": "screen-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "poster-preview-dialog",
+   "kind": "screen",
+   "dpi": 288,
+   "shot": "screen",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "poster-preview-dialog",
+   "kind": "screen",
+   "dpi": 288,
+   "shot": "screen-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "landing-sticker",
+   "kind": "screen",
+   "dpi": 96,
+   "shot": "screen",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "landing-sticker",
+   "kind": "screen",
+   "dpi": 96,
+   "shot": "screen-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "landing-sticker",
+   "kind": "screen",
+   "dpi": 192,
+   "shot": "screen",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "landing-sticker",
+   "kind": "screen",
+   "dpi": 192,
+   "shot": "screen-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "landing-video-sticker",
+   "kind": "screen",
+   "dpi": 96,
+   "shot": "screen",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "landing-video-sticker",
+   "kind": "screen",
+   "dpi": 96,
+   "shot": "screen-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "stress"
+  },
+  {
+   "id": "landing-video-sticker",
+   "kind": "screen",
+   "dpi": 192,
+   "shot": "screen",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  },
+  {
+   "id": "landing-video-sticker",
+   "kind": "screen",
+   "dpi": 192,
+   "shot": "screen-phone",
+   "jsqr": true,
+   "zxing": true,
+   "acceptance": "both"
+  }
+ ]
+}

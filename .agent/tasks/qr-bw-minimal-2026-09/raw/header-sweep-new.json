@@ -1,0 +1,312 @@
+[
+ {
+  "pick": "samples:hygiene",
+  "modules": 37,
+  "module": 0.4073,
+  "strength": "лёгкий",
+  "jsqr": 48,
+  "zxing": 48,
+  "n": 48,
+  "missed": []
+ },
+ {
+  "pick": "samples:hygiene",
+  "modules": 37,
+  "module": 0.4073,
+  "strength": "средний",
+  "jsqr": 48,
+  "zxing": 48,
+  "n": 48,
+  "missed": []
+ },
+ {
+  "pick": "samples:hygiene",
+  "modules": 37,
+  "module": 0.4073,
+  "strength": "жёсткий",
+  "jsqr": 48,
+  "zxing": 48,
+  "n": 48,
+  "missed": []
+ },
+ {
+  "pick": "samples:transport_temperature",
+  "modules": 41,
+  "module": 0.3711,
+  "strength": "лёгкий",
+  "jsqr": 48,
+  "zxing": 48,
+  "n": 48,
+  "missed": []
+ },
+ {
+  "pick": "samples:transport_temperature",
+  "modules": 41,
+  "module": 0.3711,
+  "strength": "средний",
+  "jsqr": 47,
+  "zxing": 48,
+  "n": 48,
+  "missed": [
+   "phone 9° ф1"
+  ]
+ },
+ {
+  "pick": "samples:transport_temperature",
+  "modules": 41,
+  "module": 0.3711,
+  "strength": "жёсткий",
+  "jsqr": 48,
+  "zxing": 48,
+  "n": 48,
+  "missed": []
+ },
+ {
+  "pick": "samples:cold_equipment_control",
+  "modules": 41,
+  "module": 0.3711,
+  "strength": "лёгкий",
+  "jsqr": 48,
+  "zxing": 48,
+  "n": 48,
+  "missed": []
+ },
+ {
+  "pick": "samples:cold_equipment_control",
+  "modules": 41,
+  "module": 0.3711,
+  "strength": "средний",
+  "jsqr": 48,
+  "zxing": 48,
+  "n": 48,
+  "missed": []
+ },
+ {
+  "pick": "samples:cold_equipment_control",
+  "modules": 41,
+  "module": 0.3711,
+  "strength": "жёсткий",
+  "jsqr": 48,
+  "zxing": 48,
+  "n": 48,
+  "missed": []
+ },
+ {
+  "pick": "samples:cleaning_ventilation_checklist",
+  "modules": 45,
+  "module": 0.365,
+  "strength": "лёгкий",
+  "jsqr": 48,
+  "zxing": 48,
+  "n": 48,
+  "missed": []
+ },
+ {
+  "pick": "samples:cleaning_ventilation_checklist",
+  "modules": 45,
+  "module": 0.365,
+  "strength": "средний",
+  "jsqr": 48,
+  "zxing": 48,
+  "n": 48,
+  "missed": []
+ },
+ {
+  "pick": "samples:cleaning_ventilation_checklist",
+  "modules": 45,
+  "module": 0.365,
+  "strength": "жёсткий",
+  "jsqr": 45,
+  "zxing": 48,
+  "n": 48,
+  "missed": [
+   "bw-phone -6° ф0",
+   "phone 6° ф1",
+   "bw-phone 6° ф1"
+  ]
+ },
+ {
+  "pick": "long:hygiene",
+  "modules": 49,
+  "module": 0.365,
+  "strength": "лёгкий",
+  "jsqr": 48,
+  "zxing": 48,
+  "n": 48,
+  "missed": []
+ },
+ {
+  "pick": "long:hygiene",
+  "modules": 49,
+  "module": 0.365,
+  "strength": "средний",
+  "jsqr": 47,
+  "zxing": 48,
+  "n": 48,
+  "missed": [
+   "bw-phone -10° ф1"
+  ]
+ },
+ {
+  "pick": "long:hygiene",
+  "modules": 49,
+  "module": 0.365,
+  "strength": "жёсткий",
+  "jsqr": 42,
+  "zxing": 48,
+  "n": 48,
+  "missed": [
+   "bw-phone 5° ф0",
+   "phone 6° ф0",
+   "phone 8° ф0",
+   "bw-phone -5° ф0",
+   "phone -6° ф0",
+   "bw-phone -7° ф0"
+  ]
+ },
+ {
+  "pick": "long:med_books",
+  "modules": 49,
+  "module": 0.365,
+  "strength": "лёгкий",
+  "jsqr": 48,
+  "zxing": 48,
+  "n": 48,
+  "missed": []
+ },
+ {
+  "pick": "long:med_books",
+  "modules": 49,
+  "module": 0.365,
+  "strength": "средний",
+  "jsqr": 48,
+  "zxing": 48,
+  "n": 48,
+  "missed": []
+ },
+ {
+  "pick": "long:med_books",
+  "modules": 49,
+  "module": 0.365,
+  "strength": "жёсткий",
+  "jsqr": 47,
+  "zxing": 48,
+  "n": 48,
+  "missed": [
+   "phone -6° ф0"
+  ]
+ },
+ {
+  "pick": "long:cleaning_ventilation_checklist",
+  "modules": 53,
+  "module": 0.3526,
+  "strength": "лёгкий",
+  "jsqr": 48,
+  "zxing": 48,
+  "n": 48,
+  "missed": []
+ },
+ {
+  "pick": "long:cleaning_ventilation_checklist",
+  "modules": 53,
+  "module": 0.3526,
+  "strength": "средний",
+  "jsqr": 48,
+  "zxing": 48,
+  "n": 48,
+  "missed": []
+ },
+ {
+  "pick": "long:cleaning_ventilation_checklist",
+  "modules": 53,
+  "module": 0.3526,
+  "strength": "жёсткий",
+  "jsqr": 35,
+  "zxing": 48,
+  "n": 48,
+  "missed": [
+   "phone 5° ф0",
+   "bw-phone 5° ф0",
+   "phone -10° ф0",
+   "bw-phone -10° ф0",
+   "bw-phone 5° ф1",
+   "bw-phone 6° ф1",
+   "phone 8° ф1",
+   "bw-phone 8° ф1",
+   "phone 10° ф1",
+   "bw-phone 10° ф1",
+   "phone -5° ф1",
+   "bw-phone -5° ф1",
+   "bw-phone -7° ф1"
+  ]
+ },
+ {
+  "pick": "blanks:hygiene",
+  "modules": 53,
+  "module": 0.3526,
+  "strength": "лёгкий",
+  "jsqr": 47,
+  "zxing": 48,
+  "n": 48,
+  "missed": [
+   "bw-phone 8° ф1"
+  ]
+ },
+ {
+  "pick": "blanks:hygiene",
+  "modules": 53,
+  "module": 0.3526,
+  "strength": "средний",
+  "jsqr": 45,
+  "zxing": 48,
+  "n": 48,
+  "missed": [
+   "bw-phone 9° ф1",
+   "bw-phone -7° ф1",
+   "bw-phone -10° ф1"
+  ]
+ },
+ {
+  "pick": "blanks:hygiene",
+  "modules": 53,
+  "module": 0.3526,
+  "strength": "жёсткий",
+  "jsqr": 16,
+  "zxing": 48,
+  "n": 48,
+  "missed": [
+   "phone 5° ф0",
+   "bw-phone 5° ф0",
+   "phone 6° ф0",
+   "bw-phone 6° ф0",
+   "phone 7° ф0",
+   "bw-phone 7° ф0",
+   "bw-phone 10° ф0",
+   "bw-phone -5° ф0",
+   "phone -6° ф0",
+   "phone -7° ф0",
+   "bw-phone -7° ф0",
+   "bw-phone -8° ф0",
+   "bw-phone -9° ф0",
+   "phone -10° ф0",
+   "bw-phone -10° ф0",
+   "phone 5° ф1",
+   "bw-phone 5° ф1",
+   "bw-phone 6° ф1",
+   "phone 7° ф1",
+   "bw-phone 7° ф1",
+   "phone 8° ф1",
+   "bw-phone 8° ф1",
+   "bw-phone 9° ф1",
+   "phone 10° ф1",
+   "bw-phone 10° ф1",
+   "phone -5° ф1",
+   "bw-phone -5° ф1",
+   "phone -6° ф1",
+   "bw-phone -6° ф1",
+   "bw-phone -7° ф1",
+   "phone -9° ф1",
+   "bw-phone -9° ф1"
+  ]
+ }
+]

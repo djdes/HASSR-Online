@@ -1,0 +1,166 @@
+{
+  "task": "qr-bw-minimal-2026-09",
+  "branch": "feat/bwqr-2026-09-27",
+  "base": "495c4fc4",
+  "codeCommit": "294cb800",
+  "date": "2026-09-27",
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "places": 14,
+      "note": "все места выдачи идут через brand-qr.ts; живой сайт: окно QR документа, экран QR-кодов, печать A4 и наклеек",
+      "e2e": "raw/e2e-site.json (7/7)"
+    },
+    "AC2": {
+      "status": "PASS_EXCEPT_ONE_JSQR_SHOT",
+      "journals": {
+        "blanks": 231,
+        "pages": 257,
+        "zxing300": "1285/1285",
+        "zxing150": "1285/1285",
+        "jsqr300": "1283/1285",
+        "jsqrMiss": "samples:transport_temperature p1 (и то же в variants) 300 dpi bw-phone 9°",
+        "raw": "raw/decode-journals-samples+blanks+long+paper+variants+portrait.json"
+      },
+      "places": {
+        "acceptanceShots": 132,
+        "missed": 0,
+        "raw": "raw/decode-places.json"
+      },
+      "livePrint": {
+        "a4": "300 dpi 5/5 both, 150 dpi 5/5 zxing",
+        "stickers": "6/6 same",
+        "raw": "raw/e2e-site.json"
+      },
+      "sweepVsMaster": {
+        "light": {
+          "jsqrNew": "383/384",
+          "jsqrMaster": "382/384",
+          "zxing": "384/384"
+        },
+        "medium": {
+          "jsqrNew": "379/384",
+          "jsqrMaster": "372/384",
+          "zxing": "384/384"
+        },
+        "hard": {
+          "jsqrNew": "329/384",
+          "jsqrMaster": "314/384",
+          "zxing": "384/384"
+        },
+        "raw": [
+          "raw/header-sweep-new.json",
+          "raw/header-sweep-master.json",
+          "raw/line-sweep-new.txt",
+          "raw/line-sweep-master.txt"
+        ],
+        "fine41Light": {
+          "jsqrNew": "1408/1408",
+          "jsqrMaster": "1408/1408",
+          "raw": [
+            "raw/header-sweep-fine41-new.json",
+            "raw/header-sweep-fine41-master.json"
+          ]
+        }
+      },
+      "problems": "problems.md",
+      "masterSameHarness": {
+        "jsqr300": "1285/1285",
+        "zxing": "100%",
+        "stress300": {
+          "phoneHard": "231/257 (после 245)",
+          "bwPhoneHard": "216/257 (после 220)"
+        }
+      }
+    },
+    "AC3": {
+      "status": "PASS",
+      "color": {
+        "pdfTileColorOps": 0,
+        "pdfTileImages": 0,
+        "grayValues": [
+          "0",
+          "1"
+        ],
+        "pngNonGrayPixels": 0,
+        "svgColors": [
+          "#000000",
+          "#ffffff"
+        ],
+        "raw": "raw/check-color.json"
+      },
+      "header": {
+        "pagesWithHeader": 313,
+        "cellsWider": 0,
+        "cellsTaller": 0,
+        "raw": "raw/compare-after.json"
+      },
+      "pages": {
+        "before": 728,
+        "after": 728,
+        "documentsWithMorePages": 0,
+        "docxTemplates": "6/6 по 1 странице"
+      },
+      "overlap": {
+        "blanksOk": "231/231",
+        "pages": 728,
+        "header": 313,
+        "corner": 12,
+        "none": 403,
+        "raw": "raw/check-overlap-summary.json"
+      }
+    },
+    "AC4": {
+      "status": "PASS",
+      "typecheck": "clean",
+      "tests": "2671/2671 (pre-commit test:gate)",
+      "screenshots": [
+        "shots/header-landscape-samples-hygiene-p1.png",
+        "shots/header-crop-37-modules-300dpi.png",
+        "shots/header-crop-53-modules-300dpi.png",
+        "shots/paper-blank-ot_intro-p1.png",
+        "shots/print-a4-poster.png",
+        "shots/print-stickers.png",
+        "shots/dialog-qr-document.png",
+        "shots/posters-screen-1440.png",
+        "shots/word-template-p1.png",
+        "shots/word-footer-300dpi.png",
+        "shots/tile-png-600.png",
+        "shots/mark-print-sizes.png",
+        "shots/jsqr-miss-transport_temperature-300-bw-phone.png"
+      ]
+    }
+  },
+  "headerCells": {
+    "37": {
+      "master": "16.92x20.00",
+      "after": "16.90x20.00",
+      "moduleMaster": 0.4055,
+      "moduleAfter": 0.4073
+    },
+    "41": {
+      "master": "16.92x20.00",
+      "after": "16.90x20.00",
+      "moduleMaster": 0.3694,
+      "moduleAfter": 0.3711
+    },
+    "45": {
+      "master": "18.19x21.49",
+      "after": "18.09x21.02",
+      "moduleMaster": 0.365,
+      "moduleAfter": 0.365
+    },
+    "49": {
+      "master": "19.65x23.22",
+      "after": "19.55x22.72",
+      "moduleMaster": 0.365,
+      "moduleAfter": 0.365
+    },
+    "53": {
+      "master": "20.30x24.00",
+      "after": "20.30x23.60",
+      "moduleMaster": 0.3509,
+      "moduleAfter": 0.3526
+    }
+  }
+}

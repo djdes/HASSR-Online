@@ -1,0 +1,3378 @@
+{
+ "report": {
+  "isolated": {
+   "short-tile": {
+    "grayOps": 16,
+    "values": [
+     "0",
+     "1"
+    ],
+    "colorOps": [],
+    "images": 0
+   },
+   "short-cell": {
+    "grayOps": 16,
+    "values": [
+     "0",
+     "1"
+    ],
+    "colorOps": [],
+    "images": 0
+   },
+   "longest-tile": {
+    "grayOps": 16,
+    "values": [
+     "0",
+     "1"
+    ],
+    "colorOps": [],
+    "images": 0
+   },
+   "longest-cell": {
+    "grayOps": 16,
+    "values": [
+     "0",
+     "1"
+    ],
+    "colorOps": [],
+    "images": 0
+   }
+  },
+  "documents": {
+   "documents": 231,
+   "pages": 728,
+   "qrPages": 325,
+   "grayOps": 4875,
+   "grayValues": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0
+  },
+  "png": {
+   "приглашение в Telegram (окно сотрудника)": {
+    "width": 489,
+    "height": 561,
+    "nonGray": 0,
+    "bw": 0.9908
+   },
+   "приглашение сотрудника (tg)": {
+    "width": 489,
+    "height": 561,
+    "nonGray": 0,
+    "bw": 0.9907
+   },
+   "сопряжение": {
+    "width": 602,
+    "height": 691,
+    "nonGray": 0,
+    "bw": 0.9924
+   },
+   "планшет-киоск": {
+    "width": 652,
+    "height": 748,
+    "nonGray": 0,
+    "bw": 0.993
+   },
+   "QR-регистрация": {
+    "width": 653,
+    "height": 749,
+    "nonGray": 0,
+    "bw": 0.9927
+   },
+   "сертификат (PNG в PDF)": {
+    "width": 1014,
+    "height": 1164,
+    "nonGray": 0,
+    "bw": 0.9954
+   },
+   "самый длинный адрес": {
+    "width": 664,
+    "height": 762,
+    "nonGray": 0,
+    "bw": 0.9928
+   }
+  },
+  "svg": {
+   "плакат / наклейка, самый длинный адрес": {
+    "colors": [
+     "#000000",
+     "#ffffff"
+    ],
+    "images": 0,
+    "gradients": 0,
+    "styleColors": 0
+   },
+   "лист проверяющих": {
+    "colors": [
+     "#000000",
+     "#ffffff"
+    ],
+    "images": 0,
+    "gradients": 0,
+    "styleColors": 0
+   },
+   "личный вход": {
+    "colors": [
+     "#000000",
+     "#ffffff"
+    ],
+    "images": 0,
+    "gradients": 0,
+    "styleColors": 0
+   },
+   "наклейка лендинга (без полосы)": {
+    "colors": [
+     "#000000",
+     "#ffffff"
+    ],
+    "images": 0,
+    "gradients": 0,
+    "styleColors": 0
+   }
+  },
+  "word": {
+   "word/media/fcd6708ec801d1932a66f07d3c6f57a082c7586c.png": {
+    "width": 643,
+    "height": 738,
+    "nonGray": 0,
+    "bw": 0.9928
+   }
+  },
+  "ok": true
+ },
+ "documents": [
+  {
+   "set": "samples",
+   "label": "hygiene",
+   "pages": 2,
+   "qrPages": 2,
+   "grayOps": 30,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "health_check",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "climate_control",
+   "pages": 2,
+   "qrPages": 2,
+   "grayOps": 30,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "cold_equipment_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "cleaning_ventilation_checklist",
+   "pages": 6,
+   "qrPages": 6,
+   "grayOps": 90,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "cleaning",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "general_cleaning",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "uv_lamp_runtime",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "finished_product",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "perishable_rejection",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "incoming_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "fryer_oil",
+   "pages": 2,
+   "qrPages": 2,
+   "grayOps": 30,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "med_books",
+   "pages": 3,
+   "qrPages": 3,
+   "grayOps": 45,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "training_plan",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "staff_training",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "disinfectant_usage",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "sanitary_day_control",
+   "pages": 2,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "equipment_maintenance",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "breakdown_history",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "equipment_calibration",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "incoming_raw_materials_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "ppe_issuance",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "accident_journal",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "complaint_register",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "product_writeoff",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "audit_plan",
+   "pages": 2,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "audit_protocol",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "audit_report",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "traceability_test",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "metal_impurity",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "equipment_cleaning",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "intensive_cooling",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "glass_items_list",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "glass_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "pest_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "daily_samples",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "vitaminization",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "ration_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "transport_temperature",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "tableware_breakage",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "pool_water_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "inventory_condition",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "instrument_sterilization",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "medical_waste_b",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "samples",
+   "label": "batch_release",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "blanks",
+   "label": "hygiene",
+   "pages": 2,
+   "qrPages": 2,
+   "grayOps": 30,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 2
+  },
+  {
+   "set": "blanks",
+   "label": "health_check",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "climate_control",
+   "pages": 2,
+   "qrPages": 2,
+   "grayOps": 30,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 2
+  },
+  {
+   "set": "blanks",
+   "label": "cold_equipment_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "cleaning_ventilation_checklist",
+   "pages": 6,
+   "qrPages": 6,
+   "grayOps": 90,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 6
+  },
+  {
+   "set": "blanks",
+   "label": "cleaning",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "general_cleaning",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "uv_lamp_runtime",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "finished_product",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "perishable_rejection",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "incoming_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "fryer_oil",
+   "pages": 2,
+   "qrPages": 2,
+   "grayOps": 30,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 2
+  },
+  {
+   "set": "blanks",
+   "label": "med_books",
+   "pages": 3,
+   "qrPages": 3,
+   "grayOps": 45,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 3
+  },
+  {
+   "set": "blanks",
+   "label": "training_plan",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "staff_training",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "disinfectant_usage",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "sanitary_day_control",
+   "pages": 2,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 2
+  },
+  {
+   "set": "blanks",
+   "label": "equipment_maintenance",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "breakdown_history",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "equipment_calibration",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "incoming_raw_materials_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "ppe_issuance",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "accident_journal",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "complaint_register",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "product_writeoff",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "audit_plan",
+   "pages": 2,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 2
+  },
+  {
+   "set": "blanks",
+   "label": "audit_protocol",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "audit_report",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "traceability_test",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "metal_impurity",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "equipment_cleaning",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "intensive_cooling",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "glass_items_list",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "glass_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "pest_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "daily_samples",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "vitaminization",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "ration_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "transport_temperature",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "tableware_breakage",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "pool_water_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "inventory_condition",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "instrument_sterilization",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "medical_waste_b",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "blanks",
+   "label": "batch_release",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 1
+  },
+  {
+   "set": "long",
+   "label": "hygiene",
+   "pages": 7,
+   "qrPages": 7,
+   "grayOps": 105,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "health_check",
+   "pages": 4,
+   "qrPages": 4,
+   "grayOps": 60,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "climate_control",
+   "pages": 27,
+   "qrPages": 27,
+   "grayOps": 405,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "cold_equipment_control",
+   "pages": 4,
+   "qrPages": 4,
+   "grayOps": 60,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "cleaning_ventilation_checklist",
+   "pages": 9,
+   "qrPages": 9,
+   "grayOps": 135,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "cleaning",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "general_cleaning",
+   "pages": 6,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "uv_lamp_runtime",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "finished_product",
+   "pages": 4,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "perishable_rejection",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "incoming_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "fryer_oil",
+   "pages": 2,
+   "qrPages": 2,
+   "grayOps": 30,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "med_books",
+   "pages": 3,
+   "qrPages": 3,
+   "grayOps": 45,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "training_plan",
+   "pages": 25,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "staff_training",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "disinfectant_usage",
+   "pages": 12,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "sanitary_day_control",
+   "pages": 9,
+   "qrPages": 2,
+   "grayOps": 30,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "equipment_maintenance",
+   "pages": 5,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "breakdown_history",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "equipment_calibration",
+   "pages": 3,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "incoming_raw_materials_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "ppe_issuance",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "accident_journal",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "complaint_register",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "product_writeoff",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "audit_plan",
+   "pages": 309,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "audit_protocol",
+   "pages": 3,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "audit_report",
+   "pages": 3,
+   "qrPages": 3,
+   "grayOps": 45,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "traceability_test",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "metal_impurity",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "equipment_cleaning",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "intensive_cooling",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "glass_items_list",
+   "pages": 4,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "glass_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "pest_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "daily_samples",
+   "pages": 3,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "vitaminization",
+   "pages": 3,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "ration_control",
+   "pages": 3,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "transport_temperature",
+   "pages": 3,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "tableware_breakage",
+   "pages": 3,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "pool_water_control",
+   "pages": 3,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "inventory_condition",
+   "pages": 3,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "instrument_sterilization",
+   "pages": 3,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "medical_waste_b",
+   "pages": 3,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "long",
+   "label": "batch_release",
+   "pages": 3,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "paper",
+   "label": "ot_intro",
+   "pages": 2,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 2
+  },
+  {
+   "set": "paper",
+   "label": "ot_workplace",
+   "pages": 2,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 2
+  },
+  {
+   "set": "paper",
+   "label": "fire_safety",
+   "pages": 2,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 2
+  },
+  {
+   "set": "paper",
+   "label": "fire_extinguishers",
+   "pages": 2,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 2
+  },
+  {
+   "set": "paper",
+   "label": "electrical_safety",
+   "pages": 2,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 2
+  },
+  {
+   "set": "portrait",
+   "label": "hygiene",
+   "pages": 2,
+   "qrPages": 2,
+   "grayOps": 30,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "health_check",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "climate_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "cold_equipment_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "cleaning_ventilation_checklist",
+   "pages": 5,
+   "qrPages": 5,
+   "grayOps": 75,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "cleaning",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "general_cleaning",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "uv_lamp_runtime",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "finished_product",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "perishable_rejection",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "incoming_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "fryer_oil",
+   "pages": 3,
+   "qrPages": 3,
+   "grayOps": 45,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "med_books",
+   "pages": 3,
+   "qrPages": 3,
+   "grayOps": 45,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "training_plan",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "staff_training",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "disinfectant_usage",
+   "pages": 2,
+   "qrPages": 0,
+   "grayOps": 0,
+   "values": [],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "sanitary_day_control",
+   "pages": 2,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "equipment_maintenance",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "breakdown_history",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "equipment_calibration",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "incoming_raw_materials_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "ppe_issuance",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "accident_journal",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "complaint_register",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "product_writeoff",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "audit_plan",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "audit_protocol",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "audit_report",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "traceability_test",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "metal_impurity",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "equipment_cleaning",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "intensive_cooling",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "glass_items_list",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "glass_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "pest_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "daily_samples",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "vitaminization",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "ration_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "transport_temperature",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "tableware_breakage",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "pool_water_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "inventory_condition",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "instrument_sterilization",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "medical_waste_b",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "portrait",
+   "label": "batch_release",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "hygiene-v2",
+   "pages": 5,
+   "qrPages": 5,
+   "grayOps": 75,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-hygiene",
+   "pages": 2,
+   "qrPages": 2,
+   "grayOps": 30,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-health_check",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-climate_control",
+   "pages": 2,
+   "qrPages": 2,
+   "grayOps": 30,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-cold_equipment_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-cleaning_ventilation_checklist",
+   "pages": 6,
+   "qrPages": 6,
+   "grayOps": 90,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-cleaning",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-general_cleaning",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-uv_lamp_runtime",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-finished_product",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-perishable_rejection",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-incoming_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-fryer_oil",
+   "pages": 2,
+   "qrPages": 2,
+   "grayOps": 30,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-med_books",
+   "pages": 3,
+   "qrPages": 3,
+   "grayOps": 45,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-training_plan",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-staff_training",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-disinfectant_usage",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-sanitary_day_control",
+   "pages": 2,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-equipment_maintenance",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-breakdown_history",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-equipment_calibration",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-incoming_raw_materials_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-ppe_issuance",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-accident_journal",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-complaint_register",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-product_writeoff",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-audit_plan",
+   "pages": 2,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-audit_protocol",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-audit_report",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-traceability_test",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-metal_impurity",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-equipment_cleaning",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-intensive_cooling",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-glass_items_list",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-glass_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-pest_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-daily_samples",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-vitaminization",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-ration_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-transport_temperature",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-tableware_breakage",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-pool_water_control",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-inventory_condition",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-instrument_sterilization",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-medical_waste_b",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  },
+  {
+   "set": "variants",
+   "label": "partner-batch_release",
+   "pages": 1,
+   "qrPages": 1,
+   "grayOps": 15,
+   "values": [
+    "0",
+    "1"
+   ],
+   "colorOps": 0,
+   "images": 0,
+   "footerCut": 0
+  }
+ ]
+}

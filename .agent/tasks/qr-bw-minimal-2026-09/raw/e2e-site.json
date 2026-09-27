@@ -1,0 +1,151 @@
+{
+ "checks": [
+  {
+   "id": "DLG-1",
+   "ok": true,
+   "what": "окно QR документа: два превью — новая плитка (одно слово «Отсканировать», без картинки, только чёрный и белый, пропорция 1,148)",
+   "details": [
+    {
+     "width": 182,
+     "height": 208.984375,
+     "text": [
+      "Отсканировать"
+     ],
+     "images": 0,
+     "colors": [
+      "#000000",
+      "#ffffff"
+     ]
+    },
+    {
+     "width": 182,
+     "height": 208.984375,
+     "text": [
+      "Отсканировать"
+     ],
+     "images": 0,
+     "colors": [
+      "#000000",
+      "#ffffff"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SCR-1",
+   "ok": true,
+   "what": "экран QR-кодов журнала открылся, у основного QR есть адрес",
+   "details": [
+    "hygiene",
+    "hygiene@verify",
+    "hygiene:cmujy8nve000bto9m1jlggyql",
+    "hygiene@verify:cmujy8nve000bto9m1jlggyql"
+   ]
+  },
+  {
+   "id": "PR-1",
+   "ok": true,
+   "what": "плакат A4: код 105 мм по ширине, плитка с полосой (≈ 120,5 мм)",
+   "details": {
+    "x": 42.498697916666664,
+    "y": 47.951595052083334,
+    "w": 104.9982421875,
+    "h": 120.53837890625
+   }
+  },
+  {
+   "id": "PR-2",
+   "ok": true,
+   "what": "печать Chrome плаката A4: 300 dpi — оба декодера, 150 dpi — zxing-cpp",
+   "details": "300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ"
+  },
+  {
+   "id": "ST-1",
+   "ok": true,
+   "what": "наклейки: код 29–36 мм по ширине, пропорция плитки 1,148, текст не вылезает",
+   "details": [
+    {
+     "url": "http://localhost:3141/equipment-fill/cmujy8nul0006to9m0y626tzs?token=cmujy8nul0006to9m0y626tzs.1790523431187.iYSQNPGKY4OF6APDIPLlawkfjetnGTnBQoa7tTnx_eQ",
+     "widthMm": 35.99986979166666,
+     "heightMm": 41.32874348958333,
+     "overflow": false
+    },
+    {
+     "url": "http://localhost:3141/equipment-fill/cmujy8nuq0007to9mcg0zepy1?token=cmujy8nuq0007to9mcg0zepy1.1790523431203.Ngzd_vTfLPagwR_A_FmnbuOYageAWbjyoGj8w2VeN7Q",
+     "widthMm": 35.99986979166666,
+     "heightMm": 41.32874348958333,
+     "overflow": false
+    },
+    {
+     "url": "http://localhost:3141/equipment-fill/cmujy8nut0008to9mur6t2ozc?token=cmujy8nut0008to9mur6t2ozc.1790523431220.or6-DW5lHmUmMsQasVS-lFlI0nKAwp87vLDgK0d30mk",
+     "widthMm": 35.99986979166666,
+     "heightMm": 41.32874348958333,
+     "overflow": false
+    },
+    {
+     "url": "http://localhost:3141/equipment-fill/cmujy8nuw0009to9mpc9gpa1u?token=cmujy8nuw0009to9mpc9gpa1u.1790523431236.N8bmg9NpSphA65qecSuRSg5fhl695b8rNYsHN4TxCLI",
+     "widthMm": 35.99986979166666,
+     "heightMm": 41.32874348958333,
+     "overflow": false
+    },
+    {
+     "url": "http://localhost:3141/equipment-fill/cmujy8nv0000ato9maoge6zz5?token=cmujy8nv0000ato9maoge6zz5.1790523431253.wQEknIGQH_7rYJtEuGL0pICDmqbkPytL-5-c7GBJS3Y",
+     "widthMm": 35.99986979166666,
+     "heightMm": 41.32874348958333,
+     "overflow": false
+    },
+    {
+     "url": "http://localhost:3141/equipment-fill/cmujy8nua0005to9m3ms2s0u5?token=cmujy8nua0005to9m3ms2s0u5.1790523431271.KK5R-DOQP4Zb1IVyaIC7CC25F0IEWJrkbRNoHAxbQPw",
+     "widthMm": 35.99986979166666,
+     "heightMm": 41.32874348958333,
+     "overflow": false
+    }
+   ]
+  },
+  {
+   "id": "ST-2",
+   "ok": true,
+   "what": "печать Chrome листа наклеек: каждая наклейка — 300 dpi оба декодера, 150 dpi zxing-cpp",
+   "details": []
+  },
+  {
+   "id": "ST-3",
+   "ok": true,
+   "what": "лист наклеек — A4",
+   "details": {
+    "width": 209.88865255555555,
+    "height": 297.0106596111111
+   }
+  }
+ ],
+ "decoded": {
+  "print-a4": {
+   "ok": true,
+   "marks": "300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ"
+  },
+  "print-sticker-0": {
+   "ok": true,
+   "marks": "300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ"
+  },
+  "print-sticker-1": {
+   "ok": true,
+   "marks": "300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ"
+  },
+  "print-sticker-2": {
+   "ok": true,
+   "marks": "300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ"
+  },
+  "print-sticker-3": {
+   "ok": true,
+   "marks": "300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ"
+  },
+  "print-sticker-4": {
+   "ok": true,
+   "marks": "300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ"
+  },
+  "print-sticker-5": {
+   "ok": true,
+   "marks": "300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ"
+  }
+ }
+}

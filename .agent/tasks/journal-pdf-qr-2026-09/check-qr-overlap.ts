@@ -3,7 +3,10 @@
  *
  * История: 2026-09-24 — маленький QR в правом нижнем углу; 2026-09-27 —
  * фирменный QR в шапке ХАССП справа (`.agent/tasks/journal-qr-header-2026-09`),
- * проверка переписана под новое место. Наборы бланков — из
+ * проверка переписана под новое место; 2026-09-27 (ч/б плитка,
+ * `.agent/tasks/qr-bw-minimal-2026-09`) — в шапке плитка занимает всю ячейку
+ * внутри линий (линии — рамка кода), модули считаются от окна кода
+ * (`placement.window`), а не от угла плитки. Наборы бланков — из
  * `journal-qr-header-2026-09/pages.ts`: образцы 45 журналов, те же образцы как
  * скачанный шаблон (QR /qb + строка копирайта внизу), «длинные» документы
  * всех 45 журналов (QR документа /qj/…), 5 бумажных бланков, варианты
@@ -13,7 +16,7 @@
  * посчитано и оставлено — ячейка в шапке, — но плитка и строка внизу не
  * нарисованы) и с QR. По каждой странице:
  *   1. растр пробы (300 dpi) на месте плитки — 0 тёмных пикселей (любой
- *      канал < 235): у ячейки шапки — плитка без 0,1 мм у линий ячейки, у
+ *      канал < 235): у ячейки шапки — ячейка внутри линий без 0,1 мм у них, у
  *      угла без шапки — плитка + 1 мм; строка внизу (шаблоны) — тоже пусто;
  *   2. растр с QR и растр пробы (100 dpi, вся страница) совпадают везде,
  *      кроме плитки и строки внизу: штамп больше ничего не тронул;
@@ -128,15 +131,16 @@ function moduleMismatches(r: Raster, dpi: number, origin: { x: number; y: number
   const layout = brandQrLayout(url);
   const qr = journalQrMatrix(url);
   const k = dpi / 25.4;
-  const pad = layout.pad!;
+  const pad = layout.pad;
+  const win = p.window!;
   let bad = 0;
   for (let row = 0; row < layout.size; row += 1) {
     for (let col = 0; col < layout.size; col += 1) {
-      const mx = layout.quiet + col + 0.5;
-      const my = layout.quiet + row + 0.5;
+      const mx = layout.window.x + layout.quiet + col + 0.5;
+      const my = layout.window.y + layout.quiet + row + 0.5;
       if (mx >= pad.x && mx <= pad.x + pad.w && my >= pad.y && my <= pad.y + pad.h) continue;
-      const cx = (p.box!.x0 + mx * p.module - origin.x) * k;
-      const cy = (p.box!.y0 + my * p.module - origin.y) * k;
+      const cx = (win.x0 + (layout.quiet + col + 0.5) * p.module - origin.x) * k;
+      const cy = (win.y0 + (layout.quiet + row + 0.5) * p.module - origin.y) * k;
       let sum = 0;
       for (let dy = -1; dy <= 1; dy += 1) {
         for (let dx = -1; dx <= 1; dx += 1) {
