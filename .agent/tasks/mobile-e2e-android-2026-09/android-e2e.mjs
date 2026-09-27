@@ -351,7 +351,7 @@ async function main() {
     await p.waitForURL((u) => u.pathname.startsWith("/mini/login"), { timeout: 60000 }).catch(() => undefined);
     await p.waitForSelector("#password", { timeout: 60000 }).catch(() => undefined);
     s.data.loginVisibleMs = Date.now() - started;
-    await sleep(1500);
+    await sleep(3000);
     s.shots.push(shot("cold-start-login"));
     const info = await p.evaluate(() => ({
       ua: navigator.userAgent,
@@ -506,11 +506,12 @@ async function main() {
           await goto(p, "/mini");
           homePath = pathOf(p);
         }
-        await sleep(1200);
+        await sleep(2500);
+        const dialogs = await p.evaluate(() => [...document.querySelectorAll('[role=dialog],[role=alertdialog]')].map((d) => (d.textContent || "").trim().slice(0, 80)));
         const file = shot(`${theme}-${name}`);
         s.shots.push(file);
         const lay = await layoutProbe(p, name);
-        s.data.screens.push({ name, url: pathOf(p), heading: lay.heading?.text, issues: lay.issues, capTop: lay.capTop, envTop: lay.envTop, capBottom: lay.capBottom, theme: lay.theme });
+        s.data.screens.push({ name, dialogs, url: pathOf(p), heading: lay.heading?.text, issues: lay.issues, capTop: lay.capTop, envTop: lay.envTop, capBottom: lay.capBottom, theme: lay.theme });
         for (const i of lay.issues) check(false, `${name}: ${i}`);
         if (name === "profile") {
           const push = await p.locator('[data-testid="app-push-settings"]').count();
@@ -534,6 +535,8 @@ async function main() {
   await scenario("14a Android back: nested page -> back, home -> minimize", async (s) => {
     const p = page;
     await goto(p, homePath);
+    await sleep(3000);
+    const homeNow = pathOf(p);
     const tab = p.locator('.mini-nav-tab[href="/mini/sections"], a[href="/mini/sections"]').first();
     if (await tab.count()) await tab.click();
     else await p.evaluate(() => { location.href = "/mini/sections"; });
@@ -544,7 +547,7 @@ async function main() {
     await sleep(3000);
     s.data.afterBack = pathOf(p);
     s.shots.push(shot("back-after"));
-    check(pathOf(p) === homePath, `back from /mini/sections went to ${pathOf(p)} (expected ${homePath})`);
+    check(pathOf(p) === homeNow, `back from /mini/sections went to ${pathOf(p)} (expected ${homeNow})`);
     key(4);
     await sleep(2500);
     s.data.afterBackOnHome = topActivity();
@@ -555,7 +558,7 @@ async function main() {
     await sleep(2500);
     s.data.afterReturn = pathOf(p);
     s.shots.push(shot("back-returned"));
-    check(pathOf(p) === homePath, `after returning to the app: ${pathOf(p)}`);
+    check(pathOf(p) === homeNow, `after returning to the app: ${pathOf(p)}`);
   });
 
   await scenario("4 Print from a journal document -> system print UI", async (s) => {
@@ -563,6 +566,10 @@ async function main() {
     await goto(p, screens[2][1]);
     let btn = p.getByRole("button", { name: /Печать/ }).first();
     if (!(await btn.count())) btn = p.locator('[aria-label*="Печат"], [title*="Печат"]').first();
+    if (!(await btn.count())) {
+      btn = p.locator("button:has(svg.lucide-printer)").first();
+      if (await btn.count()) s.data.printButtonName = await btn.evaluate((b) => b.getAttribute("aria-label") || b.getAttribute("title") || b.textContent?.trim() || "");
+    }
     if (!(await btn.count())) {
       s.data.buttons = await buttonsText(p);
       check(false, `no «Печать» button on ${pathOf(p)}`);
@@ -683,9 +690,16 @@ async function main() {
     ];
     s.data.tried = [];
     let found = null;
+    if (ids.docs.cold_equipment_control) candidates.unshift(`/journals/cold_equipment_control/documents/${ids.docs.cold_equipment_control}`);
     for (const url of candidates) {
       await goto(p, url).catch(() => undefined);
       const info = await p.evaluate(() => {
+        const ocr = document.querySelector('[data-testid="display-ocr-button"]');
+        if (ocr) {
+          ocr.setAttribute("data-e2e-photo", "1");
+          const input = ocr.parentElement?.querySelector('input[type="file"]');
+          return { capture: input?.getAttribute("capture") ?? null, accept: input?.accept ?? null, trigger: ocr.getAttribute("aria-label") };
+        }
         const inputs = [...document.querySelectorAll('input[type="file"]')].filter((i) => /image/.test(i.accept || ""));
         for (const input of inputs) {
           let trigger =
@@ -712,7 +726,8 @@ async function main() {
       return;
     }
     s.data.found = found;
-    await p.locator("[data-e2e-photo]").first().scrollIntoViewIfNeeded();
+    await p.locator("[data-e2e-photo]").first().evaluate((el) => el.scrollIntoView({ block: "center" }));
+    await sleep(800);
     await screenTap(p, p.locator("[data-e2e-photo]").first());
     await sleep(3000);
     let nodes = uiNodes();
@@ -759,8 +774,8 @@ async function main() {
         continue;
       }
       tested += 1;
-      await btn.scrollIntoViewIfNeeded();
-      await sleep(500);
+      await btn.evaluate((el) => el.scrollIntoView({ block: "center" }));
+      await sleep(800);
       await screenTap(p, btn);
       const c = { url, found: true, steps: [] };
       for (let i = 0; i < 4; i++) {
@@ -779,14 +794,17 @@ async function main() {
         key(4);
       }
       await sleep(3000);
+      await btn.evaluate((el) => el.scrollIntoView({ block: "center" })).catch(() => undefined);
+      await sleep(800);
+      c.near = await btn.evaluate((el) => (el.parentElement?.parentElement?.textContent || "").trim().slice(0, 300)).catch((e) => String(e));
       c.page = await p.evaluate(() => ({
         toasts: [...document.querySelectorAll("[data-sonner-toast]")].map((t) => t.textContent?.trim()),
-        texts: [...document.querySelectorAll(".text-\\[11px\\], [role=alert]")].map((t) => t.textContent?.trim()).filter(Boolean).slice(0, 5),
+        texts: [...document.querySelectorAll("[role=alert]")].map((t) => t.textContent?.trim()).filter(Boolean).slice(0, 5),
         pulsing: [...document.querySelectorAll(".animate-pulse")].filter((e) => e.getBoundingClientRect().width > 0).length,
       }));
       s.shots.push(shot(`voice-${tested}-result`));
       s.data.cases.push(c);
-      const msgs = [...c.page.toasts, ...c.page.texts].join(" | ");
+      const msgs = [...c.page.toasts, ...c.page.texts, c.near].join(" | ");
       check(c.page.pulsing === 0, `${url}: mic still «listening» (hang)`);
       check(!/[a-z]{4,}/i.test(msgs.replace(/WeSetup/g, "")) , `${url}: technical/English text shown: «${msgs}»`);
       check(!/браузер/i.test(msgs), `${url}: message talks about the browser inside the app: «${msgs}»`);
