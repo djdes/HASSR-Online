@@ -368,6 +368,16 @@ async function main() {
   device = devices[0];
   if (!device) throw new Error("no android device");
 
+  // Как у человека: под приложением есть рабочий стол. Если эмулятор ещё не
+  // запускал лаунчер, задача приложения оказывается единственной и
+  // moveTaskToBack («свернуть») системе некуда отдать — WM отменяет переход
+  // («No transition roots … so abort»), и «назад» будто не работает.
+  key(3);
+  await sleep(4000);
+  results.homeBeforeStart = topActivity();
+  results.tasksBeforeStart = sh("dumpsys activity activities | grep -E '^ *\\* Task\\{|type=home' | head -8").trim();
+  log("home before start", results.homeBeforeStart);
+
   // Видео основного сценария (до 3 минут).
   const rec = spawn("adb", ["shell", "screenrecord", "--time-limit", "180", "--bit-rate", "4000000", "/sdcard/flow.mp4"], { stdio: "ignore" });
 
@@ -545,7 +555,9 @@ async function main() {
     key(4);
     await sleep(2500);
     s.data.afterBack = topActivity();
+    await sleep(1500);
     s.shots.push(shot("login-after-back"));
+    s.data.tasksAfterBack = sh("dumpsys activity activities | grep -E '^ *\\* Task\\{|type=home' | head -8").trim();
     check(!/ru\.wesetup\.app/.test(s.data.afterBack), `app still in front after back on /mini/login: ${s.data.afterBack} (path ${await p.evaluate(() => location.pathname).catch(() => "?")})`);
     check(Boolean(appPid()), "app process died after back on /mini/login (should only minimize)");
     bringAppToFront();
