@@ -13,10 +13,19 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <!-- Фон окна под строкой состояния и полосой навигации. На телефонах со
+             старым встроенным браузером (WebView до 140) Capacitor отодвигает
+             страницу от системных полос, и под ними виден этот фон: был светлый
+             (белая полоса с белыми часами), теперь фирменный тёмно-синий. -->
+        <item name="android:windowBackground">@color/wesetup_background</item>
     </style>
 
 
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="android:background">@drawable/splash</item>
+        <!-- Заставка Android 12+: тёмно-синий фон, как у значка и экрана входа
+             (без этого система рисовала светло-серый). -->
+        <item name="windowSplashScreenBackground">@color/wesetup_background</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>
 </resources>
