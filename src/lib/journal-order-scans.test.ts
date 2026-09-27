@@ -4,6 +4,7 @@ import test from "node:test";
 import { createCanvas } from "@napi-rs/canvas";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 
+import { BRAND_QR_CAPTION_TITLE } from "@/lib/brand-qr";
 import { renderJournalDocumentPdf } from "@/lib/document-pdf";
 import { journalSamplePdfQr } from "@/lib/journal-pdf-qr-link";
 import {
@@ -142,8 +143,8 @@ test("печать: после журнала — страницы PDF-скан�
   assert.deepEqual([Math.round(portrait.width), Math.round(portrait.height)], [595, 842]);
 
   const texts = await pageTexts(new Uint8Array(merged.buffer));
-  // Подпись берём из того же места, что и штамп: текст подписи меняется (24.09 — «Заполнение электронного журнала»).
-  const qrCaption = journalSamplePdfQr("https://wesetup.ru", "hygiene").lines[0];
+  // QR в шапке — с плашкой «Отсканировать»: по ней видно, где QR есть.
+  const qrCaption = BRAND_QR_CAPTION_TITLE;
   assert.ok(texts.slice(0, journalPages).every((text) => text.includes(qrCaption)), "QR есть на каждой странице журнала");
   assert.ok(texts.slice(journalPages).every((text) => !text.includes(qrCaption)), "на страницах приказов QR нет");
   assert.match(texts[journalPages], /ORDER SCAN PAGE 1/);

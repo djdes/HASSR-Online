@@ -103,22 +103,7 @@ function drawCenteredLabel(
   drawTextCenteredInBox(doc, text, slot);
 }
 
-export function stampJournalPageNumbers(
-  doc: jsPDF,
-  fontName = "JournalUnicode",
-  options: {
-    /**
-     * Отступ правого края подписи «СТР. X ИЗ N» на странице без шапки
-     * (мм от правого края листа). По умолчанию — поле листа; с QR-кодом в
-     * углу — левее QR-блока (`journalQrFooterInset`). Функция — свой отступ у
-     * каждой страницы (QR стоит вровень с таблицей своей страницы).
-     */
-    fallbackRightInset?: number | ((pageNumber: number) => number);
-  } = {}
-) {
-  const fallbackRightInset = options.fallbackRightInset ?? JOURNAL_SHEET_MARGIN_MM;
-  const rightInsetFor = (pageNumber: number) =>
-    typeof fallbackRightInset === "function" ? fallbackRightInset(pageNumber) : fallbackRightInset;
+export function stampJournalPageNumbers(doc: jsPDF, fontName = "JournalUnicode") {
   const totalPages = doc.getNumberOfPages();
   const byPage = new Map<number, PageLabelSlot>();
   for (const slot of pageLabelSlots) {
@@ -137,8 +122,8 @@ export function stampJournalPageNumbers(
     if (slot) {
       drawCenteredLabel(doc, label, slot);
     } else {
-      // Базовая линия — на нижнем поле листа, вровень с низом QR в углу.
-      doc.text(label, pageWidth - rightInsetFor(pageNumber), pageHeight - JOURNAL_SHEET_MARGIN_MM, {
+      // Базовая линия — на нижнем поле листа, правый край — на правом поле.
+      doc.text(label, pageWidth - JOURNAL_SHEET_MARGIN_MM, pageHeight - JOURNAL_SHEET_MARGIN_MM, {
         align: "right",
       });
     }
@@ -165,24 +150,16 @@ export function partnerPdfFooterText(brand: PdfFooterBrand): string {
   return `${signature} · ${PLATFORM_BADGE_TEXT}`;
 }
 
+/** Место справа под «СТР. X ИЗ N» на странице без шапки, мм: подвал партнёра кончается левее. */
+const PARTNER_FOOTER_RIGHT_RESERVE_MM = 48;
+
 export function stampPartnerPdfFooter(
   doc: jsPDF,
   brand: PdfFooterBrand | null | undefined,
   fontName = "JournalUnicode",
-  options: {
-    /**
-     * Сколько места справа (мм) оставить под «СТР. X ИЗ N» (и QR-код в
-     * углу, если он печатается). По умолчанию 48. Функция — своё место у
-     * каждой страницы.
-     */
-    rightReserve?: number | ((pageNumber: number) => number);
-  } = {}
 ) {
   if (!brand) return;
   const totalPages = doc.getNumberOfPages();
-  const rightReserveOption = options.rightReserve ?? 48;
-  const rightReserveFor = (pageNumber: number) =>
-    typeof rightReserveOption === "function" ? rightReserveOption(pageNumber) : rightReserveOption;
   const text = partnerPdfFooterText(brand);
 
   doc.setFont(fontName, "normal");
@@ -193,7 +170,7 @@ export function stampPartnerPdfFooter(
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     // Справа оставляем место под «СТР. X ИЗ N» на страницах без шапки.
-    const maxWidth = pageWidth - JOURNAL_SHEET_MARGIN_MM - rightReserveFor(pageNumber);
+    const maxWidth = pageWidth - JOURNAL_SHEET_MARGIN_MM - PARTNER_FOOTER_RIGHT_RESERVE_MM;
     const lines = (doc.splitTextToSize(text, maxWidth) as string[]).slice(0, 2);
     // Последняя строка — на нижнем поле листа, от левого поля.
     lines.forEach((line, index) => {

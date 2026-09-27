@@ -48,8 +48,9 @@ const SHORT_VALUE = /^[\d\s.,:;+\-−–—°%/()×xхХ~<>≤≥=CС]+$/;
  * Поля таблицы бланка: заданные бланком стороны остаются, остальные —
  * поля листа. Сверху, слева и справа — `JOURNAL_SHEET_MARGIN_MM`; снизу —
  * поле листа плюс полоса под «СТР. X ИЗ N» (подпись страницы без шапки
- * стоит базовой линией на нижнем поле и не должна лечь на таблицу). Под QR
- * в углу нижнее поле поднимает `reserveJournalQrBottomMargin`.
+ * стоит базовой линией на нижнем поле и не должна лечь на таблицу). Под
+ * подвал партнёра в две строки нижнее поле поднимает
+ * `reserveJournalTableBottom`; QR строк не занимает — он в шапке.
  */
 export function journalTableMargin(margin: MarginPaddingInput | undefined): MarginPaddingInput {
   const defaults = {
@@ -69,6 +70,29 @@ export function journalTableMargin(margin: MarginPaddingInput | undefined): Marg
     bottom: margin.bottom ?? vertical ?? defaults.bottom,
     left: margin.left ?? horizontal ?? defaults.left,
   };
+}
+
+/**
+ * Нижнее поле всех таблиц autoTable этого документа — не меньше `bottomMm`
+ * (подвал партнёра в две строки: полоса выше, чем у «СТР. X ИЗ N»).
+ *
+ * Отрисовщики передают свой `margin` без `bottom` (`journalAutoTable`
+ * подставляет поле листа + полосу под «СТР. X ИЗ N»), а документные
+ * настройки autoTable целиком заменяются полем вызова. Хуки же
+ * складываются: `didParseCell` срабатывает до отрисовки таблицы, и поле
+ * правится в её разобранных настройках.
+ */
+export function reserveJournalTableBottom(doc: jsPDF, bottomMm: number) {
+  type Hook = (data: { table?: { settings?: { margin?: { bottom: number } } } }) => void;
+  const holder = doc as jsPDF & { __autoTableDocumentDefaults?: Record<string, unknown> };
+  const previous = holder.__autoTableDocumentDefaults ?? {};
+  const previousHook = previous.didParseCell as Hook | undefined;
+  const bump: Hook = (data) => {
+    const margin = data.table?.settings?.margin;
+    if (margin && typeof margin.bottom === "number" && margin.bottom < bottomMm) margin.bottom = bottomMm;
+    previousHook?.(data);
+  };
+  holder.__autoTableDocumentDefaults = { ...previous, didParseCell: bump };
 }
 
 export function isShortCellValue(text: string): boolean {

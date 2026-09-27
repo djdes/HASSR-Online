@@ -5,7 +5,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * `/qj/<orgId>/<code>/<sig>` — маленький QR в углу печатного журнала.
+ * `/qj/<orgId>/<code>/<sig>` — QR в шапке печатного журнала.
  *
  * Подпись сходится → на основной QR этого журнала (`/journal-fill/...` с
  * токеном, запись по PIN). Не сходится → 404 без подробностей: не

@@ -2,7 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { jsPDF } from "jspdf";
 import type { CellDef, CellHookData, RowInput, UserOptions } from "jspdf-autotable";
 import { registerJournalUnicodeFont } from "@/lib/pdf-journal-font";
-import { JOURNAL_LINE_WIDTH, journalAutoTable } from "@/lib/pdf-journal-table";
+import { JOURNAL_LINE_WIDTH, journalAutoTable, reserveJournalTableBottom } from "@/lib/pdf-journal-table";
 import {
   JOURNAL_FOOTER_TEXT_BAND_BRANDED_MM,
   JOURNAL_FOOTER_TEXT_BAND_MM,
@@ -307,10 +307,11 @@ import { journalDocumentPdfQr, journalPdfQrOrigin } from "@/lib/journal-pdf-qr-l
 import { loadOrderScansForPdf } from "@/lib/journal-order-scans-db";
 import { appendOrderScansToPdf, type OrderScanForPdf } from "@/lib/journal-order-scans-pdf";
 import {
-  JOURNAL_QR_BOTTOM_RESERVE_MM,
-  journalQrFooterInset,
-  journalQrRightEdges,
-  reserveJournalQrBottomMargin,
+  journalQrCellHeight,
+  journalQrCellWidth,
+  journalQrTileOf,
+  prepareJournalQr,
+  registerJournalQrSlot,
   stampJournalQr,
   trackPdfInk,
   type JournalPdfQr,
@@ -737,8 +738,9 @@ function journalNameOr(fallback: string): string {
 /**
  * Поле бланка (мм) — ОДНО на все четыре стороны листа (`pdf-journal-sheet.ts`):
  * сверху шапка ХАССП (или крупный заголовок), слева и справа шапка и
- * таблицы, снизу низ QR в углу. Штамп ХАССП и таблица журнала обязаны
- * иметь ОДНУ ширину — иначе на листе видна «ступенька».
+ * таблицы, снизу таблица (плюс полоса под «СТР. X ИЗ N»). Штамп ХАССП и
+ * таблица журнала обязаны иметь ОДНУ ширину — иначе на листе видна
+ * «ступенька»; QR — ячейкой внутри шапки справа, ширину штампа не меняет.
  */
 const PDF_SHEET_MARGIN = JOURNAL_SHEET_MARGIN_MM;
 
@@ -763,16 +765,9 @@ let lastHeaderTop = LEGACY_HEADER_TOP;
 const titleBottomByPage = new Map<number, number>();
 
 /**
- * Нижнее поле текущего прохода рендера (мм от низа листа): до него
- * доходят таблицы и текст бланка. Поле листа + полоса под QR в углу (второй
- * проход) или под подписью страницы / подвалом партнёра (первый).
- */
-let activeFooterReserveMm = JOURNAL_SHEET_MARGIN_MM + JOURNAL_FOOTER_TEXT_BAND_MM;
-
-/**
- * Полоса подвала над нижним полем у левого края (мм): «СТР. X ИЗ N» или
- * подвал партнёра в две строки. Узкий блок у левого поля (подписи) может
- * опускаться до неё — QR в углу стоит справа.
+ * Полоса подвала над нижним полем листа (мм): «СТР. X ИЗ N» на странице без
+ * шапки или подвал партнёра в две строки. Таблицы и текст бланка доходят
+ * до неё — нижнего резерва под QR больше нет (QR — в шапке).
  */
 let activeFooterTextBandMm = JOURNAL_FOOTER_TEXT_BAND_MM;
 
@@ -809,17 +804,8 @@ function legacyY(y: number): number {
   return y - (LEGACY_HEADER_TOP - lastHeaderTop);
 }
 
-/** Нижняя граница содержимого страницы (мм от верха листа) в этом проходе. */
+/** Нижняя граница содержимого страницы (мм от верха листа): поле листа + полоса подвала. */
 function contentBottom(doc: jsPDF): number {
-  return doc.internal.pageSize.getHeight() - activeFooterReserveMm;
-}
-
-/**
- * Нижняя граница узкого блока у левого поля (подписи «ВЫПОЛНИЛ/ПРОВЕРИЛ»,
- * левая половина листа): ему можно в полосу под QR — QR и подпись к нему
- * стоят в правом углу, — но не ниже подвала слева.
- */
-function narrowContentBottom(doc: jsPDF): number {
   return doc.internal.pageSize.getHeight() - PDF_SHEET_MARGIN - activeFooterTextBandMm;
 }
 
@@ -962,13 +948,20 @@ function formatHeaderDate(value: Date | string | null | undefined) {
  * Единая шапка ХАССП для всех PDF журналов.
  *
  * Геометрия (аудит Q1-B) — правится ТОЛЬКО здесь, все журналы её шарят:
- *   ┌──────────────┬────────────────────────────┬────────────┐
- *   │              │       СИСТЕМА ХАССП        │ Начат ...  │  ← row 1
- *   │ Организация  ├────────────────────────────┼────────────┤
- *   │              │     ЖУРНАЛ ... (жирный)    │ СТР. X/Y   │  ← row 2
- *   ├──────────────┴────────────────────────────┴────────────┤
- *   │ Периодичность│ <объединённое значение, без вертикалей> │  ← row 3
- *   └──────────────┴────────────────────────────────────────-┘
+ *   ┌──────────────┬────────────────────────┬────────────┬────────┐
+ *   │              │     СИСТЕМА ХАССП      │ Начат ...  │ ▀▄ ▀▄▀ │  ← row 1
+ *   │ Организация  ├────────────────────────┼────────────┤ ▄▀ QR  │
+ *   │              │  ЖУРНАЛ ... (жирный)   │ СТР. X/Y   │ плашка │  ← row 2
+ *   ├──────────────┼────────────────────────┴────────────┴────────┤
+ *   │ Периодичность│ <объединённое значение, без вертикалей>      │  ← row 3
+ *   └──────────────┴──────────────────────────────────────────────┘
+ *
+ * QR (2026-09-27) — фирменная плитка в своей ячейке справа, на высоту
+ * row1+row2, у документа с QR (`prepareJournalQr`). Рамка шапки той же
+ * ширины, что таблица, — сужается средняя колонка; строки row1+row2 не
+ * ниже плитки (20 мм — шапка не растёт; плотный адрес — до +4 мм, см.
+ * `journalQrTile`). Плитку рисует `stampJournalQr` в конце — по ячейке,
+ * которую шапка регистрирует на каждой своей странице.
  *
  * Ключевые инварианты:
  *   • горизонталь над строкой периодичности идёт на ВСЮ ширину (раньше
@@ -1037,7 +1030,11 @@ function drawJournalHeader(doc: jsPDF, params: {
   // «Начат 01-08-2026» шире, чем «СТР. 1 ИЗ 1» — правая колонка одна и та
   // же во всех журналах, чтобы шапки были единообразны.
   const rightWidth = 42;
-  const middleWidth = width - leftWidth - rightWidth;
+  // Ячейка QR — правее «Начат / Окончен · СТР. X ИЗ N», по ширине плитки.
+  const qrTile = journalQrTileOf(doc);
+  const qrWidth = qrTile ? journalQrCellWidth(qrTile) : 0;
+  const qrLeft = x + width - qrWidth;
+  const middleWidth = width - leftWidth - rightWidth - qrWidth;
   const journalTitle = headerTitleOr(journalLabel).toUpperCase();
 
   // Высоты строк — по фактическому числу строк текста (кегль 10): длинное
@@ -1055,7 +1052,12 @@ function drawJournalHeader(doc: jsPDF, params: {
   const orgHeight = rowHeightFor(orgLines, journalLineHeightMm(doc));
   doc.setFontSize(10);
   const topHeight = 10;
-  const secondHeight = Math.max(rowHeightFor(titleLines), orgHeight - topHeight);
+  // row1+row2 — не ниже ячейки QR (плитка по высоте строк шапки).
+  const secondHeight = Math.max(
+    rowHeightFor(titleLines),
+    orgHeight - topHeight,
+    qrTile ? journalQrCellHeight(qrTile) - topHeight : 0,
+  );
   const gridBottom = y + topHeight + secondHeight;
 
   doc.setFont("JournalUnicode", "normal");
@@ -1081,7 +1083,10 @@ function drawJournalHeader(doc: jsPDF, params: {
   doc.line(x + leftWidth, y, x + leftWidth, y + totalHeight);
   // Вертикаль «журнал | Начат/СТР» — только по сетке row1+row2.
   doc.line(x + leftWidth + middleWidth, y, x + leftWidth + middleWidth, gridBottom);
-  doc.line(x + leftWidth, y + topHeight, x + width, y + topHeight);
+  // Вертикаль «Начат/СТР | QR» — тоже по row1+row2; горизонталь между
+  // row1 и row2 упирается в ячейку QR.
+  if (qrTile) doc.line(qrLeft, y, qrLeft, gridBottom);
+  doc.line(x + leftWidth, y + topHeight, qrLeft, y + topHeight);
   if (withPeriodicity) {
     // Полная горизонталь над строкой периодичности (включая участок
     // под ячейкой организации) — иначе шапка «протекает» вниз.
@@ -1108,10 +1113,10 @@ function drawJournalHeader(doc: jsPDF, params: {
   doc.text("Окончен", labelX, finishedY);
   doc.setFont("JournalUnicode", "normal");
   doc.text(started, valueX, startedY);
-  // Линия «Окончен ______» не должна вылезать за правую рамку штампа
-  // (аудит r5, п.2): подчёркивание подрезаем под остаток ячейки.
+  // Линия «Окончен ______» не должна вылезать за правую рамку своей
+  // ячейки (аудит r5, п.2; правее — ячейка QR): подчёркивание подрезаем.
   doc.text(
-    finished || fitUnderscoreLabel(doc, "", x + width - 3 - valueX),
+    finished || fitUnderscoreLabel(doc, "", qrLeft - 3 - valueX),
     valueX,
     finishedY
   );
@@ -1125,6 +1130,7 @@ function drawJournalHeader(doc: jsPDF, params: {
     fontSize: 10,
     fontStyle: "bold",
   });
+  if (qrTile) registerJournalQrSlot(doc, { x0: qrLeft, y0: y, x1: x + width, y1: gridBottom });
 
   if (withPeriodicity) {
     doc.setFont("JournalUnicode", "bold");
@@ -5495,8 +5501,7 @@ function drawUvRuntimePdf(doc: jsPDF, params: {
   });
 
   // Промежутки между таблицами бланка — 3 мм (было 5 и 6): пустой бланк
-  // установки занимает лист целиком, и с QR в правом нижнем углу на нижнем
-  // поле листа иначе не помещался на одну страницу.
+  // установки занимает лист целиком и иначе не помещался на одну страницу.
   const UV_TABLE_GAP = 3;
   const specEndY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + UV_TABLE_GAP;
 
@@ -6609,8 +6614,8 @@ export type JournalDocumentPdfInput = {
   /// Подписи сотрудников через общий планшет (ПИН) за период документа —
   /// печатаются отдельной страницей-приложением. Пусто → страницы нет.
   signatures?: PdfSignatureLine[];
-  /// Маленький QR в правом нижнем углу каждой страницы (адрес + подпись).
-  /// Нет поля — бланк печатается без QR, как раньше.
+  /// Фирменный QR в шапке ХАССП справа — на каждой странице с шапкой
+  /// (`pdf-journal-qr.ts`). Нет поля — бланк печатается без QR, как раньше.
   qr?: JournalPdfQr | null;
   /// Сканы приказов к журналу (гигиена, бракераж готовой продукции) —
   /// страницы после журнала, без QR-штампа. Добавляет
@@ -6770,7 +6775,7 @@ export async function loadJournalDocumentPdfInput(params: {
     users,
   }).catch(() => []);
 
-  // Маленький QR в углу каждой страницы — на основной QR этого журнала.
+  // QR в шапке каждой страницы — на основной QR этого журнала.
   // Нет секрета QR (стенд без настроек) — печатаем бланк без кода.
   let qr: JournalPdfQr | null = null;
   try {
@@ -6881,32 +6886,12 @@ export type RenderedJournalDocumentPdf = {
  * Чистый рендер: ни одного обращения к БД, только jsPDF поверх
  * переданных данных.
  *
- * С QR в углу — до двух проходов, чтобы не менять вёрстку без нужды:
- *   1. как есть; если на каждой странице QR встал в нижнее поле (в угол
- *      или левее по низу) — готово;
- *   2. иначе (таблица дошла до низа листа) — с нижним полем таблиц под
- *      QR (`reserveJournalQrBottomMargin`). Если от этого добавилась
- *      страница, а в первом проходе QR всё же нашёл свободное место на
- *      каждой странице (пусть не внизу), — остаётся первый: лишний лист
- *      бумаги ради угла QR хуже, чем QR чуть выше.
+ * QR (если есть во входе) — в шапке ХАССП справа, своей ячейкой: строк
+ * таблицы он не занимает, поэтому рендер один, а таблицы доходят до
+ * нижнего поля листа (раньше под угловой QR поднималось нижнее поле всех
+ * таблиц, и рендер шёл в два прохода).
  */
 export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): RenderedJournalDocumentPdf {
-  if (!input.qr?.url) return renderJournalDocumentPdfPass(input, false);
-  const first = renderJournalDocumentPdfPass(input, false);
-  const firstPlacements = first.qrPlacements ?? [];
-  if (firstPlacements.every((p) => p.bottomRow && !p.overlap)) return first;
-  const second = renderJournalDocumentPdfPass(input, true);
-  const secondPlacements = second.qrPlacements ?? [];
-  const firstFree = firstPlacements.every((p) => !p.overlap);
-  const secondFree = secondPlacements.every((p) => !p.overlap);
-  if (firstFree && (!secondFree || secondPlacements.length > firstPlacements.length)) return first;
-  return second;
-}
-
-function renderJournalDocumentPdfPass(
-  input: JournalDocumentPdfInput,
-  reserveQrBottom: boolean
-): RenderedJournalDocumentPdf {
   const { users, equipment, rooms, branding } = input;
   // Бессрочный документ (`dateTo = 31.12.2099`) печатается по сегодняшний
   // день: иначе сетка бланка растягивалась на десятки страниц будущих дат.
@@ -6921,17 +6906,17 @@ function renderJournalDocumentPdfPass(
   const fontName = loadUnicodeFont(doc);
   doc.setFont(fontName, "normal");
 
-  // QR в углу: учёт нарисованного бланком (чтобы QR ничего не перекрыл) и
-  // нижнее поле таблиц под угол — до первой отрисовки.
+  // QR в шапке: плитка под адрес — до первой отрисовки (шапка оставит под
+  // неё ячейку); учёт нарисованного — для страниц без шапки (QR встаёт в
+  // правый верхний угол, только если там пусто).
   const qr = input.qr?.url ? input.qr : null;
+  if (qr) prepareJournalQr(doc, qr.url);
   const inkTracker = qr ? trackPdfInk(doc) : null;
-  // Нижнее поле таблиц и текста бланка: поле листа + полоса под QR в углу
-  // (второй проход) или под «СТР. X ИЗ N» / подвалом партнёра (первый).
+  // Нижнее поле таблиц и текста бланка: поле листа + полоса под «СТР. X
+  // ИЗ N» (или под подвал партнёра в две строки — она выше).
   activeFooterTextBandMm = branding ? JOURNAL_FOOTER_TEXT_BAND_BRANDED_MM : JOURNAL_FOOTER_TEXT_BAND_MM;
-  activeFooterReserveMm =
-    qr && reserveQrBottom ? JOURNAL_QR_BOTTOM_RESERVE_MM : PDF_SHEET_MARGIN + activeFooterTextBandMm;
-  if (activeFooterReserveMm > PDF_SHEET_MARGIN + JOURNAL_FOOTER_TEXT_BAND_MM) {
-    reserveJournalQrBottomMargin(doc, activeFooterReserveMm);
+  if (activeFooterTextBandMm > JOURNAL_FOOTER_TEXT_BAND_MM) {
+    reserveJournalTableBottom(doc, PDF_SHEET_MARGIN + activeFooterTextBandMm);
   }
 
   const templateCode = document.template.code;
@@ -7466,9 +7451,9 @@ function renderJournalDocumentPdfPass(
         data: entry.data,
       })),
       users,
-      // Подписи «ВЫПОЛНИЛ / ПРОВЕРИЛ» — узкий блок у левого поля: над
-      // нижним полем листа, левее QR в углу.
-      contentBottom: narrowContentBottom(doc),
+      // Подписи «ВЫПОЛНИЛ / ПРОВЕРИЛ» — над нижним полем листа и полосой
+      // подвала.
+      contentBottom: contentBottom(doc),
       // Общая шапка ХАССП — как у остальных журналов.
       drawHeader: (target, options) =>
         drawJournalHeader(target, {
@@ -7512,36 +7497,14 @@ function renderJournalDocumentPdfPass(
   }
 
   // Единый проход по готовому документу: «СТР. i ИЗ N» с честным N в
-  // шапке каждой страницы (или в подвале, если шапки на странице нет).
-  // С QR в углу «СТР. X ИЗ N» на страницах без шапки встаёт левее QR, а
-  // QR — вровень с правой границей таблицы своей страницы.
-  const qrRightEdges = qr ? journalQrRightEdges(doc, inkTracker) : null;
-  const qrFooterInsets =
-    qr && qrRightEdges
-      ? qrRightEdges.map((edge, index) => {
-          doc.setPage(index + 1);
-          return journalQrFooterInset(doc, qr.lines, fontName, doc.internal.pageSize.getWidth() - edge);
-        })
-      : null;
-  const qrFooterInset = qrFooterInsets ? (page: number) => qrFooterInsets[page - 1] : null;
-  stampJournalPageNumbers(
-    doc,
-    fontName,
-    qrFooterInset ? { fallbackRightInset: qrFooterInset } : {},
-  );
+  // шапке каждой страницы (или в подвале справа, если шапки на странице нет).
+  stampJournalPageNumbers(doc, fontName);
   // Подвал партнёра (white-label) — после нумерации, чтобы не спорить
   // за нижний край страницы.
-  stampPartnerPdfFooter(
-    doc,
-    branding,
-    fontName,
-    qrFooterInset ? { rightReserve: (page) => qrFooterInset(page) + 34 } : {},
-  );
-  // QR — последним: он видит всё, что уже есть на странице (включая
-  // нумерацию и подвал), и встаёт только на свободное место.
-  const qrPlacements = qr
-    ? stampJournalQr(doc, { ...qr, fontName, tracker: inkTracker, rightEdges: qrRightEdges })
-    : undefined;
+  stampPartnerPdfFooter(doc, branding, fontName);
+  // QR — последним: в ячейки шапки, которые она зарегистрировала на каждой
+  // своей странице; на странице без шапки — в свободный правый верхний угол.
+  const qrPlacements = qr ? stampJournalQr(doc, { ...qr, fontName, tracker: inkTracker }) : undefined;
 
   activeControlPeriodicity = "";
   activeDocumentStatus = "";
@@ -7552,7 +7515,6 @@ function renderJournalDocumentPdfPass(
   pagesWithJournalHeader.clear();
   titleBottomByPage.clear();
   lastHeaderTop = LEGACY_HEADER_TOP;
-  activeFooterReserveMm = PDF_SHEET_MARGIN + JOURNAL_FOOTER_TEXT_BAND_MM;
   activeFooterTextBandMm = JOURNAL_FOOTER_TEXT_BAND_MM;
   resetPageLabelSlots();
 

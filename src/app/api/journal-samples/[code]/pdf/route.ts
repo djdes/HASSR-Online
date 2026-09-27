@@ -62,7 +62,7 @@ export async function GET(
   }
 
   try {
-    // В углу каждой страницы — QR на /qb и строка копирайта.
+    // QR на /qb — в шапке каждой страницы, строка копирайта — внизу.
     const { buffer, fileName } = renderJournalDocumentPdf({
       ...buildJournalSampleInput(code),
       qr: blankPdfQr(journalPdfQrOrigin(), { target, email }),

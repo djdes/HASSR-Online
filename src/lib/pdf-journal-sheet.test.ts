@@ -4,20 +4,21 @@ import test from "node:test";
 import { createCanvas } from "@napi-rs/canvas";
 import { jsPDF } from "jspdf";
 
+import { BRAND_QR_CAPTION_SITE, BRAND_QR_CAPTION_TITLE } from "@/lib/brand-qr";
 import { renderJournalDocumentPdf } from "@/lib/document-pdf";
 import { standardFontsDir, workerFileUrl } from "@/lib/journal-preview/render";
 import { journalSamplePdfQr } from "@/lib/journal-pdf-qr-link";
 import { buildJournalSampleInput } from "@/lib/journal-sample-fixtures";
 import { registerJournalUnicodeFont } from "@/lib/pdf-journal-font";
 import {
-  JOURNAL_QR_BOTTOM_MM,
-  JOURNAL_QR_BOTTOM_RESERVE_MM,
-  JOURNAL_QR_DEFAULT_RIGHT_MARGIN_MM,
-  journalQrFooterInset,
-  journalQrRightEdges,
-  reserveJournalQrBottomMargin,
+  JOURNAL_HEADER_ROWS_MM,
+  JOURNAL_QR_MAX_GROWTH_MM,
+  JOURNAL_QR_MIN_MODULE_MM,
+  prepareJournalQr,
   stampJournalQr,
   trackPdfInk,
+  type JournalPdfQr,
+  type PdfBox,
 } from "@/lib/pdf-journal-qr";
 import {
   JOURNAL_FOOTER_TEXT_BAND_MM,
@@ -33,16 +34,22 @@ const M = JOURNAL_SHEET_MARGIN_MM;
 const TOL = 1;
 const DPI = 72;
 const PX_PER_MM = DPI / 25.4;
-const QR_LINES = ["Заполнение электронного журнала", "wesetup.ru"];
-const QR_URL = "https://wesetup.ru/journals-info/hygiene";
+const PT_TO_MM = 25.4 / 72;
+/** Самый плотный адрес документа (53 модуля): шапка с QR растёт сильнее всего. */
+const QR_DOC_LONGEST: JournalPdfQr = {
+  url: "https://wesetup.ru/qj/cmf1abcdefghijklmnopqrstu/cleaning_ventilation_checklist/AbCdEfGhIjKl",
+};
 
 type Margins = { page: number; top: number; bottom: number; left: number; right: number };
+type TextBox = PdfBox & { text: string };
+type PageInfo = { margins: Margins; widthMm: number; heightMm: number; texts: TextBox[] };
 
 /**
- * Поля каждой страницы PDF по растру: от края листа до первого тёмного
- * пикселя (любой канал < 235 — рамки, текст, заливки, QR и его подпись).
+ * По каждой странице PDF: поля по растру (от края листа до первого тёмного
+ * пикселя, любой канал < 235 — рамки, текст, заливки, QR) и текст pdf.js с
+ * прямоугольниками строк, мм.
  */
-async function pageMargins(pdf: Uint8Array): Promise<Margins[]> {
+async function inspectPages(pdf: Uint8Array): Promise<PageInfo[]> {
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
   if (!pdfjs.GlobalWorkerOptions.workerSrc) pdfjs.GlobalWorkerOptions.workerSrc = workerFileUrl();
   const task = pdfjs.getDocument({
@@ -54,7 +61,7 @@ async function pageMargins(pdf: Uint8Array): Promise<Margins[]> {
   } as Parameters<typeof pdfjs.getDocument>[0]);
   try {
     const doc = await task.promise;
-    const out: Margins[] = [];
+    const out: PageInfo[] = [];
     for (let n = 1; n <= doc.numPages; n += 1) {
       const page = await doc.getPage(n);
       const base = page.getViewport({ scale: 1 });
@@ -83,14 +90,34 @@ async function pageMargins(pdf: Uint8Array): Promise<Margins[]> {
           }
         }
       }
-      const widthMm = (base.width / 72) * 25.4;
-      const heightMm = (base.height / 72) * 25.4;
+      const widthMm = base.width * PT_TO_MM;
+      const heightMm = base.height * PT_TO_MM;
+      const content = await page.getTextContent();
+      const texts: TextBox[] = [];
+      for (const item of content.items) {
+        if (!("str" in item) || !item.str.trim()) continue;
+        const [, , , , e, f] = item.transform as number[];
+        const size = Math.hypot((item.transform as number[])[2], (item.transform as number[])[3]) * PT_TO_MM;
+        const baseline = heightMm - f * PT_TO_MM;
+        texts.push({
+          text: item.str,
+          x0: e * PT_TO_MM,
+          x1: (e + item.width) * PT_TO_MM,
+          y0: baseline - size * 0.75,
+          y1: baseline + size * 0.2,
+        });
+      }
       out.push({
-        page: n,
-        top: y0 / PX_PER_MM,
-        bottom: heightMm - (y1 + 1) / PX_PER_MM,
-        left: x0 / PX_PER_MM,
-        right: widthMm - (x1 + 1) / PX_PER_MM,
+        margins: {
+          page: n,
+          top: y0 / PX_PER_MM,
+          bottom: heightMm - (y1 + 1) / PX_PER_MM,
+          left: x0 / PX_PER_MM,
+          right: widthMm - (x1 + 1) / PX_PER_MM,
+        },
+        widthMm,
+        heightMm,
+        texts,
       });
     }
     return out;
@@ -99,9 +126,9 @@ async function pageMargins(pdf: Uint8Array): Promise<Margins[]> {
   }
 }
 
-function assertSymmetric(label: string, margins: Margins[]) {
-  for (const m of margins) {
-    for (const side of ["top", "bottom", "left", "right"] as const) {
+function assertMargins(label: string, pages: PageInfo[], sides: Array<"top" | "bottom" | "left" | "right">) {
+  for (const { margins: m } of pages) {
+    for (const side of sides) {
       assert.ok(
         Math.abs(m[side] - M) <= TOL,
         `${label}, стр. ${m.page}: поле ${side} = ${m[side].toFixed(2)} мм, ждём ${M} ± ${TOL} ` +
@@ -111,21 +138,19 @@ function assertSymmetric(label: string, margins: Margins[]) {
   }
 }
 
-test("поле листа — одно значение для всех сторон: QR в углу стоит на том же поле снизу и справа", () => {
-  assert.equal(M, 10);
-  assert.equal(JOURNAL_QR_BOTTOM_MM, M);
-  assert.equal(JOURNAL_QR_DEFAULT_RIGHT_MARGIN_MM, M);
-  // Резерв таблиц под угол: поле листа + QR 13 мм + тихая зона + половина линии.
-  assert.ok(Math.abs(JOURNAL_QR_BOTTOM_RESERVE_MM - (M + 13 + 1.3 + 0.1)) < 1e-9);
-});
+const intersects = (a: PdfBox, b: PdfBox) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
 
-test("поля таблицы: чего бланк не задал — поля листа, заданное — как есть", () => {
+test("поле листа — одно значение для всех сторон; снизу у таблиц только полоса под «СТР. X ИЗ N», резерва под QR нет", () => {
+  assert.equal(M, 10);
   assert.deepEqual(journalTableMargin(undefined), {
     top: M,
     right: M,
     bottom: M + JOURNAL_FOOTER_TEXT_BAND_MM,
     left: M,
   });
+});
+
+test("поля таблицы: чего бланк не задал — поля листа, заданное — как есть", () => {
   // autoTable сам подставил бы 14,1 мм в недостающие стороны.
   assert.deepEqual(journalTableMargin({ left: 14, right: 14 }), {
     top: M,
@@ -146,7 +171,7 @@ test("верх первой строки на верхнем поле: базо�
   assert.ok(journalCapHeightMm(doc) > 6.5 && journalCapHeightMm(doc) < 7, `26 pt → ${journalCapHeightMm(doc)} мм`);
 });
 
-test("«СТР. X ИЗ N» и подвал партнёра — базовой линией на нижнем поле, подвал от левого поля", () => {
+test("«СТР. X ИЗ N» и подвал партнёра — базовой линией на нижнем поле, номер у правого поля, подвал от левого", () => {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
   const fontName = registerJournalUnicodeFont(doc);
   doc.addPage("a4", "portrait");
@@ -174,49 +199,89 @@ test("«СТР. X ИЗ N» и подвал партнёра — базовой �
   }
 });
 
-test("книжный и альбомный лист: таблица на несколько страниц + QR + «СТР. X ИЗ N» — поля 10 мм со всех сторон на каждой странице", async () => {
+test("полная страница таблицы (книжный и альбомный лист, документ с QR): снизу поле листа + полоса номера, без резерва", async () => {
   for (const orientation of ["portrait", "landscape"] as const) {
     const doc = new jsPDF({ orientation, unit: "mm", format: "a4" });
     const fontName = registerJournalUnicodeFont(doc);
     doc.setFont(fontName, "normal");
+    // QR у документа есть — но шапки нет, и таблица начинается с верхнего
+    // поля: QR на такой странице не ставится и строк не отнимает.
+    prepareJournalQr(doc, QR_DOC_LONGEST.url);
     const tracker = trackPdfInk(doc);
-    reserveJournalQrBottomMargin(doc, JOURNAL_QR_BOTTOM_RESERVE_MM);
     doc.setFontSize(10);
+    const bottomByPage = new Map<number, number>();
+    let rowHeight = 0;
     journalAutoTable(doc, {
-      // Первая строка — на верхнем поле, продолжения — тоже (поле по умолчанию).
       startY: M,
       head: [["№", "Сотрудник", "Отметка"]],
       body: Array.from({ length: 90 }, (_, i) => [String(i + 1), `Сотрудник ${i + 1}`, "+"]),
       styles: { font: fontName, fontSize: 9 },
-    });
-    assert.ok(doc.getNumberOfPages() >= 2, "таблица на несколько страниц");
-    const edges = journalQrRightEdges(doc, tracker);
-    stampJournalPageNumbers(doc, fontName, {
-      fallbackRightInset: (page) => {
-        doc.setPage(page);
-        return journalQrFooterInset(doc, QR_LINES, fontName, doc.internal.pageSize.getWidth() - edges[page - 1]);
+      didDrawCell: (data) => {
+        const page = data.pageNumber;
+        bottomByPage.set(page, Math.max(bottomByPage.get(page) ?? 0, data.cell.y + data.cell.height));
+        rowHeight = Math.max(rowHeight, data.cell.height);
       },
     });
-    const placements = stampJournalQr(doc, { url: QR_URL, lines: QR_LINES, fontName, tracker, rightEdges: edges });
-    assert.ok(placements.every((p) => p.bottomRow && !p.moved && !p.overlap), `${orientation}: QR в углу на каждой странице`);
-    assertSymmetric(orientation, await pageMargins(new Uint8Array(doc.output("arraybuffer"))));
+    const pages = doc.getNumberOfPages();
+    assert.ok(pages >= 2, "таблица на несколько страниц");
+    stampJournalPageNumbers(doc, fontName);
+    const placements = stampJournalQr(doc, { ...QR_DOC_LONGEST, fontName, tracker });
+    assert.ok(placements.every((p) => p.where === "none"), `${orientation}: QR не лезет на таблицу`);
+    const pageHeight = orientation === "portrait" ? 297 : 210;
+    const limit = pageHeight - (M + JOURNAL_FOOTER_TEXT_BAND_MM);
+    for (let page = 1; page < pages; page += 1) {
+      const bottom = bottomByPage.get(page) ?? 0;
+      assert.ok(bottom <= limit + 0.01, `${orientation}, стр. ${page}: низ таблицы ${bottom} ниже ${limit}`);
+      assert.ok(bottom > limit - rowHeight - 0.01, `${orientation}, стр. ${page}: таблица кончается на ${bottom}, резерв?`);
+    }
+    // Поля по растру: сверху/слева/справа таблица, снизу «СТР. X ИЗ N» — 10 мм.
+    assertMargins(orientation, await inspectPages(new Uint8Array(doc.output("arraybuffer"))), [
+      "top",
+      "bottom",
+      "left",
+      "right",
+    ]);
   }
 });
 
-test("образцы журналов: верх = низ = лево = право (10 ± 1 мм) на первой странице и продолжениях", async () => {
-  // Гигиена — шапка без крупного заголовка (раньше 28 мм сверху) и её
-  // повтор на продолжении; бракераж — крупный заголовок над шапкой;
-  // чек-лист уборки — свой заголовок и повтор шапки на 2..N; УФ-установка —
-  // лист, заполненный целиком; медкнижки — три листа с повтором шапки.
-  for (const code of ["hygiene", "finished_product", "cleaning_ventilation_checklist", "uv_lamp_runtime", "med_books"]) {
-    const input = { ...buildJournalSampleInput(code), qr: journalSamplePdfQr("https://wesetup.ru", code) };
-    const rendered = renderJournalDocumentPdf(input);
-    const placements = rendered.qrPlacements ?? [];
-    assert.ok(placements.every((p) => p.bottomRow && !p.overlap), `${code}: QR в нижнем углу на каждой странице`);
-    const margins = await pageMargins(new Uint8Array(rendered.buffer));
-    if (code === "hygiene" || code === "cleaning_ventilation_checklist" || code === "med_books") {
-      assert.ok(margins.length >= 2, `${code}: есть страница-продолжение`);
+test("образцы журналов: QR в шапке на каждой странице с шапкой — внутри полей, вровень с правой рамкой, текст шапки не задет", async () => {
+  // Гигиена — «Периодичность контроля» и повтор шапки на стр. 2; медкнижки —
+  // три листа с повтором шапки; чек-лист уборки — свой заголовок над шапкой
+  // и повтор на 2..N; холодильники — самое длинное название журнала;
+  // санитарный день — стр. 2 без шапки (QR там нет).
+  for (const code of ["hygiene", "med_books", "cleaning_ventilation_checklist", "cold_equipment_control", "sanitary_day_control"]) {
+    for (const qr of [journalSamplePdfQr("https://wesetup.ru", code), QR_DOC_LONGEST]) {
+      const label = `${code} (${qr.url.includes("/qj/") ? "53 модуля" : "образец"})`;
+      const rendered = renderJournalDocumentPdf({ ...buildJournalSampleInput(code), qr });
+      const placements = rendered.qrPlacements ?? [];
+      const pages = await inspectPages(new Uint8Array(rendered.buffer));
+      assert.equal(placements.length, pages.length, label);
+      pages.forEach((page, index) => {
+        const p = placements[index];
+        const hasHeader = page.texts.some((t) => t.text.includes("СИСТЕМА ХАССП"));
+        assert.equal(p.where === "header", hasHeader, `${label}, стр. ${index + 1}: QR в шапке = шапка есть`);
+        if (!p.box) return;
+        // Внутри полей листа; ячейка шапки — вровень с правой рамкой шапки
+        // (= правый край таблицы, правое поле 10 мм).
+        assert.ok(p.box.x0 >= M && p.box.y0 >= M - 1e-6, `${label}: плитка внутри полей`);
+        assert.ok(p.box.x1 <= page.widthMm - M + 1e-6 && p.box.y1 <= page.heightMm - M, `${label}: плитка внутри полей`);
+        if (p.slot) assert.ok(Math.abs(p.slot.x1 - (page.widthMm - M)) < 0.01, `${label}: ячейка QR у правого поля`);
+        // Модуль не меньше 0,35 мм, шапка выросла не больше чем на 4 мм.
+        assert.ok(p.module >= JOURNAL_QR_MIN_MODULE_MM - 1e-9, `${label}: модуль ${p.module}`);
+        if (p.slot) {
+          assert.ok(p.slot.y1 - p.slot.y0 >= JOURNAL_HEADER_ROWS_MM - 1e-6);
+          assert.ok(p.box.y1 - p.box.y0 <= JOURNAL_HEADER_ROWS_MM + JOURNAL_QR_MAX_GROWTH_MM, `${label}: плитка по высоте шапки`);
+        }
+        // Ни одна строка текста страницы (кроме надписей самой плашки) не
+        // заходит на плитку.
+        const own = new Set([BRAND_QR_CAPTION_TITLE, BRAND_QR_CAPTION_SITE]);
+        const hit = page.texts.find((t) => !own.has(t.text.trim()) && intersects(t, p.box!));
+        assert.equal(hit, undefined, `${label}, стр. ${index + 1}: текст «${hit?.text}» на месте QR`);
+      });
+      // Поля: сверху, слева и справа — 10 мм (шапка и таблица от поля до
+      // поля, QR внутри рамки шапки); снизу — не меньше поля листа.
+      assertMargins(label, pages, ["top", "left", "right"]);
+      for (const { margins } of pages) assert.ok(margins.bottom >= M - TOL, `${label}: низ ${margins.bottom}`);
     }
-    assertSymmetric(code, margins);
   }
 });
