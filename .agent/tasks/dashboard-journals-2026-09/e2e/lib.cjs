@@ -131,10 +131,20 @@ async function themedContext(browser, device, theme, creds, extraStorage = {}) {
           }
         }
       } catch {}
-      // Значок dev-сервера Next — с первого кадра (скелет снимается до DOMContentLoaded).
-      const style = document.createElement("style");
-      style.textContent = "nextjs-portal{display:none!important}";
-      document.documentElement.appendChild(style);
+      // Значок dev-сервера Next — с первого кадра (скелет снимается до
+      // DOMContentLoaded). На момент init-скрипта <html> может ещё не быть.
+      const hideDevBadge = () => {
+        const style = document.createElement("style");
+        style.textContent = "nextjs-portal{display:none!important}";
+        (document.head || document.documentElement).appendChild(style);
+      };
+      if (document.documentElement) hideDevBadge();
+      else
+        new MutationObserver((_, observer) => {
+          if (!document.documentElement) return;
+          observer.disconnect();
+          hideDevBadge();
+        }).observe(document, { childList: true });
     },
     [theme, extraStorage],
   );

@@ -1,0 +1,50 @@
+{
+  "task": "dashboard-journals-2026-09",
+  "branch": "feat/dashboard-journals-2026-09-27",
+  "base": "40d4565f",
+  "codeCommit": "5ac8ac7b",
+  "verdict": "PASS",
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "summary": "Секция без карточки (рамка/фон/тень/скругление 0), во всю ширину контента, по умолчанию открыта, нажатие на заголовок сворачивает, состояние запоминается; после перезагрузки — с первого видимого кадра без мигания; переход внутри приложения и назад сохраняет свёрнутость.",
+      "evidence": ["raw/e2e-results.json", "shots/final-phone-collapsed.png", "shots/final-desktop-collapsed.png", "src/components/dashboard/dashboard-journals.test.ts"]
+    },
+    "AC2": {
+      "status": "PASS",
+      "summary": "Строки: превью бланка 4:3 (64×48 / 80×60) с отметкой на углу — зелёная ✓ заполнено сегодня, пустой ○ нет; без заливок и рамок; бумажные — те же строки с превью paper_<id>; поиск и отключённые работают; тап ведёт в журнал; скелет в новом виде.",
+      "evidence": ["raw/e2e-results.json", "shots/final-phone-light.png", "shots/final-phone-dark.png", "shots/final-desktop-light.png", "shots/final-desktop-dark.png", "shots/final-phone-search-disabled.png", "shots/final-phone-light-skeleton.png"]
+    },
+    "AC3": {
+      "status": "PASS",
+      "chosen": "A",
+      "variants": {
+        "A": { "idea": "галочка-бейдж на углу превью, тихая стрелка справа", "shots": ["shots/variant-a-phone-light.png", "shots/variant-a-phone-dark.png", "shots/variant-a-desktop-light.png", "shots/variant-a-desktop-dark.png", "shots/variant-a-phone-light-full.png"] },
+        "B": { "idea": "чекбокс слева от превью (чек-лист), заполненные названия приглушены", "patch": "variant-b.patch", "shots": ["shots/variant-b-phone-light.png", "shots/variant-b-phone-dark.png", "shots/variant-b-desktop-light.png", "shots/variant-b-desktop-dark.png", "shots/variant-b-phone-light-full.png"] },
+        "C": { "idea": "превью + справа пилюля «Готово» / «Заполнить»", "patch": "variant-c.patch", "shots": ["shots/variant-c-phone-light.png", "shots/variant-c-phone-dark.png", "shots/variant-c-desktop-light.png", "shots/variant-c-desktop-dark.png", "shots/variant-c-phone-light-full.png"] }
+      },
+      "compare": ["shots/compare-phone-light.png", "shots/compare-phone-dark.png", "shots/compare-desktop-light.png", "shots/compare-desktop-dark.png"],
+      "desktop": "та же секция во всю ширину; строки сеткой 3 колонки с 1024 px, 2 с 768 px; превью 80×60; поиск и кнопки одной строкой"
+    },
+    "AC4": {
+      "status": "PASS",
+      "e2e": "85/85 PASS, pageErrors 0, bad image/static responses 0",
+      "typecheck": "clean",
+      "npmTest": "2735/2735 pass",
+      "newTests": "src/components/dashboard/dashboard-journals.test.ts — 9/9",
+      "evidence": ["raw/e2e-run.log", "raw/e2e-results.json", "raw/typecheck.txt", "raw/npm-test-summary.txt", "raw/unit-dashboard-journals.txt"]
+    }
+  },
+  "commands": {
+    "typecheck": "node node_modules/typescript/bin/tsc --noEmit --skipLibCheck -p tsconfig.typecheck.json",
+    "tests": "npm run test:ci",
+    "e2e": "node .agent/tasks/dashboard-journals-2026-09/e2e/e2e.cjs",
+    "shots": "node .agent/tasks/dashboard-journals-2026-09/e2e/shots.cjs <label> [--full]",
+    "switchVariant": "git apply .agent/tasks/dashboard-journals-2026-09/variant-b.patch"
+  },
+  "metrics": {
+    "phoneThumbsKB": { "originalWebp": 427.6, "viaNextImage": 18.3, "images": 15 }
+  },
+  "notChanged": ["логика набора/статуса/ссылок/автозаполнения/поиска/отключённых", "схема БД", "зависимости", "whats-new / CHANGES"],
+  "notDone": ["push — по заданию не пушилось"]
+}

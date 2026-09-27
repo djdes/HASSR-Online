@@ -1,0 +1,1092 @@
+{
+  "startedAt": "2026-09-27T21:28:16.384Z",
+  "checks": [
+    {
+      "n": 1,
+      "ac": "AC1",
+      "name": "phone-light: секция без карточки (рамка/фон/тень/скругление нет)",
+      "ok": true,
+      "detail": {
+        "layout": "flat",
+        "border": "0px",
+        "bg": "rgba(0, 0, 0, 0)",
+        "shadow": "none",
+        "radius": "0px",
+        "widthDiff": 0,
+        "left": 16
+      }
+    },
+    {
+      "n": 2,
+      "ac": "AC1",
+      "name": "phone-light: во всю ширину контента",
+      "ok": true,
+      "detail": {
+        "widthDiff": 0,
+        "left": 16
+      }
+    },
+    {
+      "n": 3,
+      "ac": "AC1",
+      "name": "phone-light: по умолчанию развёрнута",
+      "ok": true,
+      "detail": {
+        "open": true,
+        "saved": null
+      }
+    },
+    {
+      "n": 4,
+      "ac": "AC1",
+      "name": "phone-light: заголовок «Обязательные журналы» + счётчик в строку, без значка в квадрате",
+      "ok": true,
+      "detail": {
+        "text": "Обязательные журналы5/10",
+        "height": 23,
+        "iconSquare": false
+      }
+    },
+    {
+      "n": 5,
+      "ac": "AC1",
+      "name": "phone-light: настройка — тихая иконка без рамки",
+      "ok": true,
+      "detail": {
+        "border": "0px",
+        "bg": "rgba(0, 0, 0, 0)"
+      }
+    },
+    {
+      "n": 6,
+      "ac": "AC1",
+      "name": "phone-light: «Автозаполнить» / «QR-коды» и поиск на месте, кнопки не в строке заголовка",
+      "ok": true,
+      "detail": {
+        "actions": [
+          "Автозаполнить",
+          "QR-коды"
+        ],
+        "inSummary": false
+      }
+    },
+    {
+      "n": 7,
+      "ac": "AC2",
+      "name": "phone-light: 10 строк, отметка по данным (5 ✓, 5 ○)",
+      "ok": true,
+      "detail": {
+        "filled": [
+          "cleaning",
+          "climate_control",
+          "cold_equipment_control",
+          "fryer_oil",
+          "hygiene"
+        ],
+        "open": [
+          "finished_product",
+          "general_cleaning",
+          "incoming_control",
+          "med_books",
+          "perishable_rejection"
+        ]
+      }
+    },
+    {
+      "n": 8,
+      "ac": "AC2",
+      "name": "phone-light: у каждой строки превью загружено",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "n": 9,
+      "ac": "AC2",
+      "name": "phone-light: превью 64×48",
+      "ok": true,
+      "detail": {
+        "w": 64,
+        "h": 48
+      }
+    },
+    {
+      "n": 10,
+      "ac": "AC2",
+      "name": "phone-light: строки без заливки и рамки",
+      "ok": true,
+      "detail": [
+        "rgba(0, 0, 0, 0) 0px/0px"
+      ]
+    },
+    {
+      "n": 11,
+      "ac": "AC2",
+      "name": "phone-light: бумажные — те же строки с превью, без отметки",
+      "ok": true,
+      "detail": {
+        "n": 5,
+        "caption": "Бумажные журналы"
+      }
+    },
+    {
+      "n": 12,
+      "ac": "AC2",
+      "name": "phone-light: одна колонка",
+      "ok": true,
+      "detail": {
+        "columns": 1
+      }
+    },
+    {
+      "n": 13,
+      "ac": "AC2",
+      "name": "phone-light: без горизонтальной прокрутки",
+      "ok": true,
+      "detail": {
+        "hScroll": 0
+      }
+    },
+    {
+      "n": 14,
+      "ac": "AC1",
+      "name": "phone-light: нажатие на заголовок сворачивает, состояние сохранено",
+      "ok": true,
+      "detail": {
+        "open": false,
+        "saved": "0",
+        "rowsHidden": true
+      }
+    },
+    {
+      "n": 15,
+      "ac": "AC1",
+      "name": "phone-light: после перезагрузки свёрнута, первый видимый кадр — уже свёрнута (без мигания)",
+      "ok": true,
+      "detail": {
+        "afterReload": {
+          "open": false,
+          "saved": "0"
+        },
+        "first": {
+          "t": 476,
+          "visible": true,
+          "open": false
+        },
+        "frames": [
+          {
+            "t": 122,
+            "visible": false,
+            "open": true,
+            "at": "insert"
+          },
+          {
+            "t": 127,
+            "visible": false,
+            "open": false
+          },
+          {
+            "t": 476,
+            "visible": true,
+            "open": false
+          }
+        ]
+      }
+    },
+    {
+      "n": 16,
+      "ac": "AC1",
+      "name": "phone-light: развернули — после перезагрузки открыта с первого кадра",
+      "ok": true,
+      "detail": {
+        "afterExpand": {
+          "open": true,
+          "saved": "1"
+        },
+        "afterReload2": {
+          "open": true,
+          "saved": "1"
+        },
+        "first": {
+          "t": 520,
+          "visible": true,
+          "open": true
+        }
+      }
+    },
+    {
+      "n": 17,
+      "ac": "AC2",
+      "name": "phone-light: поиск «бракераж» — только два журнала бракеража",
+      "ok": true,
+      "detail": {
+        "rows": [
+          "finished_product",
+          "perishable_rejection"
+        ],
+        "paper": 0,
+        "counter": "Найдено 2 из 50"
+      }
+    },
+    {
+      "n": 18,
+      "ac": "AC2",
+      "name": "phone-light: поиск находит отключённый журнал — строка с превью и «Включить»",
+      "ok": true,
+      "detail": {
+        "code": "vitaminization",
+        "thumb": true,
+        "button": "Включить",
+        "caption": "Отключённые"
+      }
+    },
+    {
+      "n": 19,
+      "ac": "AC2",
+      "name": "phone-light: очистка поиска возвращает весь список",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "n": 20,
+      "ac": "AC1",
+      "name": "phone-light: «Автозаполнить» открывает окно, секция не сворачивается",
+      "ok": true,
+      "detail": {
+        "dialogOk": true,
+        "stillOpen": true
+      }
+    },
+    {
+      "n": 21,
+      "ac": "AC2",
+      "name": "phone-light: тап по строке — в журнал",
+      "ok": true,
+      "detail": {
+        "url": "http://localhost:3161/journals/hygiene"
+      }
+    },
+    {
+      "n": 22,
+      "ac": "AC1",
+      "name": "phone-light: переход внутри приложения и назад — секция осталась свёрнутой",
+      "ok": true,
+      "detail": {
+        "collapsed": {
+          "open": false,
+          "saved": "0"
+        },
+        "inSettings": true,
+        "back": {
+          "open": false,
+          "saved": "0"
+        },
+        "frames": [
+          {
+            "t": 37872,
+            "visible": true,
+            "open": false,
+            "at": "insert"
+          }
+        ]
+      }
+    },
+    {
+      "n": 23,
+      "ac": "AC1",
+      "name": "phone-dark: секция без карточки (рамка/фон/тень/скругление нет)",
+      "ok": true,
+      "detail": {
+        "layout": "flat",
+        "border": "0px",
+        "bg": "rgba(0, 0, 0, 0)",
+        "shadow": "none",
+        "radius": "0px",
+        "widthDiff": 0,
+        "left": 16
+      }
+    },
+    {
+      "n": 24,
+      "ac": "AC1",
+      "name": "phone-dark: во всю ширину контента",
+      "ok": true,
+      "detail": {
+        "widthDiff": 0,
+        "left": 16
+      }
+    },
+    {
+      "n": 25,
+      "ac": "AC1",
+      "name": "phone-dark: по умолчанию развёрнута",
+      "ok": true,
+      "detail": {
+        "open": true,
+        "saved": null
+      }
+    },
+    {
+      "n": 26,
+      "ac": "AC1",
+      "name": "phone-dark: заголовок «Обязательные журналы» + счётчик в строку, без значка в квадрате",
+      "ok": true,
+      "detail": {
+        "text": "Обязательные журналы5/10",
+        "height": 23,
+        "iconSquare": false
+      }
+    },
+    {
+      "n": 27,
+      "ac": "AC1",
+      "name": "phone-dark: настройка — тихая иконка без рамки",
+      "ok": true,
+      "detail": {
+        "border": "0px",
+        "bg": "rgba(0, 0, 0, 0)"
+      }
+    },
+    {
+      "n": 28,
+      "ac": "AC1",
+      "name": "phone-dark: «Автозаполнить» / «QR-коды» и поиск на месте, кнопки не в строке заголовка",
+      "ok": true,
+      "detail": {
+        "actions": [
+          "Автозаполнить",
+          "QR-коды"
+        ],
+        "inSummary": false
+      }
+    },
+    {
+      "n": 29,
+      "ac": "AC2",
+      "name": "phone-dark: 10 строк, отметка по данным (5 ✓, 5 ○)",
+      "ok": true,
+      "detail": {
+        "filled": [
+          "cleaning",
+          "climate_control",
+          "cold_equipment_control",
+          "fryer_oil",
+          "hygiene"
+        ],
+        "open": [
+          "finished_product",
+          "general_cleaning",
+          "incoming_control",
+          "med_books",
+          "perishable_rejection"
+        ]
+      }
+    },
+    {
+      "n": 30,
+      "ac": "AC2",
+      "name": "phone-dark: у каждой строки превью загружено",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "n": 31,
+      "ac": "AC2",
+      "name": "phone-dark: превью 64×48",
+      "ok": true,
+      "detail": {
+        "w": 64,
+        "h": 48
+      }
+    },
+    {
+      "n": 32,
+      "ac": "AC2",
+      "name": "phone-dark: строки без заливки и рамки",
+      "ok": true,
+      "detail": [
+        "rgba(0, 0, 0, 0) 0px/0px"
+      ]
+    },
+    {
+      "n": 33,
+      "ac": "AC2",
+      "name": "phone-dark: бумажные — те же строки с превью, без отметки",
+      "ok": true,
+      "detail": {
+        "n": 5,
+        "caption": "Бумажные журналы"
+      }
+    },
+    {
+      "n": 34,
+      "ac": "AC2",
+      "name": "phone-dark: одна колонка",
+      "ok": true,
+      "detail": {
+        "columns": 1
+      }
+    },
+    {
+      "n": 35,
+      "ac": "AC2",
+      "name": "phone-dark: без горизонтальной прокрутки",
+      "ok": true,
+      "detail": {
+        "hScroll": 0
+      }
+    },
+    {
+      "n": 36,
+      "ac": "AC1",
+      "name": "phone-dark: нажатие на заголовок сворачивает, состояние сохранено",
+      "ok": true,
+      "detail": {
+        "open": false,
+        "saved": "0",
+        "rowsHidden": true
+      }
+    },
+    {
+      "n": 37,
+      "ac": "AC1",
+      "name": "phone-dark: после перезагрузки свёрнута, первый видимый кадр — уже свёрнута (без мигания)",
+      "ok": true,
+      "detail": {
+        "afterReload": {
+          "open": false,
+          "saved": "0"
+        },
+        "first": {
+          "t": 472,
+          "visible": true,
+          "open": false
+        },
+        "frames": [
+          {
+            "t": 123,
+            "visible": false,
+            "open": true,
+            "at": "insert"
+          },
+          {
+            "t": 126,
+            "visible": false,
+            "open": false
+          },
+          {
+            "t": 472,
+            "visible": true,
+            "open": false
+          }
+        ]
+      }
+    },
+    {
+      "n": 38,
+      "ac": "AC1",
+      "name": "phone-dark: развернули — после перезагрузки открыта с первого кадра",
+      "ok": true,
+      "detail": {
+        "afterExpand": {
+          "open": true,
+          "saved": "1"
+        },
+        "afterReload2": {
+          "open": true,
+          "saved": "1"
+        },
+        "first": {
+          "t": 477,
+          "visible": true,
+          "open": true
+        }
+      }
+    },
+    {
+      "n": 39,
+      "ac": "AC2",
+      "name": "phone-dark: тёмная — название читается (≥ 7), пустой кружок виден (≥ 3), ✓ виден (≥ 3)",
+      "ok": true,
+      "detail": {
+        "bg": "rgb(47, 44, 71)",
+        "name": 12.08,
+        "openRing": 4.1,
+        "filledMark": 4.05,
+        "badgeBg": "rgba(245, 158, 11, 0.16)",
+        "badgeText": 8
+      }
+    },
+    {
+      "n": 40,
+      "ac": "AC2",
+      "name": "phone-dark: тёмная — счётчик в заголовке не светлое пятно",
+      "ok": true,
+      "detail": {
+        "badgeBg": "rgba(245, 158, 11, 0.16)",
+        "badgeText": 8
+      }
+    },
+    {
+      "n": 41,
+      "ac": "AC1",
+      "name": "desktop-light: секция без карточки (рамка/фон/тень/скругление нет)",
+      "ok": true,
+      "detail": {
+        "layout": "flat",
+        "border": "0px",
+        "bg": "rgba(0, 0, 0, 0)",
+        "shadow": "none",
+        "radius": "0px",
+        "widthDiff": 0,
+        "left": 32
+      }
+    },
+    {
+      "n": 42,
+      "ac": "AC1",
+      "name": "desktop-light: во всю ширину контента",
+      "ok": true,
+      "detail": {
+        "widthDiff": 0,
+        "left": 32
+      }
+    },
+    {
+      "n": 43,
+      "ac": "AC1",
+      "name": "desktop-light: по умолчанию развёрнута",
+      "ok": true,
+      "detail": {
+        "open": true,
+        "saved": null
+      }
+    },
+    {
+      "n": 44,
+      "ac": "AC1",
+      "name": "desktop-light: заголовок «Обязательные журналы» + счётчик в строку, без значка в квадрате",
+      "ok": true,
+      "detail": {
+        "text": "Обязательные журналы5/10",
+        "height": 28,
+        "iconSquare": false
+      }
+    },
+    {
+      "n": 45,
+      "ac": "AC1",
+      "name": "desktop-light: настройка — тихая иконка без рамки",
+      "ok": true,
+      "detail": {
+        "border": "0px",
+        "bg": "rgba(0, 0, 0, 0)"
+      }
+    },
+    {
+      "n": 46,
+      "ac": "AC1",
+      "name": "desktop-light: «Автозаполнить» / «QR-коды» и поиск на месте, кнопки не в строке заголовка",
+      "ok": true,
+      "detail": {
+        "actions": [
+          "Автозаполнить",
+          "QR-коды"
+        ],
+        "inSummary": false
+      }
+    },
+    {
+      "n": 47,
+      "ac": "AC2",
+      "name": "desktop-light: 10 строк, отметка по данным (5 ✓, 5 ○)",
+      "ok": true,
+      "detail": {
+        "filled": [
+          "cleaning",
+          "climate_control",
+          "cold_equipment_control",
+          "fryer_oil",
+          "hygiene"
+        ],
+        "open": [
+          "finished_product",
+          "general_cleaning",
+          "incoming_control",
+          "med_books",
+          "perishable_rejection"
+        ]
+      }
+    },
+    {
+      "n": 48,
+      "ac": "AC2",
+      "name": "desktop-light: у каждой строки превью загружено",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "n": 49,
+      "ac": "AC2",
+      "name": "desktop-light: превью 80×60",
+      "ok": true,
+      "detail": {
+        "w": 80,
+        "h": 60
+      }
+    },
+    {
+      "n": 50,
+      "ac": "AC2",
+      "name": "desktop-light: строки без заливки и рамки",
+      "ok": true,
+      "detail": [
+        "rgba(0, 0, 0, 0) 0px/0px"
+      ]
+    },
+    {
+      "n": 51,
+      "ac": "AC2",
+      "name": "desktop-light: бумажные — те же строки с превью, без отметки",
+      "ok": true,
+      "detail": {
+        "n": 5,
+        "caption": "Бумажные журналы"
+      }
+    },
+    {
+      "n": 52,
+      "ac": "AC2",
+      "name": "desktop-light: три колонки",
+      "ok": true,
+      "detail": {
+        "columns": 3
+      }
+    },
+    {
+      "n": 53,
+      "ac": "AC2",
+      "name": "desktop-light: без горизонтальной прокрутки",
+      "ok": true,
+      "detail": {
+        "hScroll": 0
+      }
+    },
+    {
+      "n": 54,
+      "ac": "AC1",
+      "name": "desktop-light: нажатие на заголовок сворачивает, состояние сохранено",
+      "ok": true,
+      "detail": {
+        "open": false,
+        "saved": "0",
+        "rowsHidden": true
+      }
+    },
+    {
+      "n": 55,
+      "ac": "AC1",
+      "name": "desktop-light: после перезагрузки свёрнута, первый видимый кадр — уже свёрнута (без мигания)",
+      "ok": true,
+      "detail": {
+        "afterReload": {
+          "open": false,
+          "saved": "0"
+        },
+        "first": {
+          "t": 473,
+          "visible": true,
+          "open": false
+        },
+        "frames": [
+          {
+            "t": 118,
+            "visible": false,
+            "open": true,
+            "at": "insert"
+          },
+          {
+            "t": 127,
+            "visible": false,
+            "open": false
+          },
+          {
+            "t": 473,
+            "visible": true,
+            "open": false
+          }
+        ]
+      }
+    },
+    {
+      "n": 56,
+      "ac": "AC1",
+      "name": "desktop-light: развернули — после перезагрузки открыта с первого кадра",
+      "ok": true,
+      "detail": {
+        "afterExpand": {
+          "open": true,
+          "saved": "1"
+        },
+        "afterReload2": {
+          "open": true,
+          "saved": "1"
+        },
+        "first": {
+          "t": 490,
+          "visible": true,
+          "open": true
+        }
+      }
+    },
+    {
+      "n": 57,
+      "ac": "AC2",
+      "name": "desktop-light: поиск «бракераж» — только два журнала бракеража",
+      "ok": true,
+      "detail": {
+        "rows": [
+          "finished_product",
+          "perishable_rejection"
+        ],
+        "paper": 0,
+        "counter": "Найдено 2 из 50"
+      }
+    },
+    {
+      "n": 58,
+      "ac": "AC2",
+      "name": "desktop-light: поиск находит отключённый журнал — строка с превью и «Включить»",
+      "ok": true,
+      "detail": {
+        "code": "vitaminization",
+        "thumb": true,
+        "button": "Включить",
+        "caption": "Отключённые"
+      }
+    },
+    {
+      "n": 59,
+      "ac": "AC2",
+      "name": "desktop-light: очистка поиска возвращает весь список",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "n": 60,
+      "ac": "AC1",
+      "name": "desktop-light: «Автозаполнить» открывает окно, секция не сворачивается",
+      "ok": true,
+      "detail": {
+        "dialogOk": true,
+        "stillOpen": true
+      }
+    },
+    {
+      "n": 61,
+      "ac": "AC2",
+      "name": "desktop-light: клик по строке — в журнал",
+      "ok": true,
+      "detail": {
+        "url": "http://localhost:3161/journals/hygiene"
+      }
+    },
+    {
+      "n": 62,
+      "ac": "AC1",
+      "name": "desktop-dark: секция без карточки (рамка/фон/тень/скругление нет)",
+      "ok": true,
+      "detail": {
+        "layout": "flat",
+        "border": "0px",
+        "bg": "rgba(0, 0, 0, 0)",
+        "shadow": "none",
+        "radius": "0px",
+        "widthDiff": 0,
+        "left": 32
+      }
+    },
+    {
+      "n": 63,
+      "ac": "AC1",
+      "name": "desktop-dark: во всю ширину контента",
+      "ok": true,
+      "detail": {
+        "widthDiff": 0,
+        "left": 32
+      }
+    },
+    {
+      "n": 64,
+      "ac": "AC1",
+      "name": "desktop-dark: по умолчанию развёрнута",
+      "ok": true,
+      "detail": {
+        "open": true,
+        "saved": null
+      }
+    },
+    {
+      "n": 65,
+      "ac": "AC1",
+      "name": "desktop-dark: заголовок «Обязательные журналы» + счётчик в строку, без значка в квадрате",
+      "ok": true,
+      "detail": {
+        "text": "Обязательные журналы5/10",
+        "height": 28,
+        "iconSquare": false
+      }
+    },
+    {
+      "n": 66,
+      "ac": "AC1",
+      "name": "desktop-dark: настройка — тихая иконка без рамки",
+      "ok": true,
+      "detail": {
+        "border": "0px",
+        "bg": "rgba(0, 0, 0, 0)"
+      }
+    },
+    {
+      "n": 67,
+      "ac": "AC1",
+      "name": "desktop-dark: «Автозаполнить» / «QR-коды» и поиск на месте, кнопки не в строке заголовка",
+      "ok": true,
+      "detail": {
+        "actions": [
+          "Автозаполнить",
+          "QR-коды"
+        ],
+        "inSummary": false
+      }
+    },
+    {
+      "n": 68,
+      "ac": "AC2",
+      "name": "desktop-dark: 10 строк, отметка по данным (5 ✓, 5 ○)",
+      "ok": true,
+      "detail": {
+        "filled": [
+          "cleaning",
+          "climate_control",
+          "cold_equipment_control",
+          "fryer_oil",
+          "hygiene"
+        ],
+        "open": [
+          "finished_product",
+          "general_cleaning",
+          "incoming_control",
+          "med_books",
+          "perishable_rejection"
+        ]
+      }
+    },
+    {
+      "n": 69,
+      "ac": "AC2",
+      "name": "desktop-dark: у каждой строки превью загружено",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "n": 70,
+      "ac": "AC2",
+      "name": "desktop-dark: превью 80×60",
+      "ok": true,
+      "detail": {
+        "w": 80,
+        "h": 60
+      }
+    },
+    {
+      "n": 71,
+      "ac": "AC2",
+      "name": "desktop-dark: строки без заливки и рамки",
+      "ok": true,
+      "detail": [
+        "rgba(0, 0, 0, 0) 0px/0px"
+      ]
+    },
+    {
+      "n": 72,
+      "ac": "AC2",
+      "name": "desktop-dark: бумажные — те же строки с превью, без отметки",
+      "ok": true,
+      "detail": {
+        "n": 5,
+        "caption": "Бумажные журналы"
+      }
+    },
+    {
+      "n": 73,
+      "ac": "AC2",
+      "name": "desktop-dark: три колонки",
+      "ok": true,
+      "detail": {
+        "columns": 3
+      }
+    },
+    {
+      "n": 74,
+      "ac": "AC2",
+      "name": "desktop-dark: без горизонтальной прокрутки",
+      "ok": true,
+      "detail": {
+        "hScroll": 0
+      }
+    },
+    {
+      "n": 75,
+      "ac": "AC1",
+      "name": "desktop-dark: нажатие на заголовок сворачивает, состояние сохранено",
+      "ok": true,
+      "detail": {
+        "open": false,
+        "saved": "0",
+        "rowsHidden": true
+      }
+    },
+    {
+      "n": 76,
+      "ac": "AC1",
+      "name": "desktop-dark: после перезагрузки свёрнута, первый видимый кадр — уже свёрнута (без мигания)",
+      "ok": true,
+      "detail": {
+        "afterReload": {
+          "open": false,
+          "saved": "0"
+        },
+        "first": {
+          "t": 443,
+          "visible": true,
+          "open": false
+        },
+        "frames": [
+          {
+            "t": 104,
+            "visible": false,
+            "open": true,
+            "at": "insert"
+          },
+          {
+            "t": 115,
+            "visible": false,
+            "open": false
+          },
+          {
+            "t": 443,
+            "visible": true,
+            "open": false
+          }
+        ]
+      }
+    },
+    {
+      "n": 77,
+      "ac": "AC1",
+      "name": "desktop-dark: развернули — после перезагрузки открыта с первого кадра",
+      "ok": true,
+      "detail": {
+        "afterExpand": {
+          "open": true,
+          "saved": "1"
+        },
+        "afterReload2": {
+          "open": true,
+          "saved": "1"
+        },
+        "first": {
+          "t": 497,
+          "visible": true,
+          "open": true
+        }
+      }
+    },
+    {
+      "n": 78,
+      "ac": "AC2",
+      "name": "desktop-dark: тёмная — название читается (≥ 7), пустой кружок виден (≥ 3), ✓ виден (≥ 3)",
+      "ok": true,
+      "detail": {
+        "bg": "rgb(47, 44, 71)",
+        "name": 12.08,
+        "openRing": 4.1,
+        "filledMark": 4.05,
+        "badgeBg": "rgba(245, 158, 11, 0.16)",
+        "badgeText": 8
+      }
+    },
+    {
+      "n": 79,
+      "ac": "AC2",
+      "name": "desktop-dark: тёмная — счётчик в заголовке не светлое пятно",
+      "ok": true,
+      "detail": {
+        "badgeBg": "rgba(245, 158, 11, 0.16)",
+        "badgeText": 8
+      }
+    },
+    {
+      "n": 80,
+      "ac": "AC2",
+      "name": "phone-light: скелет загрузки в новом виде показан",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "n": 81,
+      "ac": "AC2",
+      "name": "phone-dark: скелет загрузки в новом виде показан",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "n": 82,
+      "ac": "AC2",
+      "name": "desktop-light: скелет загрузки в новом виде показан",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "n": 83,
+      "ac": "AC2",
+      "name": "desktop-dark: скелет загрузки в новом виде показан",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "n": 84,
+      "ac": "AC4",
+      "name": "превью и статика без 4xx/5xx",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "n": 85,
+      "ac": "AC4",
+      "name": "ошибок страницы нет",
+      "ok": true,
+      "detail": []
+    }
+  ],
+  "pageErrors": [],
+  "badResponses": [],
+  "filledToday": 5,
+  "shot-final-phone-light": 94,
+  "shot-collapsed-phone": 70,
+  "shot-search-phone": 69,
+  "shot-final-phone-dark": 90,
+  "shot-final-desktop-light": 75,
+  "shot-collapsed-desktop": 37,
+  "shot-search-desktop": 45,
+  "shot-final-desktop-dark": 75,
+  "shot-skeleton-phone-light": 13,
+  "shot-skeleton-phone-dark": 13,
+  "shot-skeleton-desktop-light": 10,
+  "shot-skeleton-desktop-dark": 17,
+  "finishedAt": "2026-09-27T21:33:30.117Z",
+  "summary": {
+    "total": 85,
+    "pass": 85
+  }
+}
