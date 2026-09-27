@@ -611,6 +611,50 @@ async function main() {
     check(pathOf(p) === homeNow, `after returning to the app: ${pathOf(p)}`);
   });
 
+  await scenario("10 Offline: relaunch without network -> «Нет связи» -> network on -> «Повторить»", async (s) => {
+    // Копия сайта идёт через adb reverse, мимо сети телефона: снимаем и его.
+    adb(["reverse", "--remove", "tcp:3000"]);
+    sh("cmd connectivity airplane-mode enable");
+    sh("svc wifi disable");
+    sh("svc data disable");
+    await sleep(3000);
+    sh(`am force-stop ${PKG}`);
+    sh(`am start -n ${PKG}/.MainActivity`);
+    await sleep(6000);
+    const p = await connect();
+    await sleep(4000);
+    s.data.offlineUrl = p.url();
+    s.data.offlineText = await p.evaluate(() => document.body.innerText.slice(0, 200)).catch((e) => String(e));
+    s.shots.push(shot("offline"));
+    check(/Нет связи с интернетом/.test(s.data.offlineText), `offline page not shown: ${s.data.offlineUrl} «${s.data.offlineText}»`);
+    // «Повторить» без сети — остаёмся на экране, без зависания
+    sh("cmd connectivity airplane-mode disable");
+    adb(["reverse", "tcp:3000", "tcp:3000"]);
+    sh("svc wifi enable");
+    sh("svc data enable");
+    // Сначала без нажатия: экран должен сам открыть сайт, когда сеть вернулась.
+    let autoRecovered = false;
+    for (let i = 0; i < 12 && !autoRecovered; i++) {
+      await sleep(2500);
+      autoRecovered = /^https?:\/\/(127\.0\.0\.1|wesetup\.ru)/.test(p.url());
+    }
+    s.data.autoRecovered = autoRecovered;
+    note(autoRecovered ? "recovered by itself after the network returned" : "did not recover by itself; pressing «Повторить»");
+    const retry = p.locator("#retry");
+    if (!autoRecovered && (await retry.count().catch(() => 0))) await screenTap(p, retry);
+    let p2 = p;
+    await sleep(8000);
+    try {
+      await p2.waitForURL((u) => u.origin === ORIGIN, { timeout: 30000 });
+    } catch {
+      p2 = await connect();
+    }
+    await settle(p2, 3000);
+    s.data.afterRetry = p2.url();
+    s.shots.push(shot("offline-retry"));
+    check(p2.url().startsWith(`${ORIGIN}/mini`), `after «Повторить»: ${p2.url()}`);
+  });
+
   await scenario("4 Print from a journal document -> system print UI", async (s) => {
     const p = page;
     await goto(p, screens[2][1]);
@@ -958,43 +1002,6 @@ async function main() {
     s.shots.push(shot("delete-login-again"));
     s.data.after = { url: pathOf(p), alert: await p.locator("[role=alert]").allInnerTexts().catch(() => []) };
     check(pathOf(p).startsWith("/mini/login"), `deleted account could log in: ${pathOf(p)}`);
-  });
-
-  await scenario("10 Offline: relaunch without network -> «Нет связи» -> network on -> «Повторить»", async (s) => {
-    // Копия сайта идёт через adb reverse, мимо сети телефона: снимаем и его.
-    adb(["reverse", "--remove", "tcp:3000"]);
-    sh("cmd connectivity airplane-mode enable");
-    sh("svc wifi disable");
-    sh("svc data disable");
-    await sleep(3000);
-    sh(`am force-stop ${PKG}`);
-    sh(`am start -n ${PKG}/.MainActivity`);
-    await sleep(6000);
-    const p = await connect();
-    await sleep(4000);
-    s.data.offlineUrl = p.url();
-    s.data.offlineText = await p.evaluate(() => document.body.innerText.slice(0, 200)).catch((e) => String(e));
-    s.shots.push(shot("offline"));
-    check(/Нет связи с интернетом/.test(s.data.offlineText), `offline page not shown: ${s.data.offlineUrl} «${s.data.offlineText}»`);
-    // «Повторить» без сети — остаёмся на экране, без зависания
-    sh("cmd connectivity airplane-mode disable");
-    adb(["reverse", "tcp:3000", "tcp:3000"]);
-    sh("svc wifi enable");
-    sh("svc data enable");
-    await sleep(8000);
-    const retry = p.locator("#retry");
-    if (await retry.count().catch(() => 0)) await screenTap(p, retry);
-    let p2 = p;
-    await sleep(8000);
-    try {
-      await p2.waitForURL((u) => u.origin === ORIGIN, { timeout: 30000 });
-    } catch {
-      p2 = await connect();
-    }
-    await settle(p2, 3000);
-    s.data.afterRetry = p2.url();
-    s.shots.push(shot("offline-retry"));
-    check(p2.url().startsWith(`${ORIGIN}/mini`), `after «Повторить»: ${p2.url()}`);
   });
 
   await finish(rec);
