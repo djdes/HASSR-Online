@@ -196,6 +196,16 @@ function attachListeners(p) {
 async function goto(p, url) {
   await p.goto(url.startsWith("http") ? url : ORIGIN + url, { waitUntil: "load", timeout: 90000 });
   await settle(p);
+  await dismissPushSheet(p);
+}
+/** Лист «Уведомления о задачах» мог всплыть позже (медленный эмулятор) — «Не сейчас». */
+async function dismissPushSheet(p) {
+  const later = p.getByTestId("push-explainer-later");
+  if (await later.isVisible().catch(() => false)) {
+    results.dismissedPushSheet = (results.dismissedPushSheet ?? 0) + 1;
+    await later.click().catch(() => undefined);
+    await sleep(600);
+  }
 }
 async function settle(p, ms = 1500) {
   await p.waitForLoadState("load", { timeout: 60000 }).catch(() => undefined);
@@ -296,6 +306,7 @@ async function screenTap(p, locator) {
 }
 async function setTheme(p, theme) {
   if (!pathOf(p).startsWith("/mini/me")) await goto(p, "/mini/me");
+  await dismissPushSheet(p);
   await p.getByRole("radio", { name: theme === "dark" ? "Тёмная" : "Светлая" }).click();
   await sleep(800);
 }
@@ -450,7 +461,7 @@ async function main() {
     await login(p, CHEF);
     s.shots.push(shot("chef-home"));
     s.data.home = pathOf(p);
-    const sheet = await p.waitForSelector('[data-testid="push-explainer"]', { timeout: 15000 }).catch(() => null);
+    const sheet = await p.waitForSelector('[data-testid="push-explainer"]', { timeout: 45000 }).catch(() => null);
     check(Boolean(sheet), "push explainer sheet did not appear");
     await sleep(800);
     s.shots.push(shot("push-explainer"));
