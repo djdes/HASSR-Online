@@ -109,13 +109,6 @@ jobs:
         run: |
           npx playwright install --with-deps webkit chromium > /dev/null 2>&1
           BASE=https://localhost:3000 TAG=prod OUT=hydration-out npx tsx $T/hydration-check.ts 2>&1 | grep -v "Telegram.WebApp\|Service Worker\|mini-sw\|85479" | tail -80
-          # Сравнение: та же сборка, но оболочка как до правки «без telegram.org в приложении».
-          git show b8173bb1:src/app/mini/_components/mini-app-shell.tsx > src/app/mini/_components/mini-app-shell.tsx
-          NEXT_DIST_DIR=.next-before NODE_OPTIONS=--max-old-space-size=6144 npx next build --webpack > build-before.log 2>&1 || tail -30 build-before.log
-          git checkout -- src/app/mini/_components/mini-app-shell.tsx
-          NEXT_DIST_DIR=.next-before NODE_ENV=production TLS_KEY=tls/server.key TLS_CERT=tls/server.pem PORT=3001             nohup node $T/https-server.cjs > server-before.log 2>&1 &
-          for i in $(seq 1 90); do curl -sk -o /dev/null https://localhost:3001/mini/login && break; sleep 2; done
-          BASE=https://localhost:3001 TAG=before OUT=hydration-out npx tsx $T/hydration-check.ts 2>&1 | grep -v "Telegram.WebApp\|Service Worker\|mini-sw\|85479" | tail -80
 
       - if: always()
         uses: actions/upload-artifact@v7
@@ -152,7 +145,7 @@ jobs:
     needs: site
     if: contains(github.event.head_commit.message, '[ios]') || github.event_name == 'workflow_dispatch'
     runs-on: macos-26
-    timeout-minutes: 45
+    timeout-minutes: 62
     env:
       STATE: ${{ github.workspace }}/e2e-state
       LOGS: ${{ github.workspace }}/e2e-logs
@@ -160,6 +153,8 @@ jobs:
       APP_URL: https://localhost:3000/mini?src=app
       HOMEBREW_NO_AUTO_UPDATE: "1"
       HOMEBREW_NO_INSTALL_CLEANUP: "1"
+      # «[dev]» в сообщении коммита — сайт через next dev: React пишет полный текст ошибок.
+      SITE_DEV: ${{ contains(github.event.head_commit.message, '[dev]') && '1' || '0' }}
     steps:
       - uses: actions/checkout@v7
 
@@ -210,7 +205,8 @@ jobs:
         run: |
           cat > "$STATE/server-start.sh" <<EOS
           cd "$GITHUB_WORKSPACE"
-          NODE_ENV=production TLS_KEY=tls/server.key TLS_CERT=tls/server.pem PORT=3000 nohup node $T/https-server.cjs >> "$LOGS/server.log" 2>&1 &
+          if [ "$SITE_DEV" = "1" ]; then MODE="NODE_ENV=development DEV=1"; else MODE="NODE_ENV=production"; fi
+          env \$MODE LOG_ALL=1 TLS_KEY=tls/server.key TLS_CERT=tls/server.pem PORT=3000 nohup node $T/https-server.cjs >> "$LOGS/server.log" 2>&1 &
           echo \$! > "$STATE/server.pid"
           EOS
           cat > "$STATE/server-stop.sh" <<EOS
@@ -219,11 +215,19 @@ jobs:
           lsof -ti tcp:3000 | xargs kill -9 2>/dev/null || true
           EOS
           bash "$STATE/server-start.sh"
-          for i in $(seq 1 90); do
-            code=$(curl -s -o /dev/null -w "%{http_code}" --cacert tls/ca.pem https://localhost:3000/mini/login || true)
+          for i in $(seq 1 240); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 300 --cacert tls/ca.pem https://localhost:3000/mini/login || true)
             [ "$code" = "200" ] && break; sleep 2
           done
-          echo "GET /mini/login -> $code"; [ "$code" = "200" ] || { tail -50 "$LOGS/server.log"; exit 1; }
+          echo "GET /mini/login -> $code (SITE_DEV=$SITE_DEV)"; [ "$code" = "200" ] || { tail -50 "$LOGS/server.log"; exit 1; }
+          UA="Mozilla/5.0 (iPhone; CPU iPhone OS 26_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 WeSetupApp/1.0.0 (ios)"
+          curl -s -o /dev/null -D - --cacert tls/ca.pem -A "$UA" "https://localhost:3000/mini?src=app" | grep -i -E "^HTTP|^location" || true
+          if [ "$SITE_DEV" = "1" ]; then
+            # Прогрев: next dev собирает страницы при первом заходе.
+            for u in /mini/login /mini /dashboard /journals /mini/sections /mini/me; do
+              curl -s -o /dev/null -w "warm $u %{http_code} %{time_total}s\n" --max-time 400 --cacert tls/ca.pem -A "$UA" "https://localhost:3000$u" || true
+            done
+          fi
 
       - name: Ждём симулятор и сборку приложения
         timeout-minutes: 25
@@ -244,21 +248,27 @@ jobs:
           echo "Device: $(cat $STATE/device-name) $(cat $STATE/runtime)"
           xcrun simctl keychain "$UDID" add-root-cert tls/ca.pem
           xcrun simctl install "$UDID" "$STATE/App.app"
-          nohup xcrun simctl spawn "$UDID" log stream --style compact --level info \
-            --predicate 'process == "App" OR process CONTAINS "WebContent" OR process CONTAINS "Networking" OR eventMessage CONTAINS "ru.wesetup.app"' \
-            > "$LOGS/device.log" 2>&1 &
+          nohup xcrun simctl spawn "$UDID" log stream --style compact --level info             --predicate 'process == "App" OR process CONTAINS "WebContent" OR process CONTAINS "Networking" OR eventMessage CONTAINS "ru.wesetup.app"'             > "$LOGS/device.log" 2>&1 &
           mkdir -p "$OUT_DIR/splash"
           xcrun simctl io "$UDID" recordVideo --codec=h264 --force "$OUT_DIR/splash/cold-start.mp4" > "$LOGS/record.log" 2>&1 &
           REC=$!
           sleep 3
-          nohup xcrun simctl launch --console-pty "$UDID" ru.wesetup.app > "$LOGS/launch1-console.log" 2>&1 &
-          for i in $(seq -w 1 8); do xcrun simctl io "$UDID" screenshot "$OUT_DIR/splash/splash-$i.png" >/dev/null 2>&1; done
-          sleep 8
+          now() { perl -MTime::HiRes=time -e 'printf "%.3f", time'; }
+          # Консоль приложения с метками времени (UTC) — живёт до перезапуска приложения.
+          T0=$(now); echo "launch t0=$T0 $(date -u +%T)" > "$LOGS/cold-start-timing.txt"
+          nohup bash -c "xcrun simctl launch --console-pty $UDID ru.wesetup.app 2>&1 | perl -MTime::HiRes=time -MPOSIX=strftime -ne '\$|=1; my \$t=time; printf \"%s.%03d %s\", strftime(\"%H:%M:%S\",gmtime \$t), (\$t-int \$t)*1000, \$_'" > "$LOGS/launch1-console.log" 2>&1 &
+          # Кадры первых ~15 с: в имени — миллисекунды от запуска.
+          while :; do
+            T=$(now); MS=$(perl -e "printf '%05d', ($T-$T0)*1000")
+            [ "$MS" -gt 15000 ] && break
+            xcrun simctl io "$UDID" screenshot "$OUT_DIR/splash/t$MS.png" >/dev/null 2>&1
+          done
+          sleep 4
           kill -INT $REC; sleep 3
-          ls -la "$OUT_DIR/splash"
-          xcrun simctl io "$UDID" screenshot "$OUT_DIR/splash/cold-20s.png" >/dev/null 2>&1
+          ls "$OUT_DIR/splash"
+          xcrun simctl io "$UDID" screenshot "$OUT_DIR/splash/cold-22s.png" >/dev/null 2>&1
           echo "== console of first launch"; cat "$LOGS/launch1-console.log" | head -80
-          echo "Loading app at: $(grep -c 'Loading app at' "$LOGS/launch1-console.log" || true)"
+          echo "== server requests"; grep "\[req\]" "$LOGS/server.log" | head -30 | tee -a "$LOGS/cold-start-timing.txt"
 
       - name: Appium
         run: |
@@ -268,20 +278,15 @@ jobs:
           cd $T && npm init -y >/dev/null && npm install --no-save --no-fund --no-audit webdriverio@9 2>&1 | tail -2
 
       - name: Сценарии
-        timeout-minutes: 26
+        timeout-minutes: 38
         env:
           IDS_JSON: ${{ github.workspace }}/ci-ids.json
           BASE_URL: https://localhost:3000
           CA_PEM: ${{ github.workspace }}/tls/ca.pem
           WDA_DD: ${{ github.workspace }}/e2e-state/wda
-          TEST_BUDGET_MIN: "22"
-          LAUNCH_LOG: ${{ github.workspace }}/e2e-logs/launch1-console.log
+          TEST_BUDGET_MIN: "33"
         run: |
-          export SERVER_STOP_CMD="bash $STATE/server-stop.sh"
-          export SERVER_START_CMD="bash $STATE/server-start.sh"
-          export FIREBASE_INSTALL_CMD="xcrun simctl install $UDID $STATE/AppFB.app"
-          export PLAIN_INSTALL_CMD="xcrun simctl install $UDID $STATE/App.app"
-          cd $T && node ios-e2e.mjs 2>&1 | tee "$LOGS/test.log"
+          cd $T && node ios-native.mjs 2>&1 | tee "$LOGS/test.log"
 
       - name: Сбор логов
         if: always()
@@ -294,7 +299,7 @@ jobs:
             const r = require(process.argv[1]);
             const lines = ["| Сценарий | Итог | Не прошло |", "|---|---|---|"];
             for (const s of r.results) lines.push(`| ${s.id} ${s.name} | ${s.status} | ${(s.checks||[]).filter(c=>!c.ok).map(c=>c.label).join("; ").slice(0,300)}${s.error? " ERR: "+s.error.split("\n")[0].slice(0,200):""} |`);
-            lines.push("", "crashes: " + JSON.stringify(r.crashes), "console errors: " + r.consoleErrors.length, "net failures: " + r.netFailures.length);
+            lines.push("", "crashes: " + JSON.stringify(r.crashes));
             require("fs").appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join("\n") + "\n");
             console.log(lines.join("\n"));
           ' "$OUT_DIR/results.json" || echo "no results.json"

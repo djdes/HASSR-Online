@@ -10,7 +10,9 @@ const path = require("node:path");
 const next = require(path.join(process.cwd(), "node_modules/next"));
 
 const port = Number(process.env.PORT || 3000);
-const app = next({ dev: false, dir: process.cwd(), hostname: "localhost", port });
+// DEV=1 — next dev (полный текст ошибок React в консоли приложения, для разбора гидратации).
+const dev = process.env.DEV === "1";
+const app = next({ dev, turbo: dev, turbopack: dev, dir: process.cwd(), hostname: "localhost", port });
 const handle = app.getRequestHandler();
 
 app.prepare().then(() => {
