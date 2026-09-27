@@ -87,3 +87,25 @@ export function useVisibleViewportHeight(enabled = true): number {
 
   return enabled ? height : 0;
 }
+
+/**
+ * На сколько пикселей прокрутить блок `view`, чтобы элемент `el` был виден
+ * целиком (с отступом `margin`). Положительное — вниз, отрицательное — вверх,
+ * 0 — уже виден. Высокий элемент выравнивается по верху.
+ *
+ * Зачем: окно подтверждения с полем ввода при открытой клавиатуре ограничено
+ * видимой частью экрана, его середина становится прокручиваемой — и поле
+ * «введите УДАЛИТЬ» оказывалось под кнопками окна (iPhone, раунд 5, кадр 040):
+ * набирать приходилось вслепую, а нажатие по полю попадало в «Отмена».
+ */
+export function scrollDeltaToReveal(
+  view: { top: number; bottom: number },
+  el: { top: number; bottom: number },
+  margin = 12
+): number {
+  const up = el.top - margin - view.top;
+  if (up < 0) return Math.round(up);
+  const down = el.bottom + margin - view.bottom;
+  if (down > 0) return Math.round(Math.min(down, up));
+  return 0;
+}

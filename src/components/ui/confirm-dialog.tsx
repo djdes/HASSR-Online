@@ -1,6 +1,6 @@
 "use client";
 import { lockBodyScroll, unlockBodyScroll } from "@/lib/use-body-scroll-lock";
-import { keyboardSheetMaxHeight, useKeyboardInset, useVisibleViewportHeight } from "@/lib/use-keyboard-inset";
+import { keyboardSheetMaxHeight, scrollDeltaToReveal, useKeyboardInset, useVisibleViewportHeight } from "@/lib/use-keyboard-inset";
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -156,6 +156,7 @@ export function ConfirmDialog({
   const [submitting, setSubmitting] = useState(false);
   const [phrase, setPhrase] = useState("");
   const dialogRef = useRef<HTMLDivElement | null>(null);
+  const bodyRef = useRef<HTMLDivElement | null>(null);
   const Icon = IconOverride ?? VARIANT_ICONS[variant];
   const styles = VARIANT_STYLES[variant];
 
@@ -216,6 +217,21 @@ export function ConfirmDialog({
   // верх заезжал под часы и «чёлку».
   const visibleHeight = useVisibleViewportHeight(open);
   const keyboardMaxHeight = keyboardInset ? keyboardSheetMaxHeight(visibleHeight) : null;
+
+  // Окно стало ниже (клавиатура) — поле с фокусом прокручиваем в видимую
+  // середину окна: иначе на iPhone оно пряталось под «Отмена» / «Удалить».
+  const revealFocused = () => {
+    const body = bodyRef.current;
+    const active = document.activeElement;
+    if (!body || !(active instanceof HTMLElement) || !body.contains(active)) return;
+    const delta = scrollDeltaToReveal(body.getBoundingClientRect(), active.getBoundingClientRect());
+    if (delta) body.scrollTop += delta;
+  };
+  useEffect(() => {
+    if (!keyboardInset) return;
+    const id = window.requestAnimationFrame(revealFocused);
+    return () => window.cancelAnimationFrame(id);
+  }, [keyboardInset, keyboardMaxHeight]);
 
   if (!open || typeof document === "undefined") return null;
 
@@ -320,7 +336,14 @@ export function ConfirmDialog({
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div
+          ref={bodyRef}
+          // Фокус в поле при уже открытой клавиатуре — тоже показать поле.
+          onFocus={() => {
+            if (keyboardInset) window.requestAnimationFrame(revealFocused);
+          }}
+          className="min-h-0 flex-1 overflow-y-auto"
+        >
         {/* Bullets */}
         {bullets && bullets.length > 0 ? (
           <div className="space-y-2 px-6 pb-1 pt-4">
