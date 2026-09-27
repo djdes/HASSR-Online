@@ -74,11 +74,13 @@ export async function generateJournalPDF(params: {
       lineColor: [0, 0, 0],
       textColor: [0, 0, 0],
     },
+    // Шапка — серая с чёрным текстом: синяя с белым на ч/б принтере
+    // печаталась тёмной плашкой.
     headStyles: {
       font,
       fontStyle: "normal",
-      fillColor: [41, 128, 185],
-      textColor: 255,
+      fillColor: [224, 224, 224],
+      textColor: 0,
       fontSize: 7,
       halign: "center",
     },

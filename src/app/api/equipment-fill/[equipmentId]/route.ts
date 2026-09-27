@@ -46,6 +46,7 @@ import {
 } from "@/lib/qr-fill-audit";
 import { qrFillRateLimiter } from "@/lib/rate-limit";
 import { orgTodayKey } from "@/lib/timezone";
+import { decodeRouteParam } from "@/lib/route-param";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -103,7 +104,7 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ equipmentId: string }> }
 ) {
-  const { equipmentId } = await params;
+  const equipmentId = decodeRouteParam((await params).equipmentId);
 
   if (!qrFillRateLimiter.consume(qrFillRateKey(clientIp(request), "equipment", equipmentId))) {
     return NextResponse.json({ error: QR_FILL_RATE_LIMIT_ERROR }, { status: 429 });

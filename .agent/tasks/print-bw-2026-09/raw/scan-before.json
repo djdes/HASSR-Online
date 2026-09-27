@@ -1,0 +1,11178 @@
+[
+ {
+  "set": "samples",
+  "label": "hygiene",
+  "kind": "pdf",
+  "pages": 2,
+  "ops": {
+   "pages": 2,
+   "coloredOps": 176,
+   "coloredOutsideQr": 64,
+   "coloredInQr": 48,
+   "coloredUnused": 64,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 131.3,
+      "y0": 67.8,
+      "x1": 145.7,
+      "y1": 73.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 145.7,
+      "y0": 67.8,
+      "x1": 160.1,
+      "y1": 73.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 229.3,
+      "y0": 67.8,
+      "x1": 243.7,
+      "y1": 73.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 243.7,
+      "y0": 67.8,
+      "x1": 258.2,
+      "y1": 73.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 131.3,
+      "y0": 73.7,
+      "x1": 145.7,
+      "y1": 82.6
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 145.7,
+      "y0": 73.7,
+      "x1": 160.1,
+      "y1": 82.6
+     }
+    }
+   ],
+   "palette": {
+    "247,214,212": 64
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1003664,
+   "colored": 49036,
+   "coloredVisible": 44135,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 2588
+ },
+ {
+  "set": "samples",
+  "label": "health_check",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 80,
+   "coloredOutsideQr": 28,
+   "coloredInQr": 24,
+   "coloredUnused": 28,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 119.1,
+      "y0": 63.8,
+      "x1": 131.5,
+      "y1": 72.5
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 131.5,
+      "y0": 63.8,
+      "x1": 143.5,
+      "y1": 72.5
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 205.6,
+      "y0": 63.8,
+      "x1": 218,
+      "y1": 72.5
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 218,
+      "y0": 63.8,
+      "x1": 230,
+      "y1": 72.5
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 119.1,
+      "y0": 72.5,
+      "x1": 131.5,
+      "y1": 81.2
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 131.5,
+      "y0": 72.5,
+      "x1": 143.5,
+      "y1": 81.2
+     }
+    }
+   ],
+   "palette": {
+    "247,214,212": 28
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 21794,
+   "coloredVisible": 20051,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 426
+ },
+ {
+  "set": "samples",
+  "label": "climate_control",
+  "kind": "pdf",
+  "pages": 2,
+  "ops": {
+   "pages": 2,
+   "coloredOps": 48,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 48,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1003664,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 573
+ },
+ {
+  "set": "samples",
+  "label": "cold_equipment_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 308
+ },
+ {
+  "set": "samples",
+  "label": "cleaning_ventilation_checklist",
+  "kind": "pdf",
+  "pages": 6,
+  "ops": {
+   "pages": 6,
+   "coloredOps": 144,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 144,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 3010992,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 1104
+ },
+ {
+  "set": "samples",
+  "label": "cleaning",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 50,
+   "coloredOutsideQr": 14,
+   "coloredInQr": 24,
+   "coloredUnused": 12,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 150.6,
+      "y0": 60.8,
+      "x1": 163,
+      "y1": 67.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 163,
+      "y0": 60.8,
+      "x1": 175.4,
+      "y1": 67.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 237.4,
+      "y0": 60.8,
+      "x1": 249.8,
+      "y1": 67.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 249.8,
+      "y0": 60.8,
+      "x1": 262.2,
+      "y1": 67.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 150.6,
+      "y0": 67.7,
+      "x1": 163,
+      "y1": 77.8
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 163,
+      "y0": 67.7,
+      "x1": 175.4,
+      "y1": 77.8
+     }
+    }
+   ],
+   "palette": {
+    "247,214,212": 13,
+    "252,237,217": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 10487,
+   "coloredVisible": 9548,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 322
+ },
+ {
+  "set": "samples",
+  "label": "general_cleaning",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 359
+ },
+ {
+  "set": "samples",
+  "label": "uv_lamp_runtime",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 371
+ },
+ {
+  "set": "samples",
+  "label": "finished_product",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 310
+ },
+ {
+  "set": "samples",
+  "label": "perishable_rejection",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 315
+ },
+ {
+  "set": "samples",
+  "label": "incoming_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 241
+ },
+ {
+  "set": "samples",
+  "label": "fryer_oil",
+  "kind": "pdf",
+  "pages": 2,
+  "ops": {
+   "pages": 2,
+   "coloredOps": 48,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 48,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1003664,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 425
+ },
+ {
+  "set": "samples",
+  "label": "med_books",
+  "kind": "pdf",
+  "pages": 3,
+  "ops": {
+   "pages": 3,
+   "coloredOps": 72,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 72,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1505496,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 568
+ },
+ {
+  "set": "samples",
+  "label": "training_plan",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 292
+ },
+ {
+  "set": "samples",
+  "label": "staff_training",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 312
+ },
+ {
+  "set": "samples",
+  "label": "disinfectant_usage",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 379
+ },
+ {
+  "set": "samples",
+  "label": "sanitary_day_control",
+  "kind": "pdf",
+  "pages": 2,
+  "ops": {
+   "pages": 2,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1003664,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 506
+ },
+ {
+  "set": "samples",
+  "label": "equipment_maintenance",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 388
+ },
+ {
+  "set": "samples",
+  "label": "breakdown_history",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 360
+ },
+ {
+  "set": "samples",
+  "label": "equipment_calibration",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 369
+ },
+ {
+  "set": "samples",
+  "label": "incoming_raw_materials_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 364
+ },
+ {
+  "set": "samples",
+  "label": "ppe_issuance",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 313
+ },
+ {
+  "set": "samples",
+  "label": "accident_journal",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 405
+ },
+ {
+  "set": "samples",
+  "label": "complaint_register",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 329
+ },
+ {
+  "set": "samples",
+  "label": "product_writeoff",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 354
+ },
+ {
+  "set": "samples",
+  "label": "audit_plan",
+  "kind": "pdf",
+  "pages": 2,
+  "ops": {
+   "pages": 2,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1003664,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 487
+ },
+ {
+  "set": "samples",
+  "label": "audit_protocol",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 317
+ },
+ {
+  "set": "samples",
+  "label": "audit_report",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 411
+ },
+ {
+  "set": "samples",
+  "label": "traceability_test",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 331
+ },
+ {
+  "set": "samples",
+  "label": "metal_impurity",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 345
+ },
+ {
+  "set": "samples",
+  "label": "equipment_cleaning",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 298
+ },
+ {
+  "set": "samples",
+  "label": "intensive_cooling",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 346
+ },
+ {
+  "set": "samples",
+  "label": "glass_items_list",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 285
+ },
+ {
+  "set": "samples",
+  "label": "glass_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 305
+ },
+ {
+  "set": "samples",
+  "label": "pest_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 298
+ },
+ {
+  "set": "samples",
+  "label": "daily_samples",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 318
+ },
+ {
+  "set": "samples",
+  "label": "vitaminization",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 261
+ },
+ {
+  "set": "samples",
+  "label": "ration_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 364
+ },
+ {
+  "set": "samples",
+  "label": "transport_temperature",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 317
+ },
+ {
+  "set": "samples",
+  "label": "tableware_breakage",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 297
+ },
+ {
+  "set": "samples",
+  "label": "pool_water_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 284
+ },
+ {
+  "set": "samples",
+  "label": "inventory_condition",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 297
+ },
+ {
+  "set": "samples",
+  "label": "instrument_sterilization",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 250
+ },
+ {
+  "set": "samples",
+  "label": "medical_waste_b",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 303
+ },
+ {
+  "set": "samples",
+  "label": "batch_release",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 244
+ },
+ {
+  "set": "blanks",
+  "label": "hygiene",
+  "kind": "pdf",
+  "pages": 2,
+  "ops": {
+   "pages": 2,
+   "coloredOps": 178,
+   "coloredOutsideQr": 66,
+   "coloredInQr": 48,
+   "coloredUnused": 64,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 131.3,
+      "y0": 67.8,
+      "x1": 145.7,
+      "y1": 73.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 145.7,
+      "y0": 67.8,
+      "x1": 160.1,
+      "y1": 73.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 229.3,
+      "y0": 67.8,
+      "x1": 243.7,
+      "y1": 73.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 243.7,
+      "y0": 67.8,
+      "x1": 258.2,
+      "y1": 73.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 131.3,
+      "y0": 73.7,
+      "x1": 145.7,
+      "y1": 82.6
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 145.7,
+      "y0": 73.7,
+      "x1": 160.1,
+      "y1": 82.6
+     }
+    }
+   ],
+   "palette": {
+    "247,214,212": 64,
+    "111,114,130": 2
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1003664,
+   "colored": 50072,
+   "coloredVisible": 44135,
+   "pagesWithColor": [
+    1,
+    2
+   ]
+  },
+  "ms": 598
+ },
+ {
+  "set": "blanks",
+  "label": "health_check",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 81,
+   "coloredOutsideQr": 29,
+   "coloredInQr": 24,
+   "coloredUnused": 28,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 119.1,
+      "y0": 63.8,
+      "x1": 131.5,
+      "y1": 72.5
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 131.5,
+      "y0": 63.8,
+      "x1": 143.5,
+      "y1": 72.5
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 205.6,
+      "y0": 63.8,
+      "x1": 218,
+      "y1": 72.5
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 218,
+      "y0": 63.8,
+      "x1": 230,
+      "y1": 72.5
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 119.1,
+      "y0": 72.5,
+      "x1": 131.5,
+      "y1": 81.2
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 131.5,
+      "y0": 72.5,
+      "x1": 143.5,
+      "y1": 81.2
+     }
+    }
+   ],
+   "palette": {
+    "247,214,212": 28,
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 22312,
+   "coloredVisible": 20051,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 347
+ },
+ {
+  "set": "blanks",
+  "label": "climate_control",
+  "kind": "pdf",
+  "pages": 2,
+  "ops": {
+   "pages": 2,
+   "coloredOps": 50,
+   "coloredOutsideQr": 2,
+   "coloredInQr": 48,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    },
+    {
+     "page": 2,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 2
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1003664,
+   "colored": 1036,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1,
+    2
+   ]
+  },
+  "ms": 632
+ },
+ {
+  "set": "blanks",
+  "label": "cold_equipment_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 404
+ },
+ {
+  "set": "blanks",
+  "label": "cleaning_ventilation_checklist",
+  "kind": "pdf",
+  "pages": 6,
+  "ops": {
+   "pages": 6,
+   "coloredOps": 150,
+   "coloredOutsideQr": 6,
+   "coloredInQr": 144,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    },
+    {
+     "page": 2,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    },
+    {
+     "page": 3,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    },
+    {
+     "page": 4,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    },
+    {
+     "page": 5,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    },
+    {
+     "page": 6,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 6
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 3010992,
+   "colored": 3108,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+   ]
+  },
+  "ms": 1102
+ },
+ {
+  "set": "blanks",
+  "label": "cleaning",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 51,
+   "coloredOutsideQr": 15,
+   "coloredInQr": 24,
+   "coloredUnused": 12,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 150.6,
+      "y0": 64.8,
+      "x1": 163,
+      "y1": 71.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 163,
+      "y0": 64.8,
+      "x1": 175.4,
+      "y1": 71.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 237.4,
+      "y0": 64.8,
+      "x1": 249.8,
+      "y1": 71.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 249.8,
+      "y0": 64.8,
+      "x1": 262.2,
+      "y1": 71.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 150.6,
+      "y0": 71.7,
+      "x1": 163,
+      "y1": 81.8
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 163,
+      "y0": 71.7,
+      "x1": 175.4,
+      "y1": 81.8
+     }
+    }
+   ],
+   "palette": {
+    "247,214,212": 13,
+    "252,237,217": 1,
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 11128,
+   "coloredVisible": 9661,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 310
+ },
+ {
+  "set": "blanks",
+  "label": "general_cleaning",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 302
+ },
+ {
+  "set": "blanks",
+  "label": "uv_lamp_runtime",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 332
+ },
+ {
+  "set": "blanks",
+  "label": "finished_product",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 287
+ },
+ {
+  "set": "blanks",
+  "label": "perishable_rejection",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 304
+ },
+ {
+  "set": "blanks",
+  "label": "incoming_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 341
+ },
+ {
+  "set": "blanks",
+  "label": "fryer_oil",
+  "kind": "pdf",
+  "pages": 2,
+  "ops": {
+   "pages": 2,
+   "coloredOps": 50,
+   "coloredOutsideQr": 2,
+   "coloredInQr": 48,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    },
+    {
+     "page": 2,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 2
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1003664,
+   "colored": 1036,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1,
+    2
+   ]
+  },
+  "ms": 422
+ },
+ {
+  "set": "blanks",
+  "label": "med_books",
+  "kind": "pdf",
+  "pages": 3,
+  "ops": {
+   "pages": 3,
+   "coloredOps": 75,
+   "coloredOutsideQr": 3,
+   "coloredInQr": 72,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    },
+    {
+     "page": 2,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    },
+    {
+     "page": 3,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 3
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1505496,
+   "colored": 1554,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1,
+    2,
+    3
+   ]
+  },
+  "ms": 593
+ },
+ {
+  "set": "blanks",
+  "label": "training_plan",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 312
+ },
+ {
+  "set": "blanks",
+  "label": "staff_training",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 271
+ },
+ {
+  "set": "blanks",
+  "label": "disinfectant_usage",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 330
+ },
+ {
+  "set": "blanks",
+  "label": "sanitary_day_control",
+  "kind": "pdf",
+  "pages": 2,
+  "ops": {
+   "pages": 2,
+   "coloredOps": 26,
+   "coloredOutsideQr": 2,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    },
+    {
+     "page": 2,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 2
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1003664,
+   "colored": 1036,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1,
+    2
+   ]
+  },
+  "ms": 383
+ },
+ {
+  "set": "blanks",
+  "label": "equipment_maintenance",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 357
+ },
+ {
+  "set": "blanks",
+  "label": "breakdown_history",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 323
+ },
+ {
+  "set": "blanks",
+  "label": "equipment_calibration",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 333
+ },
+ {
+  "set": "blanks",
+  "label": "incoming_raw_materials_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 319
+ },
+ {
+  "set": "blanks",
+  "label": "ppe_issuance",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 329
+ },
+ {
+  "set": "blanks",
+  "label": "accident_journal",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 284
+ },
+ {
+  "set": "blanks",
+  "label": "complaint_register",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 325
+ },
+ {
+  "set": "blanks",
+  "label": "product_writeoff",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 298
+ },
+ {
+  "set": "blanks",
+  "label": "audit_plan",
+  "kind": "pdf",
+  "pages": 2,
+  "ops": {
+   "pages": 2,
+   "coloredOps": 26,
+   "coloredOutsideQr": 2,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    },
+    {
+     "page": 2,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 2
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1003664,
+   "colored": 1036,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1,
+    2
+   ]
+  },
+  "ms": 472
+ },
+ {
+  "set": "blanks",
+  "label": "audit_protocol",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 320
+ },
+ {
+  "set": "blanks",
+  "label": "audit_report",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 338
+ },
+ {
+  "set": "blanks",
+  "label": "traceability_test",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 345
+ },
+ {
+  "set": "blanks",
+  "label": "metal_impurity",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 325
+ },
+ {
+  "set": "blanks",
+  "label": "equipment_cleaning",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 306
+ },
+ {
+  "set": "blanks",
+  "label": "intensive_cooling",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 400
+ },
+ {
+  "set": "blanks",
+  "label": "glass_items_list",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 347
+ },
+ {
+  "set": "blanks",
+  "label": "glass_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 249
+ },
+ {
+  "set": "blanks",
+  "label": "pest_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 268
+ },
+ {
+  "set": "blanks",
+  "label": "daily_samples",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 262
+ },
+ {
+  "set": "blanks",
+  "label": "vitaminization",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 316
+ },
+ {
+  "set": "blanks",
+  "label": "ration_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 296
+ },
+ {
+  "set": "blanks",
+  "label": "transport_temperature",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 400
+ },
+ {
+  "set": "blanks",
+  "label": "tableware_breakage",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 290
+ },
+ {
+  "set": "blanks",
+  "label": "pool_water_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 313
+ },
+ {
+  "set": "blanks",
+  "label": "inventory_condition",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 287
+ },
+ {
+  "set": "blanks",
+  "label": "instrument_sterilization",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 270
+ },
+ {
+  "set": "blanks",
+  "label": "medical_waste_b",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 302
+ },
+ {
+  "set": "blanks",
+  "label": "batch_release",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198.3,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 518,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 311
+ },
+ {
+  "set": "long",
+  "label": "hygiene",
+  "kind": "pdf",
+  "pages": 7,
+  "ops": {
+   "pages": 7,
+   "coloredOps": 944,
+   "coloredOutsideQr": 388,
+   "coloredInQr": 168,
+   "coloredUnused": 388,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 131.3,
+      "y0": 67.8,
+      "x1": 145.7,
+      "y1": 73.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 145.7,
+      "y0": 67.8,
+      "x1": 160.1,
+      "y1": 73.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 229.3,
+      "y0": 67.8,
+      "x1": 243.7,
+      "y1": 73.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 243.7,
+      "y0": 67.8,
+      "x1": 258.2,
+      "y1": 73.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 131.3,
+      "y0": 73.7,
+      "x1": 145.7,
+      "y1": 82.6
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 145.7,
+      "y0": 73.7,
+      "x1": 160.1,
+      "y1": 82.6
+     }
+    }
+   ],
+   "palette": {
+    "247,214,212": 388
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 3512824,
+   "colored": 313463,
+   "coloredVisible": 279957,
+   "pagesWithColor": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+   ]
+  },
+  "ms": 1598
+ },
+ {
+  "set": "long",
+  "label": "health_check",
+  "kind": "pdf",
+  "pages": 4,
+  "ops": {
+   "pages": 4,
+   "coloredOps": 504,
+   "coloredOutsideQr": 204,
+   "coloredInQr": 96,
+   "coloredUnused": 204,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 119.1,
+      "y0": 63.8,
+      "x1": 131.5,
+      "y1": 72.5
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 131.5,
+      "y0": 63.8,
+      "x1": 143.5,
+      "y1": 72.5
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 205.6,
+      "y0": 63.8,
+      "x1": 218,
+      "y1": 72.5
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 218,
+      "y0": 63.8,
+      "x1": 230,
+      "y1": 72.5
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 119.1,
+      "y0": 72.5,
+      "x1": 131.5,
+      "y1": 81.2
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 131.5,
+      "y0": 72.5,
+      "x1": 143.5,
+      "y1": 81.2
+     }
+    }
+   ],
+   "palette": {
+    "247,214,212": 204
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 2007328,
+   "colored": 163129,
+   "coloredVisible": 150270,
+   "pagesWithColor": [
+    1,
+    2,
+    3,
+    4
+   ]
+  },
+  "ms": 917
+ },
+ {
+  "set": "long",
+  "label": "climate_control",
+  "kind": "pdf",
+  "pages": 27,
+  "ops": {
+   "pages": 27,
+   "coloredOps": 648,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 648,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 13549464,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 8346
+ },
+ {
+  "set": "long",
+  "label": "cold_equipment_control",
+  "kind": "pdf",
+  "pages": 4,
+  "ops": {
+   "pages": 4,
+   "coloredOps": 96,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 96,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 2007328,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 983
+ },
+ {
+  "set": "long",
+  "label": "cleaning_ventilation_checklist",
+  "kind": "pdf",
+  "pages": 9,
+  "ops": {
+   "pages": 9,
+   "coloredOps": 216,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 216,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 4516488,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 1480
+ },
+ {
+  "set": "long",
+  "label": "cleaning",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 50,
+   "coloredOutsideQr": 14,
+   "coloredInQr": 24,
+   "coloredUnused": 12,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 150.6,
+      "y0": 64,
+      "x1": 163,
+      "y1": 70.9
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 163,
+      "y0": 64,
+      "x1": 175.4,
+      "y1": 70.9
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 237.4,
+      "y0": 64,
+      "x1": 249.8,
+      "y1": 70.9
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 249.8,
+      "y0": 64,
+      "x1": 262.2,
+      "y1": 70.9
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 150.6,
+      "y0": 70.9,
+      "x1": 163,
+      "y1": 81
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 163,
+      "y0": 70.9,
+      "x1": 175.4,
+      "y1": 81
+     }
+    }
+   ],
+   "palette": {
+    "247,214,212": 13,
+    "252,237,217": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 10618,
+   "coloredVisible": 9531,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 322
+ },
+ {
+  "set": "long",
+  "label": "general_cleaning",
+  "kind": "pdf",
+  "pages": 6,
+  "ops": {
+   "pages": 6,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 3010992,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 1148
+ },
+ {
+  "set": "long",
+  "label": "uv_lamp_runtime",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 371
+ },
+ {
+  "set": "long",
+  "label": "finished_product",
+  "kind": "pdf",
+  "pages": 4,
+  "ops": {
+   "pages": 4,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 2007328,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 598
+ },
+ {
+  "set": "long",
+  "label": "perishable_rejection",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 291
+ },
+ {
+  "set": "long",
+  "label": "incoming_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 280
+ },
+ {
+  "set": "long",
+  "label": "fryer_oil",
+  "kind": "pdf",
+  "pages": 2,
+  "ops": {
+   "pages": 2,
+   "coloredOps": 48,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 48,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1003664,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 491
+ },
+ {
+  "set": "long",
+  "label": "med_books",
+  "kind": "pdf",
+  "pages": 3,
+  "ops": {
+   "pages": 3,
+   "coloredOps": 72,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 72,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1505496,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 580
+ },
+ {
+  "set": "long",
+  "label": "training_plan",
+  "kind": "pdf",
+  "pages": 25,
+  "ops": {
+   "pages": 25,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 12545800,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 6467
+ },
+ {
+  "set": "long",
+  "label": "staff_training",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 385
+ },
+ {
+  "set": "long",
+  "label": "disinfectant_usage",
+  "kind": "pdf",
+  "pages": 12,
+  "ops": {
+   "pages": 12,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 6021984,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 1791
+ },
+ {
+  "set": "long",
+  "label": "sanitary_day_control",
+  "kind": "pdf",
+  "pages": 9,
+  "ops": {
+   "pages": 9,
+   "coloredOps": 48,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 48,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 4516488,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 926
+ },
+ {
+  "set": "long",
+  "label": "equipment_maintenance",
+  "kind": "pdf",
+  "pages": 5,
+  "ops": {
+   "pages": 5,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 2509160,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 1084
+ },
+ {
+  "set": "long",
+  "label": "breakdown_history",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 311
+ },
+ {
+  "set": "long",
+  "label": "equipment_calibration",
+  "kind": "pdf",
+  "pages": 3,
+  "ops": {
+   "pages": 3,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1505496,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 792
+ },
+ {
+  "set": "long",
+  "label": "incoming_raw_materials_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 269
+ },
+ {
+  "set": "long",
+  "label": "ppe_issuance",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 292
+ },
+ {
+  "set": "long",
+  "label": "accident_journal",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 250
+ },
+ {
+  "set": "long",
+  "label": "complaint_register",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 327
+ },
+ {
+  "set": "long",
+  "label": "product_writeoff",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 259
+ },
+ {
+  "set": "long",
+  "label": "audit_plan",
+  "kind": "pdf",
+  "pages": 309,
+  "ops": {
+   "pages": 309,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 155066088,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 149480
+ },
+ {
+  "set": "long",
+  "label": "audit_protocol",
+  "kind": "pdf",
+  "pages": 3,
+  "ops": {
+   "pages": 3,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1505496,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 571
+ },
+ {
+  "set": "long",
+  "label": "audit_report",
+  "kind": "pdf",
+  "pages": 3,
+  "ops": {
+   "pages": 3,
+   "coloredOps": 72,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 72,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1505496,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 537
+ },
+ {
+  "set": "long",
+  "label": "traceability_test",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 311
+ },
+ {
+  "set": "long",
+  "label": "metal_impurity",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 304
+ },
+ {
+  "set": "long",
+  "label": "equipment_cleaning",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 283
+ },
+ {
+  "set": "long",
+  "label": "intensive_cooling",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 391
+ },
+ {
+  "set": "long",
+  "label": "glass_items_list",
+  "kind": "pdf",
+  "pages": 4,
+  "ops": {
+   "pages": 4,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 2007328,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 617
+ },
+ {
+  "set": "long",
+  "label": "glass_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 362
+ },
+ {
+  "set": "long",
+  "label": "pest_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 399
+ },
+ {
+  "set": "long",
+  "label": "daily_samples",
+  "kind": "pdf",
+  "pages": 3,
+  "ops": {
+   "pages": 3,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1505496,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 855
+ },
+ {
+  "set": "long",
+  "label": "vitaminization",
+  "kind": "pdf",
+  "pages": 3,
+  "ops": {
+   "pages": 3,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1505496,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 719
+ },
+ {
+  "set": "long",
+  "label": "ration_control",
+  "kind": "pdf",
+  "pages": 3,
+  "ops": {
+   "pages": 3,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1505496,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 579
+ },
+ {
+  "set": "long",
+  "label": "transport_temperature",
+  "kind": "pdf",
+  "pages": 3,
+  "ops": {
+   "pages": 3,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1505496,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 752
+ },
+ {
+  "set": "long",
+  "label": "tableware_breakage",
+  "kind": "pdf",
+  "pages": 3,
+  "ops": {
+   "pages": 3,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1505496,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 709
+ },
+ {
+  "set": "long",
+  "label": "pool_water_control",
+  "kind": "pdf",
+  "pages": 3,
+  "ops": {
+   "pages": 3,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1505496,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 967
+ },
+ {
+  "set": "long",
+  "label": "inventory_condition",
+  "kind": "pdf",
+  "pages": 3,
+  "ops": {
+   "pages": 3,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1505496,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 837
+ },
+ {
+  "set": "long",
+  "label": "instrument_sterilization",
+  "kind": "pdf",
+  "pages": 3,
+  "ops": {
+   "pages": 3,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1505496,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 743
+ },
+ {
+  "set": "long",
+  "label": "medical_waste_b",
+  "kind": "pdf",
+  "pages": 3,
+  "ops": {
+   "pages": 3,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1505496,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 842
+ },
+ {
+  "set": "long",
+  "label": "batch_release",
+  "kind": "pdf",
+  "pages": 3,
+  "ops": {
+   "pages": 3,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1505496,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 887
+ },
+ {
+  "set": "paper",
+  "label": "ot_intro",
+  "kind": "pdf",
+  "pages": 2,
+  "ops": {
+   "pages": 2,
+   "coloredOps": 378,
+   "coloredOutsideQr": 338,
+   "coloredInQr": 24,
+   "coloredUnused": 16,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "RG",
+     "comps": [
+      0.04,
+      0.06,
+      0.14
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 42,
+      "x1": 20,
+      "y1": 51
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.93,
+      0.95,
+      1
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 42,
+      "x1": 20,
+      "y1": 51
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.043,
+      0.063,
+      0.141
+     ],
+     "box": {
+      "x0": 12.4,
+      "y0": 44.5,
+      "x1": 12.4,
+      "y1": 46.8
+     }
+    },
+    {
+     "page": 1,
+     "op": "RG",
+     "comps": [
+      0.04,
+      0.06,
+      0.14
+     ],
+     "box": {
+      "x0": 20,
+      "y0": 42,
+      "x1": 32.8,
+      "y1": 51
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.93,
+      0.95,
+      1
+     ],
+     "box": {
+      "x0": 20,
+      "y0": 42,
+      "x1": 32.8,
+      "y1": 51
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.043,
+      0.063,
+      0.141
+     ],
+     "box": {
+      "x0": 22.4,
+      "y0": 44.5,
+      "x1": 22.4,
+      "y1": 46.8
+     }
+    }
+   ],
+   "palette": {
+    "10,15,36": 160,
+    "237,242,255": 16,
+    "11,16,36": 160,
+    "111,114,130": 2
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1003664,
+   "colored": 71490,
+   "coloredVisible": 4838,
+   "pagesWithColor": [
+    1,
+    2
+   ]
+  },
+  "ms": 382
+ },
+ {
+  "set": "paper",
+  "label": "ot_workplace",
+  "kind": "pdf",
+  "pages": 2,
+  "ops": {
+   "pages": 2,
+   "coloredOps": 378,
+   "coloredOutsideQr": 338,
+   "coloredInQr": 24,
+   "coloredUnused": 16,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "RG",
+     "comps": [
+      0.04,
+      0.06,
+      0.14
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 42,
+      "x1": 20,
+      "y1": 51
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.93,
+      0.95,
+      1
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 42,
+      "x1": 20,
+      "y1": 51
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.043,
+      0.063,
+      0.141
+     ],
+     "box": {
+      "x0": 12.4,
+      "y0": 44.5,
+      "x1": 12.4,
+      "y1": 46.8
+     }
+    },
+    {
+     "page": 1,
+     "op": "RG",
+     "comps": [
+      0.04,
+      0.06,
+      0.14
+     ],
+     "box": {
+      "x0": 20,
+      "y0": 42,
+      "x1": 32.5,
+      "y1": 51
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.93,
+      0.95,
+      1
+     ],
+     "box": {
+      "x0": 20,
+      "y0": 42,
+      "x1": 32.5,
+      "y1": 51
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.043,
+      0.063,
+      0.141
+     ],
+     "box": {
+      "x0": 22.4,
+      "y0": 44.5,
+      "x1": 22.4,
+      "y1": 46.8
+     }
+    }
+   ],
+   "palette": {
+    "10,15,36": 160,
+    "237,242,255": 16,
+    "11,16,36": 160,
+    "111,114,130": 2
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1003664,
+   "colored": 71918,
+   "coloredVisible": 5026,
+   "pagesWithColor": [
+    1,
+    2
+   ]
+  },
+  "ms": 410
+ },
+ {
+  "set": "paper",
+  "label": "fire_safety",
+  "kind": "pdf",
+  "pages": 2,
+  "ops": {
+   "pages": 2,
+   "coloredOps": 378,
+   "coloredOutsideQr": 338,
+   "coloredInQr": 24,
+   "coloredUnused": 16,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "RG",
+     "comps": [
+      0.04,
+      0.06,
+      0.14
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 42,
+      "x1": 20,
+      "y1": 51
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.93,
+      0.95,
+      1
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 42,
+      "x1": 20,
+      "y1": 51
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.043,
+      0.063,
+      0.141
+     ],
+     "box": {
+      "x0": 12.4,
+      "y0": 44.5,
+      "x1": 12.4,
+      "y1": 46.8
+     }
+    },
+    {
+     "page": 1,
+     "op": "RG",
+     "comps": [
+      0.04,
+      0.06,
+      0.14
+     ],
+     "box": {
+      "x0": 20,
+      "y0": 42,
+      "x1": 33.5,
+      "y1": 51
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.93,
+      0.95,
+      1
+     ],
+     "box": {
+      "x0": 20,
+      "y0": 42,
+      "x1": 33.5,
+      "y1": 51
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.043,
+      0.063,
+      0.141
+     ],
+     "box": {
+      "x0": 22.4,
+      "y0": 44.5,
+      "x1": 22.4,
+      "y1": 46.8
+     }
+    }
+   ],
+   "palette": {
+    "10,15,36": 160,
+    "237,242,255": 16,
+    "11,16,36": 160,
+    "111,114,130": 2
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1003664,
+   "colored": 71492,
+   "coloredVisible": 5059,
+   "pagesWithColor": [
+    1,
+    2
+   ]
+  },
+  "ms": 444
+ },
+ {
+  "set": "paper",
+  "label": "fire_extinguishers",
+  "kind": "pdf",
+  "pages": 2,
+  "ops": {
+   "pages": 2,
+   "coloredOps": 422,
+   "coloredOutsideQr": 380,
+   "coloredInQr": 24,
+   "coloredUnused": 18,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "RG",
+     "comps": [
+      0.04,
+      0.06,
+      0.14
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 42,
+      "x1": 20,
+      "y1": 51
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.93,
+      0.95,
+      1
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 42,
+      "x1": 20,
+      "y1": 51
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.043,
+      0.063,
+      0.141
+     ],
+     "box": {
+      "x0": 12.4,
+      "y0": 44.5,
+      "x1": 12.4,
+      "y1": 46.8
+     }
+    },
+    {
+     "page": 1,
+     "op": "RG",
+     "comps": [
+      0.04,
+      0.06,
+      0.14
+     ],
+     "box": {
+      "x0": 20,
+      "y0": 42,
+      "x1": 56.6,
+      "y1": 51
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.93,
+      0.95,
+      1
+     ],
+     "box": {
+      "x0": 20,
+      "y0": 42,
+      "x1": 56.6,
+      "y1": 51
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.043,
+      0.063,
+      0.141
+     ],
+     "box": {
+      "x0": 22.4,
+      "y0": 44.5,
+      "x1": 22.4,
+      "y1": 46.8
+     }
+    }
+   ],
+   "palette": {
+    "10,15,36": 180,
+    "237,242,255": 18,
+    "11,16,36": 180,
+    "111,114,130": 2
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1003664,
+   "colored": 71925,
+   "coloredVisible": 5508,
+   "pagesWithColor": [
+    1,
+    2
+   ]
+  },
+  "ms": 396
+ },
+ {
+  "set": "paper",
+  "label": "electrical_safety",
+  "kind": "pdf",
+  "pages": 2,
+  "ops": {
+   "pages": 2,
+   "coloredOps": 378,
+   "coloredOutsideQr": 338,
+   "coloredInQr": 24,
+   "coloredUnused": 16,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "RG",
+     "comps": [
+      0.04,
+      0.06,
+      0.14
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 42,
+      "x1": 20,
+      "y1": 51
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.93,
+      0.95,
+      1
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 42,
+      "x1": 20,
+      "y1": 51
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.043,
+      0.063,
+      0.141
+     ],
+     "box": {
+      "x0": 12.4,
+      "y0": 44.5,
+      "x1": 12.4,
+      "y1": 46.8
+     }
+    },
+    {
+     "page": 1,
+     "op": "RG",
+     "comps": [
+      0.04,
+      0.06,
+      0.14
+     ],
+     "box": {
+      "x0": 20,
+      "y0": 42,
+      "x1": 34.4,
+      "y1": 51
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.93,
+      0.95,
+      1
+     ],
+     "box": {
+      "x0": 20,
+      "y0": 42,
+      "x1": 34.4,
+      "y1": 51
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.043,
+      0.063,
+      0.141
+     ],
+     "box": {
+      "x0": 22.4,
+      "y0": 44.5,
+      "x1": 22.4,
+      "y1": 46.8
+     }
+    }
+   ],
+   "palette": {
+    "10,15,36": 160,
+    "237,242,255": 16,
+    "11,16,36": 160,
+    "111,114,130": 2
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1003664,
+   "colored": 70206,
+   "coloredVisible": 6474,
+   "pagesWithColor": [
+    1,
+    2
+   ]
+  },
+  "ms": 353
+ },
+ {
+  "set": "portrait",
+  "label": "hygiene",
+  "kind": "pdf",
+  "pages": 2,
+  "ops": {
+   "pages": 2,
+   "coloredOps": 176,
+   "coloredOutsideQr": 64,
+   "coloredInQr": 48,
+   "coloredUnused": 64,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 112.3,
+      "y0": 67.8,
+      "x1": 120.5,
+      "y1": 73.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 120.5,
+      "y0": 67.8,
+      "x1": 128.6,
+      "y1": 73.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 167.5,
+      "y0": 67.8,
+      "x1": 175.7,
+      "y1": 73.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 175.7,
+      "y0": 67.8,
+      "x1": 183.8,
+      "y1": 73.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 112.3,
+      "y0": 73.7,
+      "x1": 120.5,
+      "y1": 82.6
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 120.5,
+      "y0": 73.7,
+      "x1": 128.6,
+      "y1": 82.6
+     }
+    }
+   ],
+   "palette": {
+    "247,214,212": 64
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1003664,
+   "colored": 26805,
+   "coloredVisible": 23832,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 476
+ },
+ {
+  "set": "portrait",
+  "label": "health_check",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 80,
+   "coloredOutsideQr": 28,
+   "coloredInQr": 24,
+   "coloredUnused": 28,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 100.5,
+      "y0": 63.8,
+      "x1": 106.6,
+      "y1": 75.4
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 106.6,
+      "y0": 63.8,
+      "x1": 112.6,
+      "y1": 75.4
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 143.5,
+      "y0": 63.8,
+      "x1": 149.6,
+      "y1": 75.4
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 149.6,
+      "y0": 63.8,
+      "x1": 155.6,
+      "y1": 75.4
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 100.5,
+      "y0": 75.4,
+      "x1": 106.6,
+      "y1": 84.2
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 106.6,
+      "y0": 75.4,
+      "x1": 112.6,
+      "y1": 84.2
+     }
+    }
+   ],
+   "palette": {
+    "247,214,212": 28
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 11345,
+   "coloredVisible": 9749,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 321
+ },
+ {
+  "set": "portrait",
+  "label": "climate_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 355
+ },
+ {
+  "set": "portrait",
+  "label": "cold_equipment_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 351
+ },
+ {
+  "set": "portrait",
+  "label": "cleaning_ventilation_checklist",
+  "kind": "pdf",
+  "pages": 5,
+  "ops": {
+   "pages": 5,
+   "coloredOps": 120,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 120,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 2509160,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 982
+ },
+ {
+  "set": "portrait",
+  "label": "cleaning",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 50,
+   "coloredOutsideQr": 14,
+   "coloredInQr": 24,
+   "coloredUnused": 12,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 129.3,
+      "y0": 60.4,
+      "x1": 135.7,
+      "y1": 66.9
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 135.7,
+      "y0": 60.4,
+      "x1": 142.1,
+      "y1": 66.9
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 174.3,
+      "y0": 60.4,
+      "x1": 180.7,
+      "y1": 66.9
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 180.7,
+      "y0": 60.4,
+      "x1": 187.1,
+      "y1": 66.9
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 129.3,
+      "y0": 66.9,
+      "x1": 135.7,
+      "y1": 76.1
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 135.7,
+      "y0": 66.9,
+      "x1": 142.1,
+      "y1": 76.1
+     }
+    }
+   ],
+   "palette": {
+    "247,214,212": 13,
+    "252,237,217": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 4287,
+   "coloredVisible": 3974,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 345
+ },
+ {
+  "set": "portrait",
+  "label": "general_cleaning",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 323
+ },
+ {
+  "set": "portrait",
+  "label": "uv_lamp_runtime",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 342
+ },
+ {
+  "set": "portrait",
+  "label": "finished_product",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 344
+ },
+ {
+  "set": "portrait",
+  "label": "perishable_rejection",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 278
+ },
+ {
+  "set": "portrait",
+  "label": "incoming_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 353
+ },
+ {
+  "set": "portrait",
+  "label": "fryer_oil",
+  "kind": "pdf",
+  "pages": 3,
+  "ops": {
+   "pages": 3,
+   "coloredOps": 72,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 72,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1505496,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 569
+ },
+ {
+  "set": "portrait",
+  "label": "med_books",
+  "kind": "pdf",
+  "pages": 3,
+  "ops": {
+   "pages": 3,
+   "coloredOps": 72,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 72,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1505496,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 654
+ },
+ {
+  "set": "portrait",
+  "label": "training_plan",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 311
+ },
+ {
+  "set": "portrait",
+  "label": "staff_training",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 286
+ },
+ {
+  "set": "portrait",
+  "label": "disinfectant_usage",
+  "kind": "pdf",
+  "pages": 2,
+  "ops": {
+   "pages": 2,
+   "coloredOps": 0,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 0,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1003664,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 295
+ },
+ {
+  "set": "portrait",
+  "label": "sanitary_day_control",
+  "kind": "pdf",
+  "pages": 2,
+  "ops": {
+   "pages": 2,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1003664,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 423
+ },
+ {
+  "set": "portrait",
+  "label": "equipment_maintenance",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 266
+ },
+ {
+  "set": "portrait",
+  "label": "breakdown_history",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 300
+ },
+ {
+  "set": "portrait",
+  "label": "equipment_calibration",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 323
+ },
+ {
+  "set": "portrait",
+  "label": "incoming_raw_materials_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 439
+ },
+ {
+  "set": "portrait",
+  "label": "ppe_issuance",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 299
+ },
+ {
+  "set": "portrait",
+  "label": "accident_journal",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 415
+ },
+ {
+  "set": "portrait",
+  "label": "complaint_register",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 349
+ },
+ {
+  "set": "portrait",
+  "label": "product_writeoff",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 307
+ },
+ {
+  "set": "portrait",
+  "label": "audit_plan",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 373
+ },
+ {
+  "set": "portrait",
+  "label": "audit_protocol",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 315
+ },
+ {
+  "set": "portrait",
+  "label": "audit_report",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 286
+ },
+ {
+  "set": "portrait",
+  "label": "traceability_test",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 350
+ },
+ {
+  "set": "portrait",
+  "label": "metal_impurity",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 282
+ },
+ {
+  "set": "portrait",
+  "label": "equipment_cleaning",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 332
+ },
+ {
+  "set": "portrait",
+  "label": "intensive_cooling",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 274
+ },
+ {
+  "set": "portrait",
+  "label": "glass_items_list",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 412
+ },
+ {
+  "set": "portrait",
+  "label": "glass_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 386
+ },
+ {
+  "set": "portrait",
+  "label": "pest_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 316
+ },
+ {
+  "set": "portrait",
+  "label": "daily_samples",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 331
+ },
+ {
+  "set": "portrait",
+  "label": "vitaminization",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 293
+ },
+ {
+  "set": "portrait",
+  "label": "ration_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 312
+ },
+ {
+  "set": "portrait",
+  "label": "transport_temperature",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 292
+ },
+ {
+  "set": "portrait",
+  "label": "tableware_breakage",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 300
+ },
+ {
+  "set": "portrait",
+  "label": "pool_water_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 311
+ },
+ {
+  "set": "portrait",
+  "label": "inventory_condition",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 289
+ },
+ {
+  "set": "portrait",
+  "label": "instrument_sterilization",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 327
+ },
+ {
+  "set": "portrait",
+  "label": "medical_waste_b",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 358
+ },
+ {
+  "set": "portrait",
+  "label": "batch_release",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 349
+ },
+ {
+  "set": "variants",
+  "label": "hygiene-v2",
+  "kind": "pdf",
+  "pages": 5,
+  "ops": {
+   "pages": 5,
+   "coloredOps": 120,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 120,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 2509160,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 996
+ },
+ {
+  "set": "variants",
+  "label": "partner-hygiene",
+  "kind": "pdf",
+  "pages": 2,
+  "ops": {
+   "pages": 2,
+   "coloredOps": 178,
+   "coloredOutsideQr": 66,
+   "coloredInQr": 48,
+   "coloredUnused": 64,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 131.3,
+      "y0": 67.8,
+      "x1": 145.7,
+      "y1": 73.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 145.7,
+      "y0": 67.8,
+      "x1": 160.1,
+      "y1": 73.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 229.3,
+      "y0": 67.8,
+      "x1": 243.7,
+      "y1": 73.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 243.7,
+      "y0": 67.8,
+      "x1": 258.2,
+      "y1": 73.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 131.3,
+      "y0": 73.7,
+      "x1": 145.7,
+      "y1": 82.6
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 145.7,
+      "y0": 73.7,
+      "x1": 160.1,
+      "y1": 82.6
+     }
+    }
+   ],
+   "palette": {
+    "247,214,212": 64,
+    "111,114,130": 2
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1003664,
+   "colored": 51452,
+   "coloredVisible": 44135,
+   "pagesWithColor": [
+    1,
+    2
+   ]
+  },
+  "ms": 527
+ },
+ {
+  "set": "variants",
+  "label": "partner-health_check",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 81,
+   "coloredOutsideQr": 29,
+   "coloredInQr": 24,
+   "coloredUnused": 28,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 119.1,
+      "y0": 63.8,
+      "x1": 131.5,
+      "y1": 72.5
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 131.5,
+      "y0": 63.8,
+      "x1": 143.5,
+      "y1": 72.5
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 205.6,
+      "y0": 63.8,
+      "x1": 218,
+      "y1": 72.5
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 218,
+      "y0": 63.8,
+      "x1": 230,
+      "y1": 72.5
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 119.1,
+      "y0": 72.5,
+      "x1": 131.5,
+      "y1": 81.2
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 131.5,
+      "y0": 72.5,
+      "x1": 143.5,
+      "y1": 81.2
+     }
+    }
+   ],
+   "palette": {
+    "247,214,212": 28,
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 23002,
+   "coloredVisible": 20051,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 411
+ },
+ {
+  "set": "variants",
+  "label": "partner-climate_control",
+  "kind": "pdf",
+  "pages": 2,
+  "ops": {
+   "pages": 2,
+   "coloredOps": 50,
+   "coloredOutsideQr": 2,
+   "coloredInQr": 48,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    },
+    {
+     "page": 2,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 2
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1003664,
+   "colored": 2416,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1,
+    2
+   ]
+  },
+  "ms": 540
+ },
+ {
+  "set": "variants",
+  "label": "partner-cold_equipment_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 401
+ },
+ {
+  "set": "variants",
+  "label": "partner-cleaning_ventilation_checklist",
+  "kind": "pdf",
+  "pages": 6,
+  "ops": {
+   "pages": 6,
+   "coloredOps": 150,
+   "coloredOutsideQr": 6,
+   "coloredInQr": 144,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    },
+    {
+     "page": 2,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    },
+    {
+     "page": 3,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    },
+    {
+     "page": 4,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    },
+    {
+     "page": 5,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    },
+    {
+     "page": 6,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 6
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 3010992,
+   "colored": 7248,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+   ]
+  },
+  "ms": 1525
+ },
+ {
+  "set": "variants",
+  "label": "partner-cleaning",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 51,
+   "coloredOutsideQr": 15,
+   "coloredInQr": 24,
+   "coloredUnused": 12,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 150.6,
+      "y0": 60.8,
+      "x1": 163,
+      "y1": 67.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 163,
+      "y0": 60.8,
+      "x1": 175.4,
+      "y1": 67.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 237.4,
+      "y0": 60.8,
+      "x1": 249.8,
+      "y1": 67.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 249.8,
+      "y0": 60.8,
+      "x1": 262.2,
+      "y1": 67.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 150.6,
+      "y0": 67.7,
+      "x1": 163,
+      "y1": 77.8
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 163,
+      "y0": 67.7,
+      "x1": 175.4,
+      "y1": 77.8
+     }
+    }
+   ],
+   "palette": {
+    "247,214,212": 13,
+    "252,237,217": 1,
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 11695,
+   "coloredVisible": 9548,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 445
+ },
+ {
+  "set": "variants",
+  "label": "partner-general_cleaning",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 543
+ },
+ {
+  "set": "variants",
+  "label": "partner-uv_lamp_runtime",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 502
+ },
+ {
+  "set": "variants",
+  "label": "partner-finished_product",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 383
+ },
+ {
+  "set": "variants",
+  "label": "partner-perishable_rejection",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 413
+ },
+ {
+  "set": "variants",
+  "label": "partner-incoming_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 354
+ },
+ {
+  "set": "variants",
+  "label": "partner-fryer_oil",
+  "kind": "pdf",
+  "pages": 2,
+  "ops": {
+   "pages": 2,
+   "coloredOps": 50,
+   "coloredOutsideQr": 2,
+   "coloredInQr": 48,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    },
+    {
+     "page": 2,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 2
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1003664,
+   "colored": 2416,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1,
+    2
+   ]
+  },
+  "ms": 675
+ },
+ {
+  "set": "variants",
+  "label": "partner-med_books",
+  "kind": "pdf",
+  "pages": 3,
+  "ops": {
+   "pages": 3,
+   "coloredOps": 75,
+   "coloredOutsideQr": 3,
+   "coloredInQr": 72,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    },
+    {
+     "page": 2,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    },
+    {
+     "page": 3,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 3
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1505496,
+   "colored": 3624,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1,
+    2,
+    3
+   ]
+  },
+  "ms": 868
+ },
+ {
+  "set": "variants",
+  "label": "partner-training_plan",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 302
+ },
+ {
+  "set": "variants",
+  "label": "partner-staff_training",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 508
+ },
+ {
+  "set": "variants",
+  "label": "partner-disinfectant_usage",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 463
+ },
+ {
+  "set": "variants",
+  "label": "partner-sanitary_day_control",
+  "kind": "pdf",
+  "pages": 2,
+  "ops": {
+   "pages": 2,
+   "coloredOps": 26,
+   "coloredOutsideQr": 2,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    },
+    {
+     "page": 2,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 2
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1003664,
+   "colored": 2416,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1,
+    2
+   ]
+  },
+  "ms": 499
+ },
+ {
+  "set": "variants",
+  "label": "partner-equipment_maintenance",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 347
+ },
+ {
+  "set": "variants",
+  "label": "partner-breakdown_history",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 379
+ },
+ {
+  "set": "variants",
+  "label": "partner-equipment_calibration",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 480
+ },
+ {
+  "set": "variants",
+  "label": "partner-incoming_raw_materials_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 394
+ },
+ {
+  "set": "variants",
+  "label": "partner-ppe_issuance",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 329
+ },
+ {
+  "set": "variants",
+  "label": "partner-accident_journal",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 362
+ },
+ {
+  "set": "variants",
+  "label": "partner-complaint_register",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 277
+ },
+ {
+  "set": "variants",
+  "label": "partner-product_writeoff",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 308
+ },
+ {
+  "set": "variants",
+  "label": "partner-audit_plan",
+  "kind": "pdf",
+  "pages": 2,
+  "ops": {
+   "pages": 2,
+   "coloredOps": 26,
+   "coloredOutsideQr": 2,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    },
+    {
+     "page": 2,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 2
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1003664,
+   "colored": 2416,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1,
+    2
+   ]
+  },
+  "ms": 448
+ },
+ {
+  "set": "variants",
+  "label": "partner-audit_protocol",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 256
+ },
+ {
+  "set": "variants",
+  "label": "partner-audit_report",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 298
+ },
+ {
+  "set": "variants",
+  "label": "partner-traceability_test",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 238
+ },
+ {
+  "set": "variants",
+  "label": "partner-metal_impurity",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 325
+ },
+ {
+  "set": "variants",
+  "label": "partner-equipment_cleaning",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 339
+ },
+ {
+  "set": "variants",
+  "label": "partner-intensive_cooling",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 423
+ },
+ {
+  "set": "variants",
+  "label": "partner-glass_items_list",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 372
+ },
+ {
+  "set": "variants",
+  "label": "partner-glass_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 341
+ },
+ {
+  "set": "variants",
+  "label": "partner-pest_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 305
+ },
+ {
+  "set": "variants",
+  "label": "partner-daily_samples",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 412
+ },
+ {
+  "set": "variants",
+  "label": "partner-vitaminization",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 269
+ },
+ {
+  "set": "variants",
+  "label": "partner-ration_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 330
+ },
+ {
+  "set": "variants",
+  "label": "partner-transport_temperature",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 303
+ },
+ {
+  "set": "variants",
+  "label": "partner-tableware_breakage",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 280
+ },
+ {
+  "set": "variants",
+  "label": "partner-pool_water_control",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 287
+ },
+ {
+  "set": "variants",
+  "label": "partner-inventory_condition",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 275
+ },
+ {
+  "set": "variants",
+  "label": "partner-instrument_sterilization",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 387
+ },
+ {
+  "set": "variants",
+  "label": "partner-medical_waste_b",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 255
+ },
+ {
+  "set": "variants",
+  "label": "partner-batch_release",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.435,
+      0.447,
+      0.51
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 198,
+      "x1": 10,
+      "y1": 200
+     }
+    }
+   ],
+   "palette": {
+    "111,114,130": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 1208,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 267
+ },
+ {
+  "set": "extra",
+  "label": "hygiene+signatures",
+  "kind": "pdf",
+  "pages": 3,
+  "ops": {
+   "pages": 3,
+   "coloredOps": 197,
+   "coloredOutsideQr": 78,
+   "coloredInQr": 48,
+   "coloredUnused": 71,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 131.3,
+      "y0": 67.8,
+      "x1": 145.7,
+      "y1": 73.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 145.7,
+      "y0": 67.8,
+      "x1": 160.1,
+      "y1": 73.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 229.3,
+      "y0": 67.8,
+      "x1": 243.7,
+      "y1": 73.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 243.7,
+      "y0": 67.8,
+      "x1": 258.2,
+      "y1": 73.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 131.3,
+      "y0": 73.7,
+      "x1": 145.7,
+      "y1": 82.6
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.97,
+      0.84,
+      0.83
+     ],
+     "box": {
+      "x0": 145.7,
+      "y0": 73.7,
+      "x1": 160.1,
+      "y1": 82.6
+     }
+    }
+   ],
+   "palette": {
+    "247,214,212": 64,
+    "237,242,255": 7,
+    "11,16,36": 7
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1505496,
+   "colored": 65371,
+   "coloredVisible": 44506,
+   "pagesWithColor": [
+    1,
+    3
+   ]
+  },
+  "ms": 510
+ },
+ {
+  "set": "extra",
+  "label": "calibration-overdue",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 25,
+   "coloredOutsideQr": 1,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.863,
+      0.149,
+      0.149
+     ],
+     "box": {
+      "x0": 221.8,
+      "y0": 118,
+      "x1": 221.8,
+      "y1": 120.3
+     }
+    }
+   ],
+   "palette": {
+    "220,38,38": 1
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 226,
+   "coloredVisible": 201,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 262
+ },
+ {
+  "set": "checklists",
+  "label": "cleaning_ventilation_checklist",
+  "kind": "pdf",
+  "pages": 6,
+  "ops": {
+   "pages": 6,
+   "coloredOps": 144,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 144,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 3010992,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 947
+ },
+ {
+  "set": "checklists",
+  "label": "sanitary_day_control",
+  "kind": "pdf",
+  "pages": 2,
+  "ops": {
+   "pages": 2,
+   "coloredOps": 24,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 24,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1003664,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 431
+ },
+ {
+  "set": "regulator",
+  "label": "cover",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 0,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 0,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 284
+ },
+ {
+  "set": "regulator",
+  "label": "capa",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 16,
+   "coloredOutsideQr": 8,
+   "coloredInQr": 0,
+   "coloredUnused": 8,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.93,
+      0.95,
+      1
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 40,
+      "x1": 18,
+      "y1": 46.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.93,
+      0.95,
+      1
+     ],
+     "box": {
+      "x0": 18,
+      "y0": 40,
+      "x1": 74,
+      "y1": 46.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.93,
+      0.95,
+      1
+     ],
+     "box": {
+      "x0": 74,
+      "y0": 40,
+      "x1": 94,
+      "y1": 46.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.93,
+      0.95,
+      1
+     ],
+     "box": {
+      "x0": 94,
+      "y0": 40,
+      "x1": 114,
+      "y1": 46.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.93,
+      0.95,
+      1
+     ],
+     "box": {
+      "x0": 114,
+      "y0": 40,
+      "x1": 134,
+      "y1": 46.7
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.93,
+      0.95,
+      1
+     ],
+     "box": {
+      "x0": 134,
+      "y0": 40,
+      "x1": 154,
+      "y1": 46.7
+     }
+    }
+   ],
+   "palette": {
+    "237,242,255": 8
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 9957,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 295
+ },
+ {
+  "set": "orders",
+  "label": "haccp-responsible",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 0,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 0,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 263
+ },
+ {
+  "set": "orders",
+  "label": "haccp-team",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 0,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 0,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 223
+ },
+ {
+  "set": "orders",
+  "label": "journals-intro",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 0,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 0,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 209
+ },
+ {
+  "set": "orders",
+  "label": "ppk-approval",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 0,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 0,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 236
+ },
+ {
+  "set": "orders",
+  "label": "incoming-control",
+  "kind": "pdf",
+  "pages": 2,
+  "ops": {
+   "pages": 2,
+   "coloredOps": 0,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 0,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1003664,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 319
+ },
+ {
+  "set": "orders",
+  "label": "sanitary-responsible",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 0,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 0,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 240
+ },
+ {
+  "set": "orders",
+  "label": "cleaning-schedule",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 0,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 0,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 224
+ },
+ {
+  "set": "orders",
+  "label": "disinfection",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 0,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 0,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 205
+ },
+ {
+  "set": "orders",
+  "label": "daily-samples",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 0,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 0,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 245
+ },
+ {
+  "set": "orders",
+  "label": "medical-examinations",
+  "kind": "pdf",
+  "pages": 2,
+  "ops": {
+   "pages": 2,
+   "coloredOps": 0,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 0,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 1003664,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 296
+ },
+ {
+  "set": "orders",
+  "label": "workwear",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 0,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 0,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 269
+ },
+ {
+  "set": "orders",
+  "label": "metrology",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 0,
+   "coloredOutsideQr": 0,
+   "coloredInQr": 0,
+   "coloredUnused": 0,
+   "shadings": 0,
+   "examples": [],
+   "palette": {}
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 0,
+   "coloredVisible": 0,
+   "pagesWithColor": []
+  },
+  "ms": 233
+ },
+ {
+  "set": "billing",
+  "label": "invoice",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 12,
+   "coloredOutsideQr": 6,
+   "coloredInQr": 0,
+   "coloredUnused": 6,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.92,
+      0.93,
+      0.96
+     ],
+     "box": {
+      "x0": 15,
+      "y0": 89.2,
+      "x1": 24,
+      "y1": 95.9
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.92,
+      0.93,
+      0.96
+     ],
+     "box": {
+      "x0": 24,
+      "y0": 89.2,
+      "x1": 121,
+      "y1": 95.9
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.92,
+      0.93,
+      0.96
+     ],
+     "box": {
+      "x0": 121,
+      "y0": 89.2,
+      "x1": 137,
+      "y1": 95.9
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.92,
+      0.93,
+      0.96
+     ],
+     "box": {
+      "x0": 137,
+      "y0": 89.2,
+      "x1": 153,
+      "y1": 95.9
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.92,
+      0.93,
+      0.96
+     ],
+     "box": {
+      "x0": 153,
+      "y0": 89.2,
+      "x1": 174,
+      "y1": 95.9
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.92,
+      0.93,
+      0.96
+     ],
+     "box": {
+      "x0": 174,
+      "y0": 89.2,
+      "x1": 195,
+      "y1": 95.9
+     }
+    }
+   ],
+   "palette": {
+    "235,237,245": 6
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 8002,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 2505
+ },
+ {
+  "set": "billing",
+  "label": "upd",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 90,
+   "coloredOutsideQr": 45,
+   "coloredInQr": 0,
+   "coloredUnused": 45,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.92,
+      0.93,
+      0.96
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 70.6,
+      "x1": 18,
+      "y1": 91.1
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.92,
+      0.93,
+      0.96
+     ],
+     "box": {
+      "x0": 18,
+      "y0": 70.6,
+      "x1": 100,
+      "y1": 91.1
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.92,
+      0.93,
+      0.96
+     ],
+     "box": {
+      "x0": 100,
+      "y0": 70.6,
+      "x1": 112,
+      "y1": 91.1
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.92,
+      0.93,
+      0.96
+     ],
+     "box": {
+      "x0": 112,
+      "y0": 70.6,
+      "x1": 123,
+      "y1": 91.1
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.92,
+      0.93,
+      0.96
+     ],
+     "box": {
+      "x0": 123,
+      "y0": 70.6,
+      "x1": 136,
+      "y1": 91.1
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.92,
+      0.93,
+      0.96
+     ],
+     "box": {
+      "x0": 136,
+      "y0": 70.6,
+      "x1": 150,
+      "y1": 91.1
+     }
+    }
+   ],
+   "palette": {
+    "235,237,245": 30,
+    "245,245,250": 15
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 48862,
+   "coloredVisible": 0,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 259
+ },
+ {
+  "set": "billing",
+  "label": "upd-sample",
+  "kind": "pdf",
+  "pages": 1,
+  "ops": {
+   "pages": 1,
+   "coloredOps": 91,
+   "coloredOutsideQr": 46,
+   "coloredInQr": 0,
+   "coloredUnused": 45,
+   "shadings": 0,
+   "examples": [
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.745,
+      0.235,
+      0.235
+     ],
+     "box": {
+      "x0": 222.4,
+      "y0": 11.7,
+      "x1": 222.4,
+      "y1": 14
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.92,
+      0.93,
+      0.96
+     ],
+     "box": {
+      "x0": 10,
+      "y0": 70.6,
+      "x1": 18,
+      "y1": 91.1
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.92,
+      0.93,
+      0.96
+     ],
+     "box": {
+      "x0": 18,
+      "y0": 70.6,
+      "x1": 100,
+      "y1": 91.1
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.92,
+      0.93,
+      0.96
+     ],
+     "box": {
+      "x0": 100,
+      "y0": 70.6,
+      "x1": 112,
+      "y1": 91.1
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.92,
+      0.93,
+      0.96
+     ],
+     "box": {
+      "x0": 112,
+      "y0": 70.6,
+      "x1": 123,
+      "y1": 91.1
+     }
+    },
+    {
+     "page": 1,
+     "op": "rg",
+     "comps": [
+      0.92,
+      0.93,
+      0.96
+     ],
+     "box": {
+      "x0": 123,
+      "y0": 70.6,
+      "x1": 136,
+      "y1": 91.1
+     }
+    }
+   ],
+   "palette": {
+    "190,60,60": 1,
+    "235,237,245": 30,
+    "245,245,250": 15
+   }
+  },
+  "raster": {
+   "dpi": 72,
+   "pixels": 501832,
+   "colored": 49486,
+   "coloredVisible": 499,
+   "pagesWithColor": [
+    1
+   ]
+  },
+  "ms": 260
+ },
+ {
+  "set": "docx",
+  "label": "hygiene",
+  "kind": "docx",
+  "docx": {
+   "parts": 12,
+   "colored": [
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "1F4D78"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "1F4D78"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "0563C1"
+    }
+   ],
+   "themeRefs": []
+  },
+  "ms": 128
+ },
+ {
+  "set": "docx",
+  "label": "hygiene+footer",
+  "kind": "docx",
+  "docx": {
+   "parts": 13,
+   "colored": [
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "1F4D78"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "1F4D78"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "0563C1"
+    },
+    {
+     "part": "word/footer1.xml",
+     "attr": "w:color@w:val",
+     "value": "3C4053"
+    },
+    {
+     "part": "word/footer1.xml",
+     "attr": "w:color@w:val",
+     "value": "6F7282"
+    },
+    {
+     "part": "word/footer1.xml",
+     "attr": "w:color@w:val",
+     "value": "6F7282"
+    }
+   ],
+   "themeRefs": []
+  },
+  "ms": 80
+ },
+ {
+  "set": "docx",
+  "label": "health_check",
+  "kind": "docx",
+  "docx": {
+   "parts": 12,
+   "colored": [
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "1F4D78"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "1F4D78"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "0563C1"
+    }
+   ],
+   "themeRefs": []
+  },
+  "ms": 44
+ },
+ {
+  "set": "docx",
+  "label": "health_check+footer",
+  "kind": "docx",
+  "docx": {
+   "parts": 13,
+   "colored": [
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "1F4D78"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "1F4D78"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "0563C1"
+    },
+    {
+     "part": "word/footer1.xml",
+     "attr": "w:color@w:val",
+     "value": "3C4053"
+    },
+    {
+     "part": "word/footer1.xml",
+     "attr": "w:color@w:val",
+     "value": "6F7282"
+    },
+    {
+     "part": "word/footer1.xml",
+     "attr": "w:color@w:val",
+     "value": "6F7282"
+    }
+   ],
+   "themeRefs": []
+  },
+  "ms": 60
+ },
+ {
+  "set": "docx",
+  "label": "cleaning",
+  "kind": "docx",
+  "docx": {
+   "parts": 12,
+   "colored": [
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "1F4D78"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "1F4D78"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "0563C1"
+    }
+   ],
+   "themeRefs": []
+  },
+  "ms": 35
+ },
+ {
+  "set": "docx",
+  "label": "cleaning+footer",
+  "kind": "docx",
+  "docx": {
+   "parts": 13,
+   "colored": [
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "1F4D78"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "1F4D78"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "0563C1"
+    },
+    {
+     "part": "word/footer1.xml",
+     "attr": "w:color@w:val",
+     "value": "3C4053"
+    },
+    {
+     "part": "word/footer1.xml",
+     "attr": "w:color@w:val",
+     "value": "6F7282"
+    },
+    {
+     "part": "word/footer1.xml",
+     "attr": "w:color@w:val",
+     "value": "6F7282"
+    }
+   ],
+   "themeRefs": []
+  },
+  "ms": 61
+ },
+ {
+  "set": "docx",
+  "label": "cold_equipment_control",
+  "kind": "docx",
+  "docx": {
+   "parts": 12,
+   "colored": [
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "1F4D78"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "1F4D78"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "0563C1"
+    }
+   ],
+   "themeRefs": []
+  },
+  "ms": 26
+ },
+ {
+  "set": "docx",
+  "label": "cold_equipment_control+footer",
+  "kind": "docx",
+  "docx": {
+   "parts": 13,
+   "colored": [
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "1F4D78"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "1F4D78"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "0563C1"
+    },
+    {
+     "part": "word/footer1.xml",
+     "attr": "w:color@w:val",
+     "value": "3C4053"
+    },
+    {
+     "part": "word/footer1.xml",
+     "attr": "w:color@w:val",
+     "value": "6F7282"
+    },
+    {
+     "part": "word/footer1.xml",
+     "attr": "w:color@w:val",
+     "value": "6F7282"
+    }
+   ],
+   "themeRefs": []
+  },
+  "ms": 40
+ },
+ {
+  "set": "docx",
+  "label": "finished_product",
+  "kind": "docx",
+  "docx": {
+   "parts": 12,
+   "colored": [
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "1F4D78"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "1F4D78"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "0563C1"
+    }
+   ],
+   "themeRefs": []
+  },
+  "ms": 32
+ },
+ {
+  "set": "docx",
+  "label": "finished_product+footer",
+  "kind": "docx",
+  "docx": {
+   "parts": 13,
+   "colored": [
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "1F4D78"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "1F4D78"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "0563C1"
+    },
+    {
+     "part": "word/footer1.xml",
+     "attr": "w:color@w:val",
+     "value": "3C4053"
+    },
+    {
+     "part": "word/footer1.xml",
+     "attr": "w:color@w:val",
+     "value": "6F7282"
+    },
+    {
+     "part": "word/footer1.xml",
+     "attr": "w:color@w:val",
+     "value": "6F7282"
+    }
+   ],
+   "themeRefs": []
+  },
+  "ms": 43
+ },
+ {
+  "set": "docx",
+  "label": "incoming_control",
+  "kind": "docx",
+  "docx": {
+   "parts": 12,
+   "colored": [
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "1F4D78"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "1F4D78"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "0563C1"
+    }
+   ],
+   "themeRefs": []
+  },
+  "ms": 22
+ },
+ {
+  "set": "docx",
+  "label": "incoming_control+footer",
+  "kind": "docx",
+  "docx": {
+   "parts": 13,
+   "colored": [
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "1F4D78"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "2E74B5"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "1F4D78"
+    },
+    {
+     "part": "word/styles.xml",
+     "attr": "w:color@w:val",
+     "value": "0563C1"
+    },
+    {
+     "part": "word/footer1.xml",
+     "attr": "w:color@w:val",
+     "value": "3C4053"
+    },
+    {
+     "part": "word/footer1.xml",
+     "attr": "w:color@w:val",
+     "value": "6F7282"
+    },
+    {
+     "part": "word/footer1.xml",
+     "attr": "w:color@w:val",
+     "value": "6F7282"
+    }
+   ],
+   "themeRefs": []
+  },
+  "ms": 49
+ }
+]

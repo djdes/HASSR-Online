@@ -19,6 +19,7 @@ import { isUvLampType } from "@/lib/uv-lamp";
 import { lampState, listLampOperators } from "@/lib/uv-lamp-runs";
 import { hasPaidPlan } from "@/lib/plan-limits.server";
 import { getReadingPhotoSettings } from "@/lib/reading-photo-fixation.server";
+import { decodeRouteParam } from "@/lib/route-param";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -44,12 +45,15 @@ export default async function EquipmentFillPage({
   params: Promise<{ equipmentId: string }>;
   searchParams: Promise<{ token?: string }>;
 }) {
-  const { equipmentId } = await params;
+  const equipmentId = decodeRouteParam((await params).equipmentId);
   const { token } = await searchParams;
   if (!token) notFound();
 
   const verify = verifyEquipmentQrToken(token);
   if (!verify.ok || verify.equipmentId !== equipmentId) {
+    console.warn(
+      `[qr-fill] sticker rejected kind=equipment reason=${verify.ok ? "id-mismatch" : verify.reason}`
+    );
     return (
       <main className="min-h-screen bg-[#fafbff] flex items-center justify-center px-4 py-10">
         <div className="w-full max-w-md rounded-3xl border border-[#ececf4] bg-white p-8 text-center shadow-[0_20px_60px_-30px_rgba(11,16,36,0.2)]">
@@ -111,7 +115,7 @@ export default async function EquipmentFillPage({
   if (qrMode === "auth") {
     const resolved = await sessionEmployeeForQr(organizationId);
     if (!resolved.ok && resolved.reason === "no-session") {
-      redirect(`/login?next=${encodeURIComponent(`/equipment-fill/${equipmentId}?token=${encodeURIComponent(token)}`)}`);
+      redirect(`/login?next=${encodeURIComponent(`/equipment-fill/${encodeURIComponent(equipmentId)}?token=${encodeURIComponent(token)}`)}`);
     }
     if (resolved.ok) sessionEmployee = resolved.employee;
   }

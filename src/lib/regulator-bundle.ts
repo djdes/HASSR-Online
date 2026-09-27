@@ -213,7 +213,7 @@ export function buildCapaSummaryPdf(input: {
     ]),
     theme: "grid",
     styles: { font, fontSize: 9, cellPadding: 1.5, overflow: "linebreak" },
-    headStyles: { font, fillColor: [238, 241, 255], textColor: 30 },
+    headStyles: { font, fillColor: [242, 242, 242], textColor: 30 },
     columnStyles: {
       0: { cellWidth: 8 },
       1: { cellWidth: 56 },

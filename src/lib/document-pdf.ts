@@ -907,7 +907,8 @@ function appendSignaturesPage(doc: jsPDF, fontName: string, lines: PdfSignatureL
     body: lines.map((l) => [l.employeeName, l.method, l.device ?? "—", String(l.count), String(l.photos), fmt(l.firstAt), fmt(l.lastAt)]),
     theme: "grid",
     styles: { font: fontName, fontSize: 9, cellPadding: 2 },
-    headStyles: { fillColor: [238, 241, 255], textColor: [11, 16, 36], font: fontName, fontStyle: "bold" },
+    // Шапка — серая с чёрным текстом, как у таблиц бланка (ч/б принтеры).
+    headStyles: { fillColor: [242, 242, 242], textColor: [0, 0, 0], font: fontName, fontStyle: "bold" },
     // Приложение добавляется после повтора штампа — своей шапки у его
     // страниц нет, продолжение таблицы начинается от верхнего поля.
     margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN, top: PDF_SHEET_MARGIN },
@@ -1342,14 +1343,22 @@ function displayCleaningPdfValue(value: string): string {
 
 /**
  * Заливки производственного календаря на бумаге — те же, что на экране
- * (`journal-grid.ts`): выходной/праздник #f8d7d4, сокращённый #fdeeda.
+ * (`journal-grid.ts`): выходной/праздник #d4d4d4, сокращённый #ebebeb.
  * Раньше PDF печатал колонки выходных белыми, и бланк расходился и с
  * экраном, и с печатью браузера.
+ *
+ * Только серые (2026-09-27): у заведений ч/б принтеры, а прежние розовый
+ * (#f8d7d4) и бежевый (#fdeeda) на ч/б листе выходили почти одинаково
+ * бледными. Светлота разная — выходной заметно темнее сокращённого, тот —
+ * темнее белого рабочего дня (тест `print-colors.test.ts`).
  */
-const PDF_DAY_OFF_FILL: [number, number, number] = [248, 215, 212];
-const PDF_DAY_SHORT_FILL: [number, number, number] = [253, 238, 218];
+export const PDF_DAY_OFF_FILL: [number, number, number] = [212, 212, 212];
+export const PDF_DAY_SHORT_FILL: [number, number, number] = [235, 235, 235];
 
-/** Цветовая легенда дней под таблицей — как `CleaningDayColorLegend` на экране. */
+/** Серая заливка ячейки-отметки «просрочено» (график поверки). */
+const PDF_OVERDUE_FILL: [number, number, number] = [212, 212, 212];
+
+/** Легенда дней под таблицей — как `CleaningDayColorLegend` на экране. */
 const PDF_DAY_LEGEND: { fill: [number, number, number]; label: string }[] = [
   { fill: PDF_DAY_OFF_FILL, label: "Выходной или праздник" },
   { fill: PDF_DAY_SHORT_FILL, label: "Сокращённый день" },
@@ -1376,7 +1385,7 @@ function makeDayColumnTintHook(dateKeys: string[], firstDateColumnIndex: number)
   };
 }
 
-/** Рисует строку цветовой легенды дней. Возвращает Y под ней. */
+/** Рисует строку легенды дней (образцы заливок). Возвращает Y под ней. */
 function drawDayColorLegend(doc: jsPDF, x: number, y: number): number {
   const prevSize = doc.getFontSize();
   doc.setFont("JournalUnicode", "normal");
@@ -1659,7 +1668,7 @@ function drawHygienePdf(doc: jsPDF, params: {
     startY: hygieneTitleY + 6,
     head: buildHygieneHead(params.dateKeys, params.monthLabel),
     body: buildHygieneBody(params),
-    // Колонки выходных/праздников — розовые, как на экране и в печати.
+    // Колонки выходных/праздников — серые, как на экране и в печати.
     didParseCell: makeDayColumnTintHook(params.dateKeys, 3),
     theme: "grid",
     styles: {
@@ -1872,7 +1881,7 @@ function drawHealthPdf(doc: jsPDF, params: {
   autoTable(doc, {
     startY: healthTitleY + 6,
     head: buildHealthHead(params.dateKeys, params.monthLabel),
-    // Колонки выходных/праздников — розовые, как на экране и в печати.
+    // Колонки выходных/праздников — серые, как на экране и в печати.
     didParseCell: makeDayColumnTintHook(params.dateKeys, 3),
     body: buildHealthBody(params),
     theme: "grid",
@@ -4420,11 +4429,14 @@ function drawEquipmentCalibrationPdf(doc: jsPDF, params: {
       centerCell(formatCalibrationDate(row.lastCalibrationDate)),
       {
         content: formatCalibrationDate(nextDate),
+        // Просроченная поверка: было красным — на ч/б принтере это просто
+        // тёмно-серый текст. Отметка без цвета — жирный на серой заливке.
         styles: {
           halign: "center",
           valign: "middle",
-          textColor: isOverdue ? [220, 38, 38] : [0, 0, 0],
+          textColor: [0, 0, 0],
           fontStyle: isOverdue ? "bold" : "normal",
+          ...(isOverdue ? { fillColor: PDF_OVERDUE_FILL } : {}),
         },
       },
       centerCell(row.note),

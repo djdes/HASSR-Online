@@ -1,0 +1,347 @@
+[
+ {
+  "set": "paper",
+  "label": "ot_intro",
+  "url": "https://wesetup.ru/qb/FX3AVAM36YURDKXPDHQPSLDPL3B6N6R3SKGLLMDZTHC3OWRLDZGB34JXI4DBVU37LRZL7EQQR7QQHIJTEWOQZSODLPKGS7VD6J5ADJ253LJWQ",
+  "modules": 53,
+  "pagesPlain": 2,
+  "pages": 2,
+  "pagesHeader": 0,
+  "pagesCorner": 1,
+  "pagesNone": 1,
+  "results": [
+   {
+    "page": 1,
+    "where": "corner",
+    "box": {
+     "x0": 267.00008333333324,
+     "y0": 10,
+     "x1": 287.00008333333324,
+     "y1": 33.7
+    },
+    "slot": null,
+    "hasHeader": false,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.27,
+    "overflowSheet": false,
+    "margins": {
+     "top": 10.4,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   },
+   {
+    "page": 2,
+    "where": "none",
+    "box": null,
+    "slot": null,
+    "hasHeader": false,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": null,
+    "alignDiffMm": null,
+    "overflowSheet": false,
+    "margins": {
+     "top": 14,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "paper",
+  "label": "ot_workplace",
+  "url": "https://wesetup.ru/qb/BNJWIPRFO4WIAJLQ6ZQCFYFFVRCIFX2GDSQZBSAT3NL3ES23KITAP5HLNDVZ4A2R4BUK6AKFDA66PCKRXSK5T4NBFGVAVZUIOSIFG2LROT7IA",
+  "modules": 53,
+  "pagesPlain": 2,
+  "pages": 2,
+  "pagesHeader": 0,
+  "pagesCorner": 1,
+  "pagesNone": 1,
+  "results": [
+   {
+    "page": 1,
+    "where": "corner",
+    "box": {
+     "x0": 267.0000833333333,
+     "y0": 10,
+     "x1": 287.0000833333333,
+     "y1": 33.7
+    },
+    "slot": null,
+    "hasHeader": false,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.27,
+    "overflowSheet": false,
+    "margins": {
+     "top": 10.4,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   },
+   {
+    "page": 2,
+    "where": "none",
+    "box": null,
+    "slot": null,
+    "hasHeader": false,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": null,
+    "alignDiffMm": null,
+    "overflowSheet": false,
+    "margins": {
+     "top": 14,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "paper",
+  "label": "fire_safety",
+  "url": "https://wesetup.ru/qb/L5MCKKT75JVGO6NGJ3TXXID7MXAC7OZ4RJQI6ZUK73JQZKZTU3GQ6LNAH7R6Q2MGPBL6VAO5PEUOCC6NBGAM2Q4OYZ3UUJOOERHEVJIUU5IOU",
+  "modules": 53,
+  "pagesPlain": 2,
+  "pages": 2,
+  "pagesHeader": 0,
+  "pagesCorner": 1,
+  "pagesNone": 1,
+  "results": [
+   {
+    "page": 1,
+    "where": "corner",
+    "box": {
+     "x0": 267.00008333333335,
+     "y0": 10,
+     "x1": 287.00008333333335,
+     "y1": 33.7
+    },
+    "slot": null,
+    "hasHeader": false,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.27,
+    "overflowSheet": false,
+    "margins": {
+     "top": 10.4,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   },
+   {
+    "page": 2,
+    "where": "none",
+    "box": null,
+    "slot": null,
+    "hasHeader": false,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": null,
+    "alignDiffMm": null,
+    "overflowSheet": false,
+    "margins": {
+     "top": 14,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "paper",
+  "label": "fire_extinguishers",
+  "url": "https://wesetup.ru/qb/GTM5OB6J7YDQC2YFPC76VAYGGCFV35ZNLWH3LIFXEEKKUT5URH5GGZRETBVPKEFELBQSFZYVVYDVLLERIQR6H5KNXBVNLPOLHBCQ4KLPVP3Q4",
+  "modules": 53,
+  "pagesPlain": 2,
+  "pages": 2,
+  "pagesHeader": 0,
+  "pagesCorner": 1,
+  "pagesNone": 1,
+  "results": [
+   {
+    "page": 1,
+    "where": "corner",
+    "box": {
+     "x0": 267.00008333333324,
+     "y0": 10,
+     "x1": 287.00008333333324,
+     "y1": 33.7
+    },
+    "slot": null,
+    "hasHeader": false,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.27,
+    "overflowSheet": false,
+    "margins": {
+     "top": 10.4,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   },
+   {
+    "page": 2,
+    "where": "none",
+    "box": null,
+    "slot": null,
+    "hasHeader": false,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": null,
+    "alignDiffMm": null,
+    "overflowSheet": false,
+    "margins": {
+     "top": 14,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ },
+ {
+  "set": "paper",
+  "label": "electrical_safety",
+  "url": "https://wesetup.ru/qb/YBDS4PLDIZ55TI3DCKX5RV3ZTJTWEEFVIWJF5ABNVCXPIHGJJAJ66WM3UP3L5UMF3MA2EWIFNL3LK665RE4FSGCZJFBOJCOJT2FDZ7SZTTPS2",
+  "modules": 53,
+  "pagesPlain": 2,
+  "pages": 2,
+  "pagesHeader": 0,
+  "pagesCorner": 1,
+  "pagesNone": 1,
+  "results": [
+   {
+    "page": 1,
+    "where": "corner",
+    "box": {
+     "x0": 267.00008333333335,
+     "y0": 10,
+     "x1": 287.00008333333335,
+     "y1": 33.7
+    },
+    "slot": null,
+    "hasHeader": false,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": 287,
+    "alignDiffMm": 0.27,
+    "overflowSheet": false,
+    "margins": {
+     "top": 10.4,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   },
+   {
+    "page": 2,
+    "where": "none",
+    "box": null,
+    "slot": null,
+    "hasHeader": false,
+    "modules": 53,
+    "moduleMm": 0.3509,
+    "inkBeforeStamp": 0,
+    "knownOverflow": null,
+    "changedOutside": 0,
+    "moduleMismatches": 0,
+    "contentRightMm": 287.27,
+    "qrRightMm": null,
+    "alignDiffMm": null,
+    "overflowSheet": false,
+    "margins": {
+     "top": 14,
+     "bottom": 9.3,
+     "left": 9.7,
+     "right": 9.7
+    },
+    "marginsOk": true,
+    "ok": true
+   }
+  ],
+  "ok": true
+ }
+]

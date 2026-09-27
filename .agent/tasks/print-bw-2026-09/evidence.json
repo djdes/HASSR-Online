@@ -1,0 +1,160 @@
+{
+  "task": "print-bw-2026-09",
+  "branch": "feat/bwprint-2026-09-27",
+  "base": "495c4fc4",
+  "verdict": "PASS",
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "scanner": {
+        "documents": 264,
+        "pdf": 252,
+        "docx": 12,
+        "pages": 759,
+        "coloredOpsOutsideQr": {
+          "before": 3060,
+          "after": 0
+        },
+        "coloredPixelsOutsideQr": {
+          "before": 1411038,
+          "after": 0
+        },
+        "docxColoredAttributes": {
+          "before": 102,
+          "after": 0
+        },
+        "documentsWithColor": {
+          "before": 122,
+          "after": 0
+        },
+        "opsInsideQrTile": {
+          "before": 8040,
+          "after": 8040,
+          "note": "градиент плашки QR — задача bwqr"
+        }
+      },
+      "siteE2e": {
+        "pdfs": 17,
+        "coloredOps": {
+          "before": 193,
+          "after": 0
+        },
+        "coloredPixels": {
+          "before": 384497,
+          "after": 0
+        },
+        "files": [
+          "raw/e2e-before.json",
+          "raw/e2e-after.json"
+        ]
+      },
+      "files": [
+        "raw/scan-before.json",
+        "raw/scan-after.json",
+        "raw/summary.json"
+      ]
+    },
+    "AC2": {
+      "status": "PASS",
+      "pdf": {
+        "dayOff": [
+          212,
+          212,
+          212
+        ],
+        "short": [
+          235,
+          235,
+          235
+        ],
+        "workday": [
+          255,
+          255,
+          255
+        ]
+      },
+      "screenLight": {
+        "dayOff": "#d4d4d4 → rgb(212, 212, 212)",
+        "short": "#ebebeb → rgb(235, 235, 235)"
+      },
+      "screenDark": {
+        "dayOff": "rgba(255, 255, 255, 0.16)",
+        "short": "rgba(255, 255, 255, 0.09)"
+      },
+      "browserPrintAnyTheme": {
+        "dayOff": "rgb(212, 212, 212)",
+        "short": "rgb(235, 235, 235)"
+      },
+      "bwLightness": {
+        "before": {
+          "dayOff": 225,
+          "short": 240,
+          "workday": 255
+        },
+        "after": {
+          "dayOff": 212,
+          "short": 235,
+          "workday": 255
+        }
+      }
+    },
+    "AC3": {
+      "status": "PASS",
+      "replacements": 14,
+      "shots": [
+        "shots/pdf-calibration-overdue-bw.png",
+        "shots/pdf-hygiene-weekends-bw.png",
+        "shots/server-inspector-summary.png"
+      ]
+    },
+    "AC4": {
+      "status": "PASS",
+      "checkQrOverlap": {
+        "blanksOk": "231/231",
+        "pages": 728,
+        "qrInHeader": 313,
+        "inkBeforeStamp": 0,
+        "changedOutside": 0,
+        "moduleMismatches": 0
+      },
+      "pages": {
+        "before": 759,
+        "after": 759,
+        "documentsWithMorePages": 0
+      },
+      "typecheck": "0 errors",
+      "tests": {
+        "printColors": "10/10 (master 0/10)",
+        "full": {
+          "pass": 2679,
+          "fail": 0
+        }
+      }
+    }
+  },
+  "shots": [
+    "shots/pdf-hygiene-weekends.png",
+    "shots/pdf-hygiene-weekends-bw.png",
+    "shots/pdf-cleaning-legend.png",
+    "shots/pdf-cold-deviations.png",
+    "shots/pdf-calibration-overdue.png",
+    "shots/pdf-calibration-overdue-bw.png",
+    "shots/pdf-checklist.png",
+    "shots/pdf-paper-blank.png",
+    "shots/word-template.png",
+    "shots/word-template-footer.png",
+    "shots/screen-hygiene-light.png",
+    "shots/screen-hygiene-dark.png",
+    "shots/screen-cleaning-light.png",
+    "shots/screen-cleaning-dark.png",
+    "shots/browser-print-hygiene.png",
+    "shots/server-certificate.png",
+    "shots/server-inspector-summary.png"
+  ],
+  "notDone": [
+    "public/journal-samples превью — перерисовать после слияния bwprint и bwqr",
+    "Excel-выгрузки с цветной шапкой — вне спеки",
+    "плитка QR — bwqr"
+  ],
+  "codeCommit": "c20867ba"
+}

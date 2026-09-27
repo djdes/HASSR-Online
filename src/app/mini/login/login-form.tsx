@@ -98,6 +98,13 @@ export function MiniLoginForm({
     window.setTimeout(() => revealAboveKeyboard(submitRef.current), 350);
   }
 
+  // Клавиша ввода в телефоне или почте — к паролю; в пароле — «Войти».
+  function focusPasswordOnEnter(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key !== "Enter" || password) return;
+    event.preventDefault();
+    passwordRef.current?.focus();
+  }
+
   /** Вошли: пометка «вышел вручную» больше не нужна — уходим, куда шли. */
   function finishLogin() {
     clearSignedOutMark();
@@ -293,6 +300,8 @@ export function MiniLoginForm({
               name="phone"
               type="tel"
               inputMode="tel"
+              enterKeyHint="next"
+              onKeyDown={focusPasswordOnEnter}
               autoComplete="tel"
               value={phone}
               onChange={(e) => setPhone(formatRuPhoneInput(e.target.value))}
@@ -310,6 +319,8 @@ export function MiniLoginForm({
               name="email"
               type="email"
               inputMode="email"
+              enterKeyHint="next"
+              onKeyDown={focusPasswordOnEnter}
               autoComplete="email"
               autoCapitalize="none"
               spellCheck={false}
@@ -332,6 +343,7 @@ export function MiniLoginForm({
               id="password"
               name="password"
               type={showPassword ? "text" : "password"}
+              enterKeyHint="go"
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

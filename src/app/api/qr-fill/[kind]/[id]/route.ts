@@ -7,6 +7,7 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { loadQrPoster } from "@/lib/qr-fill-poster";
 import { resolveQrPosterOrigin } from "@/lib/qr-poster-origin";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { decodeRouteParam } from "@/lib/route-param";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,7 +29,8 @@ export async function GET(
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
-  const { kind, id } = await params;
+  const { kind, id: rawId } = await params;
+  const id = decodeRouteParam(rawId);
   if (kind !== "equipment" && kind !== "room" && kind !== "journal") {
     return NextResponse.json({ error: "Неизвестный вид объекта" }, { status: 400 });
   }

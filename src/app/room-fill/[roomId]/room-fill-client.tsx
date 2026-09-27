@@ -265,7 +265,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
     }
     setSubmitting(true);
     try {
-      const response = await fetch(`/api/room-fill/${room.id}`, {
+      const response = await fetch(`/api/room-fill/${encodeURIComponent(room.id)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

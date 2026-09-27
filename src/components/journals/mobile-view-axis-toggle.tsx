@@ -95,7 +95,7 @@ export function MobileViewAxisToggle({
       role="tablist"
       aria-label="Что показывать"
       data-tour={dataTour}
-      className="inline-flex w-full rounded-2xl border border-[#ececf4] bg-[#fafbff] p-1"
+      className="inline-flex w-full rounded-2xl border border-[#ececf4] bg-[#fafbff] p-1 print:hidden"
     >
       {options.map((option) => {
         const Icon = option.icon;
