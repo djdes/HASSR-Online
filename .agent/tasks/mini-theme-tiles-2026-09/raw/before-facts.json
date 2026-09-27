@@ -1,0 +1,74 @@
+{
+  "startedAt": "2026-09-27T10:54:57.745Z",
+  "facts": {
+    "site1280": {
+      "tiles": [
+        {
+          "mode": "light",
+          "checked": "true",
+          "rect": [
+            87,
+            106
+          ],
+          "label": "Светлая",
+          "labelFont": "12px",
+          "frameBorder": "rgb(85, 102, 246)"
+        },
+        {
+          "mode": "dark",
+          "checked": "false",
+          "rect": [
+            87,
+            106
+          ],
+          "label": "Тёмная",
+          "labelFont": "12px",
+          "frameBorder": "rgb(220, 223, 237)"
+        },
+        {
+          "mode": "system",
+          "checked": "false",
+          "rect": [
+            87,
+            106
+          ],
+          "label": "Как на устройстве",
+          "labelFont": "12px",
+          "frameBorder": "rgb(220, 223, 237)"
+        }
+      ],
+      "html": 4891
+    },
+    "site390": {
+      "tiles": [
+        {
+          "mode": "light",
+          "w": 109,
+          "h": 133,
+          "labelFont": "16px"
+        },
+        {
+          "mode": "dark",
+          "w": 109,
+          "h": 133,
+          "labelFont": "16px"
+        },
+        {
+          "mode": "system",
+          "w": 109,
+          "h": 133,
+          "labelFont": "16px"
+        }
+      ]
+    },
+    "mini360": {
+      "oldSwitch": 1,
+      "oldSwitchText": "Тёмная Светлая",
+      "appearanceRow": 1,
+      "appearanceRowText": "Внешний вид логотип и цвета",
+      "theme": "light"
+    }
+  },
+  "pageErrors": [],
+  "finishedAt": "2026-09-27T10:56:45.140Z"
+}

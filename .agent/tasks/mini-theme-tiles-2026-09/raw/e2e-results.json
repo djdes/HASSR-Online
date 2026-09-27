@@ -1,0 +1,830 @@
+{
+  "startedAt": "2026-09-27T12:25:06.641Z",
+  "checks": [
+    {
+      "n": 1,
+      "ac": "AC1",
+      "name": "360: в профиле три карточки «Светлая / Тёмная / Как на устройстве» в один ряд (radiogroup), старой переключалки нет",
+      "ok": true,
+      "detail": {
+        "tiles": [
+          {
+            "mode": "light",
+            "x": 33,
+            "y": 682,
+            "w": 91,
+            "h": 117
+          },
+          {
+            "mode": "dark",
+            "x": 134,
+            "y": 682,
+            "w": 91,
+            "h": 117
+          },
+          {
+            "mode": "system",
+            "x": 236,
+            "y": 682,
+            "w": 91,
+            "h": 117
+          }
+        ],
+        "columns": 3,
+        "oldSwitch": 0
+      }
+    },
+    {
+      "n": 2,
+      "ac": "AC1",
+      "name": "360: подписи не обрезаны и не вылезают, «Как на устройстве» — в две строки, горизонтальной прокрутки нет",
+      "ok": true,
+      "detail": {
+        "labels": [
+          {
+            "mode": "light",
+            "labelFont": "15px",
+            "labelLines": 1,
+            "labelFits": true
+          },
+          {
+            "mode": "dark",
+            "labelFont": "15px",
+            "labelLines": 1,
+            "labelFits": true
+          },
+          {
+            "mode": "system",
+            "labelFont": "15px",
+            "labelLines": 2,
+            "labelFits": true
+          }
+        ],
+        "pageScrollWidth": 360
+      }
+    },
+    {
+      "n": 3,
+      "ac": "AC1",
+      "name": "строки «Внешний вид · логотип и цвета» нет; под карточками — «Логотип и цвета», ведёт туда же, что на сайте",
+      "ok": true,
+      "detail": {
+        "hasAppearanceRow": false,
+        "brandingHref": "/settings/organization#branding"
+      }
+    },
+    {
+      "n": 4,
+      "ac": "AC2",
+      "name": "старт: тема профиля (светлая), выбрана «Светлая»",
+      "ok": true,
+      "detail": {
+        "theme": {
+          "theme": "light",
+          "app": "light"
+        },
+        "storage": {
+          "mode": null,
+          "auto": null,
+          "effective": null
+        },
+        "checked": [
+          "light"
+        ]
+      }
+    },
+    {
+      "n": 5,
+      "ac": "AC1",
+      "name": "светлая тема: выбранная заметна — рамка #5566f6 (≥ 3:1 к карточке) и индиго-подпись (≥ 4.5:1)",
+      "ok": true,
+      "detail": {
+        "selected": {
+          "frame": "rgb(85, 102, 246)",
+          "label": "rgb(56, 72, 199)",
+          "weight": "600"
+        },
+        "cardBg": "rgb(255, 255, 255)",
+        "frameContrast": 4.55,
+        "labelContrast": 7.19
+      }
+    },
+    {
+      "n": 6,
+      "ac": "AC1",
+      "name": "ссылка «Логотип и цвета» нажимается целиком (48px), карточки над ней не перехватывают нажатие",
+      "ok": true,
+      "detail": {
+        "now": "theme-branding-link",
+        "withPad": "theme-tile-light",
+        "tileAfter": "none",
+        "linkHeight": 48
+      }
+    },
+    {
+      "n": 7,
+      "ac": "AC2",
+      "name": "«Тёмная»: data-theme и data-app-theme → dark сразу; localStorage dark/0/dark; POST dark → 200 (один)",
+      "ok": true,
+      "detail": {
+        "ms": 530,
+        "posts": [
+          {
+            "theme": "dark",
+            "status": 200
+          }
+        ],
+        "storage": {
+          "mode": "dark",
+          "auto": "0",
+          "effective": "dark"
+        },
+        "db": "dark"
+      }
+    },
+    {
+      "n": 8,
+      "ac": "AC1",
+      "name": "тёмная тема: выбранная заметна — рамка #7081f8 (≥ 3:1 к карточке), подпись #a3adff (≥ 4.5:1), превью «Светлая» остаётся белой",
+      "ok": true,
+      "detail": {
+        "selected": {
+          "frame": "rgb(112, 129, 248)",
+          "label": "rgb(163, 173, 255)"
+        },
+        "unselectedLabel": "rgb(204, 206, 224)",
+        "cardBg": "rgb(58, 55, 87)",
+        "frameContrast": 3.32,
+        "labelContrast": 5.35
+      }
+    },
+    {
+      "n": 9,
+      "ac": "AC2",
+      "name": "«Тёмная» после перезагрузки: тёмная, выбрана «Тёмная», без мигания и без POST",
+      "ok": true,
+      "detail": {
+        "theme": {
+          "theme": "dark",
+          "app": "dark"
+        },
+        "storage": {
+          "mode": "dark",
+          "auto": "0",
+          "effective": "dark"
+        },
+        "checked": [
+          "dark"
+        ],
+        "flips": [
+          "dcl@145=dark/dark"
+        ],
+        "posts": []
+      }
+    },
+    {
+      "n": 10,
+      "ac": "AC2",
+      "name": "«Светлая» → перезагрузка: светлая, выбрана «Светлая», в профиле light, без мигания",
+      "ok": true,
+      "detail": {
+        "click": {
+          "ms": 384,
+          "posts": [
+            {
+              "theme": "light",
+              "status": 200
+            }
+          ]
+        },
+        "reload": {
+          "theme": {
+            "theme": "light",
+            "app": "light"
+          },
+          "storage": {
+            "mode": "light",
+            "auto": "0",
+            "effective": "light"
+          },
+          "checked": [
+            "light"
+          ],
+          "flips": [
+            "dcl@141=light/light"
+          ],
+          "posts": []
+        }
+      }
+    },
+    {
+      "n": 11,
+      "ac": "AC2",
+      "name": "«Как на устройстве» (система светлая): светлая, localStorage system/0/light — как у сайта; после перезагрузки выбрана она же",
+      "ok": true,
+      "detail": {
+        "storage": {
+          "mode": "system",
+          "auto": "0",
+          "effective": "light"
+        },
+        "posts": [
+          {
+            "theme": "light",
+            "status": 200
+          }
+        ],
+        "reload": {
+          "theme": {
+            "theme": "light",
+            "app": "light"
+          },
+          "storage": {
+            "mode": "system",
+            "auto": "0",
+            "effective": "light"
+          },
+          "checked": [
+            "system"
+          ],
+          "flips": [
+            "71=light/light"
+          ],
+          "posts": []
+        }
+      }
+    },
+    {
+      "n": 12,
+      "ac": "AC2",
+      "name": "«Как на устройстве»: система стала тёмной → тёмная без перезагрузки, обратно → светлая; действующая тема записана и ушла в профиль, как на сайте",
+      "ok": true,
+      "detail": {
+        "toDark": {
+          "theme": {
+            "theme": "dark",
+            "app": "dark"
+          },
+          "storage": {
+            "mode": "system",
+            "auto": "0",
+            "effective": "dark"
+          }
+        },
+        "toLight": {
+          "theme": {
+            "theme": "light",
+            "app": "light"
+          },
+          "storage": {
+            "mode": "system",
+            "auto": "0",
+            "effective": "light"
+          }
+        },
+        "posts": [
+          {
+            "theme": "dark",
+            "status": 200
+          },
+          {
+            "theme": "light",
+            "status": 200
+          }
+        ]
+      }
+    },
+    {
+      "n": 13,
+      "ac": "AC2",
+      "name": "«Как на устройстве» + система тёмная, в профиле светлая: после перезагрузки тёмная с первого кадра, выбрана «Как на устройстве», 0 POST",
+      "ok": true,
+      "detail": {
+        "theme": {
+          "theme": "dark",
+          "app": "dark"
+        },
+        "storage": {
+          "mode": "system",
+          "auto": "0",
+          "effective": "dark"
+        },
+        "checked": [
+          "system"
+        ],
+        "flips": [
+          "124=dark/dark"
+        ],
+        "posts": [],
+        "db": "light"
+      }
+    },
+    {
+      "n": 14,
+      "ac": "AC2",
+      "name": "сайт /dashboard (1280) в той же вкладке видит выбор мини-приложения: «Как на устройстве», тёмная по системе",
+      "ok": true,
+      "detail": {
+        "siteBefore": {
+          "theme": "dark",
+          "storage": {
+            "mode": "system",
+            "auto": "0",
+            "effective": "dark"
+          }
+        },
+        "checked": [
+          "system"
+        ]
+      }
+    },
+    {
+      "n": 15,
+      "ac": "AC2",
+      "name": "обратно: «Светлая» на сайте → мини-приложение открылось светлым, выбрана «Светлая»",
+      "ok": true,
+      "detail": {
+        "siteAfter": {
+          "theme": "light",
+          "storage": {
+            "mode": "light",
+            "auto": "0",
+            "effective": "light"
+          },
+          "posts": [
+            {
+              "theme": "light",
+              "status": 200
+            },
+            {
+              "theme": "light",
+              "status": 200
+            }
+          ]
+        },
+        "backInMini": {
+          "theme": {
+            "theme": "light",
+            "app": "light"
+          },
+          "checked": [
+            "light"
+          ]
+        }
+      }
+    },
+    {
+      "n": 16,
+      "ac": "AC2",
+      "name": "в оболочке приложения «Настройки → Внешний вид» показывает тот же выбор и переключает ту же тему (там «Как на устройстве» → профиль видит его)",
+      "ok": true,
+      "detail": {
+        "shellInfo": {
+          "shell": true,
+          "header": false
+        },
+        "before": [
+          "light"
+        ],
+        "shellAfter": {
+          "theme": {
+            "theme": "dark",
+            "app": "dark"
+          },
+          "storage": {
+            "mode": "system",
+            "auto": "0",
+            "effective": "dark"
+          },
+          "checked": [
+            "system"
+          ]
+        },
+        "meAfterShell": [
+          "system"
+        ]
+      }
+    },
+    {
+      "n": 17,
+      "ac": "AC2",
+      "name": "смена по времени суток (ключ сайта = 1): тема по часу с первого кадра, ни одна карточка не выбрана, подсказка «выбор выключит смену»",
+      "ok": true,
+      "detail": {
+        "byHour": "light",
+        "theme": {
+          "theme": "light",
+          "app": "light"
+        },
+        "checked": [],
+        "flips": [
+          "73=light/light"
+        ],
+        "posts": [],
+        "noteState": "on",
+        "note": "Сейчас тема меняется по времени суток. Выберите вариант — смена по времени выключится."
+      }
+    },
+    {
+      "n": 18,
+      "ac": "AC2",
+      "name": "нажатие на карточку выключает смену по времени (как на сайте): ключ 0, выбран режим, строка «выключена», в профиль — ОДИН POST с итоговой темой",
+      "ok": true,
+      "detail": {
+        "theme": {
+          "theme": "dark",
+          "app": "dark"
+        },
+        "storage": {
+          "mode": "dark",
+          "auto": "0",
+          "effective": "dark"
+        },
+        "checked": [
+          "dark"
+        ],
+        "noteState": "turned-off",
+        "posts": [
+          {
+            "theme": "dark",
+            "status": 200
+          }
+        ]
+      }
+    },
+    {
+      "n": 19,
+      "ac": "AC2",
+      "name": "«Включить снова» возвращает смену по времени суток (ключ 1, тема по часу)",
+      "ok": true,
+      "detail": {
+        "theme": {
+          "theme": "light",
+          "app": "light"
+        },
+        "storage": {
+          "mode": "dark",
+          "auto": "1",
+          "effective": "light"
+        },
+        "checked": [],
+        "noteState": "on",
+        "posts": [
+          {
+            "theme": "light",
+            "status": 200
+          }
+        ]
+      }
+    },
+    {
+      "n": 20,
+      "ac": "AC2",
+      "name": "снова карточка «Светлая» → смена по времени выключена",
+      "ok": true,
+      "detail": {
+        "storage": {
+          "mode": "light",
+          "auto": "0",
+          "effective": "light"
+        },
+        "posts": [
+          {
+            "theme": "light",
+            "status": 200
+          }
+        ]
+      }
+    },
+    {
+      "n": 21,
+      "ac": "AC1",
+      "name": "клавиатура: стрелка вправо — «Тёмная» (фокус и выбор), влево — «Светлая»; Tab-остановка одна — на выбранной",
+      "ok": true,
+      "detail": {
+        "kbd1": {
+          "focused": "dark",
+          "checked": [
+            "dark"
+          ]
+        },
+        "kbd2": {
+          "focused": "light",
+          "checked": [
+            "light"
+          ],
+          "tabIndex": [
+            0,
+            -1,
+            -1
+          ]
+        }
+      }
+    },
+    {
+      "n": 22,
+      "ac": "AC1",
+      "name": "«Логотип и цвета» открывает «Брендинг» в настройках организации (внутри приложения)",
+      "ok": true,
+      "detail": {
+        "url": "http://localhost:3132/settings/organization#branding",
+        "branding": {
+          "top": 96,
+          "text": "Брендинг\n\nWhite-label: ваш цвет и логоти",
+          "shell": true
+        }
+      }
+    },
+    {
+      "n": 23,
+      "ac": "AC2",
+      "name": "Telegram (настоящий telegram-web-app.js; тема Telegram тёмная, система светлая): «Как на устройстве» → тёмная по Telegram, фон Telegram #2b2841, POST dark",
+      "ok": true,
+      "detail": {
+        "tgStart": {
+          "theme": {
+            "theme": "light",
+            "app": "light"
+          },
+          "checked": [
+            "light"
+          ],
+          "sdk": {
+            "platform": "ios",
+            "colorScheme": "dark",
+            "version": "8.0"
+          }
+        },
+        "tgSystem": {
+          "theme": {
+            "theme": "dark",
+            "app": "dark"
+          },
+          "storage": {
+            "mode": "system",
+            "auto": "0",
+            "effective": "dark"
+          },
+          "checked": [
+            "system"
+          ],
+          "posts": [
+            {
+              "theme": "dark",
+              "status": 200
+            }
+          ],
+          "bg": "#2b2841"
+        }
+      }
+    },
+    {
+      "n": 24,
+      "ac": "AC2",
+      "name": "Telegram: клиент сменил тему (theme_changed → themeChanged) → светлая, потом тёмная без перезагрузки; системная тема внутри Telegram не решает",
+      "ok": true,
+      "detail": {
+        "tgLight": {
+          "theme": {
+            "theme": "light",
+            "app": "light"
+          },
+          "storage": {
+            "mode": "system",
+            "auto": "0",
+            "effective": "light"
+          },
+          "sdkScheme": "light",
+          "bg": "#fafbff"
+        },
+        "tgIgnoresOs": {
+          "theme": "light",
+          "app": "light"
+        },
+        "posts": [
+          {
+            "theme": "light",
+            "status": 200
+          },
+          {
+            "theme": "dark",
+            "status": 200
+          }
+        ]
+      }
+    },
+    {
+      "n": 25,
+      "ac": "AC2",
+      "name": "Telegram: перезагрузка («Как на устройстве», Telegram тёмный, система и профиль светлые) — тёмная с первого кадра, без POST",
+      "ok": true,
+      "detail": {
+        "theme": {
+          "theme": "dark",
+          "app": "dark"
+        },
+        "storage": {
+          "mode": "system",
+          "auto": "0",
+          "effective": "dark"
+        },
+        "checked": [
+          "system"
+        ],
+        "flips": [
+          "89=dark/dark"
+        ],
+        "posts": []
+      }
+    },
+    {
+      "n": 26,
+      "ac": "AC2",
+      "name": "Telegram: после смены темы в Telegram и перезагрузки — последняя тема Telegram с первого кадра; переход без параметров в адресе — тоже (как считает сам Telegram)",
+      "ok": true,
+      "detail": {
+        "reload": {
+          "theme": {
+            "theme": "light",
+            "app": "light"
+          },
+          "storage": {
+            "mode": "system",
+            "auto": "0",
+            "effective": "light"
+          },
+          "checked": [
+            "system"
+          ],
+          "flips": [
+            "91=light/light"
+          ],
+          "posts": []
+        },
+        "sdkAfterReload": "light",
+        "noHash": {
+          "url": "http://localhost:3132/mini/me",
+          "theme": {
+            "theme": "light",
+            "app": "light"
+          },
+          "checked": [
+            "system"
+          ],
+          "flips": [
+            "89=light/light"
+          ],
+          "sdk": {
+            "platform": "ios",
+            "colorScheme": "light"
+          }
+        }
+      }
+    },
+    {
+      "n": 27,
+      "ac": "AC2",
+      "name": "приложение WeSetup (Android WebView, не Telegram): «Как на устройстве» следует теме телефона (prefers-color-scheme) без перезагрузки",
+      "ok": true,
+      "detail": {
+        "theme": {
+          "theme": "dark",
+          "app": "dark"
+        },
+        "storage": {
+          "mode": "system",
+          "auto": "0",
+          "effective": "dark"
+        },
+        "checked": [
+          "system"
+        ],
+        "inTelegram": false,
+        "shellCookie": true,
+        "posts": [
+          {
+            "theme": "light",
+            "status": 200
+          },
+          {
+            "theme": "dark",
+            "status": 200
+          }
+        ]
+      }
+    },
+    {
+      "n": 28,
+      "ac": "AC1",
+      "name": "повар и шеф: карточки есть и работают (тема личная), «Логотип и цвета» нет — настройки организации им закрыты (раньше шеф видел «Внешний вид»)",
+      "ok": true,
+      "detail": {
+        "cook": {
+          "tiles": 3,
+          "brandingLink": 0,
+          "appearanceRow": 0,
+          "switchedTo": "dark",
+          "posts": [
+            {
+              "theme": "dark",
+              "status": 200
+            }
+          ],
+          "db": "dark"
+        },
+        "chef": {
+          "tiles": 3,
+          "brandingLink": 0,
+          "appearanceRow": 0,
+          "switchedTo": "dark",
+          "posts": [
+            {
+              "theme": "dark",
+              "status": 200
+            }
+          ],
+          "db": "dark"
+        }
+      }
+    },
+    {
+      "n": 29,
+      "ac": "AC3",
+      "name": "сайт 1280: в меню профиля те же карточки (menuitemradio), «Тёмная» работает как раньше",
+      "ok": true,
+      "detail": {
+        "deskStates": [
+          {
+            "mode": "light",
+            "checked": "true",
+            "role": "menuitemradio",
+            "label": "Светлая",
+            "tabIndex": -1
+          },
+          {
+            "mode": "dark",
+            "checked": "false",
+            "role": "menuitemradio",
+            "label": "Тёмная",
+            "tabIndex": -1
+          },
+          {
+            "mode": "system",
+            "checked": "false",
+            "role": "menuitemradio",
+            "label": "Как на устройстве",
+            "tabIndex": -1
+          }
+        ],
+        "posts": [
+          {
+            "theme": "dark",
+            "status": 200
+          },
+          {
+            "theme": "dark",
+            "status": 200
+          }
+        ]
+      }
+    },
+    {
+      "n": 30,
+      "ac": "AC3",
+      "name": "сайт 390: лист профиля — те же карточки (radio), выбрана «Светлая»",
+      "ok": true,
+      "detail": {
+        "sheetStates": [
+          {
+            "mode": "light",
+            "checked": "true",
+            "role": "radio",
+            "label": "Светлая",
+            "tabIndex": 0
+          },
+          {
+            "mode": "dark",
+            "checked": "false",
+            "role": "radio",
+            "label": "Тёмная",
+            "tabIndex": -1
+          },
+          {
+            "mode": "system",
+            "checked": "false",
+            "role": "radio",
+            "label": "Как на устройстве",
+            "tabIndex": -1
+          }
+        ]
+      }
+    }
+  ],
+  "pageErrors": [],
+  "run": "mujpb4m6",
+  "devReloads": 1,
+  "shellAppearanceColumns": "138px 138px",
+  "finishedAt": "2026-09-27T12:29:10.785Z",
+  "total": 30,
+  "passed": 30
+}
