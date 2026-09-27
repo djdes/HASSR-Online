@@ -1128,6 +1128,129 @@ async function main() {
     check(tested > 0, "no mic button found");
   });
 
+  await scenario("18 Form keyboard: sticky footer right above the keyboard, focused field visible", async (s) => {
+    const p = page;
+    const imeShownFlag = () => /mInputShown=true/.test(sh("dumpsys input_method | grep -E 'mInputShown'"));
+    const code = (ids.formTextJournals ?? [])[0];
+    s.data.code = code ?? null;
+    s.data.enabledByHarness = ids.formJournalEnabledByHarness ?? null;
+    if (!check(Boolean(code), "no journal with a «Новая запись» form and a text field in ids.formTextJournals")) return;
+    await goto(p, `/journals/${code}/new`);
+    const ta = p.locator("form textarea").first();
+    await ta.waitFor({ state: "visible", timeout: 30000 });
+    const geom = () =>
+      p.evaluate(() => {
+        const rr = (el) => {
+          if (!el) return null;
+          const b = el.getBoundingClientRect();
+          return { top: Math.round(b.top * 10) / 10, bottom: Math.round(b.bottom * 10) / 10, height: Math.round(b.height * 10) / 10 };
+        };
+        const buttons = [...document.querySelectorAll("form button")];
+        const save = buttons.find((b) => /Сохранить запись/.test(b.textContent || ""));
+        const cancel = buttons.find((b) => (b.textContent || "").trim() === "Отмена");
+        const footer = save?.parentElement ?? null;
+        const nav = document.querySelector(".mini-nav-rail");
+        const vv = window.visualViewport;
+        const navRect = rr(nav);
+        return {
+          path: location.pathname,
+          miniRoot: Boolean(document.querySelector("#mini-root, .mini-root")),
+          innerHeight,
+          vv: vv ? { height: vv.height, offsetTop: vv.offsetTop } : null,
+          dpr: devicePixelRatio,
+          scrollY,
+          active: document.activeElement?.tagName ?? null,
+          activeIsFirstTextarea: document.activeElement === document.querySelector("form textarea"),
+          textarea: rr(document.querySelector("form textarea")),
+          footer: rr(footer),
+          footerInline: footer ? { bottom: footer.style.bottom, paddingBottom: footer.style.paddingBottom } : null,
+          footerComputedBottom: footer ? getComputedStyle(footer).bottom : null,
+          save: rr(save),
+          cancel: rr(cancel),
+          nav: navRect,
+          navVisibleCss: Boolean(nav && navRect && navRect.height > 0 && getComputedStyle(nav).display !== "none" && getComputedStyle(nav).visibility !== "hidden"),
+        };
+      });
+    s.data.before = await geom();
+    s.shots.push(shot("form-no-keyboard"));
+    check(s.data.before.miniRoot, `form is not inside the mini shell: ${s.data.before.path}`);
+    await ta.evaluate((el) => el.scrollIntoView({ block: "center" }));
+    await sleep(600);
+    await screenTap(p, ta);
+    let imeUp = false;
+    for (let i = 0; i < 10 && !imeUp; i++) {
+      await sleep(500);
+      imeUp = imeShownFlag();
+    }
+    await sleep(2000);
+    s.data.imeShownFlag = imeShownFlag();
+    const ins = systemInsets();
+    s.data.ins = ins;
+    s.shots.push(shot("form-keyboard"));
+    const g = await geom();
+    s.data.withKeyboard = g;
+    s.data.wv = webViewRect();
+    check(s.data.imeShownFlag || ins.imeShown, `IME not shown after tapping the textarea (mInputShown=${s.data.imeShownFlag}, ime ${JSON.stringify(ins.ime)})`);
+    check(g.active === "TEXTAREA", `focused element is ${g.active}, expected TEXTAREA`);
+    if (!g.vv || !g.save || !g.footer || !g.textarea) {
+      check(false, `geometry incomplete: ${JSON.stringify(g)}`);
+      return;
+    }
+    const visibleBottom = g.vv.offsetTop + g.vv.height;
+    const gap = Math.round((visibleBottom - g.save.bottom) * 10) / 10;
+    const vvShrink = Math.round((g.innerHeight - g.vv.height) * 10) / 10;
+    const mode = vvShrink > 80 ? "visual-viewport-shrank" : "webview-shrank";
+    const navBetween = Boolean(g.navVisibleCss && g.nav && g.nav.top >= g.footer.bottom - 1 && g.nav.top < visibleBottom);
+    s.data.metrics = {
+      mode,
+      innerHeight: g.innerHeight,
+      innerHeightNoKeyboard: s.data.before.innerHeight,
+      vvHeight: g.vv.height,
+      vvOffsetTop: g.vv.offsetTop,
+      vvShrink,
+      visibleBottom,
+      gap,
+      saveBottom: g.save.bottom,
+      footerTop: g.footer.top,
+      footerBottom: g.footer.bottom,
+      textareaTop: g.textarea.top,
+      textareaBottom: g.textarea.bottom,
+      navTop: g.nav?.top ?? null,
+      navBottom: g.nav?.bottom ?? null,
+      navBetweenFooterAndKeyboard: navBetween,
+      footerInline: g.footerInline,
+      footerComputedBottom: g.footerComputedBottom,
+      scrollYBefore: s.data.before.scrollY,
+      scrollY: g.scrollY,
+      dpr: g.dpr,
+    };
+    // Физически: низ «Сохранить запись» на экране против верха клавиатуры.
+    const imeTop = ins.ime?.y1 ?? null;
+    if (imeTop && s.data.wv) {
+      s.data.metrics.imeTopPx = imeTop;
+      s.data.metrics.saveBottomScreenPx = Math.round(s.data.wv.y1 + g.save.bottom * g.dpr);
+      s.data.metrics.saveToImePx = imeTop - s.data.metrics.saveBottomScreenPx;
+      check(s.data.metrics.saveToImePx >= -2, `«Сохранить запись» under the keyboard on screen by ${-s.data.metrics.saveToImePx}px`);
+    }
+    check(gap >= 0, `«Сохранить запись» not fully visible: gap ${gap} (visibleBottom ${visibleBottom}, save.bottom ${g.save.bottom})`);
+    check(g.textarea.top + 40 <= g.footer.top, `focused textarea covered by the footer: textarea.top ${g.textarea.top} + 40 > footer.top ${g.footer.top}`);
+    if (mode === "visual-viewport-shrank") check(gap <= 40, `empty band between the buttons and the keyboard: gap ${gap} > 40 CSS px`);
+    note(`${mode}: innerHeight ${g.innerHeight} (no kbd ${s.data.before.innerHeight}), vv ${g.vv.height}+${g.vv.offsetTop}, gap ${gap}, nav between footer and keyboard: ${navBetween}, footer inline bottom «${g.footerInline?.bottom}»`);
+    // Спрятать клавиатуру: «назад» один раз, пока она показана.
+    if (imeShownFlag() || systemInsets().imeShown) key(4);
+    await sleep(1800);
+    s.data.imeAfterBack = imeShownFlag();
+    const a = await geom();
+    s.data.after = a;
+    s.shots.push(shot("form-keyboard-hidden"));
+    check(!s.data.imeAfterBack, "IME still shown after back");
+    check(a.path === s.data.before.path, `back left the form: ${a.path}`);
+    check(a.navVisibleCss && a.nav && a.nav.bottom <= a.innerHeight + 1 && a.nav.top > 0, `bottom nav not visible after hiding the keyboard: ${JSON.stringify(a.nav)}`);
+    if (a.footer && a.nav) check(a.footer.bottom <= a.nav.top + 2, `footer not above the nav after hiding the keyboard: footer.bottom ${a.footer.bottom} > nav.top ${a.nav.top}`);
+    check(!a.footerInline?.bottom, `footer keeps inline bottom «${a.footerInline?.bottom}» without the keyboard`);
+    await p.evaluate(() => document.activeElement?.blur?.()).catch(() => undefined);
+  });
+
   await scenario("9 Deep links: warm (appUrlOpen) and cold (getLaunchUrl)", async (s) => {
     const p = page;
     await goto(p, "/mini/sections");

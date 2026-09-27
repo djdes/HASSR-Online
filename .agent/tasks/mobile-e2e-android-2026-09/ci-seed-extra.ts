@@ -31,8 +31,30 @@ async function main() {
     tpls
       .filter((t) => !disabled.has(t.code) && Array.isArray(t.fields) && (t.fields as Array<{ type?: string }>).some((f) => types.includes(String(f?.type))))
       .map((t) => t.code);
+  // 4-й круг: журнал с формой «Новая запись» (DynamicForm) и текстовым полем.
+  // У демо-компании такие журналы (ccp_monitoring и др.) выключены — включаем
+  // один в локальной e2e-базе, иначе форму с клавиатурой проверить не на чем.
+  const { hasDocumentFillUi } = await import("@/lib/journal-document-helpers");
+  const { isScanOnlyDocumentTemplate } = await import("@/lib/scan-journal-config");
+  const formCandidates = tpls
+    .filter((t) => !hasDocumentFillUi(t.code) && !isScanOnlyDocumentTemplate(t.code))
+    .filter((t) => Array.isArray(t.fields) && (t.fields as Array<{ type?: string; showIf?: unknown }>).some((f) => ["text", "textarea"].includes(String(f?.type)) && !f?.showIf))
+    .map((t) => t.code)
+    .sort((a, b) => (a === "ccp_monitoring" ? -1 : b === "ccp_monitoring" ? 1 : 0));
+  let formTextJournals = formCandidates.filter((c) => !disabled.has(c));
+  let formJournalEnabledByHarness: string | null = null;
+  if (!formTextJournals.length && formCandidates.length) {
+    formJournalEnabledByHarness = formCandidates[0];
+    const next = [...disabled].filter((c) => c !== formJournalEnabledByHarness);
+    await db.organization.update({ where: { id: org.id }, data: { disabledJournalCodes: next } });
+    formTextJournals = [formJournalEnabledByHarness];
+  }
   console.log(
-    JSON.stringify({ organizationId: org.id, docs: byCode, textJournals: withField(["text", "textarea"]), photoJournals: withField(["photo"]) }, null, 2)
+    JSON.stringify(
+      { organizationId: org.id, docs: byCode, textJournals: withField(["text", "textarea"]), photoJournals: withField(["photo"]), formTextJournals, formJournalEnabledByHarness },
+      null,
+      2
+    )
   );
   await db.$disconnect();
 }
