@@ -109,3 +109,21 @@ export function scrollDeltaToReveal(
   if (down > 0) return Math.round(Math.min(down, up));
   return 0;
 }
+
+/**
+ * Стиль липкого подвала формы с кнопками «Сохранить» / «Отмена».
+ *
+ * Клавиатуры нет — подвал у низа экрана (в мини-приложении CSS поднимает
+ * его над нижним меню), снизу поле под полоску «домой». Клавиатура
+ * открыта — подвал встаёт прямо над ней: меню и полоска всё равно под
+ * клавиатурой. Раньше высота клавиатуры прибавлялась к этим отступам, и
+ * на iPhone между кнопками и клавиатурой оставалась пустая полоса ~140pt,
+ * а подвал закрывал поле, в котором человек печатал (раунд 5, кадр 015).
+ */
+export function stickyFooterStyle(keyboardInset: number): {
+  bottom?: number;
+  paddingBottom: string;
+} {
+  if (keyboardInset > 0) return { bottom: keyboardInset, paddingBottom: "0.75rem" };
+  return { paddingBottom: "max(0.75rem, var(--safe-b))" };
+}

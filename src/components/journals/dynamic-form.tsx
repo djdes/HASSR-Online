@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useKeyboardInset } from "@/lib/use-keyboard-inset";
+import { scrollDeltaToReveal, stickyFooterStyle, useKeyboardInset } from "@/lib/use-keyboard-inset";
 import { isScannableField } from "@/lib/scannable-field";
 import { ScanToField } from "@/components/journals/scan-to-field";
 import { AlertTriangle, History, Wifi, Loader2 } from "lucide-react";
@@ -180,6 +180,28 @@ export function DynamicForm({
   // клавиатуру в тот момент, когда «Сохранить» и нужен: человек ввёл
   // значение — и кнопки нет.
   const keyboardInset = useKeyboardInset();
+  const formRef = useRef<HTMLFormElement | null>(null);
+  const footerRef = useRef<HTMLDivElement | null>(null);
+  // Клавиатура открыта: поле с фокусом не должно прятаться под липким
+  // подвалом с кнопками. iOS прокручивает к полю, не зная про подвал, и
+  // человек печатал в поле, которого не видно.
+  const revealFocusedField = useCallback(() => {
+    const form = formRef.current;
+    const footer = footerRef.current;
+    const active = document.activeElement;
+    if (!form || !footer || !(active instanceof HTMLElement)) return;
+    if (!form.contains(active) || footer.contains(active)) return;
+    const delta = scrollDeltaToReveal(
+      { top: 0, bottom: footer.getBoundingClientRect().top },
+      active.getBoundingClientRect()
+    );
+    if (delta > 0) window.scrollBy(0, delta);
+  }, []);
+  useEffect(() => {
+    if (!keyboardInset) return;
+    const id = window.requestAnimationFrame(revealFocusedField);
+    return () => window.cancelAnimationFrame(id);
+  }, [keyboardInset, revealFocusedField]);
   // Phase B: Conditional required fields. Используем journal-spec для
   // поиска полей которые становятся обязательными при отклонении +
   // правила определения «отклонения» из journal-deviation-rules.
@@ -666,7 +688,15 @@ export function DynamicForm({
   }, [inDeviation, conditionallyRequiredKeys, formData, fields]);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form
+      ref={formRef}
+      onSubmit={handleSubmit}
+      // Переход между полями при уже открытой клавиатуре (стрелки над ней).
+      onFocus={() => {
+        if (keyboardInset) window.requestAnimationFrame(revealFocusedField);
+      }}
+      className="space-y-6"
+    >
       {/* Sprint-compliance: гайд для нового сотрудника. Collapsible —
           если знакомый журнал, занимает 1 строчку. Если нет — раскрыл и
           увидел шаги по СанПиН. */}
@@ -1121,10 +1151,11 @@ export function DynamicForm({
            прокрутки вниз после каждого поля. На широком экране это
            обычный блок — там прокрутки нет и липкость только мешала бы. */
         <div
+          ref={footerRef}
           className="sticky bottom-0 z-10 -mx-4 flex flex-col-reverse gap-3 border-t border-[#ececf4] bg-white px-4 pt-3 sm:static sm:mx-0 sm:flex-row sm:border-0 sm:bg-transparent sm:px-0 sm:pt-0"
-          style={{
-            paddingBottom: `max(0.75rem, calc(var(--safe-b) + ${keyboardInset}px))`,
-          }}
+          // С клавиатурой подвал встаёт прямо над ней (в мини-приложении это
+          // перебивает подъём над нижним меню — меню под клавиатурой).
+          style={stickyFooterStyle(keyboardInset)}
         >
           <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
             {isSubmitting ? "Сохранение..." : "Сохранить запись"}
