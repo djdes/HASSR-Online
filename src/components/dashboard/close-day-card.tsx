@@ -26,8 +26,9 @@ import {
  *     сотрудникам). Уже введённое не перезаписывается. Итог — тостом.
  *   • «QR-коды» — раздел печати QR `/settings/qr-posters`.
  *
- * Кнопки лежат внутри `<summary>` раскрывающейся секции, поэтому клик по
- * обёртке гасим — иначе каждое нажатие сворачивало бы список журналов.
+ * С 2026-09-27 кнопки стоят не в строке заголовка секции, а в панели с
+ * поиском над списком журналов (`DashboardJournalsGrid`): свёрнутая
+ * секция — одна строка. Гасить клик больше не нужно — `<summary>` рядом нет.
  */
 export function CloseDayCard() {
   const router = useRouter();
@@ -67,8 +68,7 @@ export function CloseDayCard() {
 
   return (
     <div
-      className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:justify-center"
-      onClick={(e) => e.preventDefault()}
+      className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto"
       data-journals-actions=""
     >
       <button

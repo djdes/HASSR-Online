@@ -1,8 +1,11 @@
 import { ChevronDown, type LucideIcon } from "lucide-react";
 
+import { DashboardSectionMemory } from "@/components/dashboard/dashboard-section-memory";
+import { DASHBOARD_SECTION_PERSIST_SCRIPT } from "@/lib/dashboard-section-memory";
+
 type Props = {
-  /** Уникальный ключ для localStorage. Inline-скрипт в dashboard
-   *  layout читает все [data-storage-key] и подменяет open. */
+  /** Уникальный ключ для localStorage. Inline-скрипт страницы читает все
+   *  [data-storage-key] и подменяет open (см. lib/dashboard-section-memory). */
   storageKey: string;
   title: string;
   subtitle?: string;
@@ -35,32 +38,36 @@ type Props = {
    */
   actions?: React.ReactNode;
   /**
-   * Заголовок со счётчиком — по центру карточки, действия — строкой под
-   * ним по центру, настройка (`titleAside`) — в левом углу, стрелка — в
-   * правом. Иконка и подпись в этом режиме не рисуются. Нужен карточке
-   * «Обязательные журналы» (решение владельца 2026-09-25): главное —
-   * название и N/M, под ними две кнопки.
+   * Секция без карточки — прямо на фоне страницы, во всю ширину
+   * (владелец, 2026-09-27, «Обязательные журналы»: «без блока-кругляшка…
+   * а то прямоугольник в прямоугольнике»). Строка заголовка — название со
+   * счётчиком, `titleAside` и стрелка; нажатие сворачивает. Иконка,
+   * подпись и `actions` в этом режиме не рисуются — кнопки секции живут в
+   * её содержимом, чтобы свёрнутая секция была одной строкой.
    */
-  centered?: boolean;
+  flat?: boolean;
   children: React.ReactNode;
 };
 
+/** Цвета бейджа — токены с тёмными парами (globals.css), а не emerald/amber:
+ *  те в тёмной теме оставались светлыми пятнами. */
 const TONE_CLS: Record<NonNullable<Props["badge"]>["tone"] & string, string> = {
   default: "bg-[#eef1ff] text-[#3848c7]",
-  ok: "bg-emerald-50 text-emerald-700",
-  warn: "bg-amber-50 text-amber-700",
-  danger: "bg-rose-50 text-rose-700",
+  ok: "bg-[#ecfdf5] text-[#116b2a]",
+  warn: "bg-[#fff8eb] text-[#b25f00]",
+  danger: "bg-[#fff4f2] text-[#a13a32]",
 };
 
 /**
  * Раскрывающаяся секция дашборда. Server-component с native
  * `<details>` — работает с любыми children (включая async
- * server-components), не требует client JS bundle, лёгкий SSR.
+ * server-components), лёгкий SSR.
  *
- * Persist в localStorage реализован через inline-скрипт в
- * dashboard layout (см. <DashboardSectionPersistScript />): он
- * читает все [data-storage-key] и устанавливает initial open
- * state, и на toggle event пишет обратно в localStorage.
+ * Запоминание на устройстве — `<DashboardSectionPersistScript />` на
+ * странице (полная загрузка) и `DashboardSectionMemory` внутри секции
+ * (переход внутри приложения), см. lib/dashboard-section-memory.ts.
+ * Состояние `open` меняется до гидратации намеренно — отсюда
+ * `suppressHydrationWarning`.
  */
 export function DashboardSection({
   storageKey,
@@ -72,7 +79,7 @@ export function DashboardSection({
   titleAside,
   defaultOpen = false,
   actions,
-  centered = false,
+  flat = false,
   children,
 }: Props) {
   // «Обязательные журналы» → head «Обязательные », tail «журналы».
@@ -82,62 +89,60 @@ export function DashboardSection({
 
   const badgeEl = badge ? (
     <span
-      className={`ml-1.5 inline-flex translate-y-[-1px] items-center rounded-full px-2 py-0.5 align-middle text-[11px] font-semibold ${TONE_CLS[badge.tone ?? "default"]}`}
+      className={`ml-1.5 inline-flex translate-y-[-1px] items-center rounded-full px-2 py-0.5 align-middle text-[11px] font-semibold tabular-nums ${TONE_CLS[badge.tone ?? "default"]}`}
     >
       {badge.text}
     </span>
   ) : null;
 
-  if (centered) {
+  // Последнее слово и бейдж — одним неразрывным куском: перед
+  // inline-элементом браузер переносит строку даже через nbsp, и бейдж
+  // оказывался один на новой строке. Так, если всё не влезает,
+  // переносится «журналы 3/5».
+  const titleWithBadge = badge ? (
+    <>
+      {titleHead}
+      <span className="whitespace-nowrap">
+        {titleTail}
+        {badgeEl}
+      </span>
+    </>
+  ) : (
+    title
+  );
+
+  if (flat) {
     return (
       <details
-        {...(defaultOpen ? { open: true } : {})}
+        open={defaultOpen}
         data-storage-key={storageKey}
-        data-section-layout="centered"
-        className="group overflow-hidden rounded-3xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]"
+        data-section-layout="flat"
+        suppressHydrationWarning
+        className="group/section"
       >
-        {/* Строка заголовка — сетка «угол | заголовок | угол» с равными
-            боковыми колонками: так название стоит ровно по центру, а не
-            «по центру остатка» после кнопки настройки. */}
-        <summary className="flex cursor-pointer list-none flex-col gap-3 p-4 transition-colors hover:bg-[#fafbff] sm:p-5">
-          <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2">
-            <div className="flex items-center justify-start">{titleAside}</div>
-            <h3 className="text-center text-[16px] font-semibold leading-tight tracking-[-0.01em] text-[#0b1024] sm:text-[18px]">
-              {badge ? (
-                <>
-                  {titleHead}
-                  <span className="whitespace-nowrap">
-                    {titleTail}
-                    {badgeEl}
-                  </span>
-                </>
-              ) : (
-                title
-              )}
-            </h3>
-            <div className="flex items-center justify-end">
-              <ChevronDown
-                className="size-5 shrink-0 text-[#9b9fb3] transition-transform group-open:rotate-180 group-open:text-[#5566f6]"
-                aria-hidden
-              />
-            </div>
-          </div>
-          {actions ? (
-            <div className="flex w-full justify-center">{actions}</div>
-          ) : null}
+        <summary className="group/summary flex cursor-pointer list-none items-center gap-2 rounded-2xl py-1 outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 [&::-webkit-details-marker]:hidden">
+          <h2 className="min-w-0 flex-1 text-[18px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024] sm:text-[22px]">
+            {titleWithBadge}
+          </h2>
+          {titleAside ? <div className="flex shrink-0 items-center">{titleAside}</div> : null}
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full text-[#9b9fb3] transition-colors group-hover/summary:text-[#5566f6]">
+            <ChevronDown
+              className="size-5 transition-transform duration-200 group-open/section:rotate-180"
+              aria-hidden
+            />
+          </span>
         </summary>
-        <div className="border-t border-[#ececf4] p-4 sm:p-5">{children}</div>
+        <DashboardSectionMemory />
+        <div className="pt-3 sm:pt-4">{children}</div>
       </details>
     );
   }
 
   return (
     <details
-      // open — нужно прокинуть как boolean prop (не через open={false})
-      // т.к. в JSX для native HTML element атрибут принимается как
-      // boolean (presence/absence). Используем conditional spread.
-      {...(defaultOpen ? { open: true } : {})}
+      open={defaultOpen}
       data-storage-key={storageKey}
+      suppressHydrationWarning
       className="group overflow-hidden rounded-3xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]"
     >
       {/* items-center: иконка 40px и заголовок выравниваются друг по
@@ -177,21 +182,7 @@ export function DashboardSection({
                   с последним словом («…журналы 3/5»), а на десктопе стоит
                   там же, где стоял. */}
               <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.01em] text-[#0b1024] sm:text-[16px]">
-                {badge ? (
-                  // Последнее слово и бейдж — одним неразрывным куском:
-                  // перед inline-элементом браузер переносит строку даже
-                  // через nbsp, и бейдж оказывался один на новой строке.
-                  // Так, если всё не влезает, переносится «журналы 3/5».
-                  <>
-                    {titleHead}
-                    <span className="whitespace-nowrap">
-                      {titleTail}
-                      {badgeEl}
-                    </span>
-                  </>
-                ) : (
-                  title
-                )}
+                {titleWithBadge}
               </h3>
               {titleAction}
             </div>
@@ -230,51 +221,21 @@ export function DashboardSection({
           aria-hidden
         />
       </summary>
+      <DashboardSectionMemory />
       <div className="border-t border-[#ececf4] p-4 sm:p-5">{children}</div>
     </details>
   );
 }
 
 /**
- * Inline-скрипт для localStorage persist. Размещается ОДИН раз в
- * dashboard layout / page. Читает все [data-storage-key] на mount,
- * устанавливает open state из localStorage; на toggle — пишет
- * обратно. Без зависимости от React — работает даже если client JS
- * ещё не загрузился.
+ * Inline-скрипт запоминания. Размещается ОДИН раз на странице, выше
+ * секций. Без зависимости от React — работает до загрузки JS приложения.
  */
 export function DashboardSectionPersistScript() {
-  const script = `
-(function(){
-  try {
-    var prefix = 'wesetup.dashboard.section.';
-    function apply() {
-      document.querySelectorAll('details[data-storage-key]').forEach(function(d){
-        if (d.__persistAttached) return;
-        d.__persistAttached = true;
-        var key = prefix + d.dataset.storageKey;
-        var saved = null;
-        try { saved = localStorage.getItem(key); } catch(e) {}
-        if (saved === '1') d.open = true;
-        else if (saved === '0') d.open = false;
-        d.addEventListener('toggle', function(){
-          try { localStorage.setItem(key, d.open ? '1' : '0'); } catch(e) {}
-        });
-      });
-    }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', apply);
-    } else {
-      apply();
-    }
-    // Re-apply при router-navigation внутри Next (SPA), иначе attach не
-    // случится при F5 на другую страницу + back.
-    document.addEventListener('visibilitychange', apply);
-  } catch (e) { /* fail silently */ }
-})();`;
   return (
     <script
       // eslint-disable-next-line react/no-danger
-      dangerouslySetInnerHTML={{ __html: script }}
+      dangerouslySetInnerHTML={{ __html: DASHBOARD_SECTION_PERSIST_SCRIPT }}
     />
   );
 }

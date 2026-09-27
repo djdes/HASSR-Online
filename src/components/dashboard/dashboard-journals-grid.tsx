@@ -3,22 +3,25 @@
 import { useDeferredValue, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  ArrowRight,
-  CheckCircle2,
-  Eye,
-  Printer,
-  Search,
-  X,
-  XCircle,
-} from "lucide-react";
+import { Eye, Search, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { journalMatchesQuery, normalizeJournalSearch } from "@/lib/journal-search";
 import { customJournalName } from "@/lib/custom-names";
 import { sortJournalsByName } from "@/lib/journal-sort";
 import { useCustomNames } from "@/components/shared/custom-names-provider";
-import { cn } from "@/lib/utils";
+import {
+  DashboardDisabledRow,
+  DashboardJournalRow,
+  DashboardPaperRow,
+  ENABLE_BUTTON_CLASS,
+  type JournalThumbSource,
+} from "@/components/dashboard/dashboard-journal-row";
+import {
+  JOURNAL_ITEM_CLASS,
+  JOURNAL_LIST_CLASS,
+  JOURNAL_TOOLBAR_CLASS,
+} from "@/components/dashboard/dashboard-journals-layout";
 
 /**
  * Своё название организации вместо официального; официальное остаётся
@@ -32,7 +35,7 @@ function withCustomName<T extends { code: string; name: string }>(
 }
 
 /**
- * Сетка журналов на дашборде + поиск над ней.
+ * Список журналов на главной + поиск над ним.
  *
  * Поиск ищет и по отключённым журналам, хотя сама секция называется
  * «Обязательные»: искать приходят как раз тогда, когда нужного журнала на
@@ -40,8 +43,9 @@ function withCustomName<T extends { code: string; name: string }>(
  * отключённые показываются отдельной группой ниже и включаются оттуда же
  * одной кнопкой: включить безопасно, ничего не теряется.
  *
- * Карточки жили в `dashboard/page.tsx`; переехали сюда целиком, потому
- * что фильтрация — клиентская, а разметку дублировать нельзя.
+ * Вид (владелец, 2026-09-27): строки без заливки и рамок — превью бланка,
+ * название, отметка «заполнено сегодня». На телефоне одна колонка, на
+ * компьютере сетка в 2–3 колонки с превью чуть крупнее.
  */
 
 export type DashboardJournalItem = {
@@ -65,6 +69,24 @@ export type DashboardDisabledItem = {
   description?: string | null;
 };
 
+const GROUP_TITLE_CLASS =
+  "text-[12px] font-semibold uppercase tracking-[0.16em] text-[#9b9fb3]";
+
+/**
+ * Превью строки: снимок своего документа (cron `journal-previews`), иначе
+ * стандартный образец бланка, иначе — заглушка.
+ */
+function thumbFor(
+  item: { code: string; previewUrl?: string | null },
+  samples: Set<string>,
+): JournalThumbSource {
+  if (item.previewUrl) return { src: item.previewUrl, optimized: false };
+  if (samples.has(item.code)) {
+    return { src: `/journal-samples/${item.code}.webp`, optimized: true };
+  }
+  return null;
+}
+
 export function DashboardJournalsGrid({
   items: rawItems,
   paperItems,
@@ -72,6 +94,7 @@ export function DashboardJournalsGrid({
   disabledCodes,
   sampleCodes,
   canToggle,
+  actions,
 }: {
   items: DashboardJournalItem[];
   paperItems: DashboardPaperItem[];
@@ -81,6 +104,8 @@ export function DashboardJournalsGrid({
   disabledCodes: string[];
   sampleCodes: string[];
   canToggle: boolean;
+  /** Кнопки секции («Автозаполнить», «QR-коды») — в одной панели с поиском. */
+  actions?: React.ReactNode;
 }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -171,9 +196,12 @@ export function DashboardJournalsGrid({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative w-full sm:max-w-[420px]">
+    <div className="space-y-5">
+      {/* Панель: на телефоне кнопки строкой и поиск под ними, на
+          компьютере — поиск слева, кнопки справа, одной строкой. */}
+      <div className={JOURNAL_TOOLBAR_CLASS}>
+        {actions ? <div className="lg:order-3 lg:ml-auto">{actions}</div> : null}
+        <div className="relative w-full lg:order-1 lg:max-w-[420px]">
           <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#9b9fb3]" />
           <input
             value={query}
@@ -194,7 +222,7 @@ export function DashboardJournalsGrid({
           ) : null}
         </div>
         {normalizedQuery ? (
-          <div className="text-[13px] text-[#6f7282] sm:whitespace-nowrap">
+          <div className="text-[13px] text-[#6f7282] lg:order-2 lg:whitespace-nowrap">
             Найдено {foundCount} из {totalCount}
           </div>
         ) : null}
@@ -210,160 +238,78 @@ export function DashboardJournalsGrid({
         </div>
       ) : null}
 
-      {foundItems.length > 0 || foundPaper.length > 0 ? (
-        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      {foundItems.length > 0 ? (
+        <ul role="list" className={JOURNAL_LIST_CLASS} data-journal-list="">
           {foundItems.map((item) => (
-            <Link
-              key={item.id}
-              href={`/journals/${item.code}`}
-              className={cn(
-                "group flex w-full min-w-0 flex-col overflow-hidden rounded-2xl border transition-colors duration-150",
-                // Без свечения и подпрыгивания: статус читается по цвету
-                // рамки и подложки, hover — только рамка.
-                item.filled
-                  ? "border-[#c8f0d5] hover:border-[#7cf5c0]"
-                  : "border-[#ffd2cd] hover:border-[#ff8d7d]",
-              )}
-            >
-              {/* Превью: снимок первой страницы своего документа, если cron
-                  уже отрисовал, иначе стандартный образец бланка — по
-                  названию вроде «Чек-лист (памятка) проведения санитарного
-                  дня» невозможно вспомнить, что там за форма.
-
-                  На телефоне превью скрыто: в карточке шириной 165 px
-                  бумажный бланк с пропорциями 1228×862 превращается в
-                  нечитаемую полоску 119 px, а тридцать четыре таких
-                  полоски растягивали дашборд на семь экранов. */}
-              {item.previewUrl || samples.has(item.code) ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={item.previewUrl ?? `/journal-samples/${item.code}.webp`}
-                  alt=""
-                  loading="lazy"
-                  decoding="async"
-                  fetchPriority="low"
-                  width={768}
-                  height={539}
-                  className="hidden aspect-[1228/862] w-full border-b border-[#ececf4] bg-white object-cover object-top sm:block"
-                />
-              ) : null}
-
-              <span
-                className={cn(
-                  // flex-1: в ряду карточки одной высоты, но у одних
-                  // заголовок в строку, у других в две. Без растяжения
-                  // цветная полоса кончалась по тексту и под ней
-                  // оставалась белая щель до низа карточки.
-                  "flex min-w-0 flex-1 items-center gap-2.5 px-3.5 py-3 text-[14px]",
-                  item.filled ? "bg-[#effaf1]" : "bg-[#fff4f2]",
-                )}
-              >
-                <span
-                  className={cn(
-                    "flex size-7 shrink-0 items-center justify-center rounded-lg",
-                    item.filled
-                      ? "bg-[#d9f4e1] text-[#136b2a]"
-                      : "bg-[#ffe1dc] text-[#d2453d]",
-                  )}
-                >
-                  {item.filled ? (
-                    <CheckCircle2 className="size-4" />
-                  ) : (
-                    <XCircle className="size-4" />
-                  )}
-                </span>
-                <span
-                  className={cn(
-                    "line-clamp-2 min-w-0 flex-1 break-words text-[15px] font-semibold leading-snug tracking-[-0.01em]",
-                    item.filled ? "text-[#136b2a]" : "text-[#a1362f]",
-                  )}
-                  title={item.officialName ? `Официальное название: ${item.officialName}` : undefined}
-                >
-                  {item.name}
-                </span>
-                <ArrowRight
-                  className={cn(
-                    "size-4 shrink-0 transition-transform group-hover:translate-x-0.5",
-                    item.filled ? "text-[#7cf5c0]" : "text-[#ffb0a6]",
-                  )}
-                />
-              </span>
-            </Link>
-          ))}
-
-          {/* Бумажные журналы. Та же геометрия, но нейтральные и без
-              статуса: отметить «заполнено» в системе нельзя — подпись
-              ставится ручкой на распечатанном листе. */}
-          {foundPaper.map((paper) => (
-            <Link
-              key={paper.id}
-              href={`/settings/journals/paper/${paper.id}`}
-              className="group flex w-full min-w-0 flex-col overflow-hidden rounded-2xl border border-[#ececf4] bg-[#fafbff] transition-colors duration-150 hover:border-[#5566f6]/40"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={`/journal-samples/paper_${paper.id}.webp`}
-                alt=""
-                loading="lazy"
-                className="aspect-[1228/862] w-full border-b border-[#ececf4] bg-white object-cover object-top"
+            <li key={item.id} className={JOURNAL_ITEM_CLASS}>
+              <DashboardJournalRow
+                code={item.code}
+                name={item.name}
+                officialName={item.officialName}
+                filled={item.filled}
+                thumb={thumbFor(item, samples)}
               />
-              <span className="flex min-w-0 flex-1 flex-col gap-1.5 px-3.5 py-3">
-                <span className="inline-flex w-fit items-center gap-1 rounded-full bg-[#f5f6ff] px-2 py-0.5 text-[11px] font-medium text-[#3848c7]">
-                  <Printer className="size-3" />
-                  <span className="sm:hidden">Бумажный</span>
-                  <span className="hidden sm:inline">Бумажный · распечатать</span>
-                </span>
-                <span className="line-clamp-3 break-words text-[13px] font-semibold leading-snug tracking-[-0.01em] text-[#0b1024] sm:line-clamp-2 sm:text-[15px]">
-                  {paper.name}
-                </span>
-              </span>
-            </Link>
+            </li>
           ))}
-        </div>
+        </ul>
+      ) : null}
+
+      {/* Бумажные журналы: те же строки с превью бланка, без отметки —
+          заполняются ручкой на распечатке. */}
+      {foundPaper.length > 0 ? (
+        <section className="space-y-2" data-paper-list="">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <h3 className={GROUP_TITLE_CLASS}>Бумажные журналы</h3>
+            <p className="text-[13px] text-[#9b9fb3]">распечатать и вести от руки</p>
+          </div>
+          <ul role="list" className={JOURNAL_LIST_CLASS}>
+            {foundPaper.map((paper) => (
+              <li key={paper.id} className={JOURNAL_ITEM_CLASS}>
+                <DashboardPaperRow id={paper.id} name={paper.name} />
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : null}
 
       {foundDisabled.length > 0 ? (
-        <section className="space-y-3">
+        <section className="space-y-2" data-disabled-list="">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-            <h3 className="text-[14px] font-semibold text-[#0b1024]">Отключённые</h3>
-            <p className="text-[13px] text-[#6f7282]">
+            <h3 className={GROUP_TITLE_CLASS}>Отключённые</h3>
+            <p className="text-[13px] text-[#9b9fb3]">
               не показываются на дашборде и сотрудникам
               {canToggle ? " — включите, если журнал всё-таки нужен" : null}
             </p>
           </div>
-          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          <ul role="list" className={JOURNAL_LIST_CLASS}>
             {foundDisabled.map((item) => (
-              <div
-                key={item.id}
-                className="flex w-full min-w-0 flex-col gap-2 rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-3.5 py-3"
-              >
-                <span className="line-clamp-2 break-words text-[15px] font-semibold leading-snug tracking-[-0.01em] text-[#6f7282]">
-                  {item.name}
-                </span>
-                <div className="mt-auto flex flex-wrap items-center gap-2">
-                  {canToggle ? (
-                    // Включение безопасно — без подтверждения, одно нажатие.
-                    <button
-                      type="button"
-                      onClick={() => void enableJournal(item.code, item.name)}
-                      disabled={enablingCode === item.code}
-                      className="inline-flex items-center gap-1 rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] font-medium text-[#5566f6] transition-colors hover:bg-[#eef1ff] disabled:opacity-60"
-                    >
-                      <Eye className="size-3.5" />
-                      {enablingCode === item.code ? "Включаю…" : "Включить"}
-                    </button>
-                  ) : (
-                    <Link
-                      href={`/settings/journals#journal-${item.code}`}
-                      className="inline-flex items-center gap-1 rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] font-medium text-[#5566f6] hover:bg-[#eef1ff]"
-                    >
-                      Включить
-                    </Link>
-                  )}
-                </div>
-              </div>
+              <li key={item.id} className={JOURNAL_ITEM_CLASS}>
+                <DashboardDisabledRow
+                  code={item.code}
+                  name={item.name}
+                  thumb={thumbFor(item, samples)}
+                  action={
+                    canToggle ? (
+                      // Включение безопасно — без подтверждения, одно нажатие.
+                      <button
+                        type="button"
+                        onClick={() => void enableJournal(item.code, item.name)}
+                        disabled={enablingCode === item.code}
+                        className={ENABLE_BUTTON_CLASS}
+                      >
+                        <Eye className="size-3.5" />
+                        {enablingCode === item.code ? "Включаю…" : "Включить"}
+                      </button>
+                    ) : (
+                      <Link href={`/settings/journals#journal-${item.code}`} className={ENABLE_BUTTON_CLASS}>
+                        Включить
+                      </Link>
+                    )
+                  }
+                />
+              </li>
             ))}
-          </div>
+          </ul>
         </section>
       ) : null}
     </div>
