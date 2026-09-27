@@ -1,6 +1,9 @@
 # Проверка приложения Android на настоящем эмуляторе: копия сайта с демо-данными
 # поднимается прямо в задании (не прод), тестовый APK открывает её по
 # http://10.0.2.2:3000, сценарии гоняет Playwright (_android) + adb.
+# Адрес сайта в эмуляторе — http://127.0.0.1:3000 через adb reverse: куки входа
+# в продакшен-сборке сайта с флагом Secure, а 127.0.0.1 браузер считает
+# безопасным источником (на 10.0.2.2 по http вход бы не держался).
 # Только ветка mobile-e2e-android и ручной запуск — никогда не master.
 name: Приложение Android — e2e на эмуляторе
 
@@ -29,7 +32,7 @@ env:
   HARNESS: .agent/tasks/mobile-e2e-android-2026-09
   DATABASE_URL: postgresql://postgres:postgres@localhost:5432/wesetup_e2e?sslmode=disable
   DATABASE_URL_DIRECT: postgresql://postgres:postgres@localhost:5432/wesetup_e2e?sslmode=disable
-  NEXTAUTH_URL: http://10.0.2.2:3000
+  NEXTAUTH_URL: http://127.0.0.1:3000
   NEXTAUTH_SECRET: ci-e2e-secret-not-for-production-0123456789
   PLATFORM_ORG_ID: platform
   ROOT_EMAIL: root@ci.local
@@ -137,9 +140,9 @@ jobs:
         run: |
           npm ci --no-audit --no-fund
           if [ "$MODE" = "full" ]; then
-            export WESETUP_APP_URL="http://10.0.2.2:3000/mini?src=app"
+            export WESETUP_APP_URL="http://127.0.0.1:3000/mini?src=app"
             # Экран «Нет связи» в тестовой сборке возвращает в копию сайта, не на прод.
-            sed -i 's#https://wesetup.ru/mini?src=app#http://10.0.2.2:3000/mini?src=app#' www/offline.html
+            sed -i 's#https://wesetup.ru/mini?src=app#http://127.0.0.1:3000/mini?src=app#' www/offline.html
           fi
           npx cap sync android
           grep -n '"url"\|cleartext\|allowNavigation' -A3 android/app/src/main/assets/capacitor.config.json | head -30

@@ -12,7 +12,7 @@ const OUT = process.env.E2E_OUT || "e2e-out";
 const HARNESS = process.env.HARNESS || ".agent/tasks/mobile-e2e-android-2026-09";
 const MODE = process.env.MODE || "full";
 const PKG = "ru.wesetup.app";
-const ORIGIN = MODE === "full" ? "http://10.0.2.2:3000" : "https://wesetup.ru";
+const ORIGIN = MODE === "full" ? "http://127.0.0.1:3000" : "https://wesetup.ru";
 const PASSWORD = "DemoShots2026!";
 const CHEF = "chef@cafe-demo.local";
 const COOK = "cook@cafe-demo.local";
@@ -98,14 +98,16 @@ function systemInsets() {
     return m ? { x1: +m[1], y1: +m[2], x2: +m[3], y2: +m[4] } : null;
   };
   const F = String.raw`[^\n]*?frame=\[(\d+),(\d+)\]\[(\d+),(\d+)\]`;
-  return {
+  const res = {
     statusBar: frame(new RegExp(String.raw`type=(?:statusBars|ITYPE_STATUS_BAR)` + F)),
     navBar: frame(new RegExp(String.raw`type=(?:navigationBars|ITYPE_NAVIGATION_BAR)` + F)),
     ime: frame(new RegExp(String.raw`type=(?:ime|ITYPE_IME)` + F)),
-    imeShown: /mInputShown=true/.test(sh("dumpsys input_method | grep -m3 mInputShown")),
+    imeShown: null,
     screen: sh("wm size").trim(),
     density: sh("wm density").trim(),
   };
+  res.imeShown = Boolean(res.ime && res.ime.y1 > 0 && res.ime.y2 > res.ime.y1);
+  return res;
 }
 function webViewRect() {
   const n = uiNodes().find((x) => x.class === "android.webkit.WebView" && x.package === PKG);
@@ -342,7 +344,9 @@ async function main() {
     await sleep(700);
     s.shots.push(shot("cold-start-splash"));
     const p = await connect();
-    await p.waitForSelector("#password, #phone, text=Вход в кабинет", { timeout: 90000 });
+    await p
+      .waitForFunction(() => Boolean(document.querySelector("#password, #phone")) || /Вход в кабинет|Нет связи/.test(document.body?.innerText ?? ""), null, { timeout: 90000 })
+      .catch((e) => note(`login form did not appear: ${String(e).slice(0, 120)}; url ${p.url()}`));
     s.data.loginVisibleMs = Date.now() - started;
     await sleep(1200);
     s.shots.push(shot("cold-start-login"));
@@ -370,6 +374,12 @@ async function main() {
   if (MODE !== "full") {
     await scenario("PROD smoke: https://wesetup.ru/mini/login in the release config", async (s) => {
       const p = page;
+      s.data.timeline = [];
+      for (let i = 0; i < 20 && !p.url().startsWith("https://wesetup.ru/mini/login"); i++) {
+        s.data.timeline.push({ t: i * 2, url: p.url(), text: await p.evaluate(() => document.body?.innerText.slice(0, 120)).catch((e) => String(e).slice(0, 80)) });
+        await sleep(2000);
+      }
+      s.data.fetch = await p.evaluate(async () => { try { const r = await fetch("https://wesetup.ru/mini/login", { mode: "no-cors" }); return r.type + " " + r.status; } catch (e) { return String(e); } }).catch((e) => String(e));
       check(p.url().startsWith("https://wesetup.ru/mini/login"), `url ${p.url()}`);
       s.shots.push(shot("prod-login"));
       note(p.url());
@@ -875,6 +885,8 @@ async function main() {
   });
 
   await scenario("10 Offline: relaunch without network -> «Нет связи» -> network on -> «Повторить»", async (s) => {
+    // Копия сайта идёт через adb reverse, мимо сети телефона: снимаем и его.
+    adb(["reverse", "--remove", "tcp:3000"]);
     sh("cmd connectivity airplane-mode enable");
     sh("svc wifi disable");
     sh("svc data disable");
@@ -890,6 +902,7 @@ async function main() {
     check(/Нет связи с интернетом/.test(s.data.offlineText), `offline page not shown: ${s.data.offlineUrl} «${s.data.offlineText}»`);
     // «Повторить» без сети — остаёмся на экране, без зависания
     sh("cmd connectivity airplane-mode disable");
+    adb(["reverse", "tcp:3000", "tcp:3000"]);
     sh("svc wifi enable");
     sh("svc data enable");
     await sleep(8000);
