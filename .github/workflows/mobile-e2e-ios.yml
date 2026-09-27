@@ -1,0 +1,278 @@
+# Проверка приложения WeSetup для iOS в симуляторе на копии сайта внутри CI.
+# Только ветка mobile-e2e-ios (не master: push в master выкатывает прод).
+# Сайт собирается на дешёвом ubuntu (там же быстрая проверка копии сайта), macOS
+# запускается только при «[ios]» в сообщении коммита: минуты macOS в 10 раз дороже.
+name: iOS — проверка приложения в симуляторе
+
+on:
+  push:
+    branches: [mobile-e2e-ios]
+  workflow_dispatch:
+
+concurrency:
+  group: mobile-e2e-ios
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/wesetup_e2e?sslmode=disable
+  NEXTAUTH_URL: https://localhost:3000
+  NEXTAUTH_SECRET: ci-e2e-only-secret-4d1f0c2b7a9e
+  INTEGRATION_KEY_SECRET: ci-e2e-only-integration-secret
+  TELEGRAM_BOT_TOKEN: "000000:ci-fake"
+  TELEGRAM_BOT_USERNAME: wesetupbot
+  TELEGRAM_LINK_TOKEN_SECRET: ci-fake
+  TELEGRAM_WEBHOOK_SECRET: ci-fake
+  CRON_SECRET: ci-fake
+  SMTP_HOST: 127.0.0.1
+  SMTP_PORT: "2525"
+  SMTP_FROM: "WeSetup <noreply@localhost>"
+  PLATFORM_ORG_ID: platform
+  T: .agent/tasks/mobile-e2e-ios-2026-09
+
+jobs:
+  site:
+    name: Сайт — сборка и проверка копии
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: wesetup_e2e
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - run: npm ci --no-fund --no-audit
+
+      - name: Prisma и база
+        run: |
+          npx prisma generate
+          bash $T/ci-db.sh ci-ids.json
+
+      - uses: actions/cache@v5
+        with:
+          path: .next/cache
+          key: next-e2e-ios-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
+          restore-keys: next-e2e-ios-${{ hashFiles('package-lock.json') }}-
+
+      - name: Сборка сайта
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
+        run: npm run build 2>&1 | tail -40
+
+      - name: Сертификаты HTTPS для localhost
+        run: |
+          mkdir -p tls && cd tls
+          openssl req -x509 -newkey rsa:2048 -nodes -keyout ca.key -out ca.pem -days 30 -sha256 \
+            -subj "/CN=WeSetup E2E CA" -addext "basicConstraints=critical,CA:TRUE" -addext "keyUsage=critical,keyCertSign,cRLSign"
+          openssl req -newkey rsa:2048 -nodes -keyout server.key -out server.csr -subj "/CN=localhost"
+          printf "subjectAltName=DNS:localhost,IP:127.0.0.1\nextendedKeyUsage=serverAuth\nkeyUsage=critical,digitalSignature,keyEncipherment\nbasicConstraints=CA:FALSE\n" > ext.cnf
+          openssl x509 -req -in server.csr -CA ca.pem -CAkey ca.key -CAcreateserial -out server.pem -days 30 -sha256 -extfile ext.cnf
+          rm -f ca.key server.csr ext.cnf ca.srl
+          openssl x509 -in server.pem -noout -subject -ext subjectAltName
+
+      - name: Проверка копии сайта (HTTPS, вход шефа)
+        run: |
+          NODE_ENV=production TLS_KEY=tls/server.key TLS_CERT=tls/server.pem PORT=3000 \
+            nohup node $T/https-server.cjs > server.log 2>&1 &
+          UA="Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 WeSetupApp/1.0.0 (ios)"
+          for i in $(seq 1 90); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --cacert tls/ca.pem -A "$UA" https://localhost:3000/mini/login || true)
+            [ "$code" = "200" ] && break; sleep 2
+          done
+          echo "GET /mini/login -> $code"; [ "$code" = "200" ]
+          curl -s --cacert tls/ca.pem -A "$UA" -c jar.txt -o login.json -w "login %{http_code}\n" \
+            -H "Content-Type: application/json" -d '{"email":"chef@cafe-demo.local","password":"DemoShots2026!"}' \
+            https://localhost:3000/api/auth/login
+          cat login.json; echo; grep -c "session-token" jar.txt
+          curl -s --cacert tls/ca.pem -A "$UA" -b jar.txt -o mini.html -w "GET /mini %{http_code}\n" https://localhost:3000/mini?src=app
+          grep -o "mini-topbar\|mini-nav-rail\|WeSetup" mini.html | sort | uniq -c
+          tar -czf next-build.tgz --exclude=.next/cache .next
+          ls -la next-build.tgz
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: site-build
+          path: |
+            next-build.tgz
+            tls/
+            ci-ids.json
+          retention-days: 3
+          if-no-files-found: error
+
+      - if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: site-logs
+          path: |
+            server.log
+            ci-ids.json
+          retention-days: 7
+          if-no-files-found: ignore
+
+  ios:
+    name: iOS — приложение в симуляторе
+    needs: site
+    if: contains(github.event.head_commit.message, '[ios]') || github.event_name == 'workflow_dispatch'
+    runs-on: macos-26
+    timeout-minutes: 45
+    env:
+      STATE: ${{ github.workspace }}/e2e-state
+      LOGS: ${{ github.workspace }}/e2e-logs
+      OUT_DIR: ${{ github.workspace }}/e2e-out
+      APP_URL: https://localhost:3000/mini?src=app
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            mobile/package-lock.json
+
+      - name: Фон — симулятор, Appium, WebDriverAgent; сборка приложения
+        run: |
+          mkdir -p "$STATE" "$LOGS" "$OUT_DIR"
+          sw_vers; xcodebuild -version; node -v
+          nohup bash $T/ios-sim-prep.sh > "$LOGS/sim-prep.log" 2>&1 &
+          nohup bash $T/ios-app-build.sh > "$LOGS/app-build.log" 2>&1 &
+          sleep 2; echo started
+
+      - name: PostgreSQL
+        run: |
+          PGBIN=""
+          for v in 17 16 15 14; do
+            p="$(brew --prefix postgresql@$v 2>/dev/null)/bin"
+            if [ -x "$p/initdb" ]; then PGBIN="$p"; break; fi
+          done
+          if [ -z "$PGBIN" ]; then brew install postgresql@17 >/dev/null; PGBIN="$(brew --prefix postgresql@17)/bin"; fi
+          echo "PGBIN=$PGBIN"
+          "$PGBIN/initdb" -D "$STATE/pg" -U postgres -A trust -E UTF8 --locale=C > "$LOGS/initdb.log"
+          "$PGBIN/pg_ctl" -D "$STATE/pg" -l "$LOGS/postgres.log" -o "-p 5432 -k /tmp" -w start
+          "$PGBIN/createdb" -h localhost -p 5432 -U postgres wesetup_e2e
+
+      - run: npm ci --no-fund --no-audit
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: site-build
+          path: site-build
+
+      - name: База копии сайта
+        run: |
+          tar -xzf site-build/next-build.tgz
+          cp -R site-build/tls tls
+          npx prisma generate
+          bash $T/ci-db.sh ci-ids.json
+
+      - name: Сайт по HTTPS на localhost:3000
+        run: |
+          cat > "$STATE/server-start.sh" <<EOS
+          cd "$GITHUB_WORKSPACE"
+          NODE_ENV=production TLS_KEY=tls/server.key TLS_CERT=tls/server.pem PORT=3000 nohup node $T/https-server.cjs >> "$LOGS/server.log" 2>&1 &
+          echo \$! > "$STATE/server.pid"
+          EOS
+          cat > "$STATE/server-stop.sh" <<EOS
+          kill \$(cat "$STATE/server.pid") 2>/dev/null || true
+          sleep 1
+          lsof -ti tcp:3000 | xargs kill -9 2>/dev/null || true
+          EOS
+          bash "$STATE/server-start.sh"
+          for i in $(seq 1 90); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --cacert tls/ca.pem https://localhost:3000/mini/login || true)
+            [ "$code" = "200" ] && break; sleep 2
+          done
+          echo "GET /mini/login -> $code"; [ "$code" = "200" ] || { tail -50 "$LOGS/server.log"; exit 1; }
+
+      - name: Ждём симулятор и сборку приложения
+        timeout-minutes: 25
+        run: |
+          while true; do
+            if [ -f "$STATE/sim.fail" ]; then echo "::error::симулятор/Appium не готов"; tail -60 "$LOGS/sim-prep.log"; exit 1; fi
+            if [ -f "$STATE/app.fail" ]; then echo "::error::сборка приложения упала"; tail -80 "$LOGS/app-build.log"; exit 1; fi
+            if [ -f "$STATE/sim.done" ] && [ -f "$STATE/app.done" ]; then break; fi
+            sleep 10
+          done
+          echo "== sim-prep"; tail -25 "$LOGS/sim-prep.log"
+          echo "== app-build"; cat "$LOGS/app-build.log" | tail -90
+
+      - name: Установка, корневой сертификат, заставка и холодный старт
+        run: |
+          UDID=$(cat "$STATE/udid")
+          echo "UDID=$UDID" >> "$GITHUB_ENV"
+          echo "Device: $(cat $STATE/device-name) $(cat $STATE/runtime)"
+          xcrun simctl keychain "$UDID" add-root-cert tls/ca.pem
+          xcrun simctl install "$UDID" "$STATE/App.app"
+          nohup xcrun simctl spawn "$UDID" log stream --style compact --level info \
+            --predicate 'process == "App" OR process CONTAINS "WebContent" OR process CONTAINS "Networking" OR eventMessage CONTAINS "ru.wesetup.app"' \
+            > "$LOGS/device.log" 2>&1 &
+          mkdir -p "$OUT_DIR/splash"
+          nohup xcrun simctl launch --console-pty "$UDID" ru.wesetup.app > "$LOGS/launch1-console.log" 2>&1 &
+          for i in $(seq -w 1 14); do xcrun simctl io "$UDID" screenshot "$OUT_DIR/splash/splash-$i.png" >/dev/null 2>&1; done
+          sleep 12
+          xcrun simctl io "$UDID" screenshot "$OUT_DIR/splash/cold-20s.png" >/dev/null 2>&1
+          echo "== console of first launch"; cat "$LOGS/launch1-console.log" | head -80
+          echo "Loading app at: $(grep -c 'Loading app at' "$LOGS/launch1-console.log" || true)"
+
+      - name: Appium
+        run: |
+          nohup appium --address 127.0.0.1 --port 4723 --log "$LOGS/appium.log" --log-level info --log-timestamp > /dev/null 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:4723/status >/dev/null && break; sleep 1; done
+          curl -s http://127.0.0.1:4723/status; echo
+          cd $T && npm init -y >/dev/null && npm install --no-save --no-fund --no-audit webdriverio@9 2>&1 | tail -2
+
+      - name: Сценарии
+        timeout-minutes: 26
+        env:
+          IDS_JSON: ${{ github.workspace }}/ci-ids.json
+          BASE_URL: https://localhost:3000
+          CA_PEM: ${{ github.workspace }}/tls/ca.pem
+          WDA_DD: ${{ github.workspace }}/e2e-state/wda
+          TEST_BUDGET_MIN: "23"
+        run: |
+          export SERVER_STOP_CMD="bash $STATE/server-stop.sh"
+          export SERVER_START_CMD="bash $STATE/server-start.sh"
+          export FIREBASE_INSTALL_CMD="xcrun simctl install $UDID $STATE/AppFB.app"
+          export PLAIN_INSTALL_CMD="xcrun simctl install $UDID $STATE/App.app"
+          cd $T && node ios-e2e.mjs 2>&1 | tee "$LOGS/test.log"
+
+      - name: Сбор логов
+        if: always()
+        run: |
+          cp -R ~/Library/Logs/DiagnosticReports "$LOGS/DiagnosticReports" 2>/dev/null || true
+          ls -la "$LOGS/DiagnosticReports" 2>/dev/null | grep -i -E "app|webkit" || echo "no crash reports"
+          grep -h -i -E "FATAL|crash|Terminating app|EXC_" "$LOGS/device.log" | head -40 || true
+          cp "$STATE"/*.log "$LOGS/" 2>/dev/null || true
+          [ -f "$OUT_DIR/results.json" ] && node -e '
+            const r = require(process.argv[1]);
+            const lines = ["| Сценарий | Итог | Не прошло |", "|---|---|---|"];
+            for (const s of r.results) lines.push(`| ${s.id} ${s.name} | ${s.status} | ${(s.checks||[]).filter(c=>!c.ok).map(c=>c.label).join("; ").slice(0,300)}${s.error? " ERR: "+s.error.split("\n")[0].slice(0,200):""} |`);
+            lines.push("", "crashes: " + JSON.stringify(r.crashes), "console errors: " + r.consoleErrors.length, "net failures: " + r.netFailures.length);
+            require("fs").appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join("\n") + "\n");
+            console.log(lines.join("\n"));
+          ' "$OUT_DIR/results.json" || echo "no results.json"
+
+      - if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-e2e-${{ github.run_number }}
+          path: |
+            ${{ github.workspace }}/e2e-out
+            ${{ github.workspace }}/e2e-logs
+          retention-days: 14
+          if-no-files-found: warn
