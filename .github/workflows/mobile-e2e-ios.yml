@@ -103,6 +103,26 @@ jobs:
           tar -czf next-build.tgz --exclude=.next/cache .next
           ls -la next-build.tgz
 
+      - name: Гидратация в WebKit и Chromium (User-Agent приложения iOS)
+        continue-on-error: true
+        timeout-minutes: 20
+        run: |
+          npx playwright install --with-deps webkit chromium > /dev/null 2>&1
+          BASE=https://localhost:3000 TAG=prod OUT=hydration-out npx tsx $T/hydration-check.ts 2>&1 | tail -80
+          NEXT_DIST_DIR=.next-dev NEXTAUTH_URL=http://localhost:3100 nohup npx next dev -p 3100 > dev.log 2>&1 &
+          for i in $(seq 1 90); do curl -s -o /dev/null http://localhost:3100/mini/login && break; sleep 2; done
+          BASE=http://localhost:3100 TAG=dev OUT=hydration-out npx tsx $T/hydration-check.ts 2>&1 | tail -120
+
+      - if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: hydration-${{ github.run_number }}
+          path: |
+            hydration-out/
+            dev.log
+          retention-days: 14
+          if-no-files-found: ignore
+
       - uses: actions/upload-artifact@v7
         with:
           name: site-build
