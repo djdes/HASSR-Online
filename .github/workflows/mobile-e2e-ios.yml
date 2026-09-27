@@ -100,6 +100,9 @@ jobs:
           cat login.json; echo; grep -c "session-token" jar.txt
           curl -s --cacert tls/ca.pem -A "$UA" -b jar.txt -o mini.html -w "GET /mini %{http_code}\n" https://localhost:3000/mini?src=app
           grep -o "mini-topbar\|mini-nav-rail\|WeSetup" mini.html | sort | uniq -c
+          # Раунд 4: у шефа (пресет «Администратор» в копии) в нижнем меню должна быть вкладка «Журналы».
+          curl -s --cacert tls/ca.pem -A "$UA" -b jar.txt -o dash.html -w "GET /dashboard %{http_code}\n" https://localhost:3000/dashboard
+          for l in Главная Журналы Разделы Профиль; do printf "%s: %s\n" "$l" "$(grep -o "\"label\":\"$l\"\|>$l<" dash.html | wc -l)"; done
           tar -czf next-build.tgz --exclude=.next/cache .next
           ls -la next-build.tgz
 

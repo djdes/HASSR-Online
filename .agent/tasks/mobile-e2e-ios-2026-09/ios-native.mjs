@@ -121,7 +121,7 @@ function pred({ type, label, contains, begins, value }) {
 
 async function all(spec, max = 30) {
   alive();
-  const els = await driver.$(`-ios predicate string:${pred(spec)}`);
+  const els = await driver.$$(`-ios predicate string:${pred(spec)}`);
   const out = [];
   for (const el of els.slice(0, max)) {
     alive();
@@ -139,7 +139,7 @@ async function all(spec, max = 30) {
 /** Подписи текстов, содержащие любое из слов, — один запрос. */
 async function textsWith(words) {
   const cond = words.map((w) => `label CONTAINS[c] ${q(w)}`).join(" OR ");
-  const els = await driver.$(`-ios predicate string:type == ${q(T.text)} AND (${cond})`);
+  const els = await driver.$$(`-ios predicate string:type == ${q(T.text)} AND (${cond})`);
   const out = [];
   for (const el of els.slice(0, 10)) out.push(await el.getAttribute("label").catch(() => null));
   return out.filter(Boolean);
@@ -161,11 +161,11 @@ async function tapXY(x, y) {
   await driver.execute("mobile: tap", { x: Math.round(x), y: Math.round(y) });
 }
 
-async function drag(fromY, toY, x = Math.round(W.width * 0.62)) {
+async function drag(fromY, toY, x = Math.round(W.width * 0.62), velocity = 1400) {
   await driver.execute("mobile: dragFromToWithVelocity", {
     pressDuration: 0.05,
     holdDuration: 0.25,
-    velocity: 1400,
+    velocity,
     fromX: x,
     fromY: Math.round(fromY),
     toX: x,
@@ -210,9 +210,15 @@ async function tap(spec, { scrolls = 8, pick = "first", within = null, anywhere 
       return f;
     }
     if (found.length && i < scrolls) {
+      // Листаем ровно на расстояние до цели (раунд 3: полный экран перелетал тему
+      // оформления в профиле туда-обратно, пока не кончилось время).
       const f = found[0];
-      if (f.r.y + f.r.height / 2 > band().bottom) await scrollDown();
-      else await scrollUp();
+      const bb = band();
+      const mid = (bb.top + bb.bottom) / 2;
+      const delta = f.r.y + f.r.height / 2 - mid;
+      const dist = Math.max(120, Math.min(Math.abs(delta), W.height * 0.45));
+      if (delta > 0) await drag(mid + dist / 2, mid - dist / 2, undefined, 700);
+      else await drag(mid - dist / 2, mid + dist / 2, undefined, 700);
       continue;
     }
     if (!found.length && i < scrolls && Date.now() > end - timeout / 2) {
@@ -326,7 +332,7 @@ async function softClear(el) {
   const rr = await driver.getElementRect(el.elementId);
   await tapXY(rr.x + rr.width * 0.72, rr.y + rr.height / 2); // курсор в конец текста
   await sleep(400);
-  const del = await driver.$(`-ios predicate string:type == "XCUIElementTypeKey" AND (name == "delete" OR label IN {"delete","удалить","Удалить"})`);
+  const del = await driver.$$(`-ios predicate string:type == "XCUIElementTypeKey" AND (name == "delete" OR label IN {"delete","удалить","Удалить"})`);
   const kb = await keyboard();
   const d = del.length ? await driver.getElementRect(del[0].elementId).catch(() => null) : null;
   if (kb && d && d.y < W.height) {
@@ -345,7 +351,7 @@ async function pressReturn(el) {
   if (kb) {
     const names = ["return", "Return", "next", "Next", "Next:", "go", "Go", "Go:", "done", "Done", "search", "Search", "Далее", "Перейти", "Готово", "Найти", "Ввод", "Возврат"];
     const list = names.map(q).join(",");
-    const els = await driver.$(`-ios predicate string:type IN {"XCUIElementTypeButton","XCUIElementTypeKey"} AND (label IN {${list}} OR name IN {${list}})`);
+    const els = await driver.$$(`-ios predicate string:type IN {"XCUIElementTypeButton","XCUIElementTypeKey"} AND (label IN {${list}} OR name IN {${list}})`);
     for (const e of els) {
       const rr = await driver.getElementRect(e.elementId).catch(() => null);
       if (rr && rr.y >= kb.y - 2 && rr.y < W.height) {
@@ -493,6 +499,9 @@ const consoleFiles = () =>
     .filter((f) => /^launch\d+-console\.log$/.test(f))
     .map((f) => path.join(LOGS, f));
 const consoleSeen = new Map();
+// Сборка App.app в CI — без GoogleService-Info.plist (секретов нет): плагин push пишет
+// «Firebase is not configured». Это условие стенда, не ошибка страницы — считаем отдельно.
+const FIREBASE_CI = /Firebase is not configured: GoogleService-Info.plist is missing/;
 const ERR_RX = /Minified React error|#418|#419|#423|#425|Hydration|hydrat|STARTUP JS ERROR|\[error\]|Uncaught|Unhandled|TypeError|ReferenceError|SyntaxError/i;
 function consoleNews() {
   const out = [];
@@ -501,7 +510,7 @@ function consoleNews() {
     const from = consoleSeen.get(f) ?? 0;
     const lines = txt.slice(from).split("\n");
     consoleSeen.set(f, txt.length);
-    for (const l of lines) if (ERR_RX.test(l)) out.push(`${path.basename(f)}: ${l.slice(0, 400)}`);
+    for (const l of lines) if (ERR_RX.test(l) && !FIREBASE_CI.test(l)) out.push(`${path.basename(f)}: ${l.slice(0, 400)}`);
   }
   return out;
 }
@@ -525,7 +534,8 @@ const HOME_ZONE = 34; // полоска «домой»
 async function layoutCheck(ctx, name, xml) {
   xml = xml || (await source(`${ctx.r.id}-${name}`));
   const els = elementsOf(xml).filter((e) => e.w > 0 && e.h > 0 && e.type !== "Other" && e.type !== "Image");
-  const onScreen = els.filter((e) => e.y + e.h > 0 && e.y < W.height);
+  // visible="false" — WebKit сам считает элемент скрытым (прокручен под шапку, за край ленты).
+  const onScreen = els.filter((e) => e.y + e.h > 0 && e.y < W.height && e.visible !== "false");
   const underIsland = onScreen.filter((e) => e.y < ISLAND_BOTTOM && e.y + e.h > 8 && e.label);
   const nav = onScreen.filter((e) => e.type === "Link" && ["Главная", "Журналы", "Разделы", "Профиль", "Сегодня"].includes(e.label) && e.y > W.height - 160);
   const navLow = nav.filter((e) => e.y + e.h > W.height - HOME_ZONE + 1);
@@ -570,7 +580,9 @@ async function scenario(id, name, fn, timeoutMs = 300000) {
     return;
   }
   try {
-    await withTimeout(als.run(ctx, () => fn(ctx)), timeoutMs * SLOW, `${id}: не уложился в ${(timeoutMs * SLOW) / 1000} с`);
+    const lim = Math.min(timeoutMs * SLOW, Math.max(45000, DEADLINE - Date.now()));
+    r.limitMs = lim;
+    await withTimeout(als.run(ctx, () => fn(ctx)), lim, `${id}: не уложился в ${lim / 1000} с`);
     if (r.status === "RUNNING") r.status = r.checks.every((c) => c.ok) ? "PASS" : "FAIL";
   } catch (e) {
     r.status = "FAIL";
@@ -889,6 +901,7 @@ async function ready(ctx) {
 async function profileTheme(ctx, name) {
   await tab("Профиль");
   await waitText({ type: "text", label: "Профиль" }, 20000);
+  await toTop();
   const t = await tap({ type: ["other", "button"], begins: name }, { scrolls: 8 });
   ctx.d[`theme_${name}`] = t?.label;
   await sleep(1500);
@@ -932,6 +945,15 @@ async function sectionsGo(label) {
   return tap({ type: "link", contains: label }, { scrolls: 3, within: (r) => r.y < W.height - 170, settle: 3000 * SLOW });
 }
 
+// Порядок раунда 4: вход, затем самое ценное; S12 — всегда последним.
+const ORDER = (env.ORDER || "S01,S02,S03a,S04,S05,S07,S08,S06,S09,S10,S11,S03b,S12").split(",");
+// Потолок на сценарий (мс); общий бюджет — TEST_BUDGET_MIN.
+const LIMITS = { S01: 90000, S02: 300000, S03a: 420000, S03b: 360000, S04: 180000, S05: 240000, S06: 200000, S07: 200000, S08: 240000, S09: 120000, S10: 150000, S11: 240000, S12: 60000 };
+const plan = new Map();
+function def(id, name, fn, timeoutMs) {
+  plan.set(id, { name, fn, timeoutMs: LIMITS[id] ?? timeoutMs ?? 300000 });
+}
+
 async function main() {
   const caps = {
     platformName: "iOS",
@@ -960,6 +982,7 @@ async function main() {
   meta.caps = caps;
   driver = await remote({ hostname: "127.0.0.1", port: 4723, path: "/", logLevel: "warn", connectionRetryTimeout: 900000, connectionRetryCount: 1, capabilities: caps });
   log("session", driver.sessionId);
+  driver.options.connectionRetryTimeout = 150000;
   await driver.updateSettings({ snapshotMaxDepth: 62, customSnapshotTimeout: 30, pageSourceExcludedAttributes: "", waitForIdleTimeout: 0, animationCoolOffTimeout: 0 }).catch((e) => log("settings", e.message));
   await driver.execute("mobile: activateApp", { bundleId: BUNDLE });
   await sleep(1500);
@@ -968,7 +991,7 @@ async function main() {
   consoleNews(); // строки первого запуска разберёт S01 отдельно
 
   // 1. Холодный запуск (первый — в workflow до Appium; здесь — состояние и повторный замер)
-  await scenario("S01", "Холодный запуск: сразу экран входа, без клавиатуры и стрелки «назад»", async (ctx) => {
+  def("S01", "Холодный запуск: сразу экран входа, без клавиатуры и стрелки «назад»", async (ctx) => {
     ctx.shot("state-after-first-launch");
     const xml = await source("S01-first");
     ctx.check("первый запуск: экран входа «Вход в кабинет»", await onLogin());
@@ -985,42 +1008,11 @@ async function main() {
       ctx.d.launch1Errors = txt.split("\n").filter((l) => ERR_RX.test(l)).slice(0, 20);
       ctx.d.launch1Bridges = (txt.match(/Loading app at/g) || []).length;
     }
-    // Повторный холодный запуск с замером: запуск → «Вход в кабинет» в дереве.
-    await driver.execute("mobile: terminateApp", { bundleId: BUNDLE });
-    await sleep(1500);
-    const { t0 } = launchWithConsole();
-    // Кадры simctl в фоне — не зависят от того, как быстро отвечает Appium при запуске.
-    const framesDir = path.join(OUT, "S01-frames");
-    fs.mkdirSync(framesDir, { recursive: true });
-    spawn("bash", ["-c", `s=$(perl -MTime::HiRes=time -e 'printf q(%.3f), time'); for i in $(seq 1 30); do n=$(perl -MTime::HiRes=time -e "printf q(%05d), (time-$s)*1000"); xcrun simctl io ${UDID} screenshot ${framesDir}/t$n.png >/dev/null 2>&1; sleep 0.6; done`], { detached: true, stdio: "ignore" }).unref();
-    const frames = [];
-    let loginAt = null;
-    let sawOpening = false;
-    while (Date.now() - t0 < 25000) {
-      const dt = Date.now() - t0;
-      if (frames.length < 6 && dt > frames.length * 700) frames.push(ctx.shot(`relaunch-${String(dt).padStart(5, "0")}ms`));
-      try {
-        if (await has({ contains: "Открываем" })) sawOpening = true;
-        if (await onLogin()) {
-          loginAt = Date.now() - t0;
-          break;
-        }
-      } catch {
-        /* приложение ещё запускается */
-      }
-      await sleep(250);
-    }
-    ctx.shot("relaunch-login");
-    ctx.d.relaunchToLoginMs = loginAt;
-    ctx.d.relaunchUnder8s = loginAt != null && loginAt < 8000;
-    ctx.check("повторный запуск: экран входа появился (до 20 с на CI; кадры — S01-frames/)", loginAt != null && loginAt < 20000 * SLOW, loginAt);
-    ctx.check("повторный запуск: «Открываем кабинет…» не показывался", !sawOpening);
-    await sleep(1500);
-    ctx.check("повторный запуск: клавиатура не открылась сама", !(await keyboard()));
+    // Повторный замер холодного запуска доказан в раунде 3 — в раунде 4 не повторяем.
   });
 
   // 2. Вход шефа и уведомления
-  await scenario("S02", "Вход по «Почте» (клавиатура не закрывает «Войти»), лист уведомлений, разрешение iOS", async (ctx) => {
+  def("S02", "Вход по «Почте» (клавиатура не закрывает «Войти»), лист уведомлений, разрешение iOS", async (ctx) => {
     if (!(await onLogin())) {
       // S01 мог оставить приложение не на входе — перезапуск.
       await recover();
@@ -1096,19 +1088,19 @@ async function main() {
     ctx.shot(`profile-${theme}`);
     await layoutCheck(ctx, `profile-${theme}`);
   };
-  await scenario("S03a", "Основные экраны — светлая тема", async (ctx) => {
+  def("S03a", "Основные экраны — светлая тема", async (ctx) => {
     await ready(ctx);
     await profileTheme(ctx, "Светлая");
     await screenPass(ctx, "light");
   }, 480000);
-  await scenario("S03b", "Основные экраны — тёмная тема", async (ctx) => {
+  def("S03b", "Основные экраны — тёмная тема", async (ctx) => {
     await ready(ctx);
     await profileTheme(ctx, "Тёмная");
     await screenPass(ctx, "dark");
   }, 480000);
 
   // 4. Печать документа
-  await scenario("S04", "Печать документа журнала: системное окно печати iOS", async (ctx) => {
+  def("S04", "Печать документа журнала: системное окно печати iOS", async (ctx) => {
     await ready(ctx);
     const ok = await openJournal(ctx, "уборки", "Журнал уборки", IDS.docs?.cleaning?.title);
     ctx.check("документ уборки открыт", ok);
@@ -1155,7 +1147,7 @@ async function main() {
     ctx.shot(`${tag}-closed`);
     ctx.check(`${tag}: лист закрылся, приложение живо`, (await appState()) === 4 && !(await has({ contains: "AirDrop" })));
   };
-  await scenario("S05", "Скачивание отчёта Excel и PDF: лист «Поделиться» с понятным именем файла", async (ctx) => {
+  def("S05", "Скачивание отчёта Excel и PDF: лист «Поделиться» с понятным именем файла", async (ctx) => {
     await ready(ctx);
     await sectionsGo("Отчёт");
     const form = await waitFor(() => has({ contains: "Выберите журнал" }), 30000 * SLOW);
@@ -1175,7 +1167,7 @@ async function main() {
   }, 360000);
 
   // 6. Внешние ссылки
-  await scenario("S06", "Ссылки: почта (mailto) и чужой сайт — системе; приложение остаётся рабочим", async (ctx) => {
+  def("S06", "Ссылки: почта (mailto) и чужой сайт — системе; приложение остаётся рабочим", async (ctx) => {
     await ready(ctx);
     await sectionsGo("Отчёт");
     await waitFor(() => has({ type: "link", contains: "Поделиться по email" }), 30000 * SLOW);
@@ -1212,7 +1204,7 @@ async function main() {
   });
 
   // 7. Фото
-  await scenario("S07", "Фото в журнале: системный выбор (камера / медиатека / файлы) и отмена", async (ctx) => {
+  def("S07", "Фото в журнале: системный выбор (камера / медиатека / файлы) и отмена", async (ctx) => {
     await ready(ctx);
     await tab("Журналы");
     await waitFor(() => has({ type: "field", label: "Поиск по журналам" }), 30000 * SLOW);
@@ -1262,7 +1254,7 @@ async function main() {
   });
 
   // 8. Голос
-  await scenario("S08", "Голосовой ввод (текстовое поле и температура холодильника): разрешения и итог без зависания", async (ctx) => {
+  def("S08", "Голосовой ввод (текстовое поле и температура холодильника): разрешения и итог без зависания", async (ctx) => {
     await ready(ctx);
     const tryMic = async (tag) => {
       const before = await source(`S08-${tag}-before`);
@@ -1312,7 +1304,7 @@ async function main() {
   }, 360000);
 
   // 9. Жест «назад»
-  await scenario("S09", "Жест «назад» от левого края возвращает на предыдущий экран", async (ctx) => {
+  def("S09", "Жест «назад» от левого края возвращает на предыдущий экран", async (ctx) => {
     await ready(ctx);
     await tab("Разделы");
     await waitText({ type: "text", label: "Все разделы" });
@@ -1336,7 +1328,7 @@ async function main() {
   });
 
   // 10. Выход
-  await scenario("S10", "Выход из профиля → экран входа", async (ctx) => {
+  def("S10", "Выход из профиля → экран входа", async (ctx) => {
     await ready(ctx);
     const ok = await logout(ctx);
     await sleep(1500);
@@ -1347,7 +1339,7 @@ async function main() {
   });
 
   // 11. Удаление аккаунта одноразового повара
-  await scenario("S11", "Удаление аккаунта одноразового повара → «Аккаунт удалён» на входе", async (ctx) => {
+  def("S11", "Удаление аккаунта одноразового повара → «Аккаунт удалён» на входе", async (ctx) => {
     await dismissSheets();
     if (!(await onLogin())) {
       ctx.d.loggedOutFirst = true;
@@ -1381,7 +1373,7 @@ async function main() {
   });
 
   // 12. Консоль
-  await scenario("S12", "Консоль: нет ошибок React (#418 и др.) и необработанных ошибок JS", async (ctx) => {
+  def("S12", "Консоль: нет ошибок React (#418 и др.) и необработанных ошибок JS", async (ctx) => {
     await sleep(1000);
     const files = consoleFiles();
     const per = {};
@@ -1391,7 +1383,8 @@ async function main() {
         lines: txt.split("\n").length,
         react: txt.split("\n").filter((l) => /Minified React error|#418|Hydration/i.test(l)).slice(0, 10),
         startup: txt.split("\n").filter((l) => /STARTUP JS ERROR/.test(l)).length,
-        errors: txt.split("\n").filter((l) => /\[error\]|Uncaught|Unhandled|TypeError|ReferenceError/.test(l)).slice(0, 25),
+        errors: txt.split("\n").filter((l) => /\[error\]|Uncaught|Unhandled|TypeError|ReferenceError/.test(l) && !FIREBASE_CI.test(l)).slice(0, 25),
+        firebaseNotConfigured: txt.split("\n").filter((l) => FIREBASE_CI.test(l)).length,
       };
     }
     ctx.d.console = per;
@@ -1402,6 +1395,11 @@ async function main() {
     ctx.check("нет необработанных ошибок JS", errs.length === 0, errs);
   });
 
+  meta.order = ORDER;
+  for (const id of ORDER) {
+    const p = plan.get(id);
+    if (p) await scenario(id, p.name, p.fn, p.timeoutMs);
+  }
   meta.ended = new Date().toISOString();
   save();
 }
