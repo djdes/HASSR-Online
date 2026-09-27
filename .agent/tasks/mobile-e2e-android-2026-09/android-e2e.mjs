@@ -1134,6 +1134,7 @@ async function main() {
     const code = (ids.formTextJournals ?? [])[0];
     s.data.code = code ?? null;
     s.data.enabledByHarness = ids.formJournalEnabledByHarness ?? null;
+    s.data.templateCreatedByHarness = ids.formTemplateCreatedByHarness ?? null;
     if (!check(Boolean(code), "no journal with a «Новая запись» form and a text field in ids.formTextJournals")) return;
     await goto(p, `/journals/${code}/new`);
     const ta = p.locator("form textarea").first();

@@ -41,6 +41,27 @@ async function main() {
     .filter((t) => Array.isArray(t.fields) && (t.fields as Array<{ type?: string; showIf?: unknown }>).some((f) => ["text", "textarea"].includes(String(f?.type)) && !f?.showIf))
     .map((t) => t.code)
     .sort((a, b) => (a === "ccp_monitoring" ? -1 : b === "ccp_monitoring" ? 1 : 0));
+  // Свежий сидер создаёт только активный каталог (45 журналов), и все они
+  // заполняются в документе — форма `/journals/<code>/new` в CI недостижима.
+  // На проде остались строки прежних журналов (isActive=false), например
+  // «Мониторинг ККТ»: страница /new их открывает. Воспроизводим такую строку.
+  let formTemplateCreatedByHarness: string | null = null;
+  if (!formCandidates.length) {
+    const fields = [
+      { key: "ccpName", label: "Название ККТ", type: "text", required: true },
+      { key: "controlParameter", label: "Параметр контроля", type: "text", required: true },
+      { key: "criticalLimit", label: "Критический предел", type: "text", required: true },
+      { key: "actualValue", label: "Фактическое значение", type: "text", required: true },
+      { key: "withinLimit", label: "В пределах нормы", type: "boolean", required: true },
+    ];
+    await db.journalTemplate.upsert({
+      where: { code: "ccp_monitoring" },
+      update: {},
+      create: { code: "ccp_monitoring", name: "Мониторинг ККТ", description: "Журнал мониторинга критических контрольных точек", sortOrder: 5, isMandatorySanpin: false, isMandatoryHaccp: true, fields, isActive: false },
+    });
+    formTemplateCreatedByHarness = "ccp_monitoring";
+    formCandidates.push("ccp_monitoring");
+  }
   let formTextJournals = formCandidates.filter((c) => !disabled.has(c));
   let formJournalEnabledByHarness: string | null = null;
   if (!formTextJournals.length && formCandidates.length) {
@@ -51,7 +72,7 @@ async function main() {
   }
   console.log(
     JSON.stringify(
-      { organizationId: org.id, docs: byCode, textJournals: withField(["text", "textarea"]), photoJournals: withField(["photo"]), formTextJournals, formJournalEnabledByHarness },
+      { organizationId: org.id, docs: byCode, textJournals: withField(["text", "textarea"]), photoJournals: withField(["photo"]), formTextJournals, formJournalEnabledByHarness, formTemplateCreatedByHarness },
       null,
       2
     )
