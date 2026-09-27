@@ -192,6 +192,58 @@ test("показание дисплея: не читается — value null, �
   assert.equal(normalizeReadingValue(" - 2.0 "), -2);
 });
 
+test("тип прибора: цифровой — число как есть, стрелочный и жидкостный — до целого градуса и не выше medium", async () => {
+  const { parseReadingReply } = await import("@/lib/ai-vision/parse");
+  // Ответы в формате инструкции 2026-09-27 (device, seen, value, unit, confidence).
+  assert.deepEqual(
+    parseReadingReply('{"device":"digital","seen":"минус, 2, 6, точка, 3","value":-26.3,"unit":"C","confidence":"high"}'),
+    { value: -26.3, unit: "C", confidence: "high", device: "digital" }
+  );
+  assert.deepEqual(
+    parseReadingReply('{"device":"dial","seen":"стрелка между -10 и -20, ближе к -20","value":-18.6,"unit":"C","confidence":"high"}'),
+    { value: -19, unit: "C", confidence: "medium", device: "dial" }
+  );
+  assert.deepEqual(
+    parseReadingReply('{"device":"liquid","seen":"верх столбика между 20 и 30, два деления над 20","value":"22.4","unit":"°C","confidence":"medium"}'),
+    { value: 22, unit: "C", confidence: "medium", device: "liquid" }
+  );
+  // Половинки — от нуля в обе стороны, «−0» не бывает.
+  assert.equal(parseReadingReply('{"device":"dial","value":-18.5,"unit":"C","confidence":"low"}')?.value, -19);
+  assert.equal(parseReadingReply('{"device":"liquid","value":18.5,"unit":"C","confidence":"low"}')?.value, 19);
+  assert.ok(Object.is(parseReadingReply('{"device":"dial","value":-0.3,"unit":"C","confidence":"medium"}')?.value, 0));
+  // Неизвестный тип — поле не добавляется, число не округляется.
+  assert.deepEqual(parseReadingReply('{"device":"thermo","value":4.5,"unit":"C","confidence":"high"}'), {
+    value: 4.5,
+    unit: "C",
+    confidence: "high",
+  });
+  // Прибора нет — null, тип сохраняется для журнала сервера.
+  assert.deepEqual(parseReadingReply('{"device":"other","seen":"прибора на фото нет","value":null,"unit":null,"confidence":"low"}'), {
+    value: null,
+    unit: null,
+    confidence: "low",
+    device: "other",
+  });
+});
+
+test("сомнение, записанное моделью в seen, — не подставляем (проверено на живой модели: «-26 или -23» → value -23)", async () => {
+  const { parseReadingReply, parseReadingSeen, isHedgedReadingNote } = await import("@/lib/ai-vision/parse");
+  const hedged =
+    '{"device":"digital","seen":"минус, цифры 2, 6 (или 3) — дисплей показывает -26 или -23; средняя цифра читается неоднозначно","value":-23,"unit":"C","confidence":"medium"}';
+  assert.deepEqual(parseReadingReply(hedged), { value: null, unit: null, confidence: "low", device: "digital" });
+  // seen — только для журнала сервера: в ответ клиенту не попадает.
+  assert.equal(parseReadingSeen(hedged)?.startsWith("минус, цифры 2, 6"), true);
+  assert.equal("seen" in (parseReadingReply(hedged) ?? {}), false);
+  assert.equal(parseReadingSeen('{"value":4.5,"unit":"C","confidence":"high"}'), null);
+  assert.equal(parseReadingSeen(`{"value":1,"seen":"${"я".repeat(400)}"}`)?.length, 160);
+  for (const note of ["-26 или -23", "Или 8.4", "неоднозначно", "не уверен в знаке", "сомневаюсь в точке", "8.4?"]) {
+    assert.equal(isHedgedReadingNote(note), true, note);
+  }
+  for (const note of ["минус, 2, 6, точка, 3", "стрелка между -10 и -20, ближе к -20", "три одинаковых термометра", "", null, 42]) {
+    assert.equal(isHedgedReadingNote(note), false, String(note));
+  }
+});
+
 test("проверка фото: нормализация полей, valid только явное true", async () => {
   const { parsePhotoCheckReply } = await import("@/lib/ai-vision/parse");
   assert.deepEqual(parsePhotoCheckReply('```json\n{"valid":true,"confidence":0.91,"kind":"food","reason":"Тарелка супа, фото чёткое."}\n```'), {

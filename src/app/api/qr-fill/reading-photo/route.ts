@@ -5,6 +5,7 @@ import { QR_FILL_RATE_LIMIT_ERROR, qrFillRateKey } from "@/lib/qr-fill-audit";
 import type { QrObjectKind } from "@/lib/qr-object-pass";
 import { authorizeQrReadingPhoto } from "@/lib/qr-reading-photo";
 import { qrFillRateLimiter, readingPhotoRateLimiter } from "@/lib/rate-limit";
+import { READING_PHOTO_DISABLED_CODE, READING_PHOTO_FIXATION_TEXT } from "@/lib/reading-photo-fixation";
 import { READING_PHOTO_MAX_BYTES, saveReadingPhoto } from "@/lib/reading-photo-store";
 
 export const runtime = "nodejs";
@@ -28,7 +29,9 @@ function text(form: FormData, key: string, max: number): string {
  * тарифы руководителю на бесплатном тарифе.
  *
  * Фото прикрепляется на любом тарифе — это доказательство замера, а не
- * платная возможность.
+ * платная возможность. Организация выключила «Фотофиксацию показаний» —
+ * 403 `photo_disabled` (кнопок в форме тогда нет; отказ — для открытой
+ * заранее страницы и прямых запросов).
  */
 export async function POST(request: Request) {
   let form: FormData;
@@ -65,6 +68,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
   const { actor } = auth;
+  if (!actor.photo.enabled) {
+    console.info(`[reading-photo] upload refused: fixation off org=${actor.organizationId} user=${actor.employee.id}`);
+    return NextResponse.json(
+      { error: READING_PHOTO_FIXATION_TEXT.disabledError, code: READING_PHOTO_DISABLED_CODE },
+      { status: 403 }
+    );
+  }
 
   const file = photo as File;
   if (file.size > READING_PHOTO_MAX_BYTES) {
@@ -91,7 +101,7 @@ export async function POST(request: Request) {
   }
 
   console.info(
-    `[reading-photo] saved kind=${kind} object=${objectId} org=${actor.organizationId} user=${actor.employee.id} kb=${Math.round(bytes.byteLength / 1024)} autofill=${actor.autofill ? 1 : 0}`
+    `[reading-photo] saved kind=${kind} object=${objectId} org=${actor.organizationId} user=${actor.employee.id} kb=${Math.round(bytes.byteLength / 1024)} autofill=${actor.autofill ? 1 : 0} required=${actor.photo.required ? 1 : 0}`
   );
   return NextResponse.json({ ok: true, url: saved.url, autofill: actor.autofill, tariffsHref: actor.tariffsHref });
 }

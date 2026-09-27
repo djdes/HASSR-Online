@@ -20,6 +20,8 @@ import {
 } from "@/lib/cold-equipment-document";
 import { readingPhotoExists } from "@/lib/reading-photo-store";
 import { isReadingPhotoUrl } from "@/lib/reading-photos";
+import { resolveReadingPhotoForSave } from "@/lib/reading-photo-fixation";
+import { getReadingPhotoSettings } from "@/lib/reading-photo-fixation.server";
 import {
   climateCorrectionKey,
   isClimateValueOutOfRange,
@@ -134,16 +136,6 @@ export async function POST(
     );
   }
 
-  // Фото — только к числу (у «обсл»/«рем» поля температуры нет) и только
-  // наша ссылка на снимок, который действительно лежит в каталоге.
-  const photo = temperature !== null && parsed.photo ? parsed.photo : null;
-  if (photo && !(isReadingPhotoUrl(photo) && (await readingPhotoExists(photo)))) {
-    return NextResponse.json(
-      { error: "Фото не найдено — снимите ещё раз или сохраните замер без фото" },
-      { status: 400 }
-    );
-  }
-
   const equipment = await db.equipment.findUnique({
     where: { id: equipmentId },
     include: {
@@ -193,6 +185,35 @@ export async function POST(
     return NextResponse.json(
       { error: "Сотрудник не найден" },
       { status: 404 }
+    );
+  }
+
+  // «Фотофиксация показаний» организации (2026-09-27): выключена — присланное
+  // фото не прикладываем; «Фото обязательно» — температура без снимка не
+  // принимается («обсл»/«рем» — без фото). Фото — только к числу и только
+  // наша ссылка на снимок, который действительно лежит в каталоге.
+  const photoSettings = await getReadingPhotoSettings(organizationId);
+  const photoDecision = resolveReadingPhotoForSave({
+    settings: photoSettings,
+    hasReading: temperature !== null,
+    photo: parsed.photo ?? null,
+  });
+  if (!photoDecision.ok) {
+    console.info(`[reading-photo] save refused: photo required equipment=${equipment.id} org=${organizationId} user=${employee.id}`);
+    return NextResponse.json({ code: photoDecision.code, error: photoDecision.error }, { status: photoDecision.status });
+  }
+  if (photoDecision.ignored) {
+    console.info(`[reading-photo] photo ignored: fixation off equipment=${equipment.id} org=${organizationId} user=${employee.id}`);
+  }
+  const photo = photoDecision.photo;
+  if (photo && !(isReadingPhotoUrl(photo) && (await readingPhotoExists(photo)))) {
+    return NextResponse.json(
+      {
+        error: photoSettings.required
+          ? "Фото не найдено — снимите ещё раз"
+          : "Фото не найдено — снимите ещё раз или сохраните замер без фото",
+      },
+      { status: 400 }
     );
   }
 

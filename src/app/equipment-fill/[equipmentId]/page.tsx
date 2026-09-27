@@ -18,6 +18,7 @@ import { UvLampClient } from "./uv-lamp-client";
 import { isUvLampType } from "@/lib/uv-lamp";
 import { lampState, listLampOperators } from "@/lib/uv-lamp-runs";
 import { hasPaidPlan } from "@/lib/plan-limits.server";
+import { getReadingPhotoSettings } from "@/lib/reading-photo-fixation.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -149,7 +150,7 @@ export default async function EquipmentFillPage({
   // «журнала на сегодня нет» до ввода, а не после «Сохранить» (409).
   const timezone = equipment.area.organization.timezone || "Europe/Moscow";
   const day = new Date(`${orgTodayKey(timezone, new Date())}T00:00:00.000Z`);
-  const [employees, targets, photoAutofill] = await Promise.all([
+  const [employees, targets, photoAutofill, photoFixation] = await Promise.all([
     db.user.findMany({
       where: { organizationId, ...ORG_ROSTER_WHERE },
       select: { id: true, name: true, role: true, positionTitle: true, qrPinHash: true, canManageSettings: true, jobPosition: { select: { name: true } } },
@@ -166,6 +167,8 @@ export default async function EquipmentFillPage({
     }),
     // «Фото» у температуры — всем; автоввод показания со снимка — на платном тарифе.
     hasPaidPlan(organizationId),
+    // «Фотофиксация показаний»: «Сфотографируйте показание» первым действием / выключена / фото обязательно.
+    getReadingPhotoSettings(organizationId),
   ]);
 
   // Смены объекта на наклейке нет (владелец, 2026-09-22): замер — только у
@@ -206,6 +209,7 @@ export default async function EquipmentFillPage({
       rememberedEmployeeId={qrMode === "auth" ? null : readRememberValue(organizationId, (await cookies()).get(rememberCookieName(organizationId))?.value)?.employeeId ?? null}
       passEmployeeId={passEmployeeId}
       photoAutofill={photoAutofill}
+      photoFixation={photoFixation}
       employees={(sessionEmployee && !sessionEmployee.canPickOthers
         ? employees.filter((e) => e.id === sessionEmployee!.id)
         : filterAllowedFillers(employees, equipment.fillerUserIds)

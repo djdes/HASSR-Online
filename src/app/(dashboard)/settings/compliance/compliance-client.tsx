@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
+import type { ReadingPhotoSettings } from "@/lib/reading-photo-fixation";
 
 /** Варианты ожидания перед эскалацией — в минутах. */
 const ESCALATION_OPTIONS = [30, 60, 120, 240] as const;
@@ -36,6 +37,10 @@ type Props = {
   initialEscalationMinutes: number;
   initialQrFillMode: QrFillModeValue;
   initialHealthQrRequired: boolean;
+  /** «Фотофиксация показаний» QR-форм холодильника и склада. */
+  initialReadingPhoto: ReadingPhotoSettings;
+  /** Платный тариф: цифры со снимка вписываются сами (иначе — только фото). */
+  readingPhotoAutofill: boolean;
 };
 
 type QrFillModeValue = "public" | "pin" | "auth";
@@ -76,8 +81,50 @@ export function ComplianceClient({
   initialEscalationMinutes,
   initialQrFillMode,
   initialHealthQrRequired,
+  initialReadingPhoto,
+  readingPhotoAutofill,
 }: Props) {
   const [qrFillMode, setQrFillMode] = useState<QrFillModeValue>(initialQrFillMode);
+  const [readingPhoto, setReadingPhoto] = useState<ReadingPhotoSettings>(initialReadingPhoto);
+  const [savingReadingPhoto, setSavingReadingPhoto] = useState(false);
+
+  // «Фотофиксация показаний» (2026-09-27): выключили — «обязательно» снимается
+  // тоже, включили «обязательно» — фотофиксация включается (так же на сервере).
+  async function handleReadingPhoto(patch: { readingPhotoEnabled?: boolean; readingPhotoRequired?: boolean }) {
+    if (savingReadingPhoto) return;
+    const previous = readingPhoto;
+    const enabled = patch.readingPhotoRequired === true ? true : patch.readingPhotoEnabled ?? previous.enabled;
+    const required = enabled ? patch.readingPhotoRequired ?? previous.required : false;
+    setReadingPhoto({ enabled, required });
+    setSavingReadingPhoto(true);
+    try {
+      const response = await fetch("/api/settings/compliance", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.error ?? "Не удалось сохранить");
+      const saved: ReadingPhotoSettings | null =
+        data?.readingPhoto && typeof data.readingPhoto.enabled === "boolean"
+          ? { enabled: data.readingPhoto.enabled, required: data.readingPhoto.required === true }
+          : null;
+      if (saved) setReadingPhoto(saved);
+      const now = saved ?? { enabled, required };
+      toast.success(
+        !now.enabled
+          ? "Фотофиксация выключена: показания вводят вручную, кнопки фото в QR-формах нет"
+          : now.required
+            ? "Фото обязательно: без снимка температуру по QR не сохранить"
+            : "Фотофиксация включена: в QR-формах первым идёт «Сфотографируйте показание»"
+      );
+    } catch (error) {
+      setReadingPhoto(previous);
+      toast.error(error instanceof Error ? error.message : "Ошибка сохранения");
+    } finally {
+      setSavingReadingPhoto(false);
+    }
+  }
   const [healthQr, setHealthQr] = useState(initialHealthQrRequired);
   const [savingHealthQr, setSavingHealthQr] = useState(false);
 
@@ -629,6 +676,51 @@ export function ComplianceClient({
                 data-testid="health-qr-required"
               />
             </label>
+            {/* Фотофиксация показаний: «Сфотографируйте показание» на наклейке
+                холодильника и плакате склада; вложенно — «Фото обязательно». */}
+            <div className="mt-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4" data-testid="reading-photo-settings">
+              <label className="flex cursor-pointer items-start justify-between gap-4">
+                <span className="min-w-0">
+                  <span className="flex items-center gap-2 text-[14px] font-semibold text-[#0b1024]">
+                    <Camera className="size-4 shrink-0 text-[#3848c7]" />
+                    Фотофиксация показаний
+                  </span>
+                  <span className="mt-1 block text-[13px] leading-[1.5] text-[#6f7282]">
+                    На наклейке холодильника и плакате склада первой идёт кнопка «Сфотографируйте показание»: снимок
+                    термометра или дисплея ложится в журнал рядом со значением.{" "}
+                    {readingPhotoAutofill
+                      ? "Цифры с фото вписываются сами — сотруднику остаётся проверить и сохранить."
+                      : "Цифры с фото вписываются сами на платном тарифе; сейчас сотрудник вводит их руками."}{" "}
+                    Не хочет фотографировать — «Ввести вручную». Выключите — кнопки фото пропадут.
+                  </span>
+                </span>
+                <Switch
+                  checked={readingPhoto.enabled}
+                  disabled={savingReadingPhoto}
+                  onCheckedChange={(value) => void handleReadingPhoto({ readingPhotoEnabled: value })}
+                  aria-label="Фотофиксация показаний"
+                  data-testid="reading-photo-enabled"
+                />
+              </label>
+              {readingPhoto.enabled ? (
+                <label className="mt-4 flex cursor-pointer items-start justify-between gap-4 border-t border-[#ececf4] pt-4">
+                  <span className="min-w-0">
+                    <span className="block text-[14px] font-semibold text-[#0b1024]">Фото обязательно</span>
+                    <span className="mt-1 block text-[13px] leading-[1.5] text-[#6f7282]">
+                      Без снимка температуру по QR не сохранить: фото подтверждает, что замер сделали у самого
+                      холодильника. «Обслуживание», «Ремонт» и влажность — без фото.
+                    </span>
+                  </span>
+                  <Switch
+                    checked={readingPhoto.required}
+                    disabled={savingReadingPhoto}
+                    onCheckedChange={(value) => void handleReadingPhoto({ readingPhotoRequired: value })}
+                    aria-label="Фото обязательно"
+                    data-testid="reading-photo-required"
+                  />
+                </label>
+              ) : null}
+            </div>
             {qrFillMode === "pin" ? (
               <p className="mt-3 text-[12.5px] leading-[1.5] text-[#a13a32]">
                 PIN задаётся в карточке сотрудника («Сотрудники → карточка → PIN для быстрой QR-авторизации») или на странице общего планшета — код один и тот же. Сотрудник без PIN записать по QR не сможет. В публичном режиме PIN тоже спрашивается у тех, кому он задан.

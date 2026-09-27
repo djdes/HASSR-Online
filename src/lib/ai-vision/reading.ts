@@ -1,5 +1,5 @@
 import { buildVisionInstruction } from "@/lib/ai-vision/instructions";
-import { parseReadingReply, type VisionReadingResult } from "@/lib/ai-vision/parse";
+import { isHedgedReadingNote, parseReadingReply, parseReadingSeen, type VisionReadingResult } from "@/lib/ai-vision/parse";
 import { runVisionJob } from "@/lib/ai-vision/run";
 import { acceptRecognizedReading, type ReadingMetric } from "@/lib/reading-photos";
 
@@ -13,6 +13,11 @@ import { acceptRecognizedReading, type ReadingMetric } from "@/lib/reading-photo
  * единица или невозможное значение — `value: null`, как нечитаемый снимок.
  * Выдумывать нельзя: пустое поле с просьбой ввести вручную лучше чужого
  * числа в журнале.
+ *
+ * С 2026-09-27 инструкция знает не только цифровые дисплеи, но и стрелочные
+ * и стеклянные (спиртовые, ртутные) термометры: модель называет тип прибора
+ * (`device`) и что видит (`seen`), разбор округляет аналог до целого градуса
+ * и отбрасывает число, в котором модель сама усомнилась (`parse.ts`).
  */
 
 const MESSAGES = {
@@ -50,6 +55,13 @@ export async function recognizeReading(input: {
         console.warn(`[ai-vision] reading reply without JSON: ${text.slice(0, 160)}`);
         return { value: null, rows: 0 };
       }
+      // Что модель увидела и что из этого взяли — по этой строке разбирают промахи
+      // (стрелочный/жидкостный — округлили, сомнение в seen — null).
+      const seen = parseReadingSeen(text);
+      console.info(
+        `[ai-vision] reading device=${parsed.device ?? "-"} value=${parsed.value ?? "null"} confidence=${parsed.confidence}` +
+          `${seen && isHedgedReadingNote(seen) ? " hedged=1" : ""}${seen ? ` seen="${seen.replace(/"/g, "'")}"` : ""}`
+      );
       if (!metric) return { value: parsed, rows: parsed.value !== null ? 1 : 0 };
       const value = acceptRecognizedReading(parsed, metric);
       if (value === null && parsed.value !== null) {

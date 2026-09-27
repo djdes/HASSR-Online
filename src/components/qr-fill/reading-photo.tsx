@@ -6,6 +6,7 @@ import { Camera, Loader2, Lock, RotateCcw, X } from "lucide-react";
 
 import { PhotoLightbox } from "@/components/shared/photo-lightbox";
 import { downscaleImageFile } from "@/lib/ai-vision/downscale";
+import { READING_PHOTO_FIXATION_TEXT, type ReadingPhotoPhase } from "@/lib/reading-photo-fixation";
 import { READING_PHOTO_TEXT, formatRecognizedReading, type ReadingMetric } from "@/lib/reading-photos";
 
 /**
@@ -26,6 +27,12 @@ import { READING_PHOTO_TEXT, formatRecognizedReading, type ReadingMetric } from 
  *
  * Бесплатный тариф: фото прикрепляется, вместо автоввода — «Автоввод с
  * фото — на платном тарифе» и ссылка на тарифы (только руководителю).
+ *
+ * Фотофиксация показаний (2026-09-27): вариант `primary` — главная кнопка
+ * формы «Сфотографируйте показание» во всю ширину, пока снимка нет; после
+ * снимка — та же карточка, что у маленькой «Фото». Форма узнаёт этап
+ * (`onPhaseChange`), чтобы показать поле только с результатом. Компонент один
+ * и стоит на одном месте дерева: смена варианта не сбрасывает распознавание.
  */
 
 type Status =
@@ -43,6 +50,27 @@ const OUTLINE_BUTTON =
   "inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[15px] font-semibold text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:cursor-not-allowed disabled:opacity-50";
 const SMALL_BUTTON =
   "inline-flex h-11 items-center justify-center gap-1.5 rounded-2xl border border-[#dcdfed] bg-white px-3.5 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:cursor-not-allowed disabled:opacity-50";
+const PRIMARY_BUTTON =
+  "flex h-16 w-full items-center justify-center gap-2.5 rounded-2xl bg-[#5566f6] px-5 text-[18px] font-semibold text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 disabled:cursor-not-allowed disabled:bg-[#c8cbe0] disabled:shadow-none";
+
+/** Этап для формы: грузим/распознаём — «busy», снимок обработан — «done». */
+function phaseOf(status: Status): ReadingPhotoPhase {
+  if (status.kind === "uploading" || status.kind === "recognizing") return "busy";
+  if (status.kind === "idle" || status.kind === "upload-error") return "idle";
+  return "done";
+}
+
+/** Подсказка под кнопкой, пока снимка нет. */
+function emptyHint(variant: "inline" | "primary", autofill: boolean, required: boolean): string {
+  if (variant === "primary") {
+    const base = autofill
+      ? "Снимите термометр или дисплей крупно — цифры впишем сами, останется проверить и сохранить."
+      : "Снимите термометр или дисплей крупно — фото ляжет в журнал рядом со значением, цифры введёте сами.";
+    return required ? `Без фото замер не сохранить. ${base}` : base;
+  }
+  if (required) return "Фото обязательно — без снимка замер не сохранить";
+  return autofill ? "Снимите термометр — показание заполним сами" : "Снимок ляжет в журнал рядом со значением";
+}
 
 /** Черновик «−» морозилки или пустое поле — это ещё не введённое число. */
 function isBlankValue(value: string): boolean {
@@ -64,6 +92,9 @@ export function ReadingPhoto({
   value,
   onRecognized,
   disabledReason = null,
+  variant = "inline",
+  required = false,
+  onPhaseChange,
 }: {
   kind: "equipment" | "room";
   objectId: string;
@@ -85,6 +116,12 @@ export function ReadingPhoto({
   onRecognized: (value: string) => void;
   /** Почему кнопка недоступна («Сначала выберите своё имя»); null — доступна. */
   disabledReason?: string | null;
+  /** `primary` — главная кнопка формы «Сфотографируйте показание» (пока снимка нет). */
+  variant?: "inline" | "primary";
+  /** «Фото обязательно» в организации — подсказка у кнопки. */
+  required?: boolean;
+  /** Этап снимка — форма показывает поле, когда распознавание закончилось. */
+  onPhaseChange?: (phase: ReadingPhotoPhase) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
@@ -108,6 +145,14 @@ export function ReadingPhoto({
 
   const busy = status.kind === "uploading" || status.kind === "recognizing";
   const disabled = Boolean(disabledReason);
+  const phase = phaseOf(status);
+  const onPhaseRef = useRef(onPhaseChange);
+  useEffect(() => {
+    onPhaseRef.current = onPhaseChange;
+  });
+  useEffect(() => {
+    onPhaseRef.current?.(phase);
+  }, [phase]);
 
   async function recognize(url: string, seq: number) {
     const startValue = valueRef.current;
@@ -218,6 +263,26 @@ export function ReadingPhoto({
     />
   );
 
+  if (!shownUrl && variant === "primary") {
+    return (
+      <div data-testid="reading-photo" data-variant="primary">
+        {fileInput}
+        <button type="button" onClick={openCamera} disabled={disabled} className={PRIMARY_BUTTON} data-testid="reading-photo-button">
+          <Camera className="size-6" />
+          {READING_PHOTO_FIXATION_TEXT.primaryButton}
+        </button>
+        <p className="mt-2 text-center text-[14px] leading-snug text-[#6f7282]" data-testid="reading-photo-hint">
+          {disabledReason ?? emptyHint("primary", autofill, required)}
+        </p>
+        {status.kind === "upload-error" ? (
+          <p className="mt-2 text-center text-[14px] leading-snug text-[#a13a32]" role="alert">
+            {status.message}
+          </p>
+        ) : null}
+      </div>
+    );
+  }
+
   if (!shownUrl) {
     return (
       <div className="mt-3" data-testid="reading-photo">
@@ -227,9 +292,8 @@ export function ReadingPhoto({
             <Camera className="size-5" />
             {READING_PHOTO_TEXT.button}
           </button>
-          <p className="min-w-0 text-[13px] leading-snug text-[#6f7282]">
-            {disabledReason ??
-              (autofill ? "Снимите дисплей — показание заполним сами" : "Снимок дисплея ляжет в журнал рядом со значением")}
+          <p className={`min-w-0 text-[13px] leading-snug ${required && !disabledReason ? "font-medium text-[#7a4a00]" : "text-[#6f7282]"}`} data-testid="reading-photo-hint">
+            {disabledReason ?? emptyHint("inline", autofill, required)}
           </p>
         </div>
         {status.kind === "upload-error" ? (

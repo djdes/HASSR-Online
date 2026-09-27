@@ -38,7 +38,34 @@ test("показание дисплея: нечитаемое — value null, з
   assert.match(text, /Не угадывай недостающие цифры, знак и десятичную точку/);
   assert.match(text, /не подставляй «обычное» значение/);
   assert.match(text, /Знак минус важен/);
-  assert.ok(text.includes('{"value":<число или null>,"unit":"C|%|h или null","confidence":"high|medium|low"}'));
+  assert.ok(
+    text.includes('{"device":"digital|dial|liquid|other","seen":"<что видно на приборе>","value":<число или null>,"unit":"C|%|h или null","confidence":"high|medium|low"}')
+  );
+});
+
+test("показание: цифровой, стрелочный и жидкостный термометр (2026-09-27), сомнение — null, а не medium", () => {
+  const text = buildVisionInstruction("reading", { metric: "temperature" });
+  // Тип прибора — первым, потом правила чтения под тип.
+  assert.match(text, /Сначала определи тип прибора — device: digital .* dial .* liquid .* other/);
+  assert.match(text, /digital: .*Минус — отдельная короткая горизонтальная черта слева от первой цифры/);
+  assert.match(text, /Десятичная точка — маленькая светящаяся точка внизу/);
+  assert.match(text, /dial: найди подписанные деления шкалы °C/);
+  assert.match(text, /Подписи ниже нуля часто без минуса/);
+  assert.match(text, /liquid: верх столбика/);
+  assert.match(text, /Шкалу °F .* не используй/);
+  assert.match(text, /Стрелочный и жидкостный термометр — округли до целого градуса/);
+  // Несколько приборов, миниатюры, часы и заряд на снимке экрана — не показание.
+  assert.match(text, /читай тот, что снят крупнее всего и ближе к центру кадра/);
+  assert.match(text, /Время, дата, заряд батареи, цены, номера и прочие надписи на фото — не показание/);
+  // Сначала «что видно» — затем число из этого; сомнение в цифре, знаке или точке — null.
+  assert.match(text, /seen — затем запиши, что видно на этом приборе/);
+  assert.match(text, /Сомнение в цифре, знаке или точке — не medium: тогда value: null/);
+  assert.match(text, /Если не видно однозначно, есть ли минус, — value: null/);
+  assert.doesNotMatch(text, /confidence не выше medium\.\s*$/m);
+  // В инструкции нет эталонных чисел, которые модель могла бы «узнать».
+  for (const sample of ["8.4", "26.3", "−18", "-18", "3.0", "22"]) {
+    assert.ok(!text.includes(sample), sample);
+  }
 });
 
 test("показание дисплея у поля: нужный показатель вместо «самого крупного», защита от выдумывания на месте", () => {
@@ -48,7 +75,7 @@ test("показание дисплея у поля: нужный показат
   const temperature = buildVisionInstruction("reading", { metric: "temperature" });
   assert.match(temperature, /Нужна температура в градусах Цельсия/);
   assert.match(temperature, /верни температуру, unit — C/);
-  assert.match(temperature, /Если температуры на дисплее нет — value: null/);
+  assert.match(temperature, /Если температуры на фото нет — value: null/);
   assert.doesNotMatch(temperature, /самое крупное/);
 
   const humidity = buildVisionInstruction("reading", { metric: "humidity" });
