@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { scrollDeltaToReveal, stickyFooterStyle, useKeyboardInset } from "@/lib/use-keyboard-inset";
+import { scrollDeltaToReveal, stickyFooterStyle, useKeyboardState } from "@/lib/use-keyboard-inset";
 import { isScannableField } from "@/lib/scannable-field";
 import { ScanToField } from "@/components/journals/scan-to-field";
 import { AlertTriangle, History, Wifi, Loader2 } from "lucide-react";
@@ -179,7 +179,7 @@ export function DynamicForm({
   // Высота экранной клавиатуры. Без неё липкий подвал уезжает ровно под
   // клавиатуру в тот момент, когда «Сохранить» и нужен: человек ввёл
   // значение — и кнопки нет.
-  const keyboardInset = useKeyboardInset();
+  const keyboard = useKeyboardState();
   const formRef = useRef<HTMLFormElement | null>(null);
   const footerRef = useRef<HTMLDivElement | null>(null);
   // Клавиатура открыта: поле с фокусом не должно прятаться под липким
@@ -198,10 +198,19 @@ export function DynamicForm({
     if (delta > 0) window.scrollBy(0, delta);
   }, []);
   useEffect(() => {
-    if (!keyboardInset) return;
+    if (!keyboard.open) return;
     const id = window.requestAnimationFrame(revealFocusedField);
     return () => window.cancelAnimationFrame(id);
-  }, [keyboardInset, revealFocusedField]);
+  }, [keyboard.open, keyboard.bottom, revealFocusedField]);
+  // Пока открыта клавиатура, нижнее меню мини-приложения прячется (CSS по
+  // `data-keyboard-open`): кнопки формы стоят прямо над клавиатурой, а меню
+  // иначе вылезало над ней и закрывало «Сохранить запись».
+  useEffect(() => {
+    if (!keyboard.open) return;
+    const root = document.documentElement;
+    root.setAttribute("data-keyboard-open", "");
+    return () => root.removeAttribute("data-keyboard-open");
+  }, [keyboard.open]);
   // Phase B: Conditional required fields. Используем journal-spec для
   // поиска полей которые становятся обязательными при отклонении +
   // правила определения «отклонения» из journal-deviation-rules.
@@ -693,7 +702,7 @@ export function DynamicForm({
       onSubmit={handleSubmit}
       // Переход между полями при уже открытой клавиатуре (стрелки над ней).
       onFocus={() => {
-        if (keyboardInset) window.requestAnimationFrame(revealFocusedField);
+        if (keyboard.open) window.requestAnimationFrame(revealFocusedField);
       }}
       className="space-y-6"
     >
@@ -1155,7 +1164,7 @@ export function DynamicForm({
           className="sticky bottom-0 z-10 -mx-4 flex flex-col-reverse gap-3 border-t border-[#ececf4] bg-white px-4 pt-3 sm:static sm:mx-0 sm:flex-row sm:border-0 sm:bg-transparent sm:px-0 sm:pt-0"
           // С клавиатурой подвал встаёт прямо над ней (в мини-приложении это
           // перебивает подъём над нижним меню — меню под клавиатурой).
-          style={stickyFooterStyle(keyboardInset)}
+          style={stickyFooterStyle(keyboard)}
         >
           <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
             {isSubmitting ? "Сохранение..." : "Сохранить запись"}
