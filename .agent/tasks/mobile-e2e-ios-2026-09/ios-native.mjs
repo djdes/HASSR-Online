@@ -504,6 +504,10 @@ const consoleSeen = new Map();
 // Сборка App.app в CI — без GoogleService-Info.plist (секретов нет): плагин push пишет
 // «Firebase is not configured». Это условие стенда, не ошибка страницы — считаем отдельно.
 const FIREBASE_CI = /Firebase is not configured: GoogleService-Info.plist is missing/;
+// Раунд 4: «[next-auth][error][CLIENT_FETCH_ERROR] … Load failed» — запрос сессии оборвался
+// при уходе со страницы (выход, удаление аккаунта). Это console.error самой next-auth,
+// не необработанное исключение; считаем отдельно и показываем в отчёте.
+const NEXTAUTH_FETCH = /CLIENT_FETCH_ERROR|next-auth\.js\.org\/errors#client_fetch_error/;
 const ERR_RX = /Minified React error|#418|#419|#423|#425|Hydration|hydrat|STARTUP JS ERROR|\[error\]|Uncaught|Unhandled|TypeError|ReferenceError|SyntaxError/i;
 function consoleNews() {
   const out = [];
@@ -732,6 +736,44 @@ function statusStripOf(file) {
   }
 }
 
+/**
+ * Полоса кадра по высоте (в pt): средняя яркость и доля «индиго» (#5566f6 — активная
+ * вкладка нижнего меню, кнопки). Раунд 5, S13: на кадре 027 раунда 4 шапка и нижнее
+ * меню были в дереве доступности, но НЕ нарисованы — проверяем по пикселям.
+ */
+function regionStats(file, y0, y1) {
+  try {
+    const { w, h, ch, px } = decodePng(fs.readFileSync(path.join(OUT, file)));
+    const s = w / W.width;
+    let n = 0, lum = 0, indigo = 0, dark = 0;
+    for (let y = Math.round(y0 * s); y < Math.min(h, Math.round(y1 * s)); y += 2)
+      for (let x = 0; x < w; x += 3) {
+        const i = (y * w + x) * ch, r = px[i], g = px[i + 1], b = px[i + 2];
+        const l = 0.3 * r + 0.59 * g + 0.11 * b;
+        n++;
+        lum += l;
+        if (l < 90) dark++;
+        if (Math.abs(r - 85) + Math.abs(g - 102) + Math.abs(b - 246) < 70) indigo++;
+      }
+    return { file, y0, y1, meanLum: Math.round(lum / Math.max(1, n)), darkFrac: +(dark / Math.max(1, n)).toFixed(3), indigoFrac: +(indigo / Math.max(1, n)).toFixed(3) };
+  } catch (e) {
+    return { file, error: e.message };
+  }
+}
+
+/** Шапка (тёмная полоса 60–112 pt) и нижнее меню (индиго-вкладка 770–845 pt) нарисованы. */
+function chromePainted(ctx, label, file) {
+  if (!file) return ctx.check(`${label}: кадр снят`, false);
+  const top = regionStats(file, 62, 112);
+  const nav = regionStats(file, 772, 842);
+  ctx.d[`paint_${label}`] = { top, nav };
+  const topOk = top.darkFrac >= 0.6;
+  const navOk = nav.indigoFrac >= 0.02;
+  ctx.check(`${label}: шапка приложения нарисована вверху (тёмных пикселей ${top.darkFrac})`, topOk, top);
+  ctx.check(`${label}: нижнее меню нарисовано (индиго ${nav.indigoFrac})`, navOk, nav);
+  return topOk && navOk;
+}
+
 function checkStrip(ctx, label, file) {
   if (!file) return ctx.check(`${label}: кадр снят`, false);
   const st = statusStripOf(file);
@@ -951,7 +993,7 @@ async function dismissGuide(ctx) {
 }
 
 /** Форма новой записи журнала E2E (голос + фото); true — нужная кнопка на экране. */
-async function openE2eForm(ctx, want) {
+async function openE2eForm(ctx, want, { afterTap = null, settle = 3000 } = {}) {
   try {
     await tab("Журналы");
     await waitFor(() => has({ type: "field", label: "Поиск по журналам" }), 30000 * SLOW);
@@ -961,13 +1003,39 @@ async function openE2eForm(ctx, want) {
     await hideKeyboard();
     await tap({ type: "link", contains: "E2E голос" }, { scrolls: 3, within: (r) => r.y < W.height - 170, settle: 3000 * SLOW });
     await dismissGuide(ctx);
-    await tap({ type: "link", contains: "Новая запись" }, { scrolls: 4, settle: 3000 * SLOW });
+    await waitFor(() => has({ type: "link", contains: "Новая запись" }), 20000 * SLOW);
+    // Раунд 5: число записей журнала до формы — после фото/отмены пустой записи быть не должно.
+    ctx.d.entriesBefore = await entryCount();
+    await tap({ type: "link", contains: "Новая запись" }, { scrolls: 4, settle: settle * SLOW });
+    if (afterTap) await afterTap();
     return Boolean(await waitFor(() => has(want), 30000 * SLOW));
   } catch (e) {
     ctx.d.e2eFormError = e.message.slice(0, 200);
     return false;
   }
 }
+
+/** Страница журнала: «N запись/записей» и карточки «… г. в ЧЧ:ММ». */
+async function entryCount() {
+  const chip = await textsWith(["запис"]);
+  const m = chip.map((l) => /^(\d+)\s*запис/.exec(l.trim())).find(Boolean);
+  const cards = await textsWith([" г. в "]);
+  return { chip: m ? Number(m[1]) : null, chipLabels: chip.slice(0, 5), cards: cards.length, cardLabels: cards.slice(0, 5) };
+}
+
+/** С формы — «Отмена» в липком низу → страница журнала; число записей. */
+async function backToJournalCount(ctx) {
+  await hideKeyboard();
+  if (!(await tryTap({ type: ["button", "link"], label: "Отмена" }, { scrolls: 0, anywhere: true, pick: "lowest", timeout: 4000 }))) await tryTap({ type: "button", label: "Назад" }, { scrolls: 0, anywhere: true, timeout: 3000 });
+  const back = await waitFor(() => has({ type: "link", contains: "Новая запись" }), 20000 * SLOW);
+  await sleep(1500);
+  ctx.shot("journal-after-form");
+  const c = back ? await entryCount() : null;
+  ctx.d.entriesAfter = c;
+  return c;
+}
+
+const sameCount = (a, b) => a && b && (a.chip ?? 0) === (b.chip ?? 0) && a.cards === b.cards;
 
 async function sectionsGo(label) {
   await tab("Разделы");
@@ -981,10 +1049,11 @@ async function sectionsGo(label) {
   return tap({ type: "link", contains: label }, { scrolls: 3, within: (r) => r.y < W.height - 170, settle: 3000 * SLOW });
 }
 
-// Порядок раунда 4: вход, затем самое ценное; S12 — всегда последним.
-const ORDER = (env.ORDER || "S01,S02,S03a,S04,S05,S07,S08,S06,S09,S10,S11,S03b,S12").split(",");
+// Порядок раунда 5: вход, затем самое ценное; S09/S10/S03b прошли в раунде 4 — не повторяем.
+// S12 — всегда последним.
+const ORDER = (env.ORDER || "S01,S02,S13,S04,S07,S08,S11,S05,S06,S03a,S12").split(",");
 // Потолок на сценарий (мс); общий бюджет — TEST_BUDGET_MIN.
-const LIMITS = { S01: 90000, S02: 300000, S03a: 420000, S03b: 360000, S04: 180000, S05: 240000, S06: 200000, S07: 200000, S08: 240000, S09: 120000, S10: 150000, S11: 240000, S12: 60000 };
+const LIMITS = { S01: 90000, S02: 300000, S03a: 300000, S03b: 360000, S04: 300000, S05: 300000, S06: 240000, S07: 240000, S08: 240000, S09: 120000, S10: 150000, S11: 240000, S12: 60000, S13: 240000 };
 const plan = new Map();
 function def(id, name, fn, timeoutMs) {
   plan.set(id, { name, fn, timeoutMs: LIMITS[id] ?? timeoutMs ?? 300000 });
@@ -1124,11 +1193,28 @@ async function main() {
     ctx.shot(`profile-${theme}`);
     await layoutCheck(ctx, `profile-${theme}`);
   };
-  def("S03a", "Основные экраны — светлая тема", async (ctx) => {
+  // Раунд 5: главная, разделы, журналы и уборка в светлой теме доказаны в раунде 4
+  // (кадры 012–019); не хватало документа холодильников и профиля — только они.
+  def("S03a", "Светлая тема: документ холодильников и профиль", async (ctx) => {
     await ready(ctx);
     await profileTheme(ctx, "Светлая");
-    await screenPass(ctx, "light");
-  }, 480000);
+    const cold = await openJournal(ctx, "холодильн", "холодильного", IDS.docs?.cold?.title);
+    ctx.check("light: документ журнала холодильников открылся", cold);
+    await toTop();
+    checkStrip(ctx, "light: документ холодильников", ctx.shot("fridges-doc-light"));
+    await layoutCheck(ctx, "fridges-doc-light");
+    await scrollDown();
+    await scrollDown();
+    checkStrip(ctx, "light: документ холодильников пролистан", ctx.shot("fridges-doc-scrolled-light"));
+    await tab("Профиль");
+    await waitText({ type: "text", label: "Профиль" });
+    await toTop();
+    checkStrip(ctx, "light: профиль", ctx.shot("profile-light"));
+    await layoutCheck(ctx, "profile-light");
+    await scrollDown();
+    await scrollDown();
+    ctx.shot("profile-light-scrolled");
+  });
   def("S03b", "Основные экраны — тёмная тема", async (ctx) => {
     await ready(ctx);
     await profileTheme(ctx, "Тёмная");
@@ -1142,8 +1228,17 @@ async function main() {
     ctx.check("документ уборки открыт", ok);
     await toTop();
     const before = await source("S04-before");
-    const p = (await tryTap({ type: ["link", "button"], label: "Распечатать" }, { scrolls: 3 })) || (await tap({ type: ["link", "button"], contains: "Распечатать" }, { scrolls: 3 }));
-    ctx.d.printControl = p.label;
+    ctx.shot("doc-before-print");
+    let p = (await tryTap({ type: ["link", "button"], label: "Распечатать" }, { scrolls: 3, timeout: 15000 })) || (await tryTap({ type: ["link", "button"], contains: "Распечатать" }, { scrolls: 3, timeout: 10000 }));
+    ctx.d.printControl = p?.label ?? null;
+    if (!p) {
+      // Запасной путь: меню «⋯» документа → «Печать».
+      await tap({ type: "button", label: "Ещё действия" }, { scrolls: 3 });
+      await sleep(1500);
+      ctx.shot("more-menu");
+      p = await tap({ type: ["button", "other", "link", "XCUIElementTypeMenuItem"], begins: "Печать" }, { scrolls: 2, anywhere: true });
+      ctx.d.printControl = `⋯ → ${p.label}`;
+    }
     const xml = await waitFor(async () => {
       const s = await source("S04-print");
       const fresh = newLabels(before, s);
@@ -1267,7 +1362,11 @@ async function main() {
     ctx.shot("chooser");
     const labels = newLabels(before, xml).slice(0, 80);
     ctx.d.labels = labels;
-    ctx.check("системный выбор фото появился", Boolean(b) || labels.some((l) => /Медиатека|Photo Library|Снять фото|Take Photo|Выбрать файл|Choose File|Фото|Photos|Камера|Camera/i.test(l)), labels.slice(0, 20));
+    // Раунд 4: проверка засчитала «Снять фото» — это подпись кнопки самой формы, а
+    // системного листа на кадре 028 не было. Теперь — только подписи листа iOS.
+    const sys = labels.filter((l) => /Медиатека|Photo Library|Снять фото или видео|Take Photo|Выбрать файл|Choose File|^Фото$|^Photos$|^Камера$|^Camera$|^Файлы$|^Files$/i.test(l));
+    ctx.d.chooserLabels = sys;
+    ctx.check("системный выбор фото появился (подписи листа iOS)", Boolean(b) || sys.length > 0, labels.slice(0, 20));
     if (b) await driver.execute("mobile: alert", { action: "dismiss" }).catch(() => undefined);
     const c = (await tryTap({ type: "button", label: "Отменить" }, { scrolls: 0, anywhere: true, timeout: 3000 })) || (await tryTap({ type: "button", label: "Cancel" }, { scrolls: 0, anywhere: true, timeout: 2000 }));
     ctx.d.cancel = c?.label ?? null;
@@ -1275,7 +1374,11 @@ async function main() {
     const more = await tryTap({ type: "button", label: "Отменить" }, { scrolls: 0, anywhere: true, timeout: 1500 });
     if (more) await sleep(1500);
     ctx.shot("cancelled");
-    ctx.check("после отмены: приложение живо, экран на месте", (await appState()) === 4 && (await has(photoBtn)));
+    ctx.check("после отмены: приложение живо, форма на месте", (await appState()) === 4 && (await has(photoBtn)));
+    if (ctx.d.via === "e2e_voice form") {
+      const after = await backToJournalCount(ctx);
+      ctx.check("пустая запись не сохранилась (записей столько же, сколько до формы)", sameCount(ctx.d.entriesBefore, after), { before: ctx.d.entriesBefore, after });
+    }
   });
 
   // 8. Голос
@@ -1324,6 +1427,54 @@ async function main() {
     ctx.check("textarea: iOS спросил разрешения (речь / микрофон)", a.alerts.length >= 1, a.alerts);
     ctx.check("textarea: итог — текст в поле или понятная русская подсказка", a.fresh.length > 0 || a.rec, a.fresh);
   }, 360000);
+
+  // 13. Форма «Новая запись»: шапка и нижнее меню нарисованы (раунд 4, кадр 027:
+  // вместо шапки — белая полоса, нижнего меню нет, хотя в дереве доступности оба есть).
+  def("S13", "Форма «Новая запись»: шапка приложения сверху и нижнее меню — сразу и после клавиатуры", async (ctx) => {
+    await ready(ctx);
+    const want = { type: "button", label: "Сохранить запись" };
+    const frames = [];
+    const onForm = await openE2eForm(ctx, want, {
+      settle: 300,
+      afterTap: async () => {
+        // Кадры сразу после нажатия «Новая запись», до любого ввода.
+        for (const [tag, wait] of [["open-0s", 0], ["open-1s", 1000], ["open-3s", 2000]]) {
+          if (wait) await sleep(wait);
+          frames.push(ctx.shot(tag));
+        }
+      },
+    });
+    ctx.check("форма «Новая запись» открылась", onForm);
+    if (!onForm) return;
+    await sleep(2500);
+    const f6 = ctx.shot("open-6s");
+    const xml = await source("S13-form-open");
+    const els = elementsOf(xml);
+    const topbar = els.filter((e) => ["На главный экран", "Уведомления", "ИИ-помощник"].includes(e.label)).map((e) => `${e.label} y=${e.y} vis=${e.visible}`);
+    const nav = els.filter((e) => e.type === "Link" && ["Главная", "Журналы", "Разделы", "Профиль"].includes(e.label)).map((e) => `${e.label} y=${e.y}`);
+    ctx.d.tree = { topbar, nav, wide: els.filter((e) => e.w > W.width + 2).map((e) => `${e.type} «${e.label.slice(0, 30)}» w=${e.w}`).slice(0, 8) };
+    ctx.check("в дереве: шапка (логотип, колокольчик) на месте", topbar.length >= 2, topbar);
+    ctx.check("в дереве: нижнее меню на месте", nav.length >= 4, nav);
+    ctx.d.paintFrames = frames.map((f) => (f ? { f, top: regionStats(f, 62, 112), nav: regionStats(f, 772, 842) } : null));
+    // Сразу после открытия (0–3 с) — фиксируем, когда шапка появилась; итог — по кадру 6 с.
+    ctx.d.firstPaintedFrame = (ctx.d.paintFrames.find((x) => x && x.top.darkFrac >= 0.6) || {}).f ?? null;
+    chromePainted(ctx, "форма открыта (6 с)", f6);
+    checkStrip(ctx, "форма открыта", f6);
+    // Фокус в «Заметку» — клавиатура; затем «Готово» — клавиатура закрыта.
+    await tap({ type: ["XCUIElementTypeTextView", "field"], label: "Заметка" }, { scrolls: 3, maxY: W.height * 0.55 });
+    await waitFor(keyboard, 6000);
+    await sleep(1200);
+    const fk = ctx.shot("keyboard-open");
+    checkStrip(ctx, "клавиатура открыта", fk);
+    ctx.d.kbOpenTop = regionStats(fk, 62, 112);
+    await hideKeyboard();
+    await sleep(2000);
+    const fc = ctx.shot("keyboard-closed");
+    chromePainted(ctx, "клавиатура закрыта", fc);
+    await source("S13-kb-closed");
+    const after = await backToJournalCount(ctx);
+    ctx.check("без ввода запись не сохранилась", sameCount(ctx.d.entriesBefore, after), { before: ctx.d.entriesBefore, after });
+  });
 
   // 9. Жест «назад»
   def("S09", "Жест «назад» от левого края возвращает на предыдущий экран", async (ctx) => {
@@ -1378,11 +1529,33 @@ async function main() {
     ctx.shot("delete-dialog");
     const field = await waitFor(() => has({ type: "field" }), 5000);
     ctx.check("окно подтверждения с полем ввода", field);
+    if (!(await keyboard())) await tap({ type: "field" }, { scrolls: 0, anywhere: true, pick: "last" });
+    await waitFor(keyboard, 6000);
+    await sleep(1500);
+    // Раунд 5 (мастер 40d4565f): окно с открытой клавиатурой не выше видимой части
+    // экрана минус строка состояния — верх окна (значок, заголовок) под часами не прячется.
+    const dialogCheck = async (tag) => {
+      const f = ctx.shot(tag);
+      const kb = await keyboard();
+      const title = (await all({ type: "text", contains: "Удалить аккаунт навсегда" }))[0]?.r ?? null;
+      const close = (await all({ type: "button", label: "Закрыть" })).map((x) => x.r).find((r) => r.y < W.height / 2) ?? null;
+      const input = (await all({ type: "field" })).map((x) => x.r).pop() ?? null;
+      const confirm = (await all({ type: "button", label: "Удалить аккаунт" })).map((x) => x.r).sort((a, b) => b.y - a.y)[0] ?? null;
+      const kt = await keyboardTop();
+      ctx.d[`dialog_${tag}`] = { keyboard: kb, kbTop: kt, title, close, input, confirm };
+      ctx.check(`${tag}: клавиатура открыта`, Boolean(kb));
+      ctx.check(`${tag}: заголовок «Удалить аккаунт навсегда?» ниже строки состояния (y ≥ ${ISLAND_BOTTOM})`, title && title.y >= ISLAND_BOTTOM, title);
+      if (close) ctx.check(`${tag}: крестик окна ниже строки состояния`, close.y >= ISLAND_BOTTOM - 4, close);
+      checkStrip(ctx, `${tag}: под часами — только подложка, окна там нет`, f);
+      if (kt && input) ctx.check(`${tag}: поле ввода над клавиатурой`, input.y + input.height <= kt + 1, { input, kt });
+      if (kt && confirm) ctx.d[`${tag}_confirmAboveKeyboard`] = confirm.y + confirm.height <= kt + 1;
+    };
+    await dialogCheck("dialog-keyboard");
     await tap({ type: "field" }, { scrolls: 0, anywhere: true, pick: "last" });
     await sleep(800);
     await typeFocused("УДАЛИТЬ");
     await sleep(800);
-    ctx.shot("delete-typed");
+    await dialogCheck("dialog-typed");
     await hideKeyboard();
     await tap({ type: "button", label: "Удалить аккаунт" }, { scrolls: 0, anywhere: true, pick: "lowest" });
     const ok = await waitFor(onLogin, 40000 * SLOW);
@@ -1405,7 +1578,9 @@ async function main() {
         lines: txt.split("\n").length,
         react: txt.split("\n").filter((l) => /Minified React error|#418|Hydration/i.test(l)).slice(0, 10),
         startup: txt.split("\n").filter((l) => /STARTUP JS ERROR/.test(l)).length,
-        errors: txt.split("\n").filter((l) => /\[error\]|Uncaught|Unhandled|TypeError|ReferenceError/.test(l) && !FIREBASE_CI.test(l)).slice(0, 25),
+        errors: txt.split("\n").filter((l) => /\[error\]|Uncaught|Unhandled|TypeError|ReferenceError/.test(l) && !FIREBASE_CI.test(l) && !NEXTAUTH_FETCH.test(l)).slice(0, 25),
+        uncaught: txt.split("\n").filter((l) => /Uncaught|Unhandled|STARTUP JS ERROR|ReferenceError|SyntaxError/.test(l)).slice(0, 25),
+        nextAuthFetch: txt.split("\n").filter((l) => NEXTAUTH_FETCH.test(l)).slice(0, 10),
         firebaseNotConfigured: txt.split("\n").filter((l) => FIREBASE_CI.test(l)).length,
       };
     }
@@ -1414,7 +1589,10 @@ async function main() {
     const errs = Object.values(per).flatMap((p) => p.errors);
     ctx.check("журналы консоли собраны", files.length > 0, files);
     ctx.check("нет ошибок React (#418 и др.)", react.length === 0, react);
-    ctx.check("нет необработанных ошибок JS", errs.length === 0, errs);
+    const uncaught = Object.values(per).flatMap((p) => p.uncaught);
+    ctx.d.nextAuthFetch = Object.values(per).flatMap((p) => p.nextAuthFetch);
+    ctx.check("нет необработанных (uncaught/unhandled) ошибок JS", uncaught.length === 0, uncaught);
+    ctx.check("нет других записей [error] в консоли (кроме сбоя fetch next-auth — см. nextAuthFetch)", errs.length === 0, errs);
   });
 
   meta.order = ORDER;

@@ -148,7 +148,7 @@ jobs:
     needs: site
     if: contains(github.event.head_commit.message, '[ios]') || github.event_name == 'workflow_dispatch'
     runs-on: macos-26
-    timeout-minutes: 62
+    timeout-minutes: 66
     env:
       STATE: ${{ github.workspace }}/e2e-state
       LOGS: ${{ github.workspace }}/e2e-logs
@@ -286,13 +286,13 @@ jobs:
           cd $T && npm init -y >/dev/null && npm install --no-save --no-fund --no-audit webdriverio@9 2>&1 | tail -2
 
       - name: Сценарии
-        timeout-minutes: 38
+        timeout-minutes: 41
         env:
           IDS_JSON: ${{ github.workspace }}/ci-ids.json
           BASE_URL: https://localhost:3000
           CA_PEM: ${{ github.workspace }}/tls/ca.pem
           WDA_DD: ${{ github.workspace }}/e2e-state/wda
-          TEST_BUDGET_MIN: "33"
+          TEST_BUDGET_MIN: "36"
         run: |
           cd $T && node ios-native.mjs 2>&1 | tee "$LOGS/test.log"
 
