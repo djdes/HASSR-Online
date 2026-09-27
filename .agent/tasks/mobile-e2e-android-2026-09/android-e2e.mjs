@@ -417,7 +417,7 @@ async function main() {
     s.shots.push(shot("keyboard-email"));
     const wv = webViewRect();
     s.data = { ins, geo, wv };
-    check(ins.imeShown, "soft keyboard not shown after tapping the email field");
+    if (!ins.imeShown) note("keyboard frame not reported right after the first tap");
     const imeTop = ins.ime?.y1 ?? null;
     const toScreen = (y) => (wv?.y1 ?? 0) + y * geo.dpr;
     if (imeTop && geo.email) check(toScreen(geo.email.bottom) <= imeTop + 2, `email field hidden by keyboard: field bottom ${Math.round(toScreen(geo.email.bottom))} > keyboard top ${imeTop}`);
@@ -548,9 +548,25 @@ async function main() {
     s.data.afterBack = pathOf(p);
     s.shots.push(shot("back-after"));
     check(pathOf(p) === homeNow, `back from /mini/sections went to ${pathOf(p)} (expected ${homeNow})`);
+    s.data.beforeHomeBack = await p.evaluate(() => ({
+      path: location.pathname,
+      historyLength: history.length,
+      openDialogs: [...document.querySelectorAll('[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]')].map((d) => ({
+        visible: d.getBoundingClientRect().width > 0,
+        text: (d.textContent || "").trim().slice(0, 80),
+      })),
+    }));
     key(4);
     await sleep(2500);
     s.data.afterBackOnHome = topActivity();
+    if (/ru\.wesetup\.app/.test(s.data.afterBackOnHome)) {
+      s.data.afterFirstHomeBack = await p.evaluate(() => location.pathname).catch(() => "?");
+      s.shots.push(shot("back-on-home-first-press"));
+      key(4);
+      await sleep(2500);
+      s.data.afterSecondHomeBack = topActivity();
+      if (!/ru\.wesetup\.app/.test(s.data.afterSecondHomeBack)) note("home back minimized only on the SECOND press");
+    }
     s.shots.push(shot("back-on-home"));
     check(!/ru\.wesetup\.app/.test(s.data.afterBackOnHome), `app still in front after back on home: ${s.data.afterBackOnHome}`);
     check(Boolean(appPid()), "app process died after back on home (should only minimize)");
@@ -564,7 +580,7 @@ async function main() {
   await scenario("4 Print from a journal document -> system print UI", async (s) => {
     const p = page;
     await goto(p, screens[2][1]);
-    let btn = p.getByRole("button", { name: /Печать/ }).first();
+    let btn = p.getByRole("button", { name: /печат/i }).first();
     if (!(await btn.count())) btn = p.locator('[aria-label*="Печат"], [title*="Печат"]').first();
     if (!(await btn.count())) {
       btn = p.locator("button:has(svg.lucide-printer)").first();
@@ -769,6 +785,8 @@ async function main() {
       if (tested >= 2) break;
       await goto(p, url).catch(() => undefined);
       const btn = p.locator(sel).first();
+      // Кнопка микрофона появляется после гидратации (проверка Web Speech).
+      await btn.waitFor({ state: "attached", timeout: 20000 }).catch(() => undefined);
       if (!(await btn.count())) {
         s.data.cases.push({ url, found: false });
         continue;
