@@ -19,6 +19,7 @@ import { confirmAsync } from "@/components/ui/confirm-async";
 import {
   EmptyDocumentsState,
   useCanManageDocuments,
+  JournalTabs,
 } from "@/components/journals/document-list-ui";
 import {
   JOURNAL_CARD_LABEL_CLASS,
@@ -130,22 +131,7 @@ export function ScanJournalDocumentsClient({
         />
       </div>
 
-      <div className="border-b border-[#d9dce8]">
-        <div className="flex gap-9 text-[15px]">
-          <Link
-            href={`/journals/${templateCode}`}
-            className={`relative pb-4 ${activeTab === "active" ? "font-medium text-black after:absolute after:bottom-[-1px] after:left-0 after:h-[2px] after:w-full after:bg-[#5566f6]" : "text-[#6f7282]"}`}
-          >
-            Активные
-          </Link>
-          <Link
-            href={`/journals/${templateCode}?tab=closed`}
-            className={`relative pb-4 ${activeTab === "closed" ? "font-medium text-black after:absolute after:bottom-[-1px] after:left-0 after:h-[2px] after:w-full after:bg-[#5566f6]" : "text-[#6f7282]"}`}
-          >
-            Закрытые
-          </Link>
-        </div>
-      </div>
+      <JournalTabs activeTab={activeTab} templateCode={templateCode} />
 
       <div className={JOURNAL_LIST_CARDS_CLASS}>
         {documents.length === 0 ? (

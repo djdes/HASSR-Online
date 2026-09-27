@@ -10,6 +10,10 @@ import { isInsideMobileApp, needsIosStatusBarBackdrop } from "@/lib/mobile-app";
  * шапка оболочки (sticky) уезжает вместе со страницей — без подложки под
  * часами оказывался текст страницы. Подложка цвета шапки держится у
  * верхнего края видимой области (`visualViewport.offsetTop`).
+ *
+ * Слой 90 — выше окон подтверждения и шторок (z-60) и обучающего тура
+ * (z-70): иначе окно «Удалить аккаунт навсегда?» с открытой клавиатурой
+ * заезжало на часы. Нажатия подложка не перехватывает.
  */
 export function IosStatusBarBackdrop() {
   const ref = useRef<HTMLDivElement>(null);
@@ -52,7 +56,7 @@ export function IosStatusBarBackdrop() {
       ref={ref}
       aria-hidden
       className="pointer-events-none fixed inset-x-0 top-0"
-      style={{ height: "env(safe-area-inset-top, 0px)", background: "#0b1024", zIndex: 45 }}
+      style={{ height: "env(safe-area-inset-top, 0px)", background: "#0b1024", zIndex: 90 }}
     />
   );
 }

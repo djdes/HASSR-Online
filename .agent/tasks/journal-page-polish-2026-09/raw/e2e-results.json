@@ -1,0 +1,162 @@
+{
+  "at": "2026-09-27T16:01:09.116Z",
+  "base": "http://localhost:3143",
+  "pageErrors": [],
+  "checks": [
+    {
+      "id": "gaps-1280",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "QR↔ряд 12, «Создать»↔«Инструкция» 12 (было 8 / 8)"
+    },
+    {
+      "id": "tabs-1280",
+      "ac": "AC2",
+      "ok": true,
+      "detail": "текст→подчёркивание 7 px (было 19), ширина = тексту (0), полосы под рядом: нет"
+    },
+    {
+      "id": "input-is-ui-input:1280",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "data-slot=input, readOnly=false, contentEditable=false, мешающих стилей: 0; 48px, r=18px, 15px"
+    },
+    {
+      "id": "autofocus-selected:1280",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "фокус=true, выделено 0..78 из 78, направление backward, прокрутка поля 0 (начало названия на виду)"
+    },
+    {
+      "id": "click-caret:1280",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "клик после 12-го символа → курсор 12..12"
+    },
+    {
+      "id": "drag-select:1280",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "мышью протянули по «Журнал» → 0..6 («Журнал»)"
+    },
+    {
+      "id": "dblclick-word:1280",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "двойной клик → «контроля »"
+    },
+    {
+      "id": "select-all:1280",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "Ctrl+A → 0..78"
+    },
+    {
+      "id": "save-enter:1280",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "Enter → PATCH 200, H1 «Холодильники», в базе {\"journals\":{\"cold_equipment_control\":\"Холодильники\"},\"sections\":{}}"
+    },
+    {
+      "id": "reopen-selected:1280",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "в поле «Холодильники», выделено 0..12"
+    },
+    {
+      "id": "reset-fills-official:1280",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "«Вернуть стандартное» → в поле официальное (78 симв.), фокус в поле=true"
+    },
+    {
+      "id": "reset-saved:1280",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "«Сохранить» → PATCH 200, H1 «Журнал контроля температурного…», в базе {\"journals\":{},\"sections\":{}}"
+    },
+    {
+      "id": "esc-closes:1280",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "Esc → окно закрыто=true, фокус на карандаше=true"
+    },
+    {
+      "id": "copy-paste:1280",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "выделили «Журнал» мышью, Ctrl+C, Ctrl+A, набрали «Холодильный цех — », Ctrl+V → «Холодильный цех — Журнал»"
+    },
+    {
+      "id": "gaps-390-app",
+      "ac": "AC1",
+      "ok": true,
+      "detail": "оболочка приложения: заголовок→QR 12, QR→ряд 12, «Создать»↔«Инструкция» 12 (было 16 / 8 / 8)"
+    },
+    {
+      "id": "tabs-390-app",
+      "ac": "AC2",
+      "ok": true,
+      "detail": "текст→подчёркивание 7 px (было 19), полосы: нет"
+    },
+    {
+      "id": "input-is-ui-input:390",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "data-slot=input, мешающих стилей: 0, кегль 16px (iPhone не увеличивает)"
+    },
+    {
+      "id": "autofocus-selected:390",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "касание карандаша → фокус=true, выделено 0..78, прокрутка 0 (раньше на телефоне без фокуса и выделения)"
+    },
+    {
+      "id": "tap-caret:390",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "касание после 12-го символа → курсор 12..12"
+    },
+    {
+      "id": "double-tap-word:390",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "двойное нажатие → «контроля »"
+    },
+    {
+      "id": "no-touch-interception:390",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "долгое нажатие + ведение пальцем: окно открыто=true, отменённых событий {\"touchstart\":0,\"touchmove\":0,\"touchend\":0,\"selectstart\":0,\"contextmenu\":0}"
+    },
+    {
+      "id": "sheet-above-keyboard:390",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "клавиатура 336 px: низ листа 508 ≤ 508, верх 12 ≥ 0, поле и «Сохранить» над клавиатурой"
+    },
+    {
+      "id": "save-phone:390",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "«Сохранить» касанием → PATCH 200, H1 «Холодильники»"
+    },
+    {
+      "id": "reset-phone:390",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "«Вернуть стандартное» + «Сохранить» → PATCH 200, в базе {\"journals\":{},\"sections\":{}}"
+    },
+    {
+      "id": "autofocus-selected:390-site",
+      "ac": "AC3",
+      "ok": true,
+      "detail": "сайт на телефоне: фокус=true, выделено 0..78"
+    }
+  ],
+  "summary": {
+    "total": 25,
+    "pass": 25,
+    "fail": 0
+  }
+}

@@ -1,5 +1,6 @@
 import { buildVisionInstruction } from "@/lib/ai-vision/instructions";
 import { isHedgedReadingNote, parseReadingReply, parseReadingSeen, type VisionReadingResult } from "@/lib/ai-vision/parse";
+import { makeReadingZoomJpeg } from "@/lib/ai-vision/reading-zoom";
 import { runVisionJob } from "@/lib/ai-vision/run";
 import { acceptRecognizedReading, type ReadingMetric } from "@/lib/reading-photos";
 
@@ -42,10 +43,15 @@ export async function recognizeReading(input: {
   metric?: ReadingMetric | null;
 }): Promise<ReadingRecognizeOutcome> {
   const metric = input.metric ?? null;
+  // Стеклянный термометр: второе фото — увеличенный фрагмент у верха
+  // столбика (`reading-zoom.ts`). Нет цветной линии (дисплей, стрелка,
+  // серебристая ртуть) — одно фото, как раньше.
+  const zoom = await makeReadingZoomJpeg(input.bytes);
+  console.info(`[ai-vision] reading zoom=${zoom ? "1" : "0"}`);
   const outcome = await runVisionJob({
     purpose: "reading",
-    instruction: buildVisionInstruction("reading", metric ? { metric } : {}),
-    images: [input.bytes],
+    instruction: buildVisionInstruction("reading", { ...(metric ? { metric } : {}), zoom: Boolean(zoom) }),
+    images: zoom ? [input.bytes, zoom] : [input.bytes],
     orgId: input.orgId,
     user: input.user,
     messages: MESSAGES,

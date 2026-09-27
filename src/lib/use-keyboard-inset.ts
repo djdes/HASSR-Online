@@ -25,10 +25,15 @@ import { useEffect, useState } from "react";
  */
 const KEYBOARD_MIN_HEIGHT = 80;
 
-export function useKeyboardInset(): number {
+/**
+ * `enabled = false` — не слушать вьюпорт вовсе (закрытое окно, которое
+ * всё равно смонтировано): возвращает 0.
+ */
+export function useKeyboardInset(enabled = true): number {
   const [inset, setInset] = useState(0);
 
   useEffect(() => {
+    if (!enabled) return;
     const viewport = window.visualViewport;
     if (!viewport) return;
 
@@ -46,7 +51,79 @@ export function useKeyboardInset(): number {
       viewport.removeEventListener("resize", update);
       viewport.removeEventListener("scroll", update);
     };
-  }, []);
+  }, [enabled]);
 
-  return inset;
+  return enabled ? inset : 0;
+}
+
+/**
+ * Предел высоты окна над открытой клавиатурой: видимая часть экрана минус
+ * строка состояния. Без него на iPhone окно («Удалить аккаунт навсегда?»
+ * с полем ввода) было выше видимой части и заезжало верхом под часы и
+ * «чёлку». `null` — видимую высоту не знаем, оставляем как было.
+ */
+export function keyboardSheetMaxHeight(visibleHeight: number): string | null {
+  if (!(visibleHeight > 0)) return null;
+  return `calc(${Math.round(visibleHeight)}px - env(safe-area-inset-top, 0px) - 12px)`;
+}
+
+/** Высота видимой части экрана (без клавиатуры); 0 — не слушаем. */
+export function useVisibleViewportHeight(enabled = true): number {
+  const [height, setHeight] = useState(0);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const update = () => setHeight(viewport.height);
+    update();
+    viewport.addEventListener("resize", update);
+    viewport.addEventListener("scroll", update);
+    return () => {
+      viewport.removeEventListener("resize", update);
+      viewport.removeEventListener("scroll", update);
+    };
+  }, [enabled]);
+
+  return enabled ? height : 0;
+}
+
+/**
+ * На сколько пикселей прокрутить блок `view`, чтобы элемент `el` был виден
+ * целиком (с отступом `margin`). Положительное — вниз, отрицательное — вверх,
+ * 0 — уже виден. Высокий элемент выравнивается по верху.
+ *
+ * Зачем: окно подтверждения с полем ввода при открытой клавиатуре ограничено
+ * видимой частью экрана, его середина становится прокручиваемой — и поле
+ * «введите УДАЛИТЬ» оказывалось под кнопками окна (iPhone, раунд 5, кадр 040):
+ * набирать приходилось вслепую, а нажатие по полю попадало в «Отмена».
+ */
+export function scrollDeltaToReveal(
+  view: { top: number; bottom: number },
+  el: { top: number; bottom: number },
+  margin = 12
+): number {
+  const up = el.top - margin - view.top;
+  if (up < 0) return Math.round(up);
+  const down = el.bottom + margin - view.bottom;
+  if (down > 0) return Math.round(Math.min(down, up));
+  return 0;
+}
+
+/**
+ * Стиль липкого подвала формы с кнопками «Сохранить» / «Отмена».
+ *
+ * Клавиатуры нет — подвал у низа экрана (в мини-приложении CSS поднимает
+ * его над нижним меню), снизу поле под полоску «домой». Клавиатура
+ * открыта — подвал встаёт прямо над ней: меню и полоска всё равно под
+ * клавиатурой. Раньше высота клавиатуры прибавлялась к этим отступам, и
+ * на iPhone между кнопками и клавиатурой оставалась пустая полоса ~140pt,
+ * а подвал закрывал поле, в котором человек печатал (раунд 5, кадр 015).
+ */
+export function stickyFooterStyle(keyboardInset: number): {
+  bottom?: number;
+  paddingBottom: string;
+} {
+  if (keyboardInset > 0) return { bottom: keyboardInset, paddingBottom: "0.75rem" };
+  return { paddingBottom: "max(0.75rem, var(--safe-b))" };
 }

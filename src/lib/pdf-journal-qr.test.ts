@@ -4,12 +4,13 @@ import test from "node:test";
 import { createCanvas } from "@napi-rs/canvas";
 import { jsPDF } from "jspdf";
 
-import { BRAND_QR_CAPTION_SITE, BRAND_QR_CAPTION_TITLE, brandQrLayout } from "@/lib/brand-qr";
+import { BRAND_QR_CAPTION_TITLE, brandQrLayout } from "@/lib/brand-qr";
 import { standardFontsDir, workerFileUrl } from "@/lib/journal-preview/render";
 import { registerJournalUnicodeFont } from "@/lib/pdf-journal-font";
 import {
   JOURNAL_HEADER_ROWS_MM,
-  JOURNAL_QR_CELL_PAD_MM,
+  JOURNAL_QR_CELL_BASE_WIDTH_MM,
+  JOURNAL_QR_CELL_MAX_WIDTH_MM,
   JOURNAL_QR_MAX_GROWTH_MM,
   JOURNAL_QR_MAX_MODULES,
   JOURNAL_QR_MIN_MODULE_MM,
@@ -28,6 +29,7 @@ import {
   trackPdfInk,
 } from "@/lib/pdf-journal-qr";
 import { JOURNAL_SHEET_MARGIN_MM } from "@/lib/pdf-journal-sheet";
+import { JOURNAL_LINE_WIDTH } from "@/lib/pdf-journal-table";
 
 const M = JOURNAL_SHEET_MARGIN_MM;
 /** Образец бланка — короткий адрес (37 модулей). */
@@ -37,37 +39,64 @@ const URL_DOC = "https://wesetup.ru/qj/cmf1abcdefghijklmnopqrstu/hygiene/AbCdEfG
 /** Самый плотный адрес документа: /qj/<cuid>/<код 30 символов>/<подпись> — 53 модуля. */
 const URL_DOC_LONGEST = "https://wesetup.ru/qj/cmf1abcdefghijklmnopqrstu/cleaning_ventilation_checklist/AbCdEfGhIjKl";
 
-test("плитка: короткий адрес — в две строки шапки (20 мм), шапка не растёт; модуль ≥ 0,35 мм", () => {
+/**
+ * Ячейка QR прежней плитки (плашка с градиентом, до 2026-09-27) при стороне
+ * матрицы n: плитка ×1,185 от ширины (матрица + 2 × 2 модуля), высота 19,7 мм
+ * (до модуля 0,365 мм, не выше 23,7 мм), поле 0,15 мм до линий ячейки.
+ */
+function previousCell(n: number): { width: number; height: number } {
+  const height = Math.min(Math.max(19.7, (n + 4) * 1.185 * 0.365), 23.7);
+  return { width: height / 1.185 + 0.3, height: height + 0.3 };
+}
+
+test("плитка: короткий адрес — ячейка базовой ширины, строки шапки не растут (20 мм); модуль ≥ 0,35 мм", () => {
   const tile = journalQrTile(URL_SAMPLE);
   assert.equal(tile.modules, 37);
-  assert.ok(Math.abs(journalQrCellHeight(tile) - JOURNAL_HEADER_ROWS_MM) < 1e-9, `ячейка ${journalQrCellHeight(tile)}`);
+  assert.ok(Math.abs(journalQrCellWidth(tile) - JOURNAL_QR_CELL_BASE_WIDTH_MM) < 1e-9, `ячейка ${journalQrCellWidth(tile)}`);
+  assert.ok(journalQrCellHeight(tile) <= JOURNAL_HEADER_ROWS_MM, `ячейке нужно ${journalQrCellHeight(tile)} мм`);
   assert.ok(tile.module >= JOURNAL_QR_MIN_MODULE_MM, `модуль ${tile.module}`);
-  // Пропорции фирменной плитки: ширина — матрица + тихая зона, высота — с плашкой.
+  // Окно кода = ширина ячейки без линии; плитка с рамкой — пропорции раскладки.
   const layout = brandQrLayout(URL_SAMPLE);
+  assert.ok(Math.abs(layout.window.w * tile.module - (journalQrCellWidth(tile) - JOURNAL_LINE_WIDTH)) < 1e-9);
   assert.ok(Math.abs(tile.width / tile.height - layout.width / layout.height) < 1e-9);
-  assert.ok(Math.abs(journalQrCellWidth(tile) - (tile.width + 2 * JOURNAL_QR_CELL_PAD_MM)) < 1e-9);
 });
 
-test("плитка: адрес документа (49 модулей) — шапка выше ровно до модуля 0,365 мм", () => {
+test("плитка: адрес документа (49 модулей) — ячейка ровно под модуль 0,365 мм", () => {
   const tile = journalQrTile(URL_DOC);
   assert.equal(tile.modules, 49);
   assert.ok(Math.abs(tile.module - JOURNAL_QR_TARGET_MODULE_MM) < 1e-9, `модуль ${tile.module}`);
   const growth = journalQrCellHeight(tile) - JOURNAL_HEADER_ROWS_MM;
-  assert.ok(growth > 3 && growth < JOURNAL_QR_MAX_GROWTH_MM, `рост шапки ${growth}`);
-  // 41 модуль в 20 мм — уже крупнее: шапка не растёт.
+  assert.ok(growth > 2 && growth < JOURNAL_QR_MAX_GROWTH_MM, `рост шапки ${growth}`);
+  // 41 модуль в базовой ячейке — уже крупнее: шапка не растёт.
   const sample = journalQrTile("https://wesetup.ru/journals-info/cold_equipment_control");
   assert.equal(sample.modules, 41);
   assert.ok(sample.module > JOURNAL_QR_TARGET_MODULE_MM);
-  assert.ok(Math.abs(journalQrCellHeight(sample) - JOURNAL_HEADER_ROWS_MM) < 1e-9);
+  assert.ok(journalQrCellHeight(sample) <= JOURNAL_HEADER_ROWS_MM);
 });
 
-test("плитка: самый плотный адрес (53 модуля) — шапка выше ровно на 4 мм, модуль не меньше 0,35 мм", () => {
+test("плитка: самый плотный адрес (53 модуля) — самая широкая ячейка, модуль не меньше 0,35 мм", () => {
   const tile = journalQrTile(URL_DOC_LONGEST);
   assert.equal(tile.modules, 53);
   assert.ok(tile.module >= JOURNAL_QR_MIN_MODULE_MM - 1e-9 && tile.module < JOURNAL_QR_TARGET_MODULE_MM, `модуль ${tile.module}`);
+  assert.ok(Math.abs(journalQrCellWidth(tile) - JOURNAL_QR_CELL_MAX_WIDTH_MM) < 1e-9);
   const growth = journalQrCellHeight(tile) - JOURNAL_HEADER_ROWS_MM;
-  assert.ok(Math.abs(growth - JOURNAL_QR_MAX_GROWTH_MM) < 1e-9, `рост шапки ${growth}`);
-  assert.equal(JOURNAL_QR_MAX_MODULES, 53, "версия 9 — самая плотная, что помещается");
+  assert.ok(growth > 0 && growth <= JOURNAL_QR_MAX_GROWTH_MM, `рост шапки ${growth}`);
+  assert.equal(JOURNAL_QR_MAX_MODULES, 53, "версия 9 — самая плотная, что помещается (как было: токены /qb те же)");
+});
+
+test("ячейка QR при любой плотности не шире и не выше, чем у прежней плитки, модуль — не меньше", () => {
+  for (let n = 21; n <= JOURNAL_QR_MAX_MODULES; n += 4) {
+    // Строка ровно на n модулей (алфавитно-цифровая, нужной длины).
+    let url = "A";
+    while (journalQrMatrix(url).modules.size < n) url += "A";
+    assert.equal(journalQrMatrix(url).modules.size, n);
+    const tile = journalQrTile(url);
+    const previous = previousCell(n);
+    assert.ok(journalQrCellWidth(tile) <= previous.width + 1e-9, `${n}: ширина ${journalQrCellWidth(tile)} > ${previous.width}`);
+    assert.ok(journalQrCellHeight(tile) <= previous.height + 1e-9, `${n}: высота ${journalQrCellHeight(tile)} > ${previous.height}`);
+    const previousModule = (previous.width - 0.3) / (n + 4);
+    assert.ok(tile.module >= previousModule - 1e-9, `${n}: модуль ${tile.module} < ${previousModule}`);
+  }
 });
 
 test("плитка: плотнее 53 модулей — ошибка, а не нечитаемый QR", () => {
@@ -240,16 +269,21 @@ test("штамп: плитка в ячейке шапки каждой стра�
   );
   for (const p of placements.slice(0, 2)) {
     assert.ok(p.box && p.slot);
-    // По центру ячейки; правый край — в поле ячейки от рамки шапки.
-    assert.ok(Math.abs(p.slot.x1 - p.box.x1 - JOURNAL_QR_CELL_PAD_MM) < 1e-9, `стр. ${p.page}: правый край ${p.box.x1}`);
-    assert.ok(Math.abs(p.box.y0 - p.slot.y0 - (p.slot.y1 - p.box.y1)) < 1e-9, "по центру ячейки по высоте");
+    // Плитка — вся ячейка внутри линий (линии ячейки — рамка кода).
+    const half = JOURNAL_LINE_WIDTH / 2;
+    assert.ok(Math.abs(p.slot.x1 - p.box.x1 - half) < 1e-9 && Math.abs(p.box.x0 - p.slot.x0 - half) < 1e-9, `стр. ${p.page}: ${p.box.x0}–${p.box.x1}`);
+    assert.ok(Math.abs(p.box.y0 - p.slot.y0 - half) < 1e-9 && Math.abs(p.slot.y1 - p.box.y1 - half) < 1e-9, "по высоте — вся ячейка");
     assert.ok(p.box.x0 >= M && p.box.y0 >= M, "внутри полей листа");
+    // Окно кода — во всю ширину, по центру над полосой.
+    const strip = brandQrLayout(URL_DOC_LONGEST).strip!.h * tile.module;
+    assert.ok(p.window && Math.abs(p.window.x0 - p.box.x0) < 1e-9 && Math.abs(p.window.x1 - p.box.x1) < 1e-9);
+    assert.ok(Math.abs(p.window.y0 - p.box.y0 - (p.box.y1 - strip - p.window.y1)) < 1e-9, "код по центру окна");
     assert.equal(p.modules, 53);
   }
   assert.equal(placements[2].box, null);
   assert.equal(tracker.boxes(1).length, 0, "штамп не учитывается как чернила бланка");
 
-  // Растр 600 dpi: центры модулей совпадают с матрицей, плашка тёмная.
+  // Растр 600 dpi: центры модулей совпадают с матрицей, полоса снизу — сплошной чёрный.
   const layout = brandQrLayout(URL_DOC_LONGEST);
   const pdf = new Uint8Array(doc.output("arraybuffer"));
   for (const p of placements.slice(0, 2)) {
@@ -259,25 +293,27 @@ test("штамп: плитка в ячейке шапки каждой стра�
     let mismatches = 0;
     for (let row = 0; row < layout.size; row += 1) {
       for (let col = 0; col < layout.size; col += 1) {
-        const mx = layout.quiet + col + 0.5;
-        const my = layout.quiet + row + 0.5;
+        const mx = layout.window.x + layout.quiet + col + 0.5;
+        const my = layout.window.y + layout.quiet + row + 0.5;
         if (mx >= pad.x && mx <= pad.x + pad.w && my >= pad.y && my <= pad.y + pad.h) continue; // знак сайта
-        const cx = p.box!.x0 + (layout.quiet + col + 0.5) * u;
-        const cy = p.box!.y0 + (layout.quiet + row + 0.5) * u;
+        const cx = p.window!.x0 + (layout.quiet + col + 0.5) * u;
+        const cy = p.window!.y0 + (layout.quiet + row + 0.5) * u;
         if (luminanceAt(r, cx, cy) < 128 !== layout.plain(row, col)) mismatches += 1;
       }
     }
     assert.equal(mismatches, 0, `стр. ${p.page}: модули по растру`);
-    const plate = layout.plate!;
-    // Слева от надписей, за скруглением: верх плашки серый, низ почти чёрный.
-    const plateX = p.box!.x0 + (plate.x + plate.w * 0.12) * u;
-    const top = luminanceAt(r, plateX, p.box!.y0 + (plate.y + plate.h * 0.2) * u);
-    const bottom = luminanceAt(r, plateX, p.box!.y0 + (plate.y + plate.h * 0.8) * u);
-    assert.ok(bottom < 60 && top > bottom + 25, `градиент плашки: верх ${top.toFixed(0)}, низ ${bottom.toFixed(0)}`);
+    // Полоса: у левого края (до слова) — чёрная и сверху, и снизу; над ней — белое окно.
+    const strip = layout.strip!.h * u;
+    const stripX = p.box!.x0 + 0.3;
+    const top = luminanceAt(r, stripX, p.box!.y1 - strip * 0.8);
+    const bottom = luminanceAt(r, stripX, p.box!.y1 - strip * 0.2);
+    const windowAbove = luminanceAt(r, stripX, p.window!.y1 - u);
+    assert.ok(top < 40 && bottom < 40, `полоса без градиента: верх ${top.toFixed(0)}, низ ${bottom.toFixed(0)}`);
+    assert.ok(windowAbove > 215, `тихая зона над полосой белая: ${windowAbove.toFixed(0)}`);
   }
 });
 
-test("штамп: надписи плашки и строка внизу каждой страницы (копирайт шаблона); проба ничего не рисует", () => {
+test("штамп: слово в полосе и строка внизу каждой страницы (копирайт шаблона); проба ничего не рисует", () => {
   const texts: Array<{ text: string; x: number; y: number; page: number }> = [];
   const make = () => {
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
@@ -302,8 +338,11 @@ test("штамп: надписи плашки и строка внизу каж�
     placements.map((p) => p.where),
     ["header", "corner"],
   );
-  assert.ok(texts.some((t) => t.page === 1 && t.text === BRAND_QR_CAPTION_TITLE), "«Отсканировать» на плашке");
-  assert.ok(texts.some((t) => t.page === 2 && t.text === BRAND_QR_CAPTION_SITE), "«wesetup.ru» на плашке");
+  // В ячейке шапки и в плитке с рамкой — одно слово «Отсканировать», адреса сайта нет.
+  for (const page of [1, 2]) {
+    const own = texts.filter((t) => t.page === page && t.text !== footer).map((t) => t.text);
+    assert.deepEqual(own, [BRAND_QR_CAPTION_TITLE], `стр. ${page}: ${own.join(" | ")}`);
+  }
   for (const [page, height] of [
     [1, 210],
     [2, 297],

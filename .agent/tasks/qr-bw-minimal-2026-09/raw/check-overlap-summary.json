@@ -1,0 +1,93 @@
+{
+ "ok": true,
+ "sets": {
+  "blanks": {
+   "blanksOk": "45/45",
+   "pages": 57,
+   "header": 54,
+   "corner": 1,
+   "none": 2,
+   "maxInkBeforeStamp": 0,
+   "knownOverflowPages": [],
+   "maxChangedOutside": 0,
+   "maxModuleMismatches": 0,
+   "maxAlignDiffMm": 0.27,
+   "marginsOk": true,
+   "failedPages": []
+  },
+  "long": {
+   "blanksOk": "45/45",
+   "pages": 486,
+   "header": 93,
+   "corner": 4,
+   "none": 389,
+   "maxInkBeforeStamp": 0,
+   "knownOverflowPages": [
+    "cleaning_ventilation_checklist стр. 2",
+    "cleaning_ventilation_checklist стр. 3",
+    "cleaning_ventilation_checklist стр. 4"
+   ],
+   "maxChangedOutside": 0,
+   "maxModuleMismatches": 0,
+   "maxAlignDiffMm": 0.27,
+   "marginsOk": true,
+   "failedPages": []
+  },
+  "paper": {
+   "blanksOk": "5/5",
+   "pages": 10,
+   "header": 0,
+   "corner": 5,
+   "none": 5,
+   "maxInkBeforeStamp": 0,
+   "knownOverflowPages": [],
+   "maxChangedOutside": 0,
+   "maxModuleMismatches": 0,
+   "maxAlignDiffMm": 0.27,
+   "marginsOk": true,
+   "failedPages": []
+  },
+  "portrait": {
+   "blanksOk": "45/45",
+   "pages": 56,
+   "header": 53,
+   "corner": 0,
+   "none": 3,
+   "maxInkBeforeStamp": 0,
+   "knownOverflowPages": [],
+   "maxChangedOutside": 0,
+   "maxModuleMismatches": 0,
+   "maxAlignDiffMm": 0.17,
+   "marginsOk": true,
+   "failedPages": []
+  },
+  "samples": {
+   "blanksOk": "45/45",
+   "pages": 57,
+   "header": 54,
+   "corner": 1,
+   "none": 2,
+   "maxInkBeforeStamp": 0,
+   "knownOverflowPages": [],
+   "maxChangedOutside": 0,
+   "maxModuleMismatches": 0,
+   "maxAlignDiffMm": 0.27,
+   "marginsOk": true,
+   "failedPages": []
+  },
+  "variants": {
+   "blanksOk": "46/46",
+   "pages": 62,
+   "header": 59,
+   "corner": 1,
+   "none": 2,
+   "maxInkBeforeStamp": 0,
+   "knownOverflowPages": [],
+   "maxChangedOutside": 0,
+   "maxModuleMismatches": 0,
+   "maxAlignDiffMm": 0.27,
+   "marginsOk": true,
+   "failedPages": []
+  }
+ }
+}

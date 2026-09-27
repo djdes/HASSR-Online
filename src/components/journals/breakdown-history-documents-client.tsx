@@ -43,6 +43,7 @@ import {
   restoreMenuItems,
   useRestoreDocument,
   useCanManageDocuments,
+  JournalTabs,
 } from "@/components/journals/document-list-ui";
 import { resolveJournalPeriodForDate } from "@/lib/journal-period";
 import {
@@ -393,31 +394,7 @@ export function BreakdownHistoryDocumentsClient({
         />
       </div>
 
-      {/* Tabs */}
-      <div className="border-b border-[#d9dce8]">
-        <div className="flex flex-wrap gap-6 text-[15px] sm:gap-12 sm:text-[16px]">
-          <Link
-            href={`/journals/${routeCode}`}
-            className={`relative pb-6 ${
-              activeTab === "active"
-                ? "font-semibold text-black after:absolute after:bottom-[-1px] after:left-0 after:h-[3px] after:w-full after:bg-[#5566f6]"
-                : "text-[#8a8ea4]"
-            }`}
-          >
-            Активные
-          </Link>
-          <Link
-            href={`/journals/${routeCode}?tab=closed`}
-            className={`relative pb-6 ${
-              activeTab === "closed"
-                ? "font-semibold text-black after:absolute after:bottom-[-1px] after:left-0 after:h-[3px] after:w-full after:bg-[#5566f6]"
-                : "text-[#8a8ea4]"
-            }`}
-          >
-            Закрытые
-          </Link>
-        </div>
-      </div>
+      <JournalTabs activeTab={activeTab} templateCode={routeCode} />
 
       {/* Document Cards */}
       <div className={JOURNAL_LIST_CARDS_CLASS}>

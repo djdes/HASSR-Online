@@ -143,7 +143,7 @@ test("печать: после журнала — страницы PDF-скан�
   assert.deepEqual([Math.round(portrait.width), Math.round(portrait.height)], [595, 842]);
 
   const texts = await pageTexts(new Uint8Array(merged.buffer));
-  // QR в шапке — с плашкой «Отсканировать»: по ней видно, где QR есть.
+  // QR в шапке — с полосой «Отсканировать»: по ней видно, где QR есть.
   const qrCaption = BRAND_QR_CAPTION_TITLE;
   assert.ok(texts.slice(0, journalPages).every((text) => text.includes(qrCaption)), "QR есть на каждой странице журнала");
   assert.ok(texts.slice(journalPages).every((text) => !text.includes(qrCaption)), "на страницах приказов QR нет");

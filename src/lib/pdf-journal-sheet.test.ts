@@ -4,7 +4,7 @@ import test from "node:test";
 import { createCanvas } from "@napi-rs/canvas";
 import { jsPDF } from "jspdf";
 
-import { BRAND_QR_CAPTION_SITE, BRAND_QR_CAPTION_TITLE } from "@/lib/brand-qr";
+import { BRAND_QR_CAPTION_TITLE } from "@/lib/brand-qr";
 import { renderJournalDocumentPdf } from "@/lib/document-pdf";
 import { standardFontsDir, workerFileUrl } from "@/lib/journal-preview/render";
 import { journalSamplePdfQr } from "@/lib/journal-pdf-qr-link";
@@ -14,6 +14,8 @@ import {
   JOURNAL_HEADER_ROWS_MM,
   JOURNAL_QR_MAX_GROWTH_MM,
   JOURNAL_QR_MIN_MODULE_MM,
+  journalQrCellHeight,
+  journalQrTile,
   prepareJournalQr,
   stampJournalQr,
   trackPdfInk,
@@ -270,11 +272,14 @@ test("образцы журналов: QR в шапке на каждой стр
         assert.ok(p.module >= JOURNAL_QR_MIN_MODULE_MM - 1e-9, `${label}: модуль ${p.module}`);
         if (p.slot) {
           assert.ok(p.slot.y1 - p.slot.y0 >= JOURNAL_HEADER_ROWS_MM - 1e-6);
-          assert.ok(p.box.y1 - p.box.y0 <= JOURNAL_HEADER_ROWS_MM + JOURNAL_QR_MAX_GROWTH_MM, `${label}: плитка по высоте шапки`);
+          // Плитка — вся ячейка внутри линий, окно кода в ней; самой плитке
+          // нужно не больше строк шапки + 4 мм (выше — только из-за переноса названия).
+          assert.ok(p.window && p.window.y0 >= p.box.y0 - 1e-9 && p.window.y1 <= p.box.y1 + 1e-9, `${label}: окно кода в ячейке`);
+          assert.ok(journalQrCellHeight(journalQrTile(qr.url)) <= JOURNAL_HEADER_ROWS_MM + JOURNAL_QR_MAX_GROWTH_MM, `${label}: плитка по высоте шапки`);
         }
-        // Ни одна строка текста страницы (кроме надписей самой плашки) не
-        // заходит на плитку.
-        const own = new Set([BRAND_QR_CAPTION_TITLE, BRAND_QR_CAPTION_SITE]);
+        // Ни одна строка текста страницы (кроме слова в полосе самой плитки)
+        // не заходит на плитку.
+        const own = new Set([BRAND_QR_CAPTION_TITLE]);
         const hit = page.texts.find((t) => !own.has(t.text.trim()) && intersects(t, p.box!));
         assert.equal(hit, undefined, `${label}, стр. ${index + 1}: текст «${hit?.text}» на месте QR`);
       });
