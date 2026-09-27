@@ -303,7 +303,28 @@ async function hideKeyboard() {
 }
 
 let lastTapped = null;
+/**
+ * Раскладка под текст: XCTest печатает только то, что есть на текущей раскладке
+ * (раунд 2: пароль «DemoShots2026!» на русской раскладке ушёл как «2026!»).
+ * Переключаем глобусом, пока на клавиатуре не появятся нужные буквы.
+ */
+async function ensureLayout(text) {
+  const wantLatin = /[a-z]/i.test(text);
+  const wantCyr = /[а-яё]/i.test(text);
+  if (!wantLatin && !wantCyr) return;
+  const probe = wantLatin ? ["q", "Q", "a", "A"] : ["й", "Й", "ф", "Ф"];
+  for (let i = 0; i < 4; i++) {
+    const keys = await driver.$$(`-ios predicate string:type == "XCUIElementTypeKey" AND label IN {${probe.map(q).join(",")}}`);
+    if (keys.length) return;
+    const globe = await driver.$$(`-ios predicate string:type IN {"XCUIElementTypeButton","XCUIElementTypeKey"} AND (label IN {"Следующая клавиатура","Next keyboard"} OR name IN {"Следующая клавиатура","Next keyboard","NextKeyboard"})`);
+    if (!globe.length) return;
+    await globe[0].click();
+    await sleep(600);
+  }
+}
+
 async function typeFocused(text) {
+  await ensureLayout(text);
   const f = await driver.$(`-ios predicate string:type IN {${q(T.field)},${q(T.secure)}} AND hasKeyboardFocus == 1`);
   if (await f.isExisting()) {
     await f.addValue(text);
@@ -480,6 +501,8 @@ async function signIn(ctx, email, tag) {
   const kbTop1 = await keyboardTop();
   const btn1 = (await all({ type: "button", label: "Войти" }))[0]?.r;
   ctx.d[`${tag}_kb_email`] = { kbTop: kbTop1, submit: btn1 };
+  // После выхода форма помнит прошлую почту (раунд 2: «chef@…delete-me@…») — сначала очистить.
+  if (lastTapped) await lastTapped.clearValue().catch(() => undefined);
   await typeFocused(email);
   await tap({ type: "secure" }, { scrolls: 2 });
   await sleep(700);
