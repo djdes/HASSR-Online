@@ -12,7 +12,7 @@ import {
   Sticker,
 } from "lucide-react";
 import { toast } from "sonner";
-import { downloadFile, printPage } from "@/lib/native-bridge";
+import { printPage, printPdf } from "@/lib/native-bridge";
 import { QrCode } from "lucide-react";
 import { isJournalObjectQrCode, journalQrHref } from "@/lib/journal-qr-target";
 import { resolveJournalCodeAlias } from "@/lib/source-journal-map";
@@ -248,9 +248,9 @@ export function DocumentActionsBar({
                         key: "print-pdf",
                         label: "Печать",
                         icon: <Printer className="size-4 text-[#6f7282]" />,
-                        // В приложении — файл и «Поделиться», иначе новая вкладка.
+                        // В приложении — системное окно печати, иначе новая вкладка.
                         onSelect: () =>
-                          void downloadFile(`/api/journal-documents/${documentId}/pdf`, {
+                          void printPdf(`/api/journal-documents/${documentId}/pdf`, {
                             fallback: () =>
                               window.open(
                                 `/api/journal-documents/${documentId}/pdf`,

@@ -210,3 +210,14 @@ test("строка состояния вне оболочки: значки по
   assert.equal(statusBarStyleForBackground("transparent"), null);
   assert.equal(statusBarStyleForBackground(""), null);
 });
+
+test("бланк журнала (PDF) в приложении печатается, а не уходит в «Поделиться»", async () => {
+  const { isPrintPdfUrl } = await import("./native-bridge");
+  assert.equal(isPrintPdfUrl("/api/journal-documents/abc123/pdf", O), true);
+  assert.equal(isPrintPdfUrl("https://wesetup.ru/api/journal-documents/abc123/pdf?x=1", O), true);
+  assert.equal(isPrintPdfUrl("https://evil.example/api/journal-documents/abc123/pdf", O), false);
+  assert.equal(isPrintPdfUrl("/api/journal-documents/abc123/xlsx", O), false);
+  assert.equal(isPrintPdfUrl("/api/reports/compliance.zip", O), false);
+  assert.equal(isPrintPdfUrl("mailto:a@b.c", O), false);
+  assert.equal(isPrintPdfUrl("", O), false);
+});
