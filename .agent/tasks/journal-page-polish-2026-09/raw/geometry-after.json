@@ -1,0 +1,1673 @@
+{
+  "label": "after",
+  "at": "2026-09-27T15:53:35.194Z",
+  "pageErrors": [],
+  "pages": {
+    "cold-390-light": {
+      "title": {
+        "top": 291,
+        "bottom": 453.19,
+        "left": 16,
+        "right": 374,
+        "width": 358,
+        "height": 162.19
+      },
+      "row": {
+        "top": 291,
+        "bottom": 573.19,
+        "left": 16,
+        "right": 374,
+        "width": 358,
+        "height": 282.19
+      },
+      "block": {
+        "top": 465.19,
+        "bottom": 573.19,
+        "left": 16,
+        "right": 374,
+        "width": 358,
+        "height": 108
+      },
+      "qr": {
+        "top": 465.19,
+        "bottom": 513.19,
+        "left": 16,
+        "right": 374,
+        "width": 358,
+        "height": 48
+      },
+      "create": {
+        "top": 525.19,
+        "bottom": 573.19,
+        "left": 16,
+        "right": 189,
+        "width": 173,
+        "height": 48
+      },
+      "guide": {
+        "top": 525.19,
+        "bottom": 573.19,
+        "left": 201,
+        "right": 374,
+        "width": 173,
+        "height": 48
+      },
+      "tabsOuter": {
+        "top": 605.19,
+        "bottom": 653.19,
+        "left": 16,
+        "right": 374,
+        "width": 358,
+        "height": 48
+      },
+      "activeLink": {
+        "top": 605.19,
+        "bottom": 653.19,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 48
+      },
+      "activeText": {
+        "top": 614.19,
+        "bottom": 636.19,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 22
+      },
+      "closedText": {
+        "top": 614.19,
+        "bottom": 636.19,
+        "left": 124.44,
+        "right": 202.61,
+        "width": 78.17,
+        "height": 22
+      },
+      "underline": {
+        "on": "span",
+        "top": 643.19,
+        "bottom": 645.19,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 2,
+        "color": "rgb(85, 102, 246)"
+      },
+      "line": null,
+      "above": {
+        "bottom": 271,
+        "tag": "div",
+        "text": "Создавать журнал автоматическиЗаполнять "
+      },
+      "cardTop": 685.19,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "blockGapCss": "12px / 12px",
+      "rowGapCss": "12px",
+      "layout": "stacked",
+      "gaps": {
+        "titleToQr": 12,
+        "aboveToBlock": null,
+        "aboveToRow": 20,
+        "qrToRow": 12,
+        "createToGuide": 12,
+        "blockToTabs": 32,
+        "rowToTabs": 32,
+        "blockToTabText": 41,
+        "textToUnderline": 7,
+        "underlineVsTextWidth": 0,
+        "underlineToLine": null,
+        "tabsToCard": 32,
+        "underlineToCard": 40
+      }
+    },
+    "pest-390-light": {
+      "title": {
+        "top": 225,
+        "bottom": 355,
+        "left": 16,
+        "right": 374,
+        "width": 358,
+        "height": 130
+      },
+      "row": {
+        "top": 225,
+        "bottom": 475,
+        "left": 16,
+        "right": 374,
+        "width": 358,
+        "height": 250
+      },
+      "block": {
+        "top": 367,
+        "bottom": 475,
+        "left": 16,
+        "right": 374,
+        "width": 358,
+        "height": 108
+      },
+      "qr": {
+        "top": 367,
+        "bottom": 415,
+        "left": 16,
+        "right": 374,
+        "width": 358,
+        "height": 48
+      },
+      "create": {
+        "top": 427,
+        "bottom": 475,
+        "left": 16,
+        "right": 189,
+        "width": 173,
+        "height": 48
+      },
+      "guide": {
+        "top": 427,
+        "bottom": 475,
+        "left": 201,
+        "right": 374,
+        "width": 173,
+        "height": 48
+      },
+      "tabsOuter": {
+        "top": 495,
+        "bottom": 543,
+        "left": 16,
+        "right": 374,
+        "width": 358,
+        "height": 48
+      },
+      "activeLink": {
+        "top": 495,
+        "bottom": 543,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 48
+      },
+      "activeText": {
+        "top": 504,
+        "bottom": 526,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 22
+      },
+      "closedText": {
+        "top": 504,
+        "bottom": 526,
+        "left": 124.44,
+        "right": 202.61,
+        "width": 78.17,
+        "height": 22
+      },
+      "underline": {
+        "on": "span",
+        "top": 533,
+        "bottom": 535,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 2,
+        "color": "rgb(85, 102, 246)"
+      },
+      "line": null,
+      "above": {
+        "bottom": 205,
+        "tag": "div",
+        "text": "Создавать журнал автоматически"
+      },
+      "cardTop": 563,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "blockGapCss": "12px / 12px",
+      "rowGapCss": "12px",
+      "layout": "stacked",
+      "gaps": {
+        "titleToQr": 12,
+        "aboveToBlock": null,
+        "aboveToRow": 20,
+        "qrToRow": 12,
+        "createToGuide": 12,
+        "blockToTabs": 20,
+        "rowToTabs": 20,
+        "blockToTabText": 29,
+        "textToUnderline": 7,
+        "underlineVsTextWidth": 0,
+        "underlineToLine": null,
+        "tabsToCard": 20,
+        "underlineToCard": 28
+      }
+    },
+    "hygiene-390-light": {
+      "title": {
+        "top": 291,
+        "bottom": 356.63,
+        "left": 16,
+        "right": 374,
+        "width": 358,
+        "height": 65.63
+      },
+      "row": {
+        "top": 291,
+        "bottom": 476.63,
+        "left": 16,
+        "right": 374,
+        "width": 358,
+        "height": 185.63
+      },
+      "block": {
+        "top": 368.63,
+        "bottom": 476.63,
+        "left": 16,
+        "right": 374,
+        "width": 358,
+        "height": 108
+      },
+      "qr": {
+        "top": 368.63,
+        "bottom": 416.63,
+        "left": 16,
+        "right": 374,
+        "width": 358,
+        "height": 48
+      },
+      "create": null,
+      "guide": {
+        "top": 428.63,
+        "bottom": 476.63,
+        "left": 16,
+        "right": 374,
+        "width": 358,
+        "height": 48
+      },
+      "tabsOuter": {
+        "top": 508.63,
+        "bottom": 556.63,
+        "left": 16,
+        "right": 374,
+        "width": 358,
+        "height": 48
+      },
+      "activeLink": {
+        "top": 508.63,
+        "bottom": 556.63,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 48
+      },
+      "activeText": {
+        "top": 517.63,
+        "bottom": 539.63,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 22
+      },
+      "closedText": {
+        "top": 517.63,
+        "bottom": 539.63,
+        "left": 124.44,
+        "right": 202.61,
+        "width": 78.17,
+        "height": 22
+      },
+      "underline": {
+        "on": "span",
+        "top": 546.63,
+        "bottom": 548.63,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 2,
+        "color": "rgb(85, 102, 246)"
+      },
+      "line": null,
+      "above": {
+        "bottom": 271,
+        "tag": "div",
+        "text": "Создавать журнал автоматическиЗаполнять "
+      },
+      "cardTop": 670.63,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "blockGapCss": "12px / 12px",
+      "rowGapCss": "12px",
+      "layout": "stacked",
+      "gaps": {
+        "titleToQr": 12,
+        "aboveToBlock": null,
+        "aboveToRow": 20,
+        "qrToRow": 12,
+        "createToGuide": null,
+        "blockToTabs": 32,
+        "rowToTabs": 32,
+        "blockToTabText": 41,
+        "textToUnderline": 7,
+        "underlineVsTextWidth": 0,
+        "underlineToLine": null,
+        "tabsToCard": 114,
+        "underlineToCard": 122
+      }
+    },
+    "cold-360-light": {
+      "title": {
+        "top": 291,
+        "bottom": 485.38,
+        "left": 16,
+        "right": 344,
+        "width": 328,
+        "height": 194.38
+      },
+      "row": {
+        "top": 291,
+        "bottom": 605.38,
+        "left": 16,
+        "right": 344,
+        "width": 328,
+        "height": 314.38
+      },
+      "block": {
+        "top": 497.38,
+        "bottom": 605.38,
+        "left": 16,
+        "right": 344,
+        "width": 328,
+        "height": 108
+      },
+      "qr": {
+        "top": 497.38,
+        "bottom": 545.38,
+        "left": 16,
+        "right": 344,
+        "width": 328,
+        "height": 48
+      },
+      "create": {
+        "top": 557.38,
+        "bottom": 605.38,
+        "left": 16,
+        "right": 192.02,
+        "width": 176.02,
+        "height": 48
+      },
+      "guide": {
+        "top": 557.38,
+        "bottom": 605.38,
+        "left": 204.02,
+        "right": 344,
+        "width": 139.98,
+        "height": 48
+      },
+      "tabsOuter": {
+        "top": 637.38,
+        "bottom": 685.38,
+        "left": 16,
+        "right": 344,
+        "width": 328,
+        "height": 48
+      },
+      "activeLink": {
+        "top": 637.38,
+        "bottom": 685.38,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 48
+      },
+      "activeText": {
+        "top": 646.38,
+        "bottom": 668.38,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 22
+      },
+      "closedText": {
+        "top": 646.38,
+        "bottom": 668.38,
+        "left": 124.44,
+        "right": 202.61,
+        "width": 78.17,
+        "height": 22
+      },
+      "underline": {
+        "on": "span",
+        "top": 675.38,
+        "bottom": 677.38,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 2,
+        "color": "rgb(85, 102, 246)"
+      },
+      "line": null,
+      "above": {
+        "bottom": 271,
+        "tag": "div",
+        "text": "Создавать журнал автоматическиЗаполнять "
+      },
+      "cardTop": 717.38,
+      "viewport": {
+        "width": 360,
+        "height": 780
+      },
+      "blockGapCss": "12px / 12px",
+      "rowGapCss": "12px",
+      "layout": "stacked",
+      "gaps": {
+        "titleToQr": 12,
+        "aboveToBlock": null,
+        "aboveToRow": 20,
+        "qrToRow": 12,
+        "createToGuide": 12,
+        "blockToTabs": 32,
+        "rowToTabs": 32,
+        "blockToTabText": 41,
+        "textToUnderline": 7,
+        "underlineVsTextWidth": 0,
+        "underlineToLine": null,
+        "tabsToCard": 32,
+        "underlineToCard": 40
+      }
+    },
+    "pest-360-light": {
+      "title": {
+        "top": 225,
+        "bottom": 387.19,
+        "left": 16,
+        "right": 344,
+        "width": 328,
+        "height": 162.19
+      },
+      "row": {
+        "top": 225,
+        "bottom": 507.19,
+        "left": 16,
+        "right": 344,
+        "width": 328,
+        "height": 282.19
+      },
+      "block": {
+        "top": 399.19,
+        "bottom": 507.19,
+        "left": 16,
+        "right": 344,
+        "width": 328,
+        "height": 108
+      },
+      "qr": {
+        "top": 399.19,
+        "bottom": 447.19,
+        "left": 16,
+        "right": 344,
+        "width": 328,
+        "height": 48
+      },
+      "create": {
+        "top": 459.19,
+        "bottom": 507.19,
+        "left": 16,
+        "right": 192.02,
+        "width": 176.02,
+        "height": 48
+      },
+      "guide": {
+        "top": 459.19,
+        "bottom": 507.19,
+        "left": 204.02,
+        "right": 344,
+        "width": 139.98,
+        "height": 48
+      },
+      "tabsOuter": {
+        "top": 527.19,
+        "bottom": 575.19,
+        "left": 16,
+        "right": 344,
+        "width": 328,
+        "height": 48
+      },
+      "activeLink": {
+        "top": 527.19,
+        "bottom": 575.19,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 48
+      },
+      "activeText": {
+        "top": 536.19,
+        "bottom": 558.19,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 22
+      },
+      "closedText": {
+        "top": 536.19,
+        "bottom": 558.19,
+        "left": 124.44,
+        "right": 202.61,
+        "width": 78.17,
+        "height": 22
+      },
+      "underline": {
+        "on": "span",
+        "top": 565.19,
+        "bottom": 567.19,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 2,
+        "color": "rgb(85, 102, 246)"
+      },
+      "line": null,
+      "above": {
+        "bottom": 205,
+        "tag": "div",
+        "text": "Создавать журнал автоматически"
+      },
+      "cardTop": 595.19,
+      "viewport": {
+        "width": 360,
+        "height": 780
+      },
+      "blockGapCss": "12px / 12px",
+      "rowGapCss": "12px",
+      "layout": "stacked",
+      "gaps": {
+        "titleToQr": 12,
+        "aboveToBlock": null,
+        "aboveToRow": 20,
+        "qrToRow": 12,
+        "createToGuide": 12,
+        "blockToTabs": 20,
+        "rowToTabs": 20,
+        "blockToTabText": 29,
+        "textToUnderline": 7,
+        "underlineVsTextWidth": 0,
+        "underlineToLine": null,
+        "tabsToCard": 20,
+        "underlineToCard": 28
+      }
+    },
+    "hygiene-360-light": {
+      "title": {
+        "top": 291,
+        "bottom": 388.81,
+        "left": 16,
+        "right": 344,
+        "width": 328,
+        "height": 97.81
+      },
+      "row": {
+        "top": 291,
+        "bottom": 508.81,
+        "left": 16,
+        "right": 344,
+        "width": 328,
+        "height": 217.81
+      },
+      "block": {
+        "top": 400.81,
+        "bottom": 508.81,
+        "left": 16,
+        "right": 344,
+        "width": 328,
+        "height": 108
+      },
+      "qr": {
+        "top": 400.81,
+        "bottom": 448.81,
+        "left": 16,
+        "right": 344,
+        "width": 328,
+        "height": 48
+      },
+      "create": null,
+      "guide": {
+        "top": 460.81,
+        "bottom": 508.81,
+        "left": 16,
+        "right": 344,
+        "width": 328,
+        "height": 48
+      },
+      "tabsOuter": {
+        "top": 540.81,
+        "bottom": 588.81,
+        "left": 16,
+        "right": 344,
+        "width": 328,
+        "height": 48
+      },
+      "activeLink": {
+        "top": 540.81,
+        "bottom": 588.81,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 48
+      },
+      "activeText": {
+        "top": 549.81,
+        "bottom": 571.81,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 22
+      },
+      "closedText": {
+        "top": 549.81,
+        "bottom": 571.81,
+        "left": 124.44,
+        "right": 202.61,
+        "width": 78.17,
+        "height": 22
+      },
+      "underline": {
+        "on": "span",
+        "top": 578.81,
+        "bottom": 580.81,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 2,
+        "color": "rgb(85, 102, 246)"
+      },
+      "line": null,
+      "above": {
+        "bottom": 271,
+        "tag": "div",
+        "text": "Создавать журнал автоматическиЗаполнять "
+      },
+      "cardTop": 702.81,
+      "viewport": {
+        "width": 360,
+        "height": 780
+      },
+      "blockGapCss": "12px / 12px",
+      "rowGapCss": "12px",
+      "layout": "stacked",
+      "gaps": {
+        "titleToQr": 12,
+        "aboveToBlock": null,
+        "aboveToRow": 20,
+        "qrToRow": 12,
+        "createToGuide": null,
+        "blockToTabs": 32,
+        "rowToTabs": 32,
+        "blockToTabText": 41,
+        "textToUnderline": 7,
+        "underlineVsTextWidth": 0,
+        "underlineToLine": null,
+        "tabsToCard": 114,
+        "underlineToCard": 122
+      }
+    },
+    "cold-430-light": {
+      "title": {
+        "top": 265,
+        "bottom": 427.19,
+        "left": 16,
+        "right": 414,
+        "width": 398,
+        "height": 162.19
+      },
+      "row": {
+        "top": 265,
+        "bottom": 547.19,
+        "left": 16,
+        "right": 414,
+        "width": 398,
+        "height": 282.19
+      },
+      "block": {
+        "top": 439.19,
+        "bottom": 547.19,
+        "left": 16,
+        "right": 414,
+        "width": 398,
+        "height": 108
+      },
+      "qr": {
+        "top": 439.19,
+        "bottom": 487.19,
+        "left": 16,
+        "right": 414,
+        "width": 398,
+        "height": 48
+      },
+      "create": {
+        "top": 499.19,
+        "bottom": 547.19,
+        "left": 16,
+        "right": 209,
+        "width": 193,
+        "height": 48
+      },
+      "guide": {
+        "top": 499.19,
+        "bottom": 547.19,
+        "left": 221,
+        "right": 414,
+        "width": 193,
+        "height": 48
+      },
+      "tabsOuter": {
+        "top": 579.19,
+        "bottom": 627.19,
+        "left": 16,
+        "right": 414,
+        "width": 398,
+        "height": 48
+      },
+      "activeLink": {
+        "top": 579.19,
+        "bottom": 627.19,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 48
+      },
+      "activeText": {
+        "top": 588.19,
+        "bottom": 610.19,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 22
+      },
+      "closedText": {
+        "top": 588.19,
+        "bottom": 610.19,
+        "left": 124.44,
+        "right": 202.61,
+        "width": 78.17,
+        "height": 22
+      },
+      "underline": {
+        "on": "span",
+        "top": 617.19,
+        "bottom": 619.19,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 2,
+        "color": "rgb(85, 102, 246)"
+      },
+      "line": null,
+      "above": {
+        "bottom": 245,
+        "tag": "div",
+        "text": "Создавать журнал автоматическиЗаполнять "
+      },
+      "cardTop": 659.19,
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "blockGapCss": "12px / 12px",
+      "rowGapCss": "12px",
+      "layout": "stacked",
+      "gaps": {
+        "titleToQr": 12,
+        "aboveToBlock": null,
+        "aboveToRow": 20,
+        "qrToRow": 12,
+        "createToGuide": 12,
+        "blockToTabs": 32,
+        "rowToTabs": 32,
+        "blockToTabText": 41,
+        "textToUnderline": 7,
+        "underlineVsTextWidth": 0,
+        "underlineToLine": null,
+        "tabsToCard": 32,
+        "underlineToCard": 40
+      }
+    },
+    "pest-430-light": {
+      "title": {
+        "top": 212,
+        "bottom": 309.81,
+        "left": 16,
+        "right": 414,
+        "width": 398,
+        "height": 97.81
+      },
+      "row": {
+        "top": 212,
+        "bottom": 429.81,
+        "left": 16,
+        "right": 414,
+        "width": 398,
+        "height": 217.81
+      },
+      "block": {
+        "top": 321.81,
+        "bottom": 429.81,
+        "left": 16,
+        "right": 414,
+        "width": 398,
+        "height": 108
+      },
+      "qr": {
+        "top": 321.81,
+        "bottom": 369.81,
+        "left": 16,
+        "right": 414,
+        "width": 398,
+        "height": 48
+      },
+      "create": {
+        "top": 381.81,
+        "bottom": 429.81,
+        "left": 16,
+        "right": 209,
+        "width": 193,
+        "height": 48
+      },
+      "guide": {
+        "top": 381.81,
+        "bottom": 429.81,
+        "left": 221,
+        "right": 414,
+        "width": 193,
+        "height": 48
+      },
+      "tabsOuter": {
+        "top": 449.81,
+        "bottom": 497.81,
+        "left": 16,
+        "right": 414,
+        "width": 398,
+        "height": 48
+      },
+      "activeLink": {
+        "top": 449.81,
+        "bottom": 497.81,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 48
+      },
+      "activeText": {
+        "top": 458.81,
+        "bottom": 480.81,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 22
+      },
+      "closedText": {
+        "top": 458.81,
+        "bottom": 480.81,
+        "left": 124.44,
+        "right": 202.61,
+        "width": 78.17,
+        "height": 22
+      },
+      "underline": {
+        "on": "span",
+        "top": 487.81,
+        "bottom": 489.81,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 2,
+        "color": "rgb(85, 102, 246)"
+      },
+      "line": null,
+      "above": {
+        "bottom": 192,
+        "tag": "div",
+        "text": "Создавать журнал автоматически"
+      },
+      "cardTop": 517.81,
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "blockGapCss": "12px / 12px",
+      "rowGapCss": "12px",
+      "layout": "stacked",
+      "gaps": {
+        "titleToQr": 12,
+        "aboveToBlock": null,
+        "aboveToRow": 20,
+        "qrToRow": 12,
+        "createToGuide": 12,
+        "blockToTabs": 20,
+        "rowToTabs": 20,
+        "blockToTabText": 29,
+        "textToUnderline": 7,
+        "underlineVsTextWidth": 0,
+        "underlineToLine": null,
+        "tabsToCard": 20,
+        "underlineToCard": 28
+      }
+    },
+    "hygiene-430-light": {
+      "title": {
+        "top": 265,
+        "bottom": 330.63,
+        "left": 16,
+        "right": 414,
+        "width": 398,
+        "height": 65.63
+      },
+      "row": {
+        "top": 265,
+        "bottom": 450.63,
+        "left": 16,
+        "right": 414,
+        "width": 398,
+        "height": 185.63
+      },
+      "block": {
+        "top": 342.63,
+        "bottom": 450.63,
+        "left": 16,
+        "right": 414,
+        "width": 398,
+        "height": 108
+      },
+      "qr": {
+        "top": 342.63,
+        "bottom": 390.63,
+        "left": 16,
+        "right": 414,
+        "width": 398,
+        "height": 48
+      },
+      "create": null,
+      "guide": {
+        "top": 402.63,
+        "bottom": 450.63,
+        "left": 16,
+        "right": 414,
+        "width": 398,
+        "height": 48
+      },
+      "tabsOuter": {
+        "top": 482.63,
+        "bottom": 530.63,
+        "left": 16,
+        "right": 414,
+        "width": 398,
+        "height": 48
+      },
+      "activeLink": {
+        "top": 482.63,
+        "bottom": 530.63,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 48
+      },
+      "activeText": {
+        "top": 491.63,
+        "bottom": 513.63,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 22
+      },
+      "closedText": {
+        "top": 491.63,
+        "bottom": 513.63,
+        "left": 124.44,
+        "right": 202.61,
+        "width": 78.17,
+        "height": 22
+      },
+      "underline": {
+        "on": "span",
+        "top": 520.63,
+        "bottom": 522.63,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 2,
+        "color": "rgb(85, 102, 246)"
+      },
+      "line": null,
+      "above": {
+        "bottom": 245,
+        "tag": "div",
+        "text": "Создавать журнал автоматическиЗаполнять "
+      },
+      "cardTop": 644.63,
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "blockGapCss": "12px / 12px",
+      "rowGapCss": "12px",
+      "layout": "stacked",
+      "gaps": {
+        "titleToQr": 12,
+        "aboveToBlock": null,
+        "aboveToRow": 20,
+        "qrToRow": 12,
+        "createToGuide": null,
+        "blockToTabs": 32,
+        "rowToTabs": 32,
+        "blockToTabText": 41,
+        "textToUnderline": 7,
+        "underlineVsTextWidth": 0,
+        "underlineToLine": null,
+        "tabsToCard": 114,
+        "underlineToCard": 122
+      }
+    },
+    "cold-1280-light": {
+      "title": {
+        "top": 278,
+        "bottom": 388.39,
+        "left": 32,
+        "right": 796,
+        "width": 764,
+        "height": 110.39
+      },
+      "row": {
+        "top": 278,
+        "bottom": 388.39,
+        "left": 32,
+        "right": 1248,
+        "width": 1216,
+        "height": 110.39
+      },
+      "block": {
+        "top": 281.19,
+        "bottom": 385.19,
+        "left": 808,
+        "right": 1248,
+        "width": 440,
+        "height": 104
+      },
+      "qr": {
+        "top": 281.19,
+        "bottom": 329.19,
+        "left": 808,
+        "right": 1248,
+        "width": 440,
+        "height": 48
+      },
+      "create": {
+        "top": 341.19,
+        "bottom": 385.19,
+        "left": 808,
+        "right": 1022,
+        "width": 214,
+        "height": 44
+      },
+      "guide": {
+        "top": 341.19,
+        "bottom": 385.19,
+        "left": 1034,
+        "right": 1248,
+        "width": 214,
+        "height": 44
+      },
+      "tabsOuter": {
+        "top": 420.39,
+        "bottom": 449.39,
+        "left": 32,
+        "right": 1248,
+        "width": 1216,
+        "height": 29
+      },
+      "activeLink": {
+        "top": 420.39,
+        "bottom": 449.39,
+        "left": 32,
+        "right": 98.89,
+        "width": 66.89,
+        "height": 29
+      },
+      "activeText": {
+        "top": 421.39,
+        "bottom": 440.39,
+        "left": 32,
+        "right": 98.89,
+        "width": 66.89,
+        "height": 19
+      },
+      "closedText": {
+        "top": 421.39,
+        "bottom": 440.39,
+        "left": 146.89,
+        "right": 215.28,
+        "width": 68.39,
+        "height": 19
+      },
+      "underline": {
+        "on": "span",
+        "top": 447.39,
+        "bottom": 449.39,
+        "left": 32,
+        "right": 98.89,
+        "width": 66.89,
+        "height": 2,
+        "color": "rgb(85, 102, 246)"
+      },
+      "line": null,
+      "above": {
+        "bottom": 258,
+        "tag": "div",
+        "text": "Создавать журнал автоматическиЗаполнять "
+      },
+      "cardTop": 481.39,
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "blockGapCss": "12px / 12px",
+      "rowGapCss": "12px",
+      "layout": "side-by-side",
+      "gaps": {
+        "titleToQr": null,
+        "aboveToBlock": 23.19,
+        "aboveToRow": 20,
+        "qrToRow": 12,
+        "createToGuide": 12,
+        "blockToTabs": 35.2,
+        "rowToTabs": 32,
+        "blockToTabText": 36.2,
+        "textToUnderline": 7,
+        "underlineVsTextWidth": 0,
+        "underlineToLine": null,
+        "tabsToCard": 32,
+        "underlineToCard": 32
+      }
+    },
+    "pest-1280-light": {
+      "title": {
+        "top": 240.2,
+        "bottom": 313.8,
+        "left": 32,
+        "right": 796,
+        "width": 764,
+        "height": 73.59
+      },
+      "row": {
+        "top": 225,
+        "bottom": 329,
+        "left": 32,
+        "right": 1248,
+        "width": 1216,
+        "height": 104
+      },
+      "block": {
+        "top": 225,
+        "bottom": 329,
+        "left": 808,
+        "right": 1248,
+        "width": 440,
+        "height": 104
+      },
+      "qr": {
+        "top": 225,
+        "bottom": 273,
+        "left": 808,
+        "right": 1248,
+        "width": 440,
+        "height": 48
+      },
+      "create": {
+        "top": 285,
+        "bottom": 329,
+        "left": 808,
+        "right": 1022,
+        "width": 214,
+        "height": 44
+      },
+      "guide": {
+        "top": 285,
+        "bottom": 329,
+        "left": 1034,
+        "right": 1248,
+        "width": 214,
+        "height": 44
+      },
+      "tabsOuter": {
+        "top": 349,
+        "bottom": 378,
+        "left": 32,
+        "right": 1248,
+        "width": 1216,
+        "height": 29
+      },
+      "activeLink": {
+        "top": 349,
+        "bottom": 378,
+        "left": 32,
+        "right": 98.89,
+        "width": 66.89,
+        "height": 29
+      },
+      "activeText": {
+        "top": 350,
+        "bottom": 369,
+        "left": 32,
+        "right": 98.89,
+        "width": 66.89,
+        "height": 19
+      },
+      "closedText": {
+        "top": 350,
+        "bottom": 369,
+        "left": 146.89,
+        "right": 215.28,
+        "width": 68.39,
+        "height": 19
+      },
+      "underline": {
+        "on": "span",
+        "top": 376,
+        "bottom": 378,
+        "left": 32,
+        "right": 98.89,
+        "width": 66.89,
+        "height": 2,
+        "color": "rgb(85, 102, 246)"
+      },
+      "line": null,
+      "above": {
+        "bottom": 205,
+        "tag": "div",
+        "text": "Создавать журнал автоматически"
+      },
+      "cardTop": 398,
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "blockGapCss": "12px / 12px",
+      "rowGapCss": "12px",
+      "layout": "side-by-side",
+      "gaps": {
+        "titleToQr": null,
+        "aboveToBlock": 20,
+        "aboveToRow": 20,
+        "qrToRow": 12,
+        "createToGuide": 12,
+        "blockToTabs": 20,
+        "rowToTabs": 20,
+        "blockToTabText": 21,
+        "textToUnderline": 7,
+        "underlineVsTextWidth": 0,
+        "underlineToLine": null,
+        "tabsToCard": 20,
+        "underlineToCard": 20
+      }
+    },
+    "hygiene-1280-light": {
+      "title": {
+        "top": 311.59,
+        "bottom": 348.39,
+        "left": 32,
+        "right": 741.77,
+        "width": 709.77,
+        "height": 36.8
+      },
+      "row": {
+        "top": 278,
+        "bottom": 382,
+        "left": 32,
+        "right": 1248,
+        "width": 1216,
+        "height": 104
+      },
+      "block": {
+        "top": 278,
+        "bottom": 382,
+        "left": 808,
+        "right": 1248,
+        "width": 440,
+        "height": 104
+      },
+      "qr": {
+        "top": 278,
+        "bottom": 326,
+        "left": 808,
+        "right": 1248,
+        "width": 440,
+        "height": 48
+      },
+      "create": null,
+      "guide": {
+        "top": 338,
+        "bottom": 382,
+        "left": 808,
+        "right": 1248,
+        "width": 440,
+        "height": 44
+      },
+      "tabsOuter": {
+        "top": 414,
+        "bottom": 443,
+        "left": 32,
+        "right": 1248,
+        "width": 1216,
+        "height": 29
+      },
+      "activeLink": {
+        "top": 414,
+        "bottom": 443,
+        "left": 32,
+        "right": 98.89,
+        "width": 66.89,
+        "height": 29
+      },
+      "activeText": {
+        "top": 415,
+        "bottom": 434,
+        "left": 32,
+        "right": 98.89,
+        "width": 66.89,
+        "height": 19
+      },
+      "closedText": {
+        "top": 415,
+        "bottom": 434,
+        "left": 146.89,
+        "right": 215.28,
+        "width": 68.39,
+        "height": 19
+      },
+      "underline": {
+        "on": "span",
+        "top": 441,
+        "bottom": 443,
+        "left": 32,
+        "right": 98.89,
+        "width": 66.89,
+        "height": 2,
+        "color": "rgb(85, 102, 246)"
+      },
+      "line": null,
+      "above": {
+        "bottom": 258,
+        "tag": "div",
+        "text": "Создавать журнал автоматическиЗаполнять "
+      },
+      "cardTop": 560.5,
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "blockGapCss": "12px / 12px",
+      "rowGapCss": "12px",
+      "layout": "side-by-side",
+      "gaps": {
+        "titleToQr": null,
+        "aboveToBlock": 20,
+        "aboveToRow": 20,
+        "qrToRow": 12,
+        "createToGuide": null,
+        "blockToTabs": 32,
+        "rowToTabs": 32,
+        "blockToTabText": 33,
+        "textToUnderline": 7,
+        "underlineVsTextWidth": 0,
+        "underlineToLine": null,
+        "tabsToCard": 117.5,
+        "underlineToCard": 117.5
+      }
+    },
+    "cold-390-dark": {
+      "title": {
+        "top": 291,
+        "bottom": 453.19,
+        "left": 16,
+        "right": 374,
+        "width": 358,
+        "height": 162.19
+      },
+      "row": {
+        "top": 291,
+        "bottom": 573.19,
+        "left": 16,
+        "right": 374,
+        "width": 358,
+        "height": 282.19
+      },
+      "block": {
+        "top": 465.19,
+        "bottom": 573.19,
+        "left": 16,
+        "right": 374,
+        "width": 358,
+        "height": 108
+      },
+      "qr": {
+        "top": 465.19,
+        "bottom": 513.19,
+        "left": 16,
+        "right": 374,
+        "width": 358,
+        "height": 48
+      },
+      "create": {
+        "top": 525.19,
+        "bottom": 573.19,
+        "left": 16,
+        "right": 189,
+        "width": 173,
+        "height": 48
+      },
+      "guide": {
+        "top": 525.19,
+        "bottom": 573.19,
+        "left": 201,
+        "right": 374,
+        "width": 173,
+        "height": 48
+      },
+      "tabsOuter": {
+        "top": 605.19,
+        "bottom": 653.19,
+        "left": 16,
+        "right": 374,
+        "width": 358,
+        "height": 48
+      },
+      "activeLink": {
+        "top": 605.19,
+        "bottom": 653.19,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 48
+      },
+      "activeText": {
+        "top": 614.19,
+        "bottom": 636.19,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 22
+      },
+      "closedText": {
+        "top": 614.19,
+        "bottom": 636.19,
+        "left": 124.44,
+        "right": 202.61,
+        "width": 78.17,
+        "height": 22
+      },
+      "underline": {
+        "on": "span",
+        "top": 643.19,
+        "bottom": 645.19,
+        "left": 16,
+        "right": 92.44,
+        "width": 76.44,
+        "height": 2,
+        "color": "rgb(85, 102, 246)"
+      },
+      "line": null,
+      "above": {
+        "bottom": 271,
+        "tag": "div",
+        "text": "Создавать журнал автоматическиЗаполнять "
+      },
+      "cardTop": 685.19,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "blockGapCss": "12px / 12px",
+      "rowGapCss": "12px",
+      "layout": "stacked",
+      "gaps": {
+        "titleToQr": 12,
+        "aboveToBlock": null,
+        "aboveToRow": 20,
+        "qrToRow": 12,
+        "createToGuide": 12,
+        "blockToTabs": 32,
+        "rowToTabs": 32,
+        "blockToTabText": 41,
+        "textToUnderline": 7,
+        "underlineVsTextWidth": 0,
+        "underlineToLine": null,
+        "tabsToCard": 32,
+        "underlineToCard": 40
+      }
+    },
+    "cold-1280-dark": {
+      "title": {
+        "top": 278,
+        "bottom": 388.39,
+        "left": 32,
+        "right": 796,
+        "width": 764,
+        "height": 110.39
+      },
+      "row": {
+        "top": 278,
+        "bottom": 388.39,
+        "left": 32,
+        "right": 1248,
+        "width": 1216,
+        "height": 110.39
+      },
+      "block": {
+        "top": 281.19,
+        "bottom": 385.19,
+        "left": 808,
+        "right": 1248,
+        "width": 440,
+        "height": 104
+      },
+      "qr": {
+        "top": 281.19,
+        "bottom": 329.19,
+        "left": 808,
+        "right": 1248,
+        "width": 440,
+        "height": 48
+      },
+      "create": {
+        "top": 341.19,
+        "bottom": 385.19,
+        "left": 808,
+        "right": 1022,
+        "width": 214,
+        "height": 44
+      },
+      "guide": {
+        "top": 341.19,
+        "bottom": 385.19,
+        "left": 1034,
+        "right": 1248,
+        "width": 214,
+        "height": 44
+      },
+      "tabsOuter": {
+        "top": 420.39,
+        "bottom": 449.39,
+        "left": 32,
+        "right": 1248,
+        "width": 1216,
+        "height": 29
+      },
+      "activeLink": {
+        "top": 420.39,
+        "bottom": 449.39,
+        "left": 32,
+        "right": 98.89,
+        "width": 66.89,
+        "height": 29
+      },
+      "activeText": {
+        "top": 421.39,
+        "bottom": 440.39,
+        "left": 32,
+        "right": 98.89,
+        "width": 66.89,
+        "height": 19
+      },
+      "closedText": {
+        "top": 421.39,
+        "bottom": 440.39,
+        "left": 146.89,
+        "right": 215.28,
+        "width": 68.39,
+        "height": 19
+      },
+      "underline": {
+        "on": "span",
+        "top": 447.39,
+        "bottom": 449.39,
+        "left": 32,
+        "right": 98.89,
+        "width": 66.89,
+        "height": 2,
+        "color": "rgb(85, 102, 246)"
+      },
+      "line": null,
+      "above": {
+        "bottom": 258,
+        "tag": "div",
+        "text": "Создавать журнал автоматическиЗаполнять "
+      },
+      "cardTop": 481.39,
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "blockGapCss": "12px / 12px",
+      "rowGapCss": "12px",
+      "layout": "side-by-side",
+      "gaps": {
+        "titleToQr": null,
+        "aboveToBlock": 23.19,
+        "aboveToRow": 20,
+        "qrToRow": 12,
+        "createToGuide": 12,
+        "blockToTabs": 35.2,
+        "rowToTabs": 32,
+        "blockToTabText": 36.2,
+        "textToUnderline": 7,
+        "underlineVsTextWidth": 0,
+        "underlineToLine": null,
+        "tabsToCard": 32,
+        "underlineToCard": 32
+      }
+    }
+  }
+}

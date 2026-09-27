@@ -1,0 +1,135 @@
+{
+  "label": "before",
+  "engine": "webkit",
+  "at": "2026-09-27T15:03:00.254Z",
+  "pageErrors": [],
+  "desktop": {
+    "atOpen": {
+      "found": true,
+      "tag": "input",
+      "dataSlot": null,
+      "className": "h-12 w-full rounded-2xl border bg-white px-4 text-[15px] text-[#0b1024] placeholder:text-[#9b9fb3] transition-[border-color,box-shadow] duration-150 focus:outline-none focus:ring-4 disabled:opacity-60 border-[#dcdfed] focus:border-[#5566f6] focus:ring-[#5566f6]/15",
+      "readOnly": false,
+      "disabled": false,
+      "contentEditable": false,
+      "value": "Журнал контроля температурного режима холодильного и морозильного оборудования",
+      "focused": true,
+      "active": "input.h-12 w-full rounded-2xl border bg-white ",
+      "selection": [
+        0,
+        78
+      ],
+      "fontSize": "15px",
+      "height": 48,
+      "selectionColors": {
+        "bg": "rgba(0, 0, 0, 0)",
+        "fg": "rgb(11, 16, 36)"
+      },
+      "blockingStyles": [],
+      "reactHandlers": [
+        "input: onChange,onKeyDown",
+        "div: onClick",
+        "ConfirmDialog: onClose,onConfirm",
+        "JournalRenameDialog: onClose"
+      ]
+    },
+    "clickCaret": {
+      "start": 12,
+      "end": 12,
+      "value": "Журнал контроля температурного режима холодильного и морозильного оборудования",
+      "focused": true
+    },
+    "dragSelect": {
+      "start": 0,
+      "end": 6,
+      "value": "Журнал контроля температурного режима холодильного и морозильного оборудования",
+      "focused": true
+    },
+    "dblclickWord": {
+      "start": 7,
+      "end": 15,
+      "value": "Журнал контроля температурного режима холодильного и морозильного оборудования",
+      "focused": true
+    },
+    "selectAll": {
+      "start": 0,
+      "end": 78,
+      "value": "Журнал контроля температурного режима холодильного и морозильного оборудования",
+      "focused": true
+    },
+    "copyPaste": {
+      "start": 80,
+      "end": 80,
+      "value": "Журнал контроля температурного режима холодильного и морозильного оборудованияЖу",
+      "focused": true
+    },
+    "copyPasteOk": false,
+    "closedByEsc": true
+  },
+  "phone": {
+    "atOpen": {
+      "found": true,
+      "tag": "input",
+      "dataSlot": null,
+      "className": "h-12 w-full rounded-2xl border bg-white px-4 text-[15px] text-[#0b1024] placeholder:text-[#9b9fb3] transition-[border-color,box-shadow] duration-150 focus:outline-none focus:ring-4 disabled:opacity-60 border-[#dcdfed] focus:border-[#5566f6] focus:ring-[#5566f6]/15",
+      "readOnly": false,
+      "disabled": false,
+      "contentEditable": false,
+      "value": "Журнал контроля температурного режима холодильного и морозильного оборудования",
+      "focused": false,
+      "active": "div.relative flex max-h-[90vh] outline-none ",
+      "selection": [
+        78,
+        78
+      ],
+      "fontSize": "16px",
+      "height": 48,
+      "selectionColors": {
+        "bg": "rgba(0, 0, 0, 0)",
+        "fg": "rgb(11, 16, 36)"
+      },
+      "blockingStyles": [],
+      "reactHandlers": [
+        "input: onChange,onKeyDown",
+        "div: onClick",
+        "ConfirmDialog: onClose,onConfirm",
+        "JournalRenameDialog: onClose"
+      ]
+    },
+    "tapCaret": {
+      "start": 15,
+      "end": 15,
+      "value": "Журнал контроля температурного режима холодильного и морозильного оборудования",
+      "focused": true
+    },
+    "afterInspect": {
+      "found": true,
+      "tag": "input",
+      "dataSlot": null,
+      "className": "h-12 w-full rounded-2xl border bg-white px-4 text-[15px] text-[#0b1024] placeholder:text-[#9b9fb3] transition-[border-color,box-shadow] duration-150 focus:outline-none focus:ring-4 disabled:opacity-60 border-[#dcdfed] focus:border-[#5566f6] focus:ring-[#5566f6]/15",
+      "readOnly": false,
+      "disabled": false,
+      "contentEditable": false,
+      "value": "Журнал контроля температурного режима холодильного и морозильного оборудования",
+      "focused": true,
+      "active": "input.h-12 w-full rounded-2xl border bg-white ",
+      "selection": [
+        15,
+        15
+      ],
+      "fontSize": "16px",
+      "height": 48,
+      "selectionColors": {
+        "bg": "rgba(0, 0, 0, 0)",
+        "fg": "rgb(11, 16, 36)"
+      },
+      "blockingStyles": [],
+      "reactHandlers": [
+        "input: onChange,onKeyDown",
+        "div: onClick",
+        "ConfirmDialog: onClose,onConfirm",
+        "JournalRenameDialog: onClose"
+      ]
+    }
+  }
+}

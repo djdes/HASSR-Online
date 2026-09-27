@@ -1,0 +1,222 @@
+{
+  "label": "after",
+  "at": "2026-09-27T16:03:39.902Z",
+  "pageErrors": [],
+  "shell": {
+    "miniRoot": true,
+    "appShellClass": "mini-root app-shell min-h-dvh"
+  },
+  "geometry": {
+    "title": {
+      "top": 265,
+      "bottom": 429.75,
+      "left": 16,
+      "right": 374,
+      "width": 358,
+      "height": 164.75
+    },
+    "row": {
+      "top": 265,
+      "bottom": 549.75,
+      "left": 16,
+      "right": 374,
+      "width": 358,
+      "height": 284.75
+    },
+    "block": {
+      "top": 441.75,
+      "bottom": 549.75,
+      "left": 16,
+      "right": 374,
+      "width": 358,
+      "height": 108
+    },
+    "qr": {
+      "top": 441.75,
+      "bottom": 489.75,
+      "left": 16,
+      "right": 374,
+      "width": 358,
+      "height": 48
+    },
+    "create": {
+      "top": 501.75,
+      "bottom": 549.75,
+      "left": 16,
+      "right": 189,
+      "width": 173,
+      "height": 48
+    },
+    "guide": {
+      "top": 501.75,
+      "bottom": 549.75,
+      "left": 201,
+      "right": 374,
+      "width": 173,
+      "height": 48
+    },
+    "tabsOuter": {
+      "top": 581.75,
+      "bottom": 629.75,
+      "left": 16,
+      "right": 374,
+      "width": 358,
+      "height": 48
+    },
+    "activeLink": {
+      "top": 581.75,
+      "bottom": 629.75,
+      "left": 16,
+      "right": 81.27,
+      "width": 65.27,
+      "height": 48
+    },
+    "activeText": {
+      "top": 592.25,
+      "bottom": 611.25,
+      "left": 16,
+      "right": 81.27,
+      "width": 65.27,
+      "height": 19
+    },
+    "closedText": {
+      "top": 592.25,
+      "bottom": 611.25,
+      "left": 113.27,
+      "right": 178.69,
+      "width": 65.42,
+      "height": 19
+    },
+    "underline": {
+      "on": "span",
+      "top": 618.25,
+      "bottom": 620.25,
+      "left": 16,
+      "right": 81.27,
+      "width": 65.27,
+      "height": 2,
+      "color": "rgb(85, 102, 246)"
+    },
+    "line": null,
+    "above": {
+      "bottom": 245,
+      "tag": "div",
+      "text": "Создавать журнал автоматическиЗаполнять "
+    },
+    "cardTop": 661.75,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "blockGapCss": "12px / 12px",
+    "rowGapCss": "12px",
+    "layout": "stacked",
+    "gaps": {
+      "titleToQr": 12,
+      "aboveToBlock": null,
+      "aboveToRow": 20,
+      "qrToRow": 12,
+      "createToGuide": 12,
+      "blockToTabs": 32,
+      "rowToTabs": 32,
+      "blockToTabText": 42.5,
+      "textToUnderline": 7,
+      "underlineVsTextWidth": 0,
+      "underlineToLine": null,
+      "tabsToCard": 32,
+      "underlineToCard": 41.5
+    }
+  },
+  "rename": {
+    "focused": true,
+    "active": "INPUT",
+    "selection": [
+      0,
+      78
+    ],
+    "fontSize": "16px",
+    "chain": [
+      {
+        "el": "input#_r_j_.w-full min-w-0 border py-1 outline-none ",
+        "userSelect": "auto",
+        "pointerEvents": "auto",
+        "touchAction": "auto",
+        "position": "static",
+        "overflowY": "clip"
+      },
+      {
+        "el": "div.",
+        "userSelect": "auto",
+        "pointerEvents": "auto",
+        "touchAction": "auto",
+        "position": "static",
+        "overflowY": "visible"
+      },
+      {
+        "el": "div.space-y-4",
+        "userSelect": "auto",
+        "pointerEvents": "auto",
+        "touchAction": "auto",
+        "position": "static",
+        "overflowY": "visible"
+      },
+      {
+        "el": "div.px-6 pb-1 pt-4",
+        "userSelect": "auto",
+        "pointerEvents": "auto",
+        "touchAction": "auto",
+        "position": "static",
+        "overflowY": "visible"
+      },
+      {
+        "el": "div.min-h-0 flex-1 overflow-y-auto",
+        "userSelect": "auto",
+        "pointerEvents": "auto",
+        "touchAction": "auto",
+        "position": "static",
+        "overflowY": "auto"
+      },
+      {
+        "el": "div.relative flex max-h-[90vh] outline-none ",
+        "userSelect": "auto",
+        "pointerEvents": "auto",
+        "touchAction": "auto",
+        "position": "relative",
+        "overflowY": "hidden"
+      },
+      {
+        "el": "div.pointer-events-auto fixed inset-0 z-[60]",
+        "userSelect": "auto",
+        "pointerEvents": "auto",
+        "touchAction": "auto",
+        "position": "fixed",
+        "overflowY": "visible"
+      },
+      {
+        "el": "body.__variable_1124cf antialiased overflow-x",
+        "userSelect": "auto",
+        "pointerEvents": "auto",
+        "touchAction": "auto",
+        "position": "fixed",
+        "overflowY": "hidden"
+      },
+      {
+        "el": "html.",
+        "userSelect": "auto",
+        "pointerEvents": "auto",
+        "touchAction": "auto",
+        "position": "static",
+        "overflowY": "visible"
+      }
+    ],
+    "handlers": [
+      "input: onChange,onKeyDown",
+      "Input: onChange,onKeyDown",
+      "div: onClick",
+      "ConfirmDialog: onClose,onConfirm",
+      "JournalRenameDialog: onClose",
+      "PullToRefresh: onRefresh"
+    ],
+    "bodyStyle": "position: fixed; top: 0px; left: 0px; right: 0px; overflow: hidden;"
+  }
+}
