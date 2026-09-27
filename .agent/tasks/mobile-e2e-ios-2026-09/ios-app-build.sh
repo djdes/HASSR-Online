@@ -48,7 +48,7 @@ cat > "$STATE/dev.entitlements" <<'ENT'
 ENT
 sign_app() {
   codesign --force --deep --sign - "$1"
-  codesign --force --sign - --entitlements "$STATE/dev.entitlements" "$1"
+  # Без entitlements: с get-task-allow в подписи симулятор отказал в запуске (run 3).
   codesign -d --entitlements - "$1" 2>&1 | tail -5 || true
 }
 sign_app "$STATE/App.app"

@@ -512,16 +512,20 @@ async function signIn(email, ctx, { nativeTyping = false, tag = "login" } = {}) 
   await clickWeb('[role=radio]', { text: "Почта", exact: true });
   await sleep(500);
   if (nativeTyping) {
-    await tapWeb("#email");
-    await sleep(1200);
-    await native();
-    const f = await driver.$('-ios predicate string:type IN {"XCUIElementTypeTextField","XCUIElementTypeSecureTextField"} AND hasKeyboardFocus == 1');
-    await f.addValue(email);
-    await tapWeb("#password");
-    await sleep(800);
-    await native();
-    const p = await driver.$('-ios predicate string:type IN {"XCUIElementTypeTextField","XCUIElementTypeSecureTextField"} AND hasKeyboardFocus == 1');
-    await p.addValue(PASSWORD);
+    try {
+      await tapWeb("#email");
+      await sleep(1200);
+      await native();
+      const f = await driver.$('-ios predicate string:type IN {"XCUIElementTypeTextField","XCUIElementTypeSecureTextField"} AND hasKeyboardFocus == 1');
+      await f.addValue(email);
+      await tapWeb("#password");
+      await sleep(800);
+      await native();
+      const p = await driver.$('-ios predicate string:type IN {"XCUIElementTypeTextField","XCUIElementTypeSecureTextField"} AND hasKeyboardFocus == 1');
+      await p.addValue(PASSWORD);
+    } catch (e) {
+      ctx.d[`${tag}_nativeTypingError`] = String(e.message).slice(0, 300);
+    }
     ctx.shot(`${tag}-typed`);
     const typed = await js("return [document.querySelector('#email')?.value, (document.querySelector('#password')?.value||'').length]");
     ctx.d[`${tag}_typed`] = typed;
@@ -648,7 +652,7 @@ async function main() {
     "appium:wdaLaunchTimeout": 360000,
     "appium:wdaConnectionTimeout": 360000,
     "appium:showSafariConsoleLog": true,
-    "appium:showSafariNetworkLog": true,
+    "appium:showSafariNetworkLog": false,
     "appium:webviewConnectTimeout": 60000,
     "appium:simulatorStartupTimeout": 300000,
     "appium:shouldTerminateApp": true,
