@@ -4,6 +4,7 @@ import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
+import { sortJournalsByName } from "@/lib/journal-sort";
 import { JournalAccessMatrix } from "@/components/settings/journal-access-matrix";
 
 export const dynamic = "force-dynamic";
@@ -96,7 +97,7 @@ export default async function JournalAccessMatrixPage() {
           journalAccessMigrated: u.journalAccessMigrated,
           initialAccess: accessByUser.get(u.id) ?? [],
         }))}
-        catalog={ACTIVE_JOURNAL_CATALOG.map((j) => ({
+        catalog={sortJournalsByName(ACTIVE_JOURNAL_CATALOG, (j) => j.name).map((j) => ({
           code: j.code,
           name: j.name,
         }))}

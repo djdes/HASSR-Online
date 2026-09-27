@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { loadBuildingContext } from "@/lib/active-building";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
+import { sortJournalsByName } from "@/lib/journal-sort";
 import { scheduleObligationSync, utcDayKey } from "@/lib/obligation-sync-throttle";
 import { getDisabledJournalCodes } from "@/lib/disabled-journals";
 import {
@@ -79,8 +80,10 @@ export async function GET() {
     orderBy: { name: "asc" },
   });
 
-  const templates = rawTemplates.filter(
-    (template) => !disabledCodes.has(template.code)
+  // Журналы по алфавиту — тем же правилом, что на сайте (П-3).
+  const templates = sortJournalsByName(
+    rawTemplates.filter((template) => !disabledCodes.has(template.code)),
+    (template) => template.name
   );
   const user = {
     name: session.user.name ?? "",

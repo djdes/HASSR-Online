@@ -8,6 +8,7 @@ import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { journalMatchesQuery, normalizeJournalSearch } from "@/lib/journal-search";
 import { customJournalName } from "@/lib/custom-names";
+import { sortJournalsByName } from "@/lib/journal-sort";
 import { useCustomNames } from "@/components/shared/custom-names-provider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -156,12 +157,16 @@ export function JournalsBrowser({
   // Свои названия организации («Настройки → Названия»): карточки и
   // подтверждения показывают своё, поиск ищет и по официальному.
   const customNames = useCustomNames();
+  // Журналы по алфавиту — по тому названию, которое видит компания.
   const templates = useMemo(
     () =>
-      rawTemplates.map((template) => {
-        const custom = customJournalName(customNames, template.code);
-        return custom ? { ...template, name: custom, officialName: template.name } : template;
-      }),
+      sortJournalsByName(
+        rawTemplates.map((template) => {
+          const custom = customJournalName(customNames, template.code);
+          return custom ? { ...template, name: custom, officialName: template.name } : template;
+        }),
+        (template) => template.name,
+      ),
     [rawTemplates, customNames],
   );
   // Полный список отключённых кодов: PATCH /api/settings/journals ждёт
@@ -192,8 +197,8 @@ export function JournalsBrowser({
 
   // Сортируем включённые журналы так, чтобы «надо заполнить сегодня»
   // были сверху — сотрудник без опыта работы с PC не должен сканировать
-  // 35 карточек чтобы найти что от него хотят. Внутри группы сохраняем
-  // оригинальный порядок (sortOrder из админки).
+  // 35 карточек чтобы найти что от него хотят. Внутри группы — по
+  // алфавиту (templates уже отсортированы).
   const filteredEnabled = filteredTemplates
     .filter((t) => !t.disabled)
     .map((t, i) => ({ t, i }))

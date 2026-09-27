@@ -1,6 +1,7 @@
 import { Composer, type Context } from "grammy";
 import { getMiniAppBaseUrlFromEnv } from "@/lib/journal-obligation-links";
 import { db } from "@/lib/db";
+import { sortJournalsByName } from "@/lib/journal-sort";
 import { buildInlineQueryResults } from "@/lib/bot/inline-results";
 
 export function registerInlineQueryHandler(composer: Composer<Context>): void {
@@ -30,15 +31,17 @@ export function registerInlineQueryHandler(composer: Composer<Context>): void {
 
     const miniAppBaseUrl = getMiniAppBaseUrlFromEnv();
 
-    // Search journals
-    const journals = await db.journalTemplate.findMany({
-      where: {
-        isActive: true,
-        name: { contains: query, mode: "insensitive" },
-      },
-      take: 5,
-      select: { code: true, name: true, description: true },
-    });
+    // Search journals — первые пять совпадений по алфавиту.
+    const journals = sortJournalsByName(
+      await db.journalTemplate.findMany({
+        where: {
+          isActive: true,
+          name: { contains: query, mode: "insensitive" },
+        },
+        select: { code: true, name: true, description: true },
+      }),
+      (journal) => journal.name
+    ).slice(0, 5);
 
     // Search equipment
     const equipment = await db.equipment.findMany({

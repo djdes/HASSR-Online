@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { buildingWhere } from "@/lib/building-scope";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
+import { sortJournalsByName } from "@/lib/journal-sort";
 
 /**
  * Compliance heatmap: матрица «templates × дни», цветовое чтение
@@ -84,7 +85,12 @@ export async function getComplianceHeatmap(
   );
 
   const disabledSet = parseDisabledCodes(organization?.disabledJournalCodes);
-  const activeTemplates = templates.filter((t) => !disabledSet.has(t.code));
+  // Журналы по алфавиту: ниже строки ранжируются по пропускам (сортировка
+  // устойчивая), и при равных пропусках идут по алфавиту.
+  const activeTemplates = sortJournalsByName(
+    templates.filter((t) => !disabledSet.has(t.code)),
+    (t) => t.name
+  );
   const templateById = new Map(activeTemplates.map((t) => [t.id, t]));
 
   // Bucket: templateId → date(YYYY-MM-DD) → count.
@@ -199,7 +205,12 @@ export async function getWeekdayHeatmap(
   );
 
   const disabledSet = parseDisabledCodes(organization?.disabledJournalCodes);
-  const activeTemplates = templates.filter((t) => !disabledSet.has(t.code));
+  // Журналы по алфавиту: ниже строки ранжируются по пропускам (сортировка
+  // устойчивая), и при равных пропусках идут по алфавиту.
+  const activeTemplates = sortJournalsByName(
+    templates.filter((t) => !disabledSet.has(t.code)),
+    (t) => t.name
+  );
 
   // [templateId][weekday(0=Пн..6=Вс)] → Set<dateKey>
   const filledByTemplate = new Map<string, Map<number, Set<string>>>();

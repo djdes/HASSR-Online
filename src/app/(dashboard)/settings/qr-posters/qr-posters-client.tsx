@@ -1,15 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AlertTriangle, ArrowRight, LayoutGrid, Printer, Refrigerator, Warehouse } from "lucide-react";
 
 import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
 import { PageGuide } from "@/components/ui/page-guide";
 import { PageHeader, PageHeaderStat } from "@/components/ui/page-header";
+import { SearchField } from "@/components/ui/search-field";
 import { isJournalObjectQrCode } from "@/lib/journal-qr-target";
+import { journalMatchesQuery, normalizeJournalSearch } from "@/lib/journal-search";
 import type { QrPoster, QrPosterItem, QrPrintFormat } from "@/lib/qr-fill-types";
 import { composeQrPrintPages, sheetsLabel } from "@/lib/qr-print-layout";
+import { filterQrPosterItems, qrSelectAllLabel } from "@/lib/qr-posters-list";
 import type { QrPostersView } from "@/lib/qr-posters-view";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +28,9 @@ const OUTLINE_BUTTON_CLASS =
   "inline-flex h-11 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
 const TEXT_BUTTON_CLASS =
   "inline-flex h-11 shrink-0 items-center rounded-2xl px-3 text-[13.5px] font-medium text-[#3848c7] transition-colors duration-150 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
+
+/** Карточек больше — появляется поиск (на общем экране он есть всегда). */
+const SEARCH_MIN_ITEMS = 6;
 
 const GUIDE_BULLETS = [
   "Основные QR работают всегда: повесьте один раз — сотрудник сканирует и пишет в действующий документ. Документа нет — он создастся при первом скане.",
@@ -92,7 +98,13 @@ function ObjectsEmpty({ view }: { view: QrPostersView }) {
 
 /**
  * Страница QR-кодов: состояние отметок и форматов, группы карточек,
- * полоса «Выбрано: N · M листов» и печатное дерево из выбранного.
+ * поиск, полоса «Выбрано: N · M листов» и печатное дерево из выбранного.
+ *
+ * Поиск (2026-09-27) фильтрует все карточки, в том числе универсальные:
+ * на экране остаётся ровно то, что подходит под запрос, секции без
+ * совпадений прячутся. Отметки при этом не трогаются — скрытая отмеченная
+ * карточка остаётся в печати и в счётчике «Выбрано»; «Отметить найденные»
+ * действует только на то, что видно.
  */
 export function QrPostersClient({ view }: { view: QrPostersView }) {
   const { items } = view;
@@ -103,13 +115,19 @@ export function QrPostersClient({ view }: { view: QrPostersView }) {
     Object.fromEntries(items.map((item) => [item.key, item.defaultFormat]))
   );
 
+  const [query, setQuery] = useState("");
+  const normalizedQuery = normalizeJournalSearch(useDeferredValue(query));
+  const searching = normalizedQuery.length > 0;
+  const showSearch = view.screen === "overview" || items.length >= SEARCH_MIN_ITEMS;
+  const visible = useMemo(() => filterQrPosterItems(items, normalizedQuery), [items, normalizedQuery]);
+
   const groups = useMemo(
     () => ({
-      main: items.filter((item) => item.group === "main"),
-      extra: items.filter((item) => item.group === "extra"),
-      object: items.filter((item) => item.group === "object"),
+      main: visible.filter((item) => item.group === "main"),
+      extra: visible.filter((item) => item.group === "extra"),
+      object: visible.filter((item) => item.group === "object"),
     }),
-    [items]
+    [visible]
   );
   const posters = useMemo(() => new Map<string, QrPoster>(items.map((item) => [item.key, item.poster])), [items]);
   const chosen = items.filter((item) => selected[item.key]);
@@ -168,6 +186,15 @@ export function QrPostersClient({ view }: { view: QrPostersView }) {
   const objectsAllSelected = groups.object.length > 0 && groups.object.every((item) => selected[item.key]);
   const extraSelectable = groups.extra.filter((item) => !item.expired);
   const extraAllSelected = extraSelectable.length > 0 && extraSelectable.every((item) => selected[item.key]);
+
+  const stickerLinks = [
+    { href: "/settings/qr-posters?kind=equipment&layout=sheet", label: "Наклейки на оборудование", count: view.counts?.equipment ?? 0, icon: Refrigerator },
+    { href: "/settings/qr-posters?kind=rooms&layout=sheet", label: "Наклейки на склады и помещения", count: view.counts?.rooms ?? 0, icon: Warehouse },
+  ].filter((link) => journalMatchesQuery([link.label, "холодильники помещения склады объекты"], normalizedQuery));
+  const linkTotal = view.screen === "overview" ? 2 : 0;
+  const foundCount = visible.length + (view.screen === "overview" ? stickerLinks.length : 0);
+  const totalCount = items.length + linkTotal;
+  const nothingFound = searching && foundCount === 0;
 
   return (
     <div className="space-y-6 pb-28" data-qr-page={view.screen}>
@@ -235,6 +262,29 @@ export function QrPostersClient({ view }: { view: QrPostersView }) {
         </div>
       ) : null}
 
+      {showSearch ? (
+        <SearchField
+          value={query}
+          onChange={setQuery}
+          placeholder={view.screen === "objects" ? "Найти по названию или цеху" : "Найти журнал или документ"}
+          ariaLabel="Поиск по QR-кодам"
+          found={foundCount}
+          total={totalCount}
+        />
+      ) : null}
+
+      {nothingFound ? (
+        <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-10 text-center" data-qr-empty-search="">
+          <div className="text-[15px] font-medium text-[#0b1024]">Ничего не нашли</div>
+          <p className="mx-auto mt-1.5 max-w-[380px] text-[13px] text-[#6f7282]">
+            Поиск идёт по названию и коду журнала, документу, названию объекта и его цеху или точке. Отмеченные коды остаются в печати, даже если сейчас скрыты.
+          </p>
+          <button type="button" className={cn(TEXT_BUTTON_CLASS, "mt-3")} onClick={() => setQuery("")}>
+            Показать все
+          </button>
+        </div>
+      ) : null}
+
       {groups.main.length > 0 ? (
         <Section
           testId="main"
@@ -260,7 +310,7 @@ export function QrPostersClient({ view }: { view: QrPostersView }) {
         </Section>
       ) : null}
 
-      {view.screen === "journal" && journal && !journal.isObject ? (
+      {view.screen === "journal" && journal && !journal.isObject && !(searching && groups.extra.length === 0) ? (
         <Section
           testId="extra"
           title={extraTitle}
@@ -268,7 +318,7 @@ export function QrPostersClient({ view }: { view: QrPostersView }) {
           actions={
             extraSelectable.length > 1 ? (
               <button type="button" className={TEXT_BUTTON_CLASS} onClick={() => setGroupSelected(extraSelectable, !extraAllSelected)}>
-                {extraAllSelected ? "Снять все" : "Отметить все"}
+                {qrSelectAllLabel({ allSelected: extraAllSelected, searching })}
               </button>
             ) : null
           }
@@ -296,94 +346,97 @@ export function QrPostersClient({ view }: { view: QrPostersView }) {
 
       {view.screen === "overview" ? (
         <>
-          <Section
-            testId="journals"
-            title="Журналы — у каждого свой QR"
-            hint={
-              <>
-                Все включённые журналы. Код ведёт сразу в журнал, без выбора, и работает всегда: нет документа — он создастся при первом скане. Дополнительные коды на отдельный документ — по кнопке «QR-точка контроля» в самом журнале.
-              </>
-            }
-            actions={
-              overviewJournalsSelectable.length > 1 ? (
-                <button
-                  type="button"
-                  className={TEXT_BUTTON_CLASS}
-                  onClick={() => setGroupSelected(overviewJournalsSelectable, !overviewJournalsAllSelected)}
-                >
-                  {overviewJournalsAllSelected ? "Снять все" : "Отметить все"}
-                </button>
-              ) : null
-            }
-          >
-            {overviewJournals.length > 0 ? (
-              <div className="space-y-2">
-                {overviewJournals.map((item) => (
-                  <QrCompactRow
-                    key={item.key}
-                    item={item}
-                    selected={Boolean(selected[item.key])}
-                    format={formats[item.key]}
-                    onToggle={(value) => toggle(item.key, value)}
-                    onFormat={(format) => setFormat(item.key, format)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <p className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-3 text-[13px] text-[#6f7282]">
-                Нет включённых журналов.{" "}
-                <Link href="/settings/journals" className={LINK_CLASS}>
-                  Выбрать журналы
-                </Link>
-              </p>
-            )}
-          </Section>
-          <Section
-            testId="objects"
-            title="Объекты — холодильники, склады, лампы"
-            hint="Записывают по наклейке на самом объекте. QR журнала показывает статус объектов за сегодня."
-          >
-            {overviewObjectJournals.length > 0 ? (
-              <div className="space-y-2">
-                {overviewObjectJournals.map((item) => (
-                  <QrCompactRow
-                    key={item.key}
-                    item={item}
-                    selected={Boolean(selected[item.key])}
-                    format={formats[item.key]}
-                    onToggle={(value) => toggle(item.key, value)}
-                    onFormat={(format) => setFormat(item.key, format)}
-                  />
-                ))}
-              </div>
-            ) : null}
-            <div className="grid gap-2 sm:grid-cols-2">
-              {[
-                { href: "/settings/qr-posters?kind=equipment&layout=sheet", label: "Наклейки на оборудование", count: view.counts?.equipment ?? 0, icon: Refrigerator },
-                { href: "/settings/qr-posters?kind=rooms&layout=sheet", label: "Наклейки на склады и помещения", count: view.counts?.rooms ?? 0, icon: Warehouse },
-              ].map((link) => {
-                const Icon = link.icon;
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="group flex min-h-14 items-center gap-3 rounded-2xl border border-[#ececf4] bg-white px-4 py-2 transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+          {searching && overviewJournals.length === 0 ? null : (
+            <Section
+              testId="journals"
+              title="Журналы — у каждого свой QR"
+              hint={
+                <>
+                  Все включённые журналы. Код ведёт сразу в журнал, без выбора, и работает всегда: нет документа — он создастся при первом скане. Дополнительные коды на отдельный документ — по кнопке «QR-точка контроля» в самом журнале.
+                </>
+              }
+              actions={
+                overviewJournalsSelectable.length > 1 ? (
+                  <button
+                    type="button"
+                    className={TEXT_BUTTON_CLASS}
+                    onClick={() => setGroupSelected(overviewJournalsSelectable, !overviewJournalsAllSelected)}
                   >
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#eef1ff] text-[#5566f6]">
-                      <Icon className="size-4" />
-                    </span>
-                    <span className="min-w-0 flex-1 text-[14px] font-medium text-[#0b1024]">{link.label}</span>
-                    <span className="text-[13px] tabular-nums text-[#6f7282]">{link.count}</span>
-                    <ArrowRight className="size-4 text-[#9b9fb3] transition-transform duration-150 group-hover:translate-x-0.5" />
+                    {qrSelectAllLabel({ allSelected: overviewJournalsAllSelected, searching })}
+                  </button>
+                ) : null
+              }
+            >
+              {overviewJournals.length > 0 ? (
+                <div className="space-y-2">
+                  {overviewJournals.map((item) => (
+                    <QrCompactRow
+                      key={item.key}
+                      item={item}
+                      selected={Boolean(selected[item.key])}
+                      format={formats[item.key]}
+                      onToggle={(value) => toggle(item.key, value)}
+                      onFormat={(format) => setFormat(item.key, format)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-3 text-[13px] text-[#6f7282]">
+                  Нет включённых журналов.{" "}
+                  <Link href="/settings/journals" className={LINK_CLASS}>
+                    Выбрать журналы
                   </Link>
-                );
-              })}
-            </div>
-          </Section>
+                </p>
+              )}
+            </Section>
+          )}
+          {searching && overviewObjectJournals.length === 0 && stickerLinks.length === 0 ? null : (
+            <Section
+              testId="objects"
+              title="Объекты — холодильники, склады, лампы"
+              hint="Записывают по наклейке на самом объекте. QR журнала показывает статус объектов за сегодня."
+            >
+              {overviewObjectJournals.length > 0 ? (
+                <div className="space-y-2">
+                  {overviewObjectJournals.map((item) => (
+                    <QrCompactRow
+                      key={item.key}
+                      item={item}
+                      selected={Boolean(selected[item.key])}
+                      format={formats[item.key]}
+                      onToggle={(value) => toggle(item.key, value)}
+                      onFormat={(format) => setFormat(item.key, format)}
+                    />
+                  ))}
+                </div>
+              ) : null}
+              {stickerLinks.length > 0 ? (
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {stickerLinks.map((link) => {
+                    const Icon = link.icon;
+                    return (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        className="group flex min-h-14 items-center gap-3 rounded-2xl border border-[#ececf4] bg-white px-4 py-2 transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+                      >
+                        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#eef1ff] text-[#5566f6]">
+                          <Icon className="size-4" />
+                        </span>
+                        <span className="min-w-0 flex-1 text-[14px] font-medium text-[#0b1024]">{link.label}</span>
+                        <span className="text-[13px] tabular-nums text-[#6f7282]">{link.count}</span>
+                        <ArrowRight className="size-4 text-[#9b9fb3] transition-transform duration-150 group-hover:translate-x-0.5" />
+                      </Link>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </Section>
+          )}
         </>
       ) : null}
 
-      {view.objectKind ? (
+      {view.objectKind && !(searching && groups.object.length === 0) ? (
         <Section
           testId="object"
           title={view.screen === "objects" ? (view.objectKind === "room" ? "Помещения" : "Оборудование") : "Наклейки на объекты"}
@@ -398,11 +451,11 @@ export function QrPostersClient({ view }: { view: QrPostersView }) {
             groups.object.length > 0 ? (
               <>
                 <button type="button" className={TEXT_BUTTON_CLASS} onClick={() => setGroupSelected(groups.object, !objectsAllSelected)}>
-                  {objectsAllSelected ? "Снять все" : "Отметить все"}
+                  {qrSelectAllLabel({ allSelected: objectsAllSelected, searching })}
                 </button>
-                <span className="hidden text-[12.5px] text-[#6f7282] sm:inline">Формат для всех</span>
+                <span className="hidden text-[12.5px] text-[#6f7282] sm:inline">{searching ? "Формат для найденных" : "Формат для всех"}</span>
                 <QrFormatSwitch
-                  label="Формат для всех наклеек"
+                  label={searching ? "Формат для найденных наклеек" : "Формат для всех наклеек"}
                   value={sameFormat(groups.object, formats)}
                   onChange={(format) => setGroupFormat(groups.object, format)}
                 />

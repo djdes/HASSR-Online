@@ -11,6 +11,7 @@ import {
   journalMatchesCustomQuery,
 } from "@/lib/custom-names";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
+import { sortJournalsByName } from "@/lib/journal-sort";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -114,9 +115,11 @@ export async function GET(request: Request) {
         orderBy: { sortOrder: "asc" },
       })
       .then((rows) =>
-        rows
-          .filter((t) => journalMatchesCustomQuery(customNames, t.code, t.name, q, t.code))
-          .slice(0, LIMIT_PER_KIND)
+        // По алфавиту — по названию, которое видит организация.
+        sortJournalsByName(
+          rows.filter((t) => journalMatchesCustomQuery(customNames, t.code, t.name, q, t.code)),
+          (t) => customJournalName(customNames, t.code) ?? t.name
+        ).slice(0, LIMIT_PER_KIND)
       ),
     db.journalDocument.findMany({
       where: {

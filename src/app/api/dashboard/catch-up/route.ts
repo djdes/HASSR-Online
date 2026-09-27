@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
+import { sortJournalsByName } from "@/lib/journal-sort";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getActiveOrgId } from "@/lib/auth-helpers";
@@ -180,7 +181,8 @@ export async function GET() {
     days.push(d);
   }
 
-  const rows: JournalRow[] = templates.map((tpl) => {
+  // Строки сетки — журналы по алфавиту.
+  const rows: JournalRow[] = sortJournalsByName(templates, (tpl) => tpl.name).map((tpl) => {
     const doc = freshDoc.get(tpl.id) ?? null;
     if (!doc) {
       return {

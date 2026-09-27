@@ -3,6 +3,7 @@ import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
 import { db } from "@/lib/db";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
+import { sortJournalsByName } from "@/lib/journal-sort";
 import { JournalResponsiblesClient } from "@/components/settings/journal-responsibles-client";
 import { PageGuide } from "@/components/ui/page-guide";
 import { PageHeader } from "@/components/ui/page-header";
@@ -81,7 +82,9 @@ export default async function JournalResponsiblesPage() {
   // распределял на ВСЕ должности и ставил админа в verifier.
   const taskModesOverride = parseTaskModesJson(org?.journalTaskModesJson);
 
-  const journals = ACTIVE_JOURNAL_CATALOG.map((j) => {
+  // Журналы по алфавиту (клиент группирует по категориям, порядок
+  // внутри группы сохраняется).
+  const journals = sortJournalsByName(ACTIVE_JOURNAL_CATALOG, (j) => j.name).map((j) => {
     const tpl = templates.find((t) => t.code === j.code);
     const def = getDefaultTaskMode(j.code);
     const ovr = taskModesOverride[j.code] ?? {};
