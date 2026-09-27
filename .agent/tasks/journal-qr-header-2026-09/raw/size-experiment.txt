@@ -1,0 +1,30 @@
+sample hygiene                           n=37 h=19.7 w=16.62 m=0.405 | 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:-Z 150bw-phone:-Z 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ
+sample hygiene                           n=37 h=21.0 w=17.72 m=0.432 | 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:-Z 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ
+sample hygiene                           n=37 h=22.3 w=18.82 m=0.459 | 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ
+sample hygiene                           n=37 h=23.7 w=20.00 m=0.488 | 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ
+sample hygiene                           n=37 h=26.0 w=21.94 m=0.535 | 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ
+sample hygiene                           n=37 h=28.0 w=23.63 m=0.576 | 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ
+sample incoming_raw_materials_control    n=45 h=19.7 w=16.62 m=0.339 | 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:-Z 150bw-phone:-- 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ
+sample incoming_raw_materials_control    n=45 h=21.0 w=17.72 m=0.362 | 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:-Z 150bw-phone:-Z 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ
+sample incoming_raw_materials_control    n=45 h=22.3 w=18.82 m=0.384 | 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:-Z 150bw-phone:-Z 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ
+sample incoming_raw_materials_control    n=45 h=23.7 w=20.00 m=0.408 | 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:-Z 150bw-phone:-Z 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ
+sample incoming_raw_materials_control    n=45 h=26.0 w=21.94 m=0.448 | 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:-Z 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ
+sample incoming_raw_materials_control    n=45 h=28.0 w=23.63 m=0.482 | 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ
+doc hygiene                              n=49 h=19.7 w=16.62 m=0.314 | 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:-- 150bw-phone:-- 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:-Z 300bw-phone:-Z
+doc hygiene                              n=49 h=21.0 w=17.72 m=0.334 | 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:-- 150bw-phone:-- 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:-Z
+doc hygiene                              n=49 h=22.3 w=18.82 m=0.355 | 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:-Z 150bw-phone:-- 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:-Z 300bw-phone:-Z
+doc hygiene                              n=49 h=23.7 w=20.00 m=0.377 | 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:-Z 150bw-phone:-Z 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ
+doc hygiene                              n=49 h=26.0 w=21.94 m=0.414 | 150clean:-Z 150bw:JZ 150bw-print:JZ 150phone:-Z 150bw-phone:-Z 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:-Z 300bw-phone:JZ
+doc hygiene                              n=49 h=28.0 w=23.63 m=0.446 | 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:-Z 150bw-phone:-Z 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ
+doc cleaning_ventilation_checklist       n=53 h=19.7 w=16.62 m=0.292 | 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:-- 150bw-phone:-- 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:-Z 300bw-phone:JZ
+doc cleaning_ventilation_checklist       n=53 h=21.0 w=17.72 m=0.311 | 150clean:JZ 150bw:JZ 150bw-print:-Z 150phone:-- 150bw-phone:-- 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:-Z 300bw-phone:-Z
+doc cleaning_ventilation_checklist       n=53 h=22.3 w=18.82 m=0.330 | 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:-- 150bw-phone:-- 300clean:JZ 300bw:JZ 300bw-print:-Z 300phone:-Z 300bw-phone:-Z
+doc cleaning_ventilation_checklist       n=53 h=23.7 w=20.00 m=0.351 | 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:-Z 150bw-phone:-- 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ
+doc cleaning_ventilation_checklist       n=53 h=26.0 w=21.94 m=0.385 | 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:-Z 150bw-phone:-Z 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ
+doc cleaning_ventilation_checklist       n=53 h=28.0 w=23.63 m=0.415 | 150clean:-Z 150bw:JZ 150bw-print:JZ 150phone:-Z 150bw-phone:-Z 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:-Z 300bw-phone:JZ
+blank + email 31                         n=53 h=19.7 w=16.62 m=0.292 | 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:-- 150bw-phone:-- 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:-Z 300bw-phone:JZ
+blank + email 31                         n=53 h=21.0 w=17.72 m=0.311 | 150clean:-Z 150bw:JZ 150bw-print:-Z 150phone:-- 150bw-phone:-- 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:-Z 300bw-phone:-Z
+blank + email 31                         n=53 h=22.3 w=18.82 m=0.330 | 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:-- 150bw-phone:-- 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:-Z 300bw-phone:-Z
+blank + email 31                         n=53 h=23.7 w=20.00 m=0.351 | 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:-Z 150bw-phone:-- 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ
+blank + email 31                         n=53 h=26.0 w=21.94 m=0.385 | 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:-Z 150bw-phone:-Z 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ
+blank + email 31                         n=53 h=28.0 w=23.63 m=0.415 | 150clean:-Z 150bw:JZ 150bw-print:JZ 150phone:-Z 150bw-phone:-Z 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:-Z 300bw-phone:JZ

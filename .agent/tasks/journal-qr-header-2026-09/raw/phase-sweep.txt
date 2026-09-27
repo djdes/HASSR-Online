@@ -1,0 +1,6 @@
+samples:hygiene n=37 m=0.405 | 150 dpi: clean jsQR 16/16 zxing 16/16, bw jsQR 16/16 zxing 16/16, print jsQR 16/16 zxing 16/16 | 300 dpi: clean jsQR 4/4 zxing 4/4, bw jsQR 4/4 zxing 4/4, print jsQR 4/4 zxing 4/4
+samples:cold_equipment_control n=41 m=0.369 | 150 dpi: clean jsQR 14/16 zxing 16/16, bw jsQR 16/16 zxing 16/16, print jsQR 15/16 zxing 16/16 | 300 dpi: clean jsQR 4/4 zxing 4/4, bw jsQR 4/4 zxing 4/4, print jsQR 4/4 zxing 4/4
+samples:incoming_raw_materials_control n=45 m=0.365 | 150 dpi: clean jsQR 13/16 zxing 16/16, bw jsQR 16/16 zxing 16/16, print jsQR 12/16 zxing 16/16 | 300 dpi: clean jsQR 4/4 zxing 4/4, bw jsQR 4/4 zxing 4/4, print jsQR 4/4 zxing 4/4
+long:hygiene n=49 m=0.365 | 150 dpi: clean jsQR 16/16 zxing 16/16, bw jsQR 16/16 zxing 16/16, print jsQR 16/16 zxing 16/16 | 300 dpi: clean jsQR 4/4 zxing 4/4, bw jsQR 4/4 zxing 4/4, print jsQR 4/4 zxing 4/4
+long:cleaning_ventilation_checklist n=53 m=0.351 | 150 dpi: clean jsQR 12/16 zxing 16/16, bw jsQR 16/16 zxing 16/16, print jsQR 13/16 zxing 16/16 | 300 dpi: clean jsQR 4/4 zxing 4/4, bw jsQR 4/4 zxing 4/4, print jsQR 4/4 zxing 4/4
+blanks:hygiene n=53 m=0.351 | 150 dpi: clean jsQR 11/16 zxing 16/16, bw jsQR 15/16 zxing 16/16, print jsQR 12/16 zxing 16/16 | 300 dpi: clean jsQR 4/4 zxing 4/4, bw jsQR 4/4 zxing 4/4, print jsQR 4/4 zxing 4/4
