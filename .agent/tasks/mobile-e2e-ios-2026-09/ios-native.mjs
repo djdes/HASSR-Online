@@ -559,8 +559,11 @@ async function main() {
     platformName: "iOS",
     "appium:automationName": "XCUITest",
     "appium:udid": UDID,
-    "appium:bundleId": BUNDLE,
-    "appium:autoLaunch": false,
+    // Без bundleId: драйвер 12.13 не находил установленное приложение («App with bundle
+    // identifier unknown») — сессия цепляется к тому, что на экране (наше приложение).
+    // isHeadless — чтобы Appium не перезапускал симулятор с окном (это убивало приложение
+    // и журнал его консоли).
+    "appium:isHeadless": true,
     "appium:noReset": true,
     "appium:forceAppLaunch": false,
     "appium:shouldTerminateApp": false,

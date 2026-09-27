@@ -257,13 +257,18 @@ jobs:
           # Консоль приложения с метками времени (UTC) — живёт до перезапуска приложения.
           T0=$(now); echo "launch t0=$T0 $(date -u +%T)" > "$LOGS/cold-start-timing.txt"
           nohup bash -c "xcrun simctl launch --console-pty $UDID ru.wesetup.app 2>&1 | perl -MTime::HiRes=time -MPOSIX=strftime -ne '\$|=1; my \$t=time; printf \"%s.%03d %s\", strftime(\"%H:%M:%S\",gmtime \$t), (\$t-int \$t)*1000, \$_'" > "$LOGS/launch1-console.log" 2>&1 &
-          # Кадры первых ~15 с: в имени — миллисекунды от запуска.
+          # Кадры до «WebView loaded» (не дольше 90 с) и ещё 5 с: в имени — миллисекунды от запуска.
+          # Снимок во время запуска может занимать секунды — поэтому кадры, а не видео.
           while :; do
             T=$(now); MS=$(perl -e "printf '%05d', ($T-$T0)*1000")
-            [ "$MS" -gt 15000 ] && break
+            [ "$MS" -gt 90000 ] && break
             xcrun simctl io "$UDID" screenshot "$OUT_DIR/splash/t$MS.png" >/dev/null 2>&1
+            grep -q "WebView loaded" "$LOGS/launch1-console.log" && break
+            sleep 1
           done
-          sleep 4
+          sleep 5
+          T=$(now); MS=$(perl -e "printf '%05d', ($T-$T0)*1000"); xcrun simctl io "$UDID" screenshot "$OUT_DIR/splash/t$MS.png" >/dev/null 2>&1
+          sleep 1
           kill -INT $REC; sleep 3
           ls "$OUT_DIR/splash"
           xcrun simctl io "$UDID" screenshot "$OUT_DIR/splash/cold-22s.png" >/dev/null 2>&1
