@@ -22,10 +22,18 @@ import { isInsideTelegram, type TelegramWebApp } from "./telegram-web-app";
 
 type Storage = Record<string, string>;
 type FakeTelegram = Partial<Pick<TelegramWebApp, "platform" | "initData" | "colorScheme">>;
+/**
+ * Параметры запуска Telegram, пока его скрипт ещё не загружен: адрес
+ * (`#tgWebAppPlatform=…&tgWebAppThemeParams=…`) и то, что его скрипт
+ * сложил в sessionStorage на прошлых страницах.
+ */
+type Launch = { hash?: string; session?: Storage };
 type Env = {
   storage: Storage;
-  /** `window.Telegram.WebApp`; `null` — скрипта Telegram нет вовсе. */
+  /** `window.Telegram.WebApp` уже есть; `null` — скрипта Telegram нет вовсе. */
   telegram?: FakeTelegram | null;
+  /** Скрипта Telegram ещё нет (так при каждой загрузке: Next грузит его после разбора страницы). */
+  launch?: Launch;
   prefersDark?: boolean;
   hour?: number;
 };
@@ -47,6 +55,8 @@ function runBootstrap(code: string, env: Env): Record<string, string> {
   const localStorage = { getItem: get(env.storage) };
   const window: Record<string, unknown> = {
     localStorage,
+    sessionStorage: { getItem: get(env.launch?.session ?? {}) },
+    location: { hash: env.launch?.hash ?? "" },
     matchMedia: (query: string) => ({
       matches: query.includes("dark") ? Boolean(env.prefersDark) : false,
     }),
@@ -99,9 +109,41 @@ function telegramScheme(telegram: FakeTelegram | null | undefined): MiniTheme | 
   return scheme === "light" || scheme === "dark" ? scheme : null;
 }
 
-/** Тема, которую покажет провайдер после гидрации. */
+/**
+ * Какой `WebApp.colorScheme` посчитает скрипт Telegram из параметров
+ * запуска (telegram-web-app.js): параметры адреса дополняются сохранёнными
+ * в `__telegram__initParams`; тема — `bg_color` из `tgWebAppThemeParams`,
+ * поверх — сохранённая `__telegram__themeParams`; тёмная, если яркость HSP
+ * < 120; без темы — светлая. Внутри Telegram — есть `tgWebAppData` или
+ * известная платформа. Независимая запись того же правила — эталон для
+ * скрипта до гидрации.
+ */
+function telegramFromLaunch(launch: Launch | undefined): MiniTheme | null {
+  if (!launch) return null;
+  const session = launch.session ?? {};
+  const parse = (raw: string | undefined) => {
+    try {
+      return raw ? (JSON.parse(raw) as Record<string, string>) : null;
+    } catch {
+      return null;
+    }
+  };
+  const params: Record<string, string> = { ...(parse(session.__telegram__initParams) ?? {}) };
+  const hash = (launch.hash ?? "").replace(/^#/, "");
+  for (const [k, v] of new URLSearchParams(hash.includes("?") ? hash.slice(hash.indexOf("?") + 1) : hash)) params[k] = v;
+  const platform = (params.tgWebAppPlatform ?? "").trim();
+  if (!(params.tgWebAppData?.length || (platform && platform !== "unknown"))) return null;
+  const bg = parse(session.__telegram__themeParams)?.bg_color ?? parse(params.tgWebAppThemeParams)?.bg_color;
+  if (!bg) return "light";
+  const hex = bg.replace("#", "");
+  const full = hex.length === 3 ? hex.split("").map((c) => c + c).join("") : hex;
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16));
+  return Math.sqrt(0.299 * (r * r) + 0.587 * (g * g) + 0.114 * (b * b)) < 120 ? "dark" : "light";
+}
+
+/** Тема, которую покажет провайдер после гидрации (скрипт Telegram к этому моменту загружен). */
 function providerTheme(env: Env, profileTheme: MiniTheme | null, fallback: MiniTheme): MiniTheme {
-  const tg = telegramScheme(env.telegram);
+  const tg = env.telegram ? telegramScheme(env.telegram) : telegramFromLaunch(env.launch);
   const choice = resolveMiniThemeChoice({
     profileTheme,
     stored: readStoredChoice(get(env.storage)),
@@ -278,6 +320,18 @@ describe("мини-приложение: скрипт до гидрации", ()
   });
 
   it("совпадает с провайдером во всех сочетаниях — тема после гидрации не мигает", () => {
+    const launches: Array<Pick<Env, "telegram" | "launch">> = [
+      { telegram: null },
+      { telegram: NOT_TELEGRAM },
+      { telegram: IOS_DARK },
+      { telegram: ANDROID_LIGHT },
+      // Скрипт Telegram ещё не загружен — так при каждой настоящей загрузке.
+      { launch: { hash: launchHash("ios", "#212121") } },
+      { launch: { hash: launchHash("android", "#ffffff") } },
+      { launch: { session: { __telegram__initParams: JSON.stringify({ tgWebAppPlatform: "tdesktop", tgWebAppThemeParams: themeParams("#17212b") }) } } },
+      { launch: { hash: launchHash("ios", "#212121"), session: { __telegram__themeParams: JSON.stringify({ bg_color: "#ffffff" }) } } },
+      { launch: { hash: launchHash("unknown", "#212121") } },
+    ];
     const storages: Storage[] = [
       {},
       { [THEME_KEYS.mode]: "light", [THEME_KEYS.auto]: "0", [THEME_KEYS.effective]: "light" },
@@ -288,14 +342,13 @@ describe("мини-приложение: скрипт до гидрации", ()
       { [THEME_KEYS.mode]: "light", [THEME_KEYS.auto]: "1" },
       { [THEME_KEYS.mode]: "system", [THEME_KEYS.auto]: "1" },
     ];
-    const telegrams: Array<FakeTelegram | null> = [null, NOT_TELEGRAM, IOS_DARK, ANDROID_LIGHT];
     let cases = 0;
     for (const storage of storages) {
       for (const profileTheme of [null, "light", "dark"] as const) {
-        for (const telegram of telegrams) {
+        for (const launch of launches) {
           for (const prefersDark of [false, true]) {
             for (const hour of [3, 12]) {
-              const env: Env = { storage, telegram, prefersDark, hour };
+              const env: Env = { storage, ...launch, prefersDark, hour };
               // Сервер рисует тему профиля, до входа — тёмную (mini-shell-data.ts).
               const server = profileTheme ?? "dark";
               const attrs = runBootstrap(miniThemeBootstrapCode(profileTheme !== null), env);
@@ -304,7 +357,7 @@ describe("мини-приложение: скрипт до гидрации", ()
               assert.equal(
                 painted,
                 providerTheme(env, profileTheme, server),
-                JSON.stringify({ storage, profileTheme, telegram, prefersDark, hour })
+                JSON.stringify({ storage, profileTheme, launch, prefersDark, hour })
               );
               cases += 1;
             }
@@ -312,6 +365,66 @@ describe("мини-приложение: скрипт до гидрации", ()
         }
       }
     }
-    assert.equal(cases, 8 * 3 * 4 * 2 * 2);
+    assert.equal(cases, 8 * 3 * 9 * 2 * 2);
+  });
+});
+
+/** `#tgWebAppPlatform=…&tgWebAppThemeParams=…` — так Telegram открывает мини-приложение. */
+function launchHash(platform: string, bg: string): string {
+  return `#tgWebAppVersion=8.0&tgWebAppPlatform=${platform}&tgWebAppThemeParams=${encodeURIComponent(themeParams(bg))}`;
+}
+function themeParams(bg: string): string {
+  return JSON.stringify({ bg_color: bg, text_color: bg === "#ffffff" ? "#000000" : "#ffffff" });
+}
+
+describe("мини-приложение: тема Telegram, пока его скрипт не загружен", () => {
+  // Next грузит telegram-web-app.js после разбора страницы, поэтому скрипт до
+  // гидрации сам читает параметры запуска — так же, как потом прочтёт Telegram.
+  const system = { [THEME_KEYS.mode]: "system" };
+  const paint = (launch: Launch, prefersDark = false, storage: Storage = system) =>
+    runBootstrap(miniThemeBootstrapCode(true), { storage, launch, prefersDark })["data-theme"];
+
+  it("«Как на устройстве» при первом открытии — по теме из адреса запуска, а не по системе", () => {
+    assert.equal(paint({ hash: launchHash("ios", "#212121") }, false), "dark");
+    assert.equal(paint({ hash: launchHash("android", "#ffffff") }, true), "light");
+  });
+
+  it("после переходов адрес пустой — тема из того, что Telegram сохранил в sessionStorage", () => {
+    const session = { __telegram__initParams: JSON.stringify({ tgWebAppPlatform: "android", tgWebAppThemeParams: themeParams("#212121") }) };
+    assert.equal(paint({ session }, false), "dark");
+  });
+
+  it("сменили тему в Telegram (themeChanged сохранил новую) — побеждает последняя, как у Telegram", () => {
+    const session = { __telegram__themeParams: JSON.stringify({ bg_color: "#ffffff" }) };
+    assert.equal(paint({ hash: launchHash("ios", "#212121"), session }, true), "light");
+  });
+
+  it("не Telegram (платформа unknown, нет данных входа) — по системе", () => {
+    assert.equal(paint({ hash: launchHash("unknown", "#212121") }, false), "light");
+    assert.equal(paint({}, true), "dark");
+  });
+
+  it("данные входа без платформы — тоже Telegram; без темы — светлая, как у Telegram", () => {
+    assert.equal(paint({ hash: `#tgWebAppData=${encodeURIComponent("user=1&hash=x")}` }, true), "light");
+  });
+
+  it("порог тёмной — как у Telegram: яркость HSP < 120; #rgb и rgb() тоже", () => {
+    const at = (bg: string) => paint({ hash: launchHash("ios", bg) });
+    assert.equal(at("#777777"), "dark"); // HSP 119
+    // #787878 — HSP 120 даёт 119.99999999999999 и у Telegram (та же формула): тёмная.
+    assert.equal(at("#787878"), "dark");
+    assert.equal(at("#797979"), "light"); // HSP 121
+    for (const bg of ["#17212b", "#1c1c1d", "#212121", "#000"]) assert.equal(at(bg), "dark", bg);
+    for (const bg of ["#ffffff", "#fff", "#f1f1f1"]) assert.equal(at(bg), "light", bg);
+    const session = { __telegram__themeParams: JSON.stringify({ bg_color: "rgb(24, 34, 45)" }) };
+    assert.equal(paint({ hash: launchHash("ios", "#ffffff"), session }), "dark");
+  });
+
+  it("без «как на устройстве» тема Telegram не мешает теме профиля", () => {
+    const attrs = runBootstrap(miniThemeBootstrapCode(true), {
+      storage: { [THEME_KEYS.mode]: "light" },
+      launch: { hash: launchHash("ios", "#212121") },
+    });
+    assert.deepEqual(attrs, {});
   });
 });

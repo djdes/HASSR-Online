@@ -140,15 +140,51 @@ export function choiceStorageEntries(
  * `resolveMiniThemeChoice`. Когда у сервера была сессия, разметка уже
  * пришла в теме профиля — её не трогаем, кроме настроек устройства
  * (смена по времени и «как на устройстве»): их сервер знать не может.
+ *
+ * Тема Telegram. Скрипт Telegram (`telegram-web-app.js`) Next загружает уже
+ * после разбора страницы (`beforeInteractive` — очередь `self.__next_s`),
+ * поэтому здесь `window.Telegram` обычно ещё нет. Тогда тему считаем так
+ * же, как посчитает он сам: параметры запуска — из адреса (`#tgWebAppPlatform=…
+ * &tgWebAppThemeParams=…`) и из его `sessionStorage` (`__telegram__initParams`
+ * — после переходов адрес их теряет; `__telegram__themeParams` — последняя
+ * тема после `themeChanged`), тёмная — если у `bg_color` яркость HSP < 120.
  */
 export function miniThemeBootstrapCode(hasProfileTheme: boolean): string {
   const key = (name: keyof typeof THEME_KEYS) => JSON.stringify(THEME_KEYS[name]);
   return `(function(){try{
   var s=window.localStorage;
+  var tg=null;
   var w=window.Telegram&&window.Telegram.WebApp;
-  var p=w&&typeof w.platform==='string'?w.platform.trim():'';
-  var inside=!!w&&((typeof w.initData==='string'&&w.initData.length>0)||(p!==''&&p!=='unknown'));
-  var tg=inside&&(w.colorScheme==='light'||w.colorScheme==='dark')?w.colorScheme:null;
+  if(w){
+    var p=typeof w.platform==='string'?w.platform.trim():'';
+    var inside=(typeof w.initData==='string'&&w.initData.length>0)||(p!==''&&p!=='unknown');
+    if(inside&&(w.colorScheme==='light'||w.colorScheme==='dark')){tg=w.colorScheme;}
+  }else{
+    var ss=null;try{ss=window.sessionStorage;}catch(_){}
+    var sget=function(k){try{return JSON.parse(ss.getItem('__telegram__'+k));}catch(_){return null;}};
+    var ip=sget('initParams')||{};
+    var h=String(window.location&&window.location.hash||'').replace(/^#/,'');
+    var qi=h.indexOf('?');if(qi>=0){h=h.substr(qi+1);}
+    if(h.indexOf('=')>=0){
+      var ps=h.split('&');
+      for(var i=0;i<ps.length;i++){
+        var kv=ps[i].split('=');
+        try{ip[decodeURIComponent(kv[0])]=kv[1]==null?null:decodeURIComponent(kv[1].replace(/\\+/g,'%20'));}catch(_){}
+      }
+    }
+    var pl=typeof ip.tgWebAppPlatform==='string'?ip.tgWebAppPlatform.trim():'';
+    if((typeof ip.tgWebAppData==='string'&&ip.tgWebAppData.length>0)||(pl!==''&&pl!=='unknown')){
+      var bg=null;
+      try{var tp=JSON.parse(ip.tgWebAppThemeParams||'null');if(tp&&tp.bg_color){bg=tp.bg_color;}}catch(_){}
+      var st=sget('themeParams');if(st&&st.bg_color){bg=st.bg_color;}
+      var c=String(bg||''),r=-1,g=0,b=0,m;
+      if((m=/^\\s*#([0-9a-f]{6}|[0-9a-f]{3})\\s*$/i.exec(c))){
+        var x=m[1];if(x.length==3){x=x[0]+x[0]+x[1]+x[1]+x[2]+x[2];}
+        r=parseInt(x.substr(0,2),16);g=parseInt(x.substr(2,2),16);b=parseInt(x.substr(4,2),16);
+      }else if((m=/^\\s*rgba?\\((\\d+),\\s*(\\d+),\\s*(\\d+)/.exec(c))){r=+m[1];g=+m[2];b=+m[3];}
+      tg=r>=0&&Math.sqrt(0.299*(r*r)+0.587*(g*g)+0.114*(b*b))<120?'dark':'light';
+    }
+  }
   var mode=s.getItem(${key("mode")});
   var t=null;
   if(s.getItem(${key("auto")})==='1'){
