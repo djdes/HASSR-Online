@@ -598,16 +598,18 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
     <AuthSessionProvider session={session}>
       <CustomNamesProvider names={customNames}>
       <KioskSessionGuard />
-      {/* Тему в оболочке ведёт MiniThemeProvider (профиль → устройство →
-          Telegram → по умолчанию). SiteThemeProvider оставлен ради
-          страниц, которые читают `useSiteTheme` — например «Внешний
-          вид», — и работает в режиме `controlled`: он только отражает
-          текущую тему и переключает её, но сам НИЧЕГО не пересчитывает
-          и не пишет в localStorage. Раньше он считал источником правды
-          свой ключ `wesetup-theme-mode` (которого приложение не ставит),
-          получал «как в системе» и возвращал страницы к светлой.
-          Его pre-hydration скрипт не рисуем: `#mini-root` уже
-          красит MiniThemeBootstrap, два скрипта дрались бы за атрибут. */}
+      {/* Тему в оболочке ведёт MiniThemeProvider (смена по времени и
+          «как на устройстве» этого устройства → профиль → выбор на
+          устройстве → Telegram → по умолчанию). Страницам внутри оболочки,
+          которые читают `useSiteTheme` — например «Внешний вид», — он
+          отвечает сам (мост `SiteThemeBridge`): там та же тема, что в
+          профиле приложения, со всеми тремя карточками. SiteThemeProvider
+          снаружи — в режиме `controlled`: он ничего не пересчитывает и не
+          пишет в localStorage, только повторяет тему по событию. Раньше он
+          считал источником правды свой ключ `wesetup-theme-mode` и
+          возвращал страницы к светлой. Его pre-hydration скрипт не рисуем:
+          `#mini-root` уже красит MiniThemeBootstrap, два скрипта дрались
+          бы за атрибут. */}
       <SiteThemeProvider initialTheme={shell.initialTheme} controlled>
         <MiniAppShell {...shell}>
             <PageNavProvider>

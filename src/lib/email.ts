@@ -888,7 +888,7 @@ export function buildBlankDownloadEmail(params: {
     <p style="margin:12px 0 0;color:#a1a1aa;font-size:12px;line-height:1.5;word-break:break-all">Если кнопка не открывается, скопируйте адрес: ${escapeHtml(main.url)}</p>` : ""}${moreHtml}${pageHtml}
     <div style="background:#f5f6ff;border-radius:8px;padding:20px;margin:24px 0 0">
       <p style="margin:0 0 8px;font-size:14px;font-weight:600;color:#18181b">Этот журнал можно не печатать</p>
-      <p style="margin:0 0 16px;color:#3f3f46;font-size:14px;line-height:1.6">В WeSetup его заполняют с телефона по QR-коду — тому же, что стоит в углу шаблона. Без бумаги, с напоминаниями, если смена забыла отметиться. Бесплатно до ${FREE_MAX_USERS} сотрудников.</p>
+      <p style="margin:0 0 16px;color:#3f3f46;font-size:14px;line-height:1.6">В WeSetup его заполняют с телефона по QR-коду — тому же, что стоит на шаблоне. Без бумаги, с напоминаниями, если смена забыла отметиться. Бесплатно до ${FREE_MAX_USERS} сотрудников.</p>
       <a href="${escapeHtml(registerUrl)}" style="display:inline-block;background:#18181b;color:#fff;text-decoration:none;padding:10px 20px;border-radius:8px;font-weight:600;font-size:14px">Вести журнал в WeSetup</a>
     </div>
     <p style="margin:24px 0 0;font-size:12px;color:#a1a1aa;line-height:1.5">Письмо пришло, потому что этот адрес указали при скачивании шаблона на wesetup.ru. Если это были не вы — просто не отвечайте на него.</p>`;

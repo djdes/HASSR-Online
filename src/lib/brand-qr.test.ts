@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { loadImage, createCanvas } from "@napi-rs/canvas";
+import { jsPDF } from "jspdf";
 import QRCode from "qrcode";
 
 import {
@@ -12,9 +13,11 @@ import {
   brandQrPng,
   brandQrPngDataUrl,
   brandQrSvg,
+  drawBrandQrTilePdf,
   type BrandQrLayout,
 } from "@/lib/brand-qr";
 import { BRAND_QR_CAPTION_ASPECT, brandQrHeightFor } from "@/lib/brand-qr-shared";
+import { registerJournalUnicodeFont } from "@/lib/pdf-journal-font";
 import { journalQrMatrix } from "@/lib/pdf-journal-qr";
 
 /**
@@ -107,7 +110,7 @@ test("full: коррекция H, подложка по центру ≤ 20 % м
   }
 });
 
-test("compact: коррекция M, без логотипа и плашки — матрица как у прежнего углового QR", () => {
+test("compact: коррекция M, без логотипа и плашки — подвал шаблона Word", () => {
   const layout = brandQrLayout(SHORT, { variant: "compact" });
   assert.equal(layout.errorCorrection, "M");
   assert.equal(layout.pad, null);
@@ -120,7 +123,45 @@ test("compact: коррекция M, без логотипа и плашки —
       assert.equal(layout.plain(row, col), Boolean(reference.modules.get(row, col)));
     }
   }
-  assert.equal(journalQrMatrix(SHORT).modules.size, reference.modules.size, "угловой QR журнала — тот же компактный");
+  // QR печатного журнала (PDF) — полный фирменный, в шапке: коррекция H.
+  assert.equal(journalQrMatrix(SHORT).modules.size, brandQrLayout(SHORT).size);
+  assert.ok(journalQrMatrix(SHORT).modules.size > reference.modules.size, "H плотнее M");
+});
+
+test("jsPDF: полная плитка — вектором, по пропорции плитки, со знаком, плашкой и надписями; compact — ошибка", () => {
+  const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  const fontName = registerJournalUnicodeFont(doc);
+  const calls = { rect: 0, image: 0, clip: 0, texts: [] as string[] };
+  const target = doc as unknown as Record<string, (...args: unknown[]) => unknown>;
+  for (const name of ["rect", "addImage", "clip", "text"] as const) {
+    const original = target[name].bind(doc);
+    target[name] = (...args: unknown[]) => {
+      if (name === "rect") calls.rect += 1;
+      if (name === "addImage") calls.image += 1;
+      if (name === "clip") calls.clip += 1;
+      if (name === "text") calls.texts.push(String(args[0]));
+      return original(...args);
+    };
+  }
+  doc.setFont(fontName, "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(0, 0, 0);
+  doc.setFillColor(242, 242, 242);
+  const layout = brandQrLayout(SHORT);
+  const box = drawBrandQrTilePdf(doc, layout, 100, 50, 20, { fontName });
+  assert.equal(box.width, 20);
+  assert.ok(Math.abs(box.height / box.width - BRAND_QR_CAPTION_ASPECT) < 1e-9);
+  assert.ok(Math.abs(box.module - 20 / layout.width) < 1e-12);
+  assert.ok(calls.rect > layout.size, "модули — прямоугольниками по строкам");
+  assert.equal(calls.image, 1, "знак сайта — одна картинка");
+  assert.equal(calls.clip, 2, "обрезка: вырез знака и скругление плашки");
+  assert.deepEqual(calls.texts, [BRAND_QR_CAPTION_TITLE, BRAND_QR_CAPTION_SITE]);
+  // Шрифт, кегль, цвет текста и заливки документа — как были.
+  assert.equal(doc.getFontSize(), 10);
+  assert.deepEqual(doc.getFont().fontStyle, "normal");
+  assert.equal(doc.getTextColor(), "#000000");
+  assert.equal(doc.getFillColor(), "#f2f2f2");
+  assert.throws(() => drawBrandQrTilePdf(doc, brandQrLayout(SHORT, { variant: "compact" }), 0, 0, 20, { fontName }));
 });
 
 test("SVG: логотип, надписи, только чёрные модули, без id и url(#…) (печать не теряет плашку)", async () => {

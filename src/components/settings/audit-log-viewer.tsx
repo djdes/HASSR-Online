@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
+import { sortJournalsByName } from "@/lib/journal-sort";
 import { pluralRu } from "@/lib/plural-ru";
 import {
   AUDIT_ACTION_LABELS,
@@ -46,6 +47,9 @@ const JOURNAL_LABEL_BY_CODE: Record<string, string> =
     acc[item.code] = item.name;
     return acc;
   }, {});
+
+/** Журналы в фильтре — по алфавиту. */
+const JOURNALS_BY_NAME = sortJournalsByName(ACTIVE_JOURNAL_CATALOG, (item) => item.name);
 
 function formatDuration(ms: number | null | undefined): string | null {
   if (typeof ms !== "number" || ms <= 0) return null;
@@ -389,7 +393,7 @@ export function AuditLogViewer() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Все журналы</SelectItem>
-            {ACTIVE_JOURNAL_CATALOG.map((j) => (
+            {JOURNALS_BY_NAME.map((j) => (
               <SelectItem key={j.code} value={j.code}>
                 {j.name}
               </SelectItem>

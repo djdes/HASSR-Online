@@ -64,7 +64,7 @@ function describe(target: BlankTarget | null): Journal | null {
 type Mode = "session" | "login" | "register";
 
 /**
- * `/qb/<токен>` — куда ведёт QR в углу шаблона журнала, скачанного с сайта.
+ * `/qb/<токен>` — куда ведёт QR в шапке шаблона журнала, скачанного с сайта.
  *
  * В токене (AES-GCM, см. lib/blank-qr-token.ts) — журнал и почта, которую
  * человек ввёл при скачивании:

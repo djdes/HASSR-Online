@@ -4,6 +4,7 @@ import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
 import { db } from "@/lib/db";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
+import { sortJournalsByName } from "@/lib/journal-sort";
 import { JournalDifficultyClient } from "@/components/settings/journal-difficulty-client";
 import { PageGuide } from "@/components/ui/page-guide";
 import { PageHeader } from "@/components/ui/page-header";
@@ -27,7 +28,7 @@ export default async function JournalDifficultyPage() {
     }
   }
 
-  const journals = ACTIVE_JOURNAL_CATALOG.map((j) => ({
+  const journals = sortJournalsByName(ACTIVE_JOURNAL_CATALOG, (j) => j.name).map((j) => ({
     code: j.code,
     name: j.name,
   }));

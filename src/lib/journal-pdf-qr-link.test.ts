@@ -12,7 +12,7 @@ import {
   resolveJournalShortQr,
 } from "@/lib/journal-pdf-qr-link";
 import { buildJournalSampleInput } from "@/lib/journal-sample-fixtures";
-import { journalQrMatrix } from "@/lib/pdf-journal-qr";
+import { JOURNAL_QR_MAX_MODULES, journalQrMatrix } from "@/lib/pdf-journal-qr";
 import { journalShortSig, verifyJournalShortSig } from "@/lib/qr-fill-token";
 
 const ORG = "cmf1abcdefghijklmnopqrstu";
@@ -50,26 +50,26 @@ test("переадресация: неверная подпись, чужой ж
   assert.equal(verifyJournalShortSig(ORG, "hygiene", sig), true);
 });
 
-test("QR документа — короткий адрес, влезает в ≤ 41 модуль; подпись «Заполнение электронного журнала / wesetup.ru»", () => {
+test("QR документа — короткий адрес, влезает в шапку (коррекция H, ≤ 53 модулей); подписи сбоку нет", () => {
   const qr = journalDocumentPdfQr("https://wesetup.ru", ORG, "cleaning_ventilation_checklist");
   assert.ok(qr.url.includes("/qj/"));
-  assert.deepEqual(qr.lines, ["Заполнение электронного журнала", "wesetup.ru"]);
-  assert.ok(journalQrMatrix(qr.url).modules.size <= 41);
+  assert.equal(qr.footer, undefined, "подпись — на плашке самого QR");
+  assert.ok(journalQrMatrix(qr.url).modules.size <= JOURNAL_QR_MAX_MODULES);
 });
 
 test("QR образца бланка → /journals-info/<code>, без токенов", () => {
   const qr = journalSamplePdfQr("https://wesetup.ru", "hygiene");
   assert.equal(qr.url, "https://wesetup.ru/journals-info/hygiene");
-  assert.deepEqual(qr.lines, ["Заполнение электронного журнала", "wesetup.ru"]);
+  assert.equal(qr.footer, undefined);
 });
 
-test("печать журнала: с qr — QR на каждой странице без наложений; без qr — как раньше", () => {
+test("печать журнала: с qr — QR в шапке каждой страницы; без qr — как раньше", () => {
   const input = buildJournalSampleInput("hygiene");
   const withQr = renderJournalDocumentPdf({ ...input, qr: journalSamplePdfQr("https://wesetup.ru", "hygiene") });
   assert.ok(withQr.qrPlacements && withQr.qrPlacements.length > 0);
   const pages = new Set(withQr.qrPlacements.map((p) => p.page));
   assert.equal(pages.size, withQr.qrPlacements.length);
-  assert.ok(withQr.qrPlacements.every((p) => !p.overlap));
+  assert.ok(withQr.qrPlacements.every((p) => p.where === "header"));
 
   const plain = renderJournalDocumentPdf(input);
   assert.equal(plain.qrPlacements, undefined);

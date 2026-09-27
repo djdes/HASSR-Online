@@ -1,8 +1,10 @@
+import { journalDisplayName, type CustomNames } from "@/lib/custom-names";
 import { db } from "@/lib/db";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { JOURNAL_FILL_HUB_CODE, journalFillValidUntil, todayKeyFor } from "@/lib/journal-fill";
 import { HYGIENE_VERIFY_SUFFIX, isJournalObjectQrCode, splitJournalPosterId } from "@/lib/journal-qr-target";
 import { journalResponsibleLabel } from "@/lib/journal-responsible-person";
+import { getOrgCustomNames } from "@/lib/org-custom-names";
 import { resolveOrgJournalName } from "@/lib/org-journal-name";
 import {
   buildJournalPoster,
@@ -14,7 +16,8 @@ import {
 } from "@/lib/qr-fill-poster";
 import type { QrPoster, QrPosterItem, QrPosterMissing, QrPrintFormat } from "@/lib/qr-fill-types";
 import { resolveJournalObjectScope } from "@/lib/qr-journal-scope";
-import { planQrOverview } from "@/lib/qr-posters-overview";
+import { HEALTH_QR_NAME, HYGIENE_QR_NAME, planQrOverview } from "@/lib/qr-posters-overview";
+import { orderQrPosterItems, type QrListEntry } from "@/lib/qr-posters-list";
 import type { QrPostersRequest } from "@/lib/qr-posters-request";
 
 /**
@@ -29,7 +32,15 @@ import type { QrPostersRequest } from "@/lib/qr-posters-request";
  *   • overview — универсальные («Все журналы», «Допуск»; отмечены), основные
  *     QR ВСЕХ включённых журналов и журналов объектов (`qr-posters-overview.ts`).
  * `selectedIds` (старые ссылки с `ids=`) отмечает ровно эти карточки.
+ *
+ * Названия журналов на карточках — те, что видит компания («Настройки →
+ * Названия»), официальное остаётся в поиске; сам плакат печатается как
+ * раньше. Порядок карточек и поиск — `qr-posters-list.ts`: универсальные
+ * первыми, журналы, документы и объекты — по алфавиту.
  */
+
+/** Карточка страницы + строки для поиска и сортировки (`qr-posters-list.ts`). */
+export type QrPostersItem = QrPosterItem & QrListEntry;
 
 export type QrPostersScreen = "journal" | "objects" | "overview";
 
@@ -45,7 +56,7 @@ export type QrPostersView = {
   objectKind: "equipment" | "room" | null;
   /** Наклейки сужены до строк документа. */
   documentTitle: string | null;
-  items: QrPosterItem[];
+  items: QrPostersItem[];
   missing: QrPosterMissing[];
   /** Журнал объектов без объектов: кто должен их завести. */
   objectsEmpty: { responsible: string } | null;
@@ -85,7 +96,21 @@ type OrgContext = {
   journalPeriods: unknown;
   activeBuildingId: string | null;
   origin: string;
+  /** Свои названия журналов организации. */
+  names: CustomNames;
 };
+
+/**
+ * Название журнала на карточке: своё («Настройки → Названия») или
+ * `fallback` (официальное или особая подпись общего QR). У общего QR
+ * гигиены и здоровья к своему названию добавляется, что это отметка
+ * перед сменой.
+ */
+function cardName(ctx: OrgContext, code: string, fallback: string, official: string): string {
+  const shown = journalDisplayName(ctx.names, code, official);
+  if (shown === official) return fallback;
+  return fallback === HYGIENE_QR_NAME || fallback === HEALTH_QR_NAME ? `${shown} — отметка перед сменой` : shown;
+}
 
 function pick(selectedIds: string[] | null, key: string, fallback: boolean): boolean {
   return selectedIds ? selectedIds.includes(key) : fallback;
@@ -98,7 +123,7 @@ async function buildingName(buildingId: string | null): Promise<string | null> {
 }
 
 /** Основные QR журнала: сам журнал и у гигиены «допуск». */
-async function mainItems(ctx: OrgContext, code: string, name: string, request: QrPostersRequest, isObject: boolean): Promise<QrPosterItem[]> {
+async function mainItems(ctx: OrgContext, code: string, name: string, request: QrPostersRequest, isObject: boolean): Promise<QrPostersItem[]> {
   const buildingId = await resolveMainJournalQrBuilding(ctx.organizationId, ctx.activeBuildingId);
   const point = await buildingName(buildingId);
   const notices = isObject
@@ -106,7 +131,8 @@ async function mainItems(ctx: OrgContext, code: string, name: string, request: Q
     : await loadMainJournalQrNotices({ ...ctx, codes: [code] });
   const subtitle = isObject ? objectSubtitle(code) : point ? `${point} · запись с телефона` : "Запись в журнал с телефона";
   const format: QrPrintFormat = (!isObject && request.format) || "a4";
-  const items: QrPosterItem[] = [
+  const label = cardName(ctx, code, name, name);
+  const items: QrPostersItem[] = [
     {
       key: code,
       group: "main",
@@ -116,10 +142,11 @@ async function mainItems(ctx: OrgContext, code: string, name: string, request: Q
       },
       defaultSelected: pick(request.selectedIds, code, true),
       defaultFormat: format,
-      label: name,
+      label,
       sublabel: point,
       caption: isObject ? CAPTION.objectMain : CAPTION.main,
       buildingName: point,
+      search: [label, name, code, point],
     },
   ];
   if (code === "hygiene") {
@@ -146,6 +173,7 @@ async function mainItems(ctx: OrgContext, code: string, name: string, request: Q
       sublabel: point,
       caption: CAPTION.verify,
       buildingName: point,
+      search: ["Допуск сотрудников к смене", HYGIENE_VERIFY_TITLE, label, code, point],
     });
   }
   return items;
@@ -153,12 +181,12 @@ async function mainItems(ctx: OrgContext, code: string, name: string, request: Q
 
 type ExtraDoc = { id: string; title: string; status: string; dateFrom: Date; dateTo: Date; building: { name: string } | null };
 
-async function extraItemsForDoc(ctx: OrgContext, code: string, name: string, doc: ExtraDoc, request: QrPostersRequest, highlighted: boolean): Promise<QrPosterItem[]> {
+async function extraItemsForDoc(ctx: OrgContext, code: string, name: string, doc: ExtraDoc, request: QrPostersRequest, highlighted: boolean): Promise<QrPostersItem[]> {
   const validUntil = journalFillValidUntil(doc.dateTo);
   const expired = ctx.todayKey > validUntil;
   const periodLabel = formatPeriodLabel(doc.dateFrom, doc.dateTo);
   const variants = code === "hygiene" ? [false, true] : [false];
-  const items: QrPosterItem[] = [];
+  const items: QrPostersItem[] = [];
   for (const verify of variants) {
     const key = `${code}${verify ? HYGIENE_VERIFY_SUFFIX : ""}:${doc.id}`;
     const subtitle = doc.building?.name ? `${doc.title} · ${doc.building.name}` : doc.title;
@@ -189,6 +217,9 @@ async function extraItemsForDoc(ctx: OrgContext, code: string, name: string, doc
       expired,
       buildingName: doc.building?.name ?? null,
       highlighted,
+      // Пара гигиены (запись и допуск одного документа) — рядом.
+      sortName: doc.title,
+      search: [doc.title, verify ? "Допуск" : null, periodLabel, doc.building?.name, name, code],
     });
   }
   return items;
@@ -201,7 +232,7 @@ async function journalScreen(ctx: OrgContext, request: QrPostersRequest, code: s
     return { ...empty, screen: "journal", journal: null, items: [], missing: [{ id: code, label: code, reason: "Такого журнала нет" }] };
   }
   const isObject = isJournalObjectQrCode(code);
-  const journal = { code, name: template.name, isObject, disabled: ctx.disabledCodes.has(code) };
+  const journal = { code, name: cardName(ctx, code, template.name, template.name), isObject, disabled: ctx.disabledCodes.has(code) };
   const items = await mainItems(ctx, code, template.name, request, isObject);
   const missing: QrPosterMissing[] = [];
 
@@ -220,6 +251,8 @@ async function journalScreen(ctx: OrgContext, request: QrPostersRequest, code: s
         label: poster.title,
         sublabel: poster.norms.length > 0 ? `норма ${poster.norms.join(", ")}` : null,
         caption: objectKind === "room" ? CAPTION.room : code === "uv_lamp_runtime" ? CAPTION.uv : CAPTION.equipment,
+        location: loaded.locations?.[poster.id] ?? null,
+        search: [poster.title, loaded.locations?.[poster.id]],
       });
     }
     const objectsEmpty = loaded.posters.length === 0
@@ -290,6 +323,8 @@ async function objectsScreen(ctx: OrgContext, request: QrPostersRequest, kind: "
       label: poster.title,
       sublabel: poster.norms.length > 0 ? `норма ${poster.norms.join(", ")}` : null,
       caption: kind === "room" ? CAPTION.room : CAPTION.equipment,
+      location: loaded.locations?.[poster.id] ?? null,
+      search: [poster.title, loaded.locations?.[poster.id]],
     })),
     missing: loaded.missing,
     objectsEmpty: null,
@@ -307,8 +342,9 @@ async function overviewScreen(ctx: OrgContext, request: QrPostersRequest): Promi
   const templates = await db.journalTemplate.findMany({
     where: { isActive: true },
     orderBy: { sortOrder: "asc" },
-    select: { code: true, name: true },
+    select: { code: true, name: true, description: true },
   });
+  const official = new Map(templates.map((template) => [template.code, template]));
   const plan = planQrOverview(templates, ctx.disabledCodes, JOURNAL_FILL_HUB_CODE);
   const buildingId = await resolveMainJournalQrBuilding(ctx.organizationId, ctx.activeBuildingId);
   const point = await buildingName(buildingId);
@@ -319,7 +355,7 @@ async function overviewScreen(ctx: OrgContext, request: QrPostersRequest): Promi
   const pointSubtitle = point ? `${point} · запись с телефона` : "Запись в журнал с телефона";
 
   // Универсальные — каждый отдельной карточкой, отмечены для печати.
-  const items: QrPosterItem[] = [
+  const items: QrPostersItem[] = [
     {
       key: JOURNAL_FILL_HUB_CODE,
       group: "main",
@@ -336,6 +372,7 @@ async function overviewScreen(ctx: OrgContext, request: QrPostersRequest): Promi
       label: "Все журналы",
       sublabel: null,
       caption: CAPTION.hub,
+      search: ["Все журналы", "универсальный общий"],
     },
   ];
   if (plan.hygieneVerify) {
@@ -362,6 +399,7 @@ async function overviewScreen(ctx: OrgContext, request: QrPostersRequest): Promi
       sublabel: point,
       caption: CAPTION.verify,
       buildingName: point,
+      search: ["Допуск сотрудников к смене", HYGIENE_VERIFY_TITLE, "hygiene", point],
     });
   }
 
@@ -369,6 +407,8 @@ async function overviewScreen(ctx: OrgContext, request: QrPostersRequest): Promi
   // Журналы объектов отличает клиент по коду (`isJournalObjectQrCode`).
   for (const journal of [...plan.journals, ...plan.objectJournals]) {
     const isObject = isJournalObjectQrCode(journal.code);
+    const template = official.get(journal.code);
+    const label = cardName(ctx, journal.code, journal.name, template?.name ?? journal.name);
     items.push({
       key: journal.code,
       group: "extra",
@@ -386,10 +426,11 @@ async function overviewScreen(ctx: OrgContext, request: QrPostersRequest): Promi
       },
       defaultSelected: pick(request.selectedIds, journal.code, false),
       defaultFormat: format,
-      label: journal.name,
+      label,
       sublabel: point,
       caption: isObject ? CAPTION.objectMain : CAPTION.main,
       buildingName: point,
+      search: [label, journal.name, template?.name, template?.description, journal.code, point],
     });
   }
   // Старые ссылки на несколько журналов: чего нет в списке — собрать по id.
@@ -412,6 +453,7 @@ async function overviewScreen(ctx: OrgContext, request: QrPostersRequest): Promi
       sublabel: poster.subtitle,
       caption: CAPTION.main,
       expired: Boolean(poster.validUntil && ctx.todayKey > poster.validUntil),
+      search: [poster.title, poster.subtitle, poster.periodLabel, poster.journalCode],
     });
   }
   const [equipment, rooms] = await Promise.all([
@@ -450,6 +492,7 @@ export async function loadQrPostersView(params: {
     journalPeriods: org?.journalPeriods ?? null,
     activeBuildingId: params.activeBuildingId,
     origin: params.origin,
+    names: await getOrgCustomNames(params.organizationId),
   };
 
   let body: Omit<QrPostersView, "origin" | "autoprint">;
@@ -471,5 +514,5 @@ export async function loadQrPostersView(params: {
   } else {
     body = await overviewScreen(ctx, request);
   }
-  return { ...body, origin: params.origin, autoprint: request.autoprint };
+  return { ...body, items: orderQrPosterItems(body.items), origin: params.origin, autoprint: request.autoprint };
 }

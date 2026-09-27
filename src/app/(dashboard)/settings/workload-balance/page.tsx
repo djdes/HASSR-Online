@@ -12,6 +12,7 @@ import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
 import { db } from "@/lib/db";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
+import { sortJournalsByName } from "@/lib/journal-sort";
 import {
   calculatePositionWorkloads,
   calculateUserWorkloads,
@@ -336,7 +337,8 @@ export default async function WorkloadBalancePage() {
             const w = userWorkloads.get(u.id);
             const total = w?.totalWeight ?? 0;
             const pct = (total / maxUserWeight) * 100;
-            const journals = w?.journals ?? [];
+            // Журналы сотрудника — по алфавиту.
+            const journals = sortJournalsByName(w?.journals ?? [], (j) => j.name);
             return (
               <details
                 key={u.id}

@@ -4,6 +4,7 @@ import { requireAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
+import { sortJournalsByName } from "@/lib/journal-sort";
 import { JournalBonusesEditor } from "@/components/settings/journal-bonuses-editor";
 
 export const dynamic = "force-dynamic";
@@ -40,7 +41,8 @@ export default async function JournalBonusesPage() {
     templates.map((t) => [t.code, t.bonusAmountKopecks])
   );
 
-  const items = ACTIVE_JOURNAL_CATALOG.map((j) => ({
+  // Журналы по алфавиту.
+  const items = sortJournalsByName(ACTIVE_JOURNAL_CATALOG, (j) => j.name).map((j) => ({
     code: j.code,
     name: j.name,
     bonusKopecks: bonusByCode.get(j.code) ?? 0,

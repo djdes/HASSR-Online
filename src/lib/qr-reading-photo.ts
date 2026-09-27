@@ -9,6 +9,8 @@ import { hasPaidPlan } from "@/lib/plan-limits.server";
 import { normalizeQrFillMode } from "@/lib/qr-fill-actor";
 import { verifyQrFillTokenFor } from "@/lib/qr-fill-token";
 import { readObjectPassCookie, resolveObjectActor, type QrObjectKind } from "@/lib/qr-object-pass";
+import type { ReadingPhotoSettings } from "@/lib/reading-photo-fixation";
+import { getReadingPhotoSettings } from "@/lib/reading-photo-fixation.server";
 import { TARIFFS_HREF } from "@/lib/reading-photos";
 import { isManagementRole } from "@/lib/user-roles";
 
@@ -20,7 +22,8 @@ import { isManagementRole } from "@/lib/user-roles";
  *
  * Здесь же — тариф организации: автоввод с фото только на платном; ссылку
  * на тарифы видит руководитель (страница тарифов — только для руководства),
- * и только не в приложении WeSetup.
+ * и только не в приложении WeSetup. И настройка «Фотофиксация показаний»
+ * (`reading-photo-fixation.ts`): выключена — маршруты фото отказывают.
  */
 
 export type QrReadingPhotoActor = {
@@ -31,6 +34,8 @@ export type QrReadingPhotoActor = {
   autofill: boolean;
   /** Ссылка на тарифы — руководителю на бесплатном тарифе; сотруднику — нет. */
   tariffsHref: string | null;
+  /** «Фотофиксация показаний» организации: включена ли и обязательно ли фото. */
+  photo: ReadingPhotoSettings;
 };
 
 /**
@@ -122,7 +127,7 @@ export async function authorizeQrReadingPhoto(input: {
   if (!employee) return { ok: false, status: 404, error: "Сотрудник не найден" };
   if (!canFillObject(object.fillerUserIds, employee)) return { ok: false, status: 403, error: OBJECT_FILLER_DENIED };
 
-  const autofill = await hasPaidPlan(object.organizationId);
+  const [autofill, photo] = await Promise.all([hasPaidPlan(object.organizationId), getReadingPhotoSettings(object.organizationId)]);
   const userAgent =
     input.userAgent !== undefined ? input.userAgent : (await headers()).get("user-agent");
   return {
@@ -137,6 +142,7 @@ export async function authorizeQrReadingPhoto(input: {
         mayOpenTariffs: isManagementRole(employee.role),
         userAgent,
       }),
+      photo,
     },
   };
 }

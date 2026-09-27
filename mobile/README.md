@@ -24,8 +24,11 @@ Capacitor-оболочка вокруг мини-версии сайта. При
 Своё в нативной части:
 
 - **WebPrint** — локальный плагин печати: `print({ jobName })` открывает системную
-  печать текущей страницы (принтер или PDF), `openSettings()` — экран приложения
-  в настройках телефона. Android: `android/app/src/main/java/ru/wesetup/app/WebPrintPlugin.java`
+  печать текущей страницы (принтер или PDF), `printFile({ path, jobName })` —
+  печать готового PDF (бланк журнала с сервера; сайт кладёт его во временную
+  папку через Filesystem; пока только Android — на iOS сайт открывает лист
+  «Поделиться», где есть «Напечатать»), `openSettings()` — экран приложения в настройках
+  телефона. Android: `android/app/src/main/java/ru/wesetup/app/WebPrintPlugin.java`
   (регистрация в `MainActivity`), iOS: `ios/App/App/WebPrintPlugin.swift`
   (регистрация в `WeSetupViewController.capacitorDidLoad`).
 - **Фото «камера или галерея»** на Android — `WeSetupWebChromeClient.java`: для

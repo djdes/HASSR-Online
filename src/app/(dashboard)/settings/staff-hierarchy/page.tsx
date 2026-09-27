@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { sessionHasPermission } from "@/lib/permissions-server";
 import { StaffHierarchyClient } from "@/components/settings/staff-hierarchy-client";
 import { PageGuide } from "@/components/ui/page-guide";
+import { sortJournalsByName } from "@/lib/journal-sort";
 
 export const dynamic = "force-dynamic";
 
@@ -119,7 +120,10 @@ export default async function StaffHierarchyPage() {
           viewUserIds: s.viewUserIds,
           assignableJournalCodes: s.assignableJournalCodes,
         }))}
-        journals={templates.map((t) => ({ code: t.code, name: t.name }))}
+        journals={sortJournalsByName(templates, (t) => t.name).map((t) => ({
+          code: t.code,
+          name: t.name,
+        }))}
       />
     </div>
   );

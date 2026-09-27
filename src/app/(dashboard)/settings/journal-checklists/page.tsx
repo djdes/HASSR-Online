@@ -5,6 +5,7 @@ import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
 import { db } from "@/lib/db";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
+import { sortJournalsByName } from "@/lib/journal-sort";
 import { PageHeader } from "@/components/ui/page-header";
 
 export const dynamic = "force-dynamic";
@@ -39,8 +40,10 @@ export default async function JournalChecklistsHubPage() {
       : [],
   );
 
-  const enabled = ACTIVE_JOURNAL_CATALOG.filter((j) => !disabled.has(j.code));
-  const disabledList = ACTIVE_JOURNAL_CATALOG.filter((j) =>
+  // Журналы по алфавиту — и включённые, и выключенные.
+  const catalog = sortJournalsByName(ACTIVE_JOURNAL_CATALOG, (j) => j.name);
+  const enabled = catalog.filter((j) => !disabled.has(j.code));
+  const disabledList = catalog.filter((j) =>
     disabled.has(j.code),
   );
 

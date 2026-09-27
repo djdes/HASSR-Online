@@ -1,0 +1,73 @@
+# Real model runs: dispatcher/wesetup-worker.ps1 -TestImage <ref>.jpg -TestPromptFile instruction-<v>.txt (local, no queue), model 'sonnet' from dispatcher/config.json
+# ref-NN.jpg = reference NN.png re-encoded like the browser does before upload (longest side <= 1600 px, JPEG 85 %); the photos themselves are not committed
+
+=== run ref-21.jpg (instr v1)
+[2026-09-27 10:45:50] Vision test: 1 image(s), no queue
+[2026-09-27 10:45:50]   vision: 1 image(s), 57 KB, model 'sonnet'
+[2026-09-27 10:46:00] Vision test OK (63 chars, cost 0.020077 USD)
+{"device":"digital","value":8.4,"unit":"C","confidence":"high"}
+exit=0
+
+=== run ref-22.jpg (instr v1)
+[2026-09-27 10:46:01] Vision test: 1 image(s), no queue
+[2026-09-27 10:46:01]   vision: 1 image(s), 53 KB, model 'sonnet'
+[2026-09-27 10:46:18] Vision test OK (59 chars, cost 0.027877 USD)
+{"device":"dial","value":-18,"unit":"C","confidence":"low"}
+exit=0
+
+=== run ref-23.jpg (instr v1)
+[2026-09-27 10:46:19] Vision test: 1 image(s), no queue
+[2026-09-27 10:46:19]   vision: 1 image(s), 53 KB, model 'sonnet'
+[2026-09-27 10:46:25] Vision test OK (63 chars, cost 0.018267 USD)
+{"device":"digital","value":3.0,"unit":"C","confidence":"high"}
+exit=0
+
+=== run ref-24.jpg (instr v1)
+[2026-09-27 10:46:26] Vision test: 1 image(s), no queue
+[2026-09-27 10:46:26]   vision: 1 image(s), 48 KB, model 'sonnet'
+[2026-09-27 10:46:32] Vision test OK (63 chars, cost 0.020047 USD)
+{"device":"digital","value":-23,"unit":"C","confidence":"high"}
+exit=0
+
+=== run ref-25.jpg (instr v1)
+[2026-09-27 10:46:33] Vision test: 1 image(s), no queue
+[2026-09-27 10:46:33]   vision: 1 image(s), 72 KB, model 'sonnet'
+[2026-09-27 10:47:01] Vision test OK (62 chars, cost 0.038644 USD)
+{"device":"liquid","value":null,"unit":"C","confidence":"low"}
+exit=0
+
+=== run ref-24.jpg (instr v2)
+[2026-09-27 10:48:34] Vision test: 1 image(s), no queue
+[2026-09-27 10:48:34]   vision: 1 image(s), 48 KB, model 'sonnet'
+[2026-09-27 10:48:42] Vision test OK (248 chars, cost 0.022743 USD)
+{"device":"digital","seen":"минус, цифры 2, 6, 3 — дисплей показывает -263... но скорее всего цифры 2 и 6 дают -26, третий знак — 3, итого -263 не реалистично; крупно видны три знакоместа: минус, 2, 6, 3","value":-263,"unit":"C","confidence":"low"}
+exit=0
+
+=== run ref-25.jpg (instr v2)
+[2026-09-27 10:48:43] Vision test: 1 image(s), no queue
+[2026-09-27 10:48:43]   vision: 1 image(s), 72 KB, model 'sonnet'
+[2026-09-27 10:49:00] Vision test OK (276 chars, cost 0.03064 USD)
+{"device":"liquid","seen":"Три жидкостных термометра, центральный — самый крупный. Шкала °C слева от трубки: от −40 внизу до 50 вверху. Верх красного столбика на центральном приборе находится между отметками 20 и 30 °C, ближе к 20","value":20,"unit":"C","confidence":"medium"}
+exit=0
+
+=== run ref-24.jpg (instr v3)
+[2026-09-27 10:49:44] Vision test: 1 image(s), no queue
+[2026-09-27 10:49:44]   vision: 1 image(s), 48 KB, model 'sonnet'
+[2026-09-27 10:49:51] Vision test OK (205 chars, cost 0.023028 USD)
+{"device":"digital","seen":"минус, цифры 2, 6 (или 3) — дисплей показывает -26 или -23; средняя цифра читается неоднозначно из-за угла съёмки и водяного знака","value":-23,"unit":"C","confidence":"medium"}
+exit=0
+
+=== run ref-25.jpg (instr v3)
+[2026-09-27 10:49:52] Vision test: 1 image(s), no queue
+[2026-09-27 10:49:52]   vision: 1 image(s), 72 KB, model 'sonnet'
+[2026-09-27 10:50:27] Vision test OK (429 chars, cost 0.03919 USD)
+{"device":"liquid","seen":"На фото три одинаковых жидкостных термометра со шкалами °C и °F. Читаю центральный как наиболее близкий к центру кадра. Красная жидкость видна в нижней части трубки (резервуар-луковица), тонкий столбик поднимается вверх, однако верхний край столбика не различим чётко: граница жидкости сливается с фоном и не может быть надёжно соотнесена с делениями шкалы.","value":null,"unit":"C","confidence":"low"}
+exit=0
+
+=== run ref-24.jpg (instr v4)
+[2026-09-27 10:51:56] Vision test: 1 image(s), no queue
+[2026-09-27 10:51:56]   vision: 1 image(s), 48 KB, model 'sonnet'
+[2026-09-27 10:52:02] Vision test OK (120 chars, cost 0.022959 USD)
+{"device":"digital","seen":"минус, цифры 2, 6, 3 — дисплей показывает -263","value":-263,"unit":"C","confidence":"high"}
+exit=0
+

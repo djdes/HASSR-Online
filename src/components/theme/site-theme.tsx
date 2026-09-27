@@ -120,10 +120,10 @@ export function SiteThemeProvider({
   /**
    * Тему ведёт кто-то другой — оболочка мини-приложения
    * (`MiniThemeProvider`). Тогда этот провайдер только ОТРАЖАЕТ
-   * текущее значение и переключает его по просьбе страниц
-   * («Внешний вид»), но сам ничего не пересчитывает и не пишет
+   * текущее значение, но сам ничего не пересчитывает и не пишет
    * в localStorage: иначе «system» из браузера затирал выбор
-   * человека, сделанный в профиле приложения.
+   * человека, сделанный в профиле приложения. Страницам внутри
+   * оболочки `useSiteTheme()` отдаёт сама оболочка (`SiteThemeBridge`).
    */
   controlled?: boolean;
 }) {
@@ -364,6 +364,28 @@ export function SiteThemeProvider({
     >
       {children}
     </SiteThemeContext.Provider>
+  );
+}
+
+/** То, что отдаёт `useSiteTheme()`. */
+export type SiteThemeState = Ctx;
+
+/**
+ * Отдать `useSiteTheme()` другому владельцу темы. В оболочке мини-приложения
+ * тему ведёт `MiniThemeProvider` (Telegram, приложение WeSetup), и страницы
+ * сайта внутри неё — например «Настройки → Внешний вид» — должны
+ * переключать ту же тему, что и профиль приложения: с «Как на устройстве»
+ * и сменой по времени суток, а не свою копию.
+ */
+export function SiteThemeBridge({
+  value,
+  children,
+}: {
+  value: SiteThemeState;
+  children: ReactNode;
+}) {
+  return (
+    <SiteThemeContext.Provider value={value}>{children}</SiteThemeContext.Provider>
   );
 }
 

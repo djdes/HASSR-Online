@@ -344,4 +344,27 @@ describe("journal-fill-html: хаб «Все журналы»", () => {
     assert.match(html, /Холодильники<small>Статус за сегодня · записывают по наклейке на объекте<\/small>/);
     assert.match(html, /Гигиенический журнал<\/span>/);
   });
+
+  const many = (count: number) =>
+    Array.from({ length: count }, (_, index) => ({ code: `j${index}`, name: `Журнал ${index + 1}`, href: `/j${index}` }));
+
+  it("журналов больше шести — поиск как у выбора сотрудника, без скриптов скрыт", () => {
+    const html = renderHub(many(7));
+    assert.match(html, /<div class="search" id="hub-search-wrap" hidden><input id="hub-search" class="in" type="search" placeholder="Найти журнал"/);
+    assert.match(html, /aria-label="Поиск журнала"/);
+    // Искать можно и по названию, и по коду журнала.
+    assert.match(html, /<a class="item" href="\/j0" data-hub="Журнал 1 j0">/);
+    assert.match(html, /<p class="hint" id="hub-empty" hidden>Ничего не нашли/);
+  });
+
+  it("до шести журналов поиска нет", () => {
+    const html = renderHub(many(6));
+    assert.doesNotMatch(html, /hub-search/);
+  });
+
+  it("скрипт фильтрует список: все слова в любом порядке, «ё» как «е», Escape очищает", () => {
+    assert.match(QR_FILL_JS, /getElementById\("hub-search"\)/);
+    assert.match(QR_FILL_JS, /replace\(\/ё\/g,"е"\)/);
+    assert.match(QR_FILL_JS, /e\.key==="Escape"/);
+  });
 });

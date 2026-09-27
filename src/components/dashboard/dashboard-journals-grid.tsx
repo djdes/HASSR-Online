@@ -16,6 +16,7 @@ import { toast } from "sonner";
 
 import { journalMatchesQuery, normalizeJournalSearch } from "@/lib/journal-search";
 import { customJournalName } from "@/lib/custom-names";
+import { sortJournalsByName } from "@/lib/journal-sort";
 import { useCustomNames } from "@/components/shared/custom-names-provider";
 import { cn } from "@/lib/utils";
 
@@ -88,15 +89,29 @@ export function DashboardJournalsGrid({
   const [enablingCode, setEnablingCode] = useState<string | null>(null);
   const samples = useMemo(() => new Set(sampleCodes), [sampleCodes]);
   // Свои названия журналов организации («Настройки → Названия»).
+  // Каждый список — по алфавиту по тому названию, которое видит компания.
   const customNames = useCustomNames();
   const items = useMemo(
-    () => rawItems.map((item) => withCustomName(item, customJournalName(customNames, item.code))),
+    () =>
+      sortJournalsByName(
+        rawItems.map((item) => withCustomName(item, customJournalName(customNames, item.code))),
+        (item) => item.name,
+      ),
     [rawItems, customNames],
   );
   const disabledItems = useMemo(
     () =>
-      rawDisabledItems.map((item) => withCustomName(item, customJournalName(customNames, item.code))),
+      sortJournalsByName(
+        rawDisabledItems.map((item) =>
+          withCustomName(item, customJournalName(customNames, item.code)),
+        ),
+        (item) => item.name,
+      ),
     [rawDisabledItems, customNames],
+  );
+  const sortedPaperItems = useMemo(
+    () => sortJournalsByName(paperItems, (paper) => paper.name),
+    [paperItems],
   );
 
   const foundItems = useMemo(
@@ -111,8 +126,10 @@ export function DashboardJournalsGrid({
   );
   const foundPaper = useMemo(
     () =>
-      paperItems.filter((paper) => journalMatchesQuery([paper.name, paper.id], normalizedQuery)),
-    [paperItems, normalizedQuery],
+      sortedPaperItems.filter((paper) =>
+        journalMatchesQuery([paper.name, paper.id], normalizedQuery),
+      ),
+    [sortedPaperItems, normalizedQuery],
   );
   // Отключённые показываем только при поиске: без запроса секция
   // «Обязательные» должна остаться списком того, что реально ведут.

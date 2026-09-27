@@ -411,7 +411,15 @@ function documentNotice(
   return journalState ? NOTICE_BY_STATE[journalState] : null;
 }
 
-export type QrPostersResult = { posters: QrPoster[]; missing: QrPosterMissing[] };
+export type QrPostersResult = {
+  posters: QrPoster[];
+  missing: QrPosterMissing[];
+  /**
+   * Где объект (id → цех у оборудования, точка у помещения): на плакат не
+   * печатается, но нужен странице QR-кодов для поиска и порядка.
+   */
+  locations?: Record<string, string>;
+};
 
 /**
  * Все объекты организации данного вида (фильтр `allowed` — по id).
@@ -513,11 +521,13 @@ export async function loadQrPosters(params: {
   }
   const orgName = await loadPosterOrgName(params.organizationId);
   const wanted = (id: string) => allowed(id) && (explicitIds.length === 0 || explicitIds.includes(id));
+  const locations: Record<string, string> = {};
   if (params.kind === "room") {
     const buildings = await loadDirectoryBuildings(params.organizationId);
     for (const building of buildings) {
       for (const room of building.rooms) {
         if (!wanted(room.id)) continue;
+        locations[room.id] = building.name;
         posters.push(await buildRoomPoster(room, building.name, params.origin, orgName));
       }
     }
@@ -529,6 +539,7 @@ export async function loadQrPosters(params: {
     });
     for (const item of equipment) {
       if (!wanted(item.id)) continue;
+      if (item.area?.name) locations[item.id] = item.area.name;
       posters.push(await buildEquipmentPoster(item, params.origin, orgName));
     }
   }
@@ -536,7 +547,7 @@ export async function loadQrPosters(params: {
   const missing = explicitIds
     .filter((id) => !found.has(id))
     .map((id) => ({ id, label: id, reason: "Не найдено в справочнике — возможно, удалено" }));
-  return { posters, missing };
+  return { posters, missing, locations };
 }
 
 /** Один объект; `null`, если его нет или он не из этой организации. */

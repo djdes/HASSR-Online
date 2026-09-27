@@ -22,6 +22,8 @@ import {
 } from "@/lib/climate-fill";
 import { readingPhotoExists } from "@/lib/reading-photo-store";
 import { isReadingPhotoUrl } from "@/lib/reading-photos";
+import { resolveReadingPhotoForSave } from "@/lib/reading-photo-fixation";
+import { getReadingPhotoSettings } from "@/lib/reading-photo-fixation.server";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { ensureQrPeriodDocuments, qrRolloverMessage } from "@/lib/journal-qr-rollover";
 import { normalizeQrFillMode } from "@/lib/qr-fill-actor";
@@ -107,15 +109,6 @@ export async function POST(
     );
   }
 
-  // Фото — к температуре и только наша ссылка на снимок, который есть в каталоге.
-  const photo = typeof body.temperature === "number" && body.photo ? body.photo : null;
-  if (photo && !(isReadingPhotoUrl(photo) && (await readingPhotoExists(photo)))) {
-    return NextResponse.json(
-      { error: "Фото не найдено — снимите ещё раз или сохраните замер без фото" },
-      { status: 400 }
-    );
-  }
-
   const room = await db.room.findUnique({
     where: { id: roomId },
     select: {
@@ -160,6 +153,35 @@ export async function POST(
   }
   if (!employee) {
     return NextResponse.json({ error: "Сотрудник не найден" }, { status: 404 });
+  }
+
+  // «Фотофиксация показаний» организации (2026-09-27): выключена — присланное
+  // фото не прикладываем; «Фото обязательно» — температура без снимка не
+  // принимается (одна влажность — без фото). Фото — к температуре и только
+  // наша ссылка на снимок, который есть в каталоге.
+  const photoSettings = await getReadingPhotoSettings(organizationId);
+  const photoDecision = resolveReadingPhotoForSave({
+    settings: photoSettings,
+    hasReading: typeof body.temperature === "number",
+    photo: body.photo ?? null,
+  });
+  if (!photoDecision.ok) {
+    console.info(`[reading-photo] save refused: photo required room=${room.id} org=${organizationId} user=${employee.id}`);
+    return NextResponse.json({ code: photoDecision.code, error: photoDecision.error }, { status: photoDecision.status });
+  }
+  if (photoDecision.ignored) {
+    console.info(`[reading-photo] photo ignored: fixation off room=${room.id} org=${organizationId} user=${employee.id}`);
+  }
+  const photo = photoDecision.photo;
+  if (photo && !(isReadingPhotoUrl(photo) && (await readingPhotoExists(photo)))) {
+    return NextResponse.json(
+      {
+        error: photoSettings.required
+          ? "Фото не найдено — снимите ещё раз"
+          : "Фото не найдено — снимите ещё раз или сохраните замер без фото",
+      },
+      { status: 400 }
+    );
   }
 
   const now = new Date();

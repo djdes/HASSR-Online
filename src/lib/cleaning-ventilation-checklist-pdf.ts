@@ -1,5 +1,11 @@
 import type { jsPDF } from "jspdf";
 import { registerJournalUnicodeFont } from "@/lib/pdf-journal-font";
+import {
+  JOURNAL_SHEET_MARGIN_MM,
+  JOURNAL_TITLE_HEADER_GAP_MM,
+  journalDescentMm,
+  journalSheetTopBaseline,
+} from "@/lib/pdf-journal-sheet";
 import { journalAutoTable as autoTable } from "@/lib/pdf-journal-table";
 import { getRowEmployeeTitle } from "@/lib/user-roles";
 import {
@@ -75,7 +81,8 @@ export function drawCleaningVentilationChecklistPdf(
   }
 
   const fontName = registerJournalUnicodeFont(doc);
-  const margin = 14;
+  // Поле листа — одно со всех сторон (как у остальных бланков).
+  const margin = JOURNAL_SHEET_MARGIN_MM;
   const pageWidth = doc.internal.pageSize.getWidth();
   /** Ширины столбцов в прежних пропорциях — на всю ширину между полями. */
   const fit = (widths: number[]) => {
@@ -85,13 +92,17 @@ export function drawCleaningVentilationChecklistPdf(
   };
   doc.setFont(fontName, "bold");
   doc.setFontSize(13);
-  doc.text(params.title, margin, 14);
+  // Верх заголовка — на верхнем поле листа, шапка — сразу под ним.
+  const titleY = journalSheetTopBaseline(doc);
+  doc.text(params.title, margin, titleY);
+  const headerTop = titleY + journalDescentMm(doc) + JOURNAL_TITLE_HEADER_GAP_MM;
   doc.setFont(fontName, "normal");
 
   /** Штамп ХАССП — на КАЖДОЙ странице бланка (страницы 2..N — ниже). */
-  const headerTop = 20;
   const headerBottom = params.drawHeader(doc, { marginX: margin, top: headerTop });
   const headerHeight = headerBottom - headerTop;
+  /** На страницах 2..N заголовка нет — штамп на верхнем поле листа. */
+  const continuationHeaderTop = JOURNAL_SHEET_MARGIN_MM;
 
   const descriptionText = getCleaningVentilationDescriptionLines()
     .filter((item) => item.label !== "Рабочие помещения при проветривании" || config.ventilationEnabled)
@@ -183,7 +194,7 @@ export function drawCleaningVentilationChecklistPdf(
       ? (doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable!.finalY! + 8
       : 100,
     // Резерв под повтор штампа ХАССП на страницах 2..N.
-    margin: { top: headerTop + headerHeight + 6, left: margin, right: margin },
+    margin: { top: continuationHeaderTop + headerHeight + 6, left: margin, right: margin },
     theme: "grid",
     styles: { font: fontName, fontSize: 9, lineColor: [0, 0, 0], lineWidth: 0.2, cellPadding: 1.8 },
     head: [[
@@ -228,7 +239,7 @@ export function drawCleaningVentilationChecklistPdf(
   const totalPages = doc.getNumberOfPages();
   for (let page = 2; page <= totalPages; page += 1) {
     doc.setPage(page);
-    params.drawHeader(doc, { marginX: margin, top: headerTop });
+    params.drawHeader(doc, { marginX: margin, top: continuationHeaderTop });
   }
   doc.setPage(totalPages);
 }

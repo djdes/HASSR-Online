@@ -79,6 +79,16 @@
     }
     button.addEventListener("click", retry);
     window.addEventListener("online", retry);
+
+    // Событие «online» приходит, только если телефон был совсем без сети.
+    // Если сеть была, а сайт не открылся (Wi-Fi без интернета, сбой DNS при
+    // запуске), экран висел до нажатия «Повторить». Теперь раз в 10 секунд,
+    // пока экран на виду, тихо проверяем сайт и открываем его сами.
+    function probe() {
+      if (document.visibilityState !== "visible" || button.disabled) return;
+      fetch(START_URL, { mode: "no-cors", cache: "no-store" }).then(retry, function () {});
+    }
+    setInterval(probe, 10000);
   </script>
 </body>
 </html>

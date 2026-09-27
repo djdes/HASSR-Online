@@ -5,6 +5,7 @@ import { buildingTargets, getActiveBuildingId } from "@/lib/active-building";
 import { buildingWhere } from "@/lib/building-scope";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
+import { sortJournalsByName } from "@/lib/journal-sort";
 import { AutoJournalsClient } from "./auto-journals-client";
 import { PageGuide } from "@/components/ui/page-guide";
 import {
@@ -64,7 +65,8 @@ export default async function AutoJournalsPage() {
   );
   const activeTemplateIds = new Set(activeDocs.map((d) => d.templateId));
 
-  const items = templates
+  // Журналы по алфавиту.
+  const items = sortJournalsByName(templates, (t) => t.name)
     .filter((t) => !disabledSet.has(t.code))
     .map((t) => ({
       id: t.id,

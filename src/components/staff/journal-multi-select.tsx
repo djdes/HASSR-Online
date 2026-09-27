@@ -9,6 +9,7 @@ import {
   presetJournalCodes,
   type JournalCategory,
 } from "@/lib/journal-responsible-presets";
+import { sortJournalsByName } from "@/lib/journal-sort";
 import { cn } from "@/lib/utils";
 
 /**
@@ -53,7 +54,7 @@ export function JournalMultiSelect({
 
   /**
    * Группировка по категориям: тридцать журналов сплошным списком человек
-   * не читает, а ищет глазами знакомое слово.
+   * не читает, а ищет глазами знакомое слово. Внутри группы — по алфавиту.
    */
   const groups = useMemo(() => {
     const map = new Map<JournalCategory, JournalOption[]>();
@@ -64,7 +65,9 @@ export function JournalMultiSelect({
       if (bucket) bucket.push(item);
       else map.set(category, [item]);
     }
-    return [...map.entries()];
+    return [...map.entries()].map(
+      ([category, items]) => [category, sortJournalsByName(items, (item) => item.name)] as const
+    );
   }, [visible]);
 
   /** Плоский порядок строк — по нему считается диапазон при протягивании. */

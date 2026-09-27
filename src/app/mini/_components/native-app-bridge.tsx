@@ -14,11 +14,13 @@ import {
   deepLinkPath,
   downloadFile,
   getNativeBridge,
+  isPrintPdfUrl,
   normalizeAppUrl,
   openExternal,
   parsePushAskState,
   printHtml,
   printPage,
+  printPdf,
   pushExplainerAction,
   pushPermission,
   registerPushDevice,
@@ -140,6 +142,11 @@ function stubWindow(): Window {
 function handleAnchor(bridge: NativeBridge, a: HTMLAnchorElement): boolean {
   const raw = a.getAttribute("href") ?? "";
   const href = /^javascript:/i.test(raw.trim()) ? raw : a.href || raw;
+  // Бланк журнала — системное окно печати, а не «Поделиться».
+  if (!a.hasAttribute("download") && isPrintPdfUrl(href, window.location.origin)) {
+    void printPdf(href);
+    return true;
+  }
   const kind = classifyLink(href, window.location.origin, a.hasAttribute("download"));
   // intent:, file:, content:, javascript:, чужие схемы — не открываем ничего:
   // ссылка из комментария или ответа помощника не запускает сторонний обработчик.
@@ -202,6 +209,10 @@ function installInterceptors(bridge: NativeBridge): () => void {
       abs = /^(blob|data|mailto|tel|sms|tg):/i.test(href) ? href : new URL(href, window.location.href).href;
     } catch {
       return originalOpen.call(window, url, target, features);
+    }
+    if (isPrintPdfUrl(abs, window.location.origin)) {
+      void printPdf(abs);
+      return stubWindow();
     }
     const kind = classifyLink(abs, window.location.origin, false);
     // Чужая схема (intent:, file:, javascript: …) — как заблокированное всплывающее окно.

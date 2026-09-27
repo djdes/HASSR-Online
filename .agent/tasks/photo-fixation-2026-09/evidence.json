@@ -1,0 +1,48 @@
+{
+  "task": "photo-fixation-2026-09",
+  "branch": "feat/photo-fixation-2026-09-27",
+  "base": "20f099a8",
+  "spec": "spec.md",
+  "verdict": "PASS",
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "summary": "QR-формы холодильника/морозильника и склада на 390: после PIN главная кнопка «Сфотографируйте показание» (358x64, capture=environment) и «Ввести вручную»; снимок → распознавание → число с пометкой → «Всё верно — сохранить» одним нажатием → запись с фото; нечитаемо/бесплатный — ввод руками с прикреплённым фото",
+      "artifacts": ["evidence/ui-e2e.txt", "evidence/shots/390-01-photo-first.jpg", "evidence/shots/390-02-recognizing.jpg", "evidence/shots/390-03-recognized.jpg", "evidence/shots/390-04-saved.jpg", "evidence/shots/390-05-dial-recognized.jpg", "evidence/shots/390-06-unreadable.jpg", "evidence/shots/390-07-manual.jpg", "evidence/shots/390-08-free.jpg"]
+    },
+    "AC2": {
+      "status": "PASS",
+      "summary": "Настройка «Фотофиксация показаний» / «Фото обязательно» в «Строгости журналов»; хранение — PlatformSetting org-reading-photo:<orgId> без изменения схемы; выключено — кнопок нет, 403 photo_disabled, фото игнорируется; обязательно — «Нужно фото показания», 400 photo-required без фото, 200 с фото, «Обслуживание» и влажность без фото — 200",
+      "artifacts": ["evidence/api-e2e.txt", "evidence/ui-e2e.txt", "evidence/shots/1440-01-settings.jpg", "evidence/shots/1440-02-required-on.jpg", "evidence/shots/1440-03-off.jpg", "evidence/shots/390-09-required.jpg", "evidence/shots/390-10-required-no-photo.jpg", "evidence/shots/390-11-off.jpg"]
+    },
+    "AC3": {
+      "status": "PASS",
+      "note": "Инструкция и разбор — тестами; настоящая модель 10 прогонов: 21 → 8.4, 22 → -18, 23 → 3 (v1); 24 и 25 на итоговой инструкции → null («введите вручную»), выдуманных чисел нет; точность на 24/25 — открытый вопрос",
+      "model_runs": [
+        { "run": 1, "ref": "21", "expected": "8.4", "instruction": "v1", "model": "digital 8.4 high", "site": "8.4" },
+        { "run": 2, "ref": "22", "expected": "-18..-20", "instruction": "v1", "model": "dial -18 low", "site": "-18" },
+        { "run": 3, "ref": "23", "expected": "3.0", "instruction": "v1", "model": "digital 3.0 high", "site": "3" },
+        { "run": 4, "ref": "24", "expected": "-26.3", "instruction": "v1", "model": "digital -23 high", "site": "-23 (wrong; led to v2-v4)" },
+        { "run": 5, "ref": "25", "expected": "+22..+23", "instruction": "v1", "model": "liquid null", "site": "null" },
+        { "run": 6, "ref": "24", "expected": "-26.3", "instruction": "v2", "model": "digital -263 low", "site": "null (out of range)" },
+        { "run": 7, "ref": "25", "expected": "+22..+23", "instruction": "v2", "model": "liquid 20 medium", "site": "20" },
+        { "run": 8, "ref": "24", "expected": "-26.3", "instruction": "v3", "model": "digital -23 medium, seen «-26 или -23»", "site": "null (hedged)" },
+        { "run": 9, "ref": "25", "expected": "+22..+23", "instruction": "v3", "model": "liquid null", "site": "null" },
+        { "run": 10, "ref": "24", "expected": "-26.3", "instruction": "v4 (final)", "model": "digital -263 high", "site": "null (out of range)" }
+      ],
+      "artifacts": ["evidence/model/runs.txt", "evidence/model/instruction-v1.txt", "evidence/model/instruction-v2.txt", "evidence/model/instruction-v3.txt", "evidence/model/instruction-v4.txt"]
+    },
+    "AC4": {
+      "status": "PASS",
+      "checks": {
+        "typecheck": "npm run typecheck — exit 0",
+        "test": "npm test — 2619/2619 pass (11 new)",
+        "eslint": "22 changed files — 0 errors, 2 pre-existing warnings",
+        "api_e2e": "31/31 PASS",
+        "ui_e2e": "40/40 PASS"
+      }
+    }
+  },
+  "schema_changed": false,
+  "dependencies_changed": false
+}

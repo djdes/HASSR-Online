@@ -10,6 +10,7 @@ import {
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
 import { db } from "@/lib/db";
+import { sortJournalsByName } from "@/lib/journal-sort";
 import { getCoreSetupStatus } from "@/lib/onboarding-core-status";
 import { checklistJournalsForOrg } from "@/lib/onboarding-documents";
 import { rulesFor } from "@/lib/sphere-journal-rules";
@@ -120,7 +121,8 @@ export default async function OnboardingPage() {
   const countByCode = new Map(
     checklistCounts.map((row) => [row.journalCode, row._count._all]),
   );
-  const checklists: OnboardingChecklistRow[] = checklistCodes.map((code) => {
+  // Чек-листы журналов — по алфавиту названий.
+  const checklistRows: OnboardingChecklistRow[] = checklistCodes.map((code) => {
     const defaults = defaultChecklistFor(code, status.sphere);
     return {
       code,
@@ -130,6 +132,7 @@ export default async function OnboardingPage() {
       defaultsExample: defaults[0]?.title ?? null,
     };
   });
+  const checklists = sortJournalsByName(checklistRows, (row) => row.name);
 
   // === Items ===
 

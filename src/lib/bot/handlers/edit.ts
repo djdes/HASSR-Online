@@ -14,6 +14,7 @@ import {
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { journalDisplayName } from "@/lib/custom-names";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
+import { sortJournalsByName } from "@/lib/journal-sort";
 
 /**
  * Bot-driven journal editor navigation.
@@ -78,7 +79,7 @@ async function buildTemplateListView(
   };
   const allowed = await getAllowedJournalCodes(aclActorFromSession(fakeSession));
 
-  const templates = await db.journalTemplate.findMany({
+  const rawTemplates = await db.journalTemplate.findMany({
     where: {
       isActive: true,
       ...(allowed ? { code: { in: allowed } } : {}),
@@ -87,11 +88,15 @@ async function buildTemplateListView(
     select: { code: true, name: true },
   });
 
-  if (templates.length === 0) {
+  if (rawTemplates.length === 0) {
     return null;
   }
   // Своё название журнала организации — как на сайте и в приложении.
   const customNames = await getOrgCustomNames(user.organizationId);
+  // По алфавиту — по тому названию, которое видит организация.
+  const templates = sortJournalsByName(rawTemplates, (t) =>
+    journalDisplayName(customNames, t.code, t.name)
+  );
 
   const start = page * TEMPLATE_PAGE_SIZE;
   const slice = templates.slice(start, start + TEMPLATE_PAGE_SIZE);

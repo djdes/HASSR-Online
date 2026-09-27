@@ -68,6 +68,23 @@ export function classifyLink(
   return "internal";
 }
 
+/**
+ * Бланк журнала для печати (`/api/journal-documents/<id>/pdf`) на своём
+ * сайте. В приложении такой PDF открываем системным окном печати, а не
+ * листом «Поделиться» — там нет принтера.
+ */
+export function isPrintPdfUrl(href: string, currentOrigin: string): boolean {
+  if (!href) return false;
+  let url: URL;
+  try {
+    url = new URL(href, currentOrigin);
+  } catch {
+    return false;
+  }
+  if (url.origin !== currentOrigin) return false;
+  return /^\/api\/journal-documents\/[^/]+\/pdf\/?$/.test(url.pathname);
+}
+
 /** Имя файла из `Content-Disposition`: `filename*` (UTF-8) важнее `filename`. */
 export function fileNameFromContentDisposition(value: string | null | undefined): string | null {
   if (!value) return null;
@@ -537,6 +554,44 @@ export async function downloadFile(
       blob,
       downloadFileName({ contentDisposition: disposition, downloadAttr: options.fileName, url, contentType: type || blob.type })
     );
+  });
+}
+
+/**
+ * Напечатать PDF с сайта (бланк журнала). В приложении — файл во временную
+ * папку и системное окно печати (`WebPrint.printFile`: принтер или
+ * «Сохранить как PDF»). В сборке приложения без `printFile` — как раньше,
+ * лист «Поделиться». Вне приложения — `fallback` (новая вкладка).
+ */
+export async function printPdf(url: string, options: { fallback?: () => void } = {}): Promise<void> {
+  const bridge = getNativeBridge();
+  if (!bridge) {
+    if (options.fallback) options.fallback();
+    else window.open(url, "_blank", "noopener,noreferrer");
+    return;
+  }
+  if (typeof bridge.plugin("WebPrint")?.printFile !== "function") {
+    await downloadFile(url);
+    return;
+  }
+  await withFileToast(async () => {
+    const response = await fetch(url, { credentials: "include" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const disposition = response.headers.get("content-disposition");
+    const type = response.headers.get("content-type");
+    if (!/attachment/i.test(disposition ?? "") && /text\/html/i.test(type ?? "")) {
+      window.location.assign(url);
+      return;
+    }
+    const blob = await response.blob();
+    const name = downloadFileName({ contentDisposition: disposition, downloadAttr: null, url, contentType: type || blob.type });
+    const written = await bridge.call<{ uri: string }>("Filesystem", "writeFile", {
+      path: name,
+      data: await blobToBase64(blob),
+      directory: "CACHE",
+    });
+    if (!written?.uri) throw new Error("no file");
+    await bridge.call("WebPrint", "printFile", { path: written.uri, jobName: name.replace(/\.pdf$/i, "") });
   });
 }
 

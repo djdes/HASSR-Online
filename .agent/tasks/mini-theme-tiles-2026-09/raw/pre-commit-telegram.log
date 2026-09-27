@@ -1,0 +1,17 @@
+→ Проверка на секреты...
+→ TypeScript type-check...
+
+> haccp-online@0.1.0 typecheck
+> tsc --noEmit --skipLibCheck -p tsconfig.typecheck.json
+
+→ Tests (baseline gate)...
+
+> haccp-online@0.1.0 test:gate
+> bash scripts/test-with-baseline.sh
+
+
+=== Test stats: pass=2652, fail=0 ===
+✓ Все тесты прошли.
+✓ pre-commit OK
+[feat/mini-theme-tiles-2026-09-27 1d351b29] Мини-приложение: «Как на устройстве» в Telegram — тема Telegram с первого кадра, без вспышки
+ 2 files changed, 160 insertions(+), 11 deletions(-)

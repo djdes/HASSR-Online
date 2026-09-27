@@ -328,11 +328,39 @@ export function parseLabelReply(raw: string): VisionLabelResult | null {
 
 /* ─────────── Показание дисплея (`/api/ocr/reading`, контракт DisplayOcrButton) ─────────── */
 
+/** Тип прибора из ответа: цифровой дисплей, стрелочный, стеклянный жидкостный, другое. */
+export type ReadingDevice = "digital" | "dial" | "liquid" | "other";
+
 export type VisionReadingResult = {
   value: number | null;
   unit: "C" | "%" | "h" | null;
   confidence: "high" | "medium" | "low";
+  /** Есть, только если модель назвала тип прибора (инструкция с 2026-09-27). */
+  device?: ReadingDevice;
 };
+
+function normalizeReadingDevice(value: unknown): ReadingDevice | null {
+  const text = asText(value).toLowerCase();
+  return text === "digital" || text === "dial" || text === "liquid" || text === "other" ? text : null;
+}
+
+/** Стрелочный и жидкостный термометр читаются по шкале — точнее градуса не бывает. */
+export function isAnalogReadingDevice(device: ReadingDevice | null | undefined): boolean {
+  return device === "dial" || device === "liquid";
+}
+
+/**
+ * Модель сама записала в `seen`, что сомневается: «−26 или −23»,
+ * «средняя цифра читается неоднозначно», «не уверен», «?». Такое число не
+ * подставляем, даже если оно пришло в `value`, — проверено на настоящей
+ * модели: при сомнении она иногда всё равно выбирает вариант. Лучше
+ * «Не разобрали цифры — введите вручную», чем чужое число в журнале.
+ */
+export function isHedgedReadingNote(seen: unknown): boolean {
+  const text = asText(seen).toLowerCase();
+  if (!text) return false;
+  return /(^|[^а-яё])или([^а-яё]|$)|неоднозначн|сомнева|сомнени|не\s*уверен|\?/.test(text);
+}
 
 function readingObject(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
@@ -367,16 +395,45 @@ function normalizeReadingUnit(value: unknown): VisionReadingResult["unit"] {
   return null;
 }
 
-/** Ответ по дисплею → { value, unit, confidence }; null — JSON показания в ответе нет. */
+/**
+ * «Что видно на приборе» (`seen`) из ответа — только для журнала сервера:
+ * по нему разбирают промахи распознавания. Клиенту не отдаётся.
+ */
+export function parseReadingSeen(raw: string): string | null {
+  const entry = extractJsonValue(raw, readingObject);
+  const seen = entry ? asText(entry.seen).slice(0, 160) : "";
+  return seen || null;
+}
+
+/**
+ * Ответ по прибору → { value, unit, confidence, device? }; null — JSON
+ * показания в ответе нет.
+ *
+ * Стрелочный и жидкостный термометр (`device`: dial / liquid) сайт сам
+ * округляет до целого градуса и не верит в «high»: по шкале точнее не
+ * прочитать, а пометка «с фото — проверьте» должна звучать честно — модель
+ * об этом просят в инструкции, но на её слово не полагаемся. Сомнение,
+ * записанное в `seen` («−26 или −23»), — value: null (`isHedgedReadingNote`).
+ */
 export function parseReadingReply(raw: string): VisionReadingResult | null {
   const entry = extractJsonValue(raw, readingObject);
   if (!entry) return null;
-  const value = normalizeReadingValue(entry.value);
-  const confidence = asText(entry.confidence).toLowerCase();
+  const device = normalizeReadingDevice(entry.device);
+  let value = isHedgedReadingNote(entry.seen) ? null : normalizeReadingValue(entry.value);
+  const confidenceText = asText(entry.confidence).toLowerCase();
+  let confidence: VisionReadingResult["confidence"] =
+    value !== null && (confidenceText === "high" || confidenceText === "medium") ? confidenceText : "low";
+  if (value !== null && isAnalogReadingDevice(device)) {
+    // Половинки — от нуля в обе стороны: −18.5 → −19, как 18.5 → 19.
+    const rounded = Math.sign(value) * Math.round(Math.abs(value));
+    value = Object.is(rounded, -0) ? 0 : rounded;
+    if (confidence === "high") confidence = "medium";
+  }
   return {
     value,
     unit: value === null ? null : normalizeReadingUnit(entry.unit),
-    confidence: value !== null && (confidence === "high" || confidence === "medium") ? confidence : "low",
+    confidence,
+    ...(device ? { device } : {}),
   };
 }
 

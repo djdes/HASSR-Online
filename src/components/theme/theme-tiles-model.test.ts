@@ -5,6 +5,7 @@ import { describe, it } from "node:test";
 import {
   THEME_PREVIEW_PALETTES,
   THEME_TILES,
+  chooseThemeTile,
   contrastRatio,
   isThemeMode,
   relativeLuminance,
@@ -33,6 +34,32 @@ describe("карточки темы: состав и выбор", () => {
   it("при смене по времени суток не выбрана ни одна — тему задаёт час", () => {
     for (const mode of ["light", "dark", "system"] as const) {
       assert.equal(selectedThemeTile({ mode, autoBySchedule: true }), null);
+    }
+  });
+
+  it("нажатие на карточку: режим — эта карточка, смена по времени выключена", () => {
+    for (const tile of ["light", "dark", "system"] as const) {
+      assert.deepEqual(chooseThemeTile({ autoBySchedule: false }, tile), {
+        mode: tile,
+        autoBySchedule: false,
+        turnedOffAuto: false,
+      });
+      // Смену по времени выключает именно это нажатие — меню скажет
+      // «выключена» и предложит вернуть.
+      assert.deepEqual(chooseThemeTile({ autoBySchedule: true }, tile), {
+        mode: tile,
+        autoBySchedule: false,
+        turnedOffAuto: true,
+      });
+    }
+  });
+
+  it("после нажатия выбрана ровно нажатая карточка", () => {
+    for (const tile of ["light", "dark", "system"] as const) {
+      for (const autoBySchedule of [false, true]) {
+        const next = chooseThemeTile({ autoBySchedule }, tile);
+        assert.equal(selectedThemeTile(next), tile);
+      }
     }
   });
 

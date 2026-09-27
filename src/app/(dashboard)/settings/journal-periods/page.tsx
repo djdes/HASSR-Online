@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
+import { sortJournalsByName } from "@/lib/journal-sort";
 import {
   parseJournalPeriodsJson,
   resolveJournalPeriodKind,
@@ -31,7 +32,8 @@ export default async function JournalPeriodsPage() {
   const overrides = parseJournalPeriodsJson(org?.journalPeriods ?? null);
 
   // Дефолтный kind, если override не задан — для подсказки в UI.
-  const initial = templates.map((t) => {
+  // Журналы по алфавиту.
+  const initial = sortJournalsByName(templates, (t) => t.name).map((t) => {
     const o = overrides[t.code];
     const defaultKind: JournalPeriodKind = resolveJournalPeriodKind(t.code);
     return {

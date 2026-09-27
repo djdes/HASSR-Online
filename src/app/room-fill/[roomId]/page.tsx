@@ -24,6 +24,7 @@ import { listRoomSiblings } from "@/lib/qr-fill-siblings";
 import { filterAllowedFillers } from "@/lib/object-fillers";
 import { stampFor } from "@/lib/quick-values";
 import { hasPaidPlan } from "@/lib/plan-limits.server";
+import { getReadingPhotoSettings } from "@/lib/reading-photo-fixation.server";
 import { RoomFillClient } from "./room-fill-client";
 
 export const runtime = "nodejs";
@@ -114,7 +115,7 @@ export default async function RoomFillPage({
     anchor: { buildingId: room.buildingId },
     source: "room-fill",
   });
-  const [employees, documents, photoAutofill] = await Promise.all([
+  const [employees, documents, photoAutofill, photoFixation] = await Promise.all([
     db.user.findMany({
       where: { organizationId, ...ORG_ROSTER_WHERE },
       select: { id: true, name: true, role: true, positionTitle: true, qrPinHash: true, canManageSettings: true, jobPosition: { select: { name: true } } },
@@ -134,6 +135,8 @@ export default async function RoomFillPage({
     }),
     // «Фото» у температуры — всем; автоввод показания со снимка — на платном тарифе.
     hasPaidPlan(organizationId),
+    // «Фотофиксация показаний»: «Сфотографируйте показание» первым действием / выключена / фото обязательно.
+    getReadingPhotoSettings(organizationId),
   ]);
 
   const document =
@@ -179,6 +182,7 @@ export default async function RoomFillPage({
       rememberedEmployeeId={qrMode === "auth" ? null : readRememberValue(organizationId, (await cookies()).get(rememberCookieName(organizationId))?.value)?.employeeId ?? null}
       passEmployeeId={qrMode === "auth" ? null : await passEmployeeIdFromCookie(organizationId)}
       photoAutofill={photoAutofill}
+      photoFixation={photoFixation}
       employees={(sessionEmployee && !sessionEmployee.canPickOthers
         ? employees.filter((employee) => employee.id === sessionEmployee!.id)
         : filterAllowedFillers(employees, room.fillerUserIds)

@@ -10,7 +10,7 @@ import {
   isMiniShellValue,
   miniShellSignInHref,
 } from "@/lib/mini-shell-cookie";
-import { appLoginHref, isMobileAppUserAgent } from "@/lib/mobile-app";
+import { appColdStartRedirect, appLoginHref, isMobileAppUserAgent } from "@/lib/mobile-app";
 import {
   evaluatePartnerRequest,
   parsePartnerAccessClaim,
@@ -211,6 +211,14 @@ export async function proxy(req: NextRequest) {
     isMobileAppUserAgent(req.headers.get("user-agent"));
 
   if (!rawToken) {
+    // Первый запуск приложения без входа — сразу на вход, без «Открываем кабинет…».
+    const coldStart = appColdStartRedirect({
+      userAgent: req.headers.get("user-agent"),
+      pathname,
+      search: req.nextUrl.search,
+      hasSession: false,
+    });
+    if (coldStart) return NextResponse.redirect(new URL(coldStart, req.url));
     // Приложение на входе сайта (сюда ведут QR-страницы в режиме «через
     // вход»): у приложения свой вход — по телефону или почте, с тем же
     // возвратом. Вход сайта — только по почте, сотрудник с телефоном там

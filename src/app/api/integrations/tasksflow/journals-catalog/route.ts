@@ -5,6 +5,7 @@ import { getAdapter } from "@/lib/tasksflow-adapters";
 import { toDateKey } from "@/lib/hygiene-document";
 import { buildTasksflowJournalUi } from "@/lib/tasksflow-journal-ui";
 import { getUserDisplayTitle } from "@/lib/user-roles";
+import { sortJournalsByName } from "@/lib/journal-sort";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -75,7 +76,11 @@ export async function GET(request: Request) {
     select: { code: true, name: true, description: true, sortOrder: true },
     orderBy: { sortOrder: "asc" },
   });
-  const usableTemplates = templates.filter((t) => !disabled.has(t.code));
+  // Журналы по алфавиту — в таком порядке их показывает TasksFlow.
+  const usableTemplates = sortJournalsByName(
+    templates.filter((t) => !disabled.has(t.code)),
+    (t) => t.name
+  );
 
   // All active documents for the org, grouped by templateCode → docs.
   const docs = await db.journalDocument.findMany({

@@ -347,6 +347,16 @@ export const QR_FILL_JS = `
   if(form) form.addEventListener("submit",function(){ var b=form.querySelector("button[type=submit]"); if(b){b.disabled=true;b.textContent="Сохраняем…";} });
   var q=document.getElementById("emp-search");
   if(q){ q.addEventListener("input",function(){ var s=key(q.value); var it=document.querySelectorAll("[data-emp]"); for(var i=0;i<it.length;i++){ it[i].hidden=s!==""&&key(it[i].getAttribute("data-emp")).indexOf(s)===-1; } }); }
+  /* «Все журналы»: поиск по названию и коду — все слова в любом порядке, «ё» как «е»; Escape очищает. */
+  var hq=document.getElementById("hub-search");
+  if(hq){
+    var hw=document.getElementById("hub-search-wrap"); if(hw) hw.hidden=false;
+    var he=document.getElementById("hub-empty");
+    var hk=function(s){ return key(s).replace(/ё/g,"е"); };
+    var hubFilter=function(){ var ws=hk(hq.value).split(" ").filter(Boolean); var it=document.querySelectorAll("[data-hub]"); var shown=0; for(var i=0;i<it.length;i++){ var h=hk(it[i].getAttribute("data-hub")); var ok=true; for(var w=0;w<ws.length;w++){ if(h.indexOf(ws[w])<0){ ok=false; break; } } it[i].hidden=!ok; if(ok) shown++; } if(he) he.hidden=shown>0; };
+    hq.addEventListener("input",hubFilter);
+    hq.addEventListener("keydown",function(e){ if(e.key==="Escape"){ hq.value=""; hubFilter(); } });
+  }
   /* Черновик: введённое переживает обновление страницы и обрыв связи; после записи стирается, старше 12 часов — не подхватывается. */
   var dk=window.__qrDraftKey||null;
   function draftFields(){ var f=document.getElementById("qr-form"); if(!f) return []; var out=[]; var els=f.querySelectorAll("input,select,textarea"); for(var i=0;i<els.length;i++){ var el=els[i]; if(!el.name||el.type==="hidden"||el.type==="submit"||el.type==="button"||el.type==="password") continue; out.push(el); } return out; }
@@ -432,9 +442,22 @@ export function renderTokenExpired(params: { validUntil: string }): string {
 
 export function renderHub(items: Array<{ code: string; name: string; href: string; note?: string }>): string {
   if (items.length === 0) return renderMessage("warn", "Сегодня нет ни одного активного документа. Попросите руководителя открыть журналы на этот период.");
-  return `<div class="card"><p class="label">Что заполнить</p><div class="list">${items
-    .map((item) => `<a class="item" href="${esc(item.href)}"><span>${esc(item.name)}${item.note ? `<small>${esc(item.note)}</small>` : ""}</span>${ARROW}</a>`)
-    .join("")}</div></div>`;
+  // Поиск — как у выбора сотрудника: появляется, когда список длинный.
+  // Без скриптов поле скрыто, чтобы не висело неработающим.
+  const search =
+    items.length > 6
+      ? `<div class="search" id="hub-search-wrap" hidden><input id="hub-search" class="in" type="search" placeholder="Найти журнал" autocomplete="off" aria-label="Поиск журнала"></div>`
+      : "";
+  const empty =
+    items.length > 6
+      ? `<p class="hint" id="hub-empty" hidden>Ничего не нашли — попробуйте другое слово из названия журнала.</p>`
+      : "";
+  return `<div class="card"><p class="label">Что заполнить</p>${search}<div class="list">${items
+    .map(
+      (item) =>
+        `<a class="item" href="${esc(item.href)}"${search ? ` data-hub="${esc(`${item.name} ${item.code}`)}"` : ""}><span>${esc(item.name)}${item.note ? `<small>${esc(item.note)}</small>` : ""}</span>${ARROW}</a>`
+    )
+    .join("")}</div>${empty}</div>`;
 }
 
 export function renderDocumentStep(params: {

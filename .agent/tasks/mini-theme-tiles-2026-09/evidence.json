@@ -1,0 +1,79 @@
+{
+  "task_id": "mini-theme-tiles-2026-09",
+  "branch": "feat/mini-theme-tiles-2026-09-27",
+  "base": "f09f6736",
+  "verdict": "PASS",
+  "commits": [
+    { "sha": "dfa1ba7c", "subject": "Спека: тема в мини-приложении — те же три карточки, что в меню сайта, «Как на устройстве» в Telegram и вне его" },
+    { "sha": "a83fda3e", "subject": "Мини-приложение: тема — те же три карточки, что в меню сайта, «Как на устройстве» по Telegram и по телефону" },
+    { "sha": "1d351b29", "subject": "Мини-приложение: «Как на устройстве» в Telegram — тема Telegram с первого кадра, без вспышки" }
+  ],
+  "acceptance_criteria": {
+    "AC1": {
+      "status": "PASS",
+      "summary": "В /mini/me три схематичные карточки темы (radiogroup, 3 в ряд на 360 px, подписи целиком), старой переключалки нет; выбранная заметна в светлой (4.55:1 / 7.19:1) и тёмной (3.32:1 / 5.35:1); клавиатура; «Логотип и цвета» → /settings/organization#branding только с admin.full",
+      "e2e_checks": [1, 2, 3, 5, 6, 8, 21, 22, 28],
+      "screenshots": [
+        "evidence/after-mini-light-360.png",
+        "evidence/after-mini-dark-360.png",
+        "evidence/after-mini-theme-light-360.png",
+        "evidence/after-mini-theme-dark-360.png",
+        "evidence/before-mini-theme-360.png",
+        "evidence/before-mini-me-360.png"
+      ]
+    },
+    "AC2": {
+      "status": "PASS",
+      "summary": "«Как на устройстве»: Telegram — WebApp.colorScheme + themeChanged (настоящий telegram-web-app.js), с первого кадра по параметрам запуска; приложение WeSetup и браузер — prefers-color-scheme на лету; хранение как у сайта (mode=system, auto=0, effective), профиль — действующая тема; согласовано с сайтом в обе стороны и со страницами сайта в оболочке; смена по времени суток уважается",
+      "e2e_checks": [4, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 23, 24, 25, 26, 27],
+      "screenshots": [
+        "evidence/after-mini-telegram-system-dark-360.png",
+        "evidence/after-mini-auto-note-360-light.png"
+      ],
+      "unit_tests": "src/app/mini/_components/mini-theme-model.test.ts (23, в т.ч. 864 сочетания скрипт до гидрации = провайдер), src/components/theme/theme-tiles-model.test.ts (+2)"
+    },
+    "AC3": {
+      "status": "PASS",
+      "summary": "e2e 30/30 (0 ошибок страниц), typecheck 0 ошибок, npm test 2652/2652, ESLint изменённых файлов 0; сайт — разметка карточек и снимки меню профиля до/после одинаковые",
+      "e2e_checks": [29, 30],
+      "screenshots": [
+        "evidence/before-site-menu-1280.png",
+        "evidence/after-site-menu-1280.png",
+        "evidence/before-site-sheet-390.png",
+        "evidence/after-site-sheet-390.png"
+      ]
+    }
+  },
+  "commands": [
+    { "cmd": "node node_modules/typescript/bin/tsc --noEmit --skipLibCheck -p tsconfig.typecheck.json", "exit": 0, "log": "raw/typecheck.log" },
+    { "cmd": "npm run test:gate (pre-commit 1d351b29, полный прогон src/**/*.test.ts)", "exit": 0, "result": "pass=2652, fail=0", "log": "raw/pre-commit-telegram.log" },
+    { "cmd": "npm run test:gate (pre-commit a83fda3e)", "exit": 0, "result": "pass=2645, fail=0", "log": "raw/pre-commit-code.log" },
+    { "cmd": "node --import tsx --test mini-theme-model.test.ts theme-tiles-model.test.ts mini-theme.test.ts", "exit": 0, "result": "47/47", "log": "raw/unit-theme-tests.log" },
+    { "cmd": "eslint (изменённые файлы)", "exit": 0, "result": "0 problems", "log": "raw/eslint.log" },
+    { "cmd": "E2E_OUT=<вне проекта> node .agent/tasks/mini-theme-tiles-2026-09/e2e/e2e.cjs", "exit": 0, "result": "30/30, page errors 0", "log": "raw/e2e-run.log", "results": "raw/e2e-results.json" },
+    { "cmd": "node .agent/tasks/mini-theme-tiles-2026-09/e2e/site-markup.cjs before|after", "exit": 0, "result": "menu1280, appearance1280, sheet390 — identical", "files": ["raw/site-markup-before.json", "raw/site-markup-after.json"] }
+  ],
+  "storage": {
+    "keys": ["wesetup-theme-mode", "wesetup-theme-auto-schedule", "wesetup-app-theme"],
+    "system": { "wesetup-theme-mode": "system", "wesetup-theme-auto-schedule": "0", "wesetup-app-theme": "<действующая>" },
+    "profile": "User.themePreference = действующая light|dark через POST /api/me/theme (API и схема не менялись)",
+    "telegram_before_sdk": "скрипт до гидрации: tgWebAppPlatform/tgWebAppThemeParams из адреса + sessionStorage __telegram__initParams/__telegram__themeParams, HSP(bg_color) < 120 → dark"
+  },
+  "branding_row": "«Внешний вид · логотип и цвета» (→ /settings/appearance, по fullAccess) заменена ссылкой «Логотип и цвета» под карточками → /settings/organization#branding, только admin.full — как на сайте",
+  "other_switchers": {
+    "replaced": ["/mini/me"],
+    "bridged": ["«Настройки → Внешний вид» в оболочке приложения — useSiteTheme() теперь от MiniThemeProvider (SiteThemeBridge)"],
+    "none_found": ["/mini/kiosk", "mobile/ (Capacitor)", "/delete-account"],
+    "not_a_theme_switch": ["/mini/login .mini-seg — «Чем входить»"],
+    "dead_code": ["src/components/theme/theme-switcher.tsx (ThemeSwitcher) — нигде не рисуется"]
+  },
+  "open_issues": [
+    "«Настройки → Внешний вид» на телефоне — 2+1 карточки (globals.css складывает .grid-cols-3 в main), и на сайте, и в оболочке",
+    "сайт в dev шлёт два одинаковых POST /api/me/theme на нажатие (сохранение внутри setState-обновления, StrictMode); в проде один",
+    "SiteThemeProvider controlled в оболочке больше не нужен страницам — можно убрать",
+    "подписи «логотип и цвета» у «Внешнего вида» в lib/app-sections.ts",
+    "themePreference по умолчанию light — новый человек в тёмном Telegram видит светлую, пока не выберет «Как на устройстве»",
+    "предупреждение гидратации на /mini/me (скрипт Telegram на <html>, PartnerHint) — было и до задачи",
+    "dev: сервер пересобирается от любых файлов в .agent/ — e2e пишет в E2E_OUT вне проекта; под нагрузкой один раз наблюдался цикл перезагрузок снятия куки оболочки на /dashboard 1280 (не воспроизвёлся отдельно)"
+  ]
+}

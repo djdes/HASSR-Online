@@ -1,0 +1,79 @@
+{
+  "task": "journal-qr-header-2026-09",
+  "branch": "feat/journal-qr-header-2026-09-27",
+  "base": "f09f6736",
+  "date": "2026-09-27",
+  "layout": "A — отдельная ячейка в рамке шапки ХАССП справа от «Начат / Окончен · СТР. X ИЗ N»; вариант B (блок справа от рамки) снят для сравнения патчем variant-b.patch",
+  "tile": {
+    "variant": "brandQrLayout full (H, знак сайта, плашка «Отсканировать / wesetup.ru»), вектор jsPDF drawBrandQrTilePdf",
+    "baseCellMm": 20,
+    "targetModuleMm": 0.365,
+    "minModuleMm": 0.35,
+    "maxGrowthMm": 4,
+    "maxModules": 53,
+    "sizes": [
+      { "modules": 37, "moduleMm": 0.405, "tileMm": "16.6 x 19.7", "growthMm": 0 },
+      { "modules": 41, "moduleMm": 0.369, "tileMm": "16.6 x 19.7", "growthMm": 0 },
+      { "modules": 45, "moduleMm": 0.365, "tileMm": "17.9 x 21.2", "growthMm": 1.5 },
+      { "modules": 49, "moduleMm": 0.365, "tileMm": "19.3 x 22.9", "growthMm": 3.2 },
+      { "modules": 53, "moduleMm": 0.351, "tileMm": "20.0 x 23.7", "growthMm": 4.0 }
+    ]
+  },
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": "check-qr-overlap.ts: на всех 313 страницах с шапкой ХАССП QR в её ячейке (шапка есть ⇔ QR в шапке), бумажные бланки — в своём заголовке; вровень с рамкой ≤ 0,27 мм; screen-*.png"
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": "нижний резерв и второй проход удалены; pages.ts: 186 PDF, больше — 0, меньше — 8; 768 → 672 страниц (длинные 581 → 486)"
+    },
+    "AC3": {
+      "status": "PARTIAL",
+      "evidence": "decode-matrix.ts: 300 dpi (чистый, ч/б, ч/б-принтер, телефон, ч/б+телефон) — jsQR 785/785, zxing-cpp 785/785; 150 dpi (чистый, ч/б, ч/б-принтер) — zxing-cpp 471/471, jsQR 389/471 (чистый 123/157, ч/б-принтер 109/157, ч/б 157/157)",
+      "reason": "на 150 dpi модуль 0,35–0,405 мм = 2,1–2,4 px; jsQR читает в зависимости от фазы сетки (phase-sweep: 11–16/16), zxing-cpp — все; модуль ≈ 0,4 мм для документов (49–53 модуля) требует роста шапки на 5,4–7,3 мм при пределе спеки 4 мм"
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": "check-qr-overlap.ts: 231/231 бланков, 728 страниц — 0 чернил пробы на месте QR (кроме known overflow синтетики, как на master), 0 пикселей вне QR, 0 расхождений модулей; typecheck чистый; тесты 2624/2624; скриншоты screen-*.png, shots/*.png"
+    }
+  },
+  "numbers": {
+    "pages": { "master": 768, "after": 672, "pdfs": 186, "more": 0, "less": 8 },
+    "overlap": { "blanks": 231, "blanksOk": 231, "pages": 728, "pagesHeader": 313, "pagesCorner": 12, "pagesNone": 403 },
+    "decode": {
+      "blanks": 140,
+      "pages": 157,
+      "acceptance": { "jsqr": "1174/1256", "zxing": "1256/1256" },
+      "dpi300": { "jsqr": "785/785", "zxing": "785/785" },
+      "dpi150": { "jsqr": "389/471", "zxing": "471/471" },
+      "stress": {
+        "150 phone": { "jsqr": "36/157", "zxing": "157/157" },
+        "150 bw-phone": { "jsqr": "26/157", "zxing": "157/157" },
+        "300 phone-hard": { "jsqr": "132/157", "zxing": "157/157" },
+        "300 bw-phone-hard": { "jsqr": "122/157", "zxing": "157/157" }
+      }
+    },
+    "tests": { "total": 2624, "pass": 2624, "fail": 0 }
+  },
+  "raw": [
+    "raw/pages-master.json",
+    "raw/pages-after.json",
+    "raw/check-overlap-samples.json",
+    "raw/check-overlap-blanks.json",
+    "raw/check-overlap-long.json",
+    "raw/check-overlap-paper.json",
+    "raw/check-overlap-variants.json",
+    "raw/check-overlap-portrait.json",
+    "raw/decode-samples+blanks+long+paper.json",
+    "raw/decode-long-variant-b.json",
+    "raw/phase-sweep.txt",
+    "raw/target-module-experiment.txt",
+    "raw/phone-sweep.txt",
+    "raw/design-ablation.txt",
+    "raw/size-experiment.txt",
+    "raw/tables.md",
+    "raw/commit-hooks.txt",
+    "raw/commit-hooks-2.txt"
+  ]
+}
