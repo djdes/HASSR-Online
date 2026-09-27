@@ -58,7 +58,7 @@ const q = (s) => JSON.stringify(s);
 function shot(name) {
   const f = `${String(++shotN).padStart(3, "0")}-${name}.png`;
   try {
-    execFileSync("xcrun", ["simctl", "io", UDID, "screenshot", path.join(OUT, f)], { stdio: "ignore", timeout: 40000 });
+    execFileSync("xcrun", ["simctl", "io", UDID, "screenshot", path.join(OUT, f)], { stdio: "ignore", timeout: 15000 });
     return f;
   } catch (e) {
     log("screenshot failed", name, e.message);
@@ -185,7 +185,7 @@ async function toTop() {
  * Найти элемент (при необходимости долистать) и нажать пальцем в центр.
  * pick: "first" | "last" | "lowest" (по y) | функция отбора.
  */
-async function tap(spec, { scrolls = 8, pick = "first", within = null, anywhere = false, ignoreKeyboard = false, timeout = 30000 * SLOW, settle = 700 } = {}) {
+async function tap(spec, { scrolls = 8, pick = "first", within = null, anywhere = false, ignoreKeyboard = false, timeout = 30000 * SLOW, settle = 700, maxY = null } = {}) {
   const end = Date.now() + timeout;
   let found = [];
   for (let i = 0; ; i++) {
@@ -193,6 +193,7 @@ async function tap(spec, { scrolls = 8, pick = "first", within = null, anywhere 
     found = await all(spec);
     if (within) found = found.filter((f) => within(f.r, f.label));
     const b = anywhere ? { top: 0, bottom: W.height } : band();
+    if (maxY) b.bottom = Math.min(b.bottom, maxY);
     // Открытая клавиатура закрывает низ экрана: туда не нажимаем и не листаем.
     const kt = ignoreKeyboard ? null : await keyboardTop();
     if (kt) b.bottom = Math.min(b.bottom, kt - 4);
@@ -214,6 +215,7 @@ async function tap(spec, { scrolls = 8, pick = "first", within = null, anywhere 
       // оформления в профиле туда-обратно, пока не кончилось время).
       const f = found[0];
       const bb = band();
+      if (maxY) bb.bottom = Math.min(bb.bottom, maxY);
       const mid = (bb.top + bb.bottom) / 2;
       const delta = f.r.y + f.r.height / 2 - mid;
       const dist = Math.max(120, Math.min(Math.abs(delta), W.height * 0.45));
@@ -927,17 +929,51 @@ async function openJournal(ctx, search, cardText, docTitle) {
   ctx.d[`open_${search}`] = doc;
   if (!doc) await source(`${ctx.r.id}-journal-${search}`);
   if (doc === "list") {
+    await dismissGuide(ctx);
     await tap({ type: "link", contains: period }, { scrolls: 4, settle: 3000 * SLOW });
     await waitFor(() => has({ type: ["link", "button"], contains: "Распечатать" }), 40000 * SLOW);
   }
+  await dismissGuide(ctx);
   await sleep(1500);
   return has({ type: ["link", "button"], contains: "Распечатать" });
 }
 
+/**
+ * Шторка «Инструкция» журнала при первом заходе (раунд 4, кадр 021: закрыла список
+ * документов холодильников) — закрываем «Понятно».
+ */
+async function dismissGuide(ctx) {
+  const ok = await tryTap({ type: "button", label: "Понятно" }, { scrolls: 0, anywhere: true, ignoreKeyboard: true, timeout: 1500 });
+  if (ok) {
+    ctx.d.guideDismissed = (ctx.d.guideDismissed || 0) + 1;
+    await sleep(1000);
+  }
+}
+
+/** Форма новой записи журнала E2E (голос + фото); true — нужная кнопка на экране. */
+async function openE2eForm(ctx, want) {
+  try {
+    await tab("Журналы");
+    await waitFor(() => has({ type: "field", label: "Поиск по журналам" }), 30000 * SLOW);
+    await tap({ type: "field", label: "Поиск по журналам" }, { scrolls: 3 });
+    await typeFocused("E2E");
+    await sleep(1200);
+    await hideKeyboard();
+    await tap({ type: "link", contains: "E2E голос" }, { scrolls: 3, within: (r) => r.y < W.height - 170, settle: 3000 * SLOW });
+    await dismissGuide(ctx);
+    await tap({ type: "link", contains: "Новая запись" }, { scrolls: 4, settle: 3000 * SLOW });
+    return Boolean(await waitFor(() => has(want), 30000 * SLOW));
+  } catch (e) {
+    ctx.d.e2eFormError = e.message.slice(0, 200);
+    return false;
+  }
+}
+
 async function sectionsGo(label) {
   await tab("Разделы");
-  await waitFor(() => has({ type: "field", label: "Поиск раздела" }), 20000 * SLOW);
-  await tap({ type: "field", label: "Поиск раздела" }, { scrolls: 2 });
+  const SEARCH = { type: ["field", "XCUIElementTypeSearchField"], label: "Поиск раздела" };
+  await waitFor(() => has(SEARCH), 20000 * SLOW);
+  await tap(SEARCH, { scrolls: 2 });
   await sleep(500);
   await typeFocused(label);
   await sleep(1000);
@@ -1206,21 +1242,8 @@ async function main() {
   // 7. Фото
   def("S07", "Фото в журнале: системный выбор (камера / медиатека / файлы) и отмена", async (ctx) => {
     await ready(ctx);
-    await tab("Журналы");
-    await waitFor(() => has({ type: "field", label: "Поиск по журналам" }), 30000 * SLOW);
-    await tap({ type: "field", label: "Поиск по журналам" }, { scrolls: 3 });
-    await typeFocused("E2E");
-    await sleep(1200);
-    await hideKeyboard();
     let photoBtn = { type: "button", contains: "Снять фото" };
-    let btn = false;
-    try {
-      await tap({ type: "link", contains: "E2E голос" }, { scrolls: 3, within: (r) => r.y < W.height - 170, settle: 3000 * SLOW });
-      await tap({ type: "link", contains: "Новая запись" }, { scrolls: 4, settle: 3000 * SLOW });
-      btn = await waitFor(() => has(photoBtn), 30000 * SLOW);
-    } catch (e) {
-      ctx.d.e2eFormError = e.message.slice(0, 200);
-    }
+    let btn = await openE2eForm(ctx, photoBtn);
     ctx.d.via = "e2e_voice form";
     if (!btn) {
       // Запасной путь: «Снять показание с дисплея» в журнале холодильников.
@@ -1234,7 +1257,9 @@ async function main() {
     ctx.check("кнопка фото на экране", btn);
     if (!btn) return;
     const before = await source("S07-before");
-    await tap(photoBtn, { scrolls: 6 });
+    // Раунд 4: кнопка фото была под липким низом формы («Сохранить запись»), нажатие
+    // ушло в «Сохранить» и создало пустую запись. Нажимаем только в верхних 55 % экрана.
+    await tap(photoBtn, { scrolls: 6, maxY: W.height * 0.55 });
     await sleep(3000);
     const b = await alertButtons(1500);
     ctx.d.alert = b ? { b, text: await alertText() } : null;
@@ -1254,11 +1279,11 @@ async function main() {
   });
 
   // 8. Голос
-  def("S08", "Голосовой ввод (текстовое поле и температура холодильника): разрешения и итог без зависания", async (ctx) => {
+  def("S08", "Голосовой ввод в поле «Заметка»: разрешения iOS и итог без зависания", async (ctx) => {
     await ready(ctx);
     const tryMic = async (tag) => {
       const before = await source(`S08-${tag}-before`);
-      await tap({ type: "button", label: "Голосовой ввод" }, { scrolls: 6 });
+      await tap({ type: "button", label: "Голосовой ввод" }, { scrolls: 6, maxY: W.height * 0.55 });
       const alerts = [];
       for (let i = 0; i < 3; i++) {
         const b = await alertButtons(i === 0 ? 8000 : 5000);
@@ -1287,20 +1312,17 @@ async function main() {
       ctx.check(`${tag}: запись не зависла`, !hang);
       return { alerts, rec, fresh };
     };
-    const onForm = await has({ type: "button", contains: "Снять фото" });
+    // Раунд 4: в документе холодильников кнопки «Голосовой ввод» нет (там «Снять
+    // показание с дисплея») — голос проверяем в поле «Заметка» формы E2E.
+    const mic = { type: "button", label: "Голосовой ввод" };
+    const onForm = await openE2eForm(ctx, mic);
     ctx.d.onForm = onForm;
-    if (onForm && (await has({ type: "button", label: "Голосовой ввод" }))) {
-      const a = await tryMic("textarea");
-      ctx.check("textarea: iOS спросил разрешения (речь / микрофон)", a.alerts.length >= 1, a.alerts);
-    }
-    const cold = await openJournal(ctx, "холодильн", "холодильного", IDS.docs?.cold?.title);
-    ctx.check("документ холодильников открыт", cold);
-    const f = await tryMic("fridge");
-    ctx.check(
-      "fridge: итог — число/текст или понятная русская подсказка",
-      f.fresh.length > 0 || f.rec,
-      f.fresh
-    );
+    ctx.shot("form");
+    ctx.check("форма с голосовым вводом открыта", onForm);
+    if (!onForm) return;
+    const a = await tryMic("textarea");
+    ctx.check("textarea: iOS спросил разрешения (речь / микрофон)", a.alerts.length >= 1, a.alerts);
+    ctx.check("textarea: итог — текст в поле или понятная русская подсказка", a.fresh.length > 0 || a.rec, a.fresh);
   }, 360000);
 
   // 9. Жест «назад»
