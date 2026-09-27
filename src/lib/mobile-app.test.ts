@@ -7,6 +7,7 @@ import {
   appUpdateRequirement,
   compareAppVersion,
   isMobileAppUserAgent,
+  needsTelegramSdk,
   parseMobileAppUserAgent,
 } from "./mobile-app";
 
@@ -77,4 +78,14 @@ test("вход сайта в приложении ведёт на вход пр�
   assert.equal(appLoginHref("//evil.example/x"), "/mini/login");
   assert.equal(appLoginHref("https://evil.example"), "/mini/login");
   assert.equal(appLoginHref("/api/auth/session"), "/mini/login");
+});
+
+test("скрипт Telegram не грузится в приложении WeSetup, но нужен в браузере и Telegram", () => {
+  assert.equal(needsTelegramSdk("Mozilla/5.0 (iPhone) Mobile/15E148 WeSetupApp/1.0.0 (ios)"), false);
+  assert.equal(
+    needsTelegramSdk("Mozilla/5.0 (Linux; Android 14) Chrome/128 Mobile WeSetupApp/1.0.0 (android)"),
+    false
+  );
+  assert.equal(needsTelegramSdk("Mozilla/5.0 (iPhone) Mobile/15E148 Safari/604.1"), true);
+  assert.equal(needsTelegramSdk(null), true);
 });

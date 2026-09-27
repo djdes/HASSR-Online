@@ -10,7 +10,7 @@ import { SanpinChatWidget } from "@/components/ai/sanpin-chat-widget";
 import { FabDockProvider } from "@/components/layout/fab-dock";
 import { JournalUndoProvider } from "@/components/journals/journal-undo-slot";
 import { Toaster } from "@/components/ui/sonner";
-import { appStoreUrl, appUpdateRequirement } from "@/lib/mobile-app";
+import { appStoreUrl, appUpdateRequirement, needsTelegramSdk } from "@/lib/mobile-app";
 import type { PartnerHintRates } from "@/lib/partners/partner-hint";
 
 import type { MiniNavItem } from "@/app/mini/_lib/nav-items";
@@ -82,10 +82,8 @@ export async function MiniAppShell({
   // Без переменной не проверяем ничего. Оболочка общая для `/mini/*` и
   // страниц кабинета — а в приложении кабинет всегда в оболочке (кука по
   // User-Agent в `proxy.ts`), так что экран закрывает всё.
-  const outdated = appUpdateRequirement(
-    (await headers()).get("user-agent"),
-    process.env.MOBILE_APP_MIN_VERSION
-  );
+  const userAgent = (await headers()).get("user-agent");
+  const outdated = appUpdateRequirement(userAgent, process.env.MOBILE_APP_MIN_VERSION);
   if (outdated) {
     return (
       <AppUpdateGate
@@ -97,10 +95,14 @@ export async function MiniAppShell({
   }
   return (
     <>
-      <Script
-        src="https://telegram.org/js/telegram-web-app.js"
-        strategy="beforeInteractive"
-      />
+      {/* В приложении WeSetup Telegram нет: скрипт с telegram.org только
+          задерживал бы запуск (до него страница не оживает). */}
+      {needsTelegramSdk(userAgent) ? (
+        <Script
+          src="https://telegram.org/js/telegram-web-app.js"
+          strategy="beforeInteractive"
+        />
+      ) : null}
       {/* Шрифт — системный, как у QR-страниц: внешний Geist Mono (часы и
           моноширинные подписи прежней темы) больше не нужен и не грузится. */}
       <MiniThemeProvider initialTheme={initialTheme} profileTheme={profileTheme}>
