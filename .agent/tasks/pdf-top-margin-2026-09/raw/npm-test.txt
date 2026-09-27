@@ -1,0 +1,7 @@
+ℹ tests 2614
+ℹ suites 296
+ℹ pass 2614
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0

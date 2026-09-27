@@ -1,0 +1,1181 @@
+[
+ {
+  "label": "sample:hygiene",
+  "code": "hygiene",
+  "pages": 2,
+  "qrPages": 2,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.82,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.04
+   },
+   {
+    "page": 2,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.82,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.04
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:health_check",
+  "code": "health_check",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.82,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.04
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:climate_control",
+  "code": "climate_control",
+  "pages": 2,
+  "qrPages": 2,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.82,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.04
+   },
+   {
+    "page": 2,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.82,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.04
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:cold_equipment_control",
+  "code": "cold_equipment_control",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.82,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.04
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:cleaning_ventilation_checklist",
+  "code": "cleaning_ventilation_checklist",
+  "pages": 6,
+  "qrPages": 6,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.65,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.2
+   },
+   {
+    "page": 2,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.82,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.04
+   },
+   {
+    "page": 3,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.82,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.04
+   },
+   {
+    "page": 4,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.82,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.04
+   },
+   {
+    "page": 5,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.82,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.04
+   },
+   {
+    "page": 6,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.82,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.04
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:cleaning",
+  "code": "cleaning",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.82,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.04
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:general_cleaning",
+  "code": "general_cleaning",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.31,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.54
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:uv_lamp_runtime",
+  "code": "uv_lamp_runtime",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.48,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.37
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:finished_product",
+  "code": "finished_product",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.48,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.37
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:perishable_rejection",
+  "code": "perishable_rejection",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.65,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.2
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:incoming_control",
+  "code": "incoming_control",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.99,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.18
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:fryer_oil",
+  "code": "fryer_oil",
+  "pages": 2,
+  "qrPages": 2,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.65,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.2
+   },
+   {
+    "page": 2,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.82,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.04
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:med_books",
+  "code": "med_books",
+  "pages": 3,
+  "qrPages": 3,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.99,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.18
+   },
+   {
+    "page": 2,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.82,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.04
+   },
+   {
+    "page": 3,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.82,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.04
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:training_plan",
+  "code": "training_plan",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.31,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.54
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:staff_training",
+  "code": "staff_training",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.65,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.2
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:disinfectant_usage",
+  "code": "disinfectant_usage",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.82,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.04
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:sanitary_day_control",
+  "code": "sanitary_day_control",
+  "pages": 2,
+  "qrPages": 2,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.82,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.04
+   },
+   {
+    "page": 2,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.82,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.04
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:equipment_maintenance",
+  "code": "equipment_maintenance",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.48,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.37
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:breakdown_history",
+  "code": "breakdown_history",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.99,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.18
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:equipment_calibration",
+  "code": "equipment_calibration",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.65,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.2
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:incoming_raw_materials_control",
+  "code": "incoming_raw_materials_control",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.99,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.18
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:ppe_issuance",
+  "code": "ppe_issuance",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.82,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.04
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:accident_journal",
+  "code": "accident_journal",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.65,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.2
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:complaint_register",
+  "code": "complaint_register",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.31,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.54
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:product_writeoff",
+  "code": "product_writeoff",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.31,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.54
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:audit_plan",
+  "code": "audit_plan",
+  "pages": 2,
+  "qrPages": 2,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.99,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.18
+   },
+   {
+    "page": 2,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.82,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.04
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:audit_protocol",
+  "code": "audit_protocol",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.99,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.18
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:audit_report",
+  "code": "audit_report",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.82,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.04
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:traceability_test",
+  "code": "traceability_test",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.99,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.18
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:metal_impurity",
+  "code": "metal_impurity",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.65,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.2
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:equipment_cleaning",
+  "code": "equipment_cleaning",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.31,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.54
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:intensive_cooling",
+  "code": "intensive_cooling",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.48,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.37
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:glass_items_list",
+  "code": "glass_items_list",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.65,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.2
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:glass_control",
+  "code": "glass_control",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.65,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.2
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:pest_control",
+  "code": "pest_control",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.82,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.04
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:daily_samples",
+  "code": "daily_samples",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.31,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.54
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:vitaminization",
+  "code": "vitaminization",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.48,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.37
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:ration_control",
+  "code": "ration_control",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.99,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.18
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:transport_temperature",
+  "code": "transport_temperature",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.99,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.18
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:tableware_breakage",
+  "code": "tableware_breakage",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.31,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.54
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:pool_water_control",
+  "code": "pool_water_control",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.31,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.54
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:inventory_condition",
+  "code": "inventory_condition",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.99,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.18
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:instrument_sterilization",
+  "code": "instrument_sterilization",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.99,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.18
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:medical_waste_b",
+  "code": "medical_waste_b",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.48,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.37
+   }
+  ],
+  "ok": true
+ },
+ {
+  "label": "sample:batch_release",
+  "code": "batch_release",
+  "pages": 1,
+  "qrPages": 1,
+  "qrMoved": 0,
+  "qrUp": 0,
+  "pagesMargins": [
+   {
+    "page": 1,
+    "orientation": "landscape",
+    "widthMm": 297,
+    "heightMm": 210,
+    "top": 9.99,
+    "bottom": 9.85,
+    "left": 9.82,
+    "right": 9.81,
+    "symmetric": true,
+    "spread": 0.18
+   }
+  ],
+  "ok": true
+ }
+]

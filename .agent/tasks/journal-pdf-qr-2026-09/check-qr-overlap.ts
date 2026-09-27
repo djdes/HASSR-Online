@@ -21,6 +21,12 @@
  *      занятости», такие страницы перечисляются отдельно. «СТР. X ИЗ N» и
  *      подвал партнёра стоят левее QR и в растре пробы видны — они тоже
  *      проверяются на наложение зоной пункта 2.
+ *      (с 2026-09-27) Страница без таблицы и шапки — только строки у левого
+ *      поля (продолжение списка подписей): QR по правилу штампа
+ *      (`journalQrContentRight`: содержимое только в левой половине листа)
+ *      встаёт на правое поле листа, а правее всего в растре пробы — «СТР. X
+ *      ИЗ N», поставленная левее QR после расчёта его места. Метрика к такой
+ *      странице неприменима (`defaultEdge`), страницы перечисляются отдельно.
  *
  * Запуск (из корня репо):
  *   npx tsx .agent/tasks/journal-pdf-qr-2026-09/check-qr-overlap.ts samples
@@ -43,7 +49,12 @@ import {
 import { standardFontsDir, workerFileUrl } from "@/lib/journal-preview/render";
 import { journalPdfQrOrigin, journalSamplePdfQr } from "@/lib/journal-pdf-qr-link";
 import { SAMPLE_JOURNAL_CODES, buildJournalSampleInput } from "@/lib/journal-sample-fixtures";
-import { JOURNAL_QR_EDGE_MM, journalQrMatrix, type JournalQrPlacement } from "@/lib/pdf-journal-qr";
+import {
+  JOURNAL_QR_DEFAULT_RIGHT_MARGIN_MM,
+  JOURNAL_QR_EDGE_MM,
+  journalQrMatrix,
+  type JournalQrPlacement,
+} from "@/lib/pdf-journal-qr";
 
 const DPI = 200;
 const PX_PER_MM = DPI / 25.4;
@@ -228,6 +239,11 @@ type PageResult = {
   overflowSheet: boolean;
   /** Угол у границы занят — QR сдвинут влево по свободному месту. */
   shiftedLeft: boolean;
+  /**
+   * На странице нет таблицы и шапки справа (только строки у левого поля) —
+   * QR стоит на правом поле листа по умолчанию; метрика не применима.
+   */
+  defaultEdge: boolean;
   /** Граница, по которой равнялся штамп (трекер), мм. */
   stampRightEdgeMm: number;
   /** QR вровень с границей (≤ 0,5 мм); страница без содержимого или overflowSheet — null. */
@@ -273,6 +289,10 @@ async function checkOne(label: string, input: JournalDocumentPdfInput, shotName:
     const contentRight = inkRightMm(probeRasters[index]);
     const overflowSheet = contentRight !== null && contentRight > r.widthMm - JOURNAL_QR_EDGE_MM + 0.3;
     const shiftedLeft = qrRight < p.rightEdge - 0.05;
+    const defaultEdge =
+      Math.abs(p.rightEdge - (r.widthMm - JOURNAL_QR_DEFAULT_RIGHT_MARGIN_MM)) < 0.05 &&
+      contentRight !== null &&
+      contentRight < qrRight - ALIGN_TOLERANCE_MM;
     const alignDiff = contentRight === null ? null : Math.abs(qrRight - contentRight);
     return {
       page: p.page,
@@ -284,8 +304,10 @@ async function checkOne(label: string, input: JournalDocumentPdfInput, shotName:
       alignDiffMm: alignDiff === null ? null : +alignDiff.toFixed(2),
       overflowSheet,
       shiftedLeft,
+      defaultEdge,
       stampRightEdgeMm: +p.rightEdge.toFixed(2),
-      aligned: alignDiff === null || overflowSheet || shiftedLeft ? null : alignDiff <= ALIGN_TOLERANCE_MM,
+      aligned:
+        alignDiff === null || overflowSheet || shiftedLeft || defaultEdge ? null : alignDiff <= ALIGN_TOLERANCE_MM,
       moduleMismatches: moduleMismatches(r, p, url),
       decoded,
       decodedOk: decoder ? decoded === url : null,
@@ -367,6 +389,9 @@ async function main() {
     r.pages.filter((p) => p.shiftedLeft && !p.overflowSheet).map((p) => `${r.code} стр. ${p.page}`),
   );
   const overflow = results.flatMap((r) => r.pages.filter((p) => p.overflowSheet).map((p) => `${r.code} стр. ${p.page}`));
+  const textOnly = results.flatMap((r) =>
+    r.pages.filter((p) => p.defaultEdge && !p.overflowSheet).map((p) => `${r.code} стр. ${p.page}`),
+  );
   const maxDiff = measured.reduce((m, p) => Math.max(m, p.alignDiffMm ?? 0), 0);
   console.log(
     `
@@ -374,7 +399,8 @@ async function main() {
       `(≤ ${ALIGN_TOLERANCE_MM} мм), макс. разница ${maxDiff.toFixed(2)} мм; ` +
       `пустых страниц ${allPages.filter((p) => p.contentRightMm === null).length}; ` +
       `таблица за краем листа (метрика не применима): ${overflow.length ? overflow.join(", ") : "нет"}; ` +
-      `QR сдвинут влево (угол занят): ${shifted.length ? shifted.join(", ") : "нет"}`,
+      `QR сдвинут влево (угол занят): ${shifted.length ? shifted.join(", ") : "нет"}; ` +
+      `QR на правом поле листа (на странице только строки у левого поля): ${textOnly.length ? textOnly.join(", ") : "нет"}`,
   );
   console.log(`\n${results.length - failed.length}/${results.length} OK`);
   process.exit(failed.length ? 1 : 0);

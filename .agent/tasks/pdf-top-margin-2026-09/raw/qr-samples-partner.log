@@ -1,0 +1,50 @@
+OK   hygiene                            pages 2→2 ink=0/0 moved=0 up=0 mism=0/0 dec=-- align=0.05/0.05 3811ms
+OK   health_check                       pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 1111ms
+OK   climate_control                    pages 2→2 ink=0/0 moved=0 up=0 mism=0/0 dec=-- align=0.05/0.05 2121ms
+OK   cold_equipment_control             pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 1012ms
+OK   cleaning_ventilation_checklist     pages 6→6 ink=0/0/0/0/0/0 moved=0 up=0 mism=0/0/0/0/0/0 dec=------ align=0.05/0.05/0.05/0.05/0.05/0.05 4044ms
+OK   cleaning                           pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 1230ms
+OK   general_cleaning                   pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 1703ms
+OK   uv_lamp_runtime                    pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 2258ms
+OK   finished_product                   pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 1726ms
+OK   perishable_rejection               pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 2000ms
+OK   incoming_control                   pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 1735ms
+OK   fryer_oil                          pages 2→2 ink=0/0 moved=0 up=0 mism=0/0 dec=-- align=0.05/0.05 3347ms
+OK   med_books                          pages 3→3 ink=0/0/0 moved=0 up=0 mism=0/0/0 dec=--- align=0.05/0.05/0.05 6232ms
+OK   training_plan                      pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 1837ms
+OK   staff_training                     pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 1725ms
+OK   disinfectant_usage                 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.15 1847ms
+OK   sanitary_day_control               pages 2→2 ink=0/0 moved=0 up=0 mism=0/0 dec=-- align=0.05/0.15 2881ms
+OK   equipment_maintenance              pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 2598ms
+OK   breakdown_history                  pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 2414ms
+OK   equipment_calibration              pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 1841ms
+OK   incoming_raw_materials_control     pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 1728ms
+OK   ppe_issuance                       pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 1435ms
+OK   accident_journal                   pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 1395ms
+OK   complaint_register                 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 1372ms
+OK   product_writeoff                   pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 1645ms
+OK   audit_plan                         pages 2→2 ink=0/0 moved=0 up=0 mism=0/0 dec=-- align=0.05/0.15 3368ms
+OK   audit_protocol                     pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 1990ms
+OK   audit_report                       pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 2075ms
+OK   traceability_test                  pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 1118ms
+OK   metal_impurity                     pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 969ms
+OK   equipment_cleaning                 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 954ms
+OK   intensive_cooling                  pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 957ms
+OK   glass_items_list                   pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 954ms
+OK   glass_control                      pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 908ms
+OK   pest_control                       pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 858ms
+OK   daily_samples                      pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 964ms
+OK   vitaminization                     pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 978ms
+OK   ration_control                     pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 935ms
+OK   transport_temperature              pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 1016ms
+OK   tableware_breakage                 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 1290ms
+OK   pool_water_control                 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 1044ms
+OK   inventory_condition                pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 1016ms
+OK   instrument_sterilization           pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 991ms
+OK   medical_waste_b                    pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 856ms
+OK   batch_release                      pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05 829ms
+
+выравнивание: 57/57 страниц вровень (≤ 0.5 мм), макс. разница 0.15 мм; пустых страниц 0; таблица за краем листа (метрика не применима): нет; QR сдвинут влево (угол занят): нет; QR на правом поле листа (на странице только строки у левого поля): нет
+
+45/45 OK
+qr partner exit 0

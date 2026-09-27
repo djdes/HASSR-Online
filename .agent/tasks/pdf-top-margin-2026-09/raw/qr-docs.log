@@ -1,0 +1,60 @@
+# check-qr-overlap.ts docs — настоящие документы (организация «QR overlap test», seed-overlap-docs.ts), финальный код
+# строки autoTable «… could not fit page» / «… will not be drawn correctly» (синтетические таблицы шире/выше листа) убраны
+
+## 1) 44 документа без плана аудитов (строка чек-листа уборки — промежуточная версия, см. 2)
+OK   hygiene                            rows=630 pages 7→7 ink=0/0/0/0/0/0/0 moved=0 up=0 mism=0/0/0/0/0/0/0 dec=------- align=0.05/0.05/0.05/0.05/0.05/0.05/0.05
+OK   health_check                       rows=630 pages 4→4 ink=0/0/0/0 moved=0 up=0 mism=0/0/0/0 dec=---- align=0.05/0.05/0.05/0.05
+OK   climate_control                    rows=14 pages 26→30 ink=0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0 moved=0 up=0 mism=0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0 dec=------------------------------ align=0.05/0.05/0.05/0.05/0.05/5.30/5.30/5.30/5.30/5.30/5.30/5.30/5.30/5.30/5.30/5.30/5.30/5.30/5.30/5.30/5.30/5.30/5.30/5.30/5.30/5.30/5.30/5.30/5.30/5.30
+OK   cold_equipment_control             rows=14 pages 4→4 ink=0/0/0/0 moved=0 up=0 mism=0/0/0/0 dec=---- align=0.05/0.05/0.05/0.05
+OK   cleaning_ventilation_checklist     rows=0 pages 10→11 ink=0/0/0/0/0/0/0/0/0/0/0 moved=0 up=0 mism=0/0/0/0/0/0/0/0/0/0/0 dec=----------- align=0.05/0.05/0.05/0.05/0.05/0.05/0.05/0.05/0.05/0.05/0.05
+OK   cleaning                           rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05
+OK   general_cleaning                   rows=0 pages 6→6 ink=0/0/0/0/0/0 moved=0 up=0 mism=0/0/0/0/0/0 dec=------ align=0.05/0.15/0.15/0.15/0.15/0.15
+OK   uv_lamp_runtime                    rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05
+OK   finished_product                   rows=0 pages 4→4 ink=0/0/0/0 moved=0 up=0 mism=0/0/0/0 dec=---- align=0.05/0.15/0.15/0.15
+OK   perishable_rejection               rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05
+OK   incoming_control                   rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05
+OK   fryer_oil                          rows=0 pages 2→2 ink=0/0 moved=0 up=0 mism=0/0 dec=-- align=0.05/0.05
+OK   med_books                          rows=0 pages 3→3 ink=0/0/0 moved=0 up=0 mism=0/0/0 dec=--- align=0.05/0.05/0.05
+OK   training_plan                      rows=0 pages 25→28 ink=0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0 moved=0 up=0 mism=0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0 dec=---------------------------- align=0.05/5.41/5.41/5.41/5.41/5.41/5.41/5.41/5.41/5.41/5.41/5.41/5.41/5.41/5.41/5.41/5.41/5.41/5.41/5.41/5.41/5.41/5.41/5.41/5.41/5.41/5.41/5.41
+OK   staff_training                     rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05
+OK   disinfectant_usage                 rows=0 pages 12→13 ink=0/0/0/0/0/0/0/0/0/0/0/0/0 moved=0 up=0 mism=0/0/0/0/0/0/0/0/0/0/0/0/0 dec=------------- align=0.15/0.15/0.15/0.15/0.15/0.15/0.15/0.15/0.15/0.15/0.15/0.15/0.15
+OK   sanitary_day_control               rows=0 pages 9→9 ink=0/0/0/0/0/0/0/0/0 moved=0 up=0 mism=0/0/0/0/0/0/0/0/0 dec=--------- align=0.05/0.15/0.15/0.15/0.15/0.15/0.15/0.15/0.15
+OK   equipment_maintenance              rows=0 pages 5→5 ink=0/0/0/0/0 moved=0 up=0 mism=0/0/0/0/0 dec=----- align=0.05/0.15/0.15/0.15/0.15
+OK   breakdown_history                  rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05
+OK   equipment_calibration              rows=0 pages 3→4 ink=0/0/0/0 moved=0 up=0 mism=0/0/0/0 dec=---- align=0.05/0.15/0.15/0.15
+OK   incoming_raw_materials_control     rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05
+OK   ppe_issuance                       rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05
+OK   accident_journal                   rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05
+OK   complaint_register                 rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05
+OK   product_writeoff                   rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05
+OK   audit_protocol                     rows=0 pages 3→3 ink=0/0/0 moved=0 up=0 mism=0/0/0 dec=--- align=0.05/0.15/0.15
+OK   audit_report                       rows=0 pages 3→3 ink=0/0/0 moved=0 up=0 mism=0/0/0 dec=--- align=0.05/50.02/50.02
+OK   traceability_test                  rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05
+OK   metal_impurity                     rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05
+OK   equipment_cleaning                 rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05
+OK   intensive_cooling                  rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05
+OK   glass_items_list                   rows=0 pages 4→5 ink=0/0/0/0/0 moved=0 up=0 mism=0/0/0/0/0 dec=----- align=0.05/0.15/0.15/0.15/0.15
+OK   glass_control                      rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05
+OK   pest_control                       rows=0 pages 1→1 ink=0 moved=0 up=0 mism=0 dec=- align=0.05
+OK   daily_samples                      rows=0 pages 3→3 ink=0/0/0 moved=0 up=0 mism=0/0/0 dec=--- align=0.05/0.15/0.15
+OK   vitaminization                     rows=0 pages 3→3 ink=0/0/0 moved=0 up=0 mism=0/0/0 dec=--- align=0.05/0.15/0.15
+OK   ration_control                     rows=0 pages 3→3 ink=0/0/0 moved=0 up=0 mism=0/0/0 dec=--- align=0.05/0.15/0.15
+OK   transport_temperature              rows=0 pages 3→3 ink=0/0/0 moved=0 up=0 mism=0/0/0 dec=--- align=0.05/0.15/0.15
+OK   tableware_breakage                 rows=0 pages 3→3 ink=0/0/0 moved=0 up=0 mism=0/0/0 dec=--- align=0.05/0.15/0.15
+OK   pool_water_control                 rows=0 pages 3→3 ink=0/0/0 moved=0 up=0 mism=0/0/0 dec=--- align=0.05/0.15/0.15
+OK   inventory_condition                rows=0 pages 3→3 ink=0/0/0 moved=0 up=0 mism=0/0/0 dec=--- align=0.05/0.15/0.15
+OK   instrument_sterilization           rows=0 pages 3→3 ink=0/0/0 moved=0 up=0 mism=0/0/0 dec=--- align=0.05/0.15/0.15
+OK   medical_waste_b                    rows=0 pages 3→3 ink=0/0/0 moved=0 up=0 mism=0/0/0 dec=--- align=0.05/0.15/0.15
+OK   batch_release                      rows=0 pages 3→3 ink=0/0/0 moved=0 up=0 mism=0/0/0 dec=--- align=0.05/0.15/0.15
+выравнивание: 134/134 страниц вровень (≤ 0.5 мм), макс. разница 0.15 мм; пустых страниц 0; таблица за краем листа (метрика не применима): climate_control стр. 6, climate_control стр. 7, climate_control стр. 8, climate_control стр. 9, climate_control стр. 10, climate_control стр. 11, climate_control стр. 12, climate_control стр. 13, climate_control стр. 14, climate_control стр. 15, climate_control стр. 16, climate_control стр. 17, climate_control стр. 18, climate_control стр. 19, climate_control стр. 20, climate_control стр. 21, climate_control стр. 22, climate_control стр. 23, climate_control стр. 24, climate_control стр. 25, climate_control стр. 26, climate_control стр. 27, climate_control стр. 28, climate_control стр. 29, climate_control стр. 30, training_plan стр. 2, training_plan стр. 3, training_plan стр. 4, training_plan стр. 5, training_plan стр. 6, training_plan стр. 7, training_plan стр. 8, training_plan стр. 9, training_plan стр. 10, training_plan стр. 11, training_plan стр. 12, training_plan стр. 13, training_plan стр. 14, training_plan стр. 15, training_plan стр. 16, training_plan стр. 17, training_plan стр. 18, training_plan стр. 19, training_plan стр. 20, training_plan стр. 21, training_plan стр. 22, training_plan стр. 23, training_plan стр. 24, training_plan стр. 25, training_plan стр. 26, training_plan стр. 27, training_plan стр. 28; QR сдвинут влево (угол занят): нет; QR на правом поле листа (на странице только строки у левого поля): audit_report стр. 2, audit_report стр. 3
+44/44 OK
+exit 0
+
+## 2) чек-лист уборки на финальном коде
+OK   cleaning_ventilation_checklist     rows=0 pages 9→10 ink=0/0/0/0/0/0/0/0/0/0 moved=0 up=0 mism=0/0/0/0/0/0/0/0/0/0 dec=---------- align=0.05/0.05/0.05/0.05/0.05/0.05/0.05/0.05/0.05/0.05
+выравнивание: 10/10 страниц вровень (≤ 0.5 мм), макс. разница 0.05 мм; пустых страниц 0; таблица за краем листа (метрика не применима): нет; QR сдвинут влево (угол занят): нет; QR на правом поле листа (на странице только строки у левого поля): нет
+1/1 OK
+
+## 3) план аудитов (394 стр.) — qr-zone-stream.ts: те же проверки 2–3 (чернила в зоне QR до штампа, модули, место пробы = место штампа), растр по одной странице
+OK   audit_plan pages probe=394 stamped=394 qr=394 samePlaces=true inkPages=0 inkPx=0 mism=0 bottomRow=394 moved=0 overlap=0 modules=37
+# check-qr-overlap.ts на этом документе остановлен вручную: держит растры всех страниц трёх рендеров в памяти (40 ГБ, у машины оставалось 6 ГБ)
