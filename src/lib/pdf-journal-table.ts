@@ -1,5 +1,7 @@
 import type { jsPDF } from "jspdf";
-import autoTableBase, { type CellHookData, type UserOptions } from "jspdf-autotable";
+import autoTableBase, { type CellHookData, type MarginPaddingInput, type UserOptions } from "jspdf-autotable";
+
+import { JOURNAL_FOOTER_TEXT_BAND_MM, JOURNAL_SHEET_MARGIN_MM } from "@/lib/pdf-journal-sheet";
 
 /**
  * Единые правила таблиц печатных журналов (поверх jspdf-autotable).
@@ -7,6 +9,10 @@ import autoTableBase, { type CellHookData, type UserOptions } from "jspdf-autota
  * Все таблицы бланков идут через `journalAutoTable` — это одна точка, где
  * задаётся, как выглядит ячейка:
  *
+ *   • поля таблицы, которых бланк не задал, — поля листа
+ *     (`journalTableMargin`): autoTable по умолчанию ставил 14,1 мм со всех
+ *     сторон, и продолжение таблицы на странице без шапки начиналось ниже
+ *     верхнего поля листа;
  *   • текст ВСЕХ ячеек центрирован по вертикали (`valign: "middle"`):
  *     раньше autoTable по умолчанию ставил текст к верху ячейки, а часть
  *     таблиц — по центру, и в одной строке тексты «гуляли»;
@@ -37,6 +43,57 @@ const MIN_HEAD_FONT_SCALE = 0.8;
 
 /** «Короткое значение»: число/дата/время/температура/отметка. */
 const SHORT_VALUE = /^[\d\s.,:;+\-−–—°%/()×xхХ~<>≤≥=CС]+$/;
+
+/**
+ * Поля таблицы бланка: заданные бланком стороны остаются, остальные —
+ * поля листа. Сверху, слева и справа — `JOURNAL_SHEET_MARGIN_MM`; снизу —
+ * поле листа плюс полоса под «СТР. X ИЗ N» (подпись страницы без шапки
+ * стоит базовой линией на нижнем поле и не должна лечь на таблицу). Под
+ * подвал партнёра в две строки нижнее поле поднимает
+ * `reserveJournalTableBottom`; QR строк не занимает — он в шапке.
+ */
+export function journalTableMargin(margin: MarginPaddingInput | undefined): MarginPaddingInput {
+  const defaults = {
+    top: JOURNAL_SHEET_MARGIN_MM,
+    right: JOURNAL_SHEET_MARGIN_MM,
+    bottom: JOURNAL_SHEET_MARGIN_MM + JOURNAL_FOOTER_TEXT_BAND_MM,
+    left: JOURNAL_SHEET_MARGIN_MM,
+  };
+  // Число или массив — бланк задал все стороны сам.
+  if (typeof margin === "number" || Array.isArray(margin)) return margin;
+  if (!margin) return defaults;
+  const vertical = typeof margin.vertical === "number" ? margin.vertical : undefined;
+  const horizontal = typeof margin.horizontal === "number" ? margin.horizontal : undefined;
+  return {
+    top: margin.top ?? vertical ?? defaults.top,
+    right: margin.right ?? horizontal ?? defaults.right,
+    bottom: margin.bottom ?? vertical ?? defaults.bottom,
+    left: margin.left ?? horizontal ?? defaults.left,
+  };
+}
+
+/**
+ * Нижнее поле всех таблиц autoTable этого документа — не меньше `bottomMm`
+ * (подвал партнёра в две строки: полоса выше, чем у «СТР. X ИЗ N»).
+ *
+ * Отрисовщики передают свой `margin` без `bottom` (`journalAutoTable`
+ * подставляет поле листа + полосу под «СТР. X ИЗ N»), а документные
+ * настройки autoTable целиком заменяются полем вызова. Хуки же
+ * складываются: `didParseCell` срабатывает до отрисовки таблицы, и поле
+ * правится в её разобранных настройках.
+ */
+export function reserveJournalTableBottom(doc: jsPDF, bottomMm: number) {
+  type Hook = (data: { table?: { settings?: { margin?: { bottom: number } } } }) => void;
+  const holder = doc as jsPDF & { __autoTableDocumentDefaults?: Record<string, unknown> };
+  const previous = holder.__autoTableDocumentDefaults ?? {};
+  const previousHook = previous.didParseCell as Hook | undefined;
+  const bump: Hook = (data) => {
+    const margin = data.table?.settings?.margin;
+    if (margin && typeof margin.bottom === "number" && margin.bottom < bottomMm) margin.bottom = bottomMm;
+    previousHook?.(data);
+  };
+  holder.__autoTableDocumentDefaults = { ...previous, didParseCell: bump };
+}
 
 export function isShortCellValue(text: string): boolean {
   const value = text.trim();
@@ -77,6 +134,7 @@ export function journalAutoTable(doc: jsPDF, options: UserOptions): void {
 
   autoTableBase(doc, {
     ...options,
+    margin: journalTableMargin(options.margin),
     styles: {
       textColor: BLACK,
       lineColor: BLACK,

@@ -39,6 +39,11 @@ const manrope = localFont({
 });
 
 export const metadata: Metadata = {
+  // Safari на iPhone (и приложение WeSetup на iOS) сам превращал номера
+  // телефонов, даты и адреса в ссылки прямо в разметке — React видел
+  // чужую разметку и перерисовывал страницу (ошибка гидратации #418).
+  // Настоящие телефоны на сайте — это и так ссылки tel:.
+  formatDetection: { telephone: false, date: false, email: false, address: false },
   alternates: {
     types: {
       "application/rss+xml": [

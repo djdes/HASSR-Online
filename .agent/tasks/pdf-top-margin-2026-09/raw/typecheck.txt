@@ -1,0 +1,1 @@
+npm run typecheck (tsc --noEmit --skipLibCheck -p tsconfig.typecheck.json), 2026-09-27: exit 0, ошибок нет

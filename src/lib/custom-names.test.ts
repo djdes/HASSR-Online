@@ -148,9 +148,16 @@ test("шаблоны: своё название для показа, офици�
     currentCode: "hygiene",
     showAllHref: null,
   });
-  assert.equal(menu.items[0].label, "Утренний осмотр");
-  assert.deepEqual(menu.items[0].keywords, ["hygiene", OFFICIAL.hygiene]);
-  assert.deepEqual(menu.items[1].keywords, ["cleaning"]);
+  // Список по алфавиту своих названий: «Журнал уборки…» раньше «Утреннего осмотра».
+  const hygieneItem = menu.items.find((i) => i.href === "/journals/hygiene");
+  const cleaningItem = menu.items.find((i) => i.href === "/journals/cleaning");
+  assert.deepEqual(
+    menu.items.map((i) => i.label),
+    [OFFICIAL.cleaning, "Утренний осмотр"]
+  );
+  assert.equal(hygieneItem?.label, "Утренний осмотр");
+  assert.deepEqual(hygieneItem?.keywords, ["hygiene", OFFICIAL.hygiene]);
+  assert.deepEqual(cleaningItem?.keywords, ["cleaning"]);
   assert.deepEqual(filterCrumbMenu(menu.items, "гигиенич").map((i) => i.label), ["Утренний осмотр"]);
   assert.deepEqual(filterCrumbMenu(menu.items, "утренн").map((i) => i.label), ["Утренний осмотр"]);
 });

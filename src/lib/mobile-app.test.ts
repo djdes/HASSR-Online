@@ -2,11 +2,13 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  appColdStartRedirect,
   appLoginHref,
   appStoreUrl,
   appUpdateRequirement,
   compareAppVersion,
   isMobileAppUserAgent,
+  needsTelegramSdk,
   parseMobileAppUserAgent,
 } from "./mobile-app";
 
@@ -77,4 +79,25 @@ test("вход сайта в приложении ведёт на вход пр�
   assert.equal(appLoginHref("//evil.example/x"), "/mini/login");
   assert.equal(appLoginHref("https://evil.example"), "/mini/login");
   assert.equal(appLoginHref("/api/auth/session"), "/mini/login");
+});
+
+test("скрипт Telegram не грузится в приложении WeSetup, но нужен в браузере и Telegram", () => {
+  assert.equal(needsTelegramSdk("Mozilla/5.0 (iPhone) Mobile/15E148 WeSetupApp/1.0.0 (ios)"), false);
+  assert.equal(
+    needsTelegramSdk("Mozilla/5.0 (Linux; Android 14) Chrome/128 Mobile WeSetupApp/1.0.0 (android)"),
+    false
+  );
+  assert.equal(needsTelegramSdk("Mozilla/5.0 (iPhone) Mobile/15E148 Safari/604.1"), true);
+  assert.equal(needsTelegramSdk(null), true);
+});
+
+test("первый запуск приложения без входа — сразу на экран входа, без промежуточной страницы", () => {
+  const app = "Mozilla/5.0 (iPhone) AppleWebKit/605 WeSetupApp/1.0.0 (ios)";
+  assert.equal(appColdStartRedirect({ userAgent: app, pathname: "/mini", search: "?src=app", hasSession: false }), "/mini/login?next=%2Fmini%3Fsrc%3Dapp");
+  // Со входом, в браузере, с next или опросом — как раньше.
+  assert.equal(appColdStartRedirect({ userAgent: app, pathname: "/mini", search: "?src=app", hasSession: true }), null);
+  assert.equal(appColdStartRedirect({ userAgent: "Mozilla/5.0 (iPhone) Safari", pathname: "/mini", search: "", hasSession: false }), null);
+  assert.equal(appColdStartRedirect({ userAgent: app, pathname: "/mini", search: "?next=%2Fjournals", hasSession: false }), null);
+  assert.equal(appColdStartRedirect({ userAgent: app, pathname: "/mini", search: "?nps=1", hasSession: false }), null);
+  assert.equal(appColdStartRedirect({ userAgent: app, pathname: "/mini/today", search: "", hasSession: false }), null);
 });

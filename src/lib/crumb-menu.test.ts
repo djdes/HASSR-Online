@@ -145,6 +145,27 @@ test("buildJournalSwitcherMenu: a disabled CURRENT journal stays in the list, mu
   assert.equal(menu.showAllHref, null);
 });
 
+test("buildJournalSwitcherMenu: journals and hidden labels go alphabetically by the shown name", () => {
+  const menu = buildJournalSwitcherMenu({
+    templates: [
+      { id: "t1", code: "hygiene", name: "Гигиенический журнал" },
+      { id: "t4", code: "fryer", name: "Журнал фритюрных жиров" },
+      // Переименован в «Настройки → Названия» — встаёт по своему названию.
+      { id: "t3", code: "disinfectant_usage", name: "Акт дезсредств", officialName: "Журнал учёта дезсредств" },
+      { id: "t2", code: "brakerage", name: "Бракеражный журнал" },
+      { id: "t5", code: "acceptance", name: "Входной контроль" },
+    ],
+    disabledCodes: new Set(["fryer", "acceptance"]),
+    filledTemplateIds: new Set(),
+    showAllHref: null,
+  });
+  assert.deepEqual(
+    menu.items.map((item) => item.label),
+    ["Акт дезсредств", "Бракеражный журнал", "Гигиенический журнал"],
+  );
+  assert.deepEqual(menu.disabledLabels, ["Входной контроль", "Журнал фритюрных жиров"]);
+});
+
 test("journalSwitcherOptions: manager gets «Показать все» and a link in the hidden-matches hint", () => {
   const options = journalSwitcherOptions({
     items: [],

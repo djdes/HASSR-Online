@@ -17,6 +17,7 @@ import {
 import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
 import { journalDisplayName } from "@/lib/custom-names";
+import { compareJournalNames } from "@/lib/journal-sort";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
 
 export const runtime = "nodejs";
@@ -206,7 +207,8 @@ export async function GET() {
     });
   }
 
-  items.sort((a, b) => a.name.localeCompare(b.name, "ru"));
+  // По алфавиту — общим правилом для всех списков журналов.
+  items.sort((a, b) => compareJournalNames(a.name, b.name));
 
   return NextResponse.json({
     items,

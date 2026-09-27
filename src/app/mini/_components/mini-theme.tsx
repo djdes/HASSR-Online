@@ -6,35 +6,52 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
 } from "react";
 
-import { isInsideTelegram } from "./telegram-web-app";
+import {
+  SiteThemeBridge,
+  type SiteThemeState,
+  type ThemeMode,
+} from "@/components/theme/site-theme";
 
-export type MiniTheme = "dark" | "light";
+import {
+  MINI_ROOT_ID,
+  THEME_CHANGE_EVENT,
+  THEME_KEYS,
+  choiceStorageEntries,
+  deviceTheme,
+  effectiveMiniTheme,
+  isMiniTheme,
+  miniThemeBootstrapCode,
+  readStoredChoice,
+  resolveMiniThemeChoice,
+  type MiniTheme,
+  type MiniThemeChoice,
+} from "./mini-theme-model";
+import { getTelegramWebApp, isInsideTelegram } from "./telegram-web-app";
+
+export type { MiniTheme } from "./mini-theme-model";
 
 /**
- * Shared with the site (`SiteThemeProvider`) — both providers read/write
- * the same localStorage key, so toggling theme in Mini App propagates to
- * any open `wesetup.ru/dashboard` tab and vice versa via the storage
- * event. DB column `User.themePreference` is the cross-device source of
- * truth, hydrated server-side into `initialTheme` on every layout render.
+ * Тема мини-приложения: «Светлая», «Тёмная» или «Как на устройстве» —
+ * те же три варианта, что в меню профиля сайта.
+ *
+ * Выбор общий с сайтом: те же ключи localStorage (`mini-theme-model.ts`,
+ * `THEME_KEYS`), то же событие внутри вкладки и тот же профиль
+ * (`/api/me/theme`, `User.themePreference` — светлая или тёмная, источник
+ * правды между устройствами; сервер подставляет её в разметку).
+ * «Как на устройстве», как и на сайте, — настройка устройства: в
+ * localStorage режим `system`, в профиль уходит действующая тема. Внутри
+ * Telegram «устройство» — сам Telegram (`colorScheme` и событие
+ * `themeChanged`), в приложении WeSetup и браузере — тема телефона
+ * (`prefers-color-scheme`).
  */
-const STORAGE_KEY = "wesetup-app-theme";
-/** Ключи сайтового провайдера (`site-theme.tsx`) — держим согласованными:
- *  иначе обычный кабинет на компьютере считает, что человек выбрал
- *  «как в системе», и перекрашивает страницы обратно. */
-const SITE_MODE_KEY = "wesetup-theme-mode";
-const SITE_AUTO_KEY = "wesetup-theme-auto-schedule";
 const ATTRIBUTE = "data-theme";
 const APP_SHELL_ATTRIBUTE = "data-app-theme";
-const MINI_ROOT_ID = "mini-root";
-const CUSTOM_EVENT = "wesetup-theme-change";
-
-/** Legacy key — only read for one-time migration. */
-const LEGACY_MINI_KEY = "wesetup-mini-theme";
 
 /**
  * Цвет фирменной шапки — тот же, что `theme-color` QR-страниц. Шапка
@@ -48,61 +65,75 @@ export function miniBackgroundColor(theme: MiniTheme): string {
 }
 
 type Ctx = {
+  /** Действующая тема экрана. */
   theme: MiniTheme;
-  setTheme: (t: MiniTheme) => void;
+  /** Выбор человека: светлая, тёмная или как на устройстве. */
+  mode: ThemeMode;
+  /** Смена по времени суток (включается на сайте) — тогда тему задаёт час. */
+  autoBySchedule: boolean;
+  setMode: (mode: ThemeMode) => void;
+  setAutoBySchedule: (on: boolean) => void;
+  /** Явная светлая или тёмная — то же, что `setMode`. */
+  setTheme: (theme: MiniTheme) => void;
   toggle: () => void;
 };
 
 const MiniThemeContext = createContext<Ctx | null>(null);
 
-/** Выбор, сохранённый на этом устройстве. Пишется только явным
-    переключением темы — ни сервером, ни значением по умолчанию. */
-function readStoredTheme(): MiniTheme | null {
-  if (typeof window === "undefined") return null;
+type State = MiniThemeChoice & { theme: MiniTheme };
+
+function storageGet(key: string): string | null {
   try {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored === "light" || stored === "dark") return stored;
-    const legacy = window.localStorage.getItem(LEGACY_MINI_KEY);
-    if (legacy === "light" || legacy === "dark") return legacy;
+    return window.localStorage.getItem(key);
+  } catch {
+    return null; // localStorage blocked
+  }
+}
+
+function storageWrite(entries: Array<[string, string]>): void {
+  try {
+    for (const [key, value] of entries) window.localStorage.setItem(key, value);
   } catch {
     /* localStorage blocked */
   }
-  return null;
 }
 
 /** Светлый или тёмный сам клиент Telegram. Вне Telegram — null. */
 function readTelegramColorScheme(): MiniTheme | null {
-  if (typeof window === "undefined") return null;
-  if (!isInsideTelegram()) return null;
-  const scheme = (
-    window as unknown as {
-      Telegram?: { WebApp?: { colorScheme?: string } };
-    }
-  ).Telegram?.WebApp?.colorScheme;
-  return scheme === "light" || scheme === "dark" ? scheme : null;
+  if (typeof window === "undefined" || !isInsideTelegram()) return null;
+  const scheme = getTelegramWebApp()?.colorScheme;
+  return isMiniTheme(scheme) ? scheme : null;
+}
+
+function prefersDark(): boolean {
+  try {
+    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
+  } catch {
+    return false;
+  }
+}
+
+/** Действующая тема для выбора — прямо сейчас (час, Telegram, система). */
+function effectiveNow(choice: MiniThemeChoice): MiniTheme {
+  return effectiveMiniTheme(choice, {
+    hour: new Date().getHours(),
+    device: deviceTheme({
+      telegramColorScheme: readTelegramColorScheme(),
+      prefersDark: prefersDark(),
+    }),
+  });
 }
 
 /**
- * Какая тема должна быть прямо сейчас.
- *
- * Порядок строгий:
- *   1. выбор человека в профиле (`User.themePreference`) — он и на
- *      другом устройстве тот же;
- *   2. выбор, сделанный на этом устройстве, пока человек не вошёл;
- *   3. тема самого Telegram, если открыто внутри него;
- *   4. значение по умолчанию.
+ * Как применяется выбор:
+ *  - `resolve` — выбор прочитан (загрузка, доехала тема профиля, соседняя
+ *    вкладка): только экран, ничего не пишем — иначе значение по
+ *    умолчанию, записанное до входа, потом побеждало выбор в профиле;
+ *  - `live` — тема устройства или час сменились сами: как сайт — новая
+ *    действующая тема в localStorage, событие, профиль;
+ *  - `explicit` — выбор человека: все три ключа, событие, профиль.
  */
-function resolveTheme(
-  profileTheme: MiniTheme | null,
-  fallback: MiniTheme
-): MiniTheme {
-  return (
-    profileTheme ??
-    readStoredTheme() ??
-    readTelegramColorScheme() ??
-    fallback
-  );
-}
+type CommitKind = "resolve" | "live" | "explicit";
 
 export function MiniThemeProvider({
   children,
@@ -116,21 +147,56 @@ export function MiniThemeProvider({
   /** `User.themePreference` вошедшего; null — сессии на сервере не было. */
   profileTheme?: MiniTheme | null;
 }) {
-  const [theme, setThemeState] = useState<MiniTheme>(initialTheme);
+  const [state, setState] = useState<State>({
+    theme: initialTheme,
+    mode: initialTheme,
+    autoBySchedule: false,
+  });
+  // То же состояние для обработчиков и подписок — без устаревших замыканий.
+  const current = useRef<State>(state);
   // Тема из профиля, доехавшая уже после входа (вход в Telegram
   // происходит на клиенте, и серверная разметка про него не знает).
   const [lateProfileTheme, setLateProfileTheme] = useState<MiniTheme | null>(
     null
   );
   const effectiveProfileTheme = profileTheme ?? lateProfileTheme;
+  // Человек выбрал сам — дальше его выбор в localStorage главнее профиля:
+  // ответ сервера, выехавший следом, не должен вернуть прежний вид.
+  const userPicked = useRef(false);
 
+  const commit = useCallback((choice: MiniThemeChoice, kind: CommitKind) => {
+    const theme = effectiveNow(choice);
+    const previous = current.current.theme;
+    const next: State = { ...choice, theme };
+    current.current = next;
+    setState(next);
+    applyThemeToDOM(theme);
+    if (kind === "resolve") return;
+    if (kind === "live" && theme === previous) return;
+    storageWrite(
+      kind === "explicit"
+        ? choiceStorageEntries(choice, theme)
+        : [[THEME_KEYS.effective, theme]]
+    );
+    announce(theme);
+    persistThemeToServerSoon(theme);
+  }, []);
+
+  // Выбор лежит в localStorage и в Telegram — сервер их не видит, прочитать
+  // можно только после гидрации (экран уже покрасил скрипт до гидрации,
+  // состояние догоняет его). Тот же законный приём, что в site-theme.tsx.
   useEffect(() => {
-    const next = resolveTheme(effectiveProfileTheme, initialTheme);
-    setThemeState(next);
-    applyThemeToDOM(next);
-    // Ничего не пишем в localStorage: значение по умолчанию, записанное
-    // до входа, потом побеждало настоящий выбор человека в профиле.
-  }, [effectiveProfileTheme, initialTheme]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    commit(
+      resolveMiniThemeChoice({
+        profileTheme: userPicked.current ? null : effectiveProfileTheme,
+        stored: readStoredChoice(storageGet),
+        telegramColorScheme: readTelegramColorScheme(),
+        fallback: initialTheme,
+      }),
+      "resolve"
+    );
+  }, [commit, effectiveProfileTheme, initialTheme]);
 
   // Вход из Telegram проходит на клиенте, серверная разметка отдана
   // раньше и с темой по умолчанию. Как только сессия появилась —
@@ -138,9 +204,6 @@ export function MiniThemeProvider({
   // перезагрузки страницы.
   const { status } = useSession();
   const profileAsked = useRef(false);
-  // Человек переключил тему сам — ответ сервера, выехавший следом, не
-  // должен вернуть экран к прежнему виду.
-  const userPicked = useRef(false);
   useEffect(() => {
     if (status !== "authenticated") return;
     if (profileTheme !== null || profileAsked.current) return;
@@ -151,71 +214,118 @@ export function MiniThemeProvider({
         if (!res.ok) return;
         const body = (await res.json()) as { theme?: unknown };
         if (userPicked.current) return;
-        if (body.theme === "light" || body.theme === "dark") {
-          setLateProfileTheme(body.theme);
-        }
+        if (isMiniTheme(body.theme)) setLateProfileTheme(body.theme);
       } catch {
         /* нет связи — остаёмся на том, что уже показано */
       }
     })();
   }, [profileTheme, status]);
 
+  // «Как на устройстве» и смена по времени суток живут сами: тема
+  // Telegram или телефона сменилась, час перевалил за 7:00 / 19:00.
+  const { mode, autoBySchedule } = state;
+  useEffect(() => {
+    if (!autoBySchedule && mode !== "system") return;
+    const recompute = () => commit({ mode, autoBySchedule }, "live");
+    if (autoBySchedule) {
+      const id = window.setInterval(recompute, 5 * 60 * 1000);
+      return () => window.clearInterval(id);
+    }
+    // В Telegram «устройство» — сам Telegram: его тема и событие.
+    const tg = getTelegramWebApp();
+    if (readTelegramColorScheme() && tg?.onEvent) {
+      tg.onEvent("themeChanged", recompute);
+      return () => tg.offEvent?.("themeChanged", recompute);
+    }
+    const mql = window.matchMedia?.("(prefers-color-scheme: dark)");
+    mql?.addEventListener?.("change", recompute);
+    return () => mql?.removeEventListener?.("change", recompute);
+  }, [autoBySchedule, commit, mode]);
+
+  // Выбор в соседней вкладке (сайт или приложение) и чужой переключатель
+  // в этой же вкладке. Своё событие приходит с уже показанной темой.
   useEffect(() => {
     function onCustom(e: Event) {
-      const next = (e as CustomEvent<MiniTheme>).detail;
-      if (next === "light" || next === "dark") {
-        setThemeState(next);
-        applyThemeToDOM(next);
-      }
+      const detail = (e as CustomEvent<unknown>).detail;
+      if (!isMiniTheme(detail) || detail === current.current.theme) return;
+      const stored = readStoredChoice(storageGet);
+      const next: State = {
+        mode: stored.mode ?? detail,
+        autoBySchedule: stored.auto,
+        theme: detail,
+      };
+      current.current = next;
+      setState(next);
+      applyThemeToDOM(detail);
     }
     function onStorage(e: StorageEvent) {
-      if (e.key !== STORAGE_KEY) return;
-      if (e.newValue === "light" || e.newValue === "dark") {
-        setThemeState(e.newValue);
-        applyThemeToDOM(e.newValue);
+      if (
+        e.key !== null &&
+        e.key !== THEME_KEYS.effective &&
+        e.key !== THEME_KEYS.mode &&
+        e.key !== THEME_KEYS.auto
+      ) {
+        return;
       }
+      // Соседняя вкладка уже всё записала и сохранила — только показываем.
+      commit(
+        resolveMiniThemeChoice({
+          profileTheme: null,
+          stored: readStoredChoice(storageGet),
+          telegramColorScheme: readTelegramColorScheme(),
+          fallback: current.current.theme,
+        }),
+        "resolve"
+      );
     }
-    window.addEventListener(CUSTOM_EVENT, onCustom);
+    window.addEventListener(THEME_CHANGE_EVENT, onCustom);
     window.addEventListener("storage", onStorage);
     return () => {
-      window.removeEventListener(CUSTOM_EVENT, onCustom);
+      window.removeEventListener(THEME_CHANGE_EVENT, onCustom);
       window.removeEventListener("storage", onStorage);
     };
-  }, []);
+  }, [commit]);
 
-  const setTheme = useCallback((next: MiniTheme) => {
-    userPicked.current = true;
-    setThemeState(next);
-    // Чтобы эффект-расчёт, если он ещё раз запустится, дал тот же ответ.
-    setLateProfileTheme(next);
-    applyThemeToDOM(next);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, next);
-      // Явный выбор человека: сайтовый провайдер не должен трактовать
-      // его как «как в системе» и не должен включать авто по времени.
-      window.localStorage.setItem(SITE_MODE_KEY, next);
-      window.localStorage.setItem(SITE_AUTO_KEY, "0");
-    } catch {
-      /* ignore */
-    }
-    try {
-      window.dispatchEvent(
-        new CustomEvent<MiniTheme>(CUSTOM_EVENT, { detail: next })
-      );
-    } catch {
-      /* ignore */
-    }
-    // Best-effort cross-device sync. Source of truth — localStorage.
-    void persistThemeToServer(next);
-  }, []);
+  const setMode = useCallback(
+    (next: ThemeMode) => {
+      userPicked.current = true;
+      commit({ mode: next, autoBySchedule: false }, "explicit");
+    },
+    [commit]
+  );
+
+  const setAutoBySchedule = useCallback(
+    (on: boolean) => {
+      userPicked.current = true;
+      commit({ mode: current.current.mode, autoBySchedule: on }, "explicit");
+    },
+    [commit]
+  );
+
+  const setTheme = useCallback((next: MiniTheme) => setMode(next), [setMode]);
 
   const toggle = useCallback(() => {
-    setTheme(theme === "dark" ? "light" : "dark");
-  }, [setTheme, theme]);
+    setMode(current.current.theme === "dark" ? "light" : "dark");
+  }, [setMode]);
+
+  const value = useMemo<Ctx & SiteThemeState>(
+    () => ({
+      theme: state.theme,
+      mode: state.mode,
+      autoBySchedule: state.autoBySchedule,
+      setMode,
+      setAutoBySchedule,
+      setTheme,
+      toggle,
+    }),
+    [setAutoBySchedule, setMode, setTheme, state, toggle]
+  );
 
   return (
-    <MiniThemeContext.Provider value={{ theme, setTheme, toggle }}>
-      {children}
+    <MiniThemeContext.Provider value={value}>
+      {/* Страницы сайта в оболочке («Настройки → Внешний вид») читают
+          `useSiteTheme()` — отвечаем им этой же темой. */}
+      <SiteThemeBridge value={value}>{children}</SiteThemeBridge>
     </MiniThemeContext.Provider>
   );
 }
@@ -225,6 +335,10 @@ export function useMiniTheme(): Ctx {
   if (!ctx) {
     return {
       theme: "dark",
+      mode: "dark",
+      autoBySchedule: false,
+      setMode: () => {},
+      setAutoBySchedule: () => {},
       setTheme: () => {},
       toggle: () => {},
     };
@@ -246,11 +360,7 @@ function applyThemeToDOM(theme: MiniTheme) {
   }
 
   // Sync Telegram WebApp chrome.
-  const tg = (
-    window as unknown as {
-      Telegram?: { WebApp?: TelegramWebAppChrome };
-    }
-  ).Telegram?.WebApp;
+  const tg = getTelegramWebApp();
   if (tg) {
     try {
       tg.setHeaderColor?.(MINI_HERO_COLOR);
@@ -261,7 +371,36 @@ function applyThemeToDOM(theme: MiniTheme) {
   }
 }
 
+/** Сообщить остальным слушателям вкладки (сайтовый провайдер оболочки). */
+function announce(theme: MiniTheme) {
+  try {
+    window.dispatchEvent(new CustomEvent<MiniTheme>(THEME_CHANGE_EVENT, { detail: theme }));
+  } catch {
+    /* ignore */
+  }
+}
+
+/**
+ * Профиль — одним запросом на действие. Выбор карточки при включённой
+ * смене по времени — два шага подряд (выключить смену, выбрать режим), и
+ * два запроса могли бы доехать в обратном порядке: в профиле осталась бы
+ * промежуточная тема. Уходит последняя.
+ */
+let pendingServerTheme: MiniTheme | null = null;
+function persistThemeToServerSoon(theme: MiniTheme) {
+  const scheduled = pendingServerTheme !== null;
+  pendingServerTheme = theme;
+  if (scheduled) return;
+  // Следующий такт микрозадач: оба шага одного нажатия уже прошли.
+  void Promise.resolve().then(() => {
+    const next = pendingServerTheme;
+    pendingServerTheme = null;
+    if (next) void persistThemeToServer(next);
+  });
+}
+
 async function persistThemeToServer(theme: MiniTheme): Promise<void> {
+  // Best-effort cross-device sync. Source of truth on this device — localStorage.
   try {
     await fetch("/api/me/theme", {
       method: "POST",
@@ -274,19 +413,10 @@ async function persistThemeToServer(theme: MiniTheme): Promise<void> {
   }
 }
 
-type TelegramWebAppChrome = {
-  setHeaderColor?: (c: string) => void;
-  setBackgroundColor?: (c: string) => void;
-};
-
 /**
- * Скрипт до гидрации: применяет нужную тему к `#mini-root`, чтобы не
- * было вспышки светлого по тёмному и наоборот.
- *
- * Тот же порядок, что и у провайдера. Когда человек вошёл, сервер уже
- * отрисовал разметку с его темой из профиля — трогать нечего. Когда не
- * вошёл, разметка пришла с темой по умолчанию, и тут выбираем: выбор,
- * сделанный на этом устройстве, иначе тема самого Telegram.
+ * Скрипт до гидрации: применяет нужную тему к `#mini-root`, чтобы не было
+ * вспышки светлого по тёмному и наоборот. Порядок — как у провайдера
+ * (`miniThemeBootstrapCode` в `mini-theme-model.ts`).
  */
 export function MiniThemeBootstrap({
   hasProfileTheme = false,
@@ -294,24 +424,7 @@ export function MiniThemeBootstrap({
   /** У сервера была сессия и тема из профиля уже в разметке. */
   hasProfileTheme?: boolean;
 } = {}) {
-  const code = `(function(){try{
-  if(${hasProfileTheme ? "true" : "false"})return;
-  var t=localStorage.getItem(${JSON.stringify(STORAGE_KEY)});
-  if(t!=='light'&&t!=='dark'){t=localStorage.getItem(${JSON.stringify(
-    LEGACY_MINI_KEY
-  )});}
-  if(t!=='light'&&t!=='dark'){
-    var w=window.Telegram&&window.Telegram.WebApp;
-    var p=w&&typeof w.platform==='string'?w.platform.trim():'';
-    var inside=!!w&&((typeof w.initData==='string'&&w.initData.length>0)||(p!==''&&p!=='unknown'));
-    if(inside&&(w.colorScheme==='light'||w.colorScheme==='dark')){t=w.colorScheme;}
-  }
-  if(t==='light'||t==='dark'){
-    var el=document.getElementById(${JSON.stringify(MINI_ROOT_ID)});
-    if(el){el.setAttribute(${JSON.stringify(
-      ATTRIBUTE
-    )},t);el.setAttribute(${JSON.stringify(APP_SHELL_ATTRIBUTE)},t);}
-  }
-}catch(e){}})();`;
-  return <script dangerouslySetInnerHTML={{ __html: code }} />;
+  return (
+    <script dangerouslySetInnerHTML={{ __html: miniThemeBootstrapCode(hasProfileTheme) }} />
+  );
 }

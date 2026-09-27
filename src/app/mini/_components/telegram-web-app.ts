@@ -23,6 +23,12 @@ export type TelegramWebApp = {
   version?: string;
   colorScheme?: "light" | "dark";
   themeParams?: Record<string, string>;
+  /**
+   * События клиента. `themeChanged` — человек сменил тему Telegram:
+   * `colorScheme` к этому моменту уже новый (тема «Как на устройстве»).
+   */
+  onEvent?: (eventType: string, handler: () => void) => void;
+  offEvent?: (eventType: string, handler: () => void) => void;
   close?: () => void;
   setHeaderColor?: (color: string) => void;
   setBackgroundColor?: (color: string) => void;

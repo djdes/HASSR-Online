@@ -9,6 +9,7 @@ import {
   type JournalInfo,
 } from "@/content/journal-info";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
+import { sortJournalsByName } from "@/lib/journal-sort";
 import { DOCX_SAMPLE_CODES } from "@/lib/document-docx";
 import { SAMPLE_JOURNAL_CODES } from "@/lib/journal-sample-fixtures";
 import { jsonLdSafeString } from "@/lib/json-ld";
@@ -122,7 +123,11 @@ export default async function BlankiHubPage({
   const groups = CATEGORY_ORDER.map((category) => ({
     category,
     label: JOURNAL_CATEGORY_LABEL[category],
-    items: Object.values(JOURNAL_INFO).filter((j) => j.category === category),
+    // Внутри раздела — по алфавиту названий, как в кабинете.
+    items: sortJournalsByName(
+      Object.values(JOURNAL_INFO).filter((j) => j.category === category),
+      (j) => catalogName.get(j.code) ?? j.tagline,
+    ),
   })).filter((g) => g.items.length > 0);
 
   const total = Object.keys(JOURNAL_INFO).length;

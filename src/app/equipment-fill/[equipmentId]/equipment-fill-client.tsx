@@ -11,6 +11,17 @@ import { EmployeePicker } from "@/components/qr-fill/employee-picker";
 import { ReadingField } from "@/components/qr-fill/reading-field";
 import { ReadingPhoto } from "@/components/qr-fill/reading-photo";
 import { READING_PHOTO_TEXT, isReadingPhotoUrl } from "@/lib/reading-photos";
+import {
+  DEFAULT_READING_PHOTO_SETTINGS,
+  READING_PHOTO_FIXATION_TEXT,
+  initialReadingEntry,
+  isBlankReading,
+  isReadingPhotoMissing,
+  readingFormView,
+  type ReadingEntry,
+  type ReadingPhotoPhase,
+  type ReadingPhotoSettings,
+} from "@/lib/reading-photo-fixation";
 import { NextQrButton } from "@/components/qr-fill/next-qr-button";
 import { QrPassNote, QrPinOk, QrPinStep, QrPinUiStyles, QrRememberToggle, forgetQrPass, rememberQrEmployee } from "@/components/qr-fill/qr-pin-step";
 import { draftKeyFor, useFormDraft } from "@/components/qr-fill/use-form-draft";
@@ -54,6 +65,8 @@ type Props = {
   passEmployeeId?: string | null;
   /** Платный тариф: показание со снимка («Фото» у температуры) заполняется само. */
   photoAutofill?: boolean;
+  /** «Фотофиксация показаний» организации: «Сфотографируйте показание» первым действием, фото обязательно. */
+  photoFixation?: ReadingPhotoSettings;
 };
 
 const LS_EMPLOYEE_KEY = "wesetup.equipment-fill.employeeId";
@@ -80,6 +93,7 @@ export function EquipmentFillClient({
   rememberedEmployeeId = null,
   passEmployeeId = null,
   photoAutofill = false,
+  photoFixation = DEFAULT_READING_PHOTO_SETTINGS,
 }: Props) {
   const [employeeId, setEmployeeId] = useState<string>("");
   // Кого восстановили из памяти при входе: «Запомнили с прошлого раза» — только ему
@@ -116,9 +130,16 @@ export function EquipmentFillClient({
   const hasToday = typeof todayValues?.temperature === "number" || Boolean(todayValues?.status);
   // «Обслуживание»/«Ремонт» вместо температуры — в журнале «обсл»/«рем».
   const [status, setStatus] = useState<ColdEquipmentStatus | null>(todayValues?.status ?? null);
+  const blankTemperature = equipment.tempMax != null && equipment.tempMax < 0 ? "-" : "";
   const [temperature, setTemperature] = useState<string>(
-    typeof todayValues?.temperature === "number" ? String(todayValues.temperature) : equipment.tempMax != null && equipment.tempMax < 0 ? "-" : ""
+    typeof todayValues?.temperature === "number" ? String(todayValues.temperature) : blankTemperature
   );
+  // Фотофиксация (2026-09-27): значения ещё нет — первым делом «Сфотографируйте
+  // показание»; «Ввести вручную» или любой ввод в поле — обычная форма.
+  const [entry, setEntry] = useState<ReadingEntry>(() =>
+    initialReadingEntry(photoFixation, typeof todayValues?.temperature === "number" ? String(todayValues.temperature) : blankTemperature)
+  );
+  const [photoPhase, setPhotoPhase] = useState<ReadingPhotoPhase>("idle");
   const [humidity, setHumidity] = useState<string>("");
   // «Фото» у температуры: снимок дисплея прикрепляется к замеру (всем),
   // на платном тарифе показание со снимка подставляется в поле.
@@ -145,7 +166,10 @@ export function EquipmentFillClient({
     draftKeyFor(`equipment-fill:${equipment.id}`, stamp?.date),
     { temperature, humidity, correction, status: status ?? "", photo: photo ?? "" },
     (saved) => {
-      if (typeof saved.temperature === "string") setTemperature(saved.temperature);
+      if (typeof saved.temperature === "string") {
+        setTemperature(saved.temperature);
+        if (!isBlankReading(saved.temperature)) setEntry("manual");
+      }
       if (typeof saved.status === "string") setStatus(parseColdEquipmentStatus(saved.status));
       if (typeof saved.humidity === "string") setHumidity(saved.humidity);
       if (typeof saved.correction === "string") setCorrection(saved.correction);
@@ -223,6 +247,36 @@ export function EquipmentFillClient({
 
   const rememberedName = employees.find((e) => e.id === employeeId)?.name ?? null;
 
+  // Что показывать: главная кнопка снимка / поле / «Сохранить».
+  const view = readingFormView({
+    settings: photoFixation,
+    entry,
+    phase: photoPhase,
+    photoUrl: photo,
+    value: temperature,
+    status: Boolean(status),
+  });
+  // «Фото обязательно» — без снимка к температуре «Сохранить» неактивна (сервер проверяет сам).
+  const photoMissing = isReadingPhotoMissing({ settings: photoFixation, hasReading: !status && parsedTemp !== null, photoUrl: photo });
+  // Число со снимка не правили — одно нажатие «Всё верно — сохранить».
+  const confirmRecognized = !status && Boolean(photo) && recognizedTemperature !== null && temperature.trim() === recognizedTemperature;
+  const changeTemperature = (value: string) => {
+    setTemperature(value);
+    setEntry("manual");
+  };
+  const enterManually = () => {
+    setEntry("manual");
+    window.requestAnimationFrame(() => document.getElementById("equipment-fill-temperature")?.focus());
+  };
+  // Число со снимка подставили — «Всё верно — сохранить» должна быть на экране:
+  // одно нажатие без прокрутки (под полем ещё карточка фото и «Обслуживание»).
+  const saveRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (recognizedTemperature === null) return;
+    const id = window.requestAnimationFrame(() => saveRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }));
+    return () => window.cancelAnimationFrame(id);
+  }, [recognizedTemperature]);
+
   async function save() {
     if (submitting) return;
     setError(null);
@@ -232,6 +286,10 @@ export function EquipmentFillClient({
     }
     if (!status && parsedTemp === null) {
       setError("Введите температуру");
+      return;
+    }
+    if (photoMissing) {
+      setError(READING_PHOTO_FIXATION_TEXT.requiredError);
       return;
     }
     if (correctionMissing) {
@@ -254,8 +312,8 @@ export function EquipmentFillClient({
               : {}),
             // Комментарий — только к отклонению: вернули в норму — не отправляем.
             ...(needsCorrection && correction.trim() ? { correction: correction.trim() } : {}),
-            // Снимок дисплея — к числу; у «обсл»/«рем» поля температуры нет.
-            ...(!status && photo ? { photo } : {}),
+            // Снимок показания — к числу; у «обсл»/«рем» поля температуры нет.
+            ...(!status && photo && photoFixation.enabled ? { photo } : {}),
             ...(pass ? { pass } : {}),
           }),
         }
@@ -289,9 +347,11 @@ export function EquipmentFillClient({
         ? "Не введён PIN"
         : !status && parsedTemp === null
           ? "Не указана температура"
-          : correctionMissing
-            ? "Опишите, что сделали"
-            : null;
+          : photoMissing
+            ? READING_PHOTO_FIXATION_TEXT.needPhoto
+            : correctionMissing
+              ? "Опишите, что сделали"
+              : null;
 
   return (
     <QrPageShell orgName={organizationName} title={journalTitle}>
@@ -323,7 +383,7 @@ export function EquipmentFillClient({
                 ? `${COLD_EQUIPMENT_STATUS_TITLE[status]}: в журнале «${COLD_EQUIPMENT_STATUS_SHORT[status]}»`
                 : `Температура ${parsedTemp}°C сохранена в журнал`}{" "}
               {rememberedName ? `на имя ${rememberedName}` : ""}.
-              {photoAttached ? " Фото дисплея — в журнале рядом со значением." : ""}
+              {photoAttached ? " Фото показания — в журнале рядом со значением." : ""}
             </p>
             {/* Раньше предупреждение о выходе за норму исчезало вместе с
                 формой, и человек уходил, не зная, что делать дальше. */}
@@ -342,7 +402,9 @@ export function EquipmentFillClient({
               type="button"
               onClick={() => {
                 setDone(false);
-                setTemperature(equipment.tempMax != null && equipment.tempMax < 0 ? "-" : "");
+                setTemperature(blankTemperature);
+                setEntry(initialReadingEntry(photoFixation, blankTemperature));
+                setPhotoPhase("idle");
                 setHumidity("");
                 setCorrection("");
                 setStatus(null);
@@ -405,19 +467,25 @@ export function EquipmentFillClient({
                 </p>
               ) : null}
               {status ? null : (
-                <ReadingField
-                  id="equipment-fill-temperature"
-                  label="Температура"
-                  unit="°C"
-                  stamp={stampLabel}
-                  value={temperature}
-                  onChange={setTemperature}
-                  min={equipment.tempMin}
-                  max={equipment.tempMax}
-                  required
-                  // Число подставлено со снимка и не правилось — пусть человек сверит.
-                  mark={recognizedTemperature !== null && temperature.trim() === recognizedTemperature ? READING_PHOTO_TEXT.checkMark : null}
-                  footer={
+                <div>
+                  {view.showField ? (
+                    <ReadingField
+                      id="equipment-fill-temperature"
+                      label="Температура"
+                      unit="°C"
+                      stamp={stampLabel}
+                      value={temperature}
+                      onChange={changeTemperature}
+                      min={equipment.tempMin}
+                      max={equipment.tempMax}
+                      required
+                      // Число подставлено со снимка и не правилось — пусть человек сверит.
+                      mark={recognizedTemperature !== null && temperature.trim() === recognizedTemperature ? READING_PHOTO_TEXT.checkMark : null}
+                    />
+                  ) : null}
+                  {/* Снимок — всегда на этом месте дерева: смена «главная кнопка → карточка
+                      под полем» не сбрасывает загрузку и распознавание. */}
+                  {photoFixation.enabled ? (
                     <ReadingPhoto
                       kind="equipment"
                       objectId={equipment.id}
@@ -426,22 +494,38 @@ export function EquipmentFillClient({
                       pass={pass}
                       autofill={photoAutofill}
                       photoUrl={photo}
-                      onPhotoChange={setPhoto}
+                      onPhotoChange={(url) => {
+                        setPhoto(url);
+                        if (!url) setRecognizedTemperature(null);
+                      }}
                       value={temperature}
                       onRecognized={(text) => {
                         setTemperature(text);
                         setRecognizedTemperature(text);
                       }}
                       disabledReason={employeeId ? null : "Сначала выберите своё имя"}
+                      variant={view.photoFirst ? "primary" : "inline"}
+                      required={photoFixation.required}
+                      onPhaseChange={setPhotoPhase}
                     />
-                  }
-                />
+                  ) : null}
+                  {view.photoFirst && !photoFixation.required ? (
+                    <button
+                      type="button"
+                      onClick={enterManually}
+                      className="mt-3 h-12 w-full rounded-2xl border border-[#dcdfed] bg-white px-5 text-[16px] font-semibold text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+                      data-testid="reading-manual-button"
+                    >
+                      {READING_PHOTO_FIXATION_TEXT.manualButton}
+                    </button>
+                  ) : null}
+                </div>
               )}
               <EquipmentStatusChoice value={status} onChange={setStatus} />
 
               {/* Дополнительное поле для оборудования с climate-mapping
                   на humidity (например, кондиционер в кондитерской цехе). */}
-              {equipment.hasHumidityField && !status ? (
+              {equipment.hasHumidityField && !status && view.showField ? (
                 <ReadingField id="equipment-fill-humidity" label="Влажность" unit="%" stamp={stampLabel} value={humidity} onChange={setHumidity} min={humidityNorm?.min} max={humidityNorm?.max} invalidText={humidity.trim() && parsedHumidity === null ? "Влажность — число от 0 до 100, можно оставить пустым." : null} />
               ) : null}
 
@@ -468,17 +552,21 @@ export function EquipmentFillClient({
                 </div>
               ) : null}
 
-              <div>
-                <Button
-                  type="button"
-                  onClick={save}
-                  disabled={submitting || blockedReason !== null}
-                  className="h-14 w-full rounded-2xl bg-[#5566f6] px-5 text-[18px] font-semibold text-white hover:bg-[#4a5bf0] shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] disabled:bg-[#c8cbe0]"
-                >
-                  {submitting ? "Сохраняем…" : "Сохранить замер"}
-                </Button>
-                <SaveBlockedReason reason={submitting ? null : blockedReason} />
-              </div>
+              {/* Пока ждём снимок — «Сохранить» нет: главное действие одно. */}
+              {view.showSave ? (
+                <div ref={saveRef}>
+                  <Button
+                    type="button"
+                    onClick={save}
+                    disabled={submitting || blockedReason !== null}
+                    className="h-14 w-full rounded-2xl bg-[#5566f6] px-5 text-[18px] font-semibold text-white hover:bg-[#4a5bf0] shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] disabled:bg-[#c8cbe0]"
+                    data-testid="equipment-fill-save"
+                  >
+                    {submitting ? "Сохраняем…" : confirmRecognized ? READING_PHOTO_FIXATION_TEXT.confirmSave : "Сохранить замер"}
+                  </Button>
+                  <SaveBlockedReason reason={submitting ? null : blockedReason} />
+                </div>
+              ) : null}
               </div>
               )}
             </div>

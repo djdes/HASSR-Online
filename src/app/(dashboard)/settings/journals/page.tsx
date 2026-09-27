@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { getActiveBuildingId } from "@/lib/active-building";
 import { db } from "@/lib/db";
+import { sortJournalsByName } from "@/lib/journal-sort";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { getFillMode } from "@/lib/journal-routing";
@@ -89,7 +90,9 @@ export default async function JournalsSettingsPage() {
   // Снимки реальных документов — те же, что на дашборде и в /journals.
   const previewUrls = await getJournalPreviewMap(organizationId, await getActiveBuildingId(session));
 
-  const items = templates.map((t) => ({
+  // Журналы по алфавиту: клиент раскладывает их по группам
+  // («обязательные», «рекомендуем», остальные) с сохранением порядка.
+  const items = sortJournalsByName(templates, (t) => t.name).map((t) => ({
     id: t.id,
     code: t.code,
     name: t.name,
@@ -108,7 +111,7 @@ export default async function JournalsSettingsPage() {
   // Бумажные бланки сферы с тем же признаком enabled, что у
   // электронных: хранение негативное, поэтому новый бланк в каталоге
   // сразу включён.
-  const paperItems = paperJournalsFor(sphere).map((journal) => ({
+  const paperItems = sortJournalsByName(paperJournalsFor(sphere), (j) => j.name).map((journal) => ({
     ...journal,
     enabled: !disabledPaper.has(journal.id),
   }));

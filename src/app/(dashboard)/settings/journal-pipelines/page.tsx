@@ -5,6 +5,7 @@ import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
+import { sortJournalsByName } from "@/lib/journal-sort";
 import { hasCapability } from "@/lib/permission-presets";
 import { getDefaultPipeline } from "@/lib/journal-pipelines";
 import { PIPELINE_EXEMPT_JOURNALS } from "@/lib/journal-default-pipelines";
@@ -224,7 +225,7 @@ export default async function JournalPipelinesPage() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {allJournals.map((j) => {
+        {sortJournalsByName(allJournals, (j) => j.name).map((j) => {
           const hasOverride = Boolean(overrides[j.code]?.steps?.length);
           const hasDefault = Boolean(getDefaultPipeline(j.code));
           void hasDefault; // показываем только status, не «Default» отдельно

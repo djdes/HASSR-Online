@@ -1,6 +1,7 @@
 import type { jsPDF } from "jspdf";
 
 import { PLATFORM_BADGE_TEXT } from "@/lib/partners/validation";
+import { JOURNAL_CAP_HEIGHT_EM, JOURNAL_SHEET_MARGIN_MM } from "@/lib/pdf-journal-sheet";
 
 /**
  * Единая нумерация страниц печатных бланков — «СТР. X ИЗ N».
@@ -50,7 +51,7 @@ export function registerPageLabelSlot(
 }
 
 /** Высота прописной буквы DejaVu Sans в долях кегля. */
-const CAP_HEIGHT_EM = 0.73;
+const CAP_HEIGHT_EM = JOURNAL_CAP_HEIGHT_EM;
 /** Межстрочный интервал текста в ячейках бланка, в долях кегля. */
 const LINE_HEIGHT_EM = 1.3;
 
@@ -102,22 +103,7 @@ function drawCenteredLabel(
   drawTextCenteredInBox(doc, text, slot);
 }
 
-export function stampJournalPageNumbers(
-  doc: jsPDF,
-  fontName = "JournalUnicode",
-  options: {
-    /**
-     * Отступ правого края подписи «СТР. X ИЗ N» на странице без шапки
-     * (мм от правого края листа). По умолчанию 14; с QR-кодом в углу —
-     * левее QR-блока (`journalQrFooterInset`). Функция — свой отступ у
-     * каждой страницы (QR стоит вровень с таблицей, а поля у страниц разные).
-     */
-    fallbackRightInset?: number | ((pageNumber: number) => number);
-  } = {}
-) {
-  const fallbackRightInset = options.fallbackRightInset ?? 14;
-  const rightInsetFor = (pageNumber: number) =>
-    typeof fallbackRightInset === "function" ? fallbackRightInset(pageNumber) : fallbackRightInset;
+export function stampJournalPageNumbers(doc: jsPDF, fontName = "JournalUnicode") {
   const totalPages = doc.getNumberOfPages();
   const byPage = new Map<number, PageLabelSlot>();
   for (const slot of pageLabelSlots) {
@@ -136,7 +122,10 @@ export function stampJournalPageNumbers(
     if (slot) {
       drawCenteredLabel(doc, label, slot);
     } else {
-      doc.text(label, pageWidth - rightInsetFor(pageNumber), pageHeight - 8, { align: "right" });
+      // Базовая линия — на нижнем поле листа, правый край — на правом поле.
+      doc.text(label, pageWidth - JOURNAL_SHEET_MARGIN_MM, pageHeight - JOURNAL_SHEET_MARGIN_MM, {
+        align: "right",
+      });
     }
   }
 
@@ -161,24 +150,16 @@ export function partnerPdfFooterText(brand: PdfFooterBrand): string {
   return `${signature} · ${PLATFORM_BADGE_TEXT}`;
 }
 
+/** Место справа под «СТР. X ИЗ N» на странице без шапки, мм: подвал партнёра кончается левее. */
+const PARTNER_FOOTER_RIGHT_RESERVE_MM = 48;
+
 export function stampPartnerPdfFooter(
   doc: jsPDF,
   brand: PdfFooterBrand | null | undefined,
   fontName = "JournalUnicode",
-  options: {
-    /**
-     * Сколько места справа (мм) оставить под «СТР. X ИЗ N» (и QR-код в
-     * углу, если он печатается). По умолчанию 48. Функция — своё место у
-     * каждой страницы.
-     */
-    rightReserve?: number | ((pageNumber: number) => number);
-  } = {}
 ) {
   if (!brand) return;
   const totalPages = doc.getNumberOfPages();
-  const rightReserveOption = options.rightReserve ?? 48;
-  const rightReserveFor = (pageNumber: number) =>
-    typeof rightReserveOption === "function" ? rightReserveOption(pageNumber) : rightReserveOption;
   const text = partnerPdfFooterText(brand);
 
   doc.setFont(fontName, "normal");
@@ -189,11 +170,12 @@ export function stampPartnerPdfFooter(
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     // Справа оставляем место под «СТР. X ИЗ N» на страницах без шапки.
-    const maxWidth = pageWidth - 14 - rightReserveFor(pageNumber);
+    const maxWidth = pageWidth - JOURNAL_SHEET_MARGIN_MM - PARTNER_FOOTER_RIGHT_RESERVE_MM;
     const lines = (doc.splitTextToSize(text, maxWidth) as string[]).slice(0, 2);
+    // Последняя строка — на нижнем поле листа, от левого поля.
     lines.forEach((line, index) => {
-      const y = pageHeight - 8 - (lines.length - 1 - index) * 3.4;
-      doc.text(line, 14, y);
+      const y = pageHeight - JOURNAL_SHEET_MARGIN_MM - (lines.length - 1 - index) * 3.4;
+      doc.text(line, JOURNAL_SHEET_MARGIN_MM, y);
     });
   }
   doc.setTextColor(0, 0, 0);

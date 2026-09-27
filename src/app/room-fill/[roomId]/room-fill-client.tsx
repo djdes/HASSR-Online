@@ -12,6 +12,17 @@ import { EmployeePicker } from "@/components/qr-fill/employee-picker";
 import { ReadingField } from "@/components/qr-fill/reading-field";
 import { ReadingPhoto } from "@/components/qr-fill/reading-photo";
 import { READING_PHOTO_TEXT, isReadingPhotoUrl } from "@/lib/reading-photos";
+import {
+  DEFAULT_READING_PHOTO_SETTINGS,
+  READING_PHOTO_FIXATION_TEXT,
+  initialReadingEntry,
+  isBlankReading,
+  isReadingPhotoMissing,
+  readingFormView,
+  type ReadingEntry,
+  type ReadingPhotoPhase,
+  type ReadingPhotoSettings,
+} from "@/lib/reading-photo-fixation";
 import { NextQrButton } from "@/components/qr-fill/next-qr-button";
 import { QrPassNote, QrPinOk, QrPinStep, QrPinUiStyles, QrRememberToggle, forgetQrPass, rememberQrEmployee } from "@/components/qr-fill/qr-pin-step";
 import { draftKeyFor, useFormDraft } from "@/components/qr-fill/use-form-draft";
@@ -44,6 +55,8 @@ type Props = {
   passEmployeeId?: string | null;
   /** Платный тариф: показание со снимка («Фото» у температуры) заполняется само. */
   photoAutofill?: boolean;
+  /** «Фотофиксация показаний» организации: «Сфотографируйте показание» первым действием, фото обязательно. */
+  photoFixation?: ReadingPhotoSettings;
 };
 
 const LS_EMPLOYEE_KEY = "wesetup.room-fill.employeeId";
@@ -65,7 +78,7 @@ function isOutside(value: number | null, metric: Metric): boolean {
  * Три шага, как на плакате: выбрать себя → ввести показания → «Сохранить».
  * Имя запоминается на телефоне, со второго раза остаётся ввести числа.
  */
-export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot, employees, mode = "public", sessionEmployee = null, todayValues = null, stamp = null, journalTitle, rememberedEmployeeId = null, passEmployeeId = null, photoAutofill = false }: Props) {
+export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot, employees, mode = "public", sessionEmployee = null, todayValues = null, stamp = null, journalTitle, rememberedEmployeeId = null, passEmployeeId = null, photoAutofill = false, photoFixation = DEFAULT_READING_PHOTO_SETTINGS }: Props) {
   const [employeeId, setEmployeeId] = useState("");
   // Кого восстановили из памяти при входе: «Запомнили с прошлого раза» — только ему
   // и только пока выбор не меняли руками.
@@ -98,10 +111,19 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
   const fixedEmployee = mode === "auth" && sessionEmployee && !sessionEmployee.canPickOthers;
   // Холодный склад с нормой ниже нуля — минус стоит сразу.
   const hasToday = typeof todayValues?.temperature === "number" || typeof todayValues?.humidity === "number";
+  const blankTemperature = norms.temperature.max !== null && norms.temperature.max < 0 ? "-" : "";
   const [temperature, setTemperature] = useState(
-    typeof todayValues?.temperature === "number" ? String(todayValues.temperature) : norms.temperature.max !== null && norms.temperature.max < 0 ? "-" : ""
+    typeof todayValues?.temperature === "number" ? String(todayValues.temperature) : blankTemperature
   );
   const [humidity, setHumidity] = useState(typeof todayValues?.humidity === "number" ? String(todayValues.humidity) : "");
+  // Фото — к температуре: у помещения без температуры фотофиксации нет.
+  const photoSettings: ReadingPhotoSettings = norms.temperature.enabled ? photoFixation : { enabled: false, required: false };
+  // Фотофиксация (2026-09-27): показаний ещё нет — первым делом «Сфотографируйте
+  // показание»; «Ввести вручную» или любой ввод — обычная форма.
+  const [entry, setEntry] = useState<ReadingEntry>(() =>
+    hasToday ? "manual" : initialReadingEntry(photoSettings, typeof todayValues?.temperature === "number" ? String(todayValues.temperature) : blankTemperature)
+  );
+  const [photoPhase, setPhotoPhase] = useState<ReadingPhotoPhase>("idle");
   // «Фото» у температуры: снимок дисплея прикрепляется к замеру (всем),
   // на платном тарифе показание со снимка подставляется в поле.
   const [photo, setPhoto] = useState<string | null>(null);
@@ -127,8 +149,14 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
     draftKeyFor(`room-fill:${room.id}`, stamp?.date),
     { temperature, humidity, correction, photo: photo ?? "" },
     (saved) => {
-      if (typeof saved.temperature === "string") setTemperature(saved.temperature);
-      if (typeof saved.humidity === "string") setHumidity(saved.humidity);
+      if (typeof saved.temperature === "string") {
+        setTemperature(saved.temperature);
+        if (!isBlankReading(saved.temperature)) setEntry("manual");
+      }
+      if (typeof saved.humidity === "string") {
+        setHumidity(saved.humidity);
+        if (saved.humidity.trim()) setEntry("manual");
+      }
       if (typeof saved.correction === "string") setCorrection(saved.correction);
       if (isReadingPhotoUrl(saved.photo)) setPhoto(saved.photo);
     },
@@ -183,6 +211,39 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
   const needsCorrection = temperatureOutside || humidityOutside;
   const correctionMissing = needsCorrection && correction.trim() === "";
 
+  // Что показывать: главная кнопка снимка / поля / «Сохранить».
+  const view = readingFormView({
+    settings: photoSettings,
+    entry,
+    phase: photoPhase,
+    photoUrl: photo,
+    value: temperature,
+    status: false,
+  });
+  // «Фото обязательно» — температуру без снимка не сохранить (одна влажность — можно).
+  const photoMissing = isReadingPhotoMissing({
+    settings: photoSettings,
+    hasReading: norms.temperature.enabled && temperatureValue !== null,
+    photoUrl: photo,
+  });
+  // Число со снимка не правили — одно нажатие «Всё верно — сохранить».
+  const confirmRecognized = Boolean(photo) && recognizedTemperature !== null && temperature.trim() === recognizedTemperature;
+  const changeTemperature = (value: string) => {
+    setTemperature(value);
+    setEntry("manual");
+  };
+  const enterManually = () => {
+    setEntry("manual");
+    window.requestAnimationFrame(() => document.getElementById("room-fill-temperature")?.focus());
+  };
+  // Число со снимка подставили — «Всё верно — сохранить» должна быть на экране: одно нажатие без прокрутки.
+  const saveRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (recognizedTemperature === null) return;
+    const id = window.requestAnimationFrame(() => saveRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }));
+    return () => window.cancelAnimationFrame(id);
+  }, [recognizedTemperature]);
+
   async function save() {
     if (submitting) return;
     setError(null);
@@ -192,6 +253,10 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
     }
     if (!hasValue) {
       setError("Введите показания");
+      return;
+    }
+    if (photoMissing) {
+      setError(READING_PHOTO_FIXATION_TEXT.requiredError);
       return;
     }
     if (correctionMissing) {
@@ -210,8 +275,8 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
           ...(norms.humidity.enabled && humidityValue !== null && !humidityInvalid ? { humidity: humidityValue } : {}),
           // Комментарий — только к отклонению: вернули в норму — не отправляем.
           ...(needsCorrection && correction.trim() ? { correction: correction.trim() } : {}),
-          // Снимок дисплея — к температуре.
-          ...(norms.temperature.enabled && temperatureValue !== null && photo ? { photo } : {}),
+          // Снимок показания — к температуре.
+          ...(photoSettings.enabled && temperatureValue !== null && photo ? { photo } : {}),
           ...(pass ? { pass } : {}),
         }),
       });
@@ -253,9 +318,11 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
             : norms.humidity.enabled
               ? "Не указана влажность"
               : "Не указана температура"
-          : correctionMissing
-            ? "Опишите, что сделали"
-            : null;
+          : photoMissing
+            ? READING_PHOTO_FIXATION_TEXT.needPhoto
+            : correctionMissing
+              ? "Опишите, что сделали"
+              : null;
   // После сохранения текущий объект в списке сразу «снят» — с введёнными значениями.
 
   return (
@@ -281,7 +348,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
             <p className="mt-2 text-[14px] leading-relaxed text-[#6f7282]">
               Записано в бланк за сегодня{saved.slot ? `, ${saved.slot}` : ""}
               {rememberedName ? ` — на имя ${rememberedName}` : ""}.
-              {saved.photoAttached ? " Фото дисплея — в бланке рядом со значением." : ""}
+              {saved.photoAttached ? " Фото показания — в бланке рядом со значением." : ""}
             </p>
             {saved.outOfRange ? (
               <p className="mt-3 rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-3 text-[13px] text-[#a13a32]">
@@ -297,7 +364,9 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
               type="button"
               onClick={() => {
                 setSaved(null);
-                setTemperature(norms.temperature.max !== null && norms.temperature.max < 0 ? "-" : "");
+                setTemperature(blankTemperature);
+                setEntry(initialReadingEntry(photoSettings, blankTemperature));
+                setPhotoPhase("idle");
                 setHumidity("");
                 setCorrection("");
                 setPhoto(null);
@@ -360,19 +429,25 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                   </p>
                 ) : null}
                 {norms.temperature.enabled ? (
-                  <ReadingField
-                    id="room-fill-temperature"
-                    label="Температура"
-                    unit="°C"
-                    stamp={stampLabel}
-                    value={temperature}
-                    onChange={setTemperature}
-                    min={norms.temperature.min}
-                    max={norms.temperature.max}
-                    required
-                    // Число подставлено со снимка и не правилось — пусть человек сверит.
-                    mark={recognizedTemperature !== null && temperature.trim() === recognizedTemperature ? READING_PHOTO_TEXT.checkMark : null}
-                    footer={
+                  <div>
+                    {view.showField ? (
+                      <ReadingField
+                        id="room-fill-temperature"
+                        label="Температура"
+                        unit="°C"
+                        stamp={stampLabel}
+                        value={temperature}
+                        onChange={changeTemperature}
+                        min={norms.temperature.min}
+                        max={norms.temperature.max}
+                        required
+                        // Число подставлено со снимка и не правилось — пусть человек сверит.
+                        mark={recognizedTemperature !== null && temperature.trim() === recognizedTemperature ? READING_PHOTO_TEXT.checkMark : null}
+                      />
+                    ) : null}
+                    {/* Снимок — всегда на этом месте дерева: смена «главная кнопка → карточка
+                        под полем» не сбрасывает загрузку и распознавание. */}
+                    {photoSettings.enabled ? (
                       <ReadingPhoto
                         kind="room"
                         objectId={room.id}
@@ -381,19 +456,35 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                         pass={pass}
                         autofill={photoAutofill}
                         photoUrl={photo}
-                        onPhotoChange={setPhoto}
+                        onPhotoChange={(url) => {
+                          setPhoto(url);
+                          if (!url) setRecognizedTemperature(null);
+                        }}
                         value={temperature}
                         onRecognized={(text) => {
                           setTemperature(text);
                           setRecognizedTemperature(text);
                         }}
                         disabledReason={employeeId ? null : "Сначала выберите своё имя"}
+                        variant={view.photoFirst ? "primary" : "inline"}
+                        required={photoSettings.required}
+                        onPhaseChange={setPhotoPhase}
                       />
-                    }
-                  />
+                    ) : null}
+                    {view.photoFirst && !photoSettings.required ? (
+                      <button
+                        type="button"
+                        onClick={enterManually}
+                        className="mt-3 h-12 w-full rounded-2xl border border-[#dcdfed] bg-white px-5 text-[16px] font-semibold text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+                        data-testid="reading-manual-button"
+                      >
+                        {READING_PHOTO_FIXATION_TEXT.manualButton}
+                      </button>
+                    ) : null}
+                  </div>
                 ) : null}
 
-                {norms.humidity.enabled ? (
+                {norms.humidity.enabled && view.showField ? (
                   <ReadingField id="room-fill-humidity" label="Влажность" unit="%" stamp={stampLabel} value={humidity} onChange={setHumidity} min={norms.humidity.min} max={norms.humidity.max} invalidText={humidityInvalid ? "Влажность — число от 0 до 100." : null} />
                 ) : null}
 
@@ -419,22 +510,26 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
                 <div className="rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-3 text-[15px] text-[#a13a32]">{error}</div>
               ) : null}
 
-              <div>
-                <Button
-                  type="button"
-                  onClick={save}
-                  disabled={submitting || blockedReason !== null}
-                  className="h-14 w-full rounded-2xl bg-[#5566f6] px-5 text-[18px] font-semibold text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] disabled:bg-[#c8cbe0]"
-                >
-                  {submitting ? "Сохраняем…" : "Сохранить"}
-                </Button>
-                <SaveBlockedReason reason={submitting ? null : blockedReason} />
-                {hasActiveDocument && nextSlot ? (
-                  <p className="mt-2 text-center text-[14px] text-[#9b9fb3]">
-                    Запись попадёт в журнал за сегодня, срок контроля {nextSlot}.
-                  </p>
-                ) : null}
-              </div>
+              {/* Пока ждём снимок — «Сохранить» нет: главное действие одно. */}
+              {view.showSave ? (
+                <div ref={saveRef}>
+                  <Button
+                    type="button"
+                    onClick={save}
+                    disabled={submitting || blockedReason !== null}
+                    className="h-14 w-full rounded-2xl bg-[#5566f6] px-5 text-[18px] font-semibold text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] disabled:bg-[#c8cbe0]"
+                    data-testid="room-fill-save"
+                  >
+                    {submitting ? "Сохраняем…" : confirmRecognized ? READING_PHOTO_FIXATION_TEXT.confirmSave : "Сохранить"}
+                  </Button>
+                  <SaveBlockedReason reason={submitting ? null : blockedReason} />
+                  {hasActiveDocument && nextSlot ? (
+                    <p className="mt-2 text-center text-[14px] text-[#9b9fb3]">
+                      Запись попадёт в журнал за сегодня, срок контроля {nextSlot}.
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
               </div>
               )}
             </div>

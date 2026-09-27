@@ -6,6 +6,7 @@ import { clientIp } from "@/lib/client-ip";
 import { QR_FILL_RATE_LIMIT_ERROR, qrFillRateKey } from "@/lib/qr-fill-audit";
 import { authorizeQrReadingPhoto } from "@/lib/qr-reading-photo";
 import { qrFillRateLimiter } from "@/lib/rate-limit";
+import { READING_PHOTO_DISABLED_CODE, READING_PHOTO_FIXATION_TEXT } from "@/lib/reading-photo-fixation";
 import { readReadingPhoto } from "@/lib/reading-photo-store";
 import { READING_PHOTO_TEXT, isReadingPhotoUrl } from "@/lib/reading-photos";
 
@@ -33,9 +34,11 @@ const bodySchema = z.object({
  *
  * Тот же путь, что `/api/ocr/reading` (задание диспетчеру вида `reading`,
  * лимиты общие с «С фото» — в лимит идёт сотрудник, выбравший себя в форме).
- * Ответ `{ value, unit, confidence }`; нечитаемое, не та единица или
- * невозможное число — `value: null` (форма пишет «Не разобрали цифры —
- * введите вручную»), ничего не выдумывается.
+ * Ответ `{ value, unit, confidence, device? }`; нечитаемое, не та единица,
+ * невозможное число или сомнение модели — `value: null` (форма пишет «Не
+ * разобрали цифры — введите вручную»), ничего не выдумывается. Стрелочный и
+ * жидкостный термометр (`device`: dial / liquid) — до целого градуса.
+ * Фотофиксация выключена — 403 `photo_disabled`.
  */
 export async function POST(request: Request) {
   let body: z.infer<typeof bodySchema>;
@@ -60,6 +63,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
   const { actor } = auth;
+  if (!actor.photo.enabled) {
+    return NextResponse.json(
+      { error: READING_PHOTO_FIXATION_TEXT.disabledError, code: READING_PHOTO_DISABLED_CODE },
+      { status: 403 }
+    );
+  }
   if (!actor.autofill) {
     console.info(`[reading-photo] qr recognize refused: free plan org=${actor.organizationId} user=${actor.employee.id}`);
     return NextResponse.json(
@@ -86,7 +95,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: outcome.error }, { status: outcome.status });
   }
   console.info(
-    `[reading-photo] qr recognize kind=${body.kind} object=${body.objectId} metric=${body.metric} value=${outcome.result.value ?? "null"} org=${actor.organizationId}`
+    `[reading-photo] qr recognize kind=${body.kind} object=${body.objectId} metric=${body.metric} device=${outcome.result.device ?? "-"} value=${outcome.result.value ?? "null"} confidence=${outcome.result.confidence} org=${actor.organizationId}`
   );
   return NextResponse.json(outcome.result);
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { sortJournalsByName } from "@/lib/journal-sort";
 import { OPTION_LABEL, VENUE_LABEL, pickJournals, type VenueKind, type VenueOption } from "@/lib/seo/journal-picker";
 
 const CHIP = "inline-flex h-10 items-center rounded-full border px-4 text-[14px] font-medium transition-colors";
@@ -11,7 +12,11 @@ const CHIP = "inline-flex h-10 items-center rounded-full border px-4 text-[14px]
 export function JournalsCalculator({ names }: { names: Record<string, string> }) {
   const [kind, setKind] = useState<VenueKind>("cafe");
   const [options, setOptions] = useState<VenueOption[]>(["fridges", "hotFood"]);
-  const codes = useMemo(() => pickJournals(kind, options), [kind, options]);
+  // Набор — по алфавиту названий.
+  const codes = useMemo(
+    () => sortJournalsByName(pickJournals(kind, options), (code) => names[code] ?? code),
+    [kind, options, names],
+  );
 
   function toggle(o: VenueOption) {
     setOptions((prev) => (prev.includes(o) ? prev.filter((x) => x !== o) : [...prev, o]));

@@ -7,6 +7,7 @@ import JSZip from "jszip";
 
 import { BLANK_COPYRIGHT, BLANK_QR_CAPTION, blankTargetKey } from "@/lib/blank-download";
 import {
+  BLANK_PDF_FOOTER,
   BLANK_QR_LINES,
   base32Decode,
   base32Encode,
@@ -17,13 +18,13 @@ import {
   openBlankQrToken,
   sealBlankQrToken,
 } from "@/lib/blank-qr-token";
-import { brandQrPng } from "@/lib/brand-qr";
+import { BRAND_QR_CAPTION_TITLE, brandQrPng } from "@/lib/brand-qr";
 import { renderJournalDocumentDocx } from "@/lib/document-docx";
 import { renderJournalDocumentPdf } from "@/lib/document-pdf";
 import { standardFontsDir, workerFileUrl } from "@/lib/journal-preview/render";
 import { SAMPLE_ORGANIZATION, buildJournalSampleInput } from "@/lib/journal-sample-fixtures";
 import { renderPaperJournalPdfDetailed } from "@/lib/paper-journal-pdf";
-import { journalQrMatrix } from "@/lib/pdf-journal-qr";
+import { JOURNAL_QR_MAX_MODULES, journalQrMatrix } from "@/lib/pdf-journal-qr";
 import { paperJournalById } from "@/lib/sphere-journal-rules";
 
 /**
@@ -97,32 +98,36 @@ test("журнал в токене: все журналы каталога и б
   assert.equal(gone?.target, null);
 });
 
-test("адрес QR влезает в угол бланка (≤ 41 модуль); длинная почта — токен без почты", () => {
+test("адрес QR влезает в шапку бланка (H, ≤ 53 модулей); почта до 32 байт — в QR, длиннее — токен без почты", () => {
   for (const target of knownBlankTargets()) {
     const bare = blankQrUrl("https://wesetup.ru", { target });
     assert.equal(bare.withEmail, false);
     assert.ok(fitsJournalQr(bare.url), blankTargetKey(target));
   }
-  const email39 = "zaveduyushchaya.proizv@kombinat-pita.ru";
-  assert.equal(email39.length, 39);
-  const withEmail = blankQrUrl("https://wesetup.ru", { target: { kind: "code", code: "cleaning_ventilation_checklist" }, email: email39 });
+  const email32 = "zaveduyushchaya@kombinat-pita.ru";
+  assert.equal(email32.length, 32);
+  const withEmail = blankQrUrl("https://wesetup.ru", { target: { kind: "code", code: "cleaning_ventilation_checklist" }, email: email32 });
   assert.equal(withEmail.withEmail, true);
   assert.match(withEmail.url, /^https:\/\/wesetup\.ru\/qb\/[A-Z2-7]+$/);
-  assert.ok(journalQrMatrix(withEmail.url).modules.size <= 41);
-  assert.equal(openBlankQrToken(withEmail.url.split("/qb/")[1])?.email, email39);
+  assert.ok(journalQrMatrix(withEmail.url).modules.size <= JOURNAL_QR_MAX_MODULES);
+  assert.equal(openBlankQrToken(withEmail.url.split("/qb/")[1])?.email, email32);
 
-  const tooLong = blankQrUrl("https://wesetup.ru", { target: HYGIENE, email: `a${email39}` });
-  assert.equal(tooLong.withEmail, false, "почта длиннее 39 символов в QR не помещается");
-  assert.ok(fitsJournalQr(tooLong.url));
-  assert.deepEqual(openBlankQrToken(tooLong.url.split("/qb/")[1])?.target, HYGIENE, "журнал остаётся");
+  // 33 байта и больше (до 2026-09-27 помещалось 39 — у углового QR была коррекция M).
+  for (const email of [`a${email32}`, "zaveduyushchaya.proizv@kombinat-pita.ru"]) {
+    const tooLong = blankQrUrl("https://wesetup.ru", { target: HYGIENE, email });
+    assert.equal(tooLong.withEmail, false, `почта ${email.length} байт в QR не помещается`);
+    assert.ok(fitsJournalQr(tooLong.url));
+    assert.deepEqual(openBlankQrToken(tooLong.url.split("/qb/")[1])?.target, HYGIENE, "журнал остаётся");
+  }
 });
 
-test("подпись QR: «Заполнять с телефона — wesetup.ru» и строка копирайта", () => {
+test("строка внизу PDF: «Заполнять с телефона — wesetup.ru» и копирайт", () => {
   assert.deepEqual(BLANK_QR_LINES, [BLANK_QR_CAPTION, BLANK_COPYRIGHT]);
   assert.equal(BLANK_QR_CAPTION, "Заполнять с телефона — wesetup.ru");
   assert.equal(BLANK_COPYRIGHT, "© WeSetup — электронные журналы ХАССП и СанПиН · wesetup.ru");
   const qr = blankPdfQr("https://wesetup.ru/", { target: HYGIENE, email: "zav@example.com" });
-  assert.deepEqual(qr.lines, BLANK_QR_LINES);
+  assert.equal(qr.footer, BLANK_PDF_FOOTER);
+  assert.equal(BLANK_PDF_FOOTER, `${BLANK_QR_CAPTION} · ${BLANK_COPYRIGHT}`);
   assert.equal(openBlankQrToken(qr.url.split("/qb/")[1])?.email, "zav@example.com");
 });
 
@@ -151,29 +156,35 @@ async function pageTexts(pdf: Uint8Array): Promise<string[]> {
 
 const COPYRIGHT_PARTS = ["© WeSetup — электронные журналы", "ХАССП и СанПиН · wesetup.ru", "Заполнять с телефона —"];
 
-test("PDF образца: копирайт, подпись и QR на КАЖДОЙ странице, без наложений", async () => {
+test("PDF образца: копирайт на КАЖДОЙ странице, QR в шапке каждой страницы", async () => {
   const input = buildJournalSampleInput("hygiene");
   const out = renderJournalDocumentPdf({ ...input, qr: blankPdfQr("https://wesetup.ru", { target: HYGIENE, email: "zav@example.com" }) });
   const texts = await pageTexts(new Uint8Array(out.buffer));
   assert.ok(texts.length >= 2, "многостраничный образец");
-  assert.equal(out.qrPlacements?.length, texts.length, "QR на каждой странице");
-  assert.ok(out.qrPlacements?.every((p) => !p.overlap));
+  assert.equal(out.qrPlacements?.length, texts.length);
+  assert.ok(out.qrPlacements?.every((p) => p.where === "header"), "у гигиены шапка на каждой странице — QR в ней");
   texts.forEach((text, index) => {
     for (const part of COPYRIGHT_PARTS) assert.ok(text.includes(part), `стр. ${index + 1}: «${part}»`);
+    assert.ok(text.includes(BRAND_QR_CAPTION_TITLE), `стр. ${index + 1}: плашка QR`);
   });
   // Сам образец не изменился: без QR — те же страницы и то же имя файла.
   const plain = renderJournalDocumentPdf(input);
   assert.equal(plain.fileName, out.fileName);
 });
 
-test("PDF бумажного бланка: копирайт и QR на каждой странице; без qr — как в кабинете", async () => {
+test("PDF бумажного бланка: копирайт на каждой странице, QR — справа в заголовке первой; без qr — как в кабинете", async () => {
   const journal = paperJournalById("ot_intro");
   assert.ok(journal);
   const params = { journal, organization: SAMPLE_ORGANIZATION, rows: [], blankRows: 18 };
   const out = renderPaperJournalPdfDetailed({ ...params, qr: blankPdfQr("https://wesetup.ru", { target: { kind: "paper", paperId: "ot_intro" } }) });
   const texts = await pageTexts(new Uint8Array(out.buffer));
   assert.equal(out.qrPlacements?.length, texts.length);
-  assert.ok(out.qrPlacements?.every((p) => !p.overlap));
+  // Первая страница: над таблицей справа от заголовка; продолжения —
+  // таблица с верхнего поля, QR строк не отнимает.
+  assert.deepEqual(
+    out.qrPlacements?.map((p) => p.where),
+    texts.map((_, index) => (index === 0 ? "corner" : "none")),
+  );
   for (const text of texts) for (const part of COPYRIGHT_PARTS) assert.ok(text.includes(part), part);
 
   const cabinet = renderPaperJournalPdfDetailed(params);

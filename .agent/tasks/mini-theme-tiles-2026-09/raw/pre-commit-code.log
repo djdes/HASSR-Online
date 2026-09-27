@@ -1,0 +1,20 @@
+→ Проверка на секреты...
+→ TypeScript type-check...
+
+> haccp-online@0.1.0 typecheck
+> tsc --noEmit --skipLibCheck -p tsconfig.typecheck.json
+
+→ Tests (baseline gate)...
+
+> haccp-online@0.1.0 test:gate
+> bash scripts/test-with-baseline.sh
+
+
+=== Test stats: pass=2645, fail=0 ===
+✓ Все тесты прошли.
+✓ pre-commit OK
+[feat/mini-theme-tiles-2026-09-27 a83fda3e] Мини-приложение: тема — те же три карточки, что в меню сайта, «Как на устройстве» по Telegram и по телефону
+ 13 files changed, 1046 insertions(+), 230 deletions(-)
+ create mode 100644 src/app/mini/_components/mini-theme-model.test.ts
+ create mode 100644 src/app/mini/_components/mini-theme-model.ts
+ create mode 100644 src/app/mini/_components/mini-theme-tiles.tsx

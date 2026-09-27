@@ -1,0 +1,57 @@
+diff --git a/src/lib/document-pdf.ts b/src/lib/document-pdf.ts
+index 05bf332f..54af9aef 100644
+--- a/src/lib/document-pdf.ts
++++ b/src/lib/document-pdf.ts
+@@ -1034,7 +1034,9 @@ function drawJournalHeader(doc: jsPDF, params: {
+   const qrTile = journalQrTileOf(doc);
+   const qrWidth = qrTile ? journalQrCellWidth(qrTile) : 0;
+   const qrLeft = x + width - qrWidth;
+-  const middleWidth = width - leftWidth - rightWidth - qrWidth;
++  // ВАРИАНТ B (только для сравнения): рамка шапки кончается за 2 мм до блока QR.
++  const frameWidth = qrTile ? width - qrWidth - 2 : width;
++  const middleWidth = frameWidth - leftWidth - rightWidth;
+   const journalTitle = headerTitleOr(journalLabel).toUpperCase();
+ 
+   // Высоты строк — по фактическому числу строк текста (кегль 10): длинное
+@@ -1062,7 +1064,7 @@ function drawJournalHeader(doc: jsPDF, params: {
+ 
+   doc.setFont("JournalUnicode", "normal");
+   const periodicityLines = withPeriodicity
+-    ? (doc.splitTextToSize(periodicityText, width - leftWidth - 8) as string[])
++    ? (doc.splitTextToSize(periodicityText, frameWidth - leftWidth - 8) as string[])
+     : [];
+   doc.setFont("JournalUnicode", "bold");
+   const periodicityLabelLines = (doc.splitTextToSize("Периодичность контроля", leftWidth - 6) as string[]).length;
+@@ -1077,7 +1079,7 @@ function drawJournalHeader(doc: jsPDF, params: {
+   // каждая внутренняя линия рисуется один раз и упирается в рамку.
+   doc.setDrawColor(0, 0, 0);
+   doc.setLineWidth(JOURNAL_LINE_WIDTH);
+-  doc.rect(x, y, width, totalHeight);
++  doc.rect(x, y, frameWidth, totalHeight);
+   // Вертикаль «организация | остальное» — на всю высоту: в row3 она
+   // отделяет label «Периодичность контроля» от значения.
+   doc.line(x + leftWidth, y, x + leftWidth, y + totalHeight);
+@@ -1085,12 +1087,11 @@ function drawJournalHeader(doc: jsPDF, params: {
+   doc.line(x + leftWidth + middleWidth, y, x + leftWidth + middleWidth, gridBottom);
+   // Вертикаль «Начат/СТР | QR» — тоже по row1+row2; горизонталь между
+   // row1 и row2 упирается в ячейку QR.
+-  if (qrTile) doc.line(qrLeft, y, qrLeft, gridBottom);
+-  doc.line(x + leftWidth, y + topHeight, qrLeft, y + topHeight);
++  doc.line(x + leftWidth, y + topHeight, x + frameWidth, y + topHeight);
+   if (withPeriodicity) {
+     // Полная горизонталь над строкой периодичности (включая участок
+     // под ячейкой организации) — иначе шапка «протекает» вниз.
+-    doc.line(x, gridBottom, x + width, gridBottom);
++    doc.line(x, gridBottom, x + frameWidth, gridBottom);
+   }
+ 
+   doc.setFont("JournalUnicode", "bold");
+@@ -1116,7 +1117,7 @@ function drawJournalHeader(doc: jsPDF, params: {
+   // Линия «Окончен ______» не должна вылезать за правую рамку своей
+   // ячейки (аудит r5, п.2; правее — ячейка QR): подчёркивание подрезаем.
+   doc.text(
+-    finished || fitUnderscoreLabel(doc, "", qrLeft - 3 - valueX),
++    finished || fitUnderscoreLabel(doc, "", x + frameWidth - 3 - valueX),
+     valueX,
+     finishedY
+   );

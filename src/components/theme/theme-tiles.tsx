@@ -9,6 +9,7 @@ import { useSiteTheme, type ThemeMode } from "./site-theme";
 import {
   THEME_PREVIEW_PALETTES,
   THEME_TILES,
+  chooseThemeTile,
   isThemeMode,
   selectedThemeTile,
   themeTileForKey,
@@ -26,6 +27,10 @@ import {
  * до карточек доходили стрелки клавиатуры). Состояние и сохранение — те же,
  * что и раньше: `useSiteTheme().setMode` (localStorage + `/api/me/theme`).
  *
+ * Сами карточки (`ThemeTileGroup`) от провайдера не зависят — значение и
+ * `onChange` приходят снаружи. Так их же показывает профиль мини-приложения
+ * (`/mini/me`), где тему ведёт `useMiniTheme()`, а не `useSiteTheme()`.
+ *
  * Цвета рамки и подписи — токены темы (`--app-*`), а не хексы: меню
  * порталится в <body>, вне `.app-shell`, и хекс-классы там перекрашиваются
  * тёмной темой хуже (индиго-текст на тёмном становился тусклым).
@@ -37,7 +42,30 @@ import {
  */
 export const BRANDING_SETTINGS_HREF = "/settings/organization#branding";
 
-type TileSize = "comfortable" | "compact";
+/**
+ * Размер карточек:
+ *  - `comfortable` — лист профиля на телефоне и страница настроек;
+ *  - `compact` — выпадающее меню на компьютере;
+ *  - `touch` — мини-приложение: подписи и подсказка крупнее (шкала
+ *    QR-страниц), ряд из трёх держится и на узком телефоне.
+ */
+export type ThemeTileSize = "comfortable" | "compact" | "touch";
+
+/** Откуда карточки берут тему: `useSiteTheme()` на сайте, `useMiniTheme()` в мини-приложении. */
+export type ThemeTileSource = {
+  mode: ThemeMode;
+  autoBySchedule: boolean;
+  setMode: (mode: ThemeMode) => void;
+  setAutoBySchedule: (on: boolean) => void;
+};
+
+/** Подсказка под карточками про смену темы по времени суток. */
+export type ThemeTileAutoNote = {
+  autoBySchedule: boolean;
+  /** Смену выключило нажатие на карточку — предлагаем вернуть. */
+  autoTurnedOff: boolean;
+  onRestore: () => void;
+};
 
 /**
  * Выбор карточки. Если включена смена по времени суток — нажатие её
@@ -45,17 +73,18 @@ type TileSize = "comfortable" | "compact";
  * об этом: до нажатия — подсказкой, после — строкой «выключена» с
  * возможностью вернуть.
  */
-function useThemeTileChoice() {
-  const { mode, autoBySchedule, setMode, setAutoBySchedule } = useSiteTheme();
+export function useThemeTileChoice(source: ThemeTileSource) {
+  const { mode, autoBySchedule, setMode, setAutoBySchedule } = source;
   // Живёт, пока открыто меню: закрыли и открыли снова — строки уже нет.
   const [autoTurnedOff, setAutoTurnedOff] = useState(false);
 
   function choose(next: ThemeMode) {
-    if (autoBySchedule) {
+    const choice = chooseThemeTile({ autoBySchedule }, next);
+    if (choice.turnedOffAuto) {
       setAutoBySchedule(false);
       setAutoTurnedOff(true);
     }
-    setMode(next);
+    setMode(choice.mode);
   }
 
   function restoreAuto() {
@@ -63,12 +92,19 @@ function useThemeTileChoice() {
     setAutoBySchedule(true);
   }
 
+  const note: ThemeTileAutoNote = {
+    autoBySchedule,
+    autoTurnedOff,
+    onRestore: restoreAuto,
+  };
+
   return {
     selected: selectedThemeTile({ mode, autoBySchedule }),
     autoBySchedule,
     autoTurnedOff,
     choose,
     restoreAuto,
+    note,
   };
 }
 
@@ -81,23 +117,56 @@ export function ThemeTiles({
   autoNote = true,
   className,
 }: {
-  size?: TileSize;
+  size?: ThemeTileSize;
   /** Подсказка про смену по времени суток. На странице настроек её
       заменяет сама галочка «Менять по времени суток» под карточками. */
   autoNote?: boolean;
   className?: string;
 }) {
-  const { selected, autoBySchedule, autoTurnedOff, choose, restoreAuto } =
-    useThemeTileChoice();
+  const choice = useThemeTileChoice(useSiteTheme());
+  return (
+    <ThemeTileGroup
+      value={choice.selected}
+      onChange={choice.choose}
+      note={autoNote ? choice.note : null}
+      size={size}
+      className={className}
+    />
+  );
+}
+
+/**
+ * Карточки без провайдера: выбранное значение и `onChange` — снаружи.
+ * Группа переключателей (`radiogroup`): Tab заходит на выбранную карточку,
+ * стрелки выбирают соседнюю, Home / End — крайние.
+ */
+export function ThemeTileGroup({
+  value,
+  onChange,
+  note = null,
+  size = "comfortable",
+  className,
+  tileClassName,
+}: {
+  /** Выбранная карточка; `null` — ни одна (тема меняется по времени суток). */
+  value: ThemeMode | null;
+  onChange: (mode: ThemeMode) => void;
+  /** Подсказка про смену по времени суток; `null` — без неё. */
+  note?: ThemeTileAutoNote | null;
+  size?: ThemeTileSize;
+  className?: string;
+  /** Дополнительные классы кнопки-карточки (в мини-приложении — отклик нажатия). */
+  tileClassName?: string;
+}) {
   const buttons = useRef<Partial<Record<ThemeMode, HTMLButtonElement | null>>>({});
   // В группу переключателей Tab заходит один раз — на выбранную карточку.
-  const tabStop = selected ?? THEME_TILES[0].mode;
+  const tabStop = value ?? THEME_TILES[0].mode;
 
   function onKeyDown(event: KeyboardEvent<HTMLButtonElement>, current: ThemeMode) {
     const next = themeTileForKey(current, event.key);
     if (!next) return;
     event.preventDefault();
-    choose(next);
+    onChange(next);
     buttons.current[next]?.focus();
   }
 
@@ -106,10 +175,17 @@ export function ThemeTiles({
       <div
         role="radiogroup"
         aria-label="Тема"
-        className={cn("grid grid-cols-3", size === "compact" ? "gap-2" : "gap-2.5")}
+        className={cn(
+          "grid grid-cols-3",
+          size === "compact" ? "gap-2" : "gap-2.5",
+          // Правило кабинета для телефонов (globals.css) складывает
+          // `.grid-cols-3` внутри `main` в две колонки. Мини-приложение —
+          // тоже `.app-shell`, а карточкам нужен ряд из трёх.
+          size === "touch" && "no-mobile-shrink"
+        )}
       >
         {THEME_TILES.map((tile) => {
-          const checked = selected === tile.mode;
+          const checked = value === tile.mode;
           return (
             <button
               key={tile.mode}
@@ -123,25 +199,29 @@ export function ThemeTiles({
               data-state={checked ? "checked" : "unchecked"}
               data-theme-tile={tile.mode}
               data-testid={`theme-tile-${tile.mode}`}
-              onClick={() => choose(tile.mode)}
+              onClick={() => onChange(tile.mode)}
               onKeyDown={(event) => onKeyDown(event, tile.mode)}
-              className="group/tile flex min-w-0 cursor-pointer flex-col gap-2 rounded-2xl text-left outline-none"
+              className={cn(
+                "group/tile flex min-w-0 cursor-pointer flex-col gap-2 rounded-2xl text-left outline-none",
+                tileClassName
+              )}
             >
               <ThemeTileFace tile={tile} checked={checked} size={size} />
             </button>
           );
         })}
       </div>
-      {autoNote ? (
+      {note ? (
         <div aria-live="polite">
           <AutoScheduleNote
-            autoBySchedule={autoBySchedule}
-            autoTurnedOff={autoTurnedOff}
+            autoBySchedule={note.autoBySchedule}
+            autoTurnedOff={note.autoTurnedOff}
+            size={size}
             restore={
               <button
                 type="button"
                 data-testid="theme-auto-restore"
-                onClick={restoreAuto}
+                onClick={note.onRestore}
                 className={RESTORE_CLASS}
               >
                 Включить снова
@@ -162,7 +242,7 @@ export function ThemeTiles({
  */
 export function ThemeTilesMenu({ className }: { className?: string }) {
   const { selected, autoBySchedule, autoTurnedOff, choose, restoreAuto } =
-    useThemeTileChoice();
+    useThemeTileChoice(useSiteTheme());
 
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>, current: ThemeMode) {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
@@ -232,17 +312,22 @@ function AutoScheduleNote({
   autoBySchedule,
   autoTurnedOff,
   restore,
+  size = "comfortable",
 }: {
   autoBySchedule: boolean;
   autoTurnedOff: boolean;
   restore: ReactNode;
+  size?: ThemeTileSize;
 }) {
   if (!autoBySchedule && !autoTurnedOff) return null;
   return (
     <div
       data-testid="theme-auto-note"
       data-state={autoBySchedule ? "on" : "turned-off"}
-      className="mt-2 flex items-start gap-2 rounded-xl bg-[var(--app-tint-indigo)] px-2.5 py-2 text-[12px] leading-snug text-[var(--app-text-secondary)]"
+      className={cn(
+        "mt-2 flex items-start gap-2 rounded-xl bg-[var(--app-tint-indigo)] px-2.5 py-2 leading-snug text-[var(--app-text-secondary)]",
+        size === "touch" ? "text-[14px]" : "text-[12px]"
+      )}
     >
       <Clock className="mt-px size-3.5 shrink-0 text-[var(--app-indigo-deep)]" aria-hidden />
       {autoBySchedule ? (
@@ -260,7 +345,18 @@ function AutoScheduleNote({
   );
 }
 
-/** Превью и подпись карточки — общие для листа и выпадающего меню. */
+/**
+ * Кегль подписи. В мини-приложении — 15px: крупнее не помещается «устройстве»
+ * в карточку на телефоне шириной 360px (ряд из трёх в карточке профиля).
+ */
+const TILE_LABEL_SIZE: Record<ThemeTileSize, string> = {
+  comfortable: "text-[14px]",
+  compact: "text-[12px]",
+  // Телефон уже 360px: слово переносится внутри, а не вылезает за карточку.
+  touch: "text-[15px] break-words",
+};
+
+/** Превью и подпись карточки — общие для листа, выпадающего меню и мини-приложения. */
 function ThemeTileFace({
   tile,
   checked,
@@ -268,7 +364,7 @@ function ThemeTileFace({
 }: {
   tile: ThemeTile;
   checked: boolean;
-  size: TileSize;
+  size: ThemeTileSize;
 }) {
   return (
     <>
@@ -287,7 +383,7 @@ function ThemeTileFace({
       <span
         className={cn(
           "block text-center leading-tight",
-          size === "compact" ? "text-[12px]" : "text-[14px]",
+          TILE_LABEL_SIZE[size],
           checked
             ? "font-semibold text-[var(--app-indigo-deep)]"
             : "font-medium text-[var(--app-text-secondary)]"

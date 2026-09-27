@@ -560,7 +560,7 @@ function DoneView({
       <div className="rounded-2xl border border-[#5566f6]/20 bg-gradient-to-br from-[#f5f6ff] to-white p-4">
         <div className="text-[14px] font-semibold text-[#0b1024]">«{title}» можно не печатать</div>
         <p className="mt-1 text-[13px] leading-[1.55] text-[#3c4053]">
-          В WeSetup журнал заполняют с телефона по QR — тому же, что в углу шаблона. С напоминаниями, если смена
+          В WeSetup журнал заполняют с телефона по QR — тому же, что на шаблоне. С напоминаниями, если смена
           забыла отметиться.
         </p>
         <Link

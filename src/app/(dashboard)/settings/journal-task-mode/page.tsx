@@ -4,6 +4,7 @@ import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
+import { sortJournalsByName } from "@/lib/journal-sort";
 import {
   parseTaskModesJson,
   getDefaultTaskMode,
@@ -37,7 +38,7 @@ export default async function JournalTaskModePage() {
   const overrides = parseTaskModesJson(org?.journalTaskModesJson);
 
   // Готовим список journal'ов с резолвом effective-режима для UI.
-  const journals = ACTIVE_JOURNAL_CATALOG.map((j) => {
+  const journals = sortJournalsByName(ACTIVE_JOURNAL_CATALOG, (j) => j.name).map((j) => {
     const def = getDefaultTaskMode(j.code);
     const override = overrides[j.code] ?? {};
     return {

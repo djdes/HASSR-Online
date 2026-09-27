@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
+import { sortJournalsByName } from "@/lib/journal-sort";
 import { periodBounds } from "@/lib/inspector-qr";
 import type { InspectorAccess } from "@/lib/inspector-access";
 
@@ -84,7 +85,8 @@ export async function loadInspectorJournals(
     { key: "haccp", label: "Система ХАССП", rows: [] },
     { key: "other", label: "Прочие журналы", rows: [] },
   ];
-  for (const t of templatesAll) {
+  // Внутри каждой группы — по алфавиту (у проверяющего официальные названия).
+  for (const t of sortJournalsByName(templatesAll, (tpl) => tpl.name)) {
     if (access.disabledCodes.has(t.code)) continue;
     const row: InspectorJournalRow = {
       ...t,

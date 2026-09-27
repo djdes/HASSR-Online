@@ -3,6 +3,8 @@ import { ShieldCheck } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
+import { hasPaidPlan } from "@/lib/plan-limits.server";
+import { getReadingPhotoSettings } from "@/lib/reading-photo-fixation.server";
 import { ComplianceClient } from "./compliance-client";
 
 export const dynamic = "force-dynamic";
@@ -14,19 +16,24 @@ export default async function CompliancePage() {
   }
   const orgId = getActiveOrgId(session);
 
-  const org = await db.organization.findUnique({
-    where: { id: orgId },
-    select: {
-      requireAdminForJournalEdit: true,
-      shiftEndHour: true,
-      lockPastDayEdits: true,
-      requirePhotoOnTaskFillStep: true,
-      escalateDeviationsToManagement: true,
-      deviationEscalationMinutes: true,
-      qrFillMode: true,
-      healthQrRequired: true,
-    },
-  });
+  const [org, readingPhoto, paidPlan] = await Promise.all([
+    db.organization.findUnique({
+      where: { id: orgId },
+      select: {
+        requireAdminForJournalEdit: true,
+        shiftEndHour: true,
+        lockPastDayEdits: true,
+        requirePhotoOnTaskFillStep: true,
+        escalateDeviationsToManagement: true,
+        deviationEscalationMinutes: true,
+        qrFillMode: true,
+        healthQrRequired: true,
+      },
+    }),
+    // «Фотофиксация показаний» QR-форм холодильника и склада.
+    getReadingPhotoSettings(orgId),
+    hasPaidPlan(orgId),
+  ]);
 
   return (
     <div className="space-y-5">
@@ -66,6 +73,8 @@ export default async function CompliancePage() {
         initialEscalationMinutes={org?.deviationEscalationMinutes ?? 60}
         initialQrFillMode={org?.qrFillMode === "pin" || org?.qrFillMode === "auth" ? org.qrFillMode : "public"}
         initialHealthQrRequired={org?.healthQrRequired === true}
+        initialReadingPhoto={readingPhoto}
+        readingPhotoAutofill={paidPlan}
       />
     </div>
   );

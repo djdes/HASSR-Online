@@ -15,7 +15,7 @@ import {
  * сайт выдаёт QR: плакаты и наклейки журналов и объектов, личный вход,
  * QR для проверяющих (портал, лист A4, сертификат), приглашения и
  * сопряжение сотрудников, планшет-киоск, шаблоны журналов (Word),
- * угловой QR печатного журнала и наклейка на лендинге.
+ * QR в шапке печатного журнала и наклейка на лендинге.
  *
  * Вид (уточнение владельца: коды печатают на ЧЁРНО-БЕЛОМ принтере):
  *   • модули и «глаза» — чёрные: цветные «глаза» в ч/б печати становятся
@@ -31,13 +31,14 @@ import {
  * Варианты:
  *   • `full` (по умолчанию) — всё выше; `caption: false` — без плашки
  *     (наклейка лендинга: подпись даёт её золотая рамка);
- *   • `compact` — маленькие печатные QR (угол журнала 13 мм, подвал
- *     шаблона Word 18 мм): коррекция M, без логотипа и плашки — ровно
- *     прежний вид. С логотипом код пришлось бы поднять до H, матрица стала
- *     бы плотнее, а модуль — меньше 0,3 мм.
+ *   • `compact` — маленький печатный QR в подвале шаблона Word (18 мм):
+ *     коррекция M, без логотипа и плашки. С логотипом код пришлось бы
+ *     поднять до H, матрица стала бы плотнее, а модуль — меньше 0,3 мм.
+ *     Печатный журнал (PDF) с 2026-09-27 — полный вариант в шапке
+ *     (`drawBrandQrTilePdf`): там плитка ~17–20 мм, модуль не меньше 0,35 мм.
  *
  * Выходы: SVG (HTML и печать из браузера), PNG / data URL (диалоги,
- * сертификат PDF, Word), векторная матрица jsPDF (угловой QR журнала).
+ * сертификат PDF, Word), векторная плитка jsPDF (QR в шапке журнала).
  * Адрес внутри кода помощник не меняет.
  *
  * Server-only: `qrcode`, `node:fs`, `@napi-rs/canvas`. Клиенту — пропорции
@@ -62,7 +63,8 @@ const PAPER = "#ffffff";
 export const BRAND_QR_PLATE_FROM = "#6f7282";
 export const BRAND_QR_PLATE_TO = "#0b1024";
 
-const FULL_QUIET = 2;
+/** Тихая зона полного варианта вокруг матрицы, модулей. */
+export const BRAND_QR_FULL_QUIET = 2;
 /** Как у прежних PNG шаблона Word (`margin: 1`). */
 const COMPACT_QUIET = 1;
 /** Подложка логотипа — не больше этой доли стороны матрицы. */
@@ -149,7 +151,7 @@ export function brandQrLayout(url: string, options: BrandQrOptions = {}): BrandQ
   const qr = brandQrMatrix(url, { variant });
   const size = qr.modules.size;
   const data = qr.modules.data;
-  const quiet = full ? FULL_QUIET : COMPACT_QUIET;
+  const quiet = full ? BRAND_QR_FULL_QUIET : COMPACT_QUIET;
   const width = size + 2 * quiet;
   const withCaption = full && options.caption !== false;
   const height = withCaption ? width * BRAND_QR_CAPTION_ASPECT : width;
@@ -494,18 +496,63 @@ export async function brandQrPngDataUrl(url: string, options: BrandQrOptions & {
 // jsPDF (вектор)
 // ---------------------------------------------------------------------------
 
+/** Имя картинки знака в PDF: jsPDF кладёт её в файл один раз на весь документ. */
+const PDF_MARK_ALIAS = "wesetup-brand-qr-mark";
+
+type IconPng = { bytes: Uint8Array; width: number; height: number };
+let iconPngCache: IconPng | null | undefined;
+
+/** `icon.png` как есть (синхронно — отрисовка jsPDF синхронная); размер — из заголовка PNG. */
+function iconPng(): IconPng | null {
+  if (iconPngCache !== undefined) return iconPngCache;
+  const file = ICON_CANDIDATES.find((candidate) => fs.existsSync(candidate));
+  const bytes = file ? fs.readFileSync(file) : null;
+  iconPngCache =
+    bytes && bytes.length > 24 ? { bytes: new Uint8Array(bytes), width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) } : null;
+  return iconPngCache;
+}
+
+export type BrandQrPdfBox = { x: number; y: number; width: number; height: number; module: number };
+
 /**
- * Матрица компактного QR векторными квадратами jsPDF — угловой QR
- * печатного журнала. Рисуется только матрица (без тихой зоны: её даёт
- * свободное поле штампа), в квадрат `size` мм от (x, y).
+ * Полный фирменный QR векторно в jsPDF — QR в шапке печатного журнала.
+ *
+ * Та же плитка, что у PNG и SVG (`brandQrLayout`, вариант `full`): тихая
+ * зона, чёрные квадратные модули и «глаза», белая скруглённая подложка со
+ * знаком сайта, плашка с градиентом серый→чёрный и белыми «Отсканировать» /
+ * «wesetup.ru». (x, y) — левый верхний угол плитки, `width` — её ширина с
+ * тихой зоной, мм; высота — по пропорции плитки.
+ *
+ * Модули, подложка, плашка и надписи — вектор (чётко на любом принтере):
+ * подряд идущие модули строки — одним прямоугольником; градиент — как в SVG,
+ * `PLATE_STRIPES` полос внутри скруглённого контура плашки (обрезка по
+ * пути). Знак — `icon.png`: вырез `MARK_CROP` — тоже обрезкой, картинка одна
+ * на документ. `fontName` — шрифт документа с кириллицей; надписи —
+ * его жирным начертанием, кегль подбирается, чтобы строка влезла в плашку.
  */
-export function drawBrandQrMatrixPdf(doc: jsPDF, layout: BrandQrLayout, x: number, y: number, size: number) {
-  if (layout.variant !== "compact") throw new Error("В PDF вектором рисуется только компактный QR");
-  const n = layout.size;
-  const cell = size / n;
+export function drawBrandQrTilePdf(
+  doc: jsPDF,
+  layout: BrandQrLayout,
+  x: number,
+  y: number,
+  width: number,
+  options: { fontName: string },
+): BrandQrPdfBox {
+  if (layout.variant !== "full") throw new Error("Плитка PDF — только полный фирменный QR");
+  const u = width / layout.width;
+  const height = layout.height * u;
+  const font = doc.getFont();
+  const fontSize = doc.getFontSize();
+  const textColor = doc.getTextColor();
+  const fillColor = doc.getFillColor();
+
+  // Белая плитка: тихая зона кода и поле вокруг плашки.
+  doc.setFillColor(255, 255, 255);
+  doc.rect(x, y, width, height, "F");
+
   doc.setFillColor(0, 0, 0);
+  const n = layout.size;
   for (let row = 0; row < n; row += 1) {
-    // Подряд идущие тёмные модули строки — одним прямоугольником.
     let col = 0;
     while (col < n) {
       if (!layout.plain(row, col)) {
@@ -514,8 +561,79 @@ export function drawBrandQrMatrixPdf(doc: jsPDF, layout: BrandQrLayout, x: numbe
       }
       const start = col;
       while (col < n && layout.plain(row, col)) col += 1;
-      // +0.01 мм — без «волосяных» щелей между соседними строками.
-      doc.rect(x + start * cell, y + row * cell, (col - start) * cell, cell + 0.01, "F");
+      // +0,01 мм — без «волосяных» щелей между соседними строками.
+      doc.rect(x + (layout.quiet + start) * u, y + (layout.quiet + row) * u, (col - start) * u, u + 0.01, "F");
     }
   }
+
+  if (layout.pad) {
+    const p = layout.pad;
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(x + p.x * u, y + p.y * u, p.w * u, p.h * u, p.r * u, p.r * u, "F");
+  }
+  const icon = layout.mark ? iconPng() : null;
+  if (layout.mark && icon) {
+    const m = layout.mark;
+    const scale = (m.w * u) / MARK_CROP.size;
+    doc.saveGraphicsState();
+    doc.rect(x + m.x * u, y + m.y * u, m.w * u, m.h * u, null);
+    doc.clip();
+    doc.discardPath();
+    doc.addImage(
+      icon.bytes,
+      "PNG",
+      x + m.x * u - MARK_CROP.x * scale,
+      y + m.y * u - MARK_CROP.y * scale,
+      icon.width * scale,
+      icon.height * scale,
+      PDF_MARK_ALIAS,
+      // Без сжатия jsPDF кладёт картинку с альфой как есть — ~110 КБ на
+      // документ; со сжатием — ~9 КБ.
+      "FAST",
+    );
+    doc.restoreGraphicsState();
+  }
+
+  if (layout.plate) {
+    const p = layout.plate;
+    const px = x + p.x * u;
+    const py = y + p.y * u;
+    const pw = p.w * u;
+    const ph = p.h * u;
+    const from = rgbOf(BRAND_QR_PLATE_FROM);
+    const to = rgbOf(BRAND_QR_PLATE_TO);
+    doc.saveGraphicsState();
+    doc.roundedRect(px, py, pw, ph, p.r * u, p.r * u, null);
+    doc.clip();
+    doc.discardPath();
+    for (let i = 0; i < PLATE_STRIPES; i += 1) {
+      const mix = (i + 0.5) / PLATE_STRIPES;
+      const [r, g, b] = from.map((c, j) => Math.round(c + (to[j] - c) * mix));
+      doc.setFillColor(r, g, b);
+      // Как в SVG: полоса — вся часть плашки ниже своей линии, следующая
+      // (темнее) ложится сверху. Стыков между полосами нет — нет и светлых
+      // «волосков» от сглаживания краёв.
+      const top = py + (ph * i) / PLATE_STRIPES;
+      doc.rect(px, top, pw, py + ph - top, "F");
+    }
+    doc.restoreGraphicsState();
+
+    const maxWidth = (p.w - 2 * layout.width * PLATE_PAD_X) * u;
+    doc.setTextColor(255, 255, 255);
+    doc.setFont(options.fontName, "bold");
+    for (const text of [layout.title, layout.site]) {
+      if (!text) continue;
+      const size = (text.size * u * 72) / 25.4;
+      doc.setFontSize(size);
+      const textWidth = doc.getTextWidth(text.text);
+      if (textWidth > maxWidth) doc.setFontSize((size * maxWidth) / textWidth);
+      doc.text(text.text, x + text.x * u, y + text.y * u, { align: "center", baseline: "alphabetic" });
+    }
+  }
+
+  doc.setFont(font.fontName, font.fontStyle);
+  doc.setFontSize(fontSize);
+  doc.setTextColor(textColor);
+  doc.setFillColor(fillColor);
+  return { x, y, width, height, module: u };
 }

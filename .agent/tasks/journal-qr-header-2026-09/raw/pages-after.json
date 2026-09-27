@@ -1,0 +1,1490 @@
+[
+ {
+  "set": "samples",
+  "label": "hygiene",
+  "code": "hygiene",
+  "pages": 2,
+  "bytes": 494843,
+  "ms": 571
+ },
+ {
+  "set": "samples",
+  "label": "health_check",
+  "code": "health_check",
+  "pages": 1,
+  "bytes": 433300,
+  "ms": 270
+ },
+ {
+  "set": "samples",
+  "label": "climate_control",
+  "code": "climate_control",
+  "pages": 2,
+  "bytes": 493149,
+  "ms": 273
+ },
+ {
+  "set": "samples",
+  "label": "cold_equipment_control",
+  "code": "cold_equipment_control",
+  "pages": 1,
+  "bytes": 417448,
+  "ms": 218
+ },
+ {
+  "set": "samples",
+  "label": "cleaning_ventilation_checklist",
+  "code": "cleaning_ventilation_checklist",
+  "pages": 6,
+  "bytes": 770606,
+  "ms": 390
+ },
+ {
+  "set": "samples",
+  "label": "cleaning",
+  "code": "cleaning",
+  "pages": 1,
+  "bytes": 408960,
+  "ms": 271
+ },
+ {
+  "set": "samples",
+  "label": "general_cleaning",
+  "code": "general_cleaning",
+  "pages": 1,
+  "bytes": 426669,
+  "ms": 244
+ },
+ {
+  "set": "samples",
+  "label": "uv_lamp_runtime",
+  "code": "uv_lamp_runtime",
+  "pages": 1,
+  "bytes": 414083,
+  "ms": 225
+ },
+ {
+  "set": "samples",
+  "label": "finished_product",
+  "code": "finished_product",
+  "pages": 1,
+  "bytes": 399379,
+  "ms": 206
+ },
+ {
+  "set": "samples",
+  "label": "perishable_rejection",
+  "code": "perishable_rejection",
+  "pages": 1,
+  "bytes": 403659,
+  "ms": 230
+ },
+ {
+  "set": "samples",
+  "label": "incoming_control",
+  "code": "incoming_control",
+  "pages": 1,
+  "bytes": 402588,
+  "ms": 202
+ },
+ {
+  "set": "samples",
+  "label": "fryer_oil",
+  "code": "fryer_oil",
+  "pages": 2,
+  "bytes": 455648,
+  "ms": 230
+ },
+ {
+  "set": "samples",
+  "label": "med_books",
+  "code": "med_books",
+  "pages": 3,
+  "bytes": 521173,
+  "ms": 242
+ },
+ {
+  "set": "samples",
+  "label": "training_plan",
+  "code": "training_plan",
+  "pages": 1,
+  "bytes": 401485,
+  "ms": 188
+ },
+ {
+  "set": "samples",
+  "label": "staff_training",
+  "code": "staff_training",
+  "pages": 1,
+  "bytes": 399455,
+  "ms": 208
+ },
+ {
+  "set": "samples",
+  "label": "disinfectant_usage",
+  "code": "disinfectant_usage",
+  "pages": 1,
+  "bytes": 419312,
+  "ms": 228
+ },
+ {
+  "set": "samples",
+  "label": "sanitary_day_control",
+  "code": "sanitary_day_control",
+  "pages": 2,
+  "bytes": 423802,
+  "ms": 203
+ },
+ {
+  "set": "samples",
+  "label": "equipment_maintenance",
+  "code": "equipment_maintenance",
+  "pages": 1,
+  "bytes": 417482,
+  "ms": 139
+ },
+ {
+  "set": "samples",
+  "label": "breakdown_history",
+  "code": "breakdown_history",
+  "pages": 1,
+  "bytes": 399110,
+  "ms": 171
+ },
+ {
+  "set": "samples",
+  "label": "equipment_calibration",
+  "code": "equipment_calibration",
+  "pages": 1,
+  "bytes": 410602,
+  "ms": 158
+ },
+ {
+  "set": "samples",
+  "label": "incoming_raw_materials_control",
+  "code": "incoming_raw_materials_control",
+  "pages": 1,
+  "bytes": 408183,
+  "ms": 155
+ },
+ {
+  "set": "samples",
+  "label": "ppe_issuance",
+  "code": "ppe_issuance",
+  "pages": 1,
+  "bytes": 394729,
+  "ms": 156
+ },
+ {
+  "set": "samples",
+  "label": "accident_journal",
+  "code": "accident_journal",
+  "pages": 1,
+  "bytes": 401517,
+  "ms": 179
+ },
+ {
+  "set": "samples",
+  "label": "complaint_register",
+  "code": "complaint_register",
+  "pages": 1,
+  "bytes": 392189,
+  "ms": 189
+ },
+ {
+  "set": "samples",
+  "label": "product_writeoff",
+  "code": "product_writeoff",
+  "pages": 1,
+  "bytes": 402078,
+  "ms": 158
+ },
+ {
+  "set": "samples",
+  "label": "audit_plan",
+  "code": "audit_plan",
+  "pages": 2,
+  "bytes": 427264,
+  "ms": 181
+ },
+ {
+  "set": "samples",
+  "label": "audit_protocol",
+  "code": "audit_protocol",
+  "pages": 1,
+  "bytes": 397123,
+  "ms": 158
+ },
+ {
+  "set": "samples",
+  "label": "audit_report",
+  "code": "audit_report",
+  "pages": 1,
+  "bytes": 400488,
+  "ms": 152
+ },
+ {
+  "set": "samples",
+  "label": "traceability_test",
+  "code": "traceability_test",
+  "pages": 1,
+  "bytes": 398580,
+  "ms": 192
+ },
+ {
+  "set": "samples",
+  "label": "metal_impurity",
+  "code": "metal_impurity",
+  "pages": 1,
+  "bytes": 399882,
+  "ms": 119
+ },
+ {
+  "set": "samples",
+  "label": "equipment_cleaning",
+  "code": "equipment_cleaning",
+  "pages": 1,
+  "bytes": 404079,
+  "ms": 168
+ },
+ {
+  "set": "samples",
+  "label": "intensive_cooling",
+  "code": "intensive_cooling",
+  "pages": 1,
+  "bytes": 399116,
+  "ms": 155
+ },
+ {
+  "set": "samples",
+  "label": "glass_items_list",
+  "code": "glass_items_list",
+  "pages": 1,
+  "bytes": 401744,
+  "ms": 169
+ },
+ {
+  "set": "samples",
+  "label": "glass_control",
+  "code": "glass_control",
+  "pages": 1,
+  "bytes": 394951,
+  "ms": 152
+ },
+ {
+  "set": "samples",
+  "label": "pest_control",
+  "code": "pest_control",
+  "pages": 1,
+  "bytes": 399350,
+  "ms": 163
+ },
+ {
+  "set": "samples",
+  "label": "daily_samples",
+  "code": "daily_samples",
+  "pages": 1,
+  "bytes": 404588,
+  "ms": 241
+ },
+ {
+  "set": "samples",
+  "label": "vitaminization",
+  "code": "vitaminization",
+  "pages": 1,
+  "bytes": 403137,
+  "ms": 132
+ },
+ {
+  "set": "samples",
+  "label": "ration_control",
+  "code": "ration_control",
+  "pages": 1,
+  "bytes": 399291,
+  "ms": 163
+ },
+ {
+  "set": "samples",
+  "label": "transport_temperature",
+  "code": "transport_temperature",
+  "pages": 1,
+  "bytes": 405949,
+  "ms": 160
+ },
+ {
+  "set": "samples",
+  "label": "tableware_breakage",
+  "code": "tableware_breakage",
+  "pages": 1,
+  "bytes": 402019,
+  "ms": 169
+ },
+ {
+  "set": "samples",
+  "label": "pool_water_control",
+  "code": "pool_water_control",
+  "pages": 1,
+  "bytes": 405046,
+  "ms": 162
+ },
+ {
+  "set": "samples",
+  "label": "inventory_condition",
+  "code": "inventory_condition",
+  "pages": 1,
+  "bytes": 405140,
+  "ms": 194
+ },
+ {
+  "set": "samples",
+  "label": "instrument_sterilization",
+  "code": "instrument_sterilization",
+  "pages": 1,
+  "bytes": 404291,
+  "ms": 178
+ },
+ {
+  "set": "samples",
+  "label": "medical_waste_b",
+  "code": "medical_waste_b",
+  "pages": 1,
+  "bytes": 402687,
+  "ms": 164
+ },
+ {
+  "set": "samples",
+  "label": "batch_release",
+  "code": "batch_release",
+  "pages": 1,
+  "bytes": 401775,
+  "ms": 153
+ },
+ {
+  "set": "blanks",
+  "label": "hygiene",
+  "code": "hygiene",
+  "pages": 2,
+  "bytes": 561188,
+  "ms": 198
+ },
+ {
+  "set": "blanks",
+  "label": "health_check",
+  "code": "health_check",
+  "pages": 1,
+  "bytes": 459823,
+  "ms": 174
+ },
+ {
+  "set": "blanks",
+  "label": "climate_control",
+  "code": "climate_control",
+  "pages": 2,
+  "bytes": 544014,
+  "ms": 196
+ },
+ {
+  "set": "blanks",
+  "label": "cold_equipment_control",
+  "code": "cold_equipment_control",
+  "pages": 1,
+  "bytes": 444426,
+  "ms": 176
+ },
+ {
+  "set": "blanks",
+  "label": "cleaning_ventilation_checklist",
+  "code": "cleaning_ventilation_checklist",
+  "pages": 6,
+  "bytes": 881618,
+  "ms": 283
+ },
+ {
+  "set": "blanks",
+  "label": "cleaning",
+  "code": "cleaning",
+  "pages": 1,
+  "bytes": 442631,
+  "ms": 210
+ },
+ {
+  "set": "blanks",
+  "label": "general_cleaning",
+  "code": "general_cleaning",
+  "pages": 1,
+  "bytes": 453161,
+  "ms": 185
+ },
+ {
+  "set": "blanks",
+  "label": "uv_lamp_runtime",
+  "code": "uv_lamp_runtime",
+  "pages": 1,
+  "bytes": 441301,
+  "ms": 196
+ },
+ {
+  "set": "blanks",
+  "label": "finished_product",
+  "code": "finished_product",
+  "pages": 1,
+  "bytes": 428015,
+  "ms": 189
+ },
+ {
+  "set": "blanks",
+  "label": "perishable_rejection",
+  "code": "perishable_rejection",
+  "pages": 1,
+  "bytes": 431683,
+  "ms": 185
+ },
+ {
+  "set": "blanks",
+  "label": "incoming_control",
+  "code": "incoming_control",
+  "pages": 1,
+  "bytes": 431347,
+  "ms": 161
+ },
+ {
+  "set": "blanks",
+  "label": "fryer_oil",
+  "code": "fryer_oil",
+  "pages": 2,
+  "bytes": 521135,
+  "ms": 182
+ },
+ {
+  "set": "blanks",
+  "label": "med_books",
+  "code": "med_books",
+  "pages": 3,
+  "bytes": 611735,
+  "ms": 232
+ },
+ {
+  "set": "blanks",
+  "label": "training_plan",
+  "code": "training_plan",
+  "pages": 1,
+  "bytes": 430551,
+  "ms": 248
+ },
+ {
+  "set": "blanks",
+  "label": "staff_training",
+  "code": "staff_training",
+  "pages": 1,
+  "bytes": 425921,
+  "ms": 174
+ },
+ {
+  "set": "blanks",
+  "label": "disinfectant_usage",
+  "code": "disinfectant_usage",
+  "pages": 1,
+  "bytes": 447527,
+  "ms": 194
+ },
+ {
+  "set": "blanks",
+  "label": "sanitary_day_control",
+  "code": "sanitary_day_control",
+  "pages": 2,
+  "bytes": 451994,
+  "ms": 215
+ },
+ {
+  "set": "blanks",
+  "label": "equipment_maintenance",
+  "code": "equipment_maintenance",
+  "pages": 1,
+  "bytes": 444805,
+  "ms": 217
+ },
+ {
+  "set": "blanks",
+  "label": "breakdown_history",
+  "code": "breakdown_history",
+  "pages": 1,
+  "bytes": 429316,
+  "ms": 142
+ },
+ {
+  "set": "blanks",
+  "label": "equipment_calibration",
+  "code": "equipment_calibration",
+  "pages": 1,
+  "bytes": 436639,
+  "ms": 204
+ },
+ {
+  "set": "blanks",
+  "label": "incoming_raw_materials_control",
+  "code": "incoming_raw_materials_control",
+  "pages": 1,
+  "bytes": 429782,
+  "ms": 176
+ },
+ {
+  "set": "blanks",
+  "label": "ppe_issuance",
+  "code": "ppe_issuance",
+  "pages": 1,
+  "bytes": 424088,
+  "ms": 162
+ },
+ {
+  "set": "blanks",
+  "label": "accident_journal",
+  "code": "accident_journal",
+  "pages": 1,
+  "bytes": 429383,
+  "ms": 185
+ },
+ {
+  "set": "blanks",
+  "label": "complaint_register",
+  "code": "complaint_register",
+  "pages": 1,
+  "bytes": 419128,
+  "ms": 196
+ },
+ {
+  "set": "blanks",
+  "label": "product_writeoff",
+  "code": "product_writeoff",
+  "pages": 1,
+  "bytes": 431754,
+  "ms": 175
+ },
+ {
+  "set": "blanks",
+  "label": "audit_plan",
+  "code": "audit_plan",
+  "pages": 2,
+  "bytes": 462590,
+  "ms": 164
+ },
+ {
+  "set": "blanks",
+  "label": "audit_protocol",
+  "code": "audit_protocol",
+  "pages": 1,
+  "bytes": 425729,
+  "ms": 154
+ },
+ {
+  "set": "blanks",
+  "label": "audit_report",
+  "code": "audit_report",
+  "pages": 1,
+  "bytes": 428680,
+  "ms": 163
+ },
+ {
+  "set": "blanks",
+  "label": "traceability_test",
+  "code": "traceability_test",
+  "pages": 1,
+  "bytes": 429118,
+  "ms": 146
+ },
+ {
+  "set": "blanks",
+  "label": "metal_impurity",
+  "code": "metal_impurity",
+  "pages": 1,
+  "bytes": 428761,
+  "ms": 175
+ },
+ {
+  "set": "blanks",
+  "label": "equipment_cleaning",
+  "code": "equipment_cleaning",
+  "pages": 1,
+  "bytes": 431178,
+  "ms": 177
+ },
+ {
+  "set": "blanks",
+  "label": "intensive_cooling",
+  "code": "intensive_cooling",
+  "pages": 1,
+  "bytes": 429041,
+  "ms": 178
+ },
+ {
+  "set": "blanks",
+  "label": "glass_items_list",
+  "code": "glass_items_list",
+  "pages": 1,
+  "bytes": 429689,
+  "ms": 159
+ },
+ {
+  "set": "blanks",
+  "label": "glass_control",
+  "code": "glass_control",
+  "pages": 1,
+  "bytes": 426234,
+  "ms": 119
+ },
+ {
+  "set": "blanks",
+  "label": "pest_control",
+  "code": "pest_control",
+  "pages": 1,
+  "bytes": 427707,
+  "ms": 206
+ },
+ {
+  "set": "blanks",
+  "label": "daily_samples",
+  "code": "daily_samples",
+  "pages": 1,
+  "bytes": 433352,
+  "ms": 178
+ },
+ {
+  "set": "blanks",
+  "label": "vitaminization",
+  "code": "vitaminization",
+  "pages": 1,
+  "bytes": 430653,
+  "ms": 174
+ },
+ {
+  "set": "blanks",
+  "label": "ration_control",
+  "code": "ration_control",
+  "pages": 1,
+  "bytes": 427881,
+  "ms": 161
+ },
+ {
+  "set": "blanks",
+  "label": "transport_temperature",
+  "code": "transport_temperature",
+  "pages": 1,
+  "bytes": 432534,
+  "ms": 184
+ },
+ {
+  "set": "blanks",
+  "label": "tableware_breakage",
+  "code": "tableware_breakage",
+  "pages": 1,
+  "bytes": 428960,
+  "ms": 265
+ },
+ {
+  "set": "blanks",
+  "label": "pool_water_control",
+  "code": "pool_water_control",
+  "pages": 1,
+  "bytes": 432400,
+  "ms": 172
+ },
+ {
+  "set": "blanks",
+  "label": "inventory_condition",
+  "code": "inventory_condition",
+  "pages": 1,
+  "bytes": 431337,
+  "ms": 174
+ },
+ {
+  "set": "blanks",
+  "label": "instrument_sterilization",
+  "code": "instrument_sterilization",
+  "pages": 1,
+  "bytes": 431993,
+  "ms": 183
+ },
+ {
+  "set": "blanks",
+  "label": "medical_waste_b",
+  "code": "medical_waste_b",
+  "pages": 1,
+  "bytes": 431953,
+  "ms": 198
+ },
+ {
+  "set": "blanks",
+  "label": "batch_release",
+  "code": "batch_release",
+  "pages": 1,
+  "bytes": 430978,
+  "ms": 207
+ },
+ {
+  "set": "long",
+  "label": "hygiene",
+  "code": "hygiene",
+  "pages": 7,
+  "bytes": 1148067,
+  "ms": 505
+ },
+ {
+  "set": "long",
+  "label": "health_check",
+  "code": "health_check",
+  "pages": 4,
+  "bytes": 814843,
+  "ms": 298
+ },
+ {
+  "set": "long",
+  "label": "climate_control",
+  "code": "climate_control",
+  "pages": 27,
+  "bytes": 5655377,
+  "ms": 2042
+ },
+ {
+  "set": "long",
+  "label": "cold_equipment_control",
+  "code": "cold_equipment_control",
+  "pages": 4,
+  "bytes": 762919,
+  "ms": 313
+ },
+ {
+  "set": "long",
+  "label": "cleaning_ventilation_checklist",
+  "code": "cleaning_ventilation_checklist",
+  "pages": 9,
+  "bytes": 1092979,
+  "ms": 261
+ },
+ {
+  "set": "long",
+  "label": "cleaning",
+  "code": "cleaning",
+  "pages": 1,
+  "bytes": 428551,
+  "ms": 180
+ },
+ {
+  "set": "long",
+  "label": "general_cleaning",
+  "code": "general_cleaning",
+  "pages": 6,
+  "bytes": 857878,
+  "ms": 407
+ },
+ {
+  "set": "long",
+  "label": "uv_lamp_runtime",
+  "code": "uv_lamp_runtime",
+  "pages": 1,
+  "bytes": 428372,
+  "ms": 180
+ },
+ {
+  "set": "long",
+  "label": "finished_product",
+  "code": "finished_product",
+  "pages": 4,
+  "bytes": 519579,
+  "ms": 222
+ },
+ {
+  "set": "long",
+  "label": "perishable_rejection",
+  "code": "perishable_rejection",
+  "pages": 1,
+  "bytes": 418647,
+  "ms": 162
+ },
+ {
+  "set": "long",
+  "label": "incoming_control",
+  "code": "incoming_control",
+  "pages": 1,
+  "bytes": 417194,
+  "ms": 173
+ },
+ {
+  "set": "long",
+  "label": "fryer_oil",
+  "code": "fryer_oil",
+  "pages": 2,
+  "bytes": 498456,
+  "ms": 221
+ },
+ {
+  "set": "long",
+  "label": "med_books",
+  "code": "med_books",
+  "pages": 3,
+  "bytes": 578950,
+  "ms": 195
+ },
+ {
+  "set": "long",
+  "label": "training_plan",
+  "code": "training_plan",
+  "pages": 25,
+  "bytes": 3728046,
+  "ms": 1702
+ },
+ {
+  "set": "long",
+  "label": "staff_training",
+  "code": "staff_training",
+  "pages": 1,
+  "bytes": 413403,
+  "ms": 227
+ },
+ {
+  "set": "long",
+  "label": "disinfectant_usage",
+  "code": "disinfectant_usage",
+  "pages": 12,
+  "bytes": 877723,
+  "ms": 438
+ },
+ {
+  "set": "long",
+  "label": "sanitary_day_control",
+  "code": "sanitary_day_control",
+  "pages": 9,
+  "bytes": 572661,
+  "ms": 226
+ },
+ {
+  "set": "long",
+  "label": "equipment_maintenance",
+  "code": "equipment_maintenance",
+  "pages": 5,
+  "bytes": 810001,
+  "ms": 399
+ },
+ {
+  "set": "long",
+  "label": "breakdown_history",
+  "code": "breakdown_history",
+  "pages": 1,
+  "bytes": 412263,
+  "ms": 152
+ },
+ {
+  "set": "long",
+  "label": "equipment_calibration",
+  "code": "equipment_calibration",
+  "pages": 3,
+  "bytes": 566567,
+  "ms": 266
+ },
+ {
+  "set": "long",
+  "label": "incoming_raw_materials_control",
+  "code": "incoming_raw_materials_control",
+  "pages": 1,
+  "bytes": 423014,
+  "ms": 189
+ },
+ {
+  "set": "long",
+  "label": "ppe_issuance",
+  "code": "ppe_issuance",
+  "pages": 1,
+  "bytes": 410817,
+  "ms": 163
+ },
+ {
+  "set": "long",
+  "label": "accident_journal",
+  "code": "accident_journal",
+  "pages": 1,
+  "bytes": 414075,
+  "ms": 164
+ },
+ {
+  "set": "long",
+  "label": "complaint_register",
+  "code": "complaint_register",
+  "pages": 1,
+  "bytes": 405498,
+  "ms": 152
+ },
+ {
+  "set": "long",
+  "label": "product_writeoff",
+  "code": "product_writeoff",
+  "pages": 1,
+  "bytes": 418667,
+  "ms": 198
+ },
+ {
+  "set": "long",
+  "label": "audit_plan",
+  "code": "audit_plan",
+  "pages": 309,
+  "bytes": 85832419,
+  "ms": 38328
+ },
+ {
+  "set": "long",
+  "label": "audit_protocol",
+  "code": "audit_protocol",
+  "pages": 3,
+  "bytes": 435327,
+  "ms": 510
+ },
+ {
+  "set": "long",
+  "label": "audit_report",
+  "code": "audit_report",
+  "pages": 3,
+  "bytes": 539501,
+  "ms": 159
+ },
+ {
+  "set": "long",
+  "label": "traceability_test",
+  "code": "traceability_test",
+  "pages": 1,
+  "bytes": 412607,
+  "ms": 168
+ },
+ {
+  "set": "long",
+  "label": "metal_impurity",
+  "code": "metal_impurity",
+  "pages": 1,
+  "bytes": 413533,
+  "ms": 160
+ },
+ {
+  "set": "long",
+  "label": "equipment_cleaning",
+  "code": "equipment_cleaning",
+  "pages": 1,
+  "bytes": 416097,
+  "ms": 107
+ },
+ {
+  "set": "long",
+  "label": "intensive_cooling",
+  "code": "intensive_cooling",
+  "pages": 1,
+  "bytes": 413080,
+  "ms": 140
+ },
+ {
+  "set": "long",
+  "label": "glass_items_list",
+  "code": "glass_items_list",
+  "pages": 4,
+  "bytes": 478902,
+  "ms": 191
+ },
+ {
+  "set": "long",
+  "label": "glass_control",
+  "code": "glass_control",
+  "pages": 1,
+  "bytes": 410284,
+  "ms": 134
+ },
+ {
+  "set": "long",
+  "label": "pest_control",
+  "code": "pest_control",
+  "pages": 1,
+  "bytes": 413910,
+  "ms": 153
+ },
+ {
+  "set": "long",
+  "label": "daily_samples",
+  "code": "daily_samples",
+  "pages": 3,
+  "bytes": 577351,
+  "ms": 217
+ },
+ {
+  "set": "long",
+  "label": "vitaminization",
+  "code": "vitaminization",
+  "pages": 3,
+  "bytes": 577871,
+  "ms": 236
+ },
+ {
+  "set": "long",
+  "label": "ration_control",
+  "code": "ration_control",
+  "pages": 3,
+  "bytes": 529829,
+  "ms": 225
+ },
+ {
+  "set": "long",
+  "label": "transport_temperature",
+  "code": "transport_temperature",
+  "pages": 3,
+  "bytes": 578965,
+  "ms": 304
+ },
+ {
+  "set": "long",
+  "label": "tableware_breakage",
+  "code": "tableware_breakage",
+  "pages": 3,
+  "bytes": 556955,
+  "ms": 220
+ },
+ {
+  "set": "long",
+  "label": "pool_water_control",
+  "code": "pool_water_control",
+  "pages": 3,
+  "bytes": 606644,
+  "ms": 244
+ },
+ {
+  "set": "long",
+  "label": "inventory_condition",
+  "code": "inventory_condition",
+  "pages": 3,
+  "bytes": 561991,
+  "ms": 235
+ },
+ {
+  "set": "long",
+  "label": "instrument_sterilization",
+  "code": "instrument_sterilization",
+  "pages": 3,
+  "bytes": 581469,
+  "ms": 288
+ },
+ {
+  "set": "long",
+  "label": "medical_waste_b",
+  "code": "medical_waste_b",
+  "pages": 3,
+  "bytes": 573636,
+  "ms": 219
+ },
+ {
+  "set": "long",
+  "label": "batch_release",
+  "code": "batch_release",
+  "pages": 3,
+  "bytes": 571528,
+  "ms": 267
+ },
+ {
+  "set": "paper",
+  "label": "ot_intro",
+  "code": "ot_intro",
+  "pages": 2,
+  "bytes": 411834,
+  "ms": 172
+ },
+ {
+  "set": "paper",
+  "label": "ot_workplace",
+  "code": "ot_workplace",
+  "pages": 2,
+  "bytes": 411248,
+  "ms": 182
+ },
+ {
+  "set": "paper",
+  "label": "fire_safety",
+  "code": "fire_safety",
+  "pages": 2,
+  "bytes": 413093,
+  "ms": 116
+ },
+ {
+  "set": "paper",
+  "label": "fire_extinguishers",
+  "code": "fire_extinguishers",
+  "pages": 2,
+  "bytes": 417961,
+  "ms": 158
+ },
+ {
+  "set": "paper",
+  "label": "electrical_safety",
+  "code": "electrical_safety",
+  "pages": 2,
+  "bytes": 411154,
+  "ms": 182
+ },
+ {
+  "set": "variants",
+  "label": "hygiene-v2",
+  "code": "hygiene",
+  "pages": 5,
+  "bytes": 677323,
+  "ms": 297
+ },
+ {
+  "set": "variants",
+  "label": "partner-hygiene",
+  "code": "hygiene",
+  "pages": 2,
+  "bytes": 498965,
+  "ms": 237
+ },
+ {
+  "set": "variants",
+  "label": "partner-health_check",
+  "code": "health_check",
+  "pages": 1,
+  "bytes": 437028,
+  "ms": 173
+ },
+ {
+  "set": "variants",
+  "label": "partner-climate_control",
+  "code": "climate_control",
+  "pages": 2,
+  "bytes": 499495,
+  "ms": 216
+ },
+ {
+  "set": "variants",
+  "label": "partner-cold_equipment_control",
+  "code": "cold_equipment_control",
+  "pages": 1,
+  "bytes": 421878,
+  "ms": 152
+ },
+ {
+  "set": "variants",
+  "label": "partner-cleaning_ventilation_checklist",
+  "code": "cleaning_ventilation_checklist",
+  "pages": 6,
+  "bytes": 777644,
+  "ms": 243
+ },
+ {
+  "set": "variants",
+  "label": "partner-cleaning",
+  "code": "cleaning",
+  "pages": 1,
+  "bytes": 412791,
+  "ms": 194
+ },
+ {
+  "set": "variants",
+  "label": "partner-general_cleaning",
+  "code": "general_cleaning",
+  "pages": 1,
+  "bytes": 430060,
+  "ms": 183
+ },
+ {
+  "set": "variants",
+  "label": "partner-uv_lamp_runtime",
+  "code": "uv_lamp_runtime",
+  "pages": 1,
+  "bytes": 418846,
+  "ms": 164
+ },
+ {
+  "set": "variants",
+  "label": "partner-finished_product",
+  "code": "finished_product",
+  "pages": 1,
+  "bytes": 404783,
+  "ms": 171
+ },
+ {
+  "set": "variants",
+  "label": "partner-perishable_rejection",
+  "code": "perishable_rejection",
+  "pages": 1,
+  "bytes": 409819,
+  "ms": 261
+ },
+ {
+  "set": "variants",
+  "label": "partner-incoming_control",
+  "code": "incoming_control",
+  "pages": 1,
+  "bytes": 408127,
+  "ms": 178
+ },
+ {
+  "set": "variants",
+  "label": "partner-fryer_oil",
+  "code": "fryer_oil",
+  "pages": 2,
+  "bytes": 460342,
+  "ms": 167
+ },
+ {
+  "set": "variants",
+  "label": "partner-med_books",
+  "code": "med_books",
+  "pages": 3,
+  "bytes": 525137,
+  "ms": 196
+ },
+ {
+  "set": "variants",
+  "label": "partner-training_plan",
+  "code": "training_plan",
+  "pages": 1,
+  "bytes": 406018,
+  "ms": 161
+ },
+ {
+  "set": "variants",
+  "label": "partner-staff_training",
+  "code": "staff_training",
+  "pages": 1,
+  "bytes": 404242,
+  "ms": 148
+ },
+ {
+  "set": "variants",
+  "label": "partner-disinfectant_usage",
+  "code": "disinfectant_usage",
+  "pages": 1,
+  "bytes": 423450,
+  "ms": 168
+ },
+ {
+  "set": "variants",
+  "label": "partner-sanitary_day_control",
+  "code": "sanitary_day_control",
+  "pages": 2,
+  "bytes": 427357,
+  "ms": 182
+ },
+ {
+  "set": "variants",
+  "label": "partner-equipment_maintenance",
+  "code": "equipment_maintenance",
+  "pages": 1,
+  "bytes": 421646,
+  "ms": 126
+ },
+ {
+  "set": "variants",
+  "label": "partner-breakdown_history",
+  "code": "breakdown_history",
+  "pages": 1,
+  "bytes": 404748,
+  "ms": 157
+ },
+ {
+  "set": "variants",
+  "label": "partner-equipment_calibration",
+  "code": "equipment_calibration",
+  "pages": 1,
+  "bytes": 414456,
+  "ms": 216
+ },
+ {
+  "set": "variants",
+  "label": "partner-incoming_raw_materials_control",
+  "code": "incoming_raw_materials_control",
+  "pages": 1,
+  "bytes": 414221,
+  "ms": 152
+ },
+ {
+  "set": "variants",
+  "label": "partner-ppe_issuance",
+  "code": "ppe_issuance",
+  "pages": 1,
+  "bytes": 400719,
+  "ms": 147
+ },
+ {
+  "set": "variants",
+  "label": "partner-accident_journal",
+  "code": "accident_journal",
+  "pages": 1,
+  "bytes": 406811,
+  "ms": 185
+ },
+ {
+  "set": "variants",
+  "label": "partner-complaint_register",
+  "code": "complaint_register",
+  "pages": 1,
+  "bytes": 398293,
+  "ms": 151
+ },
+ {
+  "set": "variants",
+  "label": "partner-product_writeoff",
+  "code": "product_writeoff",
+  "pages": 1,
+  "bytes": 406143,
+  "ms": 128
+ },
+ {
+  "set": "variants",
+  "label": "partner-audit_plan",
+  "code": "audit_plan",
+  "pages": 2,
+  "bytes": 430527,
+  "ms": 198
+ },
+ {
+  "set": "variants",
+  "label": "partner-audit_protocol",
+  "code": "audit_protocol",
+  "pages": 1,
+  "bytes": 401469,
+  "ms": 162
+ },
+ {
+  "set": "variants",
+  "label": "partner-audit_report",
+  "code": "audit_report",
+  "pages": 1,
+  "bytes": 404631,
+  "ms": 163
+ },
+ {
+  "set": "variants",
+  "label": "partner-traceability_test",
+  "code": "traceability_test",
+  "pages": 1,
+  "bytes": 404945,
+  "ms": 188
+ },
+ {
+  "set": "variants",
+  "label": "partner-metal_impurity",
+  "code": "metal_impurity",
+  "pages": 1,
+  "bytes": 406109,
+  "ms": 167
+ },
+ {
+  "set": "variants",
+  "label": "partner-equipment_cleaning",
+  "code": "equipment_cleaning",
+  "pages": 1,
+  "bytes": 409490,
+  "ms": 171
+ },
+ {
+  "set": "variants",
+  "label": "partner-intensive_cooling",
+  "code": "intensive_cooling",
+  "pages": 1,
+  "bytes": 405568,
+  "ms": 113
+ },
+ {
+  "set": "variants",
+  "label": "partner-glass_items_list",
+  "code": "glass_items_list",
+  "pages": 1,
+  "bytes": 405973,
+  "ms": 274
+ },
+ {
+  "set": "variants",
+  "label": "partner-glass_control",
+  "code": "glass_control",
+  "pages": 1,
+  "bytes": 402517,
+  "ms": 194
+ },
+ {
+  "set": "variants",
+  "label": "partner-pest_control",
+  "code": "pest_control",
+  "pages": 1,
+  "bytes": 404612,
+  "ms": 263
+ },
+ {
+  "set": "variants",
+  "label": "partner-daily_samples",
+  "code": "daily_samples",
+  "pages": 1,
+  "bytes": 409301,
+  "ms": 183
+ },
+ {
+  "set": "variants",
+  "label": "partner-vitaminization",
+  "code": "vitaminization",
+  "pages": 1,
+  "bytes": 407449,
+  "ms": 113
+ },
+ {
+  "set": "variants",
+  "label": "partner-ration_control",
+  "code": "ration_control",
+  "pages": 1,
+  "bytes": 403891,
+  "ms": 188
+ },
+ {
+  "set": "variants",
+  "label": "partner-transport_temperature",
+  "code": "transport_temperature",
+  "pages": 1,
+  "bytes": 409519,
+  "ms": 158
+ },
+ {
+  "set": "variants",
+  "label": "partner-tableware_breakage",
+  "code": "tableware_breakage",
+  "pages": 1,
+  "bytes": 406265,
+  "ms": 171
+ },
+ {
+  "set": "variants",
+  "label": "partner-pool_water_control",
+  "code": "pool_water_control",
+  "pages": 1,
+  "bytes": 409724,
+  "ms": 167
+ },
+ {
+  "set": "variants",
+  "label": "partner-inventory_condition",
+  "code": "inventory_condition",
+  "pages": 1,
+  "bytes": 408528,
+  "ms": 164
+ },
+ {
+  "set": "variants",
+  "label": "partner-instrument_sterilization",
+  "code": "instrument_sterilization",
+  "pages": 1,
+  "bytes": 407693,
+  "ms": 168
+ },
+ {
+  "set": "variants",
+  "label": "partner-medical_waste_b",
+  "code": "medical_waste_b",
+  "pages": 1,
+  "bytes": 406302,
+  "ms": 118
+ },
+ {
+  "set": "variants",
+  "label": "partner-batch_release",
+  "code": "batch_release",
+  "pages": 1,
+  "bytes": 405588,
+  "ms": 156
+ }
+]

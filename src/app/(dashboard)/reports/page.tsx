@@ -17,6 +17,7 @@ import {
   getWeekdayHeatmap,
 } from "@/lib/compliance-heatmap";
 import { getComplianceTrend } from "@/lib/compliance-trend";
+import { sortJournalsByName } from "@/lib/journal-sort";
 
 export const dynamic = "force-dynamic";
 
@@ -252,7 +253,7 @@ export default async function ReportsPage() {
           </div>
         ) : null}
         <ReportForm
-          templates={templates}
+          templates={sortJournalsByName(templates, (t) => t.name)}
           areas={areas}
           defaultDateFrom={defaultDateFrom}
           defaultDateTo={defaultDateTo}

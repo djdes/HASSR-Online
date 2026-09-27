@@ -4,6 +4,7 @@ import { PageHeader, PageHeaderStat } from "@/components/ui/page-header";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { countCustomNames, parseCustomNames, RENAMABLE_SECTIONS } from "@/lib/custom-names";
 import { db } from "@/lib/db";
+import { sortJournalsByName } from "@/lib/journal-sort";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { pluralRu } from "@/lib/plural-ru";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -59,7 +60,9 @@ export default async function NamesSettingsPage() {
           key: section.key,
           label: section.label,
         }))}
-        journals={templates.map((template) => ({
+        // По алфавиту официальных названий: строка редактора подписана
+        // официальным названием, и во время ввода своего она не прыгает.
+        journals={sortJournalsByName(templates, (t) => t.name).map((template) => ({
           code: template.code,
           name: template.name,
           disabled: disabled.has(template.code),

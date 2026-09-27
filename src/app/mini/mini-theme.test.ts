@@ -121,3 +121,23 @@ describe("mini-theme: узнаётся как QR-страницы", () => {
     assert.equal(declaration(CSS, ".mini-btn-primary", "min-height"), "56px");
   });
 });
+
+describe("mini-theme: карточки темы в профиле", () => {
+  it("тёмная тема: выбранная карточка — индиго тёмной темы кабинета, как в меню сайта", () => {
+    // Тёмный индиго кнопок оболочки (#5566f6) на карточке #3a3757 — 2.5:1,
+    // выбор терялся.
+    const selector = '#mini-root[data-app-theme="dark"] [data-theme-tile]';
+    assert.equal(declaration(CSS, selector, "--app-indigo"), "#7081f8");
+    assert.equal(declaration(CSS, selector, "--app-indigo-deep"), "#a3adff");
+  });
+
+  it("у карточек нет невидимой подложки переключателя — она стоит ниже общего правила", () => {
+    // Подложка `inset: -10px` у крупных карточек залезала на ссылку
+    // «Логотип и цвета». Вес селекторов одинаковый — решает порядок.
+    const general = CSS.indexOf('.mini-root main :is([role="checkbox"], [role="radio"], [role="switch"])::after {');
+    const tiles = CSS.indexOf(".mini-root main [data-theme-tile]::after {");
+    assert.ok(general > 0, "нет общего правила подложки");
+    assert.ok(tiles > general, "правило карточек должно стоять ниже общего");
+    assert.equal(declaration(CSS, ".mini-root main [data-theme-tile]::after", "content"), "none");
+  });
+});

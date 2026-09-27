@@ -8,12 +8,7 @@ import {
 } from "@/lib/blank-download";
 import { deriveBlankKey } from "@/lib/blank-download-token";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
-import {
-  JOURNAL_QR_MIN_MODULE_MM,
-  JOURNAL_QR_SIZE_MM,
-  journalQrMatrix,
-  type JournalPdfQr,
-} from "@/lib/pdf-journal-qr";
+import { JOURNAL_QR_MAX_MODULES, journalQrMatrix, type JournalPdfQr } from "@/lib/pdf-journal-qr";
 import { PAPER_JOURNALS } from "@/lib/sphere-journal-rules";
 
 /**
@@ -24,16 +19,18 @@ import { PAPER_JOURNALS } from "@/lib/sphere-journal-rules";
  * под чужую почту нельзя — GCM проверяет целостность. У образца без почты
  * (встроенный просмотр) токен несёт только журнал.
  *
- * Главное ограничение — плотность. QR в углу бланка 13 мм, модуль не
- * меньше 0,3 мм, то есть не больше 41 модуля (версия 6, уровень M —
- * 864 бита). Поэтому токен компактный:
+ * Главное ограничение — плотность. QR — фирменная плитка в шапке бланка
+ * (коррекция H, модуль не меньше 0,35 мм, шапка растёт не больше чем на
+ * 4 мм), то есть не больше `JOURNAL_QR_MAX_MODULES` = 53 модулей (версия 9,
+ * уровень H — 800 бит). Поэтому токен компактный:
  *   • двоичный заголовок: версия+флаги (1 байт), момент выдачи в секундах
  *     (4 байта), журнал — 3 байта SHA-256 от ключа цели (обратно
  *     восстанавливается перебором известных журналов и бланков);
  *   • почта — байтами UTF-8 за заголовком;
  *   • base32 ЗАГЛАВНЫМИ: библиотека qrcode кодирует такой хвост адреса
  *     алфавитно-цифровым режимом (5,5 бита на символ вместо 8).
- * На адресе https://wesetup.ru в QR помещается почта до ~39 байт. Длиннее —
+ * На адресе https://wesetup.ru в QR помещается почта до 32 байт (до
+ * 2026-09-27, с маленьким QR в углу бланка, — до 39). Длиннее —
  * `blankQrUrl` отдаёт токен без почты: страница /qb тогда не подставит
  * адрес, но всё остальное работает.
  */
@@ -187,10 +184,9 @@ export function openBlankQrToken(token: string): BlankQrPayload | null {
 // Адрес и QR для PDF.
 // ---------------------------------------------------------------------------
 
-/** Помещается ли адрес в QR угла бланка (модуль ≥ 0,3 мм при стороне 13 мм). */
+/** Помещается ли адрес в QR шапки бланка (коррекция H, не больше `JOURNAL_QR_MAX_MODULES` модулей). */
 export function fitsJournalQr(url: string): boolean {
-  const modules = journalQrMatrix(url).modules.size;
-  return JOURNAL_QR_SIZE_MM / modules >= JOURNAL_QR_MIN_MODULE_MM - 1e-9;
+  return journalQrMatrix(url).modules.size <= JOURNAL_QR_MAX_MODULES;
 }
 
 export function blankQrUrl(
@@ -206,10 +202,17 @@ export function blankQrUrl(
   return { url: base + sealBlankQrToken({ target: params.target, issuedAt }), withEmail: false };
 }
 
-/** QR + подпись «Заполнять с телефона» + строка копирайта — на каждую страницу PDF. */
+/**
+ * Строка внизу каждой страницы PDF шаблона: «Заполнять с телефона —
+ * wesetup.ru · © WeSetup — …». Раньше это была подпись сбоку от QR в углу;
+ * у QR в шапке своя плашка «Отсканировать / wesetup.ru».
+ */
+export const BLANK_PDF_FOOTER = BLANK_QR_LINES.join(" · ");
+
+/** QR в шапке (на /qb) + строка копирайта внизу — на каждую страницу PDF. */
 export function blankPdfQr(
   origin: string,
   params: { target: BlankTarget; email?: string | null },
 ): JournalPdfQr {
-  return { url: blankQrUrl(origin, params).url, lines: BLANK_QR_LINES };
+  return { url: blankQrUrl(origin, params).url, footer: BLANK_PDF_FOOTER };
 }

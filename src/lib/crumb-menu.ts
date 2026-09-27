@@ -1,4 +1,5 @@
 import { journalMatchesQuery } from "@/lib/journal-search";
+import { sortJournalsByName } from "@/lib/journal-sort";
 
 /**
  * Меню хлебных крошек без разметки: поиск по списку, легенда точек,
@@ -149,7 +150,8 @@ export function buildJournalSwitcherMenu(input: {
   const items: CrumbMenuItem[] = [];
   const disabledLabels: string[] = [];
 
-  for (const template of templates) {
+  // По алфавиту — по названию, которое видит организация.
+  for (const template of sortJournalsByName(templates, (t) => t.name)) {
     const disabled = disabledCodes.has(template.code);
     const current = template.code === currentCode;
     // Выключенный журнал в рабочий список не попадает — кроме текущего:

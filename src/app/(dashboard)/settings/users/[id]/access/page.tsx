@@ -4,6 +4,7 @@ import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { isManagementRole } from "@/lib/user-roles";
 import { db } from "@/lib/db";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
+import { sortJournalsByName } from "@/lib/journal-sort";
 import { OrganizationAccessCard } from "@/components/settings/organization-access-card";
 import { formatPhone } from "@/lib/phone";
 import { isTechnicalEmail } from "@/lib/technical-email";
@@ -122,7 +123,9 @@ export default async function UserJournalAccessPage({ params }: PageProps) {
 
       <UserAccessEditor
         userId={user.id}
-        catalog={ACTIVE_JOURNAL_CATALOG.map((item) => ({ ...item }))}
+        catalog={sortJournalsByName(ACTIVE_JOURNAL_CATALOG, (item) => item.name).map((item) => ({
+          ...item,
+        }))}
         initialAccess={accessRows}
       />
     </div>

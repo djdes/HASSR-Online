@@ -56,6 +56,10 @@ export function useFormDraft<T extends Record<string, unknown>>(
 ): { restored: boolean; reset: () => void } {
   const [restored, setRestored] = useState(false);
   const readyRef = useRef(false);
+  // «Начать заново» стирает черновик и перезагружает страницу. Без стопа запись
+  // успевала сработать ещё раз до перезагрузки (значения формы те же) — и
+  // черновик возвращался: фото незаконченного замера восстанавливалось снова.
+  const stoppedRef = useRef(false);
   const applyRef = useRef(apply);
   useEffect(() => {
     applyRef.current = apply;
@@ -72,7 +76,7 @@ export function useFormDraft<T extends Record<string, unknown>>(
   }, [key]);
 
   useEffect(() => {
-    if (!key || !readyRef.current || finished) return;
+    if (!key || !readyRef.current || finished || stoppedRef.current) return;
     try {
       if (Object.values(values).some(meaningful)) localStorage.setItem(key, JSON.stringify({ t: Date.now(), v: values }));
       else localStorage.removeItem(key);
@@ -88,6 +92,7 @@ export function useFormDraft<T extends Record<string, unknown>>(
   return {
     restored,
     reset: () => {
+      stoppedRef.current = true;
       if (key) clearDraft(key);
       setRestored(false);
     },

@@ -35,6 +35,16 @@ export function isMobileAppUserAgent(ua: string | null | undefined): boolean {
   return parseMobileAppUserAgent(ua) !== null;
 }
 
+/**
+ * Нужен ли странице скрипт Telegram (`telegram-web-app.js`). Он грузится
+ * до гидратации (`beforeInteractive`): пока telegram.org не ответит,
+ * кнопки не работают. В приложении WeSetup Telegram нет, а telegram.org
+ * бывает недоступен или медленный, — там скрипт только задерживает запуск.
+ */
+export function needsTelegramSdk(ua: string | null | undefined): boolean {
+  return !isMobileAppUserAgent(ua);
+}
+
 /** Сравнение версий по числам: `1.10.0` новее `1.9.9`, `1.2` = `1.2.0`. */
 export function compareAppVersion(a: string, b: string): -1 | 0 | 1 {
   const pa = a.trim().split(".").map((n) => Number.parseInt(n, 10) || 0);
@@ -102,4 +112,24 @@ export function appLoginHref(next: string | null | undefined): string {
   const path = next.split(/[?#]/, 1)[0];
   if (path === "/mini" || path === "/api" || path.startsWith("/api/")) return "/mini/login";
   return `/mini/login?next=${encodeURIComponent(next)}`;
+}
+
+/**
+ * Первый запуск приложения без входа: `/mini?src=app` сразу ведёт на экран
+ * входа ответом сервера. Без этого человек видел «Открываем кабинет…», пока
+ * страница-вход загружалась, оживала и сама решала, что входа нет, — на
+ * iPhone до 6 секунд. С `next` и опросом (`nps`) — как раньше: их разбирает
+ * сама страница. Со входом тоже как раньше: страница уводит на главную.
+ */
+export function appColdStartRedirect(input: {
+  userAgent: string | null | undefined;
+  pathname: string;
+  search: string;
+  hasSession: boolean;
+}): string | null {
+  if (input.hasSession || input.pathname !== "/mini") return null;
+  if (!isMobileAppUserAgent(input.userAgent)) return null;
+  const params = new URLSearchParams(input.search);
+  if (params.has("next") || params.has("nps")) return null;
+  return `/mini/login?next=${encodeURIComponent(`${input.pathname}${input.search}`)}`;
 }
