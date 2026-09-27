@@ -113,3 +113,23 @@ export function appLoginHref(next: string | null | undefined): string {
   if (path === "/mini" || path === "/api" || path.startsWith("/api/")) return "/mini/login";
   return `/mini/login?next=${encodeURIComponent(next)}`;
 }
+
+/**
+ * Первый запуск приложения без входа: `/mini?src=app` сразу ведёт на экран
+ * входа ответом сервера. Без этого человек видел «Открываем кабинет…», пока
+ * страница-вход загружалась, оживала и сама решала, что входа нет, — на
+ * iPhone до 6 секунд. С `next` и опросом (`nps`) — как раньше: их разбирает
+ * сама страница. Со входом тоже как раньше: страница уводит на главную.
+ */
+export function appColdStartRedirect(input: {
+  userAgent: string | null | undefined;
+  pathname: string;
+  search: string;
+  hasSession: boolean;
+}): string | null {
+  if (input.hasSession || input.pathname !== "/mini") return null;
+  if (!isMobileAppUserAgent(input.userAgent)) return null;
+  const params = new URLSearchParams(input.search);
+  if (params.has("next") || params.has("nps")) return null;
+  return `/mini/login?next=${encodeURIComponent(`${input.pathname}${input.search}`)}`;
+}

@@ -7,6 +7,7 @@ import { formatRuPhoneInput } from "@/lib/phone-input";
 import { sanitizeMiniAppRedirectPath } from "@/lib/journal-obligation-links";
 
 import { getTelegramWebApp } from "../_components/telegram-web-app";
+import { isInsideMobileApp } from "@/lib/mobile-app";
 import { clearSignedOutMark, telegramSignInHref } from "../_lib/signed-out-mark";
 
 /**
@@ -83,10 +84,19 @@ export function MiniLoginForm({
   // подсказала бы «набирайте телефон», хотя вернуться можно одним нажатием.
   // Атрибутом `autoFocus` этого не сделать: сервер не знает, где открыт
   // экран, а браузер фокусирует поле по атрибуту ещё до гидратации.
+  // В приложении WeSetup тоже без фокуса: на iPhone клавиатура, открытая
+  // сама, закрывала пароль и «Войти» — человек видел одно поле телефона.
   useEffect(() => {
-    if (getTelegramWebApp()?.initData) return;
+    if (getTelegramWebApp()?.initData || isInsideMobileApp()) return;
     (initialPhone ? passwordRef : phoneRef).current?.focus();
   }, [initialPhone]);
+
+  // Клавиатура телефона не должна закрывать «Войти»: когда она выехала,
+  // подкручиваем страницу так, чтобы кнопка была над ней.
+  const submitRef = useRef<HTMLButtonElement>(null);
+  function keepSubmitVisible() {
+    window.setTimeout(() => revealAboveKeyboard(submitRef.current), 350);
+  }
 
   /** Вошли: пометка «вышел вручную» больше не нужна — уходим, куда шли. */
   function finishLogin() {
@@ -250,7 +260,7 @@ export function MiniLoginForm({
 
       {/* noValidate: подсказки браузера к полю почты — по-английски
           («Please include an '@'…»); проверяет сервер и отвечает по-русски. */}
-      <form onSubmit={submit} noValidate className="mt-5 space-y-3">
+      <form onSubmit={submit} onFocus={keepSubmitVisible} noValidate className="mt-5 space-y-3">
         <div role="radiogroup" aria-label="Чем входить" className="mini-seg">
           <button
             type="button"
@@ -348,6 +358,7 @@ export function MiniLoginForm({
         ) : null}
 
         <button
+          ref={submitRef}
           type="submit"
           disabled={busy || !password || (mode === "phone" ? !phone : !email.trim())}
           className="mini-btn-primary mini-press w-full"
@@ -370,4 +381,27 @@ export function MiniLoginForm({
       </form>
     </>
   );
+}
+
+/**
+ * Показать элемент над клавиатурой телефона: видимая область — это
+ * `visualViewport` (без клавиатуры), а не окно. Крутим ближайший
+ * прокручиваемый блок или страницу.
+ */
+function revealAboveKeyboard(el: HTMLElement | null) {
+  if (!el || typeof window === "undefined") return;
+  const viewport = window.visualViewport;
+  const visibleBottom = viewport ? viewport.offsetTop + viewport.height : window.innerHeight;
+  const overflow = el.getBoundingClientRect().bottom + 16 - visibleBottom;
+  if (overflow <= 0) return;
+  let parent: HTMLElement | null = el.parentElement;
+  while (parent) {
+    const overflowY = getComputedStyle(parent).overflowY;
+    if ((overflowY === "auto" || overflowY === "scroll") && parent.scrollHeight > parent.clientHeight) {
+      parent.scrollBy({ top: overflow, behavior: "smooth" });
+      return;
+    }
+    parent = parent.parentElement;
+  }
+  window.scrollBy({ top: overflow, behavior: "smooth" });
 }

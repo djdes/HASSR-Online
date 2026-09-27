@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  appColdStartRedirect,
   appLoginHref,
   appStoreUrl,
   appUpdateRequirement,
@@ -88,4 +89,15 @@ test("скрипт Telegram не грузится в приложении WeSetu
   );
   assert.equal(needsTelegramSdk("Mozilla/5.0 (iPhone) Mobile/15E148 Safari/604.1"), true);
   assert.equal(needsTelegramSdk(null), true);
+});
+
+test("первый запуск приложения без входа — сразу на экран входа, без промежуточной страницы", () => {
+  const app = "Mozilla/5.0 (iPhone) AppleWebKit/605 WeSetupApp/1.0.0 (ios)";
+  assert.equal(appColdStartRedirect({ userAgent: app, pathname: "/mini", search: "?src=app", hasSession: false }), "/mini/login?next=%2Fmini%3Fsrc%3Dapp");
+  // Со входом, в браузере, с next или опросом — как раньше.
+  assert.equal(appColdStartRedirect({ userAgent: app, pathname: "/mini", search: "?src=app", hasSession: true }), null);
+  assert.equal(appColdStartRedirect({ userAgent: "Mozilla/5.0 (iPhone) Safari", pathname: "/mini", search: "", hasSession: false }), null);
+  assert.equal(appColdStartRedirect({ userAgent: app, pathname: "/mini", search: "?next=%2Fjournals", hasSession: false }), null);
+  assert.equal(appColdStartRedirect({ userAgent: app, pathname: "/mini", search: "?nps=1", hasSession: false }), null);
+  assert.equal(appColdStartRedirect({ userAgent: app, pathname: "/mini/today", search: "", hasSession: false }), null);
 });
