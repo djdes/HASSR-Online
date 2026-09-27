@@ -1,3 +1,4 @@
+import { HUB_ADMISSION_NAME, HUB_ADMISSION_NOTE, withHubAdmission } from "@/lib/hub-journals-order";
 import { stampFor } from "@/lib/quick-values";
 import { NextResponse } from "next/server";
 
@@ -332,7 +333,14 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
     // Журналы с кончившимся периодом тоже в списке: документ нового
     // периода откроется при входе в журнал (ниже).
     const journals = await listHubJournals(orgId, disabledCodes, todayKey, { includeLapsed: true, names: customNames, includeObjects: true });
-    return page("Все журналы", renderHub(journals.map((item) => ({ ...item, href: link({}, item.code) }))), "Выберите журнал — дальше два-три касания.");
+    // «Допуск сотрудников к смене» — тем же списком: гигиена в режиме
+    // ответственного (view=all), как по отдельному плакату допуска.
+    const items = withHubAdmission<{ code: string; name: string; note?: string; href: string }>(
+      journals.map((item) => ({ ...item, href: link({}, item.code) })),
+      (item) => OBJECT_QR_JOURNAL_CODES.has(item.code),
+      { code: "hygiene", name: HUB_ADMISSION_NAME, note: HUB_ADMISSION_NOTE, href: link({ view: "all" }, "hygiene") }
+    );
+    return page("Все журналы", renderHub(items), "Выберите журнал — дальше два-три касания.");
   }
 
   const template = await db.journalTemplate.findFirst({ where: { code }, select: { name: true } });
