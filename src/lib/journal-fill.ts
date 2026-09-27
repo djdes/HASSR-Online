@@ -1,3 +1,4 @@
+import { orderHubJournals } from "@/lib/hub-journals-order";
 import { db } from "@/lib/db";
 import { ORG_ROSTER_WHERE, ORG_SIGNER_WHERE } from "@/lib/journal-roster";
 import { isPerpetualDateTo, parseJournalPeriodsJson, resolveJournalPeriodKind } from "@/lib/journal-period";
@@ -333,7 +334,8 @@ export async function listHubJournals(
     name: named(code, name),
     note: HUB_OBJECT_JOURNAL_NOTE,
   }));
-  return options.includeObjects ? [...fillable, ...byObject] : fillable;
+  // По алфавиту (решение 27.09.2026: «везде по алфавиту»), объектные — в конце.
+  return options.includeObjects ? orderHubJournals(fillable, byObject) : orderHubJournals(fillable, []);
 }
 
 /** Подпись объектных журналов в хабе: заполняют не отсюда, а по наклейке. */
