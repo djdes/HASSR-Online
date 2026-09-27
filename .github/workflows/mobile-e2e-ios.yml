@@ -250,7 +250,7 @@ jobs:
           BASE_URL: https://localhost:3000
           CA_PEM: ${{ github.workspace }}/tls/ca.pem
           WDA_DD: ${{ github.workspace }}/e2e-state/wda
-          TEST_BUDGET_MIN: "23"
+          TEST_BUDGET_MIN: "22"
           LAUNCH_LOG: ${{ github.workspace }}/e2e-logs/launch1-console.log
         run: |
           export SERVER_STOP_CMD="bash $STATE/server-stop.sh"

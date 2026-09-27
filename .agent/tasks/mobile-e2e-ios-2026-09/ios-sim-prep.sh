@@ -46,11 +46,15 @@ appium driver list --installed 2>&1 | tail -5
 WDA=$(find "$HOME/.appium" -type d -name "WebDriverAgent.xcodeproj" -maxdepth 8 | head -1)
 echo "[sim-prep] WDA project: $WDA"
 echo "[sim-prep] $(date -u +%T) build WDA"
-xcodebuild build-for-testing \
+# Под любой симулятор: в одном прогоне xcodebuild не увидел только что созданный
+# симулятор по id. Не собралось — Appium соберёт WDA сам при старте сессии.
+if ! xcodebuild build-for-testing \
   -project "$WDA" \
   -scheme WebDriverAgentRunner \
-  -destination "platform=iOS Simulator,id=$UDID" \
+  -destination "generic/platform=iOS Simulator" \
   -derivedDataPath "$STATE/wda" \
-  -quiet COMPILER_INDEX_STORE_ENABLE=NO 2>&1 | tail -20
+  -quiet COMPILER_INDEX_STORE_ENABLE=NO > "$STATE/wda-build.log" 2>&1; then
+  echo "[sim-prep] WDA prebuild failed - Appium will build it"; tail -20 "$STATE/wda-build.log"; rm -rf "$STATE/wda"
+fi
 echo "[sim-prep] $(date -u +%T) done"
 touch "$STATE/sim.done"
