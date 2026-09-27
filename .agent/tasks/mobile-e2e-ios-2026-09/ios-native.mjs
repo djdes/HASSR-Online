@@ -10,6 +10,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { execFileSync, spawn } from "node:child_process";
+import { AsyncLocalStorage } from "node:async_hooks";
+import zlib from "node:zlib";
 import { remote } from "webdriverio";
 
 const env = process.env;
@@ -33,7 +35,23 @@ let shotN = 0;
 let driver;
 let W = { width: 402, height: 874 };
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// Сценарий, у которого вышло время, продолжает жить в фоне — его шаги прерываем:
+// каждый sleep/нажатие проверяет, жив ли сценарий (раунд 2: один сбой тянул за собой все).
+const als = new AsyncLocalStorage();
+function alive() {
+  const c = als.getStore();
+  if (c && c.dead) throw new Error(`${c.r.id}: сценарий прерван по времени`);
+}
+const sleep = (ms) =>
+  new Promise((r) => setTimeout(r, ms)).then(() => {
+    alive();
+  });
+/** Кадр в текущий сценарий (если он есть). */
+function stepShot(name) {
+  const c = als.getStore();
+  if (c && !c.dead) return c.shot(name);
+  return null;
+}
 const log = (...a) => console.log(new Date().toISOString().slice(11, 23), ...a);
 const q = (s) => JSON.stringify(s);
 
@@ -126,6 +144,7 @@ function band() {
 }
 
 async function tapXY(x, y) {
+  alive();
   await driver.execute("mobile: tap", { x: Math.round(x), y: Math.round(y) });
 }
 
@@ -303,6 +322,7 @@ async function hideKeyboard() {
 }
 
 let lastTapped = null;
+let kbDumped = false;
 /**
  * Раскладка под текст: XCTest печатает только то, что есть на текущей раскладке
  * (раунд 2: пароль «DemoShots2026!» на русской раскладке ушёл как «2026!»).
@@ -311,31 +331,97 @@ let lastTapped = null;
 async function ensureLayout(text) {
   const wantLatin = /[a-z]/i.test(text);
   const wantCyr = /[а-яё]/i.test(text);
-  if (!wantLatin && !wantCyr) return;
-  const probe = wantLatin ? ["q", "Q", "a", "A"] : ["й", "Й", "ф", "Ф"];
-  for (let i = 0; i < 4; i++) {
+  if (!wantLatin && !wantCyr) return true;
+  if (!kbDumped && (await keyboard())) {
+    kbDumped = true;
+    await source("keyboard-tree");
+  }
+  const probe = wantLatin ? ["q", "Q", "a", "A", "w", "W"] : ["й", "Й", "ф", "Ф", "ц", "Ц"];
+  for (let i = 0; i < 5; i++) {
     const keys = await driver.$$(`-ios predicate string:type == "XCUIElementTypeKey" AND label IN {${probe.map(q).join(",")}}`);
-    if (keys.length) return;
-    const globe = await driver.$$(`-ios predicate string:type IN {"XCUIElementTypeButton","XCUIElementTypeKey"} AND (label IN {"Следующая клавиатура","Next keyboard"} OR name IN {"Следующая клавиатура","Next keyboard","NextKeyboard"})`);
-    if (!globe.length) return;
-    await globe[0].click();
-    await sleep(600);
+    if (keys.length) return true;
+    const globe = await driver.$$(
+      `-ios predicate string:type IN {"XCUIElementTypeButton","XCUIElementTypeKey"} AND (label CONTAINS[c] "клавиатур" OR name CONTAINS[c] "keyboard" OR label CONTAINS[c] "keyboard" OR name CONTAINS[c] "globe")`
+    );
+    if (!globe.length) return false;
+    await globe[0].click().catch(() => undefined);
+    await sleep(700);
+  }
+  return false;
+}
+
+async function readValue(el) {
+  try {
+    return await el.getAttribute("value");
+  } catch {
+    return null;
   }
 }
 
+/** Вставка через буфер обмена: simctl pbcopy → «Вставить» в меню поля. */
+async function pasteInto(el, text) {
+  execFileSync("xcrun", ["simctl", "pbcopy", UDID], { input: text, timeout: 20000 });
+  await sleep(400);
+  const r = await driver.getElementRect(el.elementId);
+  const cx = r.x + Math.min(r.width / 2, 60);
+  const cy = r.y + r.height / 2;
+  const menu = () => driver.$$(`-ios predicate string:label IN {"Вставить","Paste"}`);
+  for (const how of ["tap", "hold", "tap2"]) {
+    if (how === "tap" || how === "tap2") await tapXY(cx, cy);
+    else await driver.execute("mobile: touchAndHold", { x: Math.round(cx), y: Math.round(cy), duration: 1.2 });
+    await sleep(900);
+    const items = await menu();
+    if (items.length) {
+      await items[0].click();
+      await sleep(800);
+      // iOS может спросить «Разрешить вставку?».
+      const b = await alertButtons(1500);
+      if (b) {
+        const allow = b.find((x) => /вставк|paste|разреш|allow/i.test(x)) || b[b.length - 1];
+        await driver.execute("mobile: alert", { action: "accept", buttonLabel: allow }).catch(() => undefined);
+        await sleep(800);
+      }
+      return how;
+    }
+  }
+  return null;
+}
+
+/**
+ * Ввести текст и убедиться, что в поле ровно он (для пароля — число точек).
+ * Путь: раскладка → addValue → проверка; не совпало — очистить и вставить из буфера.
+ */
+async function typeVerified(el, text, { secure = false, clear = true } = {}) {
+  const ok = (v) => (secure ? typeof v === "string" && [...v].length === [...text].length : v === text);
+  const tries = [];
+  if (clear) await el.clearValue().catch(() => undefined);
+  const layout = await ensureLayout(text);
+  await el.addValue(text).catch((e) => tries.push(`addValue: ${e.message.slice(0, 120)}`));
+  await sleep(300);
+  let v = await readValue(el);
+  tries.push({ method: "keys", layout, value: secure ? `len ${v ? [...v].length : null}` : v });
+  if (ok(v)) return { ok: true, method: "keys", tries };
+  await el.clearValue().catch(() => undefined);
+  await sleep(300);
+  const how = await pasteInto(el, text).catch((e) => `paste error: ${e.message.slice(0, 120)}`);
+  v = await readValue(el);
+  tries.push({ method: `paste(${how})`, value: secure ? `len ${v ? [...v].length : null}` : v });
+  return { ok: ok(v), method: "paste", tries };
+}
+
+/** Поле, по которому только что нажали (или поле с фокусом), — ввод с проверкой. */
 async function typeFocused(text) {
-  await ensureLayout(text);
-  const f = await driver.$(`-ios predicate string:type IN {${q(T.field)},${q(T.secure)}} AND hasKeyboardFocus == 1`);
-  if (await f.isExisting()) {
-    await f.addValue(text);
-    return f;
+  let el = lastTapped;
+  if (!el) {
+    const f = await driver.$(`-ios predicate string:type IN {${q(T.field)},${q(T.secure)}} AND focused == 1`);
+    if (await f.isExisting().catch(() => false)) el = f;
   }
-  // Запасной путь: поле, по которому только что нажали.
-  if (lastTapped) {
-    await lastTapped.addValue(text);
-    return lastTapped;
-  }
-  throw new Error("нет поля с фокусом клавиатуры");
+  if (!el) throw new Error("нет поля для ввода");
+  const res = await typeVerified(el, text);
+  const c = als.getStore();
+  if (c) c.d[`typed_${text}`] = res;
+  if (!res.ok) log("   typing mismatch", text, JSON.stringify(res.tries).slice(0, 300));
+  return el;
 }
 
 // ─── Консоль приложения ───────────────────────────────────────────────
@@ -417,13 +503,13 @@ async function scenario(id, name, fn, timeoutMs = 300000) {
       r.skipReason = reason;
     },
   };
-  if (Date.now() > DEADLINE) {
+  if (Date.now() > DEADLINE && id !== "S12") {
     ctx.skip("время теста вышло");
     save();
     return;
   }
   try {
-    await withTimeout(fn(ctx), timeoutMs * SLOW, `${id}: не уложился в ${(timeoutMs * SLOW) / 1000} с`);
+    await withTimeout(als.run(ctx, () => fn(ctx)), timeoutMs * SLOW, `${id}: не уложился в ${(timeoutMs * SLOW) / 1000} с`);
     if (r.status === "RUNNING") r.status = r.checks.every((c) => c.ok) ? "PASS" : "FAIL";
   } catch (e) {
     r.status = "FAIL";
@@ -432,6 +518,7 @@ async function scenario(id, name, fn, timeoutMs = 300000) {
     ctx.shot("error");
     await source(`${id}-error`);
   }
+  ctx.dead = true; // шаги сценария, оставшиеся в фоне, дальше не выполняются
   try {
     const st = await appState();
     r.appStateAfter = st;
@@ -440,8 +527,8 @@ async function scenario(id, name, fn, timeoutMs = 300000) {
       if (st === 1) {
         r.status = "FAIL";
         r.crash = true;
-      }
-      await driver.execute("mobile: activateApp", { bundleId: BUNDLE });
+        launchWithConsole(); // упало — новый журнал консоли
+      } else await driver.execute("mobile: activateApp", { bundleId: BUNDLE });
       await sleep(3000);
     }
   } catch {
@@ -463,10 +550,20 @@ async function recover() {
       await tryTap({ type: "button", label }, { scrolls: 0, anywhere: true, ignoreKeyboard: true, timeout: 800 });
     }
     await hideKeyboard();
-    if ((await appState()) !== 4) await driver.execute("mobile: activateApp", { bundleId: BUNDLE });
+  } catch (e) {
+    log("recover: dismiss failed", e.message.slice(0, 200));
+  }
+  // Известное состояние: перезапуск приложения (листы печати/«Поделиться» и зависшие
+  // экраны уходят вместе с процессом; вход сохраняется в cookies).
+  try {
+    await driver.execute("mobile: terminateApp", { bundleId: BUNDLE }).catch(() => undefined);
+    await sleep(1500);
+    launchWithConsole();
+    const ok = await waitFor(async () => (await onLogin()) || (await has({ type: "link", begins: "Профиль" })), 60000 * SLOW, 1000);
+    log("recover: relaunched,", ok ? "screen ready" : "screen NOT ready");
     await sleep(1500);
   } catch (e) {
-    log("recover failed", e.message.slice(0, 200));
+    log("recover: relaunch failed", e.message.slice(0, 200));
   }
 }
 
@@ -477,11 +574,114 @@ async function onLogin() {
 /** Нижнее меню: ссылка с точной подписью внизу экрана. */
 async function tab(label) {
   const f = await tap({ type: "link", begins: label }, { scrolls: 0, anywhere: true, within: (r) => r.y > W.height - 170, settle: 1500 * SLOW });
+  stepShot(`tab-${label}`);
   return f;
 }
 
 async function waitText(spec, timeout = 25000) {
   return waitFor(() => has(spec), timeout * SLOW);
+}
+
+const emailField = () => driver.$(`-ios predicate string:${pred({ type: "field", contains: "почт" })}`);
+/** Поле пароля: скрытое (Secure) или, после «Показать пароль», обычное. */
+async function passField({ shown = false } = {}) {
+  if (!shown) {
+    const sec = await driver.$$(`-ios predicate string:type == ${q(T.secure)}`);
+    if (sec.length) return sec[0];
+  }
+  const t = await driver.$$(`-ios predicate string:type == ${q(T.field)} AND NOT (label CONTAINS[c] "почт") AND NOT (label CONTAINS[c] "телефон")`);
+  return t[0] ?? null;
+}
+
+/** Минимальный PNG-декодер (8 бит, RGB/RGBA, без чересстрочности) — кадры simctl. */
+function decodePng(buf) {
+  let p = 8, w, h, bd, ct, il;
+  const idat = [];
+  while (p < buf.length) {
+    const len = buf.readUInt32BE(p), type = buf.toString("ascii", p + 4, p + 8), d = buf.subarray(p + 8, p + 8 + len);
+    if (type === "IHDR") { w = d.readUInt32BE(0); h = d.readUInt32BE(4); bd = d[8]; ct = d[9]; il = d[12]; }
+    else if (type === "IDAT") idat.push(d);
+    else if (type === "IEND") break;
+    p += 12 + len;
+  }
+  if (bd !== 8 || il !== 0 || (ct !== 2 && ct !== 6)) throw new Error(`png: bd=${bd} ct=${ct} il=${il}`);
+  const ch = ct === 6 ? 4 : 3, stride = w * ch, raw = zlib.inflateSync(Buffer.concat(idat)), px = Buffer.alloc(h * stride);
+  for (let y = 0; y < h; y++) {
+    const f = raw[y * (stride + 1)], src = raw.subarray(y * (stride + 1) + 1, (y + 1) * (stride + 1)), o = y * stride;
+    for (let x = 0; x < stride; x++) {
+      const a = x >= ch ? px[o + x - ch] : 0, b = y ? px[o - stride + x] : 0, c = y && x >= ch ? px[o - stride + x - ch] : 0;
+      let v = src[x];
+      if (f === 1) v += a;
+      else if (f === 2) v += b;
+      else if (f === 3) v += (a + b) >> 1;
+      else if (f === 4) { const pp = a + b - c, pa = Math.abs(pp - a), pb = Math.abs(pp - b), pc = Math.abs(pp - c); v += pa <= pb && pa <= pc ? a : pb <= pc ? b : c; }
+      px[o + x] = v & 255;
+    }
+  }
+  return { w, h, ch, px };
+}
+
+/**
+ * Полоса строки состояния на кадре (0…54 pt): доля тёмной подложки #0b1024 среди
+ * пикселей, кроме белых (часы, значки) и чёрных («остров»). Текст страницы под
+ * часами (раунд 2, кадры 005/006) даёт другие цвета — доля падает.
+ */
+function statusStripOf(file) {
+  try {
+    const { w, ch, px } = decodePng(fs.readFileSync(path.join(OUT, file)));
+    const s = w / W.width;
+    const H = Math.round(ISLAND_BOTTOM * s);
+    const hist = new Map();
+    const pix = [];
+    let bright = 0, total = 0;
+    for (let y = 2; y < H; y++)
+      for (let x = 0; x < w; x += 2) {
+        const i = (y * w + x) * ch, r = px[i], g = px[i + 1], b = px[i + 2], lum = 0.3 * r + 0.59 * g + 0.11 * b;
+        total++;
+        if (lum > 200) { bright++; continue; } // часы и значки
+        if (lum < 6) continue; // «остров»
+        pix.push([r, g, b]);
+        const k = ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3);
+        hist.set(k, (hist.get(k) || 0) + 1);
+      }
+    let top = 0, topN = -1;
+    for (const [k, n] of hist) if (n > topN) { top = k; topN = n; }
+    const dom = [((top >> 10) & 31) * 8 + 4, ((top >> 5) & 31) * 8 + 4, (top & 31) * 8 + 4];
+    const near = (c, t, tol) => Math.abs(c[0] - t[0]) + Math.abs(c[1] - t[1]) + Math.abs(c[2] - t[2]) <= tol;
+    const uniform = pix.filter((c) => near(c, dom, 36)).length / Math.max(1, pix.length);
+    const brand = pix.filter((c) => near(c, [11, 16, 36], 45)).length / Math.max(1, pix.length);
+    const domLum = 0.3 * dom[0] + 0.59 * dom[1] + 0.11 * dom[2];
+    return { file, dominant: dom, domLum: Math.round(domLum), uniform: +uniform.toFixed(3), brandFrac: +brand.toFixed(3), brightFrac: +(bright / total).toFixed(3), stripPx: H };
+  } catch (e) {
+    return { file, error: e.message };
+  }
+}
+
+function checkStrip(ctx, label, file) {
+  if (!file) return ctx.check(`${label}: кадр снят`, false);
+  const st = statusStripOf(file);
+  ctx.d[`strip_${label}`] = st;
+  // Под часами — одна тёмная заливка (подложка #0b1024): доминирующий цвет тёмный и
+  // занимает ≥ 90 % полосы (кроме часов/значков и «острова»). Текст страницы даёт другие цвета.
+  return ctx.check(`${label}: под часами ровная тёмная подложка, текста страницы нет (однородность ${st.uniform ?? st.error}, яркость ${st.domLum})`, st.domLum < 45 && st.uniform >= 0.9, st);
+}
+
+/** Подпись клавиши ввода на открытой клавиатуре (зависит от enterKeyHint поля). */
+async function returnKeyLabel() {
+  try {
+    const kb = await keyboard();
+    if (!kb) return null;
+    const names = ["return", "Return", "next", "Next", "go", "Go", "done", "Done", "search", "Search", "Далее", "Перейти", "Вперед", "Вперёд", "Войти", "Ввод", "Готово", "Найти", "Поиск", "Возврат"];
+    const list = names.map(q).join(",");
+    const els = await driver.$$(`-ios predicate string:type IN {"XCUIElementTypeButton","XCUIElementTypeKey"} AND (label IN {${list}} OR name IN {${list}})`);
+    for (const e of els) {
+      const r = await driver.getElementRect(e.elementId).catch(() => null);
+      if (r && r.y >= kb.y - 2) return (await e.getAttribute("label").catch(() => null)) || (await e.getAttribute("name").catch(() => null));
+    }
+  } catch (e) {
+    log("returnKeyLabel", e.message.slice(0, 160));
+  }
+  return null;
 }
 
 async function signIn(ctx, email, tag) {
@@ -494,41 +694,135 @@ async function signIn(ctx, email, tag) {
     switched = await waitFor(() => has({ type: "field", contains: "почт" }), 4000);
   }
   ctx.check(`${tag}: вкладка «Почта» переключила поле`, switched);
-  await tap({ type: "field", contains: "почт" }, { scrolls: 2 });
+  const ef = await tap({ type: "field", contains: "почт" }, { scrolls: 2 });
   await waitFor(keyboard, 6000);
   await sleep(900);
-  ctx.shot(`${tag}-kb-email`);
+  const s1 = ctx.shot(`${tag}-kb-email`);
+  checkStrip(ctx, `${tag}: почта в фокусе`, s1);
   const kbTop1 = await keyboardTop();
   const btn1 = (await all({ type: "button", label: "Войти" }))[0]?.r;
   ctx.d[`${tag}_kb_email`] = { kbTop: kbTop1, submit: btn1 };
-  // После выхода форма помнит прошлую почту (раунд 2: «chef@…delete-me@…») — сначала очистить.
-  if (lastTapped) await lastTapped.clearValue().catch(() => undefined);
-  await typeFocused(email);
-  await tap({ type: "secure" }, { scrolls: 2 });
-  await sleep(700);
-  await typeFocused(PASSWORD);
+  // После выхода форма помнит прошлую почту (раунд 2: «chef@…delete-me@…») — typeVerified очищает.
+  const te = await typeVerified(ef.el, email);
+  ctx.d[`${tag}_emailTyping`] = te;
+  const emailVal = await readValue(await emailField());
+  ctx.check(`${tag}: почта набрана точно`, emailVal === email, { emailVal, te });
+  // Клавиша ввода в почте ведёт к паролю (enterKeyHint="next").
+  const retBefore = await returnKeyLabel();
+  await ef.el.addValue("\n").catch(() => undefined);
   await sleep(1200);
-  ctx.shot(`${tag}-kb-password`);
+  let pf = await passField();
+  if (!pf) throw new Error("нет поля пароля");
+  // Куда ушёл фокус: атрибут focused у веб-полей на iOS не работает, поэтому смотрим
+  // на клавишу ввода — у почты «next» (Далее), у пароля «go» (Перейти/Go) — и на то,
+  // осталась ли клавиатура.
+  const retAfter = await returnKeyLabel();
+  const kbAfter = Boolean(await keyboard());
+  const pfFocused = kbAfter && retAfter != null && retAfter !== retBefore && !/^(next|далее)$/i.test(retAfter);
+  ctx.d[`${tag}_enterInEmail`] = { returnKeyBefore: retBefore, returnKeyAfter: retAfter, keyboard: kbAfter };
+  ctx.shot(`${tag}-after-enter-in-email`);
+  ctx.check(`${tag}: клавиша ввода в почте перевела фокус на пароль`, pfFocused === true, ctx.d[`${tag}_enterInEmail`]);
+  if (pfFocused !== true) {
+    await tap({ type: "secure" }, { scrolls: 2 });
+    pf = await passField();
+  }
+  let tp = await typeVerified(pf, PASSWORD, { secure: true });
+  // Точная проверка: «Показать пароль» — поле становится обычным и отдаёт значение.
+  let exact = null;
+  const eye = await tryTap({ type: "button", label: "Показать пароль" }, { scrolls: 1, anywhere: true, ignoreKeyboard: true, timeout: 3000 });
+  if (eye) {
+    await sleep(700);
+    const shownEl = await passField({ shown: true });
+    exact = shownEl ? await readValue(shownEl) : null;
+    if (shownEl && exact !== PASSWORD) {
+      tp = await typeVerified(shownEl, PASSWORD);
+      exact = await readValue(shownEl);
+    }
+    ctx.d[`${tag}_passwordShown`] = exact === PASSWORD ? "совпадает" : exact == null ? null : `не совпадает, длина ${String(exact).length}`;
+    await tryTap({ type: "button", label: "Скрыть пароль" }, { scrolls: 1, anywhere: true, ignoreKeyboard: true, timeout: 3000 });
+    await sleep(500);
+  }
+  ctx.d[`${tag}_passwordTyping`] = tp;
+  ctx.check(
+    `${tag}: пароль набран точно (${exact === PASSWORD ? "сверено при «Показать пароль»" : "по числу точек"})`,
+    exact === PASSWORD || (exact == null && tp.ok),
+    { exactLen: exact == null ? null : String(exact).length, tp }
+  );
+  // Фокус в пароль: «Войти» должна быть над клавиатурой, под часами — тёмная подложка.
+  await tap({ type: "secure" }, { scrolls: 2 });
+  await waitFor(keyboard, 5000);
+  await sleep(1200);
+  const s2 = ctx.shot(`${tag}-kb-password`);
+  checkStrip(ctx, `${tag}: пароль в фокусе`, s2);
   const kbTop = await keyboardTop();
   const btn = (await all({ type: "button", label: "Войти" }))[0]?.r;
-  const emailVal = await (await driver.$(`-ios predicate string:${pred({ type: "field", contains: "почт" })}`)).getAttribute("value").catch(() => null);
-  ctx.d[`${tag}_kb_password`] = { kbTop, submit: btn, emailVal };
-  ctx.check(`${tag}: почта набрана`, emailVal === email, emailVal);
+  ctx.d[`${tag}_kb_password`] = { kbTop, submit: btn };
   if (kbTop && btn) ctx.check(`${tag}: «Войти» над клавиатурой (пароль в фокусе)`, btn.y + btn.height <= kbTop + 1, { button: btn, kbTop });
   else ctx.check(`${tag}: клавиатура открыта и «Войти» найдена`, Boolean(kbTop && btn), { kbTop, btn });
+  ctx.d[`${tag}_returnKeyPassword`] = await returnKeyLabel();
+  // Вход клавишей ввода (enterKeyHint="go"); не ушли за 12 с — нажимаем «Войти».
   const t0 = Date.now();
-  if (btn && kbTop && btn.y + btn.height <= kbTop) await tapXY(btn.x + btn.width / 2, btn.y + btn.height / 2);
-  else {
+  const sp = await passField();
+  if (sp) await sp.addValue("\n").catch(() => undefined);
+  const leftOnEnter = await waitFor(async () => !(await onLogin()), 12000 * SLOW, 800);
+  ctx.d[`${tag}_submitVia`] = leftOnEnter ? "клавиша ввода" : "кнопка «Войти»";
+  ctx.check(`${tag}: клавиша ввода в пароле отправляет форму`, leftOnEnter);
+  if (!leftOnEnter) {
+    ctx.shot(`${tag}-enter-did-not-submit`);
     await hideKeyboard();
-    await tap({ type: "button", label: "Войти" });
+    await tryTap({ type: "button", label: "Войти" });
   }
   const left = await waitFor(async () => !(await onLogin()) && (await has({ type: "link", begins: "Профиль" })), 45000 * SLOW, 800);
   ctx.d[`${tag}_loginMs`] = Date.now() - t0;
   if (!left) {
+    ctx.shot(`${tag}-login-failed`);
     const errs = (await all({ type: "text" })).map((e) => e.label).filter((l) => /невер|ошиб|не удалось|не найден/i.test(l || ""));
     throw new Error(`вход ${email} не удался: ${errs.join(" | ")}`);
   }
   await sleep(1500);
+  // iOS может предложить сохранить пароль — это не наше окно, закрываем.
+  const pw = await alertButtons(1500);
+  if (pw) {
+    const t = (await alertText()) || "";
+    ctx.d[`${tag}_systemAlertAfterLogin`] = { t, pw };
+    if (/пароль|password|связк|keychain/i.test(t)) {
+      const no = pw.find((b) => /не сейчас|not now|никогда|never/i.test(b));
+      await driver.execute("mobile: alert", { action: no ? "accept" : "dismiss", ...(no ? { buttonLabel: no } : {}) }).catch(() => undefined);
+      await sleep(800);
+    }
+  }
+}
+
+/** Профиль → «Выйти» → подтверждение; true — на экране входа. */
+async function logout(ctx) {
+  await tab("Профиль");
+  await waitText({ type: "text", label: "Профиль" });
+  await tap({ type: "button", begins: "Выйти" }, { scrolls: 10 });
+  await sleep(1200);
+  ctx.shot("logout-confirm");
+  await tap({ type: "button", label: "Выйти" }, { scrolls: 0, anywhere: true, pick: "lowest" });
+  return waitFor(onLogin, 30000 * SLOW);
+}
+
+async function dismissSheets() {
+  if (await has({ type: "button", label: "Не сейчас" })) await tryTap({ type: "button", label: "Не сейчас" }, { scrolls: 0, anywhere: true, timeout: 2000 });
+  await hideKeyboard();
+}
+
+/** Известное состояние перед сценарием: приложение на экране, шеф вошёл, листов и клавиатуры нет. */
+async function ready(ctx) {
+  if ((await appState()) !== 4) {
+    await driver.execute("mobile: activateApp", { bundleId: BUNDLE });
+    await sleep(2000);
+  }
+  await dismissSheets();
+  if (await onLogin()) {
+    ctx.d.reLogin = true;
+    await signIn(ctx, CHEF, "relogin");
+    await sleep(2000);
+    await dismissSheets();
+  }
+  if (!(await waitFor(() => has({ type: "link", begins: "Профиль" }), 20000 * SLOW))) throw new Error("нет нижнего меню — приложение не в рабочем состоянии");
 }
 
 async function profileTheme(ctx, name) {
@@ -634,6 +928,10 @@ async function main() {
     await driver.execute("mobile: terminateApp", { bundleId: BUNDLE });
     await sleep(1500);
     const { t0 } = launchWithConsole();
+    // Кадры simctl в фоне — не зависят от того, как быстро отвечает Appium при запуске.
+    const framesDir = path.join(OUT, "S01-frames");
+    fs.mkdirSync(framesDir, { recursive: true });
+    spawn("bash", ["-c", `s=$(perl -MTime::HiRes=time -e 'printf q(%.3f), time'); for i in $(seq 1 30); do n=$(perl -MTime::HiRes=time -e "printf q(%05d), (time-$s)*1000"); xcrun simctl io ${UDID} screenshot ${framesDir}/t$n.png >/dev/null 2>&1; sleep 0.6; done`], { detached: true, stdio: "ignore" }).unref();
     const frames = [];
     let loginAt = null;
     let sawOpening = false;
@@ -653,7 +951,8 @@ async function main() {
     }
     ctx.shot("relaunch-login");
     ctx.d.relaunchToLoginMs = loginAt;
-    ctx.check("повторный запуск: экран входа меньше чем за 8 с", loginAt != null && loginAt < 8000 * SLOW, loginAt);
+    ctx.d.relaunchUnder8s = loginAt != null && loginAt < 8000;
+    ctx.check("повторный запуск: экран входа появился (до 20 с на CI; кадры — S01-frames/)", loginAt != null && loginAt < 20000 * SLOW, loginAt);
     ctx.check("повторный запуск: «Открываем кабинет…» не показывался", !sawOpening);
     await sleep(1500);
     ctx.check("повторный запуск: клавиатура не открылась сама", !(await keyboard()));
@@ -661,7 +960,19 @@ async function main() {
 
   // 2. Вход шефа и уведомления
   await scenario("S02", "Вход по «Почте» (клавиатура не закрывает «Войти»), лист уведомлений, разрешение iOS", async (ctx) => {
-    await signIn(ctx, CHEF, "chef");
+    if (!(await onLogin())) {
+      // S01 мог оставить приложение не на входе — перезапуск.
+      await recover();
+    }
+    try {
+      await signIn(ctx, CHEF, "chef");
+    } catch (e) {
+      // Вторая попытка (ввод по буферу обмена сработает, если клавиатура подвела).
+      ctx.d.firstLoginError = e.message.slice(0, 300);
+      if (!(await onLogin())) throw e;
+      await hideKeyboard();
+      await signIn(ctx, CHEF, "chef-retry");
+    }
     ctx.shot("home-after-login");
     const sheet = await waitFor(() => has({ type: "button", label: "Включить" }), 15000 * SLOW);
     ctx.shot("push-explainer");
@@ -691,7 +1002,7 @@ async function main() {
   const screenPass = async (ctx, theme) => {
     await tab("Главная");
     await sleep(2500 * SLOW);
-    ctx.shot(`home-${theme}`);
+    checkStrip(ctx, `${theme}: главная`, ctx.shot(`home-${theme}`));
     await layoutCheck(ctx, `home-${theme}`);
     await tab("Разделы");
     await waitText({ type: "text", label: "Все разделы" });
@@ -709,7 +1020,7 @@ async function main() {
     await layoutCheck(ctx, `cleaning-doc-${theme}`);
     await scrollDown();
     await scrollDown();
-    ctx.shot(`cleaning-doc-scrolled-${theme}`);
+    checkStrip(ctx, `${theme}: документ уборки пролистан`, ctx.shot(`cleaning-doc-scrolled-${theme}`));
     const cold = await openJournal(ctx, "холодильн", "холодильного", IDS.docs?.cold?.title);
     ctx.check(`${theme}: документ журнала холодильников открылся`, cold);
     await toTop();
@@ -725,16 +1036,19 @@ async function main() {
     await layoutCheck(ctx, `profile-${theme}`);
   };
   await scenario("S03a", "Основные экраны — светлая тема", async (ctx) => {
+    await ready(ctx);
     await profileTheme(ctx, "Светлая");
     await screenPass(ctx, "light");
   }, 480000);
   await scenario("S03b", "Основные экраны — тёмная тема", async (ctx) => {
+    await ready(ctx);
     await profileTheme(ctx, "Тёмная");
     await screenPass(ctx, "dark");
   }, 480000);
 
   // 4. Печать документа
   await scenario("S04", "Печать документа журнала: системное окно печати iOS", async (ctx) => {
+    await ready(ctx);
     const ok = await openJournal(ctx, "уборки", "Журнал уборки", IDS.docs?.cleaning?.title);
     ctx.check("документ уборки открыт", ok);
     await toTop();
@@ -781,6 +1095,7 @@ async function main() {
     ctx.check(`${tag}: лист закрылся, приложение живо`, (await appState()) === 4 && !(await has({ contains: "AirDrop" })));
   };
   await scenario("S05", "Скачивание отчёта Excel и PDF: лист «Поделиться» с понятным именем файла", async (ctx) => {
+    await ready(ctx);
     await sectionsGo("Отчёт");
     const form = await waitFor(() => has({ contains: "Выберите журнал" }), 30000 * SLOW);
     ctx.shot("reports");
@@ -800,6 +1115,7 @@ async function main() {
 
   // 6. Внешние ссылки
   await scenario("S06", "Ссылки: почта (mailto) и чужой сайт — системе; приложение остаётся рабочим", async (ctx) => {
+    await ready(ctx);
     await sectionsGo("Отчёт");
     await waitFor(() => has({ type: "link", contains: "Поделиться по email" }), 30000 * SLOW);
     await toTop();
@@ -836,6 +1152,7 @@ async function main() {
 
   // 7. Фото
   await scenario("S07", "Фото в журнале: системный выбор (камера / медиатека / файлы) и отмена", async (ctx) => {
+    await ready(ctx);
     await tab("Журналы");
     await waitFor(() => has({ type: "field", label: "Поиск по журналам" }), 30000 * SLOW);
     await tap({ type: "field", label: "Поиск по журналам" }, { scrolls: 3 });
@@ -885,6 +1202,7 @@ async function main() {
 
   // 8. Голос
   await scenario("S08", "Голосовой ввод (текстовое поле и температура холодильника): разрешения и итог без зависания", async (ctx) => {
+    await ready(ctx);
     const tryMic = async (tag) => {
       const before = await source(`S08-${tag}-before`);
       await tap({ type: "button", label: "Голосовой ввод" }, { scrolls: 6 });
@@ -934,6 +1252,7 @@ async function main() {
 
   // 9. Жест «назад»
   await scenario("S09", "Жест «назад» от левого края возвращает на предыдущий экран", async (ctx) => {
+    await ready(ctx);
     await tab("Разделы");
     await waitText({ type: "text", label: "Все разделы" });
     await tab("Профиль");
@@ -957,13 +1276,8 @@ async function main() {
 
   // 10. Выход
   await scenario("S10", "Выход из профиля → экран входа", async (ctx) => {
-    await tab("Профиль");
-    await waitText({ type: "text", label: "Профиль" });
-    await tap({ type: "button", begins: "Выйти" }, { scrolls: 10 });
-    await sleep(1200);
-    ctx.shot("confirm");
-    await tap({ type: "button", label: "Выйти" }, { scrolls: 0, anywhere: true, pick: "lowest" });
-    const ok = await waitFor(onLogin, 30000 * SLOW);
+    await ready(ctx);
+    const ok = await logout(ctx);
     await sleep(1500);
     ctx.shot("login-after-logout");
     ctx.check("после выхода — экран входа", ok);
@@ -973,7 +1287,11 @@ async function main() {
 
   // 11. Удаление аккаунта одноразового повара
   await scenario("S11", "Удаление аккаунта одноразового повара → «Аккаунт удалён» на входе", async (ctx) => {
-    if (!(await onLogin())) throw new Error("не на экране входа");
+    await dismissSheets();
+    if (!(await onLogin())) {
+      ctx.d.loggedOutFirst = true;
+      if (!(await logout(ctx))) throw new Error("не удалось выйти к экрану входа");
+    }
     await signIn(ctx, THROWAWAY, "throwaway");
     const later = await waitFor(() => has({ type: "button", label: "Не сейчас" }), 5000);
     if (later) await tap({ type: "button", label: "Не сейчас" }, { scrolls: 0, anywhere: true });

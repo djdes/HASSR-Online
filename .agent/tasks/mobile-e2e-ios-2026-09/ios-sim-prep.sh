@@ -32,6 +32,15 @@ xcrun simctl spawn "$UDID" defaults write "Apple Global Domain" AppleLanguages -
 xcrun simctl spawn "$UDID" defaults write "Apple Global Domain" AppleLocale -string ru_RU
 xcrun simctl spawn "$UDID" defaults write com.apple.keyboard.preferences DidShowContinuousPathIntroduction -bool true || true
 xcrun simctl spawn "$UDID" defaults write com.apple.keyboard.preferences DidShowGestureKeyboardIntroduction -bool true || true
+# Раскладки: английская первой (почта и пароль), русская — вторая (поиск, «УДАЛИТЬ»;
+# переключает глобус или вставка из буфера). Раунд 2: на русской раскладке пароль
+# «DemoShots2026!» ушёл как «2026!». Без автоисправления и подсказок.
+xcrun simctl spawn "$UDID" defaults write "Apple Global Domain" AppleKeyboards -array "en_US@sw=QWERTY;hw=Automatic" "ru_RU@sw=Russian;hw=Automatic" "emoji@sw=Emoji" || true
+xcrun simctl spawn "$UDID" defaults write "Apple Global Domain" AppleKeyboardsExpanded -int 1 || true
+xcrun simctl spawn "$UDID" defaults write com.apple.Preferences KeyboardAutocorrection -bool false || true
+xcrun simctl spawn "$UDID" defaults write com.apple.Preferences KeyboardPrediction -bool false || true
+xcrun simctl spawn "$UDID" defaults write com.apple.Preferences KeyboardAutocapitalization -bool false || true
+xcrun simctl spawn "$UDID" defaults write com.apple.Preferences KeyboardCheckSpelling -bool false || true
 xcrun simctl shutdown "$UDID"
 xcrun simctl boot "$UDID"
 xcrun simctl bootstatus "$UDID" -b
