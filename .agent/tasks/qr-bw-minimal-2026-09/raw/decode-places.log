@@ -1,0 +1,22 @@
+poster-a4              105 мм; H v13, 69 мод.; модуль 1.404 мм | 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ 300phone-hard:JZ 300bw-phone-hard:JZ 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 150phone-hard:JZ 150bw-phone-hard:JZ
+poster-a4-longest      105 мм; H v15, 77 мод.; модуль 1.265 мм | 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ 300phone-hard:JZ 300bw-phone-hard:JZ 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 150phone-hard:JZ 150bw-phone-hard:JZ
+poster-a5-longest      78 мм; H v15, 77 мод.; модуль 0.940 мм | 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ 300phone-hard:JZ 300bw-phone-hard:JZ 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 150phone-hard:JZ 150bw-phone-hard:JZ
+sticker-object         36 мм; H v12, 65 мод.; модуль 0.509 мм | 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ 300phone-hard:JZ 300bw-phone-hard:JZ 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 150phone-hard:-Z 150bw-phone-hard:-Z
+sticker-longest-min    29 мм; H v15, 77 мод.; модуль 0.349 мм | 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ 300phone-hard:-Z 300bw-phone-hard:-Z 150clean:-Z 150bw:-Z 150bw-print:-Z 150phone:-Z 150bw-phone:-Z 150phone-hard:-Z 150bw-phone-hard:-Z
+inspector-sheet        73 мм; H v8, 49 мод.; модуль 1.344 мм | 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ 300phone-hard:JZ 300bw-phone-hard:JZ 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 150phone-hard:JZ 150bw-phone-hard:JZ
+personal-card          70 мм; H v6, 41 мод.; модуль 1.518 мм | 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ 300phone-hard:JZ 300bw-phone-hard:JZ 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 150phone-hard:JZ 150bw-phone-hard:JZ
+join-print             320 CSS px = 84,7 мм; H v8, 49 мод.; модуль 1.559 мм | 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ 300phone-hard:JZ 300bw-phone-hard:JZ 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 150phone-hard:JZ 150bw-phone-hard:JZ
+certificate            50 мм; H v8, 49 мод.; модуль 0.921 мм | 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ 300phone-hard:JZ 300bw-phone-hard:JZ 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 150phone-hard:JZ 150bw-phone-hard:JZ
+docx-footer            81 px Word ≈ 21,4 мм; H v9, 53 мод.; модуль 0.367 мм | 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ 300phone-hard:JZ 300bw-phone-hard:JZ 150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:-Z 150bw-phone:-Z 150phone-hard:-Z 150bw-phone-hard:-Z
+login-screen           180 CSS px; H v6, 41 мод.; 3.90 CSS px/мод. | 96screen:JZ 96screen-phone:JZ 192screen:JZ 192screen-phone:JZ 288screen:JZ 288screen-phone:JZ
+tg-invite              220 CSS px; H v8, 49 мод.; 4.05 CSS px/мод. | 96screen:JZ 96screen-phone:JZ 192screen:JZ 192screen-phone:JZ 288screen:JZ 288screen-phone:JZ
+tg-invite-thumb        128 CSS px; H v8, 49 мод.; 2.36 CSS px/мод. | 96screen:JZ 96screen-phone:-Z 192screen:JZ 192screen-phone:JZ 288screen:JZ 288screen-phone:JZ
+pair                   280 CSS px; H v8, 49 мод.; 5.16 CSS px/мод. | 96screen:JZ 96screen-phone:JZ 192screen:JZ 192screen-phone:JZ 288screen:JZ 288screen-phone:JZ
+join-dialog            260 CSS px; H v8, 49 мод.; 4.79 CSS px/мод. | 96screen:JZ 96screen-phone:JZ 192screen:JZ 192screen-phone:JZ 288screen:JZ 288screen-phone:JZ
+kiosk                  220 CSS px; H v8, 49 мод.; 4.05 CSS px/мод. | 96screen:JZ 96screen-phone:JZ 192screen:JZ 192screen-phone:JZ 288screen:JZ 288screen-phone:JZ
+poster-preview-dialog  184 CSS px; H v12, 65 мод.; 2.60 CSS px/мод. | 96screen:-Z 96screen-phone:-- 192screen:JZ 192screen-phone:JZ 288screen:JZ 288screen-phone:JZ
+landing-sticker        240 CSS px; H v3, 29 мод.; 7.27 CSS px/мод. | 96screen:JZ 96screen-phone:JZ 192screen:JZ 192screen-phone:JZ
+landing-video-sticker  150 CSS px; H v3, 29 мод.; 4.44 CSS px/мод. | 96screen:JZ 96screen-phone:JZ 192screen:JZ 192screen-phone:JZ
+
+приёмка: 132 снимков, мимо: 0
+exit 0

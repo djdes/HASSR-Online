@@ -51,6 +51,7 @@ import {
   restoreMenuItems,
   useRestoreDocument,
   useCanManageDocuments,
+  JournalTabs,
 } from "@/components/journals/document-list-ui";
 import {
   JOURNAL_LIST_STACK_CLASS,
@@ -58,8 +59,6 @@ import {
   JOURNAL_CARD_TITLE_CLASS,
   JOURNAL_CARD_VALUE_CLASS,
   JOURNAL_LIST_CARD_CLASS,
-  JOURNAL_TAB_RAIL_CLASS,
-  JOURNAL_TAB_VIEWPORT_CLASS,
   JOURNAL_CARD_SECTION_CLASS,
   JOURNAL_LIST_CARDS_CLASS,
 } from "@/components/journals/journal-responsive";
@@ -419,32 +418,7 @@ function TrackedDocumentsClientImpl({
           />
         </div>
 
-        <div className="border-b border-[#d9dce8]">
-          <div className={JOURNAL_TAB_VIEWPORT_CLASS}>
-            <div className={JOURNAL_TAB_RAIL_CLASS}>
-            <Link
-              href={`/journals/${templateCode}`}
-              className={`relative pb-5 ${
-                activeTab === "active"
-                  ? "font-medium text-black after:absolute after:bottom-[-1px] after:left-0 after:h-[3px] after:w-full after:bg-[#5566f6]"
-                  : "text-[#6f7282]"
-              }`}
-            >
-              Активные
-            </Link>
-            <Link
-              href={`/journals/${templateCode}?tab=closed`}
-              className={`relative pb-5 ${
-                activeTab === "closed"
-                  ? "font-medium text-black after:absolute after:bottom-[-1px] after:left-0 after:h-[3px] after:w-full after:bg-[#5566f6]"
-                  : "text-[#6f7282]"
-              }`}
-            >
-              Закрытые
-            </Link>
-            </div>
-          </div>
-        </div>
+        <JournalTabs activeTab={activeTab} templateCode={templateCode} />
 
         <div className={JOURNAL_LIST_CARDS_CLASS}>
           {documents.length === 0 && (

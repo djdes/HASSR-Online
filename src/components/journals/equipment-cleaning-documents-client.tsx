@@ -135,7 +135,7 @@ export function EquipmentCleaningDocumentsClient({
         users={users}
         compact={false}
       />
-      <JournalTabs activeTab={activeTab} templateCode={templateCode} compact={false} />
+      <JournalTabs activeTab={activeTab} templateCode={templateCode} />
 
       <div className={JOURNAL_LIST_CARDS_CLASS}>
         {documents.length === 0 && <EmptyDocumentsState />}

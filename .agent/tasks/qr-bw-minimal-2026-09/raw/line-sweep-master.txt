@@ -1,0 +1,32 @@
+samples:hygiene n=37 m=0.405 как есть (0)       jsQR 144/144 zxing 144/144
+samples:hygiene n=37 m=0.405 поле 0,05 мм       jsQR 144/144 zxing 144/144
+samples:hygiene n=37 m=0.405 поле 0,10 мм       jsQR 144/144 zxing 144/144
+samples:hygiene n=37 m=0.405 поле 0,15 мм       jsQR 144/144 zxing 144/144
+samples:hygiene n=37 m=0.405 без боковых линий  jsQR 144/144 zxing 144/144
+samples:transport_temperature n=41 m=0.369 как есть (0)       jsQR 143/144 zxing 144/144
+samples:transport_temperature n=41 m=0.369 поле 0,05 мм       jsQR 143/144 zxing 144/144
+samples:transport_temperature n=41 m=0.369 поле 0,10 мм       jsQR 143/144 zxing 144/144
+samples:transport_temperature n=41 m=0.369 поле 0,15 мм       jsQR 143/144 zxing 144/144
+samples:transport_temperature n=41 m=0.369 без боковых линий  jsQR 144/144 zxing 144/144
+samples:cleaning_ventilation_checklist n=45 m=0.365 как есть (0)       jsQR 139/144 zxing 144/144
+samples:cleaning_ventilation_checklist n=45 m=0.365 поле 0,05 мм       jsQR 138/144 zxing 144/144
+samples:cleaning_ventilation_checklist n=45 m=0.365 поле 0,10 мм       jsQR 138/144 zxing 144/144
+samples:cleaning_ventilation_checklist n=45 m=0.365 поле 0,15 мм       jsQR 138/144 zxing 144/144
+samples:cleaning_ventilation_checklist n=45 m=0.365 без боковых линий  jsQR 144/144 zxing 144/144
+long:hygiene n=49 m=0.365 как есть (0)       jsQR 124/144 zxing 144/144
+long:hygiene n=49 m=0.365 поле 0,05 мм       jsQR 126/144 zxing 144/144
+long:hygiene n=49 m=0.365 поле 0,10 мм       jsQR 126/144 zxing 144/144
+long:hygiene n=49 m=0.365 поле 0,15 мм       jsQR 126/144 zxing 144/144
+long:hygiene n=49 m=0.365 без боковых линий  jsQR 132/144 zxing 144/144
+long:cleaning_ventilation_checklist n=53 m=0.351 как есть (0)       jsQR 119/144 zxing 144/144
+long:cleaning_ventilation_checklist n=53 m=0.351 поле 0,05 мм       jsQR 114/144 zxing 144/144
+long:cleaning_ventilation_checklist n=53 m=0.351 поле 0,10 мм       jsQR 114/144 zxing 144/144
+long:cleaning_ventilation_checklist n=53 m=0.351 поле 0,15 мм       jsQR 114/144 zxing 144/144
+long:cleaning_ventilation_checklist n=53 m=0.351 без боковых линий  jsQR 127/144 zxing 144/144
+
+итого:
+  как есть (0)       jsQR 669/720 (92.9 %) zxing 720/720
+  поле 0,05 мм       jsQR 665/720 (92.4 %) zxing 720/720
+  поле 0,10 мм       jsQR 665/720 (92.4 %) zxing 720/720
+  поле 0,15 мм       jsQR 665/720 (92.4 %) zxing 720/720
+  без боковых линий  jsQR 691/720 (96.0 %) zxing 720/720

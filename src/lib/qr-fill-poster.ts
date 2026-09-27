@@ -41,7 +41,7 @@ export function rangeLabel(min: number | null, max: number | null, unit: string)
   return null;
 }
 
-/** Фирменный QR (`brand-qr.ts`): логотип, коррекция H, плашка «Отсканировать». */
+/** Фирменный ч/б QR (`brand-qr.ts`): знак, коррекция H, полоса «Отсканировать». */
 async function qrSvg(url: string): Promise<string> {
   return brandQrSvg(url);
 }

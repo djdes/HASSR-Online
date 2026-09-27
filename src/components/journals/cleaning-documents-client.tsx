@@ -42,6 +42,7 @@ import {
   EMPTY_STATE_CREATE_BUTTON_CLASS,
   EmptyDocumentsState,
   filterManageMenuItems,
+  JournalTabs,
   useCanManageDocuments,
 } from "@/components/journals/document-list-ui";
 import { CreateDocumentEmptyState } from "@/components/journals/create-document-empty-state";
@@ -59,8 +60,6 @@ import {
   JOURNAL_DIALOG_SUBMIT_CLASS,
   JOURNAL_DIALOG_TITLE_CLASS,
   JOURNAL_LIST_STACK_CLASS,
-  JOURNAL_TAB_RAIL_CLASS,
-  JOURNAL_TAB_VIEWPORT_CLASS,
   JOURNAL_LIST_CARD_CLASS,
   JOURNAL_LIST_CARDS_CLASS,
 } from "@/components/journals/journal-responsive";
@@ -615,34 +614,7 @@ export function CleaningDocumentsClient(props: Props) {
           />
         </div>
 
-        {/* Вкладки — та же вёрстка и типографика, что у <JournalTabs>
-            остальных 12 журналов (14px/600, pb-5, gap-8/sm:gap-12). */}
-        <div className="border-b border-[#d9dce8]">
-          <div className={JOURNAL_TAB_VIEWPORT_CLASS}>
-            <div className={JOURNAL_TAB_RAIL_CLASS}>
-              <Link
-                href={`/journals/${props.routeCode}`}
-                className={`relative pb-5 ${
-                  props.activeTab === "active"
-                    ? "font-medium text-black after:absolute after:bottom-[-1px] after:left-0 after:h-[3px] after:w-full after:bg-[#5566f6]"
-                    : "text-[#6f7282]"
-                }`}
-              >
-                Активные
-              </Link>
-              <Link
-                href={`/journals/${props.routeCode}?tab=closed`}
-                className={`relative pb-5 ${
-                  props.activeTab === "closed"
-                    ? "font-medium text-black after:absolute after:bottom-[-1px] after:left-0 after:h-[3px] after:w-full after:bg-[#5566f6]"
-                    : "text-[#6f7282]"
-                }`}
-              >
-                Закрытые
-              </Link>
-            </div>
-          </div>
-        </div>
+        <JournalTabs activeTab={props.activeTab} templateCode={props.routeCode} />
 
         <div className={JOURNAL_LIST_CARDS_CLASS}>
           {props.documents.length === 0 ? (

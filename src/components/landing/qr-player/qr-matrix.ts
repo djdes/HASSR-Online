@@ -11,7 +11,7 @@ function fluid(svg: string): string {
  * Фирменный QR для наклеек лендинга (`brand-qr.ts`) — собирается на
  * сервере: пакет `qrcode` в клиентский бандл не попадает. Два вида:
  * золотой наклейке подпись даёт её рамка, а наклейка в ролике — как её
- * печатает продукт, с плашкой «Отсканировать».
+ * печатает продукт, с полосой «Отсканировать».
  */
 export async function buildQrMatrix(text: string): Promise<QrMatrix> {
   const [bare, printed] = await Promise.all([brandQrSvg(text, { caption: false }), brandQrSvg(text)]);

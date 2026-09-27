@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useId, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Pencil, PencilLine, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ import {
   type CurrentJournalNames,
 } from "@/components/shared/custom-names-provider";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Input } from "@/components/ui/input";
 import {
   CUSTOM_NAME_MAX_LENGTH,
   checkJournalRename,
@@ -111,8 +112,15 @@ type SaveResponse = {
   errors?: CustomNameFieldError[];
 };
 
+/**
+ * Обычное поле проекта (`Input` из ui/) в рецепте дизайн-системы (SKILL.md →
+ * «Input recipe»): 48 px, скругление 2xl, индиго-рамка и кольцо в фокусе.
+ * На телефоне кегль 16 px даёт общее правило для полей в окнах
+ * (globals.css), iPhone не увеличивает страницу. Выделение — индиго
+ * (`selection:bg-primary` у `Input`).
+ */
 const INPUT_CLASS =
-  "h-12 w-full rounded-2xl border bg-white px-4 text-[15px] text-[#0b1024] placeholder:text-[#9b9fb3] transition-[border-color,box-shadow] duration-150 focus:outline-none focus:ring-4 disabled:opacity-60";
+  "h-12 rounded-2xl bg-white px-4 text-[15px] text-[#0b1024] shadow-none placeholder:text-[#9b9fb3] transition-[border-color,box-shadow] duration-150 focus-visible:ring-4 disabled:opacity-60 md:text-[15px]";
 
 /**
  * Окно «Своё название журнала». Сохраняет тем же API и по тем же правилам,
@@ -154,16 +162,20 @@ function JournalRenameDialog({
   // поле кнопка заполняет официальным, чтобы было видно, что будет.
   const showsOfficial = isStandardValue && value.trim().length > 0;
 
-  // На компьютере — сразу печатать: фокус в поле, текст выделен. На
-  // телефоне не зовём клавиатуру сами — она закрыла бы половину окна.
-  useEffect(() => {
-    if (!window.matchMedia?.("(pointer: fine)").matches) return;
-    // Позже, чем окно переводит фокус на свою карточку.
-    const id = window.setTimeout(() => {
-      inputRef.current?.focus();
-      inputRef.current?.select();
-    }, 60);
-    return () => window.clearTimeout(id);
+  // Окно открылось — поле сразу в фокусе, текущее название выделено
+  // целиком: можно печатать новое поверх или поставить курсор куда нужно.
+  // Везде, и на телефоне: фокус ставится в том же касании карандаша
+  // (эффект разметки, без таймера), поэтому клавиатура открывается вместе
+  // с листом, а не через секунду, сдвигая поле из-под пальца. Лист сам
+  // поднимается над клавиатурой (`ConfirmDialog`). У длинного названия в
+  // поле видно начало, а не хвост: выделение «назад» и прокрутка к началу
+  // (фокус сам уводит поле к концу текста).
+  useLayoutEffect(() => {
+    const input = inputRef.current;
+    if (!input) return;
+    input.focus();
+    input.setSelectionRange(0, input.value.length, "backward");
+    input.scrollLeft = 0;
   }, []);
 
   function resetToStandard() {
@@ -232,10 +244,14 @@ function JournalRenameDialog({
           <label htmlFor={inputId} className="mb-2 block text-[12px] font-medium text-[#3c4053]">
             Название журнала в вашей организации
           </label>
-          <input
+          <Input
             id={inputId}
             ref={inputRef}
             type="text"
+            // Без подсказок автозаполнения браузера поверх окна; Enter на
+            // клавиатуре телефона подписан «Готово» — он и сохраняет.
+            autoComplete="off"
+            enterKeyHint="done"
             value={value}
             maxLength={CUSTOM_NAME_MAX_LENGTH}
             placeholder={journal.officialName}
@@ -251,8 +267,8 @@ function JournalRenameDialog({
             className={cn(
               INPUT_CLASS,
               error
-                ? "border-[#e8a39b] focus:border-[#d2453d] focus:ring-[#d2453d]/15"
-                : "border-[#dcdfed] focus:border-[#5566f6] focus:ring-[#5566f6]/15"
+                ? "border-[#e8a39b] focus-visible:border-[#d2453d] focus-visible:ring-[#d2453d]/15 aria-invalid:border-[#e8a39b] aria-invalid:ring-[#d2453d]/15"
+                : "border-[#dcdfed] focus-visible:border-[#5566f6] focus-visible:ring-[#5566f6]/15"
             )}
           />
           <p

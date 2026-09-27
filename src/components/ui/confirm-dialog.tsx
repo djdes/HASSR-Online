@@ -1,5 +1,6 @@
 "use client";
 import { lockBodyScroll, unlockBodyScroll } from "@/lib/use-body-scroll-lock";
+import { useKeyboardInset } from "@/lib/use-keyboard-inset";
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -184,9 +185,15 @@ export function ConfirmDialog({
 
   // Фокус переводим на саму карточку: иначе он остаётся на кнопке под
   // окном, и клавиатура продолжает управлять страницей, а не листом.
+  // Если содержимое уже поставило фокус в своё поле (переименование
+  // журнала, `typeToConfirm` с autoFocus) — не отбираем: на телефоне это
+  // закрыло бы только что открытую клавиатуру.
   useEffect(() => {
     if (!open) return;
-    const id = window.setTimeout(() => dialogRef.current?.focus(), 0);
+    const id = window.setTimeout(() => {
+      const card = dialogRef.current;
+      if (card && !card.contains(document.activeElement)) card.focus();
+    }, 0);
     return () => window.clearTimeout(id);
   }, [open]);
 
@@ -196,6 +203,15 @@ export function ConfirmDialog({
     lockBodyScroll();
     return () => unlockBodyScroll();
   }, [open]);
+
+  // Экранная клавиатура телефона. Лист прижат к низу `position: fixed`, а
+  // iPhone (и Android с Chrome 108) клавиатурой уменьшает только видимую
+  // часть экрана: без поправки клавиатура закрывала поле и кнопки листа,
+  // а iOS, открывая её, сдвигал видимую часть страницы — поле уезжало
+  // из-под пальца (владелец, 2026-09-27, окно переименования журнала:
+  // «даже выделить нельзя»). Поднимаем лист над клавиатурой — как
+  // `card-edit-sheet` и `dynamic-form`.
+  const keyboardInset = useKeyboardInset(open);
 
   if (!open || typeof document === "undefined") return null;
 
@@ -240,6 +256,7 @@ export function ConfirmDialog({
       // выключает `pointer-events` у всего `body`. Без этой строки
       // кнопки нашего окна не нажимались бы.
       className="pointer-events-auto fixed inset-0 z-[60] flex items-end justify-center sm:items-center sm:px-4"
+      style={keyboardInset ? { paddingBottom: keyboardInset } : undefined}
     >
       {/* Backdrop */}
       <button
@@ -261,6 +278,9 @@ export function ConfirmDialog({
         // главной это `<summary>` раскрывающейся секции — нажатия внутри
         // листа сворачивали бы её.
         onClick={(e) => e.stopPropagation()}
+        // С клавиатурой лист не выше видимой над ней части экрана:
+        // середина прокручивается, шапка и кнопки остаются на виду.
+        style={keyboardInset ? { maxHeight: "calc(100% - 12px)" } : undefined}
         className={`relative flex max-h-[90vh] outline-none supports-[height:100dvh]:max-h-[90dvh] w-full max-w-[480px] flex-col overflow-hidden rounded-t-3xl border border-[#ececf4] bg-white sm:rounded-3xl shadow-[0_30px_80px_-30px_rgba(11,16,36,0.55)]`}
       >
         {/* Header — gradient accent */}

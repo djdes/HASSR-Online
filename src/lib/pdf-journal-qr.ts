@@ -2,14 +2,16 @@ import type { jsPDF } from "jspdf";
 import type { QRCode } from "qrcode";
 
 import {
-  BRAND_QR_FULL_QUIET,
+  BRAND_QR_QUIET,
+  brandQrCellHeight,
   brandQrLayout,
   brandQrMatrix,
+  drawBrandQrCellPdf,
   drawBrandQrTilePdf,
   type BrandQrLayout,
 } from "@/lib/brand-qr";
-import { BRAND_QR_CAPTION_ASPECT } from "@/lib/brand-qr-shared";
 import { JOURNAL_SHEET_MARGIN_MM } from "@/lib/pdf-journal-sheet";
+import { JOURNAL_LINE_WIDTH } from "@/lib/pdf-journal-table";
 
 /**
  * QR печатного журнала — в шапке ХАССП справа, фирменный (2026-09-27).
@@ -31,15 +33,20 @@ import { JOURNAL_SHEET_MARGIN_MM } from "@/lib/pdf-journal-sheet";
  * Нижнего резерва под QR больше нет: таблицы доходят до нижнего поля
  * листа (плюс полоса под «СТР. X ИЗ N», как у всех бланков).
  *
- * Вид — полный фирменный QR (`brand-qr.ts`): коррекция H, знак сайта по
- * центру, чёрные квадратные модули и «глаза», плашка «Отсканировать /
- * wesetup.ru», всё векторное (`drawBrandQrTilePdf`). Размер — под высоту
- * шапки: плитка в две строки шапки (20 мм), и шапка не растёт; если модуль
- * при этом меньше `JOURNAL_QR_TARGET_MODULE_MM` (длинный адрес — плотная
- * матрица), плитка выше — шапка растёт, но не больше чем на
- * `JOURNAL_QR_MAX_GROWTH_MM`, и модуль не меньше `JOURNAL_QR_MIN_MODULE_MM`.
- * Адрес плотнее (`JOURNAL_QR_MAX_MODULES`) — ошибка: его нужно укоротить, а
- * не печатать нечитаемый код.
+ * Вид — фирменный ч/б QR (`brand-qr.ts`): коррекция H, знак сайта по
+ * центру, чёрные квадратные модули и «глаза», снизу чёрная полоса с одним
+ * словом «Отсканировать», всё векторное. В ячейке шапки рамку кода дают сами
+ * линии ячейки (0,2 мм), плитка заполняет ячейку: окно с кодом (тихая зона
+ * 2 модуля) и полоса снизу во всю ширину ячейки (`drawBrandQrCellPdf`). На
+ * странице без шапки — отдельная плитка с тонкой рамкой (`drawBrandQrTilePdf`).
+ *
+ * Размер — под шапку, и шапка не больше, чем с прежней плиткой (плашка с
+ * градиентом, до 2026-09-27): ширина ячейки — окно кода под модуль
+ * `JOURNAL_QR_TARGET_MODULE_MM`, но не уже `JOURNAL_QR_CELL_BASE_WIDTH_MM`
+ * (с ней две строки шапки по 10 мм не растут) и не шире
+ * `JOURNAL_QR_CELL_MAX_WIDTH_MM`; высота — окно + полоса. Модуль не меньше
+ * `JOURNAL_QR_MIN_MODULE_MM`. Адрес плотнее (`JOURNAL_QR_MAX_MODULES`) —
+ * ошибка: его нужно укоротить, а не печатать нечитаемый код.
  */
 
 /** Высота строк шапки ХАССП без переносов (две строки по 10 мм). */
@@ -47,20 +54,22 @@ export const JOURNAL_HEADER_ROWS_MM = 20;
 /** Минимальный модуль QR на бумаге, мм. */
 export const JOURNAL_QR_MIN_MODULE_MM = 0.35;
 /**
- * Модуль, до которого плитка растёт, если в 20 мм он мельче, мм. При 0,35 мм
- * «снимок телефоном» (300 dpi, поворот, перспектива, размытие, JPEG) jsQR
- * изредка не читает, при 0,365 мм — читает (опыт `.agent/tasks/
+ * Модуль, до которого ячейка растёт, если в базовой ширине он мельче, мм. При
+ * 0,35 мм «снимок телефоном» (300 dpi, поворот, перспектива, размытие, JPEG)
+ * jsQR изредка не читает, при 0,365 мм — читает (опыт `.agent/tasks/
  * journal-qr-header-2026-09`, raw/target-module-experiment.txt); zxing-cpp
  * читает оба. Короткие адреса (≤ 41 модуля) и так крупнее — шапка не растёт.
  */
 export const JOURNAL_QR_TARGET_MODULE_MM = 0.365;
-/** На сколько строкам шапки можно вырасти ради QR, мм. */
+/** На сколько строкам шапки можно вырасти ради QR, мм (фактически — до 3,6 мм у 53 модулей). */
 export const JOURNAL_QR_MAX_GROWTH_MM = 4;
 /**
- * Белое поле между плиткой и линиями ячейки шапки, мм. У самой плитки
- * вокруг матрицы ещё тихая зона в 2 модуля.
+ * Ширина ячейки QR, при которой шапка не растёт (между осями линий), мм — как
+ * у прежней плитки: средняя колонка с названием журнала не уже, чем была.
  */
-export const JOURNAL_QR_CELL_PAD_MM = 0.15;
+export const JOURNAL_QR_CELL_BASE_WIDTH_MM = 16.9;
+/** Самая широкая ячейка QR, мм — как у прежней плитки самого плотного адреса. */
+export const JOURNAL_QR_CELL_MAX_WIDTH_MM = 20.3;
 /**
  * Зона непечати принтера у края листа, мм (≥ 4 мм): что заходит за неё,
  * считается вылезшим за лист, — по нему QR не равняется.
@@ -69,24 +78,18 @@ export const JOURNAL_QR_EDGE_MM = 5;
 /** Свободное поле вокруг плитки на странице без шапки, мм. */
 export const JOURNAL_QR_PAD_MM = 1.3;
 
-/** Высота плитки, при которой шапка не растёт, мм. */
-const TILE_BASE_HEIGHT = JOURNAL_HEADER_ROWS_MM - 2 * JOURNAL_QR_CELL_PAD_MM;
-/** Самая высокая плитка (шапка + `JOURNAL_QR_MAX_GROWTH_MM`), мм. */
-const TILE_MAX_HEIGHT = TILE_BASE_HEIGHT + JOURNAL_QR_MAX_GROWTH_MM;
-
-/** Высота плитки в модулях при стороне матрицы `modules` (пропорции `brandQrLayout`). */
-function tileHeightModules(modules: number): number {
-  return (modules + 2 * BRAND_QR_FULL_QUIET) * BRAND_QR_CAPTION_ASPECT;
-}
+/** Окно кода в ячейке — ширина ячейки без линий (по половине линии с каждой стороны), мм. */
+const WINDOW_BASE_MM = JOURNAL_QR_CELL_BASE_WIDTH_MM - JOURNAL_LINE_WIDTH;
+const WINDOW_MAX_MM = JOURNAL_QR_CELL_MAX_WIDTH_MM - JOURNAL_LINE_WIDTH;
 
 /**
  * Самая плотная матрица, что помещается в шапку с модулем не меньше
  * `JOURNAL_QR_MIN_MODULE_MM` (сторона QR растёт шагами по 4 модуля):
- * 53 модуля, версия 9 — самый длинный адрес документа /qj/….
+ * 53 модуля, версия 9 — самый длинный адрес документа /qj/… и шаблона /qb.
  */
 export const JOURNAL_QR_MAX_MODULES = (() => {
   let modules = 21;
-  while (tileHeightModules(modules + 4) * JOURNAL_QR_MIN_MODULE_MM <= TILE_MAX_HEIGHT + 1e-9) modules += 4;
+  while ((modules + 4 + 2 * BRAND_QR_QUIET) * JOURNAL_QR_MIN_MODULE_MM <= WINDOW_MAX_MM + 1e-9) modules += 4;
   return modules;
 })();
 
@@ -96,7 +99,7 @@ export type JournalPdfQr = {
   /**
    * Строка мелким серым шрифтом внизу КАЖДОЙ страницы, от левого поля, —
    * копирайт скачанного шаблона. Нет — строки нет: подпись самого QR —
-   * «Отсканировать / wesetup.ru» на его плашке.
+   * «Отсканировать» в его полосе.
    */
   footer?: string | null;
   /**
@@ -116,9 +119,12 @@ export type JournalQrTile = {
   modules: number;
   /** Сторона модуля, мм. */
   module: number;
-  /** Плитка с тихой зоной и плашкой, мм. */
+  /** Плитка с рамкой (страница без шапки, бумажный бланк), мм. */
   width: number;
   height: number;
+  /** Ячейка шапки между осями её линий, мм: ширина — окно кода + линия; высота — окно + полоса + линия. */
+  cellWidth: number;
+  cellHeight: number;
 };
 
 export type JournalQrPlacement = {
@@ -129,8 +135,10 @@ export type JournalQrPlacement = {
    * странице QR нет.
    */
   where: "header" | "corner" | "none";
-  /** Плитка на странице (с тихой зоной), мм; `null` — QR нет. */
+  /** Плитка на странице, мм (в шапке — ячейка внутри линий); `null` — QR нет. */
   box: PdfBox | null;
+  /** Окно кода на странице — квадрат матрицы с тихой зоной, мм; `null` — QR нет. */
+  window: PdfBox | null;
   /** Ячейка шапки, в которой стоит плитка (только `header`). */
   slot: PdfBox | null;
   modules: number;
@@ -138,36 +146,48 @@ export type JournalQrPlacement = {
 };
 
 /**
- * Плитка под адрес: высота — строки шапки (20 мм); выше — только ради модуля
- * `JOURNAL_QR_TARGET_MODULE_MM`, и не больше чем на `JOURNAL_QR_MAX_GROWTH_MM`
- * (у самого плотного адреса модуль тогда 0,351 мм — не меньше 0,35).
+ * Плитка под адрес: окно кода — под модуль `JOURNAL_QR_TARGET_MODULE_MM`, но
+ * не уже базовой ячейки (шапка не растёт) и не шире самой широкой (у самого
+ * плотного адреса модуль тогда 0,353 мм — не меньше 0,35).
  */
 export function journalQrTile(url: string): JournalQrTile {
-  const layout = brandQrLayout(url, { variant: "full" });
-  const heightModules = layout.height;
-  if (heightModules * JOURNAL_QR_MIN_MODULE_MM > TILE_MAX_HEIGHT + 1e-9) {
+  const layout = brandQrLayout(url);
+  const side = layout.window.w;
+  if (side * JOURNAL_QR_MIN_MODULE_MM > WINDOW_MAX_MM + 1e-9) {
     throw new Error(
       `QR слишком плотный для шапки: ${layout.size} модулей (не больше ${JOURNAL_QR_MAX_MODULES}) — адрес нужно укоротить`,
     );
   }
-  const height = Math.min(Math.max(TILE_BASE_HEIGHT, heightModules * JOURNAL_QR_TARGET_MODULE_MM), TILE_MAX_HEIGHT);
-  const module = height / heightModules;
-  return { layout, modules: layout.size, module, width: layout.width * module, height };
+  const windowMm = Math.min(Math.max(WINDOW_BASE_MM, side * JOURNAL_QR_TARGET_MODULE_MM), WINDOW_MAX_MM);
+  const module = windowMm / side;
+  return {
+    layout,
+    modules: layout.size,
+    module,
+    width: layout.width * module,
+    height: layout.height * module,
+    cellWidth: windowMm + JOURNAL_LINE_WIDTH,
+    cellHeight: brandQrCellHeight(layout) * module + JOURNAL_LINE_WIDTH,
+  };
 }
 
-/** Ширина ячейки QR в шапке, мм. */
+/** Ширина ячейки QR в шапке (между осями линий), мм. */
 export function journalQrCellWidth(tile: JournalQrTile): number {
-  return tile.width + 2 * JOURNAL_QR_CELL_PAD_MM;
+  return tile.cellWidth;
 }
 
-/** Высота строк шапки, в которую встаёт плитка, мм (не меньше `JOURNAL_HEADER_ROWS_MM`). */
+/**
+ * Высота строк шапки, которая нужна ячейке QR, мм. Меньше
+ * `JOURNAL_HEADER_ROWS_MM` — строки шапки не растут, плитка заполняет их
+ * высоту (код — по центру окна).
+ */
 export function journalQrCellHeight(tile: JournalQrTile): number {
-  return tile.height + 2 * JOURNAL_QR_CELL_PAD_MM;
+  return tile.cellHeight;
 }
 
-/** Матрица QR печатного журнала — полный фирменный QR (коррекция H). */
+/** Матрица QR печатного журнала — фирменный QR (коррекция H). */
 export function journalQrMatrix(url: string): QRCode {
-  return brandQrMatrix(url, { variant: "full" });
+  return brandQrMatrix(url);
 }
 
 // ---------------------------------------------------------------------------
@@ -483,18 +503,23 @@ export function stampJournalQr(
   const placements: JournalQrPlacement[] = [];
   const total = doc.getNumberOfPages();
 
+  const side = tile.layout.window.w * tile.module;
+  const half = JOURNAL_LINE_WIDTH / 2;
   for (let page = 1; page <= total; page += 1) {
     doc.setPage(page);
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const slot = slots.get(page) ?? null;
     let box: PdfBox | null = null;
+    let codeWindow: PdfBox | null = null;
     if (slot) {
-      // По центру ячейки: по ширине ячейка ровно под плитку, по высоте
-      // строки шапки бывают выше (перенос названия).
-      const x0 = slot.x0 + (slot.x1 - slot.x0 - tile.width) / 2;
-      const y0 = slot.y0 + (slot.y1 - slot.y0 - tile.height) / 2;
-      box = { x0, y0, x1: x0 + tile.width, y1: y0 + tile.height };
+      // Ячейка внутри линий: по ширине ровно окно кода, по высоте — сколько
+      // дали строки шапки (перенос названия — выше; код тогда по центру окна).
+      const x0 = slot.x0 + half + (slot.x1 - slot.x0 - 2 * half - side) / 2;
+      box = { x0, y0: slot.y0 + half, x1: x0 + side, y1: slot.y1 - half };
+      const stripHeight = (tile.layout.strip?.h ?? 0) * tile.module;
+      const y0 = box.y0 + (box.y1 - box.y0 - stripHeight - side) / 2;
+      codeWindow = { x0, y0, x1: x0 + side, y1: y0 + side };
     } else {
       const boxes = params.tracker?.boxes(page) ?? [];
       box = findJournalQrCorner({
@@ -503,9 +528,16 @@ export function stampJournalQr(
         boxes,
         rightEdge: journalQrContentRight(boxes, pageWidth),
       });
+      if (box) {
+        const w = tile.layout.window;
+        const x0 = box.x0 + w.x * tile.module;
+        const y0 = box.y0 + w.y * tile.module;
+        codeWindow = { x0, y0, x1: x0 + side, y1: y0 + side };
+      }
     }
     if (box && !params.probeOnly) {
-      drawBrandQrTilePdf(doc, tile.layout, box.x0, box.y0, tile.width, { fontName: params.fontName });
+      if (slot) drawBrandQrCellPdf(doc, tile.layout, box, { fontName: params.fontName });
+      else drawBrandQrTilePdf(doc, tile.layout, box.x0, box.y0, tile.width, { fontName: params.fontName });
     }
     if (params.footer && !params.probeOnly) {
       // Базовая линия — на нижнем поле листа, от левого поля (как подвал
@@ -520,6 +552,7 @@ export function stampJournalQr(
       page,
       where: slot ? "header" : box ? "corner" : "none",
       box,
+      window: codeWindow,
       slot,
       modules: tile.modules,
       module: tile.module,

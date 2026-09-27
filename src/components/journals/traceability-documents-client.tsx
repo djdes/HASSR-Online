@@ -28,7 +28,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ResponsiveMenu } from "@/components/ui/responsive-menu";
-import { cn } from "@/lib/utils";
 
 import { toast } from "sonner";
 import { confirmAsync } from "@/components/ui/confirm-async";
@@ -36,6 +35,7 @@ import {
   EmptyDocumentsState,
   filterManageMenuItems,
   useCanManageDocuments,
+  JournalTabs,
 } from "@/components/journals/document-list-ui";
 import {
   JOURNAL_CARD_LABEL_CLASS,
@@ -444,28 +444,7 @@ export function TraceabilityDocumentsClient({
           }
         />
       </div>
-          <div className="flex flex-wrap items-center gap-5 border-b border-[#d8dbe6] text-[15px] sm:gap-10 sm:text-[18px]">
-            <Link
-              href={`/journals/${routeCode}`}
-              className={cn(
-                "relative pb-4 text-[#6f7282]",
-                activeTab === "active" &&
-                  "font-medium text-black after:absolute after:bottom-[-1px] after:left-0 after:h-[3px] after:w-full after:bg-[#5566f6]"
-              )}
-            >
-              Активные
-            </Link>
-            <Link
-              href={`/journals/${routeCode}?tab=closed`}
-              className={cn(
-                "relative pb-4 text-[#6f7282]",
-                activeTab === "closed" &&
-                  "font-medium text-black after:absolute after:bottom-[-1px] after:left-0 after:h-[3px] after:w-full after:bg-[#5566f6]"
-              )}
-            >
-              Закрытые
-            </Link>
-          </div>
+          <JournalTabs activeTab={activeTab} templateCode={routeCode} />
 
       <div className={JOURNAL_LIST_CARDS_CLASS}>
         {documents.length === 0 ? (

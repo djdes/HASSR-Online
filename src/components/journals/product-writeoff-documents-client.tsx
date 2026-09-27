@@ -40,6 +40,7 @@ import {
   useRestoreDocument,
   type RestorableDocument,
   useCanManageDocuments,
+  JournalTabs,
 } from "@/components/journals/document-list-ui";
 import {
   JOURNAL_CARD_LABEL_CLASS,
@@ -251,30 +252,7 @@ export function ProductWriteoffDocumentsClient({
           />
         </div>
 
-        <div className="border-b border-[#ececf4]">
-          <div className="flex flex-wrap gap-6 text-[15px] sm:gap-12 sm:text-[16px]">
-            <Link
-              href={`/journals/${templateCode}`}
-              className={`relative pb-5 ${
-                activeTab === "active"
-                  ? "font-medium text-black after:absolute after:bottom-[-1px] after:left-0 after:h-[3px] after:w-full after:bg-[#5566f6]"
-                  : "text-[#6f7282]"
-              }`}
-            >
-              Активные
-            </Link>
-            <Link
-              href={`/journals/${templateCode}?tab=closed`}
-              className={`relative pb-5 ${
-                activeTab === "closed"
-                  ? "font-medium text-black after:absolute after:bottom-[-1px] after:left-0 after:h-[3px] after:w-full after:bg-[#5566f6]"
-                  : "text-[#6f7282]"
-              }`}
-            >
-              Закрытые
-            </Link>
-          </div>
-        </div>
+        <JournalTabs activeTab={activeTab} templateCode={templateCode} />
 
         <div className={JOURNAL_LIST_CARDS_CLASS}>
           {normalizedDocuments.length === 0 && (

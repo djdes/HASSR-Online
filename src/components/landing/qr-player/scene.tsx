@@ -446,7 +446,7 @@ function Viewfinder({ t, object, qr, bodyTemp, photo }: { t: number; object: Sca
             boxShadow: "0 1.1em 2.4em -0.7em rgba(0,0,0,0.7), 0 0.15em 0.45em rgba(0,0,0,0.4)",
           }}
         >
-          {/* Фирменный QR с плашкой — SVG собран на сервере (qr-matrix.ts). */}
+          {/* Фирменный QR с полосой «Отсканировать» — SVG собран на сервере (qr-matrix.ts). */}
           <div aria-hidden="true" dangerouslySetInnerHTML={{ __html: qr.printed }} />
           <div style={{ marginTop: "0.38em", textAlign: "center", color: P.ink, fontWeight: 700, fontSize: "0.6em", lineHeight: 1.15 }}>{layout.title}</div>
           <div style={{ marginTop: "0.18em", textAlign: "center", color: P.muted, fontSize: "0.5em", lineHeight: 1.1 }}>{DEMO.org}</div>

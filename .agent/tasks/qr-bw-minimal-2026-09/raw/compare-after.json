@@ -1,0 +1,98 @@
+{
+ "documents": 231,
+ "pagesBefore": 728,
+ "pagesAfter": 728,
+ "documentsWithMorePages": 0,
+ "sets": {
+  "samples": {
+   "cases": 45,
+   "pagesBefore": 57,
+   "pagesAfter": 57,
+   "more": [],
+   "fewer": []
+  },
+  "blanks": {
+   "cases": 45,
+   "pagesBefore": 57,
+   "pagesAfter": 57,
+   "more": [],
+   "fewer": []
+  },
+  "long": {
+   "cases": 45,
+   "pagesBefore": 486,
+   "pagesAfter": 486,
+   "more": [],
+   "fewer": []
+  },
+  "paper": {
+   "cases": 5,
+   "pagesBefore": 10,
+   "pagesAfter": 10,
+   "more": [],
+   "fewer": []
+  },
+  "portrait": {
+   "cases": 45,
+   "pagesBefore": 56,
+   "pagesAfter": 56,
+   "more": [],
+   "fewer": []
+  },
+  "variants": {
+   "cases": 46,
+   "pagesBefore": 62,
+   "pagesAfter": 62,
+   "more": [],
+   "fewer": []
+  }
+ },
+ "headerPages": 313,
+ "headerCellsWider": 0,
+ "headerCellsTaller": 0,
+ "maxWidthDeltaMm": 0,
+ "maxHeightDeltaMm": 0,
+ "byModules": {
+  "37": {
+   "before": 26.558,
+   "after": 26.558,
+   "widthBefore": 16.924,
+   "widthAfter": 16.9,
+   "moduleBefore": 0.40549999999999997,
+   "moduleAfter": 0.40730000000000005
+  },
+  "41": {
+   "before": 35.731,
+   "after": 35.731,
+   "widthBefore": 16.924,
+   "widthAfter": 16.9,
+   "moduleBefore": 0.3694,
+   "moduleAfter": 0.3711
+  },
+  "45": {
+   "before": 31.144,
+   "after": 26.558,
+   "widthBefore": 18.185,
+   "widthAfter": 18.085,
+   "moduleBefore": 0.365,
+   "moduleAfter": 0.365
+  },
+  "49": {
+   "before": 23.224,
+   "after": 22.716,
+   "widthBefore": 19.645,
+   "widthAfter": 19.545,
+   "moduleBefore": 0.365,
+   "moduleAfter": 0.365
+  },
+  "53": {
+   "before": 24,
+   "after": 23.595,
+   "widthBefore": 20.3,
+   "widthAfter": 20.3,
+   "moduleBefore": 0.3509,
+   "moduleAfter": 0.35259999999999997
+  }
+ },
+ "placementChanges": []
+}

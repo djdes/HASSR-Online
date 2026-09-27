@@ -18,12 +18,47 @@ export const JOURNAL_LIST_STACK_CLASS = "space-y-8";
 export const JOURNAL_LIST_ACTIONS_CLASS =
   "flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center";
 
+/*
+ * Вкладки «Активные / Закрытые» списка документов — ОДИН компонент
+ * `JournalTabs` (document-list-ui.tsx) у всех журналов; самописные копии
+ * запрещает `journal-page-polish.test.ts`.
+ *
+ * Владелец, 2026-09-27: «Во вкладке под „Активные“ подчёркивание странное —
+ * должно быть ближе, и может полоску убрать». Было: подчёркивание висело
+ * в 19–21 px под текстом (у ссылки `pb-5`), в 3 px над серой полосой во
+ * всю ширину ряда и в 19 копиях с разными отступами. Стало: подчёркивание
+ * у самой подписи — по её ширине, 6 px под текстом; общей полосы нет.
+ */
 export const JOURNAL_TAB_VIEWPORT_CLASS =
-  "overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
+  "overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
 
 /** Вкладки эталона — 14px/600 на всех брейкпоинтах. */
 export const JOURNAL_TAB_RAIL_CLASS =
   "flex min-w-max gap-8 text-[14px] font-semibold sm:gap-12";
+
+/**
+ * Ссылка-вкладка. `pb-2` — место под подчёркивание внутри самой ссылки:
+ * ряд прокручивается вбок (`overflow-x-auto`) и обрезал бы всё, что
+ * выступает за его край. Высота на телефоне — общее правило 48 px
+ * (app-theme.css), подпись в ней по центру, подчёркивание едет с ней.
+ */
+export const JOURNAL_TAB_LINK_CLASS =
+  "relative flex items-center gap-1.5 rounded-md pb-2 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
+
+export const JOURNAL_TAB_ACTIVE_CLASS = "text-[#0b1024]";
+
+export const JOURNAL_TAB_INACTIVE_CLASS = "text-[#6f7282] hover:text-[#0b1024]";
+
+/**
+ * Подпись вкладки. У активной — подчёркивание: ширина подписи, 2 px,
+ * верх линии в 6 px под текстом (`-bottom-2` = 8 px минус толщина).
+ * Подчёркивание привязано к подписи, а не к ссылке: иначе на телефоне
+ * (ссылка 48 px) оно уезжало бы от текста к низу ссылки.
+ */
+export const JOURNAL_TAB_LABEL_CLASS = "relative";
+
+export const JOURNAL_TAB_UNDERLINE_CLASS =
+  "after:absolute after:inset-x-0 after:-bottom-2 after:h-0.5 after:rounded-full after:bg-[#5566f6]";
 
 /**
  * Карточка документа в списке журнала — геометрия эталона

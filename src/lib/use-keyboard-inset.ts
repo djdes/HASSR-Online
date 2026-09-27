@@ -25,10 +25,15 @@ import { useEffect, useState } from "react";
  */
 const KEYBOARD_MIN_HEIGHT = 80;
 
-export function useKeyboardInset(): number {
+/**
+ * `enabled = false` — не слушать вьюпорт вовсе (закрытое окно, которое
+ * всё равно смонтировано): возвращает 0.
+ */
+export function useKeyboardInset(enabled = true): number {
   const [inset, setInset] = useState(0);
 
   useEffect(() => {
+    if (!enabled) return;
     const viewport = window.visualViewport;
     if (!viewport) return;
 
@@ -46,7 +51,7 @@ export function useKeyboardInset(): number {
       viewport.removeEventListener("resize", update);
       viewport.removeEventListener("scroll", update);
     };
-  }, []);
+  }, [enabled]);
 
-  return inset;
+  return enabled ? inset : 0;
 }
