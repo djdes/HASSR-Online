@@ -108,10 +108,14 @@ jobs:
         timeout-minutes: 20
         run: |
           npx playwright install --with-deps webkit chromium > /dev/null 2>&1
-          BASE=https://localhost:3000 TAG=prod OUT=hydration-out npx tsx $T/hydration-check.ts 2>&1 | tail -80
-          NEXT_DIST_DIR=.next-dev NEXTAUTH_URL=http://localhost:3100 nohup npx next dev -p 3100 > dev.log 2>&1 &
-          for i in $(seq 1 90); do curl -s -o /dev/null http://localhost:3100/mini/login && break; sleep 2; done
-          BASE=http://localhost:3100 TAG=dev OUT=hydration-out npx tsx $T/hydration-check.ts 2>&1 | tail -120
+          BASE=https://localhost:3000 TAG=prod OUT=hydration-out npx tsx $T/hydration-check.ts 2>&1 | grep -v "Telegram.WebApp\|Service Worker\|mini-sw\|85479" | tail -80
+          # Сравнение: та же сборка, но оболочка как до правки «без telegram.org в приложении».
+          git show b8173bb1:src/app/mini/_components/mini-app-shell.tsx > src/app/mini/_components/mini-app-shell.tsx
+          NEXT_DIST_DIR=.next-before NODE_OPTIONS=--max-old-space-size=6144 npx next build --webpack > build-before.log 2>&1 || tail -30 build-before.log
+          git checkout -- src/app/mini/_components/mini-app-shell.tsx
+          NEXT_DIST_DIR=.next-before NODE_ENV=production TLS_KEY=tls/server.key TLS_CERT=tls/server.pem PORT=3001             nohup node $T/https-server.cjs > server-before.log 2>&1 &
+          for i in $(seq 1 90); do curl -sk -o /dev/null https://localhost:3001/mini/login && break; sleep 2; done
+          BASE=https://localhost:3001 TAG=before OUT=hydration-out npx tsx $T/hydration-check.ts 2>&1 | grep -v "Telegram.WebApp\|Service Worker\|mini-sw\|85479" | tail -80
 
       - if: always()
         uses: actions/upload-artifact@v7

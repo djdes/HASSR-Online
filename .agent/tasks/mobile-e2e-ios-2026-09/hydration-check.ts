@@ -28,6 +28,8 @@ async function run(browser: Browser, name: string, variant: "app" | "safari", ro
     ignoreHTTPSErrors: true,
     serviceWorkers: "block",
   });
+  // tsx оборачивает функции в __name(...) — в браузере его нет.
+  await ctx.addInitScript("window.__name = window.__name || function (f) { return f; };");
   if (variant === "app") await ctx.addInitScript(installCapacitorStub, { ...DEFAULT_STUB, platform: "ios", permission: "denied" });
   const page = await ctx.newPage();
   let errors: string[] = [];
@@ -49,6 +51,20 @@ async function run(browser: Browser, name: string, variant: "app" | "safari", ro
     console.log(`[${TAG}] ${name}/${variant} ${label}: ${errors.length} errors`);
     for (const e of errors) console.log("   ", e.slice(0, 400));
   };
+  // Холодный старт приложения: /mini?src=app → «Открываем кабинет…» → /mini/login.
+  {
+    const t0 = Date.now();
+    errors = [];
+    await page.goto(BASE + "/mini?src=app", { waitUntil: "commit", timeout: 240000 }).catch(() => undefined);
+    await page.waitForURL(/\/mini\/login/, { timeout: 60000 }).catch(() => undefined);
+    await page.locator("form button[type=submit]").waitFor({ timeout: 60000 }).catch(() => undefined);
+    const ms = Date.now() - t0;
+    await page.waitForTimeout(2000);
+    const shot = `${TAG}-${name}-${variant}-coldstart.png`;
+    await page.screenshot({ path: path.join(OUT, shot) }).catch(() => undefined);
+    rows.push({ browser: name, variant, page: `coldstart ${ms}ms ${new URL(page.url()).pathname}`, errors: [...errors], shot });
+    console.log(`[${TAG}] ${name}/${variant} coldstart to login form: ${ms} ms, errors ${errors.length}`);
+  }
   await visit("start", "/mini?src=app");
   await visit("login", "/mini/login");
   const res = await ctx.request.post(`${BASE}/api/auth/login`, {
