@@ -35,7 +35,7 @@ import { cn } from "@/lib/utils";
 
 /** Золотая кнопка — единственный не-индиго акцент кабинета (SKILL.md → «Gold accent»). */
 export const JOURNAL_QR_POINT_CLASS =
-  "qr-point-sheen relative isolate col-span-2 inline-flex h-12 w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#fff3c4_0%,#fcd34d_40%,#f5b301_75%,#dc9d00_100%)] px-4 text-[15px] font-semibold text-[#5b3a00] shadow-[0_12px_30px_-14px_rgba(220,157,0,0.75),inset_0_1px_0_rgba(255,255,255,0.65)] ring-1 ring-[#e8b320]/60 transition-[filter,box-shadow,transform] duration-200 hover:brightness-[1.04] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#f5b301]/35 motion-reduce:transition-none";
+  "qr-point-sheen relative isolate col-span-2 inline-flex h-12 w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#fff3c4_0%,#fcd34d_40%,#f5b301_75%,#dc9d00_100%)] px-4 text-[15px] font-semibold text-[#5b3a00] shadow-[0_6px_16px_-10px_rgba(220,157,0,0.6),inset_0_1px_0_rgba(255,255,255,0.65)] ring-1 ring-[#e8b320]/60 transition-[filter,box-shadow,transform] duration-200 hover:brightness-[1.04] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#f5b301]/35 motion-reduce:transition-none";
 
 /** «Создать документ» во втором ряду — мягкий индиго (главная кнопка — в пустом состоянии). */
 export const JOURNAL_ACTION_CREATE_CLASS =
@@ -48,25 +48,28 @@ export const JOURNAL_ACTION_GUIDE_CLASS =
 /**
  * Сетка блока: на телефоне во всю ширину, на компьютере 440 px справа от заголовка.
  *
- * Шаг сетки (`gap-3`, 12 px) — тот же, что у строки «заголовок + блок»
- * (`JOURNAL_LIST_HEADER_ROW_CLASS`). Владелец, 2026-09-27: «Кнопку QR как-то
- * близко к кнопкам „Создать документ“ — сделать чуть дальше, симметрично».
- * Было: над QR 16 px (от заголовка), под ней 8 px, между кнопками ряда 8 px.
- * Стало: 12 / 12 / 12 — QR посередине, ряд на прежнем месте. Шире 12 px
- * нельзя: на телефоне кнопке «+ Создать документ» (16 px) и так остаётся
- * пара пикселей до краёв. Скелет `journals/[code]/loading.tsx` повторяет
- * оба класса (проверяет `journal-page-polish.test.ts`).
+ * Шаги (владелец, 2026-09-27: «Кнопку QR как-то близко к кнопкам „Создать
+ * документ“ — сделать чуть дальше, симметрично»; после 12 px — «не доделал»):
+ *   • по вертикали `gap-y-5` (20 px) — и под QR до ряда кнопок, и над QR до
+ *     заголовка (`JOURNAL_LIST_HEADER_ROW_CLASS`): QR ровно посередине;
+ *   • по горизонтали `gap-x-3` (12 px) между «Создать документ» и
+ *     «Инструкцией» — шире нельзя: на телефоне кнопке «+ Создать документ» и
+ *     так остаётся пара пикселей до краёв.
+ * 12 px по вертикали не читались: золотое свечение QR-кнопки уходило вниз на
+ * ~16 px и съедало зазор, — свечение укорочено (`JOURNAL_QR_POINT_CLASS`).
+ * Скелет `journals/[code]/loading.tsx` повторяет оба класса (проверяет
+ * `journal-page-polish.test.ts`).
  */
-export const JOURNAL_LIST_ACTIONS_GRID_CLASS = "grid w-full grid-cols-2 gap-3 sm:w-[440px] sm:shrink-0";
+export const JOURNAL_LIST_ACTIONS_GRID_CLASS = "grid w-full grid-cols-2 gap-x-3 gap-y-5 sm:w-[440px] sm:shrink-0";
 
 /**
  * Строка «заголовок + блок кнопок» — у общей шапки `JournalTopBar` и у
  * собственных шапок журналов. Блок стоит справа, пока рядом с ним
  * заголовку остаётся хотя бы 18rem, иначе (телефон, планшет, узкое окно)
  * уходит под заголовок — длинный заголовок не рвётся посреди слова.
- * `gap-3` — тот же шаг, что внутри блока кнопок.
+ * `gap-y-5` — тот же шаг, что под QR-кнопкой внутри блока.
  */
-export const JOURNAL_LIST_HEADER_ROW_CLASS = "flex flex-wrap items-start justify-between gap-3 sm:items-center";
+export const JOURNAL_LIST_HEADER_ROW_CLASS = "flex flex-wrap items-start justify-between gap-x-3 gap-y-5 sm:items-center";
 
 /** H1 списка журнала в этой строке: всё место рядом с блоком, перенос внутри. */
 export const JOURNAL_LIST_TITLE_CLASS = cn(JOURNAL_LIST_HEADING_CLASS, "min-w-0 flex-1 basis-[18rem] sm:max-w-none");

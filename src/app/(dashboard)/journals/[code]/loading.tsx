@@ -25,9 +25,9 @@ export default function JournalCodeLoading() {
     <div className={JOURNAL_LIST_STACK_CLASS} aria-busy="true" aria-live="polite">
       <span className="sr-only">Загружаем документы журнала…</span>
 
-      <div className="flex flex-wrap items-start justify-between gap-3 sm:items-center">
+      <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-5 sm:items-center">
         <Skeleton className="h-9 w-[320px] max-w-full rounded-2xl" />
-        <div className="grid w-full grid-cols-2 gap-3 sm:w-[440px] sm:shrink-0">
+        <div className="grid w-full grid-cols-2 gap-x-3 gap-y-5 sm:w-[440px] sm:shrink-0">
           <Skeleton className="col-span-2 h-12 w-full rounded-2xl" />
           <Skeleton className="h-11 w-full rounded-2xl" />
           <Skeleton className="h-11 w-full rounded-2xl" />

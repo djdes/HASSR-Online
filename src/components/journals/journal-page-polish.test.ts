@@ -41,10 +41,13 @@ test("вокруг QR-кнопки один шаг: строка «заголо�
   const actions = "src/components/journals/journal-list-actions.tsx";
   const grid = constant(actions, "JOURNAL_LIST_ACTIONS_GRID_CLASS");
   const row = constant(actions, "JOURNAL_LIST_HEADER_ROW_CLASS");
-  // Один и тот же шаг по обеим осям: QR ↔ ряд, «Создать» ↔ «Инструкция»,
-  // заголовок ↔ QR на телефоне. Раньше было 16 / 8 / 8.
-  assert.deepEqual(gapOf(grid), ["gap-3"]);
-  assert.deepEqual(gapOf(row), ["gap-3"]);
+  // QR ровно посередине: заголовок ↔ QR и QR ↔ ряд — один шаг 20 px;
+  // «Создать» ↔ «Инструкция» — 12 px (шире не влезает на телефоне).
+  // Было 16 / 8 / 8, потом 12 / 12 / 12 — владелец: «не доделал».
+  assert.deepEqual(gapOf(grid), ["gap-x-3", "gap-y-5"]);
+  assert.deepEqual(gapOf(row), ["gap-x-3", "gap-y-5"]);
+  // Свечение QR-кнопки не съедает зазор под ней.
+  assert.match(read(actions), /shadow-\[0_6px_16px_-10px/);
 
   // Общая шапка берёт ту же строку, что собственные шапки журналов.
   const topBar = read("src/components/journals/document-list-ui.tsx");
