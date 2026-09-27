@@ -1071,11 +1071,11 @@ async function sectionsGo(label) {
   return tap({ type: "link", contains: label }, { scrolls: 3, within: (r) => r.y < W.height - 170, settle: 3000 * SLOW });
 }
 
-// Порядок раунда 5: вход, затем самое ценное; S09/S10/S03b прошли в раунде 4 — не повторяем.
-// S12 — всегда последним.
-const ORDER = (env.ORDER || "S01,S02,S13,S04,S07,S08,S11,S05,S06,S03a,S12").split(",");
+// Порядок раунда 6: вход, затем доказательства правок мастера (S13k, S08m, S11b), затем
+// то, что в раунде 5 не дошло до проверки (S04, S05, S06, S07, S03a). S12 — всегда последним.
+const ORDER = (env.ORDER || "S01,S02,S13k,S08m,S11b,S04,S05,S06,S07,S03a,S12").split(",");
 // Потолок на сценарий (мс); общий бюджет — TEST_BUDGET_MIN.
-const LIMITS = { S01: 90000, S02: 300000, S03a: 300000, S03b: 360000, S04: 300000, S05: 300000, S06: 240000, S07: 300000, S08: 240000, S09: 120000, S10: 150000, S11: 360000, S12: 60000, S13: 240000 };
+const LIMITS = { S01: 90000, S02: 300000, S03a: 300000, S03b: 360000, S04: 300000, S05: 300000, S06: 240000, S07: 300000, S08: 240000, S09: 120000, S10: 150000, S11: 360000, S12: 60000, S13: 240000, S13k: 200000, S08m: 180000, S11b: 330000 };
 const plan = new Map();
 function def(id, name, fn, timeoutMs) {
   plan.set(id, { name, fn, timeoutMs: LIMITS[id] ?? timeoutMs ?? 300000 });
@@ -1246,8 +1246,9 @@ async function main() {
   // 4. Печать документа
   def("S04", "Печать документа журнала: системное окно печати iOS", async (ctx) => {
     await ready(ctx);
-    const ok = await openJournal(ctx, "уборки", "Журнал уборки", IDS.docs?.cleaning?.title);
-    ctx.check("документ уборки открыт", ok);
+    // Раунд 6: документ холодильников — в раунде 5 на нём были «Распечатать» и «⋯».
+    const ok = await openJournal(ctx, "холодильн", "холодильного", IDS.docs?.cold?.title);
+    ctx.check("документ холодильников открыт", ok);
     await toTop();
     const before = await source("S04-before");
     ctx.shot("doc-before-print");
@@ -1506,6 +1507,139 @@ async function main() {
     ctx.check("без ввода запись не сохранилась", sameCount(ctx.d.entriesBefore, after), { before: ctx.d.entriesBefore, after });
   });
 
+  // ─── Раунд 6: доказательства правок мастера 52e647e4 / e5716313 ─────────
+
+  /** Рамки формы: «Сохранить запись», «Отмена», «Заметка», клавиатура, панель ^ v ✓, меню. */
+  async function formRects() {
+    const pick = async (spec, f = (l) => l[0]) => {
+      const l = (await all(spec)).map((x) => x.r);
+      return l.length ? f(l) : null;
+    };
+    const save = await pick({ type: "button", label: "Сохранить запись" }, (l) => l.sort((a, b) => b.y - a.y)[0]);
+    const cancel = await pick({ type: ["button", "link"], label: "Отмена" }, (l) => l.sort((a, b) => b.y - a.y)[0]);
+    const note = await pick({ type: ["XCUIElementTypeTextView", "field"], label: "Заметка" });
+    const kb = await keyboard();
+    const bars = (await all({ type: "XCUIElementTypeToolbar" })).map((x) => x.r).filter((r) => !kb || (r.y < kb.y + 2 && r.y > kb.y - 160));
+    const bar = bars[0] ?? null;
+    const done = await pick({ type: "button", label: "Готово" }, (l) => l.find((r) => !kb || (r.y < kb.y && r.y > kb.y - 160)) ?? null);
+    const nav = (await all({ type: "link", begins: "Профиль" })).map((x) => x.r).filter((r) => r.y > W.height - 170)[0] ?? null;
+    return { save, cancel, note, kb, bar, done, nav };
+  }
+
+  def("S13k", "Форма «Новая запись» с клавиатурой: кнопки прямо над клавиатурой, поле не под кнопками", async (ctx) => {
+    await ready(ctx);
+    const want = { type: "button", label: "Сохранить запись" };
+    const onForm = await openE2eForm(ctx, want);
+    ctx.check("форма «Новая запись» открылась", onForm);
+    if (!onForm) return;
+    await sleep(2000);
+    ctx.shot("form-no-keyboard");
+    const r0 = await formRects();
+    ctx.d.rectsNoKeyboard = r0;
+    if (r0.save && r0.nav) ctx.check("без клавиатуры: подвал формы над нижним меню", r0.save.y + r0.save.height <= r0.nav.y + 1, { save: r0.save, nav: r0.nav });
+    // «Заметка» — строго выше липкого подвала; нажимаем в левую верхнюю часть поля (справа — микрофон).
+    const footerTop = r0.cancel ? Math.min(r0.cancel.y, r0.save ? r0.save.y : 1e9) : W.height * 0.55;
+    let note = r0.note;
+    if (!note || note.y + 30 > footerTop - 8 || note.y < band().top) {
+      ctx.d.noteScrolled = true;
+      const t = await tryTap({ type: ["XCUIElementTypeTextView", "field"], label: "Заметка" }, { scrolls: 4, maxY: Math.min(W.height * 0.55, footerTop - 8), settle: 600, timeout: 15000 });
+      if (t) await hideKeyboard();
+      note = (await formRects()).note;
+    }
+    if (!note) throw new Error("нет поля «Заметка»");
+    const ty = Math.min(note.y + 24, footerTop - 12);
+    ctx.d.noteTap = { x: Math.round(note.x + note.width * 0.3), y: Math.round(ty), note, footerTop };
+    ctx.check("нажатие в «Заметку» выше подвала формы", ty < footerTop - 8 && ty > 110, ctx.d.noteTap);
+    await tapXY(note.x + note.width * 0.3, ty);
+    await waitFor(keyboard, 6000);
+    await sleep(2000);
+    const fk = ctx.shot("keyboard-open");
+    await source("S13k-keyboard-open");
+    const r = await formRects();
+    ctx.d.rectsKeyboard = r;
+    ctx.check("клавиатура открыта", Boolean(r.kb), r.kb);
+    ctx.check("в дереве есть «Сохранить запись», «Отмена», «Заметка»", Boolean(r.save && r.cancel && r.note), r);
+    if (!(r.kb && r.save && r.cancel && r.note)) return;
+    const barTop = r.bar ? r.bar.y : r.done ? r.done.y - 5 : null;
+    const edge = barTop ?? r.kb.y;
+    const saveBottom = r.save.y + r.save.height;
+    const gap = Math.round((edge - saveBottom) * 10) / 10;
+    const footerTopK = Math.min(r.cancel.y, r.save.y);
+    const noteTopRoom = Math.round((footerTopK - 12 - (r.note.y + 40)) * 10) / 10;
+    const m = { saveTop: r.save.y, saveBottom, cancelTop: r.cancel.y, noteTop: r.note.y, noteBottom: r.note.y + r.note.height, barTop, barSource: r.bar ? "Toolbar" : r.done ? "Готово-5" : null, keyboardTop: r.kb.y, gap, noteTopRoom, file: fk };
+    ctx.d.measure = m;
+    log("   S13k measure", JSON.stringify(m));
+    ctx.check(`зазор низ «Сохранить запись» → верх ${barTop != null ? "панели ^ v ✓" : "клавиатуры"} = ${gap} pt (0…40)`, gap >= 0 && gap <= 40, m);
+    ctx.check(`верхние 40 pt «Заметки» выше (верх «Отмена» − 12 pt): запас ${noteTopRoom} pt`, noteTopRoom >= 0, m);
+    ctx.check("подвал формы не под клавиатурой", saveBottom <= r.kb.y + 0.5 && (barTop == null || saveBottom <= barTop + 0.5), m);
+    // Закрыть клавиатуру: ✓ на панели (или нажатие на заголовок).
+    await hideKeyboard();
+    if (await keyboard()) {
+      await tapXY(W.width / 2, 150);
+      await sleep(800);
+    }
+    await sleep(1500);
+    const fc = ctx.shot("keyboard-closed");
+    const rc = await formRects();
+    ctx.d.rectsClosed = rc;
+    ctx.check("клавиатура закрыта", !(await keyboard()));
+    if (rc.save && rc.nav) ctx.check("после клавиатуры: подвал снова над нижним меню", rc.save.y + rc.save.height <= rc.nav.y + 1, { save: rc.save, nav: rc.nav });
+    else ctx.check("после клавиатуры: подвал и меню в дереве", false, rc);
+    const nav = regionStats(fc, 772, 842);
+    ctx.d.navPaint = nav;
+    ctx.check(`после клавиатуры: нижнее меню нарисовано (индиго ${nav.indigoFrac})`, nav.indigoFrac >= 0.02, nav);
+    const after = await backToJournalCount(ctx);
+    ctx.check("без ввода запись не сохранилась", sameCount(ctx.d.entriesBefore, after), { before: ctx.d.entriesBefore, after });
+  });
+
+  def("S08m", "Голос: «Остановить запись» без речи → «Ничего не расслышали…», микрофон не висит", async (ctx) => {
+    await ready(ctx);
+    const mic = { type: "button", label: "Голосовой ввод" };
+    const onForm = await openE2eForm(ctx, mic);
+    ctx.shot("form");
+    ctx.check("форма с голосовым вводом открыта", onForm);
+    if (!onForm) return;
+    await tap(mic, { scrolls: 6, maxY: W.height * 0.55 });
+    const alerts = [];
+    for (let i = 0; i < 3; i++) {
+      const b = await alertButtons(i === 0 ? 8000 : 5000);
+      if (!b) break;
+      const text = await alertText();
+      ctx.shot(`permission-${i + 1}`);
+      alerts.push({ b, text, pressed: await acceptAlert(b) });
+      await sleep(1200);
+    }
+    ctx.d.alerts = alerts;
+    const listening = await waitFor(async () => (await has({ contains: "Слушаем" })) || (await has({ type: "button", label: "Остановить запись" })), 8000);
+    ctx.d.listeningTexts = await textsWith(["Слушаем"]);
+    ctx.shot("listening");
+    ctx.check("идёт запись: «Слушаем…» / «Остановить запись»", listening, ctx.d.listeningTexts);
+    const stop = await tryTap({ type: "button", label: "Остановить запись" }, { scrolls: 2, maxY: W.height * 0.6, settle: 0, timeout: 4000 });
+    const t0 = Date.now();
+    ctx.d.stopTapped = Boolean(stop);
+    // Распознаватель мог остановиться и сам (в симуляторе нет речи) — тогда тост уже мог быть.
+    let toast = null;
+    let n = 0;
+    while (Date.now() - t0 < 5000) {
+      const t = await textsWith(["расслышали"]);
+      if (t.length) {
+        toast = { ms: Date.now() - t0, text: t[0] };
+        break;
+      }
+      if (n++ < 3) ctx.shot(`after-stop-${n}`);
+      await sleep(400);
+    }
+    ctx.d.toast = toast;
+    const f = ctx.shot("toast");
+    await source("S08m-after-stop");
+    ctx.check(`тост «Ничего не расслышали…» за 5 с после «Остановить запись»${toast ? ` (${toast.ms} мс)` : ""}`, Boolean(toast && /Ничего не расслышали\. Попробуйте ещё раз поближе к телефону/.test(toast.text)), { toast, file: f });
+    const hang = await has({ type: "button", label: "Остановить запись" });
+    ctx.check("красный микрофон погас (нет «Остановить запись»)", !hang);
+    ctx.check("кнопка «Голосовой ввод» снова на месте", await has(mic));
+    ctx.check("приложение живо", (await appState()) === 4);
+    await backToJournalCount(ctx);
+  });
+
   // 9. Жест «назад»
   def("S09", "Жест «назад» от левого края возвращает на предыдущий экран", async (ctx) => {
     await ready(ctx);
@@ -1542,7 +1676,7 @@ async function main() {
   });
 
   // 11. Удаление аккаунта одноразового повара
-  def("S11", "Удаление аккаунта одноразового повара → «Аккаунт удалён» на входе", async (ctx) => {
+  const s11 = async (ctx) => {
     await dismissSheets();
     if (!(await onLogin())) {
       ctx.d.loggedOutFirst = true;
@@ -1568,11 +1702,17 @@ async function main() {
       const f = ctx.shot(tag);
       const kb = await keyboard();
       const title = (await all({ type: "text", contains: "Удалить аккаунт навсегда" }))[0]?.r ?? null;
-      const close = (await all({ type: "button", label: "Закрыть" })).map((x) => x.r).find((r) => r.y < W.height / 2 && r.width < 100) ?? null;
+      const close = (await all({ type: "button", label: "Закрыть" })).map((x) => x.r).filter((r) => r.y < W.height / 2 && r.width < 100).sort((a, b) => a.width * a.height - b.width * b.height)[0] ?? null;
+      const cancel = (await all({ type: "button", label: "Отмена" })).map((x) => x.r).sort((a, b) => b.y - a.y)[0] ?? null;
       const input = (await all({ type: "field" })).map((x) => x.r).pop() ?? null;
       const confirm = (await all({ type: "button", label: "Удалить аккаунт" })).map((x) => x.r).sort((a, b) => b.y - a.y)[0] ?? null;
       const kt = await keyboardTop();
-      ctx.d[`dialog_${tag}`] = { keyboard: kb, kbTop: kt, title, close, input, confirm };
+      ctx.d[`dialog_${tag}`] = { keyboard: kb, kbTop: kt, title, close, input, confirm, cancel, file: f };
+      if (input && cancel) {
+        const room = Math.round((cancel.y - 4 - (input.y + input.height)) * 10) / 10;
+        ctx.d[`${tag}_inputRoom`] = room;
+        ctx.check(`${tag}: поле «введите УДАЛИТЬ» целиком над кнопками окна (низ поля ≤ верх «Отмена» − 4 pt, запас ${room} pt)`, room >= 0, { input, cancel });
+      } else ctx.check(`${tag}: поле и «Отмена» найдены`, false, { input, cancel });
       ctx.check(`${tag}: клавиатура открыта`, Boolean(kb));
       ctx.check(`${tag}: заголовок «Удалить аккаунт навсегда?» ниже строки состояния (y ≥ ${ISLAND_BOTTOM})`, title && title.y >= ISLAND_BOTTOM, title);
       if (close) ctx.check(`${tag}: крестик окна ниже строки состояния`, close.y >= ISLAND_BOTTOM - 4, close);
@@ -1586,11 +1726,21 @@ async function main() {
     const dk = ctx.d["dialog_dialog-keyboard"];
     const covered = dk.input && dk.confirm && dk.input.y + dk.input.height > dk.confirm.y - 8;
     ctx.check("dialog-keyboard: поле ввода не закрыто кнопками окна", !covered, { input: dk.input, confirm: dk.confirm });
-    const fieldEl = (await all({ type: "field" })).pop();
-    if (!covered) await tap({ type: "field" }, { scrolls: 0, anywhere: true, pick: "last" });
-    else lastTapped = fieldEl?.el ?? null;
+    if (!covered) await tap({ type: "field" }, { scrolls: 0, anywhere: true, pick: "last", ignoreKeyboard: true });
     await sleep(800);
+    // Раунд 5: элемент поля устарел («not present in the current view anymore») — берём свежий.
+    lastTapped = (await all({ type: "field" })).pop()?.el ?? null;
     await typeFocused("УДАЛИТЬ");
+    const typed = await readValue((await all({ type: "field" })).pop()?.el);
+    ctx.d.typedValue = typed;
+    if (typed !== "УДАЛИТЬ") {
+      // Запас: печать в поле с фокусом клавишами (без ссылки на элемент).
+      await ensureLayout("УДАЛИТЬ");
+      await driver.keys([..."УДАЛИТЬ"]).catch((e) => (ctx.d.keysError = e.message.slice(0, 160)));
+      await sleep(600);
+      ctx.d.typedValueKeys = await readValue((await all({ type: "field" })).pop()?.el);
+    }
+    ctx.shot("dialog-after-typing");
     await sleep(800);
     await dialogCheck("dialog-typed");
     await hideKeyboard();
@@ -1602,7 +1752,9 @@ async function main() {
     const note = (await all({ contains: "удал" })).map((e) => e.label);
     ctx.d.note = note;
     ctx.check("надпись «Аккаунт удалён»", note.some((l) => /аккаунт удал/i.test(l || "")), note);
-  });
+  };
+  def("S11", "Удаление аккаунта одноразового повара → «Аккаунт удалён» на входе", s11);
+  def("S11b", "Удаление аккаунта с клавиатурой: поле «введите УДАЛИТЬ» над кнопками окна, окно ниже часов → «Аккаунт удалён»", s11);
 
   // 12. Консоль
   def("S12", "Консоль: нет ошибок React (#418 и др.) и необработанных ошибок JS", async (ctx) => {
