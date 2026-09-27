@@ -8,7 +8,8 @@
 // Запуск из d:/wt/mobile-apps:
 //   DATABASE_URL=<e2e> DATABASE_URL_DIRECT=<e2e> npx tsx .agent/tasks/mobile-apps-2026-09/e2e/shots-seed.ts
 const E2E = "postgresql://postgres:postgres@localhost:5432/wesetup_e2e?sslmode=disable";
-if (process.env.DATABASE_URL !== E2E) throw new Error("DATABASE_URL must be the e2e db");
+// Любая ЛОКАЛЬНАЯ e2e-база (на машине разработчика или в CI), никогда не прод.
+if (!/@(localhost|127\.0\.0\.1):5432\/wesetup_e2e\b/.test(process.env.DATABASE_URL ?? "")) throw new Error(`DATABASE_URL must be a local e2e db (${E2E})`);
 
 const fakeNow = process.env.SHOTS_SEED_NOW;
 if (fakeNow) {

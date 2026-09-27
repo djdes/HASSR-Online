@@ -1,0 +1,168 @@
+# Проверка приложения Android на настоящем эмуляторе: копия сайта с демо-данными
+# поднимается прямо в задании (не прод), тестовый APK открывает её по
+# http://10.0.2.2:3000, сценарии гоняет Playwright (_android) + adb.
+# Только ветка mobile-e2e-android и ручной запуск — никогда не master.
+name: Приложение Android — e2e на эмуляторе
+
+on:
+  push:
+    branches: [mobile-e2e-android]
+  workflow_dispatch:
+    inputs:
+      api_level:
+        description: "API level эмулятора"
+        default: "35"
+      mode:
+        description: "full — копия сайта и все сценарии; prod-smoke — APK без WESETUP_APP_URL, только экран входа wesetup.ru"
+        default: "full"
+
+concurrency:
+  group: mobile-e2e-android-${{ github.ref }}-${{ inputs.mode || 'full' }}-${{ inputs.api_level || '35' }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  API_LEVEL: ${{ inputs.api_level || '35' }}
+  MODE: ${{ inputs.mode || 'full' }}
+  HARNESS: .agent/tasks/mobile-e2e-android-2026-09
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/wesetup_e2e?sslmode=disable
+  DATABASE_URL_DIRECT: postgresql://postgres:postgres@localhost:5432/wesetup_e2e?sslmode=disable
+  NEXTAUTH_URL: http://10.0.2.2:3000
+  NEXTAUTH_SECRET: ci-e2e-secret-not-for-production-0123456789
+  PLATFORM_ORG_ID: platform
+  ROOT_EMAIL: root@ci.local
+  ROOT_PASSWORD: CiRoot2026!
+  TELEGRAM_BOT_TOKEN: "000000:ci-fake-token"
+  TELEGRAM_BOT_USERNAME: ci_fake_bot
+  TELEGRAM_WEBHOOK_SECRET: ci-fake
+  TELEGRAM_LINK_TOKEN_SECRET: ci-fake-link
+  CRON_SECRET: ci-fake-cron
+  SMTP_HOST: 127.0.0.1
+  SMTP_PORT: "2525"
+  SMTP_FROM: "WeSetup CI <noreply@ci.local>"
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  e2e:
+    name: Эмулятор API ${{ inputs.api_level || '35' }} (${{ inputs.mode || 'full' }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: wesetup_e2e
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            mobile/package-lock.json
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+          cache-dependency-path: |
+            mobile/android/*.gradle*
+            mobile/android/**/gradle-wrapper.properties
+
+      - name: KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Зависимости сайта
+        run: npm ci --no-audit --no-fund
+
+      - name: База и демо-данные
+        if: env.MODE == 'full'
+        run: |
+          npx prisma generate
+          npx prisma db push --accept-data-loss
+          npx tsx prisma/seed.ts
+          npx tsx .agent/tasks/mobile-apps-2026-09/e2e/shots-seed.ts
+          npx tsx .agent/tasks/mobile-apps-2026-09/e2e/shots-claims.ts
+          npx tsx $HARNESS/ci-seed-extra.ts > $HARNESS/ids.json
+          cat $HARNESS/ids.json
+
+      - uses: actions/cache@v5
+        if: env.MODE == 'full'
+        with:
+          path: .next/cache
+          key: nextcache-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
+          restore-keys: nextcache-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+
+      - name: Сборка сайта
+        if: env.MODE == 'full'
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
+        run: npm run build
+
+      - name: Запуск сайта
+        if: env.MODE == 'full'
+        run: |
+          mkdir -p e2e-out
+          nohup npm start -- -p 3000 > e2e-out/server.log 2>&1 &
+          for i in $(seq 1 90); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/mini/login || true)
+            if [ "$code" = "200" ]; then echo "сайт отвечает"; break; fi
+            sleep 2
+          done
+          curl -s -o /dev/null -w 'mini/login %{http_code}\n' http://localhost:3000/mini/login
+
+      - name: Тестовый APK
+        working-directory: mobile
+        run: |
+          npm ci --no-audit --no-fund
+          if [ "$MODE" = "full" ]; then
+            export WESETUP_APP_URL="http://10.0.2.2:3000/mini?src=app"
+            # Экран «Нет связи» в тестовой сборке возвращает в копию сайта, не на прод.
+            sed -i 's#https://wesetup.ru/mini?src=app#http://10.0.2.2:3000/mini?src=app#' www/offline.html
+          fi
+          npx cap sync android
+          grep -n '"url"\|cleartext\|allowNavigation' -A3 android/app/src/main/assets/capacitor.config.json | head -30
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon -q
+          ls -la app/build/outputs/apk/debug/
+
+      - name: Эмулятор и сценарии
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ env.API_LEVEL }}
+          target: google_apis
+          arch: x86_64
+          profile: pixel_7
+          ram-size: 4096M
+          disk-size: 6000M
+          force-avd-creation: true
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back emulated
+          disable-animations: true
+          script: bash ${{ env.HARNESS }}/run-emulator.sh
+
+      - name: Итоги
+        if: always()
+        run: |
+          cp -f $HARNESS/ids.json e2e-out/ 2>/dev/null || true
+          if [ -f e2e-out/results.json ]; then node -e 'const r=require("./e2e-out/results.json");for(const s of r.scenarios)console.log((s.ok?"PASS":"FAIL")+"  "+s.name+"  "+(s.details||"").slice(0,300))'; fi
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: android-e2e-${{ env.MODE }}-api${{ env.API_LEVEL }}-${{ github.run_number }}
+          path: e2e-out/
+          retention-days: 14
