@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { registerUnicodeFont } from "@/lib/closing-documents/pdf-font";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -67,6 +68,9 @@ export async function GET(request: Request) {
 
   // Generate PDF.
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  // Шрифт с кириллицей: стандартный helvetica jsPDF печатал русский текст
+  // сертификата кракозябрами (имя, «Сертификат», дата).
+  doc.setFont(registerUnicodeFont(doc), "normal");
 
   // Frame. Сертификат вешают на стену, печатают на ч/б принтерах:
   // рамка и акценты — чёрный и серые, без фирменного индиго.

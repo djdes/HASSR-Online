@@ -17,6 +17,7 @@ import {
   WidthType,
 } from "docx";
 import { brandQrPng } from "@/lib/brand-qr";
+import { HYGIENE_STATUS_OPTIONS } from "@/lib/hygiene-document";
 import type { JournalDocumentPdfInput } from "@/lib/document-pdf";
 
 /**
@@ -154,7 +155,8 @@ function employeeGrid(input: JournalDocumentPdfInput): Table {
 /** Отметка в клетке. Ключи разные у разных журналов — берём первый знакомый. */
 function markFor(data: Record<string, unknown>): string {
   if (typeof data.status === "string") {
-    return data.status === "healthy" ? "Зд." : String(data.status);
+    // Код как в PDF и на экране («Зд.», «В», «Б/л»…), а не значение из базы (`day_off`).
+    return HYGIENE_STATUS_OPTIONS.find((option) => option.value === data.status)?.code ?? String(data.status);
   }
   if (data.signed === true) return "подпись";
   return "✓";
