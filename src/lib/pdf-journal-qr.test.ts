@@ -14,6 +14,7 @@ import {
   JOURNAL_QR_MAX_MODULES,
   JOURNAL_QR_MIN_MODULE_MM,
   JOURNAL_QR_PAD_MM,
+  JOURNAL_QR_TARGET_MODULE_MM,
   findJournalQrCorner,
   journalQrCellHeight,
   journalQrCellWidth,
@@ -31,6 +32,8 @@ import { JOURNAL_SHEET_MARGIN_MM } from "@/lib/pdf-journal-sheet";
 const M = JOURNAL_SHEET_MARGIN_MM;
 /** Образец бланка — короткий адрес (37 модулей). */
 const URL_SAMPLE = "https://wesetup.ru/journals-info/hygiene";
+/** Адрес документа с кодом журнала до 23 символов — 49 модулей (так у 42 журналов из 45). */
+const URL_DOC = "https://wesetup.ru/qj/cmf1abcdefghijklmnopqrstu/hygiene/AbCdEfGhIjKl";
 /** Самый плотный адрес документа: /qj/<cuid>/<код 30 символов>/<подпись> — 53 модуля. */
 const URL_DOC_LONGEST = "https://wesetup.ru/qj/cmf1abcdefghijklmnopqrstu/cleaning_ventilation_checklist/AbCdEfGhIjKl";
 
@@ -45,12 +48,25 @@ test("плитка: короткий адрес — в две строки ша�
   assert.ok(Math.abs(journalQrCellWidth(tile) - (tile.width + 2 * JOURNAL_QR_CELL_PAD_MM)) < 1e-9);
 });
 
-test("плитка: плотный адрес — модуль ровно 0,35 мм, шапка выше, но не больше чем на 4 мм", () => {
+test("плитка: адрес документа (49 модулей) — шапка выше ровно до модуля 0,365 мм", () => {
+  const tile = journalQrTile(URL_DOC);
+  assert.equal(tile.modules, 49);
+  assert.ok(Math.abs(tile.module - JOURNAL_QR_TARGET_MODULE_MM) < 1e-9, `модуль ${tile.module}`);
+  const growth = journalQrCellHeight(tile) - JOURNAL_HEADER_ROWS_MM;
+  assert.ok(growth > 3 && growth < JOURNAL_QR_MAX_GROWTH_MM, `рост шапки ${growth}`);
+  // 41 модуль в 20 мм — уже крупнее: шапка не растёт.
+  const sample = journalQrTile("https://wesetup.ru/journals-info/cold_equipment_control");
+  assert.equal(sample.modules, 41);
+  assert.ok(sample.module > JOURNAL_QR_TARGET_MODULE_MM);
+  assert.ok(Math.abs(journalQrCellHeight(sample) - JOURNAL_HEADER_ROWS_MM) < 1e-9);
+});
+
+test("плитка: самый плотный адрес (53 модуля) — шапка выше ровно на 4 мм, модуль не меньше 0,35 мм", () => {
   const tile = journalQrTile(URL_DOC_LONGEST);
   assert.equal(tile.modules, 53);
-  assert.ok(Math.abs(tile.module - JOURNAL_QR_MIN_MODULE_MM) < 1e-9, `модуль ${tile.module}`);
+  assert.ok(tile.module >= JOURNAL_QR_MIN_MODULE_MM - 1e-9 && tile.module < JOURNAL_QR_TARGET_MODULE_MM, `модуль ${tile.module}`);
   const growth = journalQrCellHeight(tile) - JOURNAL_HEADER_ROWS_MM;
-  assert.ok(growth > 0 && growth <= JOURNAL_QR_MAX_GROWTH_MM + 1e-9, `рост шапки ${growth}`);
+  assert.ok(Math.abs(growth - JOURNAL_QR_MAX_GROWTH_MM) < 1e-9, `рост шапки ${growth}`);
   assert.equal(JOURNAL_QR_MAX_MODULES, 53, "версия 9 — самая плотная, что помещается");
 });
 

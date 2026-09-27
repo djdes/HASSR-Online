@@ -35,16 +35,25 @@ import { JOURNAL_SHEET_MARGIN_MM } from "@/lib/pdf-journal-sheet";
  * центру, чёрные квадратные модули и «глаза», плашка «Отсканировать /
  * wesetup.ru», всё векторное (`drawBrandQrTilePdf`). Размер — под высоту
  * шапки: плитка в две строки шапки (20 мм), и шапка не растёт; если модуль
- * при этом меньше `JOURNAL_QR_MIN_MODULE_MM` (длинный адрес — плотная
+ * при этом меньше `JOURNAL_QR_TARGET_MODULE_MM` (длинный адрес — плотная
  * матрица), плитка выше — шапка растёт, но не больше чем на
- * `JOURNAL_QR_MAX_GROWTH_MM`. Адрес плотнее (`JOURNAL_QR_MAX_MODULES`) —
- * ошибка: его нужно укоротить, а не печатать нечитаемый код.
+ * `JOURNAL_QR_MAX_GROWTH_MM`, и модуль не меньше `JOURNAL_QR_MIN_MODULE_MM`.
+ * Адрес плотнее (`JOURNAL_QR_MAX_MODULES`) — ошибка: его нужно укоротить, а
+ * не печатать нечитаемый код.
  */
 
 /** Высота строк шапки ХАССП без переносов (две строки по 10 мм). */
 export const JOURNAL_HEADER_ROWS_MM = 20;
 /** Минимальный модуль QR на бумаге, мм. */
 export const JOURNAL_QR_MIN_MODULE_MM = 0.35;
+/**
+ * Модуль, до которого плитка растёт, если в 20 мм он мельче, мм. При 0,35 мм
+ * «снимок телефоном» (300 dpi, поворот, перспектива, размытие, JPEG) jsQR
+ * изредка не читает, при 0,365 мм — читает (опыт `.agent/tasks/
+ * journal-qr-header-2026-09`, raw/target-module-experiment.txt); zxing-cpp
+ * читает оба. Короткие адреса (≤ 41 модуля) и так крупнее — шапка не растёт.
+ */
+export const JOURNAL_QR_TARGET_MODULE_MM = 0.365;
 /** На сколько строкам шапки можно вырасти ради QR, мм. */
 export const JOURNAL_QR_MAX_GROWTH_MM = 4;
 /**
@@ -128,17 +137,20 @@ export type JournalQrPlacement = {
   module: number;
 };
 
-/** Плитка под адрес: высота — строки шапки (20 мм), выше — только ради модуля ≥ 0,35 мм. */
+/**
+ * Плитка под адрес: высота — строки шапки (20 мм); выше — только ради модуля
+ * `JOURNAL_QR_TARGET_MODULE_MM`, и не больше чем на `JOURNAL_QR_MAX_GROWTH_MM`
+ * (у самого плотного адреса модуль тогда 0,351 мм — не меньше 0,35).
+ */
 export function journalQrTile(url: string): JournalQrTile {
   const layout = brandQrLayout(url, { variant: "full" });
   const heightModules = layout.height;
-  const needed = heightModules * JOURNAL_QR_MIN_MODULE_MM;
-  if (needed > TILE_MAX_HEIGHT + 1e-9) {
+  if (heightModules * JOURNAL_QR_MIN_MODULE_MM > TILE_MAX_HEIGHT + 1e-9) {
     throw new Error(
       `QR слишком плотный для шапки: ${layout.size} модулей (не больше ${JOURNAL_QR_MAX_MODULES}) — адрес нужно укоротить`,
     );
   }
-  const height = Math.max(TILE_BASE_HEIGHT, needed);
+  const height = Math.min(Math.max(TILE_BASE_HEIGHT, heightModules * JOURNAL_QR_TARGET_MODULE_MM), TILE_MAX_HEIGHT);
   const module = height / heightModules;
   return { layout, modules: layout.size, module, width: layout.width * module, height };
 }
