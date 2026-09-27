@@ -578,7 +578,9 @@ async function main() {
     await settle(p);
     s.shots.push(shot("back-before"));
     key(4);
-    await sleep(3000);
+    // Медленный эмулятор CI: переход «назад» может занять несколько секунд.
+    await p.waitForURL((u) => u.pathname + u.search === homeNow, { timeout: 15000 }).catch(() => undefined);
+    await sleep(1500);
     s.data.afterBack = pathOf(p);
     s.shots.push(shot("back-after"));
     check(pathOf(p) === homeNow, `back from /mini/sections went to ${pathOf(p)} (expected ${homeNow})`);
@@ -652,7 +654,8 @@ async function main() {
     await settle(p2, 3000);
     s.data.afterRetry = p2.url();
     s.shots.push(shot("offline-retry"));
-    check(p2.url().startsWith(`${ORIGIN}/mini`), `after «Повторить»: ${p2.url()}`);
+    // Вошедший человек попадает на свою главную (/control-board, /mini/today…).
+    check(p2.url().startsWith(ORIGIN) && !/offline\.html/.test(p2.url()), `after «Повторить»: ${p2.url()}`);
   });
 
   await scenario("4 Print from a journal document -> system print UI", async (s) => {
