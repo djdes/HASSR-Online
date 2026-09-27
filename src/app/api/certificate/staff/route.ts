@@ -68,8 +68,9 @@ export async function GET(request: Request) {
   // Generate PDF.
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
 
-  // Frame.
-  doc.setDrawColor(85, 102, 246);
+  // Frame. Сертификат вешают на стену, печатают на ч/б принтерах:
+  // рамка и акценты — чёрный и серые, без фирменного индиго.
+  doc.setDrawColor(64);
   doc.setLineWidth(2);
   doc.rect(15, 15, 267, 180);
   doc.setLineWidth(0.5);
@@ -77,36 +78,36 @@ export async function GET(request: Request) {
 
   // Header — название org.
   doc.setFontSize(11);
-  doc.setTextColor(111, 114, 130);
+  doc.setTextColor(115);
   doc.text(org?.name ?? "WeSetup", 148, 35, { align: "center" });
 
   // Заголовок.
   doc.setFontSize(36);
-  doc.setTextColor(11, 16, 36);
+  doc.setTextColor(0);
   doc.text("Сертификат", 148, 65, { align: "center" });
 
   doc.setFontSize(20);
-  doc.setTextColor(85, 102, 246);
+  doc.setTextColor(0);
   doc.text("«Знаток ХАССП»", 148, 80, { align: "center" });
 
   // Имя.
   doc.setFontSize(14);
-  doc.setTextColor(60, 64, 83);
+  doc.setTextColor(64);
   doc.text("выдаётся сотруднику:", 148, 100, { align: "center" });
 
   doc.setFontSize(28);
-  doc.setTextColor(11, 16, 36);
+  doc.setTextColor(0);
   doc.text(user.name, 148, 120, { align: "center" });
 
   if (user.positionTitle) {
     doc.setFontSize(13);
-    doc.setTextColor(155, 159, 179);
+    doc.setTextColor(160);
     doc.text(user.positionTitle, 148, 130, { align: "center" });
   }
 
   // Tagline.
   doc.setFontSize(12);
-  doc.setTextColor(60, 64, 83);
+  doc.setTextColor(64);
   doc.text(
     `за активное ведение журналов СанПиН/ХАССП — ${totalEntries} записей за 90 дней.`,
     148,
@@ -116,7 +117,7 @@ export async function GET(request: Request) {
 
   // Footer.
   doc.setFontSize(10);
-  doc.setTextColor(155, 159, 179);
+  doc.setTextColor(160);
   const dateStr = new Date().toLocaleDateString("ru-RU", {
     day: "numeric",
     month: "long",

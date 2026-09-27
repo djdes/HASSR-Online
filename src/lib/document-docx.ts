@@ -12,6 +12,7 @@ import {
   TableLayoutType,
   TableRow,
   TextRun,
+  UnderlineType,
   VerticalAlignTable,
   WidthType,
 } from "docx";
@@ -274,13 +275,13 @@ async function blankFooter(footer: DocxBlankFooter): Promise<Footer> {
     children: [
       new Paragraph({
         alignment: AlignmentType.RIGHT,
-        children: [new TextRun({ text: caption, bold: true, size: 16, color: "3C4053" })],
+        children: [new TextRun({ text: caption, bold: true, size: 16, color: "404040" })],
       }),
       ...rest.map(
         (line) =>
           new Paragraph({
             alignment: AlignmentType.RIGHT,
-            children: [new TextRun({ text: line, size: 14, color: "6F7282" })],
+            children: [new TextRun({ text: line, size: 14, color: "707070" })],
           })
       ),
     ],
@@ -314,6 +315,23 @@ async function blankFooter(footer: DocxBlankFooter): Promise<Footer> {
     ],
   });
 }
+
+/**
+ * Стили документа без цвета. У библиотеки docx заголовки по умолчанию
+ * синие (2E74B5, 1F4D78), ссылка — 0563C1: название журнала («Заголовок 2»)
+ * в Word печаталось синим. Бланк — только чёрный и серые: у заведений
+ * ч/б принтеры. Размеры и начертания — как у библиотеки.
+ */
+const BLACK = "000000";
+const BLACK_DEFAULT_STYLES = {
+  heading1: { run: { color: BLACK, size: 32 } },
+  heading2: { run: { color: BLACK, size: 26 } },
+  heading3: { run: { color: BLACK, size: 24 } },
+  heading4: { run: { color: BLACK, italics: true } },
+  heading5: { run: { color: BLACK } },
+  heading6: { run: { color: BLACK } },
+  hyperlink: { run: { color: BLACK, underline: { type: UnderlineType.SINGLE } } },
+};
 
 /**
  * Собирает DOCX. Возвращает буфер и имя файла — та же пара, что у
@@ -363,6 +381,7 @@ export async function renderJournalDocumentDocx(
 
   const footer = options.footer ? await blankFooter(options.footer) : null;
   const doc = new Document({
+    styles: { default: BLACK_DEFAULT_STYLES },
     sections: [{ children: body, ...(footer ? { footers: { default: footer } } : {}) }],
   });
   const buffer = await Packer.toBuffer(doc);

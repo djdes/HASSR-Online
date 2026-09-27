@@ -615,15 +615,18 @@ body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"]))
 }
 
 /* --- КАЛЕНДАРНЫЕ ДНИ В СЕТКЕ ----------------------------------------
-   Выходной/праздник и сокращённый день красятся в бланке своими
-   пастельными хексами (`journal-grid.ts`). В тёмной они оставались
-   светло-розовыми полосами через всю таблицу, а отметки на них
-   читались еле-еле. Держим тот же смысл приглушённой заливкой. */
-body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .bg-\[\#f8d7d4\] {
-  background-color: rgba(255, 144, 130, 0.16);
+   Выходной/праздник и сокращённый день красятся в бланке серым —
+   #d4d4d4 и #ebebeb (`journal-grid.ts`, те же заливки печатает PDF;
+   цвета нет — у заведений ч/б принтеры). В тёмной светло-серые были бы
+   светлыми полосами через всю таблицу, а отметки на них читались бы
+   еле-еле. Держим тот же смысл нейтральной приглушённой заливкой:
+   выходной заметно светлее фона, сокращённый — чуть светлее. На бумаге
+   из тёмной темы — те же серые, что в светлой (блок печати ниже). */
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .bg-\[\#d4d4d4\] {
+  background-color: rgba(255, 255, 255, 0.16);
 }
-body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .bg-\[\#fdeeda\] {
-  background-color: rgba(255, 190, 110, 0.14);
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .bg-\[\#ebebeb\] {
+  background-color: rgba(255, 255, 255, 0.09);
 }
 
 /* --- BORDERS ------------------------------------------------------- */
@@ -1345,7 +1348,7 @@ body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hygie
   }
 
   /* ── A18. ВЫХОДНЫЕ ДНИ ПЕЧАТАЮТСЯ ────────────────────────────────
-   * Тотальный сброс выше гасит ЛЮБОЙ фон, включая розовую подсветку
+   * Тотальный сброс выше гасит ЛЮБОЙ фон, включая серую заливку
    * нерабочих дней производственного календаря. На бумаге это важная
    * информация: проверяющий видит, ПОЧЕМУ в столбце пусто. Ячейки дня
    * помечены `data-print-keep-bg` (см. `getDayColumnBgClass`), сброс их
@@ -1354,6 +1357,16 @@ body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hygie
   .app-shell[data-app-theme="dark"] [data-print-keep-bg] {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+
+  /* Заливки дней на бумаге — те же серые, что в светлой теме и в PDF,
+     в любой теме: в тёмной они полупрозрачные белые (блок «КАЛЕНДАРНЫЕ
+     ДНИ В СЕТКЕ»), а полупрозрачный белый на белом листе не виден. */
+  .app-shell .bg-\[\#d4d4d4\][data-print-keep-bg] {
+    background-color: #d4d4d4 !important;
+  }
+  .app-shell .bg-\[\#ebebeb\][data-print-keep-bg] {
+    background-color: #ebebeb !important;
   }
 
   /* Ссылки — не показывать href в скобках и не подчёркивать

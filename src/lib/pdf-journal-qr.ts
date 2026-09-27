@@ -512,7 +512,7 @@ export function stampJournalQr(
       // партнёра); справа на странице без шапки — «СТР. X ИЗ N».
       doc.setFont(params.fontName, "normal");
       doc.setFontSize(FOOTER_FONT_SIZE);
-      doc.setTextColor(111, 114, 130);
+      doc.setTextColor(115, 115, 115);
       doc.text(params.footer, JOURNAL_SHEET_MARGIN_MM, pageHeight - JOURNAL_SHEET_MARGIN_MM);
       doc.setTextColor(0, 0, 0);
     }

@@ -301,21 +301,23 @@ function parseLegendItem(raw: string): { symbol: string; description: string } {
  * тех, кто не наводит мышь. Показываем видимые chip'ы рядом с легендой.
  */
 function CleaningDayColorLegend() {
+  // Образцы — те же серые заливки, что у колонок дней (journal-grid.ts).
   const items = [
-    { color: "border-[#f0b6b1] bg-[#f8d7d4]", label: "Выходной или праздник" },
-    { color: "border-[#f2d3a6] bg-[#fdeeda]", label: "Сокращённый день" },
+    { color: `border-[#a8a8a8] ${GRID_DAY_OFF_BG_CLASS}`, label: "Выходной или праздник" },
+    { color: `border-[#c8c8c8] ${GRID_DAY_SHORT_BG_CLASS}`, label: "Сокращённый день" },
     { color: "border-[#ececf4] bg-white", label: "Рабочий день" },
   ];
   return (
     // A18: заливки дней теперь ПЕЧАТАЮТСЯ (см. journal-grid.ts), значит
     // и легенда к ним имеет смысл на бумаге — проверяющий понимает,
-    // почему розовый столбец пуст. Квадраты помечены
+    // почему серый столбец пуст. Квадраты помечены
     // `data-print-keep-bg`, иначе тотальный светлый сброс печати
-    // выбелил бы их в три пустых рамки.
+    // выбелил бы их в три пустых рамки; рамка на бумаге — чёрная, как у
+    // образцов легенды в PDF.
     <div className="mx-auto flex w-full max-w-[820px] flex-wrap items-center gap-x-5 gap-y-2 text-[12.5px] text-[#3c4053]">
       {items.map((item) => (
         <span key={item.label} className="inline-flex items-center gap-2">
-          <span data-print-keep-bg="" className={`inline-block size-4 rounded-md border ${item.color}`} />
+          <span data-print-keep-bg="" className={`inline-block size-4 rounded-md border ${item.color} print:border-black`} />
           {item.label}
         </span>
       ))}
@@ -2649,9 +2651,9 @@ export function CleaningDocumentClient(props: Props) {
                             : cellVal
                               ? "border-[#5566f6] bg-[#f5f6ff] text-[#5566f6]"
                               : isOff
-                                ? "border-[#ffd7d3] bg-[#fff4f2] text-[#a13a32]"
+                                ? `border-[#a8a8a8] ${GRID_DAY_OFF_BG_CLASS} text-[#3c4053]`
                                 : isShort
-                                  ? "border-[#ffe9b0] bg-[#fff8eb] text-[#b25f00]"
+                                  ? `border-[#c8c8c8] ${GRID_DAY_SHORT_BG_CLASS} text-[#3c4053]`
                                   : "border-[#ececf4] bg-white text-[#3c4053] hover:bg-[#f5f6ff]";
                           return (
                             <button
@@ -2905,11 +2907,11 @@ export function CleaningDocumentClient(props: Props) {
                 {dayKeys.map((dateKey) => {
                   const isSelected = selectedCells.has(cellKey(row.id, dateKey));
                   const dayKind = getCalendarDayKind(dateKey);
-                  // Pastel-окраска по производственному календарю —
-                  // общие токены `GRID_DAY_*_BG_CLASS` (одна палитра с
-                  // гигиеной/здоровьем, насыщенность как на эталоне):
-                  //   • holiday/weekend → розовый
-                  //   • short          → бежевый
+                  // Окраска по производственному календарю — общие токены
+                  // `GRID_DAY_*_BG_CLASS` (одна палитра с гигиеной/здоровьем
+                  // и PDF; только серые — ч/б принтеры):
+                  //   • holiday/weekend → серый
+                  //   • short          → светло-серый
                   //   • workday        → прозрачный (чтобы hover строки был виден)
                   // Selected outline overlays поверх любого фона.
                   const dayBg =

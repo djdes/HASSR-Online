@@ -163,20 +163,22 @@ export function renderPaperJournalPdfDetailed(params: PaperJournalPdfParams): {
     head,
     body: [...filled, ...blanks],
     startY: noteY + 6,
+    // Только чёрный и серый (у заведений ч/б принтеры): линии и текст —
+    // чёрные, шапка — светло-серая, как у таблиц электронных бланков.
     styles: {
       font,
       fontSize: 8,
       cellPadding: 2.4,
-      lineColor: [11, 16, 36],
+      lineColor: [0, 0, 0],
       lineWidth: 0.2,
-      textColor: [11, 16, 36],
+      textColor: [0, 0, 0],
       minCellHeight: 9,
     },
     headStyles: {
       font,
       fontStyle: "bold",
-      fillColor: [238, 241, 255],
-      textColor: [11, 16, 36],
+      fillColor: [242, 242, 242],
+      textColor: [0, 0, 0],
       fontSize: 8,
     },
     columnStyles: { 0: { cellWidth: 10, halign: "center" } },

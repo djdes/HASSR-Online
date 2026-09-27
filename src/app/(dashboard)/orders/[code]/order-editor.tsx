@@ -313,7 +313,7 @@ export function OrderEditor({
 
             <div className="mt-12 flex items-end justify-between gap-6">
               <span className="text-[13.5px]">{rendered.signature.post}</span>
-              <span className="flex-1 border-b border-[#0b1024]" />
+              <span className="flex-1 border-b border-[#0b1024] print:border-black" />
               <span className="text-[13.5px]">{rendered.signature.name}</span>
             </div>
 
@@ -321,8 +321,9 @@ export function OrderEditor({
               <div className="mb-3 font-medium">С приказом ознакомлены:</div>
               {[0, 1, 2, 3].map((row) => (
                 <div key={row} className="mb-5 flex gap-8">
-                  <span className="flex-1 border-b border-[#dcdfed]" />
-                  <span className="w-[180px] border-b border-[#dcdfed]" />
+                  {/* Линии на бумаге — серые (ч/б принтеры), не сине-серые. */}
+                  <span className="flex-1 border-b border-[#dcdfed] print:border-[#e0e0e0]" />
+                  <span className="w-[180px] border-b border-[#dcdfed] print:border-[#e0e0e0]" />
                 </div>
               ))}
             </div>

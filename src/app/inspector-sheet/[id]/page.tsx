@@ -61,10 +61,10 @@ export default async function InspectorSheetPage({ params }: { params: Promise<{
     : `до ${token.expiresAt.toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric", timeZone: token.organization.timezone || "Europe/Moscow" })}`;
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#e7e9ee] px-3 py-6 text-[#141821] print:bg-white print:p-0">
+    <main className="min-h-screen overflow-x-hidden bg-[#e7e9ee] px-3 py-6 text-[#181818] print:bg-white print:p-0">
       <style>{`@page { size: A4 portrait; margin: 0; } @media print { html, body { background: #fff !important; } .no-print { display: none !important; } }`}</style>
       <div className="no-print mx-auto mb-5 flex max-w-[210mm] flex-wrap items-center justify-between gap-3">
-        <p className="text-[14px] text-[#5b6170]">
+        <p className="text-[14px] text-[#616161]">
           Лист A4. Можно печатать повторно — QR не изменится, пока доступ не отозван.
         </p>
         {inactive ? null : <PrintButton />}
@@ -77,10 +77,10 @@ export default async function InspectorSheetPage({ params }: { params: Promise<{
         </div>
       ) : (
         <article
-          className="mx-auto flex min-h-[297mm] w-full max-w-[210mm] flex-col border border-[#d5d8de] bg-white px-[8%] py-[7%] shadow-[0_18px_40px_-26px_rgba(20,24,33,0.45)] print:min-h-[296mm] print:border-0 print:shadow-none"
+          className="mx-auto flex min-h-[297mm] w-full max-w-[210mm] flex-col border border-[#d8d8d8] bg-white px-[8%] py-[7%] shadow-[0_18px_40px_-26px_rgba(20,24,33,0.45)] print:min-h-[296mm] print:border-0 print:shadow-none"
           data-inspector-sheet
         >
-          <div className="flex items-baseline justify-between gap-4 border-b-2 border-[#141821] pb-2 text-[13px] text-[#5b6170]">
+          <div className="flex items-baseline justify-between gap-4 border-b-2 border-[#181818] pb-2 text-[13px] text-[#616161]">
             <span>Для проверяющих органов</span>
             <span>Роспотребнадзор, СЭС</span>
           </div>
@@ -88,12 +88,12 @@ export default async function InspectorSheetPage({ params }: { params: Promise<{
           <h1 className={`${SERIF} mt-8 text-center text-[clamp(22px,4.2vw,32px)] leading-[1.15]`}>
             Журналы производственного контроля
           </h1>
-          <p className="mt-2 text-center text-[15px] text-[#5b6170]">ведутся в электронном виде</p>
+          <p className="mt-2 text-center text-[15px] text-[#616161]">ведутся в электронном виде</p>
 
-          <div className="mt-8 border-y border-[#d5d8de] py-4 text-center">
+          <div className="mt-8 border-y border-[#d8d8d8] py-4 text-center">
             <div className={`${SERIF} text-[clamp(18px,3.2vw,24px)] leading-tight`}>{orgTitle}</div>
-            {snapshot.orgName !== orgTitle ? <div className="mt-1 text-[14px] text-[#5b6170]">{snapshot.orgName}</div> : null}
-            <div className="mt-1 text-[13.5px] text-[#5b6170]">
+            {snapshot.orgName !== orgTitle ? <div className="mt-1 text-[14px] text-[#616161]">{snapshot.orgName}</div> : null}
+            <div className="mt-1 text-[13.5px] text-[#616161]">
               {[snapshot.orgInn ? `ИНН ${snapshot.orgInn}` : null, snapshot.orgAddress].filter(Boolean).join(", ")}
             </div>
           </div>
@@ -114,16 +114,16 @@ export default async function InspectorSheetPage({ params }: { params: Promise<{
             <li>Выберите период проверки: сегодня, неделя, месяц, квартал или свои даты.</li>
             <li>Откройте нужный журнал: он показан листами той же формы, что при печати. PDF можно скачать.</li>
           </ol>
-          <p className="mx-auto mt-5 max-w-[140mm] text-center text-[13.5px] leading-relaxed text-[#3a3f4c]">
+          <p className="mx-auto mt-5 max-w-[140mm] text-center text-[13.5px] leading-relaxed text-[#3f3f3f]">
             Вход и PIN не нужны. Только просмотр: изменить записи нельзя. Каждый просмотр фиксируется
             в журнале действий организации.
           </p>
 
           <div className="mt-auto pt-8">
-            <p className="break-all text-center font-mono text-[10.5px] text-[#8a8f9c]" data-sheet-url>
+            <p className="break-all text-center font-mono text-[10.5px] text-[#8f8f8f]" data-sheet-url>
               {url}
             </p>
-            <div className="mt-3 flex flex-wrap items-baseline justify-between gap-2 border-t border-[#141821] pt-2 text-[12px] text-[#5b6170]">
+            <div className="mt-3 flex flex-wrap items-baseline justify-between gap-2 border-t border-[#181818] pt-2 text-[12px] text-[#616161]">
               <span>Доступ действует {until}</span>
               <span>WeSetup, электронные журналы СанПиН и ХАССП</span>
             </div>
