@@ -181,9 +181,12 @@ async function connect(timeout = 90000) {
     if (pid) {
       const wv = device.webViews().find((w) => String(w.pid()) === pid.split(/\s+/)[0]);
       if (wv) {
-        page = await wv.page();
-        attachListeners(page);
-        return page;
+        const pg = await wv.page().catch(() => null);
+        if (pg) {
+          page = pg;
+          attachListeners(page);
+          return page;
+        }
       }
     }
     await sleep(1000);
