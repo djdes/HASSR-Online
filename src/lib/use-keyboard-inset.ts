@@ -55,3 +55,35 @@ export function useKeyboardInset(enabled = true): number {
 
   return enabled ? inset : 0;
 }
+
+/**
+ * Предел высоты окна над открытой клавиатурой: видимая часть экрана минус
+ * строка состояния. Без него на iPhone окно («Удалить аккаунт навсегда?»
+ * с полем ввода) было выше видимой части и заезжало верхом под часы и
+ * «чёлку». `null` — видимую высоту не знаем, оставляем как было.
+ */
+export function keyboardSheetMaxHeight(visibleHeight: number): string | null {
+  if (!(visibleHeight > 0)) return null;
+  return `calc(${Math.round(visibleHeight)}px - env(safe-area-inset-top, 0px) - 12px)`;
+}
+
+/** Высота видимой части экрана (без клавиатуры); 0 — не слушаем. */
+export function useVisibleViewportHeight(enabled = true): number {
+  const [height, setHeight] = useState(0);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const update = () => setHeight(viewport.height);
+    update();
+    viewport.addEventListener("resize", update);
+    viewport.addEventListener("scroll", update);
+    return () => {
+      viewport.removeEventListener("resize", update);
+      viewport.removeEventListener("scroll", update);
+    };
+  }, [enabled]);
+
+  return enabled ? height : 0;
+}

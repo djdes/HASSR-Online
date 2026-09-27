@@ -1,6 +1,6 @@
 "use client";
 import { lockBodyScroll, unlockBodyScroll } from "@/lib/use-body-scroll-lock";
-import { useKeyboardInset } from "@/lib/use-keyboard-inset";
+import { keyboardSheetMaxHeight, useKeyboardInset, useVisibleViewportHeight } from "@/lib/use-keyboard-inset";
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -212,6 +212,10 @@ export function ConfirmDialog({
   // «даже выделить нельзя»). Поднимаем лист над клавиатурой — как
   // `card-edit-sheet` и `dynamic-form`.
   const keyboardInset = useKeyboardInset(open);
+  // С клавиатурой окно не выше видимой части экрана — иначе на iPhone его
+  // верх заезжал под часы и «чёлку».
+  const visibleHeight = useVisibleViewportHeight(open);
+  const keyboardMaxHeight = keyboardInset ? keyboardSheetMaxHeight(visibleHeight) : null;
 
   if (!open || typeof document === "undefined") return null;
 
@@ -280,7 +284,7 @@ export function ConfirmDialog({
         onClick={(e) => e.stopPropagation()}
         // С клавиатурой лист не выше видимой над ней части экрана:
         // середина прокручивается, шапка и кнопки остаются на виду.
-        style={keyboardInset ? { maxHeight: "calc(100% - 12px)" } : undefined}
+        style={keyboardInset ? { maxHeight: keyboardMaxHeight ?? "calc(100% - 12px)" } : undefined}
         className={`relative flex max-h-[90vh] outline-none supports-[height:100dvh]:max-h-[90dvh] w-full max-w-[480px] flex-col overflow-hidden rounded-t-3xl border border-[#ececf4] bg-white sm:rounded-3xl shadow-[0_30px_80px_-30px_rgba(11,16,36,0.55)]`}
       >
         {/* Header — gradient accent */}
