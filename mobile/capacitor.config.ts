@@ -5,6 +5,13 @@ import type { CapacitorConfig } from "@capacitor/cli";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pkg = require("./package.json") as { version: string };
 
+// Только для автотестов в эмуляторе и симуляторе: адрес тестовой копии сайта
+// (например http://10.0.2.2:3000/mini?src=app). В сборках для магазинов
+// переменная не задаётся — приложение открывает wesetup.ru.
+const testUrl = process.env.WESETUP_APP_URL?.trim() || null;
+const appUrl = testUrl ?? "https://wesetup.ru/mini?src=app";
+const testHost = testUrl ? new URL(testUrl).hostname : null;
+
 const config: CapacitorConfig = {
   appId: "ru.wesetup.app",
   appName: "WeSetup",
@@ -13,12 +20,14 @@ const config: CapacitorConfig = {
   webDir: "www",
   backgroundColor: "#0b1024",
   server: {
-    url: "https://wesetup.ru/mini?src=app",
+    url: appUrl,
+    // http разрешаем только тестовой копии сайта.
+    cleartext: appUrl.startsWith("http://"),
     // Своя страница вместо белого экрана, если сайт не открылся.
     errorPath: "offline.html",
     // Без этого переходы внутри wesetup.ru (кроме /mini?src=app) на iOS
     // уходили бы в Safari: iOS сверяет адрес с server.url по префиксу.
-    allowNavigation: ["wesetup.ru", "www.wesetup.ru"],
+    allowNavigation: ["wesetup.ru", "www.wesetup.ru", ...(testHost ? [testHost] : [])],
   },
   // Платформенные значения перекрывают общее (проверено по исходникам
   // Capacitor 8: CapConfig.java и CAPInstanceDescriptor.swift).
