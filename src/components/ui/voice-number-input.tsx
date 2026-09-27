@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Mic, MicOff } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { parseRussianNumber } from "@/lib/russian-number-parser";
+import { getNativeBridge, type NativeBridge } from "@/lib/native-bridge";
+import { pickSpokenNumber, speechErrorMessage } from "@/lib/spoken-number";
 
 type SpeechRecognition = {
   lang: string;
@@ -52,6 +53,10 @@ export type VoiceNumberInputProps = {
  * пауза — остановилась, распознано число, вызывается onChange.
  * Если браузер не поддерживает — кнопка прячется (return null), поле
  * работает как обычный number input.
+ *
+ * В приложении WeSetup для телефона — системное распознавание через плагин
+ * SpeechRecognition: во встроенном браузере Android Web Speech есть, но
+ * после разрешения микрофона молча ничего не делает (проверено на эмуляторе).
  */
 export function VoiceNumberInput({
   value: _value,
@@ -65,14 +70,16 @@ export function VoiceNumberInput({
   const [error, setError] = useState<string | null>(null);
   const [hint, setHint] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const nativeStopRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const ctor = getSpeechCtor();
-    setSupported(ctor !== null);
+    setSupported(ctor !== null || nativeSpeech() !== null);
   }, []);
 
   useEffect(() => {
     return () => {
+      nativeStopRef.current?.();
       recognitionRef.current?.abort?.();
       recognitionRef.current = null;
     };
@@ -80,7 +87,89 @@ export function VoiceNumberInput({
 
   if (!supported) return null;
 
+  function applyMatches(matches: readonly string[]) {
+    const best = pickSpokenNumber(matches);
+    if (best) {
+      onChange(best.number);
+      setHint(`${best.transcript.trim()} → ${best.number}`);
+    } else if (matches.length === 0 || !matches[0]?.trim()) {
+      setError(speechErrorMessage("no-speech"));
+    } else {
+      setError(`Не распознал число в «${matches[0].trim()}». Скажите ещё раз, например «два и восемь».`);
+    }
+  }
+
+  async function startNative(bridge: NativeBridge) {
+    setError(null);
+    setHint(null);
+    let handles: Array<Promise<{ remove: () => void | Promise<void> } | null>> = [];
+    const cleanup = () => {
+      nativeStopRef.current = null;
+      for (const h of handles) void h.then((x) => x?.remove()).catch(() => undefined);
+      handles = [];
+    };
+    try {
+      const available = await bridge.call<{ available?: boolean }>("SpeechRecognition", "available");
+      if (available?.available === false) {
+        setError("Распознавание речи на этом телефоне недоступно. Введите число вручную.");
+        return;
+      }
+      const permission = await bridge.call<{ speechRecognition?: string }>("SpeechRecognition", "requestPermissions");
+      if (permission?.speechRecognition !== "granted") {
+        setError(speechErrorMessage("permission"));
+        return;
+      }
+      setListening(true);
+      if (bridge.platform === "android") {
+        // Системное окошко Android само слушает до паузы и возвращает варианты.
+        const res = await bridge.call<{ matches?: string[] }>("SpeechRecognition", "start", {
+          language: "ru-RU",
+          maxResults: 3,
+          partialResults: false,
+          popup: true,
+          prompt: "Скажите число, например «два и восемь»",
+        });
+        setListening(false);
+        applyMatches(res?.matches ?? []);
+        return;
+      }
+      // iOS: варианты приходят по ходу речи, запись останавливает кнопка или пауза.
+      let latest: string[] = [];
+      let finished = false;
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+        cleanup();
+        setListening(false);
+        applyMatches(latest);
+      };
+      handles = [
+        bridge.on("SpeechRecognition", "partialResults", (payload) => {
+          const matches = (payload as { matches?: string[] } | null)?.matches;
+          if (matches?.length) latest = matches;
+        }),
+        bridge.on("SpeechRecognition", "listeningState", (payload) => {
+          if ((payload as { status?: string } | null)?.status === "stopped") finish();
+        }),
+      ];
+      nativeStopRef.current = () => {
+        void bridge.call("SpeechRecognition", "stop").catch(() => undefined);
+        finish();
+      };
+      await bridge.call("SpeechRecognition", "start", { language: "ru-RU", maxResults: 3, partialResults: true });
+    } catch (err) {
+      cleanup();
+      setListening(false);
+      setError(speechErrorMessage(err instanceof Error ? err.message : String(err)));
+    }
+  }
+
   function start() {
+    const bridge = nativeSpeech();
+    if (bridge) {
+      void startNative(bridge);
+      return;
+    }
     const ctor = getSpeechCtor();
     if (!ctor) return;
     const rec = new ctor();
@@ -89,35 +178,16 @@ export function VoiceNumberInput({
     rec.interimResults = false;
     rec.maxAlternatives = 3;
     rec.onresult = (event) => {
-      let best: { transcript: string; number: number } | null = null;
       const result = event.results[event.resultIndex];
-      for (let i = 0; i < result.length; i++) {
-        const alt = result[i];
-        const parsed = parseRussianNumber(alt.transcript);
-        if (parsed !== null && (best === null || i === 0)) {
-          best = { transcript: alt.transcript, number: parsed };
-          break;
-        }
-      }
-      if (best) {
-        onChange(best.number);
-        setHint(`${best.transcript.trim()} → ${best.number}`);
-      } else {
-        const raw = result[0]?.transcript ?? "";
-        setError(
-          `Не распознал число в «${raw.trim() || "…"}». Скажите ещё раз, например «два и восемь».`
-        );
-      }
+      const alternatives: string[] = [];
+      for (let i = 0; i < result.length; i++) alternatives.push(result[i].transcript);
+      applyMatches(alternatives);
     };
     rec.onerror = (event) => {
       const code = event.error ?? "unknown";
-      setError(
-        code === "not-allowed" || code === "service-not-allowed"
-          ? "Нужно разрешение на микрофон. Проверьте настройки браузера."
-          : code === "no-speech"
-            ? "Не слышно. Попробуйте ещё раз."
-            : `Ошибка распознавания: ${code}`
-      );
+      if (code === "aborted") return;
+      // Раньше: «Проверьте настройки браузера» и «Ошибка распознавания: network».
+      setError(speechErrorMessage(code));
     };
     rec.onend = () => {
       setListening(false);
@@ -135,6 +205,10 @@ export function VoiceNumberInput({
   }
 
   function stop() {
+    if (nativeStopRef.current) {
+      nativeStopRef.current();
+      return;
+    }
     recognitionRef.current?.stop?.();
   }
 
@@ -174,4 +248,10 @@ export function VoiceNumberInput({
       )}
     </div>
   );
+}
+
+/** Мост приложения WeSetup, если в нём есть системное распознавание речи. */
+function nativeSpeech(): NativeBridge | null {
+  const bridge = getNativeBridge();
+  return bridge?.plugin("SpeechRecognition") ? bridge : null;
 }
