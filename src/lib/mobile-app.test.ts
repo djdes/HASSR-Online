@@ -8,6 +8,7 @@ import {
   appUpdateRequirement,
   compareAppVersion,
   isMobileAppUserAgent,
+  needsIosStatusBarBackdrop,
   needsTelegramSdk,
   parseMobileAppUserAgent,
 } from "./mobile-app";
@@ -100,4 +101,16 @@ test("первый запуск приложения без входа — ср�
   assert.equal(appColdStartRedirect({ userAgent: app, pathname: "/mini", search: "?next=%2Fjournals", hasSession: false }), null);
   assert.equal(appColdStartRedirect({ userAgent: app, pathname: "/mini", search: "?nps=1", hasSession: false }), null);
   assert.equal(appColdStartRedirect({ userAgent: app, pathname: "/mini/today", search: "", hasSession: false }), null);
+});
+
+test("подложка под строкой состояния — только iPhone в приложении или на экране «Домой»", () => {
+  const iphone = "Mozilla/5.0 (iPhone; CPU iPhone OS 26_5 like Mac OS X) AppleWebKit/605.1.15 WeSetupApp/1.0.0 (ios)";
+  assert.equal(needsIosStatusBarBackdrop({ userAgent: iphone, inApp: true, standalone: false, maxTouchPoints: 5 }), true);
+  assert.equal(needsIosStatusBarBackdrop({ userAgent: "Mozilla/5.0 (iPhone) Safari", inApp: false, standalone: true, maxTouchPoints: 5 }), true);
+  // Safari во вкладке и Telegram: строку состояния рисует не страница.
+  assert.equal(needsIosStatusBarBackdrop({ userAgent: "Mozilla/5.0 (iPhone) Safari", inApp: false, standalone: false, maxTouchPoints: 5 }), false);
+  // Android — своя системная подложка.
+  assert.equal(needsIosStatusBarBackdrop({ userAgent: "Mozilla/5.0 (Linux; Android 15) WeSetupApp/1.0.0 (android)", inApp: true, standalone: false, maxTouchPoints: 5 }), false);
+  // iPad с десктопным User-Agent (Macintosh + касания) — тоже iOS.
+  assert.equal(needsIosStatusBarBackdrop({ userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15", inApp: false, standalone: true, maxTouchPoints: 5 }), true);
 });

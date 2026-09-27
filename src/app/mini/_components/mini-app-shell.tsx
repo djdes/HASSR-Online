@@ -19,6 +19,7 @@ import { AppUpdateGate } from "./app-update-gate";
 import { EdgeBack } from "./edge-back";
 import { MiniNav } from "./mini-nav";
 import { MiniServiceWorkerRegister } from "./mini-sw-register";
+import { IosStatusBarBackdrop } from "./ios-status-bar-backdrop";
 import { NativeAppBridge } from "./native-app-bridge";
 import { MiniTelegramRuntime, MiniTopBar } from "./mini-shell";
 import { MiniThemeBootstrap, MiniThemeProvider } from "./mini-theme";
@@ -110,6 +111,7 @@ export async function MiniAppShell({
         {/* Приложение WeSetup для телефона: печать, файлы, ссылки,
             «назад», push. Вне приложения ничего не делает. */}
         <NativeAppBridge homeHref={homeHref} />
+        <IosStatusBarBackdrop />
         <MiniServiceWorkerRegister />
         {/* `id="mini-root"` ищут pre-hydration скрипт темы и
             `applyThemeToDOM`. `class="app-shell"` + `data-app-theme`

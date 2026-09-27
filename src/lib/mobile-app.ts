@@ -133,3 +133,22 @@ export function appColdStartRedirect(input: {
   if (params.has("next") || params.has("nps")) return null;
   return `/mini/login?next=${encodeURIComponent(`${input.pathname}${input.search}`)}`;
 }
+
+/**
+ * Нужна ли на iPhone своя подложка под строкой состояния. В приложении
+ * WeSetup и на экране «Домой» страница рисуется под часами и «чёлкой»;
+ * когда открыта клавиатура, iOS сдвигает видимую область, шапка оболочки
+ * уезжает вместе со страницей, и под часами оказывался текст. В Safari во
+ * вкладке и в Telegram строку состояния рисует не страница — там не нужна.
+ */
+export function needsIosStatusBarBackdrop(input: {
+  userAgent: string;
+  inApp: boolean;
+  standalone: boolean;
+  maxTouchPoints: number;
+}): boolean {
+  const ios =
+    /iPhone|iPad|iPod/.test(input.userAgent) ||
+    (/Macintosh/.test(input.userAgent) && input.maxTouchPoints > 1);
+  return ios && (input.inApp || input.standalone);
+}
