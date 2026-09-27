@@ -377,7 +377,32 @@ async function main() {
     sh(`am start -n ${PKG}/.MainActivity`);
     await sleep(700);
     s.shots.push(shot("cold-start-splash"));
+    // Серия кадров первых секунд: видно ли где-нибудь «Открываем кабинет…».
+    for (let i = 0; i < 4; i++) {
+      await sleep(400);
+      s.shots.push(shot(`cold-start-burst-${i}`));
+    }
     const p = await connect();
+    // Как можно раньше после подключения: что уже на экране и откуда пришёл документ.
+    s.data.timeline = [];
+    for (let i = 0; i < 40; i++) {
+      const snap = await p
+        .evaluate(() => {
+          const nav = performance.getEntriesByType("navigation")[0];
+          return {
+            href: location.href,
+            text: (document.body?.innerText ?? "").slice(0, 80).replace(/\s+/g, " "),
+            opening: /Открываем кабинет/.test(document.body?.innerText ?? ""),
+            navName: nav?.name,
+            redirectCount: nav?.redirectCount,
+            hasForm: Boolean(document.querySelector("#password, #phone")),
+          };
+        })
+        .catch((e) => ({ err: String(e).slice(0, 80) }));
+      s.data.timeline.push({ t: Date.now() - started, ...snap });
+      if (snap.hasForm) break;
+      await sleep(250);
+    }
     await p
       .waitForFunction(() => Boolean(document.querySelector("#password, #phone")) || /Вход в кабинет|Нет связи/.test(document.body?.innerText ?? ""), null, { timeout: 90000 })
       .catch((e) => note(`login form did not appear: ${String(e).slice(0, 120)}; url ${p.url()}`));
@@ -405,6 +430,27 @@ async function main() {
     check(pathOf(p).startsWith("/mini/login"), `landed on ${p.url()}`);
     check(/Вход в кабинет/.test(info.text), "login heading not visible");
     for (const i of s.data.layout.issues) check(false, i);
+    // Новое во 2-м круге: сервер сразу ведёт на вход, без «Открываем кабинет…».
+    const opening = s.data.timeline.filter((x) => x.opening);
+    check(!opening.length, `«Открываем кабинет…» seen at cold start: ${JSON.stringify(opening[0])}`);
+    const firstNav = s.data.timeline.find((x) => x.navName);
+    s.data.firstNav = firstNav;
+    check(!firstNav || /\/mini\/login/.test(firstNav.href ?? ""), `first document at ${firstNav?.href} (not /mini/login)`);
+    // Экран входа не открывает клавиатуру сам и не ставит фокус в поле.
+    const focus = await p.evaluate(() => ({ tag: document.activeElement?.tagName, id: document.activeElement?.id }));
+    const insNow = systemInsets();
+    s.data.focusAtStart = focus;
+    s.data.imeAtStart = { shown: insNow.imeShown, ime: insNow.ime };
+    check(focus.tag !== "INPUT", `login field focused by itself: #${focus.id}`);
+    check(!insNow.imeShown, `keyboard opened by itself on login: ime ${JSON.stringify(insNow.ime)}`);
+    // Вход — корневой экран: стрелки «Назад» нет.
+    s.data.backArrow = await p.evaluate(() =>
+      [...document.querySelectorAll('[aria-label="Назад"]')].filter((el) => el.getBoundingClientRect().width > 0).length
+    );
+    check(s.data.backArrow === 0, `back arrow visible on /mini/login (${s.data.backArrow})`);
+    results.coldStartConsole = sh("logcat -d -s Capacitor/Console:*", { timeout: 60000 }).split(/\r?\n/).filter((l) => /Capacitor\/Console/.test(l));
+    s.data.coldStartConsole = results.coldStartConsole.slice(0, 30).map((l) => l.slice(0, 300));
+    note(`first doc ${firstNav?.navName} -> ${firstNav?.href} redirects=${firstNav?.redirectCount}; focus ${focus.tag}#${focus.id}; ime ${insNow.imeShown}`);
     note(`login visible after ${s.data.loginVisibleMs}ms; env top=${s.data.layout.envTop} cap top=${s.data.layout.capTop} status bar=${JSON.stringify(s.data.layout.insets.statusBar)}`);
   });
 
@@ -421,8 +467,6 @@ async function main() {
       s.shots.push(shot("prod-login"));
       note(p.url());
     });
-    await finish(rec);
-    return;
   }
 
   await scenario("13 Keyboard: login fields stay above the keyboard", async (s) => {
@@ -457,6 +501,9 @@ async function main() {
     if (imeTop && geo.email) check(toScreen(geo.email.bottom) <= imeTop + 2, `email field hidden by keyboard: field bottom ${Math.round(toScreen(geo.email.bottom))} > keyboard top ${imeTop}`);
     // Пароль и кнопка: переходим в поле пароля, как человек.
     await screenTap(p, p.locator("#password"));
+    await sleep(800);
+    // Набираем пароль с экранной клавиатуры, как человек (2-й круг: «Войти» над клавиатурой при наборе).
+    sh("input text abc123");
     await sleep(1500);
     const geo2 = await p.evaluate(() => {
       const b = document.querySelector("#password")?.getBoundingClientRect();
@@ -469,15 +516,50 @@ async function main() {
     s.data.ins2 = ins2;
     const imeTop2 = ins2.ime?.y1 ?? null;
     if (imeTop2 && geo2.password) check(toScreen(geo2.password.bottom) <= imeTop2 + 2, `password field hidden by keyboard (${Math.round(toScreen(geo2.password.bottom))} > ${imeTop2})`);
+    check(Boolean(imeTop2), `keyboard not shown while typing the password: ${JSON.stringify(ins2.ime)}`);
     if (imeTop2 && geo2.submit) {
-      const visible = toScreen(geo2.submit.bottom) <= imeTop2 + 2;
-      if (!visible) note(`"Войти" button below the keyboard (${Math.round(toScreen(geo2.submit.bottom))} > ${imeTop2}); innerHeight ${geo2.innerHeight}, vv ${geo2.vv}`);
-      s.data.submitVisible = visible;
+      const overlap = Math.round(toScreen(geo2.submit.bottom) - imeTop2);
+      s.data.submitOverlapPx = overlap;
+      s.data.submitVisible = overlap <= 2;
+      check(overlap <= 2, `"Войти" button under the keyboard by ${overlap}px (button bottom ${Math.round(toScreen(geo2.submit.bottom))} > keyboard top ${imeTop2}); innerHeight ${geo2.innerHeight}, vv ${geo2.vv}`);
+      note(`"Войти" bottom vs keyboard top: ${overlap}px (round 1: +11px under the keyboard)`);
     }
+    s.data.typed = await p.evaluate(() => document.querySelector("#password")?.value?.length ?? 0);
+    await p.fill("#password", "");
     note(`innerHeight with keyboard ${geo2.innerHeight} (was ${geo.innerHeight}), ime ${JSON.stringify(ins2.ime)}`);
     key(4); // спрятать клавиатуру
     await sleep(800);
   });
+
+  await scenario("16 Android back on /mini/login -> app minimizes (root screen)", async (s) => {
+    const p = page;
+    if (!pathOf(p).startsWith("/mini/login")) await goto(p, "/mini/login");
+    await p.evaluate(() => document.activeElement?.blur?.());
+    await sleep(800);
+    if (systemInsets().imeShown) {
+      key(4);
+      await sleep(800);
+    }
+    s.data.before = { path: pathOf(p), top: topActivity(), historyLength: await p.evaluate(() => history.length) };
+    s.shots.push(shot("login-before-back"));
+    key(4);
+    await sleep(2500);
+    s.data.afterBack = topActivity();
+    s.shots.push(shot("login-after-back"));
+    check(!/ru\.wesetup\.app/.test(s.data.afterBack), `app still in front after back on /mini/login: ${s.data.afterBack} (path ${await p.evaluate(() => location.pathname).catch(() => "?")})`);
+    check(Boolean(appPid()), "app process died after back on /mini/login (should only minimize)");
+    bringAppToFront();
+    await sleep(2500);
+    s.data.afterReturn = pathOf(p);
+    s.shots.push(shot("login-returned"));
+    check(pathOf(p).startsWith("/mini/login"), `after returning: ${pathOf(p)}`);
+  });
+
+  if (MODE !== "full") {
+    await consoleScenario();
+    await finish(rec);
+    return;
+  }
 
   await scenario("2 Login as chef -> home, push explainer, Включить -> OS permission -> allow", async (s) => {
     const p = page;
@@ -1007,7 +1089,28 @@ async function main() {
     check(pathOf(p).startsWith("/mini/login"), `deleted account could log in: ${pathOf(p)}`);
   });
 
+  await consoleScenario();
   await finish(rec);
+}
+
+/** Ошибки React (#418 гидратация и т.п.) и прочие ошибки страницы в WebView за весь прогон. */
+async function consoleScenario() {
+  await scenario("17 WebView console: no React errors (#418 etc.) at cold start and during the flow", async (s) => {
+    const reactRe = /Minified React error|react\.dev\/errors|#41[5-9]|#42[0-9]|[Hh]ydrat/;
+    // Capacitor пишет консоль WebView в logcat с самого запуска (до подключения Playwright).
+    const lc = sh("logcat -d -s Capacitor/Console:*", { timeout: 60000 }).split(/\r?\n/).filter((l) => /Capacitor\/Console/.test(l));
+    const lcAll = [...new Set([...(results.coldStartConsole ?? []), ...lc])];
+    const lcErrors = lcAll.filter((l) => /\sE\s|^E\/|error/i.test(l));
+    const pwErrors = results.console.filter((c) => c.type === "error" || c.type === "pageerror");
+    s.data.logcatConsoleLines = lcAll.length;
+    s.data.logcatErrors = lcErrors.slice(0, 40).map((l) => l.slice(0, 400));
+    s.data.playwrightErrors = pwErrors.slice(0, 40);
+    const reactLc = lcErrors.filter((l) => reactRe.test(l));
+    const reactPw = pwErrors.filter((c) => reactRe.test(c.text));
+    s.data.react = { logcat: reactLc.slice(0, 10), playwright: reactPw.slice(0, 10) };
+    check(!reactLc.length && !reactPw.length, `React errors: ${[...reactLc.slice(0, 2), ...reactPw.slice(0, 2).map((c) => `${c.at}: ${c.text}`)].join(" / ").slice(0, 600)}`);
+    note(`logcat console lines ${lcAll.length}, errors ${lcErrors.length}; playwright errors ${pwErrors.length}`);
+  });
 }
 
 async function finish(rec) {

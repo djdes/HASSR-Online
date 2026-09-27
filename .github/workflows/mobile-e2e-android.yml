@@ -16,9 +16,12 @@ on:
       mode:
         description: "full — копия сайта и все сценарии; prod-smoke — APK без WESETUP_APP_URL, только экран входа wesetup.ru"
         default: "full"
+      tag:
+        description: "метка прогона (разные метки идут параллельно, не отменяя друг друга)"
+        default: "a"
 
 concurrency:
-  group: mobile-e2e-android-${{ github.ref }}-${{ inputs.mode || 'full' }}-${{ inputs.api_level || '35' }}
+  group: mobile-e2e-android-${{ github.ref }}-${{ inputs.mode || 'full' }}-${{ inputs.api_level || '35' }}-${{ inputs.tag || 'a' }}
   cancel-in-progress: true
 
 permissions:
