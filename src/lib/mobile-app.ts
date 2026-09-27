@@ -35,6 +35,16 @@ export function isMobileAppUserAgent(ua: string | null | undefined): boolean {
   return parseMobileAppUserAgent(ua) !== null;
 }
 
+/**
+ * Нужен ли странице скрипт Telegram (`telegram-web-app.js`). Он грузится
+ * до гидратации (`beforeInteractive`): пока telegram.org не ответит,
+ * кнопки не работают. В приложении WeSetup Telegram нет, а telegram.org
+ * бывает недоступен или медленный, — там скрипт только задерживает запуск.
+ */
+export function needsTelegramSdk(ua: string | null | undefined): boolean {
+  return !isMobileAppUserAgent(ua);
+}
+
 /** Сравнение версий по числам: `1.10.0` новее `1.9.9`, `1.2` = `1.2.0`. */
 export function compareAppVersion(a: string, b: string): -1 | 0 | 1 {
   const pa = a.trim().split(".").map((n) => Number.parseInt(n, 10) || 0);
