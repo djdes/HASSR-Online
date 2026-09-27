@@ -205,7 +205,7 @@ export function blankQrUrl(
 /**
  * Строка внизу каждой страницы PDF шаблона: «Заполнять с телефона —
  * wesetup.ru · © WeSetup — …». Раньше это была подпись сбоку от QR в углу;
- * у QR в шапке своя плашка «Отсканировать / wesetup.ru».
+ * у QR в шапке своя полоса «Отсканировать».
  */
 export const BLANK_PDF_FOOTER = BLANK_QR_LINES.join(" · ");
 

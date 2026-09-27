@@ -248,9 +248,9 @@ const REGISTER_COLUMNS: Record<string, string[]> = {
 
 /**
  * Подвал скачанного шаблона: строки подписи (первая — жирная) и QR справа.
- * Подвал Word повторяется на каждой странице сам. QR — компактный
- * фирменный (`brand-qr.ts`), как угловой QR у PDF того же шаблона: на
- * 18 мм логотип потребовал бы коррекции H и модуль вышел бы меньше 0,3 мм.
+ * Подвал Word повторяется на каждой странице сам. QR — фирменная ч/б плитка
+ * (`brand-qr.ts`: знак, коррекция H, полоса «Отсканировать»), как в шапке PDF
+ * того же шаблона.
  */
 export type DocxBlankFooter = {
   /** Адрес, который кодирует QR. */
@@ -259,8 +259,19 @@ export type DocxBlankFooter = {
   lines: string[];
 };
 
-/** Сторона QR в подвале, px Word (96 dpi): 68 px ≈ 18 мм. */
-const FOOTER_QR_PX = 68;
+/**
+ * Ширина плитки QR в подвале, px Word (96 dpi): 81 px ≈ 21,4 мм — у самого
+ * плотного адреса шаблона (/qb с почтой, 53 модуля) модуль 0,367 мм, как в
+ * шапке PDF (≥ 0,365). Высота — по пропорции картинки (с полосой).
+ */
+const FOOTER_QR_PX = 81;
+/** PNG плитки — с запасом под печать (~750 dpi на 21 мм). */
+const FOOTER_QR_PNG_WIDTH = 600;
+
+/** Ширина и высота PNG из заголовка IHDR. */
+function pngSize(png: Buffer): { width: number; height: number } {
+  return { width: png.readUInt32BE(16), height: png.readUInt32BE(20) };
+}
 /**
  * Колонки подвала, twips: ширина текста A4 при полях 2,54 см — 9026.
  * Сетка задаётся явно: проценты у ячеек LibreOffice игнорирует и делит
@@ -269,7 +280,8 @@ const FOOTER_QR_PX = 68;
 const FOOTER_COLUMNS = [7426, 1600];
 
 async function blankFooter(footer: DocxBlankFooter): Promise<Footer> {
-  const png = await brandQrPng(footer.qrUrl, { variant: "compact", width: 300 });
+  const png = await brandQrPng(footer.qrUrl, { width: FOOTER_QR_PNG_WIDTH });
+  const size = pngSize(png);
   const [caption = "", ...rest] = footer.lines;
   const text = new TableCell({
     width: { size: FOOTER_COLUMNS[0], type: WidthType.DXA },
@@ -298,7 +310,7 @@ async function blankFooter(footer: DocxBlankFooter): Promise<Footer> {
           new ImageRun({
             type: "png",
             data: png,
-            transformation: { width: FOOTER_QR_PX, height: FOOTER_QR_PX },
+            transformation: { width: FOOTER_QR_PX, height: Math.round((FOOTER_QR_PX * size.height) / size.width) },
             altText: { name: "QR", description: caption, title: "QR-код" },
           }),
         ],

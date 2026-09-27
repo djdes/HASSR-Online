@@ -121,7 +121,7 @@ export function QrFillPreview({ kind, id, emptyHint, className, heading, accent 
               // SVG собран на сервере (brand-qr.ts) из нашего адреса — безопасно встраивать.
               <div dangerouslySetInnerHTML={{ __html: state.poster.svg }} />
             ) : (
-              // Заглушка — в пропорциях фирменного QR (с плашкой), без прыжка при загрузке.
+              // Заглушка — в пропорциях фирменного QR (с полосой), без прыжка при загрузке.
               <div className="w-full animate-pulse rounded-xl bg-[#eef1ff]" style={{ aspectRatio: `1 / ${BRAND_QR_CAPTION_ASPECT}` }} />
             )}
           </div>

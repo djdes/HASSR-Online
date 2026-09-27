@@ -4,133 +4,139 @@ import path from "node:path";
 import type { jsPDF } from "jspdf";
 import QRCode from "qrcode";
 
-import {
-  BRAND_QR_CAPTION_ASPECT,
-  BRAND_QR_PLATE_GAP,
-  BRAND_QR_PLATE_HEIGHT,
-} from "@/lib/brand-qr-shared";
+import { BRAND_QR_CAPTION_ASPECT, BRAND_QR_FRAME, BRAND_QR_STRIP } from "@/lib/brand-qr-shared";
 
 /**
- * Фирменный QR WeSetup (2026-09-26) — ОДИН помощник для всех мест, где
- * сайт выдаёт QR: плакаты и наклейки журналов и объектов, личный вход,
- * QR для проверяющих (портал, лист A4, сертификат), приглашения и
- * сопряжение сотрудников, планшет-киоск, шаблоны журналов (Word),
- * QR в шапке печатного журнала и наклейка на лендинге.
+ * Фирменный QR WeSetup — ОДИН помощник для всех мест, где сайт выдаёт QR:
+ * плакаты и наклейки журналов и объектов, личный вход, QR для проверяющих
+ * (портал, лист A4, сертификат), приглашения и сопряжение сотрудников,
+ * планшет-киоск, шаблоны журналов (Word), QR в шапке печатного журнала и в
+ * бумажном бланке, наклейка на лендинге.
  *
- * Вид (уточнение владельца: коды печатают на ЧЁРНО-БЕЛОМ принтере):
- *   • модули и «глаза» — чёрные: цветные «глаза» в ч/б печати становятся
- *     средне-серыми и хуже читаются; модули и «глаза» — квадратные:
- *     скруглённые «глаза» OpenCV не находит вовсе (проверка в
- *     `.agent/tasks/qr-brand-2026-09`: 0 % против 100 % у квадратных);
- *   • коррекция ошибок H; по центру — знак сайта (`src/app/icon.png`, тот
- *     же, что фавикон) на белой скруглённой подложке не больше 20 % ширины
- *     матрицы; модули, чей центр под подложкой, не рисуются;
- *   • снизу — плашка с градиентом серый→чёрный и белой надписью
- *     «Отсканировать» / «wesetup.ru».
- *
- * Варианты:
- *   • `full` (по умолчанию) — всё выше; `caption: false` — без плашки
- *     (наклейка лендинга: подпись даёт её золотая рамка);
- *   • `compact` — маленький печатный QR в подвале шаблона Word (18 мм):
- *     коррекция M, без логотипа и плашки. С логотипом код пришлось бы
- *     поднять до H, матрица стала бы плотнее, а модуль — меньше 0,3 мм.
- *     Печатный журнал (PDF) с 2026-09-27 — полный вариант в шапке
- *     (`drawBrandQrTilePdf`): там плитка ~17–20 мм, модуль не меньше 0,35 мм.
+ * Вид (2026-09-27; владелец: «у всех чёрно-белые принтеры» — только чёрный и
+ * белый, без полутонов, градиентов и цветных картинок):
+ *   • модули и «глаза» — чёрные квадратные (скруглённые «глаза» OpenCV не
+ *     находит: `.agent/tasks/qr-brand-2026-09`), коррекция ошибок H;
+ *   • по центру — знак сайта, плоский ч/б (`MARK_SHAPES`): чёрная обложка
+ *     блокнота с тремя кольцами слева и белой «C», по мотивам иконки сайта
+ *     (`src/app/icon.png`); на белой скруглённой подложке не больше 20 %
+ *     стороны матрицы, модули, чей центр под подложкой, не рисуются;
+ *   • плитка — один чёрный блок со скруглёнными углами: тонкая рамка вокруг
+ *     белого окна с кодом (тихая зона 2 модуля), снизу рамка утолщается в
+ *     полосу с одним словом «Отсканировать» — белым жирным, по центру, по
+ *     ширине. Адреса сайта в плитке нет: бренд узнаётся по знаку, адрес
+ *     телефон покажет сам при сканировании.
+ * `caption: false` — только код со знаком, без рамки и полосы (наклейка
+ * лендинга: подпись даёт её золотая рамка).
  *
  * Выходы: SVG (HTML и печать из браузера), PNG / data URL (диалоги,
- * сертификат PDF, Word), векторная плитка jsPDF (QR в шапке журнала).
- * Адрес внутри кода помощник не меняет.
+ * сертификат PDF, Word), вектор jsPDF — плитка с рамкой (`drawBrandQrTilePdf`:
+ * страница журнала без шапки, бумажный бланк) и плитка в ячейке шапки
+ * журнала (`drawBrandQrCellPdf`: рамка — сами линии ячейки). Геометрия одна —
+ * `brandQrLayout`. Адрес внутри кода помощник не меняет.
  *
  * Server-only: `qrcode`, `node:fs`, `@napi-rs/canvas`. Клиенту — пропорции
  * из `@/lib/brand-qr-shared`.
  */
 
-export type BrandQrVariant = "full" | "compact";
-
 export type BrandQrOptions = {
-  /** `full` (по умолчанию) или `compact` — см. выше. */
-  variant?: BrandQrVariant;
-  /** Только `full`: плашка «Отсканировать» снизу. По умолчанию — есть. */
+  /** Рамка и полоса «Отсканировать» снизу. По умолчанию — есть. */
   caption?: boolean;
 };
 
 export const BRAND_QR_CAPTION_TITLE = "Отсканировать";
-export const BRAND_QR_CAPTION_SITE = "wesetup.ru";
-/** Модули и «глаза»: чистый чёрный — ч/б принтер печатает его сплошным тонером. */
+/** Модули, «глаза», рамка, полоса и знак — чистый чёрный: ч/б принтер печатает его сплошным тонером. */
 export const BRAND_QR_INK = "#000000";
 const PAPER = "#ffffff";
-/** Градиент плашки сверху вниз: серый `text-muted` → почти чёрный `dark-hero` дизайн-системы. */
-export const BRAND_QR_PLATE_FROM = "#6f7282";
-export const BRAND_QR_PLATE_TO = "#0b1024";
 
-/** Тихая зона полного варианта вокруг матрицы, модулей. */
-export const BRAND_QR_FULL_QUIET = 2;
-/** Как у прежних PNG шаблона Word (`margin: 1`). */
-const COMPACT_QUIET = 1;
-/** Подложка логотипа — не больше этой доли стороны матрицы. */
+/** Тихая зона вокруг матрицы (белое окно внутри рамки), модулей. */
+export const BRAND_QR_QUIET = 2;
+/** Подложка знака — не больше этой доли стороны матрицы. */
 const LOGO_MAX_SHARE = 0.2;
 const PAD_RADIUS = 0.3;
 const MARK_INSET = 0.09;
-const PLATE_RADIUS = 0.3;
-const PLATE_PAD_X = 0.05;
-const PLATE_STRIPES = 24;
+/** Скругление внешних углов блока, доля ширины плитки (как у прежней плашки). */
+const BLOCK_RADIUS = 0.045;
+/** Поле слова в полосе слева и справа, доля ширины плитки: слово — максимально крупно по ширине. */
+const TITLE_SIDE = 0.06;
 /**
- * Ширина надписей в em у DejaVu Sans Bold — самого широкого из шрифтов,
- * которыми они рисуются (PNG — DejaVu, SVG — системный шрифт браузера):
- * по ней кегль подбирается так, чтобы строка точно влезла в плашку.
+ * Ширина слова в em у DejaVu Sans Bold — самого широкого из шрифтов, которыми
+ * оно рисуется (PNG и PDF — DejaVu Sans Bold, SVG — системный шрифт браузера):
+ * по ней кегль подбирается так, чтобы слово точно влезло в полосу.
  */
 const TITLE_EM = 8.69;
-const SITE_EM = 6.37;
 const CAPS_ASCENT = 0.75;
-const DESCENT = 0.22;
-const SITE_ASCENT = 0.7;
+const DESCENT = 0.21;
 
-/**
- * Знак в `src/app/icon.png` (192×192): квадрат вокруг блокнота с «С»;
- * белая плитка иконки и её тень остаются снаружи — подложку рисуем сами.
- */
-const MARK_CROP = { x: 36, y: 34, size: 126 };
-const ICON_CANDIDATES = [
-  path.join(process.cwd(), "src", "app", "icon.png"),
-  // Тот же файл (побайтно) среди PWA-иконок.
-  path.join(process.cwd(), "public", "icons", "icon-192.png"),
-];
 const FONT_DIR = path.join(process.cwd(), "src", "lib", "pdf-fonts");
+const BOLD_FONT_FILE = path.join(FONT_DIR, "DejaVuSans-Bold.ttf");
 const FONT_BOLD = "WeSetupQrBold";
 
 export type BrandQrBox = { x: number; y: number; w: number; h: number; r: number };
 export type BrandQrText = { text: string; x: number; y: number; size: number };
 
+/** Фигура знака в квадрате [0, 1]²: скруглённый прямоугольник или круг, чёрный (`ink`) или белый. */
+type MarkShape =
+  | { kind: "rect"; x: number; y: number; w: number; h: number; r: number; ink: boolean }
+  | { kind: "circle"; cx: number; cy: number; r: number; ink: boolean };
+
+/**
+ * Знак сайта, плоский ч/б: чёрная обложка блокнота; три кольца слева —
+ * чёрная скоба в белом зазоре (видна и на обложке, и за её краем); белая
+ * «C» с прорезью справа. Фигуры рисуются по порядку, белые вырезают из
+ * чёрных. Самые тонкие детали — ~5 % знака: на 3–4 мм это 0,15–0,2 мм,
+ * лазерный принтер печатает их уверенно.
+ */
+const MARK_SHAPES: readonly MarkShape[] = [
+  { kind: "rect", x: 0.28, y: 0.06, w: 0.62, h: 0.88, r: 0.12, ink: true },
+  ...[0.26, 0.5, 0.74].flatMap((cy): MarkShape[] => [
+    { kind: "rect", x: 0.11, y: cy - 0.09, w: 0.33, h: 0.18, r: 0.09, ink: false },
+    { kind: "rect", x: 0.14, y: cy - 0.0425, w: 0.26, h: 0.085, r: 0.0425, ink: true },
+  ]),
+  { kind: "circle", cx: 0.665, cy: 0.5, r: 0.18, ink: false },
+  { kind: "circle", cx: 0.665, cy: 0.5, r: 0.095, ink: true },
+  { kind: "rect", x: 0.665, y: 0.44, w: 0.19, h: 0.12, r: 0, ink: true },
+];
+
 /** Раскладка плитки; единица — модуль, начало — левый верхний угол плитки. */
 export type BrandQrLayout = {
   url: string;
-  variant: BrandQrVariant;
-  errorCorrection: "H" | "M";
+  errorCorrection: "H";
   version: number;
   /** Сторона матрицы, модулей. */
   size: number;
-  /** Тихая зона вокруг матрицы (слева, сверху, справа и до плашки), модулей. */
+  /** Тихая зона вокруг матрицы внутри окна, модулей. */
   quiet: number;
-  /** Плитка: ширина = size + 2·quiet, высота — с плашкой или без. */
+  /** Рамка слева, сверху и справа, модулей (без полосы — 0). */
+  frame: number;
+  /** Плитка: ширина — окно + 2 рамки; высота — рамка + окно + полоса (без полосы — окно). */
   width: number;
   height: number;
-  /** Модуль тёмный по стандарту (до выреза под логотип). */
+  /**
+   * Окно — белый квадрат с матрицей и тихой зоной (сторона `size + 2·quiet`):
+   * модуль (row, col) — в (x + quiet + col, y + quiet + row).
+   */
+  window: BrandQrBox;
+  /** Чёрный блок — вся плитка, скругление углов `r`; без полосы — null. */
+  block: BrandQrBox | null;
+  /** Полоса под окном (утолщение рамки снизу), в ней слово; без полосы — null. */
+  strip: BrandQrBox | null;
+  /** Модуль тёмный по стандарту (до выреза под знак). */
   dark: (row: number, col: number) => boolean;
-  /** Модуль рисуется: тёмный и центр не под подложкой логотипа. */
+  /** Модуль рисуется: тёмный и центр не под подложкой знака. */
   plain: (row: number, col: number) => boolean;
-  pad: BrandQrBox | null;
-  mark: BrandQrBox | null;
-  plate: BrandQrBox | null;
+  /** Белая подложка знака и квадрат знака — в координатах плитки. */
+  pad: BrandQrBox;
+  mark: BrandQrBox;
   title: BrandQrText | null;
-  site: BrandQrText | null;
 };
 
-/** Матрица QR с коррекцией варианта (`full` — H, `compact` — M). */
-export function brandQrMatrix(url: string, options: BrandQrOptions = {}): QRCode.QRCode {
-  return QRCode.create(url, { errorCorrectionLevel: (options.variant ?? "full") === "full" ? "H" : "M" });
+/** Матрица QR — коррекция H (под знаком по центру вырезаны модули). */
+export function brandQrMatrix(url: string): QRCode.QRCode {
+  return QRCode.create(url, { errorCorrectionLevel: "H" });
 }
 
-/** Сторона подложки логотипа, модулей: нечётная (ровно по центру матрицы), ≤ 20 %. */
+/** Сторона подложки знака, модулей: нечётная (ровно по центру матрицы), ≤ 20 %. */
 export function brandQrPadModules(size: number): number {
   let k = Math.floor(size * LOGO_MAX_SHARE);
   if (k % 2 === 0) k -= 1;
@@ -146,82 +152,101 @@ function insideRounded(px: number, py: number, x0: number, y0: number, k: number
 }
 
 export function brandQrLayout(url: string, options: BrandQrOptions = {}): BrandQrLayout {
-  const variant = options.variant ?? "full";
-  const full = variant === "full";
-  const qr = brandQrMatrix(url, { variant });
+  const qr = brandQrMatrix(url);
   const size = qr.modules.size;
   const data = qr.modules.data;
-  const quiet = full ? BRAND_QR_FULL_QUIET : COMPACT_QUIET;
-  const width = size + 2 * quiet;
-  const withCaption = full && options.caption !== false;
-  const height = withCaption ? width * BRAND_QR_CAPTION_ASPECT : width;
+  const quiet = BRAND_QR_QUIET;
+  const side = size + 2 * quiet;
+  const withCaption = options.caption !== false;
+  // С полосой: окно — (1 − 2·рамка) ширины плитки, высота — по общей пропорции.
+  const width = withCaption ? side / (1 - 2 * BRAND_QR_FRAME) : side;
+  const frame = withCaption ? width * BRAND_QR_FRAME : 0;
+  const height = withCaption ? width * BRAND_QR_CAPTION_ASPECT : side;
+  const radius = withCaption ? width * BLOCK_RADIUS : 0;
+  const codeWindow: BrandQrBox = { x: frame, y: frame, w: side, h: side, r: Math.max(0, radius - frame) };
   const dark = (row: number, col: number) => data[row * size + col] === 1;
-
-  if (!full) {
-    return {
-      url,
-      variant,
-      errorCorrection: "M",
-      version: qr.version,
-      size,
-      quiet,
-      width,
-      height,
-      dark,
-      plain: dark,
-      pad: null,
-      mark: null,
-      plate: null,
-      title: null,
-      site: null,
-    };
-  }
 
   const k = brandQrPadModules(size);
   const start = (size - k) / 2;
   const padRadius = k * PAD_RADIUS;
   const underPad = (row: number, col: number) => insideRounded(col + 0.5, row + 0.5, start, start, k, padRadius);
-  const pad: BrandQrBox = { x: quiet + start, y: quiet + start, w: k, h: k, r: padRadius };
+  const pad: BrandQrBox = { x: codeWindow.x + quiet + start, y: codeWindow.y + quiet + start, w: k, h: k, r: padRadius };
   const inset = k * MARK_INSET;
   const mark: BrandQrBox = { x: pad.x + inset, y: pad.y + inset, w: k - 2 * inset, h: k - 2 * inset, r: 0 };
 
-  let plate: BrandQrBox | null = null;
+  let block: BrandQrBox | null = null;
+  let strip: BrandQrBox | null = null;
   let title: BrandQrText | null = null;
-  let site: BrandQrText | null = null;
   if (withCaption) {
-    const plateY = width * (1 + BRAND_QR_PLATE_GAP);
-    const plateH = width * BRAND_QR_PLATE_HEIGHT;
-    plate = { x: quiet, y: plateY, w: size, h: plateH, r: plateH * PLATE_RADIUS };
-    const innerW = size - 2 * width * PLATE_PAD_X;
-    const titleSize = Math.min(plateH * 0.4, innerW / TITLE_EM);
-    const siteSize = Math.min(plateH * 0.26, innerW / SITE_EM);
-    const gap = plateH * 0.08;
-    // Блок из двух строк — по центру плашки (сверху заглавная «О», снизу хвост «р»).
-    const block = CAPS_ASCENT * titleSize + DESCENT * titleSize + gap + SITE_ASCENT * siteSize + DESCENT * siteSize;
-    const titleBaseline = plateY + (plateH - block) / 2 + CAPS_ASCENT * titleSize;
-    const siteBaseline = titleBaseline + DESCENT * titleSize + gap + SITE_ASCENT * siteSize;
-    const cx = quiet + size / 2;
-    title = { text: BRAND_QR_CAPTION_TITLE, x: cx, y: titleBaseline, size: titleSize };
-    site = { text: BRAND_QR_CAPTION_SITE, x: cx, y: siteBaseline, size: siteSize };
+    block = { x: 0, y: 0, w: width, h: height, r: radius };
+    const stripY = frame + side;
+    strip = { x: 0, y: stripY, w: width, h: height - stripY, r: 0 };
+    // Кегль — по ширине (поля `TITLE_SIDE`); строка «заглавная — хвост „р“» по центру полосы.
+    const titleSize = Math.min((width * (1 - 2 * TITLE_SIDE)) / TITLE_EM, strip.h / (CAPS_ASCENT + DESCENT + 0.5));
+    const baseline = stripY + (strip.h - (CAPS_ASCENT + DESCENT) * titleSize) / 2 + CAPS_ASCENT * titleSize;
+    title = { text: BRAND_QR_CAPTION_TITLE, x: width / 2, y: baseline, size: titleSize };
   }
 
   return {
     url,
-    variant,
     errorCorrection: "H",
     version: qr.version,
     size,
     quiet,
+    frame,
     width,
     height,
+    window: codeWindow,
+    block,
+    strip,
     dark,
     plain: (row, col) => dark(row, col) && !underPad(row, col),
     pad,
     mark,
-    plate,
     title,
-    site,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Общее: модули, подложка и знак — через «кисть» вывода
+// ---------------------------------------------------------------------------
+
+type Painter = {
+  box(x: number, y: number, w: number, h: number, r: number, ink: boolean): void;
+  circle(cx: number, cy: number, r: number, ink: boolean): void;
+};
+
+/** Подряд идущие рисуемые модули строки: [начало, длина]. */
+function moduleRuns(layout: BrandQrLayout, row: number): Array<[number, number]> {
+  const runs: Array<[number, number]> = [];
+  let col = 0;
+  while (col < layout.size) {
+    if (!layout.plain(row, col)) {
+      col += 1;
+      continue;
+    }
+    const start = col;
+    while (col < layout.size && layout.plain(row, col)) col += 1;
+    runs.push([start, col - start]);
+  }
+  return runs;
+}
+
+/**
+ * Подложка и знак. (ox, oy) — левый верхний угол окна на выходе, u — модуль:
+ * координаты раскладки берутся от угла окна, поэтому одинаково работают и в
+ * плитке с рамкой, и в ячейке шапки.
+ */
+function paintMark(p: Painter, layout: BrandQrLayout, ox: number, oy: number, u: number) {
+  const at = (box: BrandQrBox) => ({ x: ox + (box.x - layout.window.x) * u, y: oy + (box.y - layout.window.y) * u });
+  const pad = at(layout.pad);
+  p.box(pad.x, pad.y, layout.pad.w * u, layout.pad.h * u, layout.pad.r * u, false);
+  const mark = at(layout.mark);
+  const s = layout.mark.w * u;
+  for (const shape of MARK_SHAPES) {
+    if (shape.kind === "rect") p.box(mark.x + shape.x * s, mark.y + shape.y * s, shape.w * s, shape.h * s, shape.r * s, shape.ink);
+    else p.circle(mark.x + shape.cx * s, mark.y + shape.cy * s, shape.r * s, shape.ink);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -234,135 +259,65 @@ function escapeXml(text: string): string {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-/**
- * Часть скруглённой плашки ниже линии `t`. Градиент в SVG — полосами из
- * таких частей (каждая следующая темнее и перекрывает предыдущую): без
- * `<linearGradient id>`. Один и тот же SVG стоит на странице дважды
- * (карточка и печатный лист), а ссылка `url(#id)` ведёт на ПЕРВЫЙ элемент
- * с этим id — в печати он внутри скрытой карточки, и Chrome не рисует
- * градиент из-под `display: none`: плашка пропала бы с листа.
- */
-function plateBelow(box: BrandQrBox, t: number): string {
-  const { x, y, w, h, r } = box;
-  const top = Math.max(t, y);
-  const insetAt = (py: number) => {
-    let dy = 0;
-    if (py < y + r) dy = y + r - py;
-    else if (py > y + h - r) dy = py - (y + h - r);
-    else return 0;
-    return r - Math.sqrt(Math.max(0, r * r - dy * dy));
-  };
-  const inset = insetAt(top);
-  const a = `A${num(r)} ${num(r)} 0 0 1 `;
-  let d = `M${num(x + inset)} ${num(top)}H${num(x + w - inset)}`;
-  if (top < y + h - r) {
-    if (top < y + r) d += `${a}${num(x + w)} ${num(y + r)}`;
-    d += `V${num(y + h - r)}${a}${num(x + w - r)} ${num(y + h)}H${num(x + r)}${a}${num(x)} ${num(y + h - r)}`;
-    d += top < y + r ? `V${num(y + r)}${a}${num(x + inset)} ${num(top)}` : `V${num(top)}`;
-  } else {
-    d += `${a}${num(x + w - r)} ${num(y + h)}H${num(x + r)}${a}${num(x + inset)} ${num(top)}`;
-  }
-  return `${d}Z`;
-}
-
-function hex(rgb: number[]): string {
-  return `#${rgb.map((c) => Math.round(c).toString(16).padStart(2, "0")).join("")}`;
-}
-
-function rgbOf(color: string): number[] {
-  return [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16));
-}
-
-function plateStripes(box: BrandQrBox): string {
-  const from = rgbOf(BRAND_QR_PLATE_FROM);
-  const to = rgbOf(BRAND_QR_PLATE_TO);
-  let out = "";
-  for (let i = 0; i < PLATE_STRIPES; i += 1) {
-    const mix = (i + 0.5) / PLATE_STRIPES;
-    const color = hex(from.map((c, j) => c + (to[j] - c) * mix));
-    out += `<path fill="${color}" d="${plateBelow(box, box.y + (box.h * i) / PLATE_STRIPES)}"/>`;
-  }
-  return out;
-}
-
 /** Тёмные модули — строками штриха толщиной в модуль, как у библиотеки qrcode (компактно). */
 function modulesPath(layout: BrandQrLayout): string {
   let d = "";
   for (let row = 0; row < layout.size; row += 1) {
     let pen: number | null = null;
-    let col = 0;
-    while (col < layout.size) {
-      if (!layout.plain(row, col)) {
-        col += 1;
-        continue;
-      }
-      const start = col;
-      while (col < layout.size && layout.plain(row, col)) col += 1;
-      const x = layout.quiet + start;
-      d += pen === null ? `M${x} ${num(layout.quiet + row + 0.5)}` : `m${x - pen} 0`;
-      d += `h${col - start}`;
-      pen = x + (col - start);
+    for (const [start, length] of moduleRuns(layout, row)) {
+      const x = layout.window.x + layout.quiet + start;
+      d += pen === null ? `M${num(x)} ${num(layout.window.y + layout.quiet + row + 0.5)}` : `m${num(x - pen)} 0`;
+      d += `h${length}`;
+      pen = x + length;
     }
   }
   return d;
 }
 
-let markDataUrlPromise: Promise<string | null> | null = null;
-
-/** Знак сайта для SVG: вырез из `icon.png` на белом, JPEG (≈ 7 КБ в base64 — легче PNG вдвое). */
-function markDataUrl(): Promise<string | null> {
-  markDataUrlPromise ??= (async () => {
-    const icon = await loadIcon();
-    if (!icon) return null;
-    const { createCanvas } = await import("@napi-rs/canvas");
-    const canvas = createCanvas(MARK_CROP.size, MARK_CROP.size);
-    const ctx = canvas.getContext("2d");
-    ctx.fillStyle = PAPER;
-    ctx.fillRect(0, 0, MARK_CROP.size, MARK_CROP.size);
-    ctx.drawImage(icon, MARK_CROP.x, MARK_CROP.y, MARK_CROP.size, MARK_CROP.size, 0, 0, MARK_CROP.size, MARK_CROP.size);
-    return `data:image/jpeg;base64,${canvas.toBuffer("image/jpeg", 90).toString("base64")}`;
-  })().catch(() => null);
-  return markDataUrlPromise;
+function svgPainter(parts: string[]): Painter {
+  const fill = (ink: boolean) => (ink ? BRAND_QR_INK : PAPER);
+  return {
+    box(x, y, w, h, r, ink) {
+      const rx = r > 0 ? ` rx="${num(r)}"` : "";
+      parts.push(`<rect x="${num(x)}" y="${num(y)}" width="${num(w)}" height="${num(h)}"${rx} fill="${fill(ink)}"/>`);
+    },
+    circle(cx, cy, r, ink) {
+      parts.push(`<circle cx="${num(cx)}" cy="${num(cy)}" r="${num(r)}" fill="${fill(ink)}"/>`);
+    },
+  };
 }
 
 /**
  * SVG плитки. `width`/`height` — в px (как у прежних SVG библиотеки
  * qrcode); на странице размер задаёт CSS, на печати — мм (`viewBox`
- * сохраняет пропорции плитки). Без `id` внутри — см. `plateBelow`.
+ * сохраняет пропорции плитки). Только чёрный и белый, без картинок и `id`.
  */
 export async function brandQrSvg(url: string, options: BrandQrOptions = {}): Promise<string> {
-  const layout = brandQrLayout(url, options);
-  const markHref = layout.mark ? await markDataUrl() : null;
-  return renderBrandQrSvg(layout, markHref);
+  return renderBrandQrSvg(brandQrLayout(url, options));
 }
 
-function renderBrandQrSvg(layout: BrandQrLayout, markHref: string | null): string {
+function renderBrandQrSvg(layout: BrandQrLayout): string {
   const pxWidth = 600;
   const pxHeight = Math.round((pxWidth * layout.height) / layout.width);
   const parts: string[] = [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${pxWidth}" height="${pxHeight}" viewBox="0 0 ${num(layout.width)} ${num(layout.height)}" role="img" aria-label="QR-код WeSetup">`,
-    `<rect width="${num(layout.width)}" height="${num(layout.height)}" fill="${PAPER}"/>`,
-    `<path fill="none" stroke="${BRAND_QR_INK}" stroke-width="1" shape-rendering="crispEdges" d="${modulesPath(layout)}"/>`,
   ];
-  if (layout.pad) {
-    const p = layout.pad;
-    parts.push(`<rect x="${num(p.x)}" y="${num(p.y)}" width="${num(p.w)}" height="${num(p.h)}" rx="${num(p.r)}" fill="${PAPER}"/>`);
+  const painter = svgPainter(parts);
+  if (layout.block) {
+    const b = layout.block;
+    painter.box(b.x, b.y, b.w, b.h, b.r, true);
+    const w = layout.window;
+    painter.box(w.x, w.y, w.w, w.h, w.r, false);
+  } else {
+    parts.push(`<rect width="${num(layout.width)}" height="${num(layout.height)}" fill="${PAPER}"/>`);
   }
-  if (layout.mark && markHref) {
-    const m = layout.mark;
-    parts.push(
-      `<image x="${num(m.x)}" y="${num(m.y)}" width="${num(m.w)}" height="${num(m.h)}" preserveAspectRatio="xMidYMid meet" href="${escapeXml(markHref)}"/>`
-    );
-  }
-  if (layout.plate) parts.push(plateStripes(layout.plate));
-  const font = `font-family="'Segoe UI','Helvetica Neue',Arial,'DejaVu Sans',sans-serif" fill="${PAPER}" text-anchor="middle"`;
+  parts.push(`<path fill="none" stroke="${BRAND_QR_INK}" stroke-width="1" shape-rendering="crispEdges" d="${modulesPath(layout)}"/>`);
+  paintMark(painter, layout, layout.window.x, layout.window.y, 1);
   if (layout.title) {
     const t = layout.title;
-    parts.push(`<text x="${num(t.x)}" y="${num(t.y)}" font-size="${num(t.size)}" font-weight="700" ${font}>${escapeXml(t.text)}</text>`);
-  }
-  if (layout.site) {
-    const s = layout.site;
-    parts.push(`<text x="${num(s.x)}" y="${num(s.y)}" font-size="${num(s.size)}" font-weight="600" ${font}>${escapeXml(s.text)}</text>`);
+    parts.push(
+      `<text x="${num(t.x)}" y="${num(t.y)}" font-size="${num(t.size)}" font-weight="700" font-family="'Segoe UI','Helvetica Neue',Arial,'DejaVu Sans',sans-serif" fill="${PAPER}" text-anchor="middle">${escapeXml(t.text)}</text>`
+    );
   }
   parts.push("</svg>");
   return parts.join("");
@@ -373,20 +328,7 @@ function renderBrandQrSvg(layout: BrandQrLayout, markHref: string | null): strin
 // ---------------------------------------------------------------------------
 
 type CanvasModule = typeof import("@napi-rs/canvas");
-type CanvasImage = Awaited<ReturnType<CanvasModule["loadImage"]>>;
 type Ctx = ReturnType<ReturnType<CanvasModule["createCanvas"]>["getContext"]>;
-
-let iconPromise: Promise<CanvasImage | null> | null = null;
-
-function loadIcon(): Promise<CanvasImage | null> {
-  iconPromise ??= (async () => {
-    const file = ICON_CANDIDATES.find((candidate) => fs.existsSync(candidate));
-    if (!file) return null;
-    const { loadImage } = await import("@napi-rs/canvas");
-    return loadImage(fs.readFileSync(file));
-  })().catch(() => null);
-  return iconPromise;
-}
 
 let fontsReady = false;
 
@@ -394,96 +336,77 @@ let fontsReady = false;
 function ensureFonts(canvas: CanvasModule): string {
   if (!fontsReady) {
     fontsReady = true;
-    const bold = path.join(FONT_DIR, "DejaVuSans-Bold.ttf");
-    if (fs.existsSync(bold)) canvas.GlobalFonts.registerFromPath(bold, FONT_BOLD);
+    if (fs.existsSync(BOLD_FONT_FILE)) canvas.GlobalFonts.registerFromPath(BOLD_FONT_FILE, FONT_BOLD);
   }
   return canvas.GlobalFonts.has(FONT_BOLD) ? FONT_BOLD : "sans-serif";
 }
 
-function roundedRect(ctx: Ctx, x: number, y: number, w: number, h: number, r: number) {
-  const radius = Math.max(0, Math.min(r, w / 2, h / 2));
-  ctx.moveTo(x + radius, y);
-  ctx.arcTo(x + w, y, x + w, y + h, radius);
-  ctx.arcTo(x + w, y + h, x, y + h, radius);
-  ctx.arcTo(x, y + h, x, y, radius);
-  ctx.arcTo(x, y, x + w, y, radius);
-  ctx.closePath();
-}
-
-function fitText(ctx: Ctx, family: string, text: BrandQrText, scale: number, maxWidth: number) {
-  let px = text.size * scale;
-  ctx.font = `${px}px ${family}`;
-  const width = ctx.measureText(text.text).width;
-  if (width > maxWidth) {
-    px *= maxWidth / width;
-    ctx.font = `${px}px ${family}`;
-  }
-  ctx.fillText(text.text, text.x * scale, text.y * scale);
+function canvasPainter(ctx: Ctx): Painter {
+  return {
+    box(x, y, w, h, r, ink) {
+      ctx.fillStyle = ink ? BRAND_QR_INK : PAPER;
+      ctx.beginPath();
+      if (r > 0) ctx.roundRect(x, y, w, h, Math.min(r, w / 2, h / 2));
+      else ctx.rect(x, y, w, h);
+      ctx.fill();
+    },
+    circle(cx, cy, r, ink) {
+      ctx.fillStyle = ink ? BRAND_QR_INK : PAPER;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fill();
+    },
+  };
 }
 
 /**
- * PNG плитки. `width` — желаемая ширина, px: модуль — целое число
- * пикселей (чёткие края), поэтому итог не уже `width` и кратен ширине
- * плитки в модулях. Высота — по пропорции варианта.
+ * PNG плитки. `width` — желаемая ширина, px: модуль — целое число пикселей
+ * (чёткие края), рамка — целое число пикселей (≥ 1), поэтому итог не уже
+ * `width`, а пропорция — `brandQrLayout` с точностью до пикселя.
  */
 export async function brandQrPng(url: string, options: BrandQrOptions & { width?: number } = {}): Promise<Buffer> {
   const layout = brandQrLayout(url, options);
   const canvasModule = await import("@napi-rs/canvas");
   const scale = Math.max(1, Math.ceil((options.width ?? 600) / layout.width));
-  const w = layout.width * scale;
-  const h = Math.round(layout.height * scale);
+  const side = layout.window.w * scale;
+  const frame = layout.block ? Math.max(1, Math.round(layout.frame * scale)) : 0;
+  const stripHeight = layout.strip ? Math.round(layout.strip.h * scale) : 0;
+  const w = side + 2 * frame;
+  const h = frame + side + stripHeight;
   const canvas = canvasModule.createCanvas(w, h);
   const ctx = canvas.getContext("2d");
+  const painter = canvasPainter(ctx);
   ctx.fillStyle = PAPER;
   ctx.fillRect(0, 0, w, h);
 
+  if (layout.block) {
+    const radius = (layout.block.r / layout.width) * w;
+    painter.box(0, 0, w, h, radius, true);
+    painter.box(frame, frame, side, side, Math.max(0, radius - frame), false);
+  }
   ctx.fillStyle = BRAND_QR_INK;
   for (let row = 0; row < layout.size; row += 1) {
-    let col = 0;
-    while (col < layout.size) {
-      if (!layout.plain(row, col)) {
-        col += 1;
-        continue;
-      }
-      const start = col;
-      while (col < layout.size && layout.plain(row, col)) col += 1;
-      ctx.fillRect((layout.quiet + start) * scale, (layout.quiet + row) * scale, (col - start) * scale, scale);
+    for (const [start, length] of moduleRuns(layout, row)) {
+      ctx.fillRect(frame + (layout.quiet + start) * scale, frame + (layout.quiet + row) * scale, length * scale, scale);
     }
   }
+  paintMark(painter, layout, frame, frame, scale);
 
-  if (layout.pad) {
-    const p = layout.pad;
-    ctx.fillStyle = PAPER;
-    ctx.beginPath();
-    roundedRect(ctx, p.x * scale, p.y * scale, p.w * scale, p.h * scale, p.r * scale);
-    ctx.fill();
-  }
-  if (layout.mark) {
-    const icon = await loadIcon();
-    if (icon) {
-      const m = layout.mark;
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "high";
-      ctx.drawImage(icon, MARK_CROP.x, MARK_CROP.y, MARK_CROP.size, MARK_CROP.size, m.x * scale, m.y * scale, m.w * scale, m.h * scale);
-    }
-  }
-
-  if (layout.plate) {
-    const p = layout.plate;
-    const gradient = ctx.createLinearGradient(0, p.y * scale, 0, (p.y + p.h) * scale);
-    gradient.addColorStop(0, BRAND_QR_PLATE_FROM);
-    gradient.addColorStop(1, BRAND_QR_PLATE_TO);
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    roundedRect(ctx, p.x * scale, p.y * scale, p.w * scale, p.h * scale, p.r * scale);
-    ctx.fill();
+  if (layout.title && layout.strip) {
+    const t = layout.title;
     const family = ensureFonts(canvasModule);
-    const maxWidth = (p.w - 2 * layout.width * PLATE_PAD_X) * scale;
+    const maxWidth = w * (1 - 2 * TITLE_SIDE);
+    let px = t.size * scale;
+    ctx.font = `${px}px ${family}`;
+    const measured = ctx.measureText(t.text).width;
+    if (measured > maxWidth) {
+      px *= maxWidth / measured;
+      ctx.font = `${px}px ${family}`;
+    }
     ctx.fillStyle = PAPER;
     ctx.textAlign = "center";
     ctx.textBaseline = "alphabetic";
-    if (layout.title) fitText(ctx, family, layout.title, scale, maxWidth);
-    if (layout.site) fitText(ctx, family, layout.site, scale, maxWidth);
+    ctx.fillText(t.text, w / 2, frame + side + (t.y - layout.strip.y) * scale);
   }
   return canvas.toBuffer("image/png");
 }
@@ -496,39 +419,114 @@ export async function brandQrPngDataUrl(url: string, options: BrandQrOptions & {
 // jsPDF (вектор)
 // ---------------------------------------------------------------------------
 
-/** Имя картинки знака в PDF: jsPDF кладёт её в файл один раз на весь документ. */
-const PDF_MARK_ALIAS = "wesetup-brand-qr-mark";
-
-type IconPng = { bytes: Uint8Array; width: number; height: number };
-let iconPngCache: IconPng | null | undefined;
-
-/** `icon.png` как есть (синхронно — отрисовка jsPDF синхронная); размер — из заголовка PNG. */
-function iconPng(): IconPng | null {
-  if (iconPngCache !== undefined) return iconPngCache;
-  const file = ICON_CANDIDATES.find((candidate) => fs.existsSync(candidate));
-  const bytes = file ? fs.readFileSync(file) : null;
-  iconPngCache =
-    bytes && bytes.length > 24 ? { bytes: new Uint8Array(bytes), width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) } : null;
-  return iconPngCache;
-}
-
-export type BrandQrPdfBox = { x: number; y: number; width: number; height: number; module: number };
+export type BrandQrPdfBox = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  module: number;
+  /** Окно кода на странице (квадрат матрицы с тихой зоной), мм. */
+  window: { x0: number; y0: number; x1: number; y1: number };
+};
 
 /**
- * Полный фирменный QR векторно в jsPDF — QR в шапке печатного журнала.
- *
- * Та же плитка, что у PNG и SVG (`brandQrLayout`, вариант `full`): тихая
- * зона, чёрные квадратные модули и «глаза», белая скруглённая подложка со
- * знаком сайта, плашка с градиентом серый→чёрный и белыми «Отсканировать» /
- * «wesetup.ru». (x, y) — левый верхний угол плитки, `width` — её ширина с
- * тихой зоной, мм; высота — по пропорции плитки.
- *
- * Модули, подложка, плашка и надписи — вектор (чётко на любом принтере):
- * подряд идущие модули строки — одним прямоугольником; градиент — как в SVG,
- * `PLATE_STRIPES` полос внутри скруглённого контура плашки (обрезка по
- * пути). Знак — `icon.png`: вырез `MARK_CROP` — тоже обрезкой, картинка одна
- * на документ. `fontName` — шрифт документа с кириллицей; надписи —
- * его жирным начертанием, кегль подбирается, чтобы строка влезла в плашку.
+ * Плитка рисуется внутри `q … Q` (`saveGraphicsState`): после неё графическое
+ * состояние листа (цвет заливки и прочее) прежнее — его возвращает сам `Q`,
+ * без повторного оператора цвета, поэтому в потоке плитки только чёрный и
+ * белый. Шрифт, кегль и цвет текста jsPDF восстанавливает сам; цвет заливки в
+ * его учёте (`getFillColor`) после плитки — последний цвет плитки (штамп QR —
+ * последнее, что рисуется на листе).
+ */
+function withPdfState<T>(doc: jsPDF, draw: () => T): T {
+  doc.saveGraphicsState();
+  try {
+    return draw();
+  } finally {
+    doc.restoreGraphicsState();
+  }
+}
+
+/** Цвета — только серые операторы PDF (`g`): чёрный 0, белый 1 (никаких `rg`/`k`). */
+function pdfPainter(doc: jsPDF): Painter {
+  const color = (ink: boolean) => {
+    const c = ink ? 0 : 255;
+    doc.setFillColor(c, c, c);
+  };
+  return {
+    box(x, y, w, h, r, ink) {
+      color(ink);
+      if (r > 0) {
+        const radius = Math.min(r, w / 2, h / 2);
+        doc.roundedRect(x, y, w, h, radius, radius, "F");
+      } else doc.rect(x, y, w, h, "F");
+    },
+    circle(cx, cy, r, ink) {
+      color(ink);
+      doc.circle(cx, cy, r, "F");
+    },
+  };
+}
+
+function pdfModules(doc: jsPDF, layout: BrandQrLayout, ox: number, oy: number, u: number) {
+  doc.setFillColor(0, 0, 0);
+  for (let row = 0; row < layout.size; row += 1) {
+    for (const [start, length] of moduleRuns(layout, row)) {
+      // +0,01 мм — без «волосяных» щелей между соседними строками.
+      doc.rect(ox + (layout.quiet + start) * u, oy + (layout.quiet + row) * u, length * u, u + 0.01, "F");
+    }
+  }
+}
+
+let boldFontBase64: string | null | undefined;
+
+/**
+ * Жирный шрифт слова в PDF: жирное начертание шрифта документа, если оно
+ * настоящее (у «JournalUnicode» — DejaVu Sans Bold), иначе — свой DejaVu Sans
+ * Bold из репозитория (у бумажного бланка «bold» — тот же обычный файл).
+ * jsPDF встраивает только использованные буквы — это несколько килобайт.
+ */
+function pdfBoldFont(doc: jsPDF, fontName: string): string {
+  const fonts = doc.getFontList();
+  const styles = Object.prototype.hasOwnProperty.call(fonts, fontName) ? fonts[fontName] : [];
+  // Незнакомое начертание jsPDF молча подменяет на Times (без кириллицы) —
+  // поэтому сначала список шрифтов документа.
+  if (styles.includes("normal") && styles.includes("bold")) {
+    const current = doc.getFont();
+    doc.setFont(fontName, "normal");
+    const normal = doc.getFont().postScriptName;
+    doc.setFont(fontName, "bold");
+    const bold = doc.getFont().postScriptName;
+    doc.setFont(current.fontName, current.fontStyle);
+    if (bold !== normal) return fontName;
+  }
+  if (Object.prototype.hasOwnProperty.call(fonts, FONT_BOLD)) return FONT_BOLD;
+  if (boldFontBase64 === undefined) {
+    boldFontBase64 = fs.existsSync(BOLD_FONT_FILE) ? fs.readFileSync(BOLD_FONT_FILE).toString("base64") : null;
+  }
+  if (!boldFontBase64) return fontName;
+  doc.addFileToVFS("wesetup-qr-bold.ttf", boldFontBase64);
+  doc.addFont("wesetup-qr-bold.ttf", FONT_BOLD, "bold");
+  return FONT_BOLD;
+}
+
+/** Слово «Отсканировать» белым жирным: центр `cx`, базовая линия `baseline`, кегль — мм (подгонка по `maxWidth`). */
+function pdfTitle(doc: jsPDF, fontName: string, text: string, cx: number, baseline: number, sizeMm: number, maxWidth: number) {
+  doc.setTextColor(255, 255, 255);
+  doc.setFont(pdfBoldFont(doc, fontName), "bold");
+  const size = (sizeMm * 72) / 25.4;
+  doc.setFontSize(size);
+  const textWidth = doc.getTextWidth(text);
+  if (textWidth > maxWidth) doc.setFontSize((size * maxWidth) / textWidth);
+  doc.text(text, cx, baseline, { align: "center", baseline: "alphabetic" });
+}
+
+/**
+ * Плитка с рамкой векторно в jsPDF — QR на странице журнала без шапки и в
+ * бумажном бланке. Та же плитка, что у PNG и SVG (`brandQrLayout` с полосой):
+ * чёрный скруглённый блок, белое окно, чёрные квадратные модули и «глаза»,
+ * знак, белое «Отсканировать» в полосе. (x, y) — левый верхний угол плитки,
+ * `width` — её ширина с рамкой, мм; высота — по пропорции плитки.
+ * `fontName` — шрифт документа с кириллицей (слово — его жирным, см. `pdfBoldFont`).
  */
 export function drawBrandQrTilePdf(
   doc: jsPDF,
@@ -538,102 +536,63 @@ export function drawBrandQrTilePdf(
   width: number,
   options: { fontName: string },
 ): BrandQrPdfBox {
-  if (layout.variant !== "full") throw new Error("Плитка PDF — только полный фирменный QR");
+  const { block, strip, title } = layout;
+  if (!block || !strip || !title) throw new Error("Плитка PDF — только QR с полосой");
   const u = width / layout.width;
   const height = layout.height * u;
-  const font = doc.getFont();
-  const fontSize = doc.getFontSize();
-  const textColor = doc.getTextColor();
-  const fillColor = doc.getFillColor();
+  const w = layout.window;
+  const ox = x + w.x * u;
+  const oy = y + w.y * u;
+  withPdfState(doc, () => {
+    const painter = pdfPainter(doc);
+    painter.box(x, y, width, height, block.r * u, true);
+    painter.box(ox, oy, w.w * u, w.h * u, w.r * u, false);
+    pdfModules(doc, layout, ox, oy, u);
+    paintMark(painter, layout, ox, oy, u);
+    pdfTitle(doc, options.fontName, title.text, x + title.x * u, y + title.y * u, title.size * u, width * (1 - 2 * TITLE_SIDE));
+  });
+  return { x, y, width, height, module: u, window: { x0: ox, y0: oy, x1: ox + w.w * u, y1: oy + w.h * u } };
+}
 
-  // Белая плитка: тихая зона кода и поле вокруг плашки.
-  doc.setFillColor(255, 255, 255);
-  doc.rect(x, y, width, height, "F");
+/** Высота плитки в ячейке шапки без запаса, модулей: окно + полоса (рамки нет — её дают линии ячейки). */
+export function brandQrCellHeight(layout: BrandQrLayout): number {
+  if (!layout.strip) throw new Error("Плитка в ячейке — только QR с полосой");
+  return layout.window.h + layout.strip.h;
+}
 
-  doc.setFillColor(0, 0, 0);
-  const n = layout.size;
-  for (let row = 0; row < n; row += 1) {
-    let col = 0;
-    while (col < n) {
-      if (!layout.plain(row, col)) {
-        col += 1;
-        continue;
-      }
-      const start = col;
-      while (col < n && layout.plain(row, col)) col += 1;
-      // +0,01 мм — без «волосяных» щелей между соседними строками.
-      doc.rect(x + (layout.quiet + start) * u, y + (layout.quiet + row) * u, (col - start) * u, u + 0.01, "F");
-    }
-  }
-
-  if (layout.pad) {
-    const p = layout.pad;
-    doc.setFillColor(255, 255, 255);
-    doc.roundedRect(x + p.x * u, y + p.y * u, p.w * u, p.h * u, p.r * u, p.r * u, "F");
-  }
-  const icon = layout.mark ? iconPng() : null;
-  if (layout.mark && icon) {
-    const m = layout.mark;
-    const scale = (m.w * u) / MARK_CROP.size;
-    doc.saveGraphicsState();
-    doc.rect(x + m.x * u, y + m.y * u, m.w * u, m.h * u, null);
-    doc.clip();
-    doc.discardPath();
-    doc.addImage(
-      icon.bytes,
-      "PNG",
-      x + m.x * u - MARK_CROP.x * scale,
-      y + m.y * u - MARK_CROP.y * scale,
-      icon.width * scale,
-      icon.height * scale,
-      PDF_MARK_ALIAS,
-      // Без сжатия jsPDF кладёт картинку с альфой как есть — ~110 КБ на
-      // документ; со сжатием — ~9 КБ.
-      "FAST",
-    );
-    doc.restoreGraphicsState();
-  }
-
-  if (layout.plate) {
-    const p = layout.plate;
-    const px = x + p.x * u;
-    const py = y + p.y * u;
-    const pw = p.w * u;
-    const ph = p.h * u;
-    const from = rgbOf(BRAND_QR_PLATE_FROM);
-    const to = rgbOf(BRAND_QR_PLATE_TO);
-    doc.saveGraphicsState();
-    doc.roundedRect(px, py, pw, ph, p.r * u, p.r * u, null);
-    doc.clip();
-    doc.discardPath();
-    for (let i = 0; i < PLATE_STRIPES; i += 1) {
-      const mix = (i + 0.5) / PLATE_STRIPES;
-      const [r, g, b] = from.map((c, j) => Math.round(c + (to[j] - c) * mix));
-      doc.setFillColor(r, g, b);
-      // Как в SVG: полоса — вся часть плашки ниже своей линии, следующая
-      // (темнее) ложится сверху. Стыков между полосами нет — нет и светлых
-      // «волосков» от сглаживания краёв.
-      const top = py + (ph * i) / PLATE_STRIPES;
-      doc.rect(px, top, pw, py + ph - top, "F");
-    }
-    doc.restoreGraphicsState();
-
-    const maxWidth = (p.w - 2 * layout.width * PLATE_PAD_X) * u;
-    doc.setTextColor(255, 255, 255);
-    doc.setFont(options.fontName, "bold");
-    for (const text of [layout.title, layout.site]) {
-      if (!text) continue;
-      const size = (text.size * u * 72) / 25.4;
-      doc.setFontSize(size);
-      const textWidth = doc.getTextWidth(text.text);
-      if (textWidth > maxWidth) doc.setFontSize((size * maxWidth) / textWidth);
-      doc.text(text.text, x + text.x * u, y + text.y * u, { align: "center", baseline: "alphabetic" });
-    }
-  }
-
-  doc.setFont(font.fontName, font.fontStyle);
-  doc.setFontSize(fontSize);
-  doc.setTextColor(textColor);
-  doc.setFillColor(fillColor);
-  return { x, y, width, height, module: u };
+/**
+ * Плитка в ячейке шапки печатного журнала: рамку кода дают сами линии ячейки
+ * (0,2 мм — тонкая рамка), плитка заполняет ячейку внутри линий: сверху белое
+ * окно с кодом (по ширине — ровно окно раскладки, по высоте — код по центру),
+ * снизу во всю ширину ячейки — чёрная полоса с «Отсканировать» (та же, что у
+ * плитки с рамкой: высота и кегль — от раскладки). Углы прямые — это ячейка
+ * таблицы. `box` — ячейка внутри линий, мм: ширина = сторона окна × модуль.
+ */
+export function drawBrandQrCellPdf(
+  doc: jsPDF,
+  layout: BrandQrLayout,
+  box: { x0: number; y0: number; x1: number; y1: number },
+  options: { fontName: string },
+): BrandQrPdfBox {
+  const { strip, title } = layout;
+  if (!strip || !title) throw new Error("Плитка в ячейке — только QR с полосой");
+  const width = box.x1 - box.x0;
+  const height = box.y1 - box.y0;
+  const u = width / layout.window.w;
+  const stripHeight = strip.h * u;
+  const windowHeight = height - stripHeight;
+  const side = layout.window.w * u;
+  const ox = box.x0;
+  const oy = box.y0 + (windowHeight - side) / 2;
+  withPdfState(doc, () => {
+    const painter = pdfPainter(doc);
+    // Белый фон окна (перекрывает, если бланк что-то уже нарисовал) и полоса.
+    painter.box(box.x0, box.y0, width, windowHeight, 0, false);
+    painter.box(box.x0, box.y1 - stripHeight, width, stripHeight, 0, true);
+    pdfModules(doc, layout, ox, oy, u);
+    paintMark(painter, layout, ox, oy, u);
+    const baseline = box.y1 - stripHeight + (title.y - strip.y) * u;
+    pdfTitle(doc, options.fontName, title.text, box.x0 + width / 2, baseline, title.size * u, layout.width * (1 - 2 * TITLE_SIDE) * u);
+  });
+  return { x: box.x0, y: box.y0, width, height, module: u, window: { x0: ox, y0: oy, x1: ox + side, y1: oy + side } };
 }

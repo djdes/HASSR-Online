@@ -53,7 +53,7 @@ test("переадресация: неверная подпись, чужой ж
 test("QR документа — короткий адрес, влезает в шапку (коррекция H, ≤ 53 модулей); подписи сбоку нет", () => {
   const qr = journalDocumentPdfQr("https://wesetup.ru", ORG, "cleaning_ventilation_checklist");
   assert.ok(qr.url.includes("/qj/"));
-  assert.equal(qr.footer, undefined, "подпись — на плашке самого QR");
+  assert.equal(qr.footer, undefined, "подпись — в полосе самого QR");
   assert.ok(journalQrMatrix(qr.url).modules.size <= JOURNAL_QR_MAX_MODULES);
 });
 

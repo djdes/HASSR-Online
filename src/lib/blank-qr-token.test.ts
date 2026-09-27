@@ -165,7 +165,7 @@ test("PDF образца: копирайт на КАЖДОЙ странице, Q
   assert.ok(out.qrPlacements?.every((p) => p.where === "header"), "у гигиены шапка на каждой странице — QR в ней");
   texts.forEach((text, index) => {
     for (const part of COPYRIGHT_PARTS) assert.ok(text.includes(part), `стр. ${index + 1}: «${part}»`);
-    assert.ok(text.includes(BRAND_QR_CAPTION_TITLE), `стр. ${index + 1}: плашка QR`);
+    assert.ok(text.includes(BRAND_QR_CAPTION_TITLE), `стр. ${index + 1}: полоса QR`);
   });
   // Сам образец не изменился: без QR — те же страницы и то же имя файла.
   const plain = renderJournalDocumentPdf(input);
@@ -211,9 +211,15 @@ test("Word: копирайт и QR в подвале (повторяется н�
   const media = Object.keys(zip.files).filter((name) => name.startsWith("word/media/") && !zip.files[name].dir);
   assert.equal(media.length, 1);
   const png = await zip.file(media[0])!.async("nodebuffer");
-  // Компактный фирменный QR (коррекция M, без логотипа — как угловой QR у PDF шаблона).
-  const expected = await brandQrPng(url, { variant: "compact", width: 300 });
+  // Фирменная ч/б плитка (знак, коррекция H, полоса «Отсканировать») — как в шапке PDF шаблона.
+  const expected = await brandQrPng(url, { width: 600 });
   assert.ok(png.equals(expected), "в подвале ровно QR этого адреса");
+  // Размер в подвале: ширина 81 px Word ≈ 21,4 мм (модуль ≥ 0,365 мм у 53 модулей), высота — по пропорции плитки.
+  const extent = /<wp:extent cx="(\d+)" cy="(\d+)"/.exec(footer);
+  assert.ok(extent, "размер картинки в подвале");
+  const [cx, cy] = [Number(extent[1]), Number(extent[2])];
+  assert.ok(Math.abs(cx / 36000 - 21.4) < 0.1, `ширина ${cx / 36000} мм`);
+  assert.ok(Math.abs(cy / cx - expected.readUInt32BE(20) / expected.readUInt32BE(16)) < 0.02, "пропорция плитки");
 
   // Без подвала — файл как раньше.
   const plain = await JSZip.loadAsync((await renderJournalDocumentDocx(buildJournalSampleInput("hygiene"), "hygiene")).buffer);
