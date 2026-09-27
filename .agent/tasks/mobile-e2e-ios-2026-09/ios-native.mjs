@@ -1067,7 +1067,8 @@ async function entryCount() {
 async function backToJournalCount(ctx) {
   await hideKeyboard();
   if (!(await tryTap({ type: ["button", "link"], label: "Отмена" }, { scrolls: 0, anywhere: true, pick: "lowest", timeout: 4000 }))) await tryTap({ type: "button", label: "Назад" }, { scrolls: 0, anywhere: true, timeout: 3000 });
-  const back = await waitFor(() => has({ type: "link", contains: "Новая запись" }), 20000 * SLOW);
+  // Раунд 6 (кадры 014/018): страница журнала открылась, но «Новая запись» не нашлась как ссылка.
+  const back = await waitFor(async () => (await has({ type: ["link", "button"], contains: "Новая запись" })) || (await has({ type: "text", contains: "Записей пока нет" })), 20000 * SLOW);
   await sleep(1500);
   ctx.shot("journal-after-form");
   const c = back ? await entryCount() : null;
@@ -1290,12 +1291,30 @@ async function main() {
     ctx.d.newLabels = fresh.slice(0, 60);
     ctx.shot("print-sheet");
     ctx.check("окно печати iOS появилось", Boolean(xml), fresh.slice(0, 30));
+    // Раунд 6 (кадры 030, 033 второго прогона): «Распечатать» в приложении — лист «Поделиться»
+    // с PDF; «Напечатать» в нём открывает окно печати iOS («Параметры», «Принтер»).
+    if (fresh.includes("ShareSheet.RemoteContainerView") || fresh.includes("Напечатать")) {
+      ctx.d.viaShareSheet = true;
+      const pr = await tryTap({ label: "Напечатать" }, { scrolls: 0, anywhere: true, ignoreKeyboard: true, timeout: 4000 });
+      ctx.d.printAction = Boolean(pr);
+      await sleep(3000);
+      ctx.shot("print-options");
+      const po = await source("S04-print-options");
+      ctx.d.printOptionsLabels = newLabels(before, po).filter((l) => /Параметры|Принтер|Копии|Формат бумаги|Printer|Options/i.test(l)).slice(0, 10);
+      ctx.check("окно печати iOS («Параметры», «Принтер»)", ctx.d.printOptionsLabels.length > 0, ctx.d.printOptionsLabels);
+    }
     const cancel = await tryTap({ type: "button", label: "Отменить" }, { scrolls: 0, anywhere: true, timeout: 3000 }) || (await tryTap({ type: "button", label: "Cancel" }, { scrolls: 0, anywhere: true, timeout: 2000 })) || (await tryTap({ type: "button", label: "Закрыть" }, { scrolls: 0, anywhere: true, timeout: 2000 }));
+    if (!(await has({ type: "button", label: "Распечатать" })) && !(await has({ type: "link", label: "Распечатать" }))) {
+      // Лист «Поделиться» остался — закрыть жестом вниз.
+      await drag(W.height * 0.55, W.height * 0.98, Math.round(W.width / 2));
+    }
     ctx.d.cancelled = cancel?.label ?? null;
     await sleep(2000);
     ctx.shot("print-cancelled");
     const after = await source("S04-after");
-    const left = newLabels(before, after).filter((l) => /Принтер|Printer|Параметры печати|Print Options/i.test(l));
+    // Раунд 6: проверка «закрылось» смотрела только на подписи окна печати, а на экране
+    // оставался лист «Поделиться» с PDF (кадр 031) — теперь и его подписи.
+    const left = newLabels(before, after).filter((l) => /Принтер|Printer|Параметры печати|Print Options|ActivityListView|ShareSheet|Напечатать|Сохранить в Файлах/i.test(l));
     ctx.check("окно печати закрылось", left.length === 0, left);
     ctx.check("приложение живо, документ на месте", (await appState()) === 4 && (await has({ type: ["link", "button"], contains: "Распечатать" })));
   });
@@ -1372,6 +1391,17 @@ async function main() {
     ctx.check("чужой сайт открылся в Safari, не в приложении", st !== 4 || (front && front.bundleId !== BUNDLE), ctx.d.external);
     await driver.execute("mobile: activateApp", { bundleId: BUNDLE });
     await sleep(2500);
+    // Раунд 6 (кадр 039): поверх приложения — окно Safari «Выбор поисковой системы»
+    // (первый запуск Safari в симуляторе); закрываем «Продолжить».
+    const sb = await alertButtons(2000);
+    if (sb) {
+      ctx.d.alertAfterReturn = { sb, text: await alertText() };
+      await driver.execute("mobile: alert", { action: "accept", buttonLabel: sb.find((x) => /Продолжить|Continue/i.test(x)) || sb[sb.length - 1] }).catch(() => undefined);
+      await sleep(1000);
+    } else if (await tryTap({ type: "button", label: "Продолжить" }, { scrolls: 0, anywhere: true, ignoreKeyboard: true, timeout: 1500 })) {
+      ctx.d.alertAfterReturn = "Продолжить";
+      await sleep(1000);
+    }
     ctx.shot("back-in-app");
     ctx.check("после возврата — та же страница, приложение живо", (await appState()) === 4 && (await has({ type: "link", contains: "tasksflow.ru" })));
     await tab("Профиль");
