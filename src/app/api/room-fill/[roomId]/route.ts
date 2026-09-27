@@ -40,6 +40,7 @@ import {
   subjectKeyForDocumentItem,
 } from "@/lib/temperature-deviations";
 import { orgTodayKey } from "@/lib/timezone";
+import { decodeRouteParam } from "@/lib/route-param";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -83,7 +84,7 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ roomId: string }> }
 ) {
-  const { roomId } = await params;
+  const roomId = decodeRouteParam((await params).roomId);
 
   if (!qrFillRateLimiter.consume(qrFillRateKey(clientIp(request), "room", roomId))) {
     return NextResponse.json({ error: QR_FILL_RATE_LIMIT_ERROR }, { status: 429 });

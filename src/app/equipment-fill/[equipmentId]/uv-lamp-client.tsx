@@ -105,7 +105,7 @@ export function UvLampClient(props: {
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch(`/api/equipment-fill/${props.lamp.id}/uv`, {
+      const res = await fetch(`/api/equipment-fill/${encodeURIComponent(props.lamp.id)}/uv`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: props.token, employeeId, pass: pass ?? undefined, action: running ? "off" : "on" }),
