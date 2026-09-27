@@ -2,4 +2,6 @@
 <resources>
     <!-- Фирменный индиго WeSetup: цвет значка push-уведомления. -->
     <color name="notification_accent">#5566F6</color>
+    <!-- Фон приложения: заставка и полосы под строкой состояния и навигацией. -->
+    <color name="wesetup_background">#0B1024</color>
 </resources>

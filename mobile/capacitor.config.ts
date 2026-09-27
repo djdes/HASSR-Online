@@ -49,6 +49,11 @@ const config: CapacitorConfig = {
       backgroundColor: "#0b1024",
       showSpinner: false,
     },
+    // Светлые значки строки состояния с запуска: фон под ними тёмный (заставка,
+    // экран «Нет связи», шапка оболочки). Дальше стиль ставит сайт.
+    SystemBars: {
+      style: "DARK",
+    },
     FirebaseMessaging: {
       presentationOptions: ["badge", "sound", "alert"],
     },
