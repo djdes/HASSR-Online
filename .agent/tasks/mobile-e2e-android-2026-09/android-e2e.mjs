@@ -347,8 +347,11 @@ async function main() {
     await p
       .waitForFunction(() => Boolean(document.querySelector("#password, #phone")) || /Вход в кабинет|Нет связи/.test(document.body?.innerText ?? ""), null, { timeout: 90000 })
       .catch((e) => note(`login form did not appear: ${String(e).slice(0, 120)}; url ${p.url()}`));
+    // /mini?src=app сначала показывает «Открываем кабинет…», затем уводит на вход.
+    await p.waitForURL((u) => u.pathname.startsWith("/mini/login"), { timeout: 60000 }).catch(() => undefined);
+    await p.waitForSelector("#password", { timeout: 60000 }).catch(() => undefined);
     s.data.loginVisibleMs = Date.now() - started;
-    await sleep(1200);
+    await sleep(1500);
     s.shots.push(shot("cold-start-login"));
     const info = await p.evaluate(() => ({
       ua: navigator.userAgent,

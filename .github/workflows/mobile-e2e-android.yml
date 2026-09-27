@@ -1,9 +1,7 @@
 # Проверка приложения Android на настоящем эмуляторе: копия сайта с демо-данными
 # поднимается прямо в задании (не прод), тестовый APK открывает её по
 # http://10.0.2.2:3000, сценарии гоняет Playwright (_android) + adb.
-# Адрес сайта в эмуляторе — http://127.0.0.1:3000 через adb reverse: куки входа
-# в продакшен-сборке сайта с флагом Secure, а 127.0.0.1 браузер считает
-# безопасным источником (на 10.0.2.2 по http вход бы не держался).
+# Адрес сайта в эмуляторе — http://127.0.0.1:3000 через adb reverse.
 # Только ветка mobile-e2e-android и ручной запуск — никогда не master.
 name: Приложение Android — e2e на эмуляторе
 
@@ -46,6 +44,7 @@ env:
   SMTP_PORT: "2525"
   SMTP_FROM: "WeSetup CI <noreply@ci.local>"
   NEXT_TELEMETRY_DISABLED: "1"
+  E2E_HTTP_COOKIES: "1"
 
 jobs:
   e2e:
@@ -116,6 +115,14 @@ jobs:
           path: .next/cache
           key: nextcache-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
           restore-keys: nextcache-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+
+      - name: Куки входа без Secure (только эта копия сайта по http)
+        # Приложение грузит страницы через прокси Capacitor (HttpURLConnection), а
+        # он по http не отдаёт куки с Secure — вход бы не держался. На проде https.
+        if: env.MODE == 'full'
+        run: |
+          sed -i 's/process.env.NODE_ENV === "production"/(process.env.NODE_ENV === "production" \&\& process.env.E2E_HTTP_COOKIES !== "1")/g' src/lib/auth.ts src/lib/auth-cookies.ts
+          grep -n "E2E_HTTP_COOKIES" src/lib/auth.ts src/lib/auth-cookies.ts
 
       - name: Сборка сайта
         if: env.MODE == 'full'
