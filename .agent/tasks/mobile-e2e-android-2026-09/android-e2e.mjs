@@ -723,6 +723,23 @@ async function main() {
     s.data.offlineText = await p.evaluate(() => document.body.innerText.slice(0, 200)).catch((e) => String(e));
     s.shots.push(shot("offline"));
     check(/Нет связи с интернетом/.test(s.data.offlineText), `offline page not shown: ${s.data.offlineUrl} «${s.data.offlineText}»`);
+    // Что человек видит на экране без сети 25 секунд подряд (экран «Нет связи»
+    // раз в 10 с проверяет сайт): текст из дерева доступности экрана, а не DOM.
+    s.data.offlineWatch = [];
+    const t0 = Date.now();
+    for (let i = 0; Date.now() - t0 < 25000; i++) {
+      const ui = uiNodes()
+        .filter((n) => n.package === PKG && (n.text || n["content-desc"]))
+        .map((n) => n.text || n["content-desc"])
+        .join(" | ")
+        .slice(0, 160);
+      const dom = await p.evaluate(() => location.href + " :: " + document.body.innerText.slice(0, 40)).catch((e) => "ERR " + String(e).slice(0, 60));
+      s.data.offlineWatch.push({ t: Date.now() - t0, ui, dom });
+      if (i % 4 === 0) s.shots.push(shot(`offline-watch-${Math.round((Date.now() - t0) / 1000)}s`));
+    }
+    const chromiumError = s.data.offlineWatch.filter((w) => /Webpage not available|ERR_CONNECTION|ERR_NAME|ERR_INTERNET/.test(w.ui));
+    s.data.chromiumErrorSamples = chromiumError.length;
+    check(!chromiumError.length, `system error page «Webpage not available» on screen instead of «Нет связи» in ${chromiumError.length}/${s.data.offlineWatch.length} samples (first at ${chromiumError[0]?.t}ms: ${chromiumError[0]?.ui})`);
     // «Повторить» без сети — остаёмся на экране, без зависания
     sh("cmd connectivity airplane-mode disable");
     adb(["reverse", "tcp:3000", "tcp:3000"]);
