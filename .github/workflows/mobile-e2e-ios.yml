@@ -224,9 +224,14 @@ jobs:
             --predicate 'process == "App" OR process CONTAINS "WebContent" OR process CONTAINS "Networking" OR eventMessage CONTAINS "ru.wesetup.app"' \
             > "$LOGS/device.log" 2>&1 &
           mkdir -p "$OUT_DIR/splash"
+          xcrun simctl io "$UDID" recordVideo --codec=h264 --force "$OUT_DIR/splash/cold-start.mp4" > "$LOGS/record.log" 2>&1 &
+          REC=$!
+          sleep 3
           nohup xcrun simctl launch --console-pty "$UDID" ru.wesetup.app > "$LOGS/launch1-console.log" 2>&1 &
-          for i in $(seq -w 1 14); do xcrun simctl io "$UDID" screenshot "$OUT_DIR/splash/splash-$i.png" >/dev/null 2>&1; done
-          sleep 12
+          for i in $(seq -w 1 8); do xcrun simctl io "$UDID" screenshot "$OUT_DIR/splash/splash-$i.png" >/dev/null 2>&1; done
+          sleep 8
+          kill -INT $REC; sleep 3
+          ls -la "$OUT_DIR/splash"
           xcrun simctl io "$UDID" screenshot "$OUT_DIR/splash/cold-20s.png" >/dev/null 2>&1
           echo "== console of first launch"; cat "$LOGS/launch1-console.log" | head -80
           echo "Loading app at: $(grep -c 'Loading app at' "$LOGS/launch1-console.log" || true)"
@@ -246,6 +251,7 @@ jobs:
           CA_PEM: ${{ github.workspace }}/tls/ca.pem
           WDA_DD: ${{ github.workspace }}/e2e-state/wda
           TEST_BUDGET_MIN: "23"
+          LAUNCH_LOG: ${{ github.workspace }}/e2e-logs/launch1-console.log
         run: |
           export SERVER_STOP_CMD="bash $STATE/server-stop.sh"
           export SERVER_START_CMD="bash $STATE/server-start.sh"

@@ -13,10 +13,14 @@ npm ci --no-fund --no-audit 2>&1 | tail -3
 sed -i '' "s#https://wesetup.ru/mini?src=app#${APP_URL}#" www/offline.html
 grep -n "START_URL =" www/offline.html
 WESETUP_APP_URL="$APP_URL" npx cap sync ios 2>&1 | tail -30
-cat ios/App/App/capacitor.config.json
+# Только тестовая сборка: WebView доступен Appium (Web Inspector) — явно, не полагаясь на #if DEBUG.
+CFG=ios/App/App/capacitor.config.json
+jq '.ios.webContentsDebuggingEnabled = true' "$CFG" > "$CFG.tmp" && mv "$CFG.tmp" "$CFG"
+cat "$CFG"
 PL=ios/App/App/Info.plist
 /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity dict" "$PL"
 /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSAllowsLocalNetworking bool true" "$PL"
+/usr/libexec/PlistBuddy -c "Add :CAPACITOR_DEBUG string true" "$PL"
 echo "[app-build] $(date -u +%T) xcodebuild"
 cd ios/App
 set +e
@@ -37,7 +41,17 @@ APP=$(find "$STATE/dd/Build/Products/Debug-iphonesimulator" -maxdepth 1 -name "*
 echo "[app-build] app: $APP"
 rm -rf "$STATE/App.app" "$STATE/AppFB.app"
 cp -R "$APP" "$STATE/App.app"
-codesign --force --deep --sign - "$STATE/App.app"
+cat > "$STATE/dev.entitlements" <<'ENT'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict><key>get-task-allow</key><true/></dict></plist>
+ENT
+sign_app() {
+  codesign --force --deep --sign - "$1"
+  codesign --force --sign - --entitlements "$STATE/dev.entitlements" "$1"
+  codesign -d --entitlements - "$1" 2>&1 | tail -5 || true
+}
+sign_app "$STATE/App.app"
 # Вариант с тестовым Firebase: только чтобы нажатие на уведомление дошло до
 # сайта (без файла Firebase плагин push не подключает обработчик нажатий).
 cp -R "$APP" "$STATE/AppFB.app"
@@ -61,7 +75,7 @@ cat > "$STATE/AppFB.app/GoogleService-Info.plist" <<'PLIST'
 </dict>
 </plist>
 PLIST
-codesign --force --deep --sign - "$STATE/AppFB.app"
+sign_app "$STATE/AppFB.app"
 plutil -p "$STATE/App.app/Info.plist" | grep -E "NSAppTransport|NSAllowsLocal|CFBundleIdentifier|UILaunchStoryboard|UIMainStoryboard|UISceneStoryboard" || true
 echo "[app-build] $(date -u +%T) done"
 touch "$STATE/app.done"

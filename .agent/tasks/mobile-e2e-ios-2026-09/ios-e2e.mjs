@@ -575,6 +575,63 @@ function serverReady(timeout = 120000) {
   });
 }
 
+// ─── Запасной путь без WEBVIEW: только нативное дерево ───────────────
+
+async function tapLabel(label, { type = null, timeout = 10000 } = {}) {
+  await native();
+  const cond = `label == ${JSON.stringify(label)}`;
+  const q = type ? `type == "${type}" AND ${cond}` : cond;
+  const end = Date.now() + timeout;
+  while (Date.now() < end) {
+    const els = await driver.$$(`-ios predicate string:${q}`);
+    for (const el of els) {
+      if (await el.isDisplayed().catch(() => true)) {
+        await el.click();
+        return true;
+      }
+    }
+    await sleep(700);
+  }
+  return false;
+}
+
+async function nativeFallback() {
+  await scenario("N02", "Без WEBVIEW: вход шефа, лист уведомлений, разрешение", async (ctx) => {
+    ctx.check("вкладка «Почта»", await tapLabel("Почта"));
+    await sleep(800);
+    const email = await driver.$('-ios predicate string:type == "XCUIElementTypeTextField"');
+    await email.click();
+    await email.addValue(CHEF);
+    const pass = await driver.$('-ios predicate string:type == "XCUIElementTypeSecureTextField"');
+    await pass.click();
+    await pass.addValue(PASSWORD);
+    ctx.shot("typed");
+    ctx.check("кнопка «Войти»", await tapLabel("Войти", { type: "XCUIElementTypeButton" }));
+    await sleep(8000);
+    ctx.shot("after-login");
+    const enable = await tapLabel("Включить", { timeout: 12000 });
+    ctx.check("лист «Уведомления о задачах» с «Включить»", enable);
+    if (enable) {
+      const b = await alertButtons(10000);
+      ctx.d.alert = b;
+      ctx.shot("os-permission");
+      ctx.check("системное окно разрешения", Boolean(b));
+      if (b) ctx.d.pressed = await acceptAlert(b);
+      await sleep(4000);
+      ctx.shot("after-allow");
+    }
+    ctx.check("приложение живо", (await appState()) === 4);
+  });
+  await scenario("N03", "Без WEBVIEW: вкладки меню", async (ctx) => {
+    for (const tab of ["Разделы", "Профиль", "Главная", "Сегодня"]) {
+      ctx.d[tab] = await tapLabel(tab, { timeout: 5000 });
+      await sleep(3500);
+      ctx.shot(`tab-${tab}`);
+    }
+    ctx.check("приложение живо", (await appState()) === 4);
+  });
+}
+
 // ─── Прогон ───────────────────────────────────────────────────────────
 
 async function main() {
@@ -620,9 +677,15 @@ async function main() {
     const win = await driver.getWindowRect();
     ctx.d.window = win;
     const xml = await source("S01-native");
-    const webViews = (xml.match(/<XCUIElementTypeWebView\b/g) || []).length;
-    ctx.d.nativeWebViews = webViews;
-    ctx.check("ровно один WebView в окне", webViews === 1, { webViews });
+    // WKWebView в дереве доступности — три вложенных WebView одного размера; мосты
+    // считаем по журналу первого запуска: «Loading app at» пишет каждый мост.
+    ctx.d.nativeWebViewNodes = (xml.match(/<XCUIElementTypeWebView\b/g) || []).length;
+    if (env.LAUNCH_LOG && fs.existsSync(env.LAUNCH_LOG)) {
+      const launch = fs.readFileSync(env.LAUNCH_LOG, "utf8");
+      const bridges = (launch.match(/Loading app at/g) || []).length;
+      ctx.d.bridgesAtLaunch = bridges;
+      ctx.check("при запуске ровно один мост/WebView (Loading app at ×1)", bridges === 1, bridges);
+    }
     let wv;
     try {
       wv = await web(90000);
@@ -659,7 +722,8 @@ async function main() {
   });
 
   if (!webOk) {
-    log("WEBVIEW недоступен — дальше без страницы нельзя");
+    log("WEBVIEW недоступен — проходим главное нативно (по дереву доступности)");
+    await nativeFallback();
     save();
     return;
   }
