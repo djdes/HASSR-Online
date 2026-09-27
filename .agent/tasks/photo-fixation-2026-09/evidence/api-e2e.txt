@@ -1,0 +1,33 @@
+PASS  настройка: без входа — 401  — 401
+PASS  настройка: сотрудник (повар) — 403  — {"error":"Это действие доступно руководителю"}
+PASS  настройка: по умолчанию строки нет (включено, фото не обязательно)
+PASS  по умолчанию: фото принято, автоввод на платном тарифе  — {"ok":true,"url":"/uploads/readings/840dcf96b1f39876496c8e14f684ac5d.jpg","autofill":true,"tariffsHref":null}
+PASS  распознавание: цифровой дисплей → 4.2, device digital  — {"value":4.2,"unit":"C","confidence":"high","device":"digital"}
+PASS  распознавание: «seen» клиенту не отдаётся
+PASS  сохранение с фото: 200, photoAttached  — {"ok":true,"touched":1,"humidityTouched":0,"outOfRange":false,"photoAttached":true}
+PASS  в журнале: temperatures + readingPhotos[замер] = ссылка  — {"temperatures":{"cold-equipment-2e17e79b-1dfb-4fa2-9700-c8925bee96ea":4.2},"readingPhotos":{"cold-equipment-2e17e79b-1dfb-4fa2-9700-c8925bee96ea":"/uploads/readings/840dcf96b1f39876496c8e14f684ac5d.jpg"},"responsibleTitle":null}
+PASS  стрелочный: −18.6 → −19 (до градуса), confidence не выше medium  — {"value":-19,"unit":"C","confidence":"medium","device":"dial"}
+PASS  жидкостный: 22.4 → 22  — {"value":22,"unit":"C","confidence":"medium","device":"liquid"}
+PASS  сомнение в seen («-26 или -23») → value null, не подставляем  — {"value":null,"unit":null,"confidence":"low"}
+PASS  пропущенная точка (−263) → вне −60…80 → null  — {"value":null,"unit":null,"confidence":"low"}
+PASS  нечитаемо → null  — {"value":null,"unit":null,"confidence":"low"}
+PASS  руководитель выключил фотофиксацию: 200, readingPhoto {enabled:false, required:false}  — {"enabled":false,"required":false}
+PASS  хранение: строка PlatformSetting своей организации  — {"enabled":false,"required":false}
+PASS  выключено: загрузка фото → 403 photo_disabled  — {"error":"Фотофиксация показаний выключена в настройках — введите показание вручную","code":"photo_disabled"}
+PASS  выключено: распознавание → 403 photo_disabled  — {"error":"Фотофиксация показаний выключена в настройках — введите показание вручную","code":"photo_disabled"}
+PASS  выключено: замер с присланным фото сохраняется, фото не прикладывается  — {"s":{"ok":true,"documentId":"cmujjesf2000azo9mjst462mi","dateKey":"2026-09-27","slot":"10:00","temperatureOutOfRange":false,"humidityOutOfRange":false},"photos":null}
+PASS  «Фото обязательно» включает и фотофиксацию: {enabled:true, required:true}  — {"enabled":true,"required":true}
+PASS  обязательно: холодильник без фото → 400 photo-required  — {"code":"photo-required","error":"Нужно фото показания — сфотографируйте термометр или дисплей"}
+PASS  обязательно: «Обслуживание» без фото → 200  — {"ok":true,"touched":1,"humidityTouched":0,"outOfRange":false,"status":"service"}
+PASS  обязательно: с фото → 200, photoAttached  — {"ok":true,"touched":1,"humidityTouched":0,"outOfRange":false,"photoAttached":true}
+PASS  обязательно: несуществующий снимок → 400 «Фото не найдено — снимите ещё раз»  — {"error":"Фото не найдено — снимите ещё раз"}
+PASS  обязательно: склад, температура без фото → 400  — {"code":"photo-required","error":"Нужно фото показания — сфотографируйте термометр или дисплей"}
+PASS  обязательно: склад, одна влажность → 200 (фото — к температуре)  — {"ok":true,"documentId":"cmujjesf2000azo9mjst462mi","dateKey":"2026-09-27","slot":"10:00","temperatureOutOfRange":false,"humidityOutOfRange":false}
+PASS  обязательно: склад с фото → 200, photoAttached  — {"ok":true,"documentId":"cmujjesf2000azo9mjst462mi","dateKey":"2026-09-27","slot":"10:00","temperatureOutOfRange":false,"humidityOutOfRange":false,"photoAttached":true}
+PASS  вернули умолчания: строка удалена  — {"enabled":true,"required":false}
+PASS  по умолчанию: без фото — 200, как раньше  — {"ok":true,"touched":1,"humidityTouched":0,"outOfRange":false}
+PASS  соседние настройки «Строгости» сохраняются как раньше и не трогают фотофиксацию  — {"requireAdminForJournalEdit":false,"shiftEndHour":0,"lockPastDayEdits":false,"requirePhotoOnTaskFillStep":false,"escalateDeviationsToManagement":true,"deviationEscalationMinutes":60,"readingPhoto":{"enabled":true,"required":false}}
+PASS  бесплатный: фото принято, autofill false  — {"ok":true,"url":"/uploads/readings/caca11d2625eab6f638ce0eba14b8f1a.jpg","autofill":false,"tariffsHref":null}
+PASS  бесплатный: распознавание → 402 paid_only (как было)  — {"error":"Автоввод с фото — на платном тарифе","code":"paid_only","tariffsHref":null}
+
+31/31 PASS
