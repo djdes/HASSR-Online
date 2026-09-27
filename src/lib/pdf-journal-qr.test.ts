@@ -5,9 +5,9 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 
 import {
+  JOURNAL_QR_BOTTOM_MM,
   JOURNAL_QR_BOTTOM_RESERVE_MM,
   JOURNAL_QR_DEFAULT_RIGHT_MARGIN_MM,
-  JOURNAL_QR_EDGE_MM,
   JOURNAL_QR_MIN_MODULE_MM,
   JOURNAL_QR_SIZE_MM,
   findJournalQrSpot,
@@ -25,14 +25,15 @@ const URL_41 = "https://wesetup.ru/qj/cmf1abcdefghijklmnopqrstu/cleaning_ventila
 
 const spotParams = { pageWidth: 297, pageHeight: 210, size: 13, captionWidth: 25, captionHeight: 7.5 };
 
-test("QR: пустая страница — правый нижний угол с отступом от края", () => {
+test("QR: пустая страница — правый нижний угол на полях листа (справа и снизу одно поле)", () => {
   const spot = findJournalQrSpot({ ...spotParams, boxes: [] });
   assert.deepEqual(spot, {
-    x: 297 - JOURNAL_QR_EDGE_MM - 13,
-    y: 210 - JOURNAL_QR_EDGE_MM - 13,
+    x: 297 - JOURNAL_QR_DEFAULT_RIGHT_MARGIN_MM - 13,
+    y: 210 - JOURNAL_QR_BOTTOM_MM - 13,
     moved: false,
     bottomRow: true,
   });
+  assert.equal(JOURNAL_QR_BOTTOM_MM, JOURNAL_QR_DEFAULT_RIGHT_MARGIN_MM, "нижнее поле = правому");
 });
 
 test("QR: угол занят подписью — сдвиг влево по нижнему полю", () => {
@@ -126,7 +127,7 @@ test("штамп: QR на каждой странице (книжная и ал�
     Math.abs(p1.x - (210.0015 - JOURNAL_QR_DEFAULT_RIGHT_MARGIN_MM - JOURNAL_QR_SIZE_MM)) < 0.01,
     `x=${p1.x}`,
   );
-  assert.ok(Math.abs(p1.y - (297 - JOURNAL_QR_EDGE_MM - JOURNAL_QR_SIZE_MM)) < 0.01, `y=${p1.y}`);
+  assert.ok(Math.abs(p1.y - (297 - JOURNAL_QR_BOTTOM_MM - JOURNAL_QR_SIZE_MM)) < 0.01, `y=${p1.y}`);
   assert.equal(p1.moved, false);
   assert.equal(p2.overlap, false);
   assert.equal(p2.moved, true);
@@ -153,7 +154,7 @@ test("QR вровень с правой границей таблицы: пра�
   assert.ok(spot);
   assert.equal(spot.moved, false);
   assert.ok(Math.abs(spot.x + 13 - tableRight) < 1e-9, `правый край QR ${spot.x + 13}`);
-  assert.equal(spot.y, 210 - JOURNAL_QR_EDGE_MM - 13);
+  assert.equal(spot.y, 210 - JOURNAL_QR_BOTTOM_MM - 13);
 });
 
 test("граница содержимого: максимум правых краёв, пусто — поле по умолчанию, не за зоной непечати", () => {

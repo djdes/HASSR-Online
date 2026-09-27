@@ -2,6 +2,7 @@ import type { jsPDF } from "jspdf";
 import type { QRCode } from "qrcode";
 
 import { brandQrLayout, brandQrMatrix, drawBrandQrMatrixPdf } from "@/lib/brand-qr";
+import { JOURNAL_SHEET_MARGIN_MM } from "@/lib/pdf-journal-sheet";
 
 /**
  * Маленький QR-код в правом нижнем углу КАЖДОЙ страницы печатного журнала.
@@ -19,9 +20,10 @@ import { brandQrLayout, brandQrMatrix, drawBrandQrMatrixPdf } from "@/lib/brand-
  *      у полной страницы таблицы угол под QR был свободен;
  *   3. `stampJournalQr` ставит QR в нижний угол ВРОВЕНЬ с правой границей
  *      содержимого страницы (правый край таблицы / рамки бланка — симметрично
- *      левому полю, `journalQrRightEdges`), а если угол занят (ручная
- *      вёрстка, подписи внизу) — сдвигает его влево по нижнему полю, затем
- *      выше, в первое свободное место этой страницы.
+ *      левому полю, `journalQrRightEdges`), низом — на нижнее поле листа
+ *      (то же поле, что сверху и по бокам, `JOURNAL_SHEET_MARGIN_MM`), а если
+ *      угол занят (ручная вёрстка, подписи внизу) — сдвигает его влево по
+ *      нижнему полю, затем выше, в первое свободное место этой страницы.
  *
  * Матрица рисуется векторными квадратами jsPDF (синхронно, чётко на любом
  * принтере), без растровой картинки. Код — компактный вариант фирменного
@@ -32,17 +34,35 @@ import { brandQrLayout, brandQrMatrix, drawBrandQrMatrixPdf } from "@/lib/brand-
 
 /** Сторона QR (без «тихой зоны»), мм. 41 модуль → 0,32 мм на модуль. */
 export const JOURNAL_QR_SIZE_MM = 13;
-/** Отступ QR-блока от края листа, мм (зона непечати принтера ≥ 4 мм). */
+/**
+ * Зона непечати принтера у края листа, мм (≥ 4 мм): правее неё QR не
+ * встаёт, а содержимое бланка за ней считается вылезшим за лист.
+ */
 export const JOURNAL_QR_EDGE_MM = 5;
+/**
+ * Низ QR — на нижнем поле листа: то же поле, что сверху и по бокам. Раньше
+ * QR стоял в 5 мм от низа, и нижнее поле листа было вдвое меньше боковых.
+ */
+export const JOURNAL_QR_BOTTOM_MM = JOURNAL_SHEET_MARGIN_MM;
 /**
  * Правое поле по умолчанию, мм: QR встаёт в стольких мм от правого края
  * листа, если на странице нет содержимого, по которому равняться.
  */
-export const JOURNAL_QR_DEFAULT_RIGHT_MARGIN_MM = 10;
-/** Свободное поле вокруг блока (тихая зона QR + зазор до таблицы), мм. */
-export const JOURNAL_QR_PAD_MM = 1.5;
-/** Нижнее поле таблиц, при котором угол полной страницы свободен под QR. */
-export const JOURNAL_QR_BOTTOM_RESERVE_MM = JOURNAL_QR_EDGE_MM + JOURNAL_QR_SIZE_MM + JOURNAL_QR_PAD_MM + 0.5;
+export const JOURNAL_QR_DEFAULT_RIGHT_MARGIN_MM = JOURNAL_SHEET_MARGIN_MM;
+/**
+ * Свободное поле вокруг блока (тихая зона QR + зазор до таблицы), мм:
+ * 1,3 мм — 4 модуля самого плотного допустимого кода (41 модуль, 0,317 мм),
+ * тихая зона по ISO/IEC 18004. Было 1,5: с QR на нижнем поле листа каждая
+ * лишняя десятая миллиметра над ним отнимается у таблицы на КАЖДОЙ полной
+ * странице, и у очень длинного бланка добавлялись листы.
+ */
+export const JOURNAL_QR_PAD_MM = 1.3;
+/**
+ * Нижнее поле таблиц, при котором угол полной страницы свободен под QR:
+ * низ QR на нижнем поле листа, сам QR, тихая зона над ним и 0,1 мм —
+ * половина толщины нижней линии таблицы (0,2 мм).
+ */
+export const JOURNAL_QR_BOTTOM_RESERVE_MM = JOURNAL_QR_BOTTOM_MM + JOURNAL_QR_SIZE_MM + JOURNAL_QR_PAD_MM + 0.1;
 /** Минимальный модуль, который телефон уверенно читает с листа, мм. */
 export const JOURNAL_QR_MIN_MODULE_MM = 0.3;
 
@@ -283,10 +303,11 @@ export function trackPdfInk(doc: jsPDF): PdfInkTracker {
 /**
  * Нижнее поле всех таблиц autoTable этого документа — не меньше `reserveMm`.
  *
- * Отрисовщики передают свой `margin` без `bottom` (autoTable подставляет
- * 14 мм), а документные настройки autoTable целиком заменяются полем
- * вызова. Хуки же складываются: `didParseCell` срабатывает до отрисовки
- * таблицы, и поле правится в её разобранных настройках.
+ * Отрисовщики передают свой `margin` без `bottom` (`journalAutoTable`
+ * подставляет поле листа + полосу под «СТР. X ИЗ N»), а документные
+ * настройки autoTable целиком заменяются полем вызова. Хуки же
+ * складываются: `didParseCell` срабатывает до отрисовки таблицы, и поле
+ * правится в её разобранных настройках.
  */
 export function reserveJournalQrBottomMargin(doc: jsPDF, reserveMm = JOURNAL_QR_BOTTOM_RESERVE_MM) {
   type Hook = (data: { table?: { settings?: { margin?: { bottom: number } } } }) => void;
@@ -387,8 +408,16 @@ export function journalQrRightEdges(doc: jsPDF, tracker: PdfInkTracker | null | 
   return edges;
 }
 
+/** Касание (общая граница с точностью до округления) — не пересечение. */
+const TOUCH_EPS_MM = 1e-6;
+
 function intersects(a: PdfBox, b: PdfBox): boolean {
-  return a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+  return (
+    a.x0 < b.x1 - TOUCH_EPS_MM &&
+    b.x0 < a.x1 - TOUCH_EPS_MM &&
+    a.y0 < b.y1 - TOUCH_EPS_MM &&
+    b.y0 < a.y1 - TOUCH_EPS_MM
+  );
 }
 
 /** QR-блок в точке (qrX, qrY) — левый верхний угол матрицы. */
@@ -423,26 +452,31 @@ export function findJournalQrSpot(params: {
   boxes: PdfBox[];
   /**
    * Где должен кончаться QR справа, мм от левого края листа (правая граница
-   * таблицы). По умолчанию — `JOURNAL_QR_EDGE_MM` от края листа.
+   * таблицы). По умолчанию — правое поле листа.
    */
   rightEdge?: number;
 }): { x: number; y: number; moved: boolean; bottomRow: boolean } | null {
   const { pageWidth, pageHeight, size, boxes } = params;
-  const rightEdge = Math.min(params.rightEdge ?? pageWidth - JOURNAL_QR_EDGE_MM, pageWidth - JOURNAL_QR_EDGE_MM);
+  const rightEdge = Math.min(
+    params.rightEdge ?? pageWidth - JOURNAL_QR_DEFAULT_RIGHT_MARGIN_MM,
+    pageWidth - JOURNAL_QR_EDGE_MM,
+  );
   const caption: CaptionLayout = {
     lines: params.captionWidth > 0 ? [{ text: "", bold: false }] : [],
     width: params.captionWidth,
     height: params.captionHeight,
   };
-  const leftmost = JOURNAL_QR_EDGE_MM + (params.captionWidth > 0 ? params.captionWidth + CAPTION_GAP_MM : 0);
+  // Весь блок (и сдвинутый) — внутри полей листа.
+  const frame = JOURNAL_SHEET_MARGIN_MM;
+  const leftmost = frame + (params.captionWidth > 0 ? params.captionWidth + CAPTION_GAP_MM : 0);
   const rightmost = rightEdge - size;
-  const bottom = pageHeight - JOURNAL_QR_EDGE_MM - size;
+  const bottom = pageHeight - JOURNAL_QR_BOTTOM_MM - size;
   const fits = (x: number, y: number) => {
     const block = blockAt(x, y, size, caption);
-    return block.y1 <= pageHeight - JOURNAL_QR_EDGE_MM + 1e-6 && block.y0 >= JOURNAL_QR_EDGE_MM && isFree(block, boxes);
+    return block.y1 <= pageHeight - JOURNAL_QR_BOTTOM_MM + 1e-6 && block.y0 >= frame && isFree(block, boxes);
   };
   if (fits(rightmost, bottom)) return { x: rightmost, y: bottom, moved: false, bottomRow: true };
-  for (let y = bottom; y >= JOURNAL_QR_EDGE_MM; y -= SEARCH_STEP_MM) {
+  for (let y = bottom; y >= frame; y -= SEARCH_STEP_MM) {
     for (let x = rightmost; x >= leftmost; x -= SEARCH_STEP_MM) {
       if (fits(x, y)) return { x, y, moved: true, bottomRow: y === bottom };
     }
@@ -497,7 +531,7 @@ export function stampJournalQr(
       rightEdge,
     });
     const x = spot?.x ?? Math.min(rightEdge, pageWidth - JOURNAL_QR_EDGE_MM) - size;
-    const y = spot?.y ?? pageHeight - JOURNAL_QR_EDGE_MM - size;
+    const y = spot?.y ?? pageHeight - JOURNAL_QR_BOTTOM_MM - size;
     if (!params.probeOnly) drawBrandQrMatrixPdf(doc, qr, x, y, size);
 
     if (caption.lines.length && !params.probeOnly) {

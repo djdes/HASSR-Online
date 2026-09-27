@@ -1,8 +1,17 @@
 import type { Prisma } from "@prisma/client";
 import { jsPDF } from "jspdf";
-import type { CellDef, CellHookData, RowInput } from "jspdf-autotable";
+import type { CellDef, CellHookData, RowInput, UserOptions } from "jspdf-autotable";
 import { registerJournalUnicodeFont } from "@/lib/pdf-journal-font";
-import { JOURNAL_LINE_WIDTH, journalAutoTable as autoTable } from "@/lib/pdf-journal-table";
+import { JOURNAL_LINE_WIDTH, journalAutoTable } from "@/lib/pdf-journal-table";
+import {
+  JOURNAL_FOOTER_TEXT_BAND_BRANDED_MM,
+  JOURNAL_FOOTER_TEXT_BAND_MM,
+  JOURNAL_SHEET_MARGIN_MM,
+  JOURNAL_TITLE_HEADER_GAP_MM,
+  journalCapHeightMm,
+  journalDescentMm,
+  journalSheetTopBaseline,
+} from "@/lib/pdf-journal-sheet";
 import { getCalendarDayKind } from "@/lib/production-calendar-data";
 import {
   resolveApprover,
@@ -298,6 +307,7 @@ import { journalDocumentPdfQr, journalPdfQrOrigin } from "@/lib/journal-pdf-qr-l
 import { loadOrderScansForPdf } from "@/lib/journal-order-scans-db";
 import { appendOrderScansToPdf, type OrderScanForPdf } from "@/lib/journal-order-scans-pdf";
 import {
+  JOURNAL_QR_BOTTOM_RESERVE_MM,
   journalQrFooterInset,
   journalQrRightEdges,
   reserveJournalQrBottomMargin,
@@ -473,7 +483,7 @@ function drawMedBookPdf(doc: jsPDF, params: {
       fontStyle: "bold",
       lineColor: [0, 0, 0],
     },
-    margin: { left: 10, right: 10 },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
   });
 
   autoTable(doc, {
@@ -500,8 +510,8 @@ function drawMedBookPdf(doc: jsPDF, params: {
       lineColor: [0, 0, 0],
     },
     margin: {
-      left: 10,
-      right: 10,
+      left: PDF_SHEET_MARGIN,
+      right: PDF_SHEET_MARGIN,
       // Резерв под повтор штампа ХАССП на страницах 2..N.
       top: activePageHeaderHeight + HEADER_TITLE_GAP,
     },
@@ -533,8 +543,8 @@ function drawMedBookPdf(doc: jsPDF, params: {
       lineColor: [0, 0, 0],
     },
     margin: {
-      left: 10,
-      right: 10,
+      left: PDF_SHEET_MARGIN,
+      right: PDF_SHEET_MARGIN,
       // Резерв под повтор штампа ХАССП на страницах 2..N.
       top: activePageHeaderHeight + HEADER_TITLE_GAP,
     },
@@ -622,7 +632,7 @@ function drawMedBookPdf(doc: jsPDF, params: {
       fontStyle: "bold",
       lineColor: [0, 0, 0],
     },
-    margin: { left: 10, right: 10 },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
   });
 
   autoTable(doc, {
@@ -649,8 +659,8 @@ function drawMedBookPdf(doc: jsPDF, params: {
       lineColor: [0, 0, 0],
     },
     margin: {
-      left: 10,
-      right: 10,
+      left: PDF_SHEET_MARGIN,
+      right: PDF_SHEET_MARGIN,
       // Резерв под повтор штампа ХАССП на страницах 2..N.
       top: activePageHeaderHeight + HEADER_TITLE_GAP,
     },
@@ -661,12 +671,12 @@ function drawMedBookPdf(doc: jsPDF, params: {
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(9);
   for (const rule of MED_BOOK_VACCINATION_RULES) {
-    if (noteY > doc.internal.pageSize.getHeight() - 12) {
-      doc.addPage();
-      noteY = 16;
-    }
-    const lines = doc.splitTextToSize(rule, pageWidth - 20) as string[];
-    doc.text(lines, 10, noteY);
+    const lines = doc.splitTextToSize(rule, pageWidth - PDF_SHEET_MARGIN * 2) as string[];
+    // Правило целиком над нижним полем; не влезает — на новую страницу
+    // (под повтор штампа ХАССП: раньше текст начинался на 16 мм и ложился
+    // под штамп, который повторяется на всех страницах 2..N).
+    noteY = placeTextBlock(doc, noteY, (lines.length - 1) * 4.5);
+    doc.text(lines, PDF_SHEET_MARGIN, noteY);
     noteY += lines.length * 4.5 + 2;
   }
 }
@@ -725,10 +735,46 @@ function journalNameOr(fallback: string): string {
  */
 
 /**
- * Левое/правое поле бланка (мм). Штамп ХАССП и таблица журнала обязаны
+ * Поле бланка (мм) — ОДНО на все четыре стороны листа (`pdf-journal-sheet.ts`):
+ * сверху шапка ХАССП (или крупный заголовок), слева и справа шапка и
+ * таблицы, снизу низ QR в углу. Штамп ХАССП и таблица журнала обязаны
  * иметь ОДНУ ширину — иначе на листе видна «ступенька».
  */
-const PDF_SHEET_MARGIN = 10;
+const PDF_SHEET_MARGIN = JOURNAL_SHEET_MARGIN_MM;
+
+/**
+ * Где стояла шапка ХАССП до выравнивания полей (мм от верха листа): под
+ * крупный заголовок, который у половины бланков в печать не идёт. Старые
+ * фиксированные координаты бланков (заголовки, «УТВЕРЖДАЮ», начало таблиц)
+ * посчитаны от неё — `legacyY` переносит их к шапке на её новом месте.
+ */
+const LEGACY_HEADER_TOP = 28;
+
+/**
+ * Верх последней нарисованной шапки ХАССП (мм) — от него `legacyY`
+ * пересчитывает старые координаты. Сбрасывается в начале рендера.
+ */
+let lastHeaderTop = LEGACY_HEADER_TOP;
+
+/**
+ * Низ крупного заголовка бланка (`drawTitle`) по страницам: шапка ХАССП
+ * встаёт под ним, а на странице без заголовка — на верхнее поле листа.
+ */
+const titleBottomByPage = new Map<number, number>();
+
+/**
+ * Нижнее поле текущего прохода рендера (мм от низа листа): до него
+ * доходят таблицы и текст бланка. Поле листа + полоса под QR в углу (второй
+ * проход) или под подписью страницы / подвалом партнёра (первый).
+ */
+let activeFooterReserveMm = JOURNAL_SHEET_MARGIN_MM + JOURNAL_FOOTER_TEXT_BAND_MM;
+
+/**
+ * Полоса подвала над нижним полем у левого края (мм): «СТР. X ИЗ N» или
+ * подвал партнёра в две строки. Узкий блок у левого поля (подписи) может
+ * опускаться до неё — QR в углу стоит справа.
+ */
+let activeFooterTextBandMm = JOURNAL_FOOTER_TEXT_BAND_MM;
 
 /**
  * Художник шапки текущего документа: `drawJournalHeader` запоминает,
@@ -737,11 +783,114 @@ const PDF_SHEET_MARGIN = 10;
  */
 let activePageHeaderPainter: ((doc: jsPDF) => void) | null = null;
 
-/** Высота шапки текущего документа (мм) — резерв `margin.top` у autoTable. */
+/**
+ * Низ повторённой шапки на страницах 2..N (мм от верха листа) — резерв
+ * `margin.top` у autoTable. На продолжениях шапка стоит на верхнем поле
+ * (крупного заголовка там нет), поэтому это поле листа + высота шапки.
+ */
 let activePageHeaderHeight = 0;
 
 /** Страницы, на которых шапка уже нарисована (без повторного оверлея). */
 const pagesWithJournalHeader = new Set<number>();
+
+function currentPageNumber(doc: jsPDF): number {
+  return (
+    (doc as jsPDF & { getCurrentPageInfo?: () => { pageNumber: number } }).getCurrentPageInfo?.()
+      .pageNumber ?? doc.getNumberOfPages()
+  );
+}
+
+/**
+ * Старая фиксированная координата бланка (при шапке на 28 мм) → та же
+ * точка относительно шапки на её нынешнем месте. Весь блок под шапкой
+ * поднимается вместе с ней, промежутки между строками не меняются.
+ */
+function legacyY(y: number): number {
+  return y - (LEGACY_HEADER_TOP - lastHeaderTop);
+}
+
+/** Нижняя граница содержимого страницы (мм от верха листа) в этом проходе. */
+function contentBottom(doc: jsPDF): number {
+  return doc.internal.pageSize.getHeight() - activeFooterReserveMm;
+}
+
+/**
+ * Нижняя граница узкого блока у левого поля (подписи «ВЫПОЛНИЛ/ПРОВЕРИЛ»,
+ * левая половина листа): ему можно в полосу под QR — QR и подпись к нему
+ * стоят в правом углу, — но не ниже подвала слева.
+ */
+function narrowContentBottom(doc: jsPDF): number {
+  return doc.internal.pageSize.getHeight() - PDF_SHEET_MARGIN - activeFooterTextBandMm;
+}
+
+/**
+ * Базовая линия первой строки текста на новой странице-продолжении:
+ * под повтором штампа ХАССП (если он есть у документа) или от верхнего
+ * поля листа. Кегль — текущий.
+ */
+function continuationTextBaseline(doc: jsPDF): number {
+  const top = activePageHeaderPainter ? activePageHeaderHeight + HEADER_TITLE_GAP : PDF_SHEET_MARGIN;
+  return top + journalCapHeightMm(doc);
+}
+
+/**
+ * Текстовый блок под таблицей — целиком над нижним полем. `baseline` —
+ * базовая линия первой строки, `linesSpan` — от неё до базовой линии
+ * последней. Не помещается — новая страница, блок с её верха. Возвращает
+ * базовую линию первой строки.
+ */
+function placeTextBlock(doc: jsPDF, baseline: number, linesSpan: number): number {
+  if (baseline + linesSpan + journalDescentMm(doc) <= contentBottom(doc)) return baseline;
+  doc.addPage();
+  return continuationTextBaseline(doc);
+}
+
+/**
+ * Начало блока «заголовок + список» под таблицей: помещается на страницу
+ * целиком — как `placeTextBlock` для всего блока; длиннее страницы — на
+ * этой странице хватает места хотя бы под `headSpan` (заголовок с первой
+ * строкой), остальное вызывающий переносит построчно.
+ */
+function placeBlockStart(doc: jsPDF, baseline: number, blockSpan: number, headSpan: number): number {
+  const pageSpan = contentBottom(doc) - continuationTextBaseline(doc) - journalDescentMm(doc);
+  return placeTextBlock(doc, baseline, blockSpan <= pageSpan ? blockSpan : headSpan);
+}
+
+/**
+ * Строки одна под другой (подписи): короткий список — одним блоком над
+ * нижним полем листа (не помещается — целиком на новую страницу), список
+ * длиннее страницы — строка за строкой с переносом на следующие страницы.
+ * Раньше длинный список уходил за нижний край листа. Шрифт — текущий.
+ */
+function drawTextLinesInFrame(doc: jsPDF, lines: string[], x: number, firstBaseline: number, step: number) {
+  if (lines.length === 0) return;
+  const span = (lines.length - 1) * step;
+  const pageSpan = contentBottom(doc) - continuationTextBaseline(doc);
+  let y = span <= pageSpan ? placeTextBlock(doc, firstBaseline, span) : firstBaseline;
+  for (const line of lines) {
+    y = placeTextBlock(doc, y, 0);
+    doc.text(line, x, y);
+    y += step;
+  }
+}
+
+/**
+ * Таблица бланка: `journalAutoTable` + верх продолжения. Если у документа
+ * шапка повторяется на страницах 2..N, таблица без своего `margin.top`
+ * продолжается под этим повтором (иначе штамп ложился на строки таблицы).
+ */
+function autoTable(doc: jsPDF, options: UserOptions): void {
+  const margin = options.margin;
+  const needsTop =
+    activePageHeaderPainter !== null &&
+    (margin === undefined || (typeof margin === "object" && !Array.isArray(margin) && margin.top === undefined));
+  journalAutoTable(
+    doc,
+    needsTop
+      ? { ...options, margin: { ...(margin ?? {}), top: activePageHeaderHeight + HEADER_TITLE_GAP } }
+      : options,
+  );
+}
 
 /**
  * Страница-приложение «Подписи сотрудников (общий планшет)».
@@ -755,23 +904,27 @@ function appendSignaturesPage(doc: jsPDF, fontName: string, lines: PdfSignatureL
   doc.addPage("a4", "landscape");
   doc.setFont(fontName, "bold");
   doc.setFontSize(13);
-  doc.text("Приложение. Подписи сотрудников через общий планшет", 14, 16);
+  // Верх заголовка — на верхнем поле листа (раньше базовая линия на 16 мм).
+  const titleY = journalSheetTopBaseline(doc);
+  doc.text("Приложение. Подписи сотрудников через общий планшет", PDF_SHEET_MARGIN, titleY);
   doc.setFont(fontName, "normal");
   doc.setFontSize(9);
   doc.text(
     "Каждый вход подтверждён личным ПИН сотрудника на планшете организации; запись журнала внесена под этим входом.",
-    14,
-    22,
+    PDF_SHEET_MARGIN,
+    titleY + 6,
   );
   const fmt = (d: Date) => d.toLocaleString("ru-RU", { dateStyle: "short", timeStyle: "short" });
   autoTable(doc, {
-    startY: 27,
+    startY: titleY + 11,
     head: [["Сотрудник", "Подтверждение", "Планшет", "Входов", "С фото", "Первый", "Последний"]],
     body: lines.map((l) => [l.employeeName, l.method, l.device ?? "—", String(l.count), String(l.photos), fmt(l.firstAt), fmt(l.lastAt)]),
     theme: "grid",
     styles: { font: fontName, fontSize: 9, cellPadding: 2 },
     headStyles: { fillColor: [238, 241, 255], textColor: [11, 16, 36], font: fontName, fontStyle: "bold" },
-    margin: { left: 14, right: 14 },
+    // Приложение добавляется после повтора штампа — своей шапки у его
+    // страниц нет, продолжение таблицы начинается от верхнего поля.
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN, top: PDF_SHEET_MARGIN },
   });
 }
 
@@ -847,7 +1000,10 @@ function drawJournalHeader(doc: jsPDF, params: {
    * таблицы журнала, иначе на листе «ступенька» (аудит r5, п.2).
    */
   marginX?: number;
-  /** Верхняя координата штампа (мм). */
+  /**
+   * Верхняя координата штампа (мм). По умолчанию — верхнее поле листа, а
+   * на странице с крупным заголовком (`drawTitle`) — под ним.
+   */
   top?: number;
   /**
    * Своя «Периодичность контроля» — у бланков, где экран берёт её из
@@ -870,7 +1026,12 @@ function drawJournalHeader(doc: jsPDF, params: {
   const withPeriodicity = Boolean(periodicityText);
   const pageWidth = doc.internal.pageSize.getWidth();
   const x = params.marginX ?? PDF_SHEET_MARGIN;
-  const y = params.top ?? 28;
+  // Раньше по умолчанию 28 мм — место под крупный заголовок даже там, где
+  // его нет: верхнее поле выходило вдвое больше боковых.
+  const titleBottom = titleBottomByPage.get(currentPageNumber(doc));
+  const y =
+    params.top ?? (titleBottom !== undefined ? titleBottom + JOURNAL_TITLE_HEADER_GAP_MM : PDF_SHEET_MARGIN);
+  lastHeaderTop = y;
   const width = pageWidth - x * 2;
   const leftWidth = 56;
   // «Начат 01-08-2026» шире, чем «СТР. 1 ИЗ 1» — правая колонка одна и та
@@ -981,17 +1142,16 @@ function drawJournalHeader(doc: jsPDF, params: {
   doc.setFont("JournalUnicode", "normal");
   doc.setFontSize(10);
 
-  const currentPage =
-    (doc as jsPDF & { getCurrentPageInfo?: () => { pageNumber: number } })
-      .getCurrentPageInfo?.().pageNumber ?? doc.getNumberOfPages();
-  pagesWithJournalHeader.add(currentPage);
+  pagesWithJournalHeader.add(currentPageNumber(doc));
 
   if (params.repeatOnPages) {
     const repeatParams = { ...params, repeatOnPages: false };
     activePageHeaderPainter = (target) => {
       drawJournalHeader(target, repeatParams);
     };
-    activePageHeaderHeight = y + totalHeight;
+    // На страницах 2..N крупного заголовка нет — повтор встаёт на верхнее
+    // поле листа (или на заданный `top`), таблица продолжается под ним.
+    activePageHeaderHeight = (params.top ?? PDF_SHEET_MARGIN) + totalHeight;
   }
 
   return y + totalHeight;
@@ -1018,9 +1178,11 @@ const HEADER_TITLE_GAP = 6;
  * Y для первого блока под шапкой. Если шапка низкая — сохраняем историческую
  * координату (чтобы не ломать вёрстку журналов), если высокая (длинная
  * периодичность) — сдвигаем вниз, чтобы текст не лёг на заголовок.
+ * Историческая координата считана при шапке на 28 мм — `legacyY` поднимает
+ * её вместе с шапкой, отступ под шапкой остаётся прежним.
  */
 function afterHeader(headerBottom: number, fallbackY: number) {
-  return Math.max(fallbackY, headerBottom + HEADER_TITLE_GAP);
+  return Math.max(legacyY(fallbackY), headerBottom + HEADER_TITLE_GAP);
 }
 
 /**
@@ -1028,7 +1190,7 @@ function afterHeader(headerBottom: number, fallbackY: number) {
  * между полями `marginX`. Таблицы с жёсткими ширинами были уже штампа
  * ХАССП, и правый край таблицы не совпадал с рамкой шапки.
  */
-function fitColumnWidths(doc: jsPDF, widths: number[], marginX: number) {
+function fitColumnWidths(doc: jsPDF, widths: number[], marginX = PDF_SHEET_MARGIN) {
   const available = doc.internal.pageSize.getWidth() - marginX * 2;
   const total = widths.reduce((sum, value) => sum + value, 0) || 1;
   // Чуть меньше единицы: сумма дробных ширин не должна превысить лист.
@@ -1062,6 +1224,16 @@ function formatApprovalDateLong(dateKey: string, year: number | string) {
   return `« ${day} » ${month} ${dateYear} г.`;
 }
 
+/**
+ * Центр строки даты под подписью «УТВЕРЖДАЮ»: как было — на 6 мм левее
+ * правого края блока, но строка не выходит за правое поле листа (блок
+ * «УТВЕРЖДАЮ» теперь стоит вровень с рамкой шапки, а дата шире 12 мм).
+ * Шрифт и кегль — текущие.
+ */
+function approvalDateCenterX(doc: jsPDF, text: string, rightEdge: number): number {
+  return Math.min(rightEdge - 6, rightEdge - doc.getTextWidth(text) / 2);
+}
+
 function drawTitle(doc: jsPDF, title: string) {
   // Название журнала — жирным (замечание владельца по печати).
   doc.setFont("JournalUnicode", "bold");
@@ -1069,9 +1241,8 @@ function drawTitle(doc: jsPDF, title: string) {
   // холодильного и морозильного оборудования" don't get truncated by the right
   // page edge. We measure the rendered width and pick a font size that fits.
   const pageWidth = doc.internal.pageSize.getWidth();
-  // Слева поле 14 мм; справа заголовок не выходит за правую рамку самой
-  // узкой шапки (поля 24 мм) — жирный шире, и длинное название вылезало
-  // правее таблицы, сбивая выравнивание QR по краю бланка.
+  // Ширина — прежняя (кегль заголовка не меняется): заголовок кончается
+  // заметно левее правой рамки шапки, жирный шире обычного.
   const maxWidth = pageWidth - 14 - 24;
   const sizes = [26, 22, 18, 16, 14];
   let chosen = sizes[sizes.length - 1];
@@ -1083,8 +1254,21 @@ function drawTitle(doc: jsPDF, title: string) {
     }
   }
   doc.setFontSize(chosen);
-  doc.text(title, 14, 15);
+  drawSheetTitleLine(doc, title);
   doc.setFont("JournalUnicode", "normal");
+}
+
+/**
+ * Крупный заголовок бланка в верхнем левом углу: верх прописных — на
+ * верхнем поле листа, слева — по левому полю (вровень с рамкой шапки).
+ * Раньше базовая линия стояла на 15 мм, шапка под ним — на 28 мм.
+ * Запоминает низ заголовка: шапка ХАССП этой страницы встаёт под ним.
+ * Шрифт и кегль — текущие.
+ */
+function drawSheetTitleLine(doc: jsPDF, title: string) {
+  const baseline = journalSheetTopBaseline(doc);
+  doc.text(title, PDF_SHEET_MARGIN, baseline);
+  titleBottomByPage.set(currentPageNumber(doc), baseline + journalDescentMm(doc));
 }
 
 /** `config.printEmptyRows` документа → неотрицательное число. */
@@ -1457,7 +1641,6 @@ function drawHygienePdf(doc: jsPDF, params: {
     withPeriodicity: true,
     startedDate: params.dateFrom,
     finishedDate: params.dateTo,
-    marginX: 14,
     repeatOnPages: true,
   });
 
@@ -1488,8 +1671,8 @@ function drawHygienePdf(doc: jsPDF, params: {
       lineColor: [0, 0, 0],
     },
     margin: {
-      left: 14,
-      right: 14,
+      left: PDF_SHEET_MARGIN,
+      right: PDF_SHEET_MARGIN,
       top: activePageHeaderHeight + HEADER_TITLE_GAP,
     },
     columnStyles: {
@@ -1506,7 +1689,6 @@ function drawHygienePdf(doc: jsPDF, params: {
     withPeriodicity: true,
     startedDate: params.dateFrom,
     finishedDate: params.dateTo,
-    marginX: 14,
   });
 
   // Блок «В журнал регистрируются результаты» печатается целиком
@@ -1514,29 +1696,29 @@ function drawHygienePdf(doc: jsPDF, params: {
   let cursorY = afterHeader(page2HeaderBottom, 84);
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(9);
-  doc.text("В журнал регистрируются результаты:", 14, cursorY);
+  doc.text("В журнал регистрируются результаты:", PDF_SHEET_MARGIN, cursorY);
   doc.setFont("JournalUnicode", "normal");
   cursorY = renderWrappedTextBlock(
     doc,
     HYGIENE_REGISTER_NOTES.map((note) => `- ${note}`),
-    14,
+    PDF_SHEET_MARGIN,
     cursorY + 6,
-    pageWidth - 28,
+    pageWidth - PDF_SHEET_MARGIN * 2,
     5
   );
   cursorY += 8;
   doc.setFont("JournalUnicode", "bold");
   doc.text(
     "Список работников, отмеченных в журнале на день осмотра, должен соответствовать числу работников на этот день в смену",
-    14,
+    PDF_SHEET_MARGIN,
     cursorY
   );
 
   cursorY += 12;
   doc.setFont("JournalUnicode", "italic");
-  doc.text("Условные обозначения:", 14, cursorY);
+  doc.text("Условные обозначения:", PDF_SHEET_MARGIN, cursorY);
   cursorY += 5;
-  renderWrappedTextBlock(doc, HYGIENE_REGISTER_LEGEND, 14, cursorY, pageWidth - 28, 5);
+  renderWrappedTextBlock(doc, HYGIENE_REGISTER_LEGEND, PDF_SHEET_MARGIN, cursorY, pageWidth - PDF_SHEET_MARGIN * 2, 5);
 }
 
 /** Минимум строк в бланке новой формы: пустые строки — под ручное заполнение. */
@@ -1563,7 +1745,6 @@ function drawHygieneV2Pdf(doc: jsPDF, params: {
     withPeriodicity: true,
     startedDate: params.dateFrom,
     finishedDate: params.dateTo,
-    marginX: 14,
     repeatOnPages: true,
   });
 
@@ -1573,9 +1754,9 @@ function drawHygieneV2Pdf(doc: jsPDF, params: {
   const captionY = afterHeader(headerBottom, 66);
   doc.setFont("JournalUnicode", "normal");
   doc.setFontSize(9);
-  doc.text(HYGIENE_V2_FORM_CAPTION, pageWidth - 14, captionY, { align: "right" });
+  doc.text(HYGIENE_V2_FORM_CAPTION, pageWidth - PDF_SHEET_MARGIN, captionY, { align: "right" });
 
-  const titleY = Math.max(74, captionY + 8);
+  const titleY = Math.max(legacyY(74), captionY + 8);
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(14);
   doc.text("ГИГИЕНИЧЕСКИЙ ЖУРНАЛ (СОТРУДНИКИ)", pageWidth / 2, titleY, { align: "center" });
@@ -1635,8 +1816,8 @@ function drawHygieneV2Pdf(doc: jsPDF, params: {
       lineColor: [0, 0, 0],
     },
     margin: {
-      left: 14,
-      right: 14,
+      left: PDF_SHEET_MARGIN,
+      right: PDF_SHEET_MARGIN,
       top: activePageHeaderHeight + HEADER_TITLE_GAP,
     },
     columnStyles: {
@@ -1674,7 +1855,6 @@ function drawHealthPdf(doc: jsPDF, params: {
     withPeriodicity: false,
     startedDate: params.dateFrom,
     finishedDate: params.dateTo,
-    marginX: 14,
     repeatOnPages: true,
   });
 
@@ -1705,8 +1885,8 @@ function drawHealthPdf(doc: jsPDF, params: {
       lineColor: [0, 0, 0],
     },
     margin: {
-      left: 14,
-      right: 14,
+      left: PDF_SHEET_MARGIN,
+      right: PDF_SHEET_MARGIN,
       top: activePageHeaderHeight + HEADER_TITLE_GAP,
     },
     columnStyles: {
@@ -1718,10 +1898,21 @@ function drawHealthPdf(doc: jsPDF, params: {
   });
 
   const finalY = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY || 150;
-  let cursorY = renderWrappedTextBlock(doc, HEALTH_REGISTER_NOTES, 14, finalY + 10, pageWidth - 28, 5);
+  // Примечания и напоминание — одним блоком над нижним полем листа: у
+  // длинного журнала таблица доходит до низа, и блок уезжал за край листа.
+  // Начертание — как было (после таблицы — жирное заголовка), кегль 9.
+  doc.setFontSize(9);
+  const notesWidth = pageWidth - PDF_SHEET_MARGIN * 2;
+  const notesLines = HEALTH_REGISTER_NOTES.reduce(
+    (count, note) => count + (doc.splitTextToSize(note, notesWidth) as string[]).length,
+    0
+  );
+  // От первой строки примечаний до строки напоминания: строки по 5 мм + 8.
+  const notesY = placeTextBlock(doc, finalY + 10, notesLines * 5 + 8);
+  let cursorY = renderWrappedTextBlock(doc, HEALTH_REGISTER_NOTES, PDF_SHEET_MARGIN, notesY, notesWidth, 5);
   cursorY += 8;
   doc.setFont("JournalUnicode", "bold");
-  doc.text(HEALTH_REGISTER_REMINDER, 14, cursorY);
+  doc.text(HEALTH_REGISTER_REMINDER, PDF_SHEET_MARGIN, cursorY);
 }
 
 /**
@@ -2244,13 +2435,10 @@ function drawColdEquipmentPdf(doc: jsPDF, params: {
       lineWidth: 0.2,
     },
     bodyStyles: { lineWidth: 0.2 },
-    columnStyles: {
-      0: { cellWidth: 34 },
-      1: { cellWidth: 44 },
-      ...Object.fromEntries(
-        dateKeys.map((_, index) => [index + 2, { cellWidth: dayWidth }])
-      ),
-    },
+    // Прежние пропорции на всю ширину между полями — край в край со
+    // штампом: за 14 дней таблица была на 31 мм уже шапки, за 31 день —
+    // на 2,5 мм шире листа.
+    columnStyles: fitColumnWidths(doc, [34, 44, ...dateKeys.map(() => dayWidth)]),
     margin: {
       left: PDF_SHEET_MARGIN,
       right: PDF_SHEET_MARGIN,
@@ -2304,7 +2492,6 @@ function drawCleaningPdf(doc: jsPDF, params: {
     withPeriodicity: false,
     startedDate: params.dateFrom,
     finishedDate: params.dateTo,
-    marginX: 16,
     repeatOnPages: true,
   });
 
@@ -2567,14 +2754,10 @@ function drawCleaningPdf(doc: jsPDF, params: {
   // Ширины ОБЯЗАНЫ уместиться в лист: при 30 днях сумма 56+44+30×8 = 340 мм
   // не влезала в печатную область (265 мм), и autoTable обрезал последние
   // колонки — в бланке пропадали числа 24-30 вместе с отметками уборки.
-  const cleaningUsableWidth = doc.internal.pageSize.getWidth() - 32;
+  const cleaningUsableWidth = doc.internal.pageSize.getWidth() - PDF_SHEET_MARGIN * 2;
   const cleaningNameWidth = dateKeys.length > 20 ? 40 : 56;
   const cleaningDetergentWidth = dateKeys.length > 20 ? 32 : 44;
-  const columnStyles: Record<number, { cellWidth: number; cellPadding?: number }> = {
-    0: { cellWidth: cleaningNameWidth },
-    1: { cellWidth: cleaningDetergentWidth },
-  };
-  const dayWidth =
+  const baseDayWidth =
     dateKeys.length > 0
       ? Math.max(
           4.5,
@@ -2585,6 +2768,19 @@ function drawCleaningPdf(doc: jsPDF, params: {
           )
         )
       : 12;
+  // Те же пропорции на всю ширину между полями — край в край со штампом
+  // (при 14 днях дневные колонки упирались в предел 12 мм, и таблица была
+  // уже шапки).
+  const fittedWidths = fitColumnWidths(doc, [
+    cleaningNameWidth,
+    cleaningDetergentWidth,
+    ...dateKeys.map(() => baseDayWidth),
+  ]);
+  const dayWidth = dateKeys.length > 0 ? fittedWidths[2].cellWidth : baseDayWidth;
+  const columnStyles: Record<number, { cellWidth: number; cellPadding?: number }> = {
+    0: { cellWidth: fittedWidths[0].cellWidth },
+    1: { cellWidth: fittedWidths[1].cellWidth },
+  };
   dateKeys.forEach((_, index) => {
     columnStyles[index + 2] = {
       cellWidth: dayWidth,
@@ -2624,8 +2820,8 @@ function drawCleaningPdf(doc: jsPDF, params: {
       lineWidth: 0.2,
     },
     margin: {
-      left: 16,
-      right: 16,
+      left: PDF_SHEET_MARGIN,
+      right: PDF_SHEET_MARGIN,
       // Резерв под повтор штампа ХАССП на страницах 2..N.
       top: activePageHeaderHeight + HEADER_TITLE_GAP,
     },
@@ -2635,21 +2831,36 @@ function drawCleaningPdf(doc: jsPDF, params: {
   });
 
   const afterMatrixY = (doc as { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY ?? 140;
+  // Легенда — те же строки, что на экране: «/-/» вместо легаси-«/»
+  // и КИРИЛЛИЧЕСКИЕ коды Т/Г (в config.legend они хранятся латиницей).
+  const legendLines = (config.legend.length > 0 ? config.legend : [...CLEANING_LEGEND]).map(
+    (line) => displayCleaningLegendLine(line)
+  );
+  const legendWidth = pageWidth - PDF_SHEET_MARGIN * 2;
+  // Строки легенды печатаются курсивом 9 pt (renderWrappedTextBlock) —
+  // считаем их так же; кегль подписей до легенды не трогаем.
+  const legendFontSize = doc.getFontSize();
+  doc.setFont("JournalUnicode", "italic");
+  doc.setFontSize(9);
+  const legendLineCount = legendLines.reduce(
+    (count, line) => count + (doc.splitTextToSize(line, legendWidth) as string[]).length,
+    0
+  );
+  doc.setFontSize(legendFontSize);
+  // Цветовая легенда дней + «Условные обозначения» — одним блоком над
+  // нижним полем листа (у длинной таблицы блок уходил за край листа).
+  const dayLegendBaseline = placeTextBlock(doc, afterMatrixY + 6, 15 + Math.max(0, legendLineCount - 1) * 4.8);
   // Строка цветовой легенды дней — как `CleaningDayColorLegend` на экране.
-  const dayLegendY = drawDayColorLegend(doc, 16, afterMatrixY + 6);
+  const dayLegendY = drawDayColorLegend(doc, PDF_SHEET_MARGIN, dayLegendBaseline);
   doc.setFont("JournalUnicode", "italic");
   const legendY = dayLegendY + 6;
-  doc.text("Условные обозначения:", 16, legendY);
+  doc.text("Условные обозначения:", PDF_SHEET_MARGIN, legendY);
   const afterLegendY = renderWrappedTextBlock(
     doc,
-    // Легенда — те же строки, что на экране: «/-/» вместо легаси-«/»
-    // и КИРИЛЛИЧЕСКИЕ коды Т/Г (в config.legend они хранятся латиницей).
-    (config.legend.length > 0 ? config.legend : [...CLEANING_LEGEND]).map(
-      (line) => displayCleaningLegendLine(line)
-    ),
-    16,
+    legendLines,
+    PDF_SHEET_MARGIN,
     legendY + 5,
-    pageWidth - 32,
+    legendWidth,
     4.8
   );
   doc.setFont("JournalUnicode", "normal");
@@ -2688,11 +2899,11 @@ function drawCleaningPdf(doc: jsPDF, params: {
   // страницы, чтобы внизу листа не висела строка-сирота.
   const SUMMARY_MIN_BLOCK = 24;
   let summaryStartY = afterLegendY + 6;
-  if (summaryStartY + SUMMARY_MIN_BLOCK > doc.internal.pageSize.getHeight() - 18) {
+  if (summaryStartY + SUMMARY_MIN_BLOCK > contentBottom(doc)) {
     doc.addPage("a4", "landscape");
     summaryStartY = activePageHeaderHeight
       ? activePageHeaderHeight + HEADER_TITLE_GAP
-      : 28;
+      : PDF_SHEET_MARGIN;
   }
 
   autoTable(doc, {
@@ -2724,9 +2935,8 @@ function drawCleaningPdf(doc: jsPDF, params: {
       lineWidth: 0.2,
     },
     margin: {
-      left: 16,
-      right: 16,
-      bottom: 18,
+      left: PDF_SHEET_MARGIN,
+      right: PDF_SHEET_MARGIN,
       top: activePageHeaderHeight + HEADER_TITLE_GAP,
     },
     // Сводную таблицу РАЗРЕШЕНО рвать между страницами (раньше
@@ -2735,11 +2945,8 @@ function drawCleaningPdf(doc: jsPDF, params: {
     // меньше, чем шапка + две строки, блок начинается с новой страницы
     // (см. summaryStartY ниже).
     rowPageBreak: "avoid",
-    columnStyles: {
-      0: { cellWidth: 48 },
-      1: { cellWidth: 96 },
-      2: { cellWidth: 96 },
-    },
+    // Прежние пропорции 48 : 96 : 96 — на всю ширину между полями.
+    columnStyles: fitColumnWidths(doc, [48, 96, 96]),
   });
 }
 
@@ -2823,35 +3030,50 @@ function drawFinishedProductPdf(doc: jsPDF, params: {
       fontStyle: "bold",
       lineColor: [0, 0, 0],
     },
-    margin: { left: 10, right: 10 },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
     // F-аудит: пустая строка бланка должна быть ~22pt (≈7.8мм) высотой,
     // иначе в неё физически нечего вписать от руки.
     bodyStyles: { minCellHeight: 7.8 },
   });
 
-  const finishedFooterY = (doc as { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY || 66;
+  const tableEndY = (doc as { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY || 66;
+  const hasFooterNote = Boolean(params.config.footerNote);
+  const members = params.config.commissionMembers;
+  const noteOffset = hasFooterNote ? 13 : 0;
+  // Примечание и подписи комиссии — одним блоком над нижним полем листа
+  // (у длинного журнала таблица доходит до низа, и блок уходил за край).
+  let finishedFooterY = tableEndY;
+  if (hasFooterNote || members.length > 0) {
+    doc.setFontSize(9);
+    // Длинный состав комиссии — с переносом: на этой странице хотя бы
+    // примечание, заголовок и первая подпись.
+    const firstMemberOffset = 8 + noteOffset + (noteOffset ? 8 : 0) + 6 + 1;
+    const lastLineOffset = members.length > 0 ? firstMemberOffset + (members.length - 1) * 7 : 13;
+    finishedFooterY =
+      placeBlockStart(doc, tableEndY + 8, lastLineOffset - 8, (members.length > 0 ? firstMemberOffset : 13) - 8) - 8;
+  }
 
   // «Примечание: …» под таблицей — как на эталоне (finished_product-grid.png).
   if (params.config.footerNote) {
     doc.setFont("JournalUnicode", "bold");
     doc.setFontSize(9);
-    doc.text("Примечание:", 10, finishedFooterY + 8);
+    doc.text("Примечание:", PDF_SHEET_MARGIN, finishedFooterY + 8);
     doc.setFont("JournalUnicode", "normal");
-    doc.text(params.config.footerNote, 10, finishedFooterY + 13);
+    doc.text(params.config.footerNote, PDF_SHEET_MARGIN, finishedFooterY + 13);
   }
 
   // Состав бракеражной комиссии — подписи под таблицей. Печатаем, только
   // если состав задан: пустых линеек в бланке быть не должно.
-  if (params.config.commissionMembers.length > 0) {
-    const noteOffset = params.config.footerNote ? 13 : 0;
+  if (members.length > 0) {
     let signY = finishedFooterY + 8 + noteOffset + (noteOffset ? 8 : 0);
     doc.setFont("JournalUnicode", "bold");
     doc.setFontSize(9);
-    doc.text("Состав бракеражной комиссии:", 10, signY);
+    doc.text("Состав бракеражной комиссии:", PDF_SHEET_MARGIN, signY);
     doc.setFont("JournalUnicode", "normal");
     signY += 6;
-    for (const member of params.config.commissionMembers) {
-      doc.text(`${member.role}: ${member.employeeName}`, 14, signY);
+    for (const member of members) {
+      signY = placeTextBlock(doc, signY, 1);
+      doc.text(`${member.role}: ${member.employeeName}`, PDF_SHEET_MARGIN + 4, signY);
       doc.line(95, signY + 1, 140, signY + 1);
       signY += 7;
     }
@@ -2887,13 +3109,13 @@ function drawEquipmentMaintenancePdf(doc: jsPDF, params: {
   doc.setFontSize(9);
   doc.text(
     "Тип профилактического обслуживания:  A = Ежемесячно   B = Ежегодно",
-    10,
+    PDF_SHEET_MARGIN,
     maintenanceLegendY
   );
 
   autoTable(doc, {
     startY: maintenanceLegendY + 4,
-    margin: { left: 10, right: 10 },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
     head: [[
       "№",
       "Оборудование / вид работ",
@@ -2938,12 +3160,17 @@ function drawEquipmentMaintenancePdf(doc: jsPDF, params: {
     },
   });
 
-  const finalY = (((doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY) || 40) + 8;
   doc.setFont("JournalUnicode", "normal");
   doc.setFontSize(9);
+  // Строка «Ответственный» — над нижним полем листа (не за краем).
+  const finalY = placeTextBlock(
+    doc,
+    (((doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY) || 40) + 8,
+    0
+  );
   doc.text(
     `Ответственный: ${[params.config.responsibleRole, params.config.responsibleEmployee].filter(Boolean).join(", ")}`,
-    10,
+    PDF_SHEET_MARGIN,
     finalY
   );
 }
@@ -2968,7 +3195,7 @@ function drawStaffTrainingPdf(doc: jsPDF, params: {
 
   autoTable(doc, {
     startY: afterHeader(trainingHeaderBottom, 30),
-    margin: { left: 10, right: 10 },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
     // Полные экранные формулировки граф: «Сотрудник» / «Вид» / «Причина»
     // не говорили инспектору, что именно в колонке.
     head: [[
@@ -3031,16 +3258,12 @@ function drawStaffTrainingPdf(doc: jsPDF, params: {
       halign: "center",
       valign: "middle",
     },
-    columnStyles: {
-      0: { cellWidth: 22 },
-      1: { cellWidth: 38 },
-      2: { cellWidth: 34 },
-      3: { cellWidth: 38 },
-      4: { cellWidth: 24 },
-      5: { cellWidth: 48 },
-      6: { cellWidth: 36 },
-      7: { cellWidth: 22, halign: "center" },
-    },
+    // Прежние пропорции на всю ширину между полями — край в край со штампом
+    // (сумма 262 мм была на 15 мм уже шапки).
+    columnStyles: (() => {
+      const widths = fitColumnWidths(doc, [22, 38, 34, 38, 24, 48, 36, 22]);
+      return { ...widths, 7: { ...widths[7], halign: "center" as const } };
+    })(),
   });
 }
 
@@ -3239,7 +3462,7 @@ function drawIncomingControlPdf(doc: jsPDF, params: {
 
   autoTable(doc, {
     startY: acceptanceTitleY + 8,
-    margin: { left: 14, right: 14 },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
     head,
     body: ensurePdfBodyRows(body, incomingControlColumns.length),
     theme: "grid",
@@ -3345,11 +3568,11 @@ function drawAcceptancePdf(doc: jsPDF, params: {
   }
 
   const baseColCount = 9;
-  const monthColWidth = (pageWidth - 28) / baseColCount;
+  const monthColWidth = (pageWidth - PDF_SHEET_MARGIN * 2) / baseColCount;
 
   autoTable(doc, {
     startY: acceptanceTitleY + 8,
-    margin: { left: 14, right: 14 },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
     head,
     body: ensurePdfBodyRows(body, 9),
     theme: "grid",
@@ -3434,7 +3657,7 @@ function drawPpeIssuancePdf(doc: jsPDF, params: {
 
   autoTable(doc, {
     startY: ppeTitleY + 8,
-    margin: { left: 14, right: 14 },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
     head,
     body,
     theme: "grid",
@@ -3481,47 +3704,53 @@ function drawProductWriteoffPdf(doc: jsPDF, params: {
 
   const writeoffTitleY = afterHeader(headerBottom, 72);
   const dateLabel = formatProductWriteoffDateLong(params.config.documentDate || params.dateFrom);
+  const pageWidth = doc.internal.pageSize.getWidth();
+  // Текст акта — между полями листа, как шапка и таблица; «АКТ» — по центру
+  // листа (раньше x = 105 — середина КНИЖНОГО листа, а бланк альбомный,
+  // и текст стоял с отступом 24 мм шириной 160 мм).
+  const textLeft = PDF_SHEET_MARGIN;
+  const textWidth = pageWidth - PDF_SHEET_MARGIN * 2;
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(16);
-  doc.text("АКТ", 105, writeoffTitleY, { align: "center" });
-  doc.text(`№ ${params.config.actNumber || "1"} от ${dateLabel}`, 105, writeoffTitleY + 8, { align: "center" });
+  doc.text("АКТ", pageWidth / 2, writeoffTitleY, { align: "center" });
+  doc.text(`№ ${params.config.actNumber || "1"} от ${dateLabel}`, pageWidth / 2, writeoffTitleY + 8, { align: "center" });
 
   doc.setFont("JournalUnicode", "normal");
   doc.setFontSize(11);
   let cursorY = writeoffTitleY + 20;
-  doc.text("Комиссия в составе:", 24, cursorY);
+  doc.text("Комиссия в составе:", textLeft, cursorY);
   cursorY += 7;
   if (params.config.commissionMembers.length === 0) {
-    doc.text("________________", 30, cursorY);
+    doc.text("________________", textLeft + 6, cursorY);
     cursorY += 7;
   } else {
     params.config.commissionMembers.forEach((member) => {
-      doc.text(`${member.role} ${member.employeeName}`, 30, cursorY);
+      doc.text(`${member.role} ${member.employeeName}`, textLeft + 6, cursorY);
       cursorY += 6;
     });
   }
 
   const introLines = doc.splitTextToSize(
     `Составила настоящий АКТ о том, что ${dateLabel} на предприятии выявлены ТМЦ с несоответствиями по качеству и (или) безопасности согласно списку ниже.`,
-    160
+    textWidth
   ) as string[];
   cursorY += 4;
   introLines.forEach((line) => {
-    doc.text(line, 24, cursorY);
+    doc.text(line, textLeft, cursorY);
     cursorY += 5;
   });
 
   const supplierLines = doc.splitTextToSize(
     `Указанные ТМЦ были выработаны ${params.config.supplierName || "________________"} и поставлены...`,
-    160
+    textWidth
   ) as string[];
   supplierLines.forEach((line) => {
-    doc.text(line, 24, cursorY);
+    doc.text(line, textLeft, cursorY);
     cursorY += 5;
   });
 
   cursorY += 3;
-  doc.text("Комиссия постановила выполнить в отношении выявленных ТМЦ следующие действия:", 24, cursorY);
+  doc.text("Комиссия постановила выполнить в отношении выявленных ТМЦ следующие действия:", textLeft, cursorY);
 
   autoTable(doc, {
     startY: cursorY + 5,
@@ -3569,23 +3798,31 @@ function drawProductWriteoffPdf(doc: jsPDF, params: {
       row.discrepancyDescription,
       row.action,
     ]),
-    margin: { left: 24, right: 24 },
-    columnStyles: {
-      0: { cellWidth: 12, halign: "center" },
-      1: { cellWidth: 34 },
-      2: { cellWidth: 30, halign: "center" },
-      3: { cellWidth: 24, halign: "center" },
-      4: { cellWidth: 40, halign: "center" },
-      5: { cellWidth: 40, halign: "center" },
-    },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
+    // Прежние пропорции на всю ширину между полями — край в край со штампом
+    // (таблица 180 мм стояла от 24 мм, правее оставалось 93 мм пустоты).
+    columnStyles: (() => {
+      const widths = fitColumnWidths(doc, [12, 34, 30, 24, 40, 40]);
+      const center = (index: number) => ({ ...widths[index], halign: "center" as const });
+      return { ...widths, 0: center(0), 2: center(2), 3: center(3), 4: center(4), 5: center(5) };
+    })(),
   });
 
-  const finalY = ((doc as unknown as { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY || cursorY) + 14;
-  doc.text("Подписи членов комиссии:", 24, finalY);
+  const signers = params.config.commissionMembers.length > 0 ? params.config.commissionMembers : [{ employeeName: "" }];
+  // Подписи комиссии — над нижним полем листа: блоком, если помещается,
+  // иначе заголовок с первой подписью, остальные — с переносом.
+  const finalY = placeBlockStart(
+    doc,
+    ((doc as unknown as { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY || cursorY) + 14,
+    8 + (signers.length - 1) * 8 + 1,
+    8 + 1
+  );
+  doc.text("Подписи членов комиссии:", textLeft, finalY);
   let signY = finalY + 8;
-  (params.config.commissionMembers.length > 0 ? params.config.commissionMembers : [{ employeeName: "" }]).forEach((member) => {
-    doc.text(member.employeeName || "________________", 30, signY);
-    doc.line(62, signY + 1, 112, signY + 1);
+  signers.forEach((member) => {
+    signY = placeTextBlock(doc, signY, 1);
+    doc.text(member.employeeName || "________________", textLeft + 6, signY);
+    doc.line(textLeft + 38, signY + 1, textLeft + 88, signY + 1);
     signY += 8;
   });
 }
@@ -3654,7 +3891,7 @@ function drawPerishableRejectionPdf(doc: jsPDF, params: {
   // край. `softenSlashBreaks` разбивает «А/Б» в своих подписях на
   // переносимые слова — иначе autoTable рвал длинный токен посимвольно.
   const printColumns = perishablePrintColumns(params.config);
-  const perishableMarginX = 10;
+  const perishableMarginX = PDF_SHEET_MARGIN;
   const perishableWidths = fitColumnWidths(
     doc,
     printColumns.map((column) => column.width),
@@ -3816,42 +4053,43 @@ function drawGlassListPdf(doc: jsPDF, params: {
 
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(22);
-  doc.text(params.title || "Перечень изделий", 14, 18);
+  drawSheetTitleLine(doc, params.title || "Перечень изделий");
 
-  // Общая шапка ХАССП — той же ширины, что таблица перечня (поля 42 мм).
+  // Общая шапка ХАССП — той же ширины, что таблица перечня (между полями
+  // листа; раньше поля перечня были 42 мм).
   const headerBottom = drawJournalHeader(doc, {
     organizationName: params.organizationName,
     journalLabel: "ПЕРЕЧЕНЬ ИЗДЕЛИЙ ИЗ СТЕКЛА И ХРУПКОГО ПЛАСТИКА",
     withPeriodicity: false,
     startedDate: params.dateFrom,
     finishedDate: null,
-    marginX: 42,
   });
   // Блок «УТВЕРЖДАЮ» и таблица сдвигаются вниз, если шапка выросла.
   // Прежний зазор: рамка шапки (низ 56 мм) → «УТВЕРЖДАЮ» (72 мм) = 16 мм.
-  const shift = Math.max(0, headerBottom + 16 - 72);
+  const approveY = Math.max(legacyY(72), headerBottom + 16);
+  const approveRight = pageWidth - PDF_SHEET_MARGIN;
 
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(12);
-  doc.text("УТВЕРЖДАЮ", pageWidth - 42, 72 + shift, { align: "right" });
+  doc.text("УТВЕРЖДАЮ", approveRight, approveY, { align: "right" });
   doc.setFont("JournalUnicode", "normal");
   doc.setFontSize(11);
-  doc.text(config.responsibleTitle || "Управляющий", pageWidth - 42, 80 + shift, { align: "right" });
-  doc.text(`____________________ ${params.responsibleName}`, pageWidth - 42, 88 + shift, { align: "right" });
-  doc.text(`«${formatGlassListDateLong(documentDate)}» г.`, pageWidth - 42, 96 + shift, { align: "right" });
+  doc.text(config.responsibleTitle || "Управляющий", approveRight, approveY + 8, { align: "right" });
+  doc.text(`____________________ ${params.responsibleName}`, approveRight, approveY + 16, { align: "right" });
+  doc.text(`«${formatGlassListDateLong(documentDate)}» г.`, approveRight, approveY + 24, { align: "right" });
 
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(14);
   doc.text(
     "ПЕРЕЧЕНЬ ИЗДЕЛИЙ ИЗ СТЕКЛА И ХРУПКОГО ПЛАСТИКА",
     pageWidth / 2,
-    106 + shift,
+    approveY + 34,
     { align: "center" }
   );
 
   autoTable(doc, {
-    startY: 114 + shift,
-    margin: { left: 42, right: 42 },
+    startY: approveY + 42,
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
     head: [[
       "",
       "Место расположения\n(участок)",
@@ -3880,12 +4118,13 @@ function drawGlassListPdf(doc: jsPDF, params: {
       lineColor: [0, 0, 0],
       lineWidth: 0.2,
     },
-    columnStyles: {
-      0: { cellWidth: 8, halign: "center" },
-      1: { cellWidth: 34, halign: "center" },
-      2: { cellWidth: 94, halign: "center" },
-      3: { cellWidth: 18, halign: "center" },
-    },
+    // Прежние пропорции 8 : 34 : 94 : 18 — на всю ширину между полями.
+    columnStyles: Object.fromEntries(
+      Object.entries(fitColumnWidths(doc, [8, 34, 94, 18])).map(([index, style]) => [
+        index,
+        { ...style, halign: "center" as const },
+      ])
+    ),
   });
 }
 
@@ -3912,14 +4151,13 @@ function drawBreakdownHistoryPdf(doc: jsPDF, params: {
 
   drawTitle(doc, params.title || BREAKDOWN_HISTORY_HEADING);
 
-  // Общая шапка ХАССП — той же ширины, что таблица (поля 24 мм).
+  // Общая шапка ХАССП — той же ширины, что таблица (между полями листа).
   const headerBottom = drawJournalHeader(doc, {
     organizationName: params.organizationName,
     journalLabel: "КАРТОЧКА ИСТОРИИ ПОЛОМОК",
     withPeriodicity: false,
     startedDate: params.dateFrom,
     finishedDate: null,
-    marginX: 24,
   });
   const breakdownTitleY = afterHeader(headerBottom, 0) + 6;
 
@@ -3959,7 +4197,7 @@ function drawBreakdownHistoryPdf(doc: jsPDF, params: {
 
   autoTable(doc, {
     startY: breakdownTitleY + 6,
-    margin: { left: 24, right: 24 },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
     head,
     body,
     theme: "grid",
@@ -4041,7 +4279,7 @@ function drawAccidentPdf(doc: jsPDF, params: {
 
   autoTable(doc, {
     startY: accidentTitleY + 6,
-    margin: { left: 10, right: 10 },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
     head,
     body,
     theme: "grid",
@@ -4082,7 +4320,7 @@ function drawEquipmentCalibrationPdf(doc: jsPDF, params: {
   const approver = resolveApprover(cfg, params.users);
   const pageWidth = doc.internal.pageSize.getWidth();
   const centerX = pageWidth / 2;
-  const headerRight = pageWidth - 24;
+  const headerRight = pageWidth - PDF_SHEET_MARGIN;
 
   drawTitle(doc, params.title || EQUIPMENT_CALIBRATION_DOCUMENT_TITLE);
   const headerBottom = drawJournalHeader(doc, {
@@ -4091,7 +4329,6 @@ function drawEquipmentCalibrationPdf(doc: jsPDF, params: {
     withPeriodicity: false,
     startedDate: params.dateFrom ?? null,
     finishedDate: params.dateTo ?? null,
-    marginX: 24,
   });
 
   const approvalY = afterHeader(headerBottom, 60);
@@ -4103,13 +4340,14 @@ function drawEquipmentCalibrationPdf(doc: jsPDF, params: {
   doc.text(approver.title, headerRight, approvalY + 6, { align: "right" });
   doc.line(headerRight - 52, approvalY + 10, headerRight, approvalY + 10);
   doc.text(approver.name, headerRight, approvalY + 14, { align: "right" });
-  doc.text(formatCalibrationDateLong(cfg.documentDate), headerRight - 6, approvalY + 20, {
+  const calibrationDateLabel = formatCalibrationDateLong(cfg.documentDate);
+  doc.text(calibrationDateLabel, approvalDateCenterX(doc, calibrationDateLabel, headerRight), approvalY + 20, {
     align: "center",
   });
 
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(12);
-  const calibrationTitleY = Math.max(90, approvalY + 30);
+  const calibrationTitleY = Math.max(legacyY(90), approvalY + 30);
   doc.text(`График поверки средств измерений на ${cfg.year} г.`, centerX, calibrationTitleY, {
     align: "center",
   });
@@ -4193,7 +4431,7 @@ function drawEquipmentCalibrationPdf(doc: jsPDF, params: {
 
   autoTable(doc, {
     startY: calibrationTitleY + 6,
-    margin: { left: 24, right: 24 },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
     head,
     body,
     theme: "grid",
@@ -4213,16 +4451,9 @@ function drawEquipmentCalibrationPdf(doc: jsPDF, params: {
       fontStyle: "bold",
     },
     bodyStyles: { lineWidth: 0.2 },
-    columnStyles: {
-      0: { cellWidth: 12 },
-      1: { cellWidth: 48 },
-      2: { cellWidth: 28 },
-      3: { cellWidth: 30 },
-      4: { cellWidth: 26 },
-      5: { cellWidth: 22 },
-      6: { cellWidth: 22 },
-      7: { cellWidth: 34 },
-    },
+    // Прежние пропорции на всю ширину между полями — край в край со штампом
+    // (сумма 222 мм была на 27 мм уже шапки).
+    columnStyles: fitColumnWidths(doc, [12, 48, 28, 30, 26, 22, 22, 34]),
   });
 }
 
@@ -4241,7 +4472,7 @@ function drawTrainingPlanPdf(doc: jsPDF, params: {
   const approver = resolveApprover(cfg, params.users);
   const pageWidth = doc.internal.pageSize.getWidth();
   const centerX = pageWidth / 2;
-  const headerRight = pageWidth - 24;
+  const headerRight = pageWidth - PDF_SHEET_MARGIN;
 
   drawTitle(doc, params.title || "План обучения");
   const headerBottom = drawJournalHeader(doc, {
@@ -4250,7 +4481,6 @@ function drawTrainingPlanPdf(doc: jsPDF, params: {
     withPeriodicity: false,
     startedDate: params.dateFrom ?? null,
     finishedDate: params.dateTo ?? null,
-    marginX: 24,
   });
 
   const approvalY = afterHeader(headerBottom, 60);
@@ -4262,16 +4492,17 @@ function drawTrainingPlanPdf(doc: jsPDF, params: {
   doc.text(approver.title, headerRight, approvalY + 6, { align: "right" });
   doc.line(headerRight - 52, approvalY + 10, headerRight, approvalY + 10);
   doc.text(approver.name, headerRight, approvalY + 14, { align: "right" });
+  const approvalDateLabel = formatApprovalDateLong(cfg.documentDate, cfg.year);
   doc.text(
-    formatApprovalDateLong(cfg.documentDate, cfg.year),
-    headerRight - 6,
+    approvalDateLabel,
+    approvalDateCenterX(doc, approvalDateLabel, headerRight),
     approvalY + 20,
     { align: "center" }
   );
 
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(11);
-  const trainingPlanTitleY = Math.max(90, approvalY + 30);
+  const trainingPlanTitleY = Math.max(legacyY(90), approvalY + 30);
   doc.text(`ПЛАН ОБУЧЕНИЯ ПЕРСОНАЛА НА ${cfg.year} Г.`, centerX, trainingPlanTitleY, { align: "center" });
 
   const topics = cfg.topics;
@@ -4310,7 +4541,7 @@ function drawTrainingPlanPdf(doc: jsPDF, params: {
 
   autoTable(doc, {
     startY: trainingPlanTitleY + 6,
-    margin: { left: 24, right: 24 },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
     head,
     body,
     theme: "grid",
@@ -4355,14 +4586,20 @@ function drawSanitationDayPdf(doc: jsPDF, params: {
   const centerX = pageWidth / 2;
 
   // --- Поля бланка: штамп ХАССП, блок «УТВЕРЖДАЮ» и таблица журнала
-  // обязаны иметь ОДНУ ширину (иначе на листе «ступенька», аудит r5 п.2).
+  // обязаны иметь ОДНУ ширину (иначе на листе «ступенька», аудит r5 п.2) —
+  // между полями листа. Раньше таблица 244 мм стояла по центру с полями
+  // 27 мм и на 1 мм не влезала в них.
   const roomColWidth = 60;
   const typeColWidth = 22;
   const monthColWidth = 13.5;
-  const tableWidth = roomColWidth + typeColWidth + 12 * monthColWidth;
-  const tableMargin = Math.round((pageWidth - tableWidth) / 2);
+  const tableMargin = PDF_SHEET_MARGIN;
   const marginLeft = tableMargin;
   const headerRight = pageWidth - tableMargin;
+  const fittedWidths = fitColumnWidths(doc, [
+    roomColWidth,
+    typeColWidth,
+    ...SANITATION_MONTHS.map(() => monthColWidth),
+  ]);
 
   // --- Title ---
   drawTitle(doc, params.title || SANITATION_DAY_DOCUMENT_TITLE);
@@ -4374,7 +4611,6 @@ function drawSanitationDayPdf(doc: jsPDF, params: {
     withPeriodicity: false,
     startedDate: params.dateFrom ?? null,
     finishedDate: params.dateTo ?? null,
-    marginX: tableMargin,
   });
 
   // --- Approval block (right-aligned to header edge) ---
@@ -4387,9 +4623,10 @@ function drawSanitationDayPdf(doc: jsPDF, params: {
   doc.text(approver.title, headerRight, approvalY + 6, { align: "right" });
   doc.line(headerRight - 52, approvalY + 10, headerRight, approvalY + 10);
   doc.text(approver.name, headerRight, approvalY + 14, { align: "right" });
+  const approvalDateLabel = formatApprovalDateLong(cfg.documentDate, cfg.year);
   doc.text(
-    formatApprovalDateLong(cfg.documentDate, cfg.year),
-    headerRight - 6,
+    approvalDateLabel,
+    approvalDateCenterX(doc, approvalDateLabel, headerRight),
     approvalY + 20,
     { align: "center" }
   );
@@ -4397,7 +4634,7 @@ function drawSanitationDayPdf(doc: jsPDF, params: {
   // --- Centered subtitle ---
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(11);
-  const sanitationTitleY = Math.max(90, approvalY + 30);
+  const sanitationTitleY = Math.max(legacyY(90), approvalY + 30);
   doc.text(
     `График и учет генеральных уборок на предприятии в ${cfg.year} г.`,
     centerX,
@@ -4497,11 +4734,8 @@ function drawSanitationDayPdf(doc: jsPDF, params: {
     bodyStyles: {
       lineWidth: 0.2,
     },
-    columnStyles: {
-      0: { cellWidth: roomColWidth },
-      1: { cellWidth: typeColWidth },
-      ...Object.fromEntries(SANITATION_MONTHS.map((_, index) => [index + 2, { cellWidth: monthColWidth }])),
-    },
+    // Прежние пропорции (помещение 60 : вид 22 : месяц 13,5) на всю ширину.
+    columnStyles: fittedWidths,
   });
 }
 
@@ -4558,7 +4792,7 @@ function drawTrackedPdf(doc: jsPDF, params: {
       fontStyle: "bold",
       lineColor: [0, 0, 0],
     },
-    margin: { left: 10, right: 10 },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
   });
 }
 
@@ -4589,22 +4823,22 @@ function drawPestControlPdf(doc: jsPDF, params: {
   // Раньше сюда уезжало название документа, и инспектор видел
   // «ZZ5 PEST_CONTROL» вместо «Журнал учёта дезинсекции и дератизации».
   const pestJournalLabel = journalNameOr(PEST_CONTROL_DOCUMENT_TITLE);
-  // Общая шапка ХАССП — той же ширины, что таблица (поля 24 мм). Даты —
-  // ДД-ММ-ГГГГ; дата окончания печатается ВМЕСТО прочерка.
+  // Общая шапка ХАССП — той же ширины, что таблица (между полями листа;
+  // раньше поля были 24 мм). Даты — ДД-ММ-ГГГГ; дата окончания печатается
+  // ВМЕСТО прочерка.
   const headerBottom = drawJournalHeader(doc, {
     organizationName: params.organizationName,
     journalLabel: pestJournalLabel,
     withPeriodicity: false,
     startedDate: startDate,
     finishedDate: endDate || null,
-    marginX: 24,
   });
   // Прежний зазор: рамка шапки (низ 48 мм) → заголовок (58 мм) = 10 мм.
-  const shift = Math.max(0, headerBottom + 10 - 58);
+  const pestTitleY = Math.max(legacyY(58), headerBottom + 10);
 
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(14);
-  doc.text(pestJournalLabel.toUpperCase(), pageWidth / 2, 58 + shift, { align: "center" });
+  doc.text(pestJournalLabel.toUpperCase(), pageWidth / 2, pestTitleY, { align: "center" });
   // Название документа — отдельной строкой и только если оно отличается
   // от названия журнала (у бланка «ZZ5 pest_control» это заголовок
   // документа, а не журнала).
@@ -4612,7 +4846,7 @@ function drawPestControlPdf(doc: jsPDF, params: {
   if (pestDocumentName && pestDocumentName !== pestJournalLabel) {
     doc.setFont("JournalUnicode", "normal");
     doc.setFontSize(10);
-    doc.text(pestDocumentName, pageWidth / 2, 64 + shift, { align: "center" });
+    doc.text(pestDocumentName, pageWidth / 2, pestTitleY + 6, { align: "center" });
   }
 
   // Порядок — как на экране (дата, затем время): запросом строки
@@ -4671,8 +4905,8 @@ function drawPestControlPdf(doc: jsPDF, params: {
   }
 
   autoTable(doc, {
-    startY: 66 + shift,
-    margin: { left: 24, right: 24 },
+    startY: pestTitleY + 8,
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
     head: [[
       "",
       "Дата и время\nпроведения",
@@ -4709,7 +4943,7 @@ function drawPestControlPdf(doc: jsPDF, params: {
       valign: "middle",
     },
     // Прежние пропорции на всю ширину между полями — край в край со штампом.
-    columnStyles: fitColumnWidths(doc, [7, 24, 34, 22, 31, 56, 31, 33], 24),
+    columnStyles: fitColumnWidths(doc, [7, 24, 34, 22, 31, 56, 31, 33]),
   });
 }
 
@@ -4728,7 +4962,7 @@ function drawEquipmentCleaningPdf(doc: jsPDF, params: {
   /** Для должности контролёра из его карточки (не копии из строки). */
   users?: PdfPositionUser[];
 }) {
-  const marginX = 14;
+  const marginX = PDF_SHEET_MARGIN;
   const currentFont = doc.getFont().fontName || "helvetica";
 
   drawTitle(doc, params.title || EQUIPMENT_CLEANING_DOCUMENT_TITLE);
@@ -4839,23 +5073,26 @@ function drawDisinfectantPdf(doc: jsPDF, params: {
 
   doc.setFont(currentFont, "bold");
   doc.setFontSize(14);
-  doc.text(params.organizationName, pageWidth / 2, 16, { align: "center" });
+  // Верх первой строки — на верхнем поле листа (раньше базовая линия на
+  // 16 мм); строки ниже — с прежними промежутками.
+  const orgY = journalSheetTopBaseline(doc);
+  doc.text(params.organizationName, pageWidth / 2, orgY, { align: "center" });
   doc.setFontSize(12);
-  doc.text(params.title || DISINFECTANT_DOCUMENT_TITLE, pageWidth / 2, 24, {
+  doc.text(params.title || DISINFECTANT_DOCUMENT_TITLE, pageWidth / 2, orgY + 8, {
     align: "center",
   });
   doc.setFont(currentFont, "normal");
   doc.setFontSize(9);
-  doc.text(`Период: ${dateFromLabel} - ${dateToLabel}`, 14, 32);
+  doc.text(`Период: ${dateFromLabel} - ${dateToLabel}`, PDF_SHEET_MARGIN, orgY + 16);
   doc.text(
     `Ответственный: ${cfg.responsibleRole}${cfg.responsibleEmployee ? `, ${cfg.responsibleEmployee}` : ""}`,
-    14,
-    38
+    PDF_SHEET_MARGIN,
+    orgY + 22
   );
 
   autoTable(doc, {
-    startY: 46,
-    margin: { left: 14, right: 14 },
+    startY: orgY + 30,
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
     theme: "grid",
     styles: {
       font: currentFont,
@@ -4938,7 +5175,7 @@ function drawDisinfectantPdf(doc: jsPDF, params: {
   autoTable(doc, {
     startY:
       (((doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY) || 46) + 8,
-    margin: { left: 14, right: 14 },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
     theme: "grid",
     styles: {
       font: currentFont,
@@ -4996,7 +5233,7 @@ function drawDisinfectantPdf(doc: jsPDF, params: {
   autoTable(doc, {
     startY:
       (((doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY) || 80) + 8,
-    margin: { left: 14, right: 14 },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
     theme: "grid",
     styles: {
       font: currentFont,
@@ -5133,7 +5370,7 @@ function drawTraceabilityPdf(doc: jsPDF, params: {
       fontStyle: "bold",
       lineColor: [0, 0, 0],
     },
-    margin: { left: 10, right: 10 },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
   });
 }
 
@@ -5254,10 +5491,14 @@ function drawUvRuntimePdf(doc: jsPDF, params: {
       fontStyle: "bold",
       lineColor: [0, 0, 0],
     },
-    margin: { left: 10, right: 10 },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
   });
 
-  const specEndY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 5;
+  // Промежутки между таблицами бланка — 3 мм (было 5 и 6): пустой бланк
+  // установки занимает лист целиком, и с QR в правом нижнем углу на нижнем
+  // поле листа иначе не помещался на одну страницу.
+  const UV_TABLE_GAP = 3;
+  const specEndY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + UV_TABLE_GAP;
 
   const userMap = Object.fromEntries(params.users.map((user) => [user.id, user.name]));
   const rows = [...params.entries].sort((a, b) => a.date.getTime() - b.date.getTime());
@@ -5335,7 +5576,7 @@ function drawUvRuntimePdf(doc: jsPDF, params: {
   });
 
   const monthlyEndY =
-    (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 6;
+    (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + UV_TABLE_GAP;
 
 
   const head: RowInput[] = [[
@@ -5491,7 +5732,7 @@ function drawRegisterPdf(doc: jsPDF, params: {
       fontStyle: "bold",
       lineColor: [0, 0, 0],
     },
-    margin: { left: 10, right: 10 },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
   });
 }
 
@@ -5525,7 +5766,7 @@ function drawAuditPlanPdf(doc: jsPDF, params: {
       approver.name,
       getAuditPlanPrintDateLabel(params.config.documentDate),
     ].filter((line) => Boolean(line && line.trim()));
-    const right = doc.internal.pageSize.getWidth() - 10;
+    const right = doc.internal.pageSize.getWidth() - PDF_SHEET_MARGIN;
     let y = afterHeader(metaBottom, 66) - 4;
     doc.setFont("JournalUnicode", "normal");
     doc.setFontSize(9);
@@ -5591,7 +5832,7 @@ function drawAuditPlanPdf(doc: jsPDF, params: {
       fontStyle: "bold",
       lineColor: [0, 0, 0],
     },
-    margin: { left: 10, right: 10 },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
   });
 }
 
@@ -5641,9 +5882,9 @@ function drawAuditProtocolPdf(doc: jsPDF, params: {
         ? [`Составлен по плану: ${params.config.sourcePlanTitle}`]
         : []),
     ],
-    12,
+    PDF_SHEET_MARGIN,
     afterHeader(metaBottom, 62),
-    270,
+    doc.internal.pageSize.getWidth() - PDF_SHEET_MARGIN * 2,
     5
   );
 
@@ -5667,28 +5908,25 @@ function drawAuditProtocolPdf(doc: jsPDF, params: {
       fontStyle: "bold",
       lineColor: [0, 0, 0],
     },
-    margin: { left: 10, right: 10 },
-    columnStyles: {
-      0: { cellWidth: 12 },
-      1: { cellWidth: 120 },
-      2: { cellWidth: 16 },
-      3: { cellWidth: 16 },
-      4: { cellWidth: 100 },
-    },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
+    // Прежние пропорции на всю ширину между полями — край в край со штампом
+    // (сумма 264 мм была на 13 мм уже шапки).
+    columnStyles: fitColumnWidths(doc, [12, 120, 16, 16, 100]),
   });
 
-  const finalY = ((doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY || 66) + 10;
   doc.setFont("JournalUnicode", "normal");
   doc.setFontSize(9);
-  let cursorY = finalY;
-  params.config.signatures.forEach((signature) => {
-    doc.text(
-      `${signature.role || "Подпись"}: ${signature.name}${signature.signedAt ? `, ${formatRuDateDash(signature.signedAt)}` : ""}`,
-      12,
-      cursorY
-    );
-    cursorY += 6;
-  });
+  // Подписи — над нижним полем листа, от левого поля.
+  drawTextLinesInFrame(
+    doc,
+    params.config.signatures.map(
+      (signature) =>
+        `${signature.role || "Подпись"}: ${signature.name}${signature.signedAt ? `, ${formatRuDateDash(signature.signedAt)}` : ""}`
+    ),
+    PDF_SHEET_MARGIN,
+    ((doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY || 66) + 10,
+    6
+  );
 }
 
 function drawAuditReportPdf(doc: jsPDF, params: {
@@ -5720,9 +5958,9 @@ function drawAuditReportPdf(doc: jsPDF, params: {
       `Итог: ${params.config.summary || "—"}`,
       `Рекомендации: ${params.config.recommendations || "—"}`,
     ],
-    12,
+    PDF_SHEET_MARGIN,
     cursorY,
-    270,
+    doc.internal.pageSize.getWidth() - PDF_SHEET_MARGIN * 2,
     5
   ) + 4;
 
@@ -5765,18 +6003,20 @@ function drawAuditReportPdf(doc: jsPDF, params: {
       fontStyle: "bold",
       lineColor: [0, 0, 0],
     },
-    margin: { left: 10, right: 10 },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
   });
 
-  cursorY = ((doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY || cursorY) + 10;
-  params.config.signatures.forEach((signature) => {
-    doc.text(
-      `${signature.role || "Подпись"}: ${[signature.position, signature.name].filter(Boolean).join(", ")}${signature.signedAt ? `, ${formatRuDateDash(signature.signedAt)}` : ""}`,
-      12,
-      cursorY
-    );
-    cursorY += 6;
-  });
+  // Подписи — над нижним полем листа, от левого поля.
+  drawTextLinesInFrame(
+    doc,
+    params.config.signatures.map(
+      (signature) =>
+        `${signature.role || "Подпись"}: ${[signature.position, signature.name].filter(Boolean).join(", ")}${signature.signedAt ? `, ${formatRuDateDash(signature.signedAt)}` : ""}`
+    ),
+    PDF_SHEET_MARGIN,
+    ((doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY || cursorY) + 10,
+    6
+  );
 }
 
 function drawMetalImpurityPdf(doc: jsPDF, params: {
@@ -5802,7 +6042,7 @@ function drawMetalImpurityPdf(doc: jsPDF, params: {
     ]],
     theme: "grid",
     styles: { font: "JournalUnicode", fontSize: 9, lineColor: [0, 0, 0], textColor: [0, 0, 0] },
-    margin: { left: 10, right: 10 },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
   });
 
   autoTable(doc, {
@@ -5848,7 +6088,7 @@ function drawMetalImpurityPdf(doc: jsPDF, params: {
       fontStyle: "bold",
       lineColor: [0, 0, 0],
     },
-    margin: { left: 10, right: 10 },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
   });
 }
 
@@ -5960,7 +6200,7 @@ function drawIntensiveCoolingPdf(doc: jsPDF, params: {
       fontStyle: "bold",
       lineColor: [0, 0, 0],
     },
-    margin: { left: 10, right: 10 },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN },
     // Прежние пропорции на всю ширину между полями — край в край со штампом.
     columnStyles: fitColumnWidths(doc, [12, 34, 34, 28, 24, 62, 28, 42], PDF_SHEET_MARGIN),
   });
@@ -6074,7 +6314,7 @@ function drawFryerOilPdf(doc: jsPDF, params: {
       fontStyle: "bold",
       lineColor: [0, 0, 0],
     },
-    margin: { left: 10, right: 10, top: fryerContinuationTop },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN, top: fryerContinuationTop },
     // Строка данных (дата + время двумя строками) не должна
     // рваться между страницами.
     rowPageBreak: "avoid",
@@ -6084,11 +6324,11 @@ function drawFryerOilPdf(doc: jsPDF, params: {
 
   // Appendix — quality assessment methodology
   const appendixStartY = dataTableEndY + 10;
-  const pageHeight = doc.internal.pageSize.getHeight();
 
-  // Check if we need a new page for the appendix
+  // Check if we need a new page for the appendix: заголовок приложения и
+  // начало таблицы оценок — над нижним полем листа.
   const appendixY =
-    appendixStartY + 8 > pageHeight - 20
+    appendixStartY + 8 > contentBottom(doc)
       ? (() => {
           doc.addPage();
           // Не 20мм: на новой странице сверху повторяется штамп ХАССП.
@@ -6098,7 +6338,7 @@ function drawFryerOilPdf(doc: jsPDF, params: {
 
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(10);
-  doc.text("Приложение. Методика определения качества фритюрного жира.", 10, appendixY);
+  doc.text("Приложение. Методика определения качества фритюрного жира.", PDF_SHEET_MARGIN, appendixY);
 
   // Quality indicators table — структура РОВНО как на экране
   // (fryer-oil-document-client): над четырьмя колонками одна
@@ -6150,7 +6390,7 @@ function drawFryerOilPdf(doc: jsPDF, params: {
       fontStyle: "bold",
       lineColor: [0, 0, 0],
     },
-    margin: { left: 10, right: 10, top: fryerContinuationTop },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN, top: fryerContinuationTop },
   });
 
   const indicatorsEndY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
@@ -6183,7 +6423,7 @@ function drawFryerOilPdf(doc: jsPDF, params: {
       fontStyle: "bold",
       lineColor: [0, 0, 0],
     },
-    margin: { left: 10, right: 200, top: fryerContinuationTop },
+    margin: { left: PDF_SHEET_MARGIN, right: 200, top: fryerContinuationTop },
   });
 
   const gradingEndY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
@@ -6203,12 +6443,12 @@ function drawFryerOilPdf(doc: jsPDF, params: {
   // терялись. Если он не помещается целиком — переносим на новую страницу.
   const formulaBlockHeight = 7 + formulaLines.length * 4.5;
   let formulaY = gradingEndY;
-  if (formulaY + formulaBlockHeight > pageHeight - 12) {
+  if (formulaY + formulaBlockHeight > contentBottom(doc)) {
     doc.addPage();
     formulaY = fryerContinuationTop;
   }
   formulaLines.forEach((line, index) => {
-    doc.text(line, 10, formulaY + 7 + index * 4.5);
+    doc.text(line, PDF_SHEET_MARGIN, formulaY + 7 + index * 4.5);
   });
 }
 
@@ -6289,16 +6529,14 @@ function drawGlassControlPdf(doc: jsPDF, params: {
     },
     // Резерв под повтор штампа ХАССП на страницах 2..N — иначе вторая
     // страница бланка уходила инспектору без шапки.
-    margin: { left: 14, right: 14, top: activePageHeaderHeight + HEADER_TITLE_GAP },
-    columnStyles: {
-      0: { cellWidth: 24, halign: "center" },
-      1: { cellWidth: 12, halign: "center" },
-      2: { cellWidth: 12, halign: "center" },
-      3: { cellWidth: 42 },
-      4: { cellWidth: 16, halign: "center" },
-      5: { cellWidth: 58 },
-      6: { cellWidth: 28, halign: "center" },
-    },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN, top: activePageHeaderHeight + HEADER_TITLE_GAP },
+    // Прежние пропорции на всю ширину между полями — край в край со штампом
+    // (сумма 192 мм была на 77 мм уже шапки).
+    columnStyles: (() => {
+      const widths = fitColumnWidths(doc, [24, 12, 12, 42, 16, 58, 28]);
+      const center = (index: number) => ({ ...widths[index], halign: "center" as const });
+      return { ...widths, 0: center(0), 1: center(1), 2: center(2), 4: center(4), 6: center(6) };
+    })(),
   });
 }
 
@@ -6687,7 +6925,14 @@ function renderJournalDocumentPdfPass(
   // нижнее поле таблиц под угол — до первой отрисовки.
   const qr = input.qr?.url ? input.qr : null;
   const inkTracker = qr ? trackPdfInk(doc) : null;
-  if (qr && reserveQrBottom) reserveJournalQrBottomMargin(doc);
+  // Нижнее поле таблиц и текста бланка: поле листа + полоса под QR в углу
+  // (второй проход) или под «СТР. X ИЗ N» / подвалом партнёра (первый).
+  activeFooterTextBandMm = branding ? JOURNAL_FOOTER_TEXT_BAND_BRANDED_MM : JOURNAL_FOOTER_TEXT_BAND_MM;
+  activeFooterReserveMm =
+    qr && reserveQrBottom ? JOURNAL_QR_BOTTOM_RESERVE_MM : PDF_SHEET_MARGIN + activeFooterTextBandMm;
+  if (activeFooterReserveMm > PDF_SHEET_MARGIN + JOURNAL_FOOTER_TEXT_BAND_MM) {
+    reserveJournalQrBottomMargin(doc, activeFooterReserveMm);
+  }
 
   const templateCode = document.template.code;
   const dateKeys = buildDateKeys(document.dateFrom, document.dateTo);
@@ -6771,6 +7016,8 @@ function renderJournalDocumentPdfPass(
   activePageHeaderPainter = null;
   activePageHeaderHeight = 0;
   pagesWithJournalHeader.clear();
+  titleBottomByPage.clear();
+  lastHeaderTop = LEGACY_HEADER_TOP;
   resetPageLabelSlots();
 
   if (templateCode === "hygiene" && readHygieneFormVersion(document.config) === 2) {
@@ -7219,6 +7466,9 @@ function renderJournalDocumentPdfPass(
         data: entry.data,
       })),
       users,
+      // Подписи «ВЫПОЛНИЛ / ПРОВЕРИЛ» — узкий блок у левого поля: над
+      // нижним полем листа, левее QR в углу.
+      contentBottom: narrowContentBottom(doc),
       // Общая шапка ХАССП — как у остальных журналов.
       drawHeader: (target, options) =>
         drawJournalHeader(target, {
@@ -7300,6 +7550,10 @@ function renderJournalDocumentPdfPass(
   activePageHeaderPainter = null;
   activePageHeaderHeight = 0;
   pagesWithJournalHeader.clear();
+  titleBottomByPage.clear();
+  lastHeaderTop = LEGACY_HEADER_TOP;
+  activeFooterReserveMm = PDF_SHEET_MARGIN + JOURNAL_FOOTER_TEXT_BAND_MM;
+  activeFooterTextBandMm = JOURNAL_FOOTER_TEXT_BAND_MM;
   resetPageLabelSlots();
 
   const buffer = Buffer.from(doc.output("arraybuffer"));

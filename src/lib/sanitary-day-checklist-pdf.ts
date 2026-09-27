@@ -1,5 +1,6 @@
 import type { jsPDF } from "jspdf";
 import type { RowInput } from "jspdf-autotable";
+import { JOURNAL_SHEET_MARGIN_MM, journalCapHeightMm } from "@/lib/pdf-journal-sheet";
 import { journalAutoTable as autoTable } from "@/lib/pdf-journal-table";
 import {
   getItemNumber,
@@ -41,6 +42,11 @@ export function drawSanitaryDayChecklistPdf(
      * границы. Раньше здесь была своя таблица-штамп другого вида.
      */
     drawHeader: (doc: jsPDF, options: { marginX: number; top: number }) => number;
+    /**
+     * Нижняя граница содержимого страницы (мм от верха листа): ниже —
+     * нижнее поле с QR и «СТР. X ИЗ N». По умолчанию — поле листа.
+     */
+    contentBottom?: number;
   }
 ) {
   const config = normalizeSdcConfig(params.config);
@@ -49,10 +55,11 @@ export function drawSanitaryDayChecklistPdf(
   const mergedMarks = mergeSdcEntries(params.entries).marks;
 
   const pageWidth = doc.internal.pageSize.getWidth();
-  const margin = 14;
+  // Поле листа — одно со всех сторон (как у остальных бланков).
+  const margin = JOURNAL_SHEET_MARGIN_MM;
 
-  // ─── Шапка ХАССП — общая для всех бланков ───
-  const lastY = params.drawHeader(doc, { marginX: margin, top: 14 });
+  // ─── Шапка ХАССП — общая для всех бланков, на верхнем поле листа ───
+  const lastY = params.drawHeader(doc, { marginX: margin, top: margin });
 
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(10);
@@ -157,7 +164,19 @@ export function drawSanitaryDayChecklistPdf(
     (doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable
       ?.finalY ?? cursorY + 40;
   const pageHeight = doc.internal.pageSize.getHeight();
-  const sigY = Math.min(finalY + 14, pageHeight - 20);
+  const contentBottom = params.contentBottom ?? pageHeight - margin;
+  // Подписи — целиком над нижним полем листа (блок: две строки через 8 мм
+  // и линия под второй). Как и раньше, при нехватке места блок
+  // подтягивается к таблице, но не ближе 7 мм и не на неё (раньше его
+  // прижимало к `pageHeight - 20` поверх строк); не помещается и так —
+  // переходит на новую страницу.
+  doc.setFontSize(10);
+  const SIGNATURES_HEIGHT = 9;
+  let sigY = Math.max(finalY + 7, Math.min(finalY + 14, contentBottom - SIGNATURES_HEIGHT));
+  if (sigY + SIGNATURES_HEIGHT > contentBottom) {
+    doc.addPage();
+    sigY = margin + journalCapHeightMm(doc);
+  }
 
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(10);
