@@ -10,6 +10,7 @@ import { unregisterPushDevice } from "@/lib/native-bridge";
 import { AppPushSettings } from "@/app/mini/_components/app-push-settings";
 
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { hasCapability } from "@/lib/permission-presets";
 import { miniHomeHref } from "@/app/mini/_lib/nav-items";
 import { getUserPositionLabel, getUserRoleLabel } from "@/lib/user-roles";
 import {
@@ -19,11 +20,9 @@ import {
   CreditCard,
   LogOut,
   MessageCircleMore,
-  Moon,
   Palette,
   Settings,
   ShieldCheck,
-  Sun,
   Trash2,
   Unlink,
   LayoutGrid,
@@ -39,7 +38,8 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DeleteAccountFlow } from "@/app/delete-account/delete-account-client";
 import { FeedbackDialog } from "@/components/layout/feedback-dialog";
 import { PasskeySettings } from "@/components/auth/passkey-settings";
-import { useMiniTheme } from "../_components/mini-theme";
+import { BRANDING_SETTINGS_HREF } from "@/components/theme/theme-tiles";
+import { MiniThemeTiles } from "../_components/mini-theme-tiles";
 import { signOutOnThisDevice } from "../_lib/signed-out-mark";
 import { signOutAndOpen } from "@/lib/sign-out";
 
@@ -47,10 +47,11 @@ import { signOutAndOpen } from "@/lib/sign-out";
  * Профиль в мини-приложении.
  *
  * Зеркало выпадающего меню профиля на сайте (`profile-sheet.tsx`):
- * карточка человека, смена организации и точки, баланс, тариф, внешний
- * вид, настройки, панель платформы, выход. Ничего «только для
- * приложения» здесь быть не должно (П-3) — поэтому web-push, PIN для
- * QR-плакатов и всё про установку на домашний экран отсюда убраны.
+ * карточка человека, смена организации и точки, тема (те же три карточки)
+ * с «Логотип и цвета», баланс, тариф, настройки, панель платформы, выход.
+ * Ничего «только для приложения» здесь быть не должно (П-3) — поэтому
+ * web-push, PIN для QR-плакатов и всё про установку на домашний экран
+ * отсюда убраны.
  *
  * Два действия необратимы:
  *   • «Выйти» — тот же полный выход, что на сайте (все куки сессии), и
@@ -74,7 +75,6 @@ export function MiniMeClient({
   phone?: string | null;
 }) {
   const { data: session, status } = useSession();
-  const { theme, setTheme } = useMiniTheme();
   const [busy, setBusy] = useState<"none" | "signout" | "unlink">("none");
   const [error, setError] = useState<string | null>(null);
   // Confirm-state для двух destructive actions. Project rule (CLAUDE.md
@@ -182,6 +182,10 @@ export function MiniMeClient({
   }
 
   const fullAccess = hasFullWorkspaceAccess(u);
+  // Логотип и цвет организации — в её настройках, куда пускают только с
+  // `admin.full`: то же условие, что у ссылки в меню профиля сайта
+  // (`canEditBranding`). Шеф полного доступа к кабинету не получает.
+  const canEditBranding = hasCapability(u, "admin.full");
   // Домашний адрес — тот же, что у первой вкладки меню, иначе кнопка
   // «На главную» вела бы туда, откуда сразу перекидывает.
   const homeHref = miniHomeHref(u);
@@ -296,44 +300,29 @@ export function MiniMeClient({
       {/* Только в приложении WeSetup: push на этот телефон. */}
       {appPlatform ? <AppPushSettings /> : null}
 
-      {/* Тема — переключатель как вкладки QR-страниц. */}
-      <section className="mini-card p-4">
-        <div className="mb-3">
-          <div
-            className="text-[17px] font-semibold"
-            style={{ color: "var(--mini-text)" }}
+      {/* Тема — те же три карточки, что в меню профиля на сайте
+          («Светлая / Тёмная / Как на устройстве», как блок Appearance в
+          приложении Claude): нажал — тема сменилась сразу. Под ними, как на
+          сайте, — «Логотип и цвета»: брендинг организации в её настройках. */}
+      <section className="mini-card p-4" data-testid="mini-theme">
+        <h2
+          className="mb-3 text-[17px] font-semibold"
+          style={{ color: "var(--mini-text)" }}
+        >
+          Тема оформления
+        </h2>
+        <MiniThemeTiles />
+        {canEditBranding ? (
+          <Link
+            href={BRANDING_SETTINGS_HREF}
+            data-testid="theme-branding-link"
+            className="mini-btn-ghost mini-press -mx-3.5 -mb-2 mt-1 w-fit"
+            style={{ color: "var(--mini-accent-ink)" }}
           >
-            Тема оформления
-          </div>
-          <div
-            className="mt-0.5 text-[14.5px]"
-            style={{ color: "var(--mini-text-muted)" }}
-          >
-            Выбор запоминается в вашем аккаунте
-          </div>
-        </div>
-        <div role="radiogroup" aria-label="Тема Mini App" className="mini-seg">
-          <button
-            type="button"
-            role="radio"
-            aria-checked={theme === "dark"}
-            onClick={() => setTheme("dark")}
-            className="mini-press"
-          >
-            <Moon className="size-5" />
-            Тёмная
-          </button>
-          <button
-            type="button"
-            role="radio"
-            aria-checked={theme === "light"}
-            onClick={() => setTheme("light")}
-            className="mini-press"
-          >
-            <Sun className="size-5" />
-            Светлая
-          </button>
-        </div>
+            <Palette className="size-5 shrink-0" aria-hidden />
+            Логотип и цвета
+          </Link>
+        ) : null}
       </section>
 
       {/* Строки — как пункты списка QR-страниц: плитка иконки, название
@@ -358,9 +347,6 @@ export function MiniMeClient({
                 />
               </Link>
             )}
-            <Link href="/settings/appearance" className="mini-item mini-press">
-              <ProfileRow icon={Palette} label="Внешний вид" hint="логотип и цвета" />
-            </Link>
             <Link href="/settings" className="mini-item mini-press">
               <ProfileRow
                 icon={Settings}

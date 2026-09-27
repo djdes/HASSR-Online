@@ -37,6 +37,19 @@ export function selectedThemeTile(state: {
 }
 
 /**
+ * Нажатие на карточку: режим — выбранная карточка, смена по времени суток
+ * выключается (иначе выбор не имел бы видимого эффекта). `turnedOffAuto` —
+ * смену выключило именно это нажатие: меню скажет «выключена» и предложит
+ * вернуть. Одинаково на сайте и в мини-приложении.
+ */
+export function chooseThemeTile(
+  state: { autoBySchedule: boolean },
+  tile: ThemeMode
+): { mode: ThemeMode; autoBySchedule: false; turnedOffAuto: boolean } {
+  return { mode: tile, autoBySchedule: false, turnedOffAuto: state.autoBySchedule };
+}
+
+/**
  * Куда ведут клавиши внутри ряда карточек — как у обычной группы
  * переключателей: стрелки по кругу, Home и End — к краям. `null` — клавиша
  * не наша, её обработает кто-то ещё (Tab, Esc, Enter).
