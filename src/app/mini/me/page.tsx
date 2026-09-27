@@ -23,6 +23,7 @@ export default async function MiniMePage() {
           select: {
             phone: true,
             positionTitle: true,
+            telegramChatId: true,
             // Должность почти всегда задана справочником, а не строкой:
             // раньше читали только `positionTitle`, и у всех, кого
             // завели правильно, в профиле стояло «не указана».
@@ -41,6 +42,7 @@ export default async function MiniMePage() {
         null
       }
       phone={profile?.phone ?? null}
+      telegramLinked={Boolean(profile?.telegramChatId)}
     />
   );
 }
