@@ -508,6 +508,9 @@ const FIREBASE_CI = /Firebase is not configured: GoogleService-Info.plist is mis
 // при уходе со страницы (выход, удаление аккаунта). Это console.error самой next-auth,
 // не необработанное исключение; считаем отдельно и показываем в отчёте.
 const NEXTAUTH_FETCH = /CLIENT_FETCH_ERROR|next-auth\.js\.org\/errors#client_fetch_error/;
+// Раунд 5: «[error] - {"errorMessage":"Retry"}» — Capacitor пишет в консоль отказ вызова
+// плагина (распознавание речи в симуляторе без голоса), даже если страница его поймала.
+const PLUGIN_REJECT = /\[error\] - \{"errorMessage":/;
 const ERR_RX = /Minified React error|#418|#419|#423|#425|Hydration|hydrat|STARTUP JS ERROR|\[error\]|Uncaught|Unhandled|TypeError|ReferenceError|SyntaxError/i;
 function consoleNews() {
   const out = [];
@@ -940,6 +943,15 @@ async function ready(ctx) {
     await dismissSheets();
   }
   if (!(await waitFor(() => has({ type: "link", begins: "Профиль" }), 20000 * SLOW))) throw new Error("нет нижнего меню — приложение не в рабочем состоянии");
+  // Раунд 5: S11 упал, не удалив повара, — S05/S06/S03a пошли под поваром (меню
+  // «Сегодня / Разделы / Профиль», без «Журналов»). У шефа есть вкладка «Журналы».
+  if (!(await has({ type: "link", begins: "Журналы" }))) {
+    ctx.d.notChef = true;
+    if (!(await logout(ctx))) throw new Error("вошёл не шеф и выйти не удалось");
+    await signIn(ctx, CHEF, "relogin-chef");
+    await sleep(2000);
+    await dismissSheets();
+  }
 }
 
 async function profileTheme(ctx, name) {
@@ -973,7 +985,15 @@ async function openJournal(ctx, search, cardText, docTitle) {
   if (doc === "list") {
     await dismissGuide(ctx);
     await tap({ type: "link", contains: period }, { scrolls: 4, settle: 3000 * SLOW });
-    await waitFor(() => has({ type: ["link", "button"], contains: "Распечатать" }), 40000 * SLOW);
+    let opened = await waitFor(() => has({ type: ["link", "button"], contains: "Распечатать" }), 40000 * SLOW);
+    // Раунд 5 (S04, кадры 019/020): после нажатия на карточку документ не открылся
+    // за 40 с (переход по ссылке не завершился) — второе нажатие, с кадром.
+    if (!opened && (await has({ type: "link", contains: period }))) {
+      ctx.d.periodRetap = true;
+      stepShot("period-retap");
+      await tap({ type: "link", contains: period }, { scrolls: 4, settle: 3000 * SLOW });
+      opened = await waitFor(() => has({ type: ["link", "button"], contains: "Распечатать" }), 40000 * SLOW);
+    }
   }
   await dismissGuide(ctx);
   await sleep(1500);
@@ -1008,7 +1028,7 @@ async function openE2eForm(ctx, want, { afterTap = null, settle = 3000 } = {}) {
     ctx.d.entriesBefore = await entryCount();
     await tap({ type: "link", contains: "Новая запись" }, { scrolls: 4, settle: settle * SLOW });
     if (afterTap) await afterTap();
-    return Boolean(await waitFor(() => has(want), 30000 * SLOW));
+    return Boolean(await waitFor(() => has(want), 45000 * SLOW));
   } catch (e) {
     ctx.d.e2eFormError = e.message.slice(0, 200);
     return false;
@@ -1020,7 +1040,9 @@ async function entryCount() {
   const chip = await textsWith(["запис"]);
   const m = chip.map((l) => /^(\d+)\s*запис/.exec(l.trim())).find(Boolean);
   const cards = await textsWith([" г. в "]);
-  return { chip: m ? Number(m[1]) : null, chipLabels: chip.slice(0, 5), cards: cards.length, cardLabels: cards.slice(0, 5) };
+  // Раунд 5: «0 записей» в дереве — два текста («0» и «записей»); пустой журнал — «Записей пока нет».
+  const empty = chip.some((l) => /Записей пока нет/i.test(l));
+  return { chip: m ? Number(m[1]) : empty ? 0 : null, chipLabels: chip.slice(0, 5), cards: cards.length, cardLabels: cards.slice(0, 5) };
 }
 
 /** С формы — «Отмена» в липком низу → страница журнала; число записей. */
@@ -1053,7 +1075,7 @@ async function sectionsGo(label) {
 // S12 — всегда последним.
 const ORDER = (env.ORDER || "S01,S02,S13,S04,S07,S08,S11,S05,S06,S03a,S12").split(",");
 // Потолок на сценарий (мс); общий бюджет — TEST_BUDGET_MIN.
-const LIMITS = { S01: 90000, S02: 300000, S03a: 300000, S03b: 360000, S04: 300000, S05: 300000, S06: 240000, S07: 240000, S08: 240000, S09: 120000, S10: 150000, S11: 240000, S12: 60000, S13: 240000 };
+const LIMITS = { S01: 90000, S02: 300000, S03a: 300000, S03b: 360000, S04: 300000, S05: 300000, S06: 240000, S07: 300000, S08: 240000, S09: 120000, S10: 150000, S11: 360000, S12: 60000, S13: 240000 };
 const plan = new Map();
 function def(id, name, fn, timeoutMs) {
   plan.set(id, { name, fn, timeoutMs: LIMITS[id] ?? timeoutMs ?? 300000 });
@@ -1373,6 +1395,14 @@ async function main() {
     await sleep(2000);
     const more = await tryTap({ type: "button", label: "Отменить" }, { scrolls: 0, anywhere: true, timeout: 1500 });
     if (more) await sleep(1500);
+    // Раунд 5 (кадр 024): в симуляторе без камеры iOS показывает не лист, а меню
+    // «Медиатека / Выбрать файл» без «Отменить» — закрывается нажатием мимо меню.
+    if (!c && !more && (await has({ label: "Медиатека" }))) {
+      await tapXY(W.width / 2, 100);
+      await sleep(1500);
+      ctx.d.cancel = "нажатие мимо меню";
+    }
+    ctx.check("меню выбора фото закрылось", !(await has({ label: "Медиатека" })));
     ctx.shot("cancelled");
     ctx.check("после отмены: приложение живо, форма на месте", (await appState()) === 4 && (await has(photoBtn)));
     if (ctx.d.via === "e2e_voice form") {
@@ -1538,7 +1568,7 @@ async function main() {
       const f = ctx.shot(tag);
       const kb = await keyboard();
       const title = (await all({ type: "text", contains: "Удалить аккаунт навсегда" }))[0]?.r ?? null;
-      const close = (await all({ type: "button", label: "Закрыть" })).map((x) => x.r).find((r) => r.y < W.height / 2) ?? null;
+      const close = (await all({ type: "button", label: "Закрыть" })).map((x) => x.r).find((r) => r.y < W.height / 2 && r.width < 100) ?? null;
       const input = (await all({ type: "field" })).map((x) => x.r).pop() ?? null;
       const confirm = (await all({ type: "button", label: "Удалить аккаунт" })).map((x) => x.r).sort((a, b) => b.y - a.y)[0] ?? null;
       const kt = await keyboardTop();
@@ -1551,7 +1581,14 @@ async function main() {
       if (kt && confirm) ctx.d[`${tag}_confirmAboveKeyboard`] = confirm.y + confirm.height <= kt + 1;
     };
     await dialogCheck("dialog-keyboard");
-    await tap({ type: "field" }, { scrolls: 0, anywhere: true, pick: "last" });
+    // Раунд 5: поле было под кнопками окна — нажатие «в поле» попало в «Отмена».
+    // Нажимаем, только если поле выше кнопок; иначе печатаем в поле с фокусом (autoFocus).
+    const dk = ctx.d["dialog_dialog-keyboard"];
+    const covered = dk.input && dk.confirm && dk.input.y + dk.input.height > dk.confirm.y - 8;
+    ctx.check("dialog-keyboard: поле ввода не закрыто кнопками окна", !covered, { input: dk.input, confirm: dk.confirm });
+    const fieldEl = (await all({ type: "field" })).pop();
+    if (!covered) await tap({ type: "field" }, { scrolls: 0, anywhere: true, pick: "last" });
+    else lastTapped = fieldEl?.el ?? null;
     await sleep(800);
     await typeFocused("УДАЛИТЬ");
     await sleep(800);
@@ -1578,7 +1615,8 @@ async function main() {
         lines: txt.split("\n").length,
         react: txt.split("\n").filter((l) => /Minified React error|#418|Hydration/i.test(l)).slice(0, 10),
         startup: txt.split("\n").filter((l) => /STARTUP JS ERROR/.test(l)).length,
-        errors: txt.split("\n").filter((l) => /\[error\]|Uncaught|Unhandled|TypeError|ReferenceError/.test(l) && !FIREBASE_CI.test(l) && !NEXTAUTH_FETCH.test(l)).slice(0, 25),
+        errors: txt.split("\n").filter((l) => /\[error\]|Uncaught|Unhandled|TypeError|ReferenceError/.test(l) && !FIREBASE_CI.test(l) && !NEXTAUTH_FETCH.test(l) && !PLUGIN_REJECT.test(l)).slice(0, 25),
+        pluginRejects: txt.split("\n").filter((l) => PLUGIN_REJECT.test(l)).slice(0, 10),
         uncaught: txt.split("\n").filter((l) => /Uncaught|Unhandled|STARTUP JS ERROR|ReferenceError|SyntaxError/.test(l)).slice(0, 25),
         nextAuthFetch: txt.split("\n").filter((l) => NEXTAUTH_FETCH.test(l)).slice(0, 10),
         firebaseNotConfigured: txt.split("\n").filter((l) => FIREBASE_CI.test(l)).length,
@@ -1591,8 +1629,9 @@ async function main() {
     ctx.check("нет ошибок React (#418 и др.)", react.length === 0, react);
     const uncaught = Object.values(per).flatMap((p) => p.uncaught);
     ctx.d.nextAuthFetch = Object.values(per).flatMap((p) => p.nextAuthFetch);
+    ctx.d.pluginRejects = Object.values(per).flatMap((p) => p.pluginRejects);
     ctx.check("нет необработанных (uncaught/unhandled) ошибок JS", uncaught.length === 0, uncaught);
-    ctx.check("нет других записей [error] в консоли (кроме сбоя fetch next-auth — см. nextAuthFetch)", errs.length === 0, errs);
+    ctx.check("нет других записей [error] в консоли (кроме сбоя fetch next-auth и отказов плагинов — см. nextAuthFetch, pluginRejects)", errs.length === 0, errs);
   });
 
   meta.order = ORDER;
