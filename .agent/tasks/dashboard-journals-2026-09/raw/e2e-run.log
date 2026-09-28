@@ -1,0 +1,87 @@
+PASS  #1 [AC1] phone-light: секция без карточки (рамка/фон/тень/скругление нет)  {"layout":"flat","border":"0px","bg":"rgba(0, 0, 0, 0)","shadow":"none","radius":"0px","widthDiff":0,"left":16}
+PASS  #2 [AC1] phone-light: во всю ширину контента  {"widthDiff":0,"left":16}
+PASS  #3 [AC1] phone-light: по умолчанию развёрнута  {"open":true,"saved":null}
+PASS  #4 [AC1] phone-light: заголовок «Обязательные журналы» + счётчик в строку, без значка в квадрате  {"text":"Обязательные журналы5/10","height":23,"iconSquare":false}
+PASS  #5 [AC1] phone-light: настройка — тихая иконка без рамки  {"border":"0px","bg":"rgba(0, 0, 0, 0)"}
+PASS  #6 [AC1] phone-light: «Автозаполнить» / «QR-коды» и поиск на месте, кнопки не в строке заголовка  {"actions":["Автозаполнить","QR-коды"],"inSummary":false}
+PASS  #7 [AC2] phone-light: 10 строк, отметка по данным (5 ✓, 5 ○)  {"filled":["cleaning","climate_control","cold_equipment_control","fryer_oil","hygiene"],"open":["finished_product","general_cleaning","incoming_control","med_books","perishable_rejection"]}
+PASS  #8 [AC2] phone-light: у каждой строки превью загружено  []
+PASS  #9 [AC2] phone-light: превью 64×48  {"w":64,"h":48}
+PASS  #10 [AC2] phone-light: строки без заливки и рамки  ["rgba(0, 0, 0, 0) 0px/0px"]
+PASS  #11 [AC2] phone-light: бумажные — те же строки с превью, без отметки  {"n":5,"caption":"Бумажные журналы"}
+PASS  #12 [AC2] phone-light: одна колонка  {"columns":1}
+PASS  #13 [AC2] phone-light: без горизонтальной прокрутки  {"hScroll":0}
+PASS  #14 [AC1] phone-light: нажатие на заголовок сворачивает, состояние сохранено  {"open":false,"saved":"0","rowsHidden":true}
+PASS  #15 [AC1] phone-light: после перезагрузки свёрнута, первый видимый кадр — уже свёрнута (без мигания)  {"afterReload":{"open":false,"saved":"0"},"first":{"t":476,"visible":true,"open":false},"frames":[{"t":122,"visible":false,"open":true,"at":"insert"},{"t":127,"visible":false,"open":false},{"t":476,"visible":true,"open":false}]}
+PASS  #16 [AC1] phone-light: развернули — после перезагрузки открыта с первого кадра  {"afterExpand":{"open":true,"saved":"1"},"afterReload2":{"open":true,"saved":"1"},"first":{"t":520,"visible":true,"open":true}}
+PASS  #17 [AC2] phone-light: поиск «бракераж» — только два журнала бракеража  {"rows":["finished_product","perishable_rejection"],"paper":0,"counter":"Найдено 2 из 50"}
+PASS  #18 [AC2] phone-light: поиск находит отключённый журнал — строка с превью и «Включить»  {"code":"vitaminization","thumb":true,"button":"Включить","caption":"Отключённые"}
+PASS  #19 [AC2] phone-light: очистка поиска возвращает весь список  null
+PASS  #20 [AC1] phone-light: «Автозаполнить» открывает окно, секция не сворачивается  {"dialogOk":true,"stillOpen":true}
+PASS  #21 [AC2] phone-light: тап по строке — в журнал  {"url":"http://localhost:3161/journals/hygiene"}
+PASS  #22 [AC1] phone-light: переход внутри приложения и назад — секция осталась свёрнутой  {"collapsed":{"open":false,"saved":"0"},"inSettings":true,"back":{"open":false,"saved":"0"},"frames":[{"t":37872,"visible":true,"open":false,"at":"insert"}]}
+PASS  #23 [AC1] phone-dark: секция без карточки (рамка/фон/тень/скругление нет)  {"layout":"flat","border":"0px","bg":"rgba(0, 0, 0, 0)","shadow":"none","radius":"0px","widthDiff":0,"left":16}
+PASS  #24 [AC1] phone-dark: во всю ширину контента  {"widthDiff":0,"left":16}
+PASS  #25 [AC1] phone-dark: по умолчанию развёрнута  {"open":true,"saved":null}
+PASS  #26 [AC1] phone-dark: заголовок «Обязательные журналы» + счётчик в строку, без значка в квадрате  {"text":"Обязательные журналы5/10","height":23,"iconSquare":false}
+PASS  #27 [AC1] phone-dark: настройка — тихая иконка без рамки  {"border":"0px","bg":"rgba(0, 0, 0, 0)"}
+PASS  #28 [AC1] phone-dark: «Автозаполнить» / «QR-коды» и поиск на месте, кнопки не в строке заголовка  {"actions":["Автозаполнить","QR-коды"],"inSummary":false}
+PASS  #29 [AC2] phone-dark: 10 строк, отметка по данным (5 ✓, 5 ○)  {"filled":["cleaning","climate_control","cold_equipment_control","fryer_oil","hygiene"],"open":["finished_product","general_cleaning","incoming_control","med_books","perishable_rejection"]}
+PASS  #30 [AC2] phone-dark: у каждой строки превью загружено  []
+PASS  #31 [AC2] phone-dark: превью 64×48  {"w":64,"h":48}
+PASS  #32 [AC2] phone-dark: строки без заливки и рамки  ["rgba(0, 0, 0, 0) 0px/0px"]
+PASS  #33 [AC2] phone-dark: бумажные — те же строки с превью, без отметки  {"n":5,"caption":"Бумажные журналы"}
+PASS  #34 [AC2] phone-dark: одна колонка  {"columns":1}
+PASS  #35 [AC2] phone-dark: без горизонтальной прокрутки  {"hScroll":0}
+PASS  #36 [AC1] phone-dark: нажатие на заголовок сворачивает, состояние сохранено  {"open":false,"saved":"0","rowsHidden":true}
+PASS  #37 [AC1] phone-dark: после перезагрузки свёрнута, первый видимый кадр — уже свёрнута (без мигания)  {"afterReload":{"open":false,"saved":"0"},"first":{"t":472,"visible":true,"open":false},"frames":[{"t":123,"visible":false,"open":true,"at":"insert"},{"t":126,"visible":false,"open":false},{"t":472,"visible":true,"open":false}]}
+PASS  #38 [AC1] phone-dark: развернули — после перезагрузки открыта с первого кадра  {"afterExpand":{"open":true,"saved":"1"},"afterReload2":{"open":true,"saved":"1"},"first":{"t":477,"visible":true,"open":true}}
+PASS  #39 [AC2] phone-dark: тёмная — название читается (≥ 7), пустой кружок виден (≥ 3), ✓ виден (≥ 3)  {"bg":"rgb(47, 44, 71)","name":12.08,"openRing":4.1,"filledMark":4.05,"badgeBg":"rgba(245, 158, 11, 0.16)","badgeText":8}
+PASS  #40 [AC2] phone-dark: тёмная — счётчик в заголовке не светлое пятно  {"badgeBg":"rgba(245, 158, 11, 0.16)","badgeText":8}
+PASS  #41 [AC1] desktop-light: секция без карточки (рамка/фон/тень/скругление нет)  {"layout":"flat","border":"0px","bg":"rgba(0, 0, 0, 0)","shadow":"none","radius":"0px","widthDiff":0,"left":32}
+PASS  #42 [AC1] desktop-light: во всю ширину контента  {"widthDiff":0,"left":32}
+PASS  #43 [AC1] desktop-light: по умолчанию развёрнута  {"open":true,"saved":null}
+PASS  #44 [AC1] desktop-light: заголовок «Обязательные журналы» + счётчик в строку, без значка в квадрате  {"text":"Обязательные журналы5/10","height":28,"iconSquare":false}
+PASS  #45 [AC1] desktop-light: настройка — тихая иконка без рамки  {"border":"0px","bg":"rgba(0, 0, 0, 0)"}
+PASS  #46 [AC1] desktop-light: «Автозаполнить» / «QR-коды» и поиск на месте, кнопки не в строке заголовка  {"actions":["Автозаполнить","QR-коды"],"inSummary":false}
+PASS  #47 [AC2] desktop-light: 10 строк, отметка по данным (5 ✓, 5 ○)  {"filled":["cleaning","climate_control","cold_equipment_control","fryer_oil","hygiene"],"open":["finished_product","general_cleaning","incoming_control","med_books","perishable_rejection"]}
+PASS  #48 [AC2] desktop-light: у каждой строки превью загружено  []
+PASS  #49 [AC2] desktop-light: превью 80×60  {"w":80,"h":60}
+PASS  #50 [AC2] desktop-light: строки без заливки и рамки  ["rgba(0, 0, 0, 0) 0px/0px"]
+PASS  #51 [AC2] desktop-light: бумажные — те же строки с превью, без отметки  {"n":5,"caption":"Бумажные журналы"}
+PASS  #52 [AC2] desktop-light: три колонки  {"columns":3}
+PASS  #53 [AC2] desktop-light: без горизонтальной прокрутки  {"hScroll":0}
+PASS  #54 [AC1] desktop-light: нажатие на заголовок сворачивает, состояние сохранено  {"open":false,"saved":"0","rowsHidden":true}
+PASS  #55 [AC1] desktop-light: после перезагрузки свёрнута, первый видимый кадр — уже свёрнута (без мигания)  {"afterReload":{"open":false,"saved":"0"},"first":{"t":473,"visible":true,"open":false},"frames":[{"t":118,"visible":false,"open":true,"at":"insert"},{"t":127,"visible":false,"open":false},{"t":473,"visible":true,"open":false}]}
+PASS  #56 [AC1] desktop-light: развернули — после перезагрузки открыта с первого кадра  {"afterExpand":{"open":true,"saved":"1"},"afterReload2":{"open":true,"saved":"1"},"first":{"t":490,"visible":true,"open":true}}
+PASS  #57 [AC2] desktop-light: поиск «бракераж» — только два журнала бракеража  {"rows":["finished_product","perishable_rejection"],"paper":0,"counter":"Найдено 2 из 50"}
+PASS  #58 [AC2] desktop-light: поиск находит отключённый журнал — строка с превью и «Включить»  {"code":"vitaminization","thumb":true,"button":"Включить","caption":"Отключённые"}
+PASS  #59 [AC2] desktop-light: очистка поиска возвращает весь список  null
+PASS  #60 [AC1] desktop-light: «Автозаполнить» открывает окно, секция не сворачивается  {"dialogOk":true,"stillOpen":true}
+PASS  #61 [AC2] desktop-light: клик по строке — в журнал  {"url":"http://localhost:3161/journals/hygiene"}
+PASS  #62 [AC1] desktop-dark: секция без карточки (рамка/фон/тень/скругление нет)  {"layout":"flat","border":"0px","bg":"rgba(0, 0, 0, 0)","shadow":"none","radius":"0px","widthDiff":0,"left":32}
+PASS  #63 [AC1] desktop-dark: во всю ширину контента  {"widthDiff":0,"left":32}
+PASS  #64 [AC1] desktop-dark: по умолчанию развёрнута  {"open":true,"saved":null}
+PASS  #65 [AC1] desktop-dark: заголовок «Обязательные журналы» + счётчик в строку, без значка в квадрате  {"text":"Обязательные журналы5/10","height":28,"iconSquare":false}
+PASS  #66 [AC1] desktop-dark: настройка — тихая иконка без рамки  {"border":"0px","bg":"rgba(0, 0, 0, 0)"}
+PASS  #67 [AC1] desktop-dark: «Автозаполнить» / «QR-коды» и поиск на месте, кнопки не в строке заголовка  {"actions":["Автозаполнить","QR-коды"],"inSummary":false}
+PASS  #68 [AC2] desktop-dark: 10 строк, отметка по данным (5 ✓, 5 ○)  {"filled":["cleaning","climate_control","cold_equipment_control","fryer_oil","hygiene"],"open":["finished_product","general_cleaning","incoming_control","med_books","perishable_rejection"]}
+PASS  #69 [AC2] desktop-dark: у каждой строки превью загружено  []
+PASS  #70 [AC2] desktop-dark: превью 80×60  {"w":80,"h":60}
+PASS  #71 [AC2] desktop-dark: строки без заливки и рамки  ["rgba(0, 0, 0, 0) 0px/0px"]
+PASS  #72 [AC2] desktop-dark: бумажные — те же строки с превью, без отметки  {"n":5,"caption":"Бумажные журналы"}
+PASS  #73 [AC2] desktop-dark: три колонки  {"columns":3}
+PASS  #74 [AC2] desktop-dark: без горизонтальной прокрутки  {"hScroll":0}
+PASS  #75 [AC1] desktop-dark: нажатие на заголовок сворачивает, состояние сохранено  {"open":false,"saved":"0","rowsHidden":true}
+PASS  #76 [AC1] desktop-dark: после перезагрузки свёрнута, первый видимый кадр — уже свёрнута (без мигания)  {"afterReload":{"open":false,"saved":"0"},"first":{"t":443,"visible":true,"open":false},"frames":[{"t":104,"visible":false,"open":true,"at":"insert"},{"t":115,"visible":false,"open":false},{"t":443,"visible":true,"open":false}]}
+PASS  #77 [AC1] desktop-dark: развернули — после перезагрузки открыта с первого кадра  {"afterExpand":{"open":true,"saved":"1"},"afterReload2":{"open":true,"saved":"1"},"first":{"t":497,"visible":true,"open":true}}
+PASS  #78 [AC2] desktop-dark: тёмная — название читается (≥ 7), пустой кружок виден (≥ 3), ✓ виден (≥ 3)  {"bg":"rgb(47, 44, 71)","name":12.08,"openRing":4.1,"filledMark":4.05,"badgeBg":"rgba(245, 158, 11, 0.16)","badgeText":8}
+PASS  #79 [AC2] desktop-dark: тёмная — счётчик в заголовке не светлое пятно  {"badgeBg":"rgba(245, 158, 11, 0.16)","badgeText":8}
+PASS  #80 [AC2] phone-light: скелет загрузки в новом виде показан  null
+PASS  #81 [AC2] phone-dark: скелет загрузки в новом виде показан  null
+PASS  #82 [AC2] desktop-light: скелет загрузки в новом виде показан  null
+PASS  #83 [AC2] desktop-dark: скелет загрузки в новом виде показан  null
+PASS  #84 [AC4] превью и статика без 4xx/5xx  []
+PASS  #85 [AC4] ошибок страницы нет  []
+
+85/85 PASS

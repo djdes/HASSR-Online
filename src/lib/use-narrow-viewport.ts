@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 /**
  * `true` на телефоне (< 640px).
@@ -11,16 +11,23 @@ import { useEffect, useState } from "react";
  */
 const NARROW_QUERY = "(max-width: 639px)";
 
+function subscribe(onChange: () => void): () => void {
+  const mq = window.matchMedia(NARROW_QUERY);
+  mq.addEventListener("change", onChange);
+  return () => mq.removeEventListener("change", onChange);
+}
+
+/**
+ * Гидратация идёт по серверному значению (`false`), потом React сам
+ * перерисует по экрану. Раньше экран читался уже в первом рендере: на
+ * телефоне разметка клиента расходилась с серверной, и React оставлял
+ * серверные атрибуты (кнопка партнёрской программы в шапке мини-приложения
+ * жила с атрибутами всплывающего окна, которого на телефоне нет).
+ */
 export function useIsNarrowViewport(): boolean {
-  const [narrow, setNarrow] = useState(
-    () => typeof window !== "undefined" && window.matchMedia(NARROW_QUERY).matches
+  return useSyncExternalStore(
+    subscribe,
+    () => window.matchMedia(NARROW_QUERY).matches,
+    () => false
   );
-  useEffect(() => {
-    const mq = window.matchMedia(NARROW_QUERY);
-    const update = () => setNarrow(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
-  return narrow;
 }

@@ -346,20 +346,23 @@ export default async function DashboardPage() {
             <DashboardSection
               storageKey="compliance-grid"
               title="Обязательные журналы"
-              // Заголовок со счётчиком N/M по центру, под ним две кнопки
-              // (решение владельца 2026-09-25). Подпись «Есть запись за
-              // сегодня: N из M…» убрана — счётчик рядом с названием.
-              centered
+              // Без карточки, во всю ширину, по умолчанию развёрнута
+              // (владелец, 2026-09-27: «без блока-кругляшка… а то
+              // прямоугольник в прямоугольнике»). Строка заголовка —
+              // название со счётчиком N/M, настройка и стрелка; кнопки
+              // «Автозаполнить» / «QR-коды» — в панели с поиском.
+              flat
               defaultOpen={true}
-              actions={<CloseDayCard />}
               titleAside={
+                // Тихая иконка без рамки: квадрат слева от заголовка
+                // владелец просил убрать, а выбор набора журналов нужен.
                 <Link
                   href="/settings/journals"
                   title="Выбрать, какие журналы вести"
                   aria-label="Настройка журналов"
-                  className="inline-flex size-10 items-center justify-center rounded-xl border border-[#dcdfed] bg-white text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] hover:text-[#3848c7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+                  className="inline-flex size-10 items-center justify-center rounded-full text-[#9b9fb3] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
                 >
-                  <SlidersHorizontal className="size-4 text-[#5566f6]" />
+                  <SlidersHorizontal className="size-[18px]" />
                 </Link>
               }
               badge={
@@ -381,6 +384,7 @@ export default async function DashboardPage() {
                 disabledCodes={[...disabledCodes]}
                 sampleCodes={[...SAMPLE_CODES]}
                 canToggle={hasFullWorkspaceAccess(session.user)}
+                actions={<CloseDayCard />}
               />
             </DashboardSection>
           )}

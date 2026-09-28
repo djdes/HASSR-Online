@@ -107,6 +107,9 @@ export function VoiceInput({
       return;
     }
     const denied = "Разрешите микрофон и распознавание речи в настройках телефона";
+    // Запись уже завершена и о ней сказано — поздний отказ плагина
+    // («Retry» после остановки) второго сообщения не добавляет.
+    let finished = false;
     try {
       const available = await bridge.call<{ available?: boolean }>("SpeechRecognition", "available");
       if (available?.available === false) {
@@ -145,6 +148,7 @@ export function VoiceInput({
         // сигнал «запись остановлена» ничего не делает.
         if (nativeFinishRef.current !== finish) return;
         nativeFinishRef.current = null;
+        finished = true;
         nativeCleanupRef.current?.();
         setRecording(false);
         // iOS молча выключает запись, если речи не было: без сообщения
@@ -176,6 +180,7 @@ export function VoiceInput({
       nativeFinishRef.current = null;
       nativeCleanupRef.current?.();
       setRecording(false);
+      if (finished) return;
       const message = err instanceof Error ? err.message : String(err);
       toast.error(
         /permission|denied|access/i.test(message)

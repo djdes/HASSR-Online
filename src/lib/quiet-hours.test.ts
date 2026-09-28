@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
+import { LOGIN_CODE_DELIVERY_KIND } from "@/lib/login-challenge";
 import { isUrgentKind, parseQuietHours, quietUntil } from "@/lib/quiet-hours";
 
 describe("parseQuietHours", () => {
@@ -34,5 +35,9 @@ describe("isUrgentKind", () => {
     assert.equal(isUrgentKind("temperature.deviation"), true);
     assert.equal(isUrgentKind("compliance"), false);
     assert.equal(isUrgentKind(null), false);
+  });
+
+  it("код входа уходит сразу и в тихие часы: иначе ночью не войти", () => {
+    assert.equal(isUrgentKind(LOGIN_CODE_DELIVERY_KIND), true);
   });
 });

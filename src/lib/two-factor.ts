@@ -8,6 +8,7 @@ import {
   evaluateChallenge,
   generateLoginCode,
   hashLoginCode,
+  LOGIN_CODE_DELIVERY_KIND,
 } from "@/lib/login-challenge";
 
 /**
@@ -54,7 +55,7 @@ export async function startTelegramChallenge(
       `🔐 Код для входа в WeSetup: <b>${code}</b>`,
       "Действует 5 минут. Если вы не входили — просто не вводите его и смените пароль.",
     ].join("\n"),
-    { userId: user.id }
+    { userId: user.id, delivery: { kind: LOGIN_CODE_DELIVERY_KIND } }
   ).catch(() => false);
   if (!sent) {
     await db.loginChallenge.update({ where: { id: created.id }, data: { consumedAt: new Date() } });

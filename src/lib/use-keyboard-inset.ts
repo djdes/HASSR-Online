@@ -122,14 +122,39 @@ export function scrollDeltaToReveal(
  * отдаёт 0 («клавиатуры нет»), и подвал формы оставался над нижним меню —
  * выше клавиатуры на 81pt, а меню вылезало над клавиатурой (раунд 6, кадр 012).
  * Поэтому «открыта» считаем по высоте видимой части, а подъём — отдельно.
+ *
+ * Android-приложение делает третье: клавиатура сжимает само окно
+ * (innerHeight 839 → 527), видимая часть равна окну — по разнице их не
+ * увидеть. Там «открыта» — окно ниже своей полной высоты (`fullHeight`,
+ * наибольшая при той же ширине) больше чем на 150px, и фокус в поле ввода;
+ * подъём 0 — низ окна и так над клавиатурой. Без этого подвал формы стоял
+ * над нижним меню, меню — над клавиатурой, и вдвоём они закрывали поле, в
+ * котором печатают (Android, раунд 4, кадр 60).
  */
 export function keyboardStateFrom(
   innerHeight: number,
   viewportHeight: number,
-  viewportOffsetTop: number
+  viewportOffsetTop: number,
+  fullHeight: number = innerHeight,
+  editableFocused = false
 ): { open: boolean; bottom: number } {
-  if (!(innerHeight - viewportHeight > KEYBOARD_MIN_HEIGHT)) return { open: false, bottom: 0 };
+  const overPage = innerHeight - viewportHeight > KEYBOARD_MIN_HEIGHT;
+  const shrankWindow = editableFocused && fullHeight - innerHeight > RESIZED_KEYBOARD_MIN_HEIGHT;
+  if (!overPage && !shrankWindow) return { open: false, bottom: 0 };
   return { open: true, bottom: Math.max(0, Math.round(innerHeight - viewportHeight - viewportOffsetTop)) };
+}
+
+/** Порог для клавиатуры, сжавшей окно: панели браузера двигают его на десятки px. */
+const RESIZED_KEYBOARD_MIN_HEIGHT = 150;
+
+/** Поле, над которым телефон открывает клавиатуру (не галочка, не кнопка, не список). */
+function isTextEntry(el: Element | null): boolean {
+  if (!el) return false;
+  if (el instanceof HTMLTextAreaElement) return true;
+  if (el instanceof HTMLInputElement) {
+    return !["checkbox", "radio", "button", "submit", "reset", "file", "range", "color", "hidden", "image"].includes(el.type);
+  }
+  return el instanceof HTMLElement && el.isContentEditable;
 }
 
 /** Состояние клавиатуры для липких подвалов (см. `keyboardStateFrom`). */
@@ -139,16 +164,30 @@ export function useKeyboardState(): { open: boolean; bottom: number } {
   useEffect(() => {
     const viewport = window.visualViewport;
     if (!viewport) return;
+    // Полная высота окна при текущей ширине: поворот экрана — новый отсчёт.
+    let full = { width: window.innerWidth, height: window.innerHeight };
     const update = () => {
-      const next = keyboardStateFrom(window.innerHeight, viewport.height, viewport.offsetTop);
+      if (window.innerWidth !== full.width) full = { width: window.innerWidth, height: window.innerHeight };
+      else if (window.innerHeight > full.height) full = { ...full, height: window.innerHeight };
+      const next = keyboardStateFrom(
+        window.innerHeight,
+        viewport.height,
+        viewport.offsetTop,
+        full.height,
+        isTextEntry(document.activeElement)
+      );
       setState((prev) => (prev.open === next.open && prev.bottom === next.bottom ? prev : next));
     };
     update();
     viewport.addEventListener("resize", update);
     viewport.addEventListener("scroll", update);
+    // Фокус перешёл в поле при уже сжатом окне — пересчитать без resize.
+    // Закрытие клавиатуры ловит resize: окно снова во весь рост.
+    document.addEventListener("focusin", update);
     return () => {
       viewport.removeEventListener("resize", update);
       viewport.removeEventListener("scroll", update);
+      document.removeEventListener("focusin", update);
     };
   }, []);
 

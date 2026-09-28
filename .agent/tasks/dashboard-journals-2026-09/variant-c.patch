@@ -1,0 +1,124 @@
+diff --git a/src/components/dashboard/dashboard-journal-row.tsx b/src/components/dashboard/dashboard-journal-row.tsx
+index e4bab625..df3839e0 100644
+--- a/src/components/dashboard/dashboard-journal-row.tsx
++++ b/src/components/dashboard/dashboard-journal-row.tsx
+@@ -1,6 +1,6 @@
+ import Image from "next/image";
+ import Link from "next/link";
+-import { Check, ChevronRight, FileText, Printer } from "lucide-react";
++import { Check, FileText, Printer } from "lucide-react";
+ 
+ import { cn } from "@/lib/utils";
+ import {
+@@ -13,11 +13,8 @@ import {
+  * «слева у названий — маленькие прямоугольные скрины журналов с понятным
+  * чекбоксом-галочкой, что тут всё ок. В минималистичном виде».
+  *
+- * Строка — без заливки и рамки: превью бланка, на его углу — отметка
+- * состояния, название, тихая стрелка. Разделитель — тонкая линия над
+- * строкой (одна система на весь список, у бумажных и отключённых тоже).
+- * Из трёх вариантов выбран этот (A); два других — патчами в
+- * `.agent/tasks/dashboard-journals-2026-09/`.
++ * Вариант C («статус справа»): превью, название, справа пилюля
++ * «Готово» / «Заполнить». Патч `.agent/tasks/dashboard-journals-2026-09/variant-c.patch`.
+  */
+ 
+ /**
+@@ -99,9 +96,6 @@ export function JournalStatusMark({
+   );
+ }
+ 
+-/** Отметка на углу превью: вырез цвета фона страницы отделяет её от бланка. */
+-const MARK_ON_THUMB = "absolute -bottom-1.5 -right-1.5 ring-[3px] ring-[var(--app-soft-surface)]";
+-
+ const ROW_LINK = cn(
+   JOURNAL_ROW_CLASS,
+   "group outline-none focus-visible:rounded-xl focus-visible:ring-4 focus-visible:ring-[#5566f6]/15",
+@@ -125,6 +119,7 @@ export function DashboardJournalRow({
+   filled: boolean;
+   thumb: JournalThumbSource;
+ }) {
++  // Вариант C — превью и название, справа пилюля статуса словом.
+   return (
+     <Link
+       href={`/journals/${code}`}
+@@ -132,9 +127,7 @@ export function DashboardJournalRow({
+       data-journal-status={filled ? "filled" : "open"}
+       className={ROW_LINK}
+     >
+-      <JournalThumb source={thumb}>
+-        <JournalStatusMark filled={filled} className={MARK_ON_THUMB} />
+-      </JournalThumb>
++      <JournalThumb source={thumb} />
+       <span className="min-w-0 flex-1">
+         <span
+           className={NAME_LINK}
+@@ -144,10 +137,25 @@ export function DashboardJournalRow({
+         </span>
+         <span className="sr-only">{filled ? ", заполнен сегодня" : ", сегодня ещё не заполнен"}</span>
+       </span>
+-      <ChevronRight
+-        className="size-4 shrink-0 text-[#c7ccea] transition-[transform,color] duration-150 group-hover:translate-x-0.5 group-hover:text-[#5566f6]"
+-        aria-hidden
+-      />
++      {filled ? (
++        <span
++          aria-hidden
++          data-journal-mark="filled"
++          className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#ecfdf5] px-2.5 py-1 text-[12px] font-semibold text-[#116b2a]"
++        >
++          <Check className="size-3.5" strokeWidth={3} />
++          Готово
++        </span>
++      ) : (
++        <span
++          aria-hidden
++          data-journal-mark="open"
++          className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] font-semibold text-[#3848c7]"
++        >
++          <span className="size-3 rounded-full border-[1.5px] border-current" />
++          Заполнить
++        </span>
++      )}
+     </Link>
+   );
+ }
+@@ -165,10 +173,13 @@ export function DashboardPaperRow({ id, name }: { id: string; name: string }) {
+         <span className={NAME_LINK}>{name}</span>
+         <span className="sr-only">, бумажный — распечатать</span>
+       </span>
+-      <Printer
+-        className="size-4 shrink-0 text-[#9b9fb3] transition-colors duration-150 group-hover:text-[#5566f6]"
++      <span
+         aria-hidden
+-      />
++        className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] font-semibold text-[#6f7282]"
++      >
++        <Printer className="size-3.5" />
++        Печать
++      </span>
+     </Link>
+   );
+ }
+diff --git a/src/components/dashboard/dashboard-journals.test.ts b/src/components/dashboard/dashboard-journals.test.ts
+index b982b8b8..8588c5d2 100644
+--- a/src/components/dashboard/dashboard-journals.test.ts
++++ b/src/components/dashboard/dashboard-journals.test.ts
+@@ -116,7 +116,7 @@ test("строка журнала: превью бланка, отметка «
+     filled,
+     /<img [^>]*srcSet="[^"]*\/_next\/image\?url=%2Fjournal-samples%2Fhygiene\.webp&amp;w=64&amp;q=75 64w/,
+   );
+-  assert.match(filled, /data-journal-mark="filled"[^>]*bg-\[#16a34a\]/, "зелёный круг");
++  assert.match(filled, /data-journal-mark="filled"[^>]*>[\s\S]*?Готово/, "пилюля «Готово»");
+   assert.match(filled, /lucide-check/, "с галочкой");
+   assert.match(filled, /class="sr-only">, заполнен сегодня</);
+   assert.match(filled, /line-clamp-2/, "название до двух строк");
+@@ -132,7 +132,7 @@ test("строка журнала: превью бланка, отметка «
+   );
+   assert.match(open, /data-journal-status="open"/);
+   // Не заполнено — пустой кружок, без красного.
+-  assert.match(open, /data-journal-mark="open"[^>]*border-2/);
++  assert.match(open, /data-journal-mark="open"[^>]*>[\s\S]*?Заполнить/);
+   assert.doesNotMatch(open, /lucide-check|lucide-x|#d2453d|#a13a32/);
+   assert.doesNotMatch(open, OLD_ROW_FILLS);
+   // Строка — без заливки и рамки.
