@@ -595,7 +595,8 @@ const FIREBASE_CI = /Firebase is not configured: GoogleService-Info.plist is mis
 const NEXTAUTH_FETCH = /CLIENT_FETCH_ERROR|next-auth\.js\.org\/errors#client_fetch_error/;
 // Раунд 5: «[error] - {"errorMessage":"Retry"}» — Capacitor пишет в консоль отказ вызова
 // плагина (распознавание речи в симуляторе без голоса), даже если страница его поймала.
-const PLUGIN_REJECT = /\[error\] - \{"errorMessage":/;
+// Раунд 8: с Capacitor 8 строка — «[error] - {"message":"Retry","errorMessage":"Retry"}» (раунд 7, S12).
+const PLUGIN_REJECT = /\[error\] - \{.*"errorMessage":/;
 const ERR_RX = /Minified React error|#418|#419|#423|#425|Hydration|hydrat|STARTUP JS ERROR|\[error\]|Uncaught|Unhandled|TypeError|ReferenceError|SyntaxError/i;
 function consoleNews() {
   const out = [];
@@ -605,6 +606,21 @@ function consoleNews() {
     const lines = txt.slice(from).split("\n");
     consoleSeen.set(f, txt.length);
     for (const l of lines) if (ERR_RX.test(l) && !FIREBASE_CI.test(l)) out.push(`${path.basename(f)}: ${l.slice(0, 400)}`);
+  }
+  return out;
+}
+
+/** Раунд 8: отметка длины журналов консоли и новые строки после неё. */
+function consoleMark() {
+  const m = new Map();
+  for (const f of consoleFiles()) m.set(f, fs.statSync(f).size);
+  return m;
+}
+function consoleSince(mark) {
+  const out = [];
+  for (const f of consoleFiles()) {
+    const buf = fs.readFileSync(f);
+    out.push(...buf.subarray(mark.get(f) ?? 0).toString("utf8").split("\n"));
   }
   return out;
 }
@@ -1167,9 +1183,10 @@ async function sectionsGo(label) {
 // Порядок раунда 6: вход, затем доказательства правок мастера (S13k, S08m, S11b), затем
 // то, что в раунде 5 не дошло до проверки (S04, S05, S06, S07, S03a). S12 — всегда последним.
 // Второй прогон раунда 6: S11b, S07, S03a доказаны в первом (прогон 36352483952) — не повторяем.
-const ORDER = (env.ORDER || "S01,S02,S08m,S13k,S05,S04,S06,S14,S12").split(",");
+// Раунд 8: вход, затем доказательства мастера d0876461 (S04d — печать без «Поделиться») и cd19f8ab (S13k — 3 раза низко + высоко), S08m (тост по кадрам), S12.
+const ORDER = (env.ORDER || "S01,S02,S04d,S13k,S08m,S12").split(",");
 // Потолок на сценарий (мс); общий бюджет — TEST_BUDGET_MIN.
-const LIMITS = { S01: 90000, S02: 300000, S03a: 300000, S03b: 360000, S04: 300000, S05: 420000, S06: 330000, S07: 300000, S08: 240000, S09: 120000, S10: 150000, S11: 360000, S12: 60000, S13: 240000, S13k: 330000, S08m: 180000, S11b: 330000, S14: 150000 };
+const LIMITS = { S01: 90000, S02: 300000, S03a: 300000, S03b: 360000, S04: 300000, S05: 420000, S06: 330000, S07: 300000, S08: 240000, S09: 120000, S10: 150000, S11: 360000, S12: 60000, S13: 240000, S13k: 720000, S08m: 180000, S11b: 330000, S14: 150000, S04d: 240000 };
 const plan = new Map();
 function def(id, name, fn, timeoutMs) {
   plan.set(id, { name, fn, timeoutMs: LIMITS[id] ?? timeoutMs ?? 300000 });
@@ -1394,6 +1411,91 @@ async function main() {
     // Раунд 7: приложение откликается после печати — вкладка «Разделы» открывается.
     await tab("Разделы");
     ctx.check("после печати интерфейс откликается (открылись «Разделы»)", await waitText({ type: "text", label: "Все разделы" }, 20000));
+    ctx.shot("after-print-sections");
+  });
+
+  // Раунд 8 (мастер d0876461): WebPrint.printFile — «Распечатать» открывает окно печати iOS
+  // с PDF сразу, без листа «Поделиться». Кадры WDA каждые ~0,7 с, пока ждём (до 10 с — норма).
+  def("S04d", "Печать документа журнала: сразу окно печати iOS с PDF (без листа «Поделиться»), отмена, отклик", async (ctx) => {
+    await ready(ctx);
+    const ok = await openJournal(ctx, "холодильн", "холодильного", IDS.docs?.cold?.title);
+    ctx.check("документ холодильников открыт", ok);
+    if (!ok) return;
+    await toTop();
+    const before = await source("S04d-before");
+    ctx.shot("doc-before-print");
+    const con0 = consoleMark();
+    const PRINT_UI = `type == "XCUIElementTypeStaticText" AND label IN {"Принтер","Параметры","Копии","Формат бумаги","Принтер не выбран"}`;
+    const SHARE_UI = `name IN {"ActivityListView","ShareSheet.RemoteContainerView","activityCollectionView"} OR label IN {"Скопировать","Сохранить в Файлах","Сохранить в Файлы","Напечатать"}`;
+    const p = (await tryTap({ type: ["link", "button"], label: "Распечатать" }, { scrolls: 3, timeout: 15000, settle: 0 })) || (await tryTap({ type: ["link", "button"], contains: "Распечатать" }, { scrolls: 3, timeout: 10000, settle: 0 }));
+    const t0 = Date.now();
+    ctx.d.printControl = p?.label ?? null;
+    ctx.check("кнопка «Распечатать» нажата", Boolean(p));
+    if (!p) return;
+    const frames = [];
+    let lastFrame = 0;
+    let printAt = null;
+    let shareAt = null;
+    while (Date.now() - t0 < 25000 * SLOW) {
+      if (Date.now() - lastFrame > 700 && Date.now() - t0 < 12000) {
+        lastFrame = Date.now();
+        const f = await wdaShot(`S04d-wait-t${Date.now() - t0}ms`);
+        if (f) frames.push(f);
+      }
+      const pu = await driver.$(`-ios predicate string:${PRINT_UI}`).catch(() => []);
+      const su = await driver.$(`-ios predicate string:${SHARE_UI}`).catch(() => []);
+      if (su.length && shareAt == null) shareAt = Date.now() - t0;
+      if (pu.length) {
+        printAt = Date.now() - t0;
+        break;
+      }
+      if (shareAt != null && Date.now() - t0 > shareAt + 3000) break;
+      await sleep(200);
+    }
+    ctx.d.frames = frames;
+    ctx.d.printAtMs = printAt;
+    ctx.d.shareSheetAtMs = shareAt;
+    // Кадр окна печати: сразу и через 1,5 с (превью PDF дорисовывается).
+    ctx.d.printFrameWda = await wdaShot("S04d-print-options");
+    ctx.shot("print-options");
+    await sleep(1500);
+    ctx.d.printFrameWda2 = await wdaShot("S04d-print-options-1500ms");
+    const xml = await source("S04d-print-options");
+    const fresh = newLabels(before, xml);
+    ctx.d.newLabels = fresh.slice(0, 80);
+    const printLabels = fresh.filter((l) => /^(Параметры|Принтер|Принтер не выбран|Копии|Формат бумаги|Макет|Печать|Print|Printer|Options|Copies)$/i.test(l));
+    const preview = fresh.filter((l) => /^Страница \d+ из \d+$|^Page \d+ of \d+$/i.test(l));
+    const shareLabels = fresh.filter((l) => /ActivityListView|ShareSheet|activityCollectionView|shareCell|^Скопировать$|Сохранить в Файл|^Напечатать$|AirDrop|PDF-документ/i.test(l));
+    const fileRow = fresh.filter((l) => /\.pdf$/i.test(l) || /cold-equipment-journal/i.test(l));
+    Object.assign(ctx.d, { printLabels, preview, shareLabels, fileRow });
+    ctx.check(`окно печати iOS за 10 с (${printAt} мс): ${printLabels.join(", ")}`, printAt != null && printAt <= 10000 * SLOW && printLabels.length >= 2, { printAt, printLabels });
+    ctx.check(`в окне печати превью PDF (${preview.join(", ")})`, preview.length > 0, preview);
+    ctx.check("нет листа «Поделиться» (ни «Скопировать», ни «Сохранить в Файлах», ни строки с именем файла)", shareAt == null && shareLabels.length === 0 && fileRow.length === 0, { shareAt, shareLabels, fileRow });
+    // Отмена: на iOS 26 кнопка окна печати — «Закрыть» (раунд 6, дерево src-S05-error.xml); «Отменить» — на старых.
+    const cancel = (await tryTap({ type: "button", label: "Отменить" }, { scrolls: 0, anywhere: true, ignoreKeyboard: true, timeout: 2500 })) || (await tryTap({ type: "button", label: "Закрыть" }, { scrolls: 0, anywhere: true, ignoreKeyboard: true, timeout: 2500 })) || (await tryTap({ type: "button", label: "Cancel" }, { scrolls: 0, anywhere: true, ignoreKeyboard: true, timeout: 1500 }));
+    ctx.d.cancelled = cancel?.label ?? null;
+    ctx.check(`окно печати закрыто кнопкой «${ctx.d.cancelled}»`, Boolean(cancel));
+    await sleep(2500);
+    ctx.shot("print-cancelled");
+    const after = await source("S04d-after");
+    const left = newLabels(before, after).filter((l) => /^(Параметры|Принтер|Принтер не выбран|Копии|Формат бумаги)$|ActivityListView|ShareSheet|^Скопировать$|Сохранить в Файл/i.test(l));
+    ctx.check("окно печати ушло, листа «Поделиться» нет", left.length === 0, left);
+    ctx.check("снова приложение: документ с «Распечатать» на месте", (await appState()) === 4 && (await has({ type: ["link", "button"], contains: "Распечатать" })));
+    // Консоль: вызов WebPrint.printFile и без отказа плагина / ошибки печати.
+    await sleep(500);
+    const con = consoleSince(con0);
+    const callLine = con.findIndex((l) => /To Native ->\s+WebPrint\s+printFile/.test(l));
+    const fsLine = con.findIndex((l) => /To Native ->\s+Filesystem\s+writeFile/.test(l));
+    const errs = con.filter((l, i) => i >= Math.max(0, fsLine) && /\[error\]|Не удалось|Uncaught|Unhandled|reject/i.test(l));
+    ctx.d.consolePrint = { writeFile: con[fsLine] ?? null, printFile: con[callLine] ?? null, errors: errs.slice(0, 10), tail: con.filter((l) => /⚡️/.test(l)).slice(0, 30) };
+    ctx.check(`в консоли «To Native -> WebPrint printFile» (${con[callLine]?.trim().slice(0, 80) ?? "нет"})`, callLine >= 0, ctx.d.consolePrint);
+    ctx.check("в консоли PDF записан (Filesystem writeFile) до printFile", fsLine >= 0 && fsLine < callLine, ctx.d.consolePrint);
+    ctx.check("после printFile нет [error]/отказа в консоли", errs.length === 0, errs);
+    const toastErr = await textsWith(["Не удалось", "Ошибка"]);
+    ctx.check("на экране нет сообщения об ошибке печати", toastErr.length === 0, toastErr);
+    // Отклик: вкладка меню меняет экран.
+    await tab("Разделы");
+    ctx.check("после печати нажатие на вкладку меняет экран (открылись «Разделы»)", await waitText({ type: "text", label: "Все разделы" }, 20000));
     ctx.shot("after-print-sections");
   });
 
@@ -1682,14 +1784,19 @@ async function main() {
   def("S13k", "Форма «Новая запись» с клавиатурой: кнопки прямо над клавиатурой, поле не под кнопками", async (ctx) => {
     await ready(ctx);
     const want = { type: "button", label: "Сохранить запись" };
-    const onForm = await openE2eForm(ctx, want);
-    ctx.check("форма «Новая запись» открылась", onForm);
-    if (!onForm) return;
-    await sleep(2000);
-    ctx.shot("form-no-keyboard");
-    const r0 = await formRects();
-    ctx.d.rectsNoKeyboard = r0;
-    if (r0.save && r0.nav) ctx.check("без клавиатуры: подвал формы над нижним меню", r0.save.y + r0.save.height <= r0.nav.y + 1, { save: r0.save, nav: r0.nav });
+    // Раунд 8 (мастер cd19f8ab): низкое положение — три раза подряд, каждый раз форма
+    // открывается заново (раунд 7: в прогоне 1 «Заметка» ушла под часы, y=12, во втором — нет).
+    const freshForm = async (tag) => {
+      const onForm = await openE2eForm(ctx, want);
+      ctx.check(`${tag}: форма «Новая запись» открыта заново`, onForm);
+      if (!onForm) return false;
+      await sleep(2000);
+      ctx.shot(`${tag}-form-no-keyboard`);
+      const r0 = await formRects();
+      ctx.d[`${tag}_rectsNoKeyboard`] = r0;
+      if (r0.save && r0.nav) ctx.check(`${tag}: без клавиатуры подвал формы над нижним меню`, r0.save.y + r0.save.height <= r0.nav.y + 1, { save: r0.save, nav: r0.nav });
+      return true;
+    };
     // Два случая iPhone (раунд 6): «Заметка» низко — iOS сдвигает экран к полю
     // (кадр 012 первого прогона: меню вылезло над клавиатурой); «Заметка» у верха —
     // видимая часть просто укорачивается. Меряем оба.
@@ -1701,10 +1808,12 @@ async function main() {
       const ty = Math.min(note.y + 24, footerTop - 12);
       ctx.d[`${tag}_noteTap`] = { x: Math.round(note.x + note.width * 0.3), y: Math.round(ty), note, footerTop };
       ctx.check(`${tag}: нажатие в «Заметку» выше подвала формы`, ty < footerTop - 8 && ty > 110, ctx.d[`${tag}_noteTap`]);
+      if (tag.startsWith("low")) ctx.check(`${tag}: «Заметка» нажата низко (y=${Math.round(ty)} ≥ ${Math.round(W.height * 0.5)})`, ty >= W.height * 0.5, ctx.d[`${tag}_noteTap`]);
       await tapXY(note.x + note.width * 0.3, ty);
       await waitFor(keyboard, 6000);
       await sleep(2000);
       const fk = ctx.shot(`${tag}-keyboard-open`);
+      ctx.d[`${tag}_wdaKeyboard`] = await wdaShot(`S13k-${tag}-keyboard-open`);
       await source(`S13k-${tag}-keyboard-open`);
       const r = await formRects();
       ctx.d[`${tag}_rectsKeyboard`] = r;
@@ -1757,18 +1866,32 @@ async function main() {
       ctx.d[`${tag}_navPaint`] = nav;
       ctx.check(`${tag}: после клавиатуры нижнее меню нарисовано (индиго ${nav.indigoFrac})`, nav.indigoFrac >= 0.02, nav);
     };
-    await measureAt("low");
-    // «Заметку» — к верху экрана (под шапку), и снова.
-    const n1 = (await formRects()).note;
-    if (n1 && n1.y > 200) {
-      const d = Math.min(n1.y - 150, W.height * 0.5);
-      await drag(W.height * 0.62, W.height * 0.62 - d, Math.round(W.width * 0.62), 600);
-      await sleep(1200);
+    const done = async (tag) => {
+      const after = await backToJournalCount(ctx);
+      ctx.check(`${tag}: без ввода запись не сохранилась`, sameCount(ctx.d.entriesBefore, after), { before: ctx.d.entriesBefore, after });
+    };
+    for (const tag of ["low1", "low2", "low3"]) {
+      if (!(await freshForm(tag))) continue;
+      await measureAt(tag);
+      await done(tag);
     }
-    ctx.d.noteBeforeHigh = (await formRects()).note;
-    await measureAt("high");
-    const after = await backToJournalCount(ctx);
-    ctx.check("без ввода запись не сохранилась", sameCount(ctx.d.entriesBefore, after), { before: ctx.d.entriesBefore, after });
+    // «Заметку» — к верху экрана (под шапку), в свежей форме.
+    if (await freshForm("high")) {
+      const n1 = (await formRects()).note;
+      if (n1 && n1.y > 200) {
+        const d = Math.min(n1.y - 150, W.height * 0.5);
+        await drag(W.height * 0.62, W.height * 0.62 - d, Math.round(W.width * 0.62), 600);
+        await sleep(1200);
+      }
+      ctx.d.noteBeforeHigh = (await formRects()).note;
+      await measureAt("high");
+      await done("high");
+    }
+    ctx.d.summary = ["low1", "low2", "low3", "high"].map((t) => {
+      const m = ctx.d[`${t}_measure`];
+      return m ? `${t}: tapY=${m.tapY} Заметка ${m.noteTop}…${m.noteBottom}, верх ${m.topLimit} (шапка ${m.topbarBottom}), Отмена ${m.cancelTop}, зазор ${m.gap}, меню видно ${m.navVisible?.length ?? "?"}, кадр ${m.file}` : `${t}: нет замера`;
+    });
+    for (const line of ctx.d.summary) log("   S13k", line);
   });
 
   def("S08m", "Голос: «Остановить запись» без речи → «Ничего не расслышали…», микрофон не висит", async (ctx) => {
@@ -1802,7 +1925,11 @@ async function main() {
     if (!toast) ctx.d.anyToastTexts = await textsWith(["Запись прервалась", "Разрешите", "недоступно", "расслышали"]);
     const xmlToast = await source("S08m-toast");
     ctx.d.toastTreeNeighbours = toast ? elementsOf(xmlToast).filter((e) => e.w > 0 && Math.abs(e.y - toast.rect.y) < 60).map((e) => `${e.type} «${e.label}» y=${e.y} h=${e.h} vis=${e.visible}`).slice(0, 12) : null;
-    ctx.check(`тост «Ничего не расслышали…» за 3 с после «Остановить запись»${toast ? ` (${toast.ms} мс)` : ""}`, Boolean(toast && toast.ms <= 3000 && /Ничего не расслышали\. Попробуйте ещё раз поближе к телефону/.test(toast.text)), toast);
+    // Раунд 8: на iOS 26.5 текст sonner в дерево не попадает (раунд 7, прогон 2: 11 опросов —
+    // пусто, а на кадрах 016–019 тост есть). Тост оцениваем по кадрам WDA; дерево — справочно.
+    ctx.d.treeToast = toast ? { ms: toast.ms, text: toast.text } : "в дереве нет (ожидаемо на iOS 26.5)";
+    const fr = ctx.d["nothing-heard_toastFrames"] || [];
+    ctx.check(`кадры WDA в окне 0–5 с после «Остановить запись» сняты (${fr.length} шт.) — тост по кадрам`, fr.length >= 5, fr);
     if (toast) ctx.check(`ровно один такой тост (${toast.count} / повторно ${toast.countAgain})`, toast.count === 1 && toast.countAgain <= 1, toast);
     // Раунд 7 (D): поздний отказ плагина после «stopped» не добавляет второй тост — ждём ещё 2,5 с.
     await sleep(2500);
