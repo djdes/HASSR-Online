@@ -26,6 +26,11 @@ import { MiniThemeBootstrap, MiniThemeProvider } from "./mini-theme";
 import { OfflineIndicator } from "./offline-indicator";
 import { RefreshProvider } from "./refresh-provider";
 
+// Сообщения — сразу под шапкой приложения. Android-приложение отдаёт вырез
+// экрана переменной `--safe-area-inset-top`, остальные — через env().
+const TOAST_TOP =
+  "calc(var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + var(--mini-topbar-h, 56px) + 8px)";
+
 type AnnouncementProp = React.ComponentProps<
   typeof AnnouncementBanner
 >["announcement"];
@@ -172,13 +177,19 @@ export async function MiniAppShell({
           {/* Сообщения — ниже шапки приложения. По умолчанию sonner
               кладёт их в самый верх экрана, и они закрывали логотип,
               название экрана и колокольчик. */}
-          <Toaster
-            offset={{
-              // Android-приложение отдаёт вырез экрана переменной
-              // `--safe-area-inset-top`, остальные — через env().
-              top: "calc(var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + var(--mini-topbar-h, 56px) + 8px)",
-            }}
-          />
+          {/* Обёртка — свой слой над шапкой и меню. Правило
+              `.mini-root > * { z-index: 1 }` клало контейнер сообщений
+              на первый слой, и шапка (40) закрывала их целиком: ошибки
+              и подтверждения в мини-приложении не видел никто. */}
+          <div className="mini-toaster" style={{ zIndex: "var(--mini-z-toast)" }}>
+            <Toaster
+              // На экранах уже 600px sonner берёт `mobileOffset`, а не
+              // `offset`: без него сообщение вставало в 16px от верха — на
+              // шапку, под часы.
+              offset={{ top: TOAST_TOP }}
+              mobileOffset={{ top: TOAST_TOP }}
+            />
+          </div>
           <OfflineIndicator />
           {authed ? <LiveConnectionIndicator variant="mini" /> : null}
           <MiniNav items={navItems} />

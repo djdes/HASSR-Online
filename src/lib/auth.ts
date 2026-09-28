@@ -9,6 +9,7 @@ import { getPermissionRole } from "@/lib/user-roles";
 import { verifyTelegramInitData } from "@/lib/telegram-init-data";
 import { telegramSignInMessageFor } from "@/lib/telegram-auth-messages";
 import { sessionCookieName } from "@/lib/auth-cookies";
+import { twoFactorRequired } from "@/lib/two-factor";
 
 /** User-Agent из мешка заголовков NextAuth (настоящего Request здесь нет). */
 function userAgentFromHeaderBag(headers: unknown): string | null {
@@ -111,6 +112,16 @@ export const authOptions: NextAuthOptions = {
 
         if (!user || !user.isActive || !isPasswordValid) {
           throw new Error("Неверный email или пароль");
+        }
+
+        // Вход с кодом из Telegram идёт только через форму входа
+        // (/api/auth/login и /api/mini/login спрашивают код). Этот
+        // провайдер кода не спрашивает — без проверки он пускал по
+        // одному паролю в аккаунт, где включено подтверждение входа.
+        if (twoFactorRequired(user)) {
+          throw new Error(
+            "Для этого аккаунта вход подтверждается кодом в Telegram — войдите через форму входа"
+          );
         }
 
         // Отметка о входе для /root/metrics. NextAuth не даёт сюда

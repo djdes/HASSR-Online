@@ -6,6 +6,9 @@ import { createHash, randomInt } from "node:crypto";
  * подобрать код по радужной таблице из миллиона шестизначных чисел.
  */
 export const CHALLENGE_TTL_MS = 5 * 60 * 1000;
+
+/** Вид сообщения с кодом входа в Telegram — срочный, тихие часы его не держат. */
+export const LOGIN_CODE_DELIVERY_KIND = "auth.login-code";
 export const CHALLENGE_MAX_ATTEMPTS = 5;
 
 export function generateLoginCode(): string {

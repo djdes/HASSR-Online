@@ -41,13 +41,14 @@
   --mini-safe-r: var(--safe-area-inset-right, env(safe-area-inset-right));
 
   /* Слои: 40 шапка, 45 плавающие кнопки, 50 навигация, 60 листы и
-     полосы, 80 фото, 100 сканер. */
+     полосы, 80 фото, 100 сканер, 110 всплывающие сообщения. */
   --mini-z-topbar: 40;
   --mini-z-fab: 45;
   --mini-z-nav: 50;
   --mini-z-overlay: 60;
   --mini-z-photo: 80;
   --mini-z-scanner: 100;
+  --mini-z-toast: 110;
 
   /* Шрифт QR-страниц — системный: на телефоне это SF / Roboto. */
   --mini-font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -307,6 +308,14 @@ body:has(#mini-root)
  */
 .mini-root main .sticky.bottom-0 {
   bottom: calc(var(--mini-safe-b) + var(--mini-nav-h));
+}
+
+/* Клавиатура открыта (форма журнала ставит `data-keyboard-open`): нижнее
+   меню прячется, как в приложениях iPhone, — кнопки формы стоят прямо над
+   клавиатурой. Иначе iOS, сдвинув экран к полю внизу, показывал меню над
+   клавиатурой, и оно закрывало «Сохранить запись» (раунд 6, кадр 012). */
+html[data-keyboard-open] .mini-nav-rail {
+  visibility: hidden;
 }
 
 /* --------------------------------------------------------------------

@@ -46,7 +46,9 @@ export function quietUntil(now: Date, timeZone: string, quiet: QuietHours | null
   return new Date(now.getTime() + minutesLeft * 60_000);
 }
 
-const URGENT = ["temperature", "deviation", "incident", "escalat", "alarm", "sos"];
+// login-code: код входа живёт 5 минут — отложенный до утра, он не даёт войти
+// ночью, а утром приходит уже протухшим.
+const URGENT = ["temperature", "deviation", "incident", "escalat", "alarm", "sos", "login-code"];
 
 export function isUrgentKind(kind: string | null | undefined): boolean {
   if (!kind) return false;

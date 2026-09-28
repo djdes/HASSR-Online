@@ -1,0 +1,7 @@
+# tests 2735
+# suites 312
+# pass 2735
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0

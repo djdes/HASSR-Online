@@ -78,7 +78,7 @@ export const PARTNER_DENYLIST = [
   // консультант, у которого не заполнен свой профиль, отправил бы её в
   // чужом кабинете и стёр настроенное.
   "/api/profile/complete",
-  "/api/settings/organization/delete",
+  "/api/settings/organization/deletion",
   "/api/settings/subscription",
   "/api/inspector",
 ] as const;
