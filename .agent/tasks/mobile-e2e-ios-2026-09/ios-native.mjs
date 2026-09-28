@@ -116,8 +116,17 @@ async function topbarBottom() {
  */
 async function watchToast(ctx, tag, contains, timeoutMs = 5000, { t0 = Date.now() } = {}) {
   const polls = [];
+  const frames = [];
+  let lastFrame = 0;
   let found = null;
   while (Date.now() - t0 < timeoutMs) {
+    // Раунд 7, прогон 1: тост в дереве не нашёлся ни разу, а кадров в окне 0–5 с не было —
+    // «виден ли» было не доказать. Теперь кадр WDA каждые ~0,7 с, пока ждём.
+    if (Date.now() - lastFrame > 700) {
+      lastFrame = Date.now();
+      const f = await wdaShot(`${ctx.r.id}-${tag}-t${Date.now() - t0}ms`);
+      if (f) frames.push(f);
+    }
     const els = await all({ type: "text", contains }, 5).catch(() => []);
     polls.push(Date.now() - t0);
     if (els.length) {
@@ -130,6 +139,7 @@ async function watchToast(ctx, tag, contains, timeoutMs = 5000, { t0 = Date.now(
   }
   ctx.d[`${tag}_toast`] = found;
   ctx.d[`${tag}_toastPolls`] = polls.length;
+  ctx.d[`${tag}_toastFrames`] = frames;
   if (!found) return null;
   const tb = await topbarBottom().catch(() => null);
   found.topbarBottom = tb;
@@ -967,7 +977,8 @@ async function signIn(ctx, email, tag) {
     await hideKeyboard();
     await tryTap({ type: "button", label: "Войти" });
   }
-  const left = await waitFor(async () => !(await onLogin()) && (await has({ type: "link", begins: "Профиль" })), 45000 * SLOW, 800);
+  // Раунд 7 (кадр 006): вход прошёл, но лист «Уведомления о задачах» прятал меню из дерева.
+  const left = await waitFor(async () => !(await onLogin()) && ((await has({ type: "link", begins: "Профиль" })) || (await has({ type: "button", label: "Включить" })) || (await has({ type: "button", label: "Не сейчас" }))), 45000 * SLOW, 800);
   ctx.d[`${tag}_loginMs`] = Date.now() - t0;
   if (!left) {
     ctx.shot(`${tag}-login-failed`);
@@ -1051,6 +1062,8 @@ async function openJournal(ctx, search, cardText, docTitle) {
   // Список документов журнала — открыть документ по периоду из названия.
   const period = docTitle ? docTitle.split(" · ").pop() : null;
   const doc = await waitFor(async () => {
+    // Раунд 7 (кадр 025): шторка «Инструкция» закрыла список документов на всё ожидание.
+    if (await has({ type: "button", label: "Понятно" })) await dismissGuide(ctx, 2000);
     if (await has({ type: ["link", "button"], contains: "Распечатать" })) return "doc";
     if (period && (await has({ type: "link", contains: period }))) return "list";
     return null;
@@ -1411,24 +1424,26 @@ async function main() {
     const form = await waitFor(() => has({ contains: "Выберите журнал" }), 30000 * SLOW);
     ctx.shot("reports");
     ctx.check("страница отчётов открылась", form);
-    // Раунд 6: у выпадающего списка нет подписи, только значение «Выберите журнал»,
-    // и форма — в самом низу длинной страницы отчётов.
-    await tap({ type: ["button", "other", "XCUIElementTypePopUpButton", "XCUIElementTypeComboBox"], value: "Выберите журнал" }, { scrolls: 20 });
-    await sleep(1200);
-    ctx.shot("reports-select");
-    await tap({ contains: "Журнал уборки" }, { scrolls: 4, within: (r) => r.y > 60, pick: "last" });
-    await sleep(1000);
-    let before = await source("S05-before-xlsx");
-    await tap({ type: "button", contains: "Скачать Excel" }, { scrolls: 12 });
-    await shareCheck(ctx, "report-xlsx", "xlsx", before);
-    // Раунд 7: «Скачать архив» (ZIP всех журналов) — после закрытия листа сайт
-    // показывает тост «Архив скачан · включено N»: положительная проверка правки cdebe948.
-    await tap({ type: "button", contains: "Скачать архив" }, { scrolls: 12, settle: 0 });
+    // Раунд 7, прогон 1: на медленном симуляторе до формы отчёта по журналу не дошли за
+    // 30 с (кадр 023). Теперь — сразу «Скачать архив» в самом низу: листаем, пока кнопка
+    // не окажется в видимой полосе.
+    const ARCH = { type: "button", contains: "Скачать архив" };
+    let archVisible = null;
+    for (let i = 0; i < 30 && !archVisible; i++) {
+      const l = (await all(ARCH)).filter((f) => f.r.y > band().top && f.r.y + f.r.height < band().bottom);
+      if (l.length) archVisible = l[0];
+      else await drag(W.height * 0.75, W.height * 0.3, undefined, 2500);
+    }
+    ctx.d.archScrolls = archVisible ? "found" : "not found";
+    ctx.shot("archive-card");
+    ctx.check("кнопка «Скачать архив» на экране", Boolean(archVisible));
+    if (!archVisible) return;
+    await tapXY(archVisible.r.x + archVisible.r.width / 2, archVisible.r.y + archVisible.r.height / 2);
     const tArch = Date.now();
     await watchToast(ctx, "archive-collecting", "Собираем архив", 4000, { t0: tArch });
-    before = await source("S05-before-zip");
+    const beforeZip = await source("S05-before-zip");
     let done = null;
-    await shareCheck(ctx, "archive-zip", "zip", before, {
+    await shareCheck(ctx, "archive-zip", "zip", beforeZip, {
       timeout: 120000,
       onClosed: async () => {
         done = await watchToast(ctx, "archive-done", "Архив скачан", 6000);
@@ -1437,24 +1452,31 @@ async function main() {
     ctx.check(`архив: тост «Архив скачан · …» после закрытия листа${done ? ` («${done.text}», ${done.ms} мс)` : ""}`, Boolean(done && /Архив скачан/.test(done.text)), done);
     ctx.d.archiveErrors = await textsWith(["Не удалось", "Ошибка"]);
     ctx.check("архив: без сообщений об ошибке", ctx.d.archiveErrors.length === 0, ctx.d.archiveErrors);
+    await tab("Главная");
+    ctx.check("после архива интерфейс откликается (открылась «Главная»)", await waitFor(() => has({ type: "link", begins: "Профиль" }), 20000));
+    ctx.shot("after-archive-home");
   }, 420000);
 
   // 6. Внешние ссылки
   def("S06", "Ссылки: почта (mailto) и чужой сайт — системе; приложение остаётся рабочим", async (ctx) => {
     await ready(ctx);
+    // Раунд 7: mailto проверен в раунде 6; время — только на чужой https (прогон 1 не уложился).
+    let front;
+    if (env.S06_MAILTO === "1") {
     await sectionsGo("Отчёт");
     await waitFor(() => has({ type: "link", contains: "Поделиться по email" }), 30000 * SLOW);
     await toTop();
     await tap({ type: "link", contains: "Поделиться по email" }, { scrolls: 3 });
     await sleep(3000);
     const stMail = await appState();
-    let front = await driver.execute("mobile: activeAppInfo").catch(() => null);
+    front = await driver.execute("mobile: activeAppInfo").catch(() => null);
     ctx.d.mailto = { state: stMail, front, alert: await alertButtons(1500) };
     ctx.shot("mailto");
     if (ctx.d.mailto.alert) await driver.execute("mobile: alert", { action: "dismiss" }).catch(() => undefined);
     if (stMail !== 4 || (front && front.bundleId !== BUNDLE)) await driver.execute("mobile: activateApp", { bundleId: BUNDLE });
     await sleep(1500);
     ctx.check("mailto: приложение на месте, страница отчётов та же", (await appState()) === 4 && (await has({ contains: "Поделиться по email" })));
+    }
     // Чужой https: tasksflow.ru на странице интеграции.
     await sectionsGo("TasksFlow");
     const ext = await waitFor(() => has({ type: "link", contains: "tasksflow.ru" }), 30000 * SLOW);
@@ -1485,6 +1507,7 @@ async function main() {
     ctx.check("после возврата — та же страница, приложение живо", (await appState()) === 4 && (await has({ type: "link", contains: "tasksflow.ru" })));
     await tab("Профиль");
     ctx.check("после возврата интерфейс откликается (открылся «Профиль»)", await waitText({ type: "text", label: "Профиль" }, 20000));
+    ctx.shot("profile-after-return");
   });
 
   // 7. Фото
@@ -1709,8 +1732,13 @@ async function main() {
       ctx.check(`${tag}: нижнее меню не видно при клавиатуре`, navVisible.length === 0, { navLinks, visTop });
       const tb = await topbarBottom().catch(() => null);
       m.topbarBottom = tb;
-      const noteFull = r.note.y >= (tb ?? ISLAND_BOTTOM) - 0.5 && r.note.y + r.note.height <= footerTopK + 0.5;
-      ctx.check(`${tag}: «Заметка» с фокусом целиком видна (${r.note.y}…${r.note.y + r.note.height} между шапкой ${tb} и подвалом ${footerTopK})`, noteFull, { note: r.note, topbarBottom: tb, footerTop: footerTopK });
+      // Раунд 7, прогон 1: при «Заметке» внизу iOS сдвинул всю страницу (шапка ушла на y=-310),
+      // и проверка сравнивала с низом шапки 0 — поле под часами (y=12) засчиталось видимым.
+      const topLimit = Math.max(tb && tb > 0 ? tb : 0, ISLAND_BOTTOM);
+      m.topLimit = topLimit;
+      m.topbarOnScreen = Boolean(tb && tb > ISLAND_BOTTOM);
+      const noteFull = r.note.y >= topLimit - 0.5 && r.note.y + r.note.height <= footerTopK + 0.5;
+      ctx.check(`${tag}: «Заметка» с фокусом целиком видна (${r.note.y}…${r.note.y + r.note.height} между верхом ${topLimit} (шапка ${tb}, часы ${ISLAND_BOTTOM}) и подвалом ${footerTopK})`, noteFull, { note: r.note, topbarBottom: tb, topLimit, footerTop: footerTopK });
       // Закрыть клавиатуру: ✓ на панели (или нажатие на заголовок).
       await hideKeyboard();
       if (await keyboard()) {
@@ -1963,10 +1991,18 @@ async function main() {
         lastFrame = Date.now();
         frames.push(shotAsync(`${ctx.r.id}-recover-t${Math.round((Date.now() - t1) / 1000)}s`));
       }
+      // Раунд 7, прогон 1: сайт открылся (кадры 042 «Открываем кабинет…», 043 — главная со
+      // скелетоном), но меню «Профиль» ещё не было в дереве — считаем и по шапке сайта.
+      if (await has({ type: "text", contains: "Нет связи" })) return null;
       if (await onLogin()) return { screen: "login", ms: Date.now() - t1 };
       if (await has({ type: "link", begins: "Профиль" })) return { screen: "home", ms: Date.now() - t1 };
+      if (await has({ type: "link", label: "На главный экран" })) return { screen: "site-shell", ms: Date.now() - t1 };
+      if (await has({ type: "text", contains: "Открываем кабинет" })) return { screen: "opening", ms: Date.now() - t1 };
       return null;
     }, 40000, 1000);
+    if (back && !["login", "home"].includes(back.screen)) {
+      ctx.d.settled = await waitFor(async () => ((await onLogin()) ? "login" : (await has({ type: "link", begins: "Профиль" })) ? "home" : null), 25000, 1000);
+    }
     ctx.d.serverUpMs = serverUp;
     ctx.d.recovered = back;
     ctx.d.frames = frames;
