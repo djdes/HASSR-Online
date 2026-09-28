@@ -14,6 +14,7 @@ import {
   JOURNAL_HEADER_ROWS_MM,
   JOURNAL_QR_MAX_GROWTH_MM,
   JOURNAL_QR_MIN_MODULE_MM,
+  JOURNAL_QR_TARGET_MODULE_MM,
   journalQrCellHeight,
   journalQrTile,
   prepareJournalQr,
@@ -251,7 +252,8 @@ test("образцы журналов: QR в шапке на каждой стр
   // Гигиена — «Периодичность контроля» и повтор шапки на стр. 2; медкнижки —
   // три листа с повтором шапки; чек-лист уборки — свой заголовок над шапкой
   // и повтор на 2..N; холодильники — самое длинное название журнала;
-  // санитарный день — стр. 2 без шапки (QR там нет).
+  // санитарный день — стр. 2 без шапки (QR там нет). На стр. 2..N шапка
+  // компактная (без «СИСТЕМА ХАССП»): её узнаём по «СТР. X ИЗ N» вверху листа.
   for (const code of ["hygiene", "med_books", "cleaning_ventilation_checklist", "cold_equipment_control", "sanitary_day_control"]) {
     for (const qr of [journalSamplePdfQr("https://wesetup.ru", code), QR_DOC_LONGEST]) {
       const label = `${code} (${qr.url.includes("/qj/") ? "53 модуля" : "образец"})`;
@@ -261,7 +263,9 @@ test("образцы журналов: QR в шапке на каждой стр
       assert.equal(placements.length, pages.length, label);
       pages.forEach((page, index) => {
         const p = placements[index];
-        const hasHeader = page.texts.some((t) => t.text.includes("СИСТЕМА ХАССП"));
+        const hasHeader = page.texts.some(
+          (t) => t.text.includes("СИСТЕМА ХАССП") || (/^СТР\. \d+ ИЗ \d+$/.test(t.text.trim()) && t.y0 < 60),
+        );
         assert.equal(p.where === "header", hasHeader, `${label}, стр. ${index + 1}: QR в шапке = шапка есть`);
         if (!p.box) return;
         // Внутри полей листа; ячейка шапки — вровень с правой рамкой шапки
@@ -271,7 +275,13 @@ test("образцы журналов: QR в шапке на каждой стр
         if (p.slot) assert.ok(Math.abs(p.slot.x1 - (page.widthMm - M)) < 0.01, `${label}: ячейка QR у правого поля`);
         // Модуль не меньше 0,35 мм, шапка выросла не больше чем на 4 мм.
         assert.ok(p.module >= JOURNAL_QR_MIN_MODULE_MM - 1e-9, `${label}: модуль ${p.module}`);
-        if (p.slot) {
+        if (p.slot && p.variant === "compact") {
+          // Компактный код продолжения — квадрат по центру ячейки, модуль прежний.
+          assert.ok(index > 0, `${label}: компактный код — только на продолжениях`);
+          assert.ok(p.module >= JOURNAL_QR_TARGET_MODULE_MM - 1e-9, `${label}: модуль ${p.module}`);
+          assert.ok(p.window && p.window.y0 >= p.box.y0 - 1e-9 && p.window.y1 <= p.box.y1 + 1e-9, `${label}: код в ячейке`);
+        } else if (p.slot) {
+          assert.equal(index, 0, `${label}: фирменная плитка — на первой странице`);
           assert.ok(p.slot.y1 - p.slot.y0 >= JOURNAL_HEADER_ROWS_MM - 1e-6);
           // Плитка — вся ячейка внутри линий, окно кода в ней; самой плитке
           // нужно не больше строк шапки + 4 мм (выше — только из-за переноса названия).

@@ -143,10 +143,17 @@ test("печать: после журнала — страницы PDF-скан�
   assert.deepEqual([Math.round(portrait.width), Math.round(portrait.height)], [595, 842]);
 
   const texts = await pageTexts(new Uint8Array(merged.buffer));
-  // QR в шапке — с полосой «Отсканировать»: по ней видно, где QR есть.
+  // QR — в шапке каждой страницы журнала: на первой — плитка с полосой
+  // «Отсканировать», на продолжениях — компактный код без полосы. На
+  // страницах приказов нет ни QR, ни номера страницы.
   const qrCaption = BRAND_QR_CAPTION_TITLE;
-  assert.ok(texts.slice(0, journalPages).every((text) => text.includes(qrCaption)), "QR есть на каждой странице журнала");
-  assert.ok(texts.slice(journalPages).every((text) => !text.includes(qrCaption)), "на страницах приказов QR нет");
+  assert.equal(journal.qrPlacements?.length, journalPages);
+  assert.ok(journal.qrPlacements?.every((p) => p.where === "header"), "QR есть на каждой странице журнала");
+  assert.ok(texts[0].includes(qrCaption), "стр. 1 — фирменная плитка");
+  assert.ok(
+    texts.slice(journalPages).every((text) => !text.includes(qrCaption) && !/СТР\. \d+ ИЗ/.test(text)),
+    "на страницах приказов QR нет",
+  );
   assert.match(texts[journalPages], /ORDER SCAN PAGE 1/);
   assert.match(texts[journalPages + 1], /ORDER SCAN PAGE 2/);
 });

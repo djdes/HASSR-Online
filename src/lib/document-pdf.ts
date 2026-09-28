@@ -516,7 +516,7 @@ function drawMedBookPdf(doc: jsPDF, params: {
       left: PDF_SHEET_MARGIN,
       right: PDF_SHEET_MARGIN,
       // Резерв под повтор штампа ХАССП на страницах 2..N.
-      top: activePageHeaderHeight + HEADER_TITLE_GAP,
+      top: continuationContentTop(),
     },
     pageBreak: "auto",
   });
@@ -549,7 +549,7 @@ function drawMedBookPdf(doc: jsPDF, params: {
       left: PDF_SHEET_MARGIN,
       right: PDF_SHEET_MARGIN,
       // Резерв под повтор штампа ХАССП на страницах 2..N.
-      top: activePageHeaderHeight + HEADER_TITLE_GAP,
+      top: continuationContentTop(),
     },
     pageBreak: "auto",
   });
@@ -563,7 +563,8 @@ function drawMedBookPdf(doc: jsPDF, params: {
   if (params.config.includeVaccinations === false) return;
 
   doc.addPage();
-  // Страница «Прививки» — с той же полной шапкой ХАССП, что и первая.
+  // Страница «Прививки» — продолжение журнала: компактная шапка, как у
+  // всех страниц 2..N (полная, с периодичностью, — только на титульной).
   const vaccinationsHeaderBottom = drawJournalHeader(doc, {
     organizationName: params.organizationName,
     journalLabel: MED_BOOK_PAPER_TITLE,
@@ -571,9 +572,11 @@ function drawMedBookPdf(doc: jsPDF, params: {
     startedDate: params.dateFrom,
     finishedDate: params.dateTo,
   });
-  const vaccinationsTitleY = afterHeader(vaccinationsHeaderBottom, 58);
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(16);
+  // Название раздела — под шапкой с тем же зазором, что у таблиц продолжения
+  // (+1 мм: крупный кегль).
+  const vaccinationsTitleY = continuationBaselineBelow(doc, vaccinationsHeaderBottom) + 1;
   doc.text("Прививки", pageWidth / 2, vaccinationsTitleY, { align: "center" });
 
   autoTable(doc, {
@@ -665,7 +668,7 @@ function drawMedBookPdf(doc: jsPDF, params: {
       left: PDF_SHEET_MARGIN,
       right: PDF_SHEET_MARGIN,
       // Резерв под повтор штампа ХАССП на страницах 2..N.
-      top: activePageHeaderHeight + HEADER_TITLE_GAP,
+      top: continuationContentTop(),
     },
     pageBreak: "auto",
   });
@@ -718,6 +721,13 @@ let activeHeaderTitle = "";
  * получал бланк с «ПРОВЕРКА FRYER_OIL» вместо названия журнала.
  */
 let activeJournalName = "";
+
+/**
+ * Короткое название организации для журналов (с точкой) — у компактной
+ * шапки продолжений: ИНН и адрес — на титульной странице. Выставляется там
+ * же, где `activeControlPeriodicity`.
+ */
+let activeOrganizationShortName = "";
 
 /** Название бланка в шапке: своё из шапки документа или стандартное. */
 function headerTitleOr(standard: string): string {
@@ -817,7 +827,7 @@ function contentBottom(doc: jsPDF): number {
  * поля листа. Кегль — текущий.
  */
 function continuationTextBaseline(doc: jsPDF): number {
-  const top = activePageHeaderPainter ? activePageHeaderHeight + HEADER_TITLE_GAP : PDF_SHEET_MARGIN;
+  const top = activePageHeaderPainter ? continuationContentTop() : PDF_SHEET_MARGIN;
   return top + journalCapHeightMm(doc);
 }
 
@@ -875,7 +885,7 @@ function autoTable(doc: jsPDF, options: UserOptions): void {
   journalAutoTable(
     doc,
     needsTop
-      ? { ...options, margin: { ...(margin ?? {}), top: activePageHeaderHeight + HEADER_TITLE_GAP } }
+      ? { ...options, margin: { ...(margin ?? {}), top: continuationContentTop() } }
       : options,
   );
 }
@@ -950,6 +960,10 @@ function formatHeaderDate(value: Date | string | null | undefined) {
 /**
  * Единая шапка ХАССП для всех PDF журналов.
  *
+ * Первая (титульная) страница — полная шапка ниже; страницы 2..N (повтор
+ * шапки и шапки, нарисованные на добавленных листах) — компактная, см.
+ * `drawJournalContinuationHeader`.
+ *
  * Геометрия (аудит Q1-B) — правится ТОЛЬКО здесь, все журналы её шарят:
  *   ┌──────────────┬────────────────────────┬────────────┬────────┐
  *   │              │     СИСТЕМА ХАССП      │ Начат ...  │ ▀▄ ▀▄▀ │  ← row 1
@@ -1013,6 +1027,8 @@ function drawJournalHeader(doc: jsPDF, params: {
    */
   repeatOnPages?: boolean;
 }): number {
+  // Страница 2..N — компактная шапка продолжения (владелец, 2026-09-28).
+  if (currentPageNumber(doc) > 1) return drawJournalContinuationHeader(doc, params);
   const { organizationName, journalLabel } = params;
   // Back-compat: у документов без сохранённого текста гигиена/здоровье
   // печатают прежнюю жёстко зашитую формулировку.
@@ -1030,15 +1046,11 @@ function drawJournalHeader(doc: jsPDF, params: {
     params.top ?? (titleBottom !== undefined ? titleBottom + JOURNAL_TITLE_HEADER_GAP_MM : PDF_SHEET_MARGIN);
   lastHeaderTop = y;
   const width = pageWidth - x * 2;
-  const leftWidth = 56;
-  // «Начат 01-08-2026» шире, чем «СТР. 1 ИЗ 1» — правая колонка одна и та
-  // же во всех журналах, чтобы шапки были единообразны.
-  const rightWidth = 42;
+  const { leftWidth, rightWidth, middleWidth } = journalHeaderColumns(doc, width);
   // Ячейка QR — правее «Начат / Окончен · СТР. X ИЗ N», по ширине плитки.
   const qrTile = journalQrTileOf(doc);
   const qrWidth = qrTile ? journalQrCellWidth(qrTile) : 0;
   const qrLeft = x + width - qrWidth;
-  const middleWidth = width - leftWidth - rightWidth - qrWidth;
   const journalTitle = headerTitleOr(journalLabel).toUpperCase();
 
   // Высоты строк — по фактическому числу строк текста (кегль 10): длинное
@@ -1159,12 +1171,130 @@ function drawJournalHeader(doc: jsPDF, params: {
     activePageHeaderPainter = (target) => {
       drawJournalHeader(target, repeatParams);
     };
-    // На страницах 2..N крупного заголовка нет — повтор встаёт на верхнее
-    // поле листа (или на заданный `top`), таблица продолжается под ним.
-    activePageHeaderHeight = (params.top ?? PDF_SHEET_MARGIN) + totalHeight;
+    // На страницах 2..N крупного заголовка нет — повтор (компактная шапка)
+    // встаёт на верхнее поле листа (или на заданный `top`), таблица
+    // продолжается под ним.
+    activePageHeaderHeight = (params.top ?? PDF_SHEET_MARGIN) + journalContinuationHeaderHeight(doc, params);
   }
 
   return y + totalHeight;
+}
+
+/**
+ * Колонки шапки: организация | название | «Начат · СТР.» | QR. Ширины
+ * организации и правой колонки одни во всех журналах; средняя — остаток
+ * (за вычетом ячейки фирменной плитки первой страницы). Компактная шапка
+ * продолжений держит те же вертикали.
+ */
+function journalHeaderColumns(doc: jsPDF, width: number) {
+  const leftWidth = 56;
+  // «Начат 01-08-2026» шире, чем «СТР. 1 ИЗ 1» — правая колонка одна и та
+  // же во всех журналах, чтобы шапки были единообразны.
+  const rightWidth = 42;
+  const qrTile = journalQrTileOf(doc);
+  const qrWidth = qrTile ? journalQrCellWidth(qrTile) : 0;
+  return { leftWidth, rightWidth, middleWidth: width - leftWidth - rightWidth - qrWidth };
+}
+
+type JournalHeaderParams = Parameters<typeof drawJournalHeader>[1];
+
+/**
+ * Раскладка компактной шапки продолжения — одна строка:
+ *
+ *   ┌──────────────┬────────────────────────────┬──────────────┬──────┐
+ *   │ Организация  │     ЖУРНАЛ ... (жирный)    │ СТР. 2 ИЗ 4  │  QR  │
+ *   └──────────────┴────────────────────────────┴──────────────┴──────┘
+ *
+ * Вертикали «организация | название | СТР.» — там же, где у полной шапки
+ * первой страницы: лист читается как её продолжение. QR — компактный код
+ * того же адреса (коррекция M, без знака и полосы, `journalQrCompact`):
+ * ячейка уже фирменной плитки, освободившееся место отходит колонке
+ * «СТР. X ИЗ N». Периодичности, «Начат / Окончен» и «СИСТЕМА ХАССП» нет —
+ * они на титульной странице; организация — короткое название для журналов
+ * (с точкой), без ИНН и адреса. Высота — по коду QR и строкам текста (кегли
+ * — как у полной шапки), не меньше 10 мм.
+ */
+function journalContinuationHeaderLayout(doc: jsPDF, params: JournalHeaderParams) {
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const x = params.marginX ?? PDF_SHEET_MARGIN;
+  const width = pageWidth - x * 2;
+  const { leftWidth, middleWidth } = journalHeaderColumns(doc, width);
+  const qrTile = journalQrTileOf(doc);
+  const qrWidth = qrTile ? qrTile.compact.cellWidth : 0;
+  const titleRight = x + leftWidth + middleWidth;
+  const qrLeft = x + width - qrWidth;
+  const organization = activeOrganizationShortName.trim() || params.organizationName;
+  const journalTitle = headerTitleOr(params.journalLabel).toUpperCase();
+
+  doc.setFont("JournalUnicode", "bold");
+  doc.setFontSize(ORG_FONT_SIZE);
+  const orgLines = (doc.splitTextToSize(organization, leftWidth - 6) as string[]).length;
+  const orgHeight = orgLines * journalLineHeightMm(doc) + 2.8;
+  doc.setFontSize(10);
+  const titleLines = (doc.splitTextToSize(journalTitle, middleWidth - 8) as string[]).length;
+  const titleHeight = titleLines * journalLineHeightMm(doc) + 2.8;
+  doc.setFont("JournalUnicode", "normal");
+  const height = Math.max(10, orgHeight, titleHeight, qrTile ? qrTile.compact.cellHeight : 0);
+  return {
+    x,
+    width,
+    leftWidth,
+    middleWidth,
+    titleRight,
+    qrLeft,
+    hasQr: Boolean(qrTile),
+    organization,
+    journalTitle,
+    height,
+  };
+}
+
+/** Высота компактной шапки продолжения этого документа, мм (резерв `margin.top` таблиц). */
+function journalContinuationHeaderHeight(doc: jsPDF, params: JournalHeaderParams): number {
+  return journalContinuationHeaderLayout(doc, params).height;
+}
+
+/**
+ * Компактная шапка продолжения (стр. 2..N), раскладка —
+ * `journalContinuationHeaderLayout`. Верх — заданный `top` или верхнее поле
+ * листа. Возвращает Y нижней границы.
+ */
+function drawJournalContinuationHeader(doc: jsPDF, params: JournalHeaderParams): number {
+  const layout = journalContinuationHeaderLayout(doc, params);
+  const { x, width, leftWidth, middleWidth, titleRight, qrLeft, height } = layout;
+  const titleBottom = titleBottomByPage.get(currentPageNumber(doc));
+  const y =
+    params.top ?? (titleBottom !== undefined ? titleBottom + JOURNAL_TITLE_HEADER_GAP_MM : PDF_SHEET_MARGIN);
+  lastHeaderTop = y;
+
+  // Линии — одной толщины с таблицами бланка, каждая рисуется один раз.
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(JOURNAL_LINE_WIDTH);
+  doc.rect(x, y, width, height);
+  doc.line(x + leftWidth, y, x + leftWidth, y + height);
+  doc.line(titleRight, y, titleRight, y + height);
+  if (layout.hasQr) doc.line(qrLeft, y, qrLeft, y + height);
+
+  doc.setFont("JournalUnicode", "bold");
+  doc.setFontSize(ORG_FONT_SIZE);
+  drawCenteredText(doc, layout.organization, x + 3, y, leftWidth - 6, height, leftWidth - 6);
+  doc.setFontSize(10);
+  drawCenteredText(doc, layout.journalTitle, x + leftWidth, y, middleWidth, height, middleWidth - 8);
+  registerPageLabelSlot(doc, {
+    x: titleRight,
+    y,
+    width: qrLeft - titleRight,
+    height,
+    maxWidth: qrLeft - titleRight - 6,
+    fontSize: 10,
+    fontStyle: "bold",
+  });
+  if (layout.hasQr) registerJournalQrSlot(doc, { x0: qrLeft, y0: y, x1: x + width, y1: y + height }, "compact");
+
+  doc.setFont("JournalUnicode", "normal");
+  doc.setFontSize(10);
+  pagesWithJournalHeader.add(currentPageNumber(doc));
+  return y + height;
 }
 
 /**
@@ -1183,6 +1313,27 @@ function fitUnderscoreLabel(doc: jsPDF, label: string, maxWidth: number) {
  * ≥8pt по требованию аудита Q1-B (8pt ≈ 2.82мм; берём с запасом).
  */
 const HEADER_TITLE_GAP = 6;
+
+/**
+ * Отступ от компактной шапки продолжения (стр. 2..N) до таблицы или текста,
+ * мм. На первой странице между шапкой и таблицей стоит название журнала, на
+ * продолжениях его нет — и зазор меньше (владелец, 2026-09-28).
+ */
+const CONTINUATION_CONTENT_GAP = 3;
+
+/** Верх таблицы или текста на странице-продолжении — под компактной шапкой, мм. */
+function continuationContentTop(): number {
+  return activePageHeaderHeight + CONTINUATION_CONTENT_GAP;
+}
+
+/**
+ * Базовая линия первой строки текущего кегля под шапкой, нарисованной на
+ * добавленном листе (стр. 2..N): верх прописных — через
+ * `CONTINUATION_CONTENT_GAP` от низа шапки.
+ */
+function continuationBaselineBelow(doc: jsPDF, headerBottom: number): number {
+  return headerBottom + CONTINUATION_CONTENT_GAP + journalCapHeightMm(doc);
+}
 
 /**
  * Y для первого блока под шапкой. Если шапка низкая — сохраняем историческую
@@ -1691,7 +1842,7 @@ function drawHygienePdf(doc: jsPDF, params: {
     margin: {
       left: PDF_SHEET_MARGIN,
       right: PDF_SHEET_MARGIN,
-      top: activePageHeaderHeight + HEADER_TITLE_GAP,
+      top: continuationContentTop(),
     },
     columnStyles: {
       0: { cellWidth: 14 },
@@ -1710,10 +1861,12 @@ function drawHygienePdf(doc: jsPDF, params: {
   });
 
   // Блок «В журнал регистрируются результаты» печатается целиком
-  // на одной странице: раньше список рвался между стр. 1 и 2.
-  let cursorY = afterHeader(page2HeaderBottom, 84);
+  // на одной странице: раньше список рвался между стр. 1 и 2. Стр. 2 —
+  // продолжение: шапка компактная, текст — сразу под ней (раньше с 66 мм,
+  // по координатам полной шапки).
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(9);
+  let cursorY = continuationBaselineBelow(doc, page2HeaderBottom);
   doc.text("В журнал регистрируются результаты:", PDF_SHEET_MARGIN, cursorY);
   doc.setFont("JournalUnicode", "normal");
   cursorY = renderWrappedTextBlock(
@@ -1836,7 +1989,7 @@ function drawHygieneV2Pdf(doc: jsPDF, params: {
     margin: {
       left: PDF_SHEET_MARGIN,
       right: PDF_SHEET_MARGIN,
-      top: activePageHeaderHeight + HEADER_TITLE_GAP,
+      top: continuationContentTop(),
     },
     columnStyles: {
       0: { cellWidth: 12 },
@@ -1905,7 +2058,7 @@ function drawHealthPdf(doc: jsPDF, params: {
     margin: {
       left: PDF_SHEET_MARGIN,
       right: PDF_SHEET_MARGIN,
-      top: activePageHeaderHeight + HEADER_TITLE_GAP,
+      top: continuationContentTop(),
     },
     columnStyles: {
       0: { cellWidth: 12 },
@@ -1973,6 +2126,14 @@ function drawClimateMetaTable(doc: jsPDF, params: {
  * трёх колонок без левой подписи — структура расходилась с экраном.
  */
 const CLIMATE_NORMS_LABEL_WIDTH = 56;
+
+/**
+ * Сколько места под названием таблицы замеров климата должно остаться на
+ * странице (мм от базовой линии названия): отступ до таблицы, её шапка в
+ * четыре строки и две строки замеров. Меньше — название с таблицей
+ * переносятся на следующую страницу.
+ */
+const CLIMATE_TITLE_WITH_TABLE_MM = 36;
 
 function buildClimateNormsBody(config: ClimateDocumentConfig): RowInput[] {
   const rooms = config.rooms.filter(
@@ -2229,12 +2390,16 @@ function drawClimatePdf(doc: jsPDF, params: {
 
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(14);
-  doc.text(params.title.toUpperCase(), doc.internal.pageSize.getWidth() / 2, normsEndY + 12, {
+  // Название — вместе с началом таблицы замеров: если после длинных «Норм
+  // условий» над нижним полем листа места нет, оба уходят на следующую
+  // страницу (раньше название печаталось ниже нижнего поля).
+  const climateTitleY = placeTextBlock(doc, normsEndY + 12, CLIMATE_TITLE_WITH_TABLE_MM);
+  doc.text(params.title.toUpperCase(), doc.internal.pageSize.getWidth() / 2, climateTitleY, {
     align: "center",
   });
 
   autoTable(doc, {
-    startY: normsEndY + 18,
+    startY: climateTitleY + 6,
     head: buildClimateHead(params.config),
     body: ensurePdfBodyRows(buildClimateBody(params), climateColumnCount),
     theme: "grid",
@@ -2259,7 +2424,7 @@ function drawClimatePdf(doc: jsPDF, params: {
       left: PDF_SHEET_MARGIN,
       right: PDF_SHEET_MARGIN,
       // Резерв под повтор штампа ХАССП на страницах 2..N.
-      top: activePageHeaderHeight + HEADER_TITLE_GAP,
+      top: continuationContentTop(),
     },
   });
 
@@ -2311,12 +2476,16 @@ function drawColdEquipmentPdf(doc: jsPDF, params: {
   const titleY = afterHeader(metaBottom, 60);
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(11);
-  doc.text(params.title.toUpperCase(), pageWidth / 2, titleY, { align: "center" });
+  // Длинное название — в пределах полей листа (на альбомном листе — одна
+  // строка; уже — переносится, а не вылезает за поля).
+  const titleLines = doc.splitTextToSize(params.title.toUpperCase(), pageWidth - PDF_SHEET_MARGIN * 2) as string[];
+  doc.text(titleLines, pageWidth / 2, titleY, { align: "center", lineHeightFactor: 1.3 });
+  const titleLastY = titleY + (titleLines.length - 1) * journalLineHeightMm(doc);
   // Основание формы — мелко по центру под названием, только на первой
   // (титульной) странице: журнал ведётся по Приложению № 2 к СанПиН.
   doc.setFont("JournalUnicode", "normal");
   doc.setFontSize(COLD_EQUIPMENT_BASIS_FONT_SIZE);
-  const basisY = titleY + COLD_EQUIPMENT_BASIS_STEP_MM;
+  const basisY = titleLastY + COLD_EQUIPMENT_BASIS_STEP_MM;
   doc.text(COLD_EQUIPMENT_LEGAL_BASIS, pageWidth / 2, basisY, { align: "center" });
 
   // (dateKey → запись дня): у журнала одна строка на дату.
@@ -2472,7 +2641,7 @@ function drawColdEquipmentPdf(doc: jsPDF, params: {
     margin: {
       left: PDF_SHEET_MARGIN,
       right: PDF_SHEET_MARGIN,
-      top: activePageHeaderHeight + HEADER_TITLE_GAP,
+      top: continuationContentTop(),
     },
   });
 }
@@ -2853,7 +3022,7 @@ function drawCleaningPdf(doc: jsPDF, params: {
       left: PDF_SHEET_MARGIN,
       right: PDF_SHEET_MARGIN,
       // Резерв под повтор штампа ХАССП на страницах 2..N.
-      top: activePageHeaderHeight + HEADER_TITLE_GAP,
+      top: continuationContentTop(),
     },
     columnStyles,
     // Заливка колонок выходных/праздников — как на экране и в печати.
@@ -2931,9 +3100,7 @@ function drawCleaningPdf(doc: jsPDF, params: {
   let summaryStartY = afterLegendY + 6;
   if (summaryStartY + SUMMARY_MIN_BLOCK > contentBottom(doc)) {
     doc.addPage("a4", "landscape");
-    summaryStartY = activePageHeaderHeight
-      ? activePageHeaderHeight + HEADER_TITLE_GAP
-      : PDF_SHEET_MARGIN;
+    summaryStartY = activePageHeaderHeight ? continuationContentTop() : PDF_SHEET_MARGIN;
   }
 
   autoTable(doc, {
@@ -2967,7 +3134,7 @@ function drawCleaningPdf(doc: jsPDF, params: {
     margin: {
       left: PDF_SHEET_MARGIN,
       right: PDF_SHEET_MARGIN,
-      top: activePageHeaderHeight + HEADER_TITLE_GAP,
+      top: continuationContentTop(),
     },
     // Сводную таблицу РАЗРЕШЕНО рвать между страницами (раньше
     // `pageBreak: "avoid"` выбрасывал её целиком на стр. 2, оставляя
@@ -5603,7 +5770,7 @@ function drawUvRuntimePdf(doc: jsPDF, params: {
     margin: {
       left: PDF_SHEET_MARGIN,
       right: PDF_SHEET_MARGIN,
-      top: activePageHeaderHeight + HEADER_TITLE_GAP,
+      top: continuationContentTop(),
     },
     rowPageBreak: "avoid",
   });
@@ -5662,7 +5829,7 @@ function drawUvRuntimePdf(doc: jsPDF, params: {
     margin: {
       left: PDF_SHEET_MARGIN,
       right: PDF_SHEET_MARGIN,
-      top: activePageHeaderHeight + HEADER_TITLE_GAP,
+      top: continuationContentTop(),
     },
     // Суммарная ширина = ширине листа: правый край всех блоков бланка
     // (штамп, спецификация, сводная, наработка) должен совпадать.
@@ -6264,7 +6431,7 @@ function drawFryerOilPdf(doc: jsPDF, params: {
   });
 
   /** Верх контента на страницах-продолжениях: строго под штампом. */
-  const fryerContinuationTop = activePageHeaderHeight + HEADER_TITLE_GAP;
+  const fryerContinuationTop = continuationContentTop();
 
   // Centered title below header
   const fryerTitleY = afterHeader(headerBottom, 58);
@@ -6562,7 +6729,7 @@ function drawGlassControlPdf(doc: jsPDF, params: {
     },
     // Резерв под повтор штампа ХАССП на страницах 2..N — иначе вторая
     // страница бланка уходила инспектору без шапки.
-    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN, top: activePageHeaderHeight + HEADER_TITLE_GAP },
+    margin: { left: PDF_SHEET_MARGIN, right: PDF_SHEET_MARGIN, top: continuationContentTop() },
     // Прежние пропорции на всю ширину между полями — край в край со штампом
     // (сумма 192 мм была на 77 мм уже шапки).
     columnStyles: (() => {
@@ -7034,6 +7201,7 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
   // Каждый вызов перезаписывает значение первым делом, так что исключение
   // в середине отрисовки не «протекает» в следующий PDF.
   activeControlPeriodicity = readControlPeriodicity(document.config, templateCode);
+  activeOrganizationShortName = orgName;
   activeDocumentStatus = document.status ?? "";
   activeHeaderTitle = readHeaderTitleOverride(document.config) ?? "";
   activeJournalName = document.template.name ?? "";
@@ -7467,7 +7635,8 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
         data: entry.data,
       })),
       users,
-      // Общая шапка ХАССП — как у остальных журналов.
+      // Общая шапка ХАССП — как у остальных журналов (на стр. 2..N —
+      // компактная); высота компактной — резерв таблицы на продолжениях.
       drawHeader: (target, options) =>
         drawJournalHeader(target, {
           organizationName,
@@ -7478,6 +7647,16 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
           marginX: options.marginX,
           top: options.top,
         }),
+      continuationHeaderHeight: (target, options) =>
+        journalContinuationHeaderHeight(target, {
+          organizationName,
+          journalLabel: "ЧЕК-ЛИСТ УБОРКИ И ПРОВЕТРИВАНИЯ ПОМЕЩЕНИЙ",
+          withPeriodicity: false,
+          startedDate: document.dateFrom,
+          finishedDate: document.dateTo,
+          marginX: options.marginX,
+        }),
+      continuationGap: CONTINUATION_CONTENT_GAP,
     });
   } else if (templateCode === SANITARY_DAY_CHECKLIST_TEMPLATE_CODE) {
     drawSanitaryDayChecklistPdf(doc, {
@@ -7546,6 +7725,7 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
   const qrPlacements = qr ? stampJournalQr(doc, { ...qr, fontName, tracker: inkTracker }) : undefined;
 
   activeControlPeriodicity = "";
+  activeOrganizationShortName = "";
   activeDocumentStatus = "";
   activeHeaderTitle = "";
   activeJournalName = "";

@@ -165,7 +165,10 @@ test("PDF образца: копирайт на КАЖДОЙ странице, Q
   assert.ok(out.qrPlacements?.every((p) => p.where === "header"), "у гигиены шапка на каждой странице — QR в ней");
   texts.forEach((text, index) => {
     for (const part of COPYRIGHT_PARTS) assert.ok(text.includes(part), `стр. ${index + 1}: «${part}»`);
-    assert.ok(text.includes(BRAND_QR_CAPTION_TITLE), `стр. ${index + 1}: полоса QR`);
+    // Стр. 1 — фирменная плитка с полосой; продолжения — компактный код без
+    // полосы (компактная шапка, 2026-09-28).
+    assert.equal(text.includes(BRAND_QR_CAPTION_TITLE), index === 0, `стр. ${index + 1}: полоса QR`);
+    assert.equal(out.qrPlacements?.[index].variant, index === 0 ? "tile" : "compact");
   });
   // Сам образец не изменился: без QR — те же страницы и то же имя файла.
   const plain = renderJournalDocumentPdf(input);

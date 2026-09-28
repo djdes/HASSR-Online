@@ -1,5 +1,5 @@
 import type { jsPDF } from "jspdf";
-import type { QRCode } from "qrcode";
+import QRCodeLib, { type QRCode } from "qrcode";
 
 import {
   BRAND_QR_QUIET,
@@ -47,6 +47,15 @@ import { JOURNAL_LINE_WIDTH } from "@/lib/pdf-journal-table";
  * `JOURNAL_QR_CELL_MAX_WIDTH_MM`; высота — окно + полоса. Модуль не меньше
  * `JOURNAL_QR_MIN_MODULE_MM`. Адрес плотнее (`JOURNAL_QR_MAX_MODULES`) —
  * ошибка: его нужно укоротить, а не печатать нечитаемый код.
+ *
+ * Продолжения (стр. 2..N, 2026-09-28): шапка там компактная — одна строка
+ * «организация | название | СТР. X ИЗ N | QR» (`drawJournalHeader`), и QR в
+ * ней меньше: тот же адрес, но обычный код без знака и полосы с коррекцией M
+ * (`journalQrCompact`) — у фирменного знака коррекция H, код на 12–16 модулей
+ * плотнее, и при том же модуле плитка уменьшиться не может. Модуль прежний
+ * (`JOURNAL_QR_COMPACT_MODULE_MM`), поэтому код меньше, а читается так же
+ * (`.agent/tasks/pdf-continuation-2026-09`: 150/300 dpi, ч/б, «телефон»).
+ * Ячейку шапка регистрирует с вариантом `compact`.
  */
 
 /** Высота строк шапки ХАССП без переносов (две строки по 10 мм). */
@@ -77,6 +86,15 @@ export const JOURNAL_QR_CELL_MAX_WIDTH_MM = 20.3;
 export const JOURNAL_QR_EDGE_MM = 5;
 /** Свободное поле вокруг плитки на странице без шапки, мм. */
 export const JOURNAL_QR_PAD_MM = 1.3;
+
+/**
+ * Модуль QR продолжения, мм: как цель плитки первой страницы — у кода с
+ * коррекцией M сторона на 12–16 модулей меньше, и ячейка выходит
+ * 12–16,6 мм вместо 17–20 (без полосы «Отсканировать»).
+ */
+export const JOURNAL_QR_COMPACT_MODULE_MM = 0.365;
+/** Коррекция ошибок QR продолжения: M — 15 % (у фирменного со знаком — H). */
+export const JOURNAL_QR_COMPACT_ERROR_CORRECTION = "M";
 
 /** Окно кода в ячейке — ширина ячейки без линий (по половине линии с каждой стороны), мм. */
 const WINDOW_BASE_MM = JOURNAL_QR_CELL_BASE_WIDTH_MM - JOURNAL_LINE_WIDTH;
@@ -112,6 +130,35 @@ export type JournalPdfQr = {
 
 export type PdfBox = { x0: number; y0: number; x1: number; y1: number };
 
+/** Вариант QR в ячейке шапки: фирменная плитка (первая страница) или компактный код продолжения. */
+export type JournalQrVariant = "tile" | "compact";
+
+/**
+ * QR продолжения: тот же адрес, обычный код (коррекция M, без знака и
+ * полосы), квадрат в ячейке шапки — рамку дают линии ячейки, тихая зона 2
+ * модуля.
+ */
+export type JournalQrCompact = {
+  matrix: QRCode;
+  /** Сторона матрицы, модулей. */
+  modules: number;
+  /** Модуль, мм. */
+  module: number;
+  /** Окно кода — матрица с тихой зоной, мм. */
+  side: number;
+  /** Ячейка шапки между осями линий, мм: окно + линия. */
+  cellWidth: number;
+  cellHeight: number;
+};
+
+export function journalQrCompact(url: string): JournalQrCompact {
+  const matrix = QRCodeLib.create(url, { errorCorrectionLevel: JOURNAL_QR_COMPACT_ERROR_CORRECTION });
+  const modules = matrix.modules.size;
+  const module = JOURNAL_QR_COMPACT_MODULE_MM;
+  const side = (modules + 2 * BRAND_QR_QUIET) * module;
+  return { matrix, modules, module, side, cellWidth: side + JOURNAL_LINE_WIDTH, cellHeight: side + JOURNAL_LINE_WIDTH };
+}
+
 /** Плитка QR документа: фирменная раскладка и её размер на бумаге. */
 export type JournalQrTile = {
   layout: BrandQrLayout;
@@ -125,6 +172,8 @@ export type JournalQrTile = {
   /** Ячейка шапки между осями её линий, мм: ширина — окно кода + линия; высота — окно + полоса + линия. */
   cellWidth: number;
   cellHeight: number;
+  /** QR того же адреса для компактной шапки продолжений. */
+  compact: JournalQrCompact;
 };
 
 export type JournalQrPlacement = {
@@ -141,6 +190,9 @@ export type JournalQrPlacement = {
   window: PdfBox | null;
   /** Ячейка шапки, в которой стоит плитка (только `header`). */
   slot: PdfBox | null;
+  /** Что стоит в ячейке шапки: фирменная плитка или компактный код продолжения (`null` — не в шапке). */
+  variant: JournalQrVariant | null;
+  /** Сторона матрицы (модулей) и модуль (мм) напечатанного кода. */
   modules: number;
   module: number;
 };
@@ -168,6 +220,7 @@ export function journalQrTile(url: string): JournalQrTile {
     height: layout.height * module,
     cellWidth: windowMm + JOURNAL_LINE_WIDTH,
     cellHeight: brandQrCellHeight(layout) * module + JOURNAL_LINE_WIDTH,
+    compact: journalQrCompact(url),
   };
 }
 
@@ -194,7 +247,8 @@ export function journalQrMatrix(url: string): QRCode {
 // Состояние документа: плитка и ячейки шапки по страницам.
 // ---------------------------------------------------------------------------
 
-type DocQr = { tile: JournalQrTile; slots: Map<number, PdfBox> };
+type DocQrSlot = { box: PdfBox; variant: JournalQrVariant };
+type DocQr = { tile: JournalQrTile; slots: Map<number, DocQrSlot> };
 const docQr = new WeakMap<jsPDF, DocQr>();
 
 function pageNumberOf(doc: jsPDF): number {
@@ -216,12 +270,16 @@ export function journalQrTileOf(doc: jsPDF): JournalQrTile | null {
   return docQr.get(doc)?.tile ?? null;
 }
 
-/** Ячейка шапки под QR на текущей странице (рамка ячейки, мм). */
-export function registerJournalQrSlot(doc: jsPDF, cell: PdfBox) {
+/**
+ * Ячейка шапки под QR на текущей странице (рамка ячейки, мм): `tile` —
+ * фирменная плитка (полная шапка первой страницы), `compact` — компактный
+ * код (шапка продолжения).
+ */
+export function registerJournalQrSlot(doc: jsPDF, cell: PdfBox, variant: JournalQrVariant = "tile") {
   const state = docQr.get(doc);
   if (!state) return;
   const page = pageNumberOf(doc);
-  if (!state.slots.has(page)) state.slots.set(page, cell);
+  if (!state.slots.has(page)) state.slots.set(page, { box: cell, variant });
 }
 
 // ---------------------------------------------------------------------------
@@ -484,6 +542,40 @@ export function findJournalQrCorner(params: {
 // Штамп.
 // ---------------------------------------------------------------------------
 
+/**
+ * Компактный код продолжения в ячейке шапки: ячейка внутри линий — белая
+ * (перекрывает, если бланк что-то уже нарисовал), модули — чёрными
+ * прямоугольниками по строкам, как у фирменной плитки. Только серые
+ * операторы цвета (0 и 1) внутри `q … Q`: состояние листа после кода прежнее.
+ */
+function drawJournalCompactQrPdf(doc: jsPDF, compact: JournalQrCompact, box: PdfBox, codeWindow: PdfBox) {
+  const { matrix, module: u } = compact;
+  const size = matrix.modules.size;
+  const ox = codeWindow.x0 + BRAND_QR_QUIET * u;
+  const oy = codeWindow.y0 + BRAND_QR_QUIET * u;
+  doc.saveGraphicsState();
+  try {
+    doc.setFillColor(255, 255, 255);
+    doc.rect(box.x0, box.y0, box.x1 - box.x0, box.y1 - box.y0, "F");
+    doc.setFillColor(0, 0, 0);
+    for (let row = 0; row < size; row += 1) {
+      let col = 0;
+      while (col < size) {
+        if (!matrix.modules.get(row, col)) {
+          col += 1;
+          continue;
+        }
+        const start = col;
+        while (col < size && matrix.modules.get(row, col)) col += 1;
+        // +0,01 мм — без «волосяных» щелей между соседними строками.
+        doc.rect(ox + start * u, oy + row * u, (col - start) * u, u + 0.01, "F");
+      }
+    }
+  } finally {
+    doc.restoreGraphicsState();
+  }
+}
+
 /** Кегль строки копирайта внизу листа, pt (было 6: у шрифта с засечками строчные ниже). */
 const FOOTER_FONT_SIZE = 6.5;
 
@@ -500,7 +592,7 @@ export function stampJournalQr(
   params.tracker?.stop();
   const state = docQr.get(doc);
   const tile = state && state.tile.layout.url === params.url ? state.tile : journalQrTile(params.url);
-  const slots = state?.slots ?? new Map<number, PdfBox>();
+  const slots = state?.slots ?? new Map<number, DocQrSlot>();
   const placements: JournalQrPlacement[] = [];
   const total = doc.getNumberOfPages();
 
@@ -510,10 +602,20 @@ export function stampJournalQr(
     doc.setPage(page);
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-    const slot = slots.get(page) ?? null;
+    const slotEntry = slots.get(page) ?? null;
+    const slot = slotEntry?.box ?? null;
+    const compact = slotEntry?.variant === "compact";
     let box: PdfBox | null = null;
     let codeWindow: PdfBox | null = null;
-    if (slot) {
+    if (slot && compact) {
+      // Компактный код продолжения: ячейка внутри линий целиком (белая),
+      // квадрат кода — по центру (строки шапки выше кода — перенос названия).
+      const code = tile.compact.side;
+      box = { x0: slot.x0 + half, y0: slot.y0 + half, x1: slot.x1 - half, y1: slot.y1 - half };
+      const x0 = box.x0 + (box.x1 - box.x0 - code) / 2;
+      const y0 = box.y0 + (box.y1 - box.y0 - code) / 2;
+      codeWindow = { x0, y0, x1: x0 + code, y1: y0 + code };
+    } else if (slot) {
       // Ячейка внутри линий: по ширине ровно окно кода, по высоте — сколько
       // дали строки шапки (перенос названия — выше; код тогда по центру окна).
       const x0 = slot.x0 + half + (slot.x1 - slot.x0 - 2 * half - side) / 2;
@@ -537,7 +639,8 @@ export function stampJournalQr(
       }
     }
     if (box && !params.probeOnly) {
-      if (slot) drawBrandQrCellPdf(doc, tile.layout, box, { fontName: params.fontName });
+      if (slot && compact) drawJournalCompactQrPdf(doc, tile.compact, box, codeWindow!);
+      else if (slot) drawBrandQrCellPdf(doc, tile.layout, box, { fontName: params.fontName });
       else drawBrandQrTilePdf(doc, tile.layout, box.x0, box.y0, tile.width, { fontName: params.fontName });
     }
     if (params.footer && !params.probeOnly) {
@@ -555,8 +658,9 @@ export function stampJournalQr(
       box,
       window: codeWindow,
       slot,
-      modules: tile.modules,
-      module: tile.module,
+      variant: slot ? (compact ? "compact" : "tile") : null,
+      modules: compact ? tile.compact.modules : tile.modules,
+      module: compact ? tile.compact.module : tile.module,
     });
   }
 
