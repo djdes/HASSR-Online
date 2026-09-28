@@ -3,7 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarDays, Plus, X } from "lucide-react";
-import { DOC_PRIMARY_BUTTON_CLASS } from "@/components/journals/journal-responsive";
+import {
+  DOC_PRIMARY_BUTTON_CLASS,
+  JOURNAL_TABLE_SCROLL_CLASS,
+} from "@/components/journals/journal-responsive";
 import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
 import { SelectionEditButton } from "@/components/journals/selection-edit-button";
 import { useSequentialEdit } from "@/components/journals/use-sequential-edit";
@@ -1716,6 +1719,7 @@ export function DisinfectantDocumentClient({
         onSettings={!readOnly ? () => setSettingsOpen(true) : undefined}
         closed={readOnly}
         closedHint="Откройте журнал заново, чтобы добавлять получение, расход и подразделения."
+        tablesInOwnFrames
         mobileView={mobileView}
         onMobileView={switchMobileView}
         cards={
@@ -1922,6 +1926,9 @@ export function DisinfectantDocumentClient({
           </Button>
         )}
 
+        {/* Каждая из трёх таблиц ездит вбок в своей рамке: подзаголовки и
+            кнопки между ними стоят по ширине экрана (`tablesInOwnFrames`). */}
+        <div className={JOURNAL_TABLE_SCROLL_CLASS}>
         <table className="min-w-full border-collapse border border-[#ececf4] bg-white text-[13px] print:border-black">
             <thead>
               <tr>
@@ -2109,6 +2116,7 @@ export function DisinfectantDocumentClient({
               </tr>
             </tbody>
           </table>
+        </div>
 
         {/* === Section 2: Receipts === */}
         <h2 className="pt-8 text-center text-[20px] font-semibold uppercase">
@@ -2124,6 +2132,7 @@ export function DisinfectantDocumentClient({
           </Button>
         )}
 
+        <div className={JOURNAL_TABLE_SCROLL_CLASS}>
         <table className="min-w-full border-collapse border border-[#ececf4] bg-white text-[13px] print:border-black">
             <thead>
               <tr>
@@ -2237,6 +2246,7 @@ export function DisinfectantDocumentClient({
               </tr>
             </tbody>
           </table>
+        </div>
 
         {/* === Section 3: Consumption === */}
         <h2 className="pt-8 text-center text-[20px] font-semibold uppercase">
@@ -2252,6 +2262,7 @@ export function DisinfectantDocumentClient({
           </Button>
         )}
 
+        <div className={JOURNAL_TABLE_SCROLL_CLASS}>
         <table className="min-w-full border-collapse border border-[#ececf4] bg-white text-[13px] print:border-black">
             <thead>
               <tr>
@@ -2362,6 +2373,7 @@ export function DisinfectantDocumentClient({
               ) : null}
             </tbody>
           </table>
+        </div>
       </JournalDocumentShell>
 
       {/* Dialogs */}

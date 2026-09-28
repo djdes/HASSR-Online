@@ -73,6 +73,7 @@ import {
   JOURNAL_DIALOG_HEADER_CLASS,
   JOURNAL_DIALOG_TITLE_CLASS,
   DOC_AUTOFILL_LABEL_CLASS,
+  JOURNAL_TABLE_SCROLL_CLASS,
 } from "@/components/journals/journal-responsive";
 import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
 import { JournalAddRow } from "@/components/journals/journal-add-row";
@@ -928,10 +929,8 @@ function SpecificationTable({
 
   return (
     <div className="uv-spec-section">
-      {/* `overflow-auto`, а не `overflow-x-auto`: глобальное мобильное
-          правило `div.overflow-x-auto:has(table)` гасит скролл и поля,
-          и справочная таблица уезжала за правый край. */}
-      <div className="-mx-4 overflow-auto px-4 sm:mx-0 lg:overflow-visible sm:px-0">
+      {/* Справочная таблица ездит вбок внутри своей рамки (общий класс). */}
+      <div className={`${JOURNAL_TABLE_SCROLL_CLASS} lg:overflow-visible`}>
       <table className="w-full min-w-[640px] table-fixed border-collapse text-[13px] text-[12px] sm:min-w-0">
         {/* U7: четыре примерно равные колонки — раньше подписи занимали
             445/480px и душили значения. */}
@@ -1049,9 +1048,8 @@ function MonthlySummaryTable({ monthlyData }: { monthlyData: { month: string; ho
 
   return (
     <div className="uv-monthly-section">
-      {/* См. комментарий в SpecificationTable — тот же обход глобального
-          правила для телефона. */}
-      <div className="-mx-4 overflow-auto px-4 sm:mx-0 lg:overflow-visible sm:px-0">
+      {/* Как в SpecificationTable: таблица ездит вбок в своей рамке. */}
+      <div className={`${JOURNAL_TABLE_SCROLL_CLASS} lg:overflow-visible`}>
       <table className="w-full min-w-[420px] border-collapse text-[13px] text-[12px] sm:min-w-0">
         <thead>
           <tr>
@@ -1769,7 +1767,7 @@ export function UvLampRuntimeDocumentClient(props: Props) {
       )}
 
       {/* Data table */}
-      <MobileViewTableWrapper mobileView={mobileView} className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0 rounded-[12px] border border-[#eceef5] bg-white print:rounded-none print:border-[#ccc]">
+      <MobileViewTableWrapper mobileView={mobileView} className={`${JOURNAL_TABLE_SCROLL_CLASS} rounded-[12px] border border-[#eceef5] bg-white print:rounded-none print:border-[#ccc]`}>
         {/* R5-7: `data-print-keep-size` — таблица из 5 колонок влезает в
             альбомный A4 целиком, сжимать её до 9.5px незачем (см.
             app-theme.css). Без атрибута шапка печаталась ~7pt против

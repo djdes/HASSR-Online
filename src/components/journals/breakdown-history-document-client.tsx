@@ -50,7 +50,6 @@ import { GRID_CELL_CLASS, GRID_HEAD_CELL_CLASS } from "@/components/journals/jou
 
 import { toast } from "sonner";
 import { confirmAsync } from "@/components/ui/confirm-async";
-import { StickyActionBar } from "@/components/journals/sticky-action-bar";
 import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
@@ -702,19 +701,17 @@ export function BreakdownHistoryDocumentClient(props: Props) {
           sheetMinWidth={1600}
           toolbar={
             isActive ? (
-              <StickyActionBar>
-                <Button
-                  type="button"
-                  className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] hover:bg-[#4452ee]"
-                  onClick={() => {
-                    setEditingRow(null);
-                    setRowDialogOpen(true);
-                  }}
-                >
-                  <Plus className="size-5" />
-                  Добавить
-                </Button>
-              </StickyActionBar>
+              <Button
+                type="button"
+                className="h-9 rounded-xl bg-[#5563ff] px-3.5 text-[13.5px] hover:bg-[#4452ee]"
+                onClick={() => {
+                  setEditingRow(null);
+                  setRowDialogOpen(true);
+                }}
+              >
+                <Plus className="size-5" />
+                Добавить
+              </Button>
             ) : undefined
           }
         >

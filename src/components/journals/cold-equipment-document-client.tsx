@@ -24,7 +24,7 @@ import {
   type ColdEquipmentStatus,
 } from "@/lib/cold-equipment-document";
 import {
-  DOC_ADD_ROW_CLASS,
+  DOC_ADD_ROW_IN_SHEET_CLASS,
   DOC_AUTOFILL_STRIP_CLASS,
   DOC_CAPS_TITLE_CLASS,
   DOC_HEADING_CLASS,
@@ -34,6 +34,7 @@ import {
   JOURNAL_DIALOG_HEADER_CLASS,
   JOURNAL_DIALOG_TITLE_CLASS,
   DOC_AUTOFILL_LABEL_CLASS,
+  JOURNAL_TABLE_SCROLL_CLASS,
 } from "@/components/journals/journal-responsive";
 import { JournalCellInput } from "@/components/journals/journal-cell-input";
 import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
@@ -1842,10 +1843,14 @@ export function ColdEquipmentDocumentClient({
    * а сам ответственный это одно поле документа. Поэтому второй пункт
    * ведёт в «Настройки журнала», где ответственный и назначается
    * (решение N8), а не создаёт новую сущность.
+   *
+   * В табличном виде ряд лежит внутри листа, который прокручивается в
+   * своей рамке: он прилипает к её левому краю и не уезжает вбок вместе
+   * с днями (`DOC_ADD_ROW_IN_SHEET_CLASS`).
    */
   const equipmentAddBar =
     status === "active" ? (
-      <div className={DOC_ADD_ROW_CLASS}>
+      <div className={DOC_ADD_ROW_IN_SHEET_CLASS}>
         <div className="flex items-stretch overflow-hidden rounded-lg">
           <Button
             type="button"
@@ -1918,7 +1923,7 @@ export function ColdEquipmentDocumentClient({
 
   return (
     <div className="bg-white text-black">
-      <FocusTodayScroller always />
+      <FocusTodayScroller />
       {/* Q3: верхнего padding'а нет — «крошки → H1» задаёт контейнер раздела. */}
       <div className="pb-8">
         <DocumentActionsBar
@@ -2718,7 +2723,7 @@ export function ColdEquipmentDocumentClient({
                 графа при проверке читается как «нарушение заметили и
                 проигнорировали».
               </p>
-              <div className="mt-3 overflow-x-auto">
+              <div className={`mt-3 ${JOURNAL_TABLE_SCROLL_CLASS}`}>
                 <table className="w-full border-collapse text-[13px]">
                   <thead>
                     <tr>

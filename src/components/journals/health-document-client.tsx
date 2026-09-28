@@ -19,7 +19,7 @@ import {
   StaffJournalToolbar,
 } from "@/components/journals/staff-journal-toolbar";
 import {
-  DOC_ADD_ROW_CLASS,
+  DOC_ADD_ROW_IN_SHEET_CLASS,
   DOC_CAPS_TITLE_CLASS,
   DOC_EXTRA_BLOCK_CLASS,
   DOC_NOTE_TEXT_CLASS,
@@ -911,7 +911,7 @@ export function HealthDocumentClient(props: Props) {
 
           {/* «Добавить» — слева непосредственно над таблицей (эталон).
               Раньше кнопка жила в шапке страницы, выше бумажной шапки.
-              `sticky left-0` держит её у левого края при горизонтальном
+              Ряд липкий: держится у левого края рамки при горизонтальном
               скролле широкого листа. */}
           <StaffJournalAddButton
             documentId={documentId}
@@ -919,7 +919,7 @@ export function HealthDocumentClient(props: Props) {
             status={status}
             users={employees}
             includedEmployeeIds={includedEmployeeIds}
-            className={`${DOC_ADD_ROW_CLASS} sticky left-0 w-fit`}
+            className={DOC_ADD_ROW_IN_SHEET_CLASS}
           />
 
           <table className="health-grid w-full border-collapse text-[13px]">

@@ -203,11 +203,11 @@ export function PaperJournalEditor({
       {/* Шапка и таблица строк — ОДИН горизонтальный скроллер: на телефоне
           они едут вместе, как единый лист (раньше у каждой был свой
           overflow-x-auto, и шапка уезжала отдельно от колонок).
-          `data-journal-doc-pan` — та же pan-зона, что у электронных
-          документов: выключает blanket-правило globals.css, которое на
+          `data-journal-doc` — тот же маркер, что у страницы электронного
+          документа: выключает blanket-правило globals.css, которое на
           мобильном делает скроллером КАЖДЫЙ div вокруг широкой таблицы. */}
       <div
-        data-journal-doc-pan
+        data-journal-doc
         className="overflow-x-auto max-sm:-mx-4 max-sm:px-4"
       >
       {/* `w-fit min-w-full`: обе таблицы растягиваются до ширины самой

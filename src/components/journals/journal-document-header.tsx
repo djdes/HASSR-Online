@@ -25,6 +25,7 @@ import {
   HeaderPeriodicity,
   HeaderTitle,
 } from "@/components/journals/journal-header-edit";
+import { JOURNAL_TABLE_SCROLL_CLASS } from "@/components/journals/journal-responsive";
 
 type Props = {
   /** Название организации (ООО «Кухня» / ИП Иванов и т.п.). */
@@ -211,12 +212,13 @@ export function JournalDocumentHeader({
   controlPeriodicity,
   className = "",
 }: Props) {
-  // Свой `overflow-x-auto`: если на узком телефоне шапка всё-таки шире
-  // экрана (длинное название организации), её можно прокрутить, а не
-  // потерять правый край с «Начат/Окончен» и «СТР. 1 ИЗ 1». Раньше
-  // шапка med_books / uv_lamp_runtime обрезалась на 66–98px.
+  // Своя рамка прокрутки (общая, `JOURNAL_TABLE_SCROLL_CLASS`): если на
+  // узком телефоне шапка всё-таки шире экрана (длинное название
+  // организации), её можно прокрутить, а не потерять правый край с
+  // «Начат/Окончен» и «СТР. 1 ИЗ 1». Раньше шапка med_books /
+  // uv_lamp_runtime обрезалась на 66–98px.
   return (
-    <div className="overflow-x-auto print:overflow-visible">
+    <div className={`${JOURNAL_TABLE_SCROLL_CLASS} print:overflow-visible`}>
       <table
         className={`w-full border-collapse text-[13px] text-[#0b1024] ${className}`}
       >

@@ -28,6 +28,7 @@ import {
   JOURNAL_DIALOG_CONTENT_WIDE_CLASS,
   JOURNAL_DIALOG_HEADER_CLASS,
   JOURNAL_DIALOG_TITLE_CLASS,
+  JOURNAL_TABLE_SCROLL_CLASS,
 } from "@/components/journals/journal-responsive";
 import { JournalCellInput } from "@/components/journals/journal-cell-input";
 import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
@@ -1170,10 +1171,10 @@ export function PerishableRejectionDocumentClient({
         {/* HACCP header table */}
         {/* В карточках на телефоне бумажная шапка скрыта (уезжала за
             правый край); на печати и на десктопе — как было. */}
-        {/* Свой `overflow-x-auto`: на 360px шапка была шире экрана на
+        {/* Своя рамка прокрутки: на 360px шапка была шире экрана на
             96px, и «Начат…/СТР. 1 ИЗ 1» обрезались без прокрутки. */}
         <div
-          className={`overflow-x-auto print:overflow-visible ${
+          className={`${JOURNAL_TABLE_SCROLL_CLASS} print:overflow-visible ${
             mobileView === "cards" ? "max-sm:hidden print:block" : ""
           }`}
         >

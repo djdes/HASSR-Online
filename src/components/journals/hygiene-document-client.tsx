@@ -14,7 +14,7 @@ import {
 } from "@/components/journals/staff-journal-toolbar";
 import { JournalAddRow } from "@/components/journals/journal-add-row";
 import {
-  DOC_ADD_ROW_CLASS,
+  DOC_ADD_ROW_IN_SHEET_CLASS,
   DOC_CAPS_TITLE_CLASS,
   DOC_LEGEND_CLASS,
   DOC_NOTE_TEXT_CLASS,
@@ -1630,7 +1630,7 @@ export function HygieneDocumentClient({
             </JournalDocumentTitle>
 
             {/* «Добавить» — слева непосредственно над таблицей, как на
-                эталоне. `sticky left-0` держит кнопку у левого края, если
+                эталоне. Ряд липкий: держится у левого края рамки, когда
                 широкий лист (min-w-[1100px]) скроллится по горизонтали. */}
             <StaffJournalAddButton
               documentId={documentId}
@@ -1638,7 +1638,7 @@ export function HygieneDocumentClient({
               status={status}
               users={employees}
               includedEmployeeIds={includedEmployeeIds}
-              className={`${DOC_ADD_ROW_CLASS} sticky left-0 w-fit`}
+              className={DOC_ADD_ROW_IN_SHEET_CLASS}
             />
 
             <table className="hygiene-grid w-full border-collapse text-[13px]">

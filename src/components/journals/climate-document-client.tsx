@@ -80,6 +80,7 @@ import {
   JOURNAL_DIALOG_TITLE_CLASS,
   DOC_AUTOFILL_LABEL_CLASS,
   DOC_AUTOFILL_STRIP_CLASS,
+  JOURNAL_TABLE_SCROLL_CLASS,
 } from "@/components/journals/journal-responsive";
 import { JournalCellInput } from "@/components/journals/journal-cell-input";
 import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
@@ -109,7 +110,7 @@ import { ReadingPhotoView } from "@/components/journals/reading-photo-view";
 
 import { toast } from "sonner";
 import { confirmAsync } from "@/components/ui/confirm-async";
-import { StickyActionBar } from "@/components/journals/sticky-action-bar";
+import { DocumentToolbarRow } from "@/components/journals/document-toolbar-row";
 import {
   PositionSelectItems,
   usePositionEmployeeCascade,
@@ -2256,7 +2257,6 @@ export function ClimateDocumentClient({
   return (
     <div className="bg-white text-black">
       <FocusTodayScroller
-        always
         onCreate={
           status === "active" ? () => setRowDialogOpen(true) : undefined
         }
@@ -2441,10 +2441,27 @@ export function ClimateDocumentClient({
         {/* Область применения и периодичность — прямо в бланке, а не в
             справке: журнал заполняет сменный сотрудник, и он должен
             видеть, что сюда вносят только склады с продуктами и что
-            пропущенный день считается нарушением. */}
-        <p className="mt-1 text-center text-[12px] leading-snug text-[#6f7282] print:text-[10px]">
-          {CLIMATE_SCOPE_HINT} {CLIMATE_FREQUENCY_HINT}
-        </p>
+            пропущенный день считается нарушением.
+            Описание и «Добавить строку» — один ряд шапки по ширине экрана
+            (правка владельца 2026-09-28: «тут в строчку должно быть»):
+            где помещается — в строку, на узком телефоне кнопка под
+            описанием во всю ширину. На печати остаётся только описание. */}
+        <DocumentToolbarRow
+          sticky
+          description={`${CLIMATE_SCOPE_HINT} ${CLIMATE_FREQUENCY_HINT}`}
+        >
+          {status === "active" ? (
+            <Button
+              type="button"
+              onClick={() => setRowDialogOpen(true)}
+              data-tour={TOUR.addRow}
+              className="h-11 gap-2 rounded-lg bg-[#5566f6] px-5 text-[15px] font-semibold text-white hover:bg-[#4a5bf0]"
+            >
+              <Plus className="size-5" strokeWidth={2.5} />
+              Добавить строку
+            </Button>
+          ) : null}
+        </DocumentToolbarRow>
 
         {deviations.length > 0 ? (
           <section className="mt-6">
@@ -2455,11 +2472,8 @@ export function ClimateDocumentClient({
               Показатель вышел за норму — опишите, что сделали. Пустая графа
               при проверке читается как «нарушение заметили и проигнорировали».
             </p>
-            {/* `overflow-auto`, а не `overflow-x-auto`: глобальное правило
-                для телефона (`div.overflow-x-auto:has(table)`) снимает
-                скролл и выводит таблицу в край экрана — сюда это не
-                годится, таблица должна ездить внутри своего блока. */}
-            <div className="mt-3 overflow-auto">
+            {/* Таблица ездит вбок внутри своей рамки (общий класс). */}
+            <div className={`mt-3 ${JOURNAL_TABLE_SCROLL_CLASS}`}>
               <table className="w-full border-collapse text-[13px]">
                 <thead>
                   <tr>
@@ -2521,21 +2535,6 @@ export function ClimateDocumentClient({
             </div>
           </section>
         ) : null}
-
-        {status === "active" && (
-          <StickyActionBar>
-            <Button
-              type="button"
-              onClick={() => setRowDialogOpen(true)}
-              data-tour={TOUR.addRow}
-              className="h-11 gap-2 rounded-lg bg-[#5566f6] px-5 text-[15px] font-semibold text-white hover:bg-[#4a5bf0]"
-            >
-              <Plus className="size-5" strokeWidth={2.5} />
-              Добавить строку
-            </Button>
-
-          </StickyActionBar>
-        )}
 
         {status === "active" ? (
           <JournalSelectionBar
@@ -2925,8 +2924,8 @@ export function ClimateDocumentClient({
               )}
 
               {/* Кликабельная пустая строка внизу таблицы — то же окно
-                  добавления, что и кнопка «Добавить строку» в StickyActionBar
-                  выше. Сетка как у строк с данными: чекбокс — leading (1),
+                  добавления, что и кнопка «Добавить строку» в шапке
+                  документа (DocumentToolbarRow) выше. Сетка как у строк с данными: чекбокс — leading (1),
                   «Дата» — под неё встаёт подпись (labelSpan=1, это
                   единственная колонка-идентификатор строки — дальше
                   начинается динамическая сетка замеров, туда подпись

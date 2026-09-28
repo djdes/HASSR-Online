@@ -66,6 +66,7 @@ import {
   JOURNAL_DIALOG_CONTENT_CLASS,
   JOURNAL_DIALOG_HEADER_CLASS,
   JOURNAL_DIALOG_TITLE_CLASS,
+  JOURNAL_TABLE_SCROLL_CLASS,
 } from "@/components/journals/journal-responsive";
 import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
 import { SelectionEditButton } from "@/components/journals/selection-edit-button";
@@ -1135,7 +1136,7 @@ export function SanitationDayDocumentClient({
         {/* В карточках на телефоне бумажная шапка скрыта: 560px не
             влезают в 390px и лист обрезался справа. */}
         <div
-          className={`-mx-4 mb-4 overflow-x-auto px-4 sm:mx-0 lg:overflow-visible sm:px-0 ${
+          className={`${JOURNAL_TABLE_SCROLL_CLASS} mb-4 lg:overflow-visible ${
             mobileView === "cards" ? "max-sm:hidden print:block" : ""
           }`}
         >
@@ -1218,10 +1219,9 @@ export function SanitationDayDocumentClient({
           </>
         ) : null}
 
-        {/* Карточки — ВНЕ скроллера таблицы: глобальное правило
-            `div.overflow-x-auto:has(table)` гасит у него боковые поля
-            (таблица на телефоне идёт в край), и карточки уезжали за
-            края экрана вместе с ней. */}
+        {/* Карточки — ВНЕ рамки прокрутки таблицы: на телефоне рамка
+            идёт от края до края экрана без боковых полей, и карточки
+            внутри неё прилипали бы к стеклу. */}
         {mobileView === "cards" ? (
             <RecordCardsView
               items={normalized.rows.map((row, index) => {

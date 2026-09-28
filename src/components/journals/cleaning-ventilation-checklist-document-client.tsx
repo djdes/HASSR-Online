@@ -53,6 +53,7 @@ import {
   JOURNAL_DIALOG_TITLE_CLASS,
   DOC_AUTOFILL_LABEL_CLASS,
   DOC_AUTOFILL_STRIP_CLASS,
+  JOURNAL_TABLE_SCROLL_CLASS,
 } from "@/components/journals/journal-responsive";
 import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
 import { JournalPaperHeaderRows } from "@/components/journals/journal-document-header";
@@ -1401,17 +1402,14 @@ export function CleaningVentilationChecklistDocumentClient({
         <div className={DOC_PAPER_CANVAS_CLASS}>
         {/* Рамку контейнера убрали: границы теперь несут сами ячейки
             бумажной шапки, иначе линия дублировалась. */}
-        {/* В табличном виде на телефоне шапка той же ширины, что сетка (1140px), — лист панорамируется целиком. */}
+        {/* В табличном виде на телефоне шапка той же ширины, что сетка (1140px). */}
         {/* В карточках на телефоне бумажная часть (шапка ХАССП +
             «Процедура/Периодичность/Ответственные») скрыта: она шире
             экрана и обрезалась справа. Печать и десктоп — как были. */}
-        {/* Свой `overflow-x-auto` у шапки: в оболочке мини-приложения
-            обёртка страницы `[data-journal-doc-pan]` сознательно без
-            прокрутки (mini-theme.css), и бланк шириной 1140px просто
-            обрезался краем экрана — `body` был шире экрана на 800px.
-            На сайте `max-sm:overflow-visible` оставляет прежнюю панораму
-            всего листа. */}
-        <div className="overflow-x-auto max-sm:overflow-visible print:overflow-visible">
+        {/* Своя рамка прокрутки у шапки (общий класс): страница документа
+            вбок не едет, и без рамки бланк шириной 1140px просто обрезался
+            бы краем экрана. */}
+        <div className={`${JOURNAL_TABLE_SCROLL_CLASS} print:overflow-visible`}>
         <div className={`overflow-hidden ${mobileView === "table" ? "max-sm:w-fit max-sm:min-w-full" : "max-sm:hidden print:block"}`}>
           <table className={`w-full border-collapse text-[13px] text-left ${mobileView === "table" ? "max-sm:min-w-[1140px]" : ""}`}>
             <tbody>
@@ -1667,10 +1665,10 @@ export function CleaningVentilationChecklistDocumentClient({
             лица» раньше сжималось до «Администрат…». */}
         <MobileViewTableWrapper
           mobileView={mobileView}
-          // `overflow-x-auto` — свой горизонтальный скролл сетки в оболочке
-          // мини-приложения (правило `.mini-root main .overflow-x-auto`).
-          // Без него сетка 1140px не прокручивалась вообще.
-          className="-mx-4 max-h-[70vh] overflow-auto overflow-x-auto px-4 max-sm:max-h-none max-sm:overflow-visible sm:mx-0 sm:px-0 rounded-[28px] border border-[#333] print:mx-0 print:max-h-none print:overflow-visible print:px-0 print:border-black"
+          // Своя рамка прокрутки сетки 1140px (общий класс). Вертикальный
+          // скролл с липкой шапкой — от 640px, как и было: на телефоне
+          // сетка идёт во всю высоту.
+          className={`${JOURNAL_TABLE_SCROLL_CLASS} sm:max-h-[70vh] sm:overflow-y-auto rounded-[28px] border border-[#333] print:max-h-none print:overflow-visible print:border-black`}
         >
           <table className="min-w-[1140px] w-full table-fixed border-collapse text-[13px]">
             <colgroup>

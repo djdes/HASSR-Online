@@ -1314,17 +1314,9 @@ export function MedBookDocumentClient({
             Прививки
           </h2>
           <div className="space-y-2">
-            {/* Не GRID_VIEWPORT_CLASS: у него на телефоне скролл снимается
-                глобальным правилом, и «Прививки» уезжали в край экрана.
-                Здесь таблица ездит внутри своего блока. */}
-            {/* `overflow-x-auto` в классе обязателен: в оболочке
-                мини-приложения прокрутку таблицам возвращает правило
-                `.mini-root main .overflow-x-auto`, и без этого класса
-                «Прививки» (1320px) на вкладке «Карточки» уходили за
-                правый край экрана. */}
-            <div
-              className={`overflow-auto overflow-x-auto rounded-[14px] bg-white ${GRID_VIEWPORT_SCROLLBAR_CLASS} print:overflow-visible print:rounded-none print:bg-transparent`}
-            >
+            {/* «Прививки» (1320px) ездят вбок внутри своей рамки — общий
+                viewport сетки, как у таблицы осмотров выше. */}
+            <div className={GRID_VIEWPORT_CLASS}>
               <table className="w-full min-w-[1320px] border-collapse text-[13px] text-black">
                 <thead>
                   <tr>

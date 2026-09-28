@@ -22,6 +22,7 @@ import {
   DOC_PAPER_CANVAS_CLASS,
   DOC_PAPER_HEADER_CLASS,
   DOC_TITLE_ROW_NO_STRIP_CLASS,
+  JOURNAL_TABLE_SCROLL_CLASS,
 } from "@/components/journals/journal-responsive";
 import { GRID_VIEWPORT_CLASS } from "@/components/journals/journal-grid";
 import { Switch } from "@/components/ui/switch";
@@ -50,10 +51,26 @@ import { TOUR, type TourAnchor } from "@/lib/tour-anchors";
  *        шапка ХАССП → КАПС-заголовок → «Добавить» → таблица
  *   6. легенда и приложения
  *
- * Лист живёт в ОДНОМ горизонтальном скроллере (`GRID_VIEWPORT_CLASS`),
- * поэтому бумажная шапка и таблица едут вбок вместе. `sheetMinWidth`
- * задаёт общую минимальную ширину: без неё шапка `w-full` расходилась
- * с широкой таблицей.
+ * На компьютере лист живёт в ОДНОМ горизонтальном скроллере
+ * (`GRID_VIEWPORT_CLASS`), поэтому бумажная шапка и таблица едут вбок
+ * вместе. `sheetMinWidth` задаёт общую минимальную ширину: без неё шапка
+ * `w-full` расходилась с широкой таблицей.
+ *
+ * На телефоне (до 640px) вбок едет ТОЛЬКО таблица (правка владельца
+ * 2026-09-28: «попадаешь в центр журнала … надо, чтобы в начале слева
+ * сверху»). Бумажная шапка, КАПС-заголовок и ряд «Добавить» стоят над
+ * рамкой таблицы, по ширине экрана, в том же порядке, что на компьютере:
+ * внутри общей рамки они уезжали вбок вместе с колонками, и на их месте
+ * оставалось пустое поле, а заголовок широкого листа (1100–1650px) стоял
+ * по его центру — за краем экрана. Эти три блока рендерятся дважды (копия
+ * для телефона и копия в листе, одна из них всегда `display: none`) —
+ * как уже было с рядом «Добавить» в карточном виде.
+ *
+ * `tablesInOwnFrames` — для листа из нескольких разных таблиц с
+ * подзаголовками и своими кнопками между ними (дезсредства): общей рамки
+ * у листа нет, каждая таблица прокручивается в своей
+ * (`JOURNAL_TABLE_SCROLL_CLASS`), а подзаголовки и кнопки стоят по ширине
+ * экрана.
  */
 export type JournalDocumentShellProps = {
   /** Заголовок страницы (H1). */
@@ -108,7 +125,8 @@ export type JournalDocumentShellProps = {
 
   /**
    * Ряд «Добавить» и соседние кнопки. В табличном виде — над таблицей
-   * внутри листа, в карточном — над карточками.
+   * (на компьютере внутри листа, на телефоне — над рамкой таблицы), в
+   * карточном — над карточками.
    */
   toolbar?: ReactNode;
   /** Карточки для телефона. */
@@ -120,6 +138,12 @@ export type JournalDocumentShellProps = {
   sheetTitle?: ReactNode;
   /** Общая минимальная ширина листа: шапка и таблица одной ширины. */
   sheetMinWidth?: number;
+  /**
+   * Лист из нескольких таблиц с подзаголовками и кнопками между ними:
+   * общей рамки прокрутки нет, каждая таблица в `children` сама обёрнута
+   * в `JOURNAL_TABLE_SCROLL_CLASS`.
+   */
+  tablesInOwnFrames?: boolean;
   /** Таблица документа. */
   children: ReactNode;
   /** Легенда, приложения, примечания — под таблицей. */
@@ -151,6 +175,7 @@ export function JournalDocumentShell({
   paperHeader,
   sheetTitle,
   sheetMinWidth,
+  tablesInOwnFrames = false,
   children,
   extra,
   className = "",
@@ -241,33 +266,55 @@ export function JournalDocumentShell({
         </div>
       ) : null}
 
+      {/* Телефон, вид «Таблица»: шапка бланка, КАПС-заголовок и ряд
+          «Добавить» — над рамкой таблицы, по ширине экрана. Шапка — в
+          своей рамке: её таблица тоже бывает шире экрана. Копии в листе
+          ниже скрыты до 640px. */}
+      {!cardsMode && (paperHeader || sheetTitle || toolbar) ? (
+        <div className="sm:hidden print:hidden">
+          {paperHeader ? (
+            <div className={`${DOC_PAPER_HEADER_CLASS} ${JOURNAL_TABLE_SCROLL_CLASS}`}>
+              {paperHeader}
+            </div>
+          ) : null}
+          {sheetTitle ? (
+            <div className={DOC_CAPS_TITLE_CLASS}>
+              <JournalDocumentTitle>{sheetTitle}</JournalDocumentTitle>
+            </div>
+          ) : null}
+          {toolbar ? <div className={DOC_ADD_ROW_CLASS}>{toolbar}</div> : null}
+        </div>
+      ) : null}
+
       <div
         className={`${DOC_PAPER_CANVAS_CLASS} ${
           cardsMode ? "hidden sm:block print:block" : ""
         }`}
       >
-        <div className={GRID_VIEWPORT_CLASS}>
+        <div className={tablesInOwnFrames ? undefined : GRID_VIEWPORT_CLASS}>
           {/* `w-max` — ширину листа задаёт самая широкая таблица внутри.
               С `w-full` бумажная шапка вставала по ширине контейнера, а
               таблица распирала себя содержимым, и правая вертикаль
               бланка расходилась с колонками. */}
           <div
-            className={sheetMinWidth ? "w-max" : "w-full"}
+            className={sheetMinWidth && !tablesInOwnFrames ? "w-max" : "w-full"}
             style={
-              sheetMinWidth
+              sheetMinWidth && !tablesInOwnFrames
                 ? { minWidth: `max(100%, ${sheetMinWidth}px)` }
                 : undefined
             }
           >
             {paperHeader ? (
-              <div className={DOC_PAPER_HEADER_CLASS}>{paperHeader}</div>
+              <div className={`${DOC_PAPER_HEADER_CLASS} max-sm:hidden`}>{paperHeader}</div>
             ) : null}
             {sheetTitle ? (
-              <div className={DOC_CAPS_TITLE_CLASS}>
+              <div className={`${DOC_CAPS_TITLE_CLASS} max-sm:hidden`}>
                 <JournalDocumentTitle>{sheetTitle}</JournalDocumentTitle>
               </div>
             ) : null}
-            {toolbar ? <div className={DOC_ADD_ROW_CLASS}>{toolbar}</div> : null}
+            {toolbar ? (
+              <div className={`${DOC_ADD_ROW_CLASS} max-sm:hidden`}>{toolbar}</div>
+            ) : null}
             {children}
           </div>
         </div>

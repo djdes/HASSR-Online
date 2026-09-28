@@ -2353,7 +2353,7 @@ export function CleaningDocumentClient(props: Props) {
   return (
     <>
       <div className="space-y-5">
-        <FocusTodayScroller always />
+        <FocusTodayScroller />
         <div className="print:hidden">
           <DocumentActionsBar
             backHref="/journals/cleaning"

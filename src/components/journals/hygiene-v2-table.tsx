@@ -10,6 +10,7 @@ import {
   type HygieneV2Row,
 } from "@/lib/hygiene-v2";
 import { journalQrHref } from "@/lib/journal-qr-target";
+import { JOURNAL_TABLE_SCROLL_CLASS } from "@/components/journals/journal-responsive";
 
 /**
  * Гигиенический журнал по форме Приложения №1 СанПиН (документы с
@@ -147,7 +148,7 @@ export function HygieneV2Table({ dateKeys, todayKey = "", employees, entries }: 
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-3xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
+          <div className={`${JOURNAL_TABLE_SCROLL_CLASS} rounded-3xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]`}>
             <table className="w-full min-w-[980px] border-collapse text-[14px] text-[#0b1024]">
               <thead>
                 <tr className="bg-[#fafbff]">
