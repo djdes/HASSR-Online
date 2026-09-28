@@ -1,0 +1,58 @@
+{
+  "pages": [
+    {
+      "page": "/ @1280",
+      "activePrices": 3,
+      "badge": "−15 % до 30 сентября"
+    },
+    {
+      "page": "/pricing @1280",
+      "activePrices": 4,
+      "badge": "−15 % до 30 сентября"
+    },
+    {
+      "page": "/settings/subscription @1280",
+      "activePrices": 3,
+      "badge": "−15 % до 30 сентября"
+    },
+    {
+      "page": "/order?plan=monthly @1280",
+      "activePrices": 1,
+      "badge": "−15 % до 30 сентября"
+    },
+    {
+      "page": "/root/promotions @1280",
+      "activePrices": 1,
+      "badge": "−15 % до 30 сентября"
+    },
+    {
+      "page": "/ @390",
+      "activePrices": 3,
+      "badge": "−15 % до 30 сентября"
+    },
+    {
+      "page": "/pricing @390",
+      "activePrices": 4,
+      "badge": "−15 % до 30 сентября"
+    },
+    {
+      "page": "/settings/subscription @390",
+      "activePrices": 3,
+      "badge": "−15 % до 30 сентября"
+    },
+    {
+      "page": "/order?plan=monthly @390",
+      "activePrices": 1,
+      "badge": "−15 % до 30 сентября"
+    },
+    {
+      "page": "/root/promotions @390",
+      "activePrices": 1,
+      "badge": "−15 % до 30 сентября"
+    }
+  ],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "created": 200,
+  "deleted": 200
+}

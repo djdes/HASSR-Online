@@ -1,0 +1,498 @@
+{
+  "checks": [
+    {
+      "name": "ROOT входит",
+      "ok": true,
+      "details": {}
+    },
+    {
+      "name": "превью в форме: 1 990 → 1 592, плашка",
+      "ok": true,
+      "details": {
+        "active": "true",
+        "old": "Без акции: 1 990 ₽",
+        "now": "По акции: 1 592 ₽",
+        "badge": "−20 % до 5 октября, 21:29"
+      }
+    },
+    {
+      "name": "акция в БД: 20 %, включена, окно (UTC в базе)",
+      "ok": true,
+      "details": {
+        "startsUtc": "2026-09-28 18:24:00",
+        "endsUtc": "2026-10-05 18:29:00"
+      }
+    },
+    {
+      "name": "ROOT «Сейчас на сайте» — зачёркнутая 1 990 и 1 592",
+      "ok": true,
+      "details": {
+        "active": "true",
+        "old": "Без акции: 1 990 ₽",
+        "now": "По акции: 1 592 ₽",
+        "badge": "−20 % до 5 октября, 21:29"
+      }
+    },
+    {
+      "name": "лендинг 1280: первый экран — зачёркнутая и новая",
+      "ok": true,
+      "details": {
+        "active": "true",
+        "old": "Без акции: 1 990 ₽",
+        "now": "По акции: 1 592 ₽",
+        "badge": "−20 % до 5 октября, 21:29"
+      }
+    },
+    {
+      "name": "лендинг 1280: карточка «Подписка»",
+      "ok": true,
+      "details": {
+        "active": "true",
+        "old": "Без акции: 1 990 ₽",
+        "now": "По акции: 1 592 ₽",
+        "badge": "−20 % до 5 октября, 21:29"
+      }
+    },
+    {
+      "name": "лендинг 1280: калькулятор оборудования",
+      "ok": true,
+      "details": {
+        "active": "true",
+        "old": "Без акции: 1 990 ₽",
+        "now": "По акции: 1 592 ₽",
+        "badge": "−20 % до 5 октября, 21:29"
+      }
+    },
+    {
+      "name": "лендинг 1280: JSON-LD цена = цена по акции",
+      "ok": true,
+      "details": {}
+    },
+    {
+      "name": "/pricing 1280: текст — зачёркнутая и новая",
+      "ok": true,
+      "details": {
+        "active": "true",
+        "old": "Без акции: 1 990 ₽",
+        "now": "По акции: 1 592 ₽",
+        "badge": ""
+      }
+    },
+    {
+      "name": "/pricing 1280: карточки «Подписка» и «+ оборудование»",
+      "ok": true,
+      "details": {
+        "count": 4,
+        "active": "true",
+        "old": "Без акции: 1 990 ₽",
+        "now": "По акции: 1 592 ₽",
+        "badge": "−20 % до 5 октября, 21:29"
+      }
+    },
+    {
+      "name": "/pricing 1280: ROI-калькулятор (15 сотрудников)",
+      "ok": true,
+      "details": {
+        "active": "true",
+        "old": "Без акции: 1 990 ₽",
+        "now": "По акции: 1 592 ₽",
+        "badge": "−20 % до 5 октября, 21:29"
+      }
+    },
+    {
+      "name": "владелец входит (1280)",
+      "ok": true,
+      "details": {}
+    },
+    {
+      "name": "/settings/subscription 1280: карточка «Подписка»",
+      "ok": true,
+      "details": {
+        "active": "true",
+        "old": "Без акции: 1 990 ₽",
+        "now": "По акции: 1 592 ₽",
+        "badge": "−20 % до 5 октября, 21:29"
+      }
+    },
+    {
+      "name": "/settings/subscription 1280: «В месяц» за 6 сотрудников",
+      "ok": true,
+      "details": {
+        "active": "true",
+        "old": "Без акции: 1 990 ₽",
+        "now": "По акции: 1 592 ₽",
+        "badge": "−20 % до 5 октября, 21:29"
+      }
+    },
+    {
+      "name": "/order 1280: строка подписки — зачёркнутая и новая",
+      "ok": true,
+      "details": {
+        "active": "true",
+        "old": "Без акции: 1 990 ₽",
+        "now": "По акции: 1 592 ₽",
+        "badge": "−20 % до 5 октября, 21:29"
+      }
+    },
+    {
+      "name": "/order 1280: к оплате 1 592 ₽",
+      "ok": true,
+      "details": {
+        "total": "1 592 ₽"
+      }
+    },
+    {
+      "name": "лендинг 390: первый экран — зачёркнутая и новая",
+      "ok": true,
+      "details": {
+        "active": "true",
+        "old": "Без акции: 1 990 ₽",
+        "now": "По акции: 1 592 ₽",
+        "badge": "−20 % до 5 октября, 21:29"
+      }
+    },
+    {
+      "name": "лендинг 390: карточка «Подписка»",
+      "ok": true,
+      "details": {
+        "active": "true",
+        "old": "Без акции: 1 990 ₽",
+        "now": "По акции: 1 592 ₽",
+        "badge": "−20 % до 5 октября, 21:29"
+      }
+    },
+    {
+      "name": "лендинг 390: калькулятор оборудования",
+      "ok": true,
+      "details": {
+        "active": "true",
+        "old": "Без акции: 1 990 ₽",
+        "now": "По акции: 1 592 ₽",
+        "badge": "−20 % до 5 октября, 21:29"
+      }
+    },
+    {
+      "name": "лендинг 390: JSON-LD цена = цена по акции",
+      "ok": true,
+      "details": {}
+    },
+    {
+      "name": "/pricing 390: текст — зачёркнутая и новая",
+      "ok": true,
+      "details": {
+        "active": "true",
+        "old": "Без акции: 1 990 ₽",
+        "now": "По акции: 1 592 ₽",
+        "badge": ""
+      }
+    },
+    {
+      "name": "/pricing 390: карточки «Подписка» и «+ оборудование»",
+      "ok": true,
+      "details": {
+        "count": 4,
+        "active": "true",
+        "old": "Без акции: 1 990 ₽",
+        "now": "По акции: 1 592 ₽",
+        "badge": "−20 % до 5 октября, 21:29"
+      }
+    },
+    {
+      "name": "/pricing 390: ROI-калькулятор (15 сотрудников)",
+      "ok": true,
+      "details": {
+        "active": "true",
+        "old": "Без акции: 1 990 ₽",
+        "now": "По акции: 1 592 ₽",
+        "badge": "−20 % до 5 октября, 21:29"
+      }
+    },
+    {
+      "name": "владелец входит (390)",
+      "ok": true,
+      "details": {}
+    },
+    {
+      "name": "/settings/subscription 390: карточка «Подписка»",
+      "ok": true,
+      "details": {
+        "active": "true",
+        "old": "Без акции: 1 990 ₽",
+        "now": "По акции: 1 592 ₽",
+        "badge": "−20 % до 5 октября, 21:29"
+      }
+    },
+    {
+      "name": "/settings/subscription 390: «В месяц» за 6 сотрудников",
+      "ok": true,
+      "details": {
+        "active": "true",
+        "old": "Без акции: 1 990 ₽",
+        "now": "По акции: 1 592 ₽",
+        "badge": "−20 % до 5 октября, 21:29"
+      }
+    },
+    {
+      "name": "/order 390: строка подписки — зачёркнутая и новая",
+      "ok": true,
+      "details": {
+        "active": "true",
+        "old": "Без акции: 1 990 ₽",
+        "now": "По акции: 1 592 ₽",
+        "badge": "−20 % до 5 октября, 21:29"
+      }
+    },
+    {
+      "name": "/order 390: к оплате 1 592 ₽",
+      "ok": true,
+      "details": {
+        "total": "1 592 ₽"
+      }
+    },
+    {
+      "name": "лендинг, ночная тема: карточка «Подписка»",
+      "ok": true,
+      "details": {}
+    },
+    {
+      "name": "ROOT создал промокод E2E10 (−10 %)",
+      "ok": true,
+      "details": {}
+    },
+    {
+      "name": "/order: промокод −10 % от цены по акции: 1 592 − 159 = 1 433",
+      "ok": true,
+      "details": {
+        "promoTotal": "1 433 ₽",
+        "promoLine": "Промокод E2E10−159 ₽"
+      }
+    },
+    {
+      "name": "к оплате в Робокассу ушло 1433.00 (заглушка, наружу не ходили)",
+      "ok": true,
+      "details": {
+        "OutSum": "1433.00",
+        "IsTest": "1",
+        "Description": "Подписка на 30 дн. (акция «Осенняя скидка» −20 %; промокод E2E10: −159 ₽)"
+      }
+    },
+    {
+      "name": "чек Робокассы — итоговая сумма",
+      "ok": true,
+      "details": {
+        "receipt": {
+          "items": [
+            {
+              "name": "Подписка на 30 дн.",
+              "quantity": 1,
+              "sum": 1433,
+              "payment_method": "full_payment",
+              "payment_object": "service",
+              "tax": "none"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "заказ: база 1990, акция −20 % (−398), промокод E2E10 −159, сумма 1433",
+      "ok": true,
+      "details": {
+        "description": "Подписка на 30 дн. (акция «Осенняя скидка» −20 %; промокод E2E10: −159 ₽)"
+      }
+    },
+    {
+      "name": "ResultURL (наш /payment, подпись тестовым паролем) → OK",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "body": "OK5"
+      }
+    },
+    {
+      "name": "заказ оплачен",
+      "ok": true,
+      "details": {
+        "status": "paid"
+      }
+    },
+    {
+      "name": "ROOT промокоды: у E2E10 одна оплата",
+      "ok": true,
+      "details": {
+        "e2eRow": "E2E10−10 %без срока1всемОтключить",
+        "e2eUses": "1"
+      }
+    },
+    {
+      "name": "ROOT акции: «Оплат по акции: 1 · скидка клиентам 398 ₽»",
+      "ok": true,
+      "details": {
+        "statText": "Осенняя скидка−20 %Действует28.09.2026, 21:24 — 05.10.2026, 21:29 МСК−20 % до 5 октября, 21:29e2e: акция на сейчасОплат по акции: 1 · скидка клиентам 398 ₽ИзменитьВыключитьУдалить"
+      }
+    },
+    {
+      "name": "/api/promo/check: скидка от цены по акции",
+      "ok": true,
+      "details": {
+        "ok": true,
+        "code": "E2E10",
+        "discountRub": 159,
+        "subscriptionRub": 1433,
+        "kind": "percent",
+        "value": 10,
+        "offerRub": 1592,
+        "promotionId": "cmull0m94000qh09mx8x6pw2s"
+      }
+    },
+    {
+      "name": "create: страница со старой ценой → 409 price-changed, заказ не создан",
+      "ok": true,
+      "details": {
+        "status": 409,
+        "error": "Цена изменилась: действует акция. Проверьте новую сумму и нажмите ещё раз",
+        "code": "price-changed",
+        "grossRub": 1592
+      }
+    },
+    {
+      "name": "ROOT API: E2EONE (лимит 1) и E2ENEW (только новым)",
+      "ok": true,
+      "details": {}
+    },
+    {
+      "name": "оплата с E2EONE: 1592 − 300 = 1292",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "amountRub": 1292
+      }
+    },
+    {
+      "name": "лимит считается и по completed-заказам",
+      "ok": true,
+      "details": {
+        "ok": false,
+        "message": "Промокод уже использован максимальное число раз",
+        "offerRub": 1592,
+        "promotionId": "cmull0m94000qh09mx8x6pw2s"
+      }
+    },
+    {
+      "name": "«только новым»: у организации уже есть оплаты",
+      "ok": true,
+      "details": {
+        "ok": false,
+        "message": "Этот промокод только для новых клиентов",
+        "offerRub": 1592,
+        "promotionId": "cmull0m94000qh09mx8x6pw2s"
+      }
+    },
+    {
+      "name": "«только новым» без входа, по почте постоянного клиента — отказ",
+      "ok": true,
+      "details": {
+        "status": 400,
+        "error": "Этот промокод только для новых клиентов"
+      }
+    },
+    {
+      "name": "«только новым» для новой почты: 1592 − 15 % (239) = 1353",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "amountRub": 1353
+      }
+    },
+    {
+      "name": "ROOT: акция ушла в «Прошедшие», сейчас акций нет",
+      "ok": true,
+      "details": {}
+    },
+    {
+      "name": "ROOT: история — создана и изменена (конец по МСК)",
+      "ok": true,
+      "details": {
+        "history": "28.09.2026, 21:33Изменена «Осенняя скидка»начало 28.09.2026, 21:24 → 18.09.2026, 21:33; конец 05.10.2026, 21:29 → 27.09.2026, 21:33· ROOT e2e28.09.2026, 21:29Создана «Осенняя скидка»−20 % · 28.09.2026, 21:24 — 05.10.2026, 21:29 МСК· ROOT e2e"
+      }
+    },
+    {
+      "name": "/root/audit: «Акция создана» / «Акция изменена»",
+      "ok": true,
+      "details": {}
+    },
+    {
+      "name": "прошедшая акция: лендинг 1280 — обычная цена",
+      "ok": true,
+      "details": {
+        "active": 0
+      }
+    },
+    {
+      "name": "прошедшая акция: /pricing 1280",
+      "ok": true,
+      "details": {}
+    },
+    {
+      "name": "прошедшая акция: лендинг 390 — обычная цена",
+      "ok": true,
+      "details": {
+        "active": 0
+      }
+    },
+    {
+      "name": "прошедшая акция: /pricing 390",
+      "ok": true,
+      "details": {}
+    },
+    {
+      "name": "прошедшая акция: /settings/subscription",
+      "ok": true,
+      "details": {}
+    },
+    {
+      "name": "прошедшая акция: /order к оплате 1 990 ₽, без зачёркивания",
+      "ok": true,
+      "details": {
+        "pastTotal": "1 990 ₽"
+      }
+    },
+    {
+      "name": "прошедшая акция: заказ на 1990 без акции",
+      "ok": true,
+      "details": {
+        "amountRub": 1990,
+        "baseRub": 1990,
+        "promotionId": null,
+        "promotionDiscountRub": 0
+      }
+    }
+  ],
+  "pageErrors": [],
+  "robokassa": [
+    "https://auth.robokassa.ru/Merchant/bundle/robokassa_iframe.js",
+    "https://auth.robokassa.ru/Merchant/bundle/robokassa_iframe.js",
+    "https://auth.robokassa.ru/Merchant/bundle/robokassa_iframe.js",
+    "https://auth.robokassa.ru/Merchant/Index.aspx?MerchantLogin=e2e-fake-shop&OutSum=1433.00&InvId=5&Description=%D0%9F%D0%BE%D0%B4%D0%BF%D0%B8%D1%81%D0%BA%D0%B0+%D0%BD%D0%B0+30+%D0%B4%D0%BD.+%28%D0%B0%D0%BA%D1%86%D0%B8%D1%8F+%C2%AB%D0%9E%D1%81%D0%B5%D0%BD%D0%BD%D1%8F%D1%8F+%D1%81%D0%BA%D0%B8%D0%B4%D0%BA%D0%B0%C2%BB+%E2%88%9220%C2%A0%25%3B+%D0%BF%D1%80%D0%BE%D0%BC%D0%BE%D0%BA%D0%BE%D0%B4+E2E10%3A+%E2%88%92159%C2%A0%E2%82%BD%29&SignatureValue=f4258c88d8227e5bfad720dc3f136630&Culture=ru&Email=pr-owner-mulkb986%40example.com&Receipt=%7B%22items%22%3A%5B%7B%22name%22%3A%22%D0%9F%D0%BE%D0%B4%D0%BF%D0%B8%D1%81%D0%BA%D0%B0+%D0%BD%D0%B0+30+%D0%B4%D0%BD.%22%2C%22quantity%22%3A1%2C%22sum%22%3A1433%2C%22payment_method%22%3A%22full_payment%22%2C%22payment_object%22%3A%22service%22%2C%22tax%22%3A%22none%22%7D%5D%7D&IsTest=1",
+    "https://auth.robokassa.ru/Merchant/bundle/robokassa_iframe.js"
+  ],
+  "devReloads": 0,
+  "promotionId": "cmull0m94000qh09mx8x6pw2s",
+  "order": {
+    "id": 5,
+    "amountRub": "1433.00",
+    "baseRub": 1990,
+    "promotionId": "cmull0m94000qh09mx8x6pw2s",
+    "promotionPercent": 20,
+    "promotionDiscountRub": 398,
+    "promoCode": "E2E10",
+    "discountRub": 159,
+    "description": "Подписка на 30 дн. (акция «Осенняя скидка» −20 %; промокод E2E10: −159 ₽)",
+    "status": "pending"
+  },
+  "passed": 56,
+  "failed": 0,
+  "robokassaHosts": [
+    "auth.robokassa.ru"
+  ]
+}

@@ -1,0 +1,21 @@
+# Команды проверки (worktree C:/wt/promos, 2026-09-28)
+
+typecheck: node node_modules/typescript/bin/tsc --noEmit --skipLibCheck -p tsconfig.typecheck.json  -> exit 0
+seed script typecheck: tsc -p <tsconfig extends tsconfig.json, include scripts/seed-promo-codes.ts> -> exit 0
+eslint (все изменённые/новые .ts/.tsx в src): 0 errors, 0 warnings (scripts/ в eslint игнорируется конфигом)
+
+unit (весь набор): node --import tsx --test --test-reporter=tap "src/**/*.test.ts"
+# tests 2773
+# pass 2773
+# fail 0
+новые/изменённые файлы тестов: src/lib/promo/promotions.test.ts, src/lib/promo/starter-codes.test.ts,
+src/lib/closing-documents/build.test.ts (+ src/lib/promo/rules.test.ts без изменений) -> 45 tests, 45 pass
+
+e2e (Playwright headless, Chromium из %LOCALAPPDATA%\ms-playwright, dev-сервер :3172):
+  e2e/e2e.cjs         -> 56 passed, 0 failed, page errors 0 (вкл. console-ошибки гидратации), raw/e2e-results.json, raw/e2e-run.log
+  e2e/hydration.cjs   -> 5 страниц x 2 ширины в период акции: 0 hydration/console ошибок, raw/hydration.json
+  e2e/extra-api.cjs   -> 4 passed: заказ без промокода в акцию 1492, счёт по безналу 1492 со снимком акции, raw/extra-api.json
+  e2e/shots-extra.cjs -> ROOT промокоды (стартовый набор), ROOT «Акции» @390: горизонтальный скролл 0 px
+Робокасса: все запросы к auth.robokassa.ru перехвачены (скрипт iFrame — abort, форма оплаты — заглушка),
+  наружу ничего не уходило; фиктивный тестовый магазин только в env процесса dev-сервера.
+ResultURL — наш /payment, подпись тестовым паролем №2 из env dev-сервера.

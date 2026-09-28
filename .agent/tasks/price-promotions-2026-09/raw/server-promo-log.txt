@@ -1,0 +1,37 @@
+[promo] promotion created cmulkjqwb000bh09m3oskax0b «Осенняя скидка» −20 % · 28.09.2026, 21:11 — 05.10.2026, 21:16 МСК by pr-root-mulkb986@example.com
+[promo] promotion created cmulkprvz000gh09m1acfp5jy «Осенняя скидка» −20 % · 28.09.2026, 21:15 — 05.10.2026, 21:20 МСК by pr-root-mulkb986@example.com
+[promo] code E2E10 accepted: −159 ₽ of 1592 ₽ (uses 0) org=cmulkbu7z0000h09m7r8wykft
+[promo] code E2E10 accepted: −159 ₽ of 1592 ₽ (uses 0) org=cmulkbu7z0000h09m7r8wykft
+[promo] order #1 monthly: base 1990 ₽ → promotion cmulkprvz000gh09m1acfp5jy −20% = 1592 ₽ → promo E2E10 −159 ₽ = 1433 ₽, points 0, to pay 1433 ₽
+[promo] code E2E10 accepted: −159 ₽ of 1592 ₽ (uses 1) org=cmulkbu7z0000h09m7r8wykft
+[promo] order refused: price changed (expected 1990 ₽, now 1592 ₽, promotion cmulkprvz000gh09m1acfp5jy)
+[promo] code E2EONE accepted: −300 ₽ of 1592 ₽ (uses 0/1) org=cmulkbu7z0000h09m7r8wykft
+[promo] order #2 monthly: base 1990 ₽ → promotion cmulkprvz000gh09m1acfp5jy −20% = 1592 ₽ → promo E2EONE −300 ₽ = 1292 ₽, points 0, to pay 1292 ₽
+[promo] code E2EONE rejected: exhausted org=cmulkbu7z0000h09m7r8wykft
+[promo] code E2ENEW rejected: new-clients-only org=cmulkbu7z0000h09m7r8wykft
+[promo] code E2ENEW rejected: new-clients-only org=anon
+[promo] code E2ENEW accepted: −239 ₽ of 1592 ₽ (uses 0) org=anon
+[promo] order #3 monthly: base 1990 ₽ → promotion cmulkprvz000gh09m1acfp5jy −20% = 1592 ₽ → promo E2ENEW −239 ₽ = 1353 ₽, points 0, to pay 1353 ₽
+[promo] promotion promotion.update cmulkprvz000gh09m1acfp5jy «Осенняя скидка»: начало 28.09.2026, 21:15 → 18.09.2026, 21:26; конец 05.10.2026, 21:20 → 27.09.2026, 21:26 by pr-root-mulkb986@example.com
+[promo] order #4 monthly: base 1990 ₽ = 1990 ₽, points 0, to pay 1990 ₽
+[promo] promotion created cmull0m94000qh09mx8x6pw2s «Осенняя скидка» −20 % · 28.09.2026, 21:24 — 05.10.2026, 21:29 МСК by pr-root-mulkb986@example.com
+[promo] code E2E10 accepted: −159 ₽ of 1592 ₽ (uses 0) org=cmulkbu7z0000h09m7r8wykft
+[promo] code E2E10 accepted: −159 ₽ of 1592 ₽ (uses 0) org=cmulkbu7z0000h09m7r8wykft
+[promo] order #5 monthly: base 1990 ₽ → promotion cmull0m94000qh09mx8x6pw2s −20% = 1592 ₽ → promo E2E10 −159 ₽ = 1433 ₽, points 0, to pay 1433 ₽
+[promo] code E2E10 accepted: −159 ₽ of 1592 ₽ (uses 1) org=cmulkbu7z0000h09m7r8wykft
+[promo] order refused: price changed (expected 1990 ₽, now 1592 ₽, promotion cmull0m94000qh09mx8x6pw2s)
+[promo] code E2EONE accepted: −300 ₽ of 1592 ₽ (uses 0/1) org=cmulkbu7z0000h09m7r8wykft
+[promo] order #6 monthly: base 1990 ₽ → promotion cmull0m94000qh09mx8x6pw2s −20% = 1592 ₽ → promo E2EONE −300 ₽ = 1292 ₽, points 0, to pay 1292 ₽
+[promo] code E2EONE rejected: exhausted org=cmulkbu7z0000h09m7r8wykft
+[promo] code E2ENEW rejected: new-clients-only org=cmulkbu7z0000h09m7r8wykft
+[promo] code E2ENEW rejected: new-clients-only org=anon
+[promo] code E2ENEW accepted: −239 ₽ of 1592 ₽ (uses 0) org=anon
+[promo] order #7 monthly: base 1990 ₽ → promotion cmull0m94000qh09mx8x6pw2s −20% = 1592 ₽ → promo E2ENEW −239 ₽ = 1353 ₽, points 0, to pay 1353 ₽
+[promo] promotion promotion.update cmull0m94000qh09mx8x6pw2s «Осенняя скидка»: начало 28.09.2026, 21:24 → 18.09.2026, 21:33; конец 05.10.2026, 21:29 → 27.09.2026, 21:33 by pr-root-mulkb986@example.com
+[promo] order #8 monthly: base 1990 ₽ = 1990 ₽, points 0, to pay 1990 ₽
+[promo] promotion created cmull7hhb0010h09mpy8jy6oh «Проверка гидратации» −15 % · 28.09.2026, 21:29 — 01.10.2026, 00:00 МСК by pr-root-mulkb986@example.com
+[promo] promotion deleted cmull7hhb0010h09mpy8jy6oh «Проверка гидратации» −15 % · 28.09.2026, 21:29 — 01.10.2026, 00:00 МСК by pr-root-mulkb986@example.com
+[promo] promotion created cmullc3c4001dh09mn1l1fkqf «Счёт и заказ» −25 % · 28.09.2026, 21:33 — 30.09.2026, 00:00 МСК by pr-root-mulkb986@example.com
+[promo] order #9 monthly: base 1990 ₽ → promotion cmullc3c4001dh09mn1l1fkqf −25% = 1492 ₽ = 1492 ₽, points 0, to pay 1492 ₽
+[promo] invoice #10: base 1990 ₽ → promotion cmullc3c4001dh09mn1l1fkqf −25% = 1492 ₽
+[promo] promotion deleted cmullc3c4001dh09mn1l1fkqf «Счёт и заказ» −25 % · 28.09.2026, 21:33 — 30.09.2026, 00:00 МСК by pr-root-mulkb986@example.com

@@ -1,0 +1,60 @@
+{
+  "task": "price-promotions-2026-09",
+  "branch": "feat/promos-2026-09-28",
+  "base": "bc243840",
+  "date": "2026-09-28",
+  "verdict": "PASS",
+  "acceptance": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "evidence": [
+        "raw/e2e-results.json (ROOT создаёт/изменяет акцию, группы, история, /root/audit)",
+        "evidence/root-promotions-running-1280.png",
+        "evidence/root-promotions-past-1280.png",
+        "evidence/root-promotions-390.png"
+      ]
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "evidence": [
+        "raw/e2e-results.json (лендинг, /pricing, /settings/subscription, /order на 1280 и 390; OutSum=1433.00, чек 1433; прошедшая акция — 1990)",
+        "raw/extra-api.json (заказ без промокода 1492 и счёт по безналу 1492 при −25 %)",
+        "raw/hydration.json (0 ошибок гидратации в период акции)",
+        "evidence/landing-*.png, evidence/pricing-card-*.png, evidence/settings-*.png, evidence/order-*.png"
+      ]
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "evidence": [
+        "raw/e2e-results.json (ROOT создаёт E2E10 → /order 1433 → оплата → учёт; лимит с completed; «только новым» по организации и по почте)",
+        "raw/seed-promo-codes.log (dry-run, --apply, повторный --apply)",
+        "evidence/order-promo-code-1280.png",
+        "evidence/root-promo-codes-uses-1280.png",
+        "evidence/root-promo-codes-starter-1280.png"
+      ]
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "evidence": ["raw/checks.txt", "raw/e2e-run.log"]
+    }
+  ],
+  "commands": {
+    "typecheck": { "cmd": "node node_modules/typescript/bin/tsc --noEmit --skipLibCheck -p tsconfig.typecheck.json", "exit": 0 },
+    "unit": { "cmd": "node --import tsx --test \"src/**/*.test.ts\"", "tests": 2773, "pass": 2773, "fail": 0 },
+    "unit_new": { "files": ["src/lib/promo/promotions.test.ts", "src/lib/promo/starter-codes.test.ts", "src/lib/closing-documents/build.test.ts", "src/lib/promo/rules.test.ts"], "tests": 45, "pass": 45 },
+    "eslint_changed": { "errors": 0, "warnings": 0 },
+    "e2e": { "script": "e2e/e2e.cjs", "passed": 56, "failed": 0, "pageErrors": 0, "viewports": [390, 1280] },
+    "hydration": { "script": "e2e/hydration.cjs", "pages": 10, "consoleErrors": 0, "pageErrors": 0 },
+    "extra_api": { "script": "e2e/extra-api.cjs", "passed": 4, "failed": 0 },
+    "seed_promo_codes": { "script": "scripts/seed-promo-codes.ts", "created": 4, "active": false, "idempotent": true }
+  },
+  "robokassa": "все запросы к auth.robokassa.ru перехвачены в браузере (abort/заглушка); наружу не уходило",
+  "schema": {
+    "new_models": ["PricePromotion"],
+    "PaymentOrder_new_fields": ["baseRub Int?", "promotionId String?", "promotionPercent Int?", "promotionDiscountRub Int @default(0)", "@@index([promotionId])"]
+  }
+}
