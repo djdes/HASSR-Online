@@ -1,0 +1,424 @@
+{
+  "checks": [
+    {
+      "name": "анонс руководителю: даты и цена из настроек/тарифа",
+      "ok": true,
+      "details": "С 1 по 10 октября подписка «до 10 сотрудников» бесплатна для всех. С 11 октября — 1 990 ₽/мес или бесплатный тариф на 1 сотрудника. Подробнее"
+    },
+    {
+      "name": "«Подробнее» ведёт на /settings/subscription",
+      "ok": true,
+      "details": "/settings/subscription"
+    },
+    {
+      "name": "анонс закрывается на день",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "сессия повара до перехода активна",
+      "ok": true,
+      "details": "uA1mulok2iw"
+    },
+    {
+      "name": "анонс видит и повар — в профиле мини-приложения, без ссылки на тариф",
+      "ok": true,
+      "details": "С 1 по 10 октября подписка «до 10 сотрудников» бесплатна для всех. С 11 октября — 1 990 ₽/мес или бесплатный тариф на 1 сотрудника."
+    },
+    {
+      "name": "оплатившим анонс не показывается",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "анонс в профиле мини-приложения",
+      "ok": true,
+      "details": "С 1 по 10 октября подписка «до 10 сотрудников» бесплатна для всех. С 11 октября — 1 990 ₽/мес или бесплатный тариф на 1 сотрудника. Подробнее"
+    },
+    {
+      "name": "в периоде: «Подписка — бесплатно по …», без окна",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "в периоде лимита нет: второй+ сотрудник добавляется",
+      "ok": true,
+      "details": 200
+    },
+    {
+      "name": "окно руководителю: «Бесплатный период подписки закончился»",
+      "ok": true,
+      "details": "Бесплатный период подписки закончился С 16 по 27 сентября подписка «до 10 сотрудников» была бесплатной для всех. Сейчас в кабинете 4 сотрудника, а бесплатный та"
+    },
+    {
+      "name": "в окне: 4 сотрудника, бесплатный — 1",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "окно блокирующее: нет «Закрыть» и «Решу позже»",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "у повара окна нет, работа не блокируется («Сегодня»)",
+      "ok": true,
+      "details": "http://localhost:3171/mini/today"
+    },
+    {
+      "name": "повару — тонкая плашка «Руководитель выбирает тариф», без окна",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "у повара на сайте окна нет",
+      "ok": true,
+      "details": "http://localhost:3171/mini/today"
+    },
+    {
+      "name": "«Оплатить» ведёт на оплату (/settings/subscription → /order?plan=monthly)",
+      "ok": true,
+      "details": "/order?plan=monthly"
+    },
+    {
+      "name": "на странице тарифа окна нет — там карточка",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "POST /api/staff → 402 «Бесплатный тариф — 1 сотрудник»",
+      "ok": true,
+      "details": {
+        "status": 402,
+        "data": {
+          "error": "Бесплатный тариф — 1 сотрудник. Оплатите подписку, чтобы добавить сотрудников или вернуть их из архива.",
+          "code": "billing_free_limit",
+          "payUrl": "/settings/subscription"
+        }
+      }
+    },
+    {
+      "name": "импорт списком: строка упёрлась в лимит",
+      "ok": true,
+      "details": {
+        "ok": true,
+        "created": 0,
+        "skipped": 0,
+        "autoMatched": 0,
+        "errors": [
+          {
+            "line": 1,
+            "message": "«Иван Иванов»: Бесплатный тариф — 1 сотрудник. Оплатите подписку, чтобы добавить сотрудников или вернуть их из архива.",
+            "raw": {
+              "fullName": "Иван Иванов",
+              "positionName": "Повар"
+            }
+          }
+        ],
+        "createdUsers": [],
+        "planUpgraded": false,
+        "billingLimit": {
+          "code": "billing_free_limit",
+          "error": "Бесплатный тариф — 1 сотрудник. Оплатите подписку, чтобы добавить сотрудников или вернуть их из архива.",
+          "payUrl": "/settings/subscription",
+          "blocked": 1
+        }
+      }
+    },
+    {
+      "name": "приглашение по почте → 402",
+      "ok": true,
+      "details": 402
+    },
+    {
+      "name": "приглашение в Telegram → 402",
+      "ok": true,
+      "details": 402
+    },
+    {
+      "name": "самозапись по QR → 402, текст «попросите руководителя»",
+      "ok": true,
+      "details": {
+        "jt": 200,
+        "join": 402
+      }
+    },
+    {
+      "name": "сторонняя комиссия в тариф не входит — добавляется",
+      "ok": true,
+      "details": 200
+    },
+    {
+      "name": "включение неактивного (PUT /api/users) → 402",
+      "ok": true,
+      "details": 402
+    },
+    {
+      "name": "выдача пароля неактивному → 402",
+      "ok": true,
+      "details": 402
+    },
+    {
+      "name": "принятие приглашения → 402, без активации",
+      "ok": true,
+      "details": 402
+    },
+    {
+      "name": "заготовка осталась неактивной",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "UI: ошибка «Бесплатный тариф — 1 сотрудник. Оплатите подписку…» с кнопкой «Оплатить»",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "оплаченной подписке окна нет",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "оплаченной подписке лимит не мешает",
+      "ok": true,
+      "details": 200
+    },
+    {
+      "name": "по умолчанию остаётся сам руководитель",
+      "ok": true,
+      "details": "true"
+    },
+    {
+      "name": "подтверждение: кто уйдёт в архив",
+      "ok": true,
+      "details": "В архив перейдут: 3 сотрудника — Пётр Повар, Мария Кассир, Олег Мойщик. Они не смогут входить в кабинет и приложение, их записи в журналах сохранятся."
+    },
+    {
+      "name": "после выбора окно исчезло",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "в архиве остальные, владелец активен",
+      "ok": true,
+      "details": [
+        {
+          "id": "cmulokac60001lg9m95f567nc",
+          "name": "Анна Смирнова",
+          "isActive": true,
+          "archived": false
+        },
+        {
+          "id": "uA1mulok2iw",
+          "name": "Пётр Повар",
+          "isActive": false,
+          "archived": true
+        },
+        {
+          "id": "uA2mulok2iw",
+          "name": "Мария Кассир",
+          "isActive": false,
+          "archived": true
+        },
+        {
+          "id": "uA3mulok2iw",
+          "name": "Олег Мойщик",
+          "isActive": false,
+          "archived": true
+        }
+      ]
+    },
+    {
+      "name": "тариф free на аккаунте и организации",
+      "ok": true,
+      "details": {
+        "acc": "free",
+        "org": "free"
+      }
+    },
+    {
+      "name": "запись в журнале действий",
+      "ok": true,
+      "details": [
+        "billing.transition.manual_free"
+      ]
+    },
+    {
+      "name": "открытая сессия архивного повара завершена",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "архивный повар уходит на вход",
+      "ok": true,
+      "details": "http://localhost:3171/mini"
+    },
+    {
+      "name": "повар из архива не входит",
+      "ok": true,
+      "details": {
+        "status": 401,
+        "location": null,
+        "session": false
+      }
+    },
+    {
+      "name": "вернуть из архива на бесплатном нельзя (понятная ошибка)",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "задача: автопереход D и тихий бесплатный E",
+      "ok": true,
+      "details": {
+        "autoFree": 1,
+        "silentFree": 1,
+        "reminded": 0,
+        "failed": 0
+      }
+    },
+    {
+      "name": "грейс истёк: остался владелец, остальные в архиве",
+      "ok": true,
+      "details": 4
+    },
+    {
+      "name": "тарифы после задачи: D free, E free",
+      "ok": true,
+      "details": {
+        "d": {
+          "plan": "free"
+        },
+        "e": {
+          "plan": "free"
+        }
+      }
+    },
+    {
+      "name": "аудит автоперехода и тихого перехода",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "оплаченная C не тронута",
+      "ok": true,
+      "details": {
+        "active": 5
+      }
+    },
+    {
+      "name": "повторный запуск ничего не меняет",
+      "ok": true,
+      "details": {
+        "autoFree": 0,
+        "silentFree": 0
+      }
+    },
+    {
+      "name": "ROOT: счётчики по состояниям",
+      "ok": true,
+      "details": {
+        "paid": 1,
+        "free": 4,
+        "waiting": 0,
+        "auto": 1
+      }
+    },
+    {
+      "name": "оплата продлевает и аккаунт: paid до +30 дней",
+      "ok": true,
+      "details": {
+        "plan": "paid",
+        "end": "2026-10-28T17:22:59.601Z"
+      }
+    },
+    {
+      "name": "после оплаты сотрудник возвращается из архива",
+      "ok": true,
+      "details": {
+        "isActive": true,
+        "archivedAt": null
+      }
+    },
+    {
+      "name": "после оплаты окна нет",
+      "ok": true,
+      "details": null
+    }
+  ],
+  "pageErrors": [],
+  "startedAt": "2026-09-28T20:09:19.971Z",
+  "telegramAfterManual": [],
+  "cronDryRun": {
+    "ok": true,
+    "dryRun": true,
+    "enforced": true,
+    "now": "2026-09-28T20:22:25.037Z",
+    "scanned": 5,
+    "silentFree": 1,
+    "reminded": 0,
+    "autoFree": 1,
+    "failed": 0,
+    "results": [
+      {
+        "unit": "cmulokpi3000hlg9musuzdqbe",
+        "organizationId": "cmulokp0u000flg9mkbgpasz9",
+        "action": "auto_free",
+        "activeUsers": 4,
+        "outcome": "planned"
+      },
+      {
+        "unit": "cmulokt1v000mlg9m89ekj1ud",
+        "organizationId": "cmulokstm000klg9mf7z9ovlu",
+        "action": "silent_free",
+        "activeUsers": 1,
+        "outcome": "planned"
+      }
+    ]
+  },
+  "cron1": {
+    "ok": true,
+    "dryRun": false,
+    "enforced": true,
+    "now": "2026-09-28T20:22:26.718Z",
+    "scanned": 5,
+    "silentFree": 1,
+    "reminded": 0,
+    "autoFree": 1,
+    "failed": 0,
+    "results": [
+      {
+        "unit": "cmulokpi3000hlg9musuzdqbe",
+        "organizationId": "cmulokp0u000flg9mkbgpasz9",
+        "action": "auto_free",
+        "activeUsers": 4,
+        "outcome": "done: archived 3"
+      },
+      {
+        "unit": "cmulokt1v000mlg9m89ekj1ud",
+        "organizationId": "cmulokstm000klg9mf7z9ovlu",
+        "action": "silent_free",
+        "activeUsers": 1,
+        "outcome": "done"
+      }
+    ]
+  },
+  "cron2": {
+    "ok": true,
+    "dryRun": false,
+    "enforced": true,
+    "now": "2026-09-28T20:22:38.089Z",
+    "scanned": 5,
+    "silentFree": 0,
+    "reminded": 0,
+    "autoFree": 0,
+    "failed": 0,
+    "results": []
+  },
+  "payment": [
+    "  subscriptionEnd: '2026-10-28T20:22:59.601Z'",
+    "}",
+    "{\"orderId\":3,\"organizationId\":\"cmulok9v60000lg9mcohhl45x\",\"subscriptionEnd\":\"2026-10-28T20:22:59.601Z\"}"
+  ],
+  "finishedAt": "2026-09-28T20:23:29.033Z"
+}

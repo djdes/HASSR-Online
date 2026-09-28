@@ -1,0 +1,55 @@
+{
+  "checks": [
+    {
+      "name": "ROOT: период кончился, грейс идёт",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "в грейсе — предупреждение, без архивации",
+      "ok": true,
+      "details": {
+        "unit": "cmulp4br1001olg9m12bxtaqo",
+        "organizationId": "cmulp4bne001mlg9mmtdje788",
+        "action": "await_decision",
+        "activeUsers": 3,
+        "outcome": "reminder sent"
+      }
+    },
+    {
+      "name": "повторный запуск: предупреждение не дублируется",
+      "ok": true,
+      "details": {
+        "unit": "cmulp4br1001olg9m12bxtaqo",
+        "organizationId": "cmulp4bne001mlg9mmtdje788",
+        "action": "await_decision",
+        "activeUsers": 3,
+        "outcome": "reminder already sent"
+      }
+    },
+    {
+      "name": "в журнале действий одно напоминание",
+      "ok": true,
+      "details": {
+        "n": 1
+      }
+    },
+    {
+      "name": "Telegram владельцу: попытка записана в TelegramLog",
+      "ok": true,
+      "details": [
+        {
+          "kind": "billing.reminder",
+          "status": "failed"
+        }
+      ]
+    },
+    {
+      "name": "сотрудники в грейсе остаются в работе",
+      "ok": true,
+      "details": {
+        "n": 3
+      }
+    }
+  ]
+}

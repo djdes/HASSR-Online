@@ -1,0 +1,60 @@
+{
+  "task": "billing-cutover-2026-09",
+  "branch": "feat/billing-2026-09-28",
+  "base": "bc243840",
+  "acceptance": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS"
+  },
+  "checks": {
+    "typecheck": "PASS",
+    "unit_tests": {
+      "pass": 2781,
+      "fail": 0,
+      "baseline_pass": 2745
+    },
+    "e2e": {
+      "pass": 50,
+      "total": 50,
+      "page_errors": 0
+    },
+    "e2e_extra_reminder": {
+      "pass": 6,
+      "total": 6
+    },
+    "eslint": {
+      "errors": 0
+    }
+  },
+  "schema_changes": [],
+  "settings": {
+    "PlatformSetting.billing.free-period": {
+      "startsAt": "2026-10-01T00:00:00+03:00",
+      "endsAt": "2026-10-11T00:00:00+03:00",
+      "graceDays": 7,
+      "transitionEnabled": true
+    }
+  },
+  "cron": "/api/cron/billing-transition (daily, CRON_SECRET, ?dryRun=1)",
+  "screenshots": [
+    "01-announcement-owner-1280.png",
+    "02-announcement-owner-390.png",
+    "03-announcement-cook-mini-390.png",
+    "05-in-period-subscription-1280.png",
+    "06-modal-owner-1280.png",
+    "07-modal-owner-390.png",
+    "08b-cook-profile-notice-390.png",
+    "09-pay-subscription-page-1280.png",
+    "10-free-limit-error-1280.png",
+    "11-choose-who-stays-390.png",
+    "12-confirm-free-390.png",
+    "14-restore-blocked-1280.png",
+    "15-root-tariffs-1280.png",
+    "16-restored-after-payment-1280.png"
+  ],
+  "commits": [
+    "ac04e5dd"
+  ]
+}
