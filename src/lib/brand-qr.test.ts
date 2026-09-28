@@ -240,7 +240,7 @@ test("jsPDF: плитка в ячейке шапки — окно на всю ш
   assert.ok(ops.gray.every((v) => v === "0" || v === "1"), `серые: ${ops.gray.join(", ")}`);
 });
 
-test("jsPDF: бланк без настоящего жирного — слово всё равно жирным (свой DejaVu Sans Bold)", () => {
+test("jsPDF: слово — всегда свой DejaVu Sans Bold: и у бланка без настоящего жирного, и у журнала с засечками", () => {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
   // Как бумажный бланк: «bold» — тот же файл, что обычный.
   const fontName = "PaperLike";
@@ -256,7 +256,9 @@ test("jsPDF: бланк без настоящего жирного — слов�
   };
   drawBrandQrTilePdf(doc, brandQrLayout(SHORT), 10, 10, 20, { fontName });
   assert.deepEqual(fonts, ["wesetup-qr-bold.ttf"]);
-  // У шрифта документа с настоящим жирным — он и берётся (без второго файла).
+  // У печатного журнала свой жирный настоящий (Liberation Serif Bold), но
+  // слово в полосе — тем же DejaVu Sans Bold, что в PNG: плитка одинакова во
+  // всех выходах, кегль подобран по его ширине.
   const journal = new jsPDF();
   const journalFont = registerJournalUnicodeFont(journal);
   const used: string[] = [];
@@ -266,8 +268,11 @@ test("jsPDF: бланк без настоящего жирного — слов�
     used.push(journal.getFont().fontName);
     return jo(...args);
   };
-  drawBrandQrTilePdf(journal, brandQrLayout(SHORT), 10, 10, 20, { fontName: journalFont });
-  assert.deepEqual(used, [journalFont]);
+  const layout = brandQrLayout(SHORT);
+  drawBrandQrTilePdf(journal, layout, 10, 10, 20, { fontName: journalFont });
+  const cellHeight = (brandQrCellHeight(layout) * 20) / layout.window.w;
+  drawBrandQrCellPdf(journal, layout, { x0: 50, y0: 10, x1: 70, y1: 10 + cellHeight }, { fontName: journalFont });
+  assert.deepEqual(used, ["WeSetupQrBold", "WeSetupQrBold"]);
 });
 
 test("SVG: знак фигурами, только чёрный и белый, одно слово, без id и url(#…)", async () => {

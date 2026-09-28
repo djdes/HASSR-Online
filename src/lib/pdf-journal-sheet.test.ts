@@ -170,7 +170,8 @@ test("верх первой строки на верхнем поле: базо�
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
   doc.setFontSize(26);
   assert.ok(Math.abs(journalSheetTopBaseline(doc) - (M + journalCapHeightMm(doc))) < 1e-9);
-  assert.ok(journalCapHeightMm(doc) > 6.5 && journalCapHeightMm(doc) < 7, `26 pt → ${journalCapHeightMm(doc)} мм`);
+  // Прописные Liberation Serif — 0,655 кегля: 26 pt → 6,0 мм.
+  assert.ok(journalCapHeightMm(doc) > 5.9 && journalCapHeightMm(doc) < 6.1, `26 pt → ${journalCapHeightMm(doc)} мм`);
 });
 
 test("«СТР. X ИЗ N» и подвал партнёра — базовой линией на нижнем поле, номер у правого поля, подвал от левого", () => {

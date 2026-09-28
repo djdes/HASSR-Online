@@ -20,10 +20,13 @@ import type { jsPDF } from "jspdf";
  */
 export const JOURNAL_SHEET_MARGIN_MM = 10;
 
-/** Высота прописной буквы DejaVu Sans в долях кегля. */
-export const JOURNAL_CAP_HEIGHT_EM = 0.73;
-/** Выносной элемент строчных («р», «у», «д») DejaVu Sans ниже базовой линии, доли кегля. */
-export const JOURNAL_DESCENT_EM = 0.24;
+/**
+ * Высота прописной буквы шрифта журнала в долях кегля: Liberation Serif —
+ * 1341/2048 (у DejaVu Sans, шрифта журналов до 2026-09-28, было 0,73).
+ */
+export const JOURNAL_CAP_HEIGHT_EM = 0.655;
+/** Выносной элемент строчных («р», «у», «д») ниже базовой линии, доли кегля: Liberation Serif — 442/2048 (DejaVu Sans — 0,24). */
+export const JOURNAL_DESCENT_EM = 0.216;
 
 /**
  * Зазор от крупного заголовка бланка (низ выносных строчных) до шапки ХАССП

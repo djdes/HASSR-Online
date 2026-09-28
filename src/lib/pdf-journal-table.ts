@@ -1,6 +1,7 @@
 import type { jsPDF } from "jspdf";
 import autoTableBase, { type CellHookData, type MarginPaddingInput, type UserOptions } from "jspdf-autotable";
 
+import { journalPrintableText } from "@/lib/pdf-journal-font";
 import { JOURNAL_FOOTER_TEXT_BAND_MM, JOURNAL_SHEET_MARGIN_MM } from "@/lib/pdf-journal-sheet";
 
 /**
@@ -29,7 +30,9 @@ import { JOURNAL_FOOTER_TEXT_BAND_MM, JOURNAL_SHEET_MARGIN_MM } from "@/lib/pdf-
  *     вылезал за рамку;
  *   • короткие значения (числа, даты, время, «+», «—», отметки до
  *     3 символов) — по центру столбца, если ВЕСЬ столбец из них состоит.
- *     Длинный текст остаётся слева, как задал бланк.
+ *     Длинный текст остаётся слева, как задал бланк;
+ *   • знаки, которых нет в шрифте журнала (✓, ✗, ₽…), заменяются близкими
+ *     (`journalPrintableText`) — иначе ячейка печаталась бы с пустым местом.
  *
  * Хуки бланка (`didParseCell`, `willDrawCell`) вызываются первыми —
  * правила применяются поверх них.
@@ -154,6 +157,7 @@ export function journalAutoTable(doc: jsPDF, options: UserOptions): void {
     footStyles: { ...options.footStyles, lineWidth: JOURNAL_LINE_WIDTH, valign: "middle" },
     didParseCell: (data) => {
       userDidParseCell?.(data);
+      if (Array.isArray(data.cell.text)) data.cell.text = data.cell.text.map(journalPrintableText);
       const cellStyles = data.cell.styles;
       cellStyles.valign = "middle";
       // Рамка: число → единая толщина. Объект (свои рамки у ячейки)

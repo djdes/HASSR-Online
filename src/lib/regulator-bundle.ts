@@ -7,29 +7,19 @@
  *  - `buildCapaSummaryPdf` — список CAPA-задач за период (open + closed),
  *    с приоритетом, ответственным, ссылкой на источник и статусом.
  *
- * Оба PDF построены через jspdf + autoTable (уже в depencies). Русский
- * шрифт берётся с диска тем же способом, что и `document-pdf.ts` —
- * cross-platform candidates, fallback на helvetica.
+ * Оба PDF построены через jspdf + autoTable (уже в depencies). Шрифт — тот
+ * же, что у журналов в этом пакете (`pdf-journal-font.ts`: Liberation Serif
+ * из репозитория, с настоящим жирным): раньше обложка брала первый попавшийся
+ * системный шрифт (Arial на Windows, DejaVu на сервере), и «жирный» был тем
+ * же обычным файлом.
  */
-import fs from "fs";
 import { jsPDF } from "jspdf";
 import autoTable, { type RowInput } from "jspdf-autotable";
 
-const FONT_CANDIDATES = [
-  "C:\\Windows\\Fonts\\arial.ttf",
-  "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-  "/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf",
-  "/usr/share/fonts/truetype/msttcorefonts/Arial.ttf",
-];
+import { registerJournalUnicodeFont } from "@/lib/pdf-journal-font";
 
 function loadUnicodeFont(doc: jsPDF): string {
-  const fontPath = FONT_CANDIDATES.find((p) => fs.existsSync(p));
-  if (!fontPath) return "helvetica";
-  const base64 = fs.readFileSync(fontPath).toString("base64");
-  doc.addFileToVFS("regulator-unicode.ttf", base64);
-  doc.addFont("regulator-unicode.ttf", "RegulatorUnicode", "normal");
-  doc.addFont("regulator-unicode.ttf", "RegulatorUnicode", "bold");
-  return "RegulatorUnicode";
+  return registerJournalUnicodeFont(doc);
 }
 
 export type RegulatorCoverInput = {

@@ -50,7 +50,7 @@ export function registerPageLabelSlot(
   pageLabelSlots.push({ ...slot, page: currentPageNumber(doc) });
 }
 
-/** Высота прописной буквы DejaVu Sans в долях кегля. */
+/** Высота прописной буквы шрифта журнала в долях кегля. */
 const CAP_HEIGHT_EM = JOURNAL_CAP_HEIGHT_EM;
 /** Межстрочный интервал текста в ячейках бланка, в долях кегля. */
 const LINE_HEIGHT_EM = 1.3;

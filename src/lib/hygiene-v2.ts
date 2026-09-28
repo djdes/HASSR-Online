@@ -251,10 +251,10 @@ export function buildHygieneV2Rows(input: {
 }
 
 /**
- * Графа подписи в PDF — словами. Основной шрифт печати (DejaVu Sans из
- * `src/lib/pdf-fonts`) знаки «✓»/«✗» знает, но запасные шрифты
- * `document-pdf.ts` (Arial, Liberation) — нет, и отметка пропала бы.
- * «да»/«нет» читаются в любом шрифте и совпадают с прежним бланком.
+ * Графа подписи в PDF — словами. Шрифт печати (Liberation Serif из
+ * `src/lib/pdf-fonts`, как и запасные) знаков «✓»/«✗» не знает — отметка
+ * пропала бы. «да»/«нет» читаются в любом шрифте и совпадают с прежним
+ * бланком.
  */
 export function hygieneV2PdfMark(mark: string): string {
   if (mark === "✓") return "да";

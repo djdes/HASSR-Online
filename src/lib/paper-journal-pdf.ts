@@ -1,10 +1,9 @@
-import fs from "node:fs";
-import path from "node:path";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { PaperJournal } from "@/lib/sphere-journal-rules";
 import { stampPartnerPdfFooter, type PdfFooterBrand } from "@/lib/pdf-page-labels";
 import { formatJournalPeriodLabel } from "@/lib/journal-document-title";
+import { journalPrintableText, registerJournalUnicodeFont } from "@/lib/pdf-journal-font";
 import {
   prepareJournalQr,
   stampJournalQr,
@@ -24,25 +23,14 @@ import {
  * правда (`journal.paperOnly`). Пустые строки печатаем всегда —
  * заполнять их будут ручкой.
  *
- * Шрифт — тот же DejaVu, что и у остальных PDF: helvetica в jsPDF не
- * знает кириллицы и печатает кракозябры (см. document-pdf.ts).
+ * Шрифт — тот же, что у электронных журналов (`pdf-journal-font.ts`:
+ * Liberation Serif с настоящим жирным): helvetica в jsPDF не знает
+ * кириллицы и печатает кракозябры. Раньше здесь был свой DejaVu Sans, и
+ * «жирный» был тем же обычным файлом.
  */
 
-const FONT_CANDIDATES = [
-  path.join(process.cwd(), "src", "lib", "pdf-fonts", "DejaVuSans.ttf"),
-  "C:\\Windows\\Fonts\\arial.ttf",
-  "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-  "/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf",
-];
-
 function loadUnicodeFont(doc: jsPDF): string {
-  const fontPath = FONT_CANDIDATES.find((candidate) => fs.existsSync(candidate));
-  if (!fontPath) return "helvetica";
-  const base64 = fs.readFileSync(fontPath).toString("base64");
-  doc.addFileToVFS("paper-unicode.ttf", base64);
-  doc.addFont("paper-unicode.ttf", "PaperUnicode", "normal");
-  doc.addFont("paper-unicode.ttf", "PaperUnicode", "bold");
-  return "PaperUnicode";
+  return registerJournalUnicodeFont(doc);
 }
 
 export type PaperJournalOrg = {
@@ -152,7 +140,7 @@ export function renderPaperJournalPdfDetailed(params: PaperJournalPdfParams): {
   const head = [["№", ...journal.columns]];
   const filled = rows.map((row, index) => [
     String(index + 1),
-    ...journal.columns.map((_, column) => row[column] ?? ""),
+    ...journal.columns.map((_, column) => journalPrintableText(row[column] ?? "")),
   ]);
   const blanks = Array.from({ length: blankRows }, (_, index) => [
     String(filled.length + index + 1),

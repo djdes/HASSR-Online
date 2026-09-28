@@ -2,7 +2,7 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { resolveOrgJournalName } from "@/lib/org-journal-name";
 import { buildOrgSnapshot } from "@/lib/orders/org-snapshot";
-import { registerUnicodeFont } from "@/lib/closing-documents/pdf-font";
+import { registerJournalUnicodeFont } from "@/lib/pdf-journal-font";
 import {
   inspectorClientIp,
   inspectorLimitKey,
@@ -24,8 +24,9 @@ export const dynamic = "force-dynamic";
  * «СанПиН / ХАССП / прочие» с числом документов и записей, электронная
  * отметка с контрольным кодом.
  *
- * Шрифт — DejaVu Sans через `registerUnicodeFont`: штатная Helvetica
- * jsPDF кириллицы не знает, раньше русский текст печатался кракозябрами.
+ * Шрифт — тот же, что у печатных журналов (`registerJournalUnicodeFont`,
+ * Liberation Serif): штатная Helvetica jsPDF кириллицы не знает, раньше
+ * русский текст печатался кракозябрами.
  */
 export async function GET(
   request: Request,
@@ -69,7 +70,7 @@ export async function GET(
   ]);
 
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-  const font = registerUnicodeFont(doc);
+  const font = registerJournalUnicodeFont(doc);
   doc.setFont(font, "normal");
   const pageW = doc.internal.pageSize.getWidth();
 

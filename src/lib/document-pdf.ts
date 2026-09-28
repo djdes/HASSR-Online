@@ -353,9 +353,9 @@ import {
 } from "@/lib/med-book-document";
 
 /**
- * Шрифт для PDF — «JournalUnicode» из репозитория (DejaVu Sans + настоящий
- * жирный, см. `pdf-journal-font.ts`). Без файла jsPDF откатывается на
- * helvetica, а она не знает кириллицы.
+ * Шрифт для PDF — «JournalUnicode» из репозитория (Liberation Serif —
+ * метрически Times New Roman — с настоящим жирным, см. `pdf-journal-font.ts`).
+ * Без файла jsPDF откатывается на helvetica, а она не знает кириллицы.
  */
 function loadUnicodeFont(doc: jsPDF) {
   return registerJournalUnicodeFont(doc);
@@ -2240,7 +2240,7 @@ function drawClimatePdf(doc: jsPDF, params: {
     theme: "grid",
     styles: {
       font: "JournalUnicode",
-      fontSize: 6.5,
+      fontSize: 7, // было 6,5: у шрифта с засечками строчные ниже (2026-09-28)
       cellPadding: 0.8,
       lineColor: [0, 0, 0],
       textColor: [0, 0, 0],
@@ -3284,7 +3284,7 @@ function drawStaffTrainingPdf(doc: jsPDF, params: {
       textColor: [0, 0, 0],
       fontStyle: "bold",
       // Мелкий кегль шапки — полные формулировки граф ломаются по словам.
-      fontSize: 6.4,
+      fontSize: 7, // было 6,4: у шрифта с засечками строчные ниже (2026-09-28)
       halign: "center",
       valign: "middle",
     },
@@ -3498,7 +3498,7 @@ function drawIncomingControlPdf(doc: jsPDF, params: {
     theme: "grid",
     styles: {
       font: "JournalUnicode",
-      fontSize: 6,
+      fontSize: 7, // было 6: у шрифта с засечками строчные ниже (2026-09-28)
       cellPadding: 1,
       lineColor: [0, 0, 0],
       lineWidth: 0.2,
@@ -3510,7 +3510,7 @@ function drawIncomingControlPdf(doc: jsPDF, params: {
       textColor: [0, 0, 0],
       lineWidth: 0.2,
       fontStyle: "bold",
-      fontSize: 5.5,
+      fontSize: 6.5, // было 5,5: у шрифта с засечками строчные ниже (2026-09-28)
     },
     bodyStyles: { lineWidth: 0.2 },
     columnStyles: {
@@ -3608,7 +3608,7 @@ function drawAcceptancePdf(doc: jsPDF, params: {
     theme: "grid",
     styles: {
       font: "JournalUnicode",
-      fontSize: 6.5,
+      fontSize: 7, // было 6,5: у шрифта с засечками строчные ниже (2026-09-28)
       cellPadding: 1,
       lineColor: [0, 0, 0],
       lineWidth: 0.2,
@@ -3620,7 +3620,7 @@ function drawAcceptancePdf(doc: jsPDF, params: {
       textColor: [0, 0, 0],
       lineWidth: 0.2,
       fontStyle: "bold",
-      fontSize: 6,
+      fontSize: 6.5, // было 6: у шрифта с засечками строчные ниже (2026-09-28)
     },
     bodyStyles: {
       lineWidth: 0.2,
@@ -3693,7 +3693,7 @@ function drawPpeIssuancePdf(doc: jsPDF, params: {
     theme: "grid",
     styles: {
       font: "JournalUnicode",
-      fontSize: 6.5,
+      fontSize: 7, // было 6,5: у шрифта с засечками строчные ниже (2026-09-28)
       cellPadding: 1,
       lineColor: [0, 0, 0],
       lineWidth: 0.2,
@@ -3705,7 +3705,7 @@ function drawPpeIssuancePdf(doc: jsPDF, params: {
       textColor: [0, 0, 0],
       lineWidth: 0.2,
       fontStyle: "bold",
-      fontSize: 6,
+      fontSize: 6.5, // было 6: у шрифта с засечками строчные ниже (2026-09-28)
     },
     bodyStyles: {
       lineWidth: 0.2,
@@ -3929,7 +3929,8 @@ function drawPerishableRejectionPdf(doc: jsPDF, params: {
   );
   const perishableHeadPadding = 1;
   const perishableHeads = printColumns.map((column) => softenSlashBreaks(column.head));
-  // Кегль шапки — самый крупный (до 6,6 pt), при котором каждое слово шапки
+  // Кегль шапки — самый крупный (до 7 pt; не мельче 6,2 — у шрифта с засечками
+  // строчные ниже), при котором каждое слово шапки
   // помещается в свою графу: слова вроде «продовольственного» не рвутся
   // («ветеринарно-санитарной» переносится после дефиса, см. ниже).
   const perishableHeadFontSize = fitHeadFontSize(
@@ -3938,7 +3939,7 @@ function drawPerishableRejectionPdf(doc: jsPDF, params: {
       text,
       width: (perishableWidths[index]?.cellWidth ?? 0) - perishableHeadPadding * 2,
     })),
-    { max: 6.6, min: 5.4 }
+    { max: 7, min: 6.2 }
   );
 
   autoTable(doc, {

@@ -337,7 +337,15 @@ async function blankFooter(footer: DocxBlankFooter): Promise<Footer> {
  * ч/б принтеры. Размеры и начертания — как у библиотеки.
  */
 const BLACK = "000000";
+/**
+ * Шрифт документа — Times New Roman, как у печатных журналов (PDF —
+ * Liberation Serif, метрически тот же Times). Word шрифты не встраивает:
+ * берёт установленный на компьютере (Times New Roman есть в Windows и
+ * macOS), файл шрифта мы не распространяем.
+ */
+export const DOCX_FONT = "Times New Roman";
 const BLACK_DEFAULT_STYLES = {
+  document: { run: { font: DOCX_FONT } },
   heading1: { run: { color: BLACK, size: 32 } },
   heading2: { run: { color: BLACK, size: 26 } },
   heading3: { run: { color: BLACK, size: 24 } },

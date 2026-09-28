@@ -481,25 +481,15 @@ function pdfModules(doc: jsPDF, layout: BrandQrLayout, ox: number, oy: number, u
 let boldFontBase64: string | null | undefined;
 
 /**
- * Жирный шрифт слова в PDF: жирное начертание шрифта документа, если оно
- * настоящее (у «JournalUnicode» — DejaVu Sans Bold), иначе — свой DejaVu Sans
- * Bold из репозитория (у бумажного бланка «bold» — тот же обычный файл).
- * jsPDF встраивает только использованные буквы — это несколько килобайт.
+ * Жирный шрифт слова в PDF — всегда свой DejaVu Sans Bold из репозитория, как
+ * у PNG: плитка одинакова во всех выходах, какой бы шрифт ни был у документа
+ * (у печатных журналов с 2026-09-28 — Liberation Serif, у слова в полосе он
+ * не нужен: кегль подобран по ширине DejaVu Sans Bold, `TITLE_EM`). jsPDF
+ * встраивает только использованные буквы — это несколько килобайт.
+ * `fontName` — запасной, если файла нет.
  */
 function pdfBoldFont(doc: jsPDF, fontName: string): string {
   const fonts = doc.getFontList();
-  const styles = Object.prototype.hasOwnProperty.call(fonts, fontName) ? fonts[fontName] : [];
-  // Незнакомое начертание jsPDF молча подменяет на Times (без кириллицы) —
-  // поэтому сначала список шрифтов документа.
-  if (styles.includes("normal") && styles.includes("bold")) {
-    const current = doc.getFont();
-    doc.setFont(fontName, "normal");
-    const normal = doc.getFont().postScriptName;
-    doc.setFont(fontName, "bold");
-    const bold = doc.getFont().postScriptName;
-    doc.setFont(current.fontName, current.fontStyle);
-    if (bold !== normal) return fontName;
-  }
   if (Object.prototype.hasOwnProperty.call(fonts, FONT_BOLD)) return FONT_BOLD;
   if (boldFontBase64 === undefined) {
     boldFontBase64 = fs.existsSync(BOLD_FONT_FILE) ? fs.readFileSync(BOLD_FONT_FILE).toString("base64") : null;

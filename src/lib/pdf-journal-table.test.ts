@@ -106,10 +106,11 @@ test("заголовок жирным не меняет разметку и не
   journalAutoTable(doc, {
     theme: "grid",
     styles: { font, fontSize: 9 },
-    // Обычным «Наименование» влезает в 30 мм, жирным — нет.
+    // Обычным «Наименование» (Liberation Serif, 9 pt — 19,8 мм) влезает в
+    // графу 24,5 мм (без полей — 21 мм), жирным (21,3 мм) — нет.
     head: [["Наименование", "Примечание"]],
     body: [["", ""]],
-    columnStyles: { 0: { cellWidth: 30 }, 1: { cellWidth: "auto" } },
+    columnStyles: { 0: { cellWidth: 24.5 }, 1: { cellWidth: "auto" } },
     margin: { left: 10, right: 10 },
     didDrawCell: (data) => {
       if (data.section !== "head") return;
