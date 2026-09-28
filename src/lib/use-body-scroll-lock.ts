@@ -50,6 +50,18 @@ export function lockBodyScroll(): void {
   body.style.right = "0";
   body.style.overflow = "hidden";
   if (scrollbar > 0) body.style.paddingRight = `${scrollbar}px`;
+  // Липкая шапка мини-приложения при прибитом body перестаёт липнуть и
+  // уезжает за верх экрана вместе со страницей. Сдвиг отдаём CSS
+  // (globals.css), он возвращает шапку на место, пока открыто окно.
+  const html = document.documentElement;
+  html.style.setProperty("--body-lock-y", `${scrollY}px`);
+  html.setAttribute("data-body-locked", "");
+}
+
+function clearHeaderOffset(): void {
+  const html = document.documentElement;
+  html.removeAttribute("data-body-locked");
+  html.style.removeProperty("--body-lock-y");
 }
 
 export function unlockBodyScroll(): void {
@@ -68,6 +80,7 @@ export function unlockBodyScroll(): void {
     body.style.right = "";
     body.style.overflow = "";
     body.style.paddingRight = "";
+    clearHeaderOffset();
     return;
   }
   body.style.position = restore.position;
@@ -76,6 +89,7 @@ export function unlockBodyScroll(): void {
   body.style.right = restore.right;
   body.style.overflow = restore.overflow;
   body.style.paddingRight = restore.paddingRight;
+  clearHeaderOffset();
   // Возвращаемся на прежнее место мгновенно, даже если у html
   // scroll-behavior: smooth — иначе страница «уезжает» анимацией.
   const html = document.documentElement;
