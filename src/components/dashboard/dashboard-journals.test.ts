@@ -131,8 +131,10 @@ test("строка журнала: превью бланка, отметка «�
     }),
   );
   assert.match(open, /data-journal-status="open"/);
-  // Не заполнено — пустой кружок, без красного.
-  assert.match(open, /data-journal-mark="open"[^>]*border-2/);
+  // Не заполнено — оранжевый круг с часами (не пустой кружок: тот был похож на чекбокс), без красного.
+  assert.match(open, /data-journal-mark="open"[^>]*bg-\[#d97706\]/);
+  assert.match(open, /lucide-clock/);
+  assert.doesNotMatch(open, /data-journal-mark="open"[^>]*border-2/);
   assert.doesNotMatch(open, /lucide-check|lucide-x|#d2453d|#a13a32/);
   assert.doesNotMatch(open, OLD_ROW_FILLS);
   // Строка — без заливки и рамки.

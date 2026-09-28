@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Check, ChevronRight, FileText, Printer } from "lucide-react";
+import { Check, ChevronRight, Clock3, FileText, Printer } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import {
@@ -70,8 +70,9 @@ export function JournalThumb({
 
 /**
  * Отметка «заполнено сегодня»: зелёный круг с галочкой; не заполнено —
- * пустой кружок, без красного (журнал не нарушен, его просто ещё не
- * заполнили).
+ * оранжевый круг с часами («ждёт заполнения»), без красного: журнал не
+ * нарушен, его просто ещё не заполнили. Пустой кружок был похож на чекбокс,
+ * который надо нажать (владелец, 2026-09-28).
  */
 export function JournalStatusMark({
   filled,
@@ -86,15 +87,11 @@ export function JournalStatusMark({
       data-journal-mark={filled ? "filled" : "open"}
       className={cn(
         "flex size-[22px] shrink-0 items-center justify-center rounded-full",
-        // Пустой кружок — свой серый: `border-[#c7ccea]` в тёмной теме
-        // общим правилом становится бледно-индиговым и пропадает.
-        filled
-          ? "bg-[#16a34a] text-white"
-          : "border-2 border-[#c3c7dc] bg-white dark:border-[#8a8da6]",
+        filled ? "bg-[#16a34a] text-white" : "bg-[#d97706] text-white",
         className,
       )}
     >
-      {filled ? <Check className="size-3.5" strokeWidth={3} /> : null}
+      {filled ? <Check className="size-3.5" strokeWidth={3} /> : <Clock3 className="size-3.5" strokeWidth={2.75} />}
     </span>
   );
 }
