@@ -20,6 +20,8 @@ import { toast } from "sonner";
 
 import { lockBodyScroll, unlockBodyScroll } from "@/lib/use-body-scroll-lock";
 import { signOutAndOpen } from "@/lib/sign-out";
+import { PromoPrice } from "@/components/pricing/promo-price";
+import type { BillingPrice } from "@/lib/billing-period";
 import { employeesLabel } from "@/lib/plan-catalog";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +43,9 @@ export type TransitionGateCopy = {
   graceLine: string | null;
   payTitle: string;
   payHint: string;
+  /** `payHint` по частям: цена (`PromoPrice`, в акцию старая зачёркнута) и условия. */
+  payPrice?: BillingPrice;
+  payTerms?: string;
   freeTitle: string;
   freeHint: string;
 };
@@ -253,7 +258,17 @@ function OverviewBody({
         {payHref ? (
           <div className="rounded-2xl border border-[#c7ccea] bg-[#f5f6ff] p-4">
             <div className="text-[15px] font-semibold text-[#0b1024]">{copy.payTitle}</div>
-            <p className="mt-1 text-[13px] leading-[1.5] text-[#3c4053]">{copy.payHint}</p>
+            <p className="mt-1 text-[13px] leading-[1.5] text-[#3c4053]">
+              {copy.payPrice && copy.payTerms ? (
+                <>
+                  <PromoPrice price={copy.payPrice} size="sm" suffix="/мес" />
+                  {" · "}
+                  {copy.payTerms}
+                </>
+              ) : (
+                copy.payHint
+              )}
+            </p>
             {/* Обычная ссылка, а не клиентский переход: живое обновление
                 дашборда (router.refresh) могло перебить мягкую навигацию, и
                 человек оставался перед окном. К оплате — полной загрузкой. */}

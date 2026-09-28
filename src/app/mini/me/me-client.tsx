@@ -43,6 +43,7 @@ import { MiniThemeTiles } from "../_components/mini-theme-tiles";
 import { signOutOnThisDevice } from "../_lib/signed-out-mark";
 import { signOutAndOpen } from "@/lib/sign-out";
 import { BillingAnnouncement } from "@/components/billing/billing-announcement";
+import type { BillingPrice } from "@/lib/billing-period";
 import { BillingStaffNotice } from "@/components/billing/billing-staff-notice";
 
 /**
@@ -78,6 +79,7 @@ export function MiniMeClient({
   billingAnnouncement?: {
     lead: string;
     tail: string | null;
+    tailParts: { before: string; price: BillingPrice; after: string } | null;
     href: string | null;
     dayKey: string;
   } | null;
@@ -234,6 +236,7 @@ export function MiniMeClient({
         <BillingAnnouncement
           lead={billingAnnouncement.lead}
           tail={billingAnnouncement.tail}
+          tailParts={billingAnnouncement.tailParts}
           href={billingAnnouncement.href}
           dayKey={billingAnnouncement.dayKey}
           variant="mini"

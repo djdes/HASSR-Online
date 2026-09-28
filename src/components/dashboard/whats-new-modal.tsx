@@ -102,6 +102,7 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   "Чат и поддержка": MessageCircle,
   "Тёмная тема": Moon,
   "Бесплатный тариф": Gift,
+  "Тарифы и подписка": Coins,
   "AI-помощник": Sparkles,
   Партнёры: Handshake,
   "Распределение задач": Gauge,

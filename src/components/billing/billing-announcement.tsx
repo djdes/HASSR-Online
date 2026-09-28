@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Gift, X } from "lucide-react";
 
+import { PromoPrice } from "@/components/pricing/promo-price";
+import type { BillingPrice } from "@/lib/billing-period";
 import { cn } from "@/lib/utils";
 
 /**
@@ -15,13 +17,15 @@ import { cn } from "@/lib/utils";
  * Закрывается на день: завтра покажется снова, пока идёт период.
  *
  * Тексты считает сервер (`announcementText`): даты — из настроек ROOT,
- * цена — из тарифа. Организациям с оплаченной подпиской не рендерится.
+ * цена — из тарифа с акцией на день перехода (`tailParts`: старая цена
+ * зачёркнута). Организациям с оплаченной подпиской не рендерится.
  */
 const DISMISS_KEY = "wesetup.billing-announcement.dismissed-day";
 
 export function BillingAnnouncement({
   lead,
   tail,
+  tailParts = null,
   href,
   dayKey,
   onlyOnPaths,
@@ -29,6 +33,8 @@ export function BillingAnnouncement({
 }: {
   lead: string;
   tail: string | null;
+  /** `tail` по частям — цена компонентом `PromoPrice`. */
+  tailParts?: { before: string; price: BillingPrice; after: string } | null;
   /** «Подробнее» — только тем, кто может открыть тариф. */
   href: string | null;
   /** Сегодняшний день по Москве — ключ «скрыть на день». */
@@ -74,7 +80,16 @@ export function BillingAnnouncement({
       <Gift className="mt-0.5 size-4 shrink-0" />
       <div className="min-w-0 flex-1">
         <span className="font-medium text-[#0b1024]">{lead}</span>
-        {tail ? <span> {tail}</span> : null}
+        {tailParts ? (
+          <span>
+            {" "}
+            {tailParts.before}
+            <PromoPrice price={tailParts.price} size="text" tone="inherit" suffix="/мес" />
+            {tailParts.after}
+          </span>
+        ) : tail ? (
+          <span> {tail}</span>
+        ) : null}
         {href ? (
           <>
             {" "}

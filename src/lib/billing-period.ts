@@ -5,6 +5,7 @@ import {
   employeesGenitiveLabel,
   employeesLabel,
 } from "@/lib/plan-catalog";
+import type { PriceWithPromotion } from "@/lib/promo/promotions";
 
 /**
  * Бесплатный период «подписка для всех» и честный переход на оплату
@@ -431,6 +432,21 @@ export function formatPriceRub(value: number): string {
   return `${new Intl.NumberFormat("ru-RU").format(value)} ₽`;
 }
 
+/** Цена подписки для анонса и окна: база, цена с акцией и сама акция. */
+export type BillingPrice = Pick<PriceWithPromotion, "baseRub" | "priceRub" | "promotion">;
+
+function asBillingPrice(price: number | BillingPrice): BillingPrice {
+  return typeof price === "number" ? { baseRub: price, priceRub: price, promotion: null } : price;
+}
+
+/** «1 990 ₽/мес» или «1 592 ₽/мес по акции (без акции 1 990 ₽)» — текстом, без зачёркивания. */
+export function billingPriceText(price: BillingPrice): string {
+  const promo = price.promotion && price.priceRub < price.baseRub;
+  return promo
+    ? `${formatPriceRub(price.priceRub)}/мес по акции (без акции ${formatPriceRub(price.baseRub)})`
+    : `${formatPriceRub(price.priceRub)}/мес`;
+}
+
 /** Подписка «до 10 сотрудников» — как её называем в анонсе и окне. */
 export const SUBSCRIPTION_QUOTED_NAME = `«до ${employeesGenitiveLabel(SUBSCRIPTION_MAX_USERS)}»`;
 
@@ -439,6 +455,11 @@ export type BillingAnnouncement = {
   lead: string;
   /** «С 11 октября — 1 990 ₽/мес или бесплатный тариф на 1 сотрудника.» Нет — если переход выключен. */
   tail: string | null;
+  /**
+   * То же, что `tail`, по частям: окно рисует цену компонентом
+   * `PromoPrice` (в акцию старая цена зачёркнута).
+   */
+  tailParts: { before: string; price: BillingPrice; after: string } | null;
 };
 
 /**
@@ -447,13 +468,14 @@ export type BillingAnnouncement = {
  */
 export function announcementText(
   settings: FreePeriodSettings,
-  priceRub: number
+  priceArg: number | BillingPrice
 ): BillingAnnouncement {
   const lead = `${freePeriodRangeLabel(settings)} подписка ${SUBSCRIPTION_QUOTED_NAME} бесплатна для всех.`;
-  const tail = settings.transitionEnabled
-    ? `С ${formatMskDay(settings.endsAt)} — ${formatPriceRub(priceRub)}/мес или бесплатный тариф на ${employeesGenitiveLabel(FREE_MAX_USERS)}.`
-    : null;
-  return { lead, tail };
+  if (!settings.transitionEnabled) return { lead, tail: null, tailParts: null };
+  const price = asBillingPrice(priceArg);
+  const before = `С ${formatMskDay(settings.endsAt)} — `;
+  const after = ` или бесплатный тариф на ${employeesGenitiveLabel(FREE_MAX_USERS)}.`;
+  return { lead, tail: `${before}${billingPriceText(price)}${after}`, tailParts: { before, price, after } };
 }
 
 /** Показывать ли анонс аккаунту в этом состоянии. */
@@ -468,6 +490,9 @@ export type TransitionCopy = {
   graceLine: string | null;
   payTitle: string;
   payHint: string;
+  /** Цена для окна (`PromoPrice`) и условия после неё — `payHint` по частям. */
+  payPrice: BillingPrice;
+  payTerms: string;
   freeTitle: string;
   freeHint: string;
 };
@@ -481,9 +506,11 @@ export type TransitionCopy = {
 export function transitionCopy(args: {
   state: AccountBillingState;
   settings: FreePeriodSettings;
-  priceRub: number;
+  /** Число — цена без акции; объект — цена с действующей акцией. */
+  priceRub: number | BillingPrice;
 }): TransitionCopy {
-  const { state, settings, priceRub } = args;
+  const { state, settings } = args;
+  const payPrice = asBillingPrice(args.priceRub);
   const who = employeesLabel(state.activeUsers);
   const free = employeesLabel(FREE_MAX_USERS);
   const expired = state.reason === "subscription_expired";
@@ -496,12 +523,15 @@ export function transitionCopy(args: {
       ? "Срок выбора прошёл: скоро в работе останется только владелец аккаунта, остальные перейдут в архив. Вернуть их можно после оплаты."
       : `Выберите до ${formatMskDay(new Date(state.graceEndsAt.getTime() - 1))} включительно. Если ничего не выбрать, в работе останется только владелец аккаунта, остальные перейдут в архив — вернуть их можно после оплаты.`
     : null;
+  const payTerms = `до ${employeesGenitiveLabel(SUBSCRIPTION_MAX_USERS)}, все остаются в работе. Каждый сверх ${SUBSCRIPTION_MAX_USERS} — +${EXTRA_USER_PRICE_RUB} ₽/мес.`;
   return {
     title,
     lead,
     graceLine,
     payTitle: "Оплатить подписку",
-    payHint: `${formatPriceRub(priceRub)}/мес · до ${employeesGenitiveLabel(SUBSCRIPTION_MAX_USERS)}, все остаются в работе. Каждый сверх ${SUBSCRIPTION_MAX_USERS} — +${EXTRA_USER_PRICE_RUB} ₽/мес.`,
+    payHint: `${billingPriceText(payPrice)} · ${payTerms}`,
+    payPrice,
+    payTerms,
     freeTitle: "Перейти на бесплатный",
     freeHint: `0 ₽ · ${free}. Остальные перейдут в архив, их записи в журналах сохранятся.`,
   };

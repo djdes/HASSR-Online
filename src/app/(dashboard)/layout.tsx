@@ -475,6 +475,7 @@ export default async function DashboardLayout({
                   <BillingAnnouncement
                     lead={billing.announcement.lead}
                     tail={billing.announcement.tail}
+                    tailParts={billing.announcement.tailParts}
                     href={billing.announcement.href}
                     dayKey={billing.announcement.dayKey}
                     onlyOnPaths={["/dashboard", "/control-board", "/journals"]}

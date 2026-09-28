@@ -317,6 +317,28 @@ describe("тексты", () => {
     assert.equal(announcementText({ ...S, transitionEnabled: false }, 1990).tail, null);
   });
 
+  it("анонс и окно в акцию: цена со скидкой, база — для зачёркивания", () => {
+    const promo = {
+      baseRub: 1990,
+      priceRub: 1592,
+      promotion: { id: "p1", title: "Осень", percent: 20, startsAt: "2026-10-01T00:00:00.000Z", endsAt: "2026-11-01T00:00:00.000Z" },
+    };
+    const a = announcementText(S, promo);
+    const sp = (x: string | null | undefined) => (x ?? "").replace(/ /g, " ");
+    assert.equal(sp(a.tail), "С 11 октября — 1 592 ₽/мес по акции (без акции 1 990 ₽) или бесплатный тариф на 1 сотрудника.");
+    assert.equal(a.tailParts?.before, "С 11 октября — ");
+    assert.equal(a.tailParts?.price.priceRub, 1592);
+    assert.equal(a.tailParts?.after, " или бесплатный тариф на 1 сотрудника.");
+    const copy = transitionCopy({ state: state({ plan: "paid", activeUsers: 5 }, AFTER), settings: S, priceRub: promo });
+    assert.equal(copy.payPrice.baseRub, 1990);
+    assert.equal(copy.payPrice.priceRub, 1592);
+    assert.match(copy.payTerms, /^до 10 сотрудников, все остаются в работе/);
+    assert.ok(sp(copy.payHint).startsWith("1 592 ₽/мес по акции (без акции 1 990 ₽) · до 10 сотрудников"));
+    // Без акции (или «акция» не уценивает) — просто цена.
+    const flat = transitionCopy({ state: state({ plan: "paid", activeUsers: 5 }, AFTER), settings: S, priceRub: { ...promo, priceRub: 1990 } });
+    assert.ok(sp(flat.payHint).startsWith("1 990 ₽/мес · до 10"));
+  });
+
   it("анонс — до конца периода и не оплатившим", () => {
     assert.equal(shouldShowAnnouncement(state({}, BEFORE)), true);
     assert.equal(shouldShowAnnouncement(state({}, IN_PERIOD)), true);
