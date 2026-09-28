@@ -1,0 +1,1712 @@
+[
+ {
+  "file": "01-holodilniki-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "01-holodilniki-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "01-holodilniki-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "01-holodilniki-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "01-holodilniki-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw-phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "01-holodilniki-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "01-holodilniki-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "01-holodilniki-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "01-holodilniki-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "01-holodilniki-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw-phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "01-holodilniki-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "01-holodilniki-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "01-holodilniki-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "01-holodilniki-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "01-holodilniki-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "bw-phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "01-holodilniki-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "01-holodilniki-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "01-holodilniki-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "01-holodilniki-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "01-holodilniki-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "bw-phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "02-sklady-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "02-sklady-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "02-sklady-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "02-sklady-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "02-sklady-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw-phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "02-sklady-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "02-sklady-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "02-sklady-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "02-sklady-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "02-sklady-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw-phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "02-sklady-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "02-sklady-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "02-sklady-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "02-sklady-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "02-sklady-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "bw-phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "02-sklady-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "02-sklady-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "02-sklady-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "02-sklady-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "02-sklady-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "bw-phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw-phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw-phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "bw-phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "bw-phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 3,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 3,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 3,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 3,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 3,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "bw-phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 3,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 3,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 3,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 3,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 3,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "bw-phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 4,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 4,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 4,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 4,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 4,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "bw-phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 4,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 4,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 4,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 4,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "page": 4,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "bw-phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw-phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw-phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "bw-phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "bw-phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 3,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 3,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 3,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 3,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 3,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "bw-phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 3,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 3,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 3,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 3,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "page": 3,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "bw-phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "05-brakerazh-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "05-brakerazh-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "05-brakerazh-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "05-brakerazh-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "05-brakerazh-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw-phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "05-brakerazh-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "05-brakerazh-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "05-brakerazh-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "05-brakerazh-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "05-brakerazh-dlinnyy",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw-phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "06-holodilniki-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "06-holodilniki-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "06-holodilniki-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "06-holodilniki-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "06-holodilniki-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw-phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "06-holodilniki-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "06-holodilniki-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "06-holodilniki-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "06-holodilniki-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "06-holodilniki-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw-phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "07-sklady-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "07-sklady-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "07-sklady-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "07-sklady-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "07-sklady-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw-phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "07-sklady-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "07-sklady-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "07-sklady-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "07-sklady-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "07-sklady-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw-phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "07-sklady-obrazec",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "07-sklady-obrazec",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "07-sklady-obrazec",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "07-sklady-obrazec",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "07-sklady-obrazec",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "bw-phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "07-sklady-obrazec",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "07-sklady-obrazec",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "07-sklady-obrazec",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "07-sklady-obrazec",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "07-sklady-obrazec",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "bw-phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "08-gigiena-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "08-gigiena-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "08-gigiena-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "08-gigiena-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "08-gigiena-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw-phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "08-gigiena-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "08-gigiena-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "08-gigiena-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "08-gigiena-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "08-gigiena-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw-phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "08-gigiena-obrazec",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "08-gigiena-obrazec",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "08-gigiena-obrazec",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "08-gigiena-obrazec",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "08-gigiena-obrazec",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 150,
+  "kind": "bw-phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "08-gigiena-obrazec",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "08-gigiena-obrazec",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "08-gigiena-obrazec",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "08-gigiena-obrazec",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "08-gigiena-obrazec",
+  "page": 2,
+  "variant": "compact",
+  "dpi": 300,
+  "kind": "bw-phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "09-uborka-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "09-uborka-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "09-uborka-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "09-uborka-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "09-uborka-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw-phone",
+  "jsqr": false,
+  "zxing": true
+ },
+ {
+  "file": "09-uborka-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "09-uborka-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "09-uborka-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "09-uborka-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "09-uborka-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw-phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "10-brakerazh-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "10-brakerazh-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "10-brakerazh-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "10-brakerazh-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "10-brakerazh-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 150,
+  "kind": "bw-phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "10-brakerazh-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "clean",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "10-brakerazh-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "10-brakerazh-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw-print",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "10-brakerazh-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "phone",
+  "jsqr": true,
+  "zxing": true
+ },
+ {
+  "file": "10-brakerazh-obrazec",
+  "page": 1,
+  "variant": "tile",
+  "dpi": 300,
+  "kind": "bw-phone",
+  "jsqr": true,
+  "zxing": true
+ }
+]

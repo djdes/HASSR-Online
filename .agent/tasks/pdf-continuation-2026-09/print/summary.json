@@ -1,0 +1,99 @@
+[
+ {
+  "file": "01-holodilniki-dlinnyy",
+  "title": "Холодильники — длинный документ",
+  "pages": 2,
+  "pdfKb": 476,
+  "pngKb": [
+   148,
+   82
+  ]
+ },
+ {
+  "file": "02-sklady-dlinnyy",
+  "title": "Склады (температура и влажность) — длинный документ",
+  "pages": 2,
+  "pdfKb": 438,
+  "pngKb": [
+   111,
+   78
+  ]
+ },
+ {
+  "file": "03-gigiena-dlinnyy",
+  "title": "Гигиенический журнал — длинный документ",
+  "pages": 4,
+  "pdfKb": 624,
+  "pngKb": [
+   110,
+   105
+  ]
+ },
+ {
+  "file": "04-uborka-dlinnyy",
+  "title": "Журнал уборки — длинный документ",
+  "pages": 3,
+  "pdfKb": 479,
+  "pngKb": [
+   94,
+   102
+  ]
+ },
+ {
+  "file": "05-brakerazh-dlinnyy",
+  "title": "Бракераж готовой продукции — длинный документ",
+  "pages": 2,
+  "pdfKb": 419,
+  "pngKb": [
+   148,
+   132
+  ]
+ },
+ {
+  "file": "06-holodilniki-obrazec",
+  "title": "Холодильники — образец с сайта",
+  "pages": 1,
+  "pdfKb": 333,
+  "pngKb": [
+   71
+  ]
+ },
+ {
+  "file": "07-sklady-obrazec",
+  "title": "Склады — образец с сайта",
+  "pages": 2,
+  "pdfKb": 389,
+  "pngKb": [
+   106,
+   43
+  ]
+ },
+ {
+  "file": "08-gigiena-obrazec",
+  "title": "Гигиена — образец с сайта",
+  "pages": 2,
+  "pdfKb": 394,
+  "pngKb": [
+   91,
+   64
+  ]
+ },
+ {
+  "file": "09-uborka-obrazec",
+  "title": "Уборка — образец с сайта",
+  "pages": 1,
+  "pdfKb": 326,
+  "pngKb": [
+   63
+  ]
+ },
+ {
+  "file": "10-brakerazh-obrazec",
+  "title": "Бракераж — образец с сайта",
+  "pages": 1,
+  "pdfKb": 315,
+  "pngKb": [
+   56
+  ]
+ }
+]

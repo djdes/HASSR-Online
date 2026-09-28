@@ -1,0 +1,530 @@
+{
+ "histogram": [
+  [
+   6,
+   1
+  ],
+  [
+   6.2,
+   2
+  ],
+  [
+   6.4,
+   3
+  ],
+  [
+   6.5,
+   65
+  ],
+  [
+   6.6,
+   10
+  ],
+  [
+   6.7,
+   4
+  ],
+  [
+   6.8,
+   7
+  ],
+  [
+   6.9,
+   19
+  ],
+  [
+   7,
+   786
+  ],
+  [
+   7.2,
+   10
+  ],
+  [
+   7.3,
+   125
+  ],
+  [
+   7.4,
+   2
+  ],
+  [
+   7.5,
+   438
+  ],
+  [
+   7.6,
+   6
+  ],
+  [
+   7.9,
+   1
+  ],
+  [
+   8,
+   506
+  ],
+  [
+   8.3,
+   2
+  ],
+  [
+   8.5,
+   8
+  ],
+  [
+   8.6,
+   13
+  ],
+  [
+   8.9,
+   2
+  ],
+  [
+   9,
+   733
+  ],
+  [
+   10,
+   267
+  ],
+  [
+   11,
+   19
+  ],
+  [
+   12,
+   9
+  ],
+  [
+   13,
+   7
+  ],
+  [
+   14,
+   8
+  ],
+  [
+   15,
+   5
+  ],
+  [
+   16,
+   3
+  ],
+  [
+   18,
+   1
+  ],
+  [
+   22,
+   2
+  ],
+  [
+   26,
+   34
+  ]
+ ],
+ "perCase": [
+  {
+   "set": "samples",
+   "label": "hygiene",
+   "min": 7.5,
+   "sample": "№ п/п",
+   "below65": 0,
+   "items": 220
+  },
+  {
+   "set": "samples",
+   "label": "health_check",
+   "min": 7.3,
+   "sample": "№",
+   "below65": 0,
+   "items": 143
+  },
+  {
+   "set": "samples",
+   "label": "climate_control",
+   "min": 7,
+   "sample": "Дата",
+   "below65": 0,
+   "items": 226
+  },
+  {
+   "set": "samples",
+   "label": "cold_equipment_control",
+   "min": 7.5,
+   "sample": "Наименование или номер ХК",
+   "below65": 0,
+   "items": 108
+  },
+  {
+   "set": "samples",
+   "label": "cleaning_ventilation_checklist",
+   "min": 9,
+   "sample": "ООО «Ромашка» · ИНН",
+   "below65": 0,
+   "items": 282
+  },
+  {
+   "set": "samples",
+   "label": "cleaning",
+   "min": 8,
+   "sample": "Наименование помещения",
+   "below65": 0,
+   "items": 48
+  },
+  {
+   "set": "samples",
+   "label": "general_cleaning",
+   "min": 8,
+   "sample": "Помещение",
+   "below65": 0,
+   "items": 141
+  },
+  {
+   "set": "samples",
+   "label": "uv_lamp_runtime",
+   "min": 7,
+   "sample": "Спецификация ультрафиолетовой бактерицидной установки",
+   "below65": 0,
+   "items": 46
+  },
+  {
+   "set": "samples",
+   "label": "finished_product",
+   "min": 6.5,
+   "sample": "Примечание",
+   "below65": 0,
+   "items": 31
+  },
+  {
+   "set": "samples",
+   "label": "perishable_rejection",
+   "min": 6.9,
+   "sample": "Номер документа,",
+   "below65": 0,
+   "items": 59
+  },
+  {
+   "set": "samples",
+   "label": "incoming_control",
+   "min": 6,
+   "sample": "Ответственный",
+   "below65": 6,
+   "items": 34
+  },
+  {
+   "set": "samples",
+   "label": "fryer_oil",
+   "min": 6.5,
+   "sample": "Органолептическая оценка качества жира",
+   "below65": 0,
+   "items": 86
+  },
+  {
+   "set": "samples",
+   "label": "med_books",
+   "min": 7,
+   "sample": "№ п/п",
+   "below65": 0,
+   "items": 143
+  },
+  {
+   "set": "samples",
+   "label": "training_plan",
+   "min": 8,
+   "sample": "№ п/п",
+   "below65": 0,
+   "items": 38
+  },
+  {
+   "set": "samples",
+   "label": "staff_training",
+   "min": 7,
+   "sample": "Дата",
+   "below65": 0,
+   "items": 30
+  },
+  {
+   "set": "samples",
+   "label": "disinfectant_usage",
+   "min": 7.3,
+   "sample": "Кратность",
+   "below65": 0,
+   "items": 98
+  },
+  {
+   "set": "samples",
+   "label": "sanitary_day_control",
+   "min": 9,
+   "sample": "ООО «Ромашка» · ИНН",
+   "below65": 0,
+   "items": 92
+  },
+  {
+   "set": "samples",
+   "label": "equipment_maintenance",
+   "min": 7,
+   "sample": "№",
+   "below65": 0,
+   "items": 79
+  },
+  {
+   "set": "samples",
+   "label": "breakdown_history",
+   "min": 7,
+   "sample": "Дата и",
+   "below65": 0,
+   "items": 34
+  },
+  {
+   "set": "samples",
+   "label": "equipment_calibration",
+   "min": 8,
+   "sample": "№ п/п",
+   "below65": 0,
+   "items": 57
+  },
+  {
+   "set": "samples",
+   "label": "incoming_raw_materials_control",
+   "min": 6.5,
+   "sample": "Дата, время",
+   "below65": 0,
+   "items": 44
+  },
+  {
+   "set": "samples",
+   "label": "ppe_issuance",
+   "min": 6.5,
+   "sample": "Дата выдачи СИЗ",
+   "below65": 0,
+   "items": 18
+  },
+  {
+   "set": "samples",
+   "label": "accident_journal",
+   "min": 6.5,
+   "sample": "Мероприятия (корректирующие",
+   "below65": 0,
+   "items": 34
+  },
+  {
+   "set": "samples",
+   "label": "complaint_register",
+   "min": 7,
+   "sample": "№",
+   "below65": 0,
+   "items": 14
+  },
+  {
+   "set": "samples",
+   "label": "product_writeoff",
+   "min": 9,
+   "sample": "ООО «Ромашка» · ИНН",
+   "below65": 0,
+   "items": 32
+  },
+  {
+   "set": "samples",
+   "label": "audit_plan",
+   "min": 7.5,
+   "sample": "№",
+   "below65": 0,
+   "items": 130
+  },
+  {
+   "set": "samples",
+   "label": "audit_protocol",
+   "min": 8,
+   "sample": "№",
+   "below65": 0,
+   "items": 24
+  },
+  {
+   "set": "samples",
+   "label": "audit_report",
+   "min": 7.5,
+   "sample": "№",
+   "below65": 0,
+   "items": 26
+  },
+  {
+   "set": "samples",
+   "label": "traceability_test",
+   "min": 7.5,
+   "sample": "Дата",
+   "below65": 0,
+   "items": 29
+  },
+  {
+   "set": "samples",
+   "label": "metal_impurity",
+   "min": 7.5,
+   "sample": "№",
+   "below65": 0,
+   "items": 24
+  },
+  {
+   "set": "samples",
+   "label": "equipment_cleaning",
+   "min": 8.3,
+   "sample": "Ополаскивание,",
+   "below65": 0,
+   "items": 35
+  },
+  {
+   "set": "samples",
+   "label": "intensive_cooling",
+   "min": 6.8,
+   "sample": "Температура через 1",
+   "below65": 0,
+   "items": 26
+  },
+  {
+   "set": "samples",
+   "label": "glass_items_list",
+   "min": 9,
+   "sample": "ООО «Ромашка» · ИНН",
+   "below65": 0,
+   "items": 31
+  },
+  {
+   "set": "samples",
+   "label": "glass_control",
+   "min": 8.5,
+   "sample": "Дата",
+   "below65": 0,
+   "items": 21
+  },
+  {
+   "set": "samples",
+   "label": "pest_control",
+   "min": 8.6,
+   "sample": "Дата и время",
+   "below65": 0,
+   "items": 25
+  },
+  {
+   "set": "samples",
+   "label": "daily_samples",
+   "min": 7,
+   "sample": "№",
+   "below65": 0,
+   "items": 40
+  },
+  {
+   "set": "samples",
+   "label": "vitaminization",
+   "min": 7,
+   "sample": "№",
+   "below65": 0,
+   "items": 40
+  },
+  {
+   "set": "samples",
+   "label": "ration_control",
+   "min": 7,
+   "sample": "№",
+   "below65": 0,
+   "items": 32
+  },
+  {
+   "set": "samples",
+   "label": "transport_temperature",
+   "min": 7,
+   "sample": "№",
+   "below65": 0,
+   "items": 40
+  },
+  {
+   "set": "samples",
+   "label": "tableware_breakage",
+   "min": 7,
+   "sample": "№",
+   "below65": 0,
+   "items": 37
+  },
+  {
+   "set": "samples",
+   "label": "pool_water_control",
+   "min": 7,
+   "sample": "№",
+   "below65": 0,
+   "items": 45
+  },
+  {
+   "set": "samples",
+   "label": "inventory_condition",
+   "min": 7,
+   "sample": "№",
+   "below65": 0,
+   "items": 43
+  },
+  {
+   "set": "samples",
+   "label": "instrument_sterilization",
+   "min": 7,
+   "sample": "№",
+   "below65": 0,
+   "items": 37
+  },
+  {
+   "set": "samples",
+   "label": "medical_waste_b",
+   "min": 7,
+   "sample": "№",
+   "below65": 0,
+   "items": 37
+  },
+  {
+   "set": "samples",
+   "label": "batch_release",
+   "min": 7,
+   "sample": "№",
+   "below65": 0,
+   "items": 37
+  },
+  {
+   "set": "paper",
+   "label": "ot_intro",
+   "min": 6.5,
+   "sample": "Заполнять с телефона — wesetup.ru · © WeSetup — электронные ",
+   "below65": 0,
+   "items": 40
+  },
+  {
+   "set": "paper",
+   "label": "ot_workplace",
+   "min": 6.5,
+   "sample": "Заполнять с телефона — wesetup.ru · © WeSetup — электронные ",
+   "below65": 0,
+   "items": 40
+  },
+  {
+   "set": "paper",
+   "label": "fire_safety",
+   "min": 6.5,
+   "sample": "Заполнять с телефона — wesetup.ru · © WeSetup — электронные ",
+   "below65": 0,
+   "items": 40
+  },
+  {
+   "set": "paper",
+   "label": "fire_extinguishers",
+   "min": 6.5,
+   "sample": "Заполнять с телефона — wesetup.ru · © WeSetup — электронные ",
+   "below65": 0,
+   "items": 42
+  },
+  {
+   "set": "paper",
+   "label": "electrical_safety",
+   "min": 6.5,
+   "sample": "Заполнять с телефона — wesetup.ru · © WeSetup — электронные ",
+   "below65": 0,
+   "items": 40
+  }
+ ]
+}

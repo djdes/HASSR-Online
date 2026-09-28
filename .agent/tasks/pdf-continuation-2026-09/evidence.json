@@ -1,0 +1,169 @@
+{
+ "task": "pdf-continuation-2026-09",
+ "base": "bc243840",
+ "branch": "feat/pdf-continuation-2026-09-28",
+ "commits": [
+  "c68aaf58",
+  "952c0ddb",
+  "6add600e",
+  "b0480c21",
+  "535758f3",
+  "60be272e"
+ ],
+ "acceptance": {
+  "AC1": "PASS",
+  "AC2": "PASS",
+  "AC3": "PASS",
+  "AC4": "PASS",
+  "font-addendum": "PASS"
+ },
+ "rename": {
+  "climate_control": {
+   "from": "Бланк контроля температуры и влажности на складах",
+   "to": "Журнал учёта температуры и влажности на складах"
+  },
+  "cold_equipment_control": {
+   "from": "Журнал контроля температурного режима холодильного и морозильного оборудования",
+   "to": "Журнал учёта температурного режима холодильного и морозильного оборудования",
+   "basis": "Приложение № 2 к СанПиН 2.3/2.4.4282-26"
+  }
+ },
+ "pages": {
+  "master": 672,
+  "fontOnly": 635,
+  "branch": 626,
+  "pdfs": 186,
+  "morethanMaster": [],
+  "fewer": [
+   "samples:cleaning_ventilation_checklist 6->5",
+   "blanks:cleaning_ventilation_checklist 6->5",
+   "long:hygiene 7->6",
+   "long:climate_control 27->19",
+   "long:cold_equipment_control 4->3",
+   "long:cleaning_ventilation_checklist 9->8",
+   "long:training_plan 25->22",
+   "long:disinfectant_usage 12->10",
+   "long:audit_plan 309->283",
+   "variants:hygiene-v2 5->4",
+   "variants:partner-cleaning_ventilation_checklist 6->5"
+  ]
+ },
+ "continuationHeader": {
+  "masterHeightMm": 34.9,
+  "branchHeightMm": 15.4,
+  "gapToTableMm": {
+   "master": 5.8,
+   "branch": 2.7
+  },
+  "qrFirstPage": {
+   "variant": "brand tile, EC H, mark + strip",
+   "cellMm": [
+    19.55,
+    22.72
+   ],
+   "codeMm": 19.35,
+   "modules": 49,
+   "moduleMm": 0.365
+  },
+  "qrContinuation": {
+   "variant": "plain, EC M, no mark, no strip",
+   "cellMm": [
+    15.17,
+    15.16
+   ],
+   "codeMm": 14.96,
+   "modules": 37,
+   "moduleMm": 0.365
+  }
+ },
+ "overlap": {
+  "samples": {
+   "ok": 45,
+   "cases": 45,
+   "pages": 56,
+   "tilePages": 44,
+   "compactPages": 9,
+   "knownOverflow": []
+  },
+  "blanks": {
+   "ok": 45,
+   "cases": 45,
+   "pages": 56,
+   "tilePages": 44,
+   "compactPages": 9,
+   "knownOverflow": []
+  },
+  "long": {
+   "ok": 45,
+   "cases": 45,
+   "pages": 444,
+   "tilePages": 44,
+   "compactPages": 38,
+   "knownOverflow": [
+    "cleaning_ventilation_checklist"
+   ]
+  },
+  "paper": {
+   "ok": 5,
+   "cases": 5,
+   "pages": 10,
+   "tilePages": 0,
+   "compactPages": 0,
+   "knownOverflow": []
+  },
+  "variants": {
+   "ok": 46,
+   "cases": 46,
+   "pages": 60,
+   "tilePages": 45,
+   "compactPages": 12,
+   "knownOverflow": []
+  },
+  "portrait": {
+   "ok": 45,
+   "cases": 45,
+   "pages": 53,
+   "tilePages": 44,
+   "compactPages": 7,
+   "knownOverflow": []
+  }
+ },
+ "decode": {
+  "rows": 2926,
+  "acceptanceJsqr": "1045/1045",
+  "acceptanceZxing": "2090/2090",
+  "firstPages": 186,
+  "continuationPages": 23
+ },
+ "decodePrint": {
+  "shots": 190,
+  "pages": 19
+ },
+ "font": {
+  "pdf": "Liberation Serif 2.1.5 Regular+Bold (SIL OFL 1.1)",
+  "source": "https://github.com/liberationfonts/liberation-fonts/releases/tag/2.1.5 (liberation-fonts-ttf-2.1.5.tar.gz)",
+  "sha256": {
+   "liberation-fonts-ttf-2.1.5.tar.gz": "7191c669bf38899f73a2094ed00f7b800553364f90e2637010a69c0e268f25d0",
+   "LiberationSerif-Regular.ttf": "058ea80864aef09a23f45cbec2bb5400bc3dfbdea01c3f10538a21fcb497fb74",
+   "LiberationSerif-Bold.ttf": "d754ba427cfe0bca54ae052384baa8f842da5bd6550ad4da024ac441e7a7d5ce"
+  },
+  "word": "Times New Roman (docDefaults)",
+  "qrStrip": "DejaVu Sans Bold (unchanged)",
+  "smallestTextPt": {
+   "master": 5,
+   "branch": 6
+  }
+ },
+ "print": [
+  "01-holodilniki-dlinnyy.pdf",
+  "02-sklady-dlinnyy.pdf",
+  "03-gigiena-dlinnyy.pdf",
+  "04-uborka-dlinnyy.pdf",
+  "05-brakerazh-dlinnyy.pdf",
+  "06-holodilniki-obrazec.pdf",
+  "07-sklady-obrazec.pdf",
+  "08-gigiena-obrazec.pdf",
+  "09-uborka-obrazec.pdf",
+  "10-brakerazh-obrazec.pdf"
+ ]
+}

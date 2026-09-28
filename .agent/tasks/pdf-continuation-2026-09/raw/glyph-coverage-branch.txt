@@ -1,0 +1,15 @@
+В напечатанном тексте (кроме ASCII и кириллицы):
+  U+00A9 «©» serif=да bold=да  paper:ot_intro, paper:ot_workplace, paper:fire_safety, paper:fire_extinguishers
+  U+00AB ««» serif=да bold=да  samples:hygiene, samples:health_check, samples:climate_control, samples:cold_equipment_control
+  U+00B0 «°» serif=да bold=да  samples:hygiene, samples:climate_control, samples:cold_equipment_control, samples:fryer_oil
+  U+00B7 «·» serif=да bold=да  samples:hygiene, samples:health_check, samples:climate_control, samples:cold_equipment_control
+  U+00BB «»» serif=да bold=да  samples:hygiene, samples:health_check, samples:climate_control, samples:cold_equipment_control
+  U+2013 «–» serif=да bold=да  samples:hygiene, samples:cleaning_ventilation_checklist, samples:ration_control
+  U+2014 «—» serif=да bold=да  samples:hygiene, samples:health_check, samples:climate_control, samples:cold_equipment_control
+  U+2022 «•» serif=да bold=да  samples:sanitary_day_control
+  U+2116 «№» serif=да bold=да  samples:hygiene, samples:health_check, samples:cold_equipment_control, samples:uv_lamp_runtime
+  U+221A «√» serif=да bold=да  samples:training_plan
+
+В исходниках печати (включая комментарии):
+  U+2713 «✓» serif=НЕТ bold=НЕТ  src/lib/document-pdf.ts
+  U+2717 «✗» serif=НЕТ bold=НЕТ  src/lib/document-pdf.ts
