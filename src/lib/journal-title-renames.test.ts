@@ -66,3 +66,23 @@ test("заголовок документа: старое название → �
     assert.equal(renamedJournalDocumentTitle(rename.code, `${rename.title} — сентябрь 2026`), `${rename.title} — сентябрь 2026`);
   }
 });
+
+test("поиск и «по алфавиту» — по новым названиям: «учет температур» находит оба журнала, «бланк» — ни один", async () => {
+  const { journalMatchesQuery, normalizeJournalSearch } = await import("@/lib/journal-search");
+  const { sortJournalsByName } = await import("@/lib/journal-sort");
+  const found = (query: string) =>
+    ACTIVE_JOURNAL_CATALOG.filter((item) => journalMatchesQuery([item.name, item.code], normalizeJournalSearch(query))).map(
+      (item) => item.code,
+    );
+  assert.deepEqual(found("учет температур").sort(), ["climate_control", "cold_equipment_control"]);
+  assert.deepEqual(found("журнал учёта температурного режима"), ["cold_equipment_control"]);
+  assert.deepEqual(found("бланк"), []);
+  // По алфавиту оба теперь среди «Журнал учёта…», а не в начале списка на «Б».
+  const sorted = sortJournalsByName(ACTIVE_JOURNAL_CATALOG, (item) => item.name).map((item) => item.name);
+  const climate = sorted.indexOf("Журнал учёта температуры и влажности на складах");
+  const cold = sorted.indexOf("Журнал учёта температурного режима холодильного и морозильного оборудования");
+  assert.ok(climate > 0 && cold > 0);
+  assert.ok(sorted[climate - 1].localeCompare(sorted[climate], "ru") <= 0);
+  assert.ok(sorted.slice(0, climate).every((name) => !name.startsWith("Чек") && !name.startsWith("Ш")));
+  assert.equal(sorted.findIndex((name) => name.startsWith("Бланк")), -1);
+});

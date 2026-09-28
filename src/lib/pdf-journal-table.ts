@@ -32,7 +32,11 @@ import { JOURNAL_FOOTER_TEXT_BAND_MM, JOURNAL_SHEET_MARGIN_MM } from "@/lib/pdf-
  *     3 символов) — по центру столбца, если ВЕСЬ столбец из них состоит.
  *     Длинный текст остаётся слева, как задал бланк;
  *   • знаки, которых нет в шрифте журнала (✓, ✗, ₽…), заменяются близкими
- *     (`journalPrintableText`) — иначе ячейка печаталась бы с пустым местом.
+ *     (`journalPrintableText`) — иначе ячейка печаталась бы с пустым местом;
+ *   • строка таблицы на разрыве страницы не делится (`rowPageBreak:
+ *     "avoid"`, если бланк не задал своё): у двухстрочной ячейки («ФИО /
+ *     должность») вторая строка уезжала на следующий лист отдельной
+ *     строкой без даты. Строку выше листа autoTable всё равно делит.
  *
  * Хуки бланка (`didParseCell`, `willDrawCell`) вызываются первыми —
  * правила применяются поверх них.
@@ -137,6 +141,7 @@ export function journalAutoTable(doc: jsPDF, options: UserOptions): void {
 
   autoTableBase(doc, {
     ...options,
+    rowPageBreak: options.rowPageBreak ?? "avoid",
     margin: journalTableMargin(options.margin),
     styles: {
       textColor: BLACK,
