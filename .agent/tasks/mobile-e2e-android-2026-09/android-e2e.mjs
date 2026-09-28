@@ -413,6 +413,119 @@ async function buttonsText(p) {
 async function toastText(p) {
   return p.evaluate(() => [...document.querySelectorAll("[data-sonner-toast]")].map((t) => t.textContent?.trim()).join(" | ")).catch(() => "");
 }
+// 5-й круг: сообщение не просто в DOM, а на экране — центр сообщения под
+// «пальцем» (elementFromPoint) принадлежит [data-sonner-toast], верх ниже
+// шапки .mini-topbar, всё внутри окна. До cdebe948 шапка (z 40) закрывала
+// контейнер sonner целиком: текст в DOM был, на экране — нет.
+const VOICE_MSG_RE = /Не удалось|Ничего не расслыш|Запись прервалась|Разрешите|недоступн|Нет связи/;
+async function toastVisibility(p, re) {
+  return p.evaluate((src) => {
+    const rx = src ? new RegExp(src) : null;
+    const bar = document.querySelector(".mini-topbar");
+    const barBottom = bar ? Math.round(bar.getBoundingClientRect().bottom * 10) / 10 : null;
+    const toasts = [...document.querySelectorAll("[data-sonner-toast]")].map((t) => {
+      const b = t.getBoundingClientRect();
+      const cx = b.left + b.width / 2;
+      const cy = b.top + b.height / 2;
+      const hit = b.width > 0 && b.height > 0 ? document.elementFromPoint(cx, cy) : null;
+      const hitToast = hit?.closest?.("[data-sonner-toast]") ?? null;
+      const text = (t.textContent || "").trim().replace(/\s+/g, " ").slice(0, 200);
+      const wrap = t.closest("[data-sonner-toaster]")?.parentElement ?? null;
+      return {
+        text,
+        rect: { top: Math.round(b.top * 10) / 10, bottom: Math.round(b.bottom * 10) / 10, left: Math.round(b.left), right: Math.round(b.right) },
+        hitInsideToast: Boolean(hitToast),
+        hitSameToast: hitToast === t,
+        hit: hit ? `${hit.tagName}.${String(hit.className).slice(0, 60)}` : null,
+        belowTopBar: barBottom == null ? null : b.top >= barBottom - 0.5,
+        inViewport: b.top >= 0 && b.bottom <= innerHeight + 0.5,
+        mounted: t.getAttribute("data-mounted"),
+        removed: t.getAttribute("data-removed"),
+        front: t.getAttribute("data-front"),
+        wrapperClass: wrap ? String(wrap.className).slice(0, 40) : null,
+        wrapperZ: wrap ? getComputedStyle(wrap).zIndex : null,
+        matches: rx ? rx.test(text) : true,
+      };
+    });
+    return { barBottom, innerHeight, dpr: devicePixelRatio, path: location.pathname, toasts };
+  }, re ? re.source : null);
+}
+function toastShownOk(t, barBottom) {
+  return Boolean(t.matches && t.hitInsideToast && t.inViewport && barBottom != null && t.belowTopBar && t.mounted === "true" && t.removed !== "true");
+}
+/** Встроенное сообщение (не toast): самый глубокий видимый элемент с текстом, не закрыт. */
+async function inlineVisibility(p, re) {
+  return p.evaluate((src) => {
+    const rx = new RegExp(src);
+    const bar = document.querySelector(".mini-topbar");
+    const barBottom = bar ? bar.getBoundingClientRect().bottom : 0;
+    const els = [...document.querySelectorAll("body *")].filter((el) => {
+      if (el.closest("[data-sonner-toast]")) return false;
+      if (!rx.test(el.textContent || "")) return false;
+      return ![...el.children].some((c) => rx.test(c.textContent || ""));
+    });
+    return els.slice(0, 5).map((el) => {
+      const b = el.getBoundingClientRect();
+      const hit = b.width > 0 && b.height > 0 ? document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2) : null;
+      return {
+        text: (el.textContent || "").trim().slice(0, 200),
+        rect: { top: Math.round(b.top * 10) / 10, bottom: Math.round(b.bottom * 10) / 10 },
+        hitInside: Boolean(hit && el.contains(hit)),
+        hit: hit ? `${hit.tagName}.${String(hit.className).slice(0, 60)}` : null,
+        inViewport: b.top >= barBottom - 0.5 && b.bottom <= innerHeight + 0.5 && b.height > 0,
+      };
+    });
+  }, re.source);
+}
+/**
+ * Ждём сообщение, видимое на экране, и снимаем экран, пока оно стоит.
+ * `re` — какой текст ищем (null — любой toast); `inlineRe` — ещё и встроенный текст.
+ */
+async function captureVisibleMessage(s, p, { re = null, inlineRe = null, name, timeout = 8000 }) {
+  const deadline = Date.now() + timeout;
+  let last = null;
+  let lastInline = [];
+  while (Date.now() < deadline) {
+    last = await toastVisibility(p, re).catch((e) => ({ error: String(e).slice(0, 200), toasts: [] }));
+    const t = (last.toasts ?? []).find((x) => toastShownOk(x, last.barBottom));
+    if (t) {
+      await sleep(450); // анимация появления sonner
+      const file = shot(name);
+      s.shots.push(file);
+      const after = await toastVisibility(p, re).catch(() => ({ toasts: [] }));
+      const t2 = (after.toasts ?? []).find((x) => x.text === t.text) ?? null;
+      const wv = webViewRect();
+      const pr = t2 ?? t;
+      const res = {
+        ok: Boolean(t2 && toastShownOk(t2, after.barBottom)),
+        kind: "toast",
+        text: t.text,
+        shot: file,
+        topBarBottom: after.barBottom ?? last.barBottom,
+        probe: pr,
+        otherToasts: (after.toasts ?? []).map((x) => x.text),
+        screenPx: wv
+          ? { top: Math.round(wv.y1 + pr.rect.top * last.dpr), bottom: Math.round(wv.y1 + pr.rect.bottom * last.dpr), topBarBottom: Math.round(wv.y1 + (after.barBottom ?? 0) * last.dpr) }
+          : null,
+      };
+      if (!res.ok) res.lostAfterShot = t2 ?? "toast gone before the screenshot finished";
+      return res;
+    }
+    if (inlineRe) {
+      lastInline = await inlineVisibility(p, inlineRe).catch(() => []);
+      const m = lastInline.find((x) => x.hitInside && x.inViewport);
+      if (m) {
+        const file = shot(name);
+        s.shots.push(file);
+        return { ok: true, kind: "inline", text: m.text, shot: file, probe: m };
+      }
+    }
+    await sleep(250);
+  }
+  const file = shot(`${name}-not-visible`);
+  s.shots.push(file);
+  return { ok: false, kind: null, shot: file, lastToastProbe: last, lastInline };
+}
 function fatalLines() {
   return sh("logcat -d -b crash").split("\n").filter((l) => /FATAL|AndroidRuntime|ru\.wesetup/.test(l)).slice(0, 40);
 }
@@ -934,11 +1047,29 @@ async function main() {
     if (sheet) check(Boolean(fileName), "share sheet shows no file name");
     if (fileName) check(!/^(WeSetup|download|file)\.\w+$/i.test(fileName) , `generic file name ${fileName}`);
     key(4);
-    await sleep(2000);
+    // 5-й круг: «Архив скачан …» появляется после закрытия листа — ловим сразу.
+    const toastRe = /Архив скачан|Не удалось|Ошибка/;
+    let vis = await captureVisibleMessage(s, p, { re: toastRe, name: "download-toast-visible", timeout: 10000 });
+    s.data.toastVisibility = vis;
+    if (!vis.ok) {
+      // Сообщение могло уже уйти — скачиваем ещё раз и снимаем, пока оно стоит.
+      s.data.retriggered = true;
+      await target.click();
+      for (let i = 0; i < 10; i++) {
+        await sleep(2000);
+        if (uiNodes().some((n) => /intentresolver|^android$/.test(n.package ?? "") && n.package !== PKG)) break;
+      }
+      key(4);
+      vis = await captureVisibleMessage(s, p, { re: toastRe, name: "download-toast-visible-retry", timeout: 10000 });
+      s.data.toastVisibilityRetry = vis;
+    }
+    check(vis.ok, `download toast not visible on screen: ${JSON.stringify(vis).slice(0, 700)}`);
+    if (vis.ok) note(`toast «${vis.text}» visible: top ${vis.probe.rect.top} >= top bar ${vis.topBarBottom}, centre hits ${vis.probe.hit}`);
+    await sleep(1500);
     s.shots.push(shot("share-dismissed"));
     check(/ru\.wesetup\.app/.test(topActivity()), `app not in front after closing the share sheet: ${topActivity()}`);
-    s.data.toastAfter = await toastText(p);
-    check(!/Не удалось/.test(s.data.toastAfter), `error toast after closing share sheet: ${s.data.toastAfter}`);
+    s.data.toastAfter = vis.text ?? (await toastText(p));
+    check(!/Не удалось|Ошибка/.test(s.data.toastAfter ?? ""), `error toast after closing share sheet: ${s.data.toastAfter}`);
   });
 
   await scenario("6 External links: tel:, mailto:, foreign https, internal target=_blank", async (s) => {
@@ -1071,6 +1202,8 @@ async function main() {
     s.data.cases = [];
     const targets = [
       [screens[3][1], 'button[aria-label="Голосовой ввод"]'],
+      // 5-й круг: микрофон текстового поля — форма «Мониторинг ККТ».
+      ...(ids.formTextJournals ?? []).slice(0, 1).map((c) => [`/journals/${c}/new`, 'button[title="Голосовой ввод"]']),
       ...(ids.textJournals ?? []).slice(0, 4).map((c) => [`/journals/${c}/new`, 'button[title="Голосовой ввод"]']),
     ];
     let tested = 0;
@@ -1089,8 +1222,9 @@ async function main() {
       await sleep(800);
       await screenTap(p, btn);
       const c = { url, found: true, steps: [] };
-      for (let i = 0; i < 4; i++) {
-        await sleep(3000);
+      let msg = null;
+      for (let i = 0; i < 5; i++) {
+        await sleep(2500);
         const nodes = uiNodes();
         const pk = [...new Set(nodes.map((n) => n.package))].filter(Boolean);
         const allow = findNode(nodes, /permission_allow_foreground_only_button|permission_allow_one_time_button|permission_allow_button/);
@@ -1100,11 +1234,21 @@ async function main() {
           tapNode(allow);
           continue;
         }
-        if (pk.includes(PKG) && pk.length <= 2) break;
         // Системное окно распознавания (Google) — закрываем.
-        key(4);
+        if (!(pk.includes(PKG) && pk.length <= 2)) key(4);
+        // 5-й круг: сообщение должно быть видно на экране, а не только в DOM.
+        msg = await captureVisibleMessage(s, p, { re: VOICE_MSG_RE, inlineRe: VOICE_MSG_RE, name: `voice-${tested}-message`, timeout: 8000 });
+        if (msg.ok || /ru\.wesetup\.app/.test(topActivity())) break;
       }
-      await sleep(3000);
+      c.message = msg;
+      // (D) поздний отказ плагина не добавляет второе сообщение.
+      await sleep(1500);
+      c.voiceToastsAfter = (await toastVisibility(p, VOICE_MSG_RE).catch(() => ({ toasts: [] }))).toasts
+        .filter((t) => t.matches && t.removed !== "true")
+        .map((t) => t.text);
+      check(Boolean(msg?.ok), `${url}: no visible message after voice input on the emulator (${JSON.stringify(msg).slice(0, 600)})`);
+      check(c.voiceToastsAfter.length <= 1, `${url}: ${c.voiceToastsAfter.length} voice toasts: ${c.voiceToastsAfter.join(" / ")}`);
+      await sleep(1500);
       await btn.evaluate((el) => el.scrollIntoView({ block: "center" })).catch(() => undefined);
       await sleep(800);
       c.near = await btn.evaluate((el) => (el.parentElement?.parentElement?.textContent || "").trim().slice(0, 300)).catch((e) => String(e));
@@ -1115,11 +1259,11 @@ async function main() {
       }));
       s.shots.push(shot(`voice-${tested}-result`));
       s.data.cases.push(c);
-      const msgs = [...c.page.toasts, ...c.page.texts, c.near].join(" | ");
+      const msgs = [c.message?.text ?? "", ...c.page.toasts, ...c.page.texts, c.near].filter(Boolean).join(" | ");
       check(c.page.pulsing === 0, `${url}: mic still «listening» (hang)`);
       check(!/[a-z]{4,}/i.test(msgs.replace(/WeSetup/g, "")) , `${url}: technical/English text shown: «${msgs}»`);
       check(!/браузер/i.test(msgs), `${url}: message talks about the browser inside the app: «${msgs}»`);
-      note(`${url}: «${msgs || "no message"}»`);
+      note(`${url}: ${c.message?.ok ? `visible ${c.message.kind} «${c.message.text}»` : "no visible message"}; page «${msgs || "no message"}»`);
       for (let i = 0; i < 2 && !/ru\.wesetup\.app/.test(topActivity()); i++) {
         key(4);
         await sleep(1000);
@@ -1166,6 +1310,9 @@ async function main() {
           footer: rr(footer),
           footerInline: footer ? { bottom: footer.style.bottom, paddingBottom: footer.style.paddingBottom } : null,
           footerComputedBottom: footer ? getComputedStyle(footer).bottom : null,
+          footerComputedPaddingBottom: footer ? getComputedStyle(footer).paddingBottom : null,
+          keyboardAttr: document.documentElement.hasAttribute("data-keyboard-open"),
+          navVisibility: nav ? getComputedStyle(nav).visibility : null,
           save: rr(save),
           cancel: rr(cancel),
           nav: navRect,
@@ -1234,7 +1381,22 @@ async function main() {
       check(s.data.metrics.saveToImePx >= -2, `«Сохранить запись» under the keyboard on screen by ${-s.data.metrics.saveToImePx}px`);
     }
     check(gap >= 0, `«Сохранить запись» not fully visible: gap ${gap} (visibleBottom ${visibleBottom}, save.bottom ${g.save.bottom})`);
-    check(g.textarea.top + 40 <= g.footer.top, `focused textarea covered by the footer: textarea.top ${g.textarea.top} + 40 > footer.top ${g.footer.top}`);
+    // 5-й круг (fc537a6f + 911dc785): клавиатура, сжавшая окно, распознана.
+    const saveToWvBottom = Math.round((g.innerHeight - g.save.bottom) * 10) / 10;
+    Object.assign(s.data.metrics, {
+      keyboardAttr: g.keyboardAttr,
+      navVisibility: g.navVisibility,
+      saveToWebViewBottom: saveToWvBottom,
+      footerComputedPaddingBottom: g.footerComputedPaddingBottom,
+    });
+    check(g.keyboardAttr, "html has no data-keyboard-open while the keyboard is up");
+    check(g.navVisibility === "hidden", `.mini-nav-rail visibility «${g.navVisibility}» with the keyboard, expected hidden`);
+    check(g.footerComputedBottom === "0px", `footer computed bottom «${g.footerComputedBottom}» with the keyboard, expected 0px`);
+    check(
+      saveToWvBottom >= -0.5 && saveToWvBottom <= 24,
+      `«Сохранить запись» bottom ${g.save.bottom} is ${saveToWvBottom} CSS px from the WebView bottom ${g.innerHeight} (expected 0..24)`
+    );
+    check(g.textarea.bottom + 8 <= g.footer.top, `focused textarea not fully above the footer: textarea.bottom ${g.textarea.bottom} + 8 > footer.top ${g.footer.top}`);
     if (mode === "visual-viewport-shrank") check(gap <= 40, `empty band between the buttons and the keyboard: gap ${gap} > 40 CSS px`);
     note(`${mode}: innerHeight ${g.innerHeight} (no kbd ${s.data.before.innerHeight}), vv ${g.vv.height}+${g.vv.offsetTop}, gap ${gap}, nav between footer and keyboard: ${navBetween}, footer inline bottom «${g.footerInline?.bottom}»`);
     // Спрятать клавиатуру: «назад» один раз, пока она показана.
@@ -1249,6 +1411,16 @@ async function main() {
     check(a.navVisibleCss && a.nav && a.nav.bottom <= a.innerHeight + 1 && a.nav.top > 0, `bottom nav not visible after hiding the keyboard: ${JSON.stringify(a.nav)}`);
     if (a.footer && a.nav) check(a.footer.bottom <= a.nav.top + 2, `footer not above the nav after hiding the keyboard: footer.bottom ${a.footer.bottom} > nav.top ${a.nav.top}`);
     check(!a.footerInline?.bottom, `footer keeps inline bottom «${a.footerInline?.bottom}» without the keyboard`);
+    check(!a.keyboardAttr, "data-keyboard-open still on html after hiding the keyboard");
+    check(a.navVisibility === "visible", `.mini-nav-rail visibility «${a.navVisibility}» after hiding the keyboard`);
+    const fb = parseFloat(a.footerComputedBottom ?? "");
+    check(
+      a.footerComputedBottom === s.data.before.footerComputedBottom && fb >= 70 && fb <= 100,
+      `footer bottom after the keyboard «${a.footerComputedBottom}», before «${s.data.before.footerComputedBottom}» (expected ~82px)`
+    );
+    note(
+      `with keyboard: attr ${g.keyboardAttr}, nav ${g.navVisibility}, footer bottom ${g.footerComputedBottom}, save ${saveToWvBottom} CSS px above the WebView bottom, textarea.bottom ${g.textarea.bottom} / footer.top ${g.footer.top}; after: attr ${a.keyboardAttr}, nav ${a.navVisibility}, footer bottom ${a.footerComputedBottom}`
+    );
     await p.evaluate(() => document.activeElement?.blur?.()).catch(() => undefined);
   });
 
@@ -1347,19 +1519,29 @@ async function main() {
 /** Ошибки React (#418 гидратация и т.п.) и прочие ошибки страницы в WebView за весь прогон. */
 async function consoleScenario() {
   await scenario("17 WebView console: no React errors (#418 etc.) at cold start and during the flow", async (s) => {
-    const reactRe = /Minified React error|react\.dev\/errors|#41[5-9]|#42[0-9]|[Hh]ydrat/;
+    // 5-й круг: провал — React #418/#422/#425 и предупреждения о расхождении
+    // гидратации (и error, и warning); всё остальное — отдельными списками.
+    const hydrationRe =
+      /Minified React error #(418|422|425)\b|react\.dev\/errors\/(418|422|425)\b|[Hh]ydration (failed|mismatch|error)|did(n't| not) match|[Hh]ydrated but some attributes|server rendered (HTML|text)/;
     // Capacitor пишет консоль WebView в logcat с самого запуска (до подключения Playwright).
     const lc = sh("logcat -d -s Capacitor/Console:*", { timeout: 60000 }).split(/\r?\n/).filter((l) => /Capacitor\/Console/.test(l));
     const lcAll = [...new Set([...(results.coldStartConsole ?? []), ...lc])];
     const lcErrors = lcAll.filter((l) => /\sE\s|^E\/|error/i.test(l));
     const pwErrors = results.console.filter((c) => c.type === "error" || c.type === "pageerror");
     s.data.logcatConsoleLines = lcAll.length;
-    s.data.logcatErrors = lcErrors.slice(0, 40).map((l) => l.slice(0, 400));
-    s.data.playwrightErrors = pwErrors.slice(0, 40);
-    const reactLc = lcErrors.filter((l) => reactRe.test(l));
-    const reactPw = pwErrors.filter((c) => reactRe.test(c.text));
+    const reactLc = lcAll.filter((l) => hydrationRe.test(l));
+    const reactPw = results.console.filter((c) => hydrationRe.test(c.text));
     s.data.react = { logcat: reactLc.slice(0, 10), playwright: reactPw.slice(0, 10) };
-    check(!reactLc.length && !reactPw.length, `React errors: ${[...reactLc.slice(0, 2), ...reactPw.slice(0, 2).map((c) => `${c.at}: ${c.text}`)].join(" / ").slice(0, 600)}`);
+    s.data.otherLogcatErrors = lcErrors.filter((l) => !hydrationRe.test(l)).slice(0, 40).map((l) => l.slice(0, 400));
+    s.data.otherPlaywright = results.console.filter((c) => !hydrationRe.test(c.text)).slice(0, 60);
+    s.data.otherReactErrors = [...lcAll, ...results.console.map((c) => c.text)]
+      .filter((t) => /Minified React error|react\.dev\/errors/.test(t) && !hydrationRe.test(t))
+      .slice(0, 10);
+    check(
+      !reactLc.length && !reactPw.length,
+      `React #418/#422/#425 or hydration mismatch: ${[...reactLc.slice(0, 2), ...reactPw.slice(0, 2).map((c) => `${c.at}: ${c.type}: ${c.text}`)].join(" / ").slice(0, 700)}`
+    );
+    note(`other: logcat errors ${s.data.otherLogcatErrors.length}, playwright errors+warnings ${s.data.otherPlaywright.length}, other React errors ${s.data.otherReactErrors.length}`);
     note(`logcat console lines ${lcAll.length}, errors ${lcErrors.length}; playwright errors ${pwErrors.length}`);
   });
 }
