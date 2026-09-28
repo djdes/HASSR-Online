@@ -1,0 +1,184 @@
+{
+  "label": "before",
+  "pageErrors": [],
+  "rows": [
+    {
+      "code": "climate_control",
+      "miniRoot": true,
+      "scrollX": 0,
+      "scrollY": 3892,
+      "docScrollWidth": 390,
+      "maxScrollLeft": 515,
+      "pan": {
+        "scrollLeft": 0,
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "overflowX": "visible"
+      },
+      "h1": {
+        "text": "Бланк контроля температуры и влажности на складах — сентябрь 2026",
+        "left": 16,
+        "right": 374,
+        "top": 132
+      },
+      "outside": null,
+      "frames": [
+        {
+          "el": "div.mb-0.max-sm:overflow-visible.overflow-x-auto.sm:mx-0.sm:px-0.round",
+          "left": 0,
+          "right": 390,
+          "sw": 1280,
+          "cw": 390
+        },
+        {
+          "el": "div.mt-3.overflow-auto",
+          "left": 16,
+          "right": 374,
+          "sw": 414,
+          "cw": 358
+        },
+        {
+          "el": "div.max-sm:overflow-visible.overflow-x-auto.sm:mx-0.sm:px-0.rounded-[1",
+          "left": 0,
+          "right": 390,
+          "sw": 1420,
+          "cw": 390
+        }
+      ]
+    },
+    {
+      "code": "cold_equipment_control",
+      "miniRoot": true,
+      "scrollX": 0,
+      "scrollY": 891,
+      "docScrollWidth": 390,
+      "maxScrollLeft": 776,
+      "pan": {
+        "scrollLeft": 0,
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "overflowX": "visible"
+      },
+      "h1": {
+        "text": "Журнал контроля температурного режима холодильного и морозильного обор",
+        "left": 16,
+        "right": 374,
+        "top": 132
+      },
+      "outside": null,
+      "frames": [
+        {
+          "el": "div.max-sm:overflow-visible.overflow-x-auto.sm:mx-0.sm:px-0.rounded-[1",
+          "left": 0,
+          "right": 390,
+          "sw": 1166,
+          "cw": 390
+        }
+      ]
+    },
+    {
+      "code": "hygiene",
+      "miniRoot": true,
+      "scrollX": 0,
+      "scrollY": 0,
+      "docScrollWidth": 390,
+      "maxScrollLeft": 0,
+      "pan": {
+        "scrollLeft": 0,
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "overflowX": "visible"
+      },
+      "h1": {
+        "text": "Гигиенический журнал (сотрудники)",
+        "left": 16,
+        "right": 374,
+        "top": 132
+      },
+      "outside": null,
+      "frames": [
+        {
+          "el": "div.overflow-x-auto.rounded-3xl.border.border-[#ececf4].bg-white.shado",
+          "left": 0,
+          "right": 390,
+          "sw": 980,
+          "cw": 388
+        }
+      ]
+    },
+    {
+      "code": "pest_control",
+      "miniRoot": true,
+      "scrollX": 0,
+      "scrollY": 0,
+      "docScrollWidth": 390,
+      "maxScrollLeft": 0,
+      "pan": {
+        "scrollLeft": 0,
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "overflowX": "visible"
+      },
+      "h1": {
+        "text": "Журнал учета дезинфекции, дезинсекции и дератизации — 2026 год",
+        "left": 16,
+        "right": 374,
+        "top": 132
+      },
+      "outside": null,
+      "frames": [
+        {
+          "el": "div.max-sm:overflow-visible.overflow-x-auto.sm:mx-0.sm:px-0.rounded-[1",
+          "left": 0,
+          "right": 390,
+          "sw": 1105,
+          "cw": 390
+        }
+      ]
+    },
+    {
+      "code": "cleaning",
+      "miniRoot": true,
+      "scrollX": 0,
+      "scrollY": 517,
+      "docScrollWidth": 390,
+      "maxScrollLeft": 836,
+      "pan": {
+        "scrollLeft": 0,
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "overflowX": "visible"
+      },
+      "h1": {
+        "text": "Журнал уборки",
+        "left": 16,
+        "right": 374,
+        "top": 132
+      },
+      "outside": null,
+      "frames": [
+        {
+          "el": "div.mb-0.max-sm:overflow-visible.overflow-x-auto.sm:mx-0.sm:px-0.round",
+          "left": 0,
+          "right": 390,
+          "sw": 1242,
+          "cw": 390
+        },
+        {
+          "el": "div.max-sm:overflow-visible.overflow-x-auto.sm:mx-0.sm:px-0.rounded-[1",
+          "left": 0,
+          "right": 390,
+          "sw": 1226,
+          "cw": 390
+        },
+        {
+          "el": "div.mt-8.max-sm:overflow-visible.overflow-x-auto.sm:mx-0.sm:px-0.round",
+          "left": 0,
+          "right": 390,
+          "sw": 640,
+          "cw": 390
+        }
+      ]
+    }
+  ]
+}

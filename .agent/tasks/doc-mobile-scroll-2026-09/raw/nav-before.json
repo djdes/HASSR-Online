@@ -1,0 +1,388 @@
+{
+  "label": "before",
+  "at": "2026-09-28T20:16:32.567Z",
+  "pageErrors": [],
+  "steps": [
+    {
+      "mode": "phoneTable",
+      "step": "journal → document",
+      "url": "/journals/climate_control/documents/cmulmrwea00vp8w9mx1khr2fl",
+      "scrollX": 0,
+      "scrollY": 3613,
+      "maxScrollLeft": 520,
+      "docScrollWidth": 390,
+      "pan": {
+        "scrollLeft": 520,
+        "scrollWidth": 1430,
+        "clientWidth": 390,
+        "overflowX": "auto"
+      },
+      "h1": {
+        "text": "Бланк контроля температуры и влажности на складах — сентябрь 2026",
+        "left": -504,
+        "right": -146,
+        "top": 132
+      },
+      "headerAdd": {
+        "text": "Добавить строку",
+        "left": -504,
+        "right": -314.8,
+        "top": 1797.1,
+        "width": 189.2
+      },
+      "scrollers": [
+        {
+          "el": "div[data-journal-doc-pan].max-sm:-mx-4.max-sm:overflow-x-aut",
+          "scrollLeft": 520,
+          "scrollWidth": 1430,
+          "clientWidth": 390
+        },
+        {
+          "el": "div.mt-3.overflow-auto",
+          "scrollLeft": 0,
+          "scrollWidth": 426,
+          "clientWidth": 358
+        }
+      ],
+      "problems": [
+        "scrollY=3613",
+        "whole sheet pans (1430px)",
+        "table scrollLeft=520",
+        "H1 cut left (-504)",
+        "add button cut left (-504)"
+      ]
+    },
+    {
+      "mode": "phoneTable",
+      "step": "document → other document",
+      "disturbedBefore": {
+        "scrollY": 900,
+        "moved": 2
+      },
+      "url": "/journals/climate_control/documents/cmulmz1dn0002n49mhlocyt7m",
+      "scrollX": 0,
+      "scrollY": 0,
+      "maxScrollLeft": 0,
+      "docScrollWidth": 390,
+      "pan": {
+        "scrollLeft": 0,
+        "scrollWidth": 1280,
+        "clientWidth": 390,
+        "overflowX": "auto"
+      },
+      "h1": {
+        "text": "Бланк контроля температуры и влажности на складах — август 2026",
+        "left": 16,
+        "right": 374,
+        "top": 132
+      },
+      "headerAdd": null,
+      "scrollers": [
+        {
+          "el": "div[data-journal-doc-pan].max-sm:-mx-4.max-sm:overflow-x-aut",
+          "scrollLeft": 0,
+          "scrollWidth": 1280,
+          "clientWidth": 390
+        }
+      ],
+      "problems": [
+        "whole sheet pans (1280px)"
+      ]
+    },
+    {
+      "mode": "phoneTable",
+      "step": "back → document",
+      "url": "/journals/climate_control/documents/cmulmrwea00vp8w9mx1khr2fl",
+      "scrollX": 0,
+      "scrollY": 3613,
+      "maxScrollLeft": 520,
+      "docScrollWidth": 390,
+      "pan": {
+        "scrollLeft": 520,
+        "scrollWidth": 1430,
+        "clientWidth": 390,
+        "overflowX": "auto"
+      },
+      "h1": {
+        "text": "Бланк контроля температуры и влажности на складах — сентябрь 2026",
+        "left": -504,
+        "right": -146,
+        "top": 132
+      },
+      "headerAdd": {
+        "text": "Добавить строку",
+        "left": -504,
+        "right": -314.8,
+        "top": 1797.1,
+        "width": 189.2
+      },
+      "scrollers": [
+        {
+          "el": "div[data-journal-doc-pan].max-sm:-mx-4.max-sm:overflow-x-aut",
+          "scrollLeft": 520,
+          "scrollWidth": 1430,
+          "clientWidth": 390
+        },
+        {
+          "el": "div.mt-3.overflow-auto",
+          "scrollLeft": 0,
+          "scrollWidth": 426,
+          "clientWidth": 358
+        }
+      ],
+      "problems": []
+    },
+    {
+      "mode": "phoneTable",
+      "step": "direct → journal page",
+      "url": "/journals/cold_equipment_control",
+      "scrollX": 0,
+      "scrollY": 0,
+      "maxScrollLeft": 0,
+      "docScrollWidth": 390,
+      "pan": null,
+      "h1": {
+        "text": "Журнал контроля температурного режима холодильного и морозильного обор",
+        "left": 16,
+        "right": 374,
+        "top": 291
+      },
+      "headerAdd": null,
+      "scrollers": [],
+      "problems": []
+    },
+    {
+      "mode": "phoneTable",
+      "step": "journal → document (cold)",
+      "url": "/journals/cold_equipment_control/documents/cmulmrwgw00xc8w9msmn09ox6",
+      "scrollX": 0,
+      "scrollY": 902,
+      "maxScrollLeft": 776,
+      "docScrollWidth": 390,
+      "pan": {
+        "scrollLeft": 776,
+        "scrollWidth": 1166,
+        "clientWidth": 390,
+        "overflowX": "auto"
+      },
+      "h1": {
+        "text": "Журнал контроля температурного режима холодильного и морозильного обор",
+        "left": -760,
+        "right": -402,
+        "top": 132
+      },
+      "headerAdd": {
+        "text": "Добавить",
+        "left": -776,
+        "right": -644,
+        "top": 1219.1,
+        "width": 132
+      },
+      "scrollers": [
+        {
+          "el": "div[data-journal-doc-pan].max-sm:-mx-4.max-sm:overflow-x-aut",
+          "scrollLeft": 776,
+          "scrollWidth": 1166,
+          "clientWidth": 390
+        }
+      ],
+      "problems": [
+        "scrollY=902",
+        "whole sheet pans (1166px)",
+        "table scrollLeft=776",
+        "H1 cut left (-760)",
+        "add button cut left (-776)"
+      ]
+    },
+    {
+      "mode": "desktop",
+      "step": "journal → document",
+      "url": "/journals/climate_control/documents/cmulmrwea00vp8w9mx1khr2fl",
+      "scrollX": 0,
+      "scrollY": 2991,
+      "maxScrollLeft": 107,
+      "docScrollWidth": 1280,
+      "pan": {
+        "scrollLeft": 0,
+        "scrollWidth": 1248,
+        "clientWidth": 1216,
+        "overflowX": "visible"
+      },
+      "h1": {
+        "text": "Бланк контроля температуры и влажности на складах — сентябрь 2026",
+        "left": 32,
+        "right": 940.8,
+        "top": 145
+      },
+      "headerAdd": {
+        "text": "Добавить строку",
+        "left": 32,
+        "right": 212.8,
+        "top": 3059,
+        "width": 180.8
+      },
+      "scrollers": [
+        {
+          "el": "div.mb-0.max-sm:overflow-visible.overflow-x-auto.sm:mx-0.sm:",
+          "scrollLeft": 0,
+          "scrollWidth": 1280,
+          "clientWidth": 1216
+        },
+        {
+          "el": "div.max-sm:overflow-visible.overflow-x-auto.sm:mx-0.sm:px-0.",
+          "scrollLeft": 107,
+          "scrollWidth": 1430,
+          "clientWidth": 1216
+        }
+      ],
+      "problems": [
+        "scrollY=2991",
+        "table scrollLeft=107"
+      ]
+    },
+    {
+      "mode": "desktop",
+      "step": "document → other document",
+      "disturbedBefore": {
+        "scrollY": 900,
+        "moved": 2
+      },
+      "url": "/journals/climate_control/documents/cmulmz1dn0002n49mhlocyt7m",
+      "scrollX": 0,
+      "scrollY": 0,
+      "maxScrollLeft": 0,
+      "docScrollWidth": 1280,
+      "pan": {
+        "scrollLeft": 0,
+        "scrollWidth": 1248,
+        "clientWidth": 1216,
+        "overflowX": "visible"
+      },
+      "h1": {
+        "text": "Бланк контроля температуры и влажности на складах — август 2026",
+        "left": 32,
+        "right": 1152,
+        "top": 145
+      },
+      "headerAdd": null,
+      "scrollers": [
+        {
+          "el": "div.mb-0.max-sm:overflow-visible.overflow-x-auto.sm:mx-0.sm:",
+          "scrollLeft": 0,
+          "scrollWidth": 1280,
+          "clientWidth": 1216
+        },
+        {
+          "el": "div.max-sm:overflow-visible.overflow-x-auto.sm:mx-0.sm:px-0.",
+          "scrollLeft": 0,
+          "scrollWidth": 1280,
+          "clientWidth": 1216
+        }
+      ],
+      "problems": []
+    },
+    {
+      "mode": "desktop",
+      "step": "back → document",
+      "url": "/journals/climate_control/documents/cmulmrwea00vp8w9mx1khr2fl",
+      "scrollX": 0,
+      "scrollY": 2991,
+      "maxScrollLeft": 107,
+      "docScrollWidth": 1280,
+      "pan": {
+        "scrollLeft": 0,
+        "scrollWidth": 1248,
+        "clientWidth": 1216,
+        "overflowX": "visible"
+      },
+      "h1": {
+        "text": "Бланк контроля температуры и влажности на складах — сентябрь 2026",
+        "left": 32,
+        "right": 940.8,
+        "top": 145
+      },
+      "headerAdd": {
+        "text": "Добавить строку",
+        "left": 32,
+        "right": 212.8,
+        "top": 3059,
+        "width": 180.8
+      },
+      "scrollers": [
+        {
+          "el": "div.mb-0.max-sm:overflow-visible.overflow-x-auto.sm:mx-0.sm:",
+          "scrollLeft": 0,
+          "scrollWidth": 1280,
+          "clientWidth": 1216
+        },
+        {
+          "el": "div.max-sm:overflow-visible.overflow-x-auto.sm:mx-0.sm:px-0.",
+          "scrollLeft": 107,
+          "scrollWidth": 1430,
+          "clientWidth": 1216
+        }
+      ],
+      "problems": []
+    },
+    {
+      "mode": "desktop",
+      "step": "direct → journal page",
+      "url": "/journals/cold_equipment_control",
+      "scrollX": 0,
+      "scrollY": 0,
+      "maxScrollLeft": 0,
+      "docScrollWidth": 1280,
+      "pan": null,
+      "h1": {
+        "text": "Журнал контроля температурного режима холодильного и морозильного обор",
+        "left": 32,
+        "right": 796,
+        "top": 278.8
+      },
+      "headerAdd": null,
+      "scrollers": [],
+      "problems": []
+    },
+    {
+      "mode": "desktop",
+      "step": "journal → document (cold)",
+      "url": "/journals/cold_equipment_control/documents/cmulmrwgw00xc8w9msmn09ox6",
+      "scrollX": 0,
+      "scrollY": 677,
+      "maxScrollLeft": 811,
+      "docScrollWidth": 1280,
+      "pan": {
+        "scrollLeft": 0,
+        "scrollWidth": 1248,
+        "clientWidth": 1216,
+        "overflowX": "visible"
+      },
+      "h1": {
+        "text": "Журнал контроля температурного режима холодильного и морозильного обор",
+        "left": 32,
+        "right": 940.8,
+        "top": 145
+      },
+      "headerAdd": {
+        "text": "Добавить",
+        "left": -779,
+        "right": -651.8,
+        "top": 975.8,
+        "width": 127.2
+      },
+      "scrollers": [
+        {
+          "el": "div.max-sm:overflow-visible.overflow-x-auto.sm:mx-0.sm:px-0.",
+          "scrollLeft": 811,
+          "scrollWidth": 2027,
+          "clientWidth": 1216
+        }
+      ],
+      "problems": [
+        "scrollY=677",
+        "table scrollLeft=811",
+        "add button cut left (-779)"
+      ]
+    }
+  ]
+}

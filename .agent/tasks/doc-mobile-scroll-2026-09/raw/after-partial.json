@@ -1,0 +1,239 @@
+{
+  "note": "Прогон «после» по итоговому коду остановлен: на C: осталось < 700 МБ (правило окружения). Строки с ошибкой (упавший Chromium) исключены.",
+  "rows": [
+    {
+      "mode": "desktop",
+      "code": "hygiene",
+      "scrollY": 0,
+      "scrollX": 0,
+      "maxScrollLeft": 0,
+      "pan": "-",
+      "verdict": "✓"
+    },
+    {
+      "mode": "phoneTable",
+      "code": "hygiene",
+      "scrollY": 0,
+      "scrollX": 0,
+      "maxScrollLeft": 0,
+      "pan": "-",
+      "verdict": "✓"
+    },
+    {
+      "mode": "phone",
+      "code": "hygiene",
+      "scrollY": 0,
+      "scrollX": 0,
+      "maxScrollLeft": 0,
+      "pan": "-",
+      "verdict": "✓"
+    },
+    {
+      "mode": "phoneTable",
+      "code": "health_check",
+      "scrollY": 0,
+      "scrollX": 0,
+      "maxScrollLeft": 0,
+      "pan": "-",
+      "verdict": "✓"
+    },
+    {
+      "mode": "phone",
+      "code": "health_check",
+      "scrollY": 0,
+      "scrollX": 0,
+      "maxScrollLeft": 0,
+      "pan": "-",
+      "verdict": "✓"
+    },
+    {
+      "mode": "desktop",
+      "code": "health_check",
+      "scrollY": 0,
+      "scrollX": 0,
+      "maxScrollLeft": 0,
+      "pan": "-",
+      "verdict": "✓"
+    },
+    {
+      "mode": "phone",
+      "code": "climate_control",
+      "scrollY": 0,
+      "scrollX": 0,
+      "maxScrollLeft": 0,
+      "pan": "-",
+      "verdict": "✓"
+    },
+    {
+      "mode": "desktop",
+      "code": "climate_control",
+      "scrollY": 0,
+      "scrollX": 0,
+      "maxScrollLeft": 0,
+      "pan": "-",
+      "verdict": "✓"
+    },
+    {
+      "mode": "phoneTable",
+      "code": "climate_control",
+      "scrollY": 0,
+      "scrollX": 0,
+      "maxScrollLeft": 0,
+      "pan": "-",
+      "verdict": "✓"
+    },
+    {
+      "mode": "desktop",
+      "code": "cold_equipment_control",
+      "scrollY": 0,
+      "scrollX": 0,
+      "maxScrollLeft": 0,
+      "pan": "-",
+      "verdict": "✓"
+    },
+    {
+      "mode": "phoneTable",
+      "code": "cold_equipment_control",
+      "scrollY": 0,
+      "scrollX": 0,
+      "maxScrollLeft": 0,
+      "pan": "-",
+      "verdict": "✓"
+    },
+    {
+      "mode": "phone",
+      "code": "cold_equipment_control",
+      "scrollY": 0,
+      "scrollX": 0,
+      "maxScrollLeft": 0,
+      "pan": "-",
+      "verdict": "✓"
+    },
+    {
+      "mode": "phoneTable",
+      "code": "cleaning_ventilation_checklist",
+      "scrollY": 0,
+      "scrollX": 0,
+      "maxScrollLeft": 0,
+      "pan": "-",
+      "verdict": "✓"
+    },
+    {
+      "mode": "desktop",
+      "code": "cleaning_ventilation_checklist",
+      "scrollY": 0,
+      "scrollX": 0,
+      "maxScrollLeft": 0,
+      "pan": "-",
+      "verdict": "✓"
+    },
+    {
+      "mode": "phone",
+      "code": "cleaning_ventilation_checklist",
+      "scrollY": 0,
+      "scrollX": 0,
+      "maxScrollLeft": 0,
+      "pan": "-",
+      "verdict": "✓"
+    },
+    {
+      "mode": "phoneTable",
+      "code": "cleaning",
+      "scrollY": 0,
+      "scrollX": 0,
+      "maxScrollLeft": 0,
+      "pan": "-",
+      "verdict": "✓"
+    },
+    {
+      "mode": "desktop",
+      "code": "cleaning",
+      "scrollY": 0,
+      "scrollX": 0,
+      "maxScrollLeft": 0,
+      "pan": "-",
+      "verdict": "✓"
+    },
+    {
+      "mode": "phone",
+      "code": "cleaning",
+      "scrollY": 0,
+      "scrollX": 0,
+      "maxScrollLeft": 0,
+      "pan": "-",
+      "verdict": "✓"
+    },
+    {
+      "mode": "desktop",
+      "code": "general_cleaning",
+      "scrollY": 0,
+      "scrollX": 0,
+      "maxScrollLeft": 0,
+      "pan": "-",
+      "verdict": "✓"
+    },
+    {
+      "mode": "phone",
+      "code": "general_cleaning",
+      "scrollY": 0,
+      "scrollX": 0,
+      "maxScrollLeft": 0,
+      "pan": "-",
+      "verdict": "✓"
+    },
+    {
+      "mode": "phoneTable",
+      "code": "general_cleaning",
+      "scrollY": 0,
+      "scrollX": 0,
+      "maxScrollLeft": 0,
+      "pan": "-",
+      "verdict": "✓"
+    },
+    {
+      "mode": "desktop",
+      "code": "uv_lamp_runtime",
+      "scrollY": 0,
+      "scrollX": 0,
+      "maxScrollLeft": 0,
+      "pan": "-",
+      "verdict": "✓"
+    },
+    {
+      "mode": "phoneTable",
+      "code": "uv_lamp_runtime",
+      "scrollY": 0,
+      "scrollX": 0,
+      "maxScrollLeft": 0,
+      "pan": "-",
+      "verdict": "✓"
+    },
+    {
+      "mode": "phone",
+      "code": "uv_lamp_runtime",
+      "scrollY": 0,
+      "scrollX": 0,
+      "maxScrollLeft": 0,
+      "pan": "-",
+      "verdict": "✓"
+    },
+    {
+      "mode": "phoneTable",
+      "code": "finished_product",
+      "scrollY": 0,
+      "scrollX": 0,
+      "maxScrollLeft": 0,
+      "pan": "-",
+      "verdict": "✓"
+    },
+    {
+      "mode": "phone",
+      "code": "finished_product",
+      "scrollY": 0,
+      "scrollX": 0,
+      "maxScrollLeft": 0,
+      "pan": "-",
+      "verdict": "✓"
+    }
+  ]
+}

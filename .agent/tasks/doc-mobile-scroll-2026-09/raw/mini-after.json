@@ -1,0 +1,166 @@
+{
+  "label": "after",
+  "pageErrors": [],
+  "rows": [
+    {
+      "code": "climate_control",
+      "miniRoot": true,
+      "scrollX": 0,
+      "scrollY": 0,
+      "docScrollWidth": 390,
+      "maxScrollLeft": 0,
+      "pan": null,
+      "h1": {
+        "text": "Бланк контроля температуры и влажности на складах — сентябрь 2026",
+        "left": 16,
+        "right": 374,
+        "top": 132
+      },
+      "outside": null,
+      "frames": [
+        {
+          "el": "div.mb-0.journal-table-scroll.overflow-x-auto.overscroll-x-contain.rou",
+          "left": 0,
+          "right": 390,
+          "sw": 1280,
+          "cw": 390
+        },
+        {
+          "el": "div.mt-3.journal-table-scroll.overflow-x-auto.overscroll-x-contain",
+          "left": 0,
+          "right": 390,
+          "sw": 414,
+          "cw": 390
+        },
+        {
+          "el": "div.journal-table-scroll.overflow-x-auto.overscroll-x-contain.rounded-",
+          "left": 0,
+          "right": 390,
+          "sw": 1420,
+          "cw": 390
+        }
+      ]
+    },
+    {
+      "code": "cold_equipment_control",
+      "miniRoot": true,
+      "scrollX": 0,
+      "scrollY": 0,
+      "docScrollWidth": 390,
+      "maxScrollLeft": 0,
+      "pan": null,
+      "h1": {
+        "text": "Журнал контроля температурного режима холодильного и морозильного обор",
+        "left": 16,
+        "right": 374,
+        "top": 132
+      },
+      "outside": null,
+      "frames": [
+        {
+          "el": "div.journal-table-scroll.overflow-x-auto.overscroll-x-contain.rounded-",
+          "left": 0,
+          "right": 390,
+          "sw": 1150,
+          "cw": 390
+        }
+      ]
+    },
+    {
+      "code": "hygiene",
+      "miniRoot": true,
+      "scrollX": 0,
+      "scrollY": 0,
+      "docScrollWidth": 390,
+      "maxScrollLeft": 0,
+      "pan": null,
+      "h1": {
+        "text": "Гигиенический журнал (сотрудники)",
+        "left": 16,
+        "right": 374,
+        "top": 132
+      },
+      "outside": null,
+      "frames": [
+        {
+          "el": "div.journal-table-scroll.overflow-x-auto.overscroll-x-contain.rounded-",
+          "left": 0,
+          "right": 390,
+          "sw": 980,
+          "cw": 388
+        }
+      ]
+    },
+    {
+      "code": "pest_control",
+      "miniRoot": true,
+      "scrollX": 0,
+      "scrollY": 0,
+      "docScrollWidth": 390,
+      "maxScrollLeft": 0,
+      "pan": null,
+      "h1": {
+        "text": "Журнал учета дезинфекции, дезинсекции и дератизации — 2026 год",
+        "left": 16,
+        "right": 374,
+        "top": 132
+      },
+      "outside": null,
+      "frames": [
+        {
+          "el": "div.journal-table-scroll.overflow-x-auto.overscroll-x-contain.rounded-",
+          "left": 0,
+          "right": 390,
+          "sw": 1105,
+          "cw": 390
+        },
+        {
+          "el": "div.journal-table-scroll.overflow-x-auto.overscroll-x-contain.print:ov",
+          "left": 0,
+          "right": 390,
+          "sw": 400,
+          "cw": 390
+        }
+      ]
+    },
+    {
+      "code": "cleaning",
+      "miniRoot": true,
+      "scrollX": 0,
+      "scrollY": 0,
+      "docScrollWidth": 390,
+      "maxScrollLeft": 0,
+      "pan": null,
+      "h1": {
+        "text": "Журнал уборки",
+        "left": 16,
+        "right": 374,
+        "top": 132
+      },
+      "outside": null,
+      "frames": [
+        {
+          "el": "div.mb-0.journal-table-scroll.overflow-x-auto.overscroll-x-contain.rou",
+          "left": 0,
+          "right": 390,
+          "sw": 1226,
+          "cw": 390
+        },
+        {
+          "el": "div.journal-table-scroll.overflow-x-auto.overscroll-x-contain.rounded-",
+          "left": 0,
+          "right": 390,
+          "sw": 1226,
+          "cw": 390
+        },
+        {
+          "el": "div.mt-8.journal-table-scroll.overflow-x-auto.overscroll-x-contain.rou",
+          "left": 0,
+          "right": 390,
+          "sw": 640,
+          "cw": 390
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "label": "after",
+  "engine": "webkit",
+  "pageErrors": [
+    "/localhost:3181/api/support/chat/status due to access control checks.",
+    "ResizeObserver loop completed with undelivered notifications."
+  ],
+  "rows": [
+    {
+      "code": "climate_control",
+      "scrollX": 0,
+      "scrollY": 0,
+      "docScrollWidth": 390,
+      "maxScrollLeft": 0,
+      "h1Left": 16,
+      "outside": null,
+      "swipe": {
+        "frames": 3,
+        "framesScrolled": [
+          400,
+          36,
+          400
+        ],
+        "h1Left": 16,
+        "addLeft": 16
+      }
+    },
+    {
+      "code": "cold_equipment_control",
+      "scrollX": 0,
+      "scrollY": 0,
+      "docScrollWidth": 390,
+      "maxScrollLeft": 0,
+      "h1Left": 16,
+      "outside": null,
+      "swipe": {
+        "frames": 1,
+        "framesScrolled": [
+          400
+        ],
+        "h1Left": 16,
+        "addLeft": 16
+      }
+    },
+    {
+      "code": "pest_control",
+      "scrollX": 0,
+      "scrollY": 0,
+      "docScrollWidth": 390,
+      "maxScrollLeft": 0,
+      "h1Left": 16,
+      "outside": null,
+      "swipe": {
+        "frames": 1,
+        "framesScrolled": [
+          400
+        ],
+        "h1Left": 16,
+        "addLeft": 16
+      }
+    }
+  ]
+}

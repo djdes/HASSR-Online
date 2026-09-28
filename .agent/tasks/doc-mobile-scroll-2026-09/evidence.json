@@ -1,0 +1,974 @@
+{
+  "task": "doc-mobile-scroll-2026-09",
+  "branch": "fix/doc-mobile-scroll-2026-09-28",
+  "base": "bc243840",
+  "codeCommit": "312ae009",
+  "rootCauses": [
+    "На телефоне горизонтальным скроллером была обёртка страницы документа ([data-journal-doc-pan], max-sm:overflow-x-auto), а своя прокрутка таблиц гасилась (max-sm:overflow-visible + зона в globals.css): вбок ехала вся страница, шапка уезжала за левый край. Вид «Таблица»: 44 из 45 журналов, лист 641–2648 px; вид по умолчанию: гигиена 981, фритюр 588.",
+    "FocusTodayScroller always (климат, холодильники, уборка) при каждом открытии scrollIntoView(center, center): телефон — климат y=3613 и лист 520 (H1 x=−504), холодильники y=902/776, уборка y=552/852; компьютер — климат y=2991/107, холодильники y=677/811, уборка y=393/282; то же при клиентской навигации, «Назад» и в мини-приложении."
+  ],
+  "sharedFrame": {
+    "class": "journal-table-scroll",
+    "tokens": [
+      "JOURNAL_TABLE_SCROLL_CLASS",
+      "JOURNAL_TABLE_VIEWPORT_CLASS",
+      "GRID_VIEWPORT_CLASS",
+      "GRID_VIEWPORT_WIDE_CLASS"
+    ],
+    "phoneCss": "[data-journal-doc] .journal-table-scroll { margin-inline: -1rem; border-radius: 0 } + вложенная — margin-inline: 0 (screen, max-width 639px)",
+    "headerComponents": [
+      "DocumentToolbarRow (описание + кнопки)",
+      "DOC_ADD_ROW_IN_SHEET_CLASS (липкий ряд «Добавить» в листе)",
+      "JournalDocumentShell: шапка/заголовок/«Добавить» над рамкой на телефоне, tablesInOwnFrames"
+    ]
+  },
+  "todayDecision": "Автопрокрутка к «сегодня» при открытии снята и на телефоне, и на компьютере (на компьютере она тоже сдвигала страницу: y до 2991, таблица до 811 px). «Сегодня» подсвечено; «Перейти» в полосе прогресса и ?focus=today — по явному действию.",
+  "e2e": {
+    "before": {
+      "documentMeasurements": 135,
+      "withProblem": 49,
+      "journalPages": 90,
+      "journalPagesWithProblem": 0
+    },
+    "afterFinalCode": {
+      "fullRunStoppedBy": "правило окружения: на C: < 700 МБ (667 МБ) — dev-сервер остановлен, .next-e2e удалён",
+      "measured": 26,
+      "measuredWithProblem": 0,
+      "notMeasured": 104,
+      "journalsFull": [
+        "hygiene",
+        "health_check",
+        "climate_control",
+        "cold_equipment_control",
+        "cleaning_ventilation_checklist",
+        "cleaning",
+        "general_cleaning",
+        "uv_lamp_runtime",
+        "finished_product (без компьютера)"
+      ],
+      "probes": [
+        "pest_control phone+desktop ✓",
+        "disinfectant_usage phone+desktop ✓",
+        "accident_journal phone ✓"
+      ],
+      "navigation": "климат/холодильники, телефон «Таблица» и компьютер: журнал → документ, документ → другой документ, «Назад», журнал → документ — все y=0, рамки 0",
+      "miniShell": "5 журналов — y=0, рамки 0 (до: климат y=3892)",
+      "webkit": "климат, холодильники, дезинсекция — y=0, рамки 0; после сдвига рамок H1 и «Добавить» на x=16",
+      "headerRow": "360/390: кнопка под описанием во всю ширину; 640/768/1280: описание и кнопка в одну строку"
+    }
+  },
+  "checks": {
+    "typecheck": "0 ошибок",
+    "tests": "2748 pass / 0 fail",
+    "guardTest": "journal-table-scroll.test.ts 10/10",
+    "eslintChangedFiles": "0 ошибок (33 старых предупреждения)"
+  },
+  "acceptance": {
+    "AC1": "PASS по замеренным (страница 390 px, вбок едут только рамки таблиц; 0 проблем в 26 замерах + пробы + мини + WebKit); полный прогон «после» по 45 журналам не досчитан из-за места на C:",
+    "AC2": "PASS по замеренным (прямая загрузка и клиентская навигация: y=0, scrollLeft=0)",
+    "AC3": "PASS (header.cjs на 360–1280 px)",
+    "AC4": "ЧАСТИЧНО: e2e «до» — все 45 журналов; «после» — 9 журналов полностью + 3 пробами; снимки, typecheck и тесты — есть"
+  },
+  "byJournal": [
+    {
+      "code": "hygiene",
+      "journal": "Гигиенический журнал (сотрудники)",
+      "phone": {
+        "before": "✗ вбок едет вся страница (981px)",
+        "after": "✓"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (981px)",
+        "after": "✓"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "✓"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "health_check",
+      "journal": "Журнал здоровья",
+      "phone": {
+        "before": "✓",
+        "after": "✓"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1100px)",
+        "after": "✓"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "✓"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "climate_control",
+      "journal": "Бланк контроля температуры и влажности на складах",
+      "phone": {
+        "before": "✓",
+        "after": "✓"
+      },
+      "phoneTable": {
+        "before": "✗ окно y=3613, вбок едет вся страница (1430px), таблица sl=520, H1 срезан (-504), «Добавить» срезана (-504)",
+        "after": "✓"
+      },
+      "desktop": {
+        "before": "✗ окно y=2991, таблица sl=107",
+        "after": "✓"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "cold_equipment_control",
+      "journal": "Журнал контроля температурного режима холодильного и морозильного оборудования",
+      "phone": {
+        "before": "✓",
+        "after": "✓"
+      },
+      "phoneTable": {
+        "before": "✗ окно y=902, вбок едет вся страница (1166px), таблица sl=776, H1 срезан (-760), «Добавить» срезана (-776)",
+        "after": "✓"
+      },
+      "desktop": {
+        "before": "✗ окно y=677, таблица sl=811, «Добавить» срезана (-779)",
+        "after": "✓"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "cleaning_ventilation_checklist",
+      "journal": "Чек-лист уборки и проветривания помещений",
+      "phone": {
+        "before": "✓",
+        "after": "✓"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1141px)",
+        "after": "✓"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "✓"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "cleaning",
+      "journal": "Журнал уборки",
+      "phone": {
+        "before": "✓",
+        "after": "✓"
+      },
+      "phoneTable": {
+        "before": "✗ окно y=552, вбок едет вся страница (1242px), таблица sl=852, H1 срезан (-836), «Добавить» срезана (-836)",
+        "after": "✓"
+      },
+      "desktop": {
+        "before": "✗ окно y=393, таблица sl=282",
+        "after": "✓"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "general_cleaning",
+      "journal": "График и учет генеральных уборок",
+      "phone": {
+        "before": "✓",
+        "after": "✓"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (641px)",
+        "after": "✓"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "✓"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "uv_lamp_runtime",
+      "journal": "Журнал учета работы УФ бактерицидной установки",
+      "phone": {
+        "before": "✓",
+        "after": "✓"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1292px)",
+        "after": "✓"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "✓"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "finished_product",
+      "journal": "Журнал бракеража готовой пищевой продукции",
+      "phone": {
+        "before": "✓",
+        "after": "✓"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1090px)",
+        "after": "✓"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "perishable_rejection",
+      "journal": "Журнал бракеража скоропортящейся пищевой продукции",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1120px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "incoming_control",
+      "journal": "Журнал приемки и входного контроля продукции",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1120px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "fryer_oil",
+      "journal": "Журнал учета использования фритюрных жиров",
+      "phone": {
+        "before": "✗ вбок едет вся страница (588px)",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1159px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "med_books",
+      "journal": "Медицинские книжки",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1377px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "training_plan",
+      "journal": "План обучения персонала",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (901px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "staff_training",
+      "journal": "Журнал регистрации инструктажей (обучения) сотрудников",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (2328px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "disinfectant_usage",
+      "journal": "Журнал учета дезинфицирующих средств",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1069px)",
+        "after": "✓ (проба)"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "✓ (проба)"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "sanitary_day_control",
+      "journal": "Чек-лист (памятка) проведения санитарного дня",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1648px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "equipment_maintenance",
+      "journal": "График профилактического обслуживания оборудования",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1216px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "breakdown_history",
+      "journal": "Карточка истории поломок",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (2109px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "equipment_calibration",
+      "journal": "График поверки средств измерений",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1853px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "incoming_raw_materials_control",
+      "journal": "Журнал входного контроля сырья, ингредиентов, упаковочных материалов",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1276px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "ppe_issuance",
+      "journal": "Журнал учета выдачи СИЗ",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (2648px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "accident_journal",
+      "journal": "Журнал учета аварий",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1783px)",
+        "after": "✓ (проба)"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "complaint_register",
+      "journal": "Журнал регистрации жалоб",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1659px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "product_writeoff",
+      "journal": "Акт забраковки",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1464px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "audit_plan",
+      "journal": "План-программа внутренних аудитов",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (986px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "audit_protocol",
+      "journal": "Протокол внутреннего аудита",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (938px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "audit_report",
+      "journal": "Отчет о внутреннем аудите",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "traceability_test",
+      "journal": "Журнал прослеживаемости продукции",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1496px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "metal_impurity",
+      "journal": "Журнал учета металлопримесей в сырье",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1639px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "equipment_cleaning",
+      "journal": "Журнал мойки и дезинфекции оборудования",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (2154px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "intensive_cooling",
+      "journal": "Журнал контроля интенсивного охлаждения горячих блюд",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1666px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "glass_items_list",
+      "journal": "Перечень изделий из стекла и хрупкого пластика",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1116px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "glass_control",
+      "journal": "Журнал контроля изделий из стекла и хрупкого пластика",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1642px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "pest_control",
+      "journal": "Журнал учета дезинфекции, дезинсекции и дератизации",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1110px)",
+        "after": "✓ (проба)"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "✓ (проба)"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "daily_samples",
+      "journal": "Журнал отбора и хранения суточных проб",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1356px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "vitaminization",
+      "journal": "Журнал проведения витаминизации третьих и сладких блюд",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1356px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "ration_control",
+      "journal": "Ведомость контроля за рационом питания",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1056px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "transport_temperature",
+      "journal": "Журнал контроля температуры при транспортировке",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1356px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "tableware_breakage",
+      "journal": "Журнал учёта боя посуды",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1206px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "pool_water_control",
+      "journal": "Журнал контроля качества воды в бассейне",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1656px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "inventory_condition",
+      "journal": "Журнал оценки состояния металлического и пластикового инвентаря",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1206px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "instrument_sterilization",
+      "journal": "Журнал контроля стерилизации инструментов",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1206px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "medical_waste_b",
+      "journal": "Журнал учёта отходов класса Б",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1206px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    },
+    {
+      "code": "batch_release",
+      "journal": "Журнал допуска партии продукции к отгрузке",
+      "phone": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "phoneTable": {
+        "before": "✗ вбок едет вся страница (1206px)",
+        "after": "не замерено"
+      },
+      "desktop": {
+        "before": "✓",
+        "after": "не замерено"
+      },
+      "journalPage": {
+        "before": "✓ / ✓",
+        "after": "не замерено"
+      }
+    }
+  ]
+}
