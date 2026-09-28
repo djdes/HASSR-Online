@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ArrowRight, Building2, CheckCircle2, Gift, Users } from "lucide-react";
 
+import { PromoPrice } from "@/components/pricing/promo-price";
+import type { PriceWithPromotion } from "@/lib/promo/promotions";
 import { cn } from "@/lib/utils";
 
 /**
@@ -29,11 +31,15 @@ export function PlanCard({
   note,
   ctaDisabled,
   touch = false,
+  price,
 }: {
   kind: "free" | "team" | "network";
   name: string;
   from: string;
   period: string;
+  /// Цена с акцией (lib/promo). Идёт акция — старая цена зачёркнута,
+  /// рядом новая и плашка «−N % до …»; нет — показываем `from`.
+  price?: PriceWithPromotion;
   /// Подводка над списком — «Всё из Бесплатного, плюс:». Нужна, чтобы
   /// не дублировать в платном тарифе половину бесплатного.
   pointsIntro?: string;
@@ -91,19 +97,40 @@ export function PlanCard({
             </span>
           )}
         </div>
-        <div className="mt-6 flex items-baseline gap-2">
-          <span className="text-[34px] font-semibold tracking-[-0.02em]">
-            {from}
-          </span>
-          <span
-            className={cn(
-              touch ? "text-[16px] sm:text-[13px]" : "text-[13px]",
-              highlighted ? "text-white/60" : "text-[#9b9fb3]",
-            )}
-          >
-            {period}
-          </span>
-        </div>
+        {price?.promotion ? (
+          <PromoPrice
+            price={price}
+            size="xl"
+            layout="stacked"
+            tone={highlighted ? "dark" : "light"}
+            className="mt-5"
+            suffix={
+              <span
+                className={cn(
+                  "ml-2",
+                  touch ? "text-[16px] sm:text-[13px]" : "text-[13px]",
+                  highlighted ? "text-white/60" : "text-[#9b9fb3]",
+                )}
+              >
+                {period}
+              </span>
+            }
+          />
+        ) : (
+          <div className="mt-6 flex items-baseline gap-2">
+            <span className="text-[34px] font-semibold tracking-[-0.02em]">
+              {from}
+            </span>
+            <span
+              className={cn(
+                touch ? "text-[16px] sm:text-[13px]" : "text-[13px]",
+                highlighted ? "text-white/60" : "text-[#9b9fb3]",
+              )}
+            >
+              {period}
+            </span>
+          </div>
+        )}
         {pointsIntro ? (
           <div
             className={cn(

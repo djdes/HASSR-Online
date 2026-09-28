@@ -48,6 +48,8 @@ type OrderForClosing = {
   refundedAt: Date | null;
   promoCode: string | null;
   discountRub: number;
+  promotionPercent: number | null;
+  promotionDiscountRub: number;
 };
 
 export function closingEligibility(
@@ -86,6 +88,8 @@ async function loadOrder(orderId: number): Promise<OrderForClosing | null> {
       refundedAt: true,
       promoCode: true,
       discountRub: true,
+      promotionPercent: true,
+      promotionDiscountRub: true,
     },
   });
 }
@@ -145,6 +149,8 @@ export async function ensureClosingDocument(
       bundleConfig: order.bundleConfig,
       promoCode: order.promoCode,
       discountRub: order.discountRub,
+      promotionPercent: order.promotionPercent,
+      promotionDiscountRub: order.promotionDiscountRub,
     },
     tariff: tariff ? { title: tariff.title, periodDays: tariff.periodDays } : null,
     subscriptionEnd: options.subscriptionEnd ?? null,

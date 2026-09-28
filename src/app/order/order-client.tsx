@@ -20,6 +20,8 @@ import {
 } from "@/lib/hardware-pricing";
 import { ROBOKASSA_IFRAME_SCRIPT_URL } from "@/lib/robokassa-constants";
 import type { Tariff } from "@/lib/tariffs";
+import type { SubscriptionOffer } from "@/lib/promo/promotions";
+import { PromoPrice } from "@/components/pricing/promo-price";
 import {
   RECURRING_CONSENT_TEXT,
   RECURRING_OFFER_HREF,
@@ -77,6 +79,7 @@ function formatRub(value: number): string {
  */
 export function OrderClient({
   tariff,
+  offer = null,
   bundleConfig,
   amountRub,
   returnParams,
@@ -86,6 +89,8 @@ export function OrderClient({
   pointsCap = 0,
 }: {
   tariff: Tariff | null;
+  /// Цена подписки с действующей акцией (сервер). amountRub уже её учитывает.
+  offer?: SubscriptionOffer | null;
   bundleConfig: Record<string, number> | null;
   amountRub: number;
   returnParams: ReturnParams;
@@ -109,6 +114,7 @@ export function OrderClient({
   ) : (
     <Checkout
       tariff={tariff}
+      offer={offer}
       bundleConfig={bundleConfig}
       amountRub={amountRub}
       sessionEmail={sessionEmail}
@@ -123,6 +129,7 @@ export function OrderClient({
 
 function Checkout({
   tariff,
+  offer = null,
   bundleConfig,
   amountRub,
   sessionEmail,
@@ -131,6 +138,7 @@ function Checkout({
   pointsCap = 0,
 }: {
   tariff: Tariff | null;
+  offer?: SubscriptionOffer | null;
   bundleConfig: Record<string, number> | null;
   amountRub: number;
   sessionEmail: string;
@@ -138,6 +146,7 @@ function Checkout({
   pointsAvailable?: number;
   pointsCap?: number;
 }) {
+  const router = useRouter();
   const [email, setEmail] = useState(sessionEmail);
   // По умолчанию выключено — этого требует Робокасса: согласие на
   // автосписание человек даёт сам, а не получает вместе с формой.
@@ -301,6 +310,13 @@ function Checkout({
       : 0;
   const netRub = Math.max(0, amountAfterPromo - pointsSpent);
   const showPointsBlock = pointsAvailable > 0;
+  // Цена подписки с акцией для строки «Подписка»: без акции — цена тарифа.
+  const subscriptionPrice = offer ?? {
+    baseRub: tariff.priceRub,
+    priceRub: tariff.priceRub,
+    discountRub: 0,
+    promotion: null,
+  };
   async function applyPromo() {
     const code = promoInput.trim();
     if (!code || !tariff) return;
@@ -317,7 +333,17 @@ function Checkout({
         message?: string;
         code?: string;
         discountRub?: number;
+        offerRub?: number;
       };
+      // Акция началась или кончилась, пока страница была открыта: скидка
+      // промокода посчитана от другой цены — обновляем страницу, сумма
+      // пересчитается, промокод нужно применить ещё раз.
+      if (typeof data.offerRub === "number" && data.offerRub !== subscriptionPrice.priceRub) {
+        setPromo(null);
+        setPromoError("Цена подписки изменилась — обновили сумму. Нажмите «Применить» ещё раз");
+        router.refresh();
+        return;
+      }
       if (!res.ok || !data.ok || !data.code) {
         setPromo(null);
         setPromoError(data.message ?? "Промокод не подошёл");
@@ -346,12 +372,22 @@ function Checkout({
           recurringConsent,
           usePoints: pointsSpent > 0,
           promoCode: promo?.code,
+          // Сверка, не сумма: сервер считает сам и откажет, если за время
+          // на странице цена изменилась (закончилась или началась акция).
+          expectedGrossRub: amountAfterPromo,
         }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(data.error ?? "Не удалось создать заказ");
         setLoading(false);
+        if (data.code === "price-changed") {
+          if (promo) {
+            setPromo(null);
+            setPromoError("Цена изменилась — нажмите «Применить» ещё раз");
+          }
+          router.refresh();
+        }
         return;
       }
       // Заказ полностью закрыт баллами — кассы в этой дороге нет,
@@ -396,11 +432,22 @@ function Checkout({
             {formatRub(netRub)}
           </span>
         </div>
-        {items.length > 0 || pointsSpent > 0 || discountRub > 0 ? (
+        {items.length > 0 || pointsSpent > 0 || discountRub > 0 || subscriptionPrice.promotion ? (
           <ul className="mt-4 space-y-1.5 border-t border-[#ececf4] pt-4">
-            <li className="flex justify-between gap-3 text-[13px] text-[#3c4053]">
+            {/* Акция — прямо в строке подписки: старая цена зачёркнута,
+                новая и плашка «−N % до …». Промокод и баллы — ниже, от
+                цены с акцией. */}
+            <li
+              data-testid="order-subscription-line"
+              className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-[13px] text-[#3c4053]"
+            >
               <span>Подписка на {tariff.periodDays} дн.</span>
-              <span className="tabular-nums">{formatRub(tariff.priceRub)}</span>
+              <PromoPrice
+                price={subscriptionPrice}
+                size="text"
+                tone="inherit"
+                className="justify-end"
+              />
             </li>
             {items.map(({ device, qty }) => (
               <li
@@ -464,7 +511,8 @@ function Checkout({
         </div>
         {promo ? (
           <p className="mt-2 text-[12px] text-[#116b2a]">
-            Промокод {promo.code} применён: −{formatRub(promo.discountRub)} от подписки.
+            Промокод {promo.code} применён: −{formatRub(promo.discountRub)} от подписки
+            {subscriptionPrice.promotion ? " (считается от цены по акции)" : ""}.
           </p>
         ) : promoError ? (
           <p className="mt-2 text-[12px] text-[#a13a32]">{promoError}</p>
@@ -593,7 +641,8 @@ function Checkout({
           ) : netRub === 0 ? (
             <>
               <Coins className="size-4" />
-              Оплатить баллами
+              {/* Ноль бывает и без баллов — промокод на 100 %. */}
+              {pointsSpent > 0 ? "Оплатить баллами" : "Оформить без оплаты"}
             </>
           ) : (
             <>

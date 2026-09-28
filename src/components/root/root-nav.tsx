@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Activity,
+  BadgePercent,
   Bot,
   ChevronDown,
   ClipboardList,
@@ -76,6 +77,7 @@ const NAV: NavEntry[] = [
     icon: Wallet,
     items: [
       { href: "/root/tariffs", label: "Тарифы", icon: Wallet },
+      { href: "/root/promotions", label: "Акции", icon: BadgePercent },
       { href: "/root/promo-codes", label: "Промокоды", icon: Ticket },
       { href: "/root/services", label: "Услуги", icon: Sparkles },
       { href: "/root/service-requests", label: "Заявки на услуги", icon: ClipboardList },

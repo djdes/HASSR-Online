@@ -78,6 +78,17 @@ describe("buildClosingLines", () => {
     assert.match(doc.lines[0].title, /Скидка баллами: 500 ₽/);
   });
 
+  it("акция и промокод поверх неё — обе скидки в описании, сумма = оплате", () => {
+    // 1990 − 20 % = 1592; промокод −10 % от 1592 = −159 → 1433.
+    const doc = buildClosingDocument(
+      input({ amountRub: 1433, promotionPercent: 20, promotionDiscountRub: 398, promoCode: "START10", discountRub: 159 })
+    );
+    assert.equal(doc.totalRub, 1433);
+    const title = doc.lines[0].title.replace(/[\u00a0\u202f]/g, " ");
+    assert.match(title, /Скидка по акции \(−20 %\): 398 ₽/);
+    assert.match(title, /Промокод START10: −159 ₽/);
+  });
+
   it("комплект: оборудование строками по каталогу, услуге — остаток", () => {
     const lines = buildClosingLines(
       input({ amountRub: 1990 + 3490 * 2 + 490 * 5, bundleConfig: { temp: 2, nfc: 5, ghost: 3 } })

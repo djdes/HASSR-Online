@@ -6,6 +6,7 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getBalance } from "@/lib/balance/ledger";
 import { readTariffs, fallbackTariffs, TARIFF_BUNDLE } from "@/lib/tariffs";
 import { normalizeHardwareConfig, hardwareTotal } from "@/lib/hardware-pricing";
+import { getDisplayOffer } from "@/lib/promo/offer";
 import { OrderClient } from "./order-client";
 import { redirect } from "next/navigation";
 import { isMobileAppRequest, MOBILE_APP_HOME } from "@/lib/mobile-app-payments";
@@ -59,8 +60,13 @@ export default async function OrderPage({
     bundleConfig = normalizeHardwareConfig(decodeConfig(first("cfg")));
   }
 
-  const amountRub = tariff
-    ? tariff.priceRub + (bundleConfig ? hardwareTotal(bundleConfig) : 0)
+  // Цена подписки с действующей акцией — та же, что на витринах. Здесь
+  // она только для показа: сумму к оплате заново посчитает сервер при
+  // создании заказа и сверит с этой (акция могла кончиться, пока открыта
+  // страница).
+  const offer = tariff ? await getDisplayOffer(tariff) : null;
+  const amountRub = offer
+    ? offer.priceRub + (bundleConfig ? hardwareTotal(bundleConfig) : 0)
     : 0;
 
   // Баллы показываем только тому, кто может распоряжаться деньгами
@@ -80,13 +86,14 @@ export default async function OrderPage({
       <main className="mx-auto w-full max-w-[720px] px-4 py-10 sm:px-6 md:py-14">
         <OrderClient
           tariff={tariff}
+          offer={offer}
           bundleConfig={bundleConfig}
           amountRub={amountRub}
           sessionEmail={sessionEmail}
           pointsAvailable={pointsAvailable}
           // Баллами оплачивается только подписка: оборудование —
           // физический товар с себестоимостью.
-          pointsCap={tariff?.priceRub ?? 0}
+          pointsCap={offer?.priceRub ?? 0}
           // Пришли из кабинета по кнопке «Включить автопродление».
           recurringDefault={first("recurring") === "1"}
           returnParams={{

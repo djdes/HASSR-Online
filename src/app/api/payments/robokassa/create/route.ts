@@ -5,7 +5,9 @@ import { authOptions } from "@/lib/auth";
 import { getActiveOrgId, isImpersonating } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { resolvePromo } from "@/lib/promo/service";
-import { readTariff, TARIFF_BUNDLE } from "@/lib/tariffs";
+import { getSubscriptionOffer } from "@/lib/promo/offer";
+import { computeCheckoutAmounts, orderDiscountNote } from "@/lib/promo/promotions";
+import { TARIFF_BUNDLE } from "@/lib/tariffs";
 import {
   hardwareTotal,
   normalizeHardwareConfig,
@@ -39,8 +41,12 @@ export const dynamic = "force-dynamic";
  *
  * Сумма считается ТОЛЬКО на сервере: с клиента приходит состав корзины
  * (`{ deviceId: qty }`) и тумблер «списать баллы», а рубли берутся из
- * БД-тарифа, прайса железа и баланса организации. Иначе можно было бы
- * прислать «оплачу за 1 ₽».
+ * БД-тарифа, действующей акции, промокода, прайса железа и баланса
+ * организации. Иначе можно было бы прислать «оплачу за 1 ₽».
+ *
+ * `expectedGrossRub` от клиента — не сумма к оплате, а сверка: если за
+ * время на странице акция закончилась (или началась), заказ не создаём и
+ * просим проверить новую сумму, чтобы в кассе не всплыла другая цифра.
  */
 
 const createOrderRateLimiter = createRateLimiter({
@@ -111,21 +117,24 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const tariff = await readTariff(tariffKey);
-  if (!tariff) {
+  // Один момент на акцию и сроки промокода: граница акции не должна
+  // пройти между двумя проверками одного заказа.
+  const now = new Date();
+  // Цена тарифа с действующей акцией — та же функция, что у витрин.
+  const offer = await getSubscriptionOffer(now, tariffKey);
+  if (!offer) {
     return NextResponse.json({ error: "Тариф недоступен" }, { status: 400 });
   }
 
   const bundleConfig =
-    tariff.key === TARIFF_BUNDLE
+    offer.tariffKey === TARIFF_BUNDLE
       ? normalizeHardwareConfig(body.bundleConfig)
       : null;
-  const grossRub =
-    tariff.priceRub + (bundleConfig ? hardwareTotal(bundleConfig) : 0);
+  const hardwareRub = bundleConfig ? hardwareTotal(bundleConfig) : 0;
 
   // Проверка по ПОЛНОЙ сумме: заказ, полностью закрытый баллами, —
   // нормальный сценарий, а вот пустая корзина без подписки — нет.
-  if (grossRub <= 0) {
+  if (offer.priceRub + hardwareRub <= 0) {
     return NextResponse.json(
       { error: "Сумма заказа получилась нулевой — выберите оборудование" },
       { status: 400 },
@@ -133,8 +142,8 @@ export async function POST(request: NextRequest) {
   }
 
   const description = bundleConfig
-    ? `${tariff.title} (подписка на ${tariff.periodDays} дн. + оборудование)`
-    : `${tariff.title} на ${tariff.periodDays} дн.`;
+    ? `${offer.tariffTitle} (подписка на ${offer.periodDays} дн. + оборудование)`
+    : `${offer.tariffTitle} на ${offer.periodDays} дн.`;
 
   // Галочка автосписаний. Не проставлена — платёж разовый: нажатие
   // «Оплатить» без галочки обязано просто провести оплату, а не требовать
@@ -149,23 +158,57 @@ export async function POST(request: NextRequest) {
       : null;
   const usePoints =
     body.usePoints !== false && !recurringConsent && Boolean(organizationId);
-  // Промокод: скидка от цены подписки, считается здесь, не в браузере.
-  // Неподходящий код — ошибка, а не молчаливая оплата без скидки.
+  // Промокод: скидка от цены подписки С АКЦИЕЙ, считается здесь, не в
+  // браузере. Неподходящий код — ошибка, а не молчаливая оплата без скидки.
   const promoRaw = typeof body.promoCode === "string" ? body.promoCode : "";
   let promoCode: string | null = null;
-  let discountRub = 0;
+  let promoRule: { kind: "percent" | "fixed"; value: number } | null = null;
   if (promoRaw.trim()) {
     const promo = await resolvePromo(promoRaw, {
       organizationId,
-      subscriptionRub: tariff.priceRub,
+      subscriptionRub: offer.priceRub,
+      email,
+      now,
     });
     if (!promo.ok) return NextResponse.json({ error: promo.message }, { status: 400 });
     promoCode = promo.code;
-    discountRub = promo.discountRub;
+    promoRule = promo.rule;
   }
-  // Описание заказа с промокодом — оно же в чеке, УПД и ответе клиенту.
-  const orderDescription = promoCode
-    ? `${description} (промокод ${promoCode}: −${discountRub} ₽)`
+  const amounts = computeCheckoutAmounts({
+    baseRub: offer.baseRub,
+    promotion: offer.promotion,
+    promo: promoRule,
+    hardwareRub,
+  });
+
+  // Сверка с тем, что человек видел на странице (см. комментарий вверху).
+  const expectedGrossRub = body.expectedGrossRub;
+  if (typeof expectedGrossRub === "number" && Math.round(expectedGrossRub) !== amounts.grossRub) {
+    console.info(
+      `[promo] order refused: price changed (expected ${expectedGrossRub} ₽, now ${amounts.grossRub} ₽, promotion ${offer.promotion?.id ?? "none"})`,
+    );
+    return NextResponse.json(
+      {
+        error: offer.promotion
+          ? "Цена изменилась: действует акция. Проверьте новую сумму и нажмите ещё раз"
+          : "Цена изменилась: акция уже закончилась. Проверьте новую сумму и нажмите ещё раз",
+        code: "price-changed",
+        grossRub: amounts.grossRub,
+      },
+      { status: 409 },
+    );
+  }
+
+  // Описание заказа с акцией и промокодом — оно же в чеке, УПД и ответе
+  // клиенту.
+  const discountNote = orderDiscountNote({
+    promotion: offer.promotion,
+    promotionDiscountRub: amounts.promotionDiscountRub,
+    promoCode,
+    promoDiscountRub: amounts.promoDiscountRub,
+  });
+  const orderDescription = discountNote
+    ? `${description} (${discountNote})`
     : description;
 
   // Метка партнёра (cookie с /p/<slug>) едет в заказ: после оплаты
@@ -181,12 +224,16 @@ export async function POST(request: NextRequest) {
     organizationId,
     userId: session?.user?.id ?? null,
     email,
-    tariffKey: tariff.key,
+    tariffKey: offer.tariffKey,
     description: orderDescription,
-    grossRub: grossRub - discountRub,
-    subscriptionRub: tariff.priceRub - discountRub,
+    grossRub: amounts.grossRub,
+    subscriptionRub: amounts.subscriptionRub,
     promoCode,
-    discountRub,
+    discountRub: amounts.promoDiscountRub,
+    baseRub: amounts.baseRub,
+    promotionId: offer.promotion?.id ?? null,
+    promotionPercent: offer.promotion?.percent ?? null,
+    promotionDiscountRub: amounts.promotionDiscountRub,
     bundleConfig,
     isTest: isTestMode(),
     recurringConsent,
@@ -194,6 +241,15 @@ export async function POST(request: NextRequest) {
     referrerOrganizationId: referrer?.id ?? null,
     usePoints,
   });
+  console.info(
+    `[promo] order #${order.id} ${offer.tariffKey}: base ${amounts.baseRub} ₽` +
+      (offer.promotion
+        ? ` → promotion ${offer.promotion.id} −${offer.promotion.percent}% = ${amounts.offerRub} ₽`
+        : "") +
+      (promoCode ? ` → promo ${promoCode} −${amounts.promoDiscountRub} ₽` : "") +
+      (amounts.hardwareRub ? ` + hardware ${amounts.hardwareRub} ₽` : "") +
+      ` = ${amounts.grossRub} ₽, points ${order.pointsSpent}, to pay ${order.amountRub} ₽`,
+  );
 
   if (recurringConsent) {
     // Историю согласий Робокасса требует хранить отдельно: в споре о

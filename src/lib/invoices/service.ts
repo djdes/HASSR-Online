@@ -7,6 +7,8 @@ import { sendInvoiceEmail } from "@/lib/email";
 import type { LegalProfile } from "@/lib/org-legal-profile";
 import { completePaidOrder } from "@/lib/payment-fulfillment";
 import { notifyPlatformAdmin } from "@/lib/platform-admin";
+import { getSubscriptionOffer } from "@/lib/promo/offer";
+import { orderDiscountNote } from "@/lib/promo/promotions";
 import { isTestMode } from "@/lib/robokassa";
 import { readTariff } from "@/lib/tariffs";
 
@@ -67,8 +69,11 @@ export async function createInvoiceOrder(args: {
   if (!buyer.inn) {
     return { ok: false, status: 400, error: "Укажите ИНН организации в настройках — без него счёт не оформить" };
   }
-  const tariff = await readTariff(args.tariffKey);
-  if (!tariff || !tariff.active) return { ok: false, status: 400, error: "Тариф недоступен" };
+  // Цена с действующей акцией — та же, что в кабинете рядом с кнопкой.
+  // Счёт фиксирует её на свой срок: оплатят после конца акции — всё
+  // равно по сумме счёта.
+  const offer = await getSubscriptionOffer(new Date(), args.tariffKey);
+  if (!offer) return { ok: false, status: 400, error: "Тариф недоступен" };
 
   const existing = await db.paymentOrder.findFirst({
     where: { organizationId: args.organizationId, paymentMethod: "invoice", status: "pending" },
@@ -76,20 +81,35 @@ export async function createInvoiceOrder(args: {
   });
   if (existing) return { ok: true, order: existing, created: false };
 
+  const note = orderDiscountNote({
+    promotion: offer.promotion,
+    promotionDiscountRub: offer.discountRub,
+    promoCode: null,
+    promoDiscountRub: 0,
+  });
   const order = await db.paymentOrder.create({
     data: {
       email: args.email,
-      tariffKey: tariff.key,
-      amountRub: tariff.priceRub,
-      description: `${tariff.title} на ${tariff.periodDays} дн. (счёт)`,
+      tariffKey: offer.tariffKey,
+      amountRub: offer.priceRub,
+      description: `${offer.tariffTitle} на ${offer.periodDays} дн. (счёт${note ? `; ${note}` : ""})`,
       status: "pending",
       isTest: isTestMode(),
       organizationId: args.organizationId,
       userId: args.userId,
       paymentMethod: "invoice",
       invoiceDueAt: new Date(Date.now() + INVOICE_VALID_DAYS * DAY_MS),
+      baseRub: offer.baseRub,
+      promotionId: offer.promotion?.id ?? null,
+      promotionPercent: offer.promotion?.percent ?? null,
+      promotionDiscountRub: offer.discountRub,
     },
   });
+  console.info(
+    `[promo] invoice #${order.id}: base ${offer.baseRub} ₽` +
+      (offer.promotion ? ` → promotion ${offer.promotion.id} −${offer.promotion.percent}%` : "") +
+      ` = ${offer.priceRub} ₽`
+  );
   return { ok: true, order, created: true };
 }
 

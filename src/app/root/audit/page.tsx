@@ -30,6 +30,12 @@ const ACTION_LABELS: Record<string, string> = {
   "tasksflow.bulk_assign.force_wipe": "TasksFlow: force-wipe задач",
   "staff.archived.responsibles_orphan":
     "Архив сотрудника: освобождены слоты ответственных",
+  // Акции на подписку (ROOT → «Акции»).
+  "promotion.create": "Акция создана",
+  "promotion.update": "Акция изменена",
+  "promotion.enable": "Акция включена",
+  "promotion.disable": "Акция выключена",
+  "promotion.delete": "Акция удалена",
 };
 
 function formatDate(d: Date): string {

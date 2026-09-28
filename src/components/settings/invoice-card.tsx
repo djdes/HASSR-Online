@@ -7,6 +7,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { PromoPrice } from "@/components/pricing/promo-price";
+import { applyPromotion, type AppliedPromotion } from "@/lib/promo/promotions";
 
 /**
  * «Оплата по безналу для юрлиц» на странице подписки.
@@ -25,14 +27,18 @@ export function InvoiceCard({
   amountRub,
   periodDays,
   pending,
+  promotion = null,
 }: {
   /** Реквизиты исполнителя заполнены — счёт можно выставить. */
   ready: boolean;
   orgName: string;
   orgInn: string | null;
+  /** Цена подписки по тарифу (без акции). */
   amountRub: number;
   periodDays: number;
   pending: Pending | null;
+  /** Действующая акция: счёт выставится по цене со скидкой (сервер считает так же). */
+  promotion?: AppliedPromotion | null;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -40,6 +46,7 @@ export function InvoiceCard({
   if (!ready) return null;
 
   const rub = (value: number) => `${value.toLocaleString("ru-RU")} ₽`;
+  const price = applyPromotion(amountRub, promotion);
 
   async function issue() {
     setBusy(true);
@@ -96,7 +103,8 @@ export function InvoiceCard({
           ) : (
             <>
               <p className="mt-1 max-w-[640px] text-[13px] leading-relaxed text-[#6f7282]">
-                Не платите картой? Выставим счёт на {rub(amountRub)} за {periodDays} дн. на{" "}
+                Не платите картой? Выставим счёт на{" "}
+                <PromoPrice price={price} size="text" tone="inherit" /> за {periodDays} дн. на{" "}
                 <strong className="text-[#0b1024]">{orgName}</strong>
                 {orgInn ? ` (ИНН ${orgInn})` : ""}. Бухгалтерия оплачивает по реквизитам, подписка
                 продлевается с даты поступления денег, закрывающие документы — автоматически.
@@ -129,7 +137,7 @@ export function InvoiceCard({
         onClose={() => setOpen(false)}
         onConfirm={issue}
         variant="info"
-        title={`Выставить счёт на ${rub(amountRub)}?`}
+        title={`Выставить счёт на ${rub(price.priceRub)}?`}
         description={`Плательщик — ${orgName}${orgInn ? `, ИНН ${orgInn}` : ""}. Счёт действителен 7 дней.`}
         bullets={[
           { label: "PDF скачается сразу и уйдёт на вашу почту" },

@@ -31,6 +31,9 @@ import {
   planLabel,
 } from "@/lib/plan-limits";
 import { RecurringCard } from "@/components/settings/recurring-card";
+import { PromoBadge, PromoPrice } from "@/components/pricing/promo-price";
+import { getDisplayOffer } from "@/lib/promo/offer";
+import { applyPromotion } from "@/lib/promo/promotions";
 import { isMobileAppRequest } from "@/lib/mobile-app-payments";
 
 export default async function SubscriptionPage() {
@@ -74,6 +77,10 @@ export default async function SubscriptionPage() {
   const monthly =
     tariffs.find((t) => t.key === TARIFF_MONTHLY) ?? fallbackTariffs()[0];
   const price = quoteSubscription(employees, monthly.priceRub);
+  // Действующая акция — на всю сумму подписки (база + доплата сверх
+  // лимита); та же цена уйдёт в заказ и счёт (lib/promo/offer.ts).
+  const offer = await getDisplayOffer(monthly);
+  const monthlyWithPromotion = applyPromotion(price.monthlyRub, offer.promotion);
   // Пример для справки: команда чуть больше подписки — видно и базу,
   // и доплату.
   const exampleEmployees = SUBSCRIPTION_MAX_USERS + 5;
@@ -193,6 +200,7 @@ export default async function SubscriptionPage() {
         billingTestMode={BILLING_TEST_MODE}
         hardwareFromRub={hardwareFromRub}
         subscriptionMonthly={monthly.priceRub}
+        subscriptionPromotion={offer.promotion}
       />
 
       {!isDemo ? (
@@ -201,6 +209,7 @@ export default async function SubscriptionPage() {
           orgName={org?.name ?? "организацию"}
           orgInn={org?.inn ?? null}
           amountRub={monthly.priceRub}
+          promotion={offer.promotion}
           periodDays={monthly.periodDays}
           pending={
             pendingInvoice
@@ -337,8 +346,8 @@ export default async function SubscriptionPage() {
             <p className="mt-1 max-w-[640px] text-[13px] leading-relaxed text-[#6f7282]">
               До {FREE_MAX_USERS} сотрудников — бесплатно. Команда до{" "}
               {SUBSCRIPTION_MAX_USERS} — одна подписка{" "}
-              {monthly.priceRub.toLocaleString("ru-RU")} ₽/мес на всех, не за
-              человека. Каждый сотрудник сверх {SUBSCRIPTION_MAX_USERS} —{" "}
+              <PromoPrice price={offer} size="text" tone="inherit" suffix="/мес" showBadge={false} />{" "}
+              на всех, не за человека. Каждый сотрудник сверх {SUBSCRIPTION_MAX_USERS} —{" "}
               {`+${EXTRA_USER_PRICE_RUB} ₽/мес.`}
             </p>
 
@@ -366,9 +375,13 @@ export default async function SubscriptionPage() {
               <PricingStat
                 label="В месяц"
                 value={
-                  price.isFree
-                    ? "0 ₽"
-                    : `${price.monthlyRub.toLocaleString("ru-RU")} ₽`
+                  price.isFree ? (
+                    "0 ₽"
+                  ) : monthlyWithPromotion.promotion ? (
+                    <PromoPrice price={monthlyWithPromotion} size="lg" layout="stacked" />
+                  ) : (
+                    `${price.monthlyRub.toLocaleString("ru-RU")} ₽`
+                  )
                 }
                 hint={
                   price.isFree ? (
@@ -401,6 +414,13 @@ export default async function SubscriptionPage() {
                 {example.extraEmployees} × {EXTRA_USER_PRICE_RUB} ={" "}
                 {example.monthlyRub.toLocaleString("ru-RU")} ₽/мес.
               </p>
+              {offer.promotion ? (
+                <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[#3c4053]">
+                  <span>Сейчас акция «{offer.promotion.title}»:</span>
+                  <PromoBadge promotion={offer.promotion} />
+                  <span>на всю сумму подписки, вместе с доплатой сверх {SUBSCRIPTION_MAX_USERS}.</span>
+                </p>
+              ) : null}
               {BILLING_TEST_MODE ? (
                 <p className="mt-3 text-[#3c4053]">
                   Пока сайт в тестовом режиме, суммы выше — справочные:
@@ -422,7 +442,7 @@ function PricingStat({
   accent = false,
 }: {
   label: string;
-  value: string;
+  value: React.ReactNode;
   hint: React.ReactNode;
   accent?: boolean;
 }) {

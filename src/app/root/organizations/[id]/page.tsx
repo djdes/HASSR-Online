@@ -72,6 +72,10 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
       isTest: true,
       refundedAt: true,
       paymentMethod: true,
+      promoCode: true,
+      discountRub: true,
+      promotionPercent: true,
+      promotionDiscountRub: true,
     },
   });
   const documentsReady = isRequisitesComplete(await readPlatformRequisites());
@@ -244,6 +248,17 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
                       <span className="ml-1 text-[12px] text-[#3848c7]">
                         баллами −{payment.pointsSpent.toLocaleString("ru-RU")}
                       </span>
+                    ) : null}
+                    {/* Отчёт по скидкам: акция и промокод — снимком из заказа. */}
+                    {payment.promotionPercent && payment.promotionDiscountRub > 0 ? (
+                      <div className="text-[12px] text-[#116b2a]">
+                        акция −{payment.promotionPercent} % (−{payment.promotionDiscountRub.toLocaleString("ru-RU")} ₽)
+                      </div>
+                    ) : null}
+                    {payment.promoCode && payment.discountRub > 0 ? (
+                      <div className="text-[12px] text-[#3848c7]">
+                        {payment.promoCode} −{payment.discountRub.toLocaleString("ru-RU")} ₽
+                      </div>
                     ) : null}
                   </td>
                   <td className="py-2.5 pl-4">

@@ -55,6 +55,8 @@ import {
   TARIFF_MONTHLY,
 } from "@/lib/tariffs";
 import { PlanCard } from "@/components/pricing/plan-card";
+import { PromoPrice } from "@/components/pricing/promo-price";
+import { getDisplayOffer } from "@/lib/promo/offer";
 import { JOURNALS_TOTAL_ELECTRONIC_LABEL, JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
 
 export const dynamic = "force-dynamic";
@@ -289,6 +291,9 @@ export default async function LandingPage() {
   const tariffs = await readTariffs().catch(() => fallbackTariffs());
   const monthly =
     tariffs.find((t) => t.key === TARIFF_MONTHLY) ?? fallbackTariffs()[0];
+  // Цена с действующей акцией (ROOT → «Акции»): зачёркнутая старая и
+  // новая — в первом экране, карточке и калькуляторе.
+  const offer = await getDisplayOffer(monthly);
 
   // «от N ₽» в карточке оборудования — самый дешёвый готовый комплект.
   // Считаем, а не хардкодим: состав комплектов меняется в
@@ -375,11 +380,16 @@ export default async function LandingPage() {
           {
             "@type": "Offer",
             name: monthly.title,
-            price: String(monthly.priceRub),
+            // Цена в разметке = цена на странице: в период акции — со
+            // скидкой и с датой, до которой она действует.
+            price: String(offer.priceRub),
+            ...(offer.promotion
+              ? { priceValidUntil: offer.promotion.endsAt.slice(0, 10) }
+              : {}),
             priceCurrency: "RUB",
             priceSpecification: {
               "@type": "UnitPriceSpecification",
-              price: String(monthly.priceRub),
+              price: String(offer.priceRub),
               priceCurrency: "RUB",
               unitText: "месяц",
             },
@@ -575,11 +585,12 @@ export default async function LandingPage() {
               До {FREE_MAX_USERS} сотрудников —{" "}
               <span className="font-semibold text-[#0b1024]">бесплатно</span>,
             </span>
-            <span className="inline-flex items-center gap-1.5">
+            <span className="inline-flex flex-wrap items-center gap-1.5">
               дальше от{" "}
-              <span className="font-semibold tabular-nums text-[#0b1024]">
-                {formatRub(monthly.priceRub)}/мес
-              </span>
+              <PromoPrice
+                price={offer}
+                suffix={<span className="font-semibold text-[#0b1024]">/мес</span>}
+              />
               <ArrowRight className="size-4 shrink-0 text-[#3848c7]" />
             </span>
           </AnchorScrollLink>
@@ -595,11 +606,12 @@ export default async function LandingPage() {
             <span aria-hidden="true" className="text-[#c9cddd]">
               ·
             </span>
-            <span>
+            <span className="inline-flex flex-wrap items-baseline gap-x-1">
               дальше от{" "}
-              <span className="font-semibold tabular-nums text-[#0b1024]">
-                {formatRub(monthly.priceRub)}/мес
-              </span>
+              <PromoPrice
+                price={offer}
+                suffix={<span className="font-semibold text-[#0b1024]">/мес</span>}
+              />
             </span>
             <ArrowRight className="size-3.5 shrink-0 text-[#3848c7] transition-transform group-hover:translate-x-0.5" />
           </AnchorScrollLink>
@@ -779,6 +791,7 @@ export default async function LandingPage() {
             на десктопе и в кабинете (там флага нет) — как было. */}
         <EquipmentPricing
           subscriptionMonthly={monthly.priceRub}
+          subscriptionPromotion={offer.promotion}
           hardwareFromRub={hardwareFromRub}
         >
           <PlanCard
@@ -802,6 +815,7 @@ export default async function LandingPage() {
             kind="team"
             name={monthly.title}
             from={formatRub(monthly.priceRub)}
+            price={offer}
             period="в месяц"
             pointsIntro="Всё из Бесплатного, плюс:"
             points={[

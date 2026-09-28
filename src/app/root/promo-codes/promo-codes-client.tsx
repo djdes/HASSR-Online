@@ -4,6 +4,7 @@ import { Loader2, Plus, Ticket } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { formatMskDateTime, mskInputToDate } from "@/lib/promo/promotions";
 import { describeDiscount } from "@/lib/promo/rules";
 import { cn } from "@/lib/utils";
 
@@ -25,9 +26,32 @@ const INPUT =
   "h-11 w-full rounded-2xl border border-[#dcdfed] bg-white px-3.5 text-[14px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15";
 const CARD = "rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]";
 
+/** Дата по Москве: «01.10.2026». */
+const mskDate = (iso: string) => formatMskDateTime(new Date(iso)).slice(0, 10);
+
+/** Срок кода по Москве: начало дня «с» и конец дня «по» (23:59:59). */
+function mskDayStart(date: string): string | null {
+  return date ? mskInputToDate(`${date}T00:00`)?.toISOString() ?? null : null;
+}
+function mskDayEnd(date: string): string | null {
+  const end = date ? mskInputToDate(`${date}T23:59`) : null;
+  return end ? new Date(end.getTime() + 59_999).toISOString() : null;
+}
+
+const EMPTY_FORM = {
+  code: "",
+  kind: "percent" as "percent" | "fixed",
+  value: "10",
+  startsAt: "",
+  endsAt: "",
+  maxUses: "",
+  newClientsOnly: false,
+  note: "",
+};
+
 export function PromoCodesClient({ initial }: { initial: PromoRow[] }) {
   const [rows, setRows] = useState(initial);
-  const [form, setForm] = useState({ code: "", kind: "percent" as "percent" | "fixed", value: "10", endsAt: "", maxUses: "", newClientsOnly: false, note: "" });
+  const [form, setForm] = useState(EMPTY_FORM);
   const [busy, setBusy] = useState(false);
 
   async function create() {
@@ -40,7 +64,8 @@ export function PromoCodesClient({ initial }: { initial: PromoRow[] }) {
           code: form.code,
           kind: form.kind,
           value: Number(form.value),
-          endsAt: form.endsAt ? new Date(`${form.endsAt}T23:59:59`).toISOString() : null,
+          startsAt: mskDayStart(form.startsAt),
+          endsAt: mskDayEnd(form.endsAt),
           maxUses: form.maxUses ? Number(form.maxUses) : null,
           newClientsOnly: form.newClientsOnly,
           note: form.note,
@@ -49,7 +74,7 @@ export function PromoCodesClient({ initial }: { initial: PromoRow[] }) {
       const data = (await response.json().catch(() => null)) as { error?: string; code?: PromoRow } | null;
       if (!response.ok || !data?.code) throw new Error(data?.error ?? "Не удалось создать");
       setRows((prev) => [data.code!, ...prev]);
-      setForm({ code: "", kind: "percent", value: "10", endsAt: "", maxUses: "", newClientsOnly: false, note: "" });
+      setForm(EMPTY_FORM);
       toast.success(`Промокод ${data.code.code} создан`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Ошибка");
@@ -72,7 +97,15 @@ export function PromoCodesClient({ initial }: { initial: PromoRow[] }) {
     toast.success(row.active ? `${row.code} отключён` : `${row.code} включён`);
   }
 
-  const date = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("ru-RU") : "—");
+  // Срок по Москве: «с 01.10.2026 по 31.10.2026», «до …», «без срока».
+  const period = (row: PromoRow) =>
+    row.startsAt && row.endsAt
+      ? `с ${mskDate(row.startsAt)} по ${mskDate(row.endsAt)}`
+      : row.endsAt
+        ? `до ${mskDate(row.endsAt)}`
+        : row.startsAt
+          ? `с ${mskDate(row.startsAt)}`
+          : "без срока";
 
   return (
     <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -85,28 +118,28 @@ export function PromoCodesClient({ initial }: { initial: PromoRow[] }) {
             <table className="w-full min-w-[620px] text-[13.5px]">
               <thead>
                 <tr className="text-left text-[11px] uppercase tracking-[0.14em] text-[#9b9fb3]">
-                  <th className="pb-2 font-medium">Код</th>
-                  <th className="pb-2 font-medium">Скидка</th>
-                  <th className="pb-2 font-medium">Действует до</th>
-                  <th className="pb-2 font-medium">Оплат</th>
-                  <th className="pb-2 font-medium">Кому</th>
+                  <th className="pb-2 pr-4 font-medium">Код</th>
+                  <th className="pb-2 pr-4 font-medium">Скидка</th>
+                  <th className="pb-2 pr-4 font-medium">Срок (МСК)</th>
+                  <th className="pb-2 pr-4 font-medium">Оплат</th>
+                  <th className="pb-2 pr-4 font-medium">Кому</th>
                   <th className="pb-2 font-medium" />
                 </tr>
               </thead>
               <tbody>
                 {rows.map((row) => (
                   <tr key={row.id} className={cn("border-t border-[#f2f3f8]", !row.active && "opacity-60")}>
-                    <td className="py-2.5">
+                    <td className="py-2.5 pr-4">
                       <span className="font-mono font-semibold text-[#0b1024]">{row.code}</span>
                       {row.note ? <div className="text-[12px] text-[#6f7282]">{row.note}</div> : null}
                     </td>
-                    <td className="py-2.5 tabular-nums text-[#0b1024]">{describeDiscount(row)}</td>
-                    <td className="py-2.5 text-[#6f7282]">{date(row.endsAt)}</td>
-                    <td className="py-2.5 tabular-nums text-[#6f7282]">
+                    <td className="whitespace-nowrap py-2.5 pr-4 tabular-nums text-[#0b1024]">{describeDiscount(row)}</td>
+                    <td className="py-2.5 pr-4 text-[#6f7282]">{period(row)}</td>
+                    <td className="whitespace-nowrap py-2.5 pr-4 tabular-nums text-[#6f7282]">
                       {row.paidUses}
                       {row.maxUses ? ` / ${row.maxUses}` : ""}
                     </td>
-                    <td className="py-2.5 text-[#6f7282]">{row.newClientsOnly ? "только новым" : "всем"}</td>
+                    <td className="py-2.5 pr-4 text-[#6f7282]">{row.newClientsOnly ? "только новым" : "всем"}</td>
                     <td className="py-2.5 text-right">
                       <button
                         type="button"
@@ -149,9 +182,15 @@ export function PromoCodesClient({ initial }: { initial: PromoRow[] }) {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
-              <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">Действует до</span>
+              <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">Действует с</span>
+              <input type="date" value={form.startsAt} onChange={(e) => setForm({ ...form, startsAt: e.target.value })} className={INPUT} />
+            </label>
+            <label className="block">
+              <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">по (включительно)</span>
               <input type="date" value={form.endsAt} onChange={(e) => setForm({ ...form, endsAt: e.target.value })} className={INPUT} />
             </label>
+          </div>
+          <div>
             <label className="block">
               <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">Лимит оплат</span>
               <input value={form.maxUses} onChange={(e) => setForm({ ...form, maxUses: e.target.value.replace(/\D/g, "") })} inputMode="numeric" placeholder="без лимита" className={INPUT} />

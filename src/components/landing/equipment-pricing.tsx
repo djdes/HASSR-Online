@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronDown, Wrench } from "lucide-react";
 import { PricingCalculator } from "@/components/public/pricing-calculator";
+import type { AppliedPromotion } from "@/lib/promo/promotions";
 
 /**
  * Третья тарифная карточка «+ Оборудование» и калькулятор под ней.
@@ -20,11 +21,14 @@ import { PricingCalculator } from "@/components/public/pricing-calculator";
 export function EquipmentPricing({
   children,
   subscriptionMonthly,
+  subscriptionPromotion = null,
   hardwareFromRub,
 }: {
   /** Карточки «Бесплатный» и «Подписка», отрисованные на сервере. */
   children: React.ReactNode;
   subscriptionMonthly: number;
+  /** Действующая акция на подписку — калькулятор зачеркнёт цену. */
+  subscriptionPromotion?: AppliedPromotion | null;
   /** Самый дешёвый комплект — показываем как «от N ₽». */
   hardwareFromRub: number;
 }) {
@@ -105,6 +109,7 @@ export function EquipmentPricing({
           </div>
           <PricingCalculator
             subscriptionMonthly={subscriptionMonthly}
+            subscriptionPromotion={subscriptionPromotion}
             paymentDisabled
           />
         </div>

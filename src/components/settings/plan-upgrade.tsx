@@ -19,6 +19,7 @@ import {
   type CatalogPlanId,
 } from "@/lib/plan-catalog";
 import { PlanCard } from "@/components/pricing/plan-card";
+import { applyPromotion, type AppliedPromotion } from "@/lib/promo/promotions";
 
 /** Что даёт железо — те же три пункта, что в карточке на лендинге. */
 const HARDWARE_POINTS = [
@@ -41,6 +42,8 @@ type Props = {
   hardwareFromRub: number;
   /** Цена подписки из БД — калькулятор считает с ней общий итог. */
   subscriptionMonthly: number;
+  /** Действующая акция (сервер) — цена подписки зачёркивается. */
+  subscriptionPromotion?: AppliedPromotion | null;
 };
 
 /**
@@ -59,6 +62,7 @@ export function PlanUpgrade({
   billingTestMode,
   hardwareFromRub,
   subscriptionMonthly,
+  subscriptionPromotion = null,
 }: Props) {
   const [hardwareOpen, setHardwareOpen] = useState(false);
 
@@ -127,6 +131,11 @@ export function PlanUpgrade({
                 isPaidPlan
                   ? `${subscriptionMonthly.toLocaleString("ru-RU")} ₽`
                   : plan.price
+              }
+              price={
+                isPaidPlan
+                  ? applyPromotion(subscriptionMonthly, subscriptionPromotion)
+                  : undefined
               }
               period={plan.priceHint}
               pointsIntro={
@@ -221,6 +230,7 @@ export function PlanUpgrade({
           </div>
           <PricingCalculator
             subscriptionMonthly={subscriptionMonthly}
+            subscriptionPromotion={subscriptionPromotion}
             paymentDisabled
           />
         </div>

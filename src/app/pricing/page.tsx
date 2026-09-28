@@ -22,6 +22,9 @@ import {
   SUBSCRIPTION_MAX_USERS,
 } from "@/lib/plan-catalog";
 import { JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
+import { PromoPrice } from "@/components/pricing/promo-price";
+import { getDisplayOffer } from "@/lib/promo/offer";
+import { applyPromotion, type PriceWithPromotion } from "@/lib/promo/promotions";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -65,6 +68,8 @@ export default async function PricingPage() {
   const monthly =
     tariffs.find((t) => t.key === TARIFF_MONTHLY) ?? fallbackTariffs()[0];
   const bundle = tariffs.find((t) => t.key === TARIFF_BUNDLE) ?? null;
+  // Действующая акция: зачёркнутая цена в тексте, карточках и калькуляторе.
+  const offer = await getDisplayOffer(monthly);
 
   return (
     <div className="min-h-screen bg-white text-[#0b1024]">
@@ -77,7 +82,7 @@ export default async function PricingPage() {
           <p className="mt-3 max-w-[640px] text-[16px] leading-relaxed text-[#3c4053]">
             Все {JOURNALS_TOTAL_LABEL} доступны бесплатно смене до {FREE_MAX_USERS}{" "}
             человек. Команда до {SUBSCRIPTION_MAX_USERS} — одна подписка{" "}
-            {formatRub(monthly.priceRub)}/мес на всех, не за человека; каждый
+            <PromoPrice price={offer} size="text" tone="inherit" suffix="/мес" showBadge={false} /> на всех, не за человека; каждый
             сотрудник сверх {SUBSCRIPTION_MAX_USERS} —{" "}
             {`+${EXTRA_USER_PRICE_RUB} ₽/мес`}. Оборудование — разовая
             покупка, без скрытых платежей.
@@ -103,6 +108,7 @@ export default async function PricingPage() {
           <PlanCard
             name={monthly.title}
             price={formatRub(monthly.priceRub)}
+            offer={offer}
             period={`за ${monthly.periodDays} дней`}
             description="Одна цена на всю команду. Если датчики и планшеты уже есть — подключаем их."
             points={[
@@ -119,6 +125,7 @@ export default async function PricingPage() {
           <PlanCard
             name={bundle?.title ?? "Подписка + оборудование"}
             price={formatRub(bundle?.priceRub ?? monthly.priceRub)}
+            offer={applyPromotion(bundle?.priceRub ?? monthly.priceRub, offer.promotion)}
             period="в месяц + железо"
             icon
             description="Та же подписка плюс датчики, планшет и выездной монтаж. Состав собирается в калькуляторе на главной."
@@ -142,7 +149,7 @@ export default async function PricingPage() {
           .
         </p>
 
-        <RoiCalculator subscriptionMonthly={monthly.priceRub} />
+        <RoiCalculator subscriptionMonthly={monthly.priceRub} promotion={offer.promotion} />
 
         <section className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-8">
           <h2 className="text-[18px] font-semibold tracking-[-0.01em]">
@@ -199,9 +206,12 @@ function PlanCard({
   ctaHref,
   highlighted,
   icon,
+  offer,
 }: {
   name: string;
   price: string;
+  /** Цена с акцией: идёт акция — зачёркнутая старая, новая и плашка. */
+  offer?: PriceWithPromotion;
   period: string;
   description: string;
   points: string[];
@@ -230,12 +240,22 @@ function PlanCard({
         </div>
       </div>
 
-      <div className="mt-4 flex items-baseline gap-2">
-        <span className="text-[30px] font-semibold tracking-[-0.02em] tabular-nums">
-          {price}
-        </span>
-        <span className="text-[13px] text-[#6f7282]">{period}</span>
-      </div>
+      {offer?.promotion ? (
+        <PromoPrice
+          price={offer}
+          size="xl"
+          layout="stacked"
+          className="mt-4"
+          suffix={<span className="ml-2 text-[13px] text-[#6f7282]">{period}</span>}
+        />
+      ) : (
+        <div className="mt-4 flex items-baseline gap-2">
+          <span className="text-[30px] font-semibold tracking-[-0.02em] tabular-nums">
+            {price}
+          </span>
+          <span className="text-[13px] text-[#6f7282]">{period}</span>
+        </div>
+      )}
 
       <p className="mt-3 text-[14px] leading-[1.55] text-[#6f7282]">
         {description}

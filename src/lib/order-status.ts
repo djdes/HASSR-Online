@@ -3,7 +3,8 @@
  * ROOT-карточку, чтобы «pending» не показывался сырым словом.
  */
 export function orderStatusLabel(order: { status: string; paymentMethod?: string | null }): string {
-  if (order.status === "paid") return "оплачен";
+  // completed — оплачен, и новый клиент уже дозаполнил профиль.
+  if (order.status === "paid" || order.status === "completed") return "оплачен";
   if (order.status === "expired") return "истёк";
   if (order.status === "cancelled") return "отменён";
   if (order.status === "pending") {

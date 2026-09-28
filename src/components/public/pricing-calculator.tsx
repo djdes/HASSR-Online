@@ -22,6 +22,8 @@ import {
   type HardwareBundle,
   type HardwareBundleId,
 } from "@/lib/hardware-pricing";
+import { PromoPrice } from "@/components/pricing/promo-price";
+import { applyPromotion, type AppliedPromotion } from "@/lib/promo/promotions";
 
 /**
  * Pricing calculator: bundle-first, customizable second.
@@ -78,11 +80,15 @@ function encodeConfig(config: Record<string, number>): string {
 
 export function PricingCalculator({
   subscriptionMonthly,
+  subscriptionPromotion = null,
   paymentDisabled = false,
 }: {
   /// Цена подписки из БД (PlatformTariff.monthly) — приходит с сервера,
   /// чтобы ROOT мог поменять её без деплоя.
   subscriptionMonthly: number;
+  /// Действующая акция (сервер, lib/promo/offer.ts) — цена подписки
+  /// зачёркивается, рядом цена со скидкой.
+  subscriptionPromotion?: AppliedPromotion | null;
   /// Оплата железа выключена: комплект собирается под объект и до
   /// согласования состава деньги брать нельзя.
   paymentDisabled?: boolean;
@@ -195,10 +201,13 @@ export function PricingCalculator({
             Подписка
           </div>
           <div className="text-right">
-            <span className="text-[22px] font-semibold tracking-[-0.01em]">
-              {formatRub(SUBSCRIPTION_MONTHLY)}
-            </span>
-            <span className="ml-1 text-[12px] text-white/60">/мес</span>
+            <PromoPrice
+              price={applyPromotion(SUBSCRIPTION_MONTHLY, subscriptionPromotion)}
+              size="md"
+              tone="dark"
+              className="justify-end"
+              suffix={<span className="ml-1 text-[12px] text-white/60">/мес</span>}
+            />
           </div>
         </div>
         <div className="mt-3 flex items-baseline justify-between gap-3">

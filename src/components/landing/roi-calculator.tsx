@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { quoteSubscription } from "@/lib/subscription-pricing";
+import { PromoPrice } from "@/components/pricing/promo-price";
+import { applyPromotion, type AppliedPromotion } from "@/lib/promo/promotions";
 
 /**
  * H10 — ROI калькулятор на лендинге. Slider «сколько у вас сотрудников»
@@ -21,9 +23,15 @@ import { quoteSubscription } from "@/lib/subscription-pricing";
  */
 export function RoiCalculator({
   subscriptionMonthly,
+  promotion = null,
 }: {
   /** Цена подписки из БД (`PlatformTariff.monthly`), ₽/мес. */
   subscriptionMonthly: number;
+  /**
+   * Действующая акция (сервер): скидка — на всю сумму подписки, вместе с
+   * доплатой за сотрудников сверх лимита.
+   */
+  promotion?: AppliedPromotion | null;
 }) {
   const [employees, setEmployees] = useState(15);
 
@@ -37,12 +45,14 @@ export function RoiCalculator({
     // С системой — почти 0. 50_000 ₽ × 1.5 / 12 = 6_250 ₽/мес.
     const fineProtectionPerMonth = 6_250;
     const totalMonthlySaving = moneySavedPerMonth + fineProtectionPerMonth;
-    const monthlyCost = price.monthlyRub;
+    const withPromotion = applyPromotion(price.monthlyRub, promotion);
+    const monthlyCost = withPromotion.priceRub;
     const netBenefit = totalMonthlySaving - monthlyCost;
     const roiX =
       monthlyCost === 0 ? Infinity : Math.round(totalMonthlySaving / monthlyCost);
 
     return {
+      withPromotion,
       monthlyCost,
       monthlyCostFormatted: monthlyCost.toLocaleString("ru-RU"),
       hoursSavedPerMonth: Math.round(hoursSavedPerMonth),
@@ -55,7 +65,7 @@ export function RoiCalculator({
       roiX: Number.isFinite(roiX) ? roiX : null,
       tier: price.tierLabel,
     };
-  }, [employees, subscriptionMonthly]);
+  }, [employees, subscriptionMonthly, promotion]);
 
   return (
     <section className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-10">
@@ -101,9 +111,13 @@ export function RoiCalculator({
         <Tile
           label="WeSetup в месяц"
           value={
-            calc.monthlyCost === 0
-              ? "0 ₽"
-              : `${calc.monthlyCostFormatted} ₽`
+            calc.withPromotion.promotion ? (
+              <PromoPrice price={calc.withPromotion} size="md" tone="inherit" layout="stacked" />
+            ) : calc.monthlyCost === 0 ? (
+              "0 ₽"
+            ) : (
+              `${calc.monthlyCostFormatted} ₽`
+            )
           }
           hint={calc.tier}
           tone="muted"
@@ -162,7 +176,7 @@ function Tile({
   tone,
 }: {
   label: string;
-  value: string;
+  value: React.ReactNode;
   hint?: string;
   tone: "positive" | "muted";
 }) {

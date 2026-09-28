@@ -77,6 +77,15 @@ export type CreateOrderWithPointsInput = {
   /** Промокод (в верхнем регистре) и скидка в рублях — уже посчитанные сервером. */
   promoCode?: string | null;
   discountRub?: number;
+  /**
+   * Снимок цены для отчёта ROOT: цена подписки по тарифу до скидок и
+   * действовавшая акция (id, процент, скидка в рублях). Сумму заказа не
+   * меняют — она уже в grossRub.
+   */
+  baseRub?: number | null;
+  promotionId?: string | null;
+  promotionPercent?: number | null;
+  promotionDiscountRub?: number;
 };
 
 export type CreatedOrder = {
@@ -148,6 +157,10 @@ export async function createOrderWithPoints(
         referrerOrganizationId: input.referrerOrganizationId ?? undefined,
         promoCode: input.promoCode ?? undefined,
         discountRub: input.discountRub ?? 0,
+        baseRub: input.baseRub ?? undefined,
+        promotionId: input.promotionId ?? undefined,
+        promotionPercent: input.promotionPercent ?? undefined,
+        promotionDiscountRub: input.promotionDiscountRub ?? 0,
       },
       select: { id: true, isTest: true },
     });
@@ -171,7 +184,8 @@ export async function createOrderWithPoints(
           status: "paid",
           paidAt: new Date(),
           isTest: false,
-          rawResult: { paidBy: "points", pointsSpent },
+          // Ноль к оплате бывает и без баллов — промокод на 100 %.
+          rawResult: { paidBy: pointsSpent > 0 ? "points" : "discount", pointsSpent },
         },
       });
     }

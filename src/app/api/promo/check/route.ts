@@ -2,11 +2,11 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId, isImpersonating } from "@/lib/auth-helpers";
+import { getSubscriptionOffer } from "@/lib/promo/offer";
 import { resolvePromo } from "@/lib/promo/service";
 import { createRateLimiter } from "@/lib/rate-limit";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getServerSession } from "@/lib/server-session";
-import { readTariff } from "@/lib/tariffs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,7 +20,12 @@ function clientIp(request: NextRequest): string {
 
 /**
  * POST { code, tariffKey } — проверить промокод до оформления. Ответ —
- * ровно то, что потом посчитает сервер при создании заказа.
+ * ровно то, что потом посчитает сервер при создании заказа: скидка
+ * промокода от цены подписки С АКЦИЕЙ (`getSubscriptionOffer`).
+ *
+ * «Только новым» здесь проверяется по организации из сессии; по почте
+ * анонимного заказа — уже при создании заказа (иначе этот открытый
+ * адрес подсказывал бы, какие почты платили).
  */
 export async function POST(request: NextRequest) {
   if (!limiter.consume(clientIp(request))) {
@@ -29,22 +34,32 @@ export async function POST(request: NextRequest) {
   const body = (await request.json().catch(() => ({}))) as { code?: unknown; tariffKey?: unknown };
   const code = typeof body.code === "string" ? body.code : "";
   const tariffKey = typeof body.tariffKey === "string" ? body.tariffKey : "";
-  const tariff = await readTariff(tariffKey);
-  if (!tariff) return NextResponse.json({ ok: false, message: "Тариф недоступен" }, { status: 400 });
+  const now = new Date();
+  const offer = await getSubscriptionOffer(now, tariffKey);
+  if (!offer) return NextResponse.json({ ok: false, message: "Тариф недоступен" }, { status: 400 });
 
   const session = await getServerSession(authOptions).catch(() => null);
   const organizationId =
     session?.user && hasFullWorkspaceAccess(session.user) && !isImpersonating(session)
       ? getActiveOrgId(session)
       : null;
-  const result = await resolvePromo(code, { organizationId, subscriptionRub: tariff.priceRub });
-  if (!result.ok) return NextResponse.json({ ok: false, message: result.message });
+  const result = await resolvePromo(code, {
+    organizationId,
+    subscriptionRub: offer.priceRub,
+    email: session?.user?.email ?? null,
+    now,
+  });
+  // Цена с акцией едет в ответ: если акция началась или кончилась, пока
+  // человек был на странице, клиент увидит расхождение и обновит сумму.
+  const price = { offerRub: offer.priceRub, promotionId: offer.promotion?.id ?? null };
+  if (!result.ok) return NextResponse.json({ ok: false, message: result.message, ...price });
   return NextResponse.json({
     ok: true,
     code: result.code,
     discountRub: result.discountRub,
-    subscriptionRub: tariff.priceRub - result.discountRub,
+    subscriptionRub: offer.priceRub - result.discountRub,
     kind: result.rule.kind,
     value: result.rule.value,
+    ...price,
   });
 }

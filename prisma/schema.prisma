@@ -2708,8 +2708,18 @@ model PaymentOrder {
   /// До какой даты действителен счёт по безналу.
   invoiceDueAt           DateTime?
   /// Промокод, применённый при оформлении (в верхнем регистре), и скидка в рублях.
+  /// Скидка промокода считается от цены с акцией (см. promotionDiscountRub).
   promoCode              String?
   discountRub            Int              @default(0)
+  /// Цена подписки по тарифу (PlatformTariff) до акции и промокода, без
+  /// оборудования. null — заказы до появления акций.
+  baseRub                Int?
+  /// Акция, действовавшая при оформлении: id (PricePromotion) и процент —
+  /// снимком, акцию потом могут изменить или удалить.
+  promotionId            String?
+  promotionPercent       Int?
+  /// Скидка по акции в рублях (от baseRub).
+  promotionDiscountRub   Int              @default(0)
   partnerAccruals        PartnerAccrual[]
 
   @@index([email])
@@ -2717,6 +2727,8 @@ model PaymentOrder {
   /// История оплат организации в ROOT-панели читается по этому индексу.
   @@index([organizationId])
   @@index([recurringChargeOf])
+  /// Оплаты по акции для ROOT (/root/promotions).
+  @@index([promotionId])
 }
 
 /// История согласий на автоматические списания.
@@ -3549,6 +3561,28 @@ model PromoCode {
   note           String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+}
+
+/// Акция на подписку: процентная скидка в окне дат. На сайте старая цена
+/// зачёркивается, к оплате — цена со скидкой (lib/promo/offer.ts). Создаёт
+/// ROOT на /root/promotions, время вводится и показывается по Москве.
+/// Окна могут пересекаться — действует наибольший процент. Промокод
+/// считается уже от цены с акцией.
+model PricePromotion {
+  id        String   @id @default(cuid())
+  title     String
+  /// 1..90
+  percent   Int
+  /// Начало включительно, конец — не включая (ровно в endsAt акции уже нет).
+  startsAt  DateTime
+  endsAt    DateTime
+  /// Выключенная акция не действует, даже если окно идёт.
+  active    Boolean  @default(true)
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active, endsAt])
 }
 
 /// Журнал входов: когда, откуда и с какого устройства. Пишется при каждом
