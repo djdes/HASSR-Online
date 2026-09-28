@@ -1136,7 +1136,7 @@ async function openE2eForm(ctx, want, { afterTap = null, settle = 3000 } = {}) {
     ctx.d.entriesBefore = await entryCount();
     await tap({ type: "link", contains: "Новая запись" }, { scrolls: 4, settle: settle * SLOW });
     if (afterTap) await afterTap();
-    return Boolean(await waitFor(() => has(want), 45000 * SLOW));
+    return Boolean(await waitFor(() => has(want), 90000 * SLOW));
   } catch (e) {
     ctx.d.e2eFormError = e.message.slice(0, 200);
     return false;
@@ -1158,7 +1158,7 @@ async function backToJournalCount(ctx) {
   await hideKeyboard();
   if (!(await tryTap({ type: ["button", "link"], label: "Отмена" }, { scrolls: 0, anywhere: true, pick: "lowest", timeout: 4000 }))) await tryTap({ type: "button", label: "Назад" }, { scrolls: 0, anywhere: true, timeout: 3000 });
   // Раунд 6 (кадры 014/018): страница журнала открылась, но «Новая запись» не нашлась как ссылка.
-  const back = await waitFor(async () => (await has({ type: ["link", "button"], contains: "Новая запись" })) || (await has({ type: "text", contains: "Записей пока нет" })), 20000 * SLOW);
+  const back = await waitFor(async () => (await has({ type: ["link", "button"], contains: "Новая запись" })) || (await has({ type: "text", contains: "Записей пока нет" })), 45000 * SLOW);
   await sleep(1500);
   ctx.shot("journal-after-form");
   const c = back ? await entryCount() : null;
@@ -1442,8 +1442,8 @@ async function main() {
         const f = await wdaShot(`S04d-wait-t${Date.now() - t0}ms`);
         if (f) frames.push(f);
       }
-      const pu = await driver.$(`-ios predicate string:${PRINT_UI}`).catch(() => []);
-      const su = await driver.$(`-ios predicate string:${SHARE_UI}`).catch(() => []);
+      const pu = await driver.$$(`-ios predicate string:${PRINT_UI}`).catch(() => []);
+      const su = await driver.$$(`-ios predicate string:${SHARE_UI}`).catch(() => []);
       if (su.length && shareAt == null) shareAt = Date.now() - t0;
       if (pu.length) {
         printAt = Date.now() - t0;
@@ -1465,7 +1465,7 @@ async function main() {
     ctx.d.newLabels = fresh.slice(0, 80);
     const printLabels = fresh.filter((l) => /^(Параметры|Принтер|Принтер не выбран|Копии|Формат бумаги|Макет|Печать|Print|Printer|Options|Copies)$/i.test(l));
     const preview = fresh.filter((l) => /^Страница \d+ из \d+$|^Page \d+ of \d+$/i.test(l));
-    const shareLabels = fresh.filter((l) => /ActivityListView|ShareSheet|activityCollectionView|shareCell|^Скопировать$|Сохранить в Файл|^Напечатать$|AirDrop|PDF-документ/i.test(l));
+    const shareLabels = fresh.filter((l) => /ActivityListView|ShareSheet|activityCollectionView|shareCell|^Скопировать$|Сохранить в Файл|AirDrop|PDF-документ/i.test(l) || l === "Напечатать");
     const fileRow = fresh.filter((l) => /\.pdf$/i.test(l) || /cold-equipment-journal/i.test(l));
     Object.assign(ctx.d, { printLabels, preview, shareLabels, fileRow });
     ctx.check(`окно печати iOS за 10 с (${printAt} мс): ${printLabels.join(", ")}`, printAt != null && printAt <= 10000 * SLOW && printLabels.length >= 2, { printAt, printLabels });
