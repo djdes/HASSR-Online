@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { ArrowRight, Loader2, RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
+import { pluralRu } from "@/lib/plural-ru";
 
 type Status = "untouched" | "in_progress" | "completed";
 
@@ -101,7 +102,7 @@ export function JournalsProgressClient() {
       <PageHeader
         title={
           counts.untouched + counts.in_progress > 0
-            ? `Сегодня нужно заполнить: ${counts.untouched + counts.in_progress} ${counts.untouched + counts.in_progress === 1 ? "журнал" : "журналов"}`
+            ? `Сегодня нужно заполнить: ${counts.untouched + counts.in_progress} ${pluralRu(counts.untouched + counts.in_progress, "журнал", "журнала", "журналов")}`
             : "Все журналы на сегодня готовы"
         }
         description="Только те журналы, которые нужно вести сегодня. Откройте журнал, чтобы заполнить или проверить. Обновляется автоматически."
