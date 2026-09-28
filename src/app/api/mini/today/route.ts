@@ -187,7 +187,7 @@ export async function GET() {
   const journalName = (code: string): string =>
     customJournalName(customNames, code) ||
     // Короткая подпись из словаря — первой: полное название журнала
-    // («Журнал контроля температурного режима холодильного и морозильного
+    // («Журнал учёта температурного режима холодильного и морозильного
     // оборудования») в заголовке группы на телефоне не помещается.
     JOURNAL_LABELS[code] || templateName.get(code) || code;
 

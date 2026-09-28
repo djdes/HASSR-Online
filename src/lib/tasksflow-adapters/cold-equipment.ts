@@ -1,5 +1,5 @@
 /**
- * TasksFlow adapter for «Журнал контроля температурного режима
+ * TasksFlow adapter for «Журнал учёта температурного режима
  * холодильного и морозильного оборудования» (cold_equipment_control).
  *
  * Mapping:

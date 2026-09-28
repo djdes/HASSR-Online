@@ -1,5 +1,5 @@
 /**
- * TasksFlow adapter for «Журнал температуры и влажности»
+ * TasksFlow adapter for «Журнал учёта температуры и влажности на складах»
  * (climate_control).
  *
  * Climate entries pack many sub-values into `entry.data.measurements`:

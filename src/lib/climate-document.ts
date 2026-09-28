@@ -8,8 +8,9 @@ import {
 import { normalizeReadingPhotos } from "@/lib/reading-photos";
 
 export const CLIMATE_DOCUMENT_TEMPLATE_CODE = "climate_control";
+/** Название журнала (2026-09-28: «журнал учёта», слова «бланк» в названии нет). */
 export const CLIMATE_DOCUMENT_TITLE =
-  "Бланк контроля температуры и влажности на складах";
+  "Журнал учёта температуры и влажности на складах";
 
 /**
  * Журнал ведётся ТОЛЬКО по складским помещениям, где хранятся продукты:

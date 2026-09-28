@@ -15,6 +15,8 @@ import {
   COLD_EQUIPMENT_STATUSES,
   COLD_EQUIPMENT_STATUS_SHORT,
   COLD_EQUIPMENT_STATUS_TITLE,
+  COLD_EQUIPMENT_DOCUMENT_TITLE,
+  COLD_EQUIPMENT_LEGAL_BASIS,
   formatColdEquipmentCell,
   parseColdEquipmentCellInput,
   setColdEquipmentSlotStatus,
@@ -2398,7 +2400,7 @@ export function ColdEquipmentDocumentClient({
           <div className={`${DOC_PAPER_HEADER_CLASS} print:mb-2`}>
           <JournalDocumentHeader
             orgName={organizationName}
-            title="Журнал контроля температурного режима холодильного и морозильного оборудования"
+            title={COLD_EQUIPMENT_DOCUMENT_TITLE}
             startedAt={dateFrom}
             finishedAt={status === "closed" ? dateTo : null}
             controlPeriodicity={controlPeriodicity}
@@ -2406,10 +2408,11 @@ export function ColdEquipmentDocumentClient({
           </div>
 
         <div className={DOC_CAPS_TITLE_CLASS}>
-          <JournalDocumentTitle>
-            Журнал контроля температурного режима холодильного и морозильного
-            оборудования
-          </JournalDocumentTitle>
+          <JournalDocumentTitle>{COLD_EQUIPMENT_DOCUMENT_TITLE}</JournalDocumentTitle>
+          {/* Основание формы — как на первой странице печати. */}
+          <p className="mt-1 text-center text-[12px] leading-snug text-[#6f7282] print:text-[10px]">
+            {COLD_EQUIPMENT_LEGAL_BASIS}
+          </p>
         </div>
         {/* Без JS-гейта по mobileView: внешний контейнер в cards-режиме
             спрятан классом (`viewClasses.table`), копия для карточек

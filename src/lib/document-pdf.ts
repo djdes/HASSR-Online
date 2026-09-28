@@ -13,6 +13,7 @@ import {
   journalSheetTopBaseline,
 } from "@/lib/pdf-journal-sheet";
 import { getCalendarDayKind } from "@/lib/production-calendar-data";
+import { renamedJournalDocumentTitle } from "@/lib/journal-title-renames";
 import {
   resolveApprover,
   resolveResponsible,
@@ -45,6 +46,7 @@ import {
   normalizeColdEquipmentDocumentConfig,
   expandColdEquipmentReadingSlots,
   normalizeColdEquipmentEntryData,
+  COLD_EQUIPMENT_LEGAL_BASIS,
   COLD_EQUIPMENT_STATUS_SHORT,
   type ColdEquipmentStatus,
 } from "@/lib/cold-equipment-document";
@@ -1245,7 +1247,7 @@ function approvalDateCenterX(doc: jsPDF, text: string, rightEdge: number): numbe
 function drawTitle(doc: jsPDF, title: string) {
   // Название журнала — жирным (замечание владельца по печати).
   doc.setFont("JournalUnicode", "bold");
-  // Auto-shrink long h1 so titles like "Журнал контроля температурного режима
+  // Auto-shrink long h1 so titles like "Журнал учёта температурного режима
   // холодильного и морозильного оборудования" don't get truncated by the right
   // page edge. We measure the rendered width and pick a font size that fits.
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -2263,8 +2265,15 @@ function drawClimatePdf(doc: jsPDF, params: {
 
 }
 
+/** Строка основания под названием холодильного журнала: кегль (pt) и шаг от базовой линии названия, мм. */
+const COLD_EQUIPMENT_BASIS_FONT_SIZE = 8;
+const COLD_EQUIPMENT_BASIS_STEP_MM = 4.4;
+/** От базовой линии строки основания до таблицы, мм (у названия без неё было 6). */
+const COLD_EQUIPMENT_BASIS_TABLE_GAP_MM = 4.2;
+
 /**
- * Журнал контроля температурного режима холодильного оборудования.
+ * Журнал учёта температурного режима холодильного и морозильного
+ * оборудования (форма Приложения № 2 к СанПиН 2.3/2.4.4282-26).
  *
  * Раньше PDF печатал ТРАНСПОНИРОВАННУЮ таблицу (строки = даты,
  * колонки = оборудование) — она не совпадала ни с экраном, ни с печатью
@@ -2303,7 +2312,12 @@ function drawColdEquipmentPdf(doc: jsPDF, params: {
   doc.setFont("JournalUnicode", "bold");
   doc.setFontSize(11);
   doc.text(params.title.toUpperCase(), pageWidth / 2, titleY, { align: "center" });
+  // Основание формы — мелко по центру под названием, только на первой
+  // (титульной) странице: журнал ведётся по Приложению № 2 к СанПиН.
   doc.setFont("JournalUnicode", "normal");
+  doc.setFontSize(COLD_EQUIPMENT_BASIS_FONT_SIZE);
+  const basisY = titleY + COLD_EQUIPMENT_BASIS_STEP_MM;
+  doc.text(COLD_EQUIPMENT_LEGAL_BASIS, pageWidth / 2, basisY, { align: "center" });
 
   // (dateKey → запись дня): у журнала одна строка на дату.
   const rowByDate = new Map<string, { employeeId: string; temperatures: Record<string, number | null>; statuses: Record<string, ColdEquipmentStatus> }>();
@@ -2429,7 +2443,7 @@ function drawColdEquipmentPdf(doc: jsPDF, params: {
     dateKeys.length > 0 ? Math.max(6.5, Math.min(12, 170 / dateKeys.length)) : 12;
 
   autoTable(doc, {
-    startY: titleY + 6,
+    startY: basisY + COLD_EQUIPMENT_BASIS_TABLE_GAP_MM,
     head,
     body,
     theme: "grid",
@@ -6908,7 +6922,18 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
   const { users, equipment, rooms, branding } = input;
   // Бессрочный документ (`dateTo = 31.12.2099`) печатается по сегодняшний
   // день: иначе сетка бланка растягивалась на десятки страниц будущих дат.
-  const document = clampPerpetualDocumentForPrint(input.document);
+  // Старое название журнала в заголовке документа (переименование
+  // 2026-09-28, `journal-title-renames.ts`) печатается новым — даже если сид
+  // этот документ ещё не переименовал.
+  const clamped = clampPerpetualDocumentForPrint(input.document);
+  const document = {
+    ...clamped,
+    title: renamedJournalDocumentTitle(clamped.template.code, clamped.title ?? ""),
+    template: {
+      ...clamped.template,
+      name: renamedJournalDocumentTitle(clamped.template.code, clamped.template.name ?? ""),
+    },
+  };
 
   const doc = new jsPDF({
     orientation: "landscape",

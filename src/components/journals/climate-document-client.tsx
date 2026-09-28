@@ -2371,7 +2371,7 @@ export function ClimateDocumentClient({
             <tbody>
               <JournalPaperHeaderRows
                 orgName={organizationName}
-                title="БЛАНК КОНТРОЛЯ ТЕМПЕРАТУРЫ И ВЛАЖНОСТИ"
+                title={CLIMATE_DOCUMENT_TITLE.toUpperCase()}
                 startedAt={dateFrom}
                 finishedAt={status === "closed" ? dateTo : null}
                 controlPeriodicity={controlPeriodicity}

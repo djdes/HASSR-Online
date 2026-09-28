@@ -1,72 +1,90 @@
 /**
- * One-shot rename: «Бланк контроля температуры и влажности» →
- * «… на складах».
+ * Переименование журналов в уже созданных данных (идемпотентно, на каждом
+ * деплое — см. .github/workflows/deploy.yml; имя файла прежнее, чтобы не
+ * трогать деплой).
  *
- * Журнал сузили до складов, где хранятся продукты, и название в коде
- * поправили. Но у уже созданных документов заголовок лежит в БД строкой
- * с момента создания, а имя шаблона — в JournalTemplate. Обычный seed
- * обновляет шаблон, документы же остаются со старым названием, и на
- * сайте журнал по-прежнему называется по-старому.
+ * История: сначала здесь было одно переименование журнала климата
+ * («… температуры и влажности» → «… на складах»). 2026-09-28 владелец
+ * переименовал оба журнала температуры: журнал складов — «Журнал учёта
+ * температуры и влажности на складах» (слова «бланк» в названии журнала
+ * быть не должно), холодильный — «Журнал учёта температурного режима
+ * холодильного и морозильного оборудования» (форма Приложения № 2 к СанПиН
+ * 2.3/2.4.4282-26). Списки старых и новых названий —
+ * `src/lib/journal-title-renames.ts` (их же использует печать).
  *
- * Безопасно: трогаем только документы шаблона climate_control, у которых
- * заголовок ещё не содержит «на складах». Пользовательские названия,
- * набранные вручную, не совпадут с известными старыми и останутся как
- * есть — переименовываем строго по точному совпадению.
- *
- * Идемпотентно: после прогона следующий запуск обновит 0 строк.
- * Запускается на каждый deploy (см. .github/workflows/deploy.yml).
+ * Обычный seed обновляет имя шаблона по каталогу, а у созданных документов
+ * заголовок лежит в БД строкой с момента создания. Здесь:
+ *   • имя шаблона — на новое (если seed ещё не обновил);
+ *   • документы шаблона, у которых заголовок ровно старое название или
+ *     автоназвание «старое название — период», — на новое (период
+ *     сохраняется). Любой статус: печать архивного документа тоже должна
+ *     выходить с новым названием.
+ * Названия, набранные вручную, под эти правила не попадут. Повторный запуск
+ * обновит 0 строк.
  */
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import "dotenv/config";
 import pg from "pg";
 
+import { JOURNAL_TITLE_RENAMES, renamedJournalDocumentTitle } from "../src/lib/journal-title-renames";
+
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
-const TEMPLATE_CODE = "climate_control";
-const NEW_TITLE = "Бланк контроля температуры и влажности на складах";
-
-/**
- * Старые заголовки — точным совпадением. Список, а не префикс: под
- * префикс попало бы «…влажности в цехе №2», которое кто-то ввёл руками.
- */
-const OLD_TITLES = [
-  "Бланк контроля температуры и влажности",
-  "Журнал контроля температуры и влажности",
-  "Контроль температуры и влажности",
-];
-
 async function main() {
-  const template = await prisma.journalTemplate.findUnique({
-    where: { code: TEMPLATE_CODE },
-    select: { id: true, name: true },
-  });
-  if (!template) {
-    console.log(`[rename-climate] шаблон ${TEMPLATE_CODE} не найден — нечего делать`);
-    return;
-  }
-
-  if (template.name !== NEW_TITLE) {
-    await prisma.journalTemplate.update({
-      where: { id: template.id },
-      data: { name: NEW_TITLE },
+  for (const rename of JOURNAL_TITLE_RENAMES) {
+    const tag = `[rename-journal ${rename.code}]`;
+    const template = await prisma.journalTemplate.findUnique({
+      where: { code: rename.code },
+      select: { id: true, name: true },
     });
-    console.log(`[rename-climate] шаблон: «${template.name}» → «${NEW_TITLE}»`);
+    if (!template) {
+      console.log(`${tag} шаблон не найден — нечего делать`);
+      continue;
+    }
+
+    if (template.name !== rename.title) {
+      await prisma.journalTemplate.update({
+        where: { id: template.id },
+        data: { name: rename.title },
+      });
+      console.log(`${tag} шаблон: «${template.name}» → «${rename.title}»`);
+    }
+
+    // Точное старое название — одним запросом.
+    const exact = await prisma.journalDocument.updateMany({
+      where: { templateId: template.id, title: { in: [...rename.legacyTitles] } },
+      data: { title: rename.title },
+    });
+
+    // «Старое название — период»: хвост у каждого свой — по одному. Условие
+    // на прежний заголовок: если его успели поменять руками, не трогаем.
+    let withPeriod = 0;
+    for (const legacy of rename.legacyTitles) {
+      const prefixed = await prisma.journalDocument.findMany({
+        where: { templateId: template.id, title: { startsWith: `${legacy} — ` } },
+        select: { id: true, title: true },
+      });
+      for (const document of prefixed) {
+        const updated = await prisma.journalDocument.updateMany({
+          where: { id: document.id, title: document.title },
+          data: { title: renamedJournalDocumentTitle(rename.code, document.title) },
+        });
+        withPeriod += updated.count;
+      }
+    }
+
+    console.log(
+      `${tag} документов переименовано: ${exact.count + withPeriod} (без периода: ${exact.count}, с периодом: ${withPeriod})`
+    );
   }
-
-  const documents = await prisma.journalDocument.updateMany({
-    where: { templateId: template.id, title: { in: OLD_TITLES } },
-    data: { title: NEW_TITLE },
-  });
-
-  console.log(`[rename-climate] документов переименовано: ${documents.count}`);
 }
 
 main()
   .catch((error) => {
-    console.error("[rename-climate] ошибка:", error);
+    console.error("[rename-journal] ошибка:", error);
     process.exitCode = 1;
   })
   .finally(async () => {

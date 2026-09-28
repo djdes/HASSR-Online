@@ -8,8 +8,15 @@ import {
 import { normalizeReadingPhotos, withReadingPhoto } from "@/lib/reading-photos";
 
 export const COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE = "cold_equipment_control";
+/** Название журнала — по форме Приложения № 2 к СанПиН 2.3/2.4.4282-26 (`COLD_EQUIPMENT_LEGAL_BASIS`). */
 export const COLD_EQUIPMENT_DOCUMENT_TITLE =
-  "Журнал контроля температурного режима холодильного и морозильного оборудования";
+  "Журнал учёта температурного режима холодильного и морозильного оборудования";
+
+/**
+ * Основание формы: печатается мелко по центру под названием на первой
+ * странице PDF и стоит в «На основании» на странице журнала на сайте.
+ */
+export const COLD_EQUIPMENT_LEGAL_BASIS = "Приложение № 2 к СанПиН 2.3/2.4.4282-26";
 
 type EquipmentSeed = {
   name: string;
