@@ -8,7 +8,8 @@
  *
  * Имя шаблона каталог и сид обновляют сами, а заголовок уже созданного
  * документа лежит в БД строкой с момента создания (точное название или
- * автоназвание «название — период»). По этим спискам его переименовывает
+ * автоназвание «название — период»; у документов, созданных до сентября
+ * 2026, — «название · период», у демо — «название (демо)»). По этим спискам его переименовывает
  * `prisma/seed-rename-climate-title.ts` (на каждом деплое, идемпотентно), а
  * печать (`document-pdf.ts`) печатает старое название новым, если документ
  * ещё не переименован. Названия, набранные руками, под списки не попадут.
@@ -42,12 +43,20 @@ export const JOURNAL_TITLE_RENAMES: readonly JournalTitleRename[] = [
   },
 ];
 
-/** Разделитель автоназвания «название — период» (`journal-document-title.ts`). */
-const NAME_SEPARATOR = " — ";
+/**
+ * Что может стоять сразу после названия в заголовке документа: нынешний
+ * разделитель автоназвания « — » (`journal-document-title.ts`), прежний
+ * « · » (так созданы документы до сентября 2026 — на проде их большинство),
+ * тире покороче и скобка «(демо)». Просто пробел — нет: «Бланк контроля
+ * температуры и влажности на складах» начинается с более короткого старого
+ * названия, и его «хвост» не период.
+ */
+const NAME_SEPARATORS = [" — ", " · ", " – ", " - ", " ("] as const;
 
 /**
  * Заголовок документа с нынешним названием журнала: старое название целиком
- * или в начале автоназвания «старое название — период» (период сохраняется).
+ * или в начале автоназвания «старое название — период» / «· период» /
+ * «(демо)» (хвост сохраняется).
  * Всё остальное — как есть.
  */
 export function renamedJournalDocumentTitle(code: string, title: string): string {
@@ -55,7 +64,9 @@ export function renamedJournalDocumentTitle(code: string, title: string): string
   if (!rename) return title;
   for (const legacy of rename.legacyTitles) {
     if (title === legacy) return rename.title;
-    if (title.startsWith(`${legacy}${NAME_SEPARATOR}`)) return `${rename.title}${title.slice(legacy.length)}`;
+    if (NAME_SEPARATORS.some((separator) => title.startsWith(`${legacy}${separator}`))) {
+      return `${rename.title}${title.slice(legacy.length)}`;
+    }
   }
   return title;
 }

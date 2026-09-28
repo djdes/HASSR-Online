@@ -59,18 +59,23 @@ async function main() {
       data: { title: rename.title },
     });
 
-    // «Старое название — период»: хвост у каждого свой — по одному. Условие
-    // на прежний заголовок: если его успели поменять руками, не трогаем.
+    // «Старое название — период» (и прежнее «· период», «(демо)»): хвост у
+    // каждого свой — по одному. Какие разделители считаются хвостом, решает
+    // renamedJournalDocumentTitle (её же зовёт печать); не переименовала —
+    // не трогаем. Условие на прежний заголовок: если его успели поменять
+    // руками, не трогаем.
     let withPeriod = 0;
     for (const legacy of rename.legacyTitles) {
       const prefixed = await prisma.journalDocument.findMany({
-        where: { templateId: template.id, title: { startsWith: `${legacy} — ` } },
+        where: { templateId: template.id, title: { startsWith: legacy } },
         select: { id: true, title: true },
       });
       for (const document of prefixed) {
+        const next = renamedJournalDocumentTitle(rename.code, document.title);
+        if (next === document.title) continue;
         const updated = await prisma.journalDocument.updateMany({
           where: { id: document.id, title: document.title },
-          data: { title: renamedJournalDocumentTitle(rename.code, document.title) },
+          data: { title: next },
         });
         withPeriod += updated.count;
       }
