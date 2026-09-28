@@ -80,6 +80,67 @@ function shotAsync(name) {
   return f;
 }
 
+/**
+ * Раунд 7: кадр через WebDriverAgent (XCUIScreen, ~0,3–1 с) — быстрее simctl, пока
+ * тост (4 с) ещё на экране. Без строки состояния поверх — это тот же экран.
+ */
+async function wdaShot(name) {
+  const f = `${String(++shotN).padStart(3, "0")}-${name}-wda.png`;
+  const c = als.getStore();
+  try {
+    const b64 = await withTimeout(driver.takeScreenshot(), 8000, "wda screenshot timeout");
+    fs.writeFileSync(path.join(OUT, f), Buffer.from(b64, "base64"));
+    if (c) c.r.shots.push(f);
+    return f;
+  } catch (e) {
+    log("wda screenshot failed", name, e.message.slice(0, 160));
+    return null;
+  }
+}
+
+/** Низ шапки приложения (строка «WESETUP» с логотипом и колокольчиком) по дереву. */
+async function topbarBottom() {
+  let bottom = null;
+  for (const label of ["На главный экран", "Уведомления", "ИИ-помощник"]) {
+    for (const x of await all({ type: ["link", "button"], label }, 5)) {
+      if (x.r.y < 200) bottom = Math.max(bottom ?? 0, x.r.y + x.r.height);
+    }
+  }
+  return bottom;
+}
+
+/**
+ * Раунд 7 (мастер cdebe948): тост должен быть ВИДЕН — не только в дереве. Опрос дерева
+ * каждые ~150 мс; как только текст найден — кадр WDA и кадр simctl, рамка, число тостов,
+ * низ шапки. Решение «виден» — по кадрам (смотрим глазами) и по рамке ниже шапки.
+ */
+async function watchToast(ctx, tag, contains, timeoutMs = 5000, { t0 = Date.now() } = {}) {
+  const polls = [];
+  let found = null;
+  while (Date.now() - t0 < timeoutMs) {
+    const els = await all({ type: "text", contains }, 5).catch(() => []);
+    polls.push(Date.now() - t0);
+    if (els.length) {
+      found = { ms: Date.now() - t0, text: els[0].label, rect: els[0].r, count: new Set(els.map((e) => `${Math.round(e.r.y)}|${e.label}`)).size };
+      found.wda = await wdaShot(`${ctx.r.id}-${tag}-toast`);
+      found.simctl = shotAsync(`${ctx.r.id}-${tag}-toast-simctl`);
+      break;
+    }
+    await sleep(150);
+  }
+  ctx.d[`${tag}_toast`] = found;
+  ctx.d[`${tag}_toastPolls`] = polls.length;
+  if (!found) return null;
+  const tb = await topbarBottom().catch(() => null);
+  found.topbarBottom = tb;
+  // Второй опрос — тостов с этим текстом ровно один и тот же.
+  const again = await all({ type: "text", contains }, 5).catch(() => []);
+  found.countAgain = new Set(again.map((e) => `${Math.round(e.r.y)}|${e.label}`)).size;
+  ctx.check(`${tag}: тост ниже шапки (верх тоста ${found.rect.y} ≥ низ шапки ${tb})`, tb != null && found.rect.y >= tb - 0.5, { rect: found.rect, topbarBottom: tb });
+  ctx.check(`${tag}: тост в пределах экрана`, found.rect.y + found.rect.height <= W.height && found.rect.x >= -1 && found.rect.x + found.rect.width <= W.width + 1, found.rect);
+  return found;
+}
+
 function save() {
   fs.writeFileSync(path.join(OUT, "results.json"), JSON.stringify({ meta, results, crashes }, null, 2));
 }
@@ -1093,9 +1154,9 @@ async function sectionsGo(label) {
 // Порядок раунда 6: вход, затем доказательства правок мастера (S13k, S08m, S11b), затем
 // то, что в раунде 5 не дошло до проверки (S04, S05, S06, S07, S03a). S12 — всегда последним.
 // Второй прогон раунда 6: S11b, S07, S03a доказаны в первом (прогон 36352483952) — не повторяем.
-const ORDER = (env.ORDER || "S01,S02,S13k,S08m,S04,S05,S06,S12").split(",");
+const ORDER = (env.ORDER || "S01,S02,S08m,S13k,S05,S04,S06,S14,S12").split(",");
 // Потолок на сценарий (мс); общий бюджет — TEST_BUDGET_MIN.
-const LIMITS = { S01: 90000, S02: 300000, S03a: 300000, S03b: 360000, S04: 300000, S05: 330000, S06: 330000, S07: 300000, S08: 240000, S09: 120000, S10: 150000, S11: 360000, S12: 60000, S13: 240000, S13k: 330000, S08m: 180000, S11b: 330000 };
+const LIMITS = { S01: 90000, S02: 300000, S03a: 300000, S03b: 360000, S04: 300000, S05: 420000, S06: 330000, S07: 300000, S08: 240000, S09: 120000, S10: 150000, S11: 360000, S12: 60000, S13: 240000, S13k: 330000, S08m: 180000, S11b: 330000, S14: 150000 };
 const plan = new Map();
 function def(id, name, fn, timeoutMs) {
   plan.set(id, { name, fn, timeoutMs: LIMITS[id] ?? timeoutMs ?? 300000 });
@@ -1317,16 +1378,20 @@ async function main() {
     const left = newLabels(before, after).filter((l) => /Принтер|Printer|Параметры печати|Print Options|ActivityListView|ShareSheet|Напечатать|Сохранить в Файлах/i.test(l));
     ctx.check("окно печати закрылось", left.length === 0, left);
     ctx.check("приложение живо, документ на месте", (await appState()) === 4 && (await has({ type: ["link", "button"], contains: "Распечатать" })));
+    // Раунд 7: приложение откликается после печати — вкладка «Разделы» открывается.
+    await tab("Разделы");
+    ctx.check("после печати интерфейс откликается (открылись «Разделы»)", await waitText({ type: "text", label: "Все разделы" }, 20000));
+    ctx.shot("after-print-sections");
   });
 
   // 5. Скачивание отчёта: лист «Поделиться»
-  const shareCheck = async (ctx, tag, ext, before) => {
+  const shareCheck = async (ctx, tag, ext, before, { timeout = 30000, onClosed = null } = {}) => {
     let fresh = [];
     const xml = await waitFor(async () => {
       const s = await source(`S05-${tag}`);
       fresh = newLabels(before, s);
       return fresh.some((l) => /Сохранить в|Save to|AirDrop|Скопировать|Copy|Напечатать|Print|Файлы|Files|Сообщения|Messages|Правка действий|Edit Actions/i.test(l)) ? s : null;
-    }, 30000 * SLOW, 1500);
+    }, timeout * SLOW, 1500);
     ctx.shot(`${tag}-share-sheet`);
     ctx.d[`${tag}_newLabels`] = fresh.slice(0, 60);
     ctx.check(`${tag}: лист «Поделиться» появился`, Boolean(xml), fresh.slice(0, 25));
@@ -1335,6 +1400,7 @@ async function main() {
     ctx.check(`${tag}: имя файла видно в листе (.${ext})`, names.some((n) => n.toLowerCase().includes("." + ext)), names);
     const close = (await tryTap({ type: "button", label: "Закрыть" }, { scrolls: 0, anywhere: true, timeout: 3000 })) || (await tryTap({ type: "button", label: "Close" }, { scrolls: 0, anywhere: true, timeout: 2000 }));
     if (!close) await drag(W.height * 0.35, W.height * 0.95, Math.round(W.width / 2));
+    if (onClosed) await onClosed();
     await sleep(2000);
     ctx.shot(`${tag}-closed`);
     ctx.check(`${tag}: лист закрылся, приложение живо`, (await appState()) === 4 && !(await has({ contains: "AirDrop" })));
@@ -1355,10 +1421,23 @@ async function main() {
     let before = await source("S05-before-xlsx");
     await tap({ type: "button", contains: "Скачать Excel" }, { scrolls: 12 });
     await shareCheck(ctx, "report-xlsx", "xlsx", before);
-    before = await source("S05-before-pdf");
-    await tap({ type: "button", contains: "Скачать PDF" }, { scrolls: 12 });
-    await shareCheck(ctx, "report-pdf", "pdf", before);
-  }, 360000);
+    // Раунд 7: «Скачать архив» (ZIP всех журналов) — после закрытия листа сайт
+    // показывает тост «Архив скачан · включено N»: положительная проверка правки cdebe948.
+    await tap({ type: "button", contains: "Скачать архив" }, { scrolls: 12, settle: 0 });
+    const tArch = Date.now();
+    await watchToast(ctx, "archive-collecting", "Собираем архив", 4000, { t0: tArch });
+    before = await source("S05-before-zip");
+    let done = null;
+    await shareCheck(ctx, "archive-zip", "zip", before, {
+      timeout: 120000,
+      onClosed: async () => {
+        done = await watchToast(ctx, "archive-done", "Архив скачан", 6000);
+      },
+    });
+    ctx.check(`архив: тост «Архив скачан · …» после закрытия листа${done ? ` («${done.text}», ${done.ms} мс)` : ""}`, Boolean(done && /Архив скачан/.test(done.text)), done);
+    ctx.d.archiveErrors = await textsWith(["Не удалось", "Ошибка"]);
+    ctx.check("архив: без сообщений об ошибке", ctx.d.archiveErrors.length === 0, ctx.d.archiveErrors);
+  }, 420000);
 
   // 6. Внешние ссылки
   def("S06", "Ссылки: почта (mailto) и чужой сайт — системе; приложение остаётся рабочим", async (ctx) => {
@@ -1622,6 +1701,16 @@ async function main() {
       ctx.check(`${tag}: зазор низ «Сохранить запись» → верх ${barTop != null ? "панели ^ v ✓" : "клавиатуры"} = ${gap} pt (0…40)`, gap >= 0 && gap <= 40, m);
       ctx.check(`${tag}: верхние 40 pt «Заметки» выше (верх «Отмена» − 12 pt): запас ${noteTopRoom} pt`, noteTopRoom >= 0, m);
       ctx.check(`${tag}: подвал формы не под клавиатурой`, saveBottom <= r.kb.y + 0.5 && (barTop == null || saveBottom <= barTop + 0.5), m);
+      // Раунд 7 (мастер fc537a6f/911dc785): при клавиатуре нижнее меню скрыто (html[data-keyboard-open]),
+      // поле с фокусом целиком видно: ниже шапки и выше подвала формы.
+      const visTop = edge;
+      const navVisible = navLinks.filter((q) => q.y + q.height / 2 < visTop);
+      m.navVisible = navVisible;
+      ctx.check(`${tag}: нижнее меню не видно при клавиатуре`, navVisible.length === 0, { navLinks, visTop });
+      const tb = await topbarBottom().catch(() => null);
+      m.topbarBottom = tb;
+      const noteFull = r.note.y >= (tb ?? ISLAND_BOTTOM) - 0.5 && r.note.y + r.note.height <= footerTopK + 0.5;
+      ctx.check(`${tag}: «Заметка» с фокусом целиком видна (${r.note.y}…${r.note.y + r.note.height} между шапкой ${tb} и подвалом ${footerTopK})`, noteFull, { note: r.note, topbarBottom: tb, footerTop: footerTopK });
       // Закрыть клавиатуру: ✓ на панели (или нажатие на заголовок).
       await hideKeyboard();
       if (await keyboard()) {
@@ -1633,6 +1722,7 @@ async function main() {
       const rc = await formRects();
       ctx.d[`${tag}_rectsClosed`] = rc;
       ctx.check(`${tag}: клавиатура закрыта`, !(await keyboard()));
+      ctx.check(`${tag}: после клавиатуры нижнее меню снова в дереве`, Boolean(rc.nav), rc.nav);
       if (rc.save && rc.nav) ctx.check(`${tag}: после клавиатуры подвал снова над нижним меню`, rc.save.y + rc.save.height <= rc.nav.y + 1, { save: rc.save, nav: rc.nav });
       else ctx.check(`${tag}: после клавиатуры подвал и меню в дереве`, false, rc);
       const nav = regionStats(fc, 772, 842);
@@ -1679,32 +1769,18 @@ async function main() {
     const t0 = Date.now();
     ctx.d.stopTapped = Boolean(stop);
     // Распознаватель мог остановиться и сам (в симуляторе нет речи) — тогда тост уже мог быть.
-    // Раунд 6, первый прогон: кадры simctl снимались по 5–15 с, опрос дерева между
-    // ними пропускал тост (живёт 4 с). Теперь — только опрос, кадры в фоне.
-    let toast = null;
-    const polls = [];
-    const asyncShots = [];
-    while (Date.now() - t0 < 5000) {
-      const ms = Date.now() - t0;
-      if ((ms > 600 && asyncShots.length === 0) || (ms > 2000 && asyncShots.length === 1)) asyncShots.push(shotAsync(`${ctx.r.id}-after-stop-${ms}ms`));
-      const els = await all({ type: "text", contains: "расслышали" }, 3).catch(() => []);
-      polls.push(Date.now() - t0);
-      if (els.length) {
-        toast = { ms: Date.now() - t0, text: els[0].label, rect: els[0].r };
-        asyncShots.push(shotAsync(`${ctx.r.id}-toast-found`));
-        break;
-      }
-      await sleep(150);
-    }
-    ctx.d.polls = polls;
-    ctx.d.asyncShots = asyncShots;
-    ctx.d.toast = toast;
+    // Раунд 7: опрос дерева + кадр WDA в момент находки (watchToast), проверка «ниже шапки».
+    const toast = await watchToast(ctx, "nothing-heard", "расслышали", 5000, { t0 });
     if (!toast) ctx.d.anyToastTexts = await textsWith(["Запись прервалась", "Разрешите", "недоступно", "расслышали"]);
-    await sleep(1500);
-    const f = ctx.shot("toast");
-    if (toast) ctx.check("тост на экране (между шапкой и низом)", toast.rect.y >= ISLAND_BOTTOM && toast.rect.y + toast.rect.height <= W.height, toast.rect);
-    await source("S08m-after-stop");
-    ctx.check(`тост «Ничего не расслышали…» за 5 с после «Остановить запись»${toast ? ` (${toast.ms} мс)` : ""}`, Boolean(toast && /Ничего не расслышали\. Попробуйте ещё раз поближе к телефону/.test(toast.text)), { toast, file: f });
+    const xmlToast = await source("S08m-toast");
+    ctx.d.toastTreeNeighbours = toast ? elementsOf(xmlToast).filter((e) => e.w > 0 && Math.abs(e.y - toast.rect.y) < 60).map((e) => `${e.type} «${e.label}» y=${e.y} h=${e.h} vis=${e.visible}`).slice(0, 12) : null;
+    ctx.check(`тост «Ничего не расслышали…» за 3 с после «Остановить запись»${toast ? ` (${toast.ms} мс)` : ""}`, Boolean(toast && toast.ms <= 3000 && /Ничего не расслышали\. Попробуйте ещё раз поближе к телефону/.test(toast.text)), toast);
+    if (toast) ctx.check(`ровно один такой тост (${toast.count} / повторно ${toast.countAgain})`, toast.count === 1 && toast.countAgain <= 1, toast);
+    // Раунд 7 (D): поздний отказ плагина после «stopped» не добавляет второй тост — ждём ещё 2,5 с.
+    await sleep(2500);
+    const f = ctx.shot("toast-later");
+    ctx.d.toastTextsLater = await textsWith(["расслышали", "Запись прервалась", "Разрешите", "недоступно", "Не удалось"]);
+    ctx.check("через 2,5 с — не больше одного сообщения голосового ввода", ctx.d.toastTextsLater.length <= 1, { texts: ctx.d.toastTextsLater, file: f });
     const hang = await has({ type: "button", label: "Остановить запись" });
     ctx.check("красный микрофон погас (нет «Остановить запись»)", !hang);
     ctx.check("кнопка «Голосовой ввод» снова на месте", await has(mic));
@@ -1828,6 +1904,102 @@ async function main() {
   def("S11", "Удаление аккаунта одноразового повара → «Аккаунт удалён» на входе", s11);
   def("S11b", "Удаление аккаунта с клавиатурой: поле «введите УДАЛИТЬ» над кнопками окна, окно ниже часов → «Аккаунт удалён»", s11);
 
+  // 14. Раунд 7: нет связи — экран «Нет связи» (mobile/www/offline.html) и самовосстановление.
+  def("S14", "Нет связи: сервер остановлен → «Нет связи» при запуске; сервер вернулся → приложение само открывает сайт", async (ctx) => {
+    const st = env.STATE;
+    const stopSh = st && path.join(st, "server-stop.sh");
+    const startSh = st && path.join(st, "server-start.sh");
+    if (!stopSh || !fs.existsSync(stopSh) || !fs.existsSync(startSh)) {
+      ctx.check("скрипты остановки/запуска сервера на месте", false, { st });
+      return;
+    }
+    const probe = () => {
+      try {
+        return execFileSync("curl", ["-s", "-o", "/dev/null", "-w", "%{http_code}", "--max-time", "5", "--cacert", env.CA_PEM, `${env.BASE_URL || "https://localhost:3000"}/mini/login`], { timeout: 10000 }).toString();
+      } catch (e) {
+        return `err ${String(e.stdout || e.message).slice(0, 60)}`;
+      }
+    };
+    let started = false;
+    const startServer = () => {
+      if (started) return;
+      started = true;
+      execFileSync("bash", [startSh], { stdio: "ignore", timeout: 30000 });
+    };
+    execFileSync("bash", [stopSh], { stdio: "ignore", timeout: 30000 });
+    try {
+    await sleep(1500);
+    ctx.d.probeAfterStop = probe();
+    log("   S14 server stopped, probe:", ctx.d.probeAfterStop);
+    ctx.check(`сервер остановлен (ответ ${ctx.d.probeAfterStop})`, !/^[23]\d\d$/.test(ctx.d.probeAfterStop));
+    await driver.execute("mobile: terminateApp", { bundleId: BUNDLE }).catch(() => undefined);
+    await sleep(1000);
+    const L = launchWithConsole();
+    ctx.d.launchConsole = path.basename(L.file);
+    const frames = [];
+    let lastFrame = 0;
+    const offline = await waitFor(async () => {
+      if (Date.now() - lastFrame > 3000) {
+        lastFrame = Date.now();
+        frames.push(shotAsync(`${ctx.r.id}-offline-t${Math.round((Date.now() - L.t0) / 1000)}s`));
+      }
+      return (await has({ type: "text", contains: "Нет связи" })) ? Date.now() - L.t0 : null;
+    }, 20000, 500);
+    ctx.d.offlineMs = offline;
+    const fo = ctx.shot("offline-page");
+    ctx.d.offlineTexts = await textsWith(["Нет связи", "Проверьте", "Открываем"]);
+    ctx.d.retryButton = await has({ type: "button", label: "Повторить" });
+    await source("S14-offline");
+    ctx.check(`за 20 с — экран «Нет связи с интернетом» (${offline ?? "—"} мс), кнопка «Повторить»`, Boolean(offline) && ctx.d.retryButton, { texts: ctx.d.offlineTexts, file: fo });
+    ctx.check("на экране не страница входа/сайт (сервер выключен)", !(await onLogin()) && !(await has({ type: "link", begins: "Профиль" })));
+    // Сервер снова запускаем; страница «Нет связи» раз в 10 с проверяет адрес и открывает сайт сама.
+    startServer();
+    const t1 = Date.now();
+    let serverUp = null;
+    lastFrame = 0;
+    const back = await waitFor(async () => {
+      if (!serverUp && /^[23]\d\d$/.test(probe())) serverUp = Date.now() - t1;
+      if (Date.now() - lastFrame > 5000) {
+        lastFrame = Date.now();
+        frames.push(shotAsync(`${ctx.r.id}-recover-t${Math.round((Date.now() - t1) / 1000)}s`));
+      }
+      if (await onLogin()) return { screen: "login", ms: Date.now() - t1 };
+      if (await has({ type: "link", begins: "Профиль" })) return { screen: "home", ms: Date.now() - t1 };
+      return null;
+    }, 40000, 1000);
+    ctx.d.serverUpMs = serverUp;
+    ctx.d.recovered = back;
+    ctx.d.frames = frames;
+    const fr = ctx.shot("recovered");
+    await source("S14-recovered");
+    ctx.check(`сервер снова отвечает (${serverUp ?? "—"} мс)`, serverUp != null);
+    ctx.check(`за 40 с приложение само открыло сайт (${back ? `${back.screen}, ${back.ms} мс` : "нет"})`, Boolean(back), { file: fr, texts: await textsWith(["Нет связи", "Открываем", "Вход"]) });
+    if (!back) {
+      // Ещё 30 с — для отчёта: восстановилось ли позже; и хвост журнала устройства.
+      const later = await waitFor(async () => ((await onLogin()) || (await has({ type: "link", begins: "Профиль" })) ? Date.now() - t1 : null), 30000, 1000);
+      ctx.d.recoveredLaterMs = later;
+      ctx.shot("recovered-later");
+      try {
+        const dl = fs.readFileSync(path.join(LOGS, "device.log"), "utf8").split("\n");
+        ctx.d.deviceLogTail = dl.filter((l) => /offline|WebView|NSURLError|navigation|provisional|Capacitor|⚡️/i.test(l)).slice(-60);
+      } catch (e) {
+        ctx.d.deviceLogTail = String(e.message);
+      }
+    }
+    } finally {
+      // Сценарий упал до запуска сервера — сервер всё равно поднимаем (иначе S12 и
+      // восстановление после провала останутся без сайта).
+      if (!started) {
+        try {
+          startServer();
+          ctx.d.serverRestartedInFinally = true;
+        } catch (e) {
+          ctx.d.serverRestartError = String(e.message).slice(0, 200);
+        }
+      }
+    }
+  }, 150000);
+
   // 12. Консоль
   def("S12", "Консоль: нет ошибок React (#418 и др.) и необработанных ошибок JS", async (ctx) => {
     await sleep(1000);
@@ -1837,7 +2009,7 @@ async function main() {
       const txt = fs.readFileSync(f, "utf8");
       per[path.basename(f)] = {
         lines: txt.split("\n").length,
-        react: txt.split("\n").filter((l) => /Minified React error|#418|Hydration/i.test(l)).slice(0, 10),
+        react: txt.split("\n").filter((l) => /Minified React error|#418|#419|#422|#423|#425|hydrat/i.test(l)).slice(0, 10),
         startup: txt.split("\n").filter((l) => /STARTUP JS ERROR/.test(l)).length,
         errors: txt.split("\n").filter((l) => /\[error\]|Uncaught|Unhandled|TypeError|ReferenceError/.test(l) && !FIREBASE_CI.test(l) && !NEXTAUTH_FETCH.test(l) && !PLUGIN_REJECT.test(l)).slice(0, 25),
         pluginRejects: txt.split("\n").filter((l) => PLUGIN_REJECT.test(l)).slice(0, 10),
@@ -1850,7 +2022,7 @@ async function main() {
     const react = Object.values(per).flatMap((p) => p.react);
     const errs = Object.values(per).flatMap((p) => p.errors);
     ctx.check("журналы консоли собраны", files.length > 0, files);
-    ctx.check("нет ошибок React (#418 и др.)", react.length === 0, react);
+    ctx.check("нет ошибок React (#418/#422/#425 и др.) и предупреждений о гидратации", react.length === 0, react);
     const uncaught = Object.values(per).flatMap((p) => p.uncaught);
     ctx.d.nextAuthFetch = Object.values(per).flatMap((p) => p.nextAuthFetch);
     ctx.d.pluginRejects = Object.values(per).flatMap((p) => p.pluginRejects);
