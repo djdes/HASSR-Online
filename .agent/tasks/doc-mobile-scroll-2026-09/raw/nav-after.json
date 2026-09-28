@@ -1,12 +1,12 @@
 {
   "label": "after",
-  "at": "2026-09-28T20:38:27.792Z",
+  "at": "2026-09-28T22:12:18.422Z",
   "pageErrors": [],
   "steps": [
     {
       "mode": "phoneTable",
       "step": "journal → document",
-      "url": "/journals/climate_control/documents/cmulmrwea00vp8w9mx1khr2fl",
+      "url": "/journals/climate_control/documents/cmulrn22e00vpn89m3i2x9upm",
       "scrollX": 0,
       "scrollY": 0,
       "maxScrollLeft": 0,
@@ -22,7 +22,7 @@
         "text": "Добавить строку",
         "left": 16,
         "right": 374,
-        "top": 1327.9,
+        "top": 1363.4,
         "width": 358
       },
       "scrollers": [
@@ -54,7 +54,7 @@
         "scrollY": 900,
         "moved": 3
       },
-      "url": "/journals/climate_control/documents/cmulmz1dn0002n49mhlocyt7m",
+      "url": "/journals/climate_control/documents/cmulrpx9i0001609mzu2phmx5",
       "scrollX": 0,
       "scrollY": 0,
       "maxScrollLeft": 0,
@@ -86,7 +86,7 @@
     {
       "mode": "phoneTable",
       "step": "back → document",
-      "url": "/journals/climate_control/documents/cmulmrwea00vp8w9mx1khr2fl",
+      "url": "/journals/climate_control/documents/cmulrn22e00vpn89m3i2x9upm",
       "scrollX": 0,
       "scrollY": 0,
       "maxScrollLeft": 0,
@@ -102,7 +102,7 @@
         "text": "Добавить строку",
         "left": 16,
         "right": 374,
-        "top": 1327.9,
+        "top": 1363.4,
         "width": 358
       },
       "scrollers": [
@@ -149,7 +149,7 @@
     {
       "mode": "phoneTable",
       "step": "journal → document (cold)",
-      "url": "/journals/cold_equipment_control/documents/cmulmrwgw00xc8w9msmn09ox6",
+      "url": "/journals/cold_equipment_control/documents/cmulrn24r00xcn89mux82rtc5",
       "scrollX": 0,
       "scrollY": 0,
       "maxScrollLeft": 0,
@@ -165,7 +165,7 @@
         "text": "Добавить",
         "left": 16,
         "right": 148,
-        "top": 1219.1,
+        "top": 1254.6,
         "width": 132
       },
       "scrollers": [
@@ -181,7 +181,7 @@
     {
       "mode": "desktop",
       "step": "journal → document",
-      "url": "/journals/climate_control/documents/cmulmrwea00vp8w9mx1khr2fl",
+      "url": "/journals/climate_control/documents/cmulrn22e00vpn89m3i2x9upm",
       "scrollX": 0,
       "scrollY": 0,
       "maxScrollLeft": 0,
@@ -197,7 +197,7 @@
         "text": "Добавить строку",
         "left": 1067.2,
         "right": 1248,
-        "top": 986.7,
+        "top": 1009.2,
         "width": 180.8
       },
       "scrollers": [
@@ -223,7 +223,7 @@
         "scrollY": 900,
         "moved": 2
       },
-      "url": "/journals/climate_control/documents/cmulmz1dn0002n49mhlocyt7m",
+      "url": "/journals/climate_control/documents/cmulrpx9i0001609mzu2phmx5",
       "scrollX": 0,
       "scrollY": 0,
       "maxScrollLeft": 0,
@@ -255,7 +255,7 @@
     {
       "mode": "desktop",
       "step": "back → document",
-      "url": "/journals/climate_control/documents/cmulmrwea00vp8w9mx1khr2fl",
+      "url": "/journals/climate_control/documents/cmulrn22e00vpn89m3i2x9upm",
       "scrollX": 0,
       "scrollY": 0,
       "maxScrollLeft": 0,
@@ -271,7 +271,7 @@
         "text": "Добавить строку",
         "left": 1067.2,
         "right": 1248,
-        "top": 986.7,
+        "top": 1009.2,
         "width": 180.8
       },
       "scrollers": [
@@ -312,7 +312,7 @@
     {
       "mode": "desktop",
       "step": "journal → document (cold)",
-      "url": "/journals/cold_equipment_control/documents/cmulmrwgw00xc8w9msmn09ox6",
+      "url": "/journals/cold_equipment_control/documents/cmulrn24r00xcn89mux82rtc5",
       "scrollX": 0,
       "scrollY": 0,
       "maxScrollLeft": 0,
@@ -328,7 +328,7 @@
         "text": "Добавить",
         "left": 32,
         "right": 159.2,
-        "top": 975.8,
+        "top": 998.3,
         "width": 127.2
       },
       "scrollers": [

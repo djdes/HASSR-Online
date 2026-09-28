@@ -2,7 +2,6 @@
   "label": "after",
   "engine": "webkit",
   "pageErrors": [
-    "/localhost:3181/api/support/chat/status due to access control checks.",
     "ResizeObserver loop completed with undelivered notifications."
   ],
   "rows": [

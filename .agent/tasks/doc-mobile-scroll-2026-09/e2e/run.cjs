@@ -57,6 +57,49 @@ async function swipeFrames(page) {
   });
 }
 
+/** Свободно на C:, МБ (правило окружения: ниже 1 ГБ — остановить замер). */
+function freeMbC() {
+  try {
+    const st = fs.statfsSync("C:\\");
+    return Math.round((st.bavail * st.bsize) / 1048576);
+  } catch {
+    return Infinity;
+  }
+}
+const STOP = { at: null };
+
+/** Контекст + вкладка режима; `fresh()` пересоздаёт их после падения вкладки. */
+function makeTab(browser, mode, codes, results) {
+  const tab = { ctx: null, page: null };
+  tab.fresh = async () => {
+    if (tab.ctx) await tab.ctx.close().catch(() => {});
+    tab.ctx = await newContext(browser, mode.viewport);
+    tab.page = await quietPage(tab.ctx, results);
+    if (mode.view) {
+      await tab.page.addInitScript(
+        ([list, v]) => {
+          try {
+            for (const code of list) localStorage.setItem(`journal-mobile-view:${code}`, v);
+          } catch {}
+        },
+        [codes, mode.view],
+      );
+    }
+  };
+  return tab;
+}
+
+function diskGuard(where) {
+  if (STOP.at) return false;
+  const free = freeMbC();
+  if (free < 1024) {
+    STOP.at = `${where} (на C: ${free} МБ)`;
+    console.log(`STOP: на C: ${free} МБ, остановлено перед ${where}`);
+    return false;
+  }
+  return true;
+}
+
 (async () => {
   const creds = readCreds();
   const docs = creds.documents.filter((d) => d.status === "active" && (!ONLY || ONLY.has(d.code)));
@@ -65,6 +108,7 @@ async function swipeFrames(page) {
   fs.mkdirSync(shotsDir, { recursive: true });
   fs.mkdirSync(path.join(OUT, "raw"), { recursive: true });
   const results = { label: LABEL, at: new Date().toISOString(), pageErrors: [], documents: [], journals: [] };
+  const save = () => fs.writeFileSync(path.join(OUT, "raw", `${LABEL}.json`), JSON.stringify(results, null, 2));
 
   const browser = await launch();
   try {
@@ -74,76 +118,81 @@ async function swipeFrames(page) {
       { key: "desktop", viewport: DESKTOP, view: null },
     ];
     await Promise.all(modes.map(async (mode) => {
-      const ctx = await newContext(browser, mode.viewport);
-      const page = await quietPage(ctx, results);
-      if (mode.view) {
-        await page.addInitScript(
-          ([list, v]) => {
-            try {
-              for (const code of list) localStorage.setItem(`journal-mobile-view:${code}`, v);
-            } catch {}
-          },
-          [codes, mode.view],
-        );
-      }
+      const tab = makeTab(browser, mode, codes, results);
+      await tab.fresh();
       for (const doc of docs) {
+        if (!diskGuard(`${mode.key} ${doc.code}`)) break;
         const url = `/journals/${doc.code}/documents/${doc.id}`;
-        let row = { code: doc.code, mode: mode.key };
-        try {
-          await gotoHydrated(page, url, "main h1");
-          await page.waitForTimeout(3500);
-          const m = await measurePage(page);
-          row = { ...row, ...m, problems: verdict(m) };
-          if (mode.key !== "desktop") {
-            // Человек сдвинул таблицу вбок: шапка (H1, «Добавить…») должна остаться на месте.
-            row.swipe = await swipeFrames(page);
-            if (row.swipe.moved > 0) {
-              if (row.swipe.h1 && Math.abs(row.swipe.h1.left - (m.h1 ? m.h1.left : 0)) > 1) row.problems.push(`H1 moves with table (${row.swipe.h1.left})`);
-              if (row.swipe.add && row.swipe.add.left < 0) row.problems.push(`add button cut after swipe (${row.swipe.add.left})`);
+        let row = null;
+        for (let attempt = 1; attempt <= 2; attempt += 1) {
+          row = { code: doc.code, mode: mode.key, ...(attempt > 1 ? { retried: true } : {}) };
+          try {
+            const page = tab.page;
+            await gotoHydrated(page, url, "main h1");
+            await page.waitForTimeout(3500);
+            const m = await measurePage(page);
+            row = { ...row, ...m, problems: verdict(m) };
+            if (mode.key !== "desktop") {
+              // Человек сдвинул таблицу вбок: шапка (H1, «Добавить…») должна остаться на месте.
+              row.swipe = await swipeFrames(page);
+              if (row.swipe.moved > 0) {
+                if (row.swipe.h1 && Math.abs(row.swipe.h1.left - (m.h1 ? m.h1.left : 0)) > 1) row.problems.push(`H1 moves with table (${row.swipe.h1.left})`);
+                if (row.swipe.add && row.swipe.add.left < 0) row.problems.push(`add button cut after swipe (${row.swipe.add.left})`);
+              }
             }
+            if (SHOT_CODES.has(doc.code)) {
+              await page.screenshot({ path: path.join(shotsDir, `${doc.code}-${mode.key}.png`) });
+            }
+          } catch (err) {
+            row.error = String(err && err.message).slice(0, 300);
           }
-          if (SHOT_CODES.has(doc.code) && mode.key !== "desktop") {
-            await page.screenshot({ path: path.join(shotsDir, `${doc.code}-${mode.key}.png`) });
-          }
-          if (SHOT_CODES.has(doc.code) && mode.key === "desktop") {
-            await page.screenshot({ path: path.join(shotsDir, `${doc.code}-desktop.png`) });
-          }
-        } catch (err) {
-          row.error = String(err && err.message).slice(0, 300);
+          if (!row.error) break;
+          // Вкладка упала или закрылась — новая вкладка и ещё одна попытка.
+          await tab.fresh().catch(() => {});
         }
         results.documents.push(row);
+        save();
         console.log(
-          `${mode.key.padEnd(10)} ${doc.code.padEnd(32)} y=${row.scrollY} x=${row.scrollX} sl=${row.maxScrollLeft} pan=${row.pan ? row.pan.scrollWidth : "-"} ` +
-            `${row.error ? `ERROR ${row.error}` : row.problems.length ? "✗ " + row.problems.join("; ") : "✓"}`,
+          `${mode.key.padEnd(10)} ${doc.code.padEnd(32)} y=${row.scrollY} x=${row.scrollX} sl=${row.maxScrollLeft} ` +
+            `${row.error ? `ERROR ${row.error.split("\n")[0]}` : row.problems.length ? "✗ " + row.problems.join("; ") : "✓"}${row.retried ? " (повтор)" : ""}`,
         );
       }
-      await ctx.close();
+      await tab.ctx.close().catch(() => {});
     }));
 
     // Страницы журналов (список документов).
     await Promise.all([modes[0], modes[2]].map(async (mode) => {
-      const ctx = await newContext(browser, mode.viewport);
-      const page = await quietPage(ctx, results);
+      const tab = makeTab(browser, mode, codes, results);
+      await tab.fresh();
       for (const code of codes) {
-        let row = { code, mode: mode.key };
-        try {
-          await gotoHydrated(page, `/journals/${code}`, "main h1");
-          await page.waitForTimeout(800);
-          const m = await measurePage(page);
-          row = { ...row, ...m, problems: verdict(m) };
-        } catch (err) {
-          row.error = String(err && err.message).slice(0, 300);
+        if (!diskGuard(`страница журнала ${mode.key} ${code}`)) break;
+        let row = null;
+        for (let attempt = 1; attempt <= 2; attempt += 1) {
+          row = { code, mode: mode.key, ...(attempt > 1 ? { retried: true } : {}) };
+          try {
+            await gotoHydrated(tab.page, `/journals/${code}`, "main h1");
+            await tab.page.waitForTimeout(800);
+            const m = await measurePage(tab.page);
+            row = { ...row, ...m, problems: verdict(m) };
+          } catch (err) {
+            row.error = String(err && err.message).slice(0, 300);
+          }
+          if (!row.error) break;
+          await tab.fresh().catch(() => {});
         }
         results.journals.push(row);
+        save();
         console.log(
-          `journal ${mode.key.padEnd(8)} ${code.padEnd(32)} ${row.error ? `ERROR ${row.error}` : row.problems.length ? "✗ " + row.problems.join("; ") : "✓"}`,
+          `journal ${mode.key.padEnd(8)} ${code.padEnd(32)} ${row.error ? `ERROR ${row.error.split("\n")[0]}` : row.problems.length ? "✗ " + row.problems.join("; ") : "✓"}${row.retried ? " (повтор)" : ""}`,
         );
       }
-      await ctx.close();
+      await tab.ctx.close().catch(() => {});
     }));
   } finally {
     await browser.close();
-    fs.writeFileSync(path.join(OUT, "raw", `${LABEL}.json`), JSON.stringify(results, null, 2));
+    results.stoppedAt = STOP.at;
+    save();
+    if (STOP.at) console.log(`STOPPED AT ${STOP.at}`);
   }
 })().catch((err) => {
   console.error(err);

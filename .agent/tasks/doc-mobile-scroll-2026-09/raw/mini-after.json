@@ -108,17 +108,17 @@
       "outside": null,
       "frames": [
         {
-          "el": "div.journal-table-scroll.overflow-x-auto.overscroll-x-contain.rounded-",
-          "left": 0,
-          "right": 390,
-          "sw": 1105,
-          "cw": 390
-        },
-        {
           "el": "div.journal-table-scroll.overflow-x-auto.overscroll-x-contain.print:ov",
           "left": 0,
           "right": 390,
           "sw": 400,
+          "cw": 390
+        },
+        {
+          "el": "div.journal-table-scroll.overflow-x-auto.overscroll-x-contain.rounded-",
+          "left": 0,
+          "right": 390,
+          "sw": 1105,
           "cw": 390
         }
       ]

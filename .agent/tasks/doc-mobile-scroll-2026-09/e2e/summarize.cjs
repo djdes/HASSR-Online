@@ -1,5 +1,7 @@
-// Таблица «до/после» по журналам из raw/before.json и raw/after.json.
+// Таблицы «до/после» по журналам из raw/before.json и raw/after.json.
 //   node D:/wt-build/tmp-docscroll/e2e/summarize.cjs  → raw/summary.md + raw/summary.json
+// «До» и «после» — разные посевы одной и той же организации-образца (после перебазирования
+// ветки базу засеяли заново), сравнение — по коду журнала и режиму.
 const fs = require("node:fs");
 const path = require("node:path");
 const { OUT, readCreds } = require("./lib.cjs");
@@ -11,8 +13,8 @@ function load(label) {
 
 /** Короткая сводка по одному замеру: ✓ или список проблем (одинаково для «до» и «после»). */
 function cell(row) {
-  if (!row) return "—";
-  if (row.error) return "ошибка загрузки";
+  if (!row) return "не замерено";
+  if (row.error) return `✗ ошибка загрузки: ${row.error.split("\n")[0].slice(0, 80)}`;
   const p = [];
   if (row.scrollY !== 0) p.push(`окно y=${Math.round(row.scrollY)}`);
   if (row.scrollX !== 0) p.push(`окно x=${Math.round(row.scrollX)}`);
@@ -32,52 +34,69 @@ function cell(row) {
 
 const before = load("before");
 const after = load("after");
-// Прогон «после» по итоговому коду остановлен правилом окружения (на C: < 700 МБ):
-// берём то, что успели замерить (raw/after-partial.json), и точечные пробы.
-const partial = load("after-partial");
-const PROBES = {
-  "pest_control|phoneTable": "✓ (проба)",
-  "pest_control|desktop": "✓ (проба)",
-  "disinfectant_usage|phoneTable": "✓ (проба)",
-  "disinfectant_usage|desktop": "✓ (проба)",
-  "accident_journal|phoneTable": "✓ (проба)",
-};
-function afterCell(code, mode) {
-  if (after) return cell(pick(after, "documents", code, mode));
-  const row = partial && partial.rows.find((r) => r.code === code && r.mode === mode);
-  if (row) return row.verdict === "✓" ? "✓" : `✗ ${row.verdict}`;
-  return PROBES[`${code}|${mode}`] ?? "не замерено";
-}
 const creds = readCreds();
 const codes = [...new Set(creds.documents.filter((d) => d.status === "active").map((d) => d.code))];
 const names = Object.fromEntries(creds.documents.map((d) => [d.code, d.journal]));
 const pick = (set, list, code, mode) => (set ? set[list].find((r) => r.code === code && r.mode === mode) : null);
+const MODES = ["phone", "phoneTable", "desktop"];
 
 const rows = [];
-let md = "| Журнал | Телефон, вид по умолчанию: до → после | Телефон, «Таблица»: до → после | Компьютер 1280: до → после | Страница журнала, телефон / компьютер: до → после |\n|---|---|---|---|---|\n";
-const totals = { before: 0, after: 0, cells: 0 };
+const totals = {
+  documentCells: 0,
+  before: 0,
+  after: 0,
+  afterNotMeasured: 0,
+  journalCells: 0,
+  journalBefore: 0,
+  journalAfter: 0,
+  journalAfterNotMeasured: 0,
+};
+let md =
+  "| Журнал | Телефон, вид по умолчанию: до → после | Телефон, «Таблица»: до → после | Компьютер 1280: до → после | Страница журнала, телефон / компьютер: до → после |\n|---|---|---|---|---|\n";
+let mdAfter = "| Журнал | Телефон, по умолчанию | Телефон, «Таблица» | Компьютер 1280 | Страница журнала (телефон / компьютер) |\n|---|---|---|---|---|\n";
 for (const code of codes) {
   const r = { code, journal: names[code] };
   const cols = [];
-  for (const mode of ["phone", "phoneTable", "desktop"]) {
+  const afterCols = [];
+  for (const mode of MODES) {
     const b = cell(pick(before, "documents", code, mode));
-    const a = afterCell(code, mode);
+    const a = cell(pick(after, "documents", code, mode));
     r[mode] = { before: b, after: a };
-    totals.cells += 1;
+    totals.documentCells += 1;
     if (b !== "✓") totals.before += 1;
-    if (a.startsWith("✗")) totals.after += 1;
-    if (a === "не замерено") totals.notMeasured = (totals.notMeasured || 0) + 1;
+    if (a === "не замерено") totals.afterNotMeasured += 1;
+    else if (a !== "✓") totals.after += 1;
     cols.push(`${b} → ${a}`);
+    afterCols.push(a);
   }
-  const jb = `${cell(pick(before, "journals", code, "phone"))} / ${cell(pick(before, "journals", code, "desktop"))}`;
-  const ja = after ? `${cell(pick(after, "journals", code, "phone"))} / ${cell(pick(after, "journals", code, "desktop"))}` : "не замерено";
+  const jp = ["phone", "desktop"].map((mode) => ({
+    b: cell(pick(before, "journals", code, mode)),
+    a: cell(pick(after, "journals", code, mode)),
+  }));
+  for (const { b, a } of jp) {
+    totals.journalCells += 1;
+    if (b !== "✓") totals.journalBefore += 1;
+    if (a === "не замерено") totals.journalAfterNotMeasured += 1;
+    else if (a !== "✓") totals.journalAfter += 1;
+  }
+  const jb = jp.map((x) => x.b).join(" / ");
+  const ja = jp.map((x) => x.a).join(" / ");
   r.journalPage = { before: jb, after: ja };
   cols.push(`${jb} → ${ja}`);
+  afterCols.push(ja);
   rows.push(r);
   md += `| \`${code}\` ${names[code] ?? ""} | ${cols.join(" | ")} |\n`;
+  mdAfter += `| \`${code}\` ${names[code] ?? ""} | ${afterCols.join(" | ")} |\n`;
 }
-md += `\nЗамеров документа с проблемой: до — ${totals.before} из ${totals.cells}; после — ${totals.after} ` +
-  `(по итоговому коду не замерено ${totals.notMeasured || 0} из ${totals.cells}: прогон остановлен правилом «на C: < 700 МБ»).\n`;
+const totalsLine =
+  `Документы (45 журналов × 3 режима = ${totals.documentCells} замеров): с проблемой до — ${totals.before}, после — ${totals.after}` +
+  `${totals.afterNotMeasured ? ` (не замерено ${totals.afterNotMeasured})` : ""}. ` +
+  `Страницы журналов (${totals.journalCells} замеров): до — ${totals.journalBefore}, после — ${totals.journalAfter}` +
+  `${totals.journalAfterNotMeasured ? ` (не замерено ${totals.journalAfterNotMeasured})` : ""}.`;
+md += `\n${totalsLine}\n`;
+mdAfter += `\n${totalsLine}\n`;
 fs.writeFileSync(path.join(OUT, "raw", "summary.md"), md);
-fs.writeFileSync(path.join(OUT, "raw", "summary.json"), JSON.stringify({ totals, rows }, null, 2));
-console.log(md);
+fs.writeFileSync(path.join(OUT, "raw", "summary-after.md"), mdAfter);
+fs.writeFileSync(path.join(OUT, "raw", "summary.json"), JSON.stringify({ totals, stoppedAt: after ? after.stoppedAt ?? null : null, rows }, null, 2));
+console.log(mdAfter);
+console.log(totalsLine);
