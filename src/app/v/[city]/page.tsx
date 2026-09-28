@@ -11,6 +11,7 @@ import { jsonLdSafeString } from "@/lib/json-ld";
 import { DEFAULT_TWITTER_CARD } from "@/lib/meta-defaults";
 import { ogImages, twitterImages } from "@/lib/og-image";
 import { JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
+import { FREE_PLAN_TITLE, FREE_TIER_SHORT } from "@/lib/plan-catalog";
 
 export const dynamic = "force-static";
 
@@ -34,7 +35,7 @@ export function generateStaticParams() {
 function texts(slug: string) {
   const c = CITIES[slug];
   const title = `Электронные журналы СанПиН и ХАССП ${c.inCity}`;
-  const description = `Электронные журналы ХАССП для кафе и ресторанов ${c.inCity}: ${JOURNALS_TOTAL_LABEL}, заполнение с телефона, PDF к проверке Роспотребнадзора. Бесплатно до 3 сотрудников.`;
+  const description = `Электронные журналы ХАССП для кафе и ресторанов ${c.inCity}: ${JOURNALS_TOTAL_LABEL}, заполнение с телефона, PDF к проверке Роспотребнадзора. ${FREE_TIER_SHORT}.`;
   return { c, title, description, url: `${SITE}/v/${c.slug}` };
 }
 
@@ -72,7 +73,7 @@ export default async function CityLandingPage({ params }: { params: Promise<{ ci
         areaServed: { "@type": "City", name: c.name, containedInPlace: { "@type": "AdministrativeArea", name: c.region } },
         url,
         description,
-        offers: { "@type": "Offer", price: "0", priceCurrency: "RUB", description: "Бесплатный тариф до 3 сотрудников" },
+        offers: { "@type": "Offer", price: "0", priceCurrency: "RUB", description: FREE_PLAN_TITLE },
       },
       { "@type": "FAQPage", mainEntity: faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) },
     ],

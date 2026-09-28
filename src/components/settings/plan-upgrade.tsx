@@ -16,6 +16,7 @@ import {
   PLAN_CATALOG,
   SUBSCRIPTION_MAX_USERS,
   catalogPlanIdFor,
+  employeesLabel,
   type CatalogPlanId,
 } from "@/lib/plan-catalog";
 import { PlanCard } from "@/components/pricing/plan-card";
@@ -38,6 +39,11 @@ type Props = {
   freeUserLimit: number;
   /** Тестовый режим биллинга — оплата не списывается. */
   billingTestMode: boolean;
+  /**
+   * Бесплатный период закончился: сверх бесплатного лимита — только
+   * после оплаты (тихого перевода на платный больше нет).
+   */
+  paymentRequired?: boolean;
   /** Самый дешёвый комплект железа — считается на сервере. */
   hardwareFromRub: number;
   /** Цена подписки из БД — калькулятор считает с ней общий итог. */
@@ -60,6 +66,7 @@ export function PlanUpgrade({
   activeUsers,
   freeUserLimit,
   billingTestMode,
+  paymentRequired = false,
   hardwareFromRub,
   subscriptionMonthly,
   subscriptionPromotion = null,
@@ -86,7 +93,10 @@ export function PlanUpgrade({
           <p className="mt-1 inline-flex items-center gap-1.5 text-[13px] text-[#6f7282]">
             <Users className="size-3.5" />
             {currentId === "free"
-              ? `${activeUsers}/${freeUserLimit} сотрудников · свободно мест: ${seatsLeft}`
+              ? activeUsers > freeUserLimit
+                ? // Сверх бесплатного (до решения после бесплатного периода) дробь «4/1» путает.
+                  `${employeesLabel(activeUsers)} · бесплатный тариф — ${employeesLabel(freeUserLimit)}`
+                : `${activeUsers}/${freeUserLimit} сотрудников · свободно мест: ${seatsLeft}`
               : paidSummary}
           </p>
           {planNote ? (
@@ -102,12 +112,15 @@ export function PlanUpgrade({
 
       {/* Предупреждение ровно на границе: следующий человек меняет тариф. */}
       {currentId === "free" && seatsLeft === 0 ? (
-        <p className="mt-4 rounded-2xl border border-[#ffe9b0] bg-[#fffaf0] px-4 py-3 text-[13px] leading-relaxed text-[#3c4053]">
-          Бесплатные места закончились. Следующий сотрудник переведёт
-          организацию на платный тариф
-          {billingTestMode
-            ? " — сейчас это бесплатно, сайт в тестовом режиме."
-            : "."}
+        <p
+          data-testid="plan-seats-note"
+          className="mt-4 rounded-2xl border border-[#ffe9b0] bg-[#fffaf0] px-4 py-3 text-[13px] leading-relaxed text-[#3c4053]"
+        >
+          {paymentRequired
+            ? "Бесплатные места закончились. Чтобы добавить сотрудников или вернуть их из архива, оплатите подписку."
+            : `Бесплатные места закончились. Следующий сотрудник переведёт организацию на подписку${
+                billingTestMode ? " — сейчас это бесплатно, сайт в тестовом режиме." : "."
+              }`}
         </p>
       ) : null}
 

@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { isManagementRole } from "@/lib/user-roles";
 import { recordAuditLog } from "@/lib/audit-log";
 import { buildStaffLogin, loginSuffixSchema } from "@/lib/login-prefix";
+import { checkUserActivation, seatLimitResponse } from "@/lib/billing.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -65,7 +66,7 @@ export async function POST(
 
   const user = await db.user.findFirst({
     where: { id, organizationId: orgId },
-    select: { id: true, name: true, email: true, passwordHash: true },
+    select: { id: true, name: true, email: true, passwordHash: true, isActive: true },
   });
   if (!user) {
     return NextResponse.json({ error: "Сотрудник не найден" }, { status: 404 });
@@ -102,6 +103,11 @@ export async function POST(
         { error: "Укажите логин — сотрудник ещё не может войти" },
         { status: 400 }
       );
+    }
+    // Пароль включает неактивного сотрудника — это место в тарифе.
+    if (!user.isActive) {
+      const seats = await checkUserActivation(user.id, { source: "staff.credentials" });
+      if (!seats.ok) return seatLimitResponse(seats);
     }
     data.passwordHash = await bcrypt.hash(parsed.password, 10);
     data.isActive = true;

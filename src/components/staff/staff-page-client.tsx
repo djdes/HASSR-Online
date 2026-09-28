@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { ApiError, toastCaughtError } from "@/lib/billing-limit-toast";
 import { cn } from "@/lib/utils";
 import {
   clampOffset,
@@ -413,7 +414,8 @@ export function StaffPageClient(props: StaffPageProps) {
     });
     if (!res.ok) {
       const data = await res.json().catch(() => null);
-      throw new Error(data?.error || `Ошибка ${res.status}`);
+      // С телом ответа: лимит тарифа (402) показываем с кнопкой «Оплатить».
+      throw new ApiError(data?.error || `Ошибка ${res.status}`, data);
     }
     return res.json().catch(() => ({}));
   }
@@ -587,7 +589,7 @@ export function StaffPageClient(props: StaffPageProps) {
       await callJson(url, { method: "DELETE" });
       startTransition(() => router.refresh());
     } catch (error) {
-      toast.error((error as Error).message);
+      toastCaughtError(error, "Не удалось удалить запись");
     }
   }
 

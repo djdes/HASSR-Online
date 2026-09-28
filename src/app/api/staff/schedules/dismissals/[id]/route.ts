@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { isManagementRole } from "@/lib/user-roles";
+import { checkUserActivation, seatLimitResponse } from "@/lib/billing.server";
 
 export async function DELETE(
   _request: Request,
@@ -21,6 +22,11 @@ export async function DELETE(
   if (!row) {
     return NextResponse.json({ error: "Запись не найдена" }, { status: 404 });
   }
+  // Снятие увольнения возвращает сотрудника в работу — это место в
+  // тарифе. Проверяем до записи, иначе запись увольнения исчезла бы.
+  const seats = await checkUserActivation(row.userId, { source: "staff.dismissal.undo" });
+  if (!seats.ok) return seatLimitResponse(seats);
+
   // Remove the dismissal AND unarchive the user.
   await db.$transaction([
     db.staffDismissal.delete({ where: { id: row.id } }),

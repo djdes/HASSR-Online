@@ -196,6 +196,13 @@ export const AUDIT_ACTION_LABELS: Record<string, AuditActionLabel> = {
   "subscription.cancelled": { label: "Подписка отменена", variant: "destructive" },
   "subscription.resumed": { label: "Подписка возобновлена", variant: "default" },
   "plan.auto_upgraded": { label: "Тариф повышен автоматически", variant: "secondary" },
+  // Переход на оплату после бесплатного периода (2026-10).
+  "billing.transition.manual_free": { label: "Переход на бесплатный тариф", variant: "destructive" },
+  "billing.transition.auto_free": { label: "Автопереход на бесплатный тариф", variant: "destructive" },
+  "billing.transition.silent_free": { label: "Бесплатный тариф после бесплатного периода", variant: "secondary" },
+  "billing.transition.reminder": { label: "Напоминание выбрать тариф", variant: "outline" },
+  "billing.free_period.updated": { label: "Настройки бесплатного периода", variant: "secondary" },
+  "staff.restored": { label: "Сотрудник возвращён из архива", variant: "default" },
 
   // --- Резервные копии ----------------------------------------------------
   "yandex_backup.success": { label: "Резервная копия создана", variant: "default" },
@@ -250,6 +257,8 @@ const ENTITY_LABELS_LOWER: Record<string, string> = {
   webhook: "Вебхук",
   invoice: "Счёт",
   subscription: "Подписка",
+  account: "Аккаунт",
+  platform_setting: "Настройки платформы",
   idea: "Идея",
   partner: "Консультант",
   backup: "Резервная копия",
@@ -326,6 +335,13 @@ const DETAIL_KEY_LABELS: Record<string, string> = {
   employee: "Сотрудник",
   parentId: "Родительский шаг",
   reason: "Причина",
+  mode: "Как",
+  keptUserName: "Остался в работе",
+  archivedCount: "В архив",
+  archived: "Перешли в архив",
+  activeUsersBefore: "Было активных",
+  planBefore: "Тариф был",
+  graceEndsAt: "Срок выбора до",
   comment: "Комментарий",
   ip: "IP-адрес",
   userAgent: "Устройство",
@@ -396,6 +412,8 @@ const DETAIL_KEY_LABELS: Record<string, string> = {
  * название, если оно есть, лежит в соседнем поле.
  */
 const HIDDEN_DETAIL_KEYS = new Set([
+  "archivedUserIds",
+  "keptUserId",
   "joinTokenId",
   "partnerId",
   "claimId",
@@ -411,6 +429,16 @@ const HIDDEN_DETAIL_KEYS = new Set([
 
 /** Значения-перечисления по ключу → по-русски. */
 const DETAIL_VALUE_LABELS: Record<string, Record<string, string>> = {
+  mode: {
+    manual: "решение руководителя",
+    auto: "автоматически, срок выбора прошёл",
+    silent: "автоматически, в работе 1 сотрудник",
+  },
+  planBefore: { paid: "подписка", free: "бесплатный", trial: "бесплатный" },
+  reason: {
+    free_period_ended: "закончился бесплатный период",
+    subscription_expired: "закончилась оплаченная подписка",
+  },
   visionKind: {
     menu: "меню",
     raw: "сырьё",

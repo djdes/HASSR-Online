@@ -6,6 +6,7 @@ import { notifyManagement } from "@/lib/notifications";
 import { normalizePhone } from "@/lib/phone";
 import { tryAutolinkTasksflowByPhone } from "@/lib/tasksflow-autolink";
 import { ensurePlanForHeadcount } from "@/lib/plan-limits.server";
+import { checkSeatsForActivation } from "@/lib/billing.server";
 import { normalizeWeeklyDaysOff } from "@/lib/staff-days-off";
 import { resolveJournalAccessBootstrap } from "@/lib/staff-journal-bootstrap";
 
@@ -42,7 +43,14 @@ export type CreateStaffResult =
       positionName: string;
       planUpgraded: boolean;
     }
-  | { ok: false; error: string; status: 400 | 404 };
+  | {
+      ok: false;
+      error: string;
+      status: 400 | 402 | 404;
+      /** `billing_free_limit` — лимит бесплатного тарифа, клиент покажет «Оплатить». */
+      code?: string;
+      payUrl?: string;
+    };
 
 function syntheticEmail(orgId: string) {
   const salt = crypto.randomBytes(6).toString("hex");
@@ -62,6 +70,16 @@ export async function createStaffMember(
   });
   if (!position) {
     return { ok: false, error: "Должность не найдена", status: 404 };
+  }
+
+  // Лимит тарифа — ДО создания (после бесплатного периода на бесплатном
+  // тарифе второго активного добавить нельзя). Сторонняя бракеражная
+  // комиссия в тариф не входит.
+  if (position.categoryKey !== "commission") {
+    const seats = await checkSeatsForActivation(orgId, 1, { source: "staff.create" });
+    if (!seats.ok) {
+      return { ok: false, error: seats.error, status: 402, code: seats.code, payUrl: seats.payUrl };
+    }
   }
 
   const rawPhone = input.phone?.trim() ?? "";
@@ -126,8 +144,8 @@ export async function createStaffMember(
     return u;
   });
 
-  // Лимит бесплатного тарифа (3 сотрудника): создание не блокируем,
-  // при превышении переводим организацию на платный (тестовый режим).
+  // До конца бесплатного периода лимит не блокирует: при превышении
+  // организация тихо переходит на подписку (как раньше).
   const planCheck = await ensurePlanForHeadcount(orgId);
 
   // Best-effort автосвязка с TasksFlow по номеру.

@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileSpreadsheet, Loader2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
+import { toastApiError } from "@/lib/billing-limit-toast";
 import { toastPlanUpgraded } from "@/lib/plan-upgraded-toast";
 import { Button } from "@/components/ui/button";
 
@@ -235,6 +236,7 @@ export function BulkStaffImport() {
           (errCount > 0 ? `, ошибок: ${errCount}` : "")
       );
       if (data.planUpgraded) toastPlanUpgraded();
+      if (data.billingLimit) toastApiError(data.billingLimit, "Лимит тарифа");
       if (errCount > 0) {
         for (const e of data.errors.slice(0, 3)) {
           toast.warning(`Строка ${e.line}: ${e.message}`);

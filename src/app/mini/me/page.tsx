@@ -1,6 +1,9 @@
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getServerSession } from "@/lib/server-session";
+import { getActiveOrgId, isImpersonating } from "@/lib/auth-helpers";
+import { loadBillingView } from "@/lib/billing-view.server";
+import { isMobileAppRequest } from "@/lib/mobile-app-payments";
 
 import { MiniMeClient } from "./me-client";
 
@@ -33,8 +36,24 @@ export default async function MiniMePage() {
         .catch(() => null)
     : null;
 
+  // Анонс бесплатного периода: в мини-приложении — здесь, в профиле.
+  const billing = session?.user
+    ? await loadBillingView({
+        organizationId: getActiveOrgId(session),
+        user: session.user,
+        impersonating: isImpersonating(session),
+        partnerAccess: Boolean(session.user.partnerAccess),
+        inMobileApp: await isMobileAppRequest(),
+      }).catch(() => null)
+    : null;
+  const billingAnnouncement = billing?.announcement ?? null;
+  // Сотруднику без прав на тариф — тонкая плашка, пока руководитель решает.
+  const billingStaffNotice = billing?.staffNotice === true;
+
   return (
     <MiniMeClient
+      billingAnnouncement={billingAnnouncement}
+      billingStaffNotice={billingStaffNotice}
       telegramBotUsername={process.env.TELEGRAM_BOT_USERNAME ?? ""}
       positionTitle={
         profile?.jobPosition?.name?.trim() ||

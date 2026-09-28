@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { ApiError, toastCaughtError } from "@/lib/billing-limit-toast";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -110,14 +111,15 @@ export function QuickAddEmployee({
         | { user?: { id: string; name: string }; error?: string }
         | null;
       if (!res.ok || !data?.user) {
-        throw new Error(data?.error ?? "Не удалось создать сотрудника");
+        throw new ApiError(data?.error ?? "Не удалось создать сотрудника", data);
       }
 
       setFullName("");
       setNewPositionName("");
       await onCreated(data.user);
     } catch (error) {
-      toast.error(humanizeFetchError(error, "Ошибка"));
+      if (error instanceof ApiError) toastCaughtError(error, "Ошибка");
+      else toast.error(humanizeFetchError(error, "Ошибка"));
     } finally {
       setPending(false);
     }

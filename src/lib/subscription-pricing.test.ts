@@ -8,7 +8,7 @@ import { pricingScaleRows, quoteSubscription } from "@/lib/subscription-pricing"
 const BASE = 1990;
 
 describe("quoteSubscription", () => {
-  it("1 и 3 сотрудника — бесплатно, все суммы 0", () => {
+  it("до FREE_MAX_USERS (1) — бесплатно, все суммы 0", () => {
     for (const n of [1, FREE_MAX_USERS]) {
       const q = quoteSubscription(n, BASE);
       assert.equal(q.isFree, true);
@@ -21,7 +21,7 @@ describe("quoteSubscription", () => {
     }
   });
 
-  it("4 сотрудника — только подписка, без доплаты", () => {
+  it("FREE_MAX_USERS + 1 (2) — только подписка, без доплаты", () => {
     const q = quoteSubscription(FREE_MAX_USERS + 1, BASE);
     assert.equal(q.isFree, false);
     assert.equal(q.baseRub, BASE);
@@ -31,14 +31,14 @@ describe("quoteSubscription", () => {
     assert.equal(q.tierLabel, "подписка");
   });
 
-  it("30 сотрудников — граница подписки, доплаты ещё нет", () => {
+  it("SUBSCRIPTION_MAX_USERS (10) — граница подписки, доплаты ещё нет", () => {
     const q = quoteSubscription(SUBSCRIPTION_MAX_USERS, BASE);
     assert.equal(q.monthlyRub, BASE);
     assert.equal(q.extraEmployees, 0);
     assert.equal(q.tierLabel, "подписка");
   });
 
-  it("31 сотрудник — подписка + одна доплата", () => {
+  it("SUBSCRIPTION_MAX_USERS + 1 (11) — подписка + одна доплата", () => {
     const q = quoteSubscription(SUBSCRIPTION_MAX_USERS + 1, BASE);
     assert.equal(q.extraEmployees, 1);
     assert.equal(q.extraRub, EXTRA_USER_PRICE_RUB);
@@ -46,7 +46,7 @@ describe("quoteSubscription", () => {
     assert.equal(q.tierLabel, `подписка + 1 сверх ${SUBSCRIPTION_MAX_USERS}`);
   });
 
-  it("35 сотрудников — подписка + 5 доплат, год = ×12 без скидки", () => {
+  it("SUBSCRIPTION_MAX_USERS + 5 (15) — подписка + 5 доплат, год = ×12 без скидки", () => {
     const q = quoteSubscription(SUBSCRIPTION_MAX_USERS + 5, BASE);
     assert.equal(q.extraEmployees, 5);
     assert.equal(q.extraRub, 5 * EXTRA_USER_PRICE_RUB);
@@ -71,8 +71,17 @@ describe("quoteSubscription", () => {
   });
 
   it("дробное число сотрудников округляется вниз", () => {
-    assert.equal(quoteSubscription(3.9, BASE).isFree, true);
+    assert.equal(quoteSubscription(FREE_MAX_USERS + 0.9, BASE).isFree, true);
     assert.equal(quoteSubscription(4.2, BASE).employees, 4);
+  });
+
+  it("тариф 2026-10: 1 бесплатно, 2–10 за подписку, 11-й — доплата", () => {
+    assert.equal(FREE_MAX_USERS, 1);
+    assert.equal(SUBSCRIPTION_MAX_USERS, 10);
+    assert.equal(quoteSubscription(1, BASE).monthlyRub, 0);
+    assert.equal(quoteSubscription(2, BASE).monthlyRub, BASE);
+    assert.equal(quoteSubscription(10, BASE).monthlyRub, BASE);
+    assert.equal(quoteSubscription(11, BASE).monthlyRub, BASE + EXTRA_USER_PRICE_RUB);
   });
 });
 
@@ -81,7 +90,7 @@ describe("pricingScaleRows", () => {
     const rows = pricingScaleRows(BASE);
     assert.equal(rows.length, 3);
 
-    assert.equal(rows[0].range, `1–${FREE_MAX_USERS} сотрудников`);
+    assert.equal(rows[0].range, "1 сотрудник");
     assert.equal(rows[0].price, "бесплатно");
 
     assert.equal(rows[1].range, `${FREE_MAX_USERS + 1}–${SUBSCRIPTION_MAX_USERS}`);

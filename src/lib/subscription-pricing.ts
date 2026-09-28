@@ -1,5 +1,9 @@
 import { FREE_MAX_USERS } from "@/lib/plan-limits";
-import { EXTRA_USER_PRICE_RUB, SUBSCRIPTION_MAX_USERS } from "@/lib/plan-catalog";
+import {
+  EXTRA_USER_PRICE_RUB,
+  SUBSCRIPTION_MAX_USERS,
+  employeesLabel,
+} from "@/lib/plan-catalog";
 
 /**
  * Единый расчёт стоимости подписки — один на лендинг, /pricing, кабинет
@@ -77,7 +81,14 @@ export function pricingScaleRows(
   subscriptionMonthlyRub: number
 ): { range: string; price: string }[] {
   return [
-    { range: `1–${FREE_MAX_USERS} сотрудников`, price: "бесплатно" },
+    {
+      // «1 сотрудник», а не «1–1 сотрудников» (тариф 2026-10).
+      range:
+        FREE_MAX_USERS === 1
+          ? employeesLabel(1)
+          : `1–${employeesLabel(FREE_MAX_USERS)}`,
+      price: "бесплатно",
+    },
     {
       range: `${FREE_MAX_USERS + 1}–${SUBSCRIPTION_MAX_USERS}`,
       price: `${subscriptionMonthlyRub.toLocaleString("ru-RU")} ₽/мес за всю команду`,

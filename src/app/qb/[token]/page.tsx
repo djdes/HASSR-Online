@@ -21,7 +21,7 @@ import {
 import { openBlankQrToken, type BlankQrPayload } from "@/lib/blank-qr-token";
 import { db } from "@/lib/db";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
-import { FREE_MAX_USERS } from "@/lib/plan-limits";
+import { FREE_TIER_SHORT } from "@/lib/plan-catalog";
 import { getServerSession } from "@/lib/server-session";
 import { paperJournalById } from "@/lib/sphere-journal-rules";
 
@@ -205,7 +205,7 @@ export default async function BlankQrPage({ params }: { params: Promise<{ token:
               </Link>
               <p className="mt-3 text-center text-[13px] leading-[1.5] text-[#6f7282]">
                 {mode === "register"
-                  ? `Бесплатно до ${FREE_MAX_USERS} сотрудников, без карты.${email ? " Почта, на которую скачивали шаблон, уже подставлена." : ""}`
+                  ? `${FREE_TIER_SHORT}, без карты.${email ? " Почта, на которую скачивали шаблон, уже подставлена." : ""}`
                   : mode === "login"
                     ? "Почта уже подставлена — останется ввести пароль."
                     : null}

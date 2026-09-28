@@ -1,7 +1,7 @@
 import { Coins, FlaskConical, Users } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
+import { requireAuth, getActiveOrgId, isImpersonating } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
 import { ClosingDocumentActions } from "@/components/settings/closing-document-actions";
@@ -16,8 +16,16 @@ import { pricingScaleRows, quoteSubscription } from "@/lib/subscription-pricing"
 import {
   EXTRA_USER_PRICE_RUB,
   FREE_PLAN_NOTE,
+  FREE_SEATS_LABEL,
   SUBSCRIPTION_MAX_USERS,
+  SUBSCRIPTION_SEATS_LABEL,
 } from "@/lib/plan-catalog";
+import { formatMskDay, lastFreeDay } from "@/lib/billing-period";
+import { loadBillingView } from "@/lib/billing-view.server";
+import {
+  BillingTransitionGate,
+  type TransitionGateCopy,
+} from "@/components/billing/billing-transition-gate";
 import { HARDWARE_BUNDLES, bundleTotal } from "@/lib/hardware-pricing";
 import {
   readTariffs,
@@ -63,11 +71,58 @@ export default async function SubscriptionPage() {
   // В демо-организации сотрудники тестовые и в тариф не входят — иначе
   // калькулятор показал бы «15 человек» и цену, которой не будет.
   const isDemo = org?.isDemo === true;
-  const employees = isDemo ? 1 : org?._count.users || 1;
   const plan = org?.subscriptionPlan ?? "free";
+
+  // Бесплатный период и переход на оплату (2026-10): тариф и численность
+  // считаются по аккаунту, как в шапке и в проверке мест.
+  const inMobileApp = await isMobileAppRequest();
+  const billing = await loadBillingView({
+    organizationId: getActiveOrgId(session),
+    user: session.user,
+    impersonating: isImpersonating(session),
+    partnerAccess: Boolean(session.user.partnerAccess),
+    inMobileApp,
+  }).catch((error) => {
+    console.error("[billing] subscription page view failed", error);
+    return null;
+  });
+  const kind = billing?.state.kind ?? "legacy";
+  const employees = isDemo
+    ? 1
+    : billing && !billing.unit.exempt
+      ? Math.max(1, billing.unit.activeUsers)
+      : org?._count.users || 1;
+  // Какая карточка витрины «текущая»: реально оплачено и бесплатный
+  // период — подписка; после периода без оплаты — бесплатный.
+  const shownPlan =
+    kind === "paid" || kind === "free_period"
+      ? "paid"
+      : kind === "free" || kind === "needs_decision"
+        ? "free"
+        : plan;
+  const shownPlanLabel =
+    kind === "paid"
+      ? `Подписка${billing?.state.paidUntil ? ` до ${formatMskDay(billing.state.paidUntil)}` : ""}`
+      : kind === "free_period" && billing
+        ? `Подписка — бесплатно по ${formatMskDay(lastFreeDay(billing.settings))}`
+        : kind === "needs_decision"
+          ? "Бесплатный период закончился"
+          : kind === "free"
+            ? "Бесплатный"
+            : planLabel(plan);
+  // Надписи «тестовый режим — оплата не списывается» — только до
+  // перехода на оплату: после него это была бы неправда.
+  const testModeActive = billing ? billing.testModeActive : BILLING_TEST_MODE;
+  const paymentRequired =
+    billing?.state.enforcement === true && kind !== "paid" && kind !== "exempt";
+  // Развилка «оплатить / бесплатный» — карточкой вверху страницы (окно
+  // на этой странице не показываем: оно закрыло бы саму оплату).
+  const decisionCopy: TransitionGateCopy | null = billing?.gate?.copy ?? null;
+  const decisionReadOnly =
+    kind === "needs_decision" && !billing?.state.inactive && !decisionCopy;
   // Условие бесплатного тарифа — одной строкой под названием плана.
   // null на платном.
-  const planNote = isFreePlan(plan) ? FREE_PLAN_NOTE : null;
+  const planNote = isFreePlan(shownPlan) ? FREE_PLAN_NOTE : null;
   // Та же цифра, что в карточке железа на лендинге — считаем из одного
   // источника, чтобы витрины не разъехались.
   const hardwareFromRub = Math.min(...HARDWARE_BUNDLES.map(bundleTotal));
@@ -128,11 +183,13 @@ export default async function SubscriptionPage() {
 
   // Приложение WeSetup: только состояние тарифа, без оплаты, счетов и
   // ссылок на оплату (App Store 3.1.1 / 3.1.3(b), Google Play).
-  if (await isMobileAppRequest()) {
-    const activeUntil = isFreePlan(plan) ? null : (org?.subscriptionEnd ?? null);
+  if (inMobileApp) {
+    const activeUntil =
+      billing?.state.paidUntil ?? (isFreePlan(plan) ? null : (org?.subscriptionEnd ?? null));
     return (
       <InAppSubscriptionStatus
-        planLabel={planLabel(plan)}
+        decisionCopy={decisionCopy}
+        planLabel={shownPlanLabel}
         planNote={planNote}
         paused={plan === "paused"}
         activeUntil={activeUntil}
@@ -186,18 +243,39 @@ export default async function SubscriptionPage() {
         </Link>
       ) : null}
 
+      {decisionCopy ? (
+        <BillingTransitionGate
+          display="card"
+          copy={decisionCopy}
+          payHref="/order?plan=monthly"
+          blocking={false}
+          cardNote={
+            invoiceReady && !isDemo
+              ? "Оплатить можно и счётом по безналу — блок «Оплата по безналу для юрлиц» ниже."
+              : null
+          }
+        />
+      ) : null}
+      {decisionReadOnly ? (
+        <p className="rounded-2xl border border-[#ffd9a8] bg-[#fffaf0] px-4 py-3 text-[13.5px] leading-[1.5] text-[#7a4a00]">
+          Бесплатный период подписки закончился. Оплатить подписку или перейти
+          на бесплатный тариф может руководитель организации в своём кабинете.
+        </p>
+      ) : null}
+
       {/* Витрина тарифов — главное на странице, поэтому первым блоком.
           Раньше здесь висел SubscriptionManager с мёртвыми
           starter/standard/pro, которые никогда не писались в БД. */}
       {plan === "paused" ? <ResumePausedCard /> : null}
 
       <PlanUpgrade
-        currentPlan={plan}
-        currentPlanLabel={planLabel(plan)}
+        currentPlan={shownPlan}
+        currentPlanLabel={shownPlanLabel}
         planNote={planNote}
         activeUsers={employees}
         freeUserLimit={FREE_MAX_USERS}
-        billingTestMode={BILLING_TEST_MODE}
+        billingTestMode={testModeActive}
+        paymentRequired={paymentRequired}
         hardwareFromRub={hardwareFromRub}
         subscriptionMonthly={monthly.priceRub}
         subscriptionPromotion={offer.promotion}
@@ -344,11 +422,11 @@ export default async function SubscriptionPage() {
               Как считается стоимость
             </h2>
             <p className="mt-1 max-w-[640px] text-[13px] leading-relaxed text-[#6f7282]">
-              До {FREE_MAX_USERS} сотрудников — бесплатно. Команда до{" "}
-              {SUBSCRIPTION_MAX_USERS} — одна подписка{" "}
+              {FREE_SEATS_LABEL} — бесплатно. Команда {SUBSCRIPTION_SEATS_LABEL} —
+              одна подписка{" "}
               <PromoPrice price={offer} size="text" tone="inherit" suffix="/мес" showBadge={false} />{" "}
-              на всех, не за человека. Каждый сотрудник сверх {SUBSCRIPTION_MAX_USERS} —{" "}
-              {`+${EXTRA_USER_PRICE_RUB} ₽/мес.`}
+              на всех, не за человека. Каждый сотрудник сверх{" "}
+              {SUBSCRIPTION_MAX_USERS} — {`+${EXTRA_USER_PRICE_RUB} ₽/мес.`}
             </p>
 
             <div className="mt-5 grid gap-4 sm:grid-cols-3">
@@ -421,7 +499,7 @@ export default async function SubscriptionPage() {
                   <span>на всю сумму подписки, вместе с доплатой сверх {SUBSCRIPTION_MAX_USERS}.</span>
                 </p>
               ) : null}
-              {BILLING_TEST_MODE ? (
+              {testModeActive ? (
                 <p className="mt-3 text-[#3c4053]">
                   Пока сайт в тестовом режиме, суммы выше — справочные:
                   оплата не списывается.
@@ -473,6 +551,7 @@ function PricingStat({
  * паузы можно: это бесплатно.
  */
 function InAppSubscriptionStatus({
+  decisionCopy,
   planLabel: label,
   planNote,
   paused,
@@ -482,6 +561,8 @@ function InAppSubscriptionStatus({
   balanceRub,
   payments,
 }: {
+  /** Развилка после бесплатного периода — без кнопки оплаты (правила сторов). */
+  decisionCopy: TransitionGateCopy | null;
   planLabel: string;
   planNote: string | null;
   paused: boolean;
@@ -503,6 +584,10 @@ function InAppSubscriptionStatus({
       <h1 className="text-[32px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">
         Тариф
       </h1>
+
+      {decisionCopy ? (
+        <BillingTransitionGate display="card" copy={decisionCopy} payHref={null} blocking={false} />
+      ) : null}
 
       {paused ? <ResumePausedCard /> : null}
 

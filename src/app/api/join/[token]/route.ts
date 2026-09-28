@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { hashInviteToken } from "@/lib/invite-tokens";
 import { ensurePlanForHeadcount } from "@/lib/plan-limits.server";
+import { checkSeatsForActivation, seatLimitResponse } from "@/lib/billing.server";
 import { resolveJournalAccessBootstrap } from "@/lib/staff-journal-bootstrap";
 
 export const runtime = "nodejs";
@@ -148,6 +149,14 @@ export async function POST(request: Request, ctx: Ctx) {
     );
   }
 
+  // Лимит тарифа — до создания. Самозаписывается сотрудник: оплачивать
+  // не ему, поэтому текст — «попросите руководителя».
+  const seats = await checkSeatsForActivation(r.row.organizationId, 1, {
+    source: "join.qr",
+    audience: "invitee",
+  });
+  if (!seats.ok) return seatLimitResponse(seats);
+
   const phone = normalizePhone(body.phone);
 
   // Уникальность по phone в рамках организации (телефон — natural key
@@ -267,8 +276,8 @@ export async function POST(request: Request, ctx: Ctx) {
     throw err;
   }
 
-  // Лимит бесплатного тарифа: самозапись по QR тоже увеличивает
-  // численность, поэтому проверяем и здесь (создание не блокируем).
+  // До конца бесплатного периода самозапись по QR тоже может перевести
+  // организацию на подписку (тихо, как раньше).
   await ensurePlanForHeadcount(r.row.organizationId);
 
   // Auto-onboarding в TasksFlow:

@@ -42,6 +42,8 @@ import { BRANDING_SETTINGS_HREF } from "@/components/theme/theme-tiles";
 import { MiniThemeTiles } from "../_components/mini-theme-tiles";
 import { signOutOnThisDevice } from "../_lib/signed-out-mark";
 import { signOutAndOpen } from "@/lib/sign-out";
+import { BillingAnnouncement } from "@/components/billing/billing-announcement";
+import { BillingStaffNotice } from "@/components/billing/billing-staff-notice";
 
 /**
  * Профиль в мини-приложении.
@@ -67,7 +69,18 @@ export function MiniMeClient({
   positionTitle = null,
   phone = null,
   telegramLinked = false,
+  billingAnnouncement = null,
+  billingStaffNotice = false,
 }: {
+  /** Руководитель выбирает тариф после бесплатного периода. */
+  billingStaffNotice?: boolean;
+  /** Анонс бесплатного периода (тексты — с сервера). */
+  billingAnnouncement?: {
+    lead: string;
+    tail: string | null;
+    href: string | null;
+    dayKey: string;
+  } | null;
   // Читается на сервере в page.tsx: TELEGRAM_BOT_USERNAME — не
   // NEXT_PUBLIC-переменная, из клиентского компонента её не видно.
   telegramBotUsername: string;
@@ -216,6 +229,17 @@ export function MiniMeClient({
       <header className="px-1">
         <h1 className="mini-h1">Профиль</h1>
       </header>
+
+      {billingAnnouncement ? (
+        <BillingAnnouncement
+          lead={billingAnnouncement.lead}
+          tail={billingAnnouncement.tail}
+          href={billingAnnouncement.href}
+          dayKey={billingAnnouncement.dayKey}
+          variant="mini"
+        />
+      ) : null}
+      {billingStaffNotice ? <BillingStaffNotice variant="mini" /> : null}
 
       <MiniOrgSwitcher />
       <MiniLocationSwitcher />

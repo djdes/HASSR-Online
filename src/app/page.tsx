@@ -19,10 +19,13 @@ import { LANDING_SECTION_CLASS, LandingSectionHeader } from "@/components/landin
 import { listPublicReviews } from "@/lib/balance/reviews";
 import { buildAggregateRating } from "@/lib/seo/aggregate-rating";
 import { NICHES } from "@/content/niches";
-import { FREE_MAX_USERS } from "@/lib/plan-limits";
 import {
   catalogPlanIdFor,
+  employeesGenitiveLabel,
   FREE_PLAN_NOTE,
+  FREE_PLAN_TITLE,
+  FREE_SEATS_LABEL,
+  FREE_TIER_SHORT,
   EXTRA_USER_PRICE_RUB,
   LARGE_TEAM_NOTE,
   SUBSCRIPTION_MAX_USERS,
@@ -68,7 +71,7 @@ export const metadata = {
   // дублируется), поэтому «— WeSetup» пишем в строке вручную.
   title: "Электронные журналы СанПиН и ХАССП онлайн — WeSetup",
   description:
-    `${JOURNALS_TOTAL_ELECTRONIC_LABEL} СанПиН и ХАССП для общепита и производств. QR-наклейки на оборудовании: отсканировал, ввёл PIN — запись в журнале. PDF для Роспотребнадзора. Бесплатно до 3 сотрудников.`,
+    `${JOURNALS_TOTAL_ELECTRONIC_LABEL} СанПиН и ХАССП для общепита и производств. QR-наклейки на оборудовании: отсканировал, ввёл PIN — запись в журнале. PDF для Роспотребнадзора. ${FREE_TIER_SHORT}.`,
   alternates: { canonical: "https://wesetup.ru/", types: { "application/rss+xml": [{ url: "https://wesetup.ru/blog/feed.xml", title: "WeSetup — блог" }, { url: "https://wesetup.ru/whats-new/feed.xml", title: "WeSetup — что нового" }] } },
 };
 
@@ -178,7 +181,7 @@ const FAQ = [
  * Пункты первого экрана. Появляются по очереди — см. `.hero-point`.
  * Порядок не случайный: сверху то, ради чего сервис и покупают.
  * Пункта «Бесплатный доступ ко всем журналам» больше нет: строкой ниже
- * то же самое сказано с цифрами («До 3 сотрудников — бесплатно»).
+ * то же самое сказано с цифрами («1 сотрудник — бесплатно»).
  * На телефоне строки 16 px и могут переноситься — список выровнен по
  * левому краю, галочка стоит у первой строки.
  */
@@ -345,7 +348,7 @@ export default async function LandingPage() {
           "@type": "Offer",
           price: "0",
           priceCurrency: "RUB",
-          description: "Бесплатный тариф до 3 сотрудников",
+          description: FREE_PLAN_TITLE,
         },
         // Звёзды в выдаче: только из одобренных отзывов с оценкой, не меньше трёх.
         ...(rating ?? {}),
@@ -374,7 +377,7 @@ export default async function LandingPage() {
             name: "Бесплатный",
             price: "0",
             priceCurrency: "RUB",
-            description: `До 3 сотрудников, все ${JOURNALS_TOTAL_LABEL}, бессрочно`,
+            description: `${FREE_SEATS_LABEL}, все ${JOURNALS_TOTAL_LABEL}, бессрочно`,
             availability: "https://schema.org/InStock",
           },
           {
@@ -393,7 +396,7 @@ export default async function LandingPage() {
               priceCurrency: "RUB",
               unitText: "месяц",
             },
-            description: `До ${SUBSCRIPTION_MAX_USERS} сотрудников в подписке, далее +${EXTRA_USER_PRICE_RUB} ₽/мес за каждого; IoT-датчики, автозаполнение`,
+            description: `До ${employeesGenitiveLabel(SUBSCRIPTION_MAX_USERS)} в подписке, далее +${EXTRA_USER_PRICE_RUB} ₽/мес за каждого; IoT-датчики, автозаполнение`,
             availability: "https://schema.org/InStock",
           },
         ],
@@ -582,7 +585,7 @@ export default async function LandingPage() {
             className="group mt-4 flex min-h-12 max-w-full flex-wrap items-center gap-x-1.5 text-left text-[16px] leading-[1.45] text-[#3c4053] sm:hidden"
           >
             <span>
-              До {FREE_MAX_USERS} сотрудников —{" "}
+              {FREE_SEATS_LABEL} —{" "}
               <span className="font-semibold text-[#0b1024]">бесплатно</span>,
             </span>
             <span className="inline-flex flex-wrap items-center gap-1.5">
@@ -600,7 +603,7 @@ export default async function LandingPage() {
             className="group mx-auto mt-6 hidden w-fit max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-0.5 rounded-full border border-[#dcdfed] bg-white/80 px-4 py-2 text-[14px] text-[#3c4053] backdrop-blur transition-colors hover:border-[#5566f6]/45 hover:bg-white sm:flex"
           >
             <span>
-              До {FREE_MAX_USERS} сотрудников —{" "}
+              {FREE_SEATS_LABEL} —{" "}
               <span className="font-semibold text-[#0b1024]">бесплатно</span>
             </span>
             <span aria-hidden="true" className="text-[#c9cddd]">
@@ -800,7 +803,7 @@ export default async function LandingPage() {
             from="0 ₽"
             period="навсегда"
             points={[
-              `До ${FREE_MAX_USERS} сотрудников`,
+              FREE_SEATS_LABEL,
               `Все ${JOURNALS_TOTAL_LABEL} СанПиН и ХАССП`,
               "PDF для проверок, без карты",
             ]}
@@ -819,7 +822,7 @@ export default async function LandingPage() {
             period="в месяц"
             pointsIntro="Всё из Бесплатного, плюс:"
             points={[
-              `До ${SUBSCRIPTION_MAX_USERS} сотрудников`,
+              `До ${employeesGenitiveLabel(SUBSCRIPTION_MAX_USERS)}`,
               "Свои IoT-датчики и автозаполнение",
               "Приоритетная поддержка в Telegram",
             ]}

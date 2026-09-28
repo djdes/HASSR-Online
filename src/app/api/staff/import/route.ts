@@ -7,6 +7,8 @@ import { isManagementRole } from "@/lib/user-roles";
 import { normalizePhone } from "@/lib/phone";
 import { recordAuditLog } from "@/lib/audit-log";
 import { ensurePlanForHeadcount } from "@/lib/plan-limits.server";
+import { seatAllowance, seatLimitSummary } from "@/lib/billing.server";
+import { FREE_LIMIT_MESSAGE } from "@/lib/billing-period";
 import { tryAutolinkTasksflowByPhone } from "@/lib/tasksflow-autolink";
 import { DEFAULT_WEEKLY_DAYS_OFF } from "@/lib/staff-days-off";
 import { STAFF_SHEET_NAME, parseStaffSheet } from "@/lib/staff-excel";
@@ -125,6 +127,9 @@ export async function POST(request: Request) {
   let created = 0;
   let updated = 0;
   let skipped = 0;
+  // Лимит тарифа — по строкам ДО создания каждой (комиссия не считается).
+  let seatsLeft = (await seatAllowance(orgId)).left;
+  let seatBlocked = 0;
 
   for (const row of parsed.rows) {
     const position = positionByName.get(row.positionName.toLowerCase());
@@ -219,6 +224,15 @@ export async function POST(request: Request) {
       continue;
     }
 
+    if (position.categoryKey !== "commission") {
+      if (seatsLeft <= 0) {
+        errors.push({ line: row.line, message: `«${row.fullName}»: ${FREE_LIMIT_MESSAGE}` });
+        seatBlocked += 1;
+        continue;
+      }
+      seatsLeft -= 1;
+    }
+
     const inherited = codesByPosition.get(position.id) ?? [];
     const codes = explicitCodes ?? inherited;
     const strictAcl = explicitCodes !== null || inherited.length > 0;
@@ -271,6 +285,7 @@ export async function POST(request: Request) {
   }
 
   const planCheck = await ensurePlanForHeadcount(orgId);
+  const billingLimit = seatLimitSummary(seatBlocked, "staff.import", orgId);
 
   await recordAuditLog({
     request,
@@ -296,5 +311,6 @@ export async function POST(request: Request) {
     skipped,
     errors,
     planUpgraded: planCheck.upgraded,
+    billingLimit,
   });
 }

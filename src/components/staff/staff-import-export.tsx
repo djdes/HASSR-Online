@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Download, FileSpreadsheet, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { toastApiError } from "@/lib/billing-limit-toast";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 /**
@@ -63,6 +64,7 @@ export function StaffImportExport() {
       if (data.planUpgraded) {
         toast.info("Сотрудников стало больше бесплатного лимита — тариф обновлён");
       }
+      if (data.billingLimit) toastApiError(data.billingLimit, "Лимит тарифа");
       router.refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Ошибка");

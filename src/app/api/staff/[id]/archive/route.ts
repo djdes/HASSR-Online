@@ -7,11 +7,12 @@ import {
   ACTIVE_JOURNAL_CATALOG,
 } from "@/lib/journal-catalog";
 import { getVerifierSlotId } from "@/lib/journal-responsible-schemas";
+import { checkUserActivation, seatLimitResponse } from "@/lib/billing.server";
 
 async function guard(id: string, orgId: string) {
   const user = await db.user.findFirst({
     where: { id, organizationId: orgId },
-    select: { id: true, archivedAt: true, isRoot: true },
+    select: { id: true, name: true, archivedAt: true, isRoot: true },
   });
   return user;
 }
@@ -217,6 +218,11 @@ export async function DELETE(
     return NextResponse.json({ error: "Сотрудник не найден" }, { status: 404 });
   }
 
+  // Возврат из архива занимает место в тарифе: на бесплатном после
+  // конца бесплатного периода — только после оплаты подписки.
+  const seats = await checkUserActivation(user.id, { source: "staff.restore" });
+  if (!seats.ok) return seatLimitResponse(seats);
+
   await db.user.update({
     where: { id: user.id },
     data: {
@@ -224,5 +230,25 @@ export async function DELETE(
       isActive: true,
     },
   });
+  console.info("[billing] staff restored from archive", {
+    organizationId: orgId,
+    userId: user.id,
+    by: session.user.id,
+  });
+  try {
+    await db.auditLog.create({
+      data: {
+        organizationId: orgId,
+        userId: session.user.id,
+        userName: session.user.name ?? null,
+        action: "staff.restored",
+        entity: "User",
+        entityId: user.id,
+        details: { name: user.name },
+      },
+    });
+  } catch (error) {
+    console.error("[staff] restore audit failed", error);
+  }
   return NextResponse.json({ ok: true });
 }

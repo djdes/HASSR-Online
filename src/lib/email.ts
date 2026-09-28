@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 import { closingDocumentFilename } from "@/lib/closing-documents/types";
 import { escapeHtml } from "@/lib/html-escape";
 import { FREE_MAX_USERS } from "@/lib/plan-limits";
+import { FREE_TIER_SHORT, employeesGenitiveLabel } from "@/lib/plan-catalog";
 
 /**
  * Локальный relay на той же машине. Прод отправляет через exim на
@@ -444,7 +445,7 @@ export async function sendWelcomeEmail(params: {
 
   const body = `
     <p style="margin:0 0 16px;color:#3f3f46;line-height:1.6">Здравствуйте, <strong>${escapeHtml(name)}</strong>!</p>
-    <p style="margin:0 0 16px;color:#3f3f46;line-height:1.6">Организация <strong>${escapeHtml(organizationName)}</strong> успешно зарегистрирована. Бесплатно до <strong>${FREE_MAX_USERS} сотрудников</strong>, без ограничений по записям — все функции доступны сразу.</p>
+    <p style="margin:0 0 16px;color:#3f3f46;line-height:1.6">Организация <strong>${escapeHtml(organizationName)}</strong> успешно зарегистрирована. Бесплатно для <strong>${employeesGenitiveLabel(FREE_MAX_USERS)}</strong>, без ограничений по записям — все функции доступны сразу.</p>
     <div style="background:#f4f4f5;border-radius:8px;padding:20px;margin:0 0 24px">
       <p style="margin:0 0 12px;font-size:14px;font-weight:600;color:#18181b">С чего начать:</p>
       <p style="margin:0 0 8px;color:#3f3f46;font-size:14px">1. Добавьте производственные зоны в <strong>Настройки → Зоны</strong></p>
@@ -888,7 +889,7 @@ export function buildBlankDownloadEmail(params: {
     <p style="margin:12px 0 0;color:#a1a1aa;font-size:12px;line-height:1.5;word-break:break-all">Если кнопка не открывается, скопируйте адрес: ${escapeHtml(main.url)}</p>` : ""}${moreHtml}${pageHtml}
     <div style="background:#f5f6ff;border-radius:8px;padding:20px;margin:24px 0 0">
       <p style="margin:0 0 8px;font-size:14px;font-weight:600;color:#18181b">Этот журнал можно не печатать</p>
-      <p style="margin:0 0 16px;color:#3f3f46;font-size:14px;line-height:1.6">В WeSetup его заполняют с телефона по QR-коду — тому же, что стоит на шаблоне. Без бумаги, с напоминаниями, если смена забыла отметиться. Бесплатно до ${FREE_MAX_USERS} сотрудников.</p>
+      <p style="margin:0 0 16px;color:#3f3f46;font-size:14px;line-height:1.6">В WeSetup его заполняют с телефона по QR-коду — тому же, что стоит на шаблоне. Без бумаги, с напоминаниями, если смена забыла отметиться. ${FREE_TIER_SHORT}.</p>
       <a href="${escapeHtml(registerUrl)}" style="display:inline-block;background:#18181b;color:#fff;text-decoration:none;padding:10px 20px;border-radius:8px;font-weight:600;font-size:14px">Вести журнал в WeSetup</a>
     </div>
     <p style="margin:24px 0 0;font-size:12px;color:#a1a1aa;line-height:1.5">Письмо пришло, потому что этот адрес указали при скачивании шаблона на wesetup.ru. Если это были не вы — просто не отвечайте на него.</p>`;

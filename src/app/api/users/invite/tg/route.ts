@@ -5,6 +5,7 @@ import { brandQrPngDataUrl } from "@/lib/brand-qr";
 import { db } from "@/lib/db";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { ensurePlanForHeadcount } from "@/lib/plan-limits.server";
+import { checkSeatsForActivation, seatLimitResponse } from "@/lib/billing.server";
 import { getServerSession } from "@/lib/server-session";
 import {
   botInviteExpiresAt,
@@ -99,6 +100,10 @@ export async function POST(request: Request) {
       });
     }
     const useStrictAcl = positionTemplates.length > 0;
+
+    // Место проверяем при создании приглашения (и ещё раз при привязке в боте).
+    const seats = await checkSeatsForActivation(organizationId, 1, { source: "users.invite.tg" });
+    if (!seats.ok) return seatLimitResponse(seats);
 
     const { user } = await db.$transaction(async (tx) => {
       const user = await tx.user.create({

@@ -1,5 +1,5 @@
 import { escapeHtml } from "@/lib/html-escape";
-import { FREE_MAX_USERS } from "@/lib/plan-limits";
+import { FREE_SEATS_LABEL } from "@/lib/plan-catalog";
 import { renderEmailLayout, sendRawEmail } from "@/lib/email";
 
 import { formatPoints, REFERRAL_REWARD_PERCENT } from "./constants";
@@ -82,7 +82,7 @@ export function buildReferralInviteEmail(params: ReferralInviteEmailParams): {
     <p ${P}>Здравствуйте!</p>
     <p ${P}>${who} рекомендует вам WeSetup — сервис электронных журналов СанПиН и ХАССП: сотрудники заполняют их с телефона по QR-коду, а к проверке всё готово.</p>
     ${personal}
-    <p ${P}>По этой ссылке вы начнёте бесплатно — до ${FREE_MAX_USERS} сотрудников, без ограничений по записям, — а рекомендателю начислим бонус на баланс, когда вы оформите подписку.</p>
+    <p ${P}>По этой ссылке вы начнёте бесплатно (бесплатный тариф — ${FREE_SEATS_LABEL}, без ограничений по записям), а рекомендателю начислим бонус на баланс, когда вы оформите подписку.</p>
     ${button(params.link, "Попробовать WeSetup")}
     <p ${MUTED}>Ссылка: ${escapeHtml(params.link)}</p>
     ${reply}

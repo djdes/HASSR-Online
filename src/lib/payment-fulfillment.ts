@@ -226,7 +226,18 @@ async function extendOrganization(args: {
   periodDays: number;
   order: { id: number; recurringConsent?: boolean; recurringChargeOf?: number | null };
 }): Promise<Date> {
-  const subscriptionEnd = extendFrom(args.currentEnd, args.periodDays);
+  // Тариф живёт на аккаунте (сеть платит один раз): оплаченный срок
+  // считаем от самого позднего из концов — организации и аккаунта.
+  const owner = await db.organization.findUnique({
+    where: { id: args.organizationId },
+    select: { accountId: true, account: { select: { subscriptionEnd: true } } },
+  });
+  const accountEnd = owner?.account?.subscriptionEnd ?? null;
+  const base =
+    accountEnd && (!args.currentEnd || accountEnd.getTime() > args.currentEnd.getTime())
+      ? accountEnd
+      : args.currentEnd;
+  const subscriptionEnd = extendFrom(base, args.periodDays);
   const { order } = args;
   await db.organization.update({
     where: { id: args.organizationId },
@@ -242,6 +253,21 @@ async function extendOrganization(args: {
           }
         : {}),
     },
+  });
+  // Раньше оплата продлевала только организацию, а тариф аккаунта
+  // оставался прежним: после перехода на бесплатный (2026-10) оплативший
+  // видел бы «Бесплатный» в шапке и не мог вернуть сотрудников.
+  if (owner?.accountId) {
+    await db.account.update({
+      where: { id: owner.accountId },
+      data: { subscriptionPlan: "paid", subscriptionEnd },
+    });
+  }
+  console.info("[billing] payment extended subscription", {
+    organizationId: args.organizationId,
+    accountId: owner?.accountId ?? null,
+    orderId: order.id,
+    subscriptionEnd: subscriptionEnd.toISOString(),
   });
   return subscriptionEnd;
 }

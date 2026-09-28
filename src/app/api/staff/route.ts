@@ -70,7 +70,10 @@ export async function POST(request: Request) {
     mayGrantFlags ? { ...rest, keepsCoreJournals, canManageSettings } : rest
   );
   if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: result.status });
+    return NextResponse.json(
+      { error: result.error, code: result.code, payUrl: result.payUrl },
+      { status: result.status }
+    );
   }
 
   return NextResponse.json({

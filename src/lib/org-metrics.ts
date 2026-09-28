@@ -50,8 +50,8 @@ export type OrgMetrics = {
   /// Когда последний раз кто-то заполнял журнал. null = никогда.
   lastEntryAt: string | null;
   /// Расчётный MRR — quoteSubscription(activeUsers, цена тарифа).monthlyRub:
-  /// до 3 активных — 0, до 30 — одна подписка на команду, дальше
-  /// +100 ₽/мес за каждого сверх 30. Для trial это «потенциальный MRR»
+  /// до FREE_MAX_USERS активных — 0, до SUBSCRIPTION_MAX_USERS — одна
+  /// подписка на команду, дальше +EXTRA_USER_PRICE_RUB ₽/мес за каждого. Для trial это «потенциальный MRR»
   /// (что было бы, если бы организация платила).
   potentialMrrRub: number;
   /// Реальный MRR — 0 для trial, иначе potentialMrrRub. Простая

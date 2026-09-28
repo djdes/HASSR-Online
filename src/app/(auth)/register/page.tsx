@@ -5,10 +5,11 @@ import {
   DEFAULT_TWITTER_IMAGES,
 } from "@/lib/meta-defaults";
 import { JOURNALS_TOTAL_ELECTRONIC_LABEL } from "@/lib/journal-catalog";
+import { FREE_SEATS_LABEL } from "@/lib/plan-catalog";
 
 const TITLE = "Регистрация организации";
 const DESC =
-  `Создайте бесплатный аккаунт WeSetup за 5 минут. До 3 сотрудников бесплатно навсегда. Все ${JOURNALS_TOTAL_ELECTRONIC_LABEL} СанПиН и ХАССП включены.`;
+  `Создайте бесплатный аккаунт WeSetup за 5 минут. ${FREE_SEATS_LABEL} — бесплатно навсегда. Все ${JOURNALS_TOTAL_ELECTRONIC_LABEL} СанПиН и ХАССП включены.`;
 const URL = "https://wesetup.ru/register";
 
 export const metadata = {

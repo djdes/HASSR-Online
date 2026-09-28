@@ -16,10 +16,13 @@ import {
   DEFAULT_TWITTER_CARD,
   DEFAULT_TWITTER_IMAGES,
 } from "@/lib/meta-defaults";
-import { FREE_MAX_USERS } from "@/lib/plan-limits";
 import {
   EXTRA_USER_PRICE_RUB,
+  FREE_SEATS_LABEL,
+  FREE_TIER_SHORT,
   SUBSCRIPTION_MAX_USERS,
+  SUBSCRIPTION_SEATS_LABEL,
+  employeesGenitiveLabel,
 } from "@/lib/plan-catalog";
 import { JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
 import { PromoPrice } from "@/components/pricing/promo-price";
@@ -29,12 +32,13 @@ import { applyPromotion, type PriceWithPromotion } from "@/lib/promo/promotions"
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-// Метаданные — статический литерал, поэтому числа здесь вшиты; они
-// должны совпадать с FREE_MAX_USERS (3) и SUBSCRIPTION_MAX_USERS (30).
+// Числа в описании — из констант тарифа (FREE_MAX_USERS, SUBSCRIPTION_MAX_USERS):
+// при смене тарифа метаданные меняются вместе с витриной.
+const PRICING_DESCRIPTION = `Сколько стоит WeSetup: ${FREE_TIER_SHORT.toLowerCase()}, одна подписка на команду ${SUBSCRIPTION_SEATS_LABEL}, доплата за каждого сверх ${SUBSCRIPTION_MAX_USERS} и пакеты с оборудованием. Калькулятор экономии.`;
+
 export const metadata = {
   title: "Цены на электронные журналы СанПиН и ХАССП",
-  description:
-    "Сколько стоит WeSetup: бесплатно до 3 сотрудников, одна подписка на команду до 30, доплата за каждого сверх 30 и пакеты с оборудованием. Калькулятор экономии.",
+  description: PRICING_DESCRIPTION,
   alternates: { canonical: "https://wesetup.ru/pricing" },
   openGraph: {
     type: "website",
@@ -42,8 +46,7 @@ export const metadata = {
     siteName: "WeSetup",
     url: "https://wesetup.ru/pricing",
     title: "Цены на электронные журналы СанПиН и ХАССП",
-    description:
-      "Сколько стоит WeSetup: бесплатно до 3 сотрудников, одна подписка на команду до 30, доплата за каждого сверх 30 и пакеты с оборудованием. Калькулятор экономии.",
+    description: PRICING_DESCRIPTION,
     images: DEFAULT_OG_IMAGES,
   },
   twitter: {
@@ -58,8 +61,8 @@ export const metadata = {
  *
  * Цены берутся из БД (`PlatformTariff`) — те же, что на лендинге и в
  * кнопках оплаты. Модель одна на весь сайт (`quoteSubscription`):
- * до 3 сотрудников бесплатно, до 30 — одна подписка на команду,
- * дальше доплата за каждого.
+ * 1 сотрудник бесплатно, до 10 — одна подписка на команду,
+ * дальше доплата за каждого (числа — из констант plan-catalog).
  */
 export default async function PricingPage() {
   // Витрина с кнопками оплаты — не для приложения (правила магазинов).
@@ -80,8 +83,8 @@ export default async function PricingPage() {
             Сколько стоит WeSetup
           </h1>
           <p className="mt-3 max-w-[640px] text-[16px] leading-relaxed text-[#3c4053]">
-            Все {JOURNALS_TOTAL_LABEL} доступны бесплатно смене до {FREE_MAX_USERS}{" "}
-            человек. Команда до {SUBSCRIPTION_MAX_USERS} — одна подписка{" "}
+            Все {JOURNALS_TOTAL_LABEL} доступны бесплатно — {FREE_SEATS_LABEL}.
+            Команда {SUBSCRIPTION_SEATS_LABEL} — одна подписка{" "}
             <PromoPrice price={offer} size="text" tone="inherit" suffix="/мес" showBadge={false} /> на всех, не за человека; каждый
             сотрудник сверх {SUBSCRIPTION_MAX_USERS} —{" "}
             {`+${EXTRA_USER_PRICE_RUB} ₽/мес`}. Оборудование — разовая
@@ -96,7 +99,7 @@ export default async function PricingPage() {
             period="навсегда"
             description="Для заведения с небольшой сменой."
             points={[
-              `До ${FREE_MAX_USERS} сотрудников`,
+              FREE_SEATS_LABEL,
               `Все ${JOURNALS_TOTAL_LABEL} СанПиН и ХАССП`,
               "Telegram-бот с пошаговым заполнением",
               "PDF для проверок, без привязки карты",
@@ -112,7 +115,7 @@ export default async function PricingPage() {
             period={`за ${monthly.periodDays} дней`}
             description="Одна цена на всю команду. Если датчики и планшеты уже есть — подключаем их."
             points={[
-              `До ${SUBSCRIPTION_MAX_USERS} сотрудников, далее +${EXTRA_USER_PRICE_RUB} ₽/мес за каждого`,
+              `До ${employeesGenitiveLabel(SUBSCRIPTION_MAX_USERS)}, далее +${EXTRA_USER_PRICE_RUB} ₽/мес за каждого`,
               "Подключение своих IoT-датчиков",
               "Автозаполнение температур и гигиены",
               "Приоритетная поддержка в Telegram",
@@ -180,7 +183,7 @@ export default async function PricingPage() {
             Попробуйте бесплатно
           </h2>
           <p className="mt-2 max-w-[480px] text-[15px] leading-relaxed text-white/70">
-            Регистрация занимает 2 минуты. До {FREE_MAX_USERS} сотрудников — бесплатно
+            Регистрация занимает 2 минуты. {FREE_SEATS_LABEL} — бесплатно
             навсегда. Карта не требуется.
           </p>
           <Link

@@ -18,6 +18,7 @@ import { normalizePhone } from "@/lib/phone";
 import { tryAutolinkTasksflowByPhone } from "@/lib/tasksflow-autolink";
 import { performOffboarding } from "@/lib/offboarding";
 import { normalizeWeeklyDaysOff } from "@/lib/staff-days-off";
+import { checkUserActivation, seatLimitResponse } from "@/lib/billing.server";
 
 const updateUserSchema = z.object({
   name: z.string().trim().min(2).optional(),
@@ -126,6 +127,13 @@ export async function PUT(
     }
 
     const wasActive = user.isActive === true;
+
+    // Включение неактивного (заготовки из TasksFlow, онбординга и т. п.)
+    // занимает место в тарифе — проверяем до записи.
+    if (isActive === true && !wasActive) {
+      const seats = await checkUserActivation(id, { source: "users.activate" });
+      if (!seats.ok) return seatLimitResponse(seats);
+    }
 
     const updated = await db.user.update({
       where: { id },

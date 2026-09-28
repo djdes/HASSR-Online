@@ -58,7 +58,12 @@ export async function POST(request: Request, ctx: { params: Promise<{ code: stri
     fullName: parsed.data.fullName,
     phone: parsed.data.phone || undefined,
   });
-  if (!created.ok) return NextResponse.json({ error: created.error }, { status: created.status });
+  if (!created.ok) {
+    return NextResponse.json(
+      { error: created.error, code: created.code, payUrl: created.payUrl },
+      { status: created.status }
+    );
+  }
   const pin = requestedPin || generateEmployeeQrPin();
   const pinError = await setEmployeeQrPin(created.user.id, pin);
   const commission = await addOrgCommissionMember(organizationId, code, {

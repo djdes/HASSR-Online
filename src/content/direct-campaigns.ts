@@ -1,4 +1,5 @@
 import { JOURNALS_TOTAL_ELECTRONIC_LABEL, JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
+import { FREE_PLAN_TITLE, FREE_SEATS_LABEL } from "@/lib/plan-catalog";
 
 /**
  * Draft campaign spec for Yandex.Direct. Loaded by scripts/yandex-direct-setup.ts
@@ -91,7 +92,7 @@ export const CAMPAIGNS: CampaignSpec[] = [
           {
             title1: "WeSetup — электронные журналы",
             title2: "СанПиН и ХАССП. Бесплатно",
-            text: `${JOURNALS_TOTAL_LABEL}, Telegram-бот, PDF для проверок. Бесплатный тариф до 3 сотрудников.`,
+            text: `${JOURNALS_TOTAL_LABEL}, Telegram-бот, PDF для проверок. ${FREE_PLAN_TITLE}.`,
             href: u("/", "brand", "exact"),
             displayPath: "журналы/бесплатно",
           },
@@ -327,7 +328,7 @@ export const CAMPAIGNS: CampaignSpec[] = [
           {
             title1: "Журналы СанПиН бесплатно",
             title2: "Без срока, без карты",
-            text: `${JOURNALS_TOTAL_ELECTRONIC_LABEL} для общепита. До 3 сотрудников — навсегда бесплатно.`,
+            text: `${JOURNALS_TOTAL_ELECTRONIC_LABEL} для общепита. ${FREE_SEATS_LABEL} — навсегда бесплатно.`,
             href: u("/", "free-tier", "free-main"),
             displayPath: "бесплатно",
           },

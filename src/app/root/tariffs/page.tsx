@@ -1,6 +1,8 @@
 import { requireRoot } from "@/lib/auth-helpers";
 import { readTariffs } from "@/lib/tariffs";
+import { collectBillingOverview, readFreePeriodSettings } from "@/lib/billing.server";
 import { TariffsClient } from "./tariffs-client";
+import { BillingPeriodCard } from "./billing-period-card";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -16,7 +18,11 @@ export const metadata = {
  */
 export default async function RootTariffsPage() {
   await requireRoot();
-  const tariffs = await readTariffs();
+  const [tariffs, freePeriod, billingOverview] = await Promise.all([
+    readTariffs(),
+    readFreePeriodSettings(),
+    collectBillingOverview(),
+  ]);
 
   return (
     <div className="mx-auto max-w-[880px]">
@@ -30,6 +36,18 @@ export default async function RootTariffsPage() {
       </p>
       <div className="mt-6">
         <TariffsClient initial={tariffs} />
+      </div>
+      {/* Бесплатный период «подписка для всех» и переход на оплату (2026-10). */}
+      <div className="mt-6">
+        <BillingPeriodCard
+          initialSettings={{
+            startsAt: freePeriod.startsAt.toISOString(),
+            endsAt: freePeriod.endsAt.toISOString(),
+            graceDays: freePeriod.graceDays,
+            transitionEnabled: freePeriod.transitionEnabled,
+          }}
+          initialOverview={billingOverview}
+        />
       </div>
     </div>
   );

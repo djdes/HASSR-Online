@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { hashInviteToken } from "@/lib/invite-tokens";
+import { checkUserActivation, seatLimitResponse } from "@/lib/billing.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,6 +44,14 @@ export async function POST(request: Request, { params }: RouteParams) {
       { status: 400 }
     );
   }
+
+  // Принятие приглашения делает сотрудника активным — место в тарифе.
+  // Сброс пароля уже активному ничего не добавляет и не блокируется.
+  const seats = await checkUserActivation(invite.userId, {
+    source: "invite.accept",
+    audience: "invitee",
+  });
+  if (!seats.ok) return seatLimitResponse(seats);
 
   const passwordHash = await bcrypt.hash(password, 12);
 

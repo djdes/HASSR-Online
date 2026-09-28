@@ -12,6 +12,7 @@ import { jsonLdSafeString } from "@/lib/json-ld";
 import { DEFAULT_TWITTER_CARD } from "@/lib/meta-defaults";
 import { ogImages, twitterImages } from "@/lib/og-image";
 import { JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
+import { FREE_TIER_SHORT } from "@/lib/plan-catalog";
 
 export const dynamic = "force-static";
 const SITE = "https://wesetup.ru";
@@ -102,7 +103,7 @@ export default async function GlossaryTermPage({ params }: { params: Promise<{ s
 
         <div className="mt-10 rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
           <div className="text-[15px] font-semibold">Ведите журналы без бумаги</div>
-          <p className="mt-1.5 text-[14px] leading-[1.6] text-[#3c4053]">{JOURNALS_TOTAL_LABEL} СанПиН и ХАССП, заполнение с телефона, PDF для проверок. Бесплатно до 3 сотрудников.</p>
+          <p className="mt-1.5 text-[14px] leading-[1.6] text-[#3c4053]">{JOURNALS_TOTAL_LABEL} СанПиН и ХАССП, заполнение с телефона, PDF для проверок. {FREE_TIER_SHORT}.</p>
           <Link href="/register" className="mt-4 inline-flex h-11 items-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]">
             Начать бесплатно
             <ArrowRight className="size-4" />

@@ -17,6 +17,8 @@ import {
   } from "@/lib/meta-defaults";
 import { ogImages, twitterImages } from "@/lib/og-image";
 import { JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
+import { employeesGenitiveLabel } from "@/lib/plan-catalog";
+import { FREE_MAX_USERS } from "@/lib/plan-limits";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -249,7 +251,7 @@ export default async function BlogArticlePage({
           </div>
           <p className="mx-auto mt-2 max-w-[480px] text-[14px] text-white/70">
             Все {JOURNALS_TOTAL_LABEL} СанПиН и ХАССП в одном кабинете. Бесплатный
-            тариф навсегда, до 3 сотрудников, без привязки карты.
+            тариф навсегда на {employeesGenitiveLabel(FREE_MAX_USERS)}, без привязки карты.
           </p>
           <Link
             href="/register"

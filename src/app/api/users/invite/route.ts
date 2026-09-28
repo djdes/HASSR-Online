@@ -18,6 +18,7 @@ import {
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { tryAutolinkTasksflowByPhone } from "@/lib/tasksflow-autolink";
 import { ensurePlanForHeadcount } from "@/lib/plan-limits.server";
+import { checkSeatsForActivation, seatLimitResponse } from "@/lib/billing.server";
 
 const inviteUserSchema = z.object({
   name: z.string().min(2, "Имя должно содержать минимум 2 символа"),
@@ -92,6 +93,12 @@ export async function POST(request: Request) {
     }
     const useStrictAcl = positionTemplates.length > 0;
 
+    // Приглашённый станет активным, когда примет приглашение, — место
+    // проверяем уже сейчас, чтобы руководитель узнал о лимите сразу, а не
+    // сотрудник у двери (при принятии проверка повторяется).
+    const seats = await checkSeatsForActivation(organizationId, 1, { source: "users.invite" });
+    if (!seats.ok) return seatLimitResponse(seats);
+
     const { user } = await db.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
@@ -129,8 +136,8 @@ export async function POST(request: Request) {
       return { user };
     });
 
-    // Лимит бесплатного тарифа (3 сотрудника): при превышении молча
-    // переводим организацию на платный — блокировать приглашение нельзя.
+    // До конца бесплатного периода при превышении лимита организация тихо
+    // переходит на подписку (как раньше).
     const planCheck = await ensurePlanForHeadcount(organizationId);
 
     const inviteUrl = buildInviteUrl(raw);

@@ -10,6 +10,11 @@ import { listPendingQrPinRequests } from "@/lib/qr-pin-requests";
 import { AddOrganizationButton } from "@/components/settings/add-organization-button";
 import { normalizeSphere } from "@/lib/org-profile";
 import type { PositionCategory } from "@/components/staff/staff-types";
+import { ArchivedStaffSection } from "@/components/staff/archived-staff-section";
+import { loadAccountBilling } from "@/lib/billing.server";
+import { BILLING_PAY_HREF } from "@/lib/billing-period";
+import { FREE_SEATS_LABEL } from "@/lib/plan-catalog";
+import { isMobileAppRequest } from "@/lib/mobile-app-payments";
 
 export const dynamic = "force-dynamic";
 
@@ -134,6 +139,27 @@ export default async function StaffPage() {
     select: { id: true, _count: { select: { organizations: true } } },
   });
 
+  // «Архив»: вернуть сотрудников (в том числе после перехода на
+  // бесплатный тариф). Уволенные по графику — во вкладке «Увольнения».
+  const [archived, billing, inMobileApp] = await Promise.all([
+    db.user.findMany({
+      where: { organizationId: orgId, archivedAt: { not: null }, isRoot: false, dismissal: { is: null } },
+      orderBy: [{ archivedAt: "desc" }, { name: "asc" }],
+      take: 300,
+      select: {
+        id: true,
+        name: true,
+        positionTitle: true,
+        archivedAt: true,
+        jobPosition: { select: { name: true } },
+      },
+    }),
+    loadAccountBilling(orgId).catch(() => null),
+    isMobileAppRequest(),
+  ]);
+  const seatsFull =
+    billing?.state.seatLimit != null && billing.state.activeUsers >= billing.state.seatLimit;
+
   return (
     <>
     <PinRequestsPanel initial={pinRequests} />
@@ -207,6 +233,20 @@ export default async function StaffPage() {
         positionLabel: d.user.positionTitle || d.user.role || "—",
         date: d.date.toISOString().slice(0, 10),
       }))}
+    />
+    <ArchivedStaffSection
+      employees={archived.map((u) => ({
+        id: u.id,
+        name: u.name,
+        position: u.jobPosition?.name?.trim() || u.positionTitle?.trim() || null,
+        archivedAt: (u.archivedAt ?? new Date()).toISOString(),
+      }))}
+      seatsNote={
+        seatsFull
+          ? `Бесплатный тариф — ${FREE_SEATS_LABEL}: вернуть сотрудников из архива можно после оплаты подписки.`
+          : null
+      }
+      payHref={seatsFull && !inMobileApp ? BILLING_PAY_HREF : null}
     />
     {ownedAccount ? (
       <div className="mt-6">

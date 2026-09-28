@@ -252,6 +252,18 @@ export function registerStartHandler(composer: Composer<Context>): void {
       return;
     }
 
+    // Привязка по приглашению включает сотрудника — место в тарифе. На
+    // бесплатном после конца бесплатного периода — только после оплаты.
+    const { checkUserActivation } = await import("@/lib/billing.server");
+    const seats = await checkUserActivation(token.userId, {
+      source: "bot.invite",
+      audience: "invitee",
+    });
+    if (!seats.ok) {
+      await ctx.reply(seats.error);
+      return;
+    }
+
     await db.$transaction([
       db.user.update({
         where: { id: token.userId },

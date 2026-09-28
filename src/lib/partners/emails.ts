@@ -1,5 +1,6 @@
 import { escapeHtml } from "@/lib/html-escape";
 import { FREE_MAX_USERS } from "@/lib/plan-limits";
+import { employeesGenitiveLabel } from "@/lib/plan-catalog";
 import {
   emailBrandForPartnerSlug,
   renderEmailLayout,
@@ -112,7 +113,7 @@ export async function sendPartnerClientInviteEmail(params: {
     <p ${P}>Здравствуйте!</p>
     <p ${P}>Приглашаем вести электронные журналы СанПиН и ХАССП в WeSetup. Служба сопровождения WeSetup поможет с настройкой, подскажет про просрочки и подготовку к проверкам.</p>
     <div ${BOX}>
-      <p style="margin:0;color:#3f3f46;font-size:14px">Регистрация без карты: бесплатно до ${FREE_MAX_USERS} сотрудников, без ограничений по записям.</p>
+      <p style="margin:0;color:#3f3f46;font-size:14px">Регистрация без карты: бесплатно для ${employeesGenitiveLabel(FREE_MAX_USERS)}, без ограничений по записям.</p>
     </div>
     ${button(inviteUrl, "Зарегистрироваться")}
     <p ${MUTED}>Не интересно? <a href="${params.declineUrl}" style="color:#71717a">Нажмите здесь</a> — и приглашения больше не придут.</p>`;
@@ -124,7 +125,7 @@ export async function sendPartnerClientInviteEmail(params: {
     <p ${P}>Здравствуйте!</p>
     <p ${P}><strong>${escapeHtml(params.brandName)}</strong> предлагает вести электронные журналы СанПиН и ХАССП в WeSetup и сопровождать вас: помогать с настройкой, следить за просрочками и готовить документы к проверкам.</p>
     <div ${BOX}>
-      <p style="margin:0 0 8px;color:#3f3f46;font-size:14px">Регистрация без карты: бесплатно до ${FREE_MAX_USERS} сотрудников, без ограничений по записям.</p>
+      <p style="margin:0 0 8px;color:#3f3f46;font-size:14px">Регистрация без карты: бесплатно для ${employeesGenitiveLabel(FREE_MAX_USERS)}, без ограничений по записям.</p>
       ${params.contactLine ? `<p style="margin:0;color:#3f3f46;font-size:14px">${escapeHtml(params.contactLine)}</p>` : ""}
     </div>
     ${button(inviteUrl, "Зарегистрироваться по ссылке партнёра")}

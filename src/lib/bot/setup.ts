@@ -3,6 +3,7 @@ import { TELEGRAM_COMMANDS } from "@/lib/bot/start-response";
 import { buildMiniAppUrl } from "@/lib/journal-obligation-links";
 import { JOURNALS_TOTAL } from "@/lib/journal-catalog";
 import { pluralRu } from "@/lib/plural-ru";
+import { FREE_TIER_SHORT } from "@/lib/plan-catalog";
 
 export const WESETUP_BOT_PROFILE = {
   name: "WeSetup · журналы ХАССП/СанПиН",
@@ -14,7 +15,7 @@ export const WESETUP_BOT_PROFILE = {
     "✅ Заполнение в один клик прямо здесь — откройте Кабинет и отметьте строки за смену.\n" +
     "📊 PDF для Роспотребнадзора одним кликом — сборка «По звонку инспектора» за 7 дней.\n" +
     "🤖 Умные напоминания, голосовой ввод температур, офлайн-режим на кухне.\n\n" +
-    "Бесплатно до 3 сотрудников. Сайт: wesetup.ru",
+    `${FREE_TIER_SHORT}. Сайт: wesetup.ru`,
   menuButtonText: "🏠 Кабинет",
 } as const;
 

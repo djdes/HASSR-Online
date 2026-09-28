@@ -39,6 +39,11 @@ import { db } from "@/lib/db";
 import { DEFAULT_ORG_NAME } from "@/lib/org-profile";
 import { listAccessibleOrganizations } from "@/lib/organization-access";
 import { BILLING_TEST_MODE, FREE_MAX_USERS } from "@/lib/plan-limits";
+import { loadBillingView } from "@/lib/billing-view.server";
+import { isMobileAppRequest } from "@/lib/mobile-app-payments";
+import { BillingAnnouncement } from "@/components/billing/billing-announcement";
+import { BillingTransitionGate } from "@/components/billing/billing-transition-gate";
+import { BillingStaffNotice } from "@/components/billing/billing-staff-notice";
 import { PageNav, PageNavProvider } from "@/components/layout/page-nav";
 import { LayoutLocationTabs } from "@/components/layout/location-tabs";
 import { JournalUndoProvider } from "@/components/journals/journal-undo-slot";
@@ -214,6 +219,20 @@ export default async function DashboardLayout({
     brandedOrg?.subscriptionPlan ??
     "free";
 
+  // Бесплатный период и переход на оплату (2026-10): анонс, окно решения
+  // руководителю, плашка сотруднику, строка тарифа в шапке. Сбой расчёта
+  // не должен ронять кабинет — тогда просто без них.
+  const billing = await loadBillingView({
+    organizationId: activeOrgId,
+    user: session.user,
+    impersonating: isImpersonating(session),
+    partnerAccess: Boolean(partnerAccess),
+    inMobileApp: await isMobileAppRequest(),
+  }).catch((error) => {
+    console.error("[billing] layout view failed", error);
+    return null;
+  });
+
   // Баллы в шапке видит только тот, кто может ими распорядиться:
   // сумма — это деньги организации. Остальным пункт меню всё равно
   // показываем: отзыв пишет и повар, просто без цифры.
@@ -376,11 +395,13 @@ export default async function DashboardLayout({
             userRole={session.user.role ?? ""}
             positionTitle={profile?.positionTitle ?? ""}
             isRoot={session.user.isRoot === true}
-            subscriptionPlan={accountPlan}
+            subscriptionPlan={billing?.header.plan ?? accountPlan}
             balanceRub={balanceRub}
-            activeUsers={accountUsers}
+            activeUsers={billing && !billing.unit.exempt ? billing.unit.activeUsers : accountUsers}
             freeUserLimit={FREE_MAX_USERS}
-            billingTestMode={BILLING_TEST_MODE}
+            billingTestMode={billing ? billing.testModeActive : BILLING_TEST_MODE}
+            planLabelOverride={billing?.header.label ?? null}
+            planNote={billing?.header.note ?? null}
             organizations={organizations}
             activeOrganizationId={activeOrgId}
             buildings={buildingContext.canSwitch ? buildingContext.buildings : []}
@@ -447,6 +468,19 @@ export default async function DashboardLayout({
                 {/* Объявление ROOT (плановые работы, инцидент) — над контентом,
                     закрывается и запоминается по id. */}
                 <AnnouncementBanner announcement={announcement} />
+                {/* Анонс бесплатного периода — наверху главной у всех
+                    ролей (дашборд руководителя, журналы сотрудника),
+                    закрывается на день. */}
+                {billing?.announcement ? (
+                  <BillingAnnouncement
+                    lead={billing.announcement.lead}
+                    tail={billing.announcement.tail}
+                    href={billing.announcement.href}
+                    dayKey={billing.announcement.dayKey}
+                    onlyOnPaths={["/dashboard", "/control-board", "/journals"]}
+                  />
+                ) : null}
+                {billing?.staffNotice ? <BillingStaffNotice /> : null}
                 {deletionDue ? <DeletionBanner dueAt={deletionDue} canCancel={hasCapability(session.user, "admin.full")} /> : null}
                 {/* Всегда в дереве: начатый ответ переживает router.refresh(),
                     когда после оценки ask становится false. `?nps=1` —
@@ -495,6 +529,17 @@ export default async function DashboardLayout({
           profile &&
           profile.legalVersion !== LEGAL_VERSION ? (
             <LegalUpdateModal />
+          ) : null}
+          {/* Бесплатный период подписки закончился — руководителю с
+              правом на тариф окно на любой странице, пока не решит.
+              На странице тарифа вместо окна карточка (там же оплата). */}
+          {billing?.gate ? (
+            <BillingTransitionGate
+              copy={billing.gate.copy}
+              payHref={billing.gate.payHref}
+              blocking={billing.gate.blocking}
+              hideOnPaths={["/settings/subscription"]}
+            />
           ) : null}
           {hasFullWorkspaceAccess(session.user) && profile?.showWhatsNew !== false ? (
             <WhatsNewModal
@@ -594,6 +639,19 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
 
   const impersonatedName = impersonatedOrg?.name ?? null;
 
+  // Окно решения и плашка сотруднику — те же, что на сайте (П-3); анонс
+  // периода в приложении живёт в профиле.
+  const billing = await loadBillingView({
+    organizationId: activeOrgId,
+    user: session.user,
+    impersonating: isImpersonating(session),
+    partnerAccess: Boolean(partnerAccess),
+    inMobileApp: await isMobileAppRequest(),
+  }).catch((error) => {
+    console.error("[billing] mini shell view failed", error);
+    return null;
+  });
+
   return (
     <AuthSessionProvider session={session}>
       <CustomNamesProvider names={customNames}>
@@ -637,7 +695,16 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
                   />
                 </Suspense>
               ) : null}
+              {billing?.staffNotice ? <BillingStaffNotice variant="mini" /> : null}
               {children}
+              {billing?.gate ? (
+                <BillingTransitionGate
+                  copy={billing.gate.copy}
+                  payHref={billing.gate.payHref}
+                  blocking={billing.gate.blocking}
+                  hideOnPaths={["/settings/subscription"]}
+                />
+              ) : null}
             </PageNavProvider>
         </MiniAppShell>
       </SiteThemeProvider>

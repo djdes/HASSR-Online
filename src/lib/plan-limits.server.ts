@@ -1,11 +1,17 @@
-import {
-  BILLING_TEST_MODE,
-  FREE_MAX_USERS,
-  isFreePlan,
-  isPaidPlan,
-} from "@/lib/plan-limits";
+import { BILLING_TEST_MODE, FREE_MAX_USERS, isFreePlan } from "@/lib/plan-limits";
 import { db } from "@/lib/db";
-import { NOT_COMMISSION_WHERE } from "@/lib/journal-roster";
+import {
+  billingPhase,
+  formatMskDay,
+  isAutoUpgradeAllowed,
+  lastFreeDay,
+} from "@/lib/billing-period";
+import {
+  SEAT_USER_WHERE,
+  loadAccountBilling,
+  readFreePeriodSettings,
+} from "@/lib/billing.server";
+import { employeesLabel } from "@/lib/plan-catalog";
 
 /**
  * Серверная часть тарифных лимитов.
@@ -20,15 +26,13 @@ import { NOT_COMMISSION_WHERE } from "@/lib/journal-roster";
  * температуры с фото). Тариф живёт на аккаунте (legacy-зеркало — в
  * организации), как в шапке кабинета; приостановленная или отменённая
  * организация — без платных возможностей, даже если аккаунт платный.
+ *
+ * С бесплатным периодом (2026-10): в периоде возможности включены у
+ * всех, после — только у реально оплативших (`billing-period.ts`).
  */
 export async function hasPaidPlan(organizationId: string): Promise<boolean> {
-  const org = await db.organization.findUnique({
-    where: { id: organizationId },
-    select: { subscriptionPlan: true, account: { select: { subscriptionPlan: true } } },
-  });
-  if (!org) return false;
-  if (org.subscriptionPlan === "paused" || org.subscriptionPlan === "cancelled") return false;
-  return isPaidPlan(org.account?.subscriptionPlan ?? org.subscriptionPlan);
+  const loaded = await loadAccountBilling(organizationId);
+  return loaded?.state.paidFeatures ?? false;
 }
 
 export type EnsurePlanResult = {
@@ -38,11 +42,19 @@ export type EnsurePlanResult = {
   plan: string;
   /** Сколько активных сотрудников насчитали. */
   activeUsers: number;
+  /**
+   * Бесплатный период закончился и переход на оплату включён: платный
+   * тариф теперь только после оплаты, тихого перевода нет.
+   */
+  paymentRequired?: boolean;
 };
 
 /**
  * Пересчитывает численность и, если бесплатный лимит превышен, переводит
- * на платный тариф.
+ * на платный тариф — но только пока не закончился бесплатный период
+ * (или пока переход на оплату выключен в ROOT). После — платный тариф
+ * только после оплаты, а лимит бесплатного проверяет
+ * `checkSeatsForActivation` ДО создания сотрудника.
  *
  * Считаем по аккаунту, а не по организации: у сети из трёх кафе один
  * договор, и бесплатные места (`FREE_MAX_USERS`) — общие. Пока организация не привязана
@@ -59,9 +71,6 @@ export async function ensurePlanForHeadcount(
   organizationId: string,
   options: { force?: boolean } = {}
 ): Promise<EnsurePlanResult> {
-  // Динамический импорт: файл читают и клиентские компоненты (ради
-  // FREE_MAX_USERS и planLabel), а `db`/`telegram` тянут server-only код.
-
   const org = await db.organization.findUnique({
     where: { id: organizationId },
     select: {
@@ -95,8 +104,9 @@ export async function ensurePlanForHeadcount(
       : [org.id];
 
   const activeUsers = await db.user.count({
-    // Сторонние члены бракеражной комиссии в тариф не входят (владелец, 2026-09-21).
-    where: { organizationId: { in: scopeOrgIds }, isActive: true, ...NOT_COMMISSION_WHERE },
+    // Сторонние члены бракеражной комиссии, архив и ROOT в тариф не входят
+    // (владелец, 2026-09-21) — тот же счёт, что у перехода на оплату.
+    where: { ...SEAT_USER_WHERE, organizationId: { in: scopeOrgIds } },
   });
 
   const currentPlan = org.account?.subscriptionPlan ?? org.subscriptionPlan;
@@ -108,6 +118,21 @@ export async function ensurePlanForHeadcount(
   if (!shouldUpgrade) {
     return { upgraded: false, plan: currentPlan, activeUsers };
   }
+
+  // После конца бесплатного периода (и с включённым переходом) платный
+  // тариф — только после оплаты. Тихий перевод на «платный» без денег
+  // стал бы бесплатной подпиской навсегда.
+  const settings = await readFreePeriodSettings();
+  const now = new Date();
+  if (!isAutoUpgradeAllowed(settings, now)) {
+    console.info("[billing] auto-upgrade skipped: payment required", {
+      organizationId,
+      activeUsers,
+      force: options.force === true,
+    });
+    return { upgraded: false, plan: currentPlan, activeUsers, paymentRequired: true };
+  }
+  const inFreePeriod = billingPhase(settings, now) === "free_period";
 
   const upgradedAt = new Date();
   // Тариф живёт на аккаунте, но пишем и в организации: часть кода ещё
@@ -136,6 +161,13 @@ export async function ensurePlanForHeadcount(
     });
   });
 
+  console.info("[billing] auto-upgrade → paid without payment", {
+    organizationId,
+    activeUsers,
+    reason: options.force ? "manual" : "headcount",
+    freePeriod: inFreePeriod,
+  });
+
   // Аудит — best-effort, ошибка записи не должна валить создание сотрудника.
   try {
     await db.auditLog.create({
@@ -149,6 +181,7 @@ export async function ensurePlanForHeadcount(
           freeLimit: FREE_MAX_USERS,
           reason: options.force ? "manual" : "headcount",
           billingTestMode: BILLING_TEST_MODE,
+          freePeriod: inFreePeriod,
         },
       },
     });
@@ -157,18 +190,21 @@ export async function ensurePlanForHeadcount(
   }
 
   // Уведомление владельцу: переход тарифа — не то, о чём стоит узнавать
-  // из счёта. В тестовом режиме прямо пишем, что оплата не требуется.
+  // из счёта. Прямо пишем, почему оплата сейчас не требуется: идёт
+  // бесплатный период или сайт в тестовом режиме.
   try {
     const { notifyOrganization } = await import("@/lib/telegram");
     await notifyOrganization(
       organizationId,
       [
-        BILLING_TEST_MODE ? "🧪" : "💳",
-        ` Организация «${org.name}» перешла на платный тариф.`,
-        `\nСотрудников: ${activeUsers} (бесплатно — до ${FREE_MAX_USERS}).`,
-        BILLING_TEST_MODE
-          ? "\nСайт в тестовом режиме — оплата не требуется."
-          : "",
+        inFreePeriod || BILLING_TEST_MODE ? "🧪" : "💳",
+        ` Организация «${org.name}» перешла на подписку.`,
+        `\nСотрудников: ${activeUsers} (бесплатный тариф — ${employeesLabel(FREE_MAX_USERS)}).`,
+        inFreePeriod
+          ? `\nПодписка бесплатна для всех по ${formatMskDay(lastFreeDay(settings))} включительно — оплата сейчас не требуется.`
+          : BILLING_TEST_MODE
+            ? "\nСайт в тестовом режиме — оплата не требуется."
+            : "",
       ].join(""),
       ["owner"]
     );

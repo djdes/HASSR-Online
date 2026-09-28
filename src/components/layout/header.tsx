@@ -162,6 +162,13 @@ type HeaderProps = {
   /** Тестовый режим биллинга — тариф меняется, деньги не списываются. */
   billingTestMode: boolean;
   /**
+   * Название тарифа вместо `planLabel(subscriptionPlan)` — бесплатный
+   * период («Подписка»), «Нужно выбрать тариф» после него.
+   */
+  planLabelOverride?: string | null;
+  /** Хвост строки тарифа: «бесплатно по 10 октября», «до 3 ноября». */
+  planNote?: string | null;
+  /**
    * Пользователь состоит в активном партнёре — в шапке появляется вход
    * в партнёрский кабинет и переключатель контекста «Моя организация /
    * Партнёрский кабинет» в меню профиля.
@@ -200,6 +207,8 @@ export function Header({
   activeUsers,
   freeUserLimit,
   billingTestMode,
+  planLabelOverride = null,
+  planNote = null,
   partnerCabinet = null,
   partnerHint = null,
   canEditBranding = false,
@@ -272,8 +281,8 @@ export function Header({
   const HomeIcon = showsOrg ? Building2 : UserRound;
   const homeHref = getWebHomeHref({ role: userRole, isRoot });
   // Строка тарифа в меню профиля. На бесплатном показываем занятые
-  // места (человек должен заранее видеть, что 6-й сотрудник переведёт
-  // на платный), на платном — просто численность.
+  // места (человек должен заранее видеть, что следующий сотрудник
+  // потребует подписку), на платном — просто численность.
   const onFreePlan = subscriptionPlan === "trial" || subscriptionPlan === "free";
   // Мест считаем по всем организациям аккаунта — иначе владелец сети
   // видел бы «2/5» в каждой точке и не понимал, откуда взялся платный.
@@ -282,10 +291,13 @@ export function Header({
     ? " сотрудников по всем организациям"
     : " сотрудников";
   const planLine = [
-    planLabel(subscriptionPlan),
-    onFreePlan
+    planLabelOverride ?? planLabel(subscriptionPlan),
+    // Сверх бесплатного лимита (до перехода на оплату так бывает) дробь
+    // «3/1» только путает — показываем просто численность.
+    onFreePlan && activeUsers <= freeUserLimit
       ? `${activeUsers}/${freeUserLimit}${headcountSuffix}`
       : `${activeUsers}${headcountSuffix}`,
+    planNote,
     !onFreePlan && billingTestMode ? "тестовый режим" : null,
   ]
     .filter(Boolean)

@@ -3,6 +3,7 @@ import { requireRoot } from "@/lib/auth-helpers";
 import { getAllOrgMetrics } from "@/lib/org-metrics";
 import { MetricsTable } from "./metrics-table";
 import { SeedDemoButton } from "./seed-demo-button";
+import { EXTRA_USER_PRICE_RUB, FREE_SEATS_LABEL, SUBSCRIPTION_SEATS_LABEL } from "@/lib/plan-catalog";
 
 export const dynamic = "force-dynamic";
 
@@ -49,8 +50,8 @@ export default async function RootMetricsPage() {
             <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
               Активность, retention и выручка по всем организациям.
               Расчётный MRR — `quoteSubscription(activeUsers)` по единой
-              модели: до 3 — 0 ₽, до 30 — одна подписка, дальше +100 ₽ за
-              каждого; реальный — 0 для trial-org. Trend — % изменения 7-дневной
+              модели: {FREE_SEATS_LABEL} — 0 ₽, {SUBSCRIPTION_SEATS_LABEL} — одна
+              подписка, дальше +{EXTRA_USER_PRICE_RUB} ₽ за каждого; реальный — 0 для trial-org. Trend — % изменения 7-дневной
               активности vs предыдущая неделя. Email — адрес того, кто
               зарегистрировал организацию. Заголовки колонок кликабельны,
               поиск ищет по части адреса или названия. Клик по числу

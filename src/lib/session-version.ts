@@ -50,3 +50,11 @@ export async function bumpSessionVersion(userId: string): Promise<number> {
   cache.set(userId, { version: row.sessionVersion, at: Date.now() });
   return row.sessionVersion;
 }
+
+/**
+ * Сбросить кеш версии — после массового bump через `updateMany`
+ * (переход на бесплатный тариф завершает сессии ушедших в архив).
+ */
+export function forgetSessionVersions(userIds: string[]): void {
+  for (const id of userIds) cache.delete(id);
+}

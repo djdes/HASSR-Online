@@ -5,6 +5,7 @@ import Image from "next/image";
 import { brandQrHeightFor } from "@/lib/brand-qr-shared";
 import { Copy, Dices, Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { ApiError, toastCaughtError } from "@/lib/billing-limit-toast";
 import {
   Dialog,
   DialogContent,
@@ -151,7 +152,7 @@ export function StaffAccessDialog({
         });
         const payload = await response.json().catch(() => null);
         if (!response.ok) {
-          throw new Error(payload?.error ?? "Не удалось выдать доступ");
+          throw new ApiError(payload?.error ?? "Не удалось выдать доступ", payload);
         }
       }
 
@@ -176,7 +177,7 @@ export function StaffAccessDialog({
       onSaved?.();
       onClose();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка");
+      toastCaughtError(error, "Ошибка");
     } finally {
       setBusy(false);
     }

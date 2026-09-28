@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { brandQrHeightFor } from "@/lib/brand-qr-shared";
 import { toast } from "sonner";
+import { toastApiError } from "@/lib/billing-limit-toast";
 import { useSubmitLock } from "@/lib/use-submit-lock";
 import { formatDaysRu } from "@/lib/format-days";
 import { ChevronLeft, Copy, ExternalLink, KeyRound } from "lucide-react";
@@ -472,7 +473,8 @@ export function StaffAddFlowDialog(props: {
         | { user?: { id: string; name: string }; error?: string }
         | null;
       if (!res.ok || !data?.user) {
-        toast.error(data?.error ?? "Не удалось создать");
+        // Лимит бесплатного тарифа — с кнопкой «Оплатить».
+        toastApiError(data, "Не удалось создать");
         return;
       }
       toast.success("Сотрудник добавлен");

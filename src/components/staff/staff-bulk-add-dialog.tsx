@@ -5,6 +5,7 @@ import { BodyScrollLock } from "@/lib/use-body-scroll-lock";
 import { useMemo, useRef, useState } from "react";
 import { Loader2, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
+import { toastApiError } from "@/lib/billing-limit-toast";
 import { cn } from "@/lib/utils";
 import { WEEKDAY_LABELS, DEFAULT_WEEKLY_DAYS_OFF } from "@/lib/staff-days-off";
 import { parseStaffRows } from "@/lib/staff-bulk-parse";
@@ -216,6 +217,9 @@ export function StaffBulkAddDialog({
         toast.error(
           `Добавлено ${data?.created ?? 0}, не прошло ${serverErrors.length}`
         );
+        // Часть строк упёрлась в лимит бесплатного тарифа — отдельно, с
+        // кнопкой «Оплатить».
+        if (data?.billingLimit) toastApiError(data.billingLimit, "Лимит тарифа");
         onDone(data?.created ?? 0);
         return;
       }
