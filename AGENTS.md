@@ -294,7 +294,7 @@ Critical env vars (see `.env.shared` for template):
 
 ## Conventions for AI Agents
 
-- Visible UI follows the project design system (`wesetup-design` skill, `.claude/skills/design-system`): every screen must look like one product.
+- Visible UI follows the project design system (`design-system` skill, `.claude/skills/design-system`): every screen must look like one product.
 - For non-trivial refactors, `karpathy-guidelines` is the coding discipline to follow; for a new feature that touches existing code, lock the scope first (a frozen spec, see the proof loop above).
-- The `.cursorrules` file in repo root contains additional style rules (notably the git branch workflow).
+- The `.cursorrules` file in repo root repeats the key coding rules for Cursor.
 - The local `CLAUDE.md` (not in git) holds operational notes: production probes, SSH access (the password stays in the local `.env`), architecture principles. Refer to it for deployment commands and troubleshooting.

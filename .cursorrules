@@ -23,8 +23,8 @@ cp .env.shared .env && npm install && npx prisma generate && npx prisma db push 
 - Path alias: `@/*` → `./src/*`
 - Prisma 7 requires `@prisma/adapter-pg` pool — see `src/lib/db.ts`
 - Zod v4 (not v3)
-- All data multi-tenant: scope queries by `session.user.organizationId`
-- Three roles: owner > technologist > operator
+- All data multi-tenant: scope queries by `getActiveOrgId(session)` from `src/lib/auth-helpers.ts` (ROOT can act as another organization, so `session.user.organizationId` is not always the viewed one)
+- Roles: manager / head_chef (management) and cook / waiter (staff); legacy owner / technologist / operator are still accepted
 - API routes: `getServerSession(authOptions)` → role check → Zod validate → Prisma → NextResponse.json()
 - Notifications (email/Telegram) are fire-and-forget: catch errors, don't fail main operation
 
@@ -32,38 +32,8 @@ cp .env.shared .env && npm install && npx prisma generate && npx prisma db push 
 - `(auth)/` — login, register (public)
 - `(dashboard)/` — sidebar layout, protected by `requireAuth()`
 - `src/lib/` — auth.ts, db.ts, validators.ts, email.ts, telegram.ts, tuya.ts, pdf.ts
-- `prisma/schema.prisma` — 6 models: Organization, User, Area, Equipment, JournalTemplate, JournalEntry
+- `prisma/schema.prisma` — the full data model (see AGENTS.md)
 
-## Git Workflow (MANDATORY — follow automatically every time)
-
-**NEVER commit or push to `master` directly. ALWAYS create a feature branch first.**
-
-### Automatic steps (do these without being asked):
-
-**1. Before ANY task** — pull master:
-```bash
-git checkout master && git pull origin master
-git checkout -b feature/short-task-name
-```
-
-**2. When done** — commit, push, create PR:
-```bash
-git add <specific files>          # NEVER use "git add ." or "git add -A"
-git commit -m "feat: what was done"
-git push -u origin feature/short-task-name
-gh pr create --title "feat: what was done" --body "Summary of changes"
-```
-
-**3. After creating PR** — review diff and merge:
-```bash
-gh pr diff                        # check changes look correct
-gh pr merge --merge               # merge into master
-git checkout master && git pull origin master
-```
-
-Branch naming: `feature/`, `fix/`, `docs/` + short description.
-Never deploy from a feature branch — only from master after PR merge.
-
-## Deployment
-See CLAUDE.md for full deploy script. Server: 192.168.33.3, PM2 on port 3001.
-Secrets in `.env.shared`. Deploy helpers (`_deploy.py`, `_run.py`) are in .gitignore — recreate from CLAUDE.md.
+## Git and Deployment
+Commit only the files you changed (`git add <specific files>`), with a Russian commit message.
+Deployment runs from GitHub Actions on every push to `master` (`.github/workflows/deploy.yml`); see AGENTS.md -> Deployment.

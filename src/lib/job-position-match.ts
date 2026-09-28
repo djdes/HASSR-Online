@@ -12,9 +12,8 @@
  * Возвращает confidence 0..1 — caller может фильтровать по threshold
  * (рекомендуется ≥ 0.7 для авто-присвоения, < 0.7 → ручной выбор).
  *
- * Не использует LLM — fast и deterministic. Если confidence низкая,
- * caller может опционально вызвать Claude Haiku batch (см. отдельный
- * `matchPositionsWithLLM` если потребуется).
+ * Не использует LLM — fast и deterministic. Если confidence низкая —
+ * ручной выбор.
  */
 
 export type MatchResult = {

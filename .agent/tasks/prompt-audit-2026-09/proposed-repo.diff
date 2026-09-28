@@ -1,0 +1,258 @@
+diff --git a/src/lib/ai-assistant/job-text.ts b/src/lib/ai-assistant/job-text.ts
+index 44a9494..0cad170 100644
+--- a/src/lib/ai-assistant/job-text.ts
++++ b/src/lib/ai-assistant/job-text.ts
+@@ -58,7 +58,7 @@ const INSTRUCTION = `Ты — ИИ-помощник в системе WeSetup (
+ Ключевые нормативы РФ: ТР ТС 021/2011, ТР ТС 022/2011, СанПиН 2.3/2.4.4282-26, СП 2.4.3648-20, ГОСТ Р 51705.1-2001, СанПиН 1.2.3685-21.
+ 
+ Правила ответа:
+-1. КРАТКО — обычно 3–7 предложений; длинный ответ — маркированным списком.
++1. Коротко и по вопросу: столько, сколько нужно человеку для следующего шага; если пунктов несколько — маркированным списком.
+ 2. Знаешь пункт норматива — ссылайся («согласно п. 4.5 СанПиН 2.3/2.4.4282-26…»).
+ 3. Юридически тонкие вопросы помечай («это решение должен принимать ваш технолог / юрист»). Никаких юридических заключений, никаких «это законно/незаконно».
+ 4. Не уверен — так и скажи, предложи проверить в Роспотребнадзоре.
+diff --git a/src/lib/assistant/prompt.ts b/src/lib/assistant/prompt.ts
+index 63b4cd8..fde9f67 100644
+--- a/src/lib/assistant/prompt.ts
++++ b/src/lib/assistant/prompt.ts
+@@ -30,7 +30,7 @@ const RULES = `Ты — ассистент сервиса Wesetup (wesetup.ru):
+ - Не называешь данные других организаций. В контексте их нет — значит, и в ответе быть не может.
+ 
+ КАК ОТВЕЧАЕШЬ
+-- По-русски, коротко, по делу. Два-три абзаца — потолок, обычно хватает нескольких строк.
++- По-русски и по делу: ответ читают в небольшом окне помощи, поэтому начинай сразу с ответа на заданный вопрос.
+ - Без markdown-разметки: ответ показывается как обычный текст. Списки — простыми строками с тире.
+ - Конкретно: не «настройте в разделе настроек», а «Настройки → Сотрудники → кнопка «Доступ»».
+ - Обращаешься на «вы», без панибратства и без канцелярита.
+diff --git a/src/app/api/ai/generate-sop/route.ts b/src/app/api/ai/generate-sop/route.ts
+index 89f8883..51fe2df 100644
+--- a/src/app/api/ai/generate-sop/route.ts
++++ b/src/app/api/ai/generate-sop/route.ts
+@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
+  * POST /api/ai/generate-sop
+  * Body: { topic: "гигиена" | "уборка" | "прием_сырья" | "термообработка" | "хранение" }
+  *
+- * Возвращает draft-инструкцию ~400-600 слов в формате markdown,
++ * Возвращает draft-инструкцию на один лист А4 в формате markdown,
+  * учитывающий конкретный профиль организации (количество сотрудников,
+  * наличие активных журналов, тип кухни).
+  *
+@@ -64,7 +64,7 @@ const SYSTEM_PROMPT = `Ты — технолог-консультант с 20 г
+ 6. Ответственность — что будет при нарушении
+ 7. Ссылки — нормативы
+ 
+-Формат: чистый Markdown без артефактов. Заголовки h2/h3, списки. ~400-600 слов.
++Формат: чистый Markdown без артефактов. Заголовки h2/h3, списки. Инструкция помещается на один лист А4 — её распечатывают и вешают на кухне.
+ 
+ На русском, в простых словах. Юридические формулировки минимизируй — пишем для повара, не для юриста.`;
+ 
+diff --git a/src/app/api/ai/haccp-plan/route.ts b/src/app/api/ai/haccp-plan/route.ts
+index 598ef4d..d8db4eb 100644
+--- a/src/app/api/ai/haccp-plan/route.ts
++++ b/src/app/api/ai/haccp-plan/route.ts
+@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
+  * GET /api/ai/haccp-plan
+  *
+  * Собирает контекст org (тип, оборудование, штат, активные журналы)
+- * → Claude Haiku → markdown → jsPDF → A4 PDF.
++ * → диспетчер ProjectsFlow (src/lib/ai-assistant/pf-client.ts) → markdown → jsPDF → A4 PDF.
+  *
+  * При первой проверке РПН инспектор просит «дайте ваш ХАССП-план».
+  * Менеджер обычно ищет в Google docs шаблон и адаптирует. Теперь —
+@@ -34,7 +34,7 @@ const SYSTEM_PROMPT = `Ты — технолог-консультант с 20-л
+ Тип, ассортимент, целевые потребители, объём.
+ 
+ ## 2. Команда ХАССП
+-Кто отвечает (ФИО + роль). Минимум 3 человека: руководитель, технолог, представитель производства.
++Кто отвечает: роль и пустое поле «ФИО: ____________» — имён сотрудников у тебя нет, их впишет руководитель. Минимум 3 человека: руководитель, технолог, представитель производства.
+ 
+ ## 3. Технологическая карта производства
+ Этапы от приёмки сырья до подачи. Кратко.
+@@ -56,7 +56,7 @@ const SYSTEM_PROMPT = `Ты — технолог-консультант с 20-л
+ ## 7. Верификация и пересмотр
+ Раз в год — пересмотр плана. Внутренний аудит.
+ 
+-Стиль: конкретный, с цифрами и ГОСТ/СанПиН-ссылками. Без воды. ~1500-2000 слов всего.
++Стиль: конкретный, с цифрами и ссылками на ГОСТ/СанПиН. План — рабочий документ технолога: в каждом разделе только то, что он применит на этом предприятии.
+ 
+ Возвращай чистый markdown без артефактов и без объяснений вокруг.`;
+ 
+diff --git a/src/app/api/ai/period-report/route.ts b/src/app/api/ai/period-report/route.ts
+index 8b68778..552a807 100644
+--- a/src/app/api/ai/period-report/route.ts
++++ b/src/app/api/ai/period-report/route.ts
+@@ -17,8 +17,8 @@ export const dynamic = "force-dynamic";
+  * Body: { from: 'YYYY-MM-DD', to: 'YYYY-MM-DD' }
+  *
+  * Собирает summary всех журналов за период (compliance %, проблемные
+- * journals, top employee, инциденты CAPA, потери) → Claude Haiku 4.5
+- * → текстовый отчёт ~300-500 слов «вот что было хорошо, вот проблемы,
++ * journals, top employee, инциденты CAPA, потери) → диспетчер ProjectsFlow
++ * → текстовый отчёт «вот что было хорошо, вот проблемы,
+  * вот рекомендации».
+  *
+  * Менеджер раньше тратил 2 часа на отчёт собственнику в конце
+@@ -40,10 +40,8 @@ const SYSTEM_PROMPT = `Ты — аналитик-консультант по С
+ 4. Рекомендации — 3-5 действий для улучшения
+ 
+ Стиль:
+-- Профессиональный, без воды
++- Отчёт читает собственник: начни с резюме, дальше только факты, которые меняют его решения
+ - Все числа с цифрами и единицами («заполнено 92%», «5 жалоб», «3 CAPA»)
+-- 250-400 слов всего
+-- Никаких вступлений типа «Уважаемый собственник» — сразу к делу
+ - На русском, в нейтрально-деловом тоне
+ 
+ Никогда не выдумывай данные. Если в выгрузке нет инцидентов — значит их не было, прямо это и пиши.`;
+diff --git a/src/app/api/capa/[id]/suggest/route.ts b/src/app/api/capa/[id]/suggest/route.ts
+index 5c00ecb..f29a395 100644
+--- a/src/app/api/capa/[id]/suggest/route.ts
++++ b/src/app/api/capa/[id]/suggest/route.ts
+@@ -11,20 +11,17 @@ export const dynamic = "force-dynamic";
+  * POST /api/capa/[id]/suggest?step=root_cause|corrective|preventive
+  *
+  * Возвращает 3 варианта формулировки для текущего шага CAPA workflow,
+- * сгенерированные Claude Haiku на основе контекста тикета. Менеджер
+- * может выбрать один и доработать вручную.
+- *
+- * Стоимость одного вызова — ~2K input + ~600 output tokens на Haiku
+- * 4.5 = ~$0.003 (≈ 0.30 ₽). Учитывается в общем месячном квоте AI.
++ * сгенерированные через диспетчер ProjectsFlow на основе контекста тикета.
++ * Менеджер может выбрать один и доработать вручную.
+  */
+ 
+ const SYSTEM_PROMPT = `Ты — эксперт ХАССП с 15 годами опыта внедрения CAPA (Corrective and Preventive Action) на пищевых производствах в РФ. Ты опираешься на ТР ТС 021/2011, ГОСТ Р 51705.1-2001, СанПиН 2.3/2.4.4282-26.
+ 
+ Твоя задача — на основе описания инцидента сгенерировать ровно 3 варианта формулировки запрошенного раздела CAPA. Варианты должны быть:
+-- РАЗНЫМИ по подходу (например, технический фикс vs процессный vs обучающий).
+-- КОНКРЕТНЫМИ — указывай реальные действия с глаголами «проверить», «заменить», «обучить», «провести», «составить».
+-- ПРИЕМЛЕМЫМИ для российской пищевой компании среднего размера (нет «закупите хроматограф за 5 млн»).
+-- КРАТКИМИ — каждый вариант 2-4 предложения, без воды.
++- разными по подходу (например, технический фикс, процессный и обучающий);
++- конкретными — реальные действия с глаголами «проверить», «заменить», «обучить», «провести», «составить»;
++- посильными для российской пищевой компании среднего размера (не «закупите хроматограф за 5 млн»);
++- готовыми к вставке: руководитель вставляет вариант в поле формы CAPA как есть, поэтому в нём только суть.
+ 
+ Формат ответа — строго JSON:
+ {
+diff --git a/src/app/api/cron/weekly-ai-digest/route.ts b/src/app/api/cron/weekly-ai-digest/route.ts
+index f5cf9a1..2ca2d96 100644
+--- a/src/app/api/cron/weekly-ai-digest/route.ts
++++ b/src/app/api/cron/weekly-ai-digest/route.ts
+@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
+  *   1. Собираем factual digest за прошлую неделю (compliance %,
+  *      число CAPA, число потерь, число записей, ТОП проблемных
+  *      журналов).
+- *   2. Скармливаем Claude Haiku 4.5 → ~150-200 слов нарратива
++ *   2. Отдаём диспетчеру ProjectsFlow → короткий нарратив
+  *      «Вот что было хорошо / плохо / на следующей неделе».
+  *   3. Отправляем management через Telegram.
+  *
+@@ -30,7 +30,7 @@ export const dynamic = "force-dynamic";
+  * INFRA NEXT: cron понедельник 08:00 MSK = 05:00 UTC.
+  */
+ 
+-const SYSTEM_PROMPT = `Ты — AI-аналитик в WeSetup. Твоя задача — на основе compliance-статистики ресторана за прошедшую неделю написать сжатый narrative (150-200 слов) для Telegram-сообщения руководству.
++const SYSTEM_PROMPT = `Ты — AI-аналитик в WeSetup. Твоя задача — на основе compliance-статистики ресторана за прошедшую неделю написать короткое сообщение руководству в Telegram. Его читают между делами: первая строка — оценка недели, дальше только то, что требует внимания или решения.
+ 
+ Структура:
+ 1. Краткая оценка недели (1 предложение)
+@@ -39,10 +39,8 @@ const SYSTEM_PROMPT = `Ты — AI-аналитик в WeSetup. Твоя зад
+ 4. Рекомендация на следующую неделю — 1 действие
+ 
+ Стиль:
+-- Профессиональный, без воды
+ - Все числа с цифрами и единицами
+ - Без markdown-форматирования (Telegram HTML allowed: <b>, <i>)
+-- Никаких приветствий
+ - На русском
+ 
+ Если всё нормально — пиши кратко («Стабильная неделя, продолжайте в том же духе»). Не выдумывай проблем.`;
+diff --git a/src/lib/job-position-match.ts b/src/lib/job-position-match.ts
+index 83372c7..cc06262 100644
+--- a/src/lib/job-position-match.ts
++++ b/src/lib/job-position-match.ts
+@@ -12,9 +12,8 @@
+  * Возвращает confidence 0..1 — caller может фильтровать по threshold
+  * (рекомендуется ≥ 0.7 для авто-присвоения, < 0.7 → ручной выбор).
+  *
+- * Не использует LLM — fast и deterministic. Если confidence низкая,
+- * caller может опционально вызвать Claude Haiku batch (см. отдельный
+- * `matchPositionsWithLLM` если потребуется).
++ * Не использует LLM — fast и deterministic. Если confidence низкая —
++ * ручной выбор.
+  */
+ 
+ export type MatchResult = {
+diff --git a/AGENTS.md b/AGENTS.md
+index c9bc93f..33e68e9 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -294,7 +294,7 @@ Critical env vars (see `.env.shared` for template):
+ 
+ ## Conventions for AI Agents
+ 
+-- Visible UI follows the project design system (`wesetup-design` skill, `.claude/skills/design-system`): every screen must look like one product.
++- Visible UI follows the project design system (`design-system` skill, `.claude/skills/design-system`): every screen must look like one product.
+ - For non-trivial refactors, `karpathy-guidelines` is the coding discipline to follow; for a new feature that touches existing code, lock the scope first (a frozen spec, see the proof loop above).
+-- The `.cursorrules` file in repo root contains additional style rules (notably the git branch workflow).
++- The `.cursorrules` file in repo root repeats the key coding rules for Cursor.
+ - The local `CLAUDE.md` (not in git) holds operational notes: production probes, SSH access (the password stays in the local `.env`), architecture principles. Refer to it for deployment commands and troubleshooting.
+diff --git a/.cursorrules b/.cursorrules
+index 07e4def..491c206 100644
+--- a/.cursorrules
++++ b/.cursorrules
+@@ -23,8 +23,8 @@ cp .env.shared .env && npm install && npx prisma generate && npx prisma db push
+ - Path alias: `@/*` → `./src/*`
+ - Prisma 7 requires `@prisma/adapter-pg` pool — see `src/lib/db.ts`
+ - Zod v4 (not v3)
+-- All data multi-tenant: scope queries by `session.user.organizationId`
+-- Three roles: owner > technologist > operator
++- All data multi-tenant: scope queries by `getActiveOrgId(session)` from `src/lib/auth-helpers.ts` (ROOT can act as another organization, so `session.user.organizationId` is not always the viewed one)
++- Roles: manager / head_chef (management) and cook / waiter (staff); legacy owner / technologist / operator are still accepted
+ - API routes: `getServerSession(authOptions)` → role check → Zod validate → Prisma → NextResponse.json()
+ - Notifications (email/Telegram) are fire-and-forget: catch errors, don't fail main operation
+ 
+@@ -32,38 +32,8 @@ cp .env.shared .env && npm install && npx prisma generate && npx prisma db push
+ - `(auth)/` — login, register (public)
+ - `(dashboard)/` — sidebar layout, protected by `requireAuth()`
+ - `src/lib/` — auth.ts, db.ts, validators.ts, email.ts, telegram.ts, tuya.ts, pdf.ts
+-- `prisma/schema.prisma` — 6 models: Organization, User, Area, Equipment, JournalTemplate, JournalEntry
++- `prisma/schema.prisma` — the full data model (see AGENTS.md)
+ 
+-## Git Workflow (MANDATORY — follow automatically every time)
+-
+-**NEVER commit or push to `master` directly. ALWAYS create a feature branch first.**
+-
+-### Automatic steps (do these without being asked):
+-
+-**1. Before ANY task** — pull master:
+-```bash
+-git checkout master && git pull origin master
+-git checkout -b feature/short-task-name
+-```
+-
+-**2. When done** — commit, push, create PR:
+-```bash
+-git add <specific files>          # NEVER use "git add ." or "git add -A"
+-git commit -m "feat: what was done"
+-git push -u origin feature/short-task-name
+-gh pr create --title "feat: what was done" --body "Summary of changes"
+-```
+-
+-**3. After creating PR** — review diff and merge:
+-```bash
+-gh pr diff                        # check changes look correct
+-gh pr merge --merge               # merge into master
+-git checkout master && git pull origin master
+-```
+-
+-Branch naming: `feature/`, `fix/`, `docs/` + short description.
+-Never deploy from a feature branch — only from master after PR merge.
+-
+-## Deployment
+-See CLAUDE.md for full deploy script. Server: 192.168.33.3, PM2 on port 3001.
+-Secrets in `.env.shared`. Deploy helpers (`_deploy.py`, `_run.py`) are in .gitignore — recreate from CLAUDE.md.
++## Git and Deployment
++Commit only the files you changed (`git add <specific files>`), with a Russian commit message.
++Deployment runs from GitHub Actions on every push to `master` (`.github/workflows/deploy.yml`); see AGENTS.md -> Deployment.
