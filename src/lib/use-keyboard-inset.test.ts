@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { keyboardSheetMaxHeight, keyboardStateFrom, scrollDeltaToReveal, stickyFooterStyle } from "./use-keyboard-inset";
+import { coveredTopEdge, keyboardSheetMaxHeight, keyboardStateFrom, scrollDeltaToReveal, stickyFooterStyle } from "./use-keyboard-inset";
 
 test("окно над клавиатурой не выше видимой части экрана и не заезжает под часы", () => {
   assert.equal(keyboardSheetMaxHeight(420.4), "calc(420px - env(safe-area-inset-top, 0px) - 12px)");
@@ -50,4 +50,15 @@ test("Android-приложение: клавиатура сжимает само
   assert.deepEqual(keyboardStateFrom(527, 527, 0, 839, false), { open: false, bottom: 0 });
   // Панель браузера свернулась/развернулась (десятки px) — не клавиатура.
   assert.deepEqual(keyboardStateFrom(780, 780, 0, 839, true), { open: false, bottom: 0 });
+});
+
+test("верх видимой части: iPhone сдвинул экран — считаем от сдвига и подложки под часами, а не от нуля страницы", () => {
+  // Без сдвига верх закрывает шапка (118).
+  assert.equal(coveredTopEdge(0, [118, 62]), 118);
+  // iOS сдвинул видимую часть на 310: шапка осталась выше (118), под часами
+  // подложка до 372. Раньше верх считался от 0, и поле уезжало под часы
+  // (iOS, раунд 7, кадр 016: «Заметка» на y=12).
+  assert.equal(coveredTopEdge(310, [118, 372]), 372);
+  // Поле на 322..455 (в координатах страницы) закрыто подложкой — вверх, а не вниз.
+  assert.equal(scrollDeltaToReveal({ top: coveredTopEdge(310, [118, 372]), bottom: 694 }, { top: 322, bottom: 455 }), -62);
 });

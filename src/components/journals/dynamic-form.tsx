@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { scrollDeltaToReveal, stickyFooterStyle, useKeyboardState } from "@/lib/use-keyboard-inset";
+import { coveredTopEdge, scrollDeltaToReveal, stickyFooterStyle, useKeyboardState } from "@/lib/use-keyboard-inset";
 import { isScannableField } from "@/lib/scannable-field";
 import { ScanToField } from "@/components/journals/scan-to-field";
 import { AlertTriangle, History, Wifi, Loader2 } from "lucide-react";
@@ -191,8 +191,14 @@ export function DynamicForm({
     const active = document.activeElement;
     if (!form || !footer || !(active instanceof HTMLElement)) return;
     if (!form.contains(active) || footer.contains(active)) return;
+    // Верх — не 0 страницы, а то, что видно: iOS с клавиатурой сдвигает
+    // экран, сверху шапка и подложка под часами. Иначе поле уезжало под часы.
+    const top = coveredTopEdge(
+      window.visualViewport?.offsetTop ?? 0,
+      Array.from(document.querySelectorAll<HTMLElement>("header.sticky, [data-status-bar-backdrop]"), (el) => el.getBoundingClientRect().bottom)
+    );
     const delta = scrollDeltaToReveal(
-      { top: 0, bottom: footer.getBoundingClientRect().top },
+      { top, bottom: footer.getBoundingClientRect().top },
       active.getBoundingClientRect()
     );
     if (delta > 0) window.scrollBy(0, delta);

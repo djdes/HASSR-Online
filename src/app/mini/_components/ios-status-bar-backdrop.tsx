@@ -55,6 +55,8 @@ export function IosStatusBarBackdrop() {
     <div
       ref={ref}
       aria-hidden
+      // Метка для формы записи: подложка закрывает верх экрана (см. coveredTopEdge).
+      data-status-bar-backdrop=""
       className="pointer-events-none fixed inset-x-0 top-0"
       style={{ height: "env(safe-area-inset-top, 0px)", background: "#0b1024", zIndex: 90 }}
     />
