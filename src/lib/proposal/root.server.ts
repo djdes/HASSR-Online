@@ -64,6 +64,7 @@ const PROMO_WARNING: Record<PromoRejectReason, (code: string) => string> = {
   expired: (code) => `Срок промокода ${code} истёк`,
   exhausted: (code) => `Промокод ${code} уже использован максимальное число раз`,
   "new-clients-only": (code) => `Промокод ${code} — только для новых клиентов`,
+  "personal-foreign": (code) => `Промокод ${code} персональный — он выдан другой организации`,
 };
 
 export type ProposalPromoOption = {
@@ -75,13 +76,9 @@ export type ProposalPromoOption = {
   label: string;
 };
 
-/**
- * «Навсегда» — поле `PromoCode.lifetime` соседней задачи promo-personal.
- * В этой ветке колонки ещё нет: читаем без типа Prisma, чтобы после слияния
- * значение подхватилось само, а до него было «нет».
- */
-function lifetimeOf(row: object): boolean {
-  return (row as Record<string, unknown>).lifetime === true;
+/** «Навсегда» — `PromoCode.lifetime` (скидка закрепляется за аккаунтом после первой оплаты). */
+function lifetimeOf(row: { lifetime: boolean }): boolean {
+  return row.lifetime === true;
 }
 
 function promoOptionLabel(option: Omit<ProposalPromoOption, "label">): string {
