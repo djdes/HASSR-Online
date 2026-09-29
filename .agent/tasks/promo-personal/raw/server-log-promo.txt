@@ -1,0 +1,70 @@
+[promo] link rejected code=E2EOLD10 reason=expired viewer=guest
+[promo] invalid link page code=E2EOLD10 reason=expired
+[promo] link rejected code=NOSUCH404 reason=not-found viewer=guest
+[promo] invalid link page code=NOSUCH404 reason=not-found
+[promo] link opened code=ROMASHKA10 sphere=cafe viewer=guest → /register?promo=ROMASHKA10&s=cafe&next=%2Fsettings%2Fsubscription%3Fpromo%3DROMASHKA10
+[promo] register page: promo=ROMASHKA10 (ok) sphere=cafe
+[instant-register] sphere from promo link {
+[promo] page:/settings/subscription (code from query): code ROMASHKA10 (lifetime) −199 ₽ of 1990 ₽ target org=cmumr49q000051c9mtftzjfl0 account=cmumr49s200071c9mx2ave11t
+[promo] page:/settings/subscription (code from query): code ROMASHKA10 (lifetime) −199 ₽ of 1990 ₽ target org=cmumrfb9q000g1c9mcuianlkj account=cmumrfbgk000i1c9mn1oetumh
+[promo] page:/order (code from query): code ROMASHKA10 (lifetime) −199 ₽ of 1990 ₽ target org=cmumrfb9q000g1c9mcuianlkj account=cmumrfbgk000i1c9mn1oetumh
+[promo] order: code ROMASHKA10 (lifetime) −199 ₽ of 1990 ₽ target org=cmumrfb9q000g1c9mcuianlkj account=cmumrfbgk000i1c9mn1oetumh
+[promo] order #1 monthly: base 1990 ₽ → promo (lifetime) ROMASHKA10 −199 ₽ = 1791 ₽, points 0, to pay 1791 ₽
+[promo] lifetime bound account=cmumrfbgk000i1c9mn1oetumh code=ROMASHKA10 value=10% order=1
+[promo] link opened code=ROMASHKA10-2 sphere=cafe viewer=guest → /register?promo=ROMASHKA10-2&s=cafe&next=%2Fsettings%2Fsubscription%3Fpromo%3DROMASHKA10-2
+[promo] register page: promo=ROMASHKA10-2 (ok) sphere=cafe
+[promo] page:/settings/subscription (code from query): code ROMASHKA10-2 (lifetime) −199 ₽ of 1990 ₽ target org=cmumrj955000o1c9mh0su95hh account=cmumrj978000q1c9m6bujdliq
+[promo] page:/order (code from query): code ROMASHKA10-2 (lifetime) −199 ₽ of 1990 ₽ target org=cmumrj955000o1c9mh0su95hh account=cmumrj978000q1c9m6bujdliq
+[promo] order: code ROMASHKA10-2 (lifetime) −199 ₽ of 1990 ₽ target org=cmumrj955000o1c9mh0su95hh account=cmumrj978000q1c9m6bujdliq
+[promo] order #2 monthly: base 1990 ₽ → promo (lifetime) ROMASHKA10-2 −199 ₽ = 1791 ₽, points 0, to pay 1791 ₽
+[promo] lifetime bound account=cmumrj978000q1c9m6bujdliq code=ROMASHKA10-2 value=10% order=2
+[promo] page:/settings/subscription (code from cookie): lifetime ROMASHKA10 (auto) −199 ₽ of 1990 ₽ target org=cmumrfb9q000g1c9mcuianlkj account=cmumrfbgk000i1c9mn1oetumh
+[promo] page:/order (code from cookie): lifetime ROMASHKA10 (auto) −199 ₽ of 1990 ₽ target org=cmumrfb9q000g1c9mcuianlkj account=cmumrfbgk000i1c9mn1oetumh
+[promo] page:/settings/subscription (code from query): code ROMASHKA10 (lifetime) −199 ₽ of 1990 ₽ target org=cmumrqd3900101c9m099u18s7 account=cmumrqd7v00121c9m513n0u3d
+[promo] page:/order (code from query): code ROMASHKA10 (lifetime) −199 ₽ of 1990 ₽ target org=cmumrqd3900101c9m099u18s7 account=cmumrqd7v00121c9m513n0u3d
+[promo] order: code ROMASHKA10 (lifetime) −199 ₽ of 1990 ₽ target org=cmumrqd3900101c9m099u18s7 account=cmumrqd7v00121c9m513n0u3d
+[promo] lifetime bound account=cmumrqd7v00121c9m513n0u3d code=ROMASHKA10 value=10% order=1
+[promo] page:/settings/subscription (code from query): code ROMASHKA10-2 (lifetime) −199 ₽ of 1990 ₽ target org=cmumrrjem00181c9mq3lkscr5 account=cmumrrjg7001a1c9m3yx7m0zq
+[promo] page:/order (code from query): code ROMASHKA10-2 (lifetime) −199 ₽ of 1990 ₽ target org=cmumrrjem00181c9mq3lkscr5 account=cmumrrjg7001a1c9m3yx7m0zq
+[promo] order: code ROMASHKA10-2 (lifetime) −199 ₽ of 1990 ₽ target org=cmumrrjem00181c9mq3lkscr5 account=cmumrrjg7001a1c9m3yx7m0zq
+[promo] lifetime bound account=cmumrrjg7001a1c9m3yx7m0zq code=ROMASHKA10-2 value=10% order=2
+[promo] page:/settings/subscription (code from cookie): lifetime ROMASHKA10 (auto) −199 ₽ of 1990 ₽ target org=cmumrqd3900101c9m099u18s7 account=cmumrqd7v00121c9m513n0u3d
+[promo] page:/order (code from cookie): lifetime ROMASHKA10 (auto) −199 ₽ of 1990 ₽ target org=cmumrqd3900101c9m099u18s7 account=cmumrqd7v00121c9m513n0u3d
+[promo] order: lifetime ROMASHKA10 (auto) −199 ₽ of 1990 ₽ target org=cmumrqd3900101c9m099u18s7 account=cmumrqd7v00121c9m513n0u3d
+[promo] order #3 monthly: base 1990 ₽ → lifetime (auto) ROMASHKA10 −199 ₽ = 1791 ₽, points 0, to pay 1791 ₽
+[promo] invoice: lifetime ROMASHKA10 (auto) −199 ₽ of 1990 ₽ target org=cmumrqd3900101c9m099u18s7 account=cmumrqd7v00121c9m513n0u3d
+[promo] invoice #4: base 1990 ₽ → lifetime (auto) ROMASHKA10 −199 ₽ = 1791 ₽
+[promo] page:/settings/subscription (code from cookie): lifetime ROMASHKA10-2 (auto) −199 ₽ of 1990 ₽ target org=cmumrrjem00181c9mq3lkscr5 account=cmumrrjg7001a1c9m3yx7m0zq
+[promo] page:/order (code from cookie): lifetime ROMASHKA10-2 (auto) −199 ₽ of 1990 ₽ target org=cmumrrjem00181c9mq3lkscr5 account=cmumrrjg7001a1c9m3yx7m0zq
+[promo] link opened code=LAVKA10 sphere=cafe viewer=manager user=cmumrofo2000w1c9mcr2ek50s → /settings/subscription?promo=LAVKA10
+[promo] page:/settings/subscription (code from query): code LAVKA10 (lifetime) −199 ₽ of 1990 ₽ target org=cmumrofnf000v1c9m63czjkw9 account=cmumrofp0000x1c9mdr5m2wwu
+[promo] page:/settings/subscription (code from query): code ROMASHKA10-2 rejected (personal-foreign) target org=cmumrofnf000v1c9m63czjkw9 account=cmumrofp0000x1c9mdr5m2wwu
+[promo] page:/order (code from cookie): code LAVKA10 (lifetime) −199 ₽ of 1990 ₽ target org=cmumrofnf000v1c9m63czjkw9 account=cmumrofp0000x1c9mdr5m2wwu
+[promo] page:/settings/subscription (code from query): code ROMASHKA10 (lifetime) −199 ₽ of 1990 ₽ target org=cmumrwfwi001m1c9m8dxoa1xv account=cmumrwg3h001o1c9mtm5reph5
+[promo] page:/order (code from query): code ROMASHKA10 (lifetime) −199 ₽ of 1990 ₽ target org=cmumrwfwi001m1c9m8dxoa1xv account=cmumrwg3h001o1c9mtm5reph5
+[promo] order: code ROMASHKA10 (lifetime) −199 ₽ of 1990 ₽ target org=cmumrwfwi001m1c9m8dxoa1xv account=cmumrwg3h001o1c9mtm5reph5
+[promo] lifetime bound account=cmumrwg3h001o1c9mtm5reph5 code=ROMASHKA10 value=10% order=1
+[promo] page:/settings/subscription (code from query): code ROMASHKA10-2 (lifetime) −199 ₽ of 1990 ₽ target org=cmumrxuc2001t1c9mydu4t337 account=cmumrxucq001v1c9m4f98zxl5
+[promo] page:/order (code from query): code ROMASHKA10-2 (lifetime) −199 ₽ of 1990 ₽ target org=cmumrxuc2001t1c9mydu4t337 account=cmumrxucq001v1c9m4f98zxl5
+[promo] order: code ROMASHKA10-2 (lifetime) −199 ₽ of 1990 ₽ target org=cmumrxuc2001t1c9mydu4t337 account=cmumrxucq001v1c9m4f98zxl5
+[promo] lifetime bound account=cmumrxucq001v1c9m4f98zxl5 code=ROMASHKA10-2 value=10% order=2
+[promo] page:/settings/subscription (code from cookie): lifetime ROMASHKA10 (auto) −199 ₽ of 1990 ₽ target org=cmumrwfwi001m1c9m8dxoa1xv account=cmumrwg3h001o1c9mtm5reph5
+[promo] page:/order (code from cookie): lifetime ROMASHKA10 (auto) −199 ₽ of 1990 ₽ target org=cmumrwfwi001m1c9m8dxoa1xv account=cmumrwg3h001o1c9mtm5reph5
+[promo] order: lifetime ROMASHKA10 (auto) −199 ₽ of 1990 ₽ target org=cmumrwfwi001m1c9m8dxoa1xv account=cmumrwg3h001o1c9mtm5reph5
+[promo] invoice: lifetime ROMASHKA10 (auto) −199 ₽ of 1990 ₽ target org=cmumrwfwi001m1c9m8dxoa1xv account=cmumrwg3h001o1c9mtm5reph5
+[promo] page:/settings/subscription (code from cookie): lifetime ROMASHKA10-2 (auto) −199 ₽ of 1990 ₽ target org=cmumrxuc2001t1c9mydu4t337 account=cmumrxucq001v1c9m4f98zxl5
+[promo] page:/order (code from cookie): lifetime ROMASHKA10-2 (auto) −199 ₽ of 1990 ₽ target org=cmumrxuc2001t1c9mydu4t337 account=cmumrxucq001v1c9m4f98zxl5
+[promo] link opened code=LAVKA10 sphere=cafe viewer=manager user=cmumrvqje001i1c9mi1kubgz4 → /settings/subscription?promo=LAVKA10
+[promo] page:/settings/subscription (code from query): code LAVKA10 (lifetime) −199 ₽ of 1990 ₽ target org=cmumrvqix001h1c9msugket4x account=cmumrvqjv001j1c9mho1vooc6
+[promo] page:/settings/subscription (code from query): code ROMASHKA10-2 rejected (personal-foreign) target org=cmumrvqix001h1c9msugket4x account=cmumrvqjv001j1c9mho1vooc6
+[promo] page:/order (code from cookie): code LAVKA10 (lifetime) −199 ₽ of 1990 ₽ target org=cmumrvqix001h1c9msugket4x account=cmumrvqjv001j1c9mho1vooc6
+[promo] check: code ROMASHKA10-2 rejected (personal-foreign) target org=cmumrvqix001h1c9msugket4x account=cmumrvqjv001j1c9mho1vooc6
+[promo] order: code ROMASHKA10-2 rejected (personal-foreign) target org=cmumrvqix001h1c9msugket4x account=cmumrvqjv001j1c9mho1vooc6
+[promo] order: code ROMASHKA10-2 rejected (personal-foreign) target org=new account=-
+[promo] root created code E2E500 (−500 ₽) by pp-root-mumrvoll@example.com
+[promo] root created code E2E5 (−5 %) by pp-root-mumrvoll@example.com
+[promo] check: code E2E500 −500 ₽ of 1990 ₽ target org=cmumrxuc2001t1c9mydu4t337 account=cmumrxucq001v1c9m4f98zxl5
+[promo] check: lifetime ROMASHKA10-2 (auto) −199 ₽ of 1990 ₽, typed E2E5 lost target org=cmumrxuc2001t1c9mydu4t337 account=cmumrxucq001v1c9m4f98zxl5
+[promo] root promo.update E2E5: навсегда: да; почта — → partner-mumrvoll@example.com; рассылка — → e2e-edit by pp-root-mumrvoll@example.com
+[promo] lifetime revoked account=cmumrxucq001v1c9m4f98zxl5 code=ROMASHKA10-2 order=2 by ROOT e2e
+[promo] page:/order (code from cookie): code ROMASHKA10-2 rejected (exhausted) target org=cmumrxuc2001t1c9mydu4t337 account=cmumrxucq001v1c9m4f98zxl5

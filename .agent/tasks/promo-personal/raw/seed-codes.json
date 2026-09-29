@@ -1,0 +1,47 @@
+{
+  "created": {
+    "guest1280": {
+      "id": "cmumrvuzx0000mg9m96yyjv9e",
+      "code": "ROMASHKA10",
+      "link": "http://localhost:3191/promo/ROMASHKA10?s=cafe",
+      "offer": {
+        "code": "ROMASHKA10",
+        "kind": "percent",
+        "value": 10,
+        "lifetime": true,
+        "endsAt": "2026-12-28T14:29:31.155Z"
+      }
+    },
+    "guest390": {
+      "id": "cmumrvv040001mg9mqsvszk96",
+      "code": "ROMASHKA10-2",
+      "link": "http://localhost:3191/promo/ROMASHKA10-2?s=cafe",
+      "offer": {
+        "code": "ROMASHKA10-2",
+        "kind": "percent",
+        "value": 10,
+        "lifetime": true,
+        "endsAt": "2026-12-28T14:29:31.155Z"
+      }
+    },
+    "owner": {
+      "id": "cmumrvv060002mg9m7vmdmx8d",
+      "code": "LAVKA10",
+      "link": "http://localhost:3191/promo/LAVKA10?s=cafe",
+      "offer": {
+        "code": "LAVKA10",
+        "kind": "percent",
+        "value": 10,
+        "lifetime": true,
+        "endsAt": "2026-12-28T14:29:31.155Z"
+      }
+    }
+  },
+  "expired": null,
+  "unknown": null,
+  "suggest": {
+    "romashka": "ROMASHKA10",
+    "empty": "KPVJSF10"
+  },
+  "prodLink": "https://wesetup.ru/promo/ROMASHKA10?s=cafe"
+}
