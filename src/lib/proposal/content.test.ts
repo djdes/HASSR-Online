@@ -179,6 +179,21 @@ describe("тексты КП — честность по правилам сфе�
     assert.ok(content.offer.notes.some((note) => note.includes("истёк")));
   });
 
+  it("код «навсегда» со сроком: пояснение про срок активации, без срока — нет", () => {
+    // Персональный код рассылки: скидка навсегда, но активировать — до 13 октября включительно.
+    const deadline = new Date("2026-10-13T20:59:59.999Z");
+    const content = buildProposalContent({ sphere: "cafe", promo: { ...SAMPLE_PROMO_LIFETIME, endsAt: deadline } }, sampleProposalContext());
+    assert.equal(content.price.promoTerm, "навсегда");
+    assert.ok(
+      content.offer.notes.includes("Промокод ROMASHKA10 действует до 13\u00a0октября: при оплате до этого дня скидка остаётся навсегда."),
+      content.offer.notes.join(" | "),
+    );
+    const noDeadline = buildProposalContent({ sphere: "cafe", promo: SAMPLE_PROMO_LIFETIME }, sampleProposalContext());
+    assert.ok(!noDeadline.offer.notes.some((note) => note.includes("действует до")));
+    const until = buildProposalContent({ sphere: "cafe", promo: SAMPLE_PROMO_UNTIL }, sampleProposalContext());
+    assert.ok(!until.offer.notes.some((note) => note.includes("при оплате до этого дня")));
+  });
+
   it("реквизиты: пустые — не показываем, заполненные — ИНН и ОГРН", () => {
     const empty = buildProposalContent({ sphere: "cafe" }, sampleProposalContext({ requisites: { ...EMPTY_REQUISITES } }));
     assert.equal(empty.requisites, null);

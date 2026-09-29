@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 
 import { ORG_SPHERES, type OrgSphere } from "@/lib/org-profile";
 
-import { buildProposalContent } from "./content";
+import { buildProposalContent, type ProposalContext } from "./content";
 import { MARGIN_BOTTOM, MARGIN_TOP, MARGIN_X, PAGE_H, PAGE_W, renderProposalPdfDocument } from "./pdf";
 import { SAMPLE_PROMO_LIFETIME, SAMPLE_PROMO_UNTIL, sampleProposalContext } from "./sample";
 import type { ProposalPromo } from "./types";
@@ -20,10 +20,15 @@ import type { ProposalPromo } from "./types";
 const LONG_NAME = "Общество с ограниченной ответственностью «Столовая при заводе металлоконструкций»".slice(0, 80);
 const EPS = 0.01;
 
-function check(sphere: OrgSphere, promo: ProposalPromo | null, companyName: string | null) {
+function check(
+  sphere: OrgSphere,
+  promo: ProposalPromo | null,
+  companyName: string | null,
+  context: ProposalContext = sampleProposalContext(),
+) {
   const content = buildProposalContent(
     { sphere, companyName, recipientName: companyName ? "Анна Сергеевна" : null, promo },
-    sampleProposalContext(),
+    context,
   );
   const render = renderProposalPdfDocument(content);
   assert.equal(render.pages, 1, `${sphere}: страниц ${render.pages}`);
@@ -41,6 +46,18 @@ describe("PDF КП — один лист A4", () => {
   it(`длинное название (${LONG_NAME.length} знаков) и промокод со сроком — все сферы`, () => {
     assert.equal(LONG_NAME.length, 80);
     for (const { value } of ORG_SPHERES) check(value, SAMPLE_PROMO_UNTIL, LONG_NAME);
+  });
+
+  it("персональный код рассылки: навсегда со сроком активации + акция — все сферы, длинное название", () => {
+    // Больше всего пояснений: срок кода, «цена с акцией, дальше…», бесплатный период.
+    const promo: ProposalPromo = { ...SAMPLE_PROMO_LIFETIME, endsAt: new Date("2026-10-13T20:59:59.999Z") };
+    const context = sampleProposalContext({
+      promotion: { id: "p1", title: "Осень", percent: 20, startsAt: "2026-09-01T00:00:00.000Z", endsAt: "2026-10-10T21:00:00.000Z" },
+    });
+    for (const { value } of ORG_SPHERES) {
+      const render = check(value, promo, LONG_NAME, context);
+      assert.ok(render.pages === 1);
+    }
   });
 
   it("без промокода и с промокодом навсегда — выборочно", () => {

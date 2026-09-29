@@ -335,6 +335,13 @@ export function buildProposalContent(input: ProposalVars, ctx: ProposalContext):
   };
 
   const notes: string[] = [];
+  // «Навсегда» у кода со сроком — это срок активации: скидка закрепляется
+  // первой оплатой до конца срока. Не обещаем её тем, кто придёт позже.
+  if (price.promo && price.promo.lifetime && price.promo.endsAt) {
+    notes.push(
+      `Промокод ${price.promo.code} действует ${promotionEndLabel(price.promo.endsAt)}: при оплате до этого дня скидка остаётся навсегда.`,
+    );
+  }
   if (price.promotion && price.promo) {
     notes.push(
       price.afterPromotionRub !== null
