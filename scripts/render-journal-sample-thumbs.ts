@@ -13,6 +13,8 @@
  *
  * Только часть журналов (новые коды, без перерисовки остальных и бланков):
  *   ONLY_CODES=daily_samples,vitaminization npx tsx scripts/render-journal-sample-thumbs.ts http://localhost:3010
+ * Бумажные журналы — по имени файла, с префиксом paper_:
+ *   ONLY_CODES=paper_fire_safety,paper_ot_intro npx tsx scripts/render-journal-sample-thumbs.ts http://localhost:3010
  */
 import fs from "fs";
 import path from "path";
@@ -112,7 +114,10 @@ async function main() {
   // Бумажные бланки. Префикс paper_ — потому что id бланков живут в
   // своём пространстве имён и в теории могут совпасть с кодом
   // электронного журнала.
-  for (const journal of ONLY_CODES.length ? [] : PAPER_JOURNALS) {
+  const paperJournals = ONLY_CODES.length
+    ? PAPER_JOURNALS.filter((journal) => ONLY_CODES.includes(`paper_${journal.id}`))
+    : PAPER_JOURNALS;
+  for (const journal of paperJournals) {
     await shoot(
       `${BASE}/api/journal-samples/paper/${journal.id}/pdf?inline=1`,
       `paper_${journal.id}`,
