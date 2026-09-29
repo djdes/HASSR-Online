@@ -1,0 +1,73 @@
+[
+ {
+  "action": "proposal.sender.update",
+  "entityId": "proposal.sender",
+  "details": {
+   "after": {
+    "name": "Анна Петрова, менеджер WeSetup",
+    "email": "support@wesetup.ru",
+    "phone": "+7 900 000-00-00",
+    "telegram": "example_manager"
+   },
+   "before": null
+  }
+ },
+ {
+  "action": "proposal.link",
+  "entityId": "ROMASHKA10",
+  "details": {
+   "promo": {
+    "code": "ROMASHKA10",
+    "kind": "percent",
+    "value": 10,
+    "endsAt": null,
+    "lifetime": false
+   },
+   "action": "link",
+   "sphere": "cafe",
+   "companyName": "Кафе «Ромашка»",
+   "promoSource": "database",
+   "customSender": null,
+   "recipientName": "Анна Сергеевна"
+  }
+ },
+ {
+  "action": "proposal.pdf",
+  "entityId": "ROMASHKA10",
+  "details": {
+   "promo": {
+    "code": "ROMASHKA10",
+    "kind": "percent",
+    "value": 10,
+    "endsAt": null,
+    "lifetime": false
+   },
+   "action": "pdf",
+   "sphere": "cafe",
+   "companyName": "Кафе «Ромашка»",
+   "promoSource": "database",
+   "customSender": null,
+   "recipientName": "Анна Сергеевна"
+  }
+ },
+ {
+  "action": "proposal.test_email",
+  "entityId": "ROMASHKA10",
+  "details": {
+   "to": "kp-root-mumtb5jd@example.com",
+   "sent": false,
+   "promo": {
+    "code": "ROMASHKA10",
+    "kind": "percent",
+    "value": 10,
+    "endsAt": null,
+    "lifetime": false
+   },
+   "sphere": "cafe",
+   "delivery": "log",
+   "companyName": "Кафе «Ромашка»",
+   "customSender": null,
+   "recipientName": "Анна Сергеевна"
+  }
+ }
+]

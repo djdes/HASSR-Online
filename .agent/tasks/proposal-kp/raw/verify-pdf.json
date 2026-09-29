@@ -1,0 +1,1637 @@
+{
+ "rows": [
+  {
+   "label": "restaurant/none/short",
+   "pages": 1,
+   "scale": 0.946,
+   "bytes": 89089,
+   "textItems": 123,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-kafe",
+   "qrModuleMm": 0.948,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "restaurant/none/long",
+   "pages": 1,
+   "scale": 0.946,
+   "bytes": 89299,
+   "textItems": 123,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-kafe",
+   "qrModuleMm": 0.948,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "restaurant/lifetime/short",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 90414,
+   "textItems": 127,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=restaurant",
+   "qrModuleMm": 0.767,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "restaurant/lifetime/long",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 90586,
+   "textItems": 127,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=restaurant",
+   "qrModuleMm": 0.767,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "restaurant/until/short",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 90658,
+   "textItems": 127,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=restaurant",
+   "qrModuleMm": 0.767,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "restaurant/until/long",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 90829,
+   "textItems": 127,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=restaurant",
+   "qrModuleMm": 0.767,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "cafe/none/short",
+   "pages": 1,
+   "scale": 0.943,
+   "bytes": 88987,
+   "textItems": 123,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-kafe",
+   "qrModuleMm": 0.945,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "cafe/none/long",
+   "pages": 1,
+   "scale": 0.943,
+   "bytes": 89152,
+   "textItems": 123,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-kafe",
+   "qrModuleMm": 0.945,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "cafe/lifetime/short",
+   "pages": 1,
+   "scale": 0.943,
+   "bytes": 89902,
+   "textItems": 127,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=cafe",
+   "qrModuleMm": 0.853,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "cafe/lifetime/long",
+   "pages": 1,
+   "scale": 0.943,
+   "bytes": 90065,
+   "textItems": 127,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=cafe",
+   "qrModuleMm": 0.853,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "cafe/until/short",
+   "pages": 1,
+   "scale": 0.943,
+   "bytes": 90000,
+   "textItems": 127,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=cafe",
+   "qrModuleMm": 0.853,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "cafe/until/long",
+   "pages": 1,
+   "scale": 0.943,
+   "bytes": 90163,
+   "textItems": 127,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=cafe",
+   "qrModuleMm": 0.853,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "bar/none/short",
+   "pages": 1,
+   "scale": 0.959,
+   "bytes": 88653,
+   "textItems": 122,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-bara",
+   "qrModuleMm": 0.961,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "bar/none/long",
+   "pages": 1,
+   "scale": 0.959,
+   "bytes": 88770,
+   "textItems": 122,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-bara",
+   "qrModuleMm": 0.961,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "bar/lifetime/short",
+   "pages": 1,
+   "scale": 0.953,
+   "bytes": 89760,
+   "textItems": 126,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=bar",
+   "qrModuleMm": 0.862,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "bar/lifetime/long",
+   "pages": 1,
+   "scale": 0.953,
+   "bytes": 89882,
+   "textItems": 126,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=bar",
+   "qrModuleMm": 0.862,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "bar/until/short",
+   "pages": 1,
+   "scale": 0.953,
+   "bytes": 89958,
+   "textItems": 126,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=bar",
+   "qrModuleMm": 0.862,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "bar/until/long",
+   "pages": 1,
+   "scale": 0.953,
+   "bytes": 90080,
+   "textItems": 126,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=bar",
+   "qrModuleMm": 0.862,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "canteen/none/short",
+   "pages": 1,
+   "scale": 0.921,
+   "bytes": 89477,
+   "textItems": 125,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-stolovoy",
+   "qrModuleMm": 0.923,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "canteen/none/long",
+   "pages": 1,
+   "scale": 0.921,
+   "bytes": 89627,
+   "textItems": 125,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-stolovoy",
+   "qrModuleMm": 0.923,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "canteen/lifetime/short",
+   "pages": 1,
+   "scale": 0.906,
+   "bytes": 90972,
+   "textItems": 128,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=canteen",
+   "qrModuleMm": 0.747,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "canteen/lifetime/long",
+   "pages": 1,
+   "scale": 0.906,
+   "bytes": 91125,
+   "textItems": 128,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=canteen",
+   "qrModuleMm": 0.747,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "canteen/until/short",
+   "pages": 1,
+   "scale": 0.906,
+   "bytes": 90836,
+   "textItems": 128,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=canteen",
+   "qrModuleMm": 0.82,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "canteen/until/long",
+   "pages": 1,
+   "scale": 0.906,
+   "bytes": 90988,
+   "textItems": 128,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=canteen",
+   "qrModuleMm": 0.82,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "fastfood/none/short",
+   "pages": 1,
+   "scale": 0.946,
+   "bytes": 89097,
+   "textItems": 123,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-fastfuda",
+   "qrModuleMm": 0.948,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "fastfood/none/long",
+   "pages": 1,
+   "scale": 0.946,
+   "bytes": 89296,
+   "textItems": 123,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-fastfuda",
+   "qrModuleMm": 0.948,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "fastfood/lifetime/short",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 90323,
+   "textItems": 126,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=fastfood",
+   "qrModuleMm": 0.767,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "fastfood/lifetime/long",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 90549,
+   "textItems": 126,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=fastfood",
+   "qrModuleMm": 0.767,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "fastfood/until/short",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 90573,
+   "textItems": 126,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=fastfood",
+   "qrModuleMm": 0.767,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "fastfood/until/long",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 90799,
+   "textItems": 126,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=fastfood",
+   "qrModuleMm": 0.767,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "bakery/none/short",
+   "pages": 1,
+   "scale": 0.946,
+   "bytes": 89178,
+   "textItems": 122,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-pekarni",
+   "qrModuleMm": 0.948,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "bakery/none/long",
+   "pages": 1,
+   "scale": 0.946,
+   "bytes": 89381,
+   "textItems": 122,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-pekarni",
+   "qrModuleMm": 0.948,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "bakery/lifetime/short",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 90153,
+   "textItems": 126,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=bakery",
+   "qrModuleMm": 0.842,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "bakery/lifetime/long",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 90315,
+   "textItems": 126,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=bakery",
+   "qrModuleMm": 0.842,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "bakery/until/short",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 90371,
+   "textItems": 126,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=bakery",
+   "qrModuleMm": 0.842,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "bakery/until/long",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 90535,
+   "textItems": 126,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=bakery",
+   "qrModuleMm": 0.842,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "catering/none/short",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 89297,
+   "textItems": 121,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-keyteringa",
+   "qrModuleMm": 0.933,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "catering/none/long",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 89502,
+   "textItems": 121,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-keyteringa",
+   "qrModuleMm": 0.933,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "catering/lifetime/short",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 90393,
+   "textItems": 125,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=catering",
+   "qrModuleMm": 0.767,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "catering/lifetime/long",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 90593,
+   "textItems": 125,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=catering",
+   "qrModuleMm": 0.767,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "catering/until/short",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 90622,
+   "textItems": 125,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=catering",
+   "qrModuleMm": 0.767,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "catering/until/long",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 90822,
+   "textItems": 125,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=catering",
+   "qrModuleMm": 0.767,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "hotel/none/short",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 89161,
+   "textItems": 123,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-otelya",
+   "qrModuleMm": 0.933,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "hotel/none/long",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 89335,
+   "textItems": 123,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-otelya",
+   "qrModuleMm": 0.933,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "hotel/lifetime/short",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 90190,
+   "textItems": 127,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=hotel",
+   "qrModuleMm": 0.842,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "hotel/lifetime/long",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 90366,
+   "textItems": 127,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=hotel",
+   "qrModuleMm": 0.842,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "hotel/until/short",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 90607,
+   "textItems": 127,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=hotel",
+   "qrModuleMm": 0.842,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "hotel/until/long",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 90784,
+   "textItems": 127,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=hotel",
+   "qrModuleMm": 0.842,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "retail/none/short",
+   "pages": 1,
+   "scale": 0.943,
+   "bytes": 89401,
+   "textItems": 123,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-magazina",
+   "qrModuleMm": 0.945,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "retail/none/long",
+   "pages": 1,
+   "scale": 0.943,
+   "bytes": 89588,
+   "textItems": 123,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-magazina",
+   "qrModuleMm": 0.945,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "retail/lifetime/short",
+   "pages": 1,
+   "scale": 0.943,
+   "bytes": 90017,
+   "textItems": 127,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=retail",
+   "qrModuleMm": 0.853,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "retail/lifetime/long",
+   "pages": 1,
+   "scale": 0.943,
+   "bytes": 90204,
+   "textItems": 127,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=retail",
+   "qrModuleMm": 0.853,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "retail/until/short",
+   "pages": 1,
+   "scale": 0.943,
+   "bytes": 90277,
+   "textItems": 127,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=retail",
+   "qrModuleMm": 0.853,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "retail/until/long",
+   "pages": 1,
+   "scale": 0.943,
+   "bytes": 90464,
+   "textItems": 127,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=retail",
+   "qrModuleMm": 0.853,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "gas_station/none/short",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 89537,
+   "textItems": 123,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-azs",
+   "qrModuleMm": 0.933,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "gas_station/none/long",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 89736,
+   "textItems": 123,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-azs",
+   "qrModuleMm": 0.933,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "gas_station/lifetime/short",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 90942,
+   "textItems": 127,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=gas_station",
+   "qrModuleMm": 0.767,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "gas_station/lifetime/long",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 91143,
+   "textItems": 127,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=gas_station",
+   "qrModuleMm": 0.767,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "gas_station/until/short",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 91171,
+   "textItems": 127,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=gas_station",
+   "qrModuleMm": 0.767,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "gas_station/until/long",
+   "pages": 1,
+   "scale": 0.931,
+   "bytes": 91371,
+   "textItems": 127,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=gas_station",
+   "qrModuleMm": 0.767,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "education/none/short",
+   "pages": 1,
+   "scale": 0.937,
+   "bytes": 90183,
+   "textItems": 121,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-detskogo-sada",
+   "qrModuleMm": 0.848,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "education/none/long",
+   "pages": 1,
+   "scale": 0.937,
+   "bytes": 90374,
+   "textItems": 121,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-detskogo-sada",
+   "qrModuleMm": 0.848,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "education/lifetime/short",
+   "pages": 1,
+   "scale": 0.937,
+   "bytes": 91213,
+   "textItems": 125,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=education",
+   "qrModuleMm": 0.772,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "education/lifetime/long",
+   "pages": 1,
+   "scale": 0.937,
+   "bytes": 91389,
+   "textItems": 125,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=education",
+   "qrModuleMm": 0.772,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "education/until/short",
+   "pages": 1,
+   "scale": 0.937,
+   "bytes": 91217,
+   "textItems": 125,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=education",
+   "qrModuleMm": 0.772,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "education/until/long",
+   "pages": 1,
+   "scale": 0.937,
+   "bytes": 91393,
+   "textItems": 125,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=education",
+   "qrModuleMm": 0.772,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "medical/none/short",
+   "pages": 1,
+   "scale": 0.956,
+   "bytes": 89625,
+   "textItems": 120,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-medcentra",
+   "qrModuleMm": 0.958,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "medical/none/long",
+   "pages": 1,
+   "scale": 0.956,
+   "bytes": 89811,
+   "textItems": 120,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-medcentra",
+   "qrModuleMm": 0.958,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "medical/lifetime/short",
+   "pages": 1,
+   "scale": 0.956,
+   "bytes": 90923,
+   "textItems": 124,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=medical",
+   "qrModuleMm": 0.788,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "medical/lifetime/long",
+   "pages": 1,
+   "scale": 0.956,
+   "bytes": 91104,
+   "textItems": 124,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=medical",
+   "qrModuleMm": 0.788,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "medical/until/short",
+   "pages": 1,
+   "scale": 0.956,
+   "bytes": 90751,
+   "textItems": 124,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=medical",
+   "qrModuleMm": 0.865,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "medical/until/long",
+   "pages": 1,
+   "scale": 0.956,
+   "bytes": 90932,
+   "textItems": 124,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=medical",
+   "qrModuleMm": 0.865,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "production/none/short",
+   "pages": 1,
+   "scale": 0.918,
+   "bytes": 90254,
+   "textItems": 124,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-proizvodstva",
+   "qrModuleMm": 0.83,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "production/none/long",
+   "pages": 1,
+   "scale": 0.918,
+   "bytes": 90430,
+   "textItems": 124,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-proizvodstva",
+   "qrModuleMm": 0.83,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "production/lifetime/short",
+   "pages": 1,
+   "scale": 0.918,
+   "bytes": 90902,
+   "textItems": 128,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=production",
+   "qrModuleMm": 0.757,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "production/lifetime/long",
+   "pages": 1,
+   "scale": 0.918,
+   "bytes": 91066,
+   "textItems": 128,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=production",
+   "qrModuleMm": 0.757,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "production/until/short",
+   "pages": 1,
+   "scale": 0.918,
+   "bytes": 91200,
+   "textItems": 128,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=production",
+   "qrModuleMm": 0.757,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "production/until/long",
+   "pages": 1,
+   "scale": 0.918,
+   "bytes": 91365,
+   "textItems": 128,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=production",
+   "qrModuleMm": 0.757,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "fitness/none/short",
+   "pages": 1,
+   "scale": 0.946,
+   "bytes": 89685,
+   "textItems": 123,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-fitnes-centra",
+   "qrModuleMm": 0.856,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "fitness/none/long",
+   "pages": 1,
+   "scale": 0.946,
+   "bytes": 89854,
+   "textItems": 123,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-fitnes-centra",
+   "qrModuleMm": 0.856,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "fitness/lifetime/short",
+   "pages": 1,
+   "scale": 0.946,
+   "bytes": 90625,
+   "textItems": 127,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=fitness",
+   "qrModuleMm": 0.78,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "fitness/lifetime/long",
+   "pages": 1,
+   "scale": 0.946,
+   "bytes": 90794,
+   "textItems": 127,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=fitness",
+   "qrModuleMm": 0.78,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "fitness/until/short",
+   "pages": 1,
+   "scale": 0.946,
+   "bytes": 90424,
+   "textItems": 127,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=fitness",
+   "qrModuleMm": 0.856,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "fitness/until/long",
+   "pages": 1,
+   "scale": 0.946,
+   "bytes": 90594,
+   "textItems": 127,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=fitness",
+   "qrModuleMm": 0.856,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "beauty/none/short",
+   "pages": 1,
+   "scale": 0.981,
+   "bytes": 89495,
+   "textItems": 120,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-salona-krasoty",
+   "qrModuleMm": 0.887,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "beauty/none/long",
+   "pages": 1,
+   "scale": 0.981,
+   "bytes": 89681,
+   "textItems": 120,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/dlya-salona-krasoty",
+   "qrModuleMm": 0.887,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "beauty/lifetime/short",
+   "pages": 1,
+   "scale": 0.981,
+   "bytes": 90147,
+   "textItems": 124,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=beauty",
+   "qrModuleMm": 0.887,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "beauty/lifetime/long",
+   "pages": 1,
+   "scale": 0.981,
+   "bytes": 90325,
+   "textItems": 124,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=beauty",
+   "qrModuleMm": 0.887,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "beauty/until/short",
+   "pages": 1,
+   "scale": 0.981,
+   "bytes": 90298,
+   "textItems": 124,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=beauty",
+   "qrModuleMm": 0.887,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "beauty/until/long",
+   "pages": 1,
+   "scale": 0.981,
+   "bytes": 90479,
+   "textItems": 124,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=beauty",
+   "qrModuleMm": 0.887,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "other/none/short",
+   "pages": 1,
+   "scale": 0.965,
+   "bytes": 88779,
+   "textItems": 118,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/register",
+   "qrModuleMm": 0.967,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "other/none/long",
+   "pages": 1,
+   "scale": 0.965,
+   "bytes": 88977,
+   "textItems": 118,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/register",
+   "qrModuleMm": 0.967,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "other/lifetime/short",
+   "pages": 1,
+   "scale": 0.956,
+   "bytes": 89786,
+   "textItems": 123,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=other",
+   "qrModuleMm": 0.865,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "other/lifetime/long",
+   "pages": 1,
+   "scale": 0.956,
+   "bytes": 89973,
+   "textItems": 123,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/ROMASHKA10?s=other",
+   "qrModuleMm": 0.865,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "other/until/short",
+   "pages": 1,
+   "scale": 0.956,
+   "bytes": 90059,
+   "textItems": 123,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=other",
+   "qrModuleMm": 0.865,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  },
+  {
+   "label": "other/until/long",
+   "pages": 1,
+   "scale": 0.956,
+   "bytes": 90256,
+   "textItems": 123,
+   "outside": 0,
+   "textBox": [
+    14,
+    12.2,
+    196,
+    284.9
+   ],
+   "qrUrl": "https://wesetup.ru/promo/OKTYABR10?s=other",
+   "qrModuleMm": 0.865,
+   "qr": "150clean:JZ 150bw:JZ 150bw-print:JZ 150phone:JZ 150bw-phone:JZ 300clean:JZ 300bw:JZ 300bw-print:JZ 300phone:JZ 300bw-phone:JZ"
+  }
+ ],
+ "failures": []
+}
