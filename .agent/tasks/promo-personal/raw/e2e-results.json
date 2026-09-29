@@ -1,0 +1,540 @@
+{
+  "checks": [
+    {
+      "name": "1280: /promo/E2EOLD10 → «Промокод больше не действует» и ссылка на тарифы",
+      "ok": true,
+      "details": {
+        "url": "http://localhost:3191/promo?code=E2EOLD10",
+        "title": "Промокод больше не действует"
+      }
+    },
+    {
+      "name": "390: /promo/E2EOLD10 → «Промокод больше не действует» и ссылка на тарифы",
+      "ok": true,
+      "details": {
+        "url": "http://localhost:3191/promo?code=E2EOLD10",
+        "title": "Промокод больше не действует"
+      }
+    },
+    {
+      "name": "неизвестный код → «Такого промокода нет»",
+      "ok": true,
+      "details": {}
+    },
+    {
+      "name": "1280: /promo/ROMASHKA10?s=cafe → регистрация, сфера подставлена, плашка кода, cookie на 30 дней",
+      "ok": true,
+      "details": {
+        "url": "http://localhost:3191/register?promo=ROMASHKA10&s=cafe&next=%2Fsettings%2Fsubscription%3Fpromo%3DROMASHKA10",
+        "sphere": "cafe",
+        "banner": "Промокод ROMASHKA10: −10 % навсегда. Создайте аккаунт — код подставится на оплате сам.",
+        "cookie": "ROMASHKA10"
+      }
+    },
+    {
+      "name": "1280: организация создана со сферой «Кафе» (type=cafe)",
+      "ok": true,
+      "details": {
+        "id": "cmumrwfwi001m1c9m8dxoa1xv",
+        "type": "cafe",
+        "accountId": "cmumrwg3h001o1c9mtm5reph5"
+      }
+    },
+    {
+      "name": "1280: тариф с подставленным кодом — −199 ₽, старая цена 1 990 зачёркнута, 1 791 ₽",
+      "ok": true,
+      "details": {
+        "applied": "Промокод ROMASHKA10 применён: −199 ₽ от подписки.",
+        "notice": "Скидка навсегда: после оплаты она закрепится за аккаунтом и будет применяться к каждой следующей оплате подписки сама.",
+        "card": {
+          "personal": "true",
+          "source": "code",
+          "old": "1 990 ₽",
+          "now": "1 791 ₽",
+          "badge": "Промокод ROMASHKA10: −10 % навсегда"
+        },
+        "plan": {
+          "personal": "true",
+          "source": "code",
+          "old": "1 990 ₽",
+          "now": "1 791 ₽",
+          "badge": "Промокод ROMASHKA10: −10 % навсегда"
+        }
+      }
+    },
+    {
+      "name": "1280: /order — код подставлен сам, зачёркнутая 1 990 → 1 791, к оплате 1 791 ₽",
+      "ok": true,
+      "details": {
+        "line": {
+          "personal": "true",
+          "source": "code",
+          "old": "1 990 ₽",
+          "now": "1 791 ₽",
+          "badge": "Промокод ROMASHKA10: −10 % навсегда"
+        },
+        "total": "1 791 ₽"
+      }
+    },
+    {
+      "name": "1280: в кассу ушло 1791.00 (тестовый режим, заглушка)",
+      "ok": true,
+      "details": {
+        "invId": 1,
+        "outSum": "1791.00",
+        "isTest": "1",
+        "description": "Подписка на 30 дн. (промокод ROMASHKA10, скидка навсегда: −199 ₽)"
+      }
+    },
+    {
+      "name": "1280: ResultURL /payment → OK",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "body": "OK1"
+      }
+    },
+    {
+      "name": "1280: оплата с lifetime-кодом → скидка закреплена за аккаунтом (снимок −10 %, с заказа №1), аудит",
+      "ok": true,
+      "details": {
+        "order": {
+          "status": "paid",
+          "promoCode": "ROMASHKA10",
+          "discountRub": 199,
+          "lifetimeDiscountId": null,
+          "amountRub": 1791,
+          "description": "Подписка на 30 дн. (промокод ROMASHKA10, скидка навсегда: −199 ₽)"
+        },
+        "binding": {
+          "code": "ROMASHKA10",
+          "value": 10,
+          "orderId": 1
+        },
+        "audits": 1
+      }
+    },
+    {
+      "name": "1280: лог «[promo] lifetime bound account=… code=ROMASHKA10»",
+      "ok": true,
+      "details": {}
+    },
+    {
+      "name": "390: /promo/ROMASHKA10-2?s=cafe → регистрация, сфера подставлена, плашка кода, cookie на 30 дней",
+      "ok": true,
+      "details": {
+        "url": "http://localhost:3191/register?promo=ROMASHKA10-2&s=cafe&next=%2Fsettings%2Fsubscription%3Fpromo%3DROMASHKA10-2",
+        "sphere": "cafe",
+        "banner": "Промокод ROMASHKA10-2: −10 % навсегда. Создайте аккаунт — код подставится на оплате сам.",
+        "cookie": "ROMASHKA10-2"
+      }
+    },
+    {
+      "name": "390: организация создана со сферой «Кафе» (type=cafe)",
+      "ok": true,
+      "details": {
+        "id": "cmumrxuc2001t1c9mydu4t337",
+        "type": "cafe",
+        "accountId": "cmumrxucq001v1c9m4f98zxl5"
+      }
+    },
+    {
+      "name": "390: тариф с подставленным кодом — −199 ₽, старая цена 1 990 зачёркнута, 1 791 ₽",
+      "ok": true,
+      "details": {
+        "applied": "Промокод ROMASHKA10-2 применён: −199 ₽ от подписки.",
+        "notice": "Скидка навсегда: после оплаты она закрепится за аккаунтом и будет применяться к каждой следующей оплате подписки сама.",
+        "card": {
+          "personal": "true",
+          "source": "code",
+          "old": "1 990 ₽",
+          "now": "1 791 ₽",
+          "badge": "Промокод ROMASHKA10-2: −10 % навсегда"
+        },
+        "plan": {
+          "personal": "true",
+          "source": "code",
+          "old": "1 990 ₽",
+          "now": "1 791 ₽",
+          "badge": "Промокод ROMASHKA10-2: −10 % навсегда"
+        }
+      }
+    },
+    {
+      "name": "390: /order — код подставлен сам, зачёркнутая 1 990 → 1 791, к оплате 1 791 ₽",
+      "ok": true,
+      "details": {
+        "line": {
+          "personal": "true",
+          "source": "code",
+          "old": "1 990 ₽",
+          "now": "1 791 ₽",
+          "badge": "Промокод ROMASHKA10-2: −10 % навсегда"
+        },
+        "total": "1 791 ₽"
+      }
+    },
+    {
+      "name": "390: в кассу ушло 1791.00 (тестовый режим, заглушка)",
+      "ok": true,
+      "details": {
+        "invId": 2,
+        "outSum": "1791.00",
+        "isTest": "1",
+        "description": "Подписка на 30 дн. (промокод ROMASHKA10-2, скидка навсегда: −199 ₽)"
+      }
+    },
+    {
+      "name": "390: ResultURL /payment → OK",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "body": "OK2"
+      }
+    },
+    {
+      "name": "390: оплата с lifetime-кодом → скидка закреплена за аккаунтом (снимок −10 %, с заказа №2), аудит",
+      "ok": true,
+      "details": {
+        "order": {
+          "status": "paid",
+          "promoCode": "ROMASHKA10-2",
+          "discountRub": 199,
+          "lifetimeDiscountId": null,
+          "amountRub": 1791,
+          "description": "Подписка на 30 дн. (промокод ROMASHKA10-2, скидка навсегда: −199 ₽)"
+        },
+        "binding": {
+          "code": "ROMASHKA10-2",
+          "value": 10,
+          "orderId": 2
+        },
+        "audits": 1
+      }
+    },
+    {
+      "name": "390: лог «[promo] lifetime bound account=… code=ROMASHKA10-2»",
+      "ok": true,
+      "details": {}
+    },
+    {
+      "name": "1280: тариф без ввода кода — «Ваша скидка −10 % навсегда», 1 990 → 1 791",
+      "ok": true,
+      "details": {
+        "lifetimeText": "Ваша скидка −10 % навсегдаПрименяется сама к каждой оплате подписки — картой и п",
+        "plan": {
+          "personal": "true",
+          "source": "lifetime",
+          "old": "1 990 ₽",
+          "now": "1 791 ₽",
+          "badge": "Ваша скидка −10 % навсегда"
+        }
+      }
+    },
+    {
+      "name": "1280: /order без кода — зачёркнутая 1 990 → 1 791, «Ваша скидка −10 % навсегда», к оплате 1 791 ₽",
+      "ok": true,
+      "details": {
+        "line": {
+          "personal": "true",
+          "source": "lifetime",
+          "old": "1 990 ₽",
+          "now": "1 791 ₽",
+          "badge": "Ваша скидка −10 % навсегда"
+        },
+        "total": "1 791 ₽",
+        "hint": "Ваша скидка −10 % навсегда: −199 ₽ от подписки — применяется сама, вводить ничего не нужно."
+      }
+    },
+    {
+      "name": "1280: продление картой — 1791.00, заказ помечен авто-скидкой навсегда, привязка не изменилась (идемпотентно)",
+      "ok": true,
+      "details": {
+        "pay": {
+          "invId": 3,
+          "outSum": "1791.00",
+          "isTest": "1",
+          "description": "Подписка на 30 дн. (скидка навсегда по промокоду ROMASHKA10: −199 ₽)"
+        },
+        "order": {
+          "status": "paid",
+          "promoCode": "ROMASHKA10",
+          "lifetimeDiscountId": "cmumrxo5p001r1c9mnj57md0t",
+          "discountRub": 199,
+          "description": "Подписка на 30 дн. (скидка навсегда по промокоду ROMASHKA10: −199 ₽)"
+        },
+        "bindings": [
+          {
+            "orderId": 1
+          }
+        ],
+        "audits": 1
+      }
+    },
+    {
+      "name": "1280: счёт по безналу — 1 791 ₽ со скидкой навсегда (сервер)",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "invBody": {
+          "orderId": 4,
+          "amountRub": 1791,
+          "dueAt": "2026-10-06T14:31:44.188Z",
+          "created": true,
+          "pdfUrl": "/api/payments/invoice/4/pdf"
+        },
+        "invOrder": {
+          "amountRub": 1791,
+          "lifetimeDiscountId": "cmumrxo5p001r1c9mnj57md0t",
+          "promoCode": "ROMASHKA10",
+          "paymentMethod": "invoice",
+          "description": "Подписка на 30 дн. (счёт; скидка навсегда по промокоду ROMASHKA10: −199 ₽)"
+        }
+      }
+    },
+    {
+      "name": "390: тариф без ввода кода — «Ваша скидка −10 % навсегда», 1 990 → 1 791",
+      "ok": true,
+      "details": {
+        "lifetimeText": "Ваша скидка −10 % навсегдаПрименяется сама к каждой оплате подписки — картой и п",
+        "plan": {
+          "personal": "true",
+          "source": "lifetime",
+          "old": "1 990 ₽",
+          "now": "1 791 ₽",
+          "badge": "Ваша скидка −10 % навсегда"
+        }
+      }
+    },
+    {
+      "name": "390: /order без кода — зачёркнутая 1 990 → 1 791, «Ваша скидка −10 % навсегда», к оплате 1 791 ₽",
+      "ok": true,
+      "details": {
+        "line": {
+          "personal": "true",
+          "source": "lifetime",
+          "old": "1 990 ₽",
+          "now": "1 791 ₽",
+          "badge": "Ваша скидка −10 % навсегда"
+        },
+        "total": "1 791 ₽",
+        "hint": "Ваша скидка −10 % навсегда: −199 ₽ от подписки — применяется сама, вводить ничего не нужно."
+      }
+    },
+    {
+      "name": "владелец «Лавки» входит (1280)",
+      "ok": true,
+      "details": {}
+    },
+    {
+      "name": "1280: /promo/LAVKA10 с входом → /settings/subscription?promo=LAVKA10, код применён",
+      "ok": true,
+      "details": {
+        "url": "http://localhost:3191/settings/subscription?promo=LAVKA10",
+        "applied": "Промокод LAVKA10 применён: −199 ₽ от подписки.",
+        "plan": {
+          "personal": "true",
+          "source": "code",
+          "old": "1 990 ₽",
+          "now": "1 791 ₽",
+          "badge": "Промокод LAVKA10: −10 % навсегда"
+        }
+      }
+    },
+    {
+      "name": "1280: чужой персональный код на странице тарифа — «выдан другой организации»",
+      "ok": true,
+      "details": {
+        "pageError": "Этот промокод персональный — он выдан другой организации"
+      }
+    },
+    {
+      "name": "1280: чужой персональный код на /order — отказ",
+      "ok": true,
+      "details": {
+        "orderError": "Этот промокод персональный — он выдан другой организации"
+      }
+    },
+    {
+      "name": "создание заказа с чужим персональным кодом — 400, сервер отказал",
+      "ok": true,
+      "details": {
+        "status": 400,
+        "body": {
+          "error": "Этот промокод персональный — он выдан другой организации"
+        }
+      }
+    },
+    {
+      "name": "без входа по чужой почте — тоже отказ",
+      "ok": true,
+      "details": {
+        "status": 400,
+        "anonBody": {
+          "error": "Этот промокод персональный — он выдан другой организации"
+        }
+      }
+    },
+    {
+      "name": "владелец «Лавки» входит (390)",
+      "ok": true,
+      "details": {}
+    },
+    {
+      "name": "390: /promo/LAVKA10 с входом → /settings/subscription?promo=LAVKA10, код применён",
+      "ok": true,
+      "details": {
+        "url": "http://localhost:3191/settings/subscription?promo=LAVKA10",
+        "applied": "Промокод LAVKA10 применён: −199 ₽ от подписки.",
+        "plan": {
+          "personal": "true",
+          "source": "code",
+          "old": "1 990 ₽",
+          "now": "1 791 ₽",
+          "badge": "Промокод LAVKA10: −10 % навсегда"
+        }
+      }
+    },
+    {
+      "name": "390: чужой персональный код на странице тарифа — «выдан другой организации»",
+      "ok": true,
+      "details": {
+        "pageError": "Этот промокод персональный — он выдан другой организации"
+      }
+    },
+    {
+      "name": "390: чужой персональный код на /order — отказ",
+      "ok": true,
+      "details": {
+        "orderError": "Этот промокод персональный — он выдан другой организации"
+      }
+    },
+    {
+      "name": "ROOT входит",
+      "ok": true,
+      "details": {}
+    },
+    {
+      "name": "ROOT API: коды E2E500 (−500 ₽) и E2E5 (−5 %)",
+      "ok": true,
+      "details": {}
+    },
+    {
+      "name": "выгоднейший из двух: −500 ₽ лучше −10 % навсегда — применён код, пояснение",
+      "ok": true,
+      "details": {
+        "applied": {
+          "source": "code",
+          "code": "E2E500",
+          "kind": "fixed",
+          "value": 500,
+          "lifetime": false,
+          "discountRub": 500,
+          "lifetimeDiscountId": null,
+          "label": "Промокод E2E500: −500 ₽"
+        },
+        "notice": "Промокод E2E500 выгоднее вашей скидки навсегда (−10 %) — применили его к этой оплате. Скидки не складываются: следующие оплаты — снова со скидкой навсегда."
+      }
+    },
+    {
+      "name": "выгоднейший из двух: −5 % хуже — осталась скидка навсегда, пояснение",
+      "ok": true,
+      "details": {
+        "applied": {
+          "source": "lifetime",
+          "code": "ROMASHKA10-2",
+          "kind": "percent",
+          "value": 10,
+          "lifetime": true,
+          "discountRub": 199,
+          "lifetimeDiscountId": "cmumryar2001y1c9m1f1skewz",
+          "label": "Ваша скидка −10 % навсегда"
+        },
+        "notice": "Ваша скидка навсегда (−10 %) выгоднее промокода E2E5 — применили её. Скидки не складываются."
+      }
+    },
+    {
+      "name": "390: /order с E2E500 при скидке навсегда — к оплате 1 490 ₽ (коды не складываются)",
+      "ok": true,
+      "details": {
+        "total": "1 490 ₽"
+      }
+    },
+    {
+      "name": "ROOT: в списке пометки «навсегда», «персональный», метка рассылки",
+      "ok": true,
+      "details": {
+        "guestRow": "ROMASHKA10навсегдаперсональныйрассылка e2e-kp-2026-10e2e КП · Кафе «Ромашка»−10 %до 28.12.20261 / 1pp-guest1280-mumrvoll@example.comИзменитьОтключить"
+      }
+    },
+    {
+      "name": "ROOT: фильтр «персональные» — только персональные коды (3 из всех)",
+      "ok": true,
+      "details": {
+        "allCount": 6,
+        "personalCount": 3
+      }
+    },
+    {
+      "name": "ROOT: правка — «навсегда», персональная почта (нижний регистр), метка рассылки",
+      "ok": true,
+      "details": {
+        "lifetime": true,
+        "personalEmail": "partner-mumrvoll@example.com",
+        "campaignId": "e2e-edit"
+      }
+    },
+    {
+      "name": "ROOT: раздел «Скидки навсегда» — два аккаунта, с какого заказа",
+      "ok": true,
+      "details": {
+        "lifetimeRows": 2
+      }
+    },
+    {
+      "name": "ROOT: «Отменить» с подтверждением — revokedAt, аудит, лог",
+      "ok": true,
+      "details": {
+        "revoked": {
+          "revokedAt": "2026-09-29T11:34:43.737Z",
+          "revokedById": "rootmumrvoll"
+        },
+        "audits": 1
+      }
+    },
+    {
+      "name": "/root/audit: «Промокод создан/изменён», «Скидка навсегда закреплена/отменена»",
+      "ok": true,
+      "details": {}
+    },
+    {
+      "name": "после отмены: /order у аккаунта — 1 990 ₽, без скидки навсегда",
+      "ok": true,
+      "details": {
+        "total": "1 990 ₽"
+      }
+    }
+  ],
+  "pageErrors": [],
+  "robokassa": [
+    "https://auth.robokassa.ru/Merchant/bundle/robokassa_iframe.js",
+    "https://auth.robokassa.ru/Merchant/bundle/robokassa_iframe.js",
+    "https://auth.robokassa.ru/Merchant/Index.aspx?MerchantLogin=e2e-fake-shop&OutSum=1791.00&InvId=1&Description=%D0%9F%D0%BE%D0%B4%D0%BF%D0%B8%D1%81%D0%BA%D0%B0+%D0%BD%D0%B0+30+%D0%B4%D0%BD.+%28%D0%BF%D1%80%D0%BE%D0%BC%D0%BE%D0%BA%D0%BE%D0%B4+ROMASHKA10%2C+%D1%81%D0%BA%D0%B8%D0%B4%D0%BA%D0%B0+%D0%BD%D0%B0%D0%B2%D1%81%D0%B5%D0%B3%D0%B4%D0%B0%3A+%E2%88%92199%C2%A0%E2%82%BD%29&SignatureValue=3c210808f3280022dd8c9aa8886a1b80&Culture=ru&Email=pp-guest1280-mumrvoll%40example.com&Receipt=%7B%22items%22%3A%5B%7B%22name%22%3A%22%D0%9F%D0%BE%D0%B4%D0%BF%D0%B8%D1%81%D0%BA%D0%B0+%D0%BD%D0%B0+30+%D0%B4%D0%BD.%22%2C%22quantity%22%3A1%2C%22sum%22%3A1791%2C%22payment_method%22%3A%22full_payment%22%2C%22payment_object%22%3A%22service%22%2C%22tax%22%3A%22none%22%7D%5D%7D&IsTest=1",
+    "https://auth.robokassa.ru/Merchant/bundle/robokassa_iframe.js",
+    "https://auth.robokassa.ru/Merchant/bundle/robokassa_iframe.js",
+    "https://auth.robokassa.ru/Merchant/Index.aspx?MerchantLogin=e2e-fake-shop&OutSum=1791.00&InvId=2&Description=%D0%9F%D0%BE%D0%B4%D0%BF%D0%B8%D1%81%D0%BA%D0%B0+%D0%BD%D0%B0+30+%D0%B4%D0%BD.+%28%D0%BF%D1%80%D0%BE%D0%BC%D0%BE%D0%BA%D0%BE%D0%B4+ROMASHKA10-2%2C+%D1%81%D0%BA%D0%B8%D0%B4%D0%BA%D0%B0+%D0%BD%D0%B0%D0%B2%D1%81%D0%B5%D0%B3%D0%B4%D0%B0%3A+%E2%88%92199%C2%A0%E2%82%BD%29&SignatureValue=25ac5cd82e4f1a7a3d8e36047c09f340&Culture=ru&Email=pp-guest390-mumrvoll%40example.com&Receipt=%7B%22items%22%3A%5B%7B%22name%22%3A%22%D0%9F%D0%BE%D0%B4%D0%BF%D0%B8%D1%81%D0%BA%D0%B0+%D0%BD%D0%B0+30+%D0%B4%D0%BD.%22%2C%22quantity%22%3A1%2C%22sum%22%3A1791%2C%22payment_method%22%3A%22full_payment%22%2C%22payment_object%22%3A%22service%22%2C%22tax%22%3A%22none%22%7D%5D%7D&IsTest=1",
+    "https://auth.robokassa.ru/Merchant/bundle/robokassa_iframe.js",
+    "https://auth.robokassa.ru/Merchant/Index.aspx?MerchantLogin=e2e-fake-shop&OutSum=1791.00&InvId=3&Description=%D0%9F%D0%BE%D0%B4%D0%BF%D0%B8%D1%81%D0%BA%D0%B0+%D0%BD%D0%B0+30+%D0%B4%D0%BD.+%28%D1%81%D0%BA%D0%B8%D0%B4%D0%BA%D0%B0+%D0%BD%D0%B0%D0%B2%D1%81%D0%B5%D0%B3%D0%B4%D0%B0+%D0%BF%D0%BE+%D0%BF%D1%80%D0%BE%D0%BC%D0%BE%D0%BA%D0%BE%D0%B4%D1%83+ROMASHKA10%3A+%E2%88%92199%C2%A0%E2%82%BD%29&SignatureValue=23d2128da3b7f28ad15ef3bbd0e4f10c&Culture=ru&Email=pp-guest1280-mumrvoll%40example.com&Receipt=%7B%22items%22%3A%5B%7B%22name%22%3A%22%D0%9F%D0%BE%D0%B4%D0%BF%D0%B8%D1%81%D0%BA%D0%B0+%D0%BD%D0%B0+30+%D0%B4%D0%BD.%22%2C%22quantity%22%3A1%2C%22sum%22%3A1791%2C%22payment_method%22%3A%22full_payment%22%2C%22payment_object%22%3A%22service%22%2C%22tax%22%3A%22none%22%7D%5D%7D&IsTest=1",
+    "https://auth.robokassa.ru/Merchant/bundle/robokassa_iframe.js",
+    "https://auth.robokassa.ru/Merchant/bundle/robokassa_iframe.js",
+    "https://auth.robokassa.ru/Merchant/bundle/robokassa_iframe.js",
+    "https://auth.robokassa.ru/Merchant/bundle/robokassa_iframe.js",
+    "https://auth.robokassa.ru/Merchant/bundle/robokassa_iframe.js"
+  ],
+  "devReloads": 0,
+  "passed": 47,
+  "failed": 0,
+  "robokassaHosts": [
+    "auth.robokassa.ru"
+  ]
+}

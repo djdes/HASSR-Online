@@ -2,8 +2,9 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId, isImpersonating } from "@/lib/auth-helpers";
+import { resolveCheckoutDiscount } from "@/lib/promo/checkout";
+import { discountForPrice, discountLabel, type AppliedDiscount } from "@/lib/promo/discounts";
 import { getSubscriptionOffer } from "@/lib/promo/offer";
-import { resolvePromo } from "@/lib/promo/service";
 import { createRateLimiter } from "@/lib/rate-limit";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getServerSession } from "@/lib/server-session";
@@ -20,12 +21,14 @@ function clientIp(request: NextRequest): string {
 
 /**
  * POST { code, tariffKey } — проверить промокод до оформления. Ответ —
- * ровно то, что потом посчитает сервер при создании заказа: скидка
- * промокода от цены подписки С АКЦИЕЙ (`getSubscriptionOffer`).
+ * ровно то, что потом посчитает сервер при создании заказа
+ * (`resolveCheckoutDiscount`): скидка от цены подписки С АКЦИЕЙ,
+ * выгоднейшая из кода и скидки навсегда аккаунта, с пояснением.
  *
- * «Только новым» здесь проверяется по организации из сессии; по почте
- * анонимного заказа — уже при создании заказа (иначе этот открытый
- * адрес подсказывал бы, какие почты платили).
+ * Плательщик — из сессии. Без входа почту здесь не спрашиваем: «только
+ * новым» и персональный код проверит создание заказа (иначе этот открытый
+ * адрес подсказывал бы, какие почты платили). Персональный код анониму —
+ * `personalPending`: «проверим по почте при оплате».
  */
 export async function POST(request: NextRequest) {
   if (!limiter.consume(clientIp(request))) {
@@ -43,23 +46,52 @@ export async function POST(request: NextRequest) {
     session?.user && hasFullWorkspaceAccess(session.user) && !isImpersonating(session)
       ? getActiveOrgId(session)
       : null;
-  const result = await resolvePromo(code, {
+  const result = await resolveCheckoutDiscount({
+    promoRaw: code,
     organizationId,
-    subscriptionRub: offer.priceRub,
     email: session?.user?.email ?? null,
+    offerRub: offer.priceRub,
     now,
+    scope: "check",
   });
   // Цена с акцией едет в ответ: если акция началась или кончилась, пока
   // человек был на странице, клиент увидит расхождение и обновит сумму.
   const price = { offerRub: offer.priceRub, promotionId: offer.promotion?.id ?? null };
-  if (!result.ok) return NextResponse.json({ ok: false, message: result.message, ...price });
+  const view = (applied: AppliedDiscount | null) => (applied ? { ...applied, label: discountLabel(applied) } : null);
+  if (!result.ok) {
+    // Код не подошёл, но скидка навсегда аккаунта остаётся — покажем её.
+    const fallback: AppliedDiscount | null = result.lifetime
+      ? {
+          source: "lifetime",
+          code: result.lifetime.code,
+          kind: result.lifetime.kind,
+          value: result.lifetime.value,
+          lifetime: true,
+          discountRub: discountForPrice(result.lifetime, offer.priceRub),
+          lifetimeDiscountId: result.lifetime.id,
+        }
+      : null;
+    return NextResponse.json({
+      ok: false,
+      message: result.message,
+      reason: result.reason,
+      fallback: fallback && fallback.discountRub > 0 ? view(fallback) : null,
+      ...price,
+    });
+  }
+  const applied = result.applied;
   return NextResponse.json({
     ok: true,
-    code: result.code,
-    discountRub: result.discountRub,
-    subscriptionRub: offer.priceRub - result.discountRub,
-    kind: result.rule.kind,
-    value: result.rule.value,
+    // Прежние поля — для совместимости: код и скидка, которые применятся.
+    code: applied?.code ?? result.typedCode,
+    discountRub: applied?.discountRub ?? 0,
+    subscriptionRub: offer.priceRub - (applied?.discountRub ?? 0),
+    kind: applied?.kind ?? null,
+    value: applied?.value ?? null,
+    typedCode: result.typedCode,
+    applied: view(applied),
+    notice: result.notice,
+    personalPending: result.personalPending,
     ...price,
   });
 }

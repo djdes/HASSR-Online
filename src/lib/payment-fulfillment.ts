@@ -18,6 +18,7 @@ import { formatRub } from "@/lib/tariffs";
 import { defaultJournalAutomationJson } from "@/lib/journal-automation";
 import { DEFAULT_OFF_JOURNAL_CODES } from "@/lib/health-check-default-off";
 import { attachAccountForNewOrganization } from "@/lib/create-organization";
+import { bindLifetimeDiscountForOrder } from "@/lib/promo/lifetime";
 
 /**
  * Что происходит после подтверждённой оплаты.
@@ -62,7 +63,7 @@ function extendFrom(current: Date | null, periodDays: number): Date {
   return new Date(base + periodDays * 24 * 60 * 60 * 1000);
 }
 
-export async function fulfillPaidOrder(order: {
+type FulfillableOrder = {
   id: number;
   email: string;
   tariffKey: string;
@@ -81,7 +82,19 @@ export async function fulfillPaidOrder(order: {
   userId?: string | null;
   /** Сколько баллов ушло в счёт этого заказа (для писем и уведомлений). */
   pointsSpent?: number | null;
-}): Promise<FulfillmentResult> {
+};
+
+export async function fulfillPaidOrder(order: FulfillableOrder): Promise<FulfillmentResult> {
+  const result = await extendOrCreateForOrder(order);
+  // Скидка навсегда: первая оплаченная подписка с введённым lifetime-кодом
+  // привязывает её к аккаунту продлённой организации. Идемпотентно, лог
+  // `[promo] lifetime bound …`, аудит; сбой только пишется в лог — деньги
+  // уже получены, подписка продлена (lib/promo/lifetime.ts).
+  await bindLifetimeDiscountForOrder(order.id, result.organizationId || null);
+  return result;
+}
+
+async function extendOrCreateForOrder(order: FulfillableOrder): Promise<FulfillmentResult> {
   const periodDays = await readPeriodDays(order.tariffKey);
 
   // Организация в заказе — источник правды: платили из её кабинета,

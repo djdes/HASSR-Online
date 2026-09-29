@@ -21,6 +21,7 @@ import {
 import { ROBOKASSA_IFRAME_SCRIPT_URL } from "@/lib/robokassa-constants";
 import type { Tariff } from "@/lib/tariffs";
 import type { SubscriptionOffer } from "@/lib/promo/promotions";
+import type { AppliedDiscount } from "@/lib/promo/discounts";
 import { PromoPrice } from "@/components/pricing/promo-price";
 import {
   RECURRING_CONSENT_TEXT,
@@ -52,6 +53,27 @@ type OrderStatus = {
 function isPaidStatus(status: string): boolean {
   return status === "paid" || status === "completed";
 }
+
+/** Скидка поверх акции, как её посчитал сервер, с подписью плашки. */
+export type OrderDiscountView = AppliedDiscount & { label: string };
+
+/**
+ * Скидка при открытии страницы (сервер, `resolveCheckoutDiscount`): код из
+ * `?promo=`/cookie ссылки и скидка навсегда вошедшего аккаунта.
+ */
+export type OrderDiscountState = {
+  /** Что применится к оплате: промокод или скидка навсегда. */
+  applied: OrderDiscountView | null;
+  /** Принятый введённый код — уходит в заказ (сервер пересчитает). */
+  typedCode: string | null;
+  /** Что подставить в поле промокода. */
+  input: string;
+  error: string | null;
+  /** Что применено и почему (выгоднейшая из двух). */
+  notice: string | null;
+  /** Персональный код без входа — проверим по почте при оплате. */
+  personalPending: boolean;
+};
 
 declare global {
   interface Window {
@@ -87,10 +109,13 @@ export function OrderClient({
   recurringDefault = false,
   pointsAvailable = 0,
   pointsCap = 0,
+  initialDiscount,
 }: {
   tariff: Tariff | null;
   /// Цена подписки с действующей акцией (сервер). amountRub уже её учитывает.
   offer?: SubscriptionOffer | null;
+  /// Промокод из ссылки и скидка навсегда — посчитаны сервером.
+  initialDiscount?: OrderDiscountState;
   bundleConfig: Record<string, number> | null;
   amountRub: number;
   returnParams: ReturnParams;
@@ -121,6 +146,7 @@ export function OrderClient({
       recurringDefault={recurringDefault}
       pointsAvailable={pointsAvailable}
       pointsCap={pointsCap}
+      initialDiscount={initialDiscount}
     />
   );
 }
@@ -136,6 +162,7 @@ function Checkout({
   recurringDefault = false,
   pointsAvailable = 0,
   pointsCap = 0,
+  initialDiscount,
 }: {
   tariff: Tariff | null;
   offer?: SubscriptionOffer | null;
@@ -145,6 +172,7 @@ function Checkout({
   recurringDefault?: boolean;
   pointsAvailable?: number;
   pointsCap?: number;
+  initialDiscount?: OrderDiscountState;
 }) {
   const router = useRouter();
   const [email, setEmail] = useState(sessionEmail);
@@ -154,12 +182,16 @@ function Checkout({
   // Баллы, наоборот, списываем по умолчанию: они уже принадлежат
   // организации, и «забыл включить» — это переплата на ровном месте.
   const [usePoints, setUsePoints] = useState(true);
-  // Промокод: проверяется на сервере (/api/promo/check), здесь только
-  // показываем честный итог до нажатия; сумму скидки браузер не решает.
-  const [promoInput, setPromoInput] = useState("");
-  const [promo, setPromo] = useState<{ code: string; discountRub: number } | null>(null);
+  // Промокод и скидка навсегда: считает сервер (страница, /api/promo/check,
+  // создание заказа), здесь только показываем честный итог до нажатия;
+  // сумму скидки браузер не решает. Применяется выгоднейшая из двух.
+  const [promoInput, setPromoInput] = useState(initialDiscount?.input ?? "");
+  const [discount, setDiscount] = useState<OrderDiscountView | null>(initialDiscount?.applied ?? null);
+  const [typedCode, setTypedCode] = useState<string | null>(initialDiscount?.typedCode ?? null);
+  const [promoNotice, setPromoNotice] = useState<string | null>(initialDiscount?.notice ?? null);
+  const [personalPending, setPersonalPending] = useState(initialDiscount?.personalPending ?? false);
   const [promoBusy, setPromoBusy] = useState(false);
-  const [promoError, setPromoError] = useState<string | null>(null);
+  const [promoError, setPromoError] = useState<string | null>(initialDiscount?.error ?? null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Заказ, оформленный раньше, протух вместе с холдом баллов — их уже
@@ -301,7 +333,7 @@ function Checkout({
   // Сколько спишется баллами. Та же формула, что на сервере
   // (`pointsToSpend`): не больше баланса и не больше цены подписки.
   // Здесь она нужна только чтобы показать честный итог до нажатия.
-  const discountRub = promo?.discountRub ?? 0;
+  const discountRub = discount?.discountRub ?? 0;
   const amountAfterPromo = Math.max(0, amountRub - discountRub);
   const capAfterPromo = Math.max(0, pointsCap - discountRub);
   const pointsSpent =
@@ -331,25 +363,37 @@ function Checkout({
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
         message?: string;
-        code?: string;
-        discountRub?: number;
         offerRub?: number;
+        applied?: OrderDiscountView | null;
+        fallback?: OrderDiscountView | null;
+        typedCode?: string | null;
+        notice?: string | null;
+        personalPending?: boolean;
       };
       // Акция началась или кончилась, пока страница была открыта: скидка
       // промокода посчитана от другой цены — обновляем страницу, сумма
       // пересчитается, промокод нужно применить ещё раз.
       if (typeof data.offerRub === "number" && data.offerRub !== subscriptionPrice.priceRub) {
-        setPromo(null);
+        setDiscount(null);
+        setTypedCode(null);
+        setPromoNotice(null);
         setPromoError("Цена подписки изменилась — обновили сумму. Нажмите «Применить» ещё раз");
         router.refresh();
         return;
       }
-      if (!res.ok || !data.ok || !data.code) {
-        setPromo(null);
+      if (!res.ok || !data.ok) {
+        // Код не подошёл — остаётся то, что положено без него (скидка навсегда).
+        setDiscount(data.fallback ?? null);
+        setTypedCode(null);
+        setPromoNotice(null);
+        setPersonalPending(false);
         setPromoError(data.message ?? "Промокод не подошёл");
         return;
       }
-      setPromo({ code: data.code, discountRub: data.discountRub ?? 0 });
+      setDiscount(data.applied ?? null);
+      setTypedCode(data.typedCode ?? null);
+      setPromoNotice(data.notice ?? null);
+      setPersonalPending(Boolean(data.personalPending));
     } catch {
       setPromoError("Нет связи — попробуйте ещё раз");
     } finally {
@@ -371,7 +415,7 @@ function Checkout({
           bundleConfig: bundleConfig ?? undefined,
           recurringConsent,
           usePoints: pointsSpent > 0,
-          promoCode: promo?.code,
+          promoCode: typedCode ?? undefined,
           // Сверка, не сумма: сервер считает сам и откажет, если за время
           // на странице цена изменилась (закончилась или началась акция).
           expectedGrossRub: amountAfterPromo,
@@ -382,9 +426,12 @@ function Checkout({
         setError(data.error ?? "Не удалось создать заказ");
         setLoading(false);
         if (data.code === "price-changed") {
-          if (promo) {
-            setPromo(null);
-            setPromoError("Цена изменилась — нажмите «Применить» ещё раз");
+          // Сервер прислал скидку, посчитанную по текущей цене (в том числе
+          // скидку навсегда почты заказа, о которой страница без входа не
+          // знала): показываем её — следующая попытка сойдётся по сумме.
+          if ("discount" in data) {
+            setDiscount((data.discount as OrderDiscountView | null) ?? null);
+            setPromoNotice(typeof data.notice === "string" ? data.notice : null);
           }
           router.refresh();
         }
@@ -434,9 +481,10 @@ function Checkout({
         </div>
         {items.length > 0 || pointsSpent > 0 || discountRub > 0 || subscriptionPrice.promotion ? (
           <ul className="mt-4 space-y-1.5 border-t border-[#ececf4] pt-4">
-            {/* Акция — прямо в строке подписки: старая цена зачёркнута,
-                новая и плашка «−N % до …». Промокод и баллы — ниже, от
-                цены с акцией. */}
+            {/* Акция и персональная скидка (промокод или скидка навсегда)
+                — прямо в строке подписки: старая цена зачёркнута, новая и
+                плашки «−N % до …», «Ваша скидка −10 % навсегда». Скидка
+                считается от цены с акцией; баллы — ниже. */}
             <li
               data-testid="order-subscription-line"
               className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-[13px] text-[#3c4053]"
@@ -444,6 +492,7 @@ function Checkout({
               <span>Подписка на {tariff.periodDays} дн.</span>
               <PromoPrice
                 price={subscriptionPrice}
+                personal={discount}
                 size="text"
                 tone="inherit"
                 className="justify-end"
@@ -463,12 +512,6 @@ function Checkout({
                 </span>
               </li>
             ))}
-            {discountRub > 0 && promo ? (
-              <li className="flex justify-between gap-3 text-[13px] font-medium text-[#3848c7]">
-                <span>Промокод {promo.code}</span>
-                <span className="tabular-nums">−{formatRub(discountRub)}</span>
-              </li>
-            ) : null}
             {pointsSpent > 0 ? (
               <li className="flex justify-between gap-3 text-[13px] font-medium text-[#116b2a]">
                 <span>Баллами</span>
@@ -506,16 +549,33 @@ function Checkout({
             disabled={promoBusy || !promoInput.trim()}
             className="inline-flex h-11 shrink-0 items-center rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-50"
           >
-            {promoBusy ? "Проверяем…" : promo ? "Обновить" : "Применить"}
+            {promoBusy ? "Проверяем…" : typedCode ? "Обновить" : "Применить"}
           </button>
         </div>
-        {promo ? (
-          <p className="mt-2 text-[12px] text-[#116b2a]">
-            Промокод {promo.code} применён: −{formatRub(promo.discountRub)} от подписки
+        {promoError ? (
+          <p data-testid="promo-error" className="mt-2 text-[12px] text-[#a13a32]">
+            {promoError}
+          </p>
+        ) : discount?.source === "code" ? (
+          <p data-testid="promo-applied" className="mt-2 text-[12px] text-[#116b2a]">
+            Промокод {discount.code} применён: −{formatRub(discount.discountRub)} от подписки
             {subscriptionPrice.promotion ? " (считается от цены по акции)" : ""}.
           </p>
-        ) : promoError ? (
-          <p className="mt-2 text-[12px] text-[#a13a32]">{promoError}</p>
+        ) : discount?.source === "lifetime" && !typedCode ? (
+          <p data-testid="lifetime-applied" className="mt-2 text-[12px] text-[#116b2a]">
+            {discount.label}: −{formatRub(discount.discountRub)} от подписки — применяется сама,
+            вводить ничего не нужно.
+          </p>
+        ) : null}
+        {promoNotice ? (
+          <p data-testid="promo-notice" className="mt-2 text-[12px] leading-[1.5] text-[#3848c7]">
+            {promoNotice}
+          </p>
+        ) : null}
+        {personalPending ? (
+          <p className="mt-2 text-[12px] text-[#6f7282]">
+            Персональный промокод — проверим по почте при оплате.
+          </p>
         ) : null}
       </div>
       {showPointsBlock ? (

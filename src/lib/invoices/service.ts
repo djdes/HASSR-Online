@@ -7,8 +7,9 @@ import { sendInvoiceEmail } from "@/lib/email";
 import type { LegalProfile } from "@/lib/org-legal-profile";
 import { completePaidOrder } from "@/lib/payment-fulfillment";
 import { notifyPlatformAdmin } from "@/lib/platform-admin";
+import { resolveCheckoutDiscount } from "@/lib/promo/checkout";
 import { getSubscriptionOffer } from "@/lib/promo/offer";
-import { orderDiscountNote } from "@/lib/promo/promotions";
+import { computeCheckoutAmounts, orderDiscountNote } from "@/lib/promo/promotions";
 import { isTestMode } from "@/lib/robokassa";
 import { readTariff } from "@/lib/tariffs";
 
@@ -58,6 +59,8 @@ export async function createInvoiceOrder(args: {
   userId: string;
   email: string;
   tariffKey: string;
+  /** Введённый промокод (или код из ссылки); проверит и посчитает сервер. */
+  promoCode?: string | null;
 }): Promise<CreateInvoiceResult> {
   const requisites = await readPlatformRequisites();
   if (!invoiceRequisitesReady(requisites)) {
@@ -72,7 +75,8 @@ export async function createInvoiceOrder(args: {
   // Цена с действующей акцией — та же, что в кабинете рядом с кнопкой.
   // Счёт фиксирует её на свой срок: оплатят после конца акции — всё
   // равно по сумме счёта.
-  const offer = await getSubscriptionOffer(new Date(), args.tariffKey);
+  const now = new Date();
+  const offer = await getSubscriptionOffer(now, args.tariffKey);
   if (!offer) return { ok: false, status: 400, error: "Тариф недоступен" };
 
   const existing = await db.paymentOrder.findFirst({
@@ -81,34 +85,67 @@ export async function createInvoiceOrder(args: {
   });
   if (existing) return { ok: true, order: existing, created: false };
 
+  // Скидка поверх акции — как у оплаты картой: введённый код или скидка
+  // навсегда аккаунта, выгоднейшая из двух. Чужой или неподходящий код —
+  // отказ, а не счёт без скидки.
+  const discount = await resolveCheckoutDiscount({
+    promoRaw: args.promoCode ?? null,
+    organizationId: args.organizationId,
+    email: args.email,
+    offerRub: offer.priceRub,
+    now,
+    scope: "invoice",
+  });
+  if (!discount.ok) return { ok: false, status: 400, error: discount.message };
+  const applied = discount.applied;
+  const amounts = computeCheckoutAmounts({
+    baseRub: offer.baseRub,
+    promotion: offer.promotion,
+    promo: applied ? { kind: applied.kind, value: applied.value } : null,
+  });
+  if (amounts.grossRub <= 0) {
+    return {
+      ok: false,
+      status: 400,
+      error: "Скидка закрывает всю сумму — счёт не нужен. Оформите подписку на странице оплаты",
+    };
+  }
+
   const note = orderDiscountNote({
     promotion: offer.promotion,
-    promotionDiscountRub: offer.discountRub,
-    promoCode: null,
-    promoDiscountRub: 0,
+    promotionDiscountRub: amounts.promotionDiscountRub,
+    promoCode: applied?.code ?? null,
+    promoDiscountRub: amounts.promoDiscountRub,
+    lifetime: applied ? (applied.source === "lifetime" ? "auto" : applied.lifetime ? "code" : null) : null,
   });
   const order = await db.paymentOrder.create({
     data: {
       email: args.email,
       tariffKey: offer.tariffKey,
-      amountRub: offer.priceRub,
+      amountRub: amounts.grossRub,
       description: `${offer.tariffTitle} на ${offer.periodDays} дн. (счёт${note ? `; ${note}` : ""})`,
       status: "pending",
       isTest: isTestMode(),
       organizationId: args.organizationId,
       userId: args.userId,
       paymentMethod: "invoice",
-      invoiceDueAt: new Date(Date.now() + INVOICE_VALID_DAYS * DAY_MS),
-      baseRub: offer.baseRub,
+      invoiceDueAt: new Date(now.getTime() + INVOICE_VALID_DAYS * DAY_MS),
+      baseRub: amounts.baseRub,
       promotionId: offer.promotion?.id ?? null,
       promotionPercent: offer.promotion?.percent ?? null,
-      promotionDiscountRub: offer.discountRub,
+      promotionDiscountRub: amounts.promotionDiscountRub,
+      promoCode: applied?.code ?? null,
+      discountRub: amounts.promoDiscountRub,
+      lifetimeDiscountId: applied?.lifetimeDiscountId ?? null,
     },
   });
   console.info(
     `[promo] invoice #${order.id}: base ${offer.baseRub} ₽` +
       (offer.promotion ? ` → promotion ${offer.promotion.id} −${offer.promotion.percent}%` : "") +
-      ` = ${offer.priceRub} ₽`
+      (applied
+        ? ` → ${applied.source === "lifetime" ? "lifetime (auto)" : applied.lifetime ? "promo (lifetime)" : "promo"} ${applied.code} −${amounts.promoDiscountRub} ₽`
+        : "") +
+      ` = ${amounts.grossRub} ₽`
   );
   return { ok: true, order, created: true };
 }

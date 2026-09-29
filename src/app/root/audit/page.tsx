@@ -36,6 +36,13 @@ const ACTION_LABELS: Record<string, string> = {
   "promotion.enable": "Акция включена",
   "promotion.disable": "Акция выключена",
   "promotion.delete": "Акция удалена",
+  // Промокоды и скидки навсегда (ROOT → «Промокоды», оплата).
+  "promo.create": "Промокод создан",
+  "promo.update": "Промокод изменён",
+  "promo.enable": "Промокод включён",
+  "promo.disable": "Промокод выключен",
+  "promo.lifetime.bind": "Скидка навсегда закреплена за аккаунтом",
+  "promo.lifetime.revoke": "Скидка навсегда отменена",
 };
 
 function formatDate(d: Date): string {

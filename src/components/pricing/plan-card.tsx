@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Building2, CheckCircle2, Gift, Users } from "lucide-react";
 
-import { PromoPrice } from "@/components/pricing/promo-price";
+import { PromoPrice, type PersonalDiscount } from "@/components/pricing/promo-price";
 import type { PriceWithPromotion } from "@/lib/promo/promotions";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +32,7 @@ export function PlanCard({
   ctaDisabled,
   touch = false,
   price,
+  personal = null,
 }: {
   kind: "free" | "team" | "network";
   name: string;
@@ -40,6 +41,9 @@ export function PlanCard({
   /// Цена с акцией (lib/promo). Идёт акция — старая цена зачёркнута,
   /// рядом новая и плашка «−N % до …»; нет — показываем `from`.
   price?: PriceWithPromotion;
+  /// Персональная скидка (промокод или скидка навсегда) поверх акции —
+  /// только в кабинете; цена та же `price`.
+  personal?: PersonalDiscount | null;
   /// Подводка над списком — «Всё из Бесплатного, плюс:». Нужна, чтобы
   /// не дублировать в платном тарифе половину бесплатного.
   pointsIntro?: string;
@@ -97,9 +101,10 @@ export function PlanCard({
             </span>
           )}
         </div>
-        {price?.promotion ? (
+        {price && (price.promotion || personal) ? (
           <PromoPrice
             price={price}
+            personal={personal}
             size="xl"
             layout="stacked"
             tone={highlighted ? "dark" : "light"}

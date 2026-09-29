@@ -77,6 +77,8 @@ export type CreateOrderWithPointsInput = {
   /** Промокод (в верхнем регистре) и скидка в рублях — уже посчитанные сервером. */
   promoCode?: string | null;
   discountRub?: number;
+  /** Скидка навсегда применилась сама (id AccountLifetimeDiscount). */
+  lifetimeDiscountId?: string | null;
   /**
    * Снимок цены для отчёта ROOT: цена подписки по тарифу до скидок и
    * действовавшая акция (id, процент, скидка в рублях). Сумму заказа не
@@ -157,6 +159,7 @@ export async function createOrderWithPoints(
         referrerOrganizationId: input.referrerOrganizationId ?? undefined,
         promoCode: input.promoCode ?? undefined,
         discountRub: input.discountRub ?? 0,
+        lifetimeDiscountId: input.lifetimeDiscountId ?? undefined,
         baseRub: input.baseRub ?? undefined,
         promotionId: input.promotionId ?? undefined,
         promotionPercent: input.promotionPercent ?? undefined,

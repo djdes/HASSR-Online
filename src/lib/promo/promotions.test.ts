@@ -198,6 +198,18 @@ describe("подпись плашки", () => {
     );
     assert.equal(orderDiscountNote({ promotion: null, promotionDiscountRub: 0, promoCode: null, promoDiscountRub: 0 }), "");
   });
+
+  it("скидка навсегда: введённый код и применившаяся сама", () => {
+    const applied = toAppliedPromotion(rule());
+    assert.equal(
+      normalize(orderDiscountNote({ promotion: null, promotionDiscountRub: 0, promoCode: "ROMASHKA10", promoDiscountRub: 199, lifetime: "code" })),
+      "промокод ROMASHKA10, скидка навсегда: −199 ₽",
+    );
+    assert.equal(
+      normalize(orderDiscountNote({ promotion: applied, promotionDiscountRub: 398, promoCode: "ROMASHKA10", promoDiscountRub: 159, lifetime: "auto" })),
+      "акция «Осень» −20 %; скидка навсегда по промокоду ROMASHKA10: −159 ₽",
+    );
+  });
 });
 
 describe("describePromotionChange — аудит ROOT", () => {

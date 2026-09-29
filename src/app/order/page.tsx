@@ -7,7 +7,11 @@ import { getBalance } from "@/lib/balance/ledger";
 import { readTariffs, fallbackTariffs, TARIFF_BUNDLE } from "@/lib/tariffs";
 import { normalizeHardwareConfig, hardwareTotal } from "@/lib/hardware-pricing";
 import { getDisplayOffer } from "@/lib/promo/offer";
-import { OrderClient } from "./order-client";
+import { resolveCheckoutDiscount } from "@/lib/promo/checkout";
+import { discountForPrice, discountLabel, type AppliedDiscount } from "@/lib/promo/discounts";
+import { PROMO_COOKIE } from "@/lib/promo/personal-link";
+import { OrderClient, type OrderDiscountState } from "./order-client";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { isMobileAppRequest, MOBILE_APP_HOME } from "@/lib/mobile-app-payments";
 
@@ -80,6 +84,58 @@ export default async function OrderPage({
     ? await getBalance(getActiveOrgId(session!)).catch(() => 0)
     : 0;
 
+  // Промокод из `?promo=` (ссылка /promo/CODE, страница тарифа) или из
+  // cookie ссылки; скидка навсегда вошедшего аккаунта — сама. Считает та
+  // же функция, что и создание заказа, — здесь только для показа.
+  const isCheckout = !first("InvId") && !first("complete");
+  const promoParam = Array.isArray(params.promo) ? params.promo[0] : params.promo;
+  const cookieCode = promoParam === undefined ? ((await cookies()).get(PROMO_COOKIE)?.value ?? null) : null;
+  const promoRaw = (promoParam ?? cookieCode ?? "").trim() || null;
+  const codeSource: "query" | "cookie" | null = promoParam ? "query" : cookieCode ? "cookie" : null;
+  const discount =
+    offer && isCheckout
+      ? await resolveCheckoutDiscount({
+          promoRaw,
+          organizationId: canSpendPoints ? getActiveOrgId(session!) : null,
+          email: sessionEmail || null,
+          offerRub: offer.priceRub,
+          now: new Date(),
+          scope: `page:/order${codeSource ? ` (code from ${codeSource})` : ""}`,
+        }).catch((error) => {
+          console.error("[promo] order page discount failed", error);
+          return null;
+        })
+      : null;
+  const withLabel = (applied: AppliedDiscount | null) =>
+    applied ? { ...applied, label: discountLabel(applied) } : null;
+  const lifetimeFallback: AppliedDiscount | null =
+    discount && !discount.ok && discount.lifetime && offer
+      ? {
+          source: "lifetime",
+          code: discount.lifetime.code,
+          kind: discount.lifetime.kind,
+          value: discount.lifetime.value,
+          lifetime: true,
+          discountRub: discountForPrice(discount.lifetime, offer.priceRub),
+          lifetimeDiscountId: discount.lifetime.id,
+        }
+      : null;
+  // Код из cookie, который уже закреплён за аккаунтом скидкой навсегда, —
+  // остаток ссылки: ведём себя как без кода (скидка и так применится сама).
+  const cookieAlreadyBound =
+    codeSource === "cookie" && discount?.ok === true && discount.lifetime?.code === discount.typedCode;
+  const keepCode = discount?.ok === true && !cookieAlreadyBound;
+  const initialDiscount: OrderDiscountState = {
+    applied: withLabel(discount?.ok ? discount.applied : lifetimeFallback),
+    // Код из cookie, который не подошёл, в поле не подставляем и ошибкой
+    // не показываем: человек его сейчас не вводил.
+    typedCode: keepCode && discount?.ok ? discount.typedCode : null,
+    input: keepCode || codeSource === "query" ? (promoRaw ?? "") : "",
+    error: discount && !discount.ok && codeSource === "query" ? discount.message : null,
+    notice: keepCode && discount?.ok ? discount.notice : null,
+    personalPending: discount?.ok ? discount.personalPending : false,
+  };
+
   return (
     <div className="min-h-screen bg-white text-[#0b1024]">
       <PublicHeader />
@@ -96,6 +152,7 @@ export default async function OrderPage({
           pointsCap={offer?.priceRub ?? 0}
           // Пришли из кабинета по кнопке «Включить автопродление».
           recurringDefault={first("recurring") === "1"}
+          initialDiscount={initialDiscount}
           returnParams={{
             outSum: first("OutSum"),
             invId: first("InvId"),

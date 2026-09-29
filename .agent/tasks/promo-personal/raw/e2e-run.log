@@ -1,0 +1,50 @@
+PASS 1280: /promo/E2EOLD10 → «Промокод больше не действует» и ссылка на тарифы {"url":"http://localhost:3191/promo?code=E2EOLD10","title":"Промокод больше не действует"}
+PASS 390: /promo/E2EOLD10 → «Промокод больше не действует» и ссылка на тарифы {"url":"http://localhost:3191/promo?code=E2EOLD10","title":"Промокод больше не действует"}
+PASS неизвестный код → «Такого промокода нет»
+PASS 1280: /promo/ROMASHKA10?s=cafe → регистрация, сфера подставлена, плашка кода, cookie на 30 дней {"url":"http://localhost:3191/register?promo=ROMASHKA10&s=cafe&next=%2Fsettings%2Fsubscription%3Fpromo%3DROMASHKA10","sphere":"cafe","banner":"Промокод ROMASHKA10: −10 % навсегда. Создайте аккаунт — код подставится на оплате сам.","cookie":"ROMASHKA10"}
+PASS 1280: организация создана со сферой «Кафе» (type=cafe) {"id":"cmumrwfwi001m1c9m8dxoa1xv","type":"cafe","accountId":"cmumrwg3h001o1c9mtm5reph5"}
+PASS 1280: тариф с подставленным кодом — −199 ₽, старая цена 1 990 зачёркнута, 1 791 ₽ {"applied":"Промокод ROMASHKA10 применён: −199 ₽ от подписки.","notice":"Скидка навсегда: после оплаты она закрепится за аккаунтом и будет применяться к каждой следующей оплате подписки сама.","card":{"personal":"true","source":"code","old":"1 990 ₽","now":"1 791 ₽","badge":"Промокод ROMASHKA10: −10 % навсегда"},"plan":{"personal":"true","source":"code","old":"1 990 ₽","now":"1 791 ₽","badge":"Промокод ROMASHKA10: −10 % навсегда"}}
+PASS 1280: /order — код подставлен сам, зачёркнутая 1 990 → 1 791, к оплате 1 791 ₽ {"line":{"personal":"true","source":"code","old":"1 990 ₽","now":"1 791 ₽","badge":"Промокод ROMASHKA10: −10 % навсегда"},"total":"1 791 ₽"}
+PASS 1280: в кассу ушло 1791.00 (тестовый режим, заглушка) {"invId":1,"outSum":"1791.00","isTest":"1","description":"Подписка на 30 дн. (промокод ROMASHKA10, скидка навсегда: −199 ₽)"}
+PASS 1280: ResultURL /payment → OK {"status":200,"body":"OK1"}
+PASS 1280: оплата с lifetime-кодом → скидка закреплена за аккаунтом (снимок −10 %, с заказа №1), аудит {"order":{"status":"paid","promoCode":"ROMASHKA10","discountRub":199,"lifetimeDiscountId":null,"amountRub":1791,"description":"Подписка на 30 дн. (промокод ROMASHKA10, скидка навсегда: −199 ₽)"},"binding":{"code":"ROMASHKA10","value":10,"orderId":1},"audits":1}
+PASS 1280: лог «[promo] lifetime bound account=… code=ROMASHKA10»
+PASS 390: /promo/ROMASHKA10-2?s=cafe → регистрация, сфера подставлена, плашка кода, cookie на 30 дней {"url":"http://localhost:3191/register?promo=ROMASHKA10-2&s=cafe&next=%2Fsettings%2Fsubscription%3Fpromo%3DROMASHKA10-2","sphere":"cafe","banner":"Промокод ROMASHKA10-2: −10 % навсегда. Создайте аккаунт — код подставится на оплате сам.","cookie":"ROMASHKA10-2"}
+PASS 390: организация создана со сферой «Кафе» (type=cafe) {"id":"cmumrxuc2001t1c9mydu4t337","type":"cafe","accountId":"cmumrxucq001v1c9m4f98zxl5"}
+PASS 390: тариф с подставленным кодом — −199 ₽, старая цена 1 990 зачёркнута, 1 791 ₽ {"applied":"Промокод ROMASHKA10-2 применён: −199 ₽ от подписки.","notice":"Скидка навсегда: после оплаты она закрепится за аккаунтом и будет применяться к каждой следующей оплате подписки сама.","card":{"personal":"true","source":"code","old":"1 990 ₽","now":"1 791 ₽","badge":"Промокод ROMASHKA10-2: −10 % навсегда"},"plan":{"personal":"true","source":"code","old":"1 990 ₽","now":"1 791 ₽","badge":"Промокод ROMASHKA10-2: −10 % навсегда"}}
+PASS 390: /order — код подставлен сам, зачёркнутая 1 990 → 1 791, к оплате 1 791 ₽ {"line":{"personal":"true","source":"code","old":"1 990 ₽","now":"1 791 ₽","badge":"Промокод ROMASHKA10-2: −10 % навсегда"},"total":"1 791 ₽"}
+PASS 390: в кассу ушло 1791.00 (тестовый режим, заглушка) {"invId":2,"outSum":"1791.00","isTest":"1","description":"Подписка на 30 дн. (промокод ROMASHKA10-2, скидка навсегда: −199 ₽)"}
+PASS 390: ResultURL /payment → OK {"status":200,"body":"OK2"}
+PASS 390: оплата с lifetime-кодом → скидка закреплена за аккаунтом (снимок −10 %, с заказа №2), аудит {"order":{"status":"paid","promoCode":"ROMASHKA10-2","discountRub":199,"lifetimeDiscountId":null,"amountRub":1791,"description":"Подписка на 30 дн. (промокод ROMASHKA10-2, скидка навсегда: −199 ₽)"},"binding":{"code":"ROMASHKA10-2","value":10,"orderId":2},"audits":1}
+PASS 390: лог «[promo] lifetime bound account=… code=ROMASHKA10-2»
+PASS 1280: тариф без ввода кода — «Ваша скидка −10 % навсегда», 1 990 → 1 791 {"lifetimeText":"Ваша скидка −10 % навсегдаПрименяется сама к каждой оплате подписки — картой и п","plan":{"personal":"true","source":"lifetime","old":"1 990 ₽","now":"1 791 ₽","badge":"Ваша скидка −10 % навсегда"}}
+PASS 1280: /order без кода — зачёркнутая 1 990 → 1 791, «Ваша скидка −10 % навсегда», к оплате 1 791 ₽ {"line":{"personal":"true","source":"lifetime","old":"1 990 ₽","now":"1 791 ₽","badge":"Ваша скидка −10 % навсегда"},"total":"1 791 ₽","hint":"Ваша скидка −10 % навсегда: −199 ₽ от подписки — применяется сама, вводить ничего не нужно."}
+PASS 1280: продление картой — 1791.00, заказ помечен авто-скидкой навсегда, привязка не изменилась (идемпотентно) {"pay":{"invId":3,"outSum":"1791.00","isTest":"1","description":"Подписка на 30 дн. (скидка навсегда по промокоду ROMASHKA10: −199 ₽)"},"order":{"status":"paid","promoCode":"ROMASHKA10","lifetimeDiscountId":"cmumrxo5p001r1c9mnj57md0t","discountRub":199,"description":"Подписка на 30 дн. (скидка навсегда по промокоду ROMASHKA10: −199 ₽)"},"bindings":[{"orderId":1}],"audits":1}
+PASS 1280: счёт по безналу — 1 791 ₽ со скидкой навсегда (сервер) {"status":200,"invBody":{"orderId":4,"amountRub":1791,"dueAt":"2026-10-06T14:31:44.188Z","created":true,"pdfUrl":"/api/payments/invoice/4/pdf"},"invOrder":{"amountRub":1791,"lifetimeDiscountId":"cmumrxo5p001r1c9mnj57md0t","promoCode":"ROMASHKA10","paymentMethod":"invoice","description":"Подписка на 30 дн. (счёт; скидка навсегда по промокоду ROMASHKA10: −199 ₽)"}}
+PASS 390: тариф без ввода кода — «Ваша скидка −10 % навсегда», 1 990 → 1 791 {"lifetimeText":"Ваша скидка −10 % навсегдаПрименяется сама к каждой оплате подписки — картой и п","plan":{"personal":"true","source":"lifetime","old":"1 990 ₽","now":"1 791 ₽","badge":"Ваша скидка −10 % навсегда"}}
+PASS 390: /order без кода — зачёркнутая 1 990 → 1 791, «Ваша скидка −10 % навсегда», к оплате 1 791 ₽ {"line":{"personal":"true","source":"lifetime","old":"1 990 ₽","now":"1 791 ₽","badge":"Ваша скидка −10 % навсегда"},"total":"1 791 ₽","hint":"Ваша скидка −10 % навсегда: −199 ₽ от подписки — применяется сама, вводить ничего не нужно."}
+PASS владелец «Лавки» входит (1280)
+PASS 1280: /promo/LAVKA10 с входом → /settings/subscription?promo=LAVKA10, код применён {"url":"http://localhost:3191/settings/subscription?promo=LAVKA10","applied":"Промокод LAVKA10 применён: −199 ₽ от подписки.","plan":{"personal":"true","source":"code","old":"1 990 ₽","now":"1 791 ₽","badge":"Промокод LAVKA10: −10 % навсегда"}}
+PASS 1280: чужой персональный код на странице тарифа — «выдан другой организации» {"pageError":"Этот промокод персональный — он выдан другой организации"}
+PASS 1280: чужой персональный код на /order — отказ {"orderError":"Этот промокод персональный — он выдан другой организации"}
+PASS создание заказа с чужим персональным кодом — 400, сервер отказал {"status":400,"body":{"error":"Этот промокод персональный — он выдан другой организации"}}
+PASS без входа по чужой почте — тоже отказ {"status":400,"anonBody":{"error":"Этот промокод персональный — он выдан другой организации"}}
+PASS владелец «Лавки» входит (390)
+PASS 390: /promo/LAVKA10 с входом → /settings/subscription?promo=LAVKA10, код применён {"url":"http://localhost:3191/settings/subscription?promo=LAVKA10","applied":"Промокод LAVKA10 применён: −199 ₽ от подписки.","plan":{"personal":"true","source":"code","old":"1 990 ₽","now":"1 791 ₽","badge":"Промокод LAVKA10: −10 % навсегда"}}
+PASS 390: чужой персональный код на странице тарифа — «выдан другой организации» {"pageError":"Этот промокод персональный — он выдан другой организации"}
+PASS 390: чужой персональный код на /order — отказ {"orderError":"Этот промокод персональный — он выдан другой организации"}
+PASS ROOT входит
+PASS ROOT API: коды E2E500 (−500 ₽) и E2E5 (−5 %)
+PASS выгоднейший из двух: −500 ₽ лучше −10 % навсегда — применён код, пояснение {"applied":{"source":"code","code":"E2E500","kind":"fixed","value":500,"lifetime":false,"discountRub":500,"lifetimeDiscountId":null,"label":"Промокод E2E500: −500 ₽"},"notice":"Промокод E2E500 выгоднее вашей скидки навсегда (−10 %) — применили его к этой оплате. Скидки не складываются: следующие оплаты — снова со скидкой навсегда."}
+PASS выгоднейший из двух: −5 % хуже — осталась скидка навсегда, пояснение {"applied":{"source":"lifetime","code":"ROMASHKA10-2","kind":"percent","value":10,"lifetime":true,"discountRub":199,"lifetimeDiscountId":"cmumryar2001y1c9m1f1skewz","label":"Ваша скидка −10 % навсегда"},"notice":"Ваша скидка навсегда (−10 %) выгоднее промокода E2E5 — применили её. Скидки не складываются."}
+PASS 390: /order с E2E500 при скидке навсегда — к оплате 1 490 ₽ (коды не складываются) {"total":"1 490 ₽"}
+PASS ROOT: в списке пометки «навсегда», «персональный», метка рассылки {"guestRow":"ROMASHKA10навсегдаперсональныйрассылка e2e-kp-2026-10e2e КП · Кафе «Ромашка»−10 %до 28.12.20261 / 1pp-guest1280-mumrvoll@example.comИзменитьОтключить"}
+PASS ROOT: фильтр «персональные» — только персональные коды (3 из всех) {"allCount":6,"personalCount":3}
+PASS ROOT: правка — «навсегда», персональная почта (нижний регистр), метка рассылки {"lifetime":true,"personalEmail":"partner-mumrvoll@example.com","campaignId":"e2e-edit"}
+PASS ROOT: раздел «Скидки навсегда» — два аккаунта, с какого заказа {"lifetimeRows":2}
+PASS ROOT: «Отменить» с подтверждением — revokedAt, аудит, лог {"revoked":{"revokedAt":"2026-09-29T11:34:43.737Z","revokedById":"rootmumrvoll"},"audits":1}
+PASS /root/audit: «Промокод создан/изменён», «Скидка навсегда закреплена/отменена»
+PASS после отмены: /order у аккаунта — 1 990 ₽, без скидки навсегда {"total":"1 990 ₽"}
+
+47 passed, 0 failed, page errors: 0, dev reloads: 0
+exit=0

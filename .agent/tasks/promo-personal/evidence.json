@@ -1,0 +1,49 @@
+{
+  "task": "promo-personal",
+  "branch": "feat/promo-personal-2026-09-29",
+  "base": "2c619b4f",
+  "commits": [
+    "c4a08965",
+    "33cabb2a",
+    "275a9568",
+    "91fab143",
+    "7b1f4379",
+    "1d593320"
+  ],
+  "acceptance": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS"
+  },
+  "checks": {
+    "typecheck": "PASS",
+    "tests": {
+      "command": "npm run test:gate",
+      "pass": 2903,
+      "fail": 0
+    },
+    "newUnitTests": 60,
+    "e2e": {
+      "passed": 47,
+      "failed": 0,
+      "pageErrors": 0,
+      "robokassaHosts": [
+        "auth.robokassa.ru"
+      ],
+      "viewports": [
+        390,
+        1280
+      ]
+    }
+  },
+  "evidence": {
+    "screenshots": 23,
+    "raw": [
+      "raw/e2e-results.json",
+      "raw/e2e-run.log",
+      "raw/seed-codes.json",
+      "raw/server-log-promo.txt"
+    ]
+  }
+}

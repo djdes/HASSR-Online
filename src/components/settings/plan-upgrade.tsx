@@ -20,6 +20,7 @@ import {
   type CatalogPlanId,
 } from "@/lib/plan-catalog";
 import { PlanCard } from "@/components/pricing/plan-card";
+import type { PersonalDiscount } from "@/components/pricing/promo-price";
 import { applyPromotion, type AppliedPromotion } from "@/lib/promo/promotions";
 
 /** Что даёт железо — те же три пункта, что в карточке на лендинге. */
@@ -50,6 +51,13 @@ type Props = {
   subscriptionMonthly: number;
   /** Действующая акция (сервер) — цена подписки зачёркивается. */
   subscriptionPromotion?: AppliedPromotion | null;
+  /**
+   * Промокод или скидка навсегда (сервер, `resolveCheckoutDiscount`) —
+   * поверх акции, та же сумма уйдёт в заказ.
+   */
+  subscriptionDiscount?: PersonalDiscount | null;
+  /** Куда ведёт «Оплатить картой» — с `promo=`, если код применён. */
+  payHref?: string;
 };
 
 /**
@@ -70,6 +78,8 @@ export function PlanUpgrade({
   hardwareFromRub,
   subscriptionMonthly,
   subscriptionPromotion = null,
+  subscriptionDiscount = null,
+  payHref = "/order?plan=monthly",
 }: Props) {
   const [hardwareOpen, setHardwareOpen] = useState(false);
 
@@ -150,6 +160,7 @@ export function PlanUpgrade({
                   ? applyPromotion(subscriptionMonthly, subscriptionPromotion)
                   : undefined
               }
+              personal={isPaidPlan ? subscriptionDiscount : null}
               period={plan.priceHint}
               pointsIntro={
                 plan.inheritsFrom ? `Всё из «${plan.inheritsFrom}», плюс:` : undefined
@@ -166,7 +177,7 @@ export function PlanUpgrade({
               }
               // Бесплатный тариф покупать негде: он и так доступен.
               ctaDisabled={isCurrent || !isPaidPlan}
-              ctaHref="/order?plan=monthly"
+              ctaHref={payHref}
             />
           );
         })}

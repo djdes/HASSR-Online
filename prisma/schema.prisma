@@ -26,6 +26,8 @@ model Account {
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
   organizations      Organization[]
+  /// Скидка навсегда (lifetime-промокод, привязан первой оплатой).
+  lifetimeDiscount   AccountLifetimeDiscount?
 }
 
 /// Членство человека в организации сверх «домашней» (`User.organizationId`).
@@ -2720,6 +2722,10 @@ model PaymentOrder {
   promotionPercent       Int?
   /// Скидка по акции в рублях (от baseRub).
   promotionDiscountRub   Int              @default(0)
+  /// Скидка навсегда аккаунта применилась к заказу сама, без ввода кода:
+  /// id AccountLifetimeDiscount. promoCode/discountRub тогда — код этой
+  /// привязки и её скидка; такой заказ не считается использованием кода.
+  lifetimeDiscountId     String?
   partnerAccruals        PartnerAccrual[]
 
   @@index([email])
@@ -2729,6 +2735,8 @@ model PaymentOrder {
   @@index([recurringChargeOf])
   /// Оплаты по акции для ROOT (/root/promotions).
   @@index([promotionId])
+  /// Оплаты со скидкой навсегда для ROOT (/root/promo-codes).
+  @@index([lifetimeDiscountId])
 }
 
 /// История согласий на автоматические списания.
@@ -3559,8 +3567,48 @@ model PromoCode {
   /// Только организациям без оплаченных заказов.
   newClientsOnly Boolean   @default(false)
   note           String?
+  /// Скидка навсегда: первая оплаченная подписка с этим кодом привязывает
+  /// скидку к аккаунту (AccountLifetimeDiscount), дальше она применяется
+  /// к каждой оплате сама. Правка кода привязанные скидки не меняет.
+  lifetime       Boolean   @default(false)
+  /// Персональный код: только для этой почты (в нижнем регистре) и/или
+  /// организации (lib/promo/rules.ts → personalCodeMatches).
+  personalEmail  String?
+  organizationId String?
+  /// Метка рассылки или КП, из которой выдан код. Просто строка, без связи.
+  campaignId     String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+  lifetimeBindings AccountLifetimeDiscount[]
+
+  @@index([campaignId])
+  @@index([organizationId])
+}
+
+/// Скидка навсегда, привязанная к аккаунту первой оплаченной подпиской с
+/// lifetime-промокодом (lib/promo/lifetime.ts, вызов из fulfillPaidOrder).
+/// Вид и размер — снимком на момент привязки: правка кода потом не меняет
+/// уже привязанные скидки. Одна строка на аккаунт; отмена ROOT —
+/// revokedAt/revokedById (новая привязка переписывает строку, история
+/// остаётся в AuditLog).
+model AccountLifetimeDiscount {
+  id          String    @id @default(cuid())
+  accountId   String    @unique
+  account     Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  promoCodeId String
+  promoCode   PromoCode @relation(fields: [promoCodeId], references: [id])
+  /// Код строкой — снимок для ROOT, логов и описания заказа.
+  code        String
+  /// "percent" | "fixed"
+  kind        String
+  value       Int
+  /// Заказ (PaymentOrder.id), оплатой которого скидка привязана.
+  orderId     Int
+  boundAt     DateTime  @default(now())
+  revokedAt   DateTime?
+  revokedById String?
+
+  @@index([promoCodeId])
 }
 
 /// Акция на подписку: процентная скидка в окне дат. На сайте старая цена

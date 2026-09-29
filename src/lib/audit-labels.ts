@@ -202,6 +202,8 @@ export const AUDIT_ACTION_LABELS: Record<string, AuditActionLabel> = {
   "billing.transition.silent_free": { label: "Бесплатный тариф после бесплатного периода", variant: "secondary" },
   "billing.transition.reminder": { label: "Напоминание выбрать тариф", variant: "outline" },
   "billing.free_period.updated": { label: "Настройки бесплатного периода", variant: "secondary" },
+  "promo.lifetime.bind": { label: "Скидка навсегда закреплена", variant: "default" },
+  "promo.lifetime.revoke": { label: "Скидка навсегда отменена", variant: "destructive" },
   "staff.restored": { label: "Сотрудник возвращён из архива", variant: "default" },
 
   // --- Резервные копии ----------------------------------------------------
@@ -257,6 +259,8 @@ const ENTITY_LABELS_LOWER: Record<string, string> = {
   webhook: "Вебхук",
   invoice: "Счёт",
   subscription: "Подписка",
+  accountlifetimediscount: "Скидка навсегда",
+  promocode: "Промокод",
   account: "Аккаунт",
   platform_setting: "Настройки платформы",
   idea: "Идея",
