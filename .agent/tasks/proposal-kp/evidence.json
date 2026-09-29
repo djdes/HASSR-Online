@@ -1,0 +1,44 @@
+{
+ "task": "proposal-kp",
+ "branch": "feat/proposal-kp-2026-09-29",
+ "commits": [
+  "bc2aa7cb",
+  "8bda0995",
+  "1f455ddd",
+  "4a94c05c",
+  "86319b95"
+ ],
+ "acceptance": {
+  "AC1": "PASS",
+  "AC2": "PASS",
+  "AC3": "PASS",
+  "AC4": "PASS"
+ },
+ "chosenComposition": "A",
+ "pdfMatrix": {
+  "pdfs": 96,
+  "failures": 0,
+  "onePage": true,
+  "textOutsideMargins": 0,
+  "qrShots": 960,
+  "scaleMin": 0.906,
+  "scaleMax": 0.981,
+  "qrModuleMmMin": 0.747
+ },
+ "e2e": {
+  "pass": 51,
+  "fail": 0,
+  "pageErrors": 0
+ },
+ "typecheck": "pass",
+ "tests": {
+  "pass": 2936,
+  "fail": 0
+ },
+ "artifacts": {
+  "png": "png/",
+  "compare": "compare/",
+  "screens": "evidence/",
+  "raw": "raw/"
+ }
+}

@@ -155,6 +155,16 @@ const nextConfig: NextConfig = {
       { key: "X-Frame-Options", value: "DENY" },
     ];
 
+    // PDF коммерческого предложения (/kp/<токен>/pdf) ROOT-генератор
+    // показывает во встроенном просмотре на своей же странице
+    // (/root/proposals). DENY запрещает даже свой origin — здесь SAMEORIGIN:
+    // чужой сайт по-прежнему не встроит.
+    const proposalPdfHeaders = [
+      ...commonSecurityHeaders,
+      permissionsPolicy("()"),
+      { key: "X-Frame-Options", value: "SAMEORIGIN" },
+    ];
+
     return [
       {
         // Mini App: разрешаем embedding в Telegram Web.
@@ -174,6 +184,10 @@ const nextConfig: NextConfig = {
         headers: objectStickerHeaders,
       },
       {
+        source: "/kp/:token/pdf",
+        headers: proposalPdfHeaders,
+      },
+      {
         // Все остальные пути (кроме /mini, /mini/*) — security headers
         // + frame DENY. Negative lookahead через regex-source: Next.js
         // применяет ВСЕ matching rules одновременно, поэтому без
@@ -187,7 +201,8 @@ const nextConfig: NextConfig = {
         // показывает собственный образец во встроенном просмотре, а
         // X-Frame-Options: DENY запрещает даже свой же origin. В файле
         // нет ни сессии, ни чужих данных — вставлять его безопасно.
-        source: "/((?!mini(?:$|/)|api/journal-samples|equipment-fill/|room-fill/).*)",
+        // kp/<токен>/pdf — встроенный просмотр КП в ROOT (SAMEORIGIN выше).
+        source: "/((?!mini(?:$|/)|api/journal-samples|equipment-fill/|room-fill/|kp/[^/]+/pdf$).*)",
         headers: denyFrameHeaders,
       },
       {
@@ -219,8 +234,11 @@ const nextConfig: NextConfig = {
         // `b/<код>/badge.svg` — публичный бейдж, который вставляют на чужие
         // сайты; маршрут сам ставит `public, max-age=900`, иначе картинка
         // качалась бы при каждом показе страницы клиента.
+        //
+        // `api/kp/qr/` — QR в письме с КП: картинка зависит только от адреса,
+        // маршрут ставит `public, immutable` — почтовые прокси её кэшируют.
         source:
-          "/((?!_next/static|_next/image|api/journal-samples|api/journal-previews|journal-samples/|brand/|icons/|uploads/|favicon\\.ico|manifest\\.json|sw\\.js|robots\\.txt|sitemap\\.xml|screenshots/|b/[a-z0-9]+/badge\\.svg|og/image|og-default|blog/feed\\.xml|whats-new/feed\\.xml).*)",
+          "/((?!_next/static|_next/image|api/journal-samples|api/journal-previews|api/kp/qr/|journal-samples/|brand/|icons/|uploads/|favicon\\.ico|manifest\\.json|sw\\.js|robots\\.txt|sitemap\\.xml|screenshots/|b/[a-z0-9]+/badge\\.svg|og/image|og-default|blog/feed\\.xml|whats-new/feed\\.xml).*)",
         headers: [
           {
             key: "Cache-Control",
