@@ -4,7 +4,8 @@ import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId, isImpersonating } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
-import { resolvePromo } from "@/lib/promo/service";
+import { resolveCheckoutDiscount } from "@/lib/promo/checkout";
+import { discountLabel } from "@/lib/promo/discounts";
 import { getSubscriptionOffer } from "@/lib/promo/offer";
 import { computeCheckoutAmounts, orderDiscountNote } from "@/lib/promo/promotions";
 import { TARIFF_BUNDLE } from "@/lib/tariffs";
@@ -158,54 +159,62 @@ export async function POST(request: NextRequest) {
       : null;
   const usePoints =
     body.usePoints !== false && !recurringConsent && Boolean(organizationId);
-  // Промокод: скидка от цены подписки С АКЦИЕЙ, считается здесь, не в
-  // браузере. Неподходящий код — ошибка, а не молчаливая оплата без скидки.
+  // Скидка поверх акции: введённый промокод или скидка навсегда аккаунта,
+  // который продлит заказ, — выгоднейшая из двух, не вместе
+  // (lib/promo/checkout.ts). Считается здесь, не в браузере. Неподходящий
+  // или чужой персональный код — ошибка, а не молчаливая оплата без скидки.
   const promoRaw = typeof body.promoCode === "string" ? body.promoCode : "";
-  let promoCode: string | null = null;
-  let promoRule: { kind: "percent" | "fixed"; value: number } | null = null;
-  if (promoRaw.trim()) {
-    const promo = await resolvePromo(promoRaw, {
-      organizationId,
-      subscriptionRub: offer.priceRub,
-      email,
-      now,
-    });
-    if (!promo.ok) return NextResponse.json({ error: promo.message }, { status: 400 });
-    promoCode = promo.code;
-    promoRule = promo.rule;
-  }
+  const discount = await resolveCheckoutDiscount({
+    promoRaw,
+    organizationId,
+    email,
+    offerRub: offer.priceRub,
+    now,
+    scope: "order",
+  });
+  if (!discount.ok) return NextResponse.json({ error: discount.message }, { status: 400 });
+  const applied = discount.applied;
+  const promoCode = applied?.code ?? null;
   const amounts = computeCheckoutAmounts({
     baseRub: offer.baseRub,
     promotion: offer.promotion,
-    promo: promoRule,
+    promo: applied ? { kind: applied.kind, value: applied.value } : null,
     hardwareRub,
   });
 
   // Сверка с тем, что человек видел на странице (см. комментарий вверху).
+  // Разбивку отдаём клиенту: без входа страница не знает о скидке навсегда
+  // почты заказа — покажет новую сумму и отправит её сверкой.
   const expectedGrossRub = body.expectedGrossRub;
   if (typeof expectedGrossRub === "number" && Math.round(expectedGrossRub) !== amounts.grossRub) {
     console.info(
-      `[promo] order refused: price changed (expected ${expectedGrossRub} ₽, now ${amounts.grossRub} ₽, promotion ${offer.promotion?.id ?? "none"})`,
+      `[promo] order refused: price changed (expected ${expectedGrossRub} ₽, now ${amounts.grossRub} ₽, promotion ${offer.promotion?.id ?? "none"}, discount ${applied ? `${applied.source} ${applied.code} −${applied.discountRub}` : "none"})`,
     );
     return NextResponse.json(
       {
-        error: offer.promotion
-          ? "Цена изменилась: действует акция. Проверьте новую сумму и нажмите ещё раз"
-          : "Цена изменилась: акция уже закончилась. Проверьте новую сумму и нажмите ещё раз",
+        error:
+          applied?.source === "lifetime"
+            ? "Для этой почты действует скидка навсегда — сумма пересчитана. Проверьте её и нажмите ещё раз"
+            : offer.promotion
+              ? "Цена изменилась: действует акция. Проверьте новую сумму и нажмите ещё раз"
+              : "Цена изменилась: акция уже закончилась. Проверьте новую сумму и нажмите ещё раз",
         code: "price-changed",
         grossRub: amounts.grossRub,
+        discount: applied ? { ...applied, label: discountLabel(applied) } : null,
+        notice: discount.notice,
       },
       { status: 409 },
     );
   }
 
-  // Описание заказа с акцией и промокодом — оно же в чеке, УПД и ответе
+  // Описание заказа с акцией и скидкой — оно же в чеке, УПД и ответе
   // клиенту.
   const discountNote = orderDiscountNote({
     promotion: offer.promotion,
     promotionDiscountRub: amounts.promotionDiscountRub,
     promoCode,
     promoDiscountRub: amounts.promoDiscountRub,
+    lifetime: applied ? (applied.source === "lifetime" ? "auto" : applied.lifetime ? "code" : null) : null,
   });
   const orderDescription = discountNote
     ? `${description} (${discountNote})`
@@ -230,6 +239,7 @@ export async function POST(request: NextRequest) {
     subscriptionRub: amounts.subscriptionRub,
     promoCode,
     discountRub: amounts.promoDiscountRub,
+    lifetimeDiscountId: applied?.lifetimeDiscountId ?? null,
     baseRub: amounts.baseRub,
     promotionId: offer.promotion?.id ?? null,
     promotionPercent: offer.promotion?.percent ?? null,
@@ -246,7 +256,9 @@ export async function POST(request: NextRequest) {
       (offer.promotion
         ? ` → promotion ${offer.promotion.id} −${offer.promotion.percent}% = ${amounts.offerRub} ₽`
         : "") +
-      (promoCode ? ` → promo ${promoCode} −${amounts.promoDiscountRub} ₽` : "") +
+      (promoCode
+        ? ` → ${applied?.source === "lifetime" ? "lifetime (auto)" : applied?.lifetime ? "promo (lifetime)" : "promo"} ${promoCode} −${amounts.promoDiscountRub} ₽`
+        : "") +
       (amounts.hardwareRub ? ` + hardware ${amounts.hardwareRub} ₽` : "") +
       ` = ${amounts.grossRub} ₽, points ${order.pointsSpent}, to pay ${order.amountRub} ₽`,
   );
