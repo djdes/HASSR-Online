@@ -338,20 +338,31 @@ export async function cancelCampaign(id: string, actor: MailingActor): Promise<C
       data: channelSet(c, "skipped", "Рассылка отменена"),
     });
   }
-  // Кому что-то уже ушло — «отправлено», остальным — «отменено».
-  await db.mailingRecipient.updateMany({
-    where: {
-      campaignId: id,
-      isTest: false,
-      status: "queued",
-      OR: MAILING_CHANNELS.map((c) => channelIs(c, "sent")),
-    },
-    data: { status: "sent" },
+  // Кому что-то уже ушло — «отправлено», остальным — «отменено». Кого
+  // очередь отправляет прямо сейчас («sending»), не трогаем: итог запишет
+  // она. Разбор — в коде, а не условием NOT в SQL: у неиспользуемых
+  // каналов статус NULL, и `NOT (col = 'sending')` для них не истина.
+  const pending = await db.mailingRecipient.findMany({
+    where: { campaignId: id, isTest: false, status: "queued" },
+    select: { id: true, emailStatus: true, inAppStatus: true, pushStatus: true, telegramStatus: true },
   });
-  const cancelled = await db.mailingRecipient.updateMany({
-    where: { campaignId: id, isTest: false, status: "queued", NOT: MAILING_CHANNELS.map((c) => channelIs(c, "sending")) },
-    data: { status: "cancelled", nextAttemptAt: null },
-  });
+  const sentIds: string[] = [];
+  const cancelIds: string[] = [];
+  for (const row of pending) {
+    const statuses = [row.emailStatus, row.inAppStatus, row.pushStatus, row.telegramStatus];
+    if (statuses.includes("sending")) continue;
+    (statuses.includes("sent") ? sentIds : cancelIds).push(row.id);
+  }
+  for (let i = 0; i < sentIds.length; i += 1000) {
+    await db.mailingRecipient.updateMany({ where: { id: { in: sentIds.slice(i, i + 1000) } }, data: { status: "sent" } });
+  }
+  for (let i = 0; i < cancelIds.length; i += 1000) {
+    await db.mailingRecipient.updateMany({
+      where: { id: { in: cancelIds.slice(i, i + 1000) } },
+      data: { status: "cancelled", nextAttemptAt: null },
+    });
+  }
+  const cancelled = { count: cancelIds.length };
   await refreshCampaignCounters(id);
   const fresh = await db.mailingCampaign.findUniqueOrThrow({ where: { id } });
   console.info(`[mailing] campaign=${id} status ${campaign.status} → cancelled (не отправлено: ${cancelled.count}) by ${who(actor)}`);

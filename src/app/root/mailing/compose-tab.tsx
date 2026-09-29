@@ -28,20 +28,13 @@ import {
   type MailingChannels,
 } from "@/lib/mailing/labels";
 import type { RenderedMailing } from "@/lib/mailing/templates";
+import { pluralRu } from "@/lib/plural-ru";
 import { cn } from "@/lib/utils";
 
 import { CARD, CHANNEL_ICONS, CHECKBOX, INPUT, Notice, OUTLINE, PRIMARY, SECTION_LABEL, api } from "./ui";
 import type { MailingPageData, MailingTab } from "./types";
 
 type PreviewState = { label: string; rendered: RenderedMailing } | { error: string } | null;
-
-function plural(n: number, one: string, few: string, many: string): string {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (mod10 === 1 && mod100 !== 11) return one;
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
-  return many;
-}
 
 export function ComposeTab({
   data,
@@ -185,7 +178,7 @@ export function ComposeTab({
       });
       toast.success(
         mode === "now"
-          ? `Рассылка запущена: ${r.stats.recipients} ${plural(r.stats.recipients, "получатель", "получателя", "получателей")}`
+          ? `Рассылка запущена: ${r.stats.recipients} ${pluralRu(r.stats.recipients, "получатель", "получателя", "получателей")}`
           : `Рассылка запланирована на ${scheduledAt.replace("T", " ")} МСК`
       );
       setConfirm(null);
@@ -197,6 +190,8 @@ export function ComposeTab({
   }
 
   const noRecipients = selectedTotal === 0;
+  // Охват считается сразу по всем каналам; контактам нужен канал «Почта».
+  const recipientsCount = reach ? reach.users + (channels.email ? reach.contacts : 0) : null;
   const kindLabel = data.kinds.find((k) => k.kind === kind)?.label ?? kind;
 
   return (
@@ -210,11 +205,17 @@ export function ComposeTab({
               </span>
               <div>
                 <div className="text-[16px] font-semibold text-[#0b1024]" data-testid="compose-recipients">
-                  {noRecipients ? "Получатели не выбраны" : `Получатели: ${selectedTotal}`}
+                  {noRecipients
+                    ? "Получатели не выбраны"
+                    : recipientsCount !== null
+                      ? `Получателей: ${recipientsCount}`
+                      : `Выбрано: ${selectedTotal}`}
                 </div>
                 <div className="text-[13px] text-[#6f7282]">
-                  пользователей {userIds.size} · контактов {contactIds.size}
-                  {reach && reach.duplicates > 0 ? ` · совпали по почте: ${reach.duplicates}` : ""}
+                  выбрано пользователей {userIds.size} · контактов {contactIds.size}
+                  {reach && reach.duplicates > 0 ? ` · совпали по почте и считаются один раз: ${reach.duplicates}` : ""}
+                  {reach && reach.missing > 0 ? ` · не найдены (удалены или отключены): ${reach.missing}` : ""}
+                  {reach && reach.contacts > 0 && !channels.email ? " · контактам письмо не уйдёт: не отмечена «Почта»" : ""}
                 </div>
               </div>
             </div>
@@ -315,7 +316,7 @@ export function ComposeTab({
               Скорость: до {data.settings.perMinute} писем в минуту и {data.settings.perDay} в сутки. Сегодня уже ушло{" "}
               {data.sentToday}.
               {channels.email && emailQueued > 0
-                ? ` Этой рассылке — ${emailQueued} ${plural(emailQueued, "письмо", "письма", "писем")}: около ${minutes} мин.${
+                ? ` Этой рассылке — ${emailQueued} ${pluralRu(emailQueued, "письмо", "письма", "писем")}: около ${minutes} мин.${
                     emailQueued > leftToday ? " Часть уйдёт завтра — сработает суточный лимит." : ""
                   }`
                 : ""}
@@ -457,7 +458,7 @@ export function ComposeTab({
         description={`«${title || "Без названия"}» · ${kindLabel}. После запуска текст менять нельзя — только отменить.`}
         bullets={[
           {
-            label: `Получателей: ${reach?.recipients ?? selectedTotal}${reach && reach.duplicates ? ` (совпали по почте: ${reach.duplicates})` : ""}`,
+            label: `Получателей: ${recipientsCount ?? selectedTotal}${reach && reach.duplicates ? ` (совпали по почте: ${reach.duplicates})` : ""}`,
           },
           {
             label: `Каналы: ${MAILING_CHANNELS.filter((c) => channels[c]).map((c) => CHANNEL_LABELS[c]).join(", ")}`,

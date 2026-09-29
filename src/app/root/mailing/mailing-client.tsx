@@ -178,10 +178,8 @@ export function MailingClient({ data }: { data: MailingPageData }) {
   }
 
   function onLaunched(id: string) {
-    setCompose(composeFrom(data, null));
-    setUserIds(new Set());
-    setContactIds(new Set());
-    setSavedAt(null);
+    // Сразу в карточку. Форму не сбрасываем: смена состояния запустила бы
+    // синхронизацию адреса (replaceState) и перебила бы переход роутера.
     router.push(`/root/mailing/${id}`);
   }
 

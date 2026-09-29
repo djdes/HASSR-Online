@@ -453,7 +453,8 @@ export async function deliverRecipient(
     if (outcome.kind === "sent") {
       anySent = true;
       if (outcome.dryRun) dryRun = true;
-      note(channel, "sent", outcome.note ?? null, outcome.dryRun);
+      // У сухой отправки пометка лишняя — это видно по значку «сухая».
+      note(channel, "sent", outcome.dryRun ? null : (outcome.note ?? null), outcome.dryRun);
       if (channel === "email") {
         patch.emailSentAt = now;
         if (r.contactId) await store.markContactSent(r.contactId, now);

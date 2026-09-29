@@ -23,6 +23,7 @@ import type { ContactDto, ImportPreview } from "@/lib/mailing/contacts.server";
 import { CONTACT_FIELDS, CONTACT_FIELD_LABELS, type ColumnMapping, type ContactField } from "@/lib/mailing/csv";
 import { CONTACT_STATUS_LABELS } from "@/lib/mailing/labels";
 import { ORG_SPHERES } from "@/lib/org-profile";
+import { pluralRu } from "@/lib/plural-ru";
 import { cn } from "@/lib/utils";
 
 import { CARD, CHECKBOX, DANGER_SM, FilterSelect, INPUT, Notice, OUTLINE, OUTLINE_SM, PRIMARY, SECTION_LABEL, api, formatDate } from "./ui";
@@ -780,7 +781,7 @@ function ImportCard({ onImported }: { onImported: () => void }) {
               data-testid="contacts-commit"
             >
               {busy === "commit" ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
-              Загрузить {counts.new} {counts.new === 1 ? "контакт" : "контактов"}
+              Загрузить {counts.new} {pluralRu(counts.new, "контакт", "контакта", "контактов")}
             </button>
             {!source.trim() || !basis.trim() ? (
               <span className="inline-flex items-center gap-1.5 text-[13px] text-[#a16d32]">
