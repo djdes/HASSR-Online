@@ -523,14 +523,17 @@ function ChannelRow({
     if (parts.length) line += ` · ${parts.join(", ")}`;
   } else if (channel === "inApp") {
     line = `Дойдёт до ${reach.channels.inApp.queued} — только пользователи${selectedContacts ? `, контакты (${reach.contacts}) не получат` : ""}`;
+    if (reach.channels.inApp.optedOut) line += ` · отписались ${reach.channels.inApp.optedOut}`;
   } else if (channel === "push") {
     const p = reach.channels.push;
     line = `Дойдёт до ${p.queued} из ${reach.users} · веб-push подключён у ${p.webSubs}, приложение у ${p.appDevices}`;
+    if (p.optedOut) line += ` · отписались ${p.optedOut}`;
     if (!p.appConfigured) warn = "Firebase не настроен — в приложение push не уходит";
     if (!p.webConfigured) warn = [warn, "веб-push на сервере не настроен"].filter(Boolean).join("; ");
   } else {
     const t = reach.channels.telegram;
     line = `Дойдёт до ${t.queued} из ${reach.users} — у кого привязан бот`;
+    if (t.optedOut) line += ` · отписались ${t.optedOut}`;
     if (!t.botConfigured) warn = "Бот Telegram не настроен на сервере";
   }
   const ok = !reach || (channel === "email" ? reach.channels.email.queued : channel === "inApp" ? reach.channels.inApp.queued : channel === "push" ? reach.channels.push.queued : reach.channels.telegram.queued) > 0;

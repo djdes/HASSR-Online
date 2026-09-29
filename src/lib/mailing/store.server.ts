@@ -244,9 +244,12 @@ export function createPrismaQueueStore(): MailingQueueStore {
     },
 
     async suppressedEmails(emails) {
-      if (emails.length === 0) return new Set();
-      const rows = await db.emailSuppression.findMany({ where: { email: { in: emails } }, select: { email: true } });
-      return new Set(rows.map((r) => r.email));
+      if (emails.length === 0) return new Map();
+      const rows = await db.emailSuppression.findMany({
+        where: { email: { in: emails } },
+        select: { email: true, reason: true },
+      });
+      return new Map(rows.map((r) => [r.email, r.reason]));
     },
 
     async optedOutUsers(userIds) {

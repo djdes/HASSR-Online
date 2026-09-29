@@ -36,7 +36,8 @@ const FIELD: Record<MailingChannel, "emailStatus" | "inAppStatus" | "pushStatus"
 class MemoryStore implements MailingQueueStore {
   campaigns = new Map<string, StoredCampaign>();
   recipients: StoredRecipient[] = [];
-  suppressed = new Set<string>();
+  /** Стоп-лист: адрес → причина. */
+  suppressed = new Map<string, string>();
   optedOut = new Set<string>();
   contacts = new Map<string, string>();
   bounced: string[] = [];
@@ -167,7 +168,7 @@ class MemoryStore implements MailingQueueStore {
     return this.recipients.filter((r) => !r.isTest && r.emailSentAt && r.emailSentAt >= since).length;
   }
   async suppressedEmails(emails: string[]) {
-    return new Set(emails.filter((e) => this.suppressed.has(e)));
+    return new Map(emails.filter((e) => this.suppressed.has(e)).map((e) => [e, this.suppressed.get(e) as string]));
   }
   async optedOutUsers(userIds: string[]) {
     return new Set(userIds.filter((id) => this.optedOut.has(id)));
@@ -269,7 +270,7 @@ const T0 = new Date("2026-09-29T09:00:00Z");
 const at = (ms: number) => new Date(T0.getTime() + ms);
 
 describe("стоп-лист и отписка → skipped", () => {
-  it("письмо пропускается, остальные каналы уходят", async () => {
+  it("письмо пропускается; адрес «не принимает почту» — остальные каналы уходят", async () => {
     const store = new MemoryStore();
     store.addCampaign({ id: "c1" });
     const both = { emailStatus: "queued" as ChannelStatus, inAppStatus: "queued" as ChannelStatus };
@@ -278,7 +279,7 @@ describe("стоп-лист и отписка → skipped", () => {
     store.add({ id: "contact", contactId: "k1", email: "k@a.ru", emailStatus: "queued" });
     store.add({ id: "ok", userId: "u3", email: "ok@a.ru", ...both });
     store.add({ id: "nomail", userId: "u4", email: null, ...both });
-    store.suppressed.add("stop@a.ru");
+    store.suppressed.set("stop@a.ru", "bounced");
     store.optedOut.add("u2");
     store.contacts.set("k1", "unsubscribed");
     const { senders, calls } = fakeSenders();
@@ -290,6 +291,7 @@ describe("стоп-лист и отписка → skipped", () => {
     assert.equal(store.get("stop").inAppStatus, "sent");
     assert.equal(store.get("optout").emailStatus, "skipped");
     assert.equal(store.get("optout").errors.email, "Отписался от новостей и предложений");
+    assert.equal(store.get("optout").inAppStatus, "skipped");
     assert.equal(store.get("contact").emailStatus, "skipped");
     assert.equal(store.get("contact").status, "skipped");
     assert.equal(store.get("nomail").emailStatus, "skipped");
@@ -300,6 +302,51 @@ describe("стоп-лист и отписка → skipped", () => {
     );
     assert.equal(report.sent.email, 1);
     assert.deepEqual(report.finishedCampaigns, ["c1"]);
+  });
+
+  it("отписка — во ВСЕХ каналах: почта, колокольчик, push, Telegram (38-ФЗ ст. 18)", async () => {
+    const store = new MemoryStore();
+    store.addCampaign({ id: "c1" });
+    const all = {
+      emailStatus: "queued" as ChannelStatus,
+      inAppStatus: "queued" as ChannelStatus,
+      pushStatus: "queued" as ChannelStatus,
+      telegramStatus: "queued" as ChannelStatus,
+    };
+    store.add({ id: "optout", userId: "u1", email: "opt@a.ru", ...all });
+    store.add({ id: "unsub", userId: "u2", email: "unsub@a.ru", ...all });
+    store.add({ id: "spam", userId: "u3", email: "spam@a.ru", ...all });
+    store.add({ id: "manual", userId: "u4", email: "manual@a.ru", ...all });
+    store.add({ id: "bounced", userId: "u5", email: "bounced@a.ru", ...all });
+    store.add({ id: "ok", userId: "u6", email: "ok@a.ru", ...all });
+    store.optedOut.add("u1");
+    store.suppressed.set("unsub@a.ru", "unsubscribed");
+    store.suppressed.set("spam@a.ru", "complained");
+    store.suppressed.set("manual@a.ru", "manual");
+    store.suppressed.set("bounced@a.ru", "bounced");
+    const { senders, calls } = fakeSenders();
+
+    await runQueuePass(deps(store, senders, T0));
+
+    const channels = (id: string) => {
+      const r = store.get(id);
+      return [r.emailStatus, r.inAppStatus, r.pushStatus, r.telegramStatus];
+    };
+    for (const id of ["optout", "unsub", "spam", "manual"]) {
+      assert.deepEqual(channels(id), ["skipped", "skipped", "skipped", "skipped"], id);
+      assert.equal(store.get(id).status, "skipped", id);
+    }
+    assert.equal(store.get("optout").errors.telegram, "Отписался от новостей и предложений");
+    assert.equal(store.get("optout").errors.push, "Отписался от новостей и предложений");
+    assert.equal(store.get("unsub").errors.inApp, "Адрес в стоп-листе");
+    // «Не принимает почту» — не отказ от рекламы: теряется только письмо.
+    assert.deepEqual(channels("bounced"), ["skipped", "sent", "sent", "sent"]);
+    assert.deepEqual(channels("ok"), ["sent", "sent", "sent", "sent"]);
+    const to = (list: unknown[]) => list.map((m) => (m as { recipientId: string }).recipientId).sort();
+    assert.deepEqual(to(calls.email), ["ok"]);
+    assert.deepEqual(to(calls.inApp), ["bounced", "ok"]);
+    assert.deepEqual(to(calls.push), ["bounced", "ok"]);
+    assert.deepEqual(to(calls.telegram), ["bounced", "ok"]);
   });
 
   it("канал только для пользователей у контакта — пропуск", async () => {
@@ -577,7 +624,7 @@ describe("тестовая отправка", () => {
     const result = await deliverRecipient(store.get("t1"), campaign, deps(store, senders, T0, { template: () => withNotes }), {
       test: true,
       emailBudget: { remaining: 1 },
-      gate: { suppressed: new Set(), optedOut: new Set(), contactStatus: new Map() },
+      gate: { suppressed: new Map(), optedOut: new Set(), contactStatus: new Map() },
     });
     assert.deepEqual(result.notes, ["Промокод ROMASHKA10 — пример (test)."]);
     const email = calls.email[0] as OutgoingEmail;
@@ -607,7 +654,7 @@ describe("тестовая отправка", () => {
     const result = await deliverRecipient(store.get("t1"), campaign, deps(store, senders, T0), {
       test: true,
       emailBudget: { remaining: 0 },
-      gate: { suppressed: new Set(["root@a.ru"]), optedOut: new Set(["root"]), contactStatus: new Map() },
+      gate: { suppressed: new Map([["root@a.ru", "unsubscribed"]]), optedOut: new Set(["root"]), contactStatus: new Map() },
     });
     assert.equal(result.channels.email?.status, "sent");
     assert.equal(result.channels.push?.status, "skipped");

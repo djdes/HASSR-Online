@@ -149,9 +149,18 @@ export type PlanStats = {
   recipients: number;
   channels: {
     email: { queued: number; noEmail: number; suppressed: number; optedOut: number; inactiveContact: number };
-    inApp: { queued: number };
-    push: { queued: number; skipped: number; webSubs: number; appDevices: number; webConfigured: boolean; appConfigured: boolean };
-    telegram: { queued: number; skipped: number; botConfigured: boolean };
+    /** `optedOut` — отписались от рекламы: им не уходит ни в один канал. */
+    inApp: { queued: number; optedOut: number };
+    push: {
+      queued: number;
+      skipped: number;
+      optedOut: number;
+      webSubs: number;
+      appDevices: number;
+      webConfigured: boolean;
+      appConfigured: boolean;
+    };
+    telegram: { queued: number; skipped: number; optedOut: number; botConfigured: boolean };
   };
 };
 
@@ -214,11 +223,13 @@ export async function planRecipients(selection: AudienceSelection, channels: Mai
     ...users.map((u) => userMarketingEmail(u)),
     ...contacts.map((c) => c.email),
   ].filter((e): e is string => Boolean(e));
-  const suppressed = new Set(
+  // Стоп-лист: адрес → причина. Отписка, жалоба и ручная блокировка
+  // останавливают рекламу во всех каналах, «не принимает почту» — только письмо.
+  const suppressed = new Map(
     allEmails.length
-      ? (await db.emailSuppression.findMany({ where: { email: { in: allEmails } }, select: { email: true } })).map(
-          (r) => r.email
-        )
+      ? (
+          await db.emailSuppression.findMany({ where: { email: { in: allEmails } }, select: { email: true, reason: true } })
+        ).map((r): [string, string] => [r.email, r.reason])
       : []
   );
   const avail = pushAvailability();
@@ -234,9 +245,17 @@ export async function planRecipients(selection: AudienceSelection, channels: Mai
     recipients: 0,
     channels: {
       email: { queued: 0, noEmail: 0, suppressed: 0, optedOut: 0, inactiveContact: 0 },
-      inApp: { queued: 0 },
-      push: { queued: 0, skipped: 0, webSubs: 0, appDevices: 0, webConfigured: avail.webConfigured, appConfigured: avail.appConfigured },
-      telegram: { queued: 0, skipped: 0, botConfigured: bot },
+      inApp: { queued: 0, optedOut: 0 },
+      push: {
+        queued: 0,
+        skipped: 0,
+        optedOut: 0,
+        webSubs: 0,
+        appDevices: 0,
+        webConfigured: avail.webConfigured,
+        appConfigured: avail.appConfigured,
+      },
+      telegram: { queued: 0, skipped: 0, optedOut: 0, botConfigured: bot },
     },
   };
 
@@ -272,23 +291,31 @@ export async function planRecipients(selection: AudienceSelection, channels: Mai
         stats.channels.email.queued += 1;
       }
     }
+    // Отписка от рекламы — во всех каналах (перед отправкой проверяется ещё раз).
+    const stop = email ? suppressed.get(email) : undefined;
+    const optOut =
+      stop && stop !== "bounced" ? "Адрес в стоп-листе" : u.marketingOptOut ? "Отписался от новостей и предложений" : null;
     if (channels.inApp) {
-      d.inAppStatus = "queued";
-      stats.channels.inApp.queued += 1;
+      d.inAppStatus = optOut ? "skipped" : "queued";
+      d.inAppError = optOut;
+      if (optOut) stats.channels.inApp.optedOut += 1;
+      else stats.channels.inApp.queued += 1;
     }
     stats.channels.push.webSubs += u._count.webPushSubscriptions > 0 ? 1 : 0;
     stats.channels.push.appDevices += u._count.mobileDevices > 0 ? 1 : 0;
     if (channels.push) {
-      const reason = pushSkipReason(avail, u._count.webPushSubscriptions, u._count.mobileDevices);
+      const reason = optOut ?? pushSkipReason(avail, u._count.webPushSubscriptions, u._count.mobileDevices);
       d.pushStatus = reason ? "skipped" : "queued";
       d.pushError = reason;
+      if (optOut) stats.channels.push.optedOut += 1;
       if (reason) stats.channels.push.skipped += 1;
       else stats.channels.push.queued += 1;
     }
     if (channels.telegram) {
-      const reason = !u.telegramChatId ? "Telegram не привязан" : !bot ? "Бот Telegram не настроен" : null;
+      const reason = optOut ?? (!u.telegramChatId ? "Telegram не привязан" : !bot ? "Бот Telegram не настроен" : null);
       d.telegramStatus = reason ? "skipped" : "queued";
       d.telegramError = reason;
+      if (optOut) stats.channels.telegram.optedOut += 1;
       if (reason) stats.channels.telegram.skipped += 1;
       else stats.channels.telegram.queued += 1;
     }

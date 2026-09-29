@@ -323,7 +323,8 @@ let keepAlive = null;
     await waitFor(async () => (await sql(`select status from "MailingCampaign" where id = $1`, [second]))[0].status === "done", 90000);
     const secondRows = Object.fromEntries((await recipients(second)).map((r) => [r.email, r]));
     check("Повторная: отписавшийся контакт пропущен", secondRows["ivan.e2e@example.com"]?.emailStatus === "skipped", secondRows["ivan.e2e@example.com"]);
-    check("Повторная: Анна — письмо пропущено (стоп-лист), колокольчик ушёл", secondRows[A.email]?.emailStatus === "skipped" && /стоп-лист|Отписался/.test(secondRows[A.email]?.emailError ?? "") && secondRows[A.email]?.inAppStatus === "sent", secondRows[A.email]);
+    // Отписка останавливает рекламу во всех каналах (решение владельца, 38-ФЗ ст. 18).
+    check("Повторная: Анна отписалась — ни письма, ни колокольчика", secondRows[A.email]?.emailStatus === "skipped" && /стоп-лист|Отписался/.test(secondRows[A.email]?.emailError ?? "") && secondRows[A.email]?.inAppStatus === "skipped", secondRows[A.email]);
     check("Повторная: остальные письма ушли", secondRows["olga.e2e@example.com"]?.emailStatus === "sent", secondRows["olga.e2e@example.com"]);
 
     // ------------------------------------------------ стоп-лист

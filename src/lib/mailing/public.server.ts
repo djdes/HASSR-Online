@@ -10,10 +10,12 @@ import { verifyRecipientToken } from "./tokens";
 /**
  * Публичные действия по ссылкам из писем — без входа, по подписанному
  * токену получателя: отписка (страница и one-click POST) и клик. Плюс
- * переключатель «Новости и предложения на почту» в профиле.
+ * переключатель «Новости и предложения» в профиле.
  *
- * Отписка касается только рекламы: стоп-лист и `marketingOptOut` читает
- * одна рассылка, служебные письма (коды входа, счета) их не видят.
+ * Отписка касается только рекламы, зато во всех каналах рассылки (почта,
+ * колокольчик, push, Telegram): стоп-лист и `marketingOptOut` читает одна
+ * рассылка, служебные письма и уведомления (коды входа, счета, журналы)
+ * их не видят.
  */
 
 /** «iv***@mail.ru» — на публичной странице полный адрес не показываем. */
@@ -133,7 +135,9 @@ export async function getMarketingSubscription(userId: string): Promise<Marketin
   const email = userMarketingEmail(user);
   const stop = email ? await db.emailSuppression.findUnique({ where: { email } }) : null;
   const blockedReason = stop && (stop.reason === "bounced" || stop.reason === "manual") ? stop.reason : null;
-  return { email, subscribed: !user.marketingOptOut && !stop, blockedReason };
+  // «Не принимает почту» — не отказ от рекламы: колокольчик, push и Telegram идут, переключатель работает.
+  const optedOutByList = Boolean(stop && stop.reason !== "bounced");
+  return { email, subscribed: !user.marketingOptOut && !optedOutByList, blockedReason };
 }
 
 /**

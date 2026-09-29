@@ -42,11 +42,12 @@ export default async function UnsubscribePage({ params }: { params: Promise<{ to
             <p className="mt-3 text-[15px] leading-[1.6] text-[#3c4053]">
               {target.maskedEmail ? (
                 <>
-                  Адрес <span className="font-medium text-[#0b1024]">{target.maskedEmail}</span> больше не будет
-                  получать рекламные письма.
+                  Новости и предложения WeSetup больше не придут на{" "}
+                  <span className="font-medium text-[#0b1024]">{target.maskedEmail}</span>, а если у вас есть аккаунт —
+                  и в колокольчик, push и Telegram.
                 </>
               ) : (
-                "Вы больше не будете получать рекламные письма."
+                "Новости и предложения WeSetup больше не придут ни письмом, ни в колокольчик, push или Telegram."
               )}{" "}
               Служебные письма — коды входа, счета, уведомления о журналах — продолжат приходить.
             </p>

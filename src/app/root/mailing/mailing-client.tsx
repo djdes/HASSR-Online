@@ -78,7 +78,7 @@ export function MailingClient({ data }: { data: MailingPageData }) {
   const [sentToday, setSentToday] = useState(data.sentToday);
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
-  const labelsRef = useRef(new Map<string, string>());
+  const labelsRef = useRef(new Map<string, string>(data.draft?.labels ?? []));
   const [labelsVersion, setLabelsVersion] = useState(0);
 
   const rememberLabels = useCallback((entries: Array<[string, string]>) => {
@@ -167,6 +167,7 @@ export function MailingClient({ data }: { data: MailingPageData }) {
       setCompose(composeFrom(data, draft));
       setUserIds(new Set(draft.audience.userIds));
       setContactIds(new Set(draft.audience.contactIds));
+      rememberLabels(draft.labels ?? []);
       const f = draft.audience.filters as { users?: unknown; contacts?: unknown } | undefined;
       if (f?.users) setUserFilters(normalizeUserFilters(f.users));
       if (f?.contacts) setContactFilters(normalizeContactFilters(f.contacts));

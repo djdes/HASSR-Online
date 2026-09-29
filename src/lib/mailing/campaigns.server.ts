@@ -156,11 +156,30 @@ export type DraftDto = {
   channels: MailingChannels;
   payload: unknown;
   audience: CampaignAudience;
+  /**
+   * Подписи выбранных для «Предпросмотр для…» (первые 30 пользователей и
+   * 30 контактов) — чтобы у открытого черновика предпросмотр по получателям
+   * работал сразу, без захода на вкладки.
+   */
+  labels: Array<[string, string]>;
 };
+
+const DRAFT_LABELS_MAX = 30;
 
 export async function getDraft(id: string): Promise<DraftDto | null> {
   const row = await db.mailingCampaign.findUnique({ where: { id } });
   if (!row) return null;
+  const audience = normalizeAudience(row.audience);
+  const [users, contacts] = await Promise.all([
+    db.user.findMany({
+      where: { id: { in: audience.userIds.slice(0, DRAFT_LABELS_MAX) } },
+      select: { id: true, name: true, organization: { select: { name: true } } },
+    }),
+    db.marketingContact.findMany({
+      where: { id: { in: audience.contactIds.slice(0, DRAFT_LABELS_MAX) } },
+      select: { id: true, name: true, company: true, email: true },
+    }),
+  ]);
   return {
     id: row.id,
     title: row.title,
@@ -168,7 +187,11 @@ export async function getDraft(id: string): Promise<DraftDto | null> {
     status: row.status as CampaignStatus,
     channels: normalizeChannels(row.channels),
     payload: row.payload,
-    audience: normalizeAudience(row.audience),
+    audience,
+    labels: [
+      ...users.map((u): [string, string] => [`user:${u.id}`, `${u.name} · ${u.organization.name}`]),
+      ...contacts.map((c): [string, string] => [`contact:${c.id}`, [c.name, c.company, c.email].filter(Boolean).join(" · ")]),
+    ],
   };
 }
 
@@ -646,7 +669,7 @@ export async function sendTestToMe(campaignId: string, actor: MailingActor): Pro
     {
       test: true,
       emailBudget: { remaining: 1 },
-      gate: { suppressed: new Set(), optedOut: new Set(), contactStatus: new Map() },
+      gate: { suppressed: new Map(), optedOut: new Set(), contactStatus: new Map() },
     }
   );
   const summary = Object.fromEntries(

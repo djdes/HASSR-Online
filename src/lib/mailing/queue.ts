@@ -34,6 +34,8 @@ import {
  *     стоп-лист («bounced»);
  *   • письмо не уходит на адрес из стоп-листа, пользователю с
  *     `marketingOptOut` и контакту не в статусе «active» — skipped;
+ *     отписка (`marketingOptOut`, стоп-лист кроме «не принимает почту»)
+ *     останавливает и колокольчик, push, Telegram (`marketingOptOutReason`);
  *   • писем не больше лимита в минуту и в сутки (`rate-limit.ts`),
  *     остальные ждут следующего прохода;
  *   • отменённая рассылка не отправляет ничего: канал берётся в работу
@@ -124,7 +126,8 @@ export interface MailingQueueStore {
   listDueRecipients(now: Date, limit: number, emailAllowed: boolean): Promise<QueueRecipient[]>;
   getCampaign(id: string): Promise<QueueCampaign | null>;
   countEmailsSentSince(since: Date): Promise<number>;
-  suppressedEmails(emails: string[]): Promise<Set<string>>;
+  /** Стоп-лист: адрес → причина (unsubscribed | complained | manual | bounced). */
+  suppressedEmails(emails: string[]): Promise<Map<string, string>>;
   optedOutUsers(userIds: string[]): Promise<Set<string>>;
   contactStatuses(contactIds: string[]): Promise<Map<string, string>>;
   /**
@@ -357,7 +360,31 @@ export function ensureUnsubscribe(
   return { ...email, html, text };
 }
 
-type EmailGate = { suppressed: Set<string>; optedOut: Set<string>; contactStatus: Map<string, string> };
+type EmailGate = {
+  /** Стоп-лист: адрес → причина. */
+  suppressed: Map<string, string>;
+  optedOut: Set<string>;
+  contactStatus: Map<string, string>;
+};
+
+/**
+ * Отписка от рекламы действует во ВСЕХ каналах рассылки (38-ФЗ ст. 18):
+ * пользователь отписался (`marketingOptOut` — ссылка в письме или
+ * переключатель «Новости и предложения» в профиле) или его адрес в
+ * стоп-листе после отписки, жалобы на спам или вручную. Такому получателю
+ * не уходят ни письмо, ни колокольчик, ни push, ни Telegram — «пропущено»
+ * с причиной. «Адрес не принимает почту» (bounced) — не отказ от рекламы:
+ * такой получатель теряет только письмо.
+ */
+export function marketingOptOutReason(
+  r: Pick<QueueRecipient, "userId" | "email">,
+  gate: Pick<EmailGate, "suppressed" | "optedOut">
+): string | null {
+  const stop = r.email ? gate.suppressed.get(r.email.toLowerCase()) : undefined;
+  if (stop && stop !== "bounced") return "Адрес в стоп-листе";
+  if (r.userId && gate.optedOut.has(r.userId)) return "Отписался от новостей и предложений";
+  return null;
+}
 
 /** Почему письмо этому получателю не отправляем; null — можно. */
 export function emailSkipReason(r: QueueRecipient, gate: EmailGate): string | null {
@@ -447,6 +474,12 @@ export async function deliverRecipient(
     }
     if (!r.userId) {
       note(channel, "skipped", "Канал только для пользователей платформы");
+      continue;
+    }
+    // Отписка — во всех каналах, не только в почте (тест себе — мимо неё).
+    const optOut = options.test ? null : marketingOptOutReason(r, options.gate);
+    if (optOut) {
+      note(channel, "skipped", optOut);
       continue;
     }
     attempt.push(channel);

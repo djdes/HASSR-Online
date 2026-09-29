@@ -28,7 +28,7 @@ export function UnsubscribeButton({ token, already }: { token: string; already: 
         className="mt-6 flex items-start gap-3 rounded-2xl border border-[#c8ecd6] bg-[#ecfdf5] px-4 py-3.5 text-[14px] leading-[1.55] text-[#116b2a]"
       >
         <CheckCircle2 className="mt-0.5 size-5 shrink-0" />
-        <span>Готово: вы отписаны. Больше рекламных писем на этот адрес не будет.</span>
+        <span>Готово: вы отписаны от новостей и предложений — ни писем, ни рекламы в колокольчике, push и Telegram.</span>
       </div>
     );
   }
