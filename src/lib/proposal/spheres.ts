@@ -60,6 +60,33 @@ export type ProposalSphereCopy = {
   benefits: readonly ProposalBenefit[];
 };
 
+/**
+ * «Так же с телефона — …» под шагами: какие ещё журналы сферы заполняются по
+ * QR-плакату. Группы журналов: хотя бы один код группы должен быть в правилах
+ * сферы (тест `content.test.ts`).
+ */
+export type ProposalAlsoPhone = { text: string; groups: readonly (readonly string[])[] };
+
+const ALSO_FOOD: ProposalAlsoPhone = {
+  text: "бракераж, гигиенический журнал, уборка",
+  groups: [["finished_product", "perishable_rejection"], ["hygiene"], ["cleaning"]],
+};
+const ALSO_FITNESS: ProposalAlsoPhone = {
+  text: "уборки, учёт дезсредств",
+  groups: [["cleaning", "general_cleaning"], ["disinfectant_usage"]],
+};
+const ALSO_BEAUTY: ProposalAlsoPhone = {
+  text: "учёт дезсредств, генеральные уборки",
+  groups: [["disinfectant_usage"], ["general_cleaning"]],
+};
+
+/** Что ещё сфера заполняет с телефона (для «Так же с телефона — …»). */
+export function proposalAlsoPhone(sphere: OrgSphere): ProposalAlsoPhone {
+  if (sphere === "fitness") return ALSO_FITNESS;
+  if (sphere === "beauty") return ALSO_BEAUTY;
+  return ALSO_FOOD;
+}
+
 const COLD = "cold_equipment_control";
 const CLIMATE = "climate_control";
 

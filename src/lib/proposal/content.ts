@@ -20,7 +20,7 @@ import { rulesFor, type RuleBasis } from "@/lib/sphere-journal-rules";
 
 import { displayUrl, proposalCta, type ProposalCtaKind } from "./cta";
 import { computeProposalPrice, formatProposalRub, type ProposalPrice } from "./price";
-import { proposalSphereCopy, proposalSteps, type ProposalStep } from "./spheres";
+import { proposalAlsoPhone, proposalSphereCopy, proposalSteps, type ProposalStep } from "./spheres";
 import type { ProposalSender, ProposalVars } from "./types";
 import { normalizeProposalVars } from "./vars";
 
@@ -295,8 +295,7 @@ export function buildProposalContent(input: ProposalVars, ctx: ProposalContext):
   const greeting = vars.recipientName ? `${vars.recipientName}, здравствуйте! ` : "";
   const lead = `${greeting}Предлагаем перевести журналы ${copy.your} на телефон: без бумажных тетрадей и переписывания перед проверкой. ${legal}`;
 
-  const stepsNote =
-    "Остальные журналы — так же: у каждого свой QR-плакат. Не заполнили — руководителю придёт напоминание в Telegram и на почту. Проверяющему — журналы по форме СанПиН на печать или QR для просмотра без входа.";
+  const stepsNote = `Так же с телефона — ${proposalAlsoPhone(copy.sphere).text} и остальные журналы: у каждого свой QR-плакат. Не заполнили — руководителю придёт напоминание в Telegram и на почту. Проверяющему — журналы по форме СанПиН на печать или QR для просмотра без входа.`;
 
   const journals = proposalJournals(copy.sphere);
   const journalsMore =

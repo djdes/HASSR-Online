@@ -10,7 +10,7 @@ import { rulesFor } from "@/lib/sphere-journal-rules";
 
 import { JOURNALS_SHOWN_MAX, buildProposalContent, proposalJournals, type ProposalContent } from "./content";
 import { SAMPLE_PROMO_LIFETIME, SAMPLE_PROMO_UNTIL, sampleProposalContext } from "./sample";
-import { PROPOSAL_SPHERES, proposalSphereCopy } from "./spheres";
+import { PROPOSAL_SPHERES, proposalAlsoPhone, proposalSphereCopy } from "./spheres";
 
 const CATALOG = new Set<string>(ACTIVE_JOURNAL_CATALOG.map((item) => item.code));
 const SPHERES = ORG_SPHERES.map((item) => item.value) as OrgSphere[];
@@ -65,6 +65,16 @@ describe("тексты КП — честность по правилам сфе�
           assert.ok(allowed.has(code), `${sphere} «${benefit.title}»: ${code} не входит в правила сферы`);
         }
       }
+    });
+
+    it(`${sphere}: «так же с телефона» — журналы, которые у сферы есть`, () => {
+      const rules = rulesFor(sphere);
+      const allowed = new Set([...rules.electronicRequired.map((rule) => rule.code), ...rules.electronicRecommended]);
+      for (const group of proposalAlsoPhone(sphere).groups) {
+        assert.ok(group.some((code) => allowed.has(code)), `${sphere}: ни одного из ${group.join(", ")} в правилах сферы`);
+      }
+      const content = buildProposalContent({ sphere }, sampleProposalContext());
+      assert.ok(content.stepsNote.startsWith(`Так же с телефона — ${proposalAlsoPhone(sphere).text}`));
     });
 
     it(`${sphere}: журналы — сначала обязательные из правил, 6–8 названий и «и ещё N»`, () => {

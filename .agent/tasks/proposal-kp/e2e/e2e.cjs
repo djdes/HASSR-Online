@@ -159,10 +159,18 @@ async function main() {
     });
 
     // Тестовое письмо (SMTP выключен → лог).
+    const testMail = page.waitForResponse(
+      (res) => res.url().endsWith("/api/root/proposals/test-email") && res.request().method() === "POST",
+      { timeout: 300000 },
+    );
     await page.getByTestId("kp-test-email").click();
-    await page.waitForTimeout(4000);
+    await testMail;
+    await page.waitForTimeout(1000);
     const log = fs.existsSync(DEV_LOG) ? fs.readFileSync(DEV_LOG, "utf8") : "";
-    check("тестовое письмо: в логе [kp] root test email … delivery=log", /\[kp\] root test email to=\S+ sphere=cafe promo=ROMASHKA10 delivery=log/.test(log));
+    check(
+      "тестовое письмо: в логе [kp] root test email … delivery=log",
+      log.includes(`[kp] root test email to=${creds.root} sphere=cafe promo=ROMASHKA10 delivery=log`),
+    );
     check("тестовое письмо: email.ts записал письмо в лог", /\[email\/dev\] Subject: \[тест\] Кафе «Ромашка»: журналы СанПиН с телефона/.test(log));
 
     const audit = await sql(

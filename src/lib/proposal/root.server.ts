@@ -8,6 +8,7 @@ import {
   validatePromo,
   type PromoRejectReason,
 } from "@/lib/promo/rules";
+import { promotionEndLabel } from "@/lib/promo/promotions";
 import { PAID_ORDER_STATUSES } from "@/lib/promo/service";
 
 import { buildProposalContent, type ProposalContent } from "./content";
@@ -85,11 +86,8 @@ function lifetimeOf(row: object): boolean {
 
 function promoOptionLabel(option: Omit<ProposalPromoOption, "label">): string {
   const discount = describeDiscount(option);
-  const term = option.lifetime
-    ? " навсегда"
-    : option.endsAt
-      ? ` до ${new Date(option.endsAt).toLocaleDateString("ru-RU", { timeZone: "Europe/Moscow" })}`
-      : "";
+  // Срок — так же, как в самом КП: конец в полночь — «до 31 октября» (последний день целиком).
+  const term = option.lifetime ? " навсегда" : option.endsAt ? ` ${promotionEndLabel(option.endsAt)}` : "";
   return `${option.code} · ${discount}${term}`;
 }
 
