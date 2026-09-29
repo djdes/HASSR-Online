@@ -1,13 +1,14 @@
 "use client";
 
-import { AlertTriangle, Copy, Download, FileText, Loader2, Mail, Monitor, Save, Smartphone } from "lucide-react";
+import { AlertTriangle, Copy, Download, FileText, Loader2, Mail, Monitor, Save, Smartphone, Ticket } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import type { OrgSphere } from "@/lib/org-profile";
-import { mskInputToDate } from "@/lib/promo/promotions";
+import { mskInputToDate, promotionEndLabel } from "@/lib/promo/promotions";
+import { PROMO_VALID_DAYS_MAX, PROMO_VALID_DAYS_MIN, promoEndsAfterDays } from "@/lib/promo/valid-days";
 import type { ProposalSender } from "@/lib/proposal/types";
 import { cn } from "@/lib/utils";
 
@@ -70,7 +71,10 @@ export function ProposalsClient({
   const [sphere, setSphere] = useState<OrgSphere>("restaurant");
   const [companyName, setCompanyName] = useState("");
   const [recipientName, setRecipientName] = useState("");
+  // Список дополняется кодами, созданными кнопкой «Создать персональный код».
+  const [options, setOptions] = useState<PromoOption[]>(promoOptions);
   const [promoChoice, setPromoChoice] = useState<string>(promoOptions[0]?.code ?? NO_PROMO);
+  const [personalCode, setPersonalCode] = useState({ value: "10", days: "14" });
   const [manual, setManual] = useState({ code: "", kind: "percent" as "percent" | "fixed", value: "10", lifetime: true, endsAt: "" });
   const [defaultSender, setDefaultSender] = useState<ProposalSender | null>(savedSender);
   const initialSender = savedSender ?? fallbackSender;
@@ -85,11 +89,20 @@ export function ProposalsClient({
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"pdf" | "email">("pdf");
   const [emailWidth, setEmailWidth] = useState<390 | 600>(600);
-  const [busy, setBusy] = useState<null | "pdf" | "link" | "email" | "sender">(null);
+  const [busy, setBusy] = useState<null | "pdf" | "link" | "email" | "sender" | "code">(null);
   const [issuedLink, setIssuedLink] = useState<string | null>(null);
   const requestId = useRef(0);
 
-  const selectedOption = promoOptions.find((option) => option.code === promoChoice) ?? null;
+  const selectedOption = options.find((option) => option.code === promoChoice) ?? null;
+  const personalValue = Number(personalCode.value);
+  const personalDays = Number(personalCode.days);
+  const personalValid =
+    Number.isInteger(personalValue) &&
+    personalValue >= 1 &&
+    personalValue <= 100 &&
+    Number.isInteger(personalDays) &&
+    personalDays >= PROMO_VALID_DAYS_MIN &&
+    personalDays <= PROMO_VALID_DAYS_MAX;
 
   const form = useMemo(() => {
     const promoCode =
@@ -171,6 +184,28 @@ export function ProposalsClient({
           toast.info("Скопируйте ссылку из поля под кнопками");
         }
       }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Ошибка");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  /** Одноразовый код «−N % навсегда» с названием компании — сразу в форму, предпросмотр и PDF. */
+  async function createPersonalCode() {
+    setBusy("code");
+    try {
+      const response = await fetch("/api/root/proposals/personal-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ companyName: companyName.trim(), sphere, value: personalValue, validDays: personalDays }),
+      });
+      const data = (await response.json().catch(() => null)) as { option?: PromoOption; error?: string } | null;
+      if (!response.ok || !data?.option) throw new Error(data?.error ?? "Не удалось создать код");
+      const option = data.option;
+      setOptions((prev) => [option, ...prev.filter((item) => item.code !== option.code)]);
+      setPromoChoice(option.code);
+      toast.success(`Код ${option.code} создан и подставлен в КП`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Ошибка");
     } finally {
@@ -289,7 +324,7 @@ export function ProposalsClient({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={NO_PROMO}>Без промокода</SelectItem>
-                {promoOptions.map((option) => (
+                {options.map((option) => (
                   <SelectItem key={option.code} value={option.code}>
                     {option.label}
                   </SelectItem>
@@ -358,6 +393,46 @@ export function ProposalsClient({
                 </p>
               </div>
             ) : null}
+            <div className="space-y-2.5 rounded-2xl border border-dashed border-[#dcdfed] p-3.5" data-testid="kp-personal-code">
+              <div className="flex flex-wrap items-center gap-2 text-[13.5px] text-[#3c4053]">
+                <span>Скидка −</span>
+                <input
+                  data-testid="kp-personal-value"
+                  aria-label="Скидка, %"
+                  className={cn(INPUT, "h-10 w-[60px] px-2 text-center")}
+                  inputMode="numeric"
+                  value={personalCode.value}
+                  onChange={(event) => setPersonalCode((prev) => ({ ...prev, value: event.target.value.replace(/\D/g, "").slice(0, 3) }))}
+                />
+                <span>% навсегда, код действует</span>
+                <input
+                  data-testid="kp-personal-days"
+                  aria-label="Срок кода, дней"
+                  className={cn(INPUT, "h-10 w-[60px] px-2 text-center")}
+                  inputMode="numeric"
+                  value={personalCode.days}
+                  onChange={(event) => setPersonalCode((prev) => ({ ...prev, days: event.target.value.replace(/\D/g, "").slice(0, 2) }))}
+                />
+                <span>дн.</span>
+              </div>
+              <button
+                type="button"
+                data-testid="kp-create-code"
+                className={cn(BUTTON_OUTLINE, "w-full")}
+                disabled={busy !== null || !companyName.trim() || !personalValid}
+                onClick={() => void createPersonalCode()}
+              >
+                {busy === "code" ? <Loader2 className="size-4 animate-spin" /> : <Ticket className="size-4 text-[#5566f6]" />}
+                Создать персональный код для этой компании
+              </button>
+              <p className="text-[12.5px] leading-relaxed text-[#6f7282]">
+                {!companyName.trim()
+                  ? "Укажите компанию выше — код будет с её названием."
+                  : personalValid
+                    ? `Одна оплата по коду, без привязки к почте; оплатить — ${promotionEndLabel(promoEndsAfterDays(new Date(), personalDays))} включительно, скидка останется навсегда. Код появится в «Промокодах».`
+                    : `Скидка — от 1 до 100 %, срок — от ${PROMO_VALID_DAYS_MIN} до ${PROMO_VALID_DAYS_MAX} дней.`}
+              </p>
+            </div>
           </div>
         </section>
 

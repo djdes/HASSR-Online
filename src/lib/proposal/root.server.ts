@@ -88,6 +88,24 @@ function promoOptionLabel(option: Omit<ProposalPromoOption, "label">): string {
   return `${option.code} · ${discount}${term}`;
 }
 
+/** Строка `PromoCode` → вариант списка генератора (подпись — как в самом КП). */
+export function proposalPromoOption(row: {
+  code: string;
+  kind: string;
+  value: number;
+  lifetime: boolean;
+  endsAt: Date | null;
+}): ProposalPromoOption {
+  const option = {
+    code: row.code,
+    kind: row.kind === "fixed" ? ("fixed" as const) : ("percent" as const),
+    value: row.value,
+    lifetime: lifetimeOf(row),
+    endsAt: row.endsAt?.toISOString() ?? null,
+  };
+  return { ...option, label: promoOptionLabel(option) };
+}
+
 /** Действующие промокоды для выбора в генераторе (включены, срок не прошёл). */
 export async function listProposalPromoOptions(now: Date = new Date()): Promise<ProposalPromoOption[]> {
   const rows = await db.promoCode.findMany({
@@ -95,16 +113,7 @@ export async function listProposalPromoOptions(now: Date = new Date()): Promise<
     orderBy: { createdAt: "desc" },
     take: 200,
   });
-  return rows.map((row) => {
-    const option = {
-      code: row.code,
-      kind: row.kind === "fixed" ? ("fixed" as const) : ("percent" as const),
-      value: row.value,
-      lifetime: lifetimeOf(row),
-      endsAt: row.endsAt?.toISOString() ?? null,
-    };
-    return { ...option, label: promoOptionLabel(option) };
-  });
+  return rows.map(proposalPromoOption);
 }
 
 export type ResolvedProposalForm = {
