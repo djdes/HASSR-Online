@@ -1,0 +1,757 @@
+{
+  "startedAt": "2026-09-29T15:25:46.242Z",
+  "checks": [
+    {
+      "name": "ROOT вошёл",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "session": true
+      }
+    },
+    {
+      "name": "Предупреждение 38-ФЗ над загрузкой",
+      "ok": true,
+      "details": {
+        "text": "Реклама по email — только с согласия получателя (38-ФЗ «О рекламе», ст. 18). Указывайте, откуда адрес и на каком основании. Отписавшиеся сами попадают в стоп-ли"
+      }
+    },
+    {
+      "name": "Предпросмотр: новые 3, стоп-лист 1, дубль 1, плохой 1",
+      "ok": true,
+      "details": "Новых: 3 Уже в базе: 0 В стоп-листе: 1 Дублей в файле: 1 Плохих адресов: 1"
+    },
+    {
+      "name": "Загружено 3 контакта с источником и основанием",
+      "ok": true,
+      "details": [
+        {
+          "email": "ivan.e2e@example.com",
+          "source": "E2E выгрузка 29.09",
+          "basis": "Деловая переписка",
+          "sphere": "cafe",
+          "tags": [
+            "выставка"
+          ],
+          "status": "active"
+        },
+        {
+          "email": "ml-a-mumtvhep@example.com",
+          "source": "E2E выгрузка 29.09",
+          "basis": "Деловая переписка",
+          "sphere": null,
+          "tags": [],
+          "status": "active"
+        },
+        {
+          "email": "olga.e2e@example.com",
+          "source": "E2E выгрузка 29.09",
+          "basis": "Деловая переписка",
+          "sphere": "restaurant",
+          "tags": [],
+          "status": "active"
+        }
+      ]
+    },
+    {
+      "name": "Сфера из названия «кафе» → cafe",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "Контакты: выбраны все найденные (3)",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "Фильтр «Кафе / Кофейня» → 2 руководителя",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "Выбрано 3 пользователя (2 по фильтру + поиск)",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "Охват: почта 5, колокольчик 3, push 1, Telegram 1",
+      "ok": true,
+      "details": {
+        "email": "Дойдёт до 5 из 5",
+        "inApp": "Дойдёт до 3 — только пользователи, контакты (2) не получат",
+        "push": "Дойдёт до 1 из 3 · веб-push подключён у 1, приложение у 1",
+        "telegram": "Дойдёт до 1 из 3 — у кого привязан бот"
+      }
+    },
+    {
+      "name": "Push: честно про Firebase",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "Предупреждение про отдельный адрес отправки",
+      "ok": true,
+      "details": "Рекламные письма уходят с noreply@wesetup.ru — если их пометят спамом, служебные письма (коды входа, счета) тоже начнут попадать в спам. Лучше отдельный адрес/домен."
+    },
+    {
+      "name": "Плашка сухой отправки",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "Предпросмотр письма с переменными и отпиской",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "Тест себе: письмо (сухая), колокольчик, push/Telegram честно пропущены",
+      "ok": true,
+      "details": "Тест на root.e2e@example.com Почта: Отправлено (сухая отправка) Колокольчик: Отправлено Push: Пропущено — Нет подписки на push и приложения с уведомлениями Telegram: Пропущено — Telegram не привязан"
+    },
+    {
+      "name": "Тест записан отдельной строкой (isTest)",
+      "ok": true,
+      "details": [
+        {
+          "id": "mr791f8b8dfa2fd3d20c2d",
+          "emailStatus": "sent"
+        }
+      ]
+    },
+    {
+      "name": "Тестовое письмо — файл в папке сухой отправки",
+      "ok": true,
+      "details": "d:\\wt\\tmp-mailing\\outbox\\cmumtzhwk007oxo9m7z3vcrr9\\mr791f8b8dfa2fd3d20c2d-email.eml"
+    },
+    {
+      "name": "Скорость сохранена: 2 в минуту",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "Запуск → карточка рассылки",
+      "ok": true,
+      "details": "http://localhost:3193/root/mailing/cmumtzhwk007oxo9m7z3vcrr9"
+    },
+    {
+      "name": "Толчок после запуска: ушло ровно 2 письма (лимит 2/мин), 3 ждут",
+      "ok": true,
+      "details": [
+        [
+          "ml-a-mumtvhep@example.com",
+          "sent"
+        ],
+        [
+          "ml-d-work-mumtvhep@example.com",
+          "sent"
+        ],
+        [
+          "ivan.e2e@example.com",
+          "queued"
+        ],
+        [
+          "olga.e2e@example.com",
+          "queued"
+        ],
+        [
+          "ml-c-mumtvhep@example.com",
+          "queued"
+        ]
+      ]
+    },
+    {
+      "name": "Cron в ту же минуту: писем 0, лимит «minute»",
+      "ok": true,
+      "details": {
+        "ok": true,
+        "busy": false,
+        "startedScheduled": 0,
+        "prepared": 0,
+        "staleFailed": 0,
+        "processed": 0,
+        "sent": {
+          "email": 0,
+          "inApp": 0,
+          "push": 0,
+          "telegram": 0
+        },
+        "failed": 0,
+        "skipped": 0,
+        "retried": 0,
+        "deferredByLimit": 0,
+        "limitedBy": "minute",
+        "emailBudget": 0,
+        "finishedCampaigns": []
+      }
+    },
+    {
+      "name": "Cron через минуту: ещё 2 письма",
+      "ok": true,
+      "details": {
+        "ok": true,
+        "busy": false,
+        "startedScheduled": 0,
+        "prepared": 0,
+        "staleFailed": 0,
+        "processed": 3,
+        "sent": {
+          "email": 2,
+          "inApp": 0,
+          "push": 0,
+          "telegram": 0
+        },
+        "failed": 0,
+        "skipped": 0,
+        "retried": 0,
+        "deferredByLimit": 1,
+        "limitedBy": "minute",
+        "emailBudget": 2,
+        "finishedCampaigns": []
+      }
+    },
+    {
+      "name": "Cron: последнее письмо, рассылка завершена",
+      "ok": true,
+      "details": {
+        "ok": true,
+        "busy": false,
+        "startedScheduled": 0,
+        "prepared": 0,
+        "staleFailed": 0,
+        "processed": 1,
+        "sent": {
+          "email": 1,
+          "inApp": 0,
+          "push": 0,
+          "telegram": 0
+        },
+        "failed": 0,
+        "skipped": 0,
+        "retried": 0,
+        "deferredByLimit": 0,
+        "limitedBy": null,
+        "emailBudget": 2,
+        "finishedCampaigns": [
+          "cmumtzhwk007oxo9m7z3vcrr9"
+        ]
+      }
+    },
+    {
+      "name": "Анна: почта, колокольчик, push и Telegram — отправлены (сухая)",
+      "ok": true,
+      "details": {
+        "id": "mr1a44b25dcc1813abcca9",
+        "token": "mr1a44b25dcc1813abcca9.2MXwrSPDMriwZNTPjU5tvM",
+        "email": "ml-a-mumtvhep@example.com",
+        "userId": "cmumtw1il0070xo9mbxs7iey4",
+        "contactId": null,
+        "status": "sent",
+        "emailStatus": "sent",
+        "emailError": null,
+        "inAppStatus": "sent",
+        "inAppError": null,
+        "pushStatus": "sent",
+        "pushError": null,
+        "telegramStatus": "sent",
+        "telegramError": null,
+        "emailSentAt": "2026-09-29T12:26:21.958Z",
+        "clickedAt": null,
+        "dryRun": true,
+        "isTest": false
+      }
+    },
+    {
+      "name": "Вера: push пропущен — Firebase не настроен",
+      "ok": true,
+      "details": {
+        "id": "mrf1bd4b9b87cefbed56c7",
+        "token": "mrf1bd4b9b87cefbed56c7.dxzO3eV1juN667D2_UytFm",
+        "email": "ml-c-mumtvhep@example.com",
+        "userId": "cmumtw3t7007axo9mptqy300w",
+        "contactId": null,
+        "status": "sent",
+        "emailStatus": "sent",
+        "emailError": null,
+        "inAppStatus": "sent",
+        "inAppError": null,
+        "pushStatus": "skipped",
+        "pushError": "Приложение установлено, но Firebase не настроен — push в приложение не уходит",
+        "telegramStatus": "skipped",
+        "telegramError": "Telegram не привязан",
+        "emailSentAt": "2026-09-29T12:28:25.429Z",
+        "clickedAt": null,
+        "dryRun": true,
+        "isTest": false
+      }
+    },
+    {
+      "name": "Глеб: письмо на контактную почту, Telegram не привязан",
+      "ok": true,
+      "details": {
+        "id": "mr502465e58b83e132575c",
+        "token": "mr502465e58b83e132575c.z850TUs9rWVSKrP5r-NZD1",
+        "email": "ml-d-work-mumtvhep@example.com",
+        "userId": "cmumtw4mb007fxo9mc7paqqb9",
+        "contactId": null,
+        "status": "sent",
+        "emailStatus": "sent",
+        "emailError": null,
+        "inAppStatus": "sent",
+        "inAppError": null,
+        "pushStatus": "skipped",
+        "pushError": "Нет подписки на push и приложения с уведомлениями",
+        "telegramStatus": "skipped",
+        "telegramError": "Telegram не привязан",
+        "emailSentAt": "2026-09-29T12:26:22.057Z",
+        "clickedAt": null,
+        "dryRun": true,
+        "isTest": false
+      }
+    },
+    {
+      "name": "Контакт с почтой Анны не задвоился",
+      "ok": true,
+      "details": [
+        "ml-a-mumtvhep@example.com",
+        "ml-d-work-mumtvhep@example.com",
+        "ivan.e2e@example.com",
+        "olga.e2e@example.com",
+        "ml-c-mumtvhep@example.com"
+      ]
+    },
+    {
+      "name": "Рассылка «Завершена», отправлено 5",
+      "ok": true,
+      "details": {
+        "status": "done",
+        "sentCount": 5,
+        "queuedCount": 0
+      }
+    },
+    {
+      "name": "Колокольчик Анны: заголовок с именем",
+      "ok": true,
+      "details": [
+        "Анна Смирнова, новое в WeSetup"
+      ]
+    },
+    {
+      "name": "В папке сухой отправки 5 писем рассылки (.eml) + тест себе",
+      "ok": true,
+      "details": [
+        "mr1a44b25dcc1813abcca9-email.eml",
+        "mr502465e58b83e132575c-email.eml",
+        "mr797b9301d6f93f834f50-email.eml",
+        "mrb83e8f8e4bbff3eec3eb-email.eml",
+        "mrf1bd4b9b87cefbed56c7-email.eml"
+      ]
+    },
+    {
+      "name": "Заголовок List-Unsubscribe: https + mailto",
+      "ok": true,
+      "details": "<http://localhost:3193/api/mailing/unsubscribe/mr797b9301d6f93f834f50.YNzspmwbQuVNF5Gr9rUeZt>, <mailto:support@wesetup.ru?subject=unsubscribe%20mr797b9301d6f93f834f50>"
+    },
+    {
+      "name": "Заголовок List-Unsubscribe-Post: One-Click",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "В письме ссылка «Отписаться» и ссылки через /r/",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "Переменные в письме контакта: имя и компания",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "Push и Telegram — .json в папке, наружу не ушли",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "Клик → 307 на сохранённый адрес, параметр игнорируется",
+      "ok": true,
+      "details": {
+        "status": 307,
+        "location": "https://wesetup.ru/pricing"
+      }
+    },
+    {
+      "name": "clickedAt записан",
+      "ok": true,
+      "details": {
+        "clickedAt": "2026-09-29T12:28:25.829Z",
+        "clickCount": 1
+      }
+    },
+    {
+      "name": "Неизвестный номер ссылки → на главную",
+      "ok": true,
+      "details": "/"
+    },
+    {
+      "name": "Поддельный токен → на главную",
+      "ok": true,
+      "details": "/"
+    },
+    {
+      "name": "Карточка: кликнули 1",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "Страница отписки → стоп-лист (unsubscribed) и контакт «отписался»",
+      "ok": true,
+      "details": {
+        "ivanStop": {
+          "reason": "unsubscribed",
+          "campaignId": "cmumtzhwk007oxo9m7z3vcrr9"
+        },
+        "ivanContact": {
+          "status": "unsubscribed"
+        }
+      }
+    },
+    {
+      "name": "One-click POST без страницы → marketingOptOut пользователя",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "annaUser": {
+          "marketingOptOut": true
+        }
+      }
+    },
+    {
+      "name": "GET по ссылке из заголовка ничего не меняет — ведёт на страницу",
+      "ok": true,
+      "details": "/unsubscribe/mr1a44b25dcc1813abcca9.2MXwrSPDMriwZNTPjU5tvM"
+    },
+    {
+      "name": "Повторная рассылка запущена",
+      "ok": true,
+      "details": {
+        "selectedUsers": 3,
+        "selectedContacts": 3,
+        "users": 3,
+        "contacts": 2,
+        "missing": 0,
+        "duplicates": 1,
+        "notApplicable": 0,
+        "recipients": 5,
+        "channels": {
+          "email": {
+            "queued": 3,
+            "noEmail": 0,
+            "suppressed": 1,
+            "optedOut": 0,
+            "inactiveContact": 1
+          },
+          "inApp": {
+            "queued": 3
+          },
+          "push": {
+            "queued": 0,
+            "skipped": 0,
+            "webSubs": 1,
+            "appDevices": 1,
+            "webConfigured": true,
+            "appConfigured": false
+          },
+          "telegram": {
+            "queued": 0,
+            "skipped": 0,
+            "botConfigured": true
+          }
+        }
+      }
+    },
+    {
+      "name": "Повторная: отписавшийся контакт пропущен",
+      "ok": true,
+      "details": {
+        "id": "mr67c99adbfe461b6a312e",
+        "token": "mr67c99adbfe461b6a312e.ZgTk9PpfiX47kCOYEt4rU7",
+        "email": "ivan.e2e@example.com",
+        "userId": null,
+        "contactId": "cmumtyn31007kxo9m31qp9x43",
+        "status": "skipped",
+        "emailStatus": "skipped",
+        "emailError": "Контакт отписался",
+        "inAppStatus": null,
+        "inAppError": null,
+        "pushStatus": null,
+        "pushError": null,
+        "telegramStatus": null,
+        "telegramError": null,
+        "emailSentAt": null,
+        "clickedAt": null,
+        "dryRun": false,
+        "isTest": false
+      }
+    },
+    {
+      "name": "Повторная: Анна — письмо пропущено (стоп-лист), колокольчик ушёл",
+      "ok": true,
+      "details": {
+        "id": "mr14ced6573d828519513e",
+        "token": "mr14ced6573d828519513e.Nl9PG3LZqoGLgHKyEp2Ixu",
+        "email": "ml-a-mumtvhep@example.com",
+        "userId": "cmumtw1il0070xo9mbxs7iey4",
+        "contactId": null,
+        "status": "sent",
+        "emailStatus": "skipped",
+        "emailError": "Адрес в стоп-листе",
+        "inAppStatus": "sent",
+        "inAppError": null,
+        "pushStatus": null,
+        "pushError": null,
+        "telegramStatus": null,
+        "telegramError": null,
+        "emailSentAt": null,
+        "clickedAt": null,
+        "dryRun": false,
+        "isTest": false
+      }
+    },
+    {
+      "name": "Повторная: остальные письма ушли",
+      "ok": true,
+      "details": {
+        "id": "mr3ecf2e0bee67ebaaf0c8",
+        "token": "mr3ecf2e0bee67ebaaf0c8.QrsNBYXLluDI0c6Et5Uabu",
+        "email": "olga.e2e@example.com",
+        "userId": null,
+        "contactId": "cmumtyn31007lxo9mairc9w08",
+        "status": "sent",
+        "emailStatus": "sent",
+        "emailError": null,
+        "inAppStatus": null,
+        "inAppError": null,
+        "pushStatus": null,
+        "pushError": null,
+        "telegramStatus": null,
+        "telegramError": null,
+        "emailSentAt": "2026-09-29T12:28:36.625Z",
+        "clickedAt": null,
+        "dryRun": true,
+        "isTest": false
+      }
+    },
+    {
+      "name": "Стоп-лист: заблокированный вручную и отписавшиеся",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "Стоп-лист: добавлен адрес вручную",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "Руководитель Анна вошла",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "session": true
+      }
+    },
+    {
+      "name": "Профиль: «Новости и предложения на почту» выключены после отписки",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "Профиль: PATCH переключателя — 200",
+      "ok": true,
+      "details": 200
+    },
+    {
+      "name": "Профиль: подписка возвращена (optOut снят, стоп-лист очищен)",
+      "ok": true,
+      "details": {
+        "annaBack": {
+          "marketingOptOut": false
+        },
+        "annaStop": []
+      }
+    },
+    {
+      "name": "Мини-приложение: переключатель в профиле, включён",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "Запланирована (время по Москве)",
+      "ok": true,
+      "details": {
+        "id": "cmumu23mh008cxo9m7r3ruh5u",
+        "title": "E2E: на отмену",
+        "kind": "message",
+        "kindLabel": "Сообщение",
+        "channels": {
+          "email": true,
+          "inApp": false,
+          "push": false,
+          "telegram": false
+        },
+        "status": "scheduled",
+        "statusLabel": "Запланирована",
+        "scheduledAt": "2026-09-29T18:30:00.000Z",
+        "startedAt": null,
+        "finishedAt": null,
+        "cancelledAt": null,
+        "createdAt": "2026-09-29T15:30:22.553Z",
+        "createdByName": "Администратор",
+        "lastError": null,
+        "counts": {
+          "total": 1,
+          "queued": 1,
+          "sent": 0,
+          "failed": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "clicks": 0
+        },
+        "selection": {
+          "users": 1,
+          "contacts": 0
+        }
+      }
+    },
+    {
+      "name": "Отмена: рассылка «Отменена», получатель «отменено», письмо не ушло",
+      "ok": true,
+      "details": [
+        [
+          "cancelled",
+          "skipped",
+          "Рассылка отменена"
+        ]
+      ]
+    },
+    {
+      "name": "Cron после отмены ничего не отправил",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "390: вкладка compose без горизонтального скролла",
+      "ok": true,
+      "details": {
+        "overflow": 0
+      }
+    },
+    {
+      "name": "390: вкладка users без горизонтального скролла",
+      "ok": true,
+      "details": {
+        "overflow": 0
+      }
+    },
+    {
+      "name": "390: вкладка contacts без горизонтального скролла",
+      "ok": true,
+      "details": {
+        "overflow": 0
+      }
+    },
+    {
+      "name": "390: вкладка history без горизонтального скролла",
+      "ok": true,
+      "details": {
+        "overflow": 0
+      }
+    },
+    {
+      "name": "390: вкладка stoplist без горизонтального скролла",
+      "ok": true,
+      "details": {
+        "overflow": 0
+      }
+    },
+    {
+      "name": "390: карточка рассылки без горизонтального скролла",
+      "ok": true,
+      "details": {
+        "cardOverflow": 0
+      }
+    },
+    {
+      "name": "Аудит: загрузка, тест, запуск, план, отмена, стоп-лист, настройки, отписка",
+      "ok": true,
+      "details": [
+        {
+          "action": "mailing.campaign.cancel",
+          "n": 4
+        },
+        {
+          "action": "mailing.campaign.launch",
+          "n": 9
+        },
+        {
+          "action": "mailing.campaign.schedule",
+          "n": 4
+        },
+        {
+          "action": "mailing.campaign.test",
+          "n": 6
+        },
+        {
+          "action": "mailing.contacts.import",
+          "n": 6
+        },
+        {
+          "action": "mailing.optin",
+          "n": 1
+        },
+        {
+          "action": "mailing.settings.update",
+          "n": 9
+        },
+        {
+          "action": "mailing.suppression.add",
+          "n": 4
+        },
+        {
+          "action": "mailing.unsubscribe",
+          "n": 8
+        }
+      ]
+    }
+  ],
+  "pageErrors": [],
+  "notes": [
+    "warm /api/root/mailing/campaigns → 200",
+    "warm /api/root/mailing/campaigns/warm → 404",
+    "warm /api/root/mailing/campaigns/warm/launch → 405",
+    "warm /api/root/mailing/campaigns/warm/cancel → 405",
+    "warm /api/root/mailing/campaigns/warm/retry → 405",
+    "warm /api/root/mailing/campaigns/warm/test → 405",
+    "warm /api/root/mailing/preview → 405",
+    "warm /api/root/mailing/reach → 405",
+    "warm /api/root/mailing/settings → 200",
+    "warm /api/root/mailing/suppression → 200",
+    "warm /api/root/mailing/suppression/warm → 405",
+    "warm /api/root/mailing/contacts → 200",
+    "warm /api/root/mailing/contacts/preview → 405",
+    "warm /api/root/mailing/contacts/warm → 405",
+    "warm /api/root/mailing/contacts/delete → 405",
+    "warm /api/root/mailing/audience/users → 200",
+    "warm /api/cron/mailing → 401",
+    "warm /api/mailing/unsubscribe/warm.x → 307",
+    "warm /api/notifications/marketing → 200",
+    "warm /r/warm.x/0 → 307",
+    "warm /unsubscribe/warm.x → 200",
+    "warm /root/mailing/warm → 404",
+    "warm /root/mailing → 200",
+    "warm /settings/notifications → 200",
+    "warm /mini/me → 200"
+  ],
+  "finishedAt": "2026-09-29T15:31:10.567Z",
+  "passed": 63,
+  "failed": 0
+}
