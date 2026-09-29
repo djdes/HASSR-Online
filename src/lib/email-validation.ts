@@ -64,7 +64,7 @@ export type EmailCheck =
   | { status: "empty"; message: string }
   | { status: "invalid"; message: string }
   /// Домен почти наверняка набран с ошибкой — отправку блокируем.
-  | { status: "typo"; message: string; suggestion: string }
+  | { status: "typo"; message: string; suggestion: string; certain?: boolean }
   | { status: "ok" };
 
 /** Расстояние Левенштейна — для поиска «почти таких же» доменов. */
@@ -155,6 +155,8 @@ export function checkEmail(rawValue: string): EmailCheck {
       status: "typo",
       suggestion: known,
       message: `Домена ${domain} не существует. Возможно, вы имели в виду ${known}`,
+      // Такого домена нет наверняка — в отличие от «похож на популярный».
+      certain: true,
     };
   }
 

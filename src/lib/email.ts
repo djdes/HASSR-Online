@@ -189,11 +189,25 @@ function brandBlock(brand: EmailBrand | null | undefined): string {
   </td></tr>`;
 }
 
-function layout(title: string, body: string, brand?: EmailBrand | null) {
+/**
+ * Дополнения шаблона для рекламных писем (`src/lib/mailing`): прехедер —
+ * строка, которую почта показывает рядом с темой, и подвал с отпиской.
+ */
+export type EmailLayoutExtras = {
+  preheader?: string | null;
+  /** HTML под копирайтом (уже экранированный вызывающим). */
+  footerHtml?: string | null;
+};
+
+function layout(title: string, body: string, brand?: EmailBrand | null, extras?: EmailLayoutExtras) {
+  const preheader = extras?.preheader?.trim()
+    ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;font-size:1px;line-height:1px">${escapeHtml(extras.preheader.trim())}</div>`
+    : "";
+  const footer = extras?.footerHtml ? `\n    ${extras.footerHtml}` : "";
   return `<!DOCTYPE html>
 <html lang="ru">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">${preheader}
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 16px">
 <tr><td align="center">
 <table width="100%" style="max-width:560px;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08)">
@@ -207,7 +221,7 @@ function layout(title: string, body: string, brand?: EmailBrand | null) {
   <tr><td style="padding:16px 32px;background:#fafafa;border-top:1px solid #e4e4e7">
     <p style="margin:0;font-size:12px;color:#a1a1aa;text-align:center">&copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.${
       brand ? " Работает на платформе WeSetup." : ""
-    }</p>
+    }</p>${footer}
   </td></tr>
 </table>
 </td></tr>
@@ -217,8 +231,13 @@ function layout(title: string, body: string, brand?: EmailBrand | null) {
 }
 
 /** Для писем партнёрки (src/lib/partners/emails.ts) — тот же шаблон и транспорт. */
-export function renderEmailLayout(title: string, body: string, brand?: EmailBrand | null) {
-  return layout(title, body, brand);
+export function renderEmailLayout(
+  title: string,
+  body: string,
+  brand?: EmailBrand | null,
+  extras?: EmailLayoutExtras
+) {
+  return layout(title, body, brand, extras);
 }
 export async function sendRawEmail(
   to: string,
