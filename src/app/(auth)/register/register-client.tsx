@@ -5,8 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { LegalConsentCheckbox } from "@/components/legal/legal-consent-checkbox";
 import { BrandLogo } from "@/components/brand/logo";
-import { ArrowRight, CheckCircle2, Gift, Loader2, Sparkles } from "lucide-react";
+import { ArrowRight, CheckCircle2, Gift, Loader2, Sparkles, Ticket } from "lucide-react";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
+import { ORG_SPHERES, type OrgSphere } from "@/lib/org-profile";
 import { EmailHint, useEmailField } from "@/components/ui/email-field";
 import {
   readSignupSource,
@@ -29,16 +30,32 @@ const GOAL_PARAMS = { place: "register" };
  * Страница осталась для прямых заходов и для ссылок «Начать бесплатно»
  * с тарифных карточек — логика ровно та же, что у формы на лендинге.
  */
-export default function RegisterPage() {
+/** Промокод из ссылки /promo/CODE — уже проверен сервером страницы. */
+type RegisterPromo = { code: string; label: string };
+
+export default function RegisterPage({
+  promo = null,
+  sphere = null,
+}: {
+  promo?: RegisterPromo | null;
+  sphere?: OrgSphere | null;
+} = {}) {
   // useSearchParams требует Suspense-границы при статическом рендере.
   return (
     <Suspense fallback={null}>
-      <RegisterScreen />
+      <RegisterScreen promo={promo} linkSphere={sphere} />
     </Suspense>
   );
 }
 
-function RegisterScreen() {
+function RegisterScreen({
+  promo,
+  linkSphere,
+}: {
+  promo: RegisterPromo | null;
+  /** Сфера из ссылки с промокодом: подставлена, человек может сменить. */
+  linkSphere: OrgSphere | null;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -70,6 +87,7 @@ function RegisterScreen() {
   const blankJournalName = blankJournal?.name ?? null;
 
   const field = useEmailField(prefilled);
+  const [sphere, setSphere] = useState<OrgSphere | null>(linkSphere);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [consent, setConsent] = useState(false);
@@ -104,6 +122,8 @@ function RegisterScreen() {
           consent: true,
           consentPlace: "register",
           ...(blankJournal ? { blankJournal: blankJournal.code } : {}),
+          // Сфера из ссылки с промокодом: организация сразу с журналами сферы.
+          ...(sphere ? { sphere } : {}),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -230,6 +250,17 @@ function RegisterScreen() {
               Вас пригласили: 14 дней теста для вас, бонус — другу
             </div>
           ) : null}
+          {promo ? (
+            <div
+              data-testid="register-promo"
+              className="mb-4 flex items-start gap-2 rounded-2xl border border-[#c7ccea] bg-[#eef1ff] px-3 py-2 text-[13px] font-medium leading-[1.45] text-[#3848c7]"
+            >
+              <Ticket className="mt-0.5 size-4 shrink-0" />
+              <span>
+                {promo.label}. Создайте аккаунт — код подставится на оплате сам.
+              </span>
+            </div>
+          ) : null}
           {blankJournalName ? (
             <div
               data-testid="register-blank-journal"
@@ -277,6 +308,33 @@ function RegisterScreen() {
               domainState={field.domainState}
               onApply={field.applySuggestion}
             />
+
+            {linkSphere ? (
+              <>
+                <label
+                  htmlFor="register-sphere"
+                  className="mb-1.5 mt-4 block text-[13px] font-medium text-[#0b1024]"
+                >
+                  Сфера
+                </label>
+                <select
+                  id="register-sphere"
+                  data-testid="register-sphere"
+                  value={sphere ?? linkSphere}
+                  onChange={(e) => setSphere(e.target.value as OrgSphere)}
+                  className="h-12 w-full rounded-2xl border border-[#dcdfed] bg-white px-4 text-[16px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
+                >
+                  {ORG_SPHERES.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1.5 text-[12px] text-[#6f7282]">
+                  По сфере включим нужные журналы — поменять можно и потом.
+                </p>
+              </>
+            ) : null}
 
             <LegalConsentCheckbox
               checked={consent}

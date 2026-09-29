@@ -1,4 +1,5 @@
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
+import type { OrgSphere } from "@/lib/org-profile";
 import { defaultDisabledCodesFor } from "@/lib/sphere-journal-rules";
 
 /**
@@ -32,13 +33,17 @@ export function blankSignupJournal(raw: unknown): string | null {
 /**
  * Выключенные журналы новой организации. `enabledByBlank` — журнал, который
  * включили ради QR (есть что записать в AuditLog); `null` — он и так был
- * включён по умолчанию или регистрация не с QR.
+ * включён по умолчанию или регистрация не с QR. `sphere` — сфера из ссылки
+ * с промокодом (/promo/CODE?s=…): набор журналов сразу её, а не «Другое».
  */
-export function signupDisabledJournalCodes(blankJournal: string | null): {
+export function signupDisabledJournalCodes(
+  blankJournal: string | null,
+  sphere: OrgSphere = "other",
+): {
   disabledJournalCodes: string[];
   enabledByBlank: string | null;
 } {
-  const defaults = defaultDisabledCodesFor("other");
+  const defaults = defaultDisabledCodesFor(sphere);
   if (!blankJournal || !defaults.includes(blankJournal)) {
     return { disabledJournalCodes: defaults, enabledByBlank: null };
   }

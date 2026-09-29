@@ -10,7 +10,7 @@ import { escapeTelegramHtml } from "@/lib/telegram";
 import { notifyPlatformAdmin } from "@/lib/platform-admin";
 import { registrationCodeRateLimiter } from "@/lib/rate-limit";
 import { domainAcceptsMail } from "@/lib/mail-domain";
-import { DEFAULT_ORG_NAME } from "@/lib/org-profile";
+import { DEFAULT_ORG_NAME, ORG_SPHERES, type OrgSphere } from "@/lib/org-profile";
 import {
   JOURNAL_ENABLE_AUDIT_ACTION,
   blankSignupJournal,
@@ -72,11 +72,20 @@ export async function POST(request: Request) {
   // Обязательное согласие с документами (2026-09-22): без галки — отказ.
   const consentGiven = (body as { consent?: unknown } | null)?.consent === true;
   const consentPlace = (body as { consentPlace?: unknown } | null)?.consentPlace === "landing" ? "landing" : "register";
+  // Сфера из ссылки с промокодом (/promo/CODE?s=cafe → /register?s=cafe):
+  // только значения ORG_SPHERES, остальное молча игнорируем. С ней
+  // организация сразу получает тип и набор журналов своей сферы.
+  const rawSphere = (body as { sphere?: unknown } | null)?.sphere;
+  const sphere: OrgSphere | null =
+    typeof rawSphere === "string"
+      ? (ORG_SPHERES.find((s) => s.value === rawSphere.trim().toLowerCase())?.value ?? null)
+      : null;
   // Пришли по QR со скачанного шаблона (/qb): этот журнал у новой
   // организации включаем сразу — после регистрации он открывается готовым
   // к заполнению, а не экраном «Этот журнал отключён» (lib/blank-signup.ts).
   const signupJournals = signupDisabledJournalCodes(
     blankSignupJournal((body as { blankJournal?: unknown } | null)?.blankJournal),
+    sphere ?? "other",
   );
 
   // Мусор отсекаем ДО расхода лимита, чтобы бот пустыми запросами не
@@ -138,7 +147,7 @@ export async function POST(request: Request) {
           // в шапку кабинета, PDF-выгрузки и селектор организаций.
           // Настоящее название человек задаёт в анкете после входа.
           name: DEFAULT_ORG_NAME,
-          type: "other",
+          type: sphere ?? "other",
           // Сразу минимальный набор журналов, а не весь каталог: иначе до
           // анкеты дашборд встречает человека счётчиком «0 из N» на весь каталог.
           // Сферу спросим в анкете — тогда набор пересчитается. С QR шаблона
@@ -213,6 +222,13 @@ export async function POST(request: Request) {
     console.info("[instant-register] journal enabled for blank QR signup", {
       organizationId: created.organization.id,
       code: signupJournals.enabledByBlank,
+    });
+  }
+  if (sphere) {
+    console.info("[instant-register] sphere from promo link", {
+      organizationId: created.organization.id,
+      sphere,
+      disabledJournals: signupJournals.disabledJournalCodes.length,
     });
   }
 
