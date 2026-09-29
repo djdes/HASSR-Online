@@ -5,6 +5,11 @@
  * промокода), 150 dpi, цвет и ч/б.
  *
  *   KP_OUT=d:/wt/tmp-kp/compare node --import tsx .agent/tasks/proposal-kp/compare-variants.ts
+ *
+ * Выбрана композиция A (обоснование — evidence.md); B удалена из pdf.ts
+ * отдельным коммитом. Скрипт работает с `src/lib/proposal/pdf.ts` из
+ * коммита 8bda0995, где у `renderProposalPdfDocument` ещё есть параметр
+ * `layout` (`git show 8bda0995:src/lib/proposal/pdf.ts`).
  */
 import fs from "node:fs";
 import path from "node:path";

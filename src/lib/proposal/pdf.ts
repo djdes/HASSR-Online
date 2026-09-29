@@ -60,8 +60,6 @@ const SCALE_STEP = 0.005;
 
 export type PdfBox = { x0: number; y0: number; x1: number; y1: number; what: string };
 
-export type ProposalPdfLayout = "a" | "b";
-
 export type ProposalPdfRender = {
   buffer: Buffer;
   pages: number;
@@ -555,13 +553,13 @@ function drawQr(ctx: Ctx, x: number, y: number, width: number): { h: number; box
   return { h, box: { ...placed, what: "qr-window" }, module };
 }
 
-function drawFooter(ctx: Ctx, bottom: number, twoColumns: boolean): number {
+function drawFooter(ctx: Ctx, bottom: number): number {
   const { p, content } = ctx;
   // Высота считается «сухо» от низа листа: сначала меряем, потом рисуем.
   const measure = (dry: boolean, top: number): number => {
     const q = dry ? new Painter(p.doc, p.fonts, true) : p;
     let left = 0;
-    const leftW = twoColumns ? CONTENT_W * 0.5 : CONTENT_W;
+    const leftW = CONTENT_W * 0.5;
     if (content.sender) {
       left += q.text(content.sender.name, MARGIN_X, top + left, leftW, { size: sz(ctx, 8.8), weight: "extrabold", lh: 1.3, what: "sender" });
       const parts = content.sender.lines.map((line) => line.value);
@@ -571,17 +569,13 @@ function drawFooter(ctx: Ctx, bottom: number, twoColumns: boolean): number {
     }
     let right = 0;
     if (content.requisites) {
-      const rx = twoColumns ? MARGIN_X + CONTENT_W * 0.5 + 4 : MARGIN_X;
-      const rw = twoColumns ? CONTENT_W * 0.5 - 4 : CONTENT_W;
-      const ry = twoColumns ? top : top + left + 1.2;
-      right = q.text(content.requisites.join(" · "), rx, ry, rw, {
+      right = q.text(content.requisites.join(" · "), MARGIN_X + CONTENT_W * 0.5 + 4, top, CONTENT_W * 0.5 - 4, {
         size: sz(ctx, 6.9),
         color: MUTED,
         lh: 1.38,
-        align: twoColumns ? "right" : "left",
+        align: "right",
         what: "requisites",
       });
-      if (!twoColumns) return left + 1.2 + right;
     }
     return Math.max(left, right);
   };
@@ -593,7 +587,7 @@ function drawFooter(ctx: Ctx, bottom: number, twoColumns: boolean): number {
 }
 
 // ---------------------------------------------------------------------------
-// Композиция A — сверху вниз, предложение внизу во всю ширину
+// Композиция — сверху вниз, предложение внизу во всю ширину
 // ---------------------------------------------------------------------------
 
 function composeA(ctx: Ctx): { bottom: number; qr: { box: PdfBox; module: number } } {
@@ -685,134 +679,47 @@ function composeA(ctx: Ctx): { bottom: number; qr: { box: PdfBox; module: number
 }
 
 // ---------------------------------------------------------------------------
-// Композиция B — основная колонка слева, панель предложения справа
-// ---------------------------------------------------------------------------
 
-function composeB(ctx: Ctx, footerTop: number): { bottom: number; qr: { box: PdfBox; module: number } } {
-  const { p, content } = ctx;
-  let y = MARGIN_TOP;
-  y += drawHeader(ctx, y) + gap(ctx, 5);
-
-  const sideW = 60;
-  const colGap = 7;
-  const mainW = CONTENT_W - sideW - colGap;
-  const sideX = PAGE_W - MARGIN_X - sideW;
-  const top = y;
-
-  // Основная колонка.
-  let m = top;
-  m += drawTitle(ctx, MARGIN_X, m, mainW, 19.5) + gap(ctx, 3);
-  m += p.text(content.lead, MARGIN_X, m, mainW, { size: sz(ctx, 9.4), color: BODY, lh: 1.45, what: "lead" });
-  m += gap(ctx, 5.5);
-  m += sectionLabel(ctx, "Как это работает", MARGIN_X, m, mainW) + gap(ctx, 2.4);
-  const numSize = 6 * ctx.k;
-  content.steps.forEach((step, index) => {
-    if (index > 0) m += gap(ctx, 2.6);
-    p.number(MARGIN_X, m, numSize, String(index + 1));
-    const tx = MARGIN_X + numSize + 3;
-    const tw = mainW - numSize - 3;
-    const start = m;
-    let h = p.text(step.title, tx, m, tw, { size: sz(ctx, 9.2), weight: "extrabold", lh: 1.28, what: "step-title" });
-    h += p.text(step.text, tx, m + h, tw, { size: sz(ctx, 8.2), color: BODY, lh: 1.38, what: "step" });
-    m = start + Math.max(h, numSize);
-  });
-  m += gap(ctx, 2.4);
-  m += p.text(content.stepsNote, MARGIN_X, m, mainW, { size: sz(ctx, 7.9), color: BODY, lh: 1.4, what: "steps-note" });
-  m += gap(ctx, 5.5);
-  m += drawBenefits(ctx, MARGIN_X, m, mainW);
-  m += gap(ctx, 5.5);
-  m += drawJournals(ctx, MARGIN_X, m, mainW);
-
-  // Панель предложения справа — до футера.
-  const pad = 4.2 * ctx.k;
-  const innerW = sideW - 2 * pad;
-  const panelBottom = footerTop - gap(ctx, 5);
-  p.box(sideX, top, sideW, panelBottom - top, { fill: TINT_2, r: 3.2, what: "offer-panel" });
-  let s = top + pad;
-  s += p.text(content.offer.title.toUpperCase(), sideX + pad, s, innerW, {
-    size: sz(ctx, 7),
-    weight: "extrabold",
-    color: ACCENT_DEEP,
-    lh: 1.3,
-    charSpace: 0.3,
-    what: "offer-label",
-  });
-  s += gap(ctx, 3);
-  const rowBlock = (row: ProposalOfferRow) => {
-    s += p.text(row.title, sideX + pad, s, innerW, { size: sz(ctx, 9.2), weight: "extrabold", lh: 1.28, what: "offer-title" });
-    s += gap(ctx, 1.2);
-    if (row.oldPrice) {
-      s += p.rich([{ text: row.oldPrice, weight: "semibold", color: MUTED, strike: true }], sideX + pad, s, innerW, sz(ctx, 9.5), 1.2, "old-price");
-    }
-    s += priceLine(ctx, row.price, row.unit, sideX + pad, s, innerW, sz(ctx, 18));
-    if (row.badge) {
-      s += gap(ctx, 1.4);
-      const bs = sz(ctx, 7.2);
-      const bw = Math.min(innerW, p.width(row.badge, "extrabold", bs) + 3.6);
-      const bh = bs * PT * 1.7;
-      p.box(sideX + pad, s, bw, bh, { fill: ACCENT_DEEP, r: bh / 2, what: "badge" });
-      p.text(row.badge, sideX + pad, s, bw, { size: bs, weight: "extrabold", color: WHITE, align: "center", lh: 1.7, what: "badge-text" });
-      s += bh;
-    }
-    s += gap(ctx, 1.4);
-    s += p.text(row.text, sideX + pad, s, innerW, { size: sz(ctx, 7.8), color: BODY, lh: 1.36, what: "offer-text" });
-  };
-  rowBlock(content.offer.rows[0]);
-  s += gap(ctx, 3);
-  p.line(sideX + pad, s, sideX + sideW - pad, s, LINE, 0.3);
-  s += gap(ctx, 3);
-  rowBlock(content.offer.rows[1]);
-  for (const note of content.offer.notes) {
-    s += gap(ctx, 2);
-    s += p.text(note, sideX + pad, s, innerW, { size: sz(ctx, 7.6), weight: "semibold", color: ACCENT_DEEP, lh: 1.36, what: "offer-note" });
-  }
-  s += gap(ctx, 4);
-  const qrW = Math.min(innerW, 40 * ctx.k);
-  const qr = drawQr(ctx, sideX + (sideW - qrW) / 2, s, qrW);
-  s += qr.h + gap(ctx, 3);
-  s += p.text(content.offer.howTo, sideX + pad, s, innerW, { size: sz(ctx, 8), weight: "extrabold", lh: 1.36, what: "offer-howto" });
-  s += gap(ctx, 1);
-  s += p.text(content.offer.payment, sideX + pad, s, innerW, { size: sz(ctx, 7.6), color: BODY, lh: 1.36, what: "offer-payment" });
-  s += pad;
-
-  return { bottom: Math.max(m, s, panelBottom), qr };
+function newDocument(): jsPDF {
+  return new jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
 }
 
-// ---------------------------------------------------------------------------
-
-function attempt(content: ProposalContent, k: number, layout: ProposalPdfLayout, dry: boolean) {
-  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
+/**
+ * Одна попытка вёрстки при плотности `k`. «Сухие» попытки только меряют и
+ * делят один документ `measure`: разбор шрифтов (addFont) — самое дорогое в
+ * jsPDF, и новый документ на каждую ступень поиска плотности утраивал время.
+ */
+function attempt(content: ProposalContent, k: number, dry: boolean, measure?: jsPDF) {
+  const doc = dry && measure ? measure : newDocument();
   const fonts = registerProposalFonts(doc);
   const painter = new Painter(doc, fonts, dry);
   const ctx: Ctx = { p: painter, k, content };
-  const footerH = drawFooter({ ...ctx, p: new Painter(doc, fonts, true) }, PAGE_H - MARGIN_BOTTOM, layout === "a");
+  const footerH = drawFooter({ ...ctx, p: new Painter(doc, fonts, true) }, PAGE_H - MARGIN_BOTTOM);
   const footerTop = PAGE_H - MARGIN_BOTTOM - footerH;
-  const body = layout === "b" ? composeB(ctx, footerTop) : composeA(ctx);
-  if (!dry) drawFooter(ctx, PAGE_H - MARGIN_BOTTOM, layout === "a");
+  const body = composeA(ctx);
+  if (!dry) drawFooter(ctx, PAGE_H - MARGIN_BOTTOM);
   // Между телом и футером — не меньше 4 мм воздуха.
   const fits = body.bottom <= footerTop - 4 + 1e-6;
   return { doc, painter, fits, body, footerTop };
 }
 
-export function renderProposalPdfDocument(
-  content: ProposalContent,
-  options: { layout?: ProposalPdfLayout } = {},
-): ProposalPdfRender {
-  const layout = options.layout ?? "a";
+export function renderProposalPdfDocument(content: ProposalContent): ProposalPdfRender {
+  const measure = newDocument();
+  const fits = (k: number) => attempt(content, k, true, measure).fits;
   let scale: number | null = null;
-  if (attempt(content, 1, layout, true).fits) scale = 1;
-  else if (attempt(content, MIN_SCALE, layout, true).fits) {
+  if (fits(1)) scale = 1;
+  else if (fits(MIN_SCALE)) {
     let lo = MIN_SCALE;
     let hi = 1;
     while (hi - lo > SCALE_STEP) {
       const mid = (lo + hi) / 2;
-      if (attempt(content, mid, layout, true).fits) lo = mid;
+      if (fits(mid)) lo = mid;
       else hi = mid;
     }
     scale = Math.floor(lo * 1000) / 1000;
   }
   if (scale === null) throw new Error(`КП не помещается на лист A4 (сфера ${content.sphere})`);
-  const real = attempt(content, scale, layout, false);
+  const real = attempt(content, scale, false);
   return {
     buffer: Buffer.from(real.doc.output("arraybuffer")),
     pages: real.doc.getNumberOfPages(),

@@ -1,8 +1,8 @@
 /**
  * Предпросмотр КП без базы и сервера: PDF → PNG первой страницы (pdf.js +
- * @napi-rs/canvas). Для подбора вёрстки и сравнения композиций A/B.
+ * @napi-rs/canvas). Для подбора вёрстки.
  *
- *   KP_OUT=d:/wt/tmp-kp/preview node --import tsx .agent/tasks/proposal-kp/preview.ts [layout] [sphere...]
+ *   KP_OUT=d:/wt/tmp-kp/preview node --import tsx .agent/tasks/proposal-kp/preview.ts [sphere...]
  *
  * Данные — образец (`src/lib/proposal/sample.ts`): тариф 1 990 ₽, бесплатный период
  * по умолчанию, условные реквизиты и отправитель.
@@ -13,7 +13,7 @@ import path from "node:path";
 import { createCanvas } from "@napi-rs/canvas";
 
 import { buildProposalContent } from "@/lib/proposal/content";
-import { renderProposalPdfDocument, type ProposalPdfLayout } from "@/lib/proposal/pdf";
+import { renderProposalPdfDocument } from "@/lib/proposal/pdf";
 import type { ProposalVars } from "@/lib/proposal/types";
 
 import { openPdf } from "../journal-qr-header-2026-09/qr-sim";
@@ -44,8 +44,7 @@ export async function pageToPng(pdf: Buffer, file: string, dpi = 150, grayscale 
 }
 
 async function main() {
-  const [layoutArg, ...spheres] = process.argv.slice(2);
-  const layout = (layoutArg === "b" ? "b" : "a") as ProposalPdfLayout;
+  const spheres = process.argv.slice(2);
   const list = (spheres.length ? spheres : ["cafe"]) as ProposalVars["sphere"][];
   for (const sphere of list) {
     const promoKey = process.env.KP_PROMO ?? "lifetime";
@@ -56,12 +55,12 @@ async function main() {
       promo: promoKey === "none" ? null : promoKey === "until" ? SAMPLE_PROMO_UNTIL : SAMPLE_PROMO_LIFETIME,
     };
     const content = buildProposalContent(vars, sampleProposalContext());
-    const render = renderProposalPdfDocument(content, { layout });
-    const base = path.join(OUT, `${layout}-${sphere}${process.env.KP_TAG ? `-${process.env.KP_TAG}` : ""}`);
+    const render = renderProposalPdfDocument(content);
+    const base = path.join(OUT, `${sphere}${process.env.KP_TAG ? `-${process.env.KP_TAG}` : ""}`);
     fs.mkdirSync(OUT, { recursive: true });
     fs.writeFileSync(`${base}.pdf`, render.buffer);
     await pageToPng(render.buffer, `${base}.png`, 150);
-    console.log(`${layout} ${sphere}: pages=${render.pages} scale=${render.scale} size=${render.buffer.length} → ${base}.png`);
+    console.log(`${sphere}: pages=${render.pages} scale=${render.scale} size=${render.buffer.length} → ${base}.png`);
   }
 }
 
