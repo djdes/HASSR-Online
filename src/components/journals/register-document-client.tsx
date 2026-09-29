@@ -419,7 +419,7 @@ export function RegisterDocumentClient({
   async function handleFinish() {
     const confirmed = await confirmAsync({
       title: `Закончить журнал «${documentTitle}»?`,
-      description: "Журнал уйдёт во вкладку «Закрытые», в шапке бланка появится дата окончания.",
+      description: "Журнал уйдёт во вкладку «Закрытые», в шапке журнала появится дата окончания.",
       variant: "warn",
       confirmLabel: "Закончить",
       bullets: [

@@ -822,7 +822,7 @@ function JournalSettingsDialog({
             value={periodicity}
             maxLength={CONTROL_PERIODICITY_MAX_LENGTH}
             onChange={(event) => setPeriodicity(event.target.value)}
-            placeholder="Строка «Периодичность контроля» в шапке бланка"
+            placeholder="Строка «Периодичность контроля» в шапке журнала"
             className="min-h-[72px] rounded-xl border-[#dcdfed] px-3.5 py-2 text-[13.5px] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15"
           />
           <p className="text-[12px] leading-[1.45] text-[#6f7282]">
@@ -910,7 +910,7 @@ function JournalSettingsDialog({
               value={periodicity}
               maxLength={CONTROL_PERIODICITY_MAX_LENGTH}
               onChange={(event) => setPeriodicity(event.target.value)}
-              placeholder="Строка «Периодичность контроля» в шапке бланка"
+              placeholder="Строка «Периодичность контроля» в шапке журнала"
               className="min-h-[96px] rounded-[24px] border-[#dfe1ec] px-8 py-4 text-[18px]"
             />
           </div>

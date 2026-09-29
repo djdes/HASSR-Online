@@ -122,7 +122,7 @@ function AutofillIllustration() {
       viewBox="0 0 120 92"
       className="h-auto w-full"
       role="img"
-      aria-label={filled ? "Бланк с заполненными строками" : "Пустой бланк журнала"}
+      aria-label={filled ? "Страница журнала с заполненными строками" : "Пустая страница журнала"}
     >
       <rect
         x="1"

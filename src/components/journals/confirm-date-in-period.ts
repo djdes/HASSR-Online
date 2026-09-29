@@ -19,7 +19,7 @@ export async function confirmDateInPeriod(
     description: warning,
     bullets: [
       {
-        label: "Запись попадёт в этот документ и будет напечатана в его бланке",
+        label: "Запись попадёт в этот документ и будет напечатана вместе с ним",
         tone: "warn",
       },
       {

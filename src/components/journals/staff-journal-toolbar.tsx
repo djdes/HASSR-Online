@@ -547,7 +547,7 @@ function JournalSettingsDialog({
                   tone: "warn" as const,
                 },
                 {
-                  label: "Они останутся в базе, но пропадут из бланка и печати",
+                  label: "Они останутся в базе, но пропадут из журнала и печати",
                   tone: "default" as const,
                 },
               ]

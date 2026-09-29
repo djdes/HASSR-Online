@@ -532,7 +532,7 @@ export function HealthDocumentClient(props: Props) {
     const confirmed = await confirmAsync({
       title: "Удалить выбранных сотрудников из журнала?",
       description:
-        "Строки исчезнут из бланка вместе со всеми отметками за период документа.",
+        "Строки исчезнут из журнала вместе со всеми отметками за период документа.",
       variant: "danger",
       confirmLabel: "Удалить",
       bullets: [

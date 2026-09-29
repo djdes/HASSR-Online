@@ -29,7 +29,7 @@ export async function GET(
 
   const journal = paperJournalById(id);
   if (!journal) {
-    return NextResponse.json({ error: "Бланк не найден" }, { status: 404 });
+    return NextResponse.json({ error: "Журнал не найден" }, { status: 404 });
   }
 
   const target: BlankTarget = { kind: "paper", paperId: journal.id };
@@ -74,7 +74,7 @@ export async function GET(
   } catch (error) {
     console.error("paper journal sample pdf failed", id, error);
     return NextResponse.json(
-      { error: "Не получилось собрать бланк" },
+      { error: "Не получилось собрать PDF" },
       { status: 500 },
     );
   }

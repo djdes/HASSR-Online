@@ -37,7 +37,7 @@ async function build(
   }
   const journal = paperJournalById(id);
   if (!journal) {
-    return NextResponse.json({ error: "Бланк не найден" }, { status: 404 });
+    return NextResponse.json({ error: "Журнал не найден" }, { status: 404 });
   }
   const organizationId = getActiveOrgId(session);
   const [organization, branding] = await Promise.all([

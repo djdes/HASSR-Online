@@ -180,11 +180,11 @@ export function PaperJournalEditor({
           }),
         },
       );
-      if (!response.ok) throw new Error("Не удалось собрать бланк");
+      if (!response.ok) throw new Error("Не удалось собрать PDF");
       const blob = await response.blob();
       // В браузере — скачивание, в приложении WeSetup — «Поделиться».
       await saveBlob(blob, `${journal.id}.pdf`);
-      toast.success("Бланк готов — откройте файл и распечатайте");
+      toast.success("PDF готов — откройте файл и распечатайте");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Ошибка");
     } finally {
@@ -347,7 +347,7 @@ export function PaperJournalEditor({
             <button
               type="button"
               onClick={clearRows}
-              title="Убрать все строки и начать с пустого бланка"
+              title="Убрать все строки и начать с пустого листа"
               className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#6f7282] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
             >
               <Eraser className="size-4" />
@@ -363,7 +363,7 @@ export function PaperJournalEditor({
           className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-60"
         >
           <Download className="size-4 text-[#5566f6]" />
-          Пустой бланк
+          Пустой журнал
         </button>
         <button
           type="button"

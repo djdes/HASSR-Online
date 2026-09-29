@@ -230,7 +230,7 @@ export function CreatePaperDocumentDialog({
           {hasNoEmployees ? (
             <p className={JOURNAL_DIALOG_HINT_CLASS}>
               Активных сотрудников пока нет — документ создастся без
-              ответственного, фамилии впишете в бланк руками.{" "}
+              ответственного, фамилии впишете в журнал от руки.{" "}
               <Link
                 href="/settings/users"
                 onClick={() => setOpen(false)}

@@ -154,7 +154,7 @@ async function handleJob(job) {
             headers: authHeaders(),
             signal: AbortSignal.timeout(120000),
         });
-        if (!res.ok) throw new Error(`не удалось скачать бланк (HTTP ${res.status})`);
+        if (!res.ok) throw new Error(`не удалось скачать PDF журнала (HTTP ${res.status})`);
         fs.writeFileSync(tmp, Buffer.from(await res.arrayBuffer()));
 
         await printPdf(tmp);

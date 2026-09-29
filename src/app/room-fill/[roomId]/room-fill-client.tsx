@@ -346,9 +346,9 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
             <SuccessCheck />
             <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-[#0b1024]">Записано</h2>
             <p className="mt-2 text-[14px] leading-relaxed text-[#6f7282]">
-              Записано в бланк за сегодня{saved.slot ? `, ${saved.slot}` : ""}
+              Записано в журнал за сегодня{saved.slot ? `, ${saved.slot}` : ""}
               {rememberedName ? ` — на имя ${rememberedName}` : ""}.
-              {saved.photoAttached ? " Фото показания — в бланке рядом со значением." : ""}
+              {saved.photoAttached ? " Фото показания — в журнале рядом со значением." : ""}
             </p>
             {saved.outOfRange ? (
               <p className="mt-3 rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-3 text-[13px] text-[#a13a32]">

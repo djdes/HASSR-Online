@@ -123,7 +123,7 @@ export default async function ByUserReportPage({
         <StatCard
           label="В журналах"
           value={docEntries.length}
-          hint="отметки в бланках"
+          hint="отметки в документах"
         />
         <StatCard label="Открыл нарушений" value={capaCreated} />
         <StatCard label="Закрыл нарушений" value={capaResolved} />

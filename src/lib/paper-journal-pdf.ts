@@ -129,8 +129,8 @@ export function renderPaperJournalPdfDetailed(params: PaperJournalPdfParams): {
   // почему журнал именно бумажный, и в документе уместна.
   doc.text(
     journal.paperOnly
-      ? `Бланк для бумажного ведения. Электронная форма не применяется — ${journal.law.label}.`
-      : `Бланк для бумажного ведения — ${journal.law.label}.`,
+      ? `Журнал для ведения на бумаге. Электронная форма не применяется — ${journal.law.label}.`
+      : `Журнал для ведения на бумаге — ${journal.law.label}.`,
     pageWidth / 2,
     noteY,
     { align: "center" },

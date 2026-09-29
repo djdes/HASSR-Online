@@ -141,7 +141,7 @@ export default function FeaturesIndexPage() {
             Смотрите сами журналы
           </h2>
           <p className="mt-1.5 max-w-[640px] text-[15px] leading-[1.6] text-[#6f7282]">
-            В каталоге — все {JOURNALS_TOTAL_LABEL} с образцами бланков: что заполняется,
+            В каталоге — все {JOURNALS_TOTAL_LABEL} с образцами: что заполняется,
             как часто и какая норма этого требует.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">

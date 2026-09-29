@@ -16,7 +16,7 @@ export function PaperJournalIntro({ journal }: { journal: PaperJournal }) {
             : "bg-[#fff1d6] text-[#b45309]"
         }`}
       >
-        {journal.paperOnly ? "Только на бумаге" : "Бланк для печати"}
+        {journal.paperOnly ? "Только на бумаге" : "Для печати"}
       </span>
       <h1 className="mt-3 text-[22px] font-semibold tracking-[-0.02em] text-[#0b1024]">
         {journal.name}

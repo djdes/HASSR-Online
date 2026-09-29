@@ -131,7 +131,7 @@ const WALKTHROUGHS: Record<string, WalkthroughStep[]> = {
       page: "list",
       anchor: TOUR.documentCard,
       title: "Откройте документ",
-      body: "Нажмите на карточку — откроется бланк с помещениями и замерами.",
+      body: "Нажмите на карточку — откроется журнал с помещениями и замерами.",
     },
     {
       id: "add-room",
@@ -220,14 +220,14 @@ const GENERIC_DOCUMENT_STEPS: WalkthroughStep[] = [
     id: "document-card",
     page: "list",
     title: "Откройте документ",
-    body: "Нажмите на карточку нужного периода — откроется бланк с таблицей.",
+    body: "Нажмите на карточку нужного периода — откроется журнал с таблицей.",
   },
   {
     id: "view-toggle",
     page: "document",
     anchor: TOUR.viewToggle,
     title: "На телефоне выберите вид",
-    body: "«Карточки» — читать и заполнять по одной записи, «Таблица» — весь бланк как на бумаге.",
+    body: "«Карточки» — читать и заполнять по одной записи, «Таблица» — весь журнал как на бумаге.",
     mobileOnly: true,
   },
   {

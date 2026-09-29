@@ -298,7 +298,7 @@ export function RequisitesClient({
         {(
           [
             { kind: "facsimile", title: "Факсимиле подписи", hint: "PNG с прозрачным фоном, до 1 МБ. Впишется в рамку 34 × 11 мм.", ref: facsimileInput, box: "h-16" },
-            { kind: "stamp", title: "Печать", hint: "PNG с прозрачным фоном, до 1 МБ. Круглая, 32 × 32 мм на бланке.", ref: stampInput, box: "h-36" },
+            { kind: "stamp", title: "Печать", hint: "PNG с прозрачным фоном, до 1 МБ. Круглая, 32 × 32 мм на документе.", ref: stampInput, box: "h-36" },
           ] as const
         ).map((slot) => (
           <section key={slot.kind} className={CARD}>

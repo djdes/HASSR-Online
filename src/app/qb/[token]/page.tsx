@@ -107,7 +107,7 @@ export default async function BlankQrPage({ params }: { params: Promise<{ token:
       : mode === "login"
         ? "Войдите — и этот журнал откроется для заполнения"
         : journal?.paper
-          ? "Этот бланк — из WeSetup"
+          ? "Этот журнал — из WeSetup"
           : journal
             ? "Заполняйте этот журнал с телефона"
             : "Журналы СанПиН и ХАССП — с телефона";
@@ -120,7 +120,7 @@ export default async function BlankQrPage({ params }: { params: Promise<{ token:
       : mode === "login"
         ? "У этой почты уже есть аккаунт WeSetup. После входа сразу откроется журнал с QR-кода."
         : journal?.paper
-          ? `«${journal.title}» ведут на бумаге${journal.paperOnly ? " — так требует закон" : ""}. В WeSetup такие бланки печатаются с шапкой вашей организации, а журналы СанПиН и ХАССП заполняются с телефона по QR.`
+          ? `«${journal.title}» ведут на бумаге${journal.paperOnly ? " — так требует закон" : ""}. В WeSetup бумажные журналы печатаются с шапкой вашей организации, а журналы СанПиН и ХАССП заполняются с телефона по QR.`
           : journal
             ? "Вы отсканировали QR с шаблона. Зарегистрируйтесь — и журнал будет открываться для заполнения прямо с телефона: без бумаги и с напоминаниями."
             : "Этот QR напечатан на шаблоне журнала WeSetup. Зарегистрируйтесь — и журналы СанПиН и ХАССП будут заполняться с телефона по QR: без бумаги и с напоминаниями.";
@@ -170,7 +170,7 @@ export default async function BlankQrPage({ params }: { params: Promise<{ token:
             {journal ? (
               <div className="rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4">
                 <div className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">
-                  {journal.paper ? "Бумажный бланк" : "Журнал"}
+                  {journal.paper ? "Бумажный журнал" : "Журнал"}
                 </div>
                 <div data-testid="qb-journal" className="mt-1 text-[16px] font-semibold leading-snug">
                   {journal.title}

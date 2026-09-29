@@ -139,7 +139,7 @@ function EditDocumentDialog(props: {
         confirmLabel: "Сократить период",
         bullets: [
           {
-            label: "Записи вне нового периода пропадут из бланка и печати",
+            label: "Записи вне нового периода пропадут из журнала и печати",
             tone: "warn",
           },
           { label: "Из базы они не удаляются", tone: "info" },

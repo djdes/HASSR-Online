@@ -1027,8 +1027,8 @@ export function SanitaryDayChecklistDocumentClient({
     const confirmed = await confirmAsync({
       title: "Удалить пункт чек-листа?",
       description: item?.text
-        ? `«${item.text}» исчезнет из бланка и из печати. Восстановить нельзя.`
-        : "Пункт исчезнет из бланка и из печати. Восстановить нельзя.",
+        ? `«${item.text}» исчезнет из чек-листа и из печати. Восстановить нельзя.`
+        : "Пункт исчезнет из чек-листа и из печати. Восстановить нельзя.",
       variant: "danger",
       confirmLabel: "Удалить",
     });

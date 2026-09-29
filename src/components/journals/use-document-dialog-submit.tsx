@@ -152,7 +152,7 @@ export function DocumentDialogFeedback(props: {
         </div>
         <div className="mt-1 text-[13px] leading-[1.45] text-[#6f7282]">
           {state.duplicate.title ? `«${state.duplicate.title}». ` : ""}
-          Записи за одни и те же дни попадут в разные бланки, и ни один не
+          Записи за одни и те же дни попадут в разные документы, и ни один не
           будет выглядеть заполненным.
         </div>
         <div className="mt-3 flex flex-wrap gap-2">

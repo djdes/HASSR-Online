@@ -391,7 +391,7 @@ export function JournalsSettingsClient({
       <button
         type="button"
         onClick={() => setLightbox({ url: src, name })}
-        title="Увеличить бланк"
+        title="Увеличить страницу журнала"
         className="group/preview relative block w-full overflow-hidden border-b border-[#ececf4] bg-white"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -629,7 +629,7 @@ export function JournalsSettingsClient({
               }`}
             >
               <Printer className="size-3" />
-              {journal.paperOnly ? "Только на бумаге" : "Бланк для печати"}
+              {journal.paperOnly ? "Только на бумаге" : "Для печати"}
             </span>
             <a
               href={journal.law.url}
@@ -645,11 +645,11 @@ export function JournalsSettingsClient({
           <div className="flex gap-1.5">
             <a
               href={`/api/settings/journals/paper/${journal.id}/pdf`}
-              title="Скачать пустой бланк в PDF"
+              title="Скачать пустой журнал в PDF"
               className="inline-flex h-8 min-w-0 flex-1 items-center justify-center gap-1 rounded-xl border border-[#f0e2c6] bg-white px-2 text-[11px] font-medium text-[#8a4a08] transition-colors hover:border-[#f5c451] hover:bg-[#fff8ec]"
             >
               <Download className="size-3.5 shrink-0" />
-              <span className="truncate">Бланк</span>
+              <span className="truncate">Скачать</span>
             </a>
             <Link
               href={`/settings/journals/paper/${journal.id}`}
@@ -784,7 +784,7 @@ export function JournalsSettingsClient({
           },
         ]
       : []),
-    { label: "Бланк останется доступен по прямой ссылке", tone: "default" },
+    { label: "Журнал останется доступен по прямой ссылке", tone: "default" },
   ];
 
   return (
@@ -948,7 +948,7 @@ export function JournalsSettingsClient({
         <>
       <GroupHeading
         title="Обязательные"
-        hint="электронные — зелёные, бумажные бланки — жёлтые, в конце"
+        hint="электронные — зелёные, бумажные — жёлтые, в конце"
         count={groups.required.length + foundPaper.length}
         tone="required"
       />

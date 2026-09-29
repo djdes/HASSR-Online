@@ -166,7 +166,7 @@ export default async function RootBlankDownloadsPage() {
             <tbody>
               {consents.map((consent) => {
                 const detail = detailsById.get(consent.id) ?? {};
-                const code = detail.code ?? (detail.paperId ? `бланк ${detail.paperId}` : null);
+                const code = detail.code ?? (detail.paperId ? `бумажный ${detail.paperId}` : null);
                 return (
                   <tr key={consent.id} className="border-t border-[#ececf4] align-top">
                     <td className="whitespace-nowrap px-4 py-3 tabular-nums text-[#3c4053]">
