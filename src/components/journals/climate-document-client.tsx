@@ -110,7 +110,10 @@ import { ReadingPhotoView } from "@/components/journals/reading-photo-view";
 
 import { toast } from "sonner";
 import { confirmAsync } from "@/components/ui/confirm-async";
-import { DocumentToolbarRow } from "@/components/journals/document-toolbar-row";
+import {
+  DocumentToolbarAddButton,
+  DocumentToolbarRow,
+} from "@/components/journals/document-toolbar-row";
 import {
   PositionSelectItems,
   usePositionEmployeeCascade,
@@ -2438,28 +2441,24 @@ export function ClimateDocumentClient({
           {CLIMATE_DOCUMENT_TITLE}
         </JournalDocumentTitle>
 
-        {/* Область применения и периодичность — прямо в бланке, а не в
+        {/* Область применения и периодичность — прямо в журнале, а не в
             справке: журнал заполняет сменный сотрудник, и он должен
             видеть, что сюда вносят только склады с продуктами и что
             пропущенный день считается нарушением.
             Описание и «Добавить строку» — один ряд шапки по ширине экрана
-            (правка владельца 2026-09-28: «тут в строчку должно быть»):
-            где помещается — в строку, на узком телефоне кнопка под
-            описанием во всю ширину. На печати остаётся только описание. */}
+            (правка владельца 2026-09-28: «тут в строчку должно быть») и в
+            одну строку на любой ширине (правка 2026-09-29): на телефоне
+            описание в три строки с «Подробнее», кнопка — «+ Добавить».
+            На печати остаётся только описание. */}
         <DocumentToolbarRow
           sticky
           description={`${CLIMATE_SCOPE_HINT} ${CLIMATE_FREQUENCY_HINT}`}
         >
           {status === "active" ? (
-            <Button
-              type="button"
+            <DocumentToolbarAddButton
               onClick={() => setRowDialogOpen(true)}
               data-tour={TOUR.addRow}
-              className="h-11 gap-2 rounded-lg bg-[#5566f6] px-5 text-[15px] font-semibold text-white hover:bg-[#4a5bf0]"
-            >
-              <Plus className="size-5" strokeWidth={2.5} />
-              Добавить строку
-            </Button>
+            />
           ) : null}
         </DocumentToolbarRow>
 

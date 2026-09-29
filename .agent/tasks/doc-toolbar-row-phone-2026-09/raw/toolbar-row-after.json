@@ -1,0 +1,462 @@
+{
+  "label": "after",
+  "pageErrors": [],
+  "rows": [
+    {
+      "viewport": "360",
+      "view": "table",
+      "vw": 360,
+      "docW": 360,
+      "bar": {
+        "left": 0,
+        "right": 360,
+        "top": 418,
+        "bottom": 523,
+        "width": 360,
+        "height": 105
+      },
+      "barPadding": [
+        16,
+        16
+      ],
+      "desc": {
+        "left": 16,
+        "right": 202,
+        "top": 430,
+        "bottom": 484,
+        "width": 186,
+        "height": 54
+      },
+      "add": {
+        "left": 214,
+        "right": 344,
+        "top": 430,
+        "bottom": 478,
+        "width": 130,
+        "height": 48
+      },
+      "addText": "Добавить",
+      "addLabel": "Добавить строку",
+      "toggle": {
+        "text": "Подробнее",
+        "expanded": "false",
+        "left": 16,
+        "right": 87,
+        "top": 488,
+        "bottom": 510,
+        "width": 71,
+        "height": 22
+      },
+      "descFont": "13px",
+      "descAlign": "start",
+      "descLines": 3,
+      "descClipped": true,
+      "problems": []
+    },
+    {
+      "viewport": "360",
+      "view": "cards",
+      "vw": 360,
+      "docW": 360,
+      "bar": {
+        "left": 0,
+        "right": 360,
+        "top": 691,
+        "bottom": 796,
+        "width": 360,
+        "height": 105
+      },
+      "barPadding": [
+        16,
+        16
+      ],
+      "desc": {
+        "left": 16,
+        "right": 202,
+        "top": 703,
+        "bottom": 757,
+        "width": 186,
+        "height": 54
+      },
+      "add": {
+        "left": 214,
+        "right": 344,
+        "top": 703,
+        "bottom": 751,
+        "width": 130,
+        "height": 48
+      },
+      "addText": "Добавить",
+      "addLabel": "Добавить строку",
+      "toggle": {
+        "text": "Подробнее",
+        "expanded": "false",
+        "left": 16,
+        "right": 87,
+        "top": 761,
+        "bottom": 783,
+        "width": 71,
+        "height": 22
+      },
+      "descFont": "13px",
+      "descAlign": "start",
+      "descLines": 3,
+      "descClipped": true,
+      "problems": []
+    },
+    {
+      "viewport": "390",
+      "view": "table",
+      "vw": 390,
+      "docW": 390,
+      "bar": {
+        "left": 0,
+        "right": 390,
+        "top": 450,
+        "bottom": 555,
+        "width": 390,
+        "height": 105
+      },
+      "barPadding": [
+        16,
+        16
+      ],
+      "desc": {
+        "left": 16,
+        "right": 232,
+        "top": 462,
+        "bottom": 516,
+        "width": 216,
+        "height": 54
+      },
+      "add": {
+        "left": 244,
+        "right": 374,
+        "top": 462,
+        "bottom": 510,
+        "width": 130,
+        "height": 48
+      },
+      "addText": "Добавить",
+      "addLabel": "Добавить строку",
+      "toggle": {
+        "text": "Подробнее",
+        "expanded": "false",
+        "left": 16,
+        "right": 87,
+        "top": 520,
+        "bottom": 542,
+        "width": 71,
+        "height": 22
+      },
+      "descFont": "13px",
+      "descAlign": "start",
+      "descLines": 3,
+      "descClipped": true,
+      "problems": []
+    },
+    {
+      "viewport": "390",
+      "view": "cards",
+      "vw": 390,
+      "docW": 390,
+      "bar": {
+        "left": 0,
+        "right": 390,
+        "top": 625,
+        "bottom": 730,
+        "width": 390,
+        "height": 105
+      },
+      "barPadding": [
+        16,
+        16
+      ],
+      "desc": {
+        "left": 16,
+        "right": 232,
+        "top": 637,
+        "bottom": 691,
+        "width": 216,
+        "height": 54
+      },
+      "add": {
+        "left": 244,
+        "right": 374,
+        "top": 637,
+        "bottom": 685,
+        "width": 130,
+        "height": 48
+      },
+      "addText": "Добавить",
+      "addLabel": "Добавить строку",
+      "toggle": {
+        "text": "Подробнее",
+        "expanded": "false",
+        "left": 16,
+        "right": 87,
+        "top": 695,
+        "bottom": 717,
+        "width": 71,
+        "height": 22
+      },
+      "descFont": "13px",
+      "descAlign": "start",
+      "descLines": 3,
+      "descClipped": true,
+      "problems": []
+    },
+    {
+      "viewport": "640",
+      "view": "table",
+      "vw": 640,
+      "docW": 640,
+      "bar": {
+        "left": 0,
+        "right": 640,
+        "top": 482,
+        "bottom": 578,
+        "width": 640,
+        "height": 97
+      },
+      "barPadding": [
+        16,
+        16
+      ],
+      "desc": {
+        "left": 16,
+        "right": 419,
+        "top": 494,
+        "bottom": 565,
+        "width": 403,
+        "height": 72
+      },
+      "add": {
+        "left": 443,
+        "right": 624,
+        "top": 507,
+        "bottom": 551,
+        "width": 181,
+        "height": 44
+      },
+      "addText": "Добавить строку",
+      "addLabel": "Добавить строку",
+      "toggle": null,
+      "descFont": "13px",
+      "descAlign": "start",
+      "descLines": 4,
+      "descClipped": false,
+      "problems": []
+    },
+    {
+      "viewport": "768",
+      "view": "table",
+      "vw": 768,
+      "docW": 768,
+      "bar": {
+        "left": 0,
+        "right": 768,
+        "top": 552,
+        "bottom": 631,
+        "width": 768,
+        "height": 79
+      },
+      "barPadding": [
+        32,
+        32
+      ],
+      "desc": {
+        "left": 32,
+        "right": 531,
+        "top": 564,
+        "bottom": 618,
+        "width": 499,
+        "height": 54
+      },
+      "add": {
+        "left": 555,
+        "right": 736,
+        "top": 569,
+        "bottom": 613,
+        "width": 181,
+        "height": 44
+      },
+      "addText": "Добавить строку",
+      "addLabel": "Добавить строку",
+      "toggle": null,
+      "descFont": "13px",
+      "descAlign": "start",
+      "descLines": 3,
+      "descClipped": false,
+      "problems": []
+    },
+    {
+      "viewport": "1280",
+      "view": "table",
+      "vw": 1280,
+      "docW": 1280,
+      "bar": {
+        "left": 0,
+        "right": 1280,
+        "top": 446,
+        "bottom": 515,
+        "width": 1280,
+        "height": 69
+      },
+      "barPadding": [
+        32,
+        32
+      ],
+      "desc": {
+        "left": 32,
+        "right": 1043,
+        "top": 462,
+        "bottom": 498,
+        "width": 1011,
+        "height": 36
+      },
+      "add": {
+        "left": 1067,
+        "right": 1248,
+        "top": 458,
+        "bottom": 502,
+        "width": 181,
+        "height": 44
+      },
+      "addText": "Добавить строку",
+      "addLabel": "Добавить строку",
+      "toggle": null,
+      "descFont": "13px",
+      "descAlign": "start",
+      "descLines": 2,
+      "descClipped": false,
+      "problems": []
+    }
+  ],
+  "toggles": [
+    {
+      "viewport": "360",
+      "view": "table",
+      "collapsed": {
+        "height": 54,
+        "lines": 3
+      },
+      "expanded": {
+        "height": 161,
+        "lines": 9
+      },
+      "back": {
+        "height": 54,
+        "lines": 3
+      },
+      "problems": []
+    },
+    {
+      "viewport": "360",
+      "view": "cards",
+      "collapsed": {
+        "height": 54,
+        "lines": 3
+      },
+      "expanded": {
+        "height": 161,
+        "lines": 9
+      },
+      "back": {
+        "height": 54,
+        "lines": 3
+      },
+      "problems": []
+    },
+    {
+      "viewport": "390",
+      "view": "table",
+      "collapsed": {
+        "height": 54,
+        "lines": 3
+      },
+      "expanded": {
+        "height": 143,
+        "lines": 8
+      },
+      "back": {
+        "height": 54,
+        "lines": 3
+      },
+      "problems": []
+    },
+    {
+      "viewport": "390",
+      "view": "cards",
+      "collapsed": {
+        "height": 54,
+        "lines": 3
+      },
+      "expanded": {
+        "height": 143,
+        "lines": 8
+      },
+      "back": {
+        "height": 54,
+        "lines": 3
+      },
+      "problems": []
+    }
+  ],
+  "closed": [
+    {
+      "viewport": "390",
+      "desc": {
+        "left": 16,
+        "right": 374,
+        "top": 732,
+        "bottom": 785,
+        "width": 358,
+        "height": 54
+      },
+      "bar": {
+        "left": 0,
+        "right": 390,
+        "top": 720,
+        "bottom": 824,
+        "width": 390,
+        "height": 105
+      },
+      "problems": []
+    },
+    {
+      "viewport": "1280",
+      "desc": {
+        "left": 32,
+        "right": 1248,
+        "top": 987,
+        "bottom": 1022,
+        "width": 1216,
+        "height": 36
+      },
+      "bar": {
+        "left": 0,
+        "right": 1280,
+        "top": 975,
+        "bottom": 1035,
+        "width": 1280,
+        "height": 61
+      },
+      "problems": []
+    }
+  ],
+  "print": [
+    {
+      "viewport": "390",
+      "font": "10px",
+      "align": "center",
+      "problems": []
+    },
+    {
+      "viewport": "1280",
+      "font": "10px",
+      "align": "center",
+      "problems": []
+    }
+  ]
+}

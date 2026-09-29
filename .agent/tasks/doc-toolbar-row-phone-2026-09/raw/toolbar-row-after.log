@@ -1,0 +1,21 @@
+360   table  desc={"left":16,"right":202,"top":430,"bottom":484,"width":186,"height":54} lines=3 font=13px add={"left":214,"right":344,"top":430,"bottom":478,"width":130,"height":48} «Добавить» toggle=Подробнее docW=360 ✓
+      toggle: 54px/3 стр. → 161px/9 стр. → 54px/3 стр. ✓
+360   cards  desc={"left":16,"right":202,"top":703,"bottom":757,"width":186,"height":54} lines=3 font=13px add={"left":214,"right":344,"top":703,"bottom":751,"width":130,"height":48} «Добавить» toggle=Подробнее docW=360 ✓
+      toggle: 54px/3 стр. → 161px/9 стр. → 54px/3 стр. ✓
+390   table  desc={"left":16,"right":232,"top":462,"bottom":516,"width":216,"height":54} lines=3 font=13px add={"left":244,"right":374,"top":462,"bottom":510,"width":130,"height":48} «Добавить» toggle=Подробнее docW=390 ✓
+      toggle: 54px/3 стр. → 143px/8 стр. → 54px/3 стр. ✓
+      print: font=10px align=center ✓
+390   cards  desc={"left":16,"right":232,"top":637,"bottom":691,"width":216,"height":54} lines=3 font=13px add={"left":244,"right":374,"top":637,"bottom":685,"width":130,"height":48} «Добавить» toggle=Подробнее docW=390 ✓
+      toggle: 54px/3 стр. → 143px/8 стр. → 54px/3 стр. ✓
+640   table  desc={"left":16,"right":419,"top":494,"bottom":565,"width":403,"height":72} lines=4 font=13px add={"left":443,"right":624,"top":507,"bottom":551,"width":181,"height":44} «Добавить строку» toggle=- docW=640 ✓
+768   table  desc={"left":32,"right":531,"top":564,"bottom":618,"width":499,"height":54} lines=3 font=13px add={"left":555,"right":736,"top":569,"bottom":613,"width":181,"height":44} «Добавить строку» toggle=- docW=768 ✓
+1280  table  desc={"left":32,"right":1043,"top":462,"bottom":498,"width":1011,"height":36} lines=2 font=13px add={"left":1067,"right":1248,"top":458,"bottom":502,"width":181,"height":44} «Добавить строку» toggle=- docW=1280 ✓
+      print: font=10px align=center ✓
+closed 390   desc={"left":16,"right":374,"top":732,"bottom":785,"width":358,"height":54} bar={"left":0,"right":390,"top":720,"bottom":824,"width":390,"height":105} ✓
+closed 1280  desc={"left":32,"right":1248,"top":987,"bottom":1022,"width":1216,"height":36} bar={"left":0,"right":1280,"top":975,"bottom":1035,"width":1280,"height":61} ✓
+
+page errors: 0; failed checks: 0
+
+real	4m50.861s
+user	0m0.015s
+sys	0m0.031s

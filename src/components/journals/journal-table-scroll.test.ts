@@ -149,9 +149,16 @@ test("the add row never rides away with the table", () => {
 
 test("description and add button share one row in the document header", () => {
   const row = readFileSync(path.join(JOURNALS_DIR, "document-toolbar-row.tsx"), "utf8");
-  // Где помещается — в строку, на узком телефоне кнопка под описанием во всю ширину.
-  assert.match(row, /sm:flex-row/);
-  assert.match(row, /max-sm:\[&>\*\]:w-full/);
+  // В строку на любой ширине (правка владельца 2026-09-29): ряд не
+  // складывается в колонку на телефоне, кнопка не растягивается во всю
+  // ширину и не сжимается, на узком экране подпись короткая.
+  assert.match(row, /"-mx-4 mb-6 flex items-start gap-3 /);
+  assert.doesNotMatch(row, /max-sm:\[&>\*\]:w-full/);
+  assert.match(row, /className="flex shrink-0 flex-col items-end/);
+  assert.match(row, /max-sm:line-clamp-3/);
+  assert.match(row, /<span className="sm:hidden">\{shortLabel\}<\/span>/);
+  assert.match(row, /shortLabel = "Добавить"/);
   const climate = readFileSync(path.join(JOURNALS_DIR, "climate-document-client.tsx"), "utf8");
   assert.match(climate, /<DocumentToolbarRow[\s\S]*?description=/);
+  assert.match(climate, /<DocumentToolbarRow[\s\S]*?<DocumentToolbarAddButton[\s\S]*?<\/DocumentToolbarRow>/);
 });
