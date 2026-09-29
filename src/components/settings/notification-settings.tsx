@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
+import { MarketingEmailToggle } from "@/components/settings/marketing-email-toggle";
 import { AppStoresTeaser } from "@/components/public/app-stores-teaser";
 import { useInsideMobileApp } from "@/lib/use-inside-mobile-app";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -366,6 +367,9 @@ export function NotificationSettings({
           })}
         </ul>
       </section>
+
+      {/* Рекламные письма WeSetup: вернуть подписку после отписки из письма. */}
+      <MarketingEmailToggle />
 
       {/* Footer note */}
       <section className="rounded-3xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]" data-testid="quiet-hours">
