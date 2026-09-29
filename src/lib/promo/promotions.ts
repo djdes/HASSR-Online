@@ -278,13 +278,25 @@ export function orderDiscountNote(input: {
   promotionDiscountRub: number;
   promoCode: string | null;
   promoDiscountRub: number;
+  /**
+   * Скидка по коду — навсегда: `auto` — применилась сама (привязана к
+   * аккаунту), `code` — введён lifetime-код (привяжется после оплаты).
+   */
+  lifetime?: "auto" | "code" | null;
 }): string {
   const parts: string[] = [];
   if (input.promotion && input.promotionDiscountRub > 0) {
     parts.push(`акция «${input.promotion.title}» −${input.promotion.percent}${NBSP}%`);
   }
   if (input.promoCode && input.promoDiscountRub > 0) {
-    parts.push(`промокод ${input.promoCode}: −${input.promoDiscountRub.toLocaleString("ru-RU")}${NBSP}₽`);
+    const rub = `−${input.promoDiscountRub.toLocaleString("ru-RU")}${NBSP}₽`;
+    parts.push(
+      input.lifetime === "auto"
+        ? `скидка навсегда по промокоду ${input.promoCode}: ${rub}`
+        : input.lifetime === "code"
+          ? `промокод ${input.promoCode}, скидка навсегда: ${rub}`
+          : `промокод ${input.promoCode}: ${rub}`
+    );
   }
   return parts.join("; ");
 }

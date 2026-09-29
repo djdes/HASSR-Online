@@ -4,8 +4,11 @@ import { describe, it } from "node:test";
 import {
   computeDiscountRub,
   describeDiscount,
+  isPersonalPromo,
   isValidPromoCodeFormat,
   normalizePromoCode,
+  personalCodeMatches,
+  PROMO_REJECT_MESSAGES,
   validatePromo,
   type PromoRule,
 } from "@/lib/promo/rules";
@@ -59,5 +62,53 @@ describe("computeDiscountRub", () => {
   it("подпись скидки", () => {
     assert.equal(describeDiscount({ kind: "percent", value: 10 }), "−10 %");
     assert.equal(describeDiscount({ kind: "fixed", value: 1500 }).replace(/[\u202f\u00a0]/g, " "), "−1 500 ₽");
+  });
+});
+
+describe("персональный код", () => {
+  const personal: PromoRule = { ...base, code: "ROMASHKA10", personalEmail: "owner@romashka.ru", organizationId: "org_romashka" };
+  const own = { emails: ["owner@romashka.ru"], organizationIds: ["org_other"] };
+  const ownOrg = { emails: ["manager@romashka.ru"], organizationIds: ["org_romashka", "org_romashka_2"] };
+  const foreign = { emails: ["boss@lavka.ru"], organizationIds: ["org_lavka"] };
+
+  it("свой: совпала почта или организация (в т. ч. другая точка того же аккаунта)", () => {
+    assert.equal(personalCodeMatches(personal, own), true);
+    assert.equal(personalCodeMatches(personal, ownOrg), true);
+    assert.equal(personalCodeMatches({ personalEmail: "Owner@Romashka.RU " }, own), true);
+    assert.deepEqual(validatePromo(personal, { ...ctx, payer: own }), { ok: true });
+    assert.deepEqual(validatePromo(personal, { ...ctx, payer: ownOrg }), { ok: true });
+  });
+
+  it("чужой: другая почта и другая организация — отказ с понятной причиной", () => {
+    const verdict = validatePromo(personal, { ...ctx, payer: foreign });
+    assert.deepEqual(verdict, {
+      ok: false,
+      reason: "personal-foreign",
+      message: "Этот промокод персональный — он выдан другой организации",
+    });
+    assert.equal(PROMO_REJECT_MESSAGES["personal-foreign"], "Этот промокод персональный — он выдан другой организации");
+  });
+
+  it("чужая организация: код только на организацию, плательщик из другой", () => {
+    const orgOnly: PromoRule = { ...base, organizationId: "org_romashka" };
+    const verdict = validatePromo(orgOnly, { ...ctx, payer: { emails: ["owner@romashka.ru"], organizationIds: ["org_lavka"] } });
+    assert.equal((verdict as { reason: string }).reason, "personal-foreign");
+  });
+
+  it("чужому «исчерпан» не показываем — важнее, что код не его", () => {
+    const verdict = validatePromo({ ...personal, maxUses: 1 }, { ...ctx, paidUses: 1, payer: foreign });
+    assert.equal((verdict as { reason: string }).reason, "personal-foreign");
+  });
+
+  it("плательщик ещё неизвестен (аноним на проверке кода) — не отклоняем, решит оплата", () => {
+    assert.deepEqual(validatePromo(personal, { ...ctx, payer: null }), { ok: true });
+    assert.deepEqual(validatePromo(personal, ctx), { ok: true });
+  });
+
+  it("обычный код — не персональный, подходит всем", () => {
+    assert.equal(isPersonalPromo(base), false);
+    assert.equal(isPersonalPromo(personal), true);
+    assert.equal(personalCodeMatches(base, foreign), true);
+    assert.deepEqual(validatePromo(base, { ...ctx, payer: foreign }), { ok: true });
   });
 });
