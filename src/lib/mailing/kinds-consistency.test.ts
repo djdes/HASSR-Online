@@ -26,6 +26,16 @@ describe("точка расширения типов рассылки", () => {
     assert.equal((message?.defaultPayload as { subject: string }).subject, "");
   });
 
+  it("«КП» подключён той же строкой регистрации — шаблон, поля формы и данные для них", () => {
+    const kp = getMailingTemplate("kp");
+    assert.equal(kp?.label, "КП");
+    assert.equal(typeof kp?.prepare, "function");
+    assert.equal(typeof kp?.formData, "function");
+    const option = mailingKindOptions().find((k) => k.kind === "kp");
+    assert.deepEqual((option?.defaultPayload as { promo: { mode: string } }).promo.mode, "personal");
+    assert.ok(fs.existsSync(path.join(process.cwd(), "src", "components", "mailing", "fields", "kp.tsx")));
+  });
+
   it("повторная регистрация другого шаблона под тем же kind — ошибка", () => {
     assert.throws(() => registerMailingTemplate({ kind: "message", label: "Другой", render: async () => ({}) }));
     assert.throws(() => registerMailingTemplate({ kind: "Плохой kind", label: "x", render: async () => ({}) }));

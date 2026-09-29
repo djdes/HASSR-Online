@@ -1,4 +1,5 @@
 import type { EmailAttachment } from "@/lib/email";
+import { escapeHtml } from "@/lib/html-escape";
 import type { OrgSphere } from "@/lib/org-profile";
 
 import {
@@ -14,6 +15,7 @@ import { emailBudget, minuteWindowStart, mskDayStart, type MailingSettings } fro
 import {
   getMailingTemplate,
   type MailingRecipientContext,
+  type MailingRenderMode,
   type MailingTemplate,
   type RenderedMailing,
 } from "./templates";
@@ -47,6 +49,8 @@ const RETRY_DELAYS_MS = [60_000, 5 * 60_000];
 
 export type QueueCampaign = {
   id: string;
+  /** Название для себя — шаблону для подписей (например, заметка промокода). */
+  title?: string;
   kind: string;
   payload: unknown;
   status: string;
@@ -97,8 +101,16 @@ export interface MailingQueueStore {
   startDueScheduled(now: Date): Promise<string[]>;
   /** Идущие рассылки, по которым ещё не отработал `prepare`. */
   campaignsToPrepare(): Promise<QueueCampaign[]>;
+  /** Получатели рассылки (без тестовых), которым есть что отправлять, с тем, что уже подготовлено. */
   prepareRecipients(campaignId: string): Promise<
-    Array<{ id: string; email: string | null; organizationId: string | null; companyName: string | null; sphere: string | null }>
+    Array<{
+      id: string;
+      email: string | null;
+      organizationId: string | null;
+      companyName: string | null;
+      sphere: string | null;
+      payload?: unknown;
+    }>
   >;
   savePrepared(campaignId: string, personal: Record<string, Record<string, unknown>>, now: Date): Promise<void>;
   savePrepareError(campaignId: string, error: string): Promise<void>;
@@ -255,6 +267,10 @@ function setChannel(patch: RecipientPatch, channel: MailingChannel, status: Chan
 
 const SPHERES_ANY = (value: string | null): OrgSphere | null => (value ? (value as OrgSphere) : null);
 
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+}
+
 export function unsubscribePageUrl(appUrl: string, token: string): string {
   return `${appUrl.replace(/\/+$/, "")}/unsubscribe/${encodeURIComponent(token)}`;
 }
@@ -263,18 +279,22 @@ export function oneClickUnsubscribeUrl(appUrl: string, token: string): string {
   return `${appUrl.replace(/\/+$/, "")}/api/mailing/unsubscribe/${encodeURIComponent(token)}`;
 }
 
-/** Контекст шаблона для получателя; `track: false` — предпросмотр без учёта кликов. */
+/**
+ * Контекст шаблона для получателя; `track: false` — предпросмотр без учёта
+ * кликов, `mode` — настоящая отправка, тест себе или предпросмотр.
+ */
 export function buildRecipientContext(
   r: Pick<
     QueueRecipient,
     "id" | "token" | "email" | "name" | "companyName" | "sphere" | "userId" | "organizationId" | "contactId" | "links" | "payload"
   >,
   appUrl: string,
-  options: { track: boolean } = { track: true }
+  options: { track: boolean; mode?: MailingRenderMode } = { track: true }
 ): { ctx: MailingRecipientContext; links: () => string[] } {
   const tracker = createLinkTracker(appUrl, r.token, r.links);
   const base = appUrl.replace(/\/+$/, "");
   const ctx: MailingRecipientContext = {
+    mode: options.mode ?? "live",
     recipientId: r.id,
     email: r.email,
     name: r.name,
@@ -290,6 +310,31 @@ export function buildRecipientContext(
     personal: r.payload ?? {},
   };
   return { ctx, links: () => tracker.links };
+}
+
+/**
+ * Тест себе: пометки шаблона («промокод — пример…») — плашкой вверху
+ * письма, первой строкой текстовой версии и строкой в Telegram. Чтобы
+ * тестовое письмо, пересланное коллеге, не выдавало пример за настоящее.
+ */
+export function withTestNotes(rendered: RenderedMailing): RenderedMailing {
+  const notes = (rendered.notes ?? []).map((n) => n.trim()).filter(Boolean);
+  if (notes.length === 0) return rendered;
+  const line = `Тестовое письмо. ${notes.join(" ")}`;
+  const out: RenderedMailing = { ...rendered };
+  if (rendered.email) {
+    const banner =
+      `<div data-mailing-test-note style="margin:0;padding:10px 16px;background:#fff8eb;color:#7a4a00;` +
+      `font-family:Arial,sans-serif;font-size:13px;line-height:1.5;text-align:center">${escapeHtml(line)}</div>`;
+    const html = /<body[^>]*>/i.test(rendered.email.html)
+      ? rendered.email.html.replace(/<body[^>]*>/i, (tag) => `${tag}${banner}`)
+      : `${banner}${rendered.email.html}`;
+    out.email = { ...rendered.email, html, text: `${line}\n\n${rendered.email.text}` };
+  }
+  if (rendered.telegram) {
+    out.telegram = { ...rendered.telegram, text: `${rendered.telegram.text}\n\n<i>${escapeHtml(line)}</i>` };
+  }
+  return out;
 }
 
 /**
@@ -352,6 +397,8 @@ export type DeliverResult = {
   deferredEmail: boolean;
   retried: boolean;
   claimed: boolean;
+  /** Пометки шаблона для ROOT (только в тесте себе). */
+  notes?: string[];
 };
 
 /**
@@ -415,7 +462,7 @@ export async function deliverRecipient(
   }
 
   const template = (deps.template ?? getMailingTemplate)(campaign.kind);
-  const { ctx, links } = buildRecipientContext(r, deps.appUrl);
+  const { ctx, links } = buildRecipientContext(r, deps.appUrl, { track: true, mode: options.test ? "test" : "live" });
   let rendered: RenderedMailing | null = null;
   let renderError: string | null = null;
   if (!template) {
@@ -426,6 +473,11 @@ export async function deliverRecipient(
     } catch (error) {
       renderError = `Ошибка шаблона: ${error instanceof Error ? error.message : String(error)}`.slice(0, 300);
     }
+  }
+  if (rendered && options.test && rendered.notes && rendered.notes.length > 0) {
+    rendered = withTestNotes(rendered);
+    result.notes = rendered.notes;
+    log("info", `campaign=${campaign.id} test send with template notes`, { notes: rendered.notes });
   }
 
   const claimed = await store.claimChannels(r.id, attempt, links(), { requireSending: !options.test });
@@ -609,8 +661,8 @@ export async function runQueuePass(deps: QueueDeps): Promise<QueueReport> {
       if (template?.prepare) {
         const recipients = await store.prepareRecipients(campaign.id);
         personal = await template.prepare(
-          { id: campaign.id, payload: campaign.payload },
-          recipients.map((x) => ({ ...x, sphere: SPHERES_ANY(x.sphere) }))
+          { id: campaign.id, title: campaign.title ?? "", payload: campaign.payload },
+          recipients.map(({ payload, ...x }) => ({ ...x, sphere: SPHERES_ANY(x.sphere), personal: asRecord(payload) }))
         );
       }
       await store.savePrepared(campaign.id, personal, now);

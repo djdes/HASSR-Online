@@ -266,6 +266,7 @@ export function ComposeTab({
               payload={payload}
               onChange={onPayload}
               audience={{ users: userIds.size, contacts: contactIds.size }}
+              formData={data.kinds.find((k) => k.kind === kind)?.formData ?? null}
             />
           </div>
         </section>
@@ -405,6 +406,11 @@ export function ComposeTab({
                     );
                   })}
                 </ul>
+                {testResult.notes && testResult.notes.length > 0 ? (
+                  <p className="mt-2 text-[12.5px] leading-[1.5] text-[#7a4a00]" data-testid="compose-test-notes">
+                    {testResult.notes.join(" ")} Эта пометка есть и в самом тестовом письме.
+                  </p>
+                ) : null}
               </div>
             ) : null}
           </div>
@@ -577,6 +583,15 @@ function PreviewPane({ preview, channel }: { preview: PreviewState; channel: Mai
   return (
     <div data-testid={`preview-${channel}`}>
       <div className="mb-2 text-[12px] text-[#9b9fb3]">Для: {preview.label}</div>
+      {r.notes && r.notes.length > 0 ? (
+        <div
+          className="mb-2 flex items-start gap-2 rounded-xl bg-[#fff8eb] px-3 py-2 text-[12.5px] leading-[1.5] text-[#7a4a00]"
+          data-testid="preview-notes"
+        >
+          <Info className="mt-0.5 size-3.5 shrink-0" />
+          <span>{r.notes.join(" ")}</span>
+        </div>
+      ) : null}
       {channel === "email" ? (
         r.email ? (
           <div className="overflow-hidden rounded-2xl border border-[#ececf4]">

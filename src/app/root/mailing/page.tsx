@@ -1,7 +1,7 @@
 import { requireRoot } from "@/lib/auth-helpers";
 import { getDraft, listCampaigns } from "@/lib/mailing/campaigns.server";
 import { pushAvailability, telegramBotConfigured } from "@/lib/mailing/channels.server";
-import { mailingKindOptions } from "@/lib/mailing/kinds";
+import { mailingKindOptionsWithData } from "@/lib/mailing/kinds";
 import { emailSendStats, readMailingSettings } from "@/lib/mailing/settings.server";
 import { marketingSenderInfo } from "@/lib/mailing/transport.server";
 
@@ -28,11 +28,12 @@ export default async function RootMailingPage({
 }) {
   await requireRoot();
   const params = await searchParams;
-  const [campaigns, settings, stats, draftRaw] = await Promise.all([
+  const [campaigns, settings, stats, draftRaw, kinds] = await Promise.all([
     listCampaigns(),
     readMailingSettings(),
     emailSendStats(),
     params.draft ? getDraft(params.draft) : Promise.resolve(null),
+    mailingKindOptionsWithData(),
   ]);
   const draft = draftRaw && draftRaw.status === "draft" ? draftRaw : null;
   const sender = marketingSenderInfo();
@@ -41,7 +42,7 @@ export default async function RootMailingPage({
     : "compose";
 
   const data: MailingPageData = {
-    kinds: mailingKindOptions(),
+    kinds,
     sender: {
       mode: sender.mode,
       from: sender.from,

@@ -16,6 +16,8 @@ export type MailingKindFieldsProps<P = unknown> = {
   disabled?: boolean;
   /** Сколько выбрано получателей — для подсказок («сфера по получателю»). */
   audience: { users: number; contacts: number };
+  /** Данные шаблона для формы (`MailingTemplate.formData`), например действующие промокоды; может быть null. */
+  formData?: unknown;
 };
 
 const KIND_RE = /^[a-z][a-z0-9-]{0,39}$/;

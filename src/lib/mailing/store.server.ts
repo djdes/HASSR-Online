@@ -159,15 +159,17 @@ export function createPrismaQueueStore(): MailingQueueStore {
     async campaignsToPrepare() {
       const rows = await db.mailingCampaign.findMany({
         where: { status: "sending", preparedAt: null },
-        select: { id: true, kind: true, payload: true, status: true },
+        select: { id: true, title: true, kind: true, payload: true, status: true },
       });
       return rows;
     },
 
     async prepareRecipients(campaignId) {
+      // Только тем, кому есть что отправлять: пропущенным при постановке в
+      // очередь (стоп-лист, отписка) персональные данные не нужны.
       return db.mailingRecipient.findMany({
-        where: { campaignId, isTest: false },
-        select: { id: true, email: true, organizationId: true, companyName: true, sphere: true },
+        where: { campaignId, isTest: false, status: "queued" },
+        select: { id: true, email: true, organizationId: true, companyName: true, sphere: true, payload: true },
         orderBy: { createdAt: "asc" },
       });
     },
@@ -232,7 +234,7 @@ export function createPrismaQueueStore(): MailingQueueStore {
     async getCampaign(id): Promise<QueueCampaign | null> {
       return db.mailingCampaign.findUnique({
         where: { id },
-        select: { id: true, kind: true, payload: true, status: true },
+        select: { id: true, title: true, kind: true, payload: true, status: true },
       });
     },
 

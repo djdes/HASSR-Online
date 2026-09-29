@@ -1,5 +1,6 @@
 import { registerMailingTemplate } from "@/lib/mailing/templates";
 
+import { kpTemplate } from "./kp";
 import { messageTemplate } from "./message";
 
 /**
@@ -9,6 +10,11 @@ import { messageTemplate } from "./message";
  * `src/components/mailing/fields/<kind>.tsx`.
  */
 registerMailingTemplate(messageTemplate);
-// registerMailingTemplate(kpTemplate); — «КП» подключается одной строкой.
+registerMailingTemplate(kpTemplate);
 
-export { getMailingTemplate, mailingKindOptions, mailingTemplates } from "@/lib/mailing/templates";
+export {
+  getMailingTemplate,
+  mailingKindOptions,
+  mailingKindOptionsWithData,
+  mailingTemplates,
+} from "@/lib/mailing/templates";

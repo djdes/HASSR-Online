@@ -105,8 +105,15 @@ class MemoryStore implements MailingQueueStore {
   }
   async prepareRecipients(campaignId: string) {
     return this.recipients
-      .filter((r) => r.campaignId === campaignId && !r.isTest)
-      .map((r) => ({ id: r.id, email: r.email, organizationId: r.organizationId, companyName: r.companyName, sphere: r.sphere }));
+      .filter((r) => r.campaignId === campaignId && !r.isTest && r.status === "queued")
+      .map((r) => ({
+        id: r.id,
+        email: r.email,
+        organizationId: r.organizationId,
+        companyName: r.companyName,
+        sphere: r.sphere,
+        payload: r.payload,
+      }));
   }
   async savePrepared(campaignId: string, personal: Record<string, Record<string, unknown>>, now: Date) {
     this.prepareCalls += 1;
@@ -154,7 +161,7 @@ class MemoryStore implements MailingQueueStore {
   }
   async getCampaign(id: string) {
     const c = this.campaigns.get(id);
-    return c ? { id: c.id, kind: c.kind, payload: c.payload, status: c.status } : null;
+    return c ? { id: c.id, title: c.title, kind: c.kind, payload: c.payload, status: c.status } : null;
   }
   async countEmailsSentSince(since: Date) {
     return this.recipients.filter((r) => !r.isTest && r.emailSentAt && r.emailSentAt >= since).length;
@@ -501,6 +508,37 @@ describe("отмена и подготовка", () => {
     assert.equal(prepared, 1);
   });
 
+  it("prepare получает название рассылки и уже подготовленное; пропущенным — ничего", async () => {
+    const store = new MemoryStore();
+    store.addCampaign({ id: "c1", title: "КП октябрь", preparedAt: null });
+    store.add({ id: "r1", email: "a@a.ru", emailStatus: "queued", payload: { code: "OLD-r1" } });
+    store.add({ id: "r2", email: "b@a.ru", emailStatus: "queued" });
+    store.add({ id: "r3", email: "stop@a.ru", emailStatus: "skipped", status: "skipped" });
+    const seen: Array<{ title: string; recipients: Array<{ id: string; personal: Record<string, unknown> }> }> = [];
+    const withPrepare: MailingTemplate<{ text: string }> = {
+      ...template,
+      async prepare(campaign, recipients) {
+        seen.push({ title: campaign.title, recipients: recipients.map((r) => ({ id: r.id, personal: r.personal })) });
+        // Идемпотентно: у кого код уже есть — не трогаем.
+        return Object.fromEntries(recipients.filter((r) => !r.personal.code).map((r) => [r.id, { code: `NEW-${r.id}` }]));
+      },
+    };
+    const { senders, calls } = fakeSenders();
+    await runQueuePass(deps(store, senders, T0, { template: () => withPrepare }));
+    assert.equal(seen.length, 1);
+    assert.equal(seen[0].title, "КП октябрь");
+    assert.deepEqual(seen[0].recipients, [
+      { id: "r1", personal: { code: "OLD-r1" } },
+      { id: "r2", personal: {} },
+    ]);
+    assert.deepEqual(store.get("r1").payload, { code: "OLD-r1" });
+    assert.deepEqual(store.get("r2").payload, { code: "NEW-r2" });
+    assert.equal(store.get("r3").payload, null);
+    const html = calls.email.map((m) => (m as OutgoingEmail).html).join("\n");
+    assert.match(html, /OLD-r1/);
+    assert.match(html, /NEW-r2/);
+  });
+
   it("сбой prepare — рассылка ждёт, получатели не трогаются", async () => {
     const store = new MemoryStore();
     store.addCampaign({ id: "c1", preparedAt: null });
@@ -520,6 +558,46 @@ describe("отмена и подготовка", () => {
 });
 
 describe("тестовая отправка", () => {
+  const withNotes: MailingTemplate<{ text: string }> = {
+    ...template,
+    async render(payload, ctx) {
+      const base = await template.render(payload, ctx);
+      return ctx.mode === "live"
+        ? base
+        : { ...base, telegram: { text: "<b>КП</b>" }, notes: [`Промокод ROMASHKA10 — пример (${ctx.mode}).`] };
+    },
+  };
+
+  it("пометки шаблона — плашкой в тестовом письме, строкой в Telegram и в результате", async () => {
+    const store = new MemoryStore();
+    store.addCampaign({ id: "c1", status: "draft" });
+    store.add({ id: "t1", isTest: true, userId: "root", email: "root@a.ru", emailStatus: "queued", telegramStatus: "queued" });
+    const { senders, calls } = fakeSenders();
+    const campaign = (await store.getCampaign("c1")) as QueueCampaign;
+    const result = await deliverRecipient(store.get("t1"), campaign, deps(store, senders, T0, { template: () => withNotes }), {
+      test: true,
+      emailBudget: { remaining: 1 },
+      gate: { suppressed: new Set(), optedOut: new Set(), contactStatus: new Map() },
+    });
+    assert.deepEqual(result.notes, ["Промокод ROMASHKA10 — пример (test)."]);
+    const email = calls.email[0] as OutgoingEmail;
+    assert.match(email.html, /<body><div data-mailing-test-note[^>]*>Тестовое письмо\. Промокод ROMASHKA10 — пример \(test\)\.<\/div><p>/);
+    assert.match(email.text, /^Тестовое письмо\. Промокод ROMASHKA10/);
+    assert.equal(
+      (calls.telegram[0] as { text: string }).text,
+      "<b>КП</b>\n\n<i>Тестовое письмо. Промокод ROMASHKA10 — пример (test).</i>"
+    );
+  });
+
+  it("настоящая отправка — шаблон видит mode=live, пометок нет", async () => {
+    const store = new MemoryStore();
+    store.addCampaign({ id: "c1" });
+    store.add({ id: "r1", email: "a@a.ru", emailStatus: "queued" });
+    const { senders, calls } = fakeSenders();
+    await runQueuePass(deps(store, senders, T0, { template: () => withNotes }));
+    assert.doesNotMatch((calls.email[0] as OutgoingEmail).html, /data-mailing-test-note/);
+  });
+
   it("идёт мимо стоп-листа и лимита, но только в выбранные каналы", async () => {
     const store = new MemoryStore();
     store.addCampaign({ id: "c1", status: "draft" });

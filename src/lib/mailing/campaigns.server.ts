@@ -231,11 +231,11 @@ export async function listCampaigns(limit = 100): Promise<CampaignListRow[]> {
 
 // ------------------------------------------------------------------ launch
 
-function validated(kind: string, payload: unknown): unknown {
+async function validated(kind: string, payload: unknown): Promise<unknown> {
   const template = getMailingTemplate(kind);
   if (!template) throw new MailingError(`Тип рассылки «${kind}» не найден`);
   if (!template.validate) return payload;
-  const v = template.validate(payload);
+  const v = await template.validate(payload);
   if (!v.ok) throw new MailingError(v.error);
   return v.payload;
 }
@@ -252,7 +252,7 @@ export async function launchCampaign(
   if (campaign.status !== "draft") throw new MailingError("Эта рассылка уже запущена", 409);
   const template = getMailingTemplate(campaign.kind);
   if (!template) throw new MailingError(`Тип рассылки «${campaign.kind}» не найден`);
-  const payload = validated(campaign.kind, campaign.payload);
+  const payload = await validated(campaign.kind, campaign.payload);
   const channels = normalizeChannels(campaign.channels);
   if (!anyChannel(channels)) throw new MailingError("Отметьте хотя бы один канал");
   const audience = normalizeAudience(campaign.audience);
@@ -542,7 +542,7 @@ export async function previewMailing(input: {
 }): Promise<{ label: string; rendered: RenderedMailing }> {
   const template = getMailingTemplate(input.kind);
   if (!template) throw new MailingError(`Тип рассылки «${input.kind}» не найден`);
-  const payload = validated(input.kind, input.payload);
+  const payload = await validated(input.kind, input.payload);
   let person: { name: string | null; companyName: string | null; sphere: string | null; email: string | null; userId: string | null; contactId: string | null; organizationId: string | null } = {
     ...SAMPLE,
     userId: null,
@@ -577,7 +577,7 @@ export async function previewMailing(input: {
   const { ctx } = buildRecipientContext(
     { id: "preview", token: "preview", links: [], payload: {}, ...person },
     mailingAppUrl(),
-    { track: false }
+    { track: false, mode: "preview" }
   );
   const rendered = await template.render(payload, ctx);
   if (rendered.email) rendered.email = ensureUnsubscribe(rendered.email, ctx.unsubscribeUrl);
@@ -588,13 +588,15 @@ export type TestSendResult = {
   recipientId: string;
   channels: DeliverResult["channels"];
   email: string | null;
+  /** Пометки шаблона («промокод — пример…»), они же плашкой в тестовом письме. */
+  notes: string[];
 };
 
 /** «Тестовая отправка мне» — во все отмеченные каналы текущему ROOT, сразу. */
 export async function sendTestToMe(campaignId: string, actor: MailingActor): Promise<TestSendResult> {
   const campaign = await db.mailingCampaign.findUnique({ where: { id: campaignId } });
   if (!campaign) throw new MailingError("Сначала сохраните черновик", 404);
-  const payload = validated(campaign.kind, campaign.payload);
+  const payload = await validated(campaign.kind, campaign.payload);
   const channels = normalizeChannels(campaign.channels);
   if (!anyChannel(channels)) throw new MailingError("Отметьте хотя бы один канал");
   const me = await db.user.findUnique({
@@ -625,7 +627,13 @@ export async function sendTestToMe(campaignId: string, actor: MailingActor): Pro
   });
   const recipient = await loadQueueRecipient(id);
   if (!recipient) throw new MailingError("Не удалось создать тестового получателя", 500);
-  const queueCampaign: QueueCampaign = { id: campaign.id, kind: campaign.kind, payload, status: campaign.status };
+  const queueCampaign: QueueCampaign = {
+    id: campaign.id,
+    title: campaign.title,
+    kind: campaign.kind,
+    payload,
+    status: campaign.status,
+  };
   const result = await deliverRecipient(
     recipient,
     queueCampaign,
@@ -646,5 +654,5 @@ export async function sendTestToMe(campaignId: string, actor: MailingActor): Pro
   );
   console.info(`[mailing] campaign=${campaignId} test send to ${who(actor)}`, summary);
   await audit(actor, "mailing.campaign.test", campaignId, { title: campaign.title, to: email, channels: summary });
-  return { recipientId: id, channels: result.channels, email };
+  return { recipientId: id, channels: result.channels, email, notes: result.notes ?? [] };
 }

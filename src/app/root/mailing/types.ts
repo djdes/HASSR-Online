@@ -8,7 +8,7 @@ export const MAILING_TABS: MailingTab[] = ["compose", "users", "contacts", "hist
 
 /** Данные страницы `/root/mailing` — собирает сервер, читает клиент. */
 export type MailingPageData = {
-  kinds: Array<{ kind: string; label: string; defaultPayload: unknown }>;
+  kinds: Array<{ kind: string; label: string; defaultPayload: unknown; formData?: unknown }>;
   sender: {
     mode: MarketingSendMode;
     from: string;
