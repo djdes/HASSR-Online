@@ -104,7 +104,7 @@ export type ProposalContent = {
   recipientName: string | null;
   /** «Электронные журналы ХАССП и СанПиН» — первая часть заголовка. */
   titleLead: string;
-  /** «для ресторана» — вторая часть (выделяется цветом). */
+  /** «для ресторана» — вторая часть (выделяется цветом); «для» не отрывается от слова. */
   titleFor: string;
   title: string;
   lead: string;
@@ -285,7 +285,7 @@ export function buildProposalContent(input: ProposalVars, ctx: ProposalContext):
   const cta = proposalCta(vars, ctx.now);
 
   const titleLead = copy.food ? "Электронные журналы ХАССП и СанПиН" : "Электронные журналы СанПиН";
-  const titleFor = `для ${copy.forWhom}`;
+  const titleFor = `для${NBSP}${copy.forWhom}`;
 
   const legal = copy.food
     ? "СанПиН 2.3/2.4.4282-26 прямо разрешает вести их в электронном виде."
