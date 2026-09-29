@@ -1,4 +1,5 @@
 import { Coins, FlaskConical, Users } from "lucide-react";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireAuth, getActiveOrgId, isImpersonating } from "@/lib/auth-helpers";
@@ -40,11 +41,19 @@ import {
 } from "@/lib/plan-limits";
 import { RecurringCard } from "@/components/settings/recurring-card";
 import { PromoBadge, PromoPrice } from "@/components/pricing/promo-price";
+import { SubscriptionDiscountCard } from "@/components/settings/subscription-discount-card";
+import { resolveCheckoutDiscount } from "@/lib/promo/checkout";
+import { discountForPrice, type AppliedDiscount } from "@/lib/promo/discounts";
 import { getDisplayOffer } from "@/lib/promo/offer";
+import { PROMO_COOKIE } from "@/lib/promo/personal-link";
 import { applyPromotion } from "@/lib/promo/promotions";
 import { isMobileAppRequest } from "@/lib/mobile-app-payments";
 
-export default async function SubscriptionPage() {
+export default async function SubscriptionPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   // Раньше здесь стоял `requireRole(["owner"])`, и страница была
   // недостижима: normalizeUserRole переводит legacy-«owner» в «manager»,
   // так что список ["owner"] не совпадал ни с кем. Тариф правит тот же,
@@ -136,6 +145,72 @@ export default async function SubscriptionPage() {
   // лимита); та же цена уйдёт в заказ и счёт (lib/promo/offer.ts).
   const offer = await getDisplayOffer(monthly);
   const monthlyWithPromotion = applyPromotion(price.monthlyRub, offer.promotion);
+  // Промокод: `?promo=` (из ссылки /promo/CODE или поля ниже), иначе код
+  // из cookie ссылки. Пустой `?promo=` — явно без кода. Скидку (код или
+  // скидка навсегда аккаунта — выгоднейшая) считает сервер, как при оплате.
+  const params = await searchParams;
+  const promoParam = Array.isArray(params.promo) ? params.promo[0] : params.promo;
+  const cookieCode = promoParam === undefined ? ((await cookies()).get(PROMO_COOKIE)?.value ?? null) : null;
+  const promoRaw = (promoParam ?? cookieCode ?? "").trim() || null;
+  const codeSource = promoParam ? "query" : cookieCode ? "cookie" : null;
+  const discount =
+    inMobileApp || isDemo
+      ? null
+      : await resolveCheckoutDiscount({
+          promoRaw,
+          organizationId: getActiveOrgId(session),
+          email: session.user.email ?? null,
+          offerRub: offer.priceRub,
+          now: new Date(),
+          scope: `page:/settings/subscription${codeSource ? ` (code from ${codeSource})` : ""}`,
+        }).catch((error) => {
+          console.error("[promo] subscription page discount failed", error);
+          return null;
+        });
+  // Код не подошёл — скидка навсегда аккаунта всё равно действует.
+  const lifetime = discount?.lifetime ?? null;
+  const appliedDiscount: AppliedDiscount | null = discount?.ok
+    ? discount.applied
+    : lifetime
+      ? {
+          source: "lifetime",
+          code: lifetime.code,
+          kind: lifetime.kind,
+          value: lifetime.value,
+          lifetime: true,
+          discountRub: discountForPrice(lifetime, offer.priceRub),
+          lifetimeDiscountId: lifetime.id,
+        }
+      : null;
+  // Код из cookie, который не подошёл, не показываем ошибкой: человек его
+  // сейчас не вводил. Код из адреса — показываем причину. Код из cookie,
+  // уже закреплённый скидкой навсегда, — остаток ссылки: как без кода.
+  const cookieAlreadyBound =
+    codeSource === "cookie" && discount?.ok === true && lifetime?.code === discount.typedCode;
+  const acceptedCode = discount?.ok && !cookieAlreadyBound ? discount.typedCode : null;
+  const promoError = discount && !discount.ok && codeSource !== "cookie" ? discount.message : null;
+  const payHref = acceptedCode
+    ? `/order?plan=monthly&promo=${encodeURIComponent(acceptedCode)}`
+    : "/order?plan=monthly";
+  // Следующее автосписание — по цене тарифа со скидкой навсегда (акция к
+  // тому дню может закончиться, поэтому от цены без неё).
+  const recurringMonthlyRub = lifetime
+    ? monthly.priceRub - discountForPrice(lifetime, monthly.priceRub)
+    : monthly.priceRub;
+  const discountFirst = codeSource === "query" || Boolean(lifetime);
+  const discountCard = isDemo ? null : (
+    <SubscriptionDiscountCard
+      offer={offer}
+      periodDays={monthly.periodDays}
+      lifetime={lifetime}
+      applied={appliedDiscount}
+      typedCode={codeSource === "cookie" && !acceptedCode ? null : promoRaw}
+      error={promoError}
+      notice={discount?.ok && !cookieAlreadyBound ? discount.notice : null}
+      personalPending={discount?.ok ? discount.personalPending : false}
+      payHref={payHref}
+    />
+  );
   // Пример для справки: команда чуть больше подписки — видно и базу,
   // и доплату.
   const exampleEmployees = SUBSCRIPTION_MAX_USERS + 5;
@@ -247,7 +322,7 @@ export default async function SubscriptionPage() {
         <BillingTransitionGate
           display="card"
           copy={decisionCopy}
-          payHref="/order?plan=monthly"
+          payHref={payHref}
           blocking={false}
           cardNote={
             invoiceReady && !isDemo
@@ -268,6 +343,10 @@ export default async function SubscriptionPage() {
           starter/standard/pro, которые никогда не писались в БД. */}
       {plan === "paused" ? <ResumePausedCard /> : null}
 
+      {/* Пришли по ссылке с промокодом или уже есть скидка навсегда —
+          карточка скидки первой: ради неё человек и открыл страницу. */}
+      {discountFirst ? discountCard : null}
+
       <PlanUpgrade
         currentPlan={shownPlan}
         currentPlanLabel={shownPlanLabel}
@@ -279,7 +358,11 @@ export default async function SubscriptionPage() {
         hardwareFromRub={hardwareFromRub}
         subscriptionMonthly={monthly.priceRub}
         subscriptionPromotion={offer.promotion}
+        subscriptionDiscount={appliedDiscount}
+        payHref={payHref}
       />
+
+      {discountFirst ? null : discountCard}
 
       {!isDemo ? (
         <InvoiceCard
@@ -288,6 +371,8 @@ export default async function SubscriptionPage() {
           orgInn={org?.inn ?? null}
           amountRub={monthly.priceRub}
           promotion={offer.promotion}
+          discount={appliedDiscount}
+          promoCode={acceptedCode}
           periodDays={monthly.periodDays}
           pending={
             pendingInvoice
@@ -304,7 +389,7 @@ export default async function SubscriptionPage() {
       <RecurringCard
         active={org?.recurringActive === true}
         nextChargeAt={org?.subscriptionEnd?.toISOString() ?? null}
-        monthlyRub={monthly.priceRub}
+        monthlyRub={recurringMonthlyRub}
       />
 
       <section className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-7">
@@ -455,8 +540,13 @@ export default async function SubscriptionPage() {
                 value={
                   price.isFree ? (
                     "0 ₽"
-                  ) : monthlyWithPromotion.promotion ? (
-                    <PromoPrice price={monthlyWithPromotion} size="lg" layout="stacked" />
+                  ) : monthlyWithPromotion.promotion || appliedDiscount ? (
+                    <PromoPrice
+                      price={monthlyWithPromotion}
+                      personal={appliedDiscount}
+                      size="lg"
+                      layout="stacked"
+                    />
                   ) : (
                     `${price.monthlyRub.toLocaleString("ru-RU")} ₽`
                   )
