@@ -1,0 +1,490 @@
+{
+  "startedAt": "2026-09-29T17:01:48.860Z",
+  "checks": [
+    {
+      "name": "ROOT вошёл",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "session": true
+      }
+    },
+    {
+      "name": "Контакты загружены: «детсад» → education, «отель» → hotel",
+      "ok": true,
+      "details": [
+        {
+          "id": "cmumxc1bc000vpg9mglxp8bvb",
+          "email": "hotel.volna-mumxbfk7@example.com",
+          "sphere": "hotel",
+          "company": "Отель «Волна»"
+        },
+        {
+          "id": "cmumxc1bc000upg9my86rcm43",
+          "email": "zav.solnyshko-mumxbfk7@example.com",
+          "sphere": "education",
+          "company": "Детский сад №5 «Солнышко»"
+        }
+      ]
+    },
+    {
+      "name": "Черновик «КП» создан",
+      "ok": true,
+      "details": {
+        "campaign": {
+          "id": "cmumxc1ge000xpg9msag2aa1s",
+          "title": "E2E КП: осень",
+          "kind": "kp",
+          "kindLabel": "КП",
+          "channels": {
+            "email": true,
+            "inApp": true,
+            "push": false,
+            "telegram": true
+          },
+          "status": "draft",
+          "statusLabel": "Черновик",
+          "scheduledAt": null,
+          "startedAt": null,
+          "finishedAt": null,
+          "cancelledAt": null,
+          "createdAt": "2026-09-29T17:02:05.150Z",
+          "createdByName": "Администратор",
+          "lastError": null,
+          "counts": {
+            "total": 0,
+            "queued": 0,
+            "sent": 0,
+            "failed": 0,
+            "skipped": 0,
+            "cancelled": 0,
+            "clicks": 0
+          },
+          "selection": {
+            "users": 1,
+            "contacts": 2
+          }
+        }
+      }
+    },
+    {
+      "name": "Поля «КП»: персональные коды, 10 %, навсегда, 14 дней, срок «до <дата>» по Москве",
+      "ok": true,
+      "details": {
+        "kindValue": "kp",
+        "personalChecked": true,
+        "value": "10",
+        "days": "14",
+        "lifetime": true,
+        "daysHint": "Если отправить сегодня — до 13 октября включительно (23:59 по Москве). Кто оплатит до этого дня, сохранит скидку навсегда."
+      }
+    },
+    {
+      "name": "Подсказки: сфера получателя, «Вложить PDF», ссылка на отправителя и реквизиты",
+      "ok": true,
+      "details": "Сфера по умолчанию Ресторан Кафе / Кофейня Бар / Паб Столовая Фастфуд Пекарня Кейтеринг / Доставка Отель / Гостиница Продуктовый магазин АЗС / Придорожное кафе Школа / Детсад / Лагерь Медцентр / Больница / Санаторий Производство Фитнес-центр / Спортклуб / Бассейн Салон красоты / Барбершоп / Маникюр "
+    },
+    {
+      "name": "Предпросмотр: КП кафе с примером кода ROMASHKA10 и пометкой «пример — настоящий код создастся при отправке»",
+      "ok": true,
+      "details": "Промокод ROMASHKA10 — пример: настоящий код создастся при отправке, у каждого получателя свой."
+    },
+    {
+      "name": "Предпросмотр для отеля: пример VOLNA10, КП для отеля",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "Предпросмотр Telegram: заголовок, «Команда до 10 сотрудников — … со скидкой 10 % навсегда по промокоду VOLNA10 (код действует до …)»",
+      "ok": true,
+      "details": "Для: Олег Петров · Отель «Волна» · hotel.volna-mumxbfk7@example.com Промокод VOLNA10 — пример: настоящий код создастся при отправке, у каждого получателя свой. Предложение WeSetup для вашей команды Команда до 10 сотрудников — 1 791 ₽/мес со скидкой 10 % навсегда по промокоду VOLNA10 (код действует до 13 октября). Бесплатно — все 45 журналов для 1 сотрудника. Открыть предложение"
+    },
+    {
+      "name": "Тест себе: письмо (сухая) и пометка про пример кода",
+      "ok": true,
+      "details": "Тест на root.e2e@example.com Почта: Отправлено (сухая отправка) Колокольчик: Отправлено Telegram: Пропущено — Telegram не привязан Промокод WESETUP10 — пример: настоящий код создастся при отправке, у каждого получателя свой. Эта пометка есть и в самом тестовом письме."
+    },
+    {
+      "name": "Тестовое письмо: плашка «Тестовое письмо. Промокод … — пример» вверху",
+      "ok": true,
+      "details": "d:\\wt\\tmp-mailing2\\outbox\\cmumxc1ge000xpg9msag2aa1s\\mr4ca9879c2156d7ac0fc3-email.html"
+    },
+    {
+      "name": "Тест себе не создаёт промокодов",
+      "ok": true,
+      "details": {
+        "n": 0
+      }
+    },
+    {
+      "name": "Запуск → карточка рассылки",
+      "ok": true,
+      "details": "http://localhost:3193/root/mailing/cmumxc1ge000xpg9msag2aa1s"
+    },
+    {
+      "name": "Cron: коды подготовлены, рассылка завершена, отправлено 3",
+      "ok": true,
+      "details": {
+        "status": "done",
+        "preparedAt": "2026-09-29T14:02:34.372Z",
+        "sentCount": 3,
+        "failedCount": 0,
+        "lastError": null
+      }
+    },
+    {
+      "name": "Коды: 3 новых, у каждого получателя свой (ROMASHKA10, SOLNYSHKO10, VOLNA10)",
+      "ok": true,
+      "details": [
+        [
+          "hotel.volna-mumxbfk7@example.com",
+          {
+            "promoCode": "VOLNA10",
+            "promoEndsAt": "2026-10-13T20:59:59.999Z"
+          }
+        ],
+        [
+          "kp-anna-mumxbfk7@example.com",
+          {
+            "promoCode": "ROMASHKA10",
+            "promoEndsAt": "2026-10-13T20:59:59.999Z"
+          }
+        ],
+        [
+          "zav.solnyshko-mumxbfk7@example.com",
+          {
+            "promoCode": "SOLNYSHKO10",
+            "promoEndsAt": "2026-10-13T20:59:59.999Z"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Код Анны привязан к её организации, коды контактов — без привязки (одна оплата)",
+      "ok": true,
+      "details": [
+        [
+          "ROMASHKA10",
+          "cmumxbn03000opg9mhzcy8he9",
+          null
+        ],
+        [
+          "SOLNYSHKO10",
+          null,
+          null
+        ],
+        [
+          "VOLNA10",
+          null,
+          null
+        ]
+      ]
+    },
+    {
+      "name": "Условия кодов: −10 % навсегда, maxUses 1, до 23:59 МСК через 14 дней, заметка и метка рассылки",
+      "ok": true,
+      "details": [
+        {
+          "code": "ROMASHKA10",
+          "endsAt": "2026-10-13T20:59:59.999Z",
+          "note": "Рассылка «E2E КП: осень» · Кафе «Ромашка»"
+        },
+        {
+          "code": "SOLNYSHKO10",
+          "endsAt": "2026-10-13T20:59:59.999Z",
+          "note": "Рассылка «E2E КП: осень» · Детский сад №5 «Солнышко»"
+        },
+        {
+          "code": "VOLNA10",
+          "endsAt": "2026-10-13T20:59:59.999Z",
+          "note": "Рассылка «E2E КП: осень» · Отель «Волна»"
+        }
+      ]
+    },
+    {
+      "name": "Каналы: письма всем трём (сухая), Анне — колокольчик и Telegram (сухая)",
+      "ok": true,
+      "details": [
+        [
+          "hotel.volna-mumxbfk7@example.com",
+          "sent",
+          null,
+          null
+        ],
+        [
+          "kp-anna-mumxbfk7@example.com",
+          "sent",
+          "sent",
+          "sent"
+        ],
+        [
+          "zav.solnyshko-mumxbfk7@example.com",
+          "sent",
+          null,
+          null
+        ]
+      ]
+    },
+    {
+      "name": "Кафе «Ромашка»: своя сфера (cafe) и свой код ROMASHKA10, чужих кодов нет",
+      "ok": true,
+      "details": {
+        "promoLink": "https://wesetup.ru/promo/ROMASHKA10?s=cafe",
+        "sphere": "cafe",
+        "code": "ROMASHKA10",
+        "others": []
+      }
+    },
+    {
+      "name": "Кафе «Ромашка»: ссылки через /r/, отписка напрямую, заголовки List-Unsubscribe",
+      "ok": true,
+      "details": {
+        "hrefs": 8,
+        "external": []
+      }
+    },
+    {
+      "name": "Детский сад №5 «Солнышко»: своя сфера (education) и свой код SOLNYSHKO10, чужих кодов нет",
+      "ok": true,
+      "details": {
+        "promoLink": "https://wesetup.ru/promo/SOLNYSHKO10?s=education",
+        "sphere": "education",
+        "code": "SOLNYSHKO10",
+        "others": []
+      }
+    },
+    {
+      "name": "Детский сад №5 «Солнышко»: ссылки через /r/, отписка напрямую, заголовки List-Unsubscribe",
+      "ok": true,
+      "details": {
+        "hrefs": 8,
+        "external": []
+      }
+    },
+    {
+      "name": "Отель «Волна»: своя сфера (hotel) и свой код VOLNA10, чужих кодов нет",
+      "ok": true,
+      "details": {
+        "promoLink": "https://wesetup.ru/promo/VOLNA10?s=hotel",
+        "sphere": "hotel",
+        "code": "VOLNA10",
+        "others": []
+      }
+    },
+    {
+      "name": "Отель «Волна»: ссылки через /r/, отписка напрямую, заголовки List-Unsubscribe",
+      "ok": true,
+      "details": {
+        "hrefs": 8,
+        "external": []
+      }
+    },
+    {
+      "name": "Telegram Анны (сухая): код и ссылка на веб-версию через /r/",
+      "ok": true,
+      "details": "<b>Предложение WeSetup для вашей команды</b>\n\nКоманда до 10 сотрудников — 1 791 ₽/мес со скидкой 10 % навсегда по промокоду ROMASHKA10 (код действует до 13 октября). Бесплатно — все 45 журналов для 1 сотрудника.\n\n<a href=\"http://localhost:3193/r/mr79df9a376ff79dd69d58.<подпись>/1\">Откры"
+    },
+    {
+      "name": "Колокольчик Анны: «Предложение WeSetup для вашей команды» и ссылка на КП",
+      "ok": true,
+      "details": [
+        [
+          "Предложение WeSetup для вашей команды",
+          "http://localhost:3193/r/mr79df9a376ff79dd69d58.<подпись>/1"
+        ]
+      ]
+    },
+    {
+      "name": "ROOT «Промокоды»: 3 кода с меткой рассылки и заметкой «Рассылка «…» · компания»",
+      "ok": true,
+      "details": {
+        "ROMASHKA10": "ROMASHKA10 навсегда персональный рассылка cmumxc1ge000xpg9msag2aa1s Рассылка «E2E КП: осень» · Кафе «Ромашка» −10 % до 13.10.2026 0 / 1 Кафе «Ромашка» Изменить Отключить",
+        "SOLNYSHKO10": "SOLNYSHKO10 навсегда рассылка cmumxc1ge000xpg9msag2aa1s Рассылка «E2E КП: осень» · Детский сад №5 «Солнышко» −10 % до 13.10.2026 0 / 1 всем Изменить Отключить",
+        "VOLNA10": "VOLNA10 навсегда рассылка cmumxc1ge000xpg9msag2aa1s Рассылка «E2E КП: осень» · Отель «Волна» −10 % до 13.10.2026 0 / 1 всем Изменить Отключить"
+      }
+    },
+    {
+      "name": "Кнопка письма детсада: /r/ → https://wesetup.ru/promo/SOLNYSHKO10?s=education",
+      "ok": true,
+      "details": {
+        "status": 307,
+        "location": "https://wesetup.ru/promo/SOLNYSHKO10?s=education"
+      }
+    },
+    {
+      "name": "Клик записан у получателя",
+      "ok": true,
+      "details": {
+        "clickedAt": "2026-09-29T14:02:44.938Z",
+        "clickCount": 1
+      }
+    },
+    {
+      "name": "390: /promo/SOLNYSHKO10?s=education → регистрация: сфера «Школа / Детсад / Лагерь» подставлена, плашка кода, cookie",
+      "ok": true,
+      "details": {
+        "url": "http://localhost:3193/register?promo=SOLNYSHKO10&s=education&next=%2Fsettings%2Fsubscription%3Fpromo%3DSOLNYSHKO10",
+        "sphere": "education",
+        "banner": "Промокод SOLNYSHKO10: −10 % навсегда. Создайте аккаунт — код подставится на оплате сам.",
+        "cookie": "SOLNYSHKO10"
+      }
+    },
+    {
+      "name": "390: организация создана со сферой education",
+      "ok": true,
+      "details": {
+        "type": "education"
+      }
+    },
+    {
+      "name": "390: тариф — промокод SOLNYSHKO10 применён",
+      "ok": true,
+      "details": "Промокод SOLNYSHKO10 применён: −199 ₽ от подписки."
+    },
+    {
+      "name": "390: /order — код подставлен сам, скидка в строке подписки (оплату не отправляем)",
+      "ok": true,
+      "details": {
+        "promoInput": "SOLNYSHKO10",
+        "line": "Подписка на 30 дн. Без скидки: 1 990 ₽ Со скидкой: 1 791 ₽ Промокод SOLNYSHKO10: −10 % навсегда"
+      }
+    },
+    {
+      "name": "Генератор: код создан (−10 % навсегда, по названию компании)",
+      "ok": true,
+      "details": {
+        "option": {
+          "code": "BEREZKA10",
+          "kind": "percent",
+          "value": 10,
+          "lifetime": true,
+          "endsAt": "2026-10-13T20:59:59.999Z",
+          "label": "BEREZKA10 · −10 % навсегда"
+        }
+      }
+    },
+    {
+      "name": "Генератор: код сразу выбран в форме",
+      "ok": true,
+      "details": "BEREZKA10 · −10 % навсегда"
+    },
+    {
+      "name": "Генератор: в PDF — код, «навсегда» и срок активации, один лист",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "pages": 1,
+        "excerpt": "метра — число подставится само. Каждый сотрудник сверх 10 — 100 ₽/мес. Промокод BEREZKA10 действует до 13 октября: при оплате до этого дня скидка остаётся навсегда. С 1 по 10 октября подписка «до 10 сотрудников» бесплатна для всех. Отсканир"
+      }
+    },
+    {
+      "name": "Генератор: в письме КП — тот же код",
+      "ok": true,
+      "details": null
+    },
+    {
+      "name": "Генератор: код без привязки, одна оплата, 14 дней, заметка «Генератор КП · Столовая «Берёзка»»",
+      "ok": true,
+      "details": {
+        "kind": "percent",
+        "value": 10,
+        "lifetime": true,
+        "maxUses": 1,
+        "personalEmail": null,
+        "organizationId": null,
+        "campaignId": null,
+        "note": "Генератор КП · Столовая «Берёзка»",
+        "endsAt": "2026-10-13T20:59:59.999Z"
+      }
+    },
+    {
+      "name": "Генератор: аудит promo.create (source kp-generator)",
+      "ok": true,
+      "details": [
+        {
+          "code": "BEREZKA10",
+          "endsAt": "2026-10-13T20:59:59.999Z",
+          "source": "kp-generator",
+          "sphere": "restaurant",
+          "summary": "−10 % · навсегда",
+          "validDays": 14,
+          "companyName": "Столовая «Берёзка»"
+        }
+      ]
+    },
+    {
+      "name": "Письмо детсаду на ширине 375: без горизонтальной прокрутки",
+      "ok": true,
+      "details": {
+        "over": 0
+      }
+    },
+    {
+      "name": "Письмо детсаду на ширине 600: без горизонтальной прокрутки",
+      "ok": true,
+      "details": {
+        "over": 0
+      }
+    },
+    {
+      "name": "390: форма «КП» без горизонтальной прокрутки",
+      "ok": true,
+      "details": {
+        "overflow": 0
+      }
+    },
+    {
+      "name": "390: генератор без горизонтальной прокрутки",
+      "ok": true,
+      "details": {
+        "overflow": 0
+      }
+    },
+    {
+      "name": "Аудит рассылки: тест и запуск",
+      "ok": true,
+      "details": [
+        {
+          "action": "mailing.campaign.launch",
+          "n": 1
+        },
+        {
+          "action": "mailing.campaign.test",
+          "n": 1
+        }
+      ]
+    }
+  ],
+  "pageErrors": [],
+  "notes": [
+    "warm /api/root/mailing/campaigns → 200",
+    "warm /api/root/mailing/campaigns/warm → 404",
+    "warm /api/root/mailing/campaigns/warm/launch → 405",
+    "warm /api/root/mailing/campaigns/warm/test → 405",
+    "warm /api/root/mailing/preview → 405",
+    "warm /api/root/mailing/reach → 405",
+    "warm /api/root/mailing/contacts → 200",
+    "warm /api/cron/mailing → 401",
+    "warm /api/root/promo-codes → 200",
+    "warm /api/root/proposals → 405",
+    "warm /api/root/proposals/personal-code → 405",
+    "warm /r/warm.x/0 → 307",
+    "warm /promo/WARM10 → 307",
+    "warm /root/mailing → 200",
+    "warm /root/mailing/warm → 404",
+    "warm /root/promo-codes → 200",
+    "warm /root/proposals → 200",
+    "warm /register → 307",
+    "warm /settings/subscription → 200",
+    "warm /order → 200",
+    "existing options: Действующих общих кодов нет",
+    "preview-for options: [{\"value\":\"sample\",\"text\":\"Пример: Иван Петров, Кафе «Ромашка»\"},{\"value\":\"user:cmumxbn0c000ppg9mmahvu5ml\",\"text\":\"Анна Смирнова · Кафе «Ромашка»\"},{\"value\":\"contact:cmumxc1bc000upg9my86rcm43\",\"text\":\"Мария Иванова · Детский сад №5 «Солнышко» · zav.solnyshko-mumxbfk7@example.com\"},{\"value\":\"contact:cmumxc1bc000vpg9mglxp8bvb\",\"text\":\"Олег Петров · Отель «Волна» · hotel.volna-mumxbfk7@example.com\"}]",
+    "Кафе «Ромашка» subject (encoded): =?UTF-8?B?0JrQsNGE0LUgwqvQoNC+0LzQsNGI0LrQsMK7OiA=?= =?UTF-8?B?0LbRg9GA0L3QsNC70Ysg0KHQsNC90J/QuNCdINGB?= =?UTF-8?B?INGC",
+    "Детский сад №5 «Солнышко» subject (encoded): =?UTF-8?B?0JTQtdGC0YHQutC40Lkg0YHQsNC0IOKEljUgwqs=?= =?UTF-8?B?0KHQvtC70L3Ri9GI0LrQvsK7OiDQttGD0YDQvdCw?= =?UTF-8?B?0LvR",
+    "Отель «Волна» subject (encoded): =?UTF-8?B?0J7RgtC10LvRjCDCq9CS0L7Qu9C90LDCuzog0LY=?= =?UTF-8?B?0YPRgNC90LDQu9GLINCh0LDQvdCf0LjQnSDRgSA=?= =?UTF-8?B?0YLQ"
+  ],
+  "devReloads": 0,
+  "finishedAt": "2026-09-29T17:09:37.045Z",
+  "passed": 43,
+  "failed": 0
+}
