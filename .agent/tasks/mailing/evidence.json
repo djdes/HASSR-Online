@@ -1,0 +1,83 @@
+{
+  "task": "mailing",
+  "branch": "feat/mailing-2026-09-29",
+  "date": "2026-09-29",
+  "commits": [
+    "5da90a01",
+    "64b92f44",
+    "df92da70",
+    "776dcf0d",
+    "402f3875"
+  ],
+  "checks": {
+    "typecheck": {
+      "status": "PASS",
+      "errors": 0
+    },
+    "testGate": {
+      "status": "PASS",
+      "pass": 2902,
+      "fail": 0
+    },
+    "mailingUnitTests": {
+      "status": "PASS",
+      "pass": 66,
+      "fail": 0,
+      "files": [
+        "src/lib/mailing/csv.test.ts",
+        "src/lib/mailing/audience.test.ts",
+        "src/lib/mailing/text-format.test.ts",
+        "src/lib/mailing/tokens-links-limits.test.ts",
+        "src/lib/mailing/queue.test.ts",
+        "src/lib/mailing/kinds-consistency.test.ts"
+      ]
+    },
+    "e2e": {
+      "status": "PASS",
+      "passed": 63,
+      "failed": 0,
+      "script": ".agent/tasks/mailing/e2e/e2e.cjs",
+      "raw": "evidence/results.json"
+    },
+    "e2eRetry": {
+      "status": "PASS",
+      "passed": 4,
+      "failed": 0,
+      "script": ".agent/tasks/mailing/e2e/retry.cjs",
+      "raw": "evidence/results-retry.json"
+    }
+  },
+  "acceptance": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS"
+  },
+  "screenshots": [
+    "evidence/01-contacts-preview-1280.png",
+    "evidence/02-users-1280.png",
+    "evidence/03-compose-1280.png",
+    "evidence/04-history-draft-1280.png",
+    "evidence/05-card-1280.png",
+    "evidence/06-unsubscribe-390.png",
+    "evidence/07-unsubscribe-done-390.png",
+    "evidence/08-stoplist-1280.png",
+    "evidence/09-notifications-off-1280.png",
+    "evidence/10-notifications-on-1280.png",
+    "evidence/11-notifications-390.png",
+    "evidence/11b-mini-profile-390.png",
+    "evidence/12-card-cancelled-1280.png",
+    "evidence/13-compose-390.png",
+    "evidence/14-users-390.png",
+    "evidence/15-contacts-390.png",
+    "evidence/16-history-390.png",
+    "evidence/17-stoplist-390.png",
+    "evidence/18-card-390.png",
+    "evidence/19-card-failed-1280.png",
+    "evidence/20-card-retried-1280.png"
+  ],
+  "sampleEmail": [
+    "evidence/sample-email.eml",
+    "evidence/sample-email.html"
+  ]
+}

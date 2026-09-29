@@ -126,6 +126,11 @@ export async function upsertNotification(args: {
   linkHref?: string | null;
   linkLabel?: string | null;
   items: NotificationItem[];
+  /**
+   * false — без push: вызывающий шлёт push сам или не шлёт вовсе
+   * (рассылка ROOT: колокольчик и push — отдельные галочки).
+   */
+  push?: boolean;
 }): Promise<void> {
   const existing = await db.notification.findUnique({
     where: {
@@ -156,7 +161,7 @@ export async function upsertNotification(args: {
         dismissedAt: null,
       },
     });
-    pushNotification(args);
+    if (args.push !== false) pushNotification(args);
     // Живое событие вкладке: колокольчик перечитает список сразу, а не
     // через минуту по опросу. Данных не передаём — см. live-events.ts.
     publishToUser(args.userId, { type: "notification", kind: args.kind });

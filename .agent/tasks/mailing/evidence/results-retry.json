@@ -1,0 +1,40 @@
+{
+  "checks": [
+    {
+      "name": "Есть завершённая рассылка",
+      "ok": true,
+      "details": {
+        "id": "cmumtzhwk007oxo9m7z3vcrr9"
+      }
+    },
+    {
+      "name": "Повтор: канал с ошибкой ушёл заново",
+      "ok": true,
+      "details": {
+        "status": "sent",
+        "emailStatus": "sent",
+        "emailError": null,
+        "attempts": 0
+      }
+    },
+    {
+      "name": "Повтор: рассылка снова «Завершена», ошибок 0",
+      "ok": true,
+      "details": {
+        "status": "done",
+        "failedCount": 0,
+        "sentCount": 5
+      }
+    },
+    {
+      "name": "Повтор записан в аудит",
+      "ok": true,
+      "details": [
+        {
+          "title": "E2E: осенние новости",
+          "requeued": 1
+        }
+      ]
+    }
+  ]
+}

@@ -8,6 +8,7 @@ import { signOut, useSession } from "next-auth/react";
 import { parseMobileAppUserAgent, type MobileAppPlatform } from "@/lib/mobile-app";
 import { unregisterPushDevice } from "@/lib/native-bridge";
 import { AppPushSettings } from "@/app/mini/_components/app-push-settings";
+import { MarketingEmailToggle } from "@/components/settings/marketing-email-toggle";
 
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { hasCapability } from "@/lib/permission-presets";
@@ -331,6 +332,9 @@ export function MiniMeClient({
 
       {/* Только в приложении WeSetup: push на этот телефон. */}
       {appPlatform ? <AppPushSettings /> : null}
+
+      {/* «Новости и предложения на почту» — как в настройках уведомлений на сайте (П-3). */}
+      <MarketingEmailToggle variant="mini" />
 
       {/* Тема — те же три карточки, что в меню профиля на сайте
           («Светлая / Тёмная / Как на устройстве», как блок Appearance в

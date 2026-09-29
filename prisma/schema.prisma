@@ -887,6 +887,10 @@ model User {
   emailVerifiedAt             DateTime?
   partnerApplications         Partner[]                @relation("PartnerApplicant")
   partnerMembership           PartnerUser?             @relation("PartnerMemberships")
+  /// «Новости и предложения на почту» выключены (отписка из письма или в
+  /// профиле). Служебные письма приходят всегда.
+  marketingOptOut             Boolean                  @default(false)
+  mailingRecipients           MailingRecipient[]
 
   @@index([organizationId, archivedAt])
   @@index([jobPositionId])
@@ -3938,4 +3942,146 @@ model JournalOrderScan {
   updatedAt      DateTime     @updatedAt
 
   @@index([organizationId, journalCode, createdAt])
+}
+
+/// ROOT → «Рассылка» (2026-09-29): загруженный внешний контакт — почта из
+/// выгрузки кафе, с выставки, из переписки. Реклама по email — только с
+/// согласия (38-ФЗ, ст. 18), поэтому источник и основание обязательны.
+/// Пользователей платформы здесь нет: они берутся из `User`.
+model MarketingContact {
+  id          String             @id @default(cuid())
+  /// В нижнем регистре; одна строка на адрес.
+  email       String             @unique
+  name        String?
+  company     String?
+  /// Сфера из `ORG_SPHERES` (код) или null, если не распознана.
+  sphere      String?
+  city        String?
+  phone       String?
+  tags        String[]           @default([])
+  /// Откуда адрес: «выгрузка 2ГИС 29.09», «выставка ПИР 2026».
+  source      String
+  /// На каком основании пишем: «согласие на сайте», «деловая переписка».
+  basis       String
+  /// active | unsubscribed | bounced | complained
+  status      String             @default("active")
+  lastSentAt  DateTime?
+  note        String?
+  createdById String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  recipients  MailingRecipient[]
+
+  @@index([status])
+  @@index([source])
+  @@index([sphere])
+}
+
+/// Стоп-лист рекламных писем — общий для пользователей и контактов.
+/// Служебные письма (коды входа, счета) его не читают.
+model EmailSuppression {
+  id          String   @id @default(cuid())
+  /// В нижнем регистре.
+  email       String   @unique
+  /// unsubscribed | bounced | complained | manual
+  reason      String
+  /// Рассылка, из которой пришла отписка или отказ сервера.
+  campaignId  String?
+  note        String?
+  createdById String?
+  createdAt   DateTime @default(now())
+}
+
+/// Рассылка: черновик, запланированная, идущая, завершённая или отменённая.
+/// Получатели и очередь — строки `MailingRecipient`.
+model MailingCampaign {
+  id             String             @id @default(cuid())
+  title          String
+  /// Тип шаблона (`src/lib/mailing/templates.ts`): "message", дальше — "kp"…
+  kind           String             @default("message")
+  /// { email, inApp, push, telegram } — галочки каналов.
+  channels       Json               @default("{}")
+  /// Данные шаблона: тема, текст, кнопка… (у каждого типа свои).
+  payload        Json               @default("{}")
+  /// Снимок аудитории: выбранные пользователи и контакты, фильтры, счётчики.
+  audience       Json               @default("{}")
+  /// draft | scheduled | sending | done | cancelled
+  status         String             @default("draft")
+  /// Запуск по расписанию (момент; ввод — по Москве).
+  scheduledAt    DateTime?
+  startedAt      DateTime?
+  finishedAt     DateTime?
+  cancelledAt    DateTime?
+  /// Когда отработал `prepare` шаблона (персональные данные получателей).
+  preparedAt     DateTime?
+  lastError      String?
+  createdById    String?
+  createdByName  String?
+  totalCount     Int                @default(0)
+  queuedCount    Int                @default(0)
+  sentCount      Int                @default(0)
+  failedCount    Int                @default(0)
+  skippedCount   Int                @default(0)
+  cancelledCount Int                @default(0)
+  clickCount     Int                @default(0)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  recipients     MailingRecipient[]
+
+  @@index([status, scheduledAt])
+  @@index([createdAt])
+}
+
+/// Получатель рассылки и строка очереди. Канал отправляется один раз:
+/// queued → sending → sent | failed | skipped (null — канал не для него).
+model MailingRecipient {
+  id             String            @id
+  campaignId     String
+  campaign       MailingCampaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  userId         String?
+  user           User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  contactId      String?
+  contact        MarketingContact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  /// Снимок на момент постановки в очередь.
+  email          String?
+  name           String?
+  companyName    String?
+  sphere         String?
+  organizationId String?
+  /// «Тестовая отправка мне» — не считается в итогах рассылки.
+  isTest         Boolean           @default(false)
+  /// queued | sent | failed | skipped | cancelled
+  status         String            @default("queued")
+  emailStatus    String?
+  emailError     String?
+  inAppStatus    String?
+  inAppError     String?
+  pushStatus     String?
+  pushError      String?
+  telegramStatus String?
+  telegramError  String?
+  /// `<id>.<подпись>` — для отписки и кликов.
+  token          String            @unique
+  /// Адреса ссылок письма; клик `/r/<token>/<n>` ведёт только по ним.
+  links          Json              @default("[]")
+  attempts       Int               @default(0)
+  nextAttemptAt  DateTime?
+  sentAt         DateTime?
+  emailSentAt    DateTime?
+  clickedAt      DateTime?
+  clickCount     Int               @default(0)
+  unsubscribedAt DateTime?
+  /// Хотя бы один канал ушёл «сухой отправкой» (папка или лог).
+  dryRun         Boolean           @default(false)
+  /// Персональные данные шаблона (например, промокод).
+  payload        Json?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([campaignId, status])
+  @@index([status, nextAttemptAt])
+  @@index([emailSentAt])
+  @@index([userId])
+  @@index([contactId])
+  @@index([email])
 }

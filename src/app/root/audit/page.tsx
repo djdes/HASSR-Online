@@ -43,6 +43,22 @@ const ACTION_LABELS: Record<string, string> = {
   "promo.disable": "Промокод выключен",
   "promo.lifetime.bind": "Скидка навсегда закреплена за аккаунтом",
   "promo.lifetime.revoke": "Скидка навсегда отменена",
+  // Рассылка (ROOT → «Рассылка»).
+  "mailing.campaign.launch": "Рассылка запущена",
+  "mailing.campaign.schedule": "Рассылка запланирована",
+  "mailing.campaign.cancel": "Рассылка отменена",
+  "mailing.campaign.retry": "Рассылка: повтор неудачных",
+  "mailing.campaign.test": "Рассылка: тест себе",
+  "mailing.draft.delete": "Рассылка: черновик удалён",
+  "mailing.contacts.import": "Рассылка: загружены контакты",
+  "mailing.contact.update": "Рассылка: контакт изменён",
+  "mailing.contacts.delete": "Рассылка: контакты удалены",
+  "mailing.suppression.add": "Стоп-лист: адрес добавлен",
+  "mailing.suppression.remove": "Стоп-лист: адрес убран",
+  "mailing.settings.update": "Рассылка: скорость отправки",
+  "mailing.unsubscribe": "Отписка от рассылки",
+  "mailing.optin": "Новости на почту включены",
+  "mailing.optout": "Новости на почту выключены",
 };
 
 function formatDate(d: Date): string {
