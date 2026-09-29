@@ -110,6 +110,26 @@ describe("createPersonalPromoCodes — массовая выдача", () => {
     assert.equal(env.transactions.length, 1);
   });
 
+  it("unlocked — одноразовый код без привязки к почте и организации (загруженные контакты)", async () => {
+    const env = memoryStore([]);
+    const result = await createPersonalPromoCodesWith(
+      env.store,
+      [
+        { key: "contact-1", email: "info@romashka.ru", companyName: "Кафе «Ромашка»", unlocked: true },
+        { key: "contact-2", email: null, companyName: "Лавка", unlocked: true },
+      ],
+      OPTIONS,
+      { now }
+    );
+    assert.equal(result.size, 2);
+    for (const row of env.transactions[0]) {
+      assert.equal(row.personalEmail, null);
+      assert.equal(row.organizationId, null);
+      assert.equal(row.maxUses, 1);
+    }
+    assert.equal(env.transactions[0][0].note, "КП октябрь · Кафе «Ромашка»");
+  });
+
   it("ошибки входа — исключение, ничего не создаётся", async () => {
     const env = memoryStore();
     const bad: Array<[Parameters<typeof createPersonalPromoCodesWith>[1], PersonalCodeOptions, RegExp]> = [

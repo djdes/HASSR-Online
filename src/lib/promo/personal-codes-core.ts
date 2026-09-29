@@ -12,6 +12,14 @@ export type PersonalCodeRequest = {
   email: string | null;
   organizationId?: string | null;
   companyName?: string | null;
+  /**
+   * Код не привязан ни к почте, ни к организации — одноразовый (maxUses 1),
+   * кто-то один оплатит по нему. Для загруженных контактов рассылки: КП
+   * уходит на info@кафе, а регистрируется заведующая со своей почтой —
+   * привязка к адресу письма отказала бы ей прямо на оплате. Кому выдан —
+   * видно в заметке кода (компания) и в метке рассылки.
+   */
+  unlocked?: boolean;
 };
 
 export type PersonalCodeOptions = {
@@ -91,7 +99,7 @@ export function normalizePersonalCodeInput(
     const email = request.email?.trim().toLowerCase() || null;
     if (email && (!EMAIL_RE.test(email) || email.length > 200)) fail(`bad email for key «${request.key}»`);
     const organizationId = request.organizationId?.trim() || null;
-    if (!email && !organizationId) fail(`request «${request.key}» has neither email nor organizationId`);
+    if (!request.unlocked && !email && !organizationId) fail(`request «${request.key}» has neither email nor organizationId`);
     return { ...request, email, organizationId };
   });
   return { requests: normalized, options: { ...options, campaignId } };
@@ -154,8 +162,8 @@ export async function createPersonalPromoCodesWith(
       maxUses: 1,
       newClientsOnly: false,
       lifetime: input.options.lifetime,
-      personalEmail: request.email,
-      organizationId: request.organizationId,
+      personalEmail: request.unlocked ? null : request.email,
+      organizationId: request.unlocked ? null : request.organizationId,
       campaignId: input.options.campaignId ?? null,
       note: composeNote(input.options.note, request.companyName),
     }));
