@@ -204,6 +204,11 @@ export const AUDIT_ACTION_LABELS: Record<string, AuditActionLabel> = {
   "billing.free_period.updated": { label: "Настройки бесплатного периода", variant: "secondary" },
   "promo.lifetime.bind": { label: "Скидка навсегда закреплена", variant: "default" },
   "promo.lifetime.revoke": { label: "Скидка навсегда отменена", variant: "destructive" },
+  // Баланс и бонусы: пополнение деньгами и отзывы за баллы (2026-09-30).
+  "balance.topup.create": { label: "Пополнение баланса оформлено", variant: "outline" },
+  "balance.topup.paid": { label: "Баланс пополнен", variant: "default" },
+  "review.approve": { label: "Отзыв одобрен, баллы начислены", variant: "default" },
+  "review.reject": { label: "Отзыв отклонён", variant: "destructive" },
   "staff.restored": { label: "Сотрудник возвращён из архива", variant: "default" },
 
   // --- Резервные копии ----------------------------------------------------
@@ -403,6 +408,13 @@ const DETAIL_KEY_LABELS: Record<string, string> = {
   colleagueEmail: "Почта коллеги",
   npsScore: "Оценка",
   delivery: "Доставка",
+  // Баланс: пополнение деньгами и отзывы
+  amountRub: "Сумма, ₽",
+  balanceRub: "Баланс после, ₽",
+  rewardRub: "Начислено, ₽",
+  paymentMethod: "Способ оплаты",
+  isTest: "Тестовый платёж",
+  anonymous: "Анонимно",
   // Распознавание с фото
   visionKind: "Что распознавали",
   photos: "Фото",
@@ -452,6 +464,7 @@ const DETAIL_VALUE_LABELS: Record<string, Record<string, string>> = {
     photo_check: "проверка фото",
   },
   result: { ok: "распознано", empty: "ничего не распознано", timeout: "не успели", failed: "ошибка" },
+  paymentMethod: { card: "картой", invoice: "по счёту" },
   via: {
     // Журнал включён (journal.enable, lib/blank-signup.ts).
     "blank-qr-signup": "регистрация по QR со скачанного шаблона",

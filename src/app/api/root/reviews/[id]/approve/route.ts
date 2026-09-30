@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { recordAuditLog } from "@/lib/audit-log";
 import { requireRoot } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { escapeTelegramHtml, notifyOrganization } from "@/lib/telegram";
@@ -46,11 +47,21 @@ export async function POST(
       );
     }
 
+    await recordAuditLog({
+      request,
+      session,
+      organizationId: result.organizationId,
+      action: "review.approve",
+      entity: "CustomerReview",
+      entityId: id,
+      details: { rewardRub: result.rewardRub, kind: result.kind, anonymous: result.anonymous },
+    });
+
     const review = await getReview(id);
     if (review) {
       notifyOrganization(
         result.organizationId,
-        `⭐ Отзыв ${escapeTelegramHtml(review.authorName)} опубликован — на баланс организации начислено <b>${formatPoints(
+        `⭐ ${review.anonymous ? "Анонимный отзыв" : `Отзыв ${escapeTelegramHtml(review.authorName)}`} опубликован — на баланс организации начислено <b>${formatPoints(
           result.rewardRub,
         )}</b>. Баллы спишутся при следующей оплате подписки.`,
       ).catch((error) => console.error("review approve notify failed", error));

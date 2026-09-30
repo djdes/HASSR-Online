@@ -1,4 +1,6 @@
 import { db } from "@/lib/db";
+import { readLegalProfile } from "@/lib/org-legal-profile";
+import { cityFromAddress } from "@/lib/orders/org-snapshot";
 import { hasCapability } from "@/lib/permission-presets";
 
 import { getBalance, listTransactions, type BalanceTransactionView } from "./ledger";
@@ -7,6 +9,7 @@ import {
   listReferralInvites,
   type ReferralInviteView,
 } from "./referral";
+import { reviewPrefill } from "./review-rules";
 import { getMyReview, type ReviewView } from "./reviews";
 
 /**
@@ -25,6 +28,11 @@ export type BalanceOverview = {
   /** Личный вклад сотрудника: его отзыв и его приглашения. */
   myEarnedRub: number;
   referralCode: string;
+  /**
+   * Предзаполнение формы отзыва без дублей: имя человека и «заведение,
+   * город». Организация названа как человек — заведение пустое.
+   */
+  reviewPrefill: { authorName: string; place: string };
   transactions: BalanceTransactionView[];
   invites: ReferralInviteView[];
   myReview: ReviewView | null;
@@ -49,7 +57,7 @@ export async function loadBalanceOverview(
   const [organization, referralCode, myReview] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
-      select: { name: true },
+      select: { name: true, address: true, legalProfileJson: true },
     }),
     ensureReferralCode(organizationId),
     getMyReview(user.id),
@@ -82,6 +90,13 @@ export async function loadBalanceOverview(
       (myReview?.status === "approved" ? myReview.rewardRub : 0) +
       invites.reduce((sum, invite) => sum + invite.rewardRub, 0),
     referralCode,
+    reviewPrefill: reviewPrefill({
+      userName: user.name,
+      organizationName: organization?.name ?? null,
+      city: cityFromAddress(
+        readLegalProfile(organization?.legalProfileJson)?.address ?? organization?.address ?? null,
+      ),
+    }),
     transactions,
     invites,
     myReview,

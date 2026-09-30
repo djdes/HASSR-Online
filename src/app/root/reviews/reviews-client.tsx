@@ -13,6 +13,7 @@ import {
   reviewRewardFor,
   type ReviewKind,
 } from "@/lib/balance/constants";
+import { ANONYMOUS_REVIEW_AUTHOR } from "@/lib/balance/review-rules";
 import { reviewSocialText, type ReviewView } from "@/lib/balance/review-view";
 
 /**
@@ -191,14 +192,28 @@ function ReviewCard({ review, fromSurvey }: { review: ReviewView; fromSurvey: bo
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="text-[16px] font-semibold text-[#0b1024]">
-            {review.authorName}
+            {review.anonymous ? ANONYMOUS_REVIEW_AUTHOR : review.authorName}
           </div>
           <div className="mt-0.5 text-[13.5px] text-[#6f7282]">
-            {review.place} · {review.organizationName} ·{" "}
+            {/* У анонимного на сайте — только сфера; организацию модератор
+                видит, чтобы понимать, кому начисляет. */}
+            {review.anonymous
+              ? `${review.organizationSphere ? `${review.organizationSphere} · ` : ""}без имени и заведения на сайте`
+              : review.place}{" "}
+            · {review.organizationName} ·{" "}
             {new Date(review.createdAt).toLocaleDateString("ru-RU")}
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {review.anonymous ? (
+            <span
+              className="rounded-full bg-[#fff8eb] px-2.5 py-1 text-[12px] font-medium text-[#a16d32]"
+              title="Автор выбрал анонимность: на сайте без имени и заведения, начисление на 20 % меньше"
+              data-testid="review-anonymous-badge"
+            >
+              анонимно −20 %
+            </span>
+          ) : null}
           {fromSurvey ? (
             <span
               className="rounded-full bg-[#eef1ff] px-2.5 py-1 text-[12px] font-medium text-[#3848c7]"
@@ -217,7 +232,7 @@ function ReviewCard({ review, fromSurvey }: { review: ReviewView; fromSurvey: bo
             </span>
           ) : (
             <span className="rounded-full bg-[#fff8eb] px-2.5 py-1 text-[12px] text-[#a16d32]">
-              к начислению {formatPoints(review.suggestedRewardRub)}
+              к начислению <span data-testid="review-suggested-reward">{formatPoints(review.suggestedRewardRub)}</span>
             </span>
           )}
         </div>
@@ -313,9 +328,17 @@ function ReviewCard({ review, fromSurvey }: { review: ReviewView; fromSurvey: bo
         open={approveOpen}
         onClose={() => setApproveOpen(false)}
         onConfirm={approve}
-        title={`Одобрить и начислить ${formatPoints(reviewRewardFor(kind))}?`}
+        title={`Одобрить и начислить ${formatPoints(reviewRewardFor(kind, review.anonymous))}?`}
         description={`Баллы уйдут на баланс организации «${review.organizationName}». Автор получит уведомление в Telegram и на почту.`}
         bullets={[
+          ...(review.anonymous
+            ? [
+                {
+                  label: "Анонимный отзыв: начисление на 20 % меньше, на сайте — без имени и заведения",
+                  tone: "info" as const,
+                },
+              ]
+            : []),
           { label: "Отзыв появится на лендинге, если оставить тумблер включённым" },
           { label: "Повторное одобрение ничего не начислит второй раз", tone: "info" },
         ]}
@@ -340,7 +363,7 @@ function ReviewCard({ review, fromSurvey }: { review: ReviewView; fromSurvey: bo
               >
                 {KIND_LABELS[option]}
                 <span className="tabular-nums opacity-80">
-                  {formatPoints(reviewRewardFor(option))}
+                  {formatPoints(reviewRewardFor(option, review.anonymous))}
                 </span>
               </button>
             ))}

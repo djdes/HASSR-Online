@@ -31,11 +31,16 @@ const reviewSchema = z.object({
     .trim()
     .min(30, "Напишите хотя бы пару предложений — от 30 символов")
     .max(REVIEW_TEXT_MAX_LENGTH, "Слишком длинный отзыв"),
-  authorName: z.string().trim().min(2, "Укажите, как вас подписать").max(120),
-  place: z.string().trim().min(2, "Укажите заведение и город").max(160),
+  // Имя и заведение обязательны только у обычного отзыва — это проверяет
+  // buildReviewSubmission (review-rules.ts); у анонимного они не хранятся.
+  authorName: z.string().max(120).optional(),
+  place: z.string().max(160).optional(),
+  anonymous: z.boolean().optional(),
   rating: z.number().int().min(1).max(5).nullable().optional(),
   consentPublic: z.boolean(),
   attachments: z.unknown().optional(),
+  // Суммы и вида в схеме нет намеренно: zod их отбросит, начисление
+  // считает одобрение по вложению и флагу anonymous из БД.
 });
 
 export async function POST(request: Request) {
@@ -96,8 +101,9 @@ export async function POST(request: Request) {
     const review = await submitReview({
       organizationId,
       userId: session.user.id,
-      authorName: parsed.authorName,
-      place: parsed.place,
+      authorName: parsed.authorName ?? "",
+      place: parsed.place ?? "",
+      anonymous: parsed.anonymous === true,
       text: parsed.text,
       rating: parsed.rating ?? null,
       consentPublic: parsed.consentPublic,
@@ -114,8 +120,10 @@ export async function POST(request: Request) {
       [
         "⭐ Новый отзыв на модерации",
         `Организация: ${escapeTelegramHtml(organization?.name ?? "—")}`,
-        `Автор: ${escapeTelegramHtml(review.authorName)} · ${escapeTelegramHtml(review.place)}`,
-        `Вид: ${review.kind} · к начислению ${formatPoints(reviewRewardFor(review.kind))}`,
+        review.anonymous
+          ? "Автор: анонимно (без имени и заведения на сайте)"
+          : `Автор: ${escapeTelegramHtml(review.authorName)} · ${escapeTelegramHtml(review.place)}`,
+        `Вид: ${review.kind}${review.anonymous ? " · анонимно −20 %" : ""} · к начислению ${formatPoints(reviewRewardFor(review.kind, review.anonymous))}`,
         "",
         escapeTelegramHtml(review.text.slice(0, 500)),
         "",

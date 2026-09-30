@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { recordAuditLog } from "@/lib/audit-log";
 import { requireRoot } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { escapeTelegramHtml, notifyOrganization } from "@/lib/telegram";
@@ -61,9 +62,19 @@ export async function POST(
     throw error;
   }
 
+  await recordAuditLog({
+    request,
+    session,
+    organizationId: review.organizationId,
+    action: "review.reject",
+    entity: "CustomerReview",
+    entityId: review.id,
+    details: { reason: parsed.reason, kind: review.kind, anonymous: review.anonymous },
+  });
+
   notifyOrganization(
     review.organizationId,
-    `Отзыв ${escapeTelegramHtml(review.authorName)} не опубликован: ${escapeTelegramHtml(
+    `${review.anonymous ? "Анонимный отзыв" : `Отзыв ${escapeTelegramHtml(review.authorName)}`} не опубликован: ${escapeTelegramHtml(
       parsed.reason,
     )}. Можно поправить и отправить заново в разделе «Баланс и бонусы».`,
   ).catch((error) => console.error("review reject notify failed", error));
