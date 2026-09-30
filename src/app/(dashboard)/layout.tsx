@@ -40,8 +40,10 @@ import { getBalance } from "@/lib/balance/ledger";
 import { db } from "@/lib/db";
 import { DEFAULT_ORG_NAME } from "@/lib/org-profile";
 import { listAccessibleOrganizations } from "@/lib/organization-access";
-import { BILLING_TEST_MODE, FREE_MAX_USERS } from "@/lib/plan-limits";
+import { BILLING_TEST_MODE } from "@/lib/plan-limits";
 import { loadBillingView } from "@/lib/billing-view.server";
+import { buildCabinetPlanCard } from "@/lib/cabinet-plan";
+import { readActiveLifetimeDiscount } from "@/lib/promo/checkout";
 import { isMobileAppRequest } from "@/lib/mobile-app-payments";
 import { BillingAnnouncement } from "@/components/billing/billing-announcement";
 import { BillingTransitionGate } from "@/components/billing/billing-transition-gate";
@@ -217,21 +219,8 @@ export default async function DashboardLayout({
   // Тот же контекст (кэш на запрос) читают страницы журналов.
   const buildingContext = await loadBuildingContext(session);
 
-  // Тариф и лимит мест живут на аккаунте: у сети из трёх кафе один
-  // договор и общие бесплатные места (FREE_MAX_USERS). Пока организация не привязана
-  // к аккаунту (миграция не прогонялась) — считаем по одной точке.
-  // Демо-организация в тариф не входит: её 10–20 тестовых сотрудников
-  // иначе молча перевели бы аккаунт с бесплатного на платный.
-  const accountUsers = brandedOrg?.accountId
-    ? await db.user.count({
-        where: {
-          isActive: true,
-          organization: { accountId: brandedOrg.accountId, isDemo: false },
-        },
-      })
-    : brandedOrg?.isDemo
-      ? 0
-      : (brandedOrg?._count.users ?? 0);
+  // Тариф живёт на аккаунте: у сети из трёх кафе один договор. Пока
+  // организация не привязана к аккаунту — тариф самой организации.
   const accountPlan =
     brandedOrg?.account?.subscriptionPlan ??
     brandedOrg?.subscriptionPlan ??
@@ -240,15 +229,45 @@ export default async function DashboardLayout({
   // Бесплатный период и переход на оплату (2026-10): анонс, окно решения
   // руководителю, плашка сотруднику, строка тарифа в шапке. Сбой расчёта
   // не должен ронять кабинет — тогда просто без них.
+  const inMobileApp = await isMobileAppRequest();
   const billing = await loadBillingView({
     organizationId: activeOrgId,
     user: session.user,
     impersonating: isImpersonating(session),
     partnerAccess: Boolean(partnerAccess),
-    inMobileApp: await isMobileAppRequest(),
+    inMobileApp,
   }).catch((error) => {
     console.error("[billing] layout view failed", error);
     return null;
+  });
+
+  // Карточка «Мой кабинет» в меню профиля: тариф, организации и сотрудники
+  // (как считает тариф — `loadBillingUnit`), сумма в месяц с акцией и
+  // скидкой навсегда. Цену и ссылку видит тот, кто может менять тариф, и
+  // не в приложении WeSetup (правила сторов).
+  const canManagePlan = hasFullWorkspaceAccess(session.user);
+  const showPlanDetails = canManagePlan && !inMobileApp;
+  const lifetimeDiscount =
+    showPlanDetails && billing?.unit.accountId
+      ? await readActiveLifetimeDiscount(billing.unit.accountId).catch((error) => {
+          console.error("[billing] cabinet card lifetime discount failed", error);
+          return null;
+        })
+      : null;
+  const cabinetPlan = buildCabinetPlanCard({
+    state: billing?.state ?? null,
+    settings: billing?.settings ?? null,
+    plan: billing?.header.plan ?? accountPlan,
+    // Без расчёта тарифа — только название и ссылка.
+    exempt: billing ? billing.unit.exempt : true,
+    organizationsCount: billing?.unit.scopeOrgIds.length ?? 0,
+    employees: billing?.unit.activeUsers ?? 0,
+    tariffRub: billing?.nowPrice.baseRub ?? 0,
+    promotion: billing?.nowPrice.promotion ?? null,
+    personal: lifetimeDiscount,
+    canManagePlan,
+    inMobileApp,
+    testMode: billing ? billing.testModeActive : BILLING_TEST_MODE,
   });
 
   // Баллы в шапке видит только тот, кто может ими распорядиться:
@@ -420,13 +439,9 @@ export default async function DashboardLayout({
             userRole={session.user.role ?? ""}
             positionTitle={profile?.positionTitle ?? ""}
             isRoot={session.user.isRoot === true}
-            subscriptionPlan={billing?.header.plan ?? accountPlan}
             balanceRub={balanceRub}
-            activeUsers={billing && !billing.unit.exempt ? billing.unit.activeUsers : accountUsers}
-            freeUserLimit={FREE_MAX_USERS}
-            billingTestMode={billing ? billing.testModeActive : BILLING_TEST_MODE}
-            planLabelOverride={billing?.header.label ?? null}
-            planNote={billing?.header.note ?? null}
+            cabinetPlan={cabinetPlan}
+            ownCabinet={!isImpersonating(session) && !partnerAccess}
             organizations={organizations}
             activeOrganizationId={activeOrgId}
             buildings={buildingContext.canSwitch ? buildingContext.buildings : []}

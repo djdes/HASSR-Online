@@ -13,7 +13,6 @@ import {
   Building2,
   CalendarRange,
   ChevronDown,
-  CircleArrowUp,
   ClipboardList,
   Coins,
   CreditCard,
@@ -58,7 +57,8 @@ import { UndoRedoButtons } from "@/components/journals/undo-redo-buttons";
 import { useHeaderUndo } from "@/components/journals/journal-undo-slot";
 import { OfflineIndicator } from "@/components/layout/offline-indicator";
 import { LiveConnectionIndicator } from "@/components/live/live-connection-indicator";
-import { planLabel } from "@/lib/plan-limits";
+import { CabinetPlanCardView } from "@/components/layout/cabinet-plan-card";
+import type { CabinetPlanCard } from "@/lib/cabinet-plan";
 import { useInsideMobileApp } from "@/lib/use-inside-mobile-app";
 import { orgDisplayName } from "@/lib/org-display-name";
 import {
@@ -141,8 +141,6 @@ type HeaderProps = {
   userRole: string;
   positionTitle: string;
   isRoot: boolean;
-  /** `Organization.subscriptionPlan`: free | paid | paused | cancelled (`trial` — legacy alias free). */
-  subscriptionPlan: string;
   /**
    * Баллы организации. `null` — у пользователя нет прав на деньги
    * организации: пункт меню он видит, сумму — нет.
@@ -157,19 +155,13 @@ type HeaderProps = {
   /** Заводить новые точки может только владелец аккаунта. */
   canCreateOrganization: boolean;
   organizationSphere: string;
-  /** Активных сотрудников в организации — считается на сервере. */
-  activeUsers: number;
-  /** Сколько мест входит в бесплатный тариф (FREE_MAX_USERS). */
-  freeUserLimit: number;
-  /** Тестовый режим биллинга — тариф меняется, деньги не списываются. */
-  billingTestMode: boolean;
   /**
-   * Название тарифа вместо `planLabel(subscriptionPlan)` — бесплатный
-   * период («Подписка»), «Нужно выбрать тариф» после него.
+   * Карточка «Мой кабинет» наверху меню профиля: тариф, организации и
+   * сотрудники, сумма в месяц, «Изменить тариф» (`buildCabinetPlanCard`).
    */
-  planLabelOverride?: string | null;
-  /** Хвост строки тарифа: «бесплатно по 10 октября», «до 3 ноября». */
-  planNote?: string | null;
+  cabinetPlan: CabinetPlanCard;
+  /** Свой кабинет — не ROOT «под видом» и не консультант партнёра: пометка «сейчас». */
+  ownCabinet: boolean;
   /**
    * Пользователь состоит в активном партнёре — в шапке появляется вход
    * в партнёрский кабинет и переключатель контекста «Моя организация /
@@ -198,7 +190,6 @@ export function Header({
   userRole,
   positionTitle,
   isRoot,
-  subscriptionPlan,
   balanceRub = null,
   organizations,
   activeOrganizationId,
@@ -206,11 +197,8 @@ export function Header({
   activeBuildingId = null,
   canCreateOrganization,
   organizationSphere,
-  activeUsers,
-  freeUserLimit,
-  billingTestMode,
-  planLabelOverride = null,
-  planNote = null,
+  cabinetPlan,
+  ownCabinet,
   partnerCabinet = null,
   partnerHint = null,
   canEditBranding = false,
@@ -282,38 +270,12 @@ export function Header({
     : [userName.trim(), positionTitle.trim()].filter(Boolean).join(" · ");
   const HomeIcon = showsOrg ? Building2 : UserRound;
   const homeHref = getWebHomeHref({ role: userRole, isRoot });
-  // Строка тарифа в меню профиля. На бесплатном показываем занятые
-  // места (человек должен заранее видеть, что следующий сотрудник
-  // потребует подписку), на платном — просто численность.
-  const onFreePlan = subscriptionPlan === "trial" || subscriptionPlan === "free";
-  // Мест считаем по всем организациям аккаунта — иначе владелец сети
-  // видел бы «2/5» в каждой точке и не понимал, откуда взялся платный.
   const multiOrg = regularOrganizations.length > 1;
-  const headcountSuffix = multiOrg
-    ? " сотрудников по всем организациям"
-    : " сотрудников";
-  const planLine = [
-    planLabelOverride ?? planLabel(subscriptionPlan),
-    // Сверх бесплатного лимита (до перехода на оплату так бывает) дробь
-    // «3/1» только путает — показываем просто численность.
-    onFreePlan && activeUsers <= freeUserLimit
-      ? `${activeUsers}/${freeUserLimit}${headcountSuffix}`
-      : `${activeUsers}${headcountSuffix}`,
-    planNote,
-    !onFreePlan && billingTestMode ? "тестовый режим" : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
-  // Раздел тарифов виден каждому, кто вправе менять тариф организации.
-  // Раньше пункт показывался только на бесплатном плане — и владелец
-  // платной организации не мог найти ни историю платежей, ни
-  // автопродление: попасть на страницу можно было лишь через хаб
-  // настроек, о котором ещё нужно догадаться.
+  // Тариф меняют из карточки «Мой кабинет» (там же сумма и расшифровка).
+  // В приложении WeSetup ссылки на оплату в карточке нет (правила
+  // магазинов) — страница тарифа для просмотра остаётся пунктом «Тариф».
   const canManagePlan = fullAccess;
-  // В приложении WeSetup не зовём к оплате (правила магазинов): пункт
-  // ведёт на страницу тарифа только для просмотра — «Тариф».
   const inApp = useInsideMobileApp();
-  const upsellPlan = onFreePlan && !inApp;
 
   const visibleSecondaryNavItems = fullAccess
     ? secondaryNavItems.map((item) => ({
@@ -795,15 +757,22 @@ export function Header({
                   <p className="truncate text-[12px] leading-tight text-[#6f7282]">
                     {userEmail}
                   </p>
-                  <p className="truncate text-[12px] leading-tight text-[#6f7282]">
-                    {planLine}
-                  </p>
                 </div>
               </DropdownMenuLabel>
 
               <DropdownMenuSeparator className="my-0" />
 
               <div className="p-1">
+                {/* «Мой кабинет» (как в листе на телефоне): тариф,
+                    организации, сотрудники, сумма и «Изменить тариф».
+                    Нажатие — в свой кабинет; прежний пункт «Моя
+                    организация» заменён этой карточкой. */}
+                <CabinetPlanCardView
+                  card={cabinetPlan}
+                  ownCabinet={ownCabinet}
+                  variant="menu"
+                  onNavigate={() => setProfileMenuOpen(false)}
+                />
                 <OrganizationSwitcher
                   organizations={organizations}
                   activeId={activeOrganizationId}
@@ -811,28 +780,19 @@ export function Header({
                   onOpenCreate={openCreateDialog}
                   showSettings={fullAccess}
                   onNavigate={() => setProfileMenuOpen(false)}
+                  label="Организации этого кабинета"
                 />
                 {regularOrganizations.length > 1 || canCreateOrganization ? (
                   <DropdownMenuSeparator className="my-1" />
                 ) : null}
                 {partnerCabinet || masterCabinets.length > 0 || canCreateOrganization ? (
                   <>
-                    {/* «Кабинет» (как в листе на телефоне): «Моя организация» —
-                        текущий кабинет, «Партнёрский кабинет» — /partner,
-                        мастер-кабинеты справочников — /master. Активный
-                        пункт подсвечен, чтобы было видно, где человек сейчас.
-                        Владельцу аккаунта под кабинетами всегда «Создать
-                        мастер-кабинет»: кабинетов сколько угодно. */}
+                    {/* «Другие кабинеты»: партнёрский — /partner,
+                        мастер-кабинеты справочников — /master. Владельцу
+                        аккаунта под ними всегда «Создать мастер-кабинет». */}
                     <div className="px-2 pb-1 pt-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
-                      Кабинет
+                      Другие кабинеты
                     </div>
-                    <DropdownMenuItem asChild className="bg-[#f5f6ff] focus:bg-[#eef1ff]">
-                      <Link href="/dashboard">
-                        <Building2 className="mr-2 size-4 text-[#5566f6]" />
-                        <span className="flex-1 truncate">Моя организация</span>
-                        <span className="text-[11px] text-[#3848c7]">сейчас</span>
-                      </Link>
-                    </DropdownMenuItem>
                     {partnerCabinet ? (
                       <DropdownMenuItem asChild className="focus:bg-[#f5f6ff]">
                         <Link href="/partner">
@@ -891,27 +851,11 @@ export function Header({
                     ) : null}
                   </Link>
                 </DropdownMenuItem>
-                {canManagePlan ? (
-                  <DropdownMenuItem
-                    asChild
-                    className={
-                      upsellPlan
-                        ? "text-[#5566f6] focus:bg-[#f5f6ff] focus:text-[#5566f6]"
-                        : "focus:bg-[#f5f6ff]"
-                    }
-                  >
+                {canManagePlan && inApp ? (
+                  <DropdownMenuItem asChild className="focus:bg-[#f5f6ff]">
                     <Link href="/settings/subscription">
-                      {upsellPlan ? (
-                        <>
-                          <CircleArrowUp className="mr-2 size-4 text-[#5566f6]" />
-                          Улучшить тариф
-                        </>
-                      ) : (
-                        <>
-                          <CreditCard className="mr-2 size-4 text-[#5566f6]" />
-                          {inApp ? "Тариф" : "Тарифы и оплата"}
-                        </>
-                      )}
+                      <CreditCard className="mr-2 size-4 text-[#5566f6]" />
+                      Тариф
                     </Link>
                   </DropdownMenuItem>
                 ) : null}
@@ -982,7 +926,8 @@ export function Header({
         onClose={() => setProfileSheetOpen(false)}
         userName={userName}
         userEmail={userEmail}
-        planLine={planLine}
+        cabinetPlan={cabinetPlan}
+        ownCabinet={ownCabinet}
         organizations={regularOrganizations}
         masterCabinets={masterCabinets}
         activeOrganizationId={activeOrganizationId}
@@ -991,7 +936,6 @@ export function Header({
         partnerCabinet={partnerCabinet}
         balanceRub={balanceRub}
         canManagePlan={canManagePlan}
-        onFreePlan={onFreePlan}
         fullAccess={fullAccess}
         canEditBranding={canEditBranding}
         isRoot={isRoot}

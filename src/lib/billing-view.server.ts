@@ -31,6 +31,8 @@ export type BillingView = {
   settings: FreePeriodSettings;
   unit: BillingUnit;
   priceRub: number;
+  /** Цена подписки сейчас: база тарифа и действующая акция. */
+  nowPrice: BillingPrice;
   announcement: {
     lead: string;
     tail: string | null;
@@ -142,6 +144,7 @@ export async function loadBillingView(args: {
     settings,
     unit,
     priceRub,
+    nowPrice,
     announcement,
     gate,
     staffNotice: needsDecision && !fullAccess,

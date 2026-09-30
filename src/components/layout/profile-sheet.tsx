@@ -2,8 +2,6 @@
 
 import Link from "next/link";
 import {
-  Building2,
-  CircleArrowUp,
   Coins,
   CreditCard,
   Handshake,
@@ -30,6 +28,8 @@ import {
   ThemeTiles,
 } from "@/components/theme/theme-tiles";
 import { useOpenMasterCabinet } from "@/components/master/use-open-master-cabinet";
+import { CabinetPlanCardView } from "@/components/layout/cabinet-plan-card";
+import type { CabinetPlanCard } from "@/lib/cabinet-plan";
 import type { AccessibleOrganization } from "@/lib/organization-access";
 import { useInsideMobileApp } from "@/lib/use-inside-mobile-app";
 
@@ -50,7 +50,8 @@ export function ProfileSheet({
   onClose,
   userName,
   userEmail,
-  planLine,
+  cabinetPlan,
+  ownCabinet,
   organizations,
   masterCabinets,
   activeOrganizationId,
@@ -59,7 +60,6 @@ export function ProfileSheet({
   partnerCabinet,
   balanceRub,
   canManagePlan,
-  onFreePlan,
   fullAccess,
   canEditBranding,
   isRoot,
@@ -69,7 +69,9 @@ export function ProfileSheet({
   onClose: () => void;
   userName: string;
   userEmail: string;
-  planLine: string;
+  /** «Мой кабинет»: тариф, организации и сотрудники, сумма в месяц. */
+  cabinetPlan: CabinetPlanCard;
+  ownCabinet: boolean;
   organizations: AccessibleOrganization[];
   /** Мастер-кабинеты справочников — строками в «Кабинете», открывают `/master`. */
   masterCabinets: AccessibleOrganization[];
@@ -79,7 +81,6 @@ export function ProfileSheet({
   partnerCabinet: { brandName: string } | null;
   balanceRub: number | null;
   canManagePlan: boolean;
-  onFreePlan: boolean;
   fullAccess: boolean;
   /** Может открыть настройки организации (логотип и цвет) — `admin.full`. */
   canEditBranding: boolean;
@@ -93,7 +94,7 @@ export function ProfileSheet({
       open={open}
       onClose={onClose}
       title={userName}
-      subtitle={`${userEmail} · ${planLine}`}
+      subtitle={userEmail}
       footer={
         <button
           type="button"
@@ -108,6 +109,11 @@ export function ProfileSheet({
         </button>
       }
     >
+      {/* «Мой кабинет» сразу под именем и почтой: тариф, организации,
+          сотрудники и сумма в месяц (владелец, 2026-10-01: «Моя организация»
+          под «Организациями» путала). Нажатие — в свой кабинет. */}
+      <CabinetPlanCardView card={cabinetPlan} ownCabinet={ownCabinet} variant="sheet" onNavigate={onClose} />
+
       <div onClick={onClose}>
         <OrganizationSwitcher
           organizations={organizations}
@@ -116,21 +122,16 @@ export function ProfileSheet({
           onOpenCreate={onOpenCreate}
           showSettings={fullAccess}
           onNavigate={onClose}
+          label="Организации этого кабинета"
         />
       </div>
 
-      {/* «Кабинет»: где человек сейчас и куда ещё можно перейти —
-          партнёрский кабинет, мастер-кабинеты справочников (они здесь, а не
-          в «Организациях»: у них своя оболочка `/master`). Владельцу
-          аккаунта под кабинетами всегда «Создать мастер-кабинет». */}
+      {/* «Другие кабинеты»: партнёрский кабинет и мастер-кабинеты
+          справочников (у них своя оболочка `/master`). Владельцу аккаунта
+          под ними всегда «Создать мастер-кабинет». */}
       {partnerCabinet || masterCabinets.length > 0 || canCreateOrganization ? (
         <>
-          <div className={SHEET_GROUP_LABEL_CLASS}>Кабинет</div>
-          <Link href="/dashboard" onClick={onClose} className={`${SHEET_ROW_CLASS} bg-[#f5f6ff]`}>
-            <Building2 className="size-5 shrink-0 text-[#5566f6]" />
-            <span className="min-w-0 flex-1 truncate">Моя организация</span>
-            <span className="shrink-0 text-[12px] text-[#3848c7]">сейчас</span>
-          </Link>
+          <div className={SHEET_GROUP_LABEL_CLASS}>Другие кабинеты</div>
           {partnerCabinet ? (
             <Link href="/partner" onClick={onClose} className={SHEET_ROW_CLASS}>
               <Handshake className="size-5 shrink-0 text-[#5566f6]" />
@@ -183,20 +184,13 @@ export function ProfileSheet({
         ) : null}
       </Link>
 
-      {canManagePlan ? (
+      {/* Тариф меняют из карточки «Мой кабинет». В приложении WeSetup
+          ссылки там нет (правила магазинов) — страница тарифа для
+          просмотра остаётся отдельным пунктом. */}
+      {canManagePlan && inApp ? (
         <Link href="/settings/subscription" onClick={onClose} className={SHEET_ROW_CLASS}>
-          {onFreePlan && !inApp ? (
-            <>
-              <CircleArrowUp className="size-5 shrink-0 text-[#5566f6]" />
-              <span className="min-w-0 flex-1 text-[#5566f6]">Улучшить тариф</span>
-            </>
-          ) : (
-            <>
-              <CreditCard className="size-5 shrink-0 text-[#5566f6]" />
-              {/* В приложении не зовём к оплате (правила магазинов). */}
-              <span className="min-w-0 flex-1">{inApp ? "Тариф" : "Тарифы и оплата"}</span>
-            </>
-          )}
+          <CreditCard className="size-5 shrink-0 text-[#5566f6]" />
+          <span className="min-w-0 flex-1">Тариф</span>
         </Link>
       ) : null}
 
