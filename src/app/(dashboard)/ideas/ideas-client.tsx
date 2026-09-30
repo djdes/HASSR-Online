@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SkeletonList } from "@/components/ui/skeleton";
 import {
   IDEA_DESCRIPTION_MAX,
   IDEA_STATUS_HINT,
@@ -152,7 +153,12 @@ export function IdeasClient() {
       </div>
 
       {loading ? (
-        <div className="text-[14px] text-[#6f7282]">Загружаем…</div>
+        // Скелет карточек идей — как у остальных разделов, вместо строки
+        // «Загружаем…», которую сменял список другой высоты.
+        <div aria-busy="true" aria-live="polite">
+          <span className="sr-only">Загружаем идеи…</span>
+          <SkeletonList rows={4} height={104} className="space-y-3" />
+        </div>
       ) : ideas.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-14 text-center">
           <div className="text-[15px] font-medium text-[#0b1024]">

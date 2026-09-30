@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, PageHeaderStat } from "@/components/ui/page-header";
+import ControlBoardLoading from "./loading";
 import {
   pluralRu,
   showRemindResult,
@@ -266,13 +267,10 @@ export function ControlBoardClient() {
     return [...groups.entries()].filter(([, arr]) => arr.length > 0);
   }, [filteredTasks, groupBy]);
 
-  if (loading && !data) {
-    return (
-      <div className="flex h-[200px] items-center justify-center text-[#6f7282]">
-        <Loader2 className="size-5 animate-spin" />
-      </div>
-    );
-  }
+  // Первая загрузка — тот же скелет, что у `loading.tsx`: серверный скелет
+  // сменяется клиентским незаметно. Раньше между ними на секунду-две вставал
+  // пустой блок с крутилкой — экран «прыгал» дважды.
+  if (loading && !data) return <ControlBoardLoading />;
   if (!data) return null;
 
   const s = data.summary;

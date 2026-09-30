@@ -1,10 +1,32 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+
 import { Skeleton } from "@/components/ui/skeleton";
+import { journalsSkeletonFor } from "@/components/ui/skeleton-routes";
+
+import JournalCodeLoading from "./[code]/loading";
+
+/**
+ * Загрузка раздела `/journals/*`.
+ *
+ * Этот `loading.tsx` — внешний для всего раздела: при полной загрузке
+ * журнала или документа браузер сначала получал именно его, и человек
+ * видел сетку каталога журналов, потом скелет списка документов или
+ * документа, потом страницу — экран «прыгал» два раза. Поэтому смотрим на
+ * адрес: каталогу — его скелет, всему, что глубже, — скелет той страницы,
+ * которая откроется (выбирает `[code]/loading.tsx`).
+ */
+export default function JournalsLoading() {
+  if (journalsSkeletonFor(usePathname()) !== "catalog") return <JournalCodeLoading />;
+  return <JournalsCatalogSkeleton />;
+}
 
 /**
  * Skeleton списка журналов. Повторяет структуру `/journals`:
  * заголовок + подсказка, строка поиска/фильтров, сетка карточек.
  */
-export default function JournalsLoading() {
+function JournalsCatalogSkeleton() {
   return (
     <div className="space-y-5" aria-busy="true" aria-live="polite">
       <span className="sr-only">Загружаем журналы…</span>

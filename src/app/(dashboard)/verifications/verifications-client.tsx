@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
 import { showRemindResult, type RemindResult } from "@/lib/remind-toast";
+import VerificationsLoading from "./loading";
 import {
   buildCompletionView,
   completionEntryLabel,
@@ -227,13 +228,9 @@ export function VerificationsClient() {
     }
   }
 
-  if (loading && !data) {
-    return (
-      <div className="flex h-[200px] items-center justify-center text-[#6f7282]">
-        <Loader2 className="size-5 animate-spin" />
-      </div>
-    );
-  }
+  // Первая загрузка — скелет страницы (как `loading.tsx`), а не пустой блок
+  // с крутилкой.
+  if (loading && !data) return <VerificationsLoading />;
   if (!data) return null;
 
   return (
