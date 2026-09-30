@@ -211,10 +211,7 @@ export async function grantCabinetAccess(input: {
   return { cabinet, user: { id: user.id, name: user.name }, created: !existing };
 }
 
-export type CabinetInviteResult = MasterCabinetInvite & {
-  cabinet: { id: string; name: string };
-  organization: { id: string; name: string };
-};
+export type CabinetInviteResult = MasterCabinetInvite & { cabinet: { id: string; name: string } };
 
 /**
  * Пригласить по почте: человек — сотрудник выбранной организации аккаунта
@@ -224,33 +221,21 @@ export type CabinetInviteResult = MasterCabinetInvite & {
 export async function inviteToCabinet(input: {
   ownerUserId: string;
   cabinetId: unknown;
-  organizationId: unknown;
   name: unknown;
   email: unknown;
-  beforeCreate?: (organizationId: string) => Promise<void>;
+  beforeCreate?: (cabinetId: string) => Promise<void>;
 }): Promise<CabinetInviteResult> {
   const accountId = await ownerAccountId(input.ownerUserId);
   const cabinet = await ownedCabinet(accountId, input.cabinetId);
   const parsed = normalizeCabinetInvite(input.name, input.email);
   if (!parsed.ok) throw new MasterCabinetError(parsed.error, 400);
-  const organization =
-    typeof input.organizationId === "string" && input.organizationId
-      ? await db.organization.findFirst({
-          where: { id: input.organizationId, accountId, isDemo: false, ...NOT_DIRECTORY_ORG_WHERE },
-          select: { id: true, name: true },
-        })
-      : null;
-  if (!organization) {
-    throw new MasterCabinetError("Выберите организацию: в её «Сотрудниках» будет приглашённый", 400);
-  }
   const invite = await inviteMasterCabinetEmployee({
     cabinetId: cabinet.id,
-    organizationId: organization.id,
     name: parsed.name,
     email: parsed.email,
     beforeCreate: input.beforeCreate,
   });
-  return { ...invite, cabinet, organization };
+  return { ...invite, cabinet };
 }
 
 /**

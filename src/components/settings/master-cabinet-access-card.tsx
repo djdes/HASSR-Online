@@ -1,13 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Building2, Check, Copy, Library, Loader2, Mail, Plus, Search, UserMinus, UserPlus, Users, X } from "lucide-react";
+import { Check, Copy, Library, Loader2, Mail, Plus, Search, UserMinus, UserPlus, Users, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   ACCESS_EMAIL_RE,
-  defaultInviteOrganization,
   groupAccessCandidates,
   type AccessCandidate,
   type AccessOrganization,
@@ -92,9 +91,9 @@ export function MasterCabinetAccessCard({ initial }: { initial: AccessData }) {
             Мастер-кабинеты
           </h2>
           <p className="mt-1 max-w-[680px] text-[13px] leading-[1.55] text-[#6f7282]">
-            Кто ведёт меню и сырьё. Все, у кого есть доступ, — сотрудники ваших организаций: приглашённый по почте
-            появится в «Сотрудниках» выбранной организации в группе «Мастер-кабинет» (права группы — выше на этой
-            странице). Уже заведённому сотруднику доступ даётся одним выбором. У владельца аккаунта доступ есть всегда.
+            Кто ведёт меню и сырьё. Приглашённый по почте закреплён за кабинетом — у него только этот кабинет. Уже
+            заведённому сотруднику доступ даётся одним выбором. В тарифе кабинет с людьми — +1 сотрудник в каждом
+            подключённом пищеблоке. У владельца аккаунта доступ есть всегда.
           </p>
         </div>
       </div>
@@ -115,7 +114,6 @@ export function MasterCabinetAccessCard({ initial }: { initial: AccessData }) {
               endpoint={SETTINGS_ACCESS_ENDPOINT}
               cabinet={cabinet}
               candidates={access.candidates}
-              organizations={access.organizations}
               onChange={setAccess}
             />
           ))}
@@ -130,19 +128,16 @@ export function CabinetAccessBlock({
   endpoint,
   cabinet,
   candidates,
-  organizations,
   onChange,
 }: {
   endpoint: string;
   cabinet: CabinetAccess;
   candidates: AccessCandidate[];
-  organizations: AccessOrganization[];
   onChange: (next: AccessData) => void;
 }) {
   const [mode, setMode] = useState<null | "invite" | "grant">(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [organizationId, setOrganizationId] = useState(() => defaultInviteOrganization(organizations, cabinet.code));
   const [query, setQuery] = useState("");
   const [busy, setBusy] = useState(false);
   const [grantingId, setGrantingId] = useState<string | null>(null);
@@ -153,15 +148,13 @@ export function CabinetAccessBlock({
     () => groupAccessCandidates(candidates, cabinet.people.map((person) => person.userId), query),
     [candidates, cabinet.people, query]
   );
-  const inviteValid =
-    name.replace(/\s+/g, " ").trim().length >= 2 && ACCESS_EMAIL_RE.test(email.trim()) && Boolean(organizationId);
-  const inviteOrganization = organizations.find((org) => org.id === organizationId) ?? null;
+  const inviteValid = name.replace(/\s+/g, " ").trim().length >= 2 && ACCESS_EMAIL_RE.test(email.trim());
 
   async function invite(event: React.FormEvent) {
     event.preventDefault();
     if (!inviteValid || busy) return;
     setBusy(true);
-    const json = await callAccessApi(endpoint, "POST", { action: "invite", cabinetId: cabinet.id, organizationId, name, email });
+    const json = await callAccessApi(endpoint, "POST", { action: "invite", cabinetId: cabinet.id, name, email });
     setBusy(false);
     if (!json?.access || !json.inviteUrl) return;
     onChange(json.access);
@@ -278,7 +271,7 @@ export function CabinetAccessBlock({
             <Mail className="mt-0.5 size-4 shrink-0" />
             <span>
               {lastInvite.emailSent
-                ? `Приглашение отправлено на ${lastInvite.email}. По ссылке человек задаст пароль и сразу попадёт в кабинет${inviteOrganization ? `; в «Сотрудниках» — «${inviteOrganization.name}»` : ""}.`
+                ? `Приглашение отправлено на ${lastInvite.email}. По ссылке человек задаст пароль и сразу попадёт в кабинет.`
                 : `Письмо на ${lastInvite.email} не ушло — отправьте ссылку сами`}
             </span>
           </div>
@@ -302,35 +295,9 @@ export function CabinetAccessBlock({
       {mode === "invite" ? (
         <form onSubmit={invite} className="mt-3 space-y-3 rounded-2xl border border-[#ececf4] bg-white p-4">
           <div className="text-[13px] leading-[1.5] text-[#3c4053]">
-            Человек получит письмо, задаст пароль и сразу попадёт в «{cabinet.name}». В «Сотрудниках» выбранной
-            организации он будет в группе «Мастер-кабинет»: журналы пищеблока ему не видны, права группы меняются в
-            «Правах доступа». В тарифе сам он места не занимает: кабинет с людьми — +1 сотрудник в каждом подключённом пищеблоке.
+            Человек получит письмо, задаст пароль и сразу попадёт в «{cabinet.name}». Он закреплён за кабинетом: журналов
+            и сотрудников пищеблоков не видит. В тарифе сам кабинет — +1 сотрудник в каждом подключённом пищеблоке.
           </div>
-          <label className="block">
-            <span className="mb-1.5 flex items-center gap-1.5 text-[13px] font-medium text-[#3c4053]">
-              <Building2 className="size-4 text-[#5566f6]" />
-              Сотрудник какой организации
-            </span>
-            <select
-              value={organizationId}
-              onChange={(event) => setOrganizationId(event.target.value)}
-              disabled={busy || organizations.length === 0}
-              className={INPUT}
-              data-testid="cabinet-access-invite-org"
-            >
-              {organizations.map((org) => (
-                <option key={org.id} value={org.id}>
-                  {org.name}
-                  {cabinet.code && org.code === cabinet.code ? " — подключена к кабинету" : ""}
-                </option>
-              ))}
-            </select>
-            {organizations.length === 0 ? (
-              <span className="mt-1.5 block text-[12px] text-[#a13a32]">
-                Сначала заведите организацию — приглашённый должен быть в её «Сотрудниках».
-              </span>
-            ) : null}
-          </label>
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}

@@ -5,14 +5,12 @@ import { buildInviteUrl, generateInviteToken, hashInviteToken, inviteExpiresAt }
 import { MasterCabinetError } from "@/lib/master-cabinet-error";
 
 /**
- * Люди мастер-кабинета — сотрудники организаций (владелец, 2026-09-30:
- * «нужны стандарты и прозрачность, поэтому все должны быть в сотрудниках,
- * но в своих группах… при создании приглашения нужно указывать
- * организацию»). Приглашённый по почте становится сотрудником выбранной
- * организации в группе «Мастер-кабинет» (права группы — в «Права
- * доступа»), журналов пищеблока не видит и получает доступ к кабинету
- * (`OrganizationMember`). После входа он сразу в кабинете. Считается
- * в лимите сотрудников тарифа, как любой сотрудник организации.
+ * Приглашение в мастер-кабинет. Решение владельца 30.09 (вечер): человек
+ * закреплён за самим кабинетом (домашняя организация — кабинет), а кабинет
+ * считается сотрудником в каждом подключённом пищеблоке
+ * (`master-cabinet-seats.ts`). Группа «Мастер-кабинет» осталась от
+ * приглашённых днём сотрудниками организаций: их места не считаются, при
+ * «Убрать» — архив.
  */
 
 export const MASTER_CABINET_POSITION_NAME = "Мастер-кабинет";
@@ -53,18 +51,16 @@ export type MasterCabinetInvite = {
 };
 
 /**
- * Пригласить по почте в мастер-кабинет. `organizationId` — организация,
- * в «Сотрудниках» которой будет человек (проверяет вызывающая сторона).
- * Повторное приглашение (ещё не вошёл, из архива, прежний аккаунт только
- * в кабинете) выдаёт новую ссылку; занятый чужой email — отказ.
- * `beforeCreate` — проверка мест тарифа для нового или возвращаемого человека.
+ * Пригласить по почте в мастер-кабинет: аккаунт, закреплённый за кабинетом.
+ * Повтор (ещё не вошёл, из архива, приглашённый днём сотрудник организации,
+ * ещё не вошедший) — новая ссылка; занятый чужой email — отказ.
  */
 export async function inviteMasterCabinetEmployee(input: {
   cabinetId: string;
-  organizationId: string;
   name: string;
   email: string;
-  beforeCreate?: (organizationId: string) => Promise<void>;
+  /** Проверка мест тарифа (кабинет) — для нового или возвращаемого из архива. */
+  beforeCreate?: (cabinetId: string) => Promise<void>;
 }): Promise<MasterCabinetInvite> {
   const existing = await db.user.findFirst({
     where: { email: { equals: input.email, mode: "insensitive" } },
@@ -90,13 +86,15 @@ export async function inviteMasterCabinetEmployee(input: {
           select: { id: true },
         })
       );
-    const returningEmployee = existing.organizationId === input.organizationId;
-    if (!legacyCabinetUser && !pendingMember && !returningEmployee) {
-      throw new MasterCabinetError("Этот email уже занят в WeSetup — укажите другой адрес.", 409);
+    if (!legacyCabinetUser && !pendingMember) {
+      throw new MasterCabinetError(
+        "Этот email уже есть в WeSetup. Если это ваш сотрудник — дайте ему доступ через «Дать доступ сотруднику».",
+        409
+      );
     }
-    if (existing.archivedAt && input.beforeCreate) await input.beforeCreate(existing.organizationId);
+    if (existing.archivedAt && input.beforeCreate) await input.beforeCreate(input.cabinetId);
   } else if (input.beforeCreate) {
-    await input.beforeCreate(input.organizationId);
+    await input.beforeCreate(input.cabinetId);
   }
 
   const raw = generateInviteToken();
@@ -117,21 +115,16 @@ export async function inviteMasterCabinetEmployee(input: {
         select: { id: true, name: true, email: true, organizationId: true },
       });
     } else {
-      const position = await ensureMasterCabinetPosition(input.organizationId, tx);
+      // Закреплён за кабинетом (решение владельца 30.09): домашняя организация —
+      // сам кабинет, после входа он сразу в /master.
       saved = await tx.user.create({
         data: {
           name: input.name,
           email: input.email,
           passwordHash: "",
-          role: "cook",
-          positionTitle: position.name,
-          jobPositionId: position.id,
-          organizationId: input.organizationId,
+          role: "manager",
+          organizationId: input.cabinetId,
           isActive: false,
-          // Журналы пищеблока ему не нужны: строгий режим без выданных журналов.
-          journalAccessMigrated: true,
-          // Первый вход — сразу в кабинет (`resolveActiveOrganizationId`).
-          lastActiveOrganizationId: input.cabinetId,
         },
         select: { id: true, name: true, email: true, organizationId: true },
       });

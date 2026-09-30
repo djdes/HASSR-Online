@@ -11,8 +11,7 @@ import {
   revokeCabinetAccess,
 } from "@/lib/master-cabinet-access";
 import { MasterCabinetError } from "@/lib/master-cabinet-error";
-import { masterCabinetSeatsToAdd } from "@/lib/master-cabinet-seats";
-import { MASTER_CABINET_POSITION_NAME } from "@/lib/master-cabinet-staff";
+import { connectedSeatOrganization, masterCabinetSeatsToAdd } from "@/lib/master-cabinet-seats";
 import { createRateLimiter } from "@/lib/rate-limit";
 import { notifyEmployee } from "@/lib/telegram";
 
@@ -42,9 +41,10 @@ type Body = {
 };
 
 /** Кабинет = +1 сотрудник в каждом подключённом пищеблоке: места нужны, когда в кабинете появляется первый человек. */
-async function assertCabinetSeats(cabinetId: string, organizationId: string) {
+async function assertCabinetSeats(cabinetId: string) {
   const adding = await masterCabinetSeatsToAdd(cabinetId);
-  if (adding === 0) return;
+  const organizationId = adding > 0 ? await connectedSeatOrganization(cabinetId) : null;
+  if (!organizationId) return;
   const seats = await checkSeatsForActivation(organizationId, adding, { source: "master-cabinet.access" });
   if (!seats.ok) throw new SeatLimitError(seats);
 }
@@ -79,7 +79,7 @@ export async function handleAccessPost(
         ownerUserId,
         cabinetId,
         userId: body.userId,
-        beforeGrant: assertCabinetSeats,
+        beforeGrant: (id) => assertCabinetSeats(id),
       });
       if (result.created) {
         await recordAuditLog({
@@ -111,11 +111,9 @@ export async function handleAccessPost(
       result = await inviteToCabinet({
         ownerUserId,
         cabinetId,
-        organizationId: body.organizationId,
         name: body.name,
         email: body.email,
-        beforeCreate: (organizationId) =>
-          typeof cabinetId === "string" ? assertCabinetSeats(cabinetId, organizationId) : Promise.resolve(),
+        beforeCreate: assertCabinetSeats,
       });
     } catch (err) {
       return failure(err, "invite", ownerUserId);
@@ -126,11 +124,11 @@ export async function handleAccessPost(
       await sendInviteTokenEmail({
         to: result.user.email,
         name: result.user.name,
-        organizationName: result.organization.name,
+        organizationName: result.cabinet.name,
         inviteUrl: result.inviteUrl,
-        organizationId: result.organization.id,
+        organizationId: result.cabinet.id,
         subject: `Мастер-кабинет «${result.cabinet.name}» в WeSetup: установите пароль`,
-        intro: `Вы — сотрудник «${result.organization.name}» в группе «${MASTER_CABINET_POSITION_NAME}» с доступом к мастер-кабинету справочников «${result.cabinet.name}»: в нём ведут меню и сырьё, а подключённые пищеблоки получают их в журналы бракеража готовой продукции и скоропортящейся продукции. После входа вы сразу окажетесь в кабинете.`,
+        intro: `Вам открыт мастер-кабинет справочников «${result.cabinet.name}»: в нём ведут меню и сырьё, а подключённые пищеблоки получают их в журналы бракеража готовой продукции и скоропортящейся продукции. Журналы и сотрудники пищеблоков в кабинете не показываются. После входа вы сразу окажетесь в кабинете.`,
       });
     } catch (err) {
       emailSent = false;
@@ -145,8 +143,6 @@ export async function handleAccessPost(
       entityId: result.user.id,
       details: {
         email: result.user.email,
-        organizationId: result.organization.id,
-        organization: result.organization.name,
         reinvited: result.reinvited,
         via: cabinetIdOverride ? "master-cabinet" : "settings-permissions",
       },

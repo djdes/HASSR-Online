@@ -86,3 +86,23 @@ export async function masterCabinetSeatsToAdd(cabinetId: string): Promise<number
     },
   });
 }
+
+/** Организация аккаунта, подключённая к кабинету, — на её тарифе проверяются места кабинета. */
+export async function connectedSeatOrganization(cabinetId: string): Promise<string | null> {
+  const cabinet = await db.organization.findUnique({
+    where: { id: cabinetId },
+    select: { accountId: true, serviceCode: true, linkedServiceCode: true },
+  });
+  const code = poolCodeOf(cabinet);
+  if (!cabinet?.accountId || !code) return null;
+  const org = await db.organization.findFirst({
+    where: {
+      accountId: cabinet.accountId,
+      isDemo: false,
+      kind: { not: "directory" },
+      OR: [{ linkedServiceCode: code }, { serviceCode: code, linkedServiceCode: null }],
+    },
+    select: { id: true },
+  });
+  return org?.id ?? null;
+}

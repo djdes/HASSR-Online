@@ -73,8 +73,8 @@ export function MasterAccessDialog({ cabinetId, onClose }: { cabinetId: string; 
               Доступ к кабинету
             </h2>
             <p className="mt-1 text-[13px] leading-[1.5] text-[#6f7282]">
-              Кто ведёт меню и сырьё. Приглашённый по почте станет сотрудником выбранной организации в группе
-              «Мастер-кабинет»; уже заведённому сотруднику доступ даётся одним выбором.
+              Кто ведёт меню и сырьё. Приглашённый по почте закреплён за кабинетом; уже заведённому сотруднику доступ
+              даётся одним выбором. В тарифе кабинет — +1 сотрудник в каждом подключённом пищеблоке.
             </p>
           </div>
           <button
@@ -101,7 +101,6 @@ export function MasterAccessDialog({ cabinetId, onClose }: { cabinetId: string; 
               endpoint={MASTER_ACCESS_ENDPOINT}
               cabinet={cabinet}
               candidates={access.candidates}
-              organizations={access.organizations}
               onChange={setAccess}
             />
           ) : (

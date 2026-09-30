@@ -113,11 +113,11 @@ export async function POST(request: Request) {
       name: parsed.data.name,
       email: parsed.data.email,
       // Приглашённый — сотрудник этой организации: места тарифа как у обычного приглашения.
-      beforeCreate: async (organizationId) => {
-        const status = await getMasterCabinetStatus(organizationId);
-        const adding = status.master ? await masterCabinetSeatsToAdd(status.master.organizationId) : 0;
+      // Кабинет — +1 сотрудник в каждом подключённом пищеблоке: места нужны при первом человеке.
+      beforeCreate: async (cabinetId) => {
+        const adding = await masterCabinetSeatsToAdd(cabinetId);
         if (adding === 0) return;
-        const seats = await checkSeatsForActivation(organizationId, adding, { source: "master-cabinet.invite" });
+        const seats = await checkSeatsForActivation(auth.organizationId, adding, { source: "master-cabinet.invite" });
         if (!seats.ok) throw new MasterCabinetError(seats.error, 402);
       },
     });
@@ -140,7 +140,7 @@ export async function POST(request: Request) {
       organizationId: result.masterOrganizationId,
       subject: "Мастер-кабинет справочников WeSetup: установите пароль",
       intro:
-        "Вы будете вести справочники для пищеблоков: загружаете меню и сырьё (из Excel, CSV или списком), а пищеблоки, подключённые по коду справочника, сразу получают их в журналы бракеража готовой продукции и скоропортящейся продукции. В «Сотрудниках» организации вы в группе «Мастер-кабинет»; после входа сразу окажетесь в кабинете.",
+        "Вы будете вести справочники для пищеблоков: загружаете меню и сырьё (из Excel, CSV или списком), а пищеблоки, подключённые по коду справочника, сразу получают их в журналы бракеража готовой продукции и скоропортящейся продукции. Журналы и сотрудники пищеблоков в кабинете не показываются — только эти два списка.",
     });
   } catch (err) {
     emailSent = false;

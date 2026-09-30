@@ -130,15 +130,15 @@ export type CreateMasterCabinetResult = {
  * человека по почте. Второй кабинет в том же пуле не создаётся — только
  * приглашение в существующий; ещё один кабинет со своим кодом создаёт
  * владелец аккаунта из меню профиля (`createAccountMasterCabinet`).
- * Приглашённый — сотрудник этой организации в группе «Мастер-кабинет»
- * (`inviteMasterCabinetEmployee`); `beforeCreate` — проверка мест тарифа.
+ * Приглашённый закреплён за кабинетом (`inviteMasterCabinetEmployee`);
+ * `beforeCreate` — проверка мест тарифа.
  */
 export async function createOrInviteMasterCabinet(input: {
   organizationId: string;
   actorUserId: string;
   name: string;
   email: string;
-  beforeCreate?: (organizationId: string) => Promise<void>;
+  beforeCreate?: (cabinetId: string) => Promise<void>;
 }): Promise<CreateMasterCabinetResult> {
   const email = input.email.trim().toLowerCase();
   const name = input.name.replace(/\s+/g, " ").trim();
@@ -177,7 +177,7 @@ export async function createOrInviteMasterCabinet(input: {
       409
     );
   }
-  if (!existingMaster && existingUser && existingUser.organizationId !== org.id) {
+  if (!existingMaster && existingUser) {
     throw new MasterCabinetError(
       "Этот email уже занят другим пользователем WeSetup. Укажите другой адрес для сотрудника бэк-офиса.",
       409
@@ -227,10 +227,9 @@ export async function createOrInviteMasterCabinet(input: {
     return cabinet;
   });
 
-  // 4. Человек — сотрудник этой организации в группе «Мастер-кабинет».
+  // 4. Человек закреплён за кабинетом.
   const invite = await inviteMasterCabinetEmployee({
     cabinetId: master.id,
-    organizationId: org.id,
     name,
     email,
     beforeCreate: input.beforeCreate,
