@@ -13,6 +13,8 @@ import { db } from "@/lib/db";
  * немедленно; воркер один (PM2 fork), так что этого достаточно.
  */
 const TTL_MS = 60_000;
+/** Версия удалённого пользователя: в токенах версии ≥ 0, совпадения не будет. */
+const DELETED_USER_VERSION = -1;
 // Кеш — один на процесс (globalThis): Next грузит модуль отдельными копиями
 // для страниц и API-маршрутов, и bump из API иначе доходил до страниц
 // только через минуту (2026-09-22).
@@ -23,7 +25,10 @@ export async function getSessionVersion(userId: string): Promise<number> {
   const hit = cache.get(userId);
   if (hit && Date.now() - hit.at < TTL_MS) return hit.version;
   const row = await db.user.findUnique({ where: { id: userId }, select: { sessionVersion: true } });
-  const version = row?.sessionVersion ?? 0;
+  // Пользователя нет (удалён вместе с организацией) — ни один токен не
+  // совпадёт: старая сессия на телефоне не должна жить с чужим именем
+  // и удалённой организацией (2026-09-30, «ООО Цветочек»).
+  const version = row ? row.sessionVersion : DELETED_USER_VERSION;
   cache.set(userId, { version, at: Date.now() });
   return version;
 }
