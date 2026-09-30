@@ -1,29 +1,41 @@
 import { db } from "@/lib/db";
-import { buildInviteUrl, generateInviteToken, hashInviteToken, inviteExpiresAt } from "@/lib/invite-tokens";
-import { MasterCabinetError } from "@/lib/master-cabinet";
 import {
   isRecommendedForCabinet,
   normalizeCabinetInvite,
   type AccessCandidate,
+  type AccessOrganization,
   type AccessPerson,
   type CabinetAccess,
 } from "@/lib/master-cabinet-access-view";
+import { poolCodeOf } from "@/lib/master-cabinet-choice";
+import { MasterCabinetError } from "@/lib/master-cabinet-error";
+import {
+  inviteMasterCabinetEmployee,
+  MASTER_CABINET_POSITION_NAME,
+  type MasterCabinetInvite,
+} from "@/lib/master-cabinet-staff";
 import { MASTER_ORG_KIND, NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
 import { bumpSessionVersion } from "@/lib/session-version";
 import { getUserDisplayTitle } from "@/lib/user-roles";
 
 /**
- * Доступ к мастер-кабинетам аккаунта — «Настройки → Права доступа →
- * Мастер-кабинеты» (владелец, 2026-09-30). Управляет владелец аккаунта:
- *   - пригласить по почте — новый аккаунт с домашней организацией-кабинетом:
- *     у человека есть только этот кабинет;
+ * Доступ к мастер-кабинетам аккаунта (владелец, 2026-09-30) — «Настройки →
+ * Права доступа → Мастер-кабинеты» и кнопка «Доступ» в самом кабинете.
+ * Управляет владелец аккаунта:
+ *   - пригласить по почте — человек становится сотрудником выбранной
+ *     организации в группе «Мастер-кабинет» с доступом к кабинету;
  *   - дать доступ сотруднику объекта — участие в кабинете
  *     (`OrganizationMember`), кабинет появляется у него в меню профиля;
- *   - убрать доступ — участие снимается / приглашённый уходит в архив,
- *     сессии завершаются (иначе открытый кабинет остался бы у него до выхода).
+ *   - убрать доступ — участие снимается; кто был только для кабинета
+ *     (группа «Мастер-кабинет», прежний аккаунт «только в кабинете») —
+ *     в архив. Сессии человека завершаются.
  */
 
-export type AccountCabinetsAccess = { cabinets: CabinetAccess[]; candidates: AccessCandidate[] };
+export type AccountCabinetsAccess = {
+  cabinets: CabinetAccess[];
+  candidates: AccessCandidate[];
+  organizations: AccessOrganization[];
+};
 
 async function ownerAccountId(ownerUserId: string): Promise<string> {
   const account = await db.account.findUnique({ where: { ownerUserId }, select: { id: true } });
@@ -43,24 +55,25 @@ async function ownedCabinet(accountId: string, cabinetId: unknown): Promise<{ id
   return cabinet;
 }
 
-/** Кабинеты аккаунта с людьми и сотрудники объектов, которым можно дать доступ. */
+/** Кабинеты аккаунта с людьми, кого можно добавить, и организации для приглашения. */
 export async function listAccountCabinetsAccess(ownerUserId: string): Promise<AccountCabinetsAccess> {
   const accountId = await ownerAccountId(ownerUserId);
   const [cabinets, objects] = await Promise.all([
     db.organization.findMany({
       where: { accountId, kind: MASTER_ORG_KIND },
-      select: { id: true, name: true },
+      select: { id: true, name: true, serviceCode: true, linkedServiceCode: true },
       orderBy: { name: "asc" },
     }),
     db.organization.findMany({
       where: { accountId, isDemo: false, ...NOT_DIRECTORY_ORG_WHERE },
-      select: { id: true, name: true },
+      select: { id: true, name: true, serviceCode: true, linkedServiceCode: true },
+      orderBy: { name: "asc" },
     }),
   ]);
   const objectName = new Map(objects.map((object) => [object.id, object.name]));
   const cabinetIds = cabinets.map((cabinet) => cabinet.id);
 
-  const [invited, members, staff] = await Promise.all([
+  const [legacy, members, staff] = await Promise.all([
     cabinetIds.length
       ? db.user.findMany({
           where: { organizationId: { in: cabinetIds }, isRoot: false, archivedAt: null },
@@ -85,6 +98,7 @@ export async function listAccountCabinetsAccess(ownerUserId: string): Promise<Ac
                 role: true,
                 positionTitle: true,
                 jobPosition: { select: { name: true } },
+                inviteToken: { select: { id: true } },
               },
             },
           },
@@ -114,7 +128,7 @@ export async function listAccountCabinetsAccess(ownerUserId: string): Promise<Ac
   ]);
 
   const peopleByCabinet = new Map<string, AccessPerson[]>(cabinetIds.map((id) => [id, []]));
-  for (const user of invited) {
+  for (const user of legacy) {
     peopleByCabinet.get(user.organizationId)?.push({
       userId: user.id,
       name: user.name,
@@ -127,21 +141,27 @@ export async function listAccountCabinetsAccess(ownerUserId: string): Promise<Ac
   }
   for (const member of members) {
     const user = member.user;
-    // Приглашённый по почте — уже в списке как «invited»; уволенных не показываем.
-    if (!user || user.isRoot || user.archivedAt || !user.isActive || user.organizationId === member.organizationId) continue;
+    if (!user || user.isRoot || user.archivedAt || user.organizationId === member.organizationId) continue;
+    // Неактивный без приглашения — выключенный сотрудник, не показываем.
+    if (!user.isActive && !user.inviteToken) continue;
     peopleByCabinet.get(member.organizationId)?.push({
       userId: user.id,
       name: user.name,
       email: user.email,
       kind: "member",
-      pending: false,
+      pending: !user.isActive,
       organizationName: objectName.get(user.organizationId) ?? null,
       title: getUserDisplayTitle(user),
     });
   }
 
   return {
-    cabinets: cabinets.map((cabinet) => ({ ...cabinet, people: peopleByCabinet.get(cabinet.id) ?? [] })),
+    cabinets: cabinets.map((cabinet) => ({
+      id: cabinet.id,
+      name: cabinet.name,
+      code: poolCodeOf(cabinet),
+      people: peopleByCabinet.get(cabinet.id) ?? [],
+    })),
     candidates: staff.map((user) => ({
       id: user.id,
       name: user.name,
@@ -149,6 +169,7 @@ export async function listAccountCabinetsAccess(ownerUserId: string): Promise<Ac
       title: getUserDisplayTitle(user),
       recommended: isRecommendedForCabinet(user.role, user.jobPosition?.categoryKey ?? null),
     })),
+    organizations: objects.map((object) => ({ id: object.id, name: object.name, code: poolCodeOf(object) })),
   };
 }
 
@@ -187,88 +208,64 @@ export async function grantCabinetAccess(input: {
   return { cabinet, user, created: !existing };
 }
 
-export type CabinetInviteResult = {
+export type CabinetInviteResult = MasterCabinetInvite & {
   cabinet: { id: string; name: string };
-  user: { id: string; name: string; email: string };
-  inviteUrl: string;
-  /** Человек уже был приглашён (или убран) — выдана новая ссылка. */
-  reinvited: boolean;
+  organization: { id: string; name: string };
 };
 
 /**
- * Пригласить по почте — аккаунт только с этим кабинетом (домашняя
- * организация — кабинет, как у сотрудника бэк-офиса). `beforeCreate` —
- * проверка мест тарифа (только для нового человека).
+ * Пригласить по почте: человек — сотрудник выбранной организации аккаунта
+ * в группе «Мастер-кабинет» с доступом к кабинету. `beforeCreate` —
+ * проверка мест тарифа этой организации.
  */
 export async function inviteToCabinet(input: {
   ownerUserId: string;
   cabinetId: unknown;
+  organizationId: unknown;
   name: unknown;
   email: unknown;
-  beforeCreate?: (cabinetId: string) => Promise<void>;
+  beforeCreate?: (organizationId: string) => Promise<void>;
 }): Promise<CabinetInviteResult> {
   const accountId = await ownerAccountId(input.ownerUserId);
   const cabinet = await ownedCabinet(accountId, input.cabinetId);
   const parsed = normalizeCabinetInvite(input.name, input.email);
   if (!parsed.ok) throw new MasterCabinetError(parsed.error, 400);
-
-  const existingUser = await db.user.findFirst({
-    where: { email: { equals: parsed.email, mode: "insensitive" } },
-    select: { id: true, isActive: true, archivedAt: true, organizationId: true },
-  });
-  if (existingUser) {
-    if (existingUser.organizationId !== cabinet.id) {
-      throw new MasterCabinetError(
-        "Этот email уже есть в WeSetup. Если это ваш сотрудник — дайте ему доступ через «Дать доступ сотруднику».",
-        409
-      );
-    }
-    if (existingUser.isActive && !existingUser.archivedAt) {
-      throw new MasterCabinetError("У этого человека уже есть доступ к кабинету", 409);
-    }
-  } else if (input.beforeCreate) {
-    await input.beforeCreate(cabinet.id);
-  }
-
-  const raw = generateInviteToken();
-  const tokenHash = hashInviteToken(raw);
-  const expiresAt = inviteExpiresAt();
-  const user = await db.$transaction(async (tx) => {
-    const saved = existingUser
-      ? await tx.user.update({
-          where: { id: existingUser.id },
-          data: { name: parsed.name, isActive: false, archivedAt: null },
-          select: { id: true, name: true, email: true },
+  const organization =
+    typeof input.organizationId === "string" && input.organizationId
+      ? await db.organization.findFirst({
+          where: { id: input.organizationId, accountId, isDemo: false, ...NOT_DIRECTORY_ORG_WHERE },
+          select: { id: true, name: true },
         })
-      : await tx.user.create({
-          data: {
-            name: parsed.name,
-            email: parsed.email,
-            passwordHash: "",
-            role: "manager",
-            organizationId: cabinet.id,
-            isActive: false,
-          },
-          select: { id: true, name: true, email: true },
-        });
-    // Приглашение у человека одно (InviteToken.userId уникален): прежняя ссылка перестаёт действовать.
-    await tx.inviteToken.deleteMany({ where: { userId: saved.id } });
-    await tx.inviteToken.create({ data: { userId: saved.id, tokenHash, expiresAt } });
-    return saved;
+      : null;
+  if (!organization) {
+    throw new MasterCabinetError("Выберите организацию: в её «Сотрудниках» будет приглашённый", 400);
+  }
+  const invite = await inviteMasterCabinetEmployee({
+    cabinetId: cabinet.id,
+    organizationId: organization.id,
+    name: parsed.name,
+    email: parsed.email,
+    beforeCreate: input.beforeCreate,
   });
-
-  return { cabinet, user, inviteUrl: buildInviteUrl(raw), reinvited: Boolean(existingUser) };
+  return { ...invite, cabinet, organization };
 }
 
 /**
- * Убрать доступ: сотруднику объекта — снять участие; приглашённому по почте —
- * в архив (у него нет ничего, кроме кабинета). Сессии человека завершаются.
+ * Убрать доступ. Сотрудник объекта — снять участие; кто был в WeSetup
+ * только ради кабинета (группа «Мастер-кабинет» или прежний аккаунт
+ * «только в кабинете») — ещё и в архив со ссылкой приглашения. Сессии
+ * человека завершаются.
  */
 export async function revokeCabinetAccess(input: {
   ownerUserId: string;
   cabinetId: unknown;
   userId: unknown;
-}): Promise<{ cabinet: { id: string; name: string }; user: { id: string; name: string }; kind: "invited" | "member" }> {
+}): Promise<{
+  cabinet: { id: string; name: string };
+  user: { id: string; name: string };
+  kind: "invited" | "member";
+  archived: boolean;
+}> {
   const accountId = await ownerAccountId(input.ownerUserId);
   const cabinet = await ownedCabinet(accountId, input.cabinetId);
   if (typeof input.userId !== "string" || !input.userId || input.userId === input.ownerUserId) {
@@ -276,17 +273,28 @@ export async function revokeCabinetAccess(input: {
   }
   const user = await db.user.findUnique({
     where: { id: input.userId },
-    select: { id: true, name: true, organizationId: true, isRoot: true, lastActiveOrganizationId: true },
+    select: {
+      id: true,
+      name: true,
+      organizationId: true,
+      isRoot: true,
+      lastActiveOrganizationId: true,
+      jobPosition: { select: { name: true } },
+    },
   });
   if (!user || user.isRoot) throw new MasterCabinetError("Человек не найден", 404);
 
-  if (user.organizationId === cabinet.id) {
+  const archive = async () => {
     await db.$transaction([
       db.user.update({ where: { id: user.id }, data: { archivedAt: new Date(), isActive: false } }),
       db.inviteToken.deleteMany({ where: { userId: user.id } }),
     ]);
+  };
+
+  if (user.organizationId === cabinet.id) {
+    await archive();
     await bumpSessionVersion(user.id);
-    return { cabinet, user: { id: user.id, name: user.name }, kind: "invited" };
+    return { cabinet, user: { id: user.id, name: user.name }, kind: "invited", archived: true };
   }
 
   const removed = await db.organizationMember.deleteMany({ where: { userId: user.id, organizationId: cabinet.id } });
@@ -294,6 +302,13 @@ export async function revokeCabinetAccess(input: {
   if (user.lastActiveOrganizationId === cabinet.id) {
     await db.user.update({ where: { id: user.id }, data: { lastActiveOrganizationId: null } });
   }
+  // Был в «Сотрудниках» только ради кабинета — больше нигде не работает.
+  const onlyForCabinets =
+    user.jobPosition?.name === MASTER_CABINET_POSITION_NAME &&
+    (await db.organizationMember.count({
+      where: { userId: user.id, organization: { kind: MASTER_ORG_KIND } },
+    })) === 0;
+  if (onlyForCabinets) await archive();
   await bumpSessionVersion(user.id);
-  return { cabinet, user: { id: user.id, name: user.name }, kind: "member" };
+  return { cabinet, user: { id: user.id, name: user.name }, kind: "member", archived: onlyForCabinets };
 }

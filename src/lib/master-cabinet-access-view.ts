@@ -2,10 +2,12 @@
  * «Права доступа → Мастер-кабинеты» — чистая часть без БД.
  *
  * Доступ к мастер-кабинету (владелец, 2026-09-30) выдаётся двумя путями:
- *   - приглашение по почте — отдельный аккаунт, у которого есть только этот
- *     кабинет (домашняя организация — сам кабинет);
+ *   - приглашение по почте — человек становится сотрудником выбранной
+ *     организации в группе «Мастер-кабинет» (`master-cabinet-staff.ts`);
  *   - уже заведённому сотруднику объекта — участие в кабинете
  *     (`OrganizationMember`), его обычный вход и права не меняются.
+ * Прежние аккаунты «только в кабинете» (домашняя организация — кабинет)
+ * показываются как «invited».
  */
 
 export type AccessCandidate = {
@@ -22,16 +24,34 @@ export type AccessPerson = {
   userId: string;
   name: string;
   email: string;
-  /** invited — аккаунт только в кабинете (по почте); member — сотрудник объекта. */
+  /** invited — прежний аккаунт только в кабинете; member — сотрудник организации. */
   kind: "invited" | "member";
-  /** Приглашённый ещё не задал пароль. */
+  /** Приглашён по почте и ещё не задал пароль. */
   pending: boolean;
   /** Объект сотрудника (для member). */
   organizationName: string | null;
   title: string | null;
 };
 
-export type CabinetAccess = { id: string; name: string; people: AccessPerson[] };
+export type CabinetAccess = {
+  id: string;
+  name: string;
+  /** Код справочника кабинета — по нему видно, какие организации к нему подключены. */
+  code: string | null;
+  people: AccessPerson[];
+};
+
+/** Организация аккаунта для приглашения: в её «Сотрудниках» будет человек. */
+export type AccessOrganization = { id: string; name: string; code: string | null };
+
+/** Организация по умолчанию в приглашении: первая подключённая к кабинету, иначе первая. */
+export function defaultInviteOrganization(
+  organizations: readonly AccessOrganization[],
+  cabinetCode: string | null
+): string {
+  const connected = cabinetCode ? organizations.find((org) => org.code === cabinetCode) : undefined;
+  return connected?.id ?? organizations[0]?.id ?? "";
+}
 
 const MANAGEMENT_ROLES = new Set(["owner", "manager", "head_chef", "technologist"]);
 

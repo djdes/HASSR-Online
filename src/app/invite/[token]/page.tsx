@@ -30,6 +30,8 @@ export default async function InviteAcceptPage({ params }: PageProps) {
     name: string;
     email: string;
     organization: { name: string; kind: string; poolObjects: number };
+    /** Сотрудник организации, приглашённый в мастер-кабинет: после входа — сразу в кабинет. */
+    masterCabinet: { id: string; name: string; poolObjects: number } | null;
   } | null = null;
 
   if (raw.length > 0) {
@@ -41,7 +43,12 @@ export default async function InviteAcceptPage({ params }: PageProps) {
           select: {
             name: true,
             email: true,
+            lastActiveOrganizationId: true,
             organization: { select: { id: true, name: true, kind: true } },
+            organizationMemberships: {
+              where: { organization: { kind: "directory" } },
+              select: { organization: { select: { id: true, name: true } } },
+            },
           },
         },
       },
@@ -60,10 +67,23 @@ export default async function InviteAcceptPage({ params }: PageProps) {
       const org = row.user.organization;
       const poolObjects =
         org.kind === "directory" ? Math.max(0, (await resolveDishPoolOrgIds(org.id)).length - 1) : 0;
+      // Приглашён в мастер-кабинет сотрудником организации (группа
+      // «Мастер-кабинет»): кабинет — тот, куда звали (lastActiveOrganizationId).
+      const cabinets = org.kind === "directory" ? [] : row.user.organizationMemberships.map((m) => m.organization);
+      const cabinet =
+        cabinets.find((item) => item.id === row.user.lastActiveOrganizationId) ?? cabinets[0] ?? null;
+      const masterCabinet = cabinet
+        ? {
+            id: cabinet.id,
+            name: cabinet.name,
+            poolObjects: Math.max(0, (await resolveDishPoolOrgIds(cabinet.id)).length - 1),
+          }
+        : null;
       user = {
         name: row.user.name,
         email: row.user.email,
         organization: { name: org.name, kind: org.kind, poolObjects },
+        masterCabinet,
       };
     }
   }

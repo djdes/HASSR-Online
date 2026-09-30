@@ -1,7 +1,6 @@
 import { db } from "@/lib/db";
 import { ensureServiceCode, resolveDishPoolOrgIds } from "@/lib/dish-pool";
 import { generateServiceCode } from "@/lib/dish-pool-code";
-import { buildInviteUrl, generateInviteToken, hashInviteToken, inviteExpiresAt } from "@/lib/invite-tokens";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import {
   mapObjectsToCabinets,
@@ -13,7 +12,11 @@ import {
   type MasterCabinetObject,
 } from "@/lib/master-cabinet-choice";
 import { MASTER_ORG_KIND, NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
+import { MasterCabinetError } from "@/lib/master-cabinet-error";
+import { inviteMasterCabinetEmployee } from "@/lib/master-cabinet-staff";
 import { assertOrgMembership, listAccessibleOrganizations } from "@/lib/organization-access";
+
+export { MasterCabinetError } from "@/lib/master-cabinet-error";
 
 /**
  * Создание мастер-кабинета справочников из настроек пищеблока
@@ -45,12 +48,31 @@ async function findMasterInPool(poolIds: string[]) {
 }
 
 async function listMasterUsers(masterOrgId: string): Promise<MasterCabinetUser[]> {
-  const users = await db.user.findMany({
-    where: { organizationId: masterOrgId, isRoot: false, archivedAt: null },
-    select: { id: true, name: true, email: true, isActive: true },
-    orderBy: { createdAt: "asc" },
-  });
-  return users.map((user) => ({ id: user.id, name: user.name, email: user.email, invited: !user.isActive }));
+  // Люди кабинета: прежние аккаунты «только в кабинете» и сотрудники
+  // организаций с доступом (владелец аккаунта не показывается — доступ у
+  // него всегда). Приглашённый сотрудник, ещё не задавший пароль, — «invited».
+  const [homeUsers, members] = await Promise.all([
+    db.user.findMany({
+      where: { organizationId: masterOrgId, isRoot: false, archivedAt: null },
+      select: { id: true, name: true, email: true, isActive: true },
+      orderBy: { createdAt: "asc" },
+    }),
+    db.organizationMember.findMany({
+      where: { organizationId: masterOrgId, role: { not: "owner" } },
+      select: {
+        user: { select: { id: true, name: true, email: true, isActive: true, archivedAt: true, isRoot: true, organizationId: true } },
+      },
+      orderBy: { createdAt: "asc" },
+    }),
+  ]);
+  const seen = new Set(homeUsers.map((user) => user.id));
+  const people = homeUsers.map((user) => ({ id: user.id, name: user.name, email: user.email, invited: !user.isActive }));
+  for (const { user } of members) {
+    if (!user || user.isRoot || user.archivedAt || seen.has(user.id) || user.organizationId === masterOrgId) continue;
+    seen.add(user.id);
+    people.push({ id: user.id, name: user.name, email: user.email, invited: !user.isActive });
+  }
+  return people;
 }
 
 export async function getMasterCabinetStatus(
@@ -86,15 +108,6 @@ export async function getMasterCabinetStatus(
   };
 }
 
-export class MasterCabinetError extends Error {
-  constructor(
-    message: string,
-    readonly status: number
-  ) {
-    super(message);
-  }
-}
-
 /** Все коды журналов — кабинет журналы не ведёт, все выключены. */
 async function allJournalCodes(): Promise<string[]> {
   const templates = await db.journalTemplate.findMany({ select: { code: true } });
@@ -114,15 +127,18 @@ export type CreateMasterCabinetResult = {
 
 /**
  * Кабинет в пуле организации (создать, если его нет) + приглашение
- * сотрудника бэк-офиса. Второй кабинет в том же пуле не создаётся — только
+ * человека по почте. Второй кабинет в том же пуле не создаётся — только
  * приглашение в существующий; ещё один кабинет со своим кодом создаёт
  * владелец аккаунта из меню профиля (`createAccountMasterCabinet`).
+ * Приглашённый — сотрудник этой организации в группе «Мастер-кабинет»
+ * (`inviteMasterCabinetEmployee`); `beforeCreate` — проверка мест тарифа.
  */
 export async function createOrInviteMasterCabinet(input: {
   organizationId: string;
   actorUserId: string;
   name: string;
   email: string;
+  beforeCreate?: (organizationId: string) => Promise<void>;
 }): Promise<CreateMasterCabinetResult> {
   const email = input.email.trim().toLowerCase();
   const name = input.name.replace(/\s+/g, " ").trim();
@@ -144,40 +160,39 @@ export async function createOrInviteMasterCabinet(input: {
   const code = poolCodeOf(fresh);
   if (!code) throw new MasterCabinetError("Не удалось выдать код справочника", 500);
 
-  // 4a. Email занят — понятный отказ; тот же человек, ещё не вошедший в кабинет, — новая ссылка.
-  const existingUser = await db.user.findFirst({
-    where: { email: { equals: email, mode: "insensitive" } },
-    select: { id: true, name: true, email: true, isActive: true, organizationId: true },
-  });
-
   const poolIds = await resolveDishPoolOrgIds(org.id);
   const existingMaster = await findMasterInPool(poolIds);
 
-  if (existingUser) {
-    const sameCabinet = existingMaster && existingUser.organizationId === existingMaster.id;
-    if (!sameCabinet) {
-      throw new MasterCabinetError(
-        "Этот email уже занят другим пользователем WeSetup. Укажите другой адрес для сотрудника бэк-офиса.",
-        409
-      );
-    }
-    if (existingUser.isActive) {
-      throw new MasterCabinetError("Этот сотрудник уже работает в мастер-кабинете", 409);
-    }
+  // 2. Email занят другим человеком — отказ до создания кабинета (подробные
+  //    правила повтора — в inviteMasterCabinetEmployee).
+  const existingUser = await db.user.findFirst({
+    where: { email: { equals: email, mode: "insensitive" } },
+    select: { id: true, isActive: true, archivedAt: true, organizationId: true },
+  });
+  if (existingUser && existingUser.isActive && !existingUser.archivedAt) {
+    throw new MasterCabinetError(
+      existingMaster && existingUser.organizationId === existingMaster.id
+        ? "Этот сотрудник уже работает в мастер-кабинете"
+        : "Этот email уже занят другим пользователем WeSetup. Укажите другой адрес для сотрудника бэк-офиса.",
+      409
+    );
+  }
+  if (!existingMaster && existingUser && existingUser.organizationId !== org.id) {
+    throw new MasterCabinetError(
+      "Этот email уже занят другим пользователем WeSetup. Укажите другой адрес для сотрудника бэк-офиса.",
+      409
+    );
   }
 
-  const raw = generateInviteToken();
-  const tokenHash = hashInviteToken(raw);
-  const expiresAt = inviteExpiresAt();
   const rootOwner = await db.organization.findFirst({ where: { serviceCode: code }, select: { name: true, type: true } });
   const disabledCodes = existingMaster ? [] : await allJournalCodes();
   const accountOwner = org.accountId
     ? await db.account.findUnique({ where: { id: org.accountId }, select: { ownerUserId: true } })
     : null;
 
-  const result = await db.$transaction(async (tx) => {
-    // 3. Кабинет — прямой create: без засева журналов, триала и писем create-organization.ts.
-    const master =
+  // 3. Кабинет — прямой create: без засева журналов, триала и писем create-organization.ts.
+  const master = await db.$transaction(async (tx) => {
+    const cabinet =
       existingMaster ??
       (await tx.organization.create({
         data: {
@@ -200,47 +215,35 @@ export async function createOrInviteMasterCabinet(input: {
     });
     for (const member of members) {
       await tx.organizationMember.upsert({
-        where: { userId_organizationId: { userId: member.id, organizationId: master.id } },
+        where: { userId_organizationId: { userId: member.id, organizationId: cabinet.id } },
         create: {
           userId: member.id,
-          organizationId: master.id,
+          organizationId: cabinet.id,
           role: member.id === accountOwner?.ownerUserId ? "owner" : "manager",
         },
         update: {},
       });
     }
+    return cabinet;
+  });
 
-    // 4. Сотрудник бэк-офиса — руководитель кабинета, вход по приглашению.
-    const user =
-      existingUser ??
-      (await tx.user.create({
-        data: {
-          name,
-          email,
-          passwordHash: "",
-          role: "manager",
-          organizationId: master.id,
-          isActive: false,
-        },
-        select: { id: true, name: true, email: true },
-      }));
-    if (existingUser) {
-      // Приглашение у человека одно (InviteToken.userId уникален): прежняя
-      // ссылка перестаёт действовать, работает только новая.
-      await tx.inviteToken.deleteMany({ where: { userId: existingUser.id } });
-    }
-    await tx.inviteToken.create({ data: { userId: user.id, tokenHash, expiresAt } });
-    return { master, user };
+  // 4. Человек — сотрудник этой организации в группе «Мастер-кабинет».
+  const invite = await inviteMasterCabinetEmployee({
+    cabinetId: master.id,
+    organizationId: org.id,
+    name,
+    email,
+    beforeCreate: input.beforeCreate,
   });
 
   return {
     created: !existingMaster,
-    masterOrganizationId: result.master.id,
-    masterName: result.master.name,
+    masterOrganizationId: master.id,
+    masterName: master.name,
     code,
-    user: { id: result.user.id, name: result.user.name, email: result.user.email },
-    inviteUrl: buildInviteUrl(raw),
-    reinvited: Boolean(existingUser),
+    user: invite.user,
+    inviteUrl: invite.inviteUrl,
+    reinvited: invite.reinvited,
   };
 }
 

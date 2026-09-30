@@ -1,0 +1,45 @@
+{
+  "orgOptions": [
+    "Кафе «Альфа»"
+  ],
+  "invitedRow": "ТСТехнолог СетевойКафе «Альфа» · Мастер-кабинетПриглашёнУбрать",
+  "invitedDb": {
+    "home": true,
+    "position": "Мастер-кабинет",
+    "positionInOrgA": true,
+    "pending": true,
+    "strictJournals": true,
+    "lastActiveIsCabinet": true,
+    "cabinetMember": true,
+    "inviteToken": true
+  },
+  "group": {
+    "permissionsJson": [
+      "dashboard.view"
+    ],
+    "categoryKey": "staff"
+  },
+  "inviteeLanding": "/master",
+  "inviteeSeesAccessButton": 0,
+  "joinedRow": "ТСТехнолог СетевойКафе «Альфа» · Мастер-кабинетСотрудникУбрать",
+  "fromMasterDb": {
+    "home": true,
+    "position": "Мастер-кабинет",
+    "cabinetMember": true
+  },
+  "masterAuditVia": "master-cabinet",
+  "removedFromMaster": {
+    "archived": true,
+    "inactive": true,
+    "member": false,
+    "inviteToken": false
+  },
+  "legacyStatus": 200,
+  "legacyDb": {
+    "home": true,
+    "position": "Мастер-кабинет",
+    "member": true
+  },
+  "legacyListed": true,
+  "ok": true
+}

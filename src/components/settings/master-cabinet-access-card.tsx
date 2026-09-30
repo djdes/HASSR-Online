@@ -1,21 +1,30 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Check, Copy, Library, Loader2, Mail, Plus, Search, UserMinus, UserPlus, Users, X } from "lucide-react";
+import { Building2, Check, Copy, Library, Loader2, Mail, Plus, Search, UserMinus, UserPlus, Users, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   ACCESS_EMAIL_RE,
+  defaultInviteOrganization,
   groupAccessCandidates,
   type AccessCandidate,
+  type AccessOrganization,
   type AccessPerson,
   type CabinetAccess,
 } from "@/lib/master-cabinet-access-view";
 import { pluralRu } from "@/lib/plural-ru";
 import { cn } from "@/lib/utils";
 
-type AccessData = { cabinets: CabinetAccess[]; candidates: AccessCandidate[] };
+export type AccessData = {
+  cabinets: CabinetAccess[];
+  candidates: AccessCandidate[];
+  organizations: AccessOrganization[];
+};
+
+/** «Права доступа» — `/api/settings/master-cabinets/access`; в самом кабинете — `/api/master/access`. */
+export const SETTINGS_ACCESS_ENDPOINT = "/api/settings/master-cabinets/access";
 type ApiResponse = {
   error?: string;
   access?: AccessData;
@@ -44,8 +53,12 @@ function initialsOf(name: string): string {
   );
 }
 
-async function callAccessApi(method: "POST" | "DELETE", body: Record<string, unknown>): Promise<ApiResponse | null> {
-  const response = await fetch("/api/settings/master-cabinets/access", {
+async function callAccessApi(
+  endpoint: string,
+  method: "POST" | "DELETE",
+  body: Record<string, unknown>
+): Promise<ApiResponse | null> {
+  const response = await fetch(endpoint, {
     method,
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -60,9 +73,10 @@ async function callAccessApi(method: "POST" | "DELETE", body: Record<string, unk
 
 /**
  * «Права доступа → Мастер-кабинеты» (только владелец аккаунта): у каждого
- * кабинета свой список людей. Пригласить по почте — у человека будет только
- * этот кабинет; дать доступ сотруднику объекта — кабинет появится у него в
- * меню профиля, его обычные права не меняются.
+ * кабинета свой список людей. Пригласить по почте — человек станет
+ * сотрудником выбранной организации в группе «Мастер-кабинет»; дать доступ
+ * сотруднику объекта — кабинет появится у него в меню профиля, его обычные
+ * права не меняются.
  */
 export function MasterCabinetAccessCard({ initial }: { initial: AccessData }) {
   const [access, setAccess] = useState<AccessData>(initial);
@@ -78,8 +92,9 @@ export function MasterCabinetAccessCard({ initial }: { initial: AccessData }) {
             Мастер-кабинеты
           </h2>
           <p className="mt-1 max-w-[680px] text-[13px] leading-[1.55] text-[#6f7282]">
-            Кто ведёт меню и сырьё. Пригласите человека по почте — у него будет только этот кабинет. Или дайте доступ
-            сотруднику ваших объектов — кабинет появится у него в меню профиля. У владельца аккаунта доступ есть всегда.
+            Кто ведёт меню и сырьё. Все, у кого есть доступ, — сотрудники ваших организаций: приглашённый по почте
+            появится в «Сотрудниках» выбранной организации в группе «Мастер-кабинет» (права группы — выше на этой
+            странице). Уже заведённому сотруднику доступ даётся одним выбором. У владельца аккаунта доступ есть всегда.
           </p>
         </div>
       </div>
@@ -95,7 +110,14 @@ export function MasterCabinetAccessCard({ initial }: { initial: AccessData }) {
       ) : (
         <div className="mt-5 space-y-4">
           {access.cabinets.map((cabinet) => (
-            <CabinetAccessBlock key={cabinet.id} cabinet={cabinet} candidates={access.candidates} onChange={setAccess} />
+            <CabinetAccessBlock
+              key={cabinet.id}
+              endpoint={SETTINGS_ACCESS_ENDPOINT}
+              cabinet={cabinet}
+              candidates={access.candidates}
+              organizations={access.organizations}
+              onChange={setAccess}
+            />
           ))}
         </div>
       )}
@@ -103,18 +125,24 @@ export function MasterCabinetAccessCard({ initial }: { initial: AccessData }) {
   );
 }
 
-function CabinetAccessBlock({
+/** Люди одного кабинета: список, «Пригласить по почте», «Дать доступ сотруднику», «Убрать». */
+export function CabinetAccessBlock({
+  endpoint,
   cabinet,
   candidates,
+  organizations,
   onChange,
 }: {
+  endpoint: string;
   cabinet: CabinetAccess;
   candidates: AccessCandidate[];
+  organizations: AccessOrganization[];
   onChange: (next: AccessData) => void;
 }) {
   const [mode, setMode] = useState<null | "invite" | "grant">(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [organizationId, setOrganizationId] = useState(() => defaultInviteOrganization(organizations, cabinet.code));
   const [query, setQuery] = useState("");
   const [busy, setBusy] = useState(false);
   const [grantingId, setGrantingId] = useState<string | null>(null);
@@ -125,13 +153,15 @@ function CabinetAccessBlock({
     () => groupAccessCandidates(candidates, cabinet.people.map((person) => person.userId), query),
     [candidates, cabinet.people, query]
   );
-  const inviteValid = name.replace(/\s+/g, " ").trim().length >= 2 && ACCESS_EMAIL_RE.test(email.trim());
+  const inviteValid =
+    name.replace(/\s+/g, " ").trim().length >= 2 && ACCESS_EMAIL_RE.test(email.trim()) && Boolean(organizationId);
+  const inviteOrganization = organizations.find((org) => org.id === organizationId) ?? null;
 
   async function invite(event: React.FormEvent) {
     event.preventDefault();
     if (!inviteValid || busy) return;
     setBusy(true);
-    const json = await callAccessApi("POST", { action: "invite", cabinetId: cabinet.id, name, email });
+    const json = await callAccessApi(endpoint, "POST", { action: "invite", cabinetId: cabinet.id, organizationId, name, email });
     setBusy(false);
     if (!json?.access || !json.inviteUrl) return;
     onChange(json.access);
@@ -145,7 +175,7 @@ function CabinetAccessBlock({
   async function grant(candidate: AccessCandidate) {
     if (grantingId) return;
     setGrantingId(candidate.id);
-    const json = await callAccessApi("POST", { action: "grant", cabinetId: cabinet.id, userId: candidate.id });
+    const json = await callAccessApi(endpoint, "POST", { action: "grant", cabinetId: cabinet.id, userId: candidate.id });
     setGrantingId(null);
     if (!json?.access) return;
     onChange(json.access);
@@ -158,7 +188,7 @@ function CabinetAccessBlock({
 
   async function revoke() {
     if (!removing) return;
-    const json = await callAccessApi("DELETE", { cabinetId: cabinet.id, userId: removing.userId });
+    const json = await callAccessApi(endpoint, "DELETE", { cabinetId: cabinet.id, userId: removing.userId });
     if (!json?.access) return;
     onChange(json.access);
     toast.success(`Доступ убран: ${removing.name}`);
@@ -199,7 +229,7 @@ function CabinetAccessBlock({
                     : `${person.email} · только этот кабинет`}
                 </span>
               </span>
-              {person.kind === "member" ? (
+              {person.kind === "member" && !person.pending ? (
                 <span className="shrink-0 rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] font-medium text-[#3848c7]">
                   Сотрудник
                 </span>
@@ -248,7 +278,7 @@ function CabinetAccessBlock({
             <Mail className="mt-0.5 size-4 shrink-0" />
             <span>
               {lastInvite.emailSent
-                ? `Приглашение отправлено на ${lastInvite.email}. По ссылке человек задаст пароль и сразу попадёт в кабинет.`
+                ? `Приглашение отправлено на ${lastInvite.email}. По ссылке человек задаст пароль и сразу попадёт в кабинет${inviteOrganization ? `; в «Сотрудниках» — «${inviteOrganization.name}»` : ""}.`
                 : `Письмо на ${lastInvite.email} не ушло — отправьте ссылку сами`}
             </span>
           </div>
@@ -272,9 +302,35 @@ function CabinetAccessBlock({
       {mode === "invite" ? (
         <form onSubmit={invite} className="mt-3 space-y-3 rounded-2xl border border-[#ececf4] bg-white p-4">
           <div className="text-[13px] leading-[1.5] text-[#3c4053]">
-            Человек получит письмо, задаст пароль и попадёт в «{cabinet.name}». Журналов, сотрудников и настроек объектов
-            он не увидит.
+            Человек получит письмо, задаст пароль и сразу попадёт в «{cabinet.name}». В «Сотрудниках» выбранной
+            организации он будет в группе «Мастер-кабинет»: журналы пищеблока ему не видны, права группы меняются в
+            «Правах доступа». Считается в тарифе, как любой сотрудник.
           </div>
+          <label className="block">
+            <span className="mb-1.5 flex items-center gap-1.5 text-[13px] font-medium text-[#3c4053]">
+              <Building2 className="size-4 text-[#5566f6]" />
+              Сотрудник какой организации
+            </span>
+            <select
+              value={organizationId}
+              onChange={(event) => setOrganizationId(event.target.value)}
+              disabled={busy || organizations.length === 0}
+              className={INPUT}
+              data-testid="cabinet-access-invite-org"
+            >
+              {organizations.map((org) => (
+                <option key={org.id} value={org.id}>
+                  {org.name}
+                  {cabinet.code && org.code === cabinet.code ? " — подключена к кабинету" : ""}
+                </option>
+              ))}
+            </select>
+            {organizations.length === 0 ? (
+              <span className="mt-1.5 block text-[12px] text-[#a13a32]">
+                Сначала заведите организацию — приглашённый должен быть в её «Сотрудниках».
+              </span>
+            ) : null}
+          </label>
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}
@@ -399,7 +455,11 @@ function CabinetAccessBlock({
           removing?.kind === "member"
             ? [
                 { label: "Кабинет пропадёт из его меню профиля." },
-                { label: "Свою организацию и журналы он ведёт как раньше.", tone: "info" },
+                {
+                  label:
+                    "Если он в группе «Мастер-кабинет» и других кабинетов у него нет — уйдёт в архив «Сотрудников», место в тарифе освободится. Остальные сотрудники работают как раньше.",
+                  tone: "info",
+                },
                 { label: "На его устройствах нужно будет войти заново." },
               ]
             : [

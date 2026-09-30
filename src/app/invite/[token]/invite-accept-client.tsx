@@ -27,6 +27,7 @@ type Props = {
     name: string;
     email: string;
     organization: { name: string; kind: string; poolObjects: number };
+    masterCabinet?: { id: string; name: string; poolObjects: number } | null;
   } | null;
 };
 
@@ -66,8 +67,11 @@ export function InviteAcceptClient({ status, token, user }: Props) {
     );
   }
 
-  const isDirectory = user.organization.kind === "directory";
-  const poolObjects = user.organization.poolObjects;
+  // Мастер-кабинет: прежний аккаунт «только в кабинете» или сотрудник
+  // организации, приглашённый в кабинет (после входа — сразу туда).
+  const masterCabinet = user.masterCabinet ?? null;
+  const isDirectory = user.organization.kind === "directory" || masterCabinet !== null;
+  const poolObjects = masterCabinet ? masterCabinet.poolObjects : user.organization.poolObjects;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -103,6 +107,16 @@ export function InviteAcceptClient({ status, token, user }: Props) {
         router.push("/login?invite=accepted");
       } else {
         // Сотрудник бэк-офиса — сразу в мастер-кабинет, без крюка через /dashboard.
+        if (masterCabinet) {
+          // Сотрудник организации: переключить сессию на кабинет и открыть его.
+          await fetch("/api/me/active-organization", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ organizationId: masterCabinet.id }),
+          }).catch(() => null);
+          window.location.assign("/master");
+          return;
+        }
         router.push(isDirectory ? "/master" : "/dashboard");
         router.refresh();
       }
@@ -125,7 +139,9 @@ export function InviteAcceptClient({ status, token, user }: Props) {
           <div className="mt-3 flex gap-3 rounded-2xl bg-[#eef1ff] p-4 text-sm leading-relaxed text-[#3c4053]">
             <Library className="mt-0.5 size-5 shrink-0 text-[#5566f6]" />
             <div>
-              <p className="font-medium text-[#0b1024]">Мастер-кабинет справочников</p>
+              <p className="font-medium text-[#0b1024]">
+                Мастер-кабинет справочников{masterCabinet ? ` «${masterCabinet.name}»` : ""}
+              </p>
               <p className="mt-1">
                 Вы загружаете меню и сырьё — из Excel, CSV или списком.
                 {poolObjects > 0

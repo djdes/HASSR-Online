@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  defaultInviteOrganization,
   groupAccessCandidates,
   isRecommendedForCabinet,
   normalizeCabinetInvite,
@@ -34,6 +35,18 @@ test("поиск по имени, объекту и должности, без �
   assert.deepEqual(groupAccessCandidates(people, [], "ТЕХНОЛОГ").recommended.map((p) => p.id), ["2"]);
   const none = groupAccessCandidates(people, [], "никого");
   assert.equal(none.recommended.length + none.other.length, 0);
+});
+
+test("организация приглашения по умолчанию — подключённая к кабинету", () => {
+  const orgs = [
+    { id: "cafe", name: "Кафе", code: null },
+    { id: "kg", name: "Сад №3", code: "KGKGK-00000" },
+    { id: "kg2", name: "Сад №5", code: "KGKGK-00000" },
+  ];
+  assert.equal(defaultInviteOrganization(orgs, "KGKGK-00000"), "kg");
+  assert.equal(defaultInviteOrganization(orgs, "OTHER-00000"), "cafe");
+  assert.equal(defaultInviteOrganization(orgs, null), "cafe");
+  assert.equal(defaultInviteOrganization([], "KGKGK-00000"), "");
 });
 
 test("приглашение: ФИО и email приводятся к виду, неверное — понятная ошибка", () => {

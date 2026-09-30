@@ -1,16 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, Copy, Library, Loader2, LogOut, PenLine } from "lucide-react";
+import { Building2, Copy, Library, Loader2, LogOut, PenLine, Users } from "lucide-react";
 import { toast } from "sonner";
 
 import { BrandLogo } from "@/components/brand/logo";
+import { MasterAccessDialog } from "@/components/master/master-access-dialog";
 import { renameMasterCabinetDialog } from "@/components/master/rename-master-cabinet";
 import { ResponsiveMenu, type ResponsiveMenuEntry } from "@/components/ui/responsive-menu";
 import { signOutAndOpen } from "@/lib/sign-out";
 import { switchOrganizationAndOpen } from "@/lib/switch-organization";
 
 export type MasterShellProps = {
+  /** Открытый кабинет — для окна «Доступ». */
+  cabinetId: string;
+  /** Владелец аккаунта: кнопка «Доступ» (пригласить, дать и убрать доступ). */
+  canManageAccess: boolean;
   organizationName: string;
   code: string | null;
   objectsCount: number;
@@ -27,6 +32,8 @@ export type MasterShellProps = {
  * только списки меню и сырья для объектов пула.
  */
 export function MasterShell({
+  cabinetId,
+  canManageAccess,
   organizationName,
   code,
   objectsCount,
@@ -36,6 +43,7 @@ export function MasterShell({
   children,
 }: MasterShellProps) {
   const [switching, setSwitching] = useState(false);
+  const [accessOpen, setAccessOpen] = useState(false);
   /** Название кабинета — переименовывается карандашом в шапке. */
   const [name, setName] = useState(organizationName);
 
@@ -177,8 +185,22 @@ export function MasterShell({
             <Building2 className="size-3.5" />
             Подключено объектов: {objectsCount}
           </span>
+          {canManageAccess ? (
+            <button
+              type="button"
+              onClick={() => setAccessOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-full border border-[#dcdfed] bg-white px-3 py-1.5 text-[13px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 max-sm:min-h-11"
+              title="Пригласить по почте, дать или убрать доступ к кабинету"
+              data-testid="master-access"
+            >
+              <Users className="size-3.5 text-[#5566f6]" />
+              Доступ
+            </button>
+          ) : null}
         </div>
       </header>
+
+      {accessOpen ? <MasterAccessDialog cabinetId={cabinetId} onClose={() => setAccessOpen(false)} /> : null}
 
       <main className="flex-1 py-6 md:py-8">
         <div className="mx-auto w-full max-w-[1200px] px-4 md:px-8">{children}</div>

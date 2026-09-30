@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { authOptions } from "@/lib/auth";
+import { checkSeatsForActivation } from "@/lib/billing.server";
 import { recordAuditLog } from "@/lib/audit-log";
 import { sendInviteTokenEmail } from "@/lib/email";
 import {
@@ -110,6 +111,11 @@ export async function POST(request: Request) {
       actorUserId: auth.session.user.id,
       name: parsed.data.name,
       email: parsed.data.email,
+      // Приглашённый — сотрудник этой организации: места тарифа как у обычного приглашения.
+      beforeCreate: async (organizationId) => {
+        const seats = await checkSeatsForActivation(organizationId, 1, { source: "master-cabinet.invite" });
+        if (!seats.ok) throw new MasterCabinetError(seats.error, 402);
+      },
     });
   } catch (err) {
     if (err instanceof MasterCabinetError) {
@@ -130,7 +136,7 @@ export async function POST(request: Request) {
       organizationId: result.masterOrganizationId,
       subject: "Мастер-кабинет справочников WeSetup: установите пароль",
       intro:
-        "Вы будете вести справочники для пищеблоков: загружаете меню и сырьё (из Excel, CSV или списком), а пищеблоки, подключённые по коду справочника, сразу получают их в журналы бракеража готовой продукции и скоропортящейся продукции. Журналы и сотрудники пищеблоков в кабинете не показываются — только эти два списка.",
+        "Вы будете вести справочники для пищеблоков: загружаете меню и сырьё (из Excel, CSV или списком), а пищеблоки, подключённые по коду справочника, сразу получают их в журналы бракеража готовой продукции и скоропортящейся продукции. В «Сотрудниках» организации вы в группе «Мастер-кабинет»; после входа сразу окажетесь в кабинете.",
     });
   } catch (err) {
     emailSent = false;

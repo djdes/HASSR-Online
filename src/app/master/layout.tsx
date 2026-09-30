@@ -29,15 +29,18 @@ export default async function MasterLayout({ children }: { children: React.React
   const orgId = getActiveOrgId(session);
   const org = await db.organization.findUnique({
     where: { id: orgId },
-    select: { id: true, name: true, kind: true, serviceCode: true, linkedServiceCode: true },
+    select: { id: true, name: true, kind: true, serviceCode: true, linkedServiceCode: true, accountId: true },
   });
   if (!org || org.kind !== MASTER_ORG_KIND) redirect("/dashboard");
 
-  const [profile, poolOrganizations, accessible] = await Promise.all([
+  const [profile, poolOrganizations, accessible, account] = await Promise.all([
     db.user.findUnique({ where: { id: session.user.id }, select: { themePreference: true } }),
     listPoolOrganizations(org.id),
     listAccessibleOrganizations(session.user.id),
+    org.accountId ? db.account.findUnique({ where: { id: org.accountId }, select: { ownerUserId: true } }) : null,
   ]);
+  // «Доступ» (пригласить, дать и убрать доступ) — только владельцу аккаунта кабинета.
+  const canManageAccess = Boolean(account && account.ownerUserId === session.user.id);
   const initialTheme = await readInitialTheme(profile?.themePreference);
   // «Моя организация» — для владельца/руководителя, у которого кроме
   // кабинета есть обычные организации (не мастер-кабинеты и не демо).
@@ -53,6 +56,8 @@ export default async function MasterLayout({ children }: { children: React.React
           {/* Первым ребёнком — красит оболочку до первого кадра. */}
           <SiteThemeBootstrap />
           <MasterShell
+            cabinetId={org.id}
+            canManageAccess={canManageAccess}
             organizationName={org.name}
             code={org.linkedServiceCode ?? org.serviceCode ?? null}
             objectsCount={poolOrganizations.length}
