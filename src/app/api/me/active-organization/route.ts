@@ -68,6 +68,7 @@ export async function POST(request: Request) {
     where: { id: session.user.id },
     data: { lastActiveOrganizationId: organization.id },
   });
+  console.info(`[orgs] switched user=${session.user.id} to=${organization.id}`);
 
   await db.auditLog.create({
     data: {

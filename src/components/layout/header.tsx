@@ -437,6 +437,7 @@ export function Header({
                       organizations={organizations}
                       activeId={activeOrganizationId}
                       canCreate={false}
+                      showSettings={fullAccess}
                       label="Сменить организацию"
                     />
                     {visibleSecondaryNavItems.length > 0 ? (
@@ -806,6 +807,8 @@ export function Header({
                   activeId={activeOrganizationId}
                   canCreate={canCreateOrganization}
                   onOpenCreate={openCreateDialog}
+                  showSettings={fullAccess}
+                  onNavigate={() => setProfileMenuOpen(false)}
                 />
                 {regularOrganizations.length > 1 || canCreateOrganization ? (
                   <DropdownMenuSeparator className="my-1" />
