@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { readJson, requirePartnerApi } from "@/lib/partners/api";
 import { assignClientOwner } from "@/lib/partners/client-organizations";
 import { partnerErrorResponse } from "@/lib/partners/errors";
+import { CONVERTED_SOURCE } from "@/lib/partners/org-conversion-core";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,22 +22,23 @@ export async function POST(request: Request, ctx: { params: Promise<{ orgId: str
   const { session, membership } = auth.ctx;
   const { orgId } = await ctx.params;
 
-  // Только организации, которые завёл сам партнёр (`source: "manual"`).
-  // Иначе на клиенте, пришедшем по ссылке и почему-либо оставшемся без
-  // владельца (легаси до миграции аккаунтов), партнёр смог бы назначить
-  // владельцем произвольный адрес — то есть отдать чужую организацию.
+  // Только организации, которые завёл сам партнёр (`source: "manual"`) или
+  // перевёл в клиенты из своего аккаунта (`converted`). Иначе на клиенте,
+  // пришедшем по ссылке и почему-либо оставшемся без владельца (легаси до
+  // миграции аккаунтов), партнёр смог бы назначить владельцем произвольный
+  // адрес — то есть отдать чужую организацию.
   const link = await db.partnerClient.findFirst({
     where: {
       partnerId: membership.partnerId,
       organizationId: orgId,
       detachedAt: null,
-      source: "manual",
+      source: { in: ["manual", CONVERTED_SOURCE] },
     },
     select: { id: true, organization: { select: { name: true } } },
   });
   if (!link) {
     return NextResponse.json(
-      { error: "Передать можно только организацию, которую вы завели сами" },
+      { error: "Передать можно только организацию, которую вы завели сами или перевели из своего аккаунта" },
       { status: 404 },
     );
   }
