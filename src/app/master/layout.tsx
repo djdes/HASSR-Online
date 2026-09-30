@@ -8,6 +8,7 @@ import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { listPoolOrganizations, MASTER_ORG_KIND } from "@/lib/master-directory";
 import { listAccessibleOrganizations } from "@/lib/organization-access";
+import { readInitialTheme } from "@/lib/site-theme.server";
 import "@/app/app-theme.css";
 
 export const dynamic = "force-dynamic";
@@ -37,7 +38,7 @@ export default async function MasterLayout({ children }: { children: React.React
     listPoolOrganizations(org.id),
     listAccessibleOrganizations(session.user.id),
   ]);
-  const initialTheme: "light" | "dark" = profile?.themePreference === "dark" ? "dark" : "light";
+  const initialTheme = await readInitialTheme(profile?.themePreference);
   // «Моя организация» — для владельца/руководителя, у которого кроме
   // кабинета есть обычные организации (не мастер-кабинеты и не демо).
   // Сотруднику бэк-офиса возвращаться некуда.
@@ -48,8 +49,9 @@ export default async function MasterLayout({ children }: { children: React.React
   return (
     <AuthSessionProvider session={session}>
       <SiteThemeProvider initialTheme={initialTheme}>
-        <SiteThemeBootstrap />
         <div className="app-shell min-h-screen bg-[#f4f5fb]" data-app-theme={initialTheme} suppressHydrationWarning>
+          {/* Первым ребёнком — красит оболочку до первого кадра. */}
+          <SiteThemeBootstrap />
           <MasterShell
             organizationName={org.name}
             code={org.linkedServiceCode ?? org.serviceCode ?? null}

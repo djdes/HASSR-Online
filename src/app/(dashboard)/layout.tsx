@@ -32,6 +32,7 @@ import { npsVisibilityFor } from "@/lib/nps-data";
 import { deletionDueAt } from "@/lib/org-deletion";
 import { currentAnnouncement } from "@/lib/platform-status";
 import { WHATS_NEW_NOTES, notesWithoutPartnerProgram, whatsNewVersion } from "@/lib/whats-new-notes";
+import { THEME_COOKIE, pickInitialTheme } from "@/lib/theme-cookie";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { hasCapability } from "@/lib/permission-presets";
 import { getBalance } from "@/lib/balance/ledger";
@@ -250,8 +251,13 @@ export default async function DashboardLayout({
   ]);
   const deletionDue = deletionState?.deletionRequestedAt ? deletionDueAt(deletionState.deletionRequestedAt).toISOString() : null;
   const impersonatedName = impersonatedOrg?.name ?? null;
-  const initialTheme: "light" | "dark" =
-    profile?.themePreference === "dark" ? "dark" : "light";
+  // Тема первого кадра — та, что сейчас на этом устройстве (кука), иначе
+  // тема профиля. Так же и при router.refresh(): сервер не «возвращает»
+  // тему профиля поверх выбора устройства.
+  const initialTheme = pickInitialTheme(
+    cookieStore.get(THEME_COOKIE)?.value,
+    profile?.themePreference,
+  );
 
   // Анкета считается незаполненной, если нет телефона или организация
   // всё ещё называется заглушкой из мгновенной регистрации. На имя
@@ -318,7 +324,6 @@ export default async function DashboardLayout({
       <CustomNamesProvider names={customNames}>
       <KioskSessionGuard />
       <SiteThemeProvider initialTheme={initialTheme}>
-        <SiteThemeBootstrap />
         {/* H1 — white-label brand color через CSS-vars. Подменяет
             основной indigo (#5566f6) если org указала свой цвет. */}
         {brandColor ? (
@@ -344,6 +349,9 @@ export default async function DashboardLayout({
           data-partner-accent={partnerAccent ? "" : undefined}
           suppressHydrationWarning
         >
+          {/* Первым ребёнком: скрипт видит уже открытую оболочку и красит её
+              в тему устройства до первого кадра. */}
+          <SiteThemeBootstrap />
           {/* Док плавающих кнопок: AI-помощник, поддержка и «Как
               заполнять» регистрируются в нём вместо собственных круглых
               кнопок. На телефоне их было три, и они закрывали правый

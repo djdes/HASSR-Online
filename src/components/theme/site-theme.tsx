@@ -2,9 +2,10 @@
 
 /* eslint-disable react-hooks/set-state-in-effect --
  * Этот файл — provider темы с legit hydration pattern: server рендерит
- * с initialTheme из БД, client читает localStorage и при необходимости
- * пересинхронизируется. SSR-mismatch предотвращается inline-скриптом
- * SiteThemeBootstrap, который выставляет data-app-theme до hydration.
+ * с темой устройства из куки (иначе — из профиля), client читает
+ * localStorage и при необходимости пересинхронизируется. Первый кадр
+ * красит inline-скрипт SiteThemeBootstrap — он стоит первым ребёнком
+ * `.app-shell` и выставляет data-app-theme до hydration.
  */
 
 import {
@@ -12,9 +13,23 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useState,
   type ReactNode,
 } from "react";
+
+import {
+  THEME_COOKIE,
+  THEME_COOKIE_MAX_AGE,
+  themeCookieString,
+} from "@/lib/theme-cookie";
+
+/**
+ * Применить тему до отрисовки кадра. На сервере layout-эффекта нет —
+ * там обычный `useEffect` (он и так не выполняется).
+ */
+const useBeforePaintEffect =
+  typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 export type SiteTheme = "dark" | "light";
 /** Что юзер выбрал в UI. effective theme считается из этого + autoBySchedule. */
@@ -142,7 +157,10 @@ export function SiteThemeProvider({
 
   // Hydrate из localStorage (см. file-level eslint-disable выше — это
   // legit hydration pattern, SSR-mismatch снимается SiteThemeBootstrap).
-  useEffect(() => {
+  // До отрисовки кадра: при клиентском переходе в кабинет (вход, возврат
+  // из /root) скрипт до гидрации не выполняется, и обычный эффект успевал
+  // показать кадр в теме сервера, если она расходилась с устройством.
+  useBeforePaintEffect(() => {
     if (controlled) {
       // Читаем ТО ЖЕ значение, что и оболочка, и ничего не пишем.
       const current = readInitialThemeFromStorage(initialTheme);
@@ -405,7 +423,14 @@ export function useSiteTheme(): Ctx {
   return ctx;
 }
 
-function applyThemeToDOM(theme: SiteTheme) {
+/**
+ * Покрасить экран. `rememberOnDevice` — записать тему в куку устройства
+ * (`lib/theme-cookie.ts`): по ней сервер рисует следующий кадр — загрузку,
+ * `router.refresh()`, переход в другой раздел — сразу в этой теме. Для
+ * публичных страниц не пишем: там своя тема (по времени суток), а кука —
+ * про кабинет.
+ */
+function applyThemeToDOM(theme: SiteTheme, rememberOnDevice = true) {
   if (typeof document === "undefined") return;
   const shells = document.querySelectorAll<HTMLElement>(".app-shell");
   shells.forEach((el) => el.setAttribute(ATTRIBUTE, theme));
@@ -416,6 +441,22 @@ function applyThemeToDOM(theme: SiteTheme) {
   if (meta) {
     meta.setAttribute("content", theme === "dark" ? "#2b2841" : "#ffffff");
   }
+  if (rememberOnDevice) writeThemeCookie(theme);
+}
+
+function writeThemeCookie(theme: SiteTheme) {
+  try {
+    if (readThemeCookie() !== theme) document.cookie = themeCookieString(theme);
+  } catch {
+    /* cookies blocked */
+  }
+}
+
+function readThemeCookie(): SiteTheme | null {
+  const match = new RegExp(`(?:^|;\\s*)${THEME_COOKIE}=(light|dark)(?:;|$)`).exec(
+    document.cookie
+  );
+  return match ? (match[1] as SiteTheme) : null;
 }
 
 async function persistThemeToServer(theme: SiteTheme): Promise<void> {
@@ -432,21 +473,24 @@ async function persistThemeToServer(theme: SiteTheme): Promise<void> {
 }
 
 /**
- * Inline `<script>` который запускается до hydration и применяет
- * сохранённое предпочтение к `.app-shell`. Учитывает mode + autoBySchedule
- * чтобы не было flash:
+ * Код inline-скрипта до hydration: применяет выбор устройства к `.app-shell`.
+ * Учитывает mode + autoBySchedule, чтобы не было flash:
  *   1. Если autoBySchedule — выбирает по часу.
  *   2. Иначе если mode=system — спрашивает matchMedia.
  *   3. Иначе берёт mode напрямую (light/dark).
  *   4. Fallback — старый ключ STORAGE_KEY (effective).
+ * Красит оболочку, в которой стоит сам (`document.currentScript`), цвет
+ * строки браузера и обновляет куку темы устройства — сервер нарисует
+ * следующий кадр уже в ней.
  */
-export function SiteThemeBootstrap() {
-  const code = `(function(){try{
+export function siteThemeBootstrapCode(): string {
+  return `(function(){try{
     var modeKey=${JSON.stringify(STORAGE_MODE_KEY)};
     var autoKey=${JSON.stringify(STORAGE_AUTO_KEY)};
     var effectiveKey=${JSON.stringify(STORAGE_KEY)};
     var legacyKey=${JSON.stringify(LEGACY_MINI_KEY)};
     var attr=${JSON.stringify(ATTRIBUTE)};
+    var cookieName=${JSON.stringify(THEME_COOKIE)};
     var t=null;
     var auto=localStorage.getItem(autoKey)==='1';
     var mode=localStorage.getItem(modeKey);
@@ -464,13 +508,31 @@ export function SiteThemeBootstrap() {
       if(t!=='light'&&t!=='dark'){t=localStorage.getItem(legacyKey);}
     }
     if(t==='light'||t==='dark'){
-      var els=document.querySelectorAll('.app-shell');
-      for(var i=0;i<els.length;i++){els[i].setAttribute(attr,t);}
+      var host=document.currentScript&&document.currentScript.parentElement;
+      var els=host&&host.classList&&host.classList.contains('app-shell')?[host]:document.querySelectorAll('.app-shell');
+      for(var i=0;i<els.length;i++){
+        var was=els[i].getAttribute?els[i].getAttribute(attr):null;
+        els[i].setAttribute(attr,t);
+        if(was&&was!==t){try{console.info('[theme] до отрисовки: сервер '+was+' → устройство '+t);}catch(_){}}
+      }
       var m=document.querySelector('meta[name="theme-color"]');
-      if(m&&t==='dark'){m.setAttribute('content','#2b2841');}
+      if(m){m.setAttribute('content',t==='dark'?'#2b2841':'#ffffff');}
+      if(!new RegExp('(?:^|;\\\\s*)'+cookieName+'='+t+'(?:;|$)').test(document.cookie)){
+        document.cookie=cookieName+'='+t+'; Path=/; Max-Age=${THEME_COOKIE_MAX_AGE}; SameSite=Lax';
+      }
     }
   }catch(e){}})();`;
-  return <script dangerouslySetInnerHTML={{ __html: code }} />;
+}
+
+/**
+ * Inline `<script>` до hydration. Ставить ПЕРВЫМ ребёнком `.app-shell`:
+ * когда браузер его выполняет, открывающий тег оболочки уже разобран, а
+ * её содержимое ещё нет — кадр рисуется сразу в теме устройства. Раньше
+ * скрипт стоял перед `<div class="app-shell">`, не находил её и ничего не
+ * делал — первый кадр всегда был в теме профиля.
+ */
+export function SiteThemeBootstrap() {
+  return <script dangerouslySetInnerHTML={{ __html: siteThemeBootstrapCode() }} />;
 }
 
 /* ======================================================================
@@ -506,10 +568,14 @@ function computePublicTheme(): SiteTheme {
  * снимает классы с body — кабинет и форма входа живут своей темой.
  */
 export function usePublicAutoTheme(): void {
-  useEffect(() => {
+  // До отрисовки кадра: при клиентском переходе на публичную страницу
+  // скрипт до гидрации не выполняется, и первый кадр иначе выходил без
+  // темы (ночью — светлая вспышка), а при уходе в кабинет — с чужими
+  // классами на body.
+  useBeforePaintEffect(() => {
     const body = document.body;
     body.classList.add(...PUBLIC_BODY_CLASSES);
-    const apply = () => applyThemeToDOM(computePublicTheme());
+    const apply = () => applyThemeToDOM(computePublicTheme(), false);
     apply();
 
     const interval = setInterval(apply, 5 * 60 * 1000);
