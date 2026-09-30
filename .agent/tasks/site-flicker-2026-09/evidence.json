@@ -1,0 +1,66 @@
+{
+  "task": "site-flicker-2026-09",
+  "branch": "fix/site-flicker-2026-09-30",
+  "base": "origin/master 5f441b95",
+  "commits": {
+    "spec_plan": "e26b63eb",
+    "theme": "af6364b7",
+    "skeletons": "d0ea83f4",
+    "whats_new": "62d4e1df"
+  },
+  "verdict": "PASS по коду и тестам; замер кадрами «после» — на проде после выката (решение владельца 30.09: без dev/prod-серверов и браузеров на общем сервере)",
+  "acceptance": {
+    "AC1": {
+      "status": "PASS (код, тесты); замер после — на проде",
+      "before": "полная загрузка 6 страниц кабинета: кадры чужой темы в 5 из 7 конфигураций (везде, где тема устройства ≠ профиль): DOM до 3018 мс, кадры до 1374 мс; router.refresh — 167 мс; мини-приложение при пересоздании оболочки — 106–690 мс",
+      "fix": "кука wesetup-theme (тема устройства) → серверный data-app-theme; скрипт темы первым ребёнком .app-shell; применение темы при монтировании — useLayoutEffect (сайт, публичные страницы, мини-приложение)",
+      "tests": [
+        "src/components/theme/theme-before-hydration.test.ts",
+        "src/lib/theme-cookie.test.ts",
+        "src/app/mini/_components/mini-theme-model.test.ts (сайтовый скрипт — те же выборы)"
+      ]
+    },
+    "AC2": {
+      "status": "PASS (код, тесты); замер после — на проде",
+      "before": "окно всплывало через 1187–1754 мс после первого кадра (legacy — 373–3769 мс), после ремаунта кабинета появлялось снова через 134–149 мс",
+      "fix": "решение на сервере по куке wesetup-whats-new и версии полного текста заметок: окно в SSR-разметке открытым или его нет вовсе; однократный перенос старой отметки из localStorage",
+      "tests": ["src/lib/whats-new-seen.test.ts", "src/lib/whats-new-version.test.ts"]
+    },
+    "AC3": {
+      "status": "PASS (код, тесты); замер после — на проде",
+      "before": "чужие скелеты подстраниц (хаб настроек на балансе ~290 мс; каталог → документ → список → документ при загрузке документа); панель контроля: пустой блок с крутилкой 1311 мс; мини-приложение: «Открываем кабинет…» на каждой вкладке 250–317 мс",
+      "fix": "PageSkeleton + выбор по адресу во вложенных loading.tsx; клиентские страницы показывают скелет раздела; новые loading.tsx: batches, bonuses, losses, verifications, root; мини — скелет списка",
+      "tests": [
+        "src/components/ui/skeleton-routes.test.ts",
+        "src/components/dashboard/dashboard-journals.test.ts",
+        "src/components/journals/journal-page-polish.test.ts",
+        "src/lib/journal-list-actions-coverage.test.ts"
+      ]
+    }
+  },
+  "checks": {
+    "typecheck": "0 ошибок (pre-commit)",
+    "npm_test": "3144 pass, 0 fail (test:gate на коммите 62d4e1df)",
+    "verify_worktree": "перед каждым коммитом — только свои правки"
+  },
+  "raw": {
+    "before_results": "raw/before-results.json",
+    "before_log": "raw/before-probe.log",
+    "before_summary": "raw/before-summary.md",
+    "filmstrips_local": [
+      "evidence/before-theme-desk-dashboard.png",
+      "evidence/before-theme-phone-journals.png",
+      "evidence/before-whatsnew-phone.png",
+      "evidence/before-skeleton-desk-document.png"
+    ]
+  },
+  "not_done": [
+    "замер кадрами «после» (перенесён на прод)",
+    "обход всех разделов прерван нехваткой процессов — медленные разделы выбраны по коду"
+  ],
+  "found_not_fixed": [
+    "BillingAnnouncement всплывает после гидрации: CLS 0.178 / 0.152 на телефоне (зона тарифов)",
+    "AnnouncementBanner — тот же приём",
+    "CLS 0.909 при «назад» на /journals с компьютера — сдвиг общих элементов при смене страницы"
+  ]
+}

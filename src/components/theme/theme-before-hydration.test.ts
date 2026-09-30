@@ -50,6 +50,21 @@ describe("тема до гидрации: оболочки сайта", () => {
     });
   }
 
+  it("клиентский переход в новую оболочку: тема применяется до отрисовки кадра", () => {
+    // Скрипт до гидрации при клиентском переходе не выполняется (вход, возврат
+    // из /root, публичная страница, экраны мини-приложения) — тему применяет
+    // эффект провайдера. Обычный useEffect срабатывал ПОСЛЕ отрисовки кадра.
+    const site = read("src/components/theme/site-theme.tsx");
+    assert.match(site, /const useBeforePaintEffect =\s+typeof window === "undefined" \? useEffect : useLayoutEffect;/);
+    const hydrate = site.slice(site.indexOf("Hydrate из localStorage"), site.indexOf("Cross-tab/cross-instance sync"));
+    assert.match(hydrate, /useBeforePaintEffect\(\(\) => \{/, "провайдер сайта");
+    const publicTheme = site.slice(site.indexOf("export function usePublicAutoTheme"), site.indexOf("export function PublicThemeScope"));
+    assert.match(publicTheme, /useBeforePaintEffect\(\(\) => \{/, "публичные страницы");
+    const mini = read("src/app/mini/_components/mini-theme.tsx");
+    const resolve = mini.slice(mini.indexOf("Выбор лежит в localStorage и в Telegram"), mini.indexOf("Вход из Telegram проходит на клиенте"));
+    assert.match(resolve, /useBeforePaintEffect\(\(\) => \{/, "мини-приложение");
+  });
+
   it("серверная разметка: оболочка уже в теме устройства, скрипт — первым", () => {
     const html = renderToStaticMarkup(
       createElement(
