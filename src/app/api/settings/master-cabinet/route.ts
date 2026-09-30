@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { authOptions } from "@/lib/auth";
 import { checkSeatsForActivation } from "@/lib/billing.server";
+import { masterCabinetSeatsToAdd } from "@/lib/master-cabinet-seats";
 import { recordAuditLog } from "@/lib/audit-log";
 import { sendInviteTokenEmail } from "@/lib/email";
 import {
@@ -113,7 +114,10 @@ export async function POST(request: Request) {
       email: parsed.data.email,
       // Приглашённый — сотрудник этой организации: места тарифа как у обычного приглашения.
       beforeCreate: async (organizationId) => {
-        const seats = await checkSeatsForActivation(organizationId, 1, { source: "master-cabinet.invite" });
+        const status = await getMasterCabinetStatus(organizationId);
+        const adding = status.master ? await masterCabinetSeatsToAdd(status.master.organizationId) : 0;
+        if (adding === 0) return;
+        const seats = await checkSeatsForActivation(organizationId, adding, { source: "master-cabinet.invite" });
         if (!seats.ok) throw new MasterCabinetError(seats.error, 402);
       },
     });

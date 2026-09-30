@@ -11,6 +11,7 @@ import {
   revokeCabinetAccess,
 } from "@/lib/master-cabinet-access";
 import { MasterCabinetError } from "@/lib/master-cabinet-error";
+import { masterCabinetSeatsToAdd } from "@/lib/master-cabinet-seats";
 import { MASTER_CABINET_POSITION_NAME } from "@/lib/master-cabinet-staff";
 import { createRateLimiter } from "@/lib/rate-limit";
 import { notifyEmployee } from "@/lib/telegram";
@@ -40,6 +41,14 @@ type Body = {
   email?: unknown;
 };
 
+/** Кабинет = +1 сотрудник в каждом подключённом пищеблоке: места нужны, когда в кабинете появляется первый человек. */
+async function assertCabinetSeats(cabinetId: string, organizationId: string) {
+  const adding = await masterCabinetSeatsToAdd(cabinetId);
+  if (adding === 0) return;
+  const seats = await checkSeatsForActivation(organizationId, adding, { source: "master-cabinet.access" });
+  if (!seats.ok) throw new SeatLimitError(seats);
+}
+
 function failure(err: unknown, what: string, userId: string) {
   if (err instanceof SeatLimitError) return seatLimitResponse(err.guard);
   if (err instanceof MasterCabinetError) return NextResponse.json({ error: err.message }, { status: err.status });
@@ -66,7 +75,12 @@ export async function handleAccessPost(
 
   if (body?.action === "grant") {
     try {
-      const result = await grantCabinetAccess({ ownerUserId, cabinetId, userId: body.userId });
+      const result = await grantCabinetAccess({
+        ownerUserId,
+        cabinetId,
+        userId: body.userId,
+        beforeGrant: assertCabinetSeats,
+      });
       if (result.created) {
         await recordAuditLog({
           request,
@@ -100,10 +114,8 @@ export async function handleAccessPost(
         organizationId: body.organizationId,
         name: body.name,
         email: body.email,
-        beforeCreate: async (organizationId) => {
-          const seats = await checkSeatsForActivation(organizationId, 1, { source: "master-cabinet.invite" });
-          if (!seats.ok) throw new SeatLimitError(seats);
-        },
+        beforeCreate: (organizationId) =>
+          typeof cabinetId === "string" ? assertCabinetSeats(cabinetId, organizationId) : Promise.resolve(),
       });
     } catch (err) {
       return failure(err, "invite", ownerUserId);

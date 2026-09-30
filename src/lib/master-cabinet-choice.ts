@@ -80,3 +80,28 @@ export function normalizeObjectIds(raw: unknown): string[] {
   if (!Array.isArray(raw)) return [];
   return [...new Set(raw.filter((id): id is string => typeof id === "string" && id.trim().length > 0))];
 }
+
+/* ─────────── Места тарифа: кабинет = +1 сотрудник в каждом подключённом пищеблоке ─────────── */
+
+/**
+ * Места мастер-кабинетов (владелец, 2026-09-30, предложение заказчика:
+ * «даём кому-нибудь доступ — на организациях, к которым кабинет подключён,
+ * +1 сотрудник; отключилась — −1»). Кабинет с людьми (кроме владельца)
+ * добавляет организации аккаунта, подключённой к нему по коду справочника,
+ * одно место. Сами люди группы «Мастер-кабинет» мест не занимают.
+ */
+export function masterCabinetSeatsPerOrg(
+  orgs: ReadonlyArray<{ id: string; accountId: string | null } & PoolCodes>,
+  cabinets: ReadonlyArray<{ accountId: string | null; staffed: boolean } & PoolCodes>
+): Map<string, number> {
+  const seats = new Map<string, number>();
+  for (const org of orgs) {
+    const code = poolCodeOf(org);
+    if (!code || !org.accountId) continue;
+    const count = cabinets.filter(
+      (cabinet) => cabinet.staffed && cabinet.accountId === org.accountId && poolCodeOf(cabinet) === code
+    ).length;
+    if (count > 0) seats.set(org.id, count);
+  }
+  return seats;
+}

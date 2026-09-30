@@ -178,6 +178,8 @@ export async function grantCabinetAccess(input: {
   ownerUserId: string;
   cabinetId: unknown;
   userId: unknown;
+  /** Проверка мест тарифа (кабинет, организация сотрудника). */
+  beforeGrant?: (cabinetId: string, organizationId: string) => Promise<void>;
 }): Promise<{ cabinet: { id: string; name: string }; user: { id: string; name: string }; created: boolean }> {
   const accountId = await ownerAccountId(input.ownerUserId);
   const cabinet = await ownedCabinet(accountId, input.cabinetId);
@@ -194,7 +196,7 @@ export async function grantCabinetAccess(input: {
             isRoot: false,
             organization: { accountId, isDemo: false, ...NOT_DIRECTORY_ORG_WHERE },
           },
-          select: { id: true, name: true },
+          select: { id: true, name: true, organizationId: true },
         })
       : null;
   if (!user) throw new MasterCabinetError("Сотрудник не найден среди объектов аккаунта", 404);
@@ -203,9 +205,10 @@ export async function grantCabinetAccess(input: {
     select: { id: true },
   });
   if (!existing) {
+    if (input.beforeGrant) await input.beforeGrant(cabinet.id, user.organizationId);
     await db.organizationMember.create({ data: { userId: user.id, organizationId: cabinet.id, role: "manager" } });
   }
-  return { cabinet, user, created: !existing };
+  return { cabinet, user: { id: user.id, name: user.name }, created: !existing };
 }
 
 export type CabinetInviteResult = MasterCabinetInvite & {

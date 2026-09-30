@@ -26,6 +26,7 @@ import {
   type TransitionAction,
 } from "@/lib/billing-period";
 import { COMMISSION_CATEGORY_KEY, NOT_COMMISSION_WHERE } from "@/lib/journal-roster";
+import { masterCabinetSeatsByOrg, NOT_MASTER_CABINET_STAFF_WHERE } from "@/lib/master-cabinet-seats";
 import { FREE_MAX_USERS, isFreePlan, isInactivePlan } from "@/lib/plan-limits";
 import { employeesLabel } from "@/lib/plan-catalog";
 import { forgetSessionVersions } from "@/lib/session-version";
@@ -57,6 +58,9 @@ export const SEAT_USER_WHERE: Prisma.UserWhereInput = {
   archivedAt: null,
   isRoot: false,
   ...NOT_COMMISSION_WHERE,
+  // Люди мастер-кабинета мест не занимают: сам кабинет — +1 сотрудник в
+  // каждом подключённом пищеблоке (`master-cabinet-seats.ts`).
+  ...NOT_MASTER_CABINET_STAFF_WHERE,
 };
 
 export const AUDIT_ACTIONS = {
@@ -184,9 +188,13 @@ export async function loadBillingUnit(organizationId: string): Promise<BillingUn
       : [{ id: org.id, subscriptionEnd: org.subscriptionEnd }];
   const scopeOrgIds = scopeOrgs.map((o) => o.id);
 
-  const activeUsers = scopeOrgIds.length
-    ? await db.user.count({ where: { ...SEAT_USER_WHERE, organizationId: { in: scopeOrgIds } } })
-    : 0;
+  const [peopleSeats, cabinetSeats] = scopeOrgIds.length
+    ? await Promise.all([
+        db.user.count({ where: { ...SEAT_USER_WHERE, organizationId: { in: scopeOrgIds } } }),
+        masterCabinetSeatsByOrg(scopeOrgIds),
+      ])
+    : [0, new Map<string, number>()];
+  const activeUsers = peopleSeats + [...cabinetSeats.values()].reduce((sum, n) => sum + n, 0);
 
   return {
     key: org.accountId ?? `org:${org.id}`,
@@ -828,12 +836,13 @@ export async function listBillingUnits(): Promise<UnitRow[]> {
     _count: { _all: true },
   });
   const seatsByOrg = new Map(seats.map((row) => [row.organizationId, row._count._all]));
+  const cabinetSeats = await masterCabinetSeatsByOrg(orgs.map((org) => org.id));
 
   const units = new Map<string, UnitRow>();
   for (const org of orgs) {
     const key = org.accountId ?? `org:${org.id}`;
     const existing = units.get(key);
-    const seatsHere = seatsByOrg.get(org.id) ?? 0;
+    const seatsHere = (seatsByOrg.get(org.id) ?? 0) + (cabinetSeats.get(org.id) ?? 0);
     if (!existing) {
       units.set(key, {
         key,

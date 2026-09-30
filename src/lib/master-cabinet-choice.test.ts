@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   initialMasterCabinetSelection,
   mapObjectsToCabinets,
+  masterCabinetSeatsPerOrg,
   normalizeObjectIds,
   poolCodeOf,
   summarizeMasterCabinetChoice,
@@ -75,4 +76,24 @@ test("id объектов из запроса: строки без повтор�
   assert.deepEqual(normalizeObjectIds(["a", "a", "", "  ", 5, null, "b"]), ["a", "b"]);
   assert.deepEqual(normalizeObjectIds("a"), []);
   assert.deepEqual(normalizeObjectIds(undefined), []);
+});
+
+test("места кабинетов: +1 в каждом подключённом пищеблоке, только если в кабинете есть люди", () => {
+  const orgs = [
+    { id: "s1", accountId: "A", serviceCode: "S", linkedServiceCode: null },
+    { id: "s2", accountId: "A", serviceCode: null, linkedServiceCode: "S" },
+    { id: "k1", accountId: "A", serviceCode: null, linkedServiceCode: "K" },
+    { id: "cafe", accountId: "A", serviceCode: null, linkedServiceCode: null },
+    { id: "alien", accountId: "B", serviceCode: null, linkedServiceCode: "S" },
+  ];
+  const cabinets = [
+    { accountId: "A", staffed: true, serviceCode: null, linkedServiceCode: "S" },
+    { accountId: "A", staffed: false, serviceCode: "K", linkedServiceCode: null },
+  ];
+  assert.deepEqual([...masterCabinetSeatsPerOrg(orgs, cabinets)], [
+    ["s1", 1],
+    ["s2", 1],
+  ]);
+  const staffedGardens = [cabinets[0], { ...cabinets[1], staffed: true }];
+  assert.deepEqual([...masterCabinetSeatsPerOrg(orgs, staffedGardens)].map(([id]) => id), ["s1", "s2", "k1"]);
 });
