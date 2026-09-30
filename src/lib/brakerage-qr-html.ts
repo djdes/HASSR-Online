@@ -39,7 +39,9 @@ function signatureBadge(row: BrakerageQrRow, timeZone: string, isFinished: boole
     portionWeight: isFinished ? row.portionWeight : undefined,
   };
   const outdated = row.signatures.some((signature) => isSignatureOutdated(current, signature));
-  return `<span class="bk-s signed">Подписано: ${esc(formatRowSignatures(row.signatures, timeZone))}${outdated ? " · изменено после подписи" : ""}</span>`;
+  // Время подписи — как в журнале и печати: бракераж строки + 1 минута.
+  const text = formatRowSignatures(row.signatures, timeZone, { rejectionTime: row.rejectionAt });
+  return `<span class="bk-s signed">Подписано: ${esc(text)}${outdated ? " · изменено после подписи" : ""}</span>`;
 }
 
 function seg(name: string, options: Array<{ value: string; label: string }>, current: string): string {
@@ -152,7 +154,7 @@ export function renderBrakerageList(params: {
   const waiting = list.rows.filter((row) => row.signatures.length === 0).length;
   const readOnly = !role.evaluator && !role.editor;
   const lead = role.evaluator
-    ? `<p class="today">${waiting > 0 ? `Ждут подписи: <b>${waiting}</b>. ` : "Всё подписано. "}Проверьте блюдо и отметьте «Допущено» или «Не допущено» — это ваша подпись. Оценку и время бракеража можно поправить.</p>`
+    ? `<p class="today">${waiting > 0 ? `Ждут подписи: <b>${waiting}</b>. ` : "Всё подписано. "}Проверьте блюдо и отметьте «Допущено» или «Не допущено» — это ваша подпись${params.isFinished ? ", в журнале она встанет на минуту позже времени бракеража" : ""}. Оценку и время бракеража можно поправить.</p>`
     : readOnly
       ? `${viewerNotice(role)}<p class="today">${waiting > 0 ? `Ждут подписи: <b>${waiting}</b>. ` : "Всё подписано. "}Блюда за сегодня — только просмотр.</p>`
       : `<p class="today">Проверьте выход, оценку и время изготовления — исправьте, если нужно. Подписывает комиссия.</p>`;

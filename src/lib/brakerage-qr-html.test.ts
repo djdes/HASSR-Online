@@ -21,6 +21,7 @@ const list: BrakerageQrList = {
       name: "Суп",
       time: "11:00",
       rejectionTime: "11:05",
+      rejectionAt: "2026-09-23 11:05",
       dayKey: "2026-09-23",
       fromYesterday: false,
       grade: "Доброкачественно",
@@ -57,6 +58,16 @@ test("подписанная без правок строка готовой п�
   const html = renderBrakerageList({ ...base, role: { evaluator: true, editor: false, viewer: false } });
   assert.match(html, /Подписано: Иванова А\. · /);
   assert.doesNotMatch(html, /изменено после подписи/);
+});
+
+test("время подписи в списке — бракераж + 1 минута, а не момент нажатия", () => {
+  // Подписали в 14:40 по Москве, бракераж 11:05 — в журнале подпись 11:06.
+  const signature = { ...list.rows[0].signatures[0], signedAt: "2026-09-23T11:40:00.000Z", journalAt: "2026-09-23 11:06" };
+  const signedLater = { ...list, rows: [{ ...list.rows[0], signatures: [signature] }] };
+  const html = renderBrakerageList({ ...base, list: signedLater, role: { evaluator: true, editor: false, viewer: false } });
+  assert.match(html, /Подписано: Иванова А\. · 11:06/);
+  assert.doesNotMatch(html, /14:40/);
+  assert.match(html, /в журнале она встанет на минуту позже времени бракеража/);
 });
 
 test("правка после подписи — метка есть", () => {
