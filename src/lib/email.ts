@@ -243,9 +243,9 @@ export async function sendRawEmail(
   to: string,
   subject: string,
   html: string,
-  options?: { replyTo?: string | null }
+  options?: { replyTo?: string | null; attachments?: EmailAttachment[] }
 ): Promise<boolean> {
-  return sendEmail(to, subject, html, undefined, options);
+  return sendEmail(to, subject, html, options?.attachments, options);
 }
 
 /**

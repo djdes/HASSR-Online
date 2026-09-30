@@ -139,6 +139,8 @@ export type BalanceTopupEmailParams = {
   orderId: number;
   paymentMethod: string;
   isTest: boolean;
+  /** Номер УПД во вложении; нет — строки про документ в письме нет. */
+  closingNumber?: string | null;
 };
 
 /**
@@ -162,14 +164,20 @@ export function buildBalanceTopupEmail(params: BalanceTopupEmailParams): { subje
       <p style="margin:0;color:#18181b;font-size:14px">Баланс сейчас: <strong>${escapeHtml(formatPoints(params.balanceRub))}</strong></p>
     </div>
     <p ${P}>Баллами оплачивается подписка: на странице оплаты они списываются автоматически. Оборудование за баллы не продаём.</p>
+    ${params.closingNumber ? `<p ${P}>Закрывающий документ (УПД № ${escapeHtml(params.closingNumber)}) — во вложении и в разделе «Подписка» кабинета.</p>` : ""}
     ${button(`${APP_URL}/settings/balance`, "Открыть баланс и бонусы")}
     <p ${MUTED}>Вопросы по оплате — support@wesetup.ru.</p>`;
   return { subject, html: renderEmailLayout("Баланс пополнен", body) };
 }
 
-export async function sendBalanceTopupEmail(params: BalanceTopupEmailParams & { to: string }): Promise<boolean> {
-  const email = buildBalanceTopupEmail(params);
-  return sendRawEmail(params.to, email.subject, email.html);
+export async function sendBalanceTopupEmail(
+  params: BalanceTopupEmailParams & { to: string; closingDocument?: { number: string; pdf: Buffer } | null }
+): Promise<boolean> {
+  const email = buildBalanceTopupEmail({ ...params, closingNumber: params.closingDocument?.number ?? null });
+  const attachments = params.closingDocument
+    ? [{ filename: `УПД-${params.closingDocument.number}.pdf`, content: params.closingDocument.pdf, contentType: "application/pdf" }]
+    : undefined;
+  return sendRawEmail(params.to, email.subject, email.html, { attachments });
 }
 
 /** Реферальная награда начислена — организации-рекомендателю. */

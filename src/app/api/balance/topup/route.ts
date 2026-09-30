@@ -144,8 +144,8 @@ export async function POST(request: Request) {
     details: { amountRub: order.amountRub, paymentMethod: method, isTest: order.isTest },
   });
 
-  // Чек 54-ФЗ — только если чеки включены env (как у подписки): строка
-  // «аванс» + предмет «платёж», предмет расчёта при пополнении не известен.
+  // Чек 54-ФЗ — только если чеки включены env (как у подписки): полный
+  // расчёт за услугу (решение бухгалтера 2026-09-30).
   const params = buildPaymentParams({
     id: order.id,
     amountRub: order.amountRub,

@@ -80,13 +80,12 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
     },
   });
   const documentsReady = isRequisitesComplete(await readPlatformRequisites());
-  // Пополнение баланса — аванс: УПД на него не выпускается.
+  // УПД — на любую оплату деньгами, в том числе на пополнение баланса.
   const closingEligible = (payment: (typeof payments)[number]) =>
     documentsReady &&
     payment.status === "paid" &&
     !payment.isTest &&
     !payment.refundedAt &&
-    !isTopupOrder(payment) &&
     Number(payment.amountRub) > 0;
   const paidTotalRub = payments
     .filter((payment) => payment.status === "paid")

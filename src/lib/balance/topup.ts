@@ -12,6 +12,8 @@ import { isConfigured, isTestMode, type ReceiptItem } from "@/lib/robokassa";
 import { escapeTelegramHtml } from "@/lib/telegram";
 
 import { formatPoints } from "./constants";
+import { markClosingDocumentEmailed, prepareClosingDocumentEmail } from "@/lib/closing-documents/service";
+
 import { sendBalanceTopupEmail } from "./emails";
 import { applyBalanceChange, getBalance } from "./ledger";
 import {
@@ -149,15 +151,19 @@ export async function loadTopupBlockConfig(organizationId: string): Promise<Topu
   };
 }
 
-/** Строка чека 54-ФЗ для пополнения (уходит, только если чеки включены env). */
+/**
+ * Строка чека 54-ФЗ для пополнения (уходит, только если чеки включены env).
+ * Решение бухгалтера 2026-09-30: пополнение — сразу продажа 100 %
+ * (полный расчёт за услугу), второй чек при трате баллов не нужен.
+ */
 export function topupReceiptItems(amountRub: number, name: string): ReceiptItem[] {
   return [
     {
       name: name.slice(0, 128),
       quantity: 1,
       sum: amountRub,
-      payment_method: "advance",
-      payment_object: "payment",
+      payment_method: "full_payment",
+      payment_object: "service",
       tax: "none",
     },
   ];
@@ -247,14 +253,28 @@ export async function completeTopupOrder(
     ],
   }).catch((error) => console.error("[balance] topup notify failed", error));
 
-  await sendBalanceTopupEmail({
+  // УПД — сразу после оплаты, вложением в это же письмо (решение
+  // бухгалтера 2026-09-30). Best-effort: без реквизитов или при сбое
+  // рендера письмо уходит без вложения, документ есть в кабинете.
+  const closingDocument = order.isTest
+    ? null
+    : await prepareClosingDocumentEmail(order.id, { organizationId }).catch(() => null);
+  const sent = await sendBalanceTopupEmail({
     to: order.email,
     amountRub,
     balanceRub,
     orderId: order.id,
     paymentMethod: order.paymentMethod,
     isTest: order.isTest,
-  }).catch((error) => console.error("[balance] topup email failed", error));
+    closingDocument,
+  }).catch((error) => {
+    console.error("[balance] topup email failed", error);
+    return false;
+  });
+  if (sent && closingDocument) {
+    await markClosingDocumentEmailed(order.id).catch(() => undefined);
+    console.info("[balance] topup closing document emailed", { orderId: order.id, number: closingDocument.number });
+  }
 
   const organization = await db.organization
     .findUnique({ where: { id: organizationId }, select: { name: true } })

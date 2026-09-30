@@ -4,13 +4,14 @@ import { describe, it } from "node:test";
 import { topupReceiptItems } from "@/lib/balance/topup";
 import { TOPUP_TARIFF_KEY, topupOrderDescription } from "@/lib/balance/topup-core";
 import { reviewSocialText, type ReviewView } from "@/lib/balance/review-view";
+import { buildClosingLines } from "@/lib/closing-documents/build";
 import { closingEligibility } from "@/lib/closing-documents/service";
 import { EMPTY_REQUISITES, type PlatformRequisites } from "@/lib/closing-documents/types";
 
 /**
- * Документы вокруг пополнения: УПД на аванс не выпускаем (выдумывать документ нельзя —
- * см. .agent/tasks/balance-reviews-topup), строка чека 54-ФЗ для пополнения — «аванс»
- * + «платёж». И текст анонимного отзыва для соцсетей — без имени и заведения.
+ * Документы вокруг пополнения (решение бухгалтера 2026-09-30): пополнение — сразу
+ * продажа 100 %: УПД выпускается сразу после оплаты, чек — полный расчёт за услугу,
+ * второго чека при трате баллов нет. И текст анонимного отзыва — без имени и заведения.
  */
 
 const requisites: PlatformRequisites = {
@@ -28,11 +29,22 @@ const requisites: PlatformRequisites = {
 const paid = { status: "paid", isTest: false, amountRub: 5000, refundedAt: null };
 
 describe("закрывающий документ и пополнение", () => {
-  it("оплаченное пополнение — аванс: УПД «подписка за период» не выпускается", () => {
-    assert.deepEqual(closingEligibility({ ...paid, tariffKey: TOPUP_TARIFF_KEY }, requisites), {
-      ok: false,
-      reason: "advance",
-    });
+  it("оплаченное пополнение — УПД выпускается сразу после оплаты", () => {
+    assert.deepEqual(closingEligibility({ ...paid, tariffKey: TOPUP_TARIFF_KEY }, requisites), { ok: true });
+  });
+
+  it("строка УПД на пополнение — одна услуга на всю сумму, без периода подписки", () => {
+    const lines = buildClosingLines({
+      order: { id: 77, amountRub: 5000, pointsSpent: 0, paidAt: new Date("2026-10-02T09:00:00Z"), description: "Пополнение баланса на 5 000 ₽", tariffKey: TOPUP_TARIFF_KEY, bundleConfig: null },
+      tariff: null,
+      subscriptionEnd: null,
+      organization: { name: "Кафе", inn: "7700000000", address: null, legalProfile: null },
+      requisites,
+    } as Parameters<typeof buildClosingLines>[0]);
+    assert.equal(lines.length, 1);
+    assert.equal(lines[0].sumRub, 5000);
+    assert.match(lines[0].title, /пополнение баланса/);
+    assert.doesNotMatch(lines[0].title, /период/);
   });
 
   it("оплаченная подписка — как раньше: УПД выпускается", () => {
@@ -58,15 +70,15 @@ describe("закрывающий документ и пополнение", () =
 });
 
 describe("чек 54-ФЗ для пополнения (уходит, только если чеки включены env)", () => {
-  it("признак способа расчёта — аванс, предмет — платёж, сумма заказа, без НДС", () => {
+  it("полный расчёт за услугу, сумма заказа, без НДС (второй чек при трате баллов не нужен)", () => {
     const name = topupOrderDescription(5000, "card");
     assert.deepEqual(topupReceiptItems(5000, name), [
       {
         name: "Пополнение баланса на 5 000 ₽",
         quantity: 1,
         sum: 5000,
-        payment_method: "advance",
-        payment_object: "payment",
+        payment_method: "full_payment",
+        payment_object: "service",
         tax: "none",
       },
     ]);

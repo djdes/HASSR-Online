@@ -43,6 +43,8 @@ export type BuildInput = {
     pointsSpent: number;
     paidAt: Date;
     description: string;
+    /** "balance_topup" — пополнение баланса: строка без периода подписки. */
+    tariffKey?: string | null;
     bundleConfig: unknown;
     promoCode?: string | null;
     discountRub?: number;
@@ -135,6 +137,19 @@ export function buildClosingLines(input: BuildInput): ClosingLine[] {
   }
 
   const serviceSum = round2(money - hardwareSum);
+  // Пополнение баланса: одна строка услуги на всю сумму, без периода.
+  if (input.order.tariffKey === "balance_topup") {
+    return [
+      {
+        title: `Доступ к сервису WeSetup — пополнение баланса (1 ₽ = 1 балл для оплаты подписки), заказ № ${input.order.id}.`,
+        unit: "усл. ед.",
+        unitCode: "876",
+        qty: 1,
+        priceRub: money,
+        sumRub: money,
+      },
+    ];
+  }
   const period = subscriptionPeriod({
     paidAt: input.order.paidAt,
     periodDays: input.tariff?.periodDays ?? 30,

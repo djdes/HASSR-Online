@@ -254,13 +254,12 @@ export default async function SubscriptionPage({
     (payment) =>
       payment.paymentMethod === "invoice" && payment.status === "pending" && !isTopupOrder(payment)
   );
-  // Пополнение — аванс: УПД на него не выпускается (closingEligibility).
+  // УПД — на любую оплату деньгами, в том числе на пополнение баланса.
   const closingEligible = (payment: (typeof payments)[number]) =>
     documentsReady &&
     payment.status === "paid" &&
     !payment.isTest &&
     !payment.refundedAt &&
-    !isTopupOrder(payment) &&
     Number(payment.amountRub) > 0;
 
   // Приложение WeSetup: только состояние тарифа, без оплаты, счетов и
