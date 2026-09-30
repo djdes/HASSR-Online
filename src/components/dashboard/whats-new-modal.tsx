@@ -103,6 +103,7 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   "Тёмная тема": Moon,
   "Бесплатный тариф": Gift,
   "Тарифы и подписка": Coins,
+  "Кабинет": Settings2,
   "AI-помощник": Sparkles,
   Партнёры: Handshake,
   "Распределение задач": Gauge,
