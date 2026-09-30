@@ -1,0 +1,32 @@
+▶ перевод и возврат на живой базе: аккаунт, тариф, срок, привязка, начисления
+  ✔ предпросмотр виден владельцу, своя компания заявителя — отказ (492.5483ms)
+[partners] org converted org=cmunzqvmv0001109m2wxawmd5 partner=cmunzqvrq0009109m248y3ebu by=cmunzqvnr0003109mc5n45u7p fromAccount=cmunzqvo50004109mp5y2s52l plan=paid end=2026-11-09T10:57:22.279Z accountEndRaised=- recurringOff=true members-=1 homeMoved=- link=cmunzqw92000b109m9j13cwey
+  ✔ перевод кафе: аккаунт, тариф, срок, автопродление, членство, привязка (808.8242ms)
+[partners] org convert blocked org=cmunzqvmv0001109m2wxawmd5 by=cmunzqvnr0003109mc5n45u7p reasons=not_owner,already_client
+  ✔ повторный перевод — отказ «уже клиент» (80.0252ms)
+  ✔ оплата до перевода вознаграждения не даёт (15.7828ms)
+  ✔ оплаты после перевода дают начисления по действующим правилам (100.2218ms)
+[billing] payment extended subscription {
+  organizationId: 'cmunzqvmv0001109m2wxawmd5',
+  accountId: null,
+  orderId: 18,
+  subscriptionEnd: '2026-12-09T10:57:22.279Z'
+}
+  ✔ оплата как от кассы (completePaidOrder): продлевает саму организацию, аккаунт владельца не трогает, партнёру — начисление (1110.8643ms)
+[partners] org return blocked org=cmunzqvmv0001109m2wxawmd5 partner=cmunzqvrq0009109m248y3ebu by=cmunzqvnr0003109mc5n45u7p reasons=paid_after_conversion
+  ✔ вернуть оплаченную клиентом организацию нельзя (43.2501ms)
+[partners] org converted org=cmunzqvn90002109mit961pee partner=cmunzqvrq0009109m248y3ebu by=cmunzqvnr0003109mc5n45u7p fromAccount=cmunzqvo50004109mp5y2s52l plan=paid end=2026-11-09T10:57:22.279Z accountEndRaised=- recurringOff=false members-=1 homeMoved=- link=cmunzqxvl000k109mj4advmoe
+[partners] org returned org=cmunzqvn90002109mit961pee partner=cmunzqvrq0009109m248y3ebu by=cmunzqvnr0003109mc5n45u7p account=cmunzqvo50004109mp5y2s52l plan=paid end=2026-11-09T10:57:22.279Z inviteRevoked=- link=cmunzqxvl000k109mj4advmoe
+  ✔ бар: перевод → возврат → оплата не даёт начисления (181.4708ms)
+[partners] org converted org=cmunzqy0b000r109m04kh8jyp partner=cmunzqvrq0009109m248y3ebu by=cmunzqvnr0003109mc5n45u7p fromAccount=cmunzqvo50004109mp5y2s52l plan=paid end=2026-11-09T10:57:22.279Z accountEndRaised=- recurringOff=false members-=1 homeMoved=- link=cmunzqy21000t109mev2k6o8r
+[partners] org returned org=cmunzqy0b000r109m04kh8jyp partner=cmunzqvrq0009109m248y3ebu by=cmunzqvnr0003109mc5n45u7p account=cmunzqvo50004109mp5y2s52l plan=paid end=2026-11-09T10:57:22.279Z inviteRevoked=dbtmunzqv6v-boss@example.com link=cmunzqy21000t109mev2k6o8r
+  ✔ передача клиенту переносит тариф и срок, возврат отменяет неподтверждённое приглашение (326.1449ms)
+✔ перевод и возврат на живой базе: аккаунт, тариф, срок, привязка, начисления (6895.7872ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 17663.8712

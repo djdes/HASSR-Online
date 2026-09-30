@@ -1,0 +1,33 @@
+{
+  "task": "orgsw",
+  "branch": "feat/org-switcher-partner-2026-09-30",
+  "commits": ["76d5c829", "560391dc", "e404cace", "d191623a"],
+  "acceptance": {
+    "AC1": { "status": "PASS_1280", "browser1280": "5/5", "browser390": "not_run" },
+    "AC2": { "status": "PASS_1280", "browser1280": "4/4", "browser390": "not_run", "unit": "3/3" },
+    "AC3": {
+      "status": "PASS_unit_integration_partial_browser",
+      "unit": "43/43",
+      "dbIntegration": "10/10",
+      "browser1280": "13/13 up to client list; payment, return UI not run",
+      "browser390": "not_run"
+    }
+  },
+  "checks": {
+    "typecheck": "pass (pre-commit hooks, final tree at d191623a and last commit)",
+    "testGate": "3142/3142",
+    "unitNew": "49 pass + 1 skipped (db test runs only with WESETUP_DB_TESTS=1)",
+    "dbIntegration": "10/10",
+    "e2eBrowser": "23/24 at 1280, stopped by owner decision (dev servers and browsers overload shared machine)"
+  },
+  "notVerifiedInBrowser": [
+    "payment via /order and Robokassa stub -> accrual (server chain completePaidOrder verified in db test)",
+    "return UI in partner cabinet (logic verified in db test)",
+    "own-company blockers UI (verified via loadConversionPreview in db test)",
+    "all 390 phone flows"
+  ],
+  "evidence": {
+    "screenshots": "evidence/*.png (1280, gitignored)",
+    "raw": ["raw/e2e-results-partial.json", "raw/e2e-run-partial.log", "raw/server-log-orgsw.txt", "raw/db-integration-test.log", "raw/unit-tests.log"]
+  }
+}

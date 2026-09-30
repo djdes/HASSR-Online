@@ -195,6 +195,46 @@ test("перевод и возврат на живой базе: аккаунт,
       if (rule.bonusAmountRub > 0 && rule.bonusAfterPayments === 2) assert.ok(kinds.includes("bonus"));
     });
 
+    await t.test("оплата как от кассы (completePaidOrder): продлевает саму организацию, аккаунт владельца не трогает, партнёру — начисление", async () => {
+      // Тот же путь, что у вебхука Робокассы и «счёт оплачен»: fulfillPaidOrder → продление →
+      // скидка навсегда → привязка по метке → accrueForPaidOrder. isTest — без закрывающего документа.
+      const { completePaidOrder } = await import("@/lib/payment-fulfillment");
+      const before = await db.organization.findUniqueOrThrow({ where: { id: cafe }, select: { subscriptionEnd: true } });
+      const paidAt = new Date(Date.now() + 3000);
+      const order = await db.paymentOrder.create({
+        data: {
+          email: `${run}-client@example.com`,
+          tariffKey: "monthly",
+          amountRub: 1990,
+          description: "Подписка на 30 дн. (тест перевода, как от кассы)",
+          status: "paid",
+          isTest: true,
+          organizationId: cafe,
+          paidAt,
+        },
+      });
+      created.orders.push(order.id);
+      const done = await completePaidOrder({ ...order, amountRub: Number(order.amountRub) });
+      assert.equal(done.organizationId, cafe);
+      const after = await db.organization.findUniqueOrThrow({
+        where: { id: cafe },
+        select: { subscriptionEnd: true, subscriptionPlan: true, accountId: true },
+      });
+      assert.equal(after.accountId, null, "организация по-прежнему своя единица биллинга");
+      assert.equal(after.subscriptionPlan, "paid");
+      assert.ok(
+        after.subscriptionEnd && before.subscriptionEnd && after.subscriptionEnd > before.subscriptionEnd,
+        "оплата продлила срок самой организации",
+      );
+      const acc = await db.account.findUniqueOrThrow({ where: { id: account.id }, select: { subscriptionEnd: true } });
+      assert.equal(acc.subscriptionEnd?.getTime(), paidUntil.getTime(), "личный аккаунт партнёра оплата клиента не продлевает");
+      const accruals = await db.partnerAccrual.findMany({ where: { paymentOrderId: order.id } });
+      assert.deepEqual(
+        accruals.map((a) => [a.kind, Number(a.amountRub), a.partnerId]),
+        [["subscription", percentOf(1990, rule.subscriptionPercent), partner.id]],
+      );
+    });
+
     await t.test("вернуть оплаченную клиентом организацию нельзя", async () => {
       const back = await returnClientToOwnAccount({
         partnerId: partner.id,
