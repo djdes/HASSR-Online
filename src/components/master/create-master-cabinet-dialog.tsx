@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { ArrowRightLeft, Building2, Info, Library, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -31,6 +32,10 @@ const OUTLINE =
  * меню и сырьё. Объект, который получал их из другого кабинета, подписан —
  * видно, что он перейдёт. Создаёт только владелец аккаунта
  * (`/api/settings/master-cabinets`).
+ *
+ * Портал в `document.body`, как у `ConfirmDialog`: в мини-приложении окно
+ * рисуется из карточки профиля, и без портала его накрывали шапка и нижнее
+ * меню (кнопка «Отмена» уходила под меню).
  */
 export function CreateMasterCabinetDialog({
   onClose,
@@ -124,7 +129,9 @@ export function CreateMasterCabinetDialog({
     }
   }
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <div
       className="fixed inset-0 z-[120] flex items-center justify-center bg-[#0b1024]/40 p-4 backdrop-blur-sm"
       onClick={() => {
@@ -289,6 +296,7 @@ export function CreateMasterCabinetDialog({
           </button>
         </div>
       </form>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -15,7 +15,7 @@ if (!/@localhost:5432\/wesetup_e2e\b/.test(process.env.DATABASE_URL ?? "")) thro
 const SHOTS = "d:/wt/tmp/mc-shots";
 const OUT = ".agent/tasks/master-cabinets-unlimited-2026-09/e2e/create-cabinets.json";
 const HIDE_DEV =
-  "try{localStorage.setItem(\"wesetup.last-seen-build-sha\",\"zzz\");localStorage.setItem(\"wesetup.whats-new-seen\",\"zzz\")}catch(e){};" +
+  "try{localStorage.removeItem(\"wesetup.last-seen-build-sha\")}catch(e){};" +
   "document.addEventListener(\"DOMContentLoaded\",function(){var s=document.createElement(\"style\");" +
   "s.textContent=\"nextjs-portal{display:none!important}\";document.head.appendChild(s)})";
 const DESKTOP_UA =
@@ -82,11 +82,15 @@ async function cleanup(fx: Fixture | null) {
   await db.account.delete({ where: { id: fx.accountId } });
 }
 
+let current: Page | null = null;
+
 async function newPage(browser: Browser, ua: string, width: number, height: number) {
   const ctx = await browser.newContext({ userAgent: ua, viewport: { width, height } });
   await ctx.addInitScript(HIDE_DEV);
   await signIn(ctx, USERS.managerA);
-  return { ctx, page: await ctx.newPage() };
+  const page = await ctx.newPage();
+  current = page;
+  return { ctx, page };
 }
 
 /** Порядок строк раздела «Кабинет» по тексту, как на экране. */
@@ -96,7 +100,15 @@ async function cabinetRows(page: Page, rowSelector: string): Promise<string[]> {
   );
 }
 
+/** Окна главной поверх меню (напоминание о CAPA и т. п.) — «Напомнить позже». */
+async function dismissOverlays(page: Page) {
+  const later = page.getByRole("button", { name: "Напомнить позже" }).first();
+  await later.waitFor({ state: "visible", timeout: 5000 }).catch(() => {});
+  if (await later.isVisible().catch(() => false)) await later.click().catch(() => {});
+}
+
 async function openDesktopMenu(page: Page) {
+  await dismissOverlays(page);
   await page.getByRole("button", { name: "Профиль" }).first().click();
   await page.getByTestId("profile-create-master-cabinet").first().waitFor({ state: "visible", timeout: 30000 });
 }
@@ -226,6 +238,7 @@ async function main() {
     {
       const phone = await newPage(browser, PHONE_UA, 390, 844);
       await phone.page.goto(`${BASE}/dashboard`, { waitUntil: "load", timeout: 300000 });
+      await dismissOverlays(phone.page);
       await phone.page.getByRole("button", { name: "Профиль" }).first().click();
       await phone.page.getByTestId("profile-create-master-cabinet").last().waitFor({ state: "visible", timeout: 30000 });
       out.phoneRows = await cabinetRows(phone.page, rowsSel);
@@ -276,6 +289,10 @@ async function main() {
     out.ok = true;
   } catch (error) {
     out.ok = false;
+    if (current && !current.isClosed()) {
+      out.failUrl = current.url();
+      await current.screenshot({ path: `${SHOTS}/fail.png` }).catch(() => {});
+    }
     out.error = error instanceof Error ? `${error.message}\n${error.stack}` : String(error);
     throw error;
   } finally {

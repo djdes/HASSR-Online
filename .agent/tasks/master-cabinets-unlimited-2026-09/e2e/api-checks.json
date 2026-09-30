@@ -1,0 +1,53 @@
+{
+  "notOwner": {
+    "status": 403,
+    "body": {
+      "error": "Создавать мастер-кабинеты может только владелец аккаунта"
+    },
+    "canCreate": false
+  },
+  "ownerList": {
+    "status": 200,
+    "objects": [
+      {
+        "id": "e2e-org-a",
+        "name": "Кафе «Альфа»",
+        "currentCabinet": null
+      }
+    ]
+  },
+  "validation": {
+    "noName": {
+      "status": 400,
+      "body": {
+        "error": "Название — от 2 до 120 символов"
+      }
+    },
+    "alien": {
+      "status": 400,
+      "body": {
+        "error": "Среди отмеченных есть объект не из вашего аккаунта"
+      }
+    },
+    "empty": {
+      "status": 200,
+      "body": {
+        "cabinet": {
+          "id": "cmunxwe5c002a989mwbb26okq",
+          "name": "Без объектов",
+          "code": "XPWUA-2RGA8"
+        },
+        "summary": {
+          "selected": 0,
+          "moving": []
+        }
+      }
+    }
+  },
+  "auditRows": 2,
+  "cook": {
+    "status": 403,
+    "canCreate": false
+  },
+  "ok": true
+}

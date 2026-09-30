@@ -1,0 +1,10 @@
+{
+  "onTop": {
+    "title": "dialog",
+    "cancel": "dialog",
+    "submit": "dialog",
+    "inBody": true
+  },
+  "cancelCloses": true,
+  "ok": true
+}
