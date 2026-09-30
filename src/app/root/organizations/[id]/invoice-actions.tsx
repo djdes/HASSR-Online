@@ -12,12 +12,16 @@ export function InvoiceActions({
   amountRub,
   organizationName,
   pending,
+  purpose = "subscription",
 }: {
   orderId: number;
   amountRub: number;
   organizationName: string;
   pending: boolean;
+  /** Счёт на пополнение баланса: подписка не продлевается, баланс пополняется. */
+  purpose?: "subscription" | "topup";
 }) {
+  const topup = purpose === "topup";
   const router = useRouter();
   const [confirm, setConfirm] = useState<"paid" | "cancel" | null>(null);
   const [busy, setBusy] = useState(false);
@@ -28,7 +32,13 @@ export function InvoiceActions({
       const response = await fetch(`/api/root/orders/${orderId}/${kind === "paid" ? "mark-paid" : "cancel"}`, { method: "POST" });
       const data = (await response.json().catch(() => null)) as { error?: string } | null;
       if (!response.ok) throw new Error(data?.error ?? "Не удалось");
-      toast.success(kind === "paid" ? `Счёт № ${orderId} оплачен — подписка продлена, письмо ушло` : `Счёт № ${orderId} отменён`);
+      toast.success(
+        kind === "paid"
+          ? topup
+            ? `Счёт № ${orderId} оплачен — баланс пополнен, письмо ушло`
+            : `Счёт № ${orderId} оплачен — подписка продлена, письмо ушло`
+          : `Счёт № ${orderId} отменён`,
+      );
       setConfirm(null);
       router.refresh();
     } catch (error) {
@@ -63,11 +73,19 @@ export function InvoiceActions({
         variant="info"
         title={`Деньги по счёту № ${orderId} пришли?`}
         description={`${organizationName}, ${amountRub.toLocaleString("ru-RU")} ₽. Сверьте с выпиской: отменить подтверждение нельзя.`}
-        bullets={[
-          { label: "Подписка организации продлится" },
-          { label: "Клиенту уйдёт письмо «Оплата получена» с УПД" },
-          { label: "Партнёрские и реферальные начисления — как после кассы" },
-        ]}
+        bullets={
+          topup
+            ? [
+                { label: `Баланс организации пополнится на ${amountRub.toLocaleString("ru-RU")} ₽ (1 ₽ = 1 балл)` },
+                { label: "Клиенту уйдёт письмо «Баланс пополнен», руководству — уведомление" },
+                { label: "Комиссия партнёру — как после кассы; УПД на пополнение не выпускается" },
+              ]
+            : [
+                { label: "Подписка организации продлится" },
+                { label: "Клиенту уйдёт письмо «Оплата получена» с УПД" },
+                { label: "Партнёрские и реферальные начисления — как после кассы" },
+              ]
+        }
         confirmLabel="Да, оплата поступила"
         confirmDisabled={busy}
       />

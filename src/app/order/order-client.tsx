@@ -47,6 +47,8 @@ type OrderStatus = {
   description: string;
   isTest: boolean;
   needsCompletion: boolean;
+  /** Пополнение баланса — не подписка: «Баланс пополнен», ссылка на баланс. */
+  purpose?: "topup" | "subscription";
 };
 
 /** Оплачен ли заказ. `expired` — истёкший холд баллов, это не оплата. */
@@ -868,6 +870,23 @@ function ReturnFlow({ params }: { params: ReturnParams }) {
         </p>
         <div className="mt-6">
           <PrimaryLink href="/pricing">Выбрать тариф</PrimaryLink>
+        </div>
+      </Card>
+    );
+  }
+
+  // Пополнение баланса (оплатили на форме кассы, а не в iFrame блока
+  // «Пополнить баланс»): подписка тут ни при чём.
+  if (order.purpose === "topup") {
+    return (
+      <Card>
+        <Paid order={order} />
+        <p className="mt-4 text-[15px] leading-[1.7] text-[#3c4053]">
+          Баланс организации пополнен: 1 ₽ = 1 балл. Баллами оплачивается
+          подписка — на странице оплаты они списываются автоматически.
+        </p>
+        <div className="mt-6">
+          <PrimaryLink href="/settings/balance">Открыть баланс</PrimaryLink>
         </div>
       </Card>
     );
