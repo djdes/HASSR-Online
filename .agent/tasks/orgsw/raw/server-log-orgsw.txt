@@ -1,0 +1,8 @@
+[badge] code prepared org=osw-home-munze5z2 (not published until enabled)
+[partners] org return blocked org=osw-home-munze5z2 partner=osw-partner-munze5z2 by=osw-olga-munze5z2 reasons=link_missing
+[orgs] switched user=osw-olga-munze5z2 to=osw-home-munze5z2
+[orgs] switched user=osw-olga-munze5z2 to=osw-romashka-munze5z2
+[badge] code prepared org=osw-romashka-munze5z2 (not published until enabled)
+[badge] enabled org=osw-romashka-munze5z2 by=osw-olga-munze5z2 code=crghf4w4n2
+[badge] disabled org=osw-romashka-munze5z2 by=osw-olga-munze5z2 code=crghf4w4n2
+[partners] org converted org=osw-romashka-munze5z2 partner=osw-partner-munze5z2 by=osw-olga-munze5z2 fromAccount=osw-account-munze5z2 plan=paid end=2026-11-09T13:47:29.868Z accountEndRaised=- recurringOff=true members-=1 homeMoved=- link=cmunzkr220007yo9mcr8sgqfz

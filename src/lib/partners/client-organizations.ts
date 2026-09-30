@@ -31,6 +31,7 @@ import {
 import { defaultJournalAutomationJson } from "@/lib/journal-automation";
 import { ensureLocationBuildings } from "@/lib/location-buildings";
 import { normalizeOwnership, normalizeSphere, MAX_LOCATIONS } from "@/lib/org-profile";
+import { isInactivePlan } from "@/lib/plan-limits";
 import { refreshOrganizationLegalProfile } from "@/lib/org-legal-profile";
 import { notifyPlatformAdmin } from "@/lib/platform-admin";
 import { createRateLimiter } from "@/lib/rate-limit";
@@ -506,10 +507,20 @@ export async function assignClientOwner(input: {
         select: { id: true },
       });
       ownerUserId = user.id;
+      // Тариф и оплаченный срок организации — новому аккаунту владельца.
+      // У организации, переведённой из личного аккаунта партнёра, срок
+      // уже оплачен (он лежит в её зеркале): аккаунт с «free» без срока
+      // показал бы в шапке «Бесплатный» при оплаченной подписке.
+      const billing = await tx.organization.findUnique({
+        where: { id: input.organizationId },
+        select: { subscriptionPlan: true, subscriptionEnd: true },
+      });
       await attachAccountForNewOrganization(tx, {
         ownerUserId: user.id,
         organizationId: input.organizationId,
-        subscriptionPlan: "free",
+        subscriptionPlan:
+          billing && !isInactivePlan(billing.subscriptionPlan) ? billing.subscriptionPlan : "free",
+        subscriptionEnd: billing?.subscriptionEnd ?? null,
       });
     } else {
       const existing = await tx.organizationMember.findFirst({

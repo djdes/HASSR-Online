@@ -13,6 +13,15 @@ describe("evaluatePartnerRequest", () => {
     }
   });
 
+  it("перевод организации клиента в партнёрский кабинет консультанту закрыт", () => {
+    const verdict = evaluatePartnerRequest({
+      method: "POST",
+      pathname: "/api/settings/organization/partner-client",
+      claim: edit,
+    });
+    assert.equal(verdict.allow, false);
+  });
+
   it("обычные изменения при уровне «редактирование» разрешены", () => {
     assert.deepEqual(evaluatePartnerRequest({ method: "POST", pathname: "/api/journals", claim: edit }), { allow: true });
   });

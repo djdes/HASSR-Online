@@ -8,9 +8,12 @@ import { ClientNotes } from "@/components/partner/client-notes";
 import { ClientAccessLevel } from "@/components/partner/client-access-level";
 import { ClientHandoverCard } from "@/components/partner/client-handover-card";
 import { ClientOrgCard } from "@/components/partner/client-org-card";
+import { ClientReturnCard } from "@/components/partner/client-return-card";
 import { Card, Pill, formatDate, formatRubFixed, planLabel } from "@/components/partner/ui";
 import { PARTNER_ACCESS_LEVEL_LABELS } from "@/lib/partners/access-guard";
 import { getPartnerClientCard } from "@/lib/partners/client-card";
+import { loadReturnPreview } from "@/lib/partners/org-conversion";
+import { CONVERTED_SOURCE } from "@/lib/partners/org-conversion-core";
 import { PartnerError } from "@/lib/partners/errors";
 import { requirePartnerPage } from "@/lib/partners/page-context";
 import { sphereLabel } from "@/lib/org-profile";
@@ -22,6 +25,7 @@ const SOURCE_LABELS: Record<string, string> = {
   code: "по коду",
   invite: "по email-приглашению",
   manual: "вручную",
+  [CONVERTED_SOURCE]: "переведена из личного аккаунта",
 };
 
 const DETACHED_BY_LABELS: Record<string, string> = {
@@ -31,7 +35,7 @@ const DETACHED_BY_LABELS: Record<string, string> = {
 };
 
 export default async function PartnerClientPage({ params }: { params: Promise<{ orgId: string }> }) {
-  const { membership } = await requirePartnerPage();
+  const { membership, session } = await requirePartnerPage();
   const { orgId } = await params;
 
   let card;
@@ -44,6 +48,16 @@ export default async function PartnerClientPage({ params }: { params: Promise<{ 
 
   const { link, organization, notes, accruals, balances, handover } = card;
   const detached = Boolean(link.detachedAt);
+  // «Сделать моей организацией» — только тому, кто сам перевёл её из
+  // своего аккаунта (lib/partners/org-conversion-core.ts → planReturn).
+  const returnPreview =
+    !detached && link.source === CONVERTED_SOURCE
+      ? await loadReturnPreview({
+          partnerId: membership.partnerId,
+          userId: session.user.id,
+          organizationId: organization.id,
+        })
+      : null;
 
   return (
     <div className="space-y-5">
@@ -146,10 +160,22 @@ export default async function PartnerClientPage({ params }: { params: Promise<{ 
             }}
           />
 
-          {/* Только организации, которые партнёр завёл сам: у клиента,
-              пришедшего по ссылке, владелец — его дело. */}
-          {!detached && link.source === "manual" ? (
+          {/* Только организации, которые партнёр завёл сам или перевёл из
+              своего аккаунта: у клиента, пришедшего по ссылке, владелец —
+              его дело. */}
+          {!detached && (link.source === "manual" || link.source === CONVERTED_SOURCE) ? (
             <ClientHandoverCard organizationId={organization.id} handover={handover} />
+          ) : null}
+
+          {returnPreview?.offered ? (
+            <ClientReturnCard
+              view={{
+                organizationId: organization.id,
+                organizationName: organization.name,
+                blockers: returnPreview.plan.ok ? [] : returnPreview.plan.blockers,
+                consequences: returnPreview.plan.ok ? returnPreview.plan.consequences : null,
+              }}
+            />
           ) : null}
 
           <Card title="Подключение" eyebrow="Сопровождение">

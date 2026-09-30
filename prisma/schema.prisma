@@ -2984,8 +2984,13 @@ model PartnerClient {
   organization        Organization        @relation("PartnerClients", fields: [organizationId], references: [id], onDelete: Cascade)
   /// view | edit — выбирает клиент.
   accessLevel         String              @default("view")
-  /// link | code | invite | manual
+  /// link | code | invite | manual | converted
+  /// converted — владелец сам перевёл свою организацию в свой партнёрский
+  /// кабинет (lib/partners/org-conversion.ts).
   source              String              @default("link")
+  /// Кто перевёл свою организацию в клиенты (source = converted). Только он
+  /// может вернуть её в личный аккаунт — «Сделать моей организацией».
+  convertedByUserId   String?
   attachedAt          DateTime            @default(now())
   detachedAt          DateTime?
   /// client | partner | admin

@@ -40,6 +40,7 @@ export {
   type PartnerOverview,
 } from "./overview-shared";
 import type { PartnerAccessLevel } from "./access-guard";
+import { CONVERTED_SOURCE } from "./org-conversion-core";
 import type { OverviewClientRow, OverviewTiles, PartnerOverview } from "./overview-shared";
 
 /* ---------- чистая агрегация (тестируется без БД) ---------- */
@@ -240,7 +241,13 @@ export async function loadPartnerOverview(partnerId: string, now = new Date()): 
           subscriptionEnd: true,
           timezone: true,
           // Активных людей нет — владелец ещё не принял приглашение.
-          _count: { select: { users: { where: { isActive: true } } } },
+          // У переведённой из личного аккаунта люди есть, а владельца нет.
+          _count: {
+            select: {
+              users: { where: { isActive: true } },
+              members: { where: { role: "owner", user: { isActive: true } } },
+            },
+          },
         },
       },
     },
@@ -258,7 +265,9 @@ export async function loadPartnerOverview(partnerId: string, now = new Date()): 
     detachedAt: link.detachedAt,
     accessLevel: link.accessLevel === "edit" ? "edit" : "view",
     clientHidesBranding: link.clientHidesBranding,
-    needsHandover: link.source === "manual" && link.organization._count.users === 0,
+    needsHandover:
+      (link.source === "manual" && link.organization._count.users === 0) ||
+      (link.source === CONVERTED_SOURCE && link.organization._count.members === 0),
   }));
 
   const activeOrgIds = clients.filter((c) => !c.detachedAt).map((c) => c.organizationId);

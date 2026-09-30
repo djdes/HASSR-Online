@@ -114,6 +114,8 @@ export function ProfileSheet({
           activeId={activeOrganizationId}
           canCreate={canCreateOrganization}
           onOpenCreate={onOpenCreate}
+          showSettings={fullAccess}
+          onNavigate={onClose}
         />
       </div>
 

@@ -1,12 +1,15 @@
 import { redirect } from "next/navigation";
-import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
+import { requireAuth, getActiveOrgId, isImpersonating } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
 import { db } from "@/lib/db";
 import { OrganizationInfoForm } from "@/components/settings/organization-info-form";
+import { PartnerConversionCard } from "@/components/settings/partner-conversion-card";
 import { PublicBadgeCard } from "@/components/settings/public-badge-card";
 import { DeleteOrganizationCard } from "@/components/settings/delete-organization-card";
 import { describeBadge } from "@/lib/badge/describe";
+import { prepareBadgeCode } from "@/lib/badge/prepare";
 import { getBadgeStatusForOrganization } from "@/lib/badge/status";
+import { loadConversionPreview } from "@/lib/partners/org-conversion";
 import { readLegalProfile } from "@/lib/org-legal-profile";
 import { PageGuide } from "@/components/ui/page-guide";
 import { PageHeader } from "@/components/ui/page-header";
@@ -48,8 +51,23 @@ export default async function OrganizationInfoPage() {
     },
   });
   if (!org) redirect("/settings");
-  const badgeStatus = org.badgeEnabled ? await getBadgeStatusForOrganization(getActiveOrgId(session)).catch(() => null) : null;
-  const badge = describeBadge(org, badgeStatus?.percent ?? null);
+  // Бейдж: код заводится заранее (ничего не публикует — страница открывается
+  // только у включённого), процент считается и для живого примера.
+  const [badgeCode, badgeStatus, conversion] = await Promise.all([
+    prepareBadgeCode(organizationId, org.badgeCode),
+    getBadgeStatusForOrganization(organizationId).catch(() => null),
+    // «Перевести в партнёрский кабинет» — только владельцу с партнёрским
+    // кабинетом; null — блок не показывается.
+    loadConversionPreview({
+      userId: session.user.id,
+      organizationId,
+      inForeignMode: Boolean(session.user.partnerAccess) || isImpersonating(session),
+    }).catch((error) => {
+      console.error(`[partners] conversion preview failed org=${organizationId}`, error);
+      return null;
+    }),
+  ]);
+  const badge = describeBadge({ badgeEnabled: org.badgeEnabled, badgeCode }, badgeStatus?.percent ?? null);
 
   return (
     <div className="space-y-5">
@@ -57,6 +75,18 @@ export default async function OrganizationInfoPage() {
         title="Информация об организации"
         description="Юридические реквизиты, контакты, брендинг и общие настройки. Используются в договорах, печатных журналах, портале инспектора и в Telegram-уведомлениях."
       />
+
+      {conversion ? (
+        <PartnerConversionCard
+          view={{
+            organizationId: conversion.organizationId,
+            organizationName: conversion.organizationName,
+            partnerBrandName: conversion.partnerBrandName,
+            blockers: conversion.plan.ok ? [] : conversion.plan.blockers,
+            consequences: conversion.plan.ok ? conversion.plan.consequences : null,
+          }}
+        />
+      ) : null}
 
       <PageGuide
         title="Что заполнить в реквизитах"
@@ -102,7 +132,7 @@ export default async function OrganizationInfoPage() {
         }}
       />
 
-      <PublicBadgeCard initial={badge} />
+      <PublicBadgeCard initial={badge} organizationName={org.name} />
 
       <DeleteOrganizationCard organizationName={org.name} deletionRequestedAt={org.deletionRequestedAt?.toISOString() ?? null} />
     </div>

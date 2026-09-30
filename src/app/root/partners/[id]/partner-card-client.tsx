@@ -54,6 +54,8 @@ const SOURCE_LABELS: Record<string, string> = {
   code: "по коду",
   invite: "по приглашению",
   manual: "вручную",
+  // Владелец сам перевёл свою организацию в клиенты (lib/partners/org-conversion.ts).
+  converted: "переведена владельцем из личного аккаунта",
 };
 
 const DETACHED_BY_LABELS: Record<string, string> = {

@@ -79,6 +79,9 @@ export const PARTNER_DENYLIST = [
   // чужом кабинете и стёр настроенное.
   "/api/profile/complete",
   "/api/settings/organization/deletion",
+  // Перевод организации в клиенты своего партнёрского кабинета решает
+  // только её владелец в своей сессии (lib/partners/org-conversion.ts).
+  "/api/settings/organization/partner-client",
   "/api/settings/subscription",
   "/api/inspector",
 ] as const;
