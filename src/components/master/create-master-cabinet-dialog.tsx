@@ -110,7 +110,7 @@ export function CreateMasterCabinetDialog({
       if (!response.ok || !json?.cabinet) throw new Error(json?.error ?? "Не удалось создать мастер-кабинет");
       const cabinet = json.cabinet;
       toast.success(`Мастер-кабинет «${cabinet.name}» создан`, {
-        description: "Он в меню профиля, в разделе «Кабинет».",
+        description: "Он в меню профиля, в разделе «Кабинет». Доступ другим — «Настройки → Права доступа».",
         action: {
           label: "Открыть",
           onClick: () => {
@@ -274,8 +274,8 @@ export function CreateMasterCabinetDialog({
             <li className="flex gap-2">
               <Library className="mt-0.5 size-4 shrink-0 text-[#5566f6]" />
               <span>
-                Меню и сырьё в новом кабинете пока пустые: загрузите их сами (откройте кабинет) или пригласите
-                сотрудника бэк-офиса — «Настройки → Мастер-кабинет» у любого из отмеченных объектов.
+                Меню и сырьё в новом кабинете пока пустые: загрузите их сами (откройте кабинет) или дайте доступ
+                человеку — «Настройки → Права доступа → Мастер-кабинеты»: приглашение по почте или сотрудник объекта.
               </span>
             </li>
             {tooMany ? (

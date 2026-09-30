@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { ShieldCheck } from "lucide-react";
+import { Library, ShieldCheck } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { sessionHasPermission } from "@/lib/permissions-server";
@@ -11,6 +11,8 @@ import {
   type Permission,
 } from "@/lib/permissions";
 import { PermissionsEditor } from "@/components/settings/permissions-editor";
+import { MasterCabinetAccessCard } from "@/components/settings/master-cabinet-access-card";
+import { listAccountCabinetsAccess } from "@/lib/master-cabinet-access";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +24,15 @@ export default async function PermissionsSettingsPage() {
   }
 
   const organizationId = getActiveOrgId(session);
+
+  // «Мастер-кабинеты» — доступом управляет владелец аккаунта.
+  const ownedAccount = await db.account.findUnique({
+    where: { ownerUserId: session.user.id },
+    select: { id: true },
+  });
+  const cabinetsAccess = ownedAccount
+    ? await listAccountCabinetsAccess(session.user.id).catch(() => null)
+    : null;
 
   const [positions, users] = await Promise.all([
     db.jobPosition.findMany({
@@ -93,6 +104,15 @@ export default async function PermissionsSettingsPage() {
               <strong className="text-[#0b1024]">конкретном человеке</strong>.
               Более низкий уровень переопределяет более высокий.
             </p>
+            {cabinetsAccess ? (
+              <a
+                href="#master-cabinets"
+                className="mt-3 inline-flex h-9 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-3.5 text-[13px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+              >
+                <Library className="size-4 text-[#5566f6]" />
+                Доступ к мастер-кабинетам
+              </a>
+            ) : null}
           </div>
         </div>
       </div>
@@ -104,6 +124,8 @@ export default async function PermissionsSettingsPage() {
         managementDefaults={[...DEFAULT_MANAGEMENT_PERMISSIONS]}
         staffDefaults={[...DEFAULT_STAFF_PERMISSIONS]}
       />
+
+      {cabinetsAccess ? <MasterCabinetAccessCard initial={cabinetsAccess} /> : null}
     </div>
   );
 }

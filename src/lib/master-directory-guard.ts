@@ -5,12 +5,14 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { authOptions } from "@/lib/auth";
 import { readOrgKind } from "@/lib/master-directory";
 import { DIRECTORY_ONLY_API_ERROR } from "@/lib/master-directory-access";
+import { assertOrgMembership } from "@/lib/organization-access";
 import { getServerSession } from "@/lib/server-session";
 
 /**
  * Доступ к `/api/master/*`: активная организация сессии — мастер-кабинет
- * справочников (`kind="directory"`). Proxy уже отсёк чужие сессии по
- * токену; здесь — второй рубеж по базе.
+ * справочников (`kind="directory"`) и человек в нём состоит (доступ могли
+ * убрать в «Права доступа → Мастер-кабинеты»). Proxy уже отсёк чужие сессии
+ * по токену; здесь — второй рубеж по базе.
  */
 export async function requireMasterDirectorySession(): Promise<
   { ok: true; session: Session; masterOrgId: string } | { ok: false; response: NextResponse }
@@ -22,6 +24,9 @@ export async function requireMasterDirectorySession(): Promise<
   const masterOrgId = getActiveOrgId(session);
   if ((await readOrgKind(masterOrgId)) !== "directory") {
     return { ok: false, response: NextResponse.json({ error: DIRECTORY_ONLY_API_ERROR }, { status: 403 }) };
+  }
+  if (!session.user.isRoot && !(await assertOrgMembership(session.user.id, masterOrgId))) {
+    return { ok: false, response: NextResponse.json({ error: "Нет доступа к этому мастер-кабинету" }, { status: 403 }) };
   }
   return { ok: true, session, masterOrgId };
 }
