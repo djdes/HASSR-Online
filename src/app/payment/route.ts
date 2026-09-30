@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { formatOutSum, verifyResultSignature } from "@/lib/robokassa";
 import { completePaidOrder } from "@/lib/payment-fulfillment";
 import { notifyPlatformAdmin } from "@/lib/platform-admin";
+import { settlePaidOrder } from "@/lib/balance/topup";
 
 export const dynamic = "force-dynamic";
 
@@ -85,12 +86,11 @@ export async function POST(request: NextRequest) {
   }
 
   // Идемпотентность: перевести в paid может только один запрос. Повторное
-  // уведомление получит count = 0 и просто подтвердится.
-  const claimed = await db.paymentOrder.updateMany({
-    where: { id: invId, status: "pending" },
-    data: { status: "paid", paidAt: new Date(), rawResult: raw },
-  });
-  if (claimed.count === 0) {
+  // уведомление получит claimed = false и просто подтвердится. Пополнение
+  // баланса зачисляется в той же транзакции (settlePaidOrder): заказ не
+  // бывает «оплачен, но не зачислен», а сбой откатит оба — касса повторит.
+  const settled = await settlePaidOrder({ orderId: invId, rawResult: raw });
+  if (!settled.claimed) {
     // Заказ уже не «ожидает». Обычно это повторное уведомление по
     // оплаченному заказу — подтверждаем молча. Но если холд баллов
     // истёк и заказ закрыт как `expired`, а деньги всё-таки пришли,

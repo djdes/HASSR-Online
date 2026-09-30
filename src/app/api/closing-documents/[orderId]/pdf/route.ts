@@ -24,6 +24,7 @@ const REASONS: Record<string, string> = {
   zero: "Заказ закрыт баллами целиком — закрывать нечего",
   refunded: "По заказу оформлен возврат",
   requisites: "Реквизиты исполнителя ещё не заполнены — документ появится позже",
+  advance: "Пополнение баланса — предоплата: закрывающий документ на него не выпускается",
 };
 
 export async function GET(_request: Request, ctx: { params: Promise<{ orderId: string }> }) {

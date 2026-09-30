@@ -62,8 +62,14 @@ export type ReceiptItem = {
   name: string;
   quantity: number;
   sum: number;
-  payment_method: "full_payment";
-  payment_object: "service" | "commodity";
+  /**
+   * Признак способа расчёта (54-ФЗ, тег 1214): full_payment — полный
+   * расчёт (подписка); advance — аванс (пополнение баланса: предмет
+   * расчёта в момент оплаты не определён).
+   */
+  payment_method: "full_payment" | "advance";
+  /** Признак предмета расчёта (тег 1212): payment — «платёж» для аванса. */
+  payment_object: "service" | "commodity" | "payment";
   tax: "none";
 };
 

@@ -406,6 +406,16 @@ export async function completePaidOrder(order: {
   partnerSlug?: string | null;
   referrerOrganizationId?: string | null;
 }): Promise<{ organizationId: string | null; isNewClient: boolean }> {
+  // Пополнение баланса — не подписка: не продлеваем, скидку навсегда не
+  // привязываем, реферальную награду не запускаем. Баллы уже зачислены в
+  // той же транзакции, что и перевод заказа в paid (settlePaidOrder);
+  // здесь — комиссия партнёру, уведомления и аудит.
+  const { isTopupOrder } = await import("@/lib/balance/topup-core");
+  if (isTopupOrder(order)) {
+    const { completeTopupOrder } = await import("@/lib/balance/topup");
+    return completeTopupOrder(order.id);
+  }
+
   const { accrueForPaidOrder } = await import("@/lib/partners/accruals");
   const { attachOrganizationByRef, parsePartnerRef } = await import(
     "@/lib/partners/referral"
