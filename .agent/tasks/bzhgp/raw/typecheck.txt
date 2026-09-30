@@ -1,0 +1,3 @@
+> tsc --noEmit --skipLibCheck -p tsconfig.typecheck.json
+
+typecheck exit=0
