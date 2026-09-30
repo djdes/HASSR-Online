@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 
+import { isTopupOrder } from "@/lib/balance/topup-core";
 import { voidClosingDocument } from "@/lib/closing-documents/service";
 import { db } from "@/lib/db";
 import { hardwareTotal, normalizeHardwareConfig } from "@/lib/hardware-pricing";
@@ -50,6 +51,7 @@ const ORDER_SELECT = {
   shippedAt: true,
   refundedAt: true,
   status: true,
+  tariffKey: true,
 } as const;
 
 /** Разбивка суммы заказа: подписка = всё, что не оборудование. */
@@ -148,9 +150,13 @@ export async function accrueForPaidOrder(orderId: number): Promise<{ created: nu
       id: { not: order.id },
       paidAt: { gte: link.attachedAt, lt: order.paidAt },
     },
-    select: { amountRub: true, bundleConfig: true },
+    select: { amountRub: true, bundleConfig: true, tariffKey: true },
   });
-  const paidSubscriptionPaymentsBefore = earlier.filter((o) => splitOrderAmount(o).subscriptionRub > 0).length;
+  // Бонус «за N-й платёж» считается только по оплатам подписки: пополнения
+  // баланса дают процент, но не двигают счётчик и сами бонус не дают.
+  const paidSubscriptionPaymentsBefore = earlier.filter(
+    (o) => !isTopupOrder(o) && splitOrderAmount(o).subscriptionRub > 0,
+  ).length;
 
   const firstPaymentAt = link.firstPaymentAt && link.firstPaymentAt < order.paidAt ? link.firstPaymentAt : null;
   if (!link.firstPaymentAt) {
@@ -163,6 +169,7 @@ export async function accrueForPaidOrder(orderId: number): Promise<{ created: nu
     subscriptionRub,
     firstPaymentAt,
     paidSubscriptionPaymentsBefore,
+    bonusEligible: !isTopupOrder(order),
   });
   const created = await insertDrafts({
     drafts,

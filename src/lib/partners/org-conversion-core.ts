@@ -316,8 +316,7 @@ function orderBlockers(snapshot: ConversionSnapshot): Blocker[] {
   const invoice = snapshot.orders.find(
     (o) =>
       o.status === "pending" &&
-      o.paymentMethod === "invoice" &&
-      (!o.invoiceDueAt || o.invoiceDueAt.getTime() > now),
+      o.paymentMethod === "invoice",
   );
   if (invoice) {
     blockers.push({
@@ -325,7 +324,7 @@ function orderBlockers(snapshot: ConversionSnapshot): Blocker[] {
       message:
         `Выставлен счёт №${invoice.id} на ${rub(invoice.amountRub)}, он ещё не оплачен` +
         (invoice.invoiceDueAt ? ` (действует до ${formatMskDate(invoice.invoiceDueAt)})` : "") +
-        ". Перевод станет доступен после оплаты счёта или когда пройдёт его срок — иначе оплата пришла бы уже после перевода.",
+        ". Перевод станет доступен после оплаты счёта или его отмены (напишите в поддержку) — иначе оплата, пришедшая после перевода, дала бы комиссию за продажу до перевода.",
     });
   }
   const card = snapshot.orders

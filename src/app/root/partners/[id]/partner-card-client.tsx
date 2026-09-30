@@ -775,7 +775,7 @@ function OrdersTable({ orders, onChanged }: { orders: OrderRow[]; onChanged: () 
                 <td className="px-5 py-3 md:px-6">
                   <span className="font-medium text-[#0b1024]">#{o.id}</span>
                   <div className="text-[12px] text-[#6f7282]">
-                    {formatDate(o.paidAt)} · {o.tariffKey}
+                    {formatDate(o.paidAt)} · {o.tariffKey === "balance_topup" ? "пополнение баланса" : o.tariffKey}
                   </div>
                 </td>
                 <td className="px-3 py-3 text-[#0b1024]">

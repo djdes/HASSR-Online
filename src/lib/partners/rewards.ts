@@ -21,10 +21,10 @@ export const ACCRUAL_STATUSES = ["accrued", "payable", "paid"] as const;
 export type AccrualStatus = (typeof ACCRUAL_STATUSES)[number];
 
 export const ACCRUAL_KIND_LABELS: Record<AccrualKind, string> = {
-  subscription: "Подписка",
+  subscription: "Платёж клиента",
   hardware: "Оборудование",
   bonus: "Бонус",
-  subscription_reversal: "Сторно: подписка",
+  subscription_reversal: "Сторно: платёж клиента",
   hardware_reversal: "Сторно: оборудование",
   bonus_reversal: "Сторно: бонус",
 };
@@ -85,6 +85,12 @@ export type PaymentFacts = {
   firstPaymentAt: Date | null;
   /** Сколько успешных платежей за подписку было ДО текущего. */
   paidSubscriptionPaymentsBefore: number;
+  /**
+   * Может ли этот платёж дать бонус «за N-й платёж». false — пополнение
+   * баланса: иначе бонус 3 000 ₽ выбивался бы пополнением на 500 ₽.
+   * Не задано — может (прежнее поведение).
+   */
+  bonusEligible?: boolean;
 };
 
 /** Округление до копеек без накопления ошибок плавающей точки. */
@@ -133,6 +139,7 @@ export function computeBonusAccrual(
   facts: PaymentFacts,
 ): AccrualDraft | null {
   if (facts.subscriptionRub <= 0) return null;
+  if (facts.bonusEligible === false) return null;
   if (rule.bonusAmountRub <= 0) return null;
   const ordinal = facts.paidSubscriptionPaymentsBefore + 1;
   if (ordinal !== rule.bonusAfterPayments) return null;

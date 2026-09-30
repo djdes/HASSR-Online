@@ -267,8 +267,8 @@ test("перевод: счёт без срока тоже держит пере�
   assert.deepEqual(blockerCodes(conversion({ orders: [order({ paymentMethod: "invoice", invoiceDueAt: null })] })), ["pending_invoice"]);
 });
 
-test("перевод: просроченный неоплаченный счёт не мешает", () => {
-  assert.deepEqual(blockerCodes(conversion({ orders: [order({ paymentMethod: "invoice", invoiceDueAt: days(-1) })] })), []);
+test("перевод: просроченный неоплаченный счёт тоже держит перевод (его могут оплатить позже)", () => {
+  assert.deepEqual(blockerCodes(conversion({ orders: [order({ paymentMethod: "invoice", invoiceDueAt: days(-1) })] })), ["pending_invoice"]);
 });
 
 test("перевод: начатая оплата картой в пределах суток — отказ, старая — нет", () => {

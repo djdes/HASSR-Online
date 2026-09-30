@@ -52,6 +52,20 @@ test("второй платёж → +398 ₽ и разовый бонус 3 000 
   );
 });
 
+test("пополнение баланса вторым платежом — процент есть, бонуса нет", () => {
+  const drafts = computePaymentAccruals(DEFAULT_REWARD_RULE, {
+    paidAt,
+    subscriptionRub: 500,
+    firstPaymentAt: new Date("2026-08-15T10:00:00Z"),
+    paidSubscriptionPaymentsBefore: 1,
+    bonusEligible: false,
+  });
+  assert.deepEqual(
+    drafts.map((d) => [d.kind, d.amountRub]),
+    [["subscription", 100]],
+  );
+});
+
 test("третий платёж — только подписка, бонус не повторяется", () => {
   const drafts = computePaymentAccruals(DEFAULT_REWARD_RULE, {
     paidAt,
