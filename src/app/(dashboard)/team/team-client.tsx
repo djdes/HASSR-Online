@@ -9,11 +9,11 @@ import {
   CheckCircle2,
   Clock,
   Coffee,
-  Loader2,
   MessageSquareOff,
   Plane,
 } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
+import TeamLoading from "./loading";
 
 type WorkStatus =
   | "working"
@@ -148,13 +148,9 @@ export function TeamClient() {
     return () => window.clearInterval(t);
   }, []);
 
-  if (loading && !data) {
-    return (
-      <div className="flex h-[200px] items-center justify-center text-[#6f7282]">
-        <Loader2 className="size-5 animate-spin" />
-      </div>
-    );
-  }
+  // Первая загрузка — тот же скелет, что у `loading.tsx`, без промежуточного
+  // пустого блока с крутилкой.
+  if (loading && !data) return <TeamLoading />;
   if (!data) return null;
 
   const groups = ([

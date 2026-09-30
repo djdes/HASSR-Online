@@ -1,0 +1,302 @@
+phone|own-light|load:dashboard                       theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 397 blank 0 | cls 0 | sk дашборд…+397
+phone|own-light|load:journals                        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 482 blank 0 | cls 0 | sk журналы…+482
+phone|own-light|load:journal                         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 268 blank 0 | cls 0 | sk журналы…+26>документы журнала…+242
+phone|own-light|load:document                        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 328 blank 0 | cls 0 | sk журналы…+220>документ…+108
+phone|own-light|load:settings                        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 193 blank 0 | cls 0 | sk настройки…+193
+phone|own-light|load:balance                         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 73 blank 0 | cls 0 | sk настройки…+73
+phone|own-light|nav:dashboard>journals               theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 149 skel 149 content 455 blank 0 | cls 0.016 | sk журналы…+306
+phone|own-light|nav:journals>journal                 theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 40 skel 40 content 417 blank 0 | cls 0.018 | sk документы журнала…+377
+phone|own-light|nav:journal>document                 theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 63 skel 63 content 140 blank 0 | cls 0 | sk документ…+77
+phone|own-light|nav:document>settings                theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 192 skel 192 content 816 blank 0 | cls 0.018 | sk настройки…+624
+phone|own-light|nav:settings>balance                 theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 107 skel - content 107 blank 0 | cls 0.004
+phone|own-light|back:>settings                       theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 65 skel - content 65 blank 0 | cls 0.004
+phone|own-light|back:>document                       theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 47 skel - content 47 blank 0 | cls 0.018
+phone|own-light|back:>journal                        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 50 skel - content 50 blank 0 | cls 0
+phone|own-light|back:>journals                       theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 132 skel - content 132 blank 0 | cls 0.018
+phone|own-light|back:>dashboard                      theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 68 skel - content 68 blank 0 | cls 0.016
+phone|own-light|refresh:dashboard                    theme✗   0f/   0ms | wn - | url 14 skel - content 14 blank 0 | cls 0
+phone|own-light|login                                theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 1143 skel - content 1143 blank 0 | cls 0.001
+phone|own-light|logout                               light@941+708
+phone|own-dark|load:dashboard                        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 368 blank 0 | cls 0.178 | sk дашборд…+368
+phone|own-dark|load:journals                         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 399 blank 0 | cls 0 | sk журналы…+399
+phone|own-dark|load:journal                          theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 663 blank 0 | cls 0 | sk журналы…+40>документы журнала…+623
+phone|own-dark|load:document                         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 3025 blank 0 | cls 0 | sk журналы…+200>документы журнала…+2825
+phone|own-dark|load:settings                         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 153 blank 0 | cls 0 | sk настройки…+153
+phone|own-dark|load:balance                          theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 64 blank 0 | cls 0 | sk настройки…+64
+phone|own-dark|nav:dashboard>journals                theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 80 skel 80 content 402 blank 0 | cls 0.016 | sk журналы…+322
+phone|own-dark|nav:journals>journal                  theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 36 skel 36 content 347 blank 0 | cls 0.018 | sk документы журнала…+311
+phone|own-dark|nav:journal>document                  theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 58 skel 58 content 510 blank 0 | cls 0 | sk документ…+452
+phone|own-dark|nav:document>settings                 theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 175 skel 175 content 509 blank 0 | cls 0.018 | sk настройки…+334
+phone|own-dark|nav:settings>balance                  theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 119 skel 119 content 414 blank 0 | cls 0.004 | sk настройки…+295
+phone|own-dark|back:>settings                        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 84 skel - content 84 blank 0 | cls 0.004
+phone|own-dark|back:>document                        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 56 skel - content 56 blank 0 | cls 0.018
+phone|own-dark|back:>journal                         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 51 skel - content 51 blank 0 | cls 0
+phone|own-dark|back:>journals                        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 135 skel - content 135 blank 0 | cls 0.018
+phone|own-dark|back:>dashboard                       theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 70 skel - content 70 blank 0 | cls 0.016
+phone|own-dark|refresh:dashboard                     theme✗   0f/   0ms | wn - | url 6 skel - content 6 blank 0 | cls 0
+phone|own-dark|login                                 theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 1393 skel - content 1393 blank 0 | cls 0.001
+phone|own-dark|logout                                dark@719+541 → light@1261+100
+phone|own-light/db-dark|load:dashboard               theme✗   7f/ 421ms (кадры 28/472ms) | wn - | url 0 skel 0 content 421 blank 0 | cls 0 | sk дашборд…+421
+phone|own-light/db-dark|load:journals                theme✗   6f/ 556ms (кадры 36/612ms) | wn - | url 0 skel 0 content 556 blank 0 | cls 0 | sk журналы…+556
+phone|own-light/db-dark|load:journal                 theme✗   6f/ 388ms (кадры 3/405ms) | wn - | url 0 skel 0 content 61 blank 0 | cls 0 | sk журналы…+61
+phone|own-light/db-dark|load:document                theme✗   7f/ 582ms (кадры 21/583ms) | wn - | url 0 skel 0 content 337 blank 0 | cls 0 | sk журналы…+205>документ…+132
+phone|own-light/db-dark|load:settings                theme✗  76f/1508ms (кадры 22/572ms) | wn - | url 0 skel 0 content 403 blank 0 | cls 0 | sk настройки…+403
+phone|own-light/db-dark|load:balance                 theme✗   5f/ 359ms (кадры 3/375ms) | wn - | url 0 skel 0 content 85 blank 0 | cls 0 | sk настройки…+85
+phone|own-light/db-dark|nav:dashboard>journals       theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 899 skel 899 content 1568 blank 0 | cls 0.016 | sk журналы…+669
+phone|own-light/db-dark|nav:journals>journal         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 44 skel 44 content 474 blank 0 | cls 0.018 | sk документы журнала…+430
+phone|own-light/db-dark|nav:journal>document         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 51 skel 51 content 1330 blank 0 | cls 0 | sk документ…+1279
+phone|own-light/db-dark|nav:document>settings        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 1275 skel 1275 content - blank 0 | cls 0.018 | sk настройки…+1272
+phone|own-light/db-dark|nav:settings>balance         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 176 skel 10 content 212 blank 0 | cls 0.004 | sk настройки…+202
+phone|own-light/db-dark|back:>settings               theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 66 skel 66 content 748 blank 0 | cls 0.004 | sk настройки…+682
+phone|own-light/db-dark|back:>document               theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 64 skel - content 64 blank 0 | cls 0.018
+phone|own-light/db-dark|back:>journal                theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 71 skel - content 71 blank 0 | cls 0
+phone|own-light/db-dark|back:>journals               theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 115 skel - content 115 blank 0 | cls 0.018
+phone|own-light/db-dark|back:>dashboard              theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 88 skel - content 88 blank 0 | cls 0.016
+phone|own-light/db-dark|refresh:dashboard            theme✗   0f/   0ms | wn - | url 4 skel - content 4 blank 0 | cls 0
+phone|own-light/db-dark|login                        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 3139 skel - content 3139 blank 0 | cls 0.001
+phone|own-dark/db-light|load:dashboard               theme✗  39f/1553ms (кадры 5/371ms) | wn - | url 0 skel 0 content 525 blank 0 | cls 0.178 | sk дашборд…+525
+phone|own-dark/db-light|load:journals                theme✗  20f/3018ms (кадры 6/862ms) | wn - | url 0 skel 0 content 285 blank 0 | cls 0.152 | sk журналы…+285
+phone|own-dark/db-light|load:journal                 theme✗  20f/1145ms (кадры 5/1328ms) | wn - | url 0 skel 0 content 119 blank 0 | cls 0 | sk журналы…+119
+phone|own-dark/db-light|load:document                theme✗  15f/1704ms (кадры 2/203ms) | wn - | url 0 skel 86 content 583 blank 0 | cls 0 | sk журналы…+497
+phone|own-dark/db-light|load:settings                theme✗  13f/1511ms (кадры 2/422ms) | wn - | url 0 skel 0 content 529 blank 0 | cls 0 | sk настройки…+529
+phone|own-dark/db-light|load:balance                 theme✗  27f/1749ms (кадры 1/100ms) | wn - | url 0 skel 0 content 227 blank 0 | cls 0 | sk настройки…+227
+phone|own-dark/db-light|nav:dashboard>journals       theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 723 skel 723 content 2477 blank 0 | cls 0.016 | sk журналы…+1754
+phone|own-dark/db-light|nav:journals>journal         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 129 skel 129 content - blank 0 | cls 0.018 | sk журналы…+1174>документы журнала…+1428
+phone|own-dark/db-light|nav:journal>document         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 1466 skel 111 content - blank 0 | cls 0 | sk документы журнала…+1082>документы журнала…+1297
+phone|own-dark/db-light|nav:document>settings        theme✗   0f/   0ms | wn - | url 1374 skel 1374 content - blank 0 | cls 0.018 | sk настройки…+1250
+phone|own-dark/db-light|nav:settings>balance         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 553 skel 126 content 1108 blank 0 | cls 0.004 | sk настройки…+982
+phone|own-dark/db-light|back:>settings               theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 172 skel 172 content - blank 0 | cls 0.004 | sk настройки…+1552
+phone|own-dark/db-light|back:>document               theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 185 skel - content 185 blank 0 | cls 0.018
+phone|own-dark/db-light|back:>journal                theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 65 skel - content 65 blank 0 | cls 0
+phone|own-dark/db-light|back:>journals               theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 225 skel - content 225 blank 0 | cls 0.018
+phone|own-dark/db-light|back:>dashboard              theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 59 skel - content 59 blank 0 | cls 0.016
+phone|own-dark/db-light|refresh:dashboard            theme✗   0f/   0ms | wn - | url 9 skel - content 9 blank 0 | cls 0
+phone|own-dark/db-light|login                        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 1747 skel - content 1747 blank 0 | cls 0.001
+phone|sys-dark/db-light|load:dashboard               theme✗   6f/ 480ms (кадры 32/569ms) | wn - | url 0 skel 0 content 480 blank 0 | cls 0 | sk дашборд…+480
+phone|sys-dark/db-light|load:journals                theme✗   6f/ 630ms (кадры 43/851ms) | wn - | url 0 skel 0 content 630 blank 0 | cls 0 | sk журналы…+630
+phone|sys-dark/db-light|load:journal                 theme✗   8f/ 585ms (кадры 8/769ms) | wn - | url 0 skel 0 content 71 blank 0 | cls 0 | sk журналы…+71
+phone|sys-dark/db-light|load:document                theme✗   1f/ 226ms (кадры 20/371ms) | wn - | url 0 skel 0 content 588 blank 0 | cls 0 | sk журналы…+226>документы журнала…+362
+phone|sys-dark/db-light|load:settings                theme✗   5f/1201ms (кадры 5/1374ms) | wn - | url 0 skel 0 content 132 blank 0 | cls 0 | sk настройки…+132
+phone|sys-dark/db-light|load:balance                 theme✗   6f/ 474ms (кадры 27/585ms) | wn - | url 0 skel 0 content 474 blank 0 | cls 0 | sk настройки…+474
+phone|sys-dark/db-light|nav:dashboard>journals       theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 81 skel 81 content 402 blank 0 | cls 0.016 | sk журналы…+321
+phone|sys-dark/db-light|nav:journals>journal         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 38 skel 38 content 371 blank 0 | cls 0.018 | sk документы журнала…+333
+phone|sys-dark/db-light|nav:journal>document         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 68 skel 68 content 445 blank 0 | cls 0 | sk документ…+377
+phone|sys-dark/db-light|nav:document>settings        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 164 skel - content 164 blank 0 | cls 0.018
+phone|sys-dark/db-light|nav:settings>balance         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 133 skel - content 133 blank 0 | cls 0.004
+phone|sys-dark/db-light|back:>settings               theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 52 skel - content 52 blank 0 | cls 0.004
+phone|sys-dark/db-light|back:>document               theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 62 skel - content 62 blank 0 | cls 0.018
+phone|sys-dark/db-light|back:>journal                theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 49 skel - content 49 blank 0 | cls 0
+phone|sys-dark/db-light|back:>journals               theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 149 skel - content 149 blank 0 | cls 0.018
+phone|sys-dark/db-light|back:>dashboard              theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 71 skel - content 71 blank 0 | cls 0.016
+phone|sys-dark/db-light|refresh:dashboard            theme✗   0f/   0ms | wn - | url 2 skel - content 2 blank 0 | cls 0
+phone|sys-dark/db-light|login                        theme✗   0f/   0ms (кадры 1/107ms) | wn - | url 1291 skel - content 1291 blank 0 | cls 0.001
+phone|sys-light/db-dark|load:dashboard               theme✗   5f/ 517ms (кадры 33/557ms) | wn - | url 0 skel 0 content 517 blank 0 | cls 0 | sk дашборд…+517
+phone|sys-light/db-dark|load:journals                theme✗   6f/ 564ms (кадры 36/610ms) | wn - | url 0 skel 0 content 564 blank 0 | cls 0 | sk журналы…+564
+phone|sys-light/db-dark|load:journal                 theme✗   5f/ 383ms (кадры 21/418ms) | wn - | url 0 skel 0 content 383 blank 0 | cls 0 | sk журналы…+64>документы журнала…+319
+phone|sys-light/db-dark|load:document                theme✗   4f/ 605ms (кадры 3/609ms) | wn - | url 0 skel 0 content 230 blank 0 | cls 0 | sk журналы…+230
+phone|sys-light/db-dark|load:settings                theme✗   5f/1280ms (кадры 6/1363ms) | wn - | url 0 skel 0 content 142 blank 0 | cls 0 | sk настройки…+142
+phone|sys-light/db-dark|load:balance                 theme✗   4f/ 385ms (кадры 3/399ms) | wn - | url 0 skel 0 content 62 blank 0 | cls 0 | sk настройки…+62
+phone|sys-light/db-dark|nav:dashboard>journals       theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 118 skel 118 content 449 blank 0 | cls 0.016 | sk журналы…+331
+phone|sys-light/db-dark|nav:journals>journal         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 43 skel 43 content 376 blank 0 | cls 0.018 | sk документы журнала…+333
+phone|sys-light/db-dark|nav:journal>document         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 63 skel 63 content 394 blank 0 | cls 0 | sk документ…+331
+phone|sys-light/db-dark|nav:document>settings        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 486 skel 486 content 1169 blank 0 | cls 0.018 | sk настройки…+683
+phone|sys-light/db-dark|nav:settings>balance         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 141 skel 141 content 448 blank 0 | cls 0.004 | sk настройки…+307
+phone|sys-light/db-dark|back:>settings               theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 79 skel - content 79 blank 0 | cls 0.004
+phone|sys-light/db-dark|back:>document               theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 55 skel - content 55 blank 0 | cls 0.018
+phone|sys-light/db-dark|back:>journal                theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 56 skel - content 56 blank 0 | cls 0
+phone|sys-light/db-dark|back:>journals               theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 127 skel - content 127 blank 0 | cls 0.018
+phone|sys-light/db-dark|back:>dashboard              theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 69 skel - content 69 blank 0 | cls 0.016
+phone|sys-light/db-dark|refresh:dashboard            theme✗   0f/   0ms | wn - | url 12 skel - content 12 blank 0 | cls 0
+phone|sys-light/db-dark|login                        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 2595 skel - content 2595 blank 0 | cls 0.001
+phone|auto-night/db-light|load:dashboard             theme✗   6f/ 420ms (кадры 29/497ms) | wn - | url 0 skel 0 content 420 blank 0 | cls 0 | sk дашборд…+420
+phone|auto-night/db-light|load:journals              theme✗   5f/1412ms (кадры 6/1351ms) | wn - | url 0 skel 0 content 204 blank 0 | cls 0.152 | sk журналы…+204
+phone|auto-night/db-light|load:journal               theme✗   6f/ 476ms (кадры 28/532ms) | wn - | url 0 skel 0 content 476 blank 0 | cls 0.018 | sk журналы…+476
+phone|auto-night/db-light|load:document              theme✗   7f/ 676ms (кадры 31/893ms) | wn - | url 0 skel 0 content 356 blank 0 | cls 0 | sk журналы…+230>документ…+126
+phone|auto-night/db-light|load:settings              theme✗   5f/ 704ms (кадры 14/994ms) | wn - | url 0 skel 0 content 704 blank 0 | cls 0 | sk настройки…+704
+phone|auto-night/db-light|load:balance               theme✗   4f/ 360ms (кадры 4/418ms) | wn - | url 0 skel 0 content 99 blank 0 | cls 0 | sk настройки…+99
+phone|auto-night/db-light|nav:dashboard>journals     theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 110 skel 110 content 418 blank 0 | cls 0.016 | sk журналы…+308
+phone|auto-night/db-light|nav:journals>journal       theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 68 skel 68 content 418 blank 0 | cls 0.018 | sk документы журнала…+350
+phone|auto-night/db-light|nav:journal>document       theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 55 skel 55 content 425 blank 0 | cls 0 | sk документ…+370
+phone|auto-night/db-light|nav:document>settings      theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 179 skel - content 179 blank 0 | cls 0.018
+phone|auto-night/db-light|nav:settings>balance       theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 106 skel - content 106 blank 0 | cls 0.004
+phone|auto-night/db-light|back:>settings             theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 82 skel - content 82 blank 0 | cls 0.004
+phone|auto-night/db-light|back:>document             theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 62 skel - content 62 blank 0 | cls 0.018
+phone|auto-night/db-light|back:>journal              theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 60 skel - content 60 blank 0 | cls 0
+phone|auto-night/db-light|back:>journals             theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 149 skel - content 149 blank 0 | cls 0.018
+phone|auto-night/db-light|back:>dashboard            theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 82 skel - content 82 blank 0 | cls 0.016
+phone|auto-night/db-light|refresh:dashboard          theme✗   0f/   0ms | wn - | url 16 skel - content 16 blank 0 | cls 0
+phone|auto-night/db-light|login                      theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 1538 skel - content 1538 blank 0 | cls 0.001
+phone|mini:sys-dark/db-light|load:/dashboard         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 450 blank 0 | cls 0.001 | sk дашборд…+450
+phone|mini:sys-dark/db-light|nav:/dashboard>/journals theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 58 skel 58 content 366 blank 0 | cls 0 | sk журналы…+308
+phone|mini:sys-dark/db-light|nav:/journals>/mini/sections theme✗   4f/ 135ms (кадры 3/123ms) | wn - | url 103 skel - content 352 blank 249 | cls 0
+phone|mini:sys-dark/db-light|nav:/mini/sections>/mini/me theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 32 skel - content 344 blank 312 | cls 0.009
+phone|mini:sys-dark/db-light|back:1                  theme✗   0f/   0ms (кадры 0/0ms) | wn - | url - skel - content - blank 0 | cls 0
+phone|mini:sys-dark/db-light|back:2                  theme✗   2f/ 690ms (кадры 1/100ms) | wn - | url - skel - content - blank 0 | cls 0
+phone|mini:sys-light/db-dark|load:/dashboard         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 368 blank 0 | cls 0.001 | sk дашборд…+368
+phone|mini:sys-light/db-dark|nav:/dashboard>/journals theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 52 skel 52 content 375 blank 0 | cls 0 | sk журналы…+323
+phone|mini:sys-light/db-dark|nav:/journals>/mini/sections theme✗   4f/ 106ms (кадры 2/87ms) | wn - | url 90 skel - content 351 blank 261 | cls 0
+phone|mini:sys-light/db-dark|nav:/mini/sections>/mini/me theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 30 skel - content 339 blank 309 | cls 0.008
+phone|mini:sys-light/db-dark|back:1                  theme✗   0f/   0ms (кадры 0/0ms) | wn - | url - skel - content - blank 0 | cls 0
+phone|mini:sys-light/db-dark|back:2                  theme✗   2f/ 525ms (кадры 1/111ms) | wn - | url - skel - content - blank 0 | cls 0
+phone|mini:own-dark/db-light|load:/dashboard         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 296 blank 0 | cls 0.001 | sk дашборд…+296
+phone|mini:own-dark/db-light|nav:/dashboard>/journals theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 60 skel 60 content 708 blank 0 | cls 0 | sk журналы…+648
+phone|mini:own-dark/db-light|nav:/journals>/mini/sections theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 45 skel - content 359 blank 314 | cls 0
+phone|mini:own-dark/db-light|nav:/mini/sections>/mini/me theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 27 skel - content 344 blank 317 | cls 0.009
+phone|mini:own-dark/db-light|back:1                  theme✗   0f/   0ms (кадры 0/0ms) | wn - | url - skel - content - blank 0 | cls 0
+phone|mini:own-dark/db-light|back:2                  theme✗   0f/   0ms (кадры 0/0ms) | wn - | url - skel - content - blank 0 | cls 0
+phone|wn|load:dashboard                              theme✗   0f/   0ms (кадры 0/0ms) | wn show@1187 | url 0 skel 0 content 685 blank 0 | cls 0.178 | sk дашборд…+685
+phone|wn|nav:dashboard>journals                      theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 109 skel 109 content 419 blank 0 | cls 0.016 | sk журналы…+310
+phone|wn|nav:journals>journal                        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 92 skel 92 content 438 blank 0 | cls 0.018 | sk документы журнала…+346
+phone|wn|nav:journal>document                        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 99 skel 99 content 253 blank 0 | cls 0 | sk документ…+154
+phone|wn|nav:document>settings                       theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 144 skel 144 content 461 blank 0 | cls 0.018 | sk настройки…+317
+phone|wn|nav:settings>balance                        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 222 skel 222 content 330 blank 0 | cls 0.004 | sk настройки…+108
+phone|wn|back:>settings                              theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 139 skel - content 139 blank 0 | cls 0.004
+phone|wn|nav:settings>whats-new(public)              theme✗   0f/   0ms | wn - | url - skel - content - blank 0 | cls 0
+phone|wn|back:>settings(remount)                     theme✗   0f/   0ms (кадры 0/0ms) | wn - | url - skel - content - blank 0 | cls 0.018
+phone|wn|after-close:nav>dashboard                   theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 50 skel 50 content 374 blank 0 | cls 0.018 | sk дашборд…+324
+phone|wn|after-close:reload                          theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 343 blank 0 | cls 0 | sk дашборд…+343
+phone|wn-legacy|load1:dashboard                      theme✗   0f/   0ms (кадры 0/0ms) | wn show@1155 | url 0 skel 62 content 603 blank 0 | cls 0.178 | sk дашборд…+541
+phone|wn-legacy|load2:dashboard                      theme✗   0f/   0ms (кадры 0/0ms) | wn show@373 | url 0 skel 0 content 84 blank 0 | cls 0.178 | sk дашборд…+84
+phone|wn-legacy|after-close:reload                   theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 320 blank 0 | cls 0 | sk дашборд…+320
+desk|own-light|load:dashboard                        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 314 blank 0 | cls 0 | sk дашборд…+314
+desk|own-light|load:journals                         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 150 blank 0 | cls 0.041 | sk журналы…+150
+desk|own-light|load:journal                          theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 194 blank 0 | cls 0.001 | sk журналы…+51>документы журнала…+143
+desk|own-light|load:document                         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 184 blank 0 | cls 0.001 | sk журналы…+184
+desk|own-light|load:settings                         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 281 blank 0 | cls 0 | sk настройки…+281
+desk|own-light|load:balance                          theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 56 blank 0 | cls 0 | sk настройки…+56
+desk|own-light|nav:dashboard>journals                theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 68 skel 68 content 382 blank 0 | cls 0.005 | sk журналы…+314
+desk|own-light|nav:journals>journal                  theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 44 skel 44 content 353 blank 0 | cls 0.018 | sk документы журнала…+309
+desk|own-light|nav:journal>document                  theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 83 skel 83 content 203 blank 0 | cls 0.006 | sk документ…+120
+desk|own-light|nav:document>settings                 theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 90 skel 90 content 371 blank 0 | cls 0.037 | sk настройки…+281
+desk|own-light|nav:settings>balance                  theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 92 skel - content 92 blank 0 | cls 0
+desk|own-light|back:>settings                        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 65 skel - content 65 blank 0 | cls 0
+desk|own-light|back:>document                        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 57 skel - content 57 blank 0 | cls 0.018
+desk|own-light|back:>journal                         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 34 skel - content 34 blank 0 | cls 0.011
+desk|own-light|back:>journals                        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 71 skel - content 71 blank 0 | cls 0.909
+desk|own-light|back:>dashboard                       theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 112 skel - content 112 blank 0 | cls 0.005
+desk|own-light|refresh:dashboard                     theme✗   1f/ 167ms (кадры 2/45ms) | wn - | url 11 skel - content 11 blank 0 | cls 0
+desk|own-light|login                                 theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 848 skel - content 848 blank 0 | cls 0.001
+desk|own-light|logout                                light@357+517
+desk|own-dark|load:dashboard                         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 369 blank 0 | cls 0 | sk дашборд…+369
+desk|own-dark|load:journals                          theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 241 blank 0 | cls 0.021 | sk журналы…+241
+desk|own-dark|load:journal                           theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 48 blank 0 | cls 0 | sk журналы…+48
+desk|own-dark|load:document                          theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 222 blank 0 | cls 0.001 | sk журналы…+222
+desk|own-dark|load:settings                          theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 153 blank 0 | cls 0 | sk настройки…+153
+desk|own-dark|load:balance                           theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 84 blank 0 | cls 0 | sk настройки…+84
+desk|own-dark|nav:dashboard>journals                 theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 90 skel 90 content 374 blank 0 | cls 0.005 | sk журналы…+284
+desk|own-dark|nav:journals>journal                   theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 45 skel 45 content 396 blank 0 | cls 0.018 | sk документы журнала…+351
+desk|own-dark|nav:journal>document                   theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 57 skel 57 content 367 blank 0 | cls 0.006 | sk документ…+310
+desk|own-dark|nav:document>settings                  theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 74 skel 74 content 402 blank 0 | cls 0.037 | sk настройки…+328
+desk|own-dark|nav:settings>balance                   theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 88 skel 88 content 380 blank 0 | cls 0 | sk настройки…+292
+desk|own-dark|back:>settings                         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 64 skel - content 64 blank 0 | cls 0
+desk|own-dark|back:>document                         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 43 skel - content 43 blank 0 | cls 0.018
+desk|own-dark|back:>journal                          theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 38 skel - content 38 blank 0 | cls 0.011
+desk|own-dark|back:>journals                         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 91 skel - content 91 blank 0 | cls 0.909
+desk|own-dark|back:>dashboard                        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 69 skel - content 69 blank 0 | cls 0.005
+desk|own-dark|refresh:dashboard                      theme✗   0f/   0ms | wn - | url 6 skel - content 6 blank 0 | cls 0
+desk|own-dark|login                                  theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 1460 skel - content 1460 blank 0 | cls 0.001
+desk|own-dark|logout                                 dark@170+426 → light@596+100
+desk|own-light/db-dark|load:dashboard                theme✗   4f/ 351ms (кадры 16/471ms) | wn - | url 0 skel 0 content 351 blank 0 | cls 0 | sk дашборд…+351
+desk|own-light/db-dark|load:journals                 theme✗   4f/ 389ms (кадры 19/482ms) | wn - | url 0 skel 0 content 389 blank 0 | cls 0.021 | sk журналы…+389
+desk|own-light/db-dark|load:journal                  theme✗   4f/ 277ms (кадры 14/342ms) | wn - | url 0 skel 0 content 277 blank 0 | cls 0.001 | sk журналы…+60>документы журнала…+217
+desk|own-light/db-dark|load:document                 theme✗   5f/ 728ms (кадры 14/814ms) | wn - | url 0 skel 0 content 346 blank 0 | cls 0.001 | sk журналы…+213>документы журнала…+133
+desk|own-light/db-dark|load:settings                 theme✗   4f/ 361ms (кадры 17/704ms) | wn - | url 0 skel 0 content 361 blank 0 | cls 0 | sk настройки…+361
+desk|own-light/db-dark|load:balance                  theme✗   3f/ 269ms (кадры 12/380ms) | wn - | url 0 skel 0 content 269 blank 0 | cls 0 | sk настройки…+269
+desk|own-light/db-dark|nav:dashboard>journals        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 68 skel 68 content 391 blank 0 | cls 0.005 | sk журналы…+323
+desk|own-light/db-dark|nav:journals>journal          theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 42 skel 42 content 345 blank 0 | cls 0.018 | sk документы журнала…+303
+desk|own-light/db-dark|nav:journal>document          theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 49 skel 49 content 133 blank 0 | cls 0.006 | sk документ…+84
+desk|own-light/db-dark|nav:document>settings         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 85 skel 85 content 368 blank 0 | cls 0.037 | sk настройки…+283
+desk|own-light/db-dark|nav:settings>balance          theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 98 skel 98 content 142 blank 0 | cls 0 | sk настройки…+44
+desk|own-light/db-dark|back:>settings                theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 325 skel - content 325 blank 0 | cls 0
+desk|own-light/db-dark|back:>document                theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 117 skel - content 117 blank 0 | cls 0.018
+desk|own-light/db-dark|back:>journal                 theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 66 skel - content 66 blank 0 | cls 0.011
+desk|own-light/db-dark|back:>journals                theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 82 skel - content 82 blank 0 | cls 0.909
+desk|own-light/db-dark|back:>dashboard               theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 210 skel - content 210 blank 0 | cls 0.005
+desk|own-light/db-dark|refresh:dashboard             theme✗   0f/   0ms | wn - | url 22 skel - content 22 blank 0 | cls 0
+desk|own-light/db-dark|login                         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 2710 skel - content 2710 blank 0 | cls 0.001
+desk|own-dark/db-light|load:dashboard                theme✗   3f/ 400ms (кадры 8/516ms) | wn - | url 0 skel 0 content 400 blank 0 | cls 0 | sk дашборд…+400
+desk|own-dark/db-light|load:journals                 theme✗   6f/ 915ms (кадры 10/984ms) | wn - | url 0 skel 0 content 165 blank 0 | cls 0.041 | sk журналы…+165
+desk|own-dark/db-light|load:journal                  theme✗   8f/ 901ms (кадры 19/1134ms) | wn - | url 0 skel 0 content 901 blank 0 | cls 0.001 | sk журналы…+27>документы журнала…+874
+desk|own-dark/db-light|load:document                 theme✗   6f/ 650ms (кадры 7/1199ms) | wn - | url 0 skel 0 content 340 blank 0 | cls 0.001 | sk журналы…+340
+desk|own-dark/db-light|load:settings                 theme✗   7f/ 940ms (кадры 4/1104ms) | wn - | url 0 skel 0 content 162 blank 0 | cls 0 | sk настройки…+162
+desk|own-dark/db-light|load:balance                  theme✗   2f/ 276ms (кадры 3/468ms) | wn - | url 0 skel 0 content 70 blank 0 | cls 0 | sk настройки…+70
+desk|own-dark/db-light|nav:dashboard>journals        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 66 skel 66 content 369 blank 0 | cls 0.005 | sk журналы…+303
+desk|own-dark/db-light|nav:journals>journal          theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 35 skel 35 content 345 blank 0 | cls 0.018 | sk документы журнала…+310
+desk|own-dark/db-light|nav:journal>document          theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 141 skel 141 content 541 blank 0 | cls 0.008 | sk документ…+400
+desk|own-dark/db-light|nav:document>settings         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 82 skel 82 content 480 blank 0 | cls 0.037 | sk настройки…+398
+desk|own-dark/db-light|nav:settings>balance          theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 121 skel - content 121 blank 0 | cls 0
+desk|own-dark/db-light|back:>settings                theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 52 skel - content 52 blank 0 | cls 0
+desk|own-dark/db-light|back:>document                theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 56 skel - content 56 blank 0 | cls 0.037
+desk|own-dark/db-light|back:>journal                 theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 57 skel - content 57 blank 0 | cls 0.011
+desk|own-dark/db-light|back:>journals                theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 102 skel - content 102 blank 0 | cls 0.909
+desk|own-dark/db-light|back:>dashboard               theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 95 skel - content 95 blank 0 | cls 0.005
+desk|own-dark/db-light|refresh:dashboard             theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 109 skel - content 109 blank 0 | cls 0
+desk|own-dark/db-light|login                         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 3407 skel 3407 content 4261 blank 0 | cls 0 | sk дашборд…+854
+desk|sys-dark/db-light|load:dashboard                theme✗  23f/1503ms (кадры 26/1258ms) | wn - | url 0 skel 0 content 3253 blank 0 | cls 0 | sk дашборд…+3253
+desk|sys-dark/db-light|load:journals                 theme✗   5f/ 437ms (кадры 19/877ms) | wn - | url 0 skel 0 content 437 blank 0 | cls 0.021 | sk журналы…+437
+desk|sys-dark/db-light|load:journal                  theme✗  42f/1407ms (кадры 2/447ms) | wn - | url 0 skel 99 content 297 blank 0 | cls 0 | sk журналы…+198
+desk|sys-dark/db-light|load:document                 theme✗   3f/ 798ms (кадры 24/1114ms) | wn - | url 0 skel 0 content 2005 blank 0 | cls 0.001 | sk журналы…+294>документ…+504>документы журнала…+885>документ…+322
+desk|sys-dark/db-light|load:settings                 theme✗  24f/1503ms (кадры 8/949ms) | wn - | url 0 skel 0 content 443 blank 0 | cls 0 | sk настройки…+443
+desk|sys-dark/db-light|load:balance                  theme✗   4f/ 319ms (кадры 17/542ms) | wn - | url 0 skel 0 content 319 blank 0 | cls 0 | sk настройки…+319
+desk|sys-dark/db-light|nav:dashboard>journals        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 135 skel 135 content 773 blank 0 | cls 0.005 | sk журналы…+638
+desk|sys-dark/db-light|nav:journals>journal          theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 169 skel 169 content 1106 blank 0 | cls 0.018 | sk документы журнала…+937
+desk|sys-dark/db-light|nav:journal>document          theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 68 skel 68 content 355 blank 0 | cls 0.006 | sk документ…+287
+desk|sys-dark/db-light|nav:document>settings         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 81 skel 81 content - blank 0 | cls 0.037 | sk настройки…+2535
+desk|sys-dark/db-light|nav:settings>balance          theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 319 skel 105 content 625 blank 0 | cls 0 | sk настройки…+520
+desk|sys-dark/db-light|back:>settings                theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 114 skel - content 114 blank 0 | cls 0
+desk|sys-dark/db-light|back:>document                theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 55 skel - content 55 blank 0 | cls 0.018
+desk|sys-dark/db-light|back:>journal                 theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 45 skel - content 45 blank 0 | cls 0.011
+desk|sys-dark/db-light|back:>journals                theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 214 skel - content 214 blank 0 | cls 0.909
+desk|sys-dark/db-light|back:>dashboard               theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 215 skel - content 215 blank 0 | cls 0.005
+desk|sys-dark/db-light|refresh:dashboard             theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 4 skel - content 4 blank 0 | cls 0
+desk|sys-dark/db-light|login                         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 3726 skel - content 3726 blank 0 | cls 0.001
+desk|sys-light/db-dark|load:dashboard                theme✗  44f/1554ms (кадры 16/673ms) | wn - | url 0 skel 0 content 540 blank 0 | cls 0 | sk дашборд…+540>дашборд…+1329
+desk|sys-light/db-dark|load:journals                 theme✗  20f/2216ms (кадры 3/1281ms) | wn - | url 0 skel 0 content 99 blank 0 | cls 0.041 | sk журналы…+99
+desk|sys-light/db-dark|load:journal                  theme✗   5f/ 693ms (кадры 10/815ms) | wn - | url 0 skel 0 content 354 blank 0 | cls 0.001 | sk журналы…+88>документы журнала…+266
+desk|sys-light/db-dark|load:document                 theme✗   7f/ 724ms (кадры 2/744ms) | wn - | url 0 skel 0 content 259 blank 0 | cls 0.001 | sk журналы…+259
+desk|sys-light/db-dark|load:settings                 theme✗  28f/2130ms (кадры 11/1209ms) | wn - | url 0 skel 0 content 518 blank 0 | cls 0 | sk настройки…+518
+desk|sys-light/db-dark|load:balance                  theme✗   3f/ 486ms (кадры 11/546ms) | wn - | url 0 skel 0 content 486 blank 0 | cls 0 | sk настройки…+486
+desk|sys-light/db-dark|nav:dashboard>journals        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 86 skel 86 content 398 blank 0 | cls 0.005 | sk журналы…+312
+desk|sys-light/db-dark|nav:journals>journal          theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 45 skel 45 content 360 blank 0 | cls 0.018 | sk документы журнала…+315
+desk|sys-light/db-dark|nav:journal>document          theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 59 skel 59 content 1003 blank 0 | cls 0.006 | sk документ…+944
+desk|sys-light/db-dark|nav:document>settings         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 103 skel 103 content 522 blank 0 | cls 0.037 | sk настройки…+419
+desk|sys-light/db-dark|nav:settings>balance          theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 256 skel 256 content 599 blank 0 | cls 0 | sk настройки…+343
+desk|sys-light/db-dark|back:>settings                theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 119 skel - content 119 blank 0 | cls 0
+desk|sys-light/db-dark|back:>document                theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 98 skel - content 98 blank 0 | cls 0.037
+desk|sys-light/db-dark|back:>journal                 theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 100 skel - content 100 blank 0 | cls 0.011
+desk|sys-light/db-dark|back:>journals                theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 115 skel - content 115 blank 0 | cls 0.909
+desk|sys-light/db-dark|back:>dashboard               theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 139 skel - content 139 blank 0 | cls 0.005
+desk|sys-light/db-dark|refresh:dashboard             theme✗   0f/   0ms | wn - | url 15 skel - content 15 blank 0 | cls 0
+desk|sys-light/db-dark|login                         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 1585 skel - content 1585 blank 0 | cls 0.001
+desk|auto-night/db-light|load:dashboard              theme✗   5f/ 274ms (кадры 13/419ms) | wn - | url 0 skel 0 content 274 blank 0 | cls 0 | sk дашборд…+274
+desk|auto-night/db-light|load:journals               theme✗   6f/ 891ms (кадры 11/932ms) | wn - | url 0 skel 0 content 146 blank 0 | cls 0.041 | sk журналы…+146
+desk|auto-night/db-light|load:journal                theme✗   4f/ 370ms (кадры 22/520ms) | wn - | url 0 skel 0 content 370 blank 0 | cls 0.001 | sk журналы…+59>документы журнала…+311
+desk|auto-night/db-light|load:document               theme✗   3f/ 371ms (кадры 24/623ms) | wn - | url 0 skel 0 content 371 blank 0 | cls 0 | sk журналы…+186>документы журнала…+185
+desk|auto-night/db-light|load:settings               theme✗   4f/ 785ms (кадры 5/861ms) | wn - | url 0 skel 0 content 140 blank 0 | cls 0 | sk настройки…+140
+desk|auto-night/db-light|load:balance                theme✗   4f/ 349ms (кадры 3/549ms) | wn - | url 0 skel 0 content 111 blank 0 | cls 0 | sk настройки…+111
+desk|auto-night/db-light|nav:dashboard>journals      theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 78 skel 78 content 413 blank 0 | cls 0.005 | sk журналы…+335
+desk|auto-night/db-light|nav:journals>journal        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 40 skel 40 content 357 blank 0 | cls 0.018 | sk документы журнала…+317
+desk|auto-night/db-light|nav:journal>document        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 79 skel 79 content 355 blank 0 | cls 0.006 | sk документ…+276
+desk|auto-night/db-light|nav:document>settings       theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 83 skel 83 content 398 blank 0 | cls 0.037 | sk настройки…+315
+desk|auto-night/db-light|nav:settings>balance        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 110 skel - content 110 blank 0 | cls 0
+desk|auto-night/db-light|back:>settings              theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 77 skel - content 77 blank 0 | cls 0
+desk|auto-night/db-light|back:>document              theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 57 skel - content 57 blank 0 | cls 0.018
+desk|auto-night/db-light|back:>journal               theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 62 skel - content 62 blank 0 | cls 0.011
+desk|auto-night/db-light|back:>journals              theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 84 skel - content 84 blank 0 | cls 0.909
+desk|auto-night/db-light|back:>dashboard             theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 80 skel - content 80 blank 0 | cls 0.005
+desk|auto-night/db-light|refresh:dashboard           theme✗   0f/   0ms | wn - | url 2 skel - content 2 blank 0 | cls 0
+desk|auto-night/db-light|login                       theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 1697 skel - content 1697 blank 0 | cls 0.001
+desk|wn|load:dashboard                               theme✗   0f/   0ms (кадры 0/0ms) | wn show@1754 | url 0 skel 72 content 775 blank 0 | cls 0.047 | sk дашборд…+703
+desk|wn|nav:dashboard>journals                       theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 140 skel 140 content 1075 blank 0 | cls 0.005 | sk журналы…+935
+desk|wn|nav:journals>journal                         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 93 skel 93 content 692 blank 0 | cls 0.018 | sk документы журнала…+599
+desk|wn|nav:journal>document                         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 99 skel 99 content 1120 blank 0 | cls 0.006 | sk документ…+1021
+desk|wn|nav:document>settings                        theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 190 skel 190 content - blank 0 | cls 0.037 | sk настройки…+2555
+desk|wn|nav:settings>balance                         theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 729 skel 15 content 851 blank 0 | cls 0 | sk настройки…+836
+desk|wn|back:>settings                               theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 133 skel - content 133 blank 0 | cls 0
+desk|wn|nav:settings>whats-new(public)               theme✗   0f/   0ms | wn - | url - skel - content - blank 0 | cls 0
+desk|wn|back:>settings(remount)                      theme✗   0f/   0ms (кадры 0/0ms) | wn - | url - skel - content - blank 0 | cls 0.017
+desk|wn|after-close:nav>dashboard                    theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 90 skel 90 content - blank 0 | cls 0.037 | sk дашборд…+2503
+desk|wn|after-close:reload                           theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 3612 blank 0 | cls 0 | sk дашборд…+3612
+desk|wn-legacy|load1:dashboard                       theme✗   0f/   0ms (кадры 0/0ms) | wn show@2543 | url 0 skel 63 content 1393 blank 0 | cls 0.046 | sk дашборд…+1330
+desk|wn-legacy|load2:dashboard                       theme✗   0f/   0ms (кадры 0/0ms) | wn show@3769 | url 0 skel 0 content 4476 blank 0 | cls 0 | sk дашборд…+4476
+desk|wn-legacy|after-close:reload                    theme✗   0f/   0ms (кадры 0/0ms) | wn - | url 0 skel 0 content 1894 blank 0 | cls 0 | sk дашборд…+1894

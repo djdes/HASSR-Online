@@ -1,4 +1,25 @@
-import { Skeleton } from "@/components/ui/skeleton";
+"use client";
+
+import { usePathname } from "next/navigation";
+
+import { PageSkeleton, Skeleton } from "@/components/ui/skeleton";
+import { isSectionRoot } from "@/components/ui/skeleton-routes";
+
+/**
+ * Загрузка раздела `/settings/*`.
+ *
+ * Этот `loading.tsx` — запасной для ВСЕХ подстраниц настроек (своих у них
+ * нет), поэтому смотрим на адрес: хабу — его раскладка с тёмным hero,
+ * подстраницам — общий скелет страницы (шапка + панель). Раньше любая
+ * подстраница, от «Сотрудников» до «Баланса», грузилась под скелетом хаба
+ * с тёмным баннером, которого на ней нет, — экран «прыгал».
+ */
+export default function SettingsLoading() {
+  if (!isSectionRoot(usePathname(), "/settings")) {
+    return <PageSkeleton label="Загружаем настройки…" body="panel" />;
+  }
+  return <SettingsHubSkeleton />;
+}
 
 /**
  * Skeleton хаба `/settings`. Повторяет структуру страницы: тёмный
@@ -6,7 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton";
  * hero — см. `.claude/skills/design-system`), плашка «Быстрый старт»,
  * группы карточек разделов.
  */
-export default function SettingsLoading() {
+function SettingsHubSkeleton() {
   return (
     <div className="space-y-5" aria-busy="true" aria-live="polite">
       <span className="sr-only">Загружаем настройки…</span>

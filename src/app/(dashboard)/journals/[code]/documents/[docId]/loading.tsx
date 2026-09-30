@@ -1,11 +1,27 @@
-import { Skeleton } from "@/components/ui/skeleton";
+"use client";
+
+import { usePathname } from "next/navigation";
+
+import { PageSkeleton, Skeleton } from "@/components/ui/skeleton";
+import { journalsSkeletonFor } from "@/components/ui/skeleton-routes";
+
+/**
+ * Загрузка документа журнала. Граница срабатывает и для проверки документа
+ * (`…/documents/<id>/verify`) — ей общий скелет страницы, а не сетка.
+ */
+export default function JournalDocumentLoading() {
+  if (journalsSkeletonFor(usePathname()) === "page") {
+    return <PageSkeleton label="Загружаем проверку документа…" body="list" />;
+  }
+  return <JournalDocumentGridSkeleton />;
+}
 
 /**
  * Skeleton страницы одного документа-журнала.
  * Повторяет реальную раскладку: back-link + действия, ХАССП-шапка
  * (три колонки), заголовок журнала и сетка «строки × дни».
  */
-export default function JournalDocumentLoading() {
+function JournalDocumentGridSkeleton() {
   return (
     <div className="space-y-5" aria-busy="true" aria-live="polite">
       <span className="sr-only">Загружаем документ…</span>

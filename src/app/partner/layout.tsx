@@ -9,6 +9,7 @@ import { AuthSessionProvider } from "@/components/layout/session-provider";
 import { PartnerShell } from "@/components/partner/partner-shell";
 import { SiteThemeBootstrap, SiteThemeProvider } from "@/components/theme/site-theme";
 import { Toaster } from "@/components/ui/sonner";
+import { readInitialTheme } from "@/lib/site-theme.server";
 import "@/app/app-theme.css";
 
 export const dynamic = "force-dynamic";
@@ -38,7 +39,7 @@ export default async function PartnerAreaLayout({ children }: { children: React.
       : null,
     db.partner.findUnique({ where: { id: membership.partnerId }, select: { reviewComment: true } }),
   ]);
-  const initialTheme: "light" | "dark" = profile?.themePreference === "dark" ? "dark" : "light";
+  const initialTheme = await readInitialTheme(profile?.themePreference);
   const brandName = brand?.brandName ?? membership.partner.brandName;
   const logoUrl = brand?.hasLogoLight ? logoUrlFor(brand, "light") : null;
 
@@ -66,8 +67,9 @@ export default async function PartnerAreaLayout({ children }: { children: React.
   return (
     <AuthSessionProvider session={session}>
       <SiteThemeProvider initialTheme={initialTheme}>
-        <SiteThemeBootstrap />
         <div className="app-shell min-h-screen bg-[#f4f5fb]" data-app-theme={initialTheme} suppressHydrationWarning>
+          {/* Первым ребёнком — красит оболочку до первого кадра. */}
+          <SiteThemeBootstrap />
           {body}
         </div>
         <Toaster />

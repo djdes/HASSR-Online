@@ -66,6 +66,9 @@ export async function POST(req: NextRequest) {
     where: { id: auth.session.user.id },
     data: { themePreference: theme },
   });
+  // Смена темы в профиле — по ней рисуются новые устройства; «прыгает
+  // тема» разбирается по этой строке и куке `wesetup-theme` устройства.
+  console.info(`[theme] профиль user=${auth.session.user.id} → ${theme}`);
 
   return NextResponse.json({ ok: true, theme });
 }

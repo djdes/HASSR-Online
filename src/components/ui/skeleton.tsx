@@ -146,7 +146,14 @@ export function SkeletonTable({
 }
 
 /** Шапка страницы: заголовок, подпись и пара кнопок справа. */
-export function SkeletonPageHeader({ className }: { className?: string }) {
+export function SkeletonPageHeader({
+  className,
+  actions = true,
+}: {
+  className?: string;
+  /** Кнопки справа от заголовка — как у настоящей страницы. */
+  actions?: boolean;
+}) {
   return (
     <div
       className={cn(
@@ -158,10 +165,103 @@ export function SkeletonPageHeader({ className }: { className?: string }) {
         <Skeleton className="h-7 w-[240px] max-w-full rounded-xl" />
         <Skeleton className="h-3.5 w-[380px] max-w-full rounded-lg" />
       </div>
-      <div className="flex gap-2">
-        <Skeleton className="h-10 w-[130px] rounded-2xl" />
-        <Skeleton className="h-10 w-[104px] rounded-2xl" />
+      {actions ? (
+        <div className="flex gap-2">
+          <Skeleton className="h-10 w-[130px] rounded-2xl" />
+          <Skeleton className="h-10 w-[104px] rounded-2xl" />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/** Карточка-панель со строками «подпись + поле/значение» — формы и списки настроек. */
+export function SkeletonPanel({
+  rows = 5,
+  className,
+}: {
+  rows?: number;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "space-y-5 rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-6",
+        className,
+      )}
+    >
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-48 rounded-lg" />
+        <Skeleton className="h-3 w-72 max-w-full rounded-lg" />
       </div>
+      {Array.from({ length: rows }).map((_, index) => (
+        <div key={index} className="space-y-2">
+          <Skeleton
+            className="h-3 rounded-lg"
+            style={{ width: `${[28, 36, 22, 32, 26][index % 5]}%` }}
+          />
+          <Skeleton className="h-11 w-full rounded-2xl" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Скелетон целой страницы кабинета — ОДИН на все новые `loading.tsx`, чтобы
+ * загрузка везде выглядела одинаково: шапка как у `PageHeader`, при желании
+ * плитки-счётчики (2 в ряд на телефоне, 4 на компьютере) и тело —
+ * карточки, строки списка, таблица или панель-форма. Цвета — токены
+ * `--app-skeleton-*`, поэтому одинаково в светлой и тёмной теме.
+ *
+ * `label` — для экранного диктора: «Загружаем …».
+ */
+export function PageSkeleton({
+  label,
+  body = "cards",
+  items,
+  stats = 0,
+  actions = true,
+  className,
+}: {
+  label: string;
+  body?: "cards" | "list" | "table" | "panel";
+  /** Сколько карточек / строк / строк таблицы / полей. */
+  items?: number;
+  /** Плитки-счётчики под шапкой. */
+  stats?: number;
+  actions?: boolean;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn("space-y-5", className)}
+      aria-busy="true"
+      aria-live="polite"
+      data-page-skeleton={body}
+    >
+      <span className="sr-only">{label}</span>
+      <SkeletonPageHeader actions={actions} />
+      {stats > 0 ? (
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {Array.from({ length: stats }).map((_, index) => (
+            <Skeleton key={index} className="h-[74px] rounded-2xl" />
+          ))}
+        </div>
+      ) : null}
+      {body === "cards" ? (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: items ?? 6 }).map((_, index) => (
+            <SkeletonCard key={index} />
+          ))}
+        </div>
+      ) : body === "list" ? (
+        <SkeletonList rows={items ?? 6} height={72} />
+      ) : body === "table" ? (
+        <SkeletonTable rows={items ?? 8} />
+      ) : (
+        <SkeletonPanel rows={items ?? 5} />
+      )}
     </div>
   );
 }

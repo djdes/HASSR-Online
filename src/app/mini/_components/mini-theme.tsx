@@ -6,6 +6,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -35,6 +36,10 @@ import {
 import { getTelegramWebApp, isInsideTelegram } from "./telegram-web-app";
 
 export type { MiniTheme } from "./mini-theme-model";
+
+/** До отрисовки кадра в браузере; на сервере эффектов нет. */
+const useBeforePaintEffect =
+  typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 /**
  * Тема мини-приложения: «Светлая», «Тёмная» или «Как на устройстве» —
@@ -185,7 +190,11 @@ export function MiniThemeProvider({
   // Выбор лежит в localStorage и в Telegram — сервер их не видит, прочитать
   // можно только после гидрации (экран уже покрасил скрипт до гидрации,
   // состояние догоняет его). Тот же законный приём, что в site-theme.tsx.
-  useEffect(() => {
+  // До отрисовки кадра: экраны `/mini/*` и страницы кабинета в оболочке —
+  // разные layout'ы, при переходе между ними оболочка монтируется заново
+  // без скрипта до гидрации, и обычный эффект показывал кадр в теме
+  // сервера (профиля), пока не применял «как на устройстве».
+  useBeforePaintEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     commit(
       resolveMiniThemeChoice({

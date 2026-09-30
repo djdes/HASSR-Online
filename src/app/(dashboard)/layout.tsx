@@ -32,6 +32,8 @@ import { npsVisibilityFor } from "@/lib/nps-data";
 import { deletionDueAt } from "@/lib/org-deletion";
 import { currentAnnouncement } from "@/lib/platform-status";
 import { WHATS_NEW_NOTES, notesWithoutPartnerProgram, whatsNewVersion } from "@/lib/whats-new-notes";
+import { THEME_COOKIE, pickInitialTheme } from "@/lib/theme-cookie";
+import { WHATS_NEW_COOKIE, whatsNewMode } from "@/lib/whats-new-seen";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { hasCapability } from "@/lib/permission-presets";
 import { getBalance } from "@/lib/balance/ledger";
@@ -190,10 +192,26 @@ export default async function DashboardLayout({
       partnerAccess ? getPartnerBrandById(partnerAccess.partnerId) : Promise.resolve(null),
     ]);
 
+  // «Что нового»: показывать ли — решаем здесь, до первой отрисовки, по
+  // куке устройства (lib/whats-new-seen.ts). Версия — по ПОЛНОМУ тексту
+  // заметок: одна на все организации, иначе смена организации «обновляла»
+  // заметки и окно появлялось снова.
+  const whatsNewCurrent = whatsNewVersion(WHATS_NEW_NOTES);
+  const whatsNewState = whatsNewMode({
+    enabled: hasFullWorkspaceAccess(session.user) && profile?.showWhatsNew !== false,
+    version: whatsNewCurrent,
+    seenCookie: cookieStore.get(WHATS_NEW_COOKIE)?.value,
+  });
+  if (whatsNewState === "show") {
+    console.info(`[whats-new] окно в разметке сразу открыто user=${session.user.id} version=${whatsNewCurrent}`);
+  }
   // Консультант скрыл себя — в «Что нового» нет заметок о партнёрской программе.
-  const whatsNewNotes = (await isPartnerHiddenForOrg(activeOrgId))
-    ? notesWithoutPartnerProgram(WHATS_NEW_NOTES)
-    : WHATS_NEW_NOTES;
+  const whatsNewNotes =
+    whatsNewState === "hide"
+      ? []
+      : (await isPartnerHiddenForOrg(activeOrgId))
+        ? notesWithoutPartnerProgram(WHATS_NEW_NOTES)
+        : WHATS_NEW_NOTES;
 
   // Точки: список для переключателя в шапке и активная точка запроса.
   // Тот же контекст (кэш на запрос) читают страницы журналов.
@@ -250,8 +268,13 @@ export default async function DashboardLayout({
   ]);
   const deletionDue = deletionState?.deletionRequestedAt ? deletionDueAt(deletionState.deletionRequestedAt).toISOString() : null;
   const impersonatedName = impersonatedOrg?.name ?? null;
-  const initialTheme: "light" | "dark" =
-    profile?.themePreference === "dark" ? "dark" : "light";
+  // Тема первого кадра — та, что сейчас на этом устройстве (кука), иначе
+  // тема профиля. Так же и при router.refresh(): сервер не «возвращает»
+  // тему профиля поверх выбора устройства.
+  const initialTheme = pickInitialTheme(
+    cookieStore.get(THEME_COOKIE)?.value,
+    profile?.themePreference,
+  );
 
   // Анкета считается незаполненной, если нет телефона или организация
   // всё ещё называется заглушкой из мгновенной регистрации. На имя
@@ -318,7 +341,6 @@ export default async function DashboardLayout({
       <CustomNamesProvider names={customNames}>
       <KioskSessionGuard />
       <SiteThemeProvider initialTheme={initialTheme}>
-        <SiteThemeBootstrap />
         {/* H1 — white-label brand color через CSS-vars. Подменяет
             основной indigo (#5566f6) если org указала свой цвет. */}
         {brandColor ? (
@@ -344,6 +366,9 @@ export default async function DashboardLayout({
           data-partner-accent={partnerAccent ? "" : undefined}
           suppressHydrationWarning
         >
+          {/* Первым ребёнком: скрипт видит уже открытую оболочку и красит её
+              в тему устройства до первого кадра. */}
+          <SiteThemeBootstrap />
           {/* Док плавающих кнопок: AI-помощник, поддержка и «Как
               заполнять» регистрируются в нём вместо собственных круглых
               кнопок. На телефоне их было три, и они закрывали правый
@@ -542,10 +567,11 @@ export default async function DashboardLayout({
               hideOnPaths={["/settings/subscription"]}
             />
           ) : null}
-          {hasFullWorkspaceAccess(session.user) && profile?.showWhatsNew !== false ? (
+          {whatsNewState !== "hide" ? (
             <WhatsNewModal
-              buildSha={whatsNewVersion(whatsNewNotes)}
+              buildSha={whatsNewCurrent}
               notes={whatsNewNotes}
+              mode={whatsNewState}
             />
           ) : null}
           {/* ⌘K — палитра-навигатор. Один глобальный listener на keydown,

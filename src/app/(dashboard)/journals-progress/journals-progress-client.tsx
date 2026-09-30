@@ -8,6 +8,7 @@ import { ArrowRight, Loader2, RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
 import { pluralRu } from "@/lib/plural-ru";
+import JournalsProgressLoading from "./loading";
 
 type Status = "untouched" | "in_progress" | "completed";
 
@@ -91,6 +92,12 @@ export function JournalsProgressClient() {
     };
   }, []);
 
+  // Первая загрузка — тот же скелет, что у `loading.tsx`. Раньше до ответа
+  // сервера страница уже рисовала шапку по нулевым счётчикам — «Все журналы
+  // на сегодня готовы», — а через секунду меняла её на «Сегодня нужно
+  // заполнить: N». Обновления после первой загрузки — тихие, без скелета.
+  if (loading) return <JournalsProgressLoading />;
+
   const inProgress = items.filter((i) => i.status === "in_progress");
   const completed = items.filter((i) => i.status === "completed");
   const untouched = items.filter((i) => i.status === "untouched");
@@ -123,34 +130,27 @@ export function JournalsProgressClient() {
         }
       />
 
-      {loading ? (
-        <div className="flex items-center justify-center rounded-3xl border border-[#ececf4] bg-white p-16 text-[#6f7282]">
-          <Loader2 className="mr-2 size-4 animate-spin" />
-          Считаем прогресс…
-        </div>
-      ) : (
-        <div className="grid gap-5 lg:grid-cols-3">
-          {/* Большая левая колонка: «Нужно внимание» — собирает
-              незаполнено + начато-не-закончено. Заведующая видит
-              где ещё надо подтолкнуть сотрудников. */}
-          <div className="lg:col-span-2">
-            <Column
-              title={`Нужно внимание · ${untouched.length + inProgress.length}`}
-              subtitle="Не начаты или не закончены — проверь, подтолкни сотрудников"
-              tone="warn"
-              items={[...inProgress, ...untouched]}
-              emptyHint="Все журналы либо готовы, либо ещё не подошёл срок"
-            />
-          </div>
+      <div className="grid gap-5 lg:grid-cols-3">
+        {/* Большая левая колонка: «Нужно внимание» — собирает
+            незаполнено + начато-не-закончено. Заведующая видит
+            где ещё надо подтолкнуть сотрудников. */}
+        <div className="lg:col-span-2">
           <Column
-            title={`Готовы · ${completed.length}`}
-            subtitle="Все задачи закрыты"
-            tone="success"
-            items={completed}
-            emptyHint="Пока ни один журнал не сделан полностью"
+            title={`Нужно внимание · ${untouched.length + inProgress.length}`}
+            subtitle="Не начаты или не закончены — проверь, подтолкни сотрудников"
+            tone="warn"
+            items={[...inProgress, ...untouched]}
+            emptyHint="Все журналы либо готовы, либо ещё не подошёл срок"
           />
         </div>
-      )}
+        <Column
+          title={`Готовы · ${completed.length}`}
+          subtitle="Все задачи закрыты"
+          tone="success"
+          items={completed}
+          emptyHint="Пока ни один журнал не сделан полностью"
+        />
+      </div>
     </div>
   );
 }

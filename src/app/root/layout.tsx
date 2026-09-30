@@ -9,6 +9,7 @@ import {
   SiteThemeProvider,
 } from "@/components/theme/site-theme";
 import { Toaster } from "@/components/ui/sonner";
+import { readInitialTheme } from "@/lib/site-theme.server";
 import "@/app/app-theme.css";
 
 export const dynamic = "force-dynamic";
@@ -35,8 +36,7 @@ export default async function RootAreaLayout({
     where: { id: session.user.id },
     select: { themePreference: true },
   });
-  const initialTheme: "light" | "dark" =
-    profile?.themePreference === "dark" ? "dark" : "light";
+  const initialTheme = await readInitialTheme(profile?.themePreference);
 
   return (
     // AuthSessionProvider обязателен — клиентские компоненты типа
@@ -46,12 +46,13 @@ export default async function RootAreaLayout({
     // /root/* странице где есть подобные кнопки.
     <AuthSessionProvider session={session}>
     <SiteThemeProvider initialTheme={initialTheme}>
-      <SiteThemeBootstrap />
       <div
         className="app-shell min-h-screen bg-[#f4f5fb]"
         data-app-theme={initialTheme}
         suppressHydrationWarning
       >
+      {/* Первым ребёнком — красит оболочку до первого кадра. */}
+      <SiteThemeBootstrap />
       {/* Шапка в две строки: кто вошёл — сверху, разделы — под ней.
           Девятнадцать разделов одной строкой не помещались. */}
       <header className="border-b border-[#ececf4] bg-[#0b1024] text-white">

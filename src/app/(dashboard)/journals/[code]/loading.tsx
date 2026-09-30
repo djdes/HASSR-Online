@@ -1,9 +1,30 @@
-import { Skeleton } from "@/components/ui/skeleton";
+"use client";
+
+import { usePathname } from "next/navigation";
+
+import { PageSkeleton, Skeleton } from "@/components/ui/skeleton";
+import { journalsSkeletonFor } from "@/components/ui/skeleton-routes";
 import {
   JOURNAL_LIST_CARDS_CLASS,
   JOURNAL_LIST_STACK_CLASS,
   JOURNAL_TAB_RAIL_CLASS,
 } from "@/components/journals/journal-responsive";
+
+import JournalDocumentLoading from "./documents/[docId]/loading";
+
+/**
+ * Загрузка поддерева `/journals/[code]/*` — скелет той страницы, которая
+ * откроется. Этот `loading.tsx` — запасной и для документа (у его layout'а
+ * свой запрос к базе, и до него срабатывает эта граница), и для новой
+ * записи, инструкции, справки: раньше все они грузились под скелетом
+ * списка документов и потом «перепрыгивали» в свою раскладку.
+ */
+export default function JournalCodeLoading() {
+  const kind = journalsSkeletonFor(usePathname());
+  if (kind === "document") return <JournalDocumentLoading />;
+  if (kind === "page") return <PageSkeleton label="Загружаем журнал…" body="panel" />;
+  return <JournalListSkeleton />;
+}
 
 /**
  * Skeleton списка документов внутри журнала (`/journals/[code]`).
@@ -20,7 +41,7 @@ import {
  * что у списков (`JOURNAL_LIST_STACK_CLASS`, `JOURNAL_LIST_CARDS_CLASS`):
  * страница после загрузки не прыгает.
  */
-export default function JournalCodeLoading() {
+function JournalListSkeleton() {
   return (
     <div className={JOURNAL_LIST_STACK_CLASS} aria-busy="true" aria-live="polite">
       <span className="sr-only">Загружаем документы журнала…</span>

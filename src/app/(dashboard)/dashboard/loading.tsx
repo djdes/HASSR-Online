@@ -1,4 +1,9 @@
-import { Skeleton, SkeletonTable } from "@/components/ui/skeleton";
+"use client";
+
+import { usePathname } from "next/navigation";
+
+import { PageSkeleton, Skeleton, SkeletonTable } from "@/components/ui/skeleton";
+import { isSectionRoot } from "@/components/ui/skeleton-routes";
 import {
   JOURNAL_ITEM_CLASS,
   JOURNAL_LIST_CLASS,
@@ -8,13 +13,25 @@ import {
 } from "@/components/dashboard/dashboard-journals-layout";
 
 /**
+ * Загрузка `/dashboard/*`. Вложенные страницы («Догнать пропущенное»,
+ * «Аудит соответствия») грузились под скелетом дашборда и потом
+ * перестраивались в свою раскладку — им общий скелет страницы.
+ */
+export default function DashboardLoading() {
+  if (!isSectionRoot(usePathname(), "/dashboard")) {
+    return <PageSkeleton label="Загружаем страницу…" body="list" />;
+  }
+  return <DashboardSkeleton />;
+}
+
+/**
  * Skeleton дашборда. Повторяет структуру `/dashboard`: секция
  * «Обязательные журналы» без карточки — заголовок на фоне страницы,
  * панель (кнопки и поиск), строки «превью + название» теми же классами,
  * что и настоящий список; ниже плитки быстрых действий и таблица
  * последних записей.
  */
-export default function DashboardLoading() {
+function DashboardSkeleton() {
   return (
     <div className="space-y-5" aria-busy="true" aria-live="polite">
       <span className="sr-only">Загружаем дашборд…</span>

@@ -1,11 +1,27 @@
-import { Skeleton, SkeletonPageHeader } from "@/components/ui/skeleton";
+"use client";
+
+import { usePathname } from "next/navigation";
+
+import { PageSkeleton, Skeleton, SkeletonPageHeader } from "@/components/ui/skeleton";
+import { isSectionRoot } from "@/components/ui/skeleton-routes";
+
+/**
+ * Загрузка `/reports/*`: отчёту по сотруднику (`/reports/by-user/[id]`) —
+ * общий скелет страницы, а не раскладка сводных отчётов.
+ */
+export default function ReportsLoading() {
+  if (!isSectionRoot(usePathname(), "/reports")) {
+    return <PageSkeleton label="Загружаем отчёт…" body="cards" items={4} />;
+  }
+  return <ReportsSkeleton />;
+}
 
 /**
  * Skeleton страницы `/reports`. Повторяет структуру: шапка, карточка
  * ИИ-отчёта, сравнение недель, графики (тренд + heatmap'ы), сводный
  * ZIP-отчёт, форма генерации.
  */
-export default function ReportsLoading() {
+function ReportsSkeleton() {
   return (
     <div className="space-y-5" aria-busy="true" aria-live="polite">
       <span className="sr-only">Загружаем отчёты…</span>
