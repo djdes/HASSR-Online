@@ -1,0 +1,26 @@
+{
+  "anchorLink": 1,
+  "memberRow": "ИПИван ПоварКафе «Альфа» · ПоварСотрудникУбрать",
+  "searchClearedAfterGrant": true,
+  "invitedRow": "БТБэк-офис Тестовыйbackoffice-mca@e2e.local · только этот кабинетПриглашёнУбрать",
+  "emailSent": true,
+  "db": {
+    "membershipRole": "manager",
+    "invitedHome": true,
+    "invitedActive": false,
+    "inviteTokens": 1,
+    "audit": 2
+  },
+  "cookSeesCabinet": true,
+  "cook": {
+    "switch": 200,
+    "directory": 200,
+    "accessApi": 403
+  },
+  "inviteeUrl": "/master",
+  "inviteeActive": true,
+  "cookAfterRevoke": 401,
+  "invitedArchived": true,
+  "phoneNoHScroll": true,
+  "ok": true
+}
