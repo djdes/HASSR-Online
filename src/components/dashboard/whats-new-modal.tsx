@@ -1,5 +1,11 @@
 "use client";
 import { lockBodyScroll, unlockBodyScroll } from "@/lib/use-body-scroll-lock";
+import {
+  WHATS_NEW_LEGACY_KEY,
+  legacyWhatsNewAction,
+  whatsNewCookieString,
+  type WhatsNewMode,
+} from "@/lib/whats-new-seen";
 
 import { useEffect, useState } from "react";
 import {
@@ -46,7 +52,7 @@ import {
   Snowflake,
 } from "lucide-react";
 
-const STORAGE_KEY = "wesetup.last-seen-build-sha";
+const STORAGE_KEY = WHATS_NEW_LEGACY_KEY;
 
 /**
  * Заметка может быть простой строкой (legacy) или категорией с
@@ -66,8 +72,15 @@ export type WhatsNewNote =
     };
 
 type Props = {
+  /** Версия заметок — хэш полного текста (`whatsNewVersion(WHATS_NEW_NOTES)`). */
   buildSha: string;
   notes: WhatsNewNote[];
+  /**
+   * Решение сервера (`whatsNewMode`, lib/whats-new-seen.ts): `show` — окно
+   * открыто уже в серверной разметке; `legacy` — куки ещё нет, один раз
+   * решаем по старой отметке в localStorage.
+   */
+  mode?: Exclude<WhatsNewMode, "hide">;
 };
 
 function isCategoryNote(
@@ -167,42 +180,52 @@ function iconForCategory(name: string): LucideIcon {
 }
 
 /**
- * При первом заходе после новой сборки показываем modal со списком
- * новинок. Юзер видит изменения в lifecycle'е.
+ * После изменения заметок — окно со списком новинок, один раз.
  *
- * Логика:
- *   1. На сервере рендерится с props.buildSha (eb52b71 etc).
- *   2. На клиенте useEffect читает localStorage[STORAGE_KEY].
- *   3. Если != currentSha → показываем modal.
- *   4. Закрытие → пишем currentSha в localStorage.
+ * Решение — до первой отрисовки (`lib/whats-new-seen.ts`):
+ *   1. Сервер сравнивает версию заметок с кукой устройства и рендерит окно
+ *      только когда его нужно показать — сразу открытым (`show`). Не нужно —
+ *      компонента в разметке нет вовсе, ни при загрузке, ни при переходах.
+ *   2. Куки нет (первый заход после выката, `legacy`) — один раз решаем по
+ *      старой отметке в localStorage и переносим её в куку.
+ *   3. Закрытие → версия в куку (и в localStorage — для старых вкладок).
+ *
+ * Раньше окно открывал эффект после гидрации: оно всплывало через
+ * секунду-две поверх уже нарисованной страницы, а смена организации
+ * (другая версия текста) показывала его снова.
  *
  * Размер: карточка max-w-[480px], общая высота max-h-[90vh] supports-[height:100dvh]:max-h-[90dvh] (даже на
  * мобилке helmet+address bar остаются видимы), внутренняя scroll-зона
  * со списком категорий — overflow-y-auto. На больших экранах
  * accordion'ы помещаются без скролла.
  */
-export function WhatsNewModal({ buildSha, notes }: Props) {
-  const [open, setOpen] = useState(false);
+export function WhatsNewModal({ buildSha, notes, mode = "show" }: Props) {
+  const [open, setOpen] = useState(mode === "show");
   // По умолчанию открыта первая категория (если есть). Иначе ничего.
   const [openCategoryIdx, setOpenCategoryIdx] = useState<number | null>(0);
 
+  // Первый заход после выката: куки ещё нет — переносим старую отметку.
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (mode !== "legacy") return;
+    let stored: string | null = null;
     try {
-      const seen = window.localStorage.getItem(STORAGE_KEY);
-      if (!seen) {
-        // Первый визит вообще — не показываем (нет «новинок» для нового
-        // юзера). Просто записываем текущий sha.
-        window.localStorage.setItem(STORAGE_KEY, buildSha);
-        return;
-      }
-      if (seen !== buildSha) {
-        setOpen(true);
-      }
+      stored = window.localStorage.getItem(STORAGE_KEY);
     } catch {
-      /* localStorage недоступен — skip */
+      /* localStorage недоступен — считаем первым визитом */
     }
-  }, [buildSha]);
+    const action = legacyWhatsNewAction(stored, buildSha);
+    try {
+      document.cookie = whatsNewCookieString(action.cookieVersion);
+      if (!stored) window.localStorage.setItem(STORAGE_KEY, buildSha);
+    } catch {
+      /* ignore */
+    }
+    console.info(
+      `[whats-new] отметка перенесена в куку: ${stored ?? "нет"} → ${action.cookieVersion}${action.open ? ", окно открыто" : ""}`,
+    );
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- однократный перенос из localStorage
+    if (action.open) setOpen(true);
+  }, [mode, buildSha]);
 
   // ESC и body scroll lock пока открыта.
   useEffect(() => {
@@ -222,10 +245,12 @@ export function WhatsNewModal({ buildSha, notes }: Props) {
   function dismiss() {
     setOpen(false);
     try {
+      document.cookie = whatsNewCookieString(buildSha);
       window.localStorage.setItem(STORAGE_KEY, buildSha);
     } catch {
       /* ignore */
     }
+    console.info(`[whats-new] окно закрыто, версия ${buildSha}`);
   }
 
   if (!open || notes.length === 0) return null;
@@ -263,7 +288,10 @@ export function WhatsNewModal({ buildSha, notes }: Props) {
                 >
                   Что нового в WeSetup
                 </h2>
-                <p className="mt-0.5 text-[12px] text-[#6f7282]">
+                {/* Окно теперь приходит в серверной разметке: дата — по
+                    Москве, чтобы сервер и браузер написали одно и то же
+                    (иначе около полуночи — расхождение гидрации). */}
+                <p className="mt-0.5 text-[12px] text-[#6f7282]" suppressHydrationWarning>
                   Сборка{" "}
                   <span className="font-mono text-[#3848c7]">{buildSha}</span>
                   {" · "}
@@ -271,6 +299,7 @@ export function WhatsNewModal({ buildSha, notes }: Props) {
                     day: "numeric",
                     month: "long",
                     year: "numeric",
+                    timeZone: "Europe/Moscow",
                   })}
                 </p>
               </div>

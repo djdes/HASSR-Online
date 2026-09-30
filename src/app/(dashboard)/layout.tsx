@@ -33,6 +33,7 @@ import { deletionDueAt } from "@/lib/org-deletion";
 import { currentAnnouncement } from "@/lib/platform-status";
 import { WHATS_NEW_NOTES, notesWithoutPartnerProgram, whatsNewVersion } from "@/lib/whats-new-notes";
 import { THEME_COOKIE, pickInitialTheme } from "@/lib/theme-cookie";
+import { WHATS_NEW_COOKIE, whatsNewMode } from "@/lib/whats-new-seen";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { hasCapability } from "@/lib/permission-presets";
 import { getBalance } from "@/lib/balance/ledger";
@@ -191,10 +192,26 @@ export default async function DashboardLayout({
       partnerAccess ? getPartnerBrandById(partnerAccess.partnerId) : Promise.resolve(null),
     ]);
 
+  // «Что нового»: показывать ли — решаем здесь, до первой отрисовки, по
+  // куке устройства (lib/whats-new-seen.ts). Версия — по ПОЛНОМУ тексту
+  // заметок: одна на все организации, иначе смена организации «обновляла»
+  // заметки и окно появлялось снова.
+  const whatsNewCurrent = whatsNewVersion(WHATS_NEW_NOTES);
+  const whatsNewState = whatsNewMode({
+    enabled: hasFullWorkspaceAccess(session.user) && profile?.showWhatsNew !== false,
+    version: whatsNewCurrent,
+    seenCookie: cookieStore.get(WHATS_NEW_COOKIE)?.value,
+  });
+  if (whatsNewState === "show") {
+    console.info(`[whats-new] окно в разметке сразу открыто user=${session.user.id} version=${whatsNewCurrent}`);
+  }
   // Консультант скрыл себя — в «Что нового» нет заметок о партнёрской программе.
-  const whatsNewNotes = (await isPartnerHiddenForOrg(activeOrgId))
-    ? notesWithoutPartnerProgram(WHATS_NEW_NOTES)
-    : WHATS_NEW_NOTES;
+  const whatsNewNotes =
+    whatsNewState === "hide"
+      ? []
+      : (await isPartnerHiddenForOrg(activeOrgId))
+        ? notesWithoutPartnerProgram(WHATS_NEW_NOTES)
+        : WHATS_NEW_NOTES;
 
   // Точки: список для переключателя в шапке и активная точка запроса.
   // Тот же контекст (кэш на запрос) читают страницы журналов.
@@ -550,10 +567,11 @@ export default async function DashboardLayout({
               hideOnPaths={["/settings/subscription"]}
             />
           ) : null}
-          {hasFullWorkspaceAccess(session.user) && profile?.showWhatsNew !== false ? (
+          {whatsNewState !== "hide" ? (
             <WhatsNewModal
-              buildSha={whatsNewVersion(whatsNewNotes)}
+              buildSha={whatsNewCurrent}
               notes={whatsNewNotes}
+              mode={whatsNewState}
             />
           ) : null}
           {/* ⌘K — палитра-навигатор. Один глобальный listener на keydown,
