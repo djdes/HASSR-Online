@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Library } from "lucide-react";
+import { Library, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { CreateMasterCabinetDialog } from "@/components/master/create-master-cabinet-dialog";
 import { useOpenMasterCabinet } from "@/components/master/use-open-master-cabinet";
 import { splitCabinetMenu } from "@/lib/cabinet-menu";
 import type { AccessibleOrganization } from "@/lib/organization-access";
@@ -21,7 +22,8 @@ import type { AccessibleOrganization } from "@/lib/organization-access";
  *
  * Мастер-кабинеты справочников — не в списке организаций, а отдельной
  * карточкой «Кабинет», как в меню профиля сайта: нажатие переключает на
- * кабинет и открывает `/master` (`lib/cabinet-menu.ts`).
+ * кабинет и открывает `/master` (`lib/cabinet-menu.ts`). Владельцу
+ * аккаунта под кабинетами — «Создать мастер-кабинет» (сколько угодно).
  */
 export function MiniOrgSwitcher() {
   const router = useRouter();
@@ -30,21 +32,29 @@ export function MiniOrgSwitcher() {
   );
   const [activeId, setActiveId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [canCreateMaster, setCanCreateMaster] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const openMaster = useOpenMasterCabinet();
+
+  const loadOrganizations = useCallback(async (isCancelled: () => boolean = () => false) => {
+    try {
+      const response = await fetch("/api/organizations", { cache: "no-store" });
+      const data = response.ok ? await response.json() : null;
+      if (isCancelled() || !data?.organizations) return;
+      setOrganizations(data.organizations);
+      setCanCreateMaster(data.canCreateMasterCabinet === true);
+    } catch {
+      // Список останется прежним — переключатель просто не обновится.
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/organizations")
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data) => {
-        if (cancelled || !data?.organizations) return;
-        setOrganizations(data.organizations);
-      })
-      .catch(() => {});
+    void loadOrganizations(() => cancelled);
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loadOrganizations]);
 
   useEffect(() => {
     let cancelled = false;
@@ -63,7 +73,8 @@ export function MiniOrgSwitcher() {
 
   const { organizations: regular, masterCabinets } = splitCabinetMenu(organizations);
   const showOrganizations = regular.length >= 2;
-  if (!showOrganizations && masterCabinets.length === 0) return null;
+  const showCabinets = masterCabinets.length > 0 || canCreateMaster;
+  if (!showOrganizations && !showCabinets) return null;
 
   async function switchTo(organization: AccessibleOrganization) {
     if (organization.id === activeId || busyId) return;
@@ -120,7 +131,7 @@ export function MiniOrgSwitcher() {
           </div>
         </section>
       ) : null}
-      {masterCabinets.length > 0 ? (
+      {showCabinets ? (
         <section className="mini-card p-4">
           <div className="mini-label mb-2.5">Кабинет</div>
           <div className="space-y-2">
@@ -144,8 +155,30 @@ export function MiniOrgSwitcher() {
                 ) : null}
               </button>
             ))}
+            {canCreateMaster ? (
+              <button
+                type="button"
+                onClick={() => setCreateOpen(true)}
+                data-testid="mini-create-master-cabinet"
+                className="flex min-h-12 w-full items-center gap-3 rounded-[14px] border border-dashed px-3.5 py-2.5 text-left text-[16px] font-semibold"
+                style={{
+                  background: "var(--mini-surface-1)",
+                  borderColor: "var(--mini-divider-strong)",
+                  color: "var(--mini-accent-ink)",
+                }}
+              >
+                <Plus className="size-5 shrink-0" />
+                <span className="min-w-0 flex-1">Создать мастер-кабинет</span>
+              </button>
+            ) : null}
           </div>
         </section>
+      ) : null}
+      {createOpen ? (
+        <CreateMasterCabinetDialog
+          onClose={() => setCreateOpen(false)}
+          onCreated={() => void loadOrganizations()}
+        />
       ) : null}
     </>
   );

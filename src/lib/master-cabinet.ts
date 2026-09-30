@@ -1,9 +1,19 @@
 import { db } from "@/lib/db";
 import { ensureServiceCode, resolveDishPoolOrgIds } from "@/lib/dish-pool";
+import { generateServiceCode } from "@/lib/dish-pool-code";
 import { buildInviteUrl, generateInviteToken, hashInviteToken, inviteExpiresAt } from "@/lib/invite-tokens";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
+import {
+  mapObjectsToCabinets,
+  MASTER_CABINET_OBJECTS_MAX,
+  normalizeObjectIds,
+  poolCodeOf,
+  summarizeMasterCabinetChoice,
+  type MasterCabinetChoiceSummary,
+  type MasterCabinetObject,
+} from "@/lib/master-cabinet-choice";
 import { MASTER_ORG_KIND, NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
-import { assertOrgMembership } from "@/lib/organization-access";
+import { assertOrgMembership, listAccessibleOrganizations } from "@/lib/organization-access";
 
 /**
  * Создание мастер-кабинета справочников из настроек пищеблока
@@ -25,10 +35,6 @@ export type MasterCabinetStatus = {
     viewerCanOpen: boolean;
   };
 };
-
-function poolCodeOf(org: { serviceCode: string | null; linkedServiceCode: string | null } | null): string | null {
-  return org?.linkedServiceCode ?? org?.serviceCode ?? null;
-}
 
 async function findMasterInPool(poolIds: string[]) {
   return db.organization.findFirst({
@@ -108,8 +114,9 @@ export type CreateMasterCabinetResult = {
 
 /**
  * Кабинет в пуле организации (создать, если его нет) + приглашение
- * сотрудника бэк-офиса. Второй кабинет в пуле не создаётся — только
- * приглашение в существующий.
+ * сотрудника бэк-офиса. Второй кабинет в том же пуле не создаётся — только
+ * приглашение в существующий; ещё один кабинет со своим кодом создаёт
+ * владелец аккаунта из меню профиля (`createAccountMasterCabinet`).
  */
 export async function createOrInviteMasterCabinet(input: {
   organizationId: string;
@@ -272,4 +279,129 @@ export async function renameMasterCabinet(
   if (org.name === name) return { previousName: org.name, name, changed: false };
   await db.organization.update({ where: { id: masterOrgId }, data: { name } });
   return { previousName: org.name, name, changed: true };
+}
+
+/* ─────────── Кабинеты аккаунта: «Создать мастер-кабинет» в меню профиля ─────────── */
+
+async function ownedAccountId(ownerUserId: string): Promise<string> {
+  const account = await db.account.findUnique({ where: { ownerUserId }, select: { id: true } });
+  if (!account) throw new MasterCabinetError("Создавать мастер-кабинеты может только владелец аккаунта", 403);
+  return account.id;
+}
+
+/**
+ * Объекты аккаунта (без демо и кабинетов, только доступные владельцу) и
+ * кабинет, из которого каждый сейчас получает меню и сырьё.
+ */
+export async function listAccountMasterCabinetObjects(ownerUserId: string): Promise<MasterCabinetObject[]> {
+  const accountId = await ownedAccountId(ownerUserId);
+  const [objects, accessible] = await Promise.all([
+    db.organization.findMany({
+      where: { accountId, isDemo: false, ...NOT_DIRECTORY_ORG_WHERE },
+      select: { id: true, name: true, serviceCode: true, linkedServiceCode: true },
+      orderBy: { name: "asc" },
+    }),
+    listAccessibleOrganizations(ownerUserId),
+  ]);
+  const accessibleIds = new Set(accessible.map((item) => item.id));
+  const own = objects.filter((object) => accessibleIds.has(object.id));
+  const codes = [...new Set(own.map(poolCodeOf).filter((code): code is string => Boolean(code)))];
+  const cabinets = codes.length
+    ? await db.organization.findMany({
+        where: {
+          kind: MASTER_ORG_KIND,
+          OR: [{ linkedServiceCode: { in: codes } }, { serviceCode: { in: codes }, linkedServiceCode: null }],
+        },
+        select: { id: true, name: true, serviceCode: true, linkedServiceCode: true },
+        orderBy: { createdAt: "asc" },
+      })
+    : [];
+  return mapObjectsToCabinets(own, cabinets);
+}
+
+/** Свободный код справочника для нового кабинета. */
+async function freeServiceCode(): Promise<string> {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const code = generateServiceCode();
+    const taken = await db.organization.findUnique({ where: { serviceCode: code }, select: { id: true } });
+    if (!taken) return code;
+  }
+  throw new MasterCabinetError("Не удалось выдать код справочника — попробуйте ещё раз", 500);
+}
+
+export type CreateAccountMasterCabinetResult = {
+  id: string;
+  name: string;
+  code: string;
+  organizationIds: string[];
+  summary: MasterCabinetChoiceSummary;
+};
+
+/**
+ * Новый мастер-кабинет аккаунта — сколько угодно кабинетов (например,
+ * «Школы» и «Сады»). У кабинета свой код справочника; отмеченные объекты
+ * подключаются к нему и дальше получают меню и сырьё только отсюда (из
+ * прежнего кабинета — больше нет). Владелец аккаунта — участник кабинета
+ * и переключается в него из меню профиля. Сотрудника бэк-офиса можно
+ * пригласить позже — «Настройки → Мастер-кабинет» у любого из объектов.
+ */
+export async function createAccountMasterCabinet(input: {
+  ownerUserId: string;
+  name: unknown;
+  organizationIds: unknown;
+}): Promise<CreateAccountMasterCabinetResult> {
+  const accountId = await ownedAccountId(input.ownerUserId);
+  const name = normalizeMasterCabinetName(input.name);
+  if (!name) {
+    throw new MasterCabinetError(
+      `Название — от ${MASTER_CABINET_NAME_MIN} до ${MASTER_CABINET_NAME_MAX} символов`,
+      400
+    );
+  }
+  const requested = normalizeObjectIds(input.organizationIds);
+  if (requested.length > MASTER_CABINET_OBJECTS_MAX) {
+    throw new MasterCabinetError(`В одном кабинете — не больше ${MASTER_CABINET_OBJECTS_MAX} объектов`, 400);
+  }
+  const objects = await listAccountMasterCabinetObjects(input.ownerUserId);
+  const known = new Set(objects.map((object) => object.id));
+  if (requested.some((id) => !known.has(id))) {
+    throw new MasterCabinetError("Среди отмеченных есть объект не из вашего аккаунта", 400);
+  }
+
+  const typeSource = await db.organization.findFirst({
+    where: { id: { in: requested.length > 0 ? requested : [...known] } },
+    select: { type: true },
+  });
+  const [code, disabledCodes] = await Promise.all([freeServiceCode(), allJournalCodes()]);
+
+  const master = await db.$transaction(async (tx) => {
+    // Прямой create, как в createOrInviteMasterCabinet: без засева журналов,
+    // триала и писем create-organization.ts.
+    const created = await tx.organization.create({
+      data: {
+        name,
+        type: typeSource?.type ?? "other",
+        kind: MASTER_ORG_KIND,
+        serviceCode: code,
+        accountId,
+        disabledJournalCodes: disabledCodes,
+      },
+      select: { id: true, name: true },
+    });
+    await tx.organizationMember.create({
+      data: { userId: input.ownerUserId, organizationId: created.id, role: "owner" },
+    });
+    if (requested.length > 0) {
+      await tx.organization.updateMany({ where: { id: { in: requested } }, data: { linkedServiceCode: code } });
+    }
+    return created;
+  });
+
+  return {
+    id: master.id,
+    name: master.name,
+    code,
+    organizationIds: requested,
+    summary: summarizeMasterCabinetChoice(objects, requested),
+  };
 }

@@ -11,6 +11,7 @@ import {
   Loader2,
   LogOut,
   Palette,
+  Plus,
   Settings,
   ShieldCheck,
 } from "lucide-react";
@@ -118,8 +119,9 @@ export function ProfileSheet({
 
       {/* «Кабинет»: где человек сейчас и куда ещё можно перейти —
           партнёрский кабинет, мастер-кабинеты справочников (они здесь, а не
-          в «Организациях»: у них своя оболочка `/master`). */}
-      {partnerCabinet || masterCabinets.length > 0 ? (
+          в «Организациях»: у них своя оболочка `/master`). Владельцу
+          аккаунта под кабинетами всегда «Создать мастер-кабинет». */}
+      {partnerCabinet || masterCabinets.length > 0 || canCreateOrganization ? (
         <>
           <div className={SHEET_GROUP_LABEL_CLASS}>Кабинет</div>
           <Link href="/dashboard" onClick={onClose} className={`${SHEET_ROW_CLASS} bg-[#f5f6ff]`}>
@@ -151,6 +153,20 @@ export function ProfileSheet({
               ) : null}
             </button>
           ))}
+          {canCreateOrganization ? (
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onOpenCreate("master-cabinet");
+              }}
+              className={`${SHEET_ROW_CLASS} text-[#5566f6]`}
+              data-testid="profile-create-master-cabinet"
+            >
+              <Plus className="size-5 shrink-0" />
+              <span className="min-w-0 flex-1">Создать мастер-кабинет</span>
+            </button>
+          ) : null}
         </>
       ) : null}
 

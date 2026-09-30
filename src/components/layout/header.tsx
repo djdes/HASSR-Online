@@ -24,6 +24,7 @@ import {
   LogOut,
   Menu,
   Palette,
+  Plus,
   Settings,
   ShieldCheck,
   UserRound,
@@ -70,6 +71,7 @@ import {
 } from "@/components/layout/organization-switcher";
 import { CreateOrganizationDialog } from "@/components/layout/create-organization-dialog";
 import { CreateDemoDialog } from "@/components/layout/create-demo-dialog";
+import { CreateMasterCabinetDialog } from "@/components/master/create-master-cabinet-dialog";
 import type { AccessibleOrganization } from "@/lib/organization-access";
 import { signOutAndOpen } from "@/lib/sign-out";
 import { splitCabinetMenu } from "@/lib/cabinet-menu";
@@ -810,12 +812,14 @@ export function Header({
                 {regularOrganizations.length > 1 || canCreateOrganization ? (
                   <DropdownMenuSeparator className="my-1" />
                 ) : null}
-                {partnerCabinet || masterCabinets.length > 0 ? (
+                {partnerCabinet || masterCabinets.length > 0 || canCreateOrganization ? (
                   <>
                     {/* «Кабинет» (как в листе на телефоне): «Моя организация» —
                         текущий кабинет, «Партнёрский кабинет» — /partner,
                         мастер-кабинеты справочников — /master. Активный
-                        пункт подсвечен, чтобы было видно, где человек сейчас. */}
+                        пункт подсвечен, чтобы было видно, где человек сейчас.
+                        Владельцу аккаунта под кабинетами всегда «Создать
+                        мастер-кабинет»: кабинетов сколько угодно. */}
                     <div className="px-2 pb-1 pt-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
                       Кабинет
                     </div>
@@ -857,6 +861,17 @@ export function Header({
                         ) : null}
                       </DropdownMenuItem>
                     ))}
+                    {canCreateOrganization ? (
+                      <DropdownMenuItem
+                        className="text-[#5566f6] focus:bg-[#f5f6ff] focus:text-[#5566f6]"
+                        title="Отдельный кабинет бэк-офиса: меню и сырьё для отмеченных объектов"
+                        data-testid="profile-create-master-cabinet"
+                        onSelect={() => openCreateDialog("master-cabinet")}
+                      >
+                        <Plus className="mr-2 size-4" />
+                        Создать мастер-кабинет
+                      </DropdownMenuItem>
+                    ) : null}
                     <DropdownMenuSeparator className="my-1" />
                   </>
                 ) : null}
@@ -985,6 +1000,9 @@ export function Header({
           currentSphere={organizationSphere}
           onClose={() => setCreateDialog(null)}
         />
+      ) : null}
+      {createDialog === "master-cabinet" ? (
+        <CreateMasterCabinetDialog onClose={() => setCreateDialog(null)} />
       ) : null}
       {createDialog === "organization" ? (
         <CreateOrganizationDialog

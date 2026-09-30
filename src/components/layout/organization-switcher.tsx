@@ -30,7 +30,8 @@ import type { AccessibleOrganization } from "@/lib/organization-access";
  * из него не выберется — его бы обрезало по ширине меню.
  */
 
-export type CreateDialogKind = "organization" | "demo";
+/** Модалки создания из меню профиля; "master-cabinet" — пункт раздела «Кабинет». */
+export type CreateDialogKind = "organization" | "demo" | "master-cabinet";
 
 export function OrganizationSwitcher({
   organizations: allOrganizations,

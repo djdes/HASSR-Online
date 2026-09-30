@@ -86,13 +86,27 @@ export async function POST(request: Request) {
   return NextResponse.json({ ok: true, organizationId });
 }
 
-/** GET — организации, доступные текущему человеку. */
+/**
+ * GET — организации, доступные текущему человеку. `canCreateMasterCabinet` —
+ * владелец аккаунта: в мини-приложении у него в «Кабинете» есть «Создать
+ * мастер-кабинет» (как в меню профиля сайта).
+ */
 export async function GET() {
   const auth = await requireApiAuth();
   if (!auth.ok) return auth.response;
   const { listAccessibleOrganizations } = await import(
     "@/lib/organization-access"
   );
-  const organizations = await listAccessibleOrganizations(auth.session.user.id);
-  return NextResponse.json({ organizations });
+  const [organizations, ownedAccount] = await Promise.all([
+    listAccessibleOrganizations(auth.session.user.id),
+    db.account.findUnique({
+      where: { ownerUserId: auth.session.user.id },
+      select: { id: true },
+    }),
+  ]);
+  return NextResponse.json({
+    organizations,
+    canCreateMasterCabinet:
+      Boolean(ownedAccount) && hasFullWorkspaceAccess(auth.session.user),
+  });
 }
