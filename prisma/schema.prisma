@@ -2670,6 +2670,9 @@ model PaymentOrder {
   /// Уходит в Робокассу как InvId, поэтому именно int (int32), не uuid.
   id                     Int              @id @default(autoincrement())
   email                  String
+  /// Ключ тарифа (PlatformTariff.key) или "balance_topup" — пополнение
+  /// баланса деньгами: подписку не продлевает, зачисляется баллами 1:1
+  /// (src/lib/balance/topup-core.ts).
   tariffKey              String
   amountRub              Decimal          @db.Decimal(10, 2)
   description            String
@@ -3100,12 +3103,12 @@ model BalanceTransaction {
   organization           Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   /// + начисление, − списание.
   amount                 Int
-  /// referral_reward | review_reward | order_spend | order_release | manual_adjust
+  /// referral_reward | review_reward | order_spend | order_release | manual_adjust | topup
   kind                   String
   description            String
   /// Идемпотентность одной колонкой (NULL для manual_adjust):
   /// "order_spend:123", "order_release:123", "referral_reward:<orgId>",
-  /// "review_reward:<reviewId>".
+  /// "review_reward:<reviewId>", "topup:123" (пополнение деньгами).
   dedupeKey              String?      @unique
   paymentOrderId         Int?
   referredOrganizationId String?
@@ -3147,6 +3150,9 @@ model CustomerReview {
   mediaMime         String?
   rating            Int?
   consentPublic     Boolean      @default(true)
+  /// Анонимный отзыв: на сайте без имени и заведения, начисление на 20 %
+  /// меньше (ANONYMOUS_REVIEW_FACTOR). authorName/place тогда пустые.
+  anonymous         Boolean      @default(false)
   /// pending | approved | rejected
   status            String       @default("pending")
   rewardRub         Int          @default(0)

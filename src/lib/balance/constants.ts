@@ -20,6 +20,21 @@ export type ReviewKind = keyof typeof REVIEW_REWARD_RUB;
 
 export const REVIEW_KINDS: ReviewKind[] = ["text", "photo", "video"];
 
+/**
+ * Анонимный отзыв (без имени и заведения на сайте) стоит на 20 % меньше:
+ * 300 → 240, 750 → 600, 1990 → 1592. Округление вниз до рубля.
+ */
+export const ANONYMOUS_REVIEW_FACTOR = 0.8;
+
+/**
+ * Пополнение баланса деньгами: 1 ₽ = 1 балл, целыми рублями. Баллами
+ * по-прежнему оплачивается только подписка.
+ */
+export const TOPUP_MIN_RUB = 500;
+export const TOPUP_MAX_RUB = 300_000;
+/** Быстрые суммы в блоке «Пополнить баланс»: месяц подписки и круглые. */
+export const TOPUP_PRESETS_RUB = [1990, 5000, 10000] as const;
+
 /** Сколько живёт холд баллов на неоплаченном заказе. */
 export const POINTS_HOLD_HOURS = 24;
 
@@ -61,7 +76,8 @@ export type BalanceTransactionKind =
   | "order_spend"
   | "order_release"
   | "service_spend"
-  | "manual_adjust";
+  | "manual_adjust"
+  | "topup";
 
 /** Подписи видов транзакций для истории в кабинете и у ROOT. */
 export const TRANSACTION_KIND_LABELS: Record<BalanceTransactionKind, string> = {
@@ -71,6 +87,7 @@ export const TRANSACTION_KIND_LABELS: Record<BalanceTransactionKind, string> = {
   order_release: "Возврат баллов",
   service_spend: "Оплата услуги",
   manual_adjust: "Корректировка",
+  topup: "Пополнение",
 };
 
 export function transactionKindLabel(kind: string): string {
@@ -106,8 +123,62 @@ export function reviewKindFromMime(mime: string | null | undefined): ReviewKind 
   return null;
 }
 
-export function reviewRewardFor(kind: ReviewKind): number {
-  return REVIEW_REWARD_RUB[kind];
+/**
+ * Сколько начислить за отзыв. Анонимный — × ANONYMOUS_REVIEW_FACTOR,
+ * вниз до рубля. Считаем в сотых долях процента целыми числами: в
+ * плавающей точке 1990 × 0,8 = 1592.0000000000002, а 0,1 × 3 — меньше
+ * 0,3, и «вниз» съело бы рубль.
+ *
+ * Сумму всегда считает сервер по виду вложения и флагу из БД — от
+ * клиента сумма не принимается.
+ */
+export function reviewRewardFor(kind: ReviewKind, anonymous = false): number {
+  const base = REVIEW_REWARD_RUB[kind];
+  return anonymous ? anonymousRewardRub(base) : base;
+}
+
+/** Сумма × ANONYMOUS_REVIEW_FACTOR, вниз до рубля (999 → 799). */
+export function anonymousRewardRub(baseRub: number): number {
+  if (!Number.isFinite(baseRub) || baseRub <= 0) return 0;
+  const basisPoints = Math.round(ANONYMOUS_REVIEW_FACTOR * 10_000);
+  return Math.floor((Math.floor(baseRub) * basisPoints) / 10_000);
+}
+
+export type TopupAmountCheck =
+  | { ok: true; amountRub: number }
+  | { ok: false; error: string };
+
+/**
+ * Сумма пополнения: целые рубли от TOPUP_MIN_RUB до TOPUP_MAX_RUB.
+ * Принимает число или строку из поля ввода («5 000»); копейки, ноль,
+ * отрицательные и всё нечисловое — отказ с понятной фразой. Одна
+ * функция на подсказку в форме и на проверку сервера.
+ */
+export function parseTopupAmount(value: unknown): TopupAmountCheck {
+  let amount: number;
+  if (typeof value === "number") {
+    amount = value;
+  } else if (typeof value === "string") {
+    const compact = value.replace(/[\s  ]/g, "").replace(",", ".").replace(/₽$/, "");
+    if (!compact) return { ok: false, error: "Укажите сумму пополнения" };
+    if (!/^-?\d+(\.\d+)?$/.test(compact)) {
+      return { ok: false, error: "Сумма — числом, в рублях" };
+    }
+    amount = Number(compact);
+  } else {
+    return { ok: false, error: "Укажите сумму пополнения" };
+  }
+  if (!Number.isFinite(amount)) return { ok: false, error: "Сумма — числом, в рублях" };
+  if (!Number.isInteger(amount)) {
+    return { ok: false, error: "Сумма — целыми рублями, без копеек" };
+  }
+  if (amount < TOPUP_MIN_RUB) {
+    return { ok: false, error: `Минимальная сумма — ${formatPoints(TOPUP_MIN_RUB)}` };
+  }
+  if (amount > TOPUP_MAX_RUB) {
+    return { ok: false, error: `Максимальная сумма — ${formatPoints(TOPUP_MAX_RUB)}` };
+  }
+  return { ok: true, amountRub: amount };
 }
 
 export function isReviewKind(value: unknown): value is ReviewKind {

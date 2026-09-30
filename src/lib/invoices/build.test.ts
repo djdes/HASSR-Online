@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import { EMPTY_REQUISITES, type PartySnapshot, type PlatformRequisites } from "@/lib/closing-documents/types";
 import {
   INVOICE_VALID_DAYS,
+  TOPUP_INVOICE_LINE_TITLE,
   buildInvoiceDraft,
   buildInvoiceLines,
   invoiceFilename,
@@ -54,6 +55,40 @@ describe("buildInvoiceLines", () => {
       buyer,
     });
     assert.deepEqual(lines.map((l) => [l.sumRub, l.unit]), [[1990, "усл. ед."], [12900, "шт"]]);
+  });
+
+  it("пополнение баланса — одна строка «Пополнение баланса…» на всю сумму, без периода подписки", () => {
+    const lines = buildInvoiceLines({
+      order: { id: 28, createdAt, amountRub: 5000, bundleConfig: null },
+      tariff: null,
+      seller,
+      buyer,
+      purpose: "topup",
+    });
+    assert.deepEqual(lines, [
+      { title: TOPUP_INVOICE_LINE_TITLE, unit: "усл. ед.", unitCode: "876", qty: 1, priceRub: 5000, sumRub: 5000 },
+    ]);
+    assert.doesNotMatch(lines[0].title, /\d+ дн\./);
+  });
+
+  it("примечание счёта: подписка продлевается / баланс пополняется", () => {
+    const subscription = buildInvoiceDraft({
+      order: { id: 29, createdAt, amountRub: 1990, bundleConfig: null },
+      tariff: { title: "Подписка", periodDays: 30, priceRub: 1990 },
+      seller,
+      buyer,
+    });
+    assert.match(subscription.afterPayment ?? "", /подписка продлевается автоматически/);
+    const topup = buildInvoiceDraft({
+      order: { id: 30, createdAt, amountRub: 300000, bundleConfig: null },
+      tariff: null,
+      seller,
+      buyer,
+      purpose: "topup",
+    });
+    assert.equal(topup.totalRub, 300000);
+    assert.match(topup.afterPayment ?? "", /баланс организации пополняется на сумму счёта \(1 ₽ = 1 балл\)/);
+    assert.doesNotMatch(topup.afterPayment ?? "", /подписка продлевается/);
   });
 });
 

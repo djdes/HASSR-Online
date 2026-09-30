@@ -40,6 +40,8 @@ function reviewView(input: SubmitReviewInput): ReviewView {
     mediaMime: null,
     rating: input.rating,
     consentPublic: input.consentPublic,
+    anonymous: false,
+    organizationSphere: null,
     status: "pending",
     rewardRub: 0,
     suggestedRewardRub: 300,

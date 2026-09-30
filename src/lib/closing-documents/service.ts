@@ -1,5 +1,6 @@
 import type { ClosingDocument, Prisma } from "@prisma/client";
 
+import { isTopupOrder } from "@/lib/balance/topup-core";
 import { db } from "@/lib/db";
 import type { LegalProfile } from "@/lib/org-legal-profile";
 import { readTariff } from "@/lib/tariffs";
@@ -31,7 +32,7 @@ import {
  */
 export type ClosingEligibility =
   | { ok: true }
-  | { ok: false; reason: "not-paid" | "test" | "zero" | "refunded" | "requisites" };
+  | { ok: false; reason: "not-paid" | "test" | "zero" | "refunded" | "requisites" | "advance" };
 
 type OrderForClosing = {
   id: number;
@@ -53,10 +54,15 @@ type OrderForClosing = {
 };
 
 export function closingEligibility(
-  order: Pick<OrderForClosing, "status" | "isTest" | "amountRub" | "refundedAt">,
+  order: Pick<OrderForClosing, "status" | "isTest" | "amountRub" | "refundedAt"> & { tariffKey?: string | null },
   requisites: PlatformRequisites
 ): ClosingEligibility {
   if (order.status !== "paid") return { ok: false, reason: "not-paid" };
+  // Пополнение баланса — аванс: услуга ещё не оказана, а УПД здесь
+  // подтверждает оказанную услугу за период. Выпускать его на пополнение
+  // значило бы написать неправду; какой документ нужен на аванс — решение
+  // владельца и бухгалтера (см. .agent/tasks/balance-reviews-topup).
+  if (isTopupOrder(order)) return { ok: false, reason: "advance" };
   if (order.isTest) return { ok: false, reason: "test" };
   if (Number(order.amountRub) <= 0) return { ok: false, reason: "zero" };
   if (order.refundedAt) return { ok: false, reason: "refunded" };

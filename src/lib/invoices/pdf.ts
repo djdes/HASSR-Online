@@ -4,7 +4,7 @@ import autoTable from "jspdf-autotable";
 import { registerUnicodeFont } from "@/lib/closing-documents/pdf-font";
 import { pngSize } from "@/lib/closing-documents/pdf";
 
-import { amountInWords, formatRuDate, type InvoiceDraft } from "./build";
+import { INVOICE_AFTER_PAYMENT, amountInWords, formatRuDate, type InvoiceDraft } from "./build";
 
 /**
  * «Счёт на оплату» — привычный российский бланк: таблица реквизитов
@@ -147,7 +147,7 @@ export function renderInvoicePdf(draft: InvoiceDraft, images: InvoiceImages): Bu
   size(7.5);
   doc.setTextColor(70, 70, 70);
   const note = doc.splitTextToSize(
-    `Оплата этого счёта означает согласие с условиями договора-оферты (wesetup.ru/oferta). Счёт действителен до ${formatRuDate(draft.dueAt)}. В назначении платежа укажите «Оплата по счёту № ${draft.number}». После поступления средств подписка продлевается автоматически, закрывающие документы появляются в кабинете: «Настройки → Подписка → История оплат». НДС не облагается — продавец применяет УСН.`,
+    `Оплата этого счёта означает согласие с условиями договора-оферты (wesetup.ru/oferta). Счёт действителен до ${formatRuDate(draft.dueAt)}. В назначении платежа укажите «Оплата по счёту № ${draft.number}». ${draft.afterPayment ?? INVOICE_AFTER_PAYMENT.subscription} НДС не облагается — продавец применяет УСН.`,
     CONTENT_W
   ) as string[];
   doc.text(note, MARGIN, y);

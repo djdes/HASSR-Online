@@ -5,7 +5,14 @@
  */
 export const MIN_RATED_REVIEWS = 3;
 
-export type RatedReview = { author: string; place?: string | null; quote: string; rating: number | null };
+export type RatedReview = {
+  author: string;
+  place?: string | null;
+  quote: string;
+  rating: number | null;
+  /** Анонимный: оценка идёт в среднее, но в «Review» не попадает — у разметки автор-человек. */
+  anonymous?: boolean;
+};
 
 export function buildAggregateRating(reviews: RatedReview[]): {
   aggregateRating: { "@type": "AggregateRating"; ratingValue: string; reviewCount: number; bestRating: number; worstRating: number };
@@ -22,11 +29,14 @@ export function buildAggregateRating(reviews: RatedReview[]): {
       bestRating: 5,
       worstRating: 1,
     },
-    review: rated.slice(0, 5).map((r) => ({
-      "@type": "Review",
-      author: { "@type": "Person", name: r.author },
-      reviewRating: { "@type": "Rating", ratingValue: r.rating, bestRating: 5 },
-      reviewBody: r.quote.length > 300 ? `${r.quote.slice(0, 297)}…` : r.quote,
-    })),
+    review: rated
+      .filter((r) => r.anonymous !== true)
+      .slice(0, 5)
+      .map((r) => ({
+        "@type": "Review",
+        author: { "@type": "Person", name: r.author },
+        reviewRating: { "@type": "Rating", ratingValue: r.rating, bestRating: 5 },
+        reviewBody: r.quote.length > 300 ? `${r.quote.slice(0, 297)}…` : r.quote,
+      })),
   };
 }

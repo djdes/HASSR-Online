@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it, mock } from "node:test";
 
-import { buildReferralInviteEmail, sendReferralInviteEmail, type ReferralInviteEmailParams } from "@/lib/balance/emails";
+import {
+  buildBalanceTopupEmail,
+  buildReferralInviteEmail,
+  sendReferralInviteEmail,
+  type ReferralInviteEmailParams,
+} from "@/lib/balance/emails";
 
 const base: ReferralInviteEmailParams = {
   to: "colleague@example.com",
@@ -78,5 +83,37 @@ describe("sendReferralInviteEmail без SMTP (dev)", () => {
     assert.ok(lines.includes("[email/dev] Subject: Анна Смирнова из «Кафе «Ромашка»» рекомендует WeSetup — электронные журналы СанПиН"));
     assert.ok(lines.includes("[email/dev] Reply-To: anna@example.com"));
     assert.ok(lines.some((line) => line.startsWith("[email/dev] Body:") && line.includes("https://wesetup.ru/r/ABCD2345?email=colleague%40example.com")));
+  });
+});
+
+describe("buildBalanceTopupEmail — пополнение зачислено", () => {
+  const plain = (text: string) => text.replace(/[\u00a0\u202f]/g, " ");
+
+  it("сумма, способ, номер заказа и баланс после зачисления; ссылка на баланс", () => {
+    const email = buildBalanceTopupEmail({
+      amountRub: 5000,
+      balanceRub: 6240,
+      orderId: 42,
+      paymentMethod: "card",
+      isTest: false,
+    });
+    assert.equal(plain(email.subject), "Баланс пополнен на 5 000 ₽");
+    assert.match(plain(email.html), /Мы получили оплату картой\. На баланс вашей организации зачислено <strong>5 000 ₽<\/strong> — 1 ₽ = 1 балл\./);
+    assert.match(email.html, /№ 42/);
+    assert.match(plain(email.html), /Баланс сейчас: <strong>6 240 ₽<\/strong>/);
+    assert.ok(email.html.includes("/settings/balance"));
+    assert.equal(email.html.includes("тестовый платёж"), false);
+  });
+
+  it("счёт и тестовый платёж — честно помечены", () => {
+    const email = buildBalanceTopupEmail({
+      amountRub: 10000,
+      balanceRub: 10000,
+      orderId: 7,
+      paymentMethod: "invoice",
+      isTest: true,
+    });
+    assert.match(email.html, /Мы получили оплату по счёту/);
+    assert.match(email.html, /Это тестовый платёж<\/strong> — касса работала в тестовом режиме, деньги не списывались/);
   });
 });

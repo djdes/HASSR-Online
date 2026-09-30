@@ -48,6 +48,7 @@ import { getDisplayOffer } from "@/lib/promo/offer";
 import { PROMO_COOKIE } from "@/lib/promo/personal-link";
 import { applyPromotion } from "@/lib/promo/promotions";
 import { isMobileAppRequest } from "@/lib/mobile-app-payments";
+import { isTopupOrder } from "@/lib/balance/topup-core";
 
 export default async function SubscriptionPage({
   searchParams,
@@ -234,6 +235,7 @@ export default async function SubscriptionPage({
       refundedAt: true,
       paymentMethod: true,
       invoiceDueAt: true,
+      tariffKey: true,
     },
   });
   const paidTotalRub = payments
@@ -246,14 +248,19 @@ export default async function SubscriptionPage({
   const documentsReady = isRequisitesComplete(platformRequisites);
   // Счёт по безналу: нужны реквизиты и банк исполнителя, картинки — нет.
   const invoiceReady = invoiceRequisitesReady(platformRequisites);
+  // Счёт на пополнение баланса — не счёт на подписку: он живёт в «Баланс и
+  // бонусы», здесь карточку подписки не подменяет.
   const pendingInvoice = payments.find(
-    (payment) => payment.paymentMethod === "invoice" && payment.status === "pending"
+    (payment) =>
+      payment.paymentMethod === "invoice" && payment.status === "pending" && !isTopupOrder(payment)
   );
+  // Пополнение — аванс: УПД на него не выпускается (closingEligibility).
   const closingEligible = (payment: (typeof payments)[number]) =>
     documentsReady &&
     payment.status === "paid" &&
     !payment.isTest &&
     !payment.refundedAt &&
+    !isTopupOrder(payment) &&
     Number(payment.amountRub) > 0;
 
   // Приложение WeSetup: только состояние тарифа, без оплаты, счетов и

@@ -1,0 +1,292 @@
+{
+  "passed": 25,
+  "failed": 0,
+  "results": [
+    {
+      "name": "предзаполнение: имя человека, в «Заведение и город» только город (организация названа как человек)",
+      "ok": true,
+      "details": {
+        "authorName": "Алексей Партнёрская программа",
+        "place": "Казань"
+      }
+    },
+    {
+      "name": "анонимный отзыв сохранён без имени и заведения, к начислению 240",
+      "ok": true,
+      "details": {
+        "anonymous": true,
+        "suggested": 240
+      }
+    },
+    {
+      "name": "одобрение начисляет 240 ₽ (не 300); повторное одобрение — no-op",
+      "ok": true,
+      "details": {
+        "approved": {
+          "rewardRub": 240,
+          "organizationId": "cmunztsf20000849mdjqgtx8h",
+          "anonymous": true,
+          "kind": "text"
+        },
+        "reviewLedger": [
+          {
+            "amount": 240,
+            "kind": "review_reward",
+            "description": "Анонимный отзыв о WeSetup принят"
+          }
+        ]
+      }
+    },
+    {
+      "name": "модератор выбрал «видео» — анонимному начислено 1592 (1990 × 0,8)",
+      "ok": true,
+      "details": {
+        "rewardRub": 1592,
+        "organizationId": "cmunztsl90006849mma1ksymf",
+        "anonymous": true,
+        "kind": "video"
+      }
+    },
+    {
+      "name": "на сайте: «Анонимный отзыв» и сфера «Кафе / Кофейня», без имени",
+      "ok": true,
+      "details": {
+        "id": "cmunztssp0008849mm5bponap",
+        "quote": "Перешли на электронные журналы весной — проверка прошла без замечаний, всё нашли сразу.",
+        "author": "Анонимный отзыв",
+        "place": "Кафе / Кофейня",
+        "rating": 5,
+        "mediaUrl": null,
+        "mediaKind": null,
+        "anonymous": true
+      }
+    },
+    {
+      "name": "заказ-пополнение: balance_topup, pending, 5000, без промокода и баллов, тестовый режим",
+      "ok": true,
+      "details": {
+        "tariffKey": "balance_topup",
+        "status": "pending",
+        "amount": 5000
+      }
+    },
+    {
+      "name": "уведомление с чужой суммой (300000.00) — отказ, заказ не оплачен",
+      "ok": true,
+      "details": {
+        "status": 400,
+        "body": "amount mismatch"
+      }
+    },
+    {
+      "name": "ResultURL → OK; +5 000 на баланс сразу, строка «Пополнение баланса картой…»",
+      "ok": true,
+      "details": {
+        "paid1": {
+          "status": 200,
+          "body": "OK1"
+        },
+        "cardLedger": [
+          {
+            "amount": 5000,
+            "kind": "topup",
+            "description": "Пополнение баланса картой, заказ №1 (тестовый платёж)"
+          }
+        ],
+        "balance0": 240,
+        "balance1": 5240
+      }
+    },
+    {
+      "name": "партнёру с пополнения: 20 % от 5 000 = 1 000 ₽",
+      "ok": true,
+      "details": [
+        {
+          "kind": "subscription",
+          "base": 5000,
+          "amount": 1000
+        }
+      ]
+    },
+    {
+      "name": "повторное уведомление — OK, но без второго зачисления и второй комиссии",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "body": "OK1"
+      }
+    },
+    {
+      "name": "аудит balance.topup.paid с суммой",
+      "ok": true,
+      "details": [
+        {
+          "action": "balance.topup.paid",
+          "details": {
+            "isTest": true,
+            "amountRub": 5000,
+            "balanceRub": 5240,
+            "paymentMethod": "card"
+          }
+        }
+      ]
+    },
+    {
+      "name": "колокольчик руководству: «Баланс пополнен на 5 000 ₽»",
+      "ok": true,
+      "details": [
+        {
+          "title": "Баланс пополнен на 5 000 ₽"
+        }
+      ]
+    },
+    {
+      "name": "УПД на пополнение не выпускается — причина «advance»",
+      "ok": true,
+      "details": {
+        "ok": false,
+        "reason": "advance"
+      }
+    },
+    {
+      "name": "два уведомления одновременно — оба OK, зачисление одно (+1 990)",
+      "ok": true,
+      "details": {
+        "both": [
+          {
+            "status": 200,
+            "body": "OK2"
+          },
+          {
+            "status": 200,
+            "body": "OK2"
+          }
+        ],
+        "balance2": 7230
+      }
+    },
+    {
+      "name": "второе пополнение (2-й денежный платёж) — 20 % = 398 и бонус 3 000 по правилам computePaymentAccruals, по одной строке",
+      "ok": true,
+      "details": [
+        {
+          "kind": "bonus",
+          "base": 1990,
+          "amount": 3000
+        },
+        {
+          "kind": "subscription",
+          "base": 1990,
+          "amount": 398
+        }
+      ]
+    },
+    {
+      "name": "подписка 1 990 ₽ оплачена баллами из пополнения (0 ₽ деньгами): списано 1 990, подписка продлена, партнёру — ничего",
+      "ok": true,
+      "details": {
+        "subscription": {
+          "id": 3,
+          "amountRub": 0,
+          "pointsSpent": 1990,
+          "isTest": false,
+          "paidByPoints": true
+        },
+        "subAccruals": [],
+        "balance": 5240
+      }
+    },
+    {
+      "name": "счёт: 10 000, «(счёт)»; повтор с той же суммой — тот же счёт; другая сумма — отказ 409 с номером",
+      "ok": true,
+      "details": {
+        "invoice": 4,
+        "other": {
+          "ok": false,
+          "status": 409,
+          "error": "Уже выставлен счёт № 4 на 10 000 ₽ — он действует до 07.10.2026. Оплатите его или напишите на support@wesetup.ru, чтобы отменить"
+        }
+      }
+    },
+    {
+      "name": "блок пополнения видит действующий счёт",
+      "ok": true,
+      "details": {
+        "cardReady": true,
+        "invoiceReady": true,
+        "organizationName": "Алексей Партнёрская программа",
+        "organizationInn": "7700000017",
+        "pendingInvoice": {
+          "id": 4,
+          "amountRub": 10000,
+          "dueAt": "2026-10-07T10:59:40.626Z"
+        },
+        "recurringActive": false
+      }
+    },
+    {
+      "name": "PDF счёта на пополнение собирается",
+      "ok": true,
+      "details": {
+        "bytes": 65323
+      }
+    },
+    {
+      "name": "«Оплата поступила»: +10 000, строка «Пополнение баланса по счёту…», автор — ROOT",
+      "ok": true,
+      "details": {
+        "invoiceLedger": [
+          {
+            "amount": 10000,
+            "kind": "topup",
+            "description": "Пополнение баланса по счёту, заказ №4 (тестовый платёж)"
+          }
+        ]
+      }
+    },
+    {
+      "name": "партнёру со счёта на пополнение: 20 % = 2 000; бонус уже был — не повторяется",
+      "ok": true,
+      "details": [
+        {
+          "kind": "subscription",
+          "base": 10000,
+          "amount": 2000
+        }
+      ]
+    },
+    {
+      "name": "повторное «Оплата поступила» — 409, второго зачисления нет",
+      "ok": true,
+      "details": {
+        "ok": false,
+        "status": 409,
+        "error": "Счёт уже отмечен оплаченным"
+      }
+    },
+    {
+      "name": "у партнёра по A ровно 4 строки: 1 000 + (398 + бонус 3 000) + 2 000; с подписки баллами — ничего",
+      "ok": true,
+      "details": {
+        "totalAccruals": 4,
+        "totalRub": 6398
+      }
+    },
+    {
+      "name": "пополнение приглашённой организации рекомендателю ничего не начисляет",
+      "ok": true,
+      "details": []
+    },
+    {
+      "name": "подписка приглашённой (баллами из пополнения) — рекомендателю 30 % от 1 990 = 597",
+      "ok": true,
+      "details": [
+        {
+          "amount": 597,
+          "kind": "referral_reward",
+          "description": "Друг оплатил подписку: Кофейня «Зерно»"
+        }
+      ]
+    }
+  ]
+}

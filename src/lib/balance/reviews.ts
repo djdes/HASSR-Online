@@ -1,13 +1,7 @@
 import { db } from "@/lib/db";
 
-import {
-  REVIEW_TEXT_MAX_LENGTH,
-  REVIEW_TEXT_MIN_LENGTH,
-  isReviewKind,
-  reviewKindFromMime,
-  reviewRewardFor,
-  type ReviewKind,
-} from "./constants";
+import { isReviewKind, reviewRewardFor, type ReviewKind } from "./constants";
+import { buildReviewSubmission, publicReviewSignature, reviewSphereLabel } from "./review-rules";
 import {
   reviewSocialText,
   type PublicReview,
@@ -26,6 +20,10 @@ export type { PublicReview, ReviewStatus, ReviewView };
  * начисление происходит ТОЛЬКО после одобрения ROOT'ом: иначе достаточно
  * было бы загрузить любое видео и получить 1990 ₽. ROOT при одобрении
  * может понизить тариф (например, видео на три секунды — как текст).
+ *
+ * Анонимный отзыв (флаг `anonymous` в БД) публикуется без имени и
+ * заведения и стоит на 20 % меньше — сумму считает одобрение по флагу из
+ * базы, клиент её не присылает.
  */
 
 export class ReviewError extends Error {
@@ -49,6 +47,7 @@ type ReviewRow = {
   mediaMime: string | null;
   rating: number | null;
   consentPublic: boolean;
+  anonymous: boolean;
   status: string;
   rewardRub: number;
   rejectReason: string | null;
@@ -57,12 +56,15 @@ type ReviewRow = {
   moderatedAt: Date | null;
 };
 
-function toView(row: ReviewRow, organizationName: string): ReviewView {
+type OrganizationLabel = { name: string; type: string | null };
+
+function toView(row: ReviewRow, organization: OrganizationLabel): ReviewView {
   const kind: ReviewKind = isReviewKind(row.kind) ? row.kind : "text";
+  const anonymous = row.anonymous === true;
   return {
     id: row.id,
     organizationId: row.organizationId,
-    organizationName,
+    organizationName: organization.name,
     userId: row.userId,
     authorName: row.authorName,
     place: row.place,
@@ -72,11 +74,13 @@ function toView(row: ReviewRow, organizationName: string): ReviewView {
     mediaMime: row.mediaMime,
     rating: row.rating,
     consentPublic: row.consentPublic,
+    anonymous,
+    organizationSphere: reviewSphereLabel(organization.type),
     status: (["pending", "approved", "rejected"] as string[]).includes(row.status)
       ? (row.status as ReviewStatus)
       : "pending",
     rewardRub: row.rewardRub,
-    suggestedRewardRub: reviewRewardFor(kind),
+    suggestedRewardRub: reviewRewardFor(kind, anonymous),
     rejectReason: row.rejectReason,
     showOnLanding: row.showOnLanding,
     createdAt: row.createdAt.toISOString(),
@@ -84,11 +88,33 @@ function toView(row: ReviewRow, organizationName: string): ReviewView {
   };
 }
 
+const UNKNOWN_ORGANIZATION: OrganizationLabel = { name: "—", type: null };
+
+async function organizationLabel(organizationId: string): Promise<OrganizationLabel> {
+  const org = await db.organization.findUnique({
+    where: { id: organizationId },
+    select: { name: true, type: true },
+  });
+  return org ?? UNKNOWN_ORGANIZATION;
+}
+
+async function organizationLabels(ids: string[]): Promise<Map<string, OrganizationLabel>> {
+  if (ids.length === 0) return new Map();
+  const orgs = await db.organization.findMany({
+    where: { id: { in: Array.from(new Set(ids)) } },
+    select: { id: true, name: true, type: true },
+  });
+  return new Map(orgs.map((o) => [o.id, { name: o.name, type: o.type }]));
+}
+
 export type SubmitReviewInput = {
   organizationId: string;
   userId: string;
+  /** Для анонимного отзыва не нужны и не сохраняются. */
   authorName: string;
   place: string;
+  /** Анонимный отзыв: без имени и заведения, начисление × ANONYMOUS_REVIEW_FACTOR. */
+  anonymous?: boolean;
   text: string;
   rating: number | null;
   consentPublic: boolean;
@@ -97,24 +123,19 @@ export type SubmitReviewInput = {
 
 /** Новый отзыв «на проверке». Один активный отзыв на пользователя. */
 export async function submitReview(input: SubmitReviewInput): Promise<ReviewView> {
-  const text = input.text.trim();
-  if (text.length < REVIEW_TEXT_MIN_LENGTH) {
-    throw new ReviewError(`Напишите хотя бы пару предложений — от ${REVIEW_TEXT_MIN_LENGTH} символов`);
-  }
-  if (text.length > REVIEW_TEXT_MAX_LENGTH) {
-    throw new ReviewError(`Не больше ${REVIEW_TEXT_MAX_LENGTH} символов`);
-  }
-  const authorName = input.authorName.trim().slice(0, 120);
-  const place = input.place.trim().slice(0, 160);
-  if (!authorName) throw new ReviewError("Укажите, как вас подписать");
-  if (!place) throw new ReviewError("Укажите заведение и город");
-
-  const kind = reviewKindFromMime(input.attachment?.mimeType ?? null);
-  if (!kind) {
-    throw new ReviewError(
-      "Такой файл не подойдёт. Фото — JPG, PNG, WEBP или GIF, видео — MP4 или MOV",
-    );
-  }
+  // Проверки, вид по вложению и анонимность — чистой функцией
+  // (review-rules.ts); сумма в отзыв не пишется — её считает одобрение.
+  const built = buildReviewSubmission({
+    text: input.text,
+    authorName: input.authorName,
+    place: input.place,
+    anonymous: input.anonymous === true,
+    consentPublic: input.consentPublic,
+    rating: input.rating,
+    attachmentMime: input.attachment?.mimeType ?? null,
+  });
+  if (!built.ok) throw new ReviewError(built.error);
+  const { text, authorName, place, kind, rating, anonymous } = built.value;
 
   const active = await db.customerReview.findFirst({
     where: { userId: input.userId, status: { in: ["pending", "approved"] } },
@@ -139,18 +160,15 @@ export async function submitReview(input: SubmitReviewInput): Promise<ReviewView
       kind,
       mediaUrl: input.attachment?.url ?? null,
       mediaMime: input.attachment?.mimeType ?? null,
-      rating:
-        input.rating && input.rating >= 1 && input.rating <= 5
-          ? Math.round(input.rating)
-          : null,
-      consentPublic: input.consentPublic,
+      rating,
+      consentPublic: true,
+      anonymous,
     },
   });
-  const org = await db.organization.findUnique({
-    where: { id: input.organizationId },
-    select: { name: true },
-  });
-  return toView(created, org?.name ?? "—");
+  console.info(
+    `[balance] review submitted id=${created.id} org=${input.organizationId} user=${input.userId} kind=${kind} anonymous=${anonymous} reward=${reviewRewardFor(kind, anonymous)}`,
+  );
+  return toView(created, await organizationLabel(input.organizationId));
 }
 
 /**
@@ -162,17 +180,19 @@ export async function approveReview(input: {
   /** Понижение тарифа модератором. Не задан — тариф по вложению. */
   kind?: ReviewKind | null;
   actorUserId: string;
-}): Promise<{ rewardRub: number; organizationId: string } | null> {
+}): Promise<{ rewardRub: number; organizationId: string; anonymous: boolean; kind: ReviewKind } | null> {
   const review = await db.customerReview.findUnique({
     where: { id: input.id },
-    select: { id: true, organizationId: true, kind: true, status: true },
+    select: { id: true, organizationId: true, kind: true, status: true, anonymous: true },
   });
   if (!review) throw new ReviewError("Отзыв не найден", 404);
   if (review.status !== "pending") return null;
 
   const storedKind: ReviewKind = isReviewKind(review.kind) ? review.kind : "text";
   const kind = input.kind ?? storedKind;
-  const rewardRub = reviewRewardFor(kind);
+  // Анонимность — из БД: какой бы тариф ни выбрал модератор, анонимный
+  // отзыв стоит × ANONYMOUS_REVIEW_FACTOR.
+  const rewardRub = reviewRewardFor(kind, review.anonymous);
 
   try {
     return await db.$transaction(async (tx) => {
@@ -193,12 +213,15 @@ export async function approveReview(input: {
         organizationId: review.organizationId,
         amount: rewardRub,
         kind: "review_reward",
-        description: "Отзыв о WeSetup принят",
+        description: review.anonymous ? "Анонимный отзыв о WeSetup принят" : "Отзыв о WeSetup принят",
         dedupeKey: `review_reward:${review.id}`,
         customerReviewId: review.id,
         actorUserId: input.actorUserId,
       });
-      return { rewardRub, organizationId: review.organizationId };
+      console.info(
+        `[balance] review approved id=${review.id} org=${review.organizationId} kind=${kind} anonymous=${review.anonymous} reward=${rewardRub} by=${input.actorUserId}`,
+      );
+      return { rewardRub, organizationId: review.organizationId, anonymous: review.anonymous, kind };
     });
   } catch (error) {
     if (error instanceof DuplicateBalanceChangeError) return null;
@@ -222,6 +245,9 @@ export async function rejectReview(input: {
       moderatedByUserId: input.actorUserId,
     },
   });
+  if (claimed.count > 0) {
+    console.info(`[balance] review rejected id=${input.id} by=${input.actorUserId}`);
+  }
   return claimed.count > 0;
 }
 
@@ -235,11 +261,7 @@ export async function setReviewOnLanding(id: string, show: boolean): Promise<voi
 export async function getReview(id: string): Promise<ReviewView | null> {
   const row = await db.customerReview.findUnique({ where: { id } });
   if (!row) return null;
-  const org = await db.organization.findUnique({
-    where: { id: row.organizationId },
-    select: { name: true },
-  });
-  return toView(row, org?.name ?? "—");
+  return toView(row, await organizationLabel(row.organizationId));
 }
 
 /** Отзыв текущего пользователя — карточка статуса в кабинете. */
@@ -249,11 +271,7 @@ export async function getMyReview(userId: string): Promise<ReviewView | null> {
     orderBy: { createdAt: "desc" },
   });
   if (!row) return null;
-  const org = await db.organization.findUnique({
-    where: { id: row.organizationId },
-    select: { name: true },
-  });
-  return toView(row, org?.name ?? "—");
+  return toView(row, await organizationLabel(row.organizationId));
 }
 
 export async function listReviewsForModeration(
@@ -265,29 +283,40 @@ export async function listReviewsForModeration(
     take: 200,
   });
   if (rows.length === 0) return [];
-  const orgs = await db.organization.findMany({
-    where: { id: { in: Array.from(new Set(rows.map((r) => r.organizationId))) } },
-    select: { id: true, name: true },
-  });
-  const names = new Map(orgs.map((o) => [o.id, o.name]));
-  return rows.map((row) => toView(row, names.get(row.organizationId) ?? "—"));
+  const labels = await organizationLabels(rows.map((r) => r.organizationId));
+  return rows.map((row) => toView(row, labels.get(row.organizationId) ?? UNKNOWN_ORGANIZATION));
 }
 
-/** Одобренные отзывы для лендинга. Согласие на публикацию обязательно. */
+/**
+ * Одобренные отзывы для лендинга. Согласие на публикацию обязательно.
+ * Анонимный — без имени и заведения: «Анонимный отзыв» и сфера
+ * организации, если она известна (publicReviewSignature).
+ */
 export async function listPublicReviews(limit = 12): Promise<PublicReview[]> {
   const rows = await db.customerReview.findMany({
     where: { status: "approved", showOnLanding: true, consentPublic: true },
     orderBy: { createdAt: "desc" },
     take: limit,
   });
-  return rows.map((row) => ({
-    id: row.id,
-    quote: row.text,
-    author: row.authorName,
-    place: row.place,
-    rating: row.rating,
-    mediaUrl: row.mediaUrl,
-    mediaKind:
-      row.kind === "photo" ? "photo" : row.kind === "video" ? "video" : null,
-  }));
+  const labels = await organizationLabels(
+    rows.filter((row) => row.anonymous).map((row) => row.organizationId),
+  );
+  return rows.map((row) => {
+    const signature = publicReviewSignature({
+      anonymous: row.anonymous,
+      authorName: row.authorName,
+      place: row.place,
+      sphere: row.anonymous ? reviewSphereLabel(labels.get(row.organizationId)?.type ?? null) : null,
+    });
+    return {
+      id: row.id,
+      quote: row.text,
+      author: signature.author,
+      place: signature.place,
+      rating: row.rating,
+      mediaUrl: row.mediaUrl,
+      mediaKind: row.kind === "photo" ? "photo" : row.kind === "video" ? "video" : null,
+      anonymous: row.anonymous,
+    };
+  });
 }

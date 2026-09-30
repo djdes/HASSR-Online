@@ -1,0 +1,53 @@
+{
+  "task": "balance-reviews-topup",
+  "branch": "feat/balance-topup-2026-09-30",
+  "base": "5f441b95",
+  "commits": ["13b38268", "5422389c", "6279c535", "205664e9"],
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": [
+        "unit: src/lib/balance/review-rules.test.ts",
+        "db: raw/db-flow.json — reviewPrefill для организации, названной как человек",
+        "browser 1280/390: raw/e2e-browser-run1.log, raw/e2e-browser-run2.log — подписи и предзаполнение"
+      ]
+    },
+    "AC2": {
+      "status": "PASS",
+      "notVerifiedInBrowser": ["кнопка «Одобрить» у ROOT → 240 в балансе", "лендинг с анонимным отзывом"],
+      "evidence": [
+        "unit: constants.test.ts (240/600/1592), review-rules.test.ts (сумма и вид от клиента отбрасываются), topup-documents.test.ts",
+        "db: raw/db-flow.json — submit anonymous, approve 240, повтор no-op, video 1592, публикация без имени",
+        "browser: raw/e2e-browser-run2.log — поля скрыты, суммы зачёркнуты, ROOT видит «анонимно» и 240, диалог на 240"
+      ]
+    },
+    "AC3": {
+      "status": "PASS",
+      "notVerifiedInBrowser": [
+        "оплата картой через форму кассы, возврат на /order, история (прогон №3 прошёл, лог утерян)",
+        "оплата подписки баллами на /order (прогон №3, утерян)",
+        "«Выставить счёт» из интерфейса (прогон №3, утерян)",
+        "ROOT «Оплата поступила» из интерфейса — ни разу",
+        "приложение WeSetup: блок скрыт, API 403 — ни разу",
+        "сотрудник: блока нет, API 403 — ни разу"
+      ],
+      "evidence": [
+        "unit: topup-core.test.ts, topup-accruals.test.ts, constants.test.ts, invoices/build.test.ts, emails.test.ts, topup-documents.test.ts",
+        "db: raw/db-flow.json — 25/25: ResultURL (настоящий обработчик) → +5000, повтор и гонка без второго зачисления, комиссия 1000, подписка баллами без комиссии, счёт → markInvoicePaid +10000, повтор 409, реферальная награда только с подписки"
+      ]
+    }
+  },
+  "checks": {
+    "typecheck": "PASS (pre-commit hooks)",
+    "testGate": { "pass": 3139, "fail": 0 },
+    "unitBalance": { "pass": 103, "fail": 0, "file": "raw/unit-balance.txt" },
+    "dbFlow": { "pass": 25, "fail": 0, "file": "raw/db-flow.json" },
+    "browser": {
+      "run1": "12 PASS (форма 1280/390), дальше FAIL — перезагрузка вкладки dev-сервером",
+      "run2": "22 PASS, FAIL на «Одобрить» — dev-сервер не зарегистрировал маршрут (404)",
+      "run3": "54 PASS / 0 FAIL до падения Postgres; лог и снимки удалены по ошибке",
+      "run4": "отменён решением владельца (не запускать браузеры и dev-серверы)"
+    },
+    "screenshots": "нет сохранённых"
+  }
+}

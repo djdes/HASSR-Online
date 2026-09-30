@@ -55,3 +55,15 @@ test("новые действия по задачам и настройкам п
     assert.notEqual(auditActionLabel(code).label, code, code);
   }
 });
+
+test("пополнение баланса и модерация отзывов подписаны по-русски, способ оплаты — словами", () => {
+  for (const code of ["balance.topup.create", "balance.topup.paid", "review.approve", "review.reject"]) {
+    assert.notEqual(auditActionLabel(code).label, code, code);
+  }
+  assert.deepEqual(asText({ amountRub: 5000, paymentMethod: "invoice", isTest: true, anonymous: false }), [
+    "Сумма, ₽: 5000",
+    "Способ оплаты: по счёту",
+    "Тестовый платёж: да",
+    "Анонимно: нет",
+  ]);
+});

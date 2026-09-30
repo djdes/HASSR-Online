@@ -6,6 +6,7 @@ import {
   verifyPaymentRequestSignature,
 } from "@/lib/robokassa";
 import { hashInviteToken } from "@/lib/invite-tokens";
+import { isTopupOrder } from "@/lib/balance/topup-core";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +53,9 @@ export async function GET(request: NextRequest) {
     // Новому клиенту показываем форму достройки профиля; существующему —
     // просто «подписка продлена, войдите».
     needsCompletion: order.status === "paid" && tokenAlive,
+    // Пополнение баланса — страница возврата пишет «Баланс пополнен» и
+    // ведёт в «Баланс и бонусы», а не «подписка продлена».
+    purpose: isTopupOrder(order) ? "topup" : "subscription",
   });
 }
 

@@ -14,7 +14,6 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useLiveEvents } from "@/lib/use-live-events";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PageGuide } from "@/components/ui/page-guide";
@@ -22,12 +21,31 @@ import { useAttachmentUploads } from "@/components/support/attachment-composer";
 import {
   REFERRAL_REWARD_PERCENT,
   REVIEW_ACCEPT_ATTRIBUTE,
-  REVIEW_REWARD_RUB,
   REVIEW_TEXT_MAX_LENGTH,
+  REVIEW_TEXT_MIN_LENGTH,
+  TOPUP_MAX_RUB,
+  TOPUP_MIN_RUB,
   formatPoints,
   reviewKindFromMime,
+  reviewRewardFor,
+  type ReviewKind,
 } from "@/lib/balance/constants";
 import type { BalanceOverview } from "@/lib/balance/overview";
+import type { TopupBlockConfig } from "@/lib/balance/topup-core";
+import { useLiveEvents } from "@/lib/use-live-events";
+
+import {
+  Section,
+  StatusPill,
+  inputClass,
+  miniCard,
+  miniInput,
+  miniPrimary,
+  miniSecondary,
+  primaryButtonClass,
+  secondaryButtonClass,
+} from "./balance-ui";
+import { TopupSection } from "./topup-section";
 
 /**
  * «Баланс и бонусы» — один экран для сайта и Mini App (П-3).
@@ -45,6 +63,7 @@ export function BalanceClient({
   initial,
   variant = "site",
   inApp = false,
+  topup = null,
 }: {
   initial: BalanceOverview;
   variant?: BalanceVariant;
@@ -55,6 +74,11 @@ export function BalanceClient({
    * Play не разрешают. Решает сервер по User-Agent.
    */
   inApp?: boolean;
+  /**
+   * «Пополнить баланс»: null — блока нет (сотрудник, ROOT в режиме
+   * «войти как», приложение WeSetup). Решает сервер.
+   */
+  topup?: TopupBlockConfig | null;
 }) {
   const [data, setData] = useState(initial);
   const mini = variant === "mini";
@@ -98,6 +122,10 @@ export function BalanceClient({
     <div className={mini ? "space-y-4" : "space-y-5"}>
       <HeroCard data={data} mini={mini} inApp={inApp} />
 
+      {data.canSeeBalance && topup && !inApp ? (
+        <TopupSection config={topup} mini={mini} onPaid={refresh} />
+      ) : null}
+
       {inApp ? null : (
         <ReferralSection
           data={data}
@@ -126,7 +154,11 @@ export function BalanceClient({
             },
             {
               title: "Оставьте отзыв",
-              body: "Текст — 300 ₽, с фото — 750 ₽, с видео — 1990 ₽. Начислим после проверки модератором.",
+              body: "Текст — 300 ₽, с фото — 750 ₽, с видео — 1990 ₽. Анонимно, без имени и заведения, — на 20 % меньше. Начислим после проверки модератором.",
+            },
+            {
+              title: "Пополните деньгами",
+              body: `Картой или по счёту для юрлиц, от ${formatPoints(TOPUP_MIN_RUB)} до ${formatPoints(TOPUP_MAX_RUB)}. Деньги зачисляются баллами 1:1 сразу после оплаты. Промокоды и акции к пополнению не применяются.`,
             },
           ]}
           qa={[
@@ -136,7 +168,7 @@ export function BalanceClient({
             },
             {
               q: "Можно вывести деньгами?",
-              a: "Нет, вывод не предусмотрен: баллы — это скидка на подписку, а не электронные деньги.",
+              a: "Нет, вывод баллов не предусмотрен: ими оплачивается подписка. Если пополнили баланс по ошибке — напишите на support@wesetup.ru.",
             },
             {
               q: "Можно оплатить баллами оборудование?",
@@ -510,11 +542,49 @@ function ReferralSection({
 
 /* -------------------------------------------------------------- отзыв */
 
-const REVIEW_TILES: Array<{ kind: keyof typeof REVIEW_REWARD_RUB; title: string; hint: string }> = [
+const REVIEW_TILES: Array<{ kind: ReviewKind; title: string; hint: string }> = [
   { kind: "text", title: "Текст", hint: "пара абзацев о работе с журналами" },
   { kind: "photo", title: "С фото", hint: "снимок кухни, планшета или журнала" },
   { kind: "video", title: "С видео", hint: "30–60 секунд от первого лица" },
 ];
+
+/**
+ * Сумма за отзыв. Анонимный — старая сумма зачёркнута, рядом новая
+ * (−20 %, вниз до рубля). Только показ: начисляет сервер при одобрении по
+ * виду вложения и флагу из БД.
+ */
+function RewardAmount({
+  kind,
+  anonymous,
+  className,
+  testId,
+}: {
+  kind: ReviewKind;
+  anonymous: boolean;
+  className: string;
+  testId?: string;
+}) {
+  const full = reviewRewardFor(kind);
+  if (!anonymous) {
+    return (
+      <span className={className} data-testid={testId}>
+        {formatPoints(full)}
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex flex-wrap items-baseline gap-x-1.5" data-testid={testId}>
+      <s className="text-[0.82em] font-medium text-[#9b9fb3]" data-testid={testId ? `${testId}-old` : undefined}>
+        <span className="sr-only">было </span>
+        {formatPoints(full)}
+      </s>
+      <span className={className}>
+        <span className="sr-only">анонимно </span>
+        {formatPoints(reviewRewardFor(kind, true))}
+      </span>
+    </span>
+  );
+}
 
 function ReviewSection({
   data,
@@ -527,6 +597,9 @@ function ReviewSection({
 }) {
   const review = data.myReview;
   const [showForm, setShowForm] = useState(false);
+  // Анонимность живёт здесь, а не в форме: от неё зависят и плитки видов
+  // отзыва над формой — суммы на них зачёркиваются.
+  const [anonymous, setAnonymous] = useState(false);
 
   if (review && review.status !== "rejected" && !showForm) {
     return (
@@ -557,7 +630,9 @@ function ReviewSection({
             className={mini ? "mt-2 text-[12px]" : "mt-2 text-[12.5px] text-[#6f7282]"}
             style={mini ? { color: "var(--mini-text-muted)" } : undefined}
           >
-            — {review.authorName}, {review.place}
+            {review.anonymous
+              ? "— анонимно, без имени и заведения"
+              : `— ${review.authorName}, ${review.place}`}
           </footer>
         </blockquote>
       </Section>
@@ -593,6 +668,7 @@ function ReviewSection({
         {REVIEW_TILES.map((tile) => (
           <div
             key={tile.kind}
+            data-testid={`review-tile-${tile.kind}`}
             className={
               mini
                 ? "rounded-2xl p-3"
@@ -610,8 +686,12 @@ function ReviewSection({
             >
               {tile.title}
             </div>
-            <div className="mt-1 text-[18px] font-semibold tabular-nums text-[#116b2a]">
-              {formatPoints(REVIEW_REWARD_RUB[tile.kind])}
+            <div className="mt-1">
+              <RewardAmount
+                kind={tile.kind}
+                anonymous={anonymous}
+                className="text-[18px] font-semibold tabular-nums text-[#116b2a]"
+              />
             </div>
             <div
               className={mini ? "mt-1 text-[12px]" : "mt-1 text-[12px] text-[#6f7282]"}
@@ -626,6 +706,8 @@ function ReviewSection({
       <ReviewForm
         data={data}
         mini={mini}
+        anonymous={anonymous}
+        onAnonymousChange={setAnonymous}
         onSent={async () => {
           setShowForm(false);
           await onSent();
@@ -638,15 +720,21 @@ function ReviewSection({
 function ReviewForm({
   data,
   mini,
+  anonymous,
+  onAnonymousChange,
   onSent,
 }: {
   data: BalanceOverview;
   mini: boolean;
+  anonymous: boolean;
+  onAnonymousChange: (next: boolean) => void;
   onSent: () => void | Promise<void>;
 }) {
   const [text, setText] = useState("");
-  const [authorName, setAuthorName] = useState(data.userName);
-  const [place, setPlace] = useState(data.organizationName);
+  // Предзаполнение — с сервера и без дублей: если организация названа так
+  // же, как человек, заведение не подставляется (reviewPrefill).
+  const [authorName, setAuthorName] = useState(data.reviewPrefill.authorName);
+  const [place, setPlace] = useState(data.reviewPrefill.place);
   const [rating, setRating] = useState(5);
   const [consent, setConsent] = useState(true);
   const [sending, setSending] = useState(false);
@@ -660,15 +748,19 @@ function ReviewForm({
     () => reviewKindFromMime(attachment?.mimeType ?? null) ?? "text",
     [attachment?.mimeType],
   );
-  const reward = REVIEW_REWARD_RUB[kind];
+  const reward = reviewRewardFor(kind, anonymous);
   const uploading = attachment?.status === "uploading";
   const canSend =
-    text.trim().length >= 30 &&
-    authorName.trim().length >= 2 &&
-    place.trim().length >= 2 &&
+    text.trim().length >= REVIEW_TEXT_MIN_LENGTH &&
+    (anonymous || (authorName.trim().length >= 2 && place.trim().length >= 2)) &&
     consent &&
     !uploading &&
     !sending;
+
+  const labelClass = mini
+    ? "mb-1.5 block text-[13px] font-medium"
+    : "mb-1.5 block text-[13px] font-medium text-[#0b1024]";
+  const labelStyle = mini ? { color: "var(--mini-text)" } : undefined;
 
   async function send() {
     setSending(true);
@@ -678,8 +770,9 @@ function ReviewForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           text: text.trim(),
-          authorName: authorName.trim(),
-          place: place.trim(),
+          // Анонимный отзыв имя и заведение не отправляет вовсе.
+          ...(anonymous ? {} : { authorName: authorName.trim(), place: place.trim() }),
+          anonymous,
           rating,
           consentPublic: consent,
           attachments: ready ? [ready] : [],
@@ -732,6 +825,7 @@ function ReviewForm({
           setText(event.target.value.slice(0, REVIEW_TEXT_MAX_LENGTH))
         }
         rows={5}
+        aria-label="Текст отзыва"
         placeholder="Что изменилось после перехода на электронные журналы? Что понравилось, что было сложно?"
         className={`${inputClass(mini)} h-auto py-3`}
         style={mini ? miniInput : undefined}
@@ -743,22 +837,58 @@ function ReviewForm({
         {text.trim().length} / {REVIEW_TEXT_MAX_LENGTH} символов
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <label className="flex cursor-pointer items-start gap-2.5">
         <input
-          value={authorName}
-          onChange={(event) => setAuthorName(event.target.value)}
-          placeholder="Как вас подписать"
-          className={inputClass(mini)}
-          style={mini ? miniInput : undefined}
+          type="checkbox"
+          data-testid="review-anonymous"
+          checked={anonymous}
+          onChange={(event) => onAnonymousChange(event.target.checked)}
+          className="mt-0.5 size-4 shrink-0 accent-[#5566f6]"
         />
-        <input
-          value={place}
-          onChange={(event) => setPlace(event.target.value)}
-          placeholder="Заведение и город"
-          className={inputClass(mini)}
-          style={mini ? miniInput : undefined}
-        />
-      </div>
+        <span
+          className={mini ? "text-[13px]" : "text-[13.5px] leading-[1.5] text-[#0b1024]"}
+          style={mini ? { color: "var(--mini-text)" } : undefined}
+        >
+          Оставить отзыв анонимно (без имени и заведения)
+          <span
+            className={mini ? "mt-0.5 block text-[12px]" : "mt-0.5 block text-[12px] text-[#6f7282]"}
+            style={mini ? { color: "var(--mini-text-muted)" } : undefined}
+          >
+            На сайте отзыв будет подписан «Анонимный отзыв», начисление — на 20 % меньше.
+          </span>
+        </span>
+      </label>
+
+      {anonymous ? null : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label htmlFor="review-author" className={labelClass} style={labelStyle}>
+              Как вас подписать
+            </label>
+            <input
+              id="review-author"
+              value={authorName}
+              onChange={(event) => setAuthorName(event.target.value)}
+              placeholder="Например, Анна Петрова"
+              className={inputClass(mini)}
+              style={mini ? miniInput : undefined}
+            />
+          </div>
+          <div>
+            <label htmlFor="review-place" className={labelClass} style={labelStyle}>
+              Заведение и город
+            </label>
+            <input
+              id="review-place"
+              value={place}
+              onChange={(event) => setPlace(event.target.value)}
+              placeholder="Например, кафе «Ромашка», Казань"
+              className={inputClass(mini)}
+              style={mini ? miniInput : undefined}
+            />
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-2">
         <input
@@ -812,16 +942,19 @@ function ReviewForm({
       <label className="flex cursor-pointer items-start gap-2.5">
         <input
           type="checkbox"
+          data-testid="review-consent"
           checked={consent}
           onChange={(event) => setConsent(event.target.checked)}
           className="mt-0.5 size-4 shrink-0 accent-[#5566f6]"
         />
         <span
+          data-testid="review-consent-text"
           className={mini ? "text-[13px]" : "text-[13px] leading-[1.5] text-[#3c4053]"}
           style={mini ? { color: "var(--mini-text-muted)" } : undefined}
         >
-          Согласен на публикацию отзыва, имени и заведения на сайте wesetup.ru
-          и в соцсетях.
+          {anonymous
+            ? "Согласен на публикацию текста отзыва без имени и заведения"
+            : "Согласен на публикацию отзыва, имени и заведения на сайте wesetup.ru и в соцсетях."}
         </span>
       </label>
 
@@ -834,12 +967,19 @@ function ReviewForm({
         style={mini ? { background: "var(--mini-surface-2)" } : undefined}
       >
         <span
-          className={mini ? "text-[13px]" : "text-[13.5px] text-[#3c4053]"}
+          className={mini ? "inline-flex flex-wrap items-baseline gap-x-1.5 text-[13px]" : "inline-flex flex-wrap items-baseline gap-x-1.5 text-[13.5px] text-[#3c4053]"}
           style={mini ? { color: "var(--mini-text-muted)" } : undefined}
         >
-          Будет начислено{" "}
-          <strong className="text-[#116b2a]">{formatPoints(reward)}</strong>{" "}
-          после проверки
+          {/* Пробелы между словами даёт gap флекса — литеральные пробелы
+              удвоили бы отступ. */}
+          <span>Будет начислено</span>
+          <RewardAmount
+            kind={kind}
+            anonymous={anonymous}
+            className="font-semibold text-[#116b2a]"
+            testId="review-reward"
+          />
+          <span>после проверки</span>
         </span>
         <button
           type="button"
@@ -864,8 +1004,17 @@ function ReviewForm({
         title="Отправить отзыв на проверку?"
         description="Модератор прочитает отзыв и решит, публиковать ли его. Обычно это занимает один рабочий день."
         bullets={[
-          { label: `К начислению ${formatPoints(reward)} на баланс организации`, tone: "info" },
-          { label: "Отзыв появится на сайте с вашим именем и заведением" },
+          {
+            label: anonymous
+              ? `К начислению ${formatPoints(reward)} на баланс организации — анонимный отзыв на 20 % меньше`
+              : `К начислению ${formatPoints(reward)} на баланс организации`,
+            tone: "info",
+          },
+          {
+            label: anonymous
+              ? "Отзыв появится на сайте без имени и заведения"
+              : "Отзыв появится на сайте с вашим именем и заведением",
+          },
           { label: "Пока отзыв на проверке, отправить второй нельзя" },
         ]}
         confirmLabel="Отправить"
@@ -895,7 +1044,7 @@ function HistorySection({
         subtitle={
           inApp
             ? "Пока пусто."
-            : "Пока пусто. Пригласите коллегу или оставьте отзыв — первые баллы появятся здесь."
+            : "Пока пусто. Пригласите коллегу, оставьте отзыв или пополните баланс — первые баллы появятся здесь."
         }
       >
         {null}
@@ -981,153 +1130,5 @@ function HistorySection({
         </table>
       </div>
     </Section>
-  );
-}
-
-/* ------------------------------------------------------------ приметы */
-
-const miniCard: React.CSSProperties = {
-  background: "var(--mini-card-solid-bg)",
-  border: "1px solid var(--mini-divider)",
-};
-const miniInput: React.CSSProperties = {
-  background: "var(--mini-surface-2)",
-  color: "var(--mini-text)",
-  border: "1px solid var(--mini-divider)",
-};
-const miniPrimary: React.CSSProperties = {
-  background: "var(--mini-lime)",
-  color: "var(--mini-primary-contrast)",
-};
-const miniSecondary: React.CSSProperties = {
-  background: "var(--mini-surface-2)",
-  color: "var(--mini-text)",
-  border: "1px solid var(--mini-divider)",
-};
-
-function inputClass(mini: boolean): string {
-  return mini
-    ? "h-11 w-full rounded-2xl px-4 text-[15px] outline-none focus:ring-2 focus:ring-[color:var(--mini-lime-strong)]"
-    : "h-12 w-full rounded-2xl border border-[#dcdfed] bg-white px-4 text-[15px] text-[#0b1024] placeholder:text-[#9b9fb3] transition-colors focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15";
-}
-
-function primaryButtonClass(mini: boolean): string {
-  return mini
-    ? "inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-2xl px-5 text-[14px] font-medium disabled:opacity-50"
-    : "inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-6 text-[15px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0] disabled:cursor-not-allowed disabled:opacity-60";
-}
-
-function secondaryButtonClass(mini: boolean): string {
-  return mini
-    ? "inline-flex h-10 items-center gap-2 rounded-2xl px-4 text-[13.5px] font-medium disabled:opacity-50"
-    : "inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[13.5px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:cursor-not-allowed disabled:opacity-60";
-}
-
-function StatusPill({
-  tone,
-  mini,
-  children,
-}: {
-  tone: "muted" | "info" | "ok";
-  mini: boolean;
-  children: React.ReactNode;
-}) {
-  if (mini) {
-    const background =
-      tone === "ok"
-        ? "var(--mini-sage-soft)"
-        : tone === "info"
-          ? "var(--mini-ice-soft)"
-          : "var(--mini-surface-3)";
-    const color =
-      tone === "ok"
-        ? "var(--mini-sage)"
-        : tone === "info"
-          ? "var(--mini-ice)"
-          : "var(--mini-text-muted)";
-    return (
-      <span
-        className="rounded-full px-2.5 py-1 text-[11.5px] whitespace-nowrap"
-        style={{ background, color }}
-      >
-        {children}
-      </span>
-    );
-  }
-  const cls =
-    tone === "ok"
-      ? "bg-[#ecfdf5] text-[#116b2a]"
-      : tone === "info"
-        ? "bg-[#eef1ff] text-[#3848c7]"
-        : "bg-[#f5f6ff] text-[#6f7282]";
-  return (
-    <span className={`rounded-full px-2.5 py-1 text-[11.5px] whitespace-nowrap ${cls}`}>
-      {children}
-    </span>
-  );
-}
-
-function Section({
-  mini,
-  icon,
-  title,
-  subtitle,
-  children,
-}: {
-  mini: boolean;
-  icon: React.ReactNode;
-  title: string;
-  subtitle: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section
-      className={
-        mini
-          ? "rounded-2xl p-5"
-          : "rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-7"
-      }
-      style={mini ? miniCard : undefined}
-    >
-      <div className="flex items-start gap-4">
-        <span
-          className={
-            mini
-              ? "flex size-11 shrink-0 items-center justify-center rounded-2xl"
-              : "flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[#eef1ff]"
-          }
-          style={
-            mini
-              ? { background: "var(--mini-surface-3)", color: "var(--mini-text)" }
-              : undefined
-          }
-        >
-          {icon}
-        </span>
-        <div className="min-w-0 flex-1">
-          <h2
-            className={
-              mini
-                ? "text-[16px] font-semibold"
-                : "text-[18px] font-semibold tracking-[-0.02em] text-[#0b1024]"
-            }
-            style={mini ? { color: "var(--mini-text)" } : undefined}
-          >
-            {title}
-          </h2>
-          <p
-            className={
-              mini
-                ? "mt-1 text-[13px] leading-relaxed"
-                : "mt-1 max-w-[640px] text-[13.5px] leading-relaxed text-[#6f7282]"
-            }
-            style={mini ? { color: "var(--mini-text-muted)" } : undefined}
-          >
-            {subtitle}
-          </p>
-          {children ? <div className="mt-4">{children}</div> : null}
-        </div>
-      </div>
-    </section>
   );
 }

@@ -1,4 +1,4 @@
-import { Star } from "lucide-react";
+import { Star, UserRound } from "lucide-react";
 
 import { LANDING_SECTION_CLASS, LandingSectionHeader } from "@/components/landing/landing-section";
 import type { PublicReview } from "@/lib/balance/review-view";
@@ -43,7 +43,11 @@ export function Testimonials({ reviews }: { reviews: PublicReview[] }) {
 }
 
 function TestimonialCard({ review }: { review: PublicReview }) {
-  const initials = review.author
+  // Анонимный отзыв: без имени — и без инициалов «АО», которые читались бы
+  // как «акционерное общество». Вместо монограммы — нейтральный значок.
+  const initials = review.anonymous
+    ? ""
+    : review.author
     .split(/\s+/)
     .map((w) => w[0])
     .filter(Boolean)
@@ -95,11 +99,13 @@ function TestimonialCard({ review }: { review: PublicReview }) {
           aria-hidden="true"
           className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#eef1ff] text-[14px] font-semibold text-[#3848c7] ring-1 ring-[#5566f6]/15"
         >
-          {initials}
+          {review.anonymous ? <UserRound className="size-5" /> : initials}
         </span>
         <span className="min-w-0">
           <span className="block text-[16px] font-semibold text-[#0b1024]">{review.author}</span>
-          <span className="block text-[16px] text-[#6f7282] sm:text-[14px]">{review.place}</span>
+          {review.place ? (
+            <span className="block text-[16px] text-[#6f7282] sm:text-[14px]">{review.place}</span>
+          ) : null}
         </span>
       </figcaption>
     </figure>

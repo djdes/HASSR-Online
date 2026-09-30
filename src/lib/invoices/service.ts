@@ -1,5 +1,8 @@
 import type { PaymentOrder, Prisma } from "@prisma/client";
 
+import { formatPoints } from "@/lib/balance/constants";
+import { settlePaidOrder } from "@/lib/balance/topup";
+import { TOPUP_TARIFF_KEY, isTopupOrder, topupOrderDescription } from "@/lib/balance/topup-core";
 import { buildBuyerSnapshot, buildSellerSnapshot } from "@/lib/closing-documents/build";
 import { readLegalImage, readPlatformRequisites } from "@/lib/closing-documents/requisites";
 import { db } from "@/lib/db";
@@ -22,6 +25,8 @@ import { renderInvoicePdf } from "./pdf";
  * - `createInvoiceOrder`: заказ `paymentMethod = "invoice"` в статусе
  *   pending, без баллов и без кассы. Один действующий счёт на
  *   организацию: повторный запрос возвращает его же.
+ * - `createTopupInvoiceOrder`: счёт на пополнение баланса — отдельно от
+ *   счёта на подписку (свой «один действующий»), подписку не продлевает.
  * - `renderInvoice`: PDF по текущим реквизитам сторон (счёт — не
  *   закрывающий документ, снимок не нужен: оплатят — будет УПД).
  * - `markInvoicePaid` (ROOT): тот же путь, что у вебхука кассы —
@@ -79,8 +84,14 @@ export async function createInvoiceOrder(args: {
   const offer = await getSubscriptionOffer(now, args.tariffKey);
   if (!offer) return { ok: false, status: 400, error: "Тариф недоступен" };
 
+  // Счёт на пополнение баланса — не счёт на подписку: его не возвращаем.
   const existing = await db.paymentOrder.findFirst({
-    where: { organizationId: args.organizationId, paymentMethod: "invoice", status: "pending" },
+    where: {
+      organizationId: args.organizationId,
+      paymentMethod: "invoice",
+      status: "pending",
+      tariffKey: { not: TOPUP_TARIFF_KEY },
+    },
     orderBy: { createdAt: "desc" },
   });
   if (existing) return { ok: true, order: existing, created: false };
@@ -153,10 +164,11 @@ export async function createInvoiceOrder(args: {
 export async function renderInvoice(orderId: number): Promise<{ order: PaymentOrder; pdf: Buffer } | null> {
   const order = await db.paymentOrder.findUnique({ where: { id: orderId } });
   if (!order || order.paymentMethod !== "invoice" || !order.organizationId) return null;
+  const topup = isTopupOrder(order);
   const [requisites, organization, tariff] = await Promise.all([
     readPlatformRequisites(),
     loadOrganizationParty(order.organizationId),
-    readTariff(order.tariffKey),
+    topup ? Promise.resolve(null) : readTariff(order.tariffKey),
   ]);
   if (!organization) return null;
   const draft = buildInvoiceDraft({
@@ -164,6 +176,7 @@ export async function renderInvoice(orderId: number): Promise<{ order: PaymentOr
     tariff: tariff ? { title: tariff.title, periodDays: tariff.periodDays, priceRub: tariff.priceRub } : null,
     seller: buildSellerSnapshot(requisites),
     buyer: buildBuyerSnapshot(organization),
+    purpose: topup ? "topup" : "subscription",
   });
   const [facsimile, stamp] = await Promise.all([
     readLegalImage("facsimile", requisites),
@@ -177,6 +190,7 @@ export async function deliverInvoice(orderId: number, organizationName: string):
   const rendered = await renderInvoice(orderId);
   if (!rendered) return;
   const { order, pdf } = rendered;
+  const topup = isTopupOrder(order);
   await sendInvoiceEmail({
     to: order.email,
     number: String(order.id),
@@ -184,10 +198,11 @@ export async function deliverInvoice(orderId: number, organizationName: string):
     dueAt: order.invoiceDueAt ?? new Date(order.createdAt.getTime() + INVOICE_VALID_DAYS * DAY_MS),
     organizationId: order.organizationId,
     pdf,
+    purpose: topup ? "topup" : "subscription",
   }).catch((error) => console.error("[invoices] email failed", error));
   await notifyPlatformAdmin(
     [
-      `🧾 Выставлен счёт №${order.id}`,
+      `🧾 Выставлен счёт №${order.id}${topup ? " на пополнение баланса" : ""}`,
       `Организация: ${organizationName}`,
       `Сумма: ${Number(order.amountRub).toLocaleString("ru-RU")} ₽ · ${order.description}`,
       `Когда деньги придут — ROOT → организация → «Оплата поступила».`,
@@ -201,11 +216,15 @@ export async function markInvoicePaid(
   byUserId: string
 ): Promise<{ ok: true; order: PaymentOrder } | { ok: false; status: number; error: string }> {
   const raw: Prisma.InputJsonValue = { manual: true, by: byUserId, at: new Date().toISOString() };
-  const claimed = await db.paymentOrder.updateMany({
-    where: { id: orderId, status: "pending", paymentMethod: "invoice" },
-    data: { status: "paid", paidAt: new Date(), rawResult: raw },
+  // pending → paid одним условным апдейтом; у счёта на пополнение в той же
+  // транзакции баланс получает сумму счёта (settlePaidOrder, topup-core.ts).
+  const settled = await settlePaidOrder({
+    orderId,
+    paymentMethod: "invoice",
+    rawResult: raw,
+    actorUserId: byUserId,
   });
-  if (claimed.count === 0) {
+  if (!settled.claimed) {
     const fresh = await db.paymentOrder.findUnique({ where: { id: orderId }, select: { status: true, paymentMethod: true } });
     if (!fresh || fresh.paymentMethod !== "invoice") return { ok: false, status: 404, error: "Счёт не найден" };
     return { ok: false, status: 409, error: fresh.status === "paid" ? "Счёт уже отмечен оплаченным" : `Счёт в статусе «${fresh.status}»` };
@@ -216,6 +235,71 @@ export async function markInvoicePaid(
   // одной точкой с кассой. Внутри всё best-effort.
   await completePaidOrder(stored);
   return { ok: true, order: stored };
+}
+
+/**
+ * Счёт на пополнение баланса (сумма уже проверена `parseTopupAmount`).
+ * Как у подписки: нужны реквизиты исполнителя и ИНН покупателя; один
+ * действующий счёт на пополнение — повтор с той же суммой возвращает его
+ * же, с другой — отказ с номером действующего счёта (иначе бухгалтерия
+ * получила бы два счёта и оплатила оба).
+ */
+export async function createTopupInvoiceOrder(args: {
+  organizationId: string;
+  userId: string;
+  email: string;
+  amountRub: number;
+}): Promise<CreateInvoiceResult> {
+  const requisites = await readPlatformRequisites();
+  if (!invoiceRequisitesReady(requisites)) {
+    return { ok: false, status: 409, error: "Оплата по счёту пока недоступна — реквизиты исполнителя не заполнены" };
+  }
+  const organization = await loadOrganizationParty(args.organizationId);
+  if (!organization) return { ok: false, status: 404, error: "Организация не найдена" };
+  if (!buildBuyerSnapshot(organization).inn) {
+    return { ok: false, status: 400, error: "Укажите ИНН организации в настройках — без него счёт не оформить" };
+  }
+  const now = new Date();
+  const existing = await db.paymentOrder.findFirst({
+    where: {
+      organizationId: args.organizationId,
+      paymentMethod: "invoice",
+      status: "pending",
+      tariffKey: TOPUP_TARIFF_KEY,
+      OR: [{ invoiceDueAt: null }, { invoiceDueAt: { gt: now } }],
+    },
+    orderBy: { createdAt: "desc" },
+  });
+  if (existing) {
+    if (Number(existing.amountRub) === args.amountRub) return { ok: true, order: existing, created: false };
+    const due = existing.invoiceDueAt ? ` — он действует до ${existing.invoiceDueAt.toLocaleDateString("ru-RU")}` : "";
+    console.info(
+      `[balance] topup invoice refused org=${args.organizationId} rub=${args.amountRub}: pending invoice #${existing.id} on ${Number(existing.amountRub)}`,
+    );
+    return {
+      ok: false,
+      status: 409,
+      error: `Уже выставлен счёт № ${existing.id} на ${formatPoints(Number(existing.amountRub))}${due}. Оплатите его или напишите на support@wesetup.ru, чтобы отменить`,
+    };
+  }
+  const order = await db.paymentOrder.create({
+    data: {
+      email: args.email,
+      tariffKey: TOPUP_TARIFF_KEY,
+      amountRub: args.amountRub,
+      description: topupOrderDescription(args.amountRub, "invoice"),
+      status: "pending",
+      isTest: isTestMode(),
+      organizationId: args.organizationId,
+      userId: args.userId,
+      paymentMethod: "invoice",
+      invoiceDueAt: new Date(now.getTime() + INVOICE_VALID_DAYS * DAY_MS),
+    },
+  });
+  console.info(
+    `[balance] topup order created org=${args.organizationId} rub=${args.amountRub} order=${order.id} method=invoice`,
+  );
+  return { ok: true, order, created: true };
 }
 
 export async function cancelInvoice(orderId: number): Promise<boolean> {

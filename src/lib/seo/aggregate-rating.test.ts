@@ -17,4 +17,19 @@ describe("buildAggregateRating", () => {
     assert.equal(out.review.length, 5);
     assert.equal(out.review[0].reviewRating.ratingValue, 5);
   });
+  it("анонимный отзыв считается в среднем, но без подписи-«человека» в Review", () => {
+    const rows = [
+      { ...base, author: "Анонимный отзыв", rating: 5, anonymous: true },
+      { ...base, author: "Анна", rating: 4 },
+      { ...base, author: "Борис", rating: 3 },
+    ];
+    const out = buildAggregateRating(rows);
+    assert.ok(out);
+    assert.equal(out.aggregateRating.reviewCount, 3);
+    assert.equal(out.aggregateRating.ratingValue, "4.0");
+    assert.deepEqual(
+      out.review.map((r) => r.author.name),
+      ["Анна", "Борис"],
+    );
+  });
 });

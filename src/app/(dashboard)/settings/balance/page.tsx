@@ -1,9 +1,11 @@
 import { Coins } from "lucide-react";
 
-import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
+import { requireAuth, getActiveOrgId, isImpersonating } from "@/lib/auth-helpers";
 import { loadBalanceOverview } from "@/lib/balance/overview";
+import { loadTopupBlockConfig } from "@/lib/balance/topup";
 import { BalanceClient } from "@/components/balance/balance-client";
 import { isMobileAppRequest } from "@/lib/mobile-app-payments";
+import { hasFullWorkspaceAccess } from "@/lib/role-access";
 
 export const dynamic = "force-dynamic";
 
@@ -14,16 +16,28 @@ export const dynamic = "force-dynamic";
  * важно видеть, сколько за это начислят. Баланс и историю списаний
  * внутри показываем только `admin.full` — это решает
  * `loadBalanceOverview`, а не страница.
+ *
+ * «Пополнить баланс» — только руководителю, который видит баланс, не ROOT
+ * в режиме «войти как» (чужие деньги) и не в приложении WeSetup.
  */
 export default async function BalanceSettingsPage() {
   const session = await requireAuth();
-  const overview = await loadBalanceOverview(
-    getActiveOrgId(session),
-    session.user,
-  );
+  const organizationId = getActiveOrgId(session);
+  const overview = await loadBalanceOverview(organizationId, session.user);
   // Приложение WeSetup: только баланс и история, без оплаты и без
   // заработка баллов на скидку к оплате (правила магазинов).
   const inApp = await isMobileAppRequest();
+  const canTopUp =
+    !inApp &&
+    overview.canSeeBalance &&
+    hasFullWorkspaceAccess(session.user) &&
+    !isImpersonating(session);
+  const topup = canTopUp
+    ? await loadTopupBlockConfig(organizationId).catch((error) => {
+        console.error("[balance] topup block load failed", error);
+        return null;
+      })
+    : null;
 
   return (
     <div className="space-y-5">
@@ -38,12 +52,12 @@ export default async function BalanceSettingsPage() {
           <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
             {inApp
               ? "Бонусные баллы вашей организации и история начислений."
-              : "Баллы — это скидка на подписку: 1 балл = 1 ₽. Зарабатываются двумя способами: рекомендацией коллегам и отзывом о сервисе. Тратятся автоматически при оплате."}
+              : "Баллами оплачивается подписка: 1 балл = 1 ₽. Их можно заработать — рекомендацией коллегам и отзывом о сервисе — или пополнить баланс деньгами. Тратятся автоматически при оплате."}
           </p>
         </div>
       </div>
 
-      <BalanceClient initial={overview} variant="site" inApp={inApp} />
+      <BalanceClient initial={overview} variant="site" inApp={inApp} topup={topup} />
     </div>
   );
 }

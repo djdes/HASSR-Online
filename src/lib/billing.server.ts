@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 
 import { db } from "@/lib/db";
 import { advisoryLockKey, withAdvisoryTryLock } from "@/lib/advisory-lock";
+import { TOPUP_TARIFF_KEY } from "@/lib/balance/topup-core";
 import {
   BILLING_LIMIT_CODE,
   BILLING_PAY_HREF,
@@ -381,6 +382,8 @@ export async function hasPendingInvoice(orgIds: string[], now: Date = new Date()
       organizationId: { in: orgIds },
       paymentMethod: "invoice",
       status: "pending",
+      // Счёт на пополнение баланса — не решение «платим за подписку».
+      tariffKey: { not: TOPUP_TARIFF_KEY },
       OR: [{ invoiceDueAt: null }, { invoiceDueAt: { gt: now } }],
     },
   });

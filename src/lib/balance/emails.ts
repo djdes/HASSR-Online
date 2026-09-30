@@ -132,6 +132,46 @@ export async function sendReviewModeratedEmail(params: {
   );
 }
 
+export type BalanceTopupEmailParams = {
+  amountRub: number;
+  /** Баланс после зачисления. */
+  balanceRub: number;
+  orderId: number;
+  paymentMethod: string;
+  isTest: boolean;
+};
+
+/**
+ * Пополнение зачислено — письмо плательщику. Сборка отдельно от
+ * отправки, чтобы проверять тестом: сумма, баланс, номер заказа, честная
+ * пометка тестового платежа, без обещаний, которых продукт не делает.
+ */
+export function buildBalanceTopupEmail(params: BalanceTopupEmailParams): { subject: string; html: string } {
+  const amount = escapeHtml(formatPoints(params.amountRub));
+  const subject = `Баланс пополнен на ${formatPoints(params.amountRub)}`;
+  const how = params.paymentMethod === "invoice" ? "по счёту" : "картой";
+  const test = params.isTest
+    ? `<p ${P}><strong>Это тестовый платёж</strong> — касса работала в тестовом режиме, деньги не списывались.</p>`
+    : "";
+  const body = `
+    <p ${P}>Здравствуйте!</p>
+    <p ${P}>Мы получили оплату ${how}. На баланс вашей организации зачислено <strong>${amount}</strong> — 1 ₽ = 1 балл.</p>
+    ${test}
+    <div ${BOX}>
+      <p style="margin:0 0 8px;color:#18181b;font-size:14px">Заказ: <strong>№ ${escapeHtml(String(params.orderId))}</strong></p>
+      <p style="margin:0;color:#18181b;font-size:14px">Баланс сейчас: <strong>${escapeHtml(formatPoints(params.balanceRub))}</strong></p>
+    </div>
+    <p ${P}>Баллами оплачивается подписка: на странице оплаты они списываются автоматически. Оборудование за баллы не продаём.</p>
+    ${button(`${APP_URL}/settings/balance`, "Открыть баланс и бонусы")}
+    <p ${MUTED}>Вопросы по оплате — support@wesetup.ru.</p>`;
+  return { subject, html: renderEmailLayout("Баланс пополнен", body) };
+}
+
+export async function sendBalanceTopupEmail(params: BalanceTopupEmailParams & { to: string }): Promise<boolean> {
+  const email = buildBalanceTopupEmail(params);
+  return sendRawEmail(params.to, email.subject, email.html);
+}
+
 /** Реферальная награда начислена — организации-рекомендателю. */
 export async function sendReferralRewardEmail(params: {
   to: string;

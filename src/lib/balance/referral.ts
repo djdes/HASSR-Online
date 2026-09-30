@@ -16,6 +16,7 @@ import {
 } from "./constants";
 import { sendReferralRewardEmail } from "./emails";
 import { applyBalanceChange, DuplicateBalanceChangeError } from "./ledger";
+import { isTopupOrder } from "./topup-core";
 
 /**
  * Реферальная программа клиент → клиент.
@@ -187,6 +188,7 @@ export async function accrueReferralReward(orderId: number): Promise<number> {
     select: {
       id: true,
       organizationId: true,
+      tariffKey: true,
       amountRub: true,
       bundleConfig: true,
       pointsSpent: true,
@@ -197,6 +199,11 @@ export async function accrueReferralReward(orderId: number): Promise<number> {
   if (!order || !order.organizationId) return 0;
   if (order.status !== "paid" && order.status !== "completed") return 0;
   if (order.refundedAt) return 0;
+  // Пополнение баланса — не покупка подписки: награда «30 % первой
+  // подписки» одна на организацию, и первое пополнение съело бы её (30 %
+  // от суммы до 300 000 ₽). Награда придёт с оплатой подписки — база
+  // учитывает и баллы, в том числе из пополнения.
+  if (isTopupOrder(order)) return 0;
 
   const organization = await db.organization.findUnique({
     where: { id: order.organizationId },

@@ -12,6 +12,7 @@ import { OrgSettingsForm } from "./org-settings-form";
 import { BalanceCard } from "./balance-card";
 import { InvoiceActions } from "./invoice-actions";
 import { orderStatusLabel } from "@/lib/order-status";
+import { isTopupOrder } from "@/lib/balance/topup-core";
 
 export const dynamic = "force-dynamic";
 
@@ -79,11 +80,13 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
     },
   });
   const documentsReady = isRequisitesComplete(await readPlatformRequisites());
+  // Пополнение баланса — аванс: УПД на него не выпускается.
   const closingEligible = (payment: (typeof payments)[number]) =>
     documentsReady &&
     payment.status === "paid" &&
     !payment.isTest &&
     !payment.refundedAt &&
+    !isTopupOrder(payment) &&
     Number(payment.amountRub) > 0;
   const paidTotalRub = payments
     .filter((payment) => payment.status === "paid")
@@ -230,7 +233,9 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
                   <td className="py-2.5 text-[#0b1024]">
                     {(payment.paidAt ?? payment.createdAt).toLocaleString("ru-RU")}
                   </td>
-                  <td className="py-2.5 text-[#6f7282]">{payment.tariffKey}</td>
+                  <td className="py-2.5 text-[#6f7282]">
+                    {isTopupOrder(payment) ? "пополнение баланса" : payment.tariffKey}
+                  </td>
                   <td className="py-2.5">
                     <span
                       className={
@@ -268,6 +273,7 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
                         amountRub={Number(payment.amountRub)}
                         organizationName={org.name}
                         pending={payment.status === "pending"}
+                        purpose={isTopupOrder(payment) ? "topup" : "subscription"}
                       />
                     ) : closingEligible(payment) ? (
                       <a

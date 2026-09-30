@@ -37,6 +37,25 @@ export type InvoiceDraft = {
   lines: ClosingLine[];
   totalRub: number;
   basis: string;
+  /** Что произойдёт после оплаты — строка в примечании счёта; нет — как у подписки. */
+  afterPayment?: string;
+};
+
+/** Счёт на подписку или на пополнение баланса деньгами. */
+export type InvoicePurpose = "subscription" | "topup";
+
+/**
+ * Строка счёта на пополнение. Пополнение — предоплата: услуга будет
+ * оказана, когда баллы потратят на подписку, поэтому в счёте нет периода.
+ */
+export const TOPUP_INVOICE_LINE_TITLE =
+  "Пополнение баланса в сервисе WeSetup (предоплата за доступ к сервису)";
+
+export const INVOICE_AFTER_PAYMENT: Record<InvoicePurpose, string> = {
+  subscription:
+    "После поступления средств подписка продлевается автоматически, закрывающие документы появляются в кабинете: «Настройки → Подписка → История оплат».",
+  topup:
+    "После поступления средств баланс организации пополняется на сумму счёта (1 ₽ = 1 балл) — баллы расходуются на оплату подписки. Промокоды и акции к пополнению не применяются.",
 };
 
 export type InvoiceBuildInput = {
@@ -49,10 +68,17 @@ export type InvoiceBuildInput = {
   tariff: { title: string; periodDays: number; priceRub: number } | null;
   seller: PartySnapshot;
   buyer: PartySnapshot;
+  /** По умолчанию — подписка. */
+  purpose?: InvoicePurpose;
 };
 
 export function buildInvoiceLines(input: InvoiceBuildInput): ClosingLine[] {
   const total = round2(Math.max(0, input.order.amountRub));
+  if (input.purpose === "topup") {
+    return [
+      { title: TOPUP_INVOICE_LINE_TITLE, unit: "усл. ед.", unitCode: "876", qty: 1, priceRub: total, sumRub: total },
+    ];
+  }
   const config = normalizeHardwareConfig(input.order.bundleConfig);
   const hardware: ClosingLine[] = HARDWARE_DEVICES.filter((d) => (config[d.id] ?? 0) > 0).map(
     (d) => ({
@@ -90,6 +116,7 @@ export function buildInvoiceDraft(input: InvoiceBuildInput): InvoiceDraft {
     lines,
     totalRub: round2(lines.reduce((sum, line) => sum + line.sumRub, 0)),
     basis: "Договор-оферта (wesetup.ru/oferta)",
+    afterPayment: INVOICE_AFTER_PAYMENT[input.purpose ?? "subscription"],
   };
 }
 
