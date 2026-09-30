@@ -18,6 +18,9 @@ export const dynamic = "force-dynamic";
  *
  * GET  — состояние и список активных для шага «кто остаётся».
  * POST — «Перейти на бесплатный»: `{ keepUserId }`, остальные — в архив.
+ *        `{ keepUserId, voluntary: true }` — сам переходит с подписки (кнопка
+ *        на странице тарифа), без состояния «нужно решение»; оплаченный срок
+ *        при этом не сохраняется (окно предупреждает).
  *
  * Оплата здесь не принимается: кнопка «Оплатить» ведёт на
  * `/settings/subscription` (карта или счёт по безналу).
@@ -52,6 +55,7 @@ export async function GET() {
     kind: loaded.state.kind,
     activeUsers: loaded.state.activeUsers,
     graceEndsAt: loaded.state.graceEndsAt?.toISOString() ?? null,
+    paidUntil: loaded.state.paidUntil?.toISOString() ?? null,
     multiOrg: orgNames.size > 1,
     candidates: candidates.map((c) => ({
       id: c.id,
@@ -66,7 +70,10 @@ export async function GET() {
   });
 }
 
-const PostSchema = z.object({ keepUserId: z.string().trim().min(1, "Выберите, кто останется") });
+const PostSchema = z.object({
+  keepUserId: z.string().trim().min(1, "Выберите, кто останется"),
+  voluntary: z.boolean().optional(),
+});
 
 export async function POST(request: Request) {
   const auth = await authorize();
@@ -87,14 +94,15 @@ export async function POST(request: Request) {
   }
 
   const orgId = getActiveOrgId(session);
-  console.info("[billing] manager chose free plan", {
+  const voluntary = parsed.data.voluntary === true;
+  console.info(voluntary ? "[billing] voluntary downgrade requested" : "[billing] manager chose free plan", {
     organizationId: orgId,
     by: session.user.id,
     keepUserId: parsed.data.keepUserId,
   });
   const result = await transitionToFree({
     organizationId: orgId,
-    mode: "manual",
+    mode: voluntary ? "voluntary" : "manual",
     keepUserId: parsed.data.keepUserId,
     actor: {
       userId: session.user.id,
@@ -103,6 +111,7 @@ export async function POST(request: Request) {
     },
   });
   if (!result.ok) {
+    console.warn("[billing] free plan refused", { organizationId: orgId, voluntary, status: result.status, error: result.error });
     return NextResponse.json({ error: result.error }, { status: result.status });
   }
   return NextResponse.json({

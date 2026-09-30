@@ -536,3 +536,25 @@ export function transitionCopy(args: {
     freeHint: `0 ₽ · ${free}. Остальные перейдут в архив, их записи в журналах сохранятся.`,
   };
 }
+
+/**
+ * Добровольный переход на бесплатный тариф (кнопка на странице тарифа), в
+ * отличие от решения после бесплатного периода — в любом состоянии, где
+ * тариф вообще есть. Нельзя: у платформы, демо и мастер-кабинета тарифа нет;
+ * приостановленную организацию сначала возобновляют.
+ */
+export function voluntaryDowngradeCheck(
+  state: Pick<AccountBillingState, "kind" | "inactive">
+): { ok: true } | { ok: false; status: number; error: string } {
+  if (state.kind === "exempt") {
+    return { ok: false, status: 409, error: "У этой организации нет тарифа" };
+  }
+  if (state.inactive) {
+    return {
+      ok: false,
+      status: 409,
+      error: "Организация приостановлена — сначала возобновите работу",
+    };
+  }
+  return { ok: true };
+}

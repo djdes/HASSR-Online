@@ -21,10 +21,12 @@ import {
   SUBSCRIPTION_MAX_USERS,
   SUBSCRIPTION_SEATS_LABEL,
 } from "@/lib/plan-catalog";
-import { formatMskDay, lastFreeDay } from "@/lib/billing-period";
+import { formatMskDay, lastFreeDay, voluntaryDowngradeCheck } from "@/lib/billing-period";
+import { tariffName } from "@/lib/cabinet-plan";
 import { loadBillingView } from "@/lib/billing-view.server";
 import {
   BillingTransitionGate,
+  VoluntaryFreeButton,
   type TransitionGateCopy,
 } from "@/components/billing/billing-transition-gate";
 import { HARDWARE_BUNDLES, bundleTotal } from "@/lib/hardware-pricing";
@@ -37,7 +39,6 @@ import {
   BILLING_TEST_MODE,
   FREE_MAX_USERS,
   isFreePlan,
-  planLabel,
 } from "@/lib/plan-limits";
 import { RecurringCard } from "@/components/settings/recurring-card";
 import { PromoBadge, PromoPrice } from "@/components/pricing/promo-price";
@@ -119,7 +120,7 @@ export default async function SubscriptionPage({
           ? "Бесплатный период закончился"
           : kind === "free"
             ? "Бесплатный"
-            : planLabel(plan);
+            : tariffName(plan);
   // Надписи «тестовый режим — оплата не списывается» — только до
   // перехода на оплату: после него это была бы неправда.
   const testModeActive = billing ? billing.testModeActive : BILLING_TEST_MODE;
@@ -130,6 +131,22 @@ export default async function SubscriptionPage({
   const decisionCopy: TransitionGateCopy | null = billing?.gate?.copy ?? null;
   const decisionReadOnly =
     kind === "needs_decision" && !billing?.state.inactive && !decisionCopy;
+  // «Перейти на бесплатный» по своей воле — с подписки (в том числе
+  // оплаченной и в бесплатный период). Решает руководитель в своём
+  // кабинете: не ROOT «под видом» и не консультант (как в API перехода).
+  const voluntaryFree =
+    billing &&
+    !isDemo &&
+    !billing.unit.exempt &&
+    !isFreePlan(shownPlan) &&
+    !isImpersonating(session) &&
+    !session.user.partnerAccess &&
+    voluntaryDowngradeCheck(billing.state).ok
+      ? {
+          paidUntilLabel:
+            kind === "paid" && billing.state.paidUntil ? formatMskDay(billing.state.paidUntil) : null,
+        }
+      : null;
   // Условие бесплатного тарифа — одной строкой под названием плана.
   // null на платном.
   const planNote = isFreePlan(shownPlan) ? FREE_PLAN_NOTE : null;
@@ -366,6 +383,9 @@ export default async function SubscriptionPage({
         subscriptionPromotion={offer.promotion}
         subscriptionDiscount={appliedDiscount}
         payHref={payHref}
+        freeAction={
+          voluntaryFree ? <VoluntaryFreeButton paidUntilLabel={voluntaryFree.paidUntilLabel} /> : null
+        }
       />
 
       {discountFirst ? null : discountCard}

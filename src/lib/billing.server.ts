@@ -18,6 +18,7 @@ import {
   formatPriceRub,
   isBillingEnforced,
   normalizeFreePeriodSettings,
+  voluntaryDowngradeCheck,
   pickKeeper,
   serializeFreePeriodSettings,
   type AccountBillingKind,
@@ -66,6 +67,7 @@ export const SEAT_USER_WHERE: Prisma.UserWhereInput = {
 export const AUDIT_ACTIONS = {
   manual: "billing.transition.manual_free",
   auto: "billing.transition.auto_free",
+  voluntary: "billing.transition.voluntary_free",
   silent: "billing.transition.silent_free",
   reminder: "billing.transition.reminder",
   settings: "billing.free_period.updated",
@@ -442,7 +444,12 @@ export async function listTransitionCandidates(unit: BillingUnit): Promise<Trans
   }));
 }
 
-export type TransitionMode = "manual" | "auto" | "silent";
+/**
+ * manual — решение руководителя после бесплатного периода; voluntary — сам
+ * перешёл на бесплатный с подписки (кнопка на странице тарифа); auto и
+ * silent — ежедневная задача.
+ */
+export type TransitionMode = "manual" | "voluntary" | "auto" | "silent";
 
 export type TransitionResult =
   | {
@@ -468,7 +475,7 @@ export type TransitionResult =
 export async function transitionToFree(args: {
   organizationId: string;
   mode: TransitionMode;
-  /** Кого оставить (manual). Для auto/silent — владелец аккаунта. */
+  /** Кого оставить (manual, voluntary). Для auto/silent — владелец аккаунта. */
   keepUserId?: string | null;
   actor: { userId: string | null; userName: string | null; ipAddress?: string | null };
   now?: Date;
@@ -485,20 +492,32 @@ export async function transitionToFree(args: {
       if (!unit) return { ok: false, status: 404, error: "Организация не найдена" };
       const settings = await readFreePeriodSettings();
       const state = stateForUnit(unit, settings, now);
+      const voluntary = args.mode === "voluntary";
 
-      if (state.kind === "paid") {
-        return { ok: false, status: 409, error: "Подписка уже оплачена — переходить на бесплатный не нужно" };
+      if (voluntary) {
+        // Сам переходит с подписки: те же права (проверяет маршрут), но
+        // состояние «нужно решение» не требуется.
+        const check = voluntaryDowngradeCheck(state);
+        if (!check.ok) return check;
+      } else {
+        if (state.kind === "paid") {
+          return { ok: false, status: 409, error: "Подписка уже оплачена — переходить на бесплатный не нужно" };
+        }
+        if (state.kind === "exempt") {
+          return { ok: false, status: 409, error: "У этой организации нет тарифа" };
+        }
+        if (!state.enforcement) {
+          return { ok: false, status: 409, error: "Бесплатный период ещё идёт — выбирать тариф пока не нужно" };
+        }
       }
-      if (state.kind === "exempt") {
-        return { ok: false, status: 409, error: "У этой организации нет тарифа" };
-      }
-      if (!state.enforcement) {
-        return { ok: false, status: 409, error: "Бесплатный период ещё идёт — выбирать тариф пока не нужно" };
-      }
+      // Оплаченный срок при добровольном переходе не сохраняется (окно
+      // предупреждает; неиспользованную часть возвращают по заявлению, п. 6.2
+      // оферты), автопродление выключается — списаний на бесплатном нет.
+      const paidUntilBefore = state.kind === "paid" ? state.paidUntil : null;
 
       const candidates = await listTransitionCandidates(unit);
       let keeper: TransitionCandidate | null = null;
-      if (args.mode === "manual") {
+      if (args.mode === "manual" || voluntary) {
         keeper = candidates.find((c) => c.id === args.keepUserId) ?? null;
         if (!keeper) {
           return { ok: false, status: 400, error: "Выберите, кто останется, из активных сотрудников" };
@@ -514,7 +533,7 @@ export async function transitionToFree(args: {
         return { ok: false, status: 409, error: "Активных больше одного — нужно решение руководителя" };
       }
       const planBefore = unit.plan;
-      if (toArchive.length === 0 && isFreePlan(planBefore)) {
+      if (toArchive.length === 0 && isFreePlan(planBefore) && !paidUntilBefore) {
         return {
           ok: true,
           noop: true,
@@ -543,7 +562,22 @@ export async function transitionToFree(args: {
         if (unit.accountId) {
           await tx.account.update({
             where: { id: unit.accountId },
-            data: { subscriptionPlan: "free" },
+            data: {
+              subscriptionPlan: "free",
+              ...(paidUntilBefore ? { subscriptionEnd: now } : {}),
+            },
+          });
+        }
+        if (voluntary) {
+          if (paidUntilBefore) {
+            await tx.organization.updateMany({
+              where: { id: { in: unit.scopeOrgIds }, subscriptionEnd: { gt: now } },
+              data: { subscriptionEnd: now },
+            });
+          }
+          await tx.organization.updateMany({
+            where: { id: { in: unit.scopeOrgIds }, recurringActive: true },
+            data: { recurringActive: false, recurringDisabledAt: now, recurringFailedAttempts: 0 },
           });
         }
         // Зеркала: пауза и отмена остаются как есть, но «Возобновить»
@@ -562,7 +596,7 @@ export async function transitionToFree(args: {
             data: {
               organizationId: orgId,
               userId: args.actor.userId,
-              userName: args.actor.userName ?? (args.mode === "manual" ? null : "WeSetup"),
+              userName: args.actor.userName ?? (args.mode === "manual" || voluntary ? null : "WeSetup"),
               action: AUDIT_ACTIONS[args.mode],
               entity: unit.accountId ? "account" : "organization",
               entityId: unit.accountId ?? unit.organizationId,
@@ -576,6 +610,8 @@ export async function transitionToFree(args: {
                 archivedUserIds: archiveIds,
                 activeUsersBefore: candidates.length,
                 planBefore,
+                stateBefore: state.kind,
+                paidUntilBefore: paidUntilBefore?.toISOString() ?? null,
                 graceEndsAt: state.graceEndsAt?.toISOString() ?? null,
               },
               ipAddress: args.actor.ipAddress ?? null,
@@ -584,6 +620,18 @@ export async function transitionToFree(args: {
         }
       });
       forgetSessionVersions(archiveIds);
+
+      if (voluntary) {
+        console.info("[billing] voluntary downgrade → free", {
+          unit: unit.key,
+          organizationId: unit.organizationId,
+          stateBefore: state.kind,
+          paidUntilBefore: paidUntilBefore?.toISOString() ?? null,
+          kept: keeper?.id ?? null,
+          archived: archiveIds.length,
+          actor: args.actor.userId,
+        });
+      }
 
       console.info("[billing] transition → free", {
         unit: unit.key,
@@ -746,7 +794,7 @@ async function notifyTransition(args: {
   }
 
   const archivedLabel = employeesLabel(archived);
-  if (args.mode === "manual") {
+  if (args.mode === "manual" || args.mode === "voluntary") {
     await sendOwnerNotice({
       organizationId: args.organizationId,
       kind: "billing.manual_free",

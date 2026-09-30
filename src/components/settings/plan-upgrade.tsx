@@ -16,12 +16,15 @@ import {
   PLAN_CATALOG,
   SUBSCRIPTION_MAX_USERS,
   catalogPlanIdFor,
+  employeesGenitiveLabel,
   employeesLabel,
   type CatalogPlanId,
 } from "@/lib/plan-catalog";
 import { PlanCard } from "@/components/pricing/plan-card";
-import type { PersonalDiscount } from "@/components/pricing/promo-price";
+import { PromoPrice, type PersonalDiscount } from "@/components/pricing/promo-price";
 import { applyPromotion, type AppliedPromotion } from "@/lib/promo/promotions";
+import { formatPriceRub } from "@/lib/billing-period";
+import { planBreakdownRows, subscriptionTotal } from "@/lib/cabinet-plan";
 
 /** Что даёт железо — те же три пункта, что в карточке на лендинге. */
 const HARDWARE_POINTS = [
@@ -58,6 +61,8 @@ type Props = {
   subscriptionDiscount?: PersonalDiscount | null;
   /** Куда ведёт «Оплатить картой» — с `promo=`, если код применён. */
   payHref?: string;
+  /** Кнопка «Перейти на бесплатный» (добровольный переход) — под расчётом. */
+  freeAction?: React.ReactNode;
 };
 
 /**
@@ -80,18 +85,43 @@ export function PlanUpgrade({
   subscriptionPromotion = null,
   subscriptionDiscount = null,
   payHref = "/order?plan=monthly",
+  freeAction = null,
 }: Props) {
   const [hardwareOpen, setHardwareOpen] = useState(false);
 
   const currentId: CatalogPlanId = catalogPlanIdFor(currentPlan);
   const seatsLeft = Math.max(0, freeUserLimit - activeUsers);
-  // На платном тарифе лимита «нет» только до SUBSCRIPTION_MAX_USERS —
-  // дальше доплата, и в шапке это должно быть видно.
-  const extraUsers = Math.max(0, activeUsers - SUBSCRIPTION_MAX_USERS);
-  const paidSummary =
-    extraUsers > 0
-      ? `${activeUsers} сотрудников · +${EXTRA_USER_PRICE_RUB} ₽/мес за каждого сверх ${SUBSCRIPTION_MAX_USERS}`
-      : `${activeUsers}/${SUBSCRIPTION_MAX_USERS} сотрудников в подписке`;
+  // Расчёт «Ваш план»: подписка, превышение сверх 10, итог с акцией и
+  // скидкой — тем же `quoteSubscription`, что и калькулятор ниже.
+  const total = subscriptionTotal({
+    employees: activeUsers,
+    tariffRub: subscriptionMonthly,
+    promotion: subscriptionPromotion,
+    personal: subscriptionDiscount,
+  });
+  const rows = planBreakdownRows(total.quote);
+  const breakdown = total.quote.isFree ? null : (
+    <dl data-testid="plan-breakdown" className="mt-3 w-full max-w-[440px] space-y-1 text-[13.5px]">
+      {rows.map((row) => (
+        <div key={row.label} className="flex items-baseline justify-between gap-4">
+          <dt className="text-[#3c4053]">{row.label}</dt>
+          <dd className="shrink-0 tabular-nums text-[#0b1024]">{formatPriceRub(row.amountRub)}</dd>
+        </div>
+      ))}
+      <div className="flex items-baseline justify-between gap-4 border-t border-[#ececf4] pt-1.5">
+        <dt className="font-semibold text-[#0b1024]">Итого</dt>
+        <dd className="shrink-0 text-right" data-testid="plan-total">
+          <PromoPrice
+            price={total.withPromotion}
+            personal={subscriptionDiscount}
+            size="sm"
+            suffix="/мес"
+            showBadge={false}
+          />
+        </dd>
+      </div>
+    </dl>
+  );
 
   return (
     <section className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-7">
@@ -107,11 +137,35 @@ export function PlanUpgrade({
                 ? // Сверх бесплатного (до решения после бесплатного периода) дробь «4/1» путает.
                   `${employeesLabel(activeUsers)} · бесплатный тариф — ${employeesLabel(freeUserLimit)}`
                 : `${activeUsers}/${freeUserLimit} сотрудников · свободно мест: ${seatsLeft}`
-              : paidSummary}
+              : employeesLabel(activeUsers)}
           </p>
           {planNote ? (
             <p className="mt-1 text-[13px] text-[#6f7282]">{planNote}</p>
           ) : null}
+          {currentId === "free" ? (
+            <p className="mt-2 text-[13.5px] text-[#3c4053]">
+              {employeesLabel(freeUserLimit)} бесплатно; для команды — подписка
+              {total.quote.isFree ? (
+                <>
+                  {" "}от{" "}
+                  <PromoPrice
+                    price={applyPromotion(subscriptionMonthly, subscriptionPromotion)}
+                    personal={subscriptionDiscount}
+                    size="text"
+                    tone="inherit"
+                    suffix="/мес"
+                    showBadge={false}
+                  />{" "}
+                  до {SUBSCRIPTION_MAX_USERS} сотрудников, +{EXTRA_USER_PRICE_RUB} ₽/мес за каждого сверх{" "}
+                  {SUBSCRIPTION_MAX_USERS}.
+                </>
+              ) : (
+                <>, для ваших {employeesGenitiveLabel(activeUsers)}:</>
+              )}
+            </p>
+          ) : null}
+          {breakdown}
+          {freeAction ? <div className="mt-3">{freeAction}</div> : null}
         </div>
         {billingTestMode ? (
           <span className="rounded-full bg-[#ecfdf5] px-3 py-1 text-[12px] font-medium text-[#116b2a]">

@@ -127,6 +127,51 @@ export function BillingTransitionGate({
   );
 }
 
+/**
+ * «Перейти на бесплатный» по своей воле — со страницы тарифа, когда идёт
+ * подписка (в том числе оплаченная). Те же шаги, что в окне решения:
+ * кто остаётся → подтверждение; POST с `voluntary: true`.
+ */
+export function VoluntaryFreeButton({
+  paidUntilLabel,
+  className,
+}: {
+  /** «3 ноября» — подписка реально оплачена: срок при переходе не сохранится. */
+  paidUntilLabel: string | null;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => {
+          console.info("[billing] voluntary downgrade dialog opened", { paid: Boolean(paidUntilLabel) });
+          setOpen(true);
+        }}
+        data-testid="billing-voluntary-free"
+        className={cn(
+          "inline-flex h-10 items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[13.5px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]",
+          className
+        )}
+      >
+        Перейти на бесплатный
+      </button>
+      {open ? (
+        <ModalShell onClose={() => setOpen(false)} closable>
+          <Chooser
+            onBack={() => setOpen(false)}
+            onDone={() => setOpen(false)}
+            backLabel="Отмена"
+            voluntary
+            paidUntilLabel={paidUntilLabel}
+          />
+        </ModalShell>
+      ) : null}
+    </>
+  );
+}
+
 function ModalShell({
   children,
   onClose,
@@ -310,11 +355,17 @@ function Chooser({
   onBack,
   onDone,
   backLabel,
+  voluntary = false,
+  paidUntilLabel = null,
 }: {
   onBack: () => void;
   /** Переход выполнен: окно закрываем сразу, не дожидаясь обновления страницы. */
   onDone: () => void;
   backLabel: string;
+  /** Добровольный переход с подписки (страница тарифа). */
+  voluntary?: boolean;
+  /** Оплачено до этой даты — предупредить, что срок не сохранится. */
+  paidUntilLabel?: string | null;
 }) {
   const router = useRouter();
   const [step, setStep] = useState<Exclude<Step, "overview">>("choose");
@@ -337,6 +388,8 @@ function Chooser({
       // По умолчанию остаётся сам руководитель, потом владелец.
       const preferred = list.find((c) => c.isSelf) ?? list.find((c) => c.isOwner) ?? list[0];
       setSelected((current) => current ?? preferred?.id ?? null);
+      // Выбирать не из кого — сразу подтверждение.
+      if (list.length === 1) setStep("confirm");
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : "Не удалось загрузить сотрудников");
     }
@@ -365,7 +418,7 @@ function Chooser({
       const res = await fetch("/api/settings/subscription/transition", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ keepUserId: chosen.id }),
+        body: JSON.stringify(voluntary ? { keepUserId: chosen.id, voluntary: true } : { keepUserId: chosen.id }),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.ok) throw new Error(data?.error ?? "Не удалось перейти на бесплатный тариф");
@@ -407,6 +460,7 @@ function Chooser({
                 В работе останется: <strong className="text-[#0b1024]">{chosen.name}</strong>
               </span>
             </li>
+            {others.length > 0 ? (
             <li className="flex gap-2.5">
               <TriangleAlert className="mt-0.5 size-4 shrink-0 text-[#b25f00]" />
               <span data-testid="billing-archive-list">
@@ -415,11 +469,32 @@ function Chooser({
                 не смогут входить в кабинет и приложение, их записи в журналах сохранятся.
               </span>
             </li>
+            ) : null}
+            {others.length > 0 ? (
             <li className="flex gap-2.5">
               <Check className="mt-0.5 size-4 shrink-0 text-[#3848c7]" />
               <span>Вернуть их можно после оплаты подписки: «Сотрудники» → «Архив».</span>
             </li>
+            ) : null}
           </ul>
+          {paidUntilLabel ? (
+            <p
+              data-testid="billing-paid-term-warning"
+              className="mt-4 rounded-2xl bg-[#fff8eb] px-4 py-3 text-[13.5px] leading-[1.55] text-[#7a4a00]"
+            >
+              Подписка оплачена до {paidUntilLabel}. При переходе на бесплатный оплаченный срок не
+              сохранится, автопродление выключится. Вернуть деньги за неиспользованные дни можно по
+              заявлению на{" "}
+              <a href="mailto:support@wesetup.ru" className="underline underline-offset-2">
+                support@wesetup.ru
+              </a>{" "}
+              —{" "}
+              <a href="/oferta" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+                п. 6.2 оферты
+              </a>
+              .
+            </p>
+          ) : null}
           {!chosen.isSelf ? (
             <p className="mt-4 rounded-2xl bg-[#fff4f2] px-4 py-3 text-[13.5px] leading-[1.55] text-[#a13a32]">
               Вы тоже перейдёте в архив и сразу выйдете из кабинета.
