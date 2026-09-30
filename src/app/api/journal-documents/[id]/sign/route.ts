@@ -60,7 +60,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     action: "journal.brakerage_sign",
     entity: "JournalDocument",
     entityId: id,
-    details: { rows: entries.map((entry) => entry.rowId), method: "session" },
+    // signedAt — настоящий момент нажатия; journalTimes — время, которое
+    // встало в журнал (бракераж + 1 минута; null — настоящее время).
+    details: {
+      rows: entries.map((entry) => entry.rowId),
+      method: "session",
+      signedAt: result.signedAt,
+      journalTimes: result.rows,
+    },
   });
   const document = await db.journalDocument.findUnique({ where: { id }, select: { config: true } });
   return NextResponse.json({ signed: result.signed, config: document?.config ?? null });
