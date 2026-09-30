@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { recordAuditLog } from "@/lib/audit-log";
 import type { BrakerageCommissionMember } from "@/lib/brakerage-commission";
 import { syncDocCommissionMember } from "@/lib/brakerage-commission-org";
 import { editBrakerageRows, listBrakerageDayRows } from "@/lib/brakerage-qr";
@@ -184,6 +185,22 @@ export async function handleBrakerageList(ctx: {
       });
       if (!result.ok) return renderList(result.error, result.status >= 500 ? 500 : 200);
       signed += result.signed;
+      // Журнал действий, как у подписи на сайте: настоящий момент нажатия и
+      // время, которое встало в журнал (бракераж + 1 минута).
+      await recordAuditLog({
+        request: ctx.request,
+        session: { user: { id: employee.id, name: `${employee.name} (QR)` } },
+        organizationId: ctx.orgId,
+        action: "journal.brakerage_sign",
+        entity: "JournalDocument",
+        entityId: documentId,
+        details: {
+          rows: entries.map((entry) => entry.rowId),
+          method: "qr",
+          signedAt: result.signedAt,
+          journalTimes: result.rows,
+        },
+      });
     }
     return redirectTo(ctx.listLink({ done: "signed", n: String(signed) }));
   }

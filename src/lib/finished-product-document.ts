@@ -460,7 +460,8 @@ export function finishedProductReleaseText(row: Pick<FinishedProductDocumentRow,
  * все представления. Свои колонки — `row.custom[key]`.
  * В колонке подписей — только настоящие подписи утверждённой комиссии:
  * раньше у неподписанной строки сюда подставлялось ФИО проверяющего, и в
- * печати выходила «подпись» того, кто не подписывал.
+ * печати выходила «подпись» того, кто не подписывал. Время подписи — время
+ * бракеража строки + 1 минута (`signatureJournalTime`).
  */
 export function finishedProductCellText(
   row: FinishedProductDocumentRow,
@@ -480,7 +481,7 @@ export function finishedProductCellText(
       return finishedProductReleaseText(row);
     case "signatures": {
       const signatures = normalizeRowSignatures(row.signatures);
-      return signatures.length > 0 ? formatRowSignatures(signatures, options.timeZone) : "";
+      return signatures.length > 0 ? formatRowSignatures(signatures, options.timeZone, row) : "";
     }
     case "portion":
       return row.portionWeight;

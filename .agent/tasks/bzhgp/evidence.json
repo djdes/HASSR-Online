@@ -1,0 +1,39 @@
+{
+  "task": "bzhgp",
+  "branch": "feat/bzhgp-sign-time-2026-09-30",
+  "commits": ["0531bd12", "718dee4e", "79dd47b2", "e7a272ce"],
+  "verdict": "PASS",
+  "checks": {
+    "typecheck": { "result": "PASS", "errors": 0 },
+    "npmTest": { "result": "PASS", "pass": 3104, "fail": 0 },
+    "unit": { "files": ["src/lib/brakerage-sign-time.test.ts", "src/lib/brakerage-qr-html.test.ts"], "result": "PASS" },
+    "e2e": { "script": ".agent/tasks/bzhgp/e2e/e2e.cjs", "viewports": [1280, 390], "pass": 41, "fail": 0, "raw": "raw/e2e-results.json" }
+  },
+  "acceptance": {
+    "AC1": {
+      "result": "PASS",
+      "evidence": [
+        "shots/1280-table.png",
+        "shots/1280-dialog-soup.png",
+        "shots/1280-dialog-salad-edited.png",
+        "shots/390-cards.png",
+        "shots/390-cards-cutlet.png",
+        "shots/390-qr-signed.png",
+        "shots/390-qr-signed-cutlet.png",
+        "shots/pdf-p1.png",
+        "raw/bzhgp-journal.pdf"
+      ],
+      "word": "У БЖГП только пустой образец DOCX (строк и времени подписи нет) — менять нечего"
+    },
+    "AC2": {
+      "result": "PASS",
+      "evidence": [
+        "raw/e2e-results.json: signedAt настоящий, journalAt = бракераж + 1",
+        "SignatureEvent.createdAt настоящий, entryRef.journalAt",
+        "AuditLog journal.brakerage_sign: signedAt и journalTimes (сайт и QR)",
+        "старые подписи в базе не изменены"
+      ]
+    }
+  },
+  "legacyRule": { "windowMinutes": 5, "reason": "по умолчанию столько от бракеража до разрешения к реализации" }
+}

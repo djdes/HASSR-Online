@@ -1,7 +1,7 @@
 import type { Prisma } from "@prisma/client";
 
 import { normalizeRowSignatures, type BrakerageRowSignature } from "@/lib/brakerage-commission";
-import { correctedBrakerageTimes, deriveBrakerageTimes } from "@/lib/brakerage-times";
+import { correctedBrakerageTimes, deriveBrakerageTimes, rowRejectionDateTime } from "@/lib/brakerage-times";
 import { db } from "@/lib/db";
 import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import {
@@ -33,6 +33,11 @@ export type BrakerageQrRow = {
    * смещение журнала (5 мин). Пусто у скоропорта.
    */
   rejectionTime: string;
+  /**
+   * Время бракеража целиком («ГГГГ-ММ-ДД ЧЧ:ММ») — от него время подписи
+   * комиссии в журнале (+1 минута). Пусто у скоропорта.
+   */
+  rejectionAt: string;
   dayKey: string;
   fromYesterday: boolean;
   /** Готовая продукция — текст оценки; скоропорт — код. */
@@ -98,14 +103,18 @@ export async function listBrakerageDayRows(params: {
         const dayKey = row.productionDateTime.slice(0, 10);
         const signatures = normalizeRowSignatures(row.signatures);
         if (!row.productName.trim() || !pick(dayKey, signatures)) continue;
+        const rejection = deriveBrakerageTimes({
+          productionDateTime: row.productionDateTime,
+          rejectionTime: row.rejectionTime,
+          offsets: config.timeDefaults,
+        }).rejectionTime;
         rows.push({
           documentId: doc.id,
           rowId: row.id,
           name: row.productName,
           time: timeOf(row.productionDateTime),
-          rejectionTime: timeOf(
-            deriveBrakerageTimes({ productionDateTime: row.productionDateTime, rejectionTime: row.rejectionTime, offsets: config.timeDefaults }).rejectionTime
-          ),
+          rejectionTime: timeOf(rejection),
+          rejectionAt: rowRejectionDateTime({ rejectionTime: rejection, productionDateTime: row.productionDateTime }),
           dayKey,
           fromYesterday: dayKey !== params.todayKey,
           grade: row.organoleptic,
@@ -127,6 +136,7 @@ export async function listBrakerageDayRows(params: {
           name: row.productName,
           time: timeOf(row.arrivalTime),
           rejectionTime: "",
+          rejectionAt: "",
           dayKey,
           fromYesterday: dayKey !== params.todayKey,
           grade: row.organolepticResult,

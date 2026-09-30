@@ -10,6 +10,12 @@
  */
 
 import { modernizeGradeWording } from "@/lib/brakerage-grade-wording";
+import {
+  commissionSignDefaultTime,
+  minutesBetweenLocalDateTimes,
+  rowRejectionDateTime,
+  type BrakerageRowTimes,
+} from "@/lib/brakerage-times";
 import { pluralRu } from "@/lib/plural-ru";
 
 export const BRAKERAGE_COMMISSION_MAX = 10;
@@ -29,8 +35,15 @@ export type BrakerageRowSignature = {
   userId: string;
   name: string;
   role: string;
-  /** ISO-время подписи. */
+  /** ISO-время подписи — настоящий момент нажатия «Подписать» (для аудита). */
   signedAt: string;
+  /**
+   * Время подписи в журнале, местное «ГГГГ-ММ-ДД ЧЧ:ММ»: время бракеража
+   * строки + 1 минута на момент подписи (решение владельца 2026-09-30). Нет у
+   * подписей до этого решения и у строк без времени бракеража — там в журнале
+   * настоящее время. Показывать — через `signatureJournalTime`.
+   */
+  journalAt?: string;
   /** "qr" | "session" | "passkey" | "kiosk_pin". */
   method: string;
   /** Оценка, которую поставил подписавший. */
@@ -107,6 +120,9 @@ export function normalizeCommissionMembers(value: unknown): BrakerageCommissionM
   return result;
 }
 
+/** `journalAt`: «ГГГГ-ММ-ДД ЧЧ:ММ» или «ЧЧ:ММ», если у строки бракераж без даты. */
+const JOURNAL_AT_RE = /^(\d{4}-\d{2}-\d{2} )?\d{2}:\d{2}$/;
+
 /** Подписи строки: только с сотрудником и временем, одна (последняя) на человека. */
 export function normalizeRowSignatures(value: unknown): BrakerageRowSignature[] {
   if (!Array.isArray(value)) return [];
@@ -128,11 +144,13 @@ export function normalizeRowSignatures(value: unknown): BrakerageRowSignature[] 
             .map(([key, value]) => [key, modernizeGradeWording((value as string).slice(0, 200))])
         )
       : null;
+    const journalAt = text(record.journalAt, 20);
     const signature: BrakerageRowSignature = {
       userId,
       name: text(record.name, 120),
       role: text(record.role, 80),
       signedAt,
+      ...(JOURNAL_AT_RE.test(journalAt) ? { journalAt } : {}),
       method: text(record.method, 20) || "session",
       ...(grade ? { grade } : {}),
       ...(record.outdated === true ? { outdated: true } : {}),
@@ -177,13 +195,20 @@ export function isCommissionJournalCode(code: string | null | undefined): boolea
  * «Комиссия» в окне блюда. Подписи посторонних (не из состава) не в счёт.
  */
 export function commissionRowStatus(
-  row: { signatures?: readonly unknown[] },
-  members: readonly BrakerageCommissionMember[]
-): Array<BrakerageCommissionMember & { signed: boolean; signedAt: string | null }> {
+  row: { signatures?: readonly unknown[] } & BrakerageRowTimes,
+  members: readonly BrakerageCommissionMember[],
+  timeZone?: string
+): Array<BrakerageCommissionMember & { signed: boolean; signedAt: string | null; journalTime: string }> {
   const signatures = normalizeRowSignatures(row.signatures);
   return members.map((member) => {
     const signature = member.employeeId ? signatures.find((item) => item.userId === member.employeeId) : undefined;
-    return { ...member, signed: Boolean(signature), signedAt: signature?.signedAt ?? null };
+    return {
+      ...member,
+      signed: Boolean(signature),
+      signedAt: signature?.signedAt ?? null,
+      // Время подписи в журнале (бракераж + 1 минута), а не момент нажатия.
+      journalTime: signature ? signatureJournalTime(signature, row, timeZone) : "",
+    };
   });
 }
 
@@ -215,11 +240,80 @@ export function signatureTime(signedAt: string, timeZone = "Europe/Moscow"): str
   }
 }
 
-/** Текст подписей для ячейки и печати: «Иванова А. А. · 11:52; Петров П. П. · 11:55». */
-export function formatRowSignatures(signatures: readonly BrakerageRowSignature[], timeZone?: string): string {
+/** Настоящий момент подписи как местное «ГГГГ-ММ-ДД ЧЧ:ММ» в поясе организации; непонятное — "". */
+function signedAtLocal(signedAt: string, timeZone = "Europe/Moscow"): string {
+  const date = new Date(signedAt);
+  if (Number.isNaN(date.getTime())) return "";
+  try {
+    const parts = Object.fromEntries(
+      new Intl.DateTimeFormat("en-GB", {
+        timeZone,
+        hour12: false,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+        .formatToParts(date)
+        .map((part) => [part.type, part.value])
+    );
+    return `${parts.year}-${parts.month}-${parts.day} ${parts.hour === "24" ? "00" : parts.hour}:${parts.minute}`;
+  } catch {
+    return signedAt.slice(0, 16).replace("T", " ");
+  }
+}
+
+/**
+ * Старые подписи (до 2026-09-30, без `journalAt`): настоящее время остаётся,
+ * если оно не раньше бракеража и не позже чем через 5 минут — столько по
+ * умолчанию проходит от бракеража до разрешения к реализации. Подпись раньше
+ * бракеража или после разрешения (часто — утром следующего дня) в журнале
+ * встаёт на бракераж + 1 минута. В базе ничего не переписывается.
+ */
+export const LEGACY_SIGNATURE_WINDOW_MINUTES = 5;
+
+/**
+ * Время подписи члена комиссии в журнале «ЧЧ:ММ» — одно на экран, карточку,
+ * печать и QR:
+ *   • подпись с `journalAt` — время бракеража строки + 1 минута; поменяли
+ *     время бракеража — подпись идёт за ним («+1 минута к установленному
+ *     времени бракеража»); бракераж стёрли — время на момент подписи;
+ *   • у строки нет времени бракеража — настоящее время подписи, как раньше;
+ *   • старая подпись — см. LEGACY_SIGNATURE_WINDOW_MINUTES.
+ * Настоящий момент (`signedAt`) не меняется: он в журнале подписей и действий.
+ */
+export function signatureJournalTime(
+  signature: Pick<BrakerageRowSignature, "signedAt" | "journalAt">,
+  row?: BrakerageRowTimes | null,
+  timeZone?: string
+): string {
+  const byRejection = row ? commissionSignDefaultTime(row) : "";
+  if (signature.journalAt) return (byRejection || signature.journalAt).slice(-5);
+  const real = signatureTime(signature.signedAt, timeZone);
+  if (!byRejection || !row) return real;
+  const realLocal = signedAtLocal(signature.signedAt, timeZone);
+  const rejection = rowRejectionDateTime(row);
+  // Бракераж без даты («ЧЧ:ММ», у строки нет даты изготовления) — на день подписи.
+  const rejectionAt = rejection.length > 5 ? rejection : `${realLocal.slice(0, 10)} ${rejection}`;
+  const gap = minutesBetweenLocalDateTimes(rejectionAt, realLocal);
+  if (gap === null) return real;
+  return gap < 0 || gap > LEGACY_SIGNATURE_WINDOW_MINUTES ? byRejection.slice(-5) : real;
+}
+
+/**
+ * Текст подписей для ячейки и печати: «Иванова А. А. · 12:31; Петров П. П. · 12:31».
+ * `row` — строка журнала: время подписи считается от её времени бракеража
+ * (`signatureJournalTime`); без строки — настоящее время подписи.
+ */
+export function formatRowSignatures(
+  signatures: readonly BrakerageRowSignature[],
+  timeZone?: string,
+  row?: BrakerageRowTimes | null
+): string {
   return signatures
     .map((signature) => {
-      const time = signatureTime(signature.signedAt, timeZone);
+      const time = signatureJournalTime(signature, row, timeZone);
       return `${shortPersonName(signature.name)}${time ? ` · ${time}` : ""}`;
     })
     .join("; ");

@@ -121,7 +121,6 @@ import {
   commissionRowStatus,
   formatRowSignatures,
   hasCommission,
-  signatureTime,
   isSignatureOutdated,
   normalizeRowSignatures,
   closeBlockerForUnsigned,
@@ -1123,7 +1122,7 @@ export function FinishedProductDocumentClient({
                         {member.signed ? (
                           <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#ecfdf5] px-2.5 py-1 text-[12px] font-medium text-[#116b2a]">
                             <Check className="size-3.5" strokeWidth={3} />
-                            подписал{member.signedAt ? ` · ${signatureTime(member.signedAt)}` : ""}
+                            подписал{member.journalTime ? ` · ${member.journalTime}` : ""}
                           </span>
                         ) : (
                           <span className="inline-flex shrink-0 rounded-full bg-[#fff8eb] px-2.5 py-1 text-[12px] font-medium text-[#7a4a00]">
@@ -1149,7 +1148,7 @@ export function FinishedProductDocumentClient({
                       <span className="min-w-0">
                         <span className="block text-[13.5px] font-medium text-[#0b1024]">Подписываю как член комиссии (допущено)</span>
                         <span className="block text-[12px] leading-snug text-[#6f7282]">
-                          После сохранения под блюдом появится ваша подпись со временем, строка будет закрыта.
+                          После сохранения под блюдом появится ваша подпись — в журнале на минуту позже времени бракеража. Строка будет закрыта.
                         </span>
                       </span>
                     </label>
@@ -2249,7 +2248,8 @@ function SignaturesCell({
   if (signatures.length > 0) {
     return (
       <div className="px-1.5 py-1 text-center text-[12px] leading-snug text-[#0b1024]">
-        {formatRowSignatures(signatures)}
+        {/* Время подписи — бракераж строки + 1 минута, как в печати. */}
+        {formatRowSignatures(signatures, undefined, row)}
         {signatures.some((signature) => isSignatureOutdated(row, signature)) ? (
           <div className="mt-0.5 text-[10.5px] text-[#b25c00]" title="Строку меняли после подписи">
             изменено после подписи

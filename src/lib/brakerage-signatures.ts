@@ -19,7 +19,7 @@ import {
   type PerishableRejectionRow,
 } from "@/lib/perishable-rejection-document";
 import { orgTodayKey } from "@/lib/timezone";
-import { deriveBrakerageTimes, withLocalTime } from "@/lib/brakerage-times";
+import { commissionSignDefaultTime, deriveBrakerageTimes, withLocalTime } from "@/lib/brakerage-times";
 
 /**
  * Подпись членов бракеражной комиссии под строками (п. 2, 12 ТЗ).
@@ -29,6 +29,10 @@ import { deriveBrakerageTimes, withLocalTime } from "@/lib/brakerage-times";
  * подписей `SignatureEvent` (entryKind "brakerage_row") — доказательство
  * «кто, когда и каким входом подписал». Повторная подпись того же человека
  * заменяет его прежнюю в строке, в журнале подписей остаются обе.
+ *
+ * Время подписи в журнале (`journalAt`) — время бракеража строки + 1 минута
+ * (решение владельца 2026-09-30); настоящий момент нажатия остаётся в
+ * `signedAt`, в журнале подписей (`createdAt`) и в журнале действий.
  */
 
 export type BrakerageSignEntry = {
@@ -42,7 +46,18 @@ export type BrakerageSignEntry = {
   rejectionTime?: string;
 };
 
-export type BrakerageSignResult = { ok: true; signed: number } | { ok: false; error: string; status: number };
+/** Подписанная строка: время подписи в журнале (null — настоящее время, у строки не было бракеража). */
+export type BrakerageSignedRow = { rowId: string; journalAt: string | null };
+
+export type BrakerageSignResult =
+  | {
+      ok: true;
+      signed: number;
+      /** Настоящий момент подписи (ISO) — для журнала действий. */
+      signedAt: string;
+      rows: BrakerageSignedRow[];
+    }
+  | { ok: false; error: string; status: number };
 
 function localDateTime(timeZone: string | null | undefined, at: Date): string {
   const date = orgTodayKey(timeZone ?? undefined, at);
@@ -96,6 +111,7 @@ export async function signBrakerageRows(params: {
       }
       let signed = 0;
       const rows: FinishedProductDocumentRow[] = [];
+      const signedRows: BrakerageSignedRow[] = [];
       for (const row of config.rows) {
         const entry = byRowId.get(row.id);
         if (!entry) {
@@ -123,16 +139,21 @@ export async function signBrakerageRows(params: {
           rejectionTime: times.rejectionTime || nowLocal,
           releasePermissionTime: releaseAllowed === "yes" ? times.releasePermissionTime || nowLocal : "",
         });
+        // Время подписи в журнале — бракераж + 1 минута. Бракеража у строки не
+        // было (сервер ставит «сейчас») — как раньше: настоящее время подписи.
+        const journalAt = times.rejectionTime ? commissionSignDefaultTime(next) : "";
         const signature: BrakerageRowSignature = {
           userId: params.signer.id,
           name: params.signer.name,
           role: member.role,
           signedAt: now.toISOString(),
+          ...(journalAt ? { journalAt } : {}),
           method: params.method,
           ...(next.organoleptic ? { grade: next.organoleptic } : {}),
           snapshot: signatureSnapshot(next as unknown as Record<string, unknown>),
         };
         rows.push({ ...next, signatures: withSignature(row.signatures, signature) });
+        signedRows.push({ rowId: row.id, journalAt: journalAt || null });
         await tx.signatureEvent.create({
           data: {
             organizationId: doc.organizationId,
@@ -143,13 +164,23 @@ export async function signBrakerageRows(params: {
             rowId: row.id,
             ip: params.ip ?? null,
             userAgent: params.userAgent ?? null,
-            entryRef: { role: member.role, userName: params.signer.name, grade: signature.grade ?? null, snapshot: signature.snapshot } as Prisma.InputJsonValue,
+            entryRef: {
+              role: member.role,
+              userName: params.signer.name,
+              grade: signature.grade ?? null,
+              snapshot: signature.snapshot,
+              // Время в журнале; настоящий момент — createdAt события.
+              journalAt: journalAt || null,
+            } as Prisma.InputJsonValue,
           },
         });
         signed += 1;
       }
       if (signed === 0) return { result: { ok: false, error: "Строки не найдены — обновите страницу", status: 404 } };
-      return { config: { ...config, rows } as unknown as Prisma.InputJsonValue, result: { ok: true, signed } };
+      return {
+        config: { ...config, rows } as unknown as Prisma.InputJsonValue,
+        result: { ok: true, signed, signedAt: now.toISOString(), rows: signedRows },
+      };
     }
 
     if (doc.templateCode === "perishable_rejection") {
@@ -160,6 +191,7 @@ export async function signBrakerageRows(params: {
       }
       let signed = 0;
       const rows: PerishableRejectionRow[] = [];
+      const signedRows: BrakerageSignedRow[] = [];
       for (const row of config.rows) {
         const entry = byRowId.get(row.id);
         if (!entry) {
@@ -181,6 +213,8 @@ export async function signBrakerageRows(params: {
           snapshot: signatureSnapshot(next as unknown as Record<string, unknown>),
         };
         rows.push({ ...next, signatures: withSignature(row.signatures, signature) });
+        // У скоропорта нет времени бракеража — в журнале настоящее время подписи.
+        signedRows.push({ rowId: row.id, journalAt: null });
         await tx.signatureEvent.create({
           data: {
             organizationId: doc.organizationId,
@@ -197,12 +231,35 @@ export async function signBrakerageRows(params: {
         signed += 1;
       }
       if (signed === 0) return { result: { ok: false, error: "Строки не найдены — обновите страницу", status: 404 } };
-      return { config: { ...config, rows } as unknown as Prisma.InputJsonValue, result: { ok: true, signed } };
+      return {
+        config: { ...config, rows } as unknown as Prisma.InputJsonValue,
+        result: { ok: true, signed, signedAt: now.toISOString(), rows: signedRows },
+      };
     }
 
     return { result: { ok: false, error: "Подпись комиссии есть только у бракеражных журналов", status: 400 } };
   });
-  return result ?? { ok: false, error: "Документ не найден", status: 404 };
+  const outcome: BrakerageSignResult = result ?? { ok: false, error: "Документ не найден", status: 404 };
+  if (outcome.ok) {
+    // Настоящий момент подписи и время, которое встало в журнал, — рядом.
+    console.info("[brakerage-sign] signed", {
+      documentId: params.documentId,
+      organizationId: params.organizationId,
+      signerId: params.signer.id,
+      method: params.method,
+      signedAt: outcome.signedAt,
+      rows: outcome.rows,
+    });
+  } else {
+    console.info("[brakerage-sign] refused", {
+      documentId: params.documentId,
+      signerId: params.signer.id,
+      method: params.method,
+      status: outcome.status,
+      error: outcome.error,
+    });
+  }
+  return outcome;
 }
 
 /** Строки с датой `dayKey` (готовая продукция — по изготовлению, скоропорт — по поступлению). */
