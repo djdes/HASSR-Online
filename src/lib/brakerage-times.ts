@@ -2,8 +2,9 @@
  * Время в строке бракеража готовой продукции (все значения — местные
  * «ГГГГ-ММ-ДД ЧЧ:ММ»). Решение владельца: время снятия бракеража по
  * умолчанию = время изготовления + 5 минут, время разрешения к реализации =
- * время бракеража + 5 минут. Смещения настраиваются в журнале. Чистый модуль —
- * сайт, QR и сервер считают одинаково.
+ * время бракеража + 5 минут. Смещения настраиваются в журнале. Время подписи
+ * бракеражной комиссии в журнале = время бракеража + 1 минута (2026-09-30).
+ * Чистый модуль — сайт, QR и сервер считают одинаково.
  */
 export type BrakerageTimeOffsets = {
   rejectionAfterProductionMinutes: number;
@@ -29,6 +30,74 @@ export function addMinutesToLocalDateTime(value: string, minutes: number): strin
   // Считаем в UTC как в «часах без пояса»: сдвиг местного времени без DST.
   const date = new Date(Date.UTC(y, mo - 1, d, h, mi) + minutes * 60_000);
   return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())} ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}`;
+}
+
+/** «ЧЧ:ММ» + N минут по кругу суток: «23:59» + 1 → «00:00»; непонятное значение — "". */
+function addMinutesToLocalTime(value: string, minutes: number): string {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(value.trim());
+  if (!match) return "";
+  const hours = Number(match[1]);
+  const mins = Number(match[2]);
+  if (hours > 23 || mins > 59) return "";
+  const total = (((hours * 60 + mins + minutes) % 1440) + 1440) % 1440;
+  return `${pad(Math.floor(total / 60))}:${pad(total % 60)}`;
+}
+
+/** Минуты от `from` до `to` (оба местные «ГГГГ-ММ-ДД ЧЧ:ММ»); непонятное — null. */
+export function minutesBetweenLocalDateTimes(from: string, to: string): number | null {
+  const at = (value: string) => {
+    const match = LOCAL_RE.exec(value.trim());
+    if (!match) return null;
+    const [, y, mo, d, h, mi] = match.map(Number);
+    return Date.UTC(y, mo - 1, d, h, mi) / 60_000;
+  };
+  const a = at(from);
+  const b = at(to);
+  return a === null || b === null ? null : b - a;
+}
+
+/**
+ * Подпись бракеражной комиссии в журнале — через 1 минуту после времени
+ * бракеража строки (решение владельца 2026-09-30): бракераж 12:30 → подпись 12:31.
+ */
+export const COMMISSION_SIGN_AFTER_REJECTION_MINUTES = 1;
+
+/** Времена строки, от которых считается время подписи комиссии. */
+export type BrakerageRowTimes = {
+  rejectionTime?: string | null;
+  productionDateTime?: string | null;
+};
+
+/**
+ * Время бракеража строки как «ГГГГ-ММ-ДД ЧЧ:ММ». Бывает записано без даты
+ * («ЧЧ:ММ» — так пишут «Повторить» и демо): ставим на дату изготовления, а
+ * если так выходит раньше изготовления — на следующий день (бракераж после
+ * полуночи). Без даты изготовления — «ЧЧ:ММ». Нет времени бракеража или оно
+ * непонятное — "".
+ */
+export function rowRejectionDateTime(row: BrakerageRowTimes): string {
+  const raw = (row.rejectionTime ?? "").trim();
+  if (!raw) return "";
+  if (LOCAL_RE.test(raw)) return addMinutesToLocalDateTime(raw, 0);
+  const time = addMinutesToLocalTime(raw, 0);
+  if (!time) return "";
+  const production = addMinutesToLocalDateTime(row.productionDateTime ?? "", 0);
+  if (!production) return time;
+  const onProductionDay = `${production.slice(0, 10)} ${time}`;
+  return onProductionDay < production ? addMinutesToLocalDateTime(onProductionDay, 24 * 60) : onProductionDay;
+}
+
+/**
+ * Время подписи комиссии по умолчанию — время бракеража строки + 1 минута:
+ * «2026-09-30 12:30» → «2026-09-30 12:31», «2026-09-30 23:59» → «2026-10-01 00:00».
+ * Нет времени бракеража — "" (подпись встаёт настоящим временем, как раньше).
+ */
+export function commissionSignDefaultTime(row: BrakerageRowTimes): string {
+  const rejection = rowRejectionDateTime(row);
+  if (!rejection) return "";
+  return LOCAL_RE.test(rejection)
+    ? addMinutesToLocalDateTime(rejection, COMMISSION_SIGN_AFTER_REJECTION_MINUTES)
+    : addMinutesToLocalTime(rejection, COMMISSION_SIGN_AFTER_REJECTION_MINUTES);
 }
 
 /** Поставить «ЧЧ:ММ» на дату строки; неверное время — null. */
