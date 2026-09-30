@@ -19,14 +19,26 @@ async function guard() {
   return { session, orgId: getActiveOrgId(session), denied: null };
 }
 
+/**
+ * Процент для бейджа и для живого примера на странице настроек — считаем и
+ * у выключенного бейджа (кеш 15 минут): пример показывает то, что увидят
+ * гости после включения. Сбой расчёта — «нет данных», не ошибка.
+ */
+async function percentFor(orgId: string): Promise<number | null> {
+  const status = await getBadgeStatusForOrganization(orgId).catch((error) => {
+    console.error(`[badge] status failed org=${orgId}`, error);
+    return null;
+  });
+  return status?.percent ?? null;
+}
+
 /** GET — состояние бейджа и ссылки для вставки. */
 export async function GET() {
   const { orgId, denied } = await guard();
   if (denied) return denied;
   const org = await db.organization.findUnique({ where: { id: orgId }, select: { badgeEnabled: true, badgeCode: true } });
   if (!org) return NextResponse.json({ error: "Организация не найдена" }, { status: 404 });
-  const status = org.badgeEnabled ? await getBadgeStatusForOrganization(orgId) : null;
-  return NextResponse.json(describeBadge(org, status?.percent ?? null));
+  return NextResponse.json(describeBadge(org, await percentFor(orgId)));
 }
 
 /** PATCH { enabled } — включить (код создаётся при первом включении) или выключить. */
@@ -49,8 +61,8 @@ export async function PATCH(request: Request) {
     entity: "Organization",
     entityId: orgId,
   });
-  const status = org.badgeEnabled ? await getBadgeStatusForOrganization(orgId) : null;
-  return NextResponse.json(describeBadge(org, status?.percent ?? null));
+  console.info(`[badge] ${body.enabled ? "enabled" : "disabled"} org=${orgId} by=${session.user.id} code=${org.badgeCode ?? "-"}`);
+  return NextResponse.json(describeBadge(org, await percentFor(orgId)));
 }
 
 /** POST — перевыпустить код: старые ссылки и вставки перестают работать. */
@@ -63,6 +75,6 @@ export async function POST(request: Request) {
     select: { badgeEnabled: true, badgeCode: true },
   });
   await recordAuditLog({ organizationId: orgId, session, request, action: "badge.rotate", entity: "Organization", entityId: orgId });
-  const status = org.badgeEnabled ? await getBadgeStatusForOrganization(orgId) : null;
-  return NextResponse.json(describeBadge(org, status?.percent ?? null));
+  console.info(`[badge] code rotated org=${orgId} by=${session.user.id}`);
+  return NextResponse.json(describeBadge(org, await percentFor(orgId)));
 }
