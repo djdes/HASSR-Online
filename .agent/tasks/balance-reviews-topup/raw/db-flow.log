@@ -1,0 +1,90 @@
+PASS предзаполнение: имя человека, в «Заведение и город» только город (организация названа как человек) {"authorName":"Алексей Партнёрская программа","place":"Казань"}
+[balance] review submitted id=cmunztssp0008849mm5bponap org=cmunztsf20000849mdjqgtx8h user=cmunztsit0001849mrxtgcw5v kind=text anonymous=true reward=240
+PASS анонимный отзыв сохранён без имени и заведения, к начислению 240 {"anonymous":true,"suggested":240}
+[balance] review approved id=cmunztssp0008849mm5bponap org=cmunztsf20000849mdjqgtx8h kind=text anonymous=true reward=240 by=root-munzts34
+PASS одобрение начисляет 240 ₽ (не 300); повторное одобрение — no-op {"approved":{"rewardRub":240,"organizationId":"cmunztsf20000849mdjqgtx8h","anonymous":true,"kind":"text"},"reviewLedger":[{"amount":240,"kind":"review_reward","description":"Анонимный отзыв о WeSetup принят"}]}
+[balance] review submitted id=cmunztstz000a849mmpvtl7ye org=cmunztsl90006849mma1ksymf user=cmunztsle0007849mdagptx81 kind=text anonymous=true reward=240
+[balance] review approved id=cmunztstz000a849mmpvtl7ye org=cmunztsl90006849mma1ksymf kind=video anonymous=true reward=1592 by=root-munzts34
+PASS модератор выбрал «видео» — анонимному начислено 1592 (1990 × 0,8) {"rewardRub":1592,"organizationId":"cmunztsl90006849mma1ksymf","anonymous":true,"kind":"video"}
+PASS на сайте: «Анонимный отзыв» и сфера «Кафе / Кофейня», без имени {"id":"cmunztssp0008849mm5bponap","quote":"Перешли на электронные журналы весной — проверка прошла без замечаний, всё нашли сразу.","author":"Анонимный отзыв","place":"Кафе / Кофейня","rating":5,"mediaUrl":null,"mediaKind":null,"anonymous":true}
+[balance] topup order created org=cmunztsf20000849mdjqgtx8h rub=5000 order=1 method=card test=true
+PASS заказ-пополнение: balance_topup, pending, 5000, без промокода и баллов, тестовый режим {"tariffKey":"balance_topup","status":"pending","amount":5000}
+robokassa: amount mismatch on order 1: got 300000.00, expected 5000
+PASS уведомление с чужой суммой (300000.00) — отказ, заказ не оплачен {"status":400,"body":"amount mismatch"}
+[balance] topup paid org=cmunztsf20000849mdjqgtx8h rub=5000 order=1
+[balance] topup partner accrual order=1 org=cmunztsf20000849mdjqgtx8h created=1 amount=1000
+[email/dev] SMTP не настроен — письмо не отправлено на db-owner-munzts34@example.com.
+[email/dev] Subject: Баланс пополнен на 5 000 ₽
+[email/dev] Body:    Баланс пополнен Здравствуйте! Мы получили оплату картой. На баланс вашей организации зачислено 5 000 ₽ — 1 ₽ = 1 балл. Это тестовый платёж — касса работала в тестовом режиме, деньги не списывались. Заказ: № 1 Баланс сейчас: 5 240 ₽ Баллами оплачивается подписка: на странице оплаты они списываются автоматически. Оборудование за баллы не продаём. Открыть баланс и бонусы Вопросы по оплате — support@wesetup.ru. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.
+[platform-admin] чат админа не настроен: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст
+[balance] topup completed order=1 org=cmunztsf20000849mdjqgtx8h rub=5000 balance=5240
+PASS ResultURL → OK; +5 000 на баланс сразу, строка «Пополнение баланса картой…» {"paid1":{"status":200,"body":"OK1"},"cardLedger":[{"amount":5000,"kind":"topup","description":"Пополнение баланса картой, заказ №1 (тестовый платёж)"}],"balance0":240,"balance1":5240}
+PASS партнёру с пополнения: 20 % от 5 000 = 1 000 ₽ [{"kind":"subscription","base":5000,"amount":1000}]
+PASS повторное уведомление — OK, но без второго зачисления и второй комиссии {"status":200,"body":"OK1"}
+PASS аудит balance.topup.paid с суммой [{"action":"balance.topup.paid","details":{"isTest":true,"amountRub":5000,"balanceRub":5240,"paymentMethod":"card"}}]
+PASS колокольчик руководству: «Баланс пополнен на 5 000 ₽» [{"title":"Баланс пополнен на 5 000 ₽"}]
+PASS УПД на пополнение не выпускается — причина «advance» {"ok":false,"reason":"advance"}
+[balance] topup order created org=cmunztsf20000849mdjqgtx8h rub=1990 order=2 method=card test=true
+[balance] topup paid org=cmunztsf20000849mdjqgtx8h rub=1990 order=2
+[balance] topup partner accrual order=2 org=cmunztsf20000849mdjqgtx8h created=2 amount=3398
+[email/dev] SMTP не настроен — письмо не отправлено на db-owner-munzts34@example.com.
+[email/dev] Subject: Баланс пополнен на 1 990 ₽
+[email/dev] Body:    Баланс пополнен Здравствуйте! Мы получили оплату картой. На баланс вашей организации зачислено 1 990 ₽ — 1 ₽ = 1 балл. Это тестовый платёж — касса работала в тестовом режиме, деньги не списывались. Заказ: № 2 Баланс сейчас: 7 230 ₽ Баллами оплачивается подписка: на странице оплаты они списываются автоматически. Оборудование за баллы не продаём. Открыть баланс и бонусы Вопросы по оплате — support@wesetup.ru. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.
+[platform-admin] чат админа не настроен: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст
+[balance] topup completed order=2 org=cmunztsf20000849mdjqgtx8h rub=1990 balance=7230
+PASS два уведомления одновременно — оба OK, зачисление одно (+1 990) {"both":[{"status":200,"body":"OK2"},{"status":200,"body":"OK2"}],"balance2":7230}
+PASS второе пополнение (2-й денежный платёж) — 20 % = 398 и бонус 3 000 по правилам computePaymentAccruals, по одной строке [{"kind":"bonus","base":1990,"amount":3000},{"kind":"subscription","base":1990,"amount":398}]
+[billing] payment extended subscription {
+  organizationId: 'cmunztsf20000849mdjqgtx8h',
+  accountId: null,
+  orderId: 3,
+  subscriptionEnd: '2026-10-30T10:59:40.479Z'
+}
+[email/dev] SMTP не настроен — письмо не отправлено на db-owner-munzts34@example.com.
+[email/dev] Subject: Оплата получена — подписка продлена
+[email/dev] Body:    при сопровождении ИП Партнёров Оплата получена — подписка продлена Здравствуйте! Мы получили вашу оплату. Спасибо! Тариф: Подписка на 30 дн. Сумма: оплачено баллами (1 990 ₽) Подписка действует до: 30.10.2026 Подписка вашей организации продлена, дополнительных действий не требуется. Войти в кабинет Вопросы по оплате и возврату — support@wesetup.ru. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП. Работает на платформе WeSetup.
+[platform-admin] чат админа не настроен: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст
+PASS подписка 1 990 ₽ оплачена баллами из пополнения (0 ₽ деньгами): списано 1 990, подписка продлена, партнёру — ничего {"subscription":{"id":3,"amountRub":0,"pointsSpent":1990,"isTest":false,"paidByPoints":true},"subAccruals":[],"balance":5240}
+[balance] topup order created org=cmunztsf20000849mdjqgtx8h rub=10000 order=4 method=invoice
+[balance] topup invoice refused org=cmunztsf20000849mdjqgtx8h rub=7000: pending invoice #4 on 10000
+PASS счёт: 10 000, «(счёт)»; повтор с той же суммой — тот же счёт; другая сумма — отказ 409 с номером {"invoice":4,"other":{"ok":false,"status":409,"error":"Уже выставлен счёт № 4 на 10 000 ₽ — он действует до 07.10.2026. Оплатите его или напишите на support@wesetup.ru, чтобы отменить"}}
+PASS блок пополнения видит действующий счёт {"cardReady":true,"invoiceReady":true,"organizationName":"Алексей Партнёрская программа","organizationInn":"7700000017","pendingInvoice":{"id":4,"amountRub":10000,"dueAt":"2026-10-07T10:59:40.626Z"},"recurringActive":false}
+PASS PDF счёта на пополнение собирается {"bytes":65323}
+[balance] topup paid org=cmunztsf20000849mdjqgtx8h rub=10000 order=4
+[balance] topup partner accrual order=4 org=cmunztsf20000849mdjqgtx8h created=1 amount=2000
+[email/dev] SMTP не настроен — письмо не отправлено на db-owner-munzts34@example.com.
+[email/dev] Subject: Баланс пополнен на 10 000 ₽
+[email/dev] Body:    Баланс пополнен Здравствуйте! Мы получили оплату по счёту. На баланс вашей организации зачислено 10 000 ₽ — 1 ₽ = 1 балл. Это тестовый платёж — касса работала в тестовом режиме, деньги не списывались. Заказ: № 4 Баланс сейчас: 15 240 ₽ Баллами оплачивается подписка: на странице оплаты они списываются автоматически. Оборудование за баллы не продаём. Открыть баланс и бонусы Вопросы по оплате — support@wesetup.ru. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.
+[platform-admin] чат админа не настроен: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст
+[balance] topup completed order=4 org=cmunztsf20000849mdjqgtx8h rub=10000 balance=15240
+PASS «Оплата поступила»: +10 000, строка «Пополнение баланса по счёту…», автор — ROOT {"invoiceLedger":[{"amount":10000,"kind":"topup","description":"Пополнение баланса по счёту, заказ №4 (тестовый платёж)"}]}
+PASS партнёру со счёта на пополнение: 20 % = 2 000; бонус уже был — не повторяется [{"kind":"subscription","base":10000,"amount":2000}]
+PASS повторное «Оплата поступила» — 409, второго зачисления нет {"ok":false,"status":409,"error":"Счёт уже отмечен оплаченным"}
+PASS у партнёра по A ровно 4 строки: 1 000 + (398 + бонус 3 000) + 2 000; с подписки баллами — ничего {"totalAccruals":4,"totalRub":6398}
+[balance] topup order created org=cmunztsl90006849mma1ksymf rub=5000 order=5 method=card test=true
+[balance] topup paid org=cmunztsl90006849mma1ksymf rub=5000 order=5
+[balance] topup partner accrual order=5 org=cmunztsl90006849mma1ksymf created=0 amount=0
+[email/dev] SMTP не настроен — письмо не отправлено на db-ownerb-munzts34@example.com.
+[email/dev] Subject: Баланс пополнен на 5 000 ₽
+[email/dev] Body:    Баланс пополнен Здравствуйте! Мы получили оплату картой. На баланс вашей организации зачислено 5 000 ₽ — 1 ₽ = 1 балл. Это тестовый платёж — касса работала в тестовом режиме, деньги не списывались. Заказ: № 5 Баланс сейчас: 6 592 ₽ Баллами оплачивается подписка: на странице оплаты они списываются автоматически. Оборудование за баллы не продаём. Открыть баланс и бонусы Вопросы по оплате — support@wesetup.ru. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.
+[platform-admin] чат админа не настроен: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст
+[balance] topup completed order=5 org=cmunztsl90006849mma1ksymf rub=5000 balance=6592
+PASS пополнение приглашённой организации рекомендателю ничего не начисляет []
+[billing] payment extended subscription {
+  organizationId: 'cmunztsl90006849mma1ksymf',
+  accountId: null,
+  orderId: 6,
+  subscriptionEnd: '2026-10-30T10:59:41.111Z'
+}
+[email/dev] SMTP не настроен — письмо не отправлено на db-ownerb-munzts34@example.com.
+[email/dev] Subject: Оплата получена — подписка продлена
+[email/dev] Body:    Оплата получена — подписка продлена Здравствуйте! Мы получили вашу оплату. Спасибо! Тариф: Подписка на 30 дн. Сумма: оплачено баллами (1 990 ₽) Подписка действует до: 30.10.2026 Подписка вашей организации продлена, дополнительных действий не требуется. Войти в кабинет Вопросы по оплате и возврату — support@wesetup.ru. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.
+[platform-admin] чат админа не настроен: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст
+[email/dev] SMTP не настроен — письмо не отправлено на db-owner-munzts34@example.com.
+[email/dev] Subject: Друг оформил подписку — баллы на балансе
+[email/dev] Body:    Баллы за рекомендацию Хорошая новость! Заведение Кофейня «Зерно» , которое пришло по вашей рекомендации, оформило подписку. На баланс вашей организации начислено 597 ₽ . Баланс: 15 837 ₽ — спишется автоматически при следующей оплате подписки. Открыть баланс и бонусы Бонус начисляется один раз за каждое приглашённое заведение — 30 % его первой подписки. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.
+[platform-admin] чат админа не настроен: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст
+PASS подписка приглашённой (баллами из пополнения) — рекомендателю 30 % от 1 990 = 597 [{"amount":597,"kind":"referral_reward","description":"Друг оплатил подписку: Кофейня «Зерно»"}]
+
+25 passed, 0 failed
+EXIT=0
