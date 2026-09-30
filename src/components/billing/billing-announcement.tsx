@@ -7,6 +7,10 @@ import { Gift, X } from "lucide-react";
 
 import { PromoPrice } from "@/components/pricing/promo-price";
 import type { BillingPrice } from "@/lib/billing-period";
+import {
+  announcementCookieString,
+  BILLING_ANNOUNCEMENT_LEGACY_KEY,
+} from "@/lib/billing-announcement-cookie";
 import { cn } from "@/lib/utils";
 
 /**
@@ -20,7 +24,9 @@ import { cn } from "@/lib/utils";
  * цена — из тарифа с акцией на день перехода (`tailParts`: старая цена
  * зачёркнута). Организациям с оплаченной подпиской не рендерится.
  */
-const DISMISS_KEY = "wesetup.billing-announcement.dismissed-day";
+// Решение «показывать сегодня» принимает сервер по куке (billing-view.server):
+// закрытый сегодня анонс сюда не приходит, открытый рисуется сразу, без
+// сдвига страницы после гидрации.
 
 export function BillingAnnouncement({
   lead,
@@ -44,15 +50,19 @@ export function BillingAnnouncement({
   variant?: "site" | "mini";
 }) {
   const pathname = usePathname();
-  // До чтения localStorage не рисуем: иначе закрытый сегодня анонс
-  // мигал бы на каждом переходе.
-  const [dismissed, setDismissed] = useState(true);
+  const [dismissed, setDismissed] = useState(false);
 
+  // Один раз после выката: прежняя отметка «скрыть до завтра» в localStorage
+  // переезжает в куку, чтобы дальше решал сервер.
   useEffect(() => {
     try {
-      setDismissed(window.localStorage.getItem(DISMISS_KEY) === dayKey);
+      if (window.localStorage.getItem(BILLING_ANNOUNCEMENT_LEGACY_KEY) === dayKey) {
+        document.cookie = announcementCookieString(dayKey);
+        setDismissed(true);
+      }
+      window.localStorage.removeItem(BILLING_ANNOUNCEMENT_LEGACY_KEY);
     } catch {
-      setDismissed(false);
+      /* приватный режим — ничего не переносим */
     }
   }, [dayKey]);
 
@@ -61,11 +71,8 @@ export function BillingAnnouncement({
 
   const close = () => {
     setDismissed(true);
-    try {
-      window.localStorage.setItem(DISMISS_KEY, dayKey);
-    } catch {
-      /* приватный режим — скроем до перезагрузки */
-    }
+    document.cookie = announcementCookieString(dayKey);
+    console.info("[billing] announcement dismissed for", dayKey);
   };
 
   return (

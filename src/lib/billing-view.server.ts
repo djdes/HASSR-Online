@@ -11,6 +11,9 @@ import {
   type FreePeriodSettings,
   type TransitionCopy,
 } from "@/lib/billing-period";
+import { cookies } from "next/headers";
+
+import { BILLING_ANNOUNCEMENT_COOKIE, isAnnouncementDismissed } from "@/lib/billing-announcement-cookie";
 import { hasPendingInvoice, loadAccountBilling, type BillingUnit } from "@/lib/billing.server";
 import { BILLING_TEST_MODE } from "@/lib/plan-limits";
 import { getDisplayOffer } from "@/lib/promo/offer";
@@ -91,7 +94,14 @@ export async function loadBillingView(args: {
   const priceRub = nowPrice.priceRub;
 
   const text = announcementText(settings, transitionDayPrice ?? nowPrice);
-  const announcement = showAnnouncement
+  // Закрыт сегодня на этом устройстве (кука) — не рисуем вовсе: иначе
+  // плашка появлялась бы после гидрации и сдвигала страницу.
+  const dismissedToday = showAnnouncement
+    ? await cookies()
+        .then((store) => isAnnouncementDismissed(store.get(BILLING_ANNOUNCEMENT_COOKIE)?.value, mskDayKey(now)))
+        .catch(() => false)
+    : false;
+  const announcement = showAnnouncement && !dismissedToday
     ? {
         lead: text.lead,
         // В приложении WeSetup про цену и оплату не говорим (правила
