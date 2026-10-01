@@ -48,6 +48,9 @@ const DIRECTORY_ALLOWED_PREFIXES = [
   "/api/ai/vision-extract",
   "/login",
   "/invite",
+  // Принять приглашение (задать пароль) — ссылку часто открывают в браузере,
+  // где уже открыт мастер-кабинет; без этого «Установить пароль» получал 403.
+  "/api/invite",
   "/_next",
 ] as const;
 
