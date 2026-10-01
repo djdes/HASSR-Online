@@ -28,13 +28,19 @@ env:
   # "engines" mismatches during npm ci.
   NODE_VERSION: "22"
 
+# Гейт и выгрузка архива идут ПАРАЛЛЕЛЬНО, сервер трогаем только после
+# зелёного гейта. Раньше всё шло одной цепочкой: type-check (1.5 мин) →
+# тесты (4.5 мин: 415 файлов, каждый — свой процесс) → выгрузка → сервер,
+# и деплой занимал 13–15 минут. Тесты делятся на 4 шарда (`--test-shard`):
+# изоляция «процесс на файл» сохраняется — тесты на неё рассчитаны.
 jobs:
-  deploy:
+  gate:
+    name: ${{ matrix.check == 'typecheck' && 'Type-check' || format('Tests {0}', matrix.check) }}
     runs-on: ubuntu-latest
-    # 45, а не 30: три SSH-шага в сумме просят до 55 минут в худшем
-    # случае (чистая установка зависимостей + сборка + миграции), и
-    # бюджета в 30 не хватало — job убивался раньше своих же шагов.
-    timeout-minutes: 45
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        check: [typecheck, 1/4, 2/4, 3/4, 4/4]
 
     steps:
       - name: Checkout code
@@ -69,6 +75,7 @@ jobs:
       # разрешены — это рабочие точки для постепенного устранения.
       # См. docs/superpowers/specs/01-architecture.md.
       - name: Type-check
+        if: matrix.check == 'typecheck'
         # Проект перерос стандартные ~2 ГБ кучи Node: tsc падал с
         # «JavaScript heap out of memory» (2026-09-22). У раннера 7 ГБ.
         env:
@@ -76,7 +83,22 @@ jobs:
         run: npm run typecheck
 
       - name: Tests (baseline gate)
+        if: matrix.check != 'typecheck'
+        env:
+          TEST_SHARD: ${{ matrix.check }}
         run: npm run test:gate
+
+  # Выгрузка ничего не меняет на сервере: кладёт deploy.tar и копию .env.
+  # Распаковка — в шаге 1/3, уже после гейта; не прошёл гейт — архив
+  # просто перезапишет следующий прогон.
+  upload:
+    name: Upload tarball
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Write build-time only (sha записывается на проде до build)
         run: |
@@ -137,10 +159,11 @@ jobs:
           username: ${{ secrets.DEPLOY_SSH_USER }}
           password: ${{ secrets.DEPLOY_SSH_PASS }}
           port: ${{ secrets.DEPLOY_SSH_PORT }}
+          # Копия .env — в шаге 1/3, прямо перед распаковкой: выгрузка идёт
+          # параллельно с гейтом, и ранняя копия затёрла бы правку .env,
+          # сделанную на сервере за эти минуты.
           script: |
             mkdir -p ${{ env.APP_DIR }}
-            # Backup .env if it exists
-            [ -f ${{ env.APP_DIR }}/.env ] && cp ${{ env.APP_DIR }}/.env ${{ env.APP_DIR }}/.env.bak || true
 
       - name: Upload tarball via SCP
         uses: appleboy/scp-action@v0.1.7
@@ -152,6 +175,15 @@ jobs:
           source: deploy.tar
           target: ${{ env.APP_DIR }}
 
+  deploy:
+    needs: [gate, upload]
+    runs-on: ubuntu-latest
+    # 45, а не 30: три SSH-шага в сумме просят до 55 минут в худшем
+    # случае (чистая установка зависимостей + сборка + миграции), и
+    # бюджета в 30 не хватало — job убивался раньше своих же шагов.
+    timeout-minutes: 45
+
+    steps:
       # Deploy разбит на ТРИ SSH-шага: setup / build / seed+restart.
       # Раньше всё было одним ssh-action'ом и при медленном/нестабильном
       # GitHub-runner→prod SSH-туннеле билд (~3 мин) или test-bot-wizard
@@ -209,6 +241,8 @@ jobs:
             rm -rf src scripts prisma public .github docs .agent journals tmp-source-journals
 
             echo "=== Extracting tarball ==="
+            # Backup .env if it exists
+            [ -f .env ] && cp .env .env.bak || true
             tar xf deploy.tar && rm deploy.tar
 
             echo "=== Re-linking user uploads ==="
@@ -680,15 +714,24 @@ jobs:
 
             echo "=== Deploy complete ==="
 
-      # Деплой падал по несколько раз в день (typecheck-гейт), а узнавали
-      # об этом случайно — прод оставался на старом коде. Шаг ниже
-      # срабатывает ТОЛЬКО при падении любого предыдущего шага и шлёт
-      # админу платформы сообщение в Telegram с коммитом и ссылкой на лог.
-      # Секреты: TELEGRAM_BOT_TOKEN (тот же бот @wesetupbot) и
-      # DEPLOY_ALERT_TELEGRAM_CHAT_ID (= PLATFORM_ADMIN_TELEGRAM_CHAT_ID с прода).
-      # Если секретов нет — шаг молча пропускается, деплой это не ломает.
+  # Деплой падал по несколько раз в день (typecheck-гейт), а узнавали
+  # об этом случайно — прод оставался на старом коде. Job ниже
+  # срабатывает ТОЛЬКО при падении любого job'а выше (гейт, выгрузка,
+  # сервер) и шлёт админу платформы сообщение в Telegram с коммитом и
+  # ссылкой на лог. Отдельный job, а не шаг в deploy: при упавшем гейте
+  # deploy пропускается целиком и его шаги не выполнились бы.
+  # Секреты: TELEGRAM_BOT_TOKEN (тот же бот @wesetupbot) и
+  # DEPLOY_ALERT_TELEGRAM_CHAT_ID (= PLATFORM_ADMIN_TELEGRAM_CHAT_ID с прода).
+  # Если секретов нет — шаг молча пропускается, деплой это не ломает.
+  notify-failure:
+    name: Notify Telegram on failure
+    needs: [gate, upload, deploy]
+    if: failure()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
       - name: Notify Telegram on failure
-        if: failure()
         env:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.DEPLOY_ALERT_TELEGRAM_CHAT_ID }}

@@ -12,7 +12,13 @@ set -uo pipefail
 BASELINE="tests/.legacy-failures.txt"
 
 # Запускаем tests, ловим все строки `not ok` (TAP)
-OUTPUT=$(npm run test:ci 2>&1 || true)
+# TEST_SHARD=i/N — только i-я часть файлов: CI делит тесты на параллельные
+# job'ы. Флаг стоит ДО шаблона файлов: после него node молча гоняет всё.
+if [ -n "${TEST_SHARD:-}" ]; then
+  OUTPUT=$(node --import tsx --test --test-reporter=tap --test-shard="$TEST_SHARD" "src/**/*.test.ts" 2>&1 || true)
+else
+  OUTPUT=$(npm run test:ci 2>&1 || true)
+fi
 
 # Извлекаем список fail'ов (имена после "not ok N - ")
 ACTUAL_FAILS=$(echo "$OUTPUT" | grep -E '^# Subtest:' -A 0 || true)
