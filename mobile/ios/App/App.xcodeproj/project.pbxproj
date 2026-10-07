@@ -198,16 +198,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# GoogleService-Info.plist (Firebase, push) is written into App/ by CI from a secret.
-# Without it the app still builds and runs, just without push.
-SRC=\"${SRCROOT}/App/GoogleService-Info.plist\"
-if [ -f \"$SRC\" ]; then
-  cp \"$SRC\" \"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleService-Info.plist\"
-  echo \"GoogleService-Info.plist added to the app bundle\"
-else
-  echo \"warning: GoogleService-Info.plist not found - push notifications are disabled in this build\"
-fi
-";
+			shellScript = "# GoogleService-Info.plist (Firebase, push) is written into App/ by CI from a secret.\n# Without it the app still builds and runs, just without push.\nSRC=\"${SRCROOT}/App/GoogleService-Info.plist\"\nif [ -f \"$SRC\" ]; then\n  cp \"$SRC\" \"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleService-Info.plist\"\n  echo \"GoogleService-Info.plist added to the app bundle\"\nelse\n  echo \"warning: GoogleService-Info.plist not found - push notifications are disabled in this build\"\nfi\n";
 			showEnvVarsInLog = 0;
 		};
 		6634F4EFEBD30273BCE97C65 /* [CP] Check Pods Manifest.lock */ = {
