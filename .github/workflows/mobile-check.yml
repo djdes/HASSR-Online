@@ -100,6 +100,13 @@ jobs:
         working-directory: mobile/ios/App
         run: ruby -c fastlane/Fastfile
 
+      - name: Проверить privacy manifest внутри собранного приложения
+        run: |
+          manifest="$RUNNER_TEMP/DerivedData/Build/Products/Debug-iphonesimulator/App.app/PrivacyInfo.xcprivacy"
+          plutil -lint "$manifest"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :NSPrivacyAccessedAPITypes:0:NSPrivacyAccessedAPIType' "$manifest")" = "NSPrivacyAccessedAPICategoryFileTimestamp"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :NSPrivacyAccessedAPITypes:0:NSPrivacyAccessedAPITypeReasons:0' "$manifest")" = "C617.1"
+
       - name: Упаковать приложение симулятора с правами файлов
         run: tar -czf "$RUNNER_TEMP/WeSetup-ios-simulator.tar.gz" -C "$RUNNER_TEMP/DerivedData/Build/Products/Debug-iphonesimulator" App.app
 

@@ -198,6 +198,7 @@ jobs:
           verify_dir=$(mktemp -d "$RUNNER_TEMP/verify-ipa.XXXXXX")
           unzip -q build/WeSetup.ipa -d "$verify_dir"
           codesign --verify --deep --strict "$verify_dir/Payload/App.app"
+          plutil -lint "$verify_dir/Payload/App.app/PrivacyInfo.xcprivacy"
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$verify_dir/Payload/App.app/Info.plist")" = "ru.wesetup.app"
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$verify_dir/Payload/App.app/Info.plist")" = "$BUILD_NUMBER"
           node ../../scripts/release-manifest.mjs ios
