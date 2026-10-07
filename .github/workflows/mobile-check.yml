@@ -47,6 +47,7 @@ jobs:
             mobile/android/**/gradle-wrapper.properties
 
       - run: npm ci
+      - run: npm run test:release
       - run: npx cap sync android
 
       - name: Сборка APK
@@ -79,6 +80,7 @@ jobs:
           cache-dependency-path: mobile/package-lock.json
 
       - run: npm ci
+      - run: npm run test:release
       - run: npx cap sync ios
 
       - name: Сборка без подписи
@@ -93,3 +95,14 @@ jobs:
             -derivedDataPath "$RUNNER_TEMP/DerivedData" \
             CODE_SIGNING_ALLOWED=NO \
             COMPILER_INDEX_STORE_ENABLE=NO
+
+      - name: Проверить синтаксис сборщика релиза
+        working-directory: mobile/ios/App
+        run: ruby -c fastlane/Fastfile
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wesetup-ios-simulator-${{ github.run_number }}
+          path: ${{ runner.temp }}/DerivedData/Build/Products/Debug-iphonesimulator/App.app
+          if-no-files-found: error
+          retention-days: 14

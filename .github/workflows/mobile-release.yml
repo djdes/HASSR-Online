@@ -16,12 +16,23 @@ on:
         description: "Куда отправить Android"
         type: choice
         options: [internal, none]
-        default: internal
+        default: none
       play_status:
         description: "Статус выпуска в Google Play (draft — пока приложение ни разу не выпускалось)"
         type: choice
         options: [completed, draft]
-        default: completed
+        default: draft
+      upload_ios:
+        description: "Загрузить iOS в TestFlight после сборки (по умолчанию только IPA)"
+        type: boolean
+        default: false
+      build_number:
+        description: "Новый номер сборки; пусто = номер запуска workflow. Должен быть больше ранее загруженного."
+        type: string
+        default: ""
+
+env:
+  BUILD_NUMBER: ${{ inputs.build_number || github.run_number }}
 
 concurrency:
   group: mobile-release
@@ -58,6 +69,7 @@ jobs:
             mobile/android/**/gradle-wrapper.properties
 
       - run: npm ci
+      - run: npm run test:release
 
       - name: Секреты сборки
         env:
@@ -85,9 +97,13 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           chmod +x gradlew
-          ./gradlew bundleRelease -PversionCode=${{ github.run_number }} --no-daemon
+          ./gradlew bundleRelease assembleRelease -PversionCode="$BUILD_NUMBER" --no-daemon
+          apksigner_path=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)
+          "$apksigner_path" verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk
+          keytool -printcert -jarfile app/build/outputs/bundle/release/app-release.aab > app/build/outputs/upload-certificate.txt
           # Сборка без подписи Google Play не примет — проверяем до загрузки.
-          jarsigner -verify app/build/outputs/bundle/release/app-release.aab | grep -q "jar verified"
+          jarsigner -J-Duser.language=en -verify app/build/outputs/bundle/release/app-release.aab | grep -q "jar verified"
+          node ../../scripts/release-manifest.mjs android
 
       - name: Убрать ключ с раннера
         if: always()
@@ -96,7 +112,11 @@ jobs:
       - uses: actions/upload-artifact@v7
         with:
           name: wesetup-android-${{ github.run_number }}
-          path: mobile/android/app/build/outputs/bundle/release/app-release.aab
+          path: |
+            mobile/android/app/build/outputs/bundle/release/app-release.aab
+            mobile/android/app/build/outputs/apk/release/app-release.apk
+            mobile/android/app/build/outputs/release-manifest.json
+            mobile/android/app/build/outputs/upload-certificate.txt
           if-no-files-found: error
 
       - name: Внутреннее тестирование Google Play
@@ -110,7 +130,7 @@ jobs:
           status: ${{ inputs.play_status }}
 
   ios:
-    name: iOS — TestFlight
+    name: iOS — подписанный IPA
     if: inputs.platform != 'android'
     # macOS 26 + Xcode 26: App Store принимает только сборки на SDK iOS 26.
     runs-on: macos-26
@@ -128,6 +148,7 @@ jobs:
           cache-dependency-path: mobile/package-lock.json
 
       - run: npm ci
+      - run: npm run test:release
 
       - name: Секреты сборки
         env:
@@ -162,22 +183,36 @@ jobs:
           BUNDLE_PATH: vendor/bundle
         run: bundle install --jobs 4 --retry 3
 
-      - name: Сборка и TestFlight
+      - name: Сборка IPA и необязательная загрузка в TestFlight
         working-directory: mobile/ios/App
         env:
-          BUILD_NUMBER: ${{ github.run_number }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_KEY_PATH: ${{ runner.temp }}/asc_key.p8
           BUNDLE_PATH: vendor/bundle
-        run: bundle exec fastlane beta
+          UPLOAD_IOS: ${{ inputs.upload_ios }}
+        run: |
+          node ../../scripts/release-preflight.mjs --platform ios
+          bundle exec fastlane release
+          verify_dir=$(mktemp -d "$RUNNER_TEMP/verify-ipa.XXXXXX")
+          unzip -q build/WeSetup.ipa -d "$verify_dir"
+          codesign --verify --deep --strict "$verify_dir/Payload/App.app"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$verify_dir/Payload/App.app/Info.plist")" = "ru.wesetup.app"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$verify_dir/Payload/App.app/Info.plist")" = "$BUILD_NUMBER"
+          node ../../scripts/release-manifest.mjs ios
+          if [ "$UPLOAD_IOS" = "true" ]; then
+            bundle exec fastlane upload_beta
+          fi
 
       - uses: actions/upload-artifact@v7
-        if: success()
+        if: always()
         with:
           name: wesetup-ios-${{ github.run_number }}
-          path: mobile/ios/App/build/WeSetup.ipa
+          path: |
+            mobile/ios/App/build/WeSetup.ipa
+            mobile/ios/App/build/release-manifest.json
+            mobile/ios/App/build/WeSetup.app.dSYM.zip
           if-no-files-found: warn
 
       - name: Убрать ключи с раннера

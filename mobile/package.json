@@ -6,7 +6,10 @@
   "scripts": {
     "sync": "cap sync",
     "assets": "node scripts/make-assets.mjs && capacitor-assets generate --android --ios --iconBackgroundColor \"#0b1024\" --iconBackgroundColorDark \"#0b1024\" --splashBackgroundColor \"#0b1024\" --splashBackgroundColorDark \"#0b1024\"",
-    "android:debug": "cap sync android && cd android && gradlew assembleDebug"
+    "android:debug": "cap sync android && cd android && gradlew assembleDebug",
+    "test:release": "node --test scripts/release-preflight.test.mjs",
+    "release:check:android": "node scripts/release-preflight.mjs --platform android",
+    "release:check:ios": "node scripts/release-preflight.mjs --platform ios"
   },
   "dependencies": {
     "@capacitor-community/speech-recognition": "7.0.1",

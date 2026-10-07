@@ -7,8 +7,19 @@ def appVersionCode = project.hasProperty('versionCode') ? project.property('vers
 
 // Ключ загрузки Google Play: файл app/upload.jks кладёт CI из секрета
 // ANDROID_KEYSTORE_BASE64, пароли — из переменных окружения. Без файла
-// release-сборка остаётся неподписанной (для локальной проверки этого хватает).
+// store release is blocked without signing and Firebase configuration.
 def uploadKeystore = file('upload.jks')
+
+// Apply the same guard to local Gradle builds and CI. Debug builds need no secrets.
+gradle.taskGraph.whenReady { graph ->
+    if (['bundleRelease', 'assembleRelease', 'packageRelease', 'signReleaseBundle'].any { graph.hasTask(":app:${it}") }) {
+        project.exec {
+            workingDir rootProject.projectDir.parentFile
+            environment 'BUILD_NUMBER', appVersionCode.toString()
+            commandLine 'node', 'scripts/release-preflight.mjs', '--platform', 'android'
+        }
+    }
+}
 
 android {
     namespace = "ru.wesetup.app"
