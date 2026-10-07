@@ -29,4 +29,3 @@ const manifest = {
 const output = path.join(mobileRoot, platform === "android" ? "android/app/build/outputs/release-manifest.json" : "ios/App/build/release-manifest.json");
 writeFileSync(output, JSON.stringify(manifest, null, 2) + "\n");
 console.log(output);
-

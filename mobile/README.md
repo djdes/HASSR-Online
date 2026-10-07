@@ -26,8 +26,7 @@ Capacitor-оболочка вокруг мини-версии сайта. При
 - **WebPrint** — локальный плагин печати: `print({ jobName })` открывает системную
   печать текущей страницы (принтер или PDF), `printFile({ path, jobName })` —
   печать готового PDF (бланк журнала с сервера; сайт кладёт его во временную
-  папку через Filesystem; пока только Android — на iOS сайт открывает лист
-  «Поделиться», где есть «Напечатать»), `openSettings()` — экран приложения в настройках
+  папку через Filesystem; пока Android и iOS), `openSettings()` — экран приложения в настройках
   телефона. Android: `android/app/src/main/java/ru/wesetup/app/WebPrintPlugin.java`
   (регистрация в `MainActivity`), iOS: `ios/App/App/WebPrintPlugin.swift`
   (регистрация в `WeSetupViewController.capacitorDidLoad`).
@@ -41,8 +40,7 @@ Capacitor-оболочка вокруг мини-версии сайта. При
   `https://wesetup.ru` (`/mini`, `/journals`, `/join`, `/journal-fill`,
   `/equipment-fill`, `/room-fill`, `/task-fill`, `/delete-account`); iOS —
   `ios/App/App/App.entitlements` (`applinks:wesetup.ru`, `webcredentials:wesetup.ru`).
-- **Push**: `@capacitor-firebase/messaging`. Без файлов Firebase приложение
-  собирается и работает, только без push.
+- **Push**: `@capacitor-firebase/messaging`. Без файлов Firebase можно собрать debug-версию без push; store release требует корректную конфигурацию.
 
 ## Версии
 
@@ -90,13 +88,19 @@ APK: `android/app/build/outputs/apk/debug/app-debug.apk` (~7 МБ). Постав
 
 Подписанный выпуск локально (если есть ключ): положить `android/app/upload.jks`,
 задать `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` и
-выполнить `./gradlew bundleRelease -PversionCode=<номер>`. Без `upload.jks`
-release-сборка получается неподписанной.
+выполнить `./gradlew bundleRelease -PversionCode=<номер>`. Для release обязательны ключ, пароли и корректный Firebase-конфиг. Проверка `scripts/release-preflight.mjs` блокирует неподписанный выпуск и сборку с тестовым URL.
 
 iOS на Windows не собрать — это делает GitHub Actions (или Mac: `npx cap sync ios`,
 затем открыть `ios/App/App.xcworkspace` в Xcode).
 
 ## Выпуск: два workflow
+
+Актуальный первый выпуск описан в [PUBLISHING.md](../docs/mobile/PUBLISHING.md).
+По умолчанию release только создаёт подписанные AAB, APK и IPA: `track=none`,
+`upload_ios=false`, `play_status=draft`. Загрузка в TestFlight включается отдельно.
+В артефактах сохраняются SHA-256, версия, номер и source commit.
+`npm run test:release` проверяет запрет выпуска без конфигурации и с тестовым URL.
+
 
 **«Проверка приложений»** (`.github/workflows/mobile-check.yml`) — сама
 запускается при изменениях в `mobile/**` и в `mobile-*.yml`, можно запустить
@@ -114,7 +118,7 @@ Actions → «Выпуск приложений» → Run workflow. Параме
 - `play_status` — `completed` обычно; `draft`, пока приложение в Google Play ещё
   ни разу не выпускалось (Google не даёт создавать другие выпуски у черновика).
 
-Номер сборки = номер запуска workflow (`github.run_number`), общий для Android
+Номер сборки = явно заданный `build_number` или номер запуска workflow (`github.run_number`), общий для Android
 (`versionCode`) и iOS (`CFBundleVersion`), поэтому всегда растёт.
 
 Секреты GitHub (названия точные; где взять — `docs/mobile/secrets.md`):

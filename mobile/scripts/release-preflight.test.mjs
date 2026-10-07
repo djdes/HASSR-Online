@@ -66,4 +66,3 @@ test("invalid versions, numbers and malformed configuration are rejected", (t) =
   assert.ok(checkRelease(f).some((e) => e.includes("version")));
   assert.ok(checkRelease(f).some((e) => e.includes("Invalid JSON")));
 });
-

@@ -71,4 +71,3 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   if (errors.length) process.exitCode = 1;
   else console.log(`Release preflight PASS: ${platform}, build ${process.env.BUILD_NUMBER}`);
 }
-
