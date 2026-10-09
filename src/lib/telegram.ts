@@ -1,8 +1,8 @@
 import { Bot, InputFile } from "grammy";
 import { isUrgentKind, parseQuietHours, quietUntil } from "@/lib/quiet-hours";
 
-import { isStreamingBody } from "@/lib/streaming-body";
-import { Agent, fetch as undiciFetch, setGlobalDispatcher } from "undici";
+import { createTelegramFetch } from "@/lib/telegram-fetch";
+import { Agent, ProxyAgent, setGlobalDispatcher } from "undici";
 import crypto from "node:crypto";
 import { escapeHtml } from "@/lib/html-escape";
 import {
@@ -31,13 +31,16 @@ import { getDbRoleValuesWithLegacy, MANAGEMENT_ROLES } from "@/lib/user-roles";
 const token = process.env.TELEGRAM_BOT_TOKEN;
 const apiRoot = process.env.TELEGRAM_API_ROOT?.replace(/\/+$/, "") || undefined;
 const forceIp = process.env.TELEGRAM_FORCE_IP?.trim() || undefined;
+// Keep this proxy scoped to Telegram requests; other integrations stay direct.
+const proxyUrl = process.env.TELEGRAM_PROXY_URL?.trim() || undefined;
+const proxyAgent = proxyUrl ? new ProxyAgent(proxyUrl) : undefined;
 
 // Grammy doesn't forward undici's `dispatcher` option through its
 // baseFetchConfig. setGlobalDispatcher is the only reliable way to hook
 // into Node's global fetch used by grammy. It affects every fetch() call in
 // the process, but the lookup override only fires for hostname ===
 // "api.telegram.org"; all other hostnames fall back to system DNS unchanged.
-if (forceIp) {
+if (forceIp && !proxyAgent) {
   setGlobalDispatcher(
     new Agent({
       connect: {
@@ -62,47 +65,8 @@ if (forceIp) {
   );
 }
 
-// Grammy's shim.node.js pins `node-fetch` hard, which ignores undici's
-// global dispatcher. Pass undici's native `fetch` through BotConfig.client.fetch
-// so our setGlobalDispatcher above actually takes effect for grammy calls too.
-// Grammy's shim.node.js pins `node-fetch` hard, which ignores undici's
-// global dispatcher. Pass a wrapper over undici's native `fetch` through
-// BotConfig.client.fetch so our setGlobalDispatcher takes effect.
-//
-// Two real-world incompatibilities to handle:
-//   1. Types clash (node-fetch Request vs undici Request) — cast via unknown.
-//   2. Grammy ships an `abort-controller` polyfill whose AbortSignal is NOT
-//      an instanceof the native AbortSignal that undici validates. If we
-//      forward init.signal verbatim, undici throws "Expected signal to be
-//      an instance of AbortSignal". Strip the polyfill signal (loses
-//      grammy's soft-timeout, but undici has its own 300s cap) OR forward
-//      only native signals.
-//   3. Отправка ФАЙЛА идёт потоковым телом, а undici требует для такого
-//      `duplex: "half"` — без него конструктор Request бросает
-//      «RequestInit: duplex option is required when sending a body».
-//      Сообщения уходили (у них тело строкой), а вложения молча падали:
-//      человек прикладывал фото к обращению, оно не доходило, и в логе
-//      оставалось только «Telegram attachment send error». Наблюдалось
-//      на проде 2026-09-08 в 00:28.
-const tgFetch = forceIp
-  ? async (url: unknown, init: unknown) => {
-      const opts = (init as { signal?: unknown; body?: unknown } | undefined) ?? {};
-      const signal = opts.signal;
-      const forwarded: Record<string, unknown> =
-        signal && !(signal instanceof AbortSignal)
-          ? { ...(init as object), signal: undefined }
-          : { ...((init as object | undefined) ?? {}) };
-
-      // Ставим только для потокового тела: для строк и Buffer'ов undici
-      // ругается на лишний duplex.
-      if (isStreamingBody(opts.body)) forwarded.duplex = "half";
-
-      return undiciFetch(
-        url as Parameters<typeof undiciFetch>[0],
-        forwarded as Parameters<typeof undiciFetch>[1]
-      );
-    }
-  : undefined;
+// grammY uses its own fetch; configure the same scoped transport for all calls.
+const tgFetch = forceIp || proxyAgent ? createTelegramFetch(proxyAgent) : undefined;
 
 const bot = token
   ? new Bot(token, {

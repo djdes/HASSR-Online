@@ -38,10 +38,9 @@ async function main() {
   process.once("SIGINT", shutdown);
   process.once("SIGTERM", shutdown);
 
-  // drop_pending_updates: true — не повторяем старые апдейты,
-  // которые копились пока webhook фейлил.
+  // Keep pending support messages when connectivity returns after an outage.
   await bot.start({
-    drop_pending_updates: true,
+    drop_pending_updates: false,
     allowed_updates: [
       "message",
       "callback_query",

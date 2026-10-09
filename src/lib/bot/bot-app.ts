@@ -1,5 +1,5 @@
 import { Bot, Composer, type Context } from "grammy";
-import { Agent, fetch as undiciFetch, setGlobalDispatcher } from "undici";
+import { Agent, ProxyAgent, setGlobalDispatcher } from "undici";
 import { registerStartHandler } from "./handlers/start";
 import { registerStopHandler } from "./handlers/stop";
 import { registerInlineQueryHandler } from "./handlers/inline";
@@ -12,6 +12,7 @@ import {
 import { registerStaffToolsHandlers } from "./handlers/staff-tools";
 import { registerSupportHandlers } from "./handlers/support";
 import { registerShiftGateHandler } from "./handlers/shift-gate";
+import { createTelegramFetch } from "@/lib/telegram-fetch";
 import { getMiniAppBaseUrlFromEnv } from "@/lib/journal-obligation-links";
 import {
   configureTelegramBotProfile,
@@ -33,8 +34,11 @@ import {
 const token = process.env.TELEGRAM_BOT_TOKEN;
 const apiRoot = process.env.TELEGRAM_API_ROOT?.replace(/\/+$/, "") || undefined;
 const forceIp = process.env.TELEGRAM_FORCE_IP?.trim() || undefined;
+// Keep this proxy scoped to Telegram requests; other integrations stay direct.
+const proxyUrl = process.env.TELEGRAM_PROXY_URL?.trim() || undefined;
+const proxyAgent = proxyUrl ? new ProxyAgent(proxyUrl) : undefined;
 
-if (forceIp) {
+if (forceIp && !proxyAgent) {
   setGlobalDispatcher(
     new Agent({
       connect: {
@@ -59,20 +63,8 @@ if (forceIp) {
   );
 }
 
-const tgFetch = forceIp
-  ? async (url: unknown, init: unknown) => {
-      const opts = (init as { signal?: unknown } | undefined) ?? {};
-      const signal = opts.signal;
-      const forwarded =
-        signal && !(signal instanceof AbortSignal)
-          ? { ...(init as object), signal: undefined }
-          : (init as object | undefined);
-      return undiciFetch(
-        url as Parameters<typeof undiciFetch>[0],
-        forwarded as Parameters<typeof undiciFetch>[1]
-      );
-    }
-  : undefined;
+// grammY uses its own fetch; configure the same scoped transport for all calls.
+const tgFetch = forceIp || proxyAgent ? createTelegramFetch(proxyAgent) : undefined;
 
 let cachedBot: Bot | null = null;
 let initPromise: Promise<void> | null = null;

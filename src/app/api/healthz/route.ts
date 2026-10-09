@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getInboundBot } from "@/lib/bot/bot-app";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -54,15 +55,17 @@ export async function GET() {
   if (process.env.TELEGRAM_BOT_TOKEN) {
     const t0 = Date.now();
     try {
-      const r = await fetch(
-        `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/getMe`,
-        { signal: AbortSignal.timeout(3000) }
+      // Use the bot transport so relay/IP settings match real notifications.
+      const bot = getInboundBot();
+      if (!bot) throw new Error("bot not configured");
+      const signal = AbortSignal.timeout(3000);
+      const me = await bot.api.getMe(
+        signal as unknown as Parameters<typeof bot.api.getMe>[0]
       );
-      const data = (await r.json()) as { ok: boolean; result?: { username?: string } };
       checks.telegram = {
-        ok: data.ok === true,
+        ok: true,
         ms: Date.now() - t0,
-        detail: data.result?.username ? `@${data.result.username}` : undefined,
+        detail: me.username ? `@${me.username}` : undefined,
       };
     } catch (err) {
       console.error("[healthz] telegram check failed", err);
