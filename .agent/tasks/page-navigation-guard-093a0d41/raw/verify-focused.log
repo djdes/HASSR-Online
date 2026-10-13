@@ -1,0 +1,131 @@
+TAP version 13
+# Subtest: normal browsing and a burst across pages share a rolling budget
+ok 1 - normal browsing and a burst across pages share a rolling budget
+  ---
+  duration_ms: 2.366366
+  type: 'test'
+  ...
+# Subtest: the 10-second window expires at its boundary
+ok 2 - the 10-second window expires at its boundary
+  ---
+  duration_ms: 0.498893
+  type: 'test'
+  ...
+# Subtest: sustained automation hits the minute budget without a burst
+ok 3 - sustained automation hits the minute budget without a burst
+  ---
+  duration_ms: 0.654891
+  type: 'test'
+  ...
+# Subtest: UA changes do not erase recorded requests
+ok 4 - UA changes do not erase recorded requests
+  ---
+  duration_ms: 0.72649
+  type: 'test'
+  ...
+# Subtest: automation is only a signal, not a ban or allowlist
+ok 5 - automation is only a signal, not a ban or allowlist
+  ---
+  duration_ms: 1.014686
+  type: 'test'
+  ...
+# Subtest: bounded prefetch is separate from visits but shares the cooldown
+ok 6 - bounded prefetch is separate from visits but shares the cooldown
+  ---
+  duration_ms: 3.321552
+  type: 'test'
+  ...
+# Subtest: expired budgets are swept and capacity cannot evict a blocked subject
+ok 7 - expired budgets are swept and capacity cannot evict a blocked subject
+  ---
+  duration_ms: 0.65939
+  type: 'test'
+  ...
+# Subtest: real proxy denies documents and RSC before content, with a private Russian wait page
+ok 8 - real proxy denies documents and RSC before content, with a private Russian wait page
+  ---
+  duration_ms: 24.008258
+  type: 'test'
+  ...
+# Subtest: assets, API, callbacks and operational links survive a page cooldown
+ok 9 - assets, API, callbacks and operational links survive a page cooldown
+  ---
+  duration_ms: 7.240697
+  type: 'test'
+  ...
+# Subtest: document prefetch spoofing and forged sessions cannot reset a blocked IP
+ok 10 - document prefetch spoofing and forged sessions cannot reset a blocked IP
+  ---
+  duration_ms: 4.365637
+  type: 'test'
+  ...
+# Subtest: marked and markerless RSC fetches share a bounded budget and cooldown
+ok 11 - marked and markerless RSC fetches share a bounded budget and cooldown
+  ---
+  duration_ms: 61.097929
+  type: 'test'
+  ...
+# Subtest: subject uses verified accounts or a canonical trusted peer, never client identity hints
+ok 12 - subject uses verified accounts or a canonical trusted peer, never client identity hints
+  ---
+  duration_ms: 12.58812
+  type: 'test'
+  ...
+# Subtest: JWT subjects isolate shared IPs; root, directory, partner and staff checks retain precedence
+ok 13 - JWT subjects isolate shared IPs; root, directory, partner and staff checks retain precedence
+  ---
+  duration_ms: 66.290955
+  type: 'test'
+  ...
+# Subtest: proxy: какая кука сессии
+    # Subtest: на проде берёт куку next-auth, а не старую свою: вошёл B — proxy видит B
+    ok 1 - на проде берёт куку next-auth, а не старую свою: вошёл B — proxy видит B
+      ---
+      duration_ms: 32.337139
+      type: 'test'
+      ...
+    # Subtest: на проде без актуальной куки — запасная (сессия, выданная до правки)
+    ok 2 - на проде без актуальной куки — запасная (сессия, выданная до правки)
+      ---
+      duration_ms: 12.414223
+      type: 'test'
+      ...
+    # Subtest: на проде актуальная кука важнее любой запасной и в обратную сторону
+    ok 3 - на проде актуальная кука важнее любой запасной и в обратную сторону
+      ---
+      duration_ms: 5.181826
+      type: 'test'
+      ...
+    # Subtest: в dev актуальное имя — без префикса, как у next-auth в dev
+    ok 4 - в dev актуальное имя — без префикса, как у next-auth в dev
+      ---
+      duration_ms: 7.927487
+      type: 'test'
+      ...
+    # Subtest: без кук сессии proxy пропускает (страница сама отправит на вход)
+    ok 5 - без кук сессии proxy пропускает (страница сама отправит на вход)
+      ---
+      duration_ms: 5.823217
+      type: 'test'
+      ...
+    # Subtest: сессия мастер-кабинета: /login открыт, страницы кабинета сайта — в /master
+    ok 6 - сессия мастер-кабинета: /login открыт, страницы кабинета сайта — в /master
+      ---
+      duration_ms: 8.577178
+      type: 'test'
+      ...
+    1..6
+ok 14 - proxy: какая кука сессии
+  ---
+  duration_ms: 75.461224
+  type: 'suite'
+  ...
+1..14
+# tests 19
+# suites 1
+# pass 19
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1135.298017

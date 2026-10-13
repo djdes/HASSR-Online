@@ -1,0 +1,57 @@
+{
+  "framework": "Next.js 16.1.6 production fixture importing actual repository proxy",
+  "cases": [
+    {
+      "name": "normal Next client navigation and real Link prefetch",
+      "pass": true,
+      "prefetchResponses": 30
+    },
+    {
+      "name": "RSC 429 to document, same URL/query, countdown, desktop and 320px",
+      "pass": true
+    },
+    {
+      "name": "premature retry is server-blocked; asset request is excluded",
+      "pass": true
+    },
+    {
+      "name": "real 30-second server cooldown expires; enabled retry restores same URL",
+      "pass": true
+    },
+    {
+      "name": "no-JavaScript explanation, document 429 and response headers",
+      "pass": true
+    },
+    {
+      "name": "actual Next server enforces markerless RSC budget at 241 and shares document cooldown",
+      "pass": true
+    }
+  ],
+  "responses": [
+    {
+      "status": 429,
+      "resource": "fetch",
+      "rsc": "1",
+      "prefetch": null,
+      "segment": null,
+      "path": "/probe/start-next-next"
+    },
+    {
+      "status": 429,
+      "resource": "document",
+      "rsc": null,
+      "prefetch": null,
+      "segment": null,
+      "path": "/probe/start-next-next"
+    },
+    {
+      "status": 429,
+      "resource": "document",
+      "rsc": null,
+      "prefetch": null,
+      "segment": null,
+      "path": "/probe/start-next-next"
+    }
+  ],
+  "pass": true
+}

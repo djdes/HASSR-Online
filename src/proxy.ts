@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { decode } from "next-auth/jwt";
+import { pageNavigationGuard } from "@/lib/page-navigation-guard";
 import { pickSessionCookie } from "@/lib/auth-cookies";
 import { canAccessWebPath, hasFullWorkspaceAccess } from "@/lib/role-access";
 import { evaluateDirectoryRequest } from "@/lib/master-directory-access";
@@ -30,7 +31,10 @@ import {
 function withRequestContext(
   req: NextRequest,
   claim: PartnerAccessClaim | null,
+  verifiedUserId?: unknown,
 ): NextResponse {
+  const limited = pageNavigationGuard(req, verifiedUserId);
+  if (limited) return limited;
   const headers = new Headers(req.headers);
   for (const name of PARTNER_REQUEST_HEADERS) headers.delete(name);
   headers.set(PARTNER_HEADER_METHOD, req.method);
@@ -258,7 +262,7 @@ export async function proxy(req: NextRequest) {
     if (!token || token.isRoot !== true) {
       return NextResponse.rewrite(new URL("/404", req.url), { status: 404 });
     }
-    return withRequestContext(req, null);
+    return withRequestContext(req, null, token.id ?? token.sub);
   }
 
   // Мастер-кабинет справочников (orgKind="directory" в токене): сотрудник
@@ -295,7 +299,7 @@ export async function proxy(req: NextRequest) {
   }
 
   if (!token || !isStaffRestrictedWebPath(pathname)) {
-    return withRequestContext(req, claim);
+    return withRequestContext(req, claim, token?.id ?? token?.sub);
   }
 
   const actor = {
@@ -306,7 +310,7 @@ export async function proxy(req: NextRequest) {
     isRoot: token.isRoot === true,
   };
   if (hasFullWorkspaceAccess(actor) || canAccessWebPath(actor, pathname)) {
-    return withRequestContext(req, claim);
+    return withRequestContext(req, claim, token.id ?? token.sub);
   }
 
   // В приложении «нет прав на раздел» — это возврат на его главный

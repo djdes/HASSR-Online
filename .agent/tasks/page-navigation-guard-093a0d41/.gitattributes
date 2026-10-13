@@ -1,0 +1,2 @@
+# Preserve raw command output, including the tools' own whitespace.
+raw/*.log -whitespace

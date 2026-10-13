@@ -1,0 +1,85 @@
+{
+  "task": "093a0d41-c145-434e-84a6-3d5fd616c600",
+  "spec": "spec.md including revisions 1 and 2, frozen before their respective fixes",
+  "verdict": "PASS",
+  "criteria": {
+    "AC1": {
+      "verdict": "PASS",
+      "artifacts": [
+        "raw/verify-focused.log",
+        "src/lib/page-navigation-limit.test.ts"
+      ]
+    },
+    "AC2": {
+      "verdict": "PASS",
+      "artifacts": [
+        "raw/verify-focused.log",
+        "raw/browser-report.json",
+        "src/page-navigation-proxy.test.ts"
+      ]
+    },
+    "AC3": {
+      "verdict": "PASS",
+      "artifacts": [
+        "raw/verify-focused.log",
+        "raw/browser-report.json",
+        "docs/page-navigation-guard.md"
+      ]
+    },
+    "AC4": {
+      "verdict": "PASS",
+      "artifacts": [
+        "raw/browser-report.json",
+        "raw/wait-desktop.png",
+        "raw/wait-320.png",
+        "raw/wait-nojs.png"
+      ]
+    },
+    "AC5": {
+      "verdict": "PASS",
+      "artifacts": [
+        "raw/verify.exit",
+        "raw/verify-focused.log",
+        "raw/verify-lint.log",
+        "raw/verify-typecheck.log",
+        "raw/verify-gate.log",
+        "review.md",
+        "raw/source-manifest.json"
+      ]
+    }
+  },
+  "sourceSha256Lf": {
+    "src/proxy.ts": "8a3155db70c5ed2bc3b012af12d79ffff00d8352767f1444a9476f96b75922d7",
+    "src/lib/page-navigation-limit.ts": "a22d8bf16056e6714f6a9645ad3e2ade288bd70ec15d099d21e0b50c61ef8859",
+    "src/lib/page-navigation-guard.ts": "0ef52a30f16c12bab30d366ae4c739314c4c6b895a628f070f2f6edd97e74c80",
+    "src/lib/page-navigation-limit.test.ts": "1c9fcc776393c557082bc92839e3288ae27d602f6fb2b8aacdf3c50e37b503d7",
+    "src/page-navigation-proxy.test.ts": "67a927bef415623f1e8757b53bbacfbfb7db61993a330fb854f00d1d752e7b86",
+    "docs/page-navigation-guard.md": "fbd3a86823ec55a7a3b38c9c6c046a082d1629a4ace20a156b3a633e8e2a79f5"
+  },
+  "verificationEnvironment": "Isolated Linux checkout at 46c0f82 plus only task-owned changes; dummy database configuration. Browser fixture uses actual proxy and Next 16.1.6 production build.",
+  "checks": {
+    "focused": {
+      "passed": 19,
+      "failed": 0
+    },
+    "fullGate": {
+      "passed": 3362,
+      "failed": 0
+    },
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "browserScenarios": 6
+  },
+  "publication": {
+    "github": "NOT_PUBLISHED: previously confirmed account write-permission block; no credential/access-control workaround",
+    "production": "NOT_DEPLOYED",
+    "projectsFlow": "in_progress; not marked done pending publication"
+  },
+  "limitations": [
+    "Process-local state resets at restart and requires a shared store for scaling.",
+    "Anonymous NAT clients share an IP budget.",
+    "Trusted ingress must overwrite client-IP headers and the origin must not be public.",
+    "Background Fetch Metadata can be forged but remains capped at 240/minute.",
+    "No guarantee against distributed/slow collection or copying delivered assets."
+  ]
+}
