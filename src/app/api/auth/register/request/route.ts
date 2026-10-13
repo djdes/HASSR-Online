@@ -7,6 +7,7 @@ import {
 } from "@/lib/registration";
 import { sendVerificationEmail } from "@/lib/email";
 import { registrationCodeRateLimiter } from "@/lib/rate-limit";
+import { verifyRegistrationChallenge } from "@/lib/registration-antibot";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,6 +46,11 @@ export async function POST(request: Request) {
       },
       { status: 429 }
     );
+  }
+
+  const challenge = await verifyRegistrationChallenge(body);
+  if (!challenge.ok) {
+    return NextResponse.json({ error: challenge.error }, { status: challenge.status });
   }
 
   const existing = await db.user.findUnique({ where: { email } });

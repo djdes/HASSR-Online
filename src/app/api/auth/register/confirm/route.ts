@@ -10,6 +10,7 @@ import { notifyPlatformAdmin } from "@/lib/platform-admin";
 import { escapeTelegramHtml } from "@/lib/telegram";
 import { normalizePhone } from "@/lib/phone";
 import { registrationConfirmRateLimiter } from "@/lib/rate-limit";
+import { verifyRegistrationChallenge } from "@/lib/registration-antibot";
 import { defaultJournalAutomationJson } from "@/lib/journal-automation";
 import { DEFAULT_OFF_JOURNAL_CODES } from "@/lib/health-check-default-off";
 import { attachAccountForNewOrganization } from "@/lib/create-organization";
@@ -102,6 +103,11 @@ export async function POST(request: Request) {
       { error: "Пароль должен быть не короче 6 символов" },
       { status: 400 }
     );
+  }
+
+  const challenge = await verifyRegistrationChallenge(body);
+  if (!challenge.ok) {
+    return NextResponse.json({ error: challenge.error }, { status: challenge.status });
   }
 
   const verification = await db.emailVerification.findUnique({

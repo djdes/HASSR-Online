@@ -9,6 +9,7 @@ import { attachAccountForNewOrganization } from "@/lib/create-organization";
 import { escapeTelegramHtml } from "@/lib/telegram";
 import { notifyPlatformAdmin } from "@/lib/platform-admin";
 import { registrationCodeRateLimiter } from "@/lib/rate-limit";
+import { verifyRegistrationChallenge } from "@/lib/registration-antibot";
 import { domainAcceptsMail } from "@/lib/mail-domain";
 import { DEFAULT_ORG_NAME, ORG_SPHERES, type OrgSphere } from "@/lib/org-profile";
 import {
@@ -109,6 +110,11 @@ export async function POST(request: Request) {
       { error: "Слишком часто. Попробуйте через несколько минут" },
       { status: 429 },
     );
+  }
+
+  const challenge = await verifyRegistrationChallenge(body);
+  if (!challenge.ok) {
+    return NextResponse.json({ error: challenge.error }, { status: challenge.status });
   }
 
   // Домен обязан принимать почту. Проверка в поле ввода — для удобства,

@@ -9,6 +9,7 @@ import { ArrowRight, CheckCircle2, Gift, Loader2, Sparkles, Ticket } from "lucid
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { ORG_SPHERES, type OrgSphere } from "@/lib/org-profile";
 import { EmailHint, useEmailField } from "@/components/ui/email-field";
+import { useRegistrationChallenge } from "@/components/auth/registration-challenge";
 import {
   readSignupSource,
   rememberSignupSource,
@@ -87,6 +88,7 @@ function RegisterScreen({
   const blankJournalName = blankJournal?.name ?? null;
 
   const field = useEmailField(prefilled);
+  const challenge = useRegistrationChallenge();
   const [sphere, setSphere] = useState<OrgSphere | null>(linkSphere);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -101,7 +103,7 @@ function RegisterScreen({
     e.preventDefault();
     field.setTouched(true);
     // Кнопка заблокирована при неверном адресе — это страховка на Enter.
-    if (!field.valid) return;
+    if (loading || !field.valid || !challenge.token) return;
     if (!consent) {
       setConsentMissing(true);
       setError("Отметьте согласие с документами — без него аккаунт не создаётся");
@@ -121,6 +123,8 @@ function RegisterScreen({
           source: readSignupSource(signupPlace),
           consent: true,
           consentPlace: "register",
+          captchaToken: challenge.token,
+          website: challenge.website,
           ...(blankJournal ? { blankJournal: blankJournal.code } : {}),
           // Сфера из ссылки с промокодом: организация сразу с журналами сферы.
           ...(sphere ? { sphere } : {}),
@@ -148,6 +152,7 @@ function RegisterScreen({
       ymGoal("signup_error", { ...GOAL_PARAMS, code: "network" });
       setError("Сеть недоступна. Попробуйте ещё раз");
     } finally {
+      challenge.reset();
       setLoading(false);
     }
   }
@@ -355,9 +360,11 @@ function RegisterScreen({
               </p>
             ) : null}
 
+            {challenge.element}
+
             <button
               type="submit"
-              disabled={loading || !field.valid}
+              disabled={loading || !field.valid || !challenge.token}
               className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-6 text-[15px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors hover:bg-[#4a5bf0] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? (

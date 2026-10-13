@@ -6,6 +6,7 @@ import Link from "next/link";
 import { LegalConsentCheckbox } from "@/components/legal/legal-consent-checkbox";
 import { ArrowRight, Loader2, Mail } from "lucide-react";
 import { EmailHint, useEmailField } from "@/components/ui/email-field";
+import { useRegistrationChallenge } from "@/components/auth/registration-challenge";
 import {
   readSignupSource,
   rememberSignupSource,
@@ -48,6 +49,7 @@ export function HeroEmailStart({
 }) {
   const router = useRouter();
   const field = useEmailField();
+  const challenge = useRegistrationChallenge(tone);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [consent, setConsent] = useState(false);
@@ -67,7 +69,7 @@ export function HeroEmailStart({
     field.setTouched(true);
     // Кнопка и так заблокирована при неверном адресе — это страховка на
     // случай отправки формы клавишей Enter.
-    if (!field.valid) return;
+    if (loading || !field.valid || !challenge.token) return;
     if (!consent) {
       setConsentMissing(true);
       setError("Отметьте согласие с документами — без него аккаунт не создаётся");
@@ -90,6 +92,8 @@ export function HeroEmailStart({
           source: readSignupSource(place),
           consent: true,
           consentPlace: "landing",
+          captchaToken: challenge.token,
+          website: challenge.website,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -114,6 +118,7 @@ export function HeroEmailStart({
       ymGoal("signup_error", { ...goalParams, code: "network" });
       setError("Сеть недоступна. Попробуйте ещё раз");
     } finally {
+      challenge.reset();
       setLoading(false);
     }
   }
@@ -165,7 +170,7 @@ export function HeroEmailStart({
         </div>
         <button
           type="submit"
-          disabled={loading || !field.valid}
+          disabled={loading || !field.valid || !challenge.token}
           className={
             "group inline-flex h-[56px] shrink-0 items-center justify-center gap-2 rounded-2xl px-6 text-[16px] font-semibold transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 sm:h-[60px] sm:px-7 " +
             (layout === "stack" ? "w-full " : "") +
@@ -213,6 +218,8 @@ export function HeroEmailStart({
           className="mt-2.5"
         />
       </div>
+
+      {challenge.element}
 
       {/* Подсказки «аккаунт создадим сразу» под полем больше нет: на
           телефоне она сталкивала гарантию за сгиб. Что произойдёт после
