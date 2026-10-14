@@ -3,7 +3,8 @@
 import { usePublicCopy } from "@/components/i18n/use-public-copy";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import Link from "@/components/i18n/localized-link";
+import { publicLocaleRoute } from "@/i18n/site-locale";
 import { usePathname } from "next/navigation";
 
 const STORAGE_KEY = "wesetup.cookie-consent";
@@ -60,6 +61,7 @@ const APP_PREFIXES = [
 export function CookieConsent() {
   const t = usePublicCopy();
   const pathname = usePathname();
+  const pagePath = pathname ? publicLocaleRoute(pathname)?.pathname ?? pathname : pathname;
   const [visible, setVisible] = useState(false);
   const [entered, setEntered] = useState(false);
 
@@ -75,7 +77,7 @@ export function CookieConsent() {
     // Кабинет и мини-приложение (у них корень `.app-shell`): человек уже
     // вошёл, а баннер ложился поверх нижнего меню приложения на разделах,
     // не попавших в список префиксов («Премии», «Приказы», «Идеи»…).
-    if (document.querySelector(".app-shell")) return;
+    if (document.querySelector(".app-shell:not(.public-theme)")) return;
 
     // Показ и появление разнесены по кадрам: сначала монтируем бар
     // скрытым, следующим кадром включаем opacity/translate — иначе
@@ -94,11 +96,11 @@ export function CookieConsent() {
   // Баннер — только для публичных страниц. Внутри кабинета согласие
   // уже получено при регистрации, а плашка там налезала на карточки
   // дашборда и на «Быстрый старт» (на мобильном — особенно заметно).
-  if (pathname && APP_PREFIXES.some((p) => pathname.startsWith(p))) return null;
+  if (pagePath && APP_PREFIXES.some((p) => pagePath.startsWith(p))) return null;
   // Сам список журналов — тоже кабинет. В префиксах он записан со слэшем,
   // чтобы не задеть публичный /journals-info, и из-за этого выпадал:
   // баннер ложился поверх нижнего меню приложения.
-  if (pathname === "/journals") return null;
+  if (pagePath === "/journals") return null;
   if (!visible) return null;
 
   function accept() {

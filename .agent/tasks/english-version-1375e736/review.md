@@ -10,6 +10,8 @@ Reviewed after the implementation and initial failed checks, against baseline 7b
 - English metadata and structured data use the English preview; only real translated routes get hreflang/English sitemap entries. Unknown prefixed private/API paths remain 404 in the real application.
 - CAPTCHA remains server-verified v2 with independent tokens per form, failure reset and consent gating; only client labels and widget language change. Browser tests mock the third-party challenge and authentication writes, not the application's UI logic.
 - The terminology scanner exception is limited to two exact Russian dictionary keys already permitted for the original links. No test-baseline changes.
+- Final shared-component audit found the cookie notice still matched only unprefixed auth paths and used a plain Next link for its Russian privacy page. Normalize registered locale paths for the exclusion check and use the same language-boundary navigation wrapper; a new browser case covers both regressions.
+- The cookie browser case also found public-theme initialization adds `.app-shell` to the public body. Exclude `.public-theme` from the workspace-shell detector so public notices are not suppressed by styling classes. Private app shells and auth prefixes remain excluded.
 - No new dependency, schema migration, cloud service, production configuration or deployment. Working tree changes outside the manifest are preserved.
 
 Verification limitation: the isolated database address is deliberately unreachable. Real rendering exercises existing fallback tariffs and empty public reviews. Browser tests do not create accounts, send email, complete real reCAPTCHA, or validate production connectivity. Session fixtures use a test-only signing key in the isolated server.

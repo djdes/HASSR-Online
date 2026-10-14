@@ -75,6 +75,20 @@ try{
     assert.equal(await page.evaluate(()=>window.localeNavigationMarker),undefined);
     await ctx.close();
   });
+  await check('Cookie notice stays off English auth pages and its policy link changes document locale',async()=>{
+    const {ctx,page}=await context({viewport:{width:320,height:780}});
+    for(const path of ['/en/login','/en/register']){
+      await page.goto(base+path);await page.waitForTimeout(250);
+      assert.equal(await page.getByRole('region',{name:'Cookie notice',exact:true}).count(),0);
+    }
+    await page.goto(base+'/en');
+    await page.evaluate(()=>window.localeNavigationMarker='english-cookie-document');
+    const notice=page.getByRole('region',{name:'Cookie notice',exact:true});
+    await notice.getByRole('link').click();await page.waitForURL('**/privacy');
+    assert.equal(await page.locator('html').getAttribute('lang'),'ru');
+    assert.equal(await page.evaluate(()=>window.localeNavigationMarker),undefined);
+    await ctx.close();
+  });
   await check('All six QR chapters and equipment controls use English',async()=>{
     const {ctx,page}=await context();await page.goto(base+'/en');
     const chapters=page.getByRole('navigation',{name:'Video chapters'}).getByRole('button');

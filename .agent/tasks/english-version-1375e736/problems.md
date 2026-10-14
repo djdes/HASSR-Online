@@ -28,3 +28,13 @@ Next root layouts persist during client transitions. Reload language-boundary de
 ## Outstanding scope
 
 AC3 remains incomplete: only landing/login/registration are translated. The user has not answered whether the authenticated workspace/journals are included; other public pages are also not translated. `coverage.md` is the authoritative inventory. Do not close the ProjectsFlow task or claim the entire requested English version is complete.
+
+## V4 — Cookie notice on English authentication routes
+
+Final shared-component inspection found the notice's exclusion list only matched Russian `/login` and `/register`. Normalize explicitly translated paths before applying that existing list, preserving the rule that the banner must not cover auth forms on a narrow screen. Its privacy link also needs the locale-aware link wrapper, so a Russian policy page receives a fresh Russian root layout. Added a browser scenario for both English auth routes and the actual policy-link transition. Reverify before treating this fix as complete.
+
+The new browser case exposed a pre-existing false positive: public-theme initialization adds `app-shell public-theme` to `<body>`, so the banner's broad `.app-shell` query hides it on the landing too. Restrict the workspace check to `.app-shell:not(.public-theme)`; real private shell elements still match. This small shared-component fix is necessary for the translated cookie notice and policy link to actually be usable. Rebuild and rerun the full browser suite.
+
+Final reverification: production build, typecheck, lint, 40 focused tests, all 3375 full tests and all 10 browser scenarios pass. The browser reports no JavaScript errors. V4 is resolved; the overall task still remains incomplete under AC3.
+
+Evidence packaging caught a stale manifest: collecting remote raw files had restored the prior commit's source hash list. The commit guard rejected the mismatched evidence before staging. Synchronize manifests during source transfer and confirm every remote source is byte-identical to the local source (zero source changes) before repackaging the already-current successful checks.

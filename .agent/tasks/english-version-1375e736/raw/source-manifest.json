@@ -28,7 +28,7 @@
   "src/components/pricing/plan-card.tsx": "fe7bf15afe99df1c3d05f20761bfe0aed8bb18a578f17e5949f5cc987f3cb233",
   "src/components/pricing/promo-price.tsx": "3d55b1dcb417db6d5b1281c9f059c1df5046be6acc1aad1d991bcffd35d8a33b",
   "src/components/public/app-stores-teaser.tsx": "11af70361422cc704d24a255b9b8c84f1d9a1bd5d6ddf1d368a6523e75906296",
-  "src/components/public/cookie-consent.tsx": "3be3d53a268fff10232b9ffc97cf984b479030888bf46181d7a8a2efe0790e36",
+  "src/components/public/cookie-consent.tsx": "9d547922caa231df5f1c9a82b3e420366cd5b14d83ba06594834fa91d6a58847",
   "src/components/public/pricing-calculator.tsx": "f9bfa5aa8ac2fa5f34e9fc3332922ac14164bd356125386baf0253a2ee0bb081",
   "src/components/public/public-chrome.tsx": "a859f7d518558b10b33d7ed1d04b7925db540f72687a825181da90261ee46f5f",
   "src/components/public/public-support-widget.tsx": "8924f8230d86dfddbdb86d99a96f2cc038e5b0fd280527c315f9e25580ac6cc6",

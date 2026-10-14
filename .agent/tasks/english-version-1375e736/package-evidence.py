@@ -15,7 +15,7 @@ assert (raw / 'build.exit').read_text().strip() == '0'
 assert 'pass=3375, fail=0' in (raw / 'verify-gate.log').read_text(encoding='utf-8')
 assert '# pass 40' in (raw / 'verify-focused.log').read_text(encoding='utf-8')
 browser = json.loads((raw / 'browser-report.json').read_text(encoding='utf-8'))
-assert len(browser['cases']) >= 9 and all(c['pass'] for c in browser['cases']) and not browser['errors']
+assert len(browser['cases']) >= 10 and all(c['pass'] for c in browser['cases']) and not browser['errors']
 evidence = {
     'task': '1375e736-e5b6-4bd8-974d-b5ba34e22b42',
     'baseline': '7be7048115981f46c5e2c4f45a549c2349f81b58',
@@ -51,7 +51,7 @@ Reproduction: install the repository dependencies, use an isolated database/conf
 Raw logs: `raw/verify-*`, `raw/build.log`, `raw/build.exit`; browser report and local screenshots `raw/english-mobile.png`, `raw/english-og.png`. Failed development-server reports are diagnostic history, superseded by the production-build browser run. No new dependency or schema change. Unrelated working-tree changes remain outside the task manifest.
 '''
 (TASK / 'evidence.md').write_text(report, encoding='utf-8')
-paths = subprocess.check_output(['git', 'diff', '--name-only'], cwd=ROOT, text=True).splitlines()
+paths = subprocess.check_output(['git', 'diff', '--name-only'], cwd=ROOT, text=True, stderr=subprocess.DEVNULL).splitlines()
 unrelated = {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in paths if name not in manifest and (ROOT / name).is_file()}
 (raw / 'unrelated-before-commit.json').write_text(json.dumps(unrelated, indent=2) + '\n')
 print('Partial-delivery evidence generated. Technical checks PASS; overall task INCOMPLETE.')

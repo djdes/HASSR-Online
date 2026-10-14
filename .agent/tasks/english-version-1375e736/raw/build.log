@@ -11,21 +11,14 @@
   · proxyClientMaxBodySize: "12mb"
 
   Creating an optimized production build ...
-✓ Compiled successfully in 3.7min
+✓ Compiled successfully in 2.3min
   Skipping validation of types
-
-  We detected TypeScript in your project and reconfigured your tsconfig.json file for you.
-  The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:
-
-  	- include was updated to add '.next-english-release/types/**/*.ts'
-  	- include was updated to add '.next-english-release/dev/types/**/*.ts'
-
   Collecting page data using 11 workers ...
   Generating static pages using 11 workers (0/141) ...
   Generating static pages using 11 workers (35/141) 
   Generating static pages using 11 workers (70/141) 
   Generating static pages using 11 workers (105/141) 
-✓ Generating static pages using 11 workers (141/141) in 7.7s
+✓ Generating static pages using 11 workers (141/141) in 8.9s
   Finalizing page optimization ...
   Collecting build traces ...
 
